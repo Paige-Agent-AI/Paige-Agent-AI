@@ -1,4 +1,4 @@
-import { useEffect,useRef,useState } from "react";
+import { useEffect,useId,useRef,useState } from "react";
 import { FileCheck2 } from "lucide-react";
 import { readStaffDelivery,writeStaffDelivery,staffDeliveryCaller,type StaffDeliveryScope,type StaffDeliveryRead,type StaffDeliveryAction } from "./operations-delivery-staff";
 import type { TeamMemberRecord } from "@/solo/team-workspace-contract";
@@ -6,12 +6,25 @@ import { readDeliverySourceSessions,readDeliverySourceVersions,deliverySourceCal
 import { OperationsAssignee } from "./OperationsAssignee";
 import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
 import { registerAccountSwitchGuard } from "@/lib/auth/accountSwitchGuard";
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from "@/components/ui/select";
 import { AlertDialog,AlertDialogContent,AlertDialogHeader,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel,AlertDialogAction } from "@/components/ui/alert-dialog";
 import {browserDeliveryRecoveryStorage,readDeliveryRecovery,saveDeliveryRecovery,clearDeliveryRecovery,type RecoveryStorage} from "./operations-delivery-local-recovery";
 import "./operations-staff-delivery-review.css";
 export type PreparationProps={scope:StaffDeliveryScope;members:TeamMemberRecord[];theme?:string;onSubmitted?:()=>void|Promise<void>;registerCloseGuard?:(guard:()=>boolean)=>()=>void;recoveryStorage?:RecoveryStorage};
 type Sources={key:string;loading:boolean;sessions:DeliverySourceSession[]|null;work:StaffDeliveryRead|null};
 type Versions={key:string;loading:boolean;versions:DeliverySourceVersion[]|null;unsupported:number};
+type PickOption={value:string;label:string};
+/** One source choice, through the shared Select primitive: a visible <label> that names the trigger (WCAG 2.5.3),
+ * keyboard and screen-reader behaviour from Radix, a 44px trigger, and a menu that carries the Solo theme into its portal. */
+function SourcePick({label,value,placeholder,options,disabled,theme,onChange}:{label:string;value:string;placeholder:string;options:PickOption[];disabled:boolean;theme:string;onChange:(next:string)=>void}){
+ const id=useId();
+ return <div className="ops-staff-field"><label htmlFor={id}>{label}</label>
+  <Select value={value} disabled={disabled} onValueChange={onChange}>
+   <SelectTrigger id={id} className="ops-staff-select"><SelectValue placeholder={placeholder}/></SelectTrigger>
+   <SelectContent className="paige-solo ops-staff-select-menu" data-pg={theme} data-theme={theme}>{options.map(row=><SelectItem key={row.value} value={row.value} data-value={row.value}>{row.label}</SelectItem>)}</SelectContent>
+  </Select>
+ </div>;
+}
 /** Source preparation only: existing Studio versions and the canonical Delivery writer. */
 export function OperationsDeliverablePreparation({scope,members,theme="dark",onSubmitted,registerCloseGuard,recoveryStorage}:PreparationProps){
  const key=JSON.stringify(scope),live=useRef(key);live.current=key;
@@ -113,10 +126,10 @@ export function OperationsDeliverablePreparation({scope,members,theme="dark",onS
   <header><FileCheck2 size={24} aria-hidden="true"/><h2>Prepare the next version</h2>{!sourceFailed&&!result&&!unknown&&!hint&&<button type="button" disabled={busy} onClick={inspect}>Inspect recorded submission</button>}</header>
   {sources.key!==key||sources.loading?<><span className="sr-only" role="status">Reading saved work and source versions…</span><div className="ops-staff-skeleton" aria-hidden="true"><i/><i/><i/></div></>:!data||!sessions?<div><h3>Source access unavailable</h3></div>:!eligible?<p>{waitingOn}</p>:<>
    {sessions.length===0?<p>No Studio work is saved yet. Save a text version in Studio, then come back here to choose it.</p>:<div className="ops-staff-source-grid">
-    <label>Studio session<select value={sessionId} disabled={locked} onChange={e=>{setSessionId(e.target.value);setArtifactId("");setVersionId("");}}><option value="">Choose a saved source</option>{sessions.map(row=><option key={row.id} value={row.id}>{row.title}</option>)}</select></label>
-    <label>Saved work<select value={artifactId} disabled={locked||!session} onChange={e=>{setArtifactId(e.target.value);setVersionId("");}}><option value="">Choose saved work</option>{session?.artifacts.map(row=><option key={row.id} value={row.id}>{row.title}</option>)}</select></label>
-    <label>Version<select value={versionId} disabled={locked||!listed} onChange={e=>setVersionId(e.target.value)}><option value="">Choose the version</option>{listed?.map(row=><option key={row.id} value={row.id}>Version {row.versionNo} · {row.title}</option>)}</select></label>
-    <label>Reviewer<select value={reviewerId} disabled={locked} onChange={e=>setReviewerId(e.target.value)}><option value="">Choose a teammate</option>{membersAvailable.map(row=><option key={row.user_id} value={row.user_id}>{row.full_name||"Team member"}</option>)}</select></label>
+    <SourcePick label="Studio session" value={sessionId} placeholder="Choose a saved source" disabled={locked} theme={theme} options={sessions.map(row=>({value:row.id,label:row.title}))} onChange={next=>{setSessionId(next);setArtifactId("");setVersionId("");}}/>
+    <SourcePick label="Saved work" value={artifactId} placeholder="Choose saved work" disabled={locked||!session} theme={theme} options={(session?.artifacts??[]).map(row=>({value:row.id,label:row.title}))} onChange={next=>{setArtifactId(next);setVersionId("");}}/>
+    <SourcePick label="Version" value={versionId} placeholder="Choose the version" disabled={locked||!listed} theme={theme} options={(listed??[]).map(row=>({value:row.id,label:`Version ${row.versionNo} · ${row.title}`}))} onChange={setVersionId}/>
+    <SourcePick label="Reviewer" value={reviewerId} placeholder="Choose a teammate" disabled={locked} theme={theme} options={membersAvailable.map(row=>({value:row.user_id,label:row.full_name||"Team member"}))} onChange={setReviewerId}/>
    </div>}
    {versions.key===selection&&versions.loading&&<p role="status">Reading saved versions…</p>}
    {versions.key===selection&&versions.unsupported>0&&<p>{versions.unsupported} saved versions cannot be submitted as text deliverables.</p>}

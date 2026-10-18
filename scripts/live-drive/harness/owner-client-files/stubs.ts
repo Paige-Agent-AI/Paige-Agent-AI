@@ -8,7 +8,7 @@
 // shaped store that also holds rows the owner list must never return (another client's file, another
 // business's file, someone else's unfinished upload):
 //
-//   client_file_owner_list(p_expected_actor_id, p_expected_tenant_id, p_contact_id, p_limit)
+//   client_file_owner_list(p_expected_actor_id, p_expected_tenant_id, p_contact_id, p_limit, p_before, p_before_id)
 //     -> { ok:true, contact_id, portal_connected, files:[11 keys], has_more } | { ok:false, error } | 42501
 //     rows = this tenant AND this client AND (ready OR (not client_upload AND uploaded by the caller)), newest first
 //   client_file_owner_begin_upload(...)  -> { ok:true, file } (internal + pending at {tenant}/{contact}/internal/{id})
@@ -82,6 +82,15 @@ const fileStore: FileRow[] = state === "empty" ? [] : [
   fileRow({ original_filename: "Discovery report draft.pdf", visibility: "internal", created_at: "2026-10-13T09:00:00.000000+00:00" }),
   fileRow({ original_filename: "Pricing worksheet for the Harbour Lane studio launch and the founder's first-year retainer.pdf", visibility: "internal", created_at: "2026-10-10T10:00:00.000000+00:00" }),
 ];
+// "many" / "more-loaded": a library longer than one page (104 older private files, so 110 in all), newest first.
+// Notes 094-096 were saved in the same instant and the first page ends on the first of them (position 100), so the
+// (created_at, id) cursor is what keeps the next page from skipping 095 and 094.
+if (state === "many" || state === "more-loaded") {
+  for (let i = 1; i <= 104; i++) {
+    const at = new Date(Date.UTC(2026, 7, 1) - Math.min(i, i >= 94 && i <= 96 ? 94 : i) * 3_600_000).toISOString().replace(".000Z", ".000000+00:00");
+    fileStore.push(fileRow({ original_filename: `Session notes ${String(i).padStart(3, "0")}.pdf`, visibility: "internal", created_at: at }));
+  }
+}
 // Rows the owner list must never return, present in every state.
 fileStore.push(
   fileRow({ original_filename: "Sam's welcome pack.pdf", contact_id: OTHER_CLIENT, visibility: "shared" }),
@@ -90,6 +99,7 @@ fileStore.push(
 );
 const objects = new Set(fileStore.filter((f) => f.upload_state === "ready").map((f) => f.storage_path));
 let listReads = 0;
+const listArgs: Record<string, unknown>[] = [];
 const fileWrites: Record<string, unknown>[] = [];
 const uploads: string[] = [];
 const signed: { path: string; expires: number }[] = [];
@@ -99,16 +109,22 @@ const ownerRow = (f: FileRow) => ({
   upload_state: f.upload_state, source: f.visibility === "client_upload" ? "client" : "business", shared_at: f.shared_at,
   created_at: f.created_at, updated_at: f.updated_at, storage_path: f.storage_path,
 });
-function ownerList() {
+function ownerList(args: Record<string, unknown> = {}) {
   listReads += 1;
+  listArgs.push({ ...args });
   if (state === "loading") return new Promise(() => {});
   if (state === "refused") return Promise.resolve({ data: null, error: { code: "42501", message: "FILE_SCOPE_CHANGED" } });
   if (state === "unavailable") return Promise.resolve({ data: { ok: false, error: "CLIENT_FILES_UNAVAILABLE" }, error: null });
   if (state === "error") return Promise.resolve({ data: null, error: { code: "57014", message: "harness failure" } });
   const rows = fileStore.filter((f) => f.tenant_id === TENANT && f.contact_id === CLIENT
     && (f.upload_state === "ready" || (f.visibility !== "client_upload" && f.uploaded_by === ACTOR)))
-    .sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : a.id < b.id ? 1 : -1));
-  return Promise.resolve({ data: { ok: true, contact_id: CLIENT, portal_connected: connected, files: rows.slice(0, 100).map(ownerRow), has_more: rows.length > 100 }, error: null });
+    .sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : a.id < b.id ? 1 : -1))
+    // The server's keyset: strictly after the (created_at, id) of the last row shown.
+    // A cursor without its id gets the old strict-timestamp bound, which is what skipped same-instant files.
+    .filter((f) => !args.p_before || f.created_at < String(args.p_before)
+      || (args.p_before_id != null && f.created_at === String(args.p_before) && f.id < String(args.p_before_id)));
+  const limit = Math.min(Math.max(typeof args.p_limit === "number" ? args.p_limit : 100, 1), 100);
+  return Promise.resolve({ data: { ok: true, contact_id: CLIENT, portal_connected: connected, files: rows.slice(0, limit).map(ownerRow), has_more: rows.length > limit }, error: null });
 }
 function setFileShare(args: Record<string, unknown>) {
   fileWrites.push({ ...args });
@@ -156,7 +172,7 @@ let invokes = 0;
 /** What the drive reads back: how many status reads and share writes happened, with what arguments. */
 export const harness = {
   get reads() { return reads; }, get writes() { return writes; }, get invokes() { return invokes; },
-  get listReads() { return listReads; }, get fileWrites() { return fileWrites; }, get uploads() { return uploads; }, get signed() { return signed; },
+  get listReads() { return listReads; }, get listArgs() { return listArgs; }, get fileWrites() { return fileWrites; }, get uploads() { return uploads; }, get signed() { return signed; },
 };
 (window as unknown as { __harness: typeof harness }).__harness = harness;
 
@@ -224,7 +240,7 @@ export const supabase = {
       return { data: standing(), error: null };
     }
     if (name === "plan_item_set_client_share") return setShare(args);
-    if (name === "client_file_owner_list") return ownerList();
+    if (name === "client_file_owner_list") return ownerList(args);
     if (name === "client_file_set_client_share") return setFileShare(args);
     if (name === "client_file_owner_begin_upload") return beginUpload(args);
     if (name === "client_file_owner_finish_upload") return finishUpload(args);

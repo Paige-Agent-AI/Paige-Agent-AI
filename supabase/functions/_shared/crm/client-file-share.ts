@@ -8,9 +8,12 @@
 // Re-filing a document onto ANOTHER client (or rewriting its description) moves it with a direct
 // write through the caller's client that NEVER touches visibility (refileClientDocument). The
 // database refuses any non-service write into or out of 'shared' that is not the share writer
-// (trg_client_files_share_stamp, FILE_SHARE_WRITER_REQUIRED) and makes a file moved to another
-// client arrive private, so whether the client sees it afterwards is decided by the share writer
-// alone, at the version the move produced: business admin, live client, finished upload, audited.
+// (trg_client_files_share_stamp, FILE_SHARE_WRITER_REQUIRED), and refuses any signed-in move of a
+// SHARED file to another client (FILE_SHARED_MOVE_REFUSED): that would take the file away from the
+// client who has it with no record. So a shared file is first withdrawn through the share writer
+// (one client_unshare audit row) and only then moved, private. Whether the new client sees it is
+// decided by the share writer alone, at the version the move produced: business admin, live
+// client, finished upload, audited.
 
 export type FileDocumentSource = {
   id: string;
@@ -162,8 +165,9 @@ export async function refileClientDocument(input: {
   visibility: unknown;
 }): Promise<ClientFileRefileResult> {
   const fileId = typeof input.fileId === "string" ? input.fileId.toLowerCase() : "";
-  const nothing = (reason: ClientFileShareFailure | "not_moved", message: string, unknown = false): ClientFileRefileResult =>
-    ({ success: false, moved: unknown ? null : false, fileId, contactId: null, shared: null, reason, message, outcomeUnknown: unknown });
+  const nothing = (reason: ClientFileShareFailure | "not_moved", message: string, unknown = false,
+    shared: boolean | null = null): ClientFileRefileResult =>
+    ({ success: false, moved: unknown ? null : false, fileId, contactId: null, shared, reason, message, outcomeUnknown: unknown });
   const tenant = input.expectedTenantId;
   if (!uuid(input.expectedActorId) || !uuid(tenant)) return nothing("no_workspace", CLIENT_FILE_SHARE_MESSAGES.no_workspace);
   if (!uuid(input.fileId) || !uuid(input.fromContactId) || !uuid(input.toContactId)
@@ -174,24 +178,56 @@ export async function refileClientDocument(input: {
   const wantShared = input.visibility === "shared";
   const patch: { contact_id: string; description?: string } = { contact_id: toContact };
   if (typeof input.description === "string" && input.description.trim()) patch.description = input.description.trim().slice(0, 500);
+  const changesClient = !sameId(input.fromContactId, toContact);
+  // 0. A shared file never moves while shared. Read it as stored now; if the client can see it,
+  // withdraw that through the share writer (version-checked, one audit row) before the move.
+  let withdrawn = false;
+  if (changesClient) {
+    let current: { data: unknown; error: unknown };
+    try { current = await input.caller.readFile(fileId, tenant); } catch {
+      return nothing("not_moved", "I couldn't read the document as it is now, so I haven't moved it.");
+    }
+    const now = object(current.data);
+    if (current.error || !now || !sameId(now.id, fileId) || now.tenant_id !== tenant || !instant(now.updated_at)
+      || (now.visibility !== "internal" && now.visibility !== "shared")) {
+      return nothing("not_moved", "I couldn't read the document as it is now, so I haven't moved it.");
+    }
+    if (now.visibility === "shared") {
+      const withdraw = await shareClientFile({ caller: input.caller, expectedActorId: input.expectedActorId,
+        expectedTenantId: tenant, fileId, shared: false, expectedUpdatedAt: now.updated_at });
+      if (!withdraw.success) {
+        return { success: false, moved: false, fileId, contactId: null, shared: withdraw.writeAttempted ? null : true,
+          reason: withdraw.reason, outcomeUnknown: withdraw.writeAttempted,
+          message: withdraw.writeAttempted
+            ? `The document did not move. ${withdraw.message}`
+            : `The document did not move, and its client can still see it: ${withdraw.message}` };
+      }
+      withdrawn = true;
+    }
+  }
+  const stillThere = withdrawn
+    ? "The document did not move, but its client can no longer see it: I withdrew their access first and the move was then refused. Tell the operator exactly that."
+    : "The document did not move. Tell the operator plainly that it is still where it was, and don't say otherwise.";
+  const notMoved = () => nothing("not_moved", stillThere, false, withdrawn ? false : null);
+  const unknownMove = () => nothing("outcome_unknown", withdrawn
+    ? "I withdrew the client's access, but I couldn't confirm whether the document then moved. Check the client's file before trying again."
+    : "I couldn't confirm whether the document moved. Check the client's file before trying again.", true, withdrawn ? false : null);
   // 1. The move. Visibility is never in the patch: the share writer is the only way to change it.
   let moved: { data: unknown; error: unknown };
   try { moved = await input.caller.moveFile(fileId, tenant, patch); } catch {
-    return nothing("outcome_unknown", "I couldn't confirm whether the document moved. Check the client's file before trying again.", true);
+    return unknownMove();
   }
   if (moved.error) {
     // Only an answered SQL refusal proves nothing was written (same rule as the share writer).
-    return /^[0-9A-Z]{5}$/.test(String(object(moved.error)?.code ?? ""))
-      ? nothing("not_moved", "The document did not move. Tell the operator plainly that it is still where it was, and don't say otherwise.")
-      : nothing("outcome_unknown", "I couldn't confirm whether the document moved. Check the client's file before trying again.", true);
+    return /^[0-9A-Z]{5}$/.test(String(object(moved.error)?.code ?? "")) ? notMoved() : unknownMove();
   }
   const row = object(moved.data);
-  if (!row) return nothing("not_moved", "The document did not move. Tell the operator plainly that it is still where it was, and don't say otherwise.");
+  if (!row) return notMoved();
   if (!sameId(row.id, fileId) || !sameId(row.contact_id, toContact) || !instant(row.updated_at)
     || (row.visibility !== "internal" && row.visibility !== "shared")) {
     return nothing("outcome_unknown", "I couldn't confirm where the document is now. Check the client's file before trying again.", true);
   }
-  const movedFrom = sameId(input.fromContactId, toContact) ? null : (input.fromContactId as string).toLowerCase();
+  const movedFrom = changesClient ? (input.fromContactId as string).toLowerCase() : null;
   const nowShared = row.visibility === "shared";
   if (nowShared === wantShared) {
     return { success: true, fileId, contactId: toContact, movedFromContactId: movedFrom, shared: nowShared, share: null };

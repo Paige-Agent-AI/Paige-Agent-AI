@@ -13,14 +13,18 @@ const member={membership_id:id(10),user_id:id(8),full_name:"Review specialist",a
 let root:Root,host:HTMLDivElement;const onSubmitted=vi.fn();
 const images:Array<{onload:((event:unknown)=>void)|null;onerror:(()=>void)|null;complete:boolean;naturalWidth:number;src:string}>=[];
 (globalThis as typeof globalThis & {IS_REACT_ACT_ENVIRONMENT:boolean}).IS_REACT_ACT_ENVIRONMENT=true;
+// jsdom has no layout: the Select primitive scrolls its chosen option into view and checks pointer capture.
+Element.prototype.scrollIntoView??=function(){};Element.prototype.hasPointerCapture??=function(){return false;};Element.prototype.releasePointerCapture??=function(){};
 beforeEach(()=>{sessionStorage.clear();vi.clearAllMocks();images.length=0;vi.stubGlobal("Image",class{onload:((event:unknown)=>void)|null=null;onerror:(()=>void)|null=null;complete=false;naturalWidth=0;src="";constructor(){images.push(this);}addEventListener(event:string,handler:(event:unknown)=>void){if(event==="load")this.onload=handler;if(event==="error")this.onerror=()=>handler(undefined);}removeEventListener(event:string){if(event==="load")this.onload=null;if(event==="error")this.onerror=null;}});host=document.createElement("div");document.body.append(host);root=createRoot(host);vi.mocked(readStaffDelivery).mockResolvedValue({kind:"ready",submissions:[],releases:[]});vi.mocked(readDeliverySourceSessions).mockResolvedValue({kind:"ready",sessions:[{id:id(6),title:"Client engagement source",artifacts:[{id:id(7),title:"Delivery outline"}]}]});vi.mocked(readDeliverySourceVersions).mockResolvedValue({kind:"ready",versions:[{id:id(9),versionNo:2,title:"Reviewable outline",body:"Exact text <script>notExecuted()</script>",createdAt:scope.workUpdatedAt}],unsupportedCount:1});});
 afterEach(async()=>{await act(async()=>root.unmount());host.remove();vi.unstubAllGlobals();});
 async function mount(){await act(async()=>root.render(<OperationsDeliverablePreparation scope={scope} members={[member,{...member,user_id:id(1),full_name:"Preparer"},{...member,user_id:id(11),status:"inactive",full_name:"Inactive member"}]} onSubmitted={onSubmitted}/>));}
 function button(name:string){const b=Array.from(document.querySelectorAll<HTMLButtonElement>("button")).find(x=>x.textContent===name);expect(b).toBeTruthy();return b!;}
 async function click(name:string){await act(async()=>button(name).click());}
-// Each select is named by its visible <label> (WCAG 2.5.3), so tests find it the way a person reads it.
-const selectFor=(label:string)=>Array.from(host.querySelectorAll("label")).find(l=>l.firstChild?.textContent===label)?.querySelector("select")??null;
-async function choose(label:string,value:string){const select=selectFor(label)!;expect(select).toBeTruthy();await act(async()=>{select.value=value;select.dispatchEvent(new Event("change",{bubbles:true}));});}
+// Each choice is the shared Select primitive, named by its visible <label> (WCAG 2.5.3), so tests find it the way a
+// person reads it and drive it the way a keyboard does: Enter opens the listbox, Enter on an option chooses it.
+const selectFor=(label:string)=>{const l=Array.from(host.querySelectorAll("label")).find(x=>x.textContent===label);return l?document.getElementById(l.htmlFor) as HTMLButtonElement|null:null;};
+const key=(el:Element,k:string)=>el.dispatchEvent(new KeyboardEvent("keydown",{key:k,bubbles:true}));
+async function choose(label:string,value:string){const trigger=selectFor(label)!;expect(trigger).toBeTruthy();expect(trigger.getAttribute("role")).toBe("combobox");await act(async()=>{key(trigger,"Enter");});const option=document.querySelector<HTMLElement>(`[role="option"][data-value="${value}"]`);expect(option).toBeTruthy();await act(async()=>{key(option!,"Enter");});expect(document.querySelector('[role="listbox"]')).toBeNull();}
 async function prepare(){await mount();await choose("Studio session",id(6));await choose("Saved work",id(7));await choose("Version",id(9));await choose("Reviewer",id(8));}
 it("uses exact Studio text and authorized Team photograph with a named reviewer",async()=>{await prepare();await act(async()=>{images[0].complete=true;images[0].naturalWidth=80;images[0].onload?.({currentTarget:images[0]});});expect(host.textContent).toContain("Exact text <script>notExecuted()</script>");expect(host.querySelector("script")).toBeNull();expect(host.querySelector('img[src="https://tests.invalid/authorized-photo.png"]')).not.toBeNull();expect(host.textContent).toContain("Review specialist");expect(host.querySelector('option[value="'+id(1)+'"]')).toBeNull();expect(host.querySelector('option[value="'+id(11)+'"]')).toBeNull();expect(writeStaffDelivery).not.toHaveBeenCalled();});
 it("cancelling consequential submission never writes",async()=>{await prepare();await click("Review submission");expect(document.querySelector('[role="alertdialog"]')).not.toBeNull();await click("Keep preparing");expect(writeStaffDelivery).not.toHaveBeenCalled();});
@@ -36,12 +40,12 @@ it("read-only reconciliation keeps the recorded lock when the parent refresh rej
 it("source failures offer an honestly named read-only recovery beside the feedback",async()=>{vi.mocked(readDeliverySourceVersions).mockResolvedValue({kind:"unavailable"});await mount();await choose("Studio session",id(6));await choose("Saved work",id(7));const recovery=button("Refresh saved work");expect(recovery.closest('[role="status"]')).not.toBeNull();await click("Refresh saved work");expect(vi.mocked(readDeliverySourceVersions).mock.calls.length).toBeGreaterThan(1);expect(writeStaffDelivery).not.toHaveBeenCalled();});
 
 async function remount(nextScope=scope){await act(async()=>root.unmount());root=createRoot(host);await act(async()=>root.render(<OperationsDeliverablePreparation scope={nextScope} members={[member]} onSubmitted={onSubmitted}/>));}
-it("returning to the same inspection restores source references without copying its body or writing",async()=>{await prepare();await remount();expect(selectFor("Version")?.value).toBe(id(9));expect(selectFor("Reviewer")?.value).toBe(id(8));expect(host.textContent).toContain("Exact text");expect(JSON.stringify({...sessionStorage})).not.toContain("Exact text");expect(writeStaffDelivery).not.toHaveBeenCalled();});
+it("returning to the same inspection restores source references without copying its body or writing",async()=>{await prepare();await remount();expect(selectFor("Version")?.textContent).toBe("Version 2 · Reviewable outline");expect(selectFor("Reviewer")?.textContent).toBe("Review specialist");expect(host.textContent).toContain("Exact text");expect(JSON.stringify({...sessionStorage})).not.toContain("Exact text");expect(writeStaffDelivery).not.toHaveBeenCalled();});
 it("an uncertain submission survives unmount and a fresh work timestamp without replay",async()=>{await prepare();vi.mocked(writeStaffDelivery).mockResolvedValue({kind:"unverified"});await click("Review submission");await click("Confirm submission");await remount({...scope,workUpdatedAt:"2026-10-12T13:00:00Z"});expect(host.textContent).toContain("unconfirmed");expect(button("Review submission").disabled).toBe(true);await click("Inspect recorded submission");expect(writeStaffDelivery).toHaveBeenCalledOnce();});
 it("unavailable recovery storage prevents the consequential writer",async()=>{await prepare();const blocked={getItem:()=>null,setItem:()=>{throw Error("blocked");},removeItem:()=>{}};await act(async()=>root.render(<OperationsDeliverablePreparation scope={scope} members={[member]} recoveryStorage={blocked}/>));await click("Review submission");await click("Confirm submission");expect(writeStaffDelivery).not.toHaveBeenCalled();expect(host.textContent).toContain("recovery");});
 it("restoring references after source revocation never displays the old body or permits a write",async()=>{await prepare();vi.mocked(readDeliverySourceSessions).mockResolvedValue({kind:"refused"});await remount();expect(host.textContent).not.toContain("Exact text");expect(host.textContent).toContain("Source access unavailable");expect(writeStaffDelivery).not.toHaveBeenCalled();});
 it("restored draft uses its original work CAS instead of silently borrowing a new timestamp",async()=>{await prepare();await remount({...scope,workUpdatedAt:"2026-10-12T13:00:00Z"});vi.mocked(writeStaffDelivery).mockResolvedValue({kind:"refused"});await click("Review submission");await click("Confirm submission");expect(writeStaffDelivery).toHaveBeenCalledWith(expect.anything(),scope,expect.objectContaining({artifactVersionId:id(9)}),expect.any(Function));});
-it("a fresh actor never restores another person's source selections",async()=>{await prepare();await remount({...scope,actorId:id(20)});expect(selectFor("Version")?.value).toBe("");expect(selectFor("Reviewer")?.value).toBe("");expect(writeStaffDelivery).not.toHaveBeenCalled();});
+it("a fresh actor never restores another person's source selections",async()=>{await prepare();await remount({...scope,actorId:id(20)});expect(selectFor("Version")?.textContent).toBe("Choose the version");expect(selectFor("Reviewer")?.textContent).toBe("Choose a teammate");expect(writeStaffDelivery).not.toHaveBeenCalled();});
 // E09 Slice 4: when nothing can be prepared, say why from the recorded state (accepted work is not "awaiting a decision").
 it.each([
  ["accepted by the client",{state:"approved"},{state:"accepted"},"The client accepted version 1. There is nothing more to prepare for this work."],
@@ -55,4 +59,19 @@ it.each([
  await mount();
  expect(host.textContent).toContain(text);
  expect(host.textContent).not.toContain("awaiting its next decision");
+});
+
+// MINOR-D (round 3): the four source choices are the repo's Select primitive, never a native <select>.
+it("offers each source choice as a labelled, keyboard-operable combobox, never a native select",async()=>{
+ await mount();
+ expect(host.querySelector("select")).toBeNull();
+ for(const label of ["Studio session","Saved work","Version","Reviewer"]){const trigger=selectFor(label);expect(trigger,label).toBeTruthy();expect(trigger!.getAttribute("role")).toBe("combobox");expect(trigger!.labels?.[0]?.textContent).toBe(label);}
+ expect(selectFor("Saved work")!.disabled).toBe(true);
+ const trigger=selectFor("Reviewer")!;
+ await act(async()=>{key(trigger,"Enter");});
+ const options=Array.from(document.querySelectorAll('[role="listbox"] [role="option"]')).map(o=>o.textContent);
+ expect(options).toEqual(["Review specialist"]);
+ await act(async()=>{key(document.querySelector('[role="listbox"]')!,"Escape");});
+ expect(document.querySelector('[role="listbox"]')).toBeNull();
+ expect(trigger.textContent).toBe("Choose a teammate");
 });

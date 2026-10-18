@@ -259,9 +259,17 @@ export function ClientFiles({ contactId, clientName, portalConnected }: Props) {
             {section(`Shared with ${first}`, shared, `Nothing shared with ${first} yet. Switch a file on below to share it.`, "trc-files-shared")}
             {section(`From ${first}`, fromClient, `${first} hasn’t sent you any files.`, "trc-files-client")}
             {section("Private to your team", internal, "No private files.", "trc-files-internal")}
-            {/* No "Load more" yet: client_file_owner_list has no page cursor (it returns the newest 100 only), so a
-                button here would be a dead control. Owed: a keyset cursor on that read, then the customer page's pattern. */}
-            {files.list?.has_more && <p className="trc-files-foot">Showing the newest 100 files. Older files for {first} can’t be listed here yet.</p>}
+            {/* Older files, 100 at a time, after the last one shown (client_file_owner_list's (created_at, id) cursor). */}
+            {files.list?.has_more && (
+              <div className="trc-files-foot trc-files-more">
+                <p>Showing the newest {list.length} files.</p>
+                <button type="button" className="trc-files-quiet-btn" onClick={() => void files.loadMore()}
+                  aria-disabled={files.more.loading || files.reading || undefined}>
+                  {files.more.loading ? "Loading…" : "Load more"}
+                </button>
+                {files.more.failed && <p className="trc-files-more-error" role="alert">Older files couldn’t be loaded. Try again.</p>}
+              </div>
+            )}
           </>
         )}
       </div>

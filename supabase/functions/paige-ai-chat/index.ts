@@ -14664,10 +14664,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 } else {
                   // Re-filing onto another client, or rewriting the description. The direct write
                   // moves it and NEVER touches visibility: the database refuses any signed-in write
-                  // into or out of 'shared' that is not the share writer, and makes a file moved to
-                  // another client arrive private. So if it should end up shared (or stop being
-                  // shared), that is the share writer's call, at the version the move produced
-                  // (_shared/crm/client-file-share.ts). The CALLER's client throughout.
+                  // into or out of 'shared' that is not the share writer, and refuses to move a
+                  // SHARED file to another client at all. So the helper first withdraws a share
+                  // through the share writer (audited), then moves the private file, and if it should
+                  // end up shared that is the share writer's call again, at the version the move
+                  // produced (_shared/crm/client-file-share.ts). The CALLER's client throughout.
                   const refiled = await refileClientDocument({
                     caller: {
                       rpc: (name, rpcArgs) => supabaseClient.rpc(name, rpcArgs),

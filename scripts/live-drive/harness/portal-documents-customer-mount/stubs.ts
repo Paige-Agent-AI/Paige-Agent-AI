@@ -8,7 +8,7 @@
 // the way 20271110070000 §1e computes it, from a client_files-shaped store that deliberately holds rows the customer
 // must NOT see:
 //
-//   client_portal_documents(p_tenant_id, p_limit, p_before)
+//   client_portal_documents(p_tenant_id, p_limit, p_before, p_before_id)
 //     -> { tenant_id, client_id, summary:{shared,from_you}, files:[9 keys], has_more } | null | 42501 (several businesses)
 //     visible = this tenant AND this client AND ((shared AND ready) OR (client_upload AND uploaded by the caller))
 //     order created_at DESC, id DESC; limit clamped 1..50; summary counts every visible row.
@@ -93,7 +93,9 @@ function documents(args: Record<string, unknown>) {
   const limit = Math.min(Math.max(typeof args.p_limit === "number" ? args.p_limit : 50, 1), 50);
   const visible = rows.filter((f) => f.tenant_id === TENANT && f.contact_id === CONTACT
     && ((f.visibility === "shared" && f.upload_state === "ready") || (f.visibility === "client_upload" && f.uploaded_by === USER.id)));
-  const page = visible.filter((f) => !args.p_before || f.created_at < String(args.p_before))
+  // The server's keyset: strictly after the (created_at, id) of the last row shown.
+  const page = visible.filter((f) => !args.p_before || f.created_at < String(args.p_before)
+      || (f.created_at === String(args.p_before) && f.id < String(args.p_before_id)))
     .sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : a.id < b.id ? 1 : -1));
   return Promise.resolve({ data: {
     tenant_id: TENANT, client_id: CONTACT,

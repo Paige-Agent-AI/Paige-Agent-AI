@@ -73,8 +73,11 @@ export function useClientDocuments() {
       }
       // One closed server read decides what is listed (E09 Slice 4): shared files that are saved, and the
       // customer's own uploads. The browser never queries the file table for the list.
-      const before = append ? l.files.at(-1)?.created_at ?? null : null;
-      const result = await wait(fileRpc("client_portal_documents", {p_tenant_id: next.tenant, p_limit: pageSize, p_before: before}), deadline);
+      // The next page starts strictly after the (created_at, id) of the last file shown, so a file saved in
+      // the same instant as that one is never skipped.
+      const last = append ? l.files.at(-1) ?? null : null;
+      const result = await wait(fileRpc("client_portal_documents", {p_tenant_id: next.tenant, p_limit: pageSize,
+        p_before: last?.created_at ?? null, p_before_id: last?.id ?? null}), deadline);
       if (!current()) return;
       if (result.error?.code === "42501") throw new AccessFailure("Your document access could not be verified.");
       if (result.error) throw new Error("Document read failed");

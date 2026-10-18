@@ -7,7 +7,7 @@
 // and never more than one at a time), touch targets >= 44px on the phone, clipped text, raw ISO timestamps on screen,
 // page errors, any request that tried to leave the machine (the network is blocked), and that the HARNESS RENDER tag
 // is on screen. Each state is reached through the REAL UI: the Work list's filter, the work item's button, the real
-// selects and buttons of the release flow. The stub's call log proves the submit names the chosen version and a
+// choices (the shared Select primitive: open the combobox, click the option) and buttons of the release flow. The stub's call log proves the submit names the chosen version and a
 // reviewer who is not the submitter, and that no notification was sent.
 //
 // HARNESS RENDER ≠ AUTHENTICATED RUNTIME (§32/§70.1): the signed-in Operations sheet against the real
@@ -35,8 +35,8 @@ const SAM = "e0900000-0000-4000-8000-00000000f002";
 const ACTOR = "e0900000-0000-4000-8000-00000000f001";
 const V2 = "e4000000-0000-4000-8000-0000000f0002";
 const SIZES = { desktop: [1440, 900], phone: [390, 844] };
-const STATES = ["single", "picker", "confirm", "submitted", "in-review", "approved", "release-confirm", "released", "accepted", "client-changes", "people-loading", "reading", "unavailable"];
-const PHONE = ["single", "picker", "in-review", "approved", "accepted", "client-changes", "reading"];
+const STATES = ["single", "picker", "picker-open", "confirm", "submitted", "in-review", "approved", "release-confirm", "released", "accepted", "client-changes", "people-loading", "reading", "unavailable"];
+const PHONE = ["single", "picker", "picker-open", "in-review", "approved", "accepted", "client-changes", "reading"];
 // The one act each state may spend gold on (§11/§23): the primary write of that moment, nothing else.
 const ACTS = ["Review submission", "Confirm submission", "Approve internally", "Release for client review", "Confirm client release"];
 
@@ -75,17 +75,24 @@ async function drive(page, s, n) {
   await release.waitFor({ timeout: 30_000 });
   const log = () => page.evaluate(() => ({ reads: window.__harness.reads, writes: window.__harness.writes, invokes: window.__harness.invokes }));
   const button = (name) => release.getByRole("button", { name, exact: true });
-  // A select is found by its visible label text (the label wraps the select, so its options are in the label too).
-  const field = (name) => release.locator("label").filter({ hasText: new RegExp(`^${name}`) }).locator("select");
+  // Each choice is the shared Select primitive: a combobox found by its accessible name, which is its visible
+  // label (WCAG 2.5.3). It is opened and chosen the way a person does it: click the combobox, click the option.
+  const field = (name) => release.getByRole("combobox", { name, exact: true });
+  const choose = async (name, option) => {
+    const trigger = field(name);
+    await trigger.waitFor({ timeout: 30_000 });
+    await page.waitForFunction((el) => !el.disabled, await trigger.elementHandle(), { timeout: 15_000 });
+    await trigger.click();
+    await page.getByRole("option", { name: option }).click();
+    await page.getByRole("listbox").waitFor({ state: "detached", timeout: 10_000 });
+  };
   const pick = async () => {
-    // Each select is found by its visible label — the same name a screen reader announces (WCAG 2.5.3).
-    await field("Studio session").selectOption({ label: "Rivera Design brand launch" }, { timeout: 30_000 });
-    await field("Saved work").selectOption({ label: "Brand guidelines" });
-    await field("Version").locator("option", { hasText: "Version 2" }).waitFor({ state: "attached", timeout: 15_000 });
-    await field("Version").selectOption(V2);
-    await field("Reviewer").selectOption(SAM);
-    // The accessible name a screen reader announces starts with the visible label (WCAG 2.5.3).
-    n.names = await release.locator(".ops-staff-source-grid select").evaluateAll((els) => els.map((e) => e.getAttribute("aria-label") ?? e.closest("label")?.firstChild?.textContent));
+    await choose("Studio session", "Rivera Design brand launch");
+    await choose("Saved work", "Brand guidelines");
+    await choose("Version", /^Version 2 · /);
+    await choose("Reviewer", "Sam Okafor");
+    n.names = await release.locator(".ops-staff-source-grid [role='combobox']").evaluateAll((els) => els.map((e) => e.labels?.[0]?.textContent ?? null));
+    n.nativeSelects = await release.locator("select").count();
     await release.locator('article[aria-label="Exact preparation source"]').waitFor({ timeout: 15_000 });
   };
   let focus = release;
@@ -100,9 +107,29 @@ async function drive(page, s, n) {
       break;
     case "picker":
       await pick();
-      n.reviewerOptions = await field("Reviewer").locator("option").allInnerTexts();
+      // The reviewer listbox, opened again and closed with Escape: only eligible teammates are offered.
+      await field("Reviewer").click();
+      n.reviewerOptions = await page.getByRole("listbox").getByRole("option").allInnerTexts().then((t) => t.map(clean));
+      await page.keyboard.press("Escape");
+      await page.getByRole("listbox").waitFor({ state: "detached", timeout: 10_000 });
+      n.reviewerAfterEscape = clean(await field("Reviewer").innerText());
       n.submitEnabled = await button("Review submission").isEnabled();
       focus = release.locator('article[aria-label="Exact preparation source"]');
+      break;
+    case "picker-open":
+      // The Select primitive's listbox, open over the sheet, so its menu is measured and seen in both themes.
+      await pick();
+      await field("Version").evaluate((el) => el.scrollIntoView({ block: "center" }));
+      await field("Version").click();
+      await page.getByRole("listbox").waitFor({ timeout: 10_000 });
+      // The listbox is measured once it has been placed: until then its popper sits off-screen at translate(0,-200%).
+      n.placedTransform = await page.waitForFunction(() => {
+        const w = document.querySelector("[data-radix-popper-content-wrapper]");
+        return w && w.style.transform && !/-200%/.test(w.style.transform) ? w.style.transform : null;
+      }, null, { timeout: 10_000 }).then((h) => h.jsonValue());
+      n.versionOptions = await page.getByRole("listbox").getByRole("option").allInnerTexts().then((t) => t.map(clean));
+      n.checked = clean(await page.getByRole("option", { selected: true }).innerText());
+      focus = null;
       break;
     case "confirm": case "submitted": {
       await pick();
@@ -166,7 +193,7 @@ async function drive(page, s, n) {
   n.headingSizes = await release.locator("h2").evaluateAll((hs) => hs.map((h) => parseFloat(getComputedStyle(h).fontSize)));
   n.text = clean(await release.innerText());
   n.goldActs = await release.locator("button.ops-staff-primary").evaluateAll((els) => els.filter((e) => e.getClientRects().length).map((e) => e.textContent.trim()));
-  if (!(await page.getByRole("alertdialog").count())) await focus.first().evaluate((el) => el.scrollIntoView({ block: "center" }));
+  if (focus && !(await page.getByRole("alertdialog").count())) await focus.first().evaluate((el) => el.scrollIntoView({ block: "center" }));
   await page.waitForTimeout(300);
 }
 
@@ -185,9 +212,15 @@ function unmet(s, n) {
     want((n.text ?? "").includes("Until then, you can share a finished file with this client from their client record."), "the single-reviewer fallback is not stated");
   }
   if (s.state === "picker") {
-    want(eq(n.reviewerOptions, ["Choose a teammate", "Sam Okafor"]), `reviewers ${JSON.stringify(n.reviewerOptions)} (the signed-in owner or an invited person must never be offered)`);
+    want(eq(n.reviewerOptions, ["Sam Okafor"]), `reviewers ${JSON.stringify(n.reviewerOptions)} (the signed-in owner or an invited person must never be offered)`);
+    want(n.reviewerAfterEscape === "Sam Okafor", `Escape changed the chosen reviewer: "${n.reviewerAfterEscape}"`);
+    want(n.nativeSelects === 0, `native <select> in the release flow: ${n.nativeSelects} (§11: the Select primitive)`);
     want(n.submitEnabled === true, "Review submission is not enabled after choosing version and reviewer");
     want(eq(n.names, ["Studio session", "Saved work", "Version", "Reviewer"]), `select names do not match their visible labels: ${JSON.stringify(n.names)}`);
+  }
+  if (s.state === "picker-open") {
+    want((n.versionOptions ?? []).length >= 1 && n.versionOptions.every((t) => /^Version \d+ · /.test(t)), `version options ${JSON.stringify(n.versionOptions)}`);
+    want(/^Version 2 · /.test(n.checked ?? ""), `the chosen version is not marked selected: "${n.checked}"`);
   }
   if (s.state === "confirm") want(/Submit this version for internal review\?/.test(n.dialog ?? "") && /Sam Okafor/.test(n.dialog ?? ""), `confirm dialog "${n.dialog}"`);
   if (s.state === "submitted") {
@@ -232,7 +265,7 @@ function measureInPage(opts) {
   const visible = (n) => n.getClientRects().length > 0 && !n.closest(".sr-only, [data-harness-tag]") && getComputedStyle(n).visibility !== "hidden" && !n.closest("[hidden], [aria-hidden='true']");
   const inactive = (n) => !!n.closest("button:disabled, [aria-disabled='true'], input:disabled, select:disabled, textarea:disabled, fieldset:disabled");
   const release = document.querySelector('section[aria-label="Release this work to the client"]');
-  const overlays = [...document.querySelectorAll('[role="alertdialog"]')].filter((o) => o.getClientRects().length);
+  const overlays = [...document.querySelectorAll('[role="alertdialog"], [role="listbox"]')].filter((o) => o.getClientRects().length);
   const roots = [release, ...overlays].filter(Boolean);
   const textNodes = (root) => [...root.querySelectorAll("*")].filter((n) => [...n.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim()) && visible(n));
   const contrast = roots.flatMap((root) => textNodes(root).map((n) => {
@@ -263,7 +296,7 @@ function measureInPage(opts) {
     return hits.length ? [{ el: n.tagName.toLowerCase(), cls: String(n.className?.baseVal ?? n.className).slice(0, 40), text: n.textContent.trim().slice(0, 30), hits }] : [];
   }));
 
-  const targets = roots.flatMap((root) => [...root.querySelectorAll('a, button, input, select, textarea, [tabindex="0"]')]
+  const targets = roots.flatMap((root) => [...root.querySelectorAll('a, button, input, select, textarea, [tabindex="0"], [role="option"]')]
     .filter((n) => n.getClientRects().length && getComputedStyle(n).visibility !== "hidden" && !n.closest(".sr-only, [hidden]"))
     .filter((n) => !n.matches(".ops-staff-document, textarea"))
     .map((n) => {
@@ -359,6 +392,7 @@ try {
       { mutant: "target", shot: base("approved", "phone"), caught: (r) => r.smallTargets.length > 0 },
       { mutant: "overflow", shot: base("in-review", "phone"), caught: (r) => r.overflowX === true || r.spill.length > 0 },
       { mutant: "empty-picker", shot: base("single", "desktop"), caught: (r) => r.expectations.some((e) => /D2/.test(e)) },
+      { mutant: "select-target", shot: base("picker", "phone"), caught: (r) => r.smallTargets.length > 0 },
     ];
     const verdicts = [];
     for (const c of controls) {

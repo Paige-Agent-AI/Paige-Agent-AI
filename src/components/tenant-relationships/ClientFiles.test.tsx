@@ -62,7 +62,7 @@ const choose = async (name = "Proposal.pdf", type = "application/pdf") => {
 
 it("reads this client's files pinned to the actor, workspace and client, in three sections", async () => {
   await render();
-  expect(f.rpc).toHaveBeenCalledWith("client_file_owner_list", { p_expected_actor_id: actor, p_expected_tenant_id: tenant, p_contact_id: contact, p_limit: 100 });
+  expect(f.rpc).toHaveBeenCalledWith("client_file_owner_list", { p_expected_actor_id: actor, p_expected_tenant_id: tenant, p_contact_id: contact, p_limit: 100, p_before: null, p_before_id: null });
   const headings = Array.from(host.querySelectorAll("h4")).map(h => h.textContent);
   expect(headings).toEqual(["Shared with Jordan 1", "From Jordan 1", "Private to your team 1"]);
   expect(host.textContent).toContain("Jordan Rivera sees only files you share. New files stay private.");
@@ -260,4 +260,66 @@ it("refuses a list that carries a key the server never promised", async () => {
   await render();
   expect(host.textContent).toContain("We couldn’t read Jordan Rivera’s files.");
   expect(host.textContent).not.toContain("File 1.pdf");
+});
+
+// ── "Load more" (round 3, compliance S5): the server pages by (created_at, id) after the last file shown.
+/** The server's keyset over f.rows: newest first, ties by id, strictly after the cursor, 100 a page. */
+const keysetList = (args: Record<string, unknown>) => {
+  const key = (r: Row) => `${r.created_at}|${r.id}`;
+  const cursor = args.p_before ? `${args.p_before}|${args.p_before_id}` : null;
+  const ordered = [...f.rows].sort((a, b) => key(b).localeCompare(key(a))).filter(r => !cursor || key(r) < cursor);
+  return { ok: true, contact_id: contact, portal_connected: f.connected, files: ordered.slice(0, 100).map(ownerRow), has_more: ordered.length > 100 };
+};
+const manyFiles = () => Array.from({ length: 103 }, (_, i) => file(i + 10, i % 2 ? "internal" : "shared", { updated_at: "2026-03-01T00:00:00Z",
+  // The three oldest share one instant, and the page boundary falls inside that tie.
+  created_at: i < 98 ? `2026-02-${String(28 - Math.floor(i / 4)).padStart(2, "0")}T00:00:0${i % 4}Z` : "2026-01-01T00:00:00Z" }));
+const useKeyset = () => {
+  const base = f.rpc.getMockImplementation()!;
+  const listCalls: Record<string, unknown>[] = [];
+  f.rpc.mockImplementation(async (name: string, args: Record<string, unknown>) => {
+    if (name === "client_file_owner_list") { f.reads++; listCalls.push(args); return { data: keysetList(args), error: null }; }
+    return base(name, args);
+  });
+  return listCalls;
+};
+const rowsShown = () => host.querySelectorAll(".trc-files-row:not(.trc-files-skeleton)").length;
+
+it("loads older files after the last one shown, keeping files saved in the same instant", async () => {
+  f.rows = manyFiles();
+  const calls = useKeyset();
+  await render();
+  expect(rowsShown()).toBe(100);
+  expect(host.textContent).toContain("Showing the newest 100 files.");
+  await act(async () => button("Load more").click()); await flush();
+  const lastShown = keysetList({}).files[99];
+  expect(calls.at(-1)).toMatchObject({ p_before: lastShown.created_at, p_before_id: lastShown.id, p_limit: 100 });
+  expect(rowsShown()).toBe(103);
+  expect(new Set(Array.from(host.querySelectorAll(".trc-files-item strong")).map(e => e.textContent)).size).toBe(103);
+  expect(Array.from(host.querySelectorAll("button")).some(b => b.textContent?.trim() === "Load more")).toBe(false);
+  expect(host.textContent).not.toContain("Showing the newest");
+});
+it("confirms a share of an older file with a fresh read that covers every page shown", async () => {
+  f.rows = manyFiles();
+  const calls = useKeyset();
+  await render();
+  await act(async () => button("Load more").click()); await flush();
+  const older = keysetList({ p_before: keysetList({}).files[99].created_at, p_before_id: keysetList({}).files[99].id }).files.find(r => r.visibility === "internal")!;
+  const before = calls.length;
+  await act(async () => switchFor(older.filename as string)!.click()); await flush();
+  expect(calls.slice(before).map(c => c.p_before_id ?? null)).toEqual([null, keysetList({}).files[99].id]);
+  expect(host.textContent).toContain("Shared. Jordan Rivera can open it in their portal.");
+  expect(rowsShown()).toBe(103);
+});
+it("says so when older files can't be loaded, and keeps the list on screen", async () => {
+  f.rows = manyFiles();
+  useKeyset();
+  await render();
+  vi.spyOn(console, "error").mockImplementation(() => undefined);
+  const base = f.rpc.getMockImplementation()!;
+  f.rpc.mockImplementation(async (name: string, args: Record<string, unknown>) =>
+    name === "client_file_owner_list" && args.p_before ? { data: null, error: { code: "PGRST000", message: "upstream" } } : base(name, args));
+  await act(async () => button("Load more").click()); await flush();
+  expect(rowsShown()).toBe(100);
+  expect(host.querySelector('[role="alert"]')?.textContent).toBe("Older files couldn’t be loaded. Try again.");
+  expect(button("Load more")).toBeTruthy();
 });

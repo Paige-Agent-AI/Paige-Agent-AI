@@ -78,6 +78,9 @@
 .trc-files-note[data-tone="bad"] { border-color: color-mix(in srgb, var(--pg-negative) 55%, var(--pg-line)); }
 
 .trc-files-foot { margin: 0; padding: 10px 14px 13px; border-top: 1px solid var(--pg-line-soft); color: var(--pg-muted); font-size: 11.5px; }
+.trc-files-more { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+.trc-files-more p { margin: 0; }
+.trc-files-more .trc-files-more-error { flex-basis: 100%; color: var(--pg-ink-2); }
 .trc-files-empty, .trc-files-state { display: grid; justify-items: start; gap: 6px; margin: 0; padding: 16px 14px; color: var(--pg-ink-2); font-size: 12.5px; }
 .trc-files-empty p, .trc-files-state p { margin: 0; max-width: 62ch; }
 .trc-files-empty strong { color: var(--pg-ink); font-size: 13.5px; }

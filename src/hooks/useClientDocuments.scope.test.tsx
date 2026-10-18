@@ -6,7 +6,7 @@ import {useClientDocuments} from "./useClientDocuments";
 const f=vi.hoisted(()=>({user:{id:"e0914000-0000-0000-0000-000000000001"} as {id:string}|null,
  rpc:vi.fn(),read:vi.fn(),from:vi.fn(),upload:vi.fn(),download:vi.fn(),sign:vi.fn(),getUser:vi.fn(),list:vi.fn(),
  listener:null as null|((event:string,session:{user:{id:string}}|null)=>void),
- rows:[] as Record<string,unknown>[],reserved:null as Record<string,unknown>|null,object:false,befores:[] as unknown[]}));
+ rows:[] as Record<string,unknown>[],reserved:null as Record<string,unknown>|null,object:false,befores:[] as unknown[],beforeIds:[] as unknown[]}));
 vi.mock("@/integrations/supabase/client",()=>({supabase:{
  auth:{getUser:()=>f.getUser(),onAuthStateChange:(cb:typeof f.listener)=>{f.listener=cb;return{data:{subscription:{unsubscribe:vi.fn()}}};}},
  rpc:(...a:unknown[])=>f.rpc(...a),from:(...a:unknown[])=>f.from(...a),
@@ -27,14 +27,14 @@ function Probe(){state=useClientDocuments();return <output>{JSON.stringify(state
 const flush=async()=>act(async()=>{for(let i=0;i<60;i++)await Promise.resolve();});
 const mount=async(strict=false)=>{await act(async()=>root.render(strict?<StrictMode><Probe/></StrictMode>:<Probe/>));await flush();};
 function defer<T>(){let resolve!:(v:T)=>void;const promise=new Promise<T>(r=>resolve=r);return{promise,resolve};}
-beforeEach(()=>{vi.clearAllMocks();f.user={id:actor};f.listener=null;f.rows=[row()];f.reserved=null;f.object=false;f.befores=[];
+beforeEach(()=>{vi.clearAllMocks();f.user={id:actor};f.listener=null;f.rows=[row()];f.reserved=null;f.object=false;f.befores=[];f.beforeIds=[];
  f.getUser.mockImplementation(async()=>({data:{user:f.user},error:null}));
  f.read.mockImplementation(async()=>({data:f.reserved,error:null}));
  f.list.mockImplementation(async()=>({data:envelope(f.rows),error:null}));
  f.from.mockImplementation(()=>{const q={select:()=>q,eq:()=>q,in:()=>q,order:()=>q,maybeSingle:()=>f.read(true)};return q;});
  f.rpc.mockImplementation(async(name:string,args:Record<string,unknown>)=>{
   if(name==="client_portal_self_profile")return{data:profile(),error:null};
-  if(name==="client_portal_documents"){f.befores.push(args.p_before);return f.list(args);}
+  if(name==="client_portal_documents"){f.befores.push(args.p_before);f.beforeIds.push(args.p_before_id);return f.list(args);}
   if(name==="client_portal_begin_file_upload"){
    f.reserved??={...row(String(args.p_file_id)),storage_path:`${tenant}/${contact}/client_upload/${actor}/${args.p_file_id}`,visibility:"client_upload",upload_state:"pending"};
    return{data:f.reserved,error:null};
@@ -50,7 +50,7 @@ beforeEach(()=>{vi.clearAllMocks();f.user={id:actor};f.listener=null;f.rows=[row
 });
 afterEach(()=>{act(()=>root.unmount());host.remove();vi.useRealTimers();});
 
-it("lists through the closed client_portal_documents read, never the file table or raw CRM",async()=>{await mount();expect(state.phase).toBe("ready");expect(state.files).toHaveLength(1);expect(state.files[0].source).toBe("business");expect(state.summary).toEqual({shared:1,from_you:0});expect(f.rpc).toHaveBeenCalledWith("client_portal_documents",{p_tenant_id:tenant,p_limit:50,p_before:null});expect(f.from).not.toHaveBeenCalled();expect(f.befores).toEqual([null]);});
+it("lists through the closed client_portal_documents read, never the file table or raw CRM",async()=>{await mount();expect(state.phase).toBe("ready");expect(state.files).toHaveLength(1);expect(state.files[0].source).toBe("business");expect(state.summary).toEqual({shared:1,from_you:0});expect(f.rpc).toHaveBeenCalledWith("client_portal_documents",{p_tenant_id:tenant,p_limit:50,p_before:null,p_before_id:null});expect(f.from).not.toHaveBeenCalled();expect(f.befores).toEqual([null]);});
 it("distinguishes successful empty records from a failed read",async()=>{f.rows=[];await mount();expect(state.phase).toBe("ready");expect(state.files).toEqual([]);f.list.mockResolvedValue({data:null,error:{code:"503"}});await act(async()=>state.refresh());expect(state.phase).toBe("error");expect(state.files).toEqual([]);});
 it.each(["tenant","client","extra key","description","uploader","pending shared","foreign path"])("refuses a list with %s",async(which)=>{const page:Record<string,unknown>=envelope([row()]);const file=(page.files as Record<string,unknown>[])[0];
  if(which==="tenant")page.tenant_id="e0924000-0000-0000-0000-000000000002";if(which==="client")page.client_id="e0934000-0000-0000-0000-000000000002";
@@ -65,7 +65,7 @@ it("works after StrictMode effect cleanup without accepting the old lifetime",as
 it("mints one-minute signed links — a view link and a download under the file's own name — never a blob",async()=>{await mount();const links=await state.retrieve(state.files[0]);const path=state.files[0].storage_path;expect(f.sign).toHaveBeenCalledWith(path,60);expect(f.sign).toHaveBeenCalledWith(path,60,{download:"Preparation.pdf"});expect(links?.download).toContain("download=Preparation.pdf");expect(links!.expiresAt-Date.now()).toBeLessThanOrEqual(60_000);expect(f.download).not.toHaveBeenCalled();});
 it("never signs a path the list did not return",async()=>{await mount();expect(await state.retrieve({...state.files[0],storage_path:`${tenant}/${contact}/internal/other`})).toBeNull();expect(f.sign).not.toHaveBeenCalled();});
 it("reports a signing refusal instead of an empty link",async()=>{await mount();f.sign.mockResolvedValue({data:null,error:{message:"Object not found"}});await expect(state.retrieve(state.files[0])).rejects.toThrow(/could not be opened/);});
-it("pages fifty records by the oldest shown, and deduplicates repeated records",async()=>{f.rows=Array.from({length:50},(_,i)=>({...row(`e0944000-0000-0000-0000-${String(i+1).padStart(12,"0")}`),created_at:`2026-01-01T00:00:${String(59-i).padStart(2,"0")}Z`}));f.list.mockImplementation(async()=>({data:envelope(f.rows,true),error:null}));await mount();expect(state.more).toBe(true);f.rows=[{...row(),created_at:"2026-01-01T00:00:59Z"},row("e0944000-0000-0000-0000-000000000051")];f.list.mockImplementation(async()=>({data:envelope(f.rows,false),error:null}));await act(async()=>state.refresh(true));expect(state.files).toHaveLength(51);expect(f.befores.at(-1)).toBe("2026-01-01T00:00:10Z");expect(state.more).toBe(false);});
+it("pages fifty records by the oldest shown, and deduplicates repeated records",async()=>{f.rows=Array.from({length:50},(_,i)=>({...row(`e0944000-0000-0000-0000-${String(i+1).padStart(12,"0")}`),created_at:`2026-01-01T00:00:${String(59-i).padStart(2,"0")}Z`}));f.list.mockImplementation(async()=>({data:envelope(f.rows,true),error:null}));await mount();expect(state.more).toBe(true);f.rows=[{...row(),created_at:"2026-01-01T00:00:59Z"},row("e0944000-0000-0000-0000-000000000051")];f.list.mockImplementation(async()=>({data:envelope(f.rows,false),error:null}));await act(async()=>state.refresh(true));expect(state.files).toHaveLength(51);expect(f.befores.at(-1)).toBe("2026-01-01T00:00:10Z");expect(f.beforeIds.at(-1)).toBe("e0944000-0000-0000-0000-000000000050");expect(state.more).toBe(false);});
 it("confirms the saved upload through actual status and independent metadata readback",async()=>{await mount();await act(async()=>state.transfer(file()));expect(state.upload.kind).toBe("saved");expect(f.upload).toHaveBeenCalledWith(f.reserved!.storage_path,expect.any(File),{contentType:"application/pdf",upsert:false});expect(f.rpc).toHaveBeenCalledWith("client_portal_begin_file_upload",expect.objectContaining({p_expected_client_id:contact,p_tenant_id:tenant}));expect(f.read).toHaveBeenCalledWith(true);expect(state.files[0]).toMatchObject({source:"you",state:"ready"});});
 it("never starts an upload after the actual subject changes",async()=>{await mount();f.user={id:"e0914000-0000-0000-0000-000000000002"};await act(async()=>state.transfer(file()));expect(state.phase).toBe("unavailable");expect(f.rpc.mock.calls.some(([n])=>n==="client_portal_begin_file_upload")).toBe(false);expect(f.upload).not.toHaveBeenCalled();});
 it("does not report saved from the writer acknowledgement alone",async()=>{await mount();f.read.mockImplementation(async()=>({data:null,error:null}));await act(async()=>state.transfer(file()));expect(state.upload.kind).toBe("uncertain");expect(state.files.every(r=>r.source==="business")).toBe(true);});

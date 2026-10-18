@@ -9,7 +9,8 @@ import { clientDocumentMime } from "@/lib/client-portal-documents";
  * public.client_files and the private client-files bucket stay the only file store (§18). Every read and
  * write goes through the owner RPCs of 20271110070000, each sent with the signed-in actor and the workspace
  * the record was opened in, so a switched account or workspace is refused by the server, not trusted here:
- *   client_file_owner_list          — this client's files, pinned to tenant AND contact, admins only
+ *   client_file_owner_list          — this client's files, pinned to tenant AND contact, admins only; 100 a page,
+ *                                     the next page after the (created_at, id) of the last file shown
  *   client_file_owner_begin_upload  — reserves a PRIVATE row at the path the server fixes (owner decision D1)
  *   client_file_owner_finish_upload — verifies the stored object and marks the row saved
  *   client_file_set_client_share    — share / unshare one file, version-checked, audited
@@ -31,6 +32,8 @@ export type OwnerUpload = {
   kind: "idle" | "working" | "uncertain" | "continue" | "saved" | "error";
   notice: string; id: string | null; name: string | null;
 };
+/** "Load more": older files after the last one shown. `failed` is shown beside the button; nothing else changes. */
+export type OwnerMore = { loading: boolean; failed: boolean };
 export type ShareResult =
   | { kind: "confirmed"; shared: boolean; portalConnected: boolean | null }
   | { kind: "refused"; code: string; reread: boolean }
@@ -111,7 +114,9 @@ export function useClientFilesOwner(contactId: string | null) {
   const [list, setList] = useState<OwnerFileList | null>(null);
   const [upload, setUpload] = useState<OwnerUpload>(idle);
   const [reading, setReading] = useState(false);
-  const life = useRef({ generation: 0, read: 0, writing: false, candidate: null as Candidate | null, key: "" });
+  const [more, setMore] = useState<OwnerMore>({ loading: false, failed: false });
+  // `pages`: how many pages are on screen, so a fresh read (after a write, or Refresh) covers all of them.
+  const life = useRef({ generation: 0, read: 0, writing: false, candidate: null as Candidate | null, key: "", pages: 1, moreBusy: false });
   const key = `${activeUserId ?? ""}:${activeTenantId ?? ""}:${contactId ?? ""}`;
 
   /** The actor is the signed-in session; the workspace is the one this record was opened in. */
@@ -122,17 +127,26 @@ export function useClientFilesOwner(contactId: string | null) {
     return id;
   }, [activeTenantId, activeUserId]);
 
-  const readList = useCallback(async (): Promise<OwnerFileList> => {
+  /** One page: the newest files, or those strictly older than `after` by (created_at, id). */
+  const readPage = useCallback(async (after: OwnerFile | null): Promise<OwnerFileList> => {
     if (!activeTenantId || !contactId) throw new ScopeChanged();
     const actorId = await actor();
     const reply = await ownerRpc("client_file_owner_list", {
       p_expected_actor_id: actorId, p_expected_tenant_id: activeTenantId, p_contact_id: contactId, p_limit: OWNER_FILE_LIMIT,
+      p_before: after?.created_at ?? null, p_before_id: after?.id ?? null,
     });
     const code = refusalCode(reply);
     if (reply.error?.code === "42501" || (isObject(reply.data) && reply.data.ok === false)) throw new Refused(code);
     if (reply.error) throw new Error("File read failed");
     return parseOwnerFileList(reply.data, activeTenantId, contactId);
   }, [activeTenantId, actor, contactId]);
+
+  /** The first `pages` pages, in order, as one list (no file twice); `has_more` is the last page's. */
+  const readList = useCallback(async (pages = 1): Promise<OwnerFileList> => {
+    let all = await readPage(null);
+    for (let page = 1; page < pages && all.has_more && all.files.length; page++) all = appendPage(all, await readPage(all.files[all.files.length - 1]));
+    return all;
+  }, [readPage]);
 
   const settle = useCallback((generation: number, error: unknown) => {
     if (life.current.generation !== generation) return;
@@ -147,8 +161,8 @@ export function useClientFilesOwner(contactId: string | null) {
 
   useEffect(() => {
     const l = life.current, generation = ++l.generation;
-    l.key = key; l.candidate = null; l.writing = false;
-    setList(null); setUpload(idle()); setReading(false);
+    l.key = key; l.candidate = null; l.writing = false; l.pages = 1; l.moreBusy = false;
+    setList(null); setUpload(idle()); setReading(false); setMore({ loading: false, failed: false });
     if (accountContextLoading || !contactId) { setPhase("idle"); return; }
     if (!activeTenantId) { setPhase("no_workspace"); return; }
     setPhase("loading");
@@ -167,7 +181,7 @@ export function useClientFilesOwner(contactId: string | null) {
     const l = life.current, generation = l.generation, request = ++l.read;
     setReading(true);
     try {
-      const next = await readList();
+      const next = await readList(l.pages);
       if (l.generation === generation && l.read === request) { setList(next); setPhase("ready"); }
       return next;
     } catch (error) {
@@ -180,10 +194,42 @@ export function useClientFilesOwner(contactId: string | null) {
 
   const retry = useCallback(() => {
     const l = life.current, generation = l.generation;
+    l.pages = 1; ++l.read; setMore({ loading: false, failed: false });
     setPhase("loading");
     readList().then(next => { if (l.generation === generation) { setList(next); setPhase("ready"); } })
       .catch(error => settle(generation, error));
   }, [readList, settle]);
+
+  /**
+   * "Load more": the next 100 files, strictly older than the last one shown by (created_at, id), so a file
+   * saved in the same instant is never skipped or shown twice. A refresh or a write that reads again wins.
+   */
+  const loadMore = useCallback(async () => {
+    const l = life.current, generation = l.generation, shown = list;
+    const last = shown?.files[shown.files.length - 1];
+    // A read already in flight (Refresh, or the proof read after a write) finishes first.
+    if (!shown || !shown.has_more || !last || l.moreBusy || l.writing || reading) return;
+    const request = ++l.read;
+    l.moreBusy = true;
+    setMore({ loading: true, failed: false });
+    try {
+      const page = await readPage(last);
+      if (l.generation !== generation || l.read !== request) return;
+      l.pages += 1;
+      setList(appendPage(shown, page));
+      setMore({ loading: false, failed: false });
+    } catch (error) {
+      if (l.generation !== generation || l.read !== request) return;
+      if (error instanceof Refused || error instanceof ScopeChanged) settle(generation, error);
+      else console.error("[client-files-owner] load more", error);
+      setMore({ loading: false, failed: true });
+    } finally {
+      if (l.generation === generation) {
+        l.moreBusy = false;
+        if (l.read !== request) setMore({ loading: false, failed: false });
+      }
+    }
+  }, [list, reading, readPage, settle]);
 
   /** Share or stop sharing one file, then prove it with a fresh read. */
   const setShared = useCallback(async (file: OwnerFile, shared: boolean): Promise<ShareResult> => {
@@ -313,7 +359,14 @@ export function useClientFilesOwner(contactId: string | null) {
     return result.data.signedUrl;
   }, [actor, list]);
 
-  return { phase, list, upload, reading, reload, retry, setShared, add, check, dismiss, link };
+  return { phase, list, upload, reading, more, loadMore, reload, retry, setShared, add, check, dismiss, link };
+}
+
+/** `older` continues `shown`: its files after the ones already listed, never one twice; its has_more wins. */
+function appendPage(shown: OwnerFileList, older: OwnerFileList): OwnerFileList {
+  const seen = new Set(shown.files.map(f => f.id));
+  return { contact_id: shown.contact_id, portal_connected: older.portal_connected,
+    files: [...shown.files, ...older.files.filter(f => !seen.has(f.id))], has_more: older.has_more };
 }
 
 /** The reserved object path, which only the server decides. */

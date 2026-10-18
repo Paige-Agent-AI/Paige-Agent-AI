@@ -143,19 +143,43 @@ Deno.test("unsharing is verified against an unshared row", async () => {
   if (r.success) { assert.equal(r.replayed, true); assert.equal(r.sharedAt, null); assert.equal(r.portalConnected, false); }
 });
 
-// ── Re-filing (round 2): the direct write never touches visibility; any change that ends shared or
-// unshared goes through the share writer at the version the move produced. A file moved to another
-// client arrives private (the database trigger), so "move and share" is move, then share.
+// ── Re-filing (rounds 2-3): the direct write never touches visibility; any change that ends shared or
+// unshared goes through the share writer. A SHARED file is never moved while shared (the database
+// refuses it, FILE_SHARED_MOVE_REFUSED): the share is withdrawn through the share writer first (one
+// audit row), then the private file moves, then — if asked — it is shared on the new client at the
+// version the move produced.
 type Move = { fileId: string; tenantId: string; patch: Record<string, unknown> };
+const INTERNAL_NOW = { id: FILE, tenant_id: TENANT, visibility: "internal", shared_at: null, updated_at: VERSION };
+const SHARED_NOW = { id: FILE, tenant_id: TENANT, visibility: "shared", shared_at: VERSION, updated_at: VERSION };
+const WITHDRAWN = { id: FILE, tenant_id: TENANT, visibility: "internal", shared_at: null, updated_at: NEW_VERSION };
+const WITHDRAW_ACK = { data: { ok: true, replayed: false, file_id: FILE, shared: false, shared_at: null, updated_at: NEW_VERSION, portal_connected: true }, error: null };
 function refiler(opts: {
   moved?: { data: unknown; error: unknown } | (() => never);
+  /** Replies to the share writer, in order (the last one repeats). Default: a successful share. */
+  shares?: Array<{ data: unknown; error: unknown } | (() => never)>;
   share?: { data: unknown; error: unknown };
+  /** Reads made before the move, in order (the last one repeats): the stored row, then the
+   * withdrawal's readback. Default: the file is private. */
+  before?: Array<Record<string, unknown> | null | (() => never)>;
+  /** Reads made after the move (the share's readback). */
   row?: Record<string, unknown> | null;
 } = {}) {
   const base = caller({ reply: opts.share, row: opts.row });
   const moves: Move[] = [];
+  const shares = [...(opts.shares ?? [])], before = [...(opts.before ?? [INTERNAL_NOW])];
   const c: ClientFileRefileCaller = {
-    ...base.caller,
+    rpc: (name, args) => {
+      if (!shares.length) return base.caller.rpc(name, args);
+      base.calls.push({ name, args });
+      const next = shares.length > 1 ? shares.shift()! : shares[0];
+      return typeof next === "function" ? next() : Promise.resolve(next);
+    },
+    readFile: (fileId, tenantId) => {
+      if (moves.length) return base.caller.readFile(fileId, tenantId);
+      base.reads.push([fileId, tenantId]);
+      const next = before.length > 1 ? before.shift()! : before[0];
+      return typeof next === "function" ? next() : Promise.resolve({ data: next, error: null });
+    },
     moveFile: (fileId, tenantId, patch) => {
       moves.push({ fileId, tenantId, patch: { ...patch } });
       if (typeof opts.moved === "function") return opts.moved();
@@ -269,6 +293,82 @@ Deno.test("a malformed request moves nothing", async () => {
     assert.equal(out.success, false);
     assert.equal(r.moves.length, 0);
   }
+});
+
+Deno.test("a shared file is withdrawn through the share writer before it moves, then shared on the new client", async () => {
+  const MOVED_VERSION = "2027-01-03T00:00:00+00:00";
+  const r = refiler({
+    before: [SHARED_NOW, WITHDRAWN],
+    shares: [WITHDRAW_ACK, { data: { ok: true, replayed: false, file_id: FILE, shared: true, shared_at: MOVED_VERSION, updated_at: MOVED_VERSION, portal_connected: true }, error: null }],
+    moved: { data: { id: FILE, contact_id: OTHER_CONTACT, visibility: "internal", updated_at: MOVED_VERSION }, error: null },
+    row: { id: FILE, tenant_id: TENANT, visibility: "shared", shared_at: MOVED_VERSION, updated_at: MOVED_VERSION },
+  });
+  const out = await refile(r.caller);
+  assert.deepEqual(r.calls.map((c) => [c.args.p_shared, c.args.p_expected_updated_at]), [[false, VERSION], [true, MOVED_VERSION]],
+    "withdraw at the stored version, then share at the moved version");
+  assert.equal(r.moves.length, 1);
+  assert.deepEqual(r.moves[0].patch, { contact_id: OTHER_CONTACT });
+  assert.equal(out.success, true);
+  if (out.success) { assert.equal(out.shared, true); assert.equal(out.movedFromContactId, CONTACT); }
+});
+
+Deno.test("a shared file moved to stay private is withdrawn and moved, with no second share", async () => {
+  const r = refiler({ before: [SHARED_NOW, WITHDRAWN], shares: [WITHDRAW_ACK] });
+  const out = await refile(r.caller, { visibility: "internal" });
+  assert.equal(r.calls.length, 1);
+  assert.equal(r.calls[0].args.p_shared, false);
+  assert.equal(r.moves.length, 1);
+  assert.equal(out.success, true);
+  if (out.success) { assert.equal(out.shared, false); assert.equal(out.share, null); }
+});
+
+Deno.test("a refused withdrawal moves nothing and says the client can still see it", async () => {
+  const r = refiler({ before: [SHARED_NOW], shares: [{ data: { ok: false, error: "FILE_CHANGED", updated_at: NEW_VERSION }, error: null }] });
+  const out = await refile(r.caller);
+  assert.equal(r.moves.length, 0);
+  assert.equal(out.success, false);
+  if (!out.success) {
+    assert.equal(out.moved, false); assert.equal(out.shared, true); assert.equal(out.outcomeUnknown, false);
+    assert.equal(out.reason, "changed"); assert.match(out.message, /did not move, and its client can still see it/);
+  }
+  const lost = refiler({ before: [SHARED_NOW], shares: [{ data: null, error: { message: "upstream timeout" } }] });
+  const unknown = await refile(lost.caller);
+  assert.equal(lost.moves.length, 0);
+  if (!unknown.success) { assert.equal(unknown.moved, false); assert.equal(unknown.shared, null); assert.equal(unknown.outcomeUnknown, true); }
+});
+
+Deno.test("a move refused after the withdrawal says the file stayed but the client lost access", async () => {
+  const r = refiler({ before: [SHARED_NOW, WITHDRAWN], shares: [WITHDRAW_ACK],
+    moved: { data: null, error: { code: "42501", message: "FILE_SHARED_MOVE_REFUSED" } } });
+  const out = await refile(r.caller);
+  assert.equal(r.calls.length, 1);
+  assert.equal(out.success, false);
+  if (!out.success) {
+    assert.equal(out.moved, false); assert.equal(out.shared, false); assert.equal(out.reason, "not_moved");
+    assert.match(out.message, /can no longer see it/);
+  }
+  const lost = refiler({ before: [SHARED_NOW, WITHDRAWN], shares: [WITHDRAW_ACK], moved: () => { throw new Error("network"); } });
+  const unknown = await refile(lost.caller);
+  if (!unknown.success) { assert.equal(unknown.moved, null); assert.equal(unknown.shared, false); assert.equal(unknown.outcomeUnknown, true); }
+});
+
+Deno.test("a stored row that cannot be read moves nothing and changes no sharing", async () => {
+  for (const before of [null, { ...SHARED_NOW, tenant_id: FORGED_TENANT }, { ...SHARED_NOW, visibility: "client_upload" }, () => { throw new Error("network"); }]) {
+    const r = refiler({ before: [before as Record<string, unknown> | null] });
+    const out = await refile(r.caller);
+    assert.equal(out.success, false);
+    assert.equal(r.moves.length, 0);
+    assert.equal(r.calls.length, 0);
+    if (!out.success) { assert.equal(out.moved, false); assert.equal(out.reason, "not_moved"); }
+  }
+});
+
+Deno.test("a description change on the same client never reads for a withdrawal, even when the file is shared", async () => {
+  const r = refiler({ before: [SHARED_NOW], moved: { data: { id: FILE, contact_id: CONTACT, visibility: "shared", updated_at: NEW_VERSION }, error: null } });
+  const out = await refile(r.caller, { toContactId: CONTACT, description: "Signed scope" });
+  assert.equal(r.reads.length, 0);
+  assert.equal(r.calls.length, 0);
+  assert.equal(out.success, true);
 });
 
 Deno.test("the chat re-file branch moves through the caller's client without visibility, then the helper", async () => {

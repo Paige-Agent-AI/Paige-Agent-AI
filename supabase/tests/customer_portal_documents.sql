@@ -9,7 +9,7 @@
 -- works; a customer can no longer delete their own upload metadata; a staff PUT needs a
 -- reservation; and released work is unavailable once the client or the business is inactive.
 BEGIN;
-SELECT plan(167);
+SELECT plan(188);
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0941000-0000-4000-8000-000000000001','authenticated','authenticated','documents-owner-a@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
  ('e0941000-0000-4000-8000-000000000002','authenticated','authenticated','documents-owner-b@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -126,6 +126,15 @@ CREATE FUNCTION pg_temp.file(_r jsonb, _id text) RETURNS jsonb LANGUAGE sql AS
  $$ SELECT e FROM jsonb_array_elements(_r->'files') e WHERE e->>'id' = _id $$;
 CREATE FUNCTION pg_temp.ids(_r jsonb) RETURNS text LANGUAGE sql AS
  $$ SELECT string_agg(right(e->>'id',2), ',' ORDER BY o) FROM jsonb_array_elements(_r->'files') WITH ORDINALITY x(e,o) $$;
+CREATE FUNCTION pg_temp.owner_page(_contact text, _limit int, _before timestamptz, _before_id text) RETURNS jsonb LANGUAGE sql AS
+ $$ SELECT pg_temp.as_user('e0941000-0000-4000-8000-000000000001', format('SELECT public.client_file_owner_list(%L,%L,%L,%L,%L,%L)',
+    'e0941000-0000-4000-8000-000000000001','e0942000-0000-4000-8000-000000000001',_contact,_limit,_before,_before_id)) $$;
+CREATE FUNCTION pg_temp.jordan_page(_limit int, _before timestamptz, _before_id text) RETURNS jsonb LANGUAGE sql AS
+ $$ SELECT pg_temp.jordan(format('SELECT public.client_portal_documents(p_limit=>%L,p_before=>%L,p_before_id=>%L)',_limit,_before,_before_id)) $$;
+CREATE FUNCTION pg_temp.at(_file text) RETURNS timestamptz LANGUAGE sql AS
+ $$ SELECT created_at FROM public.client_files WHERE id=_file::uuid $$;
+CREATE FUNCTION pg_temp.page(_r jsonb) RETURNS text LANGUAGE sql AS
+ $$ SELECT coalesce(pg_temp.ids(_r),'')||'|'||(_r->>'has_more') $$;
 CREATE FUNCTION pg_temp.keys(_o jsonb) RETURNS text LANGUAGE sql AS
  $$ SELECT string_agg(k, ',' ORDER BY k) FROM jsonb_object_keys(_o) k $$;
 CREATE FUNCTION pg_temp.audits(_file text, _like text DEFAULT 'client_%') RETURNS bigint LANGUAGE sql AS
@@ -162,16 +171,46 @@ SELECT is(pg_temp.owner($q$UPDATE public.client_files SET shared_at='1999-01-01T
 SELECT ok((SELECT shared_at > '2000-01-01' FROM public.client_files WHERE id='e0944000-0000-4000-8000-000000000031'),'shared_at is not backdated');
 SELECT is(pg_temp.owner($q$UPDATE public.client_files SET visibility='internal' WHERE id='e0944000-0000-4000-8000-000000000031' RETURNING to_jsonb(id)$q$)->>'error',
  'FILE_SHARE_WRITER_REQUIRED','the owner cannot unshare by a direct REST update either');
--- Moving a file to another client (compliance S1): it arrives private on every writer, its stamp
--- cleared, because the new client was never shown it. Moving and sharing in one write is refused.
-SELECT is(pg_temp.owner($q$UPDATE public.client_files SET contact_id='e0943000-0000-4000-8000-000000000002' WHERE id='e0944000-0000-4000-8000-000000000031' RETURNING to_jsonb(visibility::text||'|'||(shared_at IS NULL AND shared_by IS NULL)::text)$q$),
- '"internal|true"'::jsonb,'a shared file the owner moves to another client arrives private, its stamp cleared');
+-- Moving a SHARED file to another client takes it away from the client who had it, so no signed-in
+-- caller may do it directly (round 3, verifier MINOR-B): not the owner, not a member holding the
+-- global admin role, and not even with the share writer's gate open. They withdraw the share through
+-- the share writer (audited) and move the private file. Only the service role moves a shared file,
+-- and it arrives private, its stamp cleared, because the new client was never shown it.
+SELECT is(pg_temp.owner($q$UPDATE public.client_files SET contact_id='e0943000-0000-4000-8000-000000000002' WHERE id='e0944000-0000-4000-8000-000000000031' RETURNING to_jsonb(id)$q$)->>'error',
+ 'FILE_SHARED_MOVE_REFUSED','the owner cannot move a shared file to another client over REST');
+SELECT is(pg_temp.as_user('e0941000-0000-4000-8000-000000000005',$q$UPDATE public.client_files SET contact_id='e0943000-0000-4000-8000-000000000002' WHERE id='e0944000-0000-4000-8000-000000000031' RETURNING to_jsonb(id)$q$)->>'error',
+ 'FILE_SHARED_MOVE_REFUSED','nor can a member holding the global admin role');
+SELECT set_config('paige.client_file_share','on',true);
+SELECT is(pg_temp.owner($q$UPDATE public.client_files SET contact_id='e0943000-0000-4000-8000-000000000002' WHERE id='e0944000-0000-4000-8000-000000000031' RETURNING to_jsonb(id)$q$)->>'error',
+ 'FILE_SHARED_MOVE_REFUSED','the share writer''s gate does not open a move');
+SELECT set_config('paige.client_file_share','off',true);
+SELECT ok((SELECT visibility='shared' AND contact_id='e0943000-0000-4000-8000-000000000003' AND shared_by='e0941000-0000-4000-8000-000000000001' AND shared_at IS NOT NULL
+  FROM public.client_files WHERE id='e0944000-0000-4000-8000-000000000031'),'so the file is still shared with its client, its stamp intact');
+SELECT is(pg_temp.as_user('e0941000-0000-4000-8000-000000000001',$q$UPDATE public.client_files SET contact_id='e0943000-0000-4000-8000-000000000002' WHERE id='e0944000-0000-4000-8000-000000000031' RETURNING to_jsonb(visibility::text||'|'||(shared_at IS NULL AND shared_by IS NULL)::text)$q$,'service_role'),
+ '"internal|true"'::jsonb,'a move by the service role arrives private, its stamp cleared');
 SELECT is(pg_temp.owner($q$UPDATE public.client_files SET contact_id='e0943000-0000-4000-8000-000000000003', visibility='shared' WHERE id='e0944000-0000-4000-8000-000000000031' RETURNING to_jsonb(id)$q$)->>'error',
  'FILE_SHARE_WRITER_REQUIRED','moving a file and sharing it in one direct write is refused');
+SELECT is(pg_temp.owner($q$UPDATE public.client_files SET contact_id='e0943000-0000-4000-8000-000000000003' WHERE id='e0944000-0000-4000-8000-000000000031' RETURNING to_jsonb(visibility::text||'|'||contact_id::text)$q$),
+ '"internal|e0943000-0000-4000-8000-000000000003"'::jsonb,'the owner moves a private file freely, and it stays private');
 SELECT is(pg_temp.as_user('e0941000-0000-4000-8000-000000000001',$q$UPDATE public.client_files SET visibility='shared' WHERE id='e0944000-0000-4000-8000-000000000031' RETURNING to_jsonb(visibility::text)$q$,'service_role'),
  '"shared"'::jsonb,'the service role shares it on its new client');
-SELECT is(pg_temp.as_user('e0941000-0000-4000-8000-000000000001',$q$UPDATE public.client_files SET contact_id='e0943000-0000-4000-8000-000000000003' WHERE id='e0944000-0000-4000-8000-000000000031' RETURNING to_jsonb(visibility::text||'|'||(shared_at IS NULL AND shared_by IS NULL)::text)$q$,'service_role'),
- '"internal|true"'::jsonb,'a move by the service role also arrives private');
+-- The signed-in route: withdraw through the share writer (one client_unshare audit row), then move.
+SELECT is(pg_temp.a_share('e0944000-0000-4000-8000-000000000031',false,(SELECT updated_at FROM public.client_files WHERE id='e0944000-0000-4000-8000-000000000031'))->>'shared','false','the owner withdraws the share through the share writer');
+SELECT is(pg_temp.audits('e0944000-0000-4000-8000-000000000031','client_unshare'),1::bigint,'which records the withdrawal once');
+SELECT is(pg_temp.owner($q$UPDATE public.client_files SET contact_id='e0943000-0000-4000-8000-000000000002' WHERE id='e0944000-0000-4000-8000-000000000031' RETURNING to_jsonb(visibility::text||'|'||contact_id::text)$q$),
+ '"internal|e0943000-0000-4000-8000-000000000002"'::jsonb,'and then moves the private file');
+-- shared_by follows auth.users ON DELETE SET NULL (round 3, verifier MAJOR-A): deleting the user who
+-- shared a file that is still shared succeeds, the file stays shared, and the sharer becomes NULL.
+INSERT INTO auth.users(id,aud,role,email,email_confirmed_at) VALUES
+ ('e0941000-0000-4000-8000-0000000000ad','authenticated','authenticated','documents-departed-sharer@tests.invalid',now());
+INSERT INTO public.client_files(id,tenant_id,contact_id,uploaded_by_user_id,storage_path,original_filename,mime_type,size_bytes,visibility,upload_state,shared_by) VALUES
+ ('e0944000-0000-4000-8000-0000000000ad','e0942000-0000-4000-8000-000000000001','e0943000-0000-4000-8000-000000000003','e0941000-0000-4000-8000-000000000001','e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000003/internal/e0944000-0000-4000-8000-0000000000ad','Departed sharer.pdf','application/pdf',1,'shared','ready','e0941000-0000-4000-8000-0000000000ad');
+SELECT is((SELECT shared_by FROM public.client_files WHERE id='e0944000-0000-4000-8000-0000000000ad'),'e0941000-0000-4000-8000-0000000000ad'::uuid,'a fixture file is shared by a user who is about to be deleted');
+SELECT is(pg_temp.owner($q$UPDATE public.client_files SET shared_by=NULL WHERE id='e0944000-0000-4000-8000-0000000000ad' RETURNING to_jsonb(shared_by)$q$),
+ '"e0941000-0000-4000-8000-0000000000ad"'::jsonb,'a direct write cannot clear the sharer of a shared file');
+SELECT lives_ok($q$DELETE FROM auth.users WHERE id='e0941000-0000-4000-8000-0000000000ad'$q$,'deleting the user who shared a still-shared file succeeds');
+SELECT ok((SELECT visibility='shared' AND shared_by IS NULL AND shared_at IS NOT NULL FROM public.client_files WHERE id='e0944000-0000-4000-8000-0000000000ad')
+  AND NOT EXISTS (SELECT 1 FROM auth.users WHERE id='e0941000-0000-4000-8000-0000000000ad'),'the file stays shared and its sharer becomes NULL');
 -- The stamp is held by a constraint too, so a write that skips the trigger cannot leave a shared
 -- row without shared_at (the list parsers require it) or a stamp on an unshared row.
 SELECT ok(EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.client_files'::regclass AND conname='client_files_share_stamp_consistent'),'the share stamp is a table constraint');
@@ -190,17 +229,17 @@ SELECT ok(NOT has_function_privilege('anon','public.client_file_owner_begin_uplo
 SELECT ok(NOT has_function_privilege('anon','public.client_file_owner_finish_upload(uuid,uuid,uuid)','EXECUTE')
   AND NOT has_function_privilege('public','public.client_file_owner_finish_upload(uuid,uuid,uuid)','EXECUTE')
   AND NOT has_function_privilege('service_role','public.client_file_owner_finish_upload(uuid,uuid,uuid)','EXECUTE'),'anon, PUBLIC and the service role cannot finish an owner upload');
-SELECT ok(NOT has_function_privilege('anon','public.client_file_owner_list(uuid,uuid,uuid,integer)','EXECUTE')
-  AND NOT has_function_privilege('public','public.client_file_owner_list(uuid,uuid,uuid,integer)','EXECUTE')
-  AND NOT has_function_privilege('service_role','public.client_file_owner_list(uuid,uuid,uuid,integer)','EXECUTE'),'anon, PUBLIC and the service role cannot list owner files');
+SELECT ok(NOT has_function_privilege('anon','public.client_file_owner_list(uuid,uuid,uuid,integer,timestamptz,uuid)','EXECUTE')
+  AND NOT has_function_privilege('public','public.client_file_owner_list(uuid,uuid,uuid,integer,timestamptz,uuid)','EXECUTE')
+  AND NOT has_function_privilege('service_role','public.client_file_owner_list(uuid,uuid,uuid,integer,timestamptz,uuid)','EXECUTE'),'anon, PUBLIC and the service role cannot list owner files');
 SELECT ok(has_function_privilege('authenticated','public.client_file_set_client_share(uuid,uuid,uuid,boolean,timestamptz)','EXECUTE')
   AND has_function_privilege('authenticated','public.client_file_owner_begin_upload(uuid,uuid,uuid,uuid,text,text,bigint)','EXECUTE')
   AND has_function_privilege('authenticated','public.client_file_owner_finish_upload(uuid,uuid,uuid)','EXECUTE')
-  AND has_function_privilege('authenticated','public.client_file_owner_list(uuid,uuid,uuid,integer)','EXECUTE'),'signed-in callers can execute the owner functions');
-SELECT ok(NOT has_function_privilege('anon','public.client_portal_documents(uuid,integer,timestamptz)','EXECUTE')
-  AND NOT has_function_privilege('public','public.client_portal_documents(uuid,integer,timestamptz)','EXECUTE'),'anon and PUBLIC cannot execute the customer read');
-SELECT ok(has_function_privilege('authenticated','public.client_portal_documents(uuid,integer,timestamptz)','EXECUTE')
-  AND has_function_privilege('service_role','public.client_portal_documents(uuid,integer,timestamptz)','EXECUTE'),'signed-in callers and the service role can execute the customer read');
+  AND has_function_privilege('authenticated','public.client_file_owner_list(uuid,uuid,uuid,integer,timestamptz,uuid)','EXECUTE'),'signed-in callers can execute the owner functions');
+SELECT ok(NOT has_function_privilege('anon','public.client_portal_documents(uuid,integer,timestamptz,uuid)','EXECUTE')
+  AND NOT has_function_privilege('public','public.client_portal_documents(uuid,integer,timestamptz,uuid)','EXECUTE'),'anon and PUBLIC cannot execute the customer read');
+SELECT ok(has_function_privilege('authenticated','public.client_portal_documents(uuid,integer,timestamptz,uuid)','EXECUTE')
+  AND has_function_privilege('service_role','public.client_portal_documents(uuid,integer,timestamptz,uuid)','EXECUTE'),'signed-in callers and the service role can execute the customer read');
 SELECT ok(NOT has_function_privilege('authenticated','public._client_files_share_stamp()','EXECUTE')
   AND NOT has_function_privilege('authenticated','public._client_file_owner_row(public.client_files)','EXECUTE'),'the trigger and projection helpers are not client-callable');
 
@@ -309,6 +348,22 @@ SELECT ok((SELECT strpos(r::text,'PRIVATE DESCRIPTION NOTE')=0 FROM ol),'descrip
 SELECT is(pg_temp.list_as('e0941000-0000-4000-8000-000000000001','e0942000-0000-4000-8000-000000000001','e0943000-0000-4000-8000-000000000001',2)->>'has_more','true','a short page says more exist');
 SELECT is(pg_temp.list_as('e0941000-0000-4000-8000-000000000001','e0942000-0000-4000-8000-000000000001','e0943000-0000-4000-8000-000000000003')->>'portal_connected','false','the list says when the client has not joined the portal');
 SELECT is(pg_temp.list_as('e0941000-0000-4000-8000-000000000002','e0942000-0000-4000-8000-000000000001','e0943000-0000-4000-8000-000000000001')->>'sqlstate','42501','an assigned coach from another business cannot list this client''s files');
+-- Keyset paging (round 3, compliance S5): the next page starts strictly after the (created_at, id)
+-- of the last row shown. Every file on a client is reachable, and two files saved in the same
+-- instant are neither skipped nor repeated. Files 25 and ad were both inserted at now() (one
+-- transaction), so they tie; 61-63 tie at an older instant.
+INSERT INTO public.client_files(id,tenant_id,contact_id,uploaded_by_user_id,storage_path,original_filename,mime_type,size_bytes,visibility,upload_state,created_at) VALUES
+ ('e0944000-0000-4000-8000-000000000061','e0942000-0000-4000-8000-000000000001','e0943000-0000-4000-8000-000000000003','e0941000-0000-4000-8000-000000000001',pg_temp.fpath('01','03','e0944000-0000-4000-8000-000000000061'),'Tie one.pdf','application/pdf',61,'internal','ready','2026-06-01T00:00:00Z'),
+ ('e0944000-0000-4000-8000-000000000062','e0942000-0000-4000-8000-000000000001','e0943000-0000-4000-8000-000000000003','e0941000-0000-4000-8000-000000000001',pg_temp.fpath('01','03','e0944000-0000-4000-8000-000000000062'),'Tie two.pdf','application/pdf',62,'internal','ready','2026-06-01T00:00:00Z'),
+ ('e0944000-0000-4000-8000-000000000063','e0942000-0000-4000-8000-000000000001','e0943000-0000-4000-8000-000000000003','e0941000-0000-4000-8000-000000000001',pg_temp.fpath('01','03','e0944000-0000-4000-8000-000000000063'),'Tie three.pdf','application/pdf',63,'internal','ready','2026-06-01T00:00:00Z');
+SELECT is(pg_temp.page(pg_temp.owner_page('e0943000-0000-4000-8000-000000000003',100,NULL,NULL)),'ad,25,63,62,61|false','the whole library, newest first, ties broken by id');
+SELECT is(pg_temp.page(pg_temp.owner_page('e0943000-0000-4000-8000-000000000003',1,NULL,NULL)),'ad|true','a one-file page says more exist');
+SELECT is(pg_temp.page(pg_temp.owner_page('e0943000-0000-4000-8000-000000000003',1,pg_temp.at('e0944000-0000-4000-8000-0000000000ad'),'e0944000-0000-4000-8000-0000000000ad')),'25|true','the next page keeps a file saved in the same instant as the last one shown');
+SELECT is(pg_temp.page(pg_temp.owner_page('e0943000-0000-4000-8000-000000000003',2,pg_temp.at('e0944000-0000-4000-8000-000000000025'),'e0944000-0000-4000-8000-000000000025')),'63,62|true','and continues into older files');
+SELECT is(pg_temp.page(pg_temp.owner_page('e0943000-0000-4000-8000-000000000003',2,'2026-06-01T00:00:00Z','e0944000-0000-4000-8000-000000000062')),'61|false','through a three-way tie to the last file, then says there is no more');
+SELECT is(pg_temp.owner_page('e0943000-0000-4000-8000-000000000003',2,'2026-06-01T00:00:00Z',NULL)->>'error','INVALID_REQUEST','a cursor without its id is refused');
+SELECT is(pg_temp.as_user('e0941000-0000-4000-8000-000000000002',format('SELECT public.client_file_owner_list(%L,%L,%L,%L,%L,%L)','e0941000-0000-4000-8000-000000000002','e0942000-0000-4000-8000-000000000002','e0943000-0000-4000-8000-000000000003',100,'2027-12-31T00:00:00Z','e0944000-0000-4000-8000-0000000000ff'))->>'error','CONTACT_NOT_FOUND','a cursor never widens the read to another business''s client');
+
 SELECT is(pg_temp.list_as('e0941000-0000-4000-8000-000000000002','e0942000-0000-4000-8000-000000000002','e0943000-0000-4000-8000-000000000001')->>'error','CONTACT_NOT_FOUND','even through their own workspace');
 
 -- 9. Customer read: who gets nothing.
@@ -350,8 +405,17 @@ SELECT ok((SELECT strpos(r::text,'PRIVATE DESCRIPTION NOTE')=0 FROM jr),'the des
 SELECT ok((SELECT strpos(r::text,'e0941000-0000-4000-8000-000000000001')=0 FROM jr),'the staff uploader and sharer are never projected');
 SELECT is(pg_temp.ids(pg_temp.as_user('e0941000-0000-4000-8000-000000000004',$q$SELECT public.client_portal_documents()$q$)),'22,07,06','the other customer sees only their own shared files and uploads, newest first');
 SELECT is((SELECT pg_temp.ids(r)||'|'||(r->>'has_more') FROM (SELECT pg_temp.jordan($q$SELECT public.client_portal_documents(p_limit=>2)$q$) AS r) x),'05,04|true','a short page keeps the order and says more exist');
-SELECT is((SELECT pg_temp.ids(r)||'|'||(r->>'has_more') FROM (SELECT pg_temp.jordan(format('SELECT public.client_portal_documents(p_before=>%L)',(SELECT created_at FROM public.client_files WHERE id='e0944000-0000-4000-8000-000000000004'))) AS r) x),'02,10|false','the next page continues before the last file seen');
+SELECT is(pg_temp.page(pg_temp.jordan_page(50,pg_temp.at('e0944000-0000-4000-8000-000000000004'),'e0944000-0000-4000-8000-000000000004')),'02,10|false','the next page continues after the last file seen');
 SELECT is((SELECT r->'summary' FROM (SELECT pg_temp.jordan($q$SELECT public.client_portal_documents(p_limit=>1)$q$) AS r) x),(SELECT r->'summary' FROM jr),'the summary never depends on the page size');
+-- Same-instant files are never skipped (round 3): two files the business shared in the same instant,
+-- the older of them landing on a page boundary. A bare timestamp cursor used to drop the second.
+INSERT INTO public.client_files(id,tenant_id,contact_id,uploaded_by_user_id,storage_path,original_filename,mime_type,size_bytes,visibility,upload_state,created_at) VALUES
+ ('e0944000-0000-4000-8000-000000000064','e0942000-0000-4000-8000-000000000001','e0943000-0000-4000-8000-000000000001','e0941000-0000-4000-8000-000000000001',pg_temp.fpath('01','01','e0944000-0000-4000-8000-000000000064'),'Same instant A.pdf','application/pdf',64,'shared','ready','2026-06-01T00:00:00Z'),
+ ('e0944000-0000-4000-8000-000000000065','e0942000-0000-4000-8000-000000000001','e0943000-0000-4000-8000-000000000001','e0941000-0000-4000-8000-000000000001',pg_temp.fpath('01','01','e0944000-0000-4000-8000-000000000065'),'Same instant B.pdf','application/pdf',65,'shared','ready','2026-06-01T00:00:00Z');
+SELECT is(pg_temp.page(pg_temp.jordan_page(1,pg_temp.at('e0944000-0000-4000-8000-000000000010'),'e0944000-0000-4000-8000-000000000010')),'65|true','a page ends on the first of two files shared in the same instant');
+SELECT is(pg_temp.page(pg_temp.jordan_page(1,'2026-06-01T00:00:00Z','e0944000-0000-4000-8000-000000000065')),'64|false','and the next page still shows the second one');
+SELECT is(pg_temp.jordan_page(1,'2026-06-01T00:00:00Z',NULL)->>'sqlstate','22023','a cursor without its id is refused');
+
 
 -- 12. Storage: what createSignedUrl relies on, under the customer's own RLS.
 SELECT is(pg_temp.sees_object('e0941000-0000-4000-8000-000000000003','e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/internal/e0944000-0000-4000-8000-000000000002'),1::bigint,'the customer can read the object of a shared file');

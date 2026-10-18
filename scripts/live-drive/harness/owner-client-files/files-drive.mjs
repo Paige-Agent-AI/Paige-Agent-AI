@@ -47,8 +47,8 @@ const SIZES = { desktop: [1440, 900], phone: [390, 844] };
 function allShots() {
   const shots = [];
   for (const theme of ["light", "dark"]) {
-    for (const state of ["populated", "connected", "empty", "loading", "refused", "unavailable", "error", "pending", "confirm", "confirm-joined", "unshare", "changed", "uploading", "uncertain", "saved", "share-added", "open", "open-blocked", "workspace-changed"]) shots.push({ state, theme, kind: "desktop" });
-    for (const state of ["populated", "empty", "refused", "pending", "confirm", "changed", "uploading", "uncertain", "saved", "share-added", "open-blocked", "workspace-changed"]) shots.push({ state, theme, kind: "phone" });
+    for (const state of ["populated", "connected", "empty", "loading", "refused", "unavailable", "error", "pending", "confirm", "confirm-joined", "unshare", "changed", "uploading", "uncertain", "saved", "share-added", "open", "open-blocked", "workspace-changed", "many", "more-loaded"]) shots.push({ state, theme, kind: "desktop" });
+    for (const state of ["populated", "empty", "refused", "pending", "confirm", "changed", "uploading", "uncertain", "saved", "share-added", "open-blocked", "workspace-changed", "many", "more-loaded"]) shots.push({ state, theme, kind: "phone" });
   }
   return shots.map((s) => ({ ...s, w: SIZES[s.kind][0], h: SIZES[s.kind][1], phone: s.kind === "phone" }));
 }
@@ -156,6 +156,27 @@ async function drive(page, s, n) {
       await section.locator(".trc-files-upload").evaluate((el) => el.scrollIntoView({ block: "center" }));
       break;
     }
+    case "many": case "more-loaded": {
+      // "Load more" (compliance S5): the first page is the newest 100; the next starts after the last row shown.
+      await listReady();
+      const foot = section.locator(".trc-files-more");
+      await foot.waitFor({ timeout: 30_000 });
+      n.firstPageRows = await section.locator(".trc-files-row").count();
+      n.foot = clean(await foot.innerText());
+      n.lastShown = await section.locator(".trc-files-row strong").last().innerText();
+      if (s.state === "more-loaded") {
+        const before = await page.evaluate(() => window.__harness.listArgs.length);
+        await foot.getByRole("button", { name: "Load more" }).click();
+        await foot.waitFor({ state: "detached", timeout: 15_000 });
+        n.moreArgs = await page.evaluate((i) => window.__harness.listArgs.slice(i), before);
+        n.rowsAfter = await section.locator(".trc-files-row strong").allInnerTexts();
+        await section.locator(".trc-files-row").last().evaluate((el) => el.scrollIntoView({ block: "center" }));
+      } else {
+        n.moreButton = await foot.getByRole("button", { name: "Load more" }).count();
+        await foot.evaluate((el) => el.scrollIntoView({ block: "center" }));
+      }
+      break;
+    }
     case "open-blocked": case "open": {
       await listReady();
       // A popup blocker that refuses even the immediate tab: nothing may claim it opened.
@@ -175,7 +196,7 @@ async function drive(page, s, n) {
   n.order = await page.evaluate(() => [...(document.querySelector(".trc-record-body")?.children ?? [])].slice(0, 3).map((c) => c.id || c.className));
   n.connectNote = await textOf(section.locator(".trc-files-connect"));
   n.text = clean(await section.innerText());
-  if (!["pending", "confirm", "confirm-joined", "unshare", "changed", "uploading", "uncertain", "saved", "share-added", "open", "open-blocked"].includes(s.state)) {
+  if (!["pending", "confirm", "confirm-joined", "unshare", "changed", "uploading", "uncertain", "saved", "share-added", "open", "open-blocked", "many", "more-loaded"].includes(s.state)) {
     await section.evaluate((el) => {
       const scroller = el.closest(".trc-record-scroll") ?? document.scrollingElement;
       const head = document.querySelector(".trc-record-head, .trc-record-header");
@@ -254,6 +275,17 @@ function unmet(s, n) {
   if (s.state === "open-blocked") {
     want(!/Opened in a new tab/.test(n.note ?? "") && /didn’t open a new tab/.test(n.note ?? ""), `blocked open note "${n.note}"`);
     want((n.link ?? []).length === 1 && /signed-file\?e=60$/.test(n.link[0].href ?? "") && n.link[0].rel === "noopener noreferrer" && n.link[0].target === "_blank", `blocked open link ${JSON.stringify(n.link)}`);
+  }
+  if (s.state === "many" || s.state === "more-loaded") {
+    want(n.firstPageRows === 100 && n.foot === "Showing the newest 100 files. Load more", `first page ${n.firstPageRows} rows, foot "${n.foot}"`);
+  }
+  if (s.state === "many") want(n.moreButton === 1, `Load more buttons ${n.moreButton}`);
+  if (s.state === "more-loaded") {
+    const a = n.moreArgs ?? [];
+    want(a.length === 1 && a[0].p_limit === 100 && typeof a[0].p_before === "string" && /^[0-9a-f-]{36}$/.test(a[0].p_before_id ?? ""), `load-more read ${JSON.stringify(a)}`);
+    const names = n.rowsAfter ?? [];
+    want(names.length === 110 && new Set(names).size === 110, `after Load more: ${names.length} rows, ${new Set(names).size} distinct (a same-instant file skipped or repeated)`);
+    want(["Session notes 094.pdf", "Session notes 095.pdf", "Session notes 096.pdf"].every((x) => names.includes(x)), "a file saved in the same instant as the page boundary is missing");
   }
   if (s.state === "workspace-changed") {
     want(!(n.text ?? "").includes("Only the business owner or an admin"), "an account change is reported as a permission refusal");
@@ -446,6 +478,7 @@ try {
       { mutant: "clip", shot: base("populated", "phone"), caught: (r) => r.clipped.length > 0 },
       { mutant: "unconfirmed", shot: base("confirm", "desktop"), caught: (r) => r.expectations.some((e) => /no re-read/.test(e)) },
       { mutant: "public", shot: base("saved", "desktop"), caught: (r) => r.expectations.some((e) => /begin args/.test(e)) },
+      { mutant: "tieskip", shot: base("more-loaded", "desktop"), caught: (r) => r.expectations.some((e) => /same instant/.test(e)) },
     ];
     const verdicts = [];
     for (const c of controls) {

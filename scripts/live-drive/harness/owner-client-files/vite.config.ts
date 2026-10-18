@@ -44,6 +44,8 @@ export default defineConfig({
       const now = fresh.files.find(f => f.id === file.id);`, `const fresh = { files: [{ ...file, visibility: shared ? "shared" : "internal" }] };
       const now = fresh.files.find(f => f.id === file.id);`);
           // An upload that starts shared instead of private (owner decision D1).
+          // A page cursor without the id tie-breaker: the next page would skip files saved in the boundary's instant.
+          if (mutant === "tieskip") return swap(`p_before: after?.created_at ?? null, p_before_id: after?.id ?? null,`, `p_before: after?.created_at ?? null, p_before_id: null,`);
           if (mutant === "public") return swap(`p_filename: candidate.name, p_mime_type: candidate.mime, p_size_bytes: candidate.size,`, `p_filename: candidate.name, p_mime_type: candidate.mime, p_size_bytes: candidate.size, p_visibility: "shared",`);
         }
         return null;

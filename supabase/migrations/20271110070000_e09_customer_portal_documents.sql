@@ -3,11 +3,17 @@
 -- (§18); no new table, bucket, event kind, executor or RLS policy. Additive, every new owner file
 -- private by default (production held 0 client_files rows at grounding; any shared row is backfilled):
 --   * client_files.shared_at / shared_by — derived by a trigger on EVERY writer; they cannot be
---     forged, and a CHECK holds them even where the trigger is skipped. The same trigger makes
---     client_file_set_client_share the ONLY non-service writer that moves a file into or out of
---     'shared' (a direct REST write, Paige's direct re-file or another DEFINER body is refused with
---     FILE_SHARE_WRITER_REQUIRED), and a file moved to another client arrives private (§58: a
---     tightening; before, a move kept the file shared and silently re-shared it with the new client).
+--     forged, and a CHECK holds them even where the trigger is skipped. shared_by follows its
+--     ON DELETE SET NULL, so deleting the user who shared a still-shared file succeeds.
+--   * The same trigger makes client_file_set_client_share the ONLY signed-in writer that changes
+--     whether a client sees a file: a direct REST write, Paige's re-file or another DEFINER body
+--     that moves visibility into or out of 'shared' is refused (FILE_SHARE_WRITER_REQUIRED), and so
+--     is moving a SHARED file to another client (FILE_SHARED_MOVE_REFUSED) — the share writer's
+--     gate does not open a move. A signed-in caller withdraws the share through the share writer
+--     (audited) and then moves a private file. Only the service role and a direct database session
+--     (migrations, pg_cron) may move a shared file; it arrives private, its stamp cleared, and the
+--     trigger writes no audit row for it (no such writer exists today). §58: before this release a
+--     move kept the file shared and silently re-shared it with the new client.
 --   * client_file_owner_begin_upload / client_file_owner_finish_upload — the owner's reservation
 --     and object-verified finish, mirroring the customer pair (20271108150000:66-106, 240-271). A
 --     reservation needs the same roles as the staff storage PUT, so no caller is left with a
@@ -16,9 +22,11 @@
 --     version-guarded, state-idempotent, audited (public.audit_logs, entity 'client_files'). It
 --     opens the trigger's gate with a transaction-local flag around its one UPDATE only.
 --   * client_file_owner_list — the owner's read, pinned to tenant AND contact (the "Staff read
---     files" policy has a coach arm with no tenant predicate; this read does not use it).
+--     files" policy has a coach arm with no tenant predicate; this read does not use it), paged by
+--     a (created_at, id) keyset so the owner can load every file, never just the newest 100.
 --   * client_portal_documents — the customer's read: shared+ready files and their own uploads of
---     their OWN relationship through an exact allowlist. Signed URLs ride the incumbent
+--     their OWN relationship through an exact allowlist, paged by the same (created_at, id)
+--     keyset so two files saved in the same instant are never skipped. Signed URLs ride the incumbent
 --     client_files_get storage policy, which re-checks the row under the customer's RLS.
 --   * operations_delivery_client_read_scoped — restated with clients.status / tenants.status
 --     'active'; decide and reviews_scoped go through it and inherit the check.
@@ -52,17 +60,32 @@ ALTER TABLE public.client_files ADD CONSTRAINT client_files_share_stamp_consiste
 -- a REST UPDATE/INSERT under any RLS arm, Paige's re-file through the caller's client, a future
 -- DEFINER body called by a signed-in user — is refused, so no share skips the audit.
 --
--- Moving a file to another client makes it private on every writer: the new client was never
--- shown it. Requesting the move AND 'shared' in one write is refused like any other direct share.
+-- Moving a SHARED file to another client takes access away from the client who had it, so a
+-- signed-in caller may not do it at all — not even inside the share writer's gate, which opens
+-- visibility only. They withdraw the share through client_file_set_client_share (one audit row)
+-- and move the now-private file. The service role or a direct database session may move a shared
+-- file; it arrives private (the new client was never shown it). Requesting the move AND 'shared' in
+-- one write is refused like any other direct share.
+--
+-- shared_by follows auth.users ON DELETE SET NULL: that referential action is an UPDATE of this
+-- table nested inside the delete (pg_trigger_depth() > 1) that sets shared_by NULL, and the stamp
+-- keeps it NULL instead of restoring the deleted user (which would fail the foreign key and roll the
+-- user's deletion back). A top-level write can never clear it: there the stored sharer wins.
 CREATE OR REPLACE FUNCTION public._client_files_share_stamp()
 RETURNS trigger LANGUAGE plpgsql SET search_path = '' AS $$
 DECLARE
   v_role text := nullif(auth.role(), '');
+  v_platform boolean;
   v_writer boolean;
 BEGIN
-  v_writer := current_setting('paige.client_file_share', true) IS NOT DISTINCT FROM 'on'
-    OR v_role = 'service_role' OR current_user = 'service_role'
+  v_platform := v_role = 'service_role' OR current_user = 'service_role'
     OR (v_role IS NULL AND current_user NOT IN ('authenticated', 'anon'));
+  v_writer := v_platform OR current_setting('paige.client_file_share', true) IS NOT DISTINCT FROM 'on';
+  IF TG_OP = 'UPDATE' AND NEW.contact_id IS DISTINCT FROM OLD.contact_id AND OLD.visibility = 'shared'
+     AND NOT v_platform THEN
+    RAISE EXCEPTION 'FILE_SHARED_MOVE_REFUSED' USING ERRCODE = '42501',
+      HINT = 'Withdraw the share through public.client_file_set_client_share, then move the private file.';
+  END IF;
   IF NOT v_writer AND (
        (TG_OP = 'INSERT' AND NEW.visibility = 'shared')
     OR (TG_OP = 'UPDATE' AND (OLD.visibility = 'shared') IS DISTINCT FROM (NEW.visibility = 'shared'))) THEN
@@ -75,7 +98,7 @@ BEGIN
   IF NEW.visibility = 'shared' THEN
     IF TG_OP = 'UPDATE' AND OLD.visibility = 'shared' AND NEW.contact_id IS NOT DISTINCT FROM OLD.contact_id THEN
       NEW.shared_at := coalesce(OLD.shared_at, now());
-      NEW.shared_by := OLD.shared_by;
+      NEW.shared_by := CASE WHEN NEW.shared_by IS NULL AND pg_trigger_depth() > 1 THEN NULL ELSE OLD.shared_by END;
     ELSE
       NEW.shared_at := now();
       NEW.shared_by := coalesce(auth.uid(), CASE WHEN TG_OP = 'INSERT' THEN NEW.shared_by END);
@@ -344,7 +367,8 @@ COMMENT ON FUNCTION public.client_file_set_client_share(uuid, uuid, uuid, boolea
 
 -- ── 1d. The owner's read ───────────────────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.client_file_owner_list(
-  p_expected_actor_id uuid, p_expected_tenant_id uuid, p_contact_id uuid, p_limit integer DEFAULT 100)
+  p_expected_actor_id uuid, p_expected_tenant_id uuid, p_contact_id uuid, p_limit integer DEFAULT 100,
+  p_before timestamptz DEFAULT NULL, p_before_id uuid DEFAULT NULL)
 RETURNS jsonb
 LANGUAGE plpgsql STABLE SECURITY DEFINER
 SET search_path = ''
@@ -367,7 +391,10 @@ BEGIN
   IF v_tenant IS DISTINCT FROM p_expected_tenant_id OR NOT public.is_tenant_admin(v_tenant) THEN
     RAISE EXCEPTION 'FILE_SCOPE_CHANGED' USING ERRCODE = '42501';
   END IF;
-  IF p_contact_id IS NULL THEN RETURN jsonb_build_object('ok', false, 'error', 'INVALID_REQUEST'); END IF;
+  -- A page cursor is the (created_at, id) of the last file shown; both halves or neither.
+  IF p_contact_id IS NULL OR (p_before IS NULL) <> (p_before_id IS NULL) THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'INVALID_REQUEST');
+  END IF;
   SELECT t.account_type::text, t.parent_tenant_id INTO v_account_type, v_parent
   FROM public.tenants t WHERE t.id = v_tenant;
   IF v_account_type = 'agency' AND v_parent IS NULL THEN
@@ -378,11 +405,14 @@ BEGIN
   IF NOT FOUND THEN RETURN jsonb_build_object('ok', false, 'error', 'CONTACT_NOT_FOUND'); END IF;
   -- Finished files of this client in this business, plus the caller's own unfinished uploads so
   -- they can finish or abandon them. A client's unfinished upload is theirs until it is verified.
+  -- Newest first by (created_at, id); the next page starts strictly after the cursor row, so a file
+  -- that shares the cursor's created_at is neither repeated nor skipped.
   WITH ranked AS (
     SELECT f AS rec, row_number() OVER (ORDER BY f.created_at DESC, f.id DESC) AS rn
     FROM public.client_files f
     WHERE f.tenant_id = v_tenant AND f.contact_id = p_contact_id
       AND (f.upload_state = 'ready' OR (f.visibility <> 'client_upload' AND f.uploaded_by_user_id = v_actor))
+      AND (p_before IS NULL OR (f.created_at, f.id) < (p_before, p_before_id))
   )
   SELECT coalesce(jsonb_agg(public._client_file_owner_row(r.rec) ORDER BY r.rn) FILTER (WHERE r.rn <= v_limit), '[]'::jsonb),
     count(*) > v_limit
@@ -391,14 +421,15 @@ BEGIN
     'files', v_files, 'has_more', v_more);
 END;
 $$;
-REVOKE ALL ON FUNCTION public.client_file_owner_list(uuid, uuid, uuid, integer) FROM PUBLIC, anon, authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.client_file_owner_list(uuid, uuid, uuid, integer) TO authenticated;
-COMMENT ON FUNCTION public.client_file_owner_list(uuid, uuid, uuid, integer) IS
-  'E09 Documents: the business''s file library for one client, pinned to the current workspace AND the client. Business owner/admin only; never a top-level agency. Finished files plus the caller''s own unfinished uploads, newest first, up to 100. Descriptions and uploader ids are not projected.';
+REVOKE ALL ON FUNCTION public.client_file_owner_list(uuid, uuid, uuid, integer, timestamptz, uuid) FROM PUBLIC, anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.client_file_owner_list(uuid, uuid, uuid, integer, timestamptz, uuid) TO authenticated;
+COMMENT ON FUNCTION public.client_file_owner_list(uuid, uuid, uuid, integer, timestamptz, uuid) IS
+  'E09 Documents: the business''s file library for one client, pinned to the current workspace AND the client. Business owner/admin only; never a top-level agency. Finished files plus the caller''s own unfinished uploads, newest first by (created_at, id), up to 100 a page; the next page passes the last row''s created_at and id as p_before / p_before_id. Descriptions and uploader ids are not projected.';
 
 -- ── 1e. The customer's read ────────────────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.client_portal_documents(
-  p_tenant_id uuid DEFAULT NULL, p_limit integer DEFAULT 50, p_before timestamptz DEFAULT NULL)
+  p_tenant_id uuid DEFAULT NULL, p_limit integer DEFAULT 50, p_before timestamptz DEFAULT NULL,
+  p_before_id uuid DEFAULT NULL)
 RETURNS jsonb
 LANGUAGE plpgsql STABLE SECURITY DEFINER
 SET search_path = public, pg_temp
@@ -413,6 +444,10 @@ DECLARE
   _has_more boolean;
 BEGIN
   IF _uid IS NULL THEN RAISE EXCEPTION 'customer authentication required' USING ERRCODE = '42501'; END IF;
+  -- A page cursor is the (created_at, id) of the last file shown; both halves or neither.
+  IF (p_before IS NULL) <> (p_before_id IS NULL) THEN
+    RAISE EXCEPTION 'a page cursor needs both p_before and p_before_id' USING ERRCODE = '22023';
+  END IF;
   -- 42501 "select an authorized customer relationship" (more than one business) propagates as is.
   _client_id := public.client_portal_relationship_id(p_tenant_id);
   IF _client_id IS NULL THEN RETURN NULL; END IF;
@@ -431,7 +466,8 @@ BEGIN
         OR (f.visibility = 'client_upload' AND f.uploaded_by_user_id = _uid))
   ), page AS (
     SELECT v.*, row_number() OVER (ORDER BY v.created_at DESC, v.id DESC) AS rn
-    FROM visible v WHERE p_before IS NULL OR v.created_at < p_before
+    -- Keyset (created_at, id): a file that shares the cursor's instant is never skipped.
+    FROM visible v WHERE p_before IS NULL OR (v.created_at, v.id) < (p_before, p_before_id)
   )
   SELECT
     (SELECT coalesce(jsonb_agg(jsonb_build_object(
@@ -454,10 +490,10 @@ BEGIN
     'files', _files, 'has_more', _has_more);
 END;
 $$;
-REVOKE ALL ON FUNCTION public.client_portal_documents(uuid, integer, timestamptz) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.client_portal_documents(uuid, integer, timestamptz) TO authenticated, service_role;
-COMMENT ON FUNCTION public.client_portal_documents(uuid, integer, timestamptz) IS
-  'E09 Documents: customer-safe projection of the caller''s OWN relationship''s files: what the business shared (finished uploads only) plus the caller''s own uploads, pending included. Name, type, size, source, state, dates and the storage path the browser signs a 60-second URL for; storage re-authorizes that path under the customer''s RLS.';
+REVOKE ALL ON FUNCTION public.client_portal_documents(uuid, integer, timestamptz, uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.client_portal_documents(uuid, integer, timestamptz, uuid) TO authenticated, service_role;
+COMMENT ON FUNCTION public.client_portal_documents(uuid, integer, timestamptz, uuid) IS
+  'E09 Documents: customer-safe projection of the caller''s OWN relationship''s files: what the business shared (finished uploads only) plus the caller''s own uploads, pending included, newest first by (created_at, id); the next page passes the last row''s created_at and id as p_before / p_before_id. Name, type, size, source, state, dates and the storage path the browser signs a 60-second URL for; storage re-authorizes that path under the customer''s RLS.';
 
 -- ── 1f. Released work: the client and the business must both be active ────────────────────────
 -- Restated from 20271031005010:4-30 (the live body, checked byte-identical), adding only
@@ -532,6 +568,6 @@ GRANT EXECUTE ON FUNCTION public.client_portal_can_upload_file_object(text) TO a
 
 COMMENT ON COLUMN public.client_files.shared_at IS 'When this file was shared with its client. Derived by trg_client_files_share_stamp on every write; set exactly when visibility = shared (client_files_share_stamp_consistent).';
 COMMENT ON COLUMN public.client_files.shared_by IS 'Who shared this file with its client (auth.uid() at the share). Derived by trg_client_files_share_stamp; NULL unless visibility = shared, and NULL for a row shared before this column existed.';
-COMMENT ON FUNCTION public._client_files_share_stamp() IS 'E09 Documents: derives shared_at/shared_by; refuses (42501 FILE_SHARE_WRITER_REQUIRED) any signed-in, non-service write that moves a file into or out of shared unless client_file_set_client_share opened the gate; a file moved to another client becomes internal.';
+COMMENT ON FUNCTION public._client_files_share_stamp() IS 'E09 Documents: derives shared_at/shared_by (shared_by follows its ON DELETE SET NULL); refuses (42501 FILE_SHARE_WRITER_REQUIRED) any signed-in, non-service write that moves a file into or out of shared unless client_file_set_client_share opened the gate, and (42501 FILE_SHARED_MOVE_REFUSED) any signed-in, non-service move of a shared file to another client; a service-role move arrives internal.';
 
 COMMIT;

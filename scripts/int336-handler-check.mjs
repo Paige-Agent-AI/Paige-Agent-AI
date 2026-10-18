@@ -2,9 +2,20 @@ import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
 import {confirmFingerprint} from '../supabase/functions/_shared/confirm-fingerprint.ts';
 import {crmApprovalSubject,canonicalizeCrmCommand,CRM_ACTION_CAPABILITY} from '../supabase/functions/_shared/crm-command/catalog.ts';
+import {readPendingApprovalRecovery} from '../supabase/functions/_shared/paige-turn/interactive-approval.ts';
 globalThis.Deno={env:{get:k=>({SUPABASE_URL:'https://test.supabase.co',SUPABASE_ANON_KEY:'anon-key',SUPABASE_SERVICE_ROLE_KEY:'service-role-key'})[k]??''}};
 globalThis.fetch=async()=>new Response('{}',{status:503});
 const fake=await import('./knowledge-scope/fake-supabase.mjs');
+// Record which existing SDK port performs each query; forward its real fixture
+// behavior unchanged. The new history fallback must use the original JWT, never
+// a service-role read masquerading as the incumbent CRM publication boundary.
+const readClients=new WeakMap(),clientPrototype=Object.getPrototypeOf(fake.createClient('', 'anon-key'));
+const originalFrom=clientPrototype.from;
+clientPrototype.from=function(table){
+ const query=originalFrom.call(this,table),record=query._record.bind(query),kind=this._kind;
+ query._record=single=>{record(single);readClients.set(fake.recorder().from.at(-1),kind);};
+ return query;
+};
 await import('../supabase/functions/paige-ai-chat/index.ts');
 const {capturedHandler}=await import('./knowledge-scope/stub-serve.mjs');
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
@@ -155,7 +166,7 @@ if(process.env.APPROVAL_RECOVERY_DATABASE_URL){
 // AND its still-live native confirmation. No history JSON, settlement or retry.
 const publicationRaces=[];
 const reloadVariants=['available','admin-current','contact-current','contact-missing','contact-foreign','contact-read-error','contact-create','company-create','contact-ref-current','contact-ref-missing','contact-ref-changed-id','company-current','task-current','equivalent-version','missing-terminal','terminal-removed','json-only','wrong-actor','wrong-tenant','wrong-intent','closed-terminal','unknown-effect','superseded','executor-held','member-refused','role-member','foreign-thread','archived-thread','scope-changed','member-revoked','expired','consumed','consumed-after-read','foreign-pending','missing-issuance','newer-issuance','newer-issuance-microsecond','newer-creation-microsecond','wrong-tool','wrong-command','wrong-key','wrong-fingerprint','duplicate-card','duplicate-pending','changed-version','changed-microsecond','missing-contact-version','company-changed-version','task-changed-version','unsupported-preview','unsupported-activity','protocol-paused','contact-race-before-final','consume-race-after-receipt','publication-false','publication-member','publication-actor','publication-error','publication-null','publication-shape','publication-scope','publication-latest','publication-held','publication-proof','publication-expired','consumed-during-publication','version-during-publication'];
-for(const variant of reloadVariants){
+for(const variant of reloadVariants)for(const verification of ['reader','handler']){
  const isRef=variant.startsWith('contact-ref-');
  const isContact=isRef||['contact-current','contact-missing','contact-foreign','contact-read-error','equivalent-version','changed-version','changed-microsecond','missing-contact-version','contact-race-before-final','version-during-publication'].includes(variant);
  const isCompany=variant.startsWith('company-'),isTask=variant.startsWith('task-');
@@ -218,27 +229,63 @@ for(const variant of reloadVariants){
   if(variant==='consumed-during-publication')consumed=true;
   if(variant==='version-during-publication')versionChanged=true;
   if(variant==='publication-expired')syntheticNow=clock+600000;
-  const nativeValue=nativePublication&&['available','publication-member','publication-actor','publication-scope','publication-latest','publication-held','publication-proof','publication-expired','consumed-during-publication','version-during-publication'].includes(variant)?nativePublication(variant,args):null;
+   const nativeValue=verification==='handler'&&nativePublication&&['available','publication-member','publication-actor','publication-scope','publication-latest','publication-held','publication-proof','publication-expired','consumed-during-publication','version-during-publication'].includes(variant)?nativePublication(variant,args):null;
   return {data:nativeValue!==null?nativeValue:variant==='publication-null'?null:variant==='publication-shape'?{available:true}:['publication-false','publication-member','publication-actor','publication-scope','publication-latest','publication-held','publication-proof'].includes(variant)?false:true,error:variant==='publication-error'?{message:'fixture publication refusal'}:null};
  },paige_chat_interactive_protocol:{data:{version:2,active:variant!=='protocol-paused'},error:null},current_user_tenant_id:()=>({data:switched?id(99):tenant,error:null}),paige_chat_interactive_executor_v2:{data:{latest:intent,executor:variant==='executor-held'?intent:null,terminal:true,stopped:false},error:null}}});
  if(variant==='publication-expired')Date.now=()=>syntheticNow;
- let response;try{response=await capturedHandler()(req({interactive:{kind:'status',approvalTurnId:turnId}}));}finally{Date.now=originalNow;}
- assert.equal(response.status,200);assert.equal(response.headers.get('cache-control'),'no-store');
- const result=await response.json();const available=['available','admin-current','contact-current','contact-create','company-create','contact-ref-current','company-current','task-current','equivalent-version','consumed-during-publication','version-during-publication'].includes(variant);
+  const readRecovery=()=>readPendingApprovalRecovery({actorId:actor,tenantId:tenant,threadId:thread,intentId:intent,turnId,
+   caller:fake.createClient('', 'anon-key'),service:fake.createClient('', 'service-role-key')});
+  let response,result;try{
+   if(verification==='reader')result={approval_recovery:await readRecovery()};
+   else{response=await capturedHandler()(req({interactive:{kind:'status',approvalTurnId:turnId}}));result=await response.json();}
+  }finally{Date.now=originalNow;}
+  if(verification==='handler'){assert.equal(response.status,200);assert.equal(response.headers.get('cache-control'),'no-store');}
+  // Protocol admission is owned by the HTTP entry; the unchanged reader itself
+  // has no rollout input. Exercise its same valid fixture even for paused ingress.
+  const available=['available','admin-current','contact-current','contact-create','company-create','contact-ref-current','company-current','task-current','equivalent-version','consumed-during-publication','version-during-publication'].includes(variant)
+   ||verification==='reader'&&variant==='protocol-paused';
  assert.equal(result.approval_recovery?.status,available?'available':'unavailable',`server recovery ${variant}: ${JSON.stringify(result)}`);
  if(available){assert.equal(publicationReads,1,'fresh native publication context is mandatory');assert.equal(result.approval_recovery.turn_id,turnId);assert.equal(result.approval_recovery.intent_id,intent);assert.equal(result.approval_recovery.tenant_id,tenant);assert.deepEqual(result.approval_recovery.confirmations,[card]);}
  else assert.equal(result.approval_recovery.confirmations,undefined,'refusal returns no executable proposal');
- if(['consumed-during-publication','version-during-publication'].includes(variant))publicationRaces.push({variant,card,args,native,command});
- if(publicationReads){assert.equal(recoveryRec.rpc.at(-1).name,'paige_chat_interactive_publication_context_v2','native context is the LAST awaited authority');assert.equal(recoveryRec.rpc.at(-1).client,'jwt');assert.equal(recoveryRec.from.length,publicationLastReadCount,'no query follows native publication context');}
+  if(verification==='handler'&&['consumed-during-publication','version-during-publication'].includes(variant))publicationRaces.push({variant,card,args,native,command});
+  const historyProjections=[
+   {table:'paige_chat_threads',op:'select',filters:[['select','id,tenant_id,caller_user_id,audience,is_archived'],['eq','id',thread],['eq','tenant_id',tenant],['eq','caller_user_id',actor]],ordered:false,limit:null,single:true},
+   {table:'paige_chat_turns',op:'select',filters:[['select','id,thread_id,role,created_at,interactive_intent_id,interactive_actor_id,interactive_tenant_id,interactive_terminal_state,bundle_ref'],['eq','id',turnId],['eq','thread_id',thread],['eq','interactive_intent_id',intent]],ordered:false,limit:null,single:true},
+  ];
+  const historyStart=recoveryRec.from.findIndex(query=>query.table==='paige_chat_threads'
+   &&query.filters.some(([op,columns])=>op==='select'&&columns===historyProjections[0].filters[0][1]));
+  if(verification==='reader'||available||variant==='protocol-paused')assert.equal(historyStart,-1,'a direct reader, live CRM approval or paused protocol cannot enter historical fallback');
+  else{
+   assert.notEqual(historyStart,-1,'an unavailable CRM approval reaches the separate scope-checked history reader');
+   const historyReads=recoveryRec.from.slice(historyStart);
+   assert.ok(historyReads.length===1||historyReads.length===2,'historical fallback stops at the thread refusal or reads the exact origin');
+   assert.deepEqual(historyReads,historyProjections.slice(0,historyReads.length),'all historical fallback queries are the exact scoped projections');
+   assert.ok(historyReads.every(query=>readClients.get(query)==='jwt'),'all historical fallback reads stay on the original JWT');
+  }
+  if(publicationReads){
+   assert.equal(recoveryRec.rpc.at(-1).name,'paige_chat_interactive_publication_context_v2','native context is the LAST awaited authority');assert.equal(recoveryRec.rpc.at(-1).client,'jwt');
+   if(verification==='reader'||available)assert.equal(recoveryRec.from.length,publicationLastReadCount,'no query follows native publication context');
+   else{
+    // A refused CRM publication may now enter a separate historical read. Bind
+    // its entire additional trace, rather than increasing the incumbent count.
+    const following=recoveryRec.from.slice(publicationLastReadCount);
+    assert.deepEqual(following,historyProjections,'CRM refusal permits only the exact original-history scope/origin projections');
+    assert.ok(following.every(query=>readClients.get(query)==='jwt'),'history fallback reads stay on the original JWT');
+   }
+  }
+  assert.equal(result.approval_history,undefined,'a CRM card cannot become a reminder receipt');
+  assert.equal(recoveryRec.rpc.some(c=>/^(resolve_paige_reminder_approval|adopt_paige_reminder_approval|execute_paige_approved_reminder)$/.test(c.name)),false,'CRM recovery cannot enter any native reminder door');
  assert.equal(recoveryRec.from.some(query=>query.table==='contacts'),false,'recovery must never query a nonexistent contact relation');
  const contactReads=recoveryRec.from.filter(query=>query.table==='clients'&&query.filters.some(([op,columns])=>op==='select'&&columns==='id,tenant_id,updated_at,created_at'));
  for(const query of contactReads){assert.ok(query.filters.some(([op,column,value])=>op==='eq'&&column==='id'&&value===id(74)),'contact revision binds the exact native record');assert.ok(query.filters.some(([op,column,value])=>op==='eq'&&column==='tenant_id'&&value===tenant),'contact revision remains tenant-scoped');}
  if(isContact&&available)assert.equal(contactReads.length,2,'both revision observations read the canonical clients row');
  if(variant==='contact-current'){
   versionChanged=true;
-  const reloaded=await capturedHandler()(req({interactive:{kind:'status',approvalTurnId:turnId}}));
-  assert.equal(reloaded.status,200);assert.equal(reloaded.headers.get('cache-control'),'no-store');
-  const changed=await reloaded.json();assert.equal(changed.approval_recovery?.status,'unavailable','a fresh reload refuses a changed canonical contact revision');
+  let changed;
+  if(verification==='reader')changed={approval_recovery:await readRecovery()};
+  else{const reloaded=await capturedHandler()(req({interactive:{kind:'status',approvalTurnId:turnId}}));
+   assert.equal(reloaded.status,200);assert.equal(reloaded.headers.get('cache-control'),'no-store');changed=await reloaded.json();}
+  assert.equal(changed.approval_recovery?.status,'unavailable','a fresh reload refuses a changed canonical contact revision');
   assert.equal(changed.approval_recovery.confirmations,undefined,'a changed contact reload exposes no executable proposal');
   assert.equal(publicationReads,1,'changed revision stops before publishing another recovery card');
  }
@@ -246,7 +293,7 @@ for(const variant of reloadVariants){
  assert.equal(recoveryRec.rpc.some(c=>/begin_v2|settle|turn_append|transition|prepare|submit|claim|execute_crm/.test(c.name)),false,'recovery never admits, settles or executes');
  assert.equal(recoveryRec.rpc.filter(c=>c.name==='paige_chat_interactive_executor_v2').every(c=>c.args.p_operation==='state'),true,'recovery never releases an executor');
 }
-console.log(`PASS actual read-only approval recovery: ${reloadVariants.length} positive/negative native-boundary variants; no provider, execution, admission, settlement or release`);
+console.log(`PASS actual read-only approval recovery: ${reloadVariants.length} unchanged-reader + ${reloadVariants.length} actual-handler positive/negative native-boundary variants; no provider, execution, admission, settlement or release`);
 
 
 if(nativePublication){assert.equal(nativePublicationCalls,10);console.log('PASS actual status handler + actual native publication SQL:10 current/actor/member/workspace/latest/released/canonical-proof/expiry/read-projection controls; proposal/domain ports remain synthetic');}

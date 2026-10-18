@@ -2,6 +2,7 @@ import { useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { ConfirmItem } from "@/components/chat/confirmPreview";
+import { readOriginalReminderHistory } from "@/components/chat/reminderHistory";
 import { CHAT_CONTROL_HEADER, chatControlRetryDelay } from "../../supabase/functions/_shared/paige-turn/control-transport";
 
 /**
@@ -101,6 +102,7 @@ export function usePaigeThreads(opts: { callerUserId: string | null; tenantId: s
   const keySuffix = platform ? "platform" : tenantId;
   const approvalScopeKey = JSON.stringify([callerUserId, tenantId, platform]);
   const approvalScopeRef = useRef({ key: approvalScopeKey, retryAt: 0 });
+  const originalReminderReadGeneration = useRef(0);
   if (approvalScopeRef.current.key !== approvalScopeKey) approvalScopeRef.current = { key: approvalScopeKey, retryAt: 0 };
 
   const threadsQuery = useQuery({
@@ -155,6 +157,29 @@ export function usePaigeThreads(opts: { callerUserId: string | null; tenantId: s
       const context = (error as { context?: Response } | null)?.context;
       if (context?.status === 429) scope.retryAt = Date.now() + chatControlRetryDelay(context.headers?.get("Retry-After"));
       return error ? null : readRecoveredPaigeApproval(data?.approval_recovery, {threadId, turnId, intentId, tenantId});
+    } catch { return null; }
+  }, [callerUserId, tenantId, platform, approvalScopeKey]);
+
+  // Same native status transport, separate inert historical result. A caller
+  // supplies a physical abort signal and fences its selected conversation/focus.
+  const loadOriginalReminderHistory = useCallback(async (
+    threadId: string, turnId: string, intentId: string, signal: AbortSignal,
+  ) => {
+    const generation = ++originalReminderReadGeneration.current;
+    if (platform || !callerUserId || !tenantId || !signal || signal.aborted) return null;
+    const scope = approvalScopeRef.current;
+    if (scope.key !== approvalScopeKey || Date.now() < scope.retryAt) return null;
+    try {
+      const { data, error } = await supabase.functions.invoke("paige-ai-chat", {
+        signal, headers: { [CHAT_CONTROL_HEADER]: "status" }, body: {
+          messages: [{ role: "user", content: "Read pending approval status." }], threadId, requestIntentId: intentId,
+          interactive: { kind: "status", approvalTurnId: turnId },
+        },
+      });
+      if (signal.aborted || approvalScopeRef.current !== scope || generation !== originalReminderReadGeneration.current) return null;
+      const context = (error as { context?: Response } | null)?.context;
+      if (context?.status === 429) scope.retryAt = Date.now() + chatControlRetryDelay(context.headers?.get("Retry-After"));
+      return error ? null : readOriginalReminderHistory(data?.approval_history, { threadId, turnId, intentId, tenantId });
     } catch { return null; }
   }, [callerUserId, tenantId, platform, approvalScopeKey]);
 
@@ -235,6 +260,7 @@ export function usePaigeThreads(opts: { callerUserId: string | null; tenantId: s
     isFetched: enabled && threadsQuery.isFetched,
     loadTurns,
     loadApprovalRecovery,
+    loadOriginalReminderHistory,
     ensureThread,
     renameThread: (id: string, title: string) => renameThread.mutate({ id, title }),
     archiveThread: (id: string) => archiveThread.mutate(id),

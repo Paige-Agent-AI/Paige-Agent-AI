@@ -43,6 +43,7 @@ import { usePlaybook } from "@/lib/playbook";
 import { cn } from "@/lib/utils";
 import type { QuickChip } from "@/components/paige/commandCenterTypes";
 import { usePaigeThreads, type PaigeThread } from "@/hooks/usePaigeThreads";
+import { readOriginalReminderHistory, type OriginalReminderHistory } from "@/components/chat/reminderHistory";
 import { useScopedUserId } from "@/hooks/useScopedUserId";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { ThreadRail } from "@/components/dashboard/paige/ThreadRail";
@@ -145,6 +146,8 @@ type Message = {
    *  not as a live Approve button (§15 — never re-fire a past action). */
   confirmResolved?: boolean;
   approvalRecovery?: "checking" | "unavailable";
+  originalReminderHistory?: OriginalReminderHistory;
+  originalReminderHistoryStatus?: "checking" | "unverified";
   recoveredApprovalExpiresAt?: string;
   /** Solo: what the person decided on this turn's card. The card settles into a record where it
    *  was asked, with no button left to press twice. Live session only; a reloaded turn shows the
@@ -614,6 +617,15 @@ const PaigeAIChatInner = ({
   const controlScopeRef = useRef({ epoch: scopeEpoch, statusNotBefore: 0, stopRetryAt: 0 });
   if (controlScopeRef.current.epoch !== scopeEpoch)
     controlScopeRef.current = { epoch: scopeEpoch, statusNotBefore: 0, stopRetryAt: 0 };
+  const originalReminderHydrationRef = useRef<{
+    scope: typeof requestScopeRef.current; cancel: () => void;
+  } | null>(null);
+  useLayoutEffect(() => {
+    const read = originalReminderHydrationRef.current;
+    if (read && (read.scope.epoch !== requestScopeRef.current.epoch
+      || !composerDraftHandlesMatch(read.scope.handle, requestScopeRef.current.handle))) read.cancel();
+  }, [requestScopeEpoch]);
+  useEffect(() => () => originalReminderHydrationRef.current?.cancel(), []);
   const researchHydrationRef = useRef<{
     scope: typeof requestScopeRef.current;
     cancel: () => void;
@@ -781,6 +793,9 @@ const PaigeAIChatInner = ({
     return true;
   }, []);
   const abortActiveRequest = useCallback(() => {
+    originalReminderHydrationRef.current?.cancel();
+    setMessages(previous => previous.map(message => message.originalReminderHistoryStatus === "checking"
+      ? { ...message, originalReminderHistoryStatus: "unverified" } : message));
     undispatchedDraftRef.current = null;
     submissionPreflightRef.current = false;
     documentRequestActiveRef.current = false;
@@ -1280,6 +1295,50 @@ const PaigeAIChatInner = ({
     for (let worker = 0; worker < Math.min(4, queue.length); worker += 1) void readQueuedRuns();
   };
 
+  const restoreOriginalReminderHistory = async (
+    threadId: string, turns: Awaited<ReturnType<typeof threadsApi.loadTurns>>, scopeStillCurrent: () => boolean,
+  ) => {
+    originalReminderHydrationRef.current?.cancel();
+    if (!soloTenantSafety || platform || !activeTenantId || typeof threadsApi.loadOriginalReminderHistory !== "function"
+      || !scopeStillCurrent()) return;
+    // One selected original card per hydration, including a non-last card. Its
+    // saved token stays server-side; Message.confirm still loses live tokens.
+    const candidate = [...turns].reverse().find(turn => turn.role === "assistant"
+      && turn.interactive_terminal_state === "WAIT_APPROVAL" && !!turn.interactive_intent_id
+      && Array.isArray(turn.bundle_ref?.paige_confirm) && turn.bundle_ref.paige_confirm.some(card =>
+        !!card && typeof card === "object" && (card as { tool?: unknown }).tool === "plan_set_reminder"));
+    if (!candidate?.interactive_intent_id) return;
+    const turnId = candidate.id, intentId = candidate.interactive_intent_id;
+    const controller = new AbortController();
+    const scope = requestScopeRef.current;
+    const generation = submissionGenerationRef.current;
+    let closed = false;
+    const owner = { scope, cancel: () => {
+      closed = true; controller.abort(); window.clearTimeout(timer);
+      if (originalReminderHydrationRef.current === owner) originalReminderHydrationRef.current = null;
+    } };
+    originalReminderHydrationRef.current = owner;
+    const current = () => !closed && !controller.signal.aborted && originalReminderHydrationRef.current === owner
+      && submissionGenerationRef.current === generation && scopeStillCurrent()
+      && scope.epoch === requestScopeRef.current.epoch
+      && composerDraftHandlesMatch(scope.handle, requestScopeRef.current.handle);
+    const markUnverified = () => setMessages(previous => previous.map(message => message.id === turnId
+      ? { ...message, originalReminderHistory: undefined, originalReminderHistoryStatus: "unverified" } : message));
+    const timer = window.setTimeout(() => { if (current()) markUnverified(); owner.cancel(); }, 10_000);
+    setMessages(previous => previous.map(message => message.id === turnId
+      ? { ...message, originalReminderHistoryStatus: "checking" } : message));
+    try {
+      const raw = await threadsApi.loadOriginalReminderHistory(threadId, turnId, intentId, controller.signal);
+      if (!current()) return;
+      const history = readOriginalReminderHistory(raw, { threadId, turnId, intentId, tenantId: activeTenantId });
+      setMessages(previous => previous.map(message => message.id === turnId
+        ? history ? { ...message, originalReminderHistory: history, originalReminderHistoryStatus: undefined }
+          : { ...message, originalReminderHistory: undefined, originalReminderHistoryStatus: "unverified" }
+        : message));
+    } catch { if (current()) markUnverified(); }
+    finally { owner.cancel(); }
+  };
+
   const restorePendingApproval = async (
     threadId: string, turns: Awaited<ReturnType<typeof threadsApi.loadTurns>>, scopeStillCurrent: () => boolean,
   ) => {
@@ -1287,6 +1346,10 @@ const PaigeAIChatInner = ({
     if (!soloTenantSafety || platform || !activeTenantId || typeof threadsApi.loadApprovalRecovery !== "function"
       || candidate?.role !== "assistant" || candidate.interactive_terminal_state !== "WAIT_APPROVAL"
       || !candidate.interactive_intent_id || !scopeStillCurrent()) return;
+    // This live reader supports CRM cards. Reminder history uses its separate
+    // read-only projection and never becomes a live approval on reload.
+    if (Array.isArray(candidate.bundle_ref?.paige_confirm) && candidate.bundle_ref.paige_confirm.some(card =>
+      !!card && typeof card === "object" && (card as { tool?: unknown }).tool === "plan_set_reminder")) return;
     const turnId = candidate.id;
     const intentId = candidate.interactive_intent_id;
     setMessages(previous => previous.map(message => message.id === turnId
@@ -1392,6 +1455,7 @@ const PaigeAIChatInner = ({
       applyConversationEvent({ type: "thread-loaded", id });
       restoreResearchReferences(id, hydrated.researchRefsAll);
       void restorePendingApproval(id, turns, () => ticketAccepted(requestTicket));
+      void restoreOriginalReminderHistory(id, turns, () => ticketAccepted(requestTicket));
       if (!soloTenantSafety && !isThreadControlled) setActiveThreadId(id);
       setSteps([]);
       writeLiveTurn(null);
@@ -1824,6 +1888,7 @@ const PaigeAIChatInner = ({
                   setMessages(hydrated.messages);
                   restoreResearchReferences(threadId, hydrated.researchRefsAll);
                   void restorePendingApproval(threadId, turns, () => ticketAccepted(requestTicket));
+                  void restoreOriginalReminderHistory(threadId, turns, () => ticketAccepted(requestTicket));
                 }
               } catch { /* the rollback stands */ }
             }
@@ -3421,6 +3486,19 @@ const PaigeAIChatInner = ({
                             {message.confirmReceipt?.result && (
                               <p className="mt-1 text-xs text-muted-foreground" data-paige-card-result>Result: {message.confirmReceipt.result}</p>
                             )}
+                            {message.originalReminderHistoryStatus && (
+                              <p role="status" className="mt-1 break-words text-xs text-muted-foreground" data-paige-original-reminder-status={message.originalReminderHistoryStatus}>
+                                {message.originalReminderHistoryStatus === "checking" ? "Checking the earlier reminder…"
+                                  : "The earlier reminder outcome couldn't be verified. Check the record before asking again."}
+                              </p>
+                            )}
+                            {message.originalReminderHistory?.results.map(result => (
+                              <p key={result.original.receipt_run_id} role="status" className="mt-1 break-words text-xs text-muted-foreground"
+                                data-paige-original-reminder-result data-paige-original-reminder-item={result.original.item_id}
+                                data-paige-original-reminder-receipt={result.original.receipt_run_id}>
+                                Recorded earlier: {result.original.title} · Originally scheduled for {new Date(result.original.remind_at).toLocaleString()}
+                              </p>
+                            ))}
                           </div>
                         )}
                         {/* #29 — inline handoff cards for the deliverables Paige produced this turn. Open

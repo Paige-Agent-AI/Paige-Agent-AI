@@ -290,8 +290,10 @@ Deno.serve(async (req) => {
     // upsert naming message_id as the arbiter is therefore a guaranteed 42P10 —
     // the failure that stranded the first Solo Beta welcome email. Clear any
     // stale non-sent rows for this message, then insert the fresh pending row.
-    await admin.from('email_send_log').delete().eq('message_id', messageId).neq('status', 'sent')
-    const { error: pendingLogError } = await admin.from('email_send_log').insert({
+    const { error: staleClearError } = await admin.from('email_send_log').delete().eq('message_id', messageId).neq('status', 'sent')
+    const { error: pendingLogError } = staleClearError
+      ? { error: staleClearError }
+      : await admin.from('email_send_log').insert({
       message_id: messageId,
       template_name: 'solo-beta-welcome',
       recipient_email: claim.recipient_email,
@@ -302,7 +304,7 @@ Deno.serve(async (req) => {
         reference_id: claim.reference_id,
         fulfillment_event_id: soloFulfillmentEventId,
       },
-    })
+      })
     if (pendingLogError) {
       await failClaim('send_log_prepare_failed')
       return new Response(JSON.stringify({ error: 'welcome_receipt_failed' }), {
@@ -314,6 +316,7 @@ Deno.serve(async (req) => {
     let response: Response
     try {
       response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+        signal: AbortSignal.timeout(20_000),
         method: 'POST',
         headers: {
           Authorization: 'Bearer ' + sendgridKey,

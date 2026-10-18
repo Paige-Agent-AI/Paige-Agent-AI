@@ -8,6 +8,7 @@ import {
 import {
   readInvoiceSubscriptionId,
   readSubscriptionItemPeriod,
+  safeStageCode,
 } from "../_shared/solo-beta-stripe-shapes.ts";
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), {
@@ -136,7 +137,7 @@ Deno.serve(async (req) => {
         _subscription_id: subscription.id, _customer_id: customerId,
         _provider_created_at: providerCreatedAt,
       });
-      if (claimError) throw new Error("event_claim_failed");
+      if (claimError) throw new Error(safeStageCode("event_claim_failed", claimError));
       const claim = Array.isArray(claimed) ? claimed[0] : claimed;
       if (!claim?.claimed) {
         if (claim?.lifecycle_state === "completed") {
@@ -150,7 +151,8 @@ Deno.serve(async (req) => {
       const { data: enrollment, error: enrollmentError } = await admin.from("solo_beta_enrollments")
         .select("checkout_attempt,checkout_fencing_token,checkout_session_id,stripe_customer_id")
         .eq("user_id", userId).maybeSingle();
-      if (enrollmentError || !enrollment || enrollment.checkout_session_id !== session.id
+      if (enrollmentError) throw new Error(safeStageCode("enrollment_identity_mismatch", enrollmentError));
+      if (!enrollment || enrollment.checkout_session_id !== session.id
         || enrollment.stripe_customer_id !== customerId || !enrollment.checkout_fencing_token) {
         throw new Error("enrollment_identity_mismatch");
       }
@@ -168,7 +170,7 @@ Deno.serve(async (req) => {
         _trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
         _cancel_at_period_end: subscription.cancel_at_period_end,
       });
-      if (fulfillError) throw new Error("atomic_fulfillment_failed");
+      if (fulfillError) throw new Error(safeStageCode("atomic_fulfillment_failed", fulfillError));
       await deliverVerifiedWelcome(supabaseUrl, serviceKey, event.id);
       return json(200, { received: true });
     }
@@ -224,7 +226,7 @@ Deno.serve(async (req) => {
         _subscription_id: subscription.id, _customer_id: customerId,
         _provider_created_at: providerCreatedAt,
       });
-      if (claimError) throw new Error("event_claim_failed");
+      if (claimError) throw new Error(safeStageCode("event_claim_failed", claimError));
       const claim = Array.isArray(claimed) ? claimed[0] : claimed;
       if (!claim?.claimed) {
         if (claim?.lifecycle_state === "completed") return json(200, { received: true, duplicate: true });
@@ -245,11 +247,16 @@ Deno.serve(async (req) => {
         _trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
         _cancel_at_period_end: subscription.cancel_at_period_end,
       });
-      if (syncError) throw new Error("lifecycle_sync_failed");
+      if (syncError) throw new Error(safeStageCode("lifecycle_sync_failed", syncError));
       return json(200, { received: true });
     }
     return json(200, { received: true, ignored: true });
   } catch (error) {
+    console.error("solo_beta_stripe_webhook_failed", {
+      eventId: typeof event !== "undefined" ? event.id : null,
+      eventType: typeof event !== "undefined" ? event.type : null,
+      message: error instanceof Error ? error.message : String(error),
+    });
     if (eventClaimed) {
       await admin.rpc("solo_beta_fail_stripe_event", { _event_id: event.id, _error_code: safeCode(error) });
     }

@@ -17,7 +17,7 @@ const f = vi.hoisted(() => ({
   brand: null as null | { tenant_id: string; tenant_name: string },
   brandLoading: false,
   multiple: false,
-  docs: { state: "ready", shared: 0, fromYou: 0, awaitingReview: 0 } as Record<string, unknown>,
+  docs: { state: "ready", shared: 0, fromYou: 0, awaitingReview: 0, awaitingReviewMore: false } as Record<string, unknown>,
   docsEnabled: [] as boolean[],
 }));
 vi.mock("@/integrations/supabase/client", () => {
@@ -76,7 +76,7 @@ const sessionReads = () => f.rpc.mock.calls.filter(c => c[0] === "client_portal_
 beforeEach(() => {
   vi.clearAllMocks();
   f.applications = 0; f.brandLoading = false; f.multiple = false; f.tables = [];
-  f.docs = { state: "ready", shared: 0, fromYou: 0, awaitingReview: 0 }; f.docsEnabled = [];
+  f.docs = { state: "ready", shared: 0, fromYou: 0, awaitingReview: 0, awaitingReviewMore: false }; f.docsEnabled = [];
   f.actions = { open: [], loading: false, error: null };
   f.progressRpc.mockResolvedValue({ data: progressPage({ shared: 0, done: 0, open: 0, overdue: 0 }), error: null });
   f.brand = { tenant_id: T, tenant_name: "Northwind Studio" };
@@ -421,7 +421,7 @@ it("never says coach, coached or coaching in any tile", async () => {
 
 // E09 Slice 4 — the Documents tile reads the customer's own Documents, not the legacy table.
 it("never counts the legacy documents table, and opens Documents", async () => {
-  f.docs = { state: "ready", shared: 2, fromYou: 1, awaitingReview: 0 };
+  f.docs = { state: "ready", shared: 2, fromYou: 1, awaitingReview: 0, awaitingReviewMore: false };
   await render();
   expect(f.tables).not.toContain("documents");
   const tile = host.querySelector<HTMLAnchorElement>('a[href="/app/documents"]')!;
@@ -432,9 +432,14 @@ it("never counts the legacy documents table, and opens Documents", async () => {
   expect(host.textContent).toContain("Documents page");
 });
 it("leads with work waiting for the customer's review", async () => {
-  f.docs = { state: "ready", shared: 1, fromYou: 0, awaitingReview: 2 };
+  f.docs = { state: "ready", shared: 1, fromYou: 0, awaitingReview: 2, awaitingReviewMore: false };
   await render();
   expect(host.querySelector('a[href="/app/documents"]')!.textContent).toContain("2 awaiting your review");
+});
+it("shows the review count as a floor when only the newest page of released work was read", async () => {
+  f.docs = { state: "ready", shared: 1, fromYou: 0, awaitingReview: 40, awaitingReviewMore: true };
+  await render();
+  expect(host.querySelector('a[href="/app/documents"]')!.textContent).toContain("40+ awaiting your review");
 });
 it("says nothing is here yet instead of a zero, and never reports a failed read as zero", async () => {
   await render();

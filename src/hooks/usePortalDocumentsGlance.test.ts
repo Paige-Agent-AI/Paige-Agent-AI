@@ -18,13 +18,13 @@ beforeEach(() => {
   f.rpc.mockImplementation(async (name: string) => answer[name]);
 });
 it("counts every file from the summary of a one-row read, and only work still waiting for the customer", async () => {
-  expect(await readPortalDocumentsGlance()).toEqual({ state: "ready", shared: 3, fromYou: 1, awaitingReview: 1 });
+  expect(await readPortalDocumentsGlance()).toEqual({ state: "ready", shared: 3, fromYou: 1, awaitingReview: 1, awaitingReviewMore: false });
   expect(f.rpc).toHaveBeenCalledWith("client_portal_documents", { p_tenant_id: tenant, p_limit: 1, p_before: null });
   expect(f.from).not.toHaveBeenCalled();
 });
 it("counts no review work where the business cannot release it", async () => {
   answer.operations_delivery_client_reviews_scoped = { data: null, error: { code: "42501", message: "DELIVERY_CLIENT_REVIEWS_UNAVAILABLE" } };
-  expect(await readPortalDocumentsGlance()).toEqual({ state: "ready", shared: 3, fromYou: 1, awaitingReview: 0 });
+  expect(await readPortalDocumentsGlance()).toEqual({ state: "ready", shared: 3, fromYou: 1, awaitingReview: 0, awaitingReviewMore: false });
 });
 it("never turns a failed read into a zero", async () => {
   answer.client_portal_documents = { data: null, error: { code: "PGRST000" } };
@@ -36,4 +36,8 @@ it("never turns a failed read into a zero", async () => {
 it("is unavailable without a customer relationship", async () => {
   answer.client_portal_self_profile = { data: null, error: null };
   expect((await readPortalDocumentsGlance()).state).toBe("unavailable");
+});
+it("marks the review count as a floor when the released-work page has more", async () => {
+  answer.operations_delivery_client_reviews_scoped = { data: { actor_id: actor, tenant_id: tenant, releases: [release(1, "awaiting_client"), release(2, "awaiting_client")], unavailable_count: 0, has_more: true }, error: null };
+  expect(await readPortalDocumentsGlance()).toEqual({ state: "ready", shared: 3, fromYou: 1, awaitingReview: 2, awaitingReviewMore: true });
 });

@@ -392,7 +392,7 @@ function DocumentsTile({ glance, businessName }: { glance: DocumentsGlance; busi
       openLabel="Open documents"
       headline={!ready ? "Couldn't check right now"
         : none ? "Nothing here yet"
-          : ready.awaitingReview > 0 ? `${ready.awaitingReview} awaiting your review`
+          : ready.awaitingReview > 0 ? `${ready.awaitingReview}${ready.awaitingReviewMore ? "+" : ""} awaiting your review`
             : `${files} ${files === 1 ? "file" : "files"}`}
       detail={!ready
         ? "Open Documents to try again."

@@ -8,11 +8,12 @@ import { readPortalReleasedWork } from "@/hooks/useClientPortalReleasedWork";
  * The customer home's Documents tile (E09 Slice 4): the same two reads as /app/documents, at their
  * smallest. Counts come from client_portal_documents(p_limit => 1).summary, so they cover every file
  * regardless of the limit; "awaiting review" counts released work still waiting for the customer.
- * A failed read never shows as zero.
+ * A failed read never shows as zero. The released-work read is one page (newest first), so when
+ * it has more, awaitingReviewMore says the count is a floor, never an exact total.
  */
 export type PortalDocumentsGlance =
   | { state: "loading" }
-  | { state: "ready"; shared: number; fromYou: number; awaitingReview: number }
+  | { state: "ready"; shared: number; fromYou: number; awaitingReview: number; awaitingReviewMore: boolean }
   | { state: "unavailable" }
   | { state: "error" };
 
@@ -37,7 +38,8 @@ export async function readPortalDocumentsGlance(current: () => boolean = () => t
   // Released work that could not be read is not counted, and not reported as zero waiting either.
   if (released.kind === "unavailable") return { state: "error" };
   const awaitingReview = released.kind === "ready" ? released.releases.filter(r => r.state === "awaiting_client").length : 0;
-  return { state: "ready", shared: page.summary.shared, fromYou: page.summary.from_you, awaitingReview };
+  const awaitingReviewMore = released.kind === "ready" && released.hasMore;
+  return { state: "ready", shared: page.summary.shared, fromYou: page.summary.from_you, awaitingReview, awaitingReviewMore };
 }
 
 export function usePortalDocumentsGlance(enabled = true): PortalDocumentsGlance {

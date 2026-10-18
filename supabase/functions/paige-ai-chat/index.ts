@@ -36,6 +36,9 @@ import { prepareCalendarLinkShare, sendCalendarLink, calendarLinkSocialCopy, typ
 // INT-178 — agreements, the READ half. Two reads over the one governed seam
 // (`public.paige_agreement_overview`); the send stays on `agreement-send` behind the confirm gate.
 import { AGREEMENT_TOOLS } from '../_shared/paige-spine/domains/agreement.ts';
+// E09 Slice 3: share one client-linked work item with that client's portal (high; owner/admin only).
+import { PLANNING_CLIENT_SHARE_TOOLS } from '../_shared/paige-spine/domains/planning_writes.ts';
+import { setPlanItemClientShare, type ClientShareFailure } from '../_shared/planning/scoped-write.ts';
 import { GROWTH_FORM_TOOLS } from '../_shared/paige-spine/domains/growth_form.ts';
 import { readAgreements } from '../_shared/agreements/chat-read.ts';
 import { agreementSendPrecheck, draftAgreement, sendAgreement } from '../_shared/agreements/chat-write.ts';
@@ -8631,6 +8634,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     if (callerTier === "tenant") toolDefs.push(...BUSINESS_SNAPSHOT_TOOLS);
     // E4-S2 client standing + business time zone: same Solo-workspace lens; caller-JWT reads only.
     if (callerTier === "tenant") toolDefs.push(...CLIENT_ENGAGEMENT_TOOLS);
+    // E09 Slice 3: share or unshare one client-linked work item. Tenant tier only and never on a
+    // client seat or the customer portal; the RPC itself re-proves owner/admin of the active workspace
+    // and refuses a top-level agency, so the offer is not the authority.
+    if (callerTier === "tenant" && !scopedClientId && !customerPortal) toolDefs.push(...PLANNING_CLIENT_SHARE_TOOLS as any);
     if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && calendarBookingRole && !scopedClientId && !customerPortal) toolDefs.push(...CALENDAR_BOOKING_READ_TOOLS);
     if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && taskReadRole && !scopedClientId && !customerPortal) toolDefs.push(...CRM_TASK_READ_TOOLS);
     // One-to-one business email (INT-328): declared by its domain module, executed only by its door.
@@ -9092,6 +9099,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       plan_add_milestone: "adding a milestone",
       plan_assign_task: "assigning a task",
       plan_update_item: "updating a plan item",
+      plan_item_set_client_share: "changing what a client can see",
       plan_remove_item: "removing a plan item",
       author_event_kind: "adding a new activity kind to track",
       automation_draft: "setting up a repeatable process",
@@ -9721,6 +9729,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           return `Update this plan item${a?.status ? ` → ${a.status}` : ""}${a?.remind_at ? ` (reminder moved to ${a.remind_at})` : a?.due_at ? ` (due ${a.due_at})` : ""}.`;
         case "plan_remove_item":
           return `Remove this plan item. If it was on the action bus, that action is dismissed too.`;
+        case "plan_item_set_client_share":
+          return a?.shared === false
+            ? "Stop showing this work item in your client's portal. They will no longer see it."
+            : "Show this work item in your client's portal. They will see its title, its state and its due date — not its notes, who it is assigned to or its priority — and they are not sent a message about it.";
         default:
           return `Paige is ${TOOL_LABELS[name] || `running ${name}`}.`;
       }
@@ -17222,6 +17234,77 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             } catch (e) { console.error("[paige] Task read receipt unavailable:", (e as Error)?.message); }
           }
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result) });
+        } else if (tc.function.name === "plan_item_set_client_share") {
+          // LAST IN THE CHAIN, after every reviewed incumbent branch, so no incumbent dispatch gains a
+          // dominating condition (c0b-incumbent-resource-binding pins those).
+          // E09 Slice 3 — share one client-linked work item with that client's portal, or stop sharing
+          // it, through the ONE executor (_shared/planning/scoped-write.ts setPlanItemClientShare) over
+          // public.plan_item_set_client_share. `high` in action-risk.ts, so it reaches here only once the
+          // confirm gate has cleared the rendered approval card; `workspace-admin` in its Spine
+          // declaration, so a member was refused before any card.
+          //
+          // THE CALLER'S CLIENT, NOT THE ADMIN ONE: the RPC is SECURITY DEFINER and re-proves actor,
+          // active workspace and owner/admin from auth.uid() (§59). The expected actor is `user.id` and
+          // the expected tenant is the server-resolved persona tenant, re-checked against
+          // current_user_tenant_id() here; NOTHING in the model's arguments can name either (a forged
+          // tenant_id is ignored by the executor and never sent).
+          const shareTenant = callerTier === "tenant" ? personaCtx?.tenant_id ?? null : null;
+          try {
+            // Malformed arguments are a refused request (nothing sent), not an unknown outcome.
+            let shareArgs: unknown = null;
+            try { shareArgs = JSON.parse(tc.function.arguments || "{}"); } catch { shareArgs = null; }
+            const scope = await supabaseClient.rpc("current_user_tenant_id");
+            const tenantNow = !shareTenant || scope.error || scope.data !== shareTenant ? null : shareTenant;
+            const r = await setPlanItemClientShare({
+              caller: {
+                rpc: (name, rpcArgs) => supabaseClient.rpc(name, rpcArgs),
+                readItem: (itemId, tenantId) => supabaseClient.from("plan_items")
+                  .select("id,tenant_id,client_shared_at,updated_at").eq("tenant_id", tenantId).eq("id", itemId).maybeSingle(),
+              },
+              expectedActorId: user.id,
+              expectedTenantId: tenantNow,
+              args: shareArgs,
+            });
+            await recordCapabilityRun(supabase, {
+              tenantId: shareTenant,
+              actorId: user.id,
+              capabilityKey: tc.function.name,
+              // EXHAUSTIVE over ClientShareFailure, so a failure mode added later is a compile error
+              // here instead of silently inheriting "refused" in the one record whose job is truth.
+              outcome: r.success === true ? "capability_succeeded" : ((reason: ClientShareFailure): "capability_refused" | "capability_outcome_unknown" => {
+                switch (reason) {
+                  case "outcome_unknown": return "capability_outcome_unknown";
+                  case "bad_request": case "no_workspace": case "scope_changed": case "not_for_account": case "not_found":
+                  case "not_client_linked": case "not_shareable": case "client_not_found": case "changed": case "refused":
+                    return "capability_refused";
+                  default: { const _never: never = reason; return "capability_refused"; }
+                }
+              })(r.reason),
+              // Deliberately no `detail`: the item's title is the client's business.
+            });
+            if (r.success === false && r.reason === "outcome_unknown") requestExecutionState.needsReview = true;
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(r.success === true
+              ? { success: true, item_id: r.itemId, plan_item_id: r.itemId, shared: r.shared, replayed: r.replayed,
+                  portal_connected: r.portalConnected,
+                  readback: { id: r.itemId, shared: r.shared, shared_at: r.sharedAt, updated_at: r.updatedAt },
+                  record_locator: { table: "plan_items", id: r.itemId }, verified_readback: true,
+                  note: (r.shared
+                    ? "Verified: the client can now see this item's title, state and due date in their portal. They were not sent a message."
+                    : "Verified: the client no longer sees this item in their portal.")
+                    + (r.portalConnected === false ? " This client has not connected to their portal yet, so they will see it once they do." : "")
+                    + (r.replayed ? " It was already in that state; nothing was changed." : "") }
+              : { success: false, error: r.message, reason: r.reason,
+                  ...(r.writeAttempted ? { outcome_unknown: true, note: OUTCOME_UNKNOWN_NOTE } : { not_applied: true }),
+                  ...(r.currentUpdatedAt ? { current_updated_at: r.currentUpdatedAt } : {}) }) });
+          } catch (e) {
+            console.error("[planning] client share dispatch threw", { reason: e instanceof Error ? e.message : "unknown" });
+            await recordCapabilityRun(supabase, { tenantId: shareTenant, actorId: user.id, capabilityKey: tc.function.name,
+              outcome: "capability_outcome_unknown" });
+            requestExecutionState.needsReview = true;
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, outcome_unknown: true,
+              error: "The sharing change did not report back. Check the item with plan_list before anything else, and do not retry automatically.",
+              note: OUTCOME_UNKNOWN_NOTE }) });
+          }
         } else {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: `Unknown tool: ${tc.function.name}` }) });
         }
@@ -17364,7 +17447,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         booking_preset_restore: "calendars",
         calendar_link_prepare: "calendars", calendar_link_send: "calendars", calendar_link_social_copy: "calendars",
         plan_create: "plans", plan_add_milestone: "plan_items", plan_set_reminder: "plan_items",
-        plan_update_item: "plan_items", plan_remove_item: "plan_items",
+        plan_update_item: "plan_items", plan_remove_item: "plan_items", plan_item_set_client_share: "plan_items",
         author_event_kind: "paige_event_kinds",
         automation_draft: "paige_automations",
         marketplace_install: "marketplace", marketplace_uninstall: "marketplace",
@@ -17498,7 +17581,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         if (tool === "automation_draft") return typeof out?.automation_id === "string" && UUID.test(out.automation_id) ? out.automation_id : null;
         if (tool === "save_to_knowledge_base") return typeof out?.knowledge_doc_id === "string" && UUID.test(out.knowledge_doc_id) ? out.knowledge_doc_id : null;
         // A Planning item's parent plan/contact/action is not the record changed.
-        if (tool && ["plan_create", "plan_add_milestone", "plan_assign_task", "plan_set_reminder", "plan_update_item", "plan_remove_item"].includes(tool)) {
+        if (tool && ["plan_create", "plan_add_milestone", "plan_assign_task", "plan_set_reminder", "plan_update_item", "plan_remove_item", "plan_item_set_client_share"].includes(tool)) {
           const locator = out?.record_locator;
           if (out?.verified_readback === true && locator?.table === WRITE_TARGET[tool] && typeof locator.id === "string" && UUID.test(locator.id)) return locator.id;
           return typeof args?.item_id === "string" && UUID.test(args.item_id) ? args.item_id : null;

@@ -51,6 +51,13 @@ export type SourceInvoice = {
 export type SourceWorkItem = {
   id: string; plan_id: string | null; item_type: 'milestone' | 'task'; title: string | null; status: string;
   due_at: string | null; completed_at: string | null; assigned: boolean;
+  /**
+   * E09 Slice 3 (migration 20271110030000): whether the business chose to show this item in the
+   * client's portal, and the exact row version the share writer (plan_item_set_client_share)
+   * compares against. Optional because a reader older than that migration omits them; a consumer
+   * offers no share control for an item that does not carry both. Passed through unchanged.
+   */
+  shared?: boolean; updated_at?: string;
 };
 export type ClientEngagementSource = {
   tenant_id: string; contact_id: string; client_name: string | null; read_at: string;
@@ -62,7 +69,9 @@ export type ClientEngagementSource = {
   signings: SourceSigning[]; signings_has_more: boolean;
   invoices: SourceInvoice[]; invoices_has_more: boolean;
   work: { total: number; done: number; cancelled: number; blocked: number; open: number; overdue: number;
-    undated_open: number; items: SourceWorkItem[]; items_has_more: boolean };
+    undated_open: number; items: SourceWorkItem[]; items_has_more: boolean;
+    /** E09 Slice 3: how many of this client's milestones and tasks are shared with their portal (non-cancelled only). */
+    shared?: number };
   /**
    * The read's own capability receipt, while the SQL reader still writes one. Optional (E4-S3): the
    * display reads stop receipting and PAIGE's chat read is recorded at the executor. No consumer may
@@ -155,6 +164,12 @@ export type ClientEngagementStatus = {
   }>;
   work: {
     state: WorkState; total: number; done: number; open: number; overdue: number; blocked: number;
+    /**
+     * E09 Slice 3: how many of this client's milestones and tasks the client can currently see in
+     * their portal (the reader counts shared, non-cancelled items; a cancelled item is unshared).
+     * Null when the reader predates that migration — unknown, never zero.
+     */
+    shared: number | null;
     next: null | { title: string | null; due_at: string; item_type: 'milestone' | 'task' };
     items: SourceWorkItem[];
   };
@@ -397,6 +412,7 @@ export function composeClientEngagementStatus(source: ClientEngagementSource): C
     invoices,
     work: {
       state: workState, total: w.total, done: w.done, open: w.open, overdue: w.overdue, blocked: w.blocked,
+      shared: typeof w.shared === 'number' && Number.isInteger(w.shared) && w.shared >= 0 ? w.shared : null,
       next: upcoming ? { title: upcoming.title, due_at: upcoming.due_at!, item_type: upcoming.item_type } : null,
       items: w.items,
     },

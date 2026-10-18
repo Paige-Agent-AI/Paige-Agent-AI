@@ -31,6 +31,10 @@ export const MODULE_ROUTES: Record<string, { href: string; icon: LucideIcon }> =
   // presentation overlay hide or reorder it). AppNav still shows it only to a single-business
   // customer; the page re-resolves the relationship server-side.
   sessions: { href: "/app/sessions", icon: CalendarClock },
+  // E09 Slice 3 — the work the business explicitly shared with the customer. The generic and fitness
+  // Playbooks already list `progress`; this key turns that entry into a link the overlay can hide or
+  // reorder. AppNav shows it only to a single-business customer; the page re-resolves server-side.
+  progress: { href: "/app/progress", icon: ListChecks },
   // Funding-vertical surfaces — keys match the /app route paths in App.tsx.
   // Gated by the funding Playbook's portal.modules (opt-in preset), never shown
   // to a coaching-generic tenant.

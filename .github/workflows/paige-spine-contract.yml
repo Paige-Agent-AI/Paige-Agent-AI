@@ -543,6 +543,9 @@ jobs:
       # E09 Sessions: the customer's own bookings, notice-window admission in front of booking-manage.
       - run: supabase test db supabase/tests/customer_portal_sessions.sql
         if: ${{ !cancelled() }}
+      # E09 Progress: only explicitly shared plan_items reach the customer; one audited share writer.
+      - run: supabase test db supabase/tests/customer_portal_progress.sql
+        if: ${{ !cancelled() }}
       # The owner's real send through create_solo_team_invite, accepted through accept_solo_team_invite,
       # for Member and Admin across two businesses: no hand-written token.
       - run: supabase test db supabase/tests/solo_team_invite_accept_end_to_end.sql

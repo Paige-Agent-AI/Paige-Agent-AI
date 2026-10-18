@@ -7,3 +7,5 @@
 .ops-staff-skeleton{display:grid;gap:10px;margin-block:16px}.ops-staff-skeleton i,.ops-staff-skeleton b{display:block;height:12px;border-radius:6px;background:var(--pg-line-soft)}.ops-staff-skeleton i:nth-child(1){width:46%;height:14px}.ops-staff-skeleton i:nth-child(2){width:78%}.ops-staff-skeleton i:nth-child(3){width:64%}.ops-staff-skeleton b{height:96px;border-radius:13px}
 @media(prefers-reduced-motion:no-preference){.ops-staff-skeleton i,.ops-staff-skeleton b{animation:ops-staff-pulse 1.4s ease-in-out infinite}}
 @keyframes ops-staff-pulse{50%{opacity:.55}}
+/* The release act stands apart from the document it releases (it sat flush against the document's border). */
+.ops-staff-review>button.ops-staff-primary{margin-top:16px}

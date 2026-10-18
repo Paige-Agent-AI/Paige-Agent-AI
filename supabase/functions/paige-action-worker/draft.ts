@@ -103,7 +103,19 @@ function leadReplyInput(payload: unknown): Obj {
 }
 
 function htmlToText(html: string): string {
-  return html
+  let text = html
+    .replace(/<!--[\s\S]*?(?:-->|$)/g, "")
+    .replace(/<(script|style)\b[^>]*>[\s\S]*?(?:<\/\1\s*>|$)/gi, "")
+    .replace(/<(?:svg|math|template|iframe|object|canvas|audio|video)\b[^>]*\/>/gi, "");
+  // Drop innermost non-content blocks first so nested vectors/templates cannot leave payload words.
+  // Each changing pass removes text; malformed unclosed blocks are dropped below, never offered.
+  let previous: string;
+  do {
+    previous = text;
+    text = text.replace(/<(svg|math|head|title|template|noscript|iframe|object|canvas|audio|video)\b[^>]*>(?:(?!<\1\b)[\s\S])*?<\/\1\s*>/gi, "");
+  } while (text !== previous);
+  return text
+    .replace(/<(?:svg|math|head|title|template|noscript|iframe|object|canvas|audio|video)\b[^>]*>[\s\S]*$/gi, "")
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/p>\s*/gi, "\n\n")
     .replace(/<[^>]+>/g, "")
@@ -113,10 +125,10 @@ function htmlToText(html: string): string {
     .trim();
 }
 
-// Only real block/inline email tags count as HTML. Plain text that merely contains "<Dana>" or "a < b > c"
+// Known structural, non-content and block/inline email tags count as HTML. Plain text containing "<Dana>" or "a < b > c"
 // is text, and is escaped — never passed through as markup.
 const looksLikeHtml = (s: string): boolean =>
-  /<\/?(p|br|div|span|a|strong|em|b|i|u|ul|ol|li|h[1-6]|table|thead|tbody|tr|td|th|blockquote|hr|img)(\s[^<>]*)?\/?>/i.test(s);
+  /<!--|<!doctype\b|<\?xml\b|<\/?(html|head|body|title|meta|link|script|style|svg|math|template|noscript|iframe|object|embed|canvas|audio|video|p|br|div|span|a|strong|em|b|i|u|ul|ol|li|h[1-6]|table|thead|tbody|tr|td|th|blockquote|hr|img)(\s[^<>]*)?\/?>/i.test(s);
 
 // What of the composer's answer is kept as the record. An allow-list, not a deny-list, and only small
 // platform-authored values: anything the model or the composer put elsewhere — a `to`, a

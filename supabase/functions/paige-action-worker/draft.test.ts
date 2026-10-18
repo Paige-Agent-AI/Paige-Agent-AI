@@ -487,3 +487,85 @@ describe("the drafted subject fits the governed email door (verifier minor 7)", 
     assert.equal(shapeEmailDraft({ subject: s, body: "Body" })!.subject, s);
   });
 });
+
+for (const kind of ["owner.lead_followup", "client.followup", "owner.followup_email"]) {
+  describe(`${kind} — structured markup is not the reviewable plain-text body`, () => {
+    const action = () => leadFollowup({ action_kind: kind });
+    const shapes = (body: string): Obj[] => [
+      { subject: "Checking in", body },
+      { draft: { subject: "Checking in", body } },
+      { draft: { subject: "Checking in", body_html: body } },
+    ];
+
+    it("converts structural document bodies through the existing plain-text projection", async () => {
+      for (const body of ["<html><body>Hello Dana</body></html>", "<!DOCTYPE html><HTML lang='en'><BODY>Hello Dana</BODY></HTML>"]) {
+        for (const result of shapes(body)) {
+          const h = harness(ok(result)), a = action();
+          assert.deepEqual(await draftClaimedAction(h.deps, a), { kind: "drafted", invocationId: INV });
+          assert.deepEqual(h.invokes, [orchestratorRequest(a)]);
+          assert.deepEqual(h.rpcs.map(r => r.fn), ["advance_action"]);
+          const draft = h.rpcs[0]!.args.p_draft_content as Obj;
+          assert.deepEqual(draft, { channel: "email", subject: "Checking in", body: "Hello Dana", raw: result.draft ? { draft: {} } : {} });
+          assert.doesNotThrow(() => parseCommsEmailCommand({ action: "comms.email_send", contact_id: C, subject: draft.subject, body: draft.body }));
+        }
+      }
+    });
+
+    it("blocks non-content-only markup rather than offering script, style or vector contents as an email", async () => {
+      for (const body of [
+        "<script>not an email()</script>", "<STYLE>.secret { display: none }</STYLE>",
+        "<svg xmlns='http://www.w3.org/2000/svg'><text>vector only</text></svg>",
+        "<svg><svg><text>inner vector</text></svg><text>outer vector</text></svg>",
+        "<html><head><title>Page title</title><style>hidden</style></head><body><script>code</script></body></html>",
+        "<template><p>Hidden template</p></template>", "<iframe>Hidden fallback</iframe>",
+        "<!-- not email -->", "<!DOCTYPE html>", "<script>unclosed code", "<style>unclosed css", "<!-- unclosed comment",
+      ]) for (const result of shapes(body)) {
+        const h = harness(ok(result));
+        assert.deepEqual(await draftClaimedAction(h.deps, action()), { kind: "failed", stage: "draft", error: EMPTY_EMAIL_DRAFT_ERROR }, body);
+        assert.deepEqual(h.rpcs, [{ fn: "fail_action", args: { p_action_id: ACT, p_error: EMPTY_EMAIL_DRAFT_ERROR } }]);
+      }
+    });
+
+    it("retains meaningful body words and existing raw allowlist while removing non-content blocks", async () => {
+      for (const body of [
+        "<html><head><title>Not the email</title></head><body>Hello<script>bad()</script> Dana<style>.hidden{}</style><svg><text>not body</text></svg><!-- private comment --></body></html>",
+        "<body>Hello<svg><svg><text>inner vector</text></svg><text>outer vector</text></svg> Dana</body>",
+        "<body>Hello<svg/> Dana</body>",
+        "<body>Hello<script>first()</script> Dana<script>second()</script></body>",
+      ]) for (const shape of shapes(body)) {
+        const result = { ...shape, to: "model-picked@example.test", recipient: { email: "other@example.test" }, compliance_verdict: "approved", summary: body };
+        const h = harness(ok(result));
+        assert.deepEqual(await draftClaimedAction(h.deps, action()), { kind: "drafted", invocationId: INV });
+        const draft = h.rpcs[0]!.args.p_draft_content as Obj;
+        assert.equal(draft.body, "Hello Dana");
+        assert.deepEqual(draft.raw, { compliance_verdict: "approved", ...(shape.draft ? { draft: {} } : {}) });
+        assert.equal("to" in draft, false);
+        assert.equal("recipient" in draft, false);
+        assert.doesNotMatch(JSON.stringify(draft), /bad\(\)|hidden|not body|private comment|model-picked|other@example|body_html|<html>/);
+      }
+    });
+
+    it("preserves intentional angle-bracket names and comparisons as literal plain text", async () => {
+      for (const body of ["<Dana>", "a < b > c", "Hi <Dana>, a < b > c"]) {
+        for (const result of [{ subject: "Checking in", body }, { draft: { subject: "Checking in", body } }, { draft: { subject: "Checking in", body_text: body } }]) {
+          const h = harness(ok(result));
+          assert.deepEqual(await draftClaimedAction(h.deps, action()), { kind: "drafted", invocationId: INV });
+          assert.equal((h.rpcs[0]!.args.p_draft_content as Obj).body, body);
+        }
+      }
+    });
+
+    if (kind !== "owner.lead_followup") it("still blocks NUL and excess meaningful text after document conversion, without truncation", async () => {
+      for (const body of ["Hi\u0000Dana", "x".repeat(COMMS_EMAIL_BODY_MAX + 1)]) {
+        for (const result of shapes(`<html><body>${body}</body></html>`)) {
+          const h = harness(ok(result));
+          assert.deepEqual(await draftClaimedAction(h.deps, action()), { kind: "failed", stage: "draft", error: EMPTY_EMAIL_DRAFT_ERROR });
+          assert.deepEqual(h.rpcs, [{ fn: "fail_action", args: { p_action_id: ACT, p_error: EMPTY_EMAIL_DRAFT_ERROR } }]);
+        }
+      }
+      const body = "é".repeat(COMMS_EMAIL_BODY_MAX), h = harness(ok({ subject: "Checking in", body: `<html><body>${body}</body></html>` }));
+      assert.deepEqual(await draftClaimedAction(h.deps, action()), { kind: "drafted", invocationId: INV });
+      assert.equal((h.rpcs[0]!.args.p_draft_content as Obj).body, body);
+    });
+  });
+}

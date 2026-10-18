@@ -77,10 +77,10 @@ ACCEPTANCE_CRITERIA: recorded above.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: recorded above.
 
-INTERNAL_BUILD_IDENTITY: b5a0a0d68a25e1ece6c59501bc9562f474451f93; deployment=PENDING merge to main then Vercel production; environment=production web (no edge/migration in this PR); migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record + PR #2346 CI
+INTERNAL_BUILD_IDENTITY: b5a0a0d68a25e1ece6c59501bc9562f474451f93; deployment=PENDING merge to main then Vercel production; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record + PR #2346 CI
 RELEASE_CHANNEL: development: internal engineering slice on the public signup surface; local/development build environment; no staged rollout.
-RELEASE_CLASSIFICATION: routine corrective copy/validation change on an existing funnel defect.
+RELEASE_CLASSIFICATION: patch: corrects the live-observed signup password-policy defect (client contract now matches the server rule with truthful displayed requirements).
 CUSTOMER_RELEASE_IDENTITY: none: defect repair, no release note.
 RELEASE_NOTE_REQUIRED: no: fixes a defect that blocked correctable password choices.
-RELEASE_TRUTH_BOUNDARY: LIVE at merge+deploy for the client contract (schema+indicator+toast); PROOF OWED only for production-rendered confirmation.
+RELEASE_TRUTH_BOUNDARY: LIVE: client-side validation/copy contract at merge+deploy; PROOF OWED: production-rendered confirmation only.
 RELEASE_RECOVERY: position=forward-fix (client-only change, revert-safe); reference=PR #2346 review thread + contract suite.

@@ -4860,6 +4860,14 @@ now fixed for signed-in writers too (`FILE_IDENTITY_IMMUTABLE`), with only the t
 `ON DELETE SET NULL` passing. Same rule on every tier. Still open with the policy follow-up: a member can
 rename a shared file (MINOR-J) as well as delete one.
 
+Round 6 (2026-10-18, pgTAP 244 cases): a customer reads, and so opens, only files the business shared to
+their contact (once ready) and the uploads their own login made. Storage serves an object to anyone who can
+see a ready row whose uploader owns it, so the customer read policy now shows a `client_upload` row only to
+the login that uploaded it: never to another login on the same contact, and never to the next person linked
+to the contact after a former person's link is cleared (the former person's uploads stay with the contact,
+visible to the business). Files the business shared stay with the contact across that change (product
+decision, filed for Slice 7). Same rule on every tier.
+
 The Operations Delivery "Client outcome" line uses the same release gate as the work item
 (`src/solo/operations/operations-item-release.ts`): it reads "Released and accepted on each work item in the
 project" only for a standalone business with a linked project and a second active member, "Releasing needs a

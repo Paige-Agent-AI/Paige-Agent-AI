@@ -2766,3 +2766,7 @@ of this section; treat this text as the interim.**
 · §32 (compiled ≠ ran) · §70/§70.1 (a human finishing the job) · §39 (the peer-gate §71.4 does not
 replace) · §BRAIN.1 (read the record first — §71 is what to do when the record is silent) · §24
 (automate the repeat — the note above).
+## 00.d OWNER OFFICIAL LAUNCH CONDITION — EXP00 + TEN CUSTOMER EXPERIENCES E01–E10 (2026-10-18)
+
+Read the current owner [first ten contract](docs/product/PRELAUNCH-FIRST-TEN-EXP-AND-EXP00-LAUNCH-REQUIREMENTS-2026-10-18.md) and [existing E09 complete Portal assignment](docs/delivery/E09-OWNER-LAUNCH-INTEGRATION-ASSIGNMENT-2026-10-18.md). NO general outside-customer invitations before **all EXP01–EXP10 jobs and EXP00 real signup/Platform Operator** have safe true production success and one integrated owner acceptance. This gate does not postpone unrelated safe merges/deploys or launch E06/E07/E08/E10 agents automatically. The new tenant's temporary PAIGE web/email addresses are reserved but only **web_live / outbound_ready / inbound_ready** after actual verified provider/site/transport results, and Chat or safe Live must guide the customer to useful launch readiness. Six DNS guidance profiles now include Wix alongside Cloudflare/Namecheap/GoDaddy/Squarespace/Porkbun, but universal authority/validation and exact approval mean no registrar login, nameserver/cost or arbitrary DNS write. E09 protected client Portal, Vibe/Marketing/Ads/Sales and L1 Operator must connect correctly. Existing first-value and supported role/tenant/provider boundaries preserved.
+

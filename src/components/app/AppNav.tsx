@@ -288,7 +288,9 @@ export function AppNav({ user }: AppNavProps) {
                   )}
                 </button>
               )}
-              {!brandLoading && brand?.tenant_id && (
+              {/* Account is a customer's own record at ONE business: shown with Messages and Sessions, never
+                  while the relationship is unresolved or failed (E09 Slice 6). */}
+              {isCustomer && (
                 <button
                   onClick={() => { navigate("/app/settings?view=client-account"); setMobileMenuOpen(false); }}
                   className={cn(DRAWER_ITEM, DRAWER_REST)}
@@ -445,7 +447,7 @@ export function AppNav({ user }: AppNavProps) {
                 )}
               </DropdownMenuItem>
             )}
-            {!brandLoading && brand?.tenant_id && (
+            {isCustomer && (
               <DropdownMenuItem onClick={() => navigate("/app/settings?view=client-account")}>
                 <UserIcon className="w-4 h-4 mr-2" />
                 Account

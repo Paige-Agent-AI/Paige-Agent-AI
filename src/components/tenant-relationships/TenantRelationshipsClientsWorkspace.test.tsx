@@ -1341,9 +1341,11 @@ describe("tenant Relationships / Clients workspace", () => {
       expect(body?.children[2]?.id).toBe("client-files");
       // The other record sections are all still there, after it (§58).
       expect([...host.querySelectorAll(".trc-record-body > .trc-record-section h3")].map(h => h.textContent)).toEqual(
-        ["Where Supplied Person stands", "Shared with Supplied Person", "Files for Supplied Person", "Relationship overview", "Contact details", "Relationship intelligence", "Relationship connections", "Data boundaries"]);
+        ["Where Supplied Person stands", "Shared with Supplied Person", "Files for Supplied Person", "How Supplied Person can be reached", "Relationship overview", "Contact details", "Relationship intelligence", "Relationship connections", "Data boundaries"]);
       // The static "upload is not exposed here" card now says where the live library is.
       expect(host.textContent).toContain("Client files · LIVE");
+      // E09 Slice 6: the record's footer no longer repeats the two flags the new section shows (§58: moved, not lost).
+      expect(host.querySelector(".trc-record-footer")?.textContent).not.toMatch(/do-not-contact flag|consent flag/);
     } finally {
       act(() => root.unmount());
       host.remove();
@@ -1381,6 +1383,18 @@ describe("tenant Relationships / Clients workspace", () => {
     expect(mounts[0].trim().startsWith("{standing && <ClientFiles")).toBe(true);
   });
 
+  it("E09 Slice 6: the reach section mounts only behind the same standing gate, and the footer keeps its flags everywhere else", () => {
+    const source = readFileSync(resolve("src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx"), "utf8");
+    const mounts = source.match(/[^\n]*<ClientCommunicationState[^\n]*/g) ?? [];
+    expect(mounts).toHaveLength(1);
+    expect(mounts[0].trim().startsWith("{standing && <ClientCommunicationState")).toBe(true);
+    // Where the section is not shown, the footer still carries both flag phrases (§58).
+    const footer = source.slice(source.indexOf('<footer className="trc-record-footer">'));
+    expect(footer).toMatch(/\{standing\s*\?\s*`Created/);
+    expect(footer).toContain("do-not-contact flag recorded");
+    expect(footer).toContain("consent flag recorded");
+  });
+
   it("E4-S3: declared, not mounted — a sub-account's People view does not read or render client standing (§60 gap pinned)", async () => {
     useTenantContext.mockReturnValue({
       activeTenantId: "tenant-sub",
@@ -1396,6 +1410,9 @@ describe("tenant Relationships / Clients workspace", () => {
       await act(async () => root.render(<MemoryRouter initialEntries={["/business/2/clients/people?person=p-1"]}><TenantRelationshipsClientsWorkspace routeTier="sub_account" openPaige={vi.fn()} /></MemoryRouter>));
       expect(editorHarness.rpc.mock.calls.some(([name]) => name === "read_client_engagement_status")).toBe(false);
       expect(host.querySelector("#client-standing")).toBeNull();
+      // E09 Slice 6: declared, not mounted on a sub-account either — no read, no section.
+      expect(editorHarness.rpc.mock.calls.some(([name]) => name === "read_client_communication_state")).toBe(false);
+      expect(host.querySelector(".trc-reach")).toBeNull();
     } finally {
       act(() => root.unmount());
       host.remove();

@@ -31,7 +31,15 @@
  * PURE + DEPENDENCY-INJECTED, exactly like `resolveSecureBrowserAuthority`, so the whole matrix —
  * same-tenant success, cross-tenant denial, forged/expired/replayed denial, and "no send on any
  * denied path" — is provable from `src/**` vitest without a Deno runtime, a database, or Resend.
+ *
+ * THE PRE-SEND GATE (E09 Slice 6, §37). Before the provider call, the claimed recipient passes the SAME
+ * runPreSend every other client send passes: a contact who turned email off (their portal, their
+ * unsubscribe link), a hard bounce, a complaint or a business pause stops the send. The claim is
+ * already spent (consume-then-execute), so a held send is reported as `send_failed` with the gate's
+ * plain reason, a failed receipt is written, and nothing reaches the provider. `preSend` is optional so
+ * the approval-binding proofs keep their exact shape; the host always injects it (emailPreSend).
  */
+import { runPreSend } from "../pre-send-pipeline.ts";
 
 /** The arguments stored with a proposal — the EXACT send that was approved. Returned by a successful
  *  claim and used verbatim; never re-authored. */
@@ -63,7 +71,7 @@ export type EmailApprovalOutcome =
   /** Phase 2 — the approval was claimed (single-use: now consumed) but the external SEND FAILED. §13:
    *  this is never reported as success — the email did not go out and the one-time approval is spent,
    *  so the caller must be told plainly and re-draft to try again. "A fire is not a delivery." */
-  | { kind: "send_failed"; resend_id: string | null; recipient: string }
+  | { kind: "send_failed"; resend_id: string | null; recipient: string; held_reason?: string }
   /** Any denial — cross-tenant/scoped-out, forged/expired/replayed approval, unrecordable proposal.
    *  NOTHING was sent on a pre-send denial, and no success receipt is written. */
   | { kind: "denied"; code: string; message: string };
@@ -109,6 +117,9 @@ export type EmailApprovalDeps = {
   }) => Promise<EmailProposalArgs | null>;
   /** The external send. Returns the provider id; `ok:false` is an honest failed send (§13). */
   send: (p: { fromHeader: string; to: string; subject: string; html: string }) => Promise<{ ok: boolean; id: string | null }>;
+  /** The canonical pre-send gate (runPreSend) for the claimed recipient. `proceed:false` holds the send
+   *  with the gate's plain reason. Optional for the pure proofs; the host injects emailPreSend. */
+  preSend?: (p: { contactId: string; to: string }) => Promise<{ proceed: boolean; reason: string | null }>;
   /** The durable execution receipt — the run/communication record read back after a real send. Only
    *  ever called after a successful atomic claim, so it is written at most once per approval. */
   recordReceipt: (p: EmailProposalArgs & { resendId: string | null; ok: boolean }) => Promise<void>;
@@ -156,6 +167,18 @@ export async function governedDraftAndEmail(
         code: "approval_not_valid",
         message: "That approval is missing, expired, or already used, so nothing was sent.",
       };
+    }
+    // The recipient's opt-outs are checked at the moment of sending, not at the moment of drafting:
+    // a contact can turn email off between the two.
+    if (deps.preSend) {
+      const gate = await deps.preSend({ contactId: claimed.contact_id, to: claimed.recipient });
+      if (!gate.proceed) {
+        await deps.recordReceipt({ ...claimed, resendId: null, ok: false });
+        return {
+          kind: "send_failed", resend_id: null, recipient: claimed.recipient,
+          held_reason: gate.reason ?? "This contact can't be emailed right now.",
+        };
+      }
     }
     // Send the EXACT approved content to the EXACT approved recipient under the EXACT approved sender.
     const res = await deps.send({
@@ -226,5 +249,16 @@ export async function governedDraftAndEmail(
     kind: "awaiting_confirm",
     confirm_fingerprint: fp,
     summary: `Drafted a ${input.docType} for ${input.recipientEmail}. Approve to send it from ${fromHeader}.`,
+  };
+}
+
+/** The host's pre-send gate for this skill: runPreSend for an email to one contact of the CALLER's tenant. */
+export function emailPreSend(
+  admin: Parameters<typeof runPreSend>[0],
+  tenantId: string,
+): NonNullable<EmailApprovalDeps["preSend"]> {
+  return async ({ contactId, to }) => {
+    const r = await runPreSend(admin, { tenantId, channel: "email", to, contactId });
+    return { proceed: r.proceed, reason: r.reason };
   };
 }

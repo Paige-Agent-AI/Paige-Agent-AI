@@ -167,7 +167,11 @@ SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001'),'{"br
 SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
 SET LOCAL ROLE service_role;
 SELECT set_config('app.crm_merge_lineage_write','on',true);
+-- Turning data sharing on is customer-only (E09 Slice 6 guard): the fixture stands in for the
+-- customer's own consent write the same way the Slice 6 suites do.
+SELECT set_config('paige.customer_consent_write','on',true), set_config('paige.customer_consent_contact','e0931000-0000-0000-0000-000000000001',true);
 UPDATE public.clients SET merged_into_contact_id=NULL,merged_at=NULL,first_name='Updated',paige_shared_context_consent=true WHERE id='e0931000-0000-0000-0000-000000000001';
+SELECT set_config('paige.customer_consent_write','',true), set_config('paige.customer_consent_contact','',true);
 SELECT set_config('app.crm_merge_lineage_write','off',true);
 RESET ROLE;
 SELECT set_config('request.jwt.claims','{}',true);

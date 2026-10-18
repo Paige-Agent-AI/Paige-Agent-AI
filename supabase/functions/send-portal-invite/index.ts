@@ -1,5 +1,6 @@
 import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
 import { handlePortalInvitationCommand } from "./command.ts";
+import { runPreSend } from "../_shared/pre-send-pipeline.ts";
 // send-portal-invite — emails a customer their branded invite to a tenant's
 // client portal (roadmap #2). The token is minted by create_tenant_invite_token
 // (admin-gated RPC) on the client; this function validates it server-side, reads
@@ -218,6 +219,56 @@ Deno.serve(async (req) => {
   if (!(await eligible()))
     return json({ ok: false, emailed: false, error: "Invitation details changed. Review the client before sending." }, 409);
 
+  // A consumer invitation is an email to one of the business's clients, so it passes the same runPreSend
+  // as the canonical command (command.ts): a client who turned email off, bounced or was paused by the
+  // business is not emailed (E09 Slice 6, M2a). Team and owner invitations are not client sends.
+  //
+  // Round 4 (verifier MINOR 2): a check that could not RUN is not a hold, and is never reported as the
+  // client's choice. It still sends nothing (§13: an unverified legal gate fails closed), but answers its
+  // own code. A hold names whose setting caused it: the business's own email quiet hours are not the
+  // client's preference, so staff are not told the client switched email off.
+  type PolicyGate = { clear: true } | { clear: false; hold: "contact" | "business_quiet_hours" } | { clear: false; unavailable: true };
+  const policyGate = async (): Promise<PolicyGate> => {
+    if (String(tok.kind ?? "consumer") !== "consumer") return { clear: true };
+    try {
+      const gate = await runPreSend(admin as unknown as Parameters<typeof runPreSend>[0], {
+        tenantId: tok.tenant_id, channel: "email", to: recipient, contactId: tok.contact_id ?? null,
+      });
+      if (gate.proceed) return { clear: true };
+      if (gate.outcome === "error") return { clear: false, unavailable: true };
+      return { clear: false, hold: gate.outcome === "queued_tenant_dnd" ? "business_quiet_hours" : "contact" };
+    } catch (e) {
+      console.error("[send-portal-invite] pre-send check threw", e instanceof Error ? e.message : "unknown");
+      return { clear: false, unavailable: true };
+    }
+  };
+  // Round 4 (verifier MEDIUM 1): the caller minted this token a moment ago for THIS send. When Paige does
+  // not send, the token must not stay live for 30 days reading "Invite pending" to staff. Revoke it with
+  // the same lifecycle write the staff cancel path makes (PortalInvitationManager): revoked_at on this
+  // exact, still-unused, legacy-minted consumer row — nothing else on the row changes. It runs only after
+  // authorized() and eligible() have both passed for this actor, and never touches a team or owner token
+  // or a token bound to a canonical invitation operation.
+  const notSent = async (gate: Exclude<PolicyGate, { clear: true }>): Promise<Response> => {
+    try {
+      const { data, error } = await admin.from("tenant_invite_tokens")
+        .update({ revoked_at: new Date().toISOString() })
+        .eq("id", tok.id).eq("tenant_id", tok.tenant_id).eq("contact_id", tok.contact_id).eq("token", token)
+        .eq("kind", "consumer").is("revoked_at", null).is("last_used_at", null).eq("uses", 0)
+        // A token the canonical command minted is its recovery handle (command.ts reuses it); leave it be.
+        .is("portal_operation_id", null)
+        .select("id");
+      if (error || !Array.isArray(data) || data.length !== 1)
+        console.error("[send-portal-invite] held invitation token was not revoked", error?.message ?? "no matching unused row");
+    } catch (e) {
+      console.error("[send-portal-invite] held invitation token revoke threw", e instanceof Error ? e.message : "unknown");
+    }
+    return "unavailable" in gate
+      ? json({ ok: false, emailed: false, status: "unavailable", code: "INVITATION_POLICY_UNAVAILABLE" }, 503)
+      : json({ ok: false, emailed: false, status: "held", code: "INVITATION_POLICY_HELD", hold: gate.hold }, 409);
+  };
+  const firstGate = await policyGate();
+  if (!firstGate.clear) return notSent(firstGate);
+
   // §6/§9: resolve the brand UP the parent chain so a sub-account invite wears its
   // AGENCY's logo + accent (not the child's empty stub, never Paige). The resolver
   // floors unset colors to the platform tokens (#150C31 / #EBB94C) — never a
@@ -299,6 +350,8 @@ Deno.serve(async (req) => {
     // invitation and recipient changes cannot be hidden by a stale dashboard.
     if (!(await authorized()) || !(await eligible()))
       return json({ ok: false, emailed: false, error: "Invitation details changed. Review the client before sending." }, 409);
+    const finalGate = await policyGate();
+    if (!finalGate.clear) return notSent(finalGate);
     if (!(await commsProviderExecutionAllowed(admin, { tenantId: tok.tenant_id, actorUserId, recipientEmail: recipient })))
       return json({ ok: false, emailed: false, status: "blocked", code: "COMMS_PROVIDER_EXECUTION_DISABLED" }, 403);
     const res = await fetch("https://api.resend.com/emails", {

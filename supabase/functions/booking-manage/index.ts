@@ -30,6 +30,7 @@ import { clientIp, overRateLimit } from "../_shared/rateLimit.ts";
 // never fails a change that's already committed.
 import { deleteZoomMeeting, updateZoomMeeting } from "../_shared/zoomMeetings.ts";
 import { primaryPhonesForUsers } from "../_shared/user-contact-methods.ts";
+import { emailOptOut } from "../_shared/contact-opt-outs.ts";
 
 // Per-window ceilings (60s). A real guest managing one booking makes a handful of
 // calls; these sit well above that but stop a replay/brute-force flood.
@@ -288,6 +289,8 @@ interface BookingCtx {
   id: string; tenant_id: string | null; host_user_id: string; guest_name: string | null;
   guest_email: string | null; guest_phone: string | null; timezone: string | null; location_type: string | null;
   location_value: string | null; collective_group_id: string | null;
+  /** The CRM contact the booking belongs to, for the guest's email opt-out (E09 Slice 6). */
+  contact_id?: string | null;
 }
 interface CalCtx { title: string | null; description: string | null; accent: string | null }
 
@@ -444,11 +447,18 @@ async function notifyChange(
       };
       // Cancelled links are dead (version bumped) — no manage link on those.
       const lcLink = event === "cancelled" ? undefined : mUrl;
+      // E09 Slice 6 (D5): the built-in emails above are the receipt of the change the guest just made and
+      // always send. An owner-authored lifecycle email is a message the business sends through Paige, so a
+      // guest who turned email off (or whom the business paused, or who bounced) is not sent one. An
+      // unreadable ledger holds it too.
+      const guestLcEmailOk = guestEmail
+        ? (await emailOptOut(admin, { tenantId: b.tenant_id, contactId: b.contact_id ?? null, email: guestEmail })) === "clear"
+        : false;
       for (const lc of steps) {
         for (const who of targetsOf(lc.to)) {
           for (const ch of channelsOf(lc.channel)) {
             const recipients = ch === "email"
-              ? (who === "guest" ? (guestEmail ? [guestEmail] : []) : hostEmails)
+              ? (who === "guest" ? (guestEmail && guestLcEmailOk ? [guestEmail] : []) : hostEmails)
               : (who === "guest" ? (b.guest_phone ? [b.guest_phone] : []) : hostPhones);
             for (const rec of recipients) {
               const key = `lc:${event}:${who}:${ch}:${rec}${timeKey}`;
@@ -832,6 +842,7 @@ Deno.serve(async (req) => {
       guest_phone: (b.guest_phone as string | null) ?? null,
       timezone: (b.timezone as string | null) ?? null, location_type: (b.location_type as string | null) ?? null,
       location_value: (b.location_value as string | null) ?? null, collective_group_id: (b.collective_group_id as string | null) ?? null,
+      contact_id: (b.contact_id as string | null) ?? null,
     };
     const calCtx: CalCtx | null = cal
       ? { title: (cal.title as string | null) ?? null, description: (cal.description as string | null) ?? null, accent: (cal.accent as string | null) ?? null }

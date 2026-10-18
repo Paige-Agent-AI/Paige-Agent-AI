@@ -1,0 +1,819 @@
+{
+ "_doc": "E09 Slice 6 consent parity fixture. ONE source for two implementations of one rule: the SQL derivation public._client_communication_state (pgTAP, generated into supabase/tests/customer_portal_consent_parity.sql by scripts/ci/consent-parity-gen.mjs) and the TypeScript deciders runPreSend + tenantConsent + normalizeAddress (supabase/functions/_shared/consent-parity.test.ts). Edit this file, then run `node scripts/ci/consent-parity-gen.mjs`; CI runs it with --check and fails on drift. Every case is one client of one business whose primary email is client.email and primary phone is client.phone. `at` orders rows (minutes after a fixed base). key: contact = contact_id only, address = contactless on the normalized address, both = contact_id plus the normalized address. A row's optional `address` is a raw address on the same channel used instead of the client's primary one (normalized the same way): the shape a merge leaves when it moves another record's opt-out onto this client. presend_* is runPreSend's disposition for a send to the primary address with the contact id (proceed = it would send); tenant_consent_email is tenantConsent for marketing email.",
+ "client": {
+  "email": "Parity.Client+portal@Tests.invalid",
+  "phone": "(555) 010-9999"
+ },
+ "normalizer": [
+  {
+   "channel": "sms",
+   "input": "(555) 010-0001",
+   "expect": "+15550100001"
+  },
+  {
+   "channel": "sms",
+   "input": "5550100001",
+   "expect": "+15550100001"
+  },
+  {
+   "channel": "sms",
+   "input": "+1 555 010 0001",
+   "expect": "+15550100001"
+  },
+  {
+   "channel": "sms",
+   "input": "+15550100001",
+   "expect": "+15550100001"
+  },
+  {
+   "channel": "sms",
+   "input": " 555.010.0001 ",
+   "expect": "+15550100001"
+  },
+  {
+   "channel": "sms",
+   "input": "15550100001",
+   "expect": "+15550100001"
+  },
+  {
+   "channel": "sms",
+   "input": "1-555-010-0001",
+   "expect": "+15550100001"
+  },
+  {
+   "channel": "sms",
+   "input": "+44 20 7946 0958",
+   "expect": "+442079460958"
+  },
+  {
+   "channel": "sms",
+   "input": "020 7946 0958",
+   "expect": "+02079460958"
+  },
+  {
+   "channel": "sms",
+   "input": "555-0100",
+   "expect": "+5550100"
+  },
+  {
+   "channel": "sms",
+   "input": "",
+   "expect": "+"
+  },
+  {
+   "channel": "sms",
+   "input": "+",
+   "expect": "+"
+  },
+  {
+   "channel": "sms",
+   "input": "\t+1 (555) 010-0001\n",
+   "expect": "+15550100001"
+  },
+  {
+   "channel": "sms",
+   "input": "ext 5550100001",
+   "expect": "+15550100001"
+  },
+  {
+   "channel": "sms",
+   "input": "555010000123",
+   "expect": "+555010000123"
+  },
+  {
+   "channel": "email",
+   "input": "Jordan.Rivera@Tests.invalid",
+   "expect": "jordan.rivera@tests.invalid"
+  },
+  {
+   "channel": "email",
+   "input": "jordan.rivera+portal@tests.invalid",
+   "expect": "jordan.rivera@tests.invalid"
+  },
+  {
+   "channel": "email",
+   "input": "  sam@tests.invalid  ",
+   "expect": "sam@tests.invalid"
+  },
+  {
+   "channel": "email",
+   "input": "SAM+A+B@TESTS.INVALID",
+   "expect": "sam@tests.invalid"
+  },
+  {
+   "channel": "email",
+   "input": "no-at-sign",
+   "expect": "no-at-sign"
+  },
+  {
+   "channel": "email",
+   "input": "@tests.invalid",
+   "expect": "@tests.invalid"
+  },
+  {
+   "channel": "email",
+   "input": "+tag@tests.invalid",
+   "expect": "@tests.invalid"
+  },
+  {
+   "channel": "email",
+   "input": "a@b@tests.invalid",
+   "expect": "a@b@tests.invalid"
+  },
+  {
+   "channel": "email",
+   "input": "a+x@b@tests.invalid",
+   "expect": "a@tests.invalid"
+  },
+  {
+   "channel": "email",
+   "input": "",
+   "expect": ""
+  },
+  {
+   "channel": "email",
+   "input": "first.last+news@sub.tests.invalid",
+   "expect": "first.last@sub.tests.invalid"
+  },
+  {
+   "channel": "email",
+   "input": " nbsp@tests.invalid ",
+   "expect": "nbsp@tests.invalid"
+  },
+  {
+   "channel": "email",
+   "input": "Mixed.Case+Tag@Example.Test",
+   "expect": "mixed.case@example.test"
+  },
+  {
+   "channel": "email",
+   "input": "plain@tests.invalid",
+   "expect": "plain@tests.invalid"
+  },
+  {
+   "channel": "email",
+   "input": "x+@tests.invalid",
+   "expect": "x@tests.invalid"
+  }
+ ],
+ "cases": [
+  {
+   "name": "nothing on record",
+   "rows": [],
+   "expect": {
+    "email": "on",
+    "email_set_by": null,
+    "sms": "not_set",
+    "sms_set_by": null,
+    "updates": "not_subscribed",
+    "updates_set_by": null,
+    "presend_email": "proceed",
+    "presend_sms": "blocked_no_consent",
+    "tenant_consent_email": "none"
+   }
+  },
+  {
+   "name": "business pauses email",
+   "rows": [
+    {
+     "table": "suppression",
+     "channel": "email",
+     "key": "contact",
+     "reason": "manual",
+     "source": "admin_ui",
+     "at": 1
+    },
+    {
+     "table": "event",
+     "channel": "email",
+     "key": "contact",
+     "topic": null,
+     "action": "revoked",
+     "source": "admin_ui",
+     "at": 1
+    }
+   ],
+   "expect": {
+    "email": "off",
+    "email_set_by": "business",
+    "sms": "not_set",
+    "sms_set_by": null,
+    "updates": "not_subscribed",
+    "updates_set_by": null,
+    "presend_email": "blocked_suppressed",
+    "presend_sms": "blocked_no_consent",
+    "tenant_consent_email": "revoked"
+   }
+  },
+  {
+   "name": "contactless hard bounce on the address",
+   "rows": [
+    {
+     "table": "suppression",
+     "channel": "email",
+     "key": "address",
+     "reason": "bounce_hard",
+     "source": "webhook",
+     "at": 1
+    }
+   ],
+   "expect": {
+    "email": "off",
+    "email_set_by": "delivery",
+    "sms": "not_set",
+    "sms_set_by": null,
+    "updates": "not_subscribed",
+    "updates_set_by": null,
+    "presend_email": "blocked_suppressed",
+    "presend_sms": "blocked_no_consent",
+    "tenant_consent_email": "none"
+   }
+  },
+  {
+   "name": "customer turns email off in the portal",
+   "rows": [
+    {
+     "table": "suppression",
+     "channel": "email",
+     "key": "both",
+     "reason": "customer_request",
+     "source": "customer_portal",
+     "at": 1
+    },
+    {
+     "table": "event",
+     "channel": "email",
+     "key": "both",
+     "topic": null,
+     "action": "revoked",
+     "source": "customer_portal",
+     "at": 1
+    }
+   ],
+   "expect": {
+    "email": "off",
+    "email_set_by": "you",
+    "sms": "not_set",
+    "sms_set_by": null,
+    "updates": "not_subscribed",
+    "updates_set_by": null,
+    "presend_email": "blocked_suppressed",
+    "presend_sms": "blocked_no_consent",
+    "tenant_consent_email": "revoked"
+   }
+  },
+  {
+   "name": "customer clicks the emailed unsubscribe link",
+   "rows": [
+    {
+     "table": "suppression",
+     "channel": "email",
+     "key": "both",
+     "reason": "unsubscribe_link",
+     "source": "webhook",
+     "at": 1
+    }
+   ],
+   "expect": {
+    "email": "off",
+    "email_set_by": "unsubscribe_link",
+    "sms": "not_set",
+    "sms_set_by": null,
+    "updates": "not_subscribed",
+    "updates_set_by": null,
+    "presend_email": "blocked_suppressed",
+    "presend_sms": "blocked_no_consent",
+    "tenant_consent_email": "none"
+   }
+  },
+  {
+   "name": "START reply",
+   "rows": [
+    {
+     "table": "event",
+     "channel": "sms",
+     "key": "both",
+     "topic": null,
+     "action": "granted",
+     "source": "inbound_message",
+     "at": 1
+    }
+   ],
+   "expect": {
+    "email": "on",
+    "email_set_by": null,
+    "sms": "on",
+    "sms_set_by": "reply",
+    "updates": "not_subscribed",
+    "updates_set_by": null,
+    "presend_email": "proceed",
+    "presend_sms": "proceed",
+    "tenant_consent_email": "none"
+   }
+  },
+  {
+   "name": "START then a business revoke",
+   "rows": [
+    {
+     "table": "event",
+     "channel": "sms",
+     "key": "both",
+     "topic": null,
+     "action": "granted",
+     "source": "inbound_message",
+     "at": 1
+    },
+    {
+     "table": "event",
+     "channel": "sms",
+     "key": "contact",
+     "topic": null,
+     "action": "revoked",
+     "source": "admin_ui",
+     "at": 2
+    }
+   ],
+   "expect": {
+    "email": "on",
+    "email_set_by": null,
+    "sms": "off",
+    "sms_set_by": "business",
+    "updates": "not_subscribed",
+    "updates_set_by": null,
+    "presend_email": "proceed",
+    "presend_sms": "blocked_no_consent",
+    "tenant_consent_email": "none"
+   }
+  },
+  {
+   "name": "customer turns texts off in the portal",
+   "rows": [
+    {
+     "table": "event",
+     "channel": "sms",
+     "key": "both",
+     "topic": null,
+     "action": "granted",
+     "source": "inbound_message",
+     "at": 1
+    },
+    {
+     "table": "suppression",
+     "channel": "sms",
+     "key": "both",
+     "reason": "customer_request",
+     "source": "customer_portal",
+     "at": 2
+    },
+    {
+     "table": "event",
+     "channel": "sms",
+     "key": "both",
+     "topic": null,
+     "action": "revoked",
+     "source": "customer_portal",
+     "at": 2
+    }
+   ],
+   "expect": {
+    "email": "on",
+    "email_set_by": null,
+    "sms": "off",
+    "sms_set_by": "you",
+    "updates": "not_subscribed",
+    "updates_set_by": null,
+    "presend_email": "proceed",
+    "presend_sms": "blocked_suppressed",
+    "tenant_consent_email": "none"
+   }
+  },
+  {
+   "name": "STOP reply",
+   "rows": [
+    {
+     "table": "event",
+     "channel": "sms",
+     "key": "both",
+     "topic": null,
+     "action": "granted",
+     "source": "inbound_message",
+     "at": 1
+    },
+    {
+     "table": "suppression",
+     "channel": "sms",
+     "key": "both",
+     "reason": "user_stop",
+     "source": "inbound_message",
+     "at": 2
+    },
+    {
+     "table": "event",
+     "channel": "sms",
+     "key": "both",
+     "topic": null,
+     "action": "revoked",
+     "source": "inbound_message",
+     "at": 2
+    }
+   ],
+   "expect": {
+    "email": "on",
+    "email_set_by": null,
+    "sms": "off",
+    "sms_set_by": "reply",
+    "updates": "not_subscribed",
+    "updates_set_by": null,
+    "presend_email": "proceed",
+    "presend_sms": "blocked_suppressed",
+    "tenant_consent_email": "none"
+   }
+  },
+  {
+   "name": "customer subscribes to updates",
+   "rows": [
+    {
+     "table": "event",
+     "channel": "email",
+     "key": "both",
+     "topic": "newsletter",
+     "action": "granted",
+     "source": "customer_portal",
+     "at": 1
+    }
+   ],
+   "expect": {
+    "email": "on",
+    "email_set_by": null,
+    "sms": "not_set",
+    "sms_set_by": null,
+    "updates": "subscribed",
+    "updates_set_by": "you",
+    "presend_email": "proceed",
+    "presend_sms": "blocked_no_consent",
+    "tenant_consent_email": "granted"
+   }
+  },
+  {
+   "name": "M9: subscribed, then a business pause that was lifted",
+   "rows": [
+    {
+     "table": "event",
+     "channel": "email",
+     "key": "both",
+     "topic": "newsletter",
+     "action": "granted",
+     "source": "customer_portal",
+     "at": 1
+    },
+    {
+     "table": "event",
+     "channel": "email",
+     "key": "contact",
+     "topic": null,
+     "action": "revoked",
+     "source": "admin_ui",
+     "at": 2
+    }
+   ],
+   "expect": {
+    "email": "on",
+    "email_set_by": null,
+    "sms": "not_set",
+    "sms_set_by": null,
+    "updates": "paused",
+    "updates_set_by": "business",
+    "presend_email": "proceed",
+    "presend_sms": "blocked_no_consent",
+    "tenant_consent_email": "revoked"
+   }
+  },
+  {
+   "name": "subscribed while the business pauses email",
+   "rows": [
+    {
+     "table": "event",
+     "channel": "email",
+     "key": "both",
+     "topic": "newsletter",
+     "action": "granted",
+     "source": "customer_portal",
+     "at": 1
+    },
+    {
+     "table": "suppression",
+     "channel": "email",
+     "key": "contact",
+     "reason": "manual",
+     "source": "admin_ui",
+     "at": 2
+    },
+    {
+     "table": "event",
+     "channel": "email",
+     "key": "contact",
+     "topic": null,
+     "action": "revoked",
+     "source": "admin_ui",
+     "at": 2
+    }
+   ],
+   "expect": {
+    "email": "off",
+    "email_set_by": "business",
+    "sms": "not_set",
+    "sms_set_by": null,
+    "updates": "paused",
+    "updates_set_by": "business",
+    "presend_email": "blocked_suppressed",
+    "presend_sms": "blocked_no_consent",
+    "tenant_consent_email": "revoked"
+   }
+  },
+  {
+   "name": "subscribed then unsubscribed",
+   "rows": [
+    {
+     "table": "event",
+     "channel": "email",
+     "key": "both",
+     "topic": "newsletter",
+     "action": "granted",
+     "source": "customer_portal",
+     "at": 1
+    },
+    {
+     "table": "event",
+     "channel": "email",
+     "key": "both",
+     "topic": "newsletter",
+     "action": "revoked",
+     "source": "customer_portal",
+     "at": 2
+    }
+   ],
+   "expect": {
+    "email": "on",
+    "email_set_by": null,
+    "sms": "not_set",
+    "sms_set_by": null,
+    "updates": "not_subscribed",
+    "updates_set_by": "you",
+    "presend_email": "proceed",
+    "presend_sms": "blocked_no_consent",
+    "tenant_consent_email": "revoked"
+   }
+  },
+  {
+   "name": "contactless START on the client's own number",
+   "rows": [
+    {
+     "table": "event",
+     "channel": "sms",
+     "key": "address",
+     "topic": null,
+     "action": "granted",
+     "source": "inbound_message",
+     "at": 1
+    }
+   ],
+   "expect": {
+    "email": "on",
+    "email_set_by": null,
+    "sms": "on",
+    "sms_set_by": "reply",
+    "updates": "not_subscribed",
+    "updates_set_by": null,
+    "presend_email": "proceed",
+    "presend_sms": "proceed",
+    "tenant_consent_email": "none"
+   }
+  },
+  {
+   "name": "paper consent the business records itself (D7)",
+   "rows": [
+    {
+     "table": "event",
+     "channel": "sms",
+     "key": "contact",
+     "topic": null,
+     "action": "granted",
+     "source": "admin_ui",
+     "at": 1
+    }
+   ],
+   "expect": {
+    "email": "on",
+    "email_set_by": null,
+    "sms": "on",
+    "sms_set_by": "business",
+    "updates": "not_subscribed",
+    "updates_set_by": null,
+    "presend_email": "proceed",
+    "presend_sms": "proceed",
+    "tenant_consent_email": "none"
+   }
+  },
+  {
+   "name": "the business records a newsletter grant (D7)",
+   "rows": [
+    {
+     "table": "event",
+     "channel": "email",
+     "key": "contact",
+     "topic": "newsletter",
+     "action": "granted",
+     "source": "admin_ui",
+     "at": 1
+    }
+   ],
+   "expect": {
+    "email": "on",
+    "email_set_by": null,
+    "sms": "not_set",
+    "sms_set_by": null,
+    "updates": "subscribed",
+    "updates_set_by": "business",
+    "presend_email": "proceed",
+    "presend_sms": "blocked_no_consent",
+    "tenant_consent_email": "granted"
+   }
+  },
+  {
+   "name": "the customer's own spam report (contactless, on their address)",
+   "rows": [
+    {
+     "table": "suppression",
+     "channel": "email",
+     "key": "address",
+     "reason": "complaint",
+     "source": "webhook",
+     "at": 1
+    }
+   ],
+   "expect": {
+    "email": "off",
+    "email_set_by": "reported",
+    "sms": "not_set",
+    "sms_set_by": null,
+    "updates": "not_subscribed",
+    "updates_set_by": null,
+    "presend_email": "blocked_suppressed",
+    "presend_sms": "blocked_no_consent",
+    "tenant_consent_email": "none"
+   }
+  },
+  {
+   "name": "the customer's own spam report (on their contact)",
+   "rows": [
+    {
+     "table": "suppression",
+     "channel": "email",
+     "key": "contact",
+     "reason": "complaint",
+     "source": "webhook",
+     "at": 1
+    }
+   ],
+   "expect": {
+    "email": "off",
+    "email_set_by": "reported",
+    "sms": "not_set",
+    "sms_set_by": null,
+    "updates": "not_subscribed",
+    "updates_set_by": null,
+    "presend_email": "blocked_suppressed",
+    "presend_sms": "blocked_no_consent",
+    "tenant_consent_email": "none"
+   }
+  },
+  {
+   "name": "the customer took back their spam report",
+   "rows": [
+    {
+     "table": "event",
+     "channel": "email",
+     "key": "both",
+     "topic": "newsletter",
+     "action": "granted",
+     "source": "signup_form",
+     "at": 1
+    },
+    {
+     "table": "event",
+     "channel": "email",
+     "key": "both",
+     "topic": null,
+     "action": "granted",
+     "source": "customer_portal",
+     "at": 3
+    },
+    {
+     "table": "event",
+     "channel": "email",
+     "key": "both",
+     "topic": "newsletter",
+     "action": "revoked",
+     "source": "customer_portal",
+     "at": 4
+    }
+   ],
+   "expect": {
+    "email": "on",
+    "email_set_by": null,
+    "sms": "not_set",
+    "sms_set_by": null,
+    "updates": "not_subscribed",
+    "updates_set_by": "you",
+    "presend_email": "proceed",
+    "presend_sms": "blocked_no_consent",
+    "tenant_consent_email": "revoked"
+   }
+  },
+  {
+   "name": "a merge moved an opt-out recorded on the other record's address",
+   "rows": [
+    {
+     "table": "suppression",
+     "channel": "email",
+     "key": "both",
+     "address": "Parity.Old+work@Tests.invalid",
+     "reason": "customer_request",
+     "source": "customer_portal",
+     "at": 1
+    },
+    {
+     "table": "event",
+     "channel": "email",
+     "key": "both",
+     "address": "Parity.Old+work@Tests.invalid",
+     "topic": null,
+     "action": "revoked",
+     "source": "customer_portal",
+     "at": 1
+    }
+   ],
+   "expect": {
+    "email": "off",
+    "email_set_by": "you",
+    "sms": "not_set",
+    "sms_set_by": null,
+    "updates": "not_subscribed",
+    "updates_set_by": null,
+    "presend_email": "blocked_suppressed",
+    "presend_sms": "blocked_no_consent",
+    "tenant_consent_email": "revoked"
+   }
+  },
+  {
+   "name": "a merge moved a texts opt-out recorded on the other record's number",
+   "rows": [
+    {
+     "table": "suppression",
+     "channel": "sms",
+     "key": "both",
+     "address": "(555) 010-7777",
+     "reason": "user_stop",
+     "source": "inbound_message",
+     "at": 1
+    }
+   ],
+   "expect": {
+    "email": "on",
+    "email_set_by": null,
+    "sms": "off",
+    "sms_set_by": "reply",
+    "updates": "not_subscribed",
+    "updates_set_by": null,
+    "presend_email": "proceed",
+    "presend_sms": "blocked_suppressed",
+    "tenant_consent_email": "none"
+   }
+  },
+  {
+   "name": "a contactless opt-out on some other address is not this client's",
+   "rows": [
+    {
+     "table": "suppression",
+     "channel": "email",
+     "key": "address",
+     "address": "someone.else@tests.invalid",
+     "reason": "unsubscribe_link",
+     "source": "webhook",
+     "at": 1
+    }
+   ],
+   "expect": {
+    "email": "on",
+    "email_set_by": null,
+    "sms": "not_set",
+    "sms_set_by": null,
+    "updates": "not_subscribed",
+    "updates_set_by": null,
+    "presend_email": "proceed",
+    "presend_sms": "blocked_no_consent",
+    "tenant_consent_email": "none"
+   }
+  }
+ ]
+}

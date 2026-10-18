@@ -24,6 +24,7 @@ import { useDashboardMode } from "@/contexts/DashboardModeContext";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { useTierFeatures } from "@/hooks/useTierFeatures";
 import { toast } from "sonner";
+import { isLegacyInviteHeld, legacyInviteHeldText, readLegacyInviteSend } from "@/lib/portal/legacyInviteSend";
 import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses, type WithClientContactMethods } from "@/lib/contact-methods";
 
 // Widened to string: the generated types do not know the contact-methods embed yet.
@@ -482,10 +483,12 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
         const { data: sent, error: sendError } = await supabase.functions.invoke("send-portal-invite", {
           body: { token, email: recipient },
         });
+        // E09 Slice 6 (§37): Paige held it, or could not check; say which, no hand-off.
+        const outcome = await readLegacyInviteSend(sent, sendError);
+        if (isLegacyInviteHeld(outcome)) { toast.error(legacyInviteHeldText(recipient, outcome)); return; }
         if (sendError) throw sendError;
-        const emailed = (sent as { emailed?: boolean } | null)?.emailed;
-        toast[emailed === true ? "success" : "warning"](
-          emailed !== true
+        toast[outcome === "emailed" ? "success" : "warning"](
+          outcome !== "emailed"
             ? `Invite prepared for ${inviteEmail}. Email delivery is unconfirmed. Check delivery before resending.`
             : `Client portal invite sent to ${inviteEmail}`,
         );

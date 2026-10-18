@@ -11,6 +11,7 @@ const other = '00000000-0000-4000-8000-000000000003';
 const runId = '00000000-0000-4000-8000-000000000004';
 const question = 'Protected fixture public research question';
 type Row = Record<string, unknown>;
+type AttemptContext = { tenantId: string; signal: AbortSignal; beforeProviderAttempt: () => Promise<boolean> };
 type Reply = { data: Row | Row[] | null; error: { message: string } | null };
 interface QueryPort extends PromiseLike<Reply> {
   select(fields: string): QueryPort;
@@ -63,7 +64,10 @@ function fixture(options: Options = {}) {
     try { await Promise.resolve(); return read(); } finally { inFlight--; }
   };
   const identityRead = vi.fn(() => request(identity));
-  const scopeRpc = vi.fn((args: Row) => request(() => {
+  let scopeWait: Promise<void> | null = null;
+  const scopeRpc = vi.fn(async (args: Row) => {
+    if (scopeWait) await scopeWait;
+    return request(() => {
     if (options.scopeBudgetAfterSearch && provider.mock.calls.length > 0 && !clockAdvanced) {
       clockNow += 91_000; clockAdvanced = true;
     }
@@ -72,7 +76,8 @@ function fixture(options: Options = {}) {
       || args._expected_actor_id !== actor || args._expected_tenant_id != null && String(args._expected_tenant_id).toLowerCase() !== active;
     return { data: refused ? null : { actor_id: options.corruptScope === 'actor' ? other : actor,
       tenant_id: options.corruptScope === 'tenant' ? other : active }, error: refused ? { message: 'fixture scope unavailable' } : null };
-  }));
+    });
+  });
   const query = (table: string) => {
     let method = 'read'; let payload: Row[] = []; let fields = '';
     const filters: Array<[string, unknown]> = [];
@@ -166,7 +171,7 @@ function fixture(options: Options = {}) {
       : phase === 'unit_synthesis' ? { insufficient: false, findings: [{ summary: 'Protected supporting fixture research establishes a reproducible baseline.', citations: [1], name: null, website: null, phone: null, values: [] }] }
         : { queries: ['protected fixture query'], done: false }) } }] }, route: null };
   });
-  const strategy = vi.fn(async () => {
+  const strategy = vi.fn(async (_opts?: Row) => {
     if (options.strategyError) {
       if (options.switchAt === 'strategy-error') active = other;
       throw new Error('fixture unexpected strategy error');
@@ -175,14 +180,14 @@ function fixture(options: Options = {}) {
   });
   const scope = { serve: (fn: typeof handler) => { handler = fn; }, recordCapabilityRun, parseResearchSourcePolicy, researchSourceUrl, RESEARCH_SEARCH_LIMIT, Date: options.scopeBudgetAfterSearch ? FixtureDate : Date,
     createClient: (_url: string, key: string) => key === 'fixture-service' ? admin : caller,
-    researchCompletion: model, strategizeBeforeReasoning: strategy, fetch: provider,
+    researchCompletion: model, RESEARCH_FABRIC_ENABLED: options.fabricEnabled ?? false, strategizeBeforeReasoning: strategy, fetch: provider,
     Deno: { env: { get: (name: string) => ({ SUPABASE_URL: 'https://local.invalid', SUPABASE_SERVICE_ROLE_KEY: 'fixture-service', SUPABASE_ANON_KEY: 'fixture-anon' })[name] } } };
   const ast = ts.createSourceFile('research.ts', source, ts.ScriptTarget.Latest, true);
   const withoutImports = ast.statements.filter(node => !ts.isImportDeclaration(node)).map(node => node.getText(ast)).join('\n');
   const js = ts.transpileModule(withoutImports, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None } }).outputText;
   const persistRun = new Function(...Object.keys(scope), `${js}; return persistRun;`)(...Object.values(scope));
-  const run = async (body: Row = {}, service = false) => {
-    const response = await handler(new Request('https://local.invalid/research', { method: 'POST', headers: { Authorization: `Bearer ${service ? 'fixture-service' : 'fixture-user'}` }, body: JSON.stringify({ question, user_id: actor, max_hops: 1, expected_tenant_id: tenant, ...body }) }));
+  const run = async (body: Row = {}, service = false, signal?: AbortSignal) => {
+    const response = await handler(new Request('https://local.invalid/research', { method: 'POST', signal, headers: { Authorization: `Bearer ${service ? 'fixture-service' : 'fixture-user'}` }, body: JSON.stringify({ question, user_id: actor, max_hops: 1, expected_tenant_id: tenant, ...body }) }));
     return { response, body: await response.json() };
   };
   const persist = async (result: Row = nativeResult()) => {
@@ -192,8 +197,53 @@ function fixture(options: Options = {}) {
     return result;
   };
   return { run, persist, rows, receipts, operations, adminRpc, admin, provider, model, strategy,
-    identityRead, scopeRpc, readbackRpc, maxParallel: () => maxParallel };
+    identityRead, scopeRpc, readbackRpc, maxParallel: () => maxParallel,
+    setActive: (value: string) => { active = value; }, waitForScope: (wait: Promise<void>) => { scopeWait = wait; } };
 }
+
+describe('native Research creates original-identity attempt scopes', () => {
+  it('request JSON cannot enable Research Fabric; every native context still receives a fresh callback and signal', async () => {
+    const test = fixture({ cited: true });
+    await test.run({ fabricEnabled: true, RESEARCH_FABRIC_ENABLED: true });
+    const strategyOptions = test.strategy.mock.calls[0]?.[0] as Row;
+    expect(strategyOptions.fabricEnabled).toBe(false);
+    expect(strategyOptions.beforeProviderAttempt).toBeTypeOf('function');
+    expect(strategyOptions.signal).toBeInstanceOf(AbortSignal);
+    expect(test.model.mock.calls.length).toBeGreaterThan(0);
+    for (const call of test.model.mock.calls) {
+      const ctx = call[3] as AttemptContext;
+      expect(ctx).toMatchObject({ tenantId: tenant });
+      expect(ctx.beforeProviderAttempt).toBeTypeOf('function');
+      expect(ctx.signal).toBeInstanceOf(AbortSignal);
+      expect(await ctx.beforeProviderAttempt()).toBe(true);
+    }
+  });
+  it('observed scope refusal remains closed after workspace returns A→B→A', async () => {
+    const test = fixture(); await test.run(); const ctx = test.model.mock.calls[0][3] as AttemptContext;
+    test.setActive(other); expect(await ctx.beforeProviderAttempt()).toBe(false);
+    test.setActive(tenant); expect(await ctx.beforeProviderAttempt()).toBe(false);
+  });
+  it('request abort closes native callbacks before any new authority read', async () => {
+    const abort = new AbortController(); const test = fixture(); await test.run({}, false, abort.signal);
+    const ctx = test.model.mock.calls[0][3] as AttemptContext; const reads = test.scopeRpc.mock.calls.length;
+    abort.abort(); expect(ctx.signal.aborted).toBe(true); expect(await ctx.beforeProviderAttempt()).toBe(false);
+    expect(test.scopeRpc).toHaveBeenCalledTimes(reads);
+  });
+  it('an expired absolute phase deadline cannot acquire authority again', async () => {
+    const test = fixture(); await test.run(); const ctx = test.model.mock.calls[0][3] as AttemptContext;
+    const reads = test.scopeRpc.mock.calls.length;
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 121_000);
+    try { expect(await ctx.beforeProviderAttempt()).toBe(false); expect(test.scopeRpc).toHaveBeenCalledTimes(reads); }
+    finally { clock.mockRestore(); }
+  });
+  it('aborted delayed native scope read settles and cannot revive on a late response', async () => {
+    const abort = new AbortController(); const test = fixture(); await test.run({}, false, abort.signal);
+    const ctx = test.model.mock.calls[0][3] as AttemptContext; let release!: () => void;
+    test.waitForScope(new Promise<void>(resolve => { release = resolve; }));
+    const pending = ctx.beforeProviderAttempt(); abort.abort(); expect(await pending).toBe(false);
+    release(); await Promise.resolve(); await Promise.resolve(); expect(await ctx.beforeProviderAttempt()).toBe(false);
+  });
+});
 
 function nativeResult(): Row {
   return { run_id: runId, question, findings: [{ text: 'Protected supported finding', citations: [1], confidence: 'high' }],

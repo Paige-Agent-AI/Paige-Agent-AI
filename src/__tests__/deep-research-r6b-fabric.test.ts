@@ -340,18 +340,20 @@ describe("R6-B — engine integration pins (the four call sites route through th
   it("the engine threads the server-resolved run context to every phase", () => {
     expect(core).toContain("const fabricCtx");
     expect(core).toContain("tenantId: resolvedTenantId");
-    expect(core).toContain("await planHop(question, domainHint, hop, evidence, strategyHint, fabricCtx, sourcePolicy)");
-    expect(core).toContain("planSynthesisUnits(question, domainHint, citable, fabricCtx)");
+    expect(core).toContain("await planHop(question, domainHint, hop, evidence, strategyHint, { ...fabricCtx, ...modelContext(t0 + BND.WALL_CLOCK_MS) }, sourcePolicy)");
+    expect(core).toContain("planSynthesisUnits(question, domainHint, citable, { ...fabricCtx, ...modelContext(t0 + BND.WALL_CLOCK_MS + 110_000) })");
   });
   it("unit diagnostics gain served_route; the R6-A served_model readback survives", () => {
     expect(core).toContain("served_route:");
     expect(core).toContain("__served_route");
     expect(core).toContain("__served_model");
   });
-  it("the strategist stays the SHARED consumer — no research-owned migration of strategize.ts", () => {
+  it("the strategist remains a SHARED consumer with its adoption controlled by the same Research flag", () => {
     expect(core).toContain('from "../_shared/reasoning/strategize.ts"');
     const strat = readFileSync(join(root, "supabase/functions/_shared/reasoning/strategize.ts"), "utf8");
     expect(strat).toContain('routedChatCompletion("plan"'); // unchanged shared module
+    expect(strat).toContain('job: "reason_strategize"');
+    expect(core).toContain('fabricEnabled: RESEARCH_FABRIC_ENABLED');
     expect(fabric).not.toContain("strategist");
   });
 });

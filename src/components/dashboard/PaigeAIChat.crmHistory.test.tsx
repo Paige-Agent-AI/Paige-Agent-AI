@@ -183,6 +183,19 @@ const href = (host: HTMLElement) => receipt(host)?.querySelector("a")?.getAttrib
 async function rerender() { await act(async () => { lastRoot!.render(<PaigeAIChat hideHeader fill enableHistory soloTenantSafety liveConversation={false} />); await flush(); }); }
 
 describe("actual CRM card reference across stream and reload", () => {
+  it("opens the exact Task from a live receipt and its reduced reloaded history", async () => {
+    const result={action:"task.update",outcome:"succeeded",receipt_recorded:true};
+    server(body([frame({paige_crm_result:{...result,readback:{id:CLIENT,title:"Neutral saved Task"},
+      record_locator:{record_id:CLIENT,deep_link_status:"exact",deep_link:"/solo/999/foreign"}}}),say("Saved."),DONE]));
+    const host=await mount();await ask(host,"Show the verified saved Task");
+    expect(href(host)).toBe(`/solo/3855/operations/work?task=${CLIENT}`);expect(receipt(host)?.textContent).toContain("Open task");
+    harness.threads=[{id:"thread-a",title:"Saved Task",updated_at:"2026-10-14T10:00:00Z"}];
+    harness.turns=history({...result,record_reference:{destination:"operations_work",record_id:CLIENT}});
+    await act(async()=>{lastRoot!.unmount();});
+    const reloaded=await mount();await act(flush);
+    expect(href(reloaded)).toBe(`/solo/3855/operations/work?task=${CLIENT}`);expect(receipt(reloaded)?.textContent).toContain("Open task");
+    expect(reloaded.innerHTML).not.toContain("/solo/999");expect(reloaded.innerHTML).not.toContain("Neutral saved Task");
+  });
   it("restores the native contact label and exact current-workspace destination", async () => {
     harness.threads = [{ id: "thread-a", title: "Saved", updated_at: "2026-10-14T10:00:00Z" }];
     harness.turns = history({ ...reduced, record_reference: reference });

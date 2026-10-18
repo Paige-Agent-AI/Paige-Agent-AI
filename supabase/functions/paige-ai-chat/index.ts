@@ -17212,7 +17212,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             }, signal: req.signal,
           }, JSON.parse(tc.function.arguments || "{}"));
           if (result.status === "available" && turnScopeTenantId) {
-            if (result.found) readRecordLinkSource.set(tc, [{ destination: "operations_work", record_id: null }]);
+            if (result.found && result.task) readRecordLinkSource.set(tc, readRecordLinks([{ destination: "operations_work", record_id: result.task.id }]));
             try {
               await recordCapabilityRun(supabase, {
                 tenantId: turnScopeTenantId, actorId: user.id, capabilityKey: tc.function.name, outcome: "capability_succeeded",

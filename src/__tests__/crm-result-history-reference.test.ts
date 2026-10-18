@@ -104,7 +104,7 @@ describe("recorded Task and Deal history uses only native receipt references", (
       { record_locator: null }, { record_locator: { ...result.record_locator, record_id: null } },
       { record_locator: { ...result.record_locator, record_id: OTHER_ID } },
       { record_locator: { ...result.record_locator, deep_link_status: "unavailable" } },
-      { record_locator: { ...result.record_locator, deep_link_status: family === "task" ? "exact" : "surface_only" } },
+      { record_locator: { ...result.record_locator, deep_link_status: family === "task" ? "pending" : "surface_only" } },
     ]) expect(crmResultRecordReference({ ...result, ...patch })).toBeNull();
   });
   it.each(["task", "deal"] as const)("requires true receipt and succeeded outcome for %s", family => {
@@ -118,7 +118,7 @@ describe("recorded Task and Deal history uses only native receipt references", (
     const row = { action: `${family}.update`, outcome: "succeeded", receipt_recorded: true };
     const reference = familyReference(family);
     for (const extra of [{ subject: "Private title" }, { subject: "CLT-1234" }, { path: "/foreign" }, { url: "https://example.invalid" },
-      { destination: family === "task" ? "pipeline" : "operations_work" }, { record_id: family === "task" ? ID : null }, { record_id: "legacy-id" }, { record_id: undefined }]) {
+      { destination: family === "task" ? "pipeline" : "operations_work" }, { record_id: family === "task" ? 3 : null }, { record_id: "legacy-id" }, { record_id: undefined }]) {
       expect(readCrmResultMetadata([{ ...row, record_reference: { ...reference, ...extra } }])[0].record_reference).toBeUndefined();
     }
     expect(readCrmResultMetadata([nativeFamily(family)])).toEqual([row]);

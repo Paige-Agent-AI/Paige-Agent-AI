@@ -19,7 +19,9 @@ describe("canonical externally emitted app destinations", () => {
   ] as const)("keeps task destinations on the native %s/%s owner", (actor, tier, account, path) => {
     expect(resolveCanonicalAppPath({ actor, tier, account, destination: "tasks" })).toBe(path);
     expect(resolveCanonicalRecordLink({ actor, tier, account, destination: "tasks", recordId: "00000000-0000-4000-8000-000000000001" }))
-      .toEqual({ path, status: "surface_only" });
+      .toEqual(tier === "solo" || tier === "standalone"
+        ? { path: `${path}?task=00000000-0000-4000-8000-000000000001`, status: "exact" }
+        : { path, status: "surface_only" });
   });
 
   it.each([
@@ -107,9 +109,10 @@ describe("resolveCanonicalRecordLink", () => {
     ["business_time_zone", "/solo/1971670/settings/setup/business-profile#business-time-zone"],
   ] as const)("maps %s to its Solo surface, surface-only", (destination, path) => {
     expect(resolveCanonicalRecordLink({ ...solo, destination })).toEqual({ path, status: "surface_only" });
-    // The invoice destination supports exact focus; other department destinations remain lists.
+    // Only the mounted invoice and Task consumers support exact UUID focus.
     expect(resolveCanonicalRecordLink({ ...solo, destination, recordId: UUID })).toEqual(destination === 'sales_invoices'
       ? { path: `${path}&invoice=${UUID}`, status: "exact" }
+      : destination === 'operations_work' ? { path: `${path}?task=${UUID}`, status: "exact" }
       : { path, status: "surface_only" });
   });
 

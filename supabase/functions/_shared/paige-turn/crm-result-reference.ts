@@ -43,22 +43,25 @@ export function crmResultRecordReference(value: unknown): ReadRecordLink | null 
     const destination = task ? "operations_work" : "pipeline";
     if (result.record_reference !== undefined && (!stored || stored.destination !== destination
       || Object.keys(stored).some(key => key !== "destination" && key !== "record_id")
-      || (task ? stored.record_id !== null : !readRecordLinks([stored])[0]?.record_id))) return null;
+      || (!(task && stored.record_id === null) && !readRecordLinks([stored])[0]?.record_id))) return null;
     // A fresh result must prove the native readback and locator agree. A reduced
     // historical reference alone never reconstructs a name, URL or raw payload.
     const fresh = !stored || result.readback != null || result.record_locator != null;
     let recordId = stored?.record_id;
     if (fresh) {
-      if (!readback || !locator || locator.deep_link_status !== (task ? "surface_only" : "exact")) return null;
+      if (!readback || !locator || (task
+        ? locator.deep_link_status !== "exact" && locator.deep_link_status !== "surface_only"
+        : locator.deep_link_status !== "exact")) return null;
       const ids = [readback.id, locator.record_id].map(id =>
         readRecordLinks([{ destination: "contacts", record_id: id }])[0]?.record_id);
       if (!ids[0] || !ids[1] || ids[0] !== ids[1]
-        || (deal && stored && readRecordLinks([stored])[0]?.record_id !== ids[0])) return null;
-      recordId = ids[0];
+        || (stored && stored.record_id !== null && readRecordLinks([stored])[0]?.record_id !== ids[0])) return null;
+      if (task && stored?.record_id != null && locator.deep_link_status !== "exact") return null;
+      // Keep old reduced/surface-only references truthful. Never invent exact
+      // Task identity for a legacy projection from a name, URL or raw history.
+      recordId = task && (stored?.record_id === null || locator.deep_link_status === "surface_only") ? null : ids[0];
     }
-    // Tasks intentionally retain no record ID: Work has no native Task focus
-    // contract. Deals reuse Pipeline's existing exact-ID contract.
-    const [reference] = readRecordLinks([{ destination, record_id: task ? null : recordId }]);
+    const [reference] = readRecordLinks([{ destination, record_id: recordId }]);
     return reference && (task || reference.record_id) ? reference : null;
   }
   if (!CONTACT_ACTIONS.has(result.action)) return null;

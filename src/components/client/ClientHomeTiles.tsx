@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyTile } from "@/components/client/EmptyTile";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlaybook } from "@/lib/playbook";
 import { useClientPortalBrandState } from "@/hooks/useClientPortalBrand";
@@ -20,6 +21,9 @@ import {
   ChevronRight,
   Lock,
 } from "lucide-react";
+
+// Some of these tables are not in the generated types; count them through an untyped view of the same client.
+const untypedDb = supabase as unknown as SupabaseClient;
 
 /**
  * The shared outline/ghost buttons hover-fill with --secondary, near-black in light theme under a
@@ -75,13 +79,13 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
       setLoading(true);
       const headOnly = { count: "exact" as const, head: true };
       const [goals, credit, apps, docs, msgs, tasks] = await Promise.all([
-        supabase.from("client_goals" as any).select("id", headOnly).eq("user_id", userId),
-        supabase.from("credit_report_uploads" as any).select("id", headOnly).eq("user_id", userId),
-        supabase.from("funding_journey_applications" as any).select("id", headOnly).eq("user_id", userId),
-        supabase.from("documents" as any).select("id", headOnly).eq("user_id", userId),
-        supabase.from("chat_messages" as any).select("id", headOnly).eq("user_id", userId),
-        supabase
-          .from("tasks" as any)
+        untypedDb.from("client_goals").select("id", headOnly).eq("user_id", userId),
+        untypedDb.from("credit_report_uploads").select("id", headOnly).eq("user_id", userId),
+        untypedDb.from("funding_journey_applications").select("id", headOnly).eq("user_id", userId),
+        untypedDb.from("documents").select("id", headOnly).eq("user_id", userId),
+        untypedDb.from("chat_messages").select("id", headOnly).eq("user_id", userId),
+        untypedDb
+          .from("tasks")
           .select("id", headOnly)
           .eq("assigned_to", userId)
           .neq("status", "completed"),

@@ -645,7 +645,7 @@ Deno.serve(async (req) => {
     }
 
     const { data: b } = await admin.from("internal_bookings")
-      .select("id, tenant_id, calendar_id, host_user_id, guest_name, guest_email, guest_phone, title, start_at, end_at, timezone, status, location_type, location_value, booking_kind, collective_group_id, appointment_type, manage_token_version, zoom_meeting_id" + (portal ? ", contact_id" : ""))
+      .select("id, tenant_id, calendar_id, host_user_id, guest_name, guest_email, guest_phone, title, start_at, end_at, timezone, status, location_type, location_value, booking_kind, collective_group_id, appointment_type, manage_token_version, zoom_meeting_id, contact_id")
       .eq("id", bookingId).maybeSingle();
     // A customer is told "not found" for anything that is not their own booking
     // in the admitted business — never "forbidden" — so nothing about other

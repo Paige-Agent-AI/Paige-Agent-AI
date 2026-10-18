@@ -277,7 +277,6 @@
   gap: 5px;
   padding: 3px 6px;
   border: 1px solid var(--sc-ev-color, var(--pg-line));
-  border-left-width: 3px;
   border-radius: 6px;
   color: var(--pg-ink-2);
   background: color-mix(in srgb, var(--sc-ev-color, var(--pg-line)) 13%, var(--pg-surface));

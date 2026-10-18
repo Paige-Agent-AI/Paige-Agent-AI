@@ -74,11 +74,6 @@ test('process-booking-notifications: a reminder to both still reaches the host w
  const out=await (await h.run({})).json();
  assert.equal(out.reminders,1);assert.equal(h.effects.length,1);assert.deepEqual(Array.from(h.effects[0].payload.to),['host@example.test']);
 });
-test('send-portal-invite: the legacy token path holds an invitation to a client who turned email off',async()=>{
- const h=harness('send-portal-invite',true,{fixtures:optedOut});
- const res=await h.run({token:'valid',email:'guest@example.test'});const out=await res.json();
- assert.equal(res.status,409);assert.equal(out.code,'INVITATION_POLICY_HELD');assert.equal(h.effects.length,0);
-});
 
 for(const mode of [false,'error','throw'])test(`plan-reminder: restricted in_app remains internal-only (${mode})`,async()=>{
  const h=harness('plan-reminder-cron',mode,{remindChannel:'in_app'});

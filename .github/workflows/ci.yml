@@ -90,6 +90,10 @@ jobs:
         run: node scripts/proof/operator-intelligence-eval.mjs --postgres
       - name: INT-280 canonical durable trajectory history in disposable PostgreSQL
         run: node scripts/proof/int280-trajectory-history.mjs --postgres
+      - name: Canonical durable thread deletion and immutable identity in disposable PostgreSQL
+        env:
+          DURABLE_THREAD_PROOF_PORT: '5432'
+        run: node scripts/proof/paige-durable-thread-detach.mjs
       - name: INT-280 actual canonical completion and Operator trajectory isolation in disposable PostgreSQL
         run: node scripts/proof/int280-trajectory-projection.mjs --postgres
       - name: Operator generated-media retirement, shared-reference refusal and partial recovery proof

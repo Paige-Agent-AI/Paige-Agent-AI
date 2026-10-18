@@ -18477,6 +18477,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   if (CONVERSATIONAL_ADMITTED_READ_TOOLS.has(String(tc.function?.name ?? "")) && parsed?.status === "available") {
                     const links = readRecordLinkSource.get(tc);
                     if (links?.length) readLinkTrace.splice(0, readLinkTrace.length, ...mergeRecordLinks(readLinkTrace, links));
+                    // Describe the actual bounded outgoing selection, never a candidate
+                    // reference dropped by its six-link cap. The model receives no URL.
+                    if (tc.function?.name === "crm_get_task" && parsed?.found === true && parsed?.task?.id) {
+                      const taskNavigationReady = readLinkTrace.some(link => link.destination === "operations_work" && link.record_id === parsed.task.id);
+                      res.content = JSON.stringify({ ...parsed, navigation_note: taskNavigationReady
+                        ? "Use the Open task control below to open this exact saved Task. The interface supplies the verified control; do not invent an address, say that no link is available, or direct the owner to search a generic Task Manager."
+                        : "This saved Task is available, but its exact opening control is not included in this response because the interface displays at most six record references. Do not promise a control for this Task or invent an address." });
+                    }
                   }
                 } catch { /* keep ok */ }
                 // BEFORE the cosmetic-trace drop below. `describeStep` returning null means the

@@ -762,8 +762,10 @@ async function ownerTaskNativeProof() {
       const controlAttempts=await Promise.all(Array.from({length:8},()=>new Promise((yes,no)=>{
         const peer=spawn(exe("psql"),[...args(database),"-c",controlStatement(race.process,"arm",raceReview)],{windowsHide:true,stdio:["ignore","pipe","pipe"]});
         let out="",err="";const timer=setTimeout(()=>peer.kill(),30000);
-        peer.stdout.on("data",d=>{out+=d;});peer.stderr.on("data",d=>{err+=d;});peer.on("error",no);
-        peer.on("exit",code=>{clearTimeout(timer);yes({code,out,err});});
+        peer.stdout.on("data",d=>{out+=d;});peer.stderr.on("data",d=>{err+=d;});
+        peer.once("error",error=>{clearTimeout(timer);no(error);});
+        // exit may precede the final pipe data; close joins both stdout and stderr.
+        peer.once("close",code=>{clearTimeout(timer);yes({code,out,err});});
       })));
       check("eight actual simultaneous owner controls mint one activation/audit; every loser is stale or NOWAIT refused",()=>{
         const succeeded=controlAttempts.filter(r=>r.code===0);assert.equal(succeeded.length,1);

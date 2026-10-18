@@ -21,9 +21,11 @@ import { fileURLToPath } from 'node:url';
 import { randomUUID, createHash } from 'node:crypto';
 import { strict as assert } from 'node:assert';
 import { installPersonalSenderProof, registerPersonalSenderCases } from './comms-email-personal-sender-cases.mjs';
+import { installOriginAdmissionProof, registerOriginAdmissionCases } from './comms-email-origin-admission-cases.mjs';
 
 const [binary, port, user, expectedDirectory] = process.argv.slice(2);
 const personalSender = process.argv.includes('--personal-sender') || process.argv.includes('--personal-sender-baseline');
+const originAdmission = process.argv.includes('--origin-admission') || process.argv.includes('--origin-admission-baseline');
 if (!binary || !/^\d+$/.test(port ?? '') || !user || !expectedDirectory) throw new Error('Usage: node scripts/sql/comms-email-send-concurrency-proof.mjs <psql> <local-port> <local-user> <verified-disposable-data-directory>');
 const cwd = fileURLToPath(new URL('.', import.meta.url));
 const migrationPath = process.env.COMMS_EMAIL_MIGRATION_OVERRIDE
@@ -288,6 +290,7 @@ try {
   sync(database, readFileSync(new URL('comms-email-send-concurrency-schema.sql', import.meta.url), 'utf8'));
   sync(database, readFileSync(migrationPath, 'utf8'));
   if (personalSender) installPersonalSenderProof({ sql: source => sync(database, source), baseline: process.argv.includes('--personal-sender-baseline') });
+  if (originAdmission) installOriginAdmissionProof({ sql: source => sync(database, source), baseline: process.argv.includes('--origin-admission-baseline') });
   // Proof instrument (NOT a stub of anything in prod): records every binding write so a double
   // admission is visible even when both writers store the same attempts value.
   sync(database, `
@@ -312,6 +315,7 @@ INSERT INTO public.client_contact_methods(tenant_id,client_id,kind,value,is_prim
 INSERT INTO public.channel_connectors(id,tenant_id,channel_type,provider,from_address,status,active) VALUES
   (${q(kA)},${q(tA)},'email','resend','Owner@A.example.invalid','active',true),(${q(kB)},${q(tB)},'email','resend','owner@b.example.invalid','active',true);`);
   if (personalSender) registerPersonalSenderCases({ scenario, sql: source => sync(database, source), asService, prepareCall, selectResult, session, waitFor, q, A, op });
+  if (originAdmission) registerOriginAdmissionCases({ scenario, sql: source => sync(database, source), asService, prepareCall, selectResult, session, waitFor, q, A, op, race, binary, args: args(database), cwd });
   for (const { name, fn } of scenarios) {
     try { await fn(); console.log(`PASS ${name}`); }
     catch (error) { failed += 1; console.log(`FAIL ${name}\n     ${String(error.message).split('\n')[0]}`); }

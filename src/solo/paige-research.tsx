@@ -45,11 +45,11 @@ const formatDate = (iso: string | null) => {
 
 function RunCard({ row, onOpen }: { row: ResearchRunRow; onOpen: (id: string) => void }) {
   return (
-    <article className="spw-source-card dr-run-card">
+    <article className="spw-source-card dr-run-card min-w-0">
       <div className="spw-card-row">
         <span className="spw-symbol"><FileSearch aria-hidden size={16} /></span>
         <div className="spw-card-copy">
-          <h3>{row.question}</h3>
+          <h3 className="line-clamp-3 [overflow-wrap:anywhere] leading-5">{row.question}</h3>
           <p>
             {formatDate(row.created_at)}
             {row.domain && row.domain !== "general" ? ` · ${row.domain}` : ""}

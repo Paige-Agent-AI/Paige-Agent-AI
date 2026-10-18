@@ -16,7 +16,7 @@
  *  - the IA: Research sits in the PAIGE workspace (Chat · Knowledge ·
  *    Research · Helpers · Capabilities) and the canonical route registry.
  */
-import { readFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
@@ -74,6 +74,61 @@ describe("actual Research Home governed history projection and display fences", 
     host = document.createElement("div"); document.body.append(host); root = createRoot(host);
   });
   afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.useRealTimers(); });
+
+  it.each([
+    ["short", "Competitor landscape"],
+    ["long-request", `${"Compare the current official service documentation, explain the limits, and retain supporting citations. ".repeat(40)}Final question detail.`],
+    ["unbroken", `https://example.org/${"LongUnbrokenResearchRequest".repeat(80)}`],
+    ["multilingual", `${"市場調査と根拠 — تحليل المصادر — investigación verificada 🔎 ".repeat(35)}結論`],
+  ])("preserves the complete %s question and exact full-detail reading path", async (name, question) => {
+    port.rpc.mockImplementation(async (rpc: string, args: { _run_id?: string }) => ({
+      data: rpc === "list_workspace_research" ? [historyRow("run-a", question)] : completeRun(args._run_id, question), error: null,
+    }));
+    await render();
+    const heading = host.querySelector(".dr-run-card h3");
+    const button = host.querySelector<HTMLButtonElement>(".dr-run-card button")!;
+    expect(heading?.textContent).toBe(question);
+    expect(button.getAttribute("aria-label")).toBe(`Open research: ${question}`);
+    expect(button.textContent).toBe("Review findings");
+    expect(host.textContent).toContain("2 sources");
+    const captureDir = process.env.RESEARCH_CARD_CAPTURE_DIR;
+    if (captureDir) {
+      mkdirSync(captureDir, { recursive: true });
+      writeFileSync(join(captureDir, `${name}.library.dom.html`), host.innerHTML);
+      writeFileSync(join(captureDir, `${name}.fixture.json`), JSON.stringify({ name, question, runId: "run-a" }));
+    }
+    await act(async () => { button.click(); await flush(); });
+    const detail = host.querySelector<HTMLElement>(".dr-detail-card")!;
+    expect(detail.querySelector("h3")?.textContent).toBe(question);
+    expect(document.activeElement).toBe(detail);
+    expect(port.rpc.mock.calls.filter(([rpc]) => rpc === "get_workspace_research_run")).toEqual([
+      ["get_workspace_research_run", { _run_id: "run-a" }],
+    ]);
+    if (captureDir) writeFileSync(join(captureDir, `${name}.detail.dom.html`), host.innerHTML);
+    const back = Array.from(detail.querySelectorAll("button")).find(b => b.textContent?.includes("Back to research history"))!;
+    await act(async () => { back.click(); await flush(); });
+    expect(host.querySelector(".dr-detail-card")).toBeNull();
+    expect(host.querySelector(".dr-run-card h3")?.textContent).toBe(question);
+    expect(port.invoke).not.toHaveBeenCalled();
+  });
+  it("distinguishes saved runs whose long questions share the same prefix", async () => {
+    const prefix = "The same opening request with distinct saved evidence. ".repeat(25);
+    const questions = [`${prefix}First result`, `${prefix}Second result`];
+    port.rpc.mockImplementation(async (rpc: string, args: { _run_id?: string }) => ({
+      data: rpc === "list_workspace_research"
+        ? questions.map((question, i) => historyRow(`run-${i}`, question))
+        : completeRun(args._run_id, questions[1]), error: null,
+    }));
+    await render();
+    const buttons = Array.from(host.querySelectorAll<HTMLButtonElement>(".dr-run-card button"));
+    expect(buttons.map(b => b.getAttribute("aria-label"))).toEqual(questions.map(q => `Open research: ${q}`));
+    await act(async () => { buttons[1].click(); await flush(); });
+    expect(host.querySelector(".dr-detail-card h3")?.textContent).toBe(questions[1]);
+    expect(port.rpc.mock.calls.filter(([rpc]) => rpc === "get_workspace_research_run")).toEqual([
+      ["get_workspace_research_run", { _run_id: "run-1" }],
+    ]);
+    expect(port.invoke).not.toHaveBeenCalled();
+  });
 
   it("withholds the observed ten unsupported claims and contradictory coverage while retaining original history metadata", async () => {
     const value = { ...completeRun(), findings: Array.from({ length: 10 }, (_, i) => ({ text: `Unsupported claim ${i}`, citations: [1, 5, 6, 11], confidence: "high" })), sources: [], coverage: { note: "Verified 10 findings from 23 citable sources", hops_used: 3 } };

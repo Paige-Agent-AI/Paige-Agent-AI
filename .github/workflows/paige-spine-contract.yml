@@ -548,6 +548,10 @@ jobs:
       - run: supabase test db supabase/tests/customer_invitation_delivery.sql
       - run: supabase test db supabase/tests/customer_invitation_catalogue.sql
         if: ${{ !cancelled() }}
+      # E09 Agreements: a customer lists, opens-to-sign and downloads only their own Sales Agreements;
+      # the portal open writes no agreement row and no agreement event; no RLS policy changes.
+      - run: supabase test db supabase/tests/customer_portal_agreements.sql
+        if: ${{ !cancelled() }}
       # E09 portal channel: customer <-> business messages in the one canonical inbox.
       - run: supabase test db supabase/tests/customer_portal_messages.sql
         if: ${{ !cancelled() }}

@@ -271,8 +271,12 @@ Deno.serve(async (req) => {
       })
     }
 
-    const resendKey = Deno.env.get('RESEND_API_KEY')
-    if (!resendKey) {
+    // Platform transactional email sends via SendGrid (owner directive: off Resend).
+    // Same governed pattern as the comms door's SendGrid arm: the scoped Mail Send
+    // credential (never an admin key), X-Idempotency-Key, and X-Message-Id as the
+    // provider acceptance receipt. custom_args carry the correlation ids.
+    const sendgridKey = Deno.env.get('SENDGRID_MAIL_SEND_API_KEY')
+    if (!sendgridKey) {
       await failClaim('email_provider_unconfigured')
       return new Response(JSON.stringify({ error: 'email_provider_unconfigured' }), {
         status: 503,
@@ -309,19 +313,26 @@ Deno.serve(async (req) => {
 
     let response: Response
     try {
-      response = await fetch('https://api.resend.com/emails', {
+      response = await fetch('https://api.sendgrid.com/v3/mail/send', {
         method: 'POST',
         headers: {
-          Authorization: 'Bearer ' + resendKey,
+          Authorization: 'Bearer ' + sendgridKey,
           'Content-Type': 'application/json',
-          'Idempotency-Key': messageId,
+          'X-Idempotency-Key': messageId,
         },
         body: JSON.stringify({
-          from: SITE_NAME + ' <notifications@' + FROM_DOMAIN + '>',
-          to: [claim.recipient_email],
+          personalizations: [{ to: [{ email: claim.recipient_email }] }],
+          from: { email: 'notifications@' + FROM_DOMAIN, name: SITE_NAME },
           subject: typeof template.subject === 'function' ? template.subject(renderData) : template.subject,
-          html,
-          text: plainText,
+          content: [
+            { type: 'text/html', value: html },
+            { type: 'text/plain', value: plainText },
+          ],
+          custom_args: {
+            message_id: messageId,
+            template: 'solo-beta-welcome',
+            fulfillment_event_id: soloFulfillmentEventId,
+          },
         }),
       })
     } catch {
@@ -332,21 +343,21 @@ Deno.serve(async (req) => {
       })
     }
 
-    const providerBody = (await response.json().catch(() => ({}))) as {
-      id?: string
-    }
-    if (!response.ok || !providerBody.id) {
+    // SendGrid answers 202 with an empty body; acceptance is the X-Message-Id
+    // header (door semantics): present = provider accepted, absent = ambiguous.
+    const providerMessageId = response.headers.get('X-Message-Id')
+    if (!response.ok || !providerMessageId) {
       await admin
         .from('email_send_log')
         .update({
           status: 'failed',
-          error_message: 'resend_' + response.status,
+          error_message: 'sendgrid_' + response.status + (response.ok ? '_no_message_id' : ''),
         })
         .eq('message_id', messageId)
         .eq('status', 'pending')
-      await failClaim('provider_rejected')
-      return new Response(JSON.stringify({ error: 'send_failed' }), {
-        status: 502,
+      await failClaim(response.ok ? 'provider_outcome_ambiguous' : 'provider_rejected', response.ok)
+      return new Response(JSON.stringify({ error: response.ok ? 'welcome_delivery_uncertain' : 'send_failed' }), {
+        status: response.ok ? 503 : 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
@@ -358,7 +369,7 @@ Deno.serve(async (req) => {
         metadata: {
           reference_id: claim.reference_id,
           fulfillment_event_id: soloFulfillmentEventId,
-          vendor_message_id: providerBody.id,
+          vendor_message_id: providerMessageId,
         },
       })
       .eq('message_id', messageId)
@@ -374,7 +385,7 @@ Deno.serve(async (req) => {
     const { error: completeError } = await admin.rpc('solo_beta_complete_welcome_delivery', {
       _delivery_id: claim.delivery_id,
       _claim_token: claim.claim_token,
-      _provider_message_id: providerBody.id,
+      _provider_message_id: providerMessageId,
     })
     if (completeError) {
       return new Response(JSON.stringify({ error: 'welcome_receipt_failed' }), {

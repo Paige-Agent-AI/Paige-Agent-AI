@@ -7,9 +7,11 @@
 -- exact allowlist, only files the business shared (ready) plus their own uploads, and storage
 -- authorizes exactly those objects for a signed URL; the deployed customer upload pipeline still
 -- works; a customer can no longer delete their own upload metadata; a staff PUT needs a
--- reservation; and released work is unavailable once the client or the business is inactive.
+-- reservation; released work is unavailable once the client or the business is inactive; and, by a
+-- matrix of every signed-in role against every write that could change what a customer reads or
+-- opens, the only ways a customer gains a file are the audited share writer and their own upload.
 BEGIN;
-SELECT plan(197);
+SELECT plan(229);
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0941000-0000-4000-8000-000000000001','authenticated','authenticated','documents-owner-a@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
  ('e0941000-0000-4000-8000-000000000002','authenticated','authenticated','documents-owner-b@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -443,6 +445,240 @@ SELECT is(pg_temp.owner($q$UPDATE public.client_files SET uploaded_by_user_id='e
  'FILE_IDENTITY_IMMUTABLE','or who uploaded a file');
 SELECT ok((SELECT count(*)=3 FROM public.client_files WHERE uploaded_by_user_id='e0941000-0000-4000-8000-000000000001' AND storage_path=pg_temp.fpath('01',CASE WHEN id='e0944000-0000-4000-8000-000000000006' THEN '02' ELSE '01' END,id::text)
   AND id IN ('e0944000-0000-4000-8000-000000000001','e0944000-0000-4000-8000-000000000002','e0944000-0000-4000-8000-000000000006')),'every refused rewrite left its row as it was');
+
+-- 12b. The visibility matrix (round 5): close the CLASS, not the instances. Every signed-in role in
+-- this fixture attempts, one at a time and each rolled back, every write that could change what a
+-- customer can read or open: INSERT / UPDATE / upsert / DELETE on client_files for visibility,
+-- contact_id, storage_path, uploaded_by_user_id, id, upload_state and tenant_id, and storage.objects
+-- INSERT / UPDATE / DELETE on the client-files bucket (DELETE as the Storage API runs it). After each
+-- write, three customers' access is fingerprinted three ways (the rows their RLS returns, the objects
+-- storage lets them open, the files their portal read lists) and compared with the fingerprint before.
+-- The only writes that may ADD to it are client_file_set_client_share (audited) and the customer's
+-- own upload; both are driven through the same harness as positive controls, so the matrix is shown
+-- to see a real gain. Deleting a file (A7) and renaming a shared one (MINOR-J) are known limits: the
+-- matrix asserts they withdraw or relabel, never grant.
+INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
+ ('e0941000-0000-4000-8000-000000000012','authenticated','authenticated','documents-admin-a@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
+ ('e0941000-0000-4000-8000-000000000013','authenticated','authenticated','documents-plain-member-a@tests.invalid',now(),'{"comms_provider_execution":"disabled"}');
+INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner,joined_at) VALUES
+ ('e0942000-0000-4000-8000-000000000001','e0941000-0000-4000-8000-000000000012','admin','active',false,now()),
+ ('e0942000-0000-4000-8000-000000000001','e0941000-0000-4000-8000-000000000013','member','active',false,now());
+INSERT INTO public.user_roles(user_id,role) VALUES ('e0941000-0000-4000-8000-000000000012','admin') ON CONFLICT DO NOTHING;
+UPDATE public.profiles SET active_tenant_id='e0942000-0000-4000-8000-000000000001'
+ WHERE user_id IN('e0941000-0000-4000-8000-000000000012','e0941000-0000-4000-8000-000000000013');
+-- Objects for the matrix: Sam's private file and his shared file get theirs (the shared one only
+-- after the PUT probes, below, so a PUT onto it is a real attempt); every actor owns one object that
+-- no row names yet, so an inserted or repointed row could name an object storage would serve.
+INSERT INTO storage.objects(bucket_id,name,owner_id,metadata)
+ SELECT 'client-files','e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/internal/obj-'||u,u,'{"size":5,"mimetype":"application/pdf"}'::jsonb
+ FROM unnest(ARRAY['e0941000-0000-4000-8000-000000000001','e0941000-0000-4000-8000-000000000002','e0941000-0000-4000-8000-000000000003',
+   'e0941000-0000-4000-8000-000000000005','e0941000-0000-4000-8000-000000000010','e0941000-0000-4000-8000-000000000012','e0941000-0000-4000-8000-000000000013']) u
+ UNION ALL SELECT 'client-files','e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000002/internal/e0944000-0000-4000-8000-000000000021','e0941000-0000-4000-8000-000000000001','{"size":21,"mimetype":"application/pdf"}'::jsonb;
+
+CREATE FUNCTION pg_temp.fid(_n text) RETURNS text LANGUAGE sql AS $$ SELECT 'e0944000-0000-4000-8000-0000000000'||_n $$;
+CREATE FUNCTION pg_temp.cid(_n text) RETURNS text LANGUAGE sql AS $$ SELECT 'e0943000-0000-4000-8000-0000000000'||_n $$;
+CREATE FUNCTION pg_temp.upd(_n text, _set text) RETURNS text LANGUAGE sql AS
+ $$ SELECT format('WITH u AS (UPDATE public.client_files SET %s WHERE id=%L RETURNING 1) SELECT to_jsonb(count(*)) FROM u', _set, pg_temp.fid(_n)) $$;
+-- A ready row on _contact naming the caller's own unreferenced object, uploaded by _uploader.
+CREATE FUNCTION pg_temp.ins(_n text, _contact text, _vis text, _uploader text DEFAULT 'auth.uid()', _conflict text DEFAULT '') RETURNS text LANGUAGE sql AS
+ $$ SELECT format($f$WITH i AS (INSERT INTO public.client_files(id,tenant_id,contact_id,uploaded_by_user_id,storage_path,original_filename,mime_type,size_bytes,visibility,upload_state)
+   VALUES (%L,'e0942000-0000-4000-8000-000000000001',%L,%s,'e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/internal/obj-'||auth.uid(),'m.pdf','application/pdf',5,%L,'ready') %s RETURNING 1)
+   SELECT to_jsonb(count(*)) FROM i$f$, pg_temp.fid(_n), pg_temp.cid(_contact), _uploader, _vis, _conflict) $$;
+-- What three customers can read or open: rows (RLS), objects (storage), portal list (the RPC).
+CREATE FUNCTION pg_temp.access() RETURNS text[] LANGUAGE plpgsql AS $$
+DECLARE _c uuid; _acc text[] := '{}'; _r jsonb;
+BEGIN
+ FOREACH _c IN ARRAY ARRAY['e0941000-0000-4000-8000-000000000003','e0941000-0000-4000-8000-000000000004','e0941000-0000-4000-8000-000000000008']::uuid[] LOOP
+  _r := pg_temp.as_user(_c, $q$SELECT coalesce(jsonb_agg(id::text),'[]') FROM public.client_files$q$);
+  _acc := _acc || ARRAY(SELECT 'row:'||right(_c::text,2)||':'||right(x,2) FROM jsonb_array_elements_text(CASE WHEN jsonb_typeof(_r)='array' THEN _r ELSE jsonb_build_array('ERROR') END) x);
+  _r := pg_temp.as_user(_c, $q$SELECT coalesce(jsonb_agg(id::text||'@'||name),'[]') FROM storage.objects WHERE bucket_id='client-files'$q$);
+  _acc := _acc || ARRAY(SELECT 'object:'||right(_c::text,2)||':'||x FROM jsonb_array_elements_text(CASE WHEN jsonb_typeof(_r)='array' THEN _r ELSE jsonb_build_array('ERROR') END) x);
+  _r := pg_temp.as_user(_c, $q$SELECT public.client_portal_documents(p_limit=>100)$q$);
+  _acc := _acc || ARRAY(SELECT 'doc:'||right(_c::text,2)||':'||right(e->>'id',2) FROM jsonb_array_elements(coalesce(_r->'files','[]')) e);
+ END LOOP;
+ RETURN _acc;
+END $$;
+CREATE TEMP TABLE vm_base AS SELECT pg_temp.access() AS acc;
+-- One attempt: the writes as _actor, then the fingerprint, then everything rolled back.
+CREATE FUNCTION pg_temp.probe(_actor uuid, _sqls text[], _storage_api boolean DEFAULT false) RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE _r jsonb; _s text; _after text[];
+BEGIN
+ BEGIN
+  IF _storage_api THEN PERFORM set_config('storage.allow_delete_query','true',true); END IF;
+  FOREACH _s IN ARRAY _sqls LOOP _r := pg_temp.as_user(_actor, _s); END LOOP;
+  PERFORM set_config('storage.allow_delete_query','false',true);
+  _after := pg_temp.access();
+  RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = jsonb_build_object('result', _r,
+    'gained', to_jsonb(ARRAY(SELECT unnest(_after) EXCEPT SELECT unnest(acc) FROM vm_base ORDER BY 1)),
+    'lost', to_jsonb(ARRAY(SELECT unnest(acc) FROM vm_base EXCEPT SELECT unnest(_after) ORDER BY 1)))::text;
+ EXCEPTION WHEN raise_exception THEN RETURN SQLERRM::jsonb;
+ END;
+END $$;
+-- The baseline the matrix starts from: Jordan opens his shared file and his own upload; 001 is
+-- private, 002 shared, 004 his upload, 006 Sam's shared file (no object yet), 021 Sam's private file.
+SELECT ok((SELECT acc @> ARRAY['row:03:02','row:03:04','doc:03:02','doc:03:04','row:04:06']
+   AND NOT acc && ARRAY['row:03:01','row:04:21','row:04:01']
+   AND (SELECT count(*) FROM unnest(acc) a WHERE a LIKE 'object:03:%') = 2 FROM vm_base)
+ AND (SELECT string_agg(right(id::text,2)||'='||visibility::text||'/'||upload_state, ',' ORDER BY id) FROM public.client_files
+      WHERE right(id::text,2) IN ('01','02','04','06','21','23') AND tenant_id='e0942000-0000-4000-8000-000000000001')
+   = '01=internal/ready,02=shared/ready,04=client_upload/ready,06=shared/ready,21=internal/ready,23=internal/pending',
+ 'the visibility matrix starts from a known baseline');
+
+CREATE TEMP TABLE vm_actor(label text, id uuid);
+INSERT INTO vm_actor VALUES
+ ('owner','e0941000-0000-4000-8000-000000000001'),('admin','e0941000-0000-4000-8000-000000000012'),
+ ('member with global admin','e0941000-0000-4000-8000-000000000005'),('plain member','e0941000-0000-4000-8000-000000000013'),
+ ('customer','e0941000-0000-4000-8000-000000000003'),('other-tenant admin','e0941000-0000-4000-8000-000000000002'),
+ ('platform owner','e0941000-0000-4000-8000-000000000010');
+CREATE TEMP TABLE vm_write(label text, sqls text[], storage_api boolean DEFAULT false);
+INSERT INTO vm_write(label, sqls) VALUES
+ -- visibility (B1, B9)
+ ('visibility private->shared', ARRAY[pg_temp.upd('01',$s$visibility='shared'$s$)]),
+ ('visibility private->client_upload (B1)', ARRAY[pg_temp.upd('01',$s$visibility='client_upload'$s$)]),
+ ('visibility shared->client_upload (B9)', ARRAY[pg_temp.upd('02',$s$visibility='client_upload'$s$)]),
+ ('visibility shared->private', ARRAY[pg_temp.upd('02',$s$visibility='internal'$s$)]),
+ ('visibility client_upload->shared', ARRAY[pg_temp.upd('04',$s$visibility='shared'$s$)]),
+ ('visibility client_upload->private', ARRAY[pg_temp.upd('04',$s$visibility='internal'$s$)]),
+ ('visibility Sam private->client_upload', ARRAY[pg_temp.upd('21',$s$visibility='client_upload'$s$)]),
+ ('visibility private->client_upload as the customer', ARRAY[pg_temp.upd('01',$s$visibility='client_upload', uploaded_by_user_id='e0941000-0000-4000-8000-000000000003'$s$)]),
+ -- contact_id (B3)
+ ('contact shared Jordan->Sam', ARRAY[pg_temp.upd('02',$s$contact_id='e0943000-0000-4000-8000-000000000002'$s$)]),
+ ('contact client_upload Jordan->Sam', ARRAY[pg_temp.upd('04',$s$contact_id='e0943000-0000-4000-8000-000000000002'$s$)]),
+ ('contact private Sam->Jordan', ARRAY[pg_temp.upd('21',$s$contact_id='e0943000-0000-4000-8000-000000000001'$s$)]),
+ ('contact private Sam->Jordan then client_upload (B3)', ARRAY[pg_temp.upd('21',$s$contact_id='e0943000-0000-4000-8000-000000000001'$s$),pg_temp.upd('21',$s$visibility='client_upload'$s$)]),
+ ('contact private Sam->Jordan and client_upload at once', ARRAY[pg_temp.upd('21',$s$contact_id='e0943000-0000-4000-8000-000000000001', visibility='client_upload'$s$)]),
+ ('contact shared Sam->Jordan', ARRAY[pg_temp.upd('06',$s$contact_id='e0943000-0000-4000-8000-000000000001'$s$)]),
+ -- storage_path
+ ('path shared->own object', ARRAY[pg_temp.upd('02',$s$storage_path='e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/internal/obj-'||auth.uid()$s$)]),
+ ('path Sam shared->Sam private object', ARRAY[pg_temp.upd('21',$s$storage_path='e0942000-0000-4000-8000-000000000001/parked/021'$s$),pg_temp.upd('06',$s$storage_path='e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000002/internal/e0944000-0000-4000-8000-000000000021'$s$)]),
+ ('path client_upload->private object', ARRAY[pg_temp.upd('01',$s$storage_path='e0942000-0000-4000-8000-000000000001/parked/001'$s$),pg_temp.upd('04',$s$storage_path='e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/internal/e0944000-0000-4000-8000-000000000001'$s$)]),
+ -- uploaded_by_user_id
+ ('uploader shared->caller', ARRAY[pg_temp.upd('02',$s$uploaded_by_user_id=auth.uid()$s$)]),
+ ('uploader private->customer', ARRAY[pg_temp.upd('01',$s$uploaded_by_user_id='e0941000-0000-4000-8000-000000000003'$s$)]),
+ -- id (B6e)
+ ('id of a shared file (B6e)', ARRAY[pg_temp.upd('02',$s$id='e0944000-0000-4000-8000-0000000000b1'$s$)]),
+ ('id of a client upload', ARRAY[pg_temp.upd('04',$s$id='e0944000-0000-4000-8000-0000000000b2'$s$)]),
+ ('id of a private file', ARRAY[pg_temp.upd('01',$s$id='e0944000-0000-4000-8000-0000000000b3'$s$)]),
+ -- upload_state
+ ('upload_state pending->ready', ARRAY[pg_temp.upd('23',$s$upload_state='ready'$s$)]),
+ ('upload_state shared ready->pending->ready', ARRAY[pg_temp.upd('02',$s$upload_state='pending'$s$),pg_temp.upd('02',$s$upload_state='ready'$s$)]),
+ -- tenant_id
+ ('tenant shared->business B', ARRAY[pg_temp.upd('02',$s$tenant_id='e0942000-0000-4000-8000-000000000002'$s$)]),
+ ('tenant shared->NULL', ARRAY[pg_temp.upd('02',$s$tenant_id=NULL$s$)]),
+ ('tenant business B shared->A', ARRAY[pg_temp.upd('08',$s$tenant_id='e0942000-0000-4000-8000-000000000001'$s$)]),
+ ('tenant business B shared->NULL', ARRAY[pg_temp.upd('08',$s$tenant_id=NULL$s$)]),
+ ('tenant business B private->shared', ARRAY[pg_temp.upd('26',$s$visibility='shared'$s$)]),
+ -- INSERT (B4, B5)
+ ('insert shared', ARRAY[pg_temp.ins('c1','01','shared')]),
+ ('insert client_upload uploaded by the caller (B5)', ARRAY[pg_temp.ins('c2','01','client_upload')]),
+ ('insert client_upload uploaded by the customer', ARRAY[pg_temp.ins('c3','01','client_upload',$s$'e0941000-0000-4000-8000-000000000003'$s$)]),
+ ('insert client_upload on Sam', ARRAY[pg_temp.ins('c4','02','client_upload')]),
+ ('insert private', ARRAY[pg_temp.ins('c5','01','internal')]),
+ ('delete private row then insert client_upload at its object on Sam (B4)', ARRAY[
+   $s$WITH d AS (DELETE FROM public.client_files WHERE id='e0944000-0000-4000-8000-000000000001' RETURNING 1) SELECT to_jsonb(count(*)) FROM d$s$,
+   $s$WITH i AS (INSERT INTO public.client_files(id,tenant_id,contact_id,uploaded_by_user_id,storage_path,original_filename,mime_type,size_bytes,visibility,upload_state) VALUES ('e0944000-0000-4000-8000-0000000000c6','e0942000-0000-4000-8000-000000000001','e0943000-0000-4000-8000-000000000002',auth.uid(),'e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/internal/e0944000-0000-4000-8000-000000000001','x.pdf','application/pdf',10,'client_upload','ready') RETURNING 1) SELECT to_jsonb(count(*)) FROM i$s$]),
+ -- upsert
+ ('upsert shared path', ARRAY[pg_temp.ins('02','01','internal',_conflict=>$s$ON CONFLICT (id) DO UPDATE SET storage_path=EXCLUDED.storage_path$s$)]),
+ ('upsert private->client_upload', ARRAY[pg_temp.ins('01','01','internal',_conflict=>$s$ON CONFLICT (id) DO UPDATE SET visibility='client_upload'$s$)]),
+ ('upsert private->shared', ARRAY[pg_temp.ins('01','01','internal',_conflict=>$s$ON CONFLICT (id) DO UPDATE SET visibility='shared'$s$)]),
+ ('upsert Sam private->Jordan client_upload', ARRAY[pg_temp.ins('21','01','internal',_conflict=>$s$ON CONFLICT (id) DO UPDATE SET contact_id=EXCLUDED.contact_id, visibility='client_upload'$s$)]),
+ ('upsert shared id', ARRAY[pg_temp.ins('02','01','internal',_conflict=>$s$ON CONFLICT (id) DO UPDATE SET id='e0944000-0000-4000-8000-0000000000b4'$s$)]),
+ -- DELETE (A7) and rename (B6c, MINOR-J): known limits, never a gain
+ ('delete a shared file (A7)', ARRAY[$s$WITH d AS (DELETE FROM public.client_files WHERE id='e0944000-0000-4000-8000-000000000002' RETURNING 1) SELECT to_jsonb(count(*)) FROM d$s$]),
+ ('delete a client upload', ARRAY[$s$WITH d AS (DELETE FROM public.client_files WHERE id='e0944000-0000-4000-8000-000000000004' RETURNING 1) SELECT to_jsonb(count(*)) FROM d$s$]),
+ ('rename a shared file (B6c)', ARRAY[pg_temp.upd('02',$s$original_filename='Renamed.pdf', mime_type='text/html'$s$)]),
+ -- storage.objects
+ ('storage PUT onto a shared file with no object', ARRAY[$s$WITH i AS (INSERT INTO storage.objects(bucket_id,name,owner_id,metadata) VALUES ('client-files','e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000002/internal/e0944000-0000-4000-8000-000000000006',auth.uid()::text,'{"size":15,"mimetype":"application/pdf"}') RETURNING 1) SELECT to_jsonb(count(*)) FROM i$s$]),
+ ('storage PUT as the file''s uploader', ARRAY[$s$WITH i AS (INSERT INTO storage.objects(bucket_id,name,owner_id,metadata) VALUES ('client-files','e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000002/internal/e0944000-0000-4000-8000-000000000006','e0941000-0000-4000-8000-000000000001','{"size":15,"mimetype":"application/pdf"}') RETURNING 1) SELECT to_jsonb(count(*)) FROM i$s$]),
+ ('storage rename an object onto a shared file', ARRAY[$s$WITH u AS (UPDATE storage.objects SET name='e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000002/internal/e0944000-0000-4000-8000-000000000006' WHERE bucket_id='client-files' AND name='e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000002/internal/e0944000-0000-4000-8000-000000000021' RETURNING 1) SELECT to_jsonb(count(*)) FROM u$s$]),
+ ('storage re-own a private object as the customer', ARRAY[$s$WITH u AS (UPDATE storage.objects SET owner_id='e0941000-0000-4000-8000-000000000003', owner='e0941000-0000-4000-8000-000000000003' WHERE bucket_id='client-files' AND name='e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/internal/e0944000-0000-4000-8000-000000000001' RETURNING 1) SELECT to_jsonb(count(*)) FROM u$s$]),
+ ('storage move an object into the bucket', ARRAY[$s$WITH u AS (UPDATE storage.objects SET bucket_id='client-files' WHERE bucket_id<>'client-files' RETURNING 1) SELECT to_jsonb(count(*)) FROM u$s$]);
+INSERT INTO vm_write(label, sqls, storage_api) VALUES
+ ('storage delete a shared file''s object', ARRAY[$s$WITH d AS (DELETE FROM storage.objects WHERE bucket_id='client-files' AND name='e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/internal/e0944000-0000-4000-8000-000000000002' RETURNING 1) SELECT to_jsonb(count(*)) FROM d$s$], true),
+ ('storage delete then re-PUT a shared file''s object', ARRAY[
+   $s$WITH d AS (DELETE FROM storage.objects WHERE bucket_id='client-files' AND name='e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/internal/e0944000-0000-4000-8000-000000000002' RETURNING 1) SELECT to_jsonb(count(*)) FROM d$s$,
+   $s$WITH i AS (INSERT INTO storage.objects(bucket_id,name,owner_id,metadata) VALUES ('client-files','e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/internal/e0944000-0000-4000-8000-000000000002',auth.uid()::text,'{"size":11,"mimetype":"application/pdf"}') RETURNING 1) SELECT to_jsonb(count(*)) FROM i$s$], true);
+
+CREATE TEMP TABLE vm AS
+ SELECT a.label AS actor, w.label AS write, pg_temp.probe(a.id, w.sqls, w.storage_api) AS r
+ FROM vm_actor a CROSS JOIN vm_write w;
+SELECT is((SELECT count(*) FROM vm), (SELECT count(*) FROM vm_actor) * (SELECT count(*) FROM vm_write), 'every role attempted every write in the matrix');
+SELECT is((SELECT string_agg(write||' => '||(r->'gained')::text, '; ' ORDER BY write) FROM vm WHERE actor=a.label AND jsonb_array_length(r->'gained') > 0),
+  NULL, format('no write by the %s gives any customer something new to read or open', a.label))
+ FROM vm_actor a;
+-- The known limits change what a customer reads without granting anything: a business admin's
+-- delete withdraws the file (A7, and so does the plain member with the global admin role, P1-class),
+-- and a rename relabels a shared file in place (MINOR-J). Both are recorded in the evidence.
+SELECT is((SELECT r->'result' FROM vm WHERE actor='member with global admin' AND write='delete a shared file (A7)'), '1'::jsonb,
+  'a member with the global admin role can still delete a shared file (A7, a known limit)');
+SELECT ok((SELECT r->'lost' @> '["row:03:02","doc:03:02"]' AND r->'gained' = '[]' FROM vm WHERE actor='member with global admin' AND write='delete a shared file (A7)'),
+  'which withdraws it from Jordan and grants nothing');
+SELECT ok((SELECT r->'result' = '1'::jsonb AND r->'gained' = '[]' AND r->'lost' = '[]' FROM vm WHERE actor='member with global admin' AND write='rename a shared file (B6c)'),
+  'a member can rename a shared file (MINOR-J, a known limit): it changes no row, object or listing a customer reaches');
+-- The matrix sees a real gain: the two sanctioned routes, through the same harness.
+CREATE TEMP TABLE vm_control AS SELECT
+ pg_temp.probe('e0941000-0000-4000-8000-000000000001', ARRAY[format('SELECT public.client_file_set_client_share(%L,%L,%L,true,%L)',
+   'e0941000-0000-4000-8000-000000000001','e0942000-0000-4000-8000-000000000001','e0944000-0000-4000-8000-000000000021',
+   (SELECT updated_at FROM public.client_files WHERE id='e0944000-0000-4000-8000-000000000021'))]) AS share,
+ pg_temp.probe('e0941000-0000-4000-8000-000000000003', ARRAY[
+   $s$SELECT public.client_portal_begin_file_upload('e0944000-0000-4000-8000-0000000000c9','e0943000-0000-4000-8000-000000000001','Mine.pdf','application/pdf',4,NULL)$s$,
+   $s$WITH i AS (INSERT INTO storage.objects(bucket_id,name,owner_id,metadata) VALUES ('client-files','e0942000-0000-4000-8000-000000000001/e0943000-0000-4000-8000-000000000001/client_upload/e0941000-0000-4000-8000-000000000003/e0944000-0000-4000-8000-0000000000c9',auth.uid()::text,'{"size":4,"mimetype":"application/pdf"}') RETURNING 1) SELECT to_jsonb(count(*)) FROM i$s$,
+   $s$SELECT public.client_portal_finish_file_upload('e0944000-0000-4000-8000-0000000000c9',NULL)$s$]) AS own_upload;
+SELECT ok((SELECT share->'gained' @> '["row:04:21","doc:04:21"]' AND (SELECT count(*) FROM jsonb_array_elements_text(share->'gained') g WHERE g LIKE 'object:04:%') = 1
+   AND share->'result'->>'ok' = 'true' AND share->'result'->>'replayed' = 'false' FROM vm_control),
+ 'the matrix sees a share: the owner''s share writer (audited, section 7) gives Sam the row, the listing and the object');
+SELECT ok((SELECT own_upload->'result'->>'upload_state' = 'ready' AND own_upload->'gained' @> '["row:03:c9","doc:03:c9"]'
+   AND (SELECT count(*) FROM jsonb_array_elements_text(own_upload->'gained') g WHERE g LIKE 'object:03:%') = 1
+   AND (SELECT bool_and(g LIKE '%:03:%') FROM jsonb_array_elements_text(own_upload->'gained') g) FROM vm_control),
+ 'and the customer''s own upload, which only Jordan gains');
+-- The instances behind the matrix rows (round 4 verifier MAJOR-H, MINOR-I; round 5 matrix finding),
+-- each refused with its own error and each leaving every customer's access exactly as it was.
+-- MAJOR-H: relabelling a file as the client's own upload was a share with no share writer, no audit
+-- and no way back. Only the customer's own login may be the uploader of a client_upload row.
+CREATE TEMP TABLE vm_h AS SELECT
+ pg_temp.probe('e0941000-0000-4000-8000-000000000001', ARRAY[pg_temp.upd('01',$s$visibility='client_upload'$s$)]) AS b1,
+ pg_temp.probe('e0941000-0000-4000-8000-000000000001', ARRAY[pg_temp.upd('21',$s$contact_id='e0943000-0000-4000-8000-000000000001'$s$)]) AS b3a,
+ pg_temp.probe('e0941000-0000-4000-8000-000000000001', ARRAY[pg_temp.upd('21',$s$contact_id='e0943000-0000-4000-8000-000000000001'$s$),pg_temp.upd('21',$s$visibility='client_upload'$s$)]) AS b3,
+ pg_temp.probe('e0941000-0000-4000-8000-000000000001', (SELECT sqls FROM vm_write WHERE label LIKE '%(B4)')) AS b4,
+ pg_temp.probe('e0941000-0000-4000-8000-000000000005', ARRAY[pg_temp.ins('c2','01','client_upload')]) AS b5,
+ pg_temp.probe('e0941000-0000-4000-8000-000000000001', ARRAY[pg_temp.upd('02',$s$visibility='client_upload'$s$)]) AS b9,
+ pg_temp.probe('e0941000-0000-4000-8000-000000000005', ARRAY[pg_temp.upd('02',$s$id='e0944000-0000-4000-8000-0000000000b1'$s$)]) AS b6e,
+ pg_temp.probe('e0941000-0000-4000-8000-000000000010', ARRAY[pg_temp.upd('08',$s$tenant_id='e0942000-0000-4000-8000-000000000001'$s$)]) AS k,
+ pg_temp.probe('e0941000-0000-4000-8000-000000000010', ARRAY[pg_temp.upd('08',$s$tenant_id=NULL$s$)]) AS k_null;
+SELECT is((SELECT b1->'result'->>'error' FROM vm_h),'FILE_CLIENT_UPLOAD_PROVENANCE','the owner cannot relabel a private file as the client''s upload (B1)');
+SELECT is((SELECT b1->'gained' FROM vm_h),'[]'::jsonb,'so Jordan reads neither its row nor its object');
+SELECT is((SELECT b3a->'result' FROM vm_h),'1'::jsonb,'the owner may move Sam''s private file onto Jordan (it stays private)');
+SELECT is((SELECT b3->'result'->>'error' FROM vm_h),'FILE_CLIENT_UPLOAD_PROVENANCE','but not then relabel it as Jordan''s upload (B3)');
+SELECT is((SELECT b3->'gained' FROM vm_h),'[]'::jsonb,'so Jordan never opens Sam''s private object');
+SELECT is((SELECT b4->'result'->>'error' FROM vm_h),'FILE_CLIENT_UPLOAD_PROVENANCE','a deleted private file''s object cannot come back as Sam''s upload (B4)');
+SELECT is((SELECT b4->'gained' FROM vm_h),'[]'::jsonb,'so Sam never reads Jordan''s private object');
+SELECT is((SELECT b5->'result'->>'error' FROM vm_h),'FILE_CLIENT_UPLOAD_PROVENANCE','a member cannot insert a client upload naming an object they own (B5)');
+SELECT is((SELECT b5->'gained' FROM vm_h),'[]'::jsonb,'so Jordan never opens it');
+SELECT is((SELECT b9->'result'->>'error' FROM vm_h),'FILE_CLIENT_UPLOAD_PROVENANCE','a shared file cannot become the client''s upload either (B9)');
+SELECT is((SELECT b9->'gained' FROM vm_h),'[]'::jsonb,'and nothing new is readable');
+-- MINOR-I: a file's id is fixed, so its client_share audit rows keep pointing at it.
+SELECT is((SELECT b6e->'result'->>'error' FROM vm_h),'FILE_IDENTITY_IMMUTABLE','a member cannot change a shared file''s id (B6e)');
+-- Matrix finding: a platform owner could move a shared row into another business, where its
+-- contact's login reads it. A file's business is fixed; only its ON DELETE SET NULL still passes.
+SELECT is((SELECT k->'result'->>'error' FROM vm_h),'FILE_IDENTITY_IMMUTABLE','a platform owner cannot move a file into another business');
+SELECT is((SELECT k->'gained' FROM vm_h),'[]'::jsonb,'so Jordan never reads that business''s shared row');
+SELECT is((SELECT k_null->'result'->>'error' FROM vm_h),'FILE_IDENTITY_IMMUTABLE','nor NULL its business: the customer read resolves a NULL business to the login''s own');
+SELECT is((SELECT k_null->'gained' FROM vm_h),'[]'::jsonb,'so that row stays out of Jordan''s reach');
+-- The tenants foreign key's ON DELETE SET NULL still passes, even inside a signed-in request (a
+-- nested write): deleting a business that still has file rows succeeds and leaves them unowned. The
+-- canonical deletion (operator_delete_archived_account) deletes a business's files first and its own
+-- guard trigger admits only that operation, so the guard is set aside here, inside this rolled-back
+-- transaction, to reach the referential action itself.
+INSERT INTO public.tenants(id,slug,name,status,account_type,parent_tenant_id,account_number_prefix,account_number,features) VALUES
+ ('e0942000-0000-4000-8000-000000000006','test-tenant-e09-documents-gone','Test business to delete','canceled','standalone',NULL,'E09DX',9491006,'{}');
+INSERT INTO public.client_files(id,tenant_id,contact_id,uploaded_by_user_id,storage_path,original_filename,mime_type,size_bytes,visibility,upload_state) VALUES
+ ('e0944000-0000-4000-8000-0000000000d1','e0942000-0000-4000-8000-000000000006','e0943000-0000-4000-8000-000000000003','e0941000-0000-4000-8000-000000000001','e0942000-0000-4000-8000-000000000006/e0943000-0000-4000-8000-000000000003/internal/e0944000-0000-4000-8000-0000000000d1','Orphan.pdf','application/pdf',1,'internal','ready');
+ALTER TABLE public.tenants DISABLE TRIGGER a01_operator_account_archive;
+SELECT set_config('request.jwt.claims','{"sub":"e0941000-0000-4000-8000-000000000010","role":"authenticated"}',true);
+SELECT lives_ok($q$DELETE FROM public.tenants WHERE id='e0942000-0000-4000-8000-000000000006'$q$,'deleting a business inside a signed-in request still nulls its files'' business');
+SELECT set_config('request.jwt.claims','{}',true);
+ALTER TABLE public.tenants ENABLE TRIGGER a01_operator_account_archive;
+SELECT ok((SELECT tenant_id IS NULL FROM public.client_files WHERE id='e0944000-0000-4000-8000-0000000000d1'),'and the file row is left with no business');
 
 -- 13. The deployed customer upload pipeline still works (§58).
 CREATE TEMP TABLE cu AS SELECT pg_temp.jordan($q$SELECT public.client_portal_begin_file_upload('e0944000-0000-4000-8000-000000000051','e0943000-0000-4000-8000-000000000001','Receipt.pdf','application/pdf',4,NULL)$q$) AS r;

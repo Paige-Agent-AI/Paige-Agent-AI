@@ -5,8 +5,10 @@
 --   * client_files.shared_at / shared_by — derived by a trigger on EVERY writer; they cannot be
 --     forged, and a CHECK holds them even where the trigger is skipped. shared_by follows its
 --     ON DELETE SET NULL, so deleting the user who shared a still-shared file succeeds.
---   * The same trigger makes client_file_set_client_share the ONLY signed-in writer that changes
---     whether a client sees a file: a direct REST write, Paige's re-file or another DEFINER body
+--   * The same trigger makes client_file_set_client_share the ONLY signed-in route by which a
+--     business shows a client a file (the customer's own upload is the other way a client gains one;
+--     deleting a file still withdraws it, and renaming a shared one relabels it, without an audit row
+--     — recorded known limits): a direct REST write, Paige's re-file or another DEFINER body
 --     that moves visibility into or out of 'shared' is refused (FILE_SHARE_WRITER_REQUIRED), and so
 --     is moving a SHARED file to another client (FILE_SHARED_MOVE_REFUSED) — the share writer's
 --     gate does not open a move. A signed-in caller withdraws the share through the share writer
@@ -14,6 +16,13 @@
 --     (migrations, pg_cron) may move a shared file; it arrives private, its stamp cleared, and the
 --     trigger writes no audit row for it (no such writer exists today). §58: before this release a
 --     move kept the file shared and silently re-shared it with the new client.
+--     The other incumbent route to a client is their own upload: the customer read policy shows any
+--     'client_upload' row on the customer's contact, and storage serves its object to whoever the row
+--     names as uploader. So a signed-in, non-service write may only make a row 'client_upload' (insert,
+--     or relabel from another visibility) when its uploader IS that contact's linked login in that
+--     business (FILE_CLIENT_UPLOAD_PROVENANCE): the customer's own reservation; never a staff relabel.
+--     A file's id, object, uploader and business are fixed for signed-in writers
+--     (FILE_IDENTITY_IMMUTABLE); only the tenants foreign key's own ON DELETE SET NULL still passes.
 --   * client_file_owner_begin_upload / client_file_owner_finish_upload — the owner's reservation
 --     and object-verified finish, mirroring the customer pair (20271108150000:66-106, 240-271). A
 --     reservation needs the same roles as the staff storage PUT, so no caller is left with a
@@ -67,13 +76,27 @@ ALTER TABLE public.client_files ADD CONSTRAINT client_files_share_stamp_consiste
 -- file; it arrives private (the new client was never shown it). Requesting the move AND 'shared' in
 -- one write is refused like any other direct share.
 --
--- A file's object and uploader are fixed once the row exists: no signed-in caller may change
--- storage_path or uploaded_by_user_id (FILE_IDENTITY_IMMUTABLE). Storage authorizes a customer's
--- download by matching the object name to a storage_path they may see, so rewriting the path of a
--- SHARED row would show that client whatever object it now names, another client's private file
--- included, with no share writer and no audit row. No product writer changes either column (the
--- finish functions change upload_state only). tenant_id is deliberately NOT in this guard: the
--- tenants foreign key is ON DELETE SET NULL, and guarding it would block deleting a business.
+-- A file's identity is fixed once the row exists: no signed-in caller may change its id,
+-- storage_path, uploaded_by_user_id or tenant_id (FILE_IDENTITY_IMMUTABLE). Storage authorizes a
+-- customer's download by matching the object name to a storage_path they may see, so rewriting the
+-- path of a SHARED row would show that client whatever object it now names, another client's private
+-- file included, with no share writer and no audit row. A new id would cut the file loose from its
+-- client_share audit rows. A new business would show a shared row to whichever client of that
+-- business its contact is (a platform owner's write; the update policy already stops everyone else).
+-- No product writer changes any of these (the finish functions change upload_state only, Paige's
+-- re-file contact_id and description). tenant_id may still become NULL through the tenants foreign
+-- key's ON DELETE SET NULL (a nested write, pg_trigger_depth() > 1): refusing that would block
+-- deleting a business. A direct write may not NULL it: the customer read policy resolves a NULL
+-- business to whichever business the contact's login belongs to, so it is a move like any other.
+--
+-- A client sees a 'client_upload' row on their contact, and storage serves its object to the login
+-- the row names as uploader, so relabelling a file as the client's own upload (or inserting one) is
+-- a share by another name: it skips the share writer, its audit and its checks, records a false
+-- "the client sent this", and cannot be undone (customer upload provenance is immutable). A
+-- signed-in, non-service write may only make a row 'client_upload' when its uploader is the contact's
+-- linked login in the row's business (FILE_CLIENT_UPLOAD_PROVENANCE). The customer's reservation
+-- (client_portal_begin_file_upload) is exactly that; no staff writer creates one (ContactFilesPanel
+-- never uploads into that tab, Paige's crm_file_document refuses it).
 --
 -- shared_by follows auth.users ON DELETE SET NULL: that referential action is an UPDATE of this
 -- table nested inside the delete (pg_trigger_depth() > 1) that sets shared_by NULL, and the stamp
@@ -89,9 +112,17 @@ BEGIN
   v_platform := v_role = 'service_role' OR current_user = 'service_role'
     OR (v_role IS NULL AND current_user NOT IN ('authenticated', 'anon'));
   v_writer := v_platform OR current_setting('paige.client_file_share', true) IS NOT DISTINCT FROM 'on';
-  IF TG_OP = 'UPDATE' AND NOT v_platform AND (NEW.storage_path IS DISTINCT FROM OLD.storage_path
-     OR NEW.uploaded_by_user_id IS DISTINCT FROM OLD.uploaded_by_user_id) THEN
+  IF TG_OP = 'UPDATE' AND NOT v_platform AND (NEW.id IS DISTINCT FROM OLD.id
+     OR NEW.storage_path IS DISTINCT FROM OLD.storage_path
+     OR NEW.uploaded_by_user_id IS DISTINCT FROM OLD.uploaded_by_user_id
+     OR (NEW.tenant_id IS DISTINCT FROM OLD.tenant_id AND NOT (NEW.tenant_id IS NULL AND pg_trigger_depth() > 1))) THEN
     RAISE EXCEPTION 'FILE_IDENTITY_IMMUTABLE' USING ERRCODE = '42501';
+  END IF;
+  IF NOT v_platform AND NEW.visibility = 'client_upload'
+     AND (TG_OP = 'INSERT' OR OLD.visibility IS DISTINCT FROM 'client_upload')
+     AND NOT EXISTS (SELECT 1 FROM public.clients c WHERE c.id = NEW.contact_id AND c.tenant_id = NEW.tenant_id
+       AND c.linked_user_id = NEW.uploaded_by_user_id) THEN
+    RAISE EXCEPTION 'FILE_CLIENT_UPLOAD_PROVENANCE' USING ERRCODE = '42501';
   END IF;
   IF TG_OP = 'UPDATE' AND NEW.contact_id IS DISTINCT FROM OLD.contact_id AND OLD.visibility = 'shared'
      AND NOT v_platform THEN
@@ -580,6 +611,6 @@ GRANT EXECUTE ON FUNCTION public.client_portal_can_upload_file_object(text) TO a
 
 COMMENT ON COLUMN public.client_files.shared_at IS 'When this file was shared with its client. Derived by trg_client_files_share_stamp on every write; set exactly when visibility = shared (client_files_share_stamp_consistent).';
 COMMENT ON COLUMN public.client_files.shared_by IS 'Who shared this file with its client (auth.uid() at the share). Derived by trg_client_files_share_stamp; NULL unless visibility = shared, and NULL for a row shared before this column existed.';
-COMMENT ON FUNCTION public._client_files_share_stamp() IS 'E09 Documents: derives shared_at/shared_by (shared_by follows its ON DELETE SET NULL); refuses (42501 FILE_SHARE_WRITER_REQUIRED) any signed-in, non-service write that moves a file into or out of shared unless client_file_set_client_share opened the gate, and (42501 FILE_SHARED_MOVE_REFUSED) any signed-in, non-service move of a shared file to another client; a service-role move arrives internal.';
+COMMENT ON FUNCTION public._client_files_share_stamp() IS 'E09 Documents: derives shared_at/shared_by (shared_by follows its ON DELETE SET NULL); refuses (42501 FILE_SHARE_WRITER_REQUIRED) any signed-in, non-service write that moves a file into or out of shared unless client_file_set_client_share opened the gate, (42501 FILE_SHARED_MOVE_REFUSED) any signed-in, non-service move of a shared file to another client (a service-role move arrives internal), (42501 FILE_IDENTITY_IMMUTABLE) any signed-in, non-service change of id, storage_path, uploaded_by_user_id or tenant_id (only the tenants foreign key''s ON DELETE SET NULL passes), and (42501 FILE_CLIENT_UPLOAD_PROVENANCE) any signed-in, non-service write that makes a row client_upload unless its uploader is the contact''s linked login in that business.';
 
 COMMIT;

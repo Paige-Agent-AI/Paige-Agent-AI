@@ -177,3 +177,21 @@ Deno.test("no row, a non-completed row, or a row without a sealed key is refused
     assertEquals(await resolvePortalDocument(params({}), AUTH, h.caller, h.service), null);
   }
 });
+
+Deno.test("ids are compared case-insensitively: an uppercase id in the URL or the answer is the same agreement", async () => {
+  const h = harness();
+  const out = await resolvePortalDocument(
+    params({ agreementId: AGREEMENT.toUpperCase(), tenantId: TENANT.toUpperCase() }), AUTH, h.caller, h.service);
+  assertEquals(out, { sealedKey: "tenant/sealed-4.pdf", title: "Synthetic agreement 4", disposition: "inline" });
+  // The scope is asked, and the service read filtered, with the canonical lowercase ids.
+  assertEquals(h.calls.find((c) => c.kind === "rpc")?.args, { p_agreement_id: AGREEMENT, p_tenant_id: TENANT });
+  assertEquals(h.calls.filter((c) => c.kind === "eq").slice(0, 2), [
+    { kind: "eq", args: ["id", AGREEMENT] },
+    { kind: "eq", args: ["tenant_id", TENANT] },
+  ]);
+  const h2 = harness({ scope: { data: { agreement_id: AGREEMENT.toUpperCase(), tenant_id: TENANT.toUpperCase(), title: "t" }, error: null } });
+  assert(await resolvePortalDocument(params({ tenantId: TENANT }), AUTH, h2.caller, h2.service) !== null);
+  // Case-folding never turns a different id into a match.
+  const h3 = harness({ scope: { data: { agreement_id: AGREEMENT.toUpperCase(), tenant_id: OTHER_TENANT.toUpperCase(), title: "t" }, error: null } });
+  assertEquals(await resolvePortalDocument(params({ tenantId: TENANT }), AUTH, h3.caller, h3.service), null);
+});

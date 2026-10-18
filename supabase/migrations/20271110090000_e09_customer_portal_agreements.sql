@@ -13,9 +13,11 @@
 --   1. It NEVER writes paige_agreements. It never freezes a document, never moves a status and,
 --      unlike the owner path, never rewrites expires_at. Only the customer's own signer row's three
 --      token columns change.
---   2. The new link keeps the deadline the emailed link already had (the agreement's expires_at),
---      and is never later. There is one token per signer row (token_hash UNIQUE), so this REPLACES
---      the emailed link: the emailed one stops working (owner decision D-A4, default).
+--   2. The new link expires at the EARLIER of the agreement's deadline and the emailed link's own
+--      expiry, so it is never later than the link the business sent; with neither, or with that
+--      moment already past, no link is issued here (NOT_SIGNABLE_HERE). There is one token per
+--      signer row (token_hash UNIQUE), so this REPLACES the emailed link: the emailed one stops
+--      working (owner decision D-A4, default). A re-open can only keep or shorten the deadline.
 --   3. It files NO paige_agreement_events row. Those print in the sealed certificate
 --      (_shared/agreements/seal.ts) and on the approved, frozen owner completion screen, where a
 --      'resent' row reads "Sent again" — untrue for a customer opening their own portal. The audit
@@ -29,10 +31,23 @@ BEGIN;
 -- as the owner.
 --
 -- "Your signer" is the agreement's counterparty signer, and there must be EXACTLY ONE. With none or
--- several (a co-signer), the portal cannot tell which row is this login — the signer email is a copy
--- taken when the agreement was created and can drift from the login — so it lists the agreement
+-- several (a co-signer), the portal cannot tell which row is this login, so it lists the agreement
 -- but sends the customer to the link they were emailed (D-A3).
-CREATE OR REPLACE FUNCTION public._client_portal_agreement_state(p_agreement_id uuid)
+--
+-- AND THAT ONE SIGNER MUST BE THIS LOGIN (conservative default, pending an owner ruling). The sealed
+-- certificate credits the signature to the person and address named on the signer row, and the
+-- portal files no agreement event, so nothing in the certificate would show the link was obtained
+-- through a portal session rather than at that address. So the portal hands out the signer's link
+-- only when the signer row's email IS one of the caller's own addresses: the login's confirmed
+-- email, or the client record's primary email (client_primary_address). Compared by the one email
+-- match key (contact_method_match_key: trimmed, lowercase). Otherwise the agreement is listed and
+-- the customer is sent to the emailed link. p_my_email_keys is that set, derived by the two
+-- DEFINER callers from auth.uid() and the re-proved relationship — never from a caller argument.
+--
+-- And the link it would hand out must have a deadline: the EARLIER of the agreement's deadline and
+-- the signer's current (emailed) token expiry. With neither, or with that moment past, it is listed
+-- as signable only from the email, so the list never offers a button the writer refuses.
+CREATE OR REPLACE FUNCTION public._client_portal_agreement_state(p_agreement_id uuid, p_my_email_keys text[])
 RETURNS jsonb
 LANGUAGE plpgsql STABLE
 SET search_path = public, pg_temp
@@ -44,6 +59,7 @@ DECLARE
   _earlier integer;
   _state text;
   _note text := NULL;
+  _deadline timestamptz;
 BEGIN
   SELECT * INTO _a FROM public.paige_agreements WHERE id = p_agreement_id;
   IF NOT FOUND THEN RETURN NULL; END IF;
@@ -70,6 +86,13 @@ BEGIN
     IF _earlier > 0 THEN _state := 'awaiting_business';
     ELSE
       _state := 'awaiting_you';
+      IF (public.contact_method_match_key('email', _me.email) = ANY (coalesce(p_my_email_keys, '{}'::text[]))) IS NOT TRUE THEN
+        _note := 'use_email_link';
+      END IF;
+      _deadline := least(_a.expires_at, _me.token_expires_at);
+      IF _deadline IS NULL OR _deadline <= now() THEN
+        _note := 'use_email_link';
+      END IF;
       -- Parity with issue_agreement_signing_link's PA001 refusal: an uploaded document whose frozen
       -- copy did not come from the upload reader is not provably the file the owner uploaded, so no
       -- link is handed to it from here either. The content hash is required by
@@ -90,7 +113,24 @@ BEGIN
     'sign_note', _note);
 END;
 $$;
-REVOKE ALL ON FUNCTION public._client_portal_agreement_state(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public._client_portal_agreement_state(uuid, text[]) FROM PUBLIC, anon, authenticated;
+
+-- The caller's own email match keys: the login's CONFIRMED email (an unconfirmed address proves
+-- nothing about who holds it) and the client record's primary email. Internal, like the state.
+CREATE OR REPLACE FUNCTION public._client_portal_my_email_keys(p_uid uuid, p_client_id uuid)
+RETURNS text[]
+LANGUAGE sql STABLE
+SET search_path = public, pg_temp
+AS $$
+  SELECT coalesce(array_agg(DISTINCT k) FILTER (WHERE k IS NOT NULL AND k <> ''), '{}'::text[])
+    FROM (
+      SELECT public.contact_method_match_key('email', u.email) AS k
+        FROM auth.users u WHERE u.id = p_uid AND u.email_confirmed_at IS NOT NULL
+      UNION ALL
+      SELECT public.contact_method_match_key('email', public.client_primary_address(p_client_id, 'email'))
+    ) keys
+$$;
+REVOKE ALL ON FUNCTION public._client_portal_my_email_keys(uuid, uuid) FROM PUBLIC, anon, authenticated;
 
 -- ── A1a: the customer's agreements ──────────────────────────────────────────────────────────────
 -- Returns NULL for anyone who is not a customer of exactly one business (staff, an unlinked login,
@@ -110,6 +150,7 @@ DECLARE
   _rows jsonb;
   _total integer;
   _summary jsonb;
+  _keys text[];
 BEGIN
   IF _uid IS NULL THEN RAISE EXCEPTION 'customer authentication required' USING ERRCODE = '42501'; END IF;
   _client_id := public.client_portal_relationship_id(p_tenant_id);
@@ -118,12 +159,13 @@ BEGIN
     FROM public.clients c JOIN public.tenants t ON t.id = c.tenant_id
    WHERE c.id = _client_id AND c.linked_user_id = _uid AND c.status = 'active'
      AND c.merged_into_contact_id IS NULL AND t.status = 'active'
-   FOR SHARE OF c, t;
+   FOR SHARE OF c;
   IF NOT FOUND THEN RETURN NULL; END IF;
+  _keys := public._client_portal_my_email_keys(_uid, _client_id);
 
   WITH mine AS (
     SELECT a.id, a.title, a.commercial_terms_id, a.status, a.sent_at, a.completed_at, a.expires_at,
-           a.sealed_storage_key, public._client_portal_agreement_state(a.id) AS st
+           a.sealed_storage_key, public._client_portal_agreement_state(a.id, _keys) AS st
       FROM public.paige_agreements a
      WHERE a.tenant_id = _tenant AND a.contact_id = _client_id AND a.status <> 'draft'
   ), shaped AS (
@@ -158,7 +200,7 @@ BEGIN
     FROM ordered o;
 
   SELECT jsonb_build_object(
-           'awaiting_you', count(*) FILTER (WHERE public._client_portal_agreement_state(a.id)->>'state' = 'awaiting_you'),
+           'awaiting_you', count(*) FILTER (WHERE public._client_portal_agreement_state(a.id, _keys)->>'state' = 'awaiting_you'),
            'signed', count(*) FILTER (WHERE a.status = 'completed'))
     INTO _summary
     FROM public.paige_agreements a
@@ -175,7 +217,8 @@ GRANT EXECUTE ON FUNCTION public.client_portal_agreements(uuid, integer) TO auth
 -- Codes: CLIENT_AGREEMENT_UNAVAILABLE (not yours, not found, draft, or no relationship — one code so
 -- a stranger learns nothing about which agreements exist), NOT_SIGNABLE (with the derived state:
 -- signed, declined, withdrawn, expired, waiting on the business or on others), NOT_SIGNABLE_HERE
--- (use the emailed link: no single counterparty, or a document this path will not hand a link to),
+-- (use the emailed link: no single counterparty, a signer row that is not this login's own email,
+-- no deadline to give the link or one already past, or a document this path will not hand a link to),
 -- TRY_AGAIN_LATER (more than 10 opens of this agreement by this customer in an hour).
 --
 -- LOCK ORDER is signer rows FOR UPDATE, then the agreement FOR KEY SHARE — the same order
@@ -199,6 +242,7 @@ DECLARE
   _locked integer;
   _token text;
   _expires timestamptz;
+  _emailed_expiry timestamptz;
 BEGIN
   IF _uid IS NULL THEN RAISE EXCEPTION 'customer authentication required' USING ERRCODE = '42501'; END IF;
   _client_id := public.client_portal_relationship_id(p_tenant_id);
@@ -228,7 +272,7 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'CLIENT_AGREEMENT_UNAVAILABLE');
   END IF;
 
-  _st := public._client_portal_agreement_state(_a.id);
+  _st := public._client_portal_agreement_state(_a.id, public._client_portal_my_email_keys(_uid, _client_id));
   IF _st->>'state' <> 'awaiting_you' THEN
     RETURN jsonb_build_object('ok', false, 'error', 'NOT_SIGNABLE', 'state', _st->>'state');
   END IF;
@@ -245,12 +289,19 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'TRY_AGAIN_LATER');
   END IF;
 
-  -- 256 bits from pgcrypto's CSPRNG; only the digest is stored. The deadline is the one the emailed
-  -- link already carried, never later; an agreement with no deadline gets the owner path's default.
-  -- pgcrypto is schema-qualified: it lives in `extensions`, which this function's pinned
-  -- search_path deliberately does not include.
+  -- The deadline: the EARLIER of the agreement's and the emailed link's (read from the signer row
+  -- this transaction holds locked), never later than either, never invented. The state above
+  -- already refused this case; it is re-checked on the locked row so no link outlives the one the
+  -- business sent even if the two ever drift.
+  SELECT s.token_expires_at INTO _emailed_expiry FROM public.paige_agreement_signers s WHERE s.id = _signer;
+  _expires := least(_a.expires_at, _emailed_expiry);
+  IF _expires IS NULL OR _expires <= now() THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'NOT_SIGNABLE_HERE');
+  END IF;
+
+  -- 256 bits from pgcrypto's CSPRNG; only the digest is stored. pgcrypto is schema-qualified: it
+  -- lives in `extensions`, which this function's pinned search_path deliberately does not include.
   _token := encode(extensions.gen_random_bytes(32), 'hex');
-  _expires := coalesce(_a.expires_at, now() + interval '30 days');
 
   UPDATE public.paige_agreement_signers
      SET token_hash = encode(extensions.digest(_token, 'sha256'), 'hex'),

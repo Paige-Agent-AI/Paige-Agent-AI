@@ -51,8 +51,10 @@ export async function resolvePortalDocument(
   caller: PortalCallerClient,
   service: PortalServiceClient,
 ): Promise<PortalDoorResult | null> {
-  const agreementId = (params.get("agreementId") ?? "").trim();
-  const tenantParam = (params.get("tenantId") ?? "").trim();
+  // Ids are normalised to lowercase once, here: Postgres prints a uuid in lowercase, so every
+  // comparison below is against the canonical form and an uppercase id in the URL is not refused.
+  const agreementId = (params.get("agreementId") ?? "").trim().toLowerCase();
+  const tenantParam = (params.get("tenantId") ?? "").trim().toLowerCase();
   if (!authHeader || !UUID.test(agreementId) || (tenantParam && !UUID.test(tenantParam))) return null;
 
   const first = await caller.auth.getUser();
@@ -67,8 +69,10 @@ export async function resolvePortalDocument(
   const row = scope.data as Record<string, unknown>;
   const keys = Object.keys(row).sort();
   if (keys.length !== SCOPE_KEYS.length || keys.some((k, i) => k !== SCOPE_KEYS[i])) return null;
-  if (row.agreement_id !== agreementId || typeof row.tenant_id !== "string" || !UUID.test(row.tenant_id)) return null;
-  if (tenantParam && row.tenant_id !== tenantParam) return null;
+  const scopedAgreement = typeof row.agreement_id === "string" ? row.agreement_id.toLowerCase() : null;
+  const scopedTenant = typeof row.tenant_id === "string" ? row.tenant_id.toLowerCase() : null;
+  if (scopedAgreement !== agreementId || !scopedTenant || !UUID.test(scopedTenant)) return null;
+  if (tenantParam && scopedTenant !== tenantParam) return null;
 
   // The session must still be the same person after the scope read. A token swapped or revoked
   // between the two calls answers for nobody.
@@ -77,10 +81,10 @@ export async function resolvePortalDocument(
 
   const { data: agreement, error } = await service.from("paige_agreements")
     .select("id,title,status,sealed_storage_key")
-    .eq("id", agreementId).eq("tenant_id", row.tenant_id).eq("status", "completed").maybeSingle();
+    .eq("id", agreementId).eq("tenant_id", scopedTenant).eq("status", "completed").maybeSingle();
   if (error || !agreement || typeof agreement !== "object") return null;
   const a = agreement as Record<string, unknown>;
-  if (a.id !== agreementId || a.status !== "completed" || typeof a.sealed_storage_key !== "string" || !a.sealed_storage_key) {
+  if (typeof a.id !== "string" || a.id.toLowerCase() !== agreementId || a.status !== "completed" || typeof a.sealed_storage_key !== "string" || !a.sealed_storage_key) {
     return null;
   }
 

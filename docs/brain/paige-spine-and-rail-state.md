@@ -1,5 +1,11 @@
 # PAIGE Spine & Rail — verified current state
 
+## 2026-10-18 — Original-reminder history reader released
+
+Master§4.0 records #2351/main654888138e5c0b0056b126396bc706a7944a3bad, reviewed613c18096394e33e43d77b027dd7fd8b6d899180/tree5920770a7b7a04a853e5df3b994ae5ced52425ef. Exact-head review/CI passed, official Edge39153099481 and independent245-file Git/source comparison verify Chat453/JWTtrue, and webdpl_9ge21VAe35DenHk4Ae7tARLqnpYi is READY/exact. This supplements the earlier dated unmerged-candidate note. The reader restores no approval or execution authority and performs no replay, mutation or new receipt. Completed-reminder authenticated recovery remains PROOF OWED; the original expired unconsumed proposal is not a successful action.
+
+Inventory accounting:25 canonical functional requirements are represented by50 preserved historical QA rows across two example contexts. The two technical dispositions are one-based rows17–18, Contact creation in Chat, backed by paired evidencef91e3699a388b0576d5d8765538b66c297b740e8c38570249eae66881bc9e45e; they are one functional requirement in two contexts. The original18 historical action entries remain separate and intact. Shared tenant-neutral delivery covers all eligible existing/future accounts; final owner acceptance remains pending. Strict whole-capability technical accounting1/18 and historical-row technical accounting2/50 remain unchanged. Neither source release nor representative proof establishes universal manual testing, full program completion or separate Live acceptance.
+
 ## 2026-10-18 — Later Task guidance and reminder foundation release supplement
 
 Master§4.0 now records2344/main8347652e252cf5fe9e467ee678deac193ff44f4a and2347/maindf7ff703699a13c8a096ef8a838c9d8e05f5432f with exact review, native, Edge and web identities. The earlier2340 narrative contradiction is narrowly corrected and paired ordinary Task read/open/reload/foreign-refusal/Close proof passed with unchanged protected records. The source-only2341 prerequisite's old failed/unapplied22000 history remains retained; its reviewed compatible native SQL was delivered at31000 in2344. No production deletion or new Task mutation was used as proof.

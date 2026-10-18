@@ -39,7 +39,7 @@ type Inspection = { kind: "item"; id: string; view: Destination; proposedStage?:
 type WorkspaceProps = { openPaige?: () => void; view?: string; onViewChange?: (view: string) => void;
   weeklySourceSearch?: string; weeklySourceKey?: string; onWeeklySourceDismiss?: () => void;
   onTaskFocusDismiss?: () => void;
-  onNavigationGuardChange?: (guard: (() => string | null) | null) => void };
+  onNavigationGuardChange?: (guard: (() => string | null) | null, notify?: () => string | null) => void };
 const subscribePersona = (changed: () => void) => subscribeScopedUser(() => changed());
 const serverPersona = () => null;
 export function OperationsWorkspace(props: WorkspaceProps) {
@@ -73,14 +73,23 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
   const editorGuard = useRef<(() => string | null) | null>(null);
   const crmInspectionHeld = useRef(false);
   const [navigationNotice, setNavigationNotice] = useState("");
+  // The shell reads this during render to retain this subtree. Reading must not
+  // publish a notice or update state in a child while its parent is rendering.
+  const navigationReason = useCallback(() => editorGuard.current?.() ?? (crmInspectionHeld.current
+      ? "Review unsaved changes or close this task before leaving it." : null), []);
   const checkNavigation = useCallback(() => {
-    const reason = editorGuard.current?.() ?? (crmInspectionHeld.current
-      ? "Review unsaved changes or close this task before leaving it." : null);
+    const reason = navigationReason();
     if (reason) setNavigationNotice(reason);
     return reason;
-  }, []);
-  const registerEditorGuard = useCallback((guard: (() => string | null) | null) => { editorGuard.current = guard; }, []);
-  useLayoutEffect(() => { onNavigationGuardChange?.(checkNavigation); return () => onNavigationGuardChange?.(null); }, [checkNavigation, onNavigationGuardChange]);
+  }, [navigationReason]);
+  const registerEditorGuard = useCallback((guard: (() => string | null) | null) => {
+    editorGuard.current = guard;
+    onNavigationGuardChange?.(navigationReason, checkNavigation);
+  }, [onNavigationGuardChange, navigationReason, checkNavigation]);
+  // Publish hold-clear changes as well as initial registration. The shell only
+  // rerenders when the hold changes; no draft or record leaves Operations.
+  useLayoutEffect(() => { onNavigationGuardChange?.(navigationReason, checkNavigation); });
+  useLayoutEffect(() => () => onNavigationGuardChange?.(null), [onNavigationGuardChange]);
   const setDestination = (name: Destination) => {
     if (name !== destination && checkNavigation()) return;
     if (onViewChange) onViewChange(name.toLowerCase()); else setLocalDestination(name);
@@ -324,7 +333,10 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
         </>}
     </div>
     <Sheet open={inspection?.view === destination} onOpenChange={(open) => { if (!open && (crmInspectionHeld.current || !checkNavigation())) {
-      taskAbort.current?.abort();crmInspectionHeld.current=false;
+      taskAbort.current?.abort();crmInspectionHeld.current=false;editorGuard.current=null;
+      // Explicit Close releases the same guard before its accepted-URL update.
+      // Waiting for the editor's passive cleanup would reject that update as dirty.
+      onNavigationGuardChange?.(navigationReason,checkNavigation);
       selectionEpoch.current += 1; setInspection(null); closeCrmReview(); setNavigationNotice("");
       if (linkedInspection) onWeeklySourceDismiss?.();
       if (linkedTask) onTaskFocusDismiss?.();

@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowLeft, Shield, TrendingUp, Zap, ChevronRight, Eye, EyeOff, RefreshCw } from "lucide-react";
 import { z } from "zod";
+import { passwordMeetsServerClasses } from "@/lib/auth/passwordPolicy";
 import type { User, Session } from "@supabase/supabase-js";
 import { signInWithOAuth } from "@/integrations/auth/oauth";
 import { PasswordStrengthIndicator } from "@/components/auth/PasswordStrengthIndicator";
@@ -32,10 +33,18 @@ import {
   type SignupPhoneCountry,
 } from "@/lib/auth/signupMobile";
 
-const authSchema = z.object({
+export const authSchema = z.object({
   email: z.string().trim().email({ message: "Invalid email address" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
   fullName: z.string().trim().min(2, { message: "Full name must be at least 2 characters" }).optional(),
+});
+
+// The four-class rule matches the Supabase server policy and applies ONLY where the
+// password is being SET (signup). Sign-in must keep accepting legacy weaker passwords.
+export const signupSchema = authSchema.extend({
+  password: authSchema.shape.password.refine(passwordMeetsServerClasses, {
+    message: "Password needs a lowercase letter, an uppercase letter, a number, and a symbol (like !@#$%).",
+  }),
 });
 
 const Auth = () => {
@@ -327,7 +336,7 @@ const Auth = () => {
         ? { email, password }
         : { email, password, fullName };
 
-      authSchema.parse(validationData);
+      (isLogin ? authSchema : signupSchema).parse(validationData);
 
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -398,9 +407,14 @@ const Auth = () => {
             signupPlanIntentRef.current = null;
             clearPlanIntent();
             const exists = /already registered|already exists/i.test(signupError.message);
+            const weakPassword = signupError.code === "weak_password" || /password should contain/i.test(signupError.message);
             toast({
-              title: exists ? "Account exists" : "Couldn't create your account",
-              description: exists ? "Sign in with this email to continue safely." : "We could not create the account. Check your details and try again, or contact support.",
+              title: exists ? "Account exists" : weakPassword ? "Password needs more variety" : "Couldn't create your account",
+              description: exists
+                ? "Sign in with this email to continue safely."
+                : weakPassword
+                  ? "Use at least one lowercase letter, one uppercase letter, one number, and one symbol (like !@#$%)."
+                  : "We could not create the account. Check your details and try again, or contact support.",
               variant: "destructive",
             });
             return;

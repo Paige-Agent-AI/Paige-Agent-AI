@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Check, X } from "lucide-react";
+import { passwordRequirementChecks } from "@/lib/auth/passwordPolicy";
 
 /**
  * Single source of truth for the account password minimum, shared by every
@@ -15,12 +16,13 @@ interface Props {
 }
 
 const getStrength = (pw: string) => {
+  const c = passwordRequirementChecks(pw);
   let score = 0;
   if (pw.length >= 6) score++;
   if (pw.length >= 10) score++;
-  if (/[A-Z]/.test(pw)) score++;
-  if (/[0-9]/.test(pw)) score++;
-  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  if (c.uppercase) score++;
+  if (c.digit) score++;
+  if (c.symbol) score++;
   return score;
 };
 
@@ -35,6 +37,7 @@ const colors = [
 
 export const PasswordStrengthIndicator = ({ password }: Props) => {
   const strength = useMemo(() => getStrength(password), [password]);
+  const checks = useMemo(() => passwordRequirementChecks(password), [password]);
 
   if (!password) return null;
 
@@ -55,13 +58,15 @@ export const PasswordStrengthIndicator = ({ password }: Props) => {
         Strength: <span className="font-medium text-foreground">{labels[Math.max(0, strength - 1)]}</span>
       </p>
 
-      {/* Requirements */}
+      {/* Requirements — derived from the same server policy the signup
+          schema enforces, so the visible checks never contradict submit. */}
       <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[11px]">
         {[
-          { met: password.length >= 6, label: "6+ characters" },
-          { met: /[A-Z]/.test(password), label: "Uppercase letter" },
-          { met: /[0-9]/.test(password), label: "Number" },
-          { met: /[^A-Za-z0-9]/.test(password), label: "Special character" },
+          { met: checks.length, label: "6+ characters" },
+          { met: checks.lowercase, label: "Lowercase letter" },
+          { met: checks.uppercase, label: "Uppercase letter" },
+          { met: checks.digit, label: "Number" },
+          { met: checks.symbol, label: "Symbol (e.g. !@#$%)" },
         ].map((r) => (
           <div key={r.label} className="flex items-center gap-1">
             {r.met ? (

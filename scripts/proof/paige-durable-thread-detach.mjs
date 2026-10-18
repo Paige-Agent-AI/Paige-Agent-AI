@@ -5,8 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { OperatorPostgresFixture } from './operator-postgres-fixture.mjs';
 
 const port = Number(process.env.DURABLE_THREAD_PROOF_PORT);
-assert.ok(Number.isInteger(port) && port !== 5432 && port >= 1024 && port <= 65535,
-  'Set DURABLE_THREAD_PROOF_PORT to an owned disposable loopback PostgreSQL port.');
+assert.ok(Number.isInteger(port) && (port !== 5432 || process.env.CI === 'true') && port >= 1024 && port <= 65535,
+  'Set DURABLE_THREAD_PROOF_PORT to an owned disposable loopback PostgreSQL port; 5432 requires CI=true.');
 const baseline = process.argv.includes('--baseline');
 const root = new URL('../../', import.meta.url);
 const read = path => readFileSync(new URL(path, root), 'utf8');
@@ -37,7 +37,8 @@ try {
       is_owner boolean,joined_at timestamptz,PRIMARY KEY(tenant_id,user_id));
     CREATE TABLE public.profiles(user_id uuid PRIMARY KEY,active_tenant_id uuid);
     CREATE TABLE public.paige_chat_threads(id uuid PRIMARY KEY,caller_user_id uuid NOT NULL,
-      tenant_id uuid NOT NULL,lens text,title text,audience text NOT NULL DEFAULT 'workspace',
+      tenant_id uuid NOT NULL,lens text,title text,audience text NOT NULL DEFAULT 'workspace'
+        CHECK (audience IN ('workspace','customer_private')),
       is_archived boolean NOT NULL DEFAULT false);
     CREATE TABLE public.marketing_content(id uuid PRIMARY KEY DEFAULT gen_random_uuid());
     CREATE TABLE public.paige_chat_turns(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

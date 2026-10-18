@@ -32,7 +32,7 @@ insert into public.paige_chat_threads(id,caller_user_id,tenant_id,lens,title,aud
  ('d7b00000-0000-4000-8000-000000000020','d7b00000-0000-4000-8000-000000000001','d7b00000-0000-4000-8000-000000000010','coach','Document fixture','workspace'),
  ('d7b00000-0000-4000-8000-000000000021','d7b00000-0000-4000-8000-000000000001','d7b00000-0000-4000-8000-000000000010','coach','Research fixture','workspace'),
  ('d7b00000-0000-4000-8000-000000000022','d7b00000-0000-4000-8000-000000000002','d7b00000-0000-4000-8000-000000000011','coach','Other workspace','workspace'),
- ('d7b00000-0000-4000-8000-000000000023','d7b00000-0000-4000-8000-000000000001','d7b00000-0000-4000-8000-000000000010','coach','Private fixture','customer_portal');
+ ('d7b00000-0000-4000-8000-000000000023','d7b00000-0000-4000-8000-000000000001','d7b00000-0000-4000-8000-000000000010','client','Private fixture','customer_private');
 create function pg_temp.make_work(parent uuid,tenant uuid,actor uuid,kind text,capability text)
 returns uuid language plpgsql as $$
 declare work uuid;

@@ -72,3 +72,32 @@ unresolved. No reminder adopter, authenticated grant, approval, Chat/Spine/sourc
 provider activation, scheduler or business-data change is included. Base main715200d remains
 preserved; subsequently observed main797d8d0 adds only the reviewed Task consumer paths and leaves
 all native inputs/frontier21000 unchanged. Root owns composition, release and acceptance.
+
+## 2026-10-18 successor: hosted binding and canonical audience
+
+Non-author review of frozen `f026d9cddf491a7225587cbb3d4260274f6345ad` identified two bounded
+proof gaps: the new native runner had no hosted invocation, and its private-audience fixture used
+the noncanonical `customer_portal` value. The prior receipt/history remains unchanged; it does not
+claim that f026's 73 assertions ran in hosted CI or exercised a valid E09 private-audience value.
+
+The existing `ci / comms-provider-boundary` disposable pinned PostgreSQL service now runs the
+runner once as an unconditional step, with explicit `DURABLE_THREAD_PROOF_PORT: '5432'`. Existing
+events, service, setup and adjacent proof steps remain unchanged. The runner permits that port
+only when `CI === 'true'`; other local proofs still require an explicitly selected disposable
+loopback port. The earlier "never 5432" statement describes the f026 local-only checkpoint.
+No remote database URL, secret, new workflow/job or alternate fixture adapter is introduced.
+
+The private fixture now uses canonical `customer_private`/client-lens input and the actual E09
+audience CHECK (`workspace`, `customer_private`). Its refusal assertion is retained. The native
+successor migration remains byte-identical to f026 (SHA256
+`8f9496b2f3aa2cad5b52686db9dc18335b0ac2770e682d38a9011df888730de0`).
+
+Fresh corrected local PostgreSQL proof with `CI=true`: 73 assertions plus the incumbent envelope
+proof and catalog/existing-row/reapply comparisons PASS; native and cluster-stop exits 0.
+Private `work/durable-thread-detach/successor-ci/` retains the exact run and workflow validation.
+The YAML parser verifies the one unconditional invocation; removing only its four added lines
+restores the predecessor workflow. Five actual runner controls (missing port, non-CI 5432,
+false/uppercase CI 5432, URL supplied as a port) refuse before fixture construction. Syntax,
+diff hygiene and final migration-version checks pass. Unchanged broader campaigns are retained,
+not represented as newly rerun. Original local advisor warnings and unavailable `plpgsql_check`
+remain recorded above. Independent successor review and hosted exact-head execution are owed.

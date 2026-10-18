@@ -62,7 +62,7 @@ describe("Conversations DND — the one staff pause", () => {
     expect(sw("SMS").disabled).toBe(false);
   });
 
-  it("a spam report is the contact's own act: locked, and said in those words (integrator ruling)", async () => {
+  it("a spam report is the contact's own act: locked, and said in those words (integrator default (owner may overrule))", async () => {
     await mount([{ channel: "email", reason: "complaint" }]);
     expect(sw("Email").disabled).toBe(true);
     expect(host.textContent).toContain("They reported email as spam. Only they can turn it back on.");

@@ -34,7 +34,7 @@ const B = "Northwind Studio";
 // Nothing in the preferences sections may name an address, a number, an id or internal vocabulary.
 const NEVER = ["jordan.rivera@example.test", "+15035550142", "503", "e0960000", "customer_request", "customer_portal", "suppression", "consent_events", "evidence", "coach", "credit", "funding", "fundab"];
 
-const STATES = ["default", "email-off", "email-paused", "email-paused-held", "email-reported", "reported-lift", "texts-on", "texts-on-no-tz", "texts-off",
+const STATES = ["default", "email-off", "email-paused", "email-paused-held", "email-reported", "reported-lift", "texts-on", "texts-on-no-tz", "texts-on-business-tz", "texts-off",
   "updates-subscribed", "business-recorded", "sharing-on", "no-address", "no-number", "multiple", "unavailable", "loading", "error", "pending", "refusal", "saved"];
 const SIZES = { desktop: [1440, 900], phone: [390, 844] };
 function allShots() {
@@ -85,7 +85,8 @@ async function drive(page, s, notes) {
   }
   await page.getByRole("heading", { name: "Your account", level: 1 }).waitFor({ timeout: 30_000 });
   if (["multiple", "unavailable"].includes(s.state)) {
-    await page.getByText("Your information is unavailable for this business").waitFor({ timeout: 30_000 });
+    await page.getByText(s.state === "multiple" ? "You're a client of more than one business" : "Your information is unavailable for this business").waitFor({ timeout: 30_000 });
+    notes.retry = await page.getByRole("button", { name: "Try again" }).count();
     notes.pageText = clean(await page.locator('[data-harness-region="page"]').innerText());
     notes.switches = await page.locator('[role="switch"]').count();
     return;
@@ -158,7 +159,12 @@ function unmet(s, n) {
     want((n.pageText ?? "").includes(`To delete what ${B} holds about you, message ${B}.`), "deletion does not route the business's records to the business");
     return miss;
   }
-  if (["multiple", "unavailable"].includes(s.state)) { want(n.switches === 0, "preference switches shown without a resolved relationship"); return miss; }
+  if (["multiple", "unavailable"].includes(s.state)) {
+    want(n.switches === 0, "preference switches shown without a resolved relationship");
+    // Round 3 (verifier minor 7): more than one business is explained, with no retry that can't change it.
+    if (s.state === "multiple") want(n.retry === 0 && (n.pageText ?? "").includes("You're a client of more than one business, so your account settings can't be shown here yet."), `multiple: retry=${n.retry} "${n.pageText}"`);
+    return miss;
+  }
   want(n.street === "12 Harbour Lane" || s.state === "no-address", `street "${n.street}"`);
   want(["Street address", "City", "State", "ZIP code"].every((l) => (n.fields ?? []).includes(l)), `address fields ${JSON.stringify(n.fields)}`);
   if (s.state === "loading") { want(n.busy === "true", "loading preferences not aria-busy"); return miss; }
@@ -172,6 +178,8 @@ function unmet(s, n) {
       want(st("email") === "On" && st("sms") === "Not set up" && st("updates") === "Not subscribed" && st("sharing") === "Not allowed", `states ${JSON.stringify([st("email"), st("sms"), st("updates"), st("sharing")])}`);
       want(n.sms.reason === "Texts can't be turned on from your account.", `texts reason "${n.sms.reason}"`);
       want((n.sms.text.match(/START/g) ?? []).length === 1, `START named ${(n.sms.text.match(/START/g) ?? []).length} times in the texts row`);
+      // Round 3 (verifier minor 6): never "again", and the route is conditional on having a text to reply to.
+      want(!/\bagain\b/.test(n.sms.text) && n.sms.text.includes(`reply START to a text from ${B} if you have one, or ask them.`), `texts not set up "${n.sms.text}"`);
       want(n.sms.buttons.includes("Don't text me"), `texts buttons ${JSON.stringify(n.sms.buttons)}`);
       want(/It has no effect yet/.test(n.prefsText ?? ""), "data sharing does not say it has no effect yet (D2/M3)");
       break;
@@ -195,7 +203,10 @@ function unmet(s, n) {
       want(n.sms.switch?.checked === "checked" && n.sms.switch.disabled === false, "texts can't be turned off");
       break;
     case "texts-on-no-tz":
-      want(n.sms.detail === `${B} doesn't have your time zone, so texts through Paige are held from 8pm to 8am Eastern time.`, `no-tz "${n.sms.detail}"`);
+      want(n.sms.detail === `${B} doesn't have your time zone, so texts through Paige are held from 8pm to 8am Eastern Time.`, `no-tz "${n.sms.detail}"`);
+      break;
+    case "texts-on-business-tz":
+      want(n.sms.detail === `${B} doesn't have your time zone, so texts through Paige are held from 8pm to 8am Central Time.`, `business-tz "${n.sms.detail}"`);
       break;
     case "email-reported":
       want(st("email") === `Off · you reported an email from ${B} as spam on Oct 3, 2026` && n.email.switch?.disabled === false, `reported "${st("email")}" switch=${JSON.stringify(n.email.switch)}`);
@@ -310,7 +321,10 @@ function measureInPage(opts) {
   const hitOf = (n) => {
     const scroller = n.closest('[data-harness-region="page"]');
     const r0 = n.getBoundingClientRect();
-    if (scroller && (r0.top < 8 || r0.bottom > innerHeight - 8)) {
+    // 16px, not 8: a 24px switch's ::after reaches 10px past its box, so a switch whose box ends within 10px of
+    // the fold has its extension clipped by the viewport edge and can't be hit-tested there (round 3: the
+    // longer texts sentence put Updates' switch 10px above the fold on a phone).
+    if (scroller && (r0.top < 16 || r0.bottom > innerHeight - 16)) {
       const saved = scroller.scrollTop;
       scroller.scrollTop += (r0.top + r0.bottom) / 2 - innerHeight / 2;
       try { return hitIn(n); } finally { scroller.scrollTop = saved; }

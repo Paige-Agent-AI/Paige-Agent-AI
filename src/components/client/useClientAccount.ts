@@ -8,7 +8,7 @@ type Draft = {
 };
 type Outcome = "idle" | "saving" | "invalid" | "conflict" | "unknown" | "saved" | "reconciled";
 type Model = {
-  phase: "loading" | "ready" | "unavailable" | "signed_out" | "read_error";
+  phase: "loading" | "ready" | "unavailable" | "multiple_businesses" | "signed_out" | "read_error";
   profile: ClientPortalSelfProfile | null; draft: Draft; outcome: Outcome; notice: string;
 };
 const emptyDraft = (): Draft => ({ first_name: "", last_name: "", phone: "", street_address: "", city: "", state: "", zip_code: "" });
@@ -27,7 +27,7 @@ export const CLIENT_ACCOUNT_MAX: Record<keyof Draft, number> = {
 const matches = (p: ClientPortalSelfProfile, draft: Draft) => fields.every(k => (p[k] ?? "") === draft[k].trim());
 const dirty = (m: Model) => !!m.profile && fields.some(k => m.draft[k] !== (m.profile![k] ?? ""));
 class ReadFailure extends Error {
-  constructor(readonly phase: "unavailable" | "signed_out" | "read_error") { super(phase); }
+  constructor(readonly phase: "unavailable" | "multiple_businesses" | "signed_out" | "read_error") { super(phase); }
 }
 
 /** Local edit lifetime only. Native Auth, relationship and versioned writer own authority. */
@@ -68,7 +68,10 @@ export function useClientAccount() {
         ? supabase.rpc("client_portal_self_profile", { p_tenant_id: tenantId })
         : supabase.rpc("client_portal_self_profile"));
       if (!current(request)) return null;
-      if (result.error) throw new ReadFailure(result.error.code === "42501" ? "unavailable" : "read_error");
+      // More than one business: the checked relationship helper asks for a choice this page can't make yet
+      // (multi-business membership is Slice 8). Retrying can't change that, so it is its own phase.
+      if (result.error) throw new ReadFailure(result.error.code !== "42501" ? "read_error"
+        : /select an authorized customer relationship/i.test(result.error.message ?? "") ? "multiple_businesses" : "unavailable");
       const row = readClientPortalSelfProfile(result.data, id, tenantId);
       if (!row) throw new ReadFailure(result.data === null ? "unavailable" : "read_error");
       if (!await verifiedActor(request, id) || !current(request)) return null;

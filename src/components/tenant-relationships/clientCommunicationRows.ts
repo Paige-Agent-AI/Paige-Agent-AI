@@ -35,7 +35,7 @@ export function communicationRows(s: State): ReachRow[] {
     label: "Email",
     value: s.email.state === "on" ? "On" : s.email.state === "no_address" ? "No email address on file"
       : s.email.set_by === "business" ? "Paused"
-        // The client's own spam report: only they can lift it, from their portal (integrator ruling 2026-10-18).
+        // The client's own spam report: only they can lift it, from their portal (integrator default (owner may overrule), 2026-10-18).
         : reported ? "Off · they reported email as spam" : "Off",
     by: s.email.state === "no_address" || reported ? null : ownerSetBy(s.email.set_by, s.email.state), at: s.email.set_at,
     paused: s.email.state === "off" && s.email.set_by === "business",

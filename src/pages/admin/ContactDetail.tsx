@@ -49,6 +49,7 @@ import { usePendingApprovals } from "@/hooks/usePendingApprovals";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { CATEGORY_LABEL, RISK_COLOR, type ApprovalCategory } from "@/lib/approvals";
 import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses, type WithClientContactMethods } from "@/lib/contact-methods";
+import { legacyInviteHeldText, readLegacyInviteSend } from "@/lib/portal/legacyInviteSend";
 
 // Widened to string: the generated types do not know the contact-methods embed yet.
 const CONTACT_DETAIL_SELECT: string = `*,${CLIENT_CONTACT_METHODS_EMBED}`;
@@ -232,11 +233,14 @@ export default function ContactDetail() {
       const row = Array.isArray(tokRes) ? tokRes[0] : tokRes;
       const token = (row as { token?: string } | null)?.token;
       if (!token) throw new Error("Could not create the invite");
-      const { data: sent } = await supabase.functions.invoke("send-portal-invite", {
+      const { data: sent, error: sendError } = await supabase.functions.invoke("send-portal-invite", {
         body: { token, email: client.email },
       });
-      const emailed = (sent as { emailed?: boolean } | null)?.emailed;
-      if (emailed === false) {
+      const outcome = await readLegacyInviteSend(sent, sendError);
+      // E09 Slice 6 (§37): the client can't be emailed; say so, with no hand-off.
+      if (outcome === "held") {
+        toast.error(legacyInviteHeldText(client.email));
+      } else if (outcome !== "emailed") {
         toast.warning(`Invite created for ${client.email}, but the email didn't send. Check delivery.`);
       } else {
         toast.success(`Client portal invite sent to ${client.email}`);

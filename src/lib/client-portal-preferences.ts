@@ -16,7 +16,7 @@ export type UpdatesState = "subscribed" | "not_subscribed" | "paused" | "no_addr
 /**
  * Who made the deciding choice (_comms_set_by): the customer's portal account, the business, a STOP/START
  * reply, their emailed unsubscribe link, a hard bounce ("delivery"), the customer's own spam report
- * ("reported" — their act, which only they can undo, integrator ruling 2026-10-18), or a sign-up form.
+ * ("reported" — their act, which only they can undo, integrator default (owner may overrule), 2026-10-18), or a sign-up form.
  * Never an address, an id or staff identity.
  */
 export type PreferenceSetBy = "you" | "business" | "reply" | "unsubscribe_link" | "delivery" | "reported" | "form";
@@ -38,7 +38,13 @@ export interface UpdatesPreference {
 }
 
 export interface DataSharingPreference { allowed: boolean; updated_at: string | null }
-export interface QuietHours { start: string; end: string; time_zone_known: boolean }
+/**
+ * Texts are held overnight (start → end) by the pre-send check. `time_zone_known` is true only when the
+ * customer's own stored zone is one the check can use; otherwise `fallback_time_zone` is the zone it
+ * actually uses instead (the business's texting zone when that applies, else America/New_York), read from
+ * the server, never assumed here. It is null whenever the customer's own zone is known.
+ */
+export interface QuietHours { start: string; end: string; time_zone_known: boolean; fallback_time_zone: string | null }
 
 export interface ClientPortalPreferences {
   schema_version: 1;
@@ -56,7 +62,8 @@ const ROOT_KEYS = ["schema_version", "tenant_id", "business_name", "email", "sms
 const CHANNEL_KEYS = ["state", "set_by", "set_at", "can_turn_on", "can_turn_off"];
 const UPDATES_KEYS = ["state", "set_by", "set_at", "can_subscribe", "can_unsubscribe"];
 const SHARING_KEYS = ["allowed", "updated_at"];
-const QUIET_KEYS = ["start", "end", "time_zone_known"];
+const QUIET_KEYS = ["start", "end", "time_zone_known", "fallback_time_zone"];
+
 const EMAIL_STATES: readonly EmailState[] = ["on", "off", "no_address"];
 const SMS_STATES: readonly SmsState[] = ["on", "off", "not_set", "no_number"];
 const UPDATES_STATES: readonly UpdatesState[] = ["subscribed", "not_subscribed", "paused", "no_address"];
@@ -70,6 +77,14 @@ const exactKeys = (v: Obj, keys: readonly string[]) => {
 };
 const isTime = (v: unknown): v is string => typeof v === "string" && Number.isFinite(Date.parse(v));
 const optTime = (v: unknown) => v === null || isTime(v);
+
+function readQuiet(quiet: unknown): QuietHours | null {
+  if (!isObj(quiet) || !exactKeys(quiet, QUIET_KEYS)) return null;
+  if (typeof quiet.start !== "string" || typeof quiet.end !== "string" || typeof quiet.time_zone_known !== "boolean") return null;
+  const fallback = quiet.fallback_time_zone;
+  if (quiet.time_zone_known ? fallback !== null : typeof fallback !== "string" || fallback.length === 0) return null;
+  return { start: quiet.start, end: quiet.end, time_zone_known: quiet.time_zone_known, fallback_time_zone: fallback as string | null };
+}
 
 function readSetBy(v: unknown): PreferenceSetBy | null | undefined {
   if (v === null) return null;
@@ -112,13 +127,12 @@ export function readClientPortalPreferences(data: unknown, tenantId?: string | n
   const sms = readChannel(data.sms, SMS_STATES, true);
   const updates = readUpdates(data.updates, true);
   const sharing = readSharing(data.data_sharing, true);
-  const quiet = data.quiet_hours;
-  if (!email || !sms || !updates || !sharing || !isObj(quiet) || !exactKeys(quiet, QUIET_KEYS)) return null;
-  if (typeof quiet.start !== "string" || typeof quiet.end !== "string" || typeof quiet.time_zone_known !== "boolean") return null;
+  const quiet = readQuiet(data.quiet_hours);
+  if (!email || !sms || !updates || !sharing || !quiet) return null;
   return {
     schema_version: 1, tenant_id: data.tenant_id, business_name: data.business_name as string | null,
     email, sms, updates, data_sharing: sharing,
-    quiet_hours: { start: quiet.start, end: quiet.end, time_zone_known: quiet.time_zone_known },
+    quiet_hours: quiet,
     read_at: data.read_at,
   };
 }
@@ -152,12 +166,11 @@ export function readClientCommunicationState(data: unknown, expected: { tenantId
   const sms = readChannel(data.sms, SMS_STATES, true);
   const updates = readUpdates(data.updates, true);
   const sharing = readSharing(data.data_sharing, true);
-  const quiet = data.quiet_hours;
-  if (!email || !sms || !updates || !sharing || !isObj(quiet) || !exactKeys(quiet, QUIET_KEYS)) return null;
-  if (typeof quiet.start !== "string" || typeof quiet.end !== "string" || typeof quiet.time_zone_known !== "boolean") return null;
+  const quiet = readQuiet(data.quiet_hours);
+  if (!email || !sms || !updates || !sharing || !quiet) return null;
   if (typeof data.portal_joined !== "boolean" || typeof data.do_not_contact !== "boolean" || typeof data.dnd_active !== "boolean") return null;
   return { tenant_id: expected.tenantId, contact_id: expected.contactId, email, sms, updates, data_sharing: sharing,
-    quiet_hours: { start: quiet.start, end: quiet.end, time_zone_known: quiet.time_zone_known },
+    quiet_hours: quiet,
     portal_joined: data.portal_joined, do_not_contact: data.do_not_contact, dnd_active: data.dnd_active, read_at: data.read_at };
 }
 
@@ -176,14 +189,16 @@ export const PORTAL_PREFERENCE_DISCLOSURES = {
   // Superseded 2026-10-18 (round 2): repeated the row's own label.
   "updates-optin:v1": "Updates and offers: newsletters and automated marketing emails from {business}, sent through Paige. You can unsubscribe anytime.",
   "updates-optin:v2": "Newsletters and automated marketing emails from {business}, sent through Paige. You can unsubscribe anytime.",
+  // Superseded 2026-10-18 (round 3): "again" was wrong for someone who never had texts, and it implied a text would come.
   "sms-pref:v1": "Texts from {business}. When texts are off, {business} can't text you through Paige. To get texts again, reply START to a text from {business}.",
+  "sms-pref:v2": "Texts from {business}. When texts are off, {business} can't text you through Paige. To get texts, reply START to a text from {business} if you have one, or ask them.",
   "data-sharing:v1": "Lets {business}'s Paige use your account details and portal activity when it prepares requests or suggestions for you. It has no effect yet, and you can turn it off anytime.",
 } as const;
 export type PortalDisclosureId = keyof typeof PORTAL_PREFERENCE_DISCLOSURES;
 
 /** The sentence each card shows today; the writer records the same id with the customer's choice. */
 export const CURRENT_DISCLOSURE = {
-  email: "email-pref:v2", sms: "sms-pref:v1", updates: "updates-optin:v2", sharing: "data-sharing:v1",
+  email: "email-pref:v2", sms: "sms-pref:v2", updates: "updates-optin:v2", sharing: "data-sharing:v1",
 } as const satisfies Record<string, PortalDisclosureId>;
 
 export function disclosureText(id: PortalDisclosureId, business: string): string {
@@ -194,7 +209,7 @@ export function disclosureText(id: PortalDisclosureId, business: string): string
 export type PreferenceRefusal =
   | "EMAIL_PAUSED_BY_BUSINESS" | "EMAIL_UNDELIVERABLE" | "EMAIL_OFF" | "NO_EMAIL_ADDRESS"
   | "SMS_OPT_IN_UNAVAILABLE" | "BAD_PREFERENCE";
-// EMAIL_REPORTED was retired in round 2: the customer's own spam report is theirs to lift (owner ruling 2026-10-18).
+// EMAIL_REPORTED was retired in round 2: the customer's own spam report is theirs to lift (integrator default (owner may overrule), 2026-10-18).
 const REFUSALS: readonly PreferenceRefusal[] = ["EMAIL_PAUSED_BY_BUSINESS", "EMAIL_UNDELIVERABLE", "EMAIL_OFF", "NO_EMAIL_ADDRESS", "SMS_OPT_IN_UNAVAILABLE", "BAD_PREFERENCE"];
 
 /** A refusal named in a writer's answer: `{ok:false, error:CODE, ...}`, or a raised message that starts with the code. */

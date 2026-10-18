@@ -52,6 +52,7 @@ import { AgentsLog } from "./AgentsLog";
 import { TagPicker } from "@/components/admin/contacts/TagPicker";
 import { ContactDealsSection } from "@/components/admin/contacts/ContactDealsSection";
 import { QuickAddDialog } from "@/components/planning/QuickAddDialog";
+import { legacyInviteHeldText, readLegacyInviteSend } from "@/lib/portal/legacyInviteSend";
 
 interface Coach { user_id: string; name: string; roles: string[] }
 
@@ -142,7 +143,7 @@ function CopyRow({ icon: Icon, value, label, action }: { icon: typeof Mail; valu
 const CONTACT_HELD_REASONS = new Set(["customer_request", "user_stop", "unsubscribe_link", "complaint"]);
 const HELD_NOTE = "Turned off by the contact. Only they can turn it back on.";
 // A spam report is the contact's own act: only they can lift it, by turning email back on from their portal
-// account (integrator ruling 2026-10-18). Said in those words, never as a delivery problem.
+// account (integrator default (owner may overrule), 2026-10-18). Said in those words, never as a delivery problem.
 const REPORTED_NOTE = "They reported email as spam. Only they can turn it back on.";
 // The suppression writer is newer than the generated Database types; call it untyped, never as `any`.
 const rawRpc = (name: string, args: Record<string, unknown>) =>
@@ -398,11 +399,13 @@ export function ContactCardRail({
       const row = Array.isArray(tokRes) ? tokRes[0] : tokRes;
       const token = (row as { token?: string } | null)?.token;
       if (!token) throw new Error("Couldn't create the invite.");
-      const { data: sent } = await supabase.functions.invoke("send-portal-invite", {
+      const { data: sent, error: sendError } = await supabase.functions.invoke("send-portal-invite", {
         body: { token, email: contact.email },
       });
-      const emailed = (sent as { emailed?: boolean } | null)?.emailed;
-      toast.success(emailed ? `Portal invite emailed to ${contact.email}.` : "Invite created — link ready to share.");
+      const outcome = await readLegacyInviteSend(sent, sendError);
+      // E09 Slice 6 (§37): the client can't be emailed; say so, and never offer the link to share instead.
+      if (outcome === "held") { toast.error(legacyInviteHeldText(contactNameFromClient(contact) || contact.email)); return; }
+      toast.success(outcome === "emailed" ? `Portal invite emailed to ${contact.email}.` : "Invite created — link ready to share.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't send the portal invite.");
     } finally {

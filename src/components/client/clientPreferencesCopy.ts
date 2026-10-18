@@ -45,6 +45,16 @@ export function clock(hhmm: string): string {
   return `${h12}${min === "00" ? "" : `:${min}`}${h < 12 ? "am" : "pm"}`;
 }
 
+/** "America/Chicago" → "Central Time": the zone's everyday name, or the IANA name when there is none. */
+export function zoneName(tz: string): string {
+  try {
+    return new Intl.DateTimeFormat("en-US", { timeZone: tz, timeZoneName: "longGeneric" })
+      .formatToParts(new Date()).find(part => part.type === "timeZoneName")?.value ?? tz;
+  } catch {
+    return tz;
+  }
+}
+
 /** Who recorded a choice that is ON, when it was not the customer's own act (D7: a business record is labelled). */
 function onBy(by: string | null, business: string, when: string): string {
   if (by === "business") return ` · set by ${business}${when}`;
@@ -102,10 +112,11 @@ export function preferenceCards(p: ClientPortalPreferences, business: string): P
     const window = `${clock(p.quiet_hours.start)} to ${clock(p.quiet_hours.end)}`;
     Object.assign(texts, {
       state: s.set_by === "reply" ? `On · you replied START${when}` : `On${onBy(s.set_by, business, when)}`,
-      // runPreSend holds texts overnight in the client's zone, or in Eastern time when it has none (safeTz).
-      detail: p.quiet_hours.time_zone_known
+      // runPreSend holds texts overnight in the client's zone; without a usable one, in the zone the server
+      // names (the business's texting zone when the check would use it, else America/New_York).
+      detail: p.quiet_hours.time_zone_known || !p.quiet_hours.fallback_time_zone
         ? `Texts through Paige only arrive between ${clock(p.quiet_hours.end)} and ${clock(p.quiet_hours.start)} your time.`
-        : `${business} doesn't have your time zone, so texts through Paige are held from ${window} Eastern time.`,
+        : `${business} doesn't have your time zone, so texts through Paige are held from ${window} ${zoneName(p.quiet_hours.fallback_time_zone)}.`,
       control: { checked: true, enabled: s.can_turn_off, reason: s.can_turn_off ? undefined : `Ask ${business} to change this.`, aria: "Texts" },
     });
   } else {

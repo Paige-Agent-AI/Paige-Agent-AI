@@ -19,7 +19,7 @@ import { day, on, outcomeText, preferenceCards, type PreferenceCard as Card } fr
  * Owner decisions this copy states: texts can be turned OFF here but only turned on by replying START
  * (D1); email off also unsubscribes from updates and offers and email back on does not re-subscribe (D4,
  * disclosure email-pref:v2); booking confirmations and agreements the customer is asked to sign still
- * arrive (D5, integrator ruling 2026-10-18); a spam report is the customer's own act, which they can undo
+ * arrive (D5, integrator default (owner may overrule), 2026-10-18); a spam report is the customer's own act, which they can undo
  * here and the business never can; data sharing changes nothing reachable today and says so (D2, M3).
  */
 

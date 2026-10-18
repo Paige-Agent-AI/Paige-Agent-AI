@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
@@ -27,10 +28,17 @@ describe("customer preferences read (exact keys)", () => {
     ["a mistyped flag", { email: card("on", { can_turn_off: "yes" }) }],
     ["a wrong schema", { schema_version: 2 }],
     ["an unparseable time", { email: card("off", { set_at: "yesterday" }) }],
+    ["quiet hours without the fallback zone", { quiet_hours: { start: "20:00", end: "08:00", time_zone_known: false } }],
+    ["a mistyped fallback zone", { quiet_hours: { start: "20:00", end: "08:00", time_zone_known: false, fallback_time_zone: 5 } }],
   ])("refuses %s", (_label, over) => {
     const row: Record<string, unknown> = prefs(over as Record<string, unknown>);
     for (const k of Object.keys(row)) if (row[k] === undefined) delete row[k];
     expect(readClientPortalPreferences(row)).toBeNull();
+  });
+  it("carries the zone the send check falls back to, or none when the customer's own zone is known (round 3)", () => {
+    expect(readClientPortalPreferences(prefs())?.quiet_hours.fallback_time_zone).toBe("America/New_York");
+    const known = prefs({ quiet_hours: { start: "20:00", end: "08:00", time_zone_known: true, fallback_time_zone: null } });
+    expect(readClientPortalPreferences(known)?.quiet_hours).toEqual({ start: "20:00", end: "08:00", time_zone_known: true, fallback_time_zone: null });
   });
   it("refuses null, arrays and strings", () => {
     for (const v of [null, [], "x", 1]) expect(readClientPortalPreferences(v)).toBeNull();
@@ -76,14 +84,27 @@ describe("disclosures are the server's sentences, byte for byte (reviewer Minor 
     expect(ids.sort()).toEqual(Object.keys(PORTAL_PREFERENCE_DISCLOSURES).sort());
   });
   it("the page shows v2 for email and updates: email off also unsubscribes, back on does not re-subscribe, agreements are named, the label is not repeated", () => {
-    expect(CURRENT_DISCLOSURE).toEqual({ email: "email-pref:v2", sms: "sms-pref:v1", updates: "updates-optin:v2", sharing: "data-sharing:v1" });
+    expect(CURRENT_DISCLOSURE).toEqual({ email: "email-pref:v2", sms: "sms-pref:v2", updates: "updates-optin:v2", sharing: "data-sharing:v1" });
     const email = disclosureText("email-pref:v2", "Northwind Studio");
     expect(email).toContain("except booking confirmations and agreements you're asked to sign");
     expect(email).toContain("Turning email off also unsubscribes you from updates and offers, and turning it back on doesn't subscribe you again.");
     expect(disclosureText("updates-optin:v2", "Northwind Studio")).not.toMatch(/^Updates and offers/);
   });
+  it("texts v2 never says \"again\" and never implies a text will come (round 3, verifier minor 6)", () => {
+    const text = disclosureText("sms-pref:v2", "Northwind Studio");
+    expect(text).not.toMatch(/\bagain\b/);
+    expect(text).toContain("reply START to a text from Northwind Studio if you have one, or ask them.");
+  });
+  // One chain, checked in CI: the page's sentence → its md5 prefix → the pin in the pgTAP file → the
+  // pgTAP assertions that every writer's evidence carries that hash (customer_portal_profile_consent R3-1).
+  it.each(Object.values(CURRENT_DISCLOSURE))("%s: the page's sentence hashes to the pin the database test holds every writer to", id => {
+    const pgtap = fs.readFileSync(path.resolve(__dirname, "../../supabase/tests/customer_portal_profile_consent.sql"), "utf8");
+    const pin = new RegExp(`client_portal_consent_disclosure\\('${id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}'\\)\\),12\\),'([0-9a-f]{12})','pin: `).exec(pgtap);
+    expect(pin, `no pgTAP hash pin for ${id}`).not.toBeNull();
+    expect(createHash("md5").update(PORTAL_PREFERENCE_DISCLOSURES[id], "utf8").digest("hex").slice(0, 12)).toBe(pin![1]);
+  });
   it("fills the business name everywhere it appears", () => {
-    const text = disclosureText("sms-pref:v1", "Northwind Studio");
+    const text = disclosureText("sms-pref:v2", "Northwind Studio");
     expect(text).not.toContain("{business}");
     expect(text.match(/Northwind Studio/g)).toHaveLength(3);
   });

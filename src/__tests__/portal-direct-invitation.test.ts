@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
+import { legacyInviteHeldText, readLegacyInviteSend } from "@/lib/portal/legacyInviteSend";
 
 // Execute the actual legacy caller closure, with no UI/network or replacement writer.
 const file = ts.createSourceFile("ClientManagementDashboard.tsx", readFileSync("src/components/dashboard/ClientManagementDashboard.tsx", "utf8"), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
@@ -9,7 +10,7 @@ function visit(node: ts.Node) { if (ts.isVariableDeclaration(node) && node.name.
 visit(file);
 if (!action) throw Error("Review the changed direct invitation caller boundary");
 const js = ts.transpileModule(`const sendInvite=${action.getText(file)};`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
-type Options = { email?: string; role?: string; allowed?: boolean; tenant?: string | null; preparationError?: boolean; missingContact?: boolean; foreignContact?: boolean; readError?: boolean; mintError?: boolean; missingToken?: boolean; sendError?: boolean; emailed?: boolean };
+type Options = { email?: string; role?: string; allowed?: boolean; tenant?: string | null; preparationError?: boolean; missingContact?: boolean; foreignContact?: boolean; readError?: boolean; mintError?: boolean; missingToken?: boolean; sendError?: boolean; emailed?: boolean; held?: boolean };
 async function drive(options: Options = {}) {
   const calls: { name: string; args?: unknown }[] = [], notices: { level: string; message: string }[] = [];
   const tenant = options.tenant === undefined ? "test-business-a" : options.tenant;
@@ -25,12 +26,12 @@ async function drive(options: Options = {}) {
       if (name === "create_tenant_invite_token") return { data: options.missingToken ? [] : [{ token: "synthetic-token" }], error: options.mintError ? Error("Mint refused") : null };
       throw Error("Unexpected RPC");
     },
-    functions: { invoke: async (name: string, args: unknown) => { calls.push({ name, args }); return { data: options.emailed === undefined ? {} : { emailed: options.emailed }, error: options.sendError ? Error("Delivery unavailable") : null }; } },
+    functions: { invoke: async (name: string, args: unknown) => { calls.push({ name, args }); if (options.held) return { data: null, error: Object.assign(Error("Edge Function returned a non-2xx status code"), { context: { status: 409, json: async () => ({ ok: false, emailed: false, status: "held", code: "INVITATION_POLICY_HELD" }) } }) }; return { data: options.emailed === undefined ? {} : { emailed: options.emailed }, error: options.sendError ? Error("Delivery unavailable") : null }; } },
     auth: { getSession: async () => ({ data: { session: { access_token: "synthetic-only" } } }) },
   };
   const toast = Object.fromEntries(["error", "warning", "success"].map(level => [level, (message: string) => notices.push({ level, message })]));
-  const run = new Function("supabase", "toast", "inviteEmail", "inviteRole", "canInvitePortal", "activeTenantId", "setInviteSending", "setInviteOpen", "setInviteEmail", "setInviteRole", "console", js + ";return sendInvite;")(
-    supabase, toast, options.email ?? " Client@tests.invalid ", options.role ?? "user", options.allowed !== false, tenant, () => {}, () => {}, () => {}, () => {}, { error() {} });
+  const run = new Function("supabase", "toast", "inviteEmail", "inviteRole", "canInvitePortal", "activeTenantId", "setInviteSending", "setInviteOpen", "setInviteEmail", "setInviteRole", "console", "readLegacyInviteSend", "legacyInviteHeldText", js + ";return sendInvite;")(
+    supabase, toast, options.email ?? " Client@tests.invalid ", options.role ?? "user", options.allowed !== false, tenant, () => {}, () => {}, () => {}, () => {}, { error() {} }, readLegacyInviteSend, legacyInviteHeldText);
   await run(); return { calls, notices };
 }
 describe("Existing direct Client invitation compatibility", () => {
@@ -52,6 +53,12 @@ describe("Existing direct Client invitation compatibility", () => {
   });
   it("treats an invocation error as a failure, without retrying an unknown send", async () => {
     const r = await drive({ sendError: true }); expect(r.notices.at(-1)?.level).toBe("error"); expect(r.calls.filter(c => c.name === "send-portal-invite")).toHaveLength(1);
+  });
+  it("a held invitation (409 INVITATION_POLICY_HELD) says so, offers no hand-off, and is not retried (E09 Slice 6, §37)", async () => {
+    const r = await drive({ held: true });
+    expect(r.notices.at(-1)).toEqual({ level: "error", message: "client@tests.invalid has email turned off or on hold, so Paige didn't send the invitation." });
+    expect(r.notices.some(n => n.level === "success" || /delivery|resend/i.test(n.message))).toBe(false);
+    expect(r.calls.filter(c => c.name === "send-portal-invite")).toHaveLength(1);
   });
   it("keeps the existing staff invitation path separate", async () => {
     const r = await drive({ role: "moderator" }); expect(r.calls.map(c => c.name)).toEqual(["send-admin-invitation"]);

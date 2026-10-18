@@ -171,6 +171,19 @@ describe("approved Account personal information", () => {
     act(() => root.unmount()); root = createRoot(host); await mount();
     expect(input("Last name").value).toBe("Updated"); expect(raw).not.toHaveBeenCalled();
   });
+  it("a customer of more than one business is told why, with no retry that can't change it (round 3, verifier minor 7)", async () => {
+    rpc.mockImplementation(async () => ({ data: null, error: { code: "42501", message: "select an authorized customer relationship" } }));
+    await mount();
+    expect(host.querySelector('[role="alert"], [role="status"]')?.textContent).toBe("You're a client of more than one business, so your account settings can't be shown here yet.");
+    expect(button("Try again")).toBeUndefined();
+    expect(host.querySelector("form")).toBeNull();
+  });
+  it("a relationship that is simply unavailable still offers a retry", async () => {
+    rpc.mockImplementation(async () => ({ data: null, error: { code: "42501", message: "customer relationship unavailable" } }));
+    await mount();
+    expect(host.textContent).toContain("Your information is unavailable for this business.");
+    expect(button("Try again")).toBeTruthy();
+  });
   it("retryable Auth verification failure shows a retry rather than a false sign-out", async () => {
     getUser.mockResolvedValueOnce({ data: { user: null }, error: { name: "AuthRetryableFetchError", status: 0 } });
     await mount(); expect(button("Try again")).toBeTruthy();
@@ -279,7 +292,7 @@ describe("Account address and preferences (E09 Slice 6)", () => {
     sms: { state: "not_set", set_by: null, set_at: null, can_turn_on: false, can_turn_off: true },
     updates: { state: "not_subscribed", set_by: null, set_at: null, can_subscribe: true, can_unsubscribe: false },
     data_sharing: { allowed: false, updated_at: null },
-    quiet_hours: { start: "20:00", end: "08:00", time_zone_known: false }, read_at: "2026-10-18T12:00:00.000Z",
+    quiet_hours: { start: "20:00", end: "08:00", time_zone_known: false, fallback_time_zone: "America/New_York" }, read_at: "2026-10-18T12:00:00.000Z",
   };
   let shared = false;
   const reads = () => rpc.mock.calls.filter(x => x[0] === "client_portal_self_profile").length;

@@ -30,7 +30,7 @@
 --   8. Opt-outs follow the person, not the row (round 2): a merge moves the archived contact's
 --      suppressions and opt-out events to the winner (address kept); deleting a contact detaches the
 --      opt-outs the contact holds (contact_id NULL, address kept) instead of cascading them away.
---   9. Owner rulings (round 2): a customer's own spam report is lifted only by that customer turning
+--   9. Integrator defaults (round 2; the owner may overrule): a customer's own spam report is lifted only by that customer turning
 --      email back on in their portal; after a customer leaves Updates, staff cannot subscribe them
 --      again (only the customer can).
 --
@@ -63,7 +63,7 @@ COMMENT ON FUNCTION public._suppression_customer_held(text, text) IS
   'E09 Slice 6: a suppression the CONTACT holds (portal choice, STOP, unsubscribe link, complaint). Only the contact, or a trusted service context acting on their own message, may lift one.';
 
 -- The rows a customer may lift THEMSELVES by turning email back on in their portal: their own portal
--- choice, their own unsubscribe click, and their own spam report (owner ruling, round 2: only the
+-- choice, their own unsubscribe click, and their own spam report (integrator default (owner may overrule), round 2: only the
 -- customer, by an affirmative act, can take back a report they made; the business never can). A STOP
 -- is lifted by replying START (D1), never from the portal; a business pause or a hard bounce is not
 -- the customer's to lift.
@@ -172,7 +172,7 @@ AS $$ SELECT CASE
   ELSE NULL END $$;
 REVOKE ALL ON FUNCTION public._comms_set_by(text, text) FROM PUBLIC, anon, authenticated;
 
--- Has the contact left Updates and offers themselves, and not come back? (Owner ruling, round 2,
+-- Has the contact left Updates and offers themselves, and not come back? (Integrator default (owner may overrule), round 2,
 -- CAN-SPAM-conservative.) True when their latest OWN newsletter choice — the portal, a sign-up form,
 -- a reply — is an unsubscribe, or while they hold an email opt-out of their own (their portal email
 -- off, their unsubscribe click, their spam report). While it is true the business cannot subscribe
@@ -404,6 +404,7 @@ DECLARE
   _e_state text; _e_by text; _e_at timestamptz; _e_held boolean; _e_fixed boolean;
   _s_state text; _s_by text; _s_at timestamptz; _s_held boolean;
   _u_state text; _u_by text; _u_at timestamptz;
+  _tz_known boolean; _tz_fallback text;
 BEGIN
   SELECT * INTO _c FROM public.clients WHERE id = p_client AND tenant_id = p_tenant;
   IF NOT FOUND THEN RETURN NULL; END IF;
@@ -478,6 +479,22 @@ BEGIN
     IF _nl.action IS NOT NULL THEN _u_by := public._comms_set_by(_nl.source, NULL); _u_at := _nl.created_at; END IF;
   END IF;
 
+  -- Quiet hours (texts): runPreSend uses safeTz(client.timezone ?? business autosend_dnd_timezone)
+  -- (pre-send-pipeline.ts step 5). A stored client zone, usable or not, is tried first and an unusable
+  -- one falls to America/New_York; with no client zone the business's usable zone applies; otherwise
+  -- America/New_York. Known only when the client's own zone is usable; otherwise the page names the
+  -- zone the gate actually falls back to (verifier minor 4), never a guessed one. Intl accepts IANA
+  -- names case-insensitively; so do these matches, which return the canonical spelling.
+  _tz_known := EXISTS (SELECT 1 FROM pg_catalog.pg_timezone_names z
+                        WHERE lower(z.name) = lower(btrim(coalesce(_c.timezone, ''))));
+  IF NOT _tz_known THEN
+    _tz_fallback := CASE WHEN _c.timezone IS NULL THEN
+        (SELECT z.name FROM public.tenant_comms_preferences p
+           JOIN pg_catalog.pg_timezone_names z ON lower(z.name) = lower(btrim(coalesce(p.autosend_dnd_timezone, '')))
+          WHERE p.tenant_id = p_tenant ORDER BY z.name LIMIT 1) END;
+    _tz_fallback := coalesce(_tz_fallback, 'America/New_York');
+  END IF;
+
   RETURN jsonb_build_object(
     'email', jsonb_build_object('state', _e_state, 'set_by', _e_by, 'set_at', _e_at,
       'can_turn_on', _e_state = 'off' AND NOT _e_fixed,
@@ -490,12 +507,8 @@ BEGIN
       'can_unsubscribe', _u_state IN ('subscribed','paused')),
     'data_sharing', jsonb_build_object('allowed', coalesce(_c.paige_shared_context_consent, false),
       'updated_at', _c.paige_shared_context_consent_updated_at),
-    -- Known only when the stored zone is one runPreSend can use: an invalid string makes the send
-    -- gate fall back to its default zone (pre-send-pipeline.ts safeTz), so it is not "your time".
-    -- Intl accepts IANA names case-insensitively; so does this match.
     'quiet_hours', jsonb_build_object('start', '20:00', 'end', '08:00',
-      'time_zone_known', EXISTS (SELECT 1 FROM pg_catalog.pg_timezone_names z
-                                  WHERE lower(z.name) = lower(btrim(coalesce(_c.timezone, ''))))));
+      'time_zone_known', _tz_known, 'fallback_time_zone', _tz_fallback));
 END $$;
 REVOKE ALL ON FUNCTION public._client_communication_state(uuid, uuid) FROM PUBLIC, anon, authenticated;
 
@@ -503,12 +516,20 @@ REVOKE ALL ON FUNCTION public._client_communication_state(uuid, uuid) FROM PUBLI
 -- Evidence written by the portal carries 'portal:<uid>:<id>:<first 12 of md5(text)>', so a later copy
 -- change can never silently re-label old evidence: a new sentence is a new id (v2), and the hash
 -- names the bytes the customer saw. {business} is replaced with the business name when rendered.
+-- v1 of email, Updates and texts is superseded (round 3) and kept, because evidence already written
+-- names it: email-pref:v2 adds the agreements exception and that email off also leaves Updates (D4);
+-- updates-optin:v2 drops the repeated row label; sms-pref:v2 drops "again" and no longer implies a
+-- text will come (a contact with texts not set up may have none to reply to). Every writer below
+-- records the id the page shows today (src/lib/client-portal-preferences.ts CURRENT_DISCLOSURE).
 CREATE OR REPLACE FUNCTION public.client_portal_consent_disclosure(p_id text)
 RETURNS text LANGUAGE sql IMMUTABLE SET search_path = pg_catalog
 AS $$ SELECT CASE p_id
   WHEN 'email-pref:v1' THEN 'Email from {business}. When email is off, {business} won''t email you through Paige. Confirmations for times you book, and changes you make to them, still arrive.'
+  WHEN 'email-pref:v2' THEN 'Email from {business}. When email is off, {business} won''t email you through Paige, except booking confirmations and agreements you''re asked to sign. Turning email off also unsubscribes you from updates and offers, and turning it back on doesn''t subscribe you again.'
   WHEN 'updates-optin:v1' THEN 'Updates and offers: newsletters and automated marketing emails from {business}, sent through Paige. You can unsubscribe anytime.'
+  WHEN 'updates-optin:v2' THEN 'Newsletters and automated marketing emails from {business}, sent through Paige. You can unsubscribe anytime.'
   WHEN 'sms-pref:v1' THEN 'Texts from {business}. When texts are off, {business} can''t text you through Paige. To get texts again, reply START to a text from {business}.'
+  WHEN 'sms-pref:v2' THEN 'Texts from {business}. When texts are off, {business} can''t text you through Paige. To get texts, reply START to a text from {business} if you have one, or ask them.'
   WHEN 'data-sharing:v1' THEN 'Lets {business}''s Paige use your account details and portal activity when it prepares requests or suggestions for you. It has no effect yet, and you can turn it off anytime.'
   END $$;
 REVOKE ALL ON FUNCTION public.client_portal_consent_disclosure(text) FROM PUBLIC, anon;
@@ -619,7 +640,7 @@ BEGIN
   PERFORM set_config('paige.customer_consent_contact', _c.id::text, true);
 
   IF _ch = 'email' AND _topic IS NULL AND NOT p_enabled THEN
-    _disclosure := 'email-pref:v1';
+    _disclosure := 'email-pref:v2';
     IF (_before #>> '{email,can_turn_off}')::boolean THEN
       INSERT INTO public.paige_suppressions(contact_id, address_normalized, channel, reason, source, created_at)
       VALUES (_c.id, _row_addr, 'email', 'customer_request', 'customer_portal', clock_timestamp()) ON CONFLICT DO NOTHING;
@@ -628,12 +649,12 @@ BEGIN
       -- D4: turning email off also leaves Updates and offers. Turning it back on never re-subscribes.
       IF _before #>> '{updates,state}' IN ('subscribed','paused') THEN
         INSERT INTO public.paige_consent_events(contact_id, address_normalized, channel, topic, action, source, evidence_ref, ip, created_at)
-        VALUES (_c.id, _row_addr, 'email', 'newsletter', 'revoked', 'customer_portal', public._client_portal_evidence_ref(_uid, 'updates-optin:v1'), NULL, clock_timestamp());
+        VALUES (_c.id, _row_addr, 'email', 'newsletter', 'revoked', 'customer_portal', public._client_portal_evidence_ref(_uid, 'updates-optin:v2'), NULL, clock_timestamp());
       END IF;
       _changed := true;
     END IF;
   ELSIF _ch = 'email' AND _topic IS NULL AND p_enabled THEN
-    _disclosure := 'email-pref:v1';
+    _disclosure := 'email-pref:v2';
     IF EXISTS (SELECT 1 FROM public.paige_suppressions s
                 WHERE s.tenant_id = _c.tenant_id AND s.channel = 'email'
                   AND public._comms_row_is_contacts(_c.tenant_id, _c.id, _addr, _uniq, s.contact_id, s.address_normalized)) THEN
@@ -658,7 +679,7 @@ BEGIN
            AND public._suppression_customer_liftable(s.source, s.reason)
            AND public._comms_row_is_contacts(_c.tenant_id, _c.id, _addr, _uniq, s.contact_id, s.address_normalized);
         IF _took_back THEN
-          -- The customer took back their own spam report or unsubscribe click (owner ruling, round 2).
+          -- The customer took back their own spam report or unsubscribe click (integrator default (owner may overrule), round 2).
           -- Two events, in this order: the 'granted' is the evidence of that affirmative act; the
           -- newsletter 'revoked' after it keeps them out of Updates and offers, and keeps marketing
           -- automations (tenantConsent reads the latest email event of any topic) closed until they
@@ -667,7 +688,7 @@ BEGIN
           INSERT INTO public.paige_consent_events(contact_id, address_normalized, channel, topic, action, source, evidence_ref, ip, created_at)
           VALUES (_c.id, _row_addr, 'email', NULL, 'granted', 'customer_portal', public._client_portal_evidence_ref(_uid, _disclosure), NULL, _at);
           INSERT INTO public.paige_consent_events(contact_id, address_normalized, channel, topic, action, source, evidence_ref, ip, created_at)
-          VALUES (_c.id, _row_addr, 'email', 'newsletter', 'revoked', 'customer_portal', public._client_portal_evidence_ref(_uid, 'updates-optin:v1'), NULL, _at + interval '1 microsecond');
+          VALUES (_c.id, _row_addr, 'email', 'newsletter', 'revoked', 'customer_portal', public._client_portal_evidence_ref(_uid, 'updates-optin:v2'), NULL, _at + interval '1 microsecond');
         END IF;
         -- Otherwise (their own portal choice) no event: resuming email to someone the business already
         -- serves is not marketing consent, and a 'granted' would open tenantConsent.
@@ -675,7 +696,7 @@ BEGIN
       END IF;
     END IF;
   ELSIF _ch = 'email' AND p_enabled THEN
-    _disclosure := 'updates-optin:v1';
+    _disclosure := 'updates-optin:v2';
     IF _before #>> '{updates,state}' <> 'subscribed' THEN
       IF _before #>> '{email,state}' = 'no_address' THEN _err := 'NO_EMAIL_ADDRESS';
       ELSIF _before #>> '{email,state}' <> 'on' THEN _err := 'EMAIL_OFF';
@@ -686,14 +707,14 @@ BEGIN
       END IF;
     END IF;
   ELSIF _ch = 'email' THEN
-    _disclosure := 'updates-optin:v1';
+    _disclosure := 'updates-optin:v2';
     IF _before #>> '{updates,state}' IN ('subscribed','paused') THEN
       INSERT INTO public.paige_consent_events(contact_id, address_normalized, channel, topic, action, source, evidence_ref, ip, created_at)
       VALUES (_c.id, _row_addr, 'email', 'newsletter', 'revoked', 'customer_portal', public._client_portal_evidence_ref(_uid, _disclosure), NULL, clock_timestamp());
       _changed := true;
     END IF;
   ELSIF NOT p_enabled THEN
-    _disclosure := 'sms-pref:v1';
+    _disclosure := 'sms-pref:v2';
     IF (_before #>> '{sms,can_turn_off}')::boolean THEN
       INSERT INTO public.paige_suppressions(contact_id, address_normalized, channel, reason, source, created_at)
       VALUES (_c.id, _row_addr, 'sms', 'customer_request', 'customer_portal', clock_timestamp()) ON CONFLICT DO NOTHING;
@@ -706,7 +727,7 @@ BEGIN
     -- subscriber of the number, and the portal phone is self-edited and unverified. The honest route
     -- is replying START to a text from the business (handle-inbound-sms records it with carrier
     -- evidence). A state that is already on replays.
-    _disclosure := 'sms-pref:v1';
+    _disclosure := 'sms-pref:v2';
     IF _before #>> '{sms,state}' <> 'on' THEN _err := 'SMS_OPT_IN_UNAVAILABLE'; END IF;
   END IF;
 

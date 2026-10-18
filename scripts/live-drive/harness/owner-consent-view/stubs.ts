@@ -24,7 +24,7 @@ export const ownerHarness = { get reads() { return ownerReads; } };
 (window as unknown as { __ownerHarness: typeof ownerHarness }).__ownerHarness = ownerHarness;
 
 function answer() {
-  const common = { schema_version: 1, tenant_id: base.TENANT, contact_id: base.CLIENT, quiet_hours: { start: "20:00", end: "08:00", time_zone_known: false }, read_at: new Date().toISOString() };
+  const common = { schema_version: 1, tenant_id: base.TENANT, contact_id: base.CLIENT, quiet_hours: { start: "20:00", end: "08:00", time_zone_known: false, fallback_time_zone: "America/New_York" }, read_at: new Date().toISOString() };
   if (consent === "paused") {
     return { ...common, email: card("off", { set_by: "business", set_at: ago(3) }), sms: card("not_set"), updates: upd("paused", { set_by: "business", set_at: ago(3) }),
       data_sharing: { allowed: false, updated_at: null }, portal_joined: false, do_not_contact: true, dnd_active: false };

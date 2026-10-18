@@ -16,7 +16,7 @@ export const prefsPayload = (over: Record<string, unknown> = {}): Record<string,
   schema_version: 1, tenant_id: PREF_TENANT, business_name: "Northwind Studio",
   email: prefCard("on"), sms: prefCard("not_set"), updates: prefUpdates("not_subscribed"),
   data_sharing: { allowed: false, updated_at: null },
-  quiet_hours: { start: "20:00", end: "08:00", time_zone_known: false },
+  quiet_hours: { start: "20:00", end: "08:00", time_zone_known: false, fallback_time_zone: "America/New_York" },
   read_at: "2026-10-18T12:00:00.000Z", ...over,
 });
 

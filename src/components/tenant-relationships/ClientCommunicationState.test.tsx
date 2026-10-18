@@ -74,7 +74,7 @@ describe("How {client} can be reached — the owner's read-only view", () => {
     expect(rows().Email).toBe("PausedSet by your business · Oct 8, 2026");
   });
 
-  it("a spam report reads as the client's own, and only they can lift it (integrator ruling)", async () => {
+  it("a spam report reads as the client's own, and only they can lift it (integrator default (owner may overrule))", async () => {
     await mount({ data: ownerStatePayload({ email: prefCard("off", { set_by: "reported", set_at: "2026-10-03T15:00:00Z", can_turn_off: false }) }), error: null });
     expect(rows().Email).toBe("Off · they reported email as spamOct 3, 2026Only they can turn it back on.");
     expect(host.textContent).not.toMatch(/delivery/);

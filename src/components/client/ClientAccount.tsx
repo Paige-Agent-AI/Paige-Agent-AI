@@ -28,8 +28,9 @@ export function ClientAccount() {
         <div className="space-y-4 py-3"><p role="alert" className="max-w-prose text-sm">{account.phase === "signed_out"
           ? "Sign in with your invited account to open your information."
           : account.phase === "unavailable" ? "Your information is unavailable for this business. Contact the business if you need access."
+          : account.phase === "multiple_businesses" ? "You're a client of more than one business, so your account settings can't be shown here yet."
           : "Your information could not be loaded. Check your connection and try again."}</p>
-          {account.phase !== "signed_out" && <Button className="min-h-[44px]" variant="outline" onClick={() => void account.reload()}>Try again</Button>}
+          {account.phase !== "signed_out" && account.phase !== "multiple_businesses" && <Button className="min-h-[44px]" variant="outline" onClick={() => void account.reload()}>Try again</Button>}
         </div>
       ) : (
         <form onSubmit={event => { event.preventDefault(); void account.save(); }} className="max-w-2xl space-y-6" aria-busy={waiting}>

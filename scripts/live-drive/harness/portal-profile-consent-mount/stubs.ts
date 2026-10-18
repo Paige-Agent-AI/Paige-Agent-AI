@@ -8,17 +8,18 @@
 //
 //   client_portal_communication_preferences(p_tenant_id)  -> { schema_version:1, tenant_id, business_name,
 //     email:{state,set_by,set_at,can_turn_on,can_turn_off}, sms:{…}, updates:{state,set_by,set_at,can_subscribe,
-//     can_unsubscribe}, data_sharing:{allowed,updated_at}, quiet_hours:{start,end,time_zone_known}, read_at }
+//     can_unsubscribe}, data_sharing:{allowed,updated_at}, quiet_hours:{start,end,time_zone_known,fallback_time_zone}, read_at }
 //   client_portal_set_communication_preference(...)        -> { ok:true, replayed, preferences } | { ok:false, error, preferences }
 //   client_portal_set_shared_context_consent(...)          -> { ok:true, replayed, preferences }
 //   client_portal_self_profile                             -> the exact 19-key shape readClientPortalSelfProfile accepts
 //
-//   ?state=default|email-off|email-paused|email-paused-held|email-reported|reported-lift|texts-on|texts-on-no-tz|
+//   ?state=default|email-off|email-paused|email-paused-held|email-reported|reported-lift|texts-on|texts-on-no-tz|texts-on-business-tz|
 //          texts-off|updates-subscribed|business-recorded|sharing-on|no-address|no-number|multiple|unavailable|
 //          loading|error|pending|refusal|saved
 //   email-reported: the customer reported an email as spam (set_by 'reported'); only they can turn it back on.
 //   reported-lift:  the same, then the drive turns email back on through the real switch.
-//   texts-on-no-tz: texts on, the business has no usable time zone for them (the Eastern-time sentence).
+//   texts-on-no-tz: texts on, no usable zone anywhere (the sentence names Eastern Time, the server's fallback).
+//   texts-on-business-tz: texts on, no client zone; the business's texting zone applies (the server names it).
 //   business-recorded: texts on and updates subscribed, both recorded by the business (D7 labels).
 //   error:   the first preferences read lands and every later one fails (reached by the page's own focus refresh).
 //   pending: every write hangs, so the row is framed mid-save.
@@ -44,7 +45,7 @@ const upd = (s: string, o: Partial<Updates> = {}): Updates => ({ state: s, set_b
 function initial() {
   const p = {
     email: card("on"), sms: card("not_set"), updates: upd("not_subscribed"),
-    data_sharing: { allowed: false, updated_at: null as string | null }, time_zone_known: false,
+    data_sharing: { allowed: false, updated_at: null as string | null }, time_zone_known: false, fallback: "America/New_York",
   };
   switch (state) {
     case "email-off": p.email = card("off", { set_by: "you", set_at: ago(6), can_turn_on: true, can_turn_off: false }); p.updates = upd("not_subscribed", { can_subscribe: false }); break;
@@ -54,6 +55,8 @@ function initial() {
     case "email-reported": case "reported-lift": p.email = card("off", { set_by: "reported", set_at: ago(15), can_turn_on: true, can_turn_off: false }); p.updates = upd("not_subscribed", { can_subscribe: false }); break;
     case "texts-on": p.sms = card("on", { set_by: "reply", set_at: ago(9) }); p.time_zone_known = true; break;
     case "texts-on-no-tz": p.sms = card("on", { set_by: "reply", set_at: ago(9) }); p.time_zone_known = false; break;
+    // No client zone, and the business has a usable texting zone: the pre-send check uses the business's (round 3).
+    case "texts-on-business-tz": p.sms = card("on", { set_by: "reply", set_at: ago(9) }); p.time_zone_known = false; p.fallback = "America/Chicago"; break;
     case "business-recorded": p.sms = card("on", { set_by: "business", set_at: ago(20) }); p.updates = upd("subscribed", { set_by: "business", set_at: ago(20) }); p.time_zone_known = true; break;
     case "texts-off": p.sms = card("off", { set_by: "reply", set_at: ago(2), can_turn_off: false }); break;
     case "updates-subscribed": p.updates = upd("subscribed", { set_by: "you", set_at: ago(12) }); break;
@@ -68,7 +71,7 @@ const view = () => ({
   schema_version: 1, tenant_id: TENANT, business_name: "Northwind Studio",
   email: { ...store.email }, sms: { ...store.sms }, updates: { ...store.updates },
   data_sharing: { ...store.data_sharing },
-  quiet_hours: { start: "20:00", end: "08:00", time_zone_known: store.time_zone_known },
+  quiet_hours: { start: "20:00", end: "08:00", time_zone_known: store.time_zone_known, fallback_time_zone: store.time_zone_known ? null : store.fallback },
   read_at: new Date().toISOString(),
 });
 

@@ -5,7 +5,7 @@
 // Only the transport is stubbed. The REAL useClientPortalAgreements / usePortalAgreementsGlance hooks (exact-key
 // parsers included), the REAL Agreements page, the REAL AppNav + useCustomerPortalNav, the REAL brand/config readers,
 // the REAL MyAgreements and the REAL, FROZEN AgreementSigning page (§28) all run against this client. The payloads
-// follow the contracts in supabase/migrations/20271110220000_e09_customer_portal_agreements.sql, and the list is
+// follow the contracts in supabase/migrations/20271110225000_e09_customer_portal_agreements.sql, and the list is
 // computed the way the SQL computes it, from a paige_agreements-shaped store that deliberately holds rows and
 // columns the customer must NOT see:
 //

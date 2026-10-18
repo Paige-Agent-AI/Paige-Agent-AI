@@ -12,8 +12,10 @@ globalThis.fetch = async (url, options) => {
   modelCalls++; modelBodies.push(body);
   const events = modelCalls === 1 ? [
     { type: 'message_start', message: { usage: { input_tokens: 1 } } },
-    { type: 'content_block_start', index: 0, content_block: { type: 'tool_use', id: 'tool-read', name: readToolUse.name } },
-    { type: 'content_block_delta', index: 0, delta: { type: 'input_json_delta', partial_json: JSON.stringify(readToolUse.input) } },
+    ...[readToolUse].flat().flatMap((use, index) => [
+      { type: 'content_block_start', index, content_block: { type: 'tool_use', id: 'tool-read-' + index, name: use.name } },
+      { type: 'content_block_delta', index, delta: { type: 'input_json_delta', partial_json: JSON.stringify(use.input) } },
+    ]),
     { type: 'message_delta', delta: { stop_reason: 'tool_use' }, usage: { output_tokens: 1 } }, { type: 'message_stop' },
   ] : [
     { type: 'message_start', message: { usage: { input_tokens: 1 } } },
@@ -86,9 +88,9 @@ const cases = [];
 const redOnly = process.argv.includes('--red-only');
 const check = async (name, run) => { try { await run(); cases.push({ name, status: 'PASS' }); console.log('PASS ' + name); }
   catch (error) { cases.push({ name, status: 'FAIL', error: error.stack }); console.error('FAIL ' + name + ': ' + error.message); } };
-async function execute({ role = 'owner', args = { task_id: taskId }, result = { data: envelope(), error: null }, finalResult, afterRead, aba = false, teamFailureAt = 0, tier = 'tenant', classification = { id: tenant, account_type: 'standalone', parent_tenant_id: null }, afterClassification, afterRole, hang = false, receiptError = false, activeProtocol = false } = {}) {
+async function execute({ role = 'owner', args = { task_id: taskId }, result = { data: envelope(), error: null }, finalResult, afterRead, aba = false, teamFailureAt = 0, tier = 'tenant', classification = { id: tenant, account_type: 'standalone', parent_tenant_id: null }, afterClassification, afterRole, hang = false, receiptError = false, activeProtocol = false, taskIds = null } = {}) {
   receipts.length = 0; modelBodies.length = 0; queryShapes.length = 0; executorState.held = null;
-  modelCalls = 0; readToolUse = { name: 'crm_get_task', input: args };
+  modelCalls = 0; readToolUse = taskIds ? taskIds.map(task_id => ({ name: 'crm_get_task', input: { task_id } })) : { name: 'crm_get_task', input: args };
   let active = tenant, classificationRow = classification, currentRole = role, reads = 0, teamReads = 0;
   const rec = scenario({ tables: { profiles: () => { const selected = active; if (aba && active !== tenant) active = tenant; return [{ active_tenant_id: selected }]; }, tenants: () => classificationRow ? [classificationRow] : [] }, rpcs: {
     ...(activeProtocol ? { paige_chat_interactive_protocol: { data: { version: 2, active: true }, error: null },
@@ -96,11 +98,12 @@ async function execute({ role = 'owner', args = { task_id: taskId }, result = { 
     get_actor_access: { data: { tier }, error: null },
     get_team_authority_readiness: () => ++teamReads === teamFailureAt ? { data: null, error: { code: '57014' } } : { data: [{ fact_key: 'viewer_permission', value: currentRole, status: 'available', tenant_id: tenant }], error: null },
     current_user_tenant_id: { data: tenant, error: null },
-    operations_crm_work_read: () => {
+    operations_crm_work_read: (parameters) => {
       reads++; if (afterRead) active = afterRead;
       if (afterClassification) classificationRow = afterClassification;
       if (afterRole !== undefined) currentRole = afterRole;
       if (hang) return new Promise(() => {});
+      if (taskIds) return { data: envelope([{ ...task(), id: parameters.p_task_id }]), error: null };
       return reads > 1 && finalResult ? finalResult : result;
     },
     record_capability_run: { data: receiptError ? null : id(90), error: receiptError ? { code: '57014' } : null },
@@ -108,9 +111,9 @@ async function execute({ role = 'owner', args = { task_id: taskId }, result = { 
   const response = await capturedHandler()(req({ messages: [{ role: 'user', content: 'Read exact saved Task ' + taskId }] }, id(100 + cases.length)));
   const wire = await response.text();
   const tools = modelBodies.flatMap(body => body.messages ?? []).filter(message => message.role === 'user').flatMap(message => Array.isArray(message.content) ? message.content : []).filter(part => part.type === 'tool_result');
-  let value = null;
-  for (const part of tools) { try { const parsed = JSON.parse(part.content); if (parsed?.status) value = parsed; } catch {} }
-  return { rec, wire, value, shapes: [...queryShapes], offered: modelBodies[0]?.tools?.map(t => t.name) ?? [] };
+  let value = null; const values = [];
+  for (const part of tools) { try { const parsed = JSON.parse(part.content); if (parsed?.status) { value = parsed; values.push(parsed); } } catch {} }
+  return { rec, wire, value, values, shapes: [...queryShapes], offered: modelBodies[0]?.tools?.map(t => t.name) ?? [] };
 }
 const noEffects = r => {
   assert.ok(!r.rec.rpc.some(c => /execute_crm|create.*task|plan_|send_|approve|dispatch_automation/.test(c.name)), 'no effect RPC');
@@ -129,6 +132,8 @@ await check('actual ordinary Chat reads exact late completed Task through origin
   for (const call of native) { assert.equal(call.client, 'jwt'); assert.deepEqual(call.parameters, { p_expected_actor_id: actor, p_expected_tenant_id: tenant, p_task_id: taskId }); assert.ok(call.signal instanceof AbortSignal); }
   assert.ok(r.wire.includes(`"destination":"operations_work","record_id":"${taskId}"`));
   assert.deepEqual(receipts.at(-1).bundle_ref.paige_record_links, [{ destination: 'operations_work', record_id: taskId }]);
+  assert.match(r.value.navigation_note, /Open task control below/);
+  assert.ok(!/https?:|\/solo\//.test(r.value.navigation_note), 'model receives a verified control label, never an address');
   assert.ok(!JSON.stringify(r.value).includes('record_links')); assert.ok(!JSON.stringify(r.value).includes('/solo/'));
   assert.equal(r.rec.rpc.filter(c => c.name === 'record_capability_run').length, 1);
   assert.equal(r.rec.rpc.filter(c => c.name === 'get_team_authority_readiness').length, 3, 'initial native Team fact plus fresh pre/post checks');
@@ -140,6 +145,7 @@ await check('actual member read keeps canonical own/assigned-client native autho
 await check('actual exact not-visible projection is not global absence and carries no Task reference', async () => {
   const r = await execute({ result: { data: envelope([]), error: null } }); assert.equal(r.value?.status, 'available'); assert.equal(r.value?.found, false);
   assert.match(r.value.message, /visible to the current actor/); assert.match(r.value.message, /does not establish global absence/);
+  assert.equal(r.value.navigation_note, undefined, 'an invisible Task cannot advertise an opening control');
   assert.ok(!r.wire.includes('"destination":"operations_work"')); noEffects(r);
 });
 await check('actual invalid UUID is refused before native read and creates no reference or effect', async () => {
@@ -147,6 +153,29 @@ await check('actual invalid UUID is refused before native read and creates no re
   assert.ok(!r.shapes.some(c => c.name === 'operations_crm_work_read')); assert.ok(!r.wire.includes('"destination":"operations_work"')); noEffects(r);
 });
 if (!redOnly) {
+  await check('seven available Tasks advertise controls only for the six actually emitted references', async () => {
+    const ids = Array.from({ length: 7 }, (_, index) => id(20 + index));
+    const r = await execute({ taskIds: ids, activeProtocol: true });
+    const links = receipts.at(-1).bundle_ref.paige_record_links;
+    assert.equal(r.values.length, 7); assert.equal(links.length, 6);
+    assert.equal(r.shapes.filter(call => call.name === 'operations_crm_work_read').length, 14);
+    for (const value of r.values) {
+      assert.equal(value.status, 'available'); assert.equal(value.found, true);
+      const selected = links.some(link => link.destination === 'operations_work' && link.record_id === value.task.id);
+      if (selected) assert.match(value.navigation_note, /Open task control below/);
+      else assert.match(value.navigation_note, /not included in this response/);
+      assert.ok(!/https?:|\/solo\//.test(value.navigation_note));
+    }
+    assert.equal(r.values.filter(value => /Open task control below/.test(value.navigation_note)).length, 6);
+    assert.ok(!links.some(link => link.record_id === ids[6])); noEffects(r);
+  });
+  await check('repeated reads retain one exact reference and truthful control guidance for both results', async () => {
+    const r = await execute({ taskIds: [taskId, taskId], activeProtocol: true });
+    assert.equal(r.values.length, 2);
+    assert.deepEqual(receipts.at(-1).bundle_ref.paige_record_links, [{ destination: 'operations_work', record_id: taskId }]);
+    for (const value of r.values) assert.match(value.navigation_note, /Open task control below/);
+    noEffects(r);
+  });
   for (const [label, options, expected] of [
     ['model tenant override', { args: { task_id: taskId, tenant_id: tenant } }, 'needs_input'],
     ['model actor override', { args: { task_id: taskId, actor_id: actor } }, 'needs_input'],
@@ -164,6 +193,7 @@ if (!redOnly) {
     ['post-read account classification changed', { afterClassification: { id: tenant, account_type: 'agency', parent_tenant_id: null } }, 'refused'],
   ]) await check('actual Chat ' + label + ' cannot leak a Task, retry or dispatch a writer', async () => {
     const r = await execute(options); assert.equal(r.value?.status, expected); assert.ok(!r.value.task); assert.ok(!r.wire.includes('"destination":"operations_work"')); noEffects(r);
+    assert.equal(r.value.navigation_note, undefined, 'refused, uncertain and withdrawn reads cannot advertise a Task');
   });
   await check('actual active-profile change rejects the retired read before model egress and cannot recover by a later same-workspace read', async () => {
     const r = await execute({ afterRead: id(99) }); assert.ok(!JSON.stringify(modelBodies).includes('Neutral exact late Task'));

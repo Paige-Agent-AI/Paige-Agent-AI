@@ -14,6 +14,7 @@ import {
 import {
   buildComposerUserPrompt, UNTRUSTED_CLOSE, UNTRUSTED_OPEN,
 } from "../subagent-email-composer/prompt.ts";
+import { COMMS_EMAIL_BODY_MAX, parseCommsEmailCommand } from "../_shared/comms-email/contract.ts";
 
 const T = "10000000-0000-4000-8000-000000000001";
 const ACT = "40000000-0000-4000-8000-000000000001";
@@ -259,8 +260,124 @@ describe("shapeEmailDraft — the shapes a specialist may return (plain text onl
   });
 });
 
-// Every other kind — including the other send_via_approval email kinds (client.followup with its 125
-// legacy approvals, owner.followup_email) — is drafted byte-for-byte as on main (81be62d9).
+const FOLLOWUP_KINDS = ["client.followup", "owner.followup_email"] as const;
+
+for (const action_kind of FOLLOWUP_KINDS) describe(`${action_kind} — governed-composer draft projection`, () => {
+  const followup = (over: Partial<ClaimedAction> = {}) => leadFollowup({ action_kind, ...over });
+
+  it("advances the claimed action with only the plain-text email and closed raw facts", async () => {
+    const h = harness(ok(composerResult({ to: "model-picked@example.test", cc: "x@evil", recipient_email: "x@evil" })));
+    const out = await draftClaimedAction(h.deps, followup());
+    assert.deepEqual(out, { kind: "drafted", invocationId: INV });
+    assert.deepEqual(h.rpcs.map(r => r.fn), ["advance_action"]);
+    assert.deepEqual(h.rpcs[0]!.args, {
+      p_action_id: ACT, p_to_status: "drafted", p_tenant_id: T, p_invocation_id: INV,
+      p_assigned_subagent_slug: "email-composer",
+      p_draft_content: {
+        channel: "email", subject: "Great to meet you, Dana", body: "Hi Dana,\n\nThanks for reaching out.",
+        raw: { subagent: "email-composer", compliance_verdict: "approved", compliance_flags: [],
+          requires_approval: false, confidence: "high", draft: { tone_used: "warm", length: "short", word_count: 6 } },
+      },
+    });
+    const stored = JSON.stringify(h.rpcs[0]!.args.p_draft_content);
+    for (const excluded of ["body_html", "recipient", "@", "next_action_hint", "compliance_findings"]) {
+      assert.equal(stored.includes(excluded), false, excluded);
+    }
+  });
+
+  it("accepts flat native text and nested HTML-only drafts without retaining model markup", async () => {
+    for (const [result, subject, body] of [
+      [{ subject: "Checking in", body: "Hi <Dana> & team,\n\nHow is next week?" }, "Checking in", "Hi <Dana> & team,\n\nHow is next week?"],
+      [{ draft: { subject: "<b>Hello</b>\nthere", body_html: '<p>Bonjour 世界</p><p><a href="https://invalid.example">A bientôt</a></p><img src="https://track.invalid/p.gif">' } }, "Hello there", "Bonjour 世界\n\nA bientôt"],
+    ] as const) {
+      const h = harness(ok(result));
+      assert.deepEqual(await draftClaimedAction(h.deps, followup()), { kind: "drafted", invocationId: INV });
+      assert.deepEqual(h.rpcs[0]!.args.p_draft_content, {
+        channel: "email", subject, body, raw: "draft" in result ? { draft: {} } : {},
+      });
+      assert.doesNotThrow(() => parseCommsEmailCommand({ action: "comms.email_send", contact_id: C, subject, body }));
+    }
+  });
+
+  it("blocks absent or unusable subject/body instead of routing an opaque result to approvals", async () => {
+    for (const result of [
+      composerResult({ subject: "Hi", body_html: "", body_text: "" }),
+      composerResult({ subject: "", body_html: "<p>x</p>", body_text: "x" }),
+      { subject: ["not text"], body: "Body" }, { subject: "Subject", body: { html: "Body" } },
+      { draft: {} }, { ok: false, draft: { subject: "Subject", body_text: "Body" } }, "opaque text", null,
+    ]) {
+      const h = harness(ok(result));
+      assert.deepEqual(await draftClaimedAction(h.deps, followup()), { kind: "failed", stage: "draft", error: EMPTY_EMAIL_DRAFT_ERROR });
+      assert.equal(h.invokes.length, 1);
+      assert.deepEqual(h.rpcs, [{ fn: "fail_action", args: { p_action_id: ACT, p_error: EMPTY_EMAIL_DRAFT_ERROR } }]);
+    }
+  });
+
+  it("blocks a NUL or over-limit body in flat and nested output without truncating it", async () => {
+    for (const body of ["Hi\u0000Dana", "x".repeat(COMMS_EMAIL_BODY_MAX + 1)]) for (const result of [
+      { subject: "Checking in", body }, { draft: { subject: "Checking in", body_text: body } },
+    ]) {
+      const h = harness(ok(result));
+      assert.deepEqual(await draftClaimedAction(h.deps, followup()), { kind: "failed", stage: "draft", error: EMPTY_EMAIL_DRAFT_ERROR });
+      assert.deepEqual(h.rpcs, [{ fn: "fail_action", args: { p_action_id: ACT, p_error: EMPTY_EMAIL_DRAFT_ERROR } }]);
+    }
+  });
+
+  it("keeps a valid body at the canonical limit whole and reuses the existing subject normalization", async () => {
+    const body = "é".repeat(COMMS_EMAIL_BODY_MAX);
+    const h = harness(ok({ draft: { subject: "<b>Checking</b>\u0000in\n" + "word ".repeat(60), body_text: body } }));
+    assert.deepEqual(await draftClaimedAction(h.deps, followup()), { kind: "drafted", invocationId: INV });
+    const draft = h.rpcs[0]!.args.p_draft_content as Obj;
+    assert.equal(draft.body, body);
+    assert.match(String(draft.subject), /^Checking in word/);
+    assert.doesNotThrow(() => parseCommsEmailCommand({ action: "comms.email_send", contact_id: C, subject: draft.subject, body: draft.body }));
+  });
+
+  it("fails missing intent before invoking only the email-composer specialist", async () => {
+    for (const payload of [null, {}, { draft_input: {} }, { draft_input: { intent: " \n " } }, { draft_input: { intent: 12 } }]) {
+      const h = harness(ok(composerResult()));
+      assert.deepEqual(await draftClaimedAction(h.deps, followup({ payload })), { kind: "failed", stage: "preflight", error: MISSING_INTENT_ERROR });
+      assert.equal(h.invokes.length, 0);
+      assert.deepEqual(h.rpcs, [{ fn: "fail_action", args: { p_action_id: ACT, p_error: MISSING_INTENT_ERROR } }]);
+    }
+    const h = harness(ok(composerResult()));
+    assert.deepEqual(await draftClaimedAction(h.deps, followup({ payload: null, draft_subagent_slug: "another-specialist" })), { kind: "drafted", invocationId: INV });
+    assert.equal(h.invokes.length, 1, "this preflight does not impose the composer's input contract on another specialist");
+    assert.equal((h.rpcs[0]!.args.p_draft_content as Obj).channel, "email");
+  });
+
+  it("keeps the legacy follow-up request unchanged, without borrowing the lead-only untrusted flag", async () => {
+    const a = followup({ payload: { draft_input: {
+      intent: "Check in about the agreed next step", recipient_email: "legacy@example.test", contact_id: OTHER_C,
+      untrusted_submission: false, key_points: ["Keep the original request"],
+    } } });
+    const h = harness(ok(composerResult()));
+    await draftClaimedAction(h.deps, a);
+    assert.deepEqual(h.invokes, [orchestratorRequest(a)]);
+    assert.deepEqual(h.invokes[0]!.input, {
+      action_kind, title: a.title, summary: a.summary, contact_id: OTHER_C,
+      intent: "Check in about the agreed next step", recipient_email: "legacy@example.test",
+      untrusted_submission: false, key_points: ["Keep the original request"],
+    });
+    assert.deepEqual(h.invokes[0]!.context, { contact_id: C, conversation_id: null });
+    assert.equal(JSON.stringify(h.rpcs[0]!.args.p_draft_content).includes("legacy@example.test"), false);
+  });
+
+  it("retains invoke, advance-error and thrown-invoke behavior without any send call", async () => {
+    const refused = harness({ httpOk: false, status: 422, body: { ok: false, error: "compliance_blocked" } });
+    assert.deepEqual(await draftClaimedAction(refused.deps, followup()), { kind: "failed", stage: "invoke", error: "invoke email-composer failed (422): compliance_blocked" });
+    assert.deepEqual(refused.rpcs.map(r => r.fn), ["fail_action"]);
+    const failedAdvance = harness(ok(composerResult()), "ACTION_TENANT_MISMATCH");
+    assert.deepEqual(await draftClaimedAction(failedAdvance.deps, followup()), { kind: "failed", stage: "advance", error: "ACTION_TENANT_MISMATCH" });
+    assert.deepEqual(failedAdvance.rpcs.map(r => r.fn), ["advance_action", "fail_action"]);
+    const thrown = harness(new Error("aborted"));
+    await assert.rejects(draftClaimedAction(thrown.deps, followup()), /aborted/);
+    assert.deepEqual(thrown.rpcs, []);
+  });
+});
+
+// All other action kinds retain the opaque draft and intent behavior from main. The two new
+// normalized follow-ups still keep main's input request, as the existing comparison below verifies.
 describe("every other kind is drafted exactly as before", () => {
   /** The request main's index.ts built, copied verbatim. */
   function mainRequest(a: ClaimedAction): Obj {
@@ -282,16 +399,22 @@ describe("every other kind is drafted exactly as before", () => {
     };
   }
 
-  const others: ClaimedAction[] = [
+  const legacyFollowups: ClaimedAction[] = [
     leadFollowup({ action_kind: "client.followup" }),
     leadFollowup({ action_kind: "owner.followup_email", payload: { draft_input: { intent: "x", recipient_email: "kept@example.test", contact_id: OTHER_C } } }),
+  ];
+  const others: ClaimedAction[] = [
     leadFollowup({ action_kind: "owner.sms_nudge", payload: {} }),
     leadFollowup({ action_kind: "client.portal_welcome", payload: { draft_input: ["array", "spread"] as unknown as Obj } }),
     leadFollowup({ action_kind: "owner.content_draft", payload: null }),
+    leadFollowup({ action_kind: "sales.work_followup", payload: null }),
+    leadFollowup({ action_kind: "finance.retainer_reminder", payload: null }),
+    leadFollowup({ action_kind: "client.followup_extra", payload: null }),
+    leadFollowup({ action_kind: "OWNER.FOLLOWUP_EMAIL", payload: null }),
   ];
 
   it("sends the same orchestrator request main sent (no untrusted flag, nothing dropped)", () => {
-    for (const a of others) assert.deepEqual(orchestratorRequest(a), mainRequest(a), a.action_kind);
+    for (const a of [...legacyFollowups, ...others]) assert.deepEqual(orchestratorRequest(a), mainRequest(a), a.action_kind);
   });
 
   it("stores the specialist's result as returned — no email shaping, no intent requirement", async () => {

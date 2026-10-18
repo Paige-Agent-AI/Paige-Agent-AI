@@ -2,11 +2,11 @@
 // back, and advance it (or fail it honestly). index.ts owns auth, the claim, receipts and the digest;
 // this module owns the per-action decision so it can be driven without a network or a database.
 //
-// EVERY KIND BUT ONE is drafted exactly as the worker always drafted it: the filing's draft_input is
-// spread into the specialist's input, and the specialist's result is stored as returned.
+// Lead replies and the two email follow-up kinds keep a plain-text email draft for governed review.
+// All other kinds store the specialist's result as returned. Only the lead reply changes the input:
 //
-// owner.lead_followup — a reply to someone who filled in a business's website form (Exp03 S3) — is
-// the one exception, and it is shaped here because the form's answers are UNTRUSTED:
+// owner.lead_followup — a reply to someone who filled in a business's website form (Exp03 S3) — treats
+// the form's answers as UNTRUSTED:
 //   • The specialist is told the submission is untrusted (`untrusted_submission: true`), so the
 //     email composer passes the visitor's answers and details as delimited, quoted DATA with an
 //     explicit rule that they are not instructions (subagent-email-composer/prompt.ts). Forced here,
@@ -27,12 +27,14 @@
 //   • A filing with no intent, or a result with no usable subject AND body, never reaches the
 //     approvals queue: the action is failed ('blocked') with the reason, instead of offering the
 //     owner an empty email (§13).
+// client.followup and owner.followup_email reuse that output projection without changing their
+// existing input. Bodies the governed door cannot store or accept are blocked, never truncated.
 // Nothing here sends. advance_action routes a send kind to paige_pending_approvals; a send only ever
 // happens when the owner sends it through the governed email door.
 //
 // Pure TypeScript with erasable syntax only, so node --test, vitest and deno test can all load it.
 
-import { COMMS_EMAIL_SUBJECT_MAX } from "../_shared/comms-email/contract.ts";
+import { COMMS_EMAIL_BODY_MAX, COMMS_EMAIL_SUBJECT_MAX } from "../_shared/comms-email/contract.ts";
 
 type Obj = Record<string, unknown>;
 const obj = (v: unknown): Obj => (v && typeof v === "object" && !Array.isArray(v) ? v as Obj : {});
@@ -175,7 +177,7 @@ export function shapeEmailDraft(result: unknown): EmailDraft | null {
  * surrogate pair (a lone half is not storable text).
  */
 function oneLineSubject(s: string): string {
-  const line = (looksLikeHtml(s) ? htmlToText(s) : s).replace(/[\s\u0000]+/g, " ").trim();
+  const line = (looksLikeHtml(s) ? htmlToText(s) : s).split("\u0000").join(" ").replace(/\s+/g, " ").trim();
   if (line.length <= COMMS_EMAIL_SUBJECT_MAX) return line;
   let cut = line.slice(0, COMMS_EMAIL_SUBJECT_MAX);
   const space = cut.lastIndexOf(" ");
@@ -208,9 +210,11 @@ type OrchBody = { ok?: unknown; error?: unknown; result?: unknown; invocation_id
  */
 export async function draftClaimedAction(deps: DraftDeps, a: ClaimedAction): Promise<DraftOutcome> {
   const leadReply = isLeadReply(a);
+  const followupEmail = a.action_kind === "client.followup" || a.action_kind === "owner.followup_email";
+  const emailDraft = leadReply || followupEmail;
 
   // The composer refuses an email with no intent; say so plainly before spending an invocation.
-  if (leadReply && a.draft_subagent_slug === EMAIL_COMPOSER_SLUG && !str(draftInputOf(a.payload).intent)) {
+  if (emailDraft && a.draft_subagent_slug === EMAIL_COMPOSER_SLUG && !str(draftInputOf(a.payload).intent)) {
     await deps.rpc("fail_action", { p_action_id: a.id, p_error: MISSING_INTENT_ERROR });
     return { kind: "failed", stage: "preflight", error: MISSING_INTENT_ERROR };
   }
@@ -228,9 +232,9 @@ export async function draftClaimedAction(deps: DraftDeps, a: ClaimedAction): Pro
   // The draft the sub-agent produced (§13 — store what it actually returned, not a hoped-for shape).
   const raw = orchBody.result;
   let draftContent: unknown;
-  if (leadReply) {
+  if (emailDraft) {
     const email = shapeEmailDraft(raw);
-    if (!email) {
+    if (!email || (followupEmail && (email.body.includes("\u0000") || email.body.length > COMMS_EMAIL_BODY_MAX))) {
       await deps.rpc("fail_action", { p_action_id: a.id, p_error: EMPTY_EMAIL_DRAFT_ERROR });
       return { kind: "failed", stage: "draft", error: EMPTY_EMAIL_DRAFT_ERROR };
     }

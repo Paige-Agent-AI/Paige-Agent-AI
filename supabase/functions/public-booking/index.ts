@@ -1298,7 +1298,7 @@ Deno.serve(async (req) => {
           const guestLcEmailOk = email
             ? (await emailOptOut(admin, {
                 tenantId: host.tenant_id ?? null,
-                contactId: (bookingRow as { contact_id?: string | null }).contact_id ?? null,
+                contactId: contactId ?? null,
                 email,
               })) === "clear"
             : false;

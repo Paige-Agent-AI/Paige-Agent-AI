@@ -604,6 +604,14 @@ if (chatSrc.includes('...PLANNING_CLIENT_SHARE_TOOLS')) {
   if (!shareTools.length) throw new Error('Planning client-share catalog could not be parsed');
   importedTools.push(...shareTools);
 }
+// E09 Slice M: the customer portal menu tools enter Chat through their domain catalog, the same way.
+if (chatSrc.includes('...PORTAL_MENU_TOOLS')) {
+  if (!/import\s*\{[^}]*PORTAL_MENU_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/paige-spine\/domains\/client_portal\.ts['"]/.test(chatSrc)) throw new Error('Unresolved portal menu catalog import');
+  const source = fs.readFileSync('supabase/functions/_shared/paige-spine/domains/client_portal.ts', 'utf8');
+  const menuTools = [...source.matchAll(/\bname:\s*'(portal_menu_(?:read|update))'/g)].map(m => m[1]);
+  if (menuTools.length !== 2) throw new Error('Portal menu catalog could not be parsed');
+  importedTools.push(...menuTools);
+}
 if (chatSrc.includes('...GROWTH_FORM_TOOLS')) {
   if (!/import\s*\{[^}]*GROWTH_FORM_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/paige-spine\/domains\/growth_form\.ts['"]/.test(chatSrc)) throw new Error('Unresolved Growth Form catalog import');
   const source = fs.readFileSync('supabase/functions/_shared/paige-spine/domains/growth_form.ts', 'utf8');

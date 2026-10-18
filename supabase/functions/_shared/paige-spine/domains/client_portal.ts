@@ -25,3 +25,91 @@ export const PORTAL_INVITATION={
  // NOT authenticated customer/provider acceptance or runtime activation. Maturity stays PARTIAL.
  chatBinding:'LIVE',mindBinding:'UNAVAILABLE',sharedPrimitiveChange:'NONE',maturity:'PARTIAL',
 }as const satisfies SpineCapability;
+
+// ─── E09 Slice M: the customer portal menu ──────────────────────────────────────────────────────
+//
+// Which entries a tenant's customers see in their portal menu, in what order and under what names.
+// ONE store (tenants.features.portal_config.modules) and ONE writer (public.set_tenant_portal_config,
+// owner/admin of the tenant or an ancestor agency, shape-validated by migration 20271110060000). The
+// executor (_shared/client-portal-menu.ts) merges the named entries into the stored overlay by key and
+// sends the full array, then re-reads it; nothing the model passes can name the tenant.
+//
+// Home and Messages are always on and keep their names; Get help, Account, Settings and Sign out are
+// fixed chrome the overlay cannot reach (owner ruling 2026-10-18). Payments is registered but not
+// offered until its page exists. The overlay is presentation only: it never grants a module, and an
+// unknown key is inert in the menu.
+import { PORTAL_MENU_CONFIGURABLE_KEYS } from '../../client-portal-menu.ts';
+
+const MENU_SURFACE='/solo/:account/clients/portal';
+const MENU_SCOPE={source:'server',tenantResolver:'current_user_tenant_id',actorResolver:'authenticated_user',revalidateAt:['before_availability','before_execution','before_receipt']} as const;
+const MENU_AVAILABILITY={resolver:'paige-capability-status',states:['live','needs_approval','not_for_tier','unavailable']} as const;
+export const PORTAL_MENU_KNOWN_KEYS_TEXT=PORTAL_MENU_CONFIGURABLE_KEYS.join(', ');
+
+export const PORTAL_MENU_CONFIGURE_CAPABILITY=defineCapability({
+ identity:{id:'client.portal_menu_configure',version:1,domain:'client',owner:'clients',humanSurface:MENU_SURFACE,
+  description:'Show, hide, rename or reorder entries in this business\'s customer portal menu. Home and Messages are always on and keep their names. Presentation only; the owner approves it first.'},
+ input:objectInputSchema({
+  description:'The menu entries to change. Entries you do not name keep exactly what the owner set before.',
+  properties:{
+   entries:{type:'array',minItems:1,maxItems:40,description:`One object per entry to change. key is one of: ${PORTAL_MENU_KNOWN_KEYS_TEXT}.`,
+    items:{type:'object',additionalProperties:false,required:['key'],properties:{
+     key:{type:'string',maxLength:40,description:'The entry\'s key, from portal_menu_read.'},
+     visible:{type:'boolean',description:'false hides it from every client of this business; true shows it again.'},
+     order:{type:'number',minimum:0,maximum:1000,description:'Its position within its group; lower comes first.'},
+     label:{type:'string',maxLength:40,description:'The name clients see, 1 to 40 characters, in the owner\'s own words. An empty string puts back the default name.'},
+    }}},
+  },
+  required:['entries'],
+ }),
+ effect:'mutation',
+ governance:{actionRiskKey:'portal_menu_update',risk:'high',approval:'confirm',requiredPermission:ownerGrantablePermission('client.portal_menu.write')},
+ tenantScope:MENU_SCOPE,
+ availability:MENU_AVAILABILITY,
+ providerBinding:{kind:'internal',operation:'public.set_tenant_portal_config',connectionResolver:null},
+ idempotency:{mode:'required',key:'tenant + the merged modules array. Re-sending the same change finds the stored overlay already equal and writes nothing (replayed:true); the Chat confirmation fingerprint is the execute-once guard.',
+  readback:'public.read_tenant_portal_menu (caller JWT, invoker rights)',replay:'return_recorded_result'},
+ receipt:{rail:true,recorder:'record_capability_run',redaction:'tenant_safe',visibility:'owner_internal'},
+ outcome:{projector:'capability-record'},
+});
+
+export const PORTAL_MENU_READ_CAPABILITY=defineCapability({
+ identity:{id:'client.portal_menu_read',version:1,domain:'client',owner:'clients',humanSurface:MENU_SURFACE,
+  description:'What this business\'s customers see in their portal menu: each entry, its name, whether it shows and why not, and what the owner set. Read-only.'},
+ input:objectInputSchema({description:'Nothing to choose: it reads the current business.',properties:{},required:[]}),
+ effect:'read',
+ governance:{actionRiskKey:null,risk:'read_only',approval:'none',requiredPermission:ownerGrantablePermission('client.portal_menu.read')},
+ tenantScope:MENU_SCOPE,
+ availability:MENU_AVAILABILITY,
+ providerBinding:{kind:'internal',operation:'public.read_tenant_portal_menu',connectionResolver:null},
+ idempotency:{mode:'not_applicable'},
+ receipt:{rail:true,recorder:'record_capability_run',redaction:'tenant_safe',visibility:'owner_internal'},
+ outcome:{projector:'capability-record'},
+});
+
+export const PORTAL_MENU_CONFIGURE={
+ key:'client.portal_menu_configure',domain:'client',owner:'clients',humanSurface:MENU_SURFACE,readiness:'none',
+ action:{classification:'mutate',executor:'public.set_tenant_portal_config',chatTool:'portal_menu_update',seatAuthority:'workspace-admin',riskPolicyKey:'high',approvalAuthority:'chat-canonical',
+  idempotency:'State-idempotent: the executor merges by key into the stored overlay and, when the result already equals what is stored, returns replayed:true without writing. There is no request key; the Chat confirmation fingerprint is the execute-once guard.'},
+ outcome:{kinds:['capability_run'],projector:'public.record_capability_run',railVisibility:'owner_internal'},
+ chatBinding:'LIVE',mindBinding:'UNAVAILABLE',sharedPrimitiveChange:'NONE',maturity:'PARTIAL',
+}as const satisfies SpineCapability;
+
+export const PORTAL_MENU_READ={
+ key:'client.portal_menu_read',domain:'client',owner:'clients',humanSurface:MENU_SURFACE,readiness:'none',
+ action:{classification:'read',executor:'public.read_tenant_portal_menu',chatTool:'portal_menu_read',seatAuthority:'workspace-admin',riskPolicyKey:'read_only',approvalAuthority:'none',
+  idempotency:'Read-only on the caller\'s own session: public.read_tenant_portal_menu (invoker rights, tenants RLS) re-proves the current workspace and can_manage_tenant_brand. Writes nothing; the chat executor records one capability receipt per answered call.'},
+ outcome:{kinds:['available','refused','unavailable'],projector:'public.read_tenant_portal_menu',railVisibility:'One capability receipt per answered chat question. A read is not a business action.'},
+ chatBinding:'LIVE',mindBinding:'UNAVAILABLE',sharedPrimitiveChange:'NONE',maturity:'PARTIAL',
+}as const satisfies SpineCapability;
+
+export const PORTAL_MENU_CAPABILITIES=[PORTAL_MENU_READ,PORTAL_MENU_CONFIGURE] as const;
+
+// Model-facing tool JSON, COMPACT (never `name:"…"` alone on a line) so chat-tool-registry-lint counts it
+// as entering Chat through the adapter spread. A declaration's input is deep-frozen and the chat adds a
+// `confirm` property to every gated tool, so each tool gets a fresh writable copy (the Slice 3 crash).
+const writable=(schema:unknown):Record<string,unknown>=>JSON.parse(JSON.stringify(schema));
+export const PORTAL_MENU_TOOLS=[
+ {type:'function',function:{name:'portal_menu_read',description:'What clients of this business see in their customer portal menu: each entry\'s key, the name clients see, its group (top, work = "Your work", paperwork = "Paperwork", learn = "Learn"), whether it shows and why not (the owner hid it, or the Playbook does not list it), and what the owner set. Home and Messages are always shown; Get help, Account, Settings and Sign out are always at the bottom. Use it before portal_menu_update, and to answer "what do my clients see in their portal?". Read-only; changes nothing.',parameters:writable(PORTAL_MENU_READ_CAPABILITY.input)}},
+ {type:'function',function:{name:'portal_menu_update',description:`Show, hide, rename or reorder entries in this business's customer portal menu, for every client of this business. Entries you do not name keep exactly what was set before. Keys: ${PORTAL_MENU_KNOWN_KEYS_TEXT}. Home and Messages are always on and cannot be renamed or hidden; Get help, Account, Settings and Sign out are fixed. An entry moves only within its own group. A renamed entry changes its menu name only, not the page's heading. Owner or admin only, and the owner approves it on the card first. Call portal_menu_read first. Never say clients see a change until this reports success.`,parameters:writable(PORTAL_MENU_CONFIGURE_CAPABILITY.input)}},
+] as const;
+export const PORTAL_MENU_TOOL_NAMES:ReadonlySet<string>=new Set(PORTAL_MENU_TOOLS.map((t)=>t.function.name));

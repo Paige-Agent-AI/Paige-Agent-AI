@@ -567,6 +567,10 @@ jobs:
       - run: supabase test db supabase/tests/solo_beta_authz_hardening.sql
       - run: supabase test db supabase/tests/solo_beta_offer_boundary.sql
       - run: supabase test db supabase/tests/solo_beta_welcome_lifecycle.sql
+      # EXP00 live-incident regression: the REAL claim→fulfill sequence must
+      # complete end-to-end (the ambiguous reference_id broke the first-ever
+      # real fulfillment; this drives the exact webhook call shape).
+      - run: supabase test db supabase/tests/solo_beta_fulfill_qualified_returning.sql
       # Platform-issued promotional Solo access is a separate service-only lane:
       # no Stripe binding, one explicit grant, one workspace, and retry-safe receipts.
       - run: supabase test db supabase/tests/promotional_solo_grant.sql

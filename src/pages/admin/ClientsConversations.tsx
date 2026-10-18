@@ -2017,6 +2017,7 @@ export default function ClientsConversations() {
           thread key so it merges cleanly with any later inbound reply). */}
       <ComposeThreadDialog
         isSolo={isSolo}
+        recordDisabled={tenantContext.loading||tenantContext.accountContextLoading||tenantContext.accountContextStatus!=="ready"}
         open={composeOpen}
         onOpenChange={(v) => { setComposeOpen(v); if (!v) { setComposeContact(null); setComposeApprovalId(undefined); if(followupLocator.kind!=="none")setSearchParams(params=>{const next=new URLSearchParams(params);next.delete("approval");return next;},{replace:true}); } }}
         activeConnectors={composerConnectors}

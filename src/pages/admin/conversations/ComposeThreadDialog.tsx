@@ -67,6 +67,7 @@ type DraftTone = "professional" | "friendly" | "warm" | "direct";
 
 export function ComposeThreadDialog({
   isSolo=false,
+  recordDisabled=false,
   open,
   onOpenChange,
   activeConnectors,
@@ -81,6 +82,8 @@ export function ComposeThreadDialog({
   onSent,
 }: {
   isSolo?: boolean;
+  /** Parent account-readiness hold for historical status/recording only. */
+  recordDisabled?: boolean;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   activeConnectors: ComposeConnector[];
@@ -515,7 +518,7 @@ export function ComposeThreadDialog({
             {open&&bound&&tenantId&&initialContact?<LeadReplyDrafts actorId={actorId} tenantId={tenantId} contactId={initialContact.id} approvalId={approvalId}
               threadKey={isSolo?`contact:${tenantId}:${initialContact.id}`:null}
               current={()=>scopeRef.current===scope} disabled={leadReplyReview.blocksSending||client?.id!==initialContact.id}
-              recordDisabled={sending||leadReplyReview.blocksSending||locatorConflicted||client?.id!==initialContact.id}
+              recordDisabled={recordDisabled||sending||leadReplyReview.blocksSending||locatorConflicted||client?.id!==initialContact.id}
               onEdit={(approval,draft)=>{
                 if(approval.id!==approvalId||approval.contact_id!==initialContact.id||approval.tenant_id!==tenantId)return;
                 if(!canReplaceFollowupDraft({subject,body,attachmentCount:attachments.length,scheduledFor,editingDraftId:null,approvalId:leadReplyApprovalId,pending:leadReplyReview.blocksSending})){

@@ -404,7 +404,28 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesCallOp
   const enc = new TextEncoder();
   const dec = new TextDecoder();
   const upstream = resp.body.getReader();
-  const send = (c: ReadableStreamDefaultController<Uint8Array>, obj: unknown) => c.enqueue(enc.encode(`data: ${JSON.stringify(obj)}\n\n`));
+  // One provider read may already contain hundreds of SSE records. Preserve the
+  // records byte-for-byte, but do not turn each into another downstream read (and
+  // another pair of canonical authority RPCs). Never wait for another packet to
+  // fill this buffer; the read loop flushes it before its next await.
+  const batch = new Uint8Array(16 * 1024);
+  let batching = false, batchBytes = 0;
+  const flush = (c: ReadableStreamDefaultController<Uint8Array>) => {
+    if (batchBytes === 0) return;
+    c.enqueue(batch.slice(0, batchBytes));
+    batchBytes = 0;
+  };
+  const send = (c: ReadableStreamDefaultController<Uint8Array>, obj: unknown) => {
+    const bytes = enc.encode(`data: ${JSON.stringify(obj)}\n\n`);
+    if (!batching) { c.enqueue(bytes); return; }
+    for (let offset = 0; offset < bytes.length;) {
+      const size = Math.min(batch.length - batchBytes, bytes.length - offset);
+      batch.set(bytes.subarray(offset, offset + size), batchBytes);
+      batchBytes += size;
+      offset += size;
+      if (batchBytes === batch.length) flush(c);
+    }
+  };
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -453,6 +474,8 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesCallOp
         while (true) {
           const { done, value } = await upstream.read();
           if (done) break;
+          batching = true;
+          try {
           buf += dec.decode(value, { stream: true });
           const lines = buf.split("\n");
           buf = lines.pop() ?? "";
@@ -493,6 +516,10 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesCallOp
             } else if (type === "error") {
               failure = String(ev.message ?? ev.error?.message ?? "stream error").slice(0, 500);
             }
+          }
+          } finally {
+            batching = false;
+            flush(controller);
           }
         }
       } catch (_e) {

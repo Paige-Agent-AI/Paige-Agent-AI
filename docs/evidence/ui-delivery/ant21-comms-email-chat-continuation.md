@@ -46,7 +46,7 @@ RELEASE_CLASSIFICATION: patch: restore existing governed behavior without a cust
 CUSTOMER_RELEASE_IDENTITY: none: no customer version or announcement requested.
 RELEASE_NOTE_REQUIRED: no: internal restoration patch, no product announcement.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: final composition/CI/deployment and ordinary customer email result/record/receipt/reload. Live UNVERIFIED, owner acceptance PENDING; original strict1/18 and2/50 unchanged.
-RELEASE_RECOVERY: position=hold this successor before source deployment; reference=existing reviewed native/Chat release and rollback contracts, preserving native90000 and prior releases.
+RELEASE_RECOVERY: position=hold this successor before source deployment; reference=existing reviewed native/Chat release and rollback contracts, preserving prior releases and the unchanged native origin SQL now proposed at210000 after the observed200000 frontier.
 
 ## October 18 source review and physical source-contract verification
 

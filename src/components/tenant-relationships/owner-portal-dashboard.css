@@ -335,6 +335,13 @@
 .opd-access-state[data-state="expired"] {
   color: var(--pg-warning);
 }
+/* E09 Slice 7: a paused client reads as ink on a dashed edge, the same word the record card uses, never
+   the warning amber, which beside the gold "Invite client" read as a second gold spend (review 10). */
+.opd-access-state[data-state="paused"] {
+  color: var(--pg-ink);
+  outline: 1px dashed var(--pg-line-strong);
+  outline-offset: -1px;
+}
 .opd-experience-card {
   padding: 20px;
   border: 1px solid var(--pg-line);

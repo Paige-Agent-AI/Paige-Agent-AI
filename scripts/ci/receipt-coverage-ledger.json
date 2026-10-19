@@ -1188,6 +1188,12 @@
       "evidence": "paige-ai-chat dispatch (the plan_item_set_client_share branch) records the run via recordCapabilityRun after _shared/planning/scoped-write.ts setPlanItemClientShare returns: capability_succeeded only when a fresh caller-JWT read of plan_items shows client_shared_at in the asked state (a state replay included), capability_refused for a named refusal the database answered (not owner/admin, not linked to a client, reminder or cancelled, client not active, item changed, account type), capability_outcome_unknown when the write may have landed but was not confirmed (including a dispatch that throws). A malformed request is refused before any write and still records a capability_refused run, as does a workspace that no longer matches current_user_tenant_id(); the switch over ClientShareFailure is exhaustive, so no outcome goes unrecorded."
     },
     {
+      "tool": "client_portal_access_set",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the read_client_portal_access / client_portal_access_set branch) records the run via recordCapabilityRun after _shared/client-portal-access.ts setPortalAccess returns: capability_succeeded only when a fresh caller-JWT public.read_client_portal_access read shows the contact in the asked state (a state replay included), capability_refused for a request refused before any write (bad shape, no workspace or verified actor) or a refusal the database answered (a structured {ok:false} code: not found, not joined, restore unavailable, version changed, agency tier, invalid; or a SQLSTATE: not owner/admin, workspace changed), capability_outcome_unknown when the write may have landed but the readback did not confirm it (including a dispatch that throws). The switch over PortalAccessFailure is exhaustive, so no outcome goes unrecorded. The writer also writes its own audit_logs row (client_portal.access_paused/_restored/_ended)."
+    },
+    {
       "tool": "portal_menu_update",
       "risk": "high",
       "receipt": "emits",

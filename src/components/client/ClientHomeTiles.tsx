@@ -7,6 +7,8 @@ import { EmptyTile } from "@/components/client/EmptyTile";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlaybook } from "@/lib/playbook";
+import { useCustomerIdentity } from "@/lib/portal/customerIdentity";
+import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import { useClientPortalBrandState } from "@/hooks/useClientPortalBrand";
 import { sessionTiming, useNextPortalSession, type PortalSession } from "@/hooks/useClientPortalSessions";
 import {
@@ -21,6 +23,9 @@ import {
 import { useMyActions } from "@/hooks/useMyActions";
 import { usePortalDocumentsGlance, type PortalDocumentsGlance } from "@/hooks/usePortalDocumentsGlance";
 import { AgreementsWaitingLine } from "@/components/client/AgreementsWaitingLine";
+import { owedPhrase, usePortalInvoicesGlance } from "@/hooks/useClientPortalInvoices";
+import { useCustomerPortalNav } from "@/hooks/useCustomerPortalNav";
+import { flattenPortalNav } from "@/lib/portal/portalMenu";
 import {
   Target,
   TrendingUp,
@@ -35,6 +40,7 @@ import {
   Lock,
   AlertCircle,
   ArrowRight,
+  CreditCard,
 } from "lucide-react";
 
 // Some of these tables are not in the generated types; count them through an untyped view of the same client.
@@ -82,6 +88,13 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
   const next = useNextPortalSession(isCustomer);
   const progress = usePortalProgressGlance(isCustomer);
   const documents = usePortalDocumentsGlance(isCustomer);
+  // The balance line points into Payments, so it shows only where Payments is a menu entry for this
+  // customer: the very menu AppNav renders (the Slice M assembly over the business's own catalog and
+  // overlay), never a hidden page's door.
+  const portalNav = useCustomerPortalNav();
+  const paymentsInMenu = isCustomer && portalNav.ready
+    && flattenPortalNav(portalNav.sections).some((item) => item.key === "billing");
+  const payments = usePortalInvoicesGlance(paymentsInMenu);
   const [counts, setCounts] = useState<Counts>(EMPTY);
   const [loading, setLoading] = useState(true);
 
@@ -112,14 +125,14 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
     };
   }, [userId]);
 
-  const askPaige = (prompt: string) => {
-    window.dispatchEvent(new CustomEvent("paige:prefill", { detail: { prompt } }));
-  };
+  // Puts a drafted question in the customer's chat with their agent; they read it and press send.
+  const askAgent = (prompt: string) => handOffPaigePrompt(prompt);
 
   // Coaching default shows coaching-only tiles. The credit/funding tiles render
   // ONLY when the client actually has that data on file (the query-result signal
   // already loaded above) — a coaching client never sees credit/funding copy.
-  const coachName = pb.persona.name;
+  // The customer's agent (Cura, or the business's own name for it). Never the owner's PAIGE persona.
+  const { agentName } = useCustomerIdentity();
   const nextStepsPrompt = pb.quickActions[0]?.prompt ?? "What should I focus on next?";
   const bookPrompt = pb.quickActions[1]?.prompt ?? "Help me schedule my next session";
   const progressPrompt = pb.quickActions[2]?.prompt ?? "Show me how I'm progressing toward my goals";
@@ -137,6 +150,9 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
   }
 
   return (
+    <>
+    {/* E09 Slice 5: a quiet line above the tiles, only while something is owed. Never a seventh tile. */}
+    {paymentsInMenu && <PaymentsBalanceLine glance={payments} businessName={businessName} />}
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* E09 Slice A — one quiet line, only while an agreement waits for this customer's signature (D-A5). */}
       <AgreementsWaitingLine enabled={isCustomer} />
@@ -153,9 +169,9 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
         <EmptyTile
           icon={<Target className="w-6 h-6" />}
           title="Set your first goal"
-          description="Tell Paige what you're building toward and she'll map the path."
+          description={`Tell ${agentName} what you're working toward. ${agentName} will help you map the path.`}
           actionLabel="Set your first goal"
-          onAction={() => askPaige("Help me set my first goal.")}
+          onAction={() => askAgent("Help me set my first goal.")}
         />
       )}
 
@@ -174,9 +190,9 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
         <EmptyTile
           icon={<TrendingUp className="w-6 h-6" />}
           title="Your progress"
-          description={`See how you're tracking toward your goals — ask ${coachName} for a snapshot.`}
+          description={`See how you're tracking toward your goals — ask ${agentName} for a snapshot.`}
           actionLabel="Show my progress"
-          onAction={() => askPaige(progressPrompt)}
+          onAction={() => askAgent(progressPrompt)}
         />
       )}
 
@@ -190,13 +206,13 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
           onClick={() => navigate("/app/funding-journey")}
         />
       ) : next.state === "session" ? (
-        // The tile this replaced asked Paige to book a session; that stays, as the second action (§58).
-        <NextSessionTile session={next.session} onBook={() => askPaige(bookPrompt)} />
+        // The tile this replaced asked the agent to book a session; that stays, as the second action (§58).
+        <NextSessionTile session={next.session} onBook={() => askAgent(bookPrompt)} />
       ) : next.state === "none" ? (
         <NoSessionTile
           businessName={businessName}
           onMessage={() => navigate("/app/messages")}
-          onBook={() => askPaige(bookPrompt)}
+          onBook={() => askAgent(bookPrompt)}
         />
       ) : next.state === "loading" && isCustomer ? (
         <div className="h-32 rounded-lg bg-muted/30 animate-pulse motion-reduce:animate-none" aria-hidden="true" />
@@ -206,7 +222,7 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
           title="Book a session"
           description={`Grab a time with ${businessName} and keep your momentum going.`}
           actionLabel="Book a session"
-          onAction={() => askPaige(bookPrompt)}
+          onAction={() => askAgent(bookPrompt)}
         />
       )}
 
@@ -227,19 +243,19 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
       {counts.messages && counts.messages > 0 ? (
         <FilledTile
           icon={<MessageSquare className="w-4 h-4" />}
-          title={`Message ${coachName}`}
+          title={`Ask ${agentName}`}
           count={counts.messages}
           label="in your thread"
-          onClick={() => askPaige("Show me my recent messages.")}
+          onClick={() => askAgent("Show me my recent messages.")}
         />
       ) : (
         <EmptyTile
           icon={<MessageSquare className="w-6 h-6" />}
-          title={`Message ${coachName}`}
-          // The action puts a question in Paige's own chat; it does not message the business (that is Messages).
-          description={`Ask ${coachName} a question anytime.`}
+          title={`Ask ${agentName}`}
+          // The action puts a question in the agent's chat; it does not message the business (that is Messages).
+          description={`Ask ${agentName} a question anytime.`}
           actionLabel="Send your first message"
-          onAction={() => askPaige(`Hi ${coachName} — I'd like to introduce myself.`)}
+          onAction={() => askAgent(`Hi ${agentName} — I'd like to introduce myself.`)}
         />
       )}
 
@@ -247,19 +263,20 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
       {isCustomer ? (
         <NextStepsTile
           businessName={businessName}
-          onAsk={() => askPaige(nextStepsPrompt)}
-          askLabel={`Ask ${coachName} what's next`}
+          onAsk={() => askAgent(nextStepsPrompt)}
+          askLabel={`Ask ${agentName} what's next`}
         />
       ) : (
         <EmptyTile
           icon={<ClipboardList className="w-6 h-6" />}
           title="Your next steps"
           description={`Your action list fills in as ${businessName} sends you action items.`}
-          actionLabel={`Ask ${coachName} what's next`}
-          onAction={() => askPaige(nextStepsPrompt)}
+          actionLabel={`Ask ${agentName} what's next`}
+          onAction={() => askAgent(nextStepsPrompt)}
         />
       )}
     </div>
+    </>
   );
 }
 
@@ -409,7 +426,7 @@ function DocumentsTile({ glance, businessName }: { glance: DocumentsGlance; busi
 
 /**
  * The customer's open action items from their business, from the same read as /app/actions (unchanged).
- * Asking Paige what's next stays, as the old tile offered it (§58). A failed read never shows as zero.
+ * Asking the agent what's next stays, as the old tile offered it (§58). A failed read never shows as zero.
  */
 function NextStepsTile({ businessName, onAsk, askLabel }: { businessName: string; onAsk: () => void; askLabel: string }) {
   const { open, loading, error } = useMyActions();
@@ -442,7 +459,7 @@ function NextStepsTile({ businessName, onAsk, askLabel }: { businessName: string
   );
 }
 
-/** "Book a session" as the tile it came from offered it: Paige is asked to set up a time. */
+/** "Book a session" as the tile it came from offered it: the agent is asked to set up a time. */
 function BookAction({ onBook }: { onBook: () => void }) {
   return (
     <Button size="sm" variant="ghost" className={TILE_BUTTON} onClick={onBook}>
@@ -513,7 +530,7 @@ function NextSessionTile({ session, onBook }: { session: PortalSession; onBook: 
   );
 }
 
-/** Nothing booked yet: message the business, or ask Paige to book a time, as the old tile did. */
+/** Nothing booked yet: message the business, or ask the agent to book a time, as the old tile did. */
 function NoSessionTile({ businessName, onMessage, onBook }: { businessName: string; onMessage: () => void; onBook: () => void }) {
   return (
     <Card className="border-dashed">
@@ -565,5 +582,48 @@ function FilledTile({
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+type PaymentsGlance = ReturnType<typeof usePortalInvoicesGlance>;
+
+/**
+ * "$1,250.00 due · 2 open invoices from Northwind Studio · 1 past due · View payments", only while something
+ * is owed. The amount leads; on a phone "View payments" sits under the words instead of squeezing them. It reads the same projection as /app/billing; nothing owed, a failed read or no relationship
+ * renders nothing, so the Home never carries an empty or a wrong money line.
+ */
+function PaymentsBalanceLine({ glance, businessName }: { glance: PaymentsGlance; businessName: string }) {
+  if (glance.state !== "ready" || glance.openCount === 0) return null;
+  const owed = owedPhrase(glance.balances);
+  if (!owed) return null;
+  const n = glance.openCount;
+  return (
+    <Link
+      to="/app/billing"
+      data-testid="payments-balance-line"
+      className={`group flex min-h-[44px] flex-col gap-1.5 rounded-lg border border-border bg-card px-4 py-2.5 text-sm sm:flex-row sm:items-center sm:gap-3 ${TILE_QUIET_HOVER} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
+    >
+      <span className="flex min-w-0 flex-1 items-start gap-3">
+        {/* The same icon as the Payments menu entry (portalMenu.ts `billing`): one destination, one mark. */}
+        <CreditCard className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+        <span className="min-w-0 [text-wrap:pretty]">
+          <span data-testid="payments-balance-owed" className="font-semibold tabular-nums">{owed} due</span>
+          <span className="text-muted-foreground"> · {n} open invoice{n === 1 ? "" : "s"} from {businessName}</span>
+          {glance.pastDue ? (
+            <>
+              <span className="text-muted-foreground">{" · "}</span>
+              <span data-testid="payments-balance-past-due" className="whitespace-nowrap font-medium">
+                <AlertCircle className="mb-0.5 mr-1 inline h-3.5 w-3.5 text-destructive" aria-hidden="true" />
+                <span className="tabular-nums">{glance.pastDue}</span> past due
+              </span>
+            </>
+          ) : null}
+        </span>
+      </span>
+      <span className="inline-flex items-center gap-1 pl-7 font-medium underline-offset-4 group-hover:underline sm:pl-0">
+        View payments
+        <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0" aria-hidden="true" />
+      </span>
+    </Link>
   );
 }

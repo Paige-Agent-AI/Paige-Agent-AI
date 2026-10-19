@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useCustomerIdentity } from "@/lib/portal/customerIdentity";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw, Plug, CheckCircle2, AlertTriangle, TrendingUp, Wallet, PieChart as PieIcon } from "lucide-react";
@@ -76,6 +77,8 @@ function marginColor(pct: number, type: "gross" | "net" | "payroll" | "marketing
 }
 
 export function FinancialIntelligenceSection({ businessId, userId, onGoToConnections }: Props) {
+  // The customer's agent (Cura, or the business's own name for it), never PAIGE, the owner's COO.
+  const { agentName } = useCustomerIdentity();
   const [loading, setLoading] = useState(true);
   const [connection, setConnection] = useState<QBConnection | null>(null);
   const [financials, setFinancials] = useState<QBFinancials | null>(null);
@@ -167,7 +170,7 @@ export function FinancialIntelligenceSection({ businessId, userId, onGoToConnect
               Connect QuickBooks to unlock your Financial Intelligence dashboard
             </h3>
             <p className="text-sm text-muted-foreground">
-              Once connected, Paige coaches you with real revenue, margins, cash runway, burn rate, and expense intelligence — not estimates.
+              Once connected, {agentName} works from your real revenue, margins, cash runway, burn rate, and expense intelligence — not estimates.
             </p>
           </div>
           <Button

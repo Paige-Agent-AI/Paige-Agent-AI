@@ -1,3 +1,5 @@
+import { readPortalShareAccess, type PortalShareAccess } from "../client-portal-access.ts";
+
 // E09 Documents — the ONE way Paige changes whether a client can see a file that stays on the same
 // client: public.client_file_set_client_share (migration 20271110200000), through the CALLER's
 // client. That function is SECURITY DEFINER and re-proves actor, current workspace and business
@@ -43,7 +45,7 @@ export type ClientFileShareFailure =
 
 export type ClientFileShareResult =
   | { success: true; fileId: string; shared: boolean; replayed: boolean; sharedAt: string | null;
-      updatedAt: string; portalConnected: boolean | null }
+      updatedAt: string; portalConnected: boolean | null; portalAccess: PortalShareAccess | null }
   | { success: false; reason: ClientFileShareFailure; message: string; writeAttempted: boolean;
       currentUpdatedAt?: string };
 
@@ -136,7 +138,8 @@ export async function shareClientFile(input: {
     || !instant(row.updated_at) || (row.visibility === "shared") !== shared
     || !(sharedAt === null || instant(sharedAt)) || (sharedAt !== null) !== shared) return fail("outcome_unknown");
   return { success: true, fileId, shared, replayed: ack.replayed, sharedAt: sharedAt as string | null,
-    updatedAt: row.updated_at as string, portalConnected: typeof ack.portal_connected === "boolean" ? ack.portal_connected : null };
+    updatedAt: row.updated_at as string, portalConnected: typeof ack.portal_connected === "boolean" ? ack.portal_connected : null,
+    portalAccess: readPortalShareAccess(ack.portal_access) };
 }
 
 export type ClientFileRefileCaller = ClientFileShareCaller & {
@@ -148,7 +151,7 @@ export type ClientFileRefileCaller = ClientFileShareCaller & {
 
 export type ClientFileRefileResult =
   | { success: true; fileId: string; contactId: string; movedFromContactId: string | null; shared: boolean;
-      share: { replayed: boolean; sharedAt: string | null; portalConnected: boolean | null } | null }
+      share: { replayed: boolean; sharedAt: string | null; portalConnected: boolean | null; portalAccess: PortalShareAccess | null } | null }
   | { success: false; moved: boolean | null; fileId: string; contactId: string | null; shared: boolean | null;
       reason: ClientFileShareFailure | "not_moved"; message: string; outcomeUnknown: boolean };
 
@@ -252,7 +255,7 @@ export async function refileClientDocument(input: {
     fileId, shared: wantShared, expectedUpdatedAt: row.updated_at });
   if (shared.success) {
     return { success: true, fileId, contactId: toContact, movedFromContactId: movedFrom, shared: shared.shared,
-      share: { replayed: shared.replayed, sharedAt: shared.sharedAt, portalConnected: shared.portalConnected } };
+      share: { replayed: shared.replayed, sharedAt: shared.sharedAt, portalConnected: shared.portalConnected, portalAccess: shared.portalAccess } };
   }
   const where = nowShared ? "the client can still see it" : "only the team can see it";
   return { success: false, moved: true, fileId, contactId: toContact, shared: shared.writeAttempted ? null : nowShared,

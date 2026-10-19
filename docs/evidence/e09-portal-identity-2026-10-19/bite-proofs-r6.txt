@@ -1,0 +1,26 @@
+CURA round 6 bite proofs (2026-10-19). Each defect was put back, the check run, then the file restored (git diff clean).
+Harness/local only; synthetic names. Head 9cf90b4e9 on main 7d3964564.
+
+BITES heading (Vitest) :: ClientPreferences.tsx <h2> set back to round 5 "Action items and summaries from {business}’s team"
+  :: src/components/client/ClientPreferences.test.tsx -> 2 failed | 55 passed
+     × nothing on record: email on, texts not set up, not subscribed, sharing not allowed
+     × the data-sharing row says what the switch governs, matching its heading and the line under it
+BITES heading (consent drive) :: same defect, consent-drive.mjs --only default
+  :: 4 of 4 default frames FAIL, each with exactly ["sharing heading names action items from the team and a fuller summary of the customer"]; drive exit 1
+BITES migration order (pgTAP) :: 20271111020000 applied BEFORE 20271111000000 and Slice 7 20271111010000 (the pre-renumber order)
+  :: customer_portal_profile_consent ok=240 not ok=13/253: Slice 7 re-declares both consent writers with the superseded ids,
+     so the recorded disclosure ids fall back (e.g. not ok 96 "the sharing audit names data-sharing:v2", not ok 238 "email off records email-pref:v3").
+     With the renumbered order (Slice 7 first): 253/253.
+      not ok 40 - evidence names the session and the exact disclosure; no spoofable IP is stored (M7)
+      not ok 59 - the opt-in evidence names the updates disclosure the page shows (v3)
+      not ok 96 - the sharing audit names data-sharing:v2, the sentence the page shows, and its hash
+      not ok 191 - the lift names the session and the email disclosure the page shows (v3)
+      not ok 233 - subscribe records updates-optin:v3 and its hash
+      not ok 235 - unsubscribe records updates-optin:v3 and its hash
+      not ok 238 - email off records email-pref:v3 and its hash
+      not ok 239 - the Updates exit email off writes (D4) records updates-optin:v3
+      not ok 242 - taking a report back records email-pref:v3 and its hash
+      not ok 243 - and its Updates exit records updates-optin:v3
+      not ok 245 - texts off records sms-pref:v3 and its hash
+      not ok 246 - every portal consent event names a current disclosure and its exact hash
+      not ok 248 - every audit row names a current disclosure

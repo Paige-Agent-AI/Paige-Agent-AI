@@ -115,6 +115,9 @@ export interface ClientContact {
   // (its invite/agreement/impersonate flow keys off it). Pulled from the same clients row,
   // no extra query.
   linked_user_id: string | null;
+  // E09 Slice 7: the business's access decision. A paused client keeps their link but must not be
+  // offered the portal channel (the server refuses PORTAL_ACCESS_PAUSED). Absent → open.
+  portal_access_state?: string | null;
   // C-2 suppression / DND surfaced on the contact card (§ read-only signal)
   dnd_active: boolean | null;
   dnd_reason: string | null;
@@ -156,7 +159,7 @@ export const THREAD_COLS =
   "id, thread_key, contact_id, snoozed_until, archived_at, labels, unread_count, " +
   "last_message_at, last_direction, " +
   "clients:contact_id(id, first_name, last_name, entity_name, entity_type, title, status, " +
-  "lifecycle_stage, source, tags, last_contacted_at, assigned_coach_user_id, linked_user_id, " +
+  "lifecycle_stage, source, tags, last_contacted_at, assigned_coach_user_id, linked_user_id, portal_access_state, " +
   "timezone, created_at, created_by, created_by_channel_type, dnd_active, dnd_reason, dnd_until, " +
   `${CLIENT_CONTACT_METHODS_EMBED})`;
 

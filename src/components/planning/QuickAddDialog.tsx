@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- pre-existing legacy `any` debt in this
+   file (untyped Supabase reads, stale generated types). The E09 Customer Portal identity change
+   (CURA, never PAIGE, on customer surfaces) only edited copy here and introduced ZERO new `any`s;
+   retyping is tracked separately (#234). */
 import { useEffect, useState, type ReactNode } from "react";
 import { Plus, Bell, CheckSquare, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -10,6 +14,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger, DialogDescription,
 } from "@/components/ui/dialog";
 import { friendlyPlanError } from "@/lib/planning";
+import { useAssistantName } from "@/lib/portal/customerIdentity";
 
 type Kind = "reminder" | "task";
 
@@ -47,6 +52,7 @@ export function QuickAddDialog({
   userId, onCreated, contactId = null, contactName = null,
   defaultDate = null, defaultKind = "reminder", trigger, open: openProp, onOpenChange,
 }: QuickAddDialogProps) {
+  const assistant = useAssistantName();
   const controlled = openProp !== undefined;
   const [openState, setOpenState] = useState(false);
   const open = controlled ? openProp : openState;
@@ -120,8 +126,8 @@ export function QuickAddDialog({
           <DialogTitle>{contactName ? `Add${forWhom}` : "Add to your plan"}</DialogTitle>
           <DialogDescription>
             {contactName
-              ? `A reminder or task about ${contactName}. For anything more, just ask Paige.`
-              : "A quick reminder or task for yourself. For anything more, just ask Paige."}
+              ? `A reminder or task about ${contactName}. For anything more, just ask ${assistant}.`
+              : `A quick reminder or task for yourself. For anything more, just ask ${assistant}.`}
           </DialogDescription>
         </DialogHeader>
 

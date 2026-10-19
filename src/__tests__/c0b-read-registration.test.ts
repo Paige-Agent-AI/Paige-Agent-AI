@@ -49,6 +49,14 @@ describe("C0b canonical read declaration convergence", () => {
         expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(true);
         continue;
       }
+      // E09 Slice 7: the newly registered owner/admin-only portal-access read and writer, likewise absent
+      // from the frozen roster. Their SQL (_client_portal_access_authorize) admits only the invitation
+      // authority, _client_portal_invitation_owner (owner/admin of the current workspace, its managing
+      // agency, or the platform owner), never a plain member or coach, so the Chat gate must say admin too.
+      if (tool === "read_client_portal_access" || tool === "client_portal_access_set") {
+        expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(true);
+        continue;
+      }
       expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(tool !== "capability_status" && (OWNER_OPS_BEFORE.includes(tool) || outsideBefore.has(tool)));
     }
   });

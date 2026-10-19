@@ -146,6 +146,8 @@ const ClientDocuments = lazyWithReload(() => import("./pages/app/ClientDocuments
 const ClientMessages = lazyWithReload(() => import("./pages/app/Messages"));
 const ClientSessions = lazyWithReload(() => import("./pages/app/Sessions"));
 const ClientProgress = lazyWithReload(() => import("./pages/app/Progress"));
+const ClientPayments = lazyWithReload(() => import("./pages/app/Billing"));
+const ClientPaymentsInvoice = lazyWithReload(() => import("./pages/app/BillingInvoice"));
 const Planning = lazyWithReload(() => import("./pages/app/Planning"));
 // #244 — the canonical "About Your Paige Team" directory. ONE component, scope prop
 // per route (tenant here; operator in Admin.tsx; agency in AgencyLayout.tsx).
@@ -156,6 +158,7 @@ const GmailCallback = lazyWithReload(() => import("./pages/GmailCallback"));
 // Bounces a signed-in-but-incomplete signup (no lane/agreement/workspace yet) to
 // the /onboarding gate. Not lazy — it's a thin wrapper around the app shells.
 import { RequireCompleteSignup } from "@/components/auth/RequireCompleteSignup";
+import { RequirePortalStaff } from "@/components/auth/RequirePortalStaff";
 import { RequireSoloBetaEntitlement } from "@/components/auth/RequireSoloBetaEntitlement";
 import { RequireSetupComplete } from "@/components/auth/RequireSetupComplete";
 
@@ -310,11 +313,16 @@ const App = () => /^\/payment-return\/?$/i.test(window.location.pathname) ? <Pay
               <Route path="sessions" element={<PageSuspense><ClientSessions /></PageSuspense>} />
               {/* E09 Slice 3 — the work the business shared with the customer; read-only. */}
               <Route path="progress" element={<PageSuspense><ClientProgress /></PageSuspense>} />
+              {/* E09 Slice 5 — "Payments": invoices the business issued to the customer, and each one's own page with
+                  the document and, when the business sent one, its payment link. Read-only; no charge starts here. */}
+              <Route path="billing" element={<PageSuspense><ClientPayments /></PageSuspense>} />
+              <Route path="billing/:invoiceId" element={<PageSuspense><ClientPaymentsInvoice /></PageSuspense>} />
               <Route path="planning" element={<PageSuspense><Planning /></PageSuspense>} />
-              {/* #244 — learn about your Paige team (tenant scope). Read-only; inherits
-                  /app's RequireCompleteSignup, no extra gate. NOT /team — that would break
-                  the /app/* tenant convention (§18); this is the non-colliding home. */}
-              <Route path="paige-team" element={<PageSuspense><PaigeTeamDirectory scope="tenant" /></PageSuspense>} />
+              {/* #244 — learn about your Paige team (tenant scope). Read-only. NOT /team — that would break
+                  the /app/* tenant convention (§18); this is the non-colliding home. Staff only (E09 round 2):
+                  PAIGE is the owner's COO, never in the Customer Portal; a customer gets the portal's
+                  not-available state. lint:customer-identity requires this gate (STAFF_ONLY_ROUTES). */}
+              <Route path="paige-team" element={<RequirePortalStaff><PageSuspense><PaigeTeamDirectory scope="tenant" /></PageSuspense></RequirePortalStaff>} />
             </Route>
 
             {/* Backward compat redirect */}

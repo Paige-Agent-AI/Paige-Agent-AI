@@ -61,6 +61,7 @@ export default function MyAgreements() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Your Agreements</h1>
           <p className="text-sm text-muted-foreground">
+            {/* customer-identity-exempt: platform legal entity — these are the platform's own Terms and policies the person accepted */}
             Every legal document you've accepted on PaigeAgent, with the exact version,
             timestamp, and device used. Use the View link to open the version you signed
             and print it for your records.

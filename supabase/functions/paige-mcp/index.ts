@@ -4630,6 +4630,8 @@ async function actorClient(): Promise<{ id: string; tenant_id: string | null; ow
     .eq("linked_user_id", a.user_id)
     .eq("status", "active")
     .is("merged_into_contact_id", null)
+    // E09 Slice 7: a paused relationship is not the client's (the resolver's own predicate).
+    .eq("portal_access_state", "open")
     .eq("tenants.status", "active")
     .maybeSingle();
   if (!data?.id) return null;

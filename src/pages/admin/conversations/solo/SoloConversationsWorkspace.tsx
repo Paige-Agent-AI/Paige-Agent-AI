@@ -333,7 +333,11 @@ export function SoloClientContextPane({ contact, labels, recentMessages, links }
 
       <ContextSection eyebrow="Client access" title="Portal access">
         <ContextFact label="Invitation" value="Not reported" />
-        <ContextFact label="Access / account link" value={contact.linked_user_id ? "Linked account reported" : "Not reported"} />
+        {/* E09 Slice 7: a paused client keeps their link, so "linked" alone would read as able to get in. */}
+        <ContextFact label="Access / account link" value={
+          contact.portal_access_state === "paused" ? (contact.linked_user_id ? "Linked account · portal access paused" : "Portal access paused")
+            : contact.portal_access_state === "ended" ? "Portal access ended"
+              : contact.linked_user_id ? "Linked account reported" : "Not reported"} />
         <ContextFact label="Readiness" value="Not reported" />
         <Link className="solo-context-owner-link" to={links.portal}>Open Portal <ExternalLink aria-hidden /></Link>
       </ContextSection>

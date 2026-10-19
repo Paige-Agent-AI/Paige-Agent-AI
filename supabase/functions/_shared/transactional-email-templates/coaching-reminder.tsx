@@ -10,7 +10,7 @@ import { EmailFooter } from './email-footer.tsx'
 // tenant that hasn't is still stamped with its own name by the resolver
 // (_shared/email/branding.ts mergeBrand), so this literal is the floor — never a
 // hardcoded Paige logo asset in a coach's client-facing email.
-const SITE_NAME = "Paige Agent AI"
+const SITE_NAME = "Paige Agent AI" // customer-identity-exempt: platform legal-name floor, unreachable once the brand resolver stamps the tenant's name
 
 interface CoachingReminderProps {
   name?: string
@@ -69,7 +69,7 @@ const CoachingReminderEmail = ({
           <Text style={detailValue}>{agenda}</Text>
         </Section>
         <Heading as="h3" style={h3}>How to prepare</Heading>
-        <Text style={text}>• Open your latest progress notes and action items in Paige</Text>
+        <Text style={text}>• Open your latest progress notes and action items in your portal</Text>
         <Text style={text}>• Review your current goals and where you left off last session</Text>
         <Text style={text}>• Have your top 2-3 questions ready</Text>
         <Button style={button} href={joinUrl}>
@@ -80,7 +80,7 @@ const CoachingReminderEmail = ({
         </Text>
         <Hr style={hr} />
         <Text style={footer}>© {new Date().getFullYear()} {displayName}. You received this because session reminders are enabled in your notification preferences.</Text>
-        <EmailFooter unsubscribeUrl={unsubscribeUrl} />
+        <EmailFooter unsubscribeUrl={unsubscribeUrl} businessName={(brandName || '').trim() || null} />
       </Container>
     </Body>
   </Html>

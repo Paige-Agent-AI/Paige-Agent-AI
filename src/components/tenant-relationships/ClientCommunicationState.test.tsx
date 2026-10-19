@@ -46,6 +46,39 @@ describe("How {client} can be reached — the owner's read-only view", () => {
     });
   });
 
+  // E09 Slice 7 round 2 (compliance 2): joined is the login link; a paused client keeps it, an ended one lost it.
+  it.each([
+    ["open", true, "Joined"],
+    ["paused", true, "Joined · access paused, so they can’t open the portal"],
+    ["ended", false, "Access ended · they need a new invitation to come back"],
+    ["not_joined", false, "Not joined yet"],
+  ] as const)("names portal access %s truthfully", async (portal_access, portal_joined, text) => {
+    await mount({ data: ownerStatePayload({ portal_joined, portal_access }), error: null });
+    expect(rows().Portal).toBe(text);
+  });
+  it("still reads an answer from before the access state existed", async () => {
+    const { portal_access: _drop, ...older } = ownerStatePayload({ portal_joined: false }) as Record<string, unknown>;
+    void _drop;
+    await mount({ data: older, error: null });
+    expect(rows().Portal).toBe("Not joined yet");
+  });
+
+  // E09 Slice 7 round 3 (low): a Pause or Restore on the record re-reads, so the Portal row follows it in the same session.
+  it("reads again when the record's access state changes, and shows the new Portal row", async () => {
+    rpc.mockReturnValue(Promise.resolve({ data: ownerStatePayload(), error: null }));
+    act(() => root.render(<MemoryRouter><ClientCommunicationState contactId={PREF_CONTACT} clientName="Jordan Rivera" account="42" accessState="open" /></MemoryRouter>));
+    await flush();
+    expect(rows().Portal).toBe("Joined");
+    rpc.mockReturnValue(Promise.resolve({ data: ownerStatePayload({ portal_access: "paused" }), error: null }));
+    act(() => root.render(<MemoryRouter><ClientCommunicationState contactId={PREF_CONTACT} clientName="Jordan Rivera" account="42" accessState="paused" /></MemoryRouter>));
+    await flush();
+    expect(rpc).toHaveBeenCalledTimes(2);
+    expect(rows().Portal).toBe("Joined · access paused, so they can’t open the portal");
+    act(() => root.render(<MemoryRouter><ClientCommunicationState contactId={PREF_CONTACT} clientName="Jordan Rivera" account="42" accessState="paused" /></MemoryRouter>));
+    await flush();
+    expect(rpc).toHaveBeenCalledTimes(2);
+  });
+
   it("is read-only: no switch, no checkbox, and it points the one staff control to Conversations", async () => {
     await mount({ data: ownerStatePayload(), error: null });
     expect(host.querySelector('[role="switch"], input, [role="checkbox"]')).toBeNull();

@@ -37,6 +37,7 @@ import {
 } from "@/hooks/useClientPortalSessions";
 import { useClientPortalBrand } from "@/hooks/useClientPortalBrand";
 import { readableTextOn } from "@/lib/brand/contrast";
+import { useCustomerIdentity } from "@/lib/portal/customerIdentity";
 
 type Accent = CSSProperties | undefined;
 
@@ -680,6 +681,7 @@ export default function Sessions() {
   const sessions = useClientPortalSessions();
   const brand = useClientPortalBrand();
   const businessName = brand?.tenant_name?.trim() || "your team";
+  const { agentName } = useCustomerIdentity();
   const accent = brand?.tenant_id && brand.tenant_id === sessions.tenantId ? brand.primary_color : null;
   const accentStyle: Accent = accent ? { backgroundColor: accent, color: readableTextOn(accent) } : undefined;
   const viewerTz = useMemo(viewerTimeZone, []);
@@ -914,7 +916,7 @@ export default function Sessions() {
             <AlertDialogTitle>Cancel {cancelSession?.title ?? "this session"}?</AlertDialogTitle>
             <AlertDialogDescription>
               {cancelSession
-                ? `${dayLabel(cancelSession.start_at, viewerTz)}, ${timeRange(cancelSession.start_at, cancelSession.end_at, viewerTz)}. It comes off ${businessName}'s calendar. To book again, message them or ask Paige.`
+                ? `${dayLabel(cancelSession.start_at, viewerTz)}, ${timeRange(cancelSession.start_at, cancelSession.end_at, viewerTz)}. It comes off ${businessName}'s calendar. To book again, message them or ask ${agentName}.`
                 : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>

@@ -1,3 +1,4 @@
+import { readPortalShareAccess, type PortalShareAccess } from '../client-portal-access.ts';
 /** Domain adapter only. Upstream must use the existing governedExecution result,
  * real stored-proposal redemption and original operation identity. This module
  * produces none of those facts, no approval, deduplication store or Rail receipt.
@@ -238,7 +239,7 @@ export type ClientShareFailure =
   | 'not_shareable' | 'client_not_found' | 'changed' | 'refused' | 'outcome_unknown';
 export type ClientShareResult =
   | { success: true; itemId: string; shared: boolean; replayed: boolean; sharedAt: string | null;
-      updatedAt: string; portalConnected: boolean | null }
+      updatedAt: string; portalConnected: boolean | null; portalAccess: PortalShareAccess | null }
   | { success: false; reason: ClientShareFailure; message: string; writeAttempted: boolean; currentUpdatedAt?: string };
 
 const CLIENT_SHARE_MESSAGES: Record<ClientShareFailure, string> = {
@@ -320,5 +321,6 @@ export async function setPlanItemClientShare(input: {
     return fail('outcome_unknown');
   return { success: true, itemId: request.itemId, shared: request.shared, replayed: ack.replayed,
     sharedAt: sharedAt as string | null, updatedAt: row.updated_at as string,
-    portalConnected: typeof ack.portal_connected === 'boolean' ? ack.portal_connected : null };
+    portalConnected: typeof ack.portal_connected === 'boolean' ? ack.portal_connected : null,
+    portalAccess: readPortalShareAccess(ack.portal_access) };
 }

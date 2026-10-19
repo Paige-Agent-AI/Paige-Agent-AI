@@ -60,7 +60,7 @@ describe("How {Business} can reach you — what each state says", () => {
   it("nothing on record: email on, texts not set up, not subscribed, sharing not allowed", async () => {
     await mount();
     expect(host.textContent).toContain("How Northwind Studio can reach you");
-    expect(host.textContent).toContain("What Northwind Studio can use");
+    expect(host.textContent).toContain("Action items from Northwind Studio’s team, and a fuller summary of you");
     expect(stateOf("email")).toBe("On");
     expect(stateOf("sms")).toBe("Not set up");
     expect(switchOf("sms")?.disabled).toBe(true);
@@ -141,15 +141,15 @@ describe("How {Business} can reach you — what each state says", () => {
 
   it("quiet hours copy depends on whether the business knows the customer's time zone (reviewer M3)", async () => {
     await mount(prefsPayload({ sms: prefCard("on", { set_by: "reply" }), quiet_hours: { start: "20:00", end: "08:00", time_zone_known: true, fallback_time_zone: null } }));
-    expect(row("sms").textContent).toContain("Texts through Paige only arrive between 8am and 8pm your time.");
+    expect(row("sms").textContent).toContain("Texts from Northwind Studio only arrive between 8am and 8pm your time.");
     act(() => root.unmount()); root = createRoot(host);
     await mount(prefsPayload({ sms: prefCard("on", { set_by: "reply" }) }));
-    expect(row("sms").querySelector('[data-testid="pref-detail"]')?.textContent).toBe("Northwind Studio doesn't have your time zone, so texts through Paige are held from 8pm to 8am Eastern Time.");
+    expect(row("sms").querySelector('[data-testid="pref-detail"]')?.textContent).toBe("Northwind Studio doesn't have your time zone, so texts from them are held from 8pm to 8am Eastern Time.");
     expect(row("sms").textContent).not.toContain("your time.");
     // The zone is the server's: the business's own texting zone when the send check would use it (minor 4).
     act(() => root.unmount()); root = createRoot(host);
     await mount(prefsPayload({ sms: prefCard("on", { set_by: "reply" }), quiet_hours: { start: "20:00", end: "08:00", time_zone_known: false, fallback_time_zone: "America/Chicago" } }));
-    expect(row("sms").querySelector('[data-testid="pref-detail"]')?.textContent).toBe("Northwind Studio doesn't have your time zone, so texts through Paige are held from 8pm to 8am Central Time.");
+    expect(row("sms").querySelector('[data-testid="pref-detail"]')?.textContent).toBe("Northwind Studio doesn't have your time zone, so texts from them are held from 8pm to 8am Central Time.");
   });
 
   it("Updates stays off while email is off, and says why", async () => {
@@ -183,10 +183,33 @@ describe("How {Business} can reach you — what each state says", () => {
   it("shows each card's server-held disclosure sentence under its id", async () => {
     await mount();
     const shown = Array.from(host.querySelectorAll<HTMLElement>("[data-disclosure]")).map(el => [el.dataset.disclosure, el.textContent]);
-    expect(shown).toEqual((["email-pref:v2", "sms-pref:v2", "updates-optin:v2", "data-sharing:v1"] as PortalDisclosureId[])
+    expect(shown).toEqual((["email-pref:v3", "sms-pref:v3", "updates-optin:v3", "data-sharing:v2"] as PortalDisclosureId[])
       .map(id => [id, disclosureText(id, "Northwind Studio")]));
-    // v1 of email, updates and texts stay known (old evidence names them) but are never shown.
-    expect(Object.keys(PORTAL_PREFERENCE_DISCLOSURES)).toHaveLength(7);
+    // Superseded ids stay known (old evidence names them) but are never shown.
+    expect(Object.keys(PORTAL_PREFERENCE_DISCLOSURES)).toHaveLength(11);
+    // Owner ruling 2026-10-19: the customer's settings never name PAIGE.
+    expect(host.textContent).not.toMatch(/paige/i);
+  });
+
+  // CURA-D1 (round 5): the sharing row, its switch, its heading and the line under it agree on what the switch
+  // governs (action items from the business's team, some AI-drafted, and a fuller summary), say what it does not
+  // change (messages, shared work, agreements, invoices, the customer's portal assistant, the business's own
+  // records), never say "requests" or "Sharing with", and use curly apostrophes throughout.
+  it("the data-sharing row says what the switch governs, matching its heading and the line under it", async () => {
+    await mount();
+    const label = "Let Northwind Studio’s team send you action items and use a fuller summary of you";
+    expect(row("sharing").querySelector('[data-testid="pref-label"]')!.textContent).toBe(label);
+    // Round 5: the longer label wraps on desktop; balanced lines keep "of you" from sitting alone on a line.
+    expect(row("sharing").querySelector('[data-testid="pref-label"]')!.className).toContain("text-balance");
+    expect(switchOf("sharing")!.getAttribute("aria-label")).toBe(label);
+    // Round 6: the summary is OF the customer (the team's assistant uses it); it is never sent to them, so the
+    // heading must not read "summaries from" the team.
+    expect(host.querySelector("#client-sharing-title")!.textContent).toBe("Action items from Northwind Studio’s team, and a fuller summary of you");
+    expect(row("sharing").querySelector('[data-testid="pref-disclosure"]')!.textContent).toBe("Lets Northwind Studio’s team send you action items in your portal, including ones its AI assistant drafts, and give that assistant a fuller summary of you. It doesn’t change messages, shared work, agreements or invoices, what your portal assistant uses to answer you, or what Northwind Studio can already see in its own records. You can turn it off anytime.");
+    expect(row("sharing").querySelector('[data-testid="pref-detail"]')!.textContent).toBe("Turning it off doesn’t delete anything.");
+    expect(host.querySelector('section[aria-labelledby="client-sharing-title"]')!.textContent).not.toMatch(/Cura|no effect yet|AI tools|AI-prepared|requests|Sharing with/);
+    // One apostrophe style across the section: the heading, row, sentence and line under the switch are all curly.
+    expect(host.querySelector('section[aria-labelledby="client-sharing-title"]')!.textContent).not.toContain("'");
   });
 
   it("section headings sit visibly above row labels (should-fix 8)", async () => {

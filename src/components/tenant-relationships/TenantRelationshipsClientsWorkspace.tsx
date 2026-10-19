@@ -9,10 +9,13 @@ import {
   FileText,
   MapPin,
   MessageSquare,
+  PauseCircle,
   Pencil,
   Plus,
   RefreshCw,
+  ReceiptText,
   ShieldCheck,
+  ShieldOff,
   Sparkles,
   Tag,
   UserRound,
@@ -39,6 +42,8 @@ import { ClientStanding } from "./ClientStanding";
 import { ClientSharedWork } from "./ClientSharedWork";
 import { ClientFiles } from "./ClientFiles";
 import { ClientCommunicationState } from "./ClientCommunicationState";
+import { ClientPortalAccess } from "./ClientPortalAccess";
+import type { PortalAccessStateName } from "@/lib/client-portal-access";
 import { PortalConfigurationGate } from "./PortalConfigurationGate";
 import { OwnerPortalDashboard } from "./OwnerPortalDashboard";
 import "./tenant-relationships-clients-workspace.css";
@@ -253,6 +258,7 @@ export function TenantRelationshipsClientsWorkspace({
                 onSelectContact={selectSoloContact}
                 onClearContact={clearSoloContact}
                 standing={standing}
+                portalAccess={standing && hasTierFeature("customer_portal_invite") ? { openPortal: () => setRouteTab("portal"), onChanged: () => { void data.refreshPeopleAfterTurn(); } } : null}
               />
             : <PeopleView key={activeTenantId} variant={variant} data={data} openPaige={openPaige} selectedContactId={selectedContactId} onSelectContact={setSelectedContactId} />
         )}
@@ -331,6 +337,7 @@ function SoloPeopleView({
   onSelectContact,
   onClearContact,
   standing,
+  portalAccess,
 }: {
   activeTenantId: string;
   data: ReturnType<typeof useTenantRelationshipsData>;
@@ -340,6 +347,7 @@ function SoloPeopleView({
   onSelectContact: (id: string) => void;
   onClearContact: () => void;
   standing: { account: string | null } | null;
+  portalAccess: { openPortal: () => void; onChanged: () => void } | null;
 }) {
   const [search, setSearch] = useState("");
   const [editorContact, setEditorContact] = useState<ReturnType<typeof useTenantRelationshipsData>["people"][number] | null>(null);
@@ -615,6 +623,7 @@ function SoloPeopleView({
               openPaige={openPaige}
               onEdit={openEditContact}
               standing={standing}
+              portalAccess={portalAccess}
             />
           ) : (
             <div className="trc-record-empty">
@@ -638,6 +647,7 @@ function ClientRecord({
   openPaige,
   onEdit,
   standing,
+  portalAccess,
 }: {
   person: ReturnType<typeof useTenantRelationshipsData>["people"][number];
   backRef: (node: HTMLButtonElement | null) => void;
@@ -645,8 +655,14 @@ function ClientRecord({
   openPaige: () => void;
   onEdit: (event: React.MouseEvent<HTMLButtonElement>) => void;
   standing: { account: string | null } | null;
+  /** E09 Slice 7: the portal access card — Solo record, same §60 feature as invitations. */
+  portalAccess: { openPortal: () => void; onChanged: () => void } | null;
 }) {
   const isBusiness = person.recordType === "business";
+  // What the client can see right now. Seeded from the roster; the access card's own server read
+  // keeps it current after a pause, restore or end (the roster refetches behind it).
+  const [access, setAccess] = useState<{ state: PortalAccessStateName; joined: boolean }>({ state: person.portalAccess, joined: Boolean(person.linkedUserId) });
+  useEffect(() => { setAccess({ state: person.portalAccess, joined: Boolean(person.linkedUserId) }); }, [person.id, person.portalAccess, person.linkedUserId]);
   return (
     <div className="trc-record-scroll">
       <header className="trc-record-header">
@@ -666,16 +682,27 @@ function ClientRecord({
           <button type="button" onClick={openPaige}><Sparkles aria-hidden /> Open PAIGE workspace</button>
           <span>Enrichment · UNAVAILABLE</span>
         </div>
+        {/* E09 Slice 7 (review 12): a withheld portal is visible at the top of the record, and jumps to
+            the card that changes it, however long the sections above that card grow. Its own row, so a narrow
+            header never squeezes it into the name column. */}
+        {portalAccess && (access.state === "paused" || access.state === "ended") && (
+          <a className="trc-record-access" data-state={access.state} href="#client-portal-access">
+            {access.state === "paused" ? <PauseCircle aria-hidden /> : <ShieldOff aria-hidden />}
+            <span>{access.state === "paused" ? "Portal access paused" : "Portal access ended"}</span>
+          </a>
+        )}
       </header>
 
       <div className="trc-record-body">
         {standing && <ClientStanding key={person.id} contactId={person.id} clientName={person.name} account={standing.account} openPaige={openPaige} />}
         {/* E09 Slice 3: what this client sees in their portal, chosen item by item. Same gate as standing (Solo only, §60/D1). */}
-        {standing && <ClientSharedWork key={`shared:${person.id}`} contactId={person.id} clientName={person.name} portalConnected={Boolean(person.linkedUserId)} />}
+        {standing && <ClientSharedWork key={`shared:${person.id}`} contactId={person.id} clientName={person.name} portalConnected={access.joined && access.state === "open"} portalPaused={access.state === "paused"} portalEnded={access.state === "ended"} />}
         {/* E09 Slice 4: this client's files — private until shared, file by file. Same gate (Solo only, §60/D1). */}
-        {standing && <ClientFiles key={`files:${person.id}`} contactId={person.id} clientName={person.name} portalConnected={Boolean(person.linkedUserId)} />}
-        {/* E09 Slice 6: how this client can be reached, read-only, from the one consent derivation. Same gate as standing. */}
-        {standing && <ClientCommunicationState key={`reach:${person.id}`} contactId={person.id} clientName={person.name} account={standing.account} />}
+        {standing && <ClientFiles key={`files:${person.id}`} contactId={person.id} clientName={person.name} portalConnected={access.joined && access.state === "open"} portalAccess={access.state} />}
+        {/* E09 Slice 7: pause, restore or end this client's portal access — the one home for that act (§18). Under what the client is shown (Shared with, then Files for). */}
+        {portalAccess && <ClientPortalAccess key={`access:${person.id}`} person={person} onOpenPortal={portalAccess.openPortal} onChanged={portalAccess.onChanged} onAccessChange={(state, joined) => setAccess({ state, joined })} />}
+        {/* E09 Slice 6: how this client can be reached, read-only, from the one consent derivation. Same gate as standing. Slice 7 round 3: re-read when the access state changes. */}
+        {standing && <ClientCommunicationState key={`reach:${person.id}`} contactId={person.id} clientName={person.name} account={standing.account} accessState={access.state} />}
         <section className="trc-record-section">
           <header><div><span>Overview</span><h3>Relationship overview</h3></div><ProofPill>Standard fields · PARTIAL</ProofPill></header>
           <dl className="trc-facts">
@@ -721,7 +748,7 @@ function ClientRecord({
           <div className="trc-capability-list">
             <article><div><strong>Conversations · PARTIAL</strong><span>The canonical Conversations owner remains the only inbox. Selected-client context handoff is not yet proven.</span></div></article>
             <article><div><strong>Sales owns pipeline · PARTIAL</strong><span>No stage, campaign membership, product association, or assignment is inferred here.</span></div></article>
-            <article><div><strong>Portal access · PARTIAL</strong><span>Configuration and invitations remain in existing Portal owners; this record does not prove their role gates.</span></div></article>
+            <article><div><strong>Portal access</strong><span>{portalAccess ? "Pause, restore or end this client’s portal access in Portal access above. Invitations and the portal’s look stay on the Portal tab." : "Configuration and invitations remain in existing Portal owners; this record does not prove their role gates."}</span></div></article>
             {standing
               ? <article><div><strong>Client files · LIVE</strong><span>On this record, under Files for {person.name}. Files stay separate from the business Vault and private until you share them.</span></div></article>
               : <article><div><strong>Client files · PARTIAL</strong><span>The existing client-files seam remains separate from the business Vault; upload is not exposed here.</span></div></article>}
@@ -833,6 +860,7 @@ function PortalView({ activeTenantId, data, selectedContactId }: { activeTenantI
         <article><UserRound aria-hidden /><div><strong>Requests and action items</strong><span>UNAVAILABLE · no aggregate workflow contract is connected.</span></div></article>
         <article><ShieldCheck aria-hidden /><div><strong>Portal access</strong><span>PARTIAL · invite and access state remains on the selected client record.</span></div></article>
         <article><UserRound aria-hidden /><div><strong>Engagement progress</strong><span>UNAVAILABLE here · sharing work with a client is on the Solo client record; this account's client record does not offer it yet.</span></div></article>
+        <article><ReceiptText aria-hidden /><div><strong>Payments</strong><span>PARTIAL · this account has no Sales screen: invoices you ask Paige to create and issue to a client appear under Payments once that client has joined their portal and Payments is shown in their menu. A Pay button appears only after you send them a payment request.</span></div></article>
         <article><ShieldCheck aria-hidden /><div><strong>Files and agreements</strong><span>PARTIAL · once your client has joined their portal, agreements you ask Paige to draft and send them appear in Agreements to sign and download. This account's client record does not offer file sharing yet.</span></div></article>
       </div>
       <div className="trc-integrity"><ShieldCheck aria-hidden /><p><strong>Preview is not impersonation.</strong> Client-facing projection never grants staff a client session.</p></div>
@@ -855,7 +883,7 @@ function PortalView({ activeTenantId, data, selectedContactId }: { activeTenantI
       {accessOpen && selectedContact && (
         <div className="trc-canonical-mount" data-contact-portal-access>
           <Suspense fallback={<BoundedState eyebrow="Portal access · PARTIAL" title="Loading selected client access" detail="No other contact is substituted while the selected record loads." kind="loading" />}>
-            <ContactPortalAccess key={`${activeTenantId}:${selectedContact.id}`} contactId={selectedContact.id} email={selectedContact.email} linkedUserId={selectedContact.linkedUserId} />
+            <ContactPortalAccess key={`${activeTenantId}:${selectedContact.id}`} contactId={selectedContact.id} email={selectedContact.email} linkedUserId={selectedContact.linkedUserId} name={selectedContact.name} />
           </Suspense>
         </div>
       )}

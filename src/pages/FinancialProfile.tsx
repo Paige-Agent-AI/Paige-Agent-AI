@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- pre-existing legacy `any` debt in this
+   file (untyped Supabase reads, stale generated types). The E09 Customer Portal identity change
+   (CURA, never PAIGE, on customer surfaces) only edited copy here and introduced ZERO new `any`s;
+   retyping is tracked separately (#234). */
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -276,7 +280,7 @@ export default function FinancialProfile() {
   // ----------------------------- Completeness -----------------------------
 
   const completeness = useMemo(() => {
-    let total = 14;
+    const total = 14;
     let filled = 0;
     const firstBank = personalBanks[0];
     if (firstBank?.institution_name) filled++;
@@ -513,7 +517,7 @@ export default function FinancialProfile() {
               Banking relationship data, asset information, and income ranges help us calculate
               more accurate fundability scores and find better funding matches for you. This
               information is <strong>never shared</strong> with lenders, banks, or third parties.
-              It stays within your PaigeAgent account exclusively.
+              It stays within your account exclusively.
             </p>
           </div>
         </div>

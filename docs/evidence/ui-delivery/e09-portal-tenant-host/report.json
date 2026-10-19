@@ -1,0 +1,433 @@
+{
+  "generatedAt": "2026-10-18T23:30:45.514Z",
+  "evidenceClass": "harness render · real PortalGateway + real host routing, deterministic adapter, hostnames mapped to loopback; not authenticated production proof",
+  "results": [
+    {
+      "name": "tenant-host-light-390x844 runtime",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "tenant-host-light-390x844 fonts ready",
+      "ok": true,
+      "detail": {
+        "status": "loaded",
+        "body": "Inter"
+      }
+    },
+    {
+      "name": "tenant-host-light-390x844 no horizontal overflow",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "tenant-host-light-390x844 AA text contrast",
+      "ok": true,
+      "detail": {
+        "min": 5.43,
+        "low": []
+      }
+    },
+    {
+      "name": "tenant-host-light-390x844 links out to the app origin",
+      "ok": true,
+      "detail": "https://paigeagent.ai/portal/acme"
+    },
+    {
+      "name": "tenant-host-light-390x844 44px link-out target",
+      "ok": true,
+      "detail": 44
+    },
+    {
+      "name": "tenant-host-light-390x844 no credential collected",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "tenant-host-light-390x844 names where sign-in happens",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "app-origin-light-390x844 runtime",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "app-origin-light-390x844 fonts ready",
+      "ok": true,
+      "detail": {
+        "status": "loaded",
+        "body": "Inter"
+      }
+    },
+    {
+      "name": "app-origin-light-390x844 no horizontal overflow",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "app-origin-light-390x844 AA text contrast",
+      "ok": true,
+      "detail": {
+        "min": 5.43,
+        "low": []
+      }
+    },
+    {
+      "name": "app-origin-light-390x844 keeps the sign-in form",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "tenant-host-light-1440x900 runtime",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "tenant-host-light-1440x900 fonts ready",
+      "ok": true,
+      "detail": {
+        "status": "loaded",
+        "body": "Inter"
+      }
+    },
+    {
+      "name": "tenant-host-light-1440x900 no horizontal overflow",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "tenant-host-light-1440x900 AA text contrast",
+      "ok": true,
+      "detail": {
+        "min": 5.43,
+        "low": []
+      }
+    },
+    {
+      "name": "tenant-host-light-1440x900 links out to the app origin",
+      "ok": true,
+      "detail": "https://paigeagent.ai/portal/acme"
+    },
+    {
+      "name": "tenant-host-light-1440x900 44px link-out target",
+      "ok": true,
+      "detail": 44
+    },
+    {
+      "name": "tenant-host-light-1440x900 no credential collected",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "tenant-host-light-1440x900 names where sign-in happens",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "app-origin-light-1440x900 runtime",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "app-origin-light-1440x900 fonts ready",
+      "ok": true,
+      "detail": {
+        "status": "loaded",
+        "body": "Inter"
+      }
+    },
+    {
+      "name": "app-origin-light-1440x900 no horizontal overflow",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "app-origin-light-1440x900 AA text contrast",
+      "ok": true,
+      "detail": {
+        "min": 5.43,
+        "low": []
+      }
+    },
+    {
+      "name": "app-origin-light-1440x900 keeps the sign-in form",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "tenant-host-dark-390x844 runtime",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "tenant-host-dark-390x844 fonts ready",
+      "ok": true,
+      "detail": {
+        "status": "loaded",
+        "body": "Inter"
+      }
+    },
+    {
+      "name": "tenant-host-dark-390x844 no horizontal overflow",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "tenant-host-dark-390x844 AA text contrast",
+      "ok": true,
+      "detail": {
+        "min": 7.27,
+        "low": []
+      }
+    },
+    {
+      "name": "tenant-host-dark-390x844 links out to the app origin",
+      "ok": true,
+      "detail": "https://paigeagent.ai/portal/acme"
+    },
+    {
+      "name": "tenant-host-dark-390x844 44px link-out target",
+      "ok": true,
+      "detail": 44
+    },
+    {
+      "name": "tenant-host-dark-390x844 no credential collected",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "tenant-host-dark-390x844 names where sign-in happens",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "app-origin-dark-390x844 runtime",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "app-origin-dark-390x844 fonts ready",
+      "ok": true,
+      "detail": {
+        "status": "loaded",
+        "body": "Inter"
+      }
+    },
+    {
+      "name": "app-origin-dark-390x844 no horizontal overflow",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "app-origin-dark-390x844 AA text contrast",
+      "ok": true,
+      "detail": {
+        "min": 7.27,
+        "low": []
+      }
+    },
+    {
+      "name": "app-origin-dark-390x844 keeps the sign-in form",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "tenant-host-dark-1440x900 runtime",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "tenant-host-dark-1440x900 fonts ready",
+      "ok": true,
+      "detail": {
+        "status": "loaded",
+        "body": "Inter"
+      }
+    },
+    {
+      "name": "tenant-host-dark-1440x900 no horizontal overflow",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "tenant-host-dark-1440x900 AA text contrast",
+      "ok": true,
+      "detail": {
+        "min": 7.27,
+        "low": []
+      }
+    },
+    {
+      "name": "tenant-host-dark-1440x900 links out to the app origin",
+      "ok": true,
+      "detail": "https://paigeagent.ai/portal/acme"
+    },
+    {
+      "name": "tenant-host-dark-1440x900 44px link-out target",
+      "ok": true,
+      "detail": 44
+    },
+    {
+      "name": "tenant-host-dark-1440x900 no credential collected",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "tenant-host-dark-1440x900 names where sign-in happens",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "app-origin-dark-1440x900 runtime",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "app-origin-dark-1440x900 fonts ready",
+      "ok": true,
+      "detail": {
+        "status": "loaded",
+        "body": "Inter"
+      }
+    },
+    {
+      "name": "app-origin-dark-1440x900 no horizontal overflow",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "app-origin-dark-1440x900 AA text contrast",
+      "ok": true,
+      "detail": {
+        "min": 7.27,
+        "low": []
+      }
+    },
+    {
+      "name": "app-origin-dark-1440x900 keeps the sign-in form",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "tenant host: stays on /portal/acme (no loop)",
+      "ok": true,
+      "detail": "/portal/acme"
+    },
+    {
+      "name": "tenant host: session never read",
+      "ok": true,
+      "detail": {
+        "getUser": 0,
+        "signIn": 0,
+        "reset": [],
+        "rpc": [
+          "peek_tenant_portal_brand:acme",
+          "peek_tenant_portal_brand:acme"
+        ]
+      }
+    },
+    {
+      "name": "tenant host: signed-in surface never rendered",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "tenant host: no relationship read",
+      "ok": true,
+      "detail": [
+        "peek_tenant_portal_brand:acme",
+        "peek_tenant_portal_brand:acme"
+      ]
+    },
+    {
+      "name": "tenant host runtime",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "tenant host /portal/other-business: pinned to /portal/acme with the app-origin link",
+      "ok": true,
+      "detail": {
+        "path": "/portal/acme",
+        "href": "https://paigeagent.ai/portal/acme"
+      }
+    },
+    {
+      "name": "tenant host /portal/other-business: brand read only for the hostname tenant",
+      "ok": true,
+      "detail": [
+        "peek_tenant_portal_brand:acme",
+        "peek_tenant_portal_brand:acme"
+      ]
+    },
+    {
+      "name": "tenant host /app: pinned to /portal/acme with the app-origin link",
+      "ok": true,
+      "detail": {
+        "path": "/portal/acme",
+        "href": "https://paigeagent.ai/portal/acme"
+      }
+    },
+    {
+      "name": "tenant host /app: brand read only for the hostname tenant",
+      "ok": true,
+      "detail": [
+        "peek_tenant_portal_brand:acme",
+        "peek_tenant_portal_brand:acme"
+      ]
+    },
+    {
+      "name": "tenant host /auth: pinned to /portal/acme with the app-origin link",
+      "ok": true,
+      "detail": {
+        "path": "/portal/acme",
+        "href": "https://paigeagent.ai/portal/acme"
+      }
+    },
+    {
+      "name": "tenant host /auth: brand read only for the hostname tenant",
+      "ok": true,
+      "detail": [
+        "peek_tenant_portal_brand:acme",
+        "peek_tenant_portal_brand:acme"
+      ]
+    },
+    {
+      "name": "tenant host /reset-password: pinned to /portal/acme with the app-origin link",
+      "ok": true,
+      "detail": {
+        "path": "/portal/acme",
+        "href": "https://paigeagent.ai/portal/acme"
+      }
+    },
+    {
+      "name": "tenant host /reset-password: brand read only for the hostname tenant",
+      "ok": true,
+      "detail": [
+        "peek_tenant_portal_brand:acme",
+        "peek_tenant_portal_brand:acme"
+      ]
+    },
+    {
+      "name": "app origin: signed-in customer enters /app",
+      "ok": true,
+      "detail": "/app"
+    },
+    {
+      "name": "app origin: reset email returns to http://127.0.0.1:5236/reset-password?portal=acme",
+      "ok": true,
+      "detail": [
+        "http://127.0.0.1:5236/reset-password?portal=acme"
+      ]
+    },
+    {
+      "name": "hostile host: reset email returns to https://paigeagent.ai/reset-password?portal=acme",
+      "ok": true,
+      "detail": [
+        "https://paigeagent.ai/reset-password?portal=acme"
+      ]
+    }
+  ]
+}

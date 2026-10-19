@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useCustomerIdentity } from "@/lib/portal/customerIdentity";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,6 +46,8 @@ export function DataPrivacyPanel() {
   const customer = known && (!!brand?.tenant_id || multipleBusinesses);
   const customerOfOne = customer && !!brand?.tenant_id;
   const business = brand?.tenant_name?.trim() || "your business";
+  // A customer's assistant is their agent, never PAIGE, the owner's COO (owner ruling, 2026-10-19).
+  const { agentName } = useCustomerIdentity();
   const showCredit = known && !customer && !funding.loading && funding.enabled;
 
   const handleDownloadData = async () => {
@@ -101,7 +104,10 @@ export function DataPrivacyPanel() {
         <div>
           <h3 className="text-lg font-semibold tracking-tight">Data &amp; Privacy</h3>
           <p className="text-sm text-muted-foreground mt-1">
-            Download your data, ask for it to be deleted, and read how Paige handles it.
+            {customer
+              ? "Download your data, ask for it to be deleted, and read how it's handled."
+              // customer-identity-exempt: staff branch (not a customer of a business)
+              : "Download your data, ask for it to be deleted, and read how Paige handles it."}
           </p>
         </div>
         {/* Staff only (§58: unchanged for them). A customer is not shown an unverifiable security claim. */}
@@ -118,9 +124,11 @@ export function DataPrivacyPanel() {
             </div>
             <p className="text-sm text-muted-foreground mt-1">
               {showCredit
+                // customer-identity-exempt: staff branch with the funding preset (not a customer)
                 ? "Export all data Paige holds about you as JSON — credit scores, fundability scores, account data, Paige session summaries, and financial profile."
                 : customer
-                  ? `Download a JSON file of what your Paige login holds: your profile, your contact details, recent Paige chats and anything else tied to your login. It doesn't include the records ${business} keeps about you. Message ${business} for a copy of those.`
+                  ? `Download a JSON file of what your portal login holds: your profile, your contact details, your recent conversations with ${agentName} and anything else tied to your login. It doesn't include the records ${business} keeps about you. Message ${business} for a copy of those.`
+                  // customer-identity-exempt: staff branch (not a customer of a business)
                   : "Download a JSON file of what your Paige login holds: your profile, your contact details, businesses you own, recent Paige chats and anything else tied to your login. Your workspace's client records aren't included."}
             </p>
           </div>
@@ -180,7 +188,8 @@ export function DataPrivacyPanel() {
             </div>
             <p className="text-sm text-muted-foreground mt-1">
               {customer
-                ? `Email privacy@paigeagent.ai to close your Paige login. To delete what ${business} holds about you, message ${business}.`
+                ? `Email privacy@paigeagent.ai to close your portal login. To delete what ${business} holds about you, message ${business}.`
+                // customer-identity-exempt: staff branch (not a customer of a business)
                 : "Email privacy@paigeagent.ai to ask us to close your Paige login and delete the data tied to it. We reply to confirm each step. Nothing is deleted automatically."}
             </p>
           </div>
@@ -216,7 +225,9 @@ export function DataPrivacyPanel() {
             </div>
             <p className="text-sm text-muted-foreground mt-1">
               {customer
-                ? `Read how Paige collects, uses and protects your data. ${business} may have its own policy too.`
+                // customer-identity-exempt: the platform's legal name, as the publisher of the privacy policy (legal entity).
+                ? `Read how Paige Agent AI, which runs this portal for ${business}, collects, uses and protects your data. ${business} may have its own policy too.`
+                // customer-identity-exempt: staff branch (not a customer of a business)
                 : "Read how Paige collects, uses and protects your data."}
             </p>
           </div>

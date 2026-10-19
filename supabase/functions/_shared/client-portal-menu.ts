@@ -63,7 +63,8 @@ export const PORTAL_MENU_KEYS: readonly PortalMenuKey[] = Object.freeze([
   k("documents", "Documents", "/app/documents", "paperwork", "brand", { defaultVisibility: "shown" }),
   // E09 Slice A: the customer's own agreements; every customer of one business has it by default (D-A1).
   k("agreements", "Agreements", "/app/agreements", "paperwork", "everyone", { shownToCustomers: true }),
-  k("billing", "Payments", "/app/billing", "paperwork", "customer", { live: false, catalogLabel: false }),
+  // E09 Slice 5: live — /app/billing is the customer's Payments page.
+  k("billing", "Payments", "/app/billing", "paperwork", "customer", { catalogLabel: false }),
   // Core for customers (§58): every customer of one business has Resources, whatever the catalog lists.
   k("resources", "Resources", "/app/learn", "learn", "everyone", { shownToCustomers: true }),
   k("learn", "Resources", "/app/learn", "learn", "everyone"),

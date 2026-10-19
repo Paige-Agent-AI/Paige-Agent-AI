@@ -9,6 +9,12 @@
  *
  * Sign-in only. A tenant's customers are created by invite (/join/:token), so
  * there is no self-serve signup here — just email + password back into /app.
+ *
+ * On a tenant host (<slug>.paigeagent.ai) this is a PUBLIC entry only (E09 decision D5): it wears the
+ * same brand and links out to this gateway on the app origin, where sign-in and the session live. It
+ * never reads a session there and never collects a credential, so no session is ever born on the
+ * tenant origin — and it never navigates to a relative /app, which host routing pins back to
+ * /portal/<slug> on a tenant host (the redirect loop this replaces).
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -23,6 +29,8 @@ import { toast } from "sonner";
 import { readableTextOn } from "@/lib/brand/contrast";
 import { resolveLandingRoute } from "@/lib/auth/resolveLandingRoute";
 import { cachePortalSlug } from "@/lib/auth/signOut";
+import { tenantHostPortalEntryUrl, tenantSlugFromHostname, trustedAppOrigin } from "@/lib/hostRouting";
+import { fetchWithheldCustomerAccess } from "@/lib/client-portal-access";
 import "./ConsumerInvitation.css";
 
 interface PortalBrand {
@@ -41,7 +49,14 @@ async function boundedGateway<T>(request: PromiseLike<T>): Promise<T> {
 
 export default function PortalGateway() {
   const navigate = useNavigate();
-  const { tenantSlug = "" } = useParams<{ tenantSlug: string }>();
+  const { tenantSlug: routeSlug = "" } = useParams<{ tenantSlug: string }>();
+  // The hostname is routing context, never authorization. On a tenant host the hostname tenant wins
+  // over the route param, so a mismatched path can never brand or link another business.
+  const [tenantHost] = useState(() => ({
+    slug: tenantSlugFromHostname(window.location.hostname),
+    entryUrl: tenantHostPortalEntryUrl(window.location.hostname),
+  }));
+  const tenantSlug = tenantHost.slug ?? routeSlug;
   const [brand, setBrand] = useState<PortalBrand | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -61,7 +76,11 @@ export default function PortalGateway() {
     if (target === "/pricing" || target === "/onboarding") {
       throw new Error("No active customer access was found. Ask your provider for a current invitation.");
     }
-    if (target === "/app" || target.startsWith("/onboard/")) {
+    // E09 Slice 7: a business paused or ended this person's access. /app shows that business's own
+    // page and grants nothing, so the brand check below (which needs an OPEN relationship) is not the
+    // question to ask. An unknown answer falls through to it, unchanged.
+    const withheld = target === "/app" ? await boundedGateway(fetchWithheldCustomerAccess()).catch(() => null) : null;
+    if (!withheld && (target === "/app" || target.startsWith("/onboard/"))) {
       // The public slug is presentation, never membership. The native reader
       // resolves only the actual caller's current active customer relationship.
       const { data, error } = await boundedGateway(supabase.rpc("get_client_portal_brand"));
@@ -82,6 +101,8 @@ export default function PortalGateway() {
   // Keep the spinner up until this settles so an authed visitor never sees a
   // flash of the sign-in form on their bookmarked gateway.
   useEffect(() => {
+    // A tenant host never reads a session: it is a public entry that links out to the app origin.
+    if (tenantHost.entryUrl) { setCheckingAuth(false); return; }
     let cancelled = false;
     const lifetime = attempt.current;
     ++lifetime.sequence;
@@ -95,7 +116,7 @@ export default function PortalGateway() {
       setCheckingAuth(false);
     }).catch((error) => { if (!cancelled) { toast.error(error instanceof Error ? error.message : "Your portal could not be verified. Try again."); setCheckingAuth(false); } });
     return () => { cancelled = true; ++lifetime.sequence; };
-  }, [customerTarget, navigate]);
+  }, [customerTarget, navigate, tenantHost.entryUrl]);
 
   useEffect(() => {
     let cancelled = false;
@@ -164,7 +185,8 @@ export default function PortalGateway() {
       // form), carrying the tenant slug so the reset stays under the coach's
       // brand and returns here when done. Sending them straight back to /portal
       // would consume the one-time token without ever letting them set a password.
-      const redirectTo = `${window.location.origin}/reset-password?portal=${encodeURIComponent(tenantSlug)}`;
+      // Always an app origin: a tenant, unknown or hostile hostname never picks the email's target.
+      const redirectTo = `${trustedAppOrigin(window.location)}/reset-password?portal=${encodeURIComponent(tenantSlug)}`;
       const { error } = await supabase.auth.resetPasswordForEmail(em, { redirectTo });
       if (error) throw error;
       toast.success("Check your email for a link to reset your password.");
@@ -219,7 +241,16 @@ export default function PortalGateway() {
             <Button onClick={() => setReloadKey((k) => k + 1)} className="w-full" style={btnStyle}>
               Try again
             </Button>
-          ) : notFound ? null : (
+          ) : notFound ? null : tenantHost.entryUrl ? (
+            <>
+              <Button asChild className="w-full" style={btnStyle}>
+                <a href={tenantHost.entryUrl} data-portal-entry="">Sign in to your portal</a>
+              </Button>
+              <p className="text-center text-xs text-muted-foreground">
+                You’ll sign in securely on {new URL(tenantHost.entryUrl).host}.
+              </p>
+            </>
+          ) : (
             <>
               <div className="space-y-2">
                 <Label htmlFor="portal-email">Email</Label>

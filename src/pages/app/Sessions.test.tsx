@@ -290,6 +290,9 @@ it("cancels only after a confirm that names the session", async () => {
   await click(button("Cancel", host)!);
   const dialog = document.querySelector('[role="alertdialog"]')!;
   expect(dialog.textContent).toContain("Cancel Strategy call?");
+  // Owner ruling 2026-10-19: the customer asks their agent (Cura by default), never PAIGE, the owner's COO.
+  expect(dialog.textContent).toContain("To book again, message them or ask Cura.");
+  expect(dialog.textContent).not.toMatch(/paige/i);
   // On a phone the dialog keeps a 16px side margin and its rounded corners.
   expect(dialog.className).toContain("w-[calc(100%-2rem)]");
   expect(dialog.className).toMatch(/(^| )rounded-xl( |$)/);

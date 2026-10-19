@@ -23,5 +23,7 @@ export const prefsPayload = (over: Record<string, unknown> = {}): Record<string,
 export const ownerStatePayload = (over: Record<string, unknown> = {}): Record<string, unknown> => {
   const { business_name: _ignored, ...rest } = prefsPayload();
   void _ignored;
-  return { ...rest, contact_id: PREF_CONTACT, portal_joined: true, do_not_contact: false, dnd_active: false, ...over };
+  const merged: Record<string, unknown> = { ...rest, contact_id: PREF_CONTACT, portal_joined: true, do_not_contact: false, dnd_active: false, ...over };
+  // E09 Slice 7: the server's portal_access agrees with the link unless a test names a state.
+  return "portal_access" in over ? merged : { ...merged, portal_access: merged.portal_joined === false ? "not_joined" : "open" };
 };

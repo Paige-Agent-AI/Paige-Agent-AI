@@ -35,7 +35,7 @@ vi.mock("@/hooks/useSessionTimeout", () => ({ useSessionTimeout: () => ({ showWa
 vi.mock("@/components/auth/SessionTimeoutWarning", () => ({ SessionTimeoutWarning: () => null }));
 vi.mock("@/components/dashboard/OnboardingChecklist", () => ({ OnboardingChecklist: () => <div>Existing checklist</div> }));
 vi.mock("@/components/dashboard/OnboardingFlow", () => ({ OnboardingFlow: () => null }));
-vi.mock("@/components/notifications/PushNotificationPrompt", () => ({ PushNotificationPrompt: () => null }));
+vi.mock("@/components/notifications/PushNotificationPrompt", () => ({ PushNotificationPrompt: () => null, pushTopicsSentence: () => null }));
 vi.mock("@/components/ui/resizable", () => ({ ResizablePanelGroup: ({ children }: PropsWithChildren) => <div>{children}</div>, ResizablePanel: ({ children }: PropsWithChildren) => <div>{children}</div>, ResizableHandle: () => null }));
 vi.mock("@/hooks/useAnalytics", () => ({ trackEvent: () => Promise.resolve() }));
 vi.mock("@/lib/auth/resolveLandingRoute", () => ({ resolveLandingRoute: () => landing() }));

@@ -145,6 +145,98 @@ export function inspectIncumbentSource(chatText,tool) {
 // reverted, all 29 fingerprints equal main's pins exactly; with it, all 29 change (the whole-handler try,
 // identity[15]). No dispatch branch, control, helper, authority or verifier logic changed. action-risk.ts
 // is byte-identical (pin unchanged). Renew those 29 dispatch scalars only.
+// E09 Slice 7 bounded renewal (2026-10-18), integrating-crew source review (NOT non-author)
+// of read_client_portal_access/client_portal_access_set on main 1cc4e995. Per-part comparison
+// (fingerprint decomposed into dispatch branch, dominating controls, identity inputs, local
+// helpers, imports): all 29 exact dispatch branches, dominating controls, local helpers and
+// imports equal; the one changed identity input is the whole-handler try (index 15), whose
+// canonical delta is insertion-only (0 removed / 85 added lines: the additive offer, two labels,
+// the confirm summary case, the final pre-Unknown dispatch branch, WRITE_TARGET and locator
+// entries). The action-risk.ts canonical delta is one added `high` row. Renew those 30 scalars only.
+// E09 Slice 7 round-2 renewal (2026-10-18), integrating-crew source review (NOT non-author): the
+// approval card for client_portal_access_set now names the client and the reason. The whole paige-ai-chat
+// diff is two lines: `portalAccessClientName` added to the existing client-portal-access import, and the
+// describeConfirm case `client_portal_access_set` now returns portalAccessConfirmSummary(a, await
+// portalAccessClientName(supabaseClient, personaCtx?.tenant_id ?? null, a?.contact_id)) — a read-only name
+// lookup on the caller's own session (RLS), no write, no effect. describeConfirm lives inside the
+// whole-handler try (identity input index 15) and precedes the comms_setup_calling branch (a dominating
+// control there), so all 29 scalars move; no dispatch branch, control, helper or import set of any
+// contract changed otherwise. Renew those 29 scalars only.
+// E09 Slice 7 round-3 renewal (2026-10-18), integrating-crew source review (NOT non-author): the
+// approval card for client_portal_access_set is now bound to the version it was built from. The
+// paige-ai-chat delta is confined to this slice's own final pre-Unknown dispatch branch plus its
+// import: `accessVersionToken` added to the existing client-portal-access import, and two read-only
+// result fields — `access_version: accessVersionToken(r.view.since)` on the read result and on the
+// set result — plus one sentence appended to the read result's note. No write, authority, tenant,
+// actor or confirmation path changed. Decomposed per contract (dispatch branches, dominating
+// controls, local helpers, imports, identity inputs): all equal for all 29 except identity input 15
+// (the whole-handler try), whose canonical delta is 2 lines replaced and 1 added, all inside that
+// branch. Renew those 29 scalars only; no SOURCES/ANCESTRY digest changes.
+// E09 Slice 7 integration renewal (2026-10-19), integrating-crew source review (NOT non-author): the
+// Slice 7 branch (e88971a26, whose three notes above were reviewed against 1cc4e995) squash-merged onto
+// s7-integrate b6d3bdf75 (main d44ad08 + Agreements #2367 + Payments). The three round notes above are
+// superseded by this one: their scalars were never pinned on this base. Additive-only check against the
+// composed bytes: the paige-ai-chat delta base -> integrated head is exactly Slice 7's own delta
+// (1cc4e995 -> e88971a26), line for line, 84 lines added and 0 removed (the client-portal-access import,
+// the two Spine tools on the offer, two labels, the confirm summary case, the final pre-Unknown dispatch
+// branch, WRITE_TARGET and locator entries). Decomposed per contract (dispatch branches, dominating
+// controls, local helpers, imports, identity inputs) for all 29: every part equal except identity input
+// 15 (the whole-handler try), which holds those insertions. action-risk.ts is base plus Slice 7's one added
+// `high` row; its canonical digest a7c03694... equals the digest Slice 7 reviewed, so that SOURCES pin is
+// the reviewed one. Renew those 29 dispatch scalars only.
+// E09 Slice 7 integration round-2 renewal (2026-10-19), integrating-crew source review (NOT non-author):
+// the compliance review found Paige's share confirmations told the owner a PAUSED client "can now open it
+// in their portal" (the share writers reported the login link alone). The paige-ai-chat delta is three
+// confirmation notes plus one name added to the existing client-portal-access import: crm_file_document's
+// same-client share note and its re-file note, and plan_item_set_client_share's note, each now say "can
+// open it now" only on the branch where the writer's portal_connected is not false, and otherwise append
+// portalUnseenNote(...) (a pure sentence from _shared/client-portal-access.ts naming paused / ended / not
+// joined); each result also carries the writer's portal_access. No write, authority, tenant, actor,
+// confirmation or verifier path changed. Decomposed per contract (dispatch branches, dominating controls,
+// local helpers, imports, identity inputs): all equal for all 29 except identity input 15 (the
+// whole-handler try: 6 canonical lines replaced by 14, all inside those three notes and the import name)
+// and crm_file_document's own dispatch branch (its two notes) and import set (client-portal-access.ts is
+// now referenced from that branch, for portalUnseenNote). action-risk.ts is byte-identical. Renew those 29
+// dispatch scalars only; no SOURCES/ANCESTRY digest changes.
+// E09 Slice 7 integration round-3 renewal (2026-10-19), integrating-crew source review (NOT non-author):
+// the Slice 7 branch rebased from s7-integrate b6d3bdf75 onto main a26efbcc9 (Agreements #2367 renumbered
+// 225000, Payments #2371, Slice H #2373, and main's own chat changes, e.g. the ANT-21 stream bound). The two notes above
+// pinned scalars on b6d3bdf75, never on this base, and are superseded here. Additive check against the
+// composed bytes: the paige-ai-chat delta main -> head equals the round-2-reviewed delta b6d3bdf75 ->
+// round-2 head line for line, except the round-3 security-2 change: the three share-confirmation guards
+// (crm_file_document's same-client share note and re-file note, plan_item_set_client_share's note) test
+// `portalConnected !== true` instead of `=== false`, so an answer with no portal_connected (null, e.g. a
+// replay) takes the unseen branch and never claims visibility; the re-file call passes
+// `refiled.share ?? { portalConnected: null }`; one comment line added. Decomposed per contract against
+// main's pins (dispatch branches, dominating controls, local helpers, imports, identity inputs): main's
+// own fingerprints equal main's pins for all 29; at head every part is equal except identity input 15
+// (the whole-handler try, holding Slice 7's insertions and these guards) for all 29, and, for
+// crm_file_document only, its dispatch branch (the two share notes above) and its import set (+
+// ../_shared/client-portal-access.ts for portalUnseenNote, a pure sentence function). No write,
+// authority, tenant, actor, confirmation or verifier path changed. Renew those 29 dispatch scalars only.
+// E09 CURA identity bounded renewal (2026-10-19), AUTHOR source review (NOT non-author; the independent
+// round-3 reviewers must confirm): branch e09-portal-cura rebased onto main a26efbcc9 (Slice H #2373 and every
+// earlier main hunk intact). The branch diff vs main for paige-ai-chat/index.ts is two hunks: one added import
+// line (readClientPortalPersonaInput, customerAgentName, customerSeatIdentity) and one added
+// `else if (callerTier === "client")` branch after the native Customer Portal persona branch, which re-voices
+// the owner's prompt blocks with the business's agent name read from client_portal_frame under the caller's
+// JWT (best effort, presentation only; vouched client-seat text untouched). No dispatch branch, control,
+// helper, authority or verifier logic changed; the whole-handler try (identity[15]) is what moves all 29.
+// Proof: paige-ai-chat/index.ts at main gives all 29 of main's pins exactly (scratchpad r3/pins.mjs, zero
+// mismatches); the branch's gives the 29 below. send-message/index.ts: the client email's sender fallback
+// reads the business name through _shared/email/sender-display-name.ts instead of "Paige Agent" (one import,
+// one widened row type, one replaced assignment). client-portal-identity.ts: the customer agent-name rule
+// (accent/symbol folding, "Paiget" only as a standalone word) and literal replacer functions. action-risk.ts
+// is byte-identical (pin unchanged). Renew those 29 dispatch scalars and those 2 source digests only.
+// E09 CURA round-6 renewal (2026-10-19), AUTHOR source review (NOT non-author; a non-author reviewer must
+// confirm): branch e09-portal-cura rebased from main a26efbcc9 onto main 7d3964564 (Slice 7 #2376, the mentor remap,
+// H0 #2375). At 7d3964564 main's own paige-ai-chat gives all 29 of main's pins exactly (scratchpad r3/pins.mjs,
+// zero mismatches). The branch delta main -> head for paige-ai-chat/index.ts is the same 18 changed lines, line for
+// line, as the delta reviewed in round 3 (a26efbcc9 -> round-5 head): one added import line and the added
+// `else if (callerTier === "client")` re-voicing branch. Slice 7's insertions are main's and unchanged. Those lines
+// sit in the whole-handler try (identity input 15), which is what moves all 29; no dispatch branch, control,
+// helper, import set, authority or verifier logic changed. SOURCES/ANCESTRY digests are unchanged (no mismatch).
+// Renew those 29 dispatch scalars only.
 const CONTRACTS = {
   "comms_setup_calling": {
     "key": "communications.comms_setup_calling",
@@ -156,7 +248,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "c7d7f31887f4f079ceab530c93fb73d8d38cad52a0ddf5be453334fbd8e6913f"
+    "fingerprint": "977946b648e121c3281058923140f7b630df6db877461fb759ba6f39fdac02bc"
   },
   "calendar_book_meeting": {
     "key": "calendar.book_meeting",
@@ -168,7 +260,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "62d3d6667bc038c6cbf4020656fe2a82eb3f8957ad9d0bde061d1ca114a3c684"
+    "fingerprint": "2cc88537b6ce863ed767d977ff7135f608bcc85e9c5ea9098f6fe799ecfa2d66"
   },
   "calendar_link_send": {
     "key": "calendar.link_send",
@@ -180,7 +272,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "6e7b59111da6bbc22096f7c44c5ebdef67ab0c58e7114ef1d3697e896f2d1c7e"
+    "fingerprint": "659febf70815f57c774a5d3e68ded57e9aba1bc274190b539854b92aeb8d4093"
   },
   "propose_business_brief_update": {
     "key": "business_profile.propose_brief_update",
@@ -192,7 +284,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "8125d2d8d5e5709c7af36a05856faeb982d3148326f092ff9a0d8ca6fb136805"
+    "fingerprint": "d33aae266148db9ec30970a5f654c01e1322c4143fc14306d464626bcade1479"
   },
   "update_business_profile": {
     "key": "business_profile.update_legacy",
@@ -204,7 +296,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": false,
     "readiness": "none",
-    "fingerprint": "12b2a428e6341dcf5e43be754a022791080512a4205ef4c53b97a5b8d7c2f6ba"
+    "fingerprint": "aa63c193fe8a2ffd41a4e08c395fbc86b1fe545e2ce0a5e1f77b3c5782ddc56e"
   },
   "capability_status": {
     "key": "platform_meta.capability_status",
@@ -216,7 +308,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": false,
     "readiness": "none",
-    "fingerprint": "aafe020e877d46cdd75cbbbe2f5bd7bf0b4bab2e80b1b1c04e623bff00320c83"
+    "fingerprint": "a7bb57c6a7d9d4f8f59bf934d175a9093f2406114c998ae819fe831008e5352b"
   },
   "improvement_propose": {
     "key": "platform_meta.improvement_propose",
@@ -228,7 +320,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": false,
     "readiness": "none",
-    "fingerprint": "551027a202eadf4a6ab5bced32ddbab196320f4151d8b385e482843ff6bc0a6b"
+    "fingerprint": "285aded79412db3473d08d4b2aa8201d94428c653b0c29318887fa979f39c001"
   },
   "improvement_decide": {
     "key": "platform_meta.improvement_decide",
@@ -240,7 +332,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": false,
     "readiness": "none",
-    "fingerprint": "6fe42e3191beffeeae86d5c1c9ed9338bbf9ed4f8ffe00efafb98a8aff8d5baa"
+    "fingerprint": "66bad68f2de685b7760757f306ec7a89e42bf6e0d5053d97bceefc7f55aa011f"
   },
   "list_subagents": {
     "key": "agents.list",
@@ -252,7 +344,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "6ad24a264908ec1240854bd9db743f57e424a2b4a25dc1342232d24819d98a6e"
+    "fingerprint": "b3c17759665facc3aabf706dbe501243728eeb767d9f343f591c52409281b73c"
   },
   "delegate_to_subagent": {
     "key": "agents.delegate",
@@ -264,7 +356,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "6ad24a264908ec1240854bd9db743f57e424a2b4a25dc1342232d24819d98a6e"
+    "fingerprint": "b3c17759665facc3aabf706dbe501243728eeb767d9f343f591c52409281b73c"
   },
   "forge_subagent": {
     "key": "agents.forge",
@@ -276,7 +368,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "0cf1a64780c2f66173c04c5dc9d73648d3dfd495c29a85b945a15c0486607f19"
+    "fingerprint": "816c9309195a40ee3d84d524896115cbf1fb4c446162dca9f54bf576b9faac6a"
   },
   "author_event_kind": {
     "key": "crm_clients.author_event_kind",
@@ -288,7 +380,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "99caa2a3468ded8dcd66376c2be140ecf12701979110f9048ca1ccd7d6646d3d"
+    "fingerprint": "3aa8579fa9ca50b5ee913b53e786760d2db1666386ee0d91476c8a07e994fe25"
   },
   "crm_add_note": {
     "key": "crm_clients.add_note",
@@ -300,7 +392,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "4d38e59f8c1f3f7454d740e2584f3f76e4b0b216e82e0ba3930392ed3ca000ce"
+    "fingerprint": "382de7ee7c76ccdf7896dae728dd8ec21a8a194e6c44cd0dd41e78267ff868ed"
   },
   "crm_file_document": {
     "key": "crm_clients.file_document",
@@ -312,7 +404,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "3e990a194f9c894b837765df51bed025ba35c35ded022267d89cae3f9ad16175"
+    "fingerprint": "08b1557eed06da18144b600bf1b8faab3d1b2ca5e0f9838fad3c0afaf018cbcf"
   },
   "update_client_data": {
     "key": "crm_clients.update_client_data",
@@ -324,7 +416,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "cae7c4c0d3c893db3a49d3e952557b5e33146a7015b4d100941187d5ac2e3239"
+    "fingerprint": "32acc94974120879b6febefd56156b288164d44ab9e556f895f0bd500af744ba"
   },
   "pipeline_configure": {
     "key": "sales.pipeline_configure",
@@ -336,7 +428,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "8fb8e568688ce76dacccfda7ada017c4b5ad2c8eb5208a9d66b9a333ed177b57"
+    "fingerprint": "feb7df0d574bc63cc5c560dc749d273eab27a63961018dcb1eff41309f41c5fb"
   },
   "deep_research": {
     "key": "research_knowledge.deep_research",
@@ -348,7 +440,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "research_provider",
-    "fingerprint": "b8048430193a762d774d1484668df79238d443e2cd3e5a553384326fe9b8cc33"
+    "fingerprint": "bd65cd71b5b08bbf6bc370eac27ec3359d83b49143407299ecaebab76b9b996f"
   },
   "web_search": {
     "key": "research_knowledge.web_search",
@@ -360,7 +452,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "research_provider",
-    "fingerprint": "14838164b843588c3f02417e467b991aa8cd171ae730465d7103a79bd8d1dee0"
+    "fingerprint": "9a24f658ea10260e77e40e39c3c4911bfc1547088850f72ae215c5af071343c7"
   },
   "web_fetch": {
     "key": "research_knowledge.web_fetch",
@@ -372,7 +464,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "2727274aebdf68916ea7ea0609b53ebbafa030a7598c194e4d2b1a0dee7fe800"
+    "fingerprint": "c4517ea8e58f1138ae11d75e91e406b9284363964f8505500e71f92e806c6991"
   },
   "save_to_knowledge_base": {
     "key": "research_knowledge.save_to_knowledge_base",
@@ -384,7 +476,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "eb02fcaf1e6eaeeef5dd6a4fe95739e4e618b6dcffb42480a8ed249faae1e03f"
+    "fingerprint": "deb31a9407a634bfcdd06feb18c4129a8f9363a5ca7f1d75796e07e560eab011"
   },
   "automation_draft": {
     "key": "automations.automation_draft",
@@ -396,7 +488,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "c4ac3666c3caee38fd7f7cbfe30c48bab38b8a5b1a2bf6cd41b68ab095209ab9"
+    "fingerprint": "806346990c37005608e3e3ab89a9d8f56ac049bd2c3aed00f74a2c5f04396c80"
   },
   "comms_connection_summary": {
     "key": "communications.comms_connection_summary",
@@ -408,7 +500,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "192793fd3fd7c1ccee262058eb58a2a51900be5a01b9131b1667641125114fa0"
+    "fingerprint": "d29ab101b1c6debcb6e1433f13aaa623a032ef9d84dc145e999a4934234aa009"
   },
   "comms_registration_status": {
     "key": "communications.comms_registration_status",
@@ -420,7 +512,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "bcaa441ec702019d4b18f6278ef987f53aa2621676a1982f43b2ff1047c400f1"
+    "fingerprint": "3b252e41758216712d1f718ddf7a7e6d377f1af014a70f5da7257cef272abaa7"
   },
   "comms_list_numbers": {
     "key": "communications.comms_list_numbers",
@@ -432,7 +524,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "3afeef60e51b81a770adee89e3d07b45ee480ac0cc57cf1185f98af8657024f4"
+    "fingerprint": "c1dc555f9a4cfedd8b04d4ce8ed2bcfcc0fe6e3b287893056a67372f7f057787"
   },
   "comms_search_numbers": {
     "key": "communications.comms_search_numbers",
@@ -444,7 +536,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "390fb08fa30e070a671ad15ecb0b87091bf1590818c022d0e5dc56aaa6e92743"
+    "fingerprint": "da4144fcdd7a7f73d300bccb5e47f04a775e58fe8981d98b7ca04e1e75da8a2a"
   },
   "comms_buy_number": {
     "key": "communications.comms_buy_number",
@@ -456,7 +548,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "a957feae375f9bc061ddc7d4a4d7438d45531f51eb7e8d7862de3cae2315b287"
+    "fingerprint": "946e62d37c323b55a7aba0d7e3818e9d1cb16d89b8c41aba5bf2a52f7c641787"
   },
   "comms_draft_registration": {
     "key": "communications.comms_draft_registration",
@@ -468,7 +560,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "ec9c80931c749792ad166a4d5edb847bb4e54eb70d5e436ed81b14df367f2178"
+    "fingerprint": "cea6365c2871d2f7018ec1bcf0c68e5af68e83e53315bc18ce5fb3b6eafc5ff9"
   },
   "comms_name_number": {
     "key": "communications.comms_name_number",
@@ -480,7 +572,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": false,
     "readiness": "none",
-    "fingerprint": "d37b86fac9ecf327fc6fe2fec03c3e48f9c3ab71be97bfe7cb9ef5bf569aae7c"
+    "fingerprint": "0bd753807ffa143b136b233252559017979ce88f5b312faf18fa5e8d2252ac6a"
   },
   "comms_set_primary_number": {
     "key": "communications.comms_set_primary_number",
@@ -492,7 +584,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "d023b72aff2aef5fc3b4f3467f9be8f6fce5eaad7fb16ab352eb30b292978001"
+    "fingerprint": "6e30809dcd458221118bd8fadc438b49d0010ce25bb913565ed1659175fef792"
   }
 };
 const SOURCES = {
@@ -500,7 +592,7 @@ const SOURCES = {
   "supabase/functions/_shared/calendar-link-tenant-brain.ts": "28748e315a12caa855ec906192743cdad5298d37ccbd35ad83539949124800f4",
   "supabase/functions/_shared/client-seat-reply.ts": "6b2ed9c2342da886f8dff44a46bc9dadd4bcd3b079839f62b470ea363564b44d",
   "supabase/functions/_shared/outbound-draft-check.ts": "eda79597ac86a489f916075844f535fcf228518d953b48c55b2e9901920ee961",
-  "supabase/functions/_shared/action-risk.ts": "61bdf66939cf2ce8858c9d8e950addf56827a11afbfe27e518e24f963473968a",
+  "supabase/functions/_shared/action-risk.ts": "a7c036942209d81c2b46dd5855bb21f69ec9ed69bf35d239e4aea3d8e50d6a3a",
   "supabase/functions/_shared/finance-gate.ts": "dfa7fbec065d346ca72199313294a4418aa8be66f3dbb68cfe991a93aef0cf40",
   "supabase/functions/_shared/paige-capability-status/projection.ts": "280c36a53ed5d553f6e6467f7177d049a2c612078cdb8d8139878cec3463922f",
   "supabase/functions/_shared/paige-capability-status/readiness.ts": "56b0a8da8b1a76414a147d15bffb9b589b9bcf9e130c797290b846759e1da65e",
@@ -518,7 +610,7 @@ const SOURCES = {
   "supabase/functions/paige-write-back/index.ts": "5ff11463820b7c38e69f683cbcd8542359d5a72c37724c06846bf3dcc6d41de8",
   "supabase/functions/paige-orchestrator/index.ts": "84e1bb410fb5e01242d4a34401ece2c4dbad515be51e3e4cbe337420e5245243",
   "supabase/functions/subagent-forge/index.ts": "1acb5488f11bd93a2d6b36638fddcd73323f4363eacbd58b284d1fa648b3d906",
-  "supabase/functions/send-message/index.ts": "a4aae28d430ffc154f59187b2df0d08dd273e11353696534981307c11b00de07",
+  "supabase/functions/send-message/index.ts": "29306707680c77fde92d6c689a9f1bca472ba24ab3219c60b21dcc7da68c956d",
   "supabase/functions/_shared/paige-spine/contracts.ts": "2d771686d636c04d2e07d9b8c336e19cde246b9a303ddd034d7ae8500f7eefb4",
   // Operator retirement adds opt-in timeout/no-retry controls; ordinary callers retain
   // their existing behavior. Renewed non-author review and actual retry controls are
@@ -550,7 +642,30 @@ const SOURCES = {
   "supabase/functions/_shared/subagent-authority.ts": "633143a287651772f3c78810397d7a1e753d1d9924c3668693783422be6c8494",
   "supabase/functions/_shared/systems-check-http.ts": "fd5713b29f5127fa0d10e501bd20cd869aa860b816eed500eb19e21e522fcfa6",
   "supabase/functions/_shared/sales-invoice-ledger.ts": "dab806f8decf8682d311a0eeaff90a2c9e7687f6043ff1d85d27a56d66b1515e",
-  "supabase/functions/_shared/sales-invoice-document.ts": "baf7933a648ca9752ff43b2c5cd654b84267f3573f7eaa0fa6670be2fc22d844",
+  // E09 Payments round 3 (2026-10-18, pin ec72c112…466b): presentation only. A projection carrying the
+  // portal-only test_provider_cents / provider_environment keys tells a TEST receipt as a test that moved
+  // no money and does not name the processor; it refuses a test total that contradicts the evidence.
+  // Owner and bearer projections carry neither key: 225 rendered fixtures compared byte-identical
+  // before/after. NON-AUTHOR REVIEWED: the round-3 verifier (not the author) reviewed this change and
+  // found it presentation-only and portal-keyed (only client_portal_invoice_ledger produces those keys;
+  // sales_provider_receipt_shape makes every provider receipt a 'receipt' with environment test|live),
+  // with nothing to block; 60,000 random owner/bearer projections byte-identical to base dbb8a8842.
+  // E09 Payments round 4 (2026-10-18, pin 3288d97e…e4c8): presentation only, portal-keyed. On a portal
+  // projection a voided invoice shows "Nothing owed: this invoice was voided." in place of the outstanding
+  // figure, the outstanding equation and the Outstanding column, and the payment notes name only the money
+  // present. NON-AUTHOR REVIEWED: the round-4 verifier (not the author) reviewed this change and found it
+  // wording-only and gated on isPortalProjection (owner/bearer output unchanged in its own 60,000-case
+  // fuzz against base dbb8a8842, two control mutants biting), with nothing to block beyond its finding 1
+  // (a fully corrected payment read "No payments recorded."), which round 5 fixes.
+  // E09 Payments round 5 (2026-10-18), reviewed by a non-author verifier, round 5 (nothing to block):
+  // presentation only, portal-keyed (paymentEvidenceCopy's
+  // isPortalProjection branch). "No payments recorded." only when the ledger shows no receipt; without a
+  // ledger "No payments count toward this invoice."; a fully corrected payment says "Recorded payments
+  // were corrected; nothing counts toward this invoice."; business-recorded money has one name
+  // ("Business-recorded payments") and the box says when its totals are after corrections. Owner and
+  // bearer output unchanged: 240 fixtures byte-identical to the round-2 renderer and 60,000 random
+  // projections (24,489 rendered, 10,829 of them void) byte-identical to base dbb8a8842.
+  "supabase/functions/_shared/sales-invoice-document.ts": "5ae255569a861722b09868da12dac1e43c104a593d3f3cb0c16f29e47eb55649",
   "supabase/functions/_shared/document-pdf.ts": "e88f697d5d79af5feb0d6952fc5029633d488434b232798bc42fffd0fccd9a8e",
   "supabase/functions/_shared/email-attachments.ts": "becc41d2968a75ba07c1ec077c142f625ccb0239f5dd3423073dbbbe0186069e",
   "supabase/functions/_shared/sales-invoice-delivery/readiness-reader.ts": "8ea30924c24b27244d413ee167e43f08b18a0589df53e2d2b65fde4998ca2ba2",
@@ -585,7 +700,7 @@ const SOURCES = {
   "supabase/functions/_shared/sales-invoice-delivery/readiness.ts": "951b29afbdab2ad6480fdaadde38ae6f927bf5686f7bbf5518109128c91bb140",
   "supabase/functions/_shared/comms-email/readiness.ts": "920b5bf24d44385ded3bd1b72840c1f1ebd3689524cd88472e6bc6337c043cfc",
   "supabase/functions/_shared/openai-models.ts": "a76ac476a2cbd298421a9d7d37f3605cf384e4a4e53a1635719405d52e70905e",
-  "supabase/functions/_shared/openai-responses.ts": "209def2faeb8ffa56b173c96a0d2ce230c5f604df3405daed2885a56199c8b70",
+  "supabase/functions/_shared/openai-responses.ts": "bec9943dcb725b592cdba219a5e349f14bcf1f259adbc17522fceb5c6fe0ec81",
   "supabase/functions/_shared/provider-failure.ts": "3a3507a6ddc6f6e5051a5d17b7a5ff30624643c6bd39d07793224eb0177873b5",
   "supabase/functions/_shared/paige-turn/route.ts": "657f0c9ee1d3724a5eca72f661718d560e090cd7ee36707cadbbf94f1f463d6e",
   "supabase/functions/_shared/brand-tokens.ts": "225f25c0ed74155012b7959766adfe51d4fd8c8341ad7da57c26b650caad06ca",
@@ -619,7 +734,22 @@ const ANCESTRY_SOURCES = {
  // binding/policy/Knowledge/private-history guards are unchanged. Pin the pure
  // identity dependency too; no dispatch scalar or verifier logic is renewed.
  "supabase/functions/_shared/client-portal-persona.ts": "e6d4017abf1f50cfbb1da55cec4430f9d64465c8664220fd1013612c91f5c833",
- "supabase/functions/_shared/client-portal-identity.ts": "e53e01aca7389c55565ceb7394498be64490760bc88c7b6b79e5f85cbbaf9d6a",
+ // E09 CURA round 4 (2026-10-19), AUTHOR source review (NOT non-author; an independent reviewer must confirm):
+ // client-portal-identity.ts only. namesPaige sets aside a literal typed "Paiget" on the raw name before folding
+ // (a superscript or look-alike t no longer borrows the exemption); the look-alike map gains lowercase keys
+ // (Latin and APL alpha, Cyrillic ie and palochka, turned i, small capitals, Cherokee small letters) and drops uppercase keys
+ // that never matched after lowercasing; a pure exported agentNameAsTyped (invisible-stripped, trimmed, 80 chars)
+ // is factored out of customerAgentName unchanged. Presentation only: no import, dispatch, authority or verifier
+ // change; paige-ai-chat is byte-identical, so the 29 dispatch fingerprints are unchanged. Old canonical digest
+ // 55a91574… reproduced from HEAD f272b28ca before renewing (scratchpad r4-digest.mjs). Renew this digest only.
+ // E09 CURA round 5 (2026-10-19), AUTHOR source review (NOT non-author; an independent reviewer must confirm):
+ // client-portal-identity.ts only. INVISIBLE gains U+FFA0 (halfwidth Hangul filler) and readAs strips INVISIBLE
+ // again after NFKC (U+FFA0 folds into U+1160); the look-alike map gains Cherokee small ꭺ ꮐ ꭼ, Lisu, Coptic,
+ // Cyrillic ԍ ҽ, Latin ǀ ɛ ɨ ɩ ᵽ ƥ ꝑ ꞡ ɠ and a pure generated table of negative circled/squared letters. Header
+ // comment narrowed to the listed look-alikes. Presentation only: no import, dispatch, authority or verifier change;
+ // paige-ai-chat untouched, so the 29 dispatch fingerprints are unchanged. Round-4 digest b673eaf5… reproduced
+ // from HEAD 270973a56 before renewing (scratchpad v4probe/c0b/dig.mjs). Renew this digest only.
+ "supabase/functions/_shared/client-portal-identity.ts": "c04232c4e0967ee8e313da48387e481c57d92c8d67ae686d2792a99c7f658a67",
  "supabase/functions/_shared/paige-spine/domains/soloBusinessInterviewContext.ts": "ae869d9dbc131f0e6d48d3f34e6a5edc81fd22a095946fa06cf8b7393528b053",
  // E02 source review: the33-key literal moved unchanged into a pure dependency.
  // Reconstituting it into the reader is AST-identical to deployed892b1bdfe.

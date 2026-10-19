@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useCustomerIdentity } from "@/lib/portal/customerIdentity";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +36,8 @@ interface CertRow {
 }
 
 export function FundingProfileSection({ businessId, userId, isAdmin }: Props) {
+  // The customer's agent (Cura, or the business's own name for it), never PAIGE, the owner's COO.
+  const { agentName } = useCustomerIdentity();
   const [answers, setAnswers] = useState<DemographicAnswers>(EMPTY_ANSWERS);
   const [businessFlags, setBusinessFlags] = useState({
     is_minority_owned: false as boolean | null,
@@ -225,10 +228,10 @@ export function FundingProfileSection({ businessId, userId, isAdmin }: Props) {
               <Sparkles className="w-5 h-5 text-primary mt-1 shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="font-semibold">
-                  Paige found {unlockedPrograms.length} program{unlockedPrograms.length === 1 ? "" : "s"} you may qualify for
+                  {agentName} found {unlockedPrograms.length} program{unlockedPrograms.length === 1 ? "" : "s"} you may qualify for
                 </p>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  Ask Paige about: {unlockedPrograms.slice(0, 3).map((p) => p.name).join(" · ")}
+                  Ask {agentName} about: {unlockedPrograms.slice(0, 3).map((p) => p.name).join(" · ")}
                   {unlockedPrograms.length > 3 ? ` +${unlockedPrograms.length - 3} more` : ""}
                 </p>
               </div>

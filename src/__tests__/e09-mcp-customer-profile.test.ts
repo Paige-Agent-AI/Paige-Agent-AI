@@ -14,7 +14,7 @@ const nodes=ast.statements.filter(node=>ts.isFunctionDeclaration(node)&&["actorC
 const script=ts.transpileModule(nodes.map(n=>n.getText(ast)).join("\n"),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.None}}).outputText;
 function load(overrides:Record<string,unknown>={}){
  const actor="actual-client",queries:Array<{select:string;filters:Array<[string,string,unknown]>}>=[];
- const row={id:"client-a",tenant_id:"tenant-a",linked_user_id:actor,status:"active",merged_into_contact_id:null,
+ const row={id:"client-a",tenant_id:"tenant-a",linked_user_id:actor,status:"active",merged_into_contact_id:null,portal_access_state:"open",
    first_name:"Test",last_name:"Customer",onboarding_stage:"invited",tenants:{status:"active"},
    current_notes:"PRIVATE INTERNAL NOTE",provider_secret:"PRIVATE PROVIDER VALUE",lead_score:99,
    client_contact_methods:[{kind:"email",value:"client@tests.invalid",is_primary:true}],...overrides};
@@ -40,9 +40,11 @@ describe("MCP customer profile privacy before opening external entry",()=>{
   const {handlers,queries}=load();const result=await handlers.me_get_profile.handler();
   expect(JSON.stringify(result)).toContain("Customer");
   expect(JSON.stringify(result)).not.toMatch(/PRIVATE|current_notes|provider_secret|lead_score/);
-  expect(queries[0].filters).toEqual(expect.arrayContaining([["eq","linked_user_id","actual-client"],["eq","status","active"],["is","merged_into_contact_id",null],["eq","tenants.status","active"]]));
+  expect(queries[0].filters).toEqual(expect.arrayContaining([["eq","linked_user_id","actual-client"],["eq","status","active"],["is","merged_into_contact_id",null],["eq","portal_access_state","open"],["eq","tenants.status","active"]]));
  });
- it.each([{linked_user_id:"foreign"},{status:"archived"},{merged_into_contact_id:"survivor"},{tenants:{status:"suspended"}}])("refuses an unavailable relationship %j",async override=>{
+ it.each([{linked_user_id:"foreign"},{status:"archived"},{merged_into_contact_id:"survivor"},{tenants:{status:"suspended"}},
+  // E09 Slice 7: a paused relationship is not the customer's while the owner holds it.
+  {portal_access_state:"paused"}])("refuses an unavailable relationship %j",async override=>{
   const {handlers,queries}=load(override);expect(await handlers.me_get_profile.handler()).toEqual({error:"no_linked_client_record"});expect(queries).toHaveLength(1);
  });
  it.each([{current_notes:"replace internal note"},{funding_goal_amount:999}])("refuses internal CRM/commercial edits %j",async patch=>{

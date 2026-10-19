@@ -325,7 +325,7 @@ SELECT is((SELECT to_jsonb(f) FROM public.client_files f WHERE id='e0944000-0000
 SELECT is(pg_temp.a_share('e0944000-0000-4000-8000-000000000021',true,NULL)->>'error','FILE_CHANGED','a missing version is refused');
 CREATE TEMP TABLE first_share AS SELECT pg_temp.a_share('e0944000-0000-4000-8000-000000000021',true) AS r;
 SELECT is((SELECT r - 'shared_at' - 'updated_at' FROM first_share),
- '{"ok":true,"replayed":false,"file_id":"e0944000-0000-4000-8000-000000000021","shared":true,"portal_connected":true}'::jsonb,'the owner shares a file with a connected client');
+ '{"ok":true,"replayed":false,"file_id":"e0944000-0000-4000-8000-000000000021","shared":true,"portal_connected":true,"portal_access":"open"}'::jsonb,'the owner shares a file with a connected client');
 SELECT ok((SELECT visibility='shared' AND shared_at=(SELECT (r->>'shared_at')::timestamptz FROM first_share) AND shared_by='e0941000-0000-4000-8000-000000000001'
   AND updated_at=(SELECT (r->>'updated_at')::timestamptz FROM first_share) FROM public.client_files WHERE id='e0944000-0000-4000-8000-000000000021'),'the row records the share, who made it and the new version');
 CREATE TEMP TABLE after_share AS SELECT to_jsonb(f) AS row FROM public.client_files f WHERE id='e0944000-0000-4000-8000-000000000021';
@@ -341,7 +341,7 @@ SELECT is(pg_temp.owner($q$UPDATE public.client_files SET visibility='shared' WH
  'FILE_SHARE_WRITER_REQUIRED','so a direct REST share right after it is still refused');
 SELECT is(pg_temp.a_share('e0944000-0000-4000-8000-000000000025',true)->>'portal_connected','false','sharing with a client who has not joined the portal says so');
 SELECT is(pg_temp.a_share('e0944000-0000-4000-8000-000000000021',false,(SELECT updated_at FROM public.client_files WHERE id='e0944000-0000-4000-8000-000000000021')) - 'updated_at',
- '{"ok":true,"replayed":false,"file_id":"e0944000-0000-4000-8000-000000000021","shared":false,"shared_at":null,"portal_connected":true}'::jsonb,'the owner unshares it');
+ '{"ok":true,"replayed":false,"file_id":"e0944000-0000-4000-8000-000000000021","shared":false,"shared_at":null,"portal_connected":true,"portal_access":"open"}'::jsonb,'the owner unshares it');
 SELECT ok((SELECT visibility='internal' AND shared_at IS NULL AND shared_by IS NULL FROM public.client_files WHERE id='e0944000-0000-4000-8000-000000000021'),'unsharing clears the share stamp');
 SELECT ok(pg_temp.file(pg_temp.as_user('e0941000-0000-4000-8000-000000000004',$q$SELECT public.client_portal_documents()$q$),'e0944000-0000-4000-8000-000000000021') IS NULL,'and Sam no longer sees it once it is unshared');
 SELECT is((SELECT string_agg(action, ',' ORDER BY created_at, action) FROM public.audit_logs WHERE entity='client_files' AND entity_id='e0944000-0000-4000-8000-000000000021'),'client_share,client_unshare','each real change writes exactly one audit row');

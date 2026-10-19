@@ -10,7 +10,7 @@
 -- every row class the contact holds is refused (MEDIUM 4); quiet hours say "your time" only for a zone
 -- the send gate can use.
 BEGIN;
-SELECT plan(246);
+SELECT plan(253);
 
 -- Production grants these table privileges to authenticated through project default privileges that
 -- no migration writes (fact 4: has_column_privilege('authenticated','clients',...,'UPDATE') = true).
@@ -199,7 +199,7 @@ SELECT is((SELECT count(*) FROM public.paige_suppressions WHERE tenant_id='e0962
 SELECT is((SELECT address_normalized FROM public.paige_suppressions WHERE contact_id='e0963000-0000-4000-8000-000000000001' AND channel='email'),'jordan.rivera@tests.invalid','the suppression carries the normalized address (M5)');
 SELECT is((SELECT count(*) FROM public.paige_consent_events WHERE contact_id='e0963000-0000-4000-8000-000000000001' AND channel='email' AND action='revoked' AND source='customer_portal' AND topic IS NULL AND address_normalized='jordan.rivera@tests.invalid'),1::bigint,'one revoked event with the normalized address');
 SELECT ok((SELECT evidence_ref FROM public.paige_consent_events WHERE contact_id='e0963000-0000-4000-8000-000000000001' AND channel='email' AND source='customer_portal')
-  = 'portal:e0961000-0000-4000-8000-000000000003:email-pref:v2:'||left(md5(public.client_portal_consent_disclosure('email-pref:v2')),12)
+  = 'portal:e0961000-0000-4000-8000-000000000003:email-pref:v3:'||left(md5(public.client_portal_consent_disclosure('email-pref:v3')),12)
   AND (SELECT ip FROM public.paige_consent_events WHERE contact_id='e0963000-0000-4000-8000-000000000001' AND channel='email' AND source='customer_portal') IS NULL,
   'evidence names the session and the exact disclosure; no spoofable IP is stored (M7)');
 SELECT is(pg_temp.pref('e0961000-0000-4000-8000-000000000003','email',NULL,false)->>'replayed','true','repeat off replays');
@@ -228,7 +228,7 @@ SELECT is((SELECT count(*) FROM public.paige_suppressions WHERE contact_id='e096
 SELECT is(pg_temp.pref('e0961000-0000-4000-8000-000000000004','email','newsletter',true)->>'error','EMAIL_OFF','subscribe while email is off is refused');
 SELECT is(pg_temp.pref('e0961000-0000-4000-8000-000000000003','email','newsletter',true)->>'ok','true','subscribe while email is on');
 SELECT ok((SELECT evidence_ref FROM public.paige_consent_events WHERE contact_id='e0963000-0000-4000-8000-000000000001' AND topic='newsletter' AND action='granted')
-  LIKE 'portal:e0961000-0000-4000-8000-000000000003:updates-optin:v2:%','the opt-in evidence names the updates disclosure the page shows (v2)');
+  LIKE 'portal:e0961000-0000-4000-8000-000000000003:updates-optin:v3:%','the opt-in evidence names the updates disclosure the page shows (v3)');
 SELECT ok(public._email_newsletter_subscribed('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000001','jordan.rivera@tests.invalid'),'the newsletter decider now says subscribed');
 SELECT is(pg_temp.prefs('e0961000-0000-4000-8000-000000000003')#>>'{updates,state}','subscribed','the card says subscribed only when both deciders agree');
 SELECT is(pg_temp.pref('e0961000-0000-4000-8000-000000000003','email',NULL,false)->>'ok','true','email off while subscribed');
@@ -279,6 +279,8 @@ SELECT is((SELECT tenant_id::text FROM public.paige_suppressions WHERE contact_i
 SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000003',$q$SELECT public.client_portal_set_shared_context_consent(true)$q$)->>'replayed','false','the customer allows data sharing');
 SELECT ok((SELECT paige_shared_context_consent AND paige_shared_context_consent_updated_at IS NOT NULL FROM public.clients WHERE id='e0963000-0000-4000-8000-000000000001'),'the flag and its timestamp are set');
 SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000003',$q$SELECT public.client_portal_set_shared_context_consent(true)$q$)->>'replayed','true','repeat replays');
+SELECT is((SELECT data->>'disclosure'||':'||(data->>'disclosure_md5') FROM public.audit_logs WHERE entity='client_portal' AND action='shared_context_consent_set' AND entity_id='e0963000-0000-4000-8000-000000000001' ORDER BY created_at DESC LIMIT 1),
+  'data-sharing:v2:'||left(md5(public.client_portal_consent_disclosure('data-sharing:v2')),12),'the sharing audit names data-sharing:v2, the sentence the page shows, and its hash');
 SELECT is((SELECT count(*) FROM public.audit_logs WHERE entity='client_portal' AND action='shared_context_consent_set' AND entity_id='e0963000-0000-4000-8000-000000000001'),1::bigint,'one audit row');
 SELECT is(pg_temp.prefs('e0961000-0000-4000-8000-000000000003')#>>'{data_sharing,allowed}','true','the read shows it');
 SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000001',$q$UPDATE public.clients SET paige_shared_context_consent=true WHERE id='e0963000-0000-4000-8000-000000000002' RETURNING to_jsonb(id)$q$)->>'error',
@@ -373,7 +375,7 @@ SELECT is(pg_temp.prefs('e0961000-0000-4000-8000-000000000009')#>>'{email,state}
 -- ── 18. The owner read ─────────────────────────────────────────────────────────────────────────
 SELECT is((SELECT array_agg(k ORDER BY k) FROM jsonb_object_keys(pg_temp.as_user('e0961000-0000-4000-8000-000000000001',
   $q$SELECT public.read_client_communication_state('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000002')$q$)) k),
-  ARRAY['contact_id','data_sharing','dnd_active','do_not_contact','email','portal_joined','quiet_hours','read_at','schema_version','sms','tenant_id','updates'],'owner read keys are exact');
+  ARRAY['contact_id','data_sharing','dnd_active','do_not_contact','email','portal_access','portal_joined','quiet_hours','read_at','schema_version','sms','tenant_id','updates'],'owner read keys are exact');
 SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000001',
   $q$SELECT public.read_client_communication_state('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000002')$q$)#>>'{sms,set_by}','you','the owner sees the client set it');
 SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000005',
@@ -513,7 +515,7 @@ SELECT is((SELECT string_agg(coalesce(topic,'-')||':'||action, ',' ORDER BY crea
   WHERE contact_id='e0963000-0000-4000-8000-000000000003' AND channel='email' AND source='customer_portal'),'-:granted,newsletter:revoked',
   'evidence of the act (granted), then out of Updates and offers (revoked), in that order');
 SELECT ok((SELECT evidence_ref FROM public.paige_consent_events WHERE contact_id='e0963000-0000-4000-8000-000000000003' AND channel='email' AND topic IS NULL AND action='granted')
-  LIKE 'portal:e0961000-0000-4000-8000-000000000008:email-pref:v2:%','the lift names the session and the email disclosure the page shows (v2)');
+  LIKE 'portal:e0961000-0000-4000-8000-000000000008:email-pref:v3:%','the lift names the session and the email disclosure the page shows (v3)');
 SELECT is(pg_temp.prefs('e0961000-0000-4000-8000-000000000008')#>>'{email,state}','on','email is on');
 SELECT is(pg_temp.prefs('e0961000-0000-4000-8000-000000000008')#>>'{updates,state}','not_subscribed','taking back a spam report never re-subscribes them');
 SELECT is(pg_temp.presend('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000003','email','riley.chen@tests.invalid'),'proceed','the send gate agrees email is on');
@@ -591,6 +593,22 @@ SELECT is(left(md5(public.client_portal_consent_disclosure('email-pref:v2')),12)
 SELECT is(left(md5(public.client_portal_consent_disclosure('updates-optin:v2')),12),'17d1249d3abe','pin: updates-optin:v2');
 SELECT is(left(md5(public.client_portal_consent_disclosure('sms-pref:v2')),12),'8b66faa37a43','pin: sms-pref:v2');
 SELECT is(left(md5(public.client_portal_consent_disclosure('data-sharing:v1')),12),'a7fbb88f3732','pin: data-sharing:v1');
+-- Owner ruling 2026-10-19 (20271111020000): PAIGE is the owner's COO and leaves the customer's sentences.
+-- The page shows these now; the v2 / data-sharing:v1 pins above stay, because evidence already written names them.
+SELECT is(left(md5(public.client_portal_consent_disclosure('email-pref:v3')),12),'911c5ac50ec5','pin: email-pref:v3');
+SELECT is(left(md5(public.client_portal_consent_disclosure('updates-optin:v3')),12),'7630f99debcf','pin: updates-optin:v3');
+SELECT is(left(md5(public.client_portal_consent_disclosure('sms-pref:v3')),12),'badc94db6304','pin: sms-pref:v3');
+SELECT is(left(md5(public.client_portal_consent_disclosure('data-sharing:v2')),12),'ef7266c5eb0a','pin: data-sharing:v2');
+SELECT is((SELECT count(*) FROM unnest(ARRAY['email-pref:v3','updates-optin:v3','sms-pref:v3','data-sharing:v2']) v WHERE public.client_portal_consent_disclosure(v) ~* 'paige'),0::bigint,'no sentence the page shows names PAIGE');
+-- CURA-D1 (round 5): the flag gates admin_propose_paige_actions, the one writer of the portal's "Action items"
+-- (paige_customer_actions). Staff reach it from ContactPaigePanel (not mounted), and the owner's PAIGE chat reaches
+-- it through action_file/action_advance -> advance_action, with text the AI drafted. It also gates
+-- load_contact_context (the fuller summary). The sentence names action items and says some are AI-drafted, says
+-- messages, shared work, agreements and invoices are not gated, nor the customer's portal assistant, nor the
+-- business's own records; it names no agent and makes no "requests", "AI tools" or "no effect" claim.
+SELECT ok(public.client_portal_consent_disclosure('data-sharing:v2') ~ '^Lets \{business\}’s team send you action items in your portal, including ones its AI assistant drafts, '
+  AND public.client_portal_consent_disclosure('data-sharing:v2') ~ 'It doesn’t change messages, shared work, agreements or invoices, what your portal assistant uses to answer you, or what \{business\} can already see in its own records\. '
+  AND public.client_portal_consent_disclosure('data-sharing:v2') !~ '\{assistant\}|no effect|AI tools|AI-prepared|requests','data-sharing:v2 says what the switch governs and what it does not change, and makes no stale claim');
 SELECT ok(public.client_portal_consent_disclosure('email-pref:v1') IS NOT NULL AND public.client_portal_consent_disclosure('updates-optin:v1') IS NOT NULL
   AND public.client_portal_consent_disclosure('sms-pref:v1') IS NOT NULL,'v1 sentences are kept: evidence already written names them');
 -- Every branch, fresh: Avery (sub-account) and a new customer, Parker, subscribed with texts on.
@@ -609,32 +627,32 @@ LANGUAGE sql AS $$ SELECT e.evidence_ref FROM public.paige_consent_events e WHER
 CREATE FUNCTION pg_temp.names(_ref text, _id text) RETURNS boolean
 LANGUAGE sql AS $$ SELECT _ref = 'portal:e0961000-0000-4000-8000-000000000030:'||_id||':'||left(md5(public.client_portal_consent_disclosure(_id)),12) $$;
 SELECT is(pg_temp.pref('e0961000-0000-4000-8000-000000000030','email','newsletter',true)->>'ok','true','Parker subscribes');
-SELECT ok(pg_temp.names(pg_temp.ev('e0963000-0000-4000-8000-000000000030','email','newsletter','granted'),'updates-optin:v2'),'subscribe records updates-optin:v2 and its hash');
+SELECT ok(pg_temp.names(pg_temp.ev('e0963000-0000-4000-8000-000000000030','email','newsletter','granted'),'updates-optin:v3'),'subscribe records updates-optin:v3 and its hash');
 SELECT is(pg_temp.pref('e0961000-0000-4000-8000-000000000030','email','newsletter',false)->>'ok','true','Parker unsubscribes');
-SELECT ok(pg_temp.names(pg_temp.ev('e0963000-0000-4000-8000-000000000030','email','newsletter','revoked'),'updates-optin:v2'),'unsubscribe records updates-optin:v2 and its hash');
+SELECT ok(pg_temp.names(pg_temp.ev('e0963000-0000-4000-8000-000000000030','email','newsletter','revoked'),'updates-optin:v3'),'unsubscribe records updates-optin:v3 and its hash');
 SELECT is(pg_temp.pref('e0961000-0000-4000-8000-000000000030','email','newsletter',true)->>'ok','true','Parker subscribes again');
 SELECT is(pg_temp.pref('e0961000-0000-4000-8000-000000000030','email',NULL,false)->>'ok','true','Parker turns email off while subscribed');
-SELECT ok(pg_temp.names(pg_temp.ev('e0963000-0000-4000-8000-000000000030','email',NULL,'revoked'),'email-pref:v2'),'email off records email-pref:v2 and its hash');
-SELECT ok(pg_temp.names(pg_temp.ev('e0963000-0000-4000-8000-000000000030','email','newsletter','revoked'),'updates-optin:v2'),'the Updates exit email off writes (D4) records updates-optin:v2');
+SELECT ok(pg_temp.names(pg_temp.ev('e0963000-0000-4000-8000-000000000030','email',NULL,'revoked'),'email-pref:v3'),'email off records email-pref:v3 and its hash');
+SELECT ok(pg_temp.names(pg_temp.ev('e0963000-0000-4000-8000-000000000030','email','newsletter','revoked'),'updates-optin:v3'),'the Updates exit email off writes (D4) records updates-optin:v3');
 -- Their own spam report replaces their portal choice (service context, as the delivery webhook writes it).
 SELECT ok(pg_temp.as_user(NULL,$q$WITH d AS (DELETE FROM public.paige_suppressions WHERE contact_id='e0963000-0000-4000-8000-000000000030' AND channel='email' RETURNING 1) SELECT to_jsonb(count(*)) FROM d$q$,'service_role') ? 'sqlstate' = false
   AND pg_temp.as_user(NULL,$q$INSERT INTO public.paige_suppressions(tenant_id,contact_id,address_normalized,channel,reason,source) VALUES ('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000030','parker.vale@tests.invalid','email','complaint','webhook') RETURNING to_jsonb(id)$q$,'service_role') ? 'sqlstate' = false,
   'Parker''s email is now held by their own spam report');
 SELECT is(pg_temp.pref('e0961000-0000-4000-8000-000000000030','email',NULL,true)->>'ok','true','Parker takes the report back');
-SELECT ok(pg_temp.names(pg_temp.ev('e0963000-0000-4000-8000-000000000030','email',NULL,'granted'),'email-pref:v2'),'taking a report back records email-pref:v2 and its hash');
-SELECT ok(pg_temp.names(pg_temp.ev('e0963000-0000-4000-8000-000000000030','email','newsletter','revoked'),'updates-optin:v2'),'and its Updates exit records updates-optin:v2');
+SELECT ok(pg_temp.names(pg_temp.ev('e0963000-0000-4000-8000-000000000030','email',NULL,'granted'),'email-pref:v3'),'taking a report back records email-pref:v3 and its hash');
+SELECT ok(pg_temp.names(pg_temp.ev('e0963000-0000-4000-8000-000000000030','email','newsletter','revoked'),'updates-optin:v3'),'and its Updates exit records updates-optin:v3');
 SELECT is(pg_temp.pref('e0961000-0000-4000-8000-000000000030','sms',NULL,false)->>'ok','true','Parker turns texts off');
-SELECT ok(pg_temp.names(pg_temp.ev('e0963000-0000-4000-8000-000000000030','sms',NULL,'revoked'),'sms-pref:v2'),'texts off records sms-pref:v2 and its hash');
+SELECT ok(pg_temp.names(pg_temp.ev('e0963000-0000-4000-8000-000000000030','sms',NULL,'revoked'),'sms-pref:v3'),'texts off records sms-pref:v3 and its hash');
 -- Across every customer and every branch this file ran: no portal event and no audit row names anything
 -- but a current id, and every hash is the hash of that id's sentence.
 SELECT is((SELECT count(*) FROM public.paige_consent_events e WHERE e.source='customer_portal'
    AND e.tenant_id IN ('e0962000-0000-4000-8000-000000000001','e0962000-0000-4000-8000-000000000004')
-   AND (e.evidence_ref !~ '^portal:[0-9a-f-]{36}:(email-pref:v2|updates-optin:v2|sms-pref:v2):[0-9a-f]{12}$'
+   AND (e.evidence_ref !~ '^portal:[0-9a-f-]{36}:(email-pref:v3|updates-optin:v3|sms-pref:v3):[0-9a-f]{12}$'
         OR right(e.evidence_ref,12) <> left(md5(public.client_portal_consent_disclosure(substring(e.evidence_ref from '^portal:[0-9a-f-]{36}:(.*):[0-9a-f]{12}$'))),12))),0::bigint,
   'every portal consent event names a current disclosure and its exact hash');
 SELECT ok((SELECT count(*) FROM public.paige_consent_events e WHERE e.source='customer_portal' AND e.tenant_id='e0962000-0000-4000-8000-000000000001') >= 10,'that sweep covered real rows');
 SELECT is((SELECT count(*) FROM public.audit_logs a WHERE a.entity='client_portal' AND a.action='communication_preference_set'
-   AND a.data->>'disclosure' NOT IN ('email-pref:v2','updates-optin:v2','sms-pref:v2')),0::bigint,'every audit row names a current disclosure');
+   AND a.data->>'disclosure' NOT IN ('email-pref:v3','updates-optin:v3','sms-pref:v3')),0::bigint,'every audit row names a current disclosure');
 
 -- ── R3-2. Quiet hours name the zone the send gate actually falls back to (verifier MINOR 4) ────────
 -- runPreSend: safeTz(client.timezone ?? business autosend_dnd_timezone) — a stored client zone, valid or

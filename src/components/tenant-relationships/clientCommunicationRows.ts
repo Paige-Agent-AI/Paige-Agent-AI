@@ -59,7 +59,11 @@ export function communicationRows(s: State): ReachRow[] {
     email, texts, updates,
     // The switch exists and the client can turn it on, but nothing reads it yet (D2): say so, so nobody relies on it.
     { label: "Shared Paige context", value: s.data_sharing.allowed ? "Allowed by the client · it has no effect yet" : "Not allowed", at: s.data_sharing.allowed ? s.data_sharing.updated_at : null },
-    { label: "Portal", value: s.portal_joined ? "Joined" : "Not joined yet" },
+    // E09 Slice 7: "joined" is the login link, which a paused client keeps and an ended one has lost.
+    { label: "Portal", value: s.portal_access === "paused" ? "Joined · access paused, so they can’t open the portal"
+      : s.portal_access === "ended" ? "Access ended · they need a new invitation to come back"
+        : s.portal_access === "not_joined" ? "Not joined yet"
+          : s.portal_access === "open" || s.portal_joined ? "Joined" : "Not joined yet" },
     { label: "Do not contact (marketing)", value: s.do_not_contact ? "On · left out of marketing email" : "Off" },
     { label: "Do not disturb", value: s.dnd_active ? "On · Paige holds emails and texts while the hold lasts" : "Off" },
   ];

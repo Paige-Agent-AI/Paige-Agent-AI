@@ -2,12 +2,14 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, AlertCircle } from "lucide-react";
 import { useEconomicRates, formatRatesAsOf } from "@/hooks/useEconomicRates";
+import { useAssistantName } from "@/lib/portal/customerIdentity";
 
 /**
  * Banner shown on Funding Intelligence page when Fed Funds Rate > 6%
  * (high-rate environment indicator).
  */
 export function RateEnvironmentBanner() {
+  const assistant = useAssistantName();
   const { data: rates, isLoading } = useEconomicRates();
 
   if (isLoading || !rates) return null;
@@ -37,7 +39,7 @@ export function RateEnvironmentBanner() {
             )}
           </div>
           <p className="text-xs text-muted-foreground">
-            The Fed Funds Rate is currently <strong>{fed.value.toFixed(2)}%</strong> — business loan rates are elevated relative to historical norms. DSCR and SBA fixed-rate products can lock in current rates before potential changes. Speak with Paige about timing strategy for your specific goal.
+            The Fed Funds Rate is currently <strong>{fed.value.toFixed(2)}%</strong> — business loan rates are elevated relative to historical norms. DSCR and SBA fixed-rate products can lock in current rates before potential changes. Speak with {assistant} about timing strategy for your specific goal.
           </p>
           <p className="text-[10px] text-muted-foreground/70">
             <TrendingUp className="inline w-3 h-3 mr-1" />

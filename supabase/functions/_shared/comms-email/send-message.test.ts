@@ -9,6 +9,7 @@ import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from
 import { readFileSync } from "node:fs";
 import { transpileModule, ModuleKind, ScriptTarget } from "typescript";
 import { describe, it, expect } from "vitest";
+import { senderDisplayName } from "../email/sender-display-name.ts";
 
 const OP = "22222222-2222-4222-8222-222222222222";
 const MSG = "33333333-3333-4333-8333-333333333333";
@@ -151,6 +152,7 @@ function setup(options: Options = {}) {
     registerOutboundAdapter: (a: { channel_type: string; send: (...x: unknown[]) => Promise<unknown> }) => { adapters[a.channel_type] = a; },
     getOutboundAdapter: (channel: string) => adapters[channel],
     buildListUnsubscribeHeaders: () => ({}),
+    senderDisplayName,
     runPreSend: async () => options.preSend ?? { proceed: true, outcome: "proceed" },
     CLIENT_CONTACT_METHODS_EMBED: "client_contact_methods",
     clientAddresses: (row: { emails?: string[] }) => ({ emails: row.emails ?? [], phones: [] }),

@@ -32,7 +32,10 @@ vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => false }));
 vi.mock("@/lib/playbook", () => ({
   usePlaybook: () => ({ persona: { greeting: "Harness greeting", name: "Paige", role: "AI COO" }, quickActions: [] }),
 }));
-vi.mock("@/hooks/useClientPortalFrame", () => ({useClientPortalFrame: () => ({phase:"not-client",frame:null,checking:false,reload:vi.fn()})}));
+// The not-client branch is the owner's chat; only staff reach it (owner ruling 2026-10-19).
+vi.mock("@/contexts/DashboardModeContext", () => ({ useDashboardMode: () => ({ isAdmin: true, loading: false, mode: "client", setMode: () => {} }) }));
+vi.mock("@/lib/portal/portalStaffStanding", () => ({ usePortalStaffStanding: (_id: string, enabled: boolean) => ({ loading: false, staff: enabled ? true : null }) }));
+vi.mock("@/hooks/useClientPortalFrame", () => {const frame=() => ({phase:"not-client",frame:null,checking:false,reload:vi.fn()}); return {useClientPortalFrame: frame, useSharedClientPortalFrame: frame};});
 vi.mock("@/hooks/useClientPortalBrand", () => ({ useClientPortalBrandState: () => ({ brand: null, loading: false }) }));
 vi.mock("@/hooks/useClientChatContext", () => ({
   useClientChatContext: () => ({ contextBlock: "", isLoading: false, hasCreditData: false }),

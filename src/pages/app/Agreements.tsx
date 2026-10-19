@@ -318,7 +318,7 @@ function PlatformTermsLink() {
   return (
     <footer className="mt-8 border-t border-border pt-4 text-sm text-muted-foreground">
       <Link to={PLATFORM_TERMS_HREF} data-testid="platform-terms-link" className={INLINE_LINK}>
-        <ShieldCheck aria-hidden="true" className="h-4 w-4 text-muted-foreground" /> PaigeAgent terms you&apos;ve accepted
+        <ShieldCheck aria-hidden="true" className="h-4 w-4 text-muted-foreground" /> Platform terms you&apos;ve accepted
       </Link>
     </footer>
   );

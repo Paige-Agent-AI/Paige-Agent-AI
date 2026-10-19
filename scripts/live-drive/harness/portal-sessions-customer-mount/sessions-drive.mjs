@@ -172,7 +172,8 @@ async function drive(page, s, notes) {
       notes.headline = (await page.locator('[data-harness-home] [data-testid="next-session-headline"]').innerText()).trim();
       notes.closedLine = await page.locator('[data-harness-home] [data-testid="next-session-closed"]').count();
       notes.tileBook = await page.locator("[data-harness-home]").getByRole("button", { name: "Book a session" }).count();
-      // Booking stays what the old tile did: ask Paige to set one up.
+      notes.homeText = (await page.locator("[data-harness-home]").innerText()).replace(/\s+/g, " ");
+      // Booking stays what the old tile did: ask the customer's agent to set one up.
       const prefill = page.evaluate(() => new Promise((res) => { window.addEventListener("paige:prefill", (e) => res(e.detail?.prompt ?? null), { once: true }); setTimeout(() => res(null), 3000); }));
       await page.locator("[data-harness-home]").getByRole("button", { name: "Book a session" }).first().click();
       notes.bookPrefill = await prefill;
@@ -234,9 +235,13 @@ function unmet(s, notes) {
     // The headline is how near it is, in the Sessions page's words; the closed window is said on the tile.
     want(notes.headline === "Today · in 45 min", `headline ${notes.headline}`);
     want(notes.closedLine === 1, "tile does not say changes are closed");
-    want(notes.tileBook === 1 && typeof notes.bookPrefill === "string", "Book a session missing or does not ask Paige");
+    want(notes.tileBook === 1 && typeof notes.bookPrefill === "string", "Book a session missing or does not ask the agent");
+    // Owner ruling 2026-10-19: the customer's agent is named (Ava here), never PAIGE, the owner's COO.
+    want(!/paige/i.test(notes.homeText ?? "") && /Ask Ava/.test(notes.homeText ?? ""), `home names PAIGE or not the agent: ${notes.homeText}`);
     want(notes.tileOpens === "/app/sessions", `tile opens ${notes.tileOpens}`);
   }
+  if (s.state === "cancel") want(/ask Ava\.$/.test(notes.dialog ?? "") || /ask Ava\./.test(notes.dialog ?? ""), `cancel dialog does not name the agent: ${notes.dialog}`);
+  if (s.state === "cancel") want(!/paige/i.test(notes.dialog ?? ""), `cancel dialog names PAIGE: ${notes.dialog}`);
   if (s.state === "home-hover") want(notes.bookHovered === true, "Book a session is not under the pointer");
   if (s.state === "home-empty") want(eq(notes.tileActions, ["Message Northwind Studio", "Book a session"]), `empty tile actions ${JSON.stringify(notes.tileActions)}`);
   return miss;

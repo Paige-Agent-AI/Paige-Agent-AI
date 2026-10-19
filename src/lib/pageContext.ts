@@ -30,7 +30,7 @@ export function getCurrentPageName(pathname: string): string {
       case "learning-vault":
         return "Learning Vault";
       case "paige-ai":
-        return "Paige AI Chat";
+        return "Chat";
       case "personal-bank-accounts":
       case "bank-accounts":
         return "Bank Accounts";
@@ -90,7 +90,7 @@ export function getPageOpeningInstruction(
       return `${base} Acknowledge they are in Payments and Billing. Keep it warm and offer to help with subscription, billing, or affiliate questions.`;
     case "Settings":
       return `${base} Acknowledge they are in Settings. Offer to help with profile, notifications, or account preferences.`;
-    case "Paige AI Chat":
+    case "Chat":
     default:
       return `${base} Give a warm, personalized greeting that acknowledges their situation from the context and ends with: "What would you like to work on?"`;
   }

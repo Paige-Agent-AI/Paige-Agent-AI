@@ -14,6 +14,7 @@
  */
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { PAIGE_APP_ORIGIN } from "../../supabase/functions/_shared/canonical-app-url";
 
 export const MARKETING_HOST = "paigeagent.ai";
 export const APP_HOST = "app.paigeagent.ai";
@@ -42,6 +43,87 @@ export function tenantSlugFromHostname(hostname: string): string | null {
   return label;
 }
 
+/**
+ * Whether the Supabase client may adopt a session from the page URL (an OAuth, magic-link or recovery
+ * callback). Never on a tenant host: sessions are born only on the app origin, so tokens that arrive at
+ * `<slug>.paigeagent.ai` are ignored, not adopted. Every other host keeps supabase-js's default (true).
+ */
+export function detectsSessionFromUrl(hostname: string): boolean {
+  return tenantSlugFromHostname(hostname) === null;
+}
+
+/**
+ * The URL parameters supabase-js reads as an auth callback (hash or query): the grant's tokens and
+ * errors, plus `sb_flow_id`, the PKCE flow id auth-js reads and deletes alongside them.
+ */
+export const AUTH_CALLBACK_PARAMS: ReadonlySet<string> = new Set([
+  "access_token", "refresh_token", "provider_token", "provider_refresh_token", "expires_at",
+  "expires_in", "token_type", "type", "code", "error", "error_code", "error_description", "sb_flow_id",
+]);
+
+/**
+ * Drop auth-callback parameters from a `?query` or `#fragment`, keeping every other segment byte for
+ * byte. Keys are decoded exactly as supabase-js decodes them (URLSearchParams), so an encoded key such
+ * as `access%5Ftoken` is still recognised. A part with no auth parameter is returned unchanged.
+ */
+export function stripAuthCallbackParams(part: string): string {
+  const prefix = part[0];
+  if (prefix !== "?" && prefix !== "#") return part;
+  const segments = part.slice(1).split("&");
+  const kept = segments.filter((segment) => {
+    const key = new URLSearchParams(segment).keys().next().value;
+    return key === undefined || !AUTH_CALLBACK_PARAMS.has(key);
+  });
+  if (kept.length === segments.length) return part;
+  const rest = kept.filter((segment) => segment !== "").join("&");
+  return rest ? `${prefix}${rest}` : "";
+}
+
+/**
+ * On a tenant host, the same-origin URL (path, query, hash) with every auth-callback parameter removed —
+ * or null when the host is not a tenant host or nothing needs removing. Pure; used for the in-place
+ * clean-up that runs whether or not `computeTenantHostRedirect` redirects.
+ */
+export function tenantHostUrlWithoutAuthParams(
+  hostname: string,
+  path: string,
+  search: string,
+  hash: string,
+): string | null {
+  if (tenantSlugFromHostname(hostname) === null) return null;
+  const cleanSearch = stripAuthCallbackParams(search);
+  const cleanHash = stripAuthCallbackParams(hash);
+  if (cleanSearch === search && cleanHash === hash) return null;
+  return `${path}${cleanSearch}${cleanHash}`;
+}
+
+/**
+ * Remove auth-callback parameters from the address bar on a tenant host, in place (history.replaceState,
+ * no navigation, history state kept). Called once while the Supabase client module is evaluated, so it
+ * runs before any app module that reads the full URL (the inline Plausible loader in index.html runs
+ * earlier and is not covered). Returns whether the URL changed. App origin and every other non-tenant
+ * host: untouched.
+ *
+ * The replacement is handed over as a full URL on the page's own origin, never a relative one: a path
+ * that begins with `//` (`https://acme.paigeagent.ai//evil.example/x`) would otherwise be read as a
+ * protocol-relative address on another site, and replaceState would throw while this module loads,
+ * stopping the whole app from starting. Prefixing the origin keeps that path byte for byte on this
+ * origin. Any failure is logged and swallowed: a clean-up must never block start (§32).
+ */
+export function scrubTenantHostAuthParams(win: Window | undefined = typeof window !== "undefined" ? window : undefined): boolean {
+  if (!win) return false;
+  try {
+    const { hostname, origin, pathname, search, hash } = win.location;
+    const target = tenantHostUrlWithoutAuthParams(hostname, pathname, search, hash);
+    if (target === null) return false;
+    win.history.replaceState(win.history.state, "", `${origin}${target}`);
+    return true;
+  } catch (error) {
+    console.error("[hostRouting] could not remove auth parameters from the tenant host's address bar", error);
+    return false;
+  }
+}
+
 /** Canonicalize a tenant wildcard host to that tenant\'s one public portal. */
 export function computeTenantHostRedirect(
   hostname: string,
@@ -53,7 +135,9 @@ export function computeTenantHostRedirect(
   if (!slug) return null;
 
   const canonicalPortal = `/portal/${encodeURIComponent(slug)}`;
-  const withLocation = (target: string) => `${target}${search}${hash}`;
+  // Auth tokens are never carried into the tenant host's canonical URL; everything else is.
+  const withLocation = (target: string) =>
+    `${target}${stripAuthCallbackParams(search)}${stripAuthCallbackParams(hash)}`;
   if (path === "/") return withLocation(canonicalPortal);
 
   // These public routes use opaque booking/form tokens, not tenant slugs. They
@@ -144,6 +228,39 @@ export function appUrl(path: string): string {
 }
 export function marketingUrl(path: string): string {
   return HOST_SPLIT_ENABLED ? `https://${MARKETING_HOST}${path}` : path;
+}
+
+/**
+ * The configured app origin: where sign-in, the Supabase session (localStorage is per origin) and the
+ * signed-in client portal live. It comes from the canonical constant, never from the request's host.
+ */
+export function configuredAppOrigin(): string {
+  return HOST_SPLIT_ENABLED ? `https://${APP_HOST}` : PAIGE_APP_ORIGIN;
+}
+
+const TRUSTED_APP_HOSTS = new Set([MARKETING_HOST, `www.${MARKETING_HOST}`, APP_HOST]);
+const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
+
+/**
+ * The origin for an absolute address that SENDS a person somewhere (a password-reset email, a
+ * tenant-host sign-in link). A trusted production app host over https, or local development, keeps
+ * its own origin — unchanged. Every other hostname — a tenant wildcard host, a preview, an unknown or
+ * hostile Host — resolves to the configured app origin, so the hostname can never pick the target.
+ */
+export function trustedAppOrigin(location: { hostname: string; origin: string; protocol: string }): string {
+  const hostname = location.hostname.trim().toLowerCase();
+  if (TRUSTED_APP_HOSTS.has(hostname) && location.protocol === "https:") return location.origin;
+  if (LOOPBACK_HOSTS.has(hostname)) return location.origin;
+  return configuredAppOrigin();
+}
+
+/**
+ * On `<slug>.paigeagent.ai`, the one sign-in link: that tenant's gateway on the app origin, pinned to
+ * the hostname tenant. Null on any non-tenant host. The tenant host itself never signs anyone in.
+ */
+export function tenantHostPortalEntryUrl(hostname: string): string | null {
+  const slug = tenantSlugFromHostname(hostname);
+  return slug ? `${configuredAppOrigin()}/portal/${encodeURIComponent(slug)}` : null;
 }
 
 /** Watches the location and cross-navigates to the canonical host when needed. */

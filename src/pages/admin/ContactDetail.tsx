@@ -549,6 +549,7 @@ export default function ContactDetail() {
                 contactId={client.id}
                 email={client.email}
                 linkedUserId={client.linked_user_id}
+                name={fullName || null}
               />
             </div>
           </TabsContent>

@@ -194,7 +194,7 @@ export async function performSignOut(
       isSigningOut = false;
       toast.error(settled === "refused"
         ? "Couldn't end your act-as in this tenant, so you're still signed in. Try again."
-        : "Paige couldn't confirm whether your act-as is still open, so you're still signed in. Try again.");
+        : "We couldn't confirm whether your act-as is still open, so you're still signed in. Try again.");
       return false;
     }
   }

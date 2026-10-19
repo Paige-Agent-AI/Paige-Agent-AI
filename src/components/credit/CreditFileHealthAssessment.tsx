@@ -916,7 +916,7 @@ function SuggestionCard({ suggestion, isMobile }: { suggestion: SuggestionConten
   if (isMobile) {
     return (
       <Collapsible open={open} onOpenChange={setOpen}>
-        <div className="mt-2 rounded-md border-l-4 border-accent/60 bg-muted/40 p-3">
+        <div className="mt-2 rounded-md border border-border/70 bg-muted/40 p-3">
           <CollapsibleTrigger className="flex items-center gap-1.5 text-xs text-accent font-medium w-full text-left">
             {open ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
             {open ? "Hide Recommendation" : "See Recommendation"}
@@ -927,7 +927,7 @@ function SuggestionCard({ suggestion, isMobile }: { suggestion: SuggestionConten
     );
   }
 
-  return <div className="mt-2 rounded-md border-l-4 border-accent/60 bg-muted/40 p-4">{content}</div>;
+  return <div className="mt-2 rounded-md border border-border/70 bg-muted/40 p-4">{content}</div>;
 }
 
 /* ─── File Completion Scorecard ─── */

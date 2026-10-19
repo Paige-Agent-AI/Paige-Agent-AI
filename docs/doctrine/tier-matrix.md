@@ -5022,3 +5022,37 @@ both themes at 390 and 1440. The database proof is `supabase/tests/customer_port
 lane's pgTAP; counts in the evidence record). Authenticated customer read, a test-mode payment link opened from
 the portal and the return to `/payment-return` on production are owed. The Agreements tab is not touched by
 this slice (owner reversal 2026-10-18; Slice A owns it).
+
+### Customer Portal — tenant host entry `<slug>.paigeagent.ai` and the app-origin gateway (E09 Slice H, 2026-10-18)
+
+Integrator decision D5 (owner may overrule): the authenticated Portal stays on the app origin; the tenant
+wildcard host is a public entry only. On `<slug>.paigeagent.ai` the existing `PortalGateway` wears the same
+brand (logo or initial, business name) and shows one link, "Sign in to your portal", to
+`<configured app origin>/portal/<slug>` (`PAIGE_APP_ORIGIN`, or `https://app.paigeagent.ai` once the host
+split is on), pinned to the hostname tenant. It never reads a session, never collects a password, never calls
+`get_client_portal_brand`, and never navigates to the relative `/app` that host routing pins back to
+`/portal/<slug>` on a tenant host (the redirect loop it replaces). Sessions stay per origin (Supabase
+`localStorage`), and none is born on a tenant host: there the Supabase client does not adopt a session from
+URL tokens (`detectSessionInUrl` false via `detectsSessionFromUrl`), canonicalising a tenant-host URL drops
+every auth-callback parameter (`sb_flow_id` included) from the query and hash, a tenant-host URL that is not
+redirected has them removed from the address bar in place (`scrubTenantHostAuthParams`, run while the
+Supabase client module loads, with a full same-origin URL so a `//` path cannot throw, and any failure
+logged rather than blocking start), and no sign-in form runs there. The app-wide session readers still run on
+every host — `BusinessProvider`, `GlobalAuthSessionManager`, `ClientOnlyRouteGuard`, analytics
+`usePageView`, and `TenantProvider`, `SubscriptionProvider` and `DashboardModeProvider` — and on a tenant
+host they read only that origin's own storage, which by code reading nothing in this slice writes to (no
+real tenant host driven). On every other host `detectSessionInUrl` keeps supabase-js's default, unchanged. Supabase
+Auth's redirect allowlist is not yet read (owed; on E10's attach checklist). Every password-reset link (the gateway's and the
+`/auth` dialog's) is built from `trustedAppOrigin`: a production app host over https and local development
+keep their own origin; a tenant, preview, unknown or hostile hostname gets the configured app origin.
+Hostnames remain routing context, never authorization. The wildcard is still not attached to Vercel (E10),
+so no tenant host serves this yet.
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|
+| Tenant-host entry on `<slug>.paigeagent.ai` (brand + link out, `tenantHostPortalEntryUrl`) | — | — | — | — | same page as Anonymous; the gateway never reads their session there, and no session is adopted there | ✓ any visitor, public brand only (`peek_tenant_portal_brand`, hostname tenant) | PROOF OWED (host not attached, E10) |
+| Sign-in and signed-in portal (`/portal/<slug>` → `/app` on the app origin) | unchanged | unchanged | unchanged | unchanged | ✓ unchanged: relative navigation on the app origin | unchanged | PROOF OWED |
+| Password-reset email target (`trustedAppOrigin`) | same rule | same rule | same rule | same rule | ✓ always an app origin | ✓ always an app origin | PROOF OWED |
+
+No tier gains or loses access: the tenant host showed a sign-in form before (unreachable, the host is a
+Vercel 404) and now shows a link to the same form on the app origin. A §61 default; no feature key.

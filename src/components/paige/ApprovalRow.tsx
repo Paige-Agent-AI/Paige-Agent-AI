@@ -1,5 +1,6 @@
 // The existing approval door. Acknowledgement is not necessarily execution.
 import { useEffect, useId, useRef, useState } from "react";
+import { Link, useInRouterContext, useLocation } from "react-router-dom";
 import { Timer, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenantContext } from "@/hooks/useTenantContext";
@@ -11,6 +12,7 @@ import { PaigeAttribution } from "@/components/ui/page";
 import { cn } from "@/lib/utils";
 import { resolveVpForActionKind } from "@/lib/paige/vpDepartments";
 import { isNativeOwnerTaskApproval, type ApprovalQueueRow } from "@/hooks/usePendingApprovals";
+import { tenantRoutePrefixForPath } from "@/components/tenant-shell/tenantShellRoutes";
 
 const SLA_LABEL: Record<string,string> = { overdue:"Overdue",due_soon:"Due soon",on_track:"On track",closed:"Closed",unscheduled:"No SLA" };
 const TICK_COLOR: Record<string,string> = { overdue:"bg-destructive",due_soon:"bg-gradient-gold",on_track:"bg-muted-foreground/40",closed:"bg-muted-foreground/30",unscheduled:"bg-muted-foreground/30" };
@@ -52,6 +54,18 @@ function executionReport(data: Record<string,unknown>): Report {
   return data.already==="in_progress" ? "in_progress" : ["approved","sent"].includes(String(data.already)) ? "already" : "unknown";
 }
 
+function FollowupReviewLink({a,followup}:{a:ApprovalQueueRow;followup:boolean}) {
+  const routed=useInRouterContext();
+  return routed?<RoutedFollowupReviewLink a={a} followup={followup}/>:<p className="text-sm text-muted-foreground">Open the original reply in Conversations to review it.</p>;
+}
+function RoutedFollowupReviewLink({a,followup}:{a:ApprovalQueueRow;followup:boolean}) {
+  const {pathname}=useLocation(),routeRoot=tenantRoutePrefixForPath(pathname);
+  const uuid=(v:unknown):v is string=>typeof v==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+  const href=routeRoot&&uuid(a.id)&&uuid(a.contact_id)?`${routeRoot}/clients/conversations?contact=${encodeURIComponent(a.contact_id)}&approval=${encodeURIComponent(a.id)}`:null;
+  return href?<Button asChild size="sm" variant="outline" className="min-h-9 h-auto"><Link to={href}>{followup?"Review reply":"Open Conversations"}</Link></Button>
+    :<p className="text-sm text-muted-foreground">The original reply is unavailable. Refresh its status before another decision.</p>;
+}
+
 export function ApprovalRow(props: Props) {
   const tenant=useTenantContext(), { isImpersonating }=useImpersonation();
   const generation=useRef(0), identityRef=useRef("");
@@ -87,6 +101,8 @@ function ApprovalRowContent({a,showDecline=false,onResolved,actorId,tenantId,cur
   actorId:string;tenantId:string|null;current:()=>boolean;
 }) {
   const id=useId(), mounted=useRef(false), flight=useRef(false);
+  const followup=a.category==="owner.lead_followup"||a.category==="client.followup"||a.category==="owner.followup_email";
+  const heldEmail=a.type==="email_draft"&&object(a.metadata)&&Object.prototype.hasOwnProperty.call(a.metadata,"held_draft_message_id");
   const [busy,setBusy]=useState(false),[declining,setDeclining]=useState(false),[rationale,setRationale]=useState("");
   const [detail,setDetail]=useState(false),[report,setReport]=useState<Report|null>(null);
   const viewRef=useRef<HTMLButtonElement>(null),closeRef=useRef<HTMLButtonElement>(null),declineRef=useRef<HTMLButtonElement>(null),reasonRef=useRef<HTMLTextAreaElement>(null);
@@ -182,8 +198,9 @@ function ApprovalRowContent({a,showDecline=false,onResolved,actorId,tenantId,cur
         </div>
         {draftedVp && <PaigeAttribution contributors={[{vp:draftedVp}]} size="sm" showMark={false} leadIn="Drafted by your Paige team"/>}
         <div className="flex flex-wrap items-center justify-end gap-1.5 pt-0.5">
-          <Button size="sm" onClick={()=>void decide(false)} disabled={busy || !!report || a.status!=="pending"}
-            className="min-h-9 h-auto bg-gradient-gold text-accent-foreground hover:opacity-90">{busy?"Checking…":"Approve"}</Button>
+          {followup||heldEmail ? <FollowupReviewLink a={a} followup={followup}/>
+            :<Button size="sm" onClick={()=>void decide(false)} disabled={busy || !!report || a.status!=="pending"}
+              className="min-h-9 h-auto bg-gradient-gold text-accent-foreground hover:opacity-90">{busy?"Checking…":"Approve"}</Button>}
           <Button size="sm" variant="ghost" className="min-h-9 h-auto" ref={viewRef} aria-expanded={detail} aria-controls={detail?id+"-detail":undefined} onClick={()=>setDetail(true)}>View</Button>
           {showDecline && <Button size="sm" variant="ghost" className="min-h-9 h-auto text-muted-foreground" ref={declineRef}
             onClick={()=>setDeclining(true)} disabled={busy || !!report || a.status!=="pending"}>Decline</Button>}

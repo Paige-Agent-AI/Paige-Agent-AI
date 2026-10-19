@@ -97,7 +97,7 @@ Browser tab: 170268697, Title: "Local actual SOLO Operations proof", URL: "http:
 						96 container
 							97 text 2  active  commitments need  a confirmed due date. Start with the original work before choosing when it belongs.
 						98 button Review timing: Confirm the next client check-in
-							99 text Review timing: 
+							99 text Review timing:
 							100 text Confirm the next client check-in
 						101 button Prepare a review with PAIGE
 				102 text Attention and deadlines reflect loaded Planning work and up to 200 CRM tasks. Unavailable sources are excluded.

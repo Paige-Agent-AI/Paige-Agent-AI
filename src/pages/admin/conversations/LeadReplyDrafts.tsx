@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { usePendingApprovals, type ApprovalQueueRow } from "@/hooks/usePendingApprovals";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { UUID, parseCommsEmailCommand } from "../../../../supabase/functions/_shared/comms-email/contract";
+import { COMMS_EMAIL_BODY_MAX, COMMS_EMAIL_SUBJECT_MAX, UUID, parseCommsEmailCommand } from "../../../../supabase/functions/_shared/comms-email/contract";
 
 import { isFollowupEmailKind, useLeadReplyReview, parseOriginalReplyRecord, readOriginalReplyRecord, ORIGINAL_REPLY_COLS } from "./useLeadReplyReview";
 import { shapeEmailDraft } from "../../../../supabase/functions/paige-action-worker/draft";
@@ -81,7 +81,11 @@ function LeadReplyDraftEntry({tenantId,contactId,approval,canEdit,disabled,recor
   const draft=stored?.channel===undefined&&stored?.ok===true&&nested
     &&(nested.channel===undefined||nested.channel==="email")
     &&!["subject","body","body_text","body_html"].some(key=>Object.prototype.hasOwnProperty.call(stored,key))
-    ?shapeEmailDraft(stored):stored;
+    // Bound raw strings before the canonical HTML projection, including unused
+    // HTML and subjects which could otherwise shrink below the command limits.
+    &&["subject","body","body_text","body_html"].every(key=>nested[key]===undefined||(typeof nested[key]==="string"&&nested[key].length<=(key==="subject"?COMMS_EMAIL_SUBJECT_MAX:COMMS_EMAIL_BODY_MAX)))
+    // Review needs only these words; never traverse untrusted composer metadata.
+    ?shapeEmailDraft({ok:true,draft:{subject:nested.subject,body:nested.body,body_text:nested.body_text,body_html:nested.body_html}}):stored;
   let ready=false;
   try { if(draft?.channel==="email") { parseCommsEmailCommand({action:"comms.email_send",contact_id:contactId,connector_id:null,subject:draft.subject,body:draft.body});ready=true; } } catch { /* Legacy malformed content grants no send authority. */ }
   return <div className="space-y-2">

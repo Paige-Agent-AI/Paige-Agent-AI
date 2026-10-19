@@ -50,6 +50,9 @@ describe("historical composer draft compatibility",()=>{
     ["competing body",{...legacyComposer(),body:"Ambiguous competing text"}],
     ["empty body",{ok:true,draft:{subject:"Your inquiry",body_text:""}}],
     ["oversized body",{ok:true,draft:{subject:"Your inquiry",body_text:"x".repeat(10001)}}],
+    ["oversized HTML projecting to short text",{ok:true,draft:{subject:"Your inquiry",body_html:"<svg>".repeat(4096)+"hidden"+"</svg>".repeat(4096)+"<p>Visible</p>"}}],
+    ["oversized subject projecting to short text",{ok:true,draft:{subject:"<svg>".repeat(32)+"hidden"+"</svg>".repeat(32)+"Subject",body_text:"Text"}}],
+    ["oversized unused HTML beside valid text",{ok:true,draft:{subject:"Your inquiry",body_text:"Text",body_html:"x".repeat(10001)}}],
     ["array draft",{ok:true,draft:[{subject:"Your inquiry",body_text:"Text"}]}],
   ])("keeps unsupported or ambiguous historical content unavailable: %s",async(_label,draft_content)=>{
     db.items=[{...pending(),category:"client.followup",draft_content}];await render();expect(editButton()).toBeUndefined();expect(host.textContent).toContain("No complete email draft");expect(edit).not.toHaveBeenCalled();expect(db.invoke).not.toHaveBeenCalled();

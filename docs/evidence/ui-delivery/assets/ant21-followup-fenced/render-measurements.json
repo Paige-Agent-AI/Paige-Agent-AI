@@ -122,10 +122,10 @@
       },
       "nativeImagePixels": [
         1024,
-        576
+        768
       ],
-      "sha256": "b4f0da9e656a1b2e3da2bc4dfb6af1d40b85562f959d65d6241f87ee3a8feb48",
-      "axSha256": "0fa9016afcee0b4459ff40c12408af5a392cd19976be3b5b8e74f11479464722"
+      "sha256": "e2607cd2a07e375d2c5dd444503762716225e0ef9117e51a65a5bb40d07048e5",
+      "axSha256": "cc0872d24fcb5e43d5c659abdcfd7ac7a7d4391369c53c973e37cb8e6fce5998"
     },
     {
       "name": "fenced-a-dark-1024-open",
@@ -221,11 +221,11 @@
         "width": 1536
       },
       "nativeImagePixels": [
-        1505,
+        1535,
         770
       ],
-      "sha256": "5c412a9c607fba0c3318eaf7f49ed7f004fa321c957223b0f0dd1f707106fc0e",
-      "axSha256": "595211a3f48446022f5458d56d1b066f6d4d768bf8671c719a4e425705c63185"
+      "sha256": "43667556a6c279807de7bb1894bcd0762ee835702df71eb6cd69437d3b69c95e",
+      "axSha256": "9710ddb2c5b6b371765e36a7497ee27ae79e6aef5380ec03260eb41cf065de83"
     },
     {
       "name": "fenced-b-light-1536-open",
@@ -246,11 +246,11 @@
         "width": 1536
       },
       "nativeImagePixels": [
-        1505,
+        1535,
         770
       ],
-      "sha256": "9b8718b21f0b0f012b513cf1f11cea9fd96958319ee37dc42108db042e925244",
-      "axSha256": "930debb10151caeb25bd8c8767b1d749651544d17ca4477ff7e8f78c85133e71"
+      "sha256": "62db127008716555d9e774ddc4262ffffc4ab4a30923dd60e364fa2431dc2456",
+      "axSha256": "14c430d963059f7de9f87bc6f9a1cba18b481a1cee19c66694e159ec42877727"
     },
     {
       "name": "fenced-b-light-1366-closed",
@@ -408,5 +408,16 @@
     "fenced-exact-preview.ax.txt": "7058483c6afaf8cd24607356de63a531be359b7e3937011ab7ff2f40b750aa27",
     "fenced-preview-cancelled.ax.txt": "1ada6a6266d9ad0f77cf5ff374fbbbe133c31faa54c42a967656b4a9569bf9c9",
     "fenced-review-cancelled.jpg": "9f8712500df95604fd3e141fe101595c054e313add32108fc65408ff67811d9b"
+  },
+  "captureCorrection": {
+    "priorEvidenceHead": "869a3a6c2d881f4fd7bb6b939f3305db714cce88",
+    "review": "REVISE; original three invalid images retained in Git/private history",
+    "correctedFrames": [
+      "fenced-a-dark-1024-closed",
+      "fenced-b-light-1536-closed",
+      "fenced-b-light-1536-open"
+    ],
+    "method": "Fresh scoped tab and explicit tab parameter per original native screenshot; no resizing, cropping or relabeling",
+    "native1536CssPixelCaptures": "1535 original image pixels; actual dimensions retained, not rewritten to1536"
   }
 }

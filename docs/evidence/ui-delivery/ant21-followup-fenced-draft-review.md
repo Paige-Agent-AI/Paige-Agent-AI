@@ -1,7 +1,7 @@
 # Follow-up review: bounded recovery of historical fenced model responses
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
-FLOW_BY_FLOW: PASS: original pending approval -> current actor/tenant/contact verification -> existing canonical email projection -> native editable review -> exact approval -> unchanged governed sender; this correction restores only the projection
+FLOW_BY_FLOW: PASS: original saved follow-up -> current actor/tenant/contact verification -> existing canonical email projection -> native editable review -> exact approval -> unchanged governed sender; existing flow contract docs/evidence/ui-delivery/ant21-followup-legacy-draft-review.md and owning src/pages/admin/conversations/LeadReplyDrafts.test.tsx, projection correction only
 PAIGE_UI_DESIGN: PASS: installed project routing and Impeccable craft/hardening applied; original native controls, tokens, layout, source fences, errors and exits preserved
 MATERIAL_FLOW_CHANGE: NO: repair the stored wording format inside the existing approved review flow; no new control, step, authorization or effect
 FLOW_PROTOTYPE: NOT_REQUIRED: logic-only canonical projection repair; existing reviewed native flow remains the contract
@@ -25,7 +25,7 @@ MUST_PRESERVE: Existing flat drafts and original approval identities, RLS/actor/
 ACCEPTANCE_CRITERIA: Existing ordinary owner opens original historical draft, sees intended subject/body, can cancel/reload the original record, and approved execution is proven separately by canonical message/provider outcome/Rail
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: Existing shared draft formatter and owning reader exercised; approval/auth/RLS/provider/operation/recovery preserved by owning suites; no auth, grants, registry, schedule, ledger, billing, Chat admission or provider configuration change
-INTERNAL_BUILD_IDENTITY: 99a92bbda1508ffcfb6694b73e8ed675fa0c314d; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_DEPLOYED(paige-action-worker); evidence=docs/evidence/ui-delivery/ant21-followup-fenced-draft-review.md
+INTERNAL_BUILD_IDENTITY: 99a92bbda1508ffcfb6694b73e8ed675fa0c314d; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-action-worker deployment and readback); evidence=docs/evidence/ui-delivery/ant21-followup-fenced-draft-review.md
 RELEASE_CHANNEL: development: tested source/render correction, not production customer proof
 RELEASE_CLASSIFICATION: internal-only: bounded prelaunch restoration repair
 CUSTOMER_RELEASE_IDENTITY: none: no complete Experience/version/announcement
@@ -66,3 +66,8 @@ Sixteen [actual-source states](assets/ant21-followup-fenced/render-measurements.
 
 Flow-by-Flow/current PAIGE design/quality modules and mandatory [Impeccable](https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md) apply: source truth, refusal/uncertainty, original hierarchy/controls, hardening, keyboard and narrow open/closed review were checked. No styling, animation or replacement shell introduced. Full actual magnification, final visual review, production source/version readback, ordinary authenticated corrected wording/negative controls, second eligible cohort, approved send/original receipts/recovery, separate Live and owner acceptance remain open. No intermediate founder testing requested.
 
+
+
+## Independent final-evidence correction
+
+Immutable869a3a6c evidence review REVISE receiptf327d74ba8c5e3caa64fe50d7e6d42c8e49af0108385fe4aa20b0fbad118a51a found three native image/DOM dimension mismatches and two evidence-schema fields. The source99a PASS remains separate. The original failed captures remain in Git and private history. Three states were recaptured with fresh directly scoped tabs and an explicit tab parameter, retaining original native pixels and exact DOM geometry. A1024closed is1024x768; B1536closed/open are native1535x770 beside actual1536x770 CSS geometry, the same observed one-pixel capture rounding as the original A1536 states. No image edited/cropped/resized. Every frame now has matching height and at most one native-pixel width difference; all16 panel states, exact words and unique image pairs reverified. FLOW_BY_FLOW names the existing flow/test reference and the Edge state uses factual PROOF_OWED; actual validateEvidenceText returns ok:true/errors:[] without policy edits. New exact-head evidence review/CI remain required.

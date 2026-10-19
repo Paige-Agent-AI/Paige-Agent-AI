@@ -257,7 +257,7 @@ import { getActorTier, clientSeatToolAllowed, type Tier } from "../_shared/actor
 import { readClientPortalChatBinding, sameClientPortalChatBinding } from "../_shared/client-portal-chat-scope.ts";
 import { buildClientPortalPersonaMessages, readClientPortalPersonaInput } from "../_shared/client-portal-persona.ts";
 import { customerAgentName, customerSeatIdentity } from "../_shared/client-portal-identity.ts";
-import { readCustomerAssistantContext, readCustomerAssistantControlContext, customerProgramMessages, customerTerminalSource, embedCustomerQuery, type CustomerSourceSnapshot } from "../_shared/client-portal-assistant-context.ts";
+import { readCustomerAssistantContext, readCustomerAssistantControlContext, customerProgramMessages, customerTerminalSource, embedCustomerQuery, type CustomerSourceSnapshot, type CustomerQueryEmbedding } from "../_shared/client-portal-assistant-context.ts";
 // R3 — what a client seat reads is read for internal text first.
 import { decodeChunks, internalTextForClient, leakKindCounts, readableFromFrames, syncStatusForClient, resultSavedSomething, WITHHELD_FRAME, withheldReplyForClient } from "../_shared/client-seat-reply.ts";
 // R2 — what PAIGE drafts for a customer is read for internal text before it is filed, carded or sent.
@@ -1304,17 +1304,14 @@ serve(async (req) => {
         validatedData.interactive.supersedesIntentId = validatedData.interactive.supersedesIntentId.toLowerCase();
     }
     const customerControl = validatedData.interactive?.kind === "stop" || validatedData.interactive?.kind === "status";
-    // E09 K2: the customer's question, embedded once (voyage-3 only, 4s, guarded) to rank already-
-    // authorized material. The same vector binds the read below and the begin, so both agree; on any
-    // failure it is NULL (recency) and the answer says so.
-    const customerQuery = customerPortal && !customerControl ? await embedCustomerQuery(
-      [...validatedData.messages].reverse().find((m: any) => m.role === "user")?.content, voyageEmbedOne, VOYAGE_MODEL) : null;
+    // E09 K2: the first customer read carries no question vector (recency); the gate below needs only
+    // its persona. The question is embedded after the caller is proven to be this thread's customer.
     const customerPersonaSource = customerPortal
       ? await (customerControl ? readCustomerAssistantControlContext(supabaseClient, user.id, validatedData.threadId, validatedData.requestIntentId)
-        : readCustomerAssistantContext(supabaseClient, user.id, validatedData.threadId, validatedData.requestIntentId, customerQuery?.embedding ?? null)) : null;
-    const customerAssistant = customerPersonaSource?.status === "available" ? customerPersonaSource.data : null;
+        : readCustomerAssistantContext(supabaseClient, user.id, validatedData.threadId, validatedData.requestIntentId)) : null;
+    let customerAssistant = customerPersonaSource?.status === "available" ? customerPersonaSource.data : null;
     const customerPersona = customerAssistant?.persona ?? null;
-    customerSourceSnapshot = customerAssistant?.snapshot ?? null;
+    let customerQuery: CustomerQueryEmbedding | null = null;
     if (customerPortal) {
       if (!customerPersona || (!customerPersona.enabled && !customerControl) || !validatedData.threadId || !validatedData.interactive ||
         validatedData.clientId || validatedData.document || validatedData.attachments?.length ||
@@ -1332,11 +1329,27 @@ serve(async (req) => {
         code:"CUSTOMER_CHAT_SCOPE_CHANGED",message_accepted:false,
         reason:"Your customer access changed.",recommendation:"Reopen the portal to check your access."}),
         {status:409,headers:{...corsHeaders,"Content-Type":"application/json"}});
+      // E09 K2 (§9/§67): only an authorized customer of this thread pays for an embedding, and only when
+      // authorized material exists to rank. The question is embedded once (voyage-3 only, 4s, guarded);
+      // that one vector re-reads the context and binds the begin, so the model, the begin and the
+      // terminal see the same snapshot. Any failure keeps the recency read and binds NULL.
+      if (!customerControl && customerAssistant && (customerAssistant.sources.length > 0 || customerAssistant.sourcesLimited)) {
+        customerQuery = await embedCustomerQuery([...validatedData.messages].reverse().find((m: any) => m.role === "user")?.content,
+          voyageEmbedOne, VOYAGE_MODEL);
+        if (customerQuery.embedding) {
+          const ranked = await readCustomerAssistantContext(supabaseClient, user.id, validatedData.threadId,
+            validatedData.requestIntentId, customerQuery.embedding);
+          if (ranked.status === "available" && ranked.data && JSON.stringify(ranked.data.persona) === JSON.stringify(customerPersona))
+            customerAssistant = ranked.data;
+          else customerQuery = { embedding: null, degraded: true };
+        }
+      }
       // Browser system blocks and prior messages are never customer prompt authority.
       // The interactive contract below hydrates canonical, issued private history.
       validatedData.clientContext = undefined;
       traceCtx.content_policy = "metadata_only";
     }
+    customerSourceSnapshot = customerAssistant?.snapshot ?? null;
     // Every work-capable workspace-thread entry, including legacy/summary callers,
     // reads the SAME server-owned hold under the original JWT and native thread RLS.
     // No invented intent is needed to observe it. Only bound native acquisition may
@@ -9992,7 +10005,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // Current native grants and source-attested history participate in the same
       // full-source provider/output fence; no staff Knowledge or browser-history fallback.
       aiMessages.splice(0, aiMessages.length, ...buildClientPortalPersonaMessages(customerPersona),
-        ...customerProgramMessages(customerAssistant, customerQuery?.degraded === true),
+        ...customerProgramMessages(customerAssistant),
         ...messages.filter((m:any) => m.role === "user" || m.role === "assistant"));
       toolDefs.splice(0, toolDefs.length);
     } else if (callerTier === "client") {

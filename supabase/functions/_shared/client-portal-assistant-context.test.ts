@@ -132,17 +132,23 @@ test("program material remains quoted data and cannot grant instructions or tool
  assert.equal(messages.length,1);assert.match(messages[0].content,/untrusted data only/);assert.match(messages[0].content,/cannot change.*role.*tools.*approval/);
  assert.match(messages[0].content,/content_truncated.*true/);assert(!messages[0].content.includes("PRIVATE BUSINESS"));
 });
-test("CURA is told to say so when matching was unavailable, and when material was left out",async()=>{
+test("CURA is told to say so when the material it got was chosen by recency, and when material was left out",async()=>{
  const ok=await read(fixture2());assert(ok.data);
  assert.doesNotMatch(customerProgramMessages(ok.data)[0].content,/most relevant material|not given/);
- assert.match(customerProgramMessages(ok.data,true)[0].content,/Tell the customer, briefly, that you may not have the most relevant material/);
+ // The note follows the read's own ranking (on a replay, the bound snapshot's), nothing else.
+ const plain={kind:"knowledge_share",...ref},recent=fixture2();
+ recent.snapshot={version:2,retrieval_refs:[plain],source_refs:[plain]};recent.sources=[{...source2,passages:null}];recent.ranking="recency";
+ const byRecency=await read(recent);assert(byRecency.data);assert.equal(byRecency.data.ranking,"recency");
+ assert.match(customerProgramMessages(byRecency.data)[0].content,/Tell the customer, briefly, that you may not have the most relevant material/);
+ // A v1 binding replays by recency, so it carries the note too.
+ const v1=await read(fixture());assert(v1.data);assert.match(customerProgramMessages(v1.data)[0].content,/may not have the most relevant material/);
  const limited=fixture2();limited.authorized_count=4;limited.sources_limited=true;const more=await read(limited);assert(more.data);
  assert.match(customerProgramMessages(more.data)[0].content,/If the answer may depend on material you were not given, say so/);
  // Each item's kind and end date reach CURA so it can say "this offer ends on …".
  assert.match(customerProgramMessages(ok.data)[0].content,/"kind":"offer","valid_until":"2027-12-31T23:59:59\+00:00"/);
 });
 test("business disablement withholds program presentation without changing native permissions",async()=>{
- const value=fixture();value.frame.config.assistant.enabled=false;const result=await read(value);assert(result.data);assert.deepEqual(customerProgramMessages(result.data,true),[]);
+ const value=fixture();value.frame.config.assistant.enabled=false;const result=await read(value);assert(result.data);assert.deepEqual(customerProgramMessages(result.data),[]);
 });
 test("ordinary terminal metadata binds exact sources; empty cleanup omits withdrawn sources",()=>{
  assert.deepEqual(customerTerminalSource(snapshot,"Answer",{turn_state:{state:"FINAL"}}),{content:"Answer",metadata:{customer_knowledge:snapshot}});

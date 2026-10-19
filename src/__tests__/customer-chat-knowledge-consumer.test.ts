@@ -97,10 +97,19 @@ describe("actual customer handler integration",()=>{
   expect(JSON.stringify(aiMessages)).toContain("representing the business");expect(JSON.stringify(aiMessages)).toContain("Approved program guidance");
   expect(JSON.stringify(aiMessages)).not.toContain("may not have the most relevant material");
   expect(aiMessages.at(-1)).toEqual({role:"user",content:"Current question"});
-  // E09 K2 (§13): when the question could not be embedded, the answer is told to say so.
-  const degraded:unknown[]=[];
-  await run(true,context.persona,context,degraded,[{role:"user",content:"Current question"}],[],buildClientPortalPersonaMessages,customerProgramMessages,{embedding:null,degraded:true});
-  expect(JSON.stringify(degraded)).toContain("may not have the most relevant material");
+  // E09 K2 (§13): the recency note follows what CURA was given, never this request's embed attempt.
+  // A retried intent replays its bound snapshot: a relevance-bound replay whose own embed failed
+  // must not claim recency, and a recency-bound replay whose embed worked must still say so.
+  const replayRelevance:unknown[]=[];
+  await run(true,context.persona,context,replayRelevance,[{role:"user",content:"Current question"}],[],buildClientPortalPersonaMessages,customerProgramMessages,{embedding:null,degraded:true});
+  expect(context.ranking).toBe("relevance");expect(JSON.stringify(replayRelevance)).not.toContain("may not have the most relevant material");
+  const recent=fixture(),plain={kind:"knowledge_share",...share};
+  Object.assign(recent,{snapshot:{version:2,retrieval_refs:[plain],source_refs:[plain]},ranking:"recency"});recent.sources[0].passages=null as unknown as number[];
+  const recency=(await readCustomerAssistantContext({rpc:async()=>({data:recent,error:null})},actor,thread,intent)).data!;
+  expect(recency.ranking).toBe("recency");
+  const replayRecency:unknown[]=[];
+  await run(true,recency.persona,recency,replayRecency,[{role:"user",content:"Current question"}],[],buildClientPortalPersonaMessages,customerProgramMessages,{embedding:Array.from({length:1024},()=>0.5),degraded:false});
+  expect(JSON.stringify(replayRecency)).toContain("may not have the most relevant material");
  });
  it("replaces raw/browser history with the native source-filtered history before downstream work",async()=>{
   const result=await readCustomerAssistantContext({rpc:async()=>({data:fixture(),error:null})},actor,thread,intent);
@@ -122,27 +131,63 @@ describe("actual customer handler integration",()=>{
   expect(captured[1][1].p_content).toBe("");expect(captured[1][1].p_bundle_ref).not.toHaveProperty("customer_knowledge");
  });
 });
-describe("E09 K2: the customer question is embedded once and binds both the read and the begin",()=>{
- it("embeds through the shared voyage embedder only (never the model router), before the customer read",()=>{
-  const d=declaration("customerQuery");const text=d.getText(ast);
+describe("E09 K2: the customer question is embedded once, only for an authorized customer, and binds both the read and the begin",()=>{
+ // Located by what it does (the one guarded step that embeds), not by its condition text, so a
+ // changed condition is judged by behaviour below rather than failing to be found.
+ const EMBED="embedCustomerQuery(";
+ const rankStep=()=>node((n):n is ts.IfStatement=>ts.isIfStatement(n)&&n.expression.getText(ast)!=="customerPortal"&&n.thenStatement.getText(ast).includes(EMBED));
+ it("embeds through the shared voyage embedder only, after the unavailable gate and the thread authorization",()=>{
+  const step=rankStep();const text=step.getText(ast);
   expect(text).toContain("embedCustomerQuery(");expect(text).toContain("voyageEmbedOne, VOYAGE_MODEL");expect(text).not.toMatch(/callModel|router/i);
-  expect(text).toContain("customerPortal && !customerControl");
-  // The customer read is given exactly that vector (or NULL), so the read and the begin agree.
-  const read=declaration("customerPersonaSource").getText(ast);
-  expect(read).toContain("customerQuery?.embedding ?? null");
-  expect(d.getStart(ast)).toBeLessThan(declaration("customerPersonaSource").getStart(ast));
+  // The only embedding of the customer's question is this one.
+  expect(source.split("embedCustomerQuery(").length-1).toBe(1);
+  // It sits inside the customer block, after the refusal and the authorization of this thread.
+  const block=node((n):n is ts.IfStatement=>ts.isIfStatement(n)&&n.expression.getText(ast)==="customerPortal"&&n.getText(ast).includes(EMBED));
+  const body=block.getText(ast),at=body.indexOf(EMBED);
+  expect(body.indexOf('code:"CUSTOMER_CHAT_UNAVAILABLE"')).toBeGreaterThan(-1);expect(body.indexOf('code:"CUSTOMER_CHAT_UNAVAILABLE"')).toBeLessThan(at);
+  expect(body.indexOf('"paige_chat_customer_thread_authorized"')).toBeGreaterThan(-1);expect(body.indexOf('"paige_chat_customer_thread_authorized"')).toBeLessThan(at);
+  expect(body.indexOf("customerPersona.enabled")).toBeLessThan(at);
+  // The first read (what the gate uses) carries no vector; the snapshot is taken after ranking.
+  expect(declaration("customerPersonaSource").getText(ast)).not.toContain("customerQuery");
+  expect(source.indexOf("customerSourceSnapshot = customerAssistant?.snapshot ?? null;")).toBeGreaterThan(block.getEnd()-1);
  });
- it("the actual handler wiring degrades to recency on an embedding failure and still reads",async()=>{
+ async function step(env:{customerControl?:boolean;assistant:unknown;embed:(text:string)=>Promise<unknown>;ranked?:unknown}){
   const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor as FunctionConstructor;
-  const q=declaration("customerQuery");
-  const run=new AsyncFunction("customerPortal","customerControl","validatedData","embedCustomerQuery","voyageEmbedOne","VOYAGE_MODEL",
-   compile(`const ${q.getText(ast)};return customerQuery;`));
-  const failing=async()=>{throw new Error("Voyage 503")};
-  expect(await run(true,false,{messages:[{role:"user",content:"Question"}]},embedCustomerQuery,failing,"voyage-3")).toEqual({embedding:null,degraded:true});
-  expect(await run(true,true,{messages:[{role:"user",content:"Question"}]},embedCustomerQuery,failing,"voyage-3")).toBeNull();
-  expect(await run(false,false,{messages:[{role:"user",content:"Question"}]},embedCustomerQuery,failing,"voyage-3")).toBeNull();
-  const v=Array.from({length:1024},()=>0.25);
-  expect(await run(true,false,{messages:[{role:"assistant",content:"x"},{role:"user",content:"Latest question"}]},embedCustomerQuery,
-   async(text:string)=>{expect(text).toBe("Latest question");return v;},"voyage-3")).toEqual({embedding:v,degraded:false});
+  const reads:unknown[][]=[],embeds:string[]=[];
+  const supabaseClient={rpc:vi.fn(async(name:string,args:Record<string,unknown>)=>{reads.push([name,args.p_query_embedding]);return env.ranked as {data:unknown;error:unknown};})};
+  const run=new AsyncFunction("env",compile(`let customerQuery=null;let customerAssistant=env.customerAssistant;
+   const {customerControl,customerPersona,validatedData,embedCustomerQuery,voyageEmbedOne,VOYAGE_MODEL,readCustomerAssistantContext,supabaseClient,user}=env;
+   ${rankStep().getText(ast)}
+   return {customerQuery,customerAssistant};`));
+  const out=await run({customerControl:env.customerControl??false,customerAssistant:env.assistant,customerPersona:(env.assistant as {persona?:unknown}|null)?.persona??null,
+   validatedData:{threadId:thread,requestIntentId:intent,messages:[{role:"user",content:"Latest question"}]},embedCustomerQuery,
+   voyageEmbedOne:async(text:string)=>{embeds.push(text);return env.embed(text);},VOYAGE_MODEL:"voyage-3",readCustomerAssistantContext,supabaseClient,user:{id:actor}});
+  return{...out,reads,embeds};
+ }
+ const v=Array.from({length:1024},()=>0.25);
+ it("embeds nothing when there is no authorized material to rank, or for stop/status",async()=>{
+  const empty={...fixture(),snapshot:null,sources:[],authorized_count:0,history:[],ranking:"recency"};
+  const first=(await readCustomerAssistantContext({rpc:async()=>({data:empty,error:null})},actor,thread,intent)).data!;
+  expect(first?.sources).toEqual([]);expect(first.persona.enabled).toBe(true);
+  const none=await step({assistant:first,embed:async()=>v});
+  expect(none.embeds).toEqual([]);expect(none.reads).toEqual([]);expect(none.customerQuery).toBeNull();expect(none.customerAssistant).toBe(first);
+  const full=(await readCustomerAssistantContext({rpc:async()=>({data:fixture(),error:null})},actor,thread,intent)).data!;
+  expect(full?.sources.length).toBe(1);
+  const control=await step({customerControl:true,assistant:full,embed:async()=>v});
+  expect(control.embeds).toEqual([]);expect(control.customerQuery).toBeNull();
+ });
+ it("re-reads with the one vector the begin will bind, and keeps the recency read on any failure",async()=>{
+  const first=(await readCustomerAssistantContext({rpc:async()=>({data:fixture(),error:null})},actor,thread,intent)).data!;
+  expect(first?.sources.length).toBe(1);
+  const rankedRow={...fixture(),sources:[{...fixture().sources[0],content:"Closest passage"}]};
+  const ok=await step({assistant:first,embed:async()=>v,ranked:{data:rankedRow,error:null}});
+  expect(ok.embeds).toEqual(["Latest question"]);expect(ok.reads).toEqual([["client_portal_assistant_context_v2",v]]);
+  expect(ok.customerQuery).toEqual({embedding:v,degraded:false});expect((ok.customerAssistant as {sources:Array<{content:string}>}).sources[0].content).toBe("Closest passage");
+  const failed=await step({assistant:first,embed:async()=>{throw new Error("Voyage 503")}});
+  expect(failed.reads).toEqual([]);expect(failed.customerQuery).toEqual({embedding:null,degraded:true});expect(failed.customerAssistant).toBe(first);
+  for(const ranked of [{data:null,error:{code:"08006"}},{data:{...rankedRow,frame:{...rankedRow.frame,config:{assistant:{enabled:true,tone:"Changed"}}}},error:null}]){
+   const lost=await step({assistant:first,embed:async()=>v,ranked});
+   expect(lost.reads.length).toBe(1);expect(lost.customerQuery).toEqual({embedding:null,degraded:true});expect(lost.customerAssistant).toBe(first);
+  }
  });
 });

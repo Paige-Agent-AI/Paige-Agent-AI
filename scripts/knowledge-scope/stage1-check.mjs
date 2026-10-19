@@ -4282,15 +4282,20 @@ group("32 Explicit customer audience uses native private history and customer pr
     &&!good.rec.rpc.some(x=>x.name==="paige_chat_interactive_begin_v2")
     &&JSON.stringify(good.rec.rpc.find(x=>x.name==="paige_chat_interactive_settle")?.args.p_bundle_ref.customer_knowledge)===JSON.stringify(snapshot));
   {
-    // E09 K2: the customer's question is embedded (voyage only) and that one vector binds both the
-    // customer read and the begin overload, so the bound snapshot is the one the model was given.
+    // E09 K2: the customer's question is embedded once (voyage only), only after this thread's customer
+    // is authorized, and that one vector binds the ranked customer read and the begin overload, so the
+    // bound snapshot is the one the model was given. The gate's own read carries no vector.
+    const order=good.rec.rpc.map(x=>x.name);
     const reads=good.rec.rpc.filter(x=>x.name==="client_portal_assistant_context_v2");
+    const ranked=reads.filter(x=>Array.isArray(x.args.p_query_embedding));
     const begin=good.rec.rpc.find(x=>x.name==="client_portal_assistant_begin");
     assert("32 the same question vector binds the customer read and the begin",
-      reads.length>=1&&Array.isArray(reads[0].args.p_query_embedding)&&reads[0].args.p_query_embedding.length===1024
-      &&JSON.stringify(begin?.args.p_query_embedding)===JSON.stringify(reads[0].args.p_query_embedding)
-      &&reads.slice(1).every(x=>x.args.p_query_embedding===null),
-      {reads:reads.map(x=>Array.isArray(x.args.p_query_embedding)?x.args.p_query_embedding.length:x.args.p_query_embedding),
+      good.embeds===1&&ranked.length===1&&ranked[0].args.p_query_embedding.length===1024
+      &&reads[0].args.p_query_embedding===null
+      &&order.indexOf("paige_chat_customer_thread_authorized")>-1
+      &&good.rec.rpc.indexOf(ranked[0])>order.indexOf("paige_chat_customer_thread_authorized")
+      &&JSON.stringify(begin?.args.p_query_embedding)===JSON.stringify(ranked[0].args.p_query_embedding),
+      {embeds:good.embeds,reads:reads.map(x=>Array.isArray(x.args.p_query_embedding)?x.args.p_query_embedding.length:x.args.p_query_embedding),
        begin:Array.isArray(begin?.args.p_query_embedding)?begin.args.p_query_embedding.length:begin?.args.p_query_embedding});
   }
   const privateTraces=good.rec.inserts.filter(x=>x.table==="paige_llm_trace");
@@ -4342,6 +4347,8 @@ group("32 Explicit customer audience uses native private history and customer pr
     assert("32 "+label+" withholds the answer",!r.responseText.includes("Scoped response."));
     assert("32 "+label+" does not dispatch an unauthorized next call",
       r.providerCalls.length===(label.endsWith("after egress")?1:0));
+    // E09 K2 (§9/§67): a refused or unauthorized customer never pays for an embedding of its question.
+    if(!label.endsWith("after egress"))assert("32 "+label+" embeds nothing",r.embeds===0,{embeds:r.embeds});
   }
   terminal=false;
   const stopped=await drive({...scenario,bodyExtras:{...scenario.bodyExtras,interactive:{kind:"stop",supersedesIntentId:intent}},
@@ -4362,6 +4369,9 @@ group("32 Explicit customer audience uses native private history and customer pr
   assert("32 compatible retry cannot manufacture source attestation in its terminal",
     legacy.rec.rpc.filter(x=>x.name==="paige_chat_interactive_settle").length===1
     &&!legacy.rec.rpc.find(x=>x.name==="paige_chat_interactive_settle")?.args.p_bundle_ref.customer_knowledge);
+  assert("32 nothing authorized to rank: no embedding, and the begin binds no vector",
+    legacy.embeds===0&&legacy.rec.rpc.find(x=>x.name==="client_portal_assistant_begin")?.args.p_query_embedding===null,
+    {embeds:legacy.embeds});
   for(const [label,overrides]of [["thread",{threadId:thread.toUpperCase()}],["intent",{requestIntentId:intent.toUpperCase()}]]){
     terminal=false;
     const r=await drive({...scenario,bodyExtras:{...scenario.bodyExtras,...overrides}});

@@ -57,8 +57,10 @@ function canonical(value: unknown): unknown {
   return value;
 }
 /** Assistant/tool transcript growth cannot mint a second operation for the same user command. */
-export async function commsEmailOperationId(tenant: string, actor: string, command: unknown, turn: Turn): Promise<string> {
-  const bytes = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(canonical({ namespace: "comms_email_chat_v1", tenant, actor, command, turn }))))).slice(0, 16);
+export async function commsEmailOperationId(tenant: string, actor: string, command: unknown, turn: Turn, origin?: { action_id: string; approval_id: string }): Promise<string> {
+  // Omission retains the incumbent unbound identity byte for byte. A server-bound follow-up
+  // adds its exact action/approval pair, so identical words cannot borrow another follow-up.
+  const bytes = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(canonical({ namespace: "comms_email_chat_v1", tenant, actor, command, turn, ...(origin ? { origin } : {}) }))))).slice(0, 16);
   bytes[6] = (bytes[6] & 15) | 64; bytes[8] = (bytes[8] & 63) | 128;
   const hex = [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
@@ -74,16 +76,42 @@ export type CommsEmailChatDependencies = {
   admin: { from(name: string): { select(value: string): CommsEmailApprovalQuery } };
   caller: { functions: { invoke(name: string, options: { body: Record<string, unknown> }): Promise<Reply> } };
 };
-export type CommsEmailChatContext = { tenantId: string | null; userId: string; toolName: string; args: Record<string, unknown>; approved: Set<string>; sameToolCalls: number; turn: Turn };
+/** Server-only: the caller has read this exact action -> pending approval with the original JWT.
+ * This tuple is correlation, never substitute authority for the command door's native checks. */
+export type CommsEmailFollowupOrigin = Readonly<{ actionId: string; approvalId: string; contactId: string; tenantId: string; actorId: string; threadId: string }>;
+export type CommsEmailChatContext = {
+  tenantId: string | null; userId: string; toolName: string; args: Record<string, unknown>; approved: Set<string>; sameToolCalls: number; turn: Turn;
+  followupOrigin?: CommsEmailFollowupOrigin;
+  /** Trusted C4b selection, including consumed/expired rows. No live lookup can replace it. */
+  pinned?: { fingerprint: string; args: Record<string, unknown> };
+  /** Root supplies a sticky scope/Stop fence, including a monotonic generation for ABA. */
+  current?: () => boolean;
+};
 type Refusal = "ambiguous" | "unclaimable" | "lookup_failed";
 /** `spent`: the approval token this call handed to comms-email-command to redeem. The chat records it
  *  against the call, so the approval card reports what the call actually did (approval-outcome.ts)
  *  instead of "Didn't run" for an email that went out. */
 export type CommsEmailChatResult = { content: Record<string, unknown>; refusal?: Refusal; tokens?: string[]; spent?: string };
 
-function refusal(reason: Refusal): CommsEmailChatResult {
+function refusal(reason: Refusal, original = false): CommsEmailChatResult {
   const message = reason === "ambiguous" ? "More than one email approval could apply." : reason === "lookup_failed" ? "The email approval could not be checked." : "The email approval cannot be used in this scope.";
-  return { refusal: reason, content: { success: false, error: message, note: "Nothing was sent by this call. Ask for a fresh email request; do not retry automatically." } };
+  return { refusal: reason, content: { success: false, error: message, note: original ? "This call did not hand off the original email request. Its outcome is not verified here. Do not retry or propose a replacement automatically." : "Nothing was sent by this call. Ask for a fresh email request; do not retry automatically." } };
+}
+
+const own = (value: object, key: string): boolean => Object.prototype.hasOwnProperty.call(value, key);
+const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === "object" && !Array.isArray(value);
+const uuid = (value: unknown): string | null => typeof value === "string" && UUID.test(value) ? value.toLowerCase() : null;
+function readOrigin(value: unknown): CommsEmailFollowupOrigin | null {
+  const keys = ["actionId", "approvalId", "contactId", "tenantId", "actorId", "threadId"] as const;
+  if (!record(value) || Object.keys(value).length !== keys.length || keys.some((key) => !own(value, key) || !uuid(value[key]))) return null;
+  return Object.fromEntries(keys.map((key) => [key, uuid(value[key])])) as CommsEmailFollowupOrigin;
+}
+/** Presence is significant: null/undefined/blank is not a legacy unbound proposal. */
+function storedApproval(args: Record<string, unknown>): string | null {
+  if (!own(args, "approval_id")) return null;
+  const id = uuid(args.approval_id);
+  if (!id) throw new TypeError("Invalid stored email approval");
+  return id;
 }
 
 const text = (value: unknown, max: number): string | null => typeof value === "string" && value.length > 0 && value.length <= max ? value : null;
@@ -193,7 +221,8 @@ const NOT_SENT_OUTCOMES = new Set<unknown>(["refused", "held", "needs_setup", "f
 export async function dispatchCommsEmailChat(ctx: CommsEmailChatContext, deps: CommsEmailChatDependencies): Promise<CommsEmailChatResult> {
   if (PORTAL_INVITATION_TOOL_NAMES.has(ctx.toolName)) return dispatchPortalInvitationChat(ctx, deps);
   if (ctx.toolName !== COMMS_EMAIL_TOOL) return { content: { success: false, error: "Email action unavailable." } };
-  if (!ctx.tenantId || !UUID.test(ctx.tenantId)) return { content: { success: false, error: "Email workspace unavailable." } };
+  const tenantId = ctx.tenantId, userId = ctx.userId, sameToolCalls = ctx.sameToolCalls;
+  if (!tenantId || !UUID.test(tenantId)) return { content: { success: false, error: "Email workspace unavailable." } };
   if (!ctx.args || typeof ctx.args !== "object" || Array.isArray(ctx.args)) return { content: { success: false, error: "Invalid email request." } };
   // `confirm` is the compatibility flag the general gate advertises on every mutating tool; it is
   // never approval here (the card's fingerprint is) and never part of the command.
@@ -201,38 +230,87 @@ export async function dispatchCommsEmailChat(ctx: CommsEmailChatContext, deps: C
   if (typeof modelArgs.confirm === "boolean") delete modelArgs.confirm;
   if (Object.keys(modelArgs).some((key) => !MODEL_KEYS.has(key))) return { content: { success: false, error: "Invalid email request. Pass only contact_id, subject, body and, when the person chose a sender, connector_id." } };
 
+  // Capture caller, selection and scope before the first await. Later mutable input/ports must
+  // not lend a different actor, origin or operation to an admitted continuation.
+  const invoke = deps.caller.functions.invoke.bind(deps.caller.functions);
+  const from = deps.admin.from.bind(deps.admin);
+  const current = ctx.current;
+  let withdrawn = false;
+  const isCurrent = (required = false): boolean => {
+    if (withdrawn) return false;
+    try {
+      if (typeof current === "function" ? current() !== true : required) withdrawn = true;
+    } catch { withdrawn = true; }
+    return !withdrawn;
+  };
+  const hasOrigin = own(ctx, "followupOrigin"), hasPin = own(ctx, "pinned");
+  let original = hasOrigin || hasPin;
+  const refuse = (reason: Refusal): CommsEmailChatResult => refusal(reason, original);
+  const origin = hasOrigin ? readOrigin(ctx.followupOrigin) : null;
+  let turn: Turn;
+  try { turn = canonical(ctx.turn) as Turn; } catch { return refuse("unclaimable"); }
+  if (hasOrigin && (!origin || origin.tenantId !== uuid(tenantId) || origin.actorId !== uuid(userId) || origin.threadId !== uuid(turn?.thread_id))) return refuse("unclaimable");
+  if (!isCurrent(original)) return refuse("unclaimable");
+  let pin: { fingerprint: string; args: Record<string, unknown> } | undefined;
+  if (hasPin) {
+    const p = ctx.pinned;
+    if (!record(p) || Object.keys(p).length !== 2 || !own(p, "fingerprint") || !own(p, "args") || typeof p.fingerprint !== "string" || !FINGERPRINT.test(p.fingerprint) || !record(p.args)) return refuse("unclaimable");
+    pin = { fingerprint: p.fingerprint, args: { ...p.args } };
+  }
+  const approved = pin ? new Set([pin.fingerprint]) : new Set(ctx.approved);
   const tokens: string[] = [];
   let approvedArgs: Record<string, unknown> | undefined;
   let fingerprint: string | undefined;
-  if (ctx.approved.size) {
+  if (pin || approved.size) {
+    let rows: { fingerprint?: unknown; args?: unknown }[];
     try {
-      const reply = await deps.admin.from("paige_pending_confirmations").select("fingerprint,args")
-        .eq("tenant_id", ctx.tenantId).eq("user_id", ctx.userId).eq("tool_name", COMMS_EMAIL_TOOL)
-        .in("fingerprint", [...ctx.approved].map((token) => token.split(":")[0]))
-        .is("thread_id", null).is("scoped_client_id", null).is("consumed_at", null)
-        .not("server_issued_at", "is", null).not("issued_in_request", "is", null)
-        .gt("expires_at", new Date().toISOString()).limit(CRM_APPROVAL_CANDIDATE_LIMIT + 1);
-      if (reply.error) return refusal("lookup_failed");
-      const rows = reply.data ?? [];
-      for (const row of rows) for (const token of ctx.approved) if (token.split(":")[0] === row.fingerprint) tokens.push(token);
+      if (pin) rows = [{ fingerprint: pin.fingerprint, args: pin.args }];
+      else {
+        const reply = await from("paige_pending_confirmations").select("fingerprint,args")
+          .eq("tenant_id", tenantId).eq("user_id", userId).eq("tool_name", COMMS_EMAIL_TOOL)
+          .in("fingerprint", [...approved].map((token) => token.split(":")[0]))
+          .is("thread_id", null).is("scoped_client_id", null).is("consumed_at", null)
+          .not("server_issued_at", "is", null).not("issued_in_request", "is", null)
+          .gt("expires_at", new Date().toISOString()).limit(CRM_APPROVAL_CANDIDATE_LIMIT + 1);
+        if (!isCurrent(original)) return refuse("unclaimable");
+        if (reply.error) return refuse("lookup_failed");
+        rows = reply.data ?? [];
+      }
+    } catch { return refuse("lookup_failed"); }
+    if (!Array.isArray(rows) || rows.length > CRM_APPROVAL_CANDIDATE_LIMIT) return { ...refuse("ambiguous"), tokens };
+    try {
+      const seen = new Set<string>();
+      for (const row of rows) {
+        if (!record(row) || typeof row.fingerprint !== "string" || !FINGERPRINT.test(row.fingerprint) || seen.has(row.fingerprint) || !record(row.args)) return { ...refuse("unclaimable"), tokens };
+        seen.add(row.fingerprint);
+        if (own(row.args, "approval_id")) original = true;
+        storedApproval(row.args); // Malformed presence cannot disappear during selection.
+        for (const token of approved) if (token.split(":")[0] === row.fingerprint) tokens.push(token);
+      }
       // The door stores no approval_subject; the subject is read from the STORED command (the
-      // contact the person saw on the card), never recomputed from model drift.
+      // contact the person saw on the card), never recomputed from model drift. A trusted fresh
+      // origin also narrows by its pending approval; absent origin never invents that binding.
       const storedContact = (args: unknown): string | null => {
         const c = args && typeof args === "object" && !Array.isArray(args) ? (args as Record<string, unknown>).command : null;
         const id = c && typeof c === "object" && !Array.isArray(c) ? (c as Record<string, unknown>).contact_id : null;
         return typeof id === "string" ? id.toLowerCase() : null;
       };
-      const subjected = rows.map((row) => { const id = storedContact(row.args); return { fingerprint: row.fingerprint, args: id ? { approval_subject: `${COMMS_EMAIL_ACTION}:${id}` } : {} }; });
-      const subject = typeof modelArgs.contact_id === "string" ? `${COMMS_EMAIL_ACTION}:${modelArgs.contact_id.toLowerCase()}` : "";
-      const selected = resolveCrmApprovedFingerprint(subjected, subject, ctx.sameToolCalls);
-      if (selected.kind === "ambiguous") return { ...refusal("ambiguous"), tokens };
+      const subjected = rows.map((row) => {
+        const id = storedContact(row.args), approval = storedApproval(row.args as Record<string, unknown>);
+        return { fingerprint: row.fingerprint, args: id ? { approval_subject: `${COMMS_EMAIL_ACTION}:${id}${origin ? `:${approval ?? ""}` : ""}` } : {} };
+      });
+      const contact = origin?.contactId ?? (typeof modelArgs.contact_id === "string" ? modelArgs.contact_id.toLowerCase() : "");
+      const subject = contact ? `${COMMS_EMAIL_ACTION}:${contact}${origin ? `:${origin.approvalId}` : ""}` : "";
+      const selected = pin ? { kind: "claim" as const, fingerprint: pin.fingerprint } : resolveCrmApprovedFingerprint(subjected, subject, sameToolCalls);
+      if (selected.kind === "ambiguous") return { ...refuse("ambiguous"), tokens };
       if (selected.kind === "claim") {
-        if (!ctx.approved.has(selected.fingerprint)) return { ...refusal("unclaimable"), tokens };
+        if (!approved.has(selected.fingerprint)) return { ...refuse("unclaimable"), tokens };
         const stored = rows.find((row) => row.fingerprint === selected.fingerprint)?.args;
-        if (!stored || typeof stored !== "object" || Array.isArray(stored)) return { ...refusal("unclaimable"), tokens };
-        approvedArgs = stored as Record<string, unknown>; fingerprint = selected.fingerprint;
+        if (!record(stored)) return { ...refuse("unclaimable"), tokens };
+        approvedArgs = { ...stored }; fingerprint = selected.fingerprint;
       }
-    } catch { return refusal("lookup_failed"); }
+      if (origin && !approvedArgs) return { ...refuse("unclaimable"), tokens };
+    } catch { return { ...refuse("unclaimable"), tokens }; }
   }
 
   let command: CommsEmailCommand;
@@ -240,25 +318,32 @@ export async function dispatchCommsEmailChat(ctx: CommsEmailChatContext, deps: C
   let spent: string | undefined;
   try {
     if (approvedArgs) {
-      if (approvedArgs.expected_tenant_id !== ctx.tenantId || typeof approvedArgs.operation_id !== "string" || !UUID.test(approvedArgs.operation_id) || !fingerprint || !FINGERPRINT.test(fingerprint)) return { ...refusal("unclaimable"), tokens };
+      if (approvedArgs.expected_tenant_id !== tenantId || typeof approvedArgs.operation_id !== "string" || !UUID.test(approvedArgs.operation_id) || !fingerprint || !FINGERPRINT.test(fingerprint)) return { ...refuse("unclaimable"), tokens };
       command = parseCommsEmailCommand(approvedArgs.command);
-      body = { expected_tenant_id: ctx.tenantId, operation_id: approvedArgs.operation_id, command, approved_fingerprint: fingerprint };
-      spent = [...ctx.approved].find((token) => token.split(":")[0] === fingerprint);
+      const approvalId = storedApproval(approvedArgs);
+      if (origin && (approvalId !== origin.approvalId || command.contact_id !== origin.contactId)) return { ...refuse("unclaimable"), tokens };
+      if (approvalId && (!uuid(userId) || !uuid(turn?.thread_id) || !isCurrent(true))) return { ...refuse("unclaimable"), tokens };
+      body = { expected_tenant_id: tenantId, operation_id: approvedArgs.operation_id, command, approved_fingerprint: fingerprint, ...(approvalId ? { approval_id: approvalId } : {}) };
+      spent = [...approved].find((token) => token.split(":")[0] === fingerprint);
     } else {
       command = parseCommsEmailCommand({ action: COMMS_EMAIL_ACTION, contact_id: modelArgs.contact_id, connector_id: modelArgs.connector_id ?? null, subject: modelArgs.subject, body: modelArgs.body });
-      body = { expected_tenant_id: ctx.tenantId, operation_id: await commsEmailOperationId(ctx.tenantId, ctx.userId, command, ctx.turn), command };
+      if (origin && command.contact_id !== origin.contactId) return refuse("unclaimable");
+      body = { expected_tenant_id: tenantId, operation_id: await commsEmailOperationId(tenantId, userId, command, turn, origin ? { action_id: origin.actionId, approval_id: origin.approvalId } : undefined), command, ...(origin ? { approval_id: origin.approvalId } : {}) };
     }
   } catch {
-    return approvedArgs ? { ...refusal("unclaimable"), tokens } : { content: { success: false, error: "Invalid email request. contact_id must be a contact's id from a contact read; subject is one line of at most 200 characters; body is plain text of at most 10000 characters." }, tokens };
+    return approvedArgs ? { ...refuse("unclaimable"), tokens } : { content: { success: false, error: "Invalid email request. contact_id must be a contact's id from a contact read; subject is one line of at most 200 characters; body is plain text of at most 10000 characters." }, tokens };
   }
 
+  if (!isCurrent(original)) return { ...refuse("unclaimable"), tokens };
   try {
-    const reply = await deps.caller.functions.invoke(DOOR, { body });
+    const reply = await invoke(DOOR, { body });
+    if (!isCurrent(original)) throw new Error("withdrawn");
     let data = reply.data;
     if (reply.error) {
       const error = reply.error as { context?: { json?: () => Promise<unknown> } };
       if (!error.context?.json) throw new Error("unanswered");
       data = await error.context.json();
+      if (!isCurrent(original)) throw new Error("withdrawn");
     }
     if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error("unanswered");
     const result = data as Record<string, unknown>;

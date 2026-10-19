@@ -434,10 +434,11 @@ export function AppDashboardHome({ factors, userId }: { factors: CreditFactorSco
   );
 }
 
-/** Home for a person whose portal access is not active: what will appear here, not an empty "Welcome". */
+/** Home for a person whose portal access is not active: what will appear here, not an empty "Welcome". It fills the
+ * pane and centres, so on desktop it sits level with the chat column's status beside it. */
 function NoAccessHome() {
   return (
-    <div className="mx-auto flex min-h-[60vh] max-w-4xl flex-col items-center justify-center" data-testid="no-access-home">
+    <div className="mx-auto flex h-full max-w-4xl flex-col items-center justify-center" data-testid="no-access-home">
       <h1 className="sr-only">Home</h1>
       <EmptyState
         icon={Inbox}

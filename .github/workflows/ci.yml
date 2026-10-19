@@ -888,6 +888,10 @@ jobs:
           # its Spine declarations, and the two MCP doors that read the link directly. Read grants the repo tree only.
           deno test --allow-read --allow-import --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \
             supabase/functions/_shared/client-portal-access.test.ts
+          # E09 CURA: the customer agent's name from the native frame (never PAIGE, in any spelling) and the
+          # customer persona's fail-closed reads. Pure module under test; read grants the repo tree only.
+          deno test --allow-read --allow-import --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/client-portal-persona.test.ts
           # The two-mailbox pilot's edge functions must at least TYPE-check.
           deno check --allow-import --node-modules-dir=none \
             supabase/functions/gmail-mailbox-sync/index.ts \

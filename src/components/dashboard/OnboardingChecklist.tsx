@@ -215,7 +215,8 @@ export const OnboardingChecklist = ({ userId }: { userId: string }) => {
           </Button>
         </div>
         <div className="flex items-center gap-3 mt-1">
-          <Progress value={progress} className="h-1.5 flex-1" />
+          {/* Track on muted: the Progress default track (--secondary) is near-black in light, so 0/3 read as a full bar (round 3 render). */}
+          <Progress value={progress} className="h-1.5 flex-1 bg-muted" />
           <span className="text-xs text-muted-foreground font-medium">{completedCount}/{items.length}</span>
         </div>
       </CardHeader>

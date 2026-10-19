@@ -1,8 +1,10 @@
-// E09 CURA identity, round 2 — render the customer /app home (chat header, greeting, composer placeholder, the
+// E09 CURA identity, rounds 2–3 — render the customer /app home (chat header, greeting, composer placeholder, the
 // "not active" status, the home greeting card and tiles, the notifications prompt) with Cura and with a renamed
 // agent "Ava", light and dark, 1440 and 390, and MEASURE each frame: no visible PAIGE, the expected wording on
 // screen, AA text contrast against the composited background, no horizontal overflow, no page errors, and the
 // HARNESS RENDER tag on screen. HARNESS RENDER ≠ AUTHENTICATED RUNTIME (§32/§70.1).
+// Round 3: the home no longer repeats the chat's greeting (said once on screen), and a person whose access is not
+// active gets the home's empty state and a Home-only menu (no "Welcome", no Action items or Resources).
 //   node scripts/live-drive/harness/portal-chat-identity-mount/identity-drive.mjs [--out dir]
 import { spawn } from "node:child_process";
 import fs from "node:fs";
@@ -21,10 +23,11 @@ const PORT = 5251;
 const desk = { w: 1440, h: 900, kind: "desktop" }, phone = { w: 390, h: 844, kind: "phone" };
 const greet = (a) => `Hi — I’m ${a}, the AI client success agent for Northwind Studio. How can I help?`;
 const CASES = [
-  { name: "cura", q: "access=ready", agent: "Cura", expect: (v) => [v.phone ? "Message Cura…" : "Ask Cura… (Shift+Enter for new line)", greet("Cura"), "AI client success agent for Northwind Studio", ...(v.phone ? [] : ["Jordan Rivera", "Cura is here to help"])] },
-  { name: "ava", q: "access=ready&agent=Ava", agent: "Ava", expect: (v) => [v.phone ? "Message Ava…" : "Ask Ava… (Shift+Enter for new line)", greet("Ava"), "AI client success agent for Northwind Studio", ...(v.phone ? [] : ["Jordan Rivera", "Ava is here to help", "Tell Ava what you're working toward. Ava will help you map the path."])] },
-  // Said once (the chat column), with the one way to get help; the home does not repeat it.
-  { name: "inactive", q: "access=inactive", expect: () => ["Your access to this portal isn’t active.", "Contact support"], absent: ["Cura", "Ask ", "Set your first goal", "is here to help"], once: "isn’t active" },
+  { name: "cura", q: "access=ready", agent: "Cura", expect: (v) => [v.phone ? "Message Cura…" : "Ask Cura… (Shift+Enter for new line)", greet("Cura"), "AI client success agent for Northwind Studio", ...(v.phone ? [] : ["Jordan Rivera", "Ask Cura about your next steps."])], absent: ["is here to help"], once: greet("Cura") },
+  { name: "ava", q: "access=ready&agent=Ava", agent: "Ava", expect: (v) => [v.phone ? "Message Ava…" : "Ask Ava… (Shift+Enter for new line)", greet("Ava"), "AI client success agent for Northwind Studio", ...(v.phone ? [] : ["Jordan Rivera", "Ask Ava about your next steps.", "Tell Ava what you're working toward. Ava will help you map the path."])], absent: ["is here to help"], once: greet("Ava") },
+  // Said once (the chat column), with the one way to get help; the home says what will appear there instead, and
+  // the menu offers Home only.
+  { name: "inactive", q: "access=inactive", expect: (v) => ["Your access to this portal isn’t active.", "Contact support", ...(v.phone ? [] : ["Nothing is shared with you right now"])], absent: ["Cura", "Ask ", "Set your first goal", "is here to help", "Welcome", "Action items", "Resources", "Messages"], once: "isn’t active" },
   { name: "push-credit", q: "access=ready&agent=Ava&funding=1&push=1", dialog: true, expect: () => ["Get a notification on this device when one of your credit scores changes or a dispute is updated."], absent: ["funding"] },
   { name: "push-none", q: "access=ready&agent=Ava&push=1", noDialog: true, expect: () => [] },
 ];

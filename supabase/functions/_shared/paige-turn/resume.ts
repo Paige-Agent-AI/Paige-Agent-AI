@@ -722,15 +722,33 @@ export function answerTurnsAfterAdmission(turns: ReadonlyArray<TurnRow>, scope: 
   const omitted = new Set<string>();
   let ownAdmissionMarkerId: string | null = null;
   const admission = scope.admission;
+  // The question this answer targets, when it is present in the window (same predicate the
+  // own-marker capture below uses to stay inside a real answering context).
+  const askedTurn = turns.find(turn => question(turn)?.ask_id === scope.askId.toLowerCase()) ?? null;
   // Native begin appends exactly one such marker for this accepted, currently owned request.
   // A pending retry reuses it. Capture its exact ID for the post-claim read; do not hide any
   // ordinary turn, Stop row, unrelated system message, or a JSON-only imitation.
   if (admission && UUID.test(admission.intentId) && UUID.test(admission.supersedesIntentId)
     && !sameId(admission.intentId, admission.supersedesIntentId)
-    && turns.some(turn => question(turn)?.ask_id === scope.askId.toLowerCase())) {
+    && askedTurn) {
     const own = turns.find(turn => marker(turn, admission.supersedesIntentId)
       && (admission.markerId === undefined || sameId(turn.id, admission.markerId)));
     if (own) { ownAdmissionMarkerId = own.id as string; omitted.add(ownAdmissionMarkerId); }
+  }
+  // A bound answer's admission marker is a CONTROL row of a request against THIS question's
+  // interactive intent — never a human message. A refused attempt (the gate said the answer
+  // could not be checked or bound, the gateway refused before PAIGE, the request died) leaves
+  // its marker behind, and the next honest answer used to read that leftover as "someone said
+  // something after the question", permanently marking the still-open question superseded —
+  // the customer-blocking loop reproduced from the live 2026-10-19 thread (four markers, zero
+  // model calls, every retry refused, reload-proof). Markers superseding the QUESTION'S OWN
+  // intent are exactly those control rows: omit them all, this request's and any leftovers.
+  // A marker superseding any OTHER intent stays visible — it is not this question's business.
+  if (askedTurn) {
+    const askedIntent = askedTurn.interactive_intent_id;
+    for (const turn of turns) {
+      if (marker(turn, askedIntent)) omitted.add(turn.id as string);
+    }
   }
   // A successful/stranded earlier answer retains this same native marker in history. Recognize
   // only the exact adjacent claim -> protected marker -> issued question triple, so existing

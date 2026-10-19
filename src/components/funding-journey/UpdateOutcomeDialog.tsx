@@ -16,6 +16,7 @@ import {
   nextStepsForDenial,
   type FundingJourneyApplication, type FundingJourneyStatus, type DenialReasonCategory,
 } from "@/lib/fundingJourney";
+import { useAssistantName } from "@/lib/portal/customerIdentity";
 
 interface Props {
   open: boolean;
@@ -28,6 +29,7 @@ interface Props {
  * Also surfaced to clients themselves so they can mark approved / denied / funded.
  */
 export function UpdateOutcomeDialog({ open, onOpenChange, application }: Props) {
+  const assistant = useAssistantName();
   const qc = useQueryClient();
   const [status, setStatus] = useState<FundingJourneyStatus>("under_review");
   const [decisionDate, setDecisionDate] = useState<string>(new Date().toISOString().split("T")[0]);
@@ -125,7 +127,7 @@ export function UpdateOutcomeDialog({ open, onOpenChange, application }: Props) 
               console.warn("ingest-rag-outcome failed:", ingestErr);
               return;
             }
-            toast.message("Outcome recorded — Paige's knowledge base updated", {
+            toast.message(`Outcome recorded — ${assistant}'s knowledge base updated`, {
               duration: 3500,
             });
           })

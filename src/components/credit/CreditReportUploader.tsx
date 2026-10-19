@@ -290,7 +290,7 @@ export function CreditReportUploader({ lastAnalyzed, lastBureau, onRefresh, isRe
       setResetConfirmText("");
       window.dispatchEvent(new CustomEvent("paige-factory-reset"));
 
-      toast.success("Factory reset complete. Credit, disputes, funding, build data, and Paige memory were cleared site-wide. Uploaded PDFs were preserved for fresh re-analysis.");
+      toast.success("Factory reset complete. Credit, disputes, funding, build data, and assistant memory were cleared site-wide. Uploaded PDFs were preserved for fresh re-analysis.");
 
       setTimeout(() => window.location.reload(), 300);
     } catch (error: any) {

@@ -37,7 +37,8 @@ import { cn } from "@/lib/utils";
 const MAX_ROWS = 6;
 
 /** Who the customer reads in a row: their agent (never PAIGE) and the business. */
-type Who = { agent: string; business: string };
+/** business: mid-sentence ("Update from your team"); lead: at the start of a sentence ("Your team sent you…"). */
+type Who = { agent: string; business: string; lead: string };
 type RowVisual = { icon: typeof MessageCircle; headline: (who: Who) => string };
 
 /**
@@ -53,7 +54,7 @@ const KIND_VISUAL: Record<string, RowVisual> = {
   "client.intake_answer": { icon: ClipboardCheck, headline: () => "You shared some details" },
   "client.action_response": { icon: CheckCircle2, headline: () => "You responded" },
   "comms.inbound": { icon: Send, headline: () => "You sent a message" },
-  "comms.outbound": { icon: MessageCircle, headline: (w) => `${w.business} sent you a message` },
+  "comms.outbound": { icon: MessageCircle, headline: (w) => `${w.lead} sent you a message` },
 };
 
 function visualFor(kind: string): RowVisual {
@@ -137,7 +138,9 @@ interface Props {
  */
 export function ClientActivityFeed({ contactId: contactIdProp, className }: Props) {
   const identity = useCustomerIdentity();
-  const who: Who = { agent: identity.agentName, business: identity.businessName ?? "your team" };
+  // A business's own name is never re-cased; only the fallback is, so a headline starts with a capital (round 2,
+  // verifier #7: "your team sent you a message").
+  const who: Who = { agent: identity.agentName, business: identity.businessName ?? "your team", lead: identity.businessName ?? "Your team" };
 
   // Self-resolve only when the parent didn't hand us a contact_id (prop omitted).
   const selfResolve = contactIdProp === undefined;

@@ -170,7 +170,7 @@ it("names the business's own agent, never the owner's PAIGE persona", async () =
   ));
   await act(async () => { for (let i = 0; i < 10; i++) await Promise.resolve(); });
   expect(host.textContent).not.toMatch(/paige/i);
-  expect(host.textContent).toContain("Tell Ava what you're working toward and you'll map the path together.");
+  expect(host.textContent).toContain("Tell Ava what you're working toward. Ava will help you map the path.");
   expect(host.textContent).toContain("Ask Ava a question anytime.");
 });
 

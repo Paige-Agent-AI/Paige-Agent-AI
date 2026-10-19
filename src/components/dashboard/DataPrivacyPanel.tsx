@@ -227,6 +227,7 @@ export function DataPrivacyPanel() {
               {customer
                 // customer-identity-exempt: the platform's legal name, as the publisher of the privacy policy (legal entity).
                 ? `Read how Paige Agent AI, which runs this portal for ${business}, collects, uses and protects your data. ${business} may have its own policy too.`
+                // customer-identity-exempt: staff branch (not a customer of a business)
                 : "Read how Paige collects, uses and protects your data."}
             </p>
           </div>

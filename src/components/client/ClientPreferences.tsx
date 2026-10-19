@@ -4,7 +4,6 @@ import { PauseCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { CURRENT_DISCLOSURE, disclosureText } from "@/lib/client-portal-preferences";
-import { useCustomerIdentity } from "@/lib/portal/customerIdentity";
 import { useClientPortalPreferences, type PreferenceKey } from "@/hooks/useClientPortalPreferences";
 import { day, on, outcomeText, preferenceCards, type PreferenceCard as Card } from "./clientPreferencesCopy";
 
@@ -21,9 +20,11 @@ import { day, on, outcomeText, preferenceCards, type PreferenceCard as Card } fr
  * (D1); email off also unsubscribes from updates and offers and email back on does not re-subscribe (D4,
  * disclosure email-pref:v3); booking confirmations and agreements the customer is asked to sign still
  * arrive (D5, integrator default (owner may overrule), 2026-10-18); a spam report is the customer's own act, which they can undo
- * here and the business never can; data sharing changes nothing reachable today and says so (D2, M3).
- * The assistant the customer lets use their information is their agent (Cura, or the business's own
- * name for it), never PAIGE, the owner's COO (owner ruling, 2026-10-19).
+ * here and the business never can. Data sharing names the business and the AI tools it uses (CURA-D1,
+ * integrator default, owner may overrule, 2026-10-19): the flag is read by the business side
+ * (load_contact_context, admin_propose_paige_actions), never by Cura, and PAIGE is never named to a
+ * customer (owner ruling, 2026-10-19). The old "It has no effect yet" (D2, M3) was untrue for those
+ * seams and is gone from data-sharing:v2.
  */
 
 const SWITCH_TARGET = "relative after:absolute after:inset-x-0 after:-inset-y-[12px] after:content-['']";
@@ -33,7 +34,6 @@ export function ClientPreferences({ actorId, onCommitted }: { actorId: string; o
   const location = useLocation();
   const section = useRef<HTMLElement | null>(null);
   const business = prefs.preferences?.business_name?.trim() || "your business";
-  const { agentName } = useCustomerIdentity();
   const ready = prefs.phase === "ready" && !!prefs.preferences;
   useEffect(() => {
     if (ready && location.hash === "#preferences") section.current?.scrollIntoView?.({ block: "start" });
@@ -67,7 +67,7 @@ export function ClientPreferences({ actorId, onCommitted }: { actorId: string; o
         {ready && prefs.preferences && (
           <ul className="divide-y divide-border border-y border-border">
             {preferenceCards(prefs.preferences, business).map(card => (
-              <PreferenceRow key={card.key} card={card} business={business} assistant={agentName} pending={prefs.pending?.key === card.key ? prefs.pending.enabled : undefined}
+              <PreferenceRow key={card.key} card={card} business={business} pending={prefs.pending?.key === card.key ? prefs.pending.enabled : undefined}
                 locked={busy} savingId={savingId} notice={noticeFor(card.key)}
                 onChange={enabled => { if (card.key !== "sharing") void prefs.setChannel(card.key, enabled); }} />
             ))}
@@ -79,16 +79,16 @@ export function ClientPreferences({ actorId, onCommitted }: { actorId: string; o
         <section aria-labelledby="client-sharing-title" className="mt-12 max-w-2xl">
           <h2 id="client-sharing-title" className="mb-5 border-b border-border pb-4 text-lg font-semibold tracking-tight">What {business} can use</h2>
           <ul className="divide-y divide-border border-b border-border">
-            <PreferenceRow business={business} assistant={agentName} locked={busy} savingId={savingId} notice={noticeFor("sharing")}
+            <PreferenceRow business={business} locked={busy} savingId={savingId} notice={noticeFor("sharing")}
               pending={prefs.pending?.key === "sharing" ? prefs.pending.enabled : undefined}
               onChange={allow => void prefs.setSharing(allow)}
               card={{
                 key: "sharing",
-                label: `Let ${agentName} use your account information`,
+                label: `Let ${business} and the AI tools it uses see your account details`,
                 disclosure: CURRENT_DISCLOSURE.sharing,
                 state: prefs.preferences.data_sharing.allowed ? `Allowed${on(day(prefs.preferences.data_sharing.updated_at))}` : "Not allowed",
                 detail: `It never changes what ${business} can already see in its own records.`,
-                control: { checked: prefs.preferences.data_sharing.allowed, enabled: true, aria: `Let ${agentName} use your account information` },
+                control: { checked: prefs.preferences.data_sharing.allowed, enabled: true, aria: `Let ${business} and the AI tools it uses see your account details` },
               }} />
           </ul>
         </section>
@@ -110,8 +110,8 @@ function PhaseMessage({ phase, onRetry }: { phase: string; onRetry: () => void }
   );
 }
 
-function PreferenceRow({ card, business, assistant, pending, locked, savingId, notice, onChange }: {
-  card: Card; business: string; assistant: string; pending: boolean | undefined; locked: boolean; savingId: string;
+function PreferenceRow({ card, business, pending, locked, savingId, notice, onChange }: {
+  card: Card; business: string; pending: boolean | undefined; locked: boolean; savingId: string;
   notice: { text: string; alert: boolean } | null; onChange: (enabled: boolean) => void;
 }) {
   const base = useId();
@@ -128,7 +128,7 @@ function PreferenceRow({ card, business, assistant, pending, locked, savingId, n
           {card.paused && <PauseCircle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-warning" />}
           <span>{pending !== undefined ? "Saving…" : card.state}</span>
         </p>
-        <p id={detailId} className="max-w-prose text-sm text-muted-foreground" data-testid="pref-disclosure" data-disclosure={card.disclosure}>{disclosureText(card.disclosure, business, assistant)}</p>
+        <p id={detailId} className="max-w-prose text-sm text-muted-foreground" data-testid="pref-disclosure" data-disclosure={card.disclosure}>{disclosureText(card.disclosure, business)}</p>
         {card.detail && <p className="max-w-prose text-sm text-muted-foreground" data-testid="pref-detail">{card.detail}</p>}
         {showReason && <p id={reasonId} className="max-w-prose text-sm text-foreground" data-testid="pref-reason">{control!.reason}</p>}
         {(card.keepOff || card.messageLink) && (

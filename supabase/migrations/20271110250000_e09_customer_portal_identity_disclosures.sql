@@ -11,11 +11,14 @@
 --   email-pref:v2      -> email-pref:v3      (drops "through Paige")
 --   updates-optin:v2   -> updates-optin:v3   (drops "sent through Paige")
 --   sms-pref:v2        -> sms-pref:v3        (drops "through Paige")
---   data-sharing:v1    -> data-sharing:v2    ("{business}'s Paige" becomes the business's agent, {assistant})
+--   data-sharing:v1    -> data-sharing:v2    ("{business}'s Paige" becomes "{business} and the AI tools it uses")
 --
--- {assistant} is a new placeholder, rendered by the page with the business's agent name
--- (customerAgentName: the business's own name for it, else Cura, never PAIGE). Like {business}, it is
--- replaced at display time; the hash names the template, exactly as it does for {business}.
+-- data-sharing:v2 names the BUSINESS, not the customer's agent. The flag the customer sets
+-- (clients.paige_shared_context_consent) is read by the business side: load_contact_context, which feeds
+-- the business's own assistant a contact's records, and admin_propose_paige_actions, which sends the
+-- customer requests the business prepared. Cura never reads it. v1's "It has no effect yet" was untrue for
+-- both seams and is dropped. (CURA-D1, integrator default, owner may overrule, 2026-10-19.) The sentence
+-- has no agent placeholder, so the stored hash fully names the wording apart from {business}.
 --
 -- THE WRITERS ARE REWRITTEN IN PLACE, NOT RE-DECLARED. client_portal_set_communication_preference and
 -- client_portal_set_shared_context_consent are read from the catalog and only their disclosure-id
@@ -37,7 +40,7 @@ AS $$ SELECT CASE p_id
   WHEN 'sms-pref:v2' THEN 'Texts from {business}. When texts are off, {business} can''t text you through Paige. To get texts, reply START to a text from {business} if you have one, or ask them.'
   WHEN 'sms-pref:v3' THEN 'Texts from {business}. When texts are off, {business} can''t text you. To get texts, reply START to a text from {business} if you have one, or ask them.'
   WHEN 'data-sharing:v1' THEN 'Lets {business}''s Paige use your account details and portal activity when it prepares requests or suggestions for you. It has no effect yet, and you can turn it off anytime.'
-  WHEN 'data-sharing:v2' THEN 'Lets {assistant}, the AI client success agent for {business}, use your account details and portal activity when it prepares requests or suggestions for you. It has no effect yet, and you can turn it off anytime.'
+  WHEN 'data-sharing:v2' THEN 'Lets {business} and the AI tools it uses see your account details and portal activity, for example to prepare requests or suggestions for you. You can turn it off anytime.'
   END $$;
 REVOKE ALL ON FUNCTION public.client_portal_consent_disclosure(text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.client_portal_consent_disclosure(text) TO authenticated, service_role;

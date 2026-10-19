@@ -10,8 +10,6 @@
  * showing the customer a state the server did not say is worse than showing nothing.
  */
 
-import { customerAgentName } from "../../supabase/functions/_shared/client-portal-identity";
-
 export type EmailState = "on" | "off" | "no_address";
 export type SmsState = "on" | "off" | "not_set" | "no_number";
 export type UpdatesState = "subscribed" | "not_subscribed" | "paused" | "no_address";
@@ -194,7 +192,10 @@ export function readClientCommunicationState(data: unknown, expected: { tenantId
  * that SQL literal byte for byte, so what the customer saw is what the evidence names (reviewer Minor 7).
  * Changing a sentence means a new id on both sides, never an edit of an old one. A superseded id stays here and
  * on the server, because evidence already written names it; the page shows only CURRENT_DISCLOSURE.
- * {business} is the business's name; {assistant} is the customer's agent (customerAgentName: never PAIGE).
+ * {business} is the business's name, filled at display time; the hash names the template. data-sharing:v2 names the
+ * business, not an agent: the flag it sets is read by the business side (load_contact_context for the business's
+ * assistant, admin_propose_paige_actions for the requests it sends), never by Cura (CURA-D1, integrator default,
+ * owner may overrule, 2026-10-19). v1's "It has no effect yet" was untrue for those two seams and is dropped.
  */
 export const PORTAL_PREFERENCE_DISCLOSURES = {
   // Superseded 2026-10-18 (round 2): did not say email off also unsubscribes from updates, or name agreements.
@@ -211,7 +212,7 @@ export const PORTAL_PREFERENCE_DISCLOSURES = {
   "sms-pref:v2": "Texts from {business}. When texts are off, {business} can't text you through Paige. To get texts, reply START to a text from {business} if you have one, or ask them.", // customer-identity-exempt: superseded consent sentence, kept byte for byte because evidence already names it
   "sms-pref:v3": "Texts from {business}. When texts are off, {business} can't text you. To get texts, reply START to a text from {business} if you have one, or ask them.",
   "data-sharing:v1": "Lets {business}'s Paige use your account details and portal activity when it prepares requests or suggestions for you. It has no effect yet, and you can turn it off anytime.", // customer-identity-exempt: superseded consent sentence, kept byte for byte because evidence already names it
-  "data-sharing:v2": "Lets {assistant}, the AI client success agent for {business}, use your account details and portal activity when it prepares requests or suggestions for you. It has no effect yet, and you can turn it off anytime.",
+  "data-sharing:v2": "Lets {business} and the AI tools it uses see your account details and portal activity, for example to prepare requests or suggestions for you. You can turn it off anytime.",
 } as const;
 export type PortalDisclosureId = keyof typeof PORTAL_PREFERENCE_DISCLOSURES;
 
@@ -220,8 +221,8 @@ export const CURRENT_DISCLOSURE = {
   email: "email-pref:v3", sms: "sms-pref:v3", updates: "updates-optin:v3", sharing: "data-sharing:v2",
 } as const satisfies Record<string, PortalDisclosureId>;
 
-export function disclosureText(id: PortalDisclosureId, business: string, assistant: string = customerAgentName(undefined)): string {
-  return PORTAL_PREFERENCE_DISCLOSURES[id].split("{business}").join(business).split("{assistant}").join(assistant);
+export function disclosureText(id: PortalDisclosureId, business: string): string {
+  return PORTAL_PREFERENCE_DISCLOSURES[id].split("{business}").join(business);
 }
 
 /** The server's named refusals. Codes never reach the screen; the component turns them into words. */

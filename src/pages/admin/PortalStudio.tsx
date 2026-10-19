@@ -343,7 +343,7 @@ function PortalStudioEditor({ embedded = false, onDirtyChange, assistantFocusReq
                 </div>
               </div>
             </SectionCard>
-            <CustomerAssistantSettings value={assistant} onChange={setAssistant} focusRequest={assistantFocusRequest} />
+            <CustomerAssistantSettings value={assistant} onChange={setAssistant} focusRequest={assistantFocusRequest} savedName={pc.config.assistant?.display_name} />
           </fieldset>
 
           {/* ── View as Client (live preview) ── */}

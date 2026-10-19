@@ -103,7 +103,7 @@ export const OnboardingChecklist = ({ userId }: { userId: string }) => {
       {
         id: "set_goal",
         label: "Set Your First Goal",
-        description: `Tell ${coachName} what you're working toward so you can map the path together`,
+        description: `Tell ${coachName} what you're working toward. ${coachName} will help you map the path.`,
         icon: Target,
         route: "/app/settings",
         check: async () => {
@@ -242,7 +242,7 @@ export const OnboardingChecklist = ({ userId }: { userId: string }) => {
                 <p className={`text-sm font-medium ${done ? "line-through text-muted-foreground" : "text-foreground"}`}>
                   {item.label}
                 </p>
-                <p className="text-xs text-muted-foreground/60 mt-0.5">{item.description}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>
               </div>
             </button>
           );

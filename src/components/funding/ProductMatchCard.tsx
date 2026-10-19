@@ -8,6 +8,7 @@ import { getCategoryMeta, getSpeedClass } from "@/lib/lenderCategories";
 import { LenderFlagBadges } from "./LenderFlagBadges";
 import { trackEvent } from "@/hooks/useAnalytics";
 import { useRef } from "react";
+import { useAssistantName } from "@/lib/portal/customerIdentity";
 
 const CATEGORY_STYLES: Record<string, { bg: string; text: string; label: string }> = {
   eligible: { bg: "bg-fundability-excellent/10", text: "text-fundability-excellent", label: "Eligible" },
@@ -49,6 +50,7 @@ function formatRequirement(label: string, value: string | number | null | undefi
 }
 
 export function ProductMatchCard({ match, onAskPaige }: { match: ProductMatch; onAskPaige?: (product: any) => void }) {
+  const assistant = useAssistantName();
   const { product, score, category, deductions, estimatedAmount, estimateExplanation, dataPoints, primaryBureau, bureauPullLabel, demographicBoosts } = match;
   const style = CATEGORY_STYLES[category];
   const categoryMeta = getCategoryMeta(product.product_category || product.product_type);
@@ -201,7 +203,7 @@ export function ProductMatchCard({ match, onAskPaige }: { match: ProductMatch; o
         )}
         {onAskPaige && (
           <Button size="sm" variant="ghost" className="text-xs" onClick={() => onAskPaige(product)}>
-            Ask Paige about this lender
+            Ask {assistant} about this lender
           </Button>
         )}
       </div>

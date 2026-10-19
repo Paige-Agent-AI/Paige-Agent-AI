@@ -15,3 +15,15 @@ export function assistantPatch(before: AssistantFields, after: AssistantFields):
   }
   return Object.keys(patch).length ? patch : undefined;
 }
+
+/**
+ * Why the name a client reads differs from the one the owner typed or saved, or null when it doesn't. A name
+ * that carries PAIGE is refused (customerAgentName): PAIGE is the owner's own assistant, never a client's.
+ */
+export function agentNameNotice(typed: string, saved?: string | null): string | null {
+  const t = typed.trim();
+  if (t && customerAgentName(t) !== t) return `Clients will see “Cura”. A name that includes Paige stays with your own assistant, so the portal uses Cura instead.`;
+  const s = typeof saved === "string" ? saved.trim() : "";
+  if (s && customerAgentName(s) !== s && t === customerAgentName(s)) return `Your saved name “${s.slice(0, 80)}” includes Paige, so clients see “Cura”. Paige is your own assistant; your clients’ agent has its own name.`;
+  return null;
+}

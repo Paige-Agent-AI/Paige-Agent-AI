@@ -14,7 +14,7 @@ import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 import { SessionTimeoutWarning } from "@/components/auth/SessionTimeoutWarning";
 import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
 import { OnboardingFlow } from "@/components/dashboard/OnboardingFlow";
-import { PushNotificationPrompt } from "@/components/notifications/PushNotificationPrompt";
+import { PushNotificationPrompt, pushTopicsSentence } from "@/components/notifications/PushNotificationPrompt";
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -36,6 +36,8 @@ import { useClientViewportHeight } from "@/hooks/useClientViewportHeight";
 import { useSharedClientPortalFrame } from "@/hooks/useClientPortalFrame";
 import { CustomerAccessGate } from "@/components/app/CustomerAccessGate";
 import { CustomerIdentityProvider, useCustomerIdentity } from "@/lib/portal/customerIdentity";
+import { usePortalStaffStanding } from "@/lib/portal/portalStaffStanding";
+import { usePlaybook } from "@/lib/playbook";
 
 // Map /app sub-routes to canonical feature names emitted as `feature_visit`.
 function routeToFeatureName(pathname: string): string | null {
@@ -70,6 +72,9 @@ const AppShell = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(!DEV_MODE);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  // The required-consents wall reports whether it is up (or still checking). While it is, no other dialog
+  // opens over it — not the funding onboarding, not the notifications prompt (D-QA2, live QA 2026-10-19).
+  const [consentsBlocking, setConsentsBlocking] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
   const { target: impersonationTarget, isImpersonating } = useImpersonation();
@@ -275,12 +280,15 @@ const AppShell = () => {
   // as a client are not customers, so the gate stands aside for them.
   return (
     <CustomerAccessGate userId={activeUser.id} enabled={!isImpersonating && !DEV_MODE}>
-    <CustomerIdentityRoot userId={activeUser.id} enabled={!isImpersonating}>
-      {!isImpersonating && <RequiredConsentsGate userId={activeUser.id} />}
-      {!isImpersonating && fundingEnabled && <OnboardingFlow open={showOnboarding} onComplete={() => setShowOnboarding(false)} />}
+    <CustomerIdentityRoot userId={activeUser.id} enabled={!isImpersonating} viewingAsClient={isImpersonating}>
+      {!isImpersonating && <RequiredConsentsGate userId={activeUser.id} onBlockingChange={setConsentsBlocking} />}
+      {!isImpersonating && fundingEnabled && <OnboardingFlow open={showOnboarding && !consentsBlocking} onComplete={() => setShowOnboarding(false)} />}
       <AdminViewBanner />
       <SessionTimeoutWarning open={showWarning} onStaySignedIn={staySignedIn} />
-      <PushNotificationPrompt />
+      {/* Names only what this person is actually notified about, and never opens over the consents wall or
+          onboarding (D-QA1/D-QA2, live QA 2026-10-19). */}
+      <PushNotificationPrompt description={pushTopicsSentence({ creditAlerts: fundingEnabled })}
+        suppressed={(!isImpersonating && consentsBlocking) || (!isImpersonating && fundingEnabled && showOnboarding)} />
       <div style={viewportHeight ? {height: viewportHeight} : undefined} className="h-dvh min-h-0 flex flex-col bg-background overflow-x-hidden">
         <AppNav user={activeUser} />
         <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0">
@@ -320,33 +328,54 @@ const AppShell = () => {
  * owner's COO (owner ruling, 2026-10-19). The browser tab names the business's portal too; the
  * platform's own title is the marketing site's.
  */
-function CustomerIdentityRoot({ userId, enabled, children }: { userId: string; enabled: boolean; children: ReactNode }) {
+function CustomerIdentityRoot({ userId, enabled, viewingAsClient, children }: { userId: string; enabled: boolean; viewingAsClient: boolean; children: ReactNode }) {
   // The access gate above already read the frame; this reads that same answer (one reader per page).
   const customer = useSharedClientPortalFrame(userId, enabled);
+  // Staff standing is asked only when there is no customer frame (or staff are viewing as a client): a staff
+  // viewer keeps the owner's assistant beside the owner's chat; anyone else's access is simply not active.
+  const standing = usePortalStaffStanding(userId, !viewingAsClient && customer.phase === "not-client");
+  const staff = viewingAsClient ? true : standing.staff;
+  const ownerPlaybook = usePlaybook(staff === true);
   const business = customer.frame?.brand.tenant_name?.trim();
   useEffect(() => {
+    // A staff viewer is not in a client's portal; only a customer (or someone whose access ended) is.
+    if (staff === true && !customer.frame) return;
+    const previous = document.title;
     document.title = business ? `${business} — Client Portal` : "Client Portal";
-  }, [business]);
-  return <CustomerIdentityProvider state={customer}>{children}</CustomerIdentityProvider>;
+    // Leaving /app (View-as-Client ends, sign-out, a staff surface) restores the title it found.
+    return () => { document.title = previous; };
+  }, [business, staff, customer.frame]);
+  const state = { frame: customer.frame, phase: viewingAsClient ? "not-client" as const : customer.phase, staff,
+    staffAssistantName: staff === true ? ownerPlaybook.persona.name : null };
+  return <CustomerIdentityProvider state={state}>{children}</CustomerIdentityProvider>;
 }
 
 // Default home content when on /app
 type CreditFactorScores = Database["public"]["Tables"]["credit_factor_scores"]["Row"];
 
-function AppDashboardHome({ factors, userId }: { factors: CreditFactorScores | null | undefined; userId?: string }) {
+export function AppDashboardHome({ factors, userId }: { factors: CreditFactorScores | null | undefined; userId?: string }) {
   const customer = useCustomerIdentity();
   // Tenant-authored portal greeting (Portal Studio → portal_config.welcome).
   // Fail-open: an unset/empty overlay falls back to the current defaults, so
   // every existing portal is byte-for-byte unchanged until a tenant sets one.
   const savedConfig = useClientPortalConfig();
   const portalConfig: ClientPortalConfig = customer.frame?.config ?? (customer.phase === "not-client" ? savedConfig : {});
-  // The customer's agent, never the owner's PAIGE persona (owner ruling, 2026-10-19).
+  // The customer's agent, never the owner's PAIGE persona (owner ruling, 2026-10-19). A staff viewer with no
+  // customer frame sits beside the owner's own chat, so the home names the owner's assistant and greets as
+  // the owner's Playbook does (§58: staff keep what they had); a viewer whose access is not active is told so.
   const agentName = customer.agentName;
-  const greeting = customer.frame ? `Hi — I’m ${agentName}, the AI client success agent for ${customer.businessName}. How can I help?` : "Your conversation is available once your customer access is checked.";
-  const welcomeHeadline = portalConfig.welcome?.headline?.trim() || "Welcome Back";
+  const staffPlaybook = usePlaybook(customer.viewer === "staff");
+  const intro = customer.frame
+    ? { title: `${agentName} is here to help`, body: `Hi — I’m ${agentName}, the AI client success agent for ${customer.businessName}. How can I help?` }
+    : customer.viewer === "staff" ? { title: `${agentName} is here to help`, body: staffPlaybook.persona.greeting }
+      : { title: `${agentName} is here to help`, body: "Your conversation is available once your customer access is checked." };
+  // A person whose access is not active reads that once, in the chat column beside this (with Contact support);
+  // the home does not repeat it (round 2 render: the same two sentences sat side by side).
+  const inactive = customer.viewer === "inactive";
+  const welcomeHeadline = inactive ? "Welcome" : portalConfig.welcome?.headline?.trim() || "Welcome Back";
   const welcomeSubhead =
     portalConfig.welcome?.subhead?.trim() ||
-    `Ask ${agentName} about your next steps.`;
+    (inactive ? "" : `Ask ${agentName} about your next steps.`);
   // `factors` is a real credit_factor_scores row — it only exists for a
   // credit-enabled tenant/client. It doubles as the "hasCreditData" signal, so
   // the credit-only factor grid below stays gated behind it. Coaching clients
@@ -355,15 +384,17 @@ function AppDashboardHome({ factors, userId }: { factors: CreditFactorScores | n
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      {userId && <OnboardingChecklist userId={userId} />}
+      {/* A person whose access is not active has no chat to finish a checklist step or a tile's "Ask …" in, so
+          neither is offered (round 2: both named an agent beside a chat that says access isn't active). */}
+      {userId && customer.viewer !== "inactive" && <OnboardingChecklist userId={userId} />}
       <div>
         <h1 className="text-3xl font-bold text-foreground">{welcomeHeadline}</h1>
-        <p className="text-muted-foreground mt-1">{welcomeSubhead}</p>
+        {welcomeSubhead && <p className="text-muted-foreground mt-1">{welcomeSubhead}</p>}
       </div>
 
       <UpcomingWidget />
 
-      {hasCreditData ? (
+      {inactive ? null : hasCreditData ? (
         <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-5">
           {[
             { label: "Payment History", score: factors.payment_history_score, weight: "35%" },
@@ -387,13 +418,13 @@ function AppDashboardHome({ factors, userId }: { factors: CreditFactorScores | n
       ) : (
         <div className="bg-card border border-border rounded-lg p-6">
           <h2 className="text-lg font-semibold text-foreground">
-            {agentName} is here to help
+            {intro.title}
           </h2>
-          <p className="text-muted-foreground mt-2">{greeting}</p>
+          <p className="text-muted-foreground mt-2">{intro.body}</p>
         </div>
       )}
 
-      {userId && <ClientHomeTiles userId={userId} />}
+      {userId && customer.viewer !== "inactive" && <ClientHomeTiles userId={userId} />}
 
       <ClientActivityFeed />
 

@@ -8,9 +8,29 @@ import { useToast } from '@/hooks/use-toast';
 interface PushNotificationPromptProps {
   /** When true (default), automatically checks if prompt should show on mount */
   autoCheck?: boolean;
+  /**
+   * What this person will actually be notified about, as one sentence. null: nothing reaches them by push, so
+   * the prompt never asks (D-QA1, live QA 2026-10-19: every business's customers were promised credit, dispute
+   * and funding alerts). The caller derives it from what is actually sent (pushTopicsSentence).
+   */
+  description: string | null;
+  /** True while another blocking dialog (the required-consents wall, onboarding) is up: never two at once (D-QA2). */
+  suppressed?: boolean;
 }
 
-export const PushNotificationPrompt = ({ autoCheck = true }: PushNotificationPromptProps) => {
+/**
+ * The push notifications that actually reach a person in the client portal. Only detect-credit-alerts sends
+ * them a push with a business attached (credit_score_changes, dispute_updates), and only for a business with
+ * credit and funding turned on. Planning reminders need a team seat, and the old dispute/funding-match triggers
+ * send no business, so send-push-notification refuses them. Everyone else gets no push, and no prompt.
+ */
+export function pushTopicsSentence(input: { creditAlerts: boolean }): string | null {
+  return input.creditAlerts
+    ? "Get a notification on this device when one of your credit scores changes or a dispute is updated. We only notify you when it matters."
+    : null;
+}
+
+export const PushNotificationPrompt = ({ autoCheck = true, description, suppressed = false }: PushNotificationPromptProps) => {
   const {
     isSupported,
     isIOS,
@@ -25,7 +45,7 @@ export const PushNotificationPrompt = ({ autoCheck = true }: PushNotificationPro
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!autoCheck || !isSupported) return;
+    if (!autoCheck || !isSupported || !description || suppressed) return;
     let cancelled = false;
     const timer = setTimeout(async () => {
       const should = await shouldShowPrompt();
@@ -38,7 +58,7 @@ export const PushNotificationPrompt = ({ autoCheck = true }: PushNotificationPro
       }
     }, 1500);
     return () => { cancelled = true; clearTimeout(timer); };
-  }, [autoCheck, isSupported, isIOS, isPWAInstalled, shouldShowPrompt]);
+  }, [autoCheck, isSupported, isIOS, isPWAInstalled, shouldShowPrompt, description, suppressed]);
 
   const handleEnable = async () => {
     setEnabling(true);
@@ -65,7 +85,7 @@ export const PushNotificationPrompt = ({ autoCheck = true }: PushNotificationPro
   return (
     <>
       {/* Standard prompt */}
-      <Dialog open={open} onOpenChange={(v) => { if (!v) handleDismiss(); }}>
+      <Dialog open={open && !suppressed && !!description} onOpenChange={(v) => { if (!v) handleDismiss(); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-accent/10">
@@ -73,7 +93,7 @@ export const PushNotificationPrompt = ({ autoCheck = true }: PushNotificationPro
             </div>
             <DialogTitle className="text-center text-2xl font-serif">Stay in the Loop</DialogTitle>
             <DialogDescription className="text-center pt-2">
-              Get instant notifications when your credit score changes, disputes are resolved, or new funding matches are found. We only notify you when it matters.
+              {description}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-2 pt-2">
@@ -96,7 +116,7 @@ export const PushNotificationPrompt = ({ autoCheck = true }: PushNotificationPro
       </Dialog>
 
       {/* iOS PWA install guide */}
-      <Dialog open={showIOSGuide} onOpenChange={(v) => { if (!v) handleDismiss(); }}>
+      <Dialog open={showIOSGuide && !suppressed && !!description} onOpenChange={(v) => { if (!v) handleDismiss(); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-accent/10">

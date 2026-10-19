@@ -36,3 +36,13 @@ it("an empty strip names the business, not an assistant", async () => {
   expect(host.textContent).toContain("Updates from Northwind Studio will show up here as you work together.");
   expect(host.textContent).not.toMatch(/paige/i);
 });
+
+// Round 2 (verifier #7): with no business name the headline read "your team sent you a message".
+it("starts a headline with a capital when the business name is not known yet", async () => {
+  f.events = [ev("1", "comms.outbound"), ev("2", "system.update")];
+  await act(async () => root.render(
+    <CustomerIdentityProvider state={{ frame: null, phase: "loading" }}><ClientActivityFeed /></CustomerIdentityProvider>,
+  ));
+  expect(host.textContent).toContain("Your team sent you a message");
+  expect(host.textContent).toContain("Update from your team");
+});

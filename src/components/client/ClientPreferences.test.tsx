@@ -184,11 +184,21 @@ describe("How {Business} can reach you — what each state says", () => {
     await mount();
     const shown = Array.from(host.querySelectorAll<HTMLElement>("[data-disclosure]")).map(el => [el.dataset.disclosure, el.textContent]);
     expect(shown).toEqual((["email-pref:v3", "sms-pref:v3", "updates-optin:v3", "data-sharing:v2"] as PortalDisclosureId[])
-      .map(id => [id, disclosureText(id, "Northwind Studio", "Cura")]));
+      .map(id => [id, disclosureText(id, "Northwind Studio")]));
     // Superseded ids stay known (old evidence names them) but are never shown.
     expect(Object.keys(PORTAL_PREFERENCE_DISCLOSURES)).toHaveLength(11);
     // Owner ruling 2026-10-19: the customer's settings never name PAIGE.
     expect(host.textContent).not.toMatch(/paige/i);
+  });
+
+  // CURA-D1: the sharing row, its switch and its heading all name the business (the party that reads the flag).
+  it("the data-sharing row names the business, matching its heading", async () => {
+    await mount();
+    const label = "Let Northwind Studio and the AI tools it uses see your account details";
+    expect(row("sharing").querySelector('[data-testid="pref-label"]')!.textContent).toBe(label);
+    expect(switchOf("sharing")!.getAttribute("aria-label")).toBe(label);
+    expect(host.querySelector("#client-sharing-title")!.textContent).toBe("What Northwind Studio can use");
+    expect(row("sharing").textContent).not.toMatch(/Cura|no effect yet/);
   });
 
   it("section headings sit visibly above row labels (should-fix 8)", async () => {

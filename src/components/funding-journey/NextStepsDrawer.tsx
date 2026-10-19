@@ -9,6 +9,7 @@ import {
   reapplicationWindowMonths,
   type FundingJourneyApplication,
 } from "@/lib/fundingJourney";
+import { useAssistantName } from "@/lib/portal/customerIdentity";
 
 interface Props {
   open: boolean;
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export function NextStepsDrawer({ open, onOpenChange, application }: Props) {
+  const assistant = useAssistantName();
   const navigate = useNavigate();
   if (!application) return null;
 
@@ -78,7 +80,7 @@ export function NextStepsDrawer({ open, onOpenChange, application }: Props) {
 
           <div className="pt-2 flex flex-col sm:flex-row gap-2">
             <Button onClick={() => { navigate("/app"); onOpenChange(false); }} className="flex-1">
-              Discuss with Paige
+              Discuss with {assistant}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
             <Button variant="outline" onClick={() => { navigate("/app/funding"); onOpenChange(false); }} className="flex-1">

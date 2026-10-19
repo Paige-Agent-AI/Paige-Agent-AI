@@ -10,7 +10,7 @@
 -- every row class the contact holds is refused (MEDIUM 4); quiet hours say "your time" only for a zone
 -- the send gate can use.
 BEGIN;
-SELECT plan(252);
+SELECT plan(253);
 
 -- Production grants these table privileges to authenticated through project default privileges that
 -- no migration writes (fact 4: has_column_privilege('authenticated','clients',...,'UPDATE') = true).
@@ -598,8 +598,11 @@ SELECT is(left(md5(public.client_portal_consent_disclosure('data-sharing:v1')),1
 SELECT is(left(md5(public.client_portal_consent_disclosure('email-pref:v3')),12),'911c5ac50ec5','pin: email-pref:v3');
 SELECT is(left(md5(public.client_portal_consent_disclosure('updates-optin:v3')),12),'7630f99debcf','pin: updates-optin:v3');
 SELECT is(left(md5(public.client_portal_consent_disclosure('sms-pref:v3')),12),'badc94db6304','pin: sms-pref:v3');
-SELECT is(left(md5(public.client_portal_consent_disclosure('data-sharing:v2')),12),'022bddb86079','pin: data-sharing:v2');
+SELECT is(left(md5(public.client_portal_consent_disclosure('data-sharing:v2')),12),'b8af28a4a0c3','pin: data-sharing:v2');
 SELECT is((SELECT count(*) FROM unnest(ARRAY['email-pref:v3','updates-optin:v3','sms-pref:v3','data-sharing:v2']) v WHERE public.client_portal_consent_disclosure(v) ~* 'paige'),0::bigint,'no sentence the page shows names PAIGE');
+-- CURA-D1: the sharing sentence names the business (the flag is read by the business side), not an agent, and
+-- no longer claims it has no effect (load_contact_context and admin_propose_paige_actions both act on it).
+SELECT ok(public.client_portal_consent_disclosure('data-sharing:v2') ~ '^Lets \{business\} and the AI tools it uses ' AND public.client_portal_consent_disclosure('data-sharing:v2') !~ '\{assistant\}|no effect','data-sharing:v2 names the business and makes no stale claim');
 SELECT ok(public.client_portal_consent_disclosure('email-pref:v1') IS NOT NULL AND public.client_portal_consent_disclosure('updates-optin:v1') IS NOT NULL
   AND public.client_portal_consent_disclosure('sms-pref:v1') IS NOT NULL,'v1 sentences are kept: evidence already written names them');
 -- Every branch, fresh: Avery (sub-account) and a new customer, Parker, subscribed with texts on.

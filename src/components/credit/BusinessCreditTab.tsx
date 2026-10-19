@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { useBusinessContext, entityRoleLabel } from "@/contexts/BusinessContext";
 import { useBuildScoreRefresh } from "@/hooks/useBuildScoreRefresh";
+import { useAssistantName } from "@/lib/portal/customerIdentity";
 
 type Bureau = "dnb" | "experian_business" | "equifax_sbfe";
 
@@ -112,6 +113,7 @@ function progressValue(meta: BureauMeta, value: number | null): number {
 }
 
 export function BusinessCreditTab() {
+  const assistant = useAssistantName();
   const qc = useQueryClient();
   const { invalidate: invalidateBuildScore } = useBuildScoreRefresh();
   const { activeBusiness, businesses } = useBusinessContext();
@@ -261,7 +263,7 @@ export function BusinessCreditTab() {
           <div className="space-y-1">
             <p className="text-sm font-medium text-foreground">Business credit report import</p>
             <p className="text-sm text-muted-foreground">
-              Upload your D&B, Experian Business, or Equifax SBFE report PDF and Paige will read the
+              Upload your D&B, Experian Business, or Equifax SBFE report PDF and {assistant} will read the
               scores into your file. These scores power your Commercial / EIN-Only fundability score.
             </p>
           </div>

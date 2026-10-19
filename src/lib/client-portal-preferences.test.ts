@@ -114,11 +114,17 @@ describe("disclosures are the server's sentences, byte for byte (reviewer Minor 
   // Owner ruling 2026-10-19: PAIGE is the owner's COO and is never named in a customer's consent sentence.
   it.each(Object.values(CURRENT_DISCLOSURE))("%s never names PAIGE", id => {
     expect(PORTAL_PREFERENCE_DISCLOSURES[id]).not.toMatch(/paige/i);
-    expect(disclosureText(id, "Northwind Studio", "Ava")).not.toMatch(/paige/i);
+    expect(disclosureText(id, "Northwind Studio")).not.toMatch(/paige/i);
   });
-  it("names the business's own agent in the data-sharing sentence", () => {
-    expect(disclosureText("data-sharing:v2", "Northwind Studio", "Ava")).toBe("Lets Ava, the AI client success agent for Northwind Studio, use your account details and portal activity when it prepares requests or suggestions for you. It has no effect yet, and you can turn it off anytime.");
-    expect(disclosureText("data-sharing:v2", "Northwind Studio")).toMatch(/^Lets Cura, /);
+  // CURA-D1 (integrator default, owner may overrule, 2026-10-19): the flag (clients.paige_shared_context_consent)
+  // is read by the BUSINESS side — load_contact_context for its assistant, admin_propose_paige_actions for the
+  // requests it sends — never by Cura. So the sentence names the business, has no agent placeholder, and no
+  // longer says "It has no effect yet" (those two server seams act on it).
+  it("names the business, not an agent, in the data-sharing sentence", () => {
+    expect(disclosureText("data-sharing:v2", "Northwind Studio")).toBe("Lets Northwind Studio and the AI tools it uses see your account details and portal activity, for example to prepare requests or suggestions for you. You can turn it off anytime.");
+    expect(PORTAL_PREFERENCE_DISCLOSURES["data-sharing:v2"]).not.toContain("{assistant}");
+    expect(PORTAL_PREFERENCE_DISCLOSURES["data-sharing:v2"]).not.toMatch(/no effect yet/);
+    expect(Object.values(PORTAL_PREFERENCE_DISCLOSURES).some(t => t.includes("{assistant}"))).toBe(false);
   });
   it("fills the business name everywhere it appears", () => {
     const text = disclosureText("sms-pref:v3", "Northwind Studio");

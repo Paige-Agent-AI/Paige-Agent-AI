@@ -271,6 +271,7 @@ export const NotificationsSettings = () => {
             <Alert>
               <ShieldCheck className="h-4 w-4" />
               <AlertDescription className="text-xs">
+                {/* customer-identity-exempt: TCPA notice naming the registered sender; must match the A2P campaign brand (compliance decision, round 2 list) */}
                 <strong>TCPA Notice:</strong> By enabling SMS you consent to receive transactional text
                 messages from PaigeAgent. Reply STOP to any message to unsubscribe. Message and data rates
                 may apply.

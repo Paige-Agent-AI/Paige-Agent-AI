@@ -169,7 +169,7 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
         <EmptyTile
           icon={<Target className="w-6 h-6" />}
           title="Set your first goal"
-          description={`Tell ${agentName} what you're working toward and you'll map the path together.`}
+          description={`Tell ${agentName} what you're working toward. ${agentName} will help you map the path.`}
           actionLabel="Set your first goal"
           onAction={() => askAgent("Help me set my first goal.")}
         />

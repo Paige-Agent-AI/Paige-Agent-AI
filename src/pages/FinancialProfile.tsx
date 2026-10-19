@@ -513,7 +513,7 @@ export default function FinancialProfile() {
               Banking relationship data, asset information, and income ranges help us calculate
               more accurate fundability scores and find better funding matches for you. This
               information is <strong>never shared</strong> with lenders, banks, or third parties.
-              It stays within your PaigeAgent account exclusively.
+              It stays within your account exclusively.
             </p>
           </div>
         </div>

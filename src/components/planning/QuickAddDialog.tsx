@@ -10,6 +10,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger, DialogDescription,
 } from "@/components/ui/dialog";
 import { friendlyPlanError } from "@/lib/planning";
+import { useAssistantName } from "@/lib/portal/customerIdentity";
 
 type Kind = "reminder" | "task";
 
@@ -47,6 +48,7 @@ export function QuickAddDialog({
   userId, onCreated, contactId = null, contactName = null,
   defaultDate = null, defaultKind = "reminder", trigger, open: openProp, onOpenChange,
 }: QuickAddDialogProps) {
+  const assistant = useAssistantName();
   const controlled = openProp !== undefined;
   const [openState, setOpenState] = useState(false);
   const open = controlled ? openProp : openState;
@@ -120,8 +122,8 @@ export function QuickAddDialog({
           <DialogTitle>{contactName ? `Add${forWhom}` : "Add to your plan"}</DialogTitle>
           <DialogDescription>
             {contactName
-              ? `A reminder or task about ${contactName}. For anything more, just ask Paige.`
-              : "A quick reminder or task for yourself. For anything more, just ask Paige."}
+              ? `A reminder or task about ${contactName}. For anything more, just ask ${assistant}.`
+              : `A quick reminder or task for yourself. For anything more, just ask ${assistant}.`}
           </DialogDescription>
         </DialogHeader>
 

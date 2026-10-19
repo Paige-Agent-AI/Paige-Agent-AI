@@ -20,6 +20,7 @@ import { differenceInMonths } from "date-fns";
 import { useClientPortalBrand } from "@/hooks/useClientPortalBrand";
 import { useOperatorIdentity } from "@/hooks/useOperatorIdentity";
 import { partnerCtas, bookingCtas, type OperatorPartners } from "@/lib/creditFileHealth";
+import { useAssistantName } from "@/lib/portal/customerIdentity";
 
 /* ─── Types ─── */
 export interface CreditAccount {
@@ -541,6 +542,7 @@ export function buildBureauHealthContext(
 
 /* ═══════════════════ COMPONENT ═══════════════════ */
 export function CreditFileHealthAssessment() {
+  const assistant = useAssistantName();
   const isMobile = useIsMobile();
 
   // §45 de-brand seam: resolve THIS client's tenant, then its tenant-authored
@@ -627,7 +629,7 @@ export function CreditFileHealthAssessment() {
       <Card className="p-6 text-center">
         <CreditCard className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
         <h3 className="font-semibold text-lg">Upload a credit report to see your file health assessment</h3>
-        <p className="text-muted-foreground text-sm mt-2">Once Paige analyzes your credit report, your file structure, comparable credit, and credit age will appear here.</p>
+        <p className="text-muted-foreground text-sm mt-2">Once {assistant} analyzes your credit report, your file structure, comparable credit, and credit age will appear here.</p>
       </Card>
     );
   }

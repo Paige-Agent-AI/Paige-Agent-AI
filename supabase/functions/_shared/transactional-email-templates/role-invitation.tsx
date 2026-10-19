@@ -4,7 +4,7 @@ import {
 } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
 
-const SITE_NAME = "Paige Agent AI"
+const SITE_NAME = "Paige Agent AI" // customer-identity-exempt: platform legal-name floor, shown only when no inviting business brand resolved
 // Paige platform defaults (§9). When an inviting tenant/agency brand is passed in,
 // these are overridden so the invite email wears the inviter's brand end-to-end —
 // same template, tenant pixels — matching the branded /join card the link opens.
@@ -42,6 +42,7 @@ function textOn(hex?: string | null): string {
 const ROLE_COPY: Record<string, { headline: string; intro: string; features: string[] }> = {
   Administrator: {
     headline: "You're now an Administrator",
+    // customer-identity-exempt: staff role card (a team member invited to run the business), never the Client card a customer receives
     intro: "Full workspace access — manage your team, configure Paige, and oversee every client relationship in the practice.",
     features: [
       "👥  Invite & manage the full team",
@@ -52,11 +53,13 @@ const ROLE_COPY: Record<string, { headline: string; intro: string; features: str
   },
   Coach: {
     headline: "Welcome to your workspace",
+    // customer-identity-exempt: staff role card (a team member invited to run the business), never the Client card a customer receives
     intro: "You'll be assigned clients to guide from onboarding through every session and outcome, with Paige surfacing what each one needs before you ask.",
     features: [
       "🎯  Your assigned client roster & journey stages",
       "💬  Real-time messaging with each client",
       "📈  At-risk signals, milestones & next-best-action prompts",
+      // customer-identity-exempt: staff role card (a team member invited to run the business), never the Client card a customer receives
       "🤖  Paige as your co-pilot in every session",
     ],
   },
@@ -72,9 +75,11 @@ const ROLE_COPY: Record<string, { headline: string; intro: string; features: str
   },
   Assistant: {
     headline: "Your assistant workspace is live",
+    // customer-identity-exempt: staff role card (a team member invited to run the business), never the Client card a customer receives
     intro: "Support your coach end to end — keep clients moving, handle follow-ups, and let Paige draft the next move for your approval.",
     features: [
       "🗂️  Shared client roster & task queue",
+      // customer-identity-exempt: staff role card (a team member invited to run the business), never the Client card a customer receives
       "✍️  Paige-drafted follow-ups ready to send",
       "📅  Scheduling & session coordination",
       "🔔  At-risk flags routed straight to you",
@@ -132,12 +137,14 @@ const ROLE_COPY: Record<string, { headline: string; intro: string; features: str
   },
   Client: {
     headline: "Welcome to your private portal",
-    intro: "Everything you need to work with your coach — sessions, next steps, and answers the moment you need them — in one place.",
+    // The Client card is the one a customer receives. It promises only what every portal has: a business can
+    // turn its assistant off (config.assistant.enabled), so it never promises one (round 2, verifier #11).
+    intro: "Everything you need to work together — your sessions, your next steps and your messages — in one place.",
     features: [
       "📊  Your personalized roadmap & progress",
       "🎯  Next steps tailored to your goals",
       "📅  Scheduling & session history",
-      "💬  24/7 help from your assistant",
+      "💬  Messages with the team, all in one thread",
     ],
   },
   // Agency-tier team roles (§9). An agency operates a book of sub-accounts; these

@@ -19,7 +19,7 @@ export const TICKET_CATEGORIES: { value: TicketCategory; label: string }[] = [
   { value: "billing", label: "Billing Question" },
   { value: "technical_issue", label: "Technical Issue" },
   { value: "account_access", label: "Account Access" },
-  { value: "paige_question", label: "Paige Question" },
+  { value: "paige_question", label: "AI Assistant Question" },
   { value: "general", label: "General Question" },
 ];
 const LEGACY_TICKET_LABELS: Record<string, string> = {
@@ -29,7 +29,7 @@ const LEGACY_TICKET_LABELS: Record<string, string> = {
 };
 
 export const FEATURE_CATEGORIES: { value: FeatureCategory; label: string }[] = [
-  { value: "paige_ai", label: "Paige AI" },
+  { value: "paige_ai", label: "AI Assistant" },
   { value: "business_tools", label: "Business Tools" },
   { value: "mobile", label: "Mobile Experience" },
   { value: "integrations", label: "Integrations" },

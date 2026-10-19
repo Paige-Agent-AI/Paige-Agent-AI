@@ -80,7 +80,7 @@ const CoachingReminderEmail = ({
         </Text>
         <Hr style={hr} />
         <Text style={footer}>© {new Date().getFullYear()} {displayName}. You received this because session reminders are enabled in your notification preferences.</Text>
-        <EmailFooter unsubscribeUrl={unsubscribeUrl} />
+        <EmailFooter unsubscribeUrl={unsubscribeUrl} businessName={(brandName || '').trim() || null} />
       </Container>
     </Body>
   </Html>

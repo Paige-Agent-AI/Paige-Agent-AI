@@ -2,13 +2,13 @@
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: ordinary SOLO request -> existing Chat admission and Model Fabric -> Responses producer -> unchanged current-authority checks -> original canonical settlement and receipt
-PAIGE_UI_DESIGN: NOT_APPLICABLE: no visible source or interaction is changed
+PAIGE_UI_DESIGN: PASS: backend-only routing preserves existing Conversations presentation and interactions; no visible source is changed
 MATERIAL_FLOW_CHANGE: NO: preserve the existing ordered byte protocol, authorization, approval and recovery behavior
 FLOW_PROTOTYPE: NOT_REQUIRED: backend transport repair, no new customer flow
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: every eligible existing and future SOLO owner should receive an authorized answer without provider packet boundaries multiplying native state reads
 VISUAL_DIRECTION: NOT_APPLICABLE: existing presentation is retained
 AUTOMATED_EVIDENCE: PASS: adapter99/0, actual-handler92/0, client-memory1237/0, ModelFabric171/0 and round-gate30/0; exact-head hosted checks remain owed
-STATIC_EVIDENCE: PARTIAL: exact reviewed one-digest renewal passes the existing223-capability Spine validator; ESLint has the identical nine incumbent explicit-any errors in baseline/current, with no waived rule; hosted native typing and required CI remain owed
+STATIC_EVIDENCE: UNVERIFIED: exact reviewed one-digest renewal passes the existing223-capability Spine validator; ESLint has the identical nine incumbent explicit-any errors in baseline/current, with no waived rule; hosted native typing and required CI remain owed
 RENDERED_EVIDENCE: NOT_APPLICABLE: no layout or control changed; no rendered acceptance claim
 BEHAVIORAL_EVIDENCE: PASS: actual existing handler and adapter execute with recording native ports and synthetic transport, including uncertainty and negative authority controls
 AUTHENTICATED_RUNTIME: UNVERIFIED: not deployed; production CPU budget, ordinary owner behavior, reload and Live are not inferred from fixtures
@@ -19,6 +19,14 @@ STATE_COVERAGE: PASS: packed/fragmented/answer-only streams; byte bounds; sparse
 TRUTHFUL_STATE_LABELS: PASS: local amplification correction is separate from historical CPU causation, hosted sufficiency, production release and owner acceptance
 SOLO_UI: NO: shared native transport; no account allowlist or frontend source
 UNVERIFIED: final composition certification, exact-head CI, deployment/readback and authenticated production CPU/recovery evidence remain release or acceptance obligations
+
+INTERNAL_BUILD_IDENTITY: cb25f595169a3b45b2def151b4df4c6d24d8c4ce source/test freeze; base=6fd24829e7c56108e9ea12df8cf83721e56d0d2a; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(reviewed three-function release and authoritative source readback); evidence=docs/evidence/ui-delivery/ant21-openai-fragmented-stream-backpressure.md
+RELEASE_CHANNEL: development: reviewed local transport correction, no production invocation
+RELEASE_CLASSIFICATION: internal-only: existing Responses stream backpressure repair and truthful prior release closeout
+CUSTOMER_RELEASE_IDENTITY: none: no completed customer Experience or new version announced
+RELEASE_NOTE_REQUIRED: no: bounded prelaunch reliability correction, integrated owner evaluation remains later
+RELEASE_TRUTH_BOUNDARY: PARTIAL: local source behavior and review pass; hosted CPU sufficiency and authenticated restoration remain owed
+RELEASE_RECOVERY: position=reviewed forward correction preserving original authority, domain records and uncertain-operation holds; reference=docs/model-routing/int-334/EVIDENCE.md
 
 ## Grounding and existing architecture
 

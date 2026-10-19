@@ -1,0 +1,3 @@
+Browser tab: 170268718, Title: "Local actual SOLO Projects proof", URL: "http://127.0.0.1:58638/?theme=light&context=b&view=projects".
+There has been no change in the accessibility tree.
+The focused UI element is 42 button Add milestone

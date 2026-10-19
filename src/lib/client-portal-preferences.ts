@@ -192,12 +192,14 @@ export function readClientCommunicationState(data: unknown, expected: { tenantId
  * that SQL literal byte for byte, so what the customer saw is what the evidence names (reviewer Minor 7).
  * Changing a sentence means a new id on both sides, never an edit of an old one. A superseded id stays here and
  * on the server, because evidence already written names it; the page shows only CURRENT_DISCLOSURE.
- * {business} is the business's name, filled at display time; the hash names the template. data-sharing:v2 names the
- * business's AI tools, not the business and not an agent: the flag gates only what the business's AI reads
- * (load_contact_context, the bundle loaded for its assistant; admin_propose_paige_actions, the AI-prepared requests
- * sent to the customer), never what its staff see in their own records, and never Cura. So the sentence also says
- * the business still sees its own records (CURA-D1, integrator default, owner may overrule, 2026-10-19; round 3
- * corrected the party). v1's "It has no effect yet" was untrue for those two seams and is dropped.
+ * {business} is the business's name, filled at display time; the hash names the template. data-sharing:v2 says
+ * only what the switch governs (CURA-D1, integrator default, owner may overrule, 2026-10-19; round 4 corrected the
+ * scope): the flag gates load_contact_context (the fuller summary the business's team-side assistant may load) and
+ * admin_propose_paige_actions (requests the business's team sends the customer through the portal, typed by staff,
+ * not prepared by AI). It does not change what the customer's own portal assistant uses (Cura never reads the flag),
+ * nor what the business and its owner-side chat already read in its own records, and the sentence says so. Neither
+ * gated path is reachable from the app today (ContactPaigePanel is not mounted). v1's "It has no effect yet" is
+ * dropped because both server checks exist. Its apostrophes are curly, like the heading, row and line around it.
  */
 export const PORTAL_PREFERENCE_DISCLOSURES = {
   // Superseded 2026-10-18 (round 2): did not say email off also unsubscribes from updates, or name agreements.
@@ -214,7 +216,7 @@ export const PORTAL_PREFERENCE_DISCLOSURES = {
   "sms-pref:v2": "Texts from {business}. When texts are off, {business} can't text you through Paige. To get texts, reply START to a text from {business} if you have one, or ask them.", // customer-identity-exempt: superseded consent sentence, kept byte for byte because evidence already names it
   "sms-pref:v3": "Texts from {business}. When texts are off, {business} can't text you. To get texts, reply START to a text from {business} if you have one, or ask them.",
   "data-sharing:v1": "Lets {business}'s Paige use your account details and portal activity when it prepares requests or suggestions for you. It has no effect yet, and you can turn it off anytime.", // customer-identity-exempt: superseded consent sentence, kept byte for byte because evidence already names it
-  "data-sharing:v2": "Lets the AI tools {business} uses read your account details and portal activity, for example to prepare requests or suggestions for you. {business} can still see its own records about you. You can turn it off anytime.",
+  "data-sharing:v2": "Lets {business}’s team send you requests through your portal and give its AI assistant a fuller summary of you. It doesn’t change what your portal assistant uses to answer you, or what {business} and its tools can already see in its own records. You can turn it off anytime.",
 } as const;
 export type PortalDisclosureId = keyof typeof PORTAL_PREFERENCE_DISCLOSURES;
 

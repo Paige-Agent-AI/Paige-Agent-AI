@@ -725,7 +725,15 @@ const ANCESTRY_SOURCES = {
  // binding/policy/Knowledge/private-history guards are unchanged. Pin the pure
  // identity dependency too; no dispatch scalar or verifier logic is renewed.
  "supabase/functions/_shared/client-portal-persona.ts": "e6d4017abf1f50cfbb1da55cec4430f9d64465c8664220fd1013612c91f5c833",
- "supabase/functions/_shared/client-portal-identity.ts": "55a915741c99a5483419a5cfff5427c1835f4ab47d0c9c038f8e310e22a4d016",
+ // E09 CURA round 4 (2026-10-19), AUTHOR source review (NOT non-author; an independent reviewer must confirm):
+ // client-portal-identity.ts only. namesPaige sets aside a literal typed "Paiget" on the raw name before folding
+ // (a superscript or look-alike t no longer borrows the exemption); the look-alike map gains lowercase keys
+ // (Latin and APL alpha, Cyrillic ie and palochka, turned i, small capitals, Cherokee small letters) and drops uppercase keys
+ // that never matched after lowercasing; a pure exported agentNameAsTyped (invisible-stripped, trimmed, 80 chars)
+ // is factored out of customerAgentName unchanged. Presentation only: no import, dispatch, authority or verifier
+ // change; paige-ai-chat is byte-identical, so the 29 dispatch fingerprints are unchanged. Old canonical digest
+ // 55a91574… reproduced from HEAD f272b28ca before renewing (scratchpad r4-digest.mjs). Renew this digest only.
+ "supabase/functions/_shared/client-portal-identity.ts": "b673eaf51edd4b0b4c14e934aae032ced09e066f091ef9ba824ebb8f362d36f9",
  "supabase/functions/_shared/paige-spine/domains/soloBusinessInterviewContext.ts": "ae869d9dbc131f0e6d48d3f34e6a5edc81fd22a095946fa06cf8b7393528b053",
  // E02 source review: the33-key literal moved unchanged into a pure dependency.
  // Reconstituting it into the reader is AST-identical to deployed892b1bdfe.

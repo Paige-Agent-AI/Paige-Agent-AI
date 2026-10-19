@@ -54,6 +54,14 @@ describe("menu for a person whose access is not active", () => {
     expect(host.querySelector('button[aria-label="Contact support"]')).not.toBeNull();
   });
 
+  // Round 4 (compliance 7): the access-ended header still called them "Client".
+  it("does not label them a client in the header", async () => {
+    await render({ frame: null, phase: "not-client", staff: false });
+    expect(host.querySelector('[data-testid="portal-role-badge"]')).toBeNull();
+    // "Client Portal" is the logo text for a portal with no business brand; only the role label is dropped.
+    expect(host.textContent).not.toMatch(/\bClient\b(?! Portal)/);
+  });
+
   it("shows the menu skeleton while the shell is still checking whether they are staff", async () => {
     await render({ frame: null, phase: "not-client", staff: null, staffChecking: true });
     expect(navEl().getAttribute("aria-busy")).toBe("true");
@@ -71,5 +79,20 @@ describe("menu for a person whose access is not active", () => {
   it("leaves the menu as it was outside the /app shell, where there is no viewer to wait for", async () => {
     await render(null);
     expect((await desktopNavHrefs(host)).length).toBeGreaterThan(1);
+    expect(host.querySelector('[data-testid="portal-role-badge"]')!.textContent).toBe("Client");
+  });
+});
+
+// Round 4 (compliance 6): access that ended mid-session (frame phase "unavailable") resolves like access that
+// was never active: Home only, and no "Client" label.
+describe("menu for a customer whose access ended mid-session", () => {
+  it("offers Home only and drops the Client label", async () => {
+    await render({ frame: null, phase: "unavailable", staff: false });
+    expect(await desktopNavHrefs(host)).toEqual(["/app"]);
+    expect(host.querySelector('[data-testid="portal-role-badge"]')).toBeNull();
+  });
+  it("waits for staff standing before choosing a menu", async () => {
+    await render({ frame: null, phase: "unavailable", staff: null, staffChecking: true });
+    expect(navEl().getAttribute("aria-busy")).toBe("true");
   });
 });

@@ -17,8 +17,8 @@ const out = path.resolve(repo, argv.includes("--out") ? argv[argv.indexOf("--out
 fs.mkdirSync(out, { recursive: true });
 const PORT = 5246;
 const SIZES = [[1536, 770], [1366, 768], [1024, 768], [900, 1000]];
-const SAVED = "Your saved name “Paige Assistant” includes Paige, so clients see “Cura”. Paige is your own assistant; your clients’ agent has its own name.";
-const TYPED = "Clients will see “Cura”. A name that includes Paige stays with your own assistant, so the portal uses Cura instead.";
+const SAVED = "Your saved name “Paige Assistant” reads like Paige, so clients see “Cura”. Paige is your own assistant; your clients’ agent has its own name.";
+const TYPED = "Clients will see “Cura”. A name that reads like Paige stays with your own assistant, so the portal uses Cura instead.";
 
 const vite = await new Promise((resolve, reject) => {
   const child = spawn("npx", ["vite", "--config", path.join(here, "vite.config.ts"), "--port", String(PORT), "--strictPort"], { cwd: repo, stdio: ["ignore", "pipe", "pipe"], detached: true });

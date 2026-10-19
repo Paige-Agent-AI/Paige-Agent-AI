@@ -11,17 +11,22 @@
 --   email-pref:v2      -> email-pref:v3      (drops "through Paige")
 --   updates-optin:v2   -> updates-optin:v3   (drops "sent through Paige")
 --   sms-pref:v2        -> sms-pref:v3        (drops "through Paige")
---   data-sharing:v1    -> data-sharing:v2    ("{business}'s Paige" becomes "the AI tools {business} uses")
+--   data-sharing:v1    -> data-sharing:v2    ("{business}'s Paige" becomes what the switch actually does)
 --
--- data-sharing:v2 names the business's AI TOOLS, not the business and not the customer's agent. The flag
--- the customer sets (clients.paige_shared_context_consent) gates only what the business's AI reads:
--- load_contact_context, the bundle of a contact's records loaded for the business's own assistant, and
--- admin_propose_paige_actions, the AI-prepared requests sent to the customer. It never changes what the
--- business's staff see in their own records, so the sentence says that too: on its own, the stored
--- sentence must not suggest that turning it off hides the customer from the business. Cura never reads the
--- flag. v1's "It has no effect yet" was untrue for both seams and is dropped. (CURA-D1, integrator default,
--- owner may overrule, 2026-10-19; round 3 corrected which party it names.) The sentence has no agent
--- placeholder, so the stored hash fully names the wording apart from {business}.
+-- data-sharing:v2 says only what the switch governs. The flag the customer sets
+-- (clients.paige_shared_context_consent) gates two business-side paths: load_contact_context, the fuller
+-- summary of a contact that the business's TEAM-side assistant may load, and admin_propose_paige_actions,
+-- the requests the business's team sends the customer through the portal (typed by staff, not prepared by
+-- AI). It does not change what the customer's own portal assistant (Cura, or the business's renamed agent)
+-- uses to answer them: client_portal_assistant_context never reads the flag. And it does not change what the
+-- business, or its owner-side chat, can already read in its own records (crm_get_contact_summary,
+-- crm_search_contacts and client_memory read the same fields on or off). The sentence says both. Today
+-- neither gated path is reachable from the app (ContactPaigePanel, their only caller, is not mounted), so the
+-- switch has no practical effect until that panel or Paige uses those paths; the sentence describes what the
+-- switch governs, and the decision log states the gap. v1's "It has no effect yet" was dropped because both
+-- server checks exist. Apostrophes in this sentence are curly, matching the heading, row and line around it
+-- on the page. (CURA-D1, integrator default, owner may overrule, 2026-10-19; round 4 corrected the scope.)
+-- The sentence has no agent placeholder, so the stored hash fully names the wording apart from {business}.
 --
 -- THE WRITERS ARE REWRITTEN IN PLACE, NOT RE-DECLARED. client_portal_set_communication_preference and
 -- client_portal_set_shared_context_consent are read from the catalog and only their disclosure-id
@@ -43,7 +48,7 @@ AS $$ SELECT CASE p_id
   WHEN 'sms-pref:v2' THEN 'Texts from {business}. When texts are off, {business} can''t text you through Paige. To get texts, reply START to a text from {business} if you have one, or ask them.'
   WHEN 'sms-pref:v3' THEN 'Texts from {business}. When texts are off, {business} can''t text you. To get texts, reply START to a text from {business} if you have one, or ask them.'
   WHEN 'data-sharing:v1' THEN 'Lets {business}''s Paige use your account details and portal activity when it prepares requests or suggestions for you. It has no effect yet, and you can turn it off anytime.'
-  WHEN 'data-sharing:v2' THEN 'Lets the AI tools {business} uses read your account details and portal activity, for example to prepare requests or suggestions for you. {business} can still see its own records about you. You can turn it off anytime.'
+  WHEN 'data-sharing:v2' THEN 'Lets {business}’s team send you requests through your portal and give its AI assistant a fuller summary of you. It doesn’t change what your portal assistant uses to answer you, or what {business} and its tools can already see in its own records. You can turn it off anytime.'
   END $$;
 REVOKE ALL ON FUNCTION public.client_portal_consent_disclosure(text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.client_portal_consent_disclosure(text) TO authenticated, service_role;

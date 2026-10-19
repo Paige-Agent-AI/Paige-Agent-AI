@@ -3,17 +3,24 @@
  * A business may rename its agent, but a name that is PAIGE, or carries it in any spelling — wrapped
  * ("Paige AI", "Ask Paige", "Paige Team"), joined ("AskPaige", "PaigeTalk", "Paigeton", "Paiges"),
  * spaced ("P a i g e", "PAIGE-T"), hidden with invisible characters ("Pa\u200Bige"), accented ("Paigé"),
- * marked ("Paige™") or written with look-alike letters — falls back to Cura. "Paiget" is a different
- * word and is kept, but only as a word of its own in the name as typed. Custom names grant no authority.
+ * marked ("Paige™"), raised or lowered ("Paigeᵗ", "ᴾᵃⁱᵍᵉ"), or written with common look-alike letters
+ * (Cyrillic, Greek, small capitals, Cherokee, APL alpha) — falls back to Cura. "Paiget" is a different word
+ * and is kept, but only when it is typed literally as a word of its own: a superscript or look-alike t is not
+ * a T. Digit and symbol swaps ("Pa1ge", "P@ige") are kept by design: they read as a different name, and
+ * chasing every leetspeak spelling would refuse ordinary names. The rule errs the other way across word
+ * breaks ("Pai Genie" reads as Cura) because the letters are read run together. Custom names grant no authority.
  */
 // Zero-width, joiner, direction, variation-selector and soft-hyphen characters render as nothing.
 const INVISIBLE = /[\u00AD\u061C\u115F\u1160\u200B-\u200F\u202A-\u202E\u2060-\u206F\u3164\uFEFF]|\u034F|\u17B4|\u17B5|\u180B|\u180C|\u180D|\u180E|\u180F|[\uFE00-\uFE0F]/g;
-// Look-alike letters that NFKC does not fold (Cyrillic, Greek, Latin dotless i, script g).
+// Look-alike letters that NFKC does not fold. The map is read after lowercasing, so every key is lowercase:
+// Cyrillic, Greek, Latin dotless and turned i, script g, Latin alpha, APL alpha, small capitals, Cherokee small letters.
 const CONFUSABLE: Readonly<Record<string, string>> = {
-  "а": "a", "А": "a", "α": "a", "Α": "a", "е": "e", "Е": "e", "ε": "e", "Ε": "e",
-  "і": "i", "І": "i", "ı": "i", "ι": "i", "Ι": "i", "р": "p", "Р": "p", "ρ": "p", "Ρ": "p",
-  "ɡ": "g", "ǥ": "g", "ց": "g",
+  "а": "a", "α": "a", "ɑ": "a", "⍺": "a", "ᴀ": "a", "е": "e", "ε": "e", "є": "e", "ᴇ": "e",
+  "і": "i", "ı": "i", "ι": "i", "ӏ": "i", "ɪ": "i", "ᴉ": "i", "ꭵ": "i", "р": "p", "ρ": "p", "ᴘ": "p", "ꮲ": "p",
+  "ɡ": "g", "ǥ": "g", "ց": "g", "ɢ": "g",
 };
+// "Paiget" typed literally as a word of its own, read on the name before any folding.
+const PAIGET = /(?<![\p{L}\p{M}\p{N}])paiget(?![\p{L}\p{M}\p{N}])/giu;
 
 /**
  * The name's words as a reader sees them: lowercase letters only, accents and look-alikes folded,
@@ -31,13 +38,20 @@ function readAs(value: string): string[] {
 }
 
 /** True when the name says PAIGE in any spelling. Its letters are read run together, so spacing,
- * punctuation and joining never hide it; only a standalone word "Paiget" is set aside first. */
+ * punctuation and joining never hide it. A literal, typed "Paiget" is set aside on the raw name first,
+ * so a folded superscript or look-alike t can never borrow the exemption. */
 function namesPaige(value: string): boolean {
-  return readAs(value).filter((word) => word !== "paiget").join("").includes("paige");
+  return readAs(value.replace(PAIGET, " ")).join("").includes("paige");
+}
+
+/** The name as a client would read it before the PAIGE rule: invisible characters removed, trimmed, at most
+ * 80 characters. A difference between this and customerAgentName is the PAIGE rule and nothing else. */
+export function agentNameAsTyped(value: unknown): string {
+  return typeof value === "string" ? value.replace(INVISIBLE, "").trim().slice(0, 80) : "";
 }
 
 export function customerAgentName(value: unknown): string {
-  const name = typeof value === "string" ? value.replace(INVISIBLE, "").trim().slice(0, 80) : "";
+  const name = agentNameAsTyped(value);
   return !name || namesPaige(name) ? "Cura" : name;
 }
 

@@ -60,7 +60,7 @@ for(const name of [undefined,"","   ","PAIGE"," Paige ","paige"])test(`legacy cu
 });
 // Round 3: the frame's name runs through the same rule the page uses; a T-word, a mark or an accent
 // after PAIGE never reaches the customer, and a standalone "Paiget" is a different word.
-for(const name of ["Paige Team","PaigeTalk","Paige\u2122","Paig\u00E9","PAIGE-T"])test(`frame name ${JSON.stringify(name)} resolves to Cura`,async()=>{
+for(const name of ["Paige Team","PaigeTalk","Paige\u2122","Paig\u00E9","PAIGE-T","Paige\u1D57","\u1D18\u1D00\u026A\u0262\u1D07"])test(`frame name ${JSON.stringify(name)} resolves to Cura`,async()=>{
   const input=await readClientPortalPersonaInput(fixture({config:{assistant:{display_name:name}}}).caller,actor);
   assert.ok(input);assert.equal(input.assistantName,"Cura");
   assert.match(buildClientPortalPersonaMessages(input)[1].content,/"assistant_name":"Cura"/);

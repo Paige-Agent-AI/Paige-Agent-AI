@@ -221,7 +221,9 @@ export function AppNav({ user }: AppNavProps) {
   const isActive = (href: string) =>
     location.pathname === href || (SECTION_HREFS.has(href) && location.pathname.startsWith(`${href}/`));
 
-  const userRoleLabel = isAdmin ? "Admin" : "Client";
+  // A person whose portal access is not active is not anyone's client here, so the header does not call them one
+  // (round 4, compliance 7). Everyone else keeps the label they had (§58).
+  const userRoleLabel = isAdmin ? "Admin" : identity.viewer === "inactive" ? null : "Client";
   const isViewingAsClient = isAdmin && mode === "client";
 
   const handleSignOut = async () => {
@@ -389,9 +391,11 @@ export function AppNav({ user }: AppNavProps) {
       </div>
 
       <div className="flex flex-wrap min-w-0 items-center gap-3 ml-auto">
-        <Badge variant="outline" className="text-[10px] font-medium capitalize border-primary-foreground/30 text-primary-foreground hidden sm:inline-flex">
-          {userRoleLabel}
-        </Badge>
+        {userRoleLabel && (
+          <Badge variant="outline" className="text-[10px] font-medium capitalize border-primary-foreground/30 text-primary-foreground hidden sm:inline-flex" data-testid="portal-role-badge">
+            {userRoleLabel}
+          </Badge>
+        )}
 
         {isViewingAsClient && (
           <Button

@@ -79,3 +79,19 @@ it("keeps staff on the owner's own assistant and greeting (§58)", async () => {
   expect(host.textContent).toContain("Owner playbook greeting");
   expect(host.textContent).not.toContain("once your customer access is checked");
 });
+
+// Round 4 (compliance 6): a customer whose access ended during the session (frame phase "unavailable") kept the
+// round-2 home, still "checking" their access, with tiles. Once the shell knows they are not staff, they get the
+// same no-access home as anyone whose access is not active; staff keep theirs.
+it("gives a customer whose access ended mid-session the no-access home", async () => {
+  await render({ frame: null, phase: "unavailable", staff: false });
+  expect(host.querySelector('[data-testid="no-access-home"]')).not.toBeNull();
+  expect(host.textContent).not.toContain("once your customer access is checked");
+  expect(host.textContent).not.toContain("Home tiles");
+});
+
+it("keeps staff whose customer frame ended on the owner's own home (§58)", async () => {
+  await render({ frame: null, phase: "unavailable", staff: true, staffAssistantName: "Owner assistant" });
+  expect(host.querySelector('[data-testid="no-access-home"]')).toBeNull();
+  expect(host.textContent).toContain("Owner assistant is here to help");
+});

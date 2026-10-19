@@ -60,7 +60,7 @@ describe("How {Business} can reach you — what each state says", () => {
   it("nothing on record: email on, texts not set up, not subscribed, sharing not allowed", async () => {
     await mount();
     expect(host.textContent).toContain("How Northwind Studio can reach you");
-    expect(host.textContent).toContain("What Northwind Studio's AI tools can use");
+    expect(host.textContent).toContain("Sharing with Northwind Studio’s team");
     expect(stateOf("email")).toBe("On");
     expect(stateOf("sms")).toBe("Not set up");
     expect(switchOf("sms")?.disabled).toBe(true);
@@ -191,17 +191,20 @@ describe("How {Business} can reach you — what each state says", () => {
     expect(host.textContent).not.toMatch(/paige/i);
   });
 
-  // CURA-D1 (round 3): the sharing row, its switch, its heading and the line under it all name the business's
-  // AI tools (what the flag gates), and nothing on the row says the business stops seeing its own records.
-  it("the data-sharing row names the business's AI tools, matching its heading and the line under it", async () => {
+  // CURA-D1 (round 4): the sharing row, its switch, its heading and the line under it agree on what the switch
+  // governs (requests from the business's team, a fuller summary for its team-side assistant), say what it does
+  // not change (the customer's portal assistant, the business's own records), and use curly apostrophes throughout.
+  it("the data-sharing row says what the switch governs, matching its heading and the line under it", async () => {
     await mount();
-    const label = "Let Northwind Studio's AI tools use your account details";
+    const label = "Let Northwind Studio’s team send you requests and use a fuller summary";
     expect(row("sharing").querySelector('[data-testid="pref-label"]')!.textContent).toBe(label);
     expect(switchOf("sharing")!.getAttribute("aria-label")).toBe(label);
-    expect(host.querySelector("#client-sharing-title")!.textContent).toBe("What Northwind Studio's AI tools can use");
-    expect(row("sharing").querySelector('[data-testid="pref-disclosure"]')!.textContent).toContain("Northwind Studio can still see its own records about you.");
-    expect(row("sharing").querySelector('[data-testid="pref-detail"]')!.textContent).toBe("Turning it off doesn't delete anything.");
-    expect(row("sharing").textContent).not.toMatch(/Cura|no effect yet|Let Northwind Studio and/);
+    expect(host.querySelector("#client-sharing-title")!.textContent).toBe("Sharing with Northwind Studio’s team");
+    expect(row("sharing").querySelector('[data-testid="pref-disclosure"]')!.textContent).toBe("Lets Northwind Studio’s team send you requests through your portal and give its AI assistant a fuller summary of you. It doesn’t change what your portal assistant uses to answer you, or what Northwind Studio and its tools can already see in its own records. You can turn it off anytime.");
+    expect(row("sharing").querySelector('[data-testid="pref-detail"]')!.textContent).toBe("Turning it off doesn’t delete anything.");
+    expect(row("sharing").textContent).not.toMatch(/Cura|no effect yet|AI tools|AI-prepared|prepare requests/);
+    // One apostrophe style across the section: the heading, row, sentence and line under the switch are all curly.
+    expect(host.querySelector('section[aria-labelledby="client-sharing-title"]')!.textContent).not.toContain("'");
   });
 
   it("section headings sit visibly above row labels (should-fix 8)", async () => {

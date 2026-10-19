@@ -36,7 +36,7 @@ export type CustomerIdentity = {
 };
 
 export type CustomerIdentityState = Pick<FrameState, "frame" | "phase"> & {
-  /** Staff standing when the frame is "not-client": true, false, or null while unknown. */
+  /** Staff standing when there is no frame ("not-client" or "unavailable"): true, false, or null while unknown. */
   staff?: boolean | null;
   /** The owner's own assistant name, used only for a staff viewer. */
   staffAssistantName?: string | null;
@@ -46,10 +46,17 @@ export type CustomerIdentityState = Pick<FrameState, "frame" | "phase"> & {
 
 const CustomerIdentityContext = createContext<CustomerIdentity | null>(null);
 
+/** No customer frame, and the shell knows there is none: never one ("not-client"), or one that ended this session
+ * ("unavailable": access revoked mid-session, or the server refused the frame). Both are resolved the same way, so a
+ * revoked customer is not left "checking" (round 4). AppShell asks staff standing in exactly these phases. */
+function frameAbsent(phase: FrameState["phase"]): boolean {
+  return phase === "not-client" || phase === "unavailable";
+}
+
 export function customerIdentityFrom(state: CustomerIdentityState): CustomerIdentity {
   const frame = state.frame;
   const viewer: PortalViewer = frame ? "customer"
-    : state.phase !== "not-client" ? "unknown"
+    : !frameAbsent(state.phase) ? "unknown"
       : state.staff === true ? "staff" : state.staff === false ? "inactive" : "unknown";
   const staffName = state.staffAssistantName?.trim();
   return {
@@ -59,7 +66,7 @@ export function customerIdentityFrom(state: CustomerIdentityState): CustomerIden
     frame,
     phase: state.phase,
     viewer,
-    checking: state.phase === "loading" || (state.phase === "not-client" && state.staffChecking === true),
+    checking: state.phase === "loading" || (frameAbsent(state.phase) && state.staffChecking === true),
   };
 }
 

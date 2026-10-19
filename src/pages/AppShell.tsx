@@ -335,7 +335,10 @@ function CustomerIdentityRoot({ userId, enabled, viewingAsClient, children }: { 
   const customer = useSharedClientPortalFrame(userId, enabled);
   // Staff standing is asked only when there is no customer frame (or staff are viewing as a client): a staff
   // viewer keeps the owner's assistant beside the owner's chat; anyone else's access is simply not active.
-  const standing = usePortalStaffStanding(userId, !viewingAsClient && customer.phase === "not-client");
+  // A frame that ended this session ("unavailable": access revoked, or refused) is resolved the same way, so a
+  // revoked customer gets the no-access home rather than a home still "checking" their access (round 4). These are
+  // the same two phases customerIdentityFrom resolves by staff standing.
+  const standing = usePortalStaffStanding(userId, !viewingAsClient && (customer.phase === "not-client" || customer.phase === "unavailable"));
   const staff = viewingAsClient ? true : standing.staff;
   const ownerPlaybook = usePlaybook(staff === true);
   const business = customer.frame?.brand.tenant_name?.trim();

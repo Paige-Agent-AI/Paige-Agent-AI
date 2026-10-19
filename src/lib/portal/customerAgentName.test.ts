@@ -30,6 +30,23 @@ describe("customerAgentName", () => {
   it("keeps Paiget only as a word of its own", () => {
     for (const v of ["Paiget", "PAIGET", "Paiget Team", "Paiget\u2122"]) expect(customerAgentName(v), JSON.stringify(v)).toBe(v);
   });
+  // Round 4 (verifier HIGH 1): the "Paiget" exemption was taken after compatibility folding, so a raised or
+  // lowered t (ᵗ U+1D57, ᵀ U+1D40, ₜ U+209C) folded into "paiget" and PAIGE reached the customer.
+  it("refuses PAIGE with a superscript or subscript t, or written in modifier letters", () => {
+    for (const v of ["Paige\u1D57", "PAIGE\u1D40", "Paige\u209C", "Paige\u1D57 Studio", "\u1D3E\u1D43\u2071\u1D4D\u1D49\u1D57", "Paiget\u0301", "\uFF30\uFF41\uFF49\uFF47\uFF45\uFF54"])
+      expect(customerAgentName(v), JSON.stringify(v)).toBe("Cura");
+  });
+  // Round 4 (verifier 3): look-alikes the map did not hold. The map is read after lowercasing, so Cherokee is
+  // keyed by its small letters (ꮲ U+ABB2, ꭵ U+AB75) and catches capital Ꮲ / Ꭵ too.
+  it("refuses small capitals, Latin and APL alpha, Cyrillic ie and palochka, and Cherokee look-alikes", () => {
+    for (const v of ["\u1D18\u1D00\u026A\u0262\u1D07", "P\u0251ige", "P\u237Aige", "Paig\u0454", "Pa\u04CFge", "\u13E2aige", "Pa\u13A5ge", "\uABB2aige", "Pa\uAB75ge", "Pa\u1D09ge", "\u0420\u0410IG\u0415"])
+      expect(customerAgentName(v), JSON.stringify(v)).toBe("Cura");
+  });
+  // Decided, not missed: a digit or symbol in place of a letter reads as a different name, and refusing every
+  // leetspeak spelling would refuse ordinary names. Recorded in client-portal-identity.ts and the decision log.
+  it("keeps digit and symbol swaps by design", () => {
+    for (const v of ["Pa1ge", "Pai9e", "P@ige", "Pa!ge"]) expect(customerAgentName(v), JSON.stringify(v)).toBe(v);
+  });
   it("does not refuse an ordinary name that merely contains the letters", () => {
     expect(customerAgentName("Paiget")).toBe("Paiget");
     expect(customerAgentName("Page")).toBe("Page");

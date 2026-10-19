@@ -181,12 +181,13 @@ function unmet(s, n) {
       // Round 3 (verifier minor 6): never "again", and the route is conditional on having a text to reply to.
       want(!/\bagain\b/.test(n.sms.text) && n.sms.text.includes(`reply START to a text from ${B} if you have one, or ask them.`), `texts not set up "${n.sms.text}"`);
       want(n.sms.buttons.includes("Don't text me"), `texts buttons ${JSON.stringify(n.sms.buttons)}`);
-      // CURA-D1 (integrator default, owner may overrule, 2026-10-19; round 3 corrected the party): the flag gates
-      // only what the business's AI reads (load_contact_context, admin_propose_paige_actions), never what its staff
-      // see, so the row and its sentence name the business's AI tools and say the business still sees its own
-      // records. The old "It has no effect yet" (D2/M3) is gone because both seams act on it. Never PAIGE, never Cura.
+      // CURA-D1 (integrator default, owner may overrule, 2026-10-19; round 4 corrected the scope): the flag gates
+      // load_contact_context (the fuller summary the business's team-side assistant may load) and
+      // admin_propose_paige_actions (requests its team sends through the portal, typed by staff, not AI-prepared).
+      // The row and its sentence say that, and that it changes neither the customer's portal assistant nor the
+      // business's own records. The old "It has no effect yet" (D2/M3) is gone. Never PAIGE, never Cura.
       want(!/no effect yet/.test(n.prefsText ?? ""), "data sharing still claims it has no effect yet");
-      want(n.sharing.text.startsWith(`Let ${B}'s AI tools use your account details`) && n.sharing.text.includes(`Lets the AI tools ${B} uses read your account details and portal activity`) && n.sharing.text.includes(`${B} can still see its own records about you.`) && n.sharing.text.includes("Turning it off doesn't delete anything.") && !/Cura|Paige|Let [^.]* and the AI tools/i.test(n.sharing.text), `sharing names the business's AI tools "${n.sharing.text}"`);
+      want(n.sharing.text.startsWith(`Let ${B}’s team send you requests and use a fuller summary`) && n.sharing.text.includes(`Lets ${B}’s team send you requests through your portal and give its AI assistant a fuller summary of you.`) && n.sharing.text.includes(`It doesn’t change what your portal assistant uses to answer you, or what ${B} and its tools can already see in its own records.`) && n.sharing.text.includes("Turning it off doesn’t delete anything.") && !/Cura|Paige|AI tools|AI-prepared|'/i.test(n.sharing.text), `sharing says what the switch governs "${n.sharing.text}"`);
       break;
     case "email-off":
       want(/^Off · you turned email off on Oct 12, 2026$/.test(st("email")), `email "${st("email")}"`);

@@ -5,6 +5,7 @@
 // HARNESS RENDER tag on screen. HARNESS RENDER ≠ AUTHENTICATED RUNTIME (§32/§70.1).
 // Round 3: the home no longer repeats the chat's greeting (said once on screen), and a person whose access is not
 // active gets the home's empty state and a Home-only menu (no "Welcome", no Action items or Resources).
+// Round 4: that person's header carries no "Client" role badge; a customer's still does.
 //   node scripts/live-drive/harness/portal-chat-identity-mount/identity-drive.mjs [--out dir]
 import { spawn } from "node:child_process";
 import fs from "node:fs";
@@ -23,11 +24,11 @@ const PORT = 5251;
 const desk = { w: 1440, h: 900, kind: "desktop" }, phone = { w: 390, h: 844, kind: "phone" };
 const greet = (a) => `Hi — I’m ${a}, the AI client success agent for Northwind Studio. How can I help?`;
 const CASES = [
-  { name: "cura", q: "access=ready", agent: "Cura", expect: (v) => [v.phone ? "Message Cura…" : "Ask Cura… (Shift+Enter for new line)", greet("Cura"), "AI client success agent for Northwind Studio", ...(v.phone ? [] : ["Jordan Rivera", "Ask Cura about your next steps."])], absent: ["is here to help"], once: greet("Cura") },
+  { name: "cura", q: "access=ready", agent: "Cura", badge: (v) => (v.phone ? null : "Client"), expect: (v) => [v.phone ? "Message Cura…" : "Ask Cura… (Shift+Enter for new line)", greet("Cura"), "AI client success agent for Northwind Studio", ...(v.phone ? [] : ["Jordan Rivera", "Ask Cura about your next steps."])], absent: ["is here to help"], once: greet("Cura") },
   { name: "ava", q: "access=ready&agent=Ava", agent: "Ava", expect: (v) => [v.phone ? "Message Ava…" : "Ask Ava… (Shift+Enter for new line)", greet("Ava"), "AI client success agent for Northwind Studio", ...(v.phone ? [] : ["Jordan Rivera", "Ask Ava about your next steps.", "Tell Ava what you're working toward. Ava will help you map the path."])], absent: ["is here to help"], once: greet("Ava") },
   // Said once (the chat column), with the one way to get help; the home says what will appear there instead, and
   // the menu offers Home only.
-  { name: "inactive", q: "access=inactive", expect: (v) => ["Your access to this portal isn’t active.", "Contact support", ...(v.phone ? [] : ["Nothing is shared with you right now"])], absent: ["Cura", "Ask ", "Set your first goal", "is here to help", "Welcome", "Action items", "Resources", "Messages"], once: "isn’t active" },
+  { name: "inactive", q: "access=inactive", expect: (v) => ["Your access to this portal isn’t active.", "Contact support", ...(v.phone ? [] : ["Nothing is shared with you right now"])], absent: ["Cura", "Ask ", "Set your first goal", "is here to help", "Welcome", "Action items", "Resources", "Messages"], once: "isn’t active", badge: null },
   { name: "push-credit", q: "access=ready&agent=Ava&funding=1&push=1", dialog: true, expect: () => ["Get a notification on this device when one of your credit scores changes or a dispute is updated."], absent: ["funding"] },
   { name: "push-none", q: "access=ready&agent=Ava&push=1", noDialog: true, expect: () => [] },
 ];
@@ -79,6 +80,7 @@ function measure() {
   const placeholder = document.querySelector("textarea")?.getAttribute("placeholder") ?? null;
   const text = document.body.innerText.replace(/HARNESS RENDER · SYNTHETIC DATA · NOT LIVE/g, "");
   return {
+    roleBadge: document.querySelector('[data-testid="portal-role-badge"]')?.textContent?.trim() ?? null,
     contrastMin: Math.round(min * 100) / 100, low,
     overflowX: document.documentElement.scrollWidth > innerWidth + 1,
     tag: !!tr && tr.height > 0 && tr.bottom <= innerHeight + 1,
@@ -120,6 +122,9 @@ try {
       ...(m && m.low.length ? [`contrast: ${m.low.join("; ")}`] : []),
       ...(m?.overflowX ? ["horizontal overflow"] : []), ...(m && !m.tag ? ["harness tag not on screen"] : []),
       ...(s.noDialog && m?.dialog ? ["a prompt opened for a business that sends no push"] : []),
+      // Round 4 (compliance 7): a person whose access is not active is not labelled "Client"; a customer still is.
+      // (The phone header has no role badge for anyone.)
+      ...(m && "badge" in s && m.roleBadge !== (typeof s.badge === "function" ? s.badge(s) : s.badge) ? [`role badge ${JSON.stringify(m.roleBadge)}`] : []),
       ...errors.map((e) => `pageerror: ${e.slice(0, 160)}`),
     ];
     if (!driveError) await page.screenshot({ path: path.join(out, file) });

@@ -6,7 +6,6 @@
     "Start with one real commitment"
   ],
   "height": 768,
-  "paigeOpen": true,
   "scrollOwners": [
     {
       "clientHeight": 641,
@@ -16,5 +15,7 @@
       "scrollWidth": 1285
     }
   ],
-  "width": 1366
+  "width": 1366,
+  "paigeAsidePresent": true,
+  "paigeAsidePresentSemantics": "DOM element presence only, including hidden or transitioning ASIDE; not open/visible state. The matching original screenshot is the visually reviewed state evidence."
 }

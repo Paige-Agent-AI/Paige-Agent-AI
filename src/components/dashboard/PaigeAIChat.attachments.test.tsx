@@ -170,6 +170,7 @@ describe("INT-338 real composer attachment integration", () => {
     }));
     await render(); await stage(file("Program-brief.pdf"), "drop"); await type("Review this brief");
     await act(async () => { send().click(); await settle(); });
+    expect(host.textContent).toContain("An earlier response was interrupted, and its outcomes still need checking");
     expect(host.textContent).toContain("Your message was recorded");
     expect(host.textContent).toContain("new actions and attachments are on hold");
     expect(host.textContent).toContain("PAIGE can still answer questions about existing records");

@@ -1,10 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   HOST_SPLIT_ENABLED,
   computeHostRedirect,
   computeTenantHostRedirect,
   configuredAppOrigin,
   detectsSessionFromUrl,
+  scrubTenantHostAuthParams,
   stripAuthCallbackParams,
   tenantHostPortalEntryUrl,
   tenantHostUrlWithoutAuthParams,
@@ -189,4 +190,50 @@ describe("auth callback parameters are removed in place on a tenant host that is
     "never touches the non-tenant host %j",
     (hostname) => expect(tenantHostUrlWithoutAuthParams(hostname, "/auth", "?code=abc", "#access_token=at")).toBeNull(),
   );
+});
+
+describe("a tenant-host path that starts with // stays on the tenant origin", () => {
+  it("canonicalizes //evil.example/x to the tenant's own portal, a same-origin target", () => {
+    const target = computeTenantHostRedirect("acme.paigeagent.ai", "//evil.example/x", "?code=abc", "");
+    expect(target).toBe("/portal/acme");
+    expect(new URL(target!, "https://acme.paigeagent.ai").origin).toBe("https://acme.paigeagent.ai");
+  });
+
+  it.each(["//evil.example", "///evil.example/x", "/\\evil.example/x", "//portal/acme"])(
+    "never returns a protocol-relative target for the path %j",
+    (path) => {
+      const target = computeTenantHostRedirect("acme.paigeagent.ai", path, "?ref=1", "");
+      expect(target).not.toBeNull();
+      expect(target!.startsWith("//")).toBe(false);
+      expect(new URL(target!, "https://acme.paigeagent.ai").origin).toBe("https://acme.paigeagent.ai");
+    },
+  );
+
+  function fakeWindow(pathname: string, search: string, replaceState: (...args: unknown[]) => void) {
+    const origin = "https://acme.paigeagent.ai";
+    return {
+      location: { hostname: "acme.paigeagent.ai", origin, pathname, search, hash: "" },
+      history: { state: { k: 1 }, replaceState },
+    } as unknown as Window;
+  }
+
+  it("hands replaceState a full same-origin URL, keeping a // path byte for byte", () => {
+    const replaceState = vi.fn();
+    expect(scrubTenantHostAuthParams(fakeWindow("//evil.example/x", "?code=abc&ref=1", replaceState))).toBe(true);
+    expect(replaceState).toHaveBeenCalledWith({ k: 1 }, "", "https://acme.paigeagent.ai//evil.example/x?ref=1");
+    const passed = new URL(replaceState.mock.calls[0][2] as string);
+    expect(passed.origin).toBe("https://acme.paigeagent.ai");
+    expect(passed.pathname).toBe("//evil.example/x");
+  });
+
+  it("logs loudly and never throws when replaceState refuses the URL", () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const refused = new DOMException("refused", "SecurityError");
+    const win = fakeWindow("/book/intro", "?code=abc", () => { throw refused; });
+    expect(() => scrubTenantHostAuthParams(win)).not.toThrow();
+    expect(scrubTenantHostAuthParams(win)).toBe(false);
+    expect(error).toHaveBeenCalled();
+    expect(error.mock.calls[0]).toContain(refused);
+    error.mockRestore();
+  });
 });

@@ -5036,7 +5036,8 @@ split is on), pinned to the hostname tenant. It never reads a session, never col
 URL tokens (`detectSessionInUrl` false via `detectsSessionFromUrl`), canonicalising a tenant-host URL drops
 every auth-callback parameter (`sb_flow_id` included) from the query and hash, a tenant-host URL that is not
 redirected has them removed from the address bar in place (`scrubTenantHostAuthParams`, run while the
-Supabase client module loads), and no sign-in form runs there. The app-wide session readers still run on
+Supabase client module loads, with a full same-origin URL so a `//` path cannot throw, and any failure
+logged rather than blocking start), and no sign-in form runs there. The app-wide session readers still run on
 every host — `BusinessProvider`, `GlobalAuthSessionManager`, `ClientOnlyRouteGuard`, analytics
 `usePageView`, and `TenantProvider`, `SubscriptionProvider` and `DashboardModeProvider` — and on a tenant
 host they read only that origin's own storage, which by code reading nothing in this slice writes to (no

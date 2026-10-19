@@ -100,16 +100,28 @@ export function tenantHostUrlWithoutAuthParams(
 /**
  * Remove auth-callback parameters from the address bar on a tenant host, in place (history.replaceState,
  * no navigation, history state kept). Called once while the Supabase client module is evaluated, so it
- * runs before anything in the app reads location.href. Returns whether the URL changed. App origin and
- * every other non-tenant host: untouched.
+ * runs before any app module that reads the full URL (the inline Plausible loader in index.html runs
+ * earlier and is not covered). Returns whether the URL changed. App origin and every other non-tenant
+ * host: untouched.
+ *
+ * The replacement is handed over as a full URL on the page's own origin, never a relative one: a path
+ * that begins with `//` (`https://acme.paigeagent.ai//evil.example/x`) would otherwise be read as a
+ * protocol-relative address on another site, and replaceState would throw while this module loads,
+ * stopping the whole app from starting. Prefixing the origin keeps that path byte for byte on this
+ * origin. Any failure is logged and swallowed: a clean-up must never block start (§32).
  */
 export function scrubTenantHostAuthParams(win: Window | undefined = typeof window !== "undefined" ? window : undefined): boolean {
   if (!win) return false;
-  const { hostname, pathname, search, hash } = win.location;
-  const target = tenantHostUrlWithoutAuthParams(hostname, pathname, search, hash);
-  if (target === null) return false;
-  win.history.replaceState(win.history.state, "", target);
-  return true;
+  try {
+    const { hostname, origin, pathname, search, hash } = win.location;
+    const target = tenantHostUrlWithoutAuthParams(hostname, pathname, search, hash);
+    if (target === null) return false;
+    win.history.replaceState(win.history.state, "", `${origin}${target}`);
+    return true;
+  } catch (error) {
+    console.error("[hostRouting] could not remove auth parameters from the tenant host's address bar", error);
+    return false;
+  }
 }
 
 /** Canonicalize a tenant wildcard host to that tenant\'s one public portal. */

@@ -77,3 +77,14 @@ it("leaves the app origin's address bar to supabase-js, exactly as today (§58)"
   expect(window.location.href).toBe(url);
   expect(replaceState).not.toHaveBeenCalled();
 });
+
+it("loads at a tenant-host URL whose path starts with //, stays same-origin and drops the code (§32/§58)", async () => {
+  const error = vi.spyOn(console, "error").mockImplementation(() => {});
+  await expect(loadClientAt("https://acme.paigeagent.ai//evil.example/x?code=abc")).resolves.toBeNull();
+  expect(loaded).not.toBeNull();
+  expect(window.location.origin).toBe("https://acme.paigeagent.ai");
+  expect(window.location.href).toBe("https://acme.paigeagent.ai//evil.example/x");
+  expect(window.location.search).not.toContain("code");
+  expect(error).not.toHaveBeenCalled();
+});
+

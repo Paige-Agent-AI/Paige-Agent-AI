@@ -51,7 +51,7 @@ export const OPERATOR_SLOTS: readonly OperatorSlot[] = [
   {
     id: "relationships",
     label: "Relationships",
-    views: ["People", "Conversations", "Calendar", "Segments"],
+    views: ["Customers", "People", "Conversations", "Calendar", "Segments"],
     absence: {
       title: "Drawn, not wired",
       body: "People, Conversations, Segments and Calendar are specified and their contract is fixed. None of the four reads live data yet: the surfaces exist, the joins behind them do not. Nothing here is waiting on a decision — only on the wiring.",

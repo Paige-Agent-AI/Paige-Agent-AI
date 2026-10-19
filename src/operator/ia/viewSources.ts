@@ -64,7 +64,13 @@ export const VIEW_SOURCES: Readonly<Record<string, ViewSource>> = {
    * The real operator comms capability (task #22's Twilio seam) is at its own address and is
    * untouched (§58). Their keys stay in `carries`.
    */
-  "relationships/people": { bespoke: "CustomersDesk", carries: [] },
+  "relationships/people": { bespoke: "PeopleSurface", carries: [] },
+  /**
+   * EXP00 O-1 (owner directive 2026-10-19): the company's real commercial book — one row per
+   * SOLO enrollment, live records only, $0.00 collected until Stripe says otherwise. Added
+   * beside People; the Layer 3a People surface and its pinned contract are untouched.
+   */
+  "relationships/customers": { bespoke: "CustomersDesk", carries: [] },
   "relationships/conversations": {
     bespoke: "ConversationsSurface",
     carries: ["comms/outbound", "comms/templates", "comms/sent-log", "support/inbox", "support/escalations", "support/response-policy"],

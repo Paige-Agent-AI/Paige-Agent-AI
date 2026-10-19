@@ -145,7 +145,11 @@ export function CustomersDesk() {
             { label: "Active paid", value: summary.active_paid },
             { label: "Welcomes sent", value: summary.welcomes_sent },
             { label: "Needing attention", value: summary.welcomes_needing_attention + summary.pending },
-            { label: "Collected", value: "$0.00", hint: "Until Stripe confirms a real collection" },
+            {
+              label: "Collected",
+              value: `$${(summary.collected_cents / 100).toFixed(2)}`,
+              hint: summary.collected_cents === 0 ? "Until Stripe confirms a real collection" : undefined,
+            },
           ].map((s) => (
             <div key={s.label} className="rounded-lg border border-border bg-card p-2.5">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{s.label}</p>
@@ -261,8 +265,12 @@ function CustomerRow({
   return (
     <tr
       onClick={onSelect}
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onSelect(); }}
+      role="button"
+      aria-label={`Open ${customer.business_name ?? "customer"} details`}
       className={cn(
-        "cursor-pointer border-b border-border/50 transition-colors hover:bg-muted/50",
+        "cursor-pointer border-b border-border/50 transition-colors hover:bg-muted/50 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-foreground/40",
         selected && "bg-muted",
       )}
     >
@@ -391,7 +399,11 @@ function CustomerDrilldown({ userId, onBack }: { userId: string; onBack: () => v
               value={h.subscription.trial_ends_at ? new Date(h.subscription.trial_ends_at).toLocaleDateString() : "—"}
             />
             <Row label="Cancel at period end" value={h.subscription.cancel_at_period_end ? "Yes" : "No"} />
-            <Row label="Collected" value="$0.00 (trial — not cash)" muted />
+            <Row
+              label="Collected"
+              value={`$0.00${h.subscription.status === "trialing" ? " (trial — not cash)" : ""}`}
+              muted
+            />
           </Section>
         )}
 
@@ -472,3 +484,5 @@ function Row({ label, value, mono, muted }: { label: string; value: string; mono
     </div>
   );
 }
+
+export default CustomersDesk;

@@ -36,7 +36,6 @@ BEGIN
           'current_period_end', ps.current_period_end,
           'cancel_at_period_end', ps.cancel_at_period_end,
           'offer_code', ps.offer_code,
-          'unit_amount_cents', ps.metadata->>'unit_amount_cents',
           'welcome_state', wd.state,
           'welcome_attempts', wd.attempt_count,
           'welcome_last_error', wd.last_error_code,
@@ -132,6 +131,8 @@ BEGIN
       FROM public.platform_subscriptions ps
       WHERE ps.tenant_id = (SELECT tenant_id FROM public.solo_beta_enrollments WHERE user_id = p_user_id)
         AND ps.provider_mode = 'live'
+        AND ps.stripe_subscription_id = (SELECT stripe_subscription_id FROM public.solo_beta_enrollments WHERE user_id = p_user_id)
+      LIMIT 1
     ),
     'workspace', (
       SELECT jsonb_build_object(

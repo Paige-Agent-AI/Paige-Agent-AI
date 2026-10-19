@@ -141,11 +141,13 @@ export type CustomerHistory = {
 export function useCustomerHistory(userId: string | null) {
   const [data, setData] = useState<CustomerHistory | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!userId) {
       setData(null);
+      setError(null);
+      setLoading(false);
       return;
     }
     let cancelled = false;

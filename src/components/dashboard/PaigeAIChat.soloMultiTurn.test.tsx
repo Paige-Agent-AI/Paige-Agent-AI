@@ -243,6 +243,9 @@ describe("Meet PAIGE — the second typed interview turn must actually submit", 
     // The answer turn carried the binding to the open question.
     const answerPost = turnPostsByBody(fetchMock).find((b) => b.resume?.kind === "answer");
     expect(answerPost?.resume?.ask_id).toBe(ASK_ID);
+    // The ride-along the server's admission gate keys on: the turn also names the
+    // interactive intent it supersedes (the marker-exclusion input).
+    expect(typeof answerPost?.interactive?.supersedesIntentId).toBe("string");
     // And when the server refuses it, the customer is TOLD — never silence.
     expect(harness.toasts.some((t) => (t.title ?? "").includes("question"))).toBe(true);
     expect(harness.toasts.some((t) => (t.description ?? "").includes("wasn't sent as an answer"))).toBe(true);

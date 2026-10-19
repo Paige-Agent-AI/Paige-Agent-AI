@@ -362,7 +362,7 @@ No visible surface changes; the customer's chat answers change. Both entry point
 | Client | ✓ only their own open private thread (tested: another customer of the same business, another business's customer and a paused customer refused) | only shares current for them; a vector aimed at an unshared or another business's document never brings it in (tested); finance-marked material only while the business is entitled (tested) |
 | Anonymous | ✗ (no grant, tested) | ✗ |
 
-Evidence: pgTAP `supabase/tests/e09_customer_knowledge_retrieval.sql` 81/81 locally (20 reinstated defects, 19 fail it; 1 equivalent). Authenticated runtime UNVERIFIED (no session driven).
+Evidence: pgTAP `supabase/tests/e09_customer_knowledge_retrieval.sql` 81/81 locally (20 reinstated defects, 19 fail it; 1 equivalent under single-business membership). Edge: the question is embedded only for the thread's authorized Client with material to rank. A caller refused by the customer gate or the thread check costs no embedding (knowledge-scope harness: 0 embeddings when disabled, revoked or on the wrong thread); other tiers reach the same refusal before it (not separately driven). Authenticated runtime UNVERIFIED (no session driven).
 
 ### E09 K1 — customer Knowledge shared business-wide, with a kind and a window (branch `e09-k1`, migration `20271111050000`, 2026-10-19; not yet merged)
 

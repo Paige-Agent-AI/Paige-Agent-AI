@@ -16,7 +16,7 @@
 --   5. Only authorized material: a vector aimed at an unshared document, at another business's
 --      document, or at a tampered chunk never brings it in; the vector only reorders authorized shares.
 --   6. Unrankable (legacy, or not embedded) shares fill leftover slots by recency; with no embedding the
---      whole read is by recency and matches the K1 customer read exactly.
+--      whole read is by recency and matches the K1 customer read in documents, order and text.
 --   7. Finance at read: an entitled business's finance document ranks; once the entitlement is gone it
 --      is excluded even when the question matches it exactly.
 --   8. Begin -> replay: the begin overload stores exactly the snapshot the customer's read produced;
@@ -272,8 +272,8 @@ CREATE TEMP TABLE k2_casey2 AS SELECT pg_temp.ctx('b2',casey,gen_random_uuid(),p
 SELECT ok((SELECT NOT 10=ANY(pg_temp.docs(r)) FROM k2_casey2),'once the entitlement is gone the finance guide is excluded, even when the question matches it exactly');
 SELECT is((SELECT r->>'ranking' FROM k2_casey2),'recency','with nothing rankable left the read honestly reports recency');
 UPDATE public.tenants SET features=features||'{"finance_in_scope": true}' WHERE id=pg_temp.t('b');
--- No embedding (the edge could not embed in time): the whole read is by recency, and it is the K1
--- customer read exactly (same documents, same order, same text).
+-- No embedding (the edge could not embed in time): the whole read is by recency and selects what the
+-- K1 customer read selects (same documents, same order, same text). Only those are compared.
 CREATE TEMP TABLE k2_null AS SELECT pg_temp.ctx('a2',jordan,gen_random_uuid(),NULL) r,
  pg_temp.as_user(pg_temp.u('a2'),format('SELECT public.client_portal_knowledge_context(%L,NULL,5,0,true)',pg_temp.t('a'))) k1 FROM k2_t;
 SELECT is((SELECT r->>'ranking' FROM k2_null),'recency','no embedding: ranking is recency');

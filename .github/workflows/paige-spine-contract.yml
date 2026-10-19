@@ -618,7 +618,7 @@ jobs:
         if: ${{ !cancelled() }}
       # E09 K2: relevant retrieval — the asker re-resolved from the thread; authorized set first, candidates only
       # through the exact-chunk check, ranked by distance, five sources, eight passages within 4,800 characters
-      # in index order; unrankable shares fill by recency; no embedding = the K1 read exactly; finance re-checked;
+      # in index order; unrankable shares fill by recency; no embedding = the K1 read's documents, order and text; finance re-checked;
       # begin binds the read's exact snapshot, replay is byte-identical and never re-embeds, hashes re-checked.
       - run: supabase test db supabase/tests/e09_customer_knowledge_retrieval.sql
         if: ${{ !cancelled() }}

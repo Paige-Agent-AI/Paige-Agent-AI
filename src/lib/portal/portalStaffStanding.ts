@@ -10,14 +10,14 @@ import { STAFF_ROLES } from "@/components/auth/ClientOnlyRouteGuard";
  * the owner's assistant; anyone else there is a person whose customer access is not active, and PAIGE,
  * the owner's COO, is never what they talk to (owner ruling, 2026-10-19). The signals are the ones
  * resolveLandingRoute already reads to decide that a person is staff: a staff role (the route guard's
- * STAFF_ROLES, plus the tenant-level "coach"), a tenant membership, a tenant they own, or an active
- * agency team seat. Each is read under the person's own session (RLS); this is presentation, never
+ * STAFF_ROLES; a business's people are recognised by their membership, never a title), a tenant membership,
+ * a tenant they own, or an active agency team seat. Each is read under the person's own session (RLS); this is presentation, never
  * authority — the server still decides what any turn may do.
  *
  * null means the role list could not be read: unknown, so the portal shows neither the owner's chat nor
  * the "not active" message as fact.
  */
-const PORTAL_STAFF_ROLES: ReadonlySet<string> = new Set([...STAFF_ROLES, "coach"]);
+const PORTAL_STAFF_ROLES: ReadonlySet<string> = new Set(STAFF_ROLES);
 const cache = new Map<string, Promise<boolean | null>>();
 
 export function readPortalStaffStanding(userId: string): Promise<boolean | null> {

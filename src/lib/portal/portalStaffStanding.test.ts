@@ -28,7 +28,7 @@ beforeEach(() => {
 });
 
 describe("readPortalStaffStanding", () => {
-  it.each(["admin", "super_admin", "platform_admin", "coach", "owner", "sales_rep", "broker"])("a %s role is staff", async (role) => {
+  it.each(["admin", "super_admin", "platform_admin", "owner", "sales_rep", "broker"])("a %s role is staff", async (role) => {
     answers.user_roles = { data: [{ role }], error: null };
     expect(await readPortalStaffStanding(`u-${role}`)).toBe(true);
   });

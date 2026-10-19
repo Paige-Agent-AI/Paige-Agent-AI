@@ -424,7 +424,7 @@ const Team = lazy(() => import("./pages/Team"));
 export const App = () => (<Routes><Route path="/app" element={<Shell />}>
   <Route path="help" element={<Help />} />
   <Route path="team" element={${gated ? "<RequirePortalStaff><Team /></RequirePortalStaff>" : "<Team />"}} />
-</Route><Route path="/admin" element={<Admin />} /></Routes>);`;
+</Route><Route path="/operator" element={<Admin />} /></Routes>);`;
     put("src/pages/Shell.tsx", 'import { Thinking } from "@/components/Thinking";\nexport const Shell = () => <Thinking />;');
     put("src/components/Thinking.tsx", 'export const Thinking = ({ n }: { n?: string }) => <p>{n || "Paige"} is thinking</p>;');
     put("src/pages/Help.tsx", "export default () => <p>Help</p>;");

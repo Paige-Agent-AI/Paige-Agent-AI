@@ -65,7 +65,7 @@ describe("desktop bar", () => {
     await closeMenus();
     // E09 Slice A: the customer's own agreements sit beside Documents (D-A1).
     const paperwork = await openGroup("Paperwork");
-    expect(paperwork.map((i) => i.getAttribute("href"))).toEqual(["/app/documents", "/app/agreements"]);
+    expect(paperwork.map((i) => i.getAttribute("href"))).toEqual(["/app/documents", "/app/agreements", "/app/billing"]);
   });
 
   it("opens a group from the keyboard, with a labelled trigger and items a screen reader announces as a menu", async () => {
@@ -94,7 +94,7 @@ describe("desktop bar", () => {
   it("applies the business's names, order and hidden entries — Action items can now be hidden, Messages cannot", async () => {
     f.config = { modules: [
       { key: "sessions", label: "Coaching calls", order: 0 }, { key: "actions", visible: false }, { key: "progress", order: 1 },
-      { key: "messages", visible: false, label: "Inbox" }, { key: "resources", visible: false }, { key: "agreements", visible: false },
+      { key: "messages", visible: false, label: "Inbox" }, { key: "resources", visible: false }, { key: "agreements", visible: false }, { key: "billing", visible: false },
     ] };
     await render();
     expect(topLevel()).toEqual(["Home", "Messages", "[Your work]", "Documents"]);
@@ -142,11 +142,12 @@ describe("desktop bar", () => {
     expect(await desktopNavHrefs(host)).toEqual(["/app", "/app/approvals", "/app/planning"]);
   });
 
-  it("never renders Payments while its route is not live", async () => {
-    f.config = { modules: [{ key: "billing", visible: true }] };
+  it("renders Payments in Paperwork now that its route is live (E09 Slice 5), named Payments over the catalog's Billing", async () => {
     await render();
-    expect((await desktopNavHrefs(host))).not.toContain("/app/billing");
-    expect(host.textContent).not.toContain("Payments");
+    expect(await desktopNavHrefs(host)).toContain("/app/billing");
+    const paperwork = await openGroup("Paperwork");
+    expect(paperwork.map((i) => [i.querySelector("[data-portal-label]")?.textContent, i.getAttribute("href")]))
+      .toEqual([["Documents", "/app/documents"], ["Agreements", "/app/agreements"], ["Payments", "/app/billing"]]);
   });
 });
 
@@ -158,7 +159,7 @@ describe("phone drawer", () => {
     const rows = Array.from(drawer().querySelectorAll<HTMLElement>("[data-portal-heading], button")).map((el) =>
       el.hasAttribute("data-portal-heading") ? `# ${el.textContent?.trim()}` : el.textContent?.trim());
     expect(rows).toEqual([
-      "Home", "Messages", "# Your work", "Progress", "Action items", "Sessions", "# Paperwork", "Documents", "Agreements", "# Learn", "Resources",
+      "Home", "Messages", "# Your work", "Progress", "Action items", "Sessions", "# Paperwork", "Documents", "Agreements", "Payments", "# Learn", "Resources",
       "Get help", "Account", "Settings", "Sign Out",
     ]);
     const work = drawer().querySelector('[role="group"][aria-labelledby]')!;
@@ -167,7 +168,7 @@ describe("phone drawer", () => {
 
   it("drops a heading whose group has nothing visible", async () => {
     f.mobile = true;
-    f.config = { modules: [{ key: "documents", visible: false }, { key: "agreements", visible: false }] };
+    f.config = { modules: [{ key: "documents", visible: false }, { key: "agreements", visible: false }, { key: "billing", visible: false }] };
     await render();
     await openDrawer();
     expect(Array.from(drawer().querySelectorAll("[data-portal-heading]")).map((h) => h.textContent)).toEqual(["Your work", "Learn"]);

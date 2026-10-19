@@ -550,7 +550,30 @@ const SOURCES = {
   "supabase/functions/_shared/subagent-authority.ts": "633143a287651772f3c78810397d7a1e753d1d9924c3668693783422be6c8494",
   "supabase/functions/_shared/systems-check-http.ts": "fd5713b29f5127fa0d10e501bd20cd869aa860b816eed500eb19e21e522fcfa6",
   "supabase/functions/_shared/sales-invoice-ledger.ts": "dab806f8decf8682d311a0eeaff90a2c9e7687f6043ff1d85d27a56d66b1515e",
-  "supabase/functions/_shared/sales-invoice-document.ts": "baf7933a648ca9752ff43b2c5cd654b84267f3573f7eaa0fa6670be2fc22d844",
+  // E09 Payments round 3 (2026-10-18, pin ec72c112…466b): presentation only. A projection carrying the
+  // portal-only test_provider_cents / provider_environment keys tells a TEST receipt as a test that moved
+  // no money and does not name the processor; it refuses a test total that contradicts the evidence.
+  // Owner and bearer projections carry neither key: 225 rendered fixtures compared byte-identical
+  // before/after. NON-AUTHOR REVIEWED: the round-3 verifier (not the author) reviewed this change and
+  // found it presentation-only and portal-keyed (only client_portal_invoice_ledger produces those keys;
+  // sales_provider_receipt_shape makes every provider receipt a 'receipt' with environment test|live),
+  // with nothing to block; 60,000 random owner/bearer projections byte-identical to base dbb8a8842.
+  // E09 Payments round 4 (2026-10-18, pin 3288d97e…e4c8): presentation only, portal-keyed. On a portal
+  // projection a voided invoice shows "Nothing owed: this invoice was voided." in place of the outstanding
+  // figure, the outstanding equation and the Outstanding column, and the payment notes name only the money
+  // present. NON-AUTHOR REVIEWED: the round-4 verifier (not the author) reviewed this change and found it
+  // wording-only and gated on isPortalProjection (owner/bearer output unchanged in its own 60,000-case
+  // fuzz against base dbb8a8842, two control mutants biting), with nothing to block beyond its finding 1
+  // (a fully corrected payment read "No payments recorded."), which round 5 fixes.
+  // E09 Payments round 5 (2026-10-18), reviewed by a non-author verifier, round 5 (nothing to block):
+  // presentation only, portal-keyed (paymentEvidenceCopy's
+  // isPortalProjection branch). "No payments recorded." only when the ledger shows no receipt; without a
+  // ledger "No payments count toward this invoice."; a fully corrected payment says "Recorded payments
+  // were corrected; nothing counts toward this invoice."; business-recorded money has one name
+  // ("Business-recorded payments") and the box says when its totals are after corrections. Owner and
+  // bearer output unchanged: 240 fixtures byte-identical to the round-2 renderer and 60,000 random
+  // projections (24,489 rendered, 10,829 of them void) byte-identical to base dbb8a8842.
+  "supabase/functions/_shared/sales-invoice-document.ts": "5ae255569a861722b09868da12dac1e43c104a593d3f3cb0c16f29e47eb55649",
   "supabase/functions/_shared/document-pdf.ts": "e88f697d5d79af5feb0d6952fc5029633d488434b232798bc42fffd0fccd9a8e",
   "supabase/functions/_shared/email-attachments.ts": "becc41d2968a75ba07c1ec077c142f625ccb0239f5dd3423073dbbbe0186069e",
   "supabase/functions/_shared/sales-invoice-delivery/readiness-reader.ts": "8ea30924c24b27244d413ee167e43f08b18a0589df53e2d2b65fde4998ca2ba2",

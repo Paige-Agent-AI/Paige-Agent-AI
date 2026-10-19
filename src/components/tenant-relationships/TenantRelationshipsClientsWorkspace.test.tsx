@@ -1247,6 +1247,10 @@ describe("tenant Relationships / Clients workspace", () => {
     expect(html).toContain("Engagement progress");
     // E09 Slice 3: sharing lives on the Solo client record only, so this non-Solo card must not claim it.
     expect(html).toContain("UNAVAILABLE here · sharing work with a client is on the Solo client record");
+    // E09 Slice 5: this card renders for a Sub-account only (AgencyApp, no Sales screen), so invoices are issued through
+    // Paige; a client sees them only after joining the portal and only where Payments is in their menu; Pay needs a request.
+    expect(html).toContain("PARTIAL · this account has no Sales screen: invoices you ask Paige to create and issue to a client appear under Payments once that client has joined their portal and Payments is shown in their menu. A Pay button appears only after you send them a payment request.");
+    expect(html).not.toContain("invoices you publish to a client appear under Payments in their portal");
     expect(html).toContain("Files and agreements");
     // E09 Slice A round 7: this card renders for a Sub-account only (AgencyApp shell), which has no Sales surface and no
     // client file library. Agreements reach it through Paige's draft/send tools; file sharing is said to be absent.

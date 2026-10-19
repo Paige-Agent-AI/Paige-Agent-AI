@@ -197,7 +197,7 @@ function ThreadSkeleton() {
 }
 
 export default function Messages() {
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const help = params.get("topic") === "help";
   const thread = useClientPortalMessages();
   const brand = useClientPortalBrand();
@@ -314,6 +314,24 @@ export default function Messages() {
       field.current?.focus();
     }
   }, [help, canCompose]);
+  // `?draft=` (Payments' "Ask for a payment link") puts suggested words in the composer, once per suggestion,
+  // for the customer to edit and send themselves. Nothing is sent on their behalf. The composer is disabled
+  // until it can take text, and leaving with unsent words already asks first, so a suggestion never lands
+  // on top of words the customer typed.
+  const draftParam = params.get("draft");
+  const seededFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (!canCompose || !draftParam || seededFor.current === draftParam) return;
+    seededFor.current = draftParam;
+    const seed = draftParam.trim().slice(0, PORTAL_MESSAGE_MAX);
+    if (seed) {
+      setDraft({ epoch: thread.scopeEpoch, text: seed, help });
+      field.current?.focus();
+    }
+    // The words now live in the composer; take them out of the address so a reload or a shared link
+    // never puts them back after the customer sent or cleared them. Replace, not push: same page.
+    setParams((p) => { const next = new URLSearchParams(p); next.delete("draft"); return next; }, { replace: true });
+  }, [canCompose, draftParam, thread.scopeEpoch, help, setParams]);
   const canSend = canCompose && length > 0 && !tooLong && !sending;
 
   const submit = async (event?: FormEvent) => {

@@ -1160,6 +1160,21 @@ jobs:
             supabase/functions/detect-credit-alerts/index.ts \
             supabase/functions/sync-credit-report-data/index.ts
 
+      - name: E09 F1b — one finance-entitlement reader; credit paths refuse customers and other businesses
+        if: ${{ !cancelled() }}
+        run: |
+          # The edge reads the per-business entitlement ONLY by calling _tenant_finance_entitled
+          # (_shared/finance-entitlement.ts). The drift test pins the TS helper to the SQL predicate and
+          # the persona expression, and fails if any edge source reads finance_in_scope / is_finance
+          # itself. The push gate refuses credit/funding categories for a non-entitled business or a
+          # recipient with no seat there. Behaviour of the credit writers is driven in
+          # test:sync-credit-report-data and test:apply-extraction.
+          deno test --allow-import=deno.land --allow-read=supabase/functions,supabase/migrations --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/finance-entitlement.test.ts \
+            supabase/functions/_shared/finance-entitlement.drift.test.ts \
+            supabase/functions/_shared/credit-paths.contract.test.ts \
+            supabase/functions/send-push-notification/finance-categories.test.ts
+
       - name: Test
         if: ${{ !cancelled() }}
         run: npm run test -- --reporter=default --reporter=json --outputFile=unit-results.json

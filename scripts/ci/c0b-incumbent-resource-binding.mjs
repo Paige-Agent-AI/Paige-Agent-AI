@@ -610,7 +610,16 @@ const SOURCES = {
   "supabase/functions/paige-write-back/index.ts": "5ff11463820b7c38e69f683cbcd8542359d5a72c37724c06846bf3dcc6d41de8",
   "supabase/functions/paige-orchestrator/index.ts": "84e1bb410fb5e01242d4a34401ece2c4dbad515be51e3e4cbe337420e5245243",
   "supabase/functions/subagent-forge/index.ts": "1acb5488f11bd93a2d6b36638fddcd73323f4363eacbd58b284d1fa648b3d906",
-  "supabase/functions/send-message/index.ts": "29306707680c77fde92d6c689a9f1bca472ba24ab3219c60b21dcc7da68c956d",
+  // EXP00 comms-door renewal (2026-10-19), AUTHOR source review (NOT non-author; an independent reviewer
+  // must confirm): branch zcod/exp00-comms-door-content-order changes send-message/index.ts in ONE hunk —
+  // the SendGrid arm's content array reorders text/plain before text/html (one comment line added, one
+  // spread line moved). SendGrid rejects html-first with a live 400 ("If present, text/plain must be first,
+  // followed by text/html, followed by any other content"), captured on the welcome delivery 2026-10-18;
+  // same fix class as send-transactional-email #2369. Provider payload construction only: no dispatch
+  // branch, authority, verifier, adapter selection or recipient logic changed; paige-ai-chat untouched,
+  // so all dispatch fingerprints are unchanged. Old canonical digest 29306707… reproduced from main
+  // before renewing (scratchpad /tmp/renew-digest.mjs, printer {removeComments:true}). Renew this digest only.
+  "supabase/functions/send-message/index.ts": "08ec0fe3db7aacb9ccc608aa71b10a607792dab06a3f0e74f24b620d738c8b87",
   "supabase/functions/_shared/paige-spine/contracts.ts": "2d771686d636c04d2e07d9b8c336e19cde246b9a303ddd034d7ae8500f7eefb4",
   // Operator retirement adds opt-in timeout/no-retry controls; ordinary callers retain
   // their existing behavior. Renewed non-author review and actual retry controls are
@@ -771,7 +780,7 @@ const ANCESTRY_SOURCES = {
  "supabase/functions/_shared/paige-turn/interactive-reminder-history.ts": "84e35fd73307cf8172951fc1dcbf0b1064dd988cfb596ea95bc3ea7e244b4415",
  // Exact non-author-reviewed generic-email C4b ancestry at a9de011b6;
  // proposal b4ebdf9d / review 8b83d5c5. Existing114 pins and verifier unchanged.
- "supabase/functions/_shared/paige-turn/resume.ts": "389a87cb2d6f6dff75704a7887ba5bd39c53fc12bc5117cf7bb2ca852f650fba",
+ "supabase/functions/_shared/paige-turn/resume.ts": "dbcdf4de1ca3d1e36d4841650fcb42a43d3d747ddc0c88488e80bb3859cbaff6",
  "supabase/functions/_shared/comms-email/chat.ts": "b2c63f538935839cbafa9642b2d0ca83b8c24b1fc61be8200bda2efc19e9044e",
 };
 export function validateIncumbentResourceBindings(chatText,sourceTexts) {

@@ -375,8 +375,10 @@ const emailOutboundAdapter: OutboundChannelAdapter = {
             ...(ctx.replyTo ? { reply_to: { email: ctx.replyTo } } : {}),
             subject: msg.subject || "(no subject)",
             content: [
-              ...(msg.body_html ? [{ type: "text/html", value: msg.body_html }] : []),
+              // SendGrid requires text/plain FIRST when both are present
+              // ("If present, text/plain must be first, followed by text/html").
               ...(msg.body_text ? [{ type: "text/plain", value: msg.body_text }] : []),
+              ...(msg.body_html ? [{ type: "text/html", value: msg.body_html }] : []),
             ],
             ...(Object.keys(sgHeaders).length ? { headers: sgHeaders } : {}),
             // Same attachments contract as every sibling arm — a sendgrid

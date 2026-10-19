@@ -62,7 +62,7 @@ ACCEPTANCE_CRITERIA: recorded above.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: recorded above.
 
-INTERNAL_BUILD_IDENTITY: will-update-at-push; deployment=PENDING merge to main then Vercel production; environment=development; migrations=APPLIED(20271111030000_operator_commercial_customers); edge=NOT_APPLICABLE; evidence=this record + CI
+INTERNAL_BUILD_IDENTITY: c10cb4b62d5763f31d4b66f5f5a1736111d699ae; deployment=PENDING merge to main then Vercel production; environment=development; migrations=APPLIED(20271111030000_operator_commercial_customers); edge=NOT_APPLICABLE; evidence=this record + CI
 RELEASE_CHANNEL: development: internal engineering slice on the Operator console; local/development build environment; no staged rollout.
 RELEASE_CLASSIFICATION: internal-only: Operator console capability, not a customer-facing release.
 CUSTOMER_RELEASE_IDENTITY: none: internal Operator capability.

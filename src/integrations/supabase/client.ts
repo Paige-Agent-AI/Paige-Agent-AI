@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
+import { detectsSessionFromUrl } from '@/lib/hostRouting';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -43,5 +44,8 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: createSafeStorage(),
     persistSession: true,
     autoRefreshToken: true,
+    // A session is born only on the app origin. On a tenant host (<slug>.paigeagent.ai) tokens in the
+    // URL are ignored rather than adopted; every other host keeps supabase-js's default (true).
+    detectSessionInUrl: detectsSessionFromUrl(typeof window !== 'undefined' ? window.location.hostname : ''),
   }
 });

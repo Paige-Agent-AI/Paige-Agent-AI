@@ -4,6 +4,8 @@ import {
   computeHostRedirect,
   computeTenantHostRedirect,
   configuredAppOrigin,
+  detectsSessionFromUrl,
+  stripAuthCallbackParams,
   tenantHostPortalEntryUrl,
   tenantSlugFromHostname,
   trustedAppOrigin,
@@ -114,4 +116,49 @@ describe("app-origin resolution for sign-in and recovery", () => {
     expect(tenantSlugFromHostname(target.hostname)).toBeNull();
     expect(computeHostRedirect(target.hostname, target.pathname, "", "")).toBeNull();
   });
+});
+
+describe("auth callback parameters never ride into a tenant host's canonical URL", () => {
+  const TOKENS = "access_token=at&refresh_token=rt&provider_token=pt&provider_refresh_token=prt"
+    + "&expires_at=1&expires_in=3600&token_type=bearer&type=recovery";
+
+  it("strips every auth parameter from the hash and keeps the rest byte for byte", () => {
+    expect(computeTenantHostRedirect("acme.paigeagent.ai", "/x", "", `#${TOKENS}&tab=Two%20words`))
+      .toBe("/portal/acme#tab=Two%20words");
+  });
+
+  it("strips code and error parameters from the query and keeps the rest", () => {
+    expect(computeTenantHostRedirect(
+      "acme.paigeagent.ai", "/auth", "?ref=partner&code=abc&error=x&error_code=y&error_description=z&utm=a+b", "",
+    )).toBe("/portal/acme?ref=partner&utm=a+b");
+  });
+
+  it("strips from both parts on a pinned route-slug rewrite", () => {
+    expect(computeTenantHostRedirect("acme.paigeagent.ai", "/portal/other", "?code=abc", `#${TOKENS}`))
+      .toBe("/portal/acme");
+  });
+
+  it("recognises an encoded key exactly as supabase-js decodes it", () => {
+    expect(computeTenantHostRedirect("acme.paigeagent.ai", "/", "", "#access%5Ftoken=at&keep=1"))
+      .toBe("/portal/acme#keep=1");
+  });
+
+  it.each(["", "?", "#", "#welcome", "?ref=partner&x=1", "#a=1&&b=2", "?codes=1&typed=2"])(
+    "leaves %j untouched when it carries no auth parameter",
+    (part) => expect(stripAuthCallbackParams(part)).toBe(part),
+  );
+
+  it("does not rewrite a URL on a non-tenant host", () => {
+    expect(computeTenantHostRedirect("paigeagent.ai", "/x", "?code=abc", "#access_token=at")).toBeNull();
+  });
+
+  it("turns off URL session detection on a tenant host only", () => {
+    expect(detectsSessionFromUrl("acme.paigeagent.ai")).toBe(false);
+    expect(detectsSessionFromUrl("Acme.PaigeAgent.ai.")).toBe(false);
+  });
+
+  it.each(["paigeagent.ai", "www.paigeagent.ai", "app.paigeagent.ai", "localhost", "preview-1.vercel.app", ""])(
+    "keeps URL session detection on the non-tenant host %j exactly as today",
+    (hostname) => expect(detectsSessionFromUrl(hostname)).toBe(true),
+  );
 });

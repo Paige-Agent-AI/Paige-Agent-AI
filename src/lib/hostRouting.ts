@@ -43,6 +43,39 @@ export function tenantSlugFromHostname(hostname: string): string | null {
   return label;
 }
 
+/**
+ * Whether the Supabase client may adopt a session from the page URL (an OAuth, magic-link or recovery
+ * callback). Never on a tenant host: sessions are born only on the app origin, so tokens that arrive at
+ * `<slug>.paigeagent.ai` are ignored, not adopted. Every other host keeps supabase-js's default (true).
+ */
+export function detectsSessionFromUrl(hostname: string): boolean {
+  return tenantSlugFromHostname(hostname) === null;
+}
+
+/** The URL parameters supabase-js reads as an auth callback (hash or query). */
+export const AUTH_CALLBACK_PARAMS: ReadonlySet<string> = new Set([
+  "access_token", "refresh_token", "provider_token", "provider_refresh_token", "expires_at",
+  "expires_in", "token_type", "type", "code", "error", "error_code", "error_description",
+]);
+
+/**
+ * Drop auth-callback parameters from a `?query` or `#fragment`, keeping every other segment byte for
+ * byte. Keys are decoded exactly as supabase-js decodes them (URLSearchParams), so an encoded key such
+ * as `access%5Ftoken` is still recognised. A part with no auth parameter is returned unchanged.
+ */
+export function stripAuthCallbackParams(part: string): string {
+  const prefix = part[0];
+  if (prefix !== "?" && prefix !== "#") return part;
+  const segments = part.slice(1).split("&");
+  const kept = segments.filter((segment) => {
+    const key = new URLSearchParams(segment).keys().next().value;
+    return key === undefined || !AUTH_CALLBACK_PARAMS.has(key);
+  });
+  if (kept.length === segments.length) return part;
+  const rest = kept.filter((segment) => segment !== "").join("&");
+  return rest ? `${prefix}${rest}` : "";
+}
+
 /** Canonicalize a tenant wildcard host to that tenant\'s one public portal. */
 export function computeTenantHostRedirect(
   hostname: string,
@@ -54,7 +87,9 @@ export function computeTenantHostRedirect(
   if (!slug) return null;
 
   const canonicalPortal = `/portal/${encodeURIComponent(slug)}`;
-  const withLocation = (target: string) => `${target}${search}${hash}`;
+  // Auth tokens are never carried into the tenant host's canonical URL; everything else is.
+  const withLocation = (target: string) =>
+    `${target}${stripAuthCallbackParams(search)}${stripAuthCallbackParams(hash)}`;
   if (path === "/") return withLocation(canonicalPortal);
 
   // These public routes use opaque booking/form tokens, not tenant slugs. They

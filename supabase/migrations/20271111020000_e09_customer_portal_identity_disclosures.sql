@@ -41,8 +41,8 @@
 -- them) keeps everything else byte for byte. Each swap is counted: a body that has drifted, already
 -- names a new id, or still names an old one afterwards stops the migration (the 20271108241000 pattern).
 -- Refusal codes, response shapes, grants and comments are unchanged; CREATE OR REPLACE keeps the ACL.
--- Renumbered 20271110250000 -> 20271111020000 (round 6) so it runs after production's newest (20271111000000)
--- and after Slice 7 (20271111010000), which re-gates both writers on the customer's portal access. Read from the
+-- Renumbered 20271110250000 -> 20271111020000 (round 6) so it runs after Slice 7 (20271111010000, production's
+-- newest, applied 2026-10-19 06:29Z, after the mentor remap 20271111000000), which re-gates both writers on the customer's portal access. Read from the
 -- catalog, Slice 7's gate is carried forward unchanged; only the id literals move (proved in a rolled-back
 -- transaction: each body with the ids swapped back is byte-identical to Slice 7's).
 

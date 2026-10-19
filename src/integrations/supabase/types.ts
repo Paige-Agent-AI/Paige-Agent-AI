@@ -21523,10 +21523,12 @@ export type Database = {
           tier: string
         }[]
       }
+      operator_billing_overview: { Args: never; Returns: Json }
       operator_dashboard_metrics: {
         Args: { p_window_days?: number }
         Returns: Json
       }
+      operator_signup_funnel: { Args: { p_window_days?: number }; Returns: Json }
       operator_tier_send_feed: {
         Args: { _since?: string; _tier?: string }
         Returns: {

@@ -338,8 +338,8 @@ posture**, and **(d) permitted-RPC scoping**, each grounded in a named resolver 
 
 | Tier | `/app` funding/credit pages, menu entries, Home credit/funding tiles, bell credit alerts | `funding_readiness` surfaces (QuickStatsBar, credit-first onboarding and checklist steps, push-prompt credit wording) | Chat credit-report path / funding persona |
 |---|---|---|---|
-| God / Operator | ✓ as staff (Q5 carve-out) | only with `funding_readiness` (0 businesses) | ✓ staff, unchanged |
-| Agency / Enterprise | ✓ as staff (Q5); the owner's menu editor and previews show funding rows only for an entitled current workspace | only with `funding_readiness` AND entitled | ✓ staff, unchanged |
+| God / Operator | ✓ as staff inside the `/app` shell (Q5 carve-out); the bell on the public landing header follows the entitlement alone | only with `funding_readiness` (0 businesses) | ✓ staff, unchanged |
+| Agency / Enterprise | ✓ as staff inside the `/app` shell (Q5); the owner's menu editor and previews show funding rows only for an entitled current workspace | only with `funding_readiness` (staff, as God and Solo) | ✓ staff, unchanged (a staff caller whose tier read fails is treated as a client for that turn) |
 | Standalone (Solo) | staff ✓ (Q5); a freshly provisioned Solo business is not entitled, so its customers get none (pgTAP + menu default proof) | staff: with `funding_readiness`; customers: `funding_readiness` AND entitled | ✓ staff, unchanged |
 | Sub-account | as Solo | as Solo | ✓ staff, unchanged |
 | Client | only when their business is finance-entitled (portal config `entitlements.finance`); otherwise redirected to `/app`, no menu entry, no tile, no alert read | `funding_readiness` AND entitled | ✗ never (tier resolved before the attachment branch; `funding_enabled` forced false) |

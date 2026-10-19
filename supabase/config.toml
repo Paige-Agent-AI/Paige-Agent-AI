@@ -737,3 +737,11 @@ verify_jwt = false
 # omitted, so the deployed-source readback needs it declared to match production.
 [functions.process-booking-notifications]
 verify_jwt = false
+
+# Preserve the deployed MCP consent helper: the in-app /mcp/authorize screen calls action "lookup"
+# before the visitor may be signed in (it only elevates scopes when a session is present), and
+# "approve"/"deny" verify the caller's JWT in the handler (tryGetUser) before minting or redirecting.
+# Production already runs it with verify_jwt=false; CLI 2.116 preserves the remote setting when this
+# is omitted, so the deployed-source readback needs it declared to match production.
+[functions.paige-mcp-consent]
+verify_jwt = false

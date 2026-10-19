@@ -7,8 +7,8 @@ MATERIAL_FLOW_CHANGE: NO: adds an originating domain's evidence to the existing 
 FLOW_PROTOTYPE: NOT_REQUIRED: existing Executive source disclosure and Finance department destination retain their actions, exits and authority.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: the SOLO owner understands financial source facts and limitations, inspects provenance, then opens the owning Finance department.
 VISUAL_DIRECTION: PASS: existing Obsidian/Mineral typography, figure rows and native disclosure; preserve the PAIGE-led review hierarchy.
-AUTOMATED_EVIDENCE: UNVERIFIED: integration, exact-decimal, caller/role/source-change and malformed evidence controls are required before delivery.
-STATIC_EVIDENCE: UNVERIFIED: final source, types, lint, build and source-binding review remain due.
+AUTOMATED_EVIDENCE: PASS: Finance integration/transport/component and incumbent Operating Fabric suites cover exact decimals, unavailable versus zero, test-source exclusion, role/caller/company/binding changes and malformed/duplicate facts. Source tests remain distinct from customer acceptance.
+STATIC_EVIDENCE: UNVERIFIED: supporting scoped lint, type ratchet, build and source-binding checks pass locally; final-head hosted checks/review and the additive old/new web contract remain release gates.
 RENDERED_EVIDENCE: UNVERIFIED: candidate native rendering and required viewports remain due.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: source disclosure, Finance navigation, refresh and return remain due.
 AUTHENTICATED_RUNTIME: UNVERIFIED: local source fixtures cannot establish production provider readiness or owner acceptance.
@@ -37,6 +37,7 @@ PROTECTED_SEAMS: existing Metric issuer, Chat admission, registry identities, Fi
 - Data: existing finance_company_entities, finance_source_bindings and finance_account_source_snapshots, read only through their canonical contracts. Source observation/receipt references are provenance, not an EXP02 execution receipt.
 - Algorithms: preserve existing ALG-06 Finance calculation contracts. This slice supplies no invented forecast or inputs; ALG-03/12/13 keep existing canonical risk ordering. Model quality/cost stays with Model Fabric/ALG-11.
 - States: loading/retry via current review hook; unavailable/refused with a reason; bounded partial source facts; exact source zero; source/freshness disclosure; department navigation; workspace switch hides the old result. No business mutation.
+- Rollout compatibility: current web requests the additive finance_sources=1 query on the same existing reader. Older Edge versions ignore it and return their original supported snapshot; new Edge omits the new structured Finance field for legacy web. This is response negotiation, never a capability/provider activation flag or permission change. No new header, body vocabulary or endpoint.
 - Dependencies: EXP03/04 commercial records, EXP05 execution and EXP09 client sources remain owned by their Experiences. EXP11 Financial depth is consumed where verified and available, without activating dormant providers.
 
 INTERNAL_BUILD_IDENTITY: aa1a098c71e247a0628ed3258fefb663ed0262c8; deployment=none-finance-candidate; environment=local; migrations=NOT_APPLICABLE; edge=PROOF_OWED(existing business-review/Chat packages); evidence=ANT-138; identity-role=source baseline, not a released Finance integration.

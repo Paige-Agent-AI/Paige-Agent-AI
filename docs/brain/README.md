@@ -1,5 +1,14 @@
 # 🧠 The Second Brain — master index & read-first orientation
 
+**October19 EXP02 Finance — local integration, not released:** the existing
+business operating snapshot now consumes canonical caller-JWT Finance catalogue
+and stored account-source reads. Source-specific exact decimal facts retain their
+company, currency, coverage and observed/synchronized times; source balances,
+available cash and credit stay separate. No provider request, new metric/store,
+financial calculation or action activation. Native/authenticated/Live and all19
+full-Experience acceptance remain due. See the existing [E02 matrix](../delivery/e2-customer-experience-integration-matrix.md)
+and [Finance flow evidence](../evidence/ui-delivery/e2-finance-business-review.md).
+
 **October19 EXP02 VERA continuation — development:** the existing VERA identity
 is being aligned to Intelligence, Finance & Risk through the existing registry,
 addressed Chat and native Executive handoff. PAIGE remains principal COO. Current

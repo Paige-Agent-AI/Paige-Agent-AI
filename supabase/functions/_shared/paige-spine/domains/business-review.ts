@@ -4,13 +4,14 @@ import { SNAPSHOT_DOMAINS, SNAPSHOT_PERIOD_KEYS } from "../../paige-context/snap
 
 // The business operating snapshot from chat (Experience 02 / Operating Fabric F2a+F2b hand-offs).
 // PAIGE answers "how is my business doing" from the SAME governed reads the fabric already owns:
-// composeBusinessReview (_shared/paige-context/business-review.ts) reading every domain through the
-// INT-340 metric issuer (public.issue_analytics_evidence_bundle) on the signed-in person's OWN
-// session, so the database decides who may — the issuer's in-body check admits only this business's
-// active owner or admin. There is no chat-only snapshot and no second data path.
+// composeBusinessReview (_shared/paige-context/business-review.ts) reads measurements through the
+// INT-340 issuer and canonical Play/Finance records through their existing caller-JWT contracts.
+// Each producing domain's database authority decides who may read. No chat-only snapshot,
+// second metric issuer, financial calculation engine or directly admitted Finance tool is added.
 //
 // WHAT THE READ IS. A projection over the live domains (payments, sales_pipeline, operations,
-// clients, and owner-only game_plan targets): per-currency amounts, counts, changes and risks, plus every other domain reported
+// clients, owner-only game_plan targets and stored Finance source facts): per-currency amounts,
+// counts, changes and risks, plus every other domain reported
 // honestly as not available with its reason. A refused, unverified, partial or dropped read is
 // never a zero, currencies are never summed, and nothing is invented. The model-facing tool JSON
 // and the dispatcher live in _shared/paige-context/business-review-chat.ts.
@@ -31,7 +32,7 @@ export const BUSINESS_OPERATING_SNAPSHOT_READ_CAPABILITY = defineCapability({
       period: { type: "string", enum: [...SNAPSHOT_PERIOD_KEYS], description: "Default last_7_days. Calendar periods use the caller's timezone. Sales review figures disclose their completed UTC-day cutoff; saved targets retain their own periods and compatible source semantics." },
       custom_start: { type: "string", description: "With period 'custom': inclusive start, an ISO instant with a zone or a bare date read as local midnight in the caller's timezone." },
       custom_end: { type: "string", description: "With period 'custom': exclusive end, same formats as custom_start. Required together; the range may not be inverted, in the future, or too long." },
-      focus: { type: "array", items: { type: "string", enum: [...SNAPSHOT_DOMAINS] }, maxItems: 6, description: "Connected readers: payments, sales_pipeline, operations, clients; game_plan reads the owner's canonical Play targets with exact portfolio counts and bounded observations. Each reader verifies its own authority. Leave it out for the default set; unavailable domains retain their reason." },
+      focus: { type: "array", items: { type: "string", enum: [...SNAPSHOT_DOMAINS] }, maxItems: 6, description: "Connected readers: payments, sales_pipeline, operations, clients, finance (stored source facts); game_plan reads the owner's canonical Play targets with exact portfolio counts and bounded observations. Each reader verifies its own authority. Leave it out for the default set; unavailable domains retain their reason." },
     },
     required: [],
   }),

@@ -1,5 +1,15 @@
 # Paige Agent AI — Master Project Reference
 
+> **October19 EXP02 Finance — local, not released:** one existing business-review
+> composition extends to caller-authorized Finance source facts, using the canonical
+> company/binding/account-source contracts. Exact decimal major amounts and source
+> provenance appear in the same UI/Chat projection, with no cross-company/currency
+> totals, bank-wide cash, profit or forecast inference. Test/unverified sources are
+> excluded. No new provider, permission, ledger, algorithm or action admission.
+> [Existing E02 matrix](delivery/e2-customer-experience-integration-matrix.md),
+> [flow/evidence](evidence/ui-delivery/e2-finance-business-review.md). Production,
+> authenticated/Live, full19 and founder acceptance remain due; this is not a shipped row.
+
 > **October19 EXP02 VERA — development, not released:** existing VERA remit,
 > addressed Chat, department labels and the Executive invitation are being aligned
 > to Intelligence, Finance & Risk. PAIGE remains principal COO; department context

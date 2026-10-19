@@ -1,5 +1,24 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+**October19 Finance continuation — implemented locally, not released or accepted.**
+REUSE the existing Finance caller-JWT catalogue/account-source contracts and their
+company/binding/owner/admin authority; EXTEND the incumbent
+`business.operating_snapshot` / `get_business_snapshot` / `paige-business-review`
+composition and existing Executive source disclosure. Original authoritative records
+remain `finance_company_entities`, `finance_source_bindings` and
+`finance_account_source_snapshots`. Up to four verified production sources, twelve
+displayed accounts per source, exact decimal major values, explicit source/account
+sampling, company/currency separation and observed/sync provenance are the bounded
+projection. Missing amounts stay unavailable; recorded Sales receipts remain distinct.
+Canonical Finance department navigation is reused. No new provider call/activation,
+metric issuer, total/calculation engine, financial ledger, model/runtime or effectful
+tool is admitted. Dormant direct Finance capabilities remain unregistered. Missing
+bank-wide cash/profit/forecast/debt/budget integration is still mandatory remaining
+work, not optional scope. Existing Finance algorithms and originating records must
+be reused for later slices. Native viewport/accessibility, actual production source,
+authorized SOLO/tenant/permission/reload/Live and final whole-Experience acceptance
+remain owed. [Pre-edit routing and proof boundaries](../evidence/ui-delivery/e2-finance-business-review.md).
+
 **October19 reactivation — current-source reconciliation, not full acceptance.**
 Existing EXP02 Codex lead resumes the entire19-outcome contract under ANT-161's
 EXP-only ownership direction. Main/public web baseline is
@@ -7,7 +26,7 @@ EXP-only ownership direction. Main/public web baseline is
 dated meaning. #2128, #2167 and native target UI #2174 are merged; target Executive/
 briefing integration #2181 and native mechanical closeout #2185 remain unmerged at
 this checkpoint. #2181 composes that main and preserves incoming exact Deal/Task
-links alongside Play focus. Only its never-applied migration moves byte-identically
+links alongside Play focus. Only its production-unapplied migration moves byte-identically
 from20271104102000 to20271112100000. Fresh364 local assertions,64 incumbent controls
 and61 isolated PostgreSQL assertions pass; current-head hosted review/CI/release and
 customer acceptance remain owed.

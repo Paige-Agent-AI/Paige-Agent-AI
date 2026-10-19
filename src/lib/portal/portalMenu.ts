@@ -114,8 +114,10 @@ export const PORTAL_MENU_ENTRIES: readonly PortalMenuEntry[] = [
   // and every other viewer keep the catalog rule exactly as before: the route still renders MyAgreements for them.
   entry({ key: "agreements", defaultLabel: "Agreements", route: "/app/agreements", icon: FileSignature, group: "paperwork", floor: "everyone", shownToCustomers: true, description: "Sign and download", editorHint: "Agreements you send from Sales" }),
   // E09 Slice 5: /app/billing is the customer's Payments page (the invoices their business issued). Catalog-placed,
-  // never force-injected: every generic Playbook lists `billing`; a Playbook without it reaches the page from the
-  // Home balance line. Named "Payments" whatever the catalog calls it (owner ruling 2026-10-18).
+  // never force-injected: every generic Playbook lists `billing`. A Playbook without it (the funding preset) gives
+  // its customers no in-app way in: the Home balance line is shown only where this entry is in the menu, so they
+  // reach the page only by its address. Known limitation, recorded in the Payments evidence record and master §5;
+  // not fixed here. Named "Payments" whatever the catalog calls it (owner ruling 2026-10-18).
   entry({ key: "billing", defaultLabel: "Payments", route: "/app/billing", icon: CreditCard, group: "paperwork", floor: "customer", catalogLabel: false, description: "Invoices and receipts", editorHint: "Hide if you bill outside Paige" }),
 
   // ── Learn ──

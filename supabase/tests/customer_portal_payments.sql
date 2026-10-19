@@ -9,9 +9,10 @@
 -- of the three reads writes anything; a sub-account's customer reads the same way (no tier filter);
 -- and the incumbent owner and bearer reads are byte-for-byte untouched by this slice. The scope helper
 -- also refuses, as E04 #2170 (aeb0db5f1) `_assert_e04_client_commercial_scope` does, a linked client who
--- is active staff of the same business, a platform owner, and a deleted or banned account (section 4b).
+-- is active staff of the same business, a platform owner, and a deleted or banned account (section 4b);
+-- a linked client whose membership of that business is no longer active (suspended) still reads.
 BEGIN;
-SELECT plan(115);
+SELECT plan(118);
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0995100-0000-4000-8000-000000000001','authenticated','authenticated','payments-owner-a@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
  ('e0995100-0000-4000-8000-000000000002','authenticated','authenticated','payments-owner-b@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -26,7 +27,8 @@ INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) V
  ('e0995100-0000-4000-8000-000000000011','authenticated','authenticated','payments-client-and-staff@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
  ('e0995100-0000-4000-8000-000000000012','authenticated','authenticated','payments-platform-owner-client@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
  ('e0995100-0000-4000-8000-000000000013','authenticated','authenticated','payments-suspended-client@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
- ('e0995100-0000-4000-8000-000000000014','authenticated','authenticated','payments-staff-elsewhere@tests.invalid',now(),'{"comms_provider_execution":"disabled"}');
+ ('e0995100-0000-4000-8000-000000000014','authenticated','authenticated','payments-staff-elsewhere@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
+ ('e0995100-0000-4000-8000-000000000015','authenticated','authenticated','payments-former-staff@tests.invalid',now(),'{"comms_provider_execution":"disabled"}');
 INSERT INTO public.tenants(id,slug,name,status,account_type,parent_tenant_id,account_number_prefix,account_number,features) VALUES
  ('e0995200-0000-4000-8000-000000000001','test-tenant-e09-payments-a','Northwind Studio','active','standalone',NULL,'E09PA',9485001,'{}'),
  ('e0995200-0000-4000-8000-000000000002','test-tenant-e09-payments-b','Test tenant payments B','active','standalone',NULL,'E09PB',9485002,'{}'),
@@ -42,7 +44,9 @@ INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner,joined_
  -- Linked as a client of Northwind AND an active member of Northwind's own team.
  ('e0995200-0000-4000-8000-000000000001','e0995100-0000-4000-8000-000000000011','member','active',false,now()),
  -- Linked as a client of Northwind and an active member of a DIFFERENT business (control).
- ('e0995200-0000-4000-8000-000000000002','e0995100-0000-4000-8000-000000000014','member','active',false,now());
+ ('e0995200-0000-4000-8000-000000000002','e0995100-0000-4000-8000-000000000014','member','active',false,now()),
+ -- Linked as a client of Northwind; their membership of Northwind's team is SUSPENDED, not active (control).
+ ('e0995200-0000-4000-8000-000000000001','e0995100-0000-4000-8000-000000000015','member','suspended',false,now());
 -- A platform owner who is also linked as a client of Northwind (no JWT here: a trusted grant context).
 INSERT INTO public.user_roles(user_id,role) VALUES ('e0995100-0000-4000-8000-000000000012','super_admin');
 UPDATE public.profiles SET active_tenant_id='e0995200-0000-4000-8000-000000000001'
@@ -59,7 +63,8 @@ INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,las
  ('e0995300-0000-4000-8000-000000000009','e0995200-0000-4000-8000-000000000001','e0995100-0000-4000-8000-000000000011','e0995100-0000-4000-8000-000000000001','Casey','Lindqvist','active'),
  ('e0995300-0000-4000-8000-000000000010','e0995200-0000-4000-8000-000000000001','e0995100-0000-4000-8000-000000000012','e0995100-0000-4000-8000-000000000001','Morgan','Achebe','active'),
  ('e0995300-0000-4000-8000-000000000011','e0995200-0000-4000-8000-000000000001','e0995100-0000-4000-8000-000000000013','e0995100-0000-4000-8000-000000000001','Riley','Tanaka','active'),
- ('e0995300-0000-4000-8000-000000000012','e0995200-0000-4000-8000-000000000001','e0995100-0000-4000-8000-000000000014','e0995100-0000-4000-8000-000000000001','Avery','Mensah','active');
+ ('e0995300-0000-4000-8000-000000000012','e0995200-0000-4000-8000-000000000001','e0995100-0000-4000-8000-000000000014','e0995100-0000-4000-8000-000000000001','Avery','Mensah','active'),
+ ('e0995300-0000-4000-8000-000000000013','e0995200-0000-4000-8000-000000000001','e0995100-0000-4000-8000-000000000015','e0995100-0000-4000-8000-000000000001','Quinn','Halvorsen','active');
 -- The merged contact's survivor is the unconnected contact (same tenant, per the lineage FK).
 SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
 SELECT set_config('app.crm_merge_lineage_write','on',true);
@@ -92,6 +97,7 @@ SELECT pg_temp.issue('e0995400-0000-4000-8000-000000000012','e0995200-0000-4000-
 SELECT pg_temp.issue('e0995400-0000-4000-8000-000000000013','e0995200-0000-4000-8000-000000000001','e0995300-0000-4000-8000-000000000010','OWNERCLIENT-0001','issued','usd',12000,now()-interval '3 days',current_date+7);
 SELECT pg_temp.issue('e0995400-0000-4000-8000-000000000014','e0995200-0000-4000-8000-000000000001','e0995300-0000-4000-8000-000000000011','SUSPENDED-0001','issued','usd',13000,now()-interval '3 days',current_date+7);
 SELECT pg_temp.issue('e0995400-0000-4000-8000-000000000015','e0995200-0000-4000-8000-000000000001','e0995300-0000-4000-8000-000000000012','ELSEWHERE-0001','issued','usd',14000,now()-interval '3 days',current_date+7);
+SELECT pg_temp.issue('e0995400-0000-4000-8000-000000000016','e0995200-0000-4000-8000-000000000001','e0995300-0000-4000-8000-000000000013','FORMERSTAFF-0001','issued','usd',15000,now()-interval '3 days',current_date+7);
 -- Jordan's rows that must never reach him: a managed draft, a CSV-imported obligation, a legacy row.
 INSERT INTO public.paige_invoices(id,tenant_id,contact_id,invoice_number,status,amount_total_cents,currency,
  billing_draft_version,billing_draft,billing_last_operation_id,billing_last_request) VALUES
@@ -253,6 +259,11 @@ SELECT is(pg_temp.reads('e0995100-0000-4000-8000-000000000011','e0995400-0000-40
 SELECT is(pg_temp.reads('e0995100-0000-4000-8000-000000000011','e0995400-0000-4000-8000-000000000012')->'ledger', 'null'::jsonb, 'and no ledger');
 SELECT is(pg_temp.reads('e0995100-0000-4000-8000-000000000011','e0995400-0000-4000-8000-000000000012')->'request', 'null'::jsonb, 'and no payment request');
 SELECT is(pg_temp.ids(pg_temp.as_user('e0995100-0000-4000-8000-000000000014','SELECT public.client_portal_invoices()')), 'ELSEWHERE-0001', 'a linked client who is staff of a DIFFERENT business still reads their own invoices');
+-- Only ACTIVE staff are turned away, as in #2170 (`status='active'`): a linked client whose membership of the
+-- same business is suspended reads as the customer they are (list, ledger and payment request).
+SELECT is(pg_temp.ids(pg_temp.reads('e0995100-0000-4000-8000-000000000015','e0995400-0000-4000-8000-000000000016')->'list'), 'FORMERSTAFF-0001', 'a linked client whose same-business membership is suspended still reads their invoice list');
+SELECT is(pg_temp.reads('e0995100-0000-4000-8000-000000000015','e0995400-0000-4000-8000-000000000016')->'ledger'->>'invoice_id', 'e0995400-0000-4000-8000-000000000016', 'and their ledger');
+SELECT is(pg_temp.reads('e0995100-0000-4000-8000-000000000015','e0995400-0000-4000-8000-000000000016')->'request'->>'invoice_id', 'e0995400-0000-4000-8000-000000000016', 'and their payment request read');
 -- A platform owner linked as a client: no customer billing read.
 SELECT is(pg_temp.reads('e0995100-0000-4000-8000-000000000012','e0995400-0000-4000-8000-000000000013')->'list', 'null'::jsonb, 'a platform owner linked as a client reads no invoice list');
 SELECT is(pg_temp.reads('e0995100-0000-4000-8000-000000000012','e0995400-0000-4000-8000-000000000013')->'ledger', 'null'::jsonb, 'and no ledger');

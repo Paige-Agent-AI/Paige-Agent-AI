@@ -82,8 +82,9 @@ const pathOf = (s) => (s.page === "home" || (s.page === "nav" && s.from === "hom
 const nameOf = (s, label = "") => `e09-payments-${s.page}${s.from ? `-from-${s.from}` : ""}${s.invoice ? `-${s.invoice}` : ""}-${s.state}-${s.theme}-${s.kind}-${s.w}x${s.h}${label}`;
 const NAV = '[data-harness-region="nav"] nav[aria-label="Customer navigation"]';
 const DRAWER = '[role="dialog"] nav[aria-label="Customer navigation"]';
-// The Paperwork group as a customer of one business with a generic catalog sees it (Agreements is not client-live).
-const PAPERWORK = ["Documents|/app/documents|Files shared with you", "Payments|/app/billing|Invoices and receipts"];
+// The Paperwork group as a customer of one business with a generic catalog sees it. Agreements (E09 Slice A, merged on
+// main before this slice) is shown to every customer of one business, so it sits between Documents and Payments.
+const PAPERWORK = ["Documents|/app/documents|Files shared with you", "Agreements|/app/agreements|Sign and download", "Payments|/app/billing|Invoices and receipts"];
 
 /** The desktop bar: each top-level entry, a group trigger as [Name] (with * when it carries the active state). */
 async function readBar(page) {
@@ -290,7 +291,7 @@ function unmet(s, n) {
     if (s.phone) {
       const d = n.drawer ?? [];
       const group = (n.paperworkGroup ?? []).find((g) => g[0] === "Paperwork") ?? [];
-      want(eq(group, ["Paperwork", "Documents", "Payments"]), `Paperwork group in the drawer ${JSON.stringify(n.paperworkGroup)}`);
+      want(eq(group, ["Paperwork", "Documents", "Agreements", "Payments"]), `Paperwork group in the drawer ${JSON.stringify(n.paperworkGroup)}`);
       const current = d.filter((x) => x.endsWith("*"));
       want(eq(current, [s.from === "home" ? "Home*" : "Payments*"]), `current drawer entry ${JSON.stringify(current)} in ${JSON.stringify(d)}`);
       want(d.filter((x) => x.replace("*", "") === "Payments").length === 1, `Payments in the drawer ${JSON.stringify(d)}`);

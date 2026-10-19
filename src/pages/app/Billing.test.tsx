@@ -7,13 +7,16 @@ import { PORTAL_INVOICES_REFRESH_ERROR, type ClientPortalInvoicesState, type Por
 
 // Synthetic test tenant (Northwind Studio); never a real account.
 const T = "e0950000-0000-4000-8000-000000000001";
-const f = vi.hoisted(() => ({ state: null as unknown as ClientPortalInvoicesState }));
+const f = vi.hoisted(() => ({
+  state: null as unknown as ClientPortalInvoicesState,
+  brand: null as unknown as { brand: Record<string, unknown> | null; loading: boolean; error: boolean; multipleBusinesses: boolean },
+}));
 vi.mock("@/hooks/useClientPortalInvoices", async (orig) => ({
   ...(await orig<typeof import("@/hooks/useClientPortalInvoices")>()),
   useClientPortalInvoices: () => f.state,
 }));
 vi.mock("@/hooks/useClientPortalBrand", () => ({
-  useClientPortalBrand: () => ({ tenant_id: T, tenant_name: "Northwind Studio", primary_color: null, logo_url: null }),
+  useClientPortalBrandState: () => f.brand,
 }));
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -51,6 +54,7 @@ const render = async () => {
 const text = () => host.textContent?.replace(/\s+/g, " ") ?? "";
 
 beforeEach(() => {
+  f.brand = { brand: { tenant_id: T, tenant_name: "Northwind Studio", primary_color: null, logo_url: null }, loading: false, error: false, multipleBusinesses: false };
   f.state = {
     invoices: [], balances: [], openCount: 0, pastDueCount: 0, invoiceCount: 0, hasMore: false, businessName: "Northwind Studio", loading: false,
     loadingMore: false, error: null, unavailable: false, multipleBusinesses: false, tenantId: T, scopeEpoch: 0, loaded: false,
@@ -148,6 +152,38 @@ it("shows the unavailable and multiple-business states instead of a list", async
   await render();
   expect(text()).toContain("Payments for more than one business isn't available yet");
   expect(host.querySelector("[data-testid=invoice-row]")).toBeNull();
+});
+
+it("tells only a viewer linked to no business to sign in with the invited email; a refused customer gets a neutral line", async () => {
+  const INVITE = "Sign in with the email your business invited";
+  const NEUTRAL = "Invoices can't be shown to this account in the client portal.";
+  // The menu treats this viewer as a customer (the brand resolved), but the invoice read refuses them: same-business
+  // staff or a platform owner linked as a client. The invite email is not why, so it is never given as the reason.
+  f.state = { ...f.state, unavailable: true };
+  await render();
+  expect(text()).toContain("Payments isn't available on this account");
+  expect(text()).toContain(NEUTRAL);
+  expect(text()).not.toContain(INVITE);
+  // Linked to no business at all: the invite guidance is the true next step.
+  act(() => root.unmount()); root = createRoot(host);
+  f.brand = { brand: null, loading: false, error: false, multipleBusinesses: false };
+  await render();
+  expect(text()).toContain(INVITE);
+  expect(text()).not.toContain(NEUTRAL);
+  // The brand read is still loading or failed: who they are is unknown, so no reason is claimed.
+  for (const unknown of [{ loading: true, error: false }, { loading: false, error: true }]) {
+    act(() => root.unmount()); root = createRoot(host);
+    f.brand = { brand: null, multipleBusinesses: false, ...unknown };
+    await render();
+    expect(text()).toContain(NEUTRAL);
+    expect(text()).not.toContain(INVITE);
+  }
+  // The business lookup says several businesses, but the invoice read refuses: no invite reason is claimed either.
+  act(() => root.unmount()); root = createRoot(host);
+  f.brand = { brand: null, loading: false, error: false, multipleBusinesses: true };
+  await render();
+  expect(text()).toContain(NEUTRAL);
+  expect(text()).not.toContain(INVITE);
 });
 
 it("keeps the list when a refresh fails, and pages older invoices on request", async () => {

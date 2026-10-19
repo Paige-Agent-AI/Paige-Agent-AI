@@ -28,7 +28,7 @@ import {
   type PortalInvoice,
   type PortalInvoiceDisplay,
 } from "@/hooks/useClientPortalInvoices";
-import { useClientPortalBrand } from "@/hooks/useClientPortalBrand";
+import { useClientPortalBrandState } from "@/hooks/useClientPortalBrand";
 import { formatPaymentMinor } from "@/solo/sales/customerPaymentRequest";
 
 const FOCUS = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -168,7 +168,13 @@ function MessageBusiness({ businessName }: { businessName: string }) {
 
 export default function Billing() {
   const invoices = useClientPortalInvoices();
-  const brand = useClientPortalBrand();
+  const brandState = useClientPortalBrandState();
+  const brand = brandState.brand;
+  // Only a viewer the brand read resolved as NOT linked to any business is told to sign in with the invited
+  // email. A viewer the menu treats as a customer (brand resolved) whom the invoice read still refuses (same-
+  // business staff or a platform owner linked as a client) gets a neutral line that claims no reason; so does
+  // a viewer whose brand read is still loading or failed, since why they were refused is not known here.
+  const notLinked = !brandState.loading && !brandState.error && !brand?.tenant_id && !brandState.multipleBusinesses;
   const businessName = invoices.businessName ?? (brand?.tenant_name?.trim() || "your business");
   const [nowMs, setNowMs] = useState(() => Date.now());
   // Keep "this year" in step with each fresh read.
@@ -255,7 +261,9 @@ export default function Billing() {
         <PaymentsEmpty
           icon={ReceiptText}
           title="Payments isn't available on this account"
-          description="Invoices from your business show here once your account is connected to it. Sign in with the email your business invited."
+          description={notLinked
+            ? "Invoices from your business show here once your account is connected to it. Sign in with the email your business invited."
+            : "Invoices can't be shown to this account in the client portal."}
           action={<BackHome />}
         />
       ) : firstLoad ? (

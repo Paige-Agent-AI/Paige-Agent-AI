@@ -3,7 +3,7 @@
 // configured → disabled Volume2 + tooltip. One shared audio element via the messageTts controller,
 // so a new play always stops the prior (no overlapping voices). §11: NO gold — playback is not the
 // act/approve moment; a neutral ghost icon in the muted-foreground token, matching MessageMeta.
-import { useSyncExternalStore } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { Volume2, Loader2, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -24,16 +24,17 @@ interface MessageAudioButtonProps {
 
 /**
  * Fetch the synthesized mp3 for `content` from paige-tts. Uses a direct authenticated fetch (not
- * supabase.functions.invoke) so we get the raw streaming Response and a real Blob — invoke's binary
+ * supabase.functions.invoke) so the existing controller can consume the raw streaming Response — invoke's binary
  * handling is unreliable. On a non-2xx we read the honest `{ error }` code (the resolveFunctionError
  * philosophy) and mark a `needs_config` for the tts_not_configured / tts_tier_reserved degrades.
  */
-async function fetchMessageAudio(content: string, requestId: string): Promise<Blob> {
+async function fetchMessageAudio(content: string, requestId: string, signal: AbortSignal): Promise<Response> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw { needsConfig: false, message: "Please sign in." } as TtsFetchError;
 
   const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paige-tts`, {
     method: "POST",
+    signal,
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${session.access_token}`,
@@ -60,12 +61,18 @@ async function fetchMessageAudio(content: string, requestId: string): Promise<Bl
       message: feedback.message,
     } as TtsFetchError;
   }
-  return await resp.blob();
+  return resp;
 }
 
 export function MessageAudioButton({ messageId, content, className }: MessageAudioButtonProps) {
   const snap = useSyncExternalStore(messageTts.subscribe, messageTts.getSnapshot, messageTts.getSnapshot);
+  const ownedRequest = useRef<AbortSignal | null>(null);
   const trimmed = content.trim();
+  // Leaving this message (including a workspace/thread change) cancels only its
+  // own output. Cleanup must not stop another conversation's newer message.
+  useEffect(() => () => {
+    if (ownedRequest.current && !ownedRequest.current.aborted && messageTts.getSnapshot().activeId === messageId) messageTts.stop();
+  }, [messageId]);
   if (!trimmed) return null;
 
   const tint = className ?? "text-muted-foreground";
@@ -79,7 +86,7 @@ export function MessageAudioButton({ messageId, content, className }: MessageAud
     const requestId = crypto.randomUUID();
     void messageTts.toggle(
       messageId,
-      () => fetchMessageAudio(trimmed, requestId),
+      signal => { ownedRequest.current = signal; return fetchMessageAudio(trimmed, requestId, signal); },
       (e: TtsFetchError) => {
         // needsConfig is reflected by the disabled state below — don't scream a red error (§13/§36).
         if (e.needsConfig) return;
@@ -110,14 +117,13 @@ export function MessageAudioButton({ messageId, content, className }: MessageAud
     );
   }
 
-  const label = playing ? "Stop playback" : loading ? "Loading voice" : "Play message aloud";
+  const label = playing ? "Stop playback" : loading ? "Stop loading voice" : "Play message aloud";
   return (
     <Button
       variant="ghost"
       size="icon"
       className="h-6 w-6"
       onClick={onClick}
-      disabled={loading}
       aria-label={label}
       aria-pressed={playing}
       title={label}

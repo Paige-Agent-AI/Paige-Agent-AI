@@ -1,0 +1,3 @@
+Browser tab: 170265244, Title: "Isolated source recovery proof", URL: "http://127.0.0.1:5298/".
+There has been no change in the accessibility tree.
+The focused UI element is 67 button (collapsed) Description: Direct PAIGE, Secondary Actions: Expand

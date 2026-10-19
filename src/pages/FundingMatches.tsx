@@ -1,4 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- pre-existing legacy `any` debt in this
+   file (untyped Supabase reads, stale generated types). The E09 Customer Portal identity change
+   (CURA, never PAIGE, on customer surfaces) only edited copy here and introduced ZERO new `any`s;
+   retyping is tracked separately (#234). */
 import { useState, useMemo, useEffect } from "react";
+import { useCustomerIdentity } from "@/lib/portal/customerIdentity";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useFundingProfile } from "@/hooks/useFundingProfile";
@@ -38,6 +43,8 @@ function SeparationAuditFundingBanner({ onFix }: { onFix: () => void }) {
 }
 
 export default function FundingMatches() {
+  // The customer's agent (Cura, or the business's own name for it), never PAIGE, the owner's COO.
+  const { agentName } = useCustomerIdentity();
   const profile = useFundingProfile();
   const navigate = useNavigate();
   const [goalModalOpen, setGoalModalOpen] = useState(false);
@@ -145,7 +152,7 @@ export default function FundingMatches() {
   function handleAskPaige(product: any) {
     const lenderQuery = `Tell me about ${product.lender_name} ${product.product_subcategory || product.product_category} — am I a fit and what's the strategy to apply?`;
     sessionStorage.setItem("paige_prefill", lenderQuery);
-    toast.info("Opening Paige with this lender pre-loaded…");
+    toast.info(`Opening ${agentName} with this lender pre-loaded…`);
     // Trigger floating chatbot to open if listening
     window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt: lenderQuery } }));
   }
@@ -306,7 +313,7 @@ export default function FundingMatches() {
           <p className="text-muted-foreground">
             {profile.middleScore
               ? "No lender products are currently in the database. An admin can add products in the Lender Bureau Preferences section."
-              : "Upload a credit report via Paige chat first to see matched funding products."}
+              : `Upload a credit report in your chat with ${agentName} first to see matched funding products.`}
           </p>
         </Card>
       )}

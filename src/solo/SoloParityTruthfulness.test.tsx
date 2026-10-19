@@ -140,7 +140,7 @@ describe("SOLO Research library guidance and existing read paths", () => {
     await renderResearch();
     await act(async () => host.querySelector<HTMLButtonElement>('[aria-label="Open research: Saved investigation"]')!.click());
     expect(harness.open).toHaveBeenCalledWith("test-run-a");
-    harness.detail = { ...harness.rows[0], findings: [{ text: "Persisted cited finding", citations: [1], confidence: "high" }], coverage: {}, entity_profile: null, sources: [{ index: 1, url: "https://example.org/source", title: "Saved source", snippet: null, reliability_score: null, tier: null, reliability: null, published_at: null, fetched_at: null, excluded: false }] };
+    harness.detail = { ...harness.rows[0], evidenceComplete: true, findings: [{ text: "Persisted cited finding", citations: [1], confidence: "high" }], coverage: {}, entity_profile: null, sources: [{ index: 1, url: "https://example.org/source", title: "Saved source", snippet: null, reliability_score: null, tier: null, reliability: null, published_at: null, fetched_at: null, excluded: false }] };
     await renderResearch();
     expect(host.querySelector('[aria-label="Findings"]')?.textContent).toContain("Persisted cited finding");
     expect(host.querySelector('a[href="https://example.org/source"]')?.getAttribute("rel")).toContain("noopener");

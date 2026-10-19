@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "sourceHead": "ab8e338d2f0fcd2b8760a61735f6bcc55d1d16e3",
+  "class": "RENDERED_SYNTHETIC_ACTUAL_INTERVIEW_COMPONENT",
+  "reviewer": "Independent non-author render_evidence_review",
+  "verdict": "SHIP_BOUNDED",
+  "capture": "checkpoint-write-failure.jpg",
+  "componentHash": "5713f051b2c1d111ad11013bf61dd13d327deac13005069b48e4aadf6fac7145",
+  "cssHash": "78ef156374ac6a320118df45d7905099e638b1f50adfd45b9d57972f84e6d178",
+  "geometry": {
+    "width": 686,
+    "height": 694
+  },
+  "requiredMatrixContribution": false,
+  "errorTextContrast": 5.59,
+  "proof": "Actual component distinguishes successful synthetic Setup save/readback from failed progress recording and shows reopen/reload recovery. AX/DOM records focus; image alone does not identify field.",
+  "unverified": [
+    "Actual database persistence in this render",
+    "Real Chat",
+    "Production",
+    "Authentication",
+    "Native zoom",
+    "Screen reader"
+  ]
+}

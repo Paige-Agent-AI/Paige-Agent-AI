@@ -1,0 +1,1278 @@
+{
+  "sourceHead": "4678ea917a03ad20de79900ba1b3623a9ccf202a",
+  "productFreeze": "7558b1b4b36cfb280070e8a1f2376c80a48df640",
+  "rows": [
+    {
+      "name": "a-light-1366-768-closed",
+      "expected": {
+        "width": 1366,
+        "height": 768,
+        "theme": "light",
+        "panel": "closed",
+        "account": "TEST STUDIO A"
+      },
+      "dom": {
+        "account": "TEST STUDIO A",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 768,
+        "navLinks": 9,
+        "panel": "closed",
+        "ready": false,
+        "screenRect": {
+          "bottom": 768.0000152587891,
+          "height": 661.2000122070312,
+          "left": 72,
+          "right": 1366.4000244140625,
+          "top": 106.8000030517578,
+          "width": 1294.4000244140625,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "light",
+        "width": 1366
+      },
+      "nativeBytes": 36909,
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "a-light-1366-768-closed.jpg",
+      "raster": [
+        1366,
+        768
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "f9e0899f7c91050d30b289e439361785dfb281d05ddf4c89ecf0784c56882a5a",
+      "dimension": "EXACT_RASTER"
+    },
+    {
+      "name": "a-light-1366-768-open",
+      "expected": {
+        "width": 1366,
+        "height": 768,
+        "theme": "light",
+        "panel": "open",
+        "account": "TEST STUDIO A"
+      },
+      "dom": {
+        "account": "TEST STUDIO A",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 768,
+        "navLinks": 9,
+        "panel": "open",
+        "ready": false,
+        "screenRect": {
+          "bottom": 768.0000152587891,
+          "height": 661.2000122070312,
+          "left": 72,
+          "right": 901.8250122070312,
+          "top": 106.8000030517578,
+          "width": 829.8250122070312,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "light",
+        "width": 1366
+      },
+      "nativeBytes": 45635,
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "a-light-1366-768-open.jpg",
+      "raster": [
+        1366,
+        768
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "95a41dbc4b97598b2f3a07d81f2d1591432e34720880332c702bfe8ed8074ce0",
+      "dimension": "EXACT_RASTER"
+    },
+    {
+      "name": "a-light-1536-770-closed",
+      "expected": {
+        "width": 1536,
+        "height": 770,
+        "theme": "light",
+        "panel": "closed",
+        "account": "TEST STUDIO A"
+      },
+      "dom": {
+        "account": "TEST STUDIO A",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 770,
+        "navLinks": 9,
+        "panel": "closed",
+        "ready": false,
+        "screenRect": {
+          "bottom": 770.4000396728516,
+          "height": 663.6000366210938,
+          "left": 72,
+          "right": 1536,
+          "top": 106.8000030517578,
+          "width": 1464,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "light",
+        "width": 1536
+      },
+      "nativeBytes": 37716,
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "a-light-1536-770-closed.jpg",
+      "raster": [
+        1535,
+        770
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "346e48f3473abfb99d20191a5a10abb7ed229647f55bcbed554fae4595f01b2f",
+      "dimension": "ONE_PIXEL_EDGE"
+    },
+    {
+      "name": "a-light-1536-770-open",
+      "expected": {
+        "width": 1536,
+        "height": 770,
+        "theme": "light",
+        "panel": "open",
+        "account": "TEST STUDIO A"
+      },
+      "dom": {
+        "account": "TEST STUDIO A",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 770,
+        "navLinks": 9,
+        "panel": "open",
+        "ready": false,
+        "screenRect": {
+          "bottom": 770.4000396728516,
+          "height": 663.6000366210938,
+          "left": 72,
+          "right": 1013.7625122070312,
+          "top": 106.8000030517578,
+          "width": 941.7625122070312,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "light",
+        "width": 1536
+      },
+      "nativeBytes": 46913,
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "a-light-1536-770-open.jpg",
+      "raster": [
+        1535,
+        770
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "131a59806e560680a4aa339d2fe04dd45505f357f2eb57d280cd8029d70d1527",
+      "dimension": "ONE_PIXEL_EDGE"
+    },
+    {
+      "name": "a-light-1024-768-closed",
+      "expected": {
+        "width": 1024,
+        "height": 768,
+        "theme": "light",
+        "panel": "closed",
+        "account": "TEST STUDIO A"
+      },
+      "dom": {
+        "account": "TEST STUDIO A",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 768,
+        "navLinks": 9,
+        "panel": "closed",
+        "ready": false,
+        "screenRect": {
+          "bottom": 768.0000152587891,
+          "height": 661.2000122070312,
+          "left": 72,
+          "right": 1024,
+          "top": 106.8000030517578,
+          "width": 952,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "light",
+        "width": 1024
+      },
+      "nativeBytes": 32840,
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "a-light-1024-768-closed.jpg",
+      "raster": [
+        1024,
+        768
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "b7c9a143f4b94e3c947eb0e5b80ec017ff6c8664039a1a4b40d4fc330a6bfe8b",
+      "dimension": "EXACT_RASTER"
+    },
+    {
+      "name": "a-light-1024-768-open",
+      "expected": {
+        "width": 1024,
+        "height": 768,
+        "theme": "light",
+        "panel": "open",
+        "account": "TEST STUDIO A"
+      },
+      "dom": {
+        "account": "TEST STUDIO A",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 768,
+        "navLinks": 9,
+        "panel": "open",
+        "ready": false,
+        "screenRect": {
+          "bottom": 768.0000152587891,
+          "height": 661.2000122070312,
+          "left": 72,
+          "right": 1024,
+          "top": 106.8000030517578,
+          "width": 952,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "light",
+        "width": 1024
+      },
+      "nativeBytes": 30070,
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "a-light-1024-768-open.jpg",
+      "raster": [
+        1024,
+        768
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "f20c0ef7db7b2616770757527366549a16c12451164eea33684414f53f79d8dc",
+      "dimension": "EXACT_RASTER"
+    },
+    {
+      "name": "a-light-900-1000-closed",
+      "expected": {
+        "width": 900,
+        "height": 1000,
+        "theme": "light",
+        "panel": "closed",
+        "account": "TEST STUDIO A"
+      },
+      "dom": {
+        "account": "TEST STUDIO A",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 1000,
+        "navLinks": 9,
+        "panel": "closed",
+        "ready": false,
+        "screenRect": {
+          "bottom": 1000.0000152587892,
+          "height": 893.2000122070312,
+          "left": 72,
+          "right": 900,
+          "top": 106.8000030517578,
+          "width": 828,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "light",
+        "width": 900
+      },
+      "nativeBytes": 33789,
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "a-light-900-1000-closed.jpg",
+      "raster": [
+        900,
+        1000
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "30e2c918dc5e89995b15fd1717f2326ff4b4f45e51c2af40f7aa9e22e4364185",
+      "dimension": "EXACT_RASTER"
+    },
+    {
+      "name": "a-light-900-1000-open",
+      "expected": {
+        "width": 900,
+        "height": 1000,
+        "theme": "light",
+        "panel": "open",
+        "account": "TEST STUDIO A"
+      },
+      "dom": {
+        "account": "TEST STUDIO A",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 1000,
+        "navLinks": 9,
+        "panel": "open",
+        "ready": false,
+        "screenRect": {
+          "bottom": 1000.0000152587892,
+          "height": 893.2000122070312,
+          "left": 72,
+          "right": 900,
+          "top": 106.8000030517578,
+          "width": 828,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "light",
+        "width": 900
+      },
+      "nativeBytes": 31697,
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "a-light-900-1000-open.jpg",
+      "raster": [
+        900,
+        1000
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "b97f81a26d02ecc0c4bc2b5ee0cea2b28a3f41e194ec0be0aedf9183a6d88b20",
+      "dimension": "EXACT_RASTER"
+    },
+    {
+      "name": "a-dark-900-1000-closed",
+      "expected": {
+        "width": 900,
+        "height": 1000,
+        "theme": "dark",
+        "panel": "closed",
+        "account": "TEST STUDIO A"
+      },
+      "dom": {
+        "account": "TEST STUDIO A",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 1000,
+        "navLinks": 9,
+        "panel": "closed",
+        "ready": false,
+        "screenRect": {
+          "bottom": 1000.0000152587892,
+          "height": 893.2000122070312,
+          "left": 72,
+          "right": 900,
+          "top": 106.8000030517578,
+          "width": 828,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "dark",
+        "width": 900
+      },
+      "nativeBytes": 34208,
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "a-dark-900-1000-closed.jpg",
+      "raster": [
+        900,
+        1000
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "d3e42c686855a01cb4c62bf037581c6d9dc39387a3db57dcd43513fb234b2100",
+      "dimension": "EXACT_RASTER"
+    },
+    {
+      "name": "a-dark-900-1000-open",
+      "expected": {
+        "width": 900,
+        "height": 1000,
+        "theme": "dark",
+        "panel": "open",
+        "account": "TEST STUDIO A"
+      },
+      "dom": {
+        "account": "TEST STUDIO A",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 1000,
+        "navLinks": 9,
+        "panel": "open",
+        "ready": false,
+        "screenRect": {
+          "bottom": 1000.0000152587892,
+          "height": 893.2000122070312,
+          "left": 72,
+          "right": 900,
+          "top": 106.8000030517578,
+          "width": 828,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "dark",
+        "width": 900
+      },
+      "nativeBytes": 31565,
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "a-dark-900-1000-open.jpg",
+      "raster": [
+        900,
+        1000
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "fe0749cd8c1bbc8d85112b0f4e64caf5e97dba22839c6386c23f71074103532a",
+      "dimension": "EXACT_RASTER"
+    },
+    {
+      "name": "a-dark-1024-768-closed",
+      "expected": {
+        "width": 1024,
+        "height": 768,
+        "theme": "dark",
+        "panel": "closed",
+        "account": "TEST STUDIO A"
+      },
+      "dom": {
+        "account": "TEST STUDIO A",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 768,
+        "navLinks": 9,
+        "panel": "closed",
+        "ready": false,
+        "screenRect": {
+          "bottom": 768.0000152587891,
+          "height": 661.2000122070312,
+          "left": 72,
+          "right": 1024,
+          "top": 106.8000030517578,
+          "width": 952,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "dark",
+        "width": 1024
+      },
+      "nativeBytes": 33382,
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "a-dark-1024-768-closed.jpg",
+      "raster": [
+        1024,
+        768
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "97108ee21ba6a6a0f202fd05b1d37a6d9b867f1a50c287f695c29ccbef514bb6",
+      "dimension": "EXACT_RASTER"
+    },
+    {
+      "name": "a-dark-1024-768-open",
+      "expected": {
+        "width": 1024,
+        "height": 768,
+        "theme": "dark",
+        "panel": "open",
+        "account": "TEST STUDIO A"
+      },
+      "dom": {
+        "account": "TEST STUDIO A",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 768,
+        "navLinks": 9,
+        "panel": "open",
+        "ready": false,
+        "screenRect": {
+          "bottom": 768.0000152587891,
+          "height": 661.2000122070312,
+          "left": 72,
+          "right": 1024,
+          "top": 106.8000030517578,
+          "width": 952,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "dark",
+        "width": 1024
+      },
+      "nativeBytes": 30471,
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "a-dark-1024-768-open.jpg",
+      "raster": [
+        1024,
+        768
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "cd88e6d2b49c775f85f8f4213b798e4728ad77b7b6791d098bb84fe4d818e3cf",
+      "dimension": "EXACT_RASTER"
+    },
+    {
+      "name": "a-dark-1366-768-closed",
+      "expected": {
+        "width": 1366,
+        "height": 768,
+        "theme": "dark",
+        "panel": "closed",
+        "account": "TEST STUDIO A"
+      },
+      "dom": {
+        "account": "TEST STUDIO A",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 768,
+        "navLinks": 9,
+        "panel": "closed",
+        "ready": false,
+        "screenRect": {
+          "bottom": 768.0000152587891,
+          "height": 661.2000122070312,
+          "left": 72,
+          "right": 1366.4000244140625,
+          "top": 106.8000030517578,
+          "width": 1294.4000244140625,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "dark",
+        "width": 1366
+      },
+      "nativeBytes": 36972,
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "a-dark-1366-768-closed.jpg",
+      "raster": [
+        1366,
+        768
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "a2a2e17ff8d4bf8d2203a77c1bd81502943ac72bd1c8156f9ab1847998daa06c",
+      "dimension": "EXACT_RASTER"
+    },
+    {
+      "name": "a-dark-1366-768-open",
+      "expected": {
+        "width": 1366,
+        "height": 768,
+        "theme": "dark",
+        "panel": "open",
+        "account": "TEST STUDIO A"
+      },
+      "dom": {
+        "account": "TEST STUDIO A",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 768,
+        "navLinks": 9,
+        "panel": "open",
+        "ready": false,
+        "screenRect": {
+          "bottom": 768.0000152587891,
+          "height": 661.2000122070312,
+          "left": 72,
+          "right": 901.8250122070312,
+          "top": 106.8000030517578,
+          "width": 829.8250122070312,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "dark",
+        "width": 1366
+      },
+      "nativeBytes": 46155,
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "a-dark-1366-768-open.jpg",
+      "raster": [
+        1366,
+        768
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "506309563279cfe5ca734e9ea9d3a13a1065b6e25e498f539cd2524b20a45218",
+      "dimension": "EXACT_RASTER"
+    },
+    {
+      "name": "a-dark-1536-770-closed",
+      "expected": {
+        "width": 1536,
+        "height": 770,
+        "theme": "dark",
+        "panel": "closed",
+        "account": "TEST STUDIO A"
+      },
+      "dom": {
+        "account": "TEST STUDIO A",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 770,
+        "navLinks": 9,
+        "panel": "closed",
+        "ready": false,
+        "screenRect": {
+          "bottom": 770.4000396728516,
+          "height": 663.6000366210938,
+          "left": 72,
+          "right": 1536,
+          "top": 106.8000030517578,
+          "width": 1464,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "dark",
+        "width": 1536
+      },
+      "nativeBytes": 38632,
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "a-dark-1536-770-closed.jpg",
+      "raster": [
+        1535,
+        770
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "49b7226f00ab27d53f1f4eb9bab682414ebb8c83437be2376e76b11a42af2ee0",
+      "dimension": "ONE_PIXEL_EDGE"
+    },
+    {
+      "name": "a-dark-1536-770-open",
+      "expected": {
+        "width": 1536,
+        "height": 770,
+        "theme": "dark",
+        "panel": "open",
+        "account": "TEST STUDIO A"
+      },
+      "dom": {
+        "account": "TEST STUDIO A",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 770,
+        "navLinks": 9,
+        "panel": "open",
+        "ready": false,
+        "screenRect": {
+          "bottom": 770.4000396728516,
+          "height": 663.6000366210938,
+          "left": 72,
+          "right": 1013.7625122070312,
+          "top": 106.8000030517578,
+          "width": 941.7625122070312,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "dark",
+        "width": 1536
+      },
+      "nativeBytes": 47753,
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "a-dark-1536-770-open.jpg",
+      "raster": [
+        1535,
+        770
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "1375dcb93665a03c14b93a103014fac27f57131b84ef747571c5c83fd56d6613",
+      "dimension": "ONE_PIXEL_EDGE"
+    },
+    {
+      "name": "b-dark-1536-770-closed",
+      "expected": {
+        "width": 1536,
+        "height": 770,
+        "theme": "dark",
+        "panel": "closed",
+        "account": "TEST STUDIO B"
+      },
+      "dom": {
+        "account": "TEST STUDIO B",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 770,
+        "navLinks": 9,
+        "panel": "closed",
+        "ready": false,
+        "screenRect": {
+          "bottom": 770.4000396728516,
+          "height": 663.6000366210938,
+          "left": 72,
+          "right": 1536,
+          "top": 106.8000030517578,
+          "width": 1464,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "dark",
+        "width": 1536
+      },
+      "nativeBytes": 38255,
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "b-dark-1536-770-closed.jpg",
+      "raster": [
+        1535,
+        770
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "f7383040dfb29422e5f7a97d07ab03c51bf5baa0c0c8295cb8d788fde7214a9b",
+      "dimension": "ONE_PIXEL_EDGE"
+    },
+    {
+      "name": "b-dark-1536-770-open",
+      "expected": {
+        "width": 1536,
+        "height": 770,
+        "theme": "dark",
+        "panel": "open",
+        "account": "TEST STUDIO B"
+      },
+      "dom": {
+        "account": "TEST STUDIO B",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 770,
+        "navLinks": 9,
+        "panel": "open",
+        "ready": false,
+        "screenRect": {
+          "bottom": 770.4000396728516,
+          "height": 663.6000366210938,
+          "left": 72,
+          "right": 1013.7625122070312,
+          "top": 106.8000030517578,
+          "width": 941.7625122070312,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "dark",
+        "width": 1536
+      },
+      "nativeBytes": 47756,
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "b-dark-1536-770-open.jpg",
+      "raster": [
+        1535,
+        770
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "3005f00df037c36dd82d4c51f604a9373ab4ad61ee458c4ca08c90f3c81c251c",
+      "dimension": "ONE_PIXEL_EDGE"
+    },
+    {
+      "name": "b-dark-1366-768-closed",
+      "expected": {
+        "width": 1366,
+        "height": 768,
+        "theme": "dark",
+        "panel": "closed",
+        "account": "TEST STUDIO B"
+      },
+      "dom": {
+        "account": "TEST STUDIO B",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 768,
+        "navLinks": 9,
+        "panel": "closed",
+        "ready": false,
+        "screenRect": {
+          "bottom": 768.0000152587891,
+          "height": 661.2000122070312,
+          "left": 72,
+          "right": 1366.4000244140625,
+          "top": 106.8000030517578,
+          "width": 1294.4000244140625,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "dark",
+        "width": 1366
+      },
+      "nativeBytes": 36609,
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "b-dark-1366-768-closed.jpg",
+      "raster": [
+        1366,
+        768
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "9c8ea93250d2383a8e8513c7f06b87bc7be124b112550d8db94a4a39d75be1e3",
+      "dimension": "EXACT_RASTER"
+    },
+    {
+      "name": "b-dark-1366-768-open",
+      "expected": {
+        "width": 1366,
+        "height": 768,
+        "theme": "dark",
+        "panel": "open",
+        "account": "TEST STUDIO B"
+      },
+      "dom": {
+        "account": "TEST STUDIO B",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 768,
+        "navLinks": 9,
+        "panel": "open",
+        "ready": false,
+        "screenRect": {
+          "bottom": 768.0000152587891,
+          "height": 661.2000122070312,
+          "left": 72,
+          "right": 901.8250122070312,
+          "top": 106.8000030517578,
+          "width": 829.8250122070312,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "dark",
+        "width": 1366
+      },
+      "nativeBytes": 46160,
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "b-dark-1366-768-open.jpg",
+      "raster": [
+        1366,
+        768
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "170f6bd3bd1eece90f1b9589e5bfc5f472fc35bbb21cae08e53dcfbc48aa1eea",
+      "dimension": "EXACT_RASTER"
+    },
+    {
+      "name": "b-dark-1024-768-closed",
+      "expected": {
+        "width": 1024,
+        "height": 768,
+        "theme": "dark",
+        "panel": "closed",
+        "account": "TEST STUDIO B"
+      },
+      "dom": {
+        "account": "TEST STUDIO B",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 768,
+        "navLinks": 9,
+        "panel": "closed",
+        "ready": false,
+        "screenRect": {
+          "bottom": 768.0000152587891,
+          "height": 661.2000122070312,
+          "left": 72,
+          "right": 1024,
+          "top": 106.8000030517578,
+          "width": 952,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "dark",
+        "width": 1024
+      },
+      "nativeBytes": 33132,
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "b-dark-1024-768-closed.jpg",
+      "raster": [
+        1024,
+        768
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "92619b0adbc1931b6d9d5b5670113ba703cf4e5d5f187cbdb12f32fecb8fd686",
+      "dimension": "EXACT_RASTER"
+    },
+    {
+      "name": "b-dark-1024-768-open",
+      "expected": {
+        "width": 1024,
+        "height": 768,
+        "theme": "dark",
+        "panel": "open",
+        "account": "TEST STUDIO B"
+      },
+      "dom": {
+        "account": "TEST STUDIO B",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 768,
+        "navLinks": 9,
+        "panel": "open",
+        "ready": false,
+        "screenRect": {
+          "bottom": 768.0000152587891,
+          "height": 661.2000122070312,
+          "left": 72,
+          "right": 1024,
+          "top": 106.8000030517578,
+          "width": 952,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "dark",
+        "width": 1024
+      },
+      "nativeBytes": 30481,
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "b-dark-1024-768-open.jpg",
+      "raster": [
+        1024,
+        768
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "45bb5c3d15b2b254cd1459c003126401dbba7a21d0dca3fc67c85f5bd63d1568",
+      "dimension": "EXACT_RASTER"
+    },
+    {
+      "name": "b-dark-900-1000-closed",
+      "expected": {
+        "width": 900,
+        "height": 1000,
+        "theme": "dark",
+        "panel": "closed",
+        "account": "TEST STUDIO B"
+      },
+      "dom": {
+        "account": "TEST STUDIO B",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 1000,
+        "navLinks": 9,
+        "panel": "closed",
+        "ready": false,
+        "screenRect": {
+          "bottom": 1000.0000152587892,
+          "height": 893.2000122070312,
+          "left": 72,
+          "right": 900,
+          "top": 106.8000030517578,
+          "width": 828,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "dark",
+        "width": 900
+      },
+      "nativeBytes": 34207,
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "b-dark-900-1000-closed.jpg",
+      "raster": [
+        900,
+        1000
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "6dfb9bb34a2914d28907b482cb324ee565755224ac768c0e0e1c52a38de5ad0c",
+      "dimension": "EXACT_RASTER"
+    },
+    {
+      "name": "b-dark-900-1000-open",
+      "expected": {
+        "width": 900,
+        "height": 1000,
+        "theme": "dark",
+        "panel": "open",
+        "account": "TEST STUDIO B"
+      },
+      "dom": {
+        "account": "TEST STUDIO B",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 1000,
+        "navLinks": 9,
+        "panel": "open",
+        "ready": false,
+        "screenRect": {
+          "bottom": 1000.0000152587892,
+          "height": 893.2000122070312,
+          "left": 72,
+          "right": 900,
+          "top": 106.8000030517578,
+          "width": 828,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "dark",
+        "width": 900
+      },
+      "nativeBytes": 31571,
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "b-dark-900-1000-open.jpg",
+      "raster": [
+        900,
+        1000
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "5e4c367da42bd443ac29c1317a08b0ee134f82f5c468c09be53b8cbc3da90633",
+      "dimension": "EXACT_RASTER"
+    },
+    {
+      "name": "b-light-900-1000-closed",
+      "expected": {
+        "width": 900,
+        "height": 1000,
+        "theme": "light",
+        "panel": "closed",
+        "account": "TEST STUDIO B"
+      },
+      "dom": {
+        "account": "TEST STUDIO B",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 1000,
+        "navLinks": 9,
+        "panel": "closed",
+        "ready": false,
+        "screenRect": {
+          "bottom": 1000.0000152587892,
+          "height": 893.2000122070312,
+          "left": 72,
+          "right": 900,
+          "top": 106.8000030517578,
+          "width": 828,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "light",
+        "width": 900
+      },
+      "nativeBytes": 33795,
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "b-light-900-1000-closed.jpg",
+      "raster": [
+        900,
+        1000
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "e4b4ae6a4d8d76ef1b6b66c171b8b5a132b8c59ad8ed9d39b4ec51a09feb49d3",
+      "dimension": "EXACT_RASTER"
+    },
+    {
+      "name": "b-light-900-1000-open",
+      "expected": {
+        "width": 900,
+        "height": 1000,
+        "theme": "light",
+        "panel": "open",
+        "account": "TEST STUDIO B"
+      },
+      "dom": {
+        "account": "TEST STUDIO B",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 1000,
+        "navLinks": 9,
+        "panel": "open",
+        "ready": false,
+        "screenRect": {
+          "bottom": 1000.0000152587892,
+          "height": 893.2000122070312,
+          "left": 72,
+          "right": 900,
+          "top": 106.8000030517578,
+          "width": 828,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "light",
+        "width": 900
+      },
+      "nativeBytes": 31690,
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "b-light-900-1000-open.jpg",
+      "raster": [
+        900,
+        1000
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "6d2a6e61f775f3c1a98d3f791f79549b685fe9a542c81330fc928e86f88de02d",
+      "dimension": "EXACT_RASTER"
+    },
+    {
+      "name": "b-light-1024-768-closed",
+      "expected": {
+        "width": 1024,
+        "height": 768,
+        "theme": "light",
+        "panel": "closed",
+        "account": "TEST STUDIO B"
+      },
+      "dom": {
+        "account": "TEST STUDIO B",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 768,
+        "navLinks": 9,
+        "panel": "closed",
+        "ready": false,
+        "screenRect": {
+          "bottom": 768.0000152587891,
+          "height": 661.2000122070312,
+          "left": 72,
+          "right": 1024,
+          "top": 106.8000030517578,
+          "width": 952,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "light",
+        "width": 1024
+      },
+      "nativeBytes": 20161,
+      "visualAcceptance": "INVALID_RENDER_PROOF",
+      "image": "b-light-1024-768-closed.jpg",
+      "raster": [
+        1024,
+        521
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "747d4a3df1df87e8395aa043fe04b7c496f1543e326cfb9848e315b6161566f6",
+      "dimension": "INVALID_RASTER"
+    },
+    {
+      "name": "b-light-1024-768-open",
+      "expected": {
+        "width": 1024,
+        "height": 768,
+        "theme": "light",
+        "panel": "open",
+        "account": "TEST STUDIO B"
+      },
+      "dom": {
+        "account": "TEST STUDIO B",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 768,
+        "navLinks": 9,
+        "panel": "open",
+        "ready": false,
+        "screenRect": {
+          "bottom": 768.0000152587891,
+          "height": 661.2000122070312,
+          "left": 72,
+          "right": 1024,
+          "top": 106.8000030517578,
+          "width": 952,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "light",
+        "width": 1024
+      },
+      "nativeBytes": 20013,
+      "visualAcceptance": "INVALID_RENDER_PROOF",
+      "image": "b-light-1024-768-open.jpg",
+      "raster": [
+        1024,
+        521
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "0f32e49b35bb64890bb113479b3ff80563c3b75f36ad8ce59c23ba36dea32774",
+      "dimension": "INVALID_RASTER"
+    },
+    {
+      "name": "b-light-1366-768-closed-standard",
+      "expected": {
+        "width": 1366,
+        "height": 768,
+        "theme": "light",
+        "panel": "closed",
+        "account": "TEST STUDIO B"
+      },
+      "dom": {
+        "account": "TEST STUDIO B",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 768,
+        "navLinks": 9,
+        "panel": "closed",
+        "ready": false,
+        "screenRect": {
+          "bottom": 768.0000152587891,
+          "height": 661.2000122070312,
+          "left": 72,
+          "right": 1366.4000244140625,
+          "top": 106.8000030517578,
+          "width": 1294.4000244140625,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "light",
+        "width": 1366
+      },
+      "bytes": 36482,
+      "api": "tab.screenshot({fullPage:false})",
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "b-light-1366-768-closed-standard.png",
+      "raster": [
+        1366,
+        768
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "507541a7eecb171f23313aad6bde12f35839b6ff9db38edb819c1f4e0480928d",
+      "dimension": "EXACT_RASTER"
+    },
+    {
+      "name": "b-light-1366-768-open-standard",
+      "expected": {
+        "width": 1366,
+        "height": 768,
+        "theme": "light",
+        "panel": "open",
+        "account": "TEST STUDIO B"
+      },
+      "dom": {
+        "account": "TEST STUDIO B",
+        "documentOverflow": false,
+        "dpr": 1.0000000149011612,
+        "error": true,
+        "height": 768,
+        "navLinks": 9,
+        "panel": "open",
+        "ready": false,
+        "screenRect": {
+          "bottom": 768.0000152587891,
+          "height": 661.2000122070312,
+          "left": 72,
+          "right": 901.8250122070312,
+          "top": 106.8000030517578,
+          "width": 829.8250122070312,
+          "x": 72,
+          "y": 106.8000030517578
+        },
+        "theme": "light",
+        "width": 1366
+      },
+      "bytes": 45652,
+      "api": "tab.screenshot({fullPage:false})",
+      "visualAcceptance": "BOUNDED_SOURCE_VIEW_ONLY; no complete32-state, zoom, authenticated or final acceptance",
+      "image": "b-light-1366-768-open-standard.png",
+      "raster": [
+        1366,
+        768
+      ],
+      "imageFormat": "JPEG",
+      "sha256": "e07fbf53891f9b90420c22a9d971b8a37dd9ce5849e071f54a48614cd0658755",
+      "dimension": "EXACT_RASTER"
+    }
+  ],
+  "dimensionCounts": {
+    "EXACT_RASTER": 22,
+    "ONE_PIXEL_EDGE": 6,
+    "INVALID_RASTER": 2
+  },
+  "completeMatrix": "UNVERIFIED; two requested states not captured; later geometry drift/reinitialization retained",
+  "keyboard": "Native skip link then Tab reached main fixture control; native ShiftTab reached header Fold then Return folded. No full focus/escape/reload-guard proof.",
+  "zoom": "Native five ctrl+equal gestures ratio1;ctrl+0 sent; not200-percent proof",
+  "cleanup": "Synthetic draft cleared through native UI; temporary viewport reset; own tab170265210 closed",
+  "customerActions": "NOT_CONNECTED / NOT_RUN"
+}

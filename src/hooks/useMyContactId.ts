@@ -1,19 +1,18 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { readClientPortalSelfProfile } from "@/lib/client-portal-self-profile";
 
 /**
  * useMyContactId — resolve the signed-in CLIENT's own `clients.id` (their
  * contact_id) from `auth.uid()`.
  *
- * A portal client is authenticated but is NOT a tenant member, so the only clean
- * link back to their contact row is `clients.linked_user_id = auth.uid()` (the
- * same key `useMyActions` / `useClientPortalBrand` resolve on). RLS on `clients`
- * already scopes a client to their own row, so this single indexed lookup is safe
- * and returns null for anyone who isn't a linked client (staff, platform owner).
+ * The canonical reader resolves an active, unmerged relationship from verified
+ * Auth identity. Never search raw CRM, match email, or borrow a preview identity.
+ * The resulting ID selects an existing Rail; it does not grant Rail authority.
  *
- * Kept deliberately tiny and side-effect-free so any client surface that needs
+ * Kept deliberately small and read-only so any client surface that needs
  * "my own contact_id" (the activity rail, a portal widget, …) can reuse it
- * instead of re-querying `clients` inline.
+ * instead of re-querying `clients` inline. Auth/scope changes retire old reads.
  *
  * @param enabled  Pass false when the caller already has the contact_id (e.g. a
  *                 parent that loaded it via `useMyActions`) to skip the query.
@@ -29,29 +28,61 @@ export function useMyContactId(enabled = true): { contactId: string | null; load
       return;
     }
     let cancelled = false;
-    setLoading(true);
-    (async () => {
+    let sequence = 0;
+    let actor: string | null = null;
+    const read = async (expectedActor?: string) => {
+      const request = ++sequence;
+      const current = () => !cancelled && request === sequence;
+      setContactId(null);
+      setLoading(true);
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (cancelled) return;
-        if (!user) {
-          setContactId(null);
-          return;
-        }
-        const { data } = await supabase
-          .from("clients")
-          .select("id")
-          .eq("linked_user_id", user.id)
-          .maybeSingle();
-        if (!cancelled) setContactId(data?.id ?? null);
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (!current()) return;
+        if (authError || !user || (expectedActor && user.id !== expectedActor)) return;
+        actor = user.id;
+        const { data, error } = await supabase.rpc("client_portal_self_profile");
+        if (!current() || error) return;
+        const profile = readClientPortalSelfProfile(data, user.id);
+        setContactId(profile?.id ?? null);
       } catch {
-        if (!cancelled) setContactId(null);
+        if (current()) setContactId(null);
       } finally {
-        if (!cancelled) setLoading(false);
+        if (current()) setLoading(false);
       }
-    })();
-    return () => { cancelled = true; };
+    };
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (cancelled) return;
+      if (event === "SIGNED_OUT") {
+        sequence += 1;
+        actor = null;
+        setContactId(null);
+        setLoading(false);
+        return;
+      }
+      const next = session?.user.id ?? null;
+      if (event === "INITIAL_SESSION" && next === actor) return;
+      sequence += 1;
+      const scheduled = sequence;
+      actor = next;
+      setContactId(null);
+      setLoading(true);
+      // Auth callbacks hold the SDK lock; verify outside the callback.
+      queueMicrotask(() => {
+        if (!cancelled && scheduled === sequence) void read(next ?? undefined);
+      });
+    });
+    const onFocus = () => { if (!cancelled) void read(); };
+    window.addEventListener("focus", onFocus);
+    void read();
+    return () => {
+      cancelled = true;
+      sequence += 1;
+      subscription.unsubscribe();
+      window.removeEventListener("focus", onFocus);
+    };
   }, [enabled]);
 
-  return { contactId, loading };
+  // A caller with an explicit contact must never render the old self-scope for
+  // the commit before passive effect cleanup runs.
+  return enabled ? { contactId, loading } : { contactId: null, loading: false };
 }

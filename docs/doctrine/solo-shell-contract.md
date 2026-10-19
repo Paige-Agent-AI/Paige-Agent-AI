@@ -30,6 +30,20 @@ Classify before changing anything:
 alter shell or layout behaviour. **Never** patch only the account where a bug was observed when
 the defect belongs to the shared shell.
 
+## Every current and future SOLO account — delivery standard
+
+**Owner clarification, 2026-10-15:** the shared SOLO product is the delivery audience. Reference accounts are test cases. A repair must reach all equivalently eligible accounts through the shared source and supported account-creation contract; no customer must receive a private copy of the shell, Chat tools or permission logic.
+
+1. **Ground eligibility on the server.** Establish business classification, active workspace/membership, role, entitlement, rollout class and actual connection readiness. A display name, email, title, navigation link or URL is not authority. Different business records remain isolated.
+2. **Change the shared implementation.** Use the existing route host, tier-feature helper, Spine registration, Harness/Trust approval and authoritative domain writer. Chat and Live consume the same governed action. A capability listed in a registry is not proof that a customer can execute it.
+3. **Provision from one contract.** Existing producers call `assert_canonical_solo_tenant`: standalone/no parent, valid account address, active owner membership and a feature-support row. Source wiring lives in `src/__tests__/canonical-provisioning-contract.test.ts`; replayed-schema behavior lives in `supabase/tests/canonical_solo_provisioning.sql`. Preserve the producers' real authorization and legal/paid-enrollment requirements. Do not create production QA accounts to prove this standard.
+4. **Migrate existing accounts compatibly.** Read back the same structural facts across the existing eligible class. Establish migration order, rollout/backfill scope and compatibility with old/new callers and standard future provisioning. Use the existing protected replay and domain suites to test existing records as well as new-account behavior. Investigate legacy or incomplete records separately. Correct proven shared data drift through a reviewed, authorized class-wide domain change; no ad hoc per-customer SQL or manufactured ownership, entitlements, provider connections or customer data. A correct new-account path does not establish that older records satisfy it.
+5. **Retain legitimate differences.** Verified subscription/entitlement, role, approved rollout, tenant preference, provider connection and explicitly authorized master-tenant privilege differences use the canonical server contracts with exact availability/denial reasons. Equal inputs produce equivalent outcomes. No parity repair mass-enables restricted features, paid providers or unsafe legacy execution.
+6. **Prove generality before release.** Run the existing parity guard and its identity-drift mutants, canonical provisioning tests, affected domain tests and required exact-head CI. Use neutral synthetic identities for source tests and at least two distinct legitimate SOLO cohorts using existing ordinary authorized accounts for customer QA. Two account passes are bounded evidence, not the definition of release scope or proof of every customer. Test fail-closed tenant/role/RLS negatives, stored approvals, durable records, truthful receipts and recovery where relevant.
+7. **Close the whole affected class.** Extend every entry in the existing 50-row parity and 18-capability restoration evidence with product-wide applicability, legitimate configuration differences, tenant isolation and new-account behavior. Record shared source, Independent Review, CI, merge/deployment, migration/configuration dependencies and authenticated acceptance separately in the existing issue/register and Master shipped log. Keep unresolved eligibility classes and missing evidence explicit; owner final acceptance remains required. This implements the October 15 permanent coverage directive recorded in ANT-21 and ANT-147 without changing security or release gates.
+
+This extends the existing contract; it creates no second provisioning, capability, permission, account or release registry. Static guards cover named source boundaries and accidental drift, not every possible backend defect. Runtime/domain checks and ordinary authenticated evidence remain required.
+
 ## Where the shell actually is
 
 | Thing | File | Note |
@@ -83,6 +97,8 @@ unrecognised.
 | Settings reachability and scroll behaviour | `scripts/live-drive/settings-scroll-drive.mjs` |
 | Settings release discipline and proof ladder | `docs/brain/solo-settings-scroll-and-release-playbook.md` |
 | Route naming and per-tier URL shape | `docs/doctrine/route-and-url-taxonomy.md` |
+| Identity drift in SOLO routes, shared chrome and tier/entry seams; nav/tier snapshot | `scripts/ci/solo-parity-guard.mjs` and its mutated fixture controls; bounded static coverage |
+| Canonical structure on every supported new SOLO producer | `assert_canonical_solo_tenant`, source wiring test and replayed-schema pgTAP suite named above |
 
 ## Proof required for any Solo UI repair or feature
 

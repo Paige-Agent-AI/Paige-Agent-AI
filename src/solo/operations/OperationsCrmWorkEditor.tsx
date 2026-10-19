@@ -6,9 +6,10 @@ import type { CrmWorkRecord } from "./operations-native-work";
 import { buildCrmWorkEditOperation, type CrmWorkEditOperation } from "./operations-crm-work-edit";
 
 /** One change per reviewed canonical command; no browser task store or writer. */
-export function OperationsCrmWorkEditor({task,actorId,tenantId,members,unavailable,onPropose}:{
+export function OperationsCrmWorkEditor({task,actorId,tenantId,members,unavailable,onPropose,onNavigationGuardChange}:{
   task:CrmWorkRecord;actorId:string;tenantId:string;members:TeamMemberRecord[];unavailable:boolean;
   onPropose:(operation:CrmWorkEditOperation)=>void;
+  onNavigationGuardChange?:(guard:(()=>string|null)|null)=>void;
 }) {
   const original=useRef(task);
   const scope=`${actorId}:${tenantId}`;
@@ -18,6 +19,11 @@ export function OperationsCrmWorkEditor({task,actorId,tenantId,members,unavailab
   const [due,setDue]=useState("");
   const [clearDate,setClearDate]=useState(false);
   const [notice,setNotice]=useState("");
+  const dirty=assignee!==original.current.user_id||Boolean(due)||clearDate;
+  useEffect(()=>{
+    onNavigationGuardChange?.(()=>dirty?"Review unsaved changes or close this task before leaving it.":null);
+    return()=>onNavigationGuardChange?.(null);
+  },[dirty,onNavigationGuardChange]);
   useEffect(()=>{
     let current=true;
     void (async()=>{try {

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { refuseCustomerTier } from "../_shared/finance-entitlement.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -28,6 +29,14 @@ serve(async (req) => {
 
     if (userError || !user) {
       throw new Error('Unauthorized');
+    }
+
+    // E09 F1b: business credit is not a customer feature — a portal customer is refused before any read.
+    const tier = await refuseCustomerTier(supabase, user.id);
+    if (!tier.ok) {
+      return new Response(JSON.stringify({ error: tier.error }), {
+        status: tier.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const { userId } = await req.json();

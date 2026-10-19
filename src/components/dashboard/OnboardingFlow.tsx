@@ -11,7 +11,7 @@ import { saveUserPrimaryAddresses } from "@/lib/userPrimaryContact";
 import { Loader2, ArrowRight, ArrowLeft, Target, TrendingUp, DollarSign, CheckCircle2, Sparkles, FileText } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { DemographicQuestionsStep, EMPTY_ANSWERS, saveDemographicAnswers, type DemographicAnswers } from "@/components/onboarding/DemographicQuestionsStep";
-import { usePlaybook } from "@/lib/playbook";
+import { useCustomerIdentity } from "@/lib/portal/customerIdentity";
 
 interface OnboardingFlowProps {
   open: boolean;
@@ -22,9 +22,10 @@ export const OnboardingFlow = ({ open, onComplete }: OnboardingFlowProps) => {
   const [step, setStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  // Speak in the tenant's Paige persona, never the platform brand (§3/§6).
-  const pb = usePlaybook();
-  const brandName = pb.persona.name;
+  // A customer is welcomed to their business and guided by their agent (Cura, or the business's own
+  // name for it); never the platform brand, and never PAIGE, the owner's COO (§3/§6, owner ruling 2026-10-19).
+  const { agentName, businessName } = useCustomerIdentity();
+  const brandName = businessName ?? "your portal";
 
   // Goals
   const [goals, setGoals] = useState<string[]>([]);
@@ -214,7 +215,7 @@ export const OnboardingFlow = ({ open, onComplete }: OnboardingFlowProps) => {
               </div>
               <h2 className="text-xl sm:text-3xl font-bold">Welcome to {brandName}!</h2>
               <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
-                {brandName} runs your credit-building and business-financing workflow.
+                {agentName} runs your credit-building and business-financing workflow.
               </p>
             </div>
 
@@ -241,7 +242,7 @@ export const OnboardingFlow = ({ open, onComplete }: OnboardingFlowProps) => {
                     </li>
                   </ul>
                   <p className="text-xs text-gold-dark font-medium">
-                    Don't have everything? Paige will guide you through every step.
+                    Don't have everything? {agentName} will guide you through every step.
                   </p>
                 </div>
               </div>

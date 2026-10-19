@@ -221,6 +221,7 @@ import { decideMcpToolCall, mcpGovernedAuditRow } from "../_shared/paige-mcp/gov
 // (public.get_actor_access) a human resolves through — so Paige's tier == a human's.
 import { getActorTier, isClientSeatByScopes } from "../_shared/actorTier.ts";
 import { classifyBusinessVerifyResponse } from "../_shared/business-verify-outcome.ts";
+import { requireFinanceEntitlement } from "../_shared/finance-entitlement.ts";
 // Master Twilio Basic-auth from the ONE home (twilio.ts) — API Key trio
 // (TWILIO_API_KEY_SID:TWILIO_API_KEY_SECRET); master TWILIO_AUTH_TOKEN absent in prod.
 
@@ -2990,6 +2991,10 @@ mcp.tool("ingest_credit_scores", {
   handler: async (args) => {
     const scope = await tenantScopedClient(args.client_id);
     if (!scope.ok) return err(scope.reason ?? "scope_denied");
+    // E09 F1b: recording a client's credit scores is a funding feature — only for a business that holds
+    // the finance entitlement (an active is_finance Marketplace install or finance_in_scope).
+    const entitled = await requireFinanceEntitlement(admin, scope.tenant_id);
+    if (!entitled.ok) return err(entitled.error);
 
     // Validation
     const reviewReasons: string[] = [];
@@ -3079,6 +3084,9 @@ mcp.tool("ingest_banking_snapshot", {
   handler: async (args) => {
     const scope = await tenantScopedClient(args.client_id);
     if (!scope.ok) return err(scope.reason ?? "scope_denied");
+    // E09 F1b: a client's banking snapshot is a funding feature — entitled businesses only.
+    const entitled = await requireFinanceEntitlement(admin, scope.tenant_id);
+    if (!entitled.ok) return err(entitled.error);
     const review: string[] = [];
     if ((args.current_balance ?? 0) < 0) review.push("negative_balance");
     if ((args.nsf_count_30d ?? 0) > 20) review.push("high_nsf_count");
@@ -3276,7 +3284,11 @@ async function applyProposal(proposal_id: string): Promise<{ ok: boolean; applie
         break;
       }
       case "ingest_credit_scores": {
-        const { data: cli } = await admin.from("clients").select("linked_user_id").eq("id", prop.client_id).maybeSingle();
+        // E09 F1b: re-checked at apply, so a proposal staged before the business lost the entitlement
+        // (or before this check existed) cannot land.
+        const { data: cli } = await admin.from("clients").select("linked_user_id, tenant_id").eq("id", prop.client_id).maybeSingle();
+        const ent = await requireFinanceEntitlement(admin, (cli?.tenant_id as string | null) ?? null);
+        if (!ent.ok) throw new Error(ent.error);
         const scores = payload.scores ?? [];
         if (cli?.linked_user_id) {
           const patch: Record<string, number | string> = {};
@@ -3309,9 +3321,12 @@ async function applyProposal(proposal_id: string): Promise<{ ok: boolean; applie
       case "ingest_banking_snapshot": {
         const { data: cli } = await admin
           .from("clients")
-          .select("linked_user_id")
+          .select("linked_user_id, tenant_id")
           .eq("id", prop.client_id)
           .maybeSingle();
+        // E09 F1b: re-checked at apply (see ingest_credit_scores above).
+        const ent = await requireFinanceEntitlement(admin, (cli?.tenant_id as string | null) ?? null);
+        if (!ent.ok) throw new Error(ent.error);
         if (!cli?.linked_user_id) {
           // No linked auth user — capture the snapshot as a structured memory entry instead.
           await admin.from("client_memory").insert({
@@ -3934,13 +3949,13 @@ mcp.tool("list_subaccounts", {
 
 mcp.tool("create_subaccount", {
   description:
-    "Agency only. Create a new sub-account (child workspace) under YOUR agency. Requires a display `name`; optional `industry` and `description`. The child arrives READY: by default (`inherit_from_parent`) it inherits your agency's white-label brand/voice, and it either carries your Playbook down or starts from `playbook_slug` — one of general, coaching-default, fitness, consultant, agency, or funding. Funding is an explicit opt-in only; it is never inherited or defaulted. The child is a standalone workspace owned by you. Only the agency OWNER may create sub-accounts.",
+    "Agency only. Create a new sub-account (child workspace) under YOUR agency. Requires a display `name`; optional `industry` and `description`. The child arrives READY: by default (`inherit_from_parent`) it inherits your agency's white-label brand/voice, and it either carries your Playbook down or starts from `playbook_slug` — one of general, coaching-default, fitness, consultant, or agency. Funding is never a starter preset, inherited or defaulted; a business gets it only through a deliberate Marketplace install. The child is a standalone workspace owned by you. Only the agency OWNER may create sub-accounts.",
   inputSchema: z.object({
     name: z.string().min(1),
     industry: z.string().optional(),
     description: z.string().optional(),
     playbook_slug: z
-      .enum(["general", "coaching-default", "fitness", "consultant", "agency", "funding"])
+      .enum(["general", "coaching-default", "fitness", "consultant", "agency"])
       .optional(),
     inherit_from_parent: z.boolean().optional(),
   }),
@@ -3951,8 +3966,8 @@ mcp.tool("create_subaccount", {
     if (!parent) return err("tenant_not_resolved");
     // Actor-explicit core (service_role): enforces owner-only + agency/enterprise-
     // parent + 100-child cap + forces child account_type, and seeds the inherited
-    // brand + chosen/inherited Playbook. §2: funding only ever via an explicit
-    // playbook_slug='funding' choice, never a default — do not force it on here.
+    // brand + chosen/inherited Playbook. §2 / E09 F1a: 'funding' is not a starter preset (the
+    // database refuses it, 22023); a business gets funding only through a Marketplace install.
     const { data, error } = await admin.rpc("create_subaccount", {
       _name: name,
       _industry: industry ?? null,
@@ -4626,8 +4641,13 @@ async function actorClient(): Promise<{ id: string; tenant_id: string | null; ow
   if (!a.user_id) return null;
   const { data } = await admin
     .from("clients")
-    .select("id, tenant_id, linked_user_id")
+    .select("id, tenant_id, linked_user_id, tenants!inner(status)")
     .eq("linked_user_id", a.user_id)
+    .eq("status", "active")
+    .is("merged_into_contact_id", null)
+    // E09 Slice 7: a paused relationship is not the client's (the resolver's own predicate).
+    .eq("portal_access_state", "open")
+    .eq("tenants.status", "active")
     .maybeSingle();
   if (!data?.id) return null;
   return { id: data.id, tenant_id: (data as any).tenant_id ?? null, owner_user_id: a.user_id };
@@ -4649,13 +4669,15 @@ mcp.tool("me_whoami", {
 });
 
 mcp.tool("me_get_profile", {
-  description: "Get the calling user's own client profile (name, email, phone, lifecycle stage, funding goal, notes). Reads only the row linked to the caller via clients.linked_user_id.",
+  description: "Get the calling customer's authorized contact information and onboarding stage. Internal CRM notes, assignments, scores and provider fields are private.",
   inputSchema: z.object({}),
   handler: async () => {
     const me = await actorClient();
     if (!me) return err("no_linked_client_record");
     const { data, error } = await admin.from("clients")
-      .select(`${CLIENT_RECORD_COLUMNS}, ${CONTACT_METHOD_SELECT}`).eq("id", me.id).maybeSingle();
+      .select("id, tenant_id, first_name, last_name, entity_name, street_address, city, state, zip_code, onboarding_stage, client_contact_methods(kind,value,is_primary)")
+      .eq("id", me.id).eq("tenant_id", me.tenant_id).eq("linked_user_id", currentActor().user_id)
+      .eq("status", "active").is("merged_into_contact_id", null).maybeSingle();
     if (error) return err(error.message);
     // The column list is built at runtime, so the row's type is stated rather than inferred.
     const record = data as unknown as ({ client_contact_methods?: unknown } & Record<string, unknown>) | null;
@@ -4668,18 +4690,20 @@ mcp.tool("me_get_profile", {
 });
 
 mcp.tool("me_update_profile", {
-  description: "Update the calling user's own client profile. Only safe self-editable fields are allowed: first_name, last_name, phone, entity_name, current_notes, funding_goal_amount. Cannot change lifecycle_stage, assigned coach, tier, or status.",
+  description: "Update your own contact names, company name and primary phone. Internal CRM notes, commercial fields, lifecycle, assignments, tier and access status are not customer-editable.",
   inputSchema: z.object({
     first_name: z.string().optional(),
     last_name: z.string().optional(),
     phone: z.string().optional(),
     entity_name: z.string().optional().describe("Their company / business name."),
-    current_notes: z.string().optional().describe("Free-form notes the user wants Paige to remember."),
-    funding_goal_amount: z.number().optional(),
+    current_notes: z.string().optional().describe("Internal field; customer updates are refused."),
+    funding_goal_amount: z.number().optional().describe("Commercial field; customer updates are refused."),
   }),
   handler: async (patch) => {
     const me = await actorClient();
     if (!me) return err("no_linked_client_record");
+    // These are internal CRM/commercial fields, not customer-editable profile data.
+    if (patch.current_notes !== undefined || patch.funding_goal_amount !== undefined) return err("field_not_customer_editable");
     // Each self-editable input, and the contact-row column it writes. `funding_goal_amount` is the
     // tool's input name; the column is `funding_goal` (there is no funding_goal_amount column, so
     // writing the input name straight through failed every time it was sent).

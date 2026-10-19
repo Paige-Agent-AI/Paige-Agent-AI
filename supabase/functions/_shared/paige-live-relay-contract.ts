@@ -11,9 +11,16 @@ export type UsageEvent =
   | { kind: "llm_turn"; sessionId: string; turnId: string; units: 1 }
   | { kind: "tts_chars"; sessionId: string; turnId: string; units: number };
 
-/** The only measurement seam: neutral observed units with session/turn identity. */
+/** Numeric server-stage observations, not audible latency or billable units. */
+export interface LiveTimingObservation {
+  phase: "final_to_first_runtime_text_ms" | "final_to_first_pcm_observed_ms" | "interrupt_to_clear_effect_ms";
+  elapsedMs: number;
+}
+
+/** The existing measurement seam: neutral units and optional numeric stages. */
 export interface UsageSink {
   emit(event: UsageEvent): void | Promise<void>;
+  timing?(event: Readonly<LiveTimingObservation>): void | Promise<void>;
 }
 
 export interface EarsAdapter {

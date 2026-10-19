@@ -40,8 +40,11 @@ function assert(label, cond, detail) {
   else { failures += 1; console.log(`  FAIL ${label}`); if (detail !== undefined) console.log(`         ${detail}`); }
 }
 
+let legacySummaryFixture = null;
 globalThis.Deno = {
-  env: { get: (k) => ({
+  env: { get: (k) => legacySummaryFixture && ["OPENAI_CANARY_TENANTS", "OPENAI_BASE_URL"].includes(k) ? undefined
+    : legacySummaryFixture && k === "OPENAI_API_KEY" ? "synthetic-summary-test-key"
+    : ({
     SUPABASE_URL: "https://test.supabase.co", SUPABASE_ANON_KEY: "anon-key",
     SUPABASE_SERVICE_ROLE_KEY: "service-role-key", VOYAGE_API_KEY: "test-voyage-key",
     ANTHROPIC_API_KEY: "test-anthropic-key",
@@ -239,9 +242,29 @@ globalThis.fetch = async (url, init) => {
   const href = String(url);
   if (href.includes("voyageai.com")) {
     embedCount += 1;
+    await legacySummaryFixture?.onEmbed?.(embedCount);
     return new Response(JSON.stringify({ data: [{ index: 0, embedding: VECTOR }] }), {
       status: 200, headers: { "Content-Type": "application/json" },
     });
+  }
+  if (legacySummaryFixture && (href.includes("openai.com") || href.includes("anthropic.com"))) {
+    const fixture = legacySummaryFixture;
+    const provider = href.includes("openai.com") ? "openai" : "anthropic";
+    const body = JSON.parse(String(init?.body ?? "{}"));
+    const prompt = JSON.stringify(body);
+    const job = prompt.includes("You are a session summarizer") ? "session_summary"
+      : prompt.includes("Business Foundation items") ? "session_milestone_extract" : "session_preference_extract";
+    fixture.calls.push({ provider, job, body, signal: init?.signal });
+    const plan = await fixture.onProvider?.(provider, job, fixture.calls.length) ?? {};
+    if (plan.status && plan.status !== 200) return new Response(JSON.stringify({ error: { type: plan.type ?? "rate_limit_error", message: "synthetic failure" } }),
+      { status: plan.status, headers: { "Content-Type": "application/json" } });
+    const text = job === "session_summary" ? "Origin-bound session summary"
+      : job === "session_milestone_extract" ? '["entity_formed"]'
+      : '{"preferences":["Prefers brief updates"],"commitments":["Will send the draft Friday"],"open_loops":["Draft review is pending"]}';
+    return new Response(JSON.stringify(provider === "openai"
+      ? { id: "resp_summary", model: body.model, status: "completed", output: [{ type: "message", role: "assistant", content: [{ type: "output_text", text }] }], usage: { input_tokens: 9, output_tokens: 7 } }
+      : { id: "msg_summary", model: body.model, content: [{ type: "text", text }], stop_reason: "end_turn", usage: { input_tokens: 9, output_tokens: 7 } }),
+    { status: 200, headers: { "Content-Type": "application/json" } });
   }
   if (href.includes("anthropic.com")) modelEgress.push(String(init?.body ?? ""));
   else if (!href.includes("voyageai.com")) {
@@ -430,6 +453,9 @@ async function drive({
   // INT-334 R4 — this turn's classifier answer (a label object, or null for a classifier that fails).
   // Left out, the fake answers as a real classifier would for the message (see the fetch fake).
   classification = NO_CLASSIFICATION,
+  summaryFixture = null,
+  authUser = { id: USER, email: "owner@example.test" },
+  requestSignal = undefined,
 }) {
   // C0a — a scenario that seats the caller as an ADMIN acts inside a workspace. Production cannot have
   // an admin seat with no resolved workspace (get_paige_persona_context falls back to
@@ -446,6 +472,11 @@ async function drive({
     const answer = typeof seat === "function" ? seat({}) : seat;
     return answer?.data === true;
   })();
+  const personaFixture = rpcOverrides.get_paige_persona_context;
+  const fixturePersona = personaFixture === undefined
+    ? { data: [{ tenant_id: seatedAdmin ? CALLER_TENANT : null }] }
+    : typeof personaFixture === "function" ? null : personaFixture;
+  const fixtureOwnTenant = typeof fixturePersona?.data?.[0]?.tenant_id === "string" ? fixturePersona.data[0].tenant_id : null;
   const logged = [];
   embedCount = 0;
   modelEgress = [];
@@ -454,6 +485,7 @@ async function drive({
   fetchUrlAnswer = fetchedPage;
   otherOutboundAnswers = outboundAnswers;
   modelStub = stream;
+  legacySummaryFixture = summaryFixture;
   readCheckReply = readCheck;
   const toolCalls = Array.isArray(toolCall) ? toolCall : toolCall ? [toolCall] : [];
   toolCallOnce = toolCalls.length > 0;
@@ -470,7 +502,7 @@ async function drive({
   const rec = fake.setScenario({
     onInsert,
     functions: functionsExtra,
-    authUser: { id: USER, email: "owner@example.test" },
+    authUser,
     // The declared-scope guard reads profiles.active_tenant_id on evidence-carrying turns.
     // This smoke's resolver DRIFTS by design (scope-mismatch cases script it per call), but the
     // user's DECLARED workspace stays put — so the unscripted profiles read defaults to the
@@ -499,6 +531,9 @@ async function drive({
       ...serviceTablesExtra,
     },
     tables: {
+      // These new origin-bound summary cases model an explicitly selected
+      // workspace, rather than the smoke's usual tenantless persona default.
+      ...(summaryFixture ? { profiles: () => [{ user_id: USER, active_tenant_id: CALLER_TENANT }] } : {}),
       // RLS emulation: only rows this caller may see, and only when the filters match.
       clients: (filters) => {
         const idEq = filters.find((f) => f[0] === "eq" && f[1] === "id")?.[2];
@@ -520,6 +555,14 @@ async function drive({
         if (isDedupe) return [];
         return [{ memory_type: "user_preference", content: MEMORY_TEXT, created_at: new Date().toISOString() }];
       },
+      // Positive legacy drives historically assumed an existing OWN thread but
+      // did not script its row. Declare that fixture state explicitly; this is
+      // not a production fallback. Any own scripted value (even undefined/[]),
+      // malformed scope or native error remains controlling and is never filled.
+      ...(!Object.hasOwn(tablesExtra, "paige_chat_threads") && typeof extraBody?.threadId === "string"
+        && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(extraBody.threadId)
+        ? { paige_chat_threads: [{ id: extraBody.threadId.toLowerCase(), caller_user_id: USER, tenant_id: fixtureOwnTenant,
+          audience: "workspace", interactive_recovery_hold: null }] } : {}),
       ...tablesExtra,
       // A THREAD ROW ALWAYS HAS AN OWNER. The handler refuses a thread whose `tenant_id` is not the
       // turn's workspace (owner addition 2026-10-05), and a production row always carries that column.
@@ -528,13 +571,15 @@ async function drive({
       // scenario that scripts `tenant_id` (including null, a platform thread) keeps exactly what it wrote.
       ...(typeof tablesExtra.paige_chat_threads === "function" ? {
         paige_chat_threads: (filters) => {
-          const persona = rpcOverrides.get_paige_persona_context;
-          const answer = persona === undefined
-            ? { data: [{ tenant_id: seatedAdmin ? CALLER_TENANT : null }] }
-            : typeof persona === "function" ? null : persona; // a scripted function is not called twice
-          const own = typeof answer?.data?.[0]?.tenant_id === "string" ? answer.data[0].tenant_id : null;
+          // Native thread rows always have these immutable bindings, including
+          // narrow summary/Studio fixtures. Preserve explicitly foreign values.
           return (tablesExtra.paige_chat_threads(filters) ?? []).map((row) =>
-            row && typeof row === "object" && !("tenant_id" in row) ? { tenant_id: own, ...row } : row);
+            row && typeof row === "object" && !Array.isArray(row) ? {
+              id: extraBody?.threadId, caller_user_id: USER,
+              ...(!Object.hasOwn(row, "audience") ? { audience: "workspace" } : {}),
+              ...(!Object.hasOwn(row, "interactive_recovery_hold") ? { interactive_recovery_hold: null } : {}),
+              ...(!("tenant_id" in row) ? { tenant_id: fixtureOwnTenant } : {}), ...row,
+            } : row);
         },
       } : {}),
     },
@@ -546,6 +591,7 @@ async function drive({
       const res = await handler(new Request("http://local/paige-ai-chat", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: authorization },
+      signal: requestSignal,
       body: JSON.stringify({
         messages: [{ role: "user", content: text }],
         ...(clientId !== undefined ? { clientId } : {}),
@@ -573,6 +619,7 @@ async function drive({
   const status = responses[0]?.status ?? null;
   const bodyText = responses.map((response) => response.bodyText).join("\n");
   modelStub = false;
+  legacySummaryFixture = null;
   toolCallOnce = false;
   selfApprove = false;
   scriptedReply = "ok";
@@ -922,7 +969,8 @@ console.log("\nthe SESSION-SUMMARY branch is bound to the same decision");
       { role: "assistant", content: "understood" },
     ],
   };
-  const ownSum = await drive({ clientId: OWN, stream: true, extraBody: sessionBody });
+  const ownSum = await drive({ clientId: OWN, stream: true, tablesExtra: { profiles: () => [{ user_id: USER, active_tenant_id: CALLER_TENANT }] }, extraBody: { ...sessionBody,
+    sessionMemoryScope: { v: 1, actor_id: USER, tenant_id: CALLER_TENANT, client_id: OWN } } });
   assert("9.0 the summary branch DOES write on an authorized turn (guards this section)",
     ownSum.rec.inserts.some((i) => i.table === "client_memory"),
     JSON.stringify(ownSum.rec.inserts.map((i) => i.table)));
@@ -951,7 +999,8 @@ console.log("\nthe SESSION-SUMMARY branch is bound to the same decision");
   assert("9.3 …and writes NO client_memory row at all — the caller is not a fallback subject",
     refusedSum.rec.inserts.filter((i) => i.table === "client_memory").length === 0,
     JSON.stringify(refusedSum.rec.inserts.filter((i) => i.table === "client_memory").map((i) => i.row)));
-  const selfSum = await drive({ clientId: undefined, stream: true, extraBody: sessionBody,
+  const selfSum = await drive({ clientId: undefined, stream: true, extraBody: { ...sessionBody,
+    sessionMemoryScope: { v: 1, actor_id: USER, tenant_id: CALLER_TENANT, client_id: null } },
     rpcOverrides: { get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: null, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } } });
   const selfSumWrite = selfSum.rec.rpc.filter((c) => c.name === "record_paige_memory");
   assert("9.3b …while the NO-CLIENT path still writes the caller's own summary (S5: through the governed seam, proposed)",
@@ -975,7 +1024,10 @@ console.log("\nthe CREDIT-REPORT upload branch is bound to the same decision");
     first_five_account_names: ["ACCOUNT ONE"],
   };
 
-  const ownCredit = await drive({ clientId: OWN, stream: true, document: creditDoc, readCheck: readsAsCreditReport });
+  // E09 F2: the credit-report branch belongs to STAFF (owner ruling Q5: staff unchanged), so the tier is stated.
+  // A client seat never takes it — 10.6 below.
+  const AS_STAFF = { get_actor_access: { data: { tier: "tenant" }, error: null } };
+  const ownCredit = await drive({ clientId: OWN, stream: true, document: creditDoc, readCheck: readsAsCreditReport, rpcOverrides: AS_STAFF });
   // The `credit_report_uploads` INSERT is the only signal unique to this branch. Bucket
   // membership is NOT: the general-document path writes to the SAME bucket under a `general/`
   // prefix, so a bucket-or-insert disjunct was satisfied by any stored PDF — which meant that
@@ -996,7 +1048,7 @@ console.log("\nthe CREDIT-REPORT upload branch is bound to the same decision");
       rows: ownCredit.rec.inserts.filter((i) => i.table === "credit_report_uploads").map((i) => i.row?.user_id),
     }));
 
-  const refusedCredit = await drive({ clientId: FOREIGN, stream: true, document: creditDoc, readCheck: readsAsCreditReport });
+  const refusedCredit = await drive({ clientId: FOREIGN, stream: true, document: creditDoc, readCheck: readsAsCreditReport, rpcOverrides: AS_STAFF });
   assert("10.2 a REFUSED credit report never lands under the named client",
     !refusedCredit.rec.uploads.some((u) => u.path.includes(FOREIGN))
       && !refusedCredit.rec.inserts.some((i) => JSON.stringify(i.row ?? {}).includes(FOREIGN)),
@@ -1022,6 +1074,19 @@ console.log("\nthe CREDIT-REPORT upload branch is bound to the same decision");
       uploads: refusedCredit.rec.uploads.map((u) => u.path),
       rows: refusedCredit.rec.inserts.filter((i) => i.table === "credit_report_uploads").map((i) => i.row),
     }));
+  // E09 F2 — A CLIENT SEAT NEVER TAKES THE CREDIT-REPORT PATH. The same PDF, the same read-check answer, from a
+  // client-tier caller: no read-check call at all, no credit_report_uploads row, no credit-bucket file outside
+  // `general/`, no sync. The PDF is a general document. 10.0 above (the same drive as staff) proves the branch
+  // is otherwise reachable, so this is not vacuous.
+  const clientCredit = await drive({ stream: true, document: creditDoc, readCheck: readsAsCreditReport,
+    rpcOverrides: { get_actor_access: { data: { tier: "client" }, error: null } } });
+  assert("10.6 a client seat's credit-report PDF never reaches the credit path: no read-check, no row, no sync",
+    !clientCredit.modelEgress.some((b) => b.includes("verify that you can literally read the PDF"))
+      && !clientCredit.rec.inserts.some((i) => i.table === "credit_report_uploads")
+      && !clientCredit.rec.uploads.some((u) => u.bucket === "credit-report-uploads" && !u.path.includes("/general/"))
+      && !clientCredit.outboundCalls.some((c) => c.url.includes("sync-credit-report-data"))
+      && !clientCredit.modelEgress.some((b) => b.includes("CREDIT REPORT ANALYSIS INSTRUCTIONS")),
+    JSON.stringify({ egress: clientCredit.modelEgress.map((b) => b.slice(0, 80)), uploads: clientCredit.rec.uploads, inserts: clientCredit.rec.inserts.map((i) => i.table) }));
 }
 
 console.log("\nthe refusal is announced on BOTH response paths, not just the agentic one");
@@ -1665,6 +1730,9 @@ const mirrorConfirms = (st) => (t, row) => {
   const AUTO = { rpcOverrides: {
     resolve_tool_autonomy: { data: "auto", error: null },
     get_actor_access: { data: { tier: "tenant" }, error: null },
+    // The ordinary workspace process cases need the real server persona precondition,
+    // not the harness's intentionally workspace-less client-seat default.
+    get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT }], error: null },
   } };
   const AS_CLIENT = { get_actor_access: { data: { tier: "client" }, error: null } };
   /** Model the process tables. The trigger catalogue is real reference data; the automations table
@@ -2525,9 +2593,12 @@ const mirrorConfirms = (st) => (t, row) => {
         && /could not confirm whether it went through/.test(toldModel(o16)), show(o16));
 
     // OUT17 — a change the CRM door reports as not applied carries that fact to the card, so a
-    // refusal reads "didn't run" and offers asking again; the same refusal without it would not.
+    // refusal reads "didn't run" and offers asking again. Unknown outcomes explicitly clear
+    // that claim so a contradictory native envelope cannot preserve not_applied=true.
     assert("18.OUT17 crm-command's answered refusal is marked not applied, and a lost answer is not",
-      /"not_applied":\s*true/.test(toldModel(o7)) && !/"not_applied"/.test(toldModel(o5)) && !/"not_applied"/.test(toldModel(o6)), "");
+      /"not_applied":\s*true/.test(toldModel(o7))
+        && /"not_applied":\s*false/.test(toldModel(o5)) && /"outcome_unknown":\s*true/.test(toldModel(o5))
+        && /"not_applied":\s*false/.test(toldModel(o6)) && /"outcome_unknown":\s*true/.test(toldModel(o6)), "");
   }
 
   const h28Store = makeConfirmStore();
@@ -3375,7 +3446,7 @@ console.log('\n24. proposal authority requires proven current scope and durable 
 {
  const THREAD='cccccccc-cccc-4ccc-8ccc-cccccccccccc';const args={updates:{goal:'ROOT-SCOPE-ACTION'}};
  const tenant={tenant_id:CALLER_TENANT};const rpc=data=>({data,error:null});
- const run=(st,resolve=()=>rpc([tenant]),extra={})=>drive({stream:true,extraBody:{threadId:THREAD},toolCall:{name:'update_client_data',args},rpcOverrides:{get_paige_persona_context:resolve,resolve_tool_autonomy:rpc('confirm'),get_actor_access:rpc({tier:'tenant'})},tablesExtra:{paige_pending_confirmations:st.table,user_roles:()=>[{role:'admin'}]},onInsert:mirrorConfirms(st),...extra});
+ const run=(st,resolve=()=>rpc([tenant]),extra={},initialTenant=CALLER_TENANT)=>drive({stream:true,extraBody:{threadId:THREAD},toolCall:{name:'update_client_data',args},rpcOverrides:{get_paige_persona_context:resolve,resolve_tool_autonomy:rpc('confirm'),get_actor_access:rpc({tier:'tenant'})},tablesExtra:{paige_pending_confirmations:st.table,user_roles:()=>[{role:'admin'}],paige_chat_threads:[{id:THREAD,caller_user_id:USER,tenant_id:initialTenant,audience:'workspace',interactive_recovery_hold:null}]},onInsert:mirrorConfirms(st),...extra});
  const writes=r=>r.outboundCalls.filter(x=>x.url.includes('paige-write-back'));
  const pending=r=>r.rec.from.filter(x=>x.table==='paige_pending_confirmations');
  for(const [name,result] of Object.entries({rpc_error:{data:null,error:{code:'57014',message:'scope unavailable'}},null_result:rpc(null),object:rpc({tenant_id:CALLER_TENANT}),malformed:rpc([{}]),bad_id:rpc([{tenant_id:'junk'}]),multiple:rpc([tenant,tenant])})){
@@ -3383,7 +3454,7 @@ console.log('\n24. proposal authority requires proven current scope and durable 
  assert('24.1 invalid persona cannot issue '+name,st.rows.length===0&&writes(r).length===0&&pending(r).length===0);
  }
  for(const data of [[],[{tenant_id:null}]]){
- const st=makeConfirmStore();const r=await run(st,()=>rpc(data));assert('24.2 proven legitimate null scope still proposes '+JSON.stringify(data),st.rows.length===1&&!!st.rows[0].server_issued_at);
+ const st=makeConfirmStore();const r=await run(st,()=>rpc(data),{},null);assert('24.2 proven legitimate null scope still proposes '+JSON.stringify(data),st.rows.length===1&&!!st.rows[0].server_issued_at);
  }
  const initial=makeConfirmStore();await run(initial);const issued=initial.rows[0];
  assert('24.3 valid no-KB tenant proposal reaches store',!!issued);
@@ -4207,7 +4278,10 @@ console.log("\nclient seat — her answer is read for internal text before a cli
   const RECORD = "5a5a5a5a-5a5a-4a5a-8a5a-5a5a5a5a5a5a";
   const BUSINESS = "Northside Fitness";
   const PERSONA = { get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: BUSINESS, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } };
-  const AS_CLIENT = { ...PERSONA, get_actor_access: { data: { tier: "client" }, error: null } };
+  // This is an actual ordinary customer relationship, not a staff workspace
+  // pointer substituted for one. The production native resolver supplies it.
+  const AS_CLIENT = { ...PERSONA, get_actor_access: { data: { tier: "client" }, error: null },
+    client_portal_self_profile: {data:{id:OWN,tenant_id:CALLER_TENANT,linked_user_id:USER},error:null} };
   const AS_OWNER = { ...PERSONA, get_actor_access: { data: { tier: "tenant" }, error: null } };
   const WITHHELD = withheldReplyForClient(BUSINESS);
   const frames = (r) => r.bodyText.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
@@ -4352,6 +4426,9 @@ console.log("\nclient seat — her answer is read for internal text before a cli
   assert("30.11 a key from the tool result she was sent is caught in a client's answer",
     sentTo(resultKey).includes('\\"needs_confirm\\"') && replyOf(resultKey) === WITHHELD,
     JSON.stringify({ inResult: sentTo(resultKey).includes('\\"needs_confirm\\"'), reply: replyOf(resultKey).slice(0, 60) }));
+  // E09 F2: a client seat no longer takes the credit-report path (owner ruling 2026-10-19; §58, named in the PR),
+  // so the credit-report drives below assert that instead. The credit instruction's block name was the only one
+  // a client's document turn carried; it is never sent to a client now, so it is never vouched for them either.
   const creditRead = { can_read_document: true, document_kind: "credit_report", first_five_account_names: ["ACCOUNT ONE"] };
   const MARKER = "CREDIT REPORT ANALYSIS INSTRUCTIONS";
   const docMarker = await drive({ stream: true, rpcOverrides: AS_CLIENT, document: { fileName: "report.pdf", base64: "JVBERi0xLjQK", mimeType: "application/pdf" }, readCheck: creditRead, text: "here is my report", replyText: `Per my ${MARKER}, your report has three accounts.` });
@@ -4389,6 +4466,20 @@ console.log("\nclient seat — her answer is read for internal text before a cli
       JSON.stringify({ personaSent, asIfServer, reply: replyOf(turn).slice(0, 60), saved: persisted(turn).at(-1)?.slice(0, 60) }));
   }
 
+  // E09 F2 — A CLIENT SEAT IS NEVER OFFERED FUNDING, even when its business is entitled. get_paige_persona_context
+  // resolves the BUSINESS's entitlement; a customer is not that business's staff, so a client-tier caller gets
+  // funding_enabled=false (owner ruling 2026-10-19). Staff of the same entitled business keep the funding skill
+  // (Q5: staff unchanged) — the control, which also proves the persona row reached the turn.
+  const FUNDING_MARK = "You are the practice's funding & capital-raising specialist.";
+  const ENTITLED_PERSONA = { get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: BUSINESS, playbook_config: null, playbook_slug: null, funding_enabled: true, brand: null }], error: null } };
+  const clientEntitled = await drive({ stream: true, rpcOverrides: { ...AS_CLIENT, ...ENTITLED_PERSONA }, replyText: "Happy to help.", extraBody: { threadId: THREAD } });
+  const staffEntitled = await drive({ stream: true, rpcOverrides: { ...AS_OWNER, ...ENTITLED_PERSONA }, replyText: "Happy to help.", extraBody: { threadId: THREAD } });
+  assert("30.37 CONTROL: staff of an entitled business still get the funding skill",
+    systemOf(staffEntitled).includes(FUNDING_MARK), JSON.stringify({ calls: staffEntitled.modelEgress.length }));
+  assert("30.38 (E09 F2) a client of that same entitled business is never sent the funding skill",
+    systemOf(clientEntitled).length > 0 && !systemOf(clientEntitled).includes(FUNDING_MARK) && replyOf(clientEntitled) === "Happy to help.",
+    JSON.stringify({ calls: clientEntitled.modelEgress.length, reply: replyOf(clientEntitled).slice(0, 40) }));
+
   // A TOOL THE SEAT MAY NOT USE RENDERS NO STEP. Action steps go to the wire as they happen and are
   // not read, so a refused owner tool must not become one: it would show a client an owner's action,
   // and buying a number shows the model's own argument, which a client can ask the model to fill with
@@ -4406,57 +4497,27 @@ console.log("\nclient seat — her answer is read for internal text before a cli
   // made from an answer the client was not shown. The control proves the clean turn does extract.
   const EXTRACTS = "Here is the credit report analysis I just produced";
   const creditClean = await drive({ stream: true, rpcOverrides: AS_CLIENT, document: { fileName: "report.pdf", base64: "JVBERi0xLjQK", mimeType: "application/pdf" }, readCheck: creditRead, text: "here is my report", replyText: "Your report has three accounts." });
-  // R3b — A SYNC THAT FAILED IS TOLD IN A SENTENCE. The harness's extraction cannot produce a
-  // report, so the pipeline fails the way a real one does; the uploader reads a fixed sentence, never
-  // the pipeline's own error text or step name.
   const syncOf = (r) => frames(r).filter((f) => f.sync_status).map((f) => f.sync_status);
-  const SYNC_BEFORE_ANY_WRITE = `I read your report, but I couldn't pull out its details for you to review, and none of them were added to your profile. You can try uploading it again, or ask ${BUSINESS} to take a look.`;
-  const SYNC_DID_NOT_FINISH = `I read your report, but I couldn't finish pulling out its details for you to review. You can ask ${BUSINESS} to take a look.`;
-  const syncSeen = syncOf(creditClean);
-  assert("30.33 a credit-report sync that did not complete reaches the uploader as a fixed sentence, with no step and no pipeline text",
-    syncSeen.length === 1 && syncSeen[0].success === false && !("step" in syncSeen[0])
-      && syncSeen[0].error === SYNC_BEFORE_ANY_WRITE && syncSeen[0].uploader_sentence === true
-      && !/Failed to|Validation failed|extraction|pipeline|Unknown/.test(JSON.stringify(syncSeen[0]))
-      // "none of them were added" is only true because nothing was: no memory note, no upload stamp.
-      && !creditClean.rec.inserts.some((i) => i.table === "client_memory" || (i.table === "credit_report_uploads" && i.update)),
-    JSON.stringify({ sync: syncSeen, writes: creditClean.rec.inserts.map((i) => `${i.table}${i.update ? ":update" : ""}`) }));
-  // ...AND A SYNC THAT STOPPED AFTER ITS FIRST WRITE NEVER SAYS NOTHING WAS ADDED. Given a report the
-  // extraction can read, the pipeline writes a client memory note before it stamps the upload; when the
-  // stamp is refused, that note is already kept, so the uploader reads only that it did not finish.
-  // The control proves the same report, unrefused, reaches the proposal.
   const REPORT = JSON.stringify({ is_credit_report: true, extraction_verified: true, report_type: "consumer", scores: { equifax: 700, experian: 705, transunion: 698 },
     negative_items: [{ creditor_name: "ACCOUNT ONE", account_type: "revolving", status: "charge_off", balance: 500 }], positive_accounts: [], hard_inquiries: [] });
-  const reportDrive = (extra = {}) => drive({ stream: true, rpcOverrides: AS_CLIENT, document: { fileName: "report.pdf", base64: "JVBERi0xLjQK", mimeType: "application/pdf" },
+  // Even with an extraction that WOULD read the report (it did, before E09 F2, and reached a proposal).
+  const reportReadable = await drive({ stream: true, rpcOverrides: AS_CLIENT, document: { fileName: "report.pdf", base64: "JVBERi0xLjQK", mimeType: "application/pdf" },
     readCheck: creditRead, text: "here is my report", replyText: "Your report has three accounts.", extractionReply: REPORT,
-    // The upload record the portal's upload writes, read back by its id, so the pipeline has a record to stamp.
     serviceTablesExtra: { credit_report_uploads: () => [{ id: "7e7e7e7e-7e7e-4e7e-8e7e-7e7e7e7e7e7e" }] },
-    tablesExtra: { credit_report_uploads: () => [{ id: "7e7e7e7e-7e7e-4e7e-8e7e-7e7e7e7e7e7e" }] }, ...extra });
-  const proposed = await reportDrive();
-  const proposedOwnNote = proposed.rec.rpc.filter((c) => c.name === "record_paige_memory" && c.args?.p_memory_type === "report_upload");
-  assert("30.34 CONTROL: a report the extraction can read reaches the proposal, after an owner-memory note is written (S5: governed seam)",
-    frames(proposed).some((f) => f.extraction_proposal) && proposedOwnNote.length === 1 && proposedOwnNote[0].args?.p_confirmation_state === "proposed"
-      && syncOf(proposed).every((st) => st.awaiting_review === true),
-    JSON.stringify({ proposal: frames(proposed).some((f) => f.extraction_proposal), inserts: proposed.rec.inserts.map((i) => i.table), sync: syncOf(proposed) }));
-  // A report the extraction reads but validation refuses stops before its first write too.
-  const notReport = await reportDrive({ extractionReply: JSON.stringify({ ...JSON.parse(REPORT), is_credit_report: false }) });
-  const notReportSync = syncOf(notReport);
-  assert("30.36 a report refused by validation tells the uploader nothing was added, and nothing was: no memory note, no upload stamp",
-    notReportSync.length === 1 && notReportSync[0].error === SYNC_BEFORE_ANY_WRITE && notReportSync[0].uploader_sentence === true && !("step" in notReportSync[0])
-      && !/Validation failed|Not identified|is_credit_report/.test(JSON.stringify(notReportSync))
-      && !notReport.rec.inserts.some((i) => i.table === "client_memory" || (i.table === "credit_report_uploads" && i.update)),
-    JSON.stringify({ sync: notReportSync, writes: notReport.rec.inserts.map((i) => `${i.table}${i.update ? ":update" : ""}`) }));
-  const stampRefused = await reportDrive({ tableErrorsExtra: { "credit_report_uploads:update": { message: "new row violates check constraint", code: "23514" } } });
-  const refusedSync = syncOf(stampRefused);
-  const refusedOwnNote = stampRefused.rec.rpc.filter((c) => c.name === "record_paige_memory" && c.args?.p_memory_type === "report_upload");
-  assert("30.35 a sync refused after its owner-memory note was written tells the uploader it did not finish, never that nothing was added (S5)",
-    refusedOwnNote.length === 1
-      && refusedSync.length === 1 && refusedSync[0].success === false && !("step" in refusedSync[0]) && !("write" in refusedSync[0])
-      && refusedSync[0].error === SYNC_DID_NOT_FINISH && refusedSync[0].uploader_sentence === true
-      && !/credit_report_uploads|check constraint|23514|write_rejected/.test(JSON.stringify(refusedSync))
-      && stampRefused.logged.some((l) => l.level === "warn" && l.msg.includes("credit report sync did not complete") && l.msg.includes("write_rejected")),
-    JSON.stringify({ inserts: stampRefused.rec.inserts.map((i) => i.table), sync: refusedSync, warns: stampRefused.logged.filter((l) => l.level === "warn").map((l) => l.msg.slice(0, 120)) }));
-  assert("30.15 CONTROL: a client's clean credit-report answer is extracted from, as before",
-    creditClean.modelEgress.some((body) => body.includes(EXTRACTS)) && replyOf(creditClean) === "Your report has three accounts.",
+    tablesExtra: { credit_report_uploads: () => [{ id: "7e7e7e7e-7e7e-4e7e-8e7e-7e7e7e7e7e7e" }] } });
+  const noCreditPath = (r) => !r.modelEgress.some((b) => b.includes("verify that you can literally read the PDF") || b.includes("Extract the structured data into the required JSON format"))
+    && !r.rec.inserts.some((i) => i.table === "credit_report_uploads" || i.table === "client_memory")
+    && !r.rec.rpc.some((c) => c.name === "record_paige_memory" && c.args?.p_memory_type === "report_upload")
+    && !r.outboundCalls.some((c) => c.url.includes("sync-credit-report-data"))
+    && syncOf(r).length === 0 && !frames(r).some((f) => f.extraction_proposal);
+  assert("30.33 (E09 F2) a client's credit report is a general document: no read-check, no extraction, no sync, no sync frame",
+    noCreditPath(creditClean) && replyOf(creditClean) === "Your report has three accounts.",
+    JSON.stringify({ egress: creditClean.modelEgress.length, sync: syncOf(creditClean), writes: creditClean.rec.inserts.map((i) => i.table), reply: replyOf(creditClean).slice(0, 60) }));
+  assert("30.34 (E09 F2) ...even when the extraction would have read it: no proposal and no owner-memory note",
+    noCreditPath(reportReadable) && replyOf(reportReadable) === "Your report has three accounts.",
+    JSON.stringify({ proposal: frames(reportReadable).some((f) => f.extraction_proposal), rpc: reportReadable.rec.rpc.map((c) => c.name), sync: syncOf(reportReadable) }));
+  assert("30.15 (E09 F2) the client's turn is answered on the general-document path, with its general instruction",
+    creditClean.modelEgress.some((b) => b.includes("The client has shared a document.")) && !creditClean.modelEgress.some((b) => b.includes(MARKER)),
     JSON.stringify({ calls: creditClean.modelEgress.length }));
   assert("30.16 a withheld credit-report answer is never extracted from, so nothing is written from it",
     !docMarker.modelEgress.some((body) => body.includes(EXTRACTS))
@@ -4543,8 +4604,10 @@ console.log("\nclient seat — her answer is read for internal text before a cli
   assert("30.20 a client's file name reached the model, and its words never withhold the client's answer",
     nameWouldBeKey && ownFile.modelEgress.some((body) => body.includes("family_plan")) && replyOf(ownFile) === "Your family_plan document is in.",
     JSON.stringify({ nameWouldBeKey, reached: ownFile.modelEgress.some((body) => body.includes("family_plan")), reply: replyOf(ownFile).slice(0, 60) }));
-  assert("30.12 a block name only the server's document instruction carried is caught on the document path",
-    answered.includes(`=== ${MARKER} ===`) && !docSystem.includes(MARKER) && replyOf(docMarker) === WITHHELD,
+  // E09 F2: the credit instruction (the one server block name a client's document turn used to carry) is never
+  // sent to a client now. The turn is a general-document turn, and the words are not the server's vouched text.
+  assert("30.12 (E09 F2) a client's credit-looking PDF is never sent the credit instruction, so its block name is not the server's",
+    !answered.includes(`=== ${MARKER} ===`) && !docSystem.includes(MARKER) && noCreditPath(docMarker),
     JSON.stringify({ inRequest: answered.includes(`=== ${MARKER} ===`), inSystem: docSystem.includes(MARKER), reply: replyOf(docMarker).slice(0, 60) }));
 }
 
@@ -5131,12 +5194,13 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
 
   // 33.6 A Studio thread whose second read fails still runs as a Studio turn, fail-closed — never as
   // main PAIGE with every tool. Kills: dropping the preStudioSessionId fallback.
+  let summaryReads33 = 0;
   const flaky = await drive({
     stream: true, extraBody: { threadId: THREAD }, toolCall: { name: "crm_create_contact", args: {} },
     rpcOverrides: { ...AS_TENANT, ...WS, ...AUTO_LANE },
     serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...SCOPE_ROW },
     tablesExtra: studioTables(),
-    tableErrorsExtra: { paige_chat_threads: ({ filters }) => (filters.some((f) => f[0] === "select" && String(f[1]).includes("summary")) ? { message: "connection reset", code: "08006" } : null) },
+    tableErrorsExtra: { paige_chat_threads: ({ filters }) => (filters.some((f) => f[0] === "select" && String(f[1]).includes("summary")) && ++summaryReads33 === 2 ? { message: "connection reset", code: "08006" } : null) },
   });
   assert("33.6 a Studio thread whose re-read fails is still fail-closed Studio: off-scope tool refused, only the fail-closed set offered",
     scopeRefused(flaky, "crm_create_contact") && offered(flaky).every((t) => ["ask_choices", "capability_status"].includes(t)),
@@ -5467,7 +5531,8 @@ console.log("\nsurface-aware self-knowledge — what she can do, what the owner 
   const unread = await drive({
     stream: true, rpcOverrides: SUPER_ADMIN_SOLO, ownerRpc: { data: true, error: null }, extraBody: { threadId: PLATFORM_THREAD }, text: "Where were we?",
     tablesExtra: { paige_chat_threads: threadRow(CALLER_TENANT, PLATFORM_SUMMARY) },
-    tableErrorsExtra: { paige_chat_threads: ({ filters }) => (filters.some((f) => f[0] === "select" && String(f[1]).trim() === "tenant_id") ? { message: "connection reset", code: "08006" } : null) },
+    tableErrorsExtra: { paige_chat_threads: ({ filters }) => (filters.some((f) => f[0] === "select" &&
+      ["tenant_id","tenant_id,audience"].includes(String(f[1]).trim())) ? { message: "connection reset", code: "08006" } : null) },
   });
   assert("38.12 a thread in another tenant workspace is refused the same way, before any model call",
     foreign.status === 409 && foreign.modelEgress.length === 0 && foreign.bodyText.includes("ACTIVE_ACCOUNT_CHANGED"),
@@ -6133,13 +6198,13 @@ try {
   const turnsWith = (fp, tool) => ({ paige_chat_turns: () => [
     { id: SUSPENDED, role: "assistant", content: "Here is what I'll do.", seq: 2, bundle_ref: { paige_confirm: [{ tool, summary: "Do it", fingerprint: fp }] } },
   ] });
-  const crmDrive = (store, db, { tenant = CALLER_TENANT, body = {}, toolCall, fixtureTool = "crm_create_contact", threadId = THREAD, concurrent = 1, extraRpc = {}, extraTables = {}, extraService = {}, tableErrors = {}, clientId } = {}) => drive({
+  const crmDrive = (store, db, { tenant = CALLER_TENANT, body = {}, toolCall, fixtureTool = "crm_create_contact", threadId = THREAD, concurrent = 1, extraRpc = {}, extraTables = {}, extraService = {}, tableErrors = {}, clientId, replyText = "ok", streamScript = null } = {}) => drive({
     // INT-334 R5b — "please do it" is a bare go-ahead: the REAL classifier labels it act (43.42e
     // pins classify.test on exactly this), so the fixture says act too instead of the implicit
     // ≤3-words-is-converse shortcut, and the R5b manifest boundary does not re-route it.
     stream: true, clientId,
     classification: { intent: "act", research: "none", difficulty: "routine", image: "none", needs_workspace_data: false, confidence: 0.9 },
-    text: body.approvedConfirmations || body.declinedConfirmations ? "Approved — run it." : "please do it",
+    text: body.declinedConfirmations ? "Hold off — skip that one." : body.approvedConfirmations ? "Approved — run it." : "please do it",
     extraBody: { ...(threadId ? { threadId } : {}), ...body }, toolCall,
     rpcOverrides: { ...SEAT(tenant), ...crmRpcs(db), ...extraRpc },
     serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...DOOR_SERVICE, ...extraService },
@@ -6148,7 +6213,43 @@ try {
     functionsExtra: { "crm-command": realCrmDoor },
     concurrentRequests: concurrent,
     tableErrorsExtra: tableErrors,
+    replyText, streamScript,
   });
+  // Ordinary browser decline: ACTIVE interactive admission, canonical prior user/proposal turns,
+  // and the native terminal receipt. The earlier helper sent approval prose for declines and
+  // discarded the reply, so a consumed proposal with a misleading answer escaped its assertions.
+  const DECLINE_INTENT = "93939393-9393-4393-8393-939393939393";
+  const DECLINE_REPLY = "Understood — you've chosen Not now for that proposal.";
+  const declineVia = (store, db, card, { token = card.fingerprint, tableErrors = {}, streamScript = null, autonomy = "confirm", bodyExtra = {}, unresolved = [] } = {}) => {
+    let executor = null; let terminal = false;
+    const history = [
+      { id: SUSPENDED, role: "assistant", content: "I can create this contact once you approve.", seq: 2,
+        bundle_ref: { paige_confirm: [card], interactive: { request_intent_id: "94949494-9494-4494-8494-949494949494",
+          effects: [{ tool: "crm_create_contact", outcome: "approval_required" }] } } },
+      { id: "95959595-9595-4595-8595-959595959595", role: "user", content: "Create a contact for Dana Reyes.", seq: 1, bundle_ref: {} },
+    ];
+    return crmDrive(store, db, {
+      body: { declinedConfirmations: [token], requestIntentId: DECLINE_INTENT, interactive: { kind: "message" }, ...bodyExtra },
+      replyText: DECLINE_REPLY, streamScript, tableErrors,
+      extraTables: {
+        paige_chat_threads: () => [{ id: THREAD, caller_user_id: USER, tenant_id: CALLER_TENANT }],
+        paige_chat_turns: (filters) => filters.some(([op]) => op === "contains") ? structuredClone(unresolved) : structuredClone(history),
+      },
+      extraRpc: {
+        resolve_tool_autonomy: { data: autonomy, error: null },
+        paige_chat_interactive_protocol: { data: { version: 2, active: true }, error: null },
+        paige_chat_interactive_begin_v2: { data: { status: "accepted", turn_id: "96969696-9696-4696-8696-969696969696" }, error: null },
+        paige_chat_interactive_executor_v2: (args) => {
+          if (args.p_operation === "acquire") executor = args.p_intent;
+          if (args.p_operation === "release") executor = null;
+          return { data: { latest: DECLINE_INTENT, executor, acquired: executor === args.p_intent, terminal, stopped: false }, error: null };
+        },
+        paige_chat_interactive_settle: () => { terminal = true; return { data: "97979797-9797-4797-8797-979797979797", error: null }; },
+      },
+    });
+  };
+  const replyRequests = (r) => r.modelEgress.map((body) => JSON.parse(body)).filter((body) => body.stream === true);
+  const declineNote = (body) => String(body?.system ?? "").split("\n\n").find((part) => part.startsWith("The owner already chose Not now")) ?? "";
   // The approved card's OWN lane (PaigeAIChat.tsx ~L1932-1960): it invokes crm-command directly with the
   // card's command, idempotency key and fingerprint, before (and instead of) echoing it to the chat.
   const cardLane = async (store, db, card, tenant = CALLER_TENANT) => {
@@ -6192,6 +6293,8 @@ try {
   };
   const contact = await strand(CONTACT);
   const deal = await strand(DEAL);
+  assert("40.1 decline context is turn-local: ordinary contact/deal approvals never receive it",
+    [contact.r, deal.r].every((r) => replyRequests(r).every((body) => declineNote(body) === "")));
   for (const [label, { st, db, card, r, minted }] of [["crm_create_contact", contact], ["deal_create", deal]]) {
     assert(`40.0 ${label}: the real door minted ONE door-scoped proposal (thread and client NULL, bare token, its own key) — guards 40.1`,
       !!card && /^[0-9a-f]{16}$/.test(card.fingerprint ?? "") && minted.rows === 1 && minted.row?.thread_id == null && minted.row?.scoped_client_id == null
@@ -6208,8 +6311,9 @@ try {
     const pinnedBody = doorCalls(r)[0]?.body;
     assert(`40.1b ${label}: the door is handed exactly the pinned proposal — its fingerprint, its stored command and key — and nothing else`,
       doorCalls(r).length === 1 && pinnedBody?.approved_fingerprint === card.fingerprint
+        && pinnedBody?.expected_tenant_id === CALLER_TENANT
         && JSON.stringify(pinnedBody?.command) === JSON.stringify(stored.args.command) && pinnedBody?.idempotency_key === stored.args.idempotency_key
-        && Object.keys(pinnedBody ?? {}).sort().join() === "approved_fingerprint,command,idempotency_key",
+        && Object.keys(pinnedBody ?? {}).sort().join() === "approved_fingerprint,command,expected_tenant_id,idempotency_key",
       JSON.stringify(doorCalls(r).map((c) => c.body)));
     const outcome = outcomeOf(r.bodyText);
     assert(`40.1c ${label}: the card reports ran from the door's own answer; one resumed frame; PAIGE is called after, with the result`,
@@ -6293,13 +6397,57 @@ try {
       outcomes.every((o) => o === "ran" || o === "unconfirmed") && outcomes.includes("ran")
         && twice.responses.every((r) => cardsOf(r.bodyText).length === 0),
       JSON.stringify({ outcomes, rows: st.rows.map((r) => ({ consumed: r.consumed, issued: r.issued_in_request })) }));
-    // A request that loses the claim before the winner has committed makes crm-command propose the act
-    // again (its own behaviour on a failed claim, crm-command ~L575+), under the SAME fingerprint. That
-    // proposal is never shown, and it is retired before the request ends: no live row is left for the
-    // card's token to claim later. Kills: not retiring the door's re-proposal (settlePinnedDoorResult).
-    assert("40.2e …a door that proposed again for the loser left NO live proposal behind (and never a card)",
-      st.rows.every((row) => row.consumed === true) && twice.responses.every((r) => cardsOf(r.bodyText).length === 0),
+    // A losing explicit claim must refuse without re-proposing. The existing single row stays
+    // consumed by its winner; there is no hidden replacement that a stale card could later spend.
+    assert("40.2e …the losing claim left NO replacement proposal behind (and never a card)",
+      st.rows.length === 1 && st.rows.every((row) => row.consumed === true)
+        && twice.responses.every((r) => cardsOf(r.bodyText).length === 0),
       JSON.stringify({ rows: st.rows.map((row) => ({ consumed: !!row.consumed, issued: row.issued_in_request })) }));
+  }
+
+  // Deliberately schedule the protected database port so a different request claims AFTER this
+  // door read no original result but BEFORE its claim. This runs the real CRM and Chat consumers;
+  // the competing transaction and its delayed commit are modelled ports, not PostgreSQL proof.
+  for (const lane of ["confirm", "auto", "off", "unresolved"]) {
+    const st = makeConfirmStore(); const db = crmDb();
+    const card = await proposeVia(st, db, CONTACT);
+    let lostClaim = false;
+    const raceTable = (filters) => {
+      if (filters.some(([op, columns]) => op === "select" && columns === "args")
+          && filters.some(([op]) => op === "update")) {
+        lostClaim = true;
+        st.rows[0].consumed = true;
+        st.rows[0].consumedAt = new Date().toISOString();
+      }
+      return st.table(filters);
+    };
+    const losing = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] },
+      toolCall: CONTACT, extraTables: { paige_pending_confirmations: raceTable },
+      extraRpc: { resolve_tool_autonomy: { data: lane, error: null } } });
+    assert(`40.2f ${lane}: a losing claim before the winner commits is unconfirmed in the card and model, never not applied`,
+      lostClaim && db.executions.length === 0 && db.committed.size === 0 && st.rows.length === 1
+        && st.rows[0].consumed === true && doorCalls(losing).length === 1 && cardsOf(losing.bodyText).length === 0
+        && outcomeOf(losing.bodyText)?.actions?.[0]?.outcome === "unconfirmed"
+        && toldModel(losing).includes('"outcome_unknown":true') && toldModel(losing).includes('"not_applied":false')
+        && toldModel(losing).includes('"refused_before_run":false')
+        && toldModel(losing).includes(lane === "off" ? "autonomy_off"
+          : lane === "unresolved" ? "autonomy_lane_unrecognized" : "CRM_APPROVAL_UNCONFIRMED")
+        && toldModel(losing).includes("prior_effect_reconciliation_required"),
+      JSON.stringify({ lostClaim, executions: db.executions.length, committed: db.committed.size,
+        rows: st.rows.length, outcome: outcomeOf(losing.bodyText) }));
+    // Only the separately modelled winner now commits its frozen stored command and key.
+    crmRpcs(db).execute_crm_command({ _tenant_id: CALLER_TENANT, _actor_id: USER,
+      _idempotency_key: st.rows[0].args.idempotency_key,
+      _command: { ...st.rows[0].args.command, approval_channel: "operator_card" } });
+    const consumedAt = st.rows[0].consumedAt;
+    const reconciled = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] },
+      extraRpc: { resolve_tool_autonomy: { data: lane, error: null } } });
+    assert(`40.2g ${lane}: the later canonical original result reconciles as ran without a second execution or replacement`,
+      db.executions.length === 1 && db.committed.size === 1 && st.rows.length === 1
+        && st.rows[0].consumedAt === consumedAt && doorCalls(reconciled).length === 1
+        && cardsOf(reconciled.bodyText).length === 0 && outcomeOf(reconciled.bodyText)?.actions?.[0]?.outcome === "ran",
+      JSON.stringify({ executions: db.executions.length, committed: db.committed.size,
+        rows: st.rows.length, outcome: outcomeOf(reconciled.bodyText) }));
   }
 
   // ── 40.3 ANOTHER WORKSPACE / ANOTHER PERSON: the row is not selected, the door is never handed it,
@@ -6335,28 +6483,248 @@ try {
     // Declined (Not now), then approved from a stale card: the row is used and nothing was committed.
     const st = makeConfirmStore(); const db = crmDb();
     const card = await proposeVia(st, db, CONTACT);
-    await crmDrive(st, db, { body: { declinedConfirmations: [card.fingerprint] } });
+    const declined = await declineVia(st, db, card, { streamScript: [{ name: "crm_list_tasks", args: {} }, DECLINE_REPLY] });
     assert("40.4b (guard) Not now consumed the door proposal", st.rows[0].consumed === true, JSON.stringify(st.rows[0]));
+    const requests = replyRequests(declined);
+    const first = requests[0];
+    const note = declineNote(first);
+    assert("40.4b1 ordinary decline retains genuine prior approval history and the actual Not now sentence",
+      declined.status === 200 && JSON.stringify(first?.messages).includes("approval_required")
+        && JSON.stringify(first?.messages).includes("Hold off — skip that one.")
+        && declined.rec.rpc.some((c) => c.name === "paige_chat_interactive_begin_v2"),
+      JSON.stringify({ status: declined.status, messages: first?.messages }));
+    assert("40.4b2 the FIRST reply request has a trusted already-made decline, no repeated approve/decline instruction",
+      /already chose Not now/.test(note) && /do not ask.*approve.*decline/i.test(note) && /do not re-propose/i.test(note), note);
+    assert("40.4b3 the decline note survives the existing tool continuation in system authority",
+      requests.length >= 2 && requests.every((body) => declineNote(body) === note && note.length > 0),
+      JSON.stringify({ requests: requests.length, notes: requests.map(declineNote) }));
+    assert("40.4b4 cancellation-pass success is not misrepresented as matched cancellation or no prior effect",
+      /does not prove.*matched.*consumed/i.test(note) && /already ran/i.test(note) && /native evidence/i.test(note), note);
+    const settled = declined.rec.rpc.filter((c) => c.name === "paige_chat_interactive_settle");
+    assert("40.4b5 a real decline runs no CRM command, commits no result, proposes nothing and does not resume an approval",
+      doorCalls(declined).length === 0 && db.executions.length === 0 && db.committed.size === 0
+        && st.rows.length === 1 && cardsOf(declined.bodyText).length === 0 && resumedFrames(declined.bodyText).length === 0
+        && !declined.rec.from.some((query) => ["clients", "deals", "tasks"].includes(query.table) && query.op !== "select")
+        && settled.length === 1 && !settled[0].args.p_bundle_ref?.paige_resume && !settled[0].args.p_bundle_ref?.turn_state?.resumed
+        && (settled[0].args.p_bundle_ref?.paige_crm_result ?? []).length === 0
+        && (settled[0].args.p_bundle_ref?.interactive?.effects ?? []).every((effect) => effect.tool === "crm_list_tasks"),
+      JSON.stringify({ executions: db.executions, committed: db.committed.size, settled: settled.map((c) => c.args.p_bundle_ref) }));
+    assert("40.4b11 a decline-bearing turn still executes its authorized read-only CRM lookup",
+      declined.rec.from.some((query) => query.table === "tasks" && query.op === "select")
+        && toldModel(declined).includes('"tool_result"'), JSON.stringify(declined.rec.from.filter((q) => q.table === "tasks")));
+    assert("40.4b6 decline reply and its canonical interactive terminal agree without rewriting prior approval history",
+      settled.length === 1 && settled[0].client === "service" && settled[0].args.p_content === DECLINE_REPLY
+        && wireAnswerMatchesSaved(declined.bodyText, settled[0].args.p_content) === null
+        && settled[0].args.p_bundle_ref?.interactive?.request_intent_id === DECLINE_INTENT
+        && !declined.rec.from.some((q) => q.table === "paige_chat_turns" && q.op !== "select"),
+      JSON.stringify(settled.map((c) => c.args)));
     const r = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] } });
     const outcome = outcomeOf(r.bodyText);
-    assert("40.4c a used approval with nothing committed under its key: nothing runs, the card says can't confirm, no fresh card",
-      db.executions.length === 0 && outcome?.actions?.[0]?.outcome === "unconfirmed" && /can't be used any more/.test(outcome?.note ?? "")
-        && cardsOf(r.bodyText).length === 0 && toldModel(r).includes("approval_already_used"),
+    assert("40.4c a used approval with nothing committed under its key: native unconfirmed claim, this request never writes or proposes",
+      db.executions.length === 0 && db.committed.size === 0 && outcome?.actions?.[0]?.outcome === "unconfirmed"
+        && doorCalls(r).length === 1 && st.rows.length === 1 && cardsOf(r.bodyText).length === 0
+        && toldModel(r).includes("CRM_APPROVAL_UNCONFIRMED") && toldModel(r).includes("approval could not be confirmed"),
       JSON.stringify({ outcome, executions: db.executions.length, rows: st.rows.length }));
-    // The door proposed the act again under the SAME fingerprint (the stored command and key re-hash to
-    // it). That row was never shown, and it must not stay live: the same declined token, posted once
-    // more (a third surface, a re-send), would claim and run it. Kills: not retiring the re-proposal.
+    // The native door now refuses a failed explicit claim without proposing again. A repeated
+    // stale token must still create no hidden live row that a later request could claim.
     const liveAfter = st.rows.filter((row) => !row.consumed);
     const again = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] } });
     assert("40.4e declined, approved from a stale card, then posted AGAIN: no hidden live proposal was left, nothing ever runs",
       liveAfter.length === 0 && db.executions.length === 0 && st.rows.every((row) => row.consumed === true)
-        && outcomeOf(again.bodyText)?.actions?.[0]?.outcome === "unconfirmed" && cardsOf(again.bodyText).length === 0,
+        && st.rows.length === 1 && db.committed.size === 0 && outcomeOf(again.bodyText)?.actions?.[0]?.outcome === "unconfirmed"
+        && cardsOf(again.bodyText).length === 0 && toldModel(again).includes("CRM_APPROVAL_UNCONFIRMED"),
       JSON.stringify({ liveAfter: liveAfter.length, executions: db.executions.length, outcome: outcomeOf(again.bodyText) }));
   }
   {
-    // Expired between this request's selection and the door's claim: the door proposes again; the
-    // carried-forward approval reads "expired", not "can't confirm", and no card is shown. Time really
-    // passes: the proposal's window closes while the door's claim is on its way (an async store answer).
+    // A no-error UPDATE can match zero rows. Its reply still acknowledges the choice, without
+    // upgrading cancellationsRecorded into proof that a particular card was retired or ran nothing.
+    const st = makeConfirmStore(); const db = crmDb();
+    const card = await proposeVia(st, db, CONTACT);
+    const unmatched = await declineVia(st, db, card, { token: "0000000000000000" });
+    const note = declineNote(replyRequests(unmatched)[0]);
+    assert("40.4b7 an unmatched decline acknowledges the choice but cannot claim a matched native cancellation",
+      unmatched.status === 200 && !st.rows[0].consumed && st.rows.length === 1 && db.executions.length === 0
+        && db.committed.size === 0 && cardsOf(unmatched.bodyText).length === 0
+        && /already chose Not now/.test(note) && /does not prove.*matched.*consumed/i.test(note), note);
+    // A successful cancellation is no authority for the reply model to choose another act.
+    // Exercise the actual Chat handler and actual CRM door, including repeated continuation calls,
+    // model confirm/key fields and an unmatched token whose no-error UPDATE consumed nothing.
+    for (const autonomy of ["confirm", "auto"]) {
+      for (const [label, call] of [
+        ["create", { ...CONTACT, args: { patch: { first_name: "Different", last_name: "Contact" }, confirm: true, idempotency_key: "decline-must-not-authorize" } }],
+        ["update", { name: "crm_update_contact", args: { contact_id: OWN, expected_updated_at: "2026-01-01T00:00:00Z", patch: { email: "changed@example.test" }, confirm: true } }],
+      ]) {
+        for (const matched of [true, false]) {
+          const stoppedStore = makeConfirmStore(); const stoppedDb = crmDb();
+          const stoppedCard = await proposeVia(stoppedStore, stoppedDb, CONTACT);
+          const stopped = await declineVia(stoppedStore, stoppedDb, stoppedCard, {
+            autonomy, ...(matched ? {} : { token: "0000000000000000" }),
+            streamScript: [call, call, DECLINE_REPLY],
+          });
+          const terminal = stopped.rec.rpc.find((c) => c.name === "paige_chat_interactive_settle")?.args?.p_bundle_ref;
+          assert(`40.4b9 ${autonomy} ${label} ${matched ? "matched" : "unmatched"}: successful decline pass cannot authorize CRM execution or a new proposal, even in later model rounds`,
+            stopped.status === 200 && stoppedStore.rows[0].consumed === matched
+              && stoppedDb.executions.length === 0 && stoppedDb.committed.size === 0 && doorCalls(stopped).length === 0
+              && stoppedStore.rows.length === 1 && cardsOf(stopped.bodyText).length === 0 && resumedFrames(stopped.bodyText).length === 0
+              && (terminal?.paige_crm_result ?? []).length === 0 && !terminal?.paige_resume
+              && replyRequests(stopped).length >= 3 && toldModel(stopped).includes("declined_turn_requires_new_instruction"),
+            JSON.stringify({ status: stopped.status, consumed: stoppedStore.rows[0].consumed, executions: stoppedDb.executions.length,
+              committed: stoppedDb.committed.size, doorCalls: doorCalls(stopped).length, rows: stoppedStore.rows.length,
+              cards: cardsOf(stopped.bodyText), rounds: replyRequests(stopped).length }));
+        }
+      }
+    }
+    // The brake belongs to this HTTP turn, not the conversation or the consumed proposal.
+    for (const autonomy of ["confirm", "auto"]) {
+      for (const call of [
+        { name: "deal_create", args: DEAL.args },
+        { name: "deal_move_stage", args: { deal_id: OWN, target_stage_id: STAGE, expected_version: 1 } },
+        { name: "crm_add_note", args: { client_ref: DEAL_CLIENT_REF, body: "A note chosen by the reply model" } },
+        { name: "crm_file_document", args: { file_id: OWN, client_ref: DEAL_CLIENT_REF } },
+        { name: "crm_update_pipeline_stage", args: { client_ref: DEAL_CLIENT_REF, status: "client_active" } },
+        { name: "crm_assign_contact", args: { client_ref: DEAL_CLIENT_REF, user_id: USER } },
+        { name: "pipeline_configure", args: { command: { type: "move-deal", deal_id: OWN, target_stage_id: STAGE } } },
+        { name: "knowledge_update", args: { id: OWN, expected_revision: 1, patch: { title: "Changed" } } },
+        { name: "save_to_knowledge_base", args: { title: "Declined", content: "Do not store" } },
+        { name: "plan_set_reminder", args: { title: "Do not schedule", remind_at: "2099-01-01T12:00:00Z", channel: "in_app" } },
+        { name: "growth_page_publish", args: { page_id: OWN } },
+      ]) {
+        const siblingStore = makeConfirmStore(); const siblingDb = crmDb();
+        const siblingCard = await proposeVia(siblingStore, siblingDb, CONTACT);
+        const sibling = await declineVia(siblingStore, siblingDb, siblingCard, { autonomy, streamScript: [call, DECLINE_REPLY] });
+        const terminal = sibling.rec.rpc.find((c) => c.name === "paige_chat_interactive_settle")?.args?.p_bundle_ref;
+        assert(`40.4b12 ${autonomy} ${call.name}: decline fence covers aliases and existing domain paths before any proposal or native writer`,
+          sibling.status === 200 && siblingStore.rows[0].consumed === true && siblingStore.rows.length === 1
+            && siblingDb.executions.length === 0 && siblingDb.committed.size === 0 && doorCalls(sibling).length === 0
+            && cardsOf(sibling.bodyText).length === 0 && toldModel(sibling).includes("declined_turn_requires_new_instruction")
+            && !sibling.rec.rpc.some((c) => ["configure_tenant_pipeline", "configure_tenant_pipeline_as_paige", "assign_contact", "update_knowledge_document", "plan_set_reminder", "record_capability_run"].includes(c.name))
+            && sibling.rec.functions.length === 0
+            && !sibling.rec.from.some((q) => ["clients", "deals", "tasks", "client_notes", "client_files", "pipelines", "knowledge_documents", "plan_items"].includes(q.table) && q.op !== "select")
+            && !framesOf(sibling.bodyText).some((frame) => frame.paige_step?.kind === "action" && ["running", "done"].includes(frame.paige_step.status))
+            && !(terminal?.interactive?.effects ?? []).some((effect) => /succeeded|approval_required|accepted/.test(effect.outcome)),
+          JSON.stringify({ status: sibling.status, tool: call.name, rows: siblingStore.rows.length, calls: siblingDb.executions.length,
+            cards: cardsOf(sibling.bodyText), native: sibling.rec.rpc.filter((c) => /configure_tenant_pipeline|assign_contact/.test(c.name)) }));
+      }
+    }
+    // These existing tools are exempt from the business-mutation risk gate, but persist
+    // a new approval or confirmation artifact. A decline must stop that decision work too.
+    const decisionWriters = [
+      { name: "propose_action", args: { action_type: "email", contact_id: OWN,
+        subject: "Your next session", body: "Confirming Tuesday at 3pm.", summary: "Email Dana about booking" } },
+      { name: "pipeline_archive_preview", args: { pipeline_ref: "PPL-QA123" } },
+      { name: "pipeline_folder_archive_preview", args: { folder_id: OWN } },
+    ];
+    for (const autonomy of ["confirm", "auto"]) for (const call of decisionWriters) {
+      for (const state of ["matched", "unmatched", "recording_failed"]) {
+        const decisionStore = makeConfirmStore(); const decisionDb = crmDb();
+        const decisionCard = await proposeVia(decisionStore, decisionDb, CONTACT);
+        const stopped = await declineVia(decisionStore, decisionDb, decisionCard, { autonomy,
+          ...(state === "unmatched" ? { token: "0000000000000000" } : {}),
+          ...(state === "recording_failed" ? { tableErrors: {
+            paige_pending_confirmations: ({ op }) => op === "update" ? { code: "42501", message: "fixture recording denied" } : null,
+          } } : {}), streamScript: [call, call, DECLINE_REPLY] });
+        const terminal = stopped.rec.rpc.find((c) => c.name === "paige_chat_interactive_settle")?.args?.p_bundle_ref;
+        const resultMessages = replyRequests(stopped).flatMap((r) => (r.messages ?? []).filter((m) => m.role === "tool").map((m) => m.content)).join("\n");
+        assert(`40.4b16 ${autonomy} ${call.name} ${state}: decline cannot file a new decision or mint a confirmation binding in any model round`,
+          stopped.status === 200 && decisionStore.rows[0].consumed === (state === "matched")
+            && decisionStore.rows.length === 1 && cardsOf(stopped.bodyText).length === 0
+            && !(stopped.rec.inserts ?? []).some((i) => i.table === "paige_pending_approvals")
+            && !stopped.rec.rpc.some((c) => ["prepare_pipeline_archive_as_paige", "prepare_pipeline_folder_archive_as_paige"].includes(c.name))
+            && !framesOf(stopped.bodyText).some((f) => f.approval_queued?.length)
+            && !(terminal?.approval_queued?.length) && !terminal?.paige_resume && resumedFrames(stopped.bodyText).length === 0
+            && !/"confirmation_token"\s*:/.test(resultMessages) && replyRequests(stopped).length >= 3
+            && toldModel(stopped).includes(state === "recording_failed" ? "confirmation_context_unavailable" : "declined_turn_requires_new_instruction"),
+          JSON.stringify({ tool: call.name, autonomy, state, inserts: stopped.rec.inserts?.filter((i) => i.table === "paige_pending_approvals"),
+            previewCalls: stopped.rec.rpc.filter((c) => /prepare_pipeline.*archive_as_paige/.test(c.name)),
+            queued: terminal?.approval_queued, rounds: replyRequests(stopped).length }));
+      }
+    }
+    for (const call of decisionWriters) {
+      const positiveStore = makeConfirmStore(); const positiveDb = crmDb();
+      const positive = await crmDrive(positiveStore, positiveDb, { toolCall: call,
+        extraService: { paige_pending_approvals: () => [{ id: OWN }] },
+        extraRpc: { prepare_pipeline_archive_as_paige: { data: { ok: true, confirmation_token: OWN }, error: null },
+          prepare_pipeline_folder_archive_as_paige: { data: { ok: true, confirmation_token: OWN }, error: null } } });
+      assert(`40.4b17 fresh ${call.name}: ordinary authorized decision preparation remains available without a decline`,
+        positive.status === 200 && (call.name === "propose_action"
+          ? (positive.rec.inserts ?? []).filter((i) => i.table === "paige_pending_approvals").length === 1
+          : positive.rec.rpc.filter((c) => c.name === (call.name === "pipeline_archive_preview" ? "prepare_pipeline_archive_as_paige" : "prepare_pipeline_folder_archive_as_paige")).length === 1)
+          && !toldModel(positive).includes("declined_turn_requires_new_instruction"),
+        JSON.stringify({ tool: call.name, inserts: positive.rec.inserts?.filter((i) => i.table === "paige_pending_approvals"),
+          previewCalls: positive.rec.rpc.filter((c) => /prepare_pipeline.*archive_as_paige/.test(c.name)) }));
+    }
+    for (const tokenKind of ["bare", "scoped", "same"]) {
+      const mixedStore = makeConfirmStore(); const mixedDb = crmDb();
+      const declinedCard = await proposeVia(mixedStore, mixedDb, CONTACT);
+      const approvedCard = await proposeVia(mixedStore, mixedDb, { ...CONTACT, args: { patch: { first_name: "Another", last_name: "Person" } } });
+      const token = tokenKind === "scoped" ? `${declinedCard.fingerprint}:${mixedStore.rows[0].issued_in_request}` : declinedCard.fingerprint;
+      const mixed = await declineVia(mixedStore, mixedDb, declinedCard, { token,
+        bodyExtra: { approvedConfirmations: [tokenKind === "same" ? declinedCard.fingerprint : approvedCard.fingerprint] },
+        streamScript: [CONTACT, DECLINE_REPLY], autonomy: "auto" });
+      const terminal = mixed.rec.rpc.find((c) => c.name === "paige_chat_interactive_settle")?.args?.p_bundle_ref;
+      assert(`40.4b13 ${tokenKind}: mixed approval/decline cannot construct a positive resume or execute either proposal`,
+        mixed.status === 200 && doorCalls(mixed).length === 0 && mixedDb.executions.length === 0 && mixedDb.committed.size === 0
+          && mixedStore.rows.length === 2 && !mixedStore.rows[1].consumed && resumedFrames(mixed.bodyText).length === 0
+          && cardsOf(mixed.bodyText).length === 0 && !terminal?.paige_resume && !terminal?.turn_state?.resumed
+          && toldModel(mixed).includes("declined_turn_requires_new_instruction"),
+        JSON.stringify({ status: mixed.status, executions: mixedDb.executions.length, calls: doorCalls(mixed).length,
+          rows: mixedStore.rows.length, consumed: mixedStore.rows.map((r) => r.consumed), resumed: resumedFrames(mixed.bodyText) }));
+    }
+    const freshStore = makeConfirmStore(); const freshDb = crmDb();
+    const freshCard = await proposeVia(freshStore, freshDb, CONTACT);
+    await declineVia(freshStore, freshDb, freshCard);
+    const fresh = await crmDrive(freshStore, freshDb, { toolCall: CONTACT,
+      extraRpc: { resolve_tool_autonomy: { data: "auto", error: null } } });
+    assert("40.4b10 a new explicit user request after decline retains ordinary AUTO CRM execution",
+      doorCalls(fresh).length === 1 && freshDb.executions.length === 1 && freshDb.committed.size === 1
+        && cardsOf(fresh.bodyText).length === 0 && replyRequests(fresh).every((body) => declineNote(body) === ""),
+      JSON.stringify({ executions: freshDb.executions.length, doorCalls: doorCalls(fresh).length, cards: cardsOf(fresh.bodyText) }));
+    const reminder = { title: "A fresh reminder", remind_at: "2099-01-01T12:00:00Z", channel: "in_app" };
+    const freshPlan = await crmDrive(freshStore, freshDb, { toolCall: { name: "plan_set_reminder", args: reminder },
+      extraRpc: { resolve_tool_autonomy: { data: "auto", error: null }, plan_set_reminder: { data: { ok: true, item_id: OWN }, error: null } },
+      extraTables: { plan_items: () => [{ id: OWN, tenant_id: CALLER_TENANT, updated_at: "2026-01-01T00:00:00Z",
+        title: reminder.title, summary: null, created_by: USER, item_type: "reminder", remind_at: reminder.remind_at,
+        remind_target: "user", remind_channel: "in_app", plan_id: null, assigned_to_user_id: USER, contact_id: null, status: "open" }] } });
+    assert("40.4b14 a fresh subsequent AUTO Planning request uses the native writer and verified readback normally",
+      freshPlan.rec.rpc.filter((c) => c.name === "plan_set_reminder").length === 1
+        && toldModel(freshPlan).includes('"success":true') && !toldModel(freshPlan).includes("declined_turn_requires_new_instruction")
+        && cardsOf(freshPlan.bodyText).length === 0 && replyRequests(freshPlan).every((body) => declineNote(body) === ""),
+      JSON.stringify({ rpc: freshPlan.rec.rpc.filter((c) => c.name === "plan_set_reminder"), cards: cardsOf(freshPlan.bodyText) }));
+    const unknownStore = makeConfirmStore(); const unknownDb = crmDb();
+    const unknownCard = await proposeVia(unknownStore, unknownDb, CONTACT);
+    const unknown = await declineVia(unknownStore, unknownDb, unknownCard, { autonomy: "auto", streamScript: [CONTACT, DECLINE_REPLY],
+      unresolved: [{ bundle_ref: { interactive: { effects: [{ tool: "crm_create_contact", outcome: "outcome_unknown" }] } } }] });
+    assert("40.4b15 an unresolved earlier effect keeps reconciliation precedence and is never retried on a decline turn",
+      unknown.status === 200 && doorCalls(unknown).length === 0 && unknownDb.executions.length === 0
+        && toldModel(unknown).includes("prior_effect_reconciliation_required") && !toldModel(unknown).includes("declined_turn_requires_new_instruction")
+        && cardsOf(unknown.bodyText).length === 0, JSON.stringify({ status: unknown.status, calls: doorCalls(unknown).length }));
+    for (const autonomy of ["confirm", "auto"]) {
+      const failedStore = makeConfirmStore(); const failedDb = crmDb();
+      const failedCard = await proposeVia(failedStore, failedDb, CONTACT);
+      const failed = await declineVia(failedStore, failedDb, failedCard, {
+        autonomy, streamScript: [CONTACT, DECLINE_REPLY],
+        tableErrors: {
+          paige_pending_confirmations: ({ op }) => op === "update" ? { code: "42501", message: "fixture decline recording denied" } : null,
+        },
+      });
+      const failedNote = declineNote(replyRequests(failed)[0]);
+      const failedTerminal = failed.rec.rpc.find((c) => c.name === "paige_chat_interactive_settle")?.args?.p_bundle_ref;
+      assert(`40.4b8 ${autonomy}: failed decline recording blocks adversarial CRM model dispatch and explains uncertainty without repeating the choice`,
+        failed.status === 200 && !failedStore.rows[0].consumed && failedDb.executions.length === 0 && failedDb.committed.size === 0
+          && doorCalls(failed).length === 0 && failedStore.rows.length === 1
+          && cardsOf(failed.bodyText).length === 0 && resumedFrames(failed.bodyText).length === 0
+          && (failedTerminal?.paige_crm_result ?? []).length === 0 && !failedTerminal?.paige_resume
+          && /already chose Not now/.test(failedNote) && /could not be verified/i.test(failedNote)
+          && /do not claim cancellation completed/i.test(failedNote)
+          && toldModel(failed).includes("confirmation_context_unavailable"),
+        JSON.stringify({ status: failed.status, consumed: failedStore.rows[0].consumed, executions: failedDb.executions.length,
+          committed: failedDb.committed.size, doorCalls: doorCalls(failed).length, cards: cardsOf(failed.bodyText), note: failedNote }));
+    }
+  }
+  {
+    // Expired between selection and the door's claim: the native door acknowledges refusal as
+    // unavailable, without guessing why its exact claim failed or creating a replacement card.
+    // Time really passes while the claim is on its way (an async store answer).
     const st = makeConfirmStore(); const db = crmDb();
     const card = await proposeVia(st, db, CONTACT);
     const closesAt = Date.now() + 1500;
@@ -6369,12 +6737,12 @@ try {
         return st.table(filters.map((f) => (f[0] === "gt" && f[1] === "expires_at" ? ["gt", "expires_at", now] : f)));
       } } });
     const outcome = outcomeOf(r.bodyText);
-    assert("40.4d expired between selection and the door's claim: nothing runs, the card says it expired, no fresh card",
-      db.executions.length === 0 && outcome?.actions?.[0]?.outcome === "not_run" && /expired/.test(outcome?.note ?? "")
-        && cardsOf(r.bodyText).length === 0 && toldModel(r).includes("approval_expired"),
+    assert("40.4d expired between selection and the door's claim: native unconfirmed claim, this request never writes or proposes",
+      db.executions.length === 0 && db.committed.size === 0 && doorCalls(r).length === 1 && outcome?.actions?.[0]?.outcome === "unconfirmed"
+        && st.rows.length === 1 && cardsOf(r.bodyText).length === 0 && toldModel(r).includes("CRM_APPROVAL_UNCONFIRMED")
+        && toldModel(r).includes("approval could not be confirmed"),
       JSON.stringify({ outcome, executions: db.executions.length, rows: st.rows.length }));
-    // The person was told it expired. The door's fresh proposal (same fingerprint) is retired, so a
-    // later re-send of the same token runs nothing — "expired" stays true.
+    // No fresh proposal exists: a later re-send of the same token still runs nothing.
     const liveAfter = st.rows.filter((row) => !row.consumed && row.expires_at > new Date().toISOString());
     const later = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] } });
     assert("40.4f …and the token posted again later: no live proposal was left behind, nothing runs",
@@ -6384,13 +6752,11 @@ try {
   }
   {
     // THE DOOR'S CLAIM ITSELF COULD NOT RUN (a store error on its claim update) while the card is still
-    // live. crm-command reads that as nothing claimed and proposes again — its insert meets the live
-    // card (the live unique index) and it answers with THAT card. Nothing ran, and the approval is still
-    // good: the truthful outcome is C4a's "could not be checked" (the pinned row re-read: still live),
-    // never "it may already have happened". The card was shown minutes ago (a real card, not a row
+    // live. crm-command returns CRM_APPROVAL_UNCONFIRMED without an insert or execution. This is
+    // unknown original outcome: another claimant may still commit, and this grants no permission to re-propose.
+    // The original card stays live. The card was shown minutes ago (a real card, not a row
     // minted milliseconds before the request), so it is outside the retirement's clock allowance
-    // altogether — it must stay live. Kills: settling a failed door claim without re-reading the row;
-    // widening the retirement's allowance (it would consume the person's live card).
+    // altogether — it must stay live. The explicit refusal must not consume it or create a new one.
     const st = makeConfirmStore(); const db = crmDb();
     const card = await proposeVia(st, db, CONTACT);
     st.rows[0].server_issued_at = new Date(Date.now() - 5 * 60_000).toISOString();
@@ -6398,9 +6764,9 @@ try {
       ? { code: "57014", message: "canceling statement due to statement timeout" } : null);
     const r = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] }, tableErrors: { "paige_pending_confirmations:update": claimDown } });
     const outcome = outcomeOf(r.bodyText);
-    assert("40.4g the door's claim errors while the card is live: nothing runs, the person is told it could not be checked (not 'may already have happened'), no card",
-      db.executions.length === 0 && doorCalls(r).length === 1 && outcome?.actions?.[0]?.outcome === "not_run"
-        && /checking your approval/.test(outcome?.note ?? "") && toldModel(r).includes("approval_check_unavailable")
+    assert("40.4g the door's claim errors while live: native unconfirmed-approval refusal, no business write and no card",
+      db.executions.length === 0 && db.committed.size === 0 && doorCalls(r).length === 1 && outcome?.actions?.[0]?.outcome === "unconfirmed"
+        && toldModel(r).includes("CRM_APPROVAL_UNCONFIRMED") && toldModel(r).includes("approval could not be confirmed")
         && !toldModel(r).includes("approval_already_used") && cardsOf(r.bodyText).length === 0,
       JSON.stringify({ outcome, executions: db.executions.length, told: toldModel(r).match(/approval_[a-z_]+/g) }));
     assert("40.4g …and the person's card is still live (not retired), so the same Approve, sent again, runs it once",
@@ -6410,23 +6776,22 @@ try {
       db.executions.length === 1 && st.rows[0].consumed === true && outcomeOf(retry.bodyText)?.actions?.[0]?.outcome === "ran",
       JSON.stringify({ executions: db.executions.length, outcome: outcomeOf(retry.bodyText) }));
     // The same failed claim on a card minted a moment ago (inside the clock allowance): the pinned row is
-    // never what the retirement consumes, so it is still live and the outcome is still "could not be
-    // checked". Kills: dropping the pinned-row exclusion from the retirement.
+    // never retired, so it stays live and the native refusal still reports unconfirmed authority.
     const st2 = makeConfirmStore(); const db2 = crmDb();
     const card2 = await proposeVia(st2, db2, CONTACT);
     const r2 = await crmDrive(st2, db2, { body: { approvedConfirmations: [card2.fingerprint] }, tableErrors: { "paige_pending_confirmations:update": claimDown } });
     assert("40.4g2 …a card minted a moment before the request is the pinned row, and the retirement never consumes it",
       db2.executions.length === 0 && st2.rows.length === 1 && st2.rows[0].consumed === false
-        && outcomeOf(r2.bodyText)?.actions?.[0]?.outcome === "not_run" && toldModel(r2).includes("approval_check_unavailable"),
+        && db2.committed.size === 0 && outcomeOf(r2.bodyText)?.actions?.[0]?.outcome === "unconfirmed"
+        && toldModel(r2).includes("CRM_APPROVAL_UNCONFIRMED"),
       JSON.stringify({ rows: st2.rows.map((row) => ({ consumed: !!row.consumed })), outcome: outcomeOf(r2.bodyText) }));
   }
   {
-    // THE RETIREMENT TAKES ONLY WHAT IS STILL LIVE. History with the
+    // A REFUSAL PRESERVES CONSUMED HISTORY. History with the
     // card's fingerprint (a declined card, and an earlier unshown re-proposal already retired), both
     // issued inside the retirement's window, both consumed at a known moment. A stale Approve: the
-    // pinned (newest) row is used, the door proposes again, and only that fresh row is retired — the
-    // consumed rows keep their consumed_at (an audit of when each was used stays true). Kills: dropping
-    // `consumed_at IS NULL` from the retirement (the older consumed row is re-stamped).
+    // pinned (newest) row is used, the native door refuses without a fresh row, and all consumed
+    // rows keep their consumed_at (an audit of when each was used stays true).
     const st = makeConfirmStore(); const db = crmDb();
     const card = await proposeVia(st, db, CONTACT);
     const now = Date.now();
@@ -6437,9 +6802,9 @@ try {
     const before = st.rows.map((row) => ({ id: row.id, consumedAt: row.consumedAt ?? null }));
     const r = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] } });
     const fresh = st.rows.filter((row) => !before.some((b) => b.id === row.id));
-    assert("40.4h a stale Approve over consumed history: nothing runs, the door's fresh proposal is retired, every consumed row keeps its consumed_at",
-      db.executions.length === 0 && outcomeOf(r.bodyText)?.actions?.[0]?.outcome === "unconfirmed" && cardsOf(r.bodyText).length === 0
-        && fresh.length === 1 && fresh[0].consumed === true
+    assert("40.4h a stale Approve over consumed history: native refusal, no fresh row, every consumed timestamp retained",
+      db.executions.length === 0 && db.committed.size === 0 && outcomeOf(r.bodyText)?.actions?.[0]?.outcome === "unconfirmed" && cardsOf(r.bodyText).length === 0
+        && fresh.length === 0 && toldModel(r).includes("CRM_APPROVAL_UNCONFIRMED")
         && before.filter((b) => b.consumedAt !== null).every((b) => st.rows.find((row) => row.id === b.id)?.consumedAt === b.consumedAt),
       JSON.stringify({ before, after: st.rows.map((row) => ({ id: row.id, consumedAt: row.consumedAt ?? null })), outcome: outcomeOf(r.bodyText) }));
   }
@@ -6461,11 +6826,11 @@ try {
       JSON.stringify({ executions: db.executions.length, door: doorCalls(r).length, cards: cardsOf(r.bodyText).length }));
   }
 
-  // ── 40.5c THE "ELSEWHERE" HALF OF THE RE-EMIT GUARD. Declined, then a stale Approve whose reply ALSO
-  // has the model call the door tool for the same act. The carried-forward call reads "can't confirm"
-  // (nothing was committed); the model's own call must not reach the door either — it would claim (or,
-  // with the re-proposal retired, re-propose as a fresh card) the act the person turned down. Kills:
-  // a guard that only refuses re-emits after a call that ran ("here").
+  // ── 40.5c THE REFUSED-RESULT HALF OF THE RE-EMIT GUARD. Declined, then a stale Approve whose reply ALSO
+  // has the model call the door tool for the same act. The native refusal is authoritative, and
+  // the model's own call must not reach the door either or propose the declined act afresh. Kills:
+  // a guard that only refuses re-emits after successful execution. Unknown native claim outcomes
+  // activate the stronger existing reconciliation brake before the ordinary re-emit guard.
   {
     const st = makeConfirmStore(); const db = crmDb();
     const card = await proposeVia(st, db, CONTACT);
@@ -6473,7 +6838,11 @@ try {
     const r = await crmDrive(st, db, { body: { approvedConfirmations: [card.fingerprint] }, toolCall: CONTACT });
     const lostResults = (toldModel(r).match(/"error":"approval_already_used"/g) ?? []).length;
     assert("40.5c declined, stale Approve, and the model calls the door again: the re-emit is refused too — nothing runs, no card, the door asked once",
-      db.executions.length === 0 && doorCalls(r).length === 1 && cardsOf(r.bodyText).length === 0 && lostResults >= 2,
+      db.executions.length === 0 && db.committed.size === 0 && st.rows.length === 1 && doorCalls(r).length === 1
+        && cardsOf(r.bodyText).length === 0 && lostResults === 0 && toldModel(r).includes("CRM_APPROVAL_UNCONFIRMED")
+        && outcomeOf(r.bodyText)?.actions?.[0]?.outcome === "unconfirmed"
+        && toldModel(r).includes('"outcome_unknown":true') && toldModel(r).includes('"not_applied":false')
+        && toldModel(r).includes("prior_effect_reconciliation_required"),
       JSON.stringify({ executions: db.executions.length, door: doorCalls(r).length, cards: cardsOf(r.bodyText).length, lostResults }));
   }
 
@@ -6988,6 +7357,287 @@ try {
         && db3.executions.length === 1 && db3.executions[0].command.action === "contact.create"
         && dealRow?.consumed === false && st3.rows.length === 2,
       JSON.stringify({ door: doorCalls(both).map((c) => c.body?.approved_fingerprint), executions: db3.executions.map((e) => e.command.action), deal: dealRow?.consumed }));
+  }
+
+  // ── 40.16 COMMS C4b. The Chat handler, selector, helper, scope checks and persistence below are
+  // REAL. Only comms-email-command is MODELLED, at the same functions.invoke boundary as 40.9 Sales.
+  // Its replay-before-current-approval/claim and newly minted cycle mirror the door's index.ts
+  // §§2,5-9. Effects and Rail entries below are MODELLED counters: NOT native SQL, provider, delivery,
+  // production Rail or customer proof. The real native/send suites remain separate evidence.
+  {
+    const EMAIL = "comms_send_email";
+    const ACTION_A = "abcdaaaa-1111-4111-8111-111111111111";
+    const ACTION_B = "abcdbbbb-2222-4222-8222-222222222222";
+    const PPA_A = "abcdcccc-3333-4333-8333-333333333333";
+    const PPA_B = "abcddddd-4444-4444-8444-444444444444";
+    const EMAIL_OP = "abcdeeee-5555-4555-8555-555555555555";
+    const CONNECTOR = "abcdffff-6666-4666-8666-666666666666";
+    const emailCall = { name: EMAIL, args: { contact_id: OWN, subject: "Checking in", body: "How is your week going?" } };
+    const emailArgs = (extra = {}) => ({ expected_tenant_id: CALLER_TENANT, operation_id: EMAIL_OP,
+      command: { action: "comms.email_send", contact_id: OWN, connector_id: CONNECTOR, subject: emailCall.args.subject, body: emailCall.args.body }, approval_id: PPA_A,
+      recipient: "dana@example.test", from_address: "owner@example.test", content_digest: "d".repeat(64),
+      approval_cycle_nonce: "abcdefab-7777-4777-8777-777777777777", ...extra });
+    const emailState = () => ({ committed: new Map(), effects: [], rail: [], ppa: "drafted", loseAck: false });
+    const emailDoor = (store, db) => async (options) => {
+      const b = options.body;
+      // The operation's saved native result is checked FIRST, including when its PPA is now terminal.
+      const prior = db.committed.get(b.operation_id);
+      if (prior) return { data: prior.approval_id === b.approval_id
+        ? { ...prior.result, replayed: true }
+        : { ok: false, outcome: "outcome_unknown", code: "LEAD_REPLY_APPROVAL_MISMATCH" }, error: null };
+      if (b.approval_id && !["drafted", "pending_approval"].includes(db.ppa)) {
+        return httpErr(409, { ok: false, outcome: "refused", code: "LEAD_REPLY_APPROVAL_NOT_PENDING" });
+      }
+      const hit = b.approved_fingerprint ? claimRow(store, b, EMAIL, (row) => row.args.operation_id === b.operation_id
+        && row.args.approval_id === b.approval_id && JSON.stringify(row.args.command) === JSON.stringify(b.command)) : null;
+      if (!hit) {
+        const now = Date.now();
+        let row = store.rows.find((r) => r.tool_name === EMAIL && !r.consumed && r.args?.operation_id === b.operation_id
+          && r.user_id === USER && r.tenant_id === CALLER_TENANT && r.expires_at > new Date(now).toISOString());
+        if (!row) {
+          row = await doorRow(EMAIL, emailArgs({ operation_id: b.operation_id, command: b.command,
+            ...(b.approval_id ? { approval_id: b.approval_id } : { approval_id: undefined }), approval_cycle_nonce: crypto.randomUUID() }),
+          { id: `modelled-email-${store.rows.length}`, consumed: false, issued_in_request: crypto.randomUUID(),
+            server_issued_at: new Date(now).toISOString(), expires_at: new Date(now + 600_000).toISOString() });
+          if (row.args.approval_id === undefined) delete row.args.approval_id;
+          row.fingerprint = await confirmFingerprint(EMAIL, row.args);
+          store.rows.push(row);
+        }
+        return { data: { ok: false, outcome: "approval_required", fingerprint: row.fingerprint,
+          operation_id: b.operation_id, summary: "Approve this exact email", preview: { kind: "email", to_address: "dana@example.test",
+            from_address: "owner@example.test", subject: b.command.subject, body_text: b.command.body } }, error: null };
+      }
+      const result = { ok: true, outcome: "provider_accepted", delivery_confirmed: false, provider_receipt_available: true };
+      db.effects.push({ operation: hit.args.operation_id, approval: hit.args.approval_id, command: structuredClone(hit.args.command) });
+      db.rail.push({ operation: hit.args.operation_id, capability: EMAIL, outcome: "provider_accepted" });
+      db.committed.set(hit.args.operation_id, { approval_id: hit.args.approval_id, result });
+      db.ppa = "approved";
+      if (db.loseAck) { db.loseAck = false; return { data: { ok: false, outcome: "outcome_unknown" }, error: null }; }
+      return { data: result, error: null };
+    };
+    const emailDrive = (store, db, { tokens = [store.rows[0]?.fingerprint], toolCall, body = {}, rpc = {}, tables = {},
+      service = {}, functions = {}, signal, streamScript } = {}) => drive({
+      stream: true, text: body.declinedConfirmations ? "Not now." : "Approved — run it.", toolCall, streamScript, requestSignal: signal,
+      classification: { intent: "act", research: "none", difficulty: "routine", image: "none", needs_workspace_data: false, confidence: 0.9 },
+      extraBody: { threadId: THREAD, ...(tokens.length ? { approvedConfirmations: tokens } : {}), ...body },
+      rpcOverrides: { ...SEAT(CALLER_TENANT), ...rpc },
+      serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...service },
+      tablesExtra: { paige_pending_confirmations: store.table, paige_chat_threads: () => [{ studio_session_id: null, summary: null }],
+        ...(tokens.length ? turnsWith(tokens[0], EMAIL) : {}), ...tables },
+      onInsert: mirrorConfirms(store), functionsExtra: { "comms-email-command": emailDoor(store, db), ...functions },
+    });
+    const emailCalls = (r) => doorCalls(r, "comms-email-command");
+    const noEmail = (r, db) => emailCalls(r).length === 0 && db.effects.length === 0 && db.rail.length === 0 && cardsOf(r.bodyText).length === 0;
+    const describe = (r, store, db) => JSON.stringify({ status: r.status, calls: emailCalls(r).map((c) => c.body),
+      effects: db.effects, rail: db.rail, rows: store.rows.map((row) => ({ fp: row.fingerprint, consumed: row.consumed })),
+      outcome: outcomeOf(r.bodyText), cards: cardsOf(r.bodyText), errors: r.logged.filter((l) => l.level === "error").slice(-2) });
+
+    const st = makeConfirmStore([await doorRow(EMAIL, emailArgs())]);
+    const db = emailState();
+    const approved = await emailDrive(st, db);
+    const calls = emailCalls(approved);
+    assert("40.16a MODELLED Comms: approval resumes without a model re-emit, using only its original operation/PPA/command and caller JWT client",
+      db.effects.length === 1 && db.effects[0].operation === EMAIL_OP && db.effects[0].approval === PPA_A
+        && JSON.stringify(db.effects[0].command) === JSON.stringify(st.rows[0].args.command)
+        && calls.length === 1 && calls[0].client === "jwt" && calls[0].body.operation_id === EMAIL_OP
+        && calls[0].body.approval_id === PPA_A && calls[0].body.approved_fingerprint === st.rows[0].fingerprint
+        && st.rows[0].consumed && outcomeOf(approved.bodyText)?.actions?.[0]?.outcome === "ran"
+        && resumedFrames(approved.bodyText).length === 1 && cardsOf(approved.bodyText).length === 0,
+      describe(approved, st, db));
+    assert("40.16b MODELLED Comms: its one modelled native outcome/Rail stays door-owned; Chat adds no duplicate capability receipt and claims no delivery",
+      db.rail.length === 1 && !approved.rec.rpc.some((r) => r.name === "record_capability_run")
+        && toldModel(approved).includes('"delivery_confirmed":false') && toldModel(approved).includes("accepted for delivery"), describe(approved, st, db));
+    const replay = await emailDrive(st, db);
+    assert("40.16c MODELLED Comms: used approval with CURRENT terminal PPA reads the ORIGINAL operation before fresh eligibility; no second effect/Rail/card",
+      db.ppa === "approved" && db.effects.length === 1 && db.rail.length === 1 && st.rows.length === 1
+        && emailCalls(replay).length === 1 && emailCalls(replay)[0].body.operation_id === EMAIL_OP
+        && emailCalls(replay)[0].body.approval_id === PPA_A && outcomeOf(replay.bodyText)?.actions?.[0]?.outcome === "ran"
+        && cardsOf(replay.bodyText).length === 0 && toldModel(replay).includes('"replayed":true'), describe(replay, st, db));
+    const { readResumeRecord } = await import("../../supabase/functions/_shared/paige-turn/resume.ts");
+    const saved = savedAnswer(approved), resume = readResumeRecord(saved?.paige_resume);
+    assert("40.16d MODELLED Comms: the original approval report and resumed outcome persist as the exact wire record for reload",
+      saved?.turn_state?.resumed?.kind === "approval" && resume?.from_turn_id === SUSPENDED
+        && JSON.stringify(resume?.outcomes) === JSON.stringify([{ tool: EMAIL, outcome: "ran" }])
+        && JSON.stringify(resume?.approval_outcome) === JSON.stringify(outcomeOf(approved.bodyText)), JSON.stringify(saved));
+    const reemitted = await emailDrive(st, db, { toolCall: { ...emailCall, args: { ...emailCall.args, body: "Model drift must not send again." } } });
+    assert("40.16e MODELLED Comms: a model re-emission after replay is refused, including drift, with no second send or proposal",
+      db.effects.length === 1 && db.rail.length === 1 && emailCalls(reemitted).length === 1 && st.rows.length === 1
+        && cardsOf(reemitted.bodyText).length === 0 && toldModel(reemitted).includes("already_handled_this_reply"), describe(reemitted, st, db));
+
+    const lostStore = makeConfirmStore([await doorRow(EMAIL, emailArgs())]), lostDb = emailState(); lostDb.loseAck = true;
+    const lost = await emailDrive(lostStore, lostDb, { toolCall: emailCall });
+    assert("40.16f MODELLED Comms: native commit then lost ACK is unconfirmed, never not-run/delivered; model re-emission cannot dispatch again",
+      lostDb.effects.length === 1 && lostDb.rail.length === 1 && emailCalls(lost).length === 1
+        && outcomeOf(lost.bodyText)?.actions?.[0]?.outcome === "unconfirmed" && cardsOf(lost.bodyText).length === 0
+        && readResumeRecord(savedAnswer(lost)?.paige_resume)?.outcomes?.[0]?.outcome === "unconfirmed", describe(lost, lostStore, lostDb));
+    const settled = await emailDrive(lostStore, lostDb);
+    assert("40.16g MODELLED Comms: reapproving after lost ACK reconciles the saved original operation/PPA only, with one modelled effect/Rail total",
+      lostDb.effects.length === 1 && lostDb.rail.length === 1 && emailCalls(settled)[0]?.body.operation_id === EMAIL_OP
+        && emailCalls(settled)[0]?.body.approval_id === PPA_A && outcomeOf(settled.bodyText)?.actions?.[0]?.outcome === "ran"
+        && cardsOf(settled.bodyText).length === 0 && lostStore.rows.length === 1, describe(settled, lostStore, lostDb));
+    const unknownStore = makeConfirmStore([await doorRow(EMAIL, emailArgs(), { consumed: true })]), unknownDb = emailState();
+    unknownDb.ppa = "approved";
+    unknownDb.committed.set(EMAIL_OP, { approval_id: PPA_A, result: { ok: false, outcome: "outcome_unknown" } });
+    const unknown = await emailDrive(unknownStore, unknownDb, { toolCall: emailCall });
+    assert("40.16h MODELLED Comms: original unknown remains unknown; no claim, replacement proposal, effect or Rail is invented",
+      unknownDb.effects.length === 0 && unknownDb.rail.length === 0 && emailCalls(unknown).length === 1
+        && outcomeOf(unknown.bodyText)?.actions?.[0]?.outcome === "unconfirmed" && unknownStore.rows.length === 1
+        && cardsOf(unknown.bodyText).length === 0
+        && readResumeRecord(savedAnswer(unknown)?.paige_resume)?.outcomes?.[0]?.outcome === "unconfirmed", describe(unknown, unknownStore, unknownDb));
+
+    const declinedStore = makeConfirmStore([await doorRow(EMAIL, emailArgs())]), declinedDb = emailState();
+    await emailDrive(declinedStore, declinedDb, { tokens: [], body: { declinedConfirmations: [declinedStore.rows[0].fingerprint] } });
+    const originalConsumed = declinedStore.rows[0].consumed;
+    const stale = await emailDrive(declinedStore, declinedDb, { toolCall: emailCall });
+    assert("40.16i MODELLED Comms: declined stale approval cannot send; the door's fresh unshown needs-confirm cycle is retired, with no replacement card",
+      originalConsumed && declinedDb.effects.length === 0 && declinedDb.rail.length === 0 && emailCalls(stale).length === 1
+        && declinedStore.rows.length === 2 && declinedStore.rows.every((row) => row.consumed)
+        && outcomeOf(stale.bodyText)?.actions?.[0]?.outcome === "unconfirmed" && cardsOf(stale.bodyText).length === 0, describe(stale, declinedStore, declinedDb));
+
+    for (const [label, args, patch, tokens] of [
+      ["malformed command", emailArgs({ command: { ...emailArgs().command, subject: "bad\nsubject" } }), {}, null],
+      ["malformed present PPA", emailArgs({ approval_id: "not-a-uuid" }), {}, null],
+      ["expired", emailArgs(), { expires_at: "2000-01-01T00:00:00Z" }, null],
+      ["foreign actor", emailArgs(), { user_id: FOREIGN }, null],
+      ["foreign tenant", emailArgs(), { tenant_id: OTHER_TENANT }, null],
+      ["missing server marker", emailArgs(), { server_issued_at: null }, null],
+      ["missing issuance nonce", emailArgs(), { issued_in_request: null }, null],
+      ["non-bare token", emailArgs(), {}, ["not-a-card-token"]],
+    ]) {
+      const s = makeConfirmStore([await doorRow(EMAIL, args, patch)]), d = emailState();
+      const r = await emailDrive(s, d, { ...(tokens ? { tokens } : {}) });
+      assert(`40.16j MODELLED Comms ${label}: no door/effect/Rail/new card and original row unspent`,
+        noEmail(r, d) && !s.rows[0].consumed, describe(r, s, d));
+    }
+    {
+      const s = makeConfirmStore([await doorRow(EMAIL, emailArgs())]), d = emailState();
+      const r = await emailDrive(s, d, { tables: { paige_chat_turns: () => [] } });
+      assert("40.16k MODELLED Comms: a token whose card this thread never showed is not carried forward", noEmail(r, d) && !s.rows[0].consumed, describe(r, s, d));
+      const SESSION = "5e550000-0000-4000-8000-0000000000c4";
+      const withheld = await emailDrive(s, d, { service: { paige_subagents: () => [{ config: { capability_scope: {
+        version: 1, mode: "allowlist", tools: ["ask_choices", "capability_status", "growth_list"] } } }] },
+        tables: { paige_chat_threads: () => [{ studio_session_id: SESSION, summary: null }],
+          studio_sessions: () => [{ id: SESSION, artifact_refs: [], title: "Spring launch" }] } });
+      assert("40.16l MODELLED Comms: an unoffered tool leaves its exact approval unspent; no door or new card", noEmail(withheld, d) && !s.rows[0].consumed, describe(withheld, s, d));
+      const controller = new AbortController();
+      const stopped = await emailDrive(s, d, { signal: controller.signal, tables: { paige_pending_confirmations: (filters) => {
+        const rows = s.table(filters);
+        if (filters.some(([op, col]) => op === "select" && String(col).includes("issued_in_request"))) controller.abort();
+        return rows;
+      } } });
+      assert("40.16m MODELLED Comms: abort after reading the original proposal withdraws the request before invoking the door", noEmail(stopped, d) && !s.rows[0].consumed, describe(stopped, s, d));
+    }
+    {
+      const s = makeConfirmStore([await doorRow(EMAIL, emailArgs())]), d = emailState();
+      let selected = false, observedWithdrawal = false;
+      const r = await emailDrive(s, d, { tables: {
+        // A dynamic persona RPC has no static fixtureOwnTenant in drive(); bind the real original
+        // thread explicitly so this reaches the scope-change oracle rather than a null-tenant row.
+        paige_chat_threads: () => [{ id: THREAD, tenant_id: CALLER_TENANT, caller_user_id: USER, audience: "workspace" }],
+        paige_pending_confirmations: (filters) => {
+        const rows = s.table(filters);
+        if (filters.some(([op, col]) => op === "select" && String(col).includes("issued_in_request"))) selected = true;
+        return rows;
+      } }, rpc: { get_paige_persona_context: () => {
+        const tenant = selected && !observedWithdrawal ? OTHER_TENANT : CALLER_TENANT;
+        if (tenant === OTHER_TENANT) observedWithdrawal = true;
+        return PERSONA(tenant).get_paige_persona_context;
+      } } });
+      assert("40.16u MODELLED Comms: an observed A-to-B scope withdrawal stays withdrawn even if a later read returns A; no invocation or consumed approval",
+        observedWithdrawal && noEmail(r, d) && !s.rows[0].consumed, describe(r, s, d));
+    }
+
+    const originRow = (extra = {}) => ({ id: ACTION_A, approval_id: PPA_A, contact_id: OWN, tenant_id: CALLER_TENANT,
+      action_kind: "owner.lead_followup", status: "drafted", ...extra });
+    const advanceCall = (id = ACTION_A) => ({ name: "action_advance", args: { action_id: id, to_status: "drafted",
+      draft_content: { channel: "email", subject: emailCall.args.subject, body: emailCall.args.body } } });
+    const originDrive = (s, d, calls, { rows = [originRow()], advance = { data: { ok: true, action_id: ACTION_A, approval_id: PPA_A }, error: null }, rpc = {}, tables = {} } = {}) =>
+      emailDrive(s, d, { tokens: [], toolCall: calls, tables, rpc: { resolve_tool_autonomy: { data: "auto", error: null },
+        advance_action: advance, list_actions: { data: rows, error: null }, ...rpc } });
+    for (const [label, preceding, advance] of [
+      ["successful advance", advanceCall(), undefined],
+      ["uppercase equivalent advance UUID", advanceCall(ACTION_A.toUpperCase()), undefined],
+      ["explicit action_get", { name: "action_get", args: { action_id: ACTION_A, limit: 2 } }, undefined],
+    ]) {
+      const s = makeConfirmStore(), d = emailState();
+      const r = await originDrive(s, d, [preceding, emailCall], { ...(advance ? { advance } : {}) });
+      const read = r.rec.rpc.filter((c) => c.name === "list_actions");
+      const invocation = emailCalls(r)[0];
+      assert(`40.16n MODELLED Comms ${label}: fresh exact scoped Action/PPA/contact + current actor/tenant/thread become the bound proposal, never a model locator`,
+        read.length === 1 && read[0].args.p_action_id?.toLowerCase() === ACTION_A && read[0].args.p_tenant_id === CALLER_TENANT && read[0].args.p_limit === 2
+          && emailCalls(r).length === 1 && invocation.client === "jwt" && invocation.body.approval_id === PPA_A
+          && invocation.body.command.contact_id === OWN && invocation.body.operation_id !== EMAIL_OP
+          && s.rows.length === 1 && s.rows[0].args.approval_id === PPA_A && !s.rows[0].consumed
+          && cardsOf(r.bodyText).length === 1 && d.effects.length === 0 && d.rail.length === 0,
+        JSON.stringify({ read, ...JSON.parse(describe(r, s, d)) }));
+    }
+    for (const [label, setup] of [
+      ["advance ok false", { advance: { data: { ok: false, action_id: ACTION_A, approval_id: PPA_A }, error: null } }],
+      ["advance missing PPA", { advance: { data: { ok: true, action_id: ACTION_A }, error: null } }],
+      ["advance wrong action", { advance: { data: { ok: true, action_id: ACTION_B, approval_id: PPA_A }, error: null } }],
+      ["advance wrong PPA", { rows: [originRow({ approval_id: PPA_B })] }],
+      ["read no row", { rows: [] }],
+      ["read two rows", { rows: [originRow(), originRow()] }],
+      ["read wrong action", { rows: [originRow({ id: ACTION_B })] }],
+      ["read foreign tenant", { rows: [originRow({ tenant_id: OTHER_TENANT })] }],
+      ["read malformed contact", { rows: [originRow({ contact_id: "not-a-uuid" })] }],
+      ["read terminal PPA", { rows: [originRow({ status: "done" })] }],
+      ["list_actions error", { rpc: { list_actions: { data: null, error: { code: "XX000", message: "unavailable" } } } }],
+      ["list_actions throw", { rpc: { list_actions: () => { throw new Error("synthetic read failure"); } } }],
+    ]) {
+      const s = makeConfirmStore(), d = emailState();
+      const r = await originDrive(s, d, [advanceCall(), emailCall], setup);
+      assert(`40.16o MODELLED Comms ${label}: unresolved original action blocks generic fresh fallback, door invocation and replacement card`,
+        noEmail(r, d) && s.rows.length === 0 && toldModel(r).includes("email_origin_unconfirmed"), describe(r, s, d));
+    }
+    {
+      const s = makeConfirmStore(), d = emailState();
+      const r = await originDrive(s, d, [advanceCall(), emailCall], {
+        rpc: { resolve_tool_autonomy: { data: "confirm", error: null } },
+      });
+      assert("40.16s MODELLED Comms: an advance still needing its OWN approval blocks the later email, while preserving that exact work-approval card",
+        emailCalls(r).length === 0 && d.effects.length === 0 && d.rail.length === 0
+          && !r.rec.rpc.some((c) => c.name === "advance_action") && cardsOf(r.bodyText).length === 1
+          && cardsOf(r.bodyText)[0].tool === "action_advance" && s.rows.length === 1
+          && s.rows[0].tool_name === "action_advance" && !s.rows[0].consumed
+          && toldModel(r).includes("email_origin_unconfirmed"), describe(r, s, d));
+    }
+    {
+      const s = makeConfirmStore(), d = emailState();
+      const r = await originDrive(s, d, [advanceCall("not-an-action-uuid"), emailCall]);
+      assert("40.16t MODELLED Comms: malformed exact-work arguments refused BEFORE native dispatch cannot open a generic email path",
+        noEmail(r, d) && s.rows.length === 0 && !r.rec.rpc.some((c) => c.name === "advance_action")
+          && toldModel(r).includes("email_origin_unconfirmed"), describe(r, s, d));
+    }
+    for (const [label, rpc] of [
+      ["error", { data: null, error: { code: "XX000", message: "unavailable" } }],
+      ["throw", () => { throw new Error("synthetic exact action read failure"); }],
+    ]) {
+      const s = makeConfirmStore(), d = emailState();
+      const r = await originDrive(s, d, [{ name: "action_get", args: { action_id: ACTION_A } }, emailCall], { rpc: { list_actions: rpc } });
+      assert(`40.16p MODELLED Comms action_get ${label}: cannot become an unbound fresh send`, noEmail(r, d) && s.rows.length === 0
+        && toldModel(r).includes("email_origin_unconfirmed"), describe(r, s, d));
+    }
+    {
+      const s = makeConfirmStore(), d = emailState();
+      const r = await originDrive(s, d, [{ name: "action_get", args: { action_id: ACTION_A } },
+        { name: "action_get", args: { action_id: ACTION_B } }, emailCall], {
+        rpc: { list_actions: (args) => ({ data: [originRow(args.p_action_id === ACTION_A ? {} : { id: ACTION_B, approval_id: PPA_B })], error: null }) },
+      });
+      assert("40.16q MODELLED Comms: two exact follow-ups for the SAME contact are ambiguous; neither PPA/latest-contact nor generic fallback is chosen",
+        noEmail(r, d) && s.rows.length === 0 && toldModel(r).includes("email_origin_unconfirmed"), describe(r, s, d));
+    }
+    {
+      const s = makeConfirmStore(), d = emailState();
+      const r = await originDrive(s, d, [{ batch: [
+        { id: "same-provider-tool-id", name: "action_get", args: { action_id: ACTION_A } },
+        { id: "same-provider-tool-id", name: "action_get", args: { action_id: ACTION_B } },
+      ] }, emailCall], { rpc: { list_actions: (args) => args.p_action_id === ACTION_A
+        ? { data: null, error: { code: "XX000", message: "original read unavailable" } }
+        : { data: [originRow({ id: ACTION_B, action_kind: "owner.internal_note", approval_id: null })], error: null } } });
+      assert("40.16r MODELLED Comms: a later irrelevant action with the SAME textual tool id cannot erase the earlier unresolved original action",
+        noEmail(r, d) && s.rows.length === 0 && toldModel(r).includes("email_origin_unconfirmed"), describe(r, s, d));
+    }
   }
 
   // ── 40.15 C4c × C4b — ONE OBJECTIVE: PAIGE asks → the person answers → PAIGE proposes a DOOR act (the
@@ -7854,8 +8504,10 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
   assert("43.8a F7 a thread from another workspace: the turn is refused before PAIGE is reached — no note, no model call, no door call",
     !told(r8a).includes("ANSWERING YOUR OFFER") && streamed(r8a).length === 0 && doorCalls(r8a).length === 0,
     JSON.stringify({ status: r8a.status, calls: streamed(r8a).length, door: doorCalls(r8a).length }));
-  assert("43.8b F8 another person's thread: their offer is invisible (RLS) and never continued — no note, cheap tier, nothing proposed",
-    !told(r8b).includes("ANSWERING YOUR OFFER") && modelOf(r8b, 0) === CLAUDE_CLASSIFICATION && doorCalls(r8b).length === 0 && c8.rows.length === 0,
+  assert("43.8b F8 an explicitly named invisible thread is refused before model, memory, provider or approval continuation",
+    r8b.status === 409 && !told(r8b).includes("ANSWERING YOUR OFFER") && r8b.modelEgress.length === 0
+      && r8b.outboundCalls.length === 0 && doorCalls(r8b).length === 0 && c8.rows.length === 0 && r8b.rec.inserts.length === 0
+      && !r8b.rec.rpc.some(c => c.name === "record_paige_memory"),
     JSON.stringify({ status: r8b.status, model: modelOf(r8b, 0), door: doorCalls(r8b).length, rows: c8.rows.length }));
 
   // ── 43.9 F9 — the offered act can't be done: a truthful refusal is a terminal answer (no loop, no fallback).
@@ -8103,7 +8755,9 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
       stream: true, text: "ok great", streamScript: opts.script,
       classification: { intent: "converse", research: "none", difficulty: "trivial", image: "none", needs_workspace_data: false, confidence: 0.9 },
       extraBody: { threadId: THREAD_FRESH },
-      rpcOverrides: { ...SEAT(CALLER_TENANT), get_actor_access: { data: { tier: "client" }, error: null }, ...crmRpcs(dbH), paige_chat_turn_append: (args) => sH.append(args) },
+      rpcOverrides: { ...SEAT(CALLER_TENANT), get_actor_access: { data: { tier: "client" }, error: null },
+        client_portal_self_profile: {data:{id:OWN,tenant_id:CALLER_TENANT,linked_user_id:USER},error:null},
+        ...crmRpcs(dbH), paige_chat_turn_append: (args) => sH.append(args) },
       tablesExtra: { paige_chat_turns: sH.table, paige_chat_threads: sH.threadsTable, client_memory: () => [], paige_pending_confirmations: cH.table },
       serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...DOOR_SERVICE },
       onInsert: mirrorConfirms(cH),
@@ -8334,11 +8988,20 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
     const rr = await turnR10(st, cs, dbx, { text: reply, script, ...extra });
     return { calls: streamed(rr).length, terminal: terminalOf(rr)?.state, saved: savedAssistant(st, THREAD_FRESH)?.content, rows: cs.rows.length };
   };
-  const DR26 = { "paige-deep-research": { status: 200, body: { run_id: "11111111-1111-4111-8111-111111111111", findings: [{ claim: "Acme's main competitor is Bolt.", source_ids: [1] }], sources: [{ id: 1, url: "https://example.com/a", title: "A" }], coverage: { stop_reason: "complete" } } } };
-  const DRRPC26 = { get_workspace_research_run: { data: { id: "11111111-1111-4111-8111-111111111111" }, error: null } };
+  // Native engine + library shapes, pinned to each actual request question. These
+  // fixtures retain the original continuity assertions; an id alone proves no saved report.
+  const researchResult26 = question => ({run_id:"11111111-1111-4111-8111-111111111111",question,
+    findings:[{text:"Acme's main competitor is Bolt.",citations:[1],confidence:"high"}],
+    sources:[{index:1,url:"https://example.com/a",title:"A",snippet:"Fixture source",reliability_score:.9,tier:"T1",reliability:"high",
+      excluded:false,published_at:null,fetched_at:"2026-10-15T16:00:00Z"}],
+    coverage:{configured:true,stop_reason:"answered",hops_used:1,searches:1,reads:1,note:""}});
+  const DR26 = question => ({"paige-deep-research":{status:200,body:researchResult26(question)}});
+  const DRRPC26 = question => { const result=researchResult26(question); return {get_workspace_research_run:{data:{
+    id:result.run_id,question,domain:"general",caller:"chat",configured:true,stop_reason:"answered",
+    findings:result.findings,sources:result.sources,coverage:result.coverage},error:null}}; };
   const SAVEDR26 = "Acme's main competitor is Bolt [1]. I've saved the full report to your Research tab.";
   for (const [id, offer] of [["43.26.N4", "Acme is a new prospect.\n\nWant me to research Acme's competitors?"], ["43.26.N4b", "Her funnel dropped last week.\n\nWant me to look into that for you?"]]) {
-    const o = await run26(offer, "sure", [{ name: "deep_research", args: { question: "Who are Acme's competitors?" } }, SAVEDR26, SAVEDR26, SAVEDR26], { outbound: DR26, rpc: DRRPC26 });
+    const o = await run26(offer, "sure", [{ name: "deep_research", args: { question: "Who are Acme's competitors?" } }, SAVEDR26, SAVEDR26, SAVEDR26], { outbound: DR26("Who are Acme's competitors?"), rpc: DRRPC26("Who are Acme's competitors?") });
     assert(`${id} deep_research saved a run: the server's line that nothing was saved is never added`, typeof o.saved === "string" && !o.saved.includes(NOTE), JSON.stringify(o));
   }
   for (const reply of ["yes link it", "sure, link it", "yes link the deal"]) {
@@ -8406,7 +9069,7 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
       { fns: { "growth-page-draft": { data: null, error: { message: "boom" } } }, rpc: CDR });
     assert("43.29.GF the page generator FAILED, then \"I've created a draft\": not the step, held, never saved as said", gf.saved !== PAGEF && gf.calls > 2, JSON.stringify(gf));
     const FAKE13 = "Linked! Dana's deal is now attached to her contact.";
-    const x1 = await run26(LINK6, "sure", [{ name: "deep_research", args: { question: "Dana deal?" } }, FAKE13, FAKE13, FAKE13, FAKE13], { outbound: DR26, rpc: DRRPC26 });
+    const x1 = await run26(LINK6, "sure", [{ name: "deep_research", args: { question: "Dana deal?" } }, FAKE13, FAKE13, FAKE13, FAKE13], { outbound: DR26("Dana deal?"), rpc: DRRPC26("Dana deal?") });
     assert("43.29.X1 a link offer, research ran, then \"Linked!\": held, kept with \"the step wasn't carried out\"", x1.saved === `${FAKE13}\n\n${continuity.ranNote(["deep_research"])}`, JSON.stringify(x1));
   }
 
@@ -8425,10 +9088,10 @@ console.log("\nINT-332 — an accepted offer reaches a tool, a card, a question 
       const o = await run26(offer, reply, [GP, MADE, MADE, MADE, MADE], { fns: GPF, rpc: CDR });
       assert(`${id} the generator ran on a generic/idiomatic page offer: "I've created a draft" ends the turn, no false line`, o.calls === 2 && o.saved === MADE && o.terminal === "FINAL", JSON.stringify(o));
     }
-    const v12 = await run26("I'd look at Acme's pricing and positioning.\n\nWant me to go ahead?", "sure", [{ name: "deep_research", args: { question: "Acme?" } }, SAVEDR26, SAVEDR26, SAVEDR26], { outbound: DR26, rpc: DRRPC26 });
+    const v12 = await run26("I'd look at Acme's pricing and positioning.\n\nWant me to go ahead?", "sure", [{ name: "deep_research", args: { question: "Acme?" } }, SAVEDR26, SAVEDR26, SAVEDR26], { outbound: DR26("Acme?"), rpc: DRRPC26("Acme?") });
     assert("43.30.V12 research ran on a generic offer whose plan is research: the answer stands", v12.calls === 2 && v12.saved === SAVEDR26, JSON.stringify(v12));
     const FAKEL = "Linked! Dana's deal is now attached to her contact.";
-    const lk = await run26("I'll link Dana's deal to her contact.\n\nWant me to go ahead?", "sure", [{ name: "deep_research", args: { question: "Dana?" } }, FAKEL, FAKEL, FAKEL, FAKEL], { outbound: DR26, rpc: DRRPC26 });
+    const lk = await run26("I'll link Dana's deal to her contact.\n\nWant me to go ahead?", "sure", [{ name: "deep_research", args: { question: "Dana?" } }, FAKEL, FAKEL, FAKEL, FAKEL], { outbound: DR26("Dana?"), rpc: DRRPC26("Dana?") });
     assert("43.30.L a generic offer whose plan is to LINK, research ran, then \"Linked!\": held, \"the step wasn't carried out\"", lk.saved === `${FAKEL}\n\n${continuity.ranNote(["deep_research"])}`, JSON.stringify(lk));
     const EM = "Done, I've emailed her the recap.";
     const q1 = await run26("Call went well.\n\nWant me to email Dana the recap and move her deal to Proposal?", "yes email her", x4(EM));
@@ -8478,7 +9141,8 @@ console.log("\npaige_turn — every stream says it started and ends once, before
 {
   const THREAD = "c1c1c1c1-c1c1-4c1c-8c1c-c1c1c1c1c1c1";
   const PERSONA = { get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: "Northside Fitness", playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } };
-  const AS_CLIENT = { ...PERSONA, get_actor_access: { data: { tier: "client" }, error: null } };
+  const AS_CLIENT = { ...PERSONA, get_actor_access: { data: { tier: "client" }, error: null },
+    client_portal_self_profile: {data:{id:OWN,tenant_id:CALLER_TENANT,linked_user_id:USER},error:null} };
   const AS_OWNER = { ...PERSONA, get_actor_access: { data: { tier: "tenant" }, error: null } };
   const NO_MEMORY = { tablesExtra: { client_memory: () => [] }, serviceTablesExtra: { client_memory: () => [] } };
   const turnsOf = (r) => r.bodyText.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
@@ -9024,7 +9688,8 @@ console.log("\npaige_turn — every stream says it started and ends once, before
   for (let k = 1; k <= 12 && !midBatch; k++) {
     const r = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Here is what I found.",
       toolCall: { batch: [search("client onboarding checklist", "toolu_m1"), search("retainer agreement template", "toolu_m2")] },
-      rpcOverrides: { ...AS_OWNER, get_paige_persona_context: switchingPersona(k) } });
+      rpcOverrides: { ...AS_OWNER, get_paige_persona_context: switchingPersona(k) },
+      tablesExtra: { paige_chat_threads: [{ id: THREAD, caller_user_id: USER, tenant_id: CALLER_TENANT, audience: "workspace", interactive_recovery_hold: null }] } });
     const ids = [...new Set(actionFrames(r).map((x) => x.id))];
     if (ids.length === 1 && r.bodyText.includes("active workspace changed")) midBatch = { k, r };
   }
@@ -9532,11 +10197,15 @@ console.log("33. Knowledge through actual spent approval and card/model outcome 
  const THREAD="cccccccc-cccc-4ccc-8ccc-cccccccccccc", id="55555555-5555-4555-8555-555555555555";
  const doc={id,tenant_id:CALLER_TENANT,revision:3,title:"Guide",summary:null,category:null,tags:[],source:"paste",source_url:null,chunk_count:1};
  const cases=[
-  {name:"unrecorded",tool:"knowledge_update",rpc:"update_tenant_knowledge_metadata",answer:{data:{tenant_id:CALLER_TENANT,document:doc,outcome:"capability_completed_unrecorded",run_id:id},error:null},outcome:"ran",note:"The change completed, but its activity record is missing. Do not repeat it."},
+  {name:"unrecorded",tool:"knowledge_update",rpc:"update_tenant_knowledge_metadata",answer:{data:{tenant_id:CALLER_TENANT,document:doc,outcome:"capability_completed_unrecorded",run_id:id},error:null},outcome:"ran",note:"The change completed, but its activity record could not be confirmed. Do not repeat it."},
   {name:"conflict",tool:"knowledge_update",rpc:"update_tenant_knowledge_metadata",answer:{data:null,error:{code:"40001",message:"KNOWLEDGE_REVISION_CONFLICT"}},outcome:"not_run",note:"It didn't go through."},
   {name:"forbidden",tool:"knowledge_delete",rpc:"delete_tenant_knowledge",answer:{data:null,error:{code:"42501",message:"KNOWLEDGE_FORBIDDEN"}},outcome:"not_run",note:"It didn't go through."},
   {name:"transport",tool:"knowledge_update",rpc:"update_tenant_knowledge_metadata",answer:{data:null,error:{message:"network lost"}},outcome:"unconfirmed",note:"This may have gone through. Check before asking again, so it doesn't happen twice."},
   {name:"delete",tool:"knowledge_delete",rpc:"delete_tenant_knowledge",answer:{data:{tenant_id:CALLER_TENANT,document_id:id,deleted_revision:2,document_absent:true,chunks_absent:true,source_cleanup:{status:"not_attempted",reason:"canonical_source_binding_unavailable"},outcome:"capability_succeeded",run_id:id},error:null},outcome:"ran"},
+  {name:"delete-bound-source",tool:"knowledge_delete",rpc:"delete_tenant_knowledge",answer:{data:{tenant_id:CALLER_TENANT,document_id:id,deleted_revision:2,document_absent:true,chunks_absent:true,source_cleanup:{status:"not_attempted",reason:"retained_by_policy"},outcome:"capability_succeeded",run_id:id},error:null},outcome:"ran"},
+  {name:"delete-bound-unrecorded",tool:"knowledge_delete",rpc:"delete_tenant_knowledge",answer:{data:{tenant_id:CALLER_TENANT,document_id:id,deleted_revision:2,document_absent:true,chunks_absent:true,source_cleanup:{status:"not_attempted",reason:"retained_by_policy"},outcome:"capability_completed_unrecorded",run_id:id},error:null},outcome:"ran",note:"The change completed, but its activity record could not be confirmed. Do not repeat it."},
+  {name:"delete-unsupported-cleanup",tool:"knowledge_delete",rpc:"delete_tenant_knowledge",answer:{data:{tenant_id:CALLER_TENANT,document_id:id,deleted_revision:2,document_absent:true,chunks_absent:true,source_cleanup:{status:"not_attempted",reason:"PRIVATE-UNSUPPORTED-REASON"},outcome:"capability_succeeded",run_id:id},error:null},outcome:"unconfirmed",note:"This may have gone through. Check before asking again, so it doesn't happen twice."},
+  {name:"delete-foreign-workspace",tool:"knowledge_delete",rpc:"delete_tenant_knowledge",answer:{data:{tenant_id:THREAD,document_id:id,deleted_revision:2,document_absent:true,chunks_absent:true,source_cleanup:{status:"not_attempted",reason:"retained_by_policy"},outcome:"capability_succeeded",run_id:id},error:null},outcome:"unconfirmed",note:"This may have gone through. Check before asking again, so it doesn't happen twice."},
  ];
  for(const test of cases) {
   const st=makeConfirmStore();
@@ -9551,9 +10220,193 @@ console.log("33. Knowledge through actual spent approval and card/model outcome 
   assert(`33 ${test.name}: card preserves operation truth`,JSON.stringify(frame)===JSON.stringify({actions:[{fingerprint:token,outcome:test.outcome}],...(test.note?{note:test.note}:{})}),JSON.stringify(frame));
   assert(`33 ${test.name}: no second Chat audit`,!approved.rec.inserts.some(i=>i.table==="paige_audit_log"&&i.row.action===test.tool));
   if(test.name==="unrecorded") assert("33 unrecorded: model retains verified change and missing receipt",approved.modelEgress.some(body=>body.includes("Canonical change verified, but its Rail receipt was not recorded"))&&!approved.modelEgress.some(body=>body.includes("you could not confirm whether it went through")));
+   if(test.name.startsWith("delete-bound")) {
+    assert(`33 ${test.name}: model preserves native deletion and retained-source truth`,approved.modelEgress.some(body=>body.includes('retained_by_policy')&&body.includes('document_absent')&&body.includes('chunks_absent')));
+    const replay=await drive({...base,extraBody:{threadId:THREAD,approvedConfirmations:[token]},toolCall:{name:test.tool,args:{...args,confirm:true}}});
+    assert(`33 ${test.name}: spent approval cannot repeat deletion`,!replay.rec.rpc.some(c=>c.name===test.rpc));
+   }
+   if(test.name==="delete-unsupported-cleanup") assert("33 unsupported cleanup reason never leaks into model outcome",!approved.modelEgress.some(body=>body.includes("PRIVATE-UNSUPPORTED-REASON")));
  }
 }
 
+
+console.log("\nlegacy session summaries use attributable Fabric and fresh origin authority");
+{
+  const body = (client = null) => ({ generateSessionSummary: true,
+    sessionMessages: [{ role: "user", content: "Please keep updates brief. I formed my business." },
+      { role: "assistant", content: "We will review the draft." }, { role: "user", content: "I will send it Friday." }],
+    sessionMemoryScope: { v: 1, actor_id: USER, tenant_id: CALLER_TENANT, client_id: client } });
+  const writes = r => [...r.rec.inserts.filter(i => i.table === "client_memory"), ...r.rec.rpc.filter(c => c.name === "record_paige_memory")];
+  const fixture = extra => ({ calls: [], ...extra });
+  const scopeTables = state => ({ profiles: () => [{ user_id: USER, active_tenant_id: state.tenant }] });
+  const rpcScope = state => ({ current_user_tenant_id: () => ({ data: state.tenant, error: null }) });
+  const ownFixture = fixture();
+  const own = await drive({ summaryFixture: ownFixture, stream: true, extraBody: body() });
+  assert("LS1 all three actual summary jobs use OpenAI primary", ownFixture.calls.length === 3 && ownFixture.calls.every(c => c.provider === "openai")
+    && ownFixture.calls.map(c => c.job).sort().join() === "session_milestone_extract,session_preference_extract,session_summary");
+  const traces = own.rec.inserts.filter(i => i.table === "paige_llm_trace" && i.row?.job_kind === "session-summary");
+  assert("LS2 all three actual trace rows carry the captured tenant, operational class and real served model", traces.length === 3
+    && traces.every(t => t.row.tenant_id === CALLER_TENANT && t.row.metadata?.route_requested_class === "operational"
+      && t.row.metadata?.route_served_provider === "openai" && t.row.model && !t.row.model.includes("gemini")), JSON.stringify(traces.map(t => t.row)));
+  const ownWrites = own.rec.rpc.filter(c => c.name === "record_paige_memory");
+  assert("LS3 own summary, milestone and all fact kinds retain captured scope and proposed confirmation", ownWrites.length === 5
+    && ownWrites.every(c => c.args.p_user_id === USER && c.args.p_tenant_id === CALLER_TENANT && c.args.p_confirmation_state === "proposed"));
+  assert("LS4 owner summaries buy no embedding and return generation separately from checked writes", own.embeds === 0
+    && JSON.parse(own.bodyText).summary === "Origin-bound session summary" && JSON.parse(own.bodyText).memory_write_status === "acknowledged");
+  const clientFixture = fixture();
+  const clientResult = await drive({ clientId: OWN, summaryFixture: clientFixture, stream: true, extraBody: body(OWN) });
+  assert("LS4b authorized client summary, milestone and all facts use only that client with five embeddings", writes(clientResult).length === 5
+    && clientResult.rec.inserts.filter(i => i.table === "client_memory").every(i => i.row.client_id === OWN && i.row.client_user_id === OWN)
+    && clientResult.embeds === 5 && clientFixture.calls.length === 3);
+  const operatorFixture = fixture();
+  const operator = await drive({ clientId: OTHERTEN, ownerRpc: { data: true, error: null }, summaryFixture: operatorFixture,
+    stream: true, extraBody: body(OTHERTEN) });
+  assert("LS4c exact platform-owner exception retains foreign-client access and attributes the actual client tenant", writes(operator).length === 5
+    && operator.rec.inserts.filter(i => i.table === "paige_llm_trace").every(i => i.row.tenant_id === OTHER_TENANT));
+  const notOwnerFixture = fixture();
+  const notOwner = await drive({ clientId: OTHERTEN, ownerRpc: { data: false, error: null }, summaryFixture: notOwnerFixture,
+    rpcOverrides: { is_platform_operator: { data: true, error: null } }, stream: true, extraBody: body(OTHERTEN) });
+  assert("LS4d broader platform-operator status does not widen the exact owner bypass", notOwnerFixture.calls.length === 0 && writes(notOwner).length === 0);
+  const tenantlessOperatorFixture = fixture(); const operatorBody = body(OTHERTEN); operatorBody.sessionMemoryScope.tenant_id = null;
+  const tenantlessOperator = await drive({ clientId: OTHERTEN, ownerRpc: { data: true, error: null }, summaryFixture: tenantlessOperatorFixture,
+    tablesExtra: { profiles: () => [{ user_id: USER, active_tenant_id: null }] },
+    rpcOverrides: { current_user_tenant_id: { data: null, error: null } }, stream: true, extraBody: operatorBody });
+  assert("LS4e tenantless platform-owner view can still summarize an authorized attributable client", writes(tenantlessOperator).length === 5
+    && tenantlessOperatorFixture.calls.length === 3 && tenantlessOperator.rec.inserts.filter(i => i.table === "paige_llm_trace").every(i => i.row.tenant_id === OTHER_TENANT));
+  const healthyFallback = fixture({ onProvider: provider => provider === "openai" ? { status: 429 } : {} });
+  const fallback = await drive({ summaryFixture: healthyFallback, stream: true, extraBody: body() });
+  assert("LS5 unchanged authority preserves health fallback for all three jobs", healthyFallback.calls.length === 6
+    && ["session_summary", "session_milestone_extract", "session_preference_extract"].every(job => healthyFallback.calls.filter(c => c.job === job).map(c => c.provider).join() === "openai,anthropic")
+    && writes(fallback).length === 5);
+  const invalid = fixture({ onProvider: () => ({ status: 400, type: "invalid_request_error" }) });
+  const invalidResult = await drive({ summaryFixture: invalid, stream: true, extraBody: body() });
+  assert("LS6 invalid request is terminal, never health fallback or persistence", invalid.calls.length === 3
+    && invalid.calls.every(c => c.provider === "openai") && writes(invalidResult).length === 0);
+  const hard = fixture();
+  const hardResult = await drive({ summaryFixture: hard, stream: true, extraBody: body(),
+    serviceTablesExtra: { paige_llm_trace: () => [{ cost_estimate_usd: 1_000 }] } });
+  assert("LS7 operational reasoning hard budget stops all providers and writes", hard.calls.length === 0 && writes(hardResult).length === 0);
+  for (const mode of ["missing", "actor", "tenant", "client", "version", "unattributed", "unattributed-owner", "malformed-canonical"]) {
+    const f = fixture(); const request = body();
+    if (mode === "missing") delete request.sessionMemoryScope;
+    if (mode === "actor") request.sessionMemoryScope.actor_id = FOREIGN;
+    if (mode === "tenant") request.sessionMemoryScope.tenant_id = OTHER_TENANT;
+    if (mode === "client") request.sessionMemoryScope.client_id = OWN;
+    if (mode === "version") request.sessionMemoryScope.v = 2;
+    if (mode === "malformed-canonical") request.sessionMemoryScope.tenant_id = "not-a-workspace";
+    const r = await drive({ summaryFixture: f, stream: true, extraBody: request,
+      ...(mode === "malformed-canonical" ? { tablesExtra: { profiles: () => [{ user_id: USER, active_tenant_id: "not-a-workspace" }] },
+        rpcOverrides: { current_user_tenant_id: { data: "not-a-workspace", error: null } } } : {}),
+      ...(mode.startsWith("unattributed") ? { tablesExtra: { profiles: () => [{ user_id: USER, active_tenant_id: null }] },
+        ...(mode === "unattributed-owner" ? { ownerRpc: { data: true, error: null } } : {}),
+        rpcOverrides: { current_user_tenant_id: { data: null, error: null } } } : {}) });
+    assert(`LS8 ${mode} origin is unavailable before any provider, embed or memory write`, f.calls.length === 0 && r.embeds === 0 && writes(r).length === 0 && !r.bodyText.includes("Origin-bound"));
+  }
+  for (const transition of ["budget", "fallback", "completion", "actor", "client-row", "embed", "owner-write", "client-write"]) {
+    const state = { tenant: CALLER_TENANT }; const actor = { id: USER }; let written = 0;
+    const client = ["client-row", "embed", "client-write"].includes(transition) ? OWN : null;
+    const f = fixture({
+      onProvider: (provider, _job, count) => {
+        if (transition === "fallback" && provider === "openai") { state.tenant = OTHER_TENANT; return { status: 429 }; }
+        if (transition === "completion" && count === 3) state.tenant = OTHER_TENANT;
+        if (transition === "actor" && count === 3) actor.id = FOREIGN;
+        return {};
+      },
+      onEmbed: () => { if (transition === "embed") state.tenant = OTHER_TENANT; },
+    });
+    let clientTenant = CALLER_TENANT;
+    if (transition === "client-row") f.onProvider = (_provider, _job, count) => { if (count === 3) clientTenant = OTHER_TENANT; return {}; };
+    const r = await drive({ clientId: client ?? undefined, summaryFixture: f, stream: true, extraBody: body(client), authUser: actor,
+      tablesExtra: { ...scopeTables(state), ...(client ? { clients: () => [{ id: OWN, tenant_id: clientTenant }] } : {}) },
+      rpcOverrides: { ...rpcScope(state), record_paige_memory: () => {
+        written++; if (transition === "owner-write") state.tenant = OTHER_TENANT;
+        return { data: "synthetic-memory-id", error: null };
+      } },
+      onInsert: table => { if (table === "client_memory" && transition === "client-write") { written++; state.tenant = OTHER_TENANT; } },
+      serviceTablesExtra: { paige_llm_trace: filters => {
+        if (transition === "budget" && filters.some(([op, column]) => op === "select" && column === "cost_estimate_usd")) state.tenant = OTHER_TENANT;
+        return [];
+      } },
+    });
+    assert(`LS9 ${transition} change releases no stale summary`, !r.bodyText.includes("Origin-bound session summary"));
+    assert(`LS10 ${transition} change permits no subsequent memory write`, writes(r).length === (["owner-write", "client-write"].includes(transition) ? 1 : 0), JSON.stringify(writes(r)));
+    if (transition === "budget") assert("LS11 changed scope during budget prevents all actual egress", f.calls.length === 0);
+    if (transition === "fallback") assert("LS12 changed scope is terminal before any Anthropic fallback", f.calls.every(c => c.provider === "openai"));
+    if (transition === "embed") assert("LS13 changed scope during embedding prevents the client insert", r.embeds === 1 && writes(r).length === 0);
+  }
+  for (let boundary = 1; boundary <= 5; boundary++) {
+    const state = { tenant: CALLER_TENANT }; const f = fixture(); let written = 0;
+    const r = await drive({ summaryFixture: f, stream: true, extraBody: body(), tablesExtra: scopeTables(state),
+      rpcOverrides: { ...rpcScope(state), record_paige_memory: () => {
+        written++; if (written === boundary) state.tenant = OTHER_TENANT;
+        return { data: "synthetic-memory-id", error: null };
+      } },
+    });
+    assert(`LS14 scope change after owner write ${boundary} prevents every later write and stale return`, writes(r).length === boundary && !r.bodyText.includes("Origin-bound"));
+    const clientState = { tenant: CALLER_TENANT }; const client = fixture({ onEmbed: count => { if (count === boundary) clientState.tenant = OTHER_TENANT; } });
+    const clientRun = await drive({ clientId: OWN, summaryFixture: client, stream: true, extraBody: body(OWN),
+      tablesExtra: scopeTables(clientState), rpcOverrides: rpcScope(clientState) });
+    assert(`LS15 scope change during client embedding ${boundary} prevents its write and every later step`, clientRun.embeds === boundary
+      && writes(clientRun).length === boundary - 1 && !clientRun.bodyText.includes("Origin-bound"));
+  }
+  const rejected = await drive({ summaryFixture: fixture(), stream: true, extraBody: body(),
+    rpcOverrides: { record_paige_memory: { data: null, error: { code: "synthetic-write-refused", message: "synthetic rejection" } } } });
+  assert("LS16 generated text is not represented as acknowledged memory when native writes reject", JSON.parse(rejected.bodyText).summary === "Origin-bound session summary"
+    && JSON.parse(rejected.bodyText).memory_write_status === "unconfirmed" && JSON.parse(rejected.bodyText).memory_writes_acknowledged === 0);
+  const aborted = new AbortController();
+  const abortFixture = fixture({ onProvider: () => { aborted.abort(); return { status: 429 }; } });
+  const abortRun = await drive({ summaryFixture: abortFixture, requestSignal: aborted.signal, stream: true, extraBody: body() });
+  assert("LS17 request abort is terminal before fallback, embeds, writes or returning generated text", abortFixture.calls.length > 0
+    && abortFixture.calls.every(c => c.provider === "openai" && c.signal.aborted) && writes(abortRun).length === 0 && abortRun.embeds === 0
+    && JSON.parse(abortRun.bodyText).code === "SESSION_SUMMARY_CANCELLED");
+  const realNow = Date.now;
+  try {
+    const expiredFixture = fixture({ onProvider: (_provider, _job, count) => {
+      if (count === 3) { const expiredAt = realNow() + 30_001; Date.now = () => expiredAt; }
+      return {};
+    } });
+    const expired = await drive({ summaryFixture: expiredFixture, stream: true, extraBody: body() });
+    assert("LS18 absolute deadline refuses late completion before delayed timer delivery", writes(expired).length === 0
+      && !expired.bodyText.includes("Origin-bound") && JSON.parse(expired.bodyText).code === "SESSION_SUMMARY_CANCELLED");
+  } finally { Date.now = realNow; }
+}
+
+console.log("\nJ19 native thread fixture defaults preserve real omissions and explicit invalid projections");
+{
+  const fixtureThread = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+  const persona = { data: [{ tenant_id: CALLER_TENANT, tenant_name: null, playbook_config: null, playbook_slug: null,
+    funding_enabled: false, brand: null }], error: null };
+  const baseRow = { id: fixtureThread, caller_user_id: USER, tenant_id: CALLER_TENANT };
+  const run = (rows, tableErrorsExtra = {}, ownerPositive = false) => drive({ stream: true, extraBody: { threadId: fixtureThread },
+    rpcOverrides: { get_paige_persona_context: persona, ...(ownerPositive ? { get_actor_access: { data: { tier: "tenant" }, error: null } } : {}) },
+    tablesExtra: { paige_chat_threads: () => rows }, tableErrorsExtra });
+  const defaultOwn = await drive({ stream: true, extraBody: { threadId: fixtureThread },
+    rpcOverrides: { get_paige_persona_context: persona, get_actor_access: { data: { tier: "tenant" }, error: null } } });
+  assert("J19 explicit default OWN-thread fixture reaches an ordinary model turn", defaultOwn.status === 200 && defaultOwn.modelEgress.length > 0,
+    JSON.stringify({status:defaultOwn.status,body:defaultOwn.bodyText.slice(0,400),logged:defaultOwn.logged.slice(-3)}));
+  const explicitMissing = await drive({ stream: true, extraBody: { threadId: fixtureThread }, rpcOverrides: { get_paige_persona_context: persona },
+    tablesExtra: { paige_chat_threads: undefined } });
+  assert("J19 explicit undefined thread table never acquires the default OWN fixture", explicitMissing.status === 409
+    && explicitMissing.bodyText.includes("INTERACTIVE_RECOVERY_SCOPE_UNAVAILABLE") && explicitMissing.modelEgress.length === 0);
+  const omitted = await run([baseRow], {}, true);
+  assert("J19 fixture genuinely omitted native columns retain an ordinary model turn", omitted.status === 200 && omitted.modelEgress.length > 0,
+    JSON.stringify({status:omitted.status,body:omitted.bodyText.slice(0,400),logged:omitted.logged.slice(-3)}));
+  assert("J19 fixture filling does not mutate the original stored-row input", !Object.hasOwn(baseRow, "audience") && !Object.hasOwn(baseRow, "interactive_recovery_hold"));
+  for (const [label, rows, errors] of [
+    ["explicit undefined audience", [{ ...baseRow, audience: undefined }]],
+    ["explicit undefined hold", [{ ...baseRow, interactive_recovery_hold: undefined }]],
+    ["malformed hold", [{ ...baseRow, interactive_recovery_hold: [] }]],
+    ["malformed row", [[]]],
+    ["private audience", [{ ...baseRow, audience: "customer_private" }]],
+    ["foreign actor", [{ ...baseRow, caller_user_id: FOREIGN }]],
+    ["missing row", []],
+    ["native read error", [baseRow], { paige_chat_threads: { code: "42501", message: "synthetic scope refusal" } }],
+  ]) {
+    const r = await run(rows, errors);
+    assert(`J19 fixture ${label} remains refused before a model or memory effect`, r.status === 409 && r.bodyText.includes("INTERACTIVE_RECOVERY_SCOPE_UNAVAILABLE") && r.modelEgress.length === 0
+      && !r.rec.rpc.some(c => c.name === "record_paige_memory") && !r.rec.inserts.some(c => c.table === "client_memory"));
+  }
+}
 
 console.log(`\n${checks - failures} passed, ${failures} failed`);
 process.exit(failures === 0 ? 0 : 1);

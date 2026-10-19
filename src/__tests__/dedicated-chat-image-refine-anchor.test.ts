@@ -80,8 +80,13 @@ describe("Task #15 — the server-owned anchor is wired safely into paige-ai-cha
   });
 
   it("reads the anchor from the caller's own thread row (RLS-scoped), not from client input", () => {
-    // the anchor columns are selected on the same tenant/caller-scoped thread read
-    expect(chat).toMatch(/select\("summary, studio_session_id, last_image_content_id, last_image_anchor_at"\)/);
+    // The strengthened common reader retains the anchor and exact native owner /
+    // workspace binding. Do not require the obsolete id-only projection spelling.
+    const reader = chat.slice(chat.indexOf("const readSummaryThread"), chat.indexOf("const foldThreadSummary"));
+    expect(reader).toMatch(/select\("[^"\n]*summary[^"\n]*studio_session_id, last_image_content_id, last_image_anchor_at"\)/);
+    expect(reader).toMatch(/\.eq\("id", threadId\)\.eq\("caller_user_id", user\.id\)/);
+    expect(reader).toMatch(/query\.eq\("tenant_id", turnScopeTenantId\)/);
+    expect(chat).toMatch(/const th = await readSummaryThread\(payloadThreadId\)/);
     // resolved only OUTSIDE Studio, only within the recency window
     expect(chat).toMatch(/!th\?\.studio_session_id && canvasArtifact == null[\s\S]{0,160}IMAGE_REFINE_ANCHOR_WINDOW_MS/);
     expect(chat).toMatch(/refineImageAnchor = \{ id: String\(th\.last_image_content_id\) \}/);

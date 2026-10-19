@@ -1,0 +1,31 @@
+{
+  "generatedAt": "2026-10-12T19:53:08.153Z",
+  "environment": "new disposable local PostgreSQL cluster; synthetic records only",
+  "assurance": "Scoped fixture replay and exact function extraction; not the full production migration chain.",
+  "trackedMigrations": [
+    {
+      "name": "20261102010000_official_2022_naics_reference.sql",
+      "sha256": "6efdaf7b123df9ed7cb16b71a378a0304490bc66c7637a1a63f5c2de13b52e20"
+    },
+    {
+      "name": "20261103000000_solo_setup_business_context.sql",
+      "sha256": "ebdbc0f19fabc25b1ae85e1cc14267445af9518e21d99a298dca65270a973ecd"
+    },
+    {
+      "name": "20261104000000_solo_managed_sender_lifecycle.sql",
+      "sha256": "22cd3dd70b0c41251e7deb81aaa83918d2c77cdd68849bba08aef1bcb02a1f44"
+    },
+    {
+      "name": "20271026000000_solo_business_interview_checkpoint.sql",
+      "sha256": "079ad6339ac35e1c3287249ae169ccad71c77fed610e254584e2bd83fe6ff274"
+    }
+  ],
+  "appliedMigrations": [
+    "20261102010000_official_2022_naics_reference.sql",
+    "20261103000000_solo_setup_business_context.sql",
+    "20261104000000_solo_managed_sender_lifecycle.sql",
+    "20271026000000_solo_business_interview_checkpoint.sql"
+  ],
+  "schemaFingerprint": "daf39b2925e13b23e45139a6c99543aee44620233c9cd252df7616623a7efcf0",
+  "openRecoveryFindings": []
+}

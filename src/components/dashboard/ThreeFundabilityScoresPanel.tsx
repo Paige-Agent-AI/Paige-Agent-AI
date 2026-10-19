@@ -12,6 +12,7 @@ import { useFinancialDataAccuracy, type AccuracyLevel } from "@/hooks/useFinanci
 import { supabase } from "@/integrations/supabase/client";
 import { BusinessPortfolio } from "./BusinessPortfolio";
 import type { FundabilityScoreResult, FundabilityBand, CreditBureau, BureauScoreEntry } from "@/lib/fundabilityScores";
+import { useAssistantName } from "@/lib/portal/customerIdentity";
 
 const BUREAU_LABEL: Record<CreditBureau, string> = {
   experian: "Experian",
@@ -106,6 +107,7 @@ function AccuracyChip({
 }
 
 function BureauLens({ result }: { result: FundabilityScoreResult }) {
+  const assistant = useAssistantName();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const bureauScores = result.bureauScores;
@@ -221,8 +223,8 @@ function BureauLens({ result }: { result: FundabilityScoreResult }) {
           {sorted.length === 3 && variance >= 30 && (
             <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-[11px] text-amber-700 dark:text-amber-400">
               ⚠ Your bureau scores vary significantly ({variance} points). This matters — apply to
-              lenders that pull your strongest bureau first. Check the bureau pull data in your
-              Paige session before submitting any application.
+              lenders that pull your strongest bureau first. Ask {assistant} which bureau each lender
+              pulls before submitting any application.
             </div>
           )}
           {sorted.length === 3 && variance > 0 && variance < 10 && (

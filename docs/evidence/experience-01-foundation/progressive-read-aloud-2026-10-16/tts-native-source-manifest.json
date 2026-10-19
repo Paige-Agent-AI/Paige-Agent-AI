@@ -1,0 +1,38 @@
+{
+  "baseHead": "dce4c51b19426948e1b65f6887db5a6fba25bc19",
+  "status": "UNCOMMITTED_DEVELOPMENT_NOT_RELEASED",
+  "proof": "Native real MPEG decoder / synthetic WPT sine-wave body; no provider or customer acceptance",
+  "inputs": [
+    {
+      "path": "src/lib/voice/messageTts.ts",
+      "sha256": "946edf2812a2c82cb7f9a213bdeedc6a82e525ee48834d295fbf7ba9c49688ad"
+    },
+    {
+      "path": "src/components/chat/MessageAudioButton.tsx",
+      "sha256": "ff9322882f005374d84c87b02666cb063362b3bc8fdcb6511418f6d205d9281e"
+    },
+    {
+      "path": "scripts/live-drive/harness/mount/message-audio-proof.html",
+      "sha256": "37195b111c294cdcc77b6539885e339fbf3c6af4eb3f9a6b5d6a8133ebb6dc92"
+    },
+    {
+      "path": "scripts/live-drive/harness/mount/message-audio-proof.ts",
+      "sha256": "3bb2bf0ef67da7e13c3e420a5a22b6e883cabf7748b220aaddd7f8c783ef3310"
+    }
+  ],
+  "sourceAsset": "https://raw.githubusercontent.com/web-platform-tests/wpt/master/media/sine440.mp3",
+  "sourceAssetSha256": "d86437635c6877c6fb5a35dcf5d673c4cb0feadf74e3994eb392fd7ffa748e4c",
+  "observations": {
+    "startedBeforeEof": true,
+    "firstPlayingMs": [
+      147,
+      64
+    ],
+    "sampleClass": "two synthetic local decoder observations, NOT provider p50/p95",
+    "holdResumeSameFetch": true,
+    "stopCancelledReader": true,
+    "restartAfterStop": true,
+    "providerRequests": 0
+  },
+  "historicalFailure": "Initial empty-src reset raced the next output; preserved failed trace, repaired detach/load and owner event fencing, native confirmation passed"
+}

@@ -55,7 +55,7 @@ vi.mock("@/integrations/supabase/client", () => ({
   },
 }));
 
-// The client strip resolves a persona name and (when no contactId prop is given) its own contact.
+// The client strip names the customer's agent (Cura by default; owner ruling 2026-10-19), never this owner persona.
 // Neither is what these cases are about, so both are pinned rather than driven.
 vi.mock("@/lib/playbook", () => ({ usePlaybook: () => ({ persona: { name: "Paige" } }) }));
 vi.mock("@/hooks/useMyContactId", () => ({ useMyContactId: () => ({ contactId: null, loading: false }) }));
@@ -241,7 +241,7 @@ describe("ClientActivityFeed — the client's own strip", () => {
   it("1. a SUCCESSFUL history puts the client's own events on screen", async () => {
     harness.result = { data: [clientRow()], error: null };
     await settle(<ClientActivityFeed contactId="contact-one" />);
-    expect(text()).toContain("You messaged Paige");
+    expect(text()).toContain("You messaged Cura");
     expect(text()).not.toContain(CLIENT_NOTHING);
     // A client surface must ask the client-scoped resolver, never the tenant-wide one.
     expect(harness.calls).toEqual(["get_client_rail"]);
@@ -274,7 +274,7 @@ describe("ClientActivityFeed — the client's own strip", () => {
         <ClientActivityFeed contactId="contact-one" />
       </FrameRecorder>,
     );
-    expect(text()).toContain("You messaged Paige");
+    expect(text()).toContain("You messaged Cura");
     const before = frames.length;
     harness.result = {
       data: [clientRow({ id: "second", title: "CLIENT-TWO-EVENT", event_kind: "client.action_response" })],
@@ -294,7 +294,7 @@ describe("ClientActivityFeed — the client's own strip", () => {
     const during = frames.slice(before);
     expect(during.length).toBeGreaterThan(0);
     for (const frame of during) {
-      expect(frame).not.toContain("You messaged Paige");
+      expect(frame).not.toContain("You messaged Cura");
       expect(frame).not.toContain(CLIENT_NOTHING);
     }
     expect(text()).toContain("Loading");

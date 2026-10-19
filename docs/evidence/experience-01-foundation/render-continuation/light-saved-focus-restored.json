@@ -1,0 +1,37 @@
+{
+  "label": "light-saved-focus-restored",
+  "requested": {
+    "width": 1366,
+    "height": 768
+  },
+  "screenshotDimensions": {
+    "width": 1366,
+    "height": 768
+  },
+  "url": "http://127.0.0.1:5204/interview.html?theme=light&state=save-error",
+  "dom": {
+    "alerts": [],
+    "background": "rgb(251, 248, 244)",
+    "focus": {
+      "name": "Correct Industry",
+      "tag": "BUTTON"
+    },
+    "foreground": "rgb(33, 30, 36)",
+    "overflow": false,
+    "paige": "open",
+    "pg": "light",
+    "profileOverflow": false,
+    "profileScroll": 159.1999969482422,
+    "secondary": "rgb(103, 97, 107)",
+    "statuses": [
+      "Saved to Setup and read back from the server. You can correct any detail below, then continue in the same conversation."
+    ],
+    "theme": "light",
+    "viewport": {
+      "height": 768,
+      "width": 1366
+    }
+  },
+  "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+  "captureAPI": "documented tab screenshot after settled DOM"
+}

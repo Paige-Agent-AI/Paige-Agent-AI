@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { contactAccessible, refuseCustomerTier } from "../_shared/finance-entitlement.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,6 +26,12 @@ Deno.serve(async (req) => {
     if (authError || !user) throw new Error("Unauthorized");
 
     const userId = user.id;
+    const refuse = (status: number, error: string) =>
+      new Response(JSON.stringify({ error }), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+    // E09 F1b: credit scoring is not a customer feature — a portal customer is refused before any read.
+    const tier = await refuseCustomerTier(supabase, userId);
+    if (!tier.ok) return refuse(tier.status, tier.error);
 
     // Check for optional client_id in request body
     let clientId: string | null = null;
@@ -33,6 +40,16 @@ Deno.serve(async (req) => {
       clientId = body?.client_id || null;
     } catch {
       // No body or invalid JSON — calculate for user's own data
+    }
+
+    // E09 F1b: a client_id from the body must be a contact the caller may act on in their own business
+    // (can_access_contact). This client was the service role, so before this any signed-in user could
+    // read and score any business's client by naming its id. `client_id` on credit_accounts,
+    // credit_negative_items and credit_factor_scores is a foreign key to clients(id) (read on
+    // production 2026-10-19), so the contact id is the right key for can_access_contact.
+    if (clientId) {
+      const access = await contactAccessible(supabase, userId, clientId);
+      if (!access.ok) return refuse(access.status, access.error);
     }
 
     // Build query filter: use client_id if provided, otherwise user_id

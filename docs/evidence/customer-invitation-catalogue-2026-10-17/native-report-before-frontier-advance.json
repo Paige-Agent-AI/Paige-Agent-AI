@@ -1,0 +1,345 @@
+{
+  "evidence": "synthetic-native-postgresql",
+  "baseline": false,
+  "proofScriptSHA256": "e9f0d59c0db602d949454f3cf18df9f3e3d92a6133605dee2615bef44a66b2d1",
+  "migrationFile": "supabase/migrations/20271107120000_e09_owner_invitation_history.sql",
+  "migrationSHA256": "b413224809bd9d101f1b202488203b63dedc5fb20f239bb257986affde47a9c7",
+  "operationProof": null,
+  "deliveryProof": null,
+  "catalogueProof": {
+    "file": "supabase/migrations/20271108235000_e09_invitation_tool_catalogue.sql",
+    "migrationSHA256": "f44f3c00f6b249569a80390853d86e99763267f410b1a28a1c61b36da6416f0e",
+    "incumbentRows": 192,
+    "resolver": "synthetic current-user membership resolver; actual catalogue bodies and authority checks",
+    "managedSupabase": "UNVERIFIED"
+  },
+  "hostedTestFile": "supabase/tests/consumer_invite_acceptance.sql",
+  "hostedTestSHA256": "83ed16f80838c6f07b7b955c4d1a077a09e19a8340f3f5475c851f7ba18f22b6",
+  "hostedEmailInsertSHA256": "1b33a52a62d10325ff2fa3dacf421530f2d1dc5307442ed31cfb5a3b3e952ad4",
+  "accountTypeSourceFile": "supabase/migrations/20260803120000_p1_subaccount_owner_leak_fix.sql",
+  "accountTypeSourceSHA256": "ad97771f0d476714a8193de945330330545d693282b565c88292264834e7c0c3",
+  "accountTypeConstraintSHA256": "8b1819d8fcf80975dfee42fd753e653441b575a0b5ebd4ecb30b9ec5d0ec3d65",
+  "authority": "actual consumer-mint trio and actual lower helper bodies",
+  "helperCatalog": [
+    {
+      "signature": "is_super_admin()",
+      "file": "20260702184358_a1b946ac-338b-4c86-8b70-0850b38b2c8c.sql",
+      "sourceSHA256": "f84d977f6bb7a6f4f9337c24f4c0bf2be13b964d99db86b35a75708be3da59dc",
+      "catalogProsrcMD5": "363ccf1a73c5d68252e165ad909032f1",
+      "productionMetadataMatch": "NOT_SUPPLIED"
+    },
+    {
+      "signature": "is_super_admin(uuid)",
+      "file": "20260702184358_a1b946ac-338b-4c86-8b70-0850b38b2c8c.sql",
+      "sourceSHA256": "c68950c142a7da2f7ee2c2a211cd0c8593a2f43488338b82462acdfb54c23a10",
+      "catalogProsrcMD5": "d014606ddbd8a120e5f3afeda5f937fa",
+      "productionMetadataMatch": "NOT_SUPPLIED"
+    },
+    {
+      "signature": "is_platform_admin(uuid)",
+      "file": "20260714142258_tier_rail_phaseB.sql",
+      "sourceSHA256": "478106e80b6c7d47bf2954da27e64e4a631f687b404ec6a59af4624ddca09e84",
+      "catalogProsrcMD5": "c2d88dd5c598217d606646895674f007",
+      "productionMetadataMatch": "NOT_SUPPLIED"
+    },
+    {
+      "signature": "is_platform_owner()",
+      "file": "20260702184358_a1b946ac-338b-4c86-8b70-0850b38b2c8c.sql",
+      "sourceSHA256": "018ae7a597b6f4611fac64c10cbc15f5cb8f59e61ded822b3830c90fc1f4c26d",
+      "catalogProsrcMD5": "08ff6983c07e71b7c4bec3b8b4fcae28",
+      "productionMetadataMatch": true
+    },
+    {
+      "signature": "is_platform_owner(uuid)",
+      "file": "20260702184358_a1b946ac-338b-4c86-8b70-0850b38b2c8c.sql",
+      "sourceSHA256": "55f33dc036631a09d68e0f6b11f68c74e50696339f235f94e157bf0fe6a2d3e8",
+      "catalogProsrcMD5": "dc789c98cf26f96d52c5138754c0f131",
+      "productionMetadataMatch": true
+    },
+    {
+      "signature": "is_platform_operator()",
+      "file": "20260816130000_operator_role_tiers_and_grant_lockdown.sql",
+      "sourceSHA256": "5cfd27a54dc200c119921172079237cadb0bf9886a059fbac4f4a4d76e3a6f11",
+      "catalogProsrcMD5": "f4e30734885255ef65dd52f13986e949",
+      "productionMetadataMatch": "NOT_SUPPLIED"
+    },
+    {
+      "signature": "is_company_workspace(uuid)",
+      "file": "20270521000000_operator_authority_in_company_workspaces.sql",
+      "sourceSHA256": "e362b00823e70b3f44a16faee217f0d4be86e6a9e9aa0f8abf2aecb087857873",
+      "catalogProsrcMD5": "7944c5bde7171fbe4e6b2f03f090fe28",
+      "productionMetadataMatch": "NOT_SUPPLIED"
+    },
+    {
+      "signature": "is_tenant_admin(uuid)",
+      "file": "20270521000000_operator_authority_in_company_workspaces.sql",
+      "sourceSHA256": "65d53e5fdb473b1a5c920f490c6fb6360645f55cf43816551f59eeed1cfb4065",
+      "catalogProsrcMD5": "7d393ee77b2ebbc42791f0dce8dbcca5",
+      "productionMetadataMatch": true
+    },
+    {
+      "signature": "agency_can_manage_child(uuid,uuid)",
+      "file": "20260714051416_fix_agency_team_enforcement.sql",
+      "sourceSHA256": "69c3846894de21cfd9f89448920ed4ea2947b2f3cd3f180a1c3c50db136f86d0",
+      "catalogProsrcMD5": "b1f1bb620eae26744519c1ff7700e28d",
+      "productionMetadataMatch": true
+    },
+    {
+      "signature": "agency_can_manage_child(uuid)",
+      "file": "20260712300000_agency_mcp_guards.sql",
+      "sourceSHA256": "a82ba6b6ae980cdd037fbd2e8a0c7235c03eb9ed40aa5c80a248f16f8b3adc26",
+      "catalogProsrcMD5": "28b9778e8612a4bbb33a8adb72c77251",
+      "productionMetadataMatch": true
+    },
+    {
+      "signature": "email_delivery_rank(text)",
+      "file": "20261105000000_an_invitation_says_what_happened_to_it.sql",
+      "sourceSHA256": "b253d17044bbfd34585b09d7e7d5a2865ef00f804b8c0153f7d68015b13fe031",
+      "catalogProsrcMD5": "5a8e139a94d941c532e87ae2c03ffa61",
+      "productionMetadataMatch": "NOT_SUPPLIED"
+    }
+  ],
+  "standIns": [
+    "auth.uid() from transaction-local test.actor GUC",
+    "tenants/tenant_members/agency_team_members/user_roles narrow synthetic tables (no production triggers)",
+    "tenant_role/app_role minimal enum members used by actual helpers",
+    "tenant_invite_tokens/email_send_log narrow synthetic tables",
+    "NO authority or lower-helper predicate stand-in in nominal tests; NULL helpers only in explicit rollback perturbation"
+  ],
+  "managedSupabase": "UNVERIFIED",
+  "authenticatedQA": "NOT_RUN",
+  "results": [
+    {
+      "name": "Migration repeat preserves exact reader definition",
+      "result": "PASS"
+    },
+    {
+      "name": "Actual source account-type CHECK rejects old subaccount and admits native sub_account",
+      "result": "PASS"
+    },
+    {
+      "name": "Exact hosted UNION fixture executes; omitted first UUID cast reproduces CI42804",
+      "result": "PASS"
+    },
+    {
+      "name": "Actual owner gets closed nonsecret exact-tenant consumer envelope without effects",
+      "result": "PASS"
+    },
+    {
+      "name": "Canonical log binds tenant/template/invite/normalized stored recipient",
+      "result": "PASS"
+    },
+    {
+      "name": "Explicit consumer kind and absent-kind receipts pass; other/null/malformed kinds refuse",
+      "result": "PASS"
+    },
+    {
+      "name": "No matching evidence remains empty/unknown without a fabricated never-sent result",
+      "result": "PASS"
+    },
+    {
+      "name": "Outcomes distinguish provider handoff, transport uncertainty and unknown status",
+      "result": "PASS"
+    },
+    {
+      "name": "Current admin authority in the named other workspace works",
+      "result": "PASS"
+    },
+    {
+      "name": "Canonical platform owner without a target membership is admitted",
+      "result": "PASS"
+    },
+    {
+      "name": "Canonical company operator without a company seat is admitted",
+      "result": "PASS"
+    },
+    {
+      "name": "Company operator has no implied customer authority",
+      "result": "PASS"
+    },
+    {
+      "name": "Platform authority still requires an existing exact tenant",
+      "result": "PASS"
+    },
+    {
+      "name": "Active parent agency owner manages child without a child seat",
+      "result": "PASS"
+    },
+    {
+      "name": "Actual active agency_owner consumer authority in exact child",
+      "result": "PASS"
+    },
+    {
+      "name": "Actual active agency_admin consumer authority in exact child",
+      "result": "PASS"
+    },
+    {
+      "name": "Actual active agency_manager consumer authority in exact child",
+      "result": "PASS"
+    },
+    {
+      "name": "Actual active agency_specialist consumer authority in exact child",
+      "result": "PASS"
+    },
+    {
+      "name": "Specialist cannot manage an off-scope sibling",
+      "result": "PASS"
+    },
+    {
+      "name": "Actual agency_viewer does not manage a child",
+      "result": "PASS"
+    },
+    {
+      "name": "Actual agency_biller does not manage a child",
+      "result": "PASS"
+    },
+    {
+      "name": "Suspended agency admin loses child authority",
+      "result": "PASS"
+    },
+    {
+      "name": "Delegated child authority cannot read an unrelated business",
+      "result": "PASS"
+    },
+    {
+      "name": "Parent tenant admin alone is not an agency child-management grant",
+      "result": "PASS"
+    },
+    {
+      "name": "Enterprise parent owner retains canonical child-management authority",
+      "result": "PASS"
+    },
+    {
+      "name": "Nonagency parent cannot create delegated child authority",
+      "result": "PASS"
+    },
+    {
+      "name": "Pure agency target is denied even for platform authority",
+      "result": "PASS"
+    },
+    {
+      "name": "Native consumer tier retains enterprise",
+      "result": "PASS"
+    },
+    {
+      "name": "Native consumer tier retains sub_account",
+      "result": "PASS"
+    },
+    {
+      "name": "No Auth is refused despite service role",
+      "result": "PASS"
+    },
+    {
+      "name": "Anonymous caller cannot execute",
+      "result": "PASS"
+    },
+    {
+      "name": "A claimed actor different from actual Auth is refused",
+      "result": "PASS"
+    },
+    {
+      "name": "Null expected actor is refused",
+      "result": "PASS"
+    },
+    {
+      "name": "Null workspace is refused",
+      "result": "PASS"
+    },
+    {
+      "name": "Foreign workspace is not selected by active/global context",
+      "result": "PASS"
+    },
+    {
+      "name": "Ordinary active member is not an invitation-history grant",
+      "result": "PASS"
+    },
+    {
+      "name": "is_owner flag alone does not widen the consumer mint role rules",
+      "result": "PASS"
+    },
+    {
+      "name": "Revoked owner membership is not authority",
+      "result": "PASS"
+    },
+    {
+      "name": "Pure agency refuses the consumer view",
+      "result": "PASS"
+    },
+    {
+      "name": "NULL predicate perturbation refuses; omitting coalesces demonstrates the bypass control",
+      "result": "PASS"
+    },
+    {
+      "name": "Reader grants stay narrow; raw tables gain no browser grant",
+      "result": "PASS"
+    },
+    {
+      "name": "Empty authorized workspace returns an array",
+      "result": "PASS"
+    },
+    {
+      "name": "History retains newest50 in stable chronological priority/id order, explicitly truncated",
+      "result": "PASS"
+    },
+    {
+      "name": "Exactly50 events is not reported truncated",
+      "result": "PASS"
+    },
+    {
+      "name": "Invitation overflow returns bounded1001 newest rows for frontend refusal",
+      "result": "PASS"
+    },
+    {
+      "name": "Catalogue migration replays without recursion or body drift",
+      "result": "PASS"
+    },
+    {
+      "name": "Catalogue predecessor body is byte-preserved",
+      "result": "PASS"
+    },
+    {
+      "name": "Every real incumbent catalogue row survives with identical metadata",
+      "result": "PASS"
+    },
+    {
+      "name": "Exactly one new invitation control defaults to confirm",
+      "result": "PASS"
+    },
+    {
+      "name": "Invitation uses the existing Communications category",
+      "result": "PASS"
+    },
+    {
+      "name": "Catalogue wrong business remains refused by incumbent",
+      "result": "PASS"
+    },
+    {
+      "name": "Anonymous catalogue execution remains denied",
+      "result": "PASS"
+    },
+    {
+      "name": "Predecessor stays internal for anon",
+      "result": "PASS"
+    },
+    {
+      "name": "Predecessor stays internal for authenticated",
+      "result": "PASS"
+    },
+    {
+      "name": "Predecessor stays internal for service_role",
+      "result": "PASS"
+    },
+    {
+      "name": "Catalogue reads do not write settings",
+      "result": "PASS"
+    },
+    {
+      "name": "Existing off setting is visible unchanged",
+      "result": "PASS"
+    },
+    {
+      "name": "Another business never inherits the off setting",
+      "result": "PASS"
+    }
+  ]
+}

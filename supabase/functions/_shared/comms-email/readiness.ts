@@ -14,7 +14,8 @@
 // INJECTED by the caller (comms-email-command passes `runPreSend` from _shared/pre-send-pipeline.ts)
 // rather than imported here.
 import { CLIENT_CONTACT_METHODS_EMBED, clientAddresses } from "../contact-methods.ts";
-import { EMAIL_ADDRESS, normalizeCommsEmailAddress } from "./contract.ts";
+import { EMAIL_ADDRESS, UUID, normalizeCommsEmailAddress } from "./contract.ts";
+import { decideContentRead } from "../inbox-intelligence/policy.ts";
 
 export interface EmailSenderFacts {
   tenantMatches: boolean;
@@ -124,6 +125,16 @@ interface ReadQuery extends PromiseLike<ReadResult> { eq(column: string, value: 
 export interface CommsEmailAdmin { from(table: string): { select(columns: string): ReadQuery } }
 type ObjectValue = Record<string, unknown>;
 const object = (v: unknown): ObjectValue => v && typeof v === "object" && !Array.isArray(v) ? v as ObjectValue : {};
+// Reuse the canonical active/tenant/personal-owner mailbox policy. A background
+// caller with no authenticated person may use a company sender, never a person's
+// private mailbox. This projection carries no credentials or mailbox contents.
+function senderAllowed(c: ObjectValue, tenantId: string, actorUserId?: string | null): boolean {
+  if (c.mailbox_class === "personal" && (typeof actorUserId !== "string" || !UUID.test(actorUserId))) return false;
+  return decideContentRead({ callerUserId: actorUserId ?? "", callerTenantId: tenantId,
+    mailboxTenantId: typeof c.tenant_id === "string" ? c.tenant_id : "",
+    mailbox: { mailbox_class: c.mailbox_class, mailbox_owner_user_id: c.mailbox_owner_user_id,
+      status: c.status, active: c.active, mailbox_scopes: null } }).allowed;
+}
 
 export type CommsEmailParties =
   | { kind: "contact_not_in_workspace" }
@@ -148,7 +159,7 @@ const contactName = (row: ObjectValue): string => {
  */
 export async function resolveCommsEmailParties(
   admin: CommsEmailAdmin,
-  input: { tenantId: string; contactId: string; connectorId: string | null },
+  input: { tenantId: string; actorUserId?: string | null; contactId: string; connectorId: string | null },
   providers: readonly string[] = BASE_EMAIL_PROVIDERS,
 ): Promise<CommsEmailParties> {
   const contact = await admin.from("clients").select(`id,tenant_id,first_name,last_name,entity_name,${CLIENT_CONTACT_METHODS_EMBED}`)
@@ -161,18 +172,18 @@ export async function resolveCommsEmailParties(
   if (!recipient) return { kind: "recipient_missing", contactName: name };
 
   if (input.connectorId) {
-    const chosen = await admin.from("channel_connectors").select("id,tenant_id,from_address")
+    const chosen = await admin.from("channel_connectors").select("id,tenant_id,from_address,status,active,mailbox_class,mailbox_owner_user_id")
       .eq("tenant_id", input.tenantId).eq("id", input.connectorId).eq("channel_type", "email").maybeSingle();
     if (chosen.error) throw new Error("sender_read_failed");
     const c = object(chosen.data);
-    if (c.id !== input.connectorId || c.tenant_id !== input.tenantId) return { kind: "sender_missing", contactName: name, recipient };
+    if (c.id !== input.connectorId || !senderAllowed(c, input.tenantId, input.actorUserId)) return { kind: "sender_missing", contactName: name, recipient };
     return { kind: "resolved", contactId: input.contactId, contactName: name, recipient, connectorId: input.connectorId, fromAddress: normalizeCommsEmailAddress(c.from_address) };
   }
-  const listed = await admin.from("channel_connectors").select("id,tenant_id,provider,from_address,active,status")
+  const listed = await admin.from("channel_connectors").select("id,tenant_id,provider,from_address,active,status,mailbox_class,mailbox_owner_user_id")
     .eq("tenant_id", input.tenantId).eq("channel_type", "email").eq("active", true).eq("status", "active");
   if (listed.error || !Array.isArray(listed.data)) throw new Error("sender_read_failed");
   const senders = (listed.data as unknown[]).map(object)
-    .filter((c) => c.tenant_id === input.tenantId && typeof c.id === "string" && providers.includes(String(c.provider)) && normalizeCommsEmailAddress(c.from_address))
+    .filter((c) => senderAllowed(c, input.tenantId, input.actorUserId) && typeof c.id === "string" && providers.includes(String(c.provider)) && normalizeCommsEmailAddress(c.from_address))
     .map((c) => ({ connector_id: (c.id as string).toLowerCase(), from_address: normalizeCommsEmailAddress(c.from_address)! }))
     .sort((a, b) => a.from_address.localeCompare(b.from_address) || a.connector_id.localeCompare(b.connector_id));
   if (!senders.length) return { kind: "sender_missing", contactName: name, recipient };
@@ -185,12 +196,13 @@ export async function resolveCommsEmailParties(
  * sender through this). Tenant- and email-filtered; reads only whether a credential REFERENCE
  * exists, never a secret. null = no such connector in this tenant; a read failure throws.
  */
-export async function readEmailSenderFacts(admin: CommsEmailAdmin, tenantId: string, connectorId: string): Promise<EmailSenderFacts | null> {
-  const { data, error } = await admin.from("channel_connectors").select("tenant_id,active,status,provider,from_address,credentials_vault_ref,config")
+export async function readEmailSenderFacts(admin: CommsEmailAdmin, tenantId: string, connectorId: string, actorUserId?: string | null): Promise<EmailSenderFacts | null> {
+  const { data, error } = await admin.from("channel_connectors").select("tenant_id,active,status,provider,from_address,credentials_vault_ref,config,mailbox_class,mailbox_owner_user_id")
     .eq("tenant_id", tenantId).eq("id", connectorId).eq("channel_type", "email").maybeSingle();
   if (error) throw new Error("setup_read_failed");
   if (!data) return null;
   const c = object(data), config = object(c.config);
+  if (!senderAllowed(c, tenantId, actorUserId)) return null;
   const facts: EmailSenderFacts = {
     tenantMatches: c.tenant_id === tenantId, active: c.active === true && c.status === "active", provider: String(c.provider ?? ""),
     fromAddress: typeof c.from_address === "string" ? c.from_address : null,
@@ -229,7 +241,7 @@ export type CommsEmailPreSendCheck = (
 /** Same reads as invoice delivery readiness: the tenant's connector row, provider environment, then the pre-send check. */
 export async function readCommsEmailReadiness(
   admin: CommsEmailAdmin,
-  input: { tenantId: string; contactId: string; recipient: string | null; connectorId: string | null },
+  input: { tenantId: string; actorUserId?: string | null; contactId: string; recipient: string | null; connectorId: string | null },
   env: (key: string) => string | undefined,
   preSendCheck: CommsEmailPreSendCheck,
 ): Promise<CommsEmailReadiness> {
@@ -237,7 +249,7 @@ export async function readCommsEmailReadiness(
   const facts = { recipient: input.recipient, sender: null as EmailSenderFacts | null, resendConfigured: !!env("RESEND_API_KEY"), googleConfigured: !!env("GOOGLE_OAUTH_CLIENT_ID") && !!env("GOOGLE_OAUTH_CLIENT_SECRET"),
     sendgridConfigured: !!env("SENDGRID_MAIL_SEND_API_KEY") };
   try {
-    if (input.connectorId) facts.sender = await readEmailSenderFacts(admin, input.tenantId, input.connectorId);
+    if (input.connectorId) facts.sender = await readEmailSenderFacts(admin, input.tenantId, input.connectorId, input.actorUserId);
     const setup = commsEmailReadiness(facts);
     if (setup.state === "needs_setup") return setup;
     const preSend = await preSendCheck(admin as never, { tenantId: input.tenantId, channel: "email", to: input.recipient ?? "", contactId: input.contactId });

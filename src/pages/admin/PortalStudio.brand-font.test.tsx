@@ -33,6 +33,9 @@ vi.mock("@/integrations/supabase/client", () => {
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: "00000000-0000-4000-8000-000000000001" }) }));
 
 import PortalStudio from "./PortalStudio";
+// E09 F2: this surface asks for the business's finance entitlement; it is not under test here (not entitled).
+vi.mock("@/hooks/useFinanceEntitlement", () => ({ useFinanceEntitlement: () => ({ entitled: false, loading: false, staffViewer: false }) }));
+
 
 let container: HTMLDivElement;
 let root: Root;
@@ -80,7 +83,7 @@ async function choose(label: string) {
   await flush();
 }
 
-const saveButton = () => [...container.querySelectorAll("button")].find((b) => b.textContent?.includes("Save portal")) as HTMLButtonElement;
+const saveButton = () => [...container.querySelectorAll("button")].find((b) => b.textContent?.includes("Save brand, greeting & agent")) as HTMLButtonElement;
 const brandWrites = () => db.rpcCalls.filter((c) => c.fn === "set_tenant_brand");
 
 describe("Client Portal typeface picker", () => {

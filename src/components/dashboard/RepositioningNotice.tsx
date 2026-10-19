@@ -3,14 +3,18 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Compass, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useCustomerIdentity } from "@/lib/portal/customerIdentity";
 
 /**
  * [§194] Static repositioning notice. Legacy dispute tables have been
  * dropped from the platform — Paige provides credit MONITORING only,
  * never credit REPAIR. CSV export removed with the source tables.
+ * It is a customer page (/app/disputes), so it speaks as the portal and names the customer's agent;
+ * PAIGE is the owner's COO and is not part of the customer's portal (owner ruling, 2026-10-19).
  */
 export function RepositioningNotice() {
   const navigate = useNavigate();
+  const { agentName } = useCustomerIdentity();
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -19,10 +23,10 @@ export function RepositioningNotice() {
           Credit Monitoring Only
         </Badge>
         <h1 className="text-3xl font-bold text-foreground">
-          Paige is a Funding Intelligence Platform
+          This portal offers funding intelligence
         </h1>
         <p className="text-muted-foreground">
-          Paige provides credit monitoring, analytics, and funding
+          It provides credit monitoring, analytics, and funding
           intelligence — not credit repair. Dispute filing, letter
           generation, and bureau challenges are outside our scope.
         </p>
@@ -36,7 +40,7 @@ export function RepositioningNotice() {
               Looking for credit repositioning services?
             </h2>
             <p className="text-sm text-muted-foreground">
-              Dispute filing and credit repositioning are outside Paige's scope. You
+              Dispute filing and credit repositioning are outside this portal's scope. You
               can use the CFPB's free self-help dispute tools to address items on your
               report directly.
             </p>
@@ -55,7 +59,7 @@ export function RepositioningNotice() {
       </Card>
 
       <Card className="p-6 bg-gradient-to-br from-accent/5 to-gold/5 border-accent/20">
-        <h2 className="font-semibold text-foreground mb-2">What Paige does</h2>
+        <h2 className="font-semibold text-foreground mb-2">What this portal does</h2>
         <p className="text-sm text-muted-foreground mb-4">
           Credit monitoring, bureau intelligence, and funding matching for
           small business owners — so you can see, track, and act on your
@@ -69,7 +73,7 @@ export function RepositioningNotice() {
             See Funding Matches
           </Button>
           <Button size="sm" variant="outline" onClick={() => navigate("/app")}>
-            Ask Paige
+            Ask {agentName}
           </Button>
         </div>
       </Card>

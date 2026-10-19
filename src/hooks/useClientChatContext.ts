@@ -7,6 +7,7 @@ import { buildBureauHealthContext } from "@/components/credit/CreditFileHealthAs
 import { getUnlockedPrograms, summarizeDemographics, type DemographicProfile } from "@/lib/unlockedPrograms";
 import type { Tables } from "@/integrations/supabase/types";
 import { useOptionalTenantContext } from "@/hooks/useTenantContext";
+import { readClientPortalSelfProfile } from "@/lib/client-portal-self-profile";
 
 export interface ClientChatContext {
   contextBlock: string;
@@ -89,7 +90,28 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
 
     async function fetchContext() {
       setIsLoading(true);
+      setContextBlock("");
       try {
+        if (userId && !clientId) {
+          const { data, error } = await supabase.rpc("client_portal_self_profile");
+          if (error) throw new Error("Customer context unavailable");
+          if (data !== null) {
+            const profile = readClientPortalSelfProfile(data, userId);
+            if (!profile) throw new Error("Customer context unavailable");
+            // A customer gets the closed native customer projection. Never
+            // continue into staff CRM briefs or legacy client_memory readers.
+            const lines = [
+              `CUSTOMER CONTEXT — ${[profile.first_name, profile.last_name].filter(Boolean).join(" ")}`,
+              profile.entity_name ? `Company: ${profile.entity_name}` : "",
+              profile.onboarding_stage ? `Onboarding: ${profile.onboarding_stage}` : "",
+            ].filter(Boolean);
+            if (!cancelled) {
+              setContextBlock(lines.join("\n"));setHasCreditData(false);
+              setHasCompletedIntake(profile.onboarding_stage === "completed");setIsLoading(false);
+            }
+            return;
+          }
+        }
         const parts: string[] = [];
         let fullName = "Unknown";
         let entityName: string | null = null;

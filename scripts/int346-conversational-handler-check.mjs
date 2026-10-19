@@ -481,6 +481,7 @@ const tzReceipts = rec.rpc.filter(c => c.name === 'record_capability_run');
 assert.equal(tzReceipts.length, 1);
 assert.equal(tzReceipts[0].args._capability_key, 'read_business_time_zone');
 
+
 // (f) Tier (critique A1). A child typed account_type='sub_account' resolves to the 'tenant' tier
 //     (get_actor_access) and IS offered these reads — that is scenario (e): the server sends tier-neutral
 //     references and the CLIENT resolver fails closed for a sub-account (client list only; see
@@ -569,3 +570,25 @@ assert.equal(rec.rpc.filter(c => c.name === 'paige_chat_turn_append' && c.args.p
 danglingStream = false;
 
 console.log('PASS conversational degraded mode: browser payload accepted while DRAINING (no 503), no tools offered or dispatched, no executor claim, one server-issued FINAL receipt, approvals refused before acceptance, replay idempotent, scope bound, interruption truthful, stop/status unchanged');
+
+// Separate ACTIVE protocol controls: the unchanged degraded cases above never
+// acquire the executor and intentionally record no interactive execution effects.
+// These drive the actual production settlement path with synthetic ports only.
+for (const [tool, input, expected, extra] of [
+  ['read_business_time_zone', {}, 'reported_success', zoneRpcs],
+  ['read_client_engagement_status', { client: 'Test Consulting Client' }, 'reported_success', clientRpcs({ data: sourceWithoutReceipt, error: null })],
+  ['read_business_metric', { metric_key: 'unsupported_fixture_metric' }, 'reported_failure', zoneRpcs],
+  ['get_business_snapshot', { unsupported_fixture_argument: true }, 'reported_failure', zoneRpcs],
+]) {
+  receipts.length = 0; modelCalls = 0; modelBodies.length = 0; executorState.held = null;
+  routeIntent = 'answer'; modelReply = 'Answered from the read result.'; readToolUse = { name: tool, input };
+  rec = scenario({ ...extra, rpcs: { ...extra.rpcs,
+    paige_chat_interactive_protocol: { data: { version: 2, active: true }, error: null },
+    paige_chat_interactive_publication_context_v2: { data: true, error: null } } });
+  const readWire = await (await capturedHandler()(req({}, id(81 + ['read_business_time_zone', 'read_client_engagement_status', 'read_business_metric', 'get_business_snapshot'].indexOf(tool))))).text();
+  assert.deepEqual(settledRef().interactive.effects, [{ tool, outcome: expected }]);
+  assert.equal(rec.functions.length, 0);
+  assert.ok(!readWire.includes("couldn't confirm whether the change went through"));
+  assert.ok(!rec.rpc.some(c => ['execute_crm_command', 'prepare_comms_email_send', 'approve_task'].includes(c.name)));
+}
+console.log('PASS active canonical read receipts: time-zone/client available, metric/snapshot needs-input; original read handlers and persisted settlement, no business operation');

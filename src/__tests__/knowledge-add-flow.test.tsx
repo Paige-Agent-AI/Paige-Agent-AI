@@ -3,19 +3,23 @@ import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { Dialog } from "@/components/ui/dialog";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const mocks = vi.hoisted(() => ({
   submitExtraction: vi.fn(), extractionStatus: vi.fn(), extractionReview: vi.fn(),
-  saveReview: vi.fn(), publicationStatus: vi.fn(), hash: vi.fn(), submitPublication: vi.fn(),
+  saveReview: vi.fn(), publicationRead: vi.fn(), hash: vi.fn(), submitPublication: vi.fn(),
+  upload: vi.fn(), existingReview: vi.fn(), sdk: null as SupabaseClient | null,
 }));
-vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
+const identity = vi.hoisted(() => ({ activeUserId: 'actor-a', activeTenantId: 'tenant-a', loading: false, accountContextStatus: 'ready' }));
+vi.mock('@/hooks/useTenantContext', () => ({ useTenantContext: () => identity }));
+vi.mock("@/integrations/supabase/client", () => ({ get supabase() { return mocks.sdk ?? { storage: { from: () => ({ upload: mocks.upload }) } }; } }));
 vi.mock("@/lib/knowledge-extraction-service", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/knowledge-extraction-service")>();
-  return { ...actual, submitKnowledgeExtraction: mocks.submitExtraction, readKnowledgeExtractionStatus: mocks.extractionStatus, readKnowledgeExtractionReview: mocks.extractionReview };
+  return { ...actual, submitKnowledgeExtraction: mocks.submitExtraction, readKnowledgeExtractionStatus: mocks.extractionStatus, readKnowledgeExtractionReview: mocks.extractionReview, readKnowledgeExtractionForDocument: mocks.existingReview, readKnowledgePublicationForDocument: mocks.publicationRead };
 });
 vi.mock("@/lib/knowledge-review-service", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/knowledge-review-service")>();
-  return { ...actual, saveKnowledgeReview: mocks.saveReview, readKnowledgePublicationStatus: mocks.publicationStatus, sha256Hex: mocks.hash };
+  return { ...actual, saveKnowledgeReview: mocks.saveReview, sha256Hex: mocks.hash };
 });
 vi.mock("@/lib/knowledge-service", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/knowledge-service")>();
@@ -28,9 +32,17 @@ import { KnowledgeReviewServiceError } from "@/lib/knowledge-review-service";
 const REF = { tenantId: "tenant-a", intentId: "intent-a", documentId: "doc-a", workId: "work-a", revision: 1 };
 const status = (work_status: string, extra: Record<string, unknown> = {}) => ({ work_id: "work-a", capability_key: "knowledge.extract", work_kind: "knowledge_extract", work_status, attempt_count: 1, max_attempts: 3, blocked_reason: null, error_code: null, safe_summary: null, created_at: "2026-10-02T00:00:00Z", updated_at: "2026-10-02T00:00:00Z", settled_at: null, ...extra });
 const review = { phase: "awaiting_review" as const, tenant_id: "tenant-a", document_id: "doc-a", revision: 2, record_state: "draft" as const, source_coverage: "complete" as const, source_binding: null, extraction_work_id: "work-a", extraction_source_binding: null, pending_review: { schema_version: 1, extracted_content: "Extracted source text", reviewed_content: null, extraction_version: "v1", coverage: "complete" as const } };
+const idlePublication = { contract_version: 1, association: 'not_submitted', work_id: null, work_status: null, generation_id: null, outcome: null };
+const publicationResult = (ref: { documentId: string; extractionWorkId: string; revision: number; workId?: string }, workStatus = 'succeeded') => ({
+  ...review, document_id: ref.documentId, revision: workStatus === 'succeeded' ? ref.revision + 1 : ref.revision,
+  record_state: 'canonical', extraction_work_id: workStatus === 'succeeded' ? null : ref.extractionWorkId,
+  pending_review: workStatus === 'succeeded' ? null : { ...review.pending_review, reviewed_content: 'Saved exact text' },
+  publication: { ...idlePublication, association: 'matched', work_id: ref.workId ?? 'pub-work', work_status: workStatus,
+    generation_id: workStatus === 'succeeded' ? ref.workId ?? 'pub-work' : null, outcome: workStatus === 'succeeded' ? 'capability_succeeded' : null },
+});
 
 let container: HTMLDivElement, root: Root, onPublished: () => void;
-const render = async () => { await act(async () => root.render(<Dialog open onOpenChange={() => {}}><AddKnowledgeFlow tenantId="tenant-a" onPublished={onPublished} onClose={() => {}} /></Dialog>)); };
+const render = async (overrides: Record<string, unknown> = {}) => { await act(async () => root.render(<Dialog open onOpenChange={() => {}}><AddKnowledgeFlow tenantId="tenant-a" onPublished={onPublished} onClose={() => {}} {...overrides} /></Dialog>)); };
 const body = () => document.body.textContent ?? "";
 const button = (text: string) => { const b = [...document.body.querySelectorAll("button")].find(b => b.textContent?.trim() === text); expect(b, `button ${text}`).toBeTruthy(); return b!; };
 const field = (id: string) => { const el = document.getElementById(id) as HTMLInputElement & HTMLTextAreaElement; expect(el, `field ${id}`).toBeTruthy(); return el; };
@@ -43,6 +55,13 @@ const click = async (text: string) => { await act(async () => { button(text).cli
 const tick = async (ms: number) => { await act(async () => { await vi.advanceTimersByTimeAsync(ms); }); };
 
 beforeEach(() => {
+  mocks.sdk = null;
+  mocks.existingReview.mockReset().mockImplementation(async (_client, scope, documentId, revision) => {
+    const saved = mocks.saveReview.mock.calls.at(-1);
+    return saved ? { ...review, tenant_id: scope.tenantId, document_id: documentId, revision, pending_review: { ...review.pending_review, reviewed_content: saved[5] }, publication: idlePublication }
+      : { ...review, record_state: 'canonical', tenant_id: scope.tenantId, document_id: documentId, revision, phase: "review_unavailable", extraction_work_id: null, pending_review: null, publication: idlePublication };
+  });
+  Object.assign(identity, { activeUserId: 'actor-a', activeTenantId: 'tenant-a', loading: false, accountContextStatus: 'ready' });
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.useFakeTimers();
   container = document.createElement("div"); document.body.append(container); root = createRoot(container);
@@ -51,9 +70,449 @@ beforeEach(() => {
   mocks.extractionStatus.mockReset().mockResolvedValue(status("succeeded"));
   mocks.extractionReview.mockReset().mockResolvedValue(review);
   mocks.saveReview.mockReset().mockResolvedValue({ revision: 3, outcome: "capability_succeeded", runId: "run-a" });
-  mocks.publicationStatus.mockReset().mockResolvedValue({ phase: "resolved", status: "succeeded" });
+  mocks.publicationRead.mockReset().mockImplementation(async (_client, _scope, ref) => publicationResult(ref));
   mocks.hash.mockReset().mockResolvedValue("a".repeat(64));
   mocks.submitPublication.mockReset().mockResolvedValue({ work_id: "pub-work", document_id: "doc-a", status: "claimed", replayed: false, revision: 3 });
+  mocks.upload.mockReset().mockResolvedValue({ error: null });
+});
+
+describe('real SDK Knowledge read receiver', () => {
+  const tenant = '11111111-1111-4111-8111-111111111111';
+  const doc = '22222222-2222-4222-8222-222222222222';
+  const work = '33333333-3333-4333-8333-333333333333';
+  const nativeReview = { ...review, tenant_id: tenant, document_id: doc, revision: 5, record_state: 'canonical', extraction_work_id: work };
+  const nativeStatus = { ...status('succeeded'), work_id: work };
+  const target = { id: doc, tenant_id: tenant, revision: 5, title: 'Existing guide', content: 'Canonical text', summary: null, category: null, tags: [] };
+  const calls: { name: string; args: Record<string, unknown>; authorization: string | null }[] = [];
+  async function sdkPorts(reply: (name: string) => unknown | Promise<unknown> = name => name === 'read_tenant_knowledge_review' ? nativeReview : [nativeStatus]) {
+    calls.length = 0;
+    mocks.sdk = createClient('https://knowledge-fixture.invalid', 'synthetic-anon-key', {
+      accessToken: async () => 'synthetic-ordinary-user-jwt',
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+      global: { fetch: async (input, init) => {
+        const url = new URL(String(input));
+        expect(url.origin).toBe('https://knowledge-fixture.invalid');
+        expect(url.pathname).toMatch(/^\/rest\/v1\/rpc\//);
+        const name = url.pathname.split('/').pop()!;
+        calls.push({ name, args: JSON.parse(String(init?.body)), authorization: new Headers(init?.headers).get('authorization') });
+        return new Response(JSON.stringify(await reply(name)), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      } },
+    });
+    const rpc = vi.spyOn(mocks.sdk, 'rpc');
+    const actual = await vi.importActual<typeof import('@/lib/knowledge-extraction-service')>('@/lib/knowledge-extraction-service');
+    mocks.extractionStatus.mockImplementation(actual.readKnowledgeExtractionStatus);
+    mocks.extractionReview.mockImplementation(actual.readKnowledgeExtractionReview);
+    mocks.publicationRead.mockImplementation(actual.readKnowledgePublicationForDocument);
+    Object.assign(identity, { activeTenantId: tenant });
+    mocks.submitExtraction.mockResolvedValue({ reference: { tenantId: tenant, intentId: '44444444-4444-4444-8444-444444444444', documentId: doc, workId: work, revision: 4 }, status: 'claimed', replayed: false });
+    return { rpc, actual };
+  }
+  it('uses the actual SDK receiver and original JWT for bound review/status reads', async () => {
+    const { rpc } = await sdkPorts();
+    await render({ tenantId: tenant });
+    set(field('knowledge-add-title'), 'Notes'); set(field('knowledge-add-content'), 'Input');
+    await click('Send to Paige'); await tick(800);
+    expect(body()).toContain('Review what Paige read');
+    expect(calls.map(c => c.name)).toEqual(['read_tenant_knowledge_review', 'get_paige_durable_work', 'read_tenant_knowledge_review']);
+    expect(calls[0].args).toEqual({ p_expected_tenant: tenant, p_doc_id: doc });
+    expect(calls[1].args).toEqual({ _work_id: work });
+    expect(calls.every(c => c.authorization === 'Bearer synthetic-ordinary-user-jwt')).toBe(true);
+    expect(rpc.mock.contexts.every(context => context === mocks.sdk)).toBe(true);
+    expect(mocks.submitExtraction).toHaveBeenCalledOnce();
+    expect(mocks.saveReview).not.toHaveBeenCalled(); expect(mocks.submitPublication).not.toHaveBeenCalled();
+  });
+  it('does not dispatch a read after the original actor scope retires', async () => {
+    await sdkPorts(); await render({ tenantId: tenant });
+    set(field('knowledge-add-title'), 'Notes'); set(field('knowledge-add-content'), 'Input');
+    await click('Send to Paige'); identity.activeUserId = 'actor-b'; await render({ tenantId: tenant }); await tick(800);
+    expect(calls).toEqual([]); expect(mocks.saveReview).not.toHaveBeenCalled(); expect(mocks.submitPublication).not.toHaveBeenCalled();
+  });
+  it('reopens the original unsaved native review after reload with zero extraction or publication', async () => {
+    const { actual, rpc } = await sdkPorts(name => name === 'read_tenant_knowledge_review'
+      ? mocks.saveReview.mock.calls.length ? { ...nativeReview, revision: 6, pending_review: { ...nativeReview.pending_review, reviewed_content: nativeReview.pending_review.extracted_content }, publication: idlePublication } : nativeReview
+      : [nativeStatus]);
+    mocks.existingReview.mockImplementation(actual.readKnowledgeExtractionForDocument);
+    mocks.saveReview.mockResolvedValue({ revision: 6, outcome: 'capability_succeeded', runId: 'run-a' });
+    mocks.submitPublication.mockResolvedValue({ work_id: 'pub-work', document_id: doc, status: 'claimed', replayed: false, revision: 6 });
+    await render({ tenantId: tenant, replacementTarget: target });
+    expect(body()).toContain('Review what Paige read');
+    expect(field('knowledge-review-content').value).toBe(nativeReview.pending_review.extracted_content);
+    expect(mocks.submitExtraction).not.toHaveBeenCalled(); expect(mocks.saveReview).not.toHaveBeenCalled(); expect(mocks.submitPublication).not.toHaveBeenCalled();
+    expect(calls.map(c => c.name)).toEqual(['read_tenant_knowledge_review', 'read_tenant_knowledge_review', 'get_paige_durable_work', 'read_tenant_knowledge_review']);
+    expect(rpc.mock.contexts.every(context => context === mocks.sdk)).toBe(true);
+    await click('Save review'); expect(mocks.saveReview.mock.calls[0].slice(1,5)).toEqual([tenant,doc,work,5]);
+    expect(mocks.submitPublication).not.toHaveBeenCalled();
+    await click('Publish to Knowledge'); expect(mocks.submitPublication.mock.calls[0].slice(1,5)).toEqual([tenant,doc,work,6]);
+    expect(mocks.submitExtraction).not.toHaveBeenCalled();
+  });
+  it('keeps an already saved resumed review held rather than overwriting or publishing it', async () => {
+    const { actual } = await sdkPorts(name => name === 'read_tenant_knowledge_review' ? { ...nativeReview, pending_review: { ...nativeReview.pending_review, reviewed_content: 'Saved exact text' } } : [nativeStatus]);
+    mocks.existingReview.mockImplementation(actual.readKnowledgeExtractionForDocument);
+    await render({ tenantId: tenant, replacementTarget: target });
+    expect(body()).toContain('Saved review needs confirmation');
+    expect(document.getElementById('knowledge-review-content')).toBeNull();
+    expect(mocks.submitExtraction).not.toHaveBeenCalled(); expect(mocks.saveReview).not.toHaveBeenCalled(); expect(mocks.submitPublication).not.toHaveBeenCalled();
+  });
+  it('recovers a saved review with native no-publication proof without another Save or reading', async () => {
+    const publication={contract_version:1,association:'not_submitted',work_id:null,work_status:null,generation_id:null,outcome:null};
+    const {actual,rpc}=await sdkPorts(name=>name==='read_tenant_knowledge_review'?{...nativeReview,pending_review:{...nativeReview.pending_review,reviewed_content:'Saved exact text'},publication}:[nativeStatus]);
+    mocks.existingReview.mockImplementation(actual.readKnowledgeExtractionForDocument);
+    await render({tenantId:tenant,replacementTarget:target});
+    expect(body()).toContain('Publish to Knowledge');
+    expect(document.getElementById('knowledge-review-content')).toBeNull();
+    expect(mocks.submitExtraction).not.toHaveBeenCalled();expect(mocks.saveReview).not.toHaveBeenCalled();expect(mocks.submitPublication).not.toHaveBeenCalled();
+    expect(rpc.mock.contexts.every(context=>context===mocks.sdk)).toBe(true);
+  });
+  it('recovers the same native publication after reload with no new intent', async () => {
+    const publication={contract_version:1,association:'matched',work_id:'66666666-6666-4666-8666-666666666666',work_status:'outcome_unknown',generation_id:null,outcome:null};
+    const {actual}=await sdkPorts(name=>name==='read_tenant_knowledge_review'?{...nativeReview,pending_review:{...nativeReview.pending_review,reviewed_content:'Saved exact text'},publication}:[nativeStatus]);
+    mocks.existingReview.mockImplementation(actual.readKnowledgeExtractionForDocument);
+    await render({tenantId:tenant,replacementTarget:target});
+    expect(body()).toContain('Publication unconfirmed');expect(body()).toContain('Check publication');
+    expect(mocks.submitExtraction).not.toHaveBeenCalled();expect(mocks.saveReview).not.toHaveBeenCalled();expect(mocks.submitPublication).not.toHaveBeenCalled();
+  });
+  it.each(['claimed','expired'])('resumes native %s publication, verifies promotion and reopens without another write', async workStatus => {
+    const pub='66666666-6666-4666-8666-666666666666';
+    let native={...nativeReview,pending_review:{...nativeReview.pending_review,reviewed_content:'Saved exact text'},publication:{...idlePublication,association:'matched',work_id:pub,work_status:workStatus}};
+    const {actual,rpc}=await sdkPorts(()=>native);
+    mocks.existingReview.mockImplementation(actual.readKnowledgeExtractionForDocument);
+    await render({tenantId:tenant,replacementTarget:target});
+    expect(body()).toContain('Publishing continues even if you close this');
+    expect(mocks.submitExtraction).not.toHaveBeenCalled();expect(mocks.saveReview).not.toHaveBeenCalled();expect(mocks.submitPublication).not.toHaveBeenCalled();
+    native={...native,revision:6,pending_review:null,extraction_work_id:null,publication:{...native.publication,work_status:'succeeded',generation_id:pub,outcome:'capability_succeeded'}} as typeof native;
+    await tick(1500);
+    expect(body()).toContain('Published to Knowledge');expect(onPublished).toHaveBeenCalledOnce();
+    await act(async()=>root.render(<span>Closed</span>));
+    await render({tenantId:tenant,replacementTarget:{...target,revision:6,content:'Saved exact text'}});
+    expect(body()).toContain('Make another correction');
+    expect(onPublished).toHaveBeenCalledOnce();
+    await click('Make another correction');
+    expect(field('knowledge-add-content').value).toBe('Saved exact text');
+    expect(calls.every(c=>c.name==='read_tenant_knowledge_review')).toBe(true);
+    expect(rpc.mock.contexts.every(context=>context===mocks.sdk)).toBe(true);
+    expect(mocks.submitExtraction).not.toHaveBeenCalled();expect(mocks.saveReview).not.toHaveBeenCalled();expect(mocks.submitPublication).not.toHaveBeenCalled();
+  });
+  it('keeps an unrecorded native publication truthful after reopening',async()=>{
+    const pub='66666666-6666-4666-8666-666666666666';
+    const {actual}=await sdkPorts(()=>({...nativeReview,pending_review:null,extraction_work_id:null,publication:{...idlePublication,association:'matched',work_id:pub,work_status:'succeeded',generation_id:pub,outcome:'capability_completed_unrecorded'}}));
+    mocks.existingReview.mockImplementation(actual.readKnowledgeExtractionForDocument);
+    await render({tenantId:tenant,replacementTarget:target});
+    expect(body()).toContain('activity receipt could not be recorded');expect(body()).toContain('Make another correction');
+    expect(mocks.submitPublication).not.toHaveBeenCalled();expect(onPublished).not.toHaveBeenCalled();
+  });
+  it('finishes the original publication after a later metadata revision without another write',async()=>{
+    const pub='66666666-6666-4666-8666-666666666666';let promoted=false;
+    const {actual}=await sdkPorts(()=>promoted
+      ? {...nativeReview,revision:9,pending_review:null,extraction_work_id:null,publication:{...idlePublication,association:'matched',work_id:pub,work_status:'succeeded',generation_id:pub,outcome:'capability_completed_unrecorded'}}
+      : {...nativeReview,pending_review:{...nativeReview.pending_review,reviewed_content:'Saved exact text'},publication:{...idlePublication,association:'matched',work_id:pub,work_status:'claimed'}});
+    mocks.existingReview.mockImplementation(actual.readKnowledgeExtractionForDocument);
+    await render({tenantId:tenant,replacementTarget:target});promoted=true;await tick(1500);
+    expect(body()).toContain('Published to Knowledge');expect(body()).toContain('activity receipt could not be recorded');
+    expect(onPublished).toHaveBeenCalledOnce();
+    expect(mocks.publicationRead.mock.calls.at(-1)?.[2]).toEqual({tenantId:tenant,documentId:doc,extractionWorkId:work,revision:5,workId:pub});
+    expect(calls.every(c=>c.name==='read_tenant_knowledge_review'&&c.authorization==='Bearer synthetic-ordinary-user-jwt')).toBe(true);
+    expect(mocks.submitExtraction).not.toHaveBeenCalled();expect(mocks.saveReview).not.toHaveBeenCalled();expect(mocks.submitPublication).not.toHaveBeenCalled();
+  });
+  it('holds a malformed native terminal outcome after reopening without success or writes',async()=>{
+    const pub='66666666-6666-4666-8666-666666666666';
+    const {actual}=await sdkPorts(()=>({...nativeReview,pending_review:null,extraction_work_id:null,publication:{...idlePublication,association:'matched',work_id:pub,work_status:'succeeded',generation_id:pub,outcome:['capability_completed_unrecorded']}}));
+    mocks.existingReview.mockImplementation(actual.readKnowledgeExtractionForDocument);
+    await render({tenantId:tenant,replacementTarget:target});
+    expect(body()).toContain('Existing reading unavailable');expect(body()).not.toContain('Make another correction');
+    expect(body()).not.toContain('Published to Knowledge');expect(onPublished).not.toHaveBeenCalled();
+    expect(mocks.submitExtraction).not.toHaveBeenCalled();expect(mocks.saveReview).not.toHaveBeenCalled();expect(mocks.submitPublication).not.toHaveBeenCalled();
+  });
+  it('keeps the original work checkable after a malformed terminal read and preserves its later receipt warning',async()=>{
+    const pub='66666666-6666-4666-8666-666666666666';let malformed=false,valid=false;
+    const {actual}=await sdkPorts(()=>malformed
+      ? {...nativeReview,revision:6,pending_review:null,extraction_work_id:null,publication:{...idlePublication,association:'matched',work_id:pub,work_status:'succeeded',generation_id:pub,outcome:valid?'capability_completed_unrecorded':['capability_completed_unrecorded']}}
+      : {...nativeReview,pending_review:{...nativeReview.pending_review,reviewed_content:'Saved exact text'},publication:{...idlePublication,association:'matched',work_id:pub,work_status:'claimed'}});
+    mocks.existingReview.mockImplementation(actual.readKnowledgeExtractionForDocument);
+    await render({tenantId:tenant,replacementTarget:target});malformed=true;await tick(1500);
+    expect(body()).toContain('Publication status failed');expect(body()).toContain('Check publication');
+    expect(body()).not.toContain('Published to Knowledge');expect(onPublished).not.toHaveBeenCalled();
+    expect(mocks.publicationRead.mock.calls.at(-1)?.[2]).toEqual({tenantId:tenant,documentId:doc,extractionWorkId:work,revision:5,workId:pub});
+    valid=true;await click('Check publication');
+    expect(body()).toContain('activity receipt could not be recorded');expect(onPublished).toHaveBeenCalledOnce();
+    expect(mocks.submitExtraction).not.toHaveBeenCalled();expect(mocks.saveReview).not.toHaveBeenCalled();expect(mocks.submitPublication).not.toHaveBeenCalled();
+  });
+  it('publishes a saved recovered review only after an explicit click and fresh exact native proof',async()=>{
+    const saved={...nativeReview,pending_review:{...nativeReview.pending_review,reviewed_content:'Saved exact text'},publication:idlePublication};
+    const {actual}=await sdkPorts(()=>saved);
+    mocks.existingReview.mockImplementation(actual.readKnowledgeExtractionForDocument);
+    mocks.submitPublication.mockResolvedValue({work_id:'66666666-6666-4666-8666-666666666666',document_id:doc,status:'claimed',replayed:false,revision:5});
+    await render({tenantId:tenant,replacementTarget:target});
+    await act(async()=>root.render(<span>Closed</span>));
+    await render({tenantId:tenant,replacementTarget:target});
+    expect(mocks.submitPublication).not.toHaveBeenCalled();
+    await click('Publish to Knowledge');
+    expect(mocks.hash).toHaveBeenCalledExactlyOnceWith('Saved exact text');
+    expect(mocks.submitPublication).toHaveBeenCalledWith(expect.anything(),tenant,doc,work,5,expect.any(String),'a'.repeat(64));
+    expect(mocks.submitExtraction).not.toHaveBeenCalled();expect(mocks.saveReview).not.toHaveBeenCalled();
+  });
+  it('refuses changed saved-review preflight before any publication submission',async()=>{
+    let revision=5;
+    const {actual}=await sdkPorts(()=>({...nativeReview,revision,pending_review:{...nativeReview.pending_review,reviewed_content:'Saved exact text'},publication:idlePublication}));
+    mocks.existingReview.mockImplementation(actual.readKnowledgeExtractionForDocument);
+    await render({tenantId:tenant,replacementTarget:target});revision=6;await click('Publish to Knowledge');
+    expect(body()).toContain('No publication was submitted');expect(mocks.submitPublication).not.toHaveBeenCalled();expect(mocks.hash).not.toHaveBeenCalled();
+    expect(mocks.submitExtraction).not.toHaveBeenCalled();expect(mocks.saveReview).not.toHaveBeenCalled();
+  });
+  it.each(['failed','cancelled'])('permits explicit recovery of native %s work after nonpromotion proof',async workStatus=>{
+    const native={...nativeReview,pending_review:{...nativeReview.pending_review,reviewed_content:'Saved exact text'},publication:{...idlePublication,association:'matched',work_id:'66666666-6666-4666-8666-666666666666',work_status:workStatus}};
+    const {actual}=await sdkPorts(()=>native);mocks.existingReview.mockImplementation(actual.readKnowledgeExtractionForDocument);
+    await render({tenantId:tenant,replacementTarget:target});
+    expect(body()).toContain('Publication failed');expect(mocks.submitPublication).not.toHaveBeenCalled();
+    await click('Publish again');expect(mocks.submitPublication).toHaveBeenCalledOnce();
+    expect(mocks.submitExtraction).not.toHaveBeenCalled();expect(mocks.saveReview).not.toHaveBeenCalled();
+  });
+  it.each(['missing','unavailable'])('holds a %s publication association rather than treating it as idle',async kind=>{
+    const {actual}=await sdkPorts(()=>({...nativeReview,pending_review:null,extraction_work_id:null,
+      ...(kind==='missing'?{}:{publication:{...idlePublication,association:'unavailable'}})}));
+    mocks.existingReview.mockImplementation(actual.readKnowledgeExtractionForDocument);
+    await render({tenantId:tenant,replacementTarget:target});
+    expect(body()).toContain('Publication unavailable');expect(document.getElementById('knowledge-add-content')).toBeNull();
+    expect(mocks.submitExtraction).not.toHaveBeenCalled();expect(mocks.saveReview).not.toHaveBeenCalled();expect(mocks.submitPublication).not.toHaveBeenCalled();
+  });
+  it('refuses a fresh correction when the canonical revision changes during continuation',async()=>{
+    const pub='66666666-6666-4666-8666-666666666666';let revision=5;
+    const {actual}=await sdkPorts(()=>({...nativeReview,revision,pending_review:null,extraction_work_id:null,publication:{...idlePublication,association:'matched',work_id:pub,work_status:'succeeded',generation_id:pub,outcome:'capability_succeeded'}}));
+    mocks.existingReview.mockImplementation(actual.readKnowledgeExtractionForDocument);
+    await render({tenantId:tenant,replacementTarget:target});revision=6;await click('Make another correction');
+    expect(body()).toContain('Document changed');expect(document.getElementById('knowledge-add-content')).toBeNull();
+    expect(mocks.submitExtraction).not.toHaveBeenCalled();expect(mocks.submitPublication).not.toHaveBeenCalled();
+  });
+  it('recovers a lost publication acknowledgement by exact native association without resubmitting',async()=>{
+    const pub='66666666-6666-4666-8666-666666666666';let uncertain=false;
+    const saved={...nativeReview,pending_review:{...nativeReview.pending_review,reviewed_content:'Saved exact text'}};
+    const {actual}=await sdkPorts(()=>({...saved,publication:uncertain?{...idlePublication,association:'matched',work_id:pub,work_status:'outcome_unknown'}:idlePublication}));
+    mocks.existingReview.mockImplementation(actual.readKnowledgeExtractionForDocument);
+    mocks.submitPublication.mockImplementation(async()=>{uncertain=true;throw Error('Lost acknowledgement');});
+    await render({tenantId:tenant,replacementTarget:target});await click('Publish to Knowledge');
+    expect(body()).toContain('Check publication');await click('Check publication');
+    expect(body()).toContain('Publication unconfirmed');expect(mocks.submitPublication).toHaveBeenCalledOnce();
+    expect(mocks.publicationRead.mock.calls[0][2]).toEqual({tenantId:tenant,documentId:doc,extractionWorkId:work,revision:5});
+    expect(mocks.submitExtraction).not.toHaveBeenCalled();expect(mocks.saveReview).not.toHaveBeenCalled();
+  });
+  it('returns to explicit Publish after a lost acknowledgement is definitively not submitted',async()=>{
+    const saved={...nativeReview,pending_review:{...nativeReview.pending_review,reviewed_content:'Saved exact text'},publication:idlePublication};
+    const {actual}=await sdkPorts(()=>saved);mocks.existingReview.mockImplementation(actual.readKnowledgeExtractionForDocument);
+    mocks.submitPublication.mockRejectedValue(Error('Lost acknowledgement'));
+    await render({tenantId:tenant,replacementTarget:target});await click('Publish to Knowledge');
+    expect(body()).toContain('Publication unconfirmed');await click('Check publication');
+    expect(body()).toContain('Your saved review is ready to publish');expect(button('Publish to Knowledge')).toBeTruthy();
+    button('Publish to Knowledge').focus();expect(document.activeElement).toBe(button('Publish to Knowledge'));
+    expect(mocks.submitPublication).toHaveBeenCalledOnce();
+    expect(mocks.submitExtraction).not.toHaveBeenCalled();expect(mocks.saveReview).not.toHaveBeenCalled();
+    mocks.submitPublication.mockResolvedValue({work_id:'66666666-6666-4666-8666-666666666666',document_id:doc,status:'claimed',replayed:false,revision:5});
+    await click('Publish to Knowledge');expect(mocks.submitPublication).toHaveBeenCalledTimes(2);
+    expect(mocks.submitPublication.mock.calls[1].slice(1)).toEqual(mocks.submitPublication.mock.calls[0].slice(1));
+    expect(calls.every(c=>c.name==='read_tenant_knowledge_review'&&c.authorization==='Bearer synthetic-ordinary-user-jwt')).toBe(true);
+  });
+  it.each(['unavailable','changed-text','known-work-disappeared'])('keeps %s held after Check publication with no new writes',async kind=>{
+    const pub='66666666-6666-4666-8666-666666666666';let checking=false;
+    const saved={...nativeReview,pending_review:{...nativeReview.pending_review,reviewed_content:'Saved exact text'},publication:idlePublication};
+    const {actual}=await sdkPorts(()=>checking
+      ? {...saved,pending_review:{...saved.pending_review,reviewed_content:kind==='changed-text'?'Unexpected changed text':'Saved exact text'},publication:kind==='unavailable'?{...idlePublication,association:'unavailable'}:idlePublication}
+      : kind==='known-work-disappeared'?{...saved,publication:{...idlePublication,association:'matched',work_id:pub,work_status:'outcome_unknown'}}:saved);
+    mocks.existingReview.mockImplementation(actual.readKnowledgeExtractionForDocument);
+    mocks.submitPublication.mockRejectedValue(Error('Lost acknowledgement'));
+    await render({tenantId:tenant,replacementTarget:target});
+    if(kind!=='known-work-disappeared')await click('Publish to Knowledge');
+    const attempts=mocks.submitPublication.mock.calls.length;checking=true;await click('Check publication');
+    expect(body()).not.toContain('Your saved review is ready to publish');expect(body()).not.toContain('Published to Knowledge');
+    expect(mocks.submitPublication).toHaveBeenCalledTimes(attempts);expect(mocks.submitExtraction).not.toHaveBeenCalled();expect(mocks.saveReview).not.toHaveBeenCalled();
+  });
+  it.each(['outcome_unknown','blocked','failed','cancelled'])('resumes the original %s work honestly with zero new dispatch', async work_status => {
+    const { actual } = await sdkPorts(name => name === 'read_tenant_knowledge_review' ? nativeReview : [{ ...nativeStatus, work_status, blocked_reason: work_status === 'blocked' ? 'authority_changed' : null }]);
+    mocks.existingReview.mockImplementation(actual.readKnowledgeExtractionForDocument);
+    await render({ tenantId: tenant, replacementTarget: target });
+    expect(body()).toContain(work_status === 'outcome_unknown' ? 'Reading outcome unconfirmed' : work_status === 'blocked' ? 'Reading paused' : 'Reading failed');
+    expect(document.getElementById('knowledge-add-content')).toBeNull(); expect(mocks.submitExtraction).not.toHaveBeenCalled(); expect(mocks.saveReview).not.toHaveBeenCalled(); expect(mocks.submitPublication).not.toHaveBeenCalled();
+  });
+  it('does not confuse a work-present missing review with idle or successful publication', async () => {
+    const { actual } = await sdkPorts(name => name === 'read_tenant_knowledge_review' ? { ...nativeReview, pending_review: null } : [nativeStatus]);
+    mocks.existingReview.mockImplementation(actual.readKnowledgeExtractionForDocument);
+    await render({ tenantId: tenant, replacementTarget: target });
+    expect(body()).toContain('Review unavailable'); expect(document.getElementById('knowledge-add-content')).toBeNull(); expect(mocks.submitExtraction).not.toHaveBeenCalled(); expect(onPublished).not.toHaveBeenCalled();
+  });
+  it('keeps malformed or stale discovery unavailable instead of opening a new source', async () => {
+    const { actual } = await sdkPorts(() => ({ ...nativeReview, revision: 6 }));
+    mocks.existingReview.mockImplementation(actual.readKnowledgeExtractionForDocument);
+    await render({ tenantId: tenant, replacementTarget: target });
+    expect(body()).toContain('Existing reading unavailable'); expect(calls).toHaveLength(1); expect(mocks.submitExtraction).not.toHaveBeenCalled();
+  });
+  it.each(['actor','workspace','unmount'])('drops late native discovery after %s retirement without another read or effect', async kind => {
+    const pending: ((data: unknown) => void)[] = [];
+    const { actual } = await sdkPorts(() => new Promise(r => { pending.push(r); }));
+    mocks.existingReview.mockImplementation(actual.readKnowledgeExtractionForDocument);
+    await render({ tenantId: tenant, replacementTarget: target });
+    expect(calls).toHaveLength(1);
+    if (kind === 'actor') identity.activeUserId = 'actor-b';
+    if (kind === 'workspace') identity.activeTenantId = 'other-tenant';
+    await act(async () => root.render(<Dialog open><AddKnowledgeFlow tenantId={tenant} replacementTarget={target} onClose={() => {}} /></Dialog>));
+    if (kind === 'unmount') await act(async () => root.render(<span>Closed</span>));
+    if (kind === 'actor') identity.activeUserId = 'actor-a';
+    if (kind === 'workspace') identity.activeTenantId = tenant;
+    if (kind !== 'unmount') await render({ tenantId: tenant, replacementTarget: target });
+    const beforeLate = calls.length;
+    await act(async () => pending[0](nativeReview));
+    expect(calls).toHaveLength(beforeLate);
+    expect(calls.every(call => call.name === 'read_tenant_knowledge_review')).toBe(true);
+    expect(mocks.submitExtraction).not.toHaveBeenCalled(); expect(mocks.saveReview).not.toHaveBeenCalled(); expect(mocks.submitPublication).not.toHaveBeenCalled();
+    expect(body()).not.toContain('Review what Paige read');
+  });
+  it('permits new input only after a verified both-null native idle projection', async () => {
+    const { actual } = await sdkPorts(() => ({ ...nativeReview, extraction_work_id: null, pending_review: null, publication: idlePublication }));
+    mocks.existingReview.mockImplementation(actual.readKnowledgeExtractionForDocument);
+    await render({ tenantId: tenant, replacementTarget: target });
+    expect(field('knowledge-add-content').value).toBe(target.content);
+    expect(calls).toHaveLength(1); expect(mocks.submitExtraction).not.toHaveBeenCalled();
+    expect(mocks.saveReview).not.toHaveBeenCalled(); expect(mocks.submitPublication).not.toHaveBeenCalled();
+  });
+  it('checks the same original work after a transient read failure without resubmitting', async () => {
+    let fail = true;
+    const { actual } = await sdkPorts(name => {
+      if (name === 'get_paige_durable_work' && fail) { fail = false; return []; }
+      return name === 'read_tenant_knowledge_review' ? nativeReview : [nativeStatus];
+    });
+    mocks.existingReview.mockImplementation(actual.readKnowledgeExtractionForDocument);
+    await render({ tenantId: tenant, replacementTarget: target });
+    expect(body()).toContain('Reading status failed');
+    await click('Check reading');
+    expect(body()).toContain('Review what Paige read');
+    expect(calls.filter(c => c.name === 'get_paige_durable_work').map(c => c.args)).toEqual([{ _work_id: work }, { _work_id: work }]);
+    expect(mocks.submitExtraction).not.toHaveBeenCalled(); expect(mocks.saveReview).not.toHaveBeenCalled(); expect(mocks.submitPublication).not.toHaveBeenCalled();
+  });
+});
+
+describe('same-document Knowledge content correction', () => {
+  const target = { id: 'doc-a', tenant_id: 'tenant-a', revision: 4, title: 'Original guide', content: 'Original canonical text', summary: 'Original summary', category: 'Guide', tags: ['original'] };
+  async function correction(overrides: Record<string, unknown> = {}) {
+    mocks.submitExtraction.mockResolvedValue({ reference: { ...REF, revision: 5 }, status: 'claimed', replayed: false });
+    mocks.extractionReview.mockResolvedValue({ ...review, record_state: 'canonical', revision: 6 });
+    mocks.saveReview.mockResolvedValue({ revision: 7, outcome: 'capability_succeeded', runId: 'run-a' });
+    mocks.submitPublication.mockResolvedValue({ work_id: 'pub-work', document_id: 'doc-a', status: 'claimed', replayed: false, revision: 7 });
+    await render({ replacementTarget: target, ...overrides });
+  }
+  it('corrects the original ID through exact extraction, review and publication payloads', async () => {
+    await correction();
+    expect(body()).toContain('Correct Knowledge content');
+    expect(field('knowledge-add-content').value).toBe(target.content);
+    set(field('knowledge-add-content'), 'Corrected input');
+    await click('Send to Paige');
+    expect(mocks.submitExtraction.mock.calls[0][2]).toMatchObject({ doc_id: 'doc-a', expected_revision: 4, content: 'Corrected input' });
+    await tick(800);
+    set(field('knowledge-review-content'), 'Exact corrected review');
+    await click('Save review');
+    expect(mocks.saveReview).toHaveBeenCalledWith(expect.anything(), 'tenant-a', 'doc-a', 'work-a', 6, 'Exact corrected review', { title: target.title, summary: target.summary, category: target.category, tags: target.tags });
+    await click('Publish to Knowledge');
+    expect(mocks.hash).toHaveBeenCalledWith('Exact corrected review');
+    expect(mocks.submitPublication).toHaveBeenCalledWith(expect.anything(), 'tenant-a', 'doc-a', 'work-a', 7, expect.any(String), 'a'.repeat(64));
+    await tick(800);
+    expect(onPublished).toHaveBeenCalledOnce();
+    expect(body()).toContain('same document');
+  });
+  it('refuses a foreign or malformed frozen target before any submission', async () => {
+    await correction({ replacementTarget: { ...target, tenant_id: 'tenant-b' } });
+    expect(body()).toContain('Source unavailable');
+    expect(mocks.submitExtraction).not.toHaveBeenCalled();
+    expect(document.getElementById('knowledge-add-content')).toBeNull();
+  });
+  it('stops on a native stale-revision refusal without refreshing the target or making a new document', async () => {
+    await correction();
+    mocks.submitExtraction.mockRejectedValue(new ExtractionConsumerError('40001', 'KNOWLEDGE_REVISION_CONFLICT'));
+    await click('Send to Paige');
+    expect(body()).toContain('Submission refused');
+    expect(mocks.submitExtraction).toHaveBeenCalledOnce();
+    expect(mocks.submitExtraction.mock.calls[0][2]).toMatchObject({ doc_id: 'doc-a', expected_revision: 4 });
+    expect(mocks.saveReview).not.toHaveBeenCalled();
+  });
+  it('reuses the exact frozen replacement payload and intent after lost acknowledgement', async () => {
+    await correction();
+    mocks.submitExtraction.mockRejectedValueOnce(new ExtractionConsumerError('EXTRACTION_SUBMISSION_UNKNOWN', 'lost', true));
+    await click('Send to Paige');
+    const first = mocks.submitExtraction.mock.calls[0][2];
+    await click('Retry same request');
+    expect(mocks.submitExtraction.mock.calls[1][2]).toEqual(first);
+    expect(first).toMatchObject({ doc_id: 'doc-a', expected_revision: 4 });
+  });
+  it.each(['actor', 'workspace'])('retires pending extraction after %s A→B→A without reviving old state', async kind => {
+    let resolve!: (value: unknown) => void;
+    await correction();
+    mocks.submitExtraction.mockImplementation(() => new Promise(r => { resolve = r; }));
+    await click('Send to Paige');
+    const scope = mocks.submitExtraction.mock.calls[0][1];
+    if (kind === 'actor') identity.activeUserId = 'actor-b'; else identity.activeTenantId = 'tenant-b';
+    await render({ replacementTarget: target });
+    if (kind === 'actor') identity.activeUserId = 'actor-a'; else identity.activeTenantId = 'tenant-a';
+    await render({ replacementTarget: target });
+    await act(async () => resolve({ reference: { ...REF, revision: 5 }, status: 'claimed', replayed: false }));
+    await tick(800);
+    expect(scope.isCurrent()).toBe(false);
+    expect(mocks.extractionStatus).not.toHaveBeenCalled();
+    expect(mocks.saveReview).not.toHaveBeenCalled();
+  });
+  it('does not publish after identity changes during the reviewed-text hash await', async () => {
+    await correction();
+    await click('Send to Paige'); await tick(800); await click('Save review');
+    let resolve!: (value: string) => void;
+    mocks.hash.mockImplementation(() => new Promise(r => { resolve = r; }));
+    await click('Publish to Knowledge');
+    identity.activeUserId = 'actor-b'; await render({ replacementTarget: target });
+    await act(async () => resolve('a'.repeat(64)));
+    expect(mocks.submitPublication).not.toHaveBeenCalled();
+  });
+  it('closing a pending correction prevents polling and completion callbacks', async () => {
+    let resolve!: (value: unknown) => void;
+    const onClose = vi.fn();
+    await correction({ onClose });
+    mocks.submitExtraction.mockImplementation(() => new Promise(r => { resolve = r; }));
+    await click('Send to Paige');
+    await act(async () => root.render(<Dialog open><span>Closed correction</span></Dialog>));
+    await act(async () => resolve({ reference: { ...REF, revision: 5 }, status: 'claimed', replayed: false }));
+    await tick(800);
+    expect(mocks.extractionStatus).not.toHaveBeenCalled(); expect(onPublished).not.toHaveBeenCalled();
+  });
+  it('rejects a review for a different document without save or publication', async () => {
+    await correction();
+    mocks.extractionReview.mockResolvedValue({ ...review, document_id: 'other-doc', record_state: 'canonical', revision: 6 });
+    await click('Send to Paige'); await tick(800);
+    expect(body()).toContain('Review unavailable');
+    expect(mocks.saveReview).not.toHaveBeenCalled(); expect(mocks.submitPublication).not.toHaveBeenCalled();
+  });
+  it('keeps the target revision captured at entry even if the supplied object is later mutated', async()=>{
+    const supplied={...target};await correction({replacementTarget:supplied});supplied.revision=99;
+    await click('Send to Paige');
+    expect(mocks.submitExtraction.mock.calls[0][2]).toMatchObject({doc_id:'doc-a',expected_revision:4});
+  });
+  it('closing the review never saves, publishes or deletes the existing canonical source',async()=>{
+    const onClose=vi.fn();await correction({onClose});await click('Send to Paige');await tick(800);await click('Close');
+    expect(onClose).toHaveBeenCalledOnce();expect(mocks.saveReview).not.toHaveBeenCalled();expect(mocks.submitPublication).not.toHaveBeenCalled();
+  });
+  it('keeps an invalid publication acknowledgement unknown and never offers another publication',async()=>{
+    const {KnowledgeServiceError}=await import('@/lib/knowledge-service');
+    await correction();await click('Send to Paige');await tick(800);await click('Save review');
+    mocks.submitPublication.mockRejectedValue(new KnowledgeServiceError('KNOWLEDGE_RESPONSE_INVALID','malformed acknowledgement'));
+    await click('Publish to Knowledge');
+    expect(body()).toContain('Publication unconfirmed');expect(mocks.submitPublication).toHaveBeenCalledOnce();
+    expect([...document.body.querySelectorAll('button')].some(b=>b.textContent==='Publish again')).toBe(false);
+  });
+  it('halts a rejected review read without leaking an unhandled error or offering publication',async()=>{
+    await correction();mocks.extractionReview.mockRejectedValue(Error('invalid review envelope'));
+    await click('Send to Paige');await tick(800);
+    expect(body()).toContain('Review unavailable');expect(mocks.saveReview).not.toHaveBeenCalled();expect(mocks.submitPublication).not.toHaveBeenCalled();
+  });
+  it('reuses the uploaded object as well as the original intent when submission acknowledgement is lost',async()=>{
+    await correction();await click('Text file');
+    const input=field('knowledge-add-file');
+    Object.defineProperty(input,'files',{value:[new File(['Corrected file text'],'guide.txt',{type:'text/plain'})]});
+    await act(async()=>input.dispatchEvent(new Event('change',{bubbles:true})));
+    mocks.submitExtraction.mockRejectedValueOnce(new ExtractionConsumerError('EXTRACTION_SUBMISSION_UNKNOWN','lost',true));
+    await click('Send to Paige');const first=mocks.submitExtraction.mock.calls[0][2];await click('Retry same request');
+    expect(mocks.upload).toHaveBeenCalledOnce();expect(mocks.submitExtraction.mock.calls[1][2]).toEqual(first);
+    expect(first).toMatchObject({kind:'file',doc_id:'doc-a',expected_revision:4,path:expect.any(String)});
+  });
 });
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); vi.useRealTimers(); });
 
@@ -144,7 +603,7 @@ describe("the governed Knowledge add flow", () => {
     mocks.submitPublication.mockRejectedValueOnce(new KnowledgeServiceError("55000", "KNOWLEDGE_PUBLICATION_PENDING"));
     await click("Publish to Knowledge");
     expect(body()).toContain("Already publishing");
-    expect(body()).toContain("do not start another");
+    expect(body()).toContain("Check its original progress");
   });
 
   it("never re-publishes after an unconfirmed publication; check status only", async () => {
@@ -155,16 +614,16 @@ describe("the governed Knowledge add flow", () => {
     await tick(800);
     await click("Save review");
     await click("Publish to Knowledge");
-    mocks.publicationStatus.mockResolvedValue({ phase: "reconcile", status: "outcome_unknown", errorCode: "completion_unknown" });
+    mocks.publicationRead.mockImplementation(async (_client, _scope, ref) => publicationResult(ref, 'outcome_unknown'));
     await tick(800 + 1500);
     expect(body()).toContain("Publication unconfirmed");
-    expect(body()).toContain("do not publish again");
+    expect(body()).toContain("Do not publish again");
     expect([...document.body.querySelectorAll("button")].some(b => b.textContent?.trim() === "Publish again")).toBe(false);
     expect(mocks.submitPublication).toHaveBeenCalledTimes(1);
   });
 
   it("a failed publication may publish again under a NEW intent", async () => {
-    mocks.publicationStatus.mockResolvedValueOnce({ phase: "resolved", status: "failed", errorCode: "embedding_failed" }).mockResolvedValue({ phase: "resolved", status: "succeeded" });
+    mocks.publicationRead.mockImplementationOnce(async (_client, _scope, ref) => publicationResult(ref, 'failed'));
     await render();
     set(field("knowledge-add-title"), "Notes");
     set(field("knowledge-add-content"), "text");

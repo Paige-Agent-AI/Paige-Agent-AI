@@ -1,7 +1,7 @@
 import React from "react";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation, useNavigationType } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const harness = vi.hoisted(() => ({
@@ -75,7 +75,8 @@ import { TenantCanonicalCalendarWorkspace } from "./TenantCanonicalCalendarWorks
 
 function LocationProbe() {
   const location = useLocation();
-  return <output data-path={`${location.pathname}${location.search}`} />;
+  const navigationType = useNavigationType();
+  return <output data-path={`${location.pathname}${location.search}`} data-navigation={navigationType} />;
 }
 
 let container: HTMLDivElement;
@@ -90,6 +91,7 @@ function mount(path: string, tier: "solo" | "agency", openPaige?: () => void) {
       <MemoryRouter initialEntries={[path]}>
         <LocationProbe />
         <Routes>
+          <Route path="/solo/:account/operations/work" element={<section data-native-work />} />
           <Route path="*" element={<TenantCanonicalCalendarWorkspace tier={tier} openPaige={openPaige} />} />
         </Routes>
       </MemoryRouter>,
@@ -111,6 +113,34 @@ afterEach(() => {
 });
 
 describe("TenantCanonicalCalendarWorkspace", () => {
+  it.each(["/solo/101/calendar/tasks", "/solo/202/calendar/tasks/"])("redirects the legacy task result %s to native Operations work", path => {
+    mount(path, "solo");
+    expect(container.querySelector("[data-path]")?.getAttribute("data-path"))
+      .toBe(`${path.split("/calendar/")[0]}/operations/work`);
+    expect(container.querySelector("[data-native-work]")).not.toBeNull();
+    expect(container.querySelector("[data-navigation]")?.getAttribute("data-navigation")).toBe("REPLACE");
+    expect(container.querySelector("[data-solo-calendar-mock]")).toBeNull();
+    expect(container.querySelector("[data-calendar-admin]")).toBeNull();
+  });
+
+  it.each([
+    ["/solo/101/calendar/week", "/solo/101/clients/calendar?calendarView=calendar"],
+    ["/solo/101/calendar/agenda", "/solo/101/clients/calendar?calendarView=agenda"],
+    ["/solo/101/clients/calendar?calendarView=tasks", "/solo/101/clients/calendar?calendarView=tasks"],
+  ])("preserves the calendar-owned destination %s", (path, expected) => {
+    mount(path, "solo");
+    expect(container.querySelector("[data-path]")?.getAttribute("data-path")).toBe(expected);
+    expect(container.querySelector("[data-solo-calendar-mock]")).not.toBeNull();
+    expect(container.querySelector("[data-native-work]")).toBeNull();
+  });
+
+  it("does not redirect a direct sub-account task calendar to Solo Operations", () => {
+    mount("/business/303/calendar/tasks", "agency");
+    expect(container.querySelector("[data-path]")?.getAttribute("data-path")).toBe("/business/303/calendar/tasks");
+    expect(container.querySelector("[data-calendar-admin]")?.getAttribute("data-tab")).toBe("tasks");
+    expect(container.querySelector("[data-native-work]")).toBeNull();
+  });
+
   it("withholds the canonical owner until server-resolved account context exists", () => {
     harness.tenantId = null;
     harness.accountLoading = true;

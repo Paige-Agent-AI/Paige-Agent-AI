@@ -67,6 +67,8 @@ on:
       # matters most; these two cover a change to the proof or to how it is derived.)
       - "supabase/tests/crm_patch_fields_match_database.sql"
       - "scripts/ci/crm-patch-field-gen.mjs"
+      - "supabase/tests/fixtures/consent-parity.json"
+      - "scripts/ci/consent-parity-gen.mjs"
       - "supabase/tests/media_credit_ledger.sql"
       - "supabase/tests/business_context_readiness.sql"
       - "supabase/tests/team_authority_readiness.sql"
@@ -125,6 +127,7 @@ on:
       - "scripts/proof/mcp-gateway-tools-action.mjs"
       # Experience 04 E4-S1 — where this client stands (source read + composer parity).
       - "supabase/tests/exp04_client_engagement_status.sql"
+      - "supabase/tests/pgcrypto_search_path_signing.sql"
       - "scripts/proof/exp04-client-status-parity.mjs"
       - "supabase/functions/_shared/client-engagement/**"
       # Experience 03 S3 — the lead reply: its proof, its migration, and the three functions whose
@@ -146,6 +149,9 @@ on:
       - "supabase/functions/comms-email-command/**"
       - "supabase/functions/send-message/**"
       - "supabase/functions/handle-sendgrid-webhook/**"
+      - "supabase/functions/sales-invoice-document/**"
+      - "supabase/functions/_shared/portal-invoice-client.ts"
+      - "supabase/functions/_shared/sales-invoice-ledger.ts"
 
 permissions:
   contents: read
@@ -163,6 +169,8 @@ jobs:
       - run: npm ci
       - run: node --experimental-strip-types scripts/ci/paige-spine-registry-lint.mjs --self-test
       - run: node --experimental-strip-types scripts/ci/paige-spine-registry-lint.mjs
+      # E09 Slice 6 (M8): the generated consent-parity pgTAP must match its fixture.
+      - run: node scripts/ci/consent-parity-gen.mjs --check
       # The two per-capability Chat-evidence proofs are listed explicitly. The path filter above
       # already matches src/__tests__/paige-spine-*.test.ts, so omitting them here meant this
       # workflow ran on their changes without running them — they were only covered by the
@@ -307,6 +315,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_scoped_task_creation.sql
 
+      - name: MENTOR role remap contract (display metadata only)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/mentor_role_remap.sql
+
       - name: Operations priority and bounded activity authority (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_priority_activity.sql
@@ -321,6 +333,10 @@ jobs:
       - name: Operations native CRM work caller scope (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_native_crm_work_read.sql
+
+      - name: Operations exact Task caller scope (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_crm_task_exact_read.sql
 
       - name: Operations signed engagement evidence caller scope (rolled back)
         if: ${{ !cancelled() }}
@@ -357,6 +373,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_delivery_client_discovery.sql
 
+      - name: Operations released work refuses a paused client and returns on restore (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/customer_portal_access_delivery.sql
+
       - name: Operations native competing client decisions
         if: ${{ !cancelled() }}
         run: node scripts/proof/operations-client-decision-concurrency.mjs
@@ -364,6 +384,12 @@ jobs:
       - name: Sales commercial and signing agreement row contracts (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/sales_agreement_trigger_contracts.sql
+      # pgcrypto lives in `extensions`. The signer side of agreements (issue, open, decline) and the
+      # invitation redeemer run for real with no stand-in digest(), and no public function with a
+      # pinned search_path lacking `extensions` calls pgcrypto unqualified (20271110040000).
+      - name: Agreement signing and pgcrypto search_path (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/pgcrypto_search_path_signing.sql
       - name: Operations accepted engagement handoff authority (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_engagement_handoff.sql
@@ -419,6 +445,10 @@ jobs:
       - name: Experience 03 sending-domain normalization (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/tenant_email_domain_normalization.sql
+
+      - name: SOLO sending-domain current-workspace authority (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/tenant_email_domain_current_role.sql
 
       # Third-party speech availability is platform-owned, distinct from the
       # caller's existing tenant membership/role and Paige thread entitlement.
@@ -524,6 +554,68 @@ jobs:
       # E09 consumer acceptance uses the same fully replayed identity/CRM schema.
       - run: supabase test db supabase/tests/consumer_invite_acceptance.sql
         if: ${{ !cancelled() }}
+      - run: supabase test db supabase/tests/customer_invitation_operation.sql
+        if: ${{ !cancelled() }}
+      - run: supabase test db supabase/tests/customer_invitation_delivery.sql
+      - run: supabase test db supabase/tests/customer_invitation_catalogue.sql
+        if: ${{ !cancelled() }}
+      # E09 Agreements: a customer lists, opens-to-sign and downloads only their own Sales Agreements;
+      # the portal open writes no agreement row and no agreement event; no RLS policy changes.
+      - run: supabase test db supabase/tests/customer_portal_agreements.sql
+        if: ${{ !cancelled() }}
+      # E09 portal channel: customer <-> business messages in the one canonical inbox.
+      - run: supabase test db supabase/tests/customer_portal_messages.sql
+        if: ${{ !cancelled() }}
+      # E09 Sessions: the customer's own bookings, notice-window admission in front of booking-manage.
+      - run: supabase test db supabase/tests/customer_portal_sessions.sql
+        if: ${{ !cancelled() }}
+      # E09 Progress: only explicitly shared plan_items reach the customer; one audited share writer.
+      - run: supabase test db supabase/tests/customer_portal_progress.sql
+        if: ${{ !cancelled() }}
+      # E09 Menu: the customer reads its own tenant's catalog; the one portal-config writer validates shape.
+      - run: supabase test db supabase/tests/customer_portal_menu.sql
+        if: ${{ !cancelled() }}
+      # E09 Documents: only explicitly shared client_files (plus the customer's own uploads) reach the
+      # customer; the owner's reserve/finish/share writers; the delete and staff-PUT fold-ins; and
+      # released work refused once the client or business is inactive.
+      - run: supabase test db supabase/tests/customer_portal_documents.sql
+        if: ${{ !cancelled() }}
+      # E09 Profile & Consent: the customer's own preferences through the one ledger; staff can never
+      # forge, override or delete a customer's choice (B1); an opt-out survives a business pause (B2).
+      - run: supabase test db supabase/tests/customer_portal_profile_consent.sql
+        if: ${{ !cancelled() }}
+      # The SQL half of the consent parity proof, generated from supabase/tests/fixtures/consent-parity.json.
+      - run: supabase test db supabase/tests/customer_portal_consent_parity.sql
+        if: ${{ !cancelled() }}
+      # E09 Payments: the customer's own issued invoices, ledger and the business's existing payment
+      # link (read-only; no charge, request or bearer grant), then the edge portal door that serves them.
+      - run: supabase test db supabase/tests/customer_portal_payments.sql
+        if: ${{ !cancelled() }}
+      - run: node --test supabase/functions/sales-invoice-document/portal.test.mjs
+        if: ${{ !cancelled() }}
+      # E09 Access: pause/restore/end through one owner writer; the resolver predicate and every reader
+      # that bypassed it refuse a paused client; end clears the link; merges cannot launder a pause.
+      - run: supabase test db supabase/tests/customer_portal_access.sql
+        if: ${{ !cancelled() }}
+      # E09 Access at integration: the Documents, Profile & Consent, Agreements and Payments customer doors
+      # refuse a paused or ended client, even when the pause lands after the resolver read (one shared helper).
+      - run: supabase test db supabase/tests/customer_portal_access_doors.sql
+        if: ${{ !cancelled() }}
+      # E09 F1a: the per-business finance entitlement — one predicate (install OR flag), neither leg
+      # self-grantable from the browser, Marketplace install/uninstall unaffected, push defaults off,
+      # 'funding' not a starter preset, and no customer-tier credit uploads or non-entitled alerts.
+      - run: supabase test db supabase/tests/e09_finance_entitlement.sql
+        if: ${{ !cancelled() }}
+      # E09 K1: the customer Knowledge share contract v2 — business-wide audience, kind and window; nothing
+      # auto-published; only the owner (never the bare operator) publishes a pinned document; finance-marked
+      # Knowledge only for an entitled business, re-checked at read; paused/merged/suspended cut off; exact
+      # chunks only; kind-aware snapshot refs; the settle lock covers business rows (withdraw → withheld).
+      - run: supabase test db supabase/tests/e09_customer_knowledge_v2.sql
+      # E09 C1: announcements through the one campaign system — the `portal` audience (open access only,
+      # the same predicate as the customer's own resolver), rule keys checked on every draft write and at
+      # approval, and Updates consent for promotions/announcements to portal-linked contacts at plan AND send.
+      - run: supabase test db supabase/tests/e09_campaign_portal_audience.sql
+        if: ${{ !cancelled() }}
       # The owner's real send through create_solo_team_invite, accepted through accept_solo_team_invite,
       # for Member and Admin across two businesses: no hand-written token.
       - run: supabase test db supabase/tests/solo_team_invite_accept_end_to_end.sql
@@ -535,6 +627,10 @@ jobs:
       - run: supabase test db supabase/tests/solo_beta_authz_hardening.sql
       - run: supabase test db supabase/tests/solo_beta_offer_boundary.sql
       - run: supabase test db supabase/tests/solo_beta_welcome_lifecycle.sql
+      # EXP00 live-incident regression: the REAL claim→fulfill sequence must
+      # complete end-to-end (the ambiguous reference_id broke the first-ever
+      # real fulfillment; this drives the exact webhook call shape).
+      - run: supabase test db supabase/tests/solo_beta_fulfill_qualified_returning.sql
       # Platform-issued promotional Solo access is a separate service-only lane:
       # no Stripe binding, one explicit grant, one workspace, and retry-safe receipts.
       - run: supabase test db supabase/tests/promotional_solo_grant.sql

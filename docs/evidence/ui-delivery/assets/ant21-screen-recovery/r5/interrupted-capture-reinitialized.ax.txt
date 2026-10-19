@@ -1,0 +1,39 @@
+Browser tab: 170265210, Title: "Isolated source recovery proof", URL: "http://localhost:8776/#tenant-shell-main".
+0 AXWebArea Isolated source recovery proof, URL: localhost:8776/#tenant-shell-main
+	1 container
+		2 text PAIGE workspace ready
+		3 link Description: Skip to content, Value: localhost:8776/#tenant-shell-main
+		4 container Tenant workspace
+			5 button Expand navigation
+				6 image
+			7 link Description: Command Center, Value: localhost:8776/solo/test-account/command-center
+			8 link Description: Operations, Value: localhost:8776/solo/test-account/operations
+			9 link Description: Clients, Value: localhost:8776/solo/test-account/clients
+			10 link Description: Marketing, Value: localhost:8776/solo/test-account/growth
+			11 link Description: Ads, Value: localhost:8776/solo/test-account/ads
+			12 link Description: Sales, Value: localhost:8776/solo/test-account/sales
+			13 link Description: Finance, Value: localhost:8776/solo/test-account/finance
+			14 link Description: Marketplace, Value: localhost:8776/solo/test-account/marketplace
+			15 link Description: Settings, Value: localhost:8776/solo/test-account/settings
+			16 button Description: Use Obsidian theme, Help: Obsidian theme
+			17 button Sign out
+			18 text TE
+		19 container
+			20 text TEST STUDIO A Clients Solo
+			21 button (collapsed) Description: Direct PAIGE, Secondary Actions: Expand
+				22 image PAIGE
+				23 text Direct PAIGE, or press ⌘\
+				24 text ⌘\
+		25 container tenant-shell-main
+			26 container Isolated proof controls
+				27 text Isolated source proof · no business actions
+				28 button Simulate missing screen
+				29 button Switch synthetic account
+				30 button Toggle fixture PAIGE
+				31 button Toggle fixture theme
+			32 container
+				33 heading Current scoped page, Value: 1
+					34 text Current scoped page
+				35 text Existing native shell and source recovery components; synthetic department content.
+
+The focused UI element is 0 AXWebArea Isolated source recovery proof, URL: localhost:8776/#tenant-shell-main

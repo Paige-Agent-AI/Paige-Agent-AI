@@ -18,7 +18,7 @@ export function useSoloDealClients(tenantId:string|null,enabled=true){
   if(!enabled||!tenantId||activeTenantId!==tenantId||accountContextLoading)return;
   setState({tenantId,phase:'loading',clients:[],hasMore:false});
   void (async()=>{try{
-   const {data,error}=await supabase.from('clients').select(SELECT).eq('tenant_id',tenantId).order('id').range(0,pages*250);
+   const {data,error}=await supabase.from('clients').select(SELECT).eq('tenant_id',tenantId).is('merged_into_contact_id',null).order('id').range(0,pages*250);
    if(!alive||current.current.tenantId!==capture.tenantId||current.current.activeTenantId!==capture.activeTenantId||!current.current.enabled||current.current.accountContextLoading)return;
    if(error){setState({tenantId,phase:'error',clients:[],hasMore:false});return;}
    const rows=(data??[]) as unknown as Record<string,unknown>[];

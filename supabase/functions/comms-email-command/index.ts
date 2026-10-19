@@ -189,7 +189,7 @@ Deno.serve(async req => {
 
   // 3 — Who it goes to and who it comes from, resolved here and never taken from the model.
   let parties: Awaited<ReturnType<typeof resolveCommsEmailParties>>;
-  try { parties = await resolveCommsEmailParties(admin as unknown as CommsEmailAdmin, { tenantId, contactId: command.contact_id, connectorId: command.connector_id }, senderProviders); }
+  try { parties = await resolveCommsEmailParties(admin as unknown as CommsEmailAdmin, { tenantId, actorUserId: user.id, contactId: command.contact_id, connectorId: command.connector_id }, senderProviders); }
   catch { return response(503, { ok: false, outcome: "refused", code: "COMMS_EMAIL_PARTIES_UNAVAILABLE" }); }
   if (parties.kind === "contact_not_in_workspace") return response(422, { ok: false, outcome: "refused", reason: "CONTACT_NOT_IN_WORKSPACE" });
   if (parties.kind === "recipient_missing") return response(422, { ok: false, outcome: "needs_setup", reason: "RECIPIENT_EMAIL_MISSING" });
@@ -214,7 +214,7 @@ Deno.serve(async req => {
   }
 
   // 4 — Readiness before any proposal: no card is raised for an email that cannot go out.
-  const readiness = await readCommsEmailReadiness(admin as unknown as CommsEmailAdmin, { tenantId, contactId: command.contact_id, recipient: parties.recipient, connectorId: parties.connectorId }, key => Deno.env.get(key), runPreSend);
+  const readiness = await readCommsEmailReadiness(admin as unknown as CommsEmailAdmin, { tenantId, actorUserId: user.id, contactId: command.contact_id, recipient: parties.recipient, connectorId: parties.connectorId }, key => Deno.env.get(key), runPreSend);
   if (!readiness.eligible || !parties.fromAddress) return response(422, { ok: false, outcome: readiness.eligible ? "needs_setup" : commsEmailReadinessOutcome(readiness), reason: readiness.eligible ? "TENANT_EMAIL_SENDER_MISSING" : readiness.reason });
 
   // 5 — The proposed call: the exact recipient address, sender address and content digest are part
@@ -332,8 +332,8 @@ Deno.serve(async req => {
 
   const result = await executeCommsEmailSend({ actorUserId: user.id, tenantId, operationId: stored.operationId, stored, governance }, {
     stillCurrent, readResult, send, readBinding,
-    resolveParties: () => resolveCommsEmailParties(admin as unknown as CommsEmailAdmin, { tenantId, contactId: stored.command.contact_id, connectorId: stored.command.connector_id }, senderProviders),
-    readiness: resolved => readCommsEmailReadiness(admin as unknown as CommsEmailAdmin, { tenantId, contactId: resolved.contactId, recipient: resolved.recipient, connectorId: resolved.connectorId }, key => Deno.env.get(key), runPreSend),
+    resolveParties: () => resolveCommsEmailParties(admin as unknown as CommsEmailAdmin, { tenantId, actorUserId: user.id, contactId: stored.command.contact_id, connectorId: stored.command.connector_id }, senderProviders),
+    readiness: resolved => readCommsEmailReadiness(admin as unknown as CommsEmailAdmin, { tenantId, actorUserId: user.id, contactId: resolved.contactId, recipient: resolved.recipient, connectorId: resolved.connectorId }, key => Deno.env.get(key), runPreSend),
     prepare: async args => {
       const { data, error } = await admin.rpc("prepare_comms_email_send", args);
       approvalPrepareRefusal.code = error ? leadReplyPrepareRefusal(error) : null;

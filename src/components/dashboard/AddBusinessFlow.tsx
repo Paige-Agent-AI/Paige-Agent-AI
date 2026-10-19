@@ -39,6 +39,7 @@ import {
   entityRoleLabel,
   ENTITY_ROLE_LABELS,
 } from "@/contexts/BusinessContext";
+import { useAssistantName } from "@/lib/portal/customerIdentity";
 
 /**
  * AddBusinessFlow — three-step modal for adding a business entity.
@@ -93,6 +94,7 @@ interface AddBusinessFlowProps {
 type Step = "gate" | "form" | "confirm";
 
 export function AddBusinessFlow({ open, onOpenChange }: AddBusinessFlowProps) {
+  const assistant = useAssistantName();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { businesses, limit, refetch, setActiveBusinessId } = useBusinessContext();
@@ -507,7 +509,7 @@ export function AddBusinessFlow({ open, onOpenChange }: AddBusinessFlowProps) {
         <h3 className="text-lg font-semibold">{createdBusiness?.name} is on board</h3>
         <p className="text-sm text-muted-foreground">
           Upload your business credit report for{" "}
-          <span className="font-medium text-foreground">{createdBusiness?.name}</span> so Paige
+          <span className="font-medium text-foreground">{createdBusiness?.name}</span> so {assistant}
           can calculate their Commercial Fundability Score.
         </p>
       </div>
@@ -554,7 +556,7 @@ export function AddBusinessFlow({ open, onOpenChange }: AddBusinessFlowProps) {
           </DialogTitle>
           <DialogDescription>
             {step === "form"
-              ? "Each business gets its own fundability scores, business credit reports, and Paige context."
+              ? `Each business gets its own fundability scores, business credit reports, and ${assistant} context.`
               : ""}
           </DialogDescription>
         </DialogHeader>

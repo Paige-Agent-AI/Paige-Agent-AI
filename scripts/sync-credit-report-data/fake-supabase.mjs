@@ -35,10 +35,17 @@ export function setScenario(scenario) {
         credit_factor_scores: [],
         funding_readiness_scores: [],
         audit_logs: [],
+        tenant_members: [],
+        credit_report_uploads: [],
         ...(scenario.db ?? {}),
       },
       user: scenario.user ?? null,
       isAdmin: scenario.isAdmin ?? false,
+      // E09 F1b authority facts, answered by the RPCs the writer now calls.
+      portalCustomers: scenario.portalCustomers ?? [],
+      platformOwners: scenario.platformOwners ?? [],
+      tenantAdmins: scenario.tenantAdmins ?? [],   // [{ actor, tenant }]
+      tierError: scenario.tierError ?? false,
       failures: scenario.failures ?? [],
       alertInvokeError: scenario.alertInvokeError ?? null,
     },
@@ -122,7 +129,16 @@ class Client {
   }
   rpc(fn, args) {
     ACTIVE.rec.rpc.push({ fn, args });
-    if (fn === "has_role") return Promise.resolve({ data: ACTIVE.scenario.isAdmin, error: null });
+    const sc = ACTIVE.scenario;
+    if (fn === "has_role") return Promise.resolve({ data: sc.isAdmin, error: null });
+    if (fn === "_user_is_portal_customer_only") {
+      if (sc.tierError) return Promise.resolve({ data: null, error: { message: "tier read failed" } });
+      return Promise.resolve({ data: sc.portalCustomers.includes(args?._user), error: null });
+    }
+    if (fn === "is_platform_owner") return Promise.resolve({ data: sc.platformOwners.includes(args?._user_id), error: null });
+    if (fn === "is_tenant_admin_as") {
+      return Promise.resolve({ data: sc.tenantAdmins.some((a) => a.actor === args?._actor && a.tenant === args?._tenant), error: null });
+    }
     return Promise.resolve({ data: null, error: { message: `fake-supabase: unstubbed rpc ${fn}` } });
   }
   get functions() {

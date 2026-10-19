@@ -4,6 +4,7 @@ import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { KnowledgeMetadataEditor } from "@/components/knowledge/KnowledgeMetadataEditor";
 import { AddDocDialog } from "@/pages/admin/TenantKnowledgeAdmin";
 import { AddKnowledgeFlow } from "@/solo/knowledge/AddKnowledgeFlow";
+import { useTenantContext } from "@/hooks/useTenantContext";
 import { useKnowledgeDocuments } from "@/hooks/useKnowledgeDocuments";
 import { useConfirm } from "@/hooks/useConfirm";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +14,11 @@ import "./knowledge-library.css";
 type Props = { tenantId: string | null | undefined; account: string; requestedDocumentId?: string | null; onDocumentChange?: (id: string | null) => void };
 /** A workspace change disposes drafts and in-flight views before the next one mounts. */
 export function KnowledgeLibrary(props: Props) {
-  return <WorkspaceLibrary key={props.tenantId ?? "unresolved"} {...props} />;
+  const identity = useTenantContext();
+  if (identity.loading || identity.accountContextStatus !== "ready" || !identity.activeUserId || identity.activeTenantId !== props.tenantId) {
+    return <section className="knowledge-library"><p role="status">Select your current workspace to open Knowledge.</p></section>;
+  }
+  return <WorkspaceLibrary key={`${props.tenantId}:${identity.activeUserId}`} {...props} />;
 }
 function publicLink(value: string | null): string | null {
   try { const url = new URL(value ?? ""); return ["https:", "http:"].includes(url.protocol) && !url.username && !url.password ? url.href : null; } catch { return null; }
@@ -30,6 +35,8 @@ function WorkspaceLibrary({ tenantId, account, requestedDocumentId, onDocumentCh
   const [adding, setAdding] = useState(false);
   const [linking, setLinking] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [correcting, setCorrecting] = useState<KnowledgeDocument | null>(null);
+  const correctionTrigger = useRef<HTMLButtonElement>(null);
   const [deleting, setDeleting] = useState(false);
   const [uncertainDelete, setUncertainDelete] = useState(false);
   const removeTrigger = useRef<HTMLButtonElement>(null);
@@ -45,6 +52,7 @@ function WorkspaceLibrary({ tenantId, account, requestedDocumentId, onDocumentCh
   useEffect(() => { if (selectedId) heading.current?.focus(); }, [selectedId]);
   useEffect(() => {
     const mine = ++generation.current;
+    setCorrecting(null);
     setSelected(null); setDetailError(null); setSourceFailed(false); setUncertainDelete(false);
     if (!tenantId || !requestedDocumentId) { setDetailLoading(false); return; }
     setDetailLoading(true); setNotice(null);
@@ -121,6 +129,10 @@ function WorkspaceLibrary({ tenantId, account, requestedDocumentId, onDocumentCh
           <Dialog open={editing} onOpenChange={setEditing}>
             <DialogTrigger asChild><button disabled={detailLoading || deleting || uncertainDelete || !!detailError}>Edit details</button></DialogTrigger>
             {editing && <KnowledgeMetadataEditor key={`${tenantId}:${selected.id}`} tenantId={tenantId} document={selected} onClose={() => setEditing(false)} onSaved={doc => { setSelected(current => current?.id === doc.id ? { ...current, ...doc } : current); void library.reload(); }} />}
+          </Dialog>
+          <Dialog open={!!correcting} onOpenChange={open => { if (!open) setCorrecting(null); }}>
+            <DialogTrigger asChild><button ref={correctionTrigger} disabled={detailLoading || deleting || uncertainDelete || !!detailError || selected.content === undefined} onClick={() => setCorrecting({ ...selected, tags: [...(selected.tags ?? [])] })}>Correct content</button></DialogTrigger>
+            {correcting && <AddKnowledgeFlow tenantId={tenantId} replacementTarget={correcting} onClose={() => setCorrecting(null)} returnFocus={() => correctionTrigger.current && !correctionTrigger.current.disabled ? correctionTrigger.current : heading.current} onPublished={() => { void inspect(correcting); void library.reload(); }} />}
           </Dialog>
           <a href={`/solo/${encodeURIComponent(account)}/command-center/mind?knowledge=${encodeURIComponent(selected.id)}`}><BrainCircuit aria-hidden /> View in Mind</a>
           <button ref={removeTrigger} className="knowledge-library__remove" onClick={() => void remove()} disabled={detailLoading || deleting || uncertainDelete || !!detailError}><Trash2 aria-hidden />{deleting ? "Removing…" : "Remove document"}</button>

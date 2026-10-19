@@ -1,0 +1,131 @@
+{
+  "evidenceClass": "actual-source-offline-chromium-leaf",
+  "authenticatedAcceptance": "NOT_RUN",
+  "fullShell": "NOT_TESTED",
+  "physicalSafari": "UNVERIFIED",
+  "network": "blocked",
+  "hashes": {
+    "src/pages/app/ClientDocuments.tsx": "c816c4d2fcb63af4a05a3d26bbbf992c41b0b2e5c7b1b96f5da76b3121732651",
+    "src/hooks/useClientDocuments.ts": "feffb5c76ff29eee042b765cdcecdb6d723c523a243cd1ecca917aeea86530d2",
+    "src/lib/client-portal-documents.ts": "a0f2940561950f43c1f706b40dfcc6d6c69d04bb234a22260e19ef28c10caacc",
+    "src/components/client/useClientAccountExit.ts": "866c2ed37bb00c37114a083f5c8c4432b815ae0d5041a9a23b2d4928c962ece3",
+    "scripts/proof/e09-customer-entry-ui/documents-source.tsx": "220e8adb269d456fd953536831e46b976adffb036314f205b70eea54bc80ee73",
+    "scripts/proof/e09-customer-entry-ui/documents-adapter.ts": "f932b5ebb1149073c857bd33b9ac3d5afc129713045ae38d2562027453ce53f7"
+  },
+  "cssSHA256": "741441bbf60065739abe6875d927fe6853be9fca906c10db33026f7150d0390d",
+  "results": [
+    {
+      "width": 1536,
+      "height": 770,
+      "state": "ready",
+      "context": "a",
+      "result": "PASS"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "state": "ready",
+      "context": "b",
+      "result": "PASS"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "state": "ready",
+      "context": "a",
+      "result": "PASS"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "state": "ready",
+      "context": "b",
+      "result": "PASS"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "ready",
+      "context": "a",
+      "result": "PASS"
+    },
+    {
+      "width": 320,
+      "height": 720,
+      "state": "long",
+      "context": "b",
+      "result": "PASS"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "empty",
+      "context": "b",
+      "result": "PASS"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "error",
+      "context": "a",
+      "result": "PASS"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "revoked",
+      "context": "b",
+      "result": "PASS"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "loading",
+      "context": "a",
+      "result": "PASS"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "pending",
+      "context": "b",
+      "result": "PASS"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "unknown",
+      "context": "a",
+      "result": "PASS"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "stored",
+      "context": "b",
+      "result": "PASS"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "retry",
+      "context": "a",
+      "result": "PASS"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "prior",
+      "context": "a",
+      "result": "PASS"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "state": "download-error",
+      "context": "b",
+      "result": "PASS"
+    }
+  ],
+  "errors": []
+}

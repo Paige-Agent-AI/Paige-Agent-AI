@@ -141,3 +141,22 @@ Records correction found: solo-completion-matrix.json `paige.live-conversation` 
 ## Code slice shipped with this return
 
 Branch `int345-solo-capability-parity` off `d1762a654cf9`. Files: supabase/functions/voice-access-token/{authorization.ts,index.ts}; src/lib/voice/VoiceDeviceProvider.tsx; src/lib/voice/voiceAccessAuthorization.test.ts; src/lib/voice/voiceDeviceTenantScope.test.tsx (new). Evidence record: docs/evidence/ui-delivery/solo-voice-readiness-parity.md (validator PASS). Gates: voice family 32/32 (failing-first + boot-guard mutation proven), tenant-shell 132/132, tsc ratchet 0, Deno check clean, eslint clean, ui-delivery-evidence PASS.
+
+## Owner continuation - October 19: recovery feedback and deferred EXP13 intake
+
+Standalone BUG and dedicated capability coding lanes are retired. EXP05 owns the current shared Chat/Operations recovery correction through independent review, exact-head CI, safe release and runtime proof. Historical INT-345 records and the original18/25/50 accounting remain preserved; this note neither transfers unresolved obligations to an inactive agent nor closes them.
+
+The owner-reported PDF incident established a locally text-readable eight-page document, a native recovery-mode attachment refusal before processing, and no matching new Knowledge record in the bounded observation window. The recorded message is distinct from reading or saving its file. The current Chat uploader permits one supported attachment per message. These observations do not establish a new CPU or provider-parsing failure.
+
+Authoritative current source locations:
+
+- `src/hooks/useChatDocumentUpload.ts` -> `stageFiles` / `processFile`: one file, supported MIME/extension and10MB limit, scoped preparation. The current EXP05 correction must preserve an unprocessed attachment only in its unchanged in-memory composer; no overwrite of newer work, scope/ABA leak, automatic resend or claim of durable file storage.
+- `src/components/dashboard/PaigeAIChat.tsx` -> typed HTTP refusal handling, canonical history hydration and attachment composer: distinguish exact native refusal from uncertain transport failure; preserve the accepted message and show the permitted existing-record read path. Reload must recover the original recorded explanation.
+- `supabase/functions/paige-ai-chat/index.ts` -> interactive recovery input guard / `interactiveFallback`: preserve original actor/tenant/thread admission, native settlement and all existing holds. A refused document must not reach model, extraction, storage, action or recovery-authority dispatch.
+- `scripts/int346-runtime-recovery-handler-check.mjs`: actual handler with recording native/provider ports, including held document and action refusal, permitted incumbent reads and no effectful recovery invocation.
+- `src/solo/knowledge/AddKnowledgeFlow.tsx` -> `uploadFile` / file validation: existing single text-file intake (.txt/.md/.markdown/.csv/.json,2MB), extraction, review and publication flow. It is not bulk PDF support.
+- `src/lib/knowledge-service.ts`, `src/lib/knowledge-extraction-service.ts`, `supabase/functions/_shared/knowledge-tenant-brain.ts` and `supabase/functions/_shared/paige-spine/domains/knowledge.ts`: reuse the canonical tenant Knowledge, extraction, authorization and retrieval contracts; attaching bytes alone is not Knowledge publication or later recall.
+
+**EXP13 - Build My Business Knowledge: FUTURE / NOT ACTIVATED.** Its approved complete journey is multiple supported documents -> safe parsing/extraction and individual progress/failures -> review of what PAIGE understood -> exact publication approval -> canonical business Knowledge records/source versions -> later scoped retrieval and source citations. Acceptance includes tenant/document permissions, interruptions, partial failure, persistence, revocation and recovery. No EXP13 agent, new store, parser service or full intake build is authorized by this record. The future receiving Experience must consume the existing architecture and its actual supported provider/readiness contracts.
+
+EXP09 retains customer-specific CURA Knowledge publication and its client authority. EXP05 consumes approved business Knowledge for Operations; it does not absorb EXP13 or expose private owner Knowledge to Portal customers. Full Operations/weekly planning/automation/ZION acceptance remains required, separately from this bounded recovery repair. No historical capability or parity observation is promoted by documentation or local tests.

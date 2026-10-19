@@ -292,6 +292,21 @@ export function useChatDocumentUpload({ scopeKey = "unscoped", enabled = true }:
     setAttachedDoc(null);
   }, [setAttachedDoc]);
 
+  // Capture after dispatch removes the chip. A known pre-processing refusal may
+  // restore it only if this exact composer stayed untouched; never undo a newer
+  // selection, removal, pending read, scope switch or ABA transition.
+  const prepareAttachmentRestore = useCallback((document: AttachedDocument) => {
+    const generation = owner.current.generation;
+    const accepted = () => owner.current.mounted && owner.current.enabled
+      && scopeKey !== null && owner.current.scope === scopeKey && owner.current.epoch === scopeEpoch
+      && owner.current.generation === generation && !owner.current.processing;
+    return () => {
+      if (!accepted()) return;
+      setState(previous => accepted() && previous.scope === scopeKey && previous.epoch === scopeEpoch
+        && !previous.doc && !previous.processing ? { ...previous, doc: document } : previous);
+    };
+  }, [scopeKey, scopeEpoch]);
+
   const openFilePicker = useCallback(() => {
     if (!owner.current.enabled || owner.current.scope === null) return;
     fileInputRef.current?.click();
@@ -314,5 +329,6 @@ export function useChatDocumentUpload({ scopeKey = "unscoped", enabled = true }:
     removeAttachment,
     openFilePicker,
     setAttachedDoc,
+    prepareAttachmentRestore,
   };
 }

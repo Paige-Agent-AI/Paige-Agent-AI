@@ -17,6 +17,7 @@ import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PaigeAIChat } from "@/components/dashboard/PaigeAIChat";
 import { Toaster } from "@/components/ui/toaster";
+import { RECOVERY_READ_ONLY_REFUSAL } from "../../../../supabase/functions/_shared/paige-turn/interactive-refusal";
 import "@/index.css";
 
 const params = new URLSearchParams(window.location.search);
@@ -224,10 +225,21 @@ const followUps: Record<string, Chunk[]> = {
 const realFetch = window.fetch.bind(window);
 window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   const url = String(input instanceof Request ? input.url : input);
-  if (!url.includes("/functions/v1/paige-ai-chat")) return realFetch(input, init);
+  if (!url.includes("/functions/v1/paige-ai-chat")) {
+    if (new URL(url, window.location.href).origin === window.location.origin) return realFetch(input, init);
+    throw new Error("Offline Chat harness refuses unexpected network traffic");
+  }
   const body = JSON.parse(String(init?.body ?? "{}"));
   const log = (window as unknown as { __c3: { requests: unknown[] } }).__c3.requests;
   log.push(body);
+  if (scenario.startsWith("recovery-")) {
+    if (body.interactive?.kind === "status") return Response.json({ settled: true });
+    if (body.document) return Response.json({ code: RECOVERY_READ_ONLY_REFUSAL.code,
+      message_accepted: true, reason: RECOVERY_READ_ONLY_REFUSAL.message }, { status: 409 });
+    const chunks = [turn("started", "WORKING", "pending"), turn("completed", "FINAL", "answer"),
+      say("This is an offline read-only continuation. No business action ran."), DONE];
+    return new Response(chunks.map(chunk => chunk.data ?? "").join(""), { headers: { "Content-Type": "text/event-stream" } });
+  }
   const chunks = body.approvedConfirmations ? (resume ? followUps.resumed : followUps.approved) : body.declinedConfirmations ? followUps.declined
     : body.resume ? (params.get("answerFollow") === "card" ? followUps.answeredCard : followUps.answered)
     : log.length > 1 && scenario.startsWith("ask") ? followUps.other
@@ -269,7 +281,7 @@ function Harness() {
         greeting="What are we moving? Tell me the outcome, and I’ll show what I can read, draft, or ask you to approve." />;
   return (
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={["/solo/3855/paige"]}>
+      <MemoryRouter initialEntries={[params.get("context") === "b" ? "/solo/3857/paige" : "/solo/3855/paige"]}>
         <div data-pg={theme} data-tenant-shell className="h-page">
           <div className="h-cap" data-harness-cap>
             {layout === "drawer" ? params.get("attachment") === "1" ? "PAIGE open (Solo docked panel)" : "PAIGE open (docked panel, no Solo safety props)" : "PAIGE workspace (Solo page)"} · {scenario}{resume ? " · approval carried forward by the server" : ""}{hold !== null ? ` · held at ${hold}` : ""}{followHold !== null ? ` · follow-up held at ${followHold}` : ""} · {theme}

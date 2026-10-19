@@ -7,6 +7,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { execFileSync } from "node:child_process";
 import {
   type ClaimedAction, draftClaimedAction, EMPTY_EMAIL_DRAFT_ERROR, MISSING_INTENT_ERROR, orchestratorRequest,
   shapeEmailDraft,
@@ -231,6 +232,40 @@ describe("owner.lead_followup — the email contract", () => {
 });
 
 describe("shapeEmailDraft — the shapes a specialist may return (plain text only)", () => {
+  it("recovers the whole fenced model response from a legacy composer fallback", () => {
+    const body="```json\n"+JSON.stringify({subject:"Actual subject",body:"Hi <Dana>,\n\nYour next step."})+"\n```";
+    const draft=shapeEmailDraft(composerResult({subject:"Following up",body_text:body}));
+    assert.equal(draft?.subject,"Actual subject");assert.equal(draft?.body,"Hi <Dana>,\n\nYour next step.");
+    assert.equal(JSON.stringify(draft).includes("x@evil"),false);
+  });
+  it("accepts reversed fields and escaped wording without inventing a new body", () => {
+    const intended={body:'A "quoted" step at C:\\work.\nReady <Dana>?',subject:"Exact subject"};
+    const draft=shapeEmailDraft(composerResult({body_text:"```\n"+JSON.stringify(intended)+"\n```"}));
+    assert.equal(draft?.subject,intended.subject);assert.equal(draft?.body,intended.body);
+  });
+  it("bounds malformed whitespace envelopes without blocking the worker or inbox",()=>{
+    const moduleUrl=new URL("./draft.ts",import.meta.url).href;
+    const input={ok:true,draft:{subject:"Subject",body_text:"```json\n"+" ".repeat(8000)+"X"}};
+    const code=`import {shapeEmailDraft} from ${JSON.stringify(moduleUrl)}; console.log(JSON.stringify(shapeEmailDraft(${JSON.stringify(input)})));`;
+    // CI's Node 20 needs the same repository TypeScript loader as this test's parent.
+    // Keep the probe in a separate, time-bounded process so a CPU regression cannot hang the suite.
+    const registerUrl=new URL("../../../scripts/client-memory-authz/register.mjs",import.meta.url).href;
+    assert.equal(execFileSync(process.execPath,["--import",registerUrl,"--input-type=module","-e",code],{encoding:"utf8",timeout:5000}).trim(),"null");
+  });
+  for(const content of [
+    '```json\n{"subject":"Actual","body":\n```',
+    '```json\n{"subject":"Actual","body":"Hi","to":"other@example.test"}\n```',
+    '```json\n{"subject":"Actual","subject":"Other","body":"Hi"}\n```',
+    '```json\n{"subject":"Actual","body":{"nested":"Hi"}}\n```',
+    '```json\n{"subject":"Actual","body":"Hi"}\n```\nextra words',
+    'Here is the email:\n```json\n{"subject":"Actual","body":"Hi"}\n```',
+    '```jsonx\n{"subject":"Actual","body":"Hi"}\n```',
+    '```json\n'+JSON.stringify({subject:"Actual",body:JSON.stringify({subject:"Nested",body:"Hi"})})+'\n```',
+    '```json\n'+JSON.stringify({subject:"Actual",body:""})+'\n```',
+    '```json\n'+JSON.stringify({subject:"s".repeat(201),body:"Hi"})+'\n```',
+  ]) it("refuses an invalid or ambiguous fenced email rather than preserving raw JSON: "+content.slice(0,65),()=>{
+    assert.equal(shapeEmailDraft(composerResult({body_text:content})),null);
+  });
   it("a flat {subject, body} in text is kept as text, exactly — '<Dana>' is words, not markup", () => {
     const d = shapeEmailDraft({ subject: "Hello", body: "Hi <Dana> & team,\nline two\n\nSecond para" })!;
     assert.deepEqual(Object.keys(d).sort(), ["body", "channel", "raw", "subject"]);
@@ -264,6 +299,14 @@ const FOLLOWUP_KINDS = ["client.followup", "owner.followup_email"] as const;
 
 for (const action_kind of FOLLOWUP_KINDS) describe(`${action_kind} — governed-composer draft projection`, () => {
   const followup = (over: Partial<ClaimedAction> = {}) => leadFollowup({ action_kind, ...over });
+  it("advances only the decoded reviewed words, never a fenced response or recipient",async()=>{
+    const h=harness(ok(composerResult({body_text:"```json\n"+JSON.stringify({subject:"Actual subject",body:"Hi <Dana>, your next step."})+"\n```"})));
+    assert.deepEqual(await draftClaimedAction(h.deps,followup()),{kind:"drafted",invocationId:INV});
+    assert.deepEqual(h.rpcs.map(r=>r.fn),["advance_action"]);
+    const stored=h.rpcs[0].args.p_draft_content as Record<string,unknown>;
+    assert.equal(stored.subject,"Actual subject");assert.equal(stored.body,"Hi <Dana>, your next step.");
+    assert.equal(JSON.stringify(stored).includes("x@evil"),false);
+  });
 
   it("advances the claimed action with only the plain-text email and closed raw facts", async () => {
     const h = harness(ok(composerResult({ to: "model-picked@example.test", cc: "x@evil", recipient_email: "x@evil" })));

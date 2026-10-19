@@ -176,7 +176,7 @@ describe("INT-338 real composer attachment integration", () => {
     expect(host.textContent).toContain("An earlier response was interrupted, and its outcomes still need checking");
     expect(host.textContent).toContain("Your message was recorded");
     expect(host.textContent).toContain("new actions and attachments are on hold");
-    expect(host.textContent).toContain("PAIGE can still answer questions about existing records");
+    expect(host.textContent).toContain("You can still ask questions about existing records");
     expect(host.textContent).toContain("Remove the attached file first to ask about existing records.");
     expect(remove()).not.toBeNull();
     expect(Array.from(host.querySelectorAll('[role="status"]')).some(status => status.textContent === "Program-brief.pdf attached")).toBe(true);

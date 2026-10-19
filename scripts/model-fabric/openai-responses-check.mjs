@@ -547,6 +547,44 @@ console.log("9. transport-read batching preserves the existing SSE protocol and 
   await new Promise((accept) => setImmediate(accept));
   ok((await cancelledReader.read()).done && cancelledTransport.calls.length === 1,
     "9.12 a cancelled consumer receives no later success or retry; no stronger upstream cancellation contract is claimed");
+
+  // A busy governed reader must bound both output buffering and provider pulls.
+  // This source supplies one event per pull instead of pre-queuing the response.
+  let pulls = 0;
+  const slowDelta = "🙂 bounded " + "x".repeat(1000);
+  const slowCount = 80;
+  const slowTransport = transport(() => new Response(new ReadableStream({ pull(c) {
+    pulls++;
+    if (pulls <= slowCount) c.enqueue(enc.encode(line({ type: "response.output_text.delta", delta: slowDelta })));
+    else { c.enqueue(enc.encode(line(complete))); c.close(); }
+  } }, { highWaterMark: 0 })));
+  const slowResponse = await ad.responsesStream({ messages: [{ role: "user", content: "x" }] },
+    { model: "gpt-6.1-sol", fetchImpl: slowTransport });
+  await new Promise((accept) => setImmediate(accept));
+  const heldPulls = pulls;
+  await new Promise((accept) => setImmediate(accept));
+  ok(heldPulls > 0 && heldPulls <= 17 && pulls === heldPulls,
+    "9.13 a paused consumer bounds provider reads to one pending byte batch, with no busy-spin");
+  const slowResult = await collect(slowResponse.body);
+  ok(slowResult.text === chunk({ role: "assistant" }) + chunk({ content: slowDelta }).repeat(slowCount) + chunk({}, "stop") + "data: [DONE]\n\n"
+    && slowResult.chunks.every((p) => p.byteLength <= 16 * 1024) && pulls === slowCount + 1,
+    "9.14 capacity wakeups and EOF preserve every byte exactly once across full and partial batches");
+
+  let cancelPulls = 0, upstreamCancels = 0;
+  const cancelFrom = traceCount();
+  const capacityCancel = transport(() => new Response(new ReadableStream({
+    pull(c) { cancelPulls++; c.enqueue(enc.encode(line({ type: "response.output_text.delta", delta: slowDelta }))); },
+    cancel() { upstreamCancels++; },
+  }, { highWaterMark: 0 })));
+  const capacityResponse = await ad.responsesStream({ messages: [{ role: "user", content: "x" }] },
+    { model: "gpt-6.1-sol", fetchImpl: capacityCancel }, TRACE);
+  await new Promise((accept) => setImmediate(accept));
+  const stoppedPulls = cancelPulls;
+  await capacityResponse.body.cancel("offline consumer closed");
+  const [cancelTrace] = await tracesSince(cancelFrom);
+  ok(stoppedPulls > 0 && stoppedPulls <= 17 && cancelPulls === stoppedPulls && upstreamCancels === 1
+    && capacityCancel.calls.length === 1 && cancelTrace?.status === "error" && cancelTrace.error_class === "stream_interrupted",
+    "9.15 cancellation wakes a full-buffer pump, cancels its one reader, and never records success or retries");
 }
 
 console.log(`\nopenai-responses: ${pass} passed, ${fail} failed`);

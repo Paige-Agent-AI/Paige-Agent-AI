@@ -21,15 +21,15 @@ globalThis.fetch=async(url,init)=>{
   if(target.includes('voyageai.com'))return new Response(JSON.stringify({data:[{index:0,embedding:Array(1024).fill(0.01)}]}),{status:200});
   if(!target.startsWith('https://api.openai.com/v1/responses'))throw Error('UNEXPECTED_OFFLINE_TRANSPORT');
   const request=JSON.parse(String(init?.body??'{}'));
-  fixture.modelCalls.push({stream:request.stream===true,model:request.model});
-  if(request.stream!==true)return new Response(JSON.stringify({model:request.model,status:'completed',output:[{type:'message',role:'assistant',content:[{type:'output_text',text:JSON.stringify({intent:'answer',research:'none',difficulty:'hard',image:'none',needs_workspace_data:true,confidence:0.99})}]}],usage:{input_tokens:1,output_tokens:1}}),{status:200});
+  fixture.modelCalls.push({stream:request.stream===true,model:request.model,tools:(request.tools??[]).map(tool=>tool.name??tool.function?.name)});
+  if(request.stream!==true)return new Response(JSON.stringify({model:request.model,status:'completed',output:[{type:'message',role:'assistant',content:[{type:'output_text',text:JSON.stringify({intent:'answer',research:'none',difficulty:'hard',image:'none',needs_workspace_data:!fixture.answerOnly,confidence:0.99})}]}],usage:{input_tokens:1,output_tokens:1}}),{status:200});
   const round=++fixture.round;
-  // ALL records in a round arrive in ONE upstream transport read. The translator
-  // must not convert this topology into one native authority RPC pair per delta.
+  // The same records arrive packed or one per read. Provider packet topology
+  // must not cause an authority RPC pair per token in the actual Chat handler.
   const packet=[];
   const event=value=>packet.push(`data: ${JSON.stringify(value)}\n\n`);
   event({type:'response.created',response:{model:request.model}});
-  if(round<3){
+  if(!fixture.answerOnly&&round<3){
     const item={id:`neutral-item-${round}`,type:'function_call',call_id:`neutral-call-${round}`,name:round===1?'capability_status':'integrations_list',arguments:'{}'};
     event({type:'response.output_item.added',output_index:0,item:{...item,arguments:''}});
     event({type:'response.function_call_arguments.delta',item_id:item.id,delta:'{}'});
@@ -40,7 +40,11 @@ globalThis.fetch=async(url,init)=>{
     event({type:'response.completed',response:{status:'completed',model:request.model,output:[],usage:{input_tokens:1,output_tokens:256}}});
     if(['scope_changed','actor_revoked','superseded'].includes(fixture.mode))fixture.revoked=true;
   }
-  return new Response(new ReadableStream({start(c){c.enqueue(enc.encode(packet.join('')));c.close();}}),{status:200,headers:{'content-type':'text/event-stream'}});
+  return new Response(new ReadableStream({start(c){
+    if(fixture.topology==='packed')c.enqueue(enc.encode(packet.join('')));
+    else for(const record of packet)c.enqueue(enc.encode(record));
+    c.close();
+  }}),{status:200,headers:{'content-type':'text/event-stream'}});
 };
 await import('../../supabase/functions/paige-ai-chat/index.ts');
 const {capturedHandler}=await import('../client-memory-authz/stub-serve.mjs');
@@ -53,10 +57,12 @@ const settleWithin=async(promise)=>{
   finally{clearTimeout(timer);}
 };
 const summaries=[];
+for(const topology of ['packed','fragmented','fragmented_answer_only'])
 for(const mode of ['normal','lost_ack','receipt_unknown','foreign_thread','scope_changed','actor_revoked','superseded','consumer_cancel']){
   let releaseFinished;
   const finished=new Promise(accept=>{releaseFinished=accept;});
-  fixture={mode,round:0,revoked:false,executor:null,latest:INTENT,terminal:false,modelCalls:[],settlements:[]};
+  fixture={mode,topology,answerOnly:topology==='fragmented_answer_only',round:0,revoked:false,executor:null,latest:INTENT,terminal:false,modelCalls:[],settlements:[]};
+  const expectedCalls=fixture.answerOnly?2:4;
   const activeTenant=()=>fixture.revoked&&mode==='scope_changed'?OTHER:TENANT;
   const rec=setScenario({authUser:{id:USER,email:'owner@example.test'},declaredActiveTenantId:TENANT,
     rpcs:{
@@ -65,7 +71,10 @@ for(const mode of ['normal','lost_ack','receipt_unknown','foreign_thread','scope
       current_user_tenant_id:()=>({data:activeTenant(),error:null}),studio_role_ok:{data:true,error:null},get_actor_access:{data:{tier:'tenant'},error:null},resolve_tool_autonomy:{data:'confirm',error:null},
       paige_chat_interactive_protocol:{data:{version:2,active:true},error:null},
       paige_chat_interactive_begin_v2:{data:{status:'accepted',turn_id:'55555555-5555-4555-8555-555555555555'},error:null},
-      paige_chat_interactive_executor_v2:args=>{
+      paige_chat_interactive_executor_v2:async args=>{
+        // Model the existing asynchronous native RPC boundary without changing
+        // its verdict. Provider production can advance while authority is read.
+        await new Promise(resolve=>setImmediate(resolve));
         if(fixture.revoked&&['scope_changed','actor_revoked'].includes(mode))return{data:null,error:{message:'native current authority unavailable'}};
         if(fixture.revoked&&mode==='superseded')fixture.latest=NEXT;
         if(args.p_operation==='acquire')fixture.executor=INTENT;
@@ -90,7 +99,7 @@ for(const mode of ['normal','lost_ack','receipt_unknown','foreign_thread','scope
     serviceTables:{user_roles:()=>[],tenant_members:()=>[{tenant_id:TENANT,user_id:USER,role:'owner',status:'active'}],tenants:()=>[{id:TENANT,account_type:'standalone',parent_tenant_id:null}],client_memory:()=>[]},
   });
   const response=await handler(new Request('http://local/paige-ai-chat',{method:'POST',headers:{authorization:'Bearer synthetic-jwt','content-type':'application/json'},body:JSON.stringify({
-    messages:[{role:'user',content:'Read only: explain current capabilities and connections. Do not create, change, send, approve or schedule anything.'}],threadId:THREAD,requestIntentId:INTENT,interactive:{kind:'message'},
+    messages:[{role:'user',content:fixture.answerOnly?'Read only: explain why clear priorities matter for a small business.':'Read only: explain current capabilities and connections. Do not create, change, send, approve or schedule anything.'}],threadId:THREAD,requestIntentId:INTENT,interactive:{kind:'message'},
   })}));
   let wire='',streamError=false;
   const reader=response.body.getReader(),decoder=new TextDecoder();
@@ -107,12 +116,13 @@ for(const mode of ['normal','lost_ack','receipt_unknown','foreign_thread','scope
   if(mode==='foreign_thread'){
     check(response.status>=400&&fixture.modelCalls.length===0&&fixture.settlements.length===0&&authorities.length===0,`${mode}: invisible foreign thread refuses before admission/model/settlement`);
   }else if(['normal','lost_ack'].includes(mode)){
-    check(response.status===200&&fixture.modelCalls.length===4&&fixture.modelCalls.filter(call=>call.stream).length===3,`${mode}: actual classifier and two-tool-plus-answer loop`);
-    check(stateReads>0&&stateReads<=80,`${mode}: packed provider records keep native state reads bounded`);
+    check(response.status===200&&fixture.modelCalls.length===expectedCalls&&fixture.modelCalls.filter(call=>call.stream).length===expectedCalls-1,`${topology}/${mode}: actual classifier and expected model rounds`);
+    if(fixture.answerOnly)check(fixture.modelCalls.filter(call=>call.stream).every(call=>call.tools.every(name=>name==='ask_choices')),`${topology}/${mode}: incident-shaped frontier answer offers only presentation, no domain tools`);
+    check(stateReads>0&&stateReads<=80,`${topology}/${mode}: provider records keep native state reads bounded`);
     check(fixture.settlements.length===1&&fixture.terminal&&fixture.executor===null&&!streamError&&wire.includes('[DONE]'),`${mode}: one canonical receipt/readback and release without replay`);
   }else if(mode==='receipt_unknown'){
     check(!fixture.terminal&&fixture.executor===INTENT&&streamError,`${mode}: unconfirmed receipt retains executor, no fabricated settlement`);
-    check(fixture.modelCalls.length===4,`${mode}: no new model/round replay after receipt uncertainty`);
+    check(fixture.modelCalls.length===expectedCalls,`${mode}: no new model/round replay after receipt uncertainty`);
   }else if(mode==='scope_changed'||mode==='actor_revoked'){
     check(!fixture.terminal&&fixture.executor===INTENT&&!wire.includes('Neutral guidance.'),`${mode}: late authority refusal withholds answer and retains uncertainty`);
   }else if(mode==='superseded'){
@@ -121,7 +131,7 @@ for(const mode of ['normal','lost_ack','receipt_unknown','foreign_thread','scope
   }else if(mode==='consumer_cancel'){
     check(fixture.terminal&&fixture.executor===null&&fixture.settlements.length===1,`${mode}: actual disconnected consumer does not abandon canonical producer settlement`);
   }
-  summaries.push({mode,status:response.status,stateReads,modelCalls:fixture.modelCalls.length,settlements:fixture.settlements.length,terminal:fixture.terminal,released:fixture.executor===null,streamError});
+  summaries.push({topology,mode,status:response.status,stateReads,modelCalls:fixture.modelCalls.length,settlements:fixture.settlements.length,terminal:fixture.terminal,released:fixture.executor===null,streamError});
 }
 console.log(JSON.stringify(summaries,null,2));
 console.log(`chat-openai-stream-batching: ${passed} passed, ${failed} failed`);

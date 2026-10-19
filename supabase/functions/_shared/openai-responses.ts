@@ -404,31 +404,46 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesCallOp
   const enc = new TextEncoder();
   const dec = new TextDecoder();
   const upstream = resp.body.getReader();
-  // One provider read may already contain hundreds of SSE records. Preserve the
-  // records byte-for-byte, but do not turn each into another downstream read (and
-  // another pair of canonical authority RPCs). Never wait for another packet to
-  // fill this buffer; the read loop flushes it before its next await.
+  // Coalesce while the governed consumer is busy checking authority, irrespective
+  // of provider packet boundaries. Keep at most one queued chunk and one pending
+  // byte batch; never wait for another provider packet when the consumer is ready.
   const batch = new Uint8Array(16 * 1024);
-  let batching = false, batchBytes = 0;
+  let batchBytes = 0, cancelled = false;
+  let wakeCapacity: (() => void) | null = null;
   const flush = (c: ReadableStreamDefaultController<Uint8Array>) => {
     if (batchBytes === 0) return;
-    c.enqueue(batch.slice(0, batchBytes));
+    const bytes = batch.slice(0, batchBytes);
     batchBytes = 0;
+    c.enqueue(bytes);
   };
-  const send = (c: ReadableStreamDefaultController<Uint8Array>, obj: unknown) => {
-    const bytes = enc.encode(`data: ${JSON.stringify(obj)}\n\n`);
-    if (!batching) { c.enqueue(bytes); return; }
-    for (let offset = 0; offset < bytes.length;) {
+  const capacity = async (c: ReadableStreamDefaultController<Uint8Array>) => {
+    while (!cancelled && (c.desiredSize ?? 0) <= 0) {
+      await new Promise<void>((resolve) => { wakeCapacity = resolve; });
+    }
+    if (cancelled) throw new DOMException("Response consumer cancelled", "AbortError");
+  };
+  // The synchronous fast path preserves batching within a packed provider read.
+  // Only a full buffer with no downstream capacity pauses the serialized pump.
+  const write = (c: ReadableStreamDefaultController<Uint8Array>, bytes: Uint8Array, offset = 0): void | Promise<void> => {
+    if (cancelled) throw new DOMException("Response consumer cancelled", "AbortError");
+    while (offset < bytes.length) {
       const size = Math.min(batch.length - batchBytes, bytes.length - offset);
       batch.set(bytes.subarray(offset, offset + size), batchBytes);
       batchBytes += size;
       offset += size;
-      if (batchBytes === batch.length) flush(c);
+      if (batchBytes === batch.length) {
+        if ((c.desiredSize ?? 0) > 0) flush(c);
+        else return capacity(c).then(() => { flush(c); return write(c, bytes, offset); });
+      }
     }
   };
+  const send = (c: ReadableStreamDefaultController<Uint8Array>, obj: unknown) =>
+    write(c, enc.encode(`data: ${JSON.stringify(obj)}\n\n`));
 
   const stream = new ReadableStream<Uint8Array>({
-    async start(controller) {
+    start(controller) {
+      // start must return promptly so pull can wake a pump waiting for capacity.
+      const pump = async () => {
       let buf = "";
       let servedModel: string | null = null;
       let outText = "";
@@ -444,10 +459,10 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesCallOp
         typeof ev?.item_id === "string" ? `id:${ev.item_id}`
         : typeof ev?.item?.id === "string" ? `id:${ev.item.id}`
         : typeof ev?.output_index === "number" ? `ix:${ev.output_index}` : null;
-      const openTool = (c: ReadableStreamDefaultController<Uint8Array>, keys: (string | null)[], callId: string, name: string) => {
+      const openTool = async (c: ReadableStreamDefaultController<Uint8Array>, keys: (string | null)[], callId: string, name: string) => {
         const t = { index: nextTool++, emitted: "" };
         for (const k of keys) if (k) tools.set(k, t);
-        send(c, { choices: [{ index: 0, delta: { tool_calls: [{ index: t.index, id: callId, type: "function", function: { name, arguments: "" } }] }, finish_reason: null }] });
+        await send(c, { choices: [{ index: 0, delta: { tool_calls: [{ index: t.index, id: callId, type: "function", function: { name, arguments: "" } }] }, finish_reason: null }] });
         return t;
       };
       const toolFor = (ev: any) => {
@@ -458,24 +473,23 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesCallOp
       const emitArgs = (c: ReadableStreamDefaultController<Uint8Array>, t: { index: number; emitted: string }, delta: string) => {
         if (!delta) return;
         t.emitted += delta;
-        send(c, { choices: [{ index: 0, delta: { tool_calls: [{ index: t.index, function: { arguments: delta } }] }, finish_reason: null }] });
+        return send(c, { choices: [{ index: 0, delta: { tool_calls: [{ index: t.index, function: { arguments: delta } }] }, finish_reason: null }] });
       };
       /** At the end of a call: emit whatever the deltas missed. A call that never gets arguments is given "{}"
        *  only when the stream finishes, so an early empty `.done` cannot pre-empt a later event carrying them. */
       const settleArgs = (c: ReadableStreamDefaultController<Uint8Array>, t: { index: number; emitted: string }, full: unknown) => {
         const fullArgs = typeof full === "string" ? full : "";
-        if (fullArgs && fullArgs.startsWith(t.emitted)) emitArgs(c, t, fullArgs.slice(t.emitted.length));
+        if (fullArgs && fullArgs.startsWith(t.emitted)) return emitArgs(c, t, fullArgs.slice(t.emitted.length));
         // A `.done` that contradicts what was already streamed cannot be repaired (those bytes are sent):
         // the call's arguments are untrustworthy, so the turn is reported as failed, never as a clean call.
         else if (fullArgs && failure === null) failure = "tool_arguments_mismatch";
       };
       send(controller, { choices: [{ index: 0, delta: { role: "assistant" }, finish_reason: null }] });
+      flush(controller);
       try {
         while (true) {
           const { done, value } = await upstream.read();
           if (done) break;
-          batching = true;
-          try {
           buf += dec.decode(value, { stream: true });
           const lines = buf.split("\n");
           buf = lines.pop() ?? "";
@@ -491,22 +505,23 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesCallOp
               if (typeof ev.response?.model === "string") servedModel = ev.response.model;
             } else if (type === "response.output_text.delta" && typeof ev.delta === "string") {
               if (outText.length < 40000) outText += ev.delta;
-              send(controller, { choices: [{ index: 0, delta: { content: ev.delta }, finish_reason: null }] });
+              const pending = send(controller, { choices: [{ index: 0, delta: { content: ev.delta }, finish_reason: null }] });
+              if (pending) await pending;
             } else if (type === "response.refusal.delta" || type === "response.refusal.done") {
               refused = true; // never surfaced as answer text; reported as a refusal stop
             } else if (type === "response.output_item.added" && ev.item?.type === "function_call") {
-              if (!toolFor(ev)) openTool(controller, [keyOf(ev), typeof ev.output_index === "number" ? `ix:${ev.output_index}` : null], ev.item.call_id, ev.item.name);
+              if (!toolFor(ev)) await openTool(controller, [keyOf(ev), typeof ev.output_index === "number" ? `ix:${ev.output_index}` : null], ev.item.call_id, ev.item.name);
             } else if (type === "response.function_call_arguments.delta" && typeof ev.delta === "string") {
               const t = toolFor(ev);
-              if (t) emitArgs(controller, t, ev.delta); // an unknown call is settled from its `.done` below
+              if (t) await emitArgs(controller, t, ev.delta); // an unknown call is settled from its `.done` below
             } else if (type === "response.function_call_arguments.done") {
               const t = toolFor(ev);
-              if (t) settleArgs(controller, t, ev.arguments);
+              if (t) await settleArgs(controller, t, ev.arguments);
             } else if (type === "response.output_item.done" && ev.item?.type === "function_call") {
-              const t = toolFor(ev) ?? openTool(controller, [keyOf(ev), typeof ev.output_index === "number" ? `ix:${ev.output_index}` : null], ev.item.call_id, ev.item.name);
-              settleArgs(controller, t, ev.item.arguments);
+              const t = toolFor(ev) ?? await openTool(controller, [keyOf(ev), typeof ev.output_index === "number" ? `ix:${ev.output_index}` : null], ev.item.call_id, ev.item.name);
+              await settleArgs(controller, t, ev.item.arguments);
             } else if (type === "response.output_item.done" && ev.item?.type === "reasoning") {
-              send(controller, { choices: [{ index: 0, delta: { paige_provider_items: [ev.item], paige_provider: providerTag(opts.model) }, finish_reason: null }] });
+              await send(controller, { choices: [{ index: 0, delta: { paige_provider_items: [ev.item], paige_provider: providerTag(opts.model) }, finish_reason: null }] });
             } else if (type === "response.completed" || type === "response.incomplete") {
               finalResponse = ev.response;
               if (typeof ev.response?.model === "string") servedModel = ev.response.model;
@@ -517,10 +532,7 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesCallOp
               failure = String(ev.message ?? ev.error?.message ?? "stream error").slice(0, 500);
             }
           }
-          } finally {
-            batching = false;
-            flush(controller);
-          }
+          if ((controller.desiredSize ?? 0) > 0) flush(controller);
         }
       } catch (_e) {
         streamErrored = true;
@@ -532,25 +544,48 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesCallOp
         }
         const truncated = !finalResponse && !failure; // the stream ended without a terminal event
         const stop = stopFor(finalResponse?.status, finalResponse?.incomplete_details?.reason, refused, nextTool > 0);
-        const errored = streamErrored || !!failure || truncated;
-        if (!errored) {
-          for (const t of new Set(tools.values())) if (!t.emitted) emitArgs(controller, t, "{}");
-          send(controller, { choices: [{ index: 0, delta: {}, finish_reason: stop.finish_reason }] });
-        }
-        controller.enqueue(enc.encode("data: [DONE]\n\n"));
-        controller.close();
+        const errored = streamErrored || cancelled || !!failure || truncated;
+        try {
+          if (!cancelled) {
+            if (!errored) {
+              for (const t of new Set(tools.values())) if (!t.emitted) await emitArgs(controller, t, "{}");
+              await send(controller, { choices: [{ index: 0, delta: {}, finish_reason: stop.finish_reason }] });
+            }
+            await write(controller, enc.encode("data: [DONE]\n\n"));
+            await capacity(controller);
+            flush(controller);
+            controller.close();
+          }
+        } finally {
         emitTrace(trace, {
           model: servedModel ?? opts.model,
-          status: errored ? "error" : "success",
+          status: errored || cancelled ? "error" : "success",
           started,
           usage: readUsage(finalResponse?.usage),
           input: body.messages,
           output: outText,
-          error_class: streamErrored ? "stream_interrupted" : failure ? "response_failed" : truncated ? "stream_truncated" : null,
+          error_class: streamErrored || cancelled ? "stream_interrupted" : failure ? "response_failed" : truncated ? "stream_truncated" : null,
           error_message: failure,
-          stop_reason: errored ? undefined : stop.stop_reason,
+          stop_reason: errored || cancelled ? undefined : stop.stop_reason,
         });
+        }
       }
+      };
+      void pump().catch((error) => { if (!cancelled) controller.error(error); });
+    },
+    pull(controller) {
+      if (!cancelled && (controller.desiredSize ?? 0) > 0) flush(controller);
+      const wake = wakeCapacity;
+      wakeCapacity = null;
+      wake?.();
+    },
+    cancel(reason) {
+      cancelled = true;
+      batchBytes = 0;
+      const wake = wakeCapacity;
+      wakeCapacity = null;
+      wake?.();
+      return upstream.cancel(reason);
     },
   });
   return { ok: true, status: 200, body: stream };

@@ -29,14 +29,17 @@ export function constantTimeEquals(a: string, b: string): boolean {
 
 /**
  * True only when the Authorization header carries the service-role key itself. Fails closed: no
- * header, a non-Bearer scheme, an empty token, or an unset key all return false.
+ * header, a non-Bearer scheme, an empty token, or an unset or whitespace-only key all return false.
  */
 export function isServiceRoleBearer(
   authorization: string | null | undefined,
   serviceKey: string | null | undefined,
 ): boolean {
-  if (!serviceKey) return false;
+  // Trimmed like the token: an env value with a trailing newline must not 401 the only producer
+  // (fetch strips trailing whitespace from the header it sends).
+  const key = (serviceKey ?? "").trim();
+  if (!key) return false;
   const token = bearerToken(authorization);
   if (!token) return false;
-  return constantTimeEquals(token, serviceKey);
+  return constantTimeEquals(token, key);
 }

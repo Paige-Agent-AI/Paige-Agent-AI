@@ -344,10 +344,10 @@ Backend only (`detect-credit-alerts`); no visible surface changes. Internal-only
 | Agency / Enterprise | only if the subject is active staff of a finance-entitled business it resolves to (same rule) |
 | Standalone (Solo) | ✓ for staff of a finance-entitled business; skipped otherwise |
 | Sub-account | ✓ for staff of a finance-entitled business; skipped otherwise |
-| Client | ✗ — portal-customer subjects are skipped |
+| Client | ✗ — portal-customer subjects are skipped, until a customer credit authorization exists (EXP18) |
 | Anonymous | ✗ — 401 |
 
-Evidence: Deno tests driving the real handler against a recording client (20/20; each guard bite-proven), `deno check` clean. Authenticated runtime UNVERIFIED (no entitled staff subject with a linked `clients` row exists in production).
+Staff means an active owner/admin seat; a `member` seat is skipped. The coach email stays inside the resolved business. Evidence: Deno tests driving the real handler against a recording client (31/31; each guard bite-proven), `deno check` clean. Authenticated runtime UNVERIFIED (no entitled staff subject with a linked `clients` row exists in production).
 
 ### Experience 04 E4-S3 PR beta — display reads write no receipt; Collections "Overdue" and the client record's standing on the business calendar (merged as #2136 → main `d5a8e6e76`, 2026-10-14; deployed — remote `edge-live` and `db-live` at `d5a8e6e7`, migration `20271031005000` read back on production, Vercel production READY; authenticated runtime still owed)
 

@@ -11,7 +11,7 @@
 
 import { resolveOperatorIdentity as resolveOperatorIdentityReal } from "../_shared/operator-identity.ts";
 import { isServiceRoleBearer } from "../_shared/service-role-bearer.ts";
-import { authorizeCreditAlertSubject } from "./authority.ts";
+import { authorizeCreditAlertSubject, staffStanding } from "./authority.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -98,8 +98,9 @@ export async function handleDetectCreditAlerts(req: Request, deps: DetectCreditA
       for (const a of (new_accounts || [])) if (a.bureau_source) bureaus.add(a.bureau_source);
       for (const n of (new_negatives || [])) if (n.bureau) bureaus.add(n.bureau);
 
+      let baselineInserted = 0;
       if (totalAccounts > 0) {
-        await supabase.from("credit_alerts").insert({
+        const { error: baselineErr } = await supabase.from("credit_alerts").insert({
           client_id,
           alert_type: "file_established",
           alert_severity: "informational",
@@ -107,10 +108,16 @@ export async function handleDetectCreditAlerts(req: Request, deps: DetectCreditA
           alert_description: `Your credit file has been analyzed — ${totalAccounts} accounts found across ${bureaus.size || 1} bureau${bureaus.size !== 1 ? "s" : ""}. This is your baseline. Future uploads will detect changes and alert you to significant events.`,
           bureau: bureau_source || null,
         });
+        if (baselineErr) {
+          console.error("[detect-credit-alerts] baseline alert insert failed:", baselineErr.message ?? String(baselineErr));
+        } else {
+          baselineInserted = 1;
+        }
       }
 
+      // Counts only the row actually written, never the one attempted (§13).
       return new Response(
-        JSON.stringify({ success: true, alerts_generated: totalAccounts > 0 ? 1 : 0, critical: 0, warnings: 0, informational: totalAccounts > 0 ? 1 : 0, first_upload: true }),
+        JSON.stringify({ success: true, alerts_generated: baselineInserted, critical: 0, warnings: 0, informational: baselineInserted, first_upload: true }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -398,9 +405,14 @@ export async function handleDetectCreditAlerts(req: Request, deps: DetectCreditA
         .select("id")
         .single();
 
-      if (!error && inserted) {
-        insertedAlerts.push({ ...alert, id: inserted.id });
+      if (error || !inserted) {
+        console.error(
+          `[detect-credit-alerts] alert insert failed (${alert.alert_type}):`,
+          error?.message ?? "no row returned",
+        );
+        continue;
       }
+      insertedAlerts.push({ ...alert, id: inserted.id });
     }
 
     // === EMAIL + PUSH NOTIFICATIONS FOR CRITICAL ALERTS ===
@@ -468,20 +480,36 @@ export async function handleDetectCreditAlerts(req: Request, deps: DetectCreditA
           }
         }
 
-        // Notify assigned coach
-        const { data: coaching } = await supabase
+        // Notify the assigned coach — of THIS business only, and only while that coach is still its
+        // credit staff. A coach_clients row from another business (entitled or not), or a coach whose
+        // seat here is gone or limited, never receives this business's credit alert.
+        const { data: coaching, error: coachingErr } = await supabase
           .from("coach_clients")
           .select("coach_user_id")
+          .eq("tenant_id", tenantId)
           .eq("client_user_id", client_id)
           .eq("status", "active")
           .limit(1);
+        if (coachingErr) {
+          console.error("[detect-credit-alerts] coach lookup failed; no coach email:", coachingErr.message ?? String(coachingErr));
+        }
+        const coachUserId: string | null =
+          !coachingErr && Array.isArray(coaching) && typeof coaching[0]?.coach_user_id === "string"
+            ? coaching[0].coach_user_id
+            : null;
+        let coachIsStaff = false;
+        if (coachUserId) {
+          const standing = await staffStanding(supabase, tenantId, coachUserId);
+          coachIsStaff = standing === "staff";
+          if (!coachIsStaff) console.warn(`[detect-credit-alerts] coach email skipped: coach ${standing} in this business`);
+        }
 
-        if (coaching && coaching.length > 0) {
-          const { data: { user: coachUser } } = await supabase.auth.admin.getUserById(coaching[0].coach_user_id);
+        if (coachUserId && coachIsStaff) {
+          const { data: { user: coachUser } } = await supabase.auth.admin.getUserById(coachUserId);
           const { data: coachProfile } = await supabase
             .from("profiles")
             .select("full_name")
-            .eq("user_id", coaching[0].coach_user_id)
+            .eq("user_id", coachUserId)
             .maybeSingle();
 
           if (coachUser?.email) {

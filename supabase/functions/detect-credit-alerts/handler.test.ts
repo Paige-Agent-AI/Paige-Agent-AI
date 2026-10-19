@@ -24,6 +24,9 @@ const CUSTOMER = "55555555-5555-4555-8555-555555555555";
 const ORPHAN = "66666666-6666-4666-8666-666666666666";
 const TWO_BUSINESSES = "77777777-7777-4777-8777-777777777777";
 const PLAIN_STAFF = "88888888-8888-4888-8888-888888888888";
+const COACH = "99999999-9999-4999-8999-999999999999";
+const LIMITED = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+const ARCHIVED = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 
 type Row = Record<string, unknown>;
 interface World {
@@ -35,7 +38,11 @@ interface World {
   profiles: Row[];
   credit_alerts: Row[];
   coach_clients: Row[];
+  /** Injected failures: a read of `select[table]` or an insert into `insert[table]` returns `{ error }`. */
+  fail?: { select?: Partial<Record<Table, string>>; insert?: Partial<Record<Table, string>> };
 }
+
+type Table = Exclude<keyof World, "fail">;
 
 function world(): World {
   return {
@@ -45,12 +52,20 @@ function world(): World {
       { tenant_id: ENTITLED, linked_user_id: TWO_BUSINESSES },
       { tenant_id: PLAIN, linked_user_id: TWO_BUSINESSES },
       { tenant_id: PLAIN, linked_user_id: PLAIN_STAFF },
+      { tenant_id: ENTITLED, linked_user_id: LIMITED },
+      { tenant_id: ENTITLED, linked_user_id: ARCHIVED },
     ],
     tenant_members: [
-      { id: "m1", tenant_id: ENTITLED, user_id: STAFF, status: "active" },
-      { id: "m2", tenant_id: PLAIN, user_id: PLAIN_STAFF, status: "active" },
+      { id: "m1", tenant_id: ENTITLED, user_id: STAFF, role: "owner", status: "active" },
+      { id: "m2", tenant_id: PLAIN, user_id: PLAIN_STAFF, role: "owner", status: "active" },
       // A member of ANOTHER business who is only a customer of the entitled one.
-      { id: "m3", tenant_id: PLAIN, user_id: CUSTOMER, status: "active" },
+      { id: "m3", tenant_id: PLAIN, user_id: CUSTOMER, role: "admin", status: "active" },
+      // An active team seat with the limited `member` permission: a seat, not credit staff.
+      { id: "m4", tenant_id: ENTITLED, user_id: LIMITED, role: "member", status: "active" },
+      // A former owner: the only row for this business is archived.
+      { id: "m5", tenant_id: ENTITLED, user_id: ARCHIVED, role: "owner", status: "archived" },
+      // The entitled business's coach, active credit staff there.
+      { id: "m6", tenant_id: ENTITLED, user_id: COACH, role: "admin", status: "active" },
     ],
     marketplace_installs: [{ tenant_id: ENTITLED, item_id: FINANCE_ITEM, status: "active" }],
     marketplace_items: [{ id: FINANCE_ITEM, is_finance: true }],
@@ -58,6 +73,7 @@ function world(): World {
     profiles: [
       { user_id: STAFF, full_name: "Sam Staff" },
       { user_id: CUSTOMER, full_name: "Casey Customer" },
+      { user_id: COACH, full_name: "Corey Coach" },
     ],
     credit_alerts: [],
     coach_clients: [],
@@ -73,7 +89,7 @@ interface Recorder {
 }
 
 function fakeClient(w: World, rec: Recorder) {
-  function builder(table: keyof World) {
+  function builder(table: Table) {
     const filters: [string, string, unknown][] = [];
     let op: "select" | "insert" | "update" = "select";
     let payload: Row | null = null;
@@ -98,6 +114,11 @@ function fakeClient(w: World, rec: Recorder) {
       );
     }
     function run() {
+      const failure = op === "insert" ? w.fail?.insert?.[table] : op === "select" ? w.fail?.select?.[table] : undefined;
+      if (failure) {
+        if (op === "select") rec.reads.push(table);
+        return { data: null, error: { message: failure } };
+      }
       if (op === "insert") {
         const row = { id: crypto.randomUUID(), ...(payload as Row) };
         rec.writes.push({ table, op, row });
@@ -118,7 +139,7 @@ function fakeClient(w: World, rec: Recorder) {
     return b;
   }
   return {
-    from: (t: string) => builder(t as keyof World),
+    from: (t: string) => builder(t as Table),
     functions: {
       invoke: (name: string, opts: { body: Row }) => {
         rec.invokes.push({ name, body: opts.body });
@@ -293,4 +314,114 @@ Deno.test("first upload for an entitled staff subject → the one baseline alert
   const out = await res.json();
   assertEquals(out.first_upload, true);
   assertEquals(rec.writes.filter((x) => x.op === "insert").map((x) => x.row.alert_type), ["file_established"]);
+});
+
+// --- 4. Round-2 hardening (E09 H0 review) ------------------------------------------------------
+
+const SR = `Bearer ${SERVICE_KEY}`;
+const coachEmails = (rec: Recorder) =>
+  rec.invokes.filter((i) => i.name === "send-support-request" && i.body.type === "credit_alert_coach");
+
+Deno.test("coach email: an active coach of THIS business who is its credit staff is emailed", async () => {
+  const { w, rec, deps } = harness();
+  w.coach_clients = [{ tenant_id: ENTITLED, coach_user_id: COACH, client_user_id: STAFF, status: "active" }];
+  const res = await handleDetectCreditAlerts(req(criticalBody(STAFF), SR), deps);
+  assertEquals(res.status, 200);
+  assertEquals(coachEmails(rec).length, 2, "one coach email per critical alert");
+});
+
+Deno.test("coach email: a coach_clients row from ANOTHER business sends no coach email", async () => {
+  const { w, rec, deps } = harness();
+  // The coach is credit staff of the entitled business too, so ONLY the business scope can refuse
+  // this row: it was filed under PLAIN.
+  w.coach_clients = [{ tenant_id: PLAIN, coach_user_id: COACH, client_user_id: STAFF, status: "active" }];
+  const res = await handleDetectCreditAlerts(req(criticalBody(STAFF), SR), deps);
+  assertEquals(res.status, 200);
+  assertEquals(coachEmails(rec), [], "no coach email crosses into another business");
+  assert(!rec.authLookups.includes(COACH), "the coach address is never looked up");
+  assertEquals(rec.invokes.filter((i) => i.body.type === "credit_alert").length, 2, "the subject's own emails still go");
+});
+
+Deno.test("coach email: a coach row in this business whose coach is not its credit staff sends no coach email", async () => {
+  const { w, rec, deps } = harness();
+  // PLAIN_STAFF is staff of PLAIN only; the row claims ENTITLED.
+  w.coach_clients = [{ tenant_id: ENTITLED, coach_user_id: PLAIN_STAFF, client_user_id: STAFF, status: "active" }];
+  await handleDetectCreditAlerts(req(criticalBody(STAFF), SR), deps);
+  assertEquals(coachEmails(rec), []);
+  assert(!rec.authLookups.includes(PLAIN_STAFF));
+});
+
+Deno.test("archived member: the subject's only row for the business is archived → skipped, nothing written", async () => {
+  const { rec, deps } = harness();
+  const res = await handleDetectCreditAlerts(req(criticalBody(ARCHIVED), SR), deps);
+  assertEquals(res.status, 200);
+  assertEquals(await res.json(), { skipped: "subject_is_portal_customer", alerts_generated: 0 });
+  assertNothingDone(rec);
+});
+
+Deno.test("limited seat: an active `member` seat is not credit staff → skipped, nothing written", async () => {
+  const { rec, deps } = harness();
+  const res = await handleDetectCreditAlerts(req(criticalBody(LIMITED), SR), deps);
+  assertEquals(res.status, 200);
+  assertEquals(await res.json(), { skipped: "subject_not_credit_staff", alerts_generated: 0 });
+  assertNothingDone(rec);
+});
+
+for (const [table, status, reason] of [
+  ["clients", 500, "business_lookup_failed"],
+  ["marketplace_installs", 503, "entitlement_unavailable"],
+  ["tenant_members", 500, "membership_lookup_failed"],
+] as const) {
+  Deno.test(`fail closed: a ${table} read error → ${status} ${reason}, nothing written or invoked`, async () => {
+    const { w, rec, deps } = harness();
+    w.fail = { select: { [table]: "injected read failure" } };
+    const res = await handleDetectCreditAlerts(req(criticalBody(STAFF), SR), deps);
+    assertEquals(res.status, status);
+    assertEquals(await res.json(), { error: reason });
+    assert(rec.reads.includes(table), `the ${table} read was attempted`);
+    assertNothingDone(rec);
+  });
+}
+
+/** Runs `fn` with console.error captured; returns the joined lines it logged. */
+async function capturingErrors(fn: () => Promise<void>): Promise<string> {
+  const lines: string[] = [];
+  const original = console.error;
+  console.error = (...args: unknown[]) => { lines.push(args.map(String).join(" ")); };
+  try { await fn(); } finally { console.error = original; }
+  return lines.join("\n");
+}
+
+Deno.test("insert failure, first upload: the baseline alert is logged and not counted when it was not written", async () => {
+  const { w, rec, deps } = harness();
+  w.fail = { insert: { credit_alerts: "injected insert failure" } };
+  const body = { client_id: STAFF, new_accounts: [{ creditor: "A", bureau_source: "experian" }] };
+  let out: Row = {};
+  const logged = await capturingErrors(async () => {
+    out = await (await handleDetectCreditAlerts(req(body, SR), deps)).json();
+  });
+  assert(logged.includes("baseline alert insert failed"), "the failed write is logged");
+  assertEquals(out.first_upload, true);
+  assertEquals(out.alerts_generated, 0);
+  assertEquals(out.informational, 0);
+  assertEquals(rec.writes, []);
+});
+
+Deno.test("insert failure, change path: failed inserts are logged, not counted, pushed or emailed", async () => {
+  const { w, rec, deps } = harness();
+  w.fail = { insert: { credit_alerts: "injected insert failure" } };
+  let out: Row = {};
+  const logged = await capturingErrors(async () => {
+    out = await (await handleDetectCreditAlerts(req(criticalBody(STAFF), SR), deps)).json();
+  });
+  assert(logged.includes("alert insert failed (new_collection)"), "each failed write is logged");
+  assertEquals(out.alerts_generated, 0);
+  assertEquals(out.critical, 0);
+  assertEquals(rec.invokes, [], "nothing pushed or emailed for an alert that does not exist");
+});
+
+Deno.test("service key with surrounding whitespace still matches; a whitespace-only key never does", () => {
+  assert(isServiceRoleBearer(`Bearer ${SERVICE_KEY}`, `${SERVICE_KEY}\n`), "trailing newline in the env value");
+  assert(isServiceRoleBearer(`Bearer ${SERVICE_KEY}`, `  ${SERVICE_KEY}`));
+  assert(!isServiceRoleBearer("Bearer x", "   "), "a whitespace-only key never matches");
 });

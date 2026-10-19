@@ -334,6 +334,21 @@ posture**, and **(d) permitted-RPC scoping**, each grounded in a named resolver 
 
 ## Surface ledger — what actually SHIPPED, per tier (§66)
 
+### E09 H0 — credit alerts gated on the business's entitlement and a staff subject (branch `e09-h0-credit-alerts`, 2026-10-19; not yet merged)
+
+Backend only (`detect-credit-alerts`); no visible surface changes. Internal-only: service-role bearer, else 401. An alert is raised only for the staff of the one finance-entitled business the subject resolves to; production holds 0 credit alerts.
+
+| Tier | Credit alerts raised |
+|---|---|
+| God / Operator | N/A — no client book; the function is not callable by a person |
+| Agency / Enterprise | only if the subject is active staff of a finance-entitled business it resolves to (same rule) |
+| Standalone (Solo) | ✓ for staff of a finance-entitled business; skipped otherwise |
+| Sub-account | ✓ for staff of a finance-entitled business; skipped otherwise |
+| Client | ✗ — portal-customer subjects are skipped |
+| Anonymous | ✗ — 401 |
+
+Evidence: Deno tests driving the real handler against a recording client (20/20; each guard bite-proven), `deno check` clean. Authenticated runtime UNVERIFIED (no entitled staff subject with a linked `clients` row exists in production).
+
 ### Experience 04 E4-S3 PR beta — display reads write no receipt; Collections "Overdue" and the client record's standing on the business calendar (merged as #2136 → main `d5a8e6e76`, 2026-10-14; deployed — remote `edge-live` and `db-live` at `d5a8e6e7`, migration `20271031005000` read back on production, Vercel production READY; authenticated runtime still owed)
 
 Three Exp04 SQL reads become pure reads (no Rail row for a page); Sales › Payments › Collections judges "Overdue" on the business's calendar day ("On hold" without a zone); "Where {client} stands" opens the Solo client record. `client_standing` is a §61 exception declared for the direct-client-book tiers and mounted on Solo only.

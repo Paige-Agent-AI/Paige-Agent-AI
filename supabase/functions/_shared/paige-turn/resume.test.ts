@@ -10,6 +10,7 @@ import { assert, assertEquals, assertThrows } from "https://deno.land/std@0.190.
 import {
   actIdentityArgs,
   answerClaim,
+  answerTurnsAfterAdmission,
   answerClaimBound,
   ANSWER_STRANDED_AFTER_MS,
   answerResumeKey,
@@ -393,4 +394,71 @@ Deno.test("C4c: the first question's id follows the chain of re-asked questions 
   const q2bTurn = { id: "c5c5c5c5-2222-4333-8444-555555555555", role: "assistant", bundle_ref: { turn_state: q2b.turnState, paige_ask: q2b.record } };
   assertEquals(resolveAskLiveness([q2bTurn, q2Turn, claim1, askTurn], ASK_ID), { state: "reopened", ask: q2b.record });
   assertEquals(resolveAskLiveness([q2bTurn, q2Turn, claim1, askTurn], Q2), { state: "stale", reason: "superseded" });
+});
+
+// The live 2026-10-19 Meet PAIGE strand (thread ad0e6231): the first interview exchange asked a
+// question; every subsequent typed answer was admitted by begin (an empty system marker superseding
+// the question's intent) and then refused before the model — four markers, zero model calls, no
+// customer-visible feedback, reload-proof. The pure half of that loop is here: a marker superseding
+// the QUESTION'S OWN intent is a control row of a bound-answer request against it, so it must never
+// read as "someone said something after the question". Before the fix, one leftover marker marked
+// the still-open question superseded forever.
+Deno.test("C4c: a refused attempt's leftover admission marker never marks its question superseded", () => {
+  const ACTOR = "6d132a4e-c4a2-487d-b829-24386079e431";
+  const TENANT = "8355e837-233e-4996-8f3c-db797282ced6";
+  const ASK_INTENT = "e4c1a1aa-58ac-4920-b2fd-a4e20c22eb83";
+  const POISON_ASK = "0c64485c-f5cd-471a-ad9e-7c0bb7783333";
+  const ask = buildAskRecord(CHOICE_ARGS, { askId: POISON_ASK, freeForm: true })!;
+  const askTurn = {
+    id: "bbbbbbbb-0000-4000-8000-000000000025", role: "assistant",
+    interactive_intent_id: ASK_INTENT, interactive_actor_id: ACTOR, interactive_tenant_id: TENANT,
+    interactive_terminal_state: "ASK_USER", interactive_supersedes_id: null,
+    bundle_ref: { paige_ask: ask, turn_state: waiting, interactive: { request_intent_id: ASK_INTENT } },
+  };
+  const userTurn1 = {
+    id: "bbbbbbbb-0000-4000-8000-000000000024", role: "user",
+    interactive_intent_id: ASK_INTENT, interactive_actor_id: ACTOR, interactive_tenant_id: TENANT,
+    interactive_terminal_state: null, interactive_supersedes_id: null,
+    bundle_ref: { interactive: { request_intent_id: ASK_INTENT } },
+  };
+  const marker = (n: number) => ({
+    id: `bbbbbbbb-0000-4000-8000-0000000000${n}`, role: "system", content: "",
+    interactive_intent_id: null, interactive_actor_id: ACTOR, interactive_tenant_id: TENANT,
+    interactive_terminal_state: null, interactive_supersedes_id: ASK_INTENT,
+    bundle_ref: { interactive: { supersedes_intent_id: ASK_INTENT } },
+  });
+  const I2 = "aaaaaaaa-0000-4000-8000-000000000002";
+  const I3 = "aaaaaaaa-0000-4000-8000-000000000003";
+  const scope = { actorId: ACTOR, tenantId: TENANT, askId: POISON_ASK };
+
+  // The exact live shape of the third attempt: its own marker AND the second attempt's leftover,
+  // both superseding the question's intent. The question is still open; the answer is live.
+  const third = answerTurnsAfterAdmission([marker(27), marker(26), askTurn, userTurn1],
+    { ...scope, admission: { intentId: I3, supersedesIntentId: ASK_INTENT } });
+  assertEquals(third.ownAdmissionMarkerId, marker(27).id);
+  assertEquals(resolveAskLiveness(third.turns, POISON_ASK), { state: "live", turnId: askTurn.id, ask });
+
+  // Reload shape: no admission context at all (the client rebinds from history and sends no
+  // supersedes), yet earlier leftovers still poison nothing.
+  const reloaded = answerTurnsAfterAdmission([marker(26), askTurn, userTurn1], scope);
+  assertEquals(reloaded.ownAdmissionMarkerId, null);
+  assertEquals(resolveAskLiveness(reloaded.turns, POISON_ASK), { state: "live", turnId: askTurn.id, ask });
+
+  // A marker superseding a DIFFERENT intent is not this question's control row: the question was
+  // genuinely moved past (that request was a bound answer to another, newer question).
+  const otherIntent = "99999999-0000-4000-8000-000000000009";
+  const foreignMarker = {
+    ...marker(28), interactive_supersedes_id: otherIntent,
+    bundle_ref: { interactive: { supersedes_intent_id: otherIntent } },
+  };
+  // This request's own admission targets the question's intent (no such marker here); the
+  // leftover foreign marker belongs to an earlier request against ANOTHER question.
+  const foreign = answerTurnsAfterAdmission([foreignMarker, askTurn, userTurn1],
+    { ...scope, admission: { intentId: I2, supersedesIntentId: ASK_INTENT } });
+  assertEquals(resolveAskLiveness(foreign.turns, POISON_ASK), { state: "stale", reason: "superseded" });
+
+  // A wrong ask id still names no question of this thread (the refusal is the client's to show).
+  const wrongId = answerTurnsAfterAdmission([marker(26), askTurn, userTurn1],
+    { actorId: ACTOR, tenantId: TENANT, askId: "dddddddd-0000-4000-8000-00000000000d", admission: { intentId: I2, supersedesIntentId: ASK_INTENT } });
+  assertEquals(resolveAskLiveness(wrongId.turns, "dddddddd-0000-4000-8000-00000000000d"), { state: "stale", reason: "not_found" });
 });

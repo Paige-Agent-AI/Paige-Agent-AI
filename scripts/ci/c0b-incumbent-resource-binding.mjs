@@ -780,7 +780,7 @@ const ANCESTRY_SOURCES = {
  "supabase/functions/_shared/paige-turn/interactive-reminder-history.ts": "84e35fd73307cf8172951fc1dcbf0b1064dd988cfb596ea95bc3ea7e244b4415",
  // Exact non-author-reviewed generic-email C4b ancestry at a9de011b6;
  // proposal b4ebdf9d / review 8b83d5c5. Existing114 pins and verifier unchanged.
- "supabase/functions/_shared/paige-turn/resume.ts": "389a87cb2d6f6dff75704a7887ba5bd39c53fc12bc5117cf7bb2ca852f650fba",
+ "supabase/functions/_shared/paige-turn/resume.ts": "dbcdf4de1ca3d1e36d4841650fcb42a43d3d747ddc0c88488e80bb3859cbaff6",
  "supabase/functions/_shared/comms-email/chat.ts": "b2c63f538935839cbafa9642b2d0ca83b8c24b1fc61be8200bda2efc19e9044e",
 };
 export function validateIncumbentResourceBindings(chatText,sourceTexts) {

@@ -232,7 +232,8 @@ describe("ClientSharedWork", () => {
   // E09 Slice 7 round 2: an ended client HAD joined; "hasn't joined yet" would be untrue.
   it("says access has ended — not 'hasn't joined' — and confirms a share truthfully", async () => {
     reads = [status(), status([{ id: DRAFT, shared: true, updated_at: V2 }, { id: REVIEW, shared: true, updated_at: V1 }, { id: KICKOFF, shared: false, updated_at: V1 }])];
-    shareReply = { data: { ok: true, replayed: false, item_id: DRAFT, shared: true, shared_at: V2, updated_at: V2, portal_connected: false }, error: null };
+    // An answer that still reads the link alone must not win over the record's ended state (same rule as paused).
+    shareReply = { data: { ok: true, replayed: false, item_id: DRAFT, shared: true, shared_at: V2, updated_at: V2, portal_connected: true }, error: null };
     await render(false, false, true);
     expect(host.querySelector(".trc-shared-connect")?.textContent).toBe("Jordan’s portal access has ended, so they can’t see this. It shows again if you invite them back and they accept.");
     await flip("Draft discovery report");

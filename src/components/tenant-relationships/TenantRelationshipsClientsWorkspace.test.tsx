@@ -1455,6 +1455,18 @@ describe("tenant Relationships / Clients workspace", () => {
     expect(mounts[0].trim().startsWith("{standing && <ClientFiles")).toBe(true);
   });
 
+  // E09 Slice 7 round 2 (compliance 1): a paused client keeps their login link, so the record must hand
+  // both cards its ACCESS state, never the link alone (that is what made Files say "can open it" while
+  // paused). Pinned at source like the mounts above; the cards' own tests drive each state.
+  it("E09 Slice 7: Shared with and Files for take the record's access state, not the login link alone", () => {
+    const source = readFileSync(resolve("src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx"), "utf8");
+    const files = (source.match(/[^\n]*<ClientFiles[^\n]*/g) ?? [])[0] ?? "";
+    expect(files).toContain('portalConnected={access.joined && access.state === "open"} portalAccess={access.state}');
+    expect(files).not.toContain("linkedUserId");
+    const shared = (source.match(/[^\n]*<ClientSharedWork[^\n]*/g) ?? [])[0] ?? "";
+    expect(shared).toContain('portalConnected={access.joined && access.state === "open"} portalPaused={access.state === "paused"} portalEnded={access.state === "ended"}');
+  });
+
   it("E09 Slice 6: the reach section mounts only behind the same standing gate, and the footer keeps its flags everywhere else", () => {
     const source = readFileSync(resolve("src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx"), "utf8");
     const mounts = source.match(/[^\n]*<ClientCommunicationState[^\n]*/g) ?? [];

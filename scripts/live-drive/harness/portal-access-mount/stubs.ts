@@ -105,6 +105,8 @@ async function answer(name: string, args: Record<string, unknown> = {}): Promise
     // The old invitation link, opened after the business paused or ended access (ConsumerInvitation).
     if (name === "client_portal_invite_status") return { data: { tenant_id: TENANT, client_id: CLIENT, accepted_at: "2026-09-02T09:00:00Z", status: state === "ended" ? "ended" : "paused" }, error: null };
     if (name === "read_client_engagement_status") return { data: standing(), error: null };
+    // Files for {client} (Slice 4): no files yet; "connected" is linked AND access open (Slice 7 round 2).
+    if (name === "client_file_owner_list") return { data: { ok: true, contact_id: CLIENT, portal_connected: access.joined && access.state === "open", files: [], has_more: false }, error: null };
     if (name === "client_portal_owner_invitations") {
       return { data: { actor_id: ACTOR, tenant_id: TENANT, invitations: [
         { id: "e0900000-0000-4000-8000-0000000a0001", contact_id: CLIENT, email: "jordan@rivera.example", created_at: "2026-09-01T12:00:00Z", expires_at: "2026-10-01T12:00:00Z", last_used_at: "2026-09-02T09:00:00Z", revoked_at: null, delivery: { history: [], truncated: false } },

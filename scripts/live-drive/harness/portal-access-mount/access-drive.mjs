@@ -153,7 +153,9 @@ async function driveOwner(page, s, n) {
   n.buttons = await section.locator("button").evaluateAll((bs) => bs.filter((b) => b.getClientRects().length).map((b) => `${b.textContent.trim()}${b.disabled ? ":disabled" : ""}${b.hasAttribute("data-gold") ? ":gold" : ""}`));
   n.confirmText = await textOf(section.locator(".trc-access-confirm"));
   n.radios = await section.locator('[role="radio"]').count();
-  n.order = await page.evaluate(() => [...(document.querySelector(".trc-record-body")?.children ?? [])].slice(0, 3).map((c) => c.id || c.className));
+  n.order = await page.evaluate(() => [...(document.querySelector(".trc-record-body")?.children ?? [])].slice(0, 4).map((c) => c.id || c.className));
+  // Integration round 2: "Files for {client}" names a paused / ended client instead of "can open it".
+  n.filesNote = await textOf(page.locator("#client-files .trc-files-connect"));
   n.text = clean(await section.innerText());
   // The header frames are taken at the top of the record, as the owner first sees it.
   if (s.state.startsWith("header-")) { await page.waitForTimeout(300); return; }
@@ -270,7 +272,7 @@ function unmet(s, n) {
     }
     return miss;
   }
-  if (!["loading", "refused", "error", "header-paused", "header-ended", "shared-paused"].includes(s.state)) want(eq(n.order?.slice(1, 3), ["client-shared-work", "client-portal-access"]), `card not under Shared with: ${JSON.stringify(n.order)}`);
+  if (!["loading", "refused", "error", "header-paused", "header-ended", "shared-paused"].includes(s.state)) want(eq(n.order?.slice(1, 4), ["client-shared-work", "client-files", "client-portal-access"]), `card not under Shared with, then Files for: ${JSON.stringify(n.order)}`);
   const gold = (n.buttons ?? []).filter((b) => b.endsWith(":gold"));
   switch (s.state) {
     case "joined":
@@ -281,10 +283,12 @@ function unmet(s, n) {
       want(n.label === "Access paused", `paused label "${n.label}"`);
       want(eq(n.facts, ["Paused Oct 16, 2026", "By Avery Lin", "Reason Payment", "Team note Waiting on the October retainer — restore as soon as it clears."]), `paused facts ${JSON.stringify(n.facts)}`);
       want(eq(n.buttons, ["Restore access:gold", "End access"]), `paused buttons ${JSON.stringify(n.buttons)}`);
+      want(n.filesNote === `Paused — ${FIRST} can’t see shared files right now. They show again if you restore their access.`, `files paused line "${n.filesNote}"`);
       break;
     case "ended":
       want(n.label === "Access ended" && eq(n.facts, ["Ended Oct 12, 2026", "By Avery Lin", "Reason Our work together has ended"]), `ended ${n.label} ${JSON.stringify(n.facts)}`);
       want(eq(n.buttons, ["Invite again"]), `ended buttons ${JSON.stringify(n.buttons)}`);
+      want(n.filesNote === `${FIRST}’s portal access has ended, so they can’t see shared files. They show again if you invite them back and they accept.`, `files ended line "${n.filesNote}"`);
       break;
     case "notjoined":
       want(n.label === "Not joined" && n.summary === `${NAME} hasn’t joined your portal yet. An invitation is waiting for them.`, `not joined "${n.summary}"`);

@@ -30,6 +30,18 @@ afterEach(async()=>{await act(async()=>root.unmount());host.remove();});
 
 const legacyComposer = () => ({ok:true,draft:{subject:"Your inquiry",body_text:"Hello <Dana>, thanks for asking.",body_html:"<p>Different untrusted HTML</p>"},recipient:{email:"untrusted@example.test"},summary:"Untrusted composer summary"});
 describe("historical composer draft compatibility",()=>{
+  it("reviews the intended email inside the historical model fence, not the JSON wrapper",async()=>{
+    const body="```json\n"+JSON.stringify({subject:"The actual reviewed subject",body:"Hello <Dana>,\n\nYour next step is ready."})+"\n```";
+    const original={...pending(),category:"client.followup",draft_content:{ok:true,draft:{subject:"Following up",body_text:body,body_html:"<p>Stale wrapper HTML</p>"},recipient:{email:"untrusted@example.test"}}};
+    db.items=[original];await render();expect(editButton()).toBeTruthy();
+    await act(async()=>{editButton()!.click();await flush();});
+    expect(edit).toHaveBeenCalledWith(original,{subject:"The actual reviewed subject",body:"Hello <Dana>,\n\nYour next step is ready."});
+    expect(host.textContent).not.toContain("untrusted@example.test");expect(db.invoke).not.toHaveBeenCalled();
+  });
+  it("does not offer a malformed historical model fence as the customer message",async()=>{
+    db.items=[{...pending(),category:"client.followup",draft_content:{ok:true,draft:{subject:"Following up",body_text:'```json\n{"subject":"Actual","body":\n```'}}}];
+    await render();expect(editButton()).toBeUndefined();expect(edit).not.toHaveBeenCalled();expect(db.invoke).not.toHaveBeenCalled();
+  });
   it("opens the original nested plain-text draft for review without addressing or sending from composer output",async()=>{
     const original={...pending(),category:"client.followup",draft_content:legacyComposer()};db.items=[original];
     await render();expect(editButton()).toBeTruthy();expect(host.textContent).not.toContain("untrusted@example.test");expect(host.textContent).not.toContain("Different untrusted HTML");

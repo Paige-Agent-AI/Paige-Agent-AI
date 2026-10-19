@@ -1024,7 +1024,10 @@ console.log("\nthe CREDIT-REPORT upload branch is bound to the same decision");
     first_five_account_names: ["ACCOUNT ONE"],
   };
 
-  const ownCredit = await drive({ clientId: OWN, stream: true, document: creditDoc, readCheck: readsAsCreditReport });
+  // E09 F2: the credit-report branch belongs to STAFF (owner ruling Q5: staff unchanged), so the tier is stated.
+  // A client seat never takes it — 10.6 below.
+  const AS_STAFF = { get_actor_access: { data: { tier: "tenant" }, error: null } };
+  const ownCredit = await drive({ clientId: OWN, stream: true, document: creditDoc, readCheck: readsAsCreditReport, rpcOverrides: AS_STAFF });
   // The `credit_report_uploads` INSERT is the only signal unique to this branch. Bucket
   // membership is NOT: the general-document path writes to the SAME bucket under a `general/`
   // prefix, so a bucket-or-insert disjunct was satisfied by any stored PDF — which meant that
@@ -1045,7 +1048,7 @@ console.log("\nthe CREDIT-REPORT upload branch is bound to the same decision");
       rows: ownCredit.rec.inserts.filter((i) => i.table === "credit_report_uploads").map((i) => i.row?.user_id),
     }));
 
-  const refusedCredit = await drive({ clientId: FOREIGN, stream: true, document: creditDoc, readCheck: readsAsCreditReport });
+  const refusedCredit = await drive({ clientId: FOREIGN, stream: true, document: creditDoc, readCheck: readsAsCreditReport, rpcOverrides: AS_STAFF });
   assert("10.2 a REFUSED credit report never lands under the named client",
     !refusedCredit.rec.uploads.some((u) => u.path.includes(FOREIGN))
       && !refusedCredit.rec.inserts.some((i) => JSON.stringify(i.row ?? {}).includes(FOREIGN)),
@@ -1071,6 +1074,19 @@ console.log("\nthe CREDIT-REPORT upload branch is bound to the same decision");
       uploads: refusedCredit.rec.uploads.map((u) => u.path),
       rows: refusedCredit.rec.inserts.filter((i) => i.table === "credit_report_uploads").map((i) => i.row),
     }));
+  // E09 F2 — A CLIENT SEAT NEVER TAKES THE CREDIT-REPORT PATH. The same PDF, the same read-check answer, from a
+  // client-tier caller: no read-check call at all, no credit_report_uploads row, no credit-bucket file outside
+  // `general/`, no sync. The PDF is a general document. 10.0 above (the same drive as staff) proves the branch
+  // is otherwise reachable, so this is not vacuous.
+  const clientCredit = await drive({ stream: true, document: creditDoc, readCheck: readsAsCreditReport,
+    rpcOverrides: { get_actor_access: { data: { tier: "client" }, error: null } } });
+  assert("10.6 a client seat's credit-report PDF never reaches the credit path: no read-check, no row, no sync",
+    !clientCredit.modelEgress.some((b) => b.includes("verify that you can literally read the PDF"))
+      && !clientCredit.rec.inserts.some((i) => i.table === "credit_report_uploads")
+      && !clientCredit.rec.uploads.some((u) => u.bucket === "credit-report-uploads" && !u.path.includes("/general/"))
+      && !clientCredit.outboundCalls.some((c) => c.url.includes("sync-credit-report-data"))
+      && !clientCredit.modelEgress.some((b) => b.includes("CREDIT REPORT ANALYSIS INSTRUCTIONS")),
+    JSON.stringify({ egress: clientCredit.modelEgress.map((b) => b.slice(0, 80)), uploads: clientCredit.rec.uploads, inserts: clientCredit.rec.inserts.map((i) => i.table) }));
 }
 
 console.log("\nthe refusal is announced on BOTH response paths, not just the agentic one");
@@ -4410,6 +4426,9 @@ console.log("\nclient seat — her answer is read for internal text before a cli
   assert("30.11 a key from the tool result she was sent is caught in a client's answer",
     sentTo(resultKey).includes('\\"needs_confirm\\"') && replyOf(resultKey) === WITHHELD,
     JSON.stringify({ inResult: sentTo(resultKey).includes('\\"needs_confirm\\"'), reply: replyOf(resultKey).slice(0, 60) }));
+  // E09 F2: a client seat no longer takes the credit-report path (owner ruling 2026-10-19; §58, named in the PR),
+  // so the credit-report drives below assert that instead. The credit instruction's block name was the only one
+  // a client's document turn carried; it is never sent to a client now, so it is never vouched for them either.
   const creditRead = { can_read_document: true, document_kind: "credit_report", first_five_account_names: ["ACCOUNT ONE"] };
   const MARKER = "CREDIT REPORT ANALYSIS INSTRUCTIONS";
   const docMarker = await drive({ stream: true, rpcOverrides: AS_CLIENT, document: { fileName: "report.pdf", base64: "JVBERi0xLjQK", mimeType: "application/pdf" }, readCheck: creditRead, text: "here is my report", replyText: `Per my ${MARKER}, your report has three accounts.` });
@@ -4447,6 +4466,20 @@ console.log("\nclient seat — her answer is read for internal text before a cli
       JSON.stringify({ personaSent, asIfServer, reply: replyOf(turn).slice(0, 60), saved: persisted(turn).at(-1)?.slice(0, 60) }));
   }
 
+  // E09 F2 — A CLIENT SEAT IS NEVER OFFERED FUNDING, even when its business is entitled. get_paige_persona_context
+  // resolves the BUSINESS's entitlement; a customer is not that business's staff, so a client-tier caller gets
+  // funding_enabled=false (owner ruling 2026-10-19). Staff of the same entitled business keep the funding skill
+  // (Q5: staff unchanged) — the control, which also proves the persona row reached the turn.
+  const FUNDING_MARK = "You are the practice's funding & capital-raising specialist.";
+  const ENTITLED_PERSONA = { get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: BUSINESS, playbook_config: null, playbook_slug: null, funding_enabled: true, brand: null }], error: null } };
+  const clientEntitled = await drive({ stream: true, rpcOverrides: { ...AS_CLIENT, ...ENTITLED_PERSONA }, replyText: "Happy to help.", extraBody: { threadId: THREAD } });
+  const staffEntitled = await drive({ stream: true, rpcOverrides: { ...AS_OWNER, ...ENTITLED_PERSONA }, replyText: "Happy to help.", extraBody: { threadId: THREAD } });
+  assert("30.37 CONTROL: staff of an entitled business still get the funding skill",
+    systemOf(staffEntitled).includes(FUNDING_MARK), JSON.stringify({ calls: staffEntitled.modelEgress.length }));
+  assert("30.38 (E09 F2) a client of that same entitled business is never sent the funding skill",
+    systemOf(clientEntitled).length > 0 && !systemOf(clientEntitled).includes(FUNDING_MARK) && replyOf(clientEntitled) === "Happy to help.",
+    JSON.stringify({ calls: clientEntitled.modelEgress.length, reply: replyOf(clientEntitled).slice(0, 40) }));
+
   // A TOOL THE SEAT MAY NOT USE RENDERS NO STEP. Action steps go to the wire as they happen and are
   // not read, so a refused owner tool must not become one: it would show a client an owner's action,
   // and buying a number shows the model's own argument, which a client can ask the model to fill with
@@ -4464,57 +4497,27 @@ console.log("\nclient seat — her answer is read for internal text before a cli
   // made from an answer the client was not shown. The control proves the clean turn does extract.
   const EXTRACTS = "Here is the credit report analysis I just produced";
   const creditClean = await drive({ stream: true, rpcOverrides: AS_CLIENT, document: { fileName: "report.pdf", base64: "JVBERi0xLjQK", mimeType: "application/pdf" }, readCheck: creditRead, text: "here is my report", replyText: "Your report has three accounts." });
-  // R3b — A SYNC THAT FAILED IS TOLD IN A SENTENCE. The harness's extraction cannot produce a
-  // report, so the pipeline fails the way a real one does; the uploader reads a fixed sentence, never
-  // the pipeline's own error text or step name.
   const syncOf = (r) => frames(r).filter((f) => f.sync_status).map((f) => f.sync_status);
-  const SYNC_BEFORE_ANY_WRITE = `I read your report, but I couldn't pull out its details for you to review, and none of them were added to your profile. You can try uploading it again, or ask ${BUSINESS} to take a look.`;
-  const SYNC_DID_NOT_FINISH = `I read your report, but I couldn't finish pulling out its details for you to review. You can ask ${BUSINESS} to take a look.`;
-  const syncSeen = syncOf(creditClean);
-  assert("30.33 a credit-report sync that did not complete reaches the uploader as a fixed sentence, with no step and no pipeline text",
-    syncSeen.length === 1 && syncSeen[0].success === false && !("step" in syncSeen[0])
-      && syncSeen[0].error === SYNC_BEFORE_ANY_WRITE && syncSeen[0].uploader_sentence === true
-      && !/Failed to|Validation failed|extraction|pipeline|Unknown/.test(JSON.stringify(syncSeen[0]))
-      // "none of them were added" is only true because nothing was: no memory note, no upload stamp.
-      && !creditClean.rec.inserts.some((i) => i.table === "client_memory" || (i.table === "credit_report_uploads" && i.update)),
-    JSON.stringify({ sync: syncSeen, writes: creditClean.rec.inserts.map((i) => `${i.table}${i.update ? ":update" : ""}`) }));
-  // ...AND A SYNC THAT STOPPED AFTER ITS FIRST WRITE NEVER SAYS NOTHING WAS ADDED. Given a report the
-  // extraction can read, the pipeline writes a client memory note before it stamps the upload; when the
-  // stamp is refused, that note is already kept, so the uploader reads only that it did not finish.
-  // The control proves the same report, unrefused, reaches the proposal.
   const REPORT = JSON.stringify({ is_credit_report: true, extraction_verified: true, report_type: "consumer", scores: { equifax: 700, experian: 705, transunion: 698 },
     negative_items: [{ creditor_name: "ACCOUNT ONE", account_type: "revolving", status: "charge_off", balance: 500 }], positive_accounts: [], hard_inquiries: [] });
-  const reportDrive = (extra = {}) => drive({ stream: true, rpcOverrides: AS_CLIENT, document: { fileName: "report.pdf", base64: "JVBERi0xLjQK", mimeType: "application/pdf" },
+  // Even with an extraction that WOULD read the report (it did, before E09 F2, and reached a proposal).
+  const reportReadable = await drive({ stream: true, rpcOverrides: AS_CLIENT, document: { fileName: "report.pdf", base64: "JVBERi0xLjQK", mimeType: "application/pdf" },
     readCheck: creditRead, text: "here is my report", replyText: "Your report has three accounts.", extractionReply: REPORT,
-    // The upload record the portal's upload writes, read back by its id, so the pipeline has a record to stamp.
     serviceTablesExtra: { credit_report_uploads: () => [{ id: "7e7e7e7e-7e7e-4e7e-8e7e-7e7e7e7e7e7e" }] },
-    tablesExtra: { credit_report_uploads: () => [{ id: "7e7e7e7e-7e7e-4e7e-8e7e-7e7e7e7e7e7e" }] }, ...extra });
-  const proposed = await reportDrive();
-  const proposedOwnNote = proposed.rec.rpc.filter((c) => c.name === "record_paige_memory" && c.args?.p_memory_type === "report_upload");
-  assert("30.34 CONTROL: a report the extraction can read reaches the proposal, after an owner-memory note is written (S5: governed seam)",
-    frames(proposed).some((f) => f.extraction_proposal) && proposedOwnNote.length === 1 && proposedOwnNote[0].args?.p_confirmation_state === "proposed"
-      && syncOf(proposed).every((st) => st.awaiting_review === true),
-    JSON.stringify({ proposal: frames(proposed).some((f) => f.extraction_proposal), inserts: proposed.rec.inserts.map((i) => i.table), sync: syncOf(proposed) }));
-  // A report the extraction reads but validation refuses stops before its first write too.
-  const notReport = await reportDrive({ extractionReply: JSON.stringify({ ...JSON.parse(REPORT), is_credit_report: false }) });
-  const notReportSync = syncOf(notReport);
-  assert("30.36 a report refused by validation tells the uploader nothing was added, and nothing was: no memory note, no upload stamp",
-    notReportSync.length === 1 && notReportSync[0].error === SYNC_BEFORE_ANY_WRITE && notReportSync[0].uploader_sentence === true && !("step" in notReportSync[0])
-      && !/Validation failed|Not identified|is_credit_report/.test(JSON.stringify(notReportSync))
-      && !notReport.rec.inserts.some((i) => i.table === "client_memory" || (i.table === "credit_report_uploads" && i.update)),
-    JSON.stringify({ sync: notReportSync, writes: notReport.rec.inserts.map((i) => `${i.table}${i.update ? ":update" : ""}`) }));
-  const stampRefused = await reportDrive({ tableErrorsExtra: { "credit_report_uploads:update": { message: "new row violates check constraint", code: "23514" } } });
-  const refusedSync = syncOf(stampRefused);
-  const refusedOwnNote = stampRefused.rec.rpc.filter((c) => c.name === "record_paige_memory" && c.args?.p_memory_type === "report_upload");
-  assert("30.35 a sync refused after its owner-memory note was written tells the uploader it did not finish, never that nothing was added (S5)",
-    refusedOwnNote.length === 1
-      && refusedSync.length === 1 && refusedSync[0].success === false && !("step" in refusedSync[0]) && !("write" in refusedSync[0])
-      && refusedSync[0].error === SYNC_DID_NOT_FINISH && refusedSync[0].uploader_sentence === true
-      && !/credit_report_uploads|check constraint|23514|write_rejected/.test(JSON.stringify(refusedSync))
-      && stampRefused.logged.some((l) => l.level === "warn" && l.msg.includes("credit report sync did not complete") && l.msg.includes("write_rejected")),
-    JSON.stringify({ inserts: stampRefused.rec.inserts.map((i) => i.table), sync: refusedSync, warns: stampRefused.logged.filter((l) => l.level === "warn").map((l) => l.msg.slice(0, 120)) }));
-  assert("30.15 CONTROL: a client's clean credit-report answer is extracted from, as before",
-    creditClean.modelEgress.some((body) => body.includes(EXTRACTS)) && replyOf(creditClean) === "Your report has three accounts.",
+    tablesExtra: { credit_report_uploads: () => [{ id: "7e7e7e7e-7e7e-4e7e-8e7e-7e7e7e7e7e7e" }] } });
+  const noCreditPath = (r) => !r.modelEgress.some((b) => b.includes("verify that you can literally read the PDF") || b.includes("Extract the structured data into the required JSON format"))
+    && !r.rec.inserts.some((i) => i.table === "credit_report_uploads" || i.table === "client_memory")
+    && !r.rec.rpc.some((c) => c.name === "record_paige_memory" && c.args?.p_memory_type === "report_upload")
+    && !r.outboundCalls.some((c) => c.url.includes("sync-credit-report-data"))
+    && syncOf(r).length === 0 && !frames(r).some((f) => f.extraction_proposal);
+  assert("30.33 (E09 F2) a client's credit report is a general document: no read-check, no extraction, no sync, no sync frame",
+    noCreditPath(creditClean) && replyOf(creditClean) === "Your report has three accounts.",
+    JSON.stringify({ egress: creditClean.modelEgress.length, sync: syncOf(creditClean), writes: creditClean.rec.inserts.map((i) => i.table), reply: replyOf(creditClean).slice(0, 60) }));
+  assert("30.34 (E09 F2) ...even when the extraction would have read it: no proposal and no owner-memory note",
+    noCreditPath(reportReadable) && replyOf(reportReadable) === "Your report has three accounts.",
+    JSON.stringify({ proposal: frames(reportReadable).some((f) => f.extraction_proposal), rpc: reportReadable.rec.rpc.map((c) => c.name), sync: syncOf(reportReadable) }));
+  assert("30.15 (E09 F2) the client's turn is answered on the general-document path, with its general instruction",
+    creditClean.modelEgress.some((b) => b.includes("The client has shared a document.")) && !creditClean.modelEgress.some((b) => b.includes(MARKER)),
     JSON.stringify({ calls: creditClean.modelEgress.length }));
   assert("30.16 a withheld credit-report answer is never extracted from, so nothing is written from it",
     !docMarker.modelEgress.some((body) => body.includes(EXTRACTS))
@@ -4601,8 +4604,10 @@ console.log("\nclient seat — her answer is read for internal text before a cli
   assert("30.20 a client's file name reached the model, and its words never withhold the client's answer",
     nameWouldBeKey && ownFile.modelEgress.some((body) => body.includes("family_plan")) && replyOf(ownFile) === "Your family_plan document is in.",
     JSON.stringify({ nameWouldBeKey, reached: ownFile.modelEgress.some((body) => body.includes("family_plan")), reply: replyOf(ownFile).slice(0, 60) }));
-  assert("30.12 a block name only the server's document instruction carried is caught on the document path",
-    answered.includes(`=== ${MARKER} ===`) && !docSystem.includes(MARKER) && replyOf(docMarker) === WITHHELD,
+  // E09 F2: the credit instruction (the one server block name a client's document turn used to carry) is never
+  // sent to a client now. The turn is a general-document turn, and the words are not the server's vouched text.
+  assert("30.12 (E09 F2) a client's credit-looking PDF is never sent the credit instruction, so its block name is not the server's",
+    !answered.includes(`=== ${MARKER} ===`) && !docSystem.includes(MARKER) && noCreditPath(docMarker),
     JSON.stringify({ inRequest: answered.includes(`=== ${MARKER} ===`), inSystem: docSystem.includes(MARKER), reply: replyOf(docMarker).slice(0, 60) }));
 }
 

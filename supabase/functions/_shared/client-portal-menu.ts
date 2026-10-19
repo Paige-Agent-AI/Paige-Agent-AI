@@ -33,16 +33,22 @@ export interface PortalMenuKey {
   /** A catalog entry every customer of one business gets anyway (Resources), unless a listed route alias speaks. */
   shownToCustomers: boolean;
   catalogLabel: boolean;
+  /**
+   * E09 F2: the entitlement the business must hold for this entry to exist at all (`finance`: a deliberate
+   * Marketplace install of funding/credit), or null. Without it the entry is never offered, never configured
+   * and never named to the business's Paige.
+   */
+  entitlement: "finance" | null;
 }
 const k = (key: string, label: string, route: string, group: PortalMenuSlot, floor: PortalMenuFloor,
-  o: Partial<Pick<PortalMenuKey, "fixed" | "live" | "clientsLive" | "defaultVisibility" | "shownToCustomers" | "catalogLabel">> = {}): PortalMenuKey =>
-  Object.freeze({ key, label, route, group, floor, fixed: false, live: true, clientsLive: true, defaultVisibility: "catalog" as const, shownToCustomers: false, catalogLabel: true, ...o });
+  o: Partial<Pick<PortalMenuKey, "fixed" | "live" | "clientsLive" | "defaultVisibility" | "shownToCustomers" | "catalogLabel" | "entitlement">> = {}): PortalMenuKey =>
+  Object.freeze({ key, label, route, group, floor, fixed: false, live: true, clientsLive: true, defaultVisibility: "catalog" as const, shownToCustomers: false, catalogLabel: true, entitlement: null, ...o });
 
 /**
  * Mirror of src/lib/portal/portalMenu.ts PORTAL_MENU_ENTRIES, in the same order: key, default name, route,
  * group, who may ever see it, fixed, live, live for clients, whether it shows without the Playbook listing
- * it (for everyone, or for customers only), and whether the Playbook's own name for it wins. Drift-tested
- * field by field.
+ * it (for everyone, or for customers only), whether the Playbook's own name for it wins, and the entitlement it
+ * needs (E09 F2). Drift-tested field by field.
  */
 export const PORTAL_MENU_KEYS: readonly PortalMenuKey[] = Object.freeze([
   k("home", "Home", "/app", "top", "everyone", { fixed: true, defaultVisibility: "shown" }),
@@ -51,13 +57,13 @@ export const PORTAL_MENU_KEYS: readonly PortalMenuKey[] = Object.freeze([
   k("actions", "Action items", "/app/actions", "work", "not_staff", { defaultVisibility: "shown" }),
   k("sessions", "Sessions", "/app/sessions", "work", "customer", { defaultVisibility: "shown" }),
   k("approvals", "Approvals", "/app/approvals", "work", "everyone"),
-  k("funding-journey", "Funding Journey", "/app/funding-journey", "work", "everyone"),
-  k("funding_journey", "Funding Journey", "/app/funding-journey", "work", "everyone"),
-  k("credit", "Credit", "/app/credit", "work", "everyone"),
-  k("funding", "Funding", "/app/funding", "work", "everyone"),
-  k("financial-profile", "Financial Profile", "/app/financial-profile", "work", "everyone"),
-  k("financial_profile", "Financial Profile", "/app/financial-profile", "work", "everyone"),
-  k("business", "Business", "/app/business", "work", "everyone"),
+  k("funding-journey", "Funding Journey", "/app/funding-journey", "work", "everyone", { entitlement: "finance" }),
+  k("funding_journey", "Funding Journey", "/app/funding-journey", "work", "everyone", { entitlement: "finance" }),
+  k("credit", "Credit", "/app/credit", "work", "everyone", { entitlement: "finance" }),
+  k("funding", "Funding", "/app/funding", "work", "everyone", { entitlement: "finance" }),
+  k("financial-profile", "Financial Profile", "/app/financial-profile", "work", "everyone", { entitlement: "finance" }),
+  k("financial_profile", "Financial Profile", "/app/financial-profile", "work", "everyone", { entitlement: "finance" }),
+  k("business", "Business", "/app/business", "work", "everyone", { entitlement: "finance" }),
   k("affiliate", "Affiliate", "/app/affiliate", "work", "everyone"),
   k("planning", "Planning", "/app/planning", "work", "staff", { fixed: true, defaultVisibility: "shown" }),
   k("documents", "Documents", "/app/documents", "paperwork", "brand", { defaultVisibility: "shown" }),
@@ -93,12 +99,15 @@ const isCore = (key: string) => PORTAL_MENU_CORE_KEYS.includes(key);
  * fails either is "not available yet" here — never offered, never changed, reported as such.
  */
 const customerLive = (e: PortalMenuKey) => e.live && e.clientsLive;
+/** E09 F2: whether this business holds the entitlement the entry needs (an entry with none always passes). */
+const entitledTo = (e: PortalMenuKey, finance: boolean) => e.entitlement === null || (e.entitlement === "finance" && finance);
 /**
  * Whether a customer of one business is offered the entry for this catalog: listed by it, or shown by default
  * ("shown", or `shownToCustomers`) — unless the catalog lists another key for the same route and not this one,
  * in which case that listed alias speaks for the destination (the frontend's offered()).
  */
-function offeredToCustomers(e: PortalMenuKey, listed: ReadonlySet<string>): boolean {
+function offeredToCustomers(e: PortalMenuKey, listed: ReadonlySet<string>, finance: boolean): boolean {
+  if (!entitledTo(e, finance)) return false;
   if (listed.has(e.key)) return true;
   if (e.defaultVisibility !== "shown" && !e.shownToCustomers) return false;
   return !PORTAL_MENU_KEYS.some((a) => a !== e && a.route === e.route && listed.has(a.key));
@@ -155,15 +164,19 @@ export function sanitizeStoredOverlay(raw: unknown): { entries: OverlayEntry[]; 
 }
 
 export type MenuRequestEntry = { key: string; visible?: boolean; order?: number; label?: string | null };
-export type MenuParseFailure = { reason: "bad_request" | "fixed_entry" | "unknown_entry" | "not_available_yet"; key?: string };
+export type MenuParseFailure = { reason: "bad_request" | "fixed_entry" | "unknown_entry" | "not_available_yet" | "not_entitled"; key?: string };
 
 /** The Playbook catalog keys this tenant's customers' menu draws on (authored, else starter, else general). */
 export function catalogKeysOf(catalog: unknown): Set<string> {
   return new Set(projectCatalog(catalog).effectiveModules.map((x) => x.key));
 }
 
-/** Parses the model's `entries`. Anything but `entries` (a tenant id, an actor) is ignored. */
-export function parseMenuRequest(args: unknown): { ok: true; entries: MenuRequestEntry[] } | ({ ok: false } & MenuParseFailure) {
+/**
+ * Parses the model's `entries`. Anything but `entries` (a tenant id, an actor) is ignored. With `entitlements`
+ * (the business's, read on the caller's session), an entry the business is not entitled to is refused as
+ * `not_entitled` (E09 F2); without it only the request's shape and the registry are checked.
+ */
+export function parseMenuRequest(args: unknown, entitlements?: { finance: boolean }): { ok: true; entries: MenuRequestEntry[] } | ({ ok: false } & MenuParseFailure) {
   if (!isObject(args) || !Array.isArray(args.entries) || args.entries.length < 1 || args.entries.length > MAX_ENTRIES) {
     return { ok: false, reason: "bad_request" };
   }
@@ -178,6 +191,7 @@ export function parseMenuRequest(args: unknown): { ok: true; entries: MenuReques
     if (known?.fixed && known.floor !== "staff") return { ok: false, reason: "fixed_entry", key };
     if (!known || !PORTAL_MENU_CONFIGURABLE_KEYS.includes(key)) return { ok: false, reason: "unknown_entry", key };
     if (!customerLive(known)) return { ok: false, reason: "not_available_yet", key };
+    if (entitlements && !entitledTo(known, entitlements.finance)) return { ok: false, reason: "not_entitled", key };
     const e: MenuRequestEntry = { key };
     if ("visible" in raw) {
       if (typeof raw.visible !== "boolean") return { ok: false, reason: "bad_request", key };
@@ -241,7 +255,7 @@ export interface PortalMenuCaller {
 }
 
 export type PortalMenuFailure =
-  | "no_workspace" | "bad_request" | "fixed_entry" | "unknown_entry" | "not_available_yet" | "not_offered"
+  | "no_workspace" | "bad_request" | "fixed_entry" | "unknown_entry" | "not_available_yet" | "not_entitled" | "not_offered"
   | "forbidden" | "unavailable" | "refused" | "outcome_unknown";
 
 export const PORTAL_MENU_MESSAGES: Readonly<Record<PortalMenuFailure, string>> = Object.freeze({
@@ -250,6 +264,7 @@ export const PORTAL_MENU_MESSAGES: Readonly<Record<PortalMenuFailure, string>> =
   fixed_entry: "Home and Messages are always in your clients' menu and keep their names.",
   unknown_entry: "That is not an entry in the customer portal menu.",
   not_available_yet: "That entry is not in the customer portal yet, so it cannot be shown, hidden or renamed.",
+  not_entitled: "That is not an entry in this business's customer portal, so it cannot be shown, hidden or renamed.",
   not_offered: "That entry only appears when your Playbook's portal lists it, and yours does not, so changing it would have no effect.",
   forbidden: "Only the business's owner or an admin can change what clients see in their portal menu.",
   unavailable: "The portal menu could not be read just now, so nothing was changed.",
@@ -263,17 +278,32 @@ export type PortalMenuResult =
 
 const sqlstate = (e: unknown): string => String(isObject(e) ? e.code ?? "" : "");
 
-type Snapshot = { modules: unknown; catalog: unknown };
+/** `finance`: the business's finance entitlement (E09 F2), false whenever it could not be read. */
+type Snapshot = { modules: unknown; catalog: unknown; finance: boolean };
 type SnapshotRead = { ok: true; snapshot: Snapshot } | { ok: false; reason: "forbidden" | "unavailable" | "no_workspace" };
 
 /** public.read_tenant_portal_menu for exactly this tenant; anything off-shape is "unavailable". */
-async function readSnapshot(caller: PortalMenuCaller, tenant: string): Promise<SnapshotRead> {
+async function readSnapshot(caller: PortalMenuCaller, tenant: string, withFinance = true): Promise<SnapshotRead> {
   let r: { data: unknown; error: unknown };
   try { r = await caller.rpc("read_tenant_portal_menu", { p_expected_tenant_id: tenant }); } catch { return { ok: false, reason: "unavailable" }; }
   if (r.error) return { ok: false, reason: sqlstate(r.error) === "42501" ? "forbidden" : "unavailable" };
   const d = r.data;
   if (!isObject(d) || d.tenant_id !== tenant || !("modules" in d) || !isObject(d.catalog)) return { ok: false, reason: "unavailable" };
-  return { ok: true, snapshot: { modules: d.modules, catalog: d.catalog } };
+  return { ok: true, snapshot: { modules: d.modules, catalog: d.catalog, finance: withFinance ? await readFinance(caller) : false } };
+}
+
+/**
+ * E09 F2: the caller's current business's finance entitlement, on the caller's own session
+ * (current_tenant_finance_entitled; the dispatcher has already proven the tenant is the caller's current one).
+ * Anything but a plain `true` — an error, a throw, another shape — is "not entitled": fail closed.
+ */
+async function readFinance(caller: PortalMenuCaller): Promise<boolean> {
+  try {
+    const r = await caller.rpc("current_tenant_finance_entitled", {});
+    return !r.error && r.data === true;
+  } catch {
+    return false;
+  }
 }
 
 /** Changes the caller's own tenant's customer menu, then proves it from a fresh read. */
@@ -294,10 +324,14 @@ export async function configurePortalMenu(input: {
   // That includes every opt-in entry (the funding preset's keys among them) for a business that did not
   // choose it — refused here, before any write, without naming anything the business does not have — and a
   // route alias the catalog does not list while it lists the other one (learn listed: resources does nothing).
+  // E09 F2: an entry this business is not entitled to (funding and credit, without a deliberate install) is
+  // refused before any write, without saying what it would have been.
+  const entitled = parseMenuRequest(input.args, { finance: before.snapshot.finance });
+  if (entitled.ok === false) return fail(entitled.reason, entitled.key);
   const listedKeys = catalogKeysOf(before.snapshot.catalog);
   for (const e of request.entries) {
     const meta = PORTAL_MENU_KEYS.find((m) => m.key === e.key);
-    if (meta && !offeredToCustomers(meta, listedKeys)) return fail("not_offered", e.key);
+    if (meta && !offeredToCustomers(meta, listedKeys, before.snapshot.finance)) return fail("not_offered", e.key);
   }
   const { entries: current, normalized } = sanitizeStoredOverlay(before.snapshot.modules);
   const merged = mergeMenuOverlay(current, request.entries);
@@ -324,7 +358,8 @@ export async function configurePortalMenu(input: {
     if (code === "P0002") return fail("no_workspace");
     return fail("refused");
   }
-  const after = await readSnapshot(input.caller, tenant);
+  // The readback proves the overlay only; the entitlement was decided before the write.
+  const after = await readSnapshot(input.caller, tenant, false);
   if (after.ok === false || !sameOverlay(after.snapshot.modules, merged)) return fail("outcome_unknown");
   return { success: true, tenantId: tenant, modules: merged, changed, normalized, replayed: false };
 }
@@ -393,7 +428,8 @@ export function projectCatalog(catalog: unknown): PortalCatalogInputs & { effect
  * entry (Approvals, the funding preset's keys, Business, Affiliate) only when this business's own catalog
  * lists it. Nothing outside this set ever appears in a read row (§2).
  */
-const mentionable = (e: PortalMenuKey, listed: ReadonlySet<string>) => e.fixed || isCore(e.key) || listed.has(e.key);
+const mentionable = (e: PortalMenuKey, listed: ReadonlySet<string>, finance: boolean) =>
+  entitledTo(e, finance) && (e.fixed || isCore(e.key) || listed.has(e.key));
 
 /**
  * Which key speaks for each route that more than one key shares, the way the frontend's assemblePortalNav
@@ -401,7 +437,7 @@ const mentionable = (e: PortalMenuKey, listed: ReadonlySet<string>) => e.fixed |
  * catalog's (an unlisted key ranks just before the listed ones), ties in registry order. Every route alias in
  * the registry is catalog-ordered in the frontend (drift-tested), which is why the catalog index is the base.
  */
-function routeSpeakers(listed: ReadonlySet<string>, catalog: readonly CatalogModule[], overlay: readonly OverlayEntry[]): Map<string, string> {
+function routeSpeakers(listed: ReadonlySet<string>, catalog: readonly CatalogModule[], overlay: readonly OverlayEntry[], finance: boolean): Map<string, string> {
   const speakers = new Map<string, string>();
   const byRoute = new Map<string, PortalMenuKey[]>();
   for (const e of PORTAL_MENU_KEYS) byRoute.set(e.route, [...(byRoute.get(e.route) ?? []), e]);
@@ -411,7 +447,7 @@ function routeSpeakers(listed: ReadonlySet<string>, catalog: readonly CatalogMod
       const o = overlay.find((x) => x.key === e.key)?.order;
       return typeof o === "number" ? o : 1000 + catalog.findIndex((m) => m.key === e.key);
     };
-    const offered = keys.filter((e) => customerLive(e) && offeredToCustomers(e, listed))
+    const offered = keys.filter((e) => customerLive(e) && offeredToCustomers(e, listed, finance))
       .sort((a, b) => pos(a) - pos(b) || PORTAL_MENU_KEYS.indexOf(a) - PORTAL_MENU_KEYS.indexOf(b));
     speakers.set(route, (offered[0] ?? keys[0]).key);
   }
@@ -421,16 +457,18 @@ function routeSpeakers(listed: ReadonlySet<string>, catalog: readonly CatalogMod
 /**
  * What this tenant's customers are offered, entry by entry. Fixed and core entries are always listed (a core
  * entry whose page does not exist yet as `not_available_yet`); an opt-in entry is listed only when this
- * business's catalog lists it. Keys that share a route are ONE row — the key that speaks for the destination,
+ * business's catalog lists it — and an entry needing an entitlement the business lacks (E09 F2: funding and credit)
+ * is never listed at all. Keys that share a route are ONE row — the key that speaks for the destination,
  * exactly as the customer sees it (hidden by the owner when that key is). `catalog.modules` is the catalog this
  * business's customers actually get.
  */
-export function projectPortalMenu(snapshot: Snapshot): { entries: PortalMenuRow[]; catalog: PortalCatalogInputs } {
+export function projectPortalMenu(snapshot: { modules: unknown; catalog: unknown; finance?: boolean }): { entries: PortalMenuRow[]; catalog: PortalCatalogInputs } {
   const cat = projectCatalog(snapshot.catalog);
   const overlay = sanitizeStoredOverlay(snapshot.modules).entries;
   const listed = new Set(cat.effectiveModules.map((m) => m.key));
-  const speakers = routeSpeakers(listed, cat.effectiveModules, overlay);
-  const entries = PORTAL_MENU_KEYS.filter((e) => e.floor !== "staff" && mentionable(e, listed) && (customerLive(e) || isCore(e.key))
+  const finance = snapshot.finance === true;
+  const speakers = routeSpeakers(listed, cat.effectiveModules, overlay, finance);
+  const entries = PORTAL_MENU_KEYS.filter((e) => e.floor !== "staff" && mentionable(e, listed, finance) && (customerLive(e) || isCore(e.key))
       && (!speakers.has(e.route) || speakers.get(e.route) === e.key))
     .map((e): PortalMenuRow => {
       const o = e.fixed ? undefined : overlay.find((x) => x.key === e.key);
@@ -439,7 +477,7 @@ export function projectPortalMenu(snapshot: Snapshot): { entries: PortalMenuRow[
         return { key: e.key, group: e.group, default_label: e.label, label: e.label, fixed: e.fixed, shown: false,
           hidden_because: "not_available_yet", order: null };
       }
-      const offered = offeredToCustomers(e, listed);
+      const offered = offeredToCustomers(e, listed, finance);
       const hiddenByOwner = o?.visible === false;
       return {
         key: e.key, group: e.group, default_label: e.label, label: o?.label ?? fromCatalog ?? e.label, fixed: e.fixed,

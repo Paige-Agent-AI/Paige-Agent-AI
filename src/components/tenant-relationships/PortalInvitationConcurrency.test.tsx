@@ -3,6 +3,9 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { OwnerPortalDashboard } from "./OwnerPortalDashboard";
 import type { RelationshipPerson, useTenantRelationshipsData } from "./useTenantRelationshipsData";
+// E09 F2: this surface asks for the business's finance entitlement; it is not under test here (not entitled).
+vi.mock("@/hooks/useFinanceEntitlement", () => ({ useFinanceEntitlement: () => ({ entitled: false, loading: false, staffViewer: false }) }));
+
 
 const fixture = vi.hoisted(() => ({ getUser: vi.fn(), rpc: vi.fn(), invoke: vi.fn(), readback: vi.fn() }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeUserId: "test-actor-a", activeTenantId: "test-tenant-a", accountContextStatus: "ready", accountContextLoading: false }) }));

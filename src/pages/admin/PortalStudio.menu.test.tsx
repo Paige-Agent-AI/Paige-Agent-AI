@@ -3,6 +3,9 @@ import { createRoot, type Root } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ClientPortalConfig, PortalModuleOverlay } from "@/hooks/useClientPortalConfig";
+// E09 F2: this surface asks for the business's finance entitlement; it is not under test here (not entitled).
+vi.mock("@/hooks/useFinanceEntitlement", () => ({ useFinanceEntitlement: () => ({ entitled: false, loading: false, staffViewer: false }) }));
+
 
 // E09 Slice M — the owner's "Customer portal menu" card inside PortalStudio (Solo: Clients → Portal → Customize
 // experience). Synthetic tenant only. The Supabase transport is a fake whose read-back can be made to disagree.

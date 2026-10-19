@@ -21524,6 +21524,8 @@ export type Database = {
         }[]
       }
       operator_billing_overview: { Args: never; Returns: Json }
+      operator_commercial_customers: { Args: never; Returns: Json }
+      operator_customer_history: { Args: { p_user_id: string }; Returns: Json }
       operator_dashboard_metrics: {
         Args: { p_window_days?: number }
         Returns: Json

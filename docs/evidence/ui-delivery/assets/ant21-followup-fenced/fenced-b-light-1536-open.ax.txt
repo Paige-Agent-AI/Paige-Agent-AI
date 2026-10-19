@@ -1,0 +1,214 @@
+Browser tab: 170268773, Title: "Local actual SOLO Conversations proof", URL: "http://127.0.0.1:58640/?theme=light&context=b".
+1 AXWebArea Local actual SOLO Conversations proof, URL: 127.0.0.1:58640/?theme=light&context=b
+	2 container
+		3 container
+			4 text PAIGE conversation opened
+			5 link Description: Skip to content, Value: 127.0.0.1:58640/?theme=light&context=b#tenant-shell-main
+			6 container Tenant workspace
+				7 link Description: PAIGE Solo home, Value: 127.0.0.1:58640/solo/1702/command-center
+				8 button Fold navigation
+					9 image
+				10 link Description: Command Center, Value: 127.0.0.1:58640/solo/1702/command-center
+				11 link Description: Operations, Value: 127.0.0.1:58640/solo/1702/operations
+				12 link Description: Clients, Value: 127.0.0.1:58640/solo/1702/clients
+				13 link Description: Marketing, Value: 127.0.0.1:58640/solo/1702/growth
+				14 link Description: Ads, Value: 127.0.0.1:58640/solo/1702/ads
+				15 link Description: Sales, Value: 127.0.0.1:58640/solo/1702/sales
+				16 link Description: Finance, Value: 127.0.0.1:58640/solo/1702/finance
+				17 link Description: Marketplace, Value: 127.0.0.1:58640/solo/1702/marketplace
+				18 link Description: Settings, Value: 127.0.0.1:58640/solo/1702/settings
+				19 button Use Obsidian theme
+				20 button Sign out
+				21 text SY
+				22 text Synthetic Studio B
+				23 text Owner workspace
+			24 container
+				25 text SYNTHETIC STUDIO B Clients Solo
+				26 button (expanded) Description: Direct PAIGE, Secondary Actions: Collapse
+					27 image PAIGE
+					28 text Direct PAIGE, or press ⌘\
+					29 text ⌘\
+			30 container
+				31 tab group Clients views
+					32 tab (selectable, settable, boolean) People, Value: 0, ID: trc-tab-people
+					33 tab (selected, settable, boolean) Conversations, Value: 1, ID: trc-tab-conversations
+					34 tab (selectable, settable, boolean) Calendar, Value: 0, ID: trc-tab-calendar
+					35 tab (selectable, settable, boolean) Portal, Value: 0, ID: trc-tab-portal
+				36 container Description: Conversations, ID: trc-panel
+					37 heading Conversations, Value: 1
+						38 text Conversations
+					39 container Conversation queue
+						191 container
+							192 button New conversation
+								193 image
+								194 text New conversation
+							195 image
+							196 text field (settable) Search messages
+							197 checkbox Active, Value: 1
+							198 checkbox Needs attention, Value: 0
+							199 checkbox Unread, Value: 0
+							200 pop up button (collapsed) Description: More views, ID: radix-:r0:, Secondary Actions: Expand
+							201 checkbox Description: Select all visible conversations, Value: 0
+							202 text 1 conversation
+							203 pop up button (collapsed) Most recent, ID: radix-:r5:, Secondary Actions: Expand
+							204 container Row density
+								205 checkbox Description: Comfortable density, Value: 1
+								206 checkbox Description: Compact density, Value: 0
+							207 button Select Neutral Client Email Neutral Client 1 day — Labels Thread actions
+								208 checkbox Description: Select Neutral Client, Value: 0
+								209 container Email
+								210 text Neutral Client
+								211 text 1 day
+								212 text —
+								213 pop up button (collapsed) Description: Labels, Secondary Actions: Expand
+									214 image
+								215 pop up button (collapsed) Description: Thread actions, ID: radix-:r8:, Secondary Actions: Expand
+									216 image
+					66 container Selected conversation
+						67 container
+							68 container Email
+							69 text Neutral Client
+							70 text Email
+							71 text  · lead@example.test
+							72 button (disabled) Call — No phone number on file to call.
+							73 pop up button (collapsed) Description: Labels, Secondary Actions: Expand
+								74 image
+							75 pop up button (collapsed) Description: Thread actions, ID: radix-:rc:, Secondary Actions: Expand
+								76 image
+							77 pop up button (collapsed) Description: Set a reminder about this contact, Secondary Actions: Expand
+								78 image
+							79 pop up button (collapsed) Description: Delete conversation, Secondary Actions: Expand
+								80 image
+						81 container
+							82 container Conversation handling
+								83 checkbox Human reply LIVE, Value: 1
+									84 text Human reply
+									85 text LIVE
+								86 checkbox PAIGE drafts PARTIAL, Value: 0
+									87 text PAIGE drafts
+									88 text PARTIAL
+								89 checkbox Governed handling PROPOSED, Value: 0
+									90 text Governed handling
+									91 text PROPOSED
+							92 button (collapsed) Description: Primary PAIGE coordination status: live, Help: Primary PAIGE LIVE, Secondary Actions: Expand
+								93 text Primary PAIGE
+								94 text LIVE
+							95 button (collapsed) Description: Current channel: Email, PARTIAL, Help: Email PARTIAL, Secondary Actions: Expand
+								96 text Email
+								97 text PARTIAL
+							98 text You write and send every reply.
+						99 container PAIGE lead replies
+							100 text PAIGE prepared a reply
+							101 text Your project next steps
+							102 button Edit and review reply
+						103 combo box (collapsed) Value: Business email· hello@business.example, Secondary Actions: Expand
+							104 container
+								105 image
+								106 text Business email ·  hello@business.example
+						107 text field (settable) Your project next steps
+						108 container
+							109 text entry area (settable) Thank you for sharing your goals.
+
+Here are the next steps for the project. Please let me know a convenient time to talk.
+
+Neutral reviewer
+							110 button Review reply
+								111 image
+								112 text Review reply
+						113 button Attach
+							114 image
+							115 text Attach
+						116 checkbox Description: Start voice typing, Help: Tap to dictate, Value: 0
+						117 button Draft with Paige
+							118 image
+							119 text Draft with Paige
+						120 pop up button (collapsed) Description: Guide Paige's draft, Secondary Actions: Expand
+							121 image
+						122 pop up button (collapsed) Schedule, Secondary Actions: Expand
+							123 image
+							124 text Schedule
+						188 container
+							189 text Review the exact sender and message before approving. 
+							190 button Cancel reply edit
+					126 container Selected client context
+						127 button (expanded) Description: Collapse client context, Secondary Actions: Collapse
+						128 container
+							129 text SELECTED CLIENT
+							130 heading Neutral Client, Value: 2
+								131 text Neutral Client
+							132 text People record PROFILE · LIVE Client context loaded for  Neutral Client
+							133 link Description: Open People record, Value: 127.0.0.1:58640/solo/1702/clients/people?person=00000000-0000-4000-8000-000000000601
+							134 text People owns this record
+							135 container
+								136 text RELATIONSHIP
+								137 heading Profile and ownership, Value: 3
+									138 text Profile and ownership
+							139 text EMAIL
+							140 text lead@example.test
+							141 text PHONE
+							142 text Not reported
+							143 text OWNER
+							144 text Not assigned
+							145 text RELATIONSHIP
+							146 text new_lead
+							147 text STATUS
+							148 text active
+							149 text SOURCE
+							150 text Not reported
+							151 container
+								152 text SALES CONTEXT
+								153 heading Pipeline, deal, offers, Value: 3
+									154 text Pipeline, deal, offers
+							155 text PIPELINE / DEAL
+							156 text Not reported
+							157 text STAGE
+							158 text Not reported
+							159 text OFFERS / PRODUCTS
+							160 text Not reported
+							161 text No client-specific sales association is proven in this inbox.
+							162 container
+								163 text RELATIONSHIP SIGNALS
+								164 heading Tags and campaigns, Value: 3
+									165 text Tags and campaigns
+							166 text No People tags reported CONVERSATION LABELS
+							167 text None reported
+							168 link Description: Open Campaigns, Value: 127.0.0.1:58640/solo/1702/growth
+							169 text Campaigns owns configuration. This generic link does not carry client selection; membership is not reported here.
+							170 container
+								171 text CLIENT ACCESS
+								172 heading Portal access, Value: 3
+									173 text Portal access
+							174 text INVITATION
+							175 text Not reported
+							176 text ACCESS / ACCOUNT LINK
+							177 text Not reported
+							178 text READINESS
+							179 text Not reported
+							180 link Description: Open Portal, Value: 127.0.0.1:58640/solo/1702/clients/portal
+							181 container
+								182 text RECENT ACTIVITY
+								183 heading Conversation touchpoints, Value: 3
+									184 text Conversation touchpoints
+							185 text No loaded message activity.
+							186 text LAST CONTACT
+							187 text Not reported
+			217 container Description: PAIGE command workspace, ID: tenant-paige-workspace
+				218 container
+					219 image PAIGE
+					220 text PAIGE Your live operating partner
+					221 button Description: Expand PAIGE panel, Help: Expand panel
+					222 button Description: Open PAIGE in full panel, Help: Open full panel
+					223 button Description: Open PAIGE in a new window, Help: Open in new window
+					224 button Description: Fold PAIGE conversation, Help: Fold PAIGE
+				225 tab group Solo PAIGE workspace
+					226 tab (selected, settable, boolean) Chat, Value: 1, ID: spw-tab-chat
+					227 tab (selectable, settable, boolean) Knowledge, Value: 0, ID: spw-tab-knowledge
+					228 tab (selectable, settable, boolean) Research, Value: 0, ID: spw-tab-research
+					229 tab (selectable, settable, boolean) Helpers, Value: 0, ID: spw-tab-helpers
+					230 tab (selectable, settable, boolean) Capabilities, Value: 0, ID: spw-tab-capabilities
+				231 container Description: Chat, ID: spw-panel-chat
+					232 text No Chat transport in this render proof.
+				233 container
+					234 text Chat  view open
+
+The focused UI element is 26 button (expanded) Description: Direct PAIGE, Secondary Actions: Collapse

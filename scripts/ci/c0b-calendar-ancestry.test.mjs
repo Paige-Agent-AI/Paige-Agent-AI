@@ -34,10 +34,12 @@ const changes = [
   ['reminder exact stored argument identity', reminderApprovalPath, '!returnedArgs || !equalArgs(args, returnedArgs)', '!returnedArgs'],
   ['original reminder succeeded-only history observation', 'supabase/functions/_shared/planning/original-reminder-outcome.ts', "if (resolved.state !== 'succeeded')", 'if (false)'],
   ['original reminder canonical-card tenant binding', 'supabase/functions/_shared/paige-turn/interactive-reminder-history.ts', 'row.tenant_id !== tenantId', 'false'],
+  ['literal generic email resume membership', 'supabase/functions/_shared/paige-turn/resume.ts', 'tool === "comms_send_email" && catalogs.commsEmailTool === tool', 'tool === "comms_send_email"'],
+  ['stored email exact origin and contact binding', 'supabase/functions/_shared/comms-email/chat.ts', 'origin && (approvalId !== origin.approvalId || command.contact_id !== origin.contactId)', 'false'],
 ];
 
 test('reviewed Calendar, Task, email, reminder and read-receipt context binds all incumbent adapters without replacing their contracts', () => {
-  assert.equal(incumbentSourcePaths.length, 114);
+  assert.equal(incumbentSourcePaths.length, 116);
   assert.ok(incumbentSourcePaths.includes(controlTransportPath), 'bounded control reader must remain a restrictive ancestry input');
   for (const [, path] of changes) assert.ok(incumbentSourcePaths.includes(path));
   assert.deepEqual(baseline.findings, []);

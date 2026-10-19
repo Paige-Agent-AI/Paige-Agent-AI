@@ -1,9 +1,10 @@
 /** Caller-JWT reader/control for the existing native task process. No execution or retry authority. */
 export type OwnerTaskScope = { actorId: string; tenantId: string; epoch: number };
 type JsonObject = Record<string, unknown>;
-type Response = { data: unknown; error: unknown };
+type Response = { data: unknown; error: unknown; count?: number | null };
 type Query = PromiseLike<Response> & {
-  select(columns: string): Query; eq(key: string, value: unknown): Query;
+  select(columns: string, options?: { count: "exact" }): Query; eq(key: string, value: unknown): Query;
+  in(key: string, values: readonly string[]): Query; range(from: number, to: number): Query;
   order(key: string, options?: { ascending: boolean }): Query; limit(count: number): Query; maybeSingle(): Query;
 };
 export type OwnerTaskCaller = {
@@ -76,18 +77,41 @@ export async function readOwnerTaskAutomations(scope: OwnerTaskScope, caller: Ow
       .eq("tenant_id", scope.tenantId).eq("trigger_key", "contact.created").order("created_at", { ascending: false }).limit(51));
     if (!matches(scope, current)) return { status: "refused" };
     if (rows.error || !Array.isArray(rows.data)) return { status: "unavailable" };
-    const items: OwnerTaskReview[] = [];
+    const inspected: JsonObject[] = [];
+    const processIds = new Set<string>();
     for (const row of rows.data.slice(0, 50)) {
       if (!object(row) || row.tenant_id !== scope.tenantId || row.trigger_key !== "contact.created" ||
-        typeof row.id !== "string" || typeof row.name !== "string" || !instant(row.updated_at) || PROCESS_KEYS.some(k => !(k in row))) return { status: "unavailable" };
-      const result = await deadline.wait(() => caller.from("paige_automation_acts").select("id,automation_id,position,action_kind,tool_key,config")
-        .eq("automation_id", row.id).order("position", { ascending: true }).order("id", { ascending: true }));
-      if (!matches(scope, current)) return { status: "refused" };
-      if (result.error || !Array.isArray(result.data) || result.data.some(a => !object(a) || a.automation_id !== row.id || typeof a.id !== "string" || !Number.isInteger(a.position) || !("config" in a))) return { status: "unavailable" };
-      if (!result.data.some(a => a.action_kind === "owner.task")) continue;
-      items.push({ id: row.id, updatedAt: row.updated_at, process: Object.fromEntries(PROCESS_KEYS.map(k => [k, row[k]])),
-        acts: result.data.map(a => ({ id: a.id, position: a.position, action_kind: a.action_kind, tool_key: a.tool_key, config: a.config })) });
+        typeof row.id !== "string" || processIds.has(row.id) || typeof row.name !== "string" || !instant(row.updated_at) || PROCESS_KEYS.some(k => !(k in row))) return { status: "unavailable" };
+      processIds.add(row.id); inspected.push(row);
     }
+    const acts = new Map<string, JsonObject[]>([...processIds].map(id => [id, []]));
+    const actIds = new Set<string>();
+    let received = 0, expected: number | null = null;
+    // One batch for ordinary lists. Exact count + ordered pages prevent an API
+    // row cap from silently turning a partial process into a complete review.
+    while (processIds.size && (expected === null || received < expected)) {
+      const result = await deadline.wait(() => caller.from("paige_automation_acts")
+        .select("id,automation_id,position,action_kind,tool_key,config", { count: "exact" })
+        .in("automation_id", [...processIds]).order("automation_id", { ascending: true })
+        .order("position", { ascending: true }).order("id", { ascending: true }).range(received, received + 199));
+      if (!matches(scope, current)) return { status: "refused" };
+      if (result.error || !Array.isArray(result.data) || typeof result.count !== "number" || !Number.isSafeInteger(result.count)
+        || result.count < 0 || expected !== null && expected !== result.count || result.data.length > 200
+        || received + result.data.length > result.count || !result.data.length && received < result.count) return { status: "unavailable" };
+      expected = result.count;
+      for (const a of result.data) {
+        if (!object(a) || typeof a.automation_id !== "string" || !processIds.has(a.automation_id) || typeof a.id !== "string"
+          || actIds.has(a.id) || !Number.isInteger(a.position) || !("config" in a)) return { status: "unavailable" };
+        actIds.add(a.id); acts.get(a.automation_id)!.push(a);
+      }
+      received += result.data.length;
+    }
+    const items: OwnerTaskReview[] = inspected.flatMap(row => {
+      const steps = acts.get(row.id as string)!;
+      return steps.some(a => a.action_kind === "owner.task") ? [{ id: row.id as string, updatedAt: row.updated_at as string,
+        process: Object.fromEntries(PROCESS_KEYS.map(k => [k, row[k]])),
+        acts: steps.map(a => ({ id: a.id, position: a.position, action_kind: a.action_kind, tool_key: a.tool_key, config: a.config })) }] : [];
+    });
     const after = await authority(scope, caller, current, deadline);
     deadline.check();
     return after === "ready" ? { status: "ready", items, hasMore: rows.data.length > 50 } : { status: after };

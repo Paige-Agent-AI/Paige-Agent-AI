@@ -50,13 +50,14 @@ BEGIN
       'detail', 'Live Stripe subscription recorded') AS stage
     FROM public.platform_subscriptions ps
     WHERE ps.tenant_id = v_tenant AND ps.provider_mode = 'live' AND ps.created_at IS NOT NULL
+      AND ps.stripe_subscription_id = (SELECT stripe_subscription_id FROM public.solo_beta_enrollments WHERE user_id = p_user_id)
     UNION ALL
     SELECT jsonb_build_object('stage', 'workspace_provisioned', 'at', t.created_at,
-      'detail', 'Workspace ' || coalesce(t.account_number::text, '') || ' provisioned') AS stage
+      'detail', concat_ws(' ', 'Workspace', t.account_number::text, 'provisioned')) AS stage
     FROM public.tenants t WHERE t.id = v_tenant AND t.created_at IS NOT NULL
     UNION ALL
     (SELECT jsonb_build_object('stage', 'meet_paige_started', 'at', th.created_at,
-      'detail', coalesce(nullif(th.title, ''), 'Meet PAIGE thread') || ' opened') AS stage
+      'detail', 'First conversation opened') AS stage
     FROM public.paige_chat_threads th
     WHERE th.tenant_id = v_tenant
     ORDER BY th.created_at ASC LIMIT 1)
@@ -102,7 +103,7 @@ BEGIN
         'stripe_subscription_id', ps.stripe_subscription_id
       )
       FROM public.platform_subscriptions ps
-      WHERE ps.tenant_id = v_tenant
+      WHERE ps.tenant_id = (SELECT tenant_id FROM public.solo_beta_enrollments WHERE user_id = p_user_id)
         AND ps.provider_mode = 'live'
         AND ps.stripe_subscription_id = (SELECT stripe_subscription_id FROM public.solo_beta_enrollments WHERE user_id = p_user_id)
       LIMIT 1
@@ -114,7 +115,7 @@ BEGIN
         'beta_entitled', t.features->>'solo_beta_offer_code' = 'paige-solo-beta-monthly-v1'
       )
       FROM public.tenants t
-      WHERE t.id = v_tenant
+      WHERE t.id = (SELECT tenant_id FROM public.solo_beta_enrollments WHERE user_id = p_user_id)
     ),
     'welcome', (
       SELECT jsonb_build_object(

@@ -137,7 +137,7 @@ const ROLE_COPY: Record<string, { headline: string; intro: string; features: str
       "📊  Your personalized roadmap & progress",
       "🎯  Next steps tailored to your goals",
       "📅  Scheduling & session history",
-      "💬  24/7 guidance from Paige",
+      "💬  24/7 help from your assistant",
     ],
   },
   // Agency-tier team roles (§9). An agency operates a book of sub-accounts; these

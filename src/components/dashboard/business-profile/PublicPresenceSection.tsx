@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useCustomerIdentity } from "@/lib/portal/customerIdentity";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,6 +77,8 @@ const LISTINGS: ListingItem[] = [
 type PresenceRow = Record<string, any>;
 
 export function PublicPresenceSection({ businessId, userId, onCompletionChange }: PublicPresenceSectionProps) {
+  // The customer's agent (Cura, or the business's own name for it), never PAIGE, the owner's COO.
+  const { agentName } = useCustomerIdentity();
   const [foundation, setFoundation] = useState<FoundationIdentity>({ legal_name: "", address: "", phone: "", complete: false });
   const [data, setData] = useState<PresenceRow>({});
   const [rowId, setRowId] = useState<string | null>(null);
@@ -390,21 +393,21 @@ export function PublicPresenceSection({ businessId, userId, onCompletionChange }
             </div>
           )}
 
-          {/* Paige Insight */}
+          {/* The customer's agent's insight */}
           {insightText ? (
             <div className="border border-primary/20 bg-primary/5 rounded-lg p-4 flex gap-3">
               <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
                 <Sparkles className="w-4 h-4 text-primary" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-primary mb-1">Paige's Insight</p>
+                <p className="text-xs font-semibold text-primary mb-1">{agentName}'s insight</p>
                 <p className="text-sm text-foreground">{insightText}</p>
               </div>
             </div>
           ) : (
             <Button size="sm" variant="outline" onClick={fetchInsight} disabled={insightLoading}>
               {insightLoading ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Sparkles className="w-3 h-3 mr-1" />}
-              Get Paige's Assessment
+              Get {agentName}'s assessment
             </Button>
           )}
         </CardContent>

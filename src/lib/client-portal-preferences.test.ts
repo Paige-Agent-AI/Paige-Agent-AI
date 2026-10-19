@@ -79,7 +79,8 @@ describe("owner read", () => {
 });
 
 describe("disclosures are the server's sentences, byte for byte (reviewer Minor 7)", () => {
-  const sql = fs.readFileSync(path.resolve(__dirname, "../../supabase/migrations/20271110215000_e09_customer_portal_profile_consent.sql"), "utf8");
+  // The latest definition of client_portal_consent_disclosure (it holds every id, old and current).
+  const sql = fs.readFileSync(path.resolve(__dirname, "../../supabase/migrations/20271110250000_e09_customer_portal_identity_disclosures.sql"), "utf8");
   const body = sql.slice(sql.indexOf("FUNCTION public.client_portal_consent_disclosure"));
   it.each(Object.keys(PORTAL_PREFERENCE_DISCLOSURES))("%s matches client_portal_consent_disclosure", id => {
     const m = new RegExp(`WHEN '${id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}' THEN '((?:[^']|'')*)'`).exec(body);
@@ -90,15 +91,15 @@ describe("disclosures are the server's sentences, byte for byte (reviewer Minor 
     const ids = [...body.slice(0, body.indexOf("END $$")).matchAll(/WHEN '([^']+)' THEN/g)].map(m => m[1]);
     expect(ids.sort()).toEqual(Object.keys(PORTAL_PREFERENCE_DISCLOSURES).sort());
   });
-  it("the page shows v2 for email and updates: email off also unsubscribes, back on does not re-subscribe, agreements are named, the label is not repeated", () => {
-    expect(CURRENT_DISCLOSURE).toEqual({ email: "email-pref:v2", sms: "sms-pref:v2", updates: "updates-optin:v2", sharing: "data-sharing:v1" });
-    const email = disclosureText("email-pref:v2", "Northwind Studio");
+  it("the page shows v3 for email and updates: email off also unsubscribes, back on does not re-subscribe, agreements are named, the label is not repeated", () => {
+    expect(CURRENT_DISCLOSURE).toEqual({ email: "email-pref:v3", sms: "sms-pref:v3", updates: "updates-optin:v3", sharing: "data-sharing:v2" });
+    const email = disclosureText("email-pref:v3", "Northwind Studio");
     expect(email).toContain("except booking confirmations and agreements you're asked to sign");
     expect(email).toContain("Turning email off also unsubscribes you from updates and offers, and turning it back on doesn't subscribe you again.");
-    expect(disclosureText("updates-optin:v2", "Northwind Studio")).not.toMatch(/^Updates and offers/);
+    expect(disclosureText("updates-optin:v3", "Northwind Studio")).not.toMatch(/^Updates and offers/);
   });
-  it("texts v2 never says \"again\" and never implies a text will come (round 3, verifier minor 6)", () => {
-    const text = disclosureText("sms-pref:v2", "Northwind Studio");
+  it("texts v3 never says \"again\" and never implies a text will come (round 3, verifier minor 6)", () => {
+    const text = disclosureText("sms-pref:v3", "Northwind Studio");
     expect(text).not.toMatch(/\bagain\b/);
     expect(text).toContain("reply START to a text from Northwind Studio if you have one, or ask them.");
   });
@@ -110,8 +111,17 @@ describe("disclosures are the server's sentences, byte for byte (reviewer Minor 
     expect(pin, `no pgTAP hash pin for ${id}`).not.toBeNull();
     expect(createHash("md5").update(PORTAL_PREFERENCE_DISCLOSURES[id], "utf8").digest("hex").slice(0, 12)).toBe(pin![1]);
   });
+  // Owner ruling 2026-10-19: PAIGE is the owner's COO and is never named in a customer's consent sentence.
+  it.each(Object.values(CURRENT_DISCLOSURE))("%s never names PAIGE", id => {
+    expect(PORTAL_PREFERENCE_DISCLOSURES[id]).not.toMatch(/paige/i);
+    expect(disclosureText(id, "Northwind Studio", "Ava")).not.toMatch(/paige/i);
+  });
+  it("names the business's own agent in the data-sharing sentence", () => {
+    expect(disclosureText("data-sharing:v2", "Northwind Studio", "Ava")).toBe("Lets Ava, the AI client success agent for Northwind Studio, use your account details and portal activity when it prepares requests or suggestions for you. It has no effect yet, and you can turn it off anytime.");
+    expect(disclosureText("data-sharing:v2", "Northwind Studio")).toMatch(/^Lets Cura, /);
+  });
   it("fills the business name everywhere it appears", () => {
-    const text = disclosureText("sms-pref:v2", "Northwind Studio");
+    const text = disclosureText("sms-pref:v3", "Northwind Studio");
     expect(text).not.toContain("{business}");
     expect(text.match(/Northwind Studio/g)).toHaveLength(3);
   });

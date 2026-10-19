@@ -7,6 +7,8 @@ import { EmptyTile } from "@/components/client/EmptyTile";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlaybook } from "@/lib/playbook";
+import { useCustomerIdentity } from "@/lib/portal/customerIdentity";
+import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import { useClientPortalBrandState } from "@/hooks/useClientPortalBrand";
 import { sessionTiming, useNextPortalSession, type PortalSession } from "@/hooks/useClientPortalSessions";
 import {
@@ -123,14 +125,14 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
     };
   }, [userId]);
 
-  const askPaige = (prompt: string) => {
-    window.dispatchEvent(new CustomEvent("paige:prefill", { detail: { prompt } }));
-  };
+  // Puts a drafted question in the customer's chat with their agent; they read it and press send.
+  const askAgent = (prompt: string) => handOffPaigePrompt(prompt);
 
   // Coaching default shows coaching-only tiles. The credit/funding tiles render
   // ONLY when the client actually has that data on file (the query-result signal
   // already loaded above) — a coaching client never sees credit/funding copy.
-  const coachName = pb.persona.name;
+  // The customer's agent (Cura, or the business's own name for it). Never the owner's PAIGE persona.
+  const { agentName } = useCustomerIdentity();
   const nextStepsPrompt = pb.quickActions[0]?.prompt ?? "What should I focus on next?";
   const bookPrompt = pb.quickActions[1]?.prompt ?? "Help me schedule my next session";
   const progressPrompt = pb.quickActions[2]?.prompt ?? "Show me how I'm progressing toward my goals";
@@ -167,9 +169,9 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
         <EmptyTile
           icon={<Target className="w-6 h-6" />}
           title="Set your first goal"
-          description="Tell Paige what you're building toward and she'll map the path."
+          description={`Tell ${agentName} what you're working toward and you'll map the path together.`}
           actionLabel="Set your first goal"
-          onAction={() => askPaige("Help me set my first goal.")}
+          onAction={() => askAgent("Help me set my first goal.")}
         />
       )}
 
@@ -188,9 +190,9 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
         <EmptyTile
           icon={<TrendingUp className="w-6 h-6" />}
           title="Your progress"
-          description={`See how you're tracking toward your goals — ask ${coachName} for a snapshot.`}
+          description={`See how you're tracking toward your goals — ask ${agentName} for a snapshot.`}
           actionLabel="Show my progress"
-          onAction={() => askPaige(progressPrompt)}
+          onAction={() => askAgent(progressPrompt)}
         />
       )}
 
@@ -204,13 +206,13 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
           onClick={() => navigate("/app/funding-journey")}
         />
       ) : next.state === "session" ? (
-        // The tile this replaced asked Paige to book a session; that stays, as the second action (§58).
-        <NextSessionTile session={next.session} onBook={() => askPaige(bookPrompt)} />
+        // The tile this replaced asked the agent to book a session; that stays, as the second action (§58).
+        <NextSessionTile session={next.session} onBook={() => askAgent(bookPrompt)} />
       ) : next.state === "none" ? (
         <NoSessionTile
           businessName={businessName}
           onMessage={() => navigate("/app/messages")}
-          onBook={() => askPaige(bookPrompt)}
+          onBook={() => askAgent(bookPrompt)}
         />
       ) : next.state === "loading" && isCustomer ? (
         <div className="h-32 rounded-lg bg-muted/30 animate-pulse motion-reduce:animate-none" aria-hidden="true" />
@@ -220,7 +222,7 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
           title="Book a session"
           description={`Grab a time with ${businessName} and keep your momentum going.`}
           actionLabel="Book a session"
-          onAction={() => askPaige(bookPrompt)}
+          onAction={() => askAgent(bookPrompt)}
         />
       )}
 
@@ -241,19 +243,19 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
       {counts.messages && counts.messages > 0 ? (
         <FilledTile
           icon={<MessageSquare className="w-4 h-4" />}
-          title={`Message ${coachName}`}
+          title={`Ask ${agentName}`}
           count={counts.messages}
           label="in your thread"
-          onClick={() => askPaige("Show me my recent messages.")}
+          onClick={() => askAgent("Show me my recent messages.")}
         />
       ) : (
         <EmptyTile
           icon={<MessageSquare className="w-6 h-6" />}
-          title={`Message ${coachName}`}
-          // The action puts a question in Paige's own chat; it does not message the business (that is Messages).
-          description={`Ask ${coachName} a question anytime.`}
+          title={`Ask ${agentName}`}
+          // The action puts a question in the agent's chat; it does not message the business (that is Messages).
+          description={`Ask ${agentName} a question anytime.`}
           actionLabel="Send your first message"
-          onAction={() => askPaige(`Hi ${coachName} — I'd like to introduce myself.`)}
+          onAction={() => askAgent(`Hi ${agentName} — I'd like to introduce myself.`)}
         />
       )}
 
@@ -261,16 +263,16 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
       {isCustomer ? (
         <NextStepsTile
           businessName={businessName}
-          onAsk={() => askPaige(nextStepsPrompt)}
-          askLabel={`Ask ${coachName} what's next`}
+          onAsk={() => askAgent(nextStepsPrompt)}
+          askLabel={`Ask ${agentName} what's next`}
         />
       ) : (
         <EmptyTile
           icon={<ClipboardList className="w-6 h-6" />}
           title="Your next steps"
           description={`Your action list fills in as ${businessName} sends you action items.`}
-          actionLabel={`Ask ${coachName} what's next`}
-          onAction={() => askPaige(nextStepsPrompt)}
+          actionLabel={`Ask ${agentName} what's next`}
+          onAction={() => askAgent(nextStepsPrompt)}
         />
       )}
     </div>
@@ -424,7 +426,7 @@ function DocumentsTile({ glance, businessName }: { glance: DocumentsGlance; busi
 
 /**
  * The customer's open action items from their business, from the same read as /app/actions (unchanged).
- * Asking Paige what's next stays, as the old tile offered it (§58). A failed read never shows as zero.
+ * Asking the agent what's next stays, as the old tile offered it (§58). A failed read never shows as zero.
  */
 function NextStepsTile({ businessName, onAsk, askLabel }: { businessName: string; onAsk: () => void; askLabel: string }) {
   const { open, loading, error } = useMyActions();
@@ -457,7 +459,7 @@ function NextStepsTile({ businessName, onAsk, askLabel }: { businessName: string
   );
 }
 
-/** "Book a session" as the tile it came from offered it: Paige is asked to set up a time. */
+/** "Book a session" as the tile it came from offered it: the agent is asked to set up a time. */
 function BookAction({ onBook }: { onBook: () => void }) {
   return (
     <Button size="sm" variant="ghost" className={TILE_BUTTON} onClick={onBook}>
@@ -528,7 +530,7 @@ function NextSessionTile({ session, onBook }: { session: PortalSession; onBook: 
   );
 }
 
-/** Nothing booked yet: message the business, or ask Paige to book a time, as the old tile did. */
+/** Nothing booked yet: message the business, or ask the agent to book a time, as the old tile did. */
 function NoSessionTile({ businessName, onMessage, onBook }: { businessName: string; onMessage: () => void; onBook: () => void }) {
   return (
     <Card className="border-dashed">

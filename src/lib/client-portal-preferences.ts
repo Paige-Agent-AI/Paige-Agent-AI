@@ -10,6 +10,8 @@
  * showing the customer a state the server did not say is worse than showing nothing.
  */
 
+import { customerAgentName } from "../../supabase/functions/_shared/client-portal-identity";
+
 export type EmailState = "on" | "off" | "no_address";
 export type SmsState = "on" | "off" | "not_set" | "no_number";
 export type UpdatesState = "subscribed" | "not_subscribed" | "paused" | "no_address";
@@ -188,32 +190,38 @@ export function readClientCommunicationState(data: unknown, expected: { tenantId
 /**
  * The sentences a customer reads at the moment of a choice, keyed by the disclosure id the server stores
  * with the evidence (`portal:<uid>:<id>:<md5 prefix of the sentence>`). The server holds the same text
- * (client_portal_consent_disclosure, 20271110215000); the Vitest suite pins each sentence here to that
- * SQL literal byte for byte, so what the customer saw is what the evidence names (reviewer Minor 7).
- * Changing a sentence means a new id (v2) on both sides, never an edit of v1. A superseded id stays here and on
- * the server, because evidence already written names it; the page shows only CURRENT_DISCLOSURE.
+ * (client_portal_consent_disclosure, latest in 20271110250000); the Vitest suite pins each sentence here to
+ * that SQL literal byte for byte, so what the customer saw is what the evidence names (reviewer Minor 7).
+ * Changing a sentence means a new id on both sides, never an edit of an old one. A superseded id stays here and
+ * on the server, because evidence already written names it; the page shows only CURRENT_DISCLOSURE.
+ * {business} is the business's name; {assistant} is the customer's agent (customerAgentName: never PAIGE).
  */
 export const PORTAL_PREFERENCE_DISCLOSURES = {
   // Superseded 2026-10-18 (round 2): did not say email off also unsubscribes from updates, or name agreements.
-  "email-pref:v1": "Email from {business}. When email is off, {business} won't email you through Paige. Confirmations for times you book, and changes you make to them, still arrive.",
-  "email-pref:v2": "Email from {business}. When email is off, {business} won't email you through Paige, except booking confirmations and agreements you're asked to sign. Turning email off also unsubscribes you from updates and offers, and turning it back on doesn't subscribe you again.",
+  "email-pref:v1": "Email from {business}. When email is off, {business} won't email you through Paige. Confirmations for times you book, and changes you make to them, still arrive.", // customer-identity-exempt: superseded consent sentence, kept byte for byte because evidence already names it
+  "email-pref:v2": "Email from {business}. When email is off, {business} won't email you through Paige, except booking confirmations and agreements you're asked to sign. Turning email off also unsubscribes you from updates and offers, and turning it back on doesn't subscribe you again.", // customer-identity-exempt: superseded consent sentence, kept byte for byte because evidence already names it
+  // Superseded 2026-10-19 (owner ruling: PAIGE is the owner's COO, not part of the customer's portal): v1 and v2 said "through Paige".
+  "email-pref:v3": "Email from {business}. When email is off, {business} won't email you, except booking confirmations and agreements you're asked to sign. Turning email off also unsubscribes you from updates and offers, and turning it back on doesn't subscribe you again.",
   // Superseded 2026-10-18 (round 2): repeated the row's own label.
-  "updates-optin:v1": "Updates and offers: newsletters and automated marketing emails from {business}, sent through Paige. You can unsubscribe anytime.",
-  "updates-optin:v2": "Newsletters and automated marketing emails from {business}, sent through Paige. You can unsubscribe anytime.",
+  "updates-optin:v1": "Updates and offers: newsletters and automated marketing emails from {business}, sent through Paige. You can unsubscribe anytime.", // customer-identity-exempt: superseded consent sentence, kept byte for byte because evidence already names it
+  "updates-optin:v2": "Newsletters and automated marketing emails from {business}, sent through Paige. You can unsubscribe anytime.", // customer-identity-exempt: superseded consent sentence, kept byte for byte because evidence already names it
+  "updates-optin:v3": "Newsletters and automated marketing emails from {business}. You can unsubscribe anytime.",
   // Superseded 2026-10-18 (round 3): "again" was wrong for someone who never had texts, and it implied a text would come.
-  "sms-pref:v1": "Texts from {business}. When texts are off, {business} can't text you through Paige. To get texts again, reply START to a text from {business}.",
-  "sms-pref:v2": "Texts from {business}. When texts are off, {business} can't text you through Paige. To get texts, reply START to a text from {business} if you have one, or ask them.",
-  "data-sharing:v1": "Lets {business}'s Paige use your account details and portal activity when it prepares requests or suggestions for you. It has no effect yet, and you can turn it off anytime.",
+  "sms-pref:v1": "Texts from {business}. When texts are off, {business} can't text you through Paige. To get texts again, reply START to a text from {business}.", // customer-identity-exempt: superseded consent sentence, kept byte for byte because evidence already names it
+  "sms-pref:v2": "Texts from {business}. When texts are off, {business} can't text you through Paige. To get texts, reply START to a text from {business} if you have one, or ask them.", // customer-identity-exempt: superseded consent sentence, kept byte for byte because evidence already names it
+  "sms-pref:v3": "Texts from {business}. When texts are off, {business} can't text you. To get texts, reply START to a text from {business} if you have one, or ask them.",
+  "data-sharing:v1": "Lets {business}'s Paige use your account details and portal activity when it prepares requests or suggestions for you. It has no effect yet, and you can turn it off anytime.", // customer-identity-exempt: superseded consent sentence, kept byte for byte because evidence already names it
+  "data-sharing:v2": "Lets {assistant}, the AI client success agent for {business}, use your account details and portal activity when it prepares requests or suggestions for you. It has no effect yet, and you can turn it off anytime.",
 } as const;
 export type PortalDisclosureId = keyof typeof PORTAL_PREFERENCE_DISCLOSURES;
 
 /** The sentence each card shows today; the writer records the same id with the customer's choice. */
 export const CURRENT_DISCLOSURE = {
-  email: "email-pref:v2", sms: "sms-pref:v2", updates: "updates-optin:v2", sharing: "data-sharing:v1",
+  email: "email-pref:v3", sms: "sms-pref:v3", updates: "updates-optin:v3", sharing: "data-sharing:v2",
 } as const satisfies Record<string, PortalDisclosureId>;
 
-export function disclosureText(id: PortalDisclosureId, business: string): string {
-  return PORTAL_PREFERENCE_DISCLOSURES[id].split("{business}").join(business);
+export function disclosureText(id: PortalDisclosureId, business: string, assistant: string = customerAgentName(undefined)): string {
+  return PORTAL_PREFERENCE_DISCLOSURES[id].split("{business}").join(business).split("{assistant}").join(assistant);
 }
 
 /** The server's named refusals. Codes never reach the screen; the component turns them into words. */

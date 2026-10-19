@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useCustomerIdentity } from "@/lib/portal/customerIdentity";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Shield, Clock, CheckCircle2, AlertTriangle, RotateCcw, ListChecks, type LucideIcon } from "lucide-react";
@@ -53,9 +54,10 @@ function nextStepFor(row: MyApprovalRow): string | null {
 }
 
 interface Props {
-  /** White-label switch: hide the "Paige" name in BTF workspace. (Sprint 211.b: BTF surface retired; prop preserved for future white-label reuse) */
+  /** White-label switch: name the team, not an assistant. (Sprint 211.b: BTF surface retired; prop preserved for future white-label reuse) */
   whiteLabel?: boolean;
-  brandedAgentName?: string; // e.g. "Paige" or "your coaching team"
+  /** Overrides the agent's name. By default it is the customer's agent (Cura, or the business's name for it), never PAIGE. */
+  brandedAgentName?: string;
   /** Optional stage line shown in the header card. */
   currentStage?: string | null;
 }
@@ -66,7 +68,8 @@ export function ClientApprovalsView({
   currentStage,
 }: Props) {
   const { pending, resolved, loading } = useMyApprovals();
-  const agent = brandedAgentName ?? (whiteLabel ? "your coaching team" : "Paige");
+  const { agentName } = useCustomerIdentity();
+  const agent = brandedAgentName ?? (whiteLabel ? "your coaching team" : agentName);
 
   if (loading) {
     return <div className="p-8 text-sm text-muted-foreground">Loading your approvals…</div>;

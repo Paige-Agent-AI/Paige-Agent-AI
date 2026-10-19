@@ -10,13 +10,14 @@ import {
   BellRing,
 } from "lucide-react";
 import { PageWalkthrough, type WalkthroughStep } from "@/components/common/PageWalkthrough";
+import { useCustomerIdentity } from "@/lib/portal/customerIdentity";
 
 const STEPS: WalkthroughStep[] = [
   {
     num: 1,
     icon: Upload,
     title: "Upload your reports",
-    what: "Start by uploading your Experian, TransUnion, and Equifax reports (PDF). Paige extracts every account, balance, score, and negative item automatically.",
+    what: "Start by uploading your Experian, TransUnion, and Equifax reports (PDF). {agent} extracts every account, balance, score, and negative item automatically.",
     why: "Lenders pull different bureaus. Without all 3, you're funding blind — you can't fix what you can't see.",
   },
   {
@@ -67,7 +68,7 @@ const STEPS: WalkthroughStep[] = [
     num: 8,
     icon: ListChecks,
     title: "Credit File Action Plan",
-    what: "Paige's prioritized list of moves to strengthen your consumer report — disputes to file, accounts to add, balances to pay down, AU tradelines to consider.",
+    what: "{agent}'s prioritized list of moves to strengthen your consumer report — disputes to file, accounts to add, balances to pay down, AU tradelines to consider.",
     why: "This is your roadmap. Every step is sequenced for maximum score impact in the shortest time — no guessing, no wasted moves.",
   },
   {
@@ -79,12 +80,16 @@ const STEPS: WalkthroughStep[] = [
   },
 ];
 
+const named = (text: string, agent: string) => text.split("{agent}").join(agent);
+
 export function CreditIntelWalkthrough() {
+  // A customer page: {agent} is the customer's agent (Cura, or the business's own name for it), never PAIGE.
+  const { agentName } = useCustomerIdentity();
   return (
     <PageWalkthrough
       storageKey="credit_intel_walkthrough_dismissed_v1"
       title="How to use this page"
-      steps={STEPS}
+      steps={STEPS.map((step) => ({ ...step, what: named(step.what, agentName), why: named(step.why, agentName), hack: step.hack && named(step.hack, agentName) }))}
     />
   );
 }

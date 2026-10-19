@@ -42,6 +42,8 @@ import {useSharedClientPortalFrame} from "@/hooks/useClientPortalFrame";
 import {type ClientPortalFrame} from "@/lib/client-portal-frame";
 import {readCustomerChat} from "@/lib/customer-chat";
 import {customerAgentName} from "../../../supabase/functions/_shared/client-portal-identity";
+import {useDashboardMode} from "@/contexts/DashboardModeContext";
+import {mergeIntoDraft, subscribePaigePromptHandoff} from "@/lib/paigePromptHandoff";
 
 type Message = {
   id: string;
@@ -132,6 +134,8 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
     mkMessage({ role: "assistant", content: playbook.persona.greeting }),
   ]);
   const [input, setInput] = useState("");
+  // The home tiles' "Ask …" buttons put a drafted question in this composer; the customer presses send.
+  useEffect(() => customerFrame ? subscribePaigePromptHandoff((prompt) => setInput((current) => mergeIntoDraft(current, prompt))) : undefined, [customerFrame]);
   const [dictationActivity, setDictationActivity] = useState({
     epoch: dictationScopeEpoch,
     active: false,
@@ -643,6 +647,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
       {monogram}
     </span>
   ) : (
+    // customer-identity-exempt: staff-only, no customer frame (owner chat for admins and view-as-client)
     <img src={paigeAvatar} alt="Paige" className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-accent flex-shrink-0" />
   );
 
@@ -675,16 +680,18 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
           {headerAvatar}
           <div className="flex-1 min-w-0">
             <h2 className="font-bold text-foreground text-sm capitalize">{playbook.persona.name}</h2>
-            <p className="text-[10px] sm:text-[11px] text-muted-foreground truncate capitalize">{playbook.persona.role}</p>
+            <p className={`text-[10px] sm:text-[11px] text-muted-foreground truncate${customerFrame ? "" : " capitalize"}`}>{playbook.persona.role}</p>
           </div>
         </div>
       </div>
 
       {/* Messages */}
+      {/* customer-identity-exempt: staff-only, no customer frame (owner chat for admins and view-as-client) */}
       <div ref={setTranscriptElement} data-paige-transcript-scroll="true" aria-label={customerFrame?`${personaName} conversation`:"PAIGE conversation"} tabIndex={0} onScroll={syncTranscriptPosition} className="flex-1 min-h-[4rem] overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
         {messages.map((message) => (
           <div key={message.id} data-paige-message-id={message.id} className={`flex gap-2 sm:gap-3 ${message.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
             {message.role === "assistant" && (
+              // customer-identity-exempt: staff-only, no customer frame (owner chat for admins and view-as-client)
               customerFrame ? headerAvatar : <img src={paigeAvatar} alt="Paige" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-accent flex-shrink-0" />
             )}
             <div className={`max-w-[88%] sm:max-w-[85%] rounded-lg px-3 py-2 sm:px-3.5 sm:py-2.5 ${message.role === "user" ? "bg-accent text-accent-foreground" : "bg-muted/40 border border-border"}`}>
@@ -725,6 +732,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
             NON-persisting portal → no compacting card (§13 — it never folds). */}
         {isLoading && messages.some((m) => m.role === "user") && (
           <div className="flex gap-2 sm:gap-3">
+            {/* customer-identity-exempt: staff-only, no customer frame (owner chat for admins and view-as-client) */}
             {customerFrame ? headerAvatar : <img src={paigeAvatar} alt="Paige" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-accent flex-shrink-0" />}
             <PaigeThinkingIndicator
               active={isLoading}
@@ -776,9 +784,9 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-            placeholder={customerFrame ? (isMobile ? `Message ${personaName}…` : `Ask ${personaName}… (Shift+Enter for new line)`) : isMobile ? (attachedDoc ? "Add a message…" : "Message Paige…") : (attachedDoc ? "Add a message or send document... (Shift+Enter for new line)" : "Ask Paige anything... (Shift+Enter for new line)")}
+            placeholder={customerFrame ? (isMobile ? `Message ${personaName}…` : `Ask ${personaName}… (Shift+Enter for new line)`) : isMobile ? (attachedDoc ? "Add a message…" : "Message Paige…") : (attachedDoc ? "Add a message or send document... (Shift+Enter for new line)" : "Ask Paige anything... (Shift+Enter for new line)")} /* customer-identity-exempt: staff-only, no customer frame (owner chat for admins and view-as-client) */
             rows={1}
-            aria-label={customerFrame?`Message ${personaName}`:"Message PAIGE"}
+            aria-label={customerFrame?`Message ${personaName}`:"Message PAIGE"} /* customer-identity-exempt: staff-only, no customer frame (owner chat for admins and view-as-client) */
             className="flex-1 min-w-0 text-[16px] md:text-sm min-h-[44px] max-h-[200px] resize-none py-2"
             disabled={isLoading}
           />
@@ -805,10 +813,22 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
 
 export function PaigeChat(props: PaigeChatProps) {
   const customer=useSharedClientPortalFrame(props.user.id,!props.clientId);
+  const staff=useDashboardMode();
   const frame=customer.frame;
   const assistantEnabled=frame?.config.assistant?.enabled!==false;
   const available=customer.phase==="ready"&&!customer.checking&&assistantEnabled;
-  if(customer.phase==="not-client")return <PaigeChatInner {...props}/>;
+  // No customer frame. Only staff (viewing as a client, or an admin previewing /app) reach the owner's
+  // chat here. Anyone else on /app is a person whose customer access is not active, and PAIGE, the
+  // owner's COO, is never what they talk to (owner ruling, 2026-10-19).
+  if(customer.phase==="not-client"){
+    if(props.clientId||staff.isAdmin)return <PaigeChatInner {...props}/>;
+    return <div role="status" className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center text-sm text-muted-foreground">
+      {staff.loading?"Checking your conversation…":<>
+        <p className="font-medium text-foreground">Your access to this portal isn’t active.</p>
+        <p className="max-w-xs">If you’re a client of a business here, ask them to send you a new invitation.</p>
+      </>}
+    </div>;
+  }
   return <div className="relative h-full min-h-0 min-w-0">
     {frame&&<div className="h-full" aria-hidden={!available}
       {...(!available?{inert:""}:{})} style={!available?{visibility:"hidden"}:undefined}>

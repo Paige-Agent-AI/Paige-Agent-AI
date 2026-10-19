@@ -256,6 +256,7 @@ import { buildStudioWhereYouAre, STUDIO_OPERATING_CORE } from "../_shared/design
 import { getActorTier, clientSeatToolAllowed, type Tier } from "../_shared/actorTier.ts";
 import { readClientPortalChatBinding, sameClientPortalChatBinding } from "../_shared/client-portal-chat-scope.ts";
 import { buildClientPortalPersonaMessages } from "../_shared/client-portal-persona.ts";
+import { customerSeatIdentity } from "../_shared/client-portal-identity.ts";
 import { readCustomerAssistantContext, readCustomerAssistantControlContext, customerProgramMessages, customerTerminalSource, type CustomerSourceSnapshot } from "../_shared/client-portal-assistant-context.ts";
 // R3 — what a client seat reads is read for internal text first.
 import { decodeChunks, internalTextForClient, leakKindCounts, readableFromFrames, syncStatusForClient, resultSavedSomething, WITHHELD_FRAME, withheldReplyForClient } from "../_shared/client-seat-reply.ts";
@@ -9973,6 +9974,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         ...customerProgramMessages(customerAssistant),
         ...messages.filter((m:any) => m.role === "user" || m.role === "assistant"));
       toolDefs.splice(0, toolDefs.length);
+    } else if (callerTier === "client") {
+      // A client seat outside the native Customer Portal branch still runs on the owner's prompt
+      // blocks, which introduce the model as PAIGE. PAIGE is the owner's COO; a client of the business
+      // talks to its agent (owner ruling, 2026-10-19). Only the self-introduction is re-voiced, and
+      // text vouched for the client-seat leak read is left byte for byte as it was vouched.
+      for (const m of aiMessages) {
+        if (m?.role === "system" && typeof m.content === "string" && !clientSeatVouched.includes(m.content)) {
+          m.content = customerSeatIdentity(m.content);
+        }
+      }
     }
     if (interactiveConversational) {
       const before = toolDefs.length;

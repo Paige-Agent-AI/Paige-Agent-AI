@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -30,13 +30,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ClientHomeTiles } from "@/components/client/ClientHomeTiles";
 import { ClientActivityFeed } from "@/components/app/ClientActivityFeed";
 import { UpcomingWidget } from "@/components/planning/UpcomingWidget";
-import { usePlaybook } from "@/lib/playbook";
 import { useClientPortalConfig, type ClientPortalConfig } from "@/hooks/useClientPortalConfig";
 import { usePresenceHeartbeat } from "@/hooks/usePresenceHeartbeat";
 import { useClientViewportHeight } from "@/hooks/useClientViewportHeight";
 import { useSharedClientPortalFrame } from "@/hooks/useClientPortalFrame";
 import { CustomerAccessGate } from "@/components/app/CustomerAccessGate";
-import { customerAgentName } from "../../supabase/functions/_shared/client-portal-identity";
+import { CustomerIdentityProvider, useCustomerIdentity } from "@/lib/portal/customerIdentity";
 
 // Map /app sub-routes to canonical feature names emitted as `feature_visit`.
 function routeToFeatureName(pathname: string): string | null {
@@ -276,6 +275,7 @@ const AppShell = () => {
   // as a client are not customers, so the gate stands aside for them.
   return (
     <CustomerAccessGate userId={activeUser.id} enabled={!isImpersonating && !DEV_MODE}>
+    <CustomerIdentityRoot userId={activeUser.id} enabled={!isImpersonating}>
       {!isImpersonating && <RequiredConsentsGate userId={activeUser.id} />}
       {!isImpersonating && fundingEnabled && <OnboardingFlow open={showOnboarding} onComplete={() => setShowOnboarding(false)} />}
       <AdminViewBanner />
@@ -309,23 +309,40 @@ const AppShell = () => {
         </ResizablePanelGroup>
         {fundingEnabled && <QuickStatsBar factors={factors} />}
       </div>
+    </CustomerIdentityRoot>
     </CustomerAccessGate>
   );
 };
+
+/**
+ * Reads the customer frame once for the whole portal, so every customer surface names the same
+ * agent (Cura, or the business's own name for it) and the same business. Never PAIGE: PAIGE is the
+ * owner's COO (owner ruling, 2026-10-19). The browser tab names the business's portal too; the
+ * platform's own title is the marketing site's.
+ */
+function CustomerIdentityRoot({ userId, enabled, children }: { userId: string; enabled: boolean; children: ReactNode }) {
+  // The access gate above already read the frame; this reads that same answer (one reader per page).
+  const customer = useSharedClientPortalFrame(userId, enabled);
+  const business = customer.frame?.brand.tenant_name?.trim();
+  useEffect(() => {
+    document.title = business ? `${business} — Client Portal` : "Client Portal";
+  }, [business]);
+  return <CustomerIdentityProvider state={customer}>{children}</CustomerIdentityProvider>;
+}
 
 // Default home content when on /app
 type CreditFactorScores = Database["public"]["Tables"]["credit_factor_scores"]["Row"];
 
 function AppDashboardHome({ factors, userId }: { factors: CreditFactorScores | null | undefined; userId?: string }) {
-  const customer = useSharedClientPortalFrame(userId ?? null);
-  const pb = usePlaybook(customer.phase === "not-client");
+  const customer = useCustomerIdentity();
   // Tenant-authored portal greeting (Portal Studio → portal_config.welcome).
   // Fail-open: an unset/empty overlay falls back to the current defaults, so
   // every existing portal is byte-for-byte unchanged until a tenant sets one.
   const savedConfig = useClientPortalConfig();
   const portalConfig: ClientPortalConfig = customer.frame?.config ?? (customer.phase === "not-client" ? savedConfig : {});
-  const agentName = customer.frame ? customerAgentName(customer.frame.config.assistant?.display_name) : customer.phase === "not-client" ? pb.persona.name : "your client success agent";
-  const greeting = customer.frame ? `Hi — I’m ${agentName}, the AI client success agent for ${customer.frame.brand.tenant_name}. How can I help?` : customer.phase === "not-client" ? pb.persona.greeting : "Your conversation is available once your customer access is checked.";
+  // The customer's agent, never the owner's PAIGE persona (owner ruling, 2026-10-19).
+  const agentName = customer.agentName;
+  const greeting = customer.frame ? `Hi — I’m ${agentName}, the AI client success agent for ${customer.businessName}. How can I help?` : "Your conversation is available once your customer access is checked.";
   const welcomeHeadline = portalConfig.welcome?.headline?.trim() || "Welcome Back";
   const welcomeSubhead =
     portalConfig.welcome?.subhead?.trim() ||

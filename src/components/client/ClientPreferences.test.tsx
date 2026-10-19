@@ -141,15 +141,15 @@ describe("How {Business} can reach you — what each state says", () => {
 
   it("quiet hours copy depends on whether the business knows the customer's time zone (reviewer M3)", async () => {
     await mount(prefsPayload({ sms: prefCard("on", { set_by: "reply" }), quiet_hours: { start: "20:00", end: "08:00", time_zone_known: true, fallback_time_zone: null } }));
-    expect(row("sms").textContent).toContain("Texts through Paige only arrive between 8am and 8pm your time.");
+    expect(row("sms").textContent).toContain("Texts from Northwind Studio only arrive between 8am and 8pm your time.");
     act(() => root.unmount()); root = createRoot(host);
     await mount(prefsPayload({ sms: prefCard("on", { set_by: "reply" }) }));
-    expect(row("sms").querySelector('[data-testid="pref-detail"]')?.textContent).toBe("Northwind Studio doesn't have your time zone, so texts through Paige are held from 8pm to 8am Eastern Time.");
+    expect(row("sms").querySelector('[data-testid="pref-detail"]')?.textContent).toBe("Northwind Studio doesn't have your time zone, so texts from them are held from 8pm to 8am Eastern Time.");
     expect(row("sms").textContent).not.toContain("your time.");
     // The zone is the server's: the business's own texting zone when the send check would use it (minor 4).
     act(() => root.unmount()); root = createRoot(host);
     await mount(prefsPayload({ sms: prefCard("on", { set_by: "reply" }), quiet_hours: { start: "20:00", end: "08:00", time_zone_known: false, fallback_time_zone: "America/Chicago" } }));
-    expect(row("sms").querySelector('[data-testid="pref-detail"]')?.textContent).toBe("Northwind Studio doesn't have your time zone, so texts through Paige are held from 8pm to 8am Central Time.");
+    expect(row("sms").querySelector('[data-testid="pref-detail"]')?.textContent).toBe("Northwind Studio doesn't have your time zone, so texts from them are held from 8pm to 8am Central Time.");
   });
 
   it("Updates stays off while email is off, and says why", async () => {
@@ -183,10 +183,12 @@ describe("How {Business} can reach you — what each state says", () => {
   it("shows each card's server-held disclosure sentence under its id", async () => {
     await mount();
     const shown = Array.from(host.querySelectorAll<HTMLElement>("[data-disclosure]")).map(el => [el.dataset.disclosure, el.textContent]);
-    expect(shown).toEqual((["email-pref:v2", "sms-pref:v2", "updates-optin:v2", "data-sharing:v1"] as PortalDisclosureId[])
-      .map(id => [id, disclosureText(id, "Northwind Studio")]));
-    // v1 of email, updates and texts stay known (old evidence names them) but are never shown.
-    expect(Object.keys(PORTAL_PREFERENCE_DISCLOSURES)).toHaveLength(7);
+    expect(shown).toEqual((["email-pref:v3", "sms-pref:v3", "updates-optin:v3", "data-sharing:v2"] as PortalDisclosureId[])
+      .map(id => [id, disclosureText(id, "Northwind Studio", "Cura")]));
+    // Superseded ids stay known (old evidence names them) but are never shown.
+    expect(Object.keys(PORTAL_PREFERENCE_DISCLOSURES)).toHaveLength(11);
+    // Owner ruling 2026-10-19: the customer's settings never name PAIGE.
+    expect(host.textContent).not.toMatch(/paige/i);
   });
 
   it("section headings sit visibly above row labels (should-fix 8)", async () => {

@@ -5,6 +5,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { ClientHomeTiles } from "./ClientHomeTiles";
+import { CustomerIdentityProvider } from "@/lib/portal/customerIdentity";
 
 // Synthetic test tenant (Northwind Studio); never a real account.
 const T = "e0923000-0000-0000-0000-000000000002";
@@ -142,17 +143,35 @@ it("with nothing booked, says so and points to messaging the business by name", 
   expect(host.textContent).toContain("Messages page");
 });
 
-it("never says 'your coach', and the Message Paige tile says only what its action does", async () => {
+it("never says 'your coach', and the Ask tile says only what its action does", async () => {
   await render();
   expect(host.textContent).not.toMatch(/your coach/i);
-  // Its action puts a question in Paige's chat; it does not open a thread with the business.
-  expect(host.textContent).toContain("Ask Paige a question anytime.");
+  // Its action puts a question in the agent's chat; it does not open a thread with the business.
+  expect(host.textContent).toContain("Ask Cura a question anytime.");
   expect(host.textContent).not.toMatch(/start a thread with/i);
   const spy = bookAsked();
   const send = Array.from(host.querySelectorAll("button")).find(b => b.textContent === "Send your first message")!;
   await act(async () => send.click());
   spy.stop();
-  expect(spy.asked).toEqual(["Hi Paige — I'd like to introduce myself."]);
+  expect(spy.asked).toEqual(["Hi Cura — I'd like to introduce myself."]);
+});
+
+// Owner ruling 2026-10-19: the customer's agent is Cura (or the business's own name for it), assigned
+// under PAIGE; PAIGE is the owner's COO and never appears on the customer's home, even though the
+// owner's Playbook persona (mocked above) is still named Paige.
+it("names the business's own agent, never the owner's PAIGE persona", async () => {
+  const frame = { brand: { tenant_name: "Northwind Studio" }, config: { assistant: { display_name: "Ava" } } } as never;
+  await act(async () => root.render(
+    <MemoryRouter initialEntries={["/app"]}>
+      <CustomerIdentityProvider state={{ frame, phase: "ready" }}>
+        <Routes><Route path="/app" element={<ClientHomeTiles userId="u1" />} /></Routes>
+      </CustomerIdentityProvider>
+    </MemoryRouter>,
+  ));
+  await act(async () => { for (let i = 0; i < 10; i++) await Promise.resolve(); });
+  expect(host.textContent).not.toMatch(/paige/i);
+  expect(host.textContent).toContain("Tell Ava what you're working toward and you'll map the path together.");
+  expect(host.textContent).toContain("Ask Ava a question anytime.");
 });
 
 it("does not read sessions for someone who is not a single-business customer, and keeps the old tile", async () => {
@@ -369,7 +388,7 @@ it("uses the nav's icons: Progress is the checklist, Next steps the clipboard", 
   expect(tile("next-steps-tile")!.querySelector("svg")!.getAttribute("class")).toContain("lucide-clipboard-list");
   f.actions = { open: [], loading: false, error: null };
   await render();
-  const empty = Array.from(host.querySelectorAll("button")).find(b => b.textContent === "Ask Paige what's next")!.closest("div")!.parentElement!;
+  const empty = Array.from(host.querySelectorAll("button")).find(b => b.textContent === "Ask Cura what's next")!.closest("div")!.parentElement!;
   expect(empty.querySelector("svg")!.getAttribute("class")).toContain("lucide-clipboard-list");
 });
 
@@ -397,12 +416,12 @@ it("counts the customer's open action items as next steps and opens them", async
   expect(host.textContent).toContain("Action items page");
 });
 
-it("with no open action items, says where they come from and keeps asking Paige what's next (§58)", async () => {
+it("with no open action items, says where they come from and keeps asking the agent what's next (§58)", async () => {
   await render();
   expect(tile("next-steps-tile")).toBeNull();
   expect(host.textContent).toContain("When Northwind Studio sends you an action item, it shows up here.");
   const spy = bookAsked();
-  await act(async () => Array.from(host.querySelectorAll("button")).find(b => b.textContent === "Ask Paige what's next")!.click());
+  await act(async () => Array.from(host.querySelectorAll("button")).find(b => b.textContent === "Ask Cura what's next")!.click());
   spy.stop();
   expect(spy.asked).toEqual(["What should I focus on next?"]);
 });

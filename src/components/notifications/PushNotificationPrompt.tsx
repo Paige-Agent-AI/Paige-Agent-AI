@@ -104,7 +104,7 @@ export const PushNotificationPrompt = ({ autoCheck = true }: PushNotificationPro
             </div>
             <DialogTitle className="text-center text-2xl font-serif">Get Notifications on iPhone</DialogTitle>
             <DialogDescription className="text-center pt-2">
-              To receive notifications on iPhone, first add PaigeAgent to your home screen.
+              To receive notifications on iPhone, first add this portal to your home screen.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-3">

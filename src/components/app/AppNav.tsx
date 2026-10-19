@@ -22,7 +22,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { performSignOut, customerSignOutTarget, cachePortalSlug } from "@/lib/auth/signOut";
 import { useUnreadSupportCount } from "@/hooks/useUnreadSupportCount";
 import { isAvatarBucketUrl } from "@/components/ui/avatar-uploader";
-import { usePlaybook } from "@/lib/playbook";
 import type { ClientPortalBrand } from "@/hooks/useClientPortalBrand";
 import { readableTextOn } from "@/lib/brand/contrast";
 import { PaigeCommandMark } from "@/components/brand/PaigeCommandMark";
@@ -30,8 +29,10 @@ import "./app-nav.css";
 
 // Renders the brand mark in the /app chrome. Prefers the TENANT's brand (logo, or
 // a monogram + name driven by the tenant's primary color) so a client sees THEIR
-// coach's brand — never hardcoded Paige (§6/§9). Falls back to the Paige logo ONLY
-// once the resolver has returned no tenant (staff / platform context). While the
+// coach's brand — never hardcoded Paige (§6/§9). Falls back to the platform mark ONLY
+// for staff once the resolver has returned no tenant; anyone else (a customer of more
+// than one business, or one whose access ended) reads "Client Portal", because PAIGE
+// is the owner's COO and not part of a customer's portal (owner ruling, 2026-10-19). While the
 // resolver is in flight it renders a neutral skeleton so the platform logo never
 // flashes and swaps to the tenant's (§11 — no jarring hand-off).
 function PortalLogo({
@@ -40,9 +41,11 @@ function PortalLogo({
   imgClassName,
   skeletonClassName = "h-7 w-24",
   nameClassName = "font-bold text-base truncate max-w-[160px]",
+  staff,
 }: {
   brand: ClientPortalBrand | null;
   loading: boolean;
+  staff: boolean;
   imgClassName: string;
   skeletonClassName?: string;
   nameClassName?: string;
@@ -60,7 +63,7 @@ function PortalLogo({
   const color = brand?.primary_color?.trim() || null;
 
   if (logo) {
-    return <img src={logo} alt={name || "PaigeAgent.ai"} className={imgClassName} />;
+    return <img src={logo} alt={name || "Client Portal"} className={imgClassName} />;
   }
   if (name) {
     // No logo on file — wear a tenant monogram tinted with their primary color
@@ -80,7 +83,9 @@ function PortalLogo({
       </span>
     );
   }
-  // Resolved with no tenant → platform (Paige) fallback: the current Command Mark.
+  // Resolved with no tenant → staff see the platform's Command Mark; nobody else does.
+  if (!staff) return <span className={nameClassName}>Client Portal</span>;
+  // customer-identity-exempt: staff only — the platform mark for an admin with no tenant brand
   return <PaigeCommandMark className={imgClassName} label="PaigeAgent.ai" />;
 }
 
@@ -157,7 +162,6 @@ export function AppNav({ user }: AppNavProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const { isAdmin, mode, setMode } = useDashboardMode();
-  const pb = usePlaybook();
   // Resolve the TENANT's brand for the chrome (same resolver onboarding uses —
   // get_client_portal_brand()). `loading` gates a skeleton so the platform logo
   // never flashes before the tenant's resolves (§6/§11).
@@ -239,6 +243,7 @@ export function AppNav({ user }: AppNavProps) {
               <PortalLogo
                 brand={brand}
                 loading={brandLoading}
+                staff={isAdmin}
                 imgClassName="h-8 w-auto max-w-full object-contain"
                 skeletonClassName="h-8 w-28"
                 nameClassName="font-bold text-lg truncate min-w-0"
@@ -332,7 +337,8 @@ export function AppNav({ user }: AppNavProps) {
           />
         ) : (
           <span className="font-bold text-base sm:text-lg truncate">
-            {brand?.tenant_name?.trim() || "PaigeAgent"}
+            {/* customer-identity-exempt: staff only — a customer without a brand reads Client Portal */}
+            {brand?.tenant_name?.trim() || (isAdmin ? "PaigeAgent" : "Client Portal")}
           </span>
         )}
 
@@ -350,6 +356,7 @@ export function AppNav({ user }: AppNavProps) {
           <PortalLogo
             brand={brand}
             loading={brandLoading}
+            staff={isAdmin}
             imgClassName="h-7 w-auto max-w-[180px] object-contain"
             skeletonClassName="h-7 w-24"
           />
@@ -401,7 +408,7 @@ export function AppNav({ user }: AppNavProps) {
             size="sm"
             className="text-primary-foreground/70 hover:text-primary-foreground hover:bg-sidebar-accent/50 gap-1.5 text-xs"
             onClick={() => navigate("/app")}
-            title={`Ask ${pb.persona.name} to connect you with your advisor`}
+            title="Contact your business"
           >
             <MessageCircle className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Contact Advisor</span>

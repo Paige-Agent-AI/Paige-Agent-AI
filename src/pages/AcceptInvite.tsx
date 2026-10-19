@@ -174,12 +174,12 @@ export default function AcceptInvitePage() {
           <CardHeader>
             <CardTitle>Client Portal enrollment is not open</CardTitle>
             <CardDescription>
-              Paige Solo is the beta currently available. This invitation cannot create a new Client Portal account.
+              {/* A customer of a business reads that business, never the platform's COO product (owner ruling, 2026-10-19). */}
+              {`This invitation can't create a new Client Portal account. Ask ${info.brand?.name || "the business that invited you"} for a new invitation.`}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <Button onClick={() => navigate("/auth?mode=login")}>Sign in to an existing account</Button>
-            <Button variant="outline" onClick={() => navigate("/")}>Return to Paige</Button>
           </CardContent>
         </Card>
       </div>

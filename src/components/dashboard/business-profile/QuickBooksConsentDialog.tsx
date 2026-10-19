@@ -14,7 +14,7 @@ interface Props {
 const COMMITMENTS = [
   "Modify your QuickBooks data",
   "Share it with lenders, advertisers, or third parties",
-  "Use it for any purpose other than your PaigeAgent services",
+  "Use it for any purpose other than your PaigeAgent services", // customer-identity-exempt: platform legal entity in a data-access consent; wording pending legal review
 ];
 
 export function QuickBooksConsentDialog({ open, onOpenChange, businessId }: Props) {
@@ -42,6 +42,7 @@ export function QuickBooksConsentDialog({ open, onOpenChange, businessId }: Prop
             QuickBooks Connection — What We Access
           </DialogTitle>
           <DialogDescription className="text-white/80 text-base leading-relaxed pt-2">
+            {/* customer-identity-exempt: platform legal entity in a data-access consent; wording pending legal review */}
             PaigeAgent requests <span className="font-semibold text-white">read-only access</span> to your
             QuickBooks data including bank account balances, revenue data, and expense categories. This data
             is used exclusively to improve your fundability score accuracy and funding recommendations.

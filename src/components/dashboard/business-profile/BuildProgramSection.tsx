@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useCustomerIdentity } from "@/lib/portal/customerIdentity";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -115,6 +116,8 @@ function tierComplete(tier: number, a: Answers): boolean {
 }
 
 export function BuildProgramSection({ foundationPct, bureauPct, onCompletionChange, businessId }: BuildProgramSectionProps) {
+  // The customer's agent (Cura, or the business's own name for it), never PAIGE, the owner's COO.
+  const { agentName } = useCustomerIdentity();
   const { isAdmin } = useDashboardMode();
   const [mode, setMode] = useState<"loading" | "assessment" | "dashboard">("loading");
   const [currentTier, setCurrentTier] = useState(0);
@@ -276,14 +279,14 @@ export function BuildProgramSection({ foundationPct, bureauPct, onCompletionChan
             {currentTier === 3 && <LeverageTierQuestions answers={answers} update={updateAnswer} />}
             {currentTier === 4 && <DevelopTierQuestions answers={answers} update={updateAnswer} />}
 
-            {/* Paige Insight */}
+            {/* The customer's agent's insight */}
             {showInsight && tierInsights[currentTier] && (
               <div className="border border-primary/20 bg-primary/5 rounded-lg p-4 flex gap-3">
                 <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
                   <Sparkles className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-primary mb-1">Paige's Insight</p>
+                  <p className="text-xs font-semibold text-primary mb-1">{agentName}'s insight</p>
                   <p className="text-sm text-foreground">{tierInsights[currentTier]}</p>
                 </div>
               </div>
@@ -291,7 +294,7 @@ export function BuildProgramSection({ foundationPct, bureauPct, onCompletionChan
             {showInsight && insightLoading && (
               <div className="border border-primary/20 bg-primary/5 rounded-lg p-4 flex items-center gap-3">
                 <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">Paige is analyzing your answers…</p>
+                <p className="text-sm text-muted-foreground">{agentName} is analyzing your answers…</p>
               </div>
             )}
 
@@ -308,7 +311,7 @@ export function BuildProgramSection({ foundationPct, bureauPct, onCompletionChan
               <Button size="sm" onClick={handleNextTier} disabled={insightLoading || saving}>
                 {saving && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}
                 {currentTier === 4 && showInsight ? "Finish & Calculate Score" :
-                  showInsight || tierInsights[currentTier] ? "Next Tier" : "Get Paige's Insight"}
+                  showInsight || tierInsights[currentTier] ? "Next Tier" : `Get ${agentName}'s insight`}
                 {!(currentTier === 4 && showInsight) && <ArrowRight className="w-3 h-3 ml-1" />}
               </Button>
             </div>

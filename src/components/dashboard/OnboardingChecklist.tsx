@@ -7,7 +7,7 @@ import { CheckCircle2, Circle, Upload, Search, FileText, Building2, Target, X, S
 import { useNavigate } from "react-router-dom";
 import { trackEvent } from "@/hooks/useAnalytics";
 import { useTenantFeature } from "@/hooks/useTenantFeature";
-import { usePlaybook } from "@/lib/playbook";
+import { useCustomerIdentity } from "@/lib/portal/customerIdentity";
 
 interface ChecklistItem {
   id: string;
@@ -28,8 +28,8 @@ export const OnboardingChecklist = ({ userId }: { userId: string }) => {
   // it gets a neutral, coaching-generic checklist instead. Only a tenant that
   // turned on the funding preset gets the credit-building steps.
   const { enabled: fundingEnabled, loading: featureLoading } = useTenantFeature("funding_readiness");
-  const pb = usePlaybook();
-  const coachName = pb.persona.name;
+  // The customer's agent (Cura, or the business's own name for it). Never PAIGE, the owner's COO.
+  const { agentName: coachName } = useCustomerIdentity();
 
   const items: ChecklistItem[] = useMemo(() => {
     if (fundingEnabled) {
@@ -82,7 +82,7 @@ export const OnboardingChecklist = ({ userId }: { userId: string }) => {
 
     // Coaching-generic default (every tenant that hasn't opted into funding).
     // Uses only universal, tenant-agnostic tables (profiles / client_goals /
-    // documents) and real client routes (/app/settings, /app/business) — the
+    // documents) and real client routes (/app/settings, /app/documents) — the
     // same ones ClientHomeTiles relies on for coaching clients.
     return [
       {
@@ -119,7 +119,8 @@ export const OnboardingChecklist = ({ userId }: { userId: string }) => {
         label: "Upload Your First Document",
         description: "Keep your important files in one place for easy reference",
         icon: Building2,
-        route: "/app/business",
+        // Documents, where the business's shared files live; not the funding business profile (§2).
+        route: "/app/documents",
         check: async () => {
           const { count } = await supabase
             .from("documents" as any)

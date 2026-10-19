@@ -308,6 +308,14 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run lint:tier-features
 
+      - name: Customer-portal identity guard (owner ruling 2026-10-19 — PAIGE is the owner's COO; customers talk to Cura)
+        if: ${{ !cancelled() }}
+        run: npm run lint:customer-identity
+
+      - name: Customer-portal identity guard self-test
+        if: ${{ !cancelled() }}
+        run: npm run lint:customer-identity:test
+
       - name: Legacy-mark guard (2026-09-06 — retired orbital PaigeMark must not return; use PaigeCommandMark)
         if: ${{ !cancelled() }}
         run: npm run lint:legacy-mark

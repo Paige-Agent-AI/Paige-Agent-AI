@@ -28,6 +28,42 @@ async function check(){const button=[...host.querySelectorAll("button")].find(b=
 beforeEach(async()=>{db.items=[pending()];db.filters=[];db.read.mockReset().mockResolvedValue({data:[],error:null});db.getUser.mockReset().mockResolvedValue({data:{user:{id:"actor"}},error:null});db.role.mockReset().mockImplementation(async(name:string)=>({data:name==="current_user_tenant_id"?tenant:true,error:null}));db.invoke.mockReset();edit.mockReset();props={actorId:"actor",tenantId:tenant,contactId:contact,disabled:false,onEdit:edit};host=document.createElement("div");document.body.append(host);root=createRoot(host);});
 afterEach(async()=>{await act(async()=>root.unmount());host.remove();});
 
+const legacyComposer = () => ({ok:true,draft:{subject:"Your inquiry",body_text:"Hello <Dana>, thanks for asking.",body_html:"<p>Different untrusted HTML</p>"},recipient:{email:"untrusted@example.test"},summary:"Untrusted composer summary"});
+describe("historical composer draft compatibility",()=>{
+  it("opens the original nested plain-text draft for review without addressing or sending from composer output",async()=>{
+    const original={...pending(),category:"client.followup",draft_content:legacyComposer()};db.items=[original];
+    await render();expect(editButton()).toBeTruthy();expect(host.textContent).not.toContain("untrusted@example.test");expect(host.textContent).not.toContain("Different untrusted HTML");
+    await act(async()=>{editButton()!.click();await flush();});
+    expect(edit).toHaveBeenCalledWith(original,{subject:"Your inquiry",body:"Hello <Dana>, thanks for asking."});expect(db.invoke).not.toHaveBeenCalled();
+  });
+  it("reuses the canonical HTML-to-text projection for an older HTML-only result",async()=>{
+    db.items=[{...pending(),category:"owner.followup_email",draft_content:{ok:true,draft:{subject:"Your inquiry",body_html:"<script>hidden()</script><p>Thanks &lt;Dana&gt;.</p>"}}}];
+    await render();expect(editButton()).toBeTruthy();await act(async()=>{editButton()!.click();await flush();});
+    expect(edit.mock.calls[0][1]).toEqual({subject:"Your inquiry",body:"Thanks <Dana>."});expect(host.querySelector("script")).toBeNull();expect(db.invoke).not.toHaveBeenCalled();
+  });
+  it.each([
+    ["failed composer",{ok:false,draft:{subject:"Your inquiry",body_text:"Text"}}],
+    ["unconfirmed composer",{draft:{subject:"Your inquiry",body_text:"Text"}}],
+    ["non-email outer channel",{...legacyComposer(),channel:"sms"}],
+    ["non-email nested channel",{ok:true,draft:{channel:"sms",subject:"Your inquiry",body_text:"Text"}}],
+    ["competing subject",{...legacyComposer(),subject:"Ambiguous competing subject"}],
+    ["competing body",{...legacyComposer(),body:"Ambiguous competing text"}],
+    ["empty body",{ok:true,draft:{subject:"Your inquiry",body_text:""}}],
+    ["oversized body",{ok:true,draft:{subject:"Your inquiry",body_text:"x".repeat(10001)}}],
+    ["array draft",{ok:true,draft:[{subject:"Your inquiry",body_text:"Text"}]}],
+  ])("keeps unsupported or ambiguous historical content unavailable: %s",async(_label,draft_content)=>{
+    db.items=[{...pending(),category:"client.followup",draft_content}];await render();expect(editButton()).toBeUndefined();expect(host.textContent).toContain("No complete email draft");expect(edit).not.toHaveBeenCalled();expect(db.invoke).not.toHaveBeenCalled();
+  });
+  it("does not turn a historical unknown operation into a fresh editable draft",async()=>{
+    db.items=[{...pending(),category:"client.followup",draft_content:legacyComposer(),metadata:{governed_send:{operation_id:operation,state:"unknown"}}}];
+    await render();expect(editButton()).toBeUndefined();expect(host.textContent).toContain("Don't resend");expect(edit).not.toHaveBeenCalled();expect(db.invoke).not.toHaveBeenCalled();
+  });
+  it("keeps the same owner/member authority boundary for a readable historical draft",async()=>{
+    db.items=[{...pending(),category:"client.followup",draft_content:legacyComposer()}];db.role.mockImplementation(async(name:string)=>({data:name==="current_user_tenant_id"?tenant:false,error:null}));
+    await render();expect(editButton()).toBeUndefined();expect(host.textContent).toContain("An owner or admin");expect(edit).not.toHaveBeenCalled();expect(db.invoke).not.toHaveBeenCalled();
+  });
+});
+
 function persistedReply(category="client.followup"){
   const actor="88888888-8888-4888-8888-888888888888",connector="33333333-3333-4333-8333-333333333333",action="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",fp="abcdef0123456789",threadKey=`contact:${tenant}:${contact}`;
   const ap={...pending(),category,metadata:{action_id:action}},act={id:action,tenant_id:tenant,contact_id:contact,approval_id:approval,action_kind:category};

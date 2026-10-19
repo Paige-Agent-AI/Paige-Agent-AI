@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { UUID, parseCommsEmailCommand } from "../../../../supabase/functions/_shared/comms-email/contract";
 
 import { isFollowupEmailKind, useLeadReplyReview, parseOriginalReplyRecord, readOriginalReplyRecord, ORIGINAL_REPLY_COLS } from "./useLeadReplyReview";
+import { shapeEmailDraft } from "../../../../supabase/functions/paige-action-worker/draft";
 
 type EntryProps = {
   tenantId: string; contactId: string; approval: ApprovalQueueRow; canEdit: boolean;
@@ -73,7 +74,14 @@ function LeadReplyDraftEntry({tenantId,contactId,approval,canEdit,disabled,recor
     }catch{settle(false,UNVERIFIED);}
   },[scope,tenantId,contactId,approval.id,approval.status,approval.metadata,isCurrent,actorId,threadKey]);
   useEffect(()=>{if(canEdit)void refresh();return()=>{request.current+=1;};},[canEdit,refresh]);
-  const draft=object(approval.draft_content);
+  const stored=object(approval.draft_content),nested=object(stored?.draft);
+  // Older successful composer envelopes predate the worker's flat projection.
+  // Reuse that exact projection for review only; never rewrite the saved row or
+  // address a message from model output. Competing flat fields are ambiguous.
+  const draft=stored?.channel===undefined&&stored?.ok===true&&nested
+    &&(nested.channel===undefined||nested.channel==="email")
+    &&!["subject","body","body_text","body_html"].some(key=>Object.hasOwn(stored,key))
+    ?shapeEmailDraft(stored):stored;
   let ready=false;
   try { if(draft?.channel==="email") { parseCommsEmailCommand({action:"comms.email_send",contact_id:contactId,connector_id:null,subject:draft.subject,body:draft.body});ready=true; } } catch { /* Legacy malformed content grants no send authority. */ }
   return <div className="space-y-2">

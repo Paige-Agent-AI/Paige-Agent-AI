@@ -238,6 +238,127 @@ async function buildPlatformStateBlock(admin: AdminClient): Promise<string> {
     lines.push("- Platform health: not available right now (systems-check read failed).");
   }
 
+  // O-3 (EXP00): the commercial customer book — newest enrollment, trial state,
+  // welcome progress, and anything needing attention. PAIGE opens the session
+  // already knowing the company's customer position, so the founder can ask
+  // "what happened with our newest customer?" without her needing a tool call.
+  // Same §13 rules: real reads, honest fallbacks, $0 until Stripe confirms.
+  try {
+    // Exact counts first (P2: a limit(10) page must never be reported as the total);
+    // the 10-row page below is ONLY for the newest-customer detail.
+    const [totalQ, fulfilledQ, canceledQ, expiredQ] = await Promise.all([
+      admin.from("solo_beta_enrollments").select("user_id", { count: "exact", head: true }),
+      admin.from("solo_beta_enrollments").select("user_id", { count: "exact", head: true }).eq("state", "fulfilled"),
+      admin.from("solo_beta_enrollments").select("user_id", { count: "exact", head: true }).eq("state", "canceled"),
+      admin.from("solo_beta_enrollments").select("user_id", { count: "exact", head: true }).eq("state", "expired"),
+    ]);
+    for (const q of [totalQ, fulfilledQ, canceledQ, expiredQ]) {
+      if (q.error) throw q.error;
+    }
+    const total = Number(totalQ.count ?? 0);
+    const fulfilled = Number(fulfilledQ.count ?? 0);
+    const canceled = Number(canceledQ.count ?? 0);
+    const expired = Number(expiredQ.count ?? 0);
+    // Non-fulfilled, non-terminal states are "in progress"; canceled/expired get
+    // their own clause rather than being mislabelled as active work.
+    const inProgress = Math.max(total - fulfilled - canceled - expired, 0);
+
+    if (total === 0) {
+      lines.push("- Customers: no Solo Beta enrollments yet.");
+    } else {
+      const parts = [`${fmtInt(total)} Solo Beta enrollment${total === 1 ? "" : "s"}`];
+      const breakdown = [`${fmtInt(fulfilled)} fulfilled`, `${fmtInt(inProgress)} in progress`];
+      if (canceled + expired > 0) breakdown.push(`${fmtInt(canceled + expired)} canceled/expired`);
+      lines.push(`- Customers: ${parts.join(", ")} — ${breakdown.join(", ")}.`);
+
+      // Newest customer detail (the founder's natural first question)
+      const { data: enrollments, error: eErr } = await admin
+        .from("solo_beta_enrollments")
+        .select("user_id,state,checkout_claimed_at,tenant_id,stripe_subscription_id,reference_id")
+        .order("checkout_claimed_at", { ascending: false, nullsFirst: false })
+        .limit(1);
+      if (eErr) throw eErr;
+      const newest = (Array.isArray(enrollments) ? enrollments : [])[0];
+      if (newest) {
+        const tenantId = newest.tenant_id;
+        let businessName = "unknown business";
+        let subStatus = "no subscription";
+        let trialEnds: string | null = null;
+        let welcomeState = "no welcome record";
+
+        if (tenantId) {
+          const [tenantR, subR, welcomeR] = await Promise.all([
+            admin.from("tenants").select("name").eq("id", tenantId).maybeSingle(),
+            admin.from("platform_subscriptions")
+              .select("status,trial_ends_at")
+              .eq("tenant_id", tenantId)
+              .eq("provider_mode", "live")
+              .maybeSingle(),
+            admin.from("solo_beta_welcome_deliveries")
+              .select("state")
+              .eq("user_id", newest.user_id)
+              .maybeSingle(),
+          ]);
+          if (tenantR.error) console.warn("[owner-context] newest-customer tenant read failed:", tenantR.error.message);
+          if (subR.error) console.warn("[owner-context] newest-customer subscription read failed:", subR.error.message);
+          if (welcomeR.error) console.warn("[owner-context] newest-customer welcome read failed:", welcomeR.error.message);
+          if (tenantR.data?.name) businessName = String(tenantR.data.name);
+          if (subR.data?.status) {
+            subStatus = String(subR.data.status);
+            if (subR.data.trial_ends_at) {
+              const d = new Date(subR.data.trial_ends_at);
+              trialEnds = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+            }
+          }
+          if (welcomeR.data?.state) welcomeState = String(welcomeR.data.state);
+        }
+
+        const parts = [businessName, `subscription: ${subStatus}`];
+        if (trialEnds) parts.push(`trial ends ${trialEnds}`);
+        parts.push(`welcome email: ${welcomeState}`);
+        parts.push(`workspace: ${newest.state === "fulfilled" ? "provisioned" : "not provisioned"}`);
+        lines.push(`  Newest customer: ${parts.join(" · ")}.`);
+      }
+
+      // Attention items (recovery desk seed — ALG-12 class). last_error_code is
+      // surfaced because it is the useful bit for "what needs review?"
+      const { data: stuck } = await admin
+        .from("solo_beta_welcome_deliveries")
+        .select("state,last_error_code")
+        .in("state", ["needs_attention", "retryable_failure"])
+        .limit(5);
+      const stuckRows = Array.isArray(stuck) ? stuck : [];
+      if (stuckRows.length > 0) {
+        const detail = stuckRows
+          .map((r) => `${r.state}${r.last_error_code ? ` [${r.last_error_code}]` : ""}`)
+          .join(", ");
+        lines.push(
+          `  Attention: ${fmtInt(stuckRows.length)} welcome email${stuckRows.length === 1 ? "" : "s"} need${stuckRows.length === 1 ? "s" : ""} review (${detail}).`,
+        );
+      }
+
+      // Collected cash — DERIVED, never asserted (P2: a hardcoded $0.00 line would
+      // silently contradict the Real ARR block the moment a live paid sub exists).
+      // Same criterion as Real ARR above: status=active AND a real stripe_subscription_id.
+      const { count: paidCount, error: paidErr } = await admin
+        .from("platform_subscriptions")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "active")
+        .not("stripe_subscription_id", "is", null);
+      if (paidErr) {
+        console.warn("[owner-context] paid-subscription count read failed:", paidErr.message);
+        lines.push("  Collected cash: not available right now (paid-subscription read failed).");
+      } else if (Number(paidCount ?? 0) === 0) {
+        lines.push("  Collected cash: $0.00 — no Stripe payment has been confirmed yet (trials are contracted intent, not revenue).");
+      } else {
+        lines.push(`  Collected cash: ${fmtInt(Number(paidCount))} live Stripe-backed paid subscription${Number(paidCount) === 1 ? "" : "s"} — see Real ARR above (trials remain contracted intent, not revenue).`);
+      }
+    }
+  } catch (e) {
+    console.warn("[owner-context] customer-book read failed:", (e as Error)?.message);
+    lines.push("- Customers: not available right now (enrollment read failed).");
+  }
+
   return lines.join("\n");
 }
 

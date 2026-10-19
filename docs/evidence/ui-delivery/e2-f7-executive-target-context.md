@@ -66,7 +66,7 @@ The final bounded15-file regression passes294 cases; focused lint/diff check PAS
 
 October19 reactivation preserves that historical proof, not a current-head test claim.
 Main d676e3301aac7d284451187fd3370ea87ed4b855 and its existing Deal/Task focus
-routes are composed with Play navigation. Only the never-applied review migration
+routes are composed with Play navigation. Only the production-unapplied review migration
 moves from20271104102000 to20271112100000, beyond observed production20271111050000
 and active E09/EXP00 reservations. Its SQL bytes and owner-only policy are unchanged.
 Current-head review, required CI, production readback and authenticated acceptance

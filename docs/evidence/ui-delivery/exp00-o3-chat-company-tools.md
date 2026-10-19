@@ -60,10 +60,10 @@ ACCEPTANCE_CRITERIA: recorded above.
 MOTION_PURPOSE: NONE.
 PROTECTED_SEAMS: recorded above.
 
-INTERNAL_BUILD_IDENTITY: e1b9adf5bf36bdfdd4c34e957d4a536034da28de; deployment=PENDING merge to main then edge deploy; environment=development; migrations=NONE (consumes existing operator_commercial_customers + operator_billing_overview); edge=paige-ai-chat; evidence=this record + CI
+INTERNAL_BUILD_IDENTITY: 75f0c290713a4dd5c74044d6531c1697dcc9e8f5; deployment=PENDING merge to main then edge deploy; environment=development; migrations=NOT_APPLICABLE (consumes existing operator_commercial_customers + operator_billing_overview); edge=PROOF_OWED(paige-ai-chat deploy + live re-probe); evidence=this record + CI
 RELEASE_CHANNEL: development: internal engineering slice; local/development build environment; no staged rollout.
 RELEASE_CLASSIFICATION: internal-only: Operator conversational capability.
 CUSTOMER_RELEASE_IDENTITY: none: internal Operator capability.
 RELEASE_NOTE_REQUIRED: no: internal Operator surface.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: source + lint + fingerprints + suites verified; post-deploy live re-probe and owner console re-ask PROOF OWED.
-RELEASE_RECOVERY: position=forward-fix (additive persona branch + two read tools; revert-safe); reference=PR CI + this record.
+RELEASE_RECOVERY: position=forward-fix (additive persona branch plus two kit-declared read tools, revert-safe); reference=PR CI plus this record.

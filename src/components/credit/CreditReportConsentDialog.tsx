@@ -18,9 +18,11 @@ interface Props {
 
 const POINTS = [
   "Your credit report is analyzed to calculate your Personal and Small Business Fundability Scores",
+  // customer-identity-exempt: consent text naming the platform company; wording awaits legal review (owner/legal decision, round 2 list)
   "Paige uses your credit data to provide personalized coaching and funding recommendations",
   "Your credit data is encrypted with AES-256 and never shared with lenders or third parties",
   "You can delete your credit data at any time from your account settings",
+  // customer-identity-exempt: consent text naming the platform company; wording awaits legal review (owner/legal decision, round 2 list)
   "This data is used only to provide your PaigeAgent services — never for employment, housing, or insurance decisions",
 ];
 
@@ -34,6 +36,7 @@ export function CreditReportConsentDialog({ open, onOpenChange, onConfirm, isSub
             Credit Report Data Usage
           </DialogTitle>
           <DialogDescription>
+            {/* customer-identity-exempt: consent text naming the platform company; wording awaits legal review (owner/legal decision, round 2 list) */}
             Before you upload your credit report please confirm you understand how PaigeAgent
             uses this data:
           </DialogDescription>

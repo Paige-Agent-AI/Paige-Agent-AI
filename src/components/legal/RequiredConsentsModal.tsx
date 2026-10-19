@@ -64,6 +64,7 @@ export function RequiredConsentsModal({ userId, outstanding, onAccepted }: Props
           <DialogTitle>Updated agreements</DialogTitle>
           <DialogDescription>
             We've updated the following {outstanding.length === 1 ? "document" : "documents"}. Please
+            {/* customer-identity-exempt: platform legal entity — these are the platform's own Terms and policies */}
             review and accept to continue using PaigeAgent.ai.
           </DialogDescription>
         </DialogHeader>

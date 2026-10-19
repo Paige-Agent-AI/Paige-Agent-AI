@@ -35,6 +35,12 @@ const memoryFixture = vi.hoisted(() => ({
   context: { block: "", loading: false, hasCreditData: false },
 }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: memoryFixture.tenant, loading: memoryFixture.loading }) }));
+const staffFixture = vi.hoisted(() => ({ isAdmin: true, loading: false }));
+// The not-client branch is the owner's chat; only staff reach it (owner ruling 2026-10-19).
+vi.mock("@/contexts/DashboardModeContext", () => ({ useDashboardMode: () => ({ ...staffFixture, mode: "client", setMode: () => {} }) }));
+// Round 2: the not-client gate asks staff STANDING (any staff role, membership, owned tenant, agency seat), not the
+// "admin" role alone. The fixture drives it: isAdmin true = staff, false = not staff.
+vi.mock("@/lib/portal/portalStaffStanding", () => ({ usePortalStaffStanding: (_id: string, enabled: boolean) => enabled ? { loading: staffFixture.loading, staff: staffFixture.loading ? null : staffFixture.isAdmin } : { loading: false, staff: null } }));
 vi.mock("@/hooks/useClientPortalFrame", () => ({useClientPortalFrame: () => portalFixture, useSharedClientPortalFrame: () => portalFixture}));
 vi.mock("@/lib/customer-chat",()=>({readCustomerChat:(...args:unknown[])=>portalFixture.read(...args)}));
 vi.mock("@/hooks/useClientPortalBrand", () => ({ useClientPortalBrandState: () => ({ brand: null, loading: false }) }));
@@ -108,6 +114,7 @@ describe("normal PaigeChat remount scroll behavior", () => {
   beforeEach(() => {
     vi.stubGlobal("ResizeObserver", HarnessResizeObserver);
     portalFixture.phase="not-client";portalFixture.frame=null;portalFixture.checking=false;
+    staffFixture.isAdmin=true;staffFixture.loading=false;
     portalFixture.read.mockReset();portalFixture.summary.mockClear();
     memoryFixture.actor = "d2000000-0000-4000-8000-000000000001";
     memoryFixture.tenant = "d2100000-0000-4000-8000-000000000001";
@@ -455,5 +462,37 @@ describe("normal PaigeChat remount scroll behavior", () => {
     expect(host.querySelector("button[aria-label='Send message']")?.hasAttribute("disabled")).toBe(true);
     expect(portalFixture.read).not.toHaveBeenCalled();
     expect([...host.querySelectorAll("button")].some(b=>b.textContent==="Try again")).toBe(false);
+  });
+
+  // Owner ruling 2026-10-19: PAIGE is the owner's COO and is never inside the Customer Portal. A person
+  // on /app whose customer access is not active (a former customer opening a bookmarked page) is not
+  // staff, so they never get the owner's chat, its PAIGE persona, or a turn sent to it.
+  it("never gives a non-staff viewer without a customer frame the owner's PAIGE chat", async () => {
+    staffFixture.isAdmin=false;
+    await act(async()=>{root.render(<PaigeChat user={{id:"former-customer",user_metadata:{}} as never} session={null}/>);for(let i=0;i<10;i++)await Promise.resolve();});
+    expect(host.textContent).toContain("Your access to this portal isn’t active.");
+    expect(host.textContent).not.toMatch(/paige/i);
+    expect(host.querySelector("textarea")).toBeNull();
+    expect(host.querySelector("[data-paige-transcript-scroll=true]")).toBeNull();
+    // Round 2 render: the one way to get help from here (the drive clicks it in the harness).
+    expect([...host.querySelectorAll("button")].map(b=>b.textContent)).toContain("Contact support");
+  });
+  // Round 2 (verifier §58 #9): staff without the "admin" role (a coach, a platform operator, an agency seat) are
+  // staff too, and must not be told their customer access isn't active.
+  it("keeps the owner's chat for any staff standing, not only the admin role", async () => {
+    staffFixture.isAdmin=true;
+    await act(async()=>{root.render(<PaigeChat user={{id:"coach-a",user_metadata:{}} as never} session={null}/>);for(let i=0;i<10;i++)await Promise.resolve();});
+    expect(host.textContent).not.toContain("isn’t active");
+    expect(host.querySelector("textarea")).not.toBeNull();
+  });
+  it("says it couldn't check, rather than either answer, when staff standing is unknown", async () => {
+    staffFixture.loading=true;
+    await act(async()=>{root.render(<PaigeChat user={{id:"unknown-a",user_metadata:{}} as never} session={null}/>);for(let i=0;i<10;i++)await Promise.resolve();});
+    expect(host.textContent).toContain("Checking your conversation…");
+    expect(host.querySelector("textarea")).toBeNull();
+  });
+  it("keeps the owner's chat for an admin previewing /app (§58)", async () => {
+    await act(async()=>{root.render(<PaigeChat user={{id:"owner-a",user_metadata:{}} as never} session={null}/>);for(let i=0;i<10;i++)await Promise.resolve();});
+    expect(host.querySelector("textarea")).not.toBeNull();
   });
 });

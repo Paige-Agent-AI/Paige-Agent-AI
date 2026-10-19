@@ -293,7 +293,7 @@ function PlatformSupportDesk() {
           <Card className="p-6 border-border">
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div>
-                <h2 className="text-xl font-semibold">Help shape PaigeAgent</h2>
+                <h2 className="text-xl font-semibold">Help shape this platform</h2>
                 <p className="text-muted-foreground text-sm mt-1">
                   Your feedback directly influences what we build next. Submit ideas and vote on features you want most.
                 </p>
@@ -361,14 +361,14 @@ function PlatformSupportDesk() {
                         {f.admin_response && (
                           <div className="mt-3 rounded-md border border-accent/30 bg-accent/5 p-3">
                             <div className="text-[11px] font-bold uppercase tracking-wider text-accent mb-1">
-                              PaigeAgent Team
+                              Platform team
                             </div>
                             <p className="text-sm text-foreground whitespace-pre-wrap">{f.admin_response}</p>
                           </div>
                         )}
 
                         <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
-                          <span>Submitted by a PaigeAgent member</span>
+                          <span>Submitted by a member</span>
                           <span>•</span>
                           <span>{timeAgo(f.created_at)}</span>
                         </div>

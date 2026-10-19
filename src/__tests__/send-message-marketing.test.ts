@@ -6,6 +6,7 @@ import { transpileModule, ModuleKind, ScriptTarget } from "typescript";
 import { describe, it, expect } from "vitest";
 import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from "../../supabase/functions/_shared/comms-provider-boundary";
 import { buildListUnsubscribeHeaders } from "../../supabase/functions/_shared/channel-adapters";
+import { senderDisplayName } from "../../supabase/functions/_shared/email/sender-display-name";
 
 const tenant = "11111111-1111-4111-8111-111111111111";
 const contact = "22222222-2222-4222-8222-222222222222";
@@ -61,7 +62,7 @@ function setup(opts: { existingToken?: string | null; mintError?: boolean; hold?
     },
     createClient: () => admin,
     registerOutboundAdapter: (a: (typeof adapters)[number]) => { adapters.push(a); },
-    buildListUnsubscribeHeaders,
+    buildListUnsubscribeHeaders, senderDisplayName,
     commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED,
     getOutboundAdapter: () => ({
       send: async (msg: Sent["msg"], ctx: Sent["ctx"]) => {

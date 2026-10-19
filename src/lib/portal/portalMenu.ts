@@ -118,6 +118,7 @@ export const PORTAL_MENU_ENTRIES: readonly PortalMenuEntry[] = [
   // its customers no in-app way in: the Home balance line is shown only where this entry is in the menu, so they
   // reach the page only by its address. Known limitation, recorded in the Payments evidence record and master §5;
   // not fixed here. Named "Payments" whatever the catalog calls it (owner ruling 2026-10-18).
+  // customer-identity-exempt: owner-only editor hint (PortalMenuEditor); never rendered in the customer menu
   entry({ key: "billing", defaultLabel: "Payments", route: "/app/billing", icon: CreditCard, group: "paperwork", floor: "customer", catalogLabel: false, description: "Invoices and receipts", editorHint: "Hide if you bill outside Paige" }),
 
   // ── Learn ──
@@ -258,6 +259,16 @@ export function assemblePortalNav(input: AssemblePortalNavInput): PortalNavSecti
 }
 
 export const flattenPortalNav = (sections: readonly PortalNavSection[]): PortalNavItem[] => sections.flatMap((s) => s.items);
+
+/**
+ * The menu for a person whose portal access is not active (no customer relationship, not staff): Home only.
+ * Every other entry opens a page that has nothing to show them or refuses them, so it is not offered
+ * (E09 CURA round 3). Their one other way out, platform Support, is AppNav's own button, not a menu entry.
+ */
+export function portalNavWithoutAccess(sections: readonly PortalNavSection[]): PortalNavSection[] {
+  const home = sections.find((s) => s.id === "top")?.items.filter((i) => i.key === "home") ?? [];
+  return [{ id: "top", label: null, items: home }];
+}
 
 /** One configurable row in the owner's editor, in the order the customer would see it. */
 export interface PortalMenuEditorEntry {

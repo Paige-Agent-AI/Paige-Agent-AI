@@ -31,6 +31,8 @@
     "lint:managed-schema": "node scripts/ci/managed-schema-ownership-lint.mjs",
     "lint:tier-features": "node scripts/ci/tier-feature-lint.mjs",
     "lint:tier-features:test": "node scripts/ci/tier-feature-lint.mjs --self-test",
+    "lint:customer-identity": "node scripts/ci/customer-portal-identity-lint.mjs",
+    "lint:customer-identity:test": "node scripts/ci/customer-portal-identity-lint.mjs --self-test",
     "lint:legacy-mark": "node scripts/ci/legacy-mark-lint.mjs",
     "lint:legacy-mark:test": "node scripts/ci/legacy-mark-lint.mjs --self-test",
     "lint:skeleton": "node scripts/ci/skeleton-content-lint.mjs",

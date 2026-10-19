@@ -21,6 +21,7 @@ import { AppNav } from "@/components/app/AppNav";
 import { ProfileSettings } from "@/components/dashboard/ProfileSettings";
 import { DataPrivacyPanel } from "@/components/dashboard/DataPrivacyPanel";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { CustomerIdentityProvider } from "@/lib/portal/customerIdentity";
 import { harnessUser } from "./stubs";
 import "@/index.css";
 
@@ -38,7 +39,7 @@ function PaigeChatPlaceholder() {
       data-harness-placeholder
       style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, background: "hsl(var(--card))", color: "hsl(var(--muted-foreground))", fontSize: 13, textAlign: "center" }}
     >
-      Paige chat — harness placeholder (the real PaigeChat panel is not mounted here)
+      Customer chat with Cura — harness placeholder (the real customer chat panel is not mounted here)
     </div>
   );
 }
@@ -51,6 +52,8 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={client}>
       <BrowserRouter>
+        {/* AppShell's one customer frame read, as a synthetic frame: the business set no agent name, so it is Cura. */}
+        <CustomerIdentityProvider state={{ phase: "ready", frame: { brand: { tenant_name: "Northwind Studio" }, config: { assistant: {} } } as never }}>
         <div className="h-dvh min-h-0 flex flex-col bg-background overflow-x-hidden" data-harness-app>
           <div style={{ display: "contents" }} data-harness-region="nav">
             <AppNav user={user} />
@@ -73,6 +76,7 @@ createRoot(document.getElementById("root")!).render(
             </ResizablePanel>
           </ResizablePanelGroup>
         </div>
+        </CustomerIdentityProvider>
         <span
           data-harness-tag
           aria-hidden="true"

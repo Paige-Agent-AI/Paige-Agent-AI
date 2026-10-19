@@ -136,7 +136,7 @@ describe("who sees what", () => {
     await render();
     expect(host.querySelector("h1")?.textContent).toBe("Agreements with Northwind Studio");
     const terms = host.querySelector<HTMLAnchorElement>("[data-testid=platform-terms-link]")!;
-    expect(terms.textContent).toBe(" PaigeAgent terms you've accepted");
+    expect(terms.textContent).toBe(" Platform terms you've accepted");
     expect(terms.getAttribute("href")).toBe("/app/agreements/platform");
     for (const extra of [{ agreements: [] as PortalAgreement[] }, { multipleBusinesses: true, summary: null }, { error: "We couldn't load your agreements.", summary: null }]) {
       act(() => root.unmount()); root = createRoot(host);

@@ -78,7 +78,7 @@ export function PaigeThinkingIndicator({
   // done → render nothing (the finished reply is the result; §11 no lingering chrome).
   if (!active) return null;
 
-  const name = personaName?.trim() || "Paige";
+  const name = personaName?.trim() || "Your assistant";
   const secs = !reduce ? ` ${Math.floor(elapsedMs / 1000)}s` : "";
   // The PHASE word is what a screen reader should hear — it changes 2-3× per turn. The live
   // seconds are visual only and must NOT be announced (a per-second aria-live update is chatter).

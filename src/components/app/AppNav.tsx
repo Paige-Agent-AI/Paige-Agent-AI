@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, LogOut, User as UserIcon, Menu, ArrowLeft, MessageCircle, Eye, LifeBuoy, CircleHelp, ChevronDown } from "lucide-react";
+import { Settings, LogOut, User as UserIcon, Menu, ArrowLeft, Eye, LifeBuoy, CircleHelp, ChevronDown } from "lucide-react";
 import type { PortalNavItem, PortalNavSection } from "@/lib/portal/portalMenu";
 import { useCustomerPortalNav } from "@/hooks/useCustomerPortalNav";
 import { cn } from "@/lib/utils";
@@ -22,16 +22,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { performSignOut, customerSignOutTarget, cachePortalSlug } from "@/lib/auth/signOut";
 import { useUnreadSupportCount } from "@/hooks/useUnreadSupportCount";
 import { isAvatarBucketUrl } from "@/components/ui/avatar-uploader";
-import { usePlaybook } from "@/lib/playbook";
 import type { ClientPortalBrand } from "@/hooks/useClientPortalBrand";
 import { readableTextOn } from "@/lib/brand/contrast";
 import { PaigeCommandMark } from "@/components/brand/PaigeCommandMark";
+import { useCustomerIdentity } from "@/lib/portal/customerIdentity";
 import "./app-nav.css";
 
 // Renders the brand mark in the /app chrome. Prefers the TENANT's brand (logo, or
 // a monogram + name driven by the tenant's primary color) so a client sees THEIR
-// coach's brand — never hardcoded Paige (§6/§9). Falls back to the Paige logo ONLY
-// once the resolver has returned no tenant (staff / platform context). While the
+// coach's brand — never hardcoded Paige (§6/§9). Falls back to the platform mark ONLY
+// for staff once the resolver has returned no tenant; anyone else (a customer of more
+// than one business, or one whose access ended) reads "Client Portal", because PAIGE
+// is the owner's COO and not part of a customer's portal (owner ruling, 2026-10-19). While the
 // resolver is in flight it renders a neutral skeleton so the platform logo never
 // flashes and swaps to the tenant's (§11 — no jarring hand-off).
 function PortalLogo({
@@ -40,9 +42,11 @@ function PortalLogo({
   imgClassName,
   skeletonClassName = "h-7 w-24",
   nameClassName = "font-bold text-base truncate max-w-[160px]",
+  staff,
 }: {
   brand: ClientPortalBrand | null;
   loading: boolean;
+  staff: boolean;
   imgClassName: string;
   skeletonClassName?: string;
   nameClassName?: string;
@@ -60,7 +64,7 @@ function PortalLogo({
   const color = brand?.primary_color?.trim() || null;
 
   if (logo) {
-    return <img src={logo} alt={name || "PaigeAgent.ai"} className={imgClassName} />;
+    return <img src={logo} alt={name || "Client Portal"} className={imgClassName} />;
   }
   if (name) {
     // No logo on file — wear a tenant monogram tinted with their primary color
@@ -80,7 +84,9 @@ function PortalLogo({
       </span>
     );
   }
-  // Resolved with no tenant → platform (Paige) fallback: the current Command Mark.
+  // Resolved with no tenant → staff see the platform's Command Mark; nobody else does.
+  if (!staff) return <span className={nameClassName}>Client Portal</span>;
+  // customer-identity-exempt: staff only — the platform mark for an admin with no tenant brand
   return <PaigeCommandMark className={imgClassName} label="PaigeAgent.ai" />;
 }
 
@@ -157,7 +163,6 @@ export function AppNav({ user }: AppNavProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const { isAdmin, mode, setMode } = useDashboardMode();
-  const pb = usePlaybook();
   // Resolve the TENANT's brand for the chrome (same resolver onboarding uses —
   // get_client_portal_brand()). `loading` gates a skeleton so the platform logo
   // never flashes before the tenant's resolves (§6/§11).
@@ -183,6 +188,10 @@ export function AppNav({ user }: AppNavProps) {
     location.pathname === "/app/messages" && (href === "/app/messages" || href.startsWith("/app/messages?"));
   const go = (href: string) => navigate(href, staysInThread(href) ? { replace: true } : undefined);
   const { count: unreadSupport } = useUnreadSupportCount(showPlatformSupport ? user.id : null);
+  // A customer is greeted by their own name on their record at this business, not their login email
+  // (D-QA5, live QA 2026-10-19). Staff, and anyone without a customer frame, keep the email.
+  const identity = useCustomerIdentity();
+  const customerName = identity.viewer === "customer" ? identity.customerName : null;
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   useEffect(() => {
     let cancelled = false;
@@ -212,7 +221,9 @@ export function AppNav({ user }: AppNavProps) {
   const isActive = (href: string) =>
     location.pathname === href || (SECTION_HREFS.has(href) && location.pathname.startsWith(`${href}/`));
 
-  const userRoleLabel = isAdmin ? "Admin" : "Client";
+  // A person whose portal access is not active is not anyone's client here, so the header does not call them one
+  // (round 4, compliance 7). Everyone else keeps the label they had (§58).
+  const userRoleLabel = isAdmin ? "Admin" : identity.viewer === "inactive" ? null : "Client";
   const isViewingAsClient = isAdmin && mode === "client";
 
   const handleSignOut = async () => {
@@ -239,6 +250,7 @@ export function AppNav({ user }: AppNavProps) {
               <PortalLogo
                 brand={brand}
                 loading={brandLoading}
+                staff={isAdmin}
                 imgClassName="h-8 w-auto max-w-full object-contain"
                 skeletonClassName="h-8 w-28"
                 nameClassName="font-bold text-lg truncate min-w-0"
@@ -332,7 +344,8 @@ export function AppNav({ user }: AppNavProps) {
           />
         ) : (
           <span className="font-bold text-base sm:text-lg truncate">
-            {brand?.tenant_name?.trim() || "PaigeAgent"}
+            {/* customer-identity-exempt: staff only — a customer without a brand reads Client Portal */}
+            {brand?.tenant_name?.trim() || (isAdmin ? "PaigeAgent" : "Client Portal")}
           </span>
         )}
 
@@ -350,6 +363,7 @@ export function AppNav({ user }: AppNavProps) {
           <PortalLogo
             brand={brand}
             loading={brandLoading}
+            staff={isAdmin}
             imgClassName="h-7 w-auto max-w-[180px] object-contain"
             skeletonClassName="h-7 w-24"
           />
@@ -377,15 +391,17 @@ export function AppNav({ user }: AppNavProps) {
       </div>
 
       <div className="flex flex-wrap min-w-0 items-center gap-3 ml-auto">
-        <Badge variant="outline" className="text-[10px] font-medium capitalize border-accent/30 text-accent hidden sm:inline-flex">
-          {userRoleLabel}
-        </Badge>
+        {userRoleLabel && (
+          <Badge variant="outline" className="text-[10px] font-medium capitalize border-primary-foreground/30 text-primary-foreground hidden sm:inline-flex" data-testid="portal-role-badge">
+            {userRoleLabel}
+          </Badge>
+        )}
 
         {isViewingAsClient && (
           <Button
             variant="ghost"
             size="sm"
-            className="text-primary-foreground/70 hover:text-primary-foreground hover:bg-sidebar-accent/50 gap-1.5 text-xs"
+            className="text-primary-foreground/90 hover:text-primary-foreground hover:bg-sidebar-accent/50 gap-1.5 text-xs"
             onClick={() => { setMode("internal"); navigate("/choose-account"); }}
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -394,17 +410,21 @@ export function AppNav({ user }: AppNavProps) {
         )}
 
         {/* A customer reaches their business through the Messages nav item; a second
-            top-bar entry to the same page only crowded the bar. */}
+            top-bar entry to the same page only crowded the bar. Everyone else who sees this (a customer of more
+            than one business, a person whose access ended, staff without the admin role) has no business thread
+            that can send, so the button says what it opens: platform Support, the same place as the menu's
+            Support entry. It used to read "Contact Advisor" and open the chat (round 2, verifier #6). */}
         {!isCustomer && !isAdmin && relationshipKnown && (
           <Button
             variant="ghost"
             size="sm"
-            className="text-primary-foreground/70 hover:text-primary-foreground hover:bg-sidebar-accent/50 gap-1.5 text-xs"
-            onClick={() => navigate("/app")}
-            title={`Ask ${pb.persona.name} to connect you with your advisor`}
+            className="text-primary-foreground/90 hover:text-primary-foreground hover:bg-sidebar-accent/50 gap-1.5 text-xs"
+            onClick={() => navigate("/app/support")}
+            aria-label="Contact support"
+            title="Contact support"
           >
-            <MessageCircle className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Contact Advisor</span>
+            <LifeBuoy aria-hidden className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Support</span>
           </Button>
         )}
 
@@ -417,14 +437,15 @@ export function AppNav({ user }: AppNavProps) {
               className="text-primary-foreground hover:bg-sidebar-accent gap-2 px-2"
             >
               {avatarNode}
-              <span className="hidden md:inline text-xs max-w-[140px] truncate">
-                {user.email}
+              <span className="hidden md:inline text-xs max-w-[140px] truncate" data-testid="account-name">
+                {customerName ?? user.email}
               </span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <div className="px-2 py-1.5 text-xs text-muted-foreground truncate">
-              {user.email}
+            <div className="px-2 py-1.5 text-xs text-muted-foreground">
+              {customerName && <p className="truncate text-sm font-medium text-foreground">{customerName}</p>}
+              <p className="truncate">{user.email}</p>
             </div>
             <DropdownMenuSeparator />
             {isAdmin && !isViewingAsClient && (
@@ -475,7 +496,7 @@ export function AppNav({ user }: AppNavProps) {
           size="sm"
           onClick={handleSignOut}
           disabled={isSigningOut}
-          className="hidden lg:inline-flex text-primary-foreground/70 hover:text-primary-foreground hover:bg-red-500/20 gap-1.5 text-xs disabled:opacity-60"
+          className="hidden lg:inline-flex text-primary-foreground/90 hover:text-primary-foreground hover:bg-red-500/20 gap-1.5 text-xs disabled:opacity-60"
         >
           <LogOut className="w-3.5 h-3.5" />
           {isSigningOut ? "Signing Out..." : "Sign Out"}

@@ -115,8 +115,8 @@ export function preferenceCards(p: ClientPortalPreferences, business: string): P
       // runPreSend holds texts overnight in the client's zone; without a usable one, in the zone the server
       // names (the business's texting zone when the check would use it, else America/New_York).
       detail: p.quiet_hours.time_zone_known || !p.quiet_hours.fallback_time_zone
-        ? `Texts through Paige only arrive between ${clock(p.quiet_hours.end)} and ${clock(p.quiet_hours.start)} your time.`
-        : `${business} doesn't have your time zone, so texts through Paige are held from ${window} ${zoneName(p.quiet_hours.fallback_time_zone)}.`,
+        ? `Texts from ${business} only arrive between ${clock(p.quiet_hours.end)} and ${clock(p.quiet_hours.start)} your time.`
+        : `${business} doesn't have your time zone, so texts from them are held from ${window} ${zoneName(p.quiet_hours.fallback_time_zone)}.`,
       control: { checked: true, enabled: s.can_turn_off, reason: s.can_turn_off ? undefined : `Ask ${business} to change this.`, aria: "Texts" },
     });
   } else {

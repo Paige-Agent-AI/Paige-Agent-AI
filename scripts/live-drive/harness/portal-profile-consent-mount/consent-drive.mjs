@@ -32,7 +32,7 @@ const NOW = new Date("2026-10-18T10:30:00-05:00");
 const TZ = "America/Chicago";
 const B = "Northwind Studio";
 // Nothing in the preferences sections may name an address, a number, an id or internal vocabulary.
-const NEVER = ["jordan.rivera@example.test", "+15035550142", "503", "e0960000", "customer_request", "customer_portal", "suppression", "consent_events", "evidence", "coach", "credit", "funding", "fundab"];
+const NEVER = ["jordan.rivera@example.test", "+15035550142", "503", "e0960000", "customer_request", "customer_portal", "suppression", "consent_events", "evidence", "coach", "credit", "funding", "fundab", "Paige", "PAIGE"];
 
 const STATES = ["default", "email-off", "email-paused", "email-paused-held", "email-reported", "reported-lift", "texts-on", "texts-on-no-tz", "texts-on-business-tz", "texts-off",
   "updates-subscribed", "business-recorded", "sharing-on", "no-address", "no-number", "multiple", "unavailable", "loading", "error", "pending", "refusal", "saved"];
@@ -181,7 +181,16 @@ function unmet(s, n) {
       // Round 3 (verifier minor 6): never "again", and the route is conditional on having a text to reply to.
       want(!/\bagain\b/.test(n.sms.text) && n.sms.text.includes(`reply START to a text from ${B} if you have one, or ask them.`), `texts not set up "${n.sms.text}"`);
       want(n.sms.buttons.includes("Don't text me"), `texts buttons ${JSON.stringify(n.sms.buttons)}`);
-      want(/It has no effect yet/.test(n.prefsText ?? ""), "data sharing does not say it has no effect yet (D2/M3)");
+      // CURA-D1 (integrator default, owner may overrule, 2026-10-19; round 5 corrected it in place): the flag gates
+      // admin_propose_paige_actions, the one writer of the portal's "Action items" (staff type them in
+      // ContactPaigePanel; the owner's PAIGE chat drafts them through advance_action), and load_contact_context (the
+      // fuller summary). The heading, row and sentence say that, say some action items are AI-drafted, and say what
+      // the switch does not change. The old "It has no effect yet" (D2/M3) is gone. Never PAIGE, never Cura, never
+      // "requests" (the switch does not gate messages, shared work, agreements or invoices).
+      want(!/no effect yet/.test(n.prefsText ?? ""), "data sharing still claims it has no effect yet");
+      want(n.sharing.text.startsWith(`Let ${B}’s team send you action items and use a fuller summary of you`) && n.sharing.text.includes(`Lets ${B}’s team send you action items in your portal, including ones its AI assistant drafts, and give that assistant a fuller summary of you.`) && n.sharing.text.includes(`It doesn’t change messages, shared work, agreements or invoices, what your portal assistant uses to answer you, or what ${B} can already see in its own records.`) && n.sharing.text.includes("Turning it off doesn’t delete anything.") && !/Cura|Paige|AI tools|AI-prepared|requests|'/i.test(n.sharing.text), `sharing says what the switch governs "${n.sharing.text}"`);
+      // Round 6: action items come from the team; the summary is of the customer and never sent to them.
+      want((n.prefsText ?? "").includes(`Action items from ${B}’s team, and a fuller summary of you`) && !/Sharing with|summaries from/.test(n.prefsText ?? ""), "sharing heading names action items from the team and a fuller summary of the customer");
       break;
     case "email-off":
       want(/^Off · you turned email off on Oct 12, 2026$/.test(st("email")), `email "${st("email")}"`);
@@ -199,14 +208,14 @@ function unmet(s, n) {
       want(!n.email.buttons.includes("Keep email off"), "Keep email off offered again after the customer recorded it");
       break;
     case "texts-on":
-      want(/^On · you replied START on Oct 9, 2026$/.test(st("sms")) && n.sms.detail === "Texts through Paige only arrive between 8am and 8pm your time.", `texts "${st("sms")}" / "${n.sms.detail}"`);
+      want(/^On · you replied START on Oct 9, 2026$/.test(st("sms")) && n.sms.detail === `Texts from ${B} only arrive between 8am and 8pm your time.`, `texts "${st("sms")}" / "${n.sms.detail}"`);
       want(n.sms.switch?.checked === "checked" && n.sms.switch.disabled === false, "texts can't be turned off");
       break;
     case "texts-on-no-tz":
-      want(n.sms.detail === `${B} doesn't have your time zone, so texts through Paige are held from 8pm to 8am Eastern Time.`, `no-tz "${n.sms.detail}"`);
+      want(n.sms.detail === `${B} doesn't have your time zone, so texts from them are held from 8pm to 8am Eastern Time.`, `no-tz "${n.sms.detail}"`);
       break;
     case "texts-on-business-tz":
-      want(n.sms.detail === `${B} doesn't have your time zone, so texts through Paige are held from 8pm to 8am Central Time.`, `business-tz "${n.sms.detail}"`);
+      want(n.sms.detail === `${B} doesn't have your time zone, so texts from them are held from 8pm to 8am Central Time.`, `business-tz "${n.sms.detail}"`);
       break;
     case "email-reported":
       want(st("email") === `Off · you reported an email from ${B} as spam on Oct 3, 2026` && n.email.switch?.disabled === false, `reported "${st("email")}" switch=${JSON.stringify(n.email.switch)}`);

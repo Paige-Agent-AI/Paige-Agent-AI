@@ -103,7 +103,7 @@ it("gives a customer no second top-bar entry to Messages: the nav item is the on
   await render();
   expect(topBarButton("Message Northwind Studio")).toBeUndefined();
   expect(topBarButton("Message your team")).toBeUndefined();
-  expect(topBarButton("Contact Advisor")).toBeUndefined();
+  expect(topBarButton("Contact support")).toBeUndefined();
   expect(host.querySelectorAll('a[href="/app/messages"]')).toHaveLength(1);
 });
 
@@ -113,10 +113,15 @@ it("gives a nameless business's customer no top-bar message button either", asyn
   expect(topBarButton("Message your team")).toBeUndefined();
 });
 
-it("keeps Contact Advisor for a signed-in non-customer and gives them no Messages link", async () => {
+it("gives a signed-in non-customer a top-bar Support button that opens platform Support, and no Messages link", async () => {
   f.brand = null;
   await render();
-  expect(topBarButton("Contact Advisor")).toBeDefined();
+  const button = topBarButton("Contact support");
+  expect(button).toBeDefined();
+  expect(button!.textContent?.trim()).toBe("Support");
+  // Round 2 (verifier #6): it used to say "Contact your business" and open the chat at /app.
+  await act(async () => button!.click());
+  expect(where()).toBe("/app/support");
   expect(host.querySelector('a[href="/app/messages"]')).toBeNull();
 });
 
@@ -124,7 +129,7 @@ it("shows no Messages link while the relationship is still resolving", async () 
   f.brandLoading = true; f.brand = null;
   await render();
   expect(host.querySelector('a[href="/app/messages"]')).toBeNull();
-  expect(topBarButton("Contact Advisor")).toBeUndefined();
+  expect(topBarButton("Contact support")).toBeUndefined();
 });
 
 it("on a failed brand read shows neither platform Support nor customer-only entries", async () => {
@@ -141,7 +146,7 @@ it("on a failed brand read shows neither platform Support nor customer-only entr
 it("on a failed brand read the desktop bar offers no contact destination that could be wrong", async () => {
   f.brand = null; f.brandError = true;
   await render();
-  expect(topBarButton("Contact Advisor")).toBeUndefined();
+  expect(topBarButton("Contact support")).toBeUndefined();
   expect(host.querySelector('a[href="/app/messages"]')).toBeNull();
 });
 
@@ -160,13 +165,13 @@ it("keeps platform Support for a customer of more than one business, and no entr
   expect(where()).toBe("/app/support");
 });
 
-it("gives a customer of more than one business no Messages dead end, and keeps Contact Advisor as before", async () => {
+it("gives a customer of more than one business no Messages dead end, and keeps its top-bar Support button", async () => {
   f.brand = null; f.multiple = true;
   await render();
   expect(host.querySelector('a[href="/app/messages"]')).toBeNull();
   expect(topBarButton("Message your team")).toBeUndefined();
   // Their top-bar route is unchanged from before E09 (§58): Messages can't serve them yet.
-  expect(topBarButton("Contact Advisor")).toBeDefined();
+  expect(topBarButton("Contact support")).toBeDefined();
 });
 
 it("switches from the thread to Get help in place, so the page's discard guard is not asked", async () => {

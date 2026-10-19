@@ -188,28 +188,43 @@ export function readClientCommunicationState(data: unknown, expected: { tenantId
 /**
  * The sentences a customer reads at the moment of a choice, keyed by the disclosure id the server stores
  * with the evidence (`portal:<uid>:<id>:<md5 prefix of the sentence>`). The server holds the same text
- * (client_portal_consent_disclosure, 20271110215000); the Vitest suite pins each sentence here to that
- * SQL literal byte for byte, so what the customer saw is what the evidence names (reviewer Minor 7).
- * Changing a sentence means a new id (v2) on both sides, never an edit of v1. A superseded id stays here and on
- * the server, because evidence already written names it; the page shows only CURRENT_DISCLOSURE.
+ * (client_portal_consent_disclosure, latest in 20271111020000); the Vitest suite pins each sentence here to
+ * that SQL literal byte for byte, so what the customer saw is what the evidence names (reviewer Minor 7).
+ * Changing a sentence means a new id on both sides, never an edit of an old one. A superseded id stays here and
+ * on the server, because evidence already written names it; the page shows only CURRENT_DISCLOSURE.
+ * {business} is the business's name, filled at display time; the hash names the template. data-sharing:v2 says
+ * only what the switch governs (CURA-D1, integrator default, owner may overrule, 2026-10-19; round 5 corrected it in
+ * place): the flag gates admin_propose_paige_actions, the one writer of the portal's "Action items", reached by staff
+ * typing in ContactPaigePanel (not mounted) and by the owner's PAIGE chat (action_file/action_advance ->
+ * advance_action) with text the AI drafted; and load_contact_context, the fuller summary. It does not gate messages,
+ * shared work, agreements or invoices, what the customer's own portal assistant uses (Cura never reads the flag), or
+ * what the business and its owner-side chat already read in its own records, and the sentence says so. Today no
+ * action item gets through either route (advance_action passes action kinds the table's action_type check refuses;
+ * the panel is unmounted), so the switch has no practical effect yet: tracked in master §5. v1's "It has no effect
+ * yet" is dropped because both server checks exist. Its apostrophes are curly, like the heading, row and line around it.
  */
 export const PORTAL_PREFERENCE_DISCLOSURES = {
   // Superseded 2026-10-18 (round 2): did not say email off also unsubscribes from updates, or name agreements.
-  "email-pref:v1": "Email from {business}. When email is off, {business} won't email you through Paige. Confirmations for times you book, and changes you make to them, still arrive.",
-  "email-pref:v2": "Email from {business}. When email is off, {business} won't email you through Paige, except booking confirmations and agreements you're asked to sign. Turning email off also unsubscribes you from updates and offers, and turning it back on doesn't subscribe you again.",
+  "email-pref:v1": "Email from {business}. When email is off, {business} won't email you through Paige. Confirmations for times you book, and changes you make to them, still arrive.", // customer-identity-exempt: superseded consent sentence, kept byte for byte because evidence already names it
+  "email-pref:v2": "Email from {business}. When email is off, {business} won't email you through Paige, except booking confirmations and agreements you're asked to sign. Turning email off also unsubscribes you from updates and offers, and turning it back on doesn't subscribe you again.", // customer-identity-exempt: superseded consent sentence, kept byte for byte because evidence already names it
+  // Superseded 2026-10-19 (owner ruling: PAIGE is the owner's COO, not part of the customer's portal): v1 and v2 said "through Paige".
+  "email-pref:v3": "Email from {business}. When email is off, {business} won't email you, except booking confirmations and agreements you're asked to sign. Turning email off also unsubscribes you from updates and offers, and turning it back on doesn't subscribe you again.",
   // Superseded 2026-10-18 (round 2): repeated the row's own label.
-  "updates-optin:v1": "Updates and offers: newsletters and automated marketing emails from {business}, sent through Paige. You can unsubscribe anytime.",
-  "updates-optin:v2": "Newsletters and automated marketing emails from {business}, sent through Paige. You can unsubscribe anytime.",
+  "updates-optin:v1": "Updates and offers: newsletters and automated marketing emails from {business}, sent through Paige. You can unsubscribe anytime.", // customer-identity-exempt: superseded consent sentence, kept byte for byte because evidence already names it
+  "updates-optin:v2": "Newsletters and automated marketing emails from {business}, sent through Paige. You can unsubscribe anytime.", // customer-identity-exempt: superseded consent sentence, kept byte for byte because evidence already names it
+  "updates-optin:v3": "Newsletters and automated marketing emails from {business}. You can unsubscribe anytime.",
   // Superseded 2026-10-18 (round 3): "again" was wrong for someone who never had texts, and it implied a text would come.
-  "sms-pref:v1": "Texts from {business}. When texts are off, {business} can't text you through Paige. To get texts again, reply START to a text from {business}.",
-  "sms-pref:v2": "Texts from {business}. When texts are off, {business} can't text you through Paige. To get texts, reply START to a text from {business} if you have one, or ask them.",
-  "data-sharing:v1": "Lets {business}'s Paige use your account details and portal activity when it prepares requests or suggestions for you. It has no effect yet, and you can turn it off anytime.",
+  "sms-pref:v1": "Texts from {business}. When texts are off, {business} can't text you through Paige. To get texts again, reply START to a text from {business}.", // customer-identity-exempt: superseded consent sentence, kept byte for byte because evidence already names it
+  "sms-pref:v2": "Texts from {business}. When texts are off, {business} can't text you through Paige. To get texts, reply START to a text from {business} if you have one, or ask them.", // customer-identity-exempt: superseded consent sentence, kept byte for byte because evidence already names it
+  "sms-pref:v3": "Texts from {business}. When texts are off, {business} can't text you. To get texts, reply START to a text from {business} if you have one, or ask them.",
+  "data-sharing:v1": "Lets {business}'s Paige use your account details and portal activity when it prepares requests or suggestions for you. It has no effect yet, and you can turn it off anytime.", // customer-identity-exempt: superseded consent sentence, kept byte for byte because evidence already names it
+  "data-sharing:v2": "Lets {business}’s team send you action items in your portal, including ones its AI assistant drafts, and give that assistant a fuller summary of you. It doesn’t change messages, shared work, agreements or invoices, what your portal assistant uses to answer you, or what {business} can already see in its own records. You can turn it off anytime.",
 } as const;
 export type PortalDisclosureId = keyof typeof PORTAL_PREFERENCE_DISCLOSURES;
 
 /** The sentence each card shows today; the writer records the same id with the customer's choice. */
 export const CURRENT_DISCLOSURE = {
-  email: "email-pref:v2", sms: "sms-pref:v2", updates: "updates-optin:v2", sharing: "data-sharing:v1",
+  email: "email-pref:v3", sms: "sms-pref:v3", updates: "updates-optin:v3", sharing: "data-sharing:v2",
 } as const satisfies Record<string, PortalDisclosureId>;
 
 export function disclosureText(id: PortalDisclosureId, business: string): string {

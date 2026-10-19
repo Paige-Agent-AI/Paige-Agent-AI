@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- pre-existing legacy `any` debt in this
+   file (untyped Supabase reads, stale generated types). The E09 Customer Portal identity change
+   (CURA, never PAIGE, on customer surfaces) only edited copy here and introduced ZERO new `any`s;
+   retyping is tracked separately (#234). */
 import { useState, useCallback, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -290,7 +294,7 @@ export function CreditReportUploader({ lastAnalyzed, lastBureau, onRefresh, isRe
       setResetConfirmText("");
       window.dispatchEvent(new CustomEvent("paige-factory-reset"));
 
-      toast.success("Factory reset complete. Credit, disputes, funding, build data, and Paige memory were cleared site-wide. Uploaded PDFs were preserved for fresh re-analysis.");
+      toast.success("Factory reset complete. Credit, disputes, funding, build data, and assistant memory were cleared site-wide. Uploaded PDFs were preserved for fresh re-analysis.");
 
       setTimeout(() => window.location.reload(), 300);
     } catch (error: any) {

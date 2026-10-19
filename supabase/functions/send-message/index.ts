@@ -1,5 +1,6 @@
 import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from "../_shared/comms-provider-boundary.ts";
 import {collectInvoiceLedger} from '../_shared/sales-invoice-ledger.ts';
+import { senderDisplayName } from "../_shared/email/sender-display-name.ts";
 import {renderSalesInvoiceDocument} from '../_shared/sales-invoice-document.ts';
 import {renderDocumentPdf} from '../_shared/document-pdf.ts';
 import {pdfEmailAttachment} from '../_shared/email-attachments.ts';
@@ -1392,7 +1393,7 @@ Deno.serve(async (req) => {
       let senderEmail: string | null = null;
       const { data: ident } = await admin.rpc("tenant_sender_identity", { _tenant_id: tenantId });
       const identRow = (ident ?? null) as
-        | { from_name?: string | null; from_address?: string | null; reply_to?: string | null }
+        | { from_name?: string | null; from_address?: string | null; reply_to?: string | null; tenant_name?: string | null }
         | null;
       if (identRow) {
         senderName = identRow.from_name ?? null;
@@ -1407,7 +1408,8 @@ Deno.serve(async (req) => {
         senderName = connectorRow.from_name || senderName;
         replyTo = connectorRow.reply_to || replyTo;
       }
-      senderName = senderName || config?.default_from_name || "Paige Agent";
+      // The client hears from the business: its configured name, else its own name (never the COO's).
+      senderName = senderDisplayName({ fromName: senderName, tenantName: identRow?.tenant_name, platformDefault: config?.default_from_name });
       // Last-resort fallback on the verified shared sending subdomain.
       const resolvedSenderEmail = senderEmail || config?.default_from_email || "no-reply@mail.paigeagent.ai";
       senderEmail = resolvedSenderEmail;

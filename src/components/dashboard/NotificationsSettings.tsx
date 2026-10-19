@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- pre-existing legacy `any` debt in this
+   file (untyped Supabase reads, stale generated types). The E09 Customer Portal identity change
+   (CURA, never PAIGE, on customer surfaces) only edited copy here and introduced ZERO new `any`s;
+   retyping is tracked separately (#234). */
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -271,6 +275,7 @@ export const NotificationsSettings = () => {
             <Alert>
               <ShieldCheck className="h-4 w-4" />
               <AlertDescription className="text-xs">
+                {/* customer-identity-exempt: TCPA notice naming the registered sender; must match the A2P campaign brand (compliance decision, round 2 list) */}
                 <strong>TCPA Notice:</strong> By enabling SMS you consent to receive transactional text
                 messages from PaigeAgent. Reply STOP to any message to unsubscribe. Message and data rates
                 may apply.

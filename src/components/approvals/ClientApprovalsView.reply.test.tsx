@@ -25,4 +25,7 @@ it("sends a customer who must reply to their business's portal thread, not the p
   expect(reply?.getAttribute("href")).toBe("/app/messages");
   expect(host.querySelector('a[href="/app/support"]')).toBeNull();
   expect(host.textContent).not.toMatch(/your coach/i);
+  // Owner ruling 2026-10-19: the requests came from the customer's agent (Cura by default), never PAIGE.
+  expect(host.textContent).toContain("every request Cura made on your behalf");
+  expect(host.textContent).not.toMatch(/paige/i);
 });

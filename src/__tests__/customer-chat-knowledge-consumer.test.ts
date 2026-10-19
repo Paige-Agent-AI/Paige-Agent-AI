@@ -76,9 +76,11 @@ describe("actual customer handler integration",()=>{
  it("clears owner prompts/tools and supplies only the customer role, current program and admitted private messages",async()=>{
   const result=await readCustomerAssistantContext({rpc:async()=>({data:fixture(),error:null})},actor,thread,intent);const context=result.data!;
   const block=node((n):n is ts.IfStatement=>ts.isIfStatement(n)&&n.expression.getText(ast)==="customerPortal && customerPersona && customerAssistant");
-  const run=new Function("customerPortal","customerPersona","customerAssistant","aiMessages","messages","toolDefs","buildClientPortalPersonaMessages","customerProgramMessages",compile(block.getText(ast)));
+  // The statement's client-seat else-branch awaits the persona read, so it compiles as an async body.
+  const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor as FunctionConstructor;
+  const run=new AsyncFunction("customerPortal","customerPersona","customerAssistant","aiMessages","messages","toolDefs","buildClientPortalPersonaMessages","customerProgramMessages",compile(block.getText(ast)));
   const aiMessages:unknown[]=[{role:"system",content:"OWNER PRIVATE"}],tools:unknown[]=[{function:{name:"owner_only_write"}}];
-  run(true,context.persona,context,aiMessages,[...context.history,{role:"user",content:"Current question"}],tools,buildClientPortalPersonaMessages,customerProgramMessages);
+  await run(true,context.persona,context,aiMessages,[...context.history,{role:"user",content:"Current question"}],tools,buildClientPortalPersonaMessages,customerProgramMessages);
   expect(tools).toEqual([]);expect(JSON.stringify(aiMessages)).not.toContain("OWNER PRIVATE");
   expect(JSON.stringify(aiMessages)).toContain("representing the business");expect(JSON.stringify(aiMessages)).toContain("Approved program guidance");
   expect(aiMessages.at(-1)).toEqual({role:"user",content:"Current question"});

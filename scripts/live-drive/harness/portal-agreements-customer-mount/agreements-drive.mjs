@@ -221,7 +221,7 @@ function unmet(s, n) {
   const customerList = s.page === "agreements" && !["loading", ...STAFF].includes(s.state);
   if (customerList) {
     want((n.leaks ?? []).length === 0, `private text on the customer page: ${JSON.stringify(n.leaks)}`);
-    want((n.links ?? []).some((l) => l === "PaigeAgent terms you've accepted -> /app/agreements/platform"), `platform-terms link ${JSON.stringify(n.links)}`);
+    want((n.links ?? []).some((l) => l === "Platform terms you've accepted -> /app/agreements/platform"), `platform-terms link ${JSON.stringify(n.links)}`);
     want(!EMAIL_PROMISE.test(n.pageText ?? ""), `the page sends the customer to the emailed link: "${(n.pageText ?? "").match(EMAIL_PROMISE)?.[0]}"`);
     want(!HOW_IT_TRAVELLED.test(n.pageText ?? ""), `the page says how a link travelled: "${(n.pageText ?? "").match(HOW_IT_TRAVELLED)?.[0]}"`);
     want(!(n.links ?? []).some((l) => /draft=/.test(l)), `a ?draft= link nothing reads yet ${JSON.stringify(n.links)}`);

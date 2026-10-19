@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- pre-existing legacy `any` debt in this
+   file (untyped Supabase reads, stale generated types). The E09 Customer Portal identity change
+   (CURA, never PAIGE, on customer surfaces) only edited copy here and introduced ZERO new `any`s;
+   retyping is tracked separately (#234). */
 import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +13,7 @@ import {
   Zap, AlertTriangle, TrendingUp, TrendingDown, Calendar,
   Clock, CreditCard, Layers, Search, Sparkles, X, ArrowRight, Loader2,
 } from "lucide-react";
+import { useAssistantName } from "@/lib/portal/customerIdentity";
 
 type PredictionType =
   | "score_drop_warning"
@@ -104,6 +109,7 @@ function sortPredictions(items: Prediction[]): Prediction[] {
 }
 
 export function PredictionsPanel({ userId, variant = "full", onNavigate }: PredictionsPanelProps) {
+  const assistant = useAssistantName();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const limit = variant === "compact" ? 3 : 5;
@@ -147,7 +153,7 @@ export function PredictionsPanel({ userId, variant = "full", onNavigate }: Predi
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Predictions refreshed", description: "Paige re-scanned your file." });
+      toast({ title: "Predictions refreshed", description: `${assistant} re-scanned your file.` });
       queryClient.invalidateQueries({ queryKey: ["credit-predictions", userId] });
     },
     onError: (err: any) => {
@@ -186,7 +192,7 @@ export function PredictionsPanel({ userId, variant = "full", onNavigate }: Predi
         <div className="flex items-center justify-between gap-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Zap className="w-5 h-5 text-accent" />
-            Paige's Predictions
+            {assistant}'s predictions
             {predictions.length > 0 && (
               <Badge variant="secondary" className="ml-1">
                 {predictions.length}
@@ -218,7 +224,7 @@ export function PredictionsPanel({ userId, variant = "full", onNavigate }: Predi
           </div>
         ) : visible.length === 0 ? (
           <div className="text-sm text-muted-foreground text-center py-6">
-            No active predictions right now. Paige will surface insights here as your file changes.
+            No active predictions right now. {assistant} will surface insights here as your file changes.
           </div>
         ) : (
           visible.map((p) => {

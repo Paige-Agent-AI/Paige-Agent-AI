@@ -41,6 +41,8 @@ function harness(name,allowed,{provider='resend',queued=false,foreign=false,seat
  // Preserve the handler's real personal/shared mailbox decision. Its import is
  // removed below with the other module syntax; an always-allow port is not policy.
  if(name==='send-message')vm.runInContext(stripTypeScriptTypes(readFileSync(new URL('inbox-intelligence/policy.ts',import.meta.url),'utf8').replace(/\bexport /g,'')),ctx);
+ // send-message also imports the business-first From-name rule; load its real body too.
+ if(name==='send-message')vm.runInContext(stripTypeScriptTypes(readFileSync(new URL('email/sender-display-name.ts',import.meta.url),'utf8').replace(/\bexport /g,'')),ctx);
  // The actual callback now imports this authority reader. Load its real body,
  // rather than silently stripping the import and failing before the floor.
  if(name==='gmail-oauth-callback')vm.runInContext(stripTypeScriptTypes(readFileSync(new URL('gmail-connection-authority.ts',import.meta.url),'utf8').replace(/\bexport /g,'')),ctx);

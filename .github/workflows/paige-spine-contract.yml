@@ -606,6 +606,12 @@ jobs:
       # 'funding' not a starter preset, and no customer-tier credit uploads or non-entitled alerts.
       - run: supabase test db supabase/tests/e09_finance_entitlement.sql
         if: ${{ !cancelled() }}
+      # E09 K1: the customer Knowledge share contract v2 — business-wide audience, kind and window; nothing
+      # auto-published; only the owner (never the bare operator) publishes a pinned document; finance-marked
+      # Knowledge only for an entitled business, re-checked at read; paused/merged/suspended cut off; exact
+      # chunks only; kind-aware snapshot refs; the settle lock covers business rows (withdraw → withheld).
+      - run: supabase test db supabase/tests/e09_customer_knowledge_v2.sql
+        if: ${{ !cancelled() }}
       # The owner's real send through create_solo_team_invite, accepted through accept_solo_team_invite,
       # for Member and Admin across two businesses: no hand-written token.
       - run: supabase test db supabase/tests/solo_team_invite_accept_end_to_end.sql

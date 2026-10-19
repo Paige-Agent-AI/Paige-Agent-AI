@@ -70,7 +70,7 @@ export function useCommercialCustomers() {
         setLoading(false);
         return;
       }
-      setData(result as CommercialCustomersData);
+      setData(result as unknown as CommercialCustomersData);
       setLoading(false);
     })();
     return () => {
@@ -163,7 +163,7 @@ export function useCustomerHistory(userId: string | null) {
         setLoading(false);
         return;
       }
-      setData(result as CustomerHistory);
+      setData(result as unknown as CustomerHistory);
       setLoading(false);
     })();
     return () => {

@@ -1,4 +1,4 @@
--- E09 F2: the customer's portal read carries its business's finance entitlement (20271111040000).
+-- E09 F2: the customer's portal read carries its business's finance entitlement (20271111045000).
 -- Full replayed schema, real caller roles, synthetic data only (§63: Northwind Studio, Jordan Rivera);
 -- all rolled back.
 --

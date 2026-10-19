@@ -35,7 +35,7 @@ ACCEPTANCE_CRITERIA: A customer of a freshly provisioned Solo business opens /ap
 MOTION_PURPOSE: NONE: no new motion.
 PROTECTED_SEAMS: `_tenant_finance_entitled` stays the one predicate (read server-side into get_client_portal_config; staff through current_tenant_finance_entitled); get_paige_persona_context is not replaced; set_tenant_portal_config stays the one menu writer.
 
-INTERNAL_BUILD_IDENTITY: parent 661f08d46ac64ee1827671ae3b58d494e19d2e86 (F1b) + the e09-funding-f2 commit that carries this record (a record cannot name its own SHA); deployment=NOT_DEPLOYED; environment=local; migrations=PROOF_OWED(20271111040000 persisted apply on production after merge, after 20271111030000); edge=PROOF_OWED(paige-ai-chat deploy readback after merge); evidence=scripts/live-drive/harness/portal-finance-entitlement-mount/finance-drive.mjs
+INTERNAL_BUILD_IDENTITY: parent 661f08d46ac64ee1827671ae3b58d494e19d2e86 (F1b) + the e09-funding-f2 commit that carries this record (a record cannot name its own SHA); deployment=NOT_DEPLOYED; environment=local; migrations=PROOF_OWED(20271111045000 persisted apply on production after merge, after 20271111030000); edge=PROOF_OWED(paige-ai-chat deploy readback after merge); evidence=scripts/live-drive/harness/portal-finance-entitlement-mount/finance-drive.mjs
 RELEASE_CHANNEL: development: local branch; production deployment, migration persisted-apply and edge readback are verified after merge.
 RELEASE_CLASSIFICATION: internal-only: a Customer Portal entitlement correction; no customer release.
 CUSTOMER_RELEASE_IDENTITY: none: pre-launch; no customer release named.

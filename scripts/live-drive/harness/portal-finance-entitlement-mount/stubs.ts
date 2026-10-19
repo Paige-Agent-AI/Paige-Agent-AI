@@ -1,7 +1,7 @@
 // Deterministic data boundary for the E09 F2 finance-entitlement harness.
 // HARNESS RENDER · SYNTHETIC DATA · NOT LIVE. Every name is fictional ("Northwind Studio", "Jordan Rivera").
 //
-// The customer's portal read (get_client_portal_config, 20271111040000) carries `entitlements.finance`; the
+// The customer's portal read (get_client_portal_config, 20271111045000) carries `entitlements.finance`; the
 // business's Playbook catalog is the generic one (`fresh`, a freshly provisioned Solo business) or the funding
 // preset (`funding-off`: chose the Playbook but holds no install; `funding-on`: a deliberate install). The customer
 // has credit reports, funding applications, credit alerts and credit factor scores on file in EVERY state, so the

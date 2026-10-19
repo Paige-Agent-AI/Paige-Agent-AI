@@ -334,7 +334,7 @@ posture**, and **(d) permitted-RPC scoping**, each grounded in a named resolver 
 
 ## Surface ledger — what actually SHIPPED, per tier (§66)
 
-### E09 F2 — funding and credit in the customer portal follow the business's entitlement (branch `e09-funding-f2`, migration `20271111040000`, 2026-10-19; not yet merged; after F1a and F1b)
+### E09 F2 — funding and credit in the customer portal follow the business's entitlement (branch `e09-funding-f2`, migration `20271111045000`, 2026-10-19; not yet merged; after F1a and F1b)
 
 | Tier | `/app` funding/credit pages, menu entries, Home credit/funding tiles, bell credit alerts | `funding_readiness` surfaces (QuickStatsBar, credit-first onboarding and checklist steps, push-prompt credit wording) | Chat credit-report path / funding persona |
 |---|---|---|---|

@@ -64,7 +64,7 @@ export const VIEW_SOURCES: Readonly<Record<string, ViewSource>> = {
    * The real operator comms capability (task #22's Twilio seam) is at its own address and is
    * untouched (§58). Their keys stay in `carries`.
    */
-  "relationships/people": { bespoke: "PeopleSurface", carries: [] },
+  "relationships/people": { bespoke: "CustomersDesk", carries: ["platform/commercial-customers"] },
   "relationships/conversations": {
     bespoke: "ConversationsSurface",
     carries: ["comms/outbound", "comms/templates", "comms/sent-log", "support/inbox", "support/escalations", "support/response-policy"],

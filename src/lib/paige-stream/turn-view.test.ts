@@ -15,6 +15,7 @@ import {
   formatElapsed,
   isDecisionReplyText,
   mergeResumedRows,
+  readRecoveryReadOnlyRefusal,
   readTurnTrace,
   settleTurnRows,
   upsertTurnRow,
@@ -196,6 +197,30 @@ describe("turn view — after the turn ends", () => {
 });
 
 describe("turn view — a saved thread reads back the same", () => {
+  const refusedRecord = { v: 1, state: "INTERRUPTED", mode: "pending", rounds: 0, tools: 0 } as const;
+  const refusalMarker = { v: 1, code: "INTERACTIVE_RECOVERY_READ_ONLY" };
+  it("an exact saved zero-work refusal has held feedback and no repeat-draft footer", () => {
+    expect(readRecoveryReadOnlyRefusal(refusalMarker, refusedRecord)).toBe(true);
+    expect(deriveSnapshotView({ outcome: refusedRecord, rows: [], elapsedMs: null, endCause: null,
+      source: "reload", hasContent: true, recoveryReadOnlyRefusal: true }, { awaitingApproval: false }))
+      .toMatchObject({ kind: "held", glyph: "lock", text: "New actions and attachments on hold", footer: null });
+  });
+  it.each([undefined, null, [], "INTERACTIVE_RECOVERY_READ_ONLY", {}, { v: "1", code: refusalMarker.code },
+    { v: 2, code: refusalMarker.code }, { v: 1, code: "OTHER_REFUSAL" }].map(marker => [marker]))("unknown refusal metadata keeps normal interruption feedback: %j", marker => {
+    expect(readRecoveryReadOnlyRefusal(marker, refusedRecord)).toBe(false);
+  });
+  it.each([null, { ...refusedRecord, state: "FINAL" }, { ...refusedRecord, mode: "action" },
+    { ...refusedRecord, tools: 1 }, { ...refusedRecord, rounds: 1 }].map(record => [record]))("a contradictory record cannot claim a pre-processing refusal: %j", record => {
+    expect(readRecoveryReadOnlyRefusal(refusalMarker, record as Parameters<typeof readRecoveryReadOnlyRefusal>[1])).toBe(false);
+  });
+  it("a refusal marker cannot hide existing steps or change a successful outcome", () => {
+    const snapshot = { rows: [row("existing", "Checked records")], elapsedMs: null, endCause: null,
+      source: "reload", hasContent: true, recoveryReadOnlyRefusal: true } as const;
+    expect(deriveSnapshotView({ ...snapshot, rows: [...snapshot.rows], outcome: refusedRecord }, { awaitingApproval: false }))
+      .toMatchObject({ kind: "warn", footer: { actions: ["askAgain"] } });
+    expect(deriveSnapshotView({ ...snapshot, rows: [...snapshot.rows], outcome: { state: "FINAL", mode: "action" } }, { awaitingApproval: false }))
+      .toMatchObject({ kind: "done", footer: null });
+  });
   it("reload settle matches the live settle for the same trace (time and step detail excepted)", () => {
     const rows = [row("a", "Looked through your contacts"), row("b", "Checked your calendar", "error")];
     const liveView = deriveLiveTurnView(live({ frame: frame("completed", "FINAL", "action"), streaming: false, endCause: "done", elapsedMs: 9_000, rows }))!;

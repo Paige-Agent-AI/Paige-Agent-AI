@@ -66,6 +66,7 @@ import {
   isDecisionReplyText,
   mergeResumedRows,
   outcomeFromRecord,
+  readRecoveryReadOnlyRefusal,
   readPaigeStreamWithRaw,
   readTurnRecord,
   readTurnTrace,
@@ -1154,6 +1155,7 @@ const PaigeAIChatInner = ({
           endCause: null,
           source: "reload",
           hasContent: t.content.trim() !== "",
+          ...(readRecoveryReadOnlyRefusal(b.interactive_refusal, record) ? { recoveryReadOnlyRefusal: true } : {}),
           // C4a — only an APPROVAL carried forward draws the two answers as one (a3/a4). An answer
           // carried forward (C4c) is the person speaking between them, so the two stay two (c3).
           ...(record.resumed?.kind === "approval" ? { resumed: true } : {}),

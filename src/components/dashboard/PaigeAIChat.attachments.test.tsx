@@ -226,10 +226,26 @@ describe("INT-338 real composer attachment integration", () => {
     ]);
     await render({ activeThreadId: "refused-thread" }); await waitForWritable();
     expect(host.textContent).toContain(content); expect(host.textContent).toContain("Review this brief");
+    expect(host.textContent).toContain("New actions and attachments on hold");
+    expect(host.textContent).not.toContain("Stopped before finishing");
+    expect(Array.from(host.querySelectorAll("button")).some(b => /ask again|retry/i.test(b.textContent ?? ""))).toBe(false);
     expect(host.textContent).not.toContain("The connection ended"); expect(fetch).not.toHaveBeenCalled();
     expect(remove()).toBeNull();
     expect(host.textContent).not.toContain("Remove the attached file first");
     expect(Array.from(host.querySelectorAll("button")).some(b => b.textContent === "Retry")).toBe(false);
+  });
+  it.each([undefined, { v: 1, code: "OTHER_REFUSAL" }, { v: 2, code: "INTERACTIVE_RECOVERY_READ_ONLY" }])("reload never infers recovery refusal from prose with unknown marker %j", async marker => {
+    harness.threads = [{ id: "unknown-thread", title: "Interrupted reply", updated_at: "2026-10-19T12:00:00Z" }];
+    harness.loadTurns.mockResolvedValue([
+      { id: "original-user", role: "user", content: "Review this brief" },
+      { id: "original-answer", role: "assistant", content: "Your message was recorded, but new actions and attachments are on hold.",
+        bundle_ref: { turn_state: { v: 1, state: "INTERRUPTED", mode: "pending", rounds: 0, tools: 0 }, interactive_refusal: marker } },
+    ]);
+    await render({ activeThreadId: "unknown-thread" }); await waitForWritable();
+    expect(host.textContent).toContain("Stopped before finishing");
+    expect(host.textContent).not.toContain("New actions and attachments on hold");
+    expect(Array.from(host.querySelectorAll("button")).some(b => /ask again/i.test(b.textContent ?? ""))).toBe(true);
+    expect(fetch).not.toHaveBeenCalled();
   });
   it("Stop preserves a staged attachment and the next draft", async () => {
     vi.stubGlobal("fetch", vi.fn(async (_url, init: RequestInit) => {

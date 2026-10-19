@@ -349,7 +349,7 @@ Edge only; no visible surface changes (the portal-side funding surfaces are slic
 
 `paige-mcp` credit-score and banking-snapshot ingest need the entitlement (they always concern a business's customer). Evidence: Deno suites incl. the SQL/TS drift test; driven harnesses `test:sync-credit-report-data` and `test:apply-extraction`. Authenticated runtime UNVERIFIED (no session driven).
 
-### E09 F1a — the finance entitlement is per business and cannot be self-granted from the browser (branch `e09-funding-f1a`, migration `20271111030000`, 2026-10-19; not yet merged)
+### E09 F1a — the finance entitlement is per business and cannot be self-granted from the browser (migration `20271111030000`, merged #2379 → `264687877`, live and read back 2026-10-19)
 
 Database only; no visible surface and no edge function changes in this PR (edge isolation is F1b, the next PR; the portal-side funding surfaces are slice F2). The one predicate is `_tenant_finance_entitled(business)` = an active `is_finance` Marketplace install OR `features.finance_in_scope` (the persona expression, verbatim). Production at grounding: 1 of 12 businesses entitled; it stays entitled.
 

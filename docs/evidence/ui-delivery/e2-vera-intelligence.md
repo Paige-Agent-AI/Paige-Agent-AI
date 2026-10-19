@@ -14,7 +14,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: source checks do not establish deployed regis
 KEYBOARD_FOCUS: UNVERIFIED: existing native button and focus styles retained; candidate keyboard drive remains due.
 ZOOM_REFLOW: UNVERIFIED: wrapping and minimum touch size inspected in source; native zoom/reflow proof remains due.
 REDUCED_MOTION: UNVERIFIED: this change adds no motion; candidate preference verification remains due.
-STATE_COVERAGE: PARTIAL: local tests cover disabled handoff and editable unsent invitation; native empty/error/recovery states remain due.
+STATE_COVERAGE: UNVERIFIED: local tests cover disabled handoff and editable unsent invitation; native empty/error/recovery states remain due.
 TRUTHFUL_STATE_LABELS: PASS: department remit is distinguished from historical authorship; the invitation claims neither delegated execution nor a completed action.
 SOLO_UI: YES: existing Business Review Executive, team directory and approval context.
 UNVERIFIED: rendered, authenticated, keyboard, zoom, reduced-motion, Live and full-Experience acceptance remain due; the viewport records below are not passing evidence.

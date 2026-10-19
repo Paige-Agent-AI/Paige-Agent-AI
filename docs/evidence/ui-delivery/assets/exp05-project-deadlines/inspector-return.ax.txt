@@ -1,0 +1,58 @@
+Browser tab: 170268718, Title: "Local actual SOLO Projects proof", URL: "http://127.0.0.1:58638/?theme=light&context=b&view=projects".
+1 AXWebArea Local actual SOLO Projects proof, URL: 127.0.0.1:58638/?theme=light&context=b&view=projects
+	2 container
+		3 container
+			4 text PAIGE folded; your conversation is preserved
+			5 link Description: Skip to content, Value: 127.0.0.1:58638/?theme=light&context=b&view=projects#tenant-shell-main
+			6 container Tenant workspace
+				7 link Description: PAIGE Solo home, Value: 127.0.0.1:58638/solo/1702/command-center
+				8 button Expand navigation
+					9 image
+				10 link Description: Command Center, Value: 127.0.0.1:58638/solo/1702/command-center
+				11 link Description: Operations, Value: 127.0.0.1:58638/solo/1702/operations
+				12 link Description: Clients, Value: 127.0.0.1:58638/solo/1702/clients
+				13 link Description: Marketing, Value: 127.0.0.1:58638/solo/1702/growth
+				14 link Description: Ads, Value: 127.0.0.1:58638/solo/1702/ads
+				15 link Description: Sales, Value: 127.0.0.1:58638/solo/1702/sales
+				16 link Description: Finance, Value: 127.0.0.1:58638/solo/1702/finance
+				17 link Description: Marketplace, Value: 127.0.0.1:58638/solo/1702/marketplace
+				18 link Description: Settings, Value: 127.0.0.1:58638/solo/1702/settings
+				19 button Description: Use Obsidian theme, Help: Obsidian theme
+				20 button Sign out
+				21 text SY
+			22 button (collapsed) Description: Direct PAIGE, Secondary Actions: Expand
+				23 image PAIGE
+				24 text Direct PAIGE, or press ⌘\
+				25 text ⌘\
+			26 container Operations department
+				27 container
+					28 container Department views
+						29 button Overview
+						30 button Work
+						31 button Projects
+						32 button Delivery
+						33 button Playbooks
+						34 button Capacity
+					35 button New project
+					36 button Refresh work and team profiles
+						37 image
+					38 button Review with PAIGE
+				39 container Projects
+					40 container
+						41 heading Every project, a clear next step, Value: 1
+							42 text Every project, a clear next step
+						43 text Follow the milestones, the owners and the work still ahead. 1  plans shown
+					44 container
+						45 button Client onboarding
+						46 text Prepare the agreed work and confirm the next commitment.
+						47 text active Jordan Ellis Jan 2  —  Jan 9 0  of  3  items completed
+						48 progress indicator Description: Client onboarding: recorded work completion, Value: 0
+						49 content list
+							50 button Share the agreed next steps Jan 2 · Ready
+								51 text Share the agreed next steps
+								52 container
+									53 text Jan 2  ·  Ready
+					54 text Progress reflects recorded tasks and milestones. Delivery review and client acceptance are separate.
+				55 text Figures reflect the projects and work loaded here.
+
+The focused UI element is 45 button Client onboarding

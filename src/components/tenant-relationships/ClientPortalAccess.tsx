@@ -308,7 +308,8 @@ function ReInvite({ tenantId, person, onClose }: { tenantId: string; person: Rel
   const latest = rows?.find((row) => row.contact_id === person.id && !row.last_used_at);
   return (
     <div className="trc-access-reinvite">
-      <p>If they accept, they’ll see your earlier messages and shared work. Their earlier invitations no longer work.</p>
+      {/* Round 2 (compliance 5): the person who accepts may not be the one who left, so name all of it. */}
+      <p>Whoever accepts sees what this client’s record holds in your portal: earlier messages, shared work and files, invoices issued to this client, and agreements that name them as a signer. Their earlier invitations no longer work.</p>
       {rows ? (
         <PortalConfigurationGate tenantId={tenantId}>
           <PortalInvitationManager tenantId={tenantId} person={unlinked} latest={latest} onReadback={() => invitations.invalidate()} />

@@ -696,9 +696,9 @@ function ClientRecord({
       <div className="trc-record-body">
         {standing && <ClientStanding key={person.id} contactId={person.id} clientName={person.name} account={standing.account} openPaige={openPaige} />}
         {/* E09 Slice 3: what this client sees in their portal, chosen item by item. Same gate as standing (Solo only, §60/D1). */}
-        {standing && <ClientSharedWork key={`shared:${person.id}`} contactId={person.id} clientName={person.name} portalConnected={access.joined && access.state === "open"} portalPaused={access.state === "paused"} />}
+        {standing && <ClientSharedWork key={`shared:${person.id}`} contactId={person.id} clientName={person.name} portalConnected={access.joined && access.state === "open"} portalPaused={access.state === "paused"} portalEnded={access.state === "ended"} />}
         {/* E09 Slice 4: this client's files — private until shared, file by file. Same gate (Solo only, §60/D1). */}
-        {standing && <ClientFiles key={`files:${person.id}`} contactId={person.id} clientName={person.name} portalConnected={Boolean(person.linkedUserId)} />}
+        {standing && <ClientFiles key={`files:${person.id}`} contactId={person.id} clientName={person.name} portalConnected={access.joined && access.state === "open"} portalAccess={access.state} />}
         {/* E09 Slice 7: pause, restore or end this client's portal access — the one home for that act (§18). Under what the client is shown (Shared with, then Files for). */}
         {portalAccess && <ClientPortalAccess key={`access:${person.id}`} person={person} onOpenPortal={portalAccess.openPortal} onChanged={portalAccess.onChanged} onAccessChange={(state, joined) => setAccess({ state, joined })} />}
         {/* E09 Slice 6: how this client can be reached, read-only, from the one consent derivation. Same gate as standing. */}

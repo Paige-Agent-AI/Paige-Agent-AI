@@ -184,6 +184,20 @@ export function inspectIncumbentSource(chatText,tool) {
 // 15 (the whole-handler try), which holds those insertions. action-risk.ts is base plus Slice 7's one added
 // `high` row; its canonical digest a7c03694... equals the digest Slice 7 reviewed, so that SOURCES pin is
 // the reviewed one. Renew those 29 dispatch scalars only.
+// E09 Slice 7 integration round-2 renewal (2026-10-19), integrating-crew source review (NOT non-author):
+// the compliance review found Paige's share confirmations told the owner a PAUSED client "can now open it
+// in their portal" (the share writers reported the login link alone). The paige-ai-chat delta is three
+// confirmation notes plus one name added to the existing client-portal-access import: crm_file_document's
+// same-client share note and its re-file note, and plan_item_set_client_share's note, each now say "can
+// open it now" only on the branch where the writer's portal_connected is not false, and otherwise append
+// portalUnseenNote(...) (a pure sentence from _shared/client-portal-access.ts naming paused / ended / not
+// joined); each result also carries the writer's portal_access. No write, authority, tenant, actor,
+// confirmation or verifier path changed. Decomposed per contract (dispatch branches, dominating controls,
+// local helpers, imports, identity inputs): all equal for all 29 except identity input 15 (the
+// whole-handler try: 6 canonical lines replaced by 14, all inside those three notes and the import name)
+// and crm_file_document's own dispatch branch (its two notes) and import set (client-portal-access.ts is
+// now referenced from that branch, for portalUnseenNote). action-risk.ts is byte-identical. Renew those 29
+// dispatch scalars only; no SOURCES/ANCESTRY digest changes.
 const CONTRACTS = {
   "comms_setup_calling": {
     "key": "communications.comms_setup_calling",

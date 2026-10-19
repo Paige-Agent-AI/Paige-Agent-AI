@@ -226,7 +226,7 @@ SELECT ok((SELECT revoked_at IS NOT NULL FROM public.tenant_invite_tokens WHERE 
 SELECT ok((SELECT revoked_at IS NULL FROM public.tenant_invite_tokens WHERE id='e0947000-0000-4000-8000-000000000002'),'the used (accepted) invitation is left as history');
 SELECT is((SELECT count(*) FROM public.audit_logs WHERE entity_id='e0937000-0000-4000-8000-0000000000c1' AND action='client_portal.access_paused'),1::bigint,'one audit row');
 SELECT is((SELECT array_agg(k ORDER BY k) FROM public.audit_logs a, jsonb_object_keys(a.data) k WHERE a.entity_id='e0937000-0000-4000-8000-0000000000c1' AND a.action='client_portal.access_paused'),
- ARRAY['contact_id','new_state','prior_state','reason','tenant_id','tokens_revoked','user_id'],'the audit row carries fixed references only');
+ ARRAY['contact_id','new_state','prior_state','reason','signing_links_revoked','tenant_id','tokens_revoked','user_id'],'the audit row carries fixed references only');
 SELECT ok((SELECT strpos(a.data::text,'March')=0 AND strpos(a.data::text,'Casey')=0 FROM public.audit_logs a WHERE a.entity_id='e0937000-0000-4000-8000-0000000000c1' AND a.action='client_portal.access_paused'),
  'never the note and never a name');
 SELECT is((SELECT data->>'tokens_revoked' FROM public.audit_logs WHERE entity_id='e0937000-0000-4000-8000-0000000000c1' AND action='client_portal.access_paused'),'1','the audit counts the revoked invitation');

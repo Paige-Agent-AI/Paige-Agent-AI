@@ -52,8 +52,8 @@ beforeEach(() => {
 afterEach(() => { act(() => root.unmount()); host.remove(); });
 
 const flush = async () => { for (let i = 0; i < 6; i++) await act(async () => { await Promise.resolve(); }); };
-async function render(portalConnected = true, portalPaused = false) {
-  await act(async () => root.render(<ClientSharedWork contactId={CLIENT} clientName="Jordan Rivera" portalConnected={portalConnected} portalPaused={portalPaused} />));
+async function render(portalConnected = true, portalPaused = false, portalEnded = false) {
+  await act(async () => root.render(<ClientSharedWork contactId={CLIENT} clientName="Jordan Rivera" portalConnected={portalConnected} portalPaused={portalPaused} portalEnded={portalEnded} />));
   await flush();
 }
 const row = (title: string) => [...host.querySelectorAll<HTMLElement>(".trc-shared-row")].find(r => r.querySelector("strong")?.textContent === title);
@@ -227,6 +227,17 @@ describe("ClientSharedWork", () => {
     await render(false); await flip("Draft discovery report");
     expect(row("Draft discovery report")?.textContent).toContain("Shared. Jordan will see this once they join your portal.");
     expect(row("Draft discovery report")?.textContent).not.toContain("can see this in their portal");
+  });
+
+  // E09 Slice 7 round 2: an ended client HAD joined; "hasn't joined yet" would be untrue.
+  it("says access has ended — not 'hasn't joined' — and confirms a share truthfully", async () => {
+    reads = [status(), status([{ id: DRAFT, shared: true, updated_at: V2 }, { id: REVIEW, shared: true, updated_at: V1 }, { id: KICKOFF, shared: false, updated_at: V1 }])];
+    shareReply = { data: { ok: true, replayed: false, item_id: DRAFT, shared: true, shared_at: V2, updated_at: V2, portal_connected: false }, error: null };
+    await render(false, false, true);
+    expect(host.querySelector(".trc-shared-connect")?.textContent).toBe("Jordan’s portal access has ended, so they can’t see this. It shows again if you invite them back and they accept.");
+    await flip("Draft discovery report");
+    expect(row("Draft discovery report")?.textContent).toContain("Shared. Jordan will see this if you invite them back and they accept.");
+    expect(host.textContent).not.toContain("hasn’t joined your portal yet");
   });
 
   it("says when the client hasn't joined the portal, from the record or from the share's answer", async () => {

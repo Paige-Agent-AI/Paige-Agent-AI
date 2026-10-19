@@ -3,6 +3,7 @@ import { ExternalLink, Inbox, Lock, RefreshCw, Share2, Upload } from "lucide-rea
 import { Switch } from "@/components/ui/switch";
 import { SCOPE_CHANGED_MESSAGE, useClientFilesOwner, type OwnerFile } from "@/hooks/useClientFilesOwner";
 import { CLIENT_DOCUMENT_ACCEPT } from "@/lib/client-portal-documents";
+import type { PortalAccessStateName } from "@/lib/client-portal-access";
 import "./client-files.css";
 
 /**
@@ -14,8 +15,12 @@ import "./client-files.css";
  * client's files shows it (§70.1). The client's own uploads carry no switch — who sent a file never
  * changes. Opening a file mints a one-minute link. Sharing is a visibility setting, not an approval, so
  * there is no gold here: the switch is the record's indigo.
+ *
+ * `portalAccess` (E09 Slice 7): the record's own access state. A paused client keeps their login link but sees
+ * nothing, and an ended one has lost it, so neither may be told "can open it in their portal" — whatever an
+ * answer that reads the link alone says.
  */
-type Props = { contactId: string; clientName: string; portalConnected: boolean };
+type Props = { contactId: string; clientName: string; portalConnected: boolean; portalAccess?: PortalAccessStateName };
 type Note = { tone: "ok" | "warn" | "bad"; text: string; /** A link to click when the browser kept the new tab from opening. */ href?: string };
 
 const firstName = (name: string) => name.trim().split(/\s+/)[0] || name;
@@ -40,13 +45,14 @@ function shareRefusal(code: string, name: string): string {
   }
 }
 
-export function ClientFiles({ contactId, clientName, portalConnected }: Props) {
+export function ClientFiles({ contactId, clientName, portalConnected, portalAccess = "open" }: Props) {
   const files = useClientFilesOwner(contactId);
   const [pending, setPending] = useState<Record<string, boolean>>({});
   const [notes, setNotes] = useState<Record<string, Note>>({});
   const [connected, setConnected] = useState(portalConnected);
   // The list read says whether the client has joined; it is newer than the record the page loaded.
   const joined = files.list ? files.list.portal_connected : connected;
+  const withheld = portalAccess === "paused" || portalAccess === "ended" ? portalAccess : null;
   const [resume, setResume] = useState<OwnerFile | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const first = firstName(clientName);
@@ -71,9 +77,12 @@ export function ClientFiles({ contactId, clientName, portalConnected }: Props) {
       const result = await files.setShared(file, next);
       if (result.kind === "confirmed") {
         if (result.portalConnected !== null) setConnected(result.portalConnected);
-        const nowJoined = result.portalConnected ?? joined;
+        const nowJoined = !withheld && (result.portalConnected ?? joined);
         note(file.id, { tone: "ok", text: !next ? `No longer shared with ${clientName}.`
-          : nowJoined ? `Shared. ${clientName} can open it in their portal.` : `Shared. ${first} will see it once they join your portal.` });
+          : nowJoined ? `Shared. ${clientName} can open it in their portal.`
+            : withheld === "paused" ? `Shared. ${first} will see it if you restore their access.`
+              : withheld === "ended" ? `Shared. ${first} will see it if you invite them back and they accept.`
+                : `Shared. ${first} will see it once they join your portal.` });
       } else if (result.kind === "refused") {
         let reread = true;
         if (result.reread) { try { await files.reload(); } catch { reread = false; } }
@@ -195,9 +204,13 @@ export function ClientFiles({ contactId, clientName, portalConnected }: Props) {
         </div>
       </div>
 
-      {!joined && files.phase === "ready" && (
+      {files.phase === "ready" && (withheld === "paused" ? (
+        <p className="trc-files-connect" role="note">Paused — {first} can’t see shared files right now. They show again if you restore their access.</p>
+      ) : withheld === "ended" ? (
+        <p className="trc-files-connect" role="note">{first}’s portal access has ended, so they can’t see shared files. They show again if you invite them back and they accept.</p>
+      ) : !joined && (
         <p className="trc-files-connect" role="note">{clientName} hasn’t joined your portal yet; shared files appear when they do.</p>
-      )}
+      ))}
 
       <input ref={input} type="file" className="sr-only" tabIndex={-1} aria-hidden="true" accept={CLIENT_DOCUMENT_ACCEPT}
         onChange={event => {

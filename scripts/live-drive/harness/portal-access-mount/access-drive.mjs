@@ -325,7 +325,7 @@ function unmet(s, n) {
       want(/^Paused — Jordan can’t see this right now\./.test(n.sharedNote ?? ""), `shared-with paused line "${n.sharedNote}"`);
       break;
     case "reinvite":
-      want(/If they accept, they’ll see your earlier messages and shared work\./.test(n.reinvite ?? ""), `reinvite copy "${n.reinvite}"`);
+      want(/Whoever accepts sees what this client’s record holds in your portal: earlier messages, shared work and files, invoices issued to this client, and agreements that name them as a signer\./.test(n.reinvite ?? ""), `reinvite copy "${n.reinvite}"`);
       // The existing invitation command, for this contact, and usable: the ended contact is no longer linked.
       want(n.manager === 1 && n.review?.disabled === false && !/couldn’t be checked/.test(n.reinvite ?? ""), `reinvite manager ${n.manager} review ${JSON.stringify(n.review)}`);
       // Review 9: the spent joining invitation is not shown as "Latest invitation: accepted" under "Access ended".

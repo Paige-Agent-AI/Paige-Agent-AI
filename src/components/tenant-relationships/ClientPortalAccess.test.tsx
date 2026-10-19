@@ -203,7 +203,8 @@ describe("Portal access card on the client record", () => {
     const manager = host.querySelector("[data-invitation-manager]")!;
     expect(manager.getAttribute("data-invitation-manager")).toBe("test-contact-a");
     expect(manager.getAttribute("data-linked")).toBe("null");
-    expect(host.textContent).toContain("they’ll see your earlier messages and shared work");
+    // Round 2 (compliance 5): everything a new acceptor would see, since the person accepting may not be the one who left.
+    expect(host.textContent).toContain("Whoever accepts sees what this client’s record holds in your portal: earlier messages, shared work and files, invoices issued to this client, and agreements that name them as a signer. Their earlier invitations no longer work.");
   });
 
   it("a refused read (another role) offers no controls", async () => {

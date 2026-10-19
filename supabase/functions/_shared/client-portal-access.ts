@@ -26,6 +26,29 @@
 // call was sent is `outcome_unknown`, never retried here.
 
 export const PORTAL_ACCESS_ACTIONS = ["pause", "restore", "end"] as const;
+
+// ── What a share answer says the client can see (E09 Slice 7 round 2) ──────────────────────────────
+// The two share writers (client_file_set_client_share, plan_item_set_client_share) answer
+// portal_connected = "can open the portal now" (linked AND access open) and portal_access, which names
+// why not. A paused client keeps their login link, so the link alone never means "they can see it".
+export type PortalShareAccess = "open" | "paused" | "ended" | "not_joined";
+const SHARE_ACCESS: readonly PortalShareAccess[] = ["open", "paused", "ended", "not_joined"];
+/** The writer's portal_access, or null when absent or unknown (an answer from before the field existed). */
+export function readPortalShareAccess(v: unknown): PortalShareAccess | null {
+  return typeof v === "string" && (SHARE_ACCESS as readonly string[]).includes(v) ? v as PortalShareAccess : null;
+}
+/**
+ * One sentence on why the client cannot see what was just shared — "" when they can (connected is not false).
+ * Paige appends it to her confirmation, so she never says "they can open it now" to a paused client.
+ */
+export function portalUnseenNote(r: { portalConnected: boolean | null; portalAccess?: PortalShareAccess | null }): string {
+  if (r.portalConnected !== false) return "";
+  switch (r.portalAccess) {
+    case "paused": return " Their portal access is paused, so they can't see it until the business restores it.";
+    case "ended": return " Their portal access has ended, so they will see it only if they are invited back and accept.";
+    default: return " This client hasn't joined their portal yet, so they'll see it once they do.";
+  }
+}
 export type PortalAccessAction = typeof PORTAL_ACCESS_ACTIONS[number];
 /** The writer's CHECK set (clients_portal_access_reason_check). Owner-internal; never shown to the client. */
 export const PORTAL_ACCESS_REASONS = [

@@ -59,6 +59,13 @@ describe("owner read", () => {
   it("accepts the server shape for the record it was opened for", () => {
     expect(readClientCommunicationState(owner(), expected)?.portal_joined).toBe(true);
   });
+  it("carries the portal access state (E09 Slice 7), and refuses one it does not know", () => {
+    expect(readClientCommunicationState(owner({ portal_access: "paused" }), expected)?.portal_access).toBe("paused");
+    expect(readClientCommunicationState(owner({ portal_access: "suspended" }), expected)).toBeNull();
+    const { portal_access: _drop, ...older } = owner();
+    void _drop;
+    expect(readClientCommunicationState(older, expected)?.portal_access).toBeNull();
+  });
   it.each([
     ["another business", { tenant_id: OTHER }],
     ["another client", { contact_id: "e0960000-0000-4000-8000-00000000d002" }],

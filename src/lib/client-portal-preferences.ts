@@ -152,15 +152,25 @@ export interface ClientCommunicationState {
   data_sharing: DataSharingPreference;
   quiet_hours: QuietHours;
   portal_joined: boolean;
+  /**
+   * E09 Slice 7: joined is the login link, which a paused client keeps and an ended one has lost; this says
+   * which. NULL when the server predates the access state (the key is then absent) — read portal_joined alone.
+   */
+  portal_access: OwnerPortalAccess | null;
   do_not_contact: boolean;
   dnd_active: boolean;
   read_at: string;
 }
+export type OwnerPortalAccess = "open" | "paused" | "ended" | "not_joined";
+const OWNER_PORTAL_ACCESS: readonly OwnerPortalAccess[] = ["open", "paused", "ended", "not_joined"];
 const OWNER_KEYS = ["schema_version", "tenant_id", "contact_id", "email", "sms", "updates", "data_sharing", "quiet_hours",
   "portal_joined", "do_not_contact", "dnd_active", "read_at"];
 
 export function readClientCommunicationState(data: unknown, expected: { tenantId: string; contactId: string }): ClientCommunicationState | null {
-  if (!isObj(data) || !exactKeys(data, OWNER_KEYS) || data.schema_version !== 1) return null;
+  // portal_access is the one key a reader may meet or not (it arrived with E09 Slice 7); every other key is exact.
+  const hasAccess = isObj(data) && Object.prototype.hasOwnProperty.call(data, "portal_access");
+  if (!isObj(data) || !exactKeys(data, hasAccess ? [...OWNER_KEYS, "portal_access"] : OWNER_KEYS) || data.schema_version !== 1) return null;
+  if (hasAccess && !OWNER_PORTAL_ACCESS.includes(data.portal_access as OwnerPortalAccess)) return null;
   if (data.tenant_id !== expected.tenantId || data.contact_id !== expected.contactId || !isTime(data.read_at)) return null;
   const email = readChannel(data.email, EMAIL_STATES, true);
   const sms = readChannel(data.sms, SMS_STATES, true);
@@ -171,7 +181,8 @@ export function readClientCommunicationState(data: unknown, expected: { tenantId
   if (typeof data.portal_joined !== "boolean" || typeof data.do_not_contact !== "boolean" || typeof data.dnd_active !== "boolean") return null;
   return { tenant_id: expected.tenantId, contact_id: expected.contactId, email, sms, updates, data_sharing: sharing,
     quiet_hours: quiet,
-    portal_joined: data.portal_joined, do_not_contact: data.do_not_contact, dnd_active: data.dnd_active, read_at: data.read_at };
+    portal_joined: data.portal_joined, portal_access: hasAccess ? data.portal_access as OwnerPortalAccess : null,
+    do_not_contact: data.do_not_contact, dnd_active: data.dnd_active, read_at: data.read_at };
 }
 
 /**

@@ -5,7 +5,7 @@
 // (--allow-read: the door and migration checks read the repo tree.)
 import { assert, assertEquals, assertNotEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
-  parsePortalAccessRequest, portalAccessConfirmSummary, readPortalAccess, setPortalAccess,
+  parsePortalAccessRequest, portalAccessConfirmSummary, portalUnseenNote, readPortalAccess, readPortalShareAccess, setPortalAccess,
   PORTAL_ACCESS_MESSAGES, PORTAL_ACCESS_REASONS, type PortalAccessCaller,
 } from "./client-portal-access.ts";
 import {
@@ -268,4 +268,33 @@ Deno.test("the resolver restatement is the incumbent body plus exactly one predi
   const after = body("20271110240000_e09_customer_portal_access.sql");
   assertEquals(after.replace("\n    AND c.portal_access_state = 'open'", ""), before);
   assertEquals(after.split("portal_access_state").length - 1, 1);
+});
+
+// E09 Slice 7 round 2 (compliance 1, §37 consumers): a share answer's portal_access names why a client
+// cannot see what was shared. Paige never confirms "they can open it now" when the writer says they can't.
+Deno.test("the share answer's access state is read strictly, and the unseen note says why", () => {
+  assertEquals(readPortalShareAccess("paused"), "paused");
+  assertEquals(readPortalShareAccess("ended"), "ended");
+  assertEquals(readPortalShareAccess("not_joined"), "not_joined");
+  assertEquals(readPortalShareAccess("open"), "open");
+  assertEquals(readPortalShareAccess("suspended"), null);
+  assertEquals(readPortalShareAccess(undefined), null);
+  assertEquals(portalUnseenNote({ portalConnected: true, portalAccess: "open" }), "");
+  assertEquals(portalUnseenNote({ portalConnected: null, portalAccess: null }), "");
+  assertEquals(portalUnseenNote({ portalConnected: false, portalAccess: "paused" }), " Their portal access is paused, so they can't see it until the business restores it.");
+  assertEquals(portalUnseenNote({ portalConnected: false, portalAccess: "ended" }), " Their portal access has ended, so they will see it only if they are invited back and accept.");
+  assertEquals(portalUnseenNote({ portalConnected: false, portalAccess: "not_joined" }), " This client hasn't joined their portal yet, so they'll see it once they do.");
+  assertEquals(portalUnseenNote({ portalConnected: false, portalAccess: null }), " This client hasn't joined their portal yet, so they'll see it once they do.");
+});
+
+Deno.test("chat never tells the owner a client can open a share the writer says they cannot", () => {
+  const chat = Deno.readTextFileSync(new URL("../paige-ai-chat/index.ts", import.meta.url));
+  for (const claim of ["they can now open it in their portal", "visible to them in their portal — say that plainly", "the client can now see this item's title"]) {
+    const at = chat.indexOf(claim);
+    assert(at > 0, claim);
+    // Each "can see it now" sentence sits on the connected branch of a portalConnected === false test.
+    const before = chat.slice(Math.max(0, at - 400), at);
+    assert(/portalConnected === false/.test(before), `"${claim}" is not guarded by portalConnected`);
+  }
+  assertEquals((chat.match(/portalUnseenNote\(/g) ?? []).length, 3);
 });

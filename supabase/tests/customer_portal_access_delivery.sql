@@ -113,6 +113,9 @@ insert into delivery_test_values values('audit_before',(select count(*)::text fr
 select set_config('request.jwt.claim.sub','ed010000-0000-4000-8000-000000000004',true);
 set local role authenticated;
 select pg_temp.refused($s$select public.operations_delivery_client_reviews_scoped('ed010000-0000-4000-8000-000000000004','ed010000-0000-4000-8000-000000001111',40)$s$,'42501','paused: released-work discovery refused');
+-- Round 2 (verifier finding 2): the OPENING gate refuses a paused client before it looks at any argument,
+-- so an out-of-range page size is still "unavailable", never a limit error that admits they reached it.
+select pg_temp.refused($s$select public.operations_delivery_client_reviews_scoped('ed010000-0000-4000-8000-000000000004','ed010000-0000-4000-8000-000000001111',41)$s$,'42501','paused: the opening gate refuses before the page size is examined');
 select pg_temp.refused($s$select public.operations_delivery_client_read_scoped((select value::uuid from delivery_test_values where key='release'),'ed010000-0000-4000-8000-000000000004','ed010000-0000-4000-8000-000000001111')$s$,'42501','paused: the released artifact is not readable');
 select pg_temp.refused($s$select public.operations_delivery_client_decide_scoped((select value::uuid from delivery_test_values where key='release'),'ed010000-0000-4000-8000-000000000004','ed010000-0000-4000-8000-000000001111',(select value::timestamptz from delivery_test_values where key='release_updated'),'accepted','Looks good')$s$,'42501','paused: a decision is refused');
 reset role;
@@ -127,6 +130,32 @@ reset role;
 select set_config('request.jwt.claim.sub','ed010000-0000-4000-8000-000000000004',true);
 set local role authenticated;
 select pg_temp.check_true(jsonb_array_length(public.operations_delivery_client_reviews_scoped('ed010000-0000-4000-8000-000000000004','ed010000-0000-4000-8000-000000001111',40)->'releases')=1,'restored: discovery is back');
+reset role;
+-- Round 2 (verifier finding 2): a pause that lands DURING the list — after the opening gate and after a
+-- row was read — is caught by the CLOSING gate, which refuses the whole answer. A stand-in for the per-row
+-- reader returns the real row and then pauses the client, as a staff pause committing mid-loop would.
+alter function public.operations_delivery_client_read_scoped(uuid,uuid,uuid) rename to operations_delivery_client_read_scoped_real;
+create function public.operations_delivery_client_read_scoped(p_release_id uuid,p_expected_actor_id uuid,p_expected_tenant_id uuid)
+returns jsonb language plpgsql security definer set search_path='' as $f$
+declare v jsonb;
+begin
+  v:=public.operations_delivery_client_read_scoped_real(p_release_id,p_expected_actor_id,p_expected_tenant_id);
+  perform pg_catalog.set_config('paige.portal_access_write','1',true);
+  update public.clients set portal_access_state='paused',portal_access_reason='other',portal_access_changed_at=pg_catalog.clock_timestamp()
+   where id='ed010000-0000-4000-8000-00000000c001';
+  perform pg_catalog.set_config('paige.portal_access_write','',true);
+  return v;
+end $f$;
+grant execute on function public.operations_delivery_client_read_scoped(uuid,uuid,uuid) to authenticated;
+select set_config('request.jwt.claim.sub','ed010000-0000-4000-8000-000000000004',true);
+set local role authenticated;
+select pg_temp.refused($s$select public.operations_delivery_client_reviews_scoped('ed010000-0000-4000-8000-000000000004','ed010000-0000-4000-8000-000000001111',40)$s$,'42501','a pause landing mid-list is refused by the closing gate');
+reset role;
+drop function public.operations_delivery_client_read_scoped(uuid,uuid,uuid);
+alter function public.operations_delivery_client_read_scoped_real(uuid,uuid,uuid) rename to operations_delivery_client_read_scoped;
+select pg_temp.check_true((select portal_access_state='open' from public.clients where id='ed010000-0000-4000-8000-00000000c001'),'(the refused list rolled the stand-in pause back)');
+select set_config('request.jwt.claim.sub','ed010000-0000-4000-8000-000000000004',true);
+set local role authenticated;
 select pg_temp.check_true(public.operations_delivery_client_decide_scoped((select value::uuid from delivery_test_values where key='release'),'ed010000-0000-4000-8000-000000000004','ed010000-0000-4000-8000-000000001111',(select value::timestamptz from delivery_test_values where key='release_updated'),'accepted','Looks good')->>'state'='accepted','restored: the client decides');
 reset role;
 select set_config('request.jwt.claim.sub','',true);

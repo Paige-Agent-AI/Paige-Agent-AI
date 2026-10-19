@@ -35,13 +35,23 @@ export function CustomerAccessGate({ userId, enabled, children }: { userId: stri
 /** A calm, full-height page under the business's own name. One action: Sign out. */
 export function CustomerAccessState({ state, access }: { state: "paused" | "ended"; access: WithheldCustomerAccess }) {
   const [signingOut, setSigningOut] = useState(false);
+  const [stillSignedIn, setStillSignedIn] = useState(false);
   const copy = customerAccessCopy(state, access.businessName);
   const signOut = async () => {
     if (signingOut) return;
     setSigningOut(true);
-    // Customers land on their business's gateway; without one cached, the site root.
-    const target = await customerSignOutTarget("/");
-    await performSignOut(target);
+    setStillSignedIn(false);
+    let left = false;
+    try {
+      // Customers land on their business's gateway; without one cached, the site root.
+      const target = await customerSignOutTarget("/");
+      // false: nothing was signed out (an open act-as was refused or could not be checked, or a sign-out was
+      // already running). The page's only control must then work again, never sit disabled on "Signing out…".
+      left = (await performSignOut(target)) !== false;
+    } catch {
+      left = false;
+    }
+    if (!left) { setSigningOut(false); setStillSignedIn(true); }
   };
   return (
     <main className="customer-access-state min-h-dvh bg-background text-foreground flex items-center justify-center px-4 py-12" data-access-state={state}>
@@ -65,6 +75,7 @@ export function CustomerAccessState({ state, access }: { state: "paused" | "ende
           <LogOut aria-hidden className="h-4 w-4" />
           {signingOut ? "Signing out…" : "Sign out"}
         </Button>
+        {stillSignedIn && <p role="alert" className="-mt-3 text-[15px] text-foreground">You’re still signed in. Try signing out again.</p>}
       </section>
     </main>
   );

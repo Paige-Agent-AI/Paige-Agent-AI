@@ -47,7 +47,7 @@ import { configurePortalMenu, readPortalMenu, type PortalMenuFailure } from '../
 import { refileClientDocument, routeFileDocument, shareClientFile } from '../_shared/crm/client-file-share.ts';
 // E09 Slice 7: read, pause, restore or end one client's portal access (set is high; owner/admin only).
 import { PORTAL_ACCESS_TOOLS } from '../_shared/paige-spine/domains/client_portal.ts';
-import { accessVersionToken, portalAccessClientName, portalAccessConfirmSummary, readPortalAccess, setPortalAccess, type PortalAccessFailure } from '../_shared/client-portal-access.ts';
+import { accessVersionToken, portalAccessClientName, portalAccessConfirmSummary, portalUnseenNote, readPortalAccess, setPortalAccess, type PortalAccessFailure } from '../_shared/client-portal-access.ts';
 import { GROWTH_FORM_TOOLS } from '../_shared/paige-spine/domains/growth_form.ts';
 import { readAgreements } from '../_shared/agreements/chat-read.ts';
 import { agreementSendPrecheck, draftAgreement, sendAgreement } from '../_shared/agreements/chat-write.ts';
@@ -14727,12 +14727,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                         visibility: shared.shared ? "shared" : "internal",
                         replayed: shared.replayed,
                         portal_connected: shared.portalConnected,
+                        portal_access: shared.portalAccess ?? undefined,
                         readback: { id: shared.fileId, shared: shared.shared, shared_at: shared.sharedAt, updated_at: shared.updatedAt },
                         verified_readback: true,
+                        // E09 Slice 7: "can open it now" only when the writer says the client can open the portal now.
                         note: (shared.shared
-                          ? "Verified: it stays on their record and they can now open it in their portal. They were not sent a message."
+                          ? (shared.portalConnected === false
+                            ? "Verified: it stays on their record and is shared to their portal. They were not sent a message."
+                              + portalUnseenNote(shared)
+                            : "Verified: it stays on their record and they can now open it in their portal. They were not sent a message.")
                           : "Verified: it stays on their record and only the team can see it now.")
-                          + (shared.portalConnected === false ? " This client hasn't joined their portal yet, so they'll see it once they do." : "")
                           + (shared.replayed ? " It was already set that way; nothing changed." : ""),
                       }
                     : {
@@ -14774,10 +14778,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                         visibility: refiled.shared ? "shared" : "internal",
                         moved_from_contact_id: refiled.movedFromContactId ?? undefined,
                         portal_connected: refiled.share?.portalConnected ?? undefined,
+                        portal_access: refiled.share?.portalAccess ?? undefined,
                         verified_readback: true,
                         note: refiled.shared
-                          ? "Filed on their record AND visible to them in their portal — say that plainly, because they can read it now. They were not sent a message."
-                            + (refiled.share?.portalConnected === false ? " This client hasn't joined their portal yet, so they'll see it once they do." : "")
+                          ? (refiled.share?.portalConnected === false
+                            ? "Filed on their record and shared to their portal. They were not sent a message." + portalUnseenNote(refiled.share)
+                            : "Filed on their record AND visible to them in their portal — say that plainly, because they can read it now. They were not sent a message.")
                           : "Filed on their record where the team can see it. The client cannot — say so if it matters."
                             + (refiled.movedFromContactId ? " A file moved to another client always arrives private." : ""),
                       }
@@ -17584,12 +17590,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(r.success === true
               ? { success: true, item_id: r.itemId, plan_item_id: r.itemId, shared: r.shared, replayed: r.replayed,
                   portal_connected: r.portalConnected,
+                  portal_access: r.portalAccess ?? undefined,
                   readback: { id: r.itemId, shared: r.shared, shared_at: r.sharedAt, updated_at: r.updatedAt },
                   record_locator: { table: "plan_items", id: r.itemId }, verified_readback: true,
+                  // E09 Slice 7: "can now see" only when the writer says the client can open the portal now.
                   note: (r.shared
-                    ? "Verified: the client can now see this item's title, state and due date in their portal. They were not sent a message."
+                    ? (r.portalConnected === false
+                      ? "Verified: this item's title, state and due date are shared to their portal. They were not sent a message."
+                        + portalUnseenNote(r)
+                      : "Verified: the client can now see this item's title, state and due date in their portal. They were not sent a message.")
                     : "Verified: the client no longer sees this item in their portal.")
-                    + (r.portalConnected === false ? " This client has not connected to their portal yet, so they will see it once they do." : "")
                     + (r.replayed ? " It was already in that state; nothing was changed." : "") }
               : { success: false, error: r.message, reason: r.reason,
                   ...(r.writeAttempted ? { outcome_unknown: true, note: OUTCOME_UNKNOWN_NOTE } : { not_applied: true }),

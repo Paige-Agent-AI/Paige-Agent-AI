@@ -51,7 +51,7 @@ beforeEach(() => {
 });
 afterEach(() => { act(() => root.unmount()); host.remove(); vi.restoreAllMocks(); });
 const flush = async () => act(async () => { for (let i = 0; i < 60; i++) await Promise.resolve(); });
-const render = async (connected = true) => { await act(async () => root.render(<ClientFiles contactId={contact} clientName="Jordan Rivera" portalConnected={connected} />)); await flush(); };
+const render = async (connected = true, portalAccess?: "open" | "paused" | "ended") => { await act(async () => root.render(<ClientFiles contactId={contact} clientName="Jordan Rivera" portalConnected={connected} portalAccess={portalAccess} />)); await flush(); };
 const switchFor = (name: string) => host.querySelector<HTMLButtonElement>(`[aria-label="Share ${name} with Jordan Rivera"]`);
 const button = (label: string) => Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find(b => b.textContent?.trim() === label)!;
 const choose = async (name = "Proposal.pdf", type = "application/pdf") => {
@@ -239,6 +239,27 @@ it("keeps one header layout: Refresh sits in the header whether the list is empt
 it("says when the client hasn't joined the portal yet", async () => {
   f.connected = false; await render(false);
   expect(host.textContent).toContain("Jordan Rivera hasn’t joined your portal yet; shared files appear when they do.");
+});
+// E09 Slice 7 round 2 (compliance 1): a paused client keeps the login link, so "linked" is not "can see".
+// The card names paused and ended, and never confirms a share as something the client can open now —
+// even against a server that still reports the link alone (portal_connected true while paused).
+it.each([
+  ["paused", "Paused — Jordan can’t see shared files right now. They show again if you restore their access.", "Shared. Jordan will see it if you restore their access."],
+  ["ended", "Jordan’s portal access has ended, so they can’t see shared files. They show again if you invite them back and they accept.", "Shared. Jordan will see it if you invite them back and they accept."],
+] as const)("says access is %s instead of 'can open it', and confirms a share truthfully", async (state, line, confirmation) => {
+  f.connected = true; // the link alone (an older answer) must not win over the record's access state
+  await render(state === "paused", state);
+  expect(host.textContent).toContain(line);
+  expect(host.textContent).not.toContain("hasn’t joined your portal yet");
+  await act(async () => switchFor("File 2.pdf")!.click()); await flush();
+  expect(host.textContent).toContain(confirmation);
+  expect(host.textContent).not.toContain("can open it in their portal");
+});
+it("follows the server when it reports the client cannot open the portal, even if the record looked open", async () => {
+  await render(true, "open");
+  f.connected = false;
+  await act(async () => switchFor("File 2.pdf")!.click()); await flush();
+  expect(host.textContent).toContain("Shared. Jordan will see it once they join your portal.");
 });
 it.each([
   ["a member who isn't an owner or admin", { data: null, error: { code: "42501", message: "FILE_SCOPE_CHANGED" } }, "Only the business owner or an admin can see and share Jordan Rivera’s files."],

@@ -369,6 +369,7 @@ DECLARE
   v_reason text := nullif(btrim(coalesce(p_reason, '')), '');
   v_tenant_status text;
   v_tokens integer := 0;
+  v_links integer := 0;
   v_blocked text;
   v_out jsonb;
 BEGIN
@@ -439,6 +440,27 @@ BEGIN
       WHERE tk.contact_id = v_row.id AND tk.tenant_id = v_tenant AND tk.kind = 'consumer'
         AND tk.revoked_at IS NULL AND tk.last_used_at IS NULL;
       GET DIAGNOSTICS v_tokens = ROW_COUNT;
+      -- A signing link the PORTAL issued for this relationship (client_portal_open_agreement_signing) stops
+      -- working too: it was handed out because access was open, so it must not outlive the pause or the
+      -- end (integrator default S7-D1, round 2; the owner may overrule). The portal's link REPLACED the
+      -- signer's token, so the current token is the portal's exactly when its latest portal issue is no
+      -- older than the business's latest send for that signer. A link the business emailed (and the portal
+      -- never replaced) is the business's own act and is left as it is, like invoices and booking links (D5).
+      -- Only token_hash is cleared: token_expires_at stays, so a restored client's next portal link can only
+      -- keep or shorten that deadline (the opener's least()), and token_revoked_at stays untouched, so the
+      -- business can still send a fresh link.
+      UPDATE public.paige_agreement_signers s SET token_hash = NULL, updated_at = now()
+      FROM public.paige_agreements a
+      WHERE a.id = s.agreement_id AND a.tenant_id = v_tenant AND a.contact_id = v_row.id
+        AND s.tenant_id = v_tenant AND s.signer_role = 'counterparty'
+        AND s.token_hash IS NOT NULL AND s.status IN ('pending','viewed')
+        AND EXISTS (SELECT 1 FROM public.paige_audit_log l
+                     WHERE l.target_type = 'paige_agreement' AND l.target_id = a.id
+                       AND l.action = 'agreement.portal_link_issued' AND l.payload->>'signer_id' = s.id::text
+                       AND l.created_at >= coalesce((SELECT max(e.created_at) FROM public.paige_agreement_events e
+                                                      WHERE e.agreement_id = a.id AND e.signer_id = s.id
+                                                        AND e.event_type IN ('sent','resent')), '-infinity'::timestamptz));
+      GET DIAGNOSTICS v_links = ROW_COUNT;
     END IF;
     -- 8. Audit: fixed references only. Never the note, never a name.
     INSERT INTO public.audit_logs(user_id, entity, action, entity_id, data)
@@ -449,7 +471,8 @@ BEGIN
       v_row.id,
       jsonb_build_object('tenant_id', v_tenant, 'contact_id', v_row.id, 'user_id', v_row.linked_user_id,
         'prior_state', v_row.portal_access_state, 'new_state', v_target,
-        'reason', CASE WHEN p_action = 'restore' THEN NULL ELSE v_reason END, 'tokens_revoked', v_tokens));
+        'reason', CASE WHEN p_action = 'restore' THEN NULL ELSE v_reason END, 'tokens_revoked', v_tokens,
+        'signing_links_revoked', v_links));
     -- 9. Result: the owner's read, from the row as it now stands. No notification is sent.
     v_out := public._client_portal_access_projection(v_tenant, v_row.id);
     RETURN v_out || jsonb_build_object('replayed', false);
@@ -462,7 +485,7 @@ REVOKE ALL ON FUNCTION public.set_client_portal_access(uuid, uuid, uuid, text, t
   FROM PUBLIC, anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.set_client_portal_access(uuid, uuid, uuid, text, text, text, timestamptz) TO authenticated;
 COMMENT ON FUNCTION public.set_client_portal_access(uuid, uuid, uuid, text, text, text, timestamptz) IS
-  'E09 Slice 7: the only writer of clients.portal_access_*. p_action pause | restore | end. Business owner/admin of the CURRENT workspace (the invitation authority); never a top-level agency (PORTAL_ACCESS_UNAVAILABLE). Keyed id + current tenant. Version-guarded on portal_access_changed_at (ACCESS_CHANGED); state-idempotent (replayed:true writes nothing). pause/end revoke every open consumer invitation for the contact; end clears the link and remembers the former login. Audited as client_portal.access_paused | _restored | _ended with fixed references. No notification is sent; no session, role, membership or Auth user is touched.';
+  'E09 Slice 7: the only writer of clients.portal_access_*. p_action pause | restore | end. Business owner/admin of the CURRENT workspace (the invitation authority); never a top-level agency (PORTAL_ACCESS_UNAVAILABLE). Keyed id + current tenant. Version-guarded on portal_access_changed_at (ACCESS_CHANGED); state-idempotent (replayed:true writes nothing). pause/end revoke every open consumer invitation for the contact and every agreement-signing link the portal issued for it (an emailed link stays); end clears the link and remembers the former login. Audited as client_portal.access_paused | _restored | _ended with fixed references. No notification is sent; no session, role, membership or Auth user is touched.';
 
 -- ── 5c. The customer's honest read ──────────────────────────────────────────────────────────────
 -- Works WITHOUT an open relationship, keyed on auth.uid() only and taking no argument, so it can never
@@ -773,8 +796,11 @@ AS $function$ SELECT EXISTS (SELECT 1 FROM public.clients WHERE id = _client_id 
 REVOKE ALL ON FUNCTION public.is_program_client_owner(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.is_program_client_owner(uuid) TO authenticated, service_role;
 
--- INVOKER: a customer's own read of clients is already refused by clients_customer_raw_boundary, so
--- these are closed today; the predicate is defence in depth. anon never had a reason to call them.
+-- INVOKER. A pure customer's own read of clients is refused by clients_customer_raw_boundary, so for them
+-- these answer NO_LINKED_CONTACT whatever the state. The predicate is NOT redundant, though (round 2,
+-- verifier finding 2): a member of the business who is also linked as its client (the open §58 self-link
+-- path) reads that row through the staff policy, and only this predicate keeps a paused or ended link from
+-- loading their client context (pinned in customer_portal_access_doors.sql). anon never had a reason to call them.
 CREATE OR REPLACE FUNCTION public.load_self_context()
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -982,7 +1008,11 @@ end $$;
 revoke all on function public.operations_delivery_client_read_scoped(uuid,uuid,uuid) from public,anon,authenticated;
 grant execute on function public.operations_delivery_client_read_scoped(uuid,uuid,uuid) to authenticated;
 
--- The two gate checks and the candidate join gain the access state; each row still goes through read_scoped.
+-- The two gate checks gain the access state; each row still goes through read_scoped, which carries it too.
+-- The candidate join deliberately does NOT (round 2, verifier finding 2): the opening gate has just proven this
+-- person's one row at this business open (one row per person per business), the per-row read_scoped refuses a
+-- row whose client is not open, and the closing gate refuses the whole answer if a pause landed during the loop.
+-- A predicate there could change no outcome, so no test could ever see it removed.
 CREATE OR REPLACE FUNCTION public.operations_delivery_client_reviews_scoped(p_expected_actor_id uuid, p_expected_tenant_id uuid, p_limit integer DEFAULT 40)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -1009,7 +1039,7 @@ begin
     select r.id,r.submission_id,r.state,r.updated_at,s.revision_no,s.artifact_digest
     from public.operations_delivery_client_releases r
     join public.clients c on c.id=r.client_id and c.tenant_id=r.tenant_id
-      and c.linked_user_id=r.client_user_id and c.merged_into_contact_id is null and c.portal_access_state='open'
+      and c.linked_user_id=r.client_user_id and c.merged_into_contact_id is null
     join public.operations_delivery_submissions s on s.id=r.submission_id
       and s.tenant_id=r.tenant_id and s.client_id=r.client_id
     where r.tenant_id=p_expected_tenant_id and r.client_user_id=v_actor
@@ -2826,5 +2856,310 @@ BEGIN
   RETURN _proven;
 END;
 $$;
+
+-- ── 13. Owner reads that said "can see it" from the link alone (§37 consumer inventory, round 2) ──
+-- Pausing keeps the link, so "linked" no longer means "can see". Four owner-facing answers read the link
+-- alone and so told the owner a paused client could open what they had just shared (or that an ended
+-- client had never joined). Each is its newest body (the file named on its line) with the access state
+-- added; nothing else changes.
+--   * client_file_set_client_share, plan_item_set_client_share: portal_connected is now "linked AND access
+--     open", and the reply gains portal_access (open | paused | ended | not_joined, or NULL with no live
+--     client) so a caller can say why not. Every consumer reads the reply's keys by name, never exactly.
+--   * client_file_owner_list: portal_connected likewise. Its envelope keys are UNCHANGED, because the Files
+--     card validates them exactly (useClientFilesOwner LIST_KEYS); the card names paused / ended from the
+--     record's own access state.
+--   * read_client_communication_state: gains portal_access beside portal_joined. Its reader
+--     (readClientCommunicationState) accepts the key from this migration on, and still accepts its absence.
+-- The one wording of that state, shared by all four (internal; no API role may call it).
+CREATE OR REPLACE FUNCTION public._client_portal_access_word(p_found boolean, p_linked uuid, p_state text)
+RETURNS text
+LANGUAGE sql IMMUTABLE
+SET search_path = ''
+AS $$
+  SELECT CASE
+    WHEN p_found IS NOT TRUE THEN NULL
+    WHEN p_state = 'paused' THEN 'paused'
+    WHEN p_state = 'ended' THEN 'ended'
+    WHEN p_linked IS NULL THEN 'not_joined'
+    ELSE 'open' END;
+$$;
+REVOKE ALL ON FUNCTION public._client_portal_access_word(boolean, uuid, text) FROM PUBLIC, anon, authenticated, service_role;
+
+-- client_file_set_client_share: from 20271110200000_e09_customer_portal_documents.sql (Documents); + the access state in portal_connected, + portal_access.
+CREATE OR REPLACE FUNCTION public.client_file_set_client_share(
+  p_expected_actor_id uuid, p_expected_tenant_id uuid, p_file_id uuid, p_shared boolean,
+  p_expected_updated_at timestamptz)
+RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_actor uuid := auth.uid();
+  v_tenant uuid;
+  v_account_type text;
+  v_parent uuid;
+  v_row public.client_files%ROWTYPE;
+  v_linked uuid;
+  v_state text;
+  v_client_found boolean;
+BEGIN
+  -- 1. Caller.
+  IF v_actor IS NULL OR p_expected_actor_id IS NULL OR v_actor IS DISTINCT FROM p_expected_actor_id
+     OR p_expected_tenant_id IS NULL THEN
+    RAISE EXCEPTION 'FILE_SCOPE_CHANGED' USING ERRCODE = '42501';
+  END IF;
+  PERFORM 1 FROM public.profiles WHERE user_id = v_actor FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'FILE_SCOPE_CHANGED' USING ERRCODE = '42501'; END IF;
+  -- 2. Workspace and role (§59).
+  v_tenant := public.current_user_tenant_id();
+  IF v_tenant IS DISTINCT FROM p_expected_tenant_id OR NOT public.is_tenant_admin(v_tenant) THEN
+    RAISE EXCEPTION 'FILE_SCOPE_CHANGED' USING ERRCODE = '42501';
+  END IF;
+  IF p_file_id IS NULL OR p_shared IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'INVALID_REQUEST');
+  END IF;
+  -- 3. Tier (§61 exception, as Slice 3).
+  SELECT t.account_type::text, t.parent_tenant_id INTO v_account_type, v_parent
+  FROM public.tenants t WHERE t.id = v_tenant;
+  IF v_account_type = 'agency' AND v_parent IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'CLIENT_FILES_UNAVAILABLE');
+  END IF;
+  -- 4. Load. Another workspace's file is indistinguishable from a missing one.
+  SELECT * INTO v_row FROM public.client_files WHERE id = p_file_id AND tenant_id = v_tenant FOR UPDATE;
+  IF NOT FOUND THEN RETURN jsonb_build_object('ok', false, 'error', 'FILE_NOT_FOUND'); END IF;
+  -- 5. Shape. What the client sent stays theirs; an unfinished upload has nothing to show.
+  IF v_row.visibility = 'client_upload' THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'FILE_IS_CLIENT_UPLOAD');
+  END IF;
+  IF v_row.upload_state <> 'ready' THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'FILE_NOT_READY');
+  END IF;
+  SELECT c.linked_user_id, c.portal_access_state INTO v_linked, v_state FROM public.clients c
+  WHERE c.id = v_row.contact_id AND c.tenant_id = v_tenant AND c.status = 'active'
+    AND c.merged_into_contact_id IS NULL
+  FOR SHARE OF c;
+  v_client_found := FOUND;
+  -- Sharing needs a live client. Withdrawing a share never does: unsharing is always allowed.
+  IF NOT v_client_found AND p_shared THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'CONTACT_NOT_FOUND');
+  END IF;
+  -- 6. State replay: a retry of a change that already landed answers from the row, writes nothing.
+  IF (v_row.visibility = 'shared') = p_shared THEN
+    RETURN jsonb_build_object('ok', true, 'replayed', true, 'file_id', v_row.id, 'shared', p_shared,
+      'shared_at', v_row.shared_at, 'updated_at', v_row.updated_at, 'portal_connected', v_client_found AND v_linked IS NOT NULL AND v_state = 'open',
+      'portal_access', public._client_portal_access_word(v_client_found, v_linked, v_state));
+  END IF;
+  -- 7. Version: the owner shares exactly the file they last saw.
+  IF p_expected_updated_at IS NULL OR v_row.updated_at IS DISTINCT FROM p_expected_updated_at THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'FILE_CHANGED', 'updated_at', v_row.updated_at);
+  END IF;
+  -- 8. Write. The share-stamp trigger records shared_at / shared_by; the flag opens its gate for
+  -- this one UPDATE and is closed again before anything else runs in the transaction.
+  PERFORM set_config('paige.client_file_share', 'on', true);
+  UPDATE public.client_files SET visibility = CASE WHEN p_shared THEN 'shared' ELSE 'internal' END::public.client_file_visibility
+  WHERE id = v_row.id
+  RETURNING * INTO v_row;
+  PERFORM set_config('paige.client_file_share', 'off', true);
+  -- 9. Audit. Fixed references only, never a filename.
+  INSERT INTO public.audit_logs(user_id, entity, action, entity_id, data)
+  VALUES (v_actor, 'client_files', CASE WHEN p_shared THEN 'client_share' ELSE 'client_unshare' END, v_row.id,
+    jsonb_build_object('tenant_id', v_tenant, 'contact_id', v_row.contact_id, 'file_id', v_row.id));
+  -- 10. Result. portal_connected says whether the client can see it yet: linked AND access open (Slice 7);
+  -- portal_access names why not. No notification is sent (D4).
+  RETURN jsonb_build_object('ok', true, 'replayed', false, 'file_id', v_row.id, 'shared', p_shared,
+    'shared_at', v_row.shared_at, 'updated_at', v_row.updated_at, 'portal_connected', v_client_found AND v_linked IS NOT NULL AND v_state = 'open',
+      'portal_access', public._client_portal_access_word(v_client_found, v_linked, v_state));
+END;
+$$;
+
+-- client_file_owner_list: from 20271110200000_e09_customer_portal_documents.sql (Documents); + the access state in portal_connected.
+CREATE OR REPLACE FUNCTION public.client_file_owner_list(
+  p_expected_actor_id uuid, p_expected_tenant_id uuid, p_contact_id uuid, p_limit integer DEFAULT 100,
+  p_before timestamptz DEFAULT NULL, p_before_id uuid DEFAULT NULL)
+RETURNS jsonb
+LANGUAGE plpgsql STABLE SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_actor uuid := auth.uid();
+  v_tenant uuid;
+  v_account_type text;
+  v_parent uuid;
+  v_linked boolean;
+  v_limit integer := least(greatest(coalesce(p_limit, 100), 1), 100);
+  v_files jsonb;
+  v_more boolean;
+BEGIN
+  IF v_actor IS NULL OR p_expected_actor_id IS NULL OR v_actor IS DISTINCT FROM p_expected_actor_id
+     OR p_expected_tenant_id IS NULL THEN
+    RAISE EXCEPTION 'FILE_SCOPE_CHANGED' USING ERRCODE = '42501';
+  END IF;
+  v_tenant := public.current_user_tenant_id();
+  IF v_tenant IS DISTINCT FROM p_expected_tenant_id OR NOT public.is_tenant_admin(v_tenant) THEN
+    RAISE EXCEPTION 'FILE_SCOPE_CHANGED' USING ERRCODE = '42501';
+  END IF;
+  -- A page cursor is the (created_at, id) of the last file shown; both halves or neither.
+  IF p_contact_id IS NULL OR (p_before IS NULL) <> (p_before_id IS NULL) THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'INVALID_REQUEST');
+  END IF;
+  SELECT t.account_type::text, t.parent_tenant_id INTO v_account_type, v_parent
+  FROM public.tenants t WHERE t.id = v_tenant;
+  IF v_account_type = 'agency' AND v_parent IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'CLIENT_FILES_UNAVAILABLE');
+  END IF;
+  -- Slice 7: "connected" is "can open the portal now" — linked AND access open. A paused client keeps the
+  -- link but sees nothing, so it is not connected. The list's keys are unchanged (the Files card reads them exactly).
+  SELECT (c.linked_user_id IS NOT NULL AND c.status = 'active' AND c.merged_into_contact_id IS NULL
+          AND c.portal_access_state = 'open') INTO v_linked
+  FROM public.clients c WHERE c.id = p_contact_id AND c.tenant_id = v_tenant;
+  IF NOT FOUND THEN RETURN jsonb_build_object('ok', false, 'error', 'CONTACT_NOT_FOUND'); END IF;
+  -- Finished files of this client in this business, plus the caller's own unfinished uploads so
+  -- they can finish or abandon them. A client's unfinished upload is theirs until it is verified.
+  -- Newest first by (created_at, id); the next page starts strictly after the cursor row, so a file
+  -- that shares the cursor's created_at is neither repeated nor skipped.
+  WITH ranked AS (
+    SELECT f AS rec, row_number() OVER (ORDER BY f.created_at DESC, f.id DESC) AS rn
+    FROM public.client_files f
+    WHERE f.tenant_id = v_tenant AND f.contact_id = p_contact_id
+      AND (f.upload_state = 'ready' OR (f.visibility <> 'client_upload' AND f.uploaded_by_user_id = v_actor))
+      AND (p_before IS NULL OR (f.created_at, f.id) < (p_before, p_before_id))
+  )
+  SELECT coalesce(jsonb_agg(public._client_file_owner_row(r.rec) ORDER BY r.rn) FILTER (WHERE r.rn <= v_limit), '[]'::jsonb),
+    count(*) > v_limit
+  INTO v_files, v_more FROM ranked r WHERE r.rn <= v_limit + 1;
+  RETURN jsonb_build_object('ok', true, 'contact_id', p_contact_id, 'portal_connected', v_linked,
+    'files', v_files, 'has_more', v_more);
+END;
+$$;
+
+-- plan_item_set_client_share: from 20271110030000_e09_customer_portal_progress.sql (Progress); + the access state in portal_connected, + portal_access.
+CREATE OR REPLACE FUNCTION public.plan_item_set_client_share(
+  p_expected_actor_id uuid, p_expected_tenant_id uuid, p_item_id uuid, p_shared boolean,
+  p_expected_updated_at timestamptz)
+RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_actor uuid := auth.uid();
+  v_tenant uuid;
+  v_account_type text;
+  v_parent uuid;
+  v_row public.plan_items%ROWTYPE;
+  v_linked uuid;
+  v_state text;
+  v_client_found boolean;
+  v_shared_at timestamptz;
+  v_updated_at timestamptz;
+BEGIN
+  -- 1. Caller: the session subject, and the caller's own expectation of who they are.
+  IF v_actor IS NULL OR p_expected_actor_id IS NULL OR v_actor IS DISTINCT FROM p_expected_actor_id
+     OR p_expected_tenant_id IS NULL THEN
+    RAISE EXCEPTION 'PLAN_SCOPE_CHANGED' USING ERRCODE = '42501';
+  END IF;
+  -- A workspace switch updates this same profile row; holding its lock serializes against it.
+  PERFORM 1 FROM public.profiles WHERE user_id = v_actor FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'PLAN_SCOPE_CHANGED' USING ERRCODE = '42501'; END IF;
+  -- 2. Workspace and role: the current workspace, business owner/admin of it. Never a global role (§59).
+  v_tenant := public.current_user_tenant_id();
+  IF v_tenant IS DISTINCT FROM p_expected_tenant_id OR NOT public.is_tenant_admin(v_tenant) THEN
+    RAISE EXCEPTION 'PLAN_SCOPE_CHANGED' USING ERRCODE = '42501';
+  END IF;
+  IF p_item_id IS NULL OR p_shared IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'INVALID_REQUEST');
+  END IF;
+  -- 3. Tier: a top-level agency manages sub-accounts, not a direct client book (§61 exception).
+  SELECT t.account_type::text, t.parent_tenant_id INTO v_account_type, v_parent
+  FROM public.tenants t WHERE t.id = v_tenant;
+  IF v_account_type = 'agency' AND v_parent IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'CLIENT_SHARE_UNAVAILABLE');
+  END IF;
+  -- 4. Load. Another workspace's item is indistinguishable from a missing one.
+  SELECT * INTO v_row FROM public.plan_items
+  WHERE id = p_item_id AND tenant_id = v_tenant FOR UPDATE;
+  IF NOT FOUND THEN RETURN jsonb_build_object('ok', false, 'error', 'ITEM_NOT_FOUND'); END IF;
+  -- 5. Shape. Only a client-linked milestone or task is ever shareable.
+  IF v_row.contact_id IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'ITEM_NOT_CLIENT_LINKED');
+  END IF;
+  IF v_row.item_type NOT IN ('milestone','task') THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'ITEM_NOT_SHAREABLE');
+  END IF;
+  SELECT c.linked_user_id, c.portal_access_state INTO v_linked, v_state FROM public.clients c
+  WHERE c.id = v_row.contact_id AND c.tenant_id = v_tenant AND c.status = 'active'
+    AND c.merged_into_contact_id IS NULL
+  FOR SHARE OF c;
+  v_client_found := FOUND;
+  -- Sharing needs a live client. Withdrawing a share never does: unsharing is always allowed.
+  IF NOT v_client_found AND p_shared THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'CONTACT_NOT_FOUND');
+  END IF;
+  -- 6. State replay: a retry of a change that already landed answers from the row, writes nothing.
+  IF (v_row.client_shared_at IS NOT NULL) = p_shared THEN
+    RETURN jsonb_build_object('ok', true, 'replayed', true, 'item_id', v_row.id, 'shared', p_shared,
+      'shared_at', v_row.client_shared_at, 'updated_at', v_row.updated_at);
+  END IF;
+  -- 7. Version: the owner shares exactly the title and status they last saw.
+  IF p_expected_updated_at IS NULL OR v_row.updated_at IS DISTINCT FROM p_expected_updated_at THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'ITEM_CHANGED', 'updated_at', v_row.updated_at);
+  END IF;
+  -- 8. Status: a cancelled item is never newly shown to a client.
+  IF p_shared AND v_row.status = 'cancelled' THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'ITEM_NOT_SHAREABLE');
+  END IF;
+  -- 9. Write.
+  UPDATE public.plan_items SET
+    client_shared_at = CASE WHEN p_shared THEN now() END,
+    client_shared_by = CASE WHEN p_shared THEN v_actor END
+  WHERE id = v_row.id
+  RETURNING client_shared_at, updated_at INTO v_shared_at, v_updated_at;
+  -- 10. Audit, in the planning audit sink. Fixed references only, never item prose.
+  INSERT INTO public.audit_logs(user_id, entity, action, entity_id, data)
+  VALUES (v_actor, 'plan_item', CASE WHEN p_shared THEN 'plan_item.client_share' ELSE 'plan_item.client_unshare' END,
+    v_row.id, jsonb_build_object('tenant_id', v_tenant, 'contact_id', v_row.contact_id, 'item_id', v_row.id));
+  -- 11. Result. portal_connected says whether the client can see it yet: linked AND access open (Slice 7);
+  -- portal_access names why not.
+  RETURN jsonb_build_object('ok', true, 'replayed', false, 'item_id', v_row.id, 'shared', p_shared,
+    'shared_at', v_shared_at, 'updated_at', v_updated_at,
+    'portal_connected', v_client_found AND v_linked IS NOT NULL AND v_state = 'open',
+    'portal_access', public._client_portal_access_word(v_client_found, v_linked, v_state));
+END;
+$$;
+
+-- read_client_communication_state: from 20271110215000_e09_customer_portal_profile_consent.sql (Profile & Consent); + portal_access.
+CREATE OR REPLACE FUNCTION public.read_client_communication_state(_expected_tenant_id uuid, _contact_id uuid)
+RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, pg_temp
+AS $$
+DECLARE
+  _c public.clients%ROWTYPE;
+  _s jsonb;
+BEGIN
+  IF auth.uid() IS NULL OR _expected_tenant_id IS NULL
+     OR public.current_user_tenant_id() IS DISTINCT FROM _expected_tenant_id
+     OR NOT public.is_tenant_admin(_expected_tenant_id) THEN
+    RAISE EXCEPTION 'Client unavailable' USING ERRCODE = '42501';
+  END IF;
+  SELECT * INTO _c FROM public.clients WHERE id = _contact_id AND tenant_id = _expected_tenant_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Client unavailable' USING ERRCODE = '42501';
+  END IF;
+  _s := public._client_communication_state(_c.tenant_id, _c.id);
+  RETURN jsonb_build_object(
+    'schema_version', 1,
+    'tenant_id', _c.tenant_id,
+    'contact_id', _c.id,
+    'email', _s->'email',
+    'sms', _s->'sms',
+    'updates', _s->'updates',
+    'data_sharing', _s->'data_sharing',
+    'quiet_hours', _s->'quiet_hours',
+    'portal_joined', _c.linked_user_id IS NOT NULL,
+    -- Slice 7: joined is the link; a paused client keeps it and an ended one has lost it. This says which.
+    'portal_access', public._client_portal_access_word(true, _c.linked_user_id, _c.portal_access_state),
+    'do_not_contact', coalesce(_c.do_not_contact, false),
+    'dnd_active', coalesce(_c.dnd_active, false) AND (_c.dnd_until IS NULL OR _c.dnd_until > now()),
+    'read_at', clock_timestamp());
+END $$;
+
 
 COMMIT;

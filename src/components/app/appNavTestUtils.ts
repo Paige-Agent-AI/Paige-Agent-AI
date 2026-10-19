@@ -13,11 +13,25 @@ export async function openGroup(name: string, root: ParentNode = document): Prom
   const trigger = groupTriggers(root).find((b) => b.getAttribute("data-portal-group") === name);
   if (!trigger) throw new Error(`no desktop group named ${name}`);
   await act(async () => { press(trigger, "Enter"); });
-  return Array.from(document.querySelectorAll<HTMLElement>('[role="menu"] [role="menuitem"]'));
+  // Read only THIS trigger's menu, and give it a few ticks to mount: reading every open menu at once can pick
+  // up the group just closed, or none at all, and the destinations then come back short.
+  const selector = `[role="menu"][aria-labelledby="${trigger.id}"] [role="menuitem"]`;
+  for (let tick = 0; tick < 20; tick++) {
+    const items = Array.from(document.querySelectorAll<HTMLElement>(selector));
+    if (items.length) return items;
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 10)); });
+  }
+  return [];
 }
 
 export async function closeMenus() {
   await act(async () => { press(document.activeElement ?? document.body, "Escape"); });
+  // Wait until the menu has really closed and returned focus to its trigger. That focus lands a tick after the
+  // menu unmounts; arriving while the next group's menu is open, it reads as a click outside and shuts it.
+  for (let tick = 0; tick < 20 && document.querySelector('[role="menu"]'); tick++) {
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 10)); });
+  }
+  await act(async () => { await new Promise((resolve) => setTimeout(resolve, 20)); });
 }
 
 /** Every /app destination in the desktop bar, in reading order, opening each group in turn. */

@@ -125,7 +125,8 @@ describe("approved owner dashboard is a real scoped product surface", () => {
     const dialog = document.querySelector('[role="dialog"]')!;
     expect(dialog.textContent).toContain("Saved greeting"); expect(dialog.textContent).not.toContain("Agreements"); expect(dialog.querySelector('a[href^="/app"]')).toBeNull();
     // The same menu the editor and the live portal assemble (E09 Slice M): fixed Home and Messages, the business's
-    // own names, never Agreements to a customer before Slice A, and Resources, core for customers (§58).
+    // own names, the owner's own hide (this business hid Agreements — shown to every customer by default since
+    // Slice A), and Resources, core for customers (§58).
     expect(Array.from(dialog.querySelectorAll(".opd-module-list li")).map((li) => li.textContent)).toEqual(["Home", "Messages", "Progress", "Action items", "Coaching calls", "Documents", "Resources"]);
     await act(async () => (dialog.querySelector('button') as HTMLButtonElement).click());
     expect(document.querySelector('[role="dialog"]')).toBeNull();

@@ -148,3 +148,29 @@ export const CLIENT_PORTAL_PREFERENCES_READ={
  outcome:{kinds:['available','no_relationship','refused'],projector:'public.client_portal_communication_preferences',railVisibility:'None. The customer\'s own settings read.'},
  chatBinding:'UNAVAILABLE',mindBinding:'UNAVAILABLE',sharedPrimitiveChange:'NONE',maturity:'PARTIAL',
 }as const satisfies SpineCapability;
+
+// ─── E09 Slice A: the customer's own Sales Agreements, read ─────────────────────────────────────
+//
+// What a business's CUSTOMER may see of the agreements that business sent them: title, the linked
+// engagement's name, where it stands for them, and whether they can sign or download it. One reader
+// (public.client_portal_agreements, migration 20271110225000): SECURITY DEFINER, it re-proves the
+// caller's one customer relationship from auth.uid() and returns only agreements whose contact IS
+// that relationship. No body, storage key, hash, token, signer identity or amount ever leaves it.
+//
+// DECLARED, NOT MOUNTED (§13). The customer-portal Chat admits no tool by construction
+// (paige-ai-chat: a customer_portal turn clears toolDefs and refuses every provider-authored call
+// with CUSTOMER_ACTION_UNAVAILABLE). This declaration names the canonical seam so the customer
+// assistant can adopt it through its own reviewed admission; until then chatBinding stays
+// UNAVAILABLE and no seat authority is claimed (a customer is not a workspace seat).
+//
+// THERE IS NO CUSTOMER WRITE CAPABILITY HERE, deliberately. Paige never signs (_shared/action-risk.ts:
+// no agreement_sign key at any class), and she does not mint a customer's signing link either:
+// public.client_portal_open_agreement_signing is reachable only from the customer's own portal page.
+export const PORTAL_AGREEMENTS_READ={
+ key:'client.portal_agreements_read',domain:'client',owner:'clients',humanSurface:'/app/agreements',readiness:'none',selfDescribe:false,
+ action:{classification:'read',executor:'public.client_portal_agreements',riskPolicyKey:'read_only',approvalAuthority:'none',
+  idempotency:'Read-only on the customer\'s own session: public.client_portal_agreements (SECURITY DEFINER) re-proves the one active customer relationship from auth.uid() under a share lock and projects an explicit allowlist. Writes nothing.'},
+ outcome:{kinds:['available','unavailable'],projector:'public.client_portal_agreements',
+  railVisibility:'No receipt: an unmounted customer read records no activity. The one customer writer (portal signing link) audits to paige_audit_log, never to the printed agreement event trail.'},
+ chatBinding:'UNAVAILABLE',mindBinding:'UNAVAILABLE',sharedPrimitiveChange:'NONE',maturity:'PARTIAL',
+}as const satisfies SpineCapability;

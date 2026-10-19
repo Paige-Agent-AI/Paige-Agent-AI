@@ -160,19 +160,24 @@ Deno.test("Payments is registered but refused until its page exists", async () =
   assert(!r.success && r.reason === "not_available_yet");
 });
 
-Deno.test("Agreements is refused for clients until Slice A, even for a business whose catalog lists it", async () => {
-  // The funding preset lists agreements; its route is still the platform-terms page.
-  for (const e of [{ key: "agreements", visible: true }, { key: "agreements", label: "Contracts" }, { key: "agreements", visible: false }]) {
-    const f = fakeCaller({ modules: [], catalog: { slug: "funding", authored_usable: false, modules: null } });
-    const r = await configurePortalMenu({ caller: f.caller, expectedTenantId: TENANT, args: { entries: [e] } });
-    assert(!r.success && r.reason === "not_available_yet" && !r.writeAttempted, JSON.stringify(e));
-    assertEquals(f.calls.length, 0);
+Deno.test("Agreements is every customer's since Slice A: shown by default, and the owner can hide or rename it", async () => {
+  // A business whose catalog does not list it (general) and one whose catalog does (funding) alike (D-A1).
+  for (const catalog of [{ slug: "general", authored_usable: false, modules: null }, { slug: "funding", authored_usable: false, modules: null }]) {
+    const read = await readPortalMenu({ caller: fakeCaller({ modules: [], catalog }).caller, expectedTenantId: TENANT });
+    assert(read.success);
+    const a = read.entries.find((e) => e.key === "agreements")!;
+    assertEquals([a.group, a.shown, a.hidden_because, a.label], ["paperwork", true, null, "Agreements"], catalog.slug);
+    for (const e of [{ key: "agreements", label: "Contracts" }, { key: "agreements", visible: false }]) {
+      const f = fakeCaller({ modules: [], catalog });
+      const r = await configurePortalMenu({ caller: f.caller, expectedTenantId: TENANT, args: { entries: [e] } });
+      assert(r.success, `${catalog.slug} ${JSON.stringify(e)}`);
+      assertEquals(r.modules, [e]);
+    }
   }
-  const f = fakeCaller({ modules: [], catalog: { slug: "funding", authored_usable: false, modules: null } });
-  const r = await readPortalMenu({ caller: f.caller, expectedTenantId: TENANT });
-  assert(r.success);
-  const a = r.entries.find((e) => e.key === "agreements")!;
-  assertEquals([a.shown, a.hidden_because], [false, "not_available_yet"]);
+  const hidden = await readPortalMenu({ caller: fakeCaller({ modules: [{ key: "agreements", visible: false }] }).caller, expectedTenantId: TENANT });
+  assert(hidden.success);
+  const a = hidden.entries.find((e) => e.key === "agreements")!;
+  assertEquals([a.shown, a.hidden_because], [false, "owner_hid_it"]);
 });
 
 Deno.test("an unknown key, a bad shape or an over-long name is refused before any read", async () => {
@@ -360,7 +365,7 @@ Deno.test("the read projects each customer entry with the owner's name and why i
   assertEquals([by.progress.shown, by.progress.hidden_because], [false, "owner_hid_it"]);
   assertEquals([by.resources.label, by.resources.shown], ["Library", true]);
   assert(!("learn" in by), "the learn alias shares Resources' route: one row, not two");
-  assertEquals([by.agreements.shown, by.agreements.hidden_because], [false, "not_available_yet"]);
+  assertEquals([by.agreements.shown, by.agreements.hidden_because], [true, null]);
   assertEquals([by.messages.label, by.messages.fixed, by.messages.shown], ["Messages", true, true]);
   // A core entry whose page does not exist yet is reported as such, never as shown.
   assertEquals([by.billing.label, by.billing.shown, by.billing.hidden_because], ["Payments", false, "not_available_yet"]);
@@ -409,7 +414,7 @@ Deno.test("the update tool names every live core key, and no key that is not liv
   }
   for (const k of ["progress", "actions", "sessions", "documents"]) assert(PORTAL_MENU_OFFERED_CORE_KEYS.includes(k), k);
   assert(!PORTAL_MENU_OFFERED_CORE_KEYS.includes("billing"), "billing is not live");
-  assert(!PORTAL_MENU_OFFERED_CORE_KEYS.includes("agreements"), "agreements is not live for clients until Slice A");
+  assert(PORTAL_MENU_OFFERED_CORE_KEYS.includes("agreements"), "agreements is live for clients since Slice A");
   for (const k of PORTAL_MENU_FIXED_KEYS) assert(!PORTAL_MENU_CONFIGURABLE_KEYS.includes(k), k);
 });
 

@@ -39,6 +39,10 @@ vi.mock("@/hooks/useClientPortalBrand", () => ({
 }));
 vi.mock("@/hooks/useMyActions", () => ({ useMyActions: () => f.actions }));
 vi.mock("@/hooks/usePortalDocumentsGlance", () => ({ usePortalDocumentsGlance: (enabled: boolean) => { f.docsEnabled.push(enabled); return enabled ? f.docs : { state: "unavailable" }; } }));
+// E09 Slice A — the agreements line is its own component (AgreementsWaitingLine.test.tsx); here only its mount.
+vi.mock("@/components/client/AgreementsWaitingLine", () => ({
+  AgreementsWaitingLine: ({ enabled }: { enabled: boolean }) => <p data-testid="agreements-line-mount" data-enabled={String(enabled)} />,
+}));
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const START = "2026-11-03T15:00:00.000Z";
@@ -408,6 +412,17 @@ it("never shows a failed action-items read as zero", async () => {
   expect(tile("next-steps-tile-headline")!.textContent).toBe("Couldn't check right now");
   expect(tile("next-steps-tile-headline")!.className).toContain("text-lg");
   expect(tile("next-steps-tile-detail")!.textContent).toBe("Open your action items to try again.");
+});
+
+it("mounts the agreements line first, enabled only for a single-business customer (E09 Slice A)", async () => {
+  await render();
+  const grid = host.querySelector(".grid")!;
+  expect(grid.firstElementChild?.getAttribute("data-testid")).toBe("agreements-line-mount");
+  expect(grid.firstElementChild?.getAttribute("data-enabled")).toBe("true");
+  act(() => root.unmount()); root = createRoot(host);
+  f.multiple = true;
+  await render();
+  expect(host.querySelector('[data-testid="agreements-line-mount"]')?.getAttribute("data-enabled")).toBe("false");
 });
 
 it("never says coach, coached or coaching in any tile", async () => {

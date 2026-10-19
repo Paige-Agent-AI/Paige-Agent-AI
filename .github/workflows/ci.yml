@@ -854,7 +854,12 @@ jobs:
           deno test --allow-import --node-modules-dir=none --deny-net --deny-env --deny-run --deny-ffi --deny-sys \
             supabase/functions/_shared/agreements/token.test.ts \
             supabase/functions/_shared/agreements/document.test.ts \
-            supabase/functions/_shared/agreements/signing-guard.test.ts
+            supabase/functions/_shared/agreements/signing-guard.test.ts \
+            supabase/functions/_shared/agreements/portal-door.test.ts
+          # E09 Slice A: agreement-document's third (customer portal) door is mounted before the other
+          # two and leaves both byte-identical. Source pins read the repo tree only; every other deny stays.
+          deno test --allow-read --allow-import --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/agreements/portal-door-wiring.test.ts
           # Inbox Intelligence (#1140 two-mailbox pilot): the pure policy/classify/sync/organize
           # contracts. Same deny-all sandbox; the modules under test are pure by design.
           deno test --allow-import --node-modules-dir=none --deny-net --deny-env --deny-run --deny-ffi --deny-sys \

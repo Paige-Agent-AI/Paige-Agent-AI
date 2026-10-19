@@ -15,11 +15,11 @@ import type { PortalModuleOverlay } from "@/hooks/useClientPortalConfig";
 // Three inputs decide the menu, and the order of authority matters:
 //   1. FLOORS (hard rules). Who may ever see an entry: a customer of one business, anyone who is not staff,
 //      anyone whose business brand resolved, staff only. The tenant overlay can never reveal past a floor.
-//   2. The Playbook CATALOG (`portal.modules`). Catalog-only entries — the funding preset's keys, Approvals,
-//      Agreements — render only when the catalog lists them (§2: funding wording is a chosen opt-in, never a
-//      default). Resources is core for customers: a customer of one business always has it, whatever the
-//      catalog lists (§58: no customer loses it), unless the owner hides it. The catalog also supplies an
-//      entry's default name.
+//   2. The Playbook CATALOG (`portal.modules`). Catalog-only entries — the funding preset's keys, Approvals —
+//      render only when the catalog lists them (§2: funding wording is a chosen opt-in, never a default).
+//      Resources and Agreements are core for customers: a customer of one business always has them, whatever
+//      the catalog lists (§58 / owner decision D-A1), unless the owner hides them; every other viewer keeps the
+//      catalog rule for them. The catalog also supplies an entry's default name.
 //   3. The tenant OVERLAY (`portal_config.modules`): hide, rename, reorder. Purely presentational: unknown
 //      keys are inert, so the overlay can never create a link, and a fixed entry ignores it entirely.
 //
@@ -29,8 +29,8 @@ import type { PortalModuleOverlay } from "@/hooks/useClientPortalConfig";
 //
 // `live` is the route gate: an entry whose page does not exist yet never renders and is never offered in
 // the editor (no "Coming soon" — §70.1). Slice 5 flips `billing`. `clientsLive` is the same gate for every
-// viewer who is not staff: Agreements' route is still the platform-terms page, so until Slice A points it at
-// the customer's own agreements, staff keep it exactly as on main and no client reaches it through the menu.
+// viewer who is not staff, for an entry whose page is not yet the client's own (Agreements was held this way
+// until Slice A pointed its route at the customer's own agreements; no entry uses it today).
 
 export type PortalMenuGroupId = "work" | "paperwork" | "learn";
 export type PortalMenuSlot = "top" | PortalMenuGroupId;
@@ -49,8 +49,8 @@ export interface PortalMenuEntry {
   /** False until the page behind `route` exists. A non-live entry never renders. */
   live: boolean;
   /**
-   * False while the page behind `route` is not yet the client's own (Agreements until Slice A): staff keep the
-   * entry as before, a viewer who is not staff never gets it, and the owner's editor never offers it.
+   * False while the page behind `route` is not yet the client's own (Agreements was, until Slice A): staff keep
+   * the entry as before, a viewer who is not staff never gets it, and the owner's editor never offers it.
    */
   clientsLive?: boolean;
   /** "shown": present unless hidden. "catalog": present only when the Playbook catalog lists the key. */
@@ -109,9 +109,10 @@ export const PORTAL_MENU_ENTRIES: readonly PortalMenuEntry[] = [
   // ── Paperwork ──
   // Available to anyone whose business brand resolved, even when an older Playbook predates the key.
   entry({ key: "documents", defaultLabel: "Documents", route: "/app/documents", icon: FileText, group: "paperwork", floor: "brand", defaultVisibility: "shown", description: "Files shared with you" }),
-  // Today this route is the platform-terms page (MyAgreements). Staff see it when the catalog lists it, exactly
-  // as before Slice M; clients never do (clientsLive:false). Slice A points it at the customer's own agreements.
-  entry({ key: "agreements", defaultLabel: "Agreements", route: "/app/agreements", icon: FileSignature, group: "paperwork", floor: "everyone", clientsLive: false, description: "Agreements on record" }),
+  // E09 Slice A: the agreements a business sent its customer, on the Sales Agreements engine — shown to every customer
+  // of one business by default (owner decision D-A1, honest empty state), hideable and renameable by the owner. Staff
+  // and every other viewer keep the catalog rule exactly as before: the route still renders MyAgreements for them.
+  entry({ key: "agreements", defaultLabel: "Agreements", route: "/app/agreements", icon: FileSignature, group: "paperwork", floor: "everyone", shownToCustomers: true, description: "Sign and download", editorHint: "Agreements you send from Sales" }),
   // Slice 5 builds /app/billing; until then this never renders and is never offered (live:false).
   entry({ key: "billing", defaultLabel: "Payments", route: "/app/billing", icon: CreditCard, group: "paperwork", floor: "customer", live: false, catalogLabel: false, description: "Invoices and receipts", editorHint: "Hide if you bill outside Paige" }),
 

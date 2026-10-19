@@ -138,6 +138,8 @@ const ProfileSettings = lazyWithReload(() => import("./components/dashboard/Prof
 const AffiliateTracking = lazyWithReload(() => import("./components/dashboard/AffiliateTracking").then(m => ({ default: m.AffiliateTracking })));
 const Support = lazyWithReload(() => import("./pages/Support"));
 const MyAgreements = lazyWithReload(() => import("./pages/MyAgreements"));
+// E09 Slice A — a customer's Sales Agreements; everyone else still gets MyAgreements there, unchanged (§58).
+const ClientAgreements = lazyWithReload(() => import("./pages/app/Agreements"));
 const ClientApprovals = lazyWithReload(() => import("./pages/ClientApprovals"));
 const ActionItems = lazyWithReload(() => import("./pages/app/ActionItems"));
 const ClientDocuments = lazyWithReload(() => import("./pages/app/ClientDocuments"));
@@ -293,7 +295,11 @@ const App = () => /^\/payment-return\/?$/i.test(window.location.pathname) ? <Pay
               <Route path="financial-profile" element={<PageSuspense><FinancialProfile /></PageSuspense>} />
               <Route path="support" element={<PageSuspense><Support /></PageSuspense>} />
               <Route path="settings" element={<PageSuspense><ProfileSettings /></PageSuspense>} />
-              <Route path="agreements" element={<PageSuspense><MyAgreements /></PageSuspense>} />
+              {/* E09 Slice A — a customer's own agreements (sign through /sign/:token, download the sealed copy);
+                  anyone who is not a customer of a business still gets MyAgreements here, unchanged. */}
+              <Route path="agreements" element={<PageSuspense><ClientAgreements /></PageSuspense>} />
+              {/* The PaigeAgent terms the signed-in user accepted, for customers too (§58). */}
+              <Route path="agreements/platform" element={<PageSuspense><MyAgreements /></PageSuspense>} />
               <Route path="affiliate" element={<PageSuspense><AffiliateTracking /></PageSuspense>} />
               <Route path="approvals" element={<PageSuspense><ClientApprovals /></PageSuspense>} />
               <Route path="actions" element={<PageSuspense><ActionItems /></PageSuspense>} />

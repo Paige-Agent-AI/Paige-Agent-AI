@@ -1,7 +1,7 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, onTestFinished, vi } from "vitest";
 import Progress from "./Progress";
 import { groupOpenWork, PORTAL_PROGRESS_REFRESH_ERROR } from "@/hooks/useClientPortalProgress";
 import type { ClientPortalProgressState, PortalProgressItem } from "@/hooks/useClientPortalProgress";
@@ -194,6 +194,10 @@ it("leads with how much is done, at the headline step", async () => {
 
 const DAYS = (n: number) => iso(Date.now() + n * DAY);
 it("names what's next: past due first, then due today, then soonest, with the milestone as context", async () => {
+  // "Due today" is one minute ahead; run at midday so the minute never crosses midnight in any zone CI uses.
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date(process.env.PROGRESS_TEST_NOW ?? "2026-10-15T16:00:00Z"));
+  onTestFinished(() => { vi.useRealTimers(); });
   withItems([
     it_("m1", { kind: "milestone", title: "Brand identity", due_at: DAYS(20) }),
     it_("later", { parent_id: "m1", due_at: DAYS(9) }),

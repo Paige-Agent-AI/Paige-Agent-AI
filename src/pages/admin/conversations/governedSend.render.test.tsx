@@ -56,7 +56,10 @@ vi.mock("@/integrations/supabase/client", () => {
       rpc: (name: string) => Promise.resolve({ data: name === "current_user_tenant_id" ? "tenant-a" : [], error: null }),
       channel: () => channel,
       removeChannel: () => {},
-      auth: { getUser: () => Promise.resolve({ data: { user: { id: "owner-1" } } }) },
+      auth: {
+        getUser: () => Promise.resolve({ data: { user: { id: "owner-1" } } }),
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }),
+      },
       functions: { invoke: () => Promise.resolve({ data: null, error: null }) },
       storage: { from: () => ({ upload: () => Promise.resolve({ data: null, error: null }), createSignedUrl: () => Promise.resolve({ data: null, error: null }) }) },
     },

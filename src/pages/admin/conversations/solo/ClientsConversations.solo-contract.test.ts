@@ -9,6 +9,16 @@ const composer = readFileSync(resolve("src/pages/admin/conversations/shell/Conve
 const composerAtom = readFileSync(resolve("src/pages/admin/conversations/MessageComposer.tsx"), "utf8");
 
 describe("Solo Conversations page wiring", () => {
+  it("routes a named reply through the existing exact composer and registry without a generic-send escape",()=>{
+    expect(page).toContain("parseFollowupLocator(searchParams)");
+    expect(page).toContain("if (leadReplyApprovalId)");
+    expect(page).toContain("await leadReplyReview.prepare(); return;");
+    expect(page).toContain("followupLocatorConflict");
+    expect(page).toContain("Return to original reply");
+    expect(page).toContain("canReplaceFollowupDraft({subject,body");
+    expect(page).toContain("useBeforeUnloadGuard(!!leadReplyApprovalId");
+    expect(page).toContain("accountEpochRef.current.accept(followupEpoch)");
+  });
   it("clears account-owned state and rejects late account work", () => {
     expect(page).toContain("tenantIdRef.current = null");
     expect(page.match(/accountEpochRef\.current\.accept/g)?.length ?? 0).toBeGreaterThanOrEqual(12);

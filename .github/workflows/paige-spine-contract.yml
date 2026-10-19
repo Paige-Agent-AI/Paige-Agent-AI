@@ -601,6 +601,11 @@ jobs:
       # refuse a paused or ended client, even when the pause lands after the resolver read (one shared helper).
       - run: supabase test db supabase/tests/customer_portal_access_doors.sql
         if: ${{ !cancelled() }}
+      # E09 F1a: the per-business finance entitlement — one predicate (install OR flag), neither leg
+      # self-grantable from the browser, Marketplace install/uninstall unaffected, push defaults off,
+      # 'funding' not a starter preset, and no customer-tier credit uploads or non-entitled alerts.
+      - run: supabase test db supabase/tests/e09_finance_entitlement.sql
+        if: ${{ !cancelled() }}
       # The owner's real send through create_solo_team_invite, accepted through accept_solo_team_invite,
       # for Member and Admin across two businesses: no hand-written token.
       - run: supabase test db supabase/tests/solo_team_invite_accept_end_to_end.sql

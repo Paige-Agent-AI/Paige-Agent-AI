@@ -13,9 +13,9 @@ RENDERED_EVIDENCE: PASS: sixteen actual-source full-shell sequences in two neutr
 BEHAVIORAL_EVIDENCE: PASS: bounded local keyboard edit, exact sender/recipient/subject/plain-text preview, Not now cancellation, edit cancellation and narrow PAIGE Escape/retained draft;118 owning assertions preserve original identity/denial/uncertainty controls; no real send
 AUTHENTICATED_RUNTIME: UNVERIFIED: the old-format failure is proven in an ordinary production owner session; correction has not been deployed
 KEYBOARD_FOCUS: PASS: Enter opens the original draft, approval preview receives focus, Not now returns to review, narrow PAIGE Escape returns to its launcher with the draft preserved
-ZOOM_REFLOW: PARTIAL: sixteen native viewport sequences preserve page width and readable review controls; actual browser magnification shortcut had no effect and remains UNVERIFIED; no CSS, control markup or geometry is changed
+ZOOM_REFLOW: UNVERIFIED: sixteen native viewport sequences preserve page width and readable review controls; actual browser magnification shortcut had no effect, so magnification remains unverified; no CSS, control markup or geometry is changed
 REDUCED_MOTION: NOT_APPLICABLE: no motion is introduced or changed
-STATE_COVERAGE: PARTIAL: all118 owning assertions pass including malformed/ambiguous/oversized/non-email/member/unknown original-operation controls; actual local populated/edit/preview/cancel and two-context states verified; authenticated provider outcomes and separate Live remain owed
+STATE_COVERAGE: UNVERIFIED: all118 owning assertions pass including malformed/ambiguous/oversized/non-email/member/unknown original-operation controls; actual local populated/edit/preview/cancel and two-context states verified; authenticated provider outcomes and separate Live have not been tested on the undeployed correction
 TRUTHFUL_STATE_LABELS: PASS: preparing/editing is not approval, provider execution, delivery, receipt recording or restored capability acceptance
 SOLO_UI: YES: shared Conversations reader for every eligible existing and future SOLO business
 SOLO_1536X770_PAIGE_CLOSED: PASS: actual current-source local shell; both neutral contexts/themes; corresponding sequence and screenshot hashes in assets/ant21-followup-legacy/render-measurements.json; not authenticated runtime

@@ -143,7 +143,7 @@ export function RuleBuilder({ rule, onChange, choices, disabled, portal = false 
   </fieldset>;
 }
 
-/** `updates`: a promotion or announcement, which a portal customer receives only with Updates and offers on. */
+/** `updates`: a promotion or announcement, which a current or former portal customer receives only after turning Updates and offers on. */
 export function Reach({ preview, newsletter, updates = false }: { preview: { phase: Phase; data: Preview | null }; newsletter: boolean; updates?: boolean }) {
   const p = preview.data;
   if (!p) return <p className="me-reach" aria-live="polite">{preview.phase === "error" ? "The count could not load." : "Counting…"}</p>;
@@ -152,7 +152,7 @@ export function Reach({ preview, newsletter, updates = false }: { preview: { pha
     p.opted_out && `${p.opted_out} opted out`,
     p.suppressed && `${p.suppressed} unsubscribed or bounced`,
     newsletter && p.no_consent && `${p.no_consent} not subscribed to your newsletter`,
-    !newsletter && updates && p.no_consent && `${p.no_consent} portal ${p.no_consent === 1 ? "customer" : "customers"} with updates and offers turned off`,
+    !newsletter && updates && p.no_consent && `${p.no_consent} portal ${p.no_consent === 1 ? "customer who hasn’t" : "customers who haven’t"} turned on updates and offers`,
   ].filter(Boolean);
   return <div className="me-reach" aria-live="polite" aria-busy={preview.phase === "loading"}>
     <strong>{p.eligible.toLocaleString()}</strong><span> {p.eligible === 1 ? "person" : "people"} can receive it</span>
@@ -402,7 +402,7 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
     <div className="me-compose">
       <div className="me-compose-form">
         <section className="campaigns-surface mo-panel" aria-labelledby="me-to">
-          <div className="mo-panel-head"><div><h2 id="me-to">To</h2><p>{newsletter ? "A newsletter goes only to contacts who opted in to it." : updates ? "Contacts who opted out, unsubscribed or bounced are left out, and so are portal customers who turned off updates and offers." : "Contacts who opted out, unsubscribed or bounced are always left out."}</p></div></div>
+          <div className="mo-panel-head"><div><h2 id="me-to">To</h2><p>{newsletter ? "A newsletter goes only to contacts who opted in to it." : updates ? "Contacts who opted out, unsubscribed or bounced are left out, and so are portal customers who haven’t turned on updates and offers." : "Contacts who opted out, unsubscribed or bounced are always left out."}</p></div></div>
           {editable ? <>
             {data.segments.length > 0 && <div className="campaigns-segmented me-seg" role="group" aria-label="Audience">
               <button type="button" aria-pressed={!draft.segment_id} onClick={() => change({ segment_id: null })}>Choose contacts</button>

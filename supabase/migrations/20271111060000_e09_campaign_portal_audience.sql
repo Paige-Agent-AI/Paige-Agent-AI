@@ -13,7 +13,9 @@
 --      checker is unchanged, so a series never takes the portal key (its send path is not re-proved here).
 --   3. Updates consent (owner Q1): a promotion or announcement (and a newsletter, already) to ANY contact
 --      linked to a customer portal requires their Updates and offers consent — at plan (_email_audience) and
---      again at send (dispatch_claim) — whatever the audience rule. Contacts with no portal link: unchanged.
+--      again at send (dispatch_claim) — whatever the audience rule. "Linked" includes a FORMER portal
+--      customer (access ended: linked_user_id cleared, portal_access_former_user_id kept), so ending access
+--      never turns promotions back on for someone who left Updates off. Never-linked contacts: unchanged.
 --      At send, a portal audience is also re-proved, so a customer paused/ended after approval is skipped.
 --
 -- Replaced (§37 producer inventory in the PR): _email_audience(uuid,jsonb,boolean) now delegates to a new
@@ -87,7 +89,8 @@ AS $function$
       public._email_rule_wants_portal(p_rule) AS portal
   ), matched AS (
     SELECT c.id, (COALESCE(c.do_not_contact,false) OR COALESCE(c.dnd_active,false) OR COALESCE(c.disqualified,false)) AS opted_out,
-           (c.linked_user_id IS NOT NULL) AS portal_linked
+           -- E09 C1: linked to a customer portal now, or before the business ended their access.
+           (c.linked_user_id IS NOT NULL OR c.portal_access_former_user_id IS NOT NULL) AS portal_linked
     FROM public.clients c, rule
     WHERE c.tenant_id = p_tenant AND c.merged_into_contact_id IS NULL
       AND (cardinality(rule.stages) = 0 OR c.lifecycle_stage = ANY (rule.stages))
@@ -114,8 +117,9 @@ AS $function$
                    AND (s.contact_id = a.id OR s.address_normalized = a.email))
         OR EXISTS (SELECT 1 FROM public.suppressed_emails g WHERE lower(btrim(g.email)) = a.email) THEN 'suppressed'
       WHEN p_newsletter AND NOT public._email_newsletter_subscribed(p_tenant, a.id, a.email) THEN 'no_consent'
-      -- E09 C1 (owner Q1): a promotion or announcement to anyone linked to a customer portal needs their
-      -- Updates and offers consent, whatever the audience rule. Contacts with no portal link are unchanged.
+      -- E09 C1 (owner Q1): a promotion or announcement to anyone linked to a customer portal (now or before
+      -- their access was ended) needs their Updates and offers turned on, whatever the audience rule.
+      -- Contacts never linked to a portal are unchanged.
       WHEN a.portal_linked AND public._email_kind_needs_updates_consent(p_kind)
            AND NOT public._email_newsletter_subscribed(p_tenant, a.id, a.email) THEN 'no_consent'
     END
@@ -324,8 +328,10 @@ BEGIN
         WHEN (public._email_rule_wants_portal(v.audience) OR public._email_rule_wants_portal(public._email_version_rule(v)))
              AND NOT public._client_portal_customer_open(r2.tenant_id, r2.client_id) THEN 'contact_removed'
         WHEN c.kind = 'newsletter' AND NOT public._email_newsletter_subscribed(r2.tenant_id, r2.client_id, r2.email) THEN 'no_consent'
-        -- E09 C1 (owner Q1): Updates and offers withdrawn after approval is honoured at send.
-        WHEN cl.linked_user_id IS NOT NULL AND public._email_kind_needs_updates_consent(c.kind)
+        -- E09 C1 (owner Q1): Updates and offers withdrawn after approval is honoured at send — for a current
+        -- portal customer and for one whose access was ended since.
+        WHEN (cl.linked_user_id IS NOT NULL OR cl.portal_access_former_user_id IS NOT NULL)
+             AND public._email_kind_needs_updates_consent(c.kind)
              AND NOT public._email_newsletter_subscribed(r2.tenant_id, r2.client_id, r2.email) THEN 'no_consent'
       END AS why
       FROM public.email_campaign_recipients r2 LEFT JOIN public.clients cl ON cl.id = r2.client_id

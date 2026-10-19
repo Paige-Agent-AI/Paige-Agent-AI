@@ -8,7 +8,7 @@
 --      linked customer — open, paused, inactive, merged, another business, and a suspended business;
 --   3. the `portal` audience reaches open-access customers of THIS business only;
 --   4. owner Q1 at plan: a promotion / announcement / newsletter to a portal-linked contact needs their
---      Updates and offers consent whatever the rule; unlinked contacts and other kinds are unchanged;
+--      Updates and offers consent whatever the rule; never-linked contacts and other kinds are unchanged;
 --      the 3-argument _email_audience (series, dashboard) is unchanged apart from the portal filter;
 --   5. rule keys are validated on every campaign draft write and on the rule frozen at request_approval
 --      (a saved segment's too); the series checker still refuses `portal`;
@@ -16,15 +16,18 @@
 --   7. through the real seams (create → update_draft → request_approval → approve → dispatch_claim):
 --      a customer paused after approval is skipped as contact_removed, and Updates turned off by the
 --      customer after approval is skipped as no_consent — on a portal audience AND on a plain one;
---   8. the editor's portal count is this business's open-access customers only.
+--   8. the editor's portal count is this business's open-access customers only;
+--   9. owner Q1 covers FORMER portal customers too: once the business ends someone's access (the link is
+--      cleared), a promotion / announcement / newsletter still needs Updates turned on — at plan, and at
+--      send when access is ended after approval. Other kinds stay unchanged for them.
 BEGIN;
-SELECT plan(72);
+SELECT plan(84);
 
 -- ── Seed ────────────────────────────────────────────────────────────────────────────────────────
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data)
 SELECT ('e0c10100-0000-4000-8000-0000000000'||lpad(n::text,2,'0'))::uuid,'authenticated','authenticated',
        'c1-user-'||n||'@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'
-  FROM generate_series(1,13) n;
+  FROM generate_series(1,15) n;
 INSERT INTO public.tenants(id,slug,name,status,account_type,parent_tenant_id,account_number_prefix,account_number,features) VALUES
  ('e0c10200-0000-4000-8000-000000000001','test-tenant-e09-c1-northwind','Northwind Studio','active','standalone',NULL,'E09C1',9411001,'{}'),
  ('e0c10200-0000-4000-8000-000000000002','test-tenant-e09-c1-harbor','Harbor Lane Studio','active','standalone',NULL,'E09C2',9411002,'{}');
@@ -285,6 +288,52 @@ SELECT ok(public._email_rule_choices('e0c10200-0000-4000-8000-000000000001') ?& 
   'the existing keys are all still there');
 SELECT is(pg_temp.owner('SELECT public.read_email_rule_choices()')->'portal', '{"open":4}'::jsonb,
   'the owner''s read carries it');
+
+-- ── 9. Former portal customers keep Q1 after their access is ended ───────────────────────────────
+-- Two more Northwind customers, tagged so a rule picks only them (letter = last two id digits):
+--  L Blake Moss   linked, open, Updates never turned on — the business then ends their access.
+--  M Harper Vance linked, open, Updates on (sign-up form) — turns it off in the portal after approval,
+--                 and then the business ends their access.
+INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,email,status,tags) VALUES
+ ('e0c10300-0000-4000-8000-000000000012','e0c10200-0000-4000-8000-000000000001','e0c10100-0000-4000-8000-000000000014','e0c10100-0000-4000-8000-000000000001','Blake','Moss','blake.c1@tests.invalid','active','{c1-former}'),
+ ('e0c10300-0000-4000-8000-000000000013','e0c10200-0000-4000-8000-000000000001','e0c10100-0000-4000-8000-000000000015','e0c10100-0000-4000-8000-000000000001','Harper','Vance','harper.c1@tests.invalid','active','{c1-former}');
+INSERT INTO public.paige_consent_events(tenant_id,contact_id,address_normalized,channel,topic,action,source,created_at)
+VALUES ('e0c10200-0000-4000-8000-000000000001','e0c10300-0000-4000-8000-000000000013','harper.c1@tests.invalid','email','newsletter','granted','signup_form',now()-interval '3 days');
+CREATE FUNCTION pg_temp.end_access(_client uuid) RETURNS jsonb LANGUAGE sql AS $$
+ SELECT pg_temp.owner(format('SELECT public.set_client_portal_access(%L,%L,%L,%L,%L,NULL,%L)',
+   'e0c10100-0000-4000-8000-000000000001','e0c10200-0000-4000-8000-000000000001', _client, 'end', 'engagement_ended',
+   pg_temp.owner(format('SELECT public.read_client_portal_access(%L,%L)','e0c10200-0000-4000-8000-000000000001', _client))->>'since')) $$;
+CREATE TEMP TABLE ends(k text PRIMARY KEY, r jsonb);
+GRANT ALL ON ends TO authenticated, service_role;
+INSERT INTO ends SELECT 'blake', pg_temp.end_access(pg_temp.c(12));
+SELECT ok((SELECT (r->>'ok')::boolean FROM ends WHERE k='blake')
+      AND (SELECT linked_user_id IS NULL AND portal_access_former_user_id IS NOT NULL AND portal_access_state = 'ended'
+             FROM public.clients WHERE id = pg_temp.c(12)),
+  'the owner ends Blake''s access through the one access writer: the link is cleared, the former login kept');
+SELECT is(pg_temp.aud('{"tags":["c1-former"]}', 'promotion'), 'L:no_consent M:ok',
+  'a promotion: Blake (access ended, Updates never turned on) is still left out');
+SELECT is(pg_temp.aud('{"tags":["c1-former"]}', 'announcement'), 'L:no_consent M:ok', 'an announcement: the same');
+SELECT is(pg_temp.aud('{"tags":["c1-former"]}', 'newsletter'), 'L:no_consent M:ok', 'a newsletter: the same');
+SELECT is(pg_temp.aud('{"tags":["c1-former"]}', 'standard'), 'L:ok M:ok',
+  'a standard email to a former portal customer is unchanged (Q1 covers three kinds only)');
+SELECT is(pg_temp.aud3('{"tags":["c1-former"]}'), 'L:ok M:ok', 'the 3-argument audience (series) is unchanged for them');
+-- Through the real seams: Harper is planned, turns Updates off, the business ends access, then the send.
+UPDATE public.email_campaign_recipients SET status='sent', sent_at=now(), lease_until=NULL WHERE status='sending';
+INSERT INTO v5 SELECT 'former', pg_temp.campaign('promotion', '{"tags":["c1-former"]}', 'Autumn offer');
+SELECT is(pg_temp.file_and_approve((SELECT id FROM v5 WHERE k='former'))->>'recipients', '1', 'filed and approved: one planned');
+SELECT is(pg_temp.rcpt((SELECT id FROM v5 WHERE k='former')), 'M:planned', 'planned at approval: Harper only');
+SELECT ok(NOT (pg_temp.as_user('e0c10100-0000-4000-8000-000000000015',
+  $q$SELECT public.client_portal_set_communication_preference('email','newsletter',false,'e0c10200-0000-4000-8000-000000000001'::uuid)$q$) ? 'error'),
+  'Harper turns Updates and offers off in the portal after approval');
+INSERT INTO ends SELECT 'harper', pg_temp.end_access(pg_temp.c(13));
+SELECT ok((SELECT (r->>'ok')::boolean FROM ends WHERE k='harper')
+      AND (SELECT linked_user_id IS NULL FROM public.clients WHERE id = pg_temp.c(13)),
+  'then the owner ends Harper''s access (the link is cleared)');
+INSERT INTO claims(r) SELECT pg_temp.claim();
+SELECT is((SELECT r->'campaign'->>'version_id' FROM claims ORDER BY n DESC LIMIT 1), (SELECT id::text FROM v5 WHERE k='former'),
+  'the worker claims the promotion');
+SELECT is(pg_temp.rcpt((SELECT id FROM v5 WHERE k='former')), 'M:skipped:no_consent',
+  'send: Harper is skipped for Updates off, even though their portal access has since ended');
 
 SELECT * FROM finish();
 ROLLBACK;

@@ -127,7 +127,8 @@ describe("email campaign chat tools", () => {
     expect(cleared.outcome).toBe("succeeded");
     const draft = EMAIL_CAMPAIGN_TOOLS.find((t) => t.function.name === "email_campaign_draft")!;
     expect(draft.function.description).toMatch(/portal:"active"/);
-    expect(draft.function.description).toMatch(/turned off updates and offers/);
+    expect(draft.function.description).toMatch(/current or former, who has not turned on updates and offers/);
+    expect(draft.function.description).not.toMatch(/turned off/);
   });
 
   it("E09 C1: any other portal value is refused before the database, and the database's own refusal reads in words", async () => {

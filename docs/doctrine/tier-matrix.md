@@ -336,7 +336,7 @@ posture**, and **(d) permitted-RPC scoping**, each grounded in a named resolver 
 
 ### E09 C1 — announcements to customers through the one campaign system (branch `e09-c1`, migration `20271111060000`, 2026-10-19; not yet merged)
 
-The campaign editor (Growth › Email, `src/solo/marketing-email-editor.tsx`) gains a "Customer portal" chip; the database gains the `portal` audience key, rule-key checks, and owner Q1 (Updates consent for promotions/announcements to portal-linked contacts, at plan and at send). Availability follows the existing campaign seams unchanged (`_email_caller_tenant`: owner/admin of the active business; `_email_paige_tenant` refuses agency accounts; Growth is not offered to Agency, §61 exception). §61 default: no new exception — the portal audience is part of campaigns, wherever campaigns already are.
+The campaign editor (Growth › Email, `src/solo/marketing-email-editor.tsx`) gains a "Customer portal" chip; the database gains the `portal` audience key, rule-key checks, and owner Q1 (Updates turned on, for promotions/announcements/newsletters to current or former portal-linked contacts, at plan and at send). Availability follows the existing campaign seams unchanged (`_email_caller_tenant`: owner/admin of the active business; `_email_paige_tenant` refuses agency accounts; Growth is not offered to Agency, §61 exception). §61 default: no new exception — the portal audience is part of campaigns, wherever campaigns already are.
 
 | Tier | Portal audience in a campaign | Updates consent for promotions / announcements |
 |---|---|---|
@@ -347,7 +347,7 @@ The campaign editor (Growth › Email, `src/solo/marketing-email-editor.tsx`) ga
 | Client | N/A — receives email; their Updates choice is honoured at plan and send; cannot read the audience (42501) | — |
 | Anonymous | ✗ | ✗ |
 
-Series (welcome / nurture / re-engagement) do not take the portal key. Evidence: pgTAP `supabase/tests/e09_campaign_portal_audience.sql` 72/72 locally (15 reinstated defects each fail it); harness frames light/dark at 390/1440 (not live). Authenticated runtime UNVERIFIED.
+Series (welcome / nurture / re-engagement) do not take the portal key. Evidence: pgTAP `supabase/tests/e09_campaign_portal_audience.sql` 84/84 locally (17 reinstated defects each fail it); harness frames light/dark at 390/1440 (not live). Authenticated runtime UNVERIFIED.
 
 ### E09 K1 — customer Knowledge shared business-wide, with a kind and a window (branch `e09-k1`, migration `20271111050000`, 2026-10-19; not yet merged)
 

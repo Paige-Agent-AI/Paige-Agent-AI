@@ -370,7 +370,7 @@ describe("Marketing › Email campaign editor", () => {
     answers.email_audience_preview = { data: { matched: 3, eligible: 2, no_address: 0, opted_out: 0, suppressed: 0, no_consent: 1, daily_cap: 500, remaining_today: 400, postal_address_set: true }, error: null };
     vi.useFakeTimers({ shouldAdvanceTime: true });
     await mount();
-    expect(text()).toContain("so are portal customers who turned off updates and offers");
+    expect(text()).toContain("so are portal customers who haven’t turned on updates and offers");
     const chip = button(/^Customers with portal access/)!;
     expect(chip.textContent).toBe("Customers with portal access3");
     expect(chip.getAttribute("aria-pressed")).toBe("false");
@@ -381,7 +381,7 @@ describe("Marketing › Email campaign editor", () => {
     expect(button(/^Customers with portal access/)!.getAttribute("aria-pressed")).toBe("true");
     expect(calls.filter((c) => c.fn === "email_campaign_update_draft").at(-1)!.args).toMatchObject({ p_audience: { portal: "active" } });
     expect(calls.filter((c) => c.fn === "email_audience_preview").at(-1)!.args).toEqual({ p_rule: { portal: "active" }, p_kind: "announcement", p_segment_id: null });
-    expect(text()).toContain("Left out: 1 portal customer with updates and offers turned off.");
+    expect(text()).toContain("Left out: 1 portal customer who hasn’t turned on updates and offers.");
     // Back to everyone: the key leaves the rule rather than being saved as a value.
     await act(async () => { button("Any contact")!.click(); });
     await act(async () => { vi.advanceTimersByTime(900); });

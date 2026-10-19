@@ -334,6 +334,21 @@ posture**, and **(d) permitted-RPC scoping**, each grounded in a named resolver 
 
 ## Surface ledger — what actually SHIPPED, per tier (§66)
 
+### E09 K1 — customer Knowledge shared business-wide, with a kind and a window (branch `e09-k1`, migration `20271111050000`, 2026-10-19; not yet merged)
+
+Database only; no visible surface changes in this PR (the owner panel is K3a). Nothing is published by the migration. Publisher = `knowledge_actor_authorized` (active workspace = the business) AND an active owner/admin membership of the business or an ancestor agency (`_tenant_brand_manager_member`); the bare platform operator is excluded.
+
+| Tier | Publish business-wide (prepare/set) | Customer reads (context, document) | Finance-marked Knowledge |
+|---|---|---|---|
+| God / Operator | ✗ unless also an owner/admin member of that business (tested: bare operator refused at prepare and at a direct set with a self-computed hash) | N/A | — |
+| Agency / Enterprise | ✓ as owner/admin of the business or of an ancestor agency, with the business as active workspace (by construction; not exercised in pgTAP) | N/A | shareable only if the business is entitled |
+| Standalone (Solo) | ✓ owner/admin; ✗ plain member (tested at prepare and at a direct set with a self-computed valid hash; removing set's publisher checks fails it) | N/A | shareable only if entitled (tested refused when not) |
+| Sub-account | ✓ owner/admin of the sub-account or ancestor agency admin (by construction) | N/A | shareable only if entitled |
+| Client | ✗ (tested) | ✓ own open relationship: per-customer + business-wide, one source per document; paused/ended/merged/deactivated/suspended cut off (tested) | shown only while the business is entitled, re-checked at read (tested) |
+| Anonymous | ✗ (no grant) | ✗ (no grant) | ✗ |
+
+Evidence: pgTAP `supabase/tests/e09_customer_knowledge_v2.sql` 141/141 locally (round 1: 27 reinstated defects, 25 fail it, 2 equivalent mutants; round 2: 5 more, all fail it). Authenticated runtime UNVERIFIED (no session driven).
+
 ### E09 F2 — funding and credit in the customer portal follow the business's entitlement (branch `e09-funding-f2`, migration `20271111045000`, 2026-10-19; not yet merged; after F1a and F1b)
 
 | Tier | `/app` funding/credit pages, menu entries, Home credit/funding tiles, bell credit alerts | `funding_readiness` surfaces (QuickStatsBar, credit-first onboarding and checklist steps, push-prompt credit wording) | Chat credit-report path / funding persona |

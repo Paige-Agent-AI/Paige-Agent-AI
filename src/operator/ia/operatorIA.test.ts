@@ -48,6 +48,10 @@ describe("the operator IA mirrors the design pack", () => {
    * duplicate-guard below fails, which is what stops the exception outliving the reason for it.
    */
   const RULED_ADDITIONS = [
+    // EXP00 O-1 owner directive, 2026-10-19: the company's real commercial book leads
+    // Relationships — live SOLO enrollment records, first tab of the slot. Added beside the
+    // pack's four; none of the pack's views moved or were replaced.
+    { slot: "relationships", view: "Customers", index: 0 },
     { slot: "settings", view: "Numbers", index: 3 },
     // Owner INT-280 ruling, 2026-10-10: within Settings, never a seventh primary slot.
     { slot: "settings", view: "PAIGE Intelligence", index: 4 },

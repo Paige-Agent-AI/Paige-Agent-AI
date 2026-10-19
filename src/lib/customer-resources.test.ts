@@ -30,6 +30,20 @@ describe('canonical customer resource client',()=>{
     for(const value of [{...list(),sources:[resource,resource],next_offset:2},{...list(),next_offset:20},{...list(),page_may_continue:true}])
       await expect(listCustomerResources(client(value),scope)).rejects.toThrow();
   });
+  it('accepts the counted read (authorized_count + sources_limited) and checks the counts agree',async()=>{
+    expect((await listCustomerResources(client({...list(),authorized_count:1,sources_limited:false}),scope)).resources).toEqual([resource]);
+    expect((await listCustomerResources(client({...list(),authorized_count:3,sources_limited:true}),scope)).resources).toEqual([resource]);
+    for(const value of [{...list(),authorized_count:0,sources_limited:false},{...list(),authorized_count:3,sources_limited:false},
+      {...list(),authorized_count:1,sources_limited:true},{...list(),authorized_count:'1',sources_limited:false},{...list(),authorized_count:1}])
+      await expect(listCustomerResources(client(value),scope)).rejects.toThrow('CUSTOMER_RESOURCE_RESPONSE_INVALID');
+  });
+  it('returns an empty last page when shares were withdrawn between pages (offset past authorized_count)',async()=>{
+    const empty={actor_id:scope.actor,tenant_id:scope.tenant,contact_id:scope.contact,sources:[],next_offset:20,page_may_continue:false,authorized_count:15,sources_limited:false};
+    expect(await listCustomerResources(client(empty),scope,20)).toEqual({resources:[],nextOffset:20,hasMore:false});
+    // Only an empty page may sit past the count; a non-empty one still has to agree with it.
+    await expect(listCustomerResources(client({...list(),next_offset:21,authorized_count:15,sources_limited:false}),scope,20)).rejects.toThrow('CUSTOMER_RESOURCE_RESPONSE_INVALID');
+    await expect(listCustomerResources(client({...empty,sources_limited:true}),scope,20)).rejects.toThrow('CUSTOMER_RESOURCE_RESPONSE_INVALID');
+  });
   it('uses native Unicode offsets rather than UTF-16 string length',async()=>{
     const sdk=client(page());expect((await readCustomerResource(sdk,scope,resource)).next_offset).toBe(3);
     expect(sdk.rpc).toHaveBeenCalledWith('client_portal_knowledge_document',expect.objectContaining({p_share_id:share,p_share_revision:2,p_source_fingerprint:'a'.repeat(64),p_offset:0,p_limit:12000}));

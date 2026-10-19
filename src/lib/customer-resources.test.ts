@@ -30,6 +30,13 @@ describe('canonical customer resource client',()=>{
     for(const value of [{...list(),sources:[resource,resource],next_offset:2},{...list(),next_offset:20},{...list(),page_may_continue:true}])
       await expect(listCustomerResources(client(value),scope)).rejects.toThrow();
   });
+  it('accepts the counted read (authorized_count + sources_limited) and checks the counts agree',async()=>{
+    expect((await listCustomerResources(client({...list(),authorized_count:1,sources_limited:false}),scope)).resources).toEqual([resource]);
+    expect((await listCustomerResources(client({...list(),authorized_count:3,sources_limited:true}),scope)).resources).toEqual([resource]);
+    for(const value of [{...list(),authorized_count:0,sources_limited:false},{...list(),authorized_count:3,sources_limited:false},
+      {...list(),authorized_count:1,sources_limited:true},{...list(),authorized_count:'1',sources_limited:false},{...list(),authorized_count:1}])
+      await expect(listCustomerResources(client(value),scope)).rejects.toThrow('CUSTOMER_RESOURCE_RESPONSE_INVALID');
+  });
   it('uses native Unicode offsets rather than UTF-16 string length',async()=>{
     const sdk=client(page());expect((await readCustomerResource(sdk,scope,resource)).next_offset).toBe(3);
     expect(sdk.rpc).toHaveBeenCalledWith('client_portal_knowledge_document',expect.objectContaining({p_share_id:share,p_share_revision:2,p_source_fingerprint:'a'.repeat(64),p_offset:0,p_limit:12000}));

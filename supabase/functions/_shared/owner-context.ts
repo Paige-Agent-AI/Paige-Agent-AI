@@ -244,25 +244,41 @@ async function buildPlatformStateBlock(admin: AdminClient): Promise<string> {
   // "what happened with our newest customer?" without her needing a tool call.
   // Same §13 rules: real reads, honest fallbacks, $0 until Stripe confirms.
   try {
-    const { data: enrollments, error: eErr } = await admin
-      .from("solo_beta_enrollments")
-      .select("user_id,state,checkout_claimed_at,tenant_id,stripe_subscription_id,reference_id")
-      .order("checkout_claimed_at", { ascending: false })
-      .limit(10);
-    if (eErr) throw eErr;
-    const rows = Array.isArray(enrollments) ? enrollments : [];
+    // Exact counts first (P2: a limit(10) page must never be reported as the total);
+    // the 10-row page below is ONLY for the newest-customer detail.
+    const [totalQ, fulfilledQ, canceledQ, expiredQ] = await Promise.all([
+      admin.from("solo_beta_enrollments").select("user_id", { count: "exact", head: true }),
+      admin.from("solo_beta_enrollments").select("user_id", { count: "exact", head: true }).eq("state", "fulfilled"),
+      admin.from("solo_beta_enrollments").select("user_id", { count: "exact", head: true }).eq("state", "canceled"),
+      admin.from("solo_beta_enrollments").select("user_id", { count: "exact", head: true }).eq("state", "expired"),
+    ]);
+    for (const q of [totalQ, fulfilledQ, canceledQ, expiredQ]) {
+      if (q.error) throw q.error;
+    }
+    const total = Number(totalQ.count ?? 0);
+    const fulfilled = Number(fulfilledQ.count ?? 0);
+    const canceled = Number(canceledQ.count ?? 0);
+    const expired = Number(expiredQ.count ?? 0);
+    // Non-fulfilled, non-terminal states are "in progress"; canceled/expired get
+    // their own clause rather than being mislabelled as active work.
+    const inProgress = Math.max(total - fulfilled - canceled - expired, 0);
 
-    if (rows.length === 0) {
+    if (total === 0) {
       lines.push("- Customers: no Solo Beta enrollments yet.");
     } else {
-      const fulfilled = rows.filter((r) => r.state === "fulfilled").length;
-      const pending = rows.length - fulfilled;
-      lines.push(
-        `- Customers: ${fmtInt(rows.length)} Solo Beta enrollment${rows.length === 1 ? "" : "s"} — ${fmtInt(fulfilled)} fulfilled, ${fmtInt(pending)} in progress.`,
-      );
+      const parts = [`${fmtInt(total)} Solo Beta enrollment${total === 1 ? "" : "s"}`];
+      const breakdown = [`${fmtInt(fulfilled)} fulfilled`, `${fmtInt(inProgress)} in progress`];
+      if (canceled + expired > 0) breakdown.push(`${fmtInt(canceled + expired)} canceled/expired`);
+      lines.push(`- Customers: ${parts.join(", ")} — ${breakdown.join(", ")}.`);
 
       // Newest customer detail (the founder's natural first question)
-      const newest = rows[0];
+      const { data: enrollments, error: eErr } = await admin
+        .from("solo_beta_enrollments")
+        .select("user_id,state,checkout_claimed_at,tenant_id,stripe_subscription_id,reference_id")
+        .order("checkout_claimed_at", { ascending: false, nullsFirst: false })
+        .limit(1);
+      if (eErr) throw eErr;
+      const newest = (Array.isArray(enrollments) ? enrollments : [])[0];
       if (newest) {
         const tenantId = newest.tenant_id;
         let businessName = "unknown business";
@@ -271,7 +287,7 @@ async function buildPlatformStateBlock(admin: AdminClient): Promise<string> {
         let welcomeState = "no welcome record";
 
         if (tenantId) {
-          const [{ data: tenant }, { data: sub }, { data: welcome }] = await Promise.all([
+          const [tenantR, subR, welcomeR] = await Promise.all([
             admin.from("tenants").select("name").eq("id", tenantId).maybeSingle(),
             admin.from("platform_subscriptions")
               .select("status,trial_ends_at")
@@ -283,15 +299,18 @@ async function buildPlatformStateBlock(admin: AdminClient): Promise<string> {
               .eq("user_id", newest.user_id)
               .maybeSingle(),
           ]);
-          if (tenant?.name) businessName = String(tenant.name);
-          if (sub?.status) {
-            subStatus = String(sub.status);
-            if (sub.trial_ends_at) {
-              const d = new Date(sub.trial_ends_at);
+          if (tenantR.error) console.warn("[owner-context] newest-customer tenant read failed:", tenantR.error.message);
+          if (subR.error) console.warn("[owner-context] newest-customer subscription read failed:", subR.error.message);
+          if (welcomeR.error) console.warn("[owner-context] newest-customer welcome read failed:", welcomeR.error.message);
+          if (tenantR.data?.name) businessName = String(tenantR.data.name);
+          if (subR.data?.status) {
+            subStatus = String(subR.data.status);
+            if (subR.data.trial_ends_at) {
+              const d = new Date(subR.data.trial_ends_at);
               trialEnds = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
             }
           }
-          if (welcome?.state) welcomeState = String(welcome.state);
+          if (welcomeR.data?.state) welcomeState = String(welcomeR.data.state);
         }
 
         const parts = [businessName, `subscription: ${subStatus}`];
@@ -301,7 +320,8 @@ async function buildPlatformStateBlock(admin: AdminClient): Promise<string> {
         lines.push(`  Newest customer: ${parts.join(" · ")}.`);
       }
 
-      // Attention items (recovery desk seed — ALG-12 class)
+      // Attention items (recovery desk seed — ALG-12 class). last_error_code is
+      // surfaced because it is the useful bit for "what needs review?"
       const { data: stuck } = await admin
         .from("solo_beta_welcome_deliveries")
         .select("state,last_error_code")
@@ -309,13 +329,30 @@ async function buildPlatformStateBlock(admin: AdminClient): Promise<string> {
         .limit(5);
       const stuckRows = Array.isArray(stuck) ? stuck : [];
       if (stuckRows.length > 0) {
+        const detail = stuckRows
+          .map((r) => `${r.state}${r.last_error_code ? ` [${r.last_error_code}]` : ""}`)
+          .join(", ");
         lines.push(
-          `  Attention: ${fmtInt(stuckRows.length)} welcome email${stuckRows.length === 1 ? "" : "s"} need${stuckRows.length === 1 ? "s" : ""} review (${stuckRows.map((r) => r.state).join(", ")}).`,
+          `  Attention: ${fmtInt(stuckRows.length)} welcome email${stuckRows.length === 1 ? "" : "s"} need${stuckRows.length === 1 ? "s" : ""} review (${detail}).`,
         );
       }
 
-      // $0 truth — trials are intent, not collected cash
-      lines.push("  Collected cash: $0.00 — no Stripe payment has been confirmed yet (trials are contracted intent, not revenue).");
+      // Collected cash — DERIVED, never asserted (P2: a hardcoded $0.00 line would
+      // silently contradict the Real ARR block the moment a live paid sub exists).
+      // Same criterion as Real ARR above: status=active AND a real stripe_subscription_id.
+      const { count: paidCount, error: paidErr } = await admin
+        .from("platform_subscriptions")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "active")
+        .not("stripe_subscription_id", "is", null);
+      if (paidErr) {
+        console.warn("[owner-context] paid-subscription count read failed:", paidErr.message);
+        lines.push("  Collected cash: not available right now (paid-subscription read failed).");
+      } else if (Number(paidCount ?? 0) === 0) {
+        lines.push("  Collected cash: $0.00 — no Stripe payment has been confirmed yet (trials are contracted intent, not revenue).");
+      } else {
+        lines.push(`  Collected cash: ${fmtInt(Number(paidCount))} live Stripe-backed paid subscription${Number(paidCount) === 1 ? "" : "s"} — see Real ARR above (trials remain contracted intent, not revenue).`);
+      }
     }
   } catch (e) {
     console.warn("[owner-context] customer-book read failed:", (e as Error)?.message);

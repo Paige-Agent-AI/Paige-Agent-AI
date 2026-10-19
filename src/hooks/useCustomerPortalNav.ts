@@ -5,6 +5,7 @@ import { usePlaybook } from "@/lib/playbook";
 import { resolvePortalCatalog } from "@/lib/playbook/resolve";
 import { assemblePortalNav, portalNavWithoutAccess, type PortalNavSection, type PortalViewer } from "@/lib/portal/portalMenu";
 import { useShellCustomerIdentity } from "@/lib/portal/customerIdentity";
+import { useFinancePortal } from "@/hooks/useFinanceEntitlement";
 
 /**
  * E09 Slice M — the customer portal menu for the signed-in viewer, computed ONCE (§18/§57). AppNav renders it;
@@ -39,7 +40,11 @@ export function useCustomerPortalNav(): CustomerPortalNav {
   const viewer: PortalViewer = { isStaff: isAdmin, isCustomer, brandResolved: !!brand };
   const catalog = config.catalog ? resolvePortalCatalog(config.catalog) : pb.portal.modules;
   const identity = useShellCustomerIdentity();
-  const assembled = assemblePortalNav({ catalog, overlay: config.modules, viewer });
+  // E09 F2: funding/credit entries need the business's finance entitlement. A customer's comes with their config
+  // (server-computed for their own business); anyone else's from useFinancePortal (staff keep theirs, Q5).
+  const financePortal = useFinancePortal(!isCustomer);
+  const finance = isCustomer ? config.entitlements?.finance === true : financePortal.open;
+  const assembled = assemblePortalNav({ catalog, overlay: config.modules, viewer, entitlements: { finance } });
   const noAccess = !isAdmin && !isCustomer && identity?.viewer === "inactive";
   const sections = noAccess ? portalNavWithoutAccess(assembled) : assembled;
   // Staff never wait on the customer read; a failed relationship read is "known enough" to render the floors.

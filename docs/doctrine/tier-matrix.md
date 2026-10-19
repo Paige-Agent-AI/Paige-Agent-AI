@@ -334,6 +334,19 @@ posture**, and **(d) permitted-RPC scoping**, each grounded in a named resolver 
 
 ## Surface ledger — what actually SHIPPED, per tier (§66)
 
+### E09 F2 — funding and credit in the customer portal follow the business's entitlement (branch `e09-funding-f2`, migration `20271111040000`, 2026-10-19; not yet merged; after F1a and F1b)
+
+| Tier | `/app` funding/credit pages, menu entries, Home credit/funding tiles, bell credit alerts | `funding_readiness` surfaces (QuickStatsBar, credit-first onboarding and checklist steps, push-prompt credit wording) | Chat credit-report path / funding persona |
+|---|---|---|---|
+| God / Operator | ✓ as staff (Q5 carve-out) | only with `funding_readiness` (0 businesses) | ✓ staff, unchanged |
+| Agency / Enterprise | ✓ as staff (Q5); the owner's menu editor and previews show funding rows only for an entitled current workspace | only with `funding_readiness` AND entitled | ✓ staff, unchanged |
+| Standalone (Solo) | staff ✓ (Q5); a freshly provisioned Solo business is not entitled, so its customers get none (pgTAP + menu default proof) | staff: with `funding_readiness`; customers: `funding_readiness` AND entitled | ✓ staff, unchanged |
+| Sub-account | as Solo | as Solo | ✓ staff, unchanged |
+| Client | only when their business is finance-entitled (portal config `entitlements.finance`); otherwise redirected to `/app`, no menu entry, no tile, no alert read | `funding_readiness` AND entitled | ✗ never (tier resolved before the attachment branch; `funding_enabled` forced false) |
+| Anonymous | ✗ (behind sign-in, unchanged) | ✗ | ✗ |
+
+Production 2026-10-19: one business resolves entitled and keeps every surface; `funding_readiness` is on for 0 of 12. Evidence: pgTAP `e09_finance_portal_entitlement.sql` (17), Vitest route × viewer matrix, menu, Home, checklist, bell, AppShell and hook tests, Deno `client-portal-menu.test.ts`, `test:client-memory-authz` (10.6, 30.12–30.38), harness frames `portal-finance-entitlement-mount` (class 3). Authenticated runtime UNVERIFIED.
+
 ### E09 F1b — credit paths refuse customers and other businesses; one edge reader of the entitlement (branch `e09-funding-f1b`, 2026-10-19; not yet merged; after F1a)
 
 Edge only; no visible surface changes (the portal-side funding surfaces are slice F2).

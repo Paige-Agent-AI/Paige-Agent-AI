@@ -54,6 +54,18 @@ export interface ClientPortalConfig {
   assistant?: PortalAssistant;
   /** Customer read only: the business's menu catalog inputs. Absent until the server sends `_catalog`. */
   catalog?: PortalCatalogInput;
+  /**
+   * Customer read only (E09 F2): what the customer's business is entitled to, computed server-side by
+   * get_client_portal_config() from _tenant_finance_entitled and concatenated last, so a stored value can never
+   * shadow it. Absent means unknown, which every reader treats as not entitled. Staff surfaces never read this:
+   * they ask current_tenant_finance_entitled() (useFinanceEntitlement).
+   */
+  entitlements?: PortalEntitlements;
+}
+
+export interface PortalEntitlements {
+  /** Funding and credit surfaces (a deliberate Marketplace install). */
+  finance: boolean;
 }
 
 export interface ClientPortalConfigState {
@@ -140,6 +152,11 @@ export function normalizePortalConfig(raw: unknown): ClientPortalConfig {
 
   const catalog = parsePortalCatalog(candidate._catalog);
   if (catalog) out.catalog = catalog;
+
+  // Only `true` grants; anything else (absent, malformed, a string) is not entitled.
+  if (candidate.entitlements && typeof candidate.entitlements === "object" && !Array.isArray(candidate.entitlements)) {
+    out.entitlements = { finance: (candidate.entitlements as Record<string, unknown>).finance === true };
+  }
 
   return out;
 }

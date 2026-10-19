@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { useFinanceEntitlement } from "@/hooks/useFinanceEntitlement";
 import { normalizePortalConfig, PORTAL_MENU_LABEL_MAX, type PortalModuleOverlay } from "@/hooks/useClientPortalConfig";
 import {
   PORTAL_CUSTOMER_PREVIEW_VIEWER, PORTAL_MENU_FIXED_TOP, PORTAL_MENU_GROUPS, assemblePortalNav, defaultPortalMenuLabel,
@@ -142,7 +143,9 @@ export interface PortalMenuEditorProps {
 
 export function PortalMenuEditor({ catalog, saved, save, reread, onDirtyChange, onDraftChange }: PortalMenuEditorProps) {
   const headingId = useId();
-  const entries = useMemo(() => portalMenuEditorEntries(catalog), [catalog]);
+  // E09 F2: funding/credit rows exist only for a finance-entitled business — the owner's current one.
+  const { entitled: finance } = useFinanceEntitlement();
+  const entries = useMemo(() => portalMenuEditorEntries(catalog, { finance }), [catalog, finance]);
   const savedKey = JSON.stringify({ saved: saved ?? [], keys: entries.map((e) => [e.key, e.defaultLabel]) });
   const [baseline, setBaseline] = useState<Row[]>(() => seedRows(entries, saved));
   const [rows, setRows] = useState<Row[]>(baseline);
@@ -166,8 +169,8 @@ export function PortalMenuEditor({ catalog, saved, save, reread, onDirtyChange, 
   useEffect(() => { onDraftChange?.(modules); }, [modules, onDraftChange]);
 
   const preview = useMemo(
-    () => assemblePortalNav({ catalog, overlay: modules, viewer: PORTAL_CUSTOMER_PREVIEW_VIEWER }),
-    [catalog, modules],
+    () => assemblePortalNav({ catalog, overlay: modules, viewer: PORTAL_CUSTOMER_PREVIEW_VIEWER, entitlements: { finance } }),
+    [catalog, modules, finance],
   );
 
   const edit = (key: string, change: Partial<Row>) => {

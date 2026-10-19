@@ -2465,13 +2465,30 @@ JSON:`;
     // awaited round-trip that widens the window. Provider-call order is preserved: extraction stays
     // the first provider call, the streamed chat reply the second. This flag only carries the
     // intent from the general-document branch to that gate.
+    // E09 F2 — the caller's tier is resolved BEFORE the attachment branch, so a customer (client-tier) caller
+    // never takes the credit-report path: no credit read-check provider call, no credit_report_uploads row, no
+    // sync. Their PDF is a general document (deferGeneralDocExtraction), exactly like an image or DOCX. Funding and
+    // credit are not a customer service (owner ruling 2026-10-19), and no customer credit authorization exists.
+    // Staff-tier behaviour is unchanged (owner ruling Q5, option a): it is gated only once Business B has a
+    // deliberate Marketplace install, a tracked follow-up.
+    //
+    // `getActorTier` is one RPC on the service-role client and fails CLOSED to the least-privileged value, so an
+    // early resolution is cheap and safe. The URL fetch below and every later site reuse this value instead of
+    // resolving a second time.
+    let callerTier: Tier = "client";
+    try {
+      if (!customerPortal) callerTier = await getActorTier(supabase, { actorUserId: user.id, isPlatform: false, scopes: [] });
+    } catch (e) {
+      console.warn("[paige] actor tier unresolved before the attachment branch — treating as client seat:", (e as Error)?.message);
+    }
     let deferGeneralDocExtraction = false;
     let isCreditReportPdf = false;
     if (attachedDocument) {
       const docKind = attachedDocument.kind || (attachedDocument.mimeType === "application/pdf" ? "pdf" : attachedDocument.mimeType?.startsWith("image/") ? "image" : "docx");
 
-      // Only run the credit-report read-check on PDFs — images/docx can't be credit reports here.
-      if (docKind === "pdf" && attachedDocument.base64) {
+      // Only run the credit-report read-check on PDFs — images/docx can't be credit reports here — and never for a
+      // client-tier caller (E09 F2): their PDF goes straight to the general-document path.
+      if (docKind === "pdf" && attachedDocument.base64 && callerTier !== "client") {
         try {
           await requireRecoveryPermission(true);
           documentReadCheck = await runDocumentReadCheck(attachedDocument.base64, traceFor("document-read-check"));
@@ -2626,15 +2643,8 @@ JSON:`;
     // and not mine to make (§00). Named here rather than left as though the tier gate closed the
     // whole question.
     //
-    // Resolved here rather than only at the old site: `getActorTier` is one RPC on the service-role
-    // client and fails CLOSED to the least-privileged value, so an early resolution is cheap and
-    // safe. The later site reuses this value instead of resolving a second time.
-    let callerTier: Tier = "client";
-    try {
-      if (!customerPortal) callerTier = await getActorTier(supabase, { actorUserId: user.id, isPlatform: false, scopes: [] });
-    } catch (e) {
-      console.warn("[paige] actor tier unresolved before URL fetch — treating as client seat:", (e as Error)?.message);
-    }
+    // The tier is resolved above, before the attachment branch (E09 F2), and reused here: a client seat
+    // triggers no fetch.
 
     const lastUserMessage = messages.filter((m: any) => m.role === "user").pop();
     let fetchedUrlContent = "";
@@ -3097,6 +3107,11 @@ JSON:`;
         playbook_config:null,playbook_slug:null,funding_enabled:false,brand:null};
       proposalScopeResolved = true;
     }
+    // E09 F2: a client-tier caller is never offered funding/credit, inside the native customer frame (above) or
+    // outside it (a client of the business with no portal frame). get_paige_persona_context resolves their
+    // business's entitlement; a customer is not that business's staff, and funding/credit is not a customer
+    // service (owner ruling 2026-10-19).
+    if (callerTier === "client") personaCtx.funding_enabled = false;
     const customerChatBinding = customerPersona?.binding ?? (callerTier === "client" && !payloadClientId
       ? await readClientPortalChatBinding(supabaseClient, user.id) : null);
     const fundingEnabled = personaCtx.funding_enabled;
@@ -17669,7 +17684,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 outcome: r.success === true ? "capability_succeeded" : ((reason: PortalMenuFailure): "capability_refused" | "capability_outcome_unknown" => {
                   switch (reason) {
                     case "outcome_unknown": return "capability_outcome_unknown";
-                    case "no_workspace": case "bad_request": case "fixed_entry": case "unknown_entry": case "not_available_yet":
+                    case "no_workspace": case "bad_request": case "fixed_entry": case "unknown_entry": case "not_available_yet": case "not_entitled":
                     case "not_offered": case "forbidden": case "unavailable": case "refused":
                       return "capability_refused";
                     default: { const _never: never = reason; return "capability_refused"; }

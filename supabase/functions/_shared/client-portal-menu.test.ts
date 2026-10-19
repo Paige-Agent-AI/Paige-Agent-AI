@@ -24,6 +24,8 @@ type Call = { name: string; args: Record<string, unknown> };
 function fakeCaller(opts: {
   modules?: unknown; catalog?: unknown; readError?: unknown; writeError?: unknown; writeThrows?: boolean;
   onWrite?: (sent: unknown) => unknown;
+  /** The business's finance entitlement (E09 F2): true, false, or "error" for a failed read. Default false. */
+  finance?: boolean | "error";
 } = {}) {
   const calls: Call[] = [];
   let stored: unknown = opts.modules === undefined ? null : opts.modules;
@@ -33,6 +35,10 @@ function fakeCaller(opts: {
       if (name === "read_tenant_portal_menu") {
         if (opts.readError) return Promise.resolve({ data: null, error: opts.readError });
         return Promise.resolve({ data: { tenant_id: args.p_expected_tenant_id, modules: stored, catalog: opts.catalog ?? CATALOG }, error: null });
+      }
+      if (name === "current_tenant_finance_entitled") {
+        if (opts.finance === "error") return Promise.resolve({ data: null, error: { code: "42501" } });
+        return Promise.resolve({ data: opts.finance === true, error: null });
       }
       if (name === "set_tenant_portal_config") {
         if (opts.writeThrows) return Promise.reject(new Error("network"));
@@ -75,7 +81,8 @@ Deno.test("the executor sends the FULL merged array, not just the named entries"
   assertEquals(write.args._patch, { modules: [
     { key: "home", visible: true, order: 0 }, { key: "resources", visible: false, order: 1 }, { key: "sessions", label: "Coaching calls" },
   ] });
-  assertEquals(f.calls.map((c) => c.name), ["read_tenant_portal_menu", "set_tenant_portal_config", "read_tenant_portal_menu"]);
+  assertEquals(f.calls.map((c) => c.name),
+    ["read_tenant_portal_menu", "current_tenant_finance_entitled", "set_tenant_portal_config", "read_tenant_portal_menu"]);
 });
 
 // ── tenant comes from the server ──────────────────────────────────────────────────────────────
@@ -85,6 +92,8 @@ Deno.test("a forged tenant_id argument is ignored; every call names the server t
     args: { tenant_id: FORGED, _tenant_id: FORGED, entries: [{ key: "progress", visible: false }] } });
   assert(r.success);
   for (const c of f.calls) {
+    // The entitlement read names no tenant at all: it is the caller's current business (E09 F2).
+    if (c.name === "current_tenant_finance_entitled") { assertEquals(c.args, {}); continue; }
     const named = c.name === "set_tenant_portal_config" ? c.args._tenant_id : c.args.p_expected_tenant_id;
     assertEquals(named, TENANT, c.name);
     assert(!JSON.stringify(c.args).includes(FORGED), `${c.name} carried the forged tenant`);
@@ -130,7 +139,7 @@ Deno.test("re-sending the same change writes nothing and says so", async () => {
   const f = fakeCaller({ modules: [{ key: "progress", visible: false }] });
   const r = await configurePortalMenu({ caller: f.caller, expectedTenantId: TENANT, args: { entries: [{ key: "progress", visible: false }] } });
   assert(r.success && r.replayed);
-  assertEquals(f.calls.map((c) => c.name), ["read_tenant_portal_menu"]);
+  assertEquals(f.calls.map((c) => c.name), ["read_tenant_portal_menu", "current_tenant_finance_entitled"]);
 });
 
 Deno.test("an unreadable menu is refused before any write", async () => {
@@ -295,7 +304,7 @@ Deno.test("a business that did not choose funding never sees a funding/credit ro
 });
 
 Deno.test("a business that chose funding gets its own funding rows, and only those its catalog lists", async () => {
-  const f = fakeCaller({ modules: [], catalog: { slug: "funding", authored_usable: false, modules: null } });
+  const f = fakeCaller({ modules: [], catalog: { slug: "funding", authored_usable: false, modules: null }, finance: true });
   const r = await readPortalMenu({ caller: f.caller, expectedTenantId: TENANT });
   assert(r.success);
   const keys = r.entries.map((e) => e.key);
@@ -308,11 +317,57 @@ Deno.test("a business that chose funding gets its own funding rows, and only tho
   assert(ok.success);
 });
 
+// ── E09 F2: the finance entitlement ─────────────────────────────────────────────────────────────
+const FINANCE_KEYS = ["funding-journey", "funding_journey", "credit", "funding", "financial-profile", "financial_profile", "business"];
+
+Deno.test("exactly the funding/credit keys and Business need the finance entitlement", () => {
+  assertEquals(PORTAL_MENU_KEYS.filter((e) => e.entitlement === "finance").map((e) => e.key), FINANCE_KEYS);
+  for (const e of PORTAL_MENU_KEYS) assert(e.entitlement === null || e.entitlement === "finance", e.key);
+});
+
+Deno.test("a funding Playbook WITHOUT the entitlement: no funding row or word in the read, and every funding key refused", async () => {
+  for (const finance of [false, "error"] as const) {
+    const catalog = { slug: "funding", authored_usable: false, modules: null };
+    const read = await readPortalMenu({ caller: fakeCaller({ modules: [{ key: "credit", label: "Credit health" }], catalog, finance }).caller, expectedTenantId: TENANT });
+    assert(read.success, String(finance));
+    for (const k of FINANCE_KEYS) assert(!read.entries.some((e) => e.key === k), `${k} listed without the entitlement (${finance})`);
+    assert(!FUNDING_WORDS.test(JSON.stringify(read.entries)), `read rows carry funding wording (${finance})`);
+    // Agreements, which the funding Playbook lists, is unaffected.
+    assert(read.entries.some((e) => e.key === "agreements" && e.shown), "agreements");
+    for (const key of FINANCE_KEYS) {
+      const f = fakeCaller({ modules: [], catalog, finance });
+      const r = await configurePortalMenu({ caller: f.caller, expectedTenantId: TENANT, args: { entries: [{ key, visible: true }] } });
+      assert(!r.success && r.reason === "not_entitled" && !r.writeAttempted, `${key} (${finance})`);
+      assert(!FUNDING_WORDS.test(r.message), `refusal names funding: ${r.message}`);
+      assert(!f.calls.some((c) => c.name === "set_tenant_portal_config"), key);
+    }
+  }
+});
+
+Deno.test("parseMenuRequest refuses an unentitled key only when it is told the entitlement", () => {
+  const args = { entries: [{ key: "credit", visible: false }] };
+  assert(parseMenuRequest(args).ok, "shape-only parse");
+  assert(parseMenuRequest(args, { finance: true }).ok, "entitled");
+  const r = parseMenuRequest(args, { finance: false });
+  assert(!r.ok && r.reason === "not_entitled" && r.key === "credit");
+  assert(parseMenuRequest({ entries: [{ key: "progress", visible: false }] }, { finance: false }).ok, "a core key is unaffected");
+});
+
+Deno.test("the entitlement is read on the caller's own session, once per snapshot", async () => {
+  const f = fakeCaller({ modules: [], finance: true });
+  await readPortalMenu({ caller: f.caller, expectedTenantId: TENANT });
+  const calls = f.calls.filter((c) => c.name === "current_tenant_finance_entitled");
+  assertEquals(calls.length, 1);
+  assertEquals(calls[0].args, {}, "no tenant argument: the wrapper reads the caller's current business");
+});
+
 Deno.test("an opt-in key for a business whose catalog does not list it is refused before any write", async () => {
   for (const key of OPT_IN) {
     const f = fakeCaller({ modules: [], catalog: { slug: "general", authored_usable: false, modules: null } });
     const r = await configurePortalMenu({ caller: f.caller, expectedTenantId: TENANT, args: { entries: [{ key, visible: true }] } });
-    assert(!r.success && r.reason === "not_offered" && !r.writeAttempted, key);
+    // A funding/credit key is refused for the missing entitlement first (E09 F2); any other opt-in key as not offered.
+    const want = PORTAL_MENU_KEYS.find((e) => e.key === key)!.entitlement === "finance" ? "not_entitled" : "not_offered";
+    assert(!r.success && r.reason === want && !r.writeAttempted, key);
     assert(!FUNDING_WORDS.test(r.message), `refusal names funding: ${r.message}`);
     assert(!f.calls.some((c) => c.name === "set_tenant_portal_config"), key);
   }
@@ -371,7 +426,8 @@ Deno.test("the read projects each customer entry with the owner's name and why i
   // Payments is live (E09 Slice 5) but catalog-placed: a catalog that does not list `billing` does not show it.
   assertEquals([by.billing.label, by.billing.shown, by.billing.hidden_because], ["Payments", false, "playbook_does_not_list_it"]);
   assert(!("planning" in by), "a staff-only entry is not a customer entry");
-  assertEquals(f.calls, [{ name: "read_tenant_portal_menu", args: { p_expected_tenant_id: TENANT } }]);
+  assertEquals(f.calls, [{ name: "read_tenant_portal_menu", args: { p_expected_tenant_id: TENANT } },
+    { name: "current_tenant_finance_entitled", args: {} }]);
 });
 
 // ── declarations ──────────────────────────────────────────────────────────────────────────────
@@ -432,6 +488,7 @@ Deno.test("PORTAL_MENU_KEYS matches src/lib/portal/portalMenu.ts PORTAL_MENU_ENT
       defaultVisibility: str("defaultVisibility") ?? "catalog", shownToCustomers: /\bshownToCustomers:\s*true\b/.test(body),
       catalogLabel: !/\bcatalogLabel:\s*false\b/.test(body),
       catalogOrdered: /\bcatalogOrdered:\s*true\b/.test(body),
+      entitlement: str("entitlement") ?? null,
     };
   });
   assert(entries.length > 0, "no entries parsed");

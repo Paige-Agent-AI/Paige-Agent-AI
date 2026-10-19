@@ -1,6 +1,8 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { useTenantFeature } from "@/hooks/useTenantFeature";
+import { useFinancePortal } from "@/hooks/useFinanceEntitlement";
+import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * Funding/credit is an opt-in vertical, never a platform default (§2/§9).
@@ -30,4 +32,26 @@ export function FundingRoute({ children }: { children: React.ReactNode }) {
 export function FundingGate({ children }: { children: React.ReactNode }) {
   const { enabled } = useTenantFeature("funding_readiness");
   return enabled ? <>{children}</> : null;
+}
+
+/**
+ * CustomerFinanceRoute — E09 F2: the /app funding and credit pages (Credit, Funding, Funding Journey, Financial
+ * Profile, Business, Business Profile, Disputes) open only for a viewer whose business is finance-entitled
+ * (useFinanceEntitlement: a customer's frame says so, or anyone else's current business does). Funding and credit
+ * are a deliberate Marketplace install, never a default (owner ruling 2026-10-19), so a direct URL from any other
+ * business goes back to the portal home. Staff keep these pages as today until their business has a deliberate
+ * install (owner ruling Q5, option a; useFinancePortal). A skeleton holds the page while the answer is still coming, so finance
+ * content never flashes; nothing is decided from a guess.
+ */
+export function CustomerFinanceRoute({ children }: { children: React.ReactNode }) {
+  const { open, loading } = useFinancePortal();
+  if (loading) {
+    return (
+      <div className="space-y-4" aria-busy="true" aria-label="Loading" data-testid="customer-finance-route-loading">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-32 w-full" />
+      </div>
+    );
+  }
+  return open ? <>{children}</> : <Navigate to="/app" replace />;
 }

@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- pre-existing legacy `any` debt in this file (untyped
+   `credit_alerts` reads/writes, the table is not in the generated types). E09 F2 only added the `enabled` option
+   and introduced ZERO new `any`s; retyping is tracked separately (#234). */
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getEffectiveUserId } from "@/lib/scopedUser";
@@ -25,10 +28,15 @@ interface UseCreditAlertsOptions {
   clientId?: string | null;
   limit?: number;
   onlyUnread?: boolean;
+  /**
+   * E09 F2: false reads nothing and subscribes to nothing (no alerts, nothing loading). Callers pass whether the
+   * viewer's business is finance-entitled; credit alerts exist only there. Defaults to true for owner tools.
+   */
+  enabled?: boolean;
 }
 
 export function useCreditAlerts(options: UseCreditAlertsOptions = {}) {
-  const { clientId, limit = 50, onlyUnread = false } = options;
+  const { clientId, limit = 50, onlyUnread = false, enabled = true } = options;
   const [alerts, setAlerts] = useState<CreditAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -36,6 +44,10 @@ export function useCreditAlerts(options: UseCreditAlertsOptions = {}) {
   const [warningUnread, setWarningUnread] = useState(0);
 
   const fetchAlerts = useCallback(async () => {
+    if (!enabled) {
+      setAlerts([]); setUnreadCount(0); setCriticalUnread(0); setWarningUnread(0); setLoading(false);
+      return;
+    }
     try {
       const resolvedClientId = clientId || (await getCurrentUserId());
       if (!resolvedClientId) { setLoading(false); return; }
@@ -65,7 +77,7 @@ export function useCreditAlerts(options: UseCreditAlertsOptions = {}) {
     } finally {
       setLoading(false);
     }
-  }, [clientId, limit, onlyUnread]);
+  }, [clientId, limit, onlyUnread, enabled]);
 
   const markAsRead = useCallback(async (alertId: string) => {
     await supabase
@@ -127,6 +139,7 @@ export function useCreditAlerts(options: UseCreditAlertsOptions = {}) {
     let channel: any;
 
     const setup = async () => {
+      if (!enabled) return;
       const resolvedClientId = clientId || (await getCurrentUserId());
       if (!resolvedClientId) return;
 
@@ -152,7 +165,7 @@ export function useCreditAlerts(options: UseCreditAlertsOptions = {}) {
 
     setup();
     return () => { if (channel) supabase.removeChannel(channel); };
-  }, [clientId]);
+  }, [clientId, enabled]);
 
   return {
     alerts,

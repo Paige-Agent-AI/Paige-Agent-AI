@@ -37,6 +37,7 @@ const AGREEMENTS = "/app/agreements";
 const RESOURCES = { href: "/app/learn", label: "Resources" };
 const AGREEMENTS_ITEM = { href: AGREEMENTS, label: "Agreements" };
 const PAYMENTS = { href: "/app/billing", label: "Payments" };
+const ENTITLED = { finance: true } as const;
 
 describe("no overlay: the same destinations main renders today, per viewer kind (§58)", () => {
   for (const [cname, pb] of Object.entries(catalogs)) {
@@ -48,7 +49,9 @@ describe("no overlay: the same destinations main renders today, per viewer kind 
           ? [RESOURCES, AGREEMENTS_ITEM].filter((g) => !before.some((i) => i.href === g.href))
           : [];
         if (viewer.isCustomer && pb.portal.modules.some((m) => m.key === "billing")) gained.push(PAYMENTS);
-        const now = flattenPortalNav(assemblePortalNav({ catalog: pb.portal.modules, viewer }));
+        // The §58 equivalence is for a finance-ENTITLED business (the one that chose funding); the removal for every
+        // other business is the E09 F2 block below.
+        const now = flattenPortalNav(assemblePortalNav({ catalog: pb.portal.modules, viewer, entitlements: ENTITLED }));
         expect(set(now)).toEqual(set([...today, ...gained]));
         // Nothing main rendered before Slice M is missing (§58).
         for (const i of today) expect(now.map((n) => n.href), `${cname} · ${vname} lost ${i.href}`).toContain(i.href);
@@ -76,7 +79,7 @@ describe("no overlay: the same destinations main renders today, per viewer kind 
   });
 
   it("keeps the opt-in catalog's own entries, in catalog order, after the core items (§2)", () => {
-    expect(shape(assemblePortalNav({ catalog: funding.portal.modules, viewer: CUSTOMER }))).toEqual([
+    expect(shape(assemblePortalNav({ catalog: funding.portal.modules, viewer: CUSTOMER, entitlements: ENTITLED }))).toEqual([
       "top: Home, Messages",
       "Your work: Progress, Action items, Sessions, Funding Journey, Credit, Funding, Financial Profile, Business",
       "Paperwork: Documents, Agreements",
@@ -229,9 +232,54 @@ describe("the registry", () => {
 
   it("offers the owner one row per configurable live entry the catalog can show, never a funding key it does not list", () => {
     expect(portalMenuEditorEntries(generic).map((e) => e.key)).toEqual(["progress", "actions", "sessions", "documents", "agreements", "billing", "resources"]);
-    expect(portalMenuEditorEntries(funding.portal.modules).map((e) => e.key)).toEqual([
+    expect(portalMenuEditorEntries(funding.portal.modules, ENTITLED).map((e) => e.key)).toEqual([
       "progress", "actions", "sessions", "funding-journey", "credit", "funding", "financial-profile", "business", "documents", "agreements", "resources",
     ]);
     expect(portalMenuEditorEntries(businessConsultant.portal.modules).map((e) => e.key)).toEqual(["progress", "actions", "sessions", "documents", "agreements", "billing", "resources"]);
+  });
+});
+
+// ── E09 F2: funding and credit need the business's finance entitlement ─────────────────────────────────────────
+const FINANCE_ROUTES = ["/app/funding-journey", "/app/credit", "/app/funding", "/app/financial-profile", "/app/business"];
+describe("E09 F2 — funding/credit entries exist only for a finance-entitled business", () => {
+  it("marks exactly the funding/credit keys and Business", () => {
+    expect(PORTAL_MENU_ENTRIES.filter((e) => e.entitlement === "finance").map((e) => e.key)).toEqual(
+      ["funding-journey", "funding_journey", "credit", "funding", "financial-profile", "financial_profile", "business"]);
+  });
+
+  it("a funding Playbook WITHOUT the entitlement shows no funding/credit entry, to any viewer, and Agreements stays", () => {
+    for (const entitlements of [undefined, {}, { finance: false }]) {
+      for (const [vname, viewer] of Object.entries(viewers)) {
+        const hrefs = flattenPortalNav(assemblePortalNav({ catalog: funding.portal.modules, viewer, entitlements })).map((i) => i.href);
+        for (const r of FINANCE_ROUTES) expect(hrefs, `${vname} ${JSON.stringify(entitlements)}`).not.toContain(r);
+      }
+    }
+    expect(shape(assemblePortalNav({ catalog: funding.portal.modules, viewer: CUSTOMER }))).toEqual([
+      "top: Home, Messages", "Your work: Progress, Action items, Sessions", "Paperwork: Documents, Agreements", "Learn: Resources",
+    ]);
+  });
+
+  it("an overlay row for a funding key is inert without the entitlement: it can neither show nor reorder anything", () => {
+    const overlay = [{ key: "credit", visible: true, order: 0, label: "Credit health" }];
+    const hrefs = flattenPortalNav(assemblePortalNav({ catalog: funding.portal.modules, overlay, viewer: CUSTOMER })).map((i) => i.href);
+    expect(hrefs).not.toContain("/app/credit");
+  });
+
+  it("the owner's editor never offers a funding row without the entitlement", () => {
+    expect(portalMenuEditorEntries(funding.portal.modules).map((e) => e.key)).toEqual(
+      ["progress", "actions", "sessions", "documents", "agreements", "resources"]);
+    expect(portalMenuEditorEntries(funding.portal.modules, { finance: false }).some((e) => e.key === "credit")).toBe(false);
+  });
+
+  it("DEFAULT PROOF: a freshly provisioned Solo business (no entitlement, any starter Playbook) has no funding key", () => {
+    for (const pb of RESOLVABLE_PLAYBOOKS) {
+      for (const viewer of [CUSTOMER, STAFF, viewers.staffWithBrand]) {
+        const keys = flattenPortalNav(assemblePortalNav({ catalog: pb.portal.modules, viewer })).map((i) => i.key);
+        for (const k of ["funding-journey", "funding_journey", "credit", "funding", "financial-profile", "financial_profile", "business"]) {
+          expect(keys, `${pb.slug}`).not.toContain(k);
+        }
+      }
+      expect(portalMenuEditorEntries(pb.portal.modules).some((e) => e.key === "credit" || e.key === "business")).toBe(false);
+    }
   });
 });

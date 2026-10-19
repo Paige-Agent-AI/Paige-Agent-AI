@@ -36,6 +36,7 @@ import {
   portalAccessState,
   portalNextStep,
 } from "./portalDashboardModel";
+import { useFinanceEntitlement } from "@/hooks/useFinanceEntitlement";
 import { usePortalInvitations } from "./usePortalInvitations";
 import { PortalInvitationManager, type PortalInvitationActionLock } from "./PortalInvitationManager";
 import { PortalInvitationHistory } from "./PortalInvitationHistory";
@@ -206,6 +207,8 @@ export function OwnerPortalDashboard({
   // the same assemblePortalNav() the live menu runs, so the summary, the list and the preview here can never
   // name or count a different menu from the editor beside them (§18/§57).
   const catalogInput = usePortalCatalogInput(tenantId);
+  // E09 F2: funding/credit entries need this business's finance entitlement, exactly as the live menu does.
+  const { entitled: financeEntitled, loading: financeLoading } = useFinanceEntitlement();
   const modules = useMemo(
     () =>
       flattenPortalNav(
@@ -213,11 +216,12 @@ export function OwnerPortalDashboard({
           catalog: resolvePortalCatalog(catalogInput.data),
           overlay: data.portalConfig.modules,
           viewer: PORTAL_CUSTOMER_PREVIEW_VIEWER,
+          entitlements: { finance: financeEntitled },
         }),
       ),
-    [catalogInput.data, data.portalConfig],
+    [catalogInput.data, data.portalConfig, financeEntitled],
   );
-  const menuLoading = data.portalLoading || catalogInput.isLoading;
+  const menuLoading = data.portalLoading || catalogInput.isLoading || financeLoading;
   const menuError = data.portalError || catalogInput.isError;
   const retryMenu = () => {
     void data.retryPortal();

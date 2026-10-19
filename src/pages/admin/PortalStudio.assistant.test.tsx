@@ -24,6 +24,9 @@ vi.mock("@/integrations/supabase/client", () => {
   }, storage: { from: () => ({}) } } };
 });
 import PortalStudio from "./PortalStudio";
+// E09 F2: this surface asks for the business's finance entitlement; it is not under test here (not entitled).
+vi.mock("@/hooks/useFinanceEntitlement", () => ({ useFinanceEntitlement: () => ({ entitled: false, loading: false, staffViewer: false }) }));
+
 let container: HTMLDivElement, root: Root, qc: QueryClient;
 const flush = async () => { for (let i = 0; i < 6; i++) await act(async () => { await new Promise(r => setTimeout(r, 0)); }); };
 const input = (name: string) => {

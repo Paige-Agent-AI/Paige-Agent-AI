@@ -15,6 +15,7 @@ const f = vi.hoisted(() => ({
   tables: [] as string[],
   actions: { open: [] as unknown[], loading: false, error: null as string | null },
   applications: 0,
+  creditPulls: 0,
   brand: null as null | { tenant_id: string; tenant_name: string },
   brandLoading: false,
   multiple: false,
@@ -24,7 +25,7 @@ const f = vi.hoisted(() => ({
 vi.mock("@/integrations/supabase/client", () => {
   const counted = (table: string) => {
     f.tables.push(table);
-    const result = { count: table === "funding_journey_applications" ? f.applications : 0, error: null };
+    const result = { count: table === "funding_journey_applications" ? f.applications : table === "credit_report_uploads" ? f.creditPulls : 0, error: null };
     const chain: Record<string, unknown> = {};
     chain.select = () => chain; chain.eq = () => chain; chain.neq = () => chain;
     chain.then = (resolve: (v: unknown) => unknown) => Promise.resolve(result).then(resolve);
@@ -63,11 +64,11 @@ const progressItem = (extra: Record<string, unknown>) => ({
 });
 
 let root: Root, host: HTMLDivElement;
-const render = async () => {
+const render = async (props: { financePortal?: boolean } = {}) => {
   await act(async () => root.render(
     <MemoryRouter initialEntries={["/app"]}>
       <Routes>
-        <Route path="/app" element={<ClientHomeTiles userId="u1" />} />
+        <Route path="/app" element={<ClientHomeTiles userId="u1" {...props} />} />
         <Route path="/app/messages" element={<p>Messages page</p>} />
         <Route path="/app/actions" element={<p>Action items page</p>} />
         <Route path="/app/progress" element={<p>Progress page</p>} />
@@ -81,7 +82,7 @@ const sessionReads = () => f.rpc.mock.calls.filter(c => c[0] === "client_portal_
 
 beforeEach(() => {
   vi.clearAllMocks();
-  f.applications = 0; f.brandLoading = false; f.multiple = false; f.tables = [];
+  f.applications = 0; f.creditPulls = 0; f.brandLoading = false; f.multiple = false; f.tables = [];
   f.docs = { state: "ready", shared: 0, fromYou: 0, awaitingReview: 0, awaitingReviewMore: false }; f.docsEnabled = [];
   f.actions = { open: [], loading: false, error: null };
   f.progressRpc.mockResolvedValue({ data: progressPage({ shared: 0, done: 0, open: 0, overdue: 0 }), error: null });
@@ -185,11 +186,31 @@ it("does not read sessions for someone who is not a single-business customer, an
   expect(sessionReads()).toHaveLength(0);
 });
 
-it("keeps the funding tile in the third slot for a client with funding applications", async () => {
+it("keeps the funding tile in the third slot for a client with funding applications, in a finance-entitled business", async () => {
   f.applications = 2;
-  await render();
+  await render({ financePortal: true });
   expect(host.textContent).toContain("Funding");
   expect(host.querySelector('a[href="/app/sessions"]')).toBeNull();
+});
+
+// E09 F2 — funding and credit are a deliberate Marketplace install, never a default (owner ruling 2026-10-19).
+it("a business that is not finance-entitled shows no Credit or Funding tile and never counts either table", async () => {
+  f.creditPulls = 3; f.applications = 2;
+  await render();
+  expect(f.tables).not.toContain("credit_report_uploads");
+  expect(f.tables).not.toContain("funding_journey_applications");
+  expect(host.textContent).not.toMatch(/\bCredit\b|reports on file|\bFunding\b|applications/);
+  // The tiles the slots fall back to are the ordinary ones.
+  expect(host.textContent).toContain("Your progress");
+  expect(host.textContent).toContain("Strategy call");
+});
+
+it("...and an entitled one shows both tiles from its real counts", async () => {
+  f.creditPulls = 3; f.applications = 2;
+  await render({ financePortal: true });
+  expect(f.tables).toEqual(expect.arrayContaining(["credit_report_uploads", "funding_journey_applications"]));
+  expect(host.textContent).toContain("reports on file");
+  expect(host.textContent).toContain("Funding");
 });
 
 /** Pin "now" (Date only; timers stay real) and serve one upcoming session starting `minutes` from it. */

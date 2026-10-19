@@ -159,6 +159,7 @@ const GmailCallback = lazyWithReload(() => import("./pages/GmailCallback"));
 // the /onboarding gate. Not lazy — it's a thin wrapper around the app shells.
 import { RequireCompleteSignup } from "@/components/auth/RequireCompleteSignup";
 import { RequirePortalStaff } from "@/components/auth/RequirePortalStaff";
+import { CustomerFinanceRoute } from "@/components/admin/FundingRoute";
 import { RequireSoloBetaEntitlement } from "@/components/auth/RequireSoloBetaEntitlement";
 import { RequireSetupComplete } from "@/components/auth/RequireSetupComplete";
 
@@ -286,16 +287,18 @@ const App = () => /^\/payment-return\/?$/i.test(window.location.pathname) ? <Pay
             {/* New agent-first dashboard */}
             <Route path="/app" element={<RequireCompleteSignup><PageSuspense><AppShell /></PageSuspense></RequireCompleteSignup>}>
               <Route index element={null} />
-              <Route path="credit" element={<PageSuspense><CreditIntelligence /></PageSuspense>} />
-              <Route path="funding" element={<PageSuspense><FundingMatches /></PageSuspense>} />
-              <Route path="funding-journey" element={<PageSuspense><FundingJourney /></PageSuspense>} />
+              {/* E09 F2: funding and credit pages open only for a finance-entitled business (CustomerFinanceRoute,
+                  the one home beside FundingRoute); any other direct URL returns to /app. */}
+              <Route path="credit" element={<CustomerFinanceRoute><PageSuspense><CreditIntelligence /></PageSuspense></CustomerFinanceRoute>} />
+              <Route path="funding" element={<CustomerFinanceRoute><PageSuspense><FundingMatches /></PageSuspense></CustomerFinanceRoute>} />
+              <Route path="funding-journey" element={<CustomerFinanceRoute><PageSuspense><FundingJourney /></PageSuspense></CustomerFinanceRoute>} />
               {/* Legacy dispute routes — repositioned to a notice + CFPB redirect + CSV export */}
-              <Route path="disputes" element={<PageSuspense><RepositioningNotice /></PageSuspense>} />
+              <Route path="disputes" element={<CustomerFinanceRoute><PageSuspense><RepositioningNotice /></PageSuspense></CustomerFinanceRoute>} />
               <Route path="learn" element={<PageSuspense><LearningVault /></PageSuspense>} />
               <Route path="learn/:courseId" element={<PageSuspense><CourseViewer /></PageSuspense>} />
-              <Route path="business" element={<PageSuspense><BusinessInfrastructureAssessment /></PageSuspense>} />
-              <Route path="business-profile" element={<PageSuspense><BusinessInfrastructureAssessment /></PageSuspense>} />
-              <Route path="financial-profile" element={<PageSuspense><FinancialProfile /></PageSuspense>} />
+              <Route path="business" element={<CustomerFinanceRoute><PageSuspense><BusinessInfrastructureAssessment /></PageSuspense></CustomerFinanceRoute>} />
+              <Route path="business-profile" element={<CustomerFinanceRoute><PageSuspense><BusinessInfrastructureAssessment /></PageSuspense></CustomerFinanceRoute>} />
+              <Route path="financial-profile" element={<CustomerFinanceRoute><PageSuspense><FinancialProfile /></PageSuspense></CustomerFinanceRoute>} />
               <Route path="support" element={<PageSuspense><Support /></PageSuspense>} />
               <Route path="settings" element={<PageSuspense><ProfileSettings /></PageSuspense>} />
               {/* E09 Slice A — a customer's own agreements (sign through /sign/:token, download the sealed copy);

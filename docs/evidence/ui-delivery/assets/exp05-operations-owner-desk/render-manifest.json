@@ -1,0 +1,182 @@
+{
+  "source_head": "580b9ee7273d6ae67711c5e3259ce746b3ab65e4",
+  "source_tree": "fde4ee81e871fcefad37856d6638e7fa0447173f",
+  "compiled_inputs": 3741,
+  "boundary": "LOCAL_ACTUAL_OPERATIONS_AND_SHELL_SYNTHETIC_SOURCE_HOOKS_NO_AUTH_NO_MUTATIONS_NO_PROVIDER",
+  "frames": [
+    {
+      "file": "a-dark-1536x770-closed.jpg",
+      "sha256": "a0361ea7c15a670033c8c3ca5aa7f4b9295b4822b863a5f5b802284ffc3f1f9a",
+      "actual_image_width": 1535,
+      "actual_image_height": 770,
+      "content": "Actual source/shared SOLO shell; neutral synthetic read ports; no authentication, mutations or provider effects"
+    },
+    {
+      "file": "a-dark-1536x770-open.jpg",
+      "sha256": "a1fbcfff56115c3ad78c4612eeb8f42aca44ea33bd82f1880788848511777743",
+      "actual_image_width": 1535,
+      "actual_image_height": 770,
+      "content": "Actual source/shared SOLO shell; neutral synthetic read ports; no authentication, mutations or provider effects"
+    },
+    {
+      "file": "a-dark-1366x768-closed.jpg",
+      "sha256": "2e0b7dd2c818e8d63cff173423c43c1d5acc8b58876e13c602593e23de88bf11",
+      "actual_image_width": 1366,
+      "actual_image_height": 768,
+      "content": "Actual source/shared SOLO shell; neutral synthetic read ports; no authentication, mutations or provider effects"
+    },
+    {
+      "file": "a-dark-1366x768-open.jpg",
+      "sha256": "dba1861094a9e25f531bdae17a362dd8af3f24df6e0d874fff84431e5fa4af04",
+      "actual_image_width": 1366,
+      "actual_image_height": 768,
+      "content": "Actual source/shared SOLO shell; neutral synthetic read ports; no authentication, mutations or provider effects"
+    },
+    {
+      "file": "a-dark-1024x768-closed.jpg",
+      "sha256": "599888ab3ec2263a8a9acbfc85275aec88295eaab36936d8cb22cbdefde12b41",
+      "actual_image_width": 1024,
+      "actual_image_height": 768,
+      "content": "Actual source/shared SOLO shell; neutral synthetic read ports; no authentication, mutations or provider effects"
+    },
+    {
+      "file": "a-dark-1024x768-open.jpg",
+      "sha256": "89452deed64736c90faa1953ab4dbab79390c9e2ad2cc92a3a9f9e6aa8d8a796",
+      "actual_image_width": 1024,
+      "actual_image_height": 768,
+      "content": "Actual source/shared SOLO shell; neutral synthetic read ports; no authentication, mutations or provider effects"
+    },
+    {
+      "file": "a-dark-900x1000-closed.jpg",
+      "sha256": "7f73f5f458b844c9fadd35a4e8e7357b4c32865e89fc2a949cc1ad60e5b29bda",
+      "actual_image_width": 900,
+      "actual_image_height": 1000,
+      "content": "Actual source/shared SOLO shell; neutral synthetic read ports; no authentication, mutations or provider effects"
+    },
+    {
+      "file": "a-dark-900x1000-open.jpg",
+      "sha256": "1d8f6ef9263509c3fa6a34cb0e7204d91af9b6f62b129164fe5db4ce42baed44",
+      "actual_image_width": 900,
+      "actual_image_height": 1000,
+      "content": "Actual source/shared SOLO shell; neutral synthetic read ports; no authentication, mutations or provider effects"
+    },
+    {
+      "file": "b-light-1536x770-closed.jpg",
+      "sha256": "21a3611a64f15e43dad8258db76b2cca57c072ec4a0987b7c66cbebf33537a51",
+      "actual_image_width": 1535,
+      "actual_image_height": 770,
+      "content": "Actual source/shared SOLO shell; neutral synthetic read ports; no authentication, mutations or provider effects"
+    },
+    {
+      "file": "b-light-1536x770-open.jpg",
+      "sha256": "ca432a09652c4db50feeca099f3fd03994ea1caba3405c28eeb34fb72a7dc260",
+      "actual_image_width": 1535,
+      "actual_image_height": 770,
+      "content": "Actual source/shared SOLO shell; neutral synthetic read ports; no authentication, mutations or provider effects"
+    },
+    {
+      "file": "b-light-1366x768-closed.jpg",
+      "sha256": "1b2d6dc8f6dbf24fd90d8ee457880a4b92c647c38299d95019ec4d4dcb283df3",
+      "actual_image_width": 1366,
+      "actual_image_height": 768,
+      "content": "Actual source/shared SOLO shell; neutral synthetic read ports; no authentication, mutations or provider effects"
+    },
+    {
+      "file": "b-light-1366x768-open.jpg",
+      "sha256": "cfbf368e139384742b4ff64070b85ab2fd4f5e7b5920d5defe5320388b34fe61",
+      "actual_image_width": 1366,
+      "actual_image_height": 768,
+      "content": "Actual source/shared SOLO shell; neutral synthetic read ports; no authentication, mutations or provider effects"
+    },
+    {
+      "file": "b-light-1024x768-closed.jpg",
+      "sha256": "7bd5d670d6ddd211d53a12cc017d51e76352b50e4449309190ba2c34c71fc45f",
+      "actual_image_width": 1024,
+      "actual_image_height": 768,
+      "content": "Actual source/shared SOLO shell; neutral synthetic read ports; no authentication, mutations or provider effects"
+    },
+    {
+      "file": "b-light-1024x768-open.jpg",
+      "sha256": "ebd98a163ff1473b982ab0905580bfbfba27cb7eab2e7fc63a93789a6c8f62c7",
+      "actual_image_width": 1024,
+      "actual_image_height": 768,
+      "content": "Actual source/shared SOLO shell; neutral synthetic read ports; no authentication, mutations or provider effects"
+    },
+    {
+      "file": "b-light-900x1000-closed.jpg",
+      "sha256": "e00a1de9e398317f7a8dcecb2a3b1acdf69dbfdc91a3810b205b5ea903c22321",
+      "actual_image_width": 900,
+      "actual_image_height": 1000,
+      "content": "Actual source/shared SOLO shell; neutral synthetic read ports; no authentication, mutations or provider effects"
+    },
+    {
+      "file": "b-light-900x1000-open.jpg",
+      "sha256": "95f6ee65934de35599ff449b780d24c40b12b255b6aaf2f19609dcf150558892",
+      "actual_image_width": 900,
+      "actual_image_height": 1000,
+      "content": "Actual source/shared SOLO shell; neutral synthetic read ports; no authentication, mutations or provider effects"
+    },
+    {
+      "file": "a-dark-phone390-closed.jpg",
+      "sha256": "f06a32e1529fbb3cb42d0b29a8fe2b77abd74d1fc867efd24cb07cb06809ff15",
+      "actual_image_width": 390,
+      "actual_image_height": 843,
+      "content": "Actual source/shared SOLO shell; neutral synthetic read ports; no authentication, mutations or provider effects"
+    },
+    {
+      "file": "a-dark-phone390-native-inspection.jpg",
+      "sha256": "a520162647ada3d585633e6c0dcf46b3435d6064f85ad83759ade221c33fd61e",
+      "actual_image_width": 390,
+      "actual_image_height": 843,
+      "content": "Actual source/shared SOLO shell; neutral synthetic read ports; no authentication, mutations or provider effects"
+    },
+    {
+      "file": "a-dark-phone320-fresh.jpg",
+      "sha256": "088ac1de50c4bf9ee52ca04afd61351546274730a543358963cd2e645000c79c",
+      "actual_image_width": 320,
+      "actual_image_height": 740,
+      "content": "Actual source/shared SOLO shell; neutral synthetic read ports; no authentication, mutations or provider effects"
+    },
+    {
+      "file": "a-dark-phone320-paige-open.jpg",
+      "sha256": "a8322a68a3d011dbef48dec60450950ea6ff9833f4e37810c7a3ef170a2e548c",
+      "actual_image_width": 320,
+      "actual_image_height": 740,
+      "content": "Actual source/shared SOLO shell; neutral synthetic read ports; no authentication, mutations or provider effects"
+    },
+    {
+      "file": "b-light-empty.jpg",
+      "sha256": "5afbab25fd6a4fb0ad8b6a590151ba58afa122c2de007f8e37774ed41b4584c1",
+      "actual_image_width": 1366,
+      "actual_image_height": 768,
+      "content": "Actual source/shared SOLO shell; neutral synthetic read ports; no authentication, mutations or provider effects"
+    },
+    {
+      "file": "a-dark-partial.jpg",
+      "sha256": "4e29a2f1af7f1b7398a12ffe75086f0c6ac365960d623d9c47d664165816023c",
+      "actual_image_width": 1366,
+      "actual_image_height": 768,
+      "content": "Actual source/shared SOLO shell; neutral synthetic read ports; no authentication, mutations or provider effects"
+    },
+    {
+      "file": "b-light-denied.jpg",
+      "sha256": "751bac54efb20ffd528362e1af9fb9d108dca41ae1e1d8bfbefffb909cdd8bf8",
+      "actual_image_width": 1366,
+      "actual_image_height": 768,
+      "content": "Actual source/shared SOLO shell; neutral synthetic read ports; no authentication, mutations or provider effects"
+    },
+    {
+      "file": "a-dark-loading.jpg",
+      "sha256": "e3d4587e47eda561e9b04865c6835706b899fbbf701a45da0157cb93013727f7",
+      "actual_image_width": 1366,
+      "actual_image_height": 768,
+      "content": "Actual source/shared SOLO shell; neutral synthetic read ports; no authentication, mutations or provider effects"
+    }
+  ],
+  "notes": [
+    "All16 desktop frames visually inspected at original capture size; original pixels retained.1536CSS native capture is1535imagepx where recorded.",
+    "The first split-view render required container reflow; these frames use corrected580b9ee7 source.",
+    "phone320fresh is a fresh-entry frame; earlier scrolled phone320 captures are not used as top-of-page evidence.",
+    "Original native inspectors/readonly hook fixtures do not prove backend authorization, receipts or customer acceptance."
+  ]
+}

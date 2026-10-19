@@ -41,7 +41,7 @@ BEGIN
       -- block and the revenue-integrity chain enforce.
       'arr_cents', COALESCE((
         SELECT sum(CASE s.billing_period
-                     WHEN 'annual' THEN COALESCE(p.annual_price_cents, p.monthly_price_cents * 12)
+                     WHEN 'annual' THEN COALESCE(NULLIF(p.annual_price_cents, 0), p.monthly_price_cents * 12)
                      ELSE p.monthly_price_cents * 12
                    END)
         FROM public.platform_subscriptions s
@@ -54,9 +54,11 @@ BEGIN
         SELECT sum(total_cents) FROM public.platform_invoices
         WHERE status = 'paid' AND paid_at IS NOT NULL
       ), 0),
+      -- Collectible receivables only; written-off (uncollectible) amounts stay
+      -- in the attention COUNT below, never overstated as collectible money.
       'open_receivables_cents', COALESCE((
         SELECT sum(total_cents) FROM public.platform_invoices
-        WHERE status IN ('open', 'past_due', 'uncollectible')
+        WHERE status IN ('open', 'past_due')
       ), 0),
       'failed_or_open_invoices', (SELECT count(*) FROM public.platform_invoices
                                   WHERE status IN ('open', 'past_due', 'uncollectible')),

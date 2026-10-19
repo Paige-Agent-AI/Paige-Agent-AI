@@ -47,7 +47,7 @@ STATIC_EVIDENCE: PASS: tsc --noEmit clean; no new lint diagnostics.
 RENDERED_EVIDENCE: PASS: Surface is server-dependent (reads real RPC data); post-deploy browser verification owed at the authenticated Operator drive (below).
 BEHAVIORAL_EVIDENCE: PASS: Loading, error, empty and filtered-empty states are distinct branches in the source; the drill renders real lifecycle sections.
 AUTHENTICATED_RUNTIME: UNVERIFIED: The desk renders real data only when a platform admin session drives it; the owner will sign in via the approved IAB handoff for the one complete evaluation.
-KEYBOARD_FOCUS: PASS: Standard HTML buttons and inputs; table rows are clickable with cursor-pointer; the filter chips are native buttons.
+KEYBOARD_FOCUS: PASS: Table rows carry tabIndex=0, role=button, aria-label, Enter/Space keydown and a focus-visible ring; filter chips are native buttons; the drill back step is a native button.
 ZOOM_REFLOW: PASS: Grid summary band (2→6 cols responsive); list+drill flex column on mobile with back step; no fixed widths.
 REDUCED_MOTION: PASS: No motion beyond the loading spinner and a hover tint.
 STATE_COVERAGE: PASS: Loading, error (role-denied), empty (zero enrollments), filtered-empty, attention-filter, trial-days urgency (≤7 days orange).
@@ -62,7 +62,7 @@ ACCEPTANCE_CRITERIA: recorded above.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: recorded above.
 
-INTERNAL_BUILD_IDENTITY: c10cb4b62d5763f31d4b66f5f5a1736111d699ae; deployment=PENDING merge to main then Vercel production; environment=development; migrations=APPLIED(20271111030000_operator_commercial_customers); edge=NOT_APPLICABLE; evidence=this record + CI
+INTERNAL_BUILD_IDENTITY: f54430f1db82c09c3ff2a1eb99f5c4c8a5526c28; deployment=PENDING merge to main then Vercel production; environment=development; migrations=APPLIED(20271111030000_operator_commercial_customers); edge=NOT_APPLICABLE; evidence=this record + CI
 RELEASE_CHANNEL: development: internal engineering slice on the Operator console; local/development build environment; no staged rollout.
 RELEASE_CLASSIFICATION: internal-only: Operator console capability, not a customer-facing release.
 CUSTOMER_RELEASE_IDENTITY: none: internal Operator capability.

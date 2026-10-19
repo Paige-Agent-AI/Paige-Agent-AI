@@ -103,7 +103,7 @@ const contact = (email: string | null, tenant = T): Row => ({
   client_contact_methods: email ? [{ kind: "email", value: email, label: null, is_primary: true, position: 0 }] : [],
 });
 const sender = (over: Row = {}): Row => ({
-  id: K, tenant_id: T, channel_type: "email", provider: "resend", from_address: "hello@business.test", active: true, status: "active",
+  id: K, tenant_id: T, channel_type: "email", mailbox_class: "shared_support", mailbox_owner_user_id: null, provider: "resend", from_address: "hello@business.test", active: true, status: "active",
   credentials_vault_ref: null, config: {}, ...over,
 });
 const submission = (): Row => ({ id: S, tenant_id: T, lead_reply_skipped_reason: null });
@@ -269,6 +269,13 @@ test("a lost race (duplicate key 23505) is success, never an error", async () =>
 });
 
 const twoSenders = { channel_connectors: [sender(), sender({ id: "70000000-0000-4000-8000-000000000002", from_address: "team@business.test" })] };
+test("background drafting has no human mailbox authority and does not select a personal sender", async () => {
+  const tables = ready({ channel_connectors: [sender({ mailbox_class: "personal", mailbox_owner_user_id: "40000000-0000-4000-8000-000000000001" })] });
+  const h = db(tables);
+  const result = await fileLeadReply(h.admin, input(), deps());
+  assert.equal(result.result.reason, "no_email_sender");
+  assert.equal(tables.paige_actions.length, 0);
+});
 for (const [name, over, tablesOver, depsOver, reason, extra] of [
   ["the business is an agency (checked again at run time)", { business: { ...soloBusiness, account_type: "agency" } }, {}, {}, "business_not_eligible", {}],
   ["the business row could not be read", { business: null }, {}, {}, "business_not_eligible", {}],

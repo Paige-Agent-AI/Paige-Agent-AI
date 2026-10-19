@@ -1,0 +1,17 @@
+{
+  "synthetic": true,
+  "providerRequests": 0,
+  "fetches": 1,
+  "eof": false,
+  "cancelled": true,
+  "mse": true,
+  "prefixBytes": 64000,
+  "firstPlayingMs": 147,
+  "state": {
+    "activeId": null,
+    "status": "idle",
+    "needsConfig": false
+  },
+  "audioReady": 0,
+  "currentTime": 0
+}

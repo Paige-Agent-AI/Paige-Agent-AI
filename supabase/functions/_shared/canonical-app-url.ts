@@ -85,7 +85,7 @@ const ROUTES: Record<MountedTier, Partial<Record<CanonicalDestination, string>>>
     settings: "/solo/{account}/settings/setup",
     connections: "/solo/{account}/settings/connections",
     integrations: "/solo/{account}/settings/integrations",
-    tasks: "/solo/{account}/calendar/tasks",
+    tasks: "/solo/{account}/operations/work",
     calendar: "/solo/{account}/calendar/week",
     contacts: "/solo/{account}/clients/people",
     pipeline: "/solo/{account}/growth/pipeline",
@@ -167,7 +167,7 @@ export type CanonicalRecordLink = { path: string; status: "exact" | "surface_onl
 /** The focus parameters the mounted surfaces already read (UUIDs only). */
 const RECORD_FOCUS: Record<MountedTier, Partial<Record<CanonicalDestination, string>>> = {
   operator: {},
-  solo: { contacts: "person", pipeline: "deal", sales_invoices: "invoice", business_game_plan: "play" },
+  solo: { contacts: "person", pipeline: "deal", sales_invoices: "invoice", tasks: "task", operations_work: "task", business_game_plan: "play" },
   sub_account: {},
   agency: {},
 };

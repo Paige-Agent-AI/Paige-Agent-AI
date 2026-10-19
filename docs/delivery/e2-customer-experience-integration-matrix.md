@@ -1,5 +1,30 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+**October19 reactivation — current-source reconciliation, not full acceptance.**
+Existing EXP02 Codex lead resumes the entire19-outcome contract under ANT-161's
+EXP-only ownership direction. Main/public web baseline is
+`d676e3301aac7d284451187fd3370ea87ed4b855`; historical paragraphs below retain their
+dated meaning. #2128, #2167 and native target UI #2174 are merged; target Executive/
+briefing integration #2181 and native mechanical closeout #2185 remain unmerged at
+this checkpoint. #2181 composes that main and preserves incoming exact Deal/Task
+links alongside Play focus. Only its never-applied migration moves byte-identically
+from20271104102000 to20271112100000. Fresh364 local assertions,64 incumbent controls
+and61 isolated PostgreSQL assertions pass; current-head hosted review/CI/release and
+customer acceptance remain owed.
+
+The original9 PASS/0 FAIL and E2-6 supplement12 PASS/0 FAIL/4 BLOCKED remain preserved;
+the historical action refusal is not a permanent limit on full EXP02. All19 outcomes,
+VERA intelligence/finance/risk integration, applicable ALG03/06/11/12/13, existing
+cross-Experience consumers, real follow-through, Chat/Live, responsive/accessibility,
+authorized SOLO/reload/isolation proof and one final founder evaluation remain
+required. VERA exists once in the production registry but still has the older Trust
+role; the same identity, addressing and department mappings need correction without
+permission/provider/model activation. Existing EXP03/04 are inactive; EXP05 execution
+and EXP09 customer sources retain ownership. No retired specialist coding agent or
+replacement domain engine is introduced. Full first reconciliation: ANT-138 comment
+ba1eb1e0-337b-47bf-a097-038715076f20; shared summary ANT-147 comment
+72358666-a747-4365-ad3a-44d51bb14cc6.
+
 **Directive:** the owner's Mandatory Customer-Visible Outcome Standard (2026-10-13). Every
 customer outcome must be documented and verified along
 **Conversation → Spine capability → Backend record → UI component → Visible state → Verified receipt**,

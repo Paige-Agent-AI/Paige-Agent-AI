@@ -1,0 +1,199 @@
+{
+  "observedUtc": "2026-10-16T02:14:27.312744+00:00",
+  "head": "57d155682bd46cd0a91f71475ea0c0dd649c4aae",
+  "states": [
+    {
+      "label": "a-light-1536-770-closed",
+      "image": "r8/a-light-1536-770-closed.jpg",
+      "dom": "r8/a-light-1536-770-closed.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "a-light-1536-770-open",
+      "image": "r8/a-light-1536-770-open.jpg",
+      "dom": "r8/a-light-1536-770-open.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "a-light-1366-768-closed",
+      "image": "r8/a-light-1366-768-closed.jpg",
+      "dom": "r8/a-light-1366-768-closed.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "a-light-1366-768-open",
+      "image": "r8/a-light-1366-768-open.jpg",
+      "dom": "r8/a-light-1366-768-open.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "a-light-1024-768-closed",
+      "image": "r8/a-light-1024-768-closed.jpg",
+      "dom": "r8/a-light-1024-768-closed.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "a-light-1024-768-open",
+      "image": "r8/a-light-1024-768-open.jpg",
+      "dom": "r8/a-light-1024-768-open.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "a-light-900-1000-closed",
+      "image": "r8/a-light-900-1000-closed.jpg",
+      "dom": "r8/a-light-900-1000-closed.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "a-light-900-1000-open",
+      "image": "r8/a-light-900-1000-open.jpg",
+      "dom": "r8/a-light-900-1000-open.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "a-dark-1536-770-closed",
+      "image": "r9/a-dark-1536-770-closed.jpg",
+      "dom": "r8/a-dark-1536-770-closed.dom.json",
+      "replacement": true
+    },
+    {
+      "label": "a-dark-1536-770-open",
+      "image": "r8/a-dark-1536-770-open.jpg",
+      "dom": "r8/a-dark-1536-770-open.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "a-dark-1366-768-closed",
+      "image": "r8/a-dark-1366-768-closed.jpg",
+      "dom": "r8/a-dark-1366-768-closed.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "a-dark-1366-768-open",
+      "image": "r8/a-dark-1366-768-open.jpg",
+      "dom": "r8/a-dark-1366-768-open.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "a-dark-1024-768-closed",
+      "image": "r8/a-dark-1024-768-closed.jpg",
+      "dom": "r8/a-dark-1024-768-closed.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "a-dark-1024-768-open",
+      "image": "r8/a-dark-1024-768-open.jpg",
+      "dom": "r8/a-dark-1024-768-open.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "a-dark-900-1000-closed",
+      "image": "r9/a-dark-900-1000-closed-confirm.jpg",
+      "dom": "r8/a-dark-900-1000-closed.dom.json",
+      "replacement": true
+    },
+    {
+      "label": "a-dark-900-1000-open",
+      "image": "r8/a-dark-900-1000-open.jpg",
+      "dom": "r8/a-dark-900-1000-open.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "b-dark-1536-770-closed",
+      "image": "r9/b-dark-1536-770-closed.jpg",
+      "dom": "r8/b-dark-1536-770-closed.dom.json",
+      "replacement": true
+    },
+    {
+      "label": "b-dark-1536-770-open",
+      "image": "r8/b-dark-1536-770-open.jpg",
+      "dom": "r8/b-dark-1536-770-open.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "b-dark-1366-768-closed",
+      "image": "r8/b-dark-1366-768-closed.jpg",
+      "dom": "r8/b-dark-1366-768-closed.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "b-dark-1366-768-open",
+      "image": "r8/b-dark-1366-768-open.jpg",
+      "dom": "r8/b-dark-1366-768-open.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "b-dark-1024-768-closed",
+      "image": "r8/b-dark-1024-768-closed.jpg",
+      "dom": "r8/b-dark-1024-768-closed.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "b-dark-1024-768-open",
+      "image": "r8/b-dark-1024-768-open.jpg",
+      "dom": "r8/b-dark-1024-768-open.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "b-dark-900-1000-closed",
+      "image": "r8/b-dark-900-1000-closed.jpg",
+      "dom": "r8/b-dark-900-1000-closed.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "b-dark-900-1000-open",
+      "image": "r8/b-dark-900-1000-open.jpg",
+      "dom": "r8/b-dark-900-1000-open.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "b-light-1536-770-closed",
+      "image": "r8/b-light-1536-770-closed.jpg",
+      "dom": "r8/b-light-1536-770-closed.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "b-light-1536-770-open",
+      "image": "r8/b-light-1536-770-open.jpg",
+      "dom": "r8/b-light-1536-770-open.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "b-light-1366-768-closed",
+      "image": "r8/b-light-1366-768-closed.jpg",
+      "dom": "r8/b-light-1366-768-closed.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "b-light-1366-768-open",
+      "image": "r8/b-light-1366-768-open.jpg",
+      "dom": "r8/b-light-1366-768-open.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "b-light-1024-768-closed",
+      "image": "r8/b-light-1024-768-closed.jpg",
+      "dom": "r8/b-light-1024-768-closed.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "b-light-1024-768-open",
+      "image": "r8/b-light-1024-768-open.jpg",
+      "dom": "r8/b-light-1024-768-open.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "b-light-900-1000-closed",
+      "image": "r8/b-light-900-1000-closed.jpg",
+      "dom": "r8/b-light-900-1000-closed.dom.json",
+      "replacement": false
+    },
+    {
+      "label": "b-light-900-1000-open",
+      "image": "r8/b-light-900-1000-open.jpg",
+      "dom": "r8/b-light-900-1000-open.dom.json",
+      "replacement": false
+    }
+  ],
+  "boundary": "Selected raw frames reviewed against native panel, theme, failure and scope. Native one-pixel edges retained. R8 original invalid/stale frames and R9 pre-confirmation portrait frame are not passed. Screenshot dimensions are not inferred from DOM."
+}

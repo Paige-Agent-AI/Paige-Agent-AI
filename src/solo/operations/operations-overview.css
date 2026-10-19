@@ -1,0 +1,68 @@
+.ops-operating-desk { min-width: 0; container-type: inline-size; }
+.ops-desk-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 16px; }
+.ops-desk-heading h1 { margin: 0 0 8px; font-size: var(--pg-t-title,21px); font-weight: 600; letter-spacing: -.025em; line-height: 1.3; }
+.ops-desk-heading p { margin: 0; color: var(--pg-muted); line-height: 1.6; }
+.ops-operating-desk button { font: inherit; cursor: pointer; }
+.ops-operating-desk button:disabled { cursor: default; color: var(--pg-muted); }
+.ops-operating-desk button:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 3px; }
+.ops-operating-desk .ops-desk-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0; min-height: 44px; border: 0; border-radius: 8px; padding: 10px 14px; background: var(--pg-ink); color: var(--pg-canvas); font-weight: 550; }
+.ops-desk-primary:hover { background: var(--pg-ink-2); }
+.ops-desk-read-scope { margin: 0 0 24px; color: var(--pg-muted); font-size: 12px; line-height: 1.6; }
+.ops-desk-columns { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(250px, 1fr); gap: 30px; }
+.ops-desk-primary-column,.ops-desk-next-column { min-width: 0; }
+.ops-desk-section-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 14px; margin-bottom: 10px; }
+.ops-operating-desk h2 { margin: 0; font-size: var(--pg-t-lead,16px); font-weight: 600; line-height: 1.4; letter-spacing: -.015em; }
+.ops-desk-section-heading>.ops-view-text-action { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; font-size: 12px; color: var(--pg-muted); }
+.ops-desk-attention { padding: 20px 0; margin-bottom: 26px; border-top: 1px solid var(--pg-line); border-bottom: 1px solid var(--pg-line); }
+.ops-desk-attention header { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.ops-desk-attention h2 { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--pg-warning); }
+.ops-desk-attention h3 { margin: 12px 0; font-size: 18px; font-weight: 550; line-height: 1.4; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.ops-desk-attention p { margin: 10px 0; line-height: 1.6; max-width: 65ch; }
+.ops-desk-inspect { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; max-width: 100%; text-align: left; padding: 9px 12px; border: 1px solid var(--pg-line); border-radius: 8px; color: var(--pg-ink); background: transparent; overflow-wrap: anywhere; }
+.ops-desk-inspect svg { flex-shrink: 0; }
+.ops-desk-inspect:hover { background: var(--pg-surface); }
+.ops-desk-attention>.ops-desk-inspect { margin-top: 16px; }
+.ops-desk-attention-clear { margin: 0 0 22px; padding: 14px 0; border-block: 1px solid var(--pg-line); color: var(--pg-muted); font-size: 13px; line-height: 1.6; }
+.ops-desk-work-list { margin: 0; padding: 0; list-style: none; }
+.ops-desk-work-list>li { display: flex; align-items: flex-start; gap: 12px; padding: 15px 0; border-bottom: 1px solid var(--pg-line); }
+.ops-desk-work-main { flex: 1; min-width: 0; }
+.ops-desk-work-main>.ops-view-text-action { display: block; min-height: 32px; text-align: left; font-weight: 550; line-height: 1.5; overflow-wrap: anywhere; }
+.ops-desk-work-main>.ops-view-text-action:hover { color: var(--pg-violet); }
+.ops-desk-work-context { display: flex; gap: 6px 14px; flex-wrap: wrap; margin-top: 5px; color: var(--pg-muted); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.ops-desk-work-owner { margin-top: 8px; font-size: 12px; }
+.ops-desk-work-owner .ops-assignee-avatar { width: 24px; height: 24px; }
+.ops-desk-work-list .ops-view-status { margin-top: 5px; flex-shrink: 0; }
+.ops-desk-projects { margin-top: 28px; }
+.ops-desk-project-list { list-style: none; margin: 0; padding: 0; }
+.ops-desk-project-list>li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 14px 0; border-bottom: 1px solid var(--pg-line); }
+.ops-desk-project-list button { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; text-align: left; overflow-wrap: anywhere; }
+.ops-desk-project-list>li>span { font-size: 12px; }
+.ops-desk-connections { display: flex; gap: 12px 22px; flex-wrap: wrap; margin-top: 26px; padding-top: 16px; border-top: 1px solid var(--pg-line); }
+.ops-desk-connections button { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: 13px; text-align: left; }
+.ops-desk-commitments { padding: 18px; border: 1px solid var(--pg-line); border-radius: 13px; background: var(--pg-surface); }
+.ops-desk-commitments>p { margin: 12px 0 0; font-size: 13px; line-height: 1.6; }
+.ops-desk-commitments .ops-desk-work-list>li:last-child { border-bottom: 0; padding-bottom: 0; }
+.ops-desk-reminders,.ops-desk-next-action { margin-top: 28px; }
+.ops-desk-note { color: var(--pg-muted); font-size: 12px; line-height: 1.6; margin: 12px 0 0; }
+.ops-desk-next-action p { color: var(--pg-muted); line-height: 1.6; margin: 12px 0 16px; max-width: 65ch; }
+.ops-desk-next-action>.ops-view-text-action { display: block; text-align: left; min-height: 44px; margin-top: 8px; }
+.ops-desk-first-use { padding: 30px 0; max-width: 65ch; border-top: 1px solid var(--pg-line); }
+.ops-desk-first-use p { margin: 14px 0; color: var(--pg-muted); line-height: 1.6; }
+.ops-desk-first-use>div { display: flex; flex-wrap: wrap; gap: 12px 24px; }
+.ops-desk-first-use button { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
+@media(max-width: 1100px) {
+  .ops-desk-columns { grid-template-columns: minmax(0,1.25fr) minmax(230px,1fr); gap: 24px; }
+}
+@media(max-width: 800px) {
+  .ops-desk-columns { grid-template-columns: minmax(0,1fr); gap: 28px; }
+  .ops-desk-heading { flex-wrap: wrap; }
+  .ops-desk-work-list>li { flex-wrap: wrap; }
+  .ops-desk-work-main { flex-basis: 70%; }
+  .ops-desk-next-column { border-top: 1px solid var(--pg-line); padding-top: 24px; }
+  .ops-desk-work-main>.ops-view-text-action,.ops-desk-section-heading>.ops-view-text-action,.ops-desk-project-list button { min-height: 44px; }
+}
+@container(max-width: 720px) {
+  .ops-desk-columns { grid-template-columns: minmax(0,1fr); gap: 28px; }
+  .ops-desk-heading { flex-wrap: wrap; }
+  .ops-desk-next-column { border-top: 1px solid var(--pg-line); padding-top: 24px; }
+}

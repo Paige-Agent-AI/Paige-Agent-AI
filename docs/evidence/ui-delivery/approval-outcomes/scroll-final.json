@@ -1,0 +1,14 @@
+{
+  "proofClass": "NATIVE_STATIC_KEYBOARD_SCROLL",
+  "end": {
+    "body": 0,
+    "field": 966.4000244140624,
+    "main": 0,
+    "max": 966
+  },
+  "home": {
+    "body": 0,
+    "field": 0,
+    "main": 0
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "documentScrollWidth": 320,
+  "documentWidth": 320,
+  "headings": [
+    "Your operating week",
+    "Needs your attention",
+    "Work in motion",
+    "Projects and milestones",
+    "Next deadlines",
+    "Recorded reminders",
+    "What to do next"
+  ],
+  "height": 740,
+  "scrollOwners": [
+    {
+      "clientHeight": 507,
+      "clientWidth": 238,
+      "scrollHeight": 2300,
+      "scrollTop": 0,
+      "scrollWidth": 238
+    }
+  ],
+  "width": 320,
+  "paigeAsidePresent": true,
+  "paigeAsidePresentSemantics": "DOM element presence only, including hidden or transitioning ASIDE; not open/visible state. The matching original screenshot is the visually reviewed state evidence."
+}

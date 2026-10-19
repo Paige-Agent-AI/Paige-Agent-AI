@@ -69,7 +69,9 @@ describe("the frame + the run reference (§12: reference + canonical reload)", (
 
   it("a null readback settles the honest reference state (never a fabricated evidence card)", () => {
     expect(chat).toContain("{ ...r, rehydrating: false, saved: false }");
-    expect(chat).toContain("/* the card keeps its honest reference state */");
+    expect(chat).toContain("RESEARCH_HISTORY_READ_BUDGET_MS");
+    // Actual reachability, late-scope rejection and terminal states are exercised by
+    // PaigeAIChat.researchRecovery.test.tsx; source text alone cannot prove the join.
     // and the card side claims no engine state a reference cannot support (review P3):
     expect(card).toContain("Reloading…");
     expect(card).toContain("Unavailable");

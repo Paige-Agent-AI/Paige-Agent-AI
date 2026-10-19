@@ -1,5 +1,89 @@
 # Governed Knowledge Chat binding
 
+## Bound-source delete result repair — development, 2026-10-16
+
+Pre-edit packet: base `3ac33996dea21b3ef94a5cef4d3f6c0658209969`; isolated
+`fix/ant21-knowledge-delete-retention`. The intended outcome is an ordinary eligible SOLO
+owner approving removal of an exact Knowledge revision and seeing the verified document/chunk
+deletion separately from the intentionally retained uploaded source. This applies to all eligible
+existing/future SOLO accounts through shared code; no account predicate or provisioning change.
+
+Routing: (1) existing Chat proposal → exact stored approval → native deletion → truthful result;
+(2) Knowledge portfolio / `knowledge-system`, existing domain writer retained;
+(3) incumbent Gateway/Harness/Trust and canonical SQL, no new executor;
+(4) `knowledge.delete`, `knowledge_delete`, `public.delete_tenant_knowledge`;
+(5) internal operation, no provider/connection or Integration Registry change;
+(6) existing high-risk confirmation and `knowledge.documents.delete` permission unchanged;
+(7) no new job/event/scheduler; (8) native document/chunk absence and native operation Rail/run;
+(9) existing Chat approval/outcome and Knowledge library surfaces, no Binding Ledger advancement;
+(10) protected real-handler fixture proof now, ordinary authenticated deletion/reload/isolation,
+Live and owner acceptance remain UNVERIFIED. No production document is deleted for this repair.
+
+Confirmed cause: the latest native publication migration returns `retained_by_policy` for bound
+sources, and the browser validator accepts it. The Chat adapter accepts only the older unbound
+reason and therefore marks a committed deletion unconfirmed. Fix only the exact closed reason
+allowlist and preserve the native reason in the result. Keep tenant/id/revision/absence/outcome/
+receipt validation, exact approvals, refusal versus unknown, and no automatic replay unchanged.
+No SQL, ACL, source cleanup, domain-writer, Portal, model/provider or activation change.
+
+Flow-by-Flow repair/verification applies. Retain the approved existing interface and controls;
+no new/material flow or prototype. Impeccable truth/clarity checks apply to the outcome contract,
+with no geometry, focus, motion, style or layout edits. Tests and release evidence are appended
+after execution. Independent Review, exact-head CI, affected dependency-pin review, production
+source readback and authenticated acceptance remain required; this packet is not release proof.
+
+Implementation/proof: the Chat adapter now accepts only the two native cleanup reasons and echoes
+the validated reason unchanged. Bound deletion explicitly says that the Knowledge document and
+indexed chunks were deleted while the uploaded source was retained by policy. The original
+unbound result and metadata-update behavior remain; completed-unrecorded stays a verified change
+with unconfirmed Rail, not a reason to repeat. Every identity/revision/absence/receipt/refusal
+check, native writer, source object, permission, approval and uncertainty control is preserved.
+
+Failing-first actual full-Chat handler: **1117 PASS / 4 FAIL** before changing the adapter. Both
+bound-source native outcomes called the caller-JWT RPC exactly once after the stored approval,
+but produced unconfirmed cards and lost the retained-source result. Focused adapter baseline:
+**36 PASS / 2 FAIL**. Final focused six-suite campaign: **110 PASS / 0 FAIL**, including existing
+unbound handling, both bound receipt outcomes, missing/foreign/contradictory envelopes, malformed
+cleanup/outcome/identity, exact SQL rollback versus uncertain transport/TimeoutError and no retry.
+An intermediate test expected the spent classifier to omit its normal `reason:null`; actual
+classification was correct. That test expectation was corrected to the existing exact ABI;
+the intermediate **109 PASS / 1 FAIL** log is retained and no runtime classifier changed.
+
+Final actual full-Chat handler: **1132 PASS / 0 FAIL**. Added canonical proposal/no-effect,
+stored-approval/single caller-JWT deletion, truthful card/model result, no duplicate Chat audit,
+spent-token zero-repeat deletion, foreign-workspace refusal and unsupported private-reason
+non-disclosure checks. These exercise real Chat and adapter code with recording RPC/provider
+ports; they do not execute PostgreSQL, a real provider, a browser or a production deletion.
+
+Existing native proof is already available, not newly rerun here:
+`scripts/knowledge-service/publication-check.py` replays the canonical migrations and
+`publication-behavior.sql:108-110` verifies the bound delete reason and retained storage object.
+The unchanged latest writer is `20270533000000_knowledge_publication.sql:377-435`; its transaction,
+child-tenant checks, record/chunk absence, receipt outcome and ACL remain intact. Content updates
+remain the existing review/publication contract, never a metadata-patch expansion.
+
+Commands/evidence retained locally under `work/knowledge-delete-retention/`:
+`handler-red.log`, `unit-red.log`, `unit-first-final.log`, `unit-final.log`,
+`handler-first-final.log`, `handler-final.log`, `c0b.log`, `typecheck.log` and scoped lint logs.
+Actual command definitions: incumbent `scripts/client-memory-authz/check.mjs` with its own loader;
+Vitest runs `knowledge-chat`, `knowledge-kit`, `knowledge-delete`, `knowledge-service`,
+`knowledge-review-service`, `knowledge-chat-ingest-outcome`, Node environment/one worker.
+The standalone strict ES2020 helper type check passes. Incumbent source-binding/security test:
+**59 PASS / 0 FAIL / 0 skips**, without pin or extractor changes. Source import census finds only
+`paige-ai-chat/index.ts` as the production importer of this helper. Review/release must inspect
+that changed closure; no automatic pin renewal is proposed merely because tests passed.
+Fresh three-file ESLint exits0 with zero warnings, and the actual Spine registry lint passes
+all214 current capabilities. Whitespace check passes. Existing frozen dispatch/dependency pins,
+registry metadata and extraction algorithm remain unchanged and accepted by their actual guards.
+Runtime helper blob: `8a8404e809bea0b879ce20f11af500f46c92c360`; raw-file SHA256
+`4ff43989e0c9cc585b032025e848fdb58e8eb6265e356d7c4bb321191a10a557`.
+
+State: local candidate, NOT MERGED / NOT DEPLOYED / NOT CUSTOMER VERIFIED. Required distinct
+review, final-head CI, production Chat closure readback, ordinary bound-source positive/negative
+QA and all eight viewport states remain owed to the restoration lead. Live and final owner
+acceptance remain UNVERIFIED. All18 historical entries and50 parity rows remain intact; this
+bounded adapter fix does not close full Knowledge content-update/deletion acceptance.
+
 ## Verified production source checkpoint — 2026-10-14 America/New_York
 
 This checkpoint supersedes the pre-release state retained below. PR1615 final head `729fefecd946f9e8d7d1af290e500f623992fed7` merged normally as `7ee9fb94162396f7fc2e38a718ccfd98bf97cd76`, preserving tested tree `1354bd148f49ef1031c142c8ad61469d209a8812`. All12 applicable exact-head checks and both Vercel statuses succeeded; full CI38667645395 and database-contract PASS. The owner-granted sequential author review exception is lower assurance and is not independent non-author approval; final source receipt6182615870 remains authoritative for its bounded scope.

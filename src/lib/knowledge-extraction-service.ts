@@ -1,4 +1,5 @@
-/** Consumer contract frozen against extraction backend 007cc088e234848c1d73e3dc495b0cda940676f2.
+/** Incumbent extraction contract frozen against backend 007cc088e234848c1d73e3dc495b0cda940676f2.
+ * Additive publication recovery requires the reviewed native45000 association contract.
  * JWT clients only. These adapters neither poll nor retry, persist, publish or cancel work.
  * Callers must supply an incarnation guard (tenant equality alone cannot fence A -> B -> A).
  */
@@ -11,19 +12,31 @@ export type ExtractionInput = {
   intent_id: string; title: string; doc_id?: string; expected_revision?: number;
 } & ({ kind: 'paste'; content: string; path?: never } | { kind: 'file'; path: string; content?: never });
 export type ExtractionStatus = 'claimed' | 'succeeded' | 'failed' | 'blocked' | 'cancelled' | 'expired' | 'outcome_unknown';
-export interface ExtractionReference { tenantId: string; intentId: string; documentId: string; workId: string; revision?: number }
+export interface ExtractionReadReference { tenantId: string; documentId: string; workId: string; revision?: number }
+export interface ExtractionReference extends ExtractionReadReference { intentId: string }
 export interface ExtractionSubmission { reference: ExtractionReference; status: ExtractionStatus; replayed: boolean }
 export interface SourceBinding {
   bucket: 'tenant-knowledge'; object_id: string; object_name: string; sha256: string;
   byte_size: number; mime_type: string; bound_at: string;
 }
 export type SourceCoverage = 'complete' | 'partial' | 'unknown';
+export interface KnowledgePublicationAssociation {
+  contract_version: 1; association: 'not_submitted' | 'matched' | 'unavailable';
+  work_id: string | null; work_status: ExtractionStatus | null; generation_id: string | null;
+  outcome: 'capability_succeeded' | 'capability_completed_unrecorded' | null;
+}
 export interface ExtractionReview {
   phase: 'awaiting_review' | 'review_unavailable';
   tenant_id: string; document_id: string; revision: number; record_state: 'canonical' | 'draft';
   source_coverage: SourceCoverage; source_binding: SourceBinding | null;
   extraction_work_id: string; extraction_source_binding: SourceBinding | null;
   pending_review: null | { schema_version: 1; extracted_content: string; reviewed_content: string | null; extraction_version: string; coverage: SourceCoverage };
+  publication?: KnowledgePublicationAssociation;
+}
+export type ExtractionDocumentReview = Omit<ExtractionReview, 'extraction_work_id'> & { extraction_work_id: string | null };
+/** Read-only source reference. It cannot submit or replay a publication intent. */
+export interface KnowledgePublicationReadReference {
+  tenantId: string; documentId: string; extractionWorkId?: string; revision: number; workId?: string;
 }
 export interface ExtractionWorkStatus {
   work_id: string; capability_key: 'knowledge.extract'; work_kind: 'knowledge_extract'; work_status: ExtractionStatus;
@@ -48,8 +61,8 @@ function assertScope(scope: ExtractionScope, uncertain = false) {
   if (!uuid(scope.tenantId) || typeof scope.isCurrent !== 'function' || scope.isCurrent() !== true) throw new ExtractionConsumerError('EXTRACTION_SCOPE_CHANGED', 'Select the original workspace and check the current extraction.', uncertain);
 }
 function capture(scope: ExtractionScope): ExtractionScope { const captured = { tenantId: scope.tenantId, isCurrent: scope.isCurrent }; assertScope(captured); return captured; }
-function reference(scope: ExtractionScope, ref: ExtractionReference) {
-  if (ref.tenantId !== scope.tenantId || !uuid(ref.intentId) || !uuid(ref.documentId) || !uuid(ref.workId) || (ref.revision !== undefined && !integer(ref.revision))) invalid();
+function reference(scope: ExtractionScope, ref: ExtractionReadReference) {
+  if (ref.tenantId !== scope.tenantId || ('intentId' in ref && !uuid(ref.intentId)) || !uuid(ref.documentId) || !uuid(ref.workId) || (ref.revision !== undefined && !integer(ref.revision))) invalid();
   return { ...ref };
 }
 function pathInTenant(value: unknown, tenant: string): value is string {
@@ -64,6 +77,30 @@ function binding(value: unknown, tenant: string): SourceBinding | null {
     byte_size: value.byte_size, mime_type: value.mime_type, bound_at: value.bound_at };
 }
 function content(value: unknown): value is string { return text(value, 480000) && new TextEncoder().encode(value).length <= MAX_BYTES; }
+function publicationProjection(value: unknown, doc: Record<string, unknown>): KnowledgePublicationAssociation | undefined {
+  // Rolling deployments may omit the additive field. Omission is not idle proof.
+  if (value === undefined) return undefined;
+  if (!object(value) || value.contract_version !== 1 || typeof value.association !== 'string'
+    || !['not_submitted', 'matched', 'unavailable'].includes(value.association)) invalid();
+  if (value.association !== 'matched') {
+    if (value.work_id !== null || value.work_status !== null || value.generation_id !== null || value.outcome !== null) invalid();
+    if (value.association === 'not_submitted' && !(object(doc.pending_review) && doc.pending_review.reviewed_content !== null)
+      && !(doc.pending_review === null && doc.extraction_work_id === null && doc.record_state === 'canonical')) invalid();
+  } else {
+    if (!uuid(value.work_id) || typeof value.work_status !== 'string' || !statuses.includes(value.work_status)) invalid();
+    if (doc.pending_review !== null) {
+      if (!object(doc.pending_review) || doc.pending_review.reviewed_content === null || value.work_status === 'succeeded'
+        || value.generation_id !== null || value.outcome !== null) invalid();
+    } else if (value.work_status === 'succeeded') {
+      if (doc.record_state !== 'canonical' || doc.extraction_work_id !== null || value.generation_id !== value.work_id
+        || typeof value.outcome !== 'string' || !['capability_succeeded', 'capability_completed_unrecorded'].includes(value.outcome)) invalid();
+    } else if (doc.record_state !== 'canonical' || doc.extraction_work_id !== null
+      || ['failed', 'cancelled'].includes(value.work_status) || value.generation_id !== null || value.outcome !== null) invalid();
+  }
+  return { contract_version: 1, association: value.association as KnowledgePublicationAssociation['association'],
+    work_id: value.work_id as string | null, work_status: value.work_status as ExtractionStatus | null,
+    generation_id: value.generation_id as string | null, outcome: value.outcome as KnowledgePublicationAssociation['outcome'] };
+}
 async function read(client: ExtractionClient, scope: ExtractionScope, name: string, args: Record<string, unknown>) {
   assertScope(scope);
   let response: { data: unknown; error: unknown };
@@ -110,26 +147,72 @@ export async function submitKnowledgeExtraction(client: ExtractionClient, suppli
     ...(d.revision !== undefined ? { revision: d.revision as number } : {}) }, status: d.status as ExtractionStatus, replayed: d.replayed };
 }
 /** Plain text only. Presence of pending_review means awaiting review, never publication or indexing. */
-export async function readKnowledgeExtractionReview(client: ExtractionClient, suppliedScope: ExtractionScope, suppliedRef: ExtractionReference): Promise<ExtractionReview> {
-  const scope = capture(suppliedScope); const ref = reference(scope, suppliedRef);
-  const d = await read(client, scope, 'read_tenant_knowledge_review', { p_expected_tenant: scope.tenantId, p_doc_id: ref.documentId });
-  if (!object(d) || d.tenant_id !== scope.tenantId || d.document_id !== ref.documentId || d.extraction_work_id !== ref.workId
-    || !integer(d.revision) || (ref.revision !== undefined && d.revision < ref.revision)
+function reviewProjection(d: unknown, scope: ExtractionScope, documentId: string, revision?: number, workId?: string, exactRevision = false): ExtractionDocumentReview {
+  if (!object(d) || d.tenant_id !== scope.tenantId || d.document_id !== documentId
+    || !(d.extraction_work_id === null || uuid(d.extraction_work_id)) || (workId !== undefined && d.extraction_work_id !== workId)
+    || !integer(d.revision) || (revision !== undefined && (exactRevision ? d.revision !== revision : d.revision < revision))
     || !['draft', 'canonical'].includes(String(d.record_state)) || !coverages.includes(String(d.source_coverage))) invalid();
   const p = d.pending_review;
-  if (p !== null && (!object(p) || p.schema_version !== 1 || !content(p.extracted_content)
+  if (p !== null && (d.extraction_work_id === null || !object(p) || p.schema_version !== 1 || !content(p.extracted_content)
     || (p.reviewed_content !== null && !content(p.reviewed_content)) || !text(p.extraction_version, 100) || !coverages.includes(String(p.coverage)))) invalid();
-  return { phase: p === null ? 'review_unavailable' : 'awaiting_review', tenant_id: scope.tenantId, document_id: ref.documentId, revision: d.revision,
+  const publication = publicationProjection(d.publication, d);
+  return { phase: p === null ? 'review_unavailable' : 'awaiting_review', tenant_id: scope.tenantId, document_id: documentId, revision: d.revision,
     record_state: d.record_state as ExtractionReview['record_state'], source_coverage: d.source_coverage as SourceCoverage,
-    source_binding: binding(d.source_binding, scope.tenantId), extraction_work_id: ref.workId,
+    source_binding: binding(d.source_binding, scope.tenantId), extraction_work_id: d.extraction_work_id as string | null,
     extraction_source_binding: binding(d.extraction_source_binding, scope.tenantId),
     pending_review: p === null ? null : { schema_version: 1, extracted_content: (p as Record<string, unknown>).extracted_content as string,
-      reviewed_content: (p as Record<string, unknown>).reviewed_content as string | null, extraction_version: (p as Record<string, unknown>).extraction_version as string, coverage: (p as Record<string, unknown>).coverage as SourceCoverage } };
+      reviewed_content: (p as Record<string, unknown>).reviewed_content as string | null, extraction_version: (p as Record<string, unknown>).extraction_version as string, coverage: (p as Record<string, unknown>).coverage as SourceCoverage },
+    ...(publication ? { publication } : {}) };
+}
+/** Discover existing staged work from the canonical scoped document, never from a new intent.
+ * The fresh selected revision must still match; malformed/unreadable data is never idle.
+ */
+export async function readKnowledgeExtractionForDocument(client: ExtractionClient, suppliedScope: ExtractionScope, documentId: string, expectedRevision: number): Promise<ExtractionDocumentReview> {
+  const scope = capture(suppliedScope);
+  if (!uuid(documentId) || !integer(expectedRevision)) invalid();
+  const d = await read(client, scope, 'read_tenant_knowledge_review', { p_expected_tenant: scope.tenantId, p_doc_id: documentId });
+  return reviewProjection(d, scope, documentId, expectedRevision, undefined, true);
+}
+/** Reconcile the original saved revision through its canonical native association. Generic
+ * job success alone cannot establish this document's promoted generation or receipt outcome.
+ */
+export async function readKnowledgePublicationForDocument(client: ExtractionClient, suppliedScope: ExtractionScope, suppliedRef: KnowledgePublicationReadReference): Promise<ExtractionDocumentReview> {
+  const scope = capture(suppliedScope); const ref = { ...suppliedRef };
+  if (ref.tenantId !== scope.tenantId || !uuid(ref.documentId) || !integer(ref.revision)
+    || (ref.extractionWorkId !== undefined && !uuid(ref.extractionWorkId)) || (ref.extractionWorkId === undefined && ref.workId === undefined)
+    || (ref.workId !== undefined && !uuid(ref.workId))) invalid();
+  const d = await read(client, scope, 'read_tenant_knowledge_review', { p_expected_tenant: scope.tenantId, p_doc_id: ref.documentId });
+  const projected = reviewProjection(d, scope, ref.documentId);
+  const p = projected.publication;
+  if (ref.extractionWorkId === undefined) {
+    // An already-canonical document has no extraction reference after promotion.
+    // Keep its exact current revision/work; never invent the cleared extraction ID.
+    if (projected.revision !== ref.revision || projected.pending_review !== null || projected.extraction_work_id !== null || p?.association !== 'matched') invalid();
+  } else if (projected.pending_review !== null) {
+    if (projected.revision !== ref.revision || projected.extraction_work_id !== ref.extractionWorkId
+      || projected.pending_review.reviewed_content === null) invalid();
+  } else {
+    // Native publication proof survives later metadata revisions. Only the known
+    // original terminal work/current generation can relax the next-revision bound;
+    // a lost acknowledgement must not adopt an unrelated later publication.
+    const samePublishedGeneration = ref.workId !== undefined && p?.association === 'matched'
+      && p.work_id === ref.workId && p.work_status === 'succeeded' && p.generation_id === ref.workId;
+    if (projected.revision <= ref.revision || p?.association !== 'matched'
+      || (projected.revision !== ref.revision + 1 && !samePublishedGeneration)) invalid();
+  }
+  if (p?.association === 'matched' && ref.workId !== undefined && p.work_id !== ref.workId) invalid();
+  return projected;
+}
+export async function readKnowledgeExtractionReview(client: ExtractionClient, suppliedScope: ExtractionScope, suppliedRef: ExtractionReadReference): Promise<ExtractionReview> {
+  const scope = capture(suppliedScope); const ref = reference(scope, suppliedRef);
+  const d = await read(client, scope, 'read_tenant_knowledge_review', { p_expected_tenant: scope.tenantId, p_doc_id: ref.documentId });
+  const projected = reviewProjection(d, scope, ref.documentId, ref.revision, ref.workId);
+  return { ...projected, extraction_work_id: ref.workId };
 }
 /** Status has no tenant/document fields. First verify its exact source/work association through
  * the scoped review RPC; then read the existing job. No new status store or receipt inference.
  */
-export async function readKnowledgeExtractionStatus(client: ExtractionClient, suppliedScope: ExtractionScope, suppliedRef: ExtractionReference): Promise<ExtractionWorkStatus> {
+export async function readKnowledgeExtractionStatus(client: ExtractionClient, suppliedScope: ExtractionScope, suppliedRef: ExtractionReadReference): Promise<ExtractionWorkStatus> {
   const scope = capture(suppliedScope); const ref = reference(scope, suppliedRef);
   await readKnowledgeExtractionReview(client, scope, ref);
   const rows = await read(client, scope, 'get_paige_durable_work', { _work_id: ref.workId });

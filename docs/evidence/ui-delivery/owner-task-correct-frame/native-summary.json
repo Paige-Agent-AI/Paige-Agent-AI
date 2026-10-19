@@ -1,0 +1,45 @@
+{
+  "result": "PASS_BOUNDED_STATIC_NATIVE_FRAME",
+  "matrixPNGs": 64,
+  "matrixPngCRCInflationDimensionsAndSha": "PASS",
+  "keyboardPNGs": 8,
+  "nativeFocusCases": 8,
+  "sourceIdentityFiles": 17,
+  "sourceIdentitiesStillMatch": true,
+  "matrixManifestSha256": "4269957a718a3cbce403c0c0a30347d011d14331af9a92b776d275e211c34866",
+  "nativeResultsSha256": "7d500c0ef9d2d6cc7941cdfc550131b218bf2fa7adff2224d1604ce0db5205e3",
+  "rendererSha256": "df20f846db266b1f1231086452d35fd7262d392bbc738dbb52175e999f7aefa4",
+  "nativeFullStylesheetSha256": "0cb70a641a01a8227505a1cec8151ff2835307848e5e626cd71af3b60b845c6a",
+  "heldTitleCharacters": 357,
+  "heldDescriptionCharacters": 213,
+  "materialFindings": [],
+  "scroll": {
+    "end": {
+      "bodyScrollTop": 0,
+      "hostClientHeight": 709,
+      "hostScrollHeight": 1816,
+      "hostScrollTop": 1106.4000244140625,
+      "outerMainScrollTop": 0
+    },
+    "home": {
+      "bodyScrollTop": 0,
+      "hostScrollTop": 0,
+      "outerMainScrollTop": 0
+    },
+    "result": "PASS"
+  },
+  "browserCleanup": {
+    "ownedTab": "1738566774",
+    "deviceMetricsCleared": true,
+    "mediaOverrideCleared": true,
+    "ownedTabClosed": true,
+    "browserGlobalViewportChanged": false,
+    "customerTabsTouched": false
+  },
+  "reflow": "768x384 CSS at DPR2 = 1536x768 PNG; 200-percent-equivalent, NOT literal browser zoom",
+  "priorEvidence": "Earlier work/owner-task-render 64 captures retained as incomplete-SoloApp-frame proof",
+  "customerAuthenticatedQa": "UNVERIFIED",
+  "hydratedBehavior": "NOT_TESTED",
+  "providerEffects": "NONE",
+  "earlierProofMethodCorrection": "CUA returned style strings truncate at200k; native in-browser complete SHA used; diagnostic preserved"
+}

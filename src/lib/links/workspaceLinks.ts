@@ -47,6 +47,8 @@ export const DESTINATION_LABEL: Readonly<Record<ReadLinkDestination, string>> = 
   business_game_plan: "Open Business Game Plan",
   trust_compass: "Open Trust Compass",
   mind: "Open Mind",
+  calendar: "Open Calendar",
+  pipeline: "Open pipeline",
 });
 
 export type WorkspaceLinkTarget = { label: string; to: string; status: "exact" | "surface_only" };
@@ -76,9 +78,13 @@ export function routeLinkTarget(link: ReadRecordLink, tier: WorkspaceLinkTier, a
     ? (link.subject ? `Open ${link.subject}` : "Open client record")
     : resolved.status === "exact" && link.destination === "sales_invoices"
       ? "Open invoice"
-      : resolved.status === "exact" && link.destination === "business_game_plan"
-        ? "Open Strategic Play"
-      : DESTINATION_LABEL[link.destination];
+      : resolved.status === "exact" && link.destination === "pipeline"
+        ? "Open deal"
+        : resolved.status === "exact" && link.destination === "operations_work"
+          ? "Open task"
+          : resolved.status === "exact" && link.destination === "business_game_plan"
+            ? "Open Strategic Play"
+            : DESTINATION_LABEL[link.destination];
   return { label, to: resolved.path, status: resolved.status };
 }
 

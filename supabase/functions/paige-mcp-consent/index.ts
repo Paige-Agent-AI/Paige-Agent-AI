@@ -157,10 +157,16 @@ async function computeGrantedScopes(userId: string, userEmail: string | null, re
   // 5. Client (end-user) — a row exists in `clients` linking this auth user
   //    to a workspace. Grant only the self-scoped scopes. Strip every
   //    operator/admin/platform scope they may have requested.
+  //    E09 Slice 7: only an OPEN relationship — active, unmerged, in an active business and not
+  //    paused — grants the client tier, the same row actorClient() in paige-mcp acts on.
   const { data: clientRow } = await admin
     .from("clients")
-    .select("id")
+    .select("id, tenants!inner(status)")
     .eq("linked_user_id", userId)
+    .eq("status", "active")
+    .is("merged_into_contact_id", null)
+    .eq("portal_access_state", "open")
+    .eq("tenants.status", "active")
     .maybeSingle();
   if (clientRow?.id) {
     const safeBase = base.filter((s) => s.startsWith("self."));

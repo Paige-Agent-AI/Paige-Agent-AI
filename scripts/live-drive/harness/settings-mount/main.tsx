@@ -32,7 +32,7 @@
  *
  *   /solo/1971670/settings/vault?theme=dark
  */
-import { Component, StrictMode, useEffect, useReducer, type ReactNode } from "react";
+import { Component, StrictMode, useEffect, useReducer, useState, type ComponentProps, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes, useParams } from "react-router-dom";
@@ -48,6 +48,7 @@ import { ClientsHub } from "@/solo/conversations";
 import { GrowthHub } from "@/solo/growth2";
 import { Analytics2 } from "@/solo/analytics2";
 import { SoloPaigeWorkspace } from "@/solo/SoloPaigeWorkspace";
+import { OperationsWorkspace } from "@/solo/operations/OperationsWorkspace";
 import "@/index.css";
 import "@/components/tenant-shell/tenant-command-center-shell.css";
 // PRODUCTION ORDER, and the reason this line exists (2026-08-31 reconciliation).
@@ -111,6 +112,7 @@ const SETTINGS_ICONS = {
 
 function Shell() {
   const [, refresh] = useReducer((value: number) => value + 1, 0);
+  const [paigeTab, setPaigeTab] = useState<NonNullable<ComponentProps<typeof SoloPaigeWorkspace>["dockedTab"]>>("chat");
   useEffect(() => {
     // Test-only equivalent of SoloApp rerendering after a tenant-context refresh.
     const onRefresh = () => flushSync(refresh);
@@ -140,7 +142,7 @@ function Shell() {
     accountType="standalone"
     userRole="admin"
     contextualNavigation={contextualNavigation}
-    soloPaigeWorkspace={<SoloPaigeWorkspace full={paigeFullMode} dockedTab="chat" onDockedTabChange={() => undefined} />}
+    soloPaigeWorkspace={<SoloPaigeWorkspace full={paigeFullMode} dockedTab={paigeTab} onDockedTabChange={setPaigeTab} />}
     paigeFull={paigeFullMode}
     brandHomeHref={`/solo/${account}/command-center`}
     onSignOut={() => {}}
@@ -170,6 +172,7 @@ const NEGATIVE_CONTROLS: Record<string, ReactNode> = {
   clients: <ClientsHub />,
   growth: <GrowthHub />,
   analytics: <Analytics2 accountContext={{ accountName: "Harness workspace", accountType: "standalone" }} accountEpoch="harness-tenant" openPaige={() => {}} />,
+  operations: <OperationsWorkspace view="work" />,
 };
 
 /**

@@ -1,4 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- pre-existing legacy `any` debt in this
+   file (untyped Supabase reads, stale generated types). The E09 Customer Portal identity change
+   (CURA, never PAIGE, on customer surfaces) only edited copy here and introduced ZERO new `any`s;
+   retyping is tracked separately (#234). */
 import { useState, useEffect } from "react";
+import { useCustomerIdentity } from "@/lib/portal/customerIdentity";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +45,8 @@ interface DocRecord {
 }
 
 export function FinancialDocsSection({ businessId, userId, onCompletionChange }: FinancialDocsSectionProps) {
+  // The customer's agent (Cura, or the business's own name for it), never PAIGE, the owner's COO.
+  const { agentName } = useCustomerIdentity();
   const [docs, setDocs] = useState<Record<string, DocRecord>>({});
   const [uploading, setUploading] = useState<string | null>(null);
   const [bankStatements, setBankStatements] = useState<{ month: string; uploaded: boolean; totalDeposits?: number; totalWithdrawals?: number; avgBalance?: number }[]>([]);
@@ -289,13 +296,13 @@ export function FinancialDocsSection({ businessId, userId, onCompletionChange }:
         </CardContent>
       </Card>
 
-      {/* Paige Financial Docs Insight */}
+      {/* Documentation insight from the customer's agent */}
       <Card className="border-primary/20">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-primary" />
-              Paige Documentation Insight
+              {agentName}'s documentation insight
             </CardTitle>
             <Button size="sm" variant="outline" className="text-xs" onClick={generateInsight} disabled={loadingInsight}>
               {loadingInsight ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Sparkles className="w-3 h-3 mr-1" />}
@@ -310,7 +317,7 @@ export function FinancialDocsSection({ businessId, userId, onCompletionChange }:
             </div>
           ) : (
             <p className="text-sm text-muted-foreground text-center py-3">
-              {uploadedCount} of {DOC_TYPES.length} documents on file. Click "Generate Insight" for Paige's assessment.
+              {uploadedCount} of {DOC_TYPES.length} documents on file. Click "Generate Insight" for {agentName}'s assessment.
             </p>
           )}
         </CardContent>

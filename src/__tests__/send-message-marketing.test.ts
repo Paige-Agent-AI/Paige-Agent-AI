@@ -1,3 +1,4 @@
+import { decideContentRead } from "../../supabase/functions/_shared/inbox-intelligence/policy.ts";
 // send-message marketing mode (E1, owner rulings 2026-10-04): the real handler source, with only the
 // network and database substituted (same harness as the invoice-delivery suite).
 import { readFileSync } from "node:fs";
@@ -5,6 +6,7 @@ import { transpileModule, ModuleKind, ScriptTarget } from "typescript";
 import { describe, it, expect } from "vitest";
 import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from "../../supabase/functions/_shared/comms-provider-boundary";
 import { buildListUnsubscribeHeaders } from "../../supabase/functions/_shared/channel-adapters";
+import { senderDisplayName } from "../../supabase/functions/_shared/email/sender-display-name";
 
 const tenant = "11111111-1111-4111-8111-111111111111";
 const contact = "22222222-2222-4222-8222-222222222222";
@@ -52,7 +54,7 @@ function setup(opts: { existingToken?: string | null; mintError?: boolean; hold?
       return { data: null, error: null };
     },
   };
-  const scope = {
+  const scope = { decideContentRead,
     PAIGE_APP_ORIGIN: "https://app.example.test",
     Deno: {
       env: { get: (k: string) => (k === "SUPABASE_SERVICE_ROLE_KEY" ? "internal" : k === "SUPABASE_URL" ? "https://db.example.test" : "configured") },
@@ -60,7 +62,7 @@ function setup(opts: { existingToken?: string | null; mintError?: boolean; hold?
     },
     createClient: () => admin,
     registerOutboundAdapter: (a: (typeof adapters)[number]) => { adapters.push(a); },
-    buildListUnsubscribeHeaders,
+    buildListUnsubscribeHeaders, senderDisplayName,
     commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED,
     getOutboundAdapter: () => ({
       send: async (msg: Sent["msg"], ctx: Sent["ctx"]) => {

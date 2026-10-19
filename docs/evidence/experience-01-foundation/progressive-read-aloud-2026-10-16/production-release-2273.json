@@ -1,0 +1,47 @@
+{
+  "pr": 2273,
+  "reviewedHead": "00f9726e5a9c86da27ea4e625d0eaff1b69cac0c",
+  "merge": "6a2c4258033c6438deab211f56d5188f1b32c9ec",
+  "firstParent": "8dbbd2c17308103039eb5e178dbd7039202feb35",
+  "tree": "f481d3ffcc6f99fcfc729b70c9cabbee9ab8d503",
+  "channel": "production",
+  "review": "AUTHOR-REVIEW / LOWER ASSURANCE",
+  "exactHeadChecks": {
+    "checks": 11,
+    "workflowGroups": 6,
+    "vercelStatuses": 2,
+    "all": "SUCCESS",
+    "preview": "SUCCESS"
+  },
+  "web": {
+    "id": "dpl_FqwfkNiPWWdkzQVTfvoP5j36na5E",
+    "state": "READY",
+    "buildId": "6a2c4258033c6438deab211f56d5188f1b32c9ec-mvbtkny1",
+    "servedMarkers": 13,
+    "customerUpdate": null
+  },
+  "edge": {
+    "run": 38997782697,
+    "selectedSource": "PASS",
+    "artifact": 12088031701,
+    "artifactVersion": 75,
+    "currentVersion": 76,
+    "currentSourceFiles": 7,
+    "currentSourceMatches": 7,
+    "verify_jwt": true,
+    "globalMarker": "HELD",
+    "globalRecoveryDependency": 2271,
+    "aggregateRun": "FAILURE_AT_GLOBAL_MARKER"
+  },
+  "preflight": {
+    "status": 200,
+    "exposedHeaders": "Server-Timing",
+    "synthesisRequests": 0
+  },
+  "migrations": "NOT_APPLICABLE",
+  "checkpointMetadataUnchanged": true,
+  "authenticatedCustomerAcceptance": "UNVERIFIED",
+  "providerP50P95": "UNVERIFIED",
+  "ownerAcceptance": "PENDING",
+  "customerReleaseIdentity": null
+}

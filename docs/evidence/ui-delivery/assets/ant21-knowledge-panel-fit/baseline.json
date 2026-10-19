@@ -1,0 +1,39 @@
+{
+  "expectedFailure": "baseline source/aside overlap",
+  "panel": {
+    "x": 1000.25,
+    "y": 114,
+    "width": 513.75,
+    "height": 660,
+    "right": 1514,
+    "bottom": 774
+  },
+  "columns": "151.75px 300px",
+  "card": {
+    "x": 1024.25,
+    "y": 255.90625,
+    "width": 1197.859375,
+    "height": 121.953125,
+    "right": 2222.109375,
+    "bottom": 377.859375
+  },
+  "aside": {
+    "x": 1190,
+    "y": 255.90625,
+    "width": 300,
+    "height": 350.953125,
+    "right": 1490,
+    "bottom": 606.859375
+  },
+  "overlap": true,
+  "escaping": [],
+  "scroll": {
+    "height": 536,
+    "content": 554,
+    "top": 0,
+    "overflow": "auto"
+  },
+  "horizontalOverflow": 708,
+  "pageOverflow": 0,
+  "reducedMotion": true
+}

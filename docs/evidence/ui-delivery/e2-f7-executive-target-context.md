@@ -25,7 +25,7 @@ MUST_PRESERVE: Historical9 PASS/0 FAIL; E2-6 supplement12 PASS/0 FAIL/4 BLOCKED;
 ACCEPTANCE_CRITERIA: Authenticated owner sees the same target/period/compatible actual in Executive, briefing and owning Play; link reload reauthorizes the current workspace; partial/expired/refused evidence stays honest; saved definitions/history persist. Source tests do not satisfy these customer criteria.
 MOTION_PURPOSE: NONE: no new motion.
 PROTECTED_SEAMS: Existing caller-JWT reader, current workspace before/after, issuer/resolver identity/expiry, owner-only RPC, shared target evaluator, E04 UUID/current-account resolver, persisted semantic frame, INT-346 admission and canonical receipt/approval boundaries.
-INTERNAL_BUILD_IDENTITY: db02d96fc2d041472567ea497d67720c925c5cf0; deployment=none-local-context; environment=local; migrations=PROOF_OWED(20271104102000_e2_business_game_plan_review); edge=PROOF_OWED(existing affected business-review and Chat packages); evidence=docs/delivery/paige-business-mission-system-phase2.md source proof and ANT-138; identity-role=corrected source composed with released native/current main before this evidence-only correction, final exact head recorded in PR.
+INTERNAL_BUILD_IDENTITY: d676e3301aac7d284451187fd3370ea87ed4b855; deployment=none-current-main-composition; environment=local; migrations=PROOF_OWED(20271112100000_e2_business_game_plan_review); edge=PROOF_OWED(existing affected business-review and Chat packages); evidence=docs/delivery/paige-business-mission-system-phase2.md source proof and ANT-138; identity-role=verified main baseline for October19 composition, final exact head recorded in PR.
 RELEASE_CHANNEL: development: local integration; hosted preview and production proof not inferred.
 RELEASE_CLASSIFICATION: internal-only: bounded required O10 integration; not whole E02 delivery.
 CUSTOMER_RELEASE_IDENTITY: none: complete outcome and final owner acceptance not yet established.
@@ -63,3 +63,19 @@ and passes afterward. No grant to the private owner helper, new RPC or database 
 the same existing public read applies its authority again before projection. This is
 unreleased source verification, not a production role-change/negative-fixture claim.
 The final bounded15-file regression passes294 cases; focused lint/diff check PASS.
+
+October19 reactivation preserves that historical proof, not a current-head test claim.
+Main d676e3301aac7d284451187fd3370ea87ed4b855 and its existing Deal/Task focus
+routes are composed with Play navigation. Only the never-applied review migration
+moves from20271104102000 to20271112100000, beyond observed production20271111050000
+and active E09/EXP00 reservations. Its SQL bytes and owner-only policy are unchanged.
+Current-head review, required CI, production readback and authenticated acceptance
+remain owed. No VERA/provider/Chat-action activation is part of this preserved slice.
+
+Fresh October19 local proof:364/364 assertions across20 affected target, Executive,
+Fabric, receipt, scope and navigation files;64/64 incumbent source-binding controls;
+Spine self-test; migration lint/collision guard; and61 rollback-only PostgreSQL
+assertions PASS. The unchanged SQL replays twice; synthetic Auth rows remain zero.
+The composition test preserves the incumbent sub-account pipeline list without exact
+record focus. Its earlier incorrect null expectation is retained in the run history.
+These are local source/isolated-runtime checks, not authenticated customer acceptance.

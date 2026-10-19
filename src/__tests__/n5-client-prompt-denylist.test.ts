@@ -6,6 +6,7 @@
 // tenant's prompt) — that failure is the point.
 import { describe, expect, it } from "vitest";
 import { readRecordLinks } from "../../supabase/functions/_shared/paige-turn/record-links";
+import { crmResultReferenceMetadata } from "../../supabase/functions/_shared/paige-turn/crm-result-reference";
 import {
   buildFundingProgramVocab,
   buildLaneGuardSection,
@@ -14,7 +15,6 @@ import {
   buildUserContext,
   CREDIT_DENYLIST,
   CREDIT_PROGRAM_DENYLIST,
-  deriveFinanceInScopeFromFeatures,
   HARD_GUARDRAIL_MARKER,
   resolveDisputeReferralLabel,
   sanitizeClientContextForTier,
@@ -40,7 +40,9 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     visit(source); if (!found) throw new Error("Production seam not found"); return found;
   };
   // These extracted seams exercise Live, which does not opt into the typed executor.
-  const js = (body: string) => ts.transpileModule(`const interactive=undefined,interactiveSettlement=undefined,interactiveLifetime=undefined;const interactiveEffects=[];class InteractiveSuperseded extends Error {}\n${body}`, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None } }).outputText;
+  // Bind its pause state from the production initializers, rather than leaving
+  // the new closure variables undefined. The invariants below keep this valid.
+  const js = (body: string) => ts.transpileModule(`const interactive=undefined,interactiveSettlement=undefined,interactiveLifetime=undefined;const interactiveEffects=[];const durableApprovalPause=${initializer("durableApprovalPause")},approvalPauseRecorded=${initializer("approvalPauseRecorded")};class InteractiveSuperseded extends Error {}\n${body}`, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None } }).outputText;
   const initializer = (name: string) => (find((n) => ts.isVariableDeclaration(n) && n.name.getText(source) === name) as ts.VariableDeclaration).initializer!.getText(source);
   // paige-turn — the PRODUCTION terminal seam, read out of index.ts (emitTurnTerminal with its
   // exactly-once guard, and emitTurnTerminalBeforeAnswer), closed over a real reducer. So the guard these
@@ -63,6 +65,26 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
   const ROLE_LINE = 'data: {"choices":[{"index":0,"delta":{"role":"assistant"},"finish_reason":null}]}\n\n';
   const FINISH_LINE = 'data: {"choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}\n\n';
   it("uses a private decision instruction only on verified non-document Live rounds", () => {
+    expect(initializer("interactive")).toBe("null");
+    expect(initializer("durableApprovalPause")).toBe("false");
+    expect(initializer("approvalPauseRecorded")).toBe("false");
+    const pauseAssignments: ts.BinaryExpression[] = [];
+    const visit = (node: ts.Node) => {
+      if (ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.EqualsToken
+          && node.left.getText(source) === "durableApprovalPause") pauseAssignments.push(node);
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
+    expect(pauseAssignments).toHaveLength(1);
+    expect(pauseAssignments[0].right.getText(source)).toBe("true");
+    let pauseGuard: ts.Node | undefined = pauseAssignments[0].parent;
+    while (pauseGuard && !ts.isIfStatement(pauseGuard)) pauseGuard = pauseGuard.parent;
+    expect(pauseGuard && ts.isIfStatement(pauseGuard) && pauseGuard.expression.getText(source)).toMatch(/^interactive && /);
+    const scopeGuard = find((node) => ts.isIfStatement(node) && ts.isReturnStatement(node.thenStatement)
+      && node.thenStatement.getText(source).includes('error: "Invalid interactive scope"')) as ts.IfStatement;
+    const rejectsInteractiveScope = new Function("validatedData", js(`return (${scopeGuard.expression.getText(source)});`));
+    expect(rejectsInteractiveScope({ threadId: "thread", requestIntentId: "intent", liveRuntimeChallenge: "signed-fixture" })).toBeTruthy();
+    expect(rejectsInteractiveScope({ threadId: "thread", requestIntentId: "intent" })).toBeFalsy();
     const messages = [{ role: "user", content: "Hello" }];
     const make = new Function("liveRuntimeScope", "attachedDocument", js(`return ${initializer("liveDecisionMessages")};`));
     expect(make(null, null)(messages)).toBe(messages);
@@ -198,18 +220,43 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
       expect(persisted).toEqual([]);
     }
   });
-  it("writes a receipt-only assistant turn without inventing spoken text", async () => {
+  const liveReceiptSeam = (permission: "allowed" | "held" | "unknown" = "allowed", lateHold = false) => {
     const writes: unknown[] = [];
+    const checks: unknown[] = [], holds: boolean[] = [], summaries: string[] = [], errors: unknown[][] = [];
     const client = { rpc: async (_name: string, args: unknown) => { writes.push(args); return { data: null, error: null }; }, from() { throw Error("no title in fixture"); } };
     const append = new Function("supabaseClient", "interactiveReceiptScope", "supabase", "user", "z", js(`return ${initializer("appendAssistant")};`))(client, null, null, null, null);
-    const make = new Function("payloadThreadId", "appendAssistant", "supabaseClient", "maybeRefreshSummary", "console", js(`return ${initializer("persistAssistantTurn")};`));
-    const persist = make("thread", append, client, async () => {}, { error() {} });
+    // This extracted receipt is the ordinary non-customer Live path. Bind the
+    // actual persistence seam's lexical permission/hold ports explicitly. These
+    // deterministic port verdicts are not native thread/authorization proof.
+    const make = new Function("payloadThreadId", "appendAssistant", "supabaseClient", "maybeRefreshSummary", "console", "customerPortal", "interactiveConversational", "requireRecoveryPermission", "refreshRecoveryHold", js(`return ${initializer("persistAssistantTurn")};`));
+    const persist = make("thread", append, client, async (id: string) => { summaries.push(id); }, { error: (...args: unknown[]) => { errors.push(args); } }, false, false,
+      async (effect?: boolean) => { checks.push(effect); if (permission !== "allowed") throw Error(permission === "held" ? "INTERACTIVE_RECOVERY_READ_ONLY" : "INTERACTIVE_RECOVERY_SCOPE_UNAVAILABLE"); },
+      async () => { holds.push(lateHold); return lateHold; });
+    return { persist, writes, checks, holds, summaries, errors };
+  };
+  it("writes a receipt-only assistant turn without inventing spoken text", async () => {
+    const { persist, writes, checks, holds, summaries, errors } = liveReceiptSeam();
     const bundleRef = { paige_crm_result: [{ outcome: "success", receipt_recorded: true }] };
     await persist("", { bundleRef });
     expect(writes).toHaveLength(1);
     expect(writes[0]).toMatchObject({ p_content: "", p_bundle_ref: bundleRef });
+    expect(checks).toEqual([undefined]); expect(holds).toEqual([false]); expect(summaries).toEqual(["thread"]); expect(errors).toEqual([]);
     await persist("", { bundleRef: null });
     expect(writes).toHaveLength(1);
+    expect(checks).toEqual([undefined]); expect(holds).toEqual([false]);
+  });
+  it.each(["held", "unknown"] as const)("refuses receipt persistence on %s recovery authority before append or maintenance", async permission => {
+    const { persist, writes, checks, holds, summaries, errors } = liveReceiptSeam(permission);
+    await persist("", { bundleRef: { paige_crm_result: [{ outcome: "success", receipt_recorded: true }] } });
+    expect(checks).toEqual([undefined]); expect(writes).toEqual([]); expect(holds).toEqual([]); expect(summaries).toEqual([]);
+    expect(errors).toHaveLength(1); expect(errors[0][1]).toBe(permission === "held" ? "INTERACTIVE_RECOVERY_READ_ONLY" : "INTERACTIVE_RECOVERY_SCOPE_UNAVAILABLE");
+  });
+  it("retains a real empty-prose receipt but suppresses title/summary maintenance on a later native hold", async () => {
+    const { persist, writes, checks, holds, summaries, errors } = liveReceiptSeam("allowed", true);
+    const bundleRef = { paige_crm_result: [{ outcome: "success", receipt_recorded: true }] };
+    await persist("", { bundleRef });
+    expect(writes).toHaveLength(1); expect(writes[0]).toMatchObject({ p_content: "", p_bundle_ref: bundleRef });
+    expect(checks).toEqual([undefined]); expect(holds).toEqual([true]); expect(summaries).toEqual([]); expect(errors).toEqual([]);
   });
   it("shares the success projection and drops CRM readback and locator from history", () => {
     // R2b: assistantTurnMetadata's bundleRef now also spreads the run REFERENCE from
@@ -217,13 +264,13 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     // variable like every other one; an empty array must project to no research key.
     // E4-S3: the read-link trace is one more seam variable (empty here, so it projects to no key) and
     // its sanitiser `readRecordLinks` is the shared one the handler imports.
-    const make = new Function("stepTrace", "queuedApprovals", "confirmTrace", "crmResultTrace", "researchTrace", "readLinkTrace", "readRecordLinks", js(`return ${initializer("assistantTurnMetadata")};`));
+    const make = new Function("stepTrace", "queuedApprovals", "confirmTrace", "crmResultTrace", "researchTrace", "readLinkTrace", "readRecordLinks", "crmResultReferenceMetadata", js(`return ${initializer("assistantTurnMetadata")};`));
     const result = { action: "crm_update", outcome: "success", receipt_recorded: true, external_effect: false, readback: { private: "fixture" }, record_locator: "private-fixture", contact_id: "private-fixture" };
-    const project = make([{ kind: "thought", group: "owner" }, { kind: "action", group: "client" }, { kind: "action", group: "client" }], [], [], [result], [], [], readRecordLinks);
+    const project = make([{ kind: "thought", group: "owner" }, { kind: "action", group: "client" }, { kind: "action", group: "client" }], [], [], [result], [], [], readRecordLinks, crmResultReferenceMetadata);
     expect(project()).toEqual({ surfaces: ["client"], bundleRef: { approval_queued: [], paige_confirm: [], paige_crm_result: [{ action: "crm_update", outcome: "success", receipt_recorded: true, external_effect: false }] } });
     // E4-S3: a turn whose only card is a read link still persists, as references only — never an address.
     const CLIENT = "e4000000-0000-4000-8000-0000000c0001";
-    const linksOnly = make([], [], [], [], [], [{ destination: "contacts", record_id: CLIENT, subject: "Acme" }, { destination: "sales_invoices", record_id: null, subject: "dropped" }], readRecordLinks);
+    const linksOnly = make([], [], [], [], [], [{ destination: "contacts", record_id: CLIENT, subject: "Acme" }, { destination: "sales_invoices", record_id: null, subject: "dropped" }], readRecordLinks, crmResultReferenceMetadata);
     expect(linksOnly()).toEqual({ surfaces: [], bundleRef: { approval_queued: [], paige_confirm: [], paige_crm_result: [],
       paige_record_links: [{ destination: "contacts", record_id: CLIENT, subject: "Acme" }, { destination: "sales_invoices", record_id: null }] } });
     // The success persist goes through this same projection, with the turn record added at the call site.
@@ -612,19 +659,17 @@ describe("#184 §2 — the SCOPE guard is data-driven, proven BOTH directions fr
   });
 });
 
-describe("#184 — deriveFinanceInScopeFromFeatures is the GENERIC no-join signal (no vertical literal)", () => {
-  it("reads the generic finance_in_scope flag, true for both boolean and string 'true'", () => {
-    expect(deriveFinanceInScopeFromFeatures({ finance_in_scope: true })).toBe(true);
-    expect(deriveFinanceInScopeFromFeatures({ finance_in_scope: "true" })).toBe(true);
+describe("#184 / E09 F1b — the no-join surfaces ask the database for the finance entitlement (no edge copy)", () => {
+  const read = (rel: string) => readFileSync(`supabase/functions/${rel}`, "utf8");
+  it("client-context no longer carries a flag-only reader", () => {
+    expect(read("_shared/client-context.ts")).not.toMatch(/export function deriveFinanceInScopeFromFeatures/);
   });
-  it("false for a coaching/consulting tenant — and the legacy 'funding' signals no longer flip it", () => {
-    expect(deriveFinanceInScopeFromFeatures({})).toBe(false);
-    expect(deriveFinanceInScopeFromFeatures(null)).toBe(false);
-    // The generic no-join signal deliberately does NOT key on the vertical literal — a
-    // tenant flagged only by the legacy features must be BACKFILLED to finance_in_scope
-    // (the migration does this); the raw legacy keys alone do not light up this signal.
-    expect(deriveFinanceInScopeFromFeatures({ playbook: "funding" })).toBe(false);
-    expect(deriveFinanceInScopeFromFeatures({ enabled_skills: ["funding"] })).toBe(false);
+  it("paige-public-chat and growth-page-draft read through _shared/finance-entitlement.ts, never the raw flag", () => {
+    for (const fn of ["paige-public-chat/index.ts", "growth-page-draft/index.ts"]) {
+      const src = read(fn);
+      expect(src).toContain('import { financeEntitled } from "../_shared/finance-entitlement.ts";');
+      expect(src.replace(/^\s*\/\/.*$/gm, "")).not.toMatch(/deriveFinanceInScopeFromFeatures|finance_in_scope/);
+    }
   });
 });
 

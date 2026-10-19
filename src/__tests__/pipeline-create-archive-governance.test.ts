@@ -33,12 +33,15 @@ function latestCatalogueMigration(): string {
   }
   return "";
 }
-function latestConfigureMigration(): string {
-  const dir = join(root, "supabase/migrations");
-  const files = readdirSync(dir).filter((f) => /^2027\d{10}/.test(f)).sort();
-  for (let i = files.length - 1; i >= 0; i -= 1) {
-    const body = readFileSync(join(dir, files[i]), "utf8");
-    if (body.includes("configure_tenant_pipeline_core_identity")) return body;
+function latestConfigureMigration(
+  files = readdirSync(join(root, "supabase/migrations")).filter((f) => /^2027\d{10}/.test(f)),
+  readMigration: (file: string) => string = (file) => readFileSync(join(root, "supabase/migrations", file), "utf8"),
+): string {
+  for (const file of [...files].sort().reverse()) {
+    const body = readMigration(file);
+    // A later domain command may CALL this writer without redefining its guard.
+    // Inspect a declaration of the canonical writer or its existing delegated implementation.
+    if (/^\s*create\s+(?:or\s+replace\s+)?function\s+public\.configure_tenant_pipeline_core_identity(?:_pre_command_desk)?\s*\(/im.test(body)) return body;
   }
   return "";
 }
@@ -75,6 +78,31 @@ describe("the autonomy catalogue drops the retired rows", () => {
 });
 
 describe("same-name pipeline creation is intentional", () => {
+  it("selects the actual latest declaration rather than a newer caller, ACL or lookalike", () => {
+    const declaration = "create or replace function public.configure_tenant_pipeline_core_identity(_tenant_id uuid) returns void as $$ begin null; end $$ language plpgsql;";
+    const fixtures = new Map([
+      ["20270501000000_old.sql", declaration + " -- old"],
+      ["20270531000000_current.sql", declaration],
+      ["20271108121000_task.sql", "create or replace function public.execute_crm_command() returns void as $$ begin perform public.configure_tenant_pipeline_core_identity(v_tenant); end $$ language plpgsql;"],
+      ["20271108122000_acl.sql", "revoke all on function public.configure_tenant_pipeline_core_identity(uuid) from public;"],
+      ["20271108123000_similar.sql", "create or replace function public.configure_tenant_pipeline_core_identity_audit() returns void as $$ begin null; end $$ language plpgsql;"],
+      ["20271108124000_comment.sql", "-- create or replace function public.configure_tenant_pipeline_core_identity() is only documentation"],
+    ]);
+    expect(latestConfigureMigration([...fixtures.keys()], file => fixtures.get(file)!)).toBe(declaration);
+  });
+
+  it("does not substitute an older guarded declaration for a newer unguarded definition", () => {
+    const current = "CREATE OR REPLACE FUNCTION public.configure_tenant_pipeline_core_identity() returns void as $$ begin null; end $$ language plpgsql;";
+    const fixtures = new Map([
+      ["20270501000000_old.sql", current + " -- PIPELINE_NAME_EXISTS"],
+      ["20270531000000_current.sql", current],
+    ]);
+    expect(latestConfigureMigration([...fixtures.keys()], file => fixtures.get(file)!)).toBe(current);
+    expect(latestConfigureMigration(["20271108121000_task.sql"], () => "perform public.configure_tenant_pipeline_core_identity(v_tenant);")).toBe("");
+    const delegated = current.replace("core_identity()", "core_identity_pre_command_desk()");
+    expect(latestConfigureMigration(["20271108121000_delegate.sql"], () => delegated)).toBe(delegated);
+  });
+
   it("the governed create refuses an existing active exact name unless allowSameName", () => {
     const migration = latestConfigureMigration();
     expect(migration).not.toBe("");

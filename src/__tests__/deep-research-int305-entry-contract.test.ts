@@ -100,9 +100,15 @@ describe("INT-305: the engine accepts the orchestrator's { input, context } enve
 
 describe("INT-305: M0 lineage untouched", () => {
   it("the §9 server-side tenant resolution still derives the tenant from user_id — never a body tenant field", () => {
-    expect(source).toContain("A tenant is derived SERVER-SIDE only.");
-    expect(source).toContain('const userId = typeof body.user_id === "string" ? body.user_id : "";');
-    expect(source).toContain('current_user_tenant_id');
+    expect(source).toContain('scopeCaller.auth.getUser()');
+    expect(source).toContain('scopeAdmin.auth.admin.getUserById(body.user_id)');
+    expect(source).toContain('actor !== body.user_id');
+    expect(source).toContain('rpc("research_assert_current_scope", {');
+    expect(source).toContain('_expected_actor_id: body.user_id');
+    expect(source).toContain('scope.data?.actor_id !== actor');
+    const scopeMigration = readFileSync(join(root, 'supabase/migrations/20271108180000_research_current_scope.sql'), 'utf8');
+    expect(scopeMigration).toContain('public.current_user_tenant_id() is distinct from v_tenant');
+    expect(scopeMigration).toContain("m.tenant_id=v_tenant and m.status='active'");
     // the cross-check stays a cross-check (never authority)
     expect(source).toContain("Optional CROSS-CHECK (never authority)");
   });

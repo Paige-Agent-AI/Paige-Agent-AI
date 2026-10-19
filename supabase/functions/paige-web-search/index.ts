@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { parseResearchSourcePolicy, researchSourceUrl, RESEARCH_SEARCH_LIMIT } from "../_shared/research-source-policy.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -43,7 +44,18 @@ serve(async (req) => {
       }
     }
 
-    const { query } = await req.json().catch(() => ({ query: "" }));
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body !== "object" || Array.isArray(body)) return new Response(JSON.stringify({ error: "Invalid search request." }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    let policy;
+    try { policy = parseResearchSourcePolicy(body); }
+    catch { return new Response(JSON.stringify({ error: "Invalid search source constraints." }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }); }
+    const requestedLimit = body.limit === undefined ? RESEARCH_SEARCH_LIMIT : body.limit;
+    if (!Number.isInteger(requestedLimit) || requestedLimit < 1 || requestedLimit > RESEARCH_SEARCH_LIMIT) return new Response(JSON.stringify({ error: "Search limit must be an integer from 1 to 5." }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const limit = Math.min(requestedLimit, policy.max_sources ?? RESEARCH_SEARCH_LIMIT);
+    const { query } = body;
     const q = typeof query === "string" ? query.trim() : "";
 
     if (!q || q.length < 2 || q.length > 500) {
@@ -75,7 +87,9 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         query: q,
-        limit: 5,
+        limit,
+        sources: ["web"],
+        ...(policy.allowed_domains ? { includeDomains: policy.allowed_domains } : {}),
       }),
     });
 
@@ -108,16 +122,19 @@ serve(async (req) => {
     }
     console.log(`[paige-web-search] firecrawl returned ${raw.length} raw results. Top-level keys: ${Object.keys(data ?? {}).join(",")}`);
 
+    const seen = new Set<string>();
     const results: SearchResult[] = raw
-      .slice(0, 5)
       .map((r: any) => ({
         title: String(r?.title ?? r?.metadata?.title ?? "").slice(0, 240),
         description: String(r?.description ?? r?.snippet ?? r?.metadata?.description ?? "")
           .replace(/<[^>]+>/g, "")
           .slice(0, 600),
-        url: String(r?.url ?? r?.metadata?.sourceURL ?? ""),
+        url: researchSourceUrl(r?.url ?? r?.metadata?.sourceURL ?? "", policy) ?? "",
       }))
-      .filter((r: SearchResult) => r.url);
+      .filter((r: SearchResult) => {
+        if (!r.url || seen.has(r.url)) return false;
+        seen.add(r.url); return true;
+      }).slice(0, limit);
 
     return new Response(
       JSON.stringify({

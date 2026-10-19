@@ -12,8 +12,9 @@
  *      non-streamed, routedChatCompletion) resolve the reasoning tier through `CLAUDE_REASONING`, with
  *      the classification tier untouched?
  *   2. EQUIVALENCE — apart from `model`, is every request body byte-identical to the frozen snapshot
- *      taken on the commit before the switch (`fixtures/request-bodies.json`)? A model swap that also
- *      changes sampling, tool_choice, caching or adds a thinking/effort field is not a model swap.
+ *      taken on the commit before the switch (`fixtures/request-bodies.json`), with the bounded
+ *      2026-10-16 automatic non-stream cache_control addition? Every other request field stays frozen.
+ *      A model swap that changes sampling, tool_choice or adds thinking/effort is not a model swap.
  *   3. COMPATIBILITY — no request on the reasoning tier carries a field the current reasoning model
  *      rejects (non-default sampling, forced tool_choice, `thinking.type: disabled|enabled`).
  *   4. TRACE TRUTH — every trace row names the model that actually served the call: the provider's
@@ -47,6 +48,7 @@ const served = (m) => SERVED[m] ?? `${m}~served`;
 const calls = [];
 let failNext = 0;
 let stopNext = null; // { reason, category } — the next response stops this way
+let usageNext = null; // one response may prove a real zero or unknown cache usage
 const realFetch = globalThis.fetch;
 globalThis.fetch = async (url, init = {}) => {
   const u = String(url);
@@ -66,7 +68,8 @@ globalThis.fetch = async (url, init = {}) => {
       status: 400, headers: { "content-type": "application/json", "request-id": "req_test" },
     });
   }
-  const usage = { input_tokens: 7, output_tokens: 11, cache_read_input_tokens: 4096, cache_creation_input_tokens: 128 };
+  const usage = usageNext ?? { input_tokens: 7, output_tokens: 11, cache_read_input_tokens: 4096, cache_creation_input_tokens: 128 };
+  usageNext = null;
   const stop = stopNext ?? { reason: "end_turn" };
   stopNext = null;
   const stopDetails = stop.category ? { type: "refusal", category: stop.category, explanation: "declined" } : null;
@@ -331,6 +334,50 @@ console.log("6. the request shapes the reasoning model rejects never leave the s
   ok(reasoningBodies.every((b) => !b.thinking || !["disabled", "enabled"].includes(b.thinking.type)), "6.3 no thinking.type disabled|enabled");
 }
 
+console.log("6b. all Claude entry points request the existing automatic, default-TTL cache policy");
+{
+  const automatic = JSON.stringify({ type: "ephemeral" });
+  for (const [name, body] of Object.entries(bodies)) {
+    ok(JSON.stringify(body.cache_control) === automatic, `6b.${name} requests automatic ephemeral caching`);
+  }
+  ok(calls.every((body) => !("ttl" in (body.cache_control ?? {}))),
+     "6b.1 no caller selects a premium one-hour TTL");
+
+  const before = traceCount();
+  const direct = await claude.callClaude({ messages: [{ role: "user", content: "cache usage" }], trace: { agent_id: "check" } });
+  const [row] = await tracesSince(before);
+  ok(direct.usage?.cache_read_input_tokens === 4096 && direct.usage?.cache_creation_input_tokens === 128,
+     "6b.2 direct callers retain the provider's cache read/create usage");
+  ok(row?.tokens_in === 7 && row?.cache_read_input_tokens === 4096 && row?.cache_creation_input_tokens === 128,
+     "6b.3 non-stream traces keep uncached input separate from cache reads/writes");
+
+  for (const [name, usage, expected] of [
+    ["zero", { input_tokens: 7, output_tokens: 11, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 }, 0],
+    ["unknown", { input_tokens: 7, output_tokens: 11 }, null],
+  ]) {
+    usageNext = usage;
+    const from = traceCount();
+    await claude.gatewayCompat("anthropic", { body: JSON.stringify({ messages: [{ role: "user", content: name }] }) }, { agent_id: "check" });
+    const [usageRow] = await tracesSince(from);
+    ok(usageRow?.cache_read_input_tokens === expected && usageRow?.cache_creation_input_tokens === expected,
+       `6b.4 ${name} cache usage remains ${name} in the non-stream gateway trace`);
+  }
+
+  // Unknown request fields cannot select a different cache policy or alter the input.
+  await claude.chatCompletionCompat({ messages: [{ role: "user", content: "unchanged" }], cache_control: { type: "ephemeral", ttl: "1h" } });
+  ok(JSON.stringify(lastCall().cache_control) === automatic && lastCall().messages[0]?.content === "unchanged",
+     "6b.5 caller-supplied premium caching is not forwarded; content stays unchanged");
+
+  const key = ENV.ANTHROPIC_API_KEY;
+  const from = calls.length;
+  let missingKey = null;
+  delete ENV.ANTHROPIC_API_KEY;
+  try { await claude.callClaude({ messages: [{ role: "user", content: "no key" }] }); } catch (e) { missingKey = e; }
+  finally { ENV.ANTHROPIC_API_KEY = key; }
+  ok(missingKey?.name === "NeedsConfigError" && calls.length === from,
+     "6b.6 caching never bypasses a missing provider key or makes a provider request");
+}
+
 console.log("7. the allow-list and the price derive from the seam");
 {
   let allowed = true;
@@ -345,7 +392,7 @@ console.log("7. the allow-list and the price derive from the seam");
      "7.3 every known reasoning id prices on the same Sonnet row (a switch is like-for-like)");
 }
 
-console.log("8. equivalence — every body matches the pre-switch snapshot except `model`");
+console.log("8. equivalence — every body matches the reviewed cache-policy snapshot except `model`");
 {
   const normalise = (o) => JSON.parse(JSON.stringify(o, (k, v) => (k === "model" ? "<MODEL>" : v)));
   const now = Object.fromEntries(Object.entries(bodies).map(([k, v]) => [k, normalise(v)]));
@@ -356,7 +403,7 @@ console.log("8. equivalence — every body matches the pre-switch snapshot excep
     const snap = JSON.parse(readFileSync(SNAPSHOT_PATH, "utf8"));
     ok(Object.keys(snap).sort().join() === Object.keys(now).sort().join(), "8.0 the same cases were driven as on the base commit");
     for (const k of Object.keys(snap)) {
-      ok(JSON.stringify(now[k]) === JSON.stringify(snap[k]), `8.${k} body is byte-identical to the pre-switch body apart from model`);
+      ok(JSON.stringify(now[k]) === JSON.stringify(snap[k]), `8.${k} body is byte-identical to the reviewed cache-policy body apart from model`);
     }
   }
 }

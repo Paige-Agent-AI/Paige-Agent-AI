@@ -1,0 +1,585 @@
+{
+  "mode": "knowledge-context-candidate",
+  "evidenceClass": "synthetic-native-postgresql",
+  "fullSupabaseReplay": "UNVERIFIED",
+  "authenticatedAcceptance": "NOT_RUN",
+  "migrationSHA256": "3c88c08a3522361e0f6b0ec00db65b33184b69f7476918a95c43d082392695e8",
+  "presentationSHA256": "1ee70024c0733f2b1e73605ad4a92c9ea952793990522cc34a1f7e338799312a",
+  "stageSHA256": "50b697cb5bcd29c38b5c087efc5ab62375ee36dd229469b7d80ad02cda321aad",
+  "frameMigration": "20271108190000_e09_customer_frame_projection.sql",
+  "frameMigrationSHA256": "c5662b4db586f884036269ff3572bbdc604a28cbbe31462d91e0931bf3644e74",
+  "unsafeFrameControl": false,
+  "customerChatMigration": "20271108201000_e09_customer_private_chat.sql",
+  "knowledgeContextMigrationSHA256": "812eb2e11ec71a45fcb5177409ce090a85eeb8d5d00ba655e31db5c2564a9d09",
+  "knowledgeContextControl": "NONE",
+  "knowledgeContextStage": "NATIVE_ADMISSION_PROJECTION_TERMINAL_PUBLICATION; actual handler integration unfinished",
+  "knowledgeContextProof": "isolated PostgreSQL; actual native definitions with modeled surrounding metadata/platform predicates; hosted acceptance NOT_RUN",
+  "results": [
+    {
+      "name": "Native fixture models the canonical global partial unique link index",
+      "status": "PASS"
+    },
+    {
+      "name": "Migration reapplication is idempotent",
+      "status": "PASS"
+    },
+    {
+      "name": "Presentation migration reapplication is idempotent",
+      "status": "PASS"
+    },
+    {
+      "name": "Stage migration reapplication is idempotent",
+      "status": "PASS"
+    },
+    {
+      "name": "Actual authenticated caller gets canonical own profile without raw table SELECT",
+      "status": "PASS"
+    },
+    {
+      "name": "Complete explicit allowlist and no future/private CRM fields",
+      "status": "PASS"
+    },
+    {
+      "name": "Primary addresses come from tenant-matching canonical contact methods",
+      "status": "PASS"
+    },
+    {
+      "name": "Foreign tenant argument supplies no authority",
+      "status": "PASS"
+    },
+    {
+      "name": "Foreign subject cannot select this tenant relationship",
+      "status": "PASS"
+    },
+    {
+      "name": "Unlinked authenticated caller gets no profile",
+      "status": "PASS"
+    },
+    {
+      "name": "No selected tenant resolves only the one legitimate relationship",
+      "status": "PASS"
+    },
+    {
+      "name": "Anonymous callable access is denied",
+      "status": "PASS"
+    },
+    {
+      "name": "Anonymous helper access is denied",
+      "status": "PASS"
+    },
+    {
+      "name": "Authenticated session without subject cannot call profile",
+      "status": "PASS"
+    },
+    {
+      "name": "Service role alone is not a customer identity",
+      "status": "PASS"
+    },
+    {
+      "name": "Presentation keeps the valid native tenant brand, ABI and canonical overlay",
+      "status": "PASS"
+    },
+    {
+      "name": "Presentation switches only with the actual authenticated subject",
+      "status": "PASS"
+    },
+    {
+      "name": "Unlinked and missing subjects receive no presentation",
+      "status": "PASS"
+    },
+    {
+      "name": "Anonymous cannot execute either presentation reader",
+      "status": "PASS"
+    },
+    {
+      "name": "Presentation revocation is effective on the next read",
+      "status": "PASS"
+    },
+    {
+      "name": "Presentation excludes archived and merged client relationships",
+      "status": "PASS"
+    },
+    {
+      "name": "Presentation excludes an inactive sponsoring business",
+      "status": "PASS"
+    },
+    {
+      "name": "Presentation preserves native ancestor inheritance and own legal-logo fallback",
+      "status": "PASS"
+    },
+    {
+      "name": "Link revocation takes effect on next read",
+      "status": "PASS"
+    },
+    {
+      "name": "Archived relationship is refused",
+      "status": "PASS"
+    },
+    {
+      "name": "Merged relationship is refused",
+      "status": "PASS"
+    },
+    {
+      "name": "Inactive business is refused",
+      "status": "PASS"
+    },
+    {
+      "name": "Reload reads actual updated profile and consent",
+      "status": "PASS"
+    },
+    {
+      "name": "Reads produce no client, address or tenant mutations",
+      "status": "PASS"
+    },
+    {
+      "name": "Future cross-business fixture preserves the canonical per-tenant unique link",
+      "status": "PASS"
+    },
+    {
+      "name": "Ambiguous relationship refuses instead of earliest-row selection",
+      "status": "PASS"
+    },
+    {
+      "name": "Both presentation readers refuse future ambiguous business relationships",
+      "status": "PASS"
+    },
+    {
+      "name": "Explicit future relationship selection stays isolated",
+      "status": "PASS"
+    },
+    {
+      "name": "Disposable future-shape cleanup restores the canonical global guard",
+      "status": "PASS"
+    },
+    {
+      "name": "Stage advancement returns the unchanged three-column ABI and canonical saved state",
+      "status": "PASS"
+    },
+    {
+      "name": "Existing durable stage audit attributes the exact actor and client",
+      "status": "PASS"
+    },
+    {
+      "name": "Same or earlier stage remains a no-op with no new audit",
+      "status": "PASS"
+    },
+    {
+      "name": "Caller payload cannot redirect stage mutation to a foreign client",
+      "status": "PASS"
+    },
+    {
+      "name": "Anonymous stage invocation refuses without writes",
+      "status": "PASS"
+    },
+    {
+      "name": "Missing subject cannot change stage",
+      "status": "PASS"
+    },
+    {
+      "name": "Unlinked identity cannot change stage",
+      "status": "PASS"
+    },
+    {
+      "name": "Service role alone cannot become a customer",
+      "status": "PASS"
+    },
+    {
+      "name": "Unknown stage refuses without writes",
+      "status": "PASS"
+    },
+    {
+      "name": "Null stage refuses without writes",
+      "status": "PASS"
+    },
+    {
+      "name": "Revoked link cannot advance stage",
+      "status": "PASS"
+    },
+    {
+      "name": "Archived client cannot advance stage",
+      "status": "PASS"
+    },
+    {
+      "name": "Merged client cannot advance stage",
+      "status": "PASS"
+    },
+    {
+      "name": "Inactive business cannot advance stage",
+      "status": "PASS"
+    },
+    {
+      "name": "Ambiguous future relationship cannot advance an arbitrary row",
+      "status": "PASS"
+    },
+    {
+      "name": "A concurrent archive winning the lock prevents stage change and audit",
+      "status": "PASS"
+    },
+    {
+      "name": "Frame migration is replayable and read-only, with a fixed search path",
+      "status": "PASS"
+    },
+    {
+      "name": "Frame permits authenticated execution, refuses anon and service-role execution",
+      "status": "PASS"
+    },
+    {
+      "name": "Frame reads the own profile and same business presentation without raw CRM SELECT",
+      "status": "PASS"
+    },
+    {
+      "name": "Frame follows the actual second subject rather than borrowing the first business",
+      "status": "PASS"
+    },
+    {
+      "name": "Unlinked authenticated subject receives no customer frame",
+      "status": "PASS"
+    },
+    {
+      "name": "Revoked link cannot publish a frame",
+      "status": "PASS"
+    },
+    {
+      "name": "Archived relationship cannot publish a frame",
+      "status": "PASS"
+    },
+    {
+      "name": "Merged relationship cannot publish a frame",
+      "status": "PASS"
+    },
+    {
+      "name": "Inactive business cannot publish a frame",
+      "status": "PASS"
+    },
+    {
+      "name": "Frame cannot select the first of ambiguous future business relationships",
+      "status": "PASS"
+    },
+    {
+      "name": "A mismatched native brand cannot be composed with an authorized customer",
+      "status": "PASS"
+    },
+    {
+      "name": "Frame reload uses saved profile/config and creates no durable effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Migration refuses an unreviewed change to the canonical contact predicate",
+      "status": "PASS"
+    },
+    {
+      "name": "Legacy staff-focused thread and private customer thread can coexist",
+      "status": "PASS"
+    },
+    {
+      "name": "Customer without staff membership creates its native private thread",
+      "status": "PASS"
+    },
+    {
+      "name": "Returning customer resumes the same canonical thread",
+      "status": "PASS"
+    },
+    {
+      "name": "A request cannot choose a different customer relationship",
+      "status": "PASS"
+    },
+    {
+      "name": "Mixed-role fixture is native staff elsewhere and the customer in this relationship",
+      "status": "PASS"
+    },
+    {
+      "name": "Canonical contact reads preserve customer self-access without granting staff authority",
+      "status": "PASS"
+    },
+    {
+      "name": "Internal contact narrowing grants no actor-selector RPC to browser or service callers",
+      "status": "PASS"
+    },
+    {
+      "name": "Linked-customer read permission cannot create a staff workspace conversation",
+      "status": "PASS"
+    },
+    {
+      "name": "A contact argument cannot bypass the native platform-lens authority check",
+      "status": "PASS"
+    },
+    {
+      "name": "A declared workspace without native membership cannot authorize self Chat",
+      "status": "PASS"
+    },
+    {
+      "name": "Private audience cannot authorize incumbent paige_tool_create_task; assigned staff=false",
+      "status": "PASS"
+    },
+    {
+      "name": "Private audience cannot authorize incumbent paige_tool_add_client_note; assigned staff=false",
+      "status": "PASS"
+    },
+    {
+      "name": "Private audience cannot authorize incumbent paige_tool_create_task; assigned staff=true",
+      "status": "PASS"
+    },
+    {
+      "name": "Private audience cannot authorize incumbent paige_tool_add_client_note; assigned staff=true",
+      "status": "PASS"
+    },
+    {
+      "name": "Rejected private-context staff tools leave no business task, note or audit effect",
+      "status": "PASS"
+    },
+    {
+      "name": "Even current business members cannot use private Chat for canonical owner-work envelopes",
+      "status": "PASS"
+    },
+    {
+      "name": "Native workspace membership preserves self Chat and its personal task writer",
+      "status": "PASS"
+    },
+    {
+      "name": "Canonical durable owner-work still accepts a native authorized workspace thread",
+      "status": "PASS"
+    },
+    {
+      "name": "Authorized workspace preserves paige_tool_create_task",
+      "status": "PASS"
+    },
+    {
+      "name": "Authorized workspace preserves paige_tool_add_client_note",
+      "status": "PASS"
+    },
+    {
+      "name": "Existing v2 staged admission records exactly one issued user turn",
+      "status": "PASS"
+    },
+    {
+      "name": "A customer cannot forge a saved assistant reply or change private audience",
+      "status": "PASS"
+    },
+    {
+      "name": "Canonical service settlement and native publication complete the private turn",
+      "status": "PASS"
+    },
+    {
+      "name": "Active v2 admits the ordinary customer and uses its existing executor gate",
+      "status": "PASS"
+    },
+    {
+      "name": "Active v2 settles, releases and publishes the customer answer without staff membership",
+      "status": "PASS"
+    },
+    {
+      "name": "Another customer and same-business staff cannot read the private history",
+      "status": "PASS"
+    },
+    {
+      "name": "Dual-role customer keeps customer history despite a staff workspace elsewhere",
+      "status": "PASS"
+    },
+    {
+      "name": "Revocation hides retained history and prevents new admission/publication",
+      "status": "PASS"
+    },
+    {
+      "name": "Private-history ACL refuses anonymous and service-role customer authorization",
+      "status": "PASS"
+    },
+    {
+      "name": "Expired history cannot be revived; a fresh conversation archives the expired native thread",
+      "status": "PASS"
+    },
+    {
+      "name": "Canonical contact deletion detaches and archives private threads without exposing retained receipts",
+      "status": "PASS"
+    },
+    {
+      "name": "Canonical private cleanup permits Auth deletion while retaining the unlinked CRM contact",
+      "status": "PASS"
+    },
+    {
+      "name": "Context support refuses a changed protected private helper owner before creating functions",
+      "status": "PASS"
+    },
+    {
+      "name": "Protected begin and settle stay unchanged and only the customer publication branch extends",
+      "status": "PASS"
+    },
+    {
+      "name": "Closed source references and versioned snapshots accept actual canonical grant metadata",
+      "status": "PASS"
+    },
+    {
+      "name": "Native reference validation returns false for null",
+      "status": "PASS"
+    },
+    {
+      "name": "Native reference validation returns false for object",
+      "status": "PASS"
+    },
+    {
+      "name": "Native reference validation returns false for scalar",
+      "status": "PASS"
+    },
+    {
+      "name": "Native reference validation returns false for scalar row",
+      "status": "PASS"
+    },
+    {
+      "name": "Native reference validation returns false for missing fields",
+      "status": "PASS"
+    },
+    {
+      "name": "Native reference validation returns false for extra fields",
+      "status": "PASS"
+    },
+    {
+      "name": "Native reference validation returns false for duplicate",
+      "status": "PASS"
+    },
+    {
+      "name": "Native reference validation returns false for noncanonical ID",
+      "status": "PASS"
+    },
+    {
+      "name": "Native reference validation returns false for null revision",
+      "status": "PASS"
+    },
+    {
+      "name": "Native reference validation returns false for too many",
+      "status": "PASS"
+    },
+    {
+      "name": "Native snapshot validation returns false for null",
+      "status": "PASS"
+    },
+    {
+      "name": "Native snapshot validation returns false for scalar",
+      "status": "PASS"
+    },
+    {
+      "name": "Native snapshot validation returns false for array",
+      "status": "PASS"
+    },
+    {
+      "name": "Native snapshot validation returns false for wrong version",
+      "status": "PASS"
+    },
+    {
+      "name": "Native snapshot validation returns false for missing refs",
+      "status": "PASS"
+    },
+    {
+      "name": "Native snapshot validation returns false for extra field",
+      "status": "PASS"
+    },
+    {
+      "name": "Native snapshot validation returns false for retrieval outside sources",
+      "status": "PASS"
+    },
+    {
+      "name": "Current reference validation uses the same canonical tenant/client/version predicate",
+      "status": "PASS"
+    },
+    {
+      "name": "Publication locks preserve actual customer actor and current source authority",
+      "status": "PASS"
+    },
+    {
+      "name": "All source/snapshot/lock primitives are private to canonical native callers",
+      "status": "PASS"
+    },
+    {
+      "name": "Native assistant projection binds the actual customer/private thread and approved canonical content",
+      "status": "PASS"
+    },
+    {
+      "name": "Native assistant projection stays identical across a read without mutations",
+      "status": "PASS"
+    },
+    {
+      "name": "Wrong customer cannot read this private context even with another legitimate relationship",
+      "status": "PASS"
+    },
+    {
+      "name": "anon cannot execute the customer assistant projection",
+      "status": "PASS"
+    },
+    {
+      "name": "service_role cannot execute the customer assistant projection",
+      "status": "PASS"
+    },
+    {
+      "name": "Recovering a legacy accepted intent never retroactively acquires Knowledge",
+      "status": "PASS"
+    },
+    {
+      "name": "Direct compatible admission cannot attest or settle program sources missing from its native user receipt",
+      "status": "PASS"
+    },
+    {
+      "name": "Unattested legacy assistant prose never becomes new model context",
+      "status": "PASS"
+    },
+    {
+      "name": "Customer adapter atomically captures the actual native source snapshot in its issued user turn",
+      "status": "PASS"
+    },
+    {
+      "name": "Customer duplicate admission cannot change or retrofit its captured source references",
+      "status": "PASS"
+    },
+    {
+      "name": "Wrong customer, anonymous and service callers cannot use the customer admission adapter",
+      "status": "PASS"
+    },
+    {
+      "name": "Source-bearing settlement refuses forged metadata without inserting a terminal",
+      "status": "PASS"
+    },
+    {
+      "name": "Canonical settlement accepts the exact captured snapshot and preserves exact replay",
+      "status": "PASS"
+    },
+    {
+      "name": "Native publication accepts the current source-bearing canonical answer",
+      "status": "PASS"
+    },
+    {
+      "name": "Current terminal publication retires when the actual Auth customer is banned",
+      "status": "PASS"
+    },
+    {
+      "name": "The current terminal loses publication permission when its source changes after settlement",
+      "status": "PASS"
+    },
+    {
+      "name": "A returning context rehydrates only attested private history and current source references",
+      "status": "PASS"
+    },
+    {
+      "name": "Withdrawn source denies accepted context and old publication",
+      "status": "PASS"
+    },
+    {
+      "name": "Withdrawn source cannot insert a new source-bearing terminal",
+      "status": "PASS"
+    },
+    {
+      "name": "Empty WITHHELD cleanup remains settleable after source withdrawal without falsifying an answer",
+      "status": "PASS"
+    },
+    {
+      "name": "Withdrawn generated prose is excluded from future model history while private canonical UI history persists",
+      "status": "PASS"
+    },
+    {
+      "name": "Customer adapter preserves ACTIVE admission and cannot bypass the existing executor gate",
+      "status": "PASS"
+    },
+    {
+      "name": "Customer adapter delegates Stop and refuses owner-style bound-answer resumption",
+      "status": "PASS"
+    }
+  ],
+  "passed": 141,
+  "failed": 0
+}

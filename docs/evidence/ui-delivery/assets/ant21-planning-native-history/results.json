@@ -1,0 +1,138 @@
+{
+  "proof": "LOCAL SYNTHETIC REAL COMPONENT/SHELL; NOT AUTHENTICATED OR DATABASE ACCEPTANCE",
+  "results": [
+    {
+      "name": "history-1536x770-light-closed",
+      "cancelledFound": true,
+      "inspectOnly": true,
+      "activityFound": true,
+      "focusRestored": true,
+      "pageErrors": []
+    },
+    {
+      "name": "history-1536x770-light-open",
+      "nativePaigeOpen": true,
+      "nativeFold": true,
+      "historyRetained": true,
+      "departmentInteraction": "Performed while PAIGE closed; native overlay retained",
+      "pageErrors": []
+    },
+    {
+      "name": "history-1536x770-dark-closed",
+      "cancelledFound": true,
+      "inspectOnly": true,
+      "activityFound": true,
+      "focusRestored": true,
+      "pageErrors": []
+    },
+    {
+      "name": "history-1536x770-dark-open",
+      "nativePaigeOpen": true,
+      "nativeFold": true,
+      "historyRetained": true,
+      "departmentInteraction": "Performed while PAIGE closed; native overlay retained",
+      "pageErrors": []
+    },
+    {
+      "name": "history-1366x768-light-closed",
+      "cancelledFound": true,
+      "inspectOnly": true,
+      "activityFound": true,
+      "focusRestored": true,
+      "pageErrors": []
+    },
+    {
+      "name": "history-1366x768-light-open",
+      "nativePaigeOpen": true,
+      "nativeFold": true,
+      "historyRetained": true,
+      "departmentInteraction": "Performed while PAIGE closed; native overlay retained",
+      "pageErrors": []
+    },
+    {
+      "name": "history-1366x768-dark-closed",
+      "cancelledFound": true,
+      "inspectOnly": true,
+      "activityFound": true,
+      "focusRestored": true,
+      "pageErrors": []
+    },
+    {
+      "name": "history-1366x768-dark-open",
+      "nativePaigeOpen": true,
+      "nativeFold": true,
+      "historyRetained": true,
+      "departmentInteraction": "Performed while PAIGE closed; native overlay retained",
+      "pageErrors": []
+    },
+    {
+      "name": "history-1024x768-light-closed",
+      "cancelledFound": true,
+      "inspectOnly": true,
+      "activityFound": true,
+      "focusRestored": true,
+      "pageErrors": []
+    },
+    {
+      "name": "history-1024x768-light-open",
+      "nativePaigeOpen": true,
+      "nativeFold": true,
+      "historyRetained": true,
+      "departmentInteraction": "Performed while PAIGE closed; native overlay retained",
+      "pageErrors": []
+    },
+    {
+      "name": "history-1024x768-dark-closed",
+      "cancelledFound": true,
+      "inspectOnly": true,
+      "activityFound": true,
+      "focusRestored": true,
+      "pageErrors": []
+    },
+    {
+      "name": "history-1024x768-dark-open",
+      "nativePaigeOpen": true,
+      "nativeFold": true,
+      "historyRetained": true,
+      "departmentInteraction": "Performed while PAIGE closed; native overlay retained",
+      "pageErrors": []
+    },
+    {
+      "name": "history-900x1000-light-closed",
+      "cancelledFound": true,
+      "inspectOnly": true,
+      "activityFound": true,
+      "focusRestored": true,
+      "pageErrors": []
+    },
+    {
+      "name": "history-900x1000-light-open",
+      "nativePaigeOpen": true,
+      "nativeFold": true,
+      "historyRetained": true,
+      "departmentInteraction": "Performed while PAIGE closed; native overlay retained",
+      "pageErrors": []
+    },
+    {
+      "name": "history-900x1000-dark-closed",
+      "cancelledFound": true,
+      "inspectOnly": true,
+      "activityFound": true,
+      "focusRestored": true,
+      "pageErrors": []
+    },
+    {
+      "name": "history-900x1000-dark-open",
+      "nativePaigeOpen": true,
+      "nativeFold": true,
+      "historyRetained": true,
+      "departmentInteraction": "Performed while PAIGE closed; native overlay retained",
+      "pageErrors": []
+    },
+    {
+      "name": "second-context-refusal-retry",
+      "reads": 3,
+      "scopeBound": true
+    }
+  ]
+}

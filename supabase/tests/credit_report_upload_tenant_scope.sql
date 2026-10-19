@@ -49,6 +49,9 @@ END $$;
 
 -- Uploads are made the way the platform makes them: by the person, in their context. None names a
 -- tenant. U1: X's own report, made while working in A. U2: Y's own report, as a client of A.
+-- (Since E09 F1a a portal customer such as Y can no longer file a credit upload themselves — proved in
+-- e09_finance_entitlement.sql. U2 is written here as the table owner so the tenant rules below keep
+-- their fixture; the set_config only names who the trigger sees as the maker.)
 SELECT set_config('request.jwt.claims', '{"sub":"a5520000-0000-0000-0000-000000000e01","role":"authenticated"}', true);
 INSERT INTO public.credit_report_uploads (user_id, uploaded_by, file_name, file_path)
 VALUES ('a5520000-0000-0000-0000-000000000e01', 'a5520000-0000-0000-0000-000000000e01', 'u1.pdf',

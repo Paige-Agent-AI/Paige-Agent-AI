@@ -1,0 +1,255 @@
+{
+  "sourceSha256": "6109dbb7174dc81fb2496ebeaf7e4577d13eb31277bdbe15a7f85bc2740fa6f1",
+  "cases": [
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "geometry": {
+        "overflow": false,
+        "fields": [
+          {
+            "id": "portal-assistant-name",
+            "fontSize": 16,
+            "width": 316
+          },
+          {
+            "id": "portal-assistant-tone",
+            "fontSize": 16,
+            "width": 316
+          },
+          {
+            "id": "portal-assistant-scope",
+            "fontSize": 16,
+            "width": 316
+          },
+          {
+            "id": "portal-assistant-handoff",
+            "fontSize": 16,
+            "width": 316
+          }
+        ]
+      },
+      "shot": "390-light.png"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "geometry": {
+        "overflow": false,
+        "fields": [
+          {
+            "id": "portal-assistant-name",
+            "fontSize": 16,
+            "width": 316
+          },
+          {
+            "id": "portal-assistant-tone",
+            "fontSize": 16,
+            "width": 316
+          },
+          {
+            "id": "portal-assistant-scope",
+            "fontSize": 16,
+            "width": 316
+          },
+          {
+            "id": "portal-assistant-handoff",
+            "fontSize": 16,
+            "width": 316
+          }
+        ]
+      },
+      "shot": "390-dark.png"
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "theme": "light",
+      "geometry": {
+        "overflow": false,
+        "fields": [
+          {
+            "id": "portal-assistant-name",
+            "fontSize": 16,
+            "width": 246
+          },
+          {
+            "id": "portal-assistant-tone",
+            "fontSize": 16,
+            "width": 246
+          },
+          {
+            "id": "portal-assistant-scope",
+            "fontSize": 16,
+            "width": 246
+          },
+          {
+            "id": "portal-assistant-handoff",
+            "fontSize": 16,
+            "width": 246
+          }
+        ]
+      },
+      "shot": "320-light.png"
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "theme": "dark",
+      "geometry": {
+        "overflow": false,
+        "fields": [
+          {
+            "id": "portal-assistant-name",
+            "fontSize": 16,
+            "width": 246
+          },
+          {
+            "id": "portal-assistant-tone",
+            "fontSize": 16,
+            "width": 246
+          },
+          {
+            "id": "portal-assistant-scope",
+            "fontSize": 16,
+            "width": 246
+          },
+          {
+            "id": "portal-assistant-handoff",
+            "fontSize": 16,
+            "width": 246
+          }
+        ]
+      },
+      "shot": "320-dark.png"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "theme": "light",
+      "geometry": {
+        "overflow": false,
+        "fields": [
+          {
+            "id": "portal-assistant-name",
+            "fontSize": 14,
+            "width": 395
+          },
+          {
+            "id": "portal-assistant-tone",
+            "fontSize": 14,
+            "width": 395
+          },
+          {
+            "id": "portal-assistant-scope",
+            "fontSize": 14,
+            "width": 806
+          },
+          {
+            "id": "portal-assistant-handoff",
+            "fontSize": 14,
+            "width": 806
+          }
+        ]
+      },
+      "shot": "1366-light.png"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "theme": "dark",
+      "geometry": {
+        "overflow": false,
+        "fields": [
+          {
+            "id": "portal-assistant-name",
+            "fontSize": 14,
+            "width": 395
+          },
+          {
+            "id": "portal-assistant-tone",
+            "fontSize": 14,
+            "width": 395
+          },
+          {
+            "id": "portal-assistant-scope",
+            "fontSize": 14,
+            "width": 806
+          },
+          {
+            "id": "portal-assistant-handoff",
+            "fontSize": 14,
+            "width": 806
+          }
+        ]
+      },
+      "shot": "1366-dark.png"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "theme": "light",
+      "geometry": {
+        "overflow": false,
+        "fields": [
+          {
+            "id": "portal-assistant-name",
+            "fontSize": 14,
+            "width": 395
+          },
+          {
+            "id": "portal-assistant-tone",
+            "fontSize": 14,
+            "width": 395
+          },
+          {
+            "id": "portal-assistant-scope",
+            "fontSize": 14,
+            "width": 806
+          },
+          {
+            "id": "portal-assistant-handoff",
+            "fontSize": 14,
+            "width": 806
+          }
+        ]
+      },
+      "shot": "900-light.png"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "theme": "dark",
+      "geometry": {
+        "overflow": false,
+        "fields": [
+          {
+            "id": "portal-assistant-name",
+            "fontSize": 14,
+            "width": 395
+          },
+          {
+            "id": "portal-assistant-tone",
+            "fontSize": 14,
+            "width": 395
+          },
+          {
+            "id": "portal-assistant-scope",
+            "fontSize": 14,
+            "width": 806
+          },
+          {
+            "id": "portal-assistant-handoff",
+            "fontSize": 14,
+            "width": 806
+          }
+        ]
+      },
+      "shot": "900-dark.png"
+    }
+  ],
+  "errors": [],
+  "boundary": "Offline prototype; actual UI primitives and compiled project tokens, deterministic local state and blocked network. Not canonical persistence, Auth, real business, full Solo shell, device or production acceptance."
+}

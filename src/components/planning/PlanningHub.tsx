@@ -12,6 +12,7 @@ import { usePlanList, type PlanScope, type PlanItem, type PlanItemType } from "@
 import { bucketOf, isClosed, type TimeBucket } from "@/lib/planning";
 import { PlanItemRow } from "./PlanItemRow";
 import { QuickAddDialog } from "./QuickAddDialog";
+import { useAssistantName } from "@/lib/portal/customerIdentity";
 
 const BUCKET_ORDER: { key: TimeBucket; label: string }[] = [
   { key: "overdue", label: "Overdue" },
@@ -37,6 +38,7 @@ const byWhen = (a: PlanItem, b: PlanItem) => {
 };
 
 export function PlanningHub({ staff = false, paigeHref = "/app" }: { staff?: boolean; paigeHref?: string }) {
+  const assistant = useAssistantName();
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const reduce = useReducedMotion();
@@ -100,7 +102,7 @@ export function PlanningHub({ staff = false, paigeHref = "/app" }: { staff?: boo
     <div className="flex items-center gap-2">
       <QuickAddDialog userId={userId} onCreated={reload} />
       <Button variant="gold" onClick={() => navigate(paigeHref)}>
-        <Sparkles className="mr-1.5 h-4 w-4" /> Plan with Paige
+        <Sparkles className="mr-1.5 h-4 w-4" /> Plan with {assistant}
       </Button>
     </div>
   );
@@ -113,7 +115,7 @@ export function PlanningHub({ staff = false, paigeHref = "/app" }: { staff?: boo
         variant="hero"
         icon={CalendarClock}
         title="Planning"
-        description="Everything you and Paige are tracking — reminders, tasks, milestones, and plans, in one place."
+        description={`Everything you and ${assistant} are tracking — reminders, tasks, milestones, and plans, in one place.`}
         actions={heroActions}
       />
 
@@ -155,7 +157,7 @@ export function PlanningHub({ staff = false, paigeHref = "/app" }: { staff?: boo
                 icon={CalendarClock}
                 tone="brand"
                 title="Nothing on the board yet"
-                description="Add a reminder or a task, or ask Paige to map out your week — it'll show up here."
+                description={`Add a reminder or a task, or ask ${assistant} to map out your week — it'll show up here.`}
                 action={heroActions}
               />
             </SectionCard>

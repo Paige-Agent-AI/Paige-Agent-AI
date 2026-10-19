@@ -1,0 +1,34 @@
+{
+  "proofClass": "SYNTHETIC_ACTUAL_GAME_PLAN_NATIVE_CHROME",
+  "productSource": "988f77dd60b907571bfb308987fc423fe5d9b0e9",
+  "fixtureCorrection": "Exact incumbent SoloApp inner namespace/theme/flex/screen-host frame restored before this round",
+  "authenticatedQa": "UNVERIFIED",
+  "findings": [
+    {
+      "status": "FAIL",
+      "scope": "Game Plan mobile header",
+      "viewport": [390, 768],
+      "gridColumnsPx": [48.6125, 227.788],
+      "subtitleWidthPx": 48.6125,
+      "subtitleHeightPx": 225,
+      "headerHeightPx": 414,
+      "remainingWorkStripHeightPx": 145.15,
+      "source": "src/solo/solo-game-plan-workspace.css: .sd-top and narrow responsive rules",
+      "capture": "frame-mobile-focused-overlap.png"
+    },
+    {
+      "status": "FAIL",
+      "scope": "Stacked Game Plan content overlaps",
+      "viewport": [390, 768],
+      "columnTrackHeightPx": 65.575,
+      "leftContentBottomPx": 481,
+      "approvalRailStartsPx": 165.625,
+      "source": "src/solo/solo-game-plan-workspace.css: <=1040 .sd-field columns and overflow-visible .sd-col/.sd-rail retain compressed min-height:0 tracks",
+      "geometry": "frame-mobile-findings.json",
+      "capture": "frame-mobile-focused-overlap.png"
+    }
+  ],
+  "notAFinding": "An initial top-of-page static mobile capture does not preserve focus or scroll from the actual React interaction. Offscreen approvals alone are not a defect. The measured header compression and overlapping layout are the defects.",
+  "runtimeEditsByThisWorker": 0,
+  "owner": "root"
+}

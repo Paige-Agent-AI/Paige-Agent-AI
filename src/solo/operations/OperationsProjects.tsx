@@ -2,7 +2,7 @@ import { Check, Flag, CirclePause } from "lucide-react";
 import type { Plan, PlanItem } from "@/hooks/usePlanList";
 import type { TeamMemberRecord } from "../team-workspace-contract";
 import { OperationsAssignee } from "./OperationsAssignee";
-import { workStatusLabel, byDueDate } from "./operations-presentation";
+import { workDateLabel, workStatusLabel, byDueDate } from "./operations-presentation";
 import "./operations-views.css";
 
 export interface OperationsProjectsProps {
@@ -22,12 +22,12 @@ export function OperationsProjects({ plans, members, onInspectItem, onInspectPla
       const completed = eligible.filter(item => item.status === "done").length;
       const closedWithUnfinishedWork = ["completed", "archived"].includes(plan.status) && completed < eligible.length;
       const blocked = eligible.filter(item => item.status === "blocked");
-      const overdue = eligible.filter(item => item.due_at && item.status !== "done" && new Date(item.due_at).getTime() < Date.now());
+      const overdue = eligible.filter(item => item.item_type !== "reminder" && item.due_at && item.status !== "done" && new Date(item.due_at).getTime() < Date.now());
       const milestones = plan.items.filter(item => item.item_type === "milestone").sort(byDueDate);
       return <article className="ops-project-track" key={plan.id}><header><div className="ops-project-title"><button type="button" className="ops-view-text-action" onClick={() => onInspectPlan(plan)}>{plan.title}</button>{plan.summary && <p>{plan.summary}</p>}</div><span className="ops-view-status" data-status={blocked.length ? "blocked" : overdue.length ? "overdue" : plan.status}>{blocked.length ? "Blocked work" : overdue.length ? "Overdue work" : workStatusLabel(plan.status)}</span></header>
         <div className="ops-project-readback">{plan.owner_user_id && !people.has(plan.owner_user_id) ? <span>Member unavailable</span> : <OperationsAssignee member={people.get(plan.owner_user_id ?? "")} />}<span>{projectDate(plan.starts_on)} — {projectDate(plan.ends_on)}</span><span>{completed} of {eligible.length} items completed</span></div>
         <div className="ops-project-progress" role="progressbar" aria-label={`${plan.title}: recorded work completion`} aria-valuemin={0} aria-valuemax={eligible.length || 1} aria-valuenow={completed} aria-valuetext={`${completed} of ${eligible.length} recorded items completed`}><span style={{ width: `${eligible.length ? completed / eligible.length * 100 : 0}%` }} /></div>
-        {milestones.length ? <ol className="ops-project-milestones">{milestones.map(item => <li key={item.id} data-status={item.status}><button type="button" onClick={() => onInspectItem(item)}><span className="ops-milestone-node">{item.status === "done" ? <Check size={15} aria-hidden="true" /> : item.status === "blocked" ? <CirclePause size={15} aria-hidden="true" /> : <Flag size={14} aria-hidden="true" />}</span><strong>{item.title}</strong><small>{projectDate(item.due_at)} · {workStatusLabel(item.status)}</small></button></li>)}</ol> : <p className="ops-view-muted ops-project-no-milestones">No milestones recorded yet.</p>}
+        {milestones.length ? <ol className="ops-project-milestones">{milestones.map(item => <li key={item.id} data-status={item.status}><button type="button" onClick={() => onInspectItem(item)}><span className="ops-milestone-node">{item.status === "done" ? <Check size={15} aria-hidden="true" /> : item.status === "blocked" ? <CirclePause size={15} aria-hidden="true" /> : <Flag size={14} aria-hidden="true" />}</span><strong>{item.title}</strong><small>{workDateLabel(item)} · {workStatusLabel(item.status)}</small></button></li>)}</ol> : <p className="ops-view-muted ops-project-no-milestones">No milestones recorded yet.</p>}
         {(closedWithUnfinishedWork || blocked.length > 0 || overdue.length > 0) && <footer className="ops-project-attention">{closedWithUnfinishedWork && <span>Recorded {plan.status}, with unfinished work. Review the project status.</span>}{blocked.length > 0 && <span>{blocked.length} blocked {blocked.length === 1 ? "item" : "items"}</span>}{overdue.length > 0 && <span>{overdue.length} overdue {overdue.length === 1 ? "item" : "items"}</span>}<button type="button" className="ops-view-text-action" onClick={() => onInspectPlan(plan)}>Inspect project</button></footer>}
       </article>;
     })}</div>}

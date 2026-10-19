@@ -688,7 +688,9 @@ const SOURCES = {
   "supabase/functions/_shared/email-attachments.ts": "becc41d2968a75ba07c1ec077c142f625ccb0239f5dd3423073dbbbe0186069e",
   "supabase/functions/_shared/sales-invoice-delivery/readiness-reader.ts": "8ea30924c24b27244d413ee167e43f08b18a0589df53e2d2b65fde4998ca2ba2",
   // E04 exact invoice navigation: independently compared incumbent route outputs; authority unchanged.
-  "supabase/functions/_shared/canonical-app-url.ts": "9eae3b8862432dd7f1d8c1bfc77db807ed6a00407731a710d874bd419f301719",
+  // E02 AUTHOR-REVIEW / LOWER ASSURANCE: add UUID-only Play focus beside current
+  // invoice/Deal/Task routes; all existing route entries and authority remain unchanged.
+  "supabase/functions/_shared/canonical-app-url.ts": "70e41acce172347f3364cbd0478d69a2b73871a82a0e2a6821fc828ff1ce6403",
   "supabase/functions/_shared/gmail.ts": "78f697e312d18eb9d73ff2a3802142003a843b109f5e2a956182befb5d6160ff",
   "supabase/functions/_shared/smtp.ts": "0e3ea569f3728dde3329bb5281ef0afb9d592a4f080b3535b2bb7da62799f5ff",
   "supabase/functions/_shared/sales-invoice-delivery/binding.ts": "4e95a90d3a145278d3cb27f64865d26dc968d1c8cf7937dea2feac584e307b77",
@@ -772,7 +774,9 @@ const ANCESTRY_SOURCES = {
  // E02 source review: the33-key literal moved unchanged into a pure dependency.
  // Reconstituting it into the reader is AST-identical to deployed892b1bdfe.
  // Pin BOTH reviewed files; no generated digest acceptance or effect guard waiver.
- "supabase/functions/_shared/analytics-metrics/read.ts": "a666df00a26f6b7d52237afdeb89868898dffb298acce4ba9fbceb18935b15d6",
+ // E02 AUTHOR-REVIEW / LOWER ASSURANCE: existing issuer cycle serialized; internal
+ // evidence retains verified epochs, model projection still strips identity. No authority change.
+ "supabase/functions/_shared/analytics-metrics/read.ts": "ddac0565d904af0860679f80dbc8fc8c4c5be1a0532557e0a1afa85809542376",
  "supabase/functions/_shared/analytics-metrics/keys.ts": "7d6469a106f5200147e360e46b0ef1846581795207fa74d7c48f0ecc14d4fbc6",
  "supabase/functions/_shared/analytics-metrics/metric-contract.ts": "8bbc6b91d259e2ab80643dd37667d88736043066e14d725bbca5344874d0c2a5",
  "supabase/functions/_shared/pipeline-original-discovery.ts": "4c55fee76bc2622a0b57b33282276f36aa3a8552725168c45ab1b2774b7e7fa9",

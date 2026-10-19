@@ -1,5 +1,6 @@
 import { currentMetricVersion, parseMetricResult, type MetricRequestIdentity, type MetricResult } from "@/lib/analytics/metric-contract";
 import { observeMissionTarget, validMissionTarget, type MissionTarget, type TargetObservation } from "../../supabase/functions/_shared/business-mission-targets/contract";
+import { projectMissionTarget } from "../../supabase/functions/_shared/business-mission-targets/presentation";
 import type { MissionTargetTool } from "../../supabase/functions/_shared/business-mission-targets/native";
 
 type Reply = { data: unknown; error: unknown };
@@ -49,11 +50,7 @@ async function scopeCheck(caller: TargetCaller, scope: TargetScope): Promise<"cu
 function projectTarget(value: unknown, scope: TargetScope): MissionTarget | null {
   if (!object(value) || !validMissionTarget(value as unknown as MissionTarget)
     || value.tenant_id !== scope.tenantId || value.mission_id !== scope.missionId) return null;
-  const t = value as unknown as MissionTarget;
-  return { id: t.id, tenant_id: t.tenant_id, mission_id: t.mission_id, revision: t.revision, state: t.state, title: t.title,
-    metric: { key: t.metric.key, version: t.metric.version, unit: t.metric.unit, value_kind: t.metric.value_kind, currency: t.metric.currency,
-      dimensions: { ...t.metric.dimensions }, range_key: t.metric.range_key, semantics: t.metric.semantics, business_time_zone: t.metric.business_time_zone },
-    period: { start: t.period.start, end: t.period.end, time_zone: t.period.time_zone }, comparison: t.comparison, desired_value: t.desired_value, upper_value: t.upper_value };
+  return projectMissionTarget(value as unknown as MissionTarget);
 }
 
 export async function readMissionTargets(caller: TargetCaller, scope: TargetScope, offset = 0): Promise<TargetList> {

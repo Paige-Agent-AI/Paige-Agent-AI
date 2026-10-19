@@ -485,13 +485,16 @@ describe('generalised issuer helpers', () => {
 // ── the composition ──────────────────────────────────────────────────────────────────────────────────
 
 describe('composeBusinessReview with F2b', () => {
-  it('operations and clients are now read; work, game plan, campaigns and the rest stay honest gaps', async () => {
+  it('operations and clients are read; a missing owner Game Plan contract is degraded and unmounted domains remain gaps', async () => {
     const f = fakeCaller();
     const r = await composeBusinessReview(f.caller, WHO, { timezone: 'UTC' }, { now: NOW });
     if (!('snapshot' in r)) throw new Error(r.reason);
     const d = r.snapshot.domains;
     for (const area of ['payments', 'sales_pipeline', 'operations', 'clients']) expect(d[area].status).toBe('available');
-    for (const area of ['work', 'game_plan', 'campaigns', 'revenue', 'communications', 'email', 'bookings', 'outcomes']) {
+    expect(d.game_plan.status).toBe('degraded');
+    expect(d.game_plan.reason).toBe('mission_review_unavailable');
+    expect(d.game_plan.data).toBeNull();
+    for (const area of ['work', 'campaigns', 'revenue', 'communications', 'email', 'bookings', 'outcomes']) {
       expect(d[area].status).toBe('unavailable');
       expect(d[area].reason).toMatch(/^no_adapter/);
     }

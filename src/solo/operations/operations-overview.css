@@ -1,4 +1,4 @@
-.ops-operating-desk { min-width: 0; }
+.ops-operating-desk { min-width: 0; container-type: inline-size; }
 .ops-desk-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 16px; }
 .ops-desk-heading h1 { margin: 0 0 8px; font-size: var(--pg-t-title,21px); font-weight: 600; letter-spacing: -.025em; line-height: 1.3; }
 .ops-desk-heading p { margin: 0; color: var(--pg-muted); line-height: 1.6; }
@@ -60,4 +60,9 @@
   .ops-desk-work-main { flex-basis: 70%; }
   .ops-desk-next-column { border-top: 1px solid var(--pg-line); padding-top: 24px; }
   .ops-desk-work-main>.ops-view-text-action,.ops-desk-section-heading>.ops-view-text-action,.ops-desk-project-list button { min-height: 44px; }
+}
+@container(max-width: 720px) {
+  .ops-desk-columns { grid-template-columns: minmax(0,1fr); gap: 28px; }
+  .ops-desk-heading { flex-wrap: wrap; }
+  .ops-desk-next-column { border-top: 1px solid var(--pg-line); padding-top: 24px; }
 }

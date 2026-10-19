@@ -24,4 +24,20 @@ describe("Portal projects canonical evidence without inferring access", () => {
   it("uses the latest ordered record, including a cancellation", () => expect(portalAccessState(person, [{ ...invite, revoked_at: "2026-10-15T10:00:00Z" }, invite], now)).toBe("canceled"));
   it("prioritizes contact preferences over an invitation", () => expect(portalNextStep({ ...person, doNotContact: true }, "not-invited")).toBe("Review contact preferences"));
   it("requires an email before preparing an invitation", () => expect(portalNextStep({ ...person, email: null }, "not-invited")).toBe("Add an email address"));
+  // E09 Slice 7 (§0.8): an ended client has no link and a used token. That is "ended", never "accepted".
+  it("reads ended before an accepted invitation", () => {
+    const ended = { ...person, linkedUserId: null, portalAccess: "ended" } as RelationshipPerson;
+    expect(portalAccessState(ended, [{ ...invite, last_used_at: "2026-10-14T13:00:00Z" }], now)).toBe("ended");
+    expect(accessLabels.ended).toBe("Access ended");
+    expect(portalNextStep(ended, "ended")).toBe("Invite again if they’re coming back");
+  });
+  it("reads paused before a linked account", () => {
+    const paused = { ...person, linkedUserId: "user-a", portalAccess: "paused" } as RelationshipPerson;
+    expect(portalAccessState(paused, undefined, now)).toBe("paused");
+    expect(accessLabels.paused).toBe("Access paused");
+    expect(portalNextStep({ ...paused, status: "active" }, "paused")).toBe("Restore or end access");
+  });
+  it("an open joined client is still linked", () => {
+    expect(portalAccessState({ ...person, linkedUserId: "user-a", portalAccess: "open" } as RelationshipPerson, [], now)).toBe("linked");
+  });
 });

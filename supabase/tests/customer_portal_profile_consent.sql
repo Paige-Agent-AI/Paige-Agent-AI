@@ -373,7 +373,7 @@ SELECT is(pg_temp.prefs('e0961000-0000-4000-8000-000000000009')#>>'{email,state}
 -- ── 18. The owner read ─────────────────────────────────────────────────────────────────────────
 SELECT is((SELECT array_agg(k ORDER BY k) FROM jsonb_object_keys(pg_temp.as_user('e0961000-0000-4000-8000-000000000001',
   $q$SELECT public.read_client_communication_state('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000002')$q$)) k),
-  ARRAY['contact_id','data_sharing','dnd_active','do_not_contact','email','portal_joined','quiet_hours','read_at','schema_version','sms','tenant_id','updates'],'owner read keys are exact');
+  ARRAY['contact_id','data_sharing','dnd_active','do_not_contact','email','portal_access','portal_joined','quiet_hours','read_at','schema_version','sms','tenant_id','updates'],'owner read keys are exact');
 SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000001',
   $q$SELECT public.read_client_communication_state('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000002')$q$)#>>'{sms,set_by}','you','the owner sees the client set it');
 SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000005',

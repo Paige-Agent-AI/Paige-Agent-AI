@@ -30,7 +30,9 @@ const shots = [];
 // The Solo frame matrix (ui-delivery evidence): four viewports × PAIGE closed / open × both themes, state=thread.
 for (const [w, h] of [[1536, 770], [1366, 768], [1024, 768], [900, 1000]]) for (const paige of ["closed", "open"]) for (const theme of ["light", "dark"]) shots.push({ state: "thread", theme, w, h, paige, matrix: true });
 // The other states at 1366×768, both themes.
-for (const state of ["help", "notjoined", "error"]) for (const theme of ["light", "dark"]) shots.push({ state, theme, w: 1366, h: 768, paige: "closed" });
+for (const state of ["help", "notjoined", "error", "paused"]) for (const theme of ["light", "dark"]) shots.push({ state, theme, w: 1366, h: 768, paige: "closed" });
+// E09 Slice 7: the held Portal channel for a paused client, on a phone too.
+for (const theme of ["light", "dark"]) shots.push({ state: "paused", theme, w: 390, h: 844, paige: "closed", phone: true });
 // A phone frame of the populated thread, for touch-target size.
 for (const theme of ["light", "dark"]) shots.push({ state: "thread", theme, w: 390, h: 844, paige: "closed", phone: true });
 
@@ -65,13 +67,13 @@ try {
     page.on("console", (msg) => { if (msg.type() === "error") consoleErrors.push(msg.text().slice(0, 240)); });
     // A missing favicon is the harness's, not the surface's; every other failed resource is an error.
     page.on("response", (r) => { if (r.status() >= 400 && !r.url().endsWith("/favicon.ico")) errors.push(`${r.status()} ${r.url()}`); });
-    await page.goto(`http://127.0.0.1:${PORT}/solo/42/clients/conversations?${new URLSearchParams({ state: s.state, theme: s.theme, paige: s.paige })}`);
+    await page.goto(`http://127.0.0.1:${PORT}/solo/42/clients/conversations?${new URLSearchParams({ state: s.state, theme: s.theme, paige: s.paige })}`, { timeout: 240_000 });
     let composer;
     const behaviour = {};
     try {
       await page.waitForSelector("[data-canonical-conversations]", { timeout: 30_000 });
       composer = page.locator(`textarea[placeholder="${PORTAL_PLACEHOLDER}"]`).first();
-      if (s.state === "notjoined") {
+      if (s.state === "notjoined" || s.state === "paused") {
         // A client who hasn't joined the portal can't receive a portal post, so the composer opens on
         // email, never on Portal. The owner can still pick Portal; the drive does, through the picker.
         await page.locator("textarea").first().waitFor({ timeout: 30_000 });
@@ -89,11 +91,11 @@ try {
     }
     if (behaviour.composerPortal) {
       if (s.state === "thread") await composer.fill(DRAFT);
-      if (s.state === "notjoined") {
-        // Picked Portal for an unjoined client: the composer says why inline and holds Send; nothing posts.
+      if (s.state === "notjoined" || s.state === "paused") {
+        // Picked Portal for an unjoined (or paused, E09 Slice 7) client: the composer says why inline and holds Send; nothing posts.
         const text = "Here's the timeline link.";
         await composer.fill(text);
-        const expected = `${NAME} hasn't joined your client portal yet`;
+        const expected = s.state === "paused" ? `${NAME}’s portal access is paused. Restore their portal access to message them here` : `${NAME} hasn't joined your client portal yet`;
         const sendBtn = page.getByRole("button", { name: "Send", exact: true });
         behaviour.sendHeld = await sendBtn.isDisabled();
         if (!behaviour.sendHeld) await sendBtn.click();
@@ -289,16 +291,16 @@ try {
       composerPortal: behaviour.composerPortal === true,
       // The "Posts in …'s client portal" note is for a client who can receive the post; an unjoined
       // client gets the not-connected notice instead (outcomeCopy).
-      noteShown: s.state === "notjoined" ? true : m.note,
-      defaultNotPortal: s.state === "notjoined" ? behaviour.defaultNotPortal === true : true,
-      sendHeld: s.state === "notjoined" ? behaviour.sendHeld === true : true,
+      noteShown: s.state === "notjoined" || s.state === "paused" ? true : m.note,
+      defaultNotPortal: s.state === "notjoined" || s.state === "paused" ? behaviour.defaultNotPortal === true : true,
+      sendHeld: s.state === "notjoined" || s.state === "paused" ? behaviour.sendHeld === true : true,
       labelsShown: m.labels.portalClient && m.labels.help && m.labels.email && m.labels.sms && (s.state === "thread" ? m.labels.portalYou : true),
       railHelpPreview: s.state === "help" ? m.railHelpPreview === true : true,
       neverClaimsRead: !m.claimsRead,
       rpcOnce: s.state === "error" ? portalReplies === 1 : portalReplies === 0,
       noProviderSend: sentElsewhere === 0,
-      outcomeCopy: s.state === "notjoined" || s.state === "error" ? !!behaviour.toast : true,
-      draftKept: s.state === "notjoined" || s.state === "error" ? behaviour.draftKept === true : true,
+      outcomeCopy: s.state === "notjoined" || s.state === "paused" || s.state === "error" ? !!behaviour.toast : true,
+      draftKept: s.state === "notjoined" || s.state === "paused" || s.state === "error" ? behaviour.draftKept === true : true,
     };
     const ok = errors.length === 0 && !m.overflowX && m.clipped.length === 0 && m.goldOutsideAct.length === 0 && m.low.length === 0 && m.smallTargets.length === 0 && Object.values(checks).every(Boolean);
     if (!ok) failed = true;

@@ -286,3 +286,23 @@ it("changing invitation retires the old password draft and consent checkbox",asy
   expect(host.querySelector('[role="checkbox"]')?.getAttribute('aria-checked')).toBe("false");
   expect(f.signUp).not.toHaveBeenCalled();
 });
+// E09 Slice 7: the business paused or ended this person's access after they joined. The old link's
+// status says so; the page names it in the business's words instead of "Let's try again", and never
+// reaches for the portal it no longer opens.
+it.each([
+  ["paused","Your access to Test Service is paused."],
+  ["ended","Your access to Test Service has ended."],
+] as const)("an accepted link whose access is %s says so instead of a generic error",async(state,title)=>{
+  f.user={id:subject,email:"recipient@tests.invalid",email_confirmed_at:"2026-01-01"};
+  const original=f.rpc.getMockImplementation()!;
+  f.rpc.mockImplementation(async(name:string,...args:unknown[])=>{
+    if(name==="client_portal_invite_status")return{data:{tenant_id:tenant,client_id:client,accepted_at:"2026-01-01",status:state},error:null};
+    return original(name,...args);
+  });
+  await render();
+  expect(host.querySelector("h1")?.textContent).toBe(title);
+  expect(host.textContent).not.toContain("Let’s try again");
+  expect(host.textContent).not.toBe("Portal destination");
+  expect(button("Sign out")).toBeTruthy();
+  expect(f.rpc.mock.calls.some(([name])=>name==="client_portal_self_profile"||name==="accept_tenant_invite")).toBe(false);
+});

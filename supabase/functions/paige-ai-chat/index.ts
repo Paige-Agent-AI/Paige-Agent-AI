@@ -45,6 +45,9 @@ import { setPlanItemClientShare, type ClientShareFailure } from '../_shared/plan
 import { PORTAL_MENU_TOOLS } from '../_shared/paige-spine/domains/client_portal.ts';
 import { configurePortalMenu, readPortalMenu, type PortalMenuFailure } from '../_shared/client-portal-menu.ts';
 import { refileClientDocument, routeFileDocument, shareClientFile } from '../_shared/crm/client-file-share.ts';
+// E09 Slice 7: read, pause, restore or end one client's portal access (set is high; owner/admin only).
+import { PORTAL_ACCESS_TOOLS } from '../_shared/paige-spine/domains/client_portal.ts';
+import { accessVersionToken, portalAccessClientName, portalAccessConfirmSummary, portalUnseenNote, readPortalAccess, setPortalAccess, type PortalAccessFailure } from '../_shared/client-portal-access.ts';
 import { GROWTH_FORM_TOOLS } from '../_shared/paige-spine/domains/growth_form.ts';
 import { readAgreements } from '../_shared/agreements/chat-read.ts';
 import { agreementSendPrecheck, draftAgreement, sendAgreement } from '../_shared/agreements/chat-write.ts';
@@ -8658,6 +8661,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // only, never on a client seat or the customer portal; set_tenant_portal_config re-proves owner/admin
     // (can_manage_tenant_brand) in its body, so the offer is not the authority.
     if (callerTier === "tenant" && !scopedClientId && !customerPortal) toolDefs.push(...PORTAL_MENU_TOOLS as any);
+    // E09 Slice 7: one client's portal access — read it, and pause/restore/end it. Tenant tier only, never
+    // on a client seat or the customer portal; set_client_portal_access re-proves owner/admin of the current
+    // workspace in its body, so the offer is not the authority.
+    if (callerTier === "tenant" && !scopedClientId && !customerPortal) toolDefs.push(...PORTAL_ACCESS_TOOLS as any);
     if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && calendarBookingRole && !scopedClientId && !customerPortal) toolDefs.push(...CALENDAR_BOOKING_READ_TOOLS);
     if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && taskReadRole && !scopedClientId && !customerPortal) toolDefs.push(...CRM_TASK_READ_TOOLS);
     // One-to-one business email (INT-328): declared by its domain module, executed only by its door.
@@ -9215,6 +9222,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       plan_item_set_client_share: "changing what a client can see",
       read_tenant_portal_menu: "checking your clients' portal menu",
       portal_menu_update: "changing your clients' portal menu",
+      read_client_portal_access: "checking a client's portal access",
+      client_portal_access_set: "changing a client's portal access",
       plan_remove_item: "removing a plan item",
       author_event_kind: "adding a new activity kind to track",
       automation_draft: "setting up a repeatable process",
@@ -9861,6 +9870,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           });
           return `Change your clients' portal menu for every client of this business — ${parts.join("; ") || "no entries named"}. Everything else in the menu stays as it is. Clients are not sent a message about it.`;
         }
+        case "client_portal_access_set":
+          // The card names the client (read on the caller's own session) and the reason being approved.
+          return portalAccessConfirmSummary(a, await portalAccessClientName(supabaseClient, personaCtx?.tenant_id ?? null, a?.contact_id));
         default:
           return `Paige is ${TOOL_LABELS[name] || `running ${name}`}.`;
       }
@@ -14715,12 +14727,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                         visibility: shared.shared ? "shared" : "internal",
                         replayed: shared.replayed,
                         portal_connected: shared.portalConnected,
+                        portal_access: shared.portalAccess ?? undefined,
                         readback: { id: shared.fileId, shared: shared.shared, shared_at: shared.sharedAt, updated_at: shared.updatedAt },
                         verified_readback: true,
+                        // E09 Slice 7: "can open it now" only when the writer says the client can open the portal now.
                         note: (shared.shared
-                          ? "Verified: it stays on their record and they can now open it in their portal. They were not sent a message."
+                          ? (shared.portalConnected !== true
+                            ? "Verified: it stays on their record and is shared to their portal. They were not sent a message."
+                              + portalUnseenNote(shared)
+                            : "Verified: it stays on their record and they can now open it in their portal. They were not sent a message.")
                           : "Verified: it stays on their record and only the team can see it now.")
-                          + (shared.portalConnected === false ? " This client hasn't joined their portal yet, so they'll see it once they do." : "")
                           + (shared.replayed ? " It was already set that way; nothing changed." : ""),
                       }
                     : {
@@ -14762,10 +14778,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                         visibility: refiled.shared ? "shared" : "internal",
                         moved_from_contact_id: refiled.movedFromContactId ?? undefined,
                         portal_connected: refiled.share?.portalConnected ?? undefined,
+                        portal_access: refiled.share?.portalAccess ?? undefined,
                         verified_readback: true,
                         note: refiled.shared
-                          ? "Filed on their record AND visible to them in their portal — say that plainly, because they can read it now. They were not sent a message."
-                            + (refiled.share?.portalConnected === false ? " This client hasn't joined their portal yet, so they'll see it once they do." : "")
+                          ? (refiled.share?.portalConnected !== true
+                            ? "Filed on their record and shared to their portal. They were not sent a message." + portalUnseenNote(refiled.share ?? { portalConnected: null })
+                            : "Filed on their record AND visible to them in their portal — say that plainly, because they can read it now. They were not sent a message.")
                           : "Filed on their record where the team can see it. The client cannot — say so if it matters."
                             + (refiled.movedFromContactId ? " A file moved to another client always arrives private." : ""),
                       }
@@ -17572,12 +17590,17 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(r.success === true
               ? { success: true, item_id: r.itemId, plan_item_id: r.itemId, shared: r.shared, replayed: r.replayed,
                   portal_connected: r.portalConnected,
+                  portal_access: r.portalAccess ?? undefined,
                   readback: { id: r.itemId, shared: r.shared, shared_at: r.sharedAt, updated_at: r.updatedAt },
                   record_locator: { table: "plan_items", id: r.itemId }, verified_readback: true,
+                  // E09 Slice 7: "can now see" only when the writer says the client can open the portal now;
+                  // round 3 (security 2): no answer (null) is unknown, never "can see".
                   note: (r.shared
-                    ? "Verified: the client can now see this item's title, state and due date in their portal. They were not sent a message."
+                    ? (r.portalConnected !== true
+                      ? "Verified: this item's title, state and due date are shared to their portal. They were not sent a message."
+                        + portalUnseenNote(r)
+                      : "Verified: the client can now see this item's title, state and due date in their portal. They were not sent a message.")
                     : "Verified: the client no longer sees this item in their portal.")
-                    + (r.portalConnected === false ? " This client has not connected to their portal yet, so they will see it once they do." : "")
                     + (r.replayed ? " It was already in that state; nothing was changed." : "") }
               : { success: false, error: r.message, reason: r.reason,
                   ...(r.writeAttempted ? { outcome_unknown: true, note: OUTCOME_UNKNOWN_NOTE } : { not_applied: true }),
@@ -17656,6 +17679,74 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(isWrite
               ? { success: false, outcome_unknown: true, error: "The menu change did not report back. Read the menu with read_tenant_portal_menu before anything else, and do not retry automatically.", note: OUTCOME_UNKNOWN_NOTE }
               : { success: false, error: "The portal menu could not be read just now.", not_applied: true }) });
+          }
+        } else if (tc.function.name === "read_client_portal_access" || tc.function.name === "client_portal_access_set") {
+          // LAST IN THE CHAIN, after every reviewed incumbent branch, so no incumbent dispatch gains a
+          // dominating condition (c0b-incumbent-resource-binding pins those).
+          // E09 Slice 7 — one client's portal access, through the ONE executor (_shared/client-portal-access.ts)
+          // over the ONE writer public.set_client_portal_access. client_portal_access_set is `high` in
+          // action-risk.ts, so it reaches here only once the confirm gate has cleared the rendered approval
+          // card; both are `workspace-admin` in their Spine declarations, so a member was refused first.
+          //
+          // THE CALLER'S TENANT AND IDENTITY, NOT THE MODEL'S: the tenant is the server-resolved persona
+          // tenant re-checked against current_user_tenant_id() on the caller's session, and the actor is the
+          // verified user. The executor reads only contact_id/action/reason; a forged tenant_id or a note is
+          // never sent. The read handed back to the model omits the owner's internal note.
+          const accessTenant = callerTier === "tenant" ? personaCtx?.tenant_id ?? null : null;
+          const accessCaller = { rpc: (name: string, rpcArgs: Record<string, unknown>) => supabaseClient.rpc(name, rpcArgs) };
+          try {
+            let accessArgs: unknown = null;
+            try { accessArgs = JSON.parse(tc.function.arguments || "{}"); } catch { accessArgs = null; }
+            const scope = await supabaseClient.rpc("current_user_tenant_id");
+            const tenantNow = !accessTenant || scope.error || scope.data !== accessTenant ? null : accessTenant;
+            if (tc.function.name === "read_client_portal_access") {
+              const r = await readPortalAccess({ caller: accessCaller, expectedTenantId: tenantNow, args: accessArgs });
+              await recordCapabilityRun(supabase, { tenantId: accessTenant, actorId: user.id, capabilityKey: tc.function.name,
+                outcome: r.success === true ? "capability_succeeded" : "capability_refused" });
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(r.success === true
+                ? { success: true, contact_id: r.view.contactId, state: r.view.state, joined: r.view.joined, since: r.view.since,
+                    changed_by_name: r.view.changedByName, reason: r.view.reason, invitation: r.view.invitation, can: r.view.can,
+                    restore_blocked_by: r.view.restoreBlockedBy, access_version: accessVersionToken(r.view.since),
+                    note: "state: open = they can use the portal (if joined); paused = withheld for now, restore brings it back; ended = closed, only a new invitation brings them back. The reason is internal to the team. Any internal note the owner wrote is not shown here. To change it, pass access_version to client_portal_access_set unchanged." }
+                : { success: false, error: r.message, reason: r.reason, not_applied: true }) });
+            } else {
+              const r = await setPortalAccess({ caller: accessCaller, expectedTenantId: tenantNow, actorId: user.id, args: accessArgs });
+              await recordCapabilityRun(supabase, {
+                tenantId: accessTenant,
+                actorId: user.id,
+                capabilityKey: tc.function.name,
+                // EXHAUSTIVE over PortalAccessFailure, so a failure mode added later is a compile error here.
+                outcome: r.success === true ? "capability_succeeded" : ((reason: PortalAccessFailure): "capability_refused" | "capability_outcome_unknown" => {
+                  switch (reason) {
+                    case "outcome_unknown": return "capability_outcome_unknown";
+                    case "no_workspace": case "bad_request": case "not_found": case "not_joined": case "restore_unavailable":
+                    case "changed": case "not_for_tier": case "forbidden": case "unavailable": case "refused":
+                      return "capability_refused";
+                    default: { const _never: never = reason; return "capability_refused"; }
+                  }
+                })(r.reason),
+              });
+              if (r.success === false && r.reason === "outcome_unknown") requestExecutionState.needsReview = true;
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(r.success === true
+                ? { success: true, replayed: r.replayed, action: r.action, state: r.view.state, joined: r.view.joined, since: r.view.since,
+                    access_version: accessVersionToken(r.view.since),
+                    record_locator: { table: "clients", id: r.contactId }, verified_readback: true,
+                    note: r.replayed ? "Their access was already like that; nothing was changed."
+                      : r.action === "pause" ? "Verified: their portal access is paused. They will see that next time they open it. They were not emailed."
+                      : r.action === "restore" ? "Verified: their portal access is restored. They were not emailed."
+                      : "Verified: their portal access has ended. Only a new invitation brings them back. They were not emailed." }
+                : { success: false, error: r.message, reason: r.reason, ...(r.detail ? { detail: r.detail } : {}),
+                    ...(r.writeAttempted ? { outcome_unknown: true, note: OUTCOME_UNKNOWN_NOTE } : { not_applied: true }) }) });
+            }
+          } catch (e) {
+            console.error("[portal-access] dispatch threw", { reason: e instanceof Error ? e.message : "unknown" });
+            const isWrite = tc.function.name === "client_portal_access_set";
+            await recordCapabilityRun(supabase, { tenantId: accessTenant, actorId: user.id, capabilityKey: tc.function.name,
+              outcome: isWrite ? "capability_outcome_unknown" : "capability_refused" });
+            if (isWrite) requestExecutionState.needsReview = true;
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(isWrite
+              ? { success: false, outcome_unknown: true, error: "The access change did not report back. Read it with read_client_portal_access before anything else, and do not retry automatically.", note: OUTCOME_UNKNOWN_NOTE }
+              : { success: false, error: "The client's portal access could not be read just now.", not_applied: true }) });
           }
         } else {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: `Unknown tool: ${tc.function.name}` }) });
@@ -17802,6 +17893,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         plan_update_item: "plan_items", plan_remove_item: "plan_items", plan_item_set_client_share: "plan_items",
         // E09 Slice M: the menu lives in tenants.features.portal_config; the record is the tenant itself.
         portal_menu_update: "tenants",
+        // E09 Slice 7: the access state lives on the contact it qualifies.
+        client_portal_access_set: "clients",
         author_event_kind: "paige_event_kinds",
         automation_draft: "paige_automations",
         marketplace_install: "marketplace", marketplace_uninstall: "marketplace",
@@ -17938,6 +18031,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         if (tool === "save_to_knowledge_base") return typeof out?.knowledge_doc_id === "string" && UUID.test(out.knowledge_doc_id) ? out.knowledge_doc_id : null;
         // The menu's record is the server-resolved tenant, proven by readback; never an argument.
         if (tool === "portal_menu_update") return out?.verified_readback === true && out?.record_locator?.table === "tenants" && typeof out.record_locator.id === "string" && UUID.test(out.record_locator.id) ? out.record_locator.id : null;
+        // The contact whose access changed, proven by readback; never an unverified argument.
+        if (tool === "client_portal_access_set") return out?.verified_readback === true && out?.record_locator?.table === "clients" && typeof out.record_locator.id === "string" && UUID.test(out.record_locator.id) ? out.record_locator.id : null;
         // A Planning item's parent plan/contact/action is not the record changed.
         if (tool && ["plan_create", "plan_add_milestone", "plan_assign_task", "plan_set_reminder", "plan_update_item", "plan_remove_item", "plan_item_set_client_share"].includes(tool)) {
           const locator = out?.record_locator;

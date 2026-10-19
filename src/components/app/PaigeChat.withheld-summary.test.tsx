@@ -32,7 +32,7 @@ vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => false }));
 vi.mock("@/lib/playbook", () => ({
   usePlaybook: () => ({ persona: { greeting: "Harness greeting", name: "Paige", role: "AI COO" }, quickActions: [] }),
 }));
-vi.mock("@/hooks/useClientPortalFrame", () => ({useClientPortalFrame: () => ({phase:"not-client",frame:null,checking:false,reload:vi.fn()})}));
+vi.mock("@/hooks/useClientPortalFrame", () => {const frame=() => ({phase:"not-client",frame:null,checking:false,reload:vi.fn()}); return {useClientPortalFrame: frame, useSharedClientPortalFrame: frame};});
 vi.mock("@/hooks/useClientPortalBrand", () => ({ useClientPortalBrandState: () => ({ brand: null, loading: false }) }));
 vi.mock("@/hooks/useClientChatContext", () => ({
   useClientChatContext: () => ({ contextBlock: "", isLoading: false, hasCreditData: false }),

@@ -30,6 +30,7 @@ import { readableTextOn } from "@/lib/brand/contrast";
 import { resolveLandingRoute } from "@/lib/auth/resolveLandingRoute";
 import { cachePortalSlug } from "@/lib/auth/signOut";
 import { tenantHostPortalEntryUrl, tenantSlugFromHostname, trustedAppOrigin } from "@/lib/hostRouting";
+import { fetchWithheldCustomerAccess } from "@/lib/client-portal-access";
 import "./ConsumerInvitation.css";
 
 interface PortalBrand {
@@ -75,7 +76,11 @@ export default function PortalGateway() {
     if (target === "/pricing" || target === "/onboarding") {
       throw new Error("No active customer access was found. Ask your provider for a current invitation.");
     }
-    if (target === "/app" || target.startsWith("/onboard/")) {
+    // E09 Slice 7: a business paused or ended this person's access. /app shows that business's own
+    // page and grants nothing, so the brand check below (which needs an OPEN relationship) is not the
+    // question to ask. An unknown answer falls through to it, unchanged.
+    const withheld = target === "/app" ? await boundedGateway(fetchWithheldCustomerAccess()).catch(() => null) : null;
+    if (!withheld && (target === "/app" || target.startsWith("/onboard/"))) {
       // The public slug is presentation, never membership. The native reader
       // resolves only the actual caller's current active customer relationship.
       const { data, error } = await boundedGateway(supabase.rpc("get_client_portal_brand"));

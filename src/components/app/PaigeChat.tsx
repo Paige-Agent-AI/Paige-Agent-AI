@@ -38,7 +38,7 @@ import { readableTextOn } from "@/lib/brand/contrast";
 import { PaigeReasoningStrip, upsertStep, type PaigeStep, type PaigeStepFrame } from "@/components/dashboard/PaigeStepTrace";
 import { PaigeThinkingIndicator } from "@/components/paige/chat/PaigeThinkingIndicator";
 import { createAnchoredTranscriptScroll } from "@/components/chat/anchoredTranscriptScroll";
-import {useClientPortalFrame} from "@/hooks/useClientPortalFrame";
+import {useSharedClientPortalFrame} from "@/hooks/useClientPortalFrame";
 import {type ClientPortalFrame} from "@/lib/client-portal-frame";
 import {readCustomerChat} from "@/lib/customer-chat";
 import {customerAgentName} from "../../../supabase/functions/_shared/client-portal-identity";
@@ -804,7 +804,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
 }
 
 export function PaigeChat(props: PaigeChatProps) {
-  const customer=useClientPortalFrame(props.user.id,!props.clientId);
+  const customer=useSharedClientPortalFrame(props.user.id,!props.clientId);
   const frame=customer.frame;
   const assistantEnabled=frame?.config.assistant?.enabled!==false;
   const available=customer.phase==="ready"&&!customer.checking&&assistantEnabled;
@@ -817,9 +817,10 @@ export function PaigeChat(props: PaigeChatProps) {
     </div>}
     {!available&&<div role="status" className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4 text-sm">
       {customer.checking?"Checking your conversation…":!assistantEnabled
-        ?"This business has turned off its AI assistant. You can still use the rest of your portal.":customer.phase==="unavailable"
-        ?"Your customer access is no longer available.":"Your customer session couldn’t be checked."}
-      {!customer.checking&&assistantEnabled&&<Button variant="outline" onClick={()=>void customer.reload()}>Try again</Button>}
+        ?"This business has turned off its AI assistant. You can still use the rest of your portal.":(customer.phase==="paused"||customer.phase==="ended")&&customer.access
+        ?(customer.phase==="paused"?`Your access to ${customer.access.businessName} is paused.`:`Your access to ${customer.access.businessName} has ended.`):customer.phase==="unavailable"
+        ?"Your customer access is no longer available.":"We couldn’t check your access just now."}
+      {!customer.checking&&assistantEnabled&&customer.phase!=="paused"&&customer.phase!=="ended"&&<Button variant="outline" onClick={()=>void customer.reload()}>Try again</Button>}
     </div>}
   </div>;
 }

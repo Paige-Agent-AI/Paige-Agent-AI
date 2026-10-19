@@ -90,6 +90,7 @@ import {
   getSoloChannelTruth,
   type AccountEpochToken,
 } from "./conversations/solo/soloConversationModel";
+import { missingPortalAccessColumns, withoutPortalAccessColumns } from "@/lib/client-portal-access";
 
 // ── Connector (channel_connectors row — kept local, not in shared) ─────────────────
 interface Connector {
@@ -536,13 +537,18 @@ export default function ClientsConversations() {
     const nowIso = new Date().toISOString();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = supabase as any;
-    let q = sb.from("threads").select(THREAD_COLS)
-      .order("last_message_at", { ascending: false, nullsFirst: false }).limit(500);
-    if (baseFilter === "active")        q = q.is("archived_at", null).or(`snoozed_until.is.null,snoozed_until.lte.${nowIso}`);
-    else if (baseFilter === "snoozed")  q = q.is("archived_at", null).gt("snoozed_until", nowIso);
-    else if (baseFilter === "archived") q = q.not("archived_at", "is", null);
-    // "all" → no state predicate
-    const { data, error } = await q;
+    const pull = (cols: string) => {
+      let q = sb.from("threads").select(cols)
+        .order("last_message_at", { ascending: false, nullsFirst: false }).limit(500);
+      if (baseFilter === "active")        q = q.is("archived_at", null).or(`snoozed_until.is.null,snoozed_until.lte.${nowIso}`);
+      else if (baseFilter === "snoozed")  q = q.is("archived_at", null).gt("snoozed_until", nowIso);
+      else if (baseFilter === "archived") q = q.not("archived_at", "is", null);
+      // "all" → no state predicate
+      return q;
+    };
+    let { data, error } = await pull(THREAD_COLS);
+    // Web ahead of migration 20271111010000 (E09 Slice 7): the inbox still loads, every client reads open.
+    if (missingPortalAccessColumns(error)) ({ data, error } = await pull(withoutPortalAccessColumns(THREAD_COLS)));
     if (!accountEpochRef.current.accept(epoch)) return;
     if (error) {
       toast.error("Couldn't load the inbox.");
@@ -869,9 +875,13 @@ export default function ClientsConversations() {
   // linked login) can receive a portal post — comms_portal_reply answers PORTAL_NOT_CONNECTED for
   // anyone else — so Portal is never the default for an unlinked client, and if the owner picks it
   // anyway the composer explains why it can't post and holds Send. The server stays authoritative.
-  const portalLinked = !!selectedThread?.clients?.linked_user_id;
+  // E09 Slice 7: "joined" now means linked AND open. A paused client keeps their link, but a portal
+  // post would reach them (and notify them) while their access is withheld, so it is held here and
+  // refused by the server (PORTAL_ACCESS_PAUSED).
+  const portalPaused = !!selectedThread?.clients?.linked_user_id && selectedThread?.clients?.portal_access_state === "paused";
+  const portalLinked = !!selectedThread?.clients?.linked_user_id && !portalPaused;
   const portalOffered = !!selected?.contactId
-    && (portalLinked || (selected?.messages.some(isPortalMessage) ?? false));
+    && (!!selectedThread?.clients?.linked_user_id || (selected?.messages.some(isPortalMessage) ?? false));
   const portalMode = composeChannel === "portal";
   const portalUnreachable = portalMode && !portalLinked;
   // Which thread the composer was last set up for, and the channel it is on now — read by the
@@ -1275,7 +1285,7 @@ export default function ClientsConversations() {
     const contactId = selected.contactId;
     if (!contactId) { toast.error("Associate this participant with a client before sending."); return; }
     // Nothing to post to: the client hasn't joined the portal. The composer already says so inline.
-    if (!portalLinked) { toast.error(portalReplyErrorCopy("PORTAL_NOT_CONNECTED", selected.name)); return; }
+    if (!portalLinked) { toast.error(portalReplyErrorCopy(portalPaused ? "PORTAL_ACCESS_PAUSED" : "PORTAL_NOT_CONNECTED", selected.name)); return; }
     const text = body.trim();
     const bodyError = portalBodyError(text);
     if (bodyError) { toast.error(bodyError); return; }
@@ -1952,7 +1962,7 @@ export default function ClientsConversations() {
                       className="flex items-start gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs text-foreground"
                     >
                       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[hsl(var(--warning))]" aria-hidden />
-                      <span>{portalReplyErrorCopy("PORTAL_NOT_CONNECTED", selected.name)}</span>
+                      <span>{portalReplyErrorCopy(portalPaused ? "PORTAL_ACCESS_PAUSED" : "PORTAL_NOT_CONNECTED", selected.name)}</span>
                     </p>
                   </div>
                 )}

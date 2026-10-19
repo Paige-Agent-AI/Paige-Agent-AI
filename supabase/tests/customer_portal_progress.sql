@@ -10,7 +10,7 @@
 -- longer exposes its proposer or raw payload to API roles while its customer and INVOKER readers
 -- keep working.
 BEGIN;
-SELECT plan(110);
+SELECT plan(112);
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0981000-0000-4000-8000-000000000001','authenticated','authenticated','progress-owner-a@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
  ('e0981000-0000-4000-8000-000000000002','authenticated','authenticated','progress-owner-b@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -174,15 +174,17 @@ SELECT is(pg_temp.a_share('e0985000-0000-4000-8000-000000000001',true,NULL)->>'e
 -- 7. Share, replay, unshare.
 CREATE TEMP TABLE first_share AS SELECT pg_temp.a_share('e0985000-0000-4000-8000-000000000001',true) AS r;
 SELECT is((SELECT r - 'shared_at' - 'updated_at' FROM first_share),
- '{"ok":true,"replayed":false,"item_id":"e0985000-0000-4000-8000-000000000001","shared":true,"portal_connected":true}'::jsonb,'the owner shares a task with a connected client');
+ '{"ok":true,"replayed":false,"item_id":"e0985000-0000-4000-8000-000000000001","shared":true,"portal_connected":true,"portal_access":"open"}'::jsonb,'the owner shares a task with a connected client');
 SELECT ok((SELECT client_shared_at IS NOT NULL AND client_shared_by='e0981000-0000-4000-8000-000000000001' AND updated_at=(SELECT (r->>'updated_at')::timestamptz FROM first_share)
   FROM public.plan_items WHERE id='e0985000-0000-4000-8000-000000000001'),'the row records who shared it and the new version');
 CREATE TEMP TABLE after_share AS SELECT to_jsonb(p) AS row FROM public.plan_items p WHERE id='e0985000-0000-4000-8000-000000000001';
 SELECT is(pg_temp.a_share('e0985000-0000-4000-8000-000000000001',true)->>'replayed','true','repeating the share (with the old version) replays');
 SELECT is((SELECT to_jsonb(p) FROM public.plan_items p WHERE id='e0985000-0000-4000-8000-000000000001'),(SELECT row FROM after_share),'a replay writes nothing, updated_at unchanged');
-SELECT is(pg_temp.a_share('e0985000-0000-4000-8000-000000000010',true)->>'portal_connected','false','sharing with a client who has not joined the portal says so');
+CREATE TEMP TABLE unjoined_share AS SELECT pg_temp.a_share('e0985000-0000-4000-8000-000000000010',true) AS r;
+SELECT is((SELECT r->>'portal_connected' FROM unjoined_share),'false','sharing with a client who has not joined the portal says so');
+SELECT is((SELECT r->>'portal_access' FROM unjoined_share),'not_joined','and names why: not joined (E09 Slice 7)');
 SELECT is(pg_temp.a_share('e0985000-0000-4000-8000-000000000005',false) - 'updated_at',
- '{"ok":true,"replayed":false,"item_id":"e0985000-0000-4000-8000-000000000005","shared":false,"shared_at":null,"portal_connected":true}'::jsonb,'a cancelled item can be unshared');
+ '{"ok":true,"replayed":false,"item_id":"e0985000-0000-4000-8000-000000000005","shared":false,"shared_at":null,"portal_connected":true,"portal_access":"open"}'::jsonb,'a cancelled item can be unshared');
 SELECT ok((SELECT client_shared_at IS NULL AND client_shared_by IS NULL FROM public.plan_items WHERE id='e0985000-0000-4000-8000-000000000005'),'unsharing clears both marker columns');
 SELECT is(pg_temp.a_share('e0985000-0000-4000-8000-000000000005',false)->>'replayed','true','repeating the unshare replays');
 
@@ -326,6 +328,15 @@ SELECT is(pg_temp.jordan($q$SELECT to_jsonb(count(*)) FROM (SELECT a.id,a.tenant
   WHERE a.tenant_id='e0982000-0000-4000-8000-000000000001' AND a.contact_id='e0983000-0000-4000-8000-000000000001') q$q$),'1'::jsonb,'the customer action-items read still returns the row');
 SELECT is(pg_temp.jordan($q$SELECT to_jsonb(initiated_by_admin_id) FROM public.paige_customer_actions$q$)->>'sqlstate','42501','the customer cannot select the proposer');
 SELECT is(pg_temp.jordan($q$SELECT public.list_pending_customer_actions('e0983000-0000-4000-8000-000000000001')$q$)#>>'{actions,0,title}','Upload your logo','the INVOKER pending-actions reader still works');
+
+-- 16. E09 Slice 7: a paused client keeps the login link, so the share answer must not call them connected.
+DO $$ BEGIN PERFORM set_config('paige.portal_access_write','1',true);
+  UPDATE public.clients SET portal_access_state='paused',portal_access_reason='other',portal_access_changed_at=clock_timestamp()
+   WHERE id='e0983000-0000-4000-8000-000000000002';
+  PERFORM set_config('paige.portal_access_write','',true); END $$;
+SELECT is((SELECT (r->>'portal_connected')||' '||(r->>'portal_access') FROM (SELECT pg_temp.a_share('e0985000-0000-4000-8000-000000000001',false,
+  (SELECT updated_at FROM public.plan_items WHERE id='e0985000-0000-4000-8000-000000000001')) r) x),'false paused',
+  'a share answer for a paused client says paused, not connected');
 
 SELECT * FROM finish();
 ROLLBACK;

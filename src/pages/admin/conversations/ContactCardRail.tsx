@@ -784,6 +784,7 @@ export function ContactCardRail({
                     contactId={contact.id}
                     email={contact.email}
                     linkedUserId={contact.linked_user_id ?? null}
+                    name={contactNameFromClient(contact) || null}
                   />
                 </FoldSection>
               )}

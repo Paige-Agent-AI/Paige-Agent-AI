@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { fetchWithheldCustomerAccess } from "@/lib/client-portal-access";
 import { workspaceRootForTenant } from "@/lib/auth/workspaceEntry";
 import { readClientPortalSelfProfile } from "@/lib/client-portal-self-profile";
 
@@ -183,6 +184,15 @@ type LandingTenant = {
  */
 export const LANDING_ROUTE_RETRY = "/auth?mode=login&route=retry";
 
+/** True only when the server says this person's access was paused or ended. An unknown answer is false: it never invents a customer route. */
+async function customerAccessWithheld(): Promise<boolean> {
+  try {
+    return (await fetchWithheldCustomerAccess()) !== null;
+  } catch {
+    return false;
+  }
+}
+
 export async function resolveLandingRoute(userId: string, options: { customerPortal?: boolean } = {}): Promise<string> {
   try {
     const [rolesRes, clientRes, ownedTenantRes, memberTenantRes, agencyTeamRes] = await Promise.all([
@@ -249,6 +259,9 @@ export async function resolveLandingRoute(userId: string, options: { customerPor
         if (!profile) return LANDING_ROUTE_RETRY;
         return "/app";
       }
+      // E09 Slice 7: no open relationship, but a business paused or ended this person's access.
+      // /app shows that business's own page; it never grants anything.
+      if (await customerAccessWithheld()) return "/app";
     }
     // Tenant/agency operators may prefer to land on their /agency side (#191);
     // a non-agency operator, or one who prefers 'last_account', falls to /admin.
@@ -332,6 +345,11 @@ export async function resolveLandingRoute(userId: string, options: { customerPor
     } catch {
       try { localStorage.removeItem("paige_pending_invite"); } catch { /* ignore */ }
     }
+
+    // E09 Slice 7: a customer whose access was paused or ended has no relationship that resolves,
+    // so everything above came back empty. They are a business's client, not a prospective
+    // subscriber: /app tells them where they stand, instead of the platform's pricing page.
+    if (await customerAccessWithheld()) return "/app";
 
     // Signed in, but no tenant yet ⇒ no active platform subscription (a tenant is
     // only provisioned after payment). Pay-before-workspace: send them to /pricing to

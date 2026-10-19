@@ -47,7 +47,8 @@ export function PortalInvitationManager({tenantId,person,latest,onReadback,actio
   {!person.email&&<p>Add an email address on the client record before inviting them.</p>}
   {person.doNotContact&&<p>This client’s contact preferences prevent an invitation email.</p>}
   {person.status!=='active'&&<p>Only active client records can receive invitations. Review this client’s status in People.</p>}
-  {person.linkedUserId&&<p>An account is linked to this contact. That does not confirm a portal visit.</p>}
+  {person.linkedUserId&&person.portalAccess==='paused'&&<p>Their portal access is paused. Restoring it gives them the portal back; no new invitation is needed.</p>}
+  {person.linkedUserId&&person.portalAccess!=='paused'&&<p>An account is linked to this contact. That does not confirm a portal visit.</p>}
   {latest&&<p>Latest invitation: {latest.last_used_at?'accepted':latest.revoked_at?'canceled':pending?'pending':'expired'}. Expires {new Date(latest.expires_at).toLocaleDateString()}.</p>}
   <PortalInvitationCommand tenantId={tenantId} contactId={person.id} eligible={eligible} onReadback={onReadback} actionLock={actionLock}/>
   {pending&&<button className="opd-button" type="button" disabled={actionBusy||!ready} onClick={()=>void cancel()}>Cancel pending invitation</button>}

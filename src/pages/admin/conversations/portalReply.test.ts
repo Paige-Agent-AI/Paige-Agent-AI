@@ -142,3 +142,15 @@ describe("plain error copy", () => {
     expect(portalReplyErrorCopy("UNCONFIRMED", "Maya")).toContain("won't post twice");
   });
 });
+
+// E09 Slice 7 (review HIGH-2): a paused client keeps their link, so a portal post would land and a
+// notification would reach them. The server refuses with PORTAL_ACCESS_PAUSED; the owner is told why.
+describe("portal reply to a paused client", () => {
+  it("maps the server refusal and says how to fix it", async () => {
+    rpc.mockResolvedValue({ data: { ok: false, error: "PORTAL_ACCESS_PAUSED" }, error: null });
+    const r = await sendPortalReply({ tenantId: "t", contactId: "c", body: "Hello", requestId: "r" });
+    expect(r).toEqual({ ok: false, code: "PORTAL_ACCESS_PAUSED" });
+    expect(portalReplyErrorCopy("PORTAL_ACCESS_PAUSED", "Jordan Test")).toBe("Jordan Test’s portal access is paused. Restore their portal access to message them here, or reply by email or SMS.");
+    expect(portalReplyErrorCopy("PORTAL_ACCESS_PAUSED", "Jordan Test")).not.toMatch(/client record/);
+  });
+});

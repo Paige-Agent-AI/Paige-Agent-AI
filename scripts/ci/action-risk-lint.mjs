@@ -612,6 +612,14 @@ if (chatSrc.includes('...PORTAL_MENU_TOOLS')) {
   if (menuTools.length !== 2) throw new Error('Portal menu catalog could not be parsed');
   importedTools.push(...menuTools);
 }
+// E09 Slice 7: the client portal access tools enter Chat through their domain catalog, the same way.
+if (chatSrc.includes('...PORTAL_ACCESS_TOOLS')) {
+  if (!/import\s*\{[^}]*PORTAL_ACCESS_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/paige-spine\/domains\/client_portal\.ts['"]/.test(chatSrc)) throw new Error('Unresolved portal access catalog import');
+  const source = fs.readFileSync('supabase/functions/_shared/paige-spine/domains/client_portal.ts', 'utf8');
+  const accessTools = [...source.matchAll(/\bname:\s*'(read_client_portal_access|client_portal_access_set)'/g)].map(m => m[1]);
+  if (accessTools.length !== 2) throw new Error('Portal access catalog could not be parsed');
+  importedTools.push(...accessTools);
+}
 if (chatSrc.includes('...GROWTH_FORM_TOOLS')) {
   if (!/import\s*\{[^}]*GROWTH_FORM_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/paige-spine\/domains\/growth_form\.ts['"]/.test(chatSrc)) throw new Error('Unresolved Growth Form catalog import');
   const source = fs.readFileSync('supabase/functions/_shared/paige-spine/domains/growth_form.ts', 'utf8');

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Plus, RefreshCw } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,7 +34,11 @@ import "./client-shared-work.css";
  * same status shows the item in the asked state (§70.1) — an acknowledgement alone is not success.
  * Nothing here is an act of approval, so no gold: the switch is the record's indigo.
  */
-type Props = { contactId: string; clientName: string; portalConnected: boolean };
+/**
+ * `portalPaused` (E09 Slice 7): the business paused this client's access, so nothing shared shows right now.
+ * `portalEnded`: access ended — the client HAD joined, so "hasn't joined yet" would be untrue.
+ */
+type Props = { contactId: string; clientName: string; portalConnected: boolean; portalPaused?: boolean; portalEnded?: boolean };
 type Note = { tone: "ok" | "warn" | "bad"; text: string };
 type Filter = "all" | "shared" | "private";
 
@@ -102,12 +106,14 @@ function refusalNote(code: unknown, name: string): { text: string; reread: boole
   }
 }
 
-export function ClientSharedWork({ contactId, clientName, portalConnected }: Props) {
+export function ClientSharedWork({ contactId, clientName, portalConnected, portalPaused = false, portalEnded = false }: Props) {
   const read = useClientEngagementStatus(contactId);
   const { activeTenantId, activeUserId } = useTenantContext();
   const [pending, setPending] = useState<Record<string, boolean>>({});
   const [notes, setNotes] = useState<Record<string, Note>>({});
   const [connected, setConnected] = useState(portalConnected);
+  // The access card above re-reads after a pause, restore or end; follow it rather than the mount value.
+  useEffect(() => { setConnected(portalConnected); }, [portalConnected]);
   const [creating, setCreating] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
   const first = clientFirstName(clientName);
@@ -165,8 +171,9 @@ export function ClientSharedWork({ contactId, clientName, portalConnected }: Pro
         note(item.id, { tone: "warn", text: reread ? refusal.text : `${refusal.text} Use Refresh to see what’s current.` });
         return;
       }
-      const joined = typeof data.portal_connected === "boolean" ? data.portal_connected : connected;
-      if (typeof data.portal_connected === "boolean") setConnected(data.portal_connected);
+      // The share writer reports the LINK; a paused link still shows nothing to the client.
+      const joined = !portalPaused && !portalEnded && (typeof data.portal_connected === "boolean" ? data.portal_connected : connected);
+      if (typeof data.portal_connected === "boolean" && !portalPaused && !portalEnded) setConnected(data.portal_connected);
       // Success is what a fresh read says, not what the writer acknowledged (§70.1).
       let fresh: ClientEngagementStatus;
       try { fresh = await read.reload(); } catch {
@@ -176,7 +183,10 @@ export function ClientSharedWork({ contactId, clientName, portalConnected }: Pro
       const now = fresh.work.items.find(row => row.id === item.id);
       if (now?.shared === next) {
         note(item.id, { tone: "ok", text: !next ? `No longer shared with ${clientName}.`
-          : joined ? `Shared. ${clientName} can see this in their portal.` : `Shared. ${first} will see this once they join your portal.` });
+          : joined ? `Shared. ${clientName} can see this in their portal.`
+            : portalPaused ? `Shared. ${first} will see this if you restore their access.`
+              : portalEnded ? `Shared. ${first} will see this if you invite them back and they accept.`
+                : `Shared. ${first} will see this once they join your portal.` });
       } else {
         note(item.id, { tone: "bad", text: "The change couldn’t be confirmed. Use Refresh before changing it again." });
       }
@@ -215,7 +225,11 @@ export function ClientSharedWork({ contactId, clientName, portalConnected }: Pro
         </div>
       </div>
 
-      {!connected && read.phase !== "refused" && read.phase !== "no_workspace" && (
+      {portalPaused && read.phase !== "refused" && read.phase !== "no_workspace" ? (
+        <p className="trc-shared-connect" role="note">Paused — {first} can’t see this right now. It shows again if you restore their access.</p>
+      ) : portalEnded && read.phase !== "refused" && read.phase !== "no_workspace" ? (
+        <p className="trc-shared-connect" role="note">{first}’s portal access has ended, so they can’t see this. It shows again if you invite them back and they accept.</p>
+      ) : !connected && read.phase !== "refused" && read.phase !== "no_workspace" && (
         <p className="trc-shared-connect" role="note">{clientName} hasn’t joined your portal yet; shared items appear when they do.</p>
       )}
 

@@ -18,7 +18,7 @@ const snapshot = (subject = actor, business = tenant) => ({actor_id: subject,
     entity_name: null, street_address: null, city: null, state: null, zip_code: null, onboarding_stage: "invited",
     is_signup_contact: false, paige_shared_context_consent: false, paige_shared_context_consent_updated_at: null,
     updated_at: null, email: "customer@tests.invalid", phone: null, contact_methods: []},
-  brand: {tenant_id: business, tenant_name: "Test practice", tenant_slug: "test-practice", logo_url: null, primary_color: "#304E42", support_email: null},
+  brand: {tenant_id: business, tenant_name: "Test business", tenant_slug: "test-business", logo_url: null, primary_color: "#304E42", support_email: null},
   config: {welcome: {headline: "Your next step"}, modules: [{key: "documents", visible: true}]},
 });
 let state: ReturnType<typeof useClientPortalFrame>, root: Root, host: HTMLDivElement, mounted: boolean;
@@ -116,4 +116,60 @@ it("does not read native customer state for an explicit impersonation/legacy bra
 it("bounds a hung admission read and leaves it unverified", async () => {
   vi.useFakeTimers(); f.rpc.mockReturnValue(new Promise(() => {})); await mount();
   await act(async () => vi.advanceTimersByTimeAsync(20_001)); expect(state.phase).toBe("error"); expect(state.frame).toBeNull();
+});
+
+// E09 Slice 7 — a paused or ended relationship is told so, in EVERY branch that would otherwise
+// refuse or fall back to the platform shell (review HIGH-1: the mid-session pause is the case the
+// owner's confirm copy promises, "they'll see that access is paused the next time they open it").
+const withheld = (state: "paused" | "ended") => ({state, business: {name: "Test business", logo_url: null}, since: "2026-10-18T12:00:00Z"});
+const routed = (frame: unknown, access: unknown) => (name: string) =>
+  Promise.resolve(name === "client_portal_access_state" ? access : name === "client_portal_frame" ? frame : {data: null, error: null});
+it.each(["paused", "ended"] as const)("names a %s relationship instead of the platform shell on first open", async kind => {
+  f.rpc.mockImplementation(routed({data: null, error: null}, {data: withheld(kind), error: null})); await mount();
+  expect(state.phase).toBe(kind); expect(state.access?.businessName).toBe("Test business"); expect(state.frame).toBeNull();
+});
+it("a pause that lands while the portal is open shows paused on the next read, not 'unavailable'", async () => {
+  await mount(); expect(state.phase).toBe("ready");
+  f.rpc.mockImplementation(routed({data: null, error: null}, {data: withheld("paused"), error: null}));
+  await act(async () => state.reload()); expect(state.phase).toBe("paused"); expect(state.frame).toBeNull();
+});
+it("explicitly requested customer access that has ended reads ended, not 'unavailable'", async () => {
+  f.rpc.mockImplementation(routed({data: null, error: null}, {data: withheld("ended"), error: null})); await mount({required: true});
+  expect(state.phase).toBe("ended");
+});
+it("a 42501 refusal is checked for a withheld relationship before it becomes 'unavailable'", async () => {
+  f.rpc.mockImplementation(routed({data: null, error: {code: "42501"}}, {data: withheld("paused"), error: null})); await mount();
+  expect(state.phase).toBe("paused");
+});
+it("more than one business keeps the existing refusal (Slice 8 owns the choice)", async () => {
+  f.rpc.mockImplementation(routed({data: null, error: {code: "42501"}}, {data: {state: "multiple"}, error: null})); await mount();
+  expect(state.phase).toBe("unavailable");
+});
+it("nothing recorded keeps the incumbent non-customer branch", async () => {
+  f.rpc.mockImplementation(routed({data: null, error: null}, {data: {state: "none"}, error: null})); await mount();
+  expect(state.phase).toBe("not-client"); expect(state.access).toBeNull();
+});
+it("before the access reader exists (PGRST202) the incumbent branch is unchanged", async () => {
+  f.rpc.mockImplementation(routed({data: null, error: null}, {data: null, error: {code: "PGRST202"}})); await mount();
+  expect(state.phase).toBe("not-client");
+});
+it("an unanswerable access check never falls back to the platform shell", async () => {
+  f.rpc.mockImplementation(routed({data: null, error: null}, {data: null, error: {code: "500"}})); await mount();
+  expect(state.phase).toBe("error"); expect(state.frame).toBeNull();
+});
+it("the customer read never carries a reason or note into the frame state", async () => {
+  f.rpc.mockImplementation(routed({data: null, error: null}, {data: {...withheld("paused"), reason: "payment", note: "private"}, error: null})); await mount();
+  expect(JSON.stringify(state.access)).not.toMatch(/payment|private/);
+});
+// Review 7: a staff member or non-customer on /app must not be told their "customer session couldn't
+// be checked" because one access read dropped. The access read is retried once on its own deadline.
+it("a dropped access read is asked once more before it becomes 'error'", async () => {
+  let accessCalls = 0;
+  f.rpc.mockImplementation(async (name: string) => {
+    if (name !== "client_portal_access_state") return {data: null, error: null};
+    accessCalls += 1;
+    return accessCalls === 1 ? {data: null, error: {code: "500"}} : {data: {state: "none"}, error: null};
+  });
+  await mount();
+  expect(state.phase).toBe("not-client"); expect(accessCalls).toBe(2);
 });

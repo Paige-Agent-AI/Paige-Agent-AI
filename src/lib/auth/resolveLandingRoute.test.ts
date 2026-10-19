@@ -271,3 +271,35 @@ describe("resolveLandingRoute — agency landing (§65)", () => {
     await expect(resolveLandingRoute("u-transport-error")).resolves.toBe("/auth?mode=login&route=retry");
   });
 });
+
+// E09 Slice 7 — a customer whose access was paused or ended has no open relationship, so every
+// resolver read is empty and they used to fall all the way through to `/pricing` (the platform's
+// enrolment page). They land on /app, where the shell shows the business's own paused/ended page.
+describe("resolveLandingRoute — withheld customer access (E09 Slice 7)", () => {
+  const actor = "e0917000-0000-0000-0000-000000000001";
+  const withheld = (state: "paused" | "ended" | "none" | "open") => rpc.mockImplementation(async (name: string) =>
+    name === "client_portal_access_state"
+      ? { data: state === "paused" || state === "ended" ? { state, business: { name: "Test Studio", logo_url: null }, since: null } : { state }, error: null }
+      : { data: null, error: null });
+  it.each(["paused", "ended"] as const)("a client-only person whose access is %s lands on /app, never /pricing", async (state) => {
+    mockTables({ roles: ["client"], agencyVisible: false });
+    withheld(state);
+    expect(await resolveLandingRoute(actor)).toBe("/app");
+    expect(await resolveLandingRoute(actor, { customerPortal: true })).toBe("/app");
+  });
+  it("a person with nothing recorded still goes to /pricing as before", async () => {
+    mockTables({ roles: [], agencyVisible: false });
+    withheld("none");
+    expect(await resolveLandingRoute(actor)).toBe("/pricing");
+  });
+  it("an unreadable access answer never invents a customer route", async () => {
+    mockTables({ roles: [], agencyVisible: false });
+    rpc.mockImplementation(async (name: string) => name === "client_portal_access_state" ? { data: null, error: { code: "500" } } : { data: null, error: null });
+    expect(await resolveLandingRoute(actor)).toBe("/pricing");
+  });
+  it("staff are never sent to the customer page by someone else's paused relationship", async () => {
+    mockTables({ roles: ["super_admin"], agencyVisible: false });
+    withheld("paused");
+    expect(await resolveLandingRoute(actor)).toBe("/choose-account");
+  });
+});

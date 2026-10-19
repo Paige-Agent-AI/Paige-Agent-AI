@@ -10,6 +10,7 @@ import {Label} from "@/components/ui/label";
 import {Checkbox} from "@/components/ui/checkbox";
 import {readableTextOn} from "@/lib/brand/contrast";
 import {readClientPortalSelfProfile} from "@/lib/client-portal-self-profile";
+import {customerAccessCopy} from "@/lib/client-portal-access";
 import type {User} from "@supabase/supabase-js";
 import "./ConsumerInvitation.css";
 
@@ -17,8 +18,10 @@ export interface ConsumerInviteInfo {
   tenant_id:string; tenant_name:string; is_valid:boolean; invited_email:string|null;
   brand:{logo_url?:string|null;primary_color?:string|null}|null;
 }
-type Phase="loading"|"choice"|"create"|"signin"|"verify"|"ready"|"wrong"|"accepted"|"unknown"|"invalid"|"error";
-type Receipt={tenant_id:string;client_id:string;accepted_at:string;status:"accepted"};
+type Phase="loading"|"choice"|"create"|"signin"|"verify"|"ready"|"wrong"|"accepted"|"unknown"|"invalid"|"error"|"paused"|"ended";
+// E09 Slice 7: an accepted link whose business has since paused or ended this person's access answers
+// "paused"/"ended" (client_portal_invite_status, 20271111010000). It is a real answer, not a fault.
+type Receipt={tenant_id:string;client_id:string;accepted_at:string;status:"accepted"|"paused"|"ended"};
 type JoinIntent={token:string;tenantId:string;email:string;at:number};
 const JOIN_INTENT_KEY="paige_customer_join_intent",JOIN_INTENT_MS=30*60*1000;
 // Short-lived presentation intent only; no password/session or access decision.
@@ -38,7 +41,7 @@ function resumeJoinIntent(token:string,tenantId:string,email:string):JoinIntent|
 function readReceipt(value:unknown,tenant:string):Receipt|null {
   if(!value||typeof value!=="object"||Array.isArray(value))return null;
   const r=value as Record<string,unknown>;
-  return Object.keys(r).length===4&&r.status==="accepted"&&r.tenant_id===tenant
+  return Object.keys(r).length===4&&(r.status==="accepted"||r.status==="paused"||r.status==="ended")&&r.tenant_id===tenant
     &&typeof r.client_id==="string"&&typeof r.accepted_at==="string"
     ?r as Receipt:null;
 }
@@ -108,6 +111,7 @@ export function ConsumerInvitation({token,info}:{token:string;info:ConsumerInvit
         const confirmation=await bounded(supabase.auth.getUser());if(!current(n))return;
         if(confirmation.error||confirmation.data.user?.id!==user.id)throw new Error("session_changed");
         setActor(user);
+        if(saved&&saved.status!=="accepted"){clearJoinIntent();setPhase(saved.status);return;}
         if(saved){clearJoinIntent();setReceipt(saved);setPhase("accepted");await openPortal(saved,user.id,n);return;}
         const valid=await validInvitation();if(!current(n))return;
         if(!valid){setPhase("invalid");return;}
@@ -174,6 +178,7 @@ export function ConsumerInvitation({token,info}:{token:string;info:ConsumerInvit
       const saved=await status();if(!current(n))return;
       if(!saved||result.data!==saved.tenant_id)throw new Error("acceptance_unconfirmed");
       if(!await checkedActor(n,subject)||!current(n))return;
+      if(saved.status!=="accepted"){setPhase(saved.status);return;}
       setReceipt(saved);setPhase("accepted");
       try{localStorage.removeItem("paige_pending_invite");}catch{/* storage is optional */}
       await openPortal(saved,subject,n);
@@ -193,6 +198,7 @@ export function ConsumerInvitation({token,info}:{token:string;info:ConsumerInvit
       const user=await checkedActor(n,actor.id);if(!user||!current(n))return;
       const saved=await status();if(!current(n))return;
       if(!saved||saved.client_id!==receipt.client_id)throw new Error("relationship_unavailable");
+      if(saved.status!=="accepted"){setReceipt(null);setPhase(saved.status);return;}
       // Keep the established Auth client alive when browser storage is unavailable.
       await openPortal(saved,user.id,n);
     }catch{if(current(n)){setReceipt(null);setPhase("error");setNotice("Your portal access could not be confirmed. Check your invitation or contact the business.");}}
@@ -219,14 +225,15 @@ export function ConsumerInvitation({token,info}:{token:string;info:ConsumerInvit
     finally{life.current.working=false;if(current(n))setBusy(false);}
   };
   const color=info.brand?.primary_color||"#150C31",style={backgroundColor:color,color:readableTextOn(color)};
-  const titles:Record<Phase,string>={loading:"Checking your invitation…",choice:`Join ${info.tenant_name}`,create:"Create your account",signin:"Sign in",verify:"Check your email",ready:`Join ${info.tenant_name}`,wrong:"Use your invited account",accepted:"Your invitation is accepted",unknown:"Check your invitation",invalid:"This invitation is unavailable",error:"Let’s try again"};
+  const withheld=phase==="paused"||phase==="ended"?customerAccessCopy(phase,info.tenant_name):null;
+  const titles:Record<Phase,string>={paused:withheld?.title??"",ended:withheld?.title??"",loading:"Checking your invitation…",choice:`Join ${info.tenant_name}`,create:"Create your account",signin:"Sign in",verify:"Check your email",ready:`Join ${info.tenant_name}`,wrong:"Use your invited account",accepted:"Your invitation is accepted",unknown:"Check your invitation",invalid:"This invitation is unavailable",error:"Let’s try again"};
   return <main className="customer-entry min-h-dvh bg-background text-foreground px-4 py-8 sm:py-12 flex items-start sm:items-center justify-center">
     <Helmet><title>{titles[phase]}</title><meta name="robots" content="noindex,nofollow"/><meta name="referrer" content="no-referrer"/></Helmet>
     <Card className="w-full max-w-md">
       <CardHeader>
         {info.brand?.logo_url&&<img src={info.brand.logo_url} alt={info.tenant_name} referrerPolicy="no-referrer" className="h-12 max-w-full w-auto self-start object-contain mb-3"/>}
         <h1 ref={heading} tabIndex={-1} className="text-2xl font-semibold leading-tight break-words focus:outline-none">{titles[phase]}</h1>
-        <CardDescription className="break-words">{phase==="create"?`Create a customer login for your work with ${info.tenant_name}.`:phase==="choice"?"Create your customer login, or sign in if you already have one.":email}</CardDescription>
+        <CardDescription className="break-words">{withheld?withheld.body:phase==="create"?`Create a customer login for your work with ${info.tenant_name}.`:phase==="choice"?"Create your customer login, or sign in if you already have one.":email}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 [&_button:not([role=checkbox])]:min-h-11 [&_input]:min-h-11 [&_input]:text-base">
         {notice&&<p role="alert" className="text-sm break-words">{notice}</p>}
@@ -245,6 +252,7 @@ export function ConsumerInvitation({token,info}:{token:string;info:ConsumerInvit
         {phase==="accepted"&&<><p>Your customer relationship is confirmed. Continue to your saved information.</p><Button style={style} disabled={busy} className="w-full" onClick={()=>void continueToPortal()}>{busy?"Checking portal…":"Continue to your portal"}</Button></>}
         {phase==="wrong"&&<><p>This invitation is for {email}. You are signed in as {actor?.email}.</p><Button variant="outline" disabled={busy} className="w-full" onClick={()=>void switchAccount()}>Sign out of this session</Button></>}
         {(phase==="unknown"||phase==="error")&&<Button variant="outline" disabled={busy} className="w-full" onClick={()=>void refresh()}>{phase==="unknown"?"Check acceptance":"Try again"}</Button>}
+        {withheld&&<Button variant="outline" disabled={busy} className="w-full !min-h-[44px]" onClick={()=>void switchAccount()}>Sign out</Button>}
         {phase==="invalid"&&<><p>Ask the business for a new invitation. No new access has been granted here.</p>{email&&<Button variant="outline" className="w-full" onClick={()=>{setPhase("signin");setNotice("");}}>Sign in to check existing access</Button>}</>}
       </CardContent>
     </Card>

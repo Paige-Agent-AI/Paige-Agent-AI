@@ -373,6 +373,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/operations_delivery_client_discovery.sql
 
+      - name: Operations released work refuses a paused client and returns on restore (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/customer_portal_access_delivery.sql
+
       - name: Operations native competing client decisions
         if: ${{ !cancelled() }}
         run: node scripts/proof/operations-client-decision-concurrency.mjs
@@ -588,6 +592,14 @@ jobs:
       - run: supabase test db supabase/tests/customer_portal_payments.sql
         if: ${{ !cancelled() }}
       - run: node --test supabase/functions/sales-invoice-document/portal.test.mjs
+        if: ${{ !cancelled() }}
+      # E09 Access: pause/restore/end through one owner writer; the resolver predicate and every reader
+      # that bypassed it refuse a paused client; end clears the link; merges cannot launder a pause.
+      - run: supabase test db supabase/tests/customer_portal_access.sql
+        if: ${{ !cancelled() }}
+      # E09 Access at integration: the Documents, Profile & Consent, Agreements and Payments customer doors
+      # refuse a paused or ended client, even when the pause lands after the resolver read (one shared helper).
+      - run: supabase test db supabase/tests/customer_portal_access_doors.sql
         if: ${{ !cancelled() }}
       # The owner's real send through create_solo_team_invite, accepted through accept_solo_team_invite,
       # for Member and Admin across two businesses: no hand-written token.

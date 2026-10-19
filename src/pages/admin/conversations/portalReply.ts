@@ -43,6 +43,8 @@ export type PortalReplyErrorCode =
   | "INVALID_BODY"
   | "CONTACT_NOT_FOUND"
   | "PORTAL_NOT_CONNECTED"
+  /** E09 Slice 7: the business paused this client's access, so no portal post or notice reaches them. */
+  | "PORTAL_ACCESS_PAUSED"
   | "REQUEST_ID_CONFLICT"
   /** The business workspace isn't active, so its portal can't take messages. */
   | "WORKSPACE_INACTIVE"
@@ -54,7 +56,7 @@ export type PortalReplyErrorCode =
   | "UNCONFIRMED";
 
 const SERVER_CODES: ReadonlySet<string> = new Set([
-  "REQUEST_ID_REQUIRED", "INVALID_BODY", "CONTACT_NOT_FOUND", "PORTAL_NOT_CONNECTED", "REQUEST_ID_CONFLICT",
+  "REQUEST_ID_REQUIRED", "INVALID_BODY", "CONTACT_NOT_FOUND", "PORTAL_NOT_CONNECTED", "PORTAL_ACCESS_PAUSED", "REQUEST_ID_CONFLICT",
   "WORKSPACE_INACTIVE",
 ]);
 
@@ -68,6 +70,8 @@ export function portalReplyErrorCopy(code: PortalReplyErrorCode, name: string): 
   switch (code) {
     case "PORTAL_NOT_CONNECTED":
       return `${who} hasn't joined your client portal yet, so there's nowhere to post this. Invite them from their contact card, or reply by email or SMS.`;
+    case "PORTAL_ACCESS_PAUSED":
+      return `${who}’s portal access is paused. Restore their portal access to message them here, or reply by email or SMS.`;
     case "CONTACT_NOT_FOUND":
       return `${who} isn't an active client in this workspace, so the portal message wasn't sent.`;
     case "INVALID_BODY":

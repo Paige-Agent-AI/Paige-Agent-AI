@@ -52,8 +52,8 @@ beforeEach(() => {
 afterEach(() => { act(() => root.unmount()); host.remove(); });
 
 const flush = async () => { for (let i = 0; i < 6; i++) await act(async () => { await Promise.resolve(); }); };
-async function render(portalConnected = true) {
-  await act(async () => root.render(<ClientSharedWork contactId={CLIENT} clientName="Jordan Rivera" portalConnected={portalConnected} />));
+async function render(portalConnected = true, portalPaused = false, portalEnded = false) {
+  await act(async () => root.render(<ClientSharedWork contactId={CLIENT} clientName="Jordan Rivera" portalConnected={portalConnected} portalPaused={portalPaused} portalEnded={portalEnded} />));
   await flush();
 }
 const row = (title: string) => [...host.querySelectorAll<HTMLElement>(".trc-shared-row")].find(r => r.querySelector("strong")?.textContent === title);
@@ -229,6 +229,18 @@ describe("ClientSharedWork", () => {
     expect(row("Draft discovery report")?.textContent).not.toContain("can see this in their portal");
   });
 
+  // E09 Slice 7 round 2: an ended client HAD joined; "hasn't joined yet" would be untrue.
+  it("says access has ended — not 'hasn't joined' — and confirms a share truthfully", async () => {
+    reads = [status(), status([{ id: DRAFT, shared: true, updated_at: V2 }, { id: REVIEW, shared: true, updated_at: V1 }, { id: KICKOFF, shared: false, updated_at: V1 }])];
+    // An answer that still reads the link alone must not win over the record's ended state (same rule as paused).
+    shareReply = { data: { ok: true, replayed: false, item_id: DRAFT, shared: true, shared_at: V2, updated_at: V2, portal_connected: true }, error: null };
+    await render(false, false, true);
+    expect(host.querySelector(".trc-shared-connect")?.textContent).toBe("Jordan’s portal access has ended, so they can’t see this. It shows again if you invite them back and they accept.");
+    await flip("Draft discovery report");
+    expect(row("Draft discovery report")?.textContent).toContain("Shared. Jordan will see this if you invite them back and they accept.");
+    expect(host.textContent).not.toContain("hasn’t joined your portal yet");
+  });
+
   it("says when the client hasn't joined the portal, from the record or from the share's answer", async () => {
     reads = [status()]; await render(false);
     expect(host.querySelector(".trc-shared-connect")?.textContent).toBe("Jordan Rivera hasn’t joined your portal yet; shared items appear when they do.");
@@ -285,5 +297,20 @@ describe("ClientSharedWork", () => {
     const css = readFileSync("src/components/tenant-relationships/client-shared-work.css", "utf8");
     expect(css).not.toMatch(/#[0-9a-f]{3,8}\b|--pg-gold|gold-dark/i);
     expect(css).toMatch(/prefers-reduced-motion: reduce/);
+  });
+
+  // E09 Slice 7: a paused client keeps their link, so the share writer still says "connected".
+  it("a paused client is told plainly that nothing shows right now, and a share says so", async () => {
+    reads = [status()]; await render(false, true);
+    expect(host.textContent).toContain("Paused — Jordan can’t see this right now. It shows again if you restore their access.");
+    expect(host.textContent).not.toContain("hasn’t joined your portal yet");
+    await flip("Draft discovery report");
+    expect(host.textContent).not.toContain("can see this in their portal");
+  });
+  it("follows the access card when access is restored without remounting", async () => {
+    reads = [status()]; await render(false, true);
+    await render(true, false);
+    expect(host.textContent).not.toContain("Paused — Jordan");
+    expect(host.textContent).not.toContain("hasn’t joined your portal yet");
   });
 });

@@ -34,7 +34,8 @@ import { usePlaybook } from "@/lib/playbook";
 import { useClientPortalConfig, type ClientPortalConfig } from "@/hooks/useClientPortalConfig";
 import { usePresenceHeartbeat } from "@/hooks/usePresenceHeartbeat";
 import { useClientViewportHeight } from "@/hooks/useClientViewportHeight";
-import { useClientPortalFrame } from "@/hooks/useClientPortalFrame";
+import { useSharedClientPortalFrame } from "@/hooks/useClientPortalFrame";
+import { CustomerAccessGate } from "@/components/app/CustomerAccessGate";
 import { customerAgentName } from "../../supabase/functions/_shared/client-portal-identity";
 
 // Map /app sub-routes to canonical feature names emitted as `feature_visit`.
@@ -270,8 +271,11 @@ const AppShell = () => {
     ? ({ ...activeUser, id: effectiveUserId } as User)
     : activeUser;
 
+  // E09 Slice 7: a customer whose business paused or ended their access sees that business's own
+  // page in place of the whole shell (no menu, no Support desk, no platform persona). Staff viewing
+  // as a client are not customers, so the gate stands aside for them.
   return (
-    <>
+    <CustomerAccessGate userId={activeUser.id} enabled={!isImpersonating && !DEV_MODE}>
       {!isImpersonating && <RequiredConsentsGate userId={activeUser.id} />}
       {!isImpersonating && fundingEnabled && <OnboardingFlow open={showOnboarding} onComplete={() => setShowOnboarding(false)} />}
       <AdminViewBanner />
@@ -305,7 +309,7 @@ const AppShell = () => {
         </ResizablePanelGroup>
         {fundingEnabled && <QuickStatsBar factors={factors} />}
       </div>
-    </>
+    </CustomerAccessGate>
   );
 };
 
@@ -313,7 +317,7 @@ const AppShell = () => {
 type CreditFactorScores = Database["public"]["Tables"]["credit_factor_scores"]["Row"];
 
 function AppDashboardHome({ factors, userId }: { factors: CreditFactorScores | null | undefined; userId?: string }) {
-  const customer = useClientPortalFrame(userId ?? null);
+  const customer = useSharedClientPortalFrame(userId ?? null);
   const pb = usePlaybook(customer.phase === "not-client");
   // Tenant-authored portal greeting (Portal Studio → portal_config.welcome).
   // Fail-open: an unset/empty overlay falls back to the current defaults, so

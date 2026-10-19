@@ -33,10 +33,14 @@ const share = (c: ClientShareCaller, args: unknown) =>
 const args = { item_id: ITEM, shared: true, expected_updated_at: VERSION };
 
 describe('setPlanItemClientShare — the one share executor (chat + scoped adapter)', () => {
+  it('carries the writer\'s portal access, so a paused client is never reported as connected (E09 Slice 7)', async () => {
+    const c = caller({ data: ack({ portal_connected: false, portal_access: 'paused' }), error: null });
+    expect(await share(c, args)).toMatchObject({ success: true, portalConnected: false, portalAccess: 'paused' });
+  });
   it('maps to the scoped RPC with the server-resolved actor and tenant, then proves it by readback', async () => {
     const c = caller();
     expect(await share(c, args)).toEqual({ success: true, itemId: ITEM, shared: true, replayed: false,
-      sharedAt: SHARED_AT, updatedAt: AFTER, portalConnected: true });
+      sharedAt: SHARED_AT, updatedAt: AFTER, portalConnected: true, portalAccess: null });
     expect(c.rpc).toHaveBeenCalledTimes(1);
     expect(c.rpc).toHaveBeenCalledWith('plan_item_set_client_share', { p_expected_actor_id: ACTOR,
       p_expected_tenant_id: TENANT, p_item_id: ITEM, p_shared: true, p_expected_updated_at: VERSION });

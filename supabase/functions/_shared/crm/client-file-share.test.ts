@@ -55,6 +55,14 @@ Deno.test("a client's own upload is refused on every route", () => {
   assert.equal(routeFileDocument({ id: FILE, contact_id: CONTACT, visibility: "client_upload" }, OTHER_CONTACT, "x"), "refuse_client_upload");
 });
 
+Deno.test("a share to a paused client reports the writer's access state, never 'connected' (E09 Slice 7)", async () => {
+  const c = caller({ reply: { data: { ok: true, replayed: false, file_id: FILE, shared: true, shared_at: NEW_VERSION, updated_at: NEW_VERSION,
+    portal_connected: false, portal_access: "paused" }, error: null } });
+  const r = await share(c.caller);
+  assert.equal(r.success, true);
+  if (r.success) { assert.equal(r.portalConnected, false); assert.equal(r.portalAccess, "paused"); }
+});
+
 Deno.test("the share writer gets the version that was read, the verified actor and the server tenant", async () => {
   const c = caller();
   const r = await share(c.caller);
@@ -66,6 +74,7 @@ Deno.test("the share writer gets the version that was read, the verified actor a
     assert.equal(r.sharedAt, NEW_VERSION);
     assert.equal(r.updatedAt, NEW_VERSION);
     assert.equal(r.portalConnected, true);
+    assert.equal(r.portalAccess, null); // an answer from before portal_access existed
     assert.equal(r.replayed, false);
   }
 });

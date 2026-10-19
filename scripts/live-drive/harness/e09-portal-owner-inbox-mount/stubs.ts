@@ -37,6 +37,8 @@ const clientRow = (id: string, first: string, last: string, email: string | null
   status: "active", lifecycle_stage: "client_active", source: "referral", tags: null, last_contacted_at: null,
   assigned_coach_user_id: null, linked_user_id: linked, timezone: "America/Chicago", created_at: ago(60 * 24 * 40), created_by: null,
   created_by_channel_type: null, dnd_active: false, dnd_reason: null, dnd_until: null,
+  // E09 Slice 7: ?state=paused — the business paused Jordan's portal access; the link stays.
+  portal_access_state: state === "paused" && id === JORDAN ? "paused" : "open",
   client_contact_methods: methodsOf(email, phone),
 });
 
@@ -98,7 +100,7 @@ const samSms = {
 const jordanLinked = state === "notjoined" ? null : "e0900000-0000-4000-8000-0000000f0001";
 const jordanMessages = state === "help"
   ? [jordanEmailIn, jordanSmsOut, jordanSmsIn, jordanPortalIn, { ...jordanHelp, sent_at: ago(12), created_at: ago(12) }]
-  : state === "notjoined"
+  : state === "notjoined" || state === "paused"
     ? [jordanEmailIn, jordanSmsOut, jordanSmsIn, jordanPortalIn, jordanHelp]
     : [jordanEmailIn, jordanSmsOut, jordanSmsIn, jordanPortalIn, jordanHelp, jordanPortalOut];
 const messages = [...jordanMessages, priyaEmail, samSms];
@@ -164,6 +166,7 @@ async function rpc(name: string, args: unknown) {
   }
   if (name === "comms_portal_reply") {
     if (state === "notjoined") return { data: { ok: false, error: "PORTAL_NOT_CONNECTED" }, error: null };
+    if (state === "paused") return { data: { ok: false, error: "PORTAL_ACCESS_PAUSED" }, error: null };
     if (state === "error") return { data: null, error: { code: "08006", message: "harness: connection failure" } };
     return { data: { ok: true, replayed: false, message_id: "m-harness-new", created_at: new Date().toISOString() }, error: null };
   }

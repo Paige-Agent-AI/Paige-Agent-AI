@@ -616,6 +616,10 @@ jobs:
       # Knowledge only for an entitled business, re-checked at read; paused/merged/suspended cut off; exact
       # chunks only; kind-aware snapshot refs; the settle lock covers business rows (withdraw → withheld).
       - run: supabase test db supabase/tests/e09_customer_knowledge_v2.sql
+      # E09 C1: announcements through the one campaign system — the `portal` audience (open access only,
+      # the same predicate as the customer's own resolver), rule keys checked on every draft write and at
+      # approval, and Updates consent for promotions/announcements to portal-linked contacts at plan AND send.
+      - run: supabase test db supabase/tests/e09_campaign_portal_audience.sql
         if: ${{ !cancelled() }}
       # The owner's real send through create_solo_team_invite, accepted through accept_solo_team_invite,
       # for Member and Admin across two businesses: no hand-written token.

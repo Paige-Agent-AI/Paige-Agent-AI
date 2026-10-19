@@ -92,6 +92,18 @@ beforeEach(() => {
 });
 afterEach(() => { act(() => root.unmount()); host.remove(); vi.useRealTimers(); vi.restoreAllMocks(); });
 
+describe("E09 C1: a series never offers the portal audience", () => {
+  it("shows the rule chips without the Customer portal choice, even when the business has portal customers", async () => {
+    const read = seriesRead();
+    read.choices = { ...read.choices, portal: { open: 3 } } as typeof read.choices;
+    await openSeries(read);
+    expect(text()).toContain("Who enters");
+    expect(Array.from(host.querySelectorAll("legend")).map((l) => l.textContent)).toContain("Stage");
+    expect(text()).not.toContain("Customer portal");
+    expect(text()).not.toContain("Customers with portal access");
+  });
+});
+
 describe("Automations panel", () => {
   it("offers three series starters when there are none, and a starter creates the series and opens it", async () => {
     answers.email_sequence_create = { data: { sequence_id: "q-1", version_id: "v-1" }, error: null };

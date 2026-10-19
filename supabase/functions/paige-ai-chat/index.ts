@@ -883,6 +883,11 @@ const messageSchema = z.object({
    *  longer opens it, because that flag says only that SOMETHING was approved, not what. Bounded
    *  and shaped so a body cannot smuggle anything else through this field. */
   approvedConfirmations: z.array(z.string().regex(/^[0-9a-f]{16}(?::[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})?$/)).max(16).optional(),
+  // EXP00 O-3 (owner defect 2026-10-19): the OPERATOR CONSOLE's chat identifies its surface.
+  // HINT-ONLY by construction: the exact literal is the only accepted value, and the server
+  // hard-gates the operator persona on is_platform_operator() from the VERIFIED JWT — a
+  // non-operator sending it is ignored outright (no client flag can elevate, per 588).
+  surface: z.literal("operator-console").optional(),
   /** Fingerprints the person DECLINED on the confirm card. A refusal that lives only in the prose
    *  of the next message is a refusal the model has to interpret correctly — and the proposal it
    *  describes stays redeemable for its whole window. These are cancelled outright instead. */
@@ -3075,6 +3080,10 @@ JSON:`;
         ? { tenantId: id as string | null } : null;
     };
     let proposalScopeResolved = false;
+    // EXP00 O-3: TRUE only when the operator-console surface hint was presented AND the
+    // verified caller IS a platform operator (the RPC gate). Drives the platform persona,
+    // the company read tools, and the steering line — nothing else trusts the hint.
+    let operatorConsolePersona = false;
 
     let personaCtx: { tenant_id: string | null; tenant_name: string | null; playbook_config: any; playbook_slug: string | null; funding_enabled: boolean; brand: Record<string, any> | null } =
       { tenant_id: null, tenant_name: null, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null };
@@ -3105,6 +3114,26 @@ JSON:`;
     if (customerPersona) {
       personaCtx = {tenant_id:customerPersona.binding.tenantId,tenant_name:customerPersona.businessName,
         playbook_config:null,playbook_slug:null,funding_enabled:false,brand:null};
+
+    // ── EXP00 O-3 (owner defect 2026-10-19): the OPERATOR CONSOLE asks as PAIGE Inc. ──
+    // Reproduced live: without this, an operator with any tenant membership resolves into that
+    // tenant's persona (their oldest workspace), so company questions get tenant-CRM answers
+    // or "tenant not resolved"; the 52 briefing branch never opens. The hint is caller-
+    // supplied but can only SELECT the platform persona — the gate is is_platform_operator on
+    // the verified JWT, and a non-operator's hint is ignored with the persona left as
+    // resolved. No tenant is assigned or bypassed: platform operators have none by design.
+    if (validatedData.surface === "operator-console") {
+      try {
+        const { data: hintOperator } = await supabaseClient.rpc("is_platform_operator");
+        if (hintOperator === true) {
+          personaCtx = { tenant_id: null, tenant_name: null, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null };
+          proposalScopeResolved = true;
+          operatorConsolePersona = true;
+        }
+      } catch (e) {
+        console.warn("[paige-ai-chat] operator-console hint gate failed (ignoring hint):", (e as Error)?.message);
+      }
+    }
       proposalScopeResolved = true;
     }
     // E09 F2: a client-tier caller is never offered funding/credit, inside the native customer frame (above) or
@@ -6166,6 +6195,13 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       }
     }
 
+    // EXP00 O-3 steering: even when no owner-memory rows exist (briefing NO-OP), an operator
+    // turn MUST know which data sources answer company questions — and MUST NOT read a tenant
+    // tool's refusal as absence. This line rides every operator-console turn.
+    if (operatorConsolePersona) {
+      aiMessages.splice(2, 0, { role: "system", content: "PLATFORM COMPANY DATA SOURCES — you are answering for PAIGE Agent AI Inc itself. Company-level questions (who has joined, customers on trials, provisioned workspaces, onboarding progress, welcome emails sent, collected cash, who needs attention) are answered with platform_customer_overview and platform_commercial_summary — they read the company's real customer records live. Tenant CRM tools read a CUSTOMER BUSINESS's workspace; on this account no tenant is selected, so their refusal or empty result is EXPECTED and proves nothing — never report a customer as lacking a subscription, workspace, welcome email or any record because a tenant tool refused or returned nothing. State figures from these platform tools or your briefing; when a source is unavailable, say exactly that." });
+    }
+
     // ── OWNER MULTI-CHAT PERSISTENCE + RECALL (#94) ──────────────────────────
     // When a thread is active (Your Paige), persist the user turn NOW (survives a
     // model error) and rehydrate the rolling summary so a long thread keeps its
@@ -8645,6 +8681,23 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               }
             }
           },
+      // ── EXP00 O-3: company read tools, admitted ONLY on operator-console turns (the
+      // dispatch re-checks the operator gate; definitions withheld otherwise).
+      ...(operatorConsolePersona ? [{
+        type: "function",
+        function: {
+          name: "platform_customer_overview",
+          description: "PAIGE Inc company view. One row per customer who joined the platform: business name, enrollment state, subscription status with trial-vs-paid truth, whether the workspace provisioned, welcome-email state, and who needs attention. Use for: who has joined, which customers are on trials, which workspaces are provisioned, welcome emails sent, customers needing attention.",
+          parameters: { type: "object", properties: {} }
+        }
+      }, {
+        type: "function",
+        function: {
+          name: "platform_commercial_summary",
+          description: "PAIGE Inc commercial truth: subscription counts (trialing vs paid), real ARR from live Stripe-backed subscriptions only, collected cash from PAID invoices only (trials are intent, not cash), open receivables, upcoming renewals, the payment method on file, and the 90-day signup funnel. Use for: what have we actually collected, revenue reporting, renewals, failed payments.",
+          parameters: { type: "object", properties: {} }
+        }
+      }] : []),
     ];
 
     // CRM/Pipeline mutations are declared by the single shared command catalogue. Remove the
@@ -16008,7 +16061,24 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 .single();
               if (error) throw error;
               result = { success: true, log_id: row?.id };
-            } else if (tc.function.name === "crm_search_contacts") {
+            } else if (tc.function.name === "platform_customer_overview" || tc.function.name === "platform_commercial_summary") {
+              // EXP00 O-3: company read tools. The DB gate (is_platform_admin on auth.uid()) is
+              // authoritative — the call goes through the CALLER-JWT client, so admission here
+              // only shapes the refusal; a non-operator can never read company rows.
+              if (!operatorConsolePersona) {
+                result = { success: false, error: "platform_operator_only", detail: "This tool answers company-level questions for the Platform Operator account only." };
+              } else if (tc.function.name === "platform_customer_overview") {
+                const { data: overview, error: overviewErr } = await supabaseClient.rpc("operator_commercial_customers");
+                result = overviewErr
+                  ? { success: false, error: "company_read_failed", detail: overviewErr.message }
+                  : { success: true, overview };
+              } else {
+                const { data: summary, error: summaryErr } = await supabaseClient.rpc("operator_billing_overview");
+                result = summaryErr
+                  ? { success: false, error: "company_read_failed", detail: summaryErr.message }
+                  : { success: true, summary };
+              }
+} else if (tc.function.name === "crm_search_contacts") {
               const limit = Math.min(Math.max(Number(args.limit) || 25, 1), 100);
               let q = admin.from("clients").select(
                 "account_number, first_name, last_name, entity_name, lifecycle_stage, status, source, tags, lead_score, assigned_coach_user_id, last_contacted_at, created_at, updated_at, client_contact_methods(kind, value, label, is_primary, position)"

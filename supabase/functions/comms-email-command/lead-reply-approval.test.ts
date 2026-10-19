@@ -29,6 +29,7 @@ const eqs = (filters: Filter[]) => Object.fromEntries(filters.filter((f) => f[0]
 const matching = (rows: Row[], filters: Filter[]) => { const e = eqs(filters); return rows.filter((r) => Object.entries(e).every(([k, v]) => r[k] === v)); };
 
 interface World {
+  memberRole: string; memberStatus: string; profileTenant: string | null; currentTenant: string;
   approvals: Row[]; actions: Row[]; domains: Row[]; connectors: Row[];
   proposals: Row[]; sent: boolean; recordResult: { data: unknown; error: unknown } | (() => never);
   rpcCalls: { name: string; args: Row }[]; fetches: string[];
@@ -42,6 +43,7 @@ interface World {
 const BINDING_APPROVAL = "meta->comms_email_binding->>approval_id";
 function world(overrides: Partial<World> = {}): World {
   return {
+    memberRole: "owner", memberStatus: "active", profileTenant: T, currentTenant: T,
     approvals: [
       { id: AP, tenant_id: T, status: "pending", contact_id: C, metadata: { action_id: ACT } },
       { id: AP2, tenant_id: T, status: "pending", contact_id: C, metadata: { action_id: ACT2 } },
@@ -76,8 +78,8 @@ function scenario(w: World) {
     return last ? [{ summary: last.summary, expires_at: last.expires_at }] : [];
   };
   const tables: Record<string, (f: Filter[]) => Row[]> = {
-    tenant_members: () => [{ role: "owner", status: "active" }],
-    profiles: () => [{ user_id: U, active_tenant_id: T }],
+    tenant_members: (f) => matching([{ tenant_id: T, user_id: U, role: w.memberRole, status: w.memberStatus }], f),
+    profiles: () => [{ user_id: U, active_tenant_id: w.profileTenant }],
     clients: (f) => matching([
       { id: C, tenant_id: T, first_name: "Riley", last_name: "Lead", client_contact_methods: [{ kind: "email", value: "riley@lead.example.invalid", is_primary: true, position: 0 }] },
       { id: C2, tenant_id: T, first_name: "Sam", last_name: "Other", client_contact_methods: [{ kind: "email", value: "sam@other.example.invalid", is_primary: true, position: 0 }] },
@@ -96,7 +98,7 @@ function scenario(w: World) {
     tables, serviceTables: tables,
     onInsert: (table: string, row: Row) => { if (table === "paige_pending_confirmations") w.proposals.push({ ...row }); return null; },
     rpcs: {
-      current_user_tenant_id: { data: T, error: null },
+      current_user_tenant_id: () => ({ data: w.currentTenant, error: null }),
       comms_provider_execution_allowed: { data: true, error: null },
       resolve_tool_autonomy: { data: "confirm", error: null },
       find_comms_email_pending_reconciliation: { data: null, error: null },
@@ -220,7 +222,7 @@ test("wrong business, wrong contact, non-pending and wrong-kind approvals are re
     // D2: the action is for this lead, but the APPROVAL row itself names someone else.
     ["an approval row that names another person", { approvals: [{ id: AP, tenant_id: T, status: "pending", contact_id: C2, metadata: { action_id: ACT } }] }, {}, "LEAD_REPLY_APPROVAL_CONTACT_MISMATCH"],
     ["an already-decided approval", { approvals: [{ id: AP, tenant_id: T, status: "rejected", contact_id: C, metadata: { action_id: ACT } }] }, {}, "LEAD_REPLY_APPROVAL_NOT_PENDING"],
-    ["a client.followup approval", { actions: [{ id: ACT, tenant_id: T, approval_id: AP, action_kind: "client.followup", contact_id: C }] }, {}, "LEAD_REPLY_APPROVAL_WRONG_KIND"],
+    ["an unsupported email kind", { actions: [{ id: ACT, tenant_id: T, approval_id: AP, action_kind: "sales.work_followup", contact_id: C }] }, {}, "LEAD_REPLY_APPROVAL_WRONG_KIND"],
     ["an action that does not point back", { actions: [{ id: ACT, tenant_id: T, approval_id: AP2, action_kind: "owner.lead_followup", contact_id: C }] }, {}, "LEAD_REPLY_APPROVAL_WRONG_KIND"],
   ];
   for (const [label, o, extra, code] of cases) {
@@ -370,4 +372,138 @@ test("verifyLeadReplyApproval / storedApprovalMatches / recordLeadReplySend", as
   assert.equal(bindingApprovalMatches(null, AP), false);
   assert.equal(leadReplyPrepareRefusal({ message: "COMMS_EMAIL_APPROVAL_ALREADY_SENT" }), "LEAD_REPLY_APPROVAL_ALREADY_SENT");
   assert.equal(leadReplyPrepareRefusal({ message: "COMMS_EMAIL_SENDER_CHANGED" }), null);
+});
+
+// The same native-closed kinds share this existing door; these recording-port tests do not
+// establish native admission or provider readiness. The native deployment is a release dependency.
+const REVIEWED_EMAIL_KINDS = ["owner.lead_followup", "client.followup", "owner.followup_email"];
+function replyWorld(kind: string, overrides: Partial<World> = {}): World {
+  return world({ actions: [{ id: ACT, tenant_id: T, approval_id: AP, action_kind: kind, contact_id: C }], ...overrides });
+}
+function assertNoSend(w: World) {
+  assert.deepEqual(w.fetches, []);
+  assert.ok(!rpcNames(w).includes("prepare_comms_email_send"));
+  assert.ok(!rpcNames(w).includes("lead_reply_record_send_service"));
+}
+
+for (const kind of REVIEWED_EMAIL_KINDS) {
+  test(`${kind}: propose the exact contact/sender/content, then confirm and record only that operation`, async () => {
+    const w = replyWorld(kind);
+    const proposed = await call(w, { approval_id: AP });
+    assert.equal(proposed.status, 202, JSON.stringify(proposed.body));
+    assert.equal(proposed.body.outcome, "approval_required");
+    assert.equal(w.proposals.length, 1);
+    const p = w.proposals[0], args = p.args as Row;
+    assert.deepEqual([p.user_id, p.tenant_id, p.thread_id, p.scoped_client_id], [U, T, null, null]);
+    assert.deepEqual([args.approval_id, args.operation_id, args.recipient, args.from_address], [AP, OP, "riley@lead.example.invalid", "hello@own.example.invalid"]);
+    assert.deepEqual([((args.command as Row).contact_id), (args.command as Row).subject, (args.command as Row).body], [C, "Thanks for reaching out", "Hi Riley, thanks for your note."]);
+    assertNoSend(w);
+    const r = await call(w, { approval_id: AP, approved_fingerprint: proposed.body.fingerprint });
+    assert.deepEqual([r.status, r.body.outcome, r.body.record_status, r.body.delivery_confirmed], [200, "provider_accepted", "recorded", false]);
+    const prepares = w.rpcCalls.filter((c) => c.name === "prepare_comms_email_send");
+    assert.equal(prepares.length, 1);
+    assert.deepEqual([prepares[0].args._actor_user_id, prepares[0].args._expected_tenant_id, prepares[0].args._operation_id, prepares[0].args._contact_id], [U, T, OP, C]);
+    assert.deepEqual([prepares[0].args._recipient, prepares[0].args._from_address, prepares[0].args._subject, prepares[0].args._body_text], [args.recipient, args.from_address, (args.command as Row).subject, (args.command as Row).body]);
+    assert.equal((prepares[0].args._governance as Row).approval_id, AP);
+    assert.equal(w.fetches.length, 1);
+    assert.ok(w.fetches.every((url) => url === "https://proj.example.invalid/functions/v1/send-message"));
+    const replay = await call(w, { approval_id: AP });
+    assert.deepEqual([replay.status, replay.body.replayed, replay.body.record_status], [200, true, "recorded"]);
+    assert.equal(w.fetches.length, 1, "accepted replay never sends twice");
+  });
+
+  test(`${kind}: exact approval/action backlinks, tenant, contact and pending state remain mandatory`, async () => {
+    const cases: [string, (w: World) => void, string][] = [
+      ["foreign approval", (w) => { w.approvals[0].tenant_id = T2; }, "LEAD_REPLY_APPROVAL_NOT_FOUND"],
+      ["foreign action", (w) => { w.actions[0].tenant_id = T2; }, "LEAD_REPLY_APPROVAL_WRONG_KIND"],
+      ["different action approval", (w) => { w.actions[0].approval_id = AP2; }, "LEAD_REPLY_APPROVAL_WRONG_KIND"],
+      ["missing action origin", (w) => { w.approvals[0].metadata = {}; }, "LEAD_REPLY_APPROVAL_WRONG_KIND"],
+      ["different action origin", (w) => { w.approvals[0].metadata = { action_id: ACT2 }; }, "LEAD_REPLY_APPROVAL_WRONG_KIND"],
+      ["different action contact", (w) => { w.actions[0].contact_id = C2; }, "LEAD_REPLY_APPROVAL_CONTACT_MISMATCH"],
+      ["different approval contact", (w) => { w.approvals[0].contact_id = C2; }, "LEAD_REPLY_APPROVAL_CONTACT_MISMATCH"],
+      ["declined approval", (w) => { w.approvals[0].status = "rejected"; }, "LEAD_REPLY_APPROVAL_NOT_PENDING"],
+    ];
+    for (const [label, change, code] of cases) {
+      const w = replyWorld(kind); change(w);
+      const r = await call(w, { approval_id: AP });
+      assert.deepEqual([r.status, r.body.code], [409, code], label);
+      assert.equal(w.proposals.length, 0, label);
+      assertNoSend(w);
+    }
+  });
+
+  test(`${kind}: current owner/admin seat and selected workspace are required before a proposal`, async () => {
+    for (const [overrides, code] of [
+      [{ memberRole: "member" }, "COMMS_EMAIL_FORBIDDEN"],
+      [{ memberStatus: "inactive" }, "COMMS_EMAIL_FORBIDDEN"],
+      [{ profileTenant: T2 }, "WORKSPACE_CHANGED"],
+      [{ profileTenant: null }, "WORKSPACE_CHANGED"],
+      [{ currentTenant: T2 }, "WORKSPACE_CHANGED"],
+    ] as [Partial<World>, string][]) {
+      const w = replyWorld(kind, overrides);
+      const r = await call(w, { approval_id: AP });
+      assert.equal(r.body.code, code, JSON.stringify(overrides));
+      assert.equal(w.proposals.length, 0);
+      assertNoSend(w);
+    }
+    const adminSeat = replyWorld(kind, { memberRole: "admin" });
+    assert.equal((await call(adminSeat, { approval_id: AP })).status, 202);
+    assertNoSend(adminSeat);
+  });
+
+  test(`${kind}: changed approval, origin, scope or recipient after proposal never reaches native prepare`, async () => {
+    const changes: ((w: World) => void)[] = [
+      (w) => { w.approvals[0].status = "approved"; },
+      (w) => { w.actions[0].approval_id = AP2; },
+      (w) => { w.approvals[0].metadata = { action_id: ACT2 }; },
+      (w) => { w.currentTenant = T2; },
+      (w) => { w.memberRole = "member"; },
+      (w) => { w.actions[0].contact_id = C2; w.approvals[0].contact_id = C2; },
+    ];
+    for (const change of changes) {
+      const w = replyWorld(kind);
+      const p = await call(w, { approval_id: AP });
+      assert.equal(p.status, 202);
+      change(w);
+      const r = await call(w, { approval_id: AP, approved_fingerprint: p.body.fingerprint });
+      assert.ok(r.status >= 400, JSON.stringify(r.body));
+      assertNoSend(w);
+    }
+  });
+
+  test(`${kind}: live/unknown/accepted other operations block a new proposal; native refusal remains controlling`, async () => {
+    for (const state of ["prepared", "dispatching", "unknown", "provider_accepted"]) {
+      const w = replyWorld(kind, { messages: [{ tenant_id: T, [BINDING_APPROVAL]: AP, operation_id: OP2, state }] });
+      const r = await call(w, { approval_id: AP });
+      assert.deepEqual([r.status, r.body.code], [409, state === "provider_accepted" ? "LEAD_REPLY_APPROVAL_ALREADY_SENT" : "LEAD_REPLY_APPROVAL_SEND_IN_PROGRESS"]);
+      assert.equal(w.proposals.length, 0);
+      assertNoSend(w);
+    }
+    const w = replyWorld(kind);
+    const p = await call(w, { approval_id: AP });
+    assert.equal(p.status, 202);
+    w.prepareError = { code: "55000", message: "COMMS_EMAIL_APPROVAL_INVALID" };
+    const r = await call(w, { approval_id: AP, approved_fingerprint: p.body.fingerprint });
+    assert.deepEqual([r.body.outcome, r.body.reason], ["refused", "LEAD_REPLY_APPROVAL_INVALID"]);
+    assert.deepEqual(w.fetches, []);
+    assert.ok(!rpcNames(w).includes("lead_reply_record_send_service"));
+  });
+
+  test(`${kind}: provider acceptance with failed bookkeeping stays accepted and never permits another send`, async () => {
+    const w = replyWorld(kind, { recordResult: { data: null, error: { code: "XX000", message: "fixture record failure" } } });
+    const p = await call(w, { approval_id: AP });
+    assert.equal(p.status, 202);
+    const r = await call(w, { approval_id: AP, approved_fingerprint: p.body.fingerprint });
+    assert.deepEqual([r.body.outcome, r.body.record_status, r.body.delivery_confirmed], ["provider_accepted", "pending_record", false]);
+    const again = await call(w, { approval_id: AP, operation_id: OP2 });
+    assert.deepEqual([again.status, again.body.code], [409, "LEAD_REPLY_APPROVAL_ALREADY_SENT"]);
+    assert.equal(w.fetches.length, 1);
+  });
+}
+
+test("approval validation keeps the email-kind set closed with no coercion", async () => {
+  for (const kind of ["owner.sms_nudge", "sales.work_followup", "comms-draft-reply", "client.followup ", "CLIENT.FOLLOWUP", "owner.followup_email.extra", null, { toString: () => "client.followup" }]) {
+    const w = world({ actions: [{ id: ACT, tenant_id: T, approval_id: AP, action_kind: kind, contact_id: C }] });
+    assert.equal(await verifyLeadReplyApproval(admin(w), { tenantId: T, approvalId: AP, contactId: C }), "LEAD_REPLY_APPROVAL_WRONG_KIND");
+  }
 });

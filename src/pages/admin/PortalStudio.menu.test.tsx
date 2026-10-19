@@ -64,15 +64,17 @@ afterEach(() => { act(() => root.unmount()); qc.clear(); container.remove(); });
 describe("Customer portal menu editor", () => {
   it("lists the fixed entries as always on and every configurable entry this business can offer, by group", async () => {
     expect(card().querySelector("h2")?.textContent).toBe("Customer portal menu");
-    expect(editorRows()).toEqual(["# Always shown", "home", "messages", "# Your work", "progress", "actions", "sessions", "# Paperwork", "documents", "# Learn", "resources"]);
+    expect(editorRows()).toEqual(["# Always shown", "home", "messages", "# Your work", "progress", "actions", "sessions", "# Paperwork", "documents", "agreements", "# Learn", "resources"]);
     for (const key of ["home", "messages"]) {
       const row = card().querySelector(`[data-menu-row="${key}"]`)!;
       expect(row.textContent).toContain("Always on");
       expect(row.querySelector('[role="switch"]')).toBeNull();
       expect(row.querySelector("input")).toBeNull();
     }
-    // Payments has no live route yet and the generic catalog lists no Agreements: no row, no "Coming soon".
-    expect(card().textContent).not.toMatch(/Payments|Agreements|Coming soon/);
+    // Payments has no live route yet: no row, no "Coming soon". Agreements is every customer's since Slice A (D-A1),
+    // and its row says where those agreements come from.
+    expect(card().textContent).not.toMatch(/Payments|Coming soon/);
+    expect(row("agreements").textContent).toContain("Agreements you send from Sales");
     expect(card().textContent).toContain("Get help, Account, Settings and Sign out are always at the bottom");
     expect(card().textContent).toMatch(/tell Paige/i);
   });
@@ -84,8 +86,8 @@ describe("Customer portal menu editor", () => {
     await type("Name for Sessions", "Coaching calls");
     await click(byLabel("Show Documents"));
     await click(byLabel("Move Progress down"));
-    expect(preview()).toEqual(["Home", "Messages", "Action items", "Progress", "Coaching calls", "Resources"]);
-    expect(preview()).toEqual(expected([{ key: "actions", order: 0 }, { key: "progress", order: 1 }, { key: "sessions", order: 2, label: "Coaching calls" }, { key: "documents", visible: false }, { key: "resources", order: 4 }]));
+    expect(preview()).toEqual(["Home", "Messages", "Action items", "Progress", "Coaching calls", "Agreements", "Resources"]);
+    expect(preview()).toEqual(expected([{ key: "actions", order: 0 }, { key: "progress", order: 1 }, { key: "sessions", order: 2, label: "Coaching calls" }, { key: "documents", visible: false }, { key: "agreements", order: 4 }, { key: "resources", order: 5 }]));
     expect(db.calls).toEqual([]);
   });
 
@@ -140,7 +142,7 @@ describe("Customer portal menu editor", () => {
     await act(async () => { await qc.invalidateQueries(); }); await flush();
     await click(byLabel("Show Resources"));
     await click(button("Save menu"));
-    const kept = db.calls[0]._patch.modules!.slice(5);
+    const kept = db.calls[0]._patch.modules!.slice(6);
     expect(kept).toEqual([{ key: "legacy-key", visible: false }, { key: "other-key" }, { key: "third-key", label: "y".repeat(39) }]);
     expect(status()?.textContent).toMatch(/Menu saved/);
   });
@@ -158,7 +160,8 @@ describe("Customer portal menu editor", () => {
       { key: "actions", visible: true, order: 1 },
       { key: "sessions", visible: true, order: 2, label: "Coaching calls" },
       { key: "documents", visible: true, order: 3 },
-      { key: "resources", visible: false, order: 4 },
+      { key: "agreements", visible: true, order: 4 },
+      { key: "resources", visible: false, order: 5 },
       { key: "legacy-key", visible: false, order: 9 },
       { key: "home", order: 0 },
     ] } });
@@ -244,9 +247,9 @@ describe("Customer portal menu editor", () => {
     act(() => root.unmount()); qc.clear(); root = createRoot(container);
     db.features = { playbook_config: { persona: { name: "Guide", greeting: "Hi" }, portal: { modules: [{ key: "home", label: "Home" }, { key: "approvals", label: "Sign-offs" }, { key: "agreements", label: "Agreements" }] } } };
     await render();
-    // Agreements is listed, but its route is still the platform-terms page: no row until Slice A (held from clients).
-    // Resources is core for customers (§58): a row even though this Playbook does not list it.
-    expect(editorRows()).toEqual(["# Always shown", "home", "messages", "# Your work", "progress", "actions", "sessions", "approvals", "# Paperwork", "documents", "# Learn", "resources"]);
+    // Agreements is the customer's own agreements since Slice A: a row. Resources is core for customers (§58): a row
+    // even though this Playbook does not list it.
+    expect(editorRows()).toEqual(["# Always shown", "home", "messages", "# Your work", "progress", "actions", "sessions", "approvals", "# Paperwork", "documents", "agreements", "# Learn", "resources"]);
     expect(byLabel<HTMLInputElement>("Name for Sign-offs").value).toBe("Sign-offs");
   });
 });

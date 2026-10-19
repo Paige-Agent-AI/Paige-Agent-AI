@@ -350,11 +350,15 @@ Deno.serve(async (req) => {
     // header (door semantics): present = provider accepted, absent = ambiguous.
     const providerMessageId = response.headers.get('X-Message-Id')
     if (!response.ok || !providerMessageId) {
+      // Keep a bounded slice of the provider's own error body (sendgrid_400
+      // alone hid the actionable reason during the live recovery; the body
+      // carries SendGrid's field-level message, never credentials).
+      const providerDetail = (await response.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 180)
       await admin
         .from('email_send_log')
         .update({
           status: 'failed',
-          error_message: 'sendgrid_' + response.status + (response.ok ? '_no_message_id' : ''),
+          error_message: ('sendgrid_' + response.status + (response.ok ? '_no_message_id' : '') + ' ' + providerDetail).slice(0, 300),
         })
         .eq('message_id', messageId)
         .eq('status', 'pending')

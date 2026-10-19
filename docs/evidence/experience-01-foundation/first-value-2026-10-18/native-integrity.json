@@ -1,0 +1,174 @@
+{
+ "capturedAt": "2026-10-18",
+ "headAtCapture": "pre-commit working tree that became the ALG first-value slice on branch zcod/e01-alg-first-value (blob bindings below are exact)",
+ "process": "temporary vite harness (tmp-capture/, uncommitted) mounting the actual SoloBusinessInterview + SoloFirstValue with synthetic context stubs; Playwright Chromium reduced-motion; direct browser PNG captures (no crop/resize); dimensions verified by independent IHDR decode",
+ "syntheticOnly": "no auth, no network, no provider, no writes; __CAPTURE_WEB_IDENTITY__ init script varies the identity state",
+ "sources": {
+  "src/solo/first-value-recommendation.ts": {
+   "gitBlobSha1": "29e198519bb9dfc6a31112d349e630fe7d47b6bf"
+  },
+  "src/solo/first-value-recommendation.test.ts": {
+   "gitBlobSha1": "e4df6bdbe30150a36a598d41095f38d10df80da1"
+  },
+  "src/solo/SoloFirstValue.tsx": {
+   "gitBlobSha1": "5625c5feb63c5018e0d8308f6a3c6dda6161ee70"
+  },
+  "src/solo/SoloFirstValue.test.tsx": {
+   "gitBlobSha1": "8f99053bbb95c78a8879305058bd1256170ed7e0"
+  },
+  "src/solo/SoloBusinessInterview.tsx": {
+   "gitBlobSha1": "e86743901c7b59134f2b256c3ed639afcfed2dd9"
+  },
+  "src/solo/solo-business-interview.css": {
+   "gitBlobSha1": "b7b2c8b19cd71522970f1c3f65902b9718cb8ffb"
+  },
+  "src/solo/data/useSoloBusinessContext.ts": {
+   "gitBlobSha1": "62e3c2179cffc4cca2b23a8b58189095aab7416e"
+  }
+ },
+ "frames": {
+  "fv-1024x768-dark-closed.png": {
+   "sha256": "10d65903960739ab6594bc30a0da5ae11fc966ba462376d4d0b3568d4cf9890d",
+   "bytes": 12072,
+   "ihdr": {
+    "width": 1024,
+    "height": 768
+   }
+  },
+  "fv-1024x768-dark-open.png": {
+   "sha256": "b3474474d835daa15658b0fc5d767162851d4308b1f37a5afe4bb5ca2386c4e5",
+   "bytes": 28283,
+   "ihdr": {
+    "width": 1024,
+    "height": 768
+   }
+  },
+  "fv-1024x768-light-closed.png": {
+   "sha256": "f9b625ad8ef0ea43ca5f8ad8e553c896a79c62e431b438c1510dff1360f250d8",
+   "bytes": 12147,
+   "ihdr": {
+    "width": 1024,
+    "height": 768
+   }
+  },
+  "fv-1024x768-light-open.png": {
+   "sha256": "fe5c9ad13c80dd54c19296c6c1ddc08806b35d57d7c9b5c2ee192c6522ec72f7",
+   "bytes": 28660,
+   "ihdr": {
+    "width": 1024,
+    "height": 768
+   }
+  },
+  "fv-1366x768-dark-closed.png": {
+   "sha256": "db354429c4fef62fbf5c5e25eb34fdec3abfce2a8017cb64ade0e901b837add3",
+   "bytes": 13164,
+   "ihdr": {
+    "width": 1366,
+    "height": 768
+   }
+  },
+  "fv-1366x768-dark-open.png": {
+   "sha256": "5ea6e072fa6d50480be04075d5214ceda1955ff720a70dbb607ba487845fc766",
+   "bytes": 29460,
+   "ihdr": {
+    "width": 1366,
+    "height": 768
+   }
+  },
+  "fv-1366x768-light-closed.png": {
+   "sha256": "aed829371adf8907c6b0f70427d557139e8067a9a3168afc5c9e2ba9500ae124",
+   "bytes": 13153,
+   "ihdr": {
+    "width": 1366,
+    "height": 768
+   }
+  },
+  "fv-1366x768-light-open.png": {
+   "sha256": "1147e543bab4005e78da756fcff5861d131345dbd2aaec8abb6222ff958a2d41",
+   "bytes": 29868,
+   "ihdr": {
+    "width": 1366,
+    "height": 768
+   }
+  },
+  "fv-1536x770-dark-closed.png": {
+   "sha256": "76e2a7ed472f7324877a5ff58c3aacdc5a12c9396a7381fdc28f06f8100f5544",
+   "bytes": 13414,
+   "ihdr": {
+    "width": 1536,
+    "height": 770
+   }
+  },
+  "fv-1536x770-dark-open.png": {
+   "sha256": "1ea9aaf07e09470f44743da236488227ab337dd9eab99942841f66e023ab14f6",
+   "bytes": 33960,
+   "ihdr": {
+    "width": 1536,
+    "height": 770
+   }
+  },
+  "fv-1536x770-light-closed.png": {
+   "sha256": "4798f6ac1662be9aaa32337361c84880711efbb06f7c3d84e90d0310f5c7708e",
+   "bytes": 13497,
+   "ihdr": {
+    "width": 1536,
+    "height": 770
+   }
+  },
+  "fv-1536x770-light-open.png": {
+   "sha256": "a3949494d8b8edd5a0d2904479e9a5ebca6eb56ead9a184cd6a5e913bd1f21f4",
+   "bytes": 34358,
+   "ihdr": {
+    "width": 1536,
+    "height": 770
+   }
+  },
+  "fv-900x1000-dark-closed.png": {
+   "sha256": "2b54b86811ca646c559209e9d9d5d555762bbb5965e5fde31ea96f09d0e60d10",
+   "bytes": 12948,
+   "ihdr": {
+    "width": 900,
+    "height": 1000
+   }
+  },
+  "fv-900x1000-dark-dismissed.png": {
+   "sha256": "3942224dafd93faf2c01a2a10c0178b968f98515521104d3b9528a6fc5329c69",
+   "bytes": 15751,
+   "ihdr": {
+    "width": 900,
+    "height": 1000
+   }
+  },
+  "fv-900x1000-dark-open.png": {
+   "sha256": "4ce76f55f15c2a780ed4ceac70377e5e7a826c4de875de21a6d044cc13e6d05f",
+   "bytes": 36568,
+   "ihdr": {
+    "width": 900,
+    "height": 1000
+   }
+  },
+  "fv-900x1000-light-closed.png": {
+   "sha256": "b37364d2eaa81e1e54c6f49fb058400984355ac6368b3869298d63c39ccabee5",
+   "bytes": 12957,
+   "ihdr": {
+    "width": 900,
+    "height": 1000
+   }
+  },
+  "fv-900x1000-light-open.png": {
+   "sha256": "c8a6677761f4e90684345bf79abaedf071b0b12439125315e17c23bda09f9ece",
+   "bytes": 37113,
+   "ihdr": {
+    "width": 900,
+    "height": 1000
+   }
+  }
+ },
+ "domAssertions": {
+  "sectionAriaLabel": "Grounded next steps",
+  "logicVersionAttribute": "data-logic-version=1 on the section",
+  "noPriorityCase": "single foundational confirm-priority action, no dismiss buttons",
+  "confirmedCase": "ranked actions quote the confirmed priority and industry; availability labels present incl. Not yet available for reserved-web publish",
+  "dismissInteraction": "component test asserts visit-local dismissal and the honest returns-next-visit note; the 900x1000 dismissed frame records the interaction"
+ }
+}

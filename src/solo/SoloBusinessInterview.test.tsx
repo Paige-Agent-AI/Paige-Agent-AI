@@ -19,7 +19,7 @@ beforeEach(() => {
   state.tenant = "tenant-a"; state.rpc.mockReset(); state.save.mockReset(); state.refresh.mockReset();
   state.context = { loading: false, error: null, saving: false, accessScope: "owner_full", resolvedTenantId: "tenant-a", contextRevision: 7,
     brief: cleanSoloSetupBrief({ publicName: "Test business", industry: "Consulting", provenance: { industry: { source: "connection_sourced", confidence: "observed" } }, updatedAt: "original" }),
-    pendingProposal: null, businessOwners: [{ id: "existing-owner" }], primaryBusinessEmail: "test@example.invalid", knowledgeSources: [{ id: "existing-source" }], paigeProfile: { identity: "existing-profile" }, voiceExamples: [{ id: "existing-example" }], save: state.save, refresh: state.refresh };
+    pendingProposal: null, businessOwners: [{ id: "existing-owner" }], primaryBusinessEmail: "test@example.invalid", primaryBusinessEmailProvenance: { source: "needs_confirmation", confidence: "unknown" }, webIdentity: "none", knowledgeSources: [{ id: "existing-source" }], paigeProfile: { identity: "existing-profile" }, voiceExamples: [{ id: "existing-example" }], save: state.save, refresh: state.refresh };
   state.rpc.mockImplementation(async (_name, args) => ({ data: args._checkpoint ? { tenantId: state.tenant, threadId: args._thread_id, ...args._checkpoint, contextRevisionAtCheckpoint: args._expected_context_revision } : null, error: null }));
   host = document.createElement("div"); document.body.append(host); root = createRoot(host);
 });

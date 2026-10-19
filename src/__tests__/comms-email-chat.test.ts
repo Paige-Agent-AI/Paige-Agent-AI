@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { COMMS_EMAIL_TOOLS, COMMS_EMAIL_TOOL_NAMES, commsEmailChatSafeResult, commsEmailConfirmPreview, commsEmailOperationId, dispatchCommsEmailChat } from '../../supabase/functions/_shared/comms-email/chat.ts';
 import { COMMS_EMAIL_SEND_CAPABILITY } from '../../supabase/functions/_shared/paige-spine/domains/comms.ts';
 import { classifySpentApproval } from '../../supabase/functions/_shared/approval-outcome.ts';
@@ -319,6 +319,213 @@ describe('comms.email_send Chat dispatch', () => {
   });
 });
 
+describe('server-bound follow-up email Chat contract', () => {
+  const actor = '88888888-8888-4888-8888-888888888888', thread = '99999999-9999-4999-8999-999999999999';
+  const actionId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', approvalId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  const secondAction = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', secondApproval = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+  const origin = () => ({ actionId, approvalId, contactId: contact, tenantId: tenant, actorId: actor, threadId: thread });
+  const bound = () => ({ ...context, userId: actor, turn: { ...turn, thread_id: thread }, followupOrigin: origin(), current: () => true });
+  const stored = (extra: Record<string, unknown> = {}) => ({ expected_tenant_id: tenant, operation_id: operation, command, approval_id: approvalId, ...extra });
+  const approved = () => ({ ...bound(), approved: new Set([fingerprint]) });
+  const deferred = <T,>() => { let resolve!: (value: T) => void; const promise = new Promise<T>(yes => { resolve = yes; }); return { promise, resolve }; };
+
+  it('keeps the legacy unbound identity and body byte-compatible', async () => {
+    expect(await commsEmailOperationId(tenant, 'actor', command, turn)).toBe('fc5eaa99-56f6-466d-a239-96fd878df695');
+    const h = harness([{ fingerprint, args: stored() }]);
+    await dispatchCommsEmailChat(context, h.deps as never);
+    expect(h.predicates).toEqual([]); // A lookup row cannot invent a fresh origin.
+    expect(h.calls[0].options.body).not.toHaveProperty('approval_id');
+  });
+
+  it('proposes the exact server origin without exposing its context or inventing another door', async () => {
+    const h = harness(); const r = await dispatchCommsEmailChat(bound(), h.deps as never);
+    expect(h.calls).toHaveLength(1); expect(h.calls[0].name).toBe('comms-email-command');
+    expect(h.calls[0].options.body.approval_id).toBe(approvalId);
+    expect(Object.keys(h.calls[0].options.body).sort()).toEqual(['approval_id', 'command', 'expected_tenant_id', 'operation_id']);
+    expect(JSON.stringify(r)).not.toContain(approvalId); expect(JSON.stringify(r)).not.toContain(actionId);
+    expect(r.content).toMatchObject({ needs_confirm: true }); expect(r.spent).toBeUndefined();
+  });
+
+  it('keeps same-origin requests stable and separates different origins from each other and unbound email', async () => {
+    const a = harness(), repeat = harness(), other = harness(), unbound = harness();
+    await dispatchCommsEmailChat(bound(), a.deps as never);
+    await dispatchCommsEmailChat({ ...bound(), followupOrigin: { ...origin(), approvalId: approvalId.toUpperCase(), actionId: actionId.toUpperCase() } }, repeat.deps as never);
+    await dispatchCommsEmailChat({ ...bound(), followupOrigin: { ...origin(), approvalId: secondApproval, actionId: secondAction } }, other.deps as never);
+    const manual = { ...bound() } as Record<string, unknown>; delete manual.followupOrigin;
+    await dispatchCommsEmailChat(manual as never, unbound.deps as never);
+    const id = (h: ReturnType<typeof harness>) => h.calls[0].options.body.operation_id;
+    expect(id(a)).toBe(id(repeat)); expect(id(a)).not.toBe(id(other)); expect(id(a)).not.toBe(id(unbound));
+  });
+
+  it('refuses every malformed or foreign server origin before lookup or invocation', async () => {
+    const missing = { ...origin() } as Record<string, unknown>; delete missing.actionId;
+    for (const bad of [undefined, null, [], {}, missing, { ...origin(), extra: true }, ...Object.keys(origin()).map(key => ({ ...origin(), [key]: 'not-a-uuid' })),
+      { ...origin(), actorId: secondAction }, { ...origin(), tenantId: secondAction }, { ...origin(), threadId: secondAction }, { ...origin(), contactId: secondAction }]) {
+      const h = harness(); const r = await dispatchCommsEmailChat({ ...bound(), followupOrigin: bad } as never, h.deps as never);
+      expect(h.calls, JSON.stringify(bad)).toEqual([]); expect(h.predicates).toEqual([]); expect(r.refusal).toBe('unclaimable');
+      expect(r.content).not.toHaveProperty('needs_confirm'); expect(String(r.content.note)).not.toMatch(/fresh email request|propose.*again/i);
+    }
+    for (const c of [{ ...bound(), current: undefined }, { ...bound(), turn: { ...turn, thread_id: null } }]) {
+      const h = harness(); expect((await dispatchCommsEmailChat(c as never, h.deps as never)).refusal).toBe('unclaimable'); expect(h.calls).toEqual([]);
+    }
+  });
+
+  it('keeps all model authority fields forbidden even beside a valid server origin', async () => {
+    for (const extra of [{ approval_id: approvalId }, { followupOrigin: origin() }, { operation_id: operation }, { actorId: actor }, { recipient: 'other@example.test' }, { sender: connector }, { governance: {} }]) {
+      const h = harness(); await dispatchCommsEmailChat({ ...bound(), args: { ...args, ...extra } }, h.deps as never); expect(h.calls).toEqual([]);
+    }
+    expect(COMMS_EMAIL_TOOLS[0].function.parameters.properties).not.toHaveProperty('approval_id');
+  });
+
+  it('redeems only the stored origin, operation and command despite model drift', async () => {
+    const h = harness([{ fingerprint, args: stored() }], { ok: true, outcome: 'provider_accepted' });
+    const c = { ...approved(), args: { ...args, body: 'Model drift' } } as Record<string, unknown>; delete c.followupOrigin;
+    const r = await dispatchCommsEmailChat(c as never, h.deps as never);
+    expect(h.calls[0].options.body).toEqual({ expected_tenant_id: tenant, operation_id: operation, command, approved_fingerprint: fingerprint, approval_id: approvalId });
+    expect(r.spent).toBe(fingerprint); expect(r.content).toMatchObject({ success: true, delivery_confirmed: false });
+  });
+
+  it('refuses an optional-present malformed stored approval instead of silently sending unbound', async () => {
+    for (const id of [undefined, null, '', ' ', 'no', 42, [], {}]) {
+      const h = harness([{ fingerprint, args: stored({ approval_id: id }) }]);
+      const r = await dispatchCommsEmailChat(approved(), h.deps as never);
+      expect(h.calls, String(id)).toEqual([]); expect(r.refusal).toBe('unclaimable'); expect(r.spent).toBeUndefined(); expect(r.content).not.toHaveProperty('needs_confirm');
+    }
+  });
+
+  it('never replaces a stored origin or attaches a fresh origin to an unbound approved card', async () => {
+    const unbound = stored(); delete (unbound as Record<string, unknown>).approval_id;
+    for (const row of [stored({ approval_id: secondApproval }), unbound]) {
+      const h = harness([{ fingerprint, args: row }]); const r = await dispatchCommsEmailChat(approved(), h.deps as never);
+      expect(h.calls).toEqual([]); expect(r.refusal).toBe('unclaimable'); expect(r.content).not.toHaveProperty('needs_confirm');
+    }
+  });
+
+  it('selects the exact trusted origin for two approvals for the same contact and otherwise stays ambiguous', async () => {
+    const otherFingerprint = '0123456789abcdef';
+    const rows = [{ fingerprint: otherFingerprint, args: stored({ approval_id: secondApproval }) }, { fingerprint, args: stored() }];
+    const h = harness(rows), c = { ...approved(), approved: new Set([fingerprint, otherFingerprint]) };
+    await dispatchCommsEmailChat(c, h.deps as never); expect(h.calls[0]?.options.body).toMatchObject({ approval_id: approvalId, approved_fingerprint: fingerprint });
+    const absent = { ...c } as Record<string, unknown>; delete absent.followupOrigin;
+    const ambiguous = harness(rows); expect((await dispatchCommsEmailChat(absent as never, ambiguous.deps as never)).refusal).toBe('ambiguous'); expect(ambiguous.calls).toEqual([]);
+  });
+
+  it('refuses duplicate fingerprints and malformed bound rows without dropping them into another send', async () => {
+    for (const rows of [[{ fingerprint, args: stored() }, { fingerprint, args: stored({ approval_id: secondApproval }) }],
+      [{ fingerprint, args: stored() }, { fingerprint: '0123456789abcdef', args: stored({ approval_id: null }) }]]) {
+      const h = harness(rows); const r = await dispatchCommsEmailChat({ ...approved(), approved: new Set([fingerprint, '0123456789abcdef']) }, h.deps as never);
+      expect(h.calls).toEqual([]); expect(r.refusal).toBeTruthy();
+    }
+  });
+
+  it('retains scoped-token, foreign stored scope, malformed fingerprint, bounds and lookup refusals', async () => {
+    for (const [rows, tokens] of [[[{ fingerprint, args: stored() }], new Set([fingerprint + ':client'])],
+      [[{ fingerprint, args: stored({ expected_tenant_id: secondAction }) }], new Set([fingerprint])],
+      [[{ fingerprint: 'bad', args: stored() }], new Set(['bad'])],
+      [Array.from({ length: 17 }, (_, i) => ({ fingerprint: i.toString(16).padStart(16, '0'), args: stored() })), new Set([fingerprint])]] as const) {
+      const h = harness([...rows]); expect((await dispatchCommsEmailChat({ ...bound(), approved: new Set(tokens) }, h.deps as never)).refusal).toBeTruthy(); expect(h.calls).toEqual([]);
+    }
+    const h = harness(); h.deps.admin.from = () => { throw Error('private read failure'); };
+    expect((await dispatchCommsEmailChat(approved(), h.deps as never)).refusal).toBe('lookup_failed'); expect(h.calls).toEqual([]);
+  });
+
+  it('snapshots server binding, context, selected tokens and the original caller method before awaiting', async () => {
+    const h = harness([{ fingerprint, args: stored() }]); const pending = deferred<{ data: unknown[]; error: null }>();
+    h.deps.admin.from('paige_pending_confirmations').limit = () => pending.promise;
+    const c = approved(), running = dispatchCommsEmailChat(c, h.deps as never), borrowed = vi.fn(async () => ({ data: {}, error: null }));
+    c.followupOrigin.approvalId = secondApproval; c.followupOrigin.actorId = secondAction; c.userId = secondAction; c.tenantId = secondAction;
+    c.turn.thread_id = secondAction; c.approved.add('0123456789abcdef'); h.deps.caller.functions.invoke = borrowed;
+    pending.resolve({ data: [{ fingerprint, args: stored() }], error: null }); await running;
+    expect(borrowed).not.toHaveBeenCalled(); expect(h.calls).toHaveLength(1); expect(h.calls[0].options.body).toMatchObject({ expected_tenant_id: tenant, approval_id: approvalId });
+  });
+
+  it('honors Stop, thrown fences and monotonic scope ABA before handing anything to the door', async () => {
+    for (const current of [() => false, () => { throw Error('withdrawn'); }]) {
+      const h = harness(); expect((await dispatchCommsEmailChat({ ...bound(), current }, h.deps as never)).refusal).toBe('unclaimable'); expect(h.calls).toEqual([]);
+    }
+    let generation = 1; const admittedGeneration = generation, h = harness([{ fingerprint, args: stored() }]);
+    const pending = deferred<{ data: unknown[]; error: null }>(); h.deps.admin.from('paige_pending_confirmations').limit = () => pending.promise;
+    const run = dispatchCommsEmailChat({ ...approved(), current: () => generation === admittedGeneration }, h.deps as never);
+    generation++; generation++; // A -> B -> A retains a newer generation.
+    pending.resolve({ data: [{ fingerprint, args: stored() }], error: null }); const r = await run;
+    expect(h.calls).toEqual([]); expect(r.refusal).toBe('unclaimable');
+    let checks = 0; const sticky = harness();
+    await dispatchCommsEmailChat({ ...bound(), current: () => ++checks === 1 }, sticky.deps as never); expect(sticky.calls).toEqual([]);
+  });
+
+  it('treats withdrawal after invocation as unknown while retaining the spent token', async () => {
+    let active = true; const h = harness([{ fingerprint, args: stored() }]);
+    h.deps.caller.functions.invoke = async (name, options) => { h.calls.push({ name, options }); active = false; return { data: { ok: true, outcome: 'provider_accepted', message_id: 'private' }, error: null }; };
+    const r = await dispatchCommsEmailChat({ ...approved(), current: () => active }, h.deps as never);
+    expect(h.calls).toHaveLength(1); expect(r.spent).toBe(fingerprint); expect(r.content).toMatchObject({ success: false, outcome: 'outcome_unknown' });
+    expect(r.content).not.toHaveProperty('not_applied'); expect(JSON.stringify(r)).not.toContain('private'); expect(String(r.content.note)).toMatch(/Do not resend/);
+  });
+
+  it('keeps all uncertain and claimed responses on the original operation without retry or reproposal', async () => {
+    for (const reply of [null, {}, { outcome: 'prepared' }, { outcome: 'dispatching' }, { outcome: 'unknown' }, { outcome: 'outcome_unknown' }]) {
+      const h = harness([{ fingerprint, args: stored() }], reply); const r = await dispatchCommsEmailChat(approved(), h.deps as never);
+      expect(h.calls).toHaveLength(1); expect(h.calls[0].options.body).toMatchObject({ operation_id: operation, approval_id: approvalId });
+      expect(r.spent).toBe(fingerprint); expect(r.content).toMatchObject({ outcome: 'outcome_unknown' }); expect(r.content).not.toHaveProperty('needs_confirm');
+    }
+    const h = harness([{ fingerprint, args: stored() }]); h.deps.caller.functions.invoke = async (name, options) => { h.calls.push({ name, options }); throw Error('Lost ACK'); };
+    expect((await dispatchCommsEmailChat(approved(), h.deps as never)).content.outcome).toBe('outcome_unknown'); expect(h.calls).toHaveLength(1);
+  });
+
+  it('gives repeated and concurrent requests the same identity while leaving atomic sending to the door', async () => {
+    const h = harness(); await Promise.all([dispatchCommsEmailChat(bound(), h.deps as never), dispatchCommsEmailChat(bound(), h.deps as never)]);
+    expect(h.calls).toHaveLength(2); expect(h.calls[0].options.body).toEqual(h.calls[1].options.body); expect(h.calls[0].options.body.approval_id).toBe(approvalId);
+  });
+
+  it('keeps delivery and pending-record truth closed without exposing origin identifiers', async () => {
+    const h = harness([{ fingerprint, args: stored() }], { ok: true, outcome: 'provider_accepted', record_status: 'pending_record', approval_id: approvalId, message_id: 'private' });
+    const r = await dispatchCommsEmailChat(approved(), h.deps as never);
+    expect(r.content).toMatchObject({ success: true, delivery_confirmed: false }); expect(String(r.content.note)).toContain('accepted for delivery');
+    expect(JSON.stringify(r)).not.toContain(approvalId); expect(JSON.stringify(r)).not.toContain('private'); expect(r.content).not.toHaveProperty('followup_completed');
+  });
+
+  it('keeps the delegated Portal tool contract separate from email origin authority', async () => {
+    expect(COMMS_EMAIL_TOOLS[1].function.parameters).toEqual({ type: 'object', properties: { contact_id: expect.any(Object) }, required: ['contact_id'], additionalProperties: false });
+    expect(COMMS_EMAIL_TOOLS[1].function.parameters.properties).not.toHaveProperty('approval_id');
+    const h = harness(); await dispatchCommsEmailChat({ ...bound(), toolName: 'client_portal_invitation_send', args: { contact_id: contact } }, h.deps as never);
+    expect(h.calls).toHaveLength(1); expect(h.calls[0].name).toBe('send-portal-invite');
+    expect(h.calls.every(c => !Object.prototype.hasOwnProperty.call(c.options.body, 'approval_id'))).toBe(true);
+  });
+
+  it('replays the exact server-pinned original operation after its live lookup disappeared or was consumed', async () => {
+    for (const reply of [{ ok: true, outcome: 'provider_accepted', replayed: true }, { ok: false, outcome: 'outcome_unknown' }]) {
+      const h = harness([], reply); const r = await dispatchCommsEmailChat({ ...bound(), pinned: { fingerprint, args: stored() } } as never, h.deps as never);
+      expect(h.predicates).toEqual([]); expect(h.calls).toHaveLength(1);
+      expect(h.calls[0].options.body).toEqual({ expected_tenant_id: tenant, operation_id: operation, command, approved_fingerprint: fingerprint, approval_id: approvalId });
+      expect(r.tokens).toEqual([fingerprint]); expect(r.spent).toBe(fingerprint); expect(r.content).not.toHaveProperty('needs_confirm');
+    }
+    // The existing root settlement layer owns retiring any newly offered card. The adapter must
+    // expose the actual response with the ORIGINAL spent token, not hide it or mint another op.
+    const reproposed = harness();
+    const r = await dispatchCommsEmailChat({ ...bound(), pinned: { fingerprint, args: stored() } }, reproposed.deps as never);
+    expect(reproposed.predicates).toEqual([]); expect(reproposed.calls).toHaveLength(1);
+    expect(reproposed.calls[0].options.body).toMatchObject({ operation_id: operation, approved_fingerprint: fingerprint, approval_id: approvalId });
+    expect(r.spent).toBe(fingerprint); expect(r.content).toMatchObject({ needs_confirm: true, confirm_fingerprint: fingerprint });
+  });
+
+  it('never turns a malformed, foreign or unverifiable pin into a fresh operation or proposal', async () => {
+    for (const pinned of [undefined, null, {}, { fingerprint }, { fingerprint: 'bad', args: stored() }, { fingerprint, args: null },
+      { fingerprint, args: stored(), extra: true }, { fingerprint, args: stored({ expected_tenant_id: secondAction }) },
+      { fingerprint, args: stored({ operation_id: '' }) }, { fingerprint, args: stored({ command: { ...command, body: '' } }) }, { fingerprint, args: stored({ approval_id: null }) }]) {
+      const h = harness(); const r = await dispatchCommsEmailChat({ ...bound(), pinned } as never, h.deps as never);
+      expect(h.predicates).toEqual([]); expect(h.calls).toEqual([]); expect(r.refusal).toBe('unclaimable'); expect(r.content).not.toHaveProperty('needs_confirm');
+    }
+    const h = harness(); await dispatchCommsEmailChat({ ...bound(), current: undefined, pinned: { fingerprint, args: stored() } } as never, h.deps as never); expect(h.calls).toEqual([]);
+  });
+
+  it('retains unbound pinned replay without borrowing fresh origin from any lookup row', async () => {
+    const manual = { ...bound(), pinned: { fingerprint, args: { expected_tenant_id: tenant, operation_id: operation, command } } } as Record<string, unknown>; delete manual.followupOrigin;
+    const h = harness([{ fingerprint, args: stored() }], { ok: true, outcome: 'provider_accepted', replayed: true });
+    const r = await dispatchCommsEmailChat(manual as never, h.deps as never);
+    expect(h.predicates).toEqual([]); expect(h.calls[0].options.body).toEqual({ expected_tenant_id: tenant, operation_id: operation, command, approved_fingerprint: fingerprint });
+    expect(r.spent).toBe(fingerprint); expect(r.content.replayed).toBe(true);
+  });
+});
+
 // The ACTUAL paige-ai-chat branch and confirm-trace line, executed with injected bindings (the same
 // technique as sales-chat-cancellation.test.ts). Proves containment and the card's preview hand-off,
 // not a hosted Chat drive.
@@ -330,14 +537,26 @@ const branchStart = chatSource.indexOf('if (COMMS_EMAIL_TOOL_NAMES.has(tc.functi
 const branchEnd = chatSource.indexOf('// ── THE ONE PUBLISH DOOR', branchStart);
 if (branchStart < 0 || branchEnd <= branchStart) throw Error('Actual comms email dispatch branch missing');
 const branch = compile(`return (async()=>{for(const tc of toolCalls){${chatSource.slice(branchStart, branchEnd)}}return toolResults})()`);
-async function chatBranch(cancellationsRecorded: boolean, current = true) {
+async function chatBranch(cancellationsRecorded: boolean, current = true, options: { pinned?: boolean; unresolved?: boolean; originCount?: number } = {}) {
   const calls: { ctx: Record<string, unknown>; deps: Record<string, unknown> }[] = [];
-  const run = async (ctx: Record<string, unknown>, deps: Record<string, unknown>) => { calls.push({ ctx, deps }); return { content: { success: true, outcome: 'provider_accepted' }, tokens: [fingerprint], refusal: undefined, spent: fingerprint }; };
+  const forwarded: { name: string; options: unknown }[] = [];
+  const run = async (ctx: Record<string, unknown>, deps: Record<string, unknown>) => {
+    calls.push({ ctx, deps });
+    await (deps.caller as { functions: { invoke(name: string, options: unknown): Promise<unknown> } }).functions.invoke('comms-email-command', { body: { original: true } });
+    return { content: { success: true, outcome: 'provider_accepted' }, tokens: [fingerprint], refusal: undefined, spent: fingerprint };
+  };
   const approvalSpend = new Map<string, string>();
   const approvalTokenTool = new Map();
-  const bindings = { cancellationsRecorded, revalidateProposalScope: async () => current, COMMS_EMAIL_TOOL_NAMES, toolCalls: [{ id: 'call-1', function: { name: 'comms_send_email', arguments: JSON.stringify(args) } }], toolResults: [], messages: [{ role: 'user', content: 'email Dana' }], personaCtx: { tenant_id: tenant }, user: { id: 'actor' }, approvedConfirmations: new Set([fingerprint]), payloadThreadId: 'thread', dispatchCommsEmailChat: run, supabaseClient: { caller: 'authenticated' }, supabaseUrl: 'test', supabaseServiceKey: 'fixture', createClient: () => ({ from: () => ({ select: () => ({}) }) }), approvalTokenTool, approvalRefusals: new Map(), approvalSpend };
+  const pin = { fingerprint, args: { expected_tenant_id: tenant, operation_id: operation, command }, toolName: 'comms_send_email' };
+  const settle = vi.fn(async (_tc: unknown, _pin: unknown, spent: string, content: unknown) => { approvalSpend.set(spent, 'call-1'); return content; });
+  const origins = new Map(Array.from({ length: options.originCount ?? 0 }, (_, n) => [String(n), { actionId: `action-${n}` }]));
+  const bindings = { cancellationsRecorded, revalidateProposalScope: async () => current, COMMS_EMAIL_TOOL_NAMES, toolCalls: [{ id: 'call-1', function: { name: 'comms_send_email', arguments: JSON.stringify(args) } }], toolResults: [], messages: [{ role: 'user', content: 'email Dana' }], personaCtx: { tenant_id: tenant }, user: { id: 'actor' }, approvedConfirmations: new Set([fingerprint]), payloadThreadId: 'thread', dispatchCommsEmailChat: run,
+    supabaseClient: { functions: { invoke: async (name: string, options: unknown) => { forwarded.push({ name, options }); return { data: {}, error: null }; } } },
+    doorPin: options.pinned ? pin : undefined, emailOriginUnavailable: false, unresolvedEmailOrigins: new Set(options.unresolved ? [{}] : []), emailOrigins: origins,
+    emailScopeCurrent: () => current, emailScopeWithdrawn: false, interactive: null, settlePinnedDoorResult: settle,
+    supabaseUrl: 'test', supabaseServiceKey: 'fixture', createClient: () => ({ from: () => ({ select: () => ({}) }) }), approvalTokenTool, approvalRefusals: new Map(), approvalSpend };
   const results = await new Function(...Object.keys(bindings), branch)(...Object.values(bindings)) as { content: string }[];
-  return { calls, caller: bindings.supabaseClient, approvalTokenTool, approvalSpend, result: JSON.parse(results[0].content) };
+  return { calls, forwarded, settle, pin, approvalTokenTool, approvalSpend, result: JSON.parse(results[0].content) };
 }
 describe('actual paige-ai-chat comms email wiring', () => {
   it('an unrecorded decline or a changed workspace sends nothing', async () => {
@@ -350,11 +569,28 @@ describe('actual paige-ai-chat comms email wiring', () => {
   it('dispatches through the caller JWT client with the turn, approvals and model args', async () => {
     const r = await chatBranch(true);
     expect(r.calls).toHaveLength(1);
-    expect(r.calls[0].deps.caller).toBe(r.caller);
+    // The scope-fenced wrapper still forwards to the original JWT caller, unchanged.
+    expect(r.forwarded).toEqual([{ name: 'comms-email-command', options: { body: { original: true } } }]);
     expect(r.calls[0].ctx).toMatchObject({ tenantId: tenant, userId: 'actor', toolName: 'comms_send_email', args, sameToolCalls: 1, turn: { thread_id: 'thread', user_turn_ordinal: 1, user_turn: 'email Dana' } });
     expect(r.approvalTokenTool.get(fingerprint)).toBe('comms_send_email');
     // The approval the door redeemed is recorded against this call, so the card reports what it did.
     expect(r.approvalSpend.get(fingerprint)).toBe('call-1');
+  });
+  it('hands the exact original pin to the helper and settles its result through the existing resume path', async () => {
+    const r = await chatBranch(true, true, { pinned: true, unresolved: true, originCount: 2 });
+    expect(r.calls).toHaveLength(1);
+    expect(r.calls[0].ctx.pinned).toEqual({ fingerprint, args: r.pin.args });
+    expect(r.calls[0].ctx.approved).toEqual(new Set([fingerprint]));
+    expect(r.calls[0].ctx).not.toHaveProperty('followupOrigin');
+    expect(r.settle).toHaveBeenCalledOnce();
+    expect(r.settle.mock.calls[0][1]).toBe(r.pin);
+  });
+  it('does not fall back to an unbound email after unresolved or ambiguous exact work continuation', async () => {
+    for (const options of [{ unresolved: true }, { originCount: 2 }]) {
+      const r = await chatBranch(true, true, options);
+      expect(r.calls).toEqual([]); expect(r.forwarded).toEqual([]);
+      expect(r.result).toMatchObject({ success: false, not_applied: true, error: 'email_origin_unconfirmed' });
+    }
   });
   it('the card frame carries the validated email preview as paige_confirm.preview', () => {
     const line = chatSource.split('\n').find(l => l.includes('confirmTrace.push({ tool: parsed.tool'));
@@ -367,10 +603,11 @@ describe('actual paige-ai-chat comms email wiring', () => {
     expect(without[0]).not.toHaveProperty('preview');
     expect(chatSource).toContain('emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_confirm: c })}\\n\\n`))');
   });
-  it('is not a resumable door tool: the door stores no thread, so a resume could never select it', () => {
+  it('resumes literal generic Comms only, preserving Portal invitation continuation outside this family', () => {
     const line = chatSource.split('\n').find(l => l.includes('const doorTools = ['));
     if (!line) throw Error('doorTools list missing');
     expect(line).not.toContain('COMMS_EMAIL_TOOL_NAMES');
+    expect(line).toContain('new Set(["comms_send_email"])');
   });
   it('the standing honesty rule reports provider acceptance as "sent (accepted for delivery)", never received or delivered', () => {
     const rule = chatSource.split('\n').find(l => l.startsWith('2. CONFIRM THE RESULT'));

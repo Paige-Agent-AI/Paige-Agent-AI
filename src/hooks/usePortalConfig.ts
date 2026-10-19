@@ -33,6 +33,16 @@ const db = supabase as unknown as {
   rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
 };
 
+/**
+ * The owner's stored presentation overlay. `entitlements` is a customer-read field the SERVER adds
+ * (get_client_portal_config, E09 F2); anything stored under that name is not an entitlement and is dropped here,
+ * so no owner surface can mistake it for one.
+ */
+function ownerConfig(raw: unknown): ClientPortalConfig {
+  const { entitlements: _stored, ...config } = normalizePortalConfig(raw);
+  return config;
+}
+
 export function usePortalConfig(tenantId: string | null) {
   const qc = useQueryClient();
   const key = ["portal-config", tenantId];
@@ -48,7 +58,7 @@ export function usePortalConfig(tenantId: string | null) {
         .maybeSingle();
       if (error) throw error;
       const feats = (data?.features ?? {}) as Record<string, unknown>;
-      return normalizePortalConfig(feats.portal_config);
+      return ownerConfig(feats.portal_config);
     },
   });
 
@@ -60,7 +70,7 @@ export function usePortalConfig(tenantId: string | null) {
         _patch: patch,
       });
       if (error) throw error;
-      return normalizePortalConfig(data);
+      return ownerConfig(data);
     },
     onMutate: async (patch) => {
       await qc.cancelQueries({ queryKey: key });

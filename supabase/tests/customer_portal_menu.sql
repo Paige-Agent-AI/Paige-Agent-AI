@@ -119,7 +119,7 @@ SELECT ok(strpos(pg_temp.as_user('e0915a00-0000-4000-8000-000000000003',$q$SELEC
 SELECT is(pg_temp.as_user('e0915a00-0000-4000-8000-000000000004',$q$SELECT public.get_client_portal_config()$q$)->'_catalog',
  '{"slug":"fitness","authored_usable":false,"modules":null}'::jsonb,'slug-only tenant: slug, not authored, no modules');
 SELECT is(pg_temp.as_user('e0915a00-0000-4000-8000-000000000005',$q$SELECT public.get_client_portal_config()$q$),
- '{"_catalog":{"slug":null,"authored_usable":false,"modules":null}}'::jsonb,'tenant with neither: empty catalog inputs, no stored config');
+ '{"_catalog":{"slug":null,"authored_usable":false,"modules":null},"entitlements":{"finance":false}}'::jsonb,'tenant with neither: empty catalog inputs, no stored config (E09 F2: finance entitlement false)');
 SELECT is(pg_temp.as_user('e0915a00-0000-4000-8000-000000000009',$q$SELECT public.get_client_portal_config()$q$)#>'{_catalog,authored_usable}','false'::jsonb,'persona without a greeting is not usable');
 SELECT is(jsonb_array_length(pg_temp.as_user('e0915a00-0000-4000-8000-000000000009',$q$SELECT public.get_client_portal_config()$q$)#>'{_catalog,modules}'),40,'authored modules are capped at 40');
 SELECT is(length(pg_temp.as_user('e0915a00-0000-4000-8000-000000000009',$q$SELECT public.get_client_portal_config()$q$)#>>'{_catalog,modules,0,label}'),80,'authored labels are capped at 80 characters');

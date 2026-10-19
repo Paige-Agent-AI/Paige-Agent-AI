@@ -9,6 +9,7 @@ import { AppNav } from "@/components/app/AppNav";
 import { QuickStatsBar } from "@/components/app/QuickStatsBar";
 import { useCreditFactors } from "@/hooks/useCreditFactors";
 import { useTenantFeature } from "@/hooks/useTenantFeature";
+import { useFinancePortal } from "@/hooks/useFinanceEntitlement";
 import { AdminViewBanner } from "@/components/admin/AdminViewBanner";
 import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 import { SessionTimeoutWarning } from "@/components/auth/SessionTimeoutWarning";
@@ -81,11 +82,11 @@ const AppShell = () => {
   const location = useLocation();
   const { target: impersonationTarget, isImpersonating } = useImpersonation();
   const effectiveUserId = impersonationTarget?.targetUserId ?? user?.id;
-  const { factors } = useCreditFactors(effectiveUserId ?? null, { enabled: !!effectiveUserId });
   // Credit/funding client chrome (the QuickStatsBar → /app/credit and the
   // credit-first OnboardingFlow) is opt-in per tenant (§2/§9). Fail-closed:
   // hidden for every coaching-generic tenant until they turn on the funding
   // preset. Coaching clients keep the neutral /onboard + portal experience.
+  // E09 F2: these also need the business's finance entitlement (AppShellBody).
   const { enabled: fundingEnabled } = useTenantFeature("funding_readiness");
   const { showWarning, staySignedIn } = useSessionTimeout();
   // Publish live presence while signed in (#148). The heartbeat always stamps
@@ -283,14 +284,44 @@ const AppShell = () => {
   return (
     <CustomerAccessGate userId={activeUser.id} enabled={!isImpersonating && !DEV_MODE}>
     <CustomerIdentityRoot userId={activeUser.id} enabled={!isImpersonating} viewingAsClient={isImpersonating}>
-      {!isImpersonating && <RequiredConsentsGate userId={activeUser.id} onBlockingChange={setConsentsBlocking} />}
-      {!isImpersonating && fundingEnabled && <OnboardingFlow open={showOnboarding && !consentsBlocking} onComplete={() => setShowOnboarding(false)} />}
+      <AppShellBody activeUser={activeUser} scopedUser={scopedUser} session={session} effectiveUserId={effectiveUserId ?? null}
+        isImpersonating={isImpersonating} impersonationContactId={impersonationTarget?.contactId}
+        fundingReadiness={fundingEnabled} showOnboarding={showOnboarding} onOnboardingDone={() => setShowOnboarding(false)}
+        consentsBlocking={consentsBlocking} onConsentsBlockingChange={setConsentsBlocking}
+        showTimeoutWarning={showWarning} staySignedIn={staySignedIn} viewportHeight={viewportHeight} pathname={location.pathname} />
+    </CustomerIdentityRoot>
+    </CustomerAccessGate>
+  );
+};
+
+/**
+ * The shell inside the customer identity, so every funding/credit decision reads ONE answer (E09 F2): `financePortal`
+ * is useFinancePortal — the customer's business is finance-entitled (or the viewer is staff, who keep what they had,
+ * Q5). Surfaces that were already behind `funding_readiness` (OnboardingFlow, QuickStatsBar, the credit-first
+ * checklist) now need BOTH, so nothing dark becomes visible; surfaces with no gate before (the credit factor grid, the
+ * Credit and Funding tiles, the bell, the routes) need the entitlement alone.
+ */
+function AppShellBody({ activeUser, scopedUser, session, effectiveUserId, isImpersonating, impersonationContactId,
+  fundingReadiness, showOnboarding, onOnboardingDone, consentsBlocking, onConsentsBlockingChange, showTimeoutWarning,
+  staySignedIn, viewportHeight, pathname }: {
+  activeUser: User; scopedUser: User; session: Session | null; effectiveUserId: string | null; isImpersonating: boolean;
+  impersonationContactId?: string; fundingReadiness: boolean; showOnboarding: boolean; onOnboardingDone: () => void;
+  consentsBlocking: boolean; onConsentsBlockingChange: (blocking: boolean) => void; showTimeoutWarning: boolean;
+  staySignedIn: () => void; viewportHeight: number | null | undefined; pathname: string;
+}) {
+  const { open: financePortal } = useFinancePortal();
+  const fundingSurfaces = fundingReadiness && financePortal;
+  const { factors } = useCreditFactors(effectiveUserId, { enabled: financePortal && !!effectiveUserId });
+  return (
+    <>
+      {!isImpersonating && <RequiredConsentsGate userId={activeUser.id} onBlockingChange={onConsentsBlockingChange} />}
+      {!isImpersonating && fundingSurfaces && <OnboardingFlow open={showOnboarding && !consentsBlocking} onComplete={onOnboardingDone} />}
       <AdminViewBanner />
-      <SessionTimeoutWarning open={showWarning} onStaySignedIn={staySignedIn} />
+      <SessionTimeoutWarning open={showTimeoutWarning} onStaySignedIn={staySignedIn} />
       {/* Names only what this person is actually notified about, and never opens over the consents wall or
           onboarding (D-QA1/D-QA2, live QA 2026-10-19). */}
-      <PushNotificationPrompt description={pushTopicsSentence({ creditAlerts: fundingEnabled })}
-        suppressed={(!isImpersonating && consentsBlocking) || (!isImpersonating && fundingEnabled && showOnboarding)} />
+      <PushNotificationPrompt description={pushTopicsSentence({ creditAlerts: fundingSurfaces })}
+        suppressed={(!isImpersonating && consentsBlocking) || (!isImpersonating && fundingSurfaces && showOnboarding)} />
       <div style={viewportHeight ? {height: viewportHeight} : undefined} className="h-dvh min-h-0 flex flex-col bg-background overflow-x-hidden">
         <AppNav user={activeUser} />
         <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0">
@@ -298,31 +329,31 @@ const AppShell = () => {
             defaultSize={40}
             minSize={30}
             maxSize={60}
-            className={`min-h-0 ${location.pathname === "/app" ? "max-md:!flex-[1_1_100%]" : "max-md:hidden"}`}
+            className={`min-h-0 ${pathname === "/app" ? "max-md:!flex-[1_1_100%]" : "max-md:hidden"}`}
           >
             <PaigeChat user={activeUser} session={session}
-              clientId={isImpersonating ? impersonationTarget?.contactId : undefined} />
+              clientId={isImpersonating ? impersonationContactId : undefined} />
           </ResizablePanel>
           <ResizableHandle withHandle className="max-md:hidden" />
           <ResizablePanel
             defaultSize={60}
-            className={`min-h-0 ${location.pathname === "/app" ? "max-md:hidden" : "max-md:!flex-[1_1_100%]"}`}
+            className={`min-h-0 ${pathname === "/app" ? "max-md:hidden" : "max-md:!flex-[1_1_100%]"}`}
           >
             <div className="h-full overflow-y-auto scroll-touch p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] md:p-6">
-              {location.pathname === "/app" ? (
-                <AppDashboardHome factors={factors} userId={scopedUser.id} />
+              {pathname === "/app" ? (
+                <AppDashboardHome factors={financePortal ? factors : null} userId={scopedUser.id}
+                  financePortal={financePortal} />
               ) : (
                 <Outlet context={{ user: scopedUser, session }} />
               )}
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>
-        {fundingEnabled && <QuickStatsBar factors={factors} />}
+        {fundingSurfaces && <QuickStatsBar factors={factors} />}
       </div>
-    </CustomerIdentityRoot>
-    </CustomerAccessGate>
+    </>
   );
-};
+}
 
 /**
  * Reads the customer frame once for the whole portal, so every customer surface names the same
@@ -358,7 +389,11 @@ function CustomerIdentityRoot({ userId, enabled, viewingAsClient, children }: { 
 // Default home content when on /app
 type CreditFactorScores = Database["public"]["Tables"]["credit_factor_scores"]["Row"];
 
-export function AppDashboardHome({ factors, userId }: { factors: CreditFactorScores | null | undefined; userId?: string }) {
+export function AppDashboardHome({ factors, userId, financePortal = false }: {
+  factors: CreditFactorScores | null | undefined; userId?: string;
+  /** E09 F2 (AppShellBody): the business is finance-entitled, or the viewer is staff (Q5). */
+  financePortal?: boolean;
+}) {
   const customer = useCustomerIdentity();
   // Tenant-authored portal greeting (Portal Studio → portal_config.welcome).
   // Fail-open: an unset/empty overlay falls back to the current defaults, so
@@ -382,7 +417,7 @@ export function AppDashboardHome({ factors, userId }: { factors: CreditFactorSco
   // credit-enabled tenant/client. It doubles as the "hasCreditData" signal, so
   // the credit-only factor grid below stays gated behind it. Coaching clients
   // (the neutral default) never have this row and see the neutral welcome area.
-  const hasCreditData = !!factors;
+  const hasCreditData = financePortal && !!factors;
 
   // A person whose access is not active has nothing here: no chat to finish a checklist step in, no tiles, no
   // business to welcome them back to. The chat column beside this says their access isn't active, once, with
@@ -391,7 +426,7 @@ export function AppDashboardHome({ factors, userId }: { factors: CreditFactorSco
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      {userId && <OnboardingChecklist userId={userId} />}
+      {userId && <OnboardingChecklist userId={userId} financePortal={financePortal} />}
       <div>
         <h1 className="text-3xl font-bold text-foreground">{welcomeHeadline}</h1>
         {welcomeSubhead && <p className="text-muted-foreground mt-1">{welcomeSubhead}</p>}
@@ -416,7 +451,7 @@ export function AppDashboardHome({ factors, userId }: { factors: CreditFactorSco
                 {f.score ?? "—"}
               </div>
               <div className="text-xs text-muted-foreground mt-1">{f.label}</div>
-              <div className="text-[10px] text-muted-foreground/60">{f.weight}</div>
+              <div className="text-xs text-muted-foreground">{f.weight}</div>
             </div>
           ))}
         </div>
@@ -429,7 +464,7 @@ export function AppDashboardHome({ factors, userId }: { factors: CreditFactorSco
         </div>
       ) : null}
 
-      {userId && <ClientHomeTiles userId={userId} />}
+      {userId && <ClientHomeTiles userId={userId} financePortal={financePortal} />}
 
       <ClientActivityFeed />
 

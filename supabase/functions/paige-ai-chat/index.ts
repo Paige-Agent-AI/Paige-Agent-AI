@@ -3115,6 +3115,9 @@ JSON:`;
       personaCtx = {tenant_id:customerPersona.binding.tenantId,tenant_name:customerPersona.businessName,
         playbook_config:null,playbook_slug:null,funding_enabled:false,brand:null};
 
+      proposalScopeResolved = true;
+    }
+
     // ── EXP00 O-3 (owner defect 2026-10-19): the OPERATOR CONSOLE asks as PAIGE Inc. ──
     // Reproduced live: without this, an operator with any tenant membership resolves into that
     // tenant's persona (their oldest workspace), so company questions get tenant-CRM answers
@@ -3133,8 +3136,6 @@ JSON:`;
       } catch (e) {
         console.warn("[paige-ai-chat] operator-console hint gate failed (ignoring hint):", (e as Error)?.message);
       }
-    }
-      proposalScopeResolved = true;
     }
     // E09 F2: a client-tier caller is never offered funding/credit, inside the native customer frame (above) or
     // outside it (a client of the business with no portal frame). get_paige_persona_context resolves their
@@ -16078,7 +16079,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   ? { success: false, error: "company_read_failed", detail: summaryErr.message }
                   : { success: true, summary };
               }
-} else if (tc.function.name === "crm_search_contacts") {
+            } else if (tc.function.name === "crm_search_contacts") {
               const limit = Math.min(Math.max(Number(args.limit) || 25, 1), 100);
               let q = admin.from("clients").select(
                 "account_number, first_name, last_name, entity_name, lifecycle_stage, status, source, tags, lead_score, assigned_coach_user_id, last_contacted_at, created_at, updated_at, client_contact_methods(kind, value, label, is_primary, position)"

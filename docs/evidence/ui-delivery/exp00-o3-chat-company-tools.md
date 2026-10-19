@@ -8,7 +8,7 @@ MUST_NOT_HAPPEN: No fake tenant assignment or tenant-isolation bypass; no client
 
 MUST_PRESERVE: The single paige-ai-chat engine and every existing persona (tenant, client, customer portal); every existing dispatch branch, guard and fingerprint (renewed as a set per the C0b convention); the §52 operator briefing architecture; the Solo app's chat behavior (surface hint sent ONLY by the operator console).
 
-ACCEPTANCE_CRITERIA: On an operator-console turn the persona is PAIGE Inc (tenant-less) for a verified platform operator — reproduced live: the exact owner question previously produced a tenant-persona answer; after the fix the same question is answered from the real company book (1 customer, Acmey Advisory, trial to 2026-11-17, workspace provisioned, welcome sent, $0.00 collected) via the two new read tools; a non-operator sending the surface hint is ignored; steering forbids reading tenant-tool refusals as absence.
+ACCEPTANCE_CRITERIA: On an operator-console turn the persona is PAIGE Inc (tenant-less) for a verified platform operator — the exact owner question was reproduced BEFORE the fix (fixture platform_admin received a tenant-persona answer); the post-fix live re-probe is PROOF OWED (P1 placement review finding fixed: the force block initially nested inside the customerPersona branch was relocated to a sibling position before this record was re-pinned); a non-operator sending the surface hint is ignored by construction; steering forbids reading tenant-tool refusals as absence.
 
 Goal: PAIGE acts as the real COO of PAIGE Agent AI Inc in conversation.
 Human and feel: Company COO; grounded, current, never guessing.
@@ -42,8 +42,8 @@ PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Platform Operator; ask company questions;
 VISUAL_DIRECTION: NOT_APPLICABLE: no visual change.
 AUTOMATED_EVIDENCE: PASS: spine self-test + full lint PASS (227 capability) with the two new read capabilities against their SQL executors; the 29 C0b dispatch fingerprints renewed with base-reproduction proof; deno diagnostics 9→9 (no new); affected suites 40/40.
 STATIC_EVIDENCE: PASS: tsc ratchet no new errors; eslint via CI.
-RENDERED_EVIDENCE: PASS: live reproduction harness is the probe (fixture JWT + exact question); post-deploy live re-verification owed below.
-BEHAVIORAL_EVIDENCE: PASS: the operator branch, hint gate, tool admission and refusal paths are distinct code paths; the negative case (non-operator hint ignored) is structural (flag stays false).
+RENDERED_EVIDENCE: PROOF OWED: the pre-fix live reproduction is captured (fixture JWT + exact question, tenant-persona answer); the post-fix re-probe runs after deploy.
+BEHAVIORAL_EVIDENCE: PROOF OWED: the operator branch, hint gate, tool admission and refusal paths are distinct code paths (review round-1 verified the wiring after relocation); the live behavioral probe runs post-deploy.
 AUTHENTICATED_RUNTIME: UNVERIFIED: post-deploy live re-probe of the exact question (platform_admin fixture) plus the owner's own console re-ask at the evaluation window.
 KEYBOARD_FOCUS: NOT_APPLICABLE: no new interactive elements.
 ZOOM_REFLOW: NOT_APPLICABLE: no layout change.

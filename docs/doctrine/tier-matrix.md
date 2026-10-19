@@ -4768,13 +4768,12 @@ Every business chooses which entries its customers see in the portal menu, in wh
 group, and what each is called. Owner rulings (2026-10-18): Home and Messages are fixed at the top; Get
 help, Account, Settings and Sign out are fixed at the bottom; Progress, Action items and Sessions ("Your
 work"), Documents, Agreements and Payments ("Paperwork") and Resources ("Learn") are configurable within
-their group; the group order is fixed. Agreements is held back from customers until Slice A (its route is
-still the platform-terms page): staff keep it exactly as before, no customer is offered it, and the editor
-shows no row for it. One registry and one assembly (`src/lib/portal/portalMenu.ts`,
+their group; the group order is fixed. Agreements was held back from customers until Slice A (its route was
+still the platform-terms page); Slice A (below) lifts that hold — it is now core for customers and has an editor row. One registry and one assembly (`src/lib/portal/portalMenu.ts`,
 `assemblePortalNav`) feed the customer chrome (`AppNav`: phone drawer with group headings, desktop bar
 with a menu per group), the owner editor's preview and PortalStudio's "View as client". Floors are hard:
 the overlay can never reveal Messages, Sessions or Progress to anyone but a customer of one business, and
-catalog-only entries (funding keys, Approvals, Agreements) render only when the Playbook catalog lists them
+catalog-only entries (funding keys, Approvals) render only when the Playbook catalog lists them
 (§2). Resources is core for customers: a customer of one business always has it, whatever the catalog
 lists, and only the owner's overlay hides it (staff and other viewers keep the catalog rule, as on main).
 When a catalog lists the `learn` alias and not `resources`, `learn` speaks for the route under its own name. An entry whose route is not live (Payments until Slice 5) never renders and is
@@ -4797,8 +4796,8 @@ lists Resources). Now each customer gets their own business's catalog (the §57 
 had is removed: Resources is core for customers, so a customer whose business's catalog omits it keeps it.
 The visible changes are additions — customers of a business that opted into the funding Playbook gain that
 business's own funding entries, and customers on Playbooks whose catalog never listed Resources (fitness,
-consultant, agency, funding) gain it. Agreements is the one entry held back from customers (above), and it
-was never theirs: its route is still the platform-terms page. Harness frames
+consultant, agency, funding) gain it. Agreements was held back from customers until Slice A connected it to
+their own agreements (next block). Harness frames
 (`scripts/live-drive/harness/portal-menu-mount`) cover the customer drawer and bar and the owner editor
 in both themes at 390 and 1440 wide. Authenticated owner save and customer menu on production are owed.
 
@@ -4922,3 +4921,69 @@ the Vitest suites cover every card state, every refusal, readback-before-success
 and the disclosure sentences pinned byte for byte to `client_portal_consent_disclosure`. Customer
 assistant (Paige in the portal): the preference tools are UNAVAILABLE to it in this slice. Authenticated
 customer change and owner read on production are owed.
+
+### Customer Portal — Agreements, `/app/agreements` on the Sales Agreements engine (E09 Slice A, 2026-10-18)
+
+A business's customer sees the agreements that business sent them (`paige_agreements` whose contact IS the
+customer's one relationship, never a draft), opens one to sign through the existing, frozen `/sign/:token`
+page (§28), and downloads or opens the sealed signed copy. Owner ruling (2026-10-18): agreements stay in the
+portal and connect to Sales Agreements. Three SECURITY DEFINER functions with in-body scope (§59, migration
+`20271110225000`): `client_portal_agreements` (the list: exact keys, never a body, storage key, hash, token,
+signer, amount or offer), `client_portal_open_agreement_signing` (the only writer: re-mints the customer's own
+signer token, files one `paige_audit_log` row and NO agreement event, never writes `paige_agreements`) and
+`client_portal_agreement_document_scope` (the download door's scope check). The `agreement-document` edge
+function gains a third, session-scoped door (`portal=1`); doors one and two are unchanged. Paige reads the
+list through `client.portal_agreements_read` (read only; she never signs or mints a link). Integrator defaults
+in force: the portal signs only when the single counterparty signer's email is the customer's confirmed login
+email or the client's primary email. Where there are several co-signers and the customer's own co-signer row has
+not signed, the agreement is listed as `awaiting_signature` ("Waiting for a signature") and is neither headed nor
+counted as the customer's. (Superseded for a single signer by round 6: one signer at another address used to be
+listed as `awaiting_signature` too; under the VISIBILITY default below it is not listed at all.) A portal-issued link never expires later
+than the emailed one (the earlier of the agreement's and the emailed link's deadline, which is also the "Sign
+by" date the list shows); a dead emailed link (expired: `link_expired`, revoked: `link_revoked`) is never
+offered as the way to sign — the row offers "Ask {Business} for a new link" (Messages, plain: no `?draft=`
+until Slice 5); once every counterparty has signed (or there is none) and only the business's signatories
+remain the row reads "Waiting for {Business}" (`awaiting_countersign`), with "You've signed" only when the
+server proved the signature is the customer's (`counterparty`: you / other / none, decided before any signed
+or waiting state); a portal open REPLACES the emailed link (D-A4, stated on the page beside the act). Round 5
+integrator default, owner may overrule: a single signer at the login's own CONFIRMED email who was never
+emailed a link may sign here, on a link ending at the earlier of the agreement's deadline and 24 hours, and
+the page never mentions an emailed link for it (`link_emailed` false; `no_link_sent` where it is not
+signable here). Round 6 integrator default, owner may overrule — VISIBILITY: the list, the open and the
+download scope reach only agreements on which the customer is a counterparty signer (a counterparty row at the
+login's confirmed email or the client's primary email); one with no counterparty, or signed for only at other
+addresses, is not listed, not opened and not downloaded (its sealed certificate names other people). A witness
+ordered before the customer reads "Someone else signs first." (`awaiting_earlier_signer`); a co-signer row at
+the customer's address that has signed reads "You've signed" and is never asked to act; the page says a link
+was "sent", never "emailed". A read that fails before the login is known to be a customer keeps MyAgreements for
+staff (§58). Agreements is core for
+customers in the menu (D-A1: every customer of one business, hideable and renameable by the owner); staff
+and every other viewer keep the catalog rule. Home shows one quiet line only while something waits for the
+customer's signature AND Agreements is in their menu (D-A5). §61 default for the customer side
+(relationship-scoped, no tier filter); the owner side keeps the existing `agreement_signing` exception.
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Enterprise | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|---|
+| Owner sends an agreement (Solo Sales, existing) | None: no tenant book | Refused by `trg_agreement_tier` | ✓ owns it | Allowed (`agreement_tier_allows`); no Sales surface in the Agency shell, so the path is Paige's `agreement_draft` / `agreement_send` (owner confirms each on its card); 0 in production. Its Clients → Portal card says so and says file sharing is not offered on its client record (round 7) | Allowed | — | — | unchanged |
+| Customer list `/app/agreements` (`client_portal_agreements`) | — | n/a: no agreements can exist | — | — | — | ✓ own relationship, non-draft only, only where they are a counterparty signer (integrator default); more than one relationship is refused and explained (Slice 8) | 42501 | PROOF OWED |
+| Review and sign (`client_portal_open_agreement_signing` → frozen `/sign/:token`) | — | — | — | — | — | ✓ own agreement, single counterparty at the customer's own address, link not revoked; never emailed: confirmed login email only, link ≤ 24 hours; ≤10 opens/hour | 42501 | PROOF OWED |
+| Download / open the signed copy (`agreement-document` door 3) | — | — | — | — | — | ✓ own completed agreement with a sealed copy on which they are a counterparty signer (integrator default) | refused | PROOF OWED |
+| Platform terms `/app/agreements` fallback and `/app/agreements/platform` (MyAgreements, unchanged) | ✓ unchanged | ✓ unchanged | ✓ unchanged | ✓ unchanged | ✓ unchanged | ✓ via the link on their Agreements page | — | PROOF OWED |
+| Menu entry "Agreements" (Paperwork) | — | — | — | — | — | ✓ by default (D-A1); owner can hide/rename | — | PROOF OWED |
+| Paige reads the customer's agreements (`client.portal_agreements_read`) | — | — | — | — | — | customer assistant only | — | PROOF OWED |
+
+pgTAP (`supabase/tests/customer_portal_agreements.sql`, 168 cases) covers other-customer, other-business,
+draft and merged-contact exclusion, every state, the open's refusals (including a revoked link, a co-signer, a
+signer at another address and the 11th open in an hour), the byte-identical agreement row, no agreement event,
+the old emailed token stopping, the notes for a dead emailed link, the "Sign by" date, `awaiting_signature`
+and `awaiting_countersign`, whose signature it is (a signer at another address, no counterparty, co-signers
+both signed, a witness and the business both left), the never-emailed one-day link and its expiry arithmetic,
+document scope, the Sub-account tier and the unchanged policy set. Vitest
+covers the hook's exact keys, tenant pin, identity reset and focus/visibility refresh, the page's states and
+copy, the one gold act, StrictMode, the Home line and the routes. Harness frames
+(`scripts/live-drive/harness/portal-agreements-customer-mount`) show the page in every state, the Home line, the
+platform-terms page and the frozen signing page reached from the portal versus the email. Round 6: pgTAP
+184 cases, adding visibility (no counterparty and other-address rows absent from the list, refused by the open
+and by the download scope, including two completed sealed copies; a control proves the same copy is
+downloadable once its signer is the customer), a witness ordered first (W1) and a signed co-signer at the
+customer's address (W3). Authenticated customer sign and download on production are owed.

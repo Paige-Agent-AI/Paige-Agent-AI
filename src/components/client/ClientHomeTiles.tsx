@@ -20,6 +20,7 @@ import {
 } from "@/hooks/useClientPortalProgress";
 import { useMyActions } from "@/hooks/useMyActions";
 import { usePortalDocumentsGlance, type PortalDocumentsGlance } from "@/hooks/usePortalDocumentsGlance";
+import { AgreementsWaitingLine } from "@/components/client/AgreementsWaitingLine";
 import {
   Target,
   TrendingUp,
@@ -137,6 +138,8 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* E09 Slice A — one quiet line, only while an agreement waits for this customer's signature (D-A5). */}
+      <AgreementsWaitingLine enabled={isCustomer} />
       {/* 1. Goals */}
       {counts.goals && counts.goals > 0 ? (
         <FilledTile

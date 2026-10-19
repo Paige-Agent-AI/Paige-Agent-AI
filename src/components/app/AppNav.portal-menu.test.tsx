@@ -58,10 +58,14 @@ afterEach(async () => { await closeMenus(); act(() => root.unmount()); host.remo
 describe("desktop bar", () => {
   it("shows Home and Messages, then each group as a menu, and a one-item group as a plain link", async () => {
     await render();
-    expect(topLevel()).toEqual(["Home", "Messages", "[Your work]", "Documents", "Resources"]);
+    expect(topLevel()).toEqual(["Home", "Messages", "[Your work]", "[Paperwork]", "Resources"]);
     const work = await openGroup("Your work");
     expect(work.map((i) => i.querySelector("[data-portal-label]")?.textContent)).toEqual(["Progress", "Action items", "Sessions"]);
     expect(work.map((i) => i.getAttribute("href"))).toEqual(["/app/progress", "/app/actions", "/app/sessions"]);
+    await closeMenus();
+    // E09 Slice A: the customer's own agreements sit beside Documents (D-A1).
+    const paperwork = await openGroup("Paperwork");
+    expect(paperwork.map((i) => i.getAttribute("href"))).toEqual(["/app/documents", "/app/agreements"]);
   });
 
   it("opens a group from the keyboard, with a labelled trigger and items a screen reader announces as a menu", async () => {
@@ -90,7 +94,7 @@ describe("desktop bar", () => {
   it("applies the business's names, order and hidden entries — Action items can now be hidden, Messages cannot", async () => {
     f.config = { modules: [
       { key: "sessions", label: "Coaching calls", order: 0 }, { key: "actions", visible: false }, { key: "progress", order: 1 },
-      { key: "messages", visible: false, label: "Inbox" }, { key: "resources", visible: false },
+      { key: "messages", visible: false, label: "Inbox" }, { key: "resources", visible: false }, { key: "agreements", visible: false },
     ] };
     await render();
     expect(topLevel()).toEqual(["Home", "Messages", "[Your work]", "Documents"]);
@@ -101,9 +105,9 @@ describe("desktop bar", () => {
   it("reads the customer's catalog from the portal config, not the RLS-denied tenant read (§57)", async () => {
     f.config = { catalog: { slug: null, authoredUsable: true, modules: [{ key: "home", label: "Home" }, { key: "agreements", label: "Agreements" }, { key: "approvals", label: "Approvals" }] } };
     await render();
-    // Agreements is listed, but its route is still the platform-terms page: held from customers until Slice A.
-    // Resources is core for customers (§58): present though this catalog does not list it.
-    expect(await desktopNavHrefs(host)).toEqual(["/app", "/app/messages", "/app/progress", "/app/actions", "/app/sessions", "/app/approvals", "/app/documents", "/app/learn"]);
+    // Agreements is the customer's own agreements since Slice A. Resources is core for customers (§58): present
+    // though this catalog does not list it.
+    expect(await desktopNavHrefs(host)).toEqual(["/app", "/app/messages", "/app/progress", "/app/actions", "/app/sessions", "/app/approvals", "/app/documents", "/app/agreements", "/app/learn"]);
   });
 
   it("keeps Agreements for staff whose Playbook lists it, exactly as before Slice M", async () => {
@@ -154,7 +158,7 @@ describe("phone drawer", () => {
     const rows = Array.from(drawer().querySelectorAll<HTMLElement>("[data-portal-heading], button")).map((el) =>
       el.hasAttribute("data-portal-heading") ? `# ${el.textContent?.trim()}` : el.textContent?.trim());
     expect(rows).toEqual([
-      "Home", "Messages", "# Your work", "Progress", "Action items", "Sessions", "# Paperwork", "Documents", "# Learn", "Resources",
+      "Home", "Messages", "# Your work", "Progress", "Action items", "Sessions", "# Paperwork", "Documents", "Agreements", "# Learn", "Resources",
       "Get help", "Account", "Settings", "Sign Out",
     ]);
     const work = drawer().querySelector('[role="group"][aria-labelledby]')!;
@@ -163,7 +167,7 @@ describe("phone drawer", () => {
 
   it("drops a heading whose group has nothing visible", async () => {
     f.mobile = true;
-    f.config = { modules: [{ key: "documents", visible: false }] };
+    f.config = { modules: [{ key: "documents", visible: false }, { key: "agreements", visible: false }] };
     await render();
     await openDrawer();
     expect(Array.from(drawer().querySelectorAll("[data-portal-heading]")).map((h) => h.textContent)).toEqual(["Your work", "Learn"]);

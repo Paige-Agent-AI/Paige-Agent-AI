@@ -39,7 +39,8 @@ const changes = [
 ];
 
 test('reviewed Calendar, Task, email, reminder and read-receipt context binds all incumbent adapters without replacing their contracts', () => {
-  assert.equal(incumbentSourcePaths.length, 116);
+  assert.equal(incumbentSourcePaths.length, 117);
+  assert.ok(incumbentSourcePaths.includes('supabase/functions/_shared/paige-turn/interactive-refusal.ts'), 'the reviewed recovery explanation must remain a restrictive ancestry input');
   assert.ok(incumbentSourcePaths.includes(controlTransportPath), 'bounded control reader must remain a restrictive ancestry input');
   for (const [, path] of changes) assert.ok(incumbentSourcePaths.includes(path));
   assert.deepEqual(baseline.findings, []);

@@ -1,0 +1,48 @@
+# EXP05 — truthful refusal and retained-file recovery
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: Oct19 owner correction; existing held conversation -> recorded request -> exact pre-processing refusal -> untouched attachment retained -> explicit removal -> permitted existing-record question; reload uses original canonical history. Routing and future EXP13 boundaries are recorded in docs/brain/int345-solo-capability-parity-first-return.md.
+PAIGE_UI_DESIGN: PASS: installed project design skill and routed Experience modules read; incumbent Chat tokens, alert, attachment chip, removal control, transcript and composer retained. Impeccable clarify and craft-floor checks applied; no new layout system or control.
+MATERIAL_FLOW_CHANGE: YES: correct the known-refusal state and retain an unprocessed file in the unchanged composer; explain the removal needed for permitted read-only continuation.
+FLOW_PROTOTYPE: UNVERIFIED: the existing actual-component attachment harness implements the refusal/reload/read-only paths under isolated data and network guards; native traversal stopped when Chrome disconnected. The owner approved this intended recovery correction on Oct19; browser behavior and finish review remain release holds.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: every eligible existing/future SOLO customer receives accurate feedback when an original recovery hold refuses a new document or action; the person can preserve the file, remove it and ask about existing records without replaying an uncertain operation.
+VISUAL_DIRECTION: PASS: existing PAIGE Chat typography, border, muted alert and attachment presentation; contextual removal guidance follows the reason inside the existing alert. No illustration, navigation, animation or department redesign.
+AUTOMATED_EVIDENCE: PASS:135 client tests across upload-hook/attachment/composer-scope/ask-user suites;75 actual-handler checks;66 incumbent adapter/authority/ancestry controls including two constant-tamper negatives. Retained-file guidance and constant inclusion were driven failing-first. Local logs remain in the private release packet; these results are not authenticated customer acceptance.
+STATIC_EVIDENCE: UNVERIFIED: seven-path ESLint0errors/0warnings; production build passed on source74c34 before the contextual-guidance successor; Impeccable detector4.1.0 found0anti-patterns and6advisories on unchanged font-size lines. Final composed type/build/Spine/Calendar checks and exact-head hosted CI remain separate.
+RENDERED_EVIDENCE: UNVERIFIED: the actual local Chat mount was observed before interaction, but no valid complete refusal/reload screenshot or responsive matrix has been captured since the browser debugger detached.
+BEHAVIORAL_EVIDENCE: UNVERIFIED: automated actual-component and recording-handler proofs pass; native browser refusal -> file preservation -> explicit removal -> read-only answer and reloaded explanation remain owed. No production document was uploaded or replayed.
+AUTHENTICATED_RUNTIME: UNVERIFIED: production incident was diagnosed read-only against the accepted turn, native recovery binding, HTTP409 and served Chat source. This candidate has not been deployed or authenticated-tested; no Knowledge publication, hold clearance, provider processing or business action is claimed.
+KEYBOARD_FOCUS: UNVERIFIED: existing accessible alert/chip/removal/input/send controls preserved; native keyboard order and focus observation require the browser connection.
+ZOOM_REFLOW: UNVERIFIED: no geometry change, but the longer refusal and contextual line require actual reflow/reachability proof.
+REDUCED_MOTION: NOT_APPLICABLE: no animation or motion behavior added or changed.
+STATE_COVERAGE: PASS: exact409/code/accepted-positive; wrong status/code/missing acceptance remain uncertain; no retry/replay; same composer restores without rereading bytes; new selection/pending read/removal/foreign scope/ABA/unmount/disabled refuse restoration; removal permits a new read question; reload preserves original recorded refusal without restoring file bytes or issuing a request.
+TRUTHFUL_STATE_LABELS: PASS: accepted message is distinct from processed document; outcomes remain unchecked; original hold and INTERRUPTED/pending state retained. Contextual file-removal guidance appears only when a file is actually attached. A recorded refusal is never a completed business action.
+SOLO_UI: YES: shared PaigeAIChat and canonical upload hook, no real-account conditions or changes to provisioning/roles/entitlements.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: no complete current native frame; closed shell is outside this component-only mount.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: actual-component docked/full mount prepared; browser interaction unavailable.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: no complete current native frame; closed shell is outside this component-only mount.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: actual-component docked/full mount prepared; browser interaction unavailable.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: no complete current native frame; closed shell is outside this component-only mount.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: actual-component docked/full mount prepared; browser interaction unavailable.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: no complete current native frame; closed shell is outside this component-only mount.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: actual-component docked/full mount prepared; browser interaction unavailable.
+UNVERIFIED: native prototype traversal/finish review, responsive/keyboard/reflow evidence, final test-fixture reconciliation and review, required exact-head CI, merge, production web/Chat deployment/readback and protected authenticated refusal/reload proof. This is a source candidate, not a released or owner-accepted recovery outcome. Bulk PDF/business Knowledge remains deferred EXP13; EXP09 CURA scope is preserved.
+OWNER_INTENT: EXP05 must complete accurate known-refusal feedback, preserve customer work where appropriate, explain permitted recovery and prove denial/reload/no-duplicate behavior, while continuing the complete Operations Experience.
+MUST_NOT_HAPPEN: No automatic resend, false file-read/save claim, new provider call, changed approval/admission/hold, forged recovery authority, cross-composer restoration or overwrite of newer customer work.
+MUST_PRESERVE: Original native actor/tenant/thread binding, canonical append/settle and receipts, unknown-outcome controls, exact approvals, risk classifications, domain writers, OpenAI-primary routing, E09 privacy and all18/25/50 obligations.
+ACCEPTANCE_CRITERIA: Known refusal is distinct from lost connection; its original explanation survives reload; the refused unprocessed file stays only in its unchanged in-memory composer; explicit removal allows an ordinary read-only question; unknown failures never replay; no processing or consequential effect occurs under the hold.
+MOTION_PURPOSE: NONE: no motion change.
+PROTECTED_SEAMS: Original interactive fallback and HTTP refusal reuse one pure constant; no native SQL, approval, action executor or provider change. Reviewed AST renewal is exactly29 fingerprint scalars plus one constant ancestry input; extractor, metadata and all116 previous inputs remain exact. Existing authority and new constant-tamper negatives remain enforced.
+INTERNAL_BUILD_IDENTITY: source=933d2773e29c99b3df879b9cc0d23fe2b2baea0a; base=5451c32308c879b141e4e3a5d82432c3f8d3e663; deployment=local-source-candidate; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat exact reviewed deploy/readback); evidence=actual client/handler tests and independent source receipts
+RELEASE_CHANNEL: development: isolated local candidate; no customer activation.
+RELEASE_CLASSIFICATION: internal-only: correction to existing refused-input feedback and recovery, not a new Knowledge capability.
+CUSTOMER_RELEASE_IDENTITY: none: this candidate has not been released or owner accepted.
+RELEASE_NOTE_REQUIRED: no: no production release yet; customer limitation remains explicit.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: implemented and locally tested; source review identified and corrected one recovery-guidance issue; native visual, final CI and production proof remain owed.
+RELEASE_RECOVERY: position=reviewed forward correction preserving original recovery hold and canonical history; reference=original request/assistant record and native outcomes. Never erase uncertainty or replay the refused document to simulate recovery.
+
+The existing harness uses the real PaigeAIChat and upload hook with synthetic authentication/history and an in-page response transport. Its illustrative workspace is not the complete production SOLO shell. The loopback server uses an invalid unit backend, refuses unexpected off-origin fetches and applies a restrictive local CSP. Use only the committed neutral Example Studio PDF fixture for local UI work, never a customer's private brief. Shared native reason remains valid for non-document approval/resume refusals; the removal instruction is client-only and conditional.
+
+Independent source review:74c34 REVISE (retained-file instruction);933d source finding CLOSED, physical reviewed fingerprint application PASS, remaining strict Calendar inventory fixture reconciliation identified. Neither receipt certifies native visual quality, final-head hosted CI, deployment, authenticated operation or complete EXP05 acceptance.
+
+[Impeccable guidance](https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md) was applied to explanation clarity, useful recovery direction and existing component craft. A native finish review remains required.

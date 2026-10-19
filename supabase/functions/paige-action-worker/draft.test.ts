@@ -7,6 +7,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { execFileSync } from "node:child_process";
 import {
   type ClaimedAction, draftClaimedAction, EMPTY_EMAIL_DRAFT_ERROR, MISSING_INTENT_ERROR, orchestratorRequest,
   shapeEmailDraft,
@@ -242,12 +243,21 @@ describe("shapeEmailDraft — the shapes a specialist may return (plain text onl
     const draft=shapeEmailDraft(composerResult({body_text:"```\n"+JSON.stringify(intended)+"\n```"}));
     assert.equal(draft?.subject,intended.subject);assert.equal(draft?.body,intended.body);
   });
+  it("bounds malformed whitespace envelopes without blocking the worker or inbox",()=>{
+    const moduleUrl=new URL("./draft.ts",import.meta.url).href;
+    const input={ok:true,draft:{subject:"Subject",body_text:"```json\n"+" ".repeat(8000)+"X"}};
+    const code=`import {shapeEmailDraft} from ${JSON.stringify(moduleUrl)}; console.log(JSON.stringify(shapeEmailDraft(${JSON.stringify(input)})));`;
+    assert.equal(execFileSync(process.execPath,["--input-type=module","-e",code],{encoding:"utf8",timeout:5000}).trim(),"null");
+  });
   for(const content of [
     '```json\n{"subject":"Actual","body":\n```',
     '```json\n{"subject":"Actual","body":"Hi","to":"other@example.test"}\n```',
     '```json\n{"subject":"Actual","subject":"Other","body":"Hi"}\n```',
     '```json\n{"subject":"Actual","body":{"nested":"Hi"}}\n```',
     '```json\n{"subject":"Actual","body":"Hi"}\n```\nextra words',
+    'Here is the email:\n```json\n{"subject":"Actual","body":"Hi"}\n```',
+    '```jsonx\n{"subject":"Actual","body":"Hi"}\n```',
+    '```json\n'+JSON.stringify({subject:"Actual",body:JSON.stringify({subject:"Nested",body:"Hi"})})+'\n```',
     '```json\n'+JSON.stringify({subject:"Actual",body:""})+'\n```',
     '```json\n'+JSON.stringify({subject:"s".repeat(201),body:"Hi"})+'\n```',
   ]) it("refuses an invalid or ambiguous fenced email rather than preserving raw JSON: "+content.slice(0,65),()=>{

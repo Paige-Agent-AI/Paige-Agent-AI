@@ -179,25 +179,29 @@ export function shapeEmailDraft(result: unknown): EmailDraft | null {
   // The historical composer caught fenced model JSON as plain text and saved the
   // entire response as body_text. Recover only its complete two-string contract;
   // malformed/ambiguous envelopes must never become the proposed email wording.
-  if (/^```(?:json\b|\s*\{)/i.test(text)) {
+  const containsEmailFence = /```json|```[ \t\r\n]*\{/i;
+  if (containsEmailFence.test(text)) {
     if (text.length > COMMS_EMAIL_BODY_MAX) return null;
-    const fence = /^```(?:json)?\s*([\s\S]*?)\s*```$/i.exec(text);
-    if (!fence) return null;
+    const opening = text.slice(0, 7).toLowerCase() === "```json" ? 7 : text.startsWith("```") ? 3 : 0;
+    if (!opening || !text.endsWith("```")) return null;
+    // Delimiters are read once. Overlapping whitespace/lazy-body regexes can
+    // backtrack for seconds on a malformed response within the normal size cap.
+    const serialized = text.slice(opening, -3).trim();
     // A closed two-field grammar rejects duplicate keys before JSON.parse could
     // silently choose one. JSON.parse still validates escapes/control characters.
     const string = '"(?:[^"\\\\]|\\\\.)*"';
     const subjectPair = '"subject"\\s*:\\s*' + string;
     const bodyPair = '"body"\\s*:\\s*' + string;
     const pair = new RegExp('^\\{\\s*(?:' + subjectPair + '\\s*,\\s*' + bodyPair + '|' + bodyPair + '\\s*,\\s*' + subjectPair + ')\\s*\\}$');
-    if (!pair.test(fence[1])) return null;
+    if (!pair.test(serialized)) return null;
     let decoded: Obj;
-    try { decoded = obj(JSON.parse(fence[1])); } catch { return null; }
+    try { decoded = obj(JSON.parse(serialized)); } catch { return null; }
     if (typeof decoded.subject !== "string" || typeof decoded.body !== "string"
       || decoded.subject.length > COMMS_EMAIL_SUBJECT_MAX || decoded.body.length > COMMS_EMAIL_BODY_MAX
       || decoded.subject.includes("\u0000") || decoded.body.includes("\u0000")) return null;
     subject = oneLineSubject(decoded.subject);
     text = looksLikeHtml(decoded.body) ? htmlToText(decoded.body) : decoded.body.trim();
-    if (/^```(?:json\b|\s*\{)/i.test(text)) return null;
+    if (containsEmailFence.test(text) || pair.test(text)) return null;
   }
   if (!subject || !text) return null;
   const raw = pick(r, RAW_KEYS);

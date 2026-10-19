@@ -177,6 +177,7 @@ describe("INT-338 real composer attachment integration", () => {
     expect(host.textContent).toContain("Your message was recorded");
     expect(host.textContent).toContain("new actions and attachments are on hold");
     expect(host.textContent).toContain("PAIGE can still answer questions about existing records");
+    expect(host.textContent).toContain("Remove the attached file first to ask about existing records.");
     expect(remove()).not.toBeNull();
     expect(Array.from(host.querySelectorAll('[role="status"]')).some(status => status.textContent === "Program-brief.pdf attached")).toBe(true);
     expect(host.textContent).not.toContain("The connection ended");
@@ -186,6 +187,7 @@ describe("INT-338 real composer attachment integration", () => {
     expect(bodies.filter(b => b.interactive?.kind === "message")).toHaveLength(1);
     expect(bodies[0].document).toMatchObject({ base64: "AQID" });
     await act(async () => { remove()!.click(); await settle(); });
+    expect(host.textContent).not.toContain("Remove the attached file first");
     await type("Show my existing records");
     await act(async () => { send().click(); await settle(); });
     expect(host.textContent).toContain("Here are the existing records you asked about");
@@ -226,6 +228,7 @@ describe("INT-338 real composer attachment integration", () => {
     expect(host.textContent).toContain(content); expect(host.textContent).toContain("Review this brief");
     expect(host.textContent).not.toContain("The connection ended"); expect(fetch).not.toHaveBeenCalled();
     expect(remove()).toBeNull();
+    expect(host.textContent).not.toContain("Remove the attached file first");
     expect(Array.from(host.querySelectorAll("button")).some(b => b.textContent === "Retry")).toBe(false);
   });
   it("Stop preserves a staged attachment and the next draft", async () => {

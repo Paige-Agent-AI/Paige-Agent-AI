@@ -1,7 +1,7 @@
 // E09 Slice 7 — pause, restore or end one joined client's portal access, from chat.
 //
 // ONE WRITER. The only writer of clients.portal_access_* is public.set_client_portal_access
-// (migration 20271110240000): business owner/admin of the CURRENT workspace (the invitation
+// (migration 20271111010000): business owner/admin of the CURRENT workspace (the invitation
 // authority), never a top-level agency, version-guarded, state-idempotent, audited with fixed
 // references. The write carries exactly the version the owner's approval card was built from: the
 // model reads the access first (read_client_portal_access returns `access_version`) and must pass

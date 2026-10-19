@@ -20,7 +20,7 @@ export interface ConsumerInviteInfo {
 }
 type Phase="loading"|"choice"|"create"|"signin"|"verify"|"ready"|"wrong"|"accepted"|"unknown"|"invalid"|"error"|"paused"|"ended";
 // E09 Slice 7: an accepted link whose business has since paused or ended this person's access answers
-// "paused"/"ended" (client_portal_invite_status, 20271110240000). It is a real answer, not a fault.
+// "paused"/"ended" (client_portal_invite_status, 20271111010000). It is a real answer, not a fault.
 type Receipt={tenant_id:string;client_id:string;accepted_at:string;status:"accepted"|"paused"|"ended"};
 type JoinIntent={token:string;tenantId:string;email:string;at:number};
 const JOIN_INTENT_KEY="paige_customer_join_intent",JOIN_INTENT_MS=30*60*1000;

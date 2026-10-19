@@ -184,7 +184,7 @@ export function useTenantRelationshipsData({
         .order("created_at", { ascending: false })
         .limit(250);
       let { data, error } = await list(soloPeople ? SOLO_PERSON_SELECT : ROSTER_PERSON_SELECT);
-      // Web ahead of migration 20271110240000: read without the access columns (everyone reads open).
+      // Web ahead of migration 20271111010000: read without the access columns (everyone reads open).
       if (soloPeople && missingPortalAccessColumns(error)) ({ data, error } = await list(withoutPortalAccessColumns(SOLO_PERSON_SELECT)));
       if (error) throw error;
       return ((data ?? []) as unknown as ClientRow[]).map((row) => mapClient(row, soloPeople));

@@ -45,7 +45,7 @@
 -- 12. _client_portal_lock_relationship: the one open-access gate the customer doors added after this
 --    slice was written (Documents, Profile & Consent, Agreements, Payments) now re-prove through.
 --
--- Renumbered 20271110110000 -> 20271110240000 at integration (2026-10-18) so it applies after Documents
+-- Renumbered 20271110110000 -> 20271111010000 at integration (2026-10-18) so it applies after Documents
 -- (200000), Profile & Consent (215000), Agreements (225000; it was 220000 before main renumbered it above
 -- 20271110220000_followup_email_origin_admission) and Payments (230000). Every function this file restates
 -- was diffed against its newest definition on that base, and again on main a26efbcc9 (2026-10-19, round 3:

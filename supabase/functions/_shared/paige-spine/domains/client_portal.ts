@@ -178,7 +178,7 @@ export const PORTAL_AGREEMENTS_READ={
 // ─── E09 Slice 7: pause, restore or end one joined client's portal access ───────────────────────
 //
 // ONE STORE (clients.portal_access_* beside the link it qualifies) and ONE WRITER
-// (public.set_client_portal_access, migration 20271110240000): business owner/admin of the CURRENT
+// (public.set_client_portal_access, migration 20271111010000): business owner/admin of the CURRENT
 // workspace — the same authority that invites — never a top-level agency, version-guarded on its own
 // column, state-idempotent, audited with fixed references, no notification. The executor
 // (_shared/client-portal-access.ts) sends only contact/action/reason and the access_version the

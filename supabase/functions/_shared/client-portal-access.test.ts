@@ -270,7 +270,7 @@ Deno.test("the resolver restatement is the incumbent body plus exactly one predi
     return src.slice(start, src.indexOf("$$;", start));
   };
   const before = body("20271102120000_e09_client_self_projection.sql");
-  const after = body("20271110240000_e09_customer_portal_access.sql");
+  const after = body("20271111010000_e09_customer_portal_access.sql");
   assertEquals(after.replace("\n    AND c.portal_access_state = 'open'", ""), before);
   assertEquals(after.split("portal_access_state").length - 1, 1);
 });

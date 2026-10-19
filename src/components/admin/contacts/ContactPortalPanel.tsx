@@ -125,7 +125,7 @@ export function ContactPortalPanel({
       // remount (reporting a revoked account as active, or missing a fresh acceptance).
       supabase.from("clients").select("linked_user_id, portal_access_state, portal_access_changed_at").eq("id", contactId).maybeSingle(),
     ]);
-    // The access columns arrive with migration 20271110240000 (the generated types do not know them
+    // The access columns arrive with migration 20271111010000 (the generated types do not know them
     // yet). Until it is applied that read fails, so fall back to the link alone rather than showing a
     // joined client as having no access.
     const client = accessRead.error

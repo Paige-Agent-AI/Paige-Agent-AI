@@ -75,7 +75,7 @@ describe("client portal access contract (E09 Slice 7)", () => {
     expect(portalAccessConfirmCopy("restore", "Jordan Test", "Test Studio").lines.join(" ")).not.toMatch(/signing link/);
   });
 
-  it("reads the writer's restore blocker, which it names `reason` (20271110240000)", async () => {
+  it("reads the writer's restore blocker, which it names `reason` (20271111010000)", async () => {
     rpc.mockResolvedValue({ data: { ok: false, error: "ACCESS_RESTORE_UNAVAILABLE", reason: "contact_merged" }, error: null });
     await expect(setPortalAccess({ actorId: "a", tenantId: "t", contactId: "c", action: "restore", reason: null, note: null, expectedChangedAt: null }))
       .resolves.toMatchObject({ ok: false, code: "ACCESS_RESTORE_UNAVAILABLE", restoreBlockedBy: "contact_merged" });
@@ -115,7 +115,7 @@ describe("client portal access contract (E09 Slice 7)", () => {
   });
 
   it("impersonation names a paused or ended client using the server's exact messages (pinned to the migration)", () => {
-    const migration = readFileSync("supabase/migrations/20271110240000_e09_customer_portal_access.sql", "utf8");
+    const migration = readFileSync("supabase/migrations/20271111010000_e09_customer_portal_access.sql", "utf8");
     expect(migration).toContain(`RAISE EXCEPTION '${IMPERSONATION_ACCESS_ENDED}'`);
     expect(migration).toContain(`RAISE EXCEPTION '${IMPERSONATION_ACCESS_PAUSED}'`);
     expect(impersonationAccessRefusal(`ERROR: ${IMPERSONATION_ACCESS_ENDED}`)).toContain("has ended");

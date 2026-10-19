@@ -226,7 +226,7 @@ describe("tenant relationship adapter sequencing", () => {
     act(() => root.unmount());
   });
 
-  // E09 Slice 7, verifier finding 3: if the web deploys before migration 20271110240000 applies, the
+  // E09 Slice 7, verifier finding 3: if the web deploys before migration 20271111010000 applies, the
   // access columns do not exist yet. People must still load (every client reads open), not error.
   it("re-reads without the access columns when the database does not have them yet", async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });

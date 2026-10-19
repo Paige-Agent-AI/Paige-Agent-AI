@@ -486,7 +486,7 @@ describe.each([
     expect(portalCalls()).toHaveLength(0);
   });
 
-  // E09 Slice 7, verifier finding 3: web deployed before migration 20271110240000 — the inbox loads.
+  // E09 Slice 7, verifier finding 3: web deployed before migration 20271111010000 — the inbox loads.
   it("still loads the inbox when the access column does not exist yet", async () => {
     db.premigration = true;
     db.messages = [portalIn, portalHelp];

@@ -5077,7 +5077,7 @@ Vercel 404) and now shows a link to the same form on the app origin. A §61 defa
 A business can pause a joined client's portal access (temporary; the link is kept, so restoring needs no
 new invitation), restore it, or end it (the link is cleared and the person's history stays on the contact;
 coming back takes a new invitation). Owner decisions D1–D11 (2026-10-18). The state lives on the contact
-(`clients.portal_access_state` open | paused | ended, migration `20271110240000`, renumbered from 110000 at integration) and the one
+(`clients.portal_access_state` open | paused | ended, migration `20271111010000`, renumbered from 110000 at integration) and the one
 resolver every customer read goes through (`client_portal_relationship_id`) admits only `open`. The one
 writer is `set_client_portal_access` (SECURITY DEFINER; the tenant is always the caller's current workspace,
 never a parameter; the same predicate as the invitation owner gate, never a global role, §59). The customer

@@ -547,7 +547,7 @@ export default function ClientsConversations() {
       return q;
     };
     let { data, error } = await pull(THREAD_COLS);
-    // Web ahead of migration 20271110240000 (E09 Slice 7): the inbox still loads, every client reads open.
+    // Web ahead of migration 20271111010000 (E09 Slice 7): the inbox still loads, every client reads open.
     if (missingPortalAccessColumns(error)) ({ data, error } = await pull(withoutPortalAccessColumns(THREAD_COLS)));
     if (!accountEpochRef.current.accept(epoch)) return;
     if (error) {

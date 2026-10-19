@@ -4,7 +4,7 @@ import { PORTAL_ACCESS_REASON_LABEL } from "../../supabase/functions/_shared/cli
 /**
  * E09 Slice 7 — a joined client's portal access to ONE business: open, paused or ended.
  *
- * The state lives on the contact (`clients.portal_access_state`, migration 20271110240000), next
+ * The state lives on the contact (`clients.portal_access_state`, migration 20271111010000), next
  * to the link it qualifies. Three server doors, and nothing else, read or change it:
  *   - `read_client_portal_access(_expected_tenant_id, _contact_id)` — the owner's read (card, Paige).
  *   - `set_client_portal_access(...)` — the one writer: pause, restore, end. Version-guarded on
@@ -51,7 +51,7 @@ export const PORTAL_ACCESS_NOTE_MAX = 280;
 
 /**
  * True when a read failed only because the access columns are not there yet (the web deployed before
- * migration 20271110240000 applied). The caller then re-reads without them, so People and the inbox keep
+ * migration 20271111010000 applied). The caller then re-reads without them, so People and the inbox keep
  * working and every client reads as open — exactly the state before this slice (verifier finding 3).
  */
 export function missingPortalAccessColumns(error: { code?: string; message?: string } | null | undefined): boolean {
@@ -123,7 +123,7 @@ export type OwnerAccessReadResult = {
 
 /** The owner's read, for the workspace this record was opened in. The server re-checks the tenant. */
 export async function fetchOwnerPortalAccess(tenantId: string, contactId: string): Promise<OwnerAccessReadResult> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC from 20271110240000 is not in the generated types yet
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC from 20271111010000 is not in the generated types yet
   const { data, error } = await (supabase as any).rpc("read_client_portal_access", {
     _expected_tenant_id: tenantId,
     _contact_id: contactId,
@@ -177,7 +177,7 @@ export async function setPortalAccess(args: {
   expectedChangedAt: string | null;
 }): Promise<PortalAccessWriteResult> {
   const note = args.note?.trim() ? args.note.trim().slice(0, PORTAL_ACCESS_NOTE_MAX) : null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC from 20271110240000 is not in the generated types yet
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC from 20271111010000 is not in the generated types yet
   const { data, error } = await (supabase as any).rpc("set_client_portal_access", {
     p_expected_actor_id: args.actorId,
     p_expected_tenant_id: args.tenantId,
@@ -197,7 +197,7 @@ export async function setPortalAccess(args: {
   }
   if (isObject(data) && data.ok === true) return { ok: true, replayed: data.replayed === true, code: null, restoreBlockedBy: null };
   if (isObject(data) && data.ok === false && typeof data.error === "string" && WRITE_CODES.has(data.error)) {
-    // The writer names the blocker `reason` on ACCESS_RESTORE_UNAVAILABLE (20271110240000); the read projection calls it restore_blocked_by.
+    // The writer names the blocker `reason` on ACCESS_RESTORE_UNAVAILABLE (20271111010000); the read projection calls it restore_blocked_by.
     const named = data.restore_blocked_by ?? data.reason;
     const blocked = typeof named === "string" && BLOCKERS.has(named) ? (named as RestoreBlockedBy) : null;
     return refused(data.error as PortalAccessWriteCode, blocked);
@@ -319,11 +319,11 @@ export function readCustomerPortalAccess(value: unknown): CustomerPortalAccess |
  * nothing to say (open, more than one business, none, or no row) and throws when the answer is
  * unknown (a failed call, or a row that does not match the contract).
  * PostgREST answers a function that does not exist yet with PGRST202 (42883 from Postgres); until
- * 20271110240000 is applied nothing can be paused, so that answer is "nothing withheld", which is
+ * 20271111010000 is applied nothing can be paused, so that answer is "nothing withheld", which is
  * exactly today's behaviour.
  */
 export async function fetchWithheldCustomerAccess(): Promise<Extract<CustomerPortalAccess, { state: "paused" | "ended" }> | null> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC from 20271110240000 is not in the generated types yet
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC from 20271111010000 is not in the generated types yet
   const result = await (supabase as any).rpc("client_portal_access_state");
   const error = result?.error as { code?: string } | null | undefined;
   if (error) {
@@ -354,7 +354,7 @@ export function customerAccessCopy(state: "paused" | "ended", business: string):
 
 /**
  * Impersonation ("view as client") refusals, in the owner's words. start_client_impersonation raises
- * these two exact messages (20271110240000); the strings are pinned by a test that reads the migration,
+ * these two exact messages (20271111010000); the strings are pinned by a test that reads the migration,
  * so a server wording change fails CI instead of silently falling back to the generic error. One home:
  * ImpersonationContext and the onboarding-status hook both use it.
  */

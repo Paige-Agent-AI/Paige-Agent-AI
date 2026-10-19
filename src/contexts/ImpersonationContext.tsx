@@ -50,7 +50,7 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
     if (error) {
       // E09 Slice 7: an ENDED client has no link, so the server answers "has not accepted their invite
       // yet" — true of the link, wrong about the person. Say what actually happened, in the owner's words.
-      // 20271110240000 names the state itself; say it in the owner's words.
+      // 20271111010000 names the state itself; say it in the owner's words.
       // The server's two access messages are pinned against the migration by a test (one home).
       const named = impersonationAccessRefusal(error.message);
       if (named) throw new Error(named);

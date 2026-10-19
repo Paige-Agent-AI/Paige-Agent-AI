@@ -612,6 +612,10 @@ jobs:
       - run: supabase test db supabase/tests/solo_beta_authz_hardening.sql
       - run: supabase test db supabase/tests/solo_beta_offer_boundary.sql
       - run: supabase test db supabase/tests/solo_beta_welcome_lifecycle.sql
+      # The live Oct-19 stranding: the attempt cap parked the sole real welcome in
+      # needs_attention with provider_rejected and no receipt, which the drainer never
+      # rescans. The requeue migration re-arms exactly that shape — and nothing else.
+      - run: supabase test db supabase/tests/welcome_delivery_requeue_after_provider_fix.sql
       # EXP00 live-incident regression: the REAL claim→fulfill sequence must
       # complete end-to-end (the ambiguous reference_id broke the first-ever
       # real fulfillment; this drives the exact webhook call shape).

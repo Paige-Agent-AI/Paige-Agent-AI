@@ -176,3 +176,39 @@ describe("browser code asks the sender only for what a person may send", () => {
     expect(code("supabase/functions/affiliate-application-confirm/index.ts")).not.toMatch(/recipientUserId/);
   });
 });
+
+describe("the welcome arm's interim Resend fallback cannot double-send", () => {
+  const src = code("supabase/functions/send-transactional-email/index.ts");
+
+  it("falls back to Resend only for the definitive SendGrid sender-identity 403, never for anything ambiguous", () => {
+    // The gate must be the conjunction: HTTP 403 AND SendGrid's own "verified
+    // Sender Identity" wording. A 202-without-id or a network throw is ambiguous
+    // (the provider may have sent) and must stay on the no-fallback path.
+    expect(src).toMatch(/response\.status === 403 && \/verified Sender Identity\/i\.test\(providerDetail\)/);
+    const gate = src.indexOf("const senderIdentityRejected =");
+    const sendgrid = src.indexOf("https://api.sendgrid.com/v3/mail/send");
+    const resend = src.indexOf("https://api.resend.com/emails", sendgrid);
+    expect(gate).toBeGreaterThan(sendgrid);
+    expect(resend).toBeGreaterThan(gate);
+  });
+
+  it("a fallback send is recorded as such and completes the same lifecycle receipt", () => {
+    expect(src).toMatch(/provider: 'resend_fallback_after_sendgrid_sender_identity_403'/);
+    const marker = src.indexOf("resend_fallback_after_sendgrid_sender_identity_403");
+    expect(src.indexOf("solo_beta_complete_welcome_delivery", marker)).toBeGreaterThan(marker);
+  });
+
+  it("an ambiguous Resend fallback outcome is recorded uncertain and never retried blind", () => {
+    const ambiguousFailures = src.match(/failClaim\('provider_outcome_ambiguous', true\)/g) ?? [];
+    expect(ambiguousFailures.length).toBeGreaterThanOrEqual(3);
+    expect(src).toMatch(/resend_ambiguous[\s\S]{0,600}failClaim\('provider_outcome_ambiguous', true\)/);
+  });
+
+  it("SendGrid remains the welcome arm's primary provider", () => {
+    const sendgrid = src.indexOf("https://api.sendgrid.com/v3/mail/send");
+    const welcome = src.indexOf("if (templateName === 'solo-beta-welcome')");
+    expect(sendgrid).toBeGreaterThan(welcome);
+    // The fallback sends from the same platform identity the general arm uses.
+    expect(src).toMatch(/from: `\$\{SITE_NAME\} <notifications@\$\{FROM_DOMAIN\}>`/);
+  });
+});

@@ -35,6 +35,15 @@ export function useClientPortalFrame(actorId: string | null, enabled = true) {
     checking: false, epoch: 0, reload: async () => undefined,
   };
 }
+// Slice 7 (#2376) made CustomerAccessGate the one frame reader and the chat/home read its answer through
+// useSharedClientPortalFrame. Without the gate mounted, the shared hook falls back to its own reader, so here it is
+// the same stubbed answer; the provider is a pass-through (AppShell's gate module is in the import graph).
+export function useSharedClientPortalFrame(actorId: string | null, enabled = true) {
+  return useClientPortalFrame(actorId, enabled);
+}
+export function ClientPortalFrameProvider({ children }: { value: unknown; children?: unknown }) {
+  return children as never;
+}
 export function usePortalStaffStanding(_userId: string | null | undefined, enabled: boolean) {
   return enabled ? { loading: false, staff: false } : { loading: false, staff: null };
 }

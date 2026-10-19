@@ -39,7 +39,12 @@ interface World {
   credit_alerts: Row[];
   coach_clients: Row[];
   /** Injected failures: a read of `select[table]` or an insert into `insert[table]` returns `{ error }`. */
-  fail?: { select?: Partial<Record<Table, string>>; insert?: Partial<Record<Table, string>> };
+  fail?: {
+    select?: Partial<Record<Table, string>>;
+    insert?: Partial<Record<Table, string>>;
+    /** Fail only the Nth read (1-based) of a table, e.g. the coach's staff read after the subject's. */
+    selectNth?: Partial<Record<Table, number>>;
+  };
 }
 
 type Table = Exclude<keyof World, "fail">;
@@ -89,6 +94,7 @@ interface Recorder {
 }
 
 function fakeClient(w: World, rec: Recorder) {
+  const selectCount: Partial<Record<Table, number>> = {};
   function builder(table: Table) {
     const filters: [string, string, unknown][] = [];
     let op: "select" | "insert" | "update" = "select";
@@ -114,7 +120,11 @@ function fakeClient(w: World, rec: Recorder) {
       );
     }
     function run() {
-      const failure = op === "insert" ? w.fail?.insert?.[table] : op === "select" ? w.fail?.select?.[table] : undefined;
+      let failure = op === "insert" ? w.fail?.insert?.[table] : op === "select" ? w.fail?.select?.[table] : undefined;
+      if (op === "select") {
+        const n = (selectCount[table] = (selectCount[table] ?? 0) + 1);
+        if (w.fail?.selectNth?.[table] === n) failure = "injected read failure";
+      }
       if (failure) {
         if (op === "select") rec.reads.push(table);
         return { data: null, error: { message: failure } };
@@ -349,6 +359,26 @@ Deno.test("coach email: a coach row in this business whose coach is not its cred
   await handleDetectCreditAlerts(req(criticalBody(STAFF), SR), deps);
   assertEquals(coachEmails(rec), []);
   assert(!rec.authLookups.includes(PLAIN_STAFF));
+});
+
+Deno.test("coach email: a coach whose only seat in this business is a limited `member` seat sends no coach email", async () => {
+  const { w, rec, deps } = harness();
+  // LIMITED holds an active `member` seat in the entitled business: a seat, not credit staff.
+  w.coach_clients = [{ tenant_id: ENTITLED, coach_user_id: LIMITED, client_user_id: STAFF, status: "active" }];
+  await handleDetectCreditAlerts(req(criticalBody(STAFF), SR), deps);
+  assertEquals(coachEmails(rec), [], "a limited seat never receives the business's credit alert");
+  assert(!rec.authLookups.includes(LIMITED), "the limited coach's address is never looked up");
+  assertEquals(rec.invokes.filter((i) => i.body.type === "credit_alert").length, 2, "the subject's own emails still go");
+});
+
+Deno.test("coach email: when the coach's staff read fails, no coach email is sent", async () => {
+  const { w, rec, deps } = harness();
+  w.coach_clients = [{ tenant_id: ENTITLED, coach_user_id: COACH, client_user_id: STAFF, status: "active" }];
+  // Read 1 is the subject's own standing (must succeed); read 2 is the coach's.
+  w.fail = { selectNth: { tenant_members: 2 } };
+  await handleDetectCreditAlerts(req(criticalBody(STAFF), SR), deps);
+  assertEquals(coachEmails(rec), [], "an unknown coach standing fails closed");
+  assert(!rec.authLookups.includes(COACH), "the coach address is never looked up");
 });
 
 Deno.test("archived member: the subject's only row for the business is archived → skipped, nothing written", async () => {

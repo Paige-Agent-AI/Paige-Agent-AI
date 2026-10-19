@@ -385,6 +385,7 @@ Deno.serve(async (req) => {
         // stays in sending and the drainer's stale-claim rescan plus the
         // prior-sent early return heal it — never parked terminal here.
         let resendId: string | null = null
+        let resendOk = false
         let resendAmbiguous = false
         let resendDefinitiveDetail = ''
         try {
@@ -411,8 +412,9 @@ Deno.serve(async (req) => {
               return {} as { id?: unknown }
             }
           })()
+          resendOk = resendResp.ok
           resendId = typeof resendJson?.id === 'string' ? resendJson.id : null
-          if (!resendId) {
+          if (!resendOk || !resendId) {
             // 2xx-without-id or 5xx: Resend may have delivered — ambiguous, so the
             // attempt is recorded uncertain and never blindly retried. A definitive
             // 4xx sent nothing and falls through to the standard rejection handling.
@@ -431,7 +433,7 @@ Deno.serve(async (req) => {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           })
         }
-        if (resendId) {
+        if (resendOk && resendId) {
           const { error: fallbackLogError } = await admin
             .from('email_send_log')
             .update({

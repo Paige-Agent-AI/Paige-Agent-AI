@@ -23,7 +23,7 @@
  *   NEXUS  (Marketing & growth)      → marketing
  *   MERIT  (Sales & revenue)         → sales, finance
  *   CURA   (Client success)          → client_experience
- *   MENTOR (Curriculum & delivery)   → product_curriculum
+ *   MENTOR (Discovery & education)   → product_curriculum
  *   ZION   (Operations & automation) → technology_automation, operations_pmo
  *   VERA   (Quality & standards)     → legal_compliance
  *

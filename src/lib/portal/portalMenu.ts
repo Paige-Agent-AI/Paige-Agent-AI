@@ -67,6 +67,12 @@ export interface PortalMenuEntry {
   trailing?: boolean;
   /** When false, the registry's default name wins over the catalog's (the owner ruled "Payments", not "Billing"). */
   catalogLabel?: boolean;
+  /**
+   * E09 F2: the entry exists only for a business holding this entitlement (`finance`: a deliberate Marketplace
+   * install of funding/credit, owner ruling 2026-10-19). Without it the entry never renders, is never offered in
+   * the owner's editor, and a stored overlay row for it stays inert. Stacks on the catalog rule; never replaces it.
+   */
+  entitlement?: "finance";
   /** One line under the name in a desktop group menu. */
   description?: string;
   /** A quiet note beside the row in the owner's editor. */
@@ -94,14 +100,15 @@ export const PORTAL_MENU_ENTRIES: readonly PortalMenuEntry[] = [
   entry({ key: "actions", defaultLabel: "Action items", route: "/app/actions", icon: ClipboardList, group: "work", floor: "not_staff", defaultVisibility: "shown", description: "What's waiting on you" }),
   entry({ key: "sessions", defaultLabel: "Sessions", route: "/app/sessions", icon: CalendarClock, group: "work", floor: "customer", defaultVisibility: "shown", description: "Your booked times" }),
   entry({ key: "approvals", defaultLabel: "Approvals", route: "/app/approvals", icon: ListChecks, group: "work", floor: "everyone", catalogOrdered: true }),
-  // Funding-vertical surfaces: routable ONLY for a tenant whose OPT-IN funding Playbook lists them (§2).
-  entry({ key: "funding-journey", defaultLabel: "Funding Journey", route: "/app/funding-journey", icon: Compass, group: "work", floor: "everyone", catalogOrdered: true }),
-  entry({ key: "funding_journey", defaultLabel: "Funding Journey", route: "/app/funding-journey", icon: Compass, group: "work", floor: "everyone", catalogOrdered: true }),
-  entry({ key: "credit", defaultLabel: "Credit", route: "/app/credit", icon: CreditCard, group: "work", floor: "everyone", catalogOrdered: true }),
-  entry({ key: "funding", defaultLabel: "Funding", route: "/app/funding", icon: Landmark, group: "work", floor: "everyone", catalogOrdered: true }),
-  entry({ key: "financial-profile", defaultLabel: "Financial Profile", route: "/app/financial-profile", icon: Wallet, group: "work", floor: "everyone", catalogOrdered: true }),
-  entry({ key: "financial_profile", defaultLabel: "Financial Profile", route: "/app/financial-profile", icon: Wallet, group: "work", floor: "everyone", catalogOrdered: true }),
-  entry({ key: "business", defaultLabel: "Business", route: "/app/business", icon: Building2, group: "work", floor: "everyone", catalogOrdered: true }),
+  // Funding-vertical surfaces: routable ONLY for a tenant whose OPT-IN funding Playbook lists them (§2) AND whose
+  // business is finance-entitled (E09 F2: a deliberate Marketplace install, never a default).
+  entry({ key: "funding-journey", defaultLabel: "Funding Journey", route: "/app/funding-journey", icon: Compass, group: "work", floor: "everyone", catalogOrdered: true, entitlement: "finance" }),
+  entry({ key: "funding_journey", defaultLabel: "Funding Journey", route: "/app/funding-journey", icon: Compass, group: "work", floor: "everyone", catalogOrdered: true, entitlement: "finance" }),
+  entry({ key: "credit", defaultLabel: "Credit", route: "/app/credit", icon: CreditCard, group: "work", floor: "everyone", catalogOrdered: true, entitlement: "finance" }),
+  entry({ key: "funding", defaultLabel: "Funding", route: "/app/funding", icon: Landmark, group: "work", floor: "everyone", catalogOrdered: true, entitlement: "finance" }),
+  entry({ key: "financial-profile", defaultLabel: "Financial Profile", route: "/app/financial-profile", icon: Wallet, group: "work", floor: "everyone", catalogOrdered: true, entitlement: "finance" }),
+  entry({ key: "financial_profile", defaultLabel: "Financial Profile", route: "/app/financial-profile", icon: Wallet, group: "work", floor: "everyone", catalogOrdered: true, entitlement: "finance" }),
+  entry({ key: "business", defaultLabel: "Business", route: "/app/business", icon: Building2, group: "work", floor: "everyone", catalogOrdered: true, entitlement: "finance" }),
   entry({ key: "affiliate", defaultLabel: "Affiliate", route: "/app/affiliate", icon: Handshake, group: "work", floor: "everyone", catalogOrdered: true }),
   // Staff only: the Task Manager. plan_list is tenant-member scoped, so a client can never use it (§9).
   entry({ key: "planning", defaultLabel: "Planning", route: "/app/planning", icon: CalendarClock, group: "work", fixed: true, floor: "staff", defaultVisibility: "shown", trailing: true }),
@@ -160,10 +167,17 @@ export interface PortalNavSection {
   items: PortalNavItem[];
 }
 
+/** What the viewer's business is entitled to (E09 F2). Absent or not `true` means not entitled. */
+export interface PortalMenuEntitlements {
+  finance?: boolean;
+}
+
 export interface AssemblePortalNavInput {
   catalog: readonly { key: string; label: string }[];
   overlay?: readonly PortalModuleOverlay[];
   viewer: PortalViewer;
+  /** Fail-closed: an entry with an `entitlement` shows only when this says `true` for it. */
+  entitlements?: PortalMenuEntitlements;
 }
 
 const floorAllows = (floor: PortalMenuFloor, v: PortalViewer) =>
@@ -200,8 +214,11 @@ const yieldsToListedAlias = (e: PortalMenuEntry, catalogKeys: Set<string>) =>
  * catalog or shown by default — "shown" for everyone, `shownToCustomers` for a customer of one business — unless a
  * listed route alias speaks for the destination instead.
  */
-const offered = (e: PortalMenuEntry, catalogKeys: Set<string>, v: PortalViewer) =>
-  e.live && (e.clientsLive !== false || v.isStaff) && (catalogKeys.has(e.key)
+const entitledTo = (e: PortalMenuEntry, entitlements: PortalMenuEntitlements | undefined) =>
+  e.entitlement === undefined || entitlements?.[e.entitlement] === true;
+
+const offered = (e: PortalMenuEntry, catalogKeys: Set<string>, v: PortalViewer, entitlements: PortalMenuEntitlements | undefined) =>
+  e.live && entitledTo(e, entitlements) && (e.clientsLive !== false || v.isStaff) && (catalogKeys.has(e.key)
     || ((e.defaultVisibility === "shown" || (e.shownToCustomers === true && v.isCustomer)) && !yieldsToListedAlias(e, catalogKeys)));
 
 interface Ranked { e: PortalMenuEntry; pos: number; label: string; hidden: boolean }
@@ -219,7 +236,7 @@ function rank(input: AssemblePortalNavInput, includeHidden: boolean): Map<Portal
     const inSlot = PORTAL_MENU_ENTRIES.filter((e) => e.group === slot);
     const ranked: Ranked[] = [];
     inSlot.forEach((e, registryIndex) => {
-      if (!floorAllows(e.floor, input.viewer) || !offered(e, catalogKeys, input.viewer)) return;
+      if (!floorAllows(e.floor, input.viewer) || !offered(e, catalogKeys, input.viewer, input.entitlements)) return;
       const o = e.fixed ? undefined : overlayByKey.get(e.key);
       const hidden = o?.visible === false;
       if (hidden && !includeHidden) return;
@@ -283,10 +300,11 @@ export interface PortalMenuEditorEntry {
 /**
  * The rows an owner can configure for this catalog: every configurable, live entry a customer of one
  * business could see — core entries always (Resources included), catalog-only entries only when the catalog
- * lists them (§2), and never one whose route is not live. Route aliases appear once.
+ * lists them (§2), and never one whose route is not live. Route aliases appear once. An entry that needs an
+ * entitlement the business does not hold (E09 F2: funding and credit) is never a row.
  */
-export function portalMenuEditorEntries(catalog: readonly { key: string; label: string }[]): PortalMenuEditorEntry[] {
-  const ranked = rank({ catalog, viewer: PORTAL_CUSTOMER_PREVIEW_VIEWER }, true);
+export function portalMenuEditorEntries(catalog: readonly { key: string; label: string }[], entitlements?: PortalMenuEntitlements): PortalMenuEditorEntry[] {
+  const ranked = rank({ catalog, viewer: PORTAL_CUSTOMER_PREVIEW_VIEWER, entitlements }, true);
   const seen = new Set<string>();
   const out: PortalMenuEditorEntry[] = [];
   for (const g of PORTAL_MENU_GROUPS) {

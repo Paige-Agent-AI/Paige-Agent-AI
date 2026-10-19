@@ -77,7 +77,14 @@ const EMPTY: Counts = {
  * the missing data. Six tiles: Goals, Progress (or Credit), Sessions (or Funding),
  * Documents, Messages, Next Steps.
  */
-export function ClientHomeTiles({ userId }: { userId: string }) {
+export function ClientHomeTiles({ userId, financePortal = false }: {
+  userId: string;
+  /**
+   * E09 F2 (the /app shell's one answer): the customer's business is finance-entitled, or the viewer is staff (Q5).
+   * Without it the credit and funding counts are never queried and their tiles never render. Defaults to false.
+   */
+  financePortal?: boolean;
+}) {
   const navigate = useNavigate();
   const pb = usePlaybook();
   // The business this customer belongs to (one business only; several is Slice 8). Its name, never
@@ -105,10 +112,12 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
       setLoading(true);
       const headOnly = { count: "exact" as const, head: true };
       // Documents are counted from the customer's own Documents read (usePortalDocumentsGlance), not here.
+      // Credit and funding are counted only for a finance-entitled business (E09 F2); otherwise not asked at all.
+      const none = Promise.resolve({ count: 0 });
       const [goals, credit, apps, msgs] = await Promise.all([
         untypedDb.from("client_goals").select("id", headOnly).eq("user_id", userId),
-        untypedDb.from("credit_report_uploads").select("id", headOnly).eq("user_id", userId),
-        untypedDb.from("funding_journey_applications").select("id", headOnly).eq("user_id", userId),
+        financePortal ? untypedDb.from("credit_report_uploads").select("id", headOnly).eq("user_id", userId) : none,
+        financePortal ? untypedDb.from("funding_journey_applications").select("id", headOnly).eq("user_id", userId) : none,
         untypedDb.from("chat_messages").select("id", headOnly).eq("user_id", userId),
       ]);
       if (cancelled) return;
@@ -123,7 +132,7 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, financePortal]);
 
   // Puts a drafted question in the customer's chat with their agent; they read it and press send.
   const askAgent = (prompt: string) => handOffPaigePrompt(prompt);
@@ -136,8 +145,8 @@ export function ClientHomeTiles({ userId }: { userId: string }) {
   const nextStepsPrompt = pb.quickActions[0]?.prompt ?? "What should I focus on next?";
   const bookPrompt = pb.quickActions[1]?.prompt ?? "Help me schedule my next session";
   const progressPrompt = pb.quickActions[2]?.prompt ?? "Show me how I'm progressing toward my goals";
-  const hasCredit = (counts.creditPulls ?? 0) > 0;
-  const hasFunding = (counts.applications ?? 0) > 0;
+  const hasCredit = financePortal && (counts.creditPulls ?? 0) > 0;
+  const hasFunding = financePortal && (counts.applications ?? 0) > 0;
 
   if (loading) {
     return (

@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
 import { useTenantContext } from "@/hooks/useTenantContext";
+import { useFinanceEntitlement } from "@/hooks/useFinanceEntitlement";
 import { useBrandKit } from "@/hooks/useBrandKit";
 import { useBrandFontFaces } from "@/hooks/useBrandFontFaces";
 import { brandFontStack, resolveBrandFontPair } from "@/lib/brand-fonts";
@@ -148,11 +149,14 @@ function PortalStudioEditor({ embedded = false, onDirtyChange, assistantFocusReq
     (!!brandForm.primary_color.trim() && !isValidHex(brandForm.primary_color)) ||
     (!!brandForm.accent_color.trim() && !isValidHex(brandForm.accent_color));
 
+  // E09 F2: funding/credit entries need the business's finance entitlement, exactly as the live menu does.
+  const { entitled: financeEntitled } = useFinanceEntitlement();
   // Preview nav = assemblePortalNav, the function the live AppNav runs, over the menu editor's unsaved draft,
   // for a customer of this one business — so the preview can never differ from the live menu (§13).
   const previewNav = useMemo(
-    () => assemblePortalNav({ catalog, overlay: menuDraft ?? pc.config.modules, viewer: PORTAL_CUSTOMER_PREVIEW_VIEWER }),
-    [catalog, menuDraft, pc.config.modules],
+    () => assemblePortalNav({ catalog, overlay: menuDraft ?? pc.config.modules, viewer: PORTAL_CUSTOMER_PREVIEW_VIEWER,
+      entitlements: { finance: financeEntitled } }),
+    [catalog, menuDraft, pc.config.modules, financeEntitled],
   );
 
   const headlineText = welcome.headline.trim() || "Welcome back";

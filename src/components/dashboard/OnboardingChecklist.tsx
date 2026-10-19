@@ -22,7 +22,12 @@ interface ChecklistItem {
   check: () => Promise<boolean>;
 }
 
-export const OnboardingChecklist = ({ userId }: { userId: string }) => {
+/**
+ * `financePortal` (E09 F2, from the /app shell's one answer): the viewer's business is finance-entitled (or the
+ * viewer is staff, Q5). The credit-first steps need it AND `funding_readiness`; without it every viewer gets the
+ * neutral steps. Defaults to false, so a mount that does not know never shows credit steps.
+ */
+export const OnboardingChecklist = ({ userId, financePortal = false }: { userId: string; financePortal?: boolean }) => {
   const [completed, setCompleted] = useState<Record<string, boolean>>({});
   const [dismissed, setDismissed] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -31,9 +36,14 @@ export const OnboardingChecklist = ({ userId }: { userId: string }) => {
   // a coaching-generic tenant never sees credit-report/business-credit steps;
   // it gets a neutral, coaching-generic checklist instead. Only a tenant that
   // turned on the funding preset gets the credit-building steps.
-  const { enabled: fundingEnabled, loading: featureLoading } = useTenantFeature("funding_readiness");
+  const { enabled: fundingReadiness, loading: featureLoading } = useTenantFeature("funding_readiness");
+  const fundingEnabled = fundingReadiness && financePortal;
   // The customer's agent (Cura, or the business's own name for it). Never PAIGE, the owner's COO.
-  const { agentName: coachName } = useCustomerIdentity();
+  const { agentName: coachName, frame } = useCustomerIdentity();
+  // A customer's own Documents scope (E09 F2): their business and their record there, from the frame — exactly what
+  // useClientDocuments reads, so a file they upload on /app/documents ticks this step (§70).
+  const documentScope = frame ? { tenant: frame.profile.tenant_id, contact: frame.profile.id, actor: frame.actorId } : null;
+  const scopeKey = documentScope ? `${documentScope.tenant}:${documentScope.contact}:${documentScope.actor}` : "";
 
   const items: ChecklistItem[] = useMemo(() => {
     if (fundingEnabled) {
@@ -122,10 +132,23 @@ export const OnboardingChecklist = ({ userId }: { userId: string }) => {
         id: "upload_document",
         label: "Upload Your First Document",
         description: "Keep your important files in one place for easy reference",
-        icon: Building2,
+        icon: FileText,
         // Documents, where the business's shared files live; not the funding business profile (§2).
         route: "/app/documents",
         check: async () => {
+          if (documentScope) {
+            // The customer's own saved uploads in their Documents (client_files, upload_state 'ready'): the same
+            // business and record /app/documents saves to. Row-level security also limits this to their own.
+            const { count } = await supabase
+              .from("client_files" as any)
+              .select("id", { count: "exact", head: true })
+              .eq("tenant_id", documentScope.tenant)
+              .eq("contact_id", documentScope.contact)
+              .eq("uploaded_by_user_id", documentScope.actor)
+              .eq("upload_state", "ready");
+            return (count ?? 0) > 0;
+          }
+          // Not a customer of one business (staff viewing /app, no active access): the legacy count, unchanged (§58).
           const { count } = await supabase
             .from("documents" as any)
             .select("id", { count: "exact", head: true })
@@ -134,7 +157,8 @@ export const OnboardingChecklist = ({ userId }: { userId: string }) => {
         },
       },
     ];
-  }, [fundingEnabled, userId, coachName]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- documentScope is keyed by scopeKey
+  }, [fundingEnabled, userId, coachName, scopeKey]);
 
   const firedStepsRef = useRef<Set<string>>(new Set());
 
@@ -191,7 +215,7 @@ export const OnboardingChecklist = ({ userId }: { userId: string }) => {
     };
     checkAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, fundingEnabled, featureLoading]);
+  }, [userId, fundingEnabled, featureLoading, scopeKey]);
 
   if (dismissed || loading) return null;
 

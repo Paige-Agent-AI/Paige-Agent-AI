@@ -328,8 +328,11 @@ Deno.serve(async (req) => {
           from: { email: 'notifications@' + FROM_DOMAIN, name: SITE_NAME },
           subject: typeof template.subject === 'function' ? template.subject(renderData) : template.subject,
           content: [
-            { type: 'text/html', value: html },
+            // SendGrid requires text/plain FIRST when both contents are present
+            // (live 400 field error, captured 2026-10-18: "If present, text/plain
+            // must be first, followed by text/html, followed by any other content").
             { type: 'text/plain', value: plainText },
+            { type: 'text/html', value: html },
           ],
           custom_args: {
             message_id: messageId,

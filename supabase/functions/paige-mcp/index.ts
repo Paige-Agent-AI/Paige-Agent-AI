@@ -221,6 +221,7 @@ import { decideMcpToolCall, mcpGovernedAuditRow } from "../_shared/paige-mcp/gov
 // (public.get_actor_access) a human resolves through — so Paige's tier == a human's.
 import { getActorTier, isClientSeatByScopes } from "../_shared/actorTier.ts";
 import { classifyBusinessVerifyResponse } from "../_shared/business-verify-outcome.ts";
+import { requireFinanceEntitlement } from "../_shared/finance-entitlement.ts";
 // Master Twilio Basic-auth from the ONE home (twilio.ts) — API Key trio
 // (TWILIO_API_KEY_SID:TWILIO_API_KEY_SECRET); master TWILIO_AUTH_TOKEN absent in prod.
 
@@ -2990,6 +2991,10 @@ mcp.tool("ingest_credit_scores", {
   handler: async (args) => {
     const scope = await tenantScopedClient(args.client_id);
     if (!scope.ok) return err(scope.reason ?? "scope_denied");
+    // E09 F1b: recording a client's credit scores is a funding feature — only for a business that holds
+    // the finance entitlement (an active is_finance Marketplace install or finance_in_scope).
+    const entitled = await requireFinanceEntitlement(admin, scope.tenant_id);
+    if (!entitled.ok) return err(entitled.error);
 
     // Validation
     const reviewReasons: string[] = [];
@@ -3079,6 +3084,9 @@ mcp.tool("ingest_banking_snapshot", {
   handler: async (args) => {
     const scope = await tenantScopedClient(args.client_id);
     if (!scope.ok) return err(scope.reason ?? "scope_denied");
+    // E09 F1b: a client's banking snapshot is a funding feature — entitled businesses only.
+    const entitled = await requireFinanceEntitlement(admin, scope.tenant_id);
+    if (!entitled.ok) return err(entitled.error);
     const review: string[] = [];
     if ((args.current_balance ?? 0) < 0) review.push("negative_balance");
     if ((args.nsf_count_30d ?? 0) > 20) review.push("high_nsf_count");
@@ -3276,7 +3284,11 @@ async function applyProposal(proposal_id: string): Promise<{ ok: boolean; applie
         break;
       }
       case "ingest_credit_scores": {
-        const { data: cli } = await admin.from("clients").select("linked_user_id").eq("id", prop.client_id).maybeSingle();
+        // E09 F1b: re-checked at apply, so a proposal staged before the business lost the entitlement
+        // (or before this check existed) cannot land.
+        const { data: cli } = await admin.from("clients").select("linked_user_id, tenant_id").eq("id", prop.client_id).maybeSingle();
+        const ent = await requireFinanceEntitlement(admin, (cli?.tenant_id as string | null) ?? null);
+        if (!ent.ok) throw new Error(ent.error);
         const scores = payload.scores ?? [];
         if (cli?.linked_user_id) {
           const patch: Record<string, number | string> = {};
@@ -3309,9 +3321,12 @@ async function applyProposal(proposal_id: string): Promise<{ ok: boolean; applie
       case "ingest_banking_snapshot": {
         const { data: cli } = await admin
           .from("clients")
-          .select("linked_user_id")
+          .select("linked_user_id, tenant_id")
           .eq("id", prop.client_id)
           .maybeSingle();
+        // E09 F1b: re-checked at apply (see ingest_credit_scores above).
+        const ent = await requireFinanceEntitlement(admin, (cli?.tenant_id as string | null) ?? null);
+        if (!ent.ok) throw new Error(ent.error);
         if (!cli?.linked_user_id) {
           // No linked auth user — capture the snapshot as a structured memory entry instead.
           await admin.from("client_memory").insert({
@@ -3934,13 +3949,13 @@ mcp.tool("list_subaccounts", {
 
 mcp.tool("create_subaccount", {
   description:
-    "Agency only. Create a new sub-account (child workspace) under YOUR agency. Requires a display `name`; optional `industry` and `description`. The child arrives READY: by default (`inherit_from_parent`) it inherits your agency's white-label brand/voice, and it either carries your Playbook down or starts from `playbook_slug` — one of general, coaching-default, fitness, consultant, agency, or funding. Funding is an explicit opt-in only; it is never inherited or defaulted. The child is a standalone workspace owned by you. Only the agency OWNER may create sub-accounts.",
+    "Agency only. Create a new sub-account (child workspace) under YOUR agency. Requires a display `name`; optional `industry` and `description`. The child arrives READY: by default (`inherit_from_parent`) it inherits your agency's white-label brand/voice, and it either carries your Playbook down or starts from `playbook_slug` — one of general, coaching-default, fitness, consultant, or agency. Funding is never a starter preset, inherited or defaulted; a business gets it only through a deliberate Marketplace install. The child is a standalone workspace owned by you. Only the agency OWNER may create sub-accounts.",
   inputSchema: z.object({
     name: z.string().min(1),
     industry: z.string().optional(),
     description: z.string().optional(),
     playbook_slug: z
-      .enum(["general", "coaching-default", "fitness", "consultant", "agency", "funding"])
+      .enum(["general", "coaching-default", "fitness", "consultant", "agency"])
       .optional(),
     inherit_from_parent: z.boolean().optional(),
   }),
@@ -3951,8 +3966,8 @@ mcp.tool("create_subaccount", {
     if (!parent) return err("tenant_not_resolved");
     // Actor-explicit core (service_role): enforces owner-only + agency/enterprise-
     // parent + 100-child cap + forces child account_type, and seeds the inherited
-    // brand + chosen/inherited Playbook. §2: funding only ever via an explicit
-    // playbook_slug='funding' choice, never a default — do not force it on here.
+    // brand + chosen/inherited Playbook. §2 / E09 F1a: 'funding' is not a starter preset (the
+    // database refuses it, 22023); a business gets funding only through a Marketplace install.
     const { data, error } = await admin.rpc("create_subaccount", {
       _name: name,
       _industry: industry ?? null,

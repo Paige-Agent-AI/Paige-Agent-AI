@@ -18,9 +18,9 @@
 // THE FOUR FACTS (owner ruling). A provider runs only when all hold:
 //   (1) PACKAGE ENTITLEMENT — the tenant holds the Funding & Coaching Tools package. Resolved here from
 //       the EXACT `is_finance` predicate the persona resolver uses (mig 20260805130000): an ACTIVE install
-//       of ANY `is_finance` marketplace item, OR the generic `tenants.features.finance_in_scope` flag. This
-//       module is a second READER of that canonical predicate (exactly as growth-page-draft /
-//       paige-public-chat read the flag) — NOT a parallel entitlement system.
+//       of ANY `is_finance` marketplace item, OR the generic `tenants.features.finance_in_scope` flag. Since
+//       E09 F1b it is read by asking the database (`_tenant_finance_entitled`, through
+//       `_shared/finance-entitlement.ts`) — NOT a parallel entitlement system and no longer a copy.
 //   (2) CONNECTION / CONSENT — the tenant has the required Financial connection OR recorded consent/setup
 //       state for the provider. NO per-tenant Financial connection model exists for these providers today,
 //       so `resolveFundingProviderConnectionState` returns ABSENT for all of them → the gate refuses.
@@ -51,7 +51,10 @@
 // SHAPE. A PURE decision core (`decideFundingCoachingGate`) over injected facts — so the matrix is a unit
 // test, not an integration ceremony — plus an ASYNC resolver (`resolveFundingCoachingGate`) that reads the
 // two server-side facts, mirroring the pure-core + async-gatherer split of the capability-status seam.
-// Imports ONLY types (nothing runtime), so it bundles into every provider function and is portable.
+// Imports only the one entitlement reader (`./finance-entitlement.ts`, dependency-free), so it bundles
+// into every provider function and is portable.
+
+import { financeEntitled, type FinanceRpcDb } from "./finance-entitlement.ts";
 
 /** The finance/credit providers governed by the Funding & Coaching Tools package. */
 export type FundingProviderKey = "smartcredit" | "nav" | "business_verifier";
@@ -214,8 +217,9 @@ export function resolveFundingProviderConnectionState(
   return { satisfied: false, missing: "connection" };
 }
 
-/** The minimal service-role client surface the async resolver needs (a tenant-scoped read only). */
-export type FundingGateDb = {
+/** The minimal service-role client surface the async resolver needs: the entitlement RPC, plus the
+ *  audit insert used by `recordFundingGateDecision`. */
+export type FundingGateDb = FinanceRpcDb & {
   from: (table: string) => {
     // deno-lint-ignore no-explicit-any
     select: (cols: string) => any;
@@ -225,69 +229,19 @@ export type FundingGateDb = {
 };
 
 /**
- * (1) Resolve the package-entitlement fact — the EXACT `is_finance` predicate from mig 20260805130000,
- * read with an EXPLICIT tenant id (service-role; no JWT). Two legs, either ⇒ entitled:
- *   (a) an ACTIVE install of any `is_finance` marketplace item (the catalog gate), and
- *   (b) the generic `tenants.features.finance_in_scope` flag (set by an is_finance Blueprint's install
- *       manifest; mirrors `deriveFinanceInScopeFromFeatures`).
- * Computed as two basic reads rather than an embedded join so it cannot depend on PostgREST embedded-filter
- * resolution, and FAILS CLOSED to `read_error` on any DB error or a missing tenant (§13/§32).
+ * (1) Resolve the package-entitlement fact — the canonical per-business predicate
+ * `public._tenant_finance_entitled` (an ACTIVE install of an `is_finance` Marketplace item OR
+ * `tenants.features.finance_in_scope`), read through the ONE edge reader `_shared/finance-entitlement.ts`
+ * with an EXPLICIT tenant id (service role; no JWT). E09 F1b: this used to be a second, hand-written
+ * copy of the expression (two table reads); it now asks the database, so the edge cannot drift from
+ * SQL. FAILS CLOSED to `read_error` on any RPC error or a missing tenant id (§13/§32).
  *
- * Exported (E09 H0) so other server-side callers read the per-business entitlement through THIS one
- * reader rather than a second copy: `detect-credit-alerts` refuses to alert for a business it does not
- * resolve `entitled`. The SQL twin is the persona expression in `get_paige_persona_context`; the drift
- * test `detect-credit-alerts/authority.test.ts` holds the two to the same predicate.
+ * Still exported under this name (E09 H0): `detect-credit-alerts` refuses to alert for a business it
+ * does not resolve `entitled`. The drift tests (`detect-credit-alerts/authority.test.ts`,
+ * `_shared/finance-entitlement.drift.test.ts`) pin the SQL and this reader together.
  */
 export async function resolveFinanceEntitlement(db: FundingGateDb, tenantId: string | null): Promise<FundingEntitlement> {
-  if (!tenantId) return "read_error";
-  try {
-    // (a) active installs for this tenant — the EXISTS over marketplace_installs JOIN marketplace_items.
-    const { data: installs, error: instErr } = await db
-      .from("marketplace_installs")
-      .select("item_id")
-      .eq("tenant_id", tenantId)
-      .eq("status", "active");
-    if (instErr) {
-      console.error("funding-coaching-gate: marketplace_installs read failed", instErr.message ?? String(instErr));
-      return "read_error";
-    }
-    const itemIds = (Array.isArray(installs) ? installs : [])
-      .map((r: { item_id?: unknown }) => r.item_id)
-      .filter((id: unknown): id is string => typeof id === "string" && id.length > 0);
-    if (itemIds.length > 0) {
-      const { data: financeItems, error: itemErr } = await db
-        .from("marketplace_items")
-        .select("id")
-        .in("id", itemIds)
-        .eq("is_finance", true)
-        .limit(1);
-      if (itemErr) {
-        console.error("funding-coaching-gate: marketplace_items read failed", itemErr.message ?? String(itemErr));
-        return "read_error";
-      }
-      if (Array.isArray(financeItems) && financeItems.length > 0) return "entitled";
-    }
-
-    // (b) generic features.finance_in_scope flag — mirrors _shared/client-context deriveFinanceInScopeFromFeatures.
-    const { data: tenantRow, error: tenantErr } = await db
-      .from("tenants")
-      .select("features")
-      .eq("id", tenantId)
-      .maybeSingle();
-    if (tenantErr) {
-      console.error("funding-coaching-gate: tenants read failed", tenantErr.message ?? String(tenantErr));
-      return "read_error";
-    }
-    const features = tenantRow?.features;
-    const inScope = features && typeof features === "object" && !Array.isArray(features)
-      ? ((features as Record<string, unknown>).finance_in_scope === true ||
-         (features as Record<string, unknown>).finance_in_scope === "true")
-      : false;
-    return inScope ? "entitled" : "not_entitled";
-  } catch (e) {
-    console.error("funding-coaching-gate: entitlement read threw", String(e));
-    return "read_error";
-  }
+  return await financeEntitled(db, tenantId);
 }
 
 /**

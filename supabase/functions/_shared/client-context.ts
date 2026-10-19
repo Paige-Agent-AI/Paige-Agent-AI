@@ -198,25 +198,12 @@ ${probeSection}${journeySection}${buildLaneGuardSection(pb, tenant, fundingOn)}`
 export const HARD_GUARDRAIL_MARKER = "HARD GUARDRAIL — STAY IN LANE:";
 
 // ---------------------------------------------------------------------------
-// #184 KILL — the GENERIC finance-in-scope signal for the no-DB-join edge surfaces
-// (paige-public-chat, growth-page-draft service-role path) that read tenant
-// features directly instead of calling get_paige_persona_context(). The SQL
-// resolver derives funding_enabled from the is_finance marketplace catalog gate
-// (an active install of an is_finance item) OR this same features flag; these
-// no-join surfaces can't run the install-join, so they read the flag. INVARIANT:
-// every is_finance Blueprint's install manifest sets feature_flag
-// finance_in_scope=true (and legacy funding tenants are backfilled), so the flag
-// is authoritative here. NO vertical literal — this replaces the old inline
-// `features.playbook === "funding" || …` ORs (§18 one home for the signal).
+// #184 — the finance signal for the no-join edge surfaces (paige-public-chat, growth-page-draft's
+// service-role path) used to live here as a flag-only read of tenants.features. E09 F1b removed it:
+// those surfaces now ask the database through `_shared/finance-entitlement.ts`
+// (`_tenant_finance_entitled` — an active is_finance install OR features.finance_in_scope), the same
+// predicate get_paige_persona_context uses, so no edge copy of the expression remains.
 // ---------------------------------------------------------------------------
-export function deriveFinanceInScopeFromFeatures(
-  features: Record<string, unknown> | null | undefined,
-): boolean {
-  const f = features && typeof features === "object" && !Array.isArray(features)
-    ? (features as Record<string, unknown>)
-    : {};
-  return f.finance_in_scope === true || f.finance_in_scope === "true";
-}
 
 // ---------------------------------------------------------------------------
 // LEAK 1b (§37) — request-supplied `clientContext` guard. The frontend

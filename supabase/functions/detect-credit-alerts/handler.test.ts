@@ -148,8 +148,25 @@ function fakeClient(w: World, rec: Recorder) {
     }
     return b;
   }
+  // E09 F1b: the entitlement is read by asking the database (`_tenant_finance_entitled`), so the fake
+  // answers that one function over the world's rows — an active install of a finance item OR the
+  // flag. A read failure injected on `marketplace_installs` fails the call (the predicate reads it).
+  const rpc = (fn: string, args?: Row) => {
+    if (fn !== "_tenant_finance_entitled") return Promise.resolve({ data: null, error: { message: `unexpected rpc ${fn}` } });
+    rec.reads.push("marketplace_installs");
+    if (w.fail?.select?.marketplace_installs) {
+      return Promise.resolve({ data: null, error: { message: w.fail.select.marketplace_installs } });
+    }
+    const t = args?._tenant;
+    const finance = new Set(w.marketplace_items.filter((i) => i.is_finance === true).map((i) => i.id));
+    const viaInstall = w.marketplace_installs.some((r) => r.tenant_id === t && r.status === "active" && finance.has(r.item_id));
+    const features = w.tenants.find((r) => r.id === t)?.features as Row | undefined;
+    const viaFlag = features?.finance_in_scope === true || features?.finance_in_scope === "true";
+    return Promise.resolve({ data: viaInstall || viaFlag, error: null });
+  };
   return {
     from: (t: string) => builder(t as Table),
+    rpc,
     functions: {
       invoke: (name: string, opts: { body: Row }) => {
         rec.invokes.push({ name, body: opts.body });

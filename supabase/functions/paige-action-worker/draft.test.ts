@@ -247,7 +247,10 @@ describe("shapeEmailDraft — the shapes a specialist may return (plain text onl
     const moduleUrl=new URL("./draft.ts",import.meta.url).href;
     const input={ok:true,draft:{subject:"Subject",body_text:"```json\n"+" ".repeat(8000)+"X"}};
     const code=`import {shapeEmailDraft} from ${JSON.stringify(moduleUrl)}; console.log(JSON.stringify(shapeEmailDraft(${JSON.stringify(input)})));`;
-    assert.equal(execFileSync(process.execPath,["--input-type=module","-e",code],{encoding:"utf8",timeout:5000}).trim(),"null");
+    // CI's Node 20 needs the same repository TypeScript loader as this test's parent.
+    // Keep the probe in a separate, time-bounded process so a CPU regression cannot hang the suite.
+    const registerUrl=new URL("../../../scripts/client-memory-authz/register.mjs",import.meta.url).href;
+    assert.equal(execFileSync(process.execPath,["--import",registerUrl,"--input-type=module","-e",code],{encoding:"utf8",timeout:5000}).trim(),"null");
   });
   for(const content of [
     '```json\n{"subject":"Actual","body":\n```',

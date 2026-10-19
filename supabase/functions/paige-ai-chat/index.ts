@@ -76,7 +76,7 @@ import { buildApprovalOutcome, classifySpentApproval, classifyUnspentApproval, d
 import { resolveSourceThreadLink } from "../_shared/source-thread-link.ts";
 import { buildCreditProposal, buildCreditSyncPayload } from "../_shared/credit-extraction-payload.ts";
 import { projectOutcomeForModel } from "../_shared/mcp-outcome.ts";
-import { embeddingsCompat } from "../_shared/voyage.ts";
+import { embeddingsCompat, voyageEmbedOne, VOYAGE_MODEL } from "../_shared/voyage.ts";
 import { applyContactSearchFilter, CONTACT_NAME_SEARCH_COLUMNS, contactIdsByAddressToken } from "../_shared/contact-search.ts";
 import { resolveClientRef } from "../_shared/client-ref.ts";
 import { orderedContactMethods, primaryContactMethod } from "../_shared/contact-methods.ts";
@@ -257,7 +257,7 @@ import { getActorTier, clientSeatToolAllowed, type Tier } from "../_shared/actor
 import { readClientPortalChatBinding, sameClientPortalChatBinding } from "../_shared/client-portal-chat-scope.ts";
 import { buildClientPortalPersonaMessages, readClientPortalPersonaInput } from "../_shared/client-portal-persona.ts";
 import { customerAgentName, customerSeatIdentity } from "../_shared/client-portal-identity.ts";
-import { readCustomerAssistantContext, readCustomerAssistantControlContext, customerProgramMessages, customerTerminalSource, type CustomerSourceSnapshot } from "../_shared/client-portal-assistant-context.ts";
+import { readCustomerAssistantContext, readCustomerAssistantControlContext, customerProgramMessages, customerTerminalSource, embedCustomerQuery, type CustomerSourceSnapshot } from "../_shared/client-portal-assistant-context.ts";
 // R3 — what a client seat reads is read for internal text first.
 import { decodeChunks, internalTextForClient, leakKindCounts, readableFromFrames, syncStatusForClient, resultSavedSomething, WITHHELD_FRAME, withheldReplyForClient } from "../_shared/client-seat-reply.ts";
 // R2 — what PAIGE drafts for a customer is read for internal text before it is filed, carded or sent.
@@ -1304,9 +1304,14 @@ serve(async (req) => {
         validatedData.interactive.supersedesIntentId = validatedData.interactive.supersedesIntentId.toLowerCase();
     }
     const customerControl = validatedData.interactive?.kind === "stop" || validatedData.interactive?.kind === "status";
+    // E09 K2: the customer's question, embedded once (voyage-3 only, 4s, guarded) to rank already-
+    // authorized material. The same vector binds the read below and the begin, so both agree; on any
+    // failure it is NULL (recency) and the answer says so.
+    const customerQuery = customerPortal && !customerControl ? await embedCustomerQuery(
+      [...validatedData.messages].reverse().find((m: any) => m.role === "user")?.content, voyageEmbedOne, VOYAGE_MODEL) : null;
     const customerPersonaSource = customerPortal
-      ? await (customerControl ? readCustomerAssistantControlContext : readCustomerAssistantContext)(
-        supabaseClient, user.id, validatedData.threadId, validatedData.requestIntentId) : null;
+      ? await (customerControl ? readCustomerAssistantControlContext(supabaseClient, user.id, validatedData.threadId, validatedData.requestIntentId)
+        : readCustomerAssistantContext(supabaseClient, user.id, validatedData.threadId, validatedData.requestIntentId, customerQuery?.embedding ?? null)) : null;
     const customerAssistant = customerPersonaSource?.status === "available" ? customerPersonaSource.data : null;
     const customerPersona = customerAssistant?.persona ?? null;
     customerSourceSnapshot = customerAssistant?.snapshot ?? null;
@@ -1521,7 +1526,8 @@ serve(async (req) => {
         p_thread: validatedData.threadId, p_intent: validatedData.requestIntentId,
         p_supersedes: interactiveInput.supersedesIntentId ?? null,
         p_content: userText ?? "", p_bound_answer: validatedData.resume?.kind === "answer",
-        p_stop: interactiveInput.kind === "stop", ...(effectful ? {} : { p_effectful: false }),
+        p_stop: interactiveInput.kind === "stop",
+        ...(customerPortal ? { p_effectful: effectful, p_query_embedding: customerQuery?.embedding ?? null } : effectful ? {} : { p_effectful: false }),
       });
       if (interactiveInput.kind === "stop") {
         const stopped = await beginTurn(true);
@@ -9986,7 +9992,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // Current native grants and source-attested history participate in the same
       // full-source provider/output fence; no staff Knowledge or browser-history fallback.
       aiMessages.splice(0, aiMessages.length, ...buildClientPortalPersonaMessages(customerPersona),
-        ...customerProgramMessages(customerAssistant),
+        ...customerProgramMessages(customerAssistant, customerQuery?.degraded === true),
         ...messages.filter((m:any) => m.role === "user" || m.role === "assistant"));
       toolDefs.splice(0, toolDefs.length);
     } else if (callerTier === "client") {

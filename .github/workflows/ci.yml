@@ -892,6 +892,11 @@ jobs:
           # customer persona's fail-closed reads. Pure module under test; read grants the repo tree only.
           deno test --allow-read --allow-import --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \
             supabase/functions/_shared/client-portal-persona.test.ts
+          # E09 K2: the customer context decoder (v1 and v2 bindings, passages, the read's own report) and the
+          # question-embedding guard (voyage-3 only, 4s abort, 1024 finite values, any failure -> recency).
+          # Pure module under test; read grants the repo tree only, every other deny stays (no network).
+          deno test --allow-read --allow-import --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/client-portal-assistant-context.test.ts
           # The two-mailbox pilot's edge functions must at least TYPE-check.
           deno check --allow-import --node-modules-dir=none \
             supabase/functions/gmail-mailbox-sync/index.ts \

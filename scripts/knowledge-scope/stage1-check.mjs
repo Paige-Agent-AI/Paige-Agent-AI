@@ -4239,7 +4239,9 @@ group("32 Explicit customer audience uses native private history and customer pr
   const customerContext=(currentFrame=frame)=>({frame:currentFrame,thread_id:thread,intent_id:intent,snapshot,
     sources:[{...sourceRef,document_id:contact,document_revision:1,generation_id:null,title:"Approved customer guide",
       content:"NATIVE_CUSTOMER_PROGRAM",content_truncated:false}],
-    history:[{role:"user",content:"NATIVE_PRIVATE_CUSTOMER_HISTORY",source_refs:[sourceRef]}],history_limited:false});
+    history:[{role:"user",content:"NATIVE_PRIVATE_CUSTOMER_HISTORY",source_refs:[sourceRef]}],history_limited:false,
+    // E09 K2: the v2 context reports how it chose (a v1 binding replays by recency) and what it left out.
+    ranking:"recency",sources_limited:false,authorized_count:1});
   let terminal=false;
   const scenario={personaTenant:CHILD,memberships:[],activeTenantId:null,
     bodyExtras:{surfaceContext:{kind:"customer_portal"},threadId:thread,requestIntentId:intent,
@@ -4249,7 +4251,7 @@ group("32 Explicit customer audience uses native private history and customer pr
     rpcExtras:{get_actor_access:{data:{tier:"tenant"},error:null},
       current_user_tenant_id:{data:null,error:null},
       client_portal_frame:{data:frame,error:null},
-      client_portal_assistant_context:{data:customerContext(),error:null},
+      client_portal_assistant_context_v2:{data:customerContext(),error:null},
       paige_chat_customer_thread_authorized:{data:true,error:null},
       paige_chat_interactive_protocol:{data:{version:2,active:false},error:null},
       paige_chat_interactive_begin_v2:{data:{status:"accepted",turn_id:contact},error:null},
@@ -4279,6 +4281,18 @@ group("32 Explicit customer audience uses native private history and customer pr
     good.rec.rpc.some(x=>x.name==="client_portal_assistant_begin")
     &&!good.rec.rpc.some(x=>x.name==="paige_chat_interactive_begin_v2")
     &&JSON.stringify(good.rec.rpc.find(x=>x.name==="paige_chat_interactive_settle")?.args.p_bundle_ref.customer_knowledge)===JSON.stringify(snapshot));
+  {
+    // E09 K2: the customer's question is embedded (voyage only) and that one vector binds both the
+    // customer read and the begin overload, so the bound snapshot is the one the model was given.
+    const reads=good.rec.rpc.filter(x=>x.name==="client_portal_assistant_context_v2");
+    const begin=good.rec.rpc.find(x=>x.name==="client_portal_assistant_begin");
+    assert("32 the same question vector binds the customer read and the begin",
+      reads.length>=1&&Array.isArray(reads[0].args.p_query_embedding)&&reads[0].args.p_query_embedding.length===1024
+      &&JSON.stringify(begin?.args.p_query_embedding)===JSON.stringify(reads[0].args.p_query_embedding)
+      &&reads.slice(1).every(x=>x.args.p_query_embedding===null),
+      {reads:reads.map(x=>Array.isArray(x.args.p_query_embedding)?x.args.p_query_embedding.length:x.args.p_query_embedding),
+       begin:Array.isArray(begin?.args.p_query_embedding)?begin.args.p_query_embedding.length:begin?.args.p_query_embedding});
+  }
   const privateTraces=good.rec.inserts.filter(x=>x.table==="paige_llm_trace");
   assert("32 customer provider telemetry contains no private transcript excerpts",
     privateTraces.length>0&&privateTraces.every(x=>x.row.input_excerpt===null&&x.row.output_excerpt===null&&x.row.error_message===null),
@@ -4315,12 +4329,12 @@ group("32 Explicit customer audience uses native private history and customer pr
     !untrustedTool.rec.inserts.some(x=>["tasks","client_notes","paige_acts","paige_processes","paige_events","paige_customer_actions","messages"].includes(x.table))
     &&!untrustedTool.rec.rpc.some(x=>["file_act","create_paige_act","emit_client_event","emit_client_rail_event"].includes(x.name)));
   for(const [label,extra] of [
-    ["disabled",{client_portal_assistant_context:{data:customerContext({...frame,config:{assistant:{enabled:false}}}),error:null}}],
-    ["revoked",{client_portal_assistant_context:{data:null,error:{code:"42501"}}}],
+    ["disabled",{client_portal_assistant_context_v2:{data:customerContext({...frame,config:{assistant:{enabled:false}}}),error:null}}],
+    ["revoked",{client_portal_assistant_context_v2:{data:null,error:{code:"42501"}}}],
     ["wrong private thread",{paige_chat_customer_thread_authorized:{data:false,error:null}}],
-    ["policy withdrawn after egress",{client_portal_assistant_context:()=>({data:customerContext(providerCalls.length
+    ["policy withdrawn after egress",{client_portal_assistant_context_v2:()=>({data:customerContext(providerCalls.length
       ? {...frame,config:{assistant:{enabled:false}}}:frame),error:null})}],
-    ["program withdrawn after egress",{client_portal_assistant_context:()=>providerCalls.length
+    ["program withdrawn after egress",{client_portal_assistant_context_v2:()=>providerCalls.length
       ? {data:null,error:{code:"42501"}}:{data:customerContext(),error:null}}],
   ]) {
     terminal=false;
@@ -4331,14 +4345,14 @@ group("32 Explicit customer audience uses native private history and customer pr
   }
   terminal=false;
   const stopped=await drive({...scenario,bodyExtras:{...scenario.bodyExtras,interactive:{kind:"stop",supersedesIntentId:intent}},
-    rpcExtras:{...scenario.rpcExtras,client_portal_assistant_context:{data:null,error:{code:"42501"}}}});
+    rpcExtras:{...scenario.rpcExtras,client_portal_assistant_context_v2:{data:null,error:{code:"42501"}}}});
   assert("32 Stop remains available after accepted program withdrawal without model dispatch",
     stopped.providerCalls.length===0&&stopped.rec.rpc.some(x=>x.name==="client_portal_assistant_begin"&&x.args.p_stop===true));
   terminal=false;
-  const legacyProjection={...customerContext(),snapshot:null,sources:[],
+  const legacyProjection={...customerContext(),snapshot:null,sources:[],authorized_count:0,
     history:[{role:"user",content:"My own earlier words",source_refs:[]}]};
   const legacy=await drive({...scenario,rpcExtras:{...scenario.rpcExtras,
-    client_portal_assistant_context:{data:legacyProjection,error:null}},
+    client_portal_assistant_context_v2:{data:legacyProjection,error:null}},
     tableExtras:{...scenario.tableExtras,paige_chat_turns:()=>[{role:"user",content:"My own earlier words",bundle_ref:{}},
       {role:"assistant",content:"WITHDRAWN_PROGRAM_HISTORY",bundle_ref:{customer_knowledge:snapshot}}]}});
   assert("32 compatible direct-admission retry stays knowledgeless at the real provider boundary",

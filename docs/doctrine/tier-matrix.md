@@ -349,6 +349,21 @@ The campaign editor (Growth › Email, `src/solo/marketing-email-editor.tsx`) ga
 
 Series (welcome / nurture / re-engagement) do not take the portal key. Evidence: pgTAP `supabase/tests/e09_campaign_portal_audience.sql` 84/84 locally (17 reinstated defects each fail it); harness frames light/dark at 390/1440 (not live). Authenticated runtime UNVERIFIED.
 
+### E09 K2 — CURA's relevant retrieval of customer Knowledge (branch `e09-k2`, migration `20271111070000`, 2026-10-19; not yet merged)
+
+No visible surface changes; the customer's chat answers change. Both entry points (`client_portal_assistant_context_v2`, the 8-argument `client_portal_assistant_begin`) are authenticated-only and re-resolve the asker from the thread; staff never read a customer's private context through them.
+
+| Tier | Customer context v2 / begin (8-arg) | What it can rank |
+|---|---|---|
+| God / Operator | ✗ (not the thread's customer; refused) | — |
+| Agency / Enterprise | ✗ (owner of the business refused, tested for the Solo owner; same predicate) | — |
+| Standalone (Solo) | ✗ owner/staff refused (tested) | — |
+| Sub-account | ✗ (same predicate as Solo) | — |
+| Client | ✓ only their own open private thread (tested: another customer of the same business, another business's customer and a paused customer refused) | only shares current for them; a vector aimed at an unshared or another business's document never brings it in (tested); finance-marked material only while the business is entitled (tested) |
+| Anonymous | ✗ (no grant, tested) | ✗ |
+
+Evidence: pgTAP `supabase/tests/e09_customer_knowledge_retrieval.sql` 81/81 locally (20 reinstated defects, 19 fail it; 1 equivalent). Authenticated runtime UNVERIFIED (no session driven).
+
 ### E09 K1 — customer Knowledge shared business-wide, with a kind and a window (branch `e09-k1`, migration `20271111050000`, 2026-10-19; not yet merged)
 
 Database only; no visible surface changes in this PR (the owner panel is K3a). Nothing is published by the migration. Publisher = `knowledge_actor_authorized` (active workspace = the business) AND an active owner/admin membership of the business or an ancestor agency (`_tenant_brand_manager_member`); the bare platform operator is excluded.

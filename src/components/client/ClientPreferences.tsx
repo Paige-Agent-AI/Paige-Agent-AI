@@ -128,7 +128,7 @@ function PreferenceRow({ card, business, pending, locked, savingId, notice, onCh
   return (
     <li className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-5 gap-y-2 py-4" data-testid={`pref-${card.key}`} aria-busy={pending !== undefined || undefined}>
       <div className="min-w-0 space-y-1">
-        <p className="text-base font-medium [overflow-wrap:anywhere]" data-testid="pref-label">{card.label}</p>
+        <p className="text-balance text-base font-medium [overflow-wrap:anywhere]" data-testid="pref-label">{card.label}</p>
         <p id={stateId} className="flex items-start gap-1.5 text-sm text-foreground" data-testid="pref-state">
           {card.paused && <PauseCircle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-warning" />}
           <span>{pending !== undefined ? "Saving…" : card.state}</span>

@@ -199,6 +199,8 @@ describe("How {Business} can reach you — what each state says", () => {
     await mount();
     const label = "Let Northwind Studio’s team send you action items and use a fuller summary of you";
     expect(row("sharing").querySelector('[data-testid="pref-label"]')!.textContent).toBe(label);
+    // Round 5: the longer label wraps on desktop; balanced lines keep "of you" from sitting alone on a line.
+    expect(row("sharing").querySelector('[data-testid="pref-label"]')!.className).toContain("text-balance");
     expect(switchOf("sharing")!.getAttribute("aria-label")).toBe(label);
     expect(host.querySelector("#client-sharing-title")!.textContent).toBe("Action items and summaries from Northwind Studio’s team");
     expect(row("sharing").querySelector('[data-testid="pref-disclosure"]')!.textContent).toBe("Lets Northwind Studio’s team send you action items in your portal, including ones its AI assistant drafts, and give that assistant a fuller summary of you. It doesn’t change messages, shared work, agreements or invoices, what your portal assistant uses to answer you, or what Northwind Studio can already see in its own records. You can turn it off anytime.");

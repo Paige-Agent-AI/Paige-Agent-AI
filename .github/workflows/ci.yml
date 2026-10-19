@@ -769,6 +769,8 @@ jobs:
         run: deno test --allow-sys --no-lock supabase/functions/_shared/comms-email/sendgrid-webhook-admin.test.ts
       - name: SendGrid provider adapter (mocked fetch; synthetic key values only)
         run: deno test --allow-sys --allow-env --no-lock supabase/functions/_shared/email/sendgrid-provider.test.ts
+      - name: Customer email footer names the business, never the platform's COO (E09 CURA)
+        run: deno test --allow-sys --no-lock supabase/functions/_shared/transactional-email-templates/email-footer.test.ts
       - name: SendGrid admin key is referenced by no tenant-execution function (ANT-43/S7)
         run: node scripts/ci/forbid-sendgrid-admin-key-refs.mjs
       - name: Deno ratchet (affected edge functions — fails on NEW or increased diagnostics)

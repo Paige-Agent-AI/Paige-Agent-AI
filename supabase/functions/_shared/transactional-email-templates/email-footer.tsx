@@ -1,5 +1,6 @@
 import * as React from 'npm:react@18.3.1'
 import { Link, Text } from 'npm:@react-email/components@0.0.22'
+import { footerLine } from './email-footer-line.ts'
 
 interface EmailFooterProps {
   /**
@@ -29,15 +30,6 @@ interface EmailFooterProps {
  * §2/§3 — copy is coaching-generic and in-voice: no finance vocabulary, and the
  * link points at the platform unsubscribe page, never a tenant domain.
  */
-// customer-identity-exempt: the platform's own mail only (affiliate, welcome, weekly summary); customer-bound templates pass businessName
-const PLATFORM_LINE = "You're receiving this as part of your Paige Agent AI updates."
-
-/** The opt-out sentence: the business for its client's mail, the platform for its own. */
-export function footerLine(businessName?: string | null): string {
-  if (businessName === undefined) return PLATFORM_LINE
-  const b = (businessName ?? '').trim()
-  return b ? `You're receiving this as part of your updates from ${b}.` : "You're receiving this because these updates are on for your email."
-}
 
 export const EmailFooter = ({ unsubscribeUrl, businessName }: EmailFooterProps) => {
   if (!unsubscribeUrl) return null

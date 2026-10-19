@@ -30,8 +30,14 @@
 --      and the client's files all still exist and the owner still reads them;
 --  13. the owner's file-share answer, file list and "how they can be reached" say paused / ended
 --      instead of "can open it" or "not joined yet".
+-- Round 3 (security 2, 3) adds:
+--  11. pausing Jordan leaves another client of the same business holding its portal-issued link (the
+--      contact predicate), and a portal-issued token on a signer who already signed (a status outside
+--      pending/viewed) is left as it is (the status predicate);
+--  13. the work-item share answer's REPLAY (a repeat of a share that already landed) names
+--      portal_connected and portal_access too, so Paige never reads "no answer" as "can see it".
 BEGIN;
-SELECT plan(107);
+SELECT plan(113);
 
 -- ── Seed ────────────────────────────────────────────────────────────────────────────────────────
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
@@ -370,6 +376,22 @@ CREATE FUNCTION pg_temp.owner_access(_action text, _reason text DEFAULT NULL) RE
    _action,_reason,
    (pg_temp.owner($q$SELECT public.read_client_portal_access('e0997200-0000-4000-8000-000000000001','e0997300-0000-4000-8000-000000000001')$q$)->>'since')))
 $$;
+-- Round 3 (security 3): another client of the same business — the self-linked owner record from section 10 —
+-- holds a link the portal issued for their own agreement (reviewer probe v39/probe_links.sql). Pausing or
+-- ending Jordan must not touch it: the revoke is scoped to Jordan's agreements (a.contact_id = v_row.id).
+INSERT INTO public.paige_agreements(id,tenant_id,contact_id,title,body_markdown,status,content_sha256,sent_at,expires_at,created_by) VALUES
+ ('e0997600-0000-4000-8000-0000000000f1','e0997200-0000-4000-8000-000000000001','e0997300-0000-4000-8000-000000000002','Other client agreement','Synthetic other','sent',repeat('d',64),now()-interval '1 day',now()+interval '10 days','e0997100-0000-4000-8000-000000000001');
+INSERT INTO public.paige_agreement_signers(id,agreement_id,tenant_id,full_name,email,signer_role,signing_order,status,token_hash,token_expires_at) VALUES
+ ('e0997700-0000-4000-8000-0000000000f1','e0997600-0000-4000-8000-0000000000f1','e0997200-0000-4000-8000-000000000001','Other Person','other.person@tests.invalid','counterparty',1,'pending',
+  encode(extensions.digest(repeat('f',64),'sha256'),'hex'),now()+interval '1 day');
+INSERT INTO public.paige_audit_log(actor_user_id,actor_role,action,target_type,target_id,tenant_id,payload) VALUES
+ ('e0997100-0000-4000-8000-000000000001','client','agreement.portal_link_issued','paige_agreement','e0997600-0000-4000-8000-0000000000f1','e0997200-0000-4000-8000-000000000001',jsonb_build_object('signer_id','e0997700-0000-4000-8000-0000000000f1'));
+-- And on Jordan's own completed agreement, the signer who already signed holds a token the portal issued
+-- (a completion link, say): status 'signed' is outside pending/viewed, so pause and end leave it as it is.
+UPDATE public.paige_agreement_signers SET token_hash=encode(extensions.digest(repeat('9',64),'sha256'),'hex'),token_expires_at=now()+interval '1 day'
+ WHERE id='e0997700-0000-4000-8000-000000000002';
+INSERT INTO public.paige_audit_log(actor_user_id,actor_role,action,target_type,target_id,tenant_id,payload) VALUES
+ ('e0997100-0000-4000-8000-000000000002','client','agreement.portal_link_issued','paige_agreement','e0997600-0000-4000-8000-000000000002','e0997200-0000-4000-8000-000000000001',jsonb_build_object('signer_id','e0997700-0000-4000-8000-000000000002'));
 SELECT pg_temp.set_access('open');
 -- Sections 2-6 opened the signing link dozens of times (pg_temp.d runs every door); the portal allows ten
 -- an hour, so those earlier opens are cleared here (fixture housekeeping in this rolled-back run only).
@@ -382,6 +404,10 @@ SELECT ok(NOT pg_temp.opens((SELECT token FROM links WHERE name='portal')),'paus
 SELECT ok((SELECT token_hash IS NULL AND token_revoked_at IS NULL AND token_expires_at IS NOT NULL FROM public.paige_agreement_signers WHERE id='e0997700-0000-4000-8000-000000000001'),
   'paused: only its token is cleared (no revocation stamp, the deadline kept)');
 SELECT ok(pg_temp.opens(repeat('b',64)),'paused: the link the business emailed still opens, as it was');
+SELECT ok((SELECT token_hash = encode(extensions.digest(repeat('f',64),'sha256'),'hex') FROM public.paige_agreement_signers WHERE id='e0997700-0000-4000-8000-0000000000f1'),
+  'paused Jordan: another client''s portal-issued link is untouched');
+SELECT ok((SELECT token_hash = encode(extensions.digest(repeat('9',64),'sha256'),'hex') FROM public.paige_agreement_signers WHERE id='e0997700-0000-4000-8000-000000000002'),
+  'paused: a portal-issued token on a signer who already signed is untouched (status outside pending/viewed)');
 SELECT is((SELECT data->>'signing_links_revoked' FROM public.audit_logs WHERE entity_id='e0997300-0000-4000-8000-000000000001'
   AND action='client_portal.access_paused' ORDER BY created_at DESC LIMIT 1),'1','the pause audit counts the one portal link it stopped');
 SELECT is(pg_temp.owner_access('restore')->>'state','open','the owner restores Jordan');
@@ -392,6 +418,9 @@ SELECT ok((SELECT token_expires_at <= now()+interval '24 hours' FROM public.paig
 SELECT is(pg_temp.owner_access('end','engagement_ended')->>'state','ended','the owner ends Jordan''s access through the writer');
 SELECT ok(NOT pg_temp.opens((SELECT token FROM links WHERE name='portal2')),'ended: the link the portal issued no longer opens');
 SELECT ok(pg_temp.opens(repeat('b',64)),'ended: the link the business emailed still opens, as it was');
+SELECT ok((SELECT token_hash IS NOT NULL FROM public.paige_agreement_signers WHERE id='e0997700-0000-4000-8000-0000000000f1')
+  AND (SELECT token_hash IS NOT NULL FROM public.paige_agreement_signers WHERE id='e0997700-0000-4000-8000-000000000002'),
+  'ended: neither the other client''s link nor the signed signer''s token was touched');
 
 -- ── 12. After a real end, the commercial history is all still there and the owner still reads it ──
 SELECT ok((SELECT linked_user_id IS NULL AND portal_access_state='ended' AND portal_access_former_user_id='e0997100-0000-4000-8000-000000000002'
@@ -431,6 +460,23 @@ SELECT pg_temp.set_access('open');
 SELECT is(pg_temp.owner_reads(),'true open | list true | reach true open','open: they say the client can see it');
 SELECT is((SELECT array_agg(k ORDER BY k) FROM jsonb_object_keys(pg_temp.owner($q$SELECT public.client_file_owner_list('e0997100-0000-4000-8000-000000000001','e0997200-0000-4000-8000-000000000001','e0997300-0000-4000-8000-000000000001')$q$)) k),
   ARRAY['contact_id','files','has_more','ok','portal_connected'],'the file list keeps exactly its keys (the Files card reads them exactly)');
+-- Round 3 (security 2): a repeat of a work-item share that already landed answers from the row — and still says
+-- what the client can see, so Paige's "Verified: the client can now see…" never rests on a missing answer.
+INSERT INTO public.plan_items(id,tenant_id,item_type,created_by,contact_id,title,status,client_shared_at,client_shared_by,updated_at) VALUES
+ ('e0997900-0000-4000-8000-000000000001','e0997200-0000-4000-8000-000000000001','task','e0997100-0000-4000-8000-000000000001','e0997300-0000-4000-8000-000000000001',
+  'Kickoff call','open',now()-interval '1 day','e0997100-0000-4000-8000-000000000001','2027-01-01T00:00:00Z');
+CREATE FUNCTION pg_temp.plan_replay() RETURNS text LANGUAGE sql AS $$
+ SELECT (r->>'replayed') || ' ' || coalesce(r->>'portal_connected','-') || ' ' || coalesce(r->>'portal_access','-')
+ FROM (SELECT pg_temp.owner(format('SELECT public.plan_item_set_client_share(%L,%L,%L,true,%L)',
+   'e0997100-0000-4000-8000-000000000001','e0997200-0000-4000-8000-000000000001','e0997900-0000-4000-8000-000000000001',
+   '2027-01-01T00:00:00Z')) AS r) x
+$$;
+SELECT pg_temp.set_access('paused');
+SELECT is(pg_temp.plan_replay(),'true false paused','paused: the work-item share replay says paused, not "no answer"');
+SELECT pg_temp.set_access('ended');
+SELECT is(pg_temp.plan_replay(),'true false ended','ended: the replay says ended');
+SELECT pg_temp.set_access('open');
+SELECT is(pg_temp.plan_replay(),'true true open','open: the replay says the client can see it');
 INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,status) VALUES
  ('e0997300-0000-4000-8000-000000000003','e0997200-0000-4000-8000-000000000001',NULL,'e0997100-0000-4000-8000-000000000001','Never','Joined','active');
 SELECT is(pg_temp.owner($q$SELECT public.read_client_communication_state('e0997200-0000-4000-8000-000000000001','e0997300-0000-4000-8000-000000000003')$q$)->>'portal_access',

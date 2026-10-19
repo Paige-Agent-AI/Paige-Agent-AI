@@ -701,8 +701,8 @@ function ClientRecord({
         {standing && <ClientFiles key={`files:${person.id}`} contactId={person.id} clientName={person.name} portalConnected={access.joined && access.state === "open"} portalAccess={access.state} />}
         {/* E09 Slice 7: pause, restore or end this client's portal access — the one home for that act (§18). Under what the client is shown (Shared with, then Files for). */}
         {portalAccess && <ClientPortalAccess key={`access:${person.id}`} person={person} onOpenPortal={portalAccess.openPortal} onChanged={portalAccess.onChanged} onAccessChange={(state, joined) => setAccess({ state, joined })} />}
-        {/* E09 Slice 6: how this client can be reached, read-only, from the one consent derivation. Same gate as standing. */}
-        {standing && <ClientCommunicationState key={`reach:${person.id}`} contactId={person.id} clientName={person.name} account={standing.account} />}
+        {/* E09 Slice 6: how this client can be reached, read-only, from the one consent derivation. Same gate as standing. Slice 7 round 3: re-read when the access state changes. */}
+        {standing && <ClientCommunicationState key={`reach:${person.id}`} contactId={person.id} clientName={person.name} account={standing.account} accessState={access.state} />}
         <section className="trc-record-section">
           <header><div><span>Overview</span><h3>Relationship overview</h3></div><ProofPill>Standard fields · PARTIAL</ProofPill></header>
           <dl className="trc-facts">

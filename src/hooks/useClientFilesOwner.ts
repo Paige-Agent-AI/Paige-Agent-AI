@@ -34,8 +34,14 @@ export type OwnerUpload = {
 };
 /** "Load more": older files after the last one shown. `failed` is shown beside the button; nothing else changes. */
 export type OwnerMore = { loading: boolean; failed: boolean };
+/**
+ * The share answer's `portal_access` (E09 Slice 7): why the client can or can't see the file now. `null` when the
+ * answer carries no word (an older server, or a client record that is no longer active) — never guessed.
+ */
+export type PortalAccessWord = "open" | "paused" | "ended" | "not_joined";
+const ACCESS_WORDS: ReadonlySet<string> = new Set(["open", "paused", "ended", "not_joined"]);
 export type ShareResult =
-  | { kind: "confirmed"; shared: boolean; portalConnected: boolean | null }
+  | { kind: "confirmed"; shared: boolean; portalConnected: boolean | null; portalAccess: PortalAccessWord | null }
   | { kind: "refused"; code: string; reread: boolean }
   | { kind: "unconfirmed" }
   | { kind: "scope" };
@@ -251,11 +257,13 @@ export function useClientFilesOwner(contactId: string | null) {
       return { kind: "refused", code, reread: code !== "CLIENT_FILES_UNAVAILABLE" };
     }
     const connected = typeof reply.data.portal_connected === "boolean" ? reply.data.portal_connected : null;
+    const word = reply.data.portal_access;
+    const access = typeof word === "string" && ACCESS_WORDS.has(word) ? word as PortalAccessWord : null;
     // Success is what a fresh read says, not what the writer acknowledged.
     try {
       const fresh = await reload();
       const now = fresh.files.find(f => f.id === file.id);
-      return now && (now.visibility === "shared") === shared ? { kind: "confirmed", shared, portalConnected: connected } : { kind: "unconfirmed" };
+      return now && (now.visibility === "shared") === shared ? { kind: "confirmed", shared, portalConnected: connected, portalAccess: access } : { kind: "unconfirmed" };
     } catch { return { kind: "unconfirmed" }; }
   }, [activeTenantId, actor, reload]);
 

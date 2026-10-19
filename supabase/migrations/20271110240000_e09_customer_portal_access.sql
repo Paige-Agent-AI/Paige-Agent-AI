@@ -46,8 +46,10 @@
 --    slice was written (Documents, Profile & Consent, Agreements, Payments) now re-prove through.
 --
 -- Renumbered 20271110110000 -> 20271110240000 at integration (2026-10-18) so it applies after Documents
--- (200000), Profile & Consent (215000), Agreements (220000) and Payments (230000). Every function this
--- file restates was diffed against its newest definition on that base; operations_delivery_client_read_scoped
+-- (200000), Profile & Consent (215000), Agreements (225000; it was 220000 before main renumbered it above
+-- 20271110220000_followup_email_origin_admission) and Payments (230000). Every function this file restates
+-- was diffed against its newest definition on that base, and again on main a26efbcc9 (2026-10-19, round 3:
+-- no migration on main redefines any of them after its source here); operations_delivery_client_read_scoped
 -- is Documents' 200000 body plus this slice's predicate, and no other restated body changed after
 -- 1cc4e9950 (the evidence record carries the table).
 BEGIN;
@@ -2159,7 +2161,7 @@ CREATE TRIGGER trg_clients_portal_link_not_staff
 
 
 -- ── 12. The open-access gate on the customer doors added after this slice was written ───────────
--- Documents (20271110200000), Profile & Consent (20271110215000), Agreements (20271110220000) and
+-- Documents (20271110200000), Profile & Consent (20271110215000), Agreements (20271110225000) and
 -- Payments (20271110230000) each resolve the customer through client_portal_relationship_id and then
 -- re-prove the row under a lock — but their re-proof predates the access state. The resolver (section 3)
 -- already refuses a paused or ended person on a plain call; the locked re-proof is what decides when a
@@ -2569,7 +2571,7 @@ BEGIN
   RETURN jsonb_build_object('ok', true, 'replayed', NOT _changed, 'preferences', _after);
 END $$;
 
--- client_portal_agreements: from 20271110220000_e09_customer_portal_agreements.sql (Agreements 20271110220000); the resolver call becomes the gate ('share'). Nothing else changes.
+-- client_portal_agreements: from 20271110225000_e09_customer_portal_agreements.sql (Agreements 20271110225000); the resolver call becomes the gate ('share'). Nothing else changes.
 CREATE OR REPLACE FUNCTION public.client_portal_agreements(p_tenant_id uuid DEFAULT NULL, p_limit integer DEFAULT 50)
 RETURNS jsonb
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER
@@ -2660,7 +2662,7 @@ BEGIN
 END;
 $$;
 
--- client_portal_open_agreement_signing: from 20271110220000_e09_customer_portal_agreements.sql (Agreements 20271110220000); the resolver call becomes the gate ('share'). Nothing else changes.
+-- client_portal_open_agreement_signing: from 20271110225000_e09_customer_portal_agreements.sql (Agreements 20271110225000); the resolver call becomes the gate ('share'). Nothing else changes.
 CREATE OR REPLACE FUNCTION public.client_portal_open_agreement_signing(p_agreement_id uuid, p_tenant_id uuid DEFAULT NULL)
 RETURNS jsonb
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER
@@ -2781,7 +2783,7 @@ BEGIN
 END;
 $$;
 
--- client_portal_agreement_document_scope: from 20271110220000_e09_customer_portal_agreements.sql (Agreements 20271110220000); the resolver call becomes the gate ('share'). Nothing else changes.
+-- client_portal_agreement_document_scope: from 20271110225000_e09_customer_portal_agreements.sql (Agreements 20271110225000); the resolver call becomes the gate ('share'). Nothing else changes.
 CREATE OR REPLACE FUNCTION public.client_portal_agreement_document_scope(p_agreement_id uuid, p_tenant_id uuid DEFAULT NULL)
 RETURNS jsonb
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER
@@ -3095,9 +3097,13 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'CONTACT_NOT_FOUND');
   END IF;
   -- 6. State replay: a retry of a change that already landed answers from the row, writes nothing.
+  -- Round 3 (security 2): the replay names what the client can see too, as the file writer's replay does;
+  -- without it Paige would read "no answer" for a paused client.
   IF (v_row.client_shared_at IS NOT NULL) = p_shared THEN
     RETURN jsonb_build_object('ok', true, 'replayed', true, 'item_id', v_row.id, 'shared', p_shared,
-      'shared_at', v_row.client_shared_at, 'updated_at', v_row.updated_at);
+      'shared_at', v_row.client_shared_at, 'updated_at', v_row.updated_at,
+      'portal_connected', v_client_found AND v_linked IS NOT NULL AND v_state = 'open',
+      'portal_access', public._client_portal_access_word(v_client_found, v_linked, v_state));
   END IF;
   -- 7. Version: the owner shares exactly the title and status they last saw.
   IF p_expected_updated_at IS NULL OR v_row.updated_at IS DISTINCT FROM p_expected_updated_at THEN

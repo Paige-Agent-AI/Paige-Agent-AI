@@ -214,6 +214,11 @@ Deno.test("the consequence line never claims a send or a deletion, and names wha
   assert(/new invitation/.test(end) && /stops showing here/.test(end));
   assert(/Emails and texts you send them aren't affected/.test(pause));
   assert(pause.includes("Reason: Payment"), "the card names the reason whether or not the version token is present");
+  // Round 3 (security 1): pause and end revoke a signing link the portal issued, which had replaced the
+  // emailed one — the card says so and tells the owner to resend; restore revokes nothing.
+  const signing = "A signing link they opened from your portal stops working; resend it if they still need to sign.";
+  assert(pause.includes(signing) && end.includes(signing), "pause and end name the signing link they stop");
+  assert(!/signing link/.test(restore));
 });
 
 Deno.test("the write is high and can never run unattended; the read is not a mutation", () => {
@@ -280,7 +285,9 @@ Deno.test("the share answer's access state is read strictly, and the unseen note
   assertEquals(readPortalShareAccess("suspended"), null);
   assertEquals(readPortalShareAccess(undefined), null);
   assertEquals(portalUnseenNote({ portalConnected: true, portalAccess: "open" }), "");
-  assertEquals(portalUnseenNote({ portalConnected: null, portalAccess: null }), "");
+  // Round 3 (security 2): no portal_connected in the answer is unknown — never silence that reads as "can see".
+  assertEquals(portalUnseenNote({ portalConnected: null, portalAccess: null }), " Whether they can see it in their portal right now wasn't confirmed, so don't say they can.");
+  assertEquals(portalUnseenNote({ portalConnected: null, portalAccess: "open" }), " Whether they can see it in their portal right now wasn't confirmed, so don't say they can.");
   assertEquals(portalUnseenNote({ portalConnected: false, portalAccess: "paused" }), " Their portal access is paused, so they can't see it until the business restores it.");
   assertEquals(portalUnseenNote({ portalConnected: false, portalAccess: "ended" }), " Their portal access has ended, so they will see it only if they are invited back and accept.");
   assertEquals(portalUnseenNote({ portalConnected: false, portalAccess: "not_joined" }), " This client hasn't joined their portal yet, so they'll see it once they do.");
@@ -292,9 +299,11 @@ Deno.test("chat never tells the owner a client can open a share the writer says 
   for (const claim of ["they can now open it in their portal", "visible to them in their portal — say that plainly", "the client can now see this item's title"]) {
     const at = chat.indexOf(claim);
     assert(at > 0, claim);
-    // Each "can see it now" sentence sits on the connected branch of a portalConnected === false test.
+    // Each "can see it now" sentence sits on the connected branch of a portalConnected !== true test, so an
+    // answer with no portal_connected (null, e.g. a replay) takes the unseen branch (round 3, security 2).
     const before = chat.slice(Math.max(0, at - 400), at);
-    assert(/portalConnected === false/.test(before), `"${claim}" is not guarded by portalConnected`);
+    assert(/portalConnected !== true/.test(before), `"${claim}" is not guarded by portalConnected !== true`);
+    assert(!/portalConnected === false\s*\n?\s*\?/.test(before), `"${claim}" is guarded by === false, which lets null claim visibility`);
   }
   assertEquals((chat.match(/portalUnseenNote\(/g) ?? []).length, 3);
 });

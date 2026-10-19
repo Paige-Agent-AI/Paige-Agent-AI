@@ -67,6 +67,14 @@ describe("client portal access contract (E09 Slice 7)", () => {
     expect(portalAccessConfirmCopy("pause", "Jordan Test", "Test Studio").lines[0]).toContain("You can restore it later.");
   });
 
+  // Round 3 (security 1): pause and end revoke a signing link the portal issued (S7-D1), and that link had
+  // replaced the emailed one — so "agreements stay as they are" alone would leave the owner never resending.
+  it("pause and end name the signing link they stop, and tell the owner to resend it; restore does not", () => {
+    const line = "A signing link they opened from your portal stops working; resend it if they still need to sign.";
+    for (const action of ["pause", "end"] as const) expect(portalAccessConfirmCopy(action, "Jordan Test", "Test Studio").lines).toContain(line);
+    expect(portalAccessConfirmCopy("restore", "Jordan Test", "Test Studio").lines.join(" ")).not.toMatch(/signing link/);
+  });
+
   it("reads the writer's restore blocker, which it names `reason` (20271110240000)", async () => {
     rpc.mockResolvedValue({ data: { ok: false, error: "ACCESS_RESTORE_UNAVAILABLE", reason: "contact_merged" }, error: null });
     await expect(setPortalAccess({ actorId: "a", tenantId: "t", contactId: "c", action: "restore", reason: null, note: null, expectedChangedAt: null }))

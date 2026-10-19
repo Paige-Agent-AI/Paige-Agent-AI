@@ -5,7 +5,7 @@ import { ClientFiles } from "./ClientFiles";
 
 const actor = "e0914000-0000-4000-8000-0000000000a1", tenant = "e0924000-0000-4000-8000-0000000000a1", contact = "e0934000-0000-4000-8000-0000000000a1";
 type Row = Record<string, unknown> & { id: string; visibility: string; upload_state: string; updated_at: string };
-const f = vi.hoisted(() => ({ rpc: vi.fn(), upload: vi.fn(), sign: vi.fn(), rows: [] as Row[], connected: true, reads: 0, sessionUser: "" }));
+const f = vi.hoisted(() => ({ rpc: vi.fn(), upload: vi.fn(), sign: vi.fn(), rows: [] as Row[], connected: true, reads: 0, sessionUser: "", access: undefined as string | undefined }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: tenant, activeUserId: actor, accountContextLoading: false }) }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {
   auth: { getSession: async () => ({ data: { session: { user: { id: f.sessionUser || actor } } }, error: null }) },
@@ -24,7 +24,7 @@ const list = () => ({ ok: true, contact_id: contact, portal_connected: f.connect
 
 let host: HTMLDivElement, root: Root;
 beforeEach(() => {
-  vi.clearAllMocks(); f.connected = true; f.reads = 0; f.sessionUser = "";
+  vi.clearAllMocks(); f.connected = true; f.reads = 0; f.sessionUser = ""; f.access = undefined;
   f.rows = [file(1, "shared"), file(2, "internal"), file(3, "client_upload", { filename: "Signed intake.pdf" })];
   f.rpc.mockImplementation(async (name: string, args: Record<string, unknown>) => {
     if (name === "client_file_owner_list") { f.reads++; return { data: list(), error: null }; }
@@ -32,7 +32,7 @@ beforeEach(() => {
       const row = f.rows.find(r => r.id === args.p_file_id)!;
       if (row.updated_at !== args.p_expected_updated_at) return { data: { ok: false, error: "FILE_CHANGED", updated_at: row.updated_at }, error: null };
       row.visibility = args.p_shared ? "shared" : "internal"; row.updated_at = "2026-01-05T00:00:00Z";
-      return { data: { ok: true, replayed: false, file_id: row.id, shared: args.p_shared, shared_at: null, updated_at: row.updated_at, portal_connected: f.connected }, error: null };
+      return { data: { ok: true, replayed: false, file_id: row.id, shared: args.p_shared, shared_at: null, updated_at: row.updated_at, portal_connected: f.connected, ...(f.access === undefined ? {} : { portal_access: f.access }) }, error: null };
     }
     if (name === "client_file_owner_begin_upload") {
       const id = String(args.p_file_id);
@@ -240,6 +240,10 @@ it("says when the client hasn't joined the portal yet", async () => {
   f.connected = false; await render(false);
   expect(host.textContent).toContain("Jordan Rivera hasn’t joined your portal yet; shared files appear when they do.");
 });
+it("takes the list's word that the client has joined since the record loaded", async () => {
+  f.connected = true; await render(false);
+  expect(host.textContent).not.toContain("hasn’t joined your portal yet");
+});
 // E09 Slice 7 round 2 (compliance 1): a paused client keeps the login link, so "linked" is not "can see".
 // The card names paused and ended, and never confirms a share as something the client can open now —
 // even against a server that still reports the link alone (portal_connected true while paused).
@@ -260,6 +264,47 @@ it("follows the server when it reports the client cannot open the portal, even i
   f.connected = false;
   await act(async () => switchFor("File 2.pdf")!.click()); await flush();
   expect(host.textContent).toContain("Shared. Jordan will see it once they join your portal.");
+});
+// E09 Slice 7 round 3 (compliance A): the record's access props are live. A Restore on the record must not leave the
+// "hasn't joined" line that the list read while paused would say, and the card must not wait for a re-read to drop it.
+it("drops the paused line and never says 'hasn't joined' when the record is restored, without a new read", async () => {
+  f.connected = false; // the list was read while access was paused: linked AND open is false
+  await render(false, "paused");
+  expect(host.textContent).toContain("Paused — Jordan can’t see shared files right now.");
+  const reads = f.reads;
+  await render(true, "open");
+  expect(f.reads).toBe(reads);
+  expect(host.textContent).not.toContain("hasn’t joined your portal yet");
+  expect(host.textContent).not.toContain("Paused — Jordan");
+  f.connected = true;
+  await act(async () => switchFor("File 2.pdf")!.click()); await flush();
+  expect(host.textContent).toContain("Shared. Jordan Rivera can open it in their portal.");
+});
+it("says paused when the share answer reads paused, though the record still thinks access is open", async () => {
+  await render(true, "open");
+  f.connected = false; f.access = "paused"; // paused in another tab after this record loaded
+  await act(async () => switchFor("File 2.pdf")!.click()); await flush();
+  expect(host.textContent).toContain("Shared. Jordan will see it if you restore their access.");
+  expect(host.textContent).toContain("Paused — Jordan can’t see shared files right now.");
+  expect(host.textContent).not.toContain("can open it in their portal");
+  expect(host.textContent).not.toContain("hasn’t joined your portal yet");
+});
+it("a Pause then Restore on the record outranks an earlier share answer that read paused", async () => {
+  await render(true, "open");
+  f.connected = false; f.access = "paused";
+  await act(async () => switchFor("File 2.pdf")!.click()); await flush();
+  expect(host.textContent).toContain("Paused — Jordan can’t see shared files right now.");
+  await render(false, "paused");
+  await render(true, "open");
+  expect(host.textContent).not.toContain("Paused — Jordan");
+  expect(host.textContent).not.toContain("hasn’t joined your portal yet");
+});
+it("says ended when the share answer reads ended, though the record still thinks access is open", async () => {
+  await render(true, "open");
+  f.connected = false; f.access = "ended";
+  await act(async () => switchFor("File 2.pdf")!.click()); await flush();
+  expect(host.textContent).toContain("Shared. Jordan will see it if you invite them back and they accept.");
+  expect(host.textContent).not.toContain("hasn’t joined your portal yet");
 });
 it.each([
   ["a member who isn't an owner or admin", { data: null, error: { code: "42501", message: "FILE_SCOPE_CHANGED" } }, "Only the business owner or an admin can see and share Jordan Rivera’s files."],

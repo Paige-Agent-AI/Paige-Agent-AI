@@ -211,11 +211,14 @@ export async function setPortalAccess(args: {
  *   - history stays on the contact, but END also hides what the person connected under their own
  *     login (it is keyed on that login), and open invitations stop working;
  *   - emails and texts are NOT stopped (the consent ledger still governs sends), and nobody is emailed;
- *   - invoices, agreements and booked sessions already sent stay as they are (D5).
+ *   - invoices, agreements and booked sessions already sent stay as they are (D5) — except a signing
+ *     link the client opened from the portal, which pause and end revoke (S7-D1, round 3 security 1):
+ *     it replaced the emailed link, so the owner is told to resend it.
  */
 export function portalAccessConfirmCopy(action: PortalAccessAction, name: string, business: string): { title: string; lines: string[]; confirm: string } {
   const notTold = "Emails and texts you send them aren’t affected, and we won’t email them about this.";
   const outside = "Invoices, agreements and booked sessions you already sent stay as they are.";
+  const signing = "A signing link they opened from your portal stops working; resend it if they still need to sign.";
   switch (action) {
     case "pause":
       return {
@@ -225,6 +228,7 @@ export function portalAccessConfirmCopy(action: PortalAccessAction, name: string
           "Their history stays on this contact, and any open invitation stops working.",
           notTold,
           outside,
+          signing,
         ],
         confirm: "Pause access",
       };
@@ -236,6 +240,7 @@ export function portalAccessConfirmCopy(action: PortalAccessAction, name: string
           "Their history stays on this contact. Anything they connected under their own login stops showing here until they rejoin.",
           notTold,
           outside,
+          signing,
         ],
         confirm: "End access",
       };

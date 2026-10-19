@@ -18,10 +18,14 @@ import "./client-communication-state.css";
  * staff control — pausing email or texts — lives in Conversations, its one home (§18), and this
  * section links there instead of growing a second switch.
  */
-type Props = { contactId: string; clientName: string; account: string | null };
+/**
+ * `accessState` (E09 Slice 7 round 3): the record's portal access state. When a Pause, Restore or End on this record
+ * changes it, the card reads again, so its Portal row never keeps saying "Joined" for a client just paused.
+ */
+type Props = { contactId: string; clientName: string; account: string | null; accessState?: string };
 type Phase = { phase: "loading" } | { phase: "no_workspace" } | { phase: "refused" } | { phase: "error" } | { phase: "ready"; state: State };
 
-export function ClientCommunicationState({ contactId, clientName, account }: Props) {
+export function ClientCommunicationState({ contactId, clientName, account, accessState }: Props) {
   const { activeTenantId, accountContextLoading } = useTenantContext();
   const [read, setRead] = useState<Phase>({ phase: "loading" });
   const [refresh, setRefresh] = useState(0);
@@ -42,7 +46,7 @@ export function ClientCommunicationState({ contactId, clientName, account }: Pro
       const parsed = error ? null : readClientCommunicationState(data, { tenantId: activeTenantId, contactId });
       setRead(parsed ? { phase: "ready", state: parsed } : { phase: "error" });
     }, () => { if (generation.current === opened) setRead({ phase: "error" }); });
-  }, [activeTenantId, accountContextLoading, contactId, refresh]);
+  }, [activeTenantId, accountContextLoading, contactId, refresh, accessState]);
 
   const conversations = account ? `/solo/${account}/clients/conversations?contact=${encodeURIComponent(contactId)}` : null;
   return (

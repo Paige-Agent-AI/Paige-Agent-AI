@@ -38,11 +38,15 @@ export function readPortalShareAccess(v: unknown): PortalShareAccess | null {
   return typeof v === "string" && (SHARE_ACCESS as readonly string[]).includes(v) ? v as PortalShareAccess : null;
 }
 /**
- * One sentence on why the client cannot see what was just shared — "" when they can (connected is not false).
- * Paige appends it to her confirmation, so she never says "they can open it now" to a paused client.
+ * One sentence on why the client cannot see what was just shared — "" only when the writer said they can
+ * (connected === true). Paige appends it to her confirmation, so she never says "they can open it now" to a
+ * paused client. Round 3 (security 2): an answer with no portal_connected (null — e.g. a replay from before
+ * the field existed) is UNKNOWN, never "can see": the note says it wasn't confirmed.
  */
+export const PORTAL_VISIBILITY_UNCONFIRMED_NOTE = " Whether they can see it in their portal right now wasn't confirmed, so don't say they can.";
 export function portalUnseenNote(r: { portalConnected: boolean | null; portalAccess?: PortalShareAccess | null }): string {
-  if (r.portalConnected !== false) return "";
+  if (r.portalConnected === true) return "";
+  if (r.portalConnected !== false) return PORTAL_VISIBILITY_UNCONFIRMED_NOTE;
   switch (r.portalAccess) {
     case "paused": return " Their portal access is paused, so they can't see it until the business restores it.";
     case "ended": return " Their portal access has ended, so they will see it only if they are invited back and accept.";
@@ -305,7 +309,9 @@ export async function portalAccessClientName(
 
 /**
  * The approval card's consequence line, in the owner's words. It names the client and, for pause
- * and end, the reason the owner is approving. It never claims a send, a deletion, or a one-step undo.
+ * and end, the reason the owner is approving. It never claims a send, a deletion, or a one-step undo,
+ * and names the one thing pause and end do revoke: a signing link the client opened from the portal
+ * (S7-D1; round 3 security 1 — that link replaced the emailed one, so the owner must resend it).
  */
 export function portalAccessConfirmSummary(args: unknown, clientName: string | null = null): string {
   // The card's words do not depend on the version token, so a missing one never hides the reason.
@@ -315,7 +321,7 @@ export function portalAccessConfirmSummary(args: unknown, clientName: string | n
   const name = clientName?.trim() || null;
   const whose = name ? `${name}'s` : "this client's";
   const why = reason ? ` Reason: ${reason} (only your team sees it).` : "";
-  const kept = "Their history stays on this contact and any open invitation stops working. They won't be emailed, and invoices, agreements and booked sessions you already sent stay as they are. Emails and texts you send them aren't affected.";
+  const kept = "Their history stays on this contact and any open invitation stops working. They won't be emailed, and invoices, agreements and booked sessions you already sent stay as they are. A signing link they opened from your portal stops working; resend it if they still need to sign. Emails and texts you send them aren't affected.";
   switch (action) {
     case "pause":
       return `Pause ${whose} portal access.${why} They'll see that their access is paused the next time they open your portal, and you can restore it later. ${kept}`;

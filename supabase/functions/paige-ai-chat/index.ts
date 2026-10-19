@@ -14732,7 +14732,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                         verified_readback: true,
                         // E09 Slice 7: "can open it now" only when the writer says the client can open the portal now.
                         note: (shared.shared
-                          ? (shared.portalConnected === false
+                          ? (shared.portalConnected !== true
                             ? "Verified: it stays on their record and is shared to their portal. They were not sent a message."
                               + portalUnseenNote(shared)
                             : "Verified: it stays on their record and they can now open it in their portal. They were not sent a message.")
@@ -14781,8 +14781,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                         portal_access: refiled.share?.portalAccess ?? undefined,
                         verified_readback: true,
                         note: refiled.shared
-                          ? (refiled.share?.portalConnected === false
-                            ? "Filed on their record and shared to their portal. They were not sent a message." + portalUnseenNote(refiled.share)
+                          ? (refiled.share?.portalConnected !== true
+                            ? "Filed on their record and shared to their portal. They were not sent a message." + portalUnseenNote(refiled.share ?? { portalConnected: null })
                             : "Filed on their record AND visible to them in their portal — say that plainly, because they can read it now. They were not sent a message.")
                           : "Filed on their record where the team can see it. The client cannot — say so if it matters."
                             + (refiled.movedFromContactId ? " A file moved to another client always arrives private." : ""),
@@ -17593,9 +17593,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   portal_access: r.portalAccess ?? undefined,
                   readback: { id: r.itemId, shared: r.shared, shared_at: r.sharedAt, updated_at: r.updatedAt },
                   record_locator: { table: "plan_items", id: r.itemId }, verified_readback: true,
-                  // E09 Slice 7: "can now see" only when the writer says the client can open the portal now.
+                  // E09 Slice 7: "can now see" only when the writer says the client can open the portal now;
+                  // round 3 (security 2): no answer (null) is unknown, never "can see".
                   note: (r.shared
-                    ? (r.portalConnected === false
+                    ? (r.portalConnected !== true
                       ? "Verified: this item's title, state and due date are shared to their portal. They were not sent a message."
                         + portalUnseenNote(r)
                       : "Verified: the client can now see this item's title, state and due date in their portal. They were not sent a message.")

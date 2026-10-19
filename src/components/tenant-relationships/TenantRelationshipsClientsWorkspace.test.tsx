@@ -1465,6 +1465,9 @@ describe("tenant Relationships / Clients workspace", () => {
     expect(files).not.toContain("linkedUserId");
     const shared = (source.match(/[^\n]*<ClientSharedWork[^\n]*/g) ?? [])[0] ?? "";
     expect(shared).toContain('portalConnected={access.joined && access.state === "open"} portalPaused={access.state === "paused"} portalEnded={access.state === "ended"}');
+    // Round 3 (low): the reach card re-reads when the access state changes in this session.
+    const reach = (source.match(/[^\n]*<ClientCommunicationState[^\n]*/g) ?? [])[0] ?? "";
+    expect(reach).toContain("accessState={access.state}");
   });
 
   it("E09 Slice 6: the reach section mounts only behind the same standing gate, and the footer keeps its flags everywhere else", () => {

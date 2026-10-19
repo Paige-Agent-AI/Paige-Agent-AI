@@ -298,12 +298,12 @@ function unmet(s, n) {
     case "error": want(/couldn’t check Jordan Rivera’s portal access\. Nothing has changed\./.test(n.alert ?? "") && /Try again/.test(n.alert ?? ""), `error "${n.alert}"`); break;
     case "confirm-pause":
       want(/^Pause Jordan Rivera’s portal access\?/.test(n.confirmText ?? ""), "pause confirm title");
-      for (const line of [`They’ll see that their access to ${BUSINESS} is paused the next time they open it.`, "Their history stays on this contact", "Emails and texts you send them aren’t affected, and we won’t email them about this.", "Invoices, agreements and booked sessions you already sent stay as they are.", "Only your team sees this."])
+      for (const line of [`They’ll see that their access to ${BUSINESS} is paused the next time they open it.`, "Their history stays on this contact", "Emails and texts you send them aren’t affected, and we won’t email them about this.", "Invoices, agreements and booked sessions you already sent stay as they are.", "A signing link they opened from your portal stops working; resend it if they still need to sign.", "Only your team sees this."])
         want((n.confirmText ?? "").includes(line), `pause confirm missing "${line}"`);
       want(n.radios === 5 && eq(n.buttons.slice(-2), ["Cancel", "Pause access"]) && gold.length === 0, `pause confirm controls ${n.radios} ${JSON.stringify(n.buttons)}`);
       break;
     case "confirm-end":
-      for (const line of ["To bring them back you’ll send a new invitation.", "Anything they connected under their own login stops showing here until they rejoin."])
+      for (const line of ["To bring them back you’ll send a new invitation.", "Anything they connected under their own login stops showing here until they rejoin.", "A signing link they opened from your portal stops working; resend it if they still need to sign."])
         want((n.confirmText ?? "").includes(line), `end confirm missing "${line}"`);
       want(!/Nothing is deleted/.test(n.confirmText ?? "") && eq(n.buttons.slice(-2), ["Cancel", "End access"]) && gold.length === 0, `end confirm ${JSON.stringify(n.buttons)}`);
       break;
@@ -329,7 +329,7 @@ function unmet(s, n) {
       want(/^Paused — Jordan can’t see this right now\./.test(n.sharedNote ?? ""), `shared-with paused line "${n.sharedNote}"`);
       break;
     case "reinvite":
-      want(/Whoever accepts sees what this client’s record holds in your portal: earlier messages, shared work and files, invoices issued to this client, and agreements that name them as a signer\./.test(n.reinvite ?? ""), `reinvite copy "${n.reinvite}"`);
+      want(/Whoever accepts sees everything in this client’s portal — messages, shared work and files, sessions, invoices, agreements and their contact details — and can act on it\./.test(n.reinvite ?? ""), `reinvite copy "${n.reinvite}"`);
       // The existing invitation command, for this contact, and usable: the ended contact is no longer linked.
       want(n.manager === 1 && n.review?.disabled === false && !/couldn’t be checked/.test(n.reinvite ?? ""), `reinvite manager ${n.manager} review ${JSON.stringify(n.review)}`);
       // Review 9: the spent joining invitation is not shown as "Latest invitation: accepted" under "Access ended".

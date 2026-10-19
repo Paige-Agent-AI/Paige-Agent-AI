@@ -171,11 +171,34 @@ export function shapeEmailDraft(result: unknown): EmailDraft | null {
   const r = obj(result);
   if (r.ok === false) return null;
   const d = obj(r.draft);
-  const subject = oneLineSubject(str(d.subject) || str(r.subject));
+  let subject = oneLineSubject(str(d.subject) || str(r.subject));
   const flatBody = str(d.body) || str(r.body);
   const html = str(d.body_html) || str(r.body_html) || (looksLikeHtml(flatBody) ? flatBody : "");
   let text = str(d.body_text) || str(r.body_text) || (flatBody && !looksLikeHtml(flatBody) ? flatBody : "");
   if (!text && html) text = htmlToText(html);
+  // The historical composer caught fenced model JSON as plain text and saved the
+  // entire response as body_text. Recover only its complete two-string contract;
+  // malformed/ambiguous envelopes must never become the proposed email wording.
+  if (/^```(?:json\b|\s*\{)/i.test(text)) {
+    if (text.length > COMMS_EMAIL_BODY_MAX) return null;
+    const fence = /^```(?:json)?\s*([\s\S]*?)\s*```$/i.exec(text);
+    if (!fence) return null;
+    // A closed two-field grammar rejects duplicate keys before JSON.parse could
+    // silently choose one. JSON.parse still validates escapes/control characters.
+    const string = '"(?:[^"\\\\]|\\\\.)*"';
+    const subjectPair = '"subject"\\s*:\\s*' + string;
+    const bodyPair = '"body"\\s*:\\s*' + string;
+    const pair = new RegExp('^\\{\\s*(?:' + subjectPair + '\\s*,\\s*' + bodyPair + '|' + bodyPair + '\\s*,\\s*' + subjectPair + ')\\s*\\}$');
+    if (!pair.test(fence[1])) return null;
+    let decoded: Obj;
+    try { decoded = obj(JSON.parse(fence[1])); } catch { return null; }
+    if (typeof decoded.subject !== "string" || typeof decoded.body !== "string"
+      || decoded.subject.length > COMMS_EMAIL_SUBJECT_MAX || decoded.body.length > COMMS_EMAIL_BODY_MAX
+      || decoded.subject.includes("\u0000") || decoded.body.includes("\u0000")) return null;
+    subject = oneLineSubject(decoded.subject);
+    text = looksLikeHtml(decoded.body) ? htmlToText(decoded.body) : decoded.body.trim();
+    if (/^```(?:json\b|\s*\{)/i.test(text)) return null;
+  }
   if (!subject || !text) return null;
   const raw = pick(r, RAW_KEYS);
   if (r.draft && typeof r.draft === "object" && !Array.isArray(r.draft)) raw.draft = pick(d, RAW_DRAFT_KEYS);

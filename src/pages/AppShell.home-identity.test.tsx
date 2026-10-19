@@ -43,17 +43,29 @@ const render = async (state: CustomerIdentityState) => {
   ));
 };
 
-it("greets a customer as the business's agent", async () => {
+// Round 3 (verifier 7): the chat beside the home already greets the customer; the home pointed to the same
+// agent with that greeting word for word. It now points to the agent once, in the welcome line, and leads
+// with the customer's own things.
+it("points a customer to the business's agent without repeating the chat's greeting", async () => {
   await render({ frame: frame("Ava"), phase: "ready" });
-  expect(host.textContent).toContain("Ava is here to help");
-  expect(host.textContent).toContain("Hi — I’m Ava, the AI client success agent for Northwind Studio. How can I help?");
+  expect(host.querySelector("h1")?.textContent).toBe("Welcome Back");
+  expect(host.textContent).toContain("Ask Ava about your next steps.");
+  expect(host.textContent).not.toContain("Hi — I’m Ava");
+  expect(host.textContent).not.toContain("is here to help");
   expect(host.textContent).toContain("Home tiles");
+  expect(host.textContent).toContain("Getting started checklist");
   expect(host.textContent).not.toMatch(/paige/i);
 });
 
-it("offers a person whose access is not active no agent tiles, checklist or greeting, and does not repeat the chat's status", async () => {
+// Round 3 (verifier 7 + compliance): the home for a person whose access is not active was "Welcome" over an
+// empty pane. It is the portal's empty state, says what will appear here, and never repeats the chat's status.
+it("gives a person whose access is not active an empty state, not a bare welcome", async () => {
   await render({ frame: null, phase: "not-client", staff: false });
-  expect(host.querySelector("h1")?.textContent).toBe("Welcome");
+  expect(host.querySelector('[data-testid="no-access-home"]')).not.toBeNull();
+  expect(host.querySelector("h1")?.textContent).toBe("Home");
+  expect(host.textContent).toContain("Nothing is shared with you right now");
+  expect(host.textContent).toContain("When a business gives you portal access, the documents, sessions and messages it shares with you appear here.");
+  expect(host.textContent).not.toMatch(/Welcome/);
   expect(host.textContent).not.toContain("isn’t active");
   expect(host.textContent).not.toContain("is here to help");
   expect(host.textContent).not.toContain("Home tiles");

@@ -20,11 +20,12 @@ import { day, on, outcomeText, preferenceCards, type PreferenceCard as Card } fr
  * (D1); email off also unsubscribes from updates and offers and email back on does not re-subscribe (D4,
  * disclosure email-pref:v3); booking confirmations and agreements the customer is asked to sign still
  * arrive (D5, integrator default (owner may overrule), 2026-10-18); a spam report is the customer's own act, which they can undo
- * here and the business never can. Data sharing names the business and the AI tools it uses (CURA-D1,
- * integrator default, owner may overrule, 2026-10-19): the flag is read by the business side
- * (load_contact_context, admin_propose_paige_actions), never by Cura, and PAIGE is never named to a
- * customer (owner ruling, 2026-10-19). The old "It has no effect yet" (D2, M3) was untrue for those
- * seams and is gone from data-sharing:v2.
+ * here and the business never can. Data sharing names the AI tools the business uses (CURA-D1,
+ * integrator default, owner may overrule, 2026-10-19; round 3 corrected the party): the flag gates only
+ * what the business's AI reads (load_contact_context, admin_propose_paige_actions), never what its staff
+ * see in their own records and never Cura, and PAIGE is never named to a customer (owner ruling,
+ * 2026-10-19). The old "It has no effect yet" (D2, M3) was untrue for those seams and is gone from
+ * data-sharing:v2.
  */
 
 const SWITCH_TARGET = "relative after:absolute after:inset-x-0 after:-inset-y-[12px] after:content-['']";
@@ -77,18 +78,18 @@ export function ClientPreferences({ actorId, onCommitted }: { actorId: string; o
 
       {ready && prefs.preferences && (
         <section aria-labelledby="client-sharing-title" className="mt-12 max-w-2xl">
-          <h2 id="client-sharing-title" className="mb-5 border-b border-border pb-4 text-lg font-semibold tracking-tight">What {business} can use</h2>
+          <h2 id="client-sharing-title" className="mb-5 border-b border-border pb-4 text-lg font-semibold tracking-tight">What {business}'s AI tools can use</h2>
           <ul className="divide-y divide-border border-b border-border">
             <PreferenceRow business={business} locked={busy} savingId={savingId} notice={noticeFor("sharing")}
               pending={prefs.pending?.key === "sharing" ? prefs.pending.enabled : undefined}
               onChange={allow => void prefs.setSharing(allow)}
               card={{
                 key: "sharing",
-                label: `Let ${business} and the AI tools it uses see your account details`,
+                label: `Let ${business}'s AI tools use your account details`,
                 disclosure: CURRENT_DISCLOSURE.sharing,
                 state: prefs.preferences.data_sharing.allowed ? `Allowed${on(day(prefs.preferences.data_sharing.updated_at))}` : "Not allowed",
-                detail: `It never changes what ${business} can already see in its own records.`,
-                control: { checked: prefs.preferences.data_sharing.allowed, enabled: true, aria: `Let ${business} and the AI tools it uses see your account details` },
+                detail: "Turning it off doesn't delete anything.",
+                control: { checked: prefs.preferences.data_sharing.allowed, enabled: true, aria: `Let ${business}'s AI tools use your account details` },
               }} />
           </ul>
         </section>

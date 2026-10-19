@@ -193,9 +193,11 @@ export function readClientCommunicationState(data: unknown, expected: { tenantId
  * Changing a sentence means a new id on both sides, never an edit of an old one. A superseded id stays here and
  * on the server, because evidence already written names it; the page shows only CURRENT_DISCLOSURE.
  * {business} is the business's name, filled at display time; the hash names the template. data-sharing:v2 names the
- * business, not an agent: the flag it sets is read by the business side (load_contact_context for the business's
- * assistant, admin_propose_paige_actions for the requests it sends), never by Cura (CURA-D1, integrator default,
- * owner may overrule, 2026-10-19). v1's "It has no effect yet" was untrue for those two seams and is dropped.
+ * business's AI tools, not the business and not an agent: the flag gates only what the business's AI reads
+ * (load_contact_context, the bundle loaded for its assistant; admin_propose_paige_actions, the AI-prepared requests
+ * sent to the customer), never what its staff see in their own records, and never Cura. So the sentence also says
+ * the business still sees its own records (CURA-D1, integrator default, owner may overrule, 2026-10-19; round 3
+ * corrected the party). v1's "It has no effect yet" was untrue for those two seams and is dropped.
  */
 export const PORTAL_PREFERENCE_DISCLOSURES = {
   // Superseded 2026-10-18 (round 2): did not say email off also unsubscribes from updates, or name agreements.
@@ -212,7 +214,7 @@ export const PORTAL_PREFERENCE_DISCLOSURES = {
   "sms-pref:v2": "Texts from {business}. When texts are off, {business} can't text you through Paige. To get texts, reply START to a text from {business} if you have one, or ask them.", // customer-identity-exempt: superseded consent sentence, kept byte for byte because evidence already names it
   "sms-pref:v3": "Texts from {business}. When texts are off, {business} can't text you. To get texts, reply START to a text from {business} if you have one, or ask them.",
   "data-sharing:v1": "Lets {business}'s Paige use your account details and portal activity when it prepares requests or suggestions for you. It has no effect yet, and you can turn it off anytime.", // customer-identity-exempt: superseded consent sentence, kept byte for byte because evidence already names it
-  "data-sharing:v2": "Lets {business} and the AI tools it uses see your account details and portal activity, for example to prepare requests or suggestions for you. You can turn it off anytime.",
+  "data-sharing:v2": "Lets the AI tools {business} uses read your account details and portal activity, for example to prepare requests or suggestions for you. {business} can still see its own records about you. You can turn it off anytime.",
 } as const;
 export type PortalDisclosureId = keyof typeof PORTAL_PREFERENCE_DISCLOSURES;
 

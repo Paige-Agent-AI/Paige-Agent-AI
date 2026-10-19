@@ -58,6 +58,17 @@ for(const name of [undefined,"","   ","PAIGE"," Paige ","paige"])test(`legacy cu
   assert.match(messages[0].content,/PAIGE is the business owner's COO/);
   assert.match(messages[1].content,/"assistant_name":"Cura"/);
 });
+// Round 3: the frame's name runs through the same rule the page uses; a T-word, a mark or an accent
+// after PAIGE never reaches the customer, and a standalone "Paiget" is a different word.
+for(const name of ["Paige Team","PaigeTalk","Paige\u2122","Paig\u00E9","PAIGE-T"])test(`frame name ${JSON.stringify(name)} resolves to Cura`,async()=>{
+  const input=await readClientPortalPersonaInput(fixture({config:{assistant:{display_name:name}}}).caller,actor);
+  assert.ok(input);assert.equal(input.assistantName,"Cura");
+  assert.match(buildClientPortalPersonaMessages(input)[1].content,/"assistant_name":"Cura"/);
+});
+test("frame name Paiget is kept as the business typed it",async()=>{
+  const input=await readClientPortalPersonaInput(fixture({config:{assistant:{display_name:"Paiget"}}}).caller,actor);
+  assert.ok(input);assert.equal(input.assistantName,"Paiget");
+});
 test("an existing custom customer name remains business-scoped presentation",async()=>{
   const input=await readClientPortalPersonaInput(fixture({config:{assistant:{display_name:"  River Guide  "}}}).caller,actor);
   assert.ok(input);assert.equal(input.assistantName,"River Guide");

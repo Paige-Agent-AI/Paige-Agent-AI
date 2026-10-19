@@ -36,5 +36,8 @@ describe("RequirePortalStaff", () => {
     await mount();
     expect(host.textContent).not.toContain("Your Paige Team");
     expect(host.querySelector('[role="status"]')).not.toBeNull();
+    // Round 3 (compliance): the page's skeleton, never a bare "Loading…".
+    expect(host.querySelector('[data-testid="portal-staff-skeleton"]')).not.toBeNull();
+    expect(host.textContent).not.toMatch(/Loading…/);
   });
 });

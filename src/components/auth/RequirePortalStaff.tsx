@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Compass } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { EmptyState } from "@/components/ui/page";
+import { Skeleton } from "@/components/ui/skeleton";
 import { usePortalStaffStanding } from "@/lib/portal/portalStaffStanding";
 
 /**
@@ -24,9 +25,7 @@ export function RequirePortalStaff({ children }: { children: ReactNode }) {
   }, []);
   const standing = usePortalStaffStanding(userId, !!userId);
   if (standing.staff === true) return <>{children}</>;
-  if (!userId || standing.loading) {
-    return <div role="status" aria-live="polite" className="py-12 text-center text-sm text-muted-foreground">Loading…</div>;
-  }
+  if (!userId || standing.loading) return <StandingSkeleton />;
   return (
     <EmptyState
       icon={Compass}
@@ -34,5 +33,26 @@ export function RequirePortalStaff({ children }: { children: ReactNode }) {
       description="Everything your business shares with you is on your home page."
       action={<Link to="/app" className="inline-flex min-h-[44px] items-center rounded-md border border-border px-4 text-sm font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Back to home</Link>}
     />
+  );
+}
+
+/** While standing is checked: the page's shape (a title and two rows), so neither the staff page nor the
+ * not-available state flashes, and nothing jumps when one lands (round 3: was a bare "Loading…"). */
+function StandingSkeleton() {
+  return (
+    <div role="status" data-testid="portal-staff-skeleton" className="mx-auto max-w-4xl space-y-4 py-2">
+      <span className="sr-only">Checking this page…</span>
+      <Skeleton className="h-8 w-56 motion-reduce:animate-none" />
+      <Skeleton className="h-4 w-80 max-w-full motion-reduce:animate-none" />
+      {[0, 1].map((i) => (
+        <div key={i} className="flex items-center gap-3 rounded-xl border border-border bg-card p-4">
+          <Skeleton className="h-10 w-10 shrink-0 rounded-full motion-reduce:animate-none" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-1/3 motion-reduce:animate-none" />
+            <Skeleton className="h-4 w-1/2 motion-reduce:animate-none" />
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }

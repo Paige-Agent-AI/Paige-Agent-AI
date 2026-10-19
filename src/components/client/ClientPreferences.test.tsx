@@ -60,7 +60,7 @@ describe("How {Business} can reach you — what each state says", () => {
   it("nothing on record: email on, texts not set up, not subscribed, sharing not allowed", async () => {
     await mount();
     expect(host.textContent).toContain("How Northwind Studio can reach you");
-    expect(host.textContent).toContain("What Northwind Studio can use");
+    expect(host.textContent).toContain("What Northwind Studio's AI tools can use");
     expect(stateOf("email")).toBe("On");
     expect(stateOf("sms")).toBe("Not set up");
     expect(switchOf("sms")?.disabled).toBe(true);
@@ -191,14 +191,17 @@ describe("How {Business} can reach you — what each state says", () => {
     expect(host.textContent).not.toMatch(/paige/i);
   });
 
-  // CURA-D1: the sharing row, its switch and its heading all name the business (the party that reads the flag).
-  it("the data-sharing row names the business, matching its heading", async () => {
+  // CURA-D1 (round 3): the sharing row, its switch, its heading and the line under it all name the business's
+  // AI tools (what the flag gates), and nothing on the row says the business stops seeing its own records.
+  it("the data-sharing row names the business's AI tools, matching its heading and the line under it", async () => {
     await mount();
-    const label = "Let Northwind Studio and the AI tools it uses see your account details";
+    const label = "Let Northwind Studio's AI tools use your account details";
     expect(row("sharing").querySelector('[data-testid="pref-label"]')!.textContent).toBe(label);
     expect(switchOf("sharing")!.getAttribute("aria-label")).toBe(label);
-    expect(host.querySelector("#client-sharing-title")!.textContent).toBe("What Northwind Studio can use");
-    expect(row("sharing").textContent).not.toMatch(/Cura|no effect yet/);
+    expect(host.querySelector("#client-sharing-title")!.textContent).toBe("What Northwind Studio's AI tools can use");
+    expect(row("sharing").querySelector('[data-testid="pref-disclosure"]')!.textContent).toContain("Northwind Studio can still see its own records about you.");
+    expect(row("sharing").querySelector('[data-testid="pref-detail"]')!.textContent).toBe("Turning it off doesn't delete anything.");
+    expect(row("sharing").textContent).not.toMatch(/Cura|no effect yet|Let Northwind Studio and/);
   });
 
   it("section headings sit visibly above row labels (should-fix 8)", async () => {

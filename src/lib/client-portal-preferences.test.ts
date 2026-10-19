@@ -117,11 +117,12 @@ describe("disclosures are the server's sentences, byte for byte (reviewer Minor 
     expect(disclosureText(id, "Northwind Studio")).not.toMatch(/paige/i);
   });
   // CURA-D1 (integrator default, owner may overrule, 2026-10-19): the flag (clients.paige_shared_context_consent)
-  // is read by the BUSINESS side — load_contact_context for its assistant, admin_propose_paige_actions for the
-  // requests it sends — never by Cura. So the sentence names the business, has no agent placeholder, and no
-  // longer says "It has no effect yet" (those two server seams act on it).
-  it("names the business, not an agent, in the data-sharing sentence", () => {
-    expect(disclosureText("data-sharing:v2", "Northwind Studio")).toBe("Lets Northwind Studio and the AI tools it uses see your account details and portal activity, for example to prepare requests or suggestions for you. You can turn it off anytime.");
+  // gates only what the business's AI reads — load_contact_context for its assistant, admin_propose_paige_actions
+  // for the requests it prepares — never what its staff see, and never Cura. Round 3: the sentence names the AI
+  // tools as the party, says the business still sees its own records, has no agent placeholder, and no longer
+  // says "It has no effect yet" (those two server seams act on it).
+  it("names the business's AI tools, not the business or an agent, in the data-sharing sentence", () => {
+    expect(disclosureText("data-sharing:v2", "Northwind Studio")).toBe("Lets the AI tools Northwind Studio uses read your account details and portal activity, for example to prepare requests or suggestions for you. Northwind Studio can still see its own records about you. You can turn it off anytime.");
     expect(PORTAL_PREFERENCE_DISCLOSURES["data-sharing:v2"]).not.toContain("{assistant}");
     expect(PORTAL_PREFERENCE_DISCLOSURES["data-sharing:v2"]).not.toMatch(/no effect yet/);
     expect(Object.values(PORTAL_PREFERENCE_DISCLOSURES).some(t => t.includes("{assistant}"))).toBe(false);

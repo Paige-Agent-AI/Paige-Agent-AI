@@ -214,6 +214,20 @@ export function inspectIncumbentSource(chatText,tool) {
 // crm_file_document only, its dispatch branch (the two share notes above) and its import set (+
 // ../_shared/client-portal-access.ts for portalUnseenNote, a pure sentence function). No write,
 // authority, tenant, actor, confirmation or verifier path changed. Renew those 29 dispatch scalars only.
+// E09 CURA identity bounded renewal (2026-10-19), AUTHOR source review (NOT non-author; the independent
+// round-3 reviewers must confirm): branch e09-portal-cura rebased onto main a26efbcc9 (Slice H #2373 and every
+// earlier main hunk intact). The branch diff vs main for paige-ai-chat/index.ts is two hunks: one added import
+// line (readClientPortalPersonaInput, customerAgentName, customerSeatIdentity) and one added
+// `else if (callerTier === "client")` branch after the native Customer Portal persona branch, which re-voices
+// the owner's prompt blocks with the business's agent name read from client_portal_frame under the caller's
+// JWT (best effort, presentation only; vouched client-seat text untouched). No dispatch branch, control,
+// helper, authority or verifier logic changed; the whole-handler try (identity[15]) is what moves all 29.
+// Proof: paige-ai-chat/index.ts at main gives all 29 of main's pins exactly (scratchpad r3/pins.mjs, zero
+// mismatches); the branch's gives the 29 below. send-message/index.ts: the client email's sender fallback
+// reads the business name through _shared/email/sender-display-name.ts instead of "Paige Agent" (one import,
+// one widened row type, one replaced assignment). client-portal-identity.ts: the customer agent-name rule
+// (accent/symbol folding, "Paiget" only as a standalone word) and literal replacer functions. action-risk.ts
+// is byte-identical (pin unchanged). Renew those 29 dispatch scalars and those 2 source digests only.
 const CONTRACTS = {
   "comms_setup_calling": {
     "key": "communications.comms_setup_calling",
@@ -587,7 +601,7 @@ const SOURCES = {
   "supabase/functions/paige-write-back/index.ts": "5ff11463820b7c38e69f683cbcd8542359d5a72c37724c06846bf3dcc6d41de8",
   "supabase/functions/paige-orchestrator/index.ts": "84e1bb410fb5e01242d4a34401ece2c4dbad515be51e3e4cbe337420e5245243",
   "supabase/functions/subagent-forge/index.ts": "1acb5488f11bd93a2d6b36638fddcd73323f4363eacbd58b284d1fa648b3d906",
-  "supabase/functions/send-message/index.ts": "a4aae28d430ffc154f59187b2df0d08dd273e11353696534981307c11b00de07",
+  "supabase/functions/send-message/index.ts": "29306707680c77fde92d6c689a9f1bca472ba24ab3219c60b21dcc7da68c956d",
   "supabase/functions/_shared/paige-spine/contracts.ts": "2d771686d636c04d2e07d9b8c336e19cde246b9a303ddd034d7ae8500f7eefb4",
   // Operator retirement adds opt-in timeout/no-retry controls; ordinary callers retain
   // their existing behavior. Renewed non-author review and actual retry controls are
@@ -711,7 +725,7 @@ const ANCESTRY_SOURCES = {
  // binding/policy/Knowledge/private-history guards are unchanged. Pin the pure
  // identity dependency too; no dispatch scalar or verifier logic is renewed.
  "supabase/functions/_shared/client-portal-persona.ts": "e6d4017abf1f50cfbb1da55cec4430f9d64465c8664220fd1013612c91f5c833",
- "supabase/functions/_shared/client-portal-identity.ts": "e53e01aca7389c55565ceb7394498be64490760bc88c7b6b79e5f85cbbaf9d6a",
+ "supabase/functions/_shared/client-portal-identity.ts": "55a915741c99a5483419a5cfff5427c1835f4ab47d0c9c038f8e310e22a4d016",
  "supabase/functions/_shared/paige-spine/domains/soloBusinessInterviewContext.ts": "ae869d9dbc131f0e6d48d3f34e6a5edc81fd22a095946fa06cf8b7393528b053",
  // E02 source review: the33-key literal moved unchanged into a pure dependency.
  // Reconstituting it into the reader is AST-identical to deployed892b1bdfe.

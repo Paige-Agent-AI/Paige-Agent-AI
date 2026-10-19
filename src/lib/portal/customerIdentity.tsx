@@ -31,6 +31,8 @@ export type CustomerIdentity = {
   frame: FrameState["frame"];
   phase: FrameState["phase"];
   viewer: PortalViewer;
+  /** True while the shell is still finding out which viewer this is (the frame, then staff standing). */
+  checking: boolean;
 };
 
 export type CustomerIdentityState = Pick<FrameState, "frame" | "phase"> & {
@@ -38,6 +40,8 @@ export type CustomerIdentityState = Pick<FrameState, "frame" | "phase"> & {
   staff?: boolean | null;
   /** The owner's own assistant name, used only for a staff viewer. */
   staffAssistantName?: string | null;
+  /** True while staff standing is being read. */
+  staffChecking?: boolean;
 };
 
 const CustomerIdentityContext = createContext<CustomerIdentity | null>(null);
@@ -55,6 +59,7 @@ export function customerIdentityFrom(state: CustomerIdentityState): CustomerIden
     frame,
     phase: state.phase,
     viewer,
+    checking: state.phase === "loading" || (state.phase === "not-client" && state.staffChecking === true),
   };
 }
 
@@ -66,7 +71,7 @@ function personName(frame: FrameState["frame"]): string | null {
 }
 
 export function CustomerIdentityProvider({ state, children }: { state: CustomerIdentityState; children: ReactNode }) {
-  const value = useMemo(() => customerIdentityFrom(state), [state.frame, state.phase, state.staff, state.staffAssistantName]); // eslint-disable-line react-hooks/exhaustive-deps
+  const value = useMemo(() => customerIdentityFrom(state), [state.frame, state.phase, state.staff, state.staffAssistantName, state.staffChecking]); // eslint-disable-line react-hooks/exhaustive-deps
   return <CustomerIdentityContext.Provider value={value}>{children}</CustomerIdentityContext.Provider>;
 }
 
@@ -76,6 +81,11 @@ export function CustomerIdentityProvider({ state, children }: { state: CustomerI
  */
 export function useCustomerIdentity(): CustomerIdentity {
   return useContext(CustomerIdentityContext) ?? NEUTRAL;
+}
+
+/** The shell's identity, or null outside the /app shell (where there is no viewer to wait for). */
+export function useShellCustomerIdentity(): CustomerIdentity | null {
+  return useContext(CustomerIdentityContext);
 }
 
 /**
@@ -90,4 +100,4 @@ export function useAssistantName(): string {
 
 // customer-identity-exempt: owner surfaces only — returned only outside CustomerIdentityProvider, which wraps every /app route
 const OWNER_ASSISTANT = "Paige";
-const NEUTRAL: CustomerIdentity = { agentName: customerAgentName(undefined), businessName: null, customerName: null, frame: null, phase: "loading", viewer: "unknown" };
+const NEUTRAL: CustomerIdentity = { agentName: customerAgentName(undefined), businessName: null, customerName: null, frame: null, phase: "loading", viewer: "unknown", checking: false };

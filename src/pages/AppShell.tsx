@@ -38,6 +38,8 @@ import { CustomerAccessGate } from "@/components/app/CustomerAccessGate";
 import { CustomerIdentityProvider, useCustomerIdentity } from "@/lib/portal/customerIdentity";
 import { usePortalStaffStanding } from "@/lib/portal/portalStaffStanding";
 import { usePlaybook } from "@/lib/playbook";
+import { EmptyState } from "@/components/ui/page";
+import { Inbox } from "lucide-react";
 
 // Map /app sub-routes to canonical feature names emitted as `feature_visit`.
 function routeToFeatureName(pathname: string): string | null {
@@ -346,7 +348,7 @@ function CustomerIdentityRoot({ userId, enabled, viewingAsClient, children }: { 
     return () => { document.title = previous; };
   }, [business, staff, customer.frame]);
   const state = { frame: customer.frame, phase: viewingAsClient ? "not-client" as const : customer.phase, staff,
-    staffAssistantName: staff === true ? ownerPlaybook.persona.name : null };
+    staffAssistantName: staff === true ? ownerPlaybook.persona.name : null, staffChecking: !viewingAsClient && standing.loading };
   return <CustomerIdentityProvider state={state}>{children}</CustomerIdentityProvider>;
 }
 
@@ -365,28 +367,28 @@ export function AppDashboardHome({ factors, userId }: { factors: CreditFactorSco
   // the owner's Playbook does (§58: staff keep what they had); a viewer whose access is not active is told so.
   const agentName = customer.agentName;
   const staffPlaybook = usePlaybook(customer.viewer === "staff");
-  const intro = customer.frame
-    ? { title: `${agentName} is here to help`, body: `Hi — I’m ${agentName}, the AI client success agent for ${customer.businessName}. How can I help?` }
+  // A customer's chat sits beside this home and greets them itself, so the home does not repeat that greeting
+  // word for word (round 3, verifier 7); the welcome line already points to the agent. Staff, and a viewer whose
+  // access is still being checked, keep the card they had (§58).
+  const intro = customer.frame ? null
     : customer.viewer === "staff" ? { title: `${agentName} is here to help`, body: staffPlaybook.persona.greeting }
       : { title: `${agentName} is here to help`, body: "Your conversation is available once your customer access is checked." };
-  // A person whose access is not active reads that once, in the chat column beside this (with Contact support);
-  // the home does not repeat it (round 2 render: the same two sentences sat side by side).
-  const inactive = customer.viewer === "inactive";
-  const welcomeHeadline = inactive ? "Welcome" : portalConfig.welcome?.headline?.trim() || "Welcome Back";
-  const welcomeSubhead =
-    portalConfig.welcome?.subhead?.trim() ||
-    (inactive ? "" : `Ask ${agentName} about your next steps.`);
+  const welcomeHeadline = portalConfig.welcome?.headline?.trim() || "Welcome Back";
+  const welcomeSubhead = portalConfig.welcome?.subhead?.trim() || `Ask ${agentName} about your next steps.`;
   // `factors` is a real credit_factor_scores row — it only exists for a
   // credit-enabled tenant/client. It doubles as the "hasCreditData" signal, so
   // the credit-only factor grid below stays gated behind it. Coaching clients
   // (the neutral default) never have this row and see the neutral welcome area.
   const hasCreditData = !!factors;
 
+  // A person whose access is not active has nothing here: no chat to finish a checklist step in, no tiles, no
+  // business to welcome them back to. The chat column beside this says their access isn't active, once, with
+  // Contact support; the home says what will appear here instead of a bare "Welcome" over an empty pane (round 3).
+  if (customer.viewer === "inactive") return <NoAccessHome />;
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      {/* A person whose access is not active has no chat to finish a checklist step or a tile's "Ask …" in, so
-          neither is offered (round 2: both named an agent beside a chat that says access isn't active). */}
-      {userId && customer.viewer !== "inactive" && <OnboardingChecklist userId={userId} />}
+      {userId && <OnboardingChecklist userId={userId} />}
       <div>
         <h1 className="text-3xl font-bold text-foreground">{welcomeHeadline}</h1>
         {welcomeSubhead && <p className="text-muted-foreground mt-1">{welcomeSubhead}</p>}
@@ -394,7 +396,7 @@ export function AppDashboardHome({ factors, userId }: { factors: CreditFactorSco
 
       <UpcomingWidget />
 
-      {inactive ? null : hasCreditData ? (
+      {hasCreditData ? (
         <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-5">
           {[
             { label: "Payment History", score: factors.payment_history_score, weight: "35%" },
@@ -415,19 +417,33 @@ export function AppDashboardHome({ factors, userId }: { factors: CreditFactorSco
             </div>
           ))}
         </div>
-      ) : (
+      ) : intro ? (
         <div className="bg-card border border-border rounded-lg p-6">
           <h2 className="text-lg font-semibold text-foreground">
             {intro.title}
           </h2>
           <p className="text-muted-foreground mt-2">{intro.body}</p>
         </div>
-      )}
+      ) : null}
 
-      {userId && customer.viewer !== "inactive" && <ClientHomeTiles userId={userId} />}
+      {userId && <ClientHomeTiles userId={userId} />}
 
       <ClientActivityFeed />
 
+    </div>
+  );
+}
+
+/** Home for a person whose portal access is not active: what will appear here, not an empty "Welcome". */
+function NoAccessHome() {
+  return (
+    <div className="mx-auto flex min-h-[60vh] max-w-4xl flex-col items-center justify-center" data-testid="no-access-home">
+      <h1 className="sr-only">Home</h1>
+      <EmptyState
+        icon={Inbox}
+        title="Nothing is shared with you right now"
+        description="When a business gives you portal access, the documents, sessions and messages it shares with you appear here."
+      />
     </div>
   );
 }

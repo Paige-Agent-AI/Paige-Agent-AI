@@ -598,11 +598,14 @@ SELECT is(left(md5(public.client_portal_consent_disclosure('data-sharing:v1')),1
 SELECT is(left(md5(public.client_portal_consent_disclosure('email-pref:v3')),12),'911c5ac50ec5','pin: email-pref:v3');
 SELECT is(left(md5(public.client_portal_consent_disclosure('updates-optin:v3')),12),'7630f99debcf','pin: updates-optin:v3');
 SELECT is(left(md5(public.client_portal_consent_disclosure('sms-pref:v3')),12),'badc94db6304','pin: sms-pref:v3');
-SELECT is(left(md5(public.client_portal_consent_disclosure('data-sharing:v2')),12),'b8af28a4a0c3','pin: data-sharing:v2');
+SELECT is(left(md5(public.client_portal_consent_disclosure('data-sharing:v2')),12),'a27d550cf760','pin: data-sharing:v2');
 SELECT is((SELECT count(*) FROM unnest(ARRAY['email-pref:v3','updates-optin:v3','sms-pref:v3','data-sharing:v2']) v WHERE public.client_portal_consent_disclosure(v) ~* 'paige'),0::bigint,'no sentence the page shows names PAIGE');
--- CURA-D1: the sharing sentence names the business (the flag is read by the business side), not an agent, and
--- no longer claims it has no effect (load_contact_context and admin_propose_paige_actions both act on it).
-SELECT ok(public.client_portal_consent_disclosure('data-sharing:v2') ~ '^Lets \{business\} and the AI tools it uses ' AND public.client_portal_consent_disclosure('data-sharing:v2') !~ '\{assistant\}|no effect','data-sharing:v2 names the business and makes no stale claim');
+-- CURA-D1 (round 3): the flag gates what the business's AI reads (load_contact_context, admin_propose_paige_actions),
+-- never what its staff see, so the sentence names the AI tools as the party, says the business still sees its own
+-- records, names no agent and no longer claims it has no effect.
+SELECT ok(public.client_portal_consent_disclosure('data-sharing:v2') ~ '^Lets the AI tools \{business\} uses read '
+  AND public.client_portal_consent_disclosure('data-sharing:v2') ~ ' \{business\} can still see its own records about you\. '
+  AND public.client_portal_consent_disclosure('data-sharing:v2') !~ '\{assistant\}|no effect|Lets \{business\} and','data-sharing:v2 names the AI tools, keeps the business''s own records, and makes no stale claim');
 SELECT ok(public.client_portal_consent_disclosure('email-pref:v1') IS NOT NULL AND public.client_portal_consent_disclosure('updates-optin:v1') IS NOT NULL
   AND public.client_portal_consent_disclosure('sms-pref:v1') IS NOT NULL,'v1 sentences are kept: evidence already written names them');
 -- Every branch, fresh: Avery (sub-account) and a new customer, Parker, subscribed with texts on.

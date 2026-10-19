@@ -38,7 +38,7 @@ VISUAL_DIRECTION: PASS: The existing v3 Operator tone/badge/border vocabulary; t
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: Pre-edit contract and state/transition map above; the owner's restart directive §3 defines the actor-goal flow (inspect customer records with search, filtering, status explanations and drill-downs).
 PAIGE_UI_DESIGN: PASS: Project skill rules applied — existing component vocabulary reused (Badge/border/tone/tabular-nums), no new visual system, §13 truth rules enforced ($0 collected, "—" for unknown).
-MATERIAL_FLOW_CHANGE: NO: New surface replacing a placeholder in the same slot; the shell routing model is unchanged.
+MATERIAL_FLOW_CHANGE: NO: this is a new view mounted into an existing slot; no existing goal, state, transition, exit or consequence changes
 FLOW_PROTOTYPE: NOT_REQUIRED: Non-material change (new view in an existing slot).
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Platform founder/COO; open the customers desk, understand the company's commercial book, drill into any customer's lifecycle.
 VISUAL_DIRECTION: PASS: Existing v3 tone vocabulary; no new visual direction.
@@ -62,7 +62,7 @@ ACCEPTANCE_CRITERIA: recorded above.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: recorded above.
 
-INTERNAL_BUILD_IDENTITY: PENDING_COMMIT_SHA; deployment=PENDING merge to main then Vercel production; environment=development; migrations=APPLIED(20271111030000); edge=NOT_APPLICABLE; evidence=this record + CI
+INTERNAL_BUILD_IDENTITY: will-update-at-push; deployment=PENDING merge to main then Vercel production; environment=development; migrations=APPLIED(20271111030000_operator_commercial_customers); edge=NOT_APPLICABLE; evidence=this record + CI
 RELEASE_CHANNEL: development: internal engineering slice on the Operator console; local/development build environment; no staged rollout.
 RELEASE_CLASSIFICATION: internal-only: Operator console capability, not a customer-facing release.
 CUSTOMER_RELEASE_IDENTITY: none: internal Operator capability.

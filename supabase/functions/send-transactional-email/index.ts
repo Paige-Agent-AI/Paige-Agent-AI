@@ -379,6 +379,14 @@ Deno.serve(async (req) => {
       const resendKey = Deno.env.get('RESEND_API_KEY')
       let resendSuffix = ''
       if (senderIdentityRejected && resendKey) {
+        // Only the provider call sits inside the try. An exception AFTER Resend
+        // accepts (during the log commit or the lifecycle completion below)
+        // propagates uncaught exactly like the SendGrid arm's would: the claim
+        // stays in sending and the drainer's stale-claim rescan plus the
+        // prior-sent early return heal it — never parked terminal here.
+        let resendId: string | null = null
+        let resendAmbiguous = false
+        let resendDefinitiveDetail = ''
         try {
           const resendResp = await fetch('https://api.resend.com/emails', {
             signal: AbortSignal.timeout(20_000),
@@ -392,57 +400,30 @@ Deno.serve(async (req) => {
               text: plainText,
             }),
           })
-          const resendJson = (await resendResp.json().catch(() => ({}))) as { id?: unknown }
-          const resendId = typeof resendJson?.id === 'string' ? resendJson.id : null
-          if (resendResp.ok && resendId) {
-            const { error: fallbackLogError } = await admin
-              .from('email_send_log')
-              .update({
-                status: 'sent',
-                metadata: {
-                  reference_id: claim.reference_id,
-                  fulfillment_event_id: soloFulfillmentEventId,
-                  vendor_message_id: resendId,
-                  provider: 'resend_fallback_after_sendgrid_sender_identity_403',
-                },
-              })
-              .eq('message_id', messageId)
-              .eq('status', 'pending')
-            if (fallbackLogError) {
-              await failClaim('send_log_commit_failed', true)
-              return new Response(JSON.stringify({ error: 'welcome_receipt_failed' }), {
-                status: 503,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              })
+          // Read the raw body once; the bounded slice keeps the actionable
+          // provider reason in the log (the same lesson the SendGrid arm learned
+          // the hard way — a bare status code hid the fix).
+          const resendRaw = await resendResp.text().catch(() => '')
+          const resendJson = (() => {
+            try {
+              return JSON.parse(resendRaw || '{}') as { id?: unknown }
+            } catch {
+              return {} as { id?: unknown }
             }
-            const { error: fallbackCompleteError } = await admin.rpc('solo_beta_complete_welcome_delivery', {
-              _delivery_id: claim.delivery_id,
-              _claim_token: claim.claim_token,
-              _provider_message_id: resendId,
-            })
-            if (fallbackCompleteError) {
-              return new Response(JSON.stringify({ error: 'welcome_receipt_failed' }), {
-                status: 503,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              })
-            }
-            return new Response(JSON.stringify({ success: true, sent: true }), {
-              status: 200,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            })
+          })()
+          resendId = typeof resendJson?.id === 'string' ? resendJson.id : null
+          if (!resendId) {
+            // 2xx-without-id or 5xx: Resend may have delivered — ambiguous, so the
+            // attempt is recorded uncertain and never blindly retried. A definitive
+            // 4xx sent nothing and falls through to the standard rejection handling.
+            resendAmbiguous = resendResp.ok || resendResp.status >= 500
+            resendDefinitiveDetail =
+              ' resend_' + resendResp.status + '_definitive ' + resendRaw.replace(/\s+/g, ' ').slice(0, 100)
           }
-          if (resendResp.ok || resendResp.status >= 500) {
-            // Resend may have delivered (or thrown mid-flight): ambiguous, so the
-            // attempt is recorded uncertain and never blindly retried.
-            await markSendFailed(sendgridDetail + ' resend_ambiguous')
-            await failClaim('provider_outcome_ambiguous', true)
-            return new Response(JSON.stringify({ error: 'welcome_delivery_uncertain' }), {
-              status: 503,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            })
-          }
-          resendSuffix = ' resend_' + resendResp.status + '_definitive'
         } catch {
+          resendAmbiguous = true
+        }
+        if (resendAmbiguous) {
           await markSendFailed(sendgridDetail + ' resend_ambiguous')
           await failClaim('provider_outcome_ambiguous', true)
           return new Response(JSON.stringify({ error: 'welcome_delivery_uncertain' }), {
@@ -450,6 +431,44 @@ Deno.serve(async (req) => {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           })
         }
+        if (resendId) {
+          const { error: fallbackLogError } = await admin
+            .from('email_send_log')
+            .update({
+              status: 'sent',
+              metadata: {
+                reference_id: claim.reference_id,
+                fulfillment_event_id: soloFulfillmentEventId,
+                vendor_message_id: resendId,
+                provider: 'resend_fallback_after_sendgrid_sender_identity_403',
+              },
+            })
+            .eq('message_id', messageId)
+            .eq('status', 'pending')
+          if (fallbackLogError) {
+            await failClaim('send_log_commit_failed', true)
+            return new Response(JSON.stringify({ error: 'welcome_receipt_failed' }), {
+              status: 503,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            })
+          }
+          const { error: fallbackCompleteError } = await admin.rpc('solo_beta_complete_welcome_delivery', {
+            _delivery_id: claim.delivery_id,
+            _claim_token: claim.claim_token,
+            _provider_message_id: resendId,
+          })
+          if (fallbackCompleteError) {
+            return new Response(JSON.stringify({ error: 'welcome_receipt_failed' }), {
+              status: 503,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            })
+          }
+          return new Response(JSON.stringify({ success: true, sent: true }), {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          })
+        }
+        resendSuffix = resendDefinitiveDetail
       }
       await markSendFailed(sendgridDetail + resendSuffix)
       await failClaim(response.ok ? 'provider_outcome_ambiguous' : 'provider_rejected', response.ok)

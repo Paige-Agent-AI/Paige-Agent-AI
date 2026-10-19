@@ -19,14 +19,14 @@ BEGIN
   FOREACH sfx IN ARRAY ARRAY['a','b','c'] LOOP
     INSERT INTO auth.users(id,aud,role,email,raw_user_meta_data)
     VALUES(
-      'b2031000-0000-0000-0000-0000000000' || (CASE sfx WHEN 'a' THEN '1' WHEN 'b' THEN '2' ELSE '3' END),
+      'b2031000-0000-0000-0000-00000000000' || (CASE sfx WHEN 'a' THEN '1' WHEN 'b' THEN '2' ELSE '3' END),
       'authenticated','authenticated',
       'welcome-requeue-' || sfx || '@tests.invalid',
       '{"full_name":"Requeue Proof ' || upper(sfx) || '"}'::jsonb
     );
     INSERT INTO public.tenants(id,slug,name,status,account_type,account_number_prefix,account_number,features,brand)
     VALUES(
-      'b2031000-0000-0000-0000-00000000a0' || (CASE sfx WHEN 'a' THEN '1' WHEN 'b' THEN '2' ELSE '3' END),
+      'b2031000-0000-0000-0000-00000000a00' || (CASE sfx WHEN 'a' THEN '1' WHEN 'b' THEN '2' ELSE '3' END),
       'welcome-requeue-' || sfx, 'Welcome Requeue ' || upper(sfx),
       'active','standalone','WRQ', 8920301 + (CASE sfx WHEN 'a' THEN 1 WHEN 'b' THEN 2 ELSE 3 END),
       '{"solo_beta_offer_code":"paige-solo-beta-monthly-v1"}'::jsonb,'{}'::jsonb
@@ -37,8 +37,8 @@ BEGIN
       stripe_product_id,stripe_price_id,trial_started_at,trial_ends_at,provider_verified_at
     )
     SELECT
-      'b2031000-0000-0000-0000-00000000b0' || (CASE sfx WHEN 'a' THEN '1' WHEN 'b' THEN '2' ELSE '3' END),
-      'b2031000-0000-0000-0000-00000000a0' || (CASE sfx WHEN 'a' THEN '1' WHEN 'b' THEN '2' ELSE '3' END),
+      'b2031000-0000-0000-0000-00000000b00' || (CASE sfx WHEN 'a' THEN '1' WHEN 'b' THEN '2' ELSE '3' END),
+      'b2031000-0000-0000-0000-00000000a00' || (CASE sfx WHEN 'a' THEN '1' WHEN 'b' THEN '2' ELSE '3' END),
       plan_id,'trialing','monthly',now(),now()+interval '30 days',
       'sub_welcome_requeue_' || sfx,'cus_welcome_requeue_' || sfx,offer_code,'live',
       stripe_product_id,stripe_price_id,now(),now()+interval '30 days',now()
@@ -47,11 +47,11 @@ BEGIN
       event_id,user_id,tenant_id,subscription_id,offer_code,outcome,reference_id
     ) VALUES(
       'evt_welcome_requeue_' || sfx,
-      'b2031000-0000-0000-0000-0000000000' || (CASE sfx WHEN 'a' THEN '1' WHEN 'b' THEN '2' ELSE '3' END),
-      'b2031000-0000-0000-0000-00000000a0' || (CASE sfx WHEN 'a' THEN '1' WHEN 'b' THEN '2' ELSE '3' END),
-      'b2031000-0000-0000-0000-00000000b0' || (CASE sfx WHEN 'a' THEN '1' WHEN 'b' THEN '2' ELSE '3' END),
+      'b2031000-0000-0000-0000-00000000000' || (CASE sfx WHEN 'a' THEN '1' WHEN 'b' THEN '2' ELSE '3' END),
+      'b2031000-0000-0000-0000-00000000a00' || (CASE sfx WHEN 'a' THEN '1' WHEN 'b' THEN '2' ELSE '3' END),
+      'b2031000-0000-0000-0000-00000000b00' || (CASE sfx WHEN 'a' THEN '1' WHEN 'b' THEN '2' ELSE '3' END),
       'paige-solo-beta-monthly-v1','completed',
-      'b2031000-0000-0000-0000-00000000c0' || (CASE sfx WHEN 'a' THEN '1' WHEN 'b' THEN '2' ELSE '3' END)
+      'b2031000-0000-0000-0000-00000000c00' || (CASE sfx WHEN 'a' THEN '1' WHEN 'b' THEN '2' ELSE '3' END)
     );
   END LOOP;
 END $$;

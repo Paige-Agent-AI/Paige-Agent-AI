@@ -199,8 +199,11 @@ describe("the welcome arm's interim Resend fallback cannot double-send", () => {
   });
 
   it("an ambiguous Resend fallback outcome is recorded uncertain and never retried blind", () => {
+    // One shared branch covers both ambiguous triggers (2xx/5xx read and network
+    // throw): the fallback's own catch must land in the SAME uncertain handling,
+    // never a blind retry.
     const ambiguousFailures = src.match(/failClaim\('provider_outcome_ambiguous', true\)/g) ?? [];
-    expect(ambiguousFailures.length).toBeGreaterThanOrEqual(3);
+    expect(ambiguousFailures.length).toBeGreaterThanOrEqual(2);
     expect(src).toMatch(/resend_ambiguous[\s\S]{0,600}failClaim\('provider_outcome_ambiguous', true\)/);
   });
 

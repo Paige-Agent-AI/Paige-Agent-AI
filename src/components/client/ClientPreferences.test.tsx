@@ -60,7 +60,7 @@ describe("How {Business} can reach you — what each state says", () => {
   it("nothing on record: email on, texts not set up, not subscribed, sharing not allowed", async () => {
     await mount();
     expect(host.textContent).toContain("How Northwind Studio can reach you");
-    expect(host.textContent).toContain("Action items and summaries from Northwind Studio’s team");
+    expect(host.textContent).toContain("Action items from Northwind Studio’s team, and a fuller summary of you");
     expect(stateOf("email")).toBe("On");
     expect(stateOf("sms")).toBe("Not set up");
     expect(switchOf("sms")?.disabled).toBe(true);
@@ -202,7 +202,9 @@ describe("How {Business} can reach you — what each state says", () => {
     // Round 5: the longer label wraps on desktop; balanced lines keep "of you" from sitting alone on a line.
     expect(row("sharing").querySelector('[data-testid="pref-label"]')!.className).toContain("text-balance");
     expect(switchOf("sharing")!.getAttribute("aria-label")).toBe(label);
-    expect(host.querySelector("#client-sharing-title")!.textContent).toBe("Action items and summaries from Northwind Studio’s team");
+    // Round 6: the summary is OF the customer (the team's assistant uses it); it is never sent to them, so the
+    // heading must not read "summaries from" the team.
+    expect(host.querySelector("#client-sharing-title")!.textContent).toBe("Action items from Northwind Studio’s team, and a fuller summary of you");
     expect(row("sharing").querySelector('[data-testid="pref-disclosure"]')!.textContent).toBe("Lets Northwind Studio’s team send you action items in your portal, including ones its AI assistant drafts, and give that assistant a fuller summary of you. It doesn’t change messages, shared work, agreements or invoices, what your portal assistant uses to answer you, or what Northwind Studio can already see in its own records. You can turn it off anytime.");
     expect(row("sharing").querySelector('[data-testid="pref-detail"]')!.textContent).toBe("Turning it off doesn’t delete anything.");
     expect(host.querySelector('section[aria-labelledby="client-sharing-title"]')!.textContent).not.toMatch(/Cura|no effect yet|AI tools|AI-prepared|requests|Sharing with/);

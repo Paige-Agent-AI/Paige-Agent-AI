@@ -29,7 +29,9 @@ import { day, on, outcomeText, preferenceCards, type PreferenceCard as Card } fr
  * item gets through either route today (the chat's action kinds fail the table's action_type check; the panel is
  * unmounted), so the switch has no practical effect yet: tracked in master §5.
  * The old "It has no effect yet" (D2, M3) is gone from data-sharing:v2. The sharing section's strings use
- * curly apostrophes, matching its stored sentence.
+ * curly apostrophes, matching its stored sentence. The heading points each half the right way (round 6): action
+ * items come FROM the team to the customer; the summary is OF the customer, used by the team's assistant, and is
+ * never sent to the customer.
  */
 
 const SWITCH_TARGET = "relative after:absolute after:inset-x-0 after:-inset-y-[12px] after:content-['']";
@@ -82,7 +84,7 @@ export function ClientPreferences({ actorId, onCommitted }: { actorId: string; o
 
       {ready && prefs.preferences && (
         <section aria-labelledby="client-sharing-title" className="mt-12 max-w-2xl">
-          <h2 id="client-sharing-title" className="mb-5 border-b border-border pb-4 text-lg font-semibold tracking-tight">Action items and summaries from {business}’s team</h2>
+          <h2 id="client-sharing-title" className="mb-5 border-b border-border pb-4 text-lg font-semibold tracking-tight">Action items from {business}’s team, and a fuller summary of you</h2>
           <ul className="divide-y divide-border border-b border-border">
             <PreferenceRow business={business} locked={busy} savingId={savingId} notice={noticeFor("sharing")}
               pending={prefs.pending?.key === "sharing" ? prefs.pending.enabled : undefined}

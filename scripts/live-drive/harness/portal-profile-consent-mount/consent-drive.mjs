@@ -189,7 +189,8 @@ function unmet(s, n) {
       // "requests" (the switch does not gate messages, shared work, agreements or invoices).
       want(!/no effect yet/.test(n.prefsText ?? ""), "data sharing still claims it has no effect yet");
       want(n.sharing.text.startsWith(`Let ${B}’s team send you action items and use a fuller summary of you`) && n.sharing.text.includes(`Lets ${B}’s team send you action items in your portal, including ones its AI assistant drafts, and give that assistant a fuller summary of you.`) && n.sharing.text.includes(`It doesn’t change messages, shared work, agreements or invoices, what your portal assistant uses to answer you, or what ${B} can already see in its own records.`) && n.sharing.text.includes("Turning it off doesn’t delete anything.") && !/Cura|Paige|AI tools|AI-prepared|requests|'/i.test(n.sharing.text), `sharing says what the switch governs "${n.sharing.text}"`);
-      want((n.prefsText ?? "").includes(`Action items and summaries from ${B}’s team`) && !/Sharing with/.test(n.prefsText ?? ""), "sharing heading names action items and summaries");
+      // Round 6: action items come from the team; the summary is of the customer and never sent to them.
+      want((n.prefsText ?? "").includes(`Action items from ${B}’s team, and a fuller summary of you`) && !/Sharing with|summaries from/.test(n.prefsText ?? ""), "sharing heading names action items from the team and a fuller summary of the customer");
       break;
     case "email-off":
       want(/^Off · you turned email off on Oct 12, 2026$/.test(st("email")), `email "${st("email")}"`);

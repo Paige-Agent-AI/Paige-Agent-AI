@@ -188,7 +188,7 @@ export function readClientCommunicationState(data: unknown, expected: { tenantId
 /**
  * The sentences a customer reads at the moment of a choice, keyed by the disclosure id the server stores
  * with the evidence (`portal:<uid>:<id>:<md5 prefix of the sentence>`). The server holds the same text
- * (client_portal_consent_disclosure, latest in 20271110250000); the Vitest suite pins each sentence here to
+ * (client_portal_consent_disclosure, latest in 20271111020000); the Vitest suite pins each sentence here to
  * that SQL literal byte for byte, so what the customer saw is what the evidence names (reviewer Minor 7).
  * Changing a sentence means a new id on both sides, never an edit of an old one. A superseded id stays here and
  * on the server, because evidence already written names it; the page shows only CURRENT_DISCLOSURE.

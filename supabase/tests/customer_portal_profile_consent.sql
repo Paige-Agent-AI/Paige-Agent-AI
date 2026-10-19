@@ -593,7 +593,7 @@ SELECT is(left(md5(public.client_portal_consent_disclosure('email-pref:v2')),12)
 SELECT is(left(md5(public.client_portal_consent_disclosure('updates-optin:v2')),12),'17d1249d3abe','pin: updates-optin:v2');
 SELECT is(left(md5(public.client_portal_consent_disclosure('sms-pref:v2')),12),'8b66faa37a43','pin: sms-pref:v2');
 SELECT is(left(md5(public.client_portal_consent_disclosure('data-sharing:v1')),12),'a7fbb88f3732','pin: data-sharing:v1');
--- Owner ruling 2026-10-19 (20271110250000): PAIGE is the owner's COO and leaves the customer's sentences.
+-- Owner ruling 2026-10-19 (20271111020000): PAIGE is the owner's COO and leaves the customer's sentences.
 -- The page shows these now; the v2 / data-sharing:v1 pins above stay, because evidence already written names them.
 SELECT is(left(md5(public.client_portal_consent_disclosure('email-pref:v3')),12),'911c5ac50ec5','pin: email-pref:v3');
 SELECT is(left(md5(public.client_portal_consent_disclosure('updates-optin:v3')),12),'7630f99debcf','pin: updates-optin:v3');

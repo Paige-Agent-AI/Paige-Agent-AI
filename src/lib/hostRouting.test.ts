@@ -7,6 +7,7 @@ import {
   detectsSessionFromUrl,
   stripAuthCallbackParams,
   tenantHostPortalEntryUrl,
+  tenantHostUrlWithoutAuthParams,
   tenantSlugFromHostname,
   trustedAppOrigin,
 } from "./hostRouting";
@@ -148,6 +149,12 @@ describe("auth callback parameters never ride into a tenant host's canonical URL
     (part) => expect(stripAuthCallbackParams(part)).toBe(part),
   );
 
+  it("strips sb_flow_id, the PKCE flow id auth-js reads, with the other auth parameters", () => {
+    expect(computeTenantHostRedirect("acme.paigeagent.ai", "/", "?sb_flow_id=f1&code=abc&ref=1", ""))
+      .toBe("/portal/acme?ref=1");
+    expect(stripAuthCallbackParams("#sb_flow_id=f1")).toBe("");
+  });
+
   it("does not rewrite a URL on a non-tenant host", () => {
     expect(computeTenantHostRedirect("paigeagent.ai", "/x", "?code=abc", "#access_token=at")).toBeNull();
   });
@@ -160,5 +167,26 @@ describe("auth callback parameters never ride into a tenant host's canonical URL
   it.each(["paigeagent.ai", "www.paigeagent.ai", "app.paigeagent.ai", "localhost", "preview-1.vercel.app", ""])(
     "keeps URL session detection on the non-tenant host %j exactly as today",
     (hostname) => expect(detectsSessionFromUrl(hostname)).toBe(true),
+  );
+});
+
+describe("auth callback parameters are removed in place on a tenant host that is not redirected", () => {
+  it.each([
+    ["/portal/acme", "", "#access_token=at&refresh_token=rt&tab=1", "/portal/acme#tab=1"],
+    ["/book/intro", "?code=abc&ref=partner", "", "/book/intro?ref=partner"],
+    ["/form/f1", "?embed=1&sb_flow_id=f1", "#error=x&error_description=y", "/form/f1?embed=1"],
+    ["/u/tok", "?type=recovery", "#token_type=bearer", "/u/tok"],
+  ])("cleans %s%s%s", (path, search, hash, expected) => {
+    expect(computeTenantHostRedirect("acme.paigeagent.ai", path, search, hash)).toBeNull();
+    expect(tenantHostUrlWithoutAuthParams("acme.paigeagent.ai", path, search, hash)).toBe(expected);
+  });
+
+  it("returns null on a tenant host when nothing needs removing", () => {
+    expect(tenantHostUrlWithoutAuthParams("acme.paigeagent.ai", "/book/intro", "?ref=1&codes=2", "#tab")).toBeNull();
+  });
+
+  it.each(["paigeagent.ai", "www.paigeagent.ai", "app.paigeagent.ai", "localhost", "preview-1.vercel.app"])(
+    "never touches the non-tenant host %j",
+    (hostname) => expect(tenantHostUrlWithoutAuthParams(hostname, "/auth", "?code=abc", "#access_token=at")).toBeNull(),
   );
 });

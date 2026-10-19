@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
-import { detectsSessionFromUrl } from '@/lib/hostRouting';
+import { detectsSessionFromUrl, scrubTenantHostAuthParams } from '@/lib/hostRouting';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -38,6 +38,15 @@ function createSafeStorage(): Storage {
     get length() { return mem.size; },
   } as Storage;
 }
+
+// On a tenant host, auth-callback parameters (tokens, codes, errors) are removed from the address bar
+// before anything else can read location.href. This module is the earliest seam the app graph offers:
+// it is evaluated while main.tsx's static imports load (App -> BusinessProvider -> here), so before
+// main.tsx calls initObservability (Sentry, PostHog), before React renders MetaPixel, SpeedInsights and
+// usePageView, and before useHostRouting's effect. With detectSessionInUrl off there, auth-js no longer
+// clears the hash itself. Every other host: untouched. (The Plausible loader in index.html is an inline
+// script that runs before any module, so this cannot be guaranteed to beat it.)
+scrubTenantHostAuthParams();
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {

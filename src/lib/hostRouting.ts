@@ -52,10 +52,13 @@ export function detectsSessionFromUrl(hostname: string): boolean {
   return tenantSlugFromHostname(hostname) === null;
 }
 
-/** The URL parameters supabase-js reads as an auth callback (hash or query). */
+/**
+ * The URL parameters supabase-js reads as an auth callback (hash or query): the grant's tokens and
+ * errors, plus `sb_flow_id`, the PKCE flow id auth-js reads and deletes alongside them.
+ */
 export const AUTH_CALLBACK_PARAMS: ReadonlySet<string> = new Set([
   "access_token", "refresh_token", "provider_token", "provider_refresh_token", "expires_at",
-  "expires_in", "token_type", "type", "code", "error", "error_code", "error_description",
+  "expires_in", "token_type", "type", "code", "error", "error_code", "error_description", "sb_flow_id",
 ]);
 
 /**
@@ -74,6 +77,39 @@ export function stripAuthCallbackParams(part: string): string {
   if (kept.length === segments.length) return part;
   const rest = kept.filter((segment) => segment !== "").join("&");
   return rest ? `${prefix}${rest}` : "";
+}
+
+/**
+ * On a tenant host, the same-origin URL (path, query, hash) with every auth-callback parameter removed —
+ * or null when the host is not a tenant host or nothing needs removing. Pure; used for the in-place
+ * clean-up that runs whether or not `computeTenantHostRedirect` redirects.
+ */
+export function tenantHostUrlWithoutAuthParams(
+  hostname: string,
+  path: string,
+  search: string,
+  hash: string,
+): string | null {
+  if (tenantSlugFromHostname(hostname) === null) return null;
+  const cleanSearch = stripAuthCallbackParams(search);
+  const cleanHash = stripAuthCallbackParams(hash);
+  if (cleanSearch === search && cleanHash === hash) return null;
+  return `${path}${cleanSearch}${cleanHash}`;
+}
+
+/**
+ * Remove auth-callback parameters from the address bar on a tenant host, in place (history.replaceState,
+ * no navigation, history state kept). Called once while the Supabase client module is evaluated, so it
+ * runs before anything in the app reads location.href. Returns whether the URL changed. App origin and
+ * every other non-tenant host: untouched.
+ */
+export function scrubTenantHostAuthParams(win: Window | undefined = typeof window !== "undefined" ? window : undefined): boolean {
+  if (!win) return false;
+  const { hostname, pathname, search, hash } = win.location;
+  const target = tenantHostUrlWithoutAuthParams(hostname, pathname, search, hash);
+  if (target === null) return false;
+  win.history.replaceState(win.history.state, "", target);
+  return true;
 }
 
 /** Canonicalize a tenant wildcard host to that tenant\'s one public portal. */

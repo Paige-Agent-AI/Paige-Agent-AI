@@ -39,6 +39,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.restoreAllMocks();
   loaded = null;
   vi.unstubAllGlobals();
   window.localStorage.clear();
@@ -60,4 +61,19 @@ it("still adopts a session from URL tokens on the app origin, exactly as today (
   expect(session?.access_token).toBe("attacker-at");
   expect(userCalls).toHaveLength(1);
   expect(window.localStorage.getItem(STORAGE_KEY)).not.toBeNull();
+});
+
+it("removes auth parameters from the tenant host's address bar while the client module loads", async () => {
+  const replaceState = vi.spyOn(window.history, "replaceState");
+  await loadClientAt(`https://acme.paigeagent.ai/book/intro?ref=partner&code=abc&sb_flow_id=f1#${tokens()}&tab=Two%20words`);
+  expect(window.location.href).toBe("https://acme.paigeagent.ai/book/intro?ref=partner#tab=Two%20words");
+  expect(replaceState).toHaveBeenCalledTimes(1);
+});
+
+it("leaves the app origin's address bar to supabase-js, exactly as today (§58)", async () => {
+  const url = "https://paigeagent.ai/book/intro?ref=partner&code=abc&sb_flow_id=f1#tab=1";
+  const replaceState = vi.spyOn(window.history, "replaceState");
+  await loadClientAt(url);
+  expect(window.location.href).toBe(url);
+  expect(replaceState).not.toHaveBeenCalled();
 });

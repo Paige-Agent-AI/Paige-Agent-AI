@@ -5034,9 +5034,13 @@ split is on), pinned to the hostname tenant. It never reads a session, never col
 `/portal/<slug>` on a tenant host (the redirect loop it replaces). Sessions stay per origin (Supabase
 `localStorage`), and none is born on a tenant host: there the Supabase client does not adopt a session from
 URL tokens (`detectSessionInUrl` false via `detectsSessionFromUrl`), canonicalising a tenant-host URL drops
-every auth-callback parameter from the query and hash, and no sign-in form runs there. The app-wide
-`BusinessProvider` still calls `getSession()` on every host; on a tenant host it reads that origin's own,
-empty storage. On every other host `detectSessionInUrl` keeps supabase-js's default, unchanged. Supabase
+every auth-callback parameter (`sb_flow_id` included) from the query and hash, a tenant-host URL that is not
+redirected has them removed from the address bar in place (`scrubTenantHostAuthParams`, run while the
+Supabase client module loads), and no sign-in form runs there. The app-wide session readers still run on
+every host — `BusinessProvider`, `GlobalAuthSessionManager`, `ClientOnlyRouteGuard`, analytics
+`usePageView`, and `TenantProvider`, `SubscriptionProvider` and `DashboardModeProvider` — and on a tenant
+host they read only that origin's own storage, which by code reading nothing in this slice writes to (no
+real tenant host driven). On every other host `detectSessionInUrl` keeps supabase-js's default, unchanged. Supabase
 Auth's redirect allowlist is not yet read (owed; on E10's attach checklist). Every password-reset link (the gateway's and the
 `/auth` dialog's) is built from `trustedAppOrigin`: a production app host over https and local development
 keep their own origin; a tenant, preview, unknown or hostile hostname gets the configured app origin.

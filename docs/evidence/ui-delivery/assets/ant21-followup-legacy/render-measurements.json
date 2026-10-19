@@ -1,0 +1,423 @@
+{
+  "boundary": "ACTUAL_CURRENT_SOURCE_SOLO_SHELL_WITH_ISOLATED_SYNTHETIC_PORTS_NOT_AUTHENTICATED",
+  "sequences": [
+    {
+      "context": "a",
+      "theme": "dark",
+      "paigeOpen": false,
+      "file": "legacy-a-current-1536x770-closed.jpg",
+      "clientWidth": 1536,
+      "pageWidth": 1536,
+      "rawModelHtmlVisible": false,
+      "rawModelRecipientVisible": false,
+      "review": {
+        "height": 40,
+        "width": 138.91250610351562,
+        "x": 1011.2250366210938,
+        "y": 641.1000366210938
+      },
+      "viewport": [
+        1536,
+        770
+      ]
+    },
+    {
+      "context": "a",
+      "theme": "dark",
+      "paigeOpen": true,
+      "file": "legacy-a-current-1536x770-open.jpg",
+      "clientWidth": 1536,
+      "pageWidth": 1536,
+      "rawModelHtmlVisible": false,
+      "rawModelRecipientVisible": false,
+      "review": {
+        "height": 40,
+        "width": 138.91250610351562,
+        "x": 626.4249877929688,
+        "y": 584.6000366210938
+      },
+      "viewport": [
+        1536,
+        770
+      ]
+    },
+    {
+      "context": "a",
+      "theme": "dark",
+      "paigeOpen": false,
+      "file": "legacy-a-current-1366x768-closed.jpg",
+      "clientWidth": 1366,
+      "pageWidth": 1366,
+      "rawModelHtmlVisible": false,
+      "rawModelRecipientVisible": false,
+      "review": {
+        "height": 40,
+        "width": 138.91250610351562,
+        "x": 539.2374877929688,
+        "y": 542.2000122070312
+      },
+      "viewport": [
+        1366,
+        768
+      ]
+    },
+    {
+      "context": "a",
+      "theme": "dark",
+      "paigeOpen": true,
+      "file": "legacy-a-current-1366x768-open.jpg",
+      "clientWidth": 1366,
+      "pageWidth": 1366,
+      "rawModelHtmlVisible": false,
+      "rawModelRecipientVisible": false,
+      "review": {
+        "height": 40,
+        "width": 138.91250610351562,
+        "x": 539.2374877929688,
+        "y": 542.2000122070312
+      },
+      "viewport": [
+        1366,
+        768
+      ]
+    },
+    {
+      "context": "a",
+      "theme": "dark",
+      "paigeOpen": false,
+      "file": "legacy-a-current-1024x768-closed.jpg",
+      "clientWidth": 1024,
+      "pageWidth": 1024,
+      "rawModelHtmlVisible": false,
+      "rawModelRecipientVisible": false,
+      "review": {
+        "height": 40,
+        "width": 138.91250610351562,
+        "x": 596.0750122070312,
+        "y": 598.7000122070312
+      },
+      "viewport": [
+        1024,
+        768
+      ]
+    },
+    {
+      "context": "a",
+      "theme": "dark",
+      "paigeOpen": true,
+      "file": "legacy-a-current-1024x768-open.jpg",
+      "clientWidth": 1024,
+      "pageWidth": 1024,
+      "rawModelHtmlVisible": false,
+      "rawModelRecipientVisible": false,
+      "review": {
+        "height": 40,
+        "width": 138.91250610351562,
+        "x": 596.0750122070312,
+        "y": 598.7000122070312
+      },
+      "viewport": [
+        1024,
+        768
+      ]
+    },
+    {
+      "context": "a",
+      "theme": "dark",
+      "paigeOpen": false,
+      "file": "legacy-a-current-900x1000-closed.jpg",
+      "clientWidth": 900,
+      "pageWidth": 900,
+      "rawModelHtmlVisible": false,
+      "rawModelRecipientVisible": false,
+      "review": {
+        "height": 40,
+        "width": 138.91250610351562,
+        "x": 504.7000122070313,
+        "y": 830.7000122070312
+      },
+      "viewport": [
+        900,
+        1000
+      ]
+    },
+    {
+      "context": "a",
+      "theme": "dark",
+      "paigeOpen": true,
+      "file": "legacy-a-current-900x1000-open.jpg",
+      "clientWidth": 900,
+      "pageWidth": 900,
+      "rawModelHtmlVisible": false,
+      "rawModelRecipientVisible": false,
+      "review": {
+        "height": 40,
+        "width": 138.91250610351562,
+        "x": 504.7000122070313,
+        "y": 830.7000122070312
+      },
+      "viewport": [
+        900,
+        1000
+      ]
+    },
+    {
+      "context": "b",
+      "theme": "light",
+      "paigeOpen": false,
+      "file": "legacy-b-current-1536x770-closed.jpg",
+      "clientWidth": 1536,
+      "pageWidth": 1536,
+      "rawModelHtmlVisible": false,
+      "rawModelRecipientVisible": false,
+      "review": {
+        "height": 40,
+        "width": 138.91250610351562,
+        "x": 973.3375244140624,
+        "y": 641.1000366210938
+      },
+      "viewport": [
+        1536,
+        770
+      ]
+    },
+    {
+      "context": "b",
+      "theme": "light",
+      "paigeOpen": true,
+      "file": "legacy-b-current-1536x770-open.jpg",
+      "clientWidth": 1536,
+      "pageWidth": 1536,
+      "rawModelHtmlVisible": false,
+      "rawModelRecipientVisible": false,
+      "review": {
+        "height": 40,
+        "width": 138.91250610351562,
+        "x": 588.5250244140625,
+        "y": 601.1000366210938
+      },
+      "viewport": [
+        1536,
+        770
+      ]
+    },
+    {
+      "context": "b",
+      "theme": "light",
+      "paigeOpen": false,
+      "file": "legacy-b-current-1366x768-closed.jpg",
+      "clientWidth": 1366,
+      "pageWidth": 1366,
+      "rawModelHtmlVisible": false,
+      "rawModelRecipientVisible": false,
+      "review": {
+        "height": 40,
+        "width": 138.91250610351562,
+        "x": 506.0500183105469,
+        "y": 598.7000122070312
+      },
+      "viewport": [
+        1366,
+        768
+      ]
+    },
+    {
+      "context": "b",
+      "theme": "light",
+      "paigeOpen": true,
+      "file": "legacy-b-current-1366x768-open.jpg",
+      "clientWidth": 1366,
+      "pageWidth": 1366,
+      "rawModelHtmlVisible": false,
+      "rawModelRecipientVisible": false,
+      "review": {
+        "height": 40,
+        "width": 138.91250610351562,
+        "x": 506.0500183105469,
+        "y": 598.7000122070312
+      },
+      "viewport": [
+        1366,
+        768
+      ]
+    },
+    {
+      "context": "b",
+      "theme": "light",
+      "paigeOpen": false,
+      "file": "legacy-b-current-1024x768-closed.jpg",
+      "clientWidth": 1024,
+      "pageWidth": 1024,
+      "rawModelHtmlVisible": false,
+      "rawModelRecipientVisible": false,
+      "review": {
+        "height": 40,
+        "width": 138.91250610351562,
+        "x": 596.0750122070312,
+        "y": 598.7000122070312
+      },
+      "viewport": [
+        1024,
+        768
+      ]
+    },
+    {
+      "context": "b",
+      "theme": "light",
+      "paigeOpen": true,
+      "file": "legacy-b-current-1024x768-open.jpg",
+      "clientWidth": 1024,
+      "pageWidth": 1024,
+      "rawModelHtmlVisible": false,
+      "rawModelRecipientVisible": false,
+      "review": {
+        "height": 40,
+        "width": 138.91250610351562,
+        "x": 596.0750122070312,
+        "y": 598.7000122070312
+      },
+      "viewport": [
+        1024,
+        768
+      ]
+    },
+    {
+      "context": "b",
+      "theme": "light",
+      "paigeOpen": false,
+      "file": "legacy-b-current-900x1000-closed.jpg",
+      "clientWidth": 900,
+      "pageWidth": 900,
+      "rawModelHtmlVisible": false,
+      "rawModelRecipientVisible": false,
+      "review": {
+        "height": 40,
+        "width": 138.91250610351562,
+        "x": 504.7000122070313,
+        "y": 830.7000122070312
+      },
+      "viewport": [
+        900,
+        1000
+      ]
+    },
+    {
+      "context": "b",
+      "theme": "light",
+      "paigeOpen": true,
+      "file": "legacy-b-current-900x1000-open.jpg",
+      "clientWidth": 900,
+      "pageWidth": 900,
+      "rawModelHtmlVisible": false,
+      "rawModelRecipientVisible": false,
+      "review": {
+        "height": 40,
+        "width": 138.91250610351562,
+        "x": 504.7000122070313,
+        "y": 830.7000122070312
+      },
+      "viewport": [
+        900,
+        1000
+      ]
+    }
+  ],
+  "keyboard": "Enter opened original draft, Not now cancelled exact preview, Cancel reply edit cleared draft, Escape closed narrow PAIGE overlay and retained reviewable words",
+  "providerSend": "NOT_PERFORMED",
+  "rawNetwork": "CSP connect-src none and blocked fetch/WebSocket/XMLHttpRequest",
+  "compiled_head": "049957f7286623e6de56f6b3b57b31c8f1565a76",
+  "compiled_tree": "9c3dbd0f6a72b05b1a75f18ea56cd79be67c80ca",
+  "reviewed_source_head": "049957f7286623e6de56f6b3b57b31c8f1565a76",
+  "runtime_input_count": 3694,
+  "compiled_inputs_current_byte_equal": true,
+  "compiled_manifest_sha256": "db8606728209c8c187109593f80ed99c5c36ef3eed7d12a94fdc8015fb67a5c7",
+  "scope": "Both neutral contexts, dark/light; four required viewports, PAIGE closed/open. Below dock breakpoint, existing PAIGE modal intentionally makes background inert; Escape restores original draft and launcher focus. No production account or provider readiness proof.",
+  "actual_browser_zoom": "UNVERIFIED: shortcut attempt left actual pixelRatio and CSS viewport unchanged; native reflow and current CSS/control preservation verified, no magnification PASS claimed.",
+  "screenshots": [
+    {
+      "file": "legacy-a-current-1536x770-closed.jpg",
+      "sha256": "333aa119b46b14923643e314919e90077675af547dec7eae990b59b194f8c6b5",
+      "committed": true
+    },
+    {
+      "file": "legacy-a-current-1536x770-open.jpg",
+      "sha256": "ecdbbdf7cfc4f578be16909c951f5619299a9288850a670c816a52e033b80d8c",
+      "committed": false
+    },
+    {
+      "file": "legacy-a-current-1366x768-closed.jpg",
+      "sha256": "9c232345700fc6faf4ad4e369da601a2f42a693e5054d6d7d553e4845ef61cf0",
+      "committed": false
+    },
+    {
+      "file": "legacy-a-current-1366x768-open.jpg",
+      "sha256": "9c232345700fc6faf4ad4e369da601a2f42a693e5054d6d7d553e4845ef61cf0",
+      "committed": false
+    },
+    {
+      "file": "legacy-a-current-1024x768-closed.jpg",
+      "sha256": "8bb62338371c95c65178d3765d4b44152672f84ba761e9cc95383cd89be6a9ed",
+      "committed": false
+    },
+    {
+      "file": "legacy-a-current-1024x768-open.jpg",
+      "sha256": "d469e3595dd2cac80f542270eae4654525bb7b35573379c4070f6d65bf6fb32e",
+      "committed": false
+    },
+    {
+      "file": "legacy-a-current-900x1000-closed.jpg",
+      "sha256": "3ad7a18f229009b96c9944a83ae2db4529e81679fa422888c8670a02996b2f66",
+      "committed": false
+    },
+    {
+      "file": "legacy-a-current-900x1000-open.jpg",
+      "sha256": "3ad7a18f229009b96c9944a83ae2db4529e81679fa422888c8670a02996b2f66",
+      "committed": false
+    },
+    {
+      "file": "legacy-b-current-1536x770-closed.jpg",
+      "sha256": "aeb09114ab33020108bf2e937128e9db8e0bb66bbcbf407a28c9101a57020eb4",
+      "committed": false
+    },
+    {
+      "file": "legacy-b-current-1536x770-open.jpg",
+      "sha256": "ab3d545bab7c315c439dbfcb3ba49b51ad677d332b17e41a9e6bf325164745ef",
+      "committed": false
+    },
+    {
+      "file": "legacy-b-current-1366x768-closed.jpg",
+      "sha256": "7f77305031698319d0a2ae0885d13e67019e3e2a947ef294b0f2b8bcc6107efb",
+      "committed": false
+    },
+    {
+      "file": "legacy-b-current-1366x768-open.jpg",
+      "sha256": "5e31e90f2b78fcfea3449d7616f68d2474df4e406693358df112ed88a50e43c7",
+      "committed": false
+    },
+    {
+      "file": "legacy-b-current-1024x768-closed.jpg",
+      "sha256": "cea0eaf552afd99a621ed339983f65e1512360ef72aff62d1b964d146028ee47",
+      "committed": false
+    },
+    {
+      "file": "legacy-b-current-1024x768-open.jpg",
+      "sha256": "949fb76c73096059002b8f48f1103e042f39c79d56bb8c9523e73b98ef4a9322",
+      "committed": false
+    },
+    {
+      "file": "legacy-b-current-900x1000-closed.jpg",
+      "sha256": "d275d70183f75032e5a559f3e42ffa3dbb7b6a1455709ac780294a8e7b11c5e0",
+      "committed": true
+    },
+    {
+      "file": "legacy-b-current-900x1000-open.jpg",
+      "sha256": "b177517175fea7270484177c6a7fafc01f69ca63fcf60f3101f1eb372ee6e6d7",
+      "committed": true
+    }
+  ],
+  "approval_preview": {
+    "file": "legacy-a-exact-review.jpg",
+    "sha256": "656c52ff584b397c60db850bb22a9322e577f1d820b393b765bd54723749796d",
+    "result": "Exact canonical sender/recipient/subject/plain text visible; Not now cancelled, no Approve performed."
+  }
+}

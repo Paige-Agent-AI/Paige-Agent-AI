@@ -8,25 +8,25 @@ FLOW_PROTOTYPE: NOT_REQUIRED: logic-only compatibility correction within the exi
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: any eligible SOLO owner/admin can inspect and correct a valid older follow-up draft through the current review path
 VISUAL_DIRECTION: PASS: retain existing native typography, tokens, buttons, hierarchy and form-fitting shell
 AUTOMATED_EVIDENCE: PASS: frozen baseline115 cases gives113PASS/2FAIL at the two historical positive cases; candidate six-suite run430PASS/0FAIL/1preexisting optional export skip; final bounded-input owning run118PASS/0FAIL; review findings reproduced first as115PASS/3FAIL
-STATIC_EVIDENCE: UNVERIFIED: scoped ESLint exit0 and Impeccable detector empty/exit0; native typing/build and exact-head CI remain required
-RENDERED_EVIDENCE: UNVERIFIED: actual new populated state and existing exits/denials need bounded browser verification
-BEHAVIORAL_EVIDENCE: UNVERIFIED: original approval identity, editable words, cancellation, uncertainty and authority controls remain test obligations
+STATIC_EVIDENCE: PASS: scoped ESLint exit0, empty Impeccable detector, actual ES2020 targeted type probe0 diagnostics and actual-shell esbuild success; whole application exact-head CI remains separately required
+RENDERED_EVIDENCE: PASS: sixteen actual-source full-shell sequences in two neutral contexts/dark and light across all four required viewports; editable legacy content, exact approval preview and cancellation verified; synthetic ports only
+BEHAVIORAL_EVIDENCE: PASS: bounded local keyboard edit, exact sender/recipient/subject/plain-text preview, Not now cancellation, edit cancellation and narrow PAIGE Escape/retained draft;118 owning assertions preserve original identity/denial/uncertainty controls; no real send
 AUTHENTICATED_RUNTIME: UNVERIFIED: the old-format failure is proven in an ordinary production owner session; correction has not been deployed
-KEYBOARD_FOCUS: UNVERIFIED: existing native controls remain; new populated-state reachability must be checked
-ZOOM_REFLOW: UNVERIFIED: no geometry edits; affected content and required Solo views remain verification obligations
+KEYBOARD_FOCUS: PASS: Enter opens the original draft, approval preview receives focus, Not now returns to review, narrow PAIGE Escape returns to its launcher with the draft preserved
+ZOOM_REFLOW: PARTIAL: sixteen native viewport sequences preserve page width and readable review controls; actual browser magnification shortcut had no effect and remains UNVERIFIED; no CSS, control markup or geometry is changed
 REDUCED_MOTION: NOT_APPLICABLE: no motion is introduced or changed
-STATE_COVERAGE: UNVERIFIED: old/new formats, malformed/ambiguous data, hidden markup, wrong kind/tenant/actor, changed scope, accepted-operation hold and recovery need verification
+STATE_COVERAGE: PARTIAL: all118 owning assertions pass including malformed/ambiguous/oversized/non-email/member/unknown original-operation controls; actual local populated/edit/preview/cancel and two-context states verified; authenticated provider outcomes and separate Live remain owed
 TRUTHFUL_STATE_LABELS: PASS: preparing/editing is not approval, provider execution, delivery, receipt recording or restored capability acceptance
 SOLO_UI: YES: shared Conversations reader for every eligible existing and future SOLO business
-SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: no geometry source changed; previous full-shell evidence retained, current populated-state verification pending
-SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: previous full-shell evidence retained without relabeling a new render
-SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: current historical-draft populated-state inspection pending
-SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: current historical-draft populated-state inspection pending
-SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: second-context populated-state inspection pending
-SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: second-context populated-state inspection pending
-SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: prior full-shell evidence retained; no current narrow-state claim
-SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: prior full-shell evidence retained; no current narrow-state claim
-UNVERIFIED: source implementation, reviews, CI, deployment, paired authenticated behavior, provider outcome, separate Live and owner acceptance are not yet claimed
+SOLO_1536X770_PAIGE_CLOSED: PASS: actual current-source local shell; both neutral contexts/themes; corresponding sequence and screenshot hashes in assets/ant21-followup-legacy/render-measurements.json; not authenticated runtime
+SOLO_1536X770_PAIGE_OPEN: PASS: actual current-source local shell; both neutral contexts/themes; corresponding sequence and screenshot hashes in assets/ant21-followup-legacy/render-measurements.json; not authenticated runtime
+SOLO_1366X768_PAIGE_CLOSED: PASS: actual current-source local shell; both neutral contexts/themes; corresponding sequence and screenshot hashes in assets/ant21-followup-legacy/render-measurements.json; not authenticated runtime
+SOLO_1366X768_PAIGE_OPEN: PASS: actual current-source local shell; both neutral contexts/themes; corresponding sequence and screenshot hashes in assets/ant21-followup-legacy/render-measurements.json; not authenticated runtime
+SOLO_1024X768_PAIGE_CLOSED: PASS: actual current-source local shell; both neutral contexts/themes; corresponding sequence and screenshot hashes in assets/ant21-followup-legacy/render-measurements.json; not authenticated runtime
+SOLO_1024X768_PAIGE_OPEN: PASS: actual current-source local shell; both neutral contexts/themes; corresponding sequence and screenshot hashes in assets/ant21-followup-legacy/render-measurements.json; not authenticated runtime
+SOLO_900X1000_PAIGE_CLOSED: PASS: actual current-source local shell; both neutral contexts/themes; corresponding sequence and screenshot hashes in assets/ant21-followup-legacy/render-measurements.json; not authenticated runtime
+SOLO_900X1000_PAIGE_OPEN: PASS: actual current-source local shell; both neutral contexts/themes; corresponding sequence and screenshot hashes in assets/ant21-followup-legacy/render-measurements.json; not authenticated runtime
+UNVERIFIED: final exact-head CI/deployment, actual browser magnification, paired authenticated correction/provider/receipt/reload/SPA, separate Live and owner acceptance remain owed
 
 OWNER_INTENT: restore the entire universal SOLO business-action experience, including previously supported follow-ups, through existing governed capabilities; old valid pending drafts must be usable without changing historical records
 MUST_NOT_HAPPEN: no direct approval/send, raw model HTML rendering or dispatch, recipient taken from composer output, fallback sender, provider activation, history rewrite, scope bypass, duplicate operation or account-specific patch
@@ -68,3 +68,9 @@ Thirteen new assertions cover nested text, HTML-only projection, failed/unconfir
 Immutable9b0ba509 Independent NON-AUTHOR review returned REVISE: Object.hasOwn is unavailable under the actual ES2020 library, and invoking the canonical HTML projector before checking raw sizes can block the inbox even when the resulting plain text is short. The subject and all body candidates are now checked against the existing canonical command limits before any projection; oversized raw content remains unavailable rather than being truncated or rewritten. Only the four bounded content fields enter the unchanged projector, so untrusted ancillary metadata is not traversed for review. The original approval object is still returned for exact original identity. The own-property check uses the existing ES2020-compatible prototype.call pattern; no compiler library was widened.
 
 Three added negative cases reproduce oversized HTML reduced to short text, an oversized HTML subject reduced to a short subject, and oversized unused HTML accompanying valid text. Before correction, all three fail with115PASS/3FAIL. After correction, all118 owning cases pass. Normal HTML-only and text-first positives remain green. The original102 predecessor assertions remain intact. Independent final review, current-source browser rendering, required exact-head CI and authenticated deployed proof remain owed; this paragraph does not certify the successor or claim provider execution.
+
+## Current-source rendered finish proof
+
+[Measured sixteen sequences](assets/ant21-followup-legacy/render-measurements.json) preserve the original actual SoloApp, shell, Conversations, composer and review hook. All compiled runtime inputs remain byte-equal to the current reviewed source; the compiled7d4d head differs from049957 only by the two Master release paragraphs. No copied screen, production connection or real provider transport is used. The initial inline-bundle fixture stalled and was INVALID for rendered proof; switching its same-origin asset transport to external scripts resolved it while tightening script-src to self and retaining connect-src none plus forbidden fetch/WebSocket/XMLHttpRequest. Those failed attempts are not counted as passes.
+
+[Populated native review](assets/ant21-followup-legacy/legacy-a-current-1536x770-closed.jpg), [exact approval preview](assets/ant21-followup-legacy/legacy-a-exact-review.jpg), [narrow native inbox](assets/ant21-followup-legacy/legacy-b-current-900x1000-closed.jpg) and [existing narrow PAIGE overlay](assets/ant21-followup-legacy/legacy-b-current-900x1000-open.jpg). The modal intentionally holds the background; Escape restores the launcher and retains the editable words. ContextB preserves the legitimate narrower navigation preference rather than adding a tenant-specific layout. All sixteen page widths equal their actual viewports; model recipient and raw HTML wording never appear. Review is preparation, not sending. The existing exact approval path remains required. Browser magnification was attempted but did not change the actual scale; no200-percent-zoom or new CSS behavior is claimed. Its remaining verification is retained for the integrated Operations/browser campaign rather than misreported here.

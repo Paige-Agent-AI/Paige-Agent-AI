@@ -68,7 +68,7 @@ describe("resolveVpForActionKind — draft credit is null unless real (§13)", (
   it("resolves namespaced §16 kinds via their namespace", () => {
     expect(resolveVpForActionKind("marketing.draft_campaign")).toBe("NEXUS");
     expect(resolveVpForActionKind("sales.work_followup")).toBe("MERIT");
-    expect(resolveVpForActionKind("finance.retainer_reminder")).toBe("MERIT");
+    expect(resolveVpForActionKind("finance.retainer_reminder")).toBe("VERA");
     expect(resolveVpForActionKind("curriculum.suggest_resource")).toBe("MENTOR");
     expect(resolveVpForActionKind("tech.propose_automation")).toBe("ZION");
     expect(resolveVpForActionKind("ops.record_status")).toBe("ZION");

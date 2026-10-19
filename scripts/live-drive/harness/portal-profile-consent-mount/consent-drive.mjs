@@ -181,13 +181,15 @@ function unmet(s, n) {
       // Round 3 (verifier minor 6): never "again", and the route is conditional on having a text to reply to.
       want(!/\bagain\b/.test(n.sms.text) && n.sms.text.includes(`reply START to a text from ${B} if you have one, or ask them.`), `texts not set up "${n.sms.text}"`);
       want(n.sms.buttons.includes("Don't text me"), `texts buttons ${JSON.stringify(n.sms.buttons)}`);
-      // CURA-D1 (integrator default, owner may overrule, 2026-10-19; round 4 corrected the scope): the flag gates
-      // load_contact_context (the fuller summary the business's team-side assistant may load) and
-      // admin_propose_paige_actions (requests its team sends through the portal, typed by staff, not AI-prepared).
-      // The row and its sentence say that, and that it changes neither the customer's portal assistant nor the
-      // business's own records. The old "It has no effect yet" (D2/M3) is gone. Never PAIGE, never Cura.
+      // CURA-D1 (integrator default, owner may overrule, 2026-10-19; round 5 corrected it in place): the flag gates
+      // admin_propose_paige_actions, the one writer of the portal's "Action items" (staff type them in
+      // ContactPaigePanel; the owner's PAIGE chat drafts them through advance_action), and load_contact_context (the
+      // fuller summary). The heading, row and sentence say that, say some action items are AI-drafted, and say what
+      // the switch does not change. The old "It has no effect yet" (D2/M3) is gone. Never PAIGE, never Cura, never
+      // "requests" (the switch does not gate messages, shared work, agreements or invoices).
       want(!/no effect yet/.test(n.prefsText ?? ""), "data sharing still claims it has no effect yet");
-      want(n.sharing.text.startsWith(`Let ${B}’s team send you requests and use a fuller summary`) && n.sharing.text.includes(`Lets ${B}’s team send you requests through your portal and give its AI assistant a fuller summary of you.`) && n.sharing.text.includes(`It doesn’t change what your portal assistant uses to answer you, or what ${B} and its tools can already see in its own records.`) && n.sharing.text.includes("Turning it off doesn’t delete anything.") && !/Cura|Paige|AI tools|AI-prepared|'/i.test(n.sharing.text), `sharing says what the switch governs "${n.sharing.text}"`);
+      want(n.sharing.text.startsWith(`Let ${B}’s team send you action items and use a fuller summary of you`) && n.sharing.text.includes(`Lets ${B}’s team send you action items in your portal, including ones its AI assistant drafts, and give that assistant a fuller summary of you.`) && n.sharing.text.includes(`It doesn’t change messages, shared work, agreements or invoices, what your portal assistant uses to answer you, or what ${B} can already see in its own records.`) && n.sharing.text.includes("Turning it off doesn’t delete anything.") && !/Cura|Paige|AI tools|AI-prepared|requests|'/i.test(n.sharing.text), `sharing says what the switch governs "${n.sharing.text}"`);
+      want((n.prefsText ?? "").includes(`Action items and summaries from ${B}’s team`) && !/Sharing with/.test(n.prefsText ?? ""), "sharing heading names action items and summaries");
       break;
     case "email-off":
       want(/^Off · you turned email off on Oct 12, 2026$/.test(st("email")), `email "${st("email")}"`);

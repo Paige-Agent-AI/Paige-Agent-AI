@@ -117,13 +117,14 @@ describe("disclosures are the server's sentences, byte for byte (reviewer Minor 
     expect(disclosureText(id, "Northwind Studio")).not.toMatch(/paige/i);
   });
   // CURA-D1 (integrator default, owner may overrule, 2026-10-19): the flag (clients.paige_shared_context_consent)
-  // gates load_contact_context (the fuller summary the business's team-side assistant may load) and
-  // admin_propose_paige_actions (requests its team sends through the portal, typed by staff, not AI-prepared).
-  // Round 4: the sentence says exactly that, and that it changes neither what the customer's portal assistant
-  // uses nor what the business already reads in its own records. No agent placeholder; no "no effect yet".
+  // gates admin_propose_paige_actions, the one writer of the portal's "Action items" (staff type them in
+  // ContactPaigePanel; the owner's PAIGE chat drafts them through action_file/action_advance -> advance_action), and
+  // load_contact_context (the fuller summary). Round 5: the sentence names action items, says some are AI-drafted,
+  // and says what it does not gate (messages, shared work, agreements, invoices, the customer's portal assistant,
+  // the business's own records). Never "requests", which the switch does not gate. No placeholder, no "no effect yet".
   it("says what the data-sharing switch governs and what it does not change", () => {
-    expect(disclosureText("data-sharing:v2", "Northwind Studio")).toBe("Lets Northwind Studio’s team send you requests through your portal and give its AI assistant a fuller summary of you. It doesn’t change what your portal assistant uses to answer you, or what Northwind Studio and its tools can already see in its own records. You can turn it off anytime.");
-    expect(PORTAL_PREFERENCE_DISCLOSURES["data-sharing:v2"]).not.toMatch(/AI tools|AI-prepared|prepare requests/);
+    expect(disclosureText("data-sharing:v2", "Northwind Studio")).toBe("Lets Northwind Studio’s team send you action items in your portal, including ones its AI assistant drafts, and give that assistant a fuller summary of you. It doesn’t change messages, shared work, agreements or invoices, what your portal assistant uses to answer you, or what Northwind Studio can already see in its own records. You can turn it off anytime.");
+    expect(PORTAL_PREFERENCE_DISCLOSURES["data-sharing:v2"]).not.toMatch(/AI tools|AI-prepared|requests/);
     expect(PORTAL_PREFERENCE_DISCLOSURES["data-sharing:v2"]).not.toContain("{assistant}");
     expect(PORTAL_PREFERENCE_DISCLOSURES["data-sharing:v2"]).not.toMatch(/no effect yet/);
     expect(Object.values(PORTAL_PREFERENCE_DISCLOSURES).some(t => t.includes("{assistant}"))).toBe(false);

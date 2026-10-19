@@ -14,18 +14,25 @@
 --   data-sharing:v1    -> data-sharing:v2    ("{business}'s Paige" becomes what the switch actually does)
 --
 -- data-sharing:v2 says only what the switch governs. The flag the customer sets
--- (clients.paige_shared_context_consent) gates two business-side paths: load_contact_context, the fuller
--- summary of a contact that the business's TEAM-side assistant may load, and admin_propose_paige_actions,
--- the requests the business's team sends the customer through the portal (typed by staff, not prepared by
--- AI). It does not change what the customer's own portal assistant (Cura, or the business's renamed agent)
--- uses to answer them: client_portal_assistant_context never reads the flag. And it does not change what the
--- business, or its owner-side chat, can already read in its own records (crm_get_contact_summary,
--- crm_search_contacts and client_memory read the same fields on or off). The sentence says both. Today
--- neither gated path is reachable from the app (ContactPaigePanel, their only caller, is not mounted), so the
--- switch has no practical effect until that panel or Paige uses those paths; the sentence describes what the
--- switch governs, and the decision log states the gap. v1's "It has no effect yet" was dropped because both
--- server checks exist. Apostrophes in this sentence are curly, matching the heading, row and line around it
--- on the page. (CURA-D1, integrator default, owner may overrule, 2026-10-19; round 4 corrected the scope.)
+-- (clients.paige_shared_context_consent) gates two business-side paths. admin_propose_paige_actions is the one
+-- writer of paige_customer_actions, which the portal lists as "Action items". Two callers reach it: staff typing in
+-- ContactPaigePanel (mounted only in the unrouted admin/ContactDetail.tsx), and the owner's PAIGE chat, whose
+-- action_file/action_advance tools file an action with a title and draft the AI wrote, which advance_action
+-- (20271110220000) hands to admin_propose_paige_actions for every surface_to_client kind. load_contact_context is
+-- the fuller summary of a contact a team-side assistant may load. The switch does not gate messages, shared work,
+-- agreements or invoices; it does not change what the customer's own portal assistant (Cura, or the business's
+-- renamed agent) uses to answer them, because client_portal_assistant_context never reads the flag; and it does not
+-- change what the business, or its owner-side chat, can already read in its own records (crm_get_contact_summary,
+-- crm_search_contacts and client_memory read the same fields on or off). The sentence says each of those.
+-- Today no action item reaches a customer by either route. The chat's route fails: advance_action passes the action
+-- kind (client.portal_recommendation, owner.onboarding_nudge, ...) as action_type, which
+-- paige_customer_actions_action_type_check refuses (task/message/recommendation/nudge only), so the action ends
+-- blocked. The staff panel is not mounted. So the switch has no practical effect yet. The mapping defect, and
+-- the AI-drafted action text not being filtered for PAIGE (which must be fixed first), are tracked follow-ups in
+-- the master reference §5. v1's "It has no effect yet" was dropped because both server checks exist. Apostrophes in
+-- this sentence are curly, matching the heading, row and line around it on the page. (CURA-D1, integrator default,
+-- owner may overrule, 2026-10-19; round 4 named staff as the only source of action items, which was wrong, and
+-- round 5 corrected it in place: this id was never recorded in any consent record.)
 -- The sentence has no agent placeholder, so the stored hash fully names the wording apart from {business}.
 --
 -- THE WRITERS ARE REWRITTEN IN PLACE, NOT RE-DECLARED. client_portal_set_communication_preference and
@@ -48,7 +55,7 @@ AS $$ SELECT CASE p_id
   WHEN 'sms-pref:v2' THEN 'Texts from {business}. When texts are off, {business} can''t text you through Paige. To get texts, reply START to a text from {business} if you have one, or ask them.'
   WHEN 'sms-pref:v3' THEN 'Texts from {business}. When texts are off, {business} can''t text you. To get texts, reply START to a text from {business} if you have one, or ask them.'
   WHEN 'data-sharing:v1' THEN 'Lets {business}''s Paige use your account details and portal activity when it prepares requests or suggestions for you. It has no effect yet, and you can turn it off anytime.'
-  WHEN 'data-sharing:v2' THEN 'Lets {business}’s team send you requests through your portal and give its AI assistant a fuller summary of you. It doesn’t change what your portal assistant uses to answer you, or what {business} and its tools can already see in its own records. You can turn it off anytime.'
+  WHEN 'data-sharing:v2' THEN 'Lets {business}’s team send you action items in your portal, including ones its AI assistant drafts, and give that assistant a fuller summary of you. It doesn’t change messages, shared work, agreements or invoices, what your portal assistant uses to answer you, or what {business} can already see in its own records. You can turn it off anytime.'
   END $$;
 REVOKE ALL ON FUNCTION public.client_portal_consent_disclosure(text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.client_portal_consent_disclosure(text) TO authenticated, service_role;

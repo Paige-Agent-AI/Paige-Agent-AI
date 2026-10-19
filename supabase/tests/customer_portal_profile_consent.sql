@@ -598,15 +598,17 @@ SELECT is(left(md5(public.client_portal_consent_disclosure('data-sharing:v1')),1
 SELECT is(left(md5(public.client_portal_consent_disclosure('email-pref:v3')),12),'911c5ac50ec5','pin: email-pref:v3');
 SELECT is(left(md5(public.client_portal_consent_disclosure('updates-optin:v3')),12),'7630f99debcf','pin: updates-optin:v3');
 SELECT is(left(md5(public.client_portal_consent_disclosure('sms-pref:v3')),12),'badc94db6304','pin: sms-pref:v3');
-SELECT is(left(md5(public.client_portal_consent_disclosure('data-sharing:v2')),12),'4c28878a775d','pin: data-sharing:v2');
+SELECT is(left(md5(public.client_portal_consent_disclosure('data-sharing:v2')),12),'ef7266c5eb0a','pin: data-sharing:v2');
 SELECT is((SELECT count(*) FROM unnest(ARRAY['email-pref:v3','updates-optin:v3','sms-pref:v3','data-sharing:v2']) v WHERE public.client_portal_consent_disclosure(v) ~* 'paige'),0::bigint,'no sentence the page shows names PAIGE');
--- CURA-D1 (round 4): the flag gates load_contact_context (the fuller summary the business's team-side assistant may
--- load) and admin_propose_paige_actions (requests its team sends through the portal, typed by staff). The sentence
--- says that, says it changes neither the customer's portal assistant nor the business's own records, names no
--- agent, makes no "AI tools" or "no effect" claim.
-SELECT ok(public.client_portal_consent_disclosure('data-sharing:v2') ~ '^Lets \{business\}’s team send you requests through your portal '
-  AND public.client_portal_consent_disclosure('data-sharing:v2') ~ 'It doesn’t change what your portal assistant uses to answer you, or what \{business\} and its tools can already see in its own records\. '
-  AND public.client_portal_consent_disclosure('data-sharing:v2') !~ '\{assistant\}|no effect|AI tools|AI-prepared','data-sharing:v2 says what the switch governs and what it does not change, and makes no stale claim');
+-- CURA-D1 (round 5): the flag gates admin_propose_paige_actions, the one writer of the portal's "Action items"
+-- (paige_customer_actions). Staff reach it from ContactPaigePanel (not mounted), and the owner's PAIGE chat reaches
+-- it through action_file/action_advance -> advance_action, with text the AI drafted. It also gates
+-- load_contact_context (the fuller summary). The sentence names action items and says some are AI-drafted, says
+-- messages, shared work, agreements and invoices are not gated, nor the customer's portal assistant, nor the
+-- business's own records; it names no agent and makes no "requests", "AI tools" or "no effect" claim.
+SELECT ok(public.client_portal_consent_disclosure('data-sharing:v2') ~ '^Lets \{business\}’s team send you action items in your portal, including ones its AI assistant drafts, '
+  AND public.client_portal_consent_disclosure('data-sharing:v2') ~ 'It doesn’t change messages, shared work, agreements or invoices, what your portal assistant uses to answer you, or what \{business\} can already see in its own records\. '
+  AND public.client_portal_consent_disclosure('data-sharing:v2') !~ '\{assistant\}|no effect|AI tools|AI-prepared|requests','data-sharing:v2 says what the switch governs and what it does not change, and makes no stale claim');
 SELECT ok(public.client_portal_consent_disclosure('email-pref:v1') IS NOT NULL AND public.client_portal_consent_disclosure('updates-optin:v1') IS NOT NULL
   AND public.client_portal_consent_disclosure('sms-pref:v1') IS NOT NULL,'v1 sentences are kept: evidence already written names them');
 -- Every branch, fresh: Avery (sub-account) and a new customer, Parker, subscribed with texts on.

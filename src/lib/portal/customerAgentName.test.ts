@@ -42,6 +42,28 @@ describe("customerAgentName", () => {
     for (const v of ["\u1D18\u1D00\u026A\u0262\u1D07", "P\u0251ige", "P\u237Aige", "Paig\u0454", "Pa\u04CFge", "\u13E2aige", "Pa\u13A5ge", "\uABB2aige", "Pa\uAB75ge", "Pa\u1D09ge", "\u0420\u0410IG\u0415"])
       expect(customerAgentName(v), JSON.stringify(v)).toBe("Cura");
   });
+  // Round 5 (verifier HIGH 1): U+FFA0 (halfwidth Hangul filler) is a letter that renders as nothing and folds under
+  // NFKC into U+1160, after the first invisible-character pass had run, so it held PAIGE apart.
+  it("refuses PAIGE held apart by a halfwidth Hangul filler, and drops the filler from a kept name", () => {
+    for (const v of ["Paﾠige", "PAIﾠGE", "Pﾠaﾠiﾠgﾠe", "Paigeﾠ", "ﾠPaige", "Paﾠ​ige"])
+      expect(customerAgentName(v), JSON.stringify(v)).toBe("Cura");
+    expect(customerAgentName("Avaﾠ")).toBe("Ava");
+  });
+  // Round 5 (verifier 3): look-alikes the map did not hold, each keyed by the form left after lowercasing.
+  it("refuses Cherokee, Lisu, Coptic, Cyrillic and Latin look-alikes and negative circled or squared letters", () => {
+    for (const v of [
+      "ᏢᎪᎥᏀᎬ", "PᎪIGE", "PAIᏀE", "PAIGᎬ", "ꮲꭺꭵꮐꭼ", // Cherokee
+      "ꓑꓮꓲꓖꓰ", // Lisu
+      "ⲢⲀⲒGⲈ", "ⲣⲁⲓgⲉ", // Coptic
+      "Paiԍe", "PAIԌE", "Paigҽ", // Cyrillic komi sje, abkhasian che
+      "PAǀGE", "Paigɛ", "Paɨge", "Paɩge", "ᵽaige", "ƥaige", "ꝑaige", "Paiꞡe", "Paiɠe", // Latin
+      "\u{1F15F}\u{1F150}\u{1F158}\u{1F156}\u{1F154}", "\u{1F17F}\u{1F170}\u{1F178}\u{1F176}\u{1F174}", // negative circled, squared
+      "\u{1F15F}\u{1F150}\u{1F158}\u{1F156}\u{1F154}\u{1F163}", // a look-alike t never borrows the Paiget exemption
+    ]) expect(customerAgentName(v), JSON.stringify(v)).toBe("Cura");
+  });
+  it("keeps ordinary names written with the newly mapped letters", () => {
+    for (const v of ["Bɛn", "Ama Ɛsi", "\u{1F170}\u{1F17B}\u{1F174}\u{1F17A}"]) expect(customerAgentName(v), JSON.stringify(v)).toBe(v);
+  });
   // Decided, not missed: a digit or symbol in place of a letter reads as a different name, and refusing every
   // leetspeak spelling would refuse ordinary names. Recorded in client-portal-identity.ts and the decision log.
   it("keeps digit and symbol swaps by design", () => {

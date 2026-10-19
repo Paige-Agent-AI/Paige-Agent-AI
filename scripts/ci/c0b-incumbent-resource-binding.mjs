@@ -733,7 +733,14 @@ const ANCESTRY_SOURCES = {
  // is factored out of customerAgentName unchanged. Presentation only: no import, dispatch, authority or verifier
  // change; paige-ai-chat is byte-identical, so the 29 dispatch fingerprints are unchanged. Old canonical digest
  // 55a91574… reproduced from HEAD f272b28ca before renewing (scratchpad r4-digest.mjs). Renew this digest only.
- "supabase/functions/_shared/client-portal-identity.ts": "b673eaf51edd4b0b4c14e934aae032ced09e066f091ef9ba824ebb8f362d36f9",
+ // E09 CURA round 5 (2026-10-19), AUTHOR source review (NOT non-author; an independent reviewer must confirm):
+ // client-portal-identity.ts only. INVISIBLE gains U+FFA0 (halfwidth Hangul filler) and readAs strips INVISIBLE
+ // again after NFKC (U+FFA0 folds into U+1160); the look-alike map gains Cherokee small ꭺ ꮐ ꭼ, Lisu, Coptic,
+ // Cyrillic ԍ ҽ, Latin ǀ ɛ ɨ ɩ ᵽ ƥ ꝑ ꞡ ɠ and a pure generated table of negative circled/squared letters. Header
+ // comment narrowed to the listed look-alikes. Presentation only: no import, dispatch, authority or verifier change;
+ // paige-ai-chat untouched, so the 29 dispatch fingerprints are unchanged. Round-4 digest b673eaf5… reproduced
+ // from HEAD 270973a56 before renewing (scratchpad v4probe/c0b/dig.mjs). Renew this digest only.
+ "supabase/functions/_shared/client-portal-identity.ts": "c04232c4e0967ee8e313da48387e481c57d92c8d67ae686d2792a99c7f658a67",
  "supabase/functions/_shared/paige-spine/domains/soloBusinessInterviewContext.ts": "ae869d9dbc131f0e6d48d3f34e6a5edc81fd22a095946fa06cf8b7393528b053",
  // E02 source review: the33-key literal moved unchanged into a pure dependency.
  // Reconstituting it into the reader is AST-identical to deployed892b1bdfe.

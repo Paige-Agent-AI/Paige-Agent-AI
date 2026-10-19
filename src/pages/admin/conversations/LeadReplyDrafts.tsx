@@ -80,7 +80,7 @@ function LeadReplyDraftEntry({tenantId,contactId,approval,canEdit,disabled,recor
   // address a message from model output. Competing flat fields are ambiguous.
   const draft=stored?.channel===undefined&&stored?.ok===true&&nested
     &&(nested.channel===undefined||nested.channel==="email")
-    &&!["subject","body","body_text","body_html"].some(key=>Object.hasOwn(stored,key))
+    &&!["subject","body","body_text","body_html"].some(key=>Object.prototype.hasOwnProperty.call(stored,key))
     ?shapeEmailDraft(stored):stored;
   let ready=false;
   try { if(draft?.channel==="email") { parseCommsEmailCommand({action:"comms.email_send",contact_id:contactId,connector_id:null,subject:draft.subject,body:draft.body});ready=true; } } catch { /* Legacy malformed content grants no send authority. */ }

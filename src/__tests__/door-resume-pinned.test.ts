@@ -10,6 +10,7 @@ import { describe, expect, it } from "vitest";
 import { dispatchGrowthPublishChat } from "../../supabase/functions/_shared/growth-publish-chat.ts";
 import { dispatchSalesInvoiceChat } from "../../supabase/functions/_shared/sales-invoice-chat.ts";
 import { dispatchSalesCollectionsChat } from "../../supabase/functions/_shared/sales-collections-chat.ts";
+import { doorResumeShape } from "../../supabase/functions/_shared/paige-turn/resume.ts";
 
 const tenant = "11111111-1111-4111-8111-111111111111";
 const other = "99999999-9999-4999-8999-999999999999";
@@ -33,6 +34,39 @@ function deps(answer: { data: unknown; error: unknown } = { data: { ok: true }, 
 
 const voidCommand = { action: "invoice.void", invoice_id: invoice, expected_version: 2, reason: "Issued twice by mistake" };
 const voidRow = { command: voidCommand, operation_id: op, expected_tenant_id: tenant, approval_subject: `invoice.void:${invoice}`, approval_cycle_nonce: op };
+
+describe("C4b — literal Comms request reconstruction", () => {
+  const catalogs = { crmActionCapability: {}, crmPreviewActions: new Set<string>(), salesTools: new Set<string>(), publishTools: {}, commsEmailTool: "comms_send_email" as const };
+  const command = { action: "comms.email_send", contact_id: invoice, connector_id: page, subject: "Approved subject", body: "Approved body" };
+  const stored = { command, operation_id: op, expected_tenant_id: tenant, approval_id: other };
+  it("projects only the four model fields while the original operation and origin remain in the pin", () => {
+    expect(doorResumeShape("comms_send_email", stored, tenant, catalogs)).toEqual({ family: "comms", callArgs: {
+      contact_id: invoice, connector_id: page, subject: "Approved subject", body: "Approved body",
+    } });
+    expect(doorResumeShape("comms_send_email", { ...stored, command: { ...command, connector_id: null } }, tenant, catalogs)?.callArgs)
+      .toEqual({ contact_id: invoice, subject: "Approved subject", body: "Approved body" });
+  });
+  it("accepts an incumbent unbound stored email but refuses malformed-present origins", () => {
+    const { approval_id: _origin, ...unbound } = stored;
+    expect(doorResumeShape("comms_send_email", unbound, tenant, catalogs)?.family).toBe("comms");
+    for (const approval_id of [null, undefined, "", "not-an-id"]) {
+      expect(doorResumeShape("comms_send_email", { ...stored, approval_id }, tenant, catalogs)).toBeNull();
+    }
+  });
+  it("refuses wrong tenant, operation, command and governance smuggling through the canonical parser", () => {
+    for (const change of [ { expected_tenant_id: other }, { operation_id: "new-op" },
+      { command: { ...command, action: "portal.invite" } }, { command: { ...command, from: "spoof@example.invalid" } },
+      { command: { ...command, subject: "Header\nInjected" } }, { command: { ...command, contact_id: "contact" } } ]) {
+      expect(doorResumeShape("comms_send_email", { ...stored, ...change }, tenant, catalogs)).toBeNull();
+    }
+  });
+  it("requires explicit literal Comms membership and never admits a Portal invitation tool", () => {
+    expect(doorResumeShape("comms_send_email", stored, tenant, { ...catalogs, commsEmailTool: undefined })).toBeNull();
+    for (const tool of ["portal_send_invite", "send_portal_invite", "client_portal_send_invitation"]) {
+      expect(doorResumeShape(tool, stored, tenant, catalogs)).toBeNull();
+    }
+  });
+});
 
 describe("C4b — a pinned door approval", () => {
   it("Sales invoice: no lookup, the stored command and operation go to the door with the fingerprint, and the approval is reported spent", async () => {

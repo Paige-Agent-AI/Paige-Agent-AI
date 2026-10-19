@@ -186,6 +186,7 @@ export function useSoloBusinessContext() {
   const [paigeProfile, setPaigeProfile] =
     useState<SoloPaigeProfile>(EMPTY_PAIGE_PROFILE);
   const [voiceExamples, setVoiceExamples] = useState<SetupVoiceExample[]>([]);
+  const [webIdentity, setWebIdentity] = useState<"unknown" | "none" | "reserved">("unknown");
   const [managedEmail, setManagedEmail] = useState<ManagedEmailIdentity | null>(
     null,
   );
@@ -254,6 +255,7 @@ export function useSoloBusinessContext() {
     setKnowledgeSources([]);
     setPaigeProfile(EMPTY_PAIGE_PROFILE);
     setVoiceExamples([]);
+    setWebIdentity("unknown");
     setManagedEmail(null);
     setContextRevision(0);
     setPendingProposal(null);
@@ -274,6 +276,29 @@ export function useSoloBusinessContext() {
       if (!row || !Number.isSafeInteger(row.contextRevision) || Number(row.contextRevision) < 0)
         throw new Error("The active workspace could not be resolved safely.");
       accept(row, activeTenantId);
+      void (async () => {
+        try {
+          const identity = await setupRpc("resolve_tenant_domain_identity");
+          if (!gate.current.isCurrent(token) || activeTenantRef.current !== activeTenantId) return;
+          if (!identity || typeof identity !== "object") return;
+          const idRow = (Array.isArray(identity.data) ? identity.data[0] : identity.data) as
+            | { default_web_hostname?: string | null }
+            | null;
+          // Canonical identity seam: a returned row with a default web hostname
+          // means the reserved Paige web identity exists; a returned row without
+          // one means none exists; anything else (error, no row) stays unknown —
+          // never guessed. Published routing is NOT claimed here; this RPC does
+          // not expose it.
+          setWebIdentity(
+            identity.error || !idRow ? "unknown"
+              : idRow.default_web_hostname ? "reserved"
+              : "none",
+          );
+        } catch {
+          // The identity read is advisory to the grounded panel; a failure
+          // leaves the truthful "unknown" state and never breaks the load.
+        }
+      })();
       return row;
     } catch (caught) {
       if (gate.current.isCurrent(token))
@@ -665,6 +690,7 @@ export function useSoloBusinessContext() {
     paigeProfile: tenantResolved ? paigeProfile : EMPTY_PAIGE_PROFILE,
     voiceExamples: tenantResolved ? voiceExamples : EMPTY_EXAMPLES,
     managedEmail: tenantResolved ? managedEmail : null,
+    webIdentity: tenantResolved ? webIdentity : "unknown",
     pendingProposal: tenantResolved ? pendingProposal : null,
     representatives: tenantResolved
       ? people.people.filter((person) => person.status === "Active")

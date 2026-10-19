@@ -1248,6 +1248,13 @@ describe("tenant Relationships / Clients workspace", () => {
     // E09 Slice 3: sharing lives on the Solo client record only, so this non-Solo card must not claim it.
     expect(html).toContain("UNAVAILABLE here · sharing work with a client is on the Solo client record");
     expect(html).toContain("Files and agreements");
+    // E09 Slice A round 7: this card renders for a Sub-account only (AgencyApp shell), which has no Sales surface and no
+    // client file library. Agreements reach it through Paige's draft/send tools; file sharing is said to be absent.
+    expect(html.replace(/&#x27;/g, "'")).toContain("PARTIAL · once your client has joined their portal, agreements you ask Paige to draft and send them appear in Agreements to sign and download. This account's client record does not offer file sharing yet.");
+    expect(html).not.toContain("agreements unchanged");
+    expect(html).not.toContain("from Sales");
+    expect(html).not.toContain("on their Solo client record appear in Documents");
+    expect(html).not.toContain("other files vary by authorized account");
     expect(html).toContain("Configuration remains owner/admin gated");
     expect(html).toContain("Choose a client to manage access");
     const source = readFileSync(resolve("src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx"), "utf8");

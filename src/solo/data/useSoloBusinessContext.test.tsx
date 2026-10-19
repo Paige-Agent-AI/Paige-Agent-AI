@@ -6,12 +6,24 @@ import { useSoloBusinessContext } from "./useSoloBusinessContext";
 const state = vi.hoisted(() => ({
   tenantId: "tenant-a" as string | null,
   rpc: vi.fn(),
+  identityResponse: { data: [{ default_web_hostname: "studio.paigeagent.ai" }], error: null } as {
+    data: Array<{ default_web_hostname?: string | null }> | null;
+    error: unknown;
+  },
 }));
 vi.mock("@/hooks/useTenantContext", () => ({
   useTenantContext: () => ({ activeTenantId: state.tenantId }),
 }));
 vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { rpc: state.rpc },
+  supabase: {
+      // The identity read is routed separately so the queued, name-agnostic
+      // incumbent expectations below are untouched by the hook's advisory
+      // resolve_tenant_domain_identity call.
+      rpc: (name: string, args?: unknown) =>
+        name === "resolve_tenant_domain_identity"
+          ? Promise.resolve(state.identityResponse)
+          : state.rpc(name, args),
+    },
 }));
 vi.mock("./useSoloPeople", () => ({
   useSoloPeople: () => ({ people: [], loading: false, error: null }),
@@ -88,6 +100,31 @@ describe("Solo business context data boundary", () => {
   beforeEach(() => {
     state.tenantId = "tenant-a";
     state.rpc.mockReset();
+    state.identityResponse = { data: [{ default_web_hostname: "studio.paigeagent.ai" }], error: null };
+  });
+
+  it("maps the canonical identity seam to the truthful web-identity state", async () => {
+    const identityCases = [
+      [{ default_web_hostname: "studio.paigeagent.ai" }, "reserved"],
+      [{ default_web_hostname: null }, "none"],
+      [null, "unknown"],
+    ] as const;
+    for (const [row, expected] of identityCases) {
+      state.identityResponse = { data: row ? [row] : null, error: null };
+      state.rpc.mockResolvedValueOnce(loaded());
+      const root = createRoot(document.createElement("div"));
+      await act(async () => root.render(<Probe />));
+      await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+      expect(latest.webIdentity).toBe(expected);
+      await act(async () => root.unmount());
+    }
+    state.identityResponse = { data: null, error: { code: "IDENTITY_READ_FAILED" } };
+    state.rpc.mockResolvedValueOnce(loaded());
+    const erroredRoot = createRoot(document.createElement("div"));
+    await act(async () => erroredRoot.render(<Probe />));
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    expect(latest.webIdentity).toBe("unknown");
+    await act(async () => erroredRoot.unmount());
   });
 
   it("returns the canonical saved brief and revision instead of treating the interview draft as readback", async () => {

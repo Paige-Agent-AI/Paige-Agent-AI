@@ -23,6 +23,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { overRateLimit, trustedClientIp } from "../_shared/rateLimit.ts";
 import { sha256Hex } from "../_shared/agreements/token.ts";
 import { TOKEN_SHAPE } from "../_shared/agreements/signing-guard.ts";
+import { isPortalDoorRequest, resolvePortalDocument } from "../_shared/agreements/portal-door.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -64,8 +65,24 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   let sealedKey: string | null = null;
   let filename = "agreement.pdf";
+  let disposition: "inline" | "attachment" = "inline";
 
-  if (token) {
+  if (isPortalDoorRequest(url.searchParams)) {
+    // ── DOOR THREE: the business's customer, signed in to their portal (E09) ──────────────────────
+    // Checked FIRST because it carries the same agreementId + Authorization as door two, which a
+    // portal login fails by construction. Access is decided by the caller-JWT scope function; see
+    // _shared/agreements/portal-door.ts. Only their own completed, sealed copy; never a signed URL.
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const caller = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } },
+      auth: { persistSession: false },
+    });
+    const door = await resolvePortalDocument(url.searchParams, authHeader, caller as never, db as never);
+    if (!door) return refuse();
+    sealedKey = door.sealedKey;
+    filename = safeFilename(door.title);
+    disposition = door.disposition;
+  } else if (token) {
     // ── DOOR ONE: the signer's retrieval token ───────────────────────────────────────────────────
     if (!TOKEN_SHAPE.test(token)) return refuse();
     const tokenHash = await sha256Hex(token);
@@ -149,7 +166,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     headers: {
       ...corsHeaders,
       "Content-Type": "application/pdf",
-      "Content-Disposition": `inline; filename="${filename}"`,
+      "Content-Disposition": `${disposition}; filename="${filename}"`,
       "X-Content-Type-Options": "nosniff",
       // The bytes are a signed legal document. Nothing caches them anywhere but the reader's screen.
       "Cache-Control": "no-store, private",

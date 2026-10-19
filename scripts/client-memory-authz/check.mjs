@@ -7354,6 +7354,287 @@ try {
       JSON.stringify({ door: doorCalls(both).map((c) => c.body?.approved_fingerprint), executions: db3.executions.map((e) => e.command.action), deal: dealRow?.consumed }));
   }
 
+  // ── 40.16 COMMS C4b. The Chat handler, selector, helper, scope checks and persistence below are
+  // REAL. Only comms-email-command is MODELLED, at the same functions.invoke boundary as 40.9 Sales.
+  // Its replay-before-current-approval/claim and newly minted cycle mirror the door's index.ts
+  // §§2,5-9. Effects and Rail entries below are MODELLED counters: NOT native SQL, provider, delivery,
+  // production Rail or customer proof. The real native/send suites remain separate evidence.
+  {
+    const EMAIL = "comms_send_email";
+    const ACTION_A = "abcdaaaa-1111-4111-8111-111111111111";
+    const ACTION_B = "abcdbbbb-2222-4222-8222-222222222222";
+    const PPA_A = "abcdcccc-3333-4333-8333-333333333333";
+    const PPA_B = "abcddddd-4444-4444-8444-444444444444";
+    const EMAIL_OP = "abcdeeee-5555-4555-8555-555555555555";
+    const CONNECTOR = "abcdffff-6666-4666-8666-666666666666";
+    const emailCall = { name: EMAIL, args: { contact_id: OWN, subject: "Checking in", body: "How is your week going?" } };
+    const emailArgs = (extra = {}) => ({ expected_tenant_id: CALLER_TENANT, operation_id: EMAIL_OP,
+      command: { action: "comms.email_send", contact_id: OWN, connector_id: CONNECTOR, subject: emailCall.args.subject, body: emailCall.args.body }, approval_id: PPA_A,
+      recipient: "dana@example.test", from_address: "owner@example.test", content_digest: "d".repeat(64),
+      approval_cycle_nonce: "abcdefab-7777-4777-8777-777777777777", ...extra });
+    const emailState = () => ({ committed: new Map(), effects: [], rail: [], ppa: "drafted", loseAck: false });
+    const emailDoor = (store, db) => async (options) => {
+      const b = options.body;
+      // The operation's saved native result is checked FIRST, including when its PPA is now terminal.
+      const prior = db.committed.get(b.operation_id);
+      if (prior) return { data: prior.approval_id === b.approval_id
+        ? { ...prior.result, replayed: true }
+        : { ok: false, outcome: "outcome_unknown", code: "LEAD_REPLY_APPROVAL_MISMATCH" }, error: null };
+      if (b.approval_id && !["drafted", "pending_approval"].includes(db.ppa)) {
+        return httpErr(409, { ok: false, outcome: "refused", code: "LEAD_REPLY_APPROVAL_NOT_PENDING" });
+      }
+      const hit = b.approved_fingerprint ? claimRow(store, b, EMAIL, (row) => row.args.operation_id === b.operation_id
+        && row.args.approval_id === b.approval_id && JSON.stringify(row.args.command) === JSON.stringify(b.command)) : null;
+      if (!hit) {
+        const now = Date.now();
+        let row = store.rows.find((r) => r.tool_name === EMAIL && !r.consumed && r.args?.operation_id === b.operation_id
+          && r.user_id === USER && r.tenant_id === CALLER_TENANT && r.expires_at > new Date(now).toISOString());
+        if (!row) {
+          row = await doorRow(EMAIL, emailArgs({ operation_id: b.operation_id, command: b.command,
+            ...(b.approval_id ? { approval_id: b.approval_id } : { approval_id: undefined }), approval_cycle_nonce: crypto.randomUUID() }),
+          { id: `modelled-email-${store.rows.length}`, consumed: false, issued_in_request: crypto.randomUUID(),
+            server_issued_at: new Date(now).toISOString(), expires_at: new Date(now + 600_000).toISOString() });
+          if (row.args.approval_id === undefined) delete row.args.approval_id;
+          row.fingerprint = await confirmFingerprint(EMAIL, row.args);
+          store.rows.push(row);
+        }
+        return { data: { ok: false, outcome: "approval_required", fingerprint: row.fingerprint,
+          operation_id: b.operation_id, summary: "Approve this exact email", preview: { kind: "email", to_address: "dana@example.test",
+            from_address: "owner@example.test", subject: b.command.subject, body_text: b.command.body } }, error: null };
+      }
+      const result = { ok: true, outcome: "provider_accepted", delivery_confirmed: false, provider_receipt_available: true };
+      db.effects.push({ operation: hit.args.operation_id, approval: hit.args.approval_id, command: structuredClone(hit.args.command) });
+      db.rail.push({ operation: hit.args.operation_id, capability: EMAIL, outcome: "provider_accepted" });
+      db.committed.set(hit.args.operation_id, { approval_id: hit.args.approval_id, result });
+      db.ppa = "approved";
+      if (db.loseAck) { db.loseAck = false; return { data: { ok: false, outcome: "outcome_unknown" }, error: null }; }
+      return { data: result, error: null };
+    };
+    const emailDrive = (store, db, { tokens = [store.rows[0]?.fingerprint], toolCall, body = {}, rpc = {}, tables = {},
+      service = {}, functions = {}, signal, streamScript } = {}) => drive({
+      stream: true, text: body.declinedConfirmations ? "Not now." : "Approved — run it.", toolCall, streamScript, requestSignal: signal,
+      classification: { intent: "act", research: "none", difficulty: "routine", image: "none", needs_workspace_data: false, confidence: 0.9 },
+      extraBody: { threadId: THREAD, ...(tokens.length ? { approvedConfirmations: tokens } : {}), ...body },
+      rpcOverrides: { ...SEAT(CALLER_TENANT), ...rpc },
+      serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...service },
+      tablesExtra: { paige_pending_confirmations: store.table, paige_chat_threads: () => [{ studio_session_id: null, summary: null }],
+        ...(tokens.length ? turnsWith(tokens[0], EMAIL) : {}), ...tables },
+      onInsert: mirrorConfirms(store), functionsExtra: { "comms-email-command": emailDoor(store, db), ...functions },
+    });
+    const emailCalls = (r) => doorCalls(r, "comms-email-command");
+    const noEmail = (r, db) => emailCalls(r).length === 0 && db.effects.length === 0 && db.rail.length === 0 && cardsOf(r.bodyText).length === 0;
+    const describe = (r, store, db) => JSON.stringify({ status: r.status, calls: emailCalls(r).map((c) => c.body),
+      effects: db.effects, rail: db.rail, rows: store.rows.map((row) => ({ fp: row.fingerprint, consumed: row.consumed })),
+      outcome: outcomeOf(r.bodyText), cards: cardsOf(r.bodyText), errors: r.logged.filter((l) => l.level === "error").slice(-2) });
+
+    const st = makeConfirmStore([await doorRow(EMAIL, emailArgs())]);
+    const db = emailState();
+    const approved = await emailDrive(st, db);
+    const calls = emailCalls(approved);
+    assert("40.16a MODELLED Comms: approval resumes without a model re-emit, using only its original operation/PPA/command and caller JWT client",
+      db.effects.length === 1 && db.effects[0].operation === EMAIL_OP && db.effects[0].approval === PPA_A
+        && JSON.stringify(db.effects[0].command) === JSON.stringify(st.rows[0].args.command)
+        && calls.length === 1 && calls[0].client === "jwt" && calls[0].body.operation_id === EMAIL_OP
+        && calls[0].body.approval_id === PPA_A && calls[0].body.approved_fingerprint === st.rows[0].fingerprint
+        && st.rows[0].consumed && outcomeOf(approved.bodyText)?.actions?.[0]?.outcome === "ran"
+        && resumedFrames(approved.bodyText).length === 1 && cardsOf(approved.bodyText).length === 0,
+      describe(approved, st, db));
+    assert("40.16b MODELLED Comms: its one modelled native outcome/Rail stays door-owned; Chat adds no duplicate capability receipt and claims no delivery",
+      db.rail.length === 1 && !approved.rec.rpc.some((r) => r.name === "record_capability_run")
+        && toldModel(approved).includes('"delivery_confirmed":false') && toldModel(approved).includes("accepted for delivery"), describe(approved, st, db));
+    const replay = await emailDrive(st, db);
+    assert("40.16c MODELLED Comms: used approval with CURRENT terminal PPA reads the ORIGINAL operation before fresh eligibility; no second effect/Rail/card",
+      db.ppa === "approved" && db.effects.length === 1 && db.rail.length === 1 && st.rows.length === 1
+        && emailCalls(replay).length === 1 && emailCalls(replay)[0].body.operation_id === EMAIL_OP
+        && emailCalls(replay)[0].body.approval_id === PPA_A && outcomeOf(replay.bodyText)?.actions?.[0]?.outcome === "ran"
+        && cardsOf(replay.bodyText).length === 0 && toldModel(replay).includes('"replayed":true'), describe(replay, st, db));
+    const { readResumeRecord } = await import("../../supabase/functions/_shared/paige-turn/resume.ts");
+    const saved = savedAnswer(approved), resume = readResumeRecord(saved?.paige_resume);
+    assert("40.16d MODELLED Comms: the original approval report and resumed outcome persist as the exact wire record for reload",
+      saved?.turn_state?.resumed?.kind === "approval" && resume?.from_turn_id === SUSPENDED
+        && JSON.stringify(resume?.outcomes) === JSON.stringify([{ tool: EMAIL, outcome: "ran" }])
+        && JSON.stringify(resume?.approval_outcome) === JSON.stringify(outcomeOf(approved.bodyText)), JSON.stringify(saved));
+    const reemitted = await emailDrive(st, db, { toolCall: { ...emailCall, args: { ...emailCall.args, body: "Model drift must not send again." } } });
+    assert("40.16e MODELLED Comms: a model re-emission after replay is refused, including drift, with no second send or proposal",
+      db.effects.length === 1 && db.rail.length === 1 && emailCalls(reemitted).length === 1 && st.rows.length === 1
+        && cardsOf(reemitted.bodyText).length === 0 && toldModel(reemitted).includes("already_handled_this_reply"), describe(reemitted, st, db));
+
+    const lostStore = makeConfirmStore([await doorRow(EMAIL, emailArgs())]), lostDb = emailState(); lostDb.loseAck = true;
+    const lost = await emailDrive(lostStore, lostDb, { toolCall: emailCall });
+    assert("40.16f MODELLED Comms: native commit then lost ACK is unconfirmed, never not-run/delivered; model re-emission cannot dispatch again",
+      lostDb.effects.length === 1 && lostDb.rail.length === 1 && emailCalls(lost).length === 1
+        && outcomeOf(lost.bodyText)?.actions?.[0]?.outcome === "unconfirmed" && cardsOf(lost.bodyText).length === 0
+        && readResumeRecord(savedAnswer(lost)?.paige_resume)?.outcomes?.[0]?.outcome === "unconfirmed", describe(lost, lostStore, lostDb));
+    const settled = await emailDrive(lostStore, lostDb);
+    assert("40.16g MODELLED Comms: reapproving after lost ACK reconciles the saved original operation/PPA only, with one modelled effect/Rail total",
+      lostDb.effects.length === 1 && lostDb.rail.length === 1 && emailCalls(settled)[0]?.body.operation_id === EMAIL_OP
+        && emailCalls(settled)[0]?.body.approval_id === PPA_A && outcomeOf(settled.bodyText)?.actions?.[0]?.outcome === "ran"
+        && cardsOf(settled.bodyText).length === 0 && lostStore.rows.length === 1, describe(settled, lostStore, lostDb));
+    const unknownStore = makeConfirmStore([await doorRow(EMAIL, emailArgs(), { consumed: true })]), unknownDb = emailState();
+    unknownDb.ppa = "approved";
+    unknownDb.committed.set(EMAIL_OP, { approval_id: PPA_A, result: { ok: false, outcome: "outcome_unknown" } });
+    const unknown = await emailDrive(unknownStore, unknownDb, { toolCall: emailCall });
+    assert("40.16h MODELLED Comms: original unknown remains unknown; no claim, replacement proposal, effect or Rail is invented",
+      unknownDb.effects.length === 0 && unknownDb.rail.length === 0 && emailCalls(unknown).length === 1
+        && outcomeOf(unknown.bodyText)?.actions?.[0]?.outcome === "unconfirmed" && unknownStore.rows.length === 1
+        && cardsOf(unknown.bodyText).length === 0
+        && readResumeRecord(savedAnswer(unknown)?.paige_resume)?.outcomes?.[0]?.outcome === "unconfirmed", describe(unknown, unknownStore, unknownDb));
+
+    const declinedStore = makeConfirmStore([await doorRow(EMAIL, emailArgs())]), declinedDb = emailState();
+    await emailDrive(declinedStore, declinedDb, { tokens: [], body: { declinedConfirmations: [declinedStore.rows[0].fingerprint] } });
+    const originalConsumed = declinedStore.rows[0].consumed;
+    const stale = await emailDrive(declinedStore, declinedDb, { toolCall: emailCall });
+    assert("40.16i MODELLED Comms: declined stale approval cannot send; the door's fresh unshown needs-confirm cycle is retired, with no replacement card",
+      originalConsumed && declinedDb.effects.length === 0 && declinedDb.rail.length === 0 && emailCalls(stale).length === 1
+        && declinedStore.rows.length === 2 && declinedStore.rows.every((row) => row.consumed)
+        && outcomeOf(stale.bodyText)?.actions?.[0]?.outcome === "unconfirmed" && cardsOf(stale.bodyText).length === 0, describe(stale, declinedStore, declinedDb));
+
+    for (const [label, args, patch, tokens] of [
+      ["malformed command", emailArgs({ command: { ...emailArgs().command, subject: "bad\nsubject" } }), {}, null],
+      ["malformed present PPA", emailArgs({ approval_id: "not-a-uuid" }), {}, null],
+      ["expired", emailArgs(), { expires_at: "2000-01-01T00:00:00Z" }, null],
+      ["foreign actor", emailArgs(), { user_id: FOREIGN }, null],
+      ["foreign tenant", emailArgs(), { tenant_id: OTHER_TENANT }, null],
+      ["missing server marker", emailArgs(), { server_issued_at: null }, null],
+      ["missing issuance nonce", emailArgs(), { issued_in_request: null }, null],
+      ["non-bare token", emailArgs(), {}, ["not-a-card-token"]],
+    ]) {
+      const s = makeConfirmStore([await doorRow(EMAIL, args, patch)]), d = emailState();
+      const r = await emailDrive(s, d, { ...(tokens ? { tokens } : {}) });
+      assert(`40.16j MODELLED Comms ${label}: no door/effect/Rail/new card and original row unspent`,
+        noEmail(r, d) && !s.rows[0].consumed, describe(r, s, d));
+    }
+    {
+      const s = makeConfirmStore([await doorRow(EMAIL, emailArgs())]), d = emailState();
+      const r = await emailDrive(s, d, { tables: { paige_chat_turns: () => [] } });
+      assert("40.16k MODELLED Comms: a token whose card this thread never showed is not carried forward", noEmail(r, d) && !s.rows[0].consumed, describe(r, s, d));
+      const SESSION = "5e550000-0000-4000-8000-0000000000c4";
+      const withheld = await emailDrive(s, d, { service: { paige_subagents: () => [{ config: { capability_scope: {
+        version: 1, mode: "allowlist", tools: ["ask_choices", "capability_status", "growth_list"] } } }] },
+        tables: { paige_chat_threads: () => [{ studio_session_id: SESSION, summary: null }],
+          studio_sessions: () => [{ id: SESSION, artifact_refs: [], title: "Spring launch" }] } });
+      assert("40.16l MODELLED Comms: an unoffered tool leaves its exact approval unspent; no door or new card", noEmail(withheld, d) && !s.rows[0].consumed, describe(withheld, s, d));
+      const controller = new AbortController();
+      const stopped = await emailDrive(s, d, { signal: controller.signal, tables: { paige_pending_confirmations: (filters) => {
+        const rows = s.table(filters);
+        if (filters.some(([op, col]) => op === "select" && String(col).includes("issued_in_request"))) controller.abort();
+        return rows;
+      } } });
+      assert("40.16m MODELLED Comms: abort after reading the original proposal withdraws the request before invoking the door", noEmail(stopped, d) && !s.rows[0].consumed, describe(stopped, s, d));
+    }
+    {
+      const s = makeConfirmStore([await doorRow(EMAIL, emailArgs())]), d = emailState();
+      let selected = false, observedWithdrawal = false;
+      const r = await emailDrive(s, d, { tables: {
+        // A dynamic persona RPC has no static fixtureOwnTenant in drive(); bind the real original
+        // thread explicitly so this reaches the scope-change oracle rather than a null-tenant row.
+        paige_chat_threads: () => [{ id: THREAD, tenant_id: CALLER_TENANT, caller_user_id: USER, audience: "workspace" }],
+        paige_pending_confirmations: (filters) => {
+        const rows = s.table(filters);
+        if (filters.some(([op, col]) => op === "select" && String(col).includes("issued_in_request"))) selected = true;
+        return rows;
+      } }, rpc: { get_paige_persona_context: () => {
+        const tenant = selected && !observedWithdrawal ? OTHER_TENANT : CALLER_TENANT;
+        if (tenant === OTHER_TENANT) observedWithdrawal = true;
+        return PERSONA(tenant).get_paige_persona_context;
+      } } });
+      assert("40.16u MODELLED Comms: an observed A-to-B scope withdrawal stays withdrawn even if a later read returns A; no invocation or consumed approval",
+        observedWithdrawal && noEmail(r, d) && !s.rows[0].consumed, describe(r, s, d));
+    }
+
+    const originRow = (extra = {}) => ({ id: ACTION_A, approval_id: PPA_A, contact_id: OWN, tenant_id: CALLER_TENANT,
+      action_kind: "owner.lead_followup", status: "drafted", ...extra });
+    const advanceCall = (id = ACTION_A) => ({ name: "action_advance", args: { action_id: id, to_status: "drafted",
+      draft_content: { channel: "email", subject: emailCall.args.subject, body: emailCall.args.body } } });
+    const originDrive = (s, d, calls, { rows = [originRow()], advance = { data: { ok: true, action_id: ACTION_A, approval_id: PPA_A }, error: null }, rpc = {}, tables = {} } = {}) =>
+      emailDrive(s, d, { tokens: [], toolCall: calls, tables, rpc: { resolve_tool_autonomy: { data: "auto", error: null },
+        advance_action: advance, list_actions: { data: rows, error: null }, ...rpc } });
+    for (const [label, preceding, advance] of [
+      ["successful advance", advanceCall(), undefined],
+      ["uppercase equivalent advance UUID", advanceCall(ACTION_A.toUpperCase()), undefined],
+      ["explicit action_get", { name: "action_get", args: { action_id: ACTION_A, limit: 2 } }, undefined],
+    ]) {
+      const s = makeConfirmStore(), d = emailState();
+      const r = await originDrive(s, d, [preceding, emailCall], { ...(advance ? { advance } : {}) });
+      const read = r.rec.rpc.filter((c) => c.name === "list_actions");
+      const invocation = emailCalls(r)[0];
+      assert(`40.16n MODELLED Comms ${label}: fresh exact scoped Action/PPA/contact + current actor/tenant/thread become the bound proposal, never a model locator`,
+        read.length === 1 && read[0].args.p_action_id?.toLowerCase() === ACTION_A && read[0].args.p_tenant_id === CALLER_TENANT && read[0].args.p_limit === 2
+          && emailCalls(r).length === 1 && invocation.client === "jwt" && invocation.body.approval_id === PPA_A
+          && invocation.body.command.contact_id === OWN && invocation.body.operation_id !== EMAIL_OP
+          && s.rows.length === 1 && s.rows[0].args.approval_id === PPA_A && !s.rows[0].consumed
+          && cardsOf(r.bodyText).length === 1 && d.effects.length === 0 && d.rail.length === 0,
+        JSON.stringify({ read, ...JSON.parse(describe(r, s, d)) }));
+    }
+    for (const [label, setup] of [
+      ["advance ok false", { advance: { data: { ok: false, action_id: ACTION_A, approval_id: PPA_A }, error: null } }],
+      ["advance missing PPA", { advance: { data: { ok: true, action_id: ACTION_A }, error: null } }],
+      ["advance wrong action", { advance: { data: { ok: true, action_id: ACTION_B, approval_id: PPA_A }, error: null } }],
+      ["advance wrong PPA", { rows: [originRow({ approval_id: PPA_B })] }],
+      ["read no row", { rows: [] }],
+      ["read two rows", { rows: [originRow(), originRow()] }],
+      ["read wrong action", { rows: [originRow({ id: ACTION_B })] }],
+      ["read foreign tenant", { rows: [originRow({ tenant_id: OTHER_TENANT })] }],
+      ["read malformed contact", { rows: [originRow({ contact_id: "not-a-uuid" })] }],
+      ["read terminal PPA", { rows: [originRow({ status: "done" })] }],
+      ["list_actions error", { rpc: { list_actions: { data: null, error: { code: "XX000", message: "unavailable" } } } }],
+      ["list_actions throw", { rpc: { list_actions: () => { throw new Error("synthetic read failure"); } } }],
+    ]) {
+      const s = makeConfirmStore(), d = emailState();
+      const r = await originDrive(s, d, [advanceCall(), emailCall], setup);
+      assert(`40.16o MODELLED Comms ${label}: unresolved original action blocks generic fresh fallback, door invocation and replacement card`,
+        noEmail(r, d) && s.rows.length === 0 && toldModel(r).includes("email_origin_unconfirmed"), describe(r, s, d));
+    }
+    {
+      const s = makeConfirmStore(), d = emailState();
+      const r = await originDrive(s, d, [advanceCall(), emailCall], {
+        rpc: { resolve_tool_autonomy: { data: "confirm", error: null } },
+      });
+      assert("40.16s MODELLED Comms: an advance still needing its OWN approval blocks the later email, while preserving that exact work-approval card",
+        emailCalls(r).length === 0 && d.effects.length === 0 && d.rail.length === 0
+          && !r.rec.rpc.some((c) => c.name === "advance_action") && cardsOf(r.bodyText).length === 1
+          && cardsOf(r.bodyText)[0].tool === "action_advance" && s.rows.length === 1
+          && s.rows[0].tool_name === "action_advance" && !s.rows[0].consumed
+          && toldModel(r).includes("email_origin_unconfirmed"), describe(r, s, d));
+    }
+    {
+      const s = makeConfirmStore(), d = emailState();
+      const r = await originDrive(s, d, [advanceCall("not-an-action-uuid"), emailCall]);
+      assert("40.16t MODELLED Comms: malformed exact-work arguments refused BEFORE native dispatch cannot open a generic email path",
+        noEmail(r, d) && s.rows.length === 0 && !r.rec.rpc.some((c) => c.name === "advance_action")
+          && toldModel(r).includes("email_origin_unconfirmed"), describe(r, s, d));
+    }
+    for (const [label, rpc] of [
+      ["error", { data: null, error: { code: "XX000", message: "unavailable" } }],
+      ["throw", () => { throw new Error("synthetic exact action read failure"); }],
+    ]) {
+      const s = makeConfirmStore(), d = emailState();
+      const r = await originDrive(s, d, [{ name: "action_get", args: { action_id: ACTION_A } }, emailCall], { rpc: { list_actions: rpc } });
+      assert(`40.16p MODELLED Comms action_get ${label}: cannot become an unbound fresh send`, noEmail(r, d) && s.rows.length === 0
+        && toldModel(r).includes("email_origin_unconfirmed"), describe(r, s, d));
+    }
+    {
+      const s = makeConfirmStore(), d = emailState();
+      const r = await originDrive(s, d, [{ name: "action_get", args: { action_id: ACTION_A } },
+        { name: "action_get", args: { action_id: ACTION_B } }, emailCall], {
+        rpc: { list_actions: (args) => ({ data: [originRow(args.p_action_id === ACTION_A ? {} : { id: ACTION_B, approval_id: PPA_B })], error: null }) },
+      });
+      assert("40.16q MODELLED Comms: two exact follow-ups for the SAME contact are ambiguous; neither PPA/latest-contact nor generic fallback is chosen",
+        noEmail(r, d) && s.rows.length === 0 && toldModel(r).includes("email_origin_unconfirmed"), describe(r, s, d));
+    }
+    {
+      const s = makeConfirmStore(), d = emailState();
+      const r = await originDrive(s, d, [{ batch: [
+        { id: "same-provider-tool-id", name: "action_get", args: { action_id: ACTION_A } },
+        { id: "same-provider-tool-id", name: "action_get", args: { action_id: ACTION_B } },
+      ] }, emailCall], { rpc: { list_actions: (args) => args.p_action_id === ACTION_A
+        ? { data: null, error: { code: "XX000", message: "original read unavailable" } }
+        : { data: [originRow({ id: ACTION_B, action_kind: "owner.internal_note", approval_id: null })], error: null } } });
+      assert("40.16r MODELLED Comms: a later irrelevant action with the SAME textual tool id cannot erase the earlier unresolved original action",
+        noEmail(r, d) && s.rows.length === 0 && toldModel(r).includes("email_origin_unconfirmed"), describe(r, s, d));
+    }
+  }
+
   // ── 40.15 C4c × C4b — ONE OBJECTIVE: PAIGE asks → the person answers → PAIGE proposes a DOOR act (the
   // real crm-command mints the card) → the person approves → the door runs it EXACTLY ONCE, carried
   // forward from the answer's continuation turn → approving again runs nothing. The composition Sales

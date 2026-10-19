@@ -160,14 +160,16 @@ function unmet(s, n) {
   want(!/Payments|Coming soon/.test(text), "Payments or 'Coming soon' shown while the route is not live");
   if (s.view === "customer") {
     const expected = {
-      default: { top: ["Home", "Messages"], work: ["Progress", "Action items", "Sessions"], paper: ["Documents"], learn: ["Resources"] },
-      renamed: { top: ["Home", "Messages"], work: ["Progress", "Action items", "Coaching calls"], paper: ["Documents"], learn: ["Library"] },
-      hidden: { top: ["Home", "Messages"], work: ["Progress", "Sessions"], paper: [], learn: ["Resources"] },
-      reordered: { top: ["Home", "Messages"], work: ["Sessions", "Action items", "Progress"], paper: ["Documents"], learn: ["Resources"] },
+      // E09 Slice A: Agreements is every customer's own agreements (D-A1); staff and a customer of several
+      // businesses keep the catalog rule, and the generic catalog does not list it.
+      default: { top: ["Home", "Messages"], work: ["Progress", "Action items", "Sessions"], paper: ["Documents", "Agreements"], learn: ["Resources"] },
+      renamed: { top: ["Home", "Messages"], work: ["Progress", "Action items", "Coaching calls"], paper: ["Documents", "Agreements"], learn: ["Library"] },
+      hidden: { top: ["Home", "Messages"], work: ["Progress", "Sessions"], paper: ["Agreements"], learn: ["Resources"] },
+      reordered: { top: ["Home", "Messages"], work: ["Sessions", "Action items", "Progress"], paper: ["Documents", "Agreements"], learn: ["Resources"] },
       staff: { top: ["Home"], work: ["Planning"], paper: [], learn: ["Resources"] },
       multi: { top: ["Home"], work: ["Action items"], paper: [], learn: ["Resources"] },
       // What the persistence run's owner saved: Sessions renamed, Documents hidden.
-      stored: { top: ["Home", "Messages"], work: ["Progress", "Action items", "Coaching calls"], paper: [], learn: ["Resources"] },
+      stored: { top: ["Home", "Messages"], work: ["Progress", "Action items", "Coaching calls"], paper: ["Agreements"], learn: ["Resources"] },
     }[s.variant];
     if (s.phone) {
       const menu = [...expected.top];
@@ -186,14 +188,14 @@ function unmet(s, n) {
     }
     return miss;
   }
-  const baseRows = ["# Always shown", "home", "messages", "# Your work", "progress", "actions", "sessions", "# Paperwork", "documents", "# Learn", "resources"];
-  if (s.variant === "reordered") want(eq(n.rows, ["# Always shown", "home", "messages", "# Your work", "sessions", "progress", "actions", "# Paperwork", "documents", "# Learn", "resources"]), `rows ${JSON.stringify(n.rows)}`);
+  const baseRows = ["# Always shown", "home", "messages", "# Your work", "progress", "actions", "sessions", "# Paperwork", "documents", "agreements", "# Learn", "resources"];
+  if (s.variant === "reordered") want(eq(n.rows, ["# Always shown", "home", "messages", "# Your work", "sessions", "progress", "actions", "# Paperwork", "documents", "agreements", "# Learn", "resources"]), `rows ${JSON.stringify(n.rows)}`);
   else want(eq(n.rows, baseRows), `rows ${JSON.stringify(n.rows)}`);
   const previews = {
-    default: ["Home", "Messages", "Progress", "Action items", "Sessions", "Documents", "Resources"],
-    renamed: ["Home", "Messages", "Progress", "Action items", "Coaching calls", "Documents", "Resources"],
-    hidden: ["Home", "Messages", "Progress", "Action items", "Sessions", "Resources"],
-    reordered: ["Home", "Messages", "Sessions", "Progress", "Action items", "Documents", "Resources"],
+    default: ["Home", "Messages", "Progress", "Action items", "Sessions", "Documents", "Agreements", "Resources"],
+    renamed: ["Home", "Messages", "Progress", "Action items", "Coaching calls", "Documents", "Agreements", "Resources"],
+    hidden: ["Home", "Messages", "Progress", "Action items", "Sessions", "Agreements", "Resources"],
+    reordered: ["Home", "Messages", "Sessions", "Progress", "Action items", "Documents", "Agreements", "Resources"],
   };
   want(eq(n.preview, previews[s.variant] ?? previews.renamed), `preview ${JSON.stringify(n.preview)}`);
   if (s.variant !== "default" && s.variant !== "hidden" && s.variant !== "reordered") want(/Renamed from Sessions/.test(n.sessionsRow ?? ""), `sessions row "${n.sessionsRow}"`);
@@ -454,7 +456,7 @@ async function runPersistence(browser, label = "", filter = () => true) {
         want(notes.documentsShown === "false", `after reload Documents switch is ${notes.documentsShown}`);
         want(notes.saveDisabled === true, "after reload the editor is dirty (Save menu enabled)");
         want(notes.statusAfterReload === 0, "a status line survived the reload");
-        want(JSON.stringify(notes.preview) === JSON.stringify(["Home", "Messages", "Progress", "Action items", "Coaching calls", "Resources"]), `after reload the preview reads ${JSON.stringify(notes.preview)}`);
+        want(JSON.stringify(notes.preview) === JSON.stringify(["Home", "Messages", "Progress", "Action items", "Coaching calls", "Agreements", "Resources"]), `after reload the preview reads ${JSON.stringify(notes.preview)}`);
       }
       const measured = [mOwner, mCustomer].filter(Boolean);
       const ok = !driveError && miss.length === 0 && errors.length === 0 && blocked.length === 0 && measured.length === 2

@@ -7,7 +7,7 @@ const state=vi.hoisted(()=>({tenant:"test-tenant-a",rpc:vi.fn(),refresh:vi.fn()}
 vi.mock("@/hooks/useTenantContext",()=>({useTenantContext:()=>({activeTenantId:state.tenant,activeTenant:{account_number:"10001"},isPlatformStaff:false,refreshTenant:state.refresh})}));
 vi.mock("./data/useSoloPeople",()=>({useSoloPeople:()=>({people:[]})}));
 vi.mock("@/hooks/useTierFeatures",()=>({useTierFeatures:()=>({has:()=>true,loading:false})}));
-vi.mock("@/integrations/supabase/client",()=>({supabase:{rpc:state.rpc}}));
+vi.mock("@/integrations/supabase/client",()=>({supabase:{rpc:(name:string,args?:unknown)=>name==="resolve_tenant_domain_identity"?Promise.resolve({data:[{default_web_hostname:"studio.paigeagent.ai"}],error:null}):state.rpc(name,args)}}));
 vi.mock("@/components/paige/live/PaigePresence",()=>({PaigePresence:()=>null}));
 vi.mock("@/components/dashboard/PaigeAIChat",()=>({PaigeAIChat:({conversationHeader}:{conversationHeader:import("react").ReactNode})=><div>{conversationHeader}</div>}));
 let host:HTMLDivElement,root:Root;

@@ -159,6 +159,27 @@ describe("INT-338 real composer attachment integration", () => {
     return e;
   };
   const remove = () => host.querySelector<HTMLButtonElement>('button[aria-label="Remove attachment"]');
+  it("explains a known recovery refusal without claiming the uploaded PDF was read or offering replay", async () => {
+    const bodies: Array<{ interactive?: { kind: string }; document?: { base64: string } }> = [];
+    vi.stubGlobal("fetch", vi.fn(async (_url, init: RequestInit) => {
+      const body = JSON.parse(String(init.body));
+      bodies.push(body);
+      return body.interactive?.kind === "message"
+        ? new Response(JSON.stringify({ code: "INTERACTIVE_RECOVERY_READ_ONLY", message_accepted: true }), { status: 409 })
+        : new Response(JSON.stringify({ settled: true }));
+    }));
+    await render(); await stage(file("Program-brief.pdf"), "drop"); await type("Review this brief");
+    await act(async () => { send().click(); await settle(); });
+    expect(host.textContent).toContain("Your message was recorded");
+    expect(host.textContent).toContain("new actions and attachments are on hold");
+    expect(host.textContent).toContain("PAIGE can still answer questions about existing records");
+    expect(host.textContent).not.toContain("The connection ended");
+    expect(host.textContent).not.toContain("I've read");
+    expect(host.textContent).not.toContain("Your message wasn't sent");
+    expect(Array.from(host.querySelectorAll("button")).some(b => b.textContent === "Retry")).toBe(false);
+    expect(bodies.filter(b => b.interactive?.kind === "message")).toHaveLength(1);
+    expect(bodies[0].document).toMatchObject({ base64: "AQID" });
+  });
   it.each(["paste", "drop"] as const)("%s during Thinking stages once and Send supersedes with one document", async route => {
     const bodies: Array<{ requestIntentId: string; interactive: { kind: string; supersedesIntentId?: string }; document?: { base64: string } }> = []; const controllers: ReadableStreamDefaultController<Uint8Array>[] = []; const signals: AbortSignal[] = [];
     vi.stubGlobal("fetch", vi.fn(async (_url, init: RequestInit) => {

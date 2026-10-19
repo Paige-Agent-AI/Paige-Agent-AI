@@ -334,7 +334,22 @@ posture**, and **(d) permitted-RPC scoping**, each grounded in a named resolver 
 
 ## Surface ledger — what actually SHIPPED, per tier (§66)
 
-### E09 F1a — the finance entitlement is per business and cannot be self-granted from the browser (branch `e09-funding-f1a`, migration `20271111030000`, 2026-10-19; not yet merged)
+### E09 F1b — credit paths refuse customers and other businesses; one edge reader of the entitlement (branch `e09-funding-f1b`, 2026-10-19; not yet merged; after F1a)
+
+Edge only; no visible surface changes (the portal-side funding surfaces are slice F2).
+
+| Tier | Credit processing (uploads, analysis, sync, scoring, predictions, projections, matches, soft pull) | Act on another business's credit records | Credit / funding pushes received |
+|---|---|---|---|
+| God / Operator | ✓ | ✓ the one cross-business path (`is_platform_owner`); the global `admin` role no longer is | N/A |
+| Agency / Enterprise | ✓ own business's records as owner/admin | a sub-account's records only with a direct owner/admin seat in it: `is_tenant_admin_as` does not follow the parent chain (production definition, 2026-10-19). `calculate-credit-factors`' contact check (`can_access_contact`) does follow it | staff of an entitled business only |
+| Standalone (Solo) | ✓ unchanged for staff, entitled or not (Q5 open) | ✗ | staff of an entitled business only |
+| Sub-account | ✓ unchanged for staff, entitled or not (Q5) | ✗ | staff of an entitled business only |
+| Client | ✗ refused at all twelve credit functions | ✗ | ✗ skipped (`not_entitled`) |
+| Anonymous | ✗ | ✗ | ✗ |
+
+`paige-mcp` credit-score and banking-snapshot ingest need the entitlement (they always concern a business's customer). Evidence: Deno suites incl. the SQL/TS drift test; driven harnesses `test:sync-credit-report-data` and `test:apply-extraction`. Authenticated runtime UNVERIFIED (no session driven).
+
+### E09 F1a — the finance entitlement is per business and cannot be self-granted from the browser (migration `20271111030000`, merged #2379 → `264687877`, live and read back 2026-10-19)
 
 Database only; no visible surface and no edge function changes in this PR (edge isolation is F1b, the next PR; the portal-side funding surfaces are slice F2). The one predicate is `_tenant_finance_entitled(business)` = an active `is_finance` Marketplace install OR `features.finance_in_scope` (the persona expression, verbatim). Production at grounding: 1 of 12 businesses entitled; it stays entitled.
 

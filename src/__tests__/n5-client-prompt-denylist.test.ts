@@ -15,7 +15,6 @@ import {
   buildUserContext,
   CREDIT_DENYLIST,
   CREDIT_PROGRAM_DENYLIST,
-  deriveFinanceInScopeFromFeatures,
   HARD_GUARDRAIL_MARKER,
   resolveDisputeReferralLabel,
   sanitizeClientContextForTier,
@@ -660,19 +659,17 @@ describe("#184 §2 — the SCOPE guard is data-driven, proven BOTH directions fr
   });
 });
 
-describe("#184 — deriveFinanceInScopeFromFeatures is the GENERIC no-join signal (no vertical literal)", () => {
-  it("reads the generic finance_in_scope flag, true for both boolean and string 'true'", () => {
-    expect(deriveFinanceInScopeFromFeatures({ finance_in_scope: true })).toBe(true);
-    expect(deriveFinanceInScopeFromFeatures({ finance_in_scope: "true" })).toBe(true);
+describe("#184 / E09 F1b — the no-join surfaces ask the database for the finance entitlement (no edge copy)", () => {
+  const read = (rel: string) => readFileSync(`supabase/functions/${rel}`, "utf8");
+  it("client-context no longer carries a flag-only reader", () => {
+    expect(read("_shared/client-context.ts")).not.toMatch(/export function deriveFinanceInScopeFromFeatures/);
   });
-  it("false for a coaching/consulting tenant — and the legacy 'funding' signals no longer flip it", () => {
-    expect(deriveFinanceInScopeFromFeatures({})).toBe(false);
-    expect(deriveFinanceInScopeFromFeatures(null)).toBe(false);
-    // The generic no-join signal deliberately does NOT key on the vertical literal — a
-    // tenant flagged only by the legacy features must be BACKFILLED to finance_in_scope
-    // (the migration does this); the raw legacy keys alone do not light up this signal.
-    expect(deriveFinanceInScopeFromFeatures({ playbook: "funding" })).toBe(false);
-    expect(deriveFinanceInScopeFromFeatures({ enabled_skills: ["funding"] })).toBe(false);
+  it("paige-public-chat and growth-page-draft read through _shared/finance-entitlement.ts, never the raw flag", () => {
+    for (const fn of ["paige-public-chat/index.ts", "growth-page-draft/index.ts"]) {
+      const src = read(fn);
+      expect(src).toContain('import { financeEntitled } from "../_shared/finance-entitlement.ts";');
+      expect(src.replace(/^\s*\/\/.*$/gm, "")).not.toMatch(/deriveFinanceInScopeFromFeatures|finance_in_scope/);
+    }
   });
 });
 

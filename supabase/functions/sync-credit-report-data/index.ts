@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { z } from "https://esm.sh/zod@3.22.4";
+import { portalCustomerTier, refuseCustomerTier, staffOfSubject } from "../_shared/finance-entitlement.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -128,6 +129,33 @@ serve(async (req) => {
       callerUserId = "service_role";
 
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+      // E09 F1b — the trusted producers (analyze-credit-report, paige-apply-extraction) write for the
+      // report's subject. A portal customer is never a credit subject (plan Q4), and a named upload
+      // must belong to that subject, so a producer cannot attach one person's upload to another.
+      const subjectTier = await portalCustomerTier(supabase, targetUserId);
+      if (subjectTier !== "not_customer") {
+        return new Response(JSON.stringify({ error: subjectTier === "customer" ? "customer_credit_not_available" : "caller_tier_unavailable" }), {
+          status: subjectTier === "customer" ? 403 : 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (payload.report_upload_id) {
+        const { data: up, error: upErr } = await supabase
+          .from("credit_report_uploads")
+          .select("user_id, tenant_id")
+          .eq("id", payload.report_upload_id)
+          .maybeSingle();
+        if (upErr) {
+          return new Response(JSON.stringify({ error: "upload_lookup_failed" }), {
+            status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (!up || up.user_id !== targetUserId || !up.tenant_id) {
+          return new Response(JSON.stringify({ error: "upload_subject_mismatch" }), {
+            status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
       return await processSync(supabase, payload, targetUserId, callerUserId);
     }
 
@@ -160,13 +188,24 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Authorization check: a person syncs their own records; an admin may sync anyone's. An assignment
-    // opens reads only, so it does not let anyone write credit data into a client's records.
+    // E09 F1b: credit processing is not a customer feature — a portal customer is refused before
+    // anything is written.
+    const tier = await refuseCustomerTier(supabase, user.id);
+    if (!tier.ok) {
+      return new Response(JSON.stringify({ error: tier.error }), {
+        status: tier.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Authorization check: a person syncs their own records; an owner/admin of a business where the
+    // subject holds a seat may sync theirs (or the platform owner). The global `admin` app role used to
+    // pass for ANYONE in any business (§59); a portal customer is never the subject (plan Q4). An
+    // assignment opens reads only, so it does not let anyone write credit data into a client's records.
     if (user.id !== targetUserId) {
-      const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
-      if (!isAdmin) {
-        return new Response(JSON.stringify({ error: "Forbidden" }), {
-          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      const staff = await staffOfSubject(supabase, user.id, targetUserId);
+      if (!staff.ok) {
+        return new Response(JSON.stringify({ error: staff.status === 403 ? "Forbidden" : staff.error, reason: staff.error }), {
+          status: staff.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
     }

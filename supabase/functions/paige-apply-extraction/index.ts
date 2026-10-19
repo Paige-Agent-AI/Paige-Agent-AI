@@ -22,6 +22,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { z } from "https://esm.sh/zod@3.22.4";
 import { APPROVABLE_KEYS, buildCreditProposal, buildCreditSyncPayload } from "../_shared/credit-extraction-payload.ts";
+import { refuseCustomerTier } from "../_shared/finance-entitlement.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -53,6 +54,17 @@ serve(async (req) => {
   const asCaller = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } } });
   const { data: { user }, error: authError } = await asCaller.auth.getUser();
   if (authError || !user) return json({ error: "Sign in and try again." }, 401);
+
+  const admin = createClient(supabaseUrl, serviceKey);
+
+  // E09 F1b: applying a credit reading is not a customer feature. A portal customer (a linked client
+  // with no seat anywhere) is refused before any read. Same-business authority stays with the RLS
+  // read below; staff of a business without the funding entitlement are not gated here (owner
+  // question Q5 is open).
+  const tier = await refuseCustomerTier(admin, user.id);
+  if (!tier.ok) {
+    return json({ error: tier.status === 403 ? "Credit reports aren't available in your portal." : "I couldn't check your access just now. Try again in a moment." }, tier.status);
+  }
 
   let body: z.infer<typeof bodySchema>;
   try {
@@ -120,8 +132,6 @@ serve(async (req) => {
     body.approved_keys.filter((k): k is typeof APPROVABLE_KEYS[number] =>
       (APPROVABLE_KEYS as readonly string[]).includes(k) && offered.has(k)),
   );
-
-  const admin = createClient(supabaseUrl, serviceKey);
 
   if (approved.size === 0) {
     // Declining everything is a real answer, not a failure. Guarded like the apply path so a

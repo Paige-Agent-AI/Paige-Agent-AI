@@ -3,6 +3,7 @@ import { gatewayCompat } from "../_shared/claude.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { addClientAddresses } from "../_shared/contact-methods.ts";
 import { setUserPrimaryAddress } from "../_shared/user-contact-methods.ts";
+import { refuseCustomerTier, staffOfBusiness } from "../_shared/finance-entitlement.ts";
 // N5 §2/§9 — the funding methodology corpus is no longer bundled into platform code;
 // it lives in the installable Marketplace funding preset (tenant KB). This extraction
 // pass parses the report structure and does not need the coaching methodology inline.
@@ -320,6 +321,16 @@ serve(async (req) => {
       });
     }
 
+    // E09 F1b: credit processing is not a customer feature. A portal customer (a linked client with
+    // no seat anywhere) is refused before any read, storage access or model call.
+    const tier = await refuseCustomerTier(supabase, user.id);
+    if (!tier.ok) {
+      return new Response(JSON.stringify({ error: tier.error }), {
+        status: tier.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { data: rateLimitOk } = await supabase.rpc("check_rate_limit", {
       _user_id: user.id,
       _function_name: "analyze-credit-report",
@@ -357,12 +368,14 @@ serve(async (req) => {
       });
     }
 
-    // Ownership check: only the upload's owner or an admin may analyze.
+    // Ownership check: the upload's own subject, or an owner/admin of the business the upload belongs
+    // to (E09 F1b, §59). The global `admin` app role used to pass for ANY business's upload; the
+    // cross-business path is the platform owner only.
     if (upload.user_id !== user.id) {
-      const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
-      if (!isAdmin) {
-        return new Response(JSON.stringify({ error: "Forbidden" }), {
-          status: 403,
+      const staff = await staffOfBusiness(supabase, user.id, upload.tenant_id ?? null);
+      if (!staff.ok) {
+        return new Response(JSON.stringify({ error: staff.status === 403 ? "Forbidden" : staff.error }), {
+          status: staff.status,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }

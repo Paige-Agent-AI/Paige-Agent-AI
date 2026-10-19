@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 // The Claude model id resolves through _shared/claude-models.ts, the one place it is chosen (INT-329).
 import { gatewayCompat } from "../_shared/claude.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { refuseCustomerTier, staffOfBusiness } from "../_shared/finance-entitlement.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -34,6 +35,15 @@ serve(async (req) => {
       });
     }
 
+    // E09 F1b: lender summaries are not a customer feature. A portal customer (a linked client with no
+    // seat anywhere) is refused before anything is read.
+    const tier = await refuseCustomerTier(supabase, user.id);
+    if (!tier.ok) {
+      return new Response(JSON.stringify({ error: tier.error }), {
+        status: tier.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const { analysisId } = await req.json();
     if (!analysisId) {
       return new Response(JSON.stringify({ error: 'analysisId is required' }), {
@@ -44,7 +54,7 @@ serve(async (req) => {
     // Get the analysis record
     const { data: analysis, error: fetchError } = await supabase
       .from('financial_document_analyses')
-      .select('*, documents(file_name), businesses(legal_name)')
+      .select('*, documents(file_name), businesses(legal_name, tenant_id)')
       .eq('id', analysisId)
       .single();
 
@@ -54,12 +64,14 @@ serve(async (req) => {
       });
     }
 
-    // Ownership check: only the analysis's owner or an admin may read.
+    // Ownership check: the analysis's owner, or an owner/admin of the business the analysis is about
+    // (E09 F1b, §59). The global `admin` app role used to pass for ANY business's analysis; the
+    // cross-business path is the platform owner only. An analysis with no business is owner-only.
     if ((analysis as any).user_id !== user.id) {
-      const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' });
-      if (!isAdmin) {
-        return new Response(JSON.stringify({ error: 'Forbidden' }), {
-          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      const staff = await staffOfBusiness(supabase, user.id, (analysis as any).businesses?.tenant_id ?? null);
+      if (!staff.ok) {
+        return new Response(JSON.stringify({ error: staff.status === 403 ? 'Forbidden' : staff.error }), {
+          status: staff.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
     }

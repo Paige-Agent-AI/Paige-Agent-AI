@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { gatewayCompat } from "../_shared/claude.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { refuseCustomerTier, staffOfBusiness } from "../_shared/finance-entitlement.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -102,6 +103,13 @@ serve(async (req) => {
     );
     if (userError || !user) throw new Error("Unauthorized");
 
+    // E09 F1b: business credit reports are not a customer feature — a portal customer is refused
+    // before the file is read or stored.
+    const tier = await refuseCustomerTier(supabase, user.id);
+    if (!tier.ok) {
+      return new Response(JSON.stringify({ error: tier.error }), { status: tier.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     const contentType = req.headers.get("content-type") || "";
     let bureau: Bureau;
     let businessId: string | null = null;
@@ -135,6 +143,29 @@ serve(async (req) => {
       const bin = atob(body.file_base64);
       fileBytes = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) fileBytes[i] = bin.charCodeAt(i);
+    }
+
+    // E09 F1b: a business_id from the request must be a business the caller owns, or one belonging to a
+    // business (tenant) they are an owner/admin of (or the platform owner). It used to be written onto
+    // the report as given.
+    if (businessId) {
+      const { data: biz, error: bizReadErr } = await supabase
+        .from("businesses")
+        .select("owner_user_id, tenant_id")
+        .eq("id", businessId)
+        .maybeSingle();
+      if (bizReadErr) {
+        return new Response(JSON.stringify({ error: "business_lookup_failed" }), { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (!biz) {
+        return new Response(JSON.stringify({ error: "forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (biz.owner_user_id !== user.id) {
+        const staff = await staffOfBusiness(supabase, user.id, biz.tenant_id ?? null);
+        if (!staff.ok) {
+          return new Response(JSON.stringify({ error: staff.error }), { status: staff.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+      }
     }
 
     // 1) Upload PDF to private storage bucket

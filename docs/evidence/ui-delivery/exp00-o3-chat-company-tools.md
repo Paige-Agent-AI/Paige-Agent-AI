@@ -60,7 +60,7 @@ ACCEPTANCE_CRITERIA: recorded above.
 MOTION_PURPOSE: NONE.
 PROTECTED_SEAMS: recorded above.
 
-INTERNAL_BUILD_IDENTITY: 386e0093c8bed7dfbf654c891b537fef90762d11; deployment=PENDING merge to main then edge deploy; environment=development; migrations=NONE (consumes existing operator_commercial_customers + operator_billing_overview); edge=paige-ai-chat; evidence=this record + CI
+INTERNAL_BUILD_IDENTITY: c97dbbf5e1a3e8925d8e0f6ceaad78e1cfc64935; deployment=PENDING merge to main then edge deploy; environment=development; migrations=NONE (consumes existing operator_commercial_customers + operator_billing_overview); edge=paige-ai-chat; evidence=this record + CI
 RELEASE_CHANNEL: development: internal engineering slice; local/development build environment; no staged rollout.
 RELEASE_CLASSIFICATION: internal-only: Operator conversational capability.
 CUSTOMER_RELEASE_IDENTITY: none: internal Operator capability.

@@ -5071,3 +5071,46 @@ so no tenant host serves this yet.
 
 No tier gains or loses access: the tenant host showed a sign-in form before (unreachable, the host is a
 Vercel 404) and now shows a link to the same form on the app origin. A §61 default; no feature key.
+
+### Customer Portal — pause, restore or end a client's access (E09 Slice 7, 2026-10-18)
+
+A business can pause a joined client's portal access (temporary; the link is kept, so restoring needs no
+new invitation), restore it, or end it (the link is cleared and the person's history stays on the contact;
+coming back takes a new invitation). Owner decisions D1–D11 (2026-10-18). The state lives on the contact
+(`clients.portal_access_state` open | paused | ended, migration `20271110240000`, renumbered from 110000 at integration) and the one
+resolver every customer read goes through (`client_portal_relationship_id`) admits only `open`. The one
+writer is `set_client_portal_access` (SECURITY DEFINER; the tenant is always the caller's current workspace,
+never a parameter; the same predicate as the invitation owner gate, never a global role, §59). The customer
+reads only their own state through `client_portal_access_state()` (keyed on `auth.uid()`; business name and
+logo only — never the reason or the team note). Same §60 feature as invitation: `customer_portal_invite`;
+§61 default, no new feature key. No notification is sent (D4); the contact and its history stay; the person's
+login and every other business are untouched (End clears the link, so its coach grants and anything the person
+connected under their own login stop showing until they rejoin; open invitations are revoked).
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Enterprise | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|---|
+| Pause / restore / end (`set_client_portal_access`) | No UI (`customer_portal_invite` excluded). Server: only inside the operator's current workspace through the invitation predicate (D2); no cross-tenant parameter | Refused (`PORTAL_ACCESS_UNAVAILABLE`); no direct client book | ✓ owner/admin of the current workspace | Server ✓, including the parent agency after switching into the child; no Solo record card (same §60 gap as `client_standing`) | Server ✓, as Sub-account | Cannot call it | No grant | PROOF OWED |
+| "Portal access" card on the Solo client record (`ClientPortalAccess`) | — | — | ✓ mounted under "Shared with {client}" and "Files for {client}" (`client_standing` gate + `customer_portal_invite`) | Not mounted | Not mounted | — | — | PROOF OWED |
+| Contact panel access switch (`ContactPortalPanel`: non-Solo Portal view, admin contact detail, Conversations contact card) | — (feature-gated off) | — (feature-gated off) | ✓ OFF opens Pause (reversible); Pause and End are their own buttons, both take a reason; Restore (gold) gives a paused client back; never calls `admin-delete-user` (§58, D10) | ✓ same (round 2: Pause now on every tier the panel mounts on) | ✓ same | — | — | PROOF OWED |
+| Owner Portal dashboard states (Access paused / Access ended, filter, attention) | — | — | ✓ | Not mounted | Not mounted | — | — | PROOF OWED |
+| Owner inbox Portal channel for a paused client | — | — | Held with "access is paused — restore their portal access" (tier-neutral; server refuses `PORTAL_ACCESS_PAUSED`) | same | same | — | — | PROOF OWED |
+| Owner displays that read the link alone (inbox context pane, Client intake panel, Solo record header chip) | — | — | ✓ name paused / ended | ✓ inbox pane + intake panel | ✓ inbox pane + intake panel | — | — | PROOF OWED |
+| Old invitation link after access changed (`ConsumerInvitation`) | — | — | — | — | — | ✓ "Your access to {Business} is paused / has ended", Sign out | — | PROOF OWED |
+| Customer paused / ended page in place of the `/app` shell (`CustomerAccessGate`) | — | — | — | — | — | ✓ own state only; no menu, no Support, no platform persona; one action, Sign out | No grant | PROOF OWED |
+| Paige reads / changes access from chat (`client.portal_access_read`, `client.portal_access_set`, risk high, owner confirms) | Current workspace only | Refused | ✓ | ✓ | ✓ | never offered | — | PROOF OWED |
+| Customer doors added by Documents, Profile & Consent, Agreements and Payments refuse a paused or ended client (`_client_portal_lock_relationship`, the one gate: Documents list and upload check, preferences read and the two consent writers, agreements list / signing link / download scope, the three invoice reads) | — | — | — | — | — | ✓ open only; each door keeps its own refusal (NULL, `{ok:false,…}` or its 42501 message) | No grant | PROOF OWED (pgTAP `customer_portal_access_doors.sql` 61/61 locally) |
+
+Vitest drives the card, the panel, the gate, the frame phases (first open, mid-session, routes that require
+a customer, 42501), the landing route and gateway, the dashboard model, the inbox hold and Shared with's
+paused line; nine source mutations each fail their named test (round 2: 22 more, one per fix). Harness frames
+(`scripts/live-drive/harness/portal-access-mount`, re-rendered at round 3 in the real face, fontLoaded in
+every frame): 152 frames, 152 pass, both themes. Owner record: 16 states at 1440x900 and 390x844, paused and
+the pause confirm at 1366x768 and 1536x770, and paused, the pause confirm and the header chip at 1024x768 and
+900x1000 (84 frames). Contact panel: joined, paused, ended and each confirm on Standalone Solo, with joined on
+Sub-account and Enterprise and the pause confirm on Sub-account (36). Customer page: paused, ended, mid-session
+pause and paused with the business's logo (16). Old invitation link: paused and ended (8). Portal dashboard:
+every row and filtered to Access paused (8). Lowest text contrast 5.25 light, 6.85 dark; gold only on Restore
+or the reused invitation command's act, gradient gold included. The Slice 1 inbox harness adds the paused
+inbox (4 frames). Chat: the approval card is bound to the version it was built from (`access_version`, round 3).
+Authenticated owner pause/restore/end and the customer page on production are owed; the QA relationship is
+to be ended by that business's owner by 2026-10-30 (D11).

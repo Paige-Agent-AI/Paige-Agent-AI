@@ -52,8 +52,8 @@ beforeEach(() => {
 afterEach(() => { act(() => root.unmount()); host.remove(); });
 
 const flush = async () => { for (let i = 0; i < 6; i++) await act(async () => { await Promise.resolve(); }); };
-async function render(portalConnected = true) {
-  await act(async () => root.render(<ClientSharedWork contactId={CLIENT} clientName="Jordan Rivera" portalConnected={portalConnected} />));
+async function render(portalConnected = true, portalPaused = false) {
+  await act(async () => root.render(<ClientSharedWork contactId={CLIENT} clientName="Jordan Rivera" portalConnected={portalConnected} portalPaused={portalPaused} />));
   await flush();
 }
 const row = (title: string) => [...host.querySelectorAll<HTMLElement>(".trc-shared-row")].find(r => r.querySelector("strong")?.textContent === title);
@@ -285,5 +285,20 @@ describe("ClientSharedWork", () => {
     const css = readFileSync("src/components/tenant-relationships/client-shared-work.css", "utf8");
     expect(css).not.toMatch(/#[0-9a-f]{3,8}\b|--pg-gold|gold-dark/i);
     expect(css).toMatch(/prefers-reduced-motion: reduce/);
+  });
+
+  // E09 Slice 7: a paused client keeps their link, so the share writer still says "connected".
+  it("a paused client is told plainly that nothing shows right now, and a share says so", async () => {
+    reads = [status()]; await render(false, true);
+    expect(host.textContent).toContain("Paused — Jordan can’t see this right now. It shows again if you restore their access.");
+    expect(host.textContent).not.toContain("hasn’t joined your portal yet");
+    await flip("Draft discovery report");
+    expect(host.textContent).not.toContain("can see this in their portal");
+  });
+  it("follows the access card when access is restored without remounting", async () => {
+    reads = [status()]; await render(false, true);
+    await render(true, false);
+    expect(host.textContent).not.toContain("Paused — Jordan");
+    expect(host.textContent).not.toContain("hasn’t joined your portal yet");
   });
 });

@@ -145,6 +145,45 @@ export function inspectIncumbentSource(chatText,tool) {
 // reverted, all 29 fingerprints equal main's pins exactly; with it, all 29 change (the whole-handler try,
 // identity[15]). No dispatch branch, control, helper, authority or verifier logic changed. action-risk.ts
 // is byte-identical (pin unchanged). Renew those 29 dispatch scalars only.
+// E09 Slice 7 bounded renewal (2026-10-18), integrating-crew source review (NOT non-author)
+// of read_client_portal_access/client_portal_access_set on main 1cc4e995. Per-part comparison
+// (fingerprint decomposed into dispatch branch, dominating controls, identity inputs, local
+// helpers, imports): all 29 exact dispatch branches, dominating controls, local helpers and
+// imports equal; the one changed identity input is the whole-handler try (index 15), whose
+// canonical delta is insertion-only (0 removed / 85 added lines: the additive offer, two labels,
+// the confirm summary case, the final pre-Unknown dispatch branch, WRITE_TARGET and locator
+// entries). The action-risk.ts canonical delta is one added `high` row. Renew those 30 scalars only.
+// E09 Slice 7 round-2 renewal (2026-10-18), integrating-crew source review (NOT non-author): the
+// approval card for client_portal_access_set now names the client and the reason. The whole paige-ai-chat
+// diff is two lines: `portalAccessClientName` added to the existing client-portal-access import, and the
+// describeConfirm case `client_portal_access_set` now returns portalAccessConfirmSummary(a, await
+// portalAccessClientName(supabaseClient, personaCtx?.tenant_id ?? null, a?.contact_id)) — a read-only name
+// lookup on the caller's own session (RLS), no write, no effect. describeConfirm lives inside the
+// whole-handler try (identity input index 15) and precedes the comms_setup_calling branch (a dominating
+// control there), so all 29 scalars move; no dispatch branch, control, helper or import set of any
+// contract changed otherwise. Renew those 29 scalars only.
+// E09 Slice 7 round-3 renewal (2026-10-18), integrating-crew source review (NOT non-author): the
+// approval card for client_portal_access_set is now bound to the version it was built from. The
+// paige-ai-chat delta is confined to this slice's own final pre-Unknown dispatch branch plus its
+// import: `accessVersionToken` added to the existing client-portal-access import, and two read-only
+// result fields — `access_version: accessVersionToken(r.view.since)` on the read result and on the
+// set result — plus one sentence appended to the read result's note. No write, authority, tenant,
+// actor or confirmation path changed. Decomposed per contract (dispatch branches, dominating
+// controls, local helpers, imports, identity inputs): all equal for all 29 except identity input 15
+// (the whole-handler try), whose canonical delta is 2 lines replaced and 1 added, all inside that
+// branch. Renew those 29 scalars only; no SOURCES/ANCESTRY digest changes.
+// E09 Slice 7 integration renewal (2026-10-19), integrating-crew source review (NOT non-author): the
+// Slice 7 branch (e88971a26, whose three notes above were reviewed against 1cc4e995) squash-merged onto
+// s7-integrate b6d3bdf75 (main d44ad08 + Agreements #2367 + Payments). The three round notes above are
+// superseded by this one: their scalars were never pinned on this base. Additive-only check against the
+// composed bytes: the paige-ai-chat delta base -> integrated head is exactly Slice 7's own delta
+// (1cc4e995 -> e88971a26), line for line, 84 lines added and 0 removed (the client-portal-access import,
+// the two Spine tools on the offer, two labels, the confirm summary case, the final pre-Unknown dispatch
+// branch, WRITE_TARGET and locator entries). Decomposed per contract (dispatch branches, dominating
+// controls, local helpers, imports, identity inputs) for all 29: every part equal except identity input
+// 15 (the whole-handler try), which holds those insertions. action-risk.ts is base plus Slice 7's one added
+// `high` row; its canonical digest a7c03694... equals the digest Slice 7 reviewed, so that SOURCES pin is
+// the reviewed one. Renew those 29 dispatch scalars only.
 const CONTRACTS = {
   "comms_setup_calling": {
     "key": "communications.comms_setup_calling",
@@ -500,7 +539,7 @@ const SOURCES = {
   "supabase/functions/_shared/calendar-link-tenant-brain.ts": "28748e315a12caa855ec906192743cdad5298d37ccbd35ad83539949124800f4",
   "supabase/functions/_shared/client-seat-reply.ts": "6b2ed9c2342da886f8dff44a46bc9dadd4bcd3b079839f62b470ea363564b44d",
   "supabase/functions/_shared/outbound-draft-check.ts": "eda79597ac86a489f916075844f535fcf228518d953b48c55b2e9901920ee961",
-  "supabase/functions/_shared/action-risk.ts": "61bdf66939cf2ce8858c9d8e950addf56827a11afbfe27e518e24f963473968a",
+  "supabase/functions/_shared/action-risk.ts": "a7c036942209d81c2b46dd5855bb21f69ec9ed69bf35d239e4aea3d8e50d6a3a",
   "supabase/functions/_shared/finance-gate.ts": "dfa7fbec065d346ca72199313294a4418aa8be66f3dbb68cfe991a93aef0cf40",
   "supabase/functions/_shared/paige-capability-status/projection.ts": "280c36a53ed5d553f6e6467f7177d049a2c612078cdb8d8139878cec3463922f",
   "supabase/functions/_shared/paige-capability-status/readiness.ts": "56b0a8da8b1a76414a147d15bffb9b589b9bcf9e130c797290b846759e1da65e",

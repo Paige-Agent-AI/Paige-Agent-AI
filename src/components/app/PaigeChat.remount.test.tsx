@@ -35,7 +35,7 @@ const memoryFixture = vi.hoisted(() => ({
   context: { block: "", loading: false, hasCreditData: false },
 }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: memoryFixture.tenant, loading: memoryFixture.loading }) }));
-vi.mock("@/hooks/useClientPortalFrame", () => ({useClientPortalFrame: () => portalFixture}));
+vi.mock("@/hooks/useClientPortalFrame", () => ({useClientPortalFrame: () => portalFixture, useSharedClientPortalFrame: () => portalFixture}));
 vi.mock("@/lib/customer-chat",()=>({readCustomerChat:(...args:unknown[])=>portalFixture.read(...args)}));
 vi.mock("@/hooks/useClientPortalBrand", () => ({ useClientPortalBrandState: () => ({ brand: null, loading: false }) }));
 vi.mock("@/hooks/useClientChatContext", () => ({

@@ -236,7 +236,7 @@ export function OwnerPortalDashboard({
     ({ person, access }) =>
       person.doNotContact ||
       !person.email ||
-      ["not-invited", "expired", "canceled"].includes(access),
+      ["not-invited", "expired", "canceled", "paused"].includes(access),
   );
   const filtered = rows.filter(
     ({ person, access }) =>

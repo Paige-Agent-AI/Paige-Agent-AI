@@ -874,6 +874,10 @@ jobs:
           # drift against the frontend registry it mirrors. Read grants the repo tree only; every other deny stays.
           deno test --allow-read --allow-import --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \
             supabase/functions/_shared/client-portal-menu.test.ts
+          # E09 Slice 7: the client portal access executor (server tenant and actor, no model note, readback),
+          # its Spine declarations, and the two MCP doors that read the link directly. Read grants the repo tree only.
+          deno test --allow-read --allow-import --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/client-portal-access.test.ts
           # The two-mailbox pilot's edge functions must at least TYPE-check.
           deno check --allow-import --node-modules-dir=none \
             supabase/functions/gmail-mailbox-sync/index.ts \

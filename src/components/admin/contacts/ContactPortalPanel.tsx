@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +26,7 @@ import {
   FileSignature,
   LogIn,
   ShieldOff,
+  PauseCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -30,6 +34,18 @@ import { callAdminAccountAction } from "@/lib/functions/adminAccountActions";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { useTierFeatures } from "@/hooks/useTierFeatures";
 import { isLegacyInviteHeld, legacyInviteHeldText, readLegacyInviteSend } from "@/lib/portal/legacyInviteSend";
+import {
+  PORTAL_ACCESS_NOTE_MAX,
+  PORTAL_ACCESS_REASONS_FOR,
+  PORTAL_ACCESS_REASON_LABEL,
+  portalAccessConfirmCopy,
+  portalAccessRefusalCopy,
+  portalAccessStateOf,
+  setPortalAccess,
+  type PortalAccessAction,
+  type PortalAccessReason,
+  type PortalAccessStateName,
+} from "@/lib/client-portal-access";
 
 type Invite = {
   id: string;
@@ -54,12 +70,15 @@ export function ContactPortalPanel({
   contactId,
   email,
   linkedUserId,
+  name,
 }: {
   contactId: string;
   email: string | null;
   linkedUserId: string | null;
+  /** How the confirm names the client. Optional for the older mounts. */
+  name?: string | null;
 }) {
-  const { activeTenantId } = useTenantContext();
+  const { activeTenantId, activeUserId, activeTenant } = useTenantContext();
   // §60 tier lock (owner-ruled 2026-08-11): the consumer/client portal invite is a
   // solo + sub_account capability ONLY. An Agency manages sub-accounts, not a direct
   // consumer client book — this closes the portal-invite leak on the Agency tier.
@@ -68,16 +87,24 @@ export function ContactPortalPanel({
   const [invites, setInvites] = useState<Invite[]>([]);
   const [envelopes, setEnvelopes] = useState<Envelope[]>([]);
   const [busy, setBusy] = useState<"invite" | "revoke" | "agreement" | "signout" | "reset" | null>(null);
-  const [confirmRevoke, setConfirmRevoke] = useState(false);
+  // E09 Slice 7: which access change is being confirmed. "end" replaced the old account-deleting revoke;
+  // "pause" is the gentler, reversible choice, and it is what switching a joined client OFF opens.
+  const [confirmAccess, setConfirmAccess] = useState<PortalAccessAction | null>(null);
+  const [accessReason, setAccessReason] = useState<PortalAccessReason | null>(null);
+  const [accessNote, setAccessNote] = useState("");
   const [confirmSignout, setConfirmSignout] = useState(false);
   const [localLinkedUserId, setLocalLinkedUserId] = useState<string | null>(linkedUserId);
+  const [accessState, setAccessState] = useState<PortalAccessStateName>("open");
+  const [accessChangedAt, setAccessChangedAt] = useState<string | null>(null);
+  const clientName = name?.trim() || "this client";
+  const businessName = activeTenant?.name?.trim() || "your business";
 
   useEffect(() => { setLocalLinkedUserId(linkedUserId); }, [linkedUserId]);
 
   const load = async () => {
     // Invites are now bound to this contact at mint (tenant_invite_tokens.contact_id),
     // so the outstanding/pending state is real: read this contact's consumer tokens.
-    const [{ data: toks }, { data: env }, { data: client }] = await Promise.all([
+    const [{ data: toks }, { data: env }, accessRead] = await Promise.all([
       supabase
         .from("tenant_invite_tokens")
         .select("id, email, expires_at, last_used_at, created_at, revoked_at")
@@ -96,11 +123,18 @@ export function ContactPortalPanel({
       // unmounted — e.g. collapsed in the Conversations fold-out (#121), where the
       // accordion unmounts closed content — would otherwise leave a stale snapshot on
       // remount (reporting a revoked account as active, or missing a fresh acceptance).
-      supabase.from("clients").select("linked_user_id").eq("id", contactId).maybeSingle(),
+      supabase.from("clients").select("linked_user_id, portal_access_state, portal_access_changed_at").eq("id", contactId).maybeSingle(),
     ]);
-    setLocalLinkedUserId(
-      (client as { linked_user_id: string | null } | null)?.linked_user_id ?? null,
-    );
+    // The access columns arrive with migration 20271110240000 (the generated types do not know them
+    // yet). Until it is applied that read fails, so fall back to the link alone rather than showing a
+    // joined client as having no access.
+    const client = accessRead.error
+      ? (await supabase.from("clients").select("linked_user_id").eq("id", contactId).maybeSingle()).data
+      : accessRead.data;
+    const row = client as unknown as { linked_user_id: string | null; portal_access_state?: string | null; portal_access_changed_at?: string | null } | null;
+    setLocalLinkedUserId(row?.linked_user_id ?? null);
+    setAccessState(portalAccessStateOf(row?.portal_access_state));
+    setAccessChangedAt(row?.portal_access_changed_at ?? null);
     setInvites(
       ((toks as Array<{ id: string; email: string | null; expires_at: string; last_used_at: string | null; created_at: string }>) || []).map((t) => ({
         id: t.id,
@@ -112,6 +146,7 @@ export function ContactPortalPanel({
       })),
     );
     setEnvelopes((env as Envelope[]) || []);
+    return row;
   };
 
   useEffect(() => { load(); }, [contactId]);
@@ -188,23 +223,48 @@ export function ContactPortalPanel({
   };
 
 
-  const revokeAccess = async () => {
-    if (!localLinkedUserId) return;
+  // E09 Slice 7, D10 (§58 call-out): turning access OFF for a joined client used to call
+  // `admin-delete-user`, which unlinked the person from EVERY business and deleted their login. It now
+  // pauses (or, by choice, ends) THIS business's access through the tenant-scoped seam, keeps the login
+  // and every other business untouched. Restore gives a paused client back; an ended one needs a new
+  // invitation. Pause is here for every tier this panel mounts on (§60/§61: customer_portal_invite —
+  // Solo, Sub-account, Enterprise), not only on the Solo client record.
+  const openConfirm = (action: PortalAccessAction) => { setAccessReason(null); setAccessNote(""); setConfirmAccess(action); };
+  const changeAccess = async (action: PortalAccessAction) => {
+    if (!localLinkedUserId || !activeTenantId) return;
+    if (action !== "restore" && !accessReason) return;
     setBusy("revoke");
     try {
-      // keep_contact: true — strips their auth login + roles but preserves CRM history
-      const { data, error } = await supabase.functions.invoke("admin-delete-user", {
-        body: { user_id: localLinkedUserId, keep_contact: true },
+      const session = await supabase.auth.getSession();
+      const actorId = session.data.session?.user.id ?? null;
+      if (session.error || !actorId || (activeUserId && actorId !== activeUserId)) {
+        toast.error(portalAccessRefusalCopy("SCOPE_CHANGED", clientName));
+        return;
+      }
+      const result = await setPortalAccess({
+        actorId, tenantId: activeTenantId, contactId, action,
+        reason: action === "restore" ? null : accessReason, note: action === "restore" ? null : accessNote,
+        expectedChangedAt: accessChangedAt,
       });
-      if (error) throw error;
-      const revokeErr = (data as { error?: string } | null)?.error;
-      if (revokeErr) throw new Error(revokeErr);
-      toast.success("Paige access revoked. CRM history preserved.");
-      setLocalLinkedUserId(null);
-      setConfirmRevoke(false);
-      await load();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Revoke failed");
+      // Success is what a fresh read says, not what the writer acknowledged (§70.1).
+      const fresh = await load();
+      const now = portalAccessStateOf(fresh?.portal_access_state);
+      const expected: PortalAccessStateName = action === "end" ? "ended" : action === "pause" ? "paused" : "open";
+      if (result.ok && now === expected) {
+        // Precise: End removes this business's coach assignment rows, so "untouched" is said of the login only.
+        toast.success(action === "end" ? "Portal access ended. Their login is untouched and their history stays on this contact."
+          : action === "pause" ? "Portal access paused. You can restore it later."
+            : "Portal access restored.");
+        setConfirmAccess(null);
+        setAccessReason(null);
+        setAccessNote("");
+        return;
+      }
+      toast.error(result.ok || !result.code ? portalAccessRefusalCopy("UNCONFIRMED", clientName)
+        : portalAccessRefusalCopy(result.code, clientName, result.restoreBlockedBy));
+      if (result.code === "ACCESS_CHANGED") setConfirmAccess(null);
+    } catch {
+      toast.error(portalAccessRefusalCopy("UNCONFIRMED", clientName));
     } finally {
       setBusy(null);
     }
@@ -238,7 +298,9 @@ export function ContactPortalPanel({
     : "pending"
     : "none";
 
-  const hasAccess = Boolean(localLinkedUserId);
+  const paused = Boolean(localLinkedUserId) && accessState === "paused";
+  const ended = !localLinkedUserId && accessState === "ended";
+  const hasAccess = Boolean(localLinkedUserId) && !paused;
 
   // §60 tier lock: the whole consumer-portal panel (invite + agreements + access
   // controls) is a solo + sub_account capability. An Agency/Enterprise/God tier
@@ -254,9 +316,15 @@ export function ContactPortalPanel({
             <LogIn className="h-4 w-4" /> Paige AI Platform Access
           </CardTitle>
           {hasAccess ? (
-            <Badge className="gap-1"><CheckCircle2 className="h-3 w-3" /> Active</Badge>
+            // One family of state chips (outline, ink text). The filled primary chip measured 3.41:1 in dark.
+            <Badge variant="outline" className="gap-1 text-foreground"><CheckCircle2 className="h-3 w-3 text-[hsl(var(--success))]" /> Active</Badge>
+          ) : paused ? (
+            // Ink and a dashed edge, never the warning hue: beside the gold Restore it read as a second gold.
+            <Badge variant="outline" className="gap-1 border-dashed text-foreground"><PauseCircle className="h-3 w-3" /> Access paused</Badge>
           ) : inviteStatus === "pending" ? (
             <Badge variant="secondary" className="gap-1"><Clock className="h-3 w-3" /> Invite pending</Badge>
+          ) : ended ? (
+            <Badge variant="outline" className="gap-1"><ShieldOff className="h-3 w-3" /> Access ended</Badge>
           ) : inviteStatus === "expired" ? (
             <Badge variant="outline" className="gap-1 text-amber-600"><AlertCircle className="h-3 w-3" /> Expired</Badge>
           ) : (
@@ -272,13 +340,17 @@ export function ContactPortalPanel({
               </div>
             </div>
             <Switch
+              // 44px hit area on touch around the drawn track; the track itself is unchanged.
+              className="relative shrink-0 before:absolute before:-inset-x-[5px] before:-inset-y-[14px] before:content-['']"
               checked={hasAccess || inviteStatus === "pending"}
               disabled={!email || busy !== null}
               onCheckedChange={(next) => {
-                if (next) {
+                if (next && paused) {
+                  openConfirm("restore");
+                } else if (next) {
                   sendInvite();
                 } else if (hasAccess) {
-                  setConfirmRevoke(true);
+                  openConfirm("pause");
                 } else if (inviteStatus === "pending") {
                   cancelPendingInvites();
                 }
@@ -287,12 +359,33 @@ export function ContactPortalPanel({
             />
           </div>
 
-          {hasAccess ? (
+          {localLinkedUserId ? (
             <div className="space-y-2">
               <div className="text-xs text-muted-foreground">
-                This client signed in and is connected to their workspace. Use the controls below if they're stuck or need help.
+                {paused
+                  ? "This client’s portal access is paused. They’ll see that it’s paused the next time they open your portal. Restore it to give it back."
+                  : "This client signed in and is connected to their workspace. Use the controls below if they're stuck or need help."}
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              {/* 44px tap targets on a phone (in px: this workspace's root type is 14px, so rem units fall
+                  short); the desktop row keeps the compact size. */}
+              <div className="flex flex-wrap items-center gap-2 [&>button]:min-h-[44px] sm:[&>button]:min-h-9">
+                {paused && (
+                  <Button size="sm" variant="gold" onClick={() => openConfirm("restore")} disabled={busy !== null}>
+                    <RefreshCw className="h-3.5 w-3.5 mr-2" />
+                    Restore access
+                  </Button>
+                )}
+                {hasAccess && (
+                  <Button size="sm" variant="outline" onClick={() => openConfirm("pause")} disabled={busy !== null}>
+                    <PauseCircle className="h-3.5 w-3.5 mr-2" />
+                    Pause access
+                  </Button>
+                )}
+                <Button size="sm" variant="outline" onClick={() => openConfirm("end")} disabled={busy !== null}
+                  className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive">
+                  <ShieldOff className="h-3.5 w-3.5 mr-2" />
+                  End access
+                </Button>
                 <Button
                   size="sm"
                   variant="outline"
@@ -314,7 +407,7 @@ export function ContactPortalPanel({
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 [&>button]:min-h-[44px] sm:[&>button]:min-h-9">
               <Button
                 size="sm"
                 variant="outline"
@@ -389,27 +482,68 @@ export function ContactPortalPanel({
         </CardContent>
       </Card>
 
-      <AlertDialog open={confirmRevoke} onOpenChange={setConfirmRevoke}>
+      <AlertDialog open={confirmAccess !== null} onOpenChange={(open) => { if (!open) setConfirmAccess(null); }}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <ShieldOff className="h-4 w-4 text-destructive" />
-              Revoke Paige access?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              This removes their login + any staff roles immediately. Their CRM history (deals, notes, documents, activities) stays intact under this contact. You can re-invite them anytime.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={busy === "revoke"}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => { e.preventDefault(); revokeAccess(); }}
-              disabled={busy === "revoke"}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {busy === "revoke" ? "Revoking…" : "Revoke access"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
+          {confirmAccess && (() => {
+            const copy = portalAccessConfirmCopy(confirmAccess, clientName, businessName);
+            return (
+              <>
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="flex items-center gap-2">
+                    {confirmAccess === "pause" ? <PauseCircle className="h-4 w-4 text-muted-foreground" />
+                      : confirmAccess === "restore" ? <RefreshCw className="h-4 w-4 text-muted-foreground" />
+                        : <ShieldOff className="h-4 w-4 text-destructive" />}
+                    {copy.title}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription asChild>
+                    <ul className="list-disc space-y-1 pl-4 text-left">{copy.lines.map((line) => <li key={line}>{line}</li>)}</ul>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                {confirmAccess !== "restore" && (
+                  <div className="space-y-3">
+                    <fieldset className="space-y-2">
+                      <legend className="text-sm font-medium">Reason <span className="font-normal text-muted-foreground">(only your team sees it)</span></legend>
+                      <RadioGroup value={accessReason ?? ""} onValueChange={(value) => setAccessReason(value as PortalAccessReason)} aria-label="Reason">
+                        {/* The whole row is the label, so the 44px row is the tap target, not the 16px dot. */}
+                        {PORTAL_ACCESS_REASONS_FOR[confirmAccess].map((value) => (
+                          <label key={value} htmlFor={`access-reason-${value}`} className="flex min-h-[44px] cursor-pointer items-center gap-3 text-sm">
+                            <RadioGroupItem id={`access-reason-${value}`} value={value} />
+                            <span>{PORTAL_ACCESS_REASON_LABEL[value]}</span>
+                          </label>
+                        ))}
+                      </RadioGroup>
+                    </fieldset>
+                    <div className="space-y-1">
+                      <Label htmlFor="access-note">Note for your team <span className="font-normal text-muted-foreground">(optional)</span></Label>
+                      <Textarea id="access-note" value={accessNote} maxLength={PORTAL_ACCESS_NOTE_MAX} rows={2}
+                        onChange={(event) => setAccessNote(event.target.value.slice(0, PORTAL_ACCESS_NOTE_MAX))} />
+                      <p className="text-xs text-muted-foreground">Only your team sees this. The client never does.</p>
+                    </div>
+                    {confirmAccess === "pause" && (
+                      <p className="text-xs text-muted-foreground">
+                        Want this to be permanent?{" "}
+                        <button type="button" className="min-h-[44px] underline underline-offset-2 hover:text-foreground sm:min-h-0" onClick={() => openConfirm("end")}>End access instead</button>
+                      </p>
+                    )}
+                  </div>
+                )}
+                <AlertDialogFooter className="[&>button]:min-h-[44px] sm:[&>button]:min-h-10">
+                  <AlertDialogCancel disabled={busy === "revoke"}>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={(e) => { e.preventDefault(); void changeAccess(confirmAccess); }}
+                    disabled={busy === "revoke" || (confirmAccess !== "restore" && !accessReason)}
+                    // Gold is spent on the one act that gives access back (§11), matching the record card.
+                    // Pause is the inverse-ink "do it" control, as on the record card: the shared primary's
+                    // dark-theme pairing measured 3.41:1, below AA, so this control does not use it.
+                    className={confirmAccess === "end" ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      : confirmAccess === "restore" ? buttonVariants({ variant: "gold" }) : "bg-foreground text-background hover:bg-foreground/90"}
+                  >
+                    {busy === "revoke" ? (confirmAccess === "end" ? "Ending…" : confirmAccess === "pause" ? "Pausing…" : "Restoring…") : copy.confirm}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </>
+            );
+          })()}
         </AlertDialogContent>
       </AlertDialog>
 

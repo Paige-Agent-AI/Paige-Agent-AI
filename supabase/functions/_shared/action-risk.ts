@@ -185,6 +185,11 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // from people who may be relying on it. `high` whatever the entries say. Its writer
   // (set_tenant_portal_config) re-proves owner/admin of the tenant or an ancestor in its body.
   ["portal_menu_update", "high", "changes what every client sees in their portal menu"],
+  // E09 Slice 7. Pausing or ending takes a real person's portal away from them on their next visit;
+  // ending needs a fresh invitation (a new email they must act on) to undo. Restoring gives it back.
+  // `high` whatever the action says, so clampLaneByRisk keeps it `confirm` on any grant — it can never
+  // run unattended. Its writer (set_client_portal_access) re-proves owner/admin of the CURRENT workspace.
+  ["client_portal_access_set", "high", "withholds or ends one client's portal access to this business; ending needs a new invitation to undo"],
 
   // ── high: spends money ────────────────────────────────────────────────────────────────────
   ["marketplace_install", "high", "installs a paid capability"],

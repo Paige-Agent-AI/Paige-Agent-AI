@@ -59,6 +59,7 @@ vi.mock("@/pages/admin/PortalStudio", async () => {
   return { default: class MockPortal extends ReactModule.Component { mountId = ++ownerHarness.portals; render() { return ReactModule.createElement("div", { "data-mocked-portal-studio": this.mountId }); } } };
 });
 vi.mock("@/components/admin/contacts/ContactPortalPanel", () => ({ ContactPortalPanel: ({ contactId }: { contactId: string }) => <div data-mocked-contact-access={contactId} /> }));
+vi.mock("./ClientPortalAccess", () => ({ ClientPortalAccess: ({ person }: { person: { id: string } }) => <div data-mocked-portal-access={person.id} /> }));
 vi.mock("@/lib/routing/useSubtabRoute", () => ({ useSubtabRoute: (...args: unknown[]) => useSubtabRoute(...args) }));
 vi.mock("./useTenantRelationshipsData", () => ({
   useTenantRelationshipsData: (...args: unknown[]) => useTenantRelationshipsData(...args),
@@ -1363,6 +1364,66 @@ describe("tenant Relationships / Clients workspace", () => {
     }
   });
 
+  it("E09 Slice 7: the Solo record carries the portal access card under what the client is shown (Shared with, then Files for), behind the invitation feature", async () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    try {
+      await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/clients/people?person=p-1"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>));
+      await act(async () => { await Promise.resolve(); });
+      const body = host.querySelector(".trc-record-body");
+      expect(body?.children[1]?.id).toBe("client-shared-work");
+      // Integration with Slice 4: Files for {client} stays directly under Shared with (pinned above), so the card follows it.
+      expect(body?.children[2]?.id).toBe("client-files");
+      expect(body?.children[3]?.getAttribute("data-mocked-portal-access")).toBe("p-1");
+      // The static "Portal access · PARTIAL" placeholder now points at the card instead of claiming nothing.
+      expect(host.textContent).toContain("Pause, restore or end this client’s portal access in Portal access above.");
+      expect(host.textContent).not.toContain("Portal access · PARTIAL");
+    } finally {
+      act(() => root.unmount());
+      host.remove();
+    }
+    const source = readFileSync(resolve("src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx"), "utf8");
+    expect(source.match(/<ClientPortalAccess /g) ?? []).toHaveLength(1);
+    expect(source).toContain('portalAccess={standing && hasTierFeature("customer_portal_invite")');
+  });
+
+  // E09 Slice 7, review 12: the card sits under an unbounded "Shared with" list, so a withheld portal
+  // is also named at the top of the record, linking down to the card that changes it.
+  it.each([
+    ["paused", "Portal access paused"],
+    ["ended", "Portal access ended"],
+  ] as const)("E09 Slice 7: a %s client's record names it in the header and links to the card", async (state, label) => {
+    useTenantRelationshipsData.mockReturnValue({ ...baseData, people: [{ ...baseData.people[0], portalAccess: state, linkedUserId: state === "paused" ? "login-test" : null }] });
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    try {
+      await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/clients/people?person=p-1"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>));
+      await act(async () => { await Promise.resolve(); });
+      const chip = host.querySelector<HTMLAnchorElement>(".trc-record-header a.trc-record-access");
+      expect(chip?.textContent).toBe(label);
+      expect(chip?.getAttribute("href")).toBe("#client-portal-access");
+    } finally {
+      act(() => root.unmount());
+      host.remove();
+    }
+  });
+
+  it("E09 Slice 7: an open client's record header carries no access chip", async () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    try {
+      await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/clients/people?person=p-1"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>));
+      await act(async () => { await Promise.resolve(); });
+      expect(host.querySelector(".trc-record-access")).toBeNull();
+    } finally {
+      act(() => root.unmount());
+      host.remove();
+    }
+  });
+
   it("E4-S3: no client selected, no read", async () => {
     const host = document.createElement("div");
     document.body.append(host);
@@ -1424,6 +1485,7 @@ describe("tenant Relationships / Clients workspace", () => {
       // E09 Slice 6: declared, not mounted on a sub-account either — no read, no section.
       expect(editorHarness.rpc.mock.calls.some(([name]) => name === "read_client_communication_state")).toBe(false);
       expect(host.querySelector(".trc-reach")).toBeNull();
+      expect(host.querySelector("[data-mocked-portal-access]")).toBeNull();
     } finally {
       act(() => root.unmount());
       host.remove();

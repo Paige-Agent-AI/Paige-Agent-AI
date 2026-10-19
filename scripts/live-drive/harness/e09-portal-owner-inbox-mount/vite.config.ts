@@ -12,6 +12,8 @@ const repo = path.resolve(import.meta.dirname, "../../../..");
 const stubs = path.join(import.meta.dirname, "stubs.ts");
 export default defineConfig({
   root: import.meta.dirname,
+  // The repo's own font files, so frames paint the real face with the network blocked (E09 Slice 7 round 2).
+  publicDir: path.join(repo, "public"),
   cacheDir: path.join(repo, "node_modules/.vite/harness-e09-portal-owner-inbox-mount"),
   css: { postcss: repo },
   plugins: [react()],

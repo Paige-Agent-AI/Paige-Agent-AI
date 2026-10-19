@@ -1,0 +1,132 @@
+/* E09 Slice 7 — "Portal access" on the Solo client record. Operate mode in the record's own pg-token
+   world, the sibling of "Shared with {client}" directly above it: one heading, the server's state as
+   a quiet word, the facts that explain it, and the acts. No card grid, no eyebrow, no coloured
+   stripe. Gold is spent on exactly one act — Restore — because giving access back is the approval
+   moment; Pause is quiet ink and End is the destructive tone. The confirm step is inline. Every
+   transition sits behind prefers-reduced-motion. */
+.trc-access { container-type: inline-size; font-variant-numeric: normal; }
+.trc-access-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; padding: 13px 14px 12px; border-bottom: 1px solid var(--pg-line-soft); }
+.trc-access-heading { display: grid; gap: 4px; min-width: 0; flex: 1 1 18rem; }
+.trc-access-heading h3 { display: inline-flex; align-items: center; gap: 7px; margin: 0; font: 600 16px/1.25 var(--pg-font-display); letter-spacing: -0.01em; }
+.trc-access-heading h3 svg { width: 15px; height: 15px; color: var(--pg-muted); }
+.trc-access-heading p { margin: 0; max-width: 62ch; color: var(--pg-ink-2); font-size: 12.5px; line-height: 1.45; overflow-wrap: anywhere; }
+
+/* The state is a word, not a coloured chip: ink for joined, muted for ended and not joined. Paused is
+   ink with a pause glyph and a dashed edge — never the warning amber, which in Obsidian sat beside the
+   gold Restore and read as a second gold spend (review 10, §11/§23). Contrast is measured against
+   --pg-raised in both themes. */
+.trc-access-state { display: inline-flex; align-items: center; min-height: 26px; padding: 0 9px; border: 1px solid var(--pg-line); border-radius: 6px; background: var(--pg-raised); color: var(--pg-ink-2); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.trc-access-state[data-state="joined"] { color: var(--pg-ink); }
+.trc-access-state { gap: 5px; }
+.trc-access-state svg { width: 13px; height: 13px; flex: none; }
+.trc-access-state[data-state="paused"] { color: var(--pg-ink); border-style: dashed; border-color: var(--pg-line-strong); }
+.trc-access-state[data-state="ended"], .trc-access-state[data-state="not-joined"] { color: var(--pg-muted); }
+
+.trc-access-body { display: grid; gap: 12px; padding: 12px 14px 14px; }
+.trc-access-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: 8px 18px; margin: 0; }
+.trc-access-facts div { display: grid; align-content: start; gap: 2px; min-width: 0; }
+/* The team's note is prose: it takes the full row rather than squeezing beside the date. */
+.trc-access-facts div[data-wide] { grid-column: 1 / -1; }
+.trc-access-facts div[data-wide] dd { max-width: 62ch; }
+.trc-access-facts dt { color: var(--pg-muted); font-size: 11.5px; }
+.trc-access-facts dd { margin: 0; color: var(--pg-ink); font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; font-variant-numeric: normal; }
+/* Only the date's figures line up; the shell root's inherited tabular figures gap prose before punctuation. */
+.trc-access-facts dd[data-date] { font-variant-numeric: tabular-nums; }
+.trc-access-hint { margin: 0; max-width: 62ch; color: var(--pg-ink-2); font-size: 12.5px; line-height: 1.45; }
+
+.trc-access-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.trc-access-btn { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 6px; padding: 0 14px; border: 1px solid var(--pg-line); border-radius: var(--pg-r-chip); background: var(--pg-surface); color: var(--pg-ink); font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; transition: background-color 160ms ease-out, border-color 160ms ease-out, filter 160ms ease-out; }
+.trc-access-btn:hover:not(:disabled) { border-color: var(--pg-line-strong); background: var(--pg-raised); }
+.trc-access-btn:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 2px; }
+.trc-access-btn:disabled { opacity: .55; cursor: not-allowed; }
+.trc-access-btn[aria-busy="true"] { cursor: progress; }
+/* Restore: the single act that gives something back. The incumbent gold fill and on-gold ink. */
+.trc-access-gold { border-color: transparent; background: var(--pg-gold-fill); color: var(--pg-env); box-shadow: var(--pg-e2); }
+.trc-access-gold:hover:not(:disabled) { border-color: transparent; background: var(--pg-gold-fill); filter: brightness(.96); }
+/* On-gold ink: the near-black environment in Obsidian, the ink in Mineral (the Mineral environment is
+   a light warm grey that would fail contrast on the gold). */
+[data-pg="light"] .trc-access-gold { color: var(--pg-ink); }
+/* Pause confirm: the inverse-ink primary, the workspace's ordinary "do it" control. */
+.trc-access-ink { border-color: transparent; background: var(--pg-ink); color: var(--pg-canvas); }
+.trc-access-ink:hover:not(:disabled) { border-color: transparent; background: var(--pg-ink); filter: none; opacity: .88; }
+/* End: destructive outline at rest, destructive fill only on the confirm itself. */
+.trc-access-danger { color: var(--pg-negative); border-color: color-mix(in srgb, var(--pg-negative) 50%, var(--pg-line)); background: transparent; }
+.trc-access-danger:hover:not(:disabled) { border-color: var(--pg-negative); background: color-mix(in srgb, var(--pg-negative) 8%, transparent); }
+.trc-access-danger-solid { border-color: transparent; background: var(--pg-negative); color: var(--pg-canvas); }
+.trc-access-danger-solid:hover:not(:disabled) { border-color: transparent; background: var(--pg-negative); filter: brightness(.95); }
+.trc-access-quiet-btn { background: transparent; border-color: transparent; color: var(--pg-ink-2); }
+.trc-access-quiet-btn:hover:not(:disabled) { background: var(--pg-surface); border-color: transparent; }
+.trc-access-quiet { display: inline-flex; width: max-content; min-height: 44px; align-items: center; gap: 6px; padding: 0 12px; border: 1px solid var(--pg-line); border-radius: var(--pg-r-chip); color: var(--pg-ink); background: var(--pg-surface); font-size: 12px; font-weight: 600; cursor: pointer; }
+.trc-access-quiet svg { width: 13px; height: 13px; }
+.trc-access-quiet:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 2px; }
+
+/* The inline confirm: a raised, lifted panel in the record, never a modal over it. */
+.trc-access-confirm { display: grid; gap: 12px; padding: 14px; border: 1px solid var(--pg-line); border-radius: var(--pg-r-plate); background: var(--pg-raised); box-shadow: var(--pg-lift-1); }
+.trc-access-confirm h4 { margin: 0; color: var(--pg-ink); font: 600 15px/1.3 var(--pg-font-display); letter-spacing: -0.01em; overflow-wrap: anywhere; text-wrap: balance; }
+.trc-access-confirm h4:focus { outline: none; }
+.trc-access-confirm h4:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 3px; border-radius: 5px; }
+.trc-access-confirm ul { display: grid; gap: 5px; margin: 0; padding: 0 0 0 1.1em; list-style: disc; color: var(--pg-ink-2); font-size: 12.5px; line-height: 1.5; max-width: 66ch; }
+.trc-access-confirm ul li::marker { color: var(--pg-muted); }
+.trc-access-confirm .trc-access-actions { justify-content: flex-end; padding-top: 2px; }
+
+.trc-access-reasons { margin: 0; padding: 0; border: 0; min-width: 0; }
+.trc-access-reasons legend, .trc-access-field label { margin: 0 0 6px; padding: 0; color: var(--pg-ink); font-size: 12.5px; font-weight: 600; }
+.trc-access-reasons legend span, .trc-access-field label span { color: var(--pg-muted); font-weight: 500; }
+.trc-access-reason-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr)); gap: 4px 10px; }
+.trc-access-reason { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 10px; border: 1px solid var(--pg-line-soft); border-radius: var(--pg-r-chip); color: var(--pg-ink-2); font-size: 13px; cursor: pointer; }
+.trc-access-reason:hover { border-color: var(--pg-line); background: var(--pg-surface); }
+.trc-access-reason:has([data-state="checked"]) { border-color: var(--pg-violet); color: var(--pg-ink); }
+.trc-access .trc-access-radio { width: 18px; height: 18px; flex: none; border-color: var(--pg-muted); color: var(--pg-violet); }
+.trc-access .trc-access-radio[data-state="checked"] { border-color: var(--pg-violet); }
+.trc-access .trc-access-radio:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 2px; box-shadow: none; }
+
+.trc-access-field { display: grid; gap: 0; }
+.trc-access-field label { display: block; }
+.trc-access-field textarea { width: 100%; min-height: 64px; padding: 9px 10px; border: 1px solid var(--pg-line); border-radius: 8px; background: var(--pg-canvas); color: var(--pg-ink); font: inherit; font-size: 13.5px; line-height: 1.45; resize: vertical; }
+/* A touch keyboard zooms into any field under 16px; on touch the note is 16px. */
+@media (pointer: coarse) { .trc-access-field textarea { font-size: 16px; } }
+.trc-access-field textarea:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 1px; }
+.trc-access-field p { margin: 6px 0 0; color: var(--pg-muted); font-size: 11.5px; line-height: 1.4; font-variant-numeric: normal; }
+
+.trc-access-reinvite { display: grid; gap: 10px; padding: 12px 14px; border: 1px solid var(--pg-line-soft); border-radius: var(--pg-r-plate); background: var(--pg-surface); }
+.trc-access-reinvite > p { margin: 0; color: var(--pg-ink-2); font-size: 12.5px; line-height: 1.45; max-width: 62ch; }
+.trc-access-reinvite > .trc-access-btn { justify-self: start; }
+/* The reused invitation command sits in the record here: its controls take the record's 44px target. */
+.trc-access-reinvite .opd-button { min-height: 44px; }
+
+.trc-access-state-line { display: grid; justify-items: start; gap: 6px; margin: 0; padding: 14px; color: var(--pg-ink-2); font-size: 12.5px; }
+.trc-access-state-line p { margin: 0; max-width: 62ch; }
+
+.trc-access-note { margin: 0 14px 14px; padding: 8px 10px; border: 1px solid var(--pg-line); border-radius: 8px; background: var(--pg-surface); color: var(--pg-ink); font-size: 12.5px; line-height: 1.45; }
+.trc-access-note[data-tone="ok"] { border-color: color-mix(in srgb, var(--pg-positive) 45%, var(--pg-line)); }
+.trc-access-note[data-tone="warn"] { border-color: color-mix(in srgb, var(--pg-warning) 50%, var(--pg-line)); }
+.trc-access-note[data-tone="bad"] { border-color: color-mix(in srgb, var(--pg-negative) 55%, var(--pg-line)); }
+
+.trc-access-skeleton { display: grid; gap: 8px; }
+.trc-access-skeleton b { display: block; height: 12px; width: 60%; border-radius: 6px; background: var(--pg-line-soft); }
+.trc-access-skeleton b + b { width: 32%; height: 36px; border-radius: var(--pg-r-chip); }
+
+@container (max-width: 420px) {
+  .trc-access-actions { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .trc-access-confirm .trc-access-actions { display: flex; flex-direction: column-reverse; align-items: stretch; }
+  .trc-access-btn { width: 100%; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .trc-access-confirm, .trc-access-note, .trc-access-reinvite { animation: trc-access-in 180ms cubic-bezier(.2, .7, .2, 1) both; }
+  .trc-access-skeleton b { animation: trc-access-pulse 1.4s ease-in-out infinite; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trc-access-btn { transition: none; }
+}
+@keyframes trc-access-in { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+@keyframes trc-access-pulse { 50% { opacity: .55; } }
+
+/* The record header's pointer to a withheld portal (review 12): a quiet ink link, the same word as the
+   card's state, so the state is visible at the top of the record however long the sections above the
+   card grow. Never gold, never the warning amber; a 44px target on touch. */
+a.trc-record-access, [data-pg] a.trc-record-access { grid-column: 1 / -1; justify-self: start; display: inline-flex; width: max-content; max-width: 100%; align-items: center; gap: 5px; margin: 0; padding: 2px 8px; border: 1px dashed var(--pg-line-strong); border-radius: 6px; color: var(--pg-ink); font-size: 12px; font-weight: 600; line-height: 1.3; text-decoration: none; }
+a.trc-record-access svg, [data-pg] a.trc-record-access svg { width: 13px; height: 13px; flex: none; }
+[data-pg] a.trc-record-access[data-state="ended"], a.trc-record-access[data-state="ended"] { border-style: solid; border-color: var(--pg-line); color: var(--pg-ink-2); }
+[data-pg] a.trc-record-access:hover, a.trc-record-access:hover { border-color: var(--pg-ink-2); }
+[data-pg] a.trc-record-access:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 2px; }
+@media (pointer: coarse) { [data-pg] a.trc-record-access, a.trc-record-access { min-height: 44px; } }

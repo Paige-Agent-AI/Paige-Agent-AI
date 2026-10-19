@@ -8,6 +8,7 @@ import { TenantRelationshipsClientsWorkspace } from "@/components/tenant-relatio
 import { AgentPresenceProvider } from "@/components/ui/paige";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import "@/index.css";
+import "../portal-access-mount/fonts.css";
 import "@/components/tenant-shell/tenant-command-center-shell.css";
 
 const params = new URLSearchParams(window.location.search);

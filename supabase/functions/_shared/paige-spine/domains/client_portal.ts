@@ -174,3 +174,81 @@ export const PORTAL_AGREEMENTS_READ={
   railVisibility:'No receipt: an unmounted customer read records no activity. The one customer writer (portal signing link) audits to paige_audit_log, never to the printed agreement event trail.'},
  chatBinding:'UNAVAILABLE',mindBinding:'UNAVAILABLE',sharedPrimitiveChange:'NONE',maturity:'PARTIAL',
 }as const satisfies SpineCapability;
+
+// ─── E09 Slice 7: pause, restore or end one joined client's portal access ───────────────────────
+//
+// ONE STORE (clients.portal_access_* beside the link it qualifies) and ONE WRITER
+// (public.set_client_portal_access, migration 20271110240000): business owner/admin of the CURRENT
+// workspace — the same authority that invites — never a top-level agency, version-guarded on its own
+// column, state-idempotent, audited with fixed references, no notification. The executor
+// (_shared/client-portal-access.ts) sends only contact/action/reason and the access_version the
+// approval card was built from, for the server-resolved tenant and the verified actor, and reports
+// success only on a matching readback.
+// Ending clears the link (a new invitation brings the person back); pausing keeps it. The owner's
+// internal note is typed on the card in the app: Paige can neither set it nor read it.
+import { PORTAL_ACCESS_REASONS } from '../../client-portal-access.ts';
+
+const ACCESS_SURFACE='/solo/:account/clients';
+export const PORTAL_ACCESS_SET_CAPABILITY=defineCapability({
+ identity:{id:'client.portal_access_set',version:1,domain:'client',owner:'clients',humanSurface:ACCESS_SURFACE,
+  description:'Pause, restore or end one joined client\'s access to this business\'s client portal. The contact and its history stay on the record, and the client is not emailed. The owner approves it first.'},
+ input:objectInputSchema({
+  description:'One client and what to do with their portal access.',
+  properties:{
+   contact_id:{type:'string',format:'uuid',description:'The client\'s contact id, from a contact lookup.'},
+   action:{type:'string',enum:['pause','restore','end'],description:'pause withholds access for now (restore brings it back); restore reopens a paused portal; end closes it (only a new invitation brings them back).'},
+   reason:{type:'string',enum:[...PORTAL_ACCESS_REASONS],description:'Required for pause and end. Internal to the team; the client never sees it.'},
+   access_version:{type:'string',description:'The access_version that read_client_portal_access returned for this client, passed back unchanged. If their access changed since that read, nothing is changed.'},
+  },
+  required:['contact_id','action','access_version'],
+ }),
+ effect:'mutation',
+ governance:{actionRiskKey:'client_portal_access_set',risk:'high',approval:'confirm',requiredPermission:ownerGrantablePermission('client.portal_access.write')},
+ tenantScope:MENU_SCOPE,
+ availability:MENU_AVAILABILITY,
+ providerBinding:{kind:'internal',operation:'public.set_client_portal_access',connectionResolver:null},
+ idempotency:{mode:'required',key:'tenant + contact + target state. Repeating a change that already landed returns replayed:true and writes nothing. The approval card is bound to the version it was built from: access_version (portal_access_changed_at from the read) is a required argument inside the Chat confirmation fingerprint and is the version the writer checks, so a change that lands after the card was built — including after approval — is refused (ACCESS_CHANGED) with nothing written. The Chat confirmation fingerprint is the execute-once guard.',
+  readback:'public.read_client_portal_access (caller JWT)',replay:'return_recorded_result'},
+ receipt:{rail:true,recorder:'record_capability_run',redaction:'tenant_safe',visibility:'owner_internal'},
+ outcome:{projector:'capability-record'},
+});
+
+export const PORTAL_ACCESS_READ_CAPABILITY=defineCapability({
+ identity:{id:'client.portal_access_read',version:1,domain:'client',owner:'clients',humanSurface:ACCESS_SURFACE,
+  description:'Whether one client has joined this business\'s portal and whether their access is open, paused or ended, since when, by whom and why. Read-only.'},
+ input:objectInputSchema({description:'The client to check.',properties:{contact_id:{type:'string',format:'uuid',description:'The client\'s contact id, from a contact lookup.'}},required:['contact_id']}),
+ effect:'read',
+ governance:{actionRiskKey:null,risk:'read_only',approval:'none',requiredPermission:ownerGrantablePermission('client.portal_access.read')},
+ tenantScope:MENU_SCOPE,
+ availability:MENU_AVAILABILITY,
+ providerBinding:{kind:'internal',operation:'public.read_client_portal_access',connectionResolver:null},
+ idempotency:{mode:'not_applicable'},
+ receipt:{rail:true,recorder:'record_capability_run',redaction:'tenant_safe',visibility:'owner_internal'},
+ outcome:{projector:'capability-record'},
+});
+
+export const PORTAL_ACCESS_SET={
+ key:'client.portal_access_set',domain:'client',owner:'clients',humanSurface:ACCESS_SURFACE,readiness:'none',
+ action:{classification:'mutate',executor:'public.set_client_portal_access',chatTool:'client_portal_access_set',seatAuthority:'workspace-admin',riskPolicyKey:'high',approvalAuthority:'chat-canonical',
+  idempotency:'State-idempotent and version-guarded: the writer answers a repeat of a landed change with replayed:true and no write, and refuses any version other than the access_version the approval card was built from (ACCESS_CHANGED), so a stale approval writes nothing. There is no request key; the Chat confirmation fingerprint, which covers access_version, is the execute-once guard.'},
+ outcome:{kinds:['capability_run'],projector:'public.record_capability_run',railVisibility:'owner_internal'},
+ chatBinding:'LIVE',mindBinding:'UNAVAILABLE',sharedPrimitiveChange:'NONE',maturity:'PARTIAL',
+}as const satisfies SpineCapability;
+
+export const PORTAL_ACCESS_READ={
+ key:'client.portal_access_read',domain:'client',owner:'clients',humanSurface:ACCESS_SURFACE,readiness:'none',
+ action:{classification:'read',executor:'public.read_client_portal_access',chatTool:'read_client_portal_access',seatAuthority:'workspace-admin',riskPolicyKey:'read_only',approvalAuthority:'none',
+  idempotency:'Read-only on the caller\'s own session: public.read_client_portal_access re-proves the current workspace and the invitation authority in its body. Writes nothing; the chat executor records one capability receipt per answered call and never hands the owner\'s internal note to the model.'},
+ outcome:{kinds:['available','refused','unavailable'],projector:'public.read_client_portal_access',railVisibility:'One capability receipt per answered chat question. A read is not a business action.'},
+ chatBinding:'LIVE',mindBinding:'UNAVAILABLE',sharedPrimitiveChange:'NONE',maturity:'PARTIAL',
+}as const satisfies SpineCapability;
+
+export const PORTAL_ACCESS_CAPABILITIES=[PORTAL_ACCESS_READ,PORTAL_ACCESS_SET] as const;
+
+// Same catalog rules as the menu tools above: the read carries its declaration's input by reference
+// and is named after its public.read_* executor (INT-003); the gated writer gets a writable copy.
+export const PORTAL_ACCESS_TOOLS=[
+ {type:'function',function:{name:'read_client_portal_access',description:'Whether one client has joined this business\'s client portal, and whether their access is open, paused or ended — since when, who changed it and the internal reason — plus whether an invitation is pending and what can be done next (pause, restore, end, or invite again). Use it before client_portal_access_set and to answer "can this client still get into their portal?". Read-only; changes nothing.',parameters:PORTAL_ACCESS_READ_CAPABILITY.input}},
+ {type:'function',function:{name:'client_portal_access_set',description:'Pause, restore or end ONE joined client\'s access to this business\'s client portal. pause: they see that their access is paused the next time they open the portal, and the owner can restore it later. restore: they can open their portal again. end: they see that access has ended, and only a new invitation brings them back; anything they connected under their own login stops showing to the team until they rejoin. Pause and end stop any open invitation from working. Their history stays on the contact, they are not emailed, and emails, texts, invoices, agreements and booked sessions are not affected. A reason is required for pause and end and stays internal. Owner or admin only, and the owner approves it on the card first. Call read_client_portal_access first and pass its access_version back unchanged; if the change is refused because their access changed, read it again and tell the owner what it is now before proposing anything. Never say the client has lost or regained access until this reports success.',parameters:writable(PORTAL_ACCESS_SET_CAPABILITY.input)}},
+] as const;
+export const PORTAL_ACCESS_TOOL_NAMES:ReadonlySet<string>=new Set(PORTAL_ACCESS_TOOLS.map((t)=>t.function.name));

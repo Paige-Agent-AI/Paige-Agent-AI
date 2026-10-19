@@ -226,13 +226,30 @@ describe("tenant relationship adapter sequencing", () => {
     act(() => root.unmount());
   });
 
+  // E09 Slice 7, verifier finding 3: if the web deploys before migration 20271110240000 applies, the
+  // access columns do not exist yet. People must still load (every client reads open), not error.
+  it("re-reads without the access columns when the database does not have them yet", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const host = document.createElement("div");
+    const root = createRoot(host);
+    await act(async () => root.render(<QueryClientProvider client={client}><DetailHarness tenantId="tenant-premigration" /></QueryClientProvider>));
+    await vi.waitFor(() => expect(pending.has("clients:tenant-premigration")).toBe(true));
+    await act(async () => { pending.get("clients:tenant-premigration")?.resolve({ data: null, error: { code: "42703", message: "column clients.portal_access_state does not exist" } as { message: string } }); });
+    await vi.waitFor(() => expect(readsFor("clients:tenant-premigration")).toHaveLength(2));
+    expect(selections[1].columns).not.toMatch(/portal_access/);
+    await act(async () => { pending.get("clients:tenant-premigration")?.resolve({ data: [ownerRow(null)], error: null }); });
+    await vi.waitFor(() => expect(host.querySelector("output")?.getAttribute("data-record")).not.toBe(""));
+    expect(JSON.parse(host.querySelector("output")!.getAttribute("data-record")!)).toMatchObject({ portalAccess: "open" });
+    act(() => root.unmount());
+  });
+
   it("adds only the native owner ID to both closed SOLO projections", async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const host = document.createElement("div");
     const root = createRoot(host);
     await act(async () => root.render(<QueryClientProvider client={client}><DeepLinkHarness tenantId="tenant-owner-fields" personId="contact-owner" /></QueryClientProvider>));
     await vi.waitFor(() => expect(pending.has("clients:tenant-owner-fields:contact-owner")).toBe(true));
-    const exactColumns = "id,first_name,last_name,entity_name,entity_type,client_contact_methods(id,kind,value,label,is_primary,position),title,website,linkedin_url,street_address,city,state,zip_code,source,status,tags,do_not_contact,paige_shared_context_consent,linked_user_id,lifecycle_stage,primary_offer,current_notes,assigned_coach_user_id,lead_owner_user_id,last_contacted_at,created_at,updated_at";
+    const exactColumns = "id,first_name,last_name,entity_name,entity_type,client_contact_methods(id,kind,value,label,is_primary,position),title,website,linkedin_url,street_address,city,state,zip_code,source,status,tags,do_not_contact,paige_shared_context_consent,linked_user_id,portal_access_state,portal_access_changed_at,lifecycle_stage,primary_offer,current_notes,assigned_coach_user_id,lead_owner_user_id,last_contacted_at,created_at,updated_at";
     expect(selections).toEqual([{ table: "clients", columns: exactColumns }, { table: "clients", columns: exactColumns }]);
     expect(filters).toEqual([{ table: "clients", column: "tenant_id", value: "tenant-owner-fields" }, { table: "clients", column: "tenant_id", value: "tenant-owner-fields" }, { table: "clients", column: "id", value: "contact-owner" }]);
     expect(from.mock.calls).toEqual([["clients"], ["clients"]]);

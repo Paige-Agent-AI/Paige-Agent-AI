@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { usePortalConfig } from "@/hooks/usePortalConfig";
+import { missingPortalAccessColumns, portalAccessStateOf, withoutPortalAccessColumns, type PortalAccessStateName } from "@/lib/client-portal-access";
 import { CLIENT_CONTACT_METHODS_EMBED, orderContactMethods, primaryValue, type ContactMethod, type ContactMethodRow } from "@/lib/contact-methods";
 
 export type RelationshipWorkspaceVariant = "relationships" | "clients";
@@ -32,6 +33,9 @@ export interface RelationshipPerson {
   doNotContact: boolean;
   sharedContextConsent: boolean;
   linkedUserId: string | null;
+  /** E09 Slice 7: the business's access decision for this contact. `open` until it pauses or ends it. */
+  portalAccess: PortalAccessStateName;
+  portalAccessChangedAt: string | null;
   relationship: string;
   lifecycleStage: string;
   primaryOffer: string | null;
@@ -63,6 +67,8 @@ interface ClientRow {
   do_not_contact: boolean;
   paige_shared_context_consent: boolean;
   linked_user_id: string | null;
+  portal_access_state?: string | null;
+  portal_access_changed_at?: string | null;
   lifecycle_stage: string | null;
   primary_offer: string | null;
   current_notes: string | null;
@@ -82,7 +88,7 @@ const clientName = (row: ClientRow, primaryEmail: string | null) => {
 
 // Widened to string on purpose: the generated types do not know the contact-methods embed yet,
 // and a literal select string makes the client's type parser recurse past its limit.
-const SOLO_PERSON_SELECT: string = `id,first_name,last_name,entity_name,entity_type,${CLIENT_CONTACT_METHODS_EMBED},title,website,linkedin_url,street_address,city,state,zip_code,source,status,tags,do_not_contact,paige_shared_context_consent,linked_user_id,lifecycle_stage,primary_offer,current_notes,assigned_coach_user_id,lead_owner_user_id,last_contacted_at,created_at,updated_at`;
+const SOLO_PERSON_SELECT: string = `id,first_name,last_name,entity_name,entity_type,${CLIENT_CONTACT_METHODS_EMBED},title,website,linkedin_url,street_address,city,state,zip_code,source,status,tags,do_not_contact,paige_shared_context_consent,linked_user_id,portal_access_state,portal_access_changed_at,lifecycle_stage,primary_offer,current_notes,assigned_coach_user_id,lead_owner_user_id,last_contacted_at,created_at,updated_at`;
 const ROSTER_PERSON_SELECT: string = `id,first_name,last_name,entity_name,${CLIENT_CONTACT_METHODS_EMBED},linked_user_id,lifecycle_stage,assigned_coach_user_id,last_contacted_at`;
 
 const trimOrNull = (value: string | null | undefined) => value?.trim() || null;
@@ -121,6 +127,8 @@ const mapClient = (row: ClientRow, soloPeople = false): RelationshipPerson => {
   doNotContact: Boolean(row.do_not_contact),
   sharedContextConsent: Boolean(row.paige_shared_context_consent),
   linkedUserId: row.linked_user_id,
+  portalAccess: portalAccessStateOf(row.portal_access_state),
+  portalAccessChangedAt: row.portal_access_changed_at ?? null,
   relationship: row.lifecycle_stage?.split("_").join(" ") || "Not classified",
   lifecycleStage: trimOrNull(row.lifecycle_stage) || "new_lead",
   primaryOffer: trimOrNull(row.primary_offer),
@@ -169,14 +177,15 @@ export function useTenantRelationshipsData({
     staleTime: 30_000,
     queryFn: async (): Promise<RelationshipPerson[]> => {
       if (!activeTenantId) return [];
-      const { data, error } = await supabase
+      const list = (select: string) => supabase
         .from("clients")
-        .select(soloPeople
-          ? SOLO_PERSON_SELECT
-          : ROSTER_PERSON_SELECT)
+        .select(select)
         .eq("tenant_id", activeTenantId)
         .order("created_at", { ascending: false })
         .limit(250);
+      let { data, error } = await list(soloPeople ? SOLO_PERSON_SELECT : ROSTER_PERSON_SELECT);
+      // Web ahead of migration 20271110240000: read without the access columns (everyone reads open).
+      if (soloPeople && missingPortalAccessColumns(error)) ({ data, error } = await list(withoutPortalAccessColumns(SOLO_PERSON_SELECT)));
       if (error) throw error;
       return ((data ?? []) as unknown as ClientRow[]).map((row) => mapClient(row, soloPeople));
     },
@@ -188,12 +197,14 @@ export function useTenantRelationshipsData({
     staleTime: 30_000,
     queryFn: async (): Promise<RelationshipPerson | null> => {
       if (!activeTenantId || !deepLinkedContactId) return null;
-      const { data, error } = await supabase
+      const one = (select: string) => supabase
         .from("clients")
-        .select(SOLO_PERSON_SELECT)
+        .select(select)
         .eq("tenant_id", activeTenantId)
         .eq("id", deepLinkedContactId)
         .maybeSingle();
+      let { data, error } = await one(SOLO_PERSON_SELECT);
+      if (missingPortalAccessColumns(error)) ({ data, error } = await one(withoutPortalAccessColumns(SOLO_PERSON_SELECT)));
       if (error) throw error;
       return data ? mapClient(data as unknown as ClientRow, true) : null;
     },

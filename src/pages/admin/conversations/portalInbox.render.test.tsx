@@ -24,6 +24,9 @@ const db = vi.hoisted(() => ({
   rpcCalls: [] as Array<{ name: string; args: unknown }>,
   portalReplies: [] as Array<{ data: unknown; error: unknown }>,
   invokes: [] as Array<{ name: string; body: unknown }>,
+  /** E09 Slice 7: the database has not got the access columns yet (web deployed first). */
+  premigration: false,
+  threadSelects: [] as string[],
 }));
 const toast = vi.hoisted(() => Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn(), message: vi.fn(), warning: vi.fn() }));
 
@@ -34,9 +37,13 @@ vi.mock("@/integrations/supabase/client", () => {
       : table === "channel_connectors" ? db.connectors
       : table === "signatures" ? db.signatures
       : [];
-    const result = () => ({ data: rows(), error: null, count: rows().length });
+    let selected = "";
+    const result = () => table === "threads" && db.premigration && /portal_access/.test(selected)
+      ? { data: null, error: { code: "42703", message: "column clients_1.portal_access_state does not exist" }, count: null }
+      : { data: rows(), error: null, count: rows().length };
     const proxy: Record<string, unknown> = new Proxy({}, {
       get(_t, key) {
+        if (key === "select") return (cols: string) => { selected = String(cols ?? ""); if (table === "threads") db.threadSelects.push(selected); return proxy; };
         if (key === "then") return (ok: (v: unknown) => void) => ok(result());
         if (key === "single" || key === "maybeSingle") return () => Promise.resolve({ data: null, error: null });
         return () => proxy;
@@ -154,6 +161,7 @@ const mounted: Array<() => Promise<void>> = [];
 afterEach(async () => { while (mounted.length) await mounted.pop()!(); });
 beforeEach(() => {
   db.rpcCalls = []; db.portalReplies = []; db.invokes = []; db.signatures = []; db.realtime = [];
+  db.premigration = false; db.threadSelects = [];
   db.connectors = [emailConnector];
   toast.mockClear(); toast.success.mockClear(); toast.error.mockClear();
 });
@@ -460,6 +468,34 @@ describe.each([
     // Back on email, the notice goes and Send is the email send again.
     await chooseIdentity(host, /jordan@northlightadvisory/);
     expect(host.querySelector("[data-portal-not-connected]")).toBeNull();
+  });
+
+  // E09 Slice 7 (review HIGH-2): a paused client keeps their link. The portal channel must not
+  // default, and choosing it explains the pause and holds Send, so nothing (and no notice) reaches them.
+  it("holds a portal reply to a paused client and says how to restore it", async () => {
+    db.messages = [portalIn, portalHelp];
+    db.threads = [{ ...thread("cust-user-1"), clients: { ...client("cust-user-1"), portal_access_state: "paused" } }];
+    const host = await mountInbox(path);
+    expect(composerBox(host).placeholder).toBe("Reply to Maya Ortiz…  (drop a file to attach)");
+    await chooseIdentity(host, /Client portal/);
+    const notice = host.querySelector("[data-portal-not-connected]");
+    expect(notice?.textContent).toContain("Maya Ortiz’s portal access is paused. Restore their portal access to message them here");
+    await type(host, "Are you there?");
+    expect(sendButton(host)?.disabled).toBe(true);
+    await clickSend(host);
+    expect(portalCalls()).toHaveLength(0);
+  });
+
+  // E09 Slice 7, verifier finding 3: web deployed before migration 20271110240000 — the inbox loads.
+  it("still loads the inbox when the access column does not exist yet", async () => {
+    db.premigration = true;
+    db.messages = [portalIn, portalHelp];
+    db.threads = [thread("cust-user-1")];
+    const host = await mountInbox(path);
+    expect(db.threadSelects.some((cols) => /portal_access_state/.test(cols))).toBe(true);
+    expect(db.threadSelects.some((cols) => !/portal_access_state/.test(cols) && /linked_user_id/.test(cols))).toBe(true);
+    expect(toast.error).not.toHaveBeenCalledWith("Couldn't load the inbox.");
+    expect(composerBox(host)).toBeTruthy();
   });
 
   it("offers the connect-a-channel step, not a dead Portal composer, for an unjoined client with no email or SMS", async () => {

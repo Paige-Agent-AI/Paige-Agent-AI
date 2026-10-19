@@ -43,7 +43,7 @@ VISUAL_DIRECTION: NOT_APPLICABLE: no visual change.
 AUTOMATED_EVIDENCE: PASS: spine self-test + full lint PASS (227 capability) with the two new read capabilities against their SQL executors; the 29 C0b dispatch fingerprints renewed with base-reproduction proof; deno diagnostics 9→9 (no new); affected suites 40/40.
 STATIC_EVIDENCE: PASS: tsc ratchet no new errors; eslint via CI.
 RENDERED_EVIDENCE: PROOF OWED: the pre-fix live reproduction is captured (fixture JWT + exact question, tenant-persona answer); the post-fix re-probe runs after deploy.
-BEHAVIORAL_EVIDENCE: PROOF OWED: the operator branch, hint gate, tool admission and refusal paths are distinct code paths (review round-1 verified the wiring after relocation); the live behavioral probe runs post-deploy.
+BEHAVIORAL_EVIDENCE: UNVERIFIED: the live behavioral probe runs post-deploy; the wiring is review-verified (round-1 relocation + round-2 kit registration) and all four capability lints pass locally.
 AUTHENTICATED_RUNTIME: UNVERIFIED: post-deploy live re-probe of the exact question (platform_admin fixture) plus the owner's own console re-ask at the evaluation window.
 KEYBOARD_FOCUS: NOT_APPLICABLE: no new interactive elements.
 ZOOM_REFLOW: NOT_APPLICABLE: no layout change.

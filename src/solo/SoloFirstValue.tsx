@@ -45,7 +45,7 @@ export function SoloFirstValue({ context, disabled }: { context: ContextLike; di
   );
   const state = useMemo(() => firstValueState({ brief: context.brief, snapshot }), [context.brief, snapshot]);
   return <section className="sbi-first-value" aria-label="Grounded next steps" data-logic-version={FIRST_VALUE_LOGIC_VERSION}>
-    <div className="sbi-fv-head"><strong>Where you actually are</strong><span>Derived only from what you confirmed and what exists — never padded.</span></div>
+    <div className="sbi-fv-head"><strong>MENTOR · Where you actually are</strong><span>Assembled by MENTOR, PAIGE&rsquo;s discovery &amp; education specialist — derived only from what you confirmed and what exists, never padded. Ask PAIGE to go deeper any time.</span></div>
     {state.achieved.length > 0 && <ul className="sbi-fv-list" aria-label="Achieved, with evidence">
       {state.achieved.map(item => <li key={item.key} className="sbi-fv-done"><span aria-hidden="true">✓</span><div><strong>{ACHIEVED_TITLE[item.key] ?? item.key}</strong><small>{item.evidence}</small></div></li>)}
     </ul>}

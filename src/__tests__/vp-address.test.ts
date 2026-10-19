@@ -13,6 +13,15 @@ describe('detectVpAddress — the roster\'s addressing rule', () => {
     expect(a?.rest).toBe('what about my Q2 pricing?');
   });
 
+  it('carries the owner-remapped MENTOR remit (discovery/education/strategy, not operations)', () => {
+    const mentor = VP_ROSTER.find((v) => v.slug === 'mentor')!;
+    expect(mentor.role).toBe('VP Discovery, Education & Strategy');
+    expect(mentor.scope).toContain('next useful business action');
+    expect(mentor.scope).not.toContain('n8n');
+    // Addressing behavior is unchanged by a remit remap.
+    expect(detectVpAddress('MENTOR, what should I focus on?')?.vp.slug).toBe('mentor');
+  });
+
   it('is case-insensitive and greeting-tolerant', () => {
     expect(detectVpAddress('hey vera, is the KYC done?')?.vp.slug).toBe('vera');
     expect(detectVpAddress('Hi NEXUS what is our pipeline looking like')?.vp.slug).toBe('nexus');

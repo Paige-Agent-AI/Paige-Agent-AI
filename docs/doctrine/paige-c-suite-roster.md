@@ -6,6 +6,16 @@
 **Numbering note (updated 2026-08-04):** the original §42 recommendation predates the §39 peer-gate amendment that merged 2026-08-04 (commit `1e87894e`). Actual § assignment when this roster is filed to `CLAUDE.md` defers to Task #93 doctrine paste slice — the roster takes whatever number is next-available at that time (likely §43 given §39 = peer-gate, §40 = Integrity Governance from Trilogy doc, §41 = Platform Spine amendment per Task #239).
 **Purpose:** Formalize the named executive-team presentation and capability-ownership pattern for Paige — the operational concretization of §14 (Paige runs a team) with PAIGE + 6 VP domains addressable in code, UI, and marketing.
 
+> **Owner remap — 2026-10-19 (MENTOR only):** the current Coordinator instructions reassign
+> **MENTOR** to **Business Discovery, Education, Knowledge and Strategy** (serving EXP01, EXP13,
+> EXP15), superseding MENTOR's VP Operations row below. The remaining roster rows are unchanged by
+> this remap. Names stay doctrine-locked; this is a remit reassignment, not a roster amendment.
+> Source: owner directive + updated North Star / EXP00–19 roadmap. Forward record:
+> `supabase/migrations/20271111000000_mentor_role_remap.sql` (display metadata only — no authority,
+> routing, or privilege change; the operational child `scheduling-coordinator` re-parents to ZION
+> per the code-layer canonical map in `src/lib/paige/vpDepartments.ts`). The historical text below
+> is preserved as-is for integrity.
+
 > **Current owner correction — 2026-09-08:** this proposed roster describes capability domains,
 > presentation identities, and bounded specialist roles inside **one Paige Runtime Harness**. It does
 > not authorize seven AI products, separate department agents, separate Brains, separate Harnesses,

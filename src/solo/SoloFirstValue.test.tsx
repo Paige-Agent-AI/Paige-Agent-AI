@@ -40,6 +40,7 @@ describe("SoloFirstValue — the grounded ALG-02/ALG-13 surface", () => {
     expect(text()).toContain("Confirm your current priority");
     expect(buttons().map((b) => b.textContent)).toEqual([]); // foundational action carries no dismiss
     expect(host.querySelector("[data-logic-version]")?.getAttribute("data-logic-version")).toBe("1");
+    expect(text()).toContain("MENTOR");
   });
 
   it("renders explainable ranked actions with the approved availability labels", async () => {

@@ -125,7 +125,9 @@
         768
       ],
       "sha256": "e2607cd2a07e375d2c5dd444503762716225e0ef9117e51a65a5bb40d07048e5",
-      "axSha256": "cc0872d24fcb5e43d5c659abdcfd7ac7a7d4391369c53c973e37cb8e6fce5998"
+      "axSha256": "4c738875e9d0db7a5fe035e6307276f47ca143a247b54683719809ecb706dc2d",
+      "privateRawAxSha256": "cc0872d24fcb5e43d5c659abdcfd7ac7a7d4391369c53c973e37cb8e6fce5998",
+      "axFormatting": "Trailing line spaces normalized in exported text only; private raw AX retained, native JPEG untouched"
     },
     {
       "name": "fenced-a-dark-1024-open",
@@ -225,7 +227,9 @@
         770
       ],
       "sha256": "43667556a6c279807de7bb1894bcd0762ee835702df71eb6cd69437d3b69c95e",
-      "axSha256": "9710ddb2c5b6b371765e36a7497ee27ae79e6aef5380ec03260eb41cf065de83"
+      "axSha256": "6b63dfbfed61333bde8e144068ee611622db55f431dbff07578815cc49723994",
+      "privateRawAxSha256": "9710ddb2c5b6b371765e36a7497ee27ae79e6aef5380ec03260eb41cf065de83",
+      "axFormatting": "Trailing line spaces normalized in exported text only; private raw AX retained, native JPEG untouched"
     },
     {
       "name": "fenced-b-light-1536-open",
@@ -250,7 +254,9 @@
         770
       ],
       "sha256": "62db127008716555d9e774ddc4262ffffc4ab4a30923dd60e364fa2431dc2456",
-      "axSha256": "14c430d963059f7de9f87bc6f9a1cba18b481a1cee19c66694e159ec42877727"
+      "axSha256": "07d9cf1e1bbe2e8735270d41141309acc8b254fd5988a18580d7aff7009e165c",
+      "privateRawAxSha256": "14c430d963059f7de9f87bc6f9a1cba18b481a1cee19c66694e159ec42877727",
+      "axFormatting": "Trailing line spaces normalized in exported text only; private raw AX retained, native JPEG untouched"
     },
     {
       "name": "fenced-b-light-1366-closed",

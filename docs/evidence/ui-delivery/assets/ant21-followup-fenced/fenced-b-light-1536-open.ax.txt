@@ -128,7 +128,7 @@ Neutral reviewer
 							122 image
 							123 text Schedule
 						187 container
-							188 text Review the exact sender and message before approving. 
+							188 text Review the exact sender and message before approving.
 							189 button Cancel reply edit
 					125 container Selected client context
 						126 button (expanded) Description: Collapse client context, Secondary Actions: Collapse

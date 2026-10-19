@@ -69,6 +69,7 @@ const CatalogSurface = lazy(() => import("@/operator/surfaces/campaigns/CatalogS
 const SalesSurface = lazy(() => import("@/operator/surfaces/campaigns/SalesSurface"));
 const SocialSurface = lazy(() => import("@/operator/surfaces/campaigns/SocialSurface"));
 const PeopleSurface = lazy(() => import("@/operator/surfaces/relationships/PeopleSurface"));
+const CustomersDesk = lazy(() => import("@/operator/surfaces/relationships/CustomersDesk"));
 const ConversationsSurface = lazy(
   () => import("@/operator/surfaces/relationships/ConversationsSurface"),
 );
@@ -217,6 +218,9 @@ export default function SlotSurfaceBody({ slot, view }: { slot: OperatorSlot; vi
             has been sitting behind a reachability exemption ever since, because a composer with
             no threads to compose against is a fragment. It has its host now. */}
         {bespoke === "PeopleSurface" && <PeopleSurface onAnnounce={announce} />}
+        {/* EXP00 O-1: the company's real commercial book — live SOLO enrollments, not the
+            Layer 3a structure-before-data console. Sits beside People, not instead of it. */}
+        {bespoke === "CustomersDesk" && <CustomersDesk />}
         {bespoke === "ConversationsSurface" && <ConversationsSurface onAnnounce={announce} />}
         {bespoke === "SegmentsSurface" && <SegmentsSurface />}
 

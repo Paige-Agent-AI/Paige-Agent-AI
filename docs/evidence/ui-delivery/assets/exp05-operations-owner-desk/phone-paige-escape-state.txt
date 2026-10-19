@@ -1,0 +1,105 @@
+Browser tab: 170268697, Title: "Local actual SOLO Operations proof", URL: "http://127.0.0.1:58637/?theme=dark&context=a&scene=working".
+1 AXWebArea Local actual SOLO Operations proof, URL: 127.0.0.1:58637/?theme=dark&context=a&scene=working
+	2 container
+		3 text PAIGE folded; your conversation is preserved
+		4 link Description: Skip to content, Value: 127.0.0.1:58637/?theme=dark&context=a&scene=working#tenant-shell-main
+		5 container Tenant workspace
+			6 link Description: PAIGE Solo home, Value: 127.0.0.1:58637/solo/1701/command-center
+			7 button Expand navigation
+				8 image
+			9 link Description: Command Center, Value: 127.0.0.1:58637/solo/1701/command-center
+			10 link Description: Operations, Value: 127.0.0.1:58637/solo/1701/operations
+			11 link Description: Clients, Value: 127.0.0.1:58637/solo/1701/clients
+			12 link Description: Marketing, Value: 127.0.0.1:58637/solo/1701/growth
+			13 link Description: Ads, Value: 127.0.0.1:58637/solo/1701/ads
+			14 link Description: Sales, Value: 127.0.0.1:58637/solo/1701/sales
+			15 link Description: Finance, Value: 127.0.0.1:58637/solo/1701/finance
+			16 link Description: Marketplace, Value: 127.0.0.1:58637/solo/1701/marketplace
+			17 link Description: Settings, Value: 127.0.0.1:58637/solo/1701/settings
+			18 button Description: Use Mineral theme, Help: Mineral theme
+			19 button Sign out
+			20 text SY
+		103 button (collapsed) Description: Direct PAIGE, Secondary Actions: Expand
+			104 image PAIGE
+			105 text Direct PAIGE, or press ⌘\
+			106 text ⌘\
+		25 container Operations department
+			26 container
+				27 container Department views
+					28 button Overview
+					29 button Work
+					30 button Projects
+					31 button Delivery
+					32 button Playbooks
+					33 button Capacity
+				34 button Refresh work and team profiles
+					35 image
+			36 container
+				37 container Overview
+					38 container
+						39 heading Your operating week, Value: 1
+							40 text Your operating week
+						41 text Current commitments, responsible people and the next decisions.
+						42 button Plan with PAIGE
+					43 container
+						44 text 4  active  commitments  ·  1  in progress ·  1 reminder  in the sources shown
+					45 container Priority work to inspect
+						46 container
+							47 heading Needs your attention, Value: 2
+								48 text Needs your attention
+							49 text Blocked
+						50 heading Confirm the project handoff, Value: 3
+							51 text Confirm the project handoff
+						52 text The next step needs an owner decision before delivery can continue.
+						53 text Client onboarding No due date
+						54 text Jordan Ellis
+						55 button Inspect the original work
+					56 container
+						57 heading Work in motion, Value: 2
+							58 text Work in motion
+						59 button All work
+						60 content list
+							61 container
+								62 button Confirm the next client check-in
+								63 text CRM task No due date Jordan Ellis In progress
+							64 container
+								65 button Share the agreed next steps
+								66 text Client onboarding Oct 21 Jordan Ellis Ready
+					67 container
+						68 heading Projects and milestones, Value: 2
+							69 text Projects and milestones
+						70 button All projects
+						71 content list
+							72 container
+								73 button Client onboarding
+								74 text 0  of  2  recorded items completed
+					75 container Connected Operations work
+						76 button Client promises
+						77 button People and workload
+						78 button Procedures
+					79 container
+						80 heading Next deadlines, Value: 2
+							81 text Next deadlines
+						82 content list
+							83 container
+								84 button Share the agreed next steps
+								85 text Client onboarding Oct 21 Jordan Ellis Ready
+						86 heading Recorded reminders, Value: 2
+							87 text Recorded reminders
+						88 button Inspect in Work
+						89 content list
+							90 container
+								91 button Review unfinished commitments
+								92 text Planning reminder Oct 22, 10:00 AM Jordan Ellis Ready
+						93 text These are saved reminder times. Open the original record to review its current state; a scheduled time does not prove delivery.
+						94 heading What to do next, Value: 2
+							95 text What to do next
+						96 container
+							97 text 2  active  commitments need  a confirmed due date. Start with the original work before choosing when it belongs.
+						98 button Review timing: Confirm the next client check-in
+							99 text Review timing: 
+							100 text Confirm the next client check-in
+						101 button Prepare a review with PAIGE
+				102 text Attention and deadlines reflect loaded Planning work and up to 200 CRM tasks. Unavailable sources are excluded.
+
+The focused UI element is 103 button (collapsed) Description: Direct PAIGE, Secondary Actions: Expand

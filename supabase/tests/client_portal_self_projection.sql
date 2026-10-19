@@ -103,8 +103,10 @@ SELECT ok(NOT has_function_privilege('anon','public.get_client_portal_brand()','
 SELECT ok(NOT has_function_privilege('anon','public.get_client_portal_config()','EXECUTE'),'anonymous cannot execute customer configuration reader');
 SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001')->'brand'->>'tenant_id','e0921000-0000-0000-0000-000000000001','brand follows actual external relationship without raw CRM SELECT');
 SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001')->'brand'->>'product_name','Test tenant A','existing native brand cascade remains compatible');
--- E09 Slice M adds one server-authored key, `_catalog`; everything the tenant saved stays exact.
-SELECT is((pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001')->'config') - '_catalog','{"welcome":{"headline":"Saved greeting A"},"modules":[{"key":"documents","visible":false}]}'::jsonb,'saved presentation overlay remains exact (beside the server catalog)');
+-- E09 Slice M adds one server-authored key, `_catalog`, and E09 F2 one more, `entitlements`; everything the tenant
+-- saved stays exact beside them.
+SELECT is((pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001')->'config') - '_catalog' - 'entitlements','{"welcome":{"headline":"Saved greeting A"},"modules":[{"key":"documents","visible":false}]}'::jsonb,'saved presentation overlay remains exact (beside the server catalog)');
+SELECT is((pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000001')->'config')->'entitlements','{"finance":false}'::jsonb,'E09 F2: the server-authored finance entitlement rides beside the overlay (false for a business without it)');
 SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000002')->'brand'->>'tenant_id','e0921000-0000-0000-0000-000000000002','a different authenticated subject reads only its own business');
 SELECT is(pg_temp.e09_presentation('e0911000-0000-0000-0000-000000000099'),'{"brand":null,"config":{}}'::jsonb,'unlinked subject receives no customer presentation');
 SELECT is(pg_temp.e09_presentation(NULL),'{"brand":null,"config":{}}'::jsonb,'missing subject supplies no presentation authority');

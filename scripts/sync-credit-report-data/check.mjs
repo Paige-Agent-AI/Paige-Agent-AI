@@ -339,16 +339,64 @@ const profileRow = (id = USER) => ({ user_id: id, estimated_fico_eq: 600, estima
     JSON.stringify({ i: alertFail.body.results?.followups_initiated, e: alertFail.body.results?.followup_errors }));
 }
 
-// ── 10. AUTHZ / TENANCY: a person syncs their own records; an admin anyone's; nobody else.
+// ── 10. AUTHZ / TENANCY: a person syncs their own records; an owner/admin of a business where the
+// subject holds a seat may sync theirs; the platform owner anyone's; nobody else (E09 F1b: the
+// global `admin` app role is no longer a pass into every business, §59).
+const BIZ = "88888888-8888-4888-8888-888888888888";
+const OTHER_BIZ = "99999999-9999-4999-8999-999999999999";
+const seat = (user, tenant) => ({ user_id: user, tenant_id: tenant, status: "active" });
 {
-  const cross = await drive({ target: OTHER, scenario: { user: { id: USER }, isAdmin: false, db: { profiles: [] } } });
-  assert("10.1 a non-admin targeting another person is refused with zero writes",
+  const cross = await drive({ target: OTHER, scenario: { user: { id: USER }, isAdmin: false, db: { profiles: [], tenant_members: [seat(OTHER, BIZ)] } } });
+  assert("10.1 a caller with no standing in the subject's business is refused with zero writes",
     cross.status === 403 && fake.db().credit_negative_items.length === 0 && fake.db().audit_logs.length === 0,
     `status ${cross.status}`);
-  const crossAdmin = await drive({ target: OTHER, scenario: { user: { id: USER }, isAdmin: true, db: { profiles: [profileRow(OTHER)] } } });
-  assert("10.2 an admin may sync another person's records — and they land as that person's rows",
+  const crossAdmin = await drive({ target: OTHER, scenario: {
+    user: { id: USER }, tenantAdmins: [{ actor: USER, tenant: BIZ }],
+    db: { profiles: [profileRow(OTHER)], tenant_members: [seat(OTHER, BIZ)] },
+  } });
+  assert("10.2 an owner/admin of the subject's business may sync their records — and they land as that person's rows",
     crossAdmin.status === 200 && fake.db().credit_negative_items[0]?.user_id === OTHER,
     `status ${crossAdmin.status} rows ${JSON.stringify(fake.db().credit_negative_items.map((n) => n.user_id))}`);
+  const globalAdmin = await drive({ target: OTHER, scenario: {
+    user: { id: USER }, isAdmin: true, tenantAdmins: [{ actor: USER, tenant: OTHER_BIZ }],
+    db: { profiles: [profileRow(OTHER)], tenant_members: [seat(OTHER, BIZ)] },
+  } });
+  assert("10.2a E09 F1b: the global admin role is no longer a pass into another business's records",
+    globalAdmin.status === 403 && fake.db().credit_negative_items.length === 0
+      && !globalAdmin.rec.rpc.some((r) => r.fn === "has_role"),
+    `status ${globalAdmin.status}`);
+  const operator = await drive({ target: OTHER, scenario: {
+    user: { id: USER }, platformOwners: [USER], db: { profiles: [profileRow(OTHER)], tenant_members: [seat(OTHER, BIZ)] },
+  } });
+  assert("10.2b the platform owner keeps the cross-business path", operator.status === 200, `status ${operator.status}`);
+  const customerCaller = await drive({ scenario: { portalCustomers: [USER], db: { profiles: [profileRow()] } } });
+  assert("10.2c E09 F1b: a portal customer syncing their own report is refused before anything is written",
+    customerCaller.status === 403 && customerCaller.body.error === "customer_credit_not_available"
+      && customerCaller.rec.calls.length === 0,
+    `status ${customerCaller.status} calls ${customerCaller.rec.calls.length}`);
+  const customerSubject = await drive({ target: OTHER, scenario: {
+    user: { id: USER }, platformOwners: [USER], portalCustomers: [OTHER], db: { profiles: [profileRow(OTHER)] },
+  } });
+  assert("10.2d E09 F1b: nobody (not even the platform owner) writes credit records about a portal customer",
+    customerSubject.status === 403 && customerSubject.rec.calls.length === 0, `status ${customerSubject.status}`);
+  const tierDown = await drive({ scenario: { tierError: true, db: { profiles: [profileRow()] } } });
+  assert("10.2e the caller-tier read failing refuses (503), nothing written",
+    tierDown.status === 503 && tierDown.rec.calls.length === 0, `status ${tierDown.status}`);
+  const svcCustomer = await drive({ auth: "service", scenario: { portalCustomers: [USER], db: { profiles: [profileRow()] } } });
+  assert("10.2f E09 F1b: the service path refuses a portal-customer subject",
+    svcCustomer.status === 403 && svcCustomer.rec.calls.length === 0, `status ${svcCustomer.status}`);
+  const UPLOAD = "abababab-abab-4bab-8bab-abababababab";
+  const svcForeignUpload = await drive({ auth: "service", payload: basePayload({ report_upload_id: UPLOAD }), scenario: {
+    db: { profiles: [profileRow()], credit_report_uploads: [{ id: UPLOAD, user_id: OTHER, tenant_id: BIZ }] },
+  } });
+  assert("10.2g E09 F1b: the service path refuses an upload that belongs to someone else",
+    svcForeignUpload.status === 403 && svcForeignUpload.body.error === "upload_subject_mismatch"
+      && fake.db().credit_negative_items.length === 0, `status ${svcForeignUpload.status}`);
+  const svcOwnUpload = await drive({ auth: "service", payload: basePayload({ report_upload_id: UPLOAD }), scenario: {
+    db: { profiles: [profileRow()], credit_report_uploads: [{ id: UPLOAD, user_id: USER, tenant_id: BIZ }] },
+  } });
+  assert("10.2h the service path still writes for the upload's own subject (staff self-upload, Q5 untouched)",
+    svcOwnUpload.status === 200 && fake.db().credit_negative_items[0]?.user_id === USER, `status ${svcOwnUpload.status}`);
   const svc = await drive({ auth: "service", scenario: { db: { profiles: [profileRow()] } } });
   assert("10.3 the service-key path (the trusted edge producers) runs as service",
     svc.status === 200 && svc.rec.calls.every((c) => c.client === "service"), `status ${svc.status}`);

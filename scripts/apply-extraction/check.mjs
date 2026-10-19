@@ -66,7 +66,7 @@ await import("../../supabase/functions/paige-apply-extraction/index.ts");
 const { capturedHandler } = await import("./stub-serve.mjs");
 const handler = capturedHandler();
 
-async function drive({ approved_keys, row = {}, claimReturns, releaseError = null, sync = 200, syncThrows = false, auth = true, syncBody = undefined, errBody = undefined }) {
+async function drive({ approved_keys, row = {}, claimReturns, releaseError = null, sync = 200, syncThrows = false, auth = true, syncBody = undefined, errBody = undefined, portalCustomers = [], tierError = false }) {
   syncCalls = []; syncStatus = sync; syncFetchThrows = syncThrows;
   syncBody200 = syncBody === null ? null
     : (syncBody ?? { success: true, results: { outcome: { status: "complete", groups_attempted: ["scores"], failed_groups: [], skipped_groups: [] } } });
@@ -81,7 +81,7 @@ async function drive({ approved_keys, row = {}, claimReturns, releaseError = nul
       analysis_status: "completed", extraction_review_state: "awaiting_review",
       analysis_result: STRUCTURED, ...row,
     },
-    claimReturns, releaseError,
+    claimReturns, releaseError, portalCustomers, tierError,
   });
   let res, body;
   try {
@@ -318,6 +318,24 @@ async function drive({ approved_keys, row = {}, claimReturns, releaseError = nul
   assert("10.10 a plain non-2xx without partial_results keeps the definite 'Nothing was changed'",
     plain.status === 502 && /Nothing was changed/.test(String(plain.body?.error)) && !plain.body?.outcome_uncertain,
     JSON.stringify(plain.body));
+}
+
+// ── 11. E09 F1b — A PORTAL CUSTOMER CANNOT APPLY A CREDIT READING. Refused before any read, claim,
+// sync or audit; a failing tier read refuses too. Staff (not a portal customer) are unchanged above.
+{
+  const cust = await drive({ approved_keys: ["negative_items"], portalCustomers: [USER] });
+  assert("11.1 a portal customer is refused 403 before the upload is even read",
+    cust.status === 403 && cust.rec.reads.length === 0 && cust.rec.updates.length === 0
+      && cust.rec.inserts.length === 0 && cust.syncCalls.length === 0,
+    JSON.stringify({ s: cust.status, r: cust.rec.reads.length, u: cust.rec.updates.length }));
+  const down = await drive({ approved_keys: ["negative_items"], tierError: true });
+  assert("11.2 a failing caller-tier read refuses 503 and touches nothing",
+    down.status === 503 && down.rec.reads.length === 0 && down.syncCalls.length === 0,
+    JSON.stringify({ s: down.status }));
+  const staff = await drive({ approved_keys: ["negative_items"] });
+  assert("11.3 the tier is asked on the SERVICE client, with the caller's id",
+    staff.rec.rpcs?.some((r) => r.fn === "_user_is_portal_customer_only" && r.client === "service" && r.args?._user === USER),
+    JSON.stringify(staff.rec.rpcs));
 }
 
 console.log(`\n${passed} passed, ${failures.length} failed`);

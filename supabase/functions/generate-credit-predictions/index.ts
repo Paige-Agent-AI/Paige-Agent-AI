@@ -9,6 +9,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { refuseCustomerTier, staffOfSubject } from "../_shared/finance-entitlement.ts";
 import { resolveOperatorIdentity } from "../_shared/operator-identity.ts";
 
 const corsHeaders = {
@@ -472,16 +473,27 @@ serve(async (req) => {
           global: { headers: { Authorization: authHeader } },
         });
         const { data: userRes } = await userClient.auth.getUser();
-        if (!userRes?.user || userRes.user.id !== body.user_id) {
-          // Allow admins
-          const { data: roles } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", userRes?.user?.id || "");
-          const allowed = (roles || []).some((r: { role: string }) => r.role === "admin");
-          if (!allowed) {
-            return new Response(JSON.stringify({ error: "Unauthorized" }), {
-              status: 401,
+        if (!userRes?.user) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        // E09 F1b: predictions are not a customer feature — a portal customer is refused.
+        const tier = await refuseCustomerTier(supabase, userRes.user.id);
+        if (!tier.ok) {
+          return new Response(JSON.stringify({ error: tier.error }), {
+            status: tier.status,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (userRes.user.id !== body.user_id) {
+          // Someone else's predictions: an owner/admin of a business where that person holds a seat,
+          // or the platform owner (§59). The global `admin` app role used to pass for anyone.
+          const staff = await staffOfSubject(supabase, userRes.user.id, String(body.user_id));
+          if (!staff.ok) {
+            return new Response(JSON.stringify({ error: staff.status === 403 ? "Unauthorized" : staff.error }), {
+              status: staff.status === 403 ? 401 : staff.status,
               headers: { ...corsHeaders, "Content-Type": "application/json" },
             });
           }

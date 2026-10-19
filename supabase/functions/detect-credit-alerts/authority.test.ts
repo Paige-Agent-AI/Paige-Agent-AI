@@ -3,8 +3,8 @@
 //
 // The SQL source of truth today is the newest `get_paige_persona_context` definition in
 // supabase/migrations (its live production body was read on 2026-10-19 and carries the same text).
-// When the planned canonical `_tenant_finance_entitled` lands (E09 F1a), its newest definition is
-// held to the same predicate here too.
+// E09 F1a added the canonical `_tenant_finance_entitled`; its newest definition is held to the same
+// predicate here, and F1b's edge reader is held to calling it.
 //
 // Run with: --allow-read=supabase/functions,supabase/migrations (see handler.test.ts).
 
@@ -46,28 +46,26 @@ Deno.test("SQL: the newest get_paige_persona_context carries the install-OR-flag
     `${def.file}: the two legs are joined by OR (install OR flag)`);
 });
 
-Deno.test("SQL: when _tenant_finance_entitled exists, it carries the same expression", () => {
+Deno.test("SQL: _tenant_finance_entitled (E09 F1a) carries the same expression", () => {
   const def = newestDefinition("_tenant_finance_entitled");
-  if (!def) return; // F1a not merged yet; the persona expression above is the source today.
+  assert(def, "_tenant_finance_entitled is defined in a migration");
   for (const frag of SQL_PREDICATE) assert(def.body.includes(frag), `${def.file} is missing: ${frag}`);
+  assert(/is_finance( = true)?\s*\)\s*or\s*\(t\.features ->> 'finance_in_scope'\)/.test(def.body),
+    `${def.file}: the two legs are joined by OR (install OR flag)`);
 });
 
-Deno.test("TS: resolveFinanceEntitlement reads the same two legs", () => {
+Deno.test("TS: resolveFinanceEntitlement asks the database for that predicate (E09 F1b), never a copy", () => {
   const src = Deno.readTextFileSync(GATE);
   const start = src.indexOf("export async function resolveFinanceEntitlement(");
   assert(start >= 0, "resolveFinanceEntitlement is exported from the gate");
   const body = src.slice(start, src.indexOf("\n}\n", start));
-  for (const frag of [
-    '.from("marketplace_installs")',
-    '.eq("tenant_id", tenantId)',
-    '.eq("status", "active")',
-    '.from("marketplace_items")',
-    '.eq("is_finance", true)',
-    '.from("tenants")',
-    "finance_in_scope === true",
-  ]) assert(body.includes(frag), `resolveFinanceEntitlement is missing: ${frag}`);
+  assert(body.includes("financeEntitled(db, tenantId)"), "it delegates to the one edge reader");
+  assert(src.includes('import { financeEntitled, type FinanceRpcDb } from "./finance-entitlement.ts";'));
+  const reader = Deno.readTextFileSync("supabase/functions/_shared/finance-entitlement.ts");
+  assert(reader.includes('db.rpc("_tenant_finance_entitled", { _tenant: tenantId })'), "the reader calls the SQL predicate");
   // A read error never resolves "entitled".
-  assertEquals((body.match(/return "read_error"/g) ?? []).length >= 3, true);
+  assert(/if \(error\) \{[\s\S]*?return "read_error";/.test(reader), "an RPC error is read_error");
+  assert(/return data === true \? "entitled" : "not_entitled";/.test(reader), "only an explicit true is entitled");
 });
 
 Deno.test("detect-credit-alerts reads the entitlement only through the shared reader", () => {

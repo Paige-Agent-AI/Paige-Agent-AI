@@ -4,6 +4,7 @@
 // iSoftpull session and return an embed token / redirect URL for the borrower.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { refuseCustomerTier } from "../_shared/finance-entitlement.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,6 +40,17 @@ Deno.serve(async (req) => {
     if (!user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // E09 F1b: a soft credit pull is not a customer feature — a portal customer is refused before any
+    // consent is recorded or a provider is contacted. (The pull is for the caller's own record only;
+    // body.user_id is not read.)
+    const tier = await refuseCustomerTier(supabase, user.id);
+    if (!tier.ok) {
+      return new Response(JSON.stringify({ error: tier.error }), {
+        status: tier.status,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

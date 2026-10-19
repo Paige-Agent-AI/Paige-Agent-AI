@@ -1,4 +1,5 @@
 import { KNOWLEDGE_TOOLS } from "../_shared/paige-spine/domains/knowledge.ts";
+import { PLATFORM_OPERATOR_READ_TOOLS } from "../_shared/paige-spine/domains/platform_operator_reads.ts";
 import { parseResearchSourcePolicy, researchResultHonorsSourcePolicy } from "../_shared/research-source-policy.ts";
 import { executeKnowledgeTool, normalizeKnowledgeArgs, type KnowledgeTool } from "../_shared/knowledge-tenant-brain.ts";
 import { BUSINESS_MISSION_TOOLS } from '../_shared/paige-spine/domains/business_mission.ts';
@@ -8682,23 +8683,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               }
             }
           },
-      // ── EXP00 O-3: company read tools, admitted ONLY on operator-console turns (the
-      // dispatch re-checks the operator gate; definitions withheld otherwise).
-      ...(operatorConsolePersona ? [{
-        type: "function",
-        function: {
-          name: "platform_customer_overview",
-          description: "PAIGE Inc company view. One row per customer who joined the platform: business name, enrollment state, subscription status with trial-vs-paid truth, whether the workspace provisioned, welcome-email state, and who needs attention. Use for: who has joined, which customers are on trials, which workspaces are provisioned, welcome emails sent, customers needing attention.",
-          parameters: { type: "object", properties: {} }
-        }
-      }, {
-        type: "function",
-        function: {
-          name: "platform_commercial_summary",
-          description: "PAIGE Inc commercial truth: subscription counts (trialing vs paid), real ARR from live Stripe-backed subscriptions only, collected cash from PAID invoices only (trials are intent, not cash), open receivables, upcoming renewals, the payment method on file, and the 90-day signup funnel. Use for: what have we actually collected, revenue reporting, renewals, failed payments.",
-          parameters: { type: "object", properties: {} }
-        }
-      }] : []),
     ];
 
     // CRM/Pipeline mutations are declared by the single shared command catalogue. Remove the
@@ -8717,6 +8701,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     toolDefs.push(...SALES_COLLECTIONS_TOOLS);
     // Canonical actor-tier resolver, not a client-selected lens. Operator/Agency stay separate.
     if (callerTier === "tenant") toolDefs.push(...BUSINESS_METRIC_TOOLS);
+    // EXP00 O-3: the operator console's company read tools — declared in the spine domain
+    // (defineCapability + public.* SQL executors); mounted ONLY on verified operator turns.
+    if (operatorConsolePersona) toolDefs.push(...PLATFORM_OPERATOR_READ_TOOLS);
     // E2-1 business snapshot: same Solo-workspace lens as the metric read. Under INT-346's staged
     // rollout a conversational turn is offered ZERO tools, so this stays dark until the read-only
     // admission class admits it.

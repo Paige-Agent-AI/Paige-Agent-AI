@@ -2,324 +2,396 @@
   "boundary": "ACTUAL_CURRENT_SOURCE_SOLO_SHELL_WITH_ISOLATED_SYNTHETIC_PORTS_NOT_AUTHENTICATED",
   "sequences": [
     {
-      "context": "a",
-      "theme": "dark",
+      "context": "b",
+      "theme": "light",
       "paigeOpen": false,
-      "file": "legacy-a-current-1536x770-closed.jpg",
-      "clientWidth": 1536,
-      "pageWidth": 1536,
-      "rawModelHtmlVisible": false,
-      "rawModelRecipientVisible": false,
-      "review": {
-        "height": 40,
-        "width": 138.91250610351562,
-        "x": 1011.2250366210938,
-        "y": 641.1000366210938
-      },
-      "viewport": [
-        1536,
-        770
-      ]
-    },
-    {
-      "context": "a",
-      "theme": "dark",
-      "paigeOpen": true,
-      "file": "legacy-a-current-1536x770-open.jpg",
-      "clientWidth": 1536,
-      "pageWidth": 1536,
-      "rawModelHtmlVisible": false,
-      "rawModelRecipientVisible": false,
-      "review": {
-        "height": 40,
-        "width": 138.91250610351562,
-        "x": 626.4249877929688,
-        "y": 584.6000366210938
-      },
-      "viewport": [
-        1536,
-        770
-      ]
-    },
-    {
-      "context": "a",
-      "theme": "dark",
-      "paigeOpen": false,
-      "file": "legacy-a-current-1366x768-closed.jpg",
-      "clientWidth": 1366,
-      "pageWidth": 1366,
-      "rawModelHtmlVisible": false,
-      "rawModelRecipientVisible": false,
-      "review": {
-        "height": 40,
-        "width": 138.91250610351562,
-        "x": 539.2374877929688,
-        "y": 542.2000122070312
-      },
-      "viewport": [
-        1366,
-        768
-      ]
-    },
-    {
-      "context": "a",
-      "theme": "dark",
-      "paigeOpen": true,
-      "file": "legacy-a-current-1366x768-open.jpg",
-      "clientWidth": 1366,
-      "pageWidth": 1366,
-      "rawModelHtmlVisible": false,
-      "rawModelRecipientVisible": false,
-      "review": {
-        "height": 40,
-        "width": 138.91250610351562,
-        "x": 539.2374877929688,
-        "y": 542.2000122070312
-      },
-      "viewport": [
-        1366,
-        768
-      ]
-    },
-    {
-      "context": "a",
-      "theme": "dark",
-      "paigeOpen": false,
-      "file": "legacy-a-current-1024x768-closed.jpg",
-      "clientWidth": 1024,
-      "pageWidth": 1024,
-      "rawModelHtmlVisible": false,
-      "rawModelRecipientVisible": false,
-      "review": {
-        "height": 40,
-        "width": 138.91250610351562,
-        "x": 596.0750122070312,
-        "y": 598.7000122070312
-      },
-      "viewport": [
-        1024,
-        768
-      ]
-    },
-    {
-      "context": "a",
-      "theme": "dark",
-      "paigeOpen": true,
-      "file": "legacy-a-current-1024x768-open.jpg",
-      "clientWidth": 1024,
-      "pageWidth": 1024,
-      "rawModelHtmlVisible": false,
-      "rawModelRecipientVisible": false,
-      "review": {
-        "height": 40,
-        "width": 138.91250610351562,
-        "x": 596.0750122070312,
-        "y": 598.7000122070312
-      },
-      "viewport": [
-        1024,
-        768
-      ]
-    },
-    {
-      "context": "a",
-      "theme": "dark",
-      "paigeOpen": false,
-      "file": "legacy-a-current-900x1000-closed.jpg",
-      "clientWidth": 900,
-      "pageWidth": 900,
-      "rawModelHtmlVisible": false,
-      "rawModelRecipientVisible": false,
-      "review": {
-        "height": 40,
-        "width": 138.91250610351562,
-        "x": 504.7000122070313,
-        "y": 830.7000122070312
-      },
       "viewport": [
         900,
         1000
-      ]
-    },
-    {
-      "context": "a",
-      "theme": "dark",
-      "paigeOpen": true,
-      "file": "legacy-a-current-900x1000-open.jpg",
+      ],
       "clientWidth": 900,
       "pageWidth": 900,
-      "rawModelHtmlVisible": false,
-      "rawModelRecipientVisible": false,
-      "review": {
-        "height": 40,
-        "width": 138.91250610351562,
-        "x": 504.7000122070313,
-        "y": 830.7000122070312
-      },
-      "viewport": [
-        900,
-        1000
-      ]
-    },
-    {
-      "context": "b",
-      "theme": "light",
-      "paigeOpen": false,
-      "file": "legacy-b-current-1536x770-closed.jpg",
-      "clientWidth": 1536,
-      "pageWidth": 1536,
-      "rawModelHtmlVisible": false,
-      "rawModelRecipientVisible": false,
-      "review": {
-        "height": 40,
-        "width": 138.91250610351562,
-        "x": 973.3375244140624,
-        "y": 641.1000366210938
-      },
-      "viewport": [
-        1536,
-        770
-      ]
-    },
-    {
-      "context": "b",
-      "theme": "light",
-      "paigeOpen": true,
-      "file": "legacy-b-current-1536x770-open.jpg",
-      "clientWidth": 1536,
-      "pageWidth": 1536,
-      "rawModelHtmlVisible": false,
-      "rawModelRecipientVisible": false,
-      "review": {
-        "height": 40,
-        "width": 138.91250610351562,
-        "x": 588.5250244140625,
-        "y": 601.1000366210938
-      },
-      "viewport": [
-        1536,
-        770
-      ]
-    },
-    {
-      "context": "b",
-      "theme": "light",
-      "paigeOpen": false,
-      "file": "legacy-b-current-1366x768-closed.jpg",
-      "clientWidth": 1366,
-      "pageWidth": 1366,
-      "rawModelHtmlVisible": false,
-      "rawModelRecipientVisible": false,
-      "review": {
-        "height": 40,
-        "width": 138.91250610351562,
-        "x": 506.0500183105469,
-        "y": 598.7000122070312
-      },
-      "viewport": [
-        1366,
-        768
-      ]
-    },
-    {
-      "context": "b",
-      "theme": "light",
-      "paigeOpen": true,
-      "file": "legacy-b-current-1366x768-open.jpg",
-      "clientWidth": 1366,
-      "pageWidth": 1366,
-      "rawModelHtmlVisible": false,
-      "rawModelRecipientVisible": false,
-      "review": {
-        "height": 40,
-        "width": 138.91250610351562,
-        "x": 506.0500183105469,
-        "y": 598.7000122070312
-      },
-      "viewport": [
-        1366,
-        768
-      ]
-    },
-    {
-      "context": "b",
-      "theme": "light",
-      "paigeOpen": false,
-      "file": "legacy-b-current-1024x768-closed.jpg",
-      "clientWidth": 1024,
-      "pageWidth": 1024,
-      "rawModelHtmlVisible": false,
-      "rawModelRecipientVisible": false,
-      "review": {
-        "height": 40,
-        "width": 138.91250610351562,
-        "x": 596.0750122070312,
-        "y": 598.7000122070312
-      },
-      "viewport": [
-        1024,
-        768
-      ]
-    },
-    {
-      "context": "b",
-      "theme": "light",
-      "paigeOpen": true,
-      "file": "legacy-b-current-1024x768-open.jpg",
-      "clientWidth": 1024,
-      "pageWidth": 1024,
-      "rawModelHtmlVisible": false,
-      "rawModelRecipientVisible": false,
-      "review": {
-        "height": 40,
-        "width": 138.91250610351562,
-        "x": 596.0750122070312,
-        "y": 598.7000122070312
-      },
-      "viewport": [
-        1024,
-        768
-      ]
-    },
-    {
-      "context": "b",
-      "theme": "light",
-      "paigeOpen": false,
       "file": "legacy-b-current-900x1000-closed.jpg",
-      "clientWidth": 900,
-      "pageWidth": 900,
-      "rawModelHtmlVisible": false,
-      "rawModelRecipientVisible": false,
-      "review": {
-        "height": 40,
-        "width": 138.91250610351562,
-        "x": 504.7000122070313,
-        "y": 830.7000122070312
+      "observed_dom": {
+        "height": 1000,
+        "pageWidth": 900,
+        "paigeOpen": false,
+        "width": 900
       },
-      "viewport": [
+      "captured_image_pixels": [
         900,
         1000
-      ]
+      ],
+      "capture_api": "screenshot-after-separate-settled-action",
+      "visual_inspection": "original full-frame capture; no resizing or pixel editing"
     },
     {
       "context": "b",
       "theme": "light",
       "paigeOpen": true,
-      "file": "legacy-b-current-900x1000-open.jpg",
-      "clientWidth": 900,
-      "pageWidth": 900,
-      "rawModelHtmlVisible": false,
-      "rawModelRecipientVisible": false,
-      "review": {
-        "height": 40,
-        "width": 138.91250610351562,
-        "x": 504.7000122070313,
-        "y": 830.7000122070312
-      },
       "viewport": [
         900,
         1000
-      ]
+      ],
+      "clientWidth": 900,
+      "pageWidth": 900,
+      "file": "legacy-b-current-900x1000-open.jpg",
+      "observed_dom": {
+        "height": 1000,
+        "pageWidth": 900,
+        "paigeOpen": true,
+        "width": 900
+      },
+      "captured_image_pixels": [
+        900,
+        1000
+      ],
+      "capture_api": "screenshot-after-separate-settled-action",
+      "visual_inspection": "original full-frame capture; no resizing or pixel editing"
+    },
+    {
+      "context": "b",
+      "theme": "light",
+      "paigeOpen": false,
+      "viewport": [
+        1024,
+        768
+      ],
+      "clientWidth": 1024,
+      "pageWidth": 1024,
+      "file": "legacy-b-current-1024x768-closed.jpg",
+      "observed_dom": {
+        "height": 768,
+        "pageWidth": 1024,
+        "paigeOpen": false,
+        "width": 1024
+      },
+      "captured_image_pixels": [
+        1024,
+        768
+      ],
+      "capture_api": "screenshot-after-separate-settled-action",
+      "visual_inspection": "original full-frame capture; no resizing or pixel editing"
+    },
+    {
+      "context": "b",
+      "theme": "light",
+      "paigeOpen": true,
+      "viewport": [
+        1024,
+        768
+      ],
+      "clientWidth": 1024,
+      "pageWidth": 1024,
+      "file": "legacy-b-current-1024x768-open.jpg",
+      "observed_dom": {
+        "height": 768,
+        "pageWidth": 1024,
+        "paigeOpen": true,
+        "width": 1024
+      },
+      "captured_image_pixels": [
+        1024,
+        768
+      ],
+      "capture_api": "screenshot-after-separate-settled-action",
+      "visual_inspection": "original full-frame capture; no resizing or pixel editing"
+    },
+    {
+      "context": "b",
+      "theme": "light",
+      "paigeOpen": false,
+      "viewport": [
+        1366,
+        768
+      ],
+      "clientWidth": 1366,
+      "pageWidth": 1366,
+      "file": "legacy-b-current-1366x768-closed.jpg",
+      "observed_dom": {
+        "height": 768,
+        "pageWidth": 1366,
+        "paigeOpen": false,
+        "width": 1366
+      },
+      "captured_image_pixels": [
+        1366,
+        768
+      ],
+      "capture_api": "screenshot-after-separate-settled-action",
+      "visual_inspection": "original full-frame capture; no resizing or pixel editing"
+    },
+    {
+      "context": "b",
+      "theme": "light",
+      "paigeOpen": true,
+      "viewport": [
+        1366,
+        768
+      ],
+      "clientWidth": 1366,
+      "pageWidth": 1366,
+      "file": "legacy-b-current-1366x768-open.jpg",
+      "observed_dom": {
+        "height": 768,
+        "pageWidth": 1366,
+        "paigeOpen": true,
+        "width": 1366
+      },
+      "captured_image_pixels": [
+        1366,
+        768
+      ],
+      "capture_api": "screenshot-after-separate-settled-action",
+      "visual_inspection": "original full-frame capture; no resizing or pixel editing"
+    },
+    {
+      "context": "b",
+      "theme": "light",
+      "paigeOpen": false,
+      "viewport": [
+        1536,
+        770
+      ],
+      "clientWidth": 1536,
+      "pageWidth": 1536,
+      "file": "legacy-b-current-1536x770-closed.jpg",
+      "observed_dom": {
+        "height": 770,
+        "pageWidth": 1536,
+        "paigeOpen": false,
+        "width": 1536
+      },
+      "captured_image_pixels": [
+        1535,
+        770
+      ],
+      "capture_api": "screenshot-after-separate-settled-action",
+      "visual_inspection": "original full-frame capture; no resizing or pixel editing"
+    },
+    {
+      "context": "b",
+      "theme": "light",
+      "paigeOpen": true,
+      "viewport": [
+        1536,
+        770
+      ],
+      "clientWidth": 1536,
+      "pageWidth": 1536,
+      "file": "legacy-b-current-1536x770-open.jpg",
+      "observed_dom": {
+        "height": 770,
+        "pageWidth": 1536,
+        "paigeOpen": true,
+        "width": 1536
+      },
+      "captured_image_pixels": [
+        1535,
+        770
+      ],
+      "capture_api": "screenshot-after-separate-settled-action",
+      "visual_inspection": "original full-frame capture; no resizing or pixel editing"
+    },
+    {
+      "context": "a",
+      "theme": "dark",
+      "paigeOpen": false,
+      "viewport": [
+        1536,
+        770
+      ],
+      "clientWidth": 1536,
+      "pageWidth": 1536,
+      "file": "legacy-a-current-1536x770-closed.jpg",
+      "observed_dom": {
+        "height": 770,
+        "pageWidth": 1536,
+        "paigeOpen": false,
+        "subject": "Your project next steps",
+        "width": 1536
+      },
+      "captured_image_pixels": [
+        1535,
+        770
+      ],
+      "capture_api": "getScreenshot",
+      "visual_inspection": "original full-frame capture; no resizing or pixel editing"
+    },
+    {
+      "context": "a",
+      "theme": "dark",
+      "paigeOpen": true,
+      "viewport": [
+        1536,
+        770
+      ],
+      "clientWidth": 1536,
+      "pageWidth": 1536,
+      "file": "legacy-a-current-1536x770-open.jpg",
+      "observed_dom": {
+        "height": 770,
+        "pageWidth": 1536,
+        "paigeOpen": true,
+        "subject": "Your project next steps",
+        "width": 1536
+      },
+      "captured_image_pixels": [
+        1535,
+        770
+      ],
+      "capture_api": "getScreenshot",
+      "visual_inspection": "original full-frame capture; no resizing or pixel editing"
+    },
+    {
+      "context": "a",
+      "theme": "dark",
+      "paigeOpen": false,
+      "viewport": [
+        1366,
+        768
+      ],
+      "clientWidth": 1366,
+      "pageWidth": 1366,
+      "file": "legacy-a-current-1366x768-closed.jpg",
+      "observed_dom": {
+        "height": 768,
+        "pageWidth": 1366,
+        "paigeOpen": false,
+        "subject": "Your project next steps",
+        "width": 1366
+      },
+      "captured_image_pixels": [
+        1366,
+        768
+      ],
+      "capture_api": "getScreenshot",
+      "visual_inspection": "original full-frame capture; no resizing or pixel editing"
+    },
+    {
+      "context": "a",
+      "theme": "dark",
+      "paigeOpen": true,
+      "viewport": [
+        1366,
+        768
+      ],
+      "clientWidth": 1366,
+      "pageWidth": 1366,
+      "file": "legacy-a-current-1366x768-open.jpg",
+      "observed_dom": {
+        "height": 768,
+        "pageWidth": 1366,
+        "paigeOpen": true,
+        "subject": "Your project next steps",
+        "width": 1366
+      },
+      "captured_image_pixels": [
+        1366,
+        768
+      ],
+      "capture_api": "getScreenshot",
+      "visual_inspection": "original full-frame capture; no resizing or pixel editing"
+    },
+    {
+      "context": "a",
+      "theme": "dark",
+      "paigeOpen": false,
+      "viewport": [
+        1024,
+        768
+      ],
+      "clientWidth": 1024,
+      "pageWidth": 1024,
+      "file": "legacy-a-current-1024x768-closed.jpg",
+      "observed_dom": {
+        "height": 768,
+        "pageWidth": 1024,
+        "paigeOpen": false,
+        "subject": "Your project next steps",
+        "width": 1024
+      },
+      "captured_image_pixels": [
+        1024,
+        768
+      ],
+      "capture_api": "getScreenshot",
+      "visual_inspection": "original full-frame capture; no resizing or pixel editing"
+    },
+    {
+      "context": "a",
+      "theme": "dark",
+      "paigeOpen": true,
+      "viewport": [
+        1024,
+        768
+      ],
+      "clientWidth": 1024,
+      "pageWidth": 1024,
+      "file": "legacy-a-current-1024x768-open.jpg",
+      "observed_dom": {
+        "height": 768,
+        "pageWidth": 1024,
+        "paigeOpen": true,
+        "subject": "Your project next steps",
+        "width": 1024
+      },
+      "captured_image_pixels": [
+        1024,
+        768
+      ],
+      "capture_api": "getScreenshot",
+      "visual_inspection": "original full-frame capture; no resizing or pixel editing"
+    },
+    {
+      "context": "a",
+      "theme": "dark",
+      "paigeOpen": false,
+      "viewport": [
+        900,
+        1000
+      ],
+      "clientWidth": 900,
+      "pageWidth": 900,
+      "file": "legacy-a-current-900x1000-closed.jpg",
+      "observed_dom": {
+        "height": 1000,
+        "pageWidth": 900,
+        "paigeOpen": false,
+        "subject": "Your project next steps",
+        "width": 900
+      },
+      "captured_image_pixels": [
+        900,
+        1000
+      ],
+      "capture_api": "getScreenshot",
+      "visual_inspection": "original full-frame capture; no resizing or pixel editing"
+    },
+    {
+      "context": "a",
+      "theme": "dark",
+      "paigeOpen": true,
+      "viewport": [
+        900,
+        1000
+      ],
+      "clientWidth": 900,
+      "pageWidth": 900,
+      "file": "legacy-a-current-900x1000-open.jpg",
+      "observed_dom": {
+        "height": 1000,
+        "pageWidth": 900,
+        "paigeOpen": true,
+        "subject": "Your project next steps",
+        "width": 900
+      },
+      "captured_image_pixels": [
+        900,
+        1000
+      ],
+      "capture_api": "getScreenshot",
+      "visual_inspection": "original full-frame capture; no resizing or pixel editing"
     }
   ],
   "keyboard": "Enter opened original draft, Not now cancelled exact preview, Cancel reply edit cleared draft, Escape closed narrow PAIGE overlay and retained reviewable words",
@@ -335,83 +407,83 @@
   "actual_browser_zoom": "UNVERIFIED: shortcut attempt left actual pixelRatio and CSS viewport unchanged; native reflow and current CSS/control preservation verified, no magnification PASS claimed.",
   "screenshots": [
     {
-      "file": "legacy-a-current-1536x770-closed.jpg",
-      "sha256": "333aa119b46b14923643e314919e90077675af547dec7eae990b59b194f8c6b5",
-      "committed": true
-    },
-    {
-      "file": "legacy-a-current-1536x770-open.jpg",
-      "sha256": "ecdbbdf7cfc4f578be16909c951f5619299a9288850a670c816a52e033b80d8c",
-      "committed": false
-    },
-    {
-      "file": "legacy-a-current-1366x768-closed.jpg",
-      "sha256": "9c232345700fc6faf4ad4e369da601a2f42a693e5054d6d7d553e4845ef61cf0",
-      "committed": false
-    },
-    {
-      "file": "legacy-a-current-1366x768-open.jpg",
-      "sha256": "9c232345700fc6faf4ad4e369da601a2f42a693e5054d6d7d553e4845ef61cf0",
-      "committed": false
-    },
-    {
-      "file": "legacy-a-current-1024x768-closed.jpg",
-      "sha256": "8bb62338371c95c65178d3765d4b44152672f84ba761e9cc95383cd89be6a9ed",
-      "committed": false
-    },
-    {
-      "file": "legacy-a-current-1024x768-open.jpg",
-      "sha256": "d469e3595dd2cac80f542270eae4654525bb7b35573379c4070f6d65bf6fb32e",
-      "committed": false
-    },
-    {
-      "file": "legacy-a-current-900x1000-closed.jpg",
-      "sha256": "3ad7a18f229009b96c9944a83ae2db4529e81679fa422888c8670a02996b2f66",
-      "committed": false
-    },
-    {
-      "file": "legacy-a-current-900x1000-open.jpg",
-      "sha256": "3ad7a18f229009b96c9944a83ae2db4529e81679fa422888c8670a02996b2f66",
-      "committed": false
-    },
-    {
-      "file": "legacy-b-current-1536x770-closed.jpg",
-      "sha256": "aeb09114ab33020108bf2e937128e9db8e0bb66bbcbf407a28c9101a57020eb4",
-      "committed": false
-    },
-    {
-      "file": "legacy-b-current-1536x770-open.jpg",
-      "sha256": "ab3d545bab7c315c439dbfcb3ba49b51ad677d332b17e41a9e6bf325164745ef",
-      "committed": false
-    },
-    {
-      "file": "legacy-b-current-1366x768-closed.jpg",
-      "sha256": "7f77305031698319d0a2ae0885d13e67019e3e2a947ef294b0f2b8bcc6107efb",
-      "committed": false
-    },
-    {
-      "file": "legacy-b-current-1366x768-open.jpg",
-      "sha256": "5e31e90f2b78fcfea3449d7616f68d2474df4e406693358df112ed88a50e43c7",
-      "committed": false
-    },
-    {
-      "file": "legacy-b-current-1024x768-closed.jpg",
-      "sha256": "cea0eaf552afd99a621ed339983f65e1512360ef72aff62d1b964d146028ee47",
-      "committed": false
-    },
-    {
-      "file": "legacy-b-current-1024x768-open.jpg",
-      "sha256": "949fb76c73096059002b8f48f1103e042f39c79d56bb8c9523e73b98ef4a9322",
-      "committed": false
-    },
-    {
       "file": "legacy-b-current-900x1000-closed.jpg",
-      "sha256": "d275d70183f75032e5a559f3e42ffa3dbb7b6a1455709ac780294a8e7b11c5e0",
+      "sha256": "41761f750dcaac2a346e1668afcdd5b5599a2e770f0ce509f3d265b3efeb9e42",
       "committed": true
     },
     {
       "file": "legacy-b-current-900x1000-open.jpg",
-      "sha256": "b177517175fea7270484177c6a7fafc01f69ca63fcf60f3101f1eb372ee6e6d7",
+      "sha256": "dd8ea53cf1e42ae80198eb665dd103a4433697dbc708a8dbee2505ef3fad612e",
+      "committed": true
+    },
+    {
+      "file": "legacy-b-current-1024x768-closed.jpg",
+      "sha256": "5e987e8c00d742052b2d504d62dc9f27244081997eb9b705bc490fa3210ba189",
+      "committed": true
+    },
+    {
+      "file": "legacy-b-current-1024x768-open.jpg",
+      "sha256": "1522cd006d34fdbb3d769f3322b6a58ed6cd5b9d0de56b0f9db1fe4d846d6734",
+      "committed": true
+    },
+    {
+      "file": "legacy-b-current-1366x768-closed.jpg",
+      "sha256": "9c9965010dff823bdcb6a55fd66de32e81e2c96208a251f7e15ff39463fd9bcc",
+      "committed": true
+    },
+    {
+      "file": "legacy-b-current-1366x768-open.jpg",
+      "sha256": "69291e27893e47038f8753b0ff67b5589a257113900c9c8717c397696080937e",
+      "committed": true
+    },
+    {
+      "file": "legacy-b-current-1536x770-closed.jpg",
+      "sha256": "9e17db02eac05801b359fd318db4ee8af1efeaa537d3c1321604c1448e7309dd",
+      "committed": true
+    },
+    {
+      "file": "legacy-b-current-1536x770-open.jpg",
+      "sha256": "2d55f084a61fc3e3f6fc04abc1e33131f65bd3556675f41a2bc8da79a4ec60d6",
+      "committed": true
+    },
+    {
+      "file": "legacy-a-current-1536x770-closed.jpg",
+      "sha256": "ebd3aa36fa1a55e234c94b459833036c196e7933cc7874786ccdaa9bc6b49453",
+      "committed": true
+    },
+    {
+      "file": "legacy-a-current-1536x770-open.jpg",
+      "sha256": "dbd2091e0447f095f18f86a1b4e5151b2f8f0e192eceb59f9a003c741104d292",
+      "committed": true
+    },
+    {
+      "file": "legacy-a-current-1366x768-closed.jpg",
+      "sha256": "defbae01a29533204a96bc59dac2b8a6460d751ea4c2966f959f7550e4190b4a",
+      "committed": true
+    },
+    {
+      "file": "legacy-a-current-1366x768-open.jpg",
+      "sha256": "ffa9df6b809c3389f92d56aa647daddbec449811e05d3e1094502668af2cf05c",
+      "committed": true
+    },
+    {
+      "file": "legacy-a-current-1024x768-closed.jpg",
+      "sha256": "c53620c171d6f02e844bdc9afd15a3a7fd83ce75f3cd6a7005e4d4e1e45a2ed3",
+      "committed": true
+    },
+    {
+      "file": "legacy-a-current-1024x768-open.jpg",
+      "sha256": "cf3d97c3879358c873d1f8ee7fff4241604be05ce1c573c396f5e95996257ed7",
+      "committed": true
+    },
+    {
+      "file": "legacy-a-current-900x1000-closed.jpg",
+      "sha256": "a01f365b884758bf7b8e87ba51ec44415470793c100873724b27ae1c8fec4e0a",
+      "committed": true
+    },
+    {
+      "file": "legacy-a-current-900x1000-open.jpg",
+      "sha256": "5acdc2e4c95ef8ef97ed3a8daeddaf67eb87aa006fd3ab59f745198daf60e1f5",
       "committed": true
     }
   ],
@@ -419,5 +491,11 @@
     "file": "legacy-a-exact-review.jpg",
     "sha256": "656c52ff584b397c60db850bb22a9322e577f1d820b393b765bd54723749796d",
     "result": "Exact canonical sender/recipient/subject/plain text visible; Not now cancelled, no Approve performed."
+  },
+  "capture_correction": {
+    "supersedes": "9d768b550cc1f71967fc2eb47b053e205849610d",
+    "independent_review": "1392610b7b58697b1df3c6f63215df3e3fb881cb17ce8164a2ad8a778955340c",
+    "reason": "Some earlier immediate screenshots did not match the requested state. They are INVALID for the sixteen-state claim and retained in immutable Git/review evidence.",
+    "replacement": "All sixteen original full-frame captures committed, each image dimensions recorded alongside exact DOM viewport. The1536CSS-pixel native frames are1535 image pixels wide due capture scaling; originals are unresized. Every closed/open pair has different pixels. Existing Direct PAIGE opens; the actual Fold PAIGE control closes. Native fresh screenshots replace stale dark frames. No production source was changed."
   }
 }

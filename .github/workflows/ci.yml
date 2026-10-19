@@ -1127,6 +1127,21 @@ jobs:
             supabase/functions/send-beta-launch-email/index.ts \
             supabase/functions/send-admin-invitation/index.ts
 
+      - name: E09 H0 — credit alerts only from the service role, for staff of a finance-entitled business
+        if: ${{ !cancelled() }}
+        run: |
+          # detect-credit-alerts trusted any bearer verify_jwt accepts (the anon key included) and the
+          # body's client_id. The real handler, against a recording client: anything but the service-role
+          # key is 401 with no client built; a subject with zero or several businesses, a non-entitled
+          # business, or a portal-customer subject writes, pushes and emails nothing. The drift test holds
+          # the entitlement to the SQL persona expression and the one TS reader.
+          deno test --allow-import=deno.land --allow-read=supabase/functions,supabase/migrations --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/detect-credit-alerts/handler.test.ts \
+            supabase/functions/detect-credit-alerts/authority.test.ts
+          deno check --allow-import --node-modules-dir=none \
+            supabase/functions/detect-credit-alerts/index.ts \
+            supabase/functions/sync-credit-report-data/index.ts
+
       - name: Test
         if: ${{ !cancelled() }}
         run: npm run test -- --reporter=default --reporter=json --outputFile=unit-results.json

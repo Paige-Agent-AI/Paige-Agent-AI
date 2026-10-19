@@ -232,8 +232,13 @@ export type FundingGateDb = {
  *       manifest; mirrors `deriveFinanceInScopeFromFeatures`).
  * Computed as two basic reads rather than an embedded join so it cannot depend on PostgREST embedded-filter
  * resolution, and FAILS CLOSED to `read_error` on any DB error or a missing tenant (§13/§32).
+ *
+ * Exported (E09 H0) so other server-side callers read the per-business entitlement through THIS one
+ * reader rather than a second copy: `detect-credit-alerts` refuses to alert for a business it does not
+ * resolve `entitled`. The SQL twin is the persona expression in `get_paige_persona_context`; the drift
+ * test `detect-credit-alerts/authority.test.ts` holds the two to the same predicate.
  */
-async function resolveFinanceEntitlement(db: FundingGateDb, tenantId: string | null): Promise<FundingEntitlement> {
+export async function resolveFinanceEntitlement(db: FundingGateDb, tenantId: string | null): Promise<FundingEntitlement> {
   if (!tenantId) return "read_error";
   try {
     // (a) active installs for this tenant — the EXISTS over marketplace_installs JOIN marketplace_items.

@@ -1,4 +1,4 @@
--- E09 K2: relevant retrieval of customer Knowledge (20271111070000). Full replayed schema, real caller
+-- E09 K2: relevant retrieval of customer Knowledge (20271112020000). Full replayed schema, real caller
 -- roles, synthetic data only (§63: Northwind Studio, Harbor Lane Advisors, Jordan Rivera and friends);
 -- every row rolls back.
 --

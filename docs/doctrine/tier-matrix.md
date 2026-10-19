@@ -349,7 +349,7 @@ The campaign editor (Growth › Email, `src/solo/marketing-email-editor.tsx`) ga
 
 Series (welcome / nurture / re-engagement) do not take the portal key. Evidence: pgTAP `supabase/tests/e09_campaign_portal_audience.sql` 84/84 locally (17 reinstated defects each fail it); harness frames light/dark at 390/1440 (not live). Authenticated runtime UNVERIFIED.
 
-### E09 K2 — CURA's relevant retrieval of customer Knowledge (branch `e09-k2`, migration `20271111070000`, 2026-10-19; not yet merged)
+### E09 K2 — CURA's relevant retrieval of customer Knowledge (branch `e09-k2`, migration `20271112020000`, 2026-10-19; not yet merged)
 
 No visible surface changes; the customer's chat answers change. Both entry points (`client_portal_assistant_context_v2`, the 8-argument `client_portal_assistant_begin`) are authenticated-only and re-resolve the asker from the thread; staff never read a customer's private context through them.
 

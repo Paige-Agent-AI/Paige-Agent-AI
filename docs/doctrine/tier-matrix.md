@@ -334,6 +334,21 @@ posture**, and **(d) permitted-RPC scoping**, each grounded in a named resolver 
 
 ## Surface ledger — what actually SHIPPED, per tier (§66)
 
+### E09 F1a — the finance entitlement is per business and cannot be self-granted from the browser (branch `e09-funding-f1a`, migration `20271111030000`, 2026-10-19; not yet merged)
+
+Database only; no visible surface and no edge function changes in this PR (edge isolation is F1b, the next PR; the portal-side funding surfaces are slice F2). The one predicate is `_tenant_finance_entitled(business)` = an active `is_finance` Marketplace install OR `features.finance_in_scope` (the persona expression, verbatim). Production at grounding: 1 of 12 businesses entitled; it stays entitled.
+
+| Tier | Finance entitlement | Change install / flag directly from the browser | Credit alerts about a customer (staff insert/update) | Own credit upload (table + bucket) |
+|---|---|---|---|---|
+| God / Operator | per business | ✗ refused like every browser role (`FINANCE_*_REQUIRES_MARKETPLACE`), including inserting a business that carries the flag; Marketplace RPCs unchanged; `paige-mcp` `update_tenant_features` (service role) can still write the flag (known gap) | ✓ (`is_super_admin`) | ✓ unchanged |
+| Agency / Enterprise | per business | ✗ refused | only where the business is entitled; the policy follows the parent chain (`agency_can_manage_child`: agency owner/admin/manager, or a scoped specialist) | ✓ unchanged |
+| Standalone (Solo) | false unless a Marketplace install (new businesses false) | ✗ refused | only if entitled | ✓ unchanged, entitled or not (owner question Q5 open) |
+| Sub-account | false unless a Marketplace install; `'funding'` is no longer a starter preset | ✗ refused | only if entitled | ✓ unchanged (Q5) |
+| Client | `client_portal_finance_entitled` (open relationship + entitled business) | ✗ | N/A | ✗ refused |
+| Anonymous | ✗ | ✗ | ✗ | ✗ |
+
+Evidence: pgTAP `supabase/tests/e09_finance_entitlement.sql` 66/66 locally with production-equivalent grants (15 reinstated defects each fail it). Authenticated runtime UNVERIFIED (no session driven).
+
 ### E09 H0 — credit alerts gated on the business's entitlement and a staff subject (branch `e09-h0-credit-alerts`, 2026-10-19; not yet merged)
 
 Backend only (`detect-credit-alerts`); no visible surface changes. Internal-only: service-role bearer, else 401. An alert is raised only for the staff of the one finance-entitled business the subject resolves to; production holds 0 credit alerts.

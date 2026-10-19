@@ -429,6 +429,81 @@ function CustomerDrilldown({ userId, onBack }: { userId: string; onBack: () => v
           </Section>
         )}
 
+        {/* O-4: observed activation timeline — only stages whose record exists */}
+        {h.activation && h.activation.length > 0 && (
+          <Section title={`Activation — ${h.activation.length} observed stage${h.activation.length === 1 ? "" : "s"}`}>
+            <ol className="space-y-1">
+              {h.activation.map((s, i) => (
+                <li key={`${s.stage}-${i}`} className="flex items-baseline gap-2">
+                  <span
+                    className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--pg-ink)]"
+                    aria-hidden="true"
+                  />
+                  <span className="text-muted-foreground">
+                    <span className="font-medium text-foreground">{s.stage.replace(/_/g, " ")}</span>
+                    <span className="ml-1.5 text-[10px]">
+                      {s.at ? new Date(s.at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "—"}
+                    </span>
+                    <span className="block text-[10px] text-muted-foreground/70">{s.detail}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+            {h.activation_summary && (
+              <Row
+                label="Last activity"
+                value={
+                  h.activation_summary.last_activity_at
+                    ? new Date(h.activation_summary.last_activity_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
+                    : `no chat activity yet (${h.activation_summary.chat_threads ?? 0} thread${(h.activation_summary.chat_threads ?? 0) === 1 ? "" : "s"})`
+                }
+                muted
+              />
+            )}
+            <p className="pt-1 text-[10px] text-muted-foreground/60">
+              Observed records only — a stage without a record never appears here; no engagement score is invented.
+            </p>
+          </Section>
+        )}
+
+        {/* O-5: recovery — lifecycle exceptions, owner-held actions */}
+        {h.recovery && (h.recovery.stranded_signup || h.recovery.welcome_attention || h.recovery.uncompleted_webhook_events > 0) && (
+          <Section title="Recovery — needs attention">
+            {h.recovery.stranded_signup && (
+              <div className="rounded border border-[var(--pg-line)] bg-[var(--pg-attention, #b45309)]/5 p-2">
+                <p className="font-medium">Stranded signup detected</p>
+                <p className="text-[11px] text-muted-foreground">
+                  A Stripe subscription exists but provisioning never fulfilled. Recorded enrollment error:{" "}
+                  <span className="font-mono text-[10px]">{h.recovery.enrollment_last_error ?? "none recorded"}</span>.
+                  Recovery is owner-held: Stripe dashboard → the affected event → Resend re-drives the proven webhook
+                  retry path; fulfillment receipts below record the outcome.
+                </p>
+              </div>
+            )}
+            {h.recovery.welcome_attention && (
+              <div className="rounded border border-[var(--pg-line)] bg-[var(--pg-attention, #b45309)]/5 p-2">
+                <p className="font-medium">Welcome email needs review</p>
+                <p className="text-[11px] text-muted-foreground">
+                  State carries {h.recovery.welcome_attempts ?? "?"} attempt(s); last error:{" "}
+                  <span className="font-mono text-[10px]">{h.recovery.welcome_last_error ?? "none recorded"}</span>.
+                  The recorded provider error names the cause; re-arming a retryable failure is a deliberate
+                  owner action on the documented recovery path — never automatic.
+                </p>
+              </div>
+            )}
+            {h.recovery.uncompleted_webhook_events > 0 && (
+              <Row
+                label="Uncompleted Stripe events"
+                value={`${h.recovery.uncompleted_webhook_events} with recorded errors`}
+                mono={false}
+              />
+            )}
+            <p className="pt-1 text-[10px] text-muted-foreground/60">
+              This desk performs no recovery action — every lever stays owner-held and auditable.
+            </p>
+          </Section>
+        )}
+
         {/* Webhook events */}
         {h.webhook_events.length > 0 && (
           <Section title={`Stripe events (${h.webhook_events.length})`}>

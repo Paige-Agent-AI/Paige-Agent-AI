@@ -122,6 +122,7 @@ export type CustomerHistory = {
     last_error: string | null;
     provider_message_id: string | null;
     first_attempt_at: string | null;
+    sent_at: string | null;
   } | null;
   webhook_events: Array<{
     type: string;
@@ -136,6 +137,26 @@ export type CustomerHistory = {
     outcome: string;
     reference_id: string;
   }>;
+  /** O-4: observed activation stages — only stages whose canonical record exists. */
+  activation: Array<{
+    stage: string;
+    at: string;
+    detail: string;
+  }>;
+  activation_summary: {
+    stages_observed: number;
+    last_activity_at: string | null;
+    chat_threads: number;
+  };
+  /** O-5: lifecycle-exception detectors. Reads only; actions stay owner-held. */
+  recovery: {
+    stranded_signup: boolean;
+    welcome_attention: boolean;
+    welcome_last_error: string | null;
+    welcome_attempts: number | null;
+    uncompleted_webhook_events: number;
+    enrollment_last_error: string | null;
+  };
 };
 
 export function useCustomerHistory(userId: string | null) {

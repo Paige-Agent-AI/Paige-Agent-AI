@@ -6,8 +6,9 @@
 --   * a validity window (valid_from / valid_until), checked at every read, at begin and at settle.
 -- Nothing is published by this migration: it creates no share and backfills nothing. A business-wide
 -- share exists only after an owner's explicit prepare -> set, which writes an audit_logs receipt.
--- Business-wide shares require a pinned (published) generation, so drafts, pending review text and
--- legacy (unpinned) documents are never business-wide customer material.
+-- Business-wide shares require a pinned (published) generation, so drafts and legacy (unpinned)
+-- documents are never business-wide customer material. A canonical document with newer text awaiting
+-- review can be shared only as its reviewed canonical text; the pending_review text is never shared.
 --
 -- Finance: a document that reads as funding/credit (text heuristic) or carries a finance Marketplace
 -- tag is customer-visible only while its business holds the finance entitlement

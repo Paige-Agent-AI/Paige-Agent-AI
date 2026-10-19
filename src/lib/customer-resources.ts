@@ -67,12 +67,15 @@ export async function listCustomerResources(client: ResourceRpc, scope: Resource
     p_tenant_id: scope.tenant, p_source_refs: null, p_limit: 20, p_offset: offset, p_include_content: false,
   });
   customerScope(v, scope);
-  // The read gained authorized_count + sources_limited (E09 K1). Both shapes are accepted, so the
-  // page keeps working whichever of the database and the frontend deploys first; when present, the
-  // two counts must agree with the page.
+  // The read gained authorized_count + sources_limited (E09 K1). This decoder accepts both shapes, so
+  // it works before and after the database change. (A browser still running the bundle from before
+  // this change rejects the counted read until it reloads.) When present, the counts must agree with
+  // the page. Shares withdrawn between pages can leave the requested offset past authorized_count:
+  // that is an empty last page, not a malformed one.
   const counted = exact(v, ['actor_id','contact_id','tenant_id','sources','next_offset','page_may_continue','authorized_count','sources_limited']);
   if ((!counted && !exact(v, ['actor_id','contact_id','tenant_id','sources','next_offset','page_may_continue']))
-    || (counted && (!integer(v.authorized_count) || !integer(v.next_offset) || v.authorized_count < v.next_offset
+    || (counted && (!integer(v.authorized_count) || !integer(v.next_offset)
+      || (v.authorized_count < v.next_offset && !(Array.isArray(v.sources) && v.sources.length === 0))
       || v.sources_limited !== (v.authorized_count > v.next_offset)))
     || !Array.isArray(v.sources) || v.sources.length > 20 || !v.sources.every(source)
     || v.next_offset !== offset + v.sources.length || typeof v.page_may_continue !== 'boolean'

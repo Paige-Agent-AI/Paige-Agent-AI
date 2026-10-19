@@ -9,15 +9,17 @@
 --      src/__tests__/finance-keyword-drift.test.ts) and the plan's additions read as finance;
 --      ordinary business text does not.
 --   4. Who may publish business-wide: the owner yes; a non-admin member, the bare platform operator,
---      a customer and another business's owner no.
+--      a customer and another business's owner no, both at prepare and when each calls set directly
+--      with a valid proposal hash it computed itself (set is the real boundary).
 --   5. What may be published business-wide: only a canonical, pinned document of this business;
 --      never a legacy (unpinned) document, a draft, another business's document, or a finance-marked
 --      document (by text alone, or by the Marketplace tag alone) while the business is not entitled.
 --      Kind and window arguments are validated; there is no finance kind.
 --   6. The explicit act: prepare -> set writes one share and one receipt; replay is idempotent; a
 --      reused operation id with other arguments and a stale proposal are refused.
---   7. The customer read unions contact and business rows, one source per document (contact wins),
---      keeps the exact per-source keys, and reports authorized_count / sources_limited.
+--   7. The customer read unions contact and business rows, one source per document (the customer's
+--      own share wins even when the business share is newer), keeps the exact per-source keys, and
+--      reports authorized_count / sources_limited (a document shared both ways counts once).
 --   8. Isolation and cut-offs: another business's customer never sees it; a paused customer is
 --      refused; merge, deactivation and business suspension cut off; a window that has not started
 --      or has ended is not current; an edited document fails closed; withdrawal works even after the
@@ -27,11 +29,12 @@
 --      non-entitled business is never shown.
 --  10. Chunks (S1): only an exact chunk of the shared pinned generation is admissible.
 --  11. Snapshot v2: v1 still validates; per-kind validators, caps and merge; unknown kinds and wrong
---      keys are rejected; K1 admits only knowledge_share refs as current; passages are checked.
+--      keys are rejected; K1 admits only knowledge_share refs as current; passages are checked. The v1
+--      assistant context refuses a version 2 accepted binding and skips a version 2 history turn.
 --  12. Settle (F-10): the settle lock takes business share rows FOR SHARE, and a withdraw between begin
 --      and settle withholds the answer; a paused customer fails the lock.
 BEGIN;
-SELECT plan(129);
+SELECT plan(141);
 
 -- ── Seed ────────────────────────────────────────────────────────────────────────────────────────
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
@@ -189,6 +192,26 @@ SELECT is(pg_temp.prep('a5','a',1)->>'sqlstate','42501','a non-admin member cann
 SELECT is(pg_temp.prep('f1','a',1)->>'sqlstate','42501','the bare platform operator cannot publish a business''s Knowledge to its customers');
 SELECT is(pg_temp.prep('a2','a',1)->>'sqlstate','42501','a customer cannot publish');
 SELECT is(pg_temp.prep('b1','a',1)->>'sqlstate','42501','another business''s owner cannot publish here');
+-- prepare is not the boundary: anyone can compute a proposal hash. Each refused caller calls set
+-- directly with a valid hash it computed for itself (the same function prepare uses).
+CREATE FUNCTION pg_temp.selfhash(_actor text,_tenant text,_doc int) RETURNS text LANGUAGE sql AS $$
+ SELECT public._client_knowledge_share_proposal_v2(pg_temp.u(_actor),pg_temp.t(_tenant),'business',NULL,pg_temp.d(_doc),true,
+  'information',NULL,NULL,0,(SELECT public._client_knowledge_source(d)->>'source_fingerprint'
+   FROM public.tenant_knowledge_docs d WHERE d.id=pg_temp.d(_doc))) $$;
+CREATE FUNCTION pg_temp.direct_set(_actor text,_tenant text,_doc int) RETURNS jsonb LANGUAGE sql AS $$
+ SELECT pg_temp.as_user(pg_temp.u(_actor),format(
+  'SELECT public.set_client_portal_business_knowledge_share(%L,%L,true,%L,NULL,NULL,0,%L,%L)',
+  pg_temp.t(_tenant),pg_temp.d(_doc),'information',pg_temp.selfhash(_actor,_tenant,_doc),gen_random_uuid())) $$;
+SELECT is(pg_temp.selfhash('a1','a',1),pg_temp.prep('a1','a',1)->>'proposal_hash',
+ 'the self-computed hash is exactly the one prepare hands the owner (so the refusals below are not hash failures)');
+SELECT is(pg_temp.direct_set('a5','a',1),'{"error":"CUSTOMER_KNOWLEDGE_FORBIDDEN","sqlstate":"42501"}'::jsonb,
+ 'a non-admin member calling set directly with a valid self-computed hash is refused');
+SELECT is(pg_temp.direct_set('f1','a',1),'{"error":"CUSTOMER_KNOWLEDGE_FORBIDDEN","sqlstate":"42501"}'::jsonb,
+ 'the bare platform operator calling set directly is refused');
+SELECT is(pg_temp.direct_set('a2','a',1),'{"error":"CUSTOMER_KNOWLEDGE_FORBIDDEN","sqlstate":"42501"}'::jsonb,
+ 'a customer calling set directly is refused');
+SELECT is(pg_temp.direct_set('b1','a',1),'{"error":"CUSTOMER_KNOWLEDGE_FORBIDDEN","sqlstate":"42501"}'::jsonb,
+ 'another business''s owner calling set directly is refused');
 
 -- ── 5. What may be published business-wide ──────────────────────────────────────────────────────
 SELECT is(pg_temp.prep('a1','a',2)->>'error','CUSTOMER_KNOWLEDGE_NOT_PREPARED','a legacy (unpinned) document is refused');
@@ -245,6 +268,25 @@ SELECT ok((SELECT (pg_temp.as_user(pg_temp.u('a1'),format('SELECT public.set_cli
 SELECT ok((SELECT jsonb_array_length(c->'sources')=1 AND (c#>>'{sources,0,share_id}')::uuid=(SELECT id FROM public.tenant_knowledge_client_shares
   WHERE contact_id=pg_temp.c('a2') AND document_id=pg_temp.d(1)) FROM pg_temp.ctx('a2','a') c),
  'Jordan gets one source for the document, and it is the per-customer share');
+SELECT is(pg_temp.ctx('a2','a')->'authorized_count','1'::jsonb,
+ 'a document shared with Jordan both per-customer and business-wide counts once in authorized_count');
+-- A page requested past authorized_count (shares withdrawn between pages) is an empty last page with
+-- next_offset = the offset: the shape src/lib/customer-resources.ts accepts as an empty page.
+SELECT is((SELECT jsonb_build_object('n',jsonb_array_length(c->'sources'),'next',c->'next_offset','count',c->'authorized_count',
+   'limited',c->'sources_limited','more',c->'page_may_continue')
+  FROM pg_temp.as_user(pg_temp.u('a2'),format('SELECT public.client_portal_knowledge_context(%L,NULL,20,20,false)',pg_temp.t('a'))) c),
+ '{"n":0,"next":20,"count":1,"limited":false,"more":false}'::jsonb,
+ 'a page past authorized_count is empty, ends the list, and is not marked limited');
+-- Preference, not recency: make the business share clearly the NEWER row. The customer's own share
+-- still wins.
+UPDATE public.tenant_knowledge_client_shares SET updated_at=now()-interval '1 day'
+ WHERE contact_id=pg_temp.c('a2') AND document_id=pg_temp.d(1);
+UPDATE public.tenant_knowledge_client_shares SET updated_at=now() WHERE id=(pg_temp.share('a',1)).id;
+SELECT ok((SELECT s.updated_at>c.updated_at FROM pg_temp.share('a',1) s, public.tenant_knowledge_client_shares c
+  WHERE c.contact_id=pg_temp.c('a2') AND c.document_id=pg_temp.d(1)),'(the business share is now the newer row)');
+SELECT ok((SELECT jsonb_array_length(c->'sources')=1 AND (c#>>'{sources,0,share_id}')::uuid=(SELECT id FROM public.tenant_knowledge_client_shares
+  WHERE contact_id=pg_temp.c('a2') AND document_id=pg_temp.d(1)) FROM pg_temp.ctx('a2','a') c),
+ 'the per-customer share wins over a NEWER business share of the same document');
 SELECT ok((SELECT (c#>>'{sources,0,share_id}')::uuid=(pg_temp.share('a',1)).id FROM pg_temp.ctx('a3','a') c),
  'Riley still gets the business-wide share');
 SELECT is((SELECT count(*) FROM jsonb_array_elements(pg_temp.as_user(pg_temp.u('a1'),format('SELECT public.list_client_portal_knowledge_shares(%L,%L)',
@@ -360,6 +402,28 @@ SELECT ok(public._client_knowledge_refs_current(pg_temp.t('a'),pg_temp.c('a3'),j
  'a v1 ref to a business-wide share is current for an open customer of the business');
 SELECT ok(NOT public._client_knowledge_refs_current(pg_temp.t('b'),pg_temp.c('b2'),jsonb_build_array(pg_temp.ref1(pg_temp.share('a',1)))),
  'and never for another business''s customer');
+
+-- The v1 assistant context only replays v1 bindings. A version 2 accepted binding is refused, and a
+-- version 2 history turn is skipped as limited. (Nothing writes v2 snapshots until K2; the turn is
+-- written directly here as the fixture.)
+CREATE TEMP TABLE k1_thread AS SELECT (pg_temp.as_user(pg_temp.u('a2'),
+ $$SELECT to_jsonb(public.paige_chat_thread_create(NULL,'customer','Jordan asks','{}'))$$)#>>'{}')::uuid id;
+INSERT INTO public.paige_chat_turns(thread_id,role,content,bundle_ref,interactive_intent_id,interactive_actor_id,interactive_tenant_id)
+SELECT id,'user','K1 v2-bound question',jsonb_build_object('customer_knowledge',jsonb_build_object('version',2,
+  'retrieval_refs','[]'::jsonb,'source_refs',jsonb_build_array(pg_temp.ref2(pg_temp.share('a',1))))),
+ 'e0b10600-0000-4000-8000-000000000001',pg_temp.u('a2'),pg_temp.t('a') FROM k1_thread;
+SELECT ok(public._client_knowledge_snapshot_valid((SELECT bundle_ref->'customer_knowledge' FROM public.paige_chat_turns
+  WHERE interactive_intent_id='e0b10600-0000-4000-8000-000000000001'))
+ AND public._client_knowledge_refs_current(pg_temp.t('a'),pg_temp.c('a2'),jsonb_build_array(pg_temp.ref2(pg_temp.share('a',1)))),
+ '(the v2 binding is itself valid and current, so only its version can refuse it)');
+SELECT is(pg_temp.as_user(pg_temp.u('a2'),format('SELECT public.client_portal_assistant_context(%L,%L)',
+  (SELECT id FROM k1_thread),'e0b10600-0000-4000-8000-000000000001')),
+ '{"error":"CUSTOMER_CONTEXT_BINDING_INVALID","sqlstate":"42501"}'::jsonb,
+ 'the v1 assistant context refuses a version 2 accepted binding');
+SELECT ok((SELECT (c->'history_limited')::boolean AND NOT jsonb_path_exists(c,'$.history[*] ? (@.content == "K1 v2-bound question")')
+  FROM pg_temp.as_user(pg_temp.u('a2'),format('SELECT public.client_portal_assistant_context(%L,%L)',
+  (SELECT id FROM k1_thread),'e0b10600-0000-4000-8000-000000000002')) c),
+ 'a new turn on the same thread works, and skips the version 2 history turn as limited');
 
 -- ── 12. Settle (F-10) ───────────────────────────────────────────────────────────────────────────
 CREATE EXTENSION IF NOT EXISTS pgrowlocks;

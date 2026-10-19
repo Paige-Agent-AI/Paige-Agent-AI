@@ -361,6 +361,45 @@ describe("Marketing › Email campaign editor", () => {
     expect(order).toEqual(["start 1:Old", "end 1", "start 2:New", "end 2", "approve"]);
   });
 
+  it("E09 C1: an announcement can go to customers with portal access, and says who Updates leaves out", async () => {
+    window.history.replaceState(null, "", "/solo/1/growth/email?campaign=c-new");
+    const read = campaignRead();
+    read.campaign.kind = "announcement";
+    read.choices = { ...read.choices, portal: { open: 3 } } as typeof read.choices;
+    answers.read_email_campaign = { data: read, error: null };
+    answers.email_audience_preview = { data: { matched: 3, eligible: 2, no_address: 0, opted_out: 0, suppressed: 0, no_consent: 1, daily_cap: 500, remaining_today: 400, postal_address_set: true }, error: null };
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    await mount();
+    expect(text()).toContain("so are portal customers who turned off updates and offers");
+    const chip = button(/^Customers with portal access/)!;
+    expect(chip.textContent).toBe("Customers with portal access3");
+    expect(chip.getAttribute("aria-pressed")).toBe("false");
+    expect(button("Any contact")!.getAttribute("aria-pressed")).toBe("true");
+    await act(async () => { chip.click(); });
+    await act(async () => { vi.advanceTimersByTime(900); });
+    await flush();
+    expect(button(/^Customers with portal access/)!.getAttribute("aria-pressed")).toBe("true");
+    expect(calls.filter((c) => c.fn === "email_campaign_update_draft").at(-1)!.args).toMatchObject({ p_audience: { portal: "active" } });
+    expect(calls.filter((c) => c.fn === "email_audience_preview").at(-1)!.args).toEqual({ p_rule: { portal: "active" }, p_kind: "announcement", p_segment_id: null });
+    expect(text()).toContain("Left out: 1 portal customer with updates and offers turned off.");
+    // Back to everyone: the key leaves the rule rather than being saved as a value.
+    await act(async () => { button("Any contact")!.click(); });
+    await act(async () => { vi.advanceTimersByTime(900); });
+    await flush();
+    expect(calls.filter((c) => c.fn === "email_campaign_update_draft").at(-1)!.args.p_audience).toEqual({});
+  });
+
+  it("E09 C1: a standard email shows the portal choice but never the Updates line", async () => {
+    window.history.replaceState(null, "", "/solo/1/growth/email?campaign=c-new");
+    const read = campaignRead();
+    read.choices = { ...read.choices, portal: { open: 3 } } as typeof read.choices;
+    answers.read_email_campaign = { data: read, error: null };
+    answers.email_audience_preview = { data: { matched: 4, eligible: 4, no_address: 0, opted_out: 0, suppressed: 0, no_consent: 2, daily_cap: 500, remaining_today: 400, postal_address_set: true }, error: null };
+    await mount();
+    expect(button(/^Customers with portal access/)).toBeTruthy();
+    expect(text()).not.toContain("updates and offers");
+  });
+
   it("a refusal from the database reads in the owner's words", async () => {
     window.history.replaceState(null, "", "/solo/1/growth/email?campaign=c-new");
     answers.read_email_campaign = { data: campaignRead(), error: null };

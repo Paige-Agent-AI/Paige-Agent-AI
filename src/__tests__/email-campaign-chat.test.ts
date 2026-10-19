@@ -112,6 +112,43 @@ describe("email campaign chat tools", () => {
     expect(calls).toHaveLength(0);
   });
 
+  it("E09 C1: PAIGE can address only customers with portal access, through the same rule the editor saves", async () => {
+    const { deps, calls } = caller({
+      email_campaign_draft: { data: { campaign_id: CAMPAIGN, version_id: VERSION, version_no: 1, created: false } },
+      read_email_campaigns: draftRead({ audience: { portal: "active", stages: ["lead"] } }),
+    });
+    const result = await run("email_campaign_draft", { campaign_id: CAMPAIGN, audience: { portal: "active", stages: ["lead"] } }, deps);
+    expect(result.outcome).toBe("succeeded");
+    expect(calls[0].args.p_audience).toEqual({ stages: ["lead"], portal: "active" });
+    const cleared = await run("email_campaign_draft", { campaign_id: CAMPAIGN, audience: { portal: null } }, caller({
+      email_campaign_draft: { data: { campaign_id: CAMPAIGN, version_id: VERSION, version_no: 1, created: false } },
+      read_email_campaigns: draftRead({ audience: {} }),
+    }).deps);
+    expect(cleared.outcome).toBe("succeeded");
+    const draft = EMAIL_CAMPAIGN_TOOLS.find((t) => t.function.name === "email_campaign_draft")!;
+    expect(draft.function.description).toMatch(/portal:"active"/);
+    expect(draft.function.description).toMatch(/turned off updates and offers/);
+  });
+
+  it("E09 C1: any other portal value is refused before the database, and the database's own refusal reads in words", async () => {
+    const { deps, calls } = caller({});
+    for (const portal of ["yes", true, "open", 1]) {
+      const result = await run("email_campaign_draft", { campaign_id: CAMPAIGN, audience: { portal } }, deps);
+      expect(result.outcome).toBe("invalid");
+    }
+    expect(calls).toHaveLength(0);
+    const refused = await run("email_campaign_draft", { campaign_id: CAMPAIGN, audience: { portal: "active" } }, caller({ email_campaign_draft: { error: { message: "rule_invalid" } } }).deps);
+    expect(refused.outcome).toBe("refused");
+    expect(String(refused.content.error)).toMatch(/customers with portal access/);
+  });
+
+  it("E09 C1: the campaign read tells PAIGE how many customers have open portal access, when the database says", async () => {
+    const read = draftRead();
+    (read.data as Record<string, unknown>).choices = { stages: [], sources: [], tags: [], portal: { open: 3 } };
+    const result = await run("read_email_campaigns", { campaign_id: CAMPAIGN }, caller({ read_email_campaigns: read }).deps);
+    expect(result.content.audience_choices).toEqual({ stages: [], sources: [], tags: [], portal_customers: 3 });
+  });
+
   it("needs an active business", async () => {
     const { deps, calls } = caller({});
     const result = await run("read_email_campaigns", {}, deps, null);

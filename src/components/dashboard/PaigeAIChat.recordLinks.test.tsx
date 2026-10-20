@@ -261,10 +261,10 @@ describe("E4-S3 — the same links after a reload", () => {
 });
 
 describe("E4-S3 — every live assistant rebuild carries the links (no frame order can drop them)", () => {
-  it("each setMessages literal that carries crmResults also carries recordLinks", async () => {
+  it("each direct or scoped stream snapshot that carries crmResults also carries recordLinks", async () => {
     const { readFileSync } = await import("node:fs");
     const src = readFileSync("src/components/dashboard/PaigeAIChat.tsx", "utf8");
-    const literals = src.split("\n").filter((l) => l.includes('setMessages([...newMessages, { id: assistantId') && l.includes("crmResults:"));
+    const literals = src.split("\n").filter((l) => /\b(?:setMessages|setStreamMessages)\(\[\.\.\.newMessages, \{ id: assistantId/.test(l) && l.includes("crmResults:"));
     expect(literals.length).toBeGreaterThanOrEqual(10);
     for (const l of literals) expect(l).toContain("recordLinks:");
   });

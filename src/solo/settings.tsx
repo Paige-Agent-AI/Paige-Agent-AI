@@ -58,6 +58,7 @@ import { CalendarsView } from "./connections-calendars";
 import { SoloBusinessContextSetup } from "./SoloBusinessContextSetup";
 import { SoloBillingView } from "./settings-billing";
 import { SoloSettingsAnalytics } from "./settings-analytics";
+import { interviewReturnPath } from "./solo-interview-navigation";
 import "./settings.css";
 
 function OrthogonalConnectionState({ accountLabel, healthLabel, tone }: { accountLabel: string; healthLabel: string; tone: ConnectionStateTone }) {
@@ -218,10 +219,12 @@ export const READINESS_COPY: Record<string, { headline: string; next: string }> 
   registration_absent:        { headline: "Texting is not ready yet", next: "Carriers require your business to be registered before any text can send, and nothing has been registered for your business yet." },
   registration_not_approved:  { headline: "Texting is not ready yet", next: "Your registration is prepared but has not been filed with carriers. Texting stays off until it is approved." },
   // Was: "Collect consent through your intake forms first…" — also unbacked. The
-  // ONLY writer of paige_consent_events is the inbound-SMS handler, which records
-  // a grant when a person replies with a START-class keyword. No intake form
-  // records SMS consent, so that sentence sent tenants to do something that
-  // stores nothing (§13).
+  // ONLY writer of an SMS GRANT in paige_consent_events is the inbound-SMS handler,
+  // which records it when a person replies with a START-class keyword. (Other
+  // writers record opt-OUTS — the business's pause, a customer's own portal choice
+  // since E09 Slice 6 — and the portal never records an SMS opt-in, owner D1.) No
+  // intake form records SMS consent, so that sentence sent tenants to do something
+  // that stores nothing (§13).
   no_consent_recorded:        { headline: "Texting is not ready yet", next: "Nobody has agreed to be texted yet. Consent is recorded when a person replies to confirm, and until then every message is held." },
 };
 
@@ -1031,8 +1034,6 @@ function SendingDomainsPanel({ comms }: { comms: ReturnType<typeof useSoloComms>
     return res.ok;
   };
 
-  if (!comms.canManage) return <NotYours what="sending domains"/>;
-
   return <>
     {comms.domains.length > 0 && <div className="ss-list">
       {comms.domains.map((d) => <div key={d.id}>
@@ -1041,7 +1042,7 @@ function SendingDomainsPanel({ comms }: { comms: ReturnType<typeof useSoloComms>
           <small>{d.fromEmailLocal}@{d.domain}</small>
         </span>
         <Status tone={d.status === "verified" ? "ok" : "warn"}>{d.status}</Status>
-        <div className="ss-row-actions">
+        {comms.canManage && <div className="ss-row-actions">
           {/* "Check DNS" rather than "Verify": this asks the provider what the
               records currently say. It cannot make an unpublished record exist,
               and a button that implied otherwise would promise a result the
@@ -1058,12 +1059,12 @@ function SendingDomainsPanel({ comms }: { comms: ReturnType<typeof useSoloComms>
             onClick={() => { if (window.confirm(`Remove ${d.domain}? Mail already sent is unaffected, but this domain stops being available as a sender.`)) void run(`remove:${d.id}`, () => comms.removeDomain(d.id), `${d.domain} removed.`); }}>
             Remove
           </button>
-        </div>
+        </div>}
         {/* DNS RECORDS: the copy-paste-able record set Resend returned for this
             domain — what the tenant publishes at their registrar (Namecheap,
             GoDaddy, Cloudflare, Vercel, etc). Shown whenever records exist,
             especially while status is pending (the tenant is mid-publish). */}
-        {d.dnsRecords.length > 0 && <div className="ss-dns-records" style={{ marginTop: 8, marginBottom: 4 }}>
+        {comms.canManage && d.dnsRecords.length > 0 && <div className="ss-dns-records" style={{ marginTop: 8, marginBottom: 4 }}>
           <p className="ss-note" style={{ marginBottom: 6 }}>
             <strong>Publish these at your DNS host ({d.status === "verified" ? "verified — already live" : "then click Check DNS above"}):</strong>
           </p>
@@ -1086,13 +1087,15 @@ function SendingDomainsPanel({ comms }: { comms: ReturnType<typeof useSoloComms>
 
     {comms.domains.length === 0 && <div className="ss-empty"><WifiOff aria-hidden/>No custom sending domain yet — mail goes out on the PAIGE-managed identity above.</div>}
 
-    {!showAdd && <div className="ss-form-actions" style={{ marginTop: 11 }}>
+    {!comms.canManage && <NotYours what="sending domains"/>}
+
+    {comms.canManage && !showAdd && <div className="ss-form-actions" style={{ marginTop: 11 }}>
       <button type="button" className="ss-btn" onClick={() => { setShowAdd(true); setOutcome(null); }}>
         <Globe2 aria-hidden/>Add a domain
       </button>
     </div>}
 
-    {showAdd && <form className="ss-form" onSubmit={async (e) => {
+    {comms.canManage && showAdd && <form className="ss-form" onSubmit={async (e) => {
       e.preventDefault();
       if (!form.domain.trim() || !form.fromName.trim()) { setOutcome({ tone: "bad", message: "A domain and a From name are both required." }); return; }
       const ok = await run("add", () => comms.addDomain(form), "Registered. Publish the DNS records it returns, then Check DNS.");
@@ -1716,6 +1719,13 @@ function SoloSettingsContent({ openPaige }: { openPaige?: () => void }) {
   const params = useParams();
   const account = params.account ?? "";
   const entry = useMemo(() => resolveSoloSettingsEntry(location.search, account), [location.search, account]);
+  const tenant = useTenantContext();
+  // A return address is navigation only. Do not carry it into an unresolved,
+  // different-account or Operator view; Chat independently verifies the thread.
+  const interviewReturn = !entry && ["integrations", "connections", "vault"].includes(tab) &&
+    !tenant.loading && !tenant.isPlatformStaff && tenant.activeTenantId &&
+    String(tenant.activeTenant?.account_number ?? "") === account && account
+    ? interviewReturnPath(account, location.search) : null;
   // BOTH ways in are one-shot, and neither can be expressed by deleting a
   // parameter alone.
   //
@@ -1851,6 +1861,7 @@ function SoloSettingsContent({ openPaige }: { openPaige?: () => void }) {
         remains their sole heading. */}
     {tab !== "vault" && tab !== "setup" && tab !== "connections" && tab !== "integrations" && tab !== "analytics" && <header className="ss-page-head"><div><span>Solo settings</span><h1>{current.label}</h1><p>{current.key === "setup" ? "The owner-confirmed business truth Paige may use to understand and support this workspace." : current.key === "integrations" ? "External tools, bridges, and safe configuration handoffs." : "Account configuration with honest runtime boundaries."}</p></div><Truth value={current.truth}/></header>}
     {entry && <div className="ss-return"><span>Opened from {entry.origin === "calendar" ? "Calendar" : "Conversations"}</span>{entry.returnTo ? <Link to={entry.returnTo}>Return to {entry.origin === "calendar" ? "Calendar" : "Conversations"}</Link> : <span>Return address rejected</span>}</div>}
+    {interviewReturn && <nav className="ss-return ss-return--interview" aria-label="Interview navigation"><Link to={interviewReturn}>Return to interview</Link></nav>}
     {current.key === "setup" && <SettingsMoveNotice key={account}/>}
     <div className="ss-content" data-settings-tab={tab} data-tab-count={tabs.length}>{view}</div>
   </div>;

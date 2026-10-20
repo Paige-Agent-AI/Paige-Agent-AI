@@ -72,9 +72,9 @@ insert into public.plans(id,tenant_id,title,horizon,starts_on,ends_on,scope,crea
  ('ee010000-0000-4000-8000-00000000a012','ee010000-0000-4000-8000-000000001111','Test team project','custom',current_date,current_date+10,'team','ee010000-0000-4000-8000-000000000003','ee010000-0000-4000-8000-000000000003');
 insert into public.plan_items(id,tenant_id,plan_id,item_type,title,created_by,assigned_to_user_id) values
  ('ee010000-0000-4000-8000-00000000a013','ee010000-0000-4000-8000-000000001111','ee010000-0000-4000-8000-00000000a012','task','Test teammate private work','ee010000-0000-4000-8000-000000000003','ee010000-0000-4000-8000-000000000003');
-select pg_temp.check_true(has_function_privilege('authenticated','public.plan_list_operations_scoped(uuid,uuid,date,date,text,integer,uuid,boolean,uuid)','EXECUTE'),'guarded read authenticated grant');
-select pg_temp.check_true(not has_function_privilege('anon','public.plan_list_operations_scoped(uuid,uuid,date,date,text,integer,uuid,boolean,uuid)','EXECUTE'),'guarded read anon denied');
-select pg_temp.check_true(not has_function_privilege('service_role','public.plan_list_operations_scoped(uuid,uuid,date,date,text,integer,uuid,boolean,uuid)','EXECUTE'),'guarded read service denied');
+select pg_temp.check_true(has_function_privilege('authenticated','public.plan_list_operations_scoped(uuid,uuid,date,date,text,integer,uuid,boolean,uuid,boolean)','EXECUTE'),'guarded read authenticated grant');
+select pg_temp.check_true(not has_function_privilege('anon','public.plan_list_operations_scoped(uuid,uuid,date,date,text,integer,uuid,boolean,uuid,boolean)','EXECUTE'),'guarded read anon denied');
+select pg_temp.check_true(not has_function_privilege('service_role','public.plan_list_operations_scoped(uuid,uuid,date,date,text,integer,uuid,boolean,uuid,boolean)','EXECUTE'),'guarded read service denied');
 select pg_temp.check_true(jsonb_array_length(public.plan_list_operations_scoped('ee020000-0000-4000-8000-000000000001','ee010000-0000-4000-8000-000000001111')->'loose_items')=0,'global admin elsewhere cannot read unrelated loose work');
 select pg_temp.check_true(jsonb_array_length(public.plan_list_operations_scoped('ee020000-0000-4000-8000-000000000001','ee010000-0000-4000-8000-000000001111')->'plans')=1,'target member sees team plan but not private plan');
 select pg_temp.check_true(jsonb_array_length(public.plan_list_operations_scoped('ee020000-0000-4000-8000-000000000001','ee010000-0000-4000-8000-000000001111')->'plans'->0->'items')=0,'team plan does not disclose unrelated private items');

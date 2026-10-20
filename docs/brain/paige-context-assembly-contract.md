@@ -35,6 +35,24 @@ Master §3's inventory: context assembly "remains distributed." Grounded:
 
 ## 2. The contract
 
+E09 customer-private Chat extends the existing thread/turn records with an explicit
+customer audience. Native identity comes from the caller-bound CRM relationship,
+never the staff active-workspace pointer. Private customer turns require issued
+actor/business/intent and terminal evidence; legacy admin/owner thread visibility
+does not grant access to this audience. The existing v2 admission/publication
+contracts consume that relationship without changing rollout or executor gates.
+Customer-private Chat is never staff action authority, including for a person
+with a legitimate staff role in another business. Incumbent staff writers require
+a workspace audience and the canonical contact predicate's internal staff-only
+narrowing. The existing two-argument contact read contract still includes linked
+customers; no new caller-executable actor selector is granted. Workspace creation
+proves native staff/contact or self-membership authority and platform self scope.
+The canonical service-only durable-work creator accepts workspace thread audience
+only; private customer Chat cannot become owner-work authority even for a member.
+This native seam alone does not activate customer model input, Knowledge
+publication, tools, Live or browser history; those consumers must bind the same
+audience, exclude owner context and preserve current publication permissions.
+
 **One ContextBundle per turn, many typed sources, zero silent degradation.**
 
 1. **Identity once, scope-checked continuously.** Actor, tenant, workspace, role, and
@@ -91,3 +109,59 @@ refactor beat (byte-comparable projection for identical inputs).
 - #93/#117 (memory/compaction): the transcript source defers to that workstream's design;
   this contract only types the seam.
 - #754 (Brain wiring): Brain/Mind/Memory eligibility contracts are linked, not redefined.
+
+## 5. Customer frame read primitive — implementation candidate
+
+The existing customer self-profile, public brand and portal configuration can be
+composed through `public.client_portal_frame()` in one STABLE database snapshot.
+Its caller JWT supplies the subject; there are no actor, client or tenant arguments.
+The unchanged native relationship reader excludes inactive/merged/unlinked or
+ambiguous relationships. Brand and profile must name the same business. The closed
+result is `{actor_id,profile,brand,config}`; it creates no identity, staff membership,
+program, Knowledge store, action or receipt. Only authenticated execution is granted;
+PUBLIC, anon and service_role execution is revoked. Canonical records remain the
+existing clients, tenant brand cascade and tenants.features.portal_config.
+
+The primitive is preparation for the existing customer frame and a typed customer
+ContextSource adapter; it does not wire either consumer or add a Spine/model tool.
+The customer assistant represents the business to its customer. Its future adapter
+must include only customer-public presentation and authorized customer/program
+records, report unavailable/degraded input honestly, revalidate the actor/client/
+business and policy/publication versions at protected boundaries, and preserve
+internal owner/operator context separately. Presentation settings do not grant
+record, Knowledge, tool, approval or provider authority. Private customer AI history
+and deliberately business-shared Conversations retain separate native audiences.
+
+Source: migration `20271108190000_e09_customer_frame_projection.sql`. Proof extends
+the incumbent `scripts/proof/e09-client-self-projection.mjs --frame` and the existing
+fully replayed `supabase/tests/client_portal_self_projection.sql`; no new QA or CI
+engine. Local synthetic native PostgreSQL cases are not authenticated Supabase or
+customer acceptance. Exact-head review/CI, migration/source readback and consumer
+acceptance remain separately required. Overall clients.portal remains PARTIAL;
+multi-business selection, customer Knowledge publication, private durable history,
+Chat/Live applicability and the complete seven-pillar experience remain proof owed.
+
+### Customer Chat consumer candidate
+
+The typed client-portal-persona ContextSource reads that atomic frame and exposes
+only bounded customer-public business presentation. In the incumbent paige-ai-chat
+runtime, customer_portal narrows the audience; native relationship and private
+thread authorization establish it. The browser sends current text, native thread
+and intent, never customer identity or prompt history. Canonical issued turns are
+rehydrated from the existing Chat records. Owner/operator playbook, brief,
+Knowledge, operating Memory and specialist context are excluded; trace content
+is metadata-only and private AI text is not copied to business-shared Rail.
+
+The existing provider/admission/settlement path remains controlling. Native
+actor/client/business, private audience and presentation policy are revalidated
+before protected dispatch/output. Customer tools and Live are not activated by
+this conversational repair. Explicit version-bound customer/program Knowledge
+publication, real domain reads/actions and verified multi-business membership
+remain required follow-on contracts. See
+docs/evidence/ui-delivery/e09-customer-chat-audience.md for source, local proof
+and the separate hosted/authenticated acceptance boundary. This is a consumer
+candidate, not proof of complete customer Chat or Portal availability.
+
+The incumbent legacy paige-context-router remains a workspace persona: a resumed
+thread must have a caller-JWT-verified workspace audience before context loading,
+writes or model work. It cannot replay customer-private history into that persona.

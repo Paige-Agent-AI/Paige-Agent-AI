@@ -92,7 +92,7 @@ import Welcome from "./Welcome";
 function ContextProbe() {
   const context = useTenantContext();
   const location = useLocation();
-  return <i data-location={location.pathname} data-provider-user={context.activeUserId ?? ""} data-provider-tenant={context.activeTenantId ?? ""} data-provider-status={context.accountContextStatus} />;
+  return <i data-location={location.pathname} data-search={location.search} data-provider-user={context.activeUserId ?? ""} data-provider-tenant={context.activeTenantId ?? ""} data-provider-status={context.accountContextStatus} />;
 }
 
 function LeaveWelcome() {
@@ -166,6 +166,8 @@ describe("Welcome with the mounted canonical tenant provider", () => {
     expect(fixture.trace).toContain("read:tenants:pending");
     await fulfill();
     expect(host.querySelector("[data-solo-mounted]")).not.toBeNull();
+    expect(host.querySelector("[data-location]")?.getAttribute("data-location")).toBe("/solo/10001/paige/chat");
+    expect(host.querySelector("[data-search]")?.getAttribute("data-search")).toBe("?onboarding=1");
     expect(host.querySelector("[data-provider-tenant]")?.getAttribute("data-provider-tenant")).toBe("test-tenant-admission");
     expect(fixture.trace).toContain("read:profiles:fulfilled");
     expect(fixture.trace).toContain("read:tenants:fulfilled");

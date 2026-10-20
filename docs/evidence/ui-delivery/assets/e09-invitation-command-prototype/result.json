@@ -1,0 +1,787 @@
+{
+  "runtime": {
+    "engine": "chromium",
+    "browserVersion": "155.0.8059.40",
+    "executable": "C:/Program Files/Google/Chrome/Application/chrome.exe",
+    "os": "Windows_NT",
+    "osVersion": "10.0.26300",
+    "headless": true,
+    "route": "actual-source owner Clients/Portal/Client access via setContent",
+    "auth": "synthetic actual-subject/tenant fixtures",
+    "permissions": "network blocked; no media, file picker, OAuth or customer permission operation"
+  },
+  "sourceHashes": [
+    {
+      "file": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "sha256": "5a282f5f7c5627856470ae5062ba8cc8d657d3a9478f30261568a9f9c9d223f0"
+    },
+    {
+      "file": "src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx",
+      "sha256": "912306ca64c4541a8cf34444053f823d33cda60e7da42f112e9601094ca7b46b"
+    },
+    {
+      "file": "src/components/tenant-relationships/OwnerPortalDashboard.tsx",
+      "sha256": "e3382deff545306a324ecaa550f43a2007d9f16434f895acdb824655b5e27eac"
+    },
+    {
+      "file": "src/components/tenant-relationships/PortalInvitationHistory.tsx",
+      "sha256": "a73437850e0080967e48fd2a7cbf13e43ae59617e9d2d96dbf922941751dd1be"
+    },
+    {
+      "file": "src/components/tenant-relationships/portalInvitationEvidence.ts",
+      "sha256": "d450631122bde8159d20c7627ca948dfdab985b1c24476f76853b1611f9b3ab5"
+    },
+    {
+      "file": "src/components/tenant-relationships/portalDashboardModel.ts",
+      "sha256": "a09f85b5189a6915fa11a2eb2064e3a73730a4fc522d4ab304ac2291add6776f"
+    },
+    {
+      "file": "src/components/tenant-relationships/PortalInvitationManager.tsx",
+      "sha256": "2f2bc7dd822cc7c3653de4009def21f23770cdb850c272d55a493911030441ca"
+    },
+    {
+      "file": "src/components/tenant-relationships/usePortalInvitations.ts",
+      "sha256": "897c6f52b730f06015a375efba2e835819210de2003fb6244d5d17620f7431c3"
+    },
+    {
+      "file": "src/components/tenant-relationships/owner-portal-dashboard.css",
+      "sha256": "fdc4dee8b948f9d5b47c47a402db2679e09e03839774f133ee0dc4c9014f959e"
+    },
+    {
+      "file": "scripts/proof/e09-invitation-history-ui/adapter.tsx",
+      "sha256": "30e23db8f6e788bdac9b6d5ecbeee504f0eb80e1d4ff25a1f73a8ede033f70ba"
+    },
+    {
+      "file": "scripts/proof/e09-invitation-history-ui/source.tsx",
+      "sha256": "e2ff49f38fdde2e9f524b8fe4511b0dc4eeebc9e208e8672debb96697c12b087"
+    },
+    {
+      "file": "scripts/proof/e09-invitation-history-ui/check.mjs",
+      "sha256": "d5702999dcbbcea364308585c408118f395b1377980b905ec80d670b43942049"
+    },
+    {
+      "file": "scripts/proof/e09-dashboard-ui/adapter.tsx",
+      "sha256": "862b2df92ad6e6078d06c77a1799288d92a38d26a7fd7ebec3326c34f1448617"
+    },
+    {
+      "file": "src/components/ui/dialog.tsx",
+      "sha256": "9107e63b84d67eafb311c13cb52bc48f32ef3b36eddebe65365b10fdfbd9d2ca"
+    },
+    {
+      "file": "src/index.css",
+      "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc"
+    },
+    {
+      "file": "scripts/proof/e09-invitation-history-ui/canonical-prototype.tsx",
+      "sha256": "938e4d2188b4f0acf976b03fb6b079d737bfdcf6e910489df2c732ab50cae4da"
+    },
+    {
+      "file": "src/components/chat/PaigeConfirmCard.tsx",
+      "sha256": "3978f0637c43e6a5f030f19c7b1d5af60b13c9b046cef7a9e7db8f5f44823e88"
+    }
+  ],
+  "cases": [
+    {
+      "width": 1536,
+      "height": 770,
+      "open": false,
+      "theme": "light",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(245, 242, 236)",
+        "color": "rgb(32, 30, 35)",
+        "surface": "#f5f2ec",
+        "theme": "light",
+        "shellTheme": "light",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 14.782646509174324,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "filename": "1536-770-closed-light-invite-ready.png"
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "open": false,
+      "theme": "dark",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(25, 22, 30)",
+        "color": "rgb(246, 242, 234)",
+        "surface": "#19161e",
+        "theme": "dark",
+        "shellTheme": "dark",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 16.008500761955702,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "filename": "1536-770-closed-dark-invite-ready.png"
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "open": true,
+      "theme": "light",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(245, 242, 236)",
+        "color": "rgb(32, 30, 35)",
+        "surface": "#f5f2ec",
+        "theme": "light",
+        "shellTheme": "light",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "open"
+      },
+      "contrast": 14.782646509174324,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "filename": "1536-770-open-light-invite-ready.png"
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "open": true,
+      "theme": "dark",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(25, 22, 30)",
+        "color": "rgb(246, 242, 234)",
+        "surface": "#19161e",
+        "theme": "dark",
+        "shellTheme": "dark",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "open"
+      },
+      "contrast": 16.008500761955702,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "filename": "1536-770-open-dark-invite-ready.png"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": false,
+      "theme": "light",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(245, 242, 236)",
+        "color": "rgb(32, 30, 35)",
+        "surface": "#f5f2ec",
+        "theme": "light",
+        "shellTheme": "light",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 14.782646509174324,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "filename": null
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": false,
+      "theme": "dark",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(25, 22, 30)",
+        "color": "rgb(246, 242, 234)",
+        "surface": "#19161e",
+        "theme": "dark",
+        "shellTheme": "dark",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 16.008500761955702,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "filename": null
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": true,
+      "theme": "light",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(245, 242, 236)",
+        "color": "rgb(32, 30, 35)",
+        "surface": "#f5f2ec",
+        "theme": "light",
+        "shellTheme": "light",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "open"
+      },
+      "contrast": 14.782646509174324,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "filename": null
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": true,
+      "theme": "dark",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(25, 22, 30)",
+        "color": "rgb(246, 242, 234)",
+        "surface": "#19161e",
+        "theme": "dark",
+        "shellTheme": "dark",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "open"
+      },
+      "contrast": 16.008500761955702,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "filename": null
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "open": false,
+      "theme": "light",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(245, 242, 236)",
+        "color": "rgb(32, 30, 35)",
+        "surface": "#f5f2ec",
+        "theme": "light",
+        "shellTheme": "light",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 14.782646509174324,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "filename": null
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "open": false,
+      "theme": "dark",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(25, 22, 30)",
+        "color": "rgb(246, 242, 234)",
+        "surface": "#19161e",
+        "theme": "dark",
+        "shellTheme": "dark",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 16.008500761955702,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "filename": null
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "open": true,
+      "theme": "light",
+      "kind": "invite",
+      "state": "ready",
+      "assistantModal": true,
+      "dialog": "not opened while native PAIGE modal owns focus",
+      "filename": null
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "open": true,
+      "theme": "dark",
+      "kind": "invite",
+      "state": "ready",
+      "assistantModal": true,
+      "dialog": "not opened while native PAIGE modal owns focus",
+      "filename": null
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "open": false,
+      "theme": "light",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(245, 242, 236)",
+        "color": "rgb(32, 30, 35)",
+        "surface": "#f5f2ec",
+        "theme": "light",
+        "shellTheme": "light",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 14.782646509174324,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "filename": null
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "open": false,
+      "theme": "dark",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(25, 22, 30)",
+        "color": "rgb(246, 242, 234)",
+        "surface": "#19161e",
+        "theme": "dark",
+        "shellTheme": "dark",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 16.008500761955702,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "filename": null
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "open": true,
+      "theme": "light",
+      "kind": "invite",
+      "state": "ready",
+      "assistantModal": true,
+      "dialog": "not opened while native PAIGE modal owns focus",
+      "filename": null
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "open": true,
+      "theme": "dark",
+      "kind": "invite",
+      "state": "ready",
+      "assistantModal": true,
+      "dialog": "not opened while native PAIGE modal owns focus",
+      "filename": null
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "open": false,
+      "theme": "light",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(245, 242, 236)",
+        "color": "rgb(32, 30, 35)",
+        "surface": "#f5f2ec",
+        "theme": "light",
+        "shellTheme": "light",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 14.782646509174324,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "filename": "390-844-closed-light-invite-ready.png"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": false,
+      "theme": "light",
+      "kind": "preview",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(245, 242, 236)",
+        "color": "rgb(32, 30, 35)",
+        "surface": "#f5f2ec",
+        "theme": "light",
+        "shellTheme": "light",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 14.782646509174324,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "filename": "1366-768-closed-light-preview-ready.png"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "open": false,
+      "theme": "dark",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(25, 22, 30)",
+        "color": "rgb(246, 242, 234)",
+        "surface": "#19161e",
+        "theme": "dark",
+        "shellTheme": "dark",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 16.008500761955702,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "filename": "390-844-closed-dark-invite-ready.png"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": false,
+      "theme": "dark",
+      "kind": "preview",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(25, 22, 30)",
+        "color": "rgb(246, 242, 234)",
+        "surface": "#19161e",
+        "theme": "dark",
+        "shellTheme": "dark",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 16.008500761955702,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "filename": "1366-768-closed-dark-preview-ready.png"
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "open": false,
+      "theme": "light",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(245, 242, 236)",
+        "color": "rgb(32, 30, 35)",
+        "surface": "#f5f2ec",
+        "theme": "light",
+        "shellTheme": "light",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 14.782646509174324,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "filename": null
+    },
+    {
+      "width": 768,
+      "height": 385,
+      "open": false,
+      "theme": "dark",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(25, 22, 30)",
+        "color": "rgb(246, 242, 234)",
+        "surface": "#19161e",
+        "theme": "dark",
+        "shellTheme": "dark",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 16.008500761955702,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "filename": null
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": false,
+      "theme": "light",
+      "kind": "invite",
+      "state": "history-error",
+      "geometry": {
+        "background": "rgb(245, 242, 236)",
+        "color": "rgb(32, 30, 35)",
+        "surface": "#f5f2ec",
+        "theme": "light",
+        "shellTheme": "light",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 14.782646509174324,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "filename": "1366-768-closed-light-invite-history-error.png"
+    }
+  ],
+  "errors": [],
+  "boundary": "Actual owner shell/dashboard/history/parser/hook; SDK/records/Auth are synthetic, network blocked, PAIGE leaf is placeholder. Automated installed binaries/engine builds only; no real customer/provider operation, legitimate cohort, full customer frame, Safari/iOS/Android/physical-device, OS scaling or actual browser zoom acceptance. Only named screenshot cases received visual artifacts; all cases rendered and exercised."
+}

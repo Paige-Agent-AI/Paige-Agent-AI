@@ -4,29 +4,34 @@ import { useSubtabRoute } from "@/lib/routing/useSubtabRoute";
 import { OperationsWorkspace } from "./OperationsWorkspace";
 
 /** Mounted only by the canonical Solo route after shared navigation integration. */
-export function OperationsRoute({ openPaige }: { openPaige: () => void }) {
+export function OperationsRoute({ openPaige, onNavigationGuardChange }: { openPaige: () => void;
+  onNavigationGuardChange?: (guard: (() => string | null) | null) => void }) {
   const [view, setView] = useSubtabRoute("solo", "operations", "overview");
   const location = useLocation();
   const navigate = useNavigate();
   const navigationType = useNavigationType();
   const { navigator } = useContext(UNSAFE_NavigationContext);
-  // The incumbent router's history index is navigation bookkeeping, never authority.
-  // MemoryHistory exposes index; BrowserHistory stores the same index in state.idx.
+  // Preserve the accepted history position (E05), never replace a popped entry.
   const memoryIndex = "index" in navigator ? navigator.index : null;
-  const browserIndex = typeof window !== "undefined" ? window.history.state?.idx : null;
-  const rawIndex = typeof memoryIndex === "number" ? memoryIndex : browserIndex;
+  const rawIndex = typeof memoryIndex === "number" ? memoryIndex : window.history.state?.idx;
   const index = typeof rawIndex === "number" && Number.isSafeInteger(rawIndex) ? rawIndex : null;
   const guard = useRef<(() => string | null) | null>(null);
+  const notifyGuard = useRef<(() => string | null) | null>(null);
   const accepted = useRef(location);
   const acceptedIndex = useRef(index);
   const restoring = useRef<string | null>(null);
   const [current, setCurrent] = useState({ view, search: location.search, key: location.key });
-  const registerGuard = useCallback((next: (() => string | null) | null) => { guard.current = next; }, []);
-  // Return to the accepted history position without replacing the popped destination.
-  // The existing editor guard keeps detail selection while that return is pending.
+  const [historyNotice,setHistoryNotice]=useState("");
+  const registerGuard = useCallback((next: (() => string | null) | null, notify?: () => string | null) => {
+    guard.current = next; notifyGuard.current = notify ?? next;
+    onNavigationGuardChange?.(next);
+  }, [onNavigationGuardChange]);
+  // BrowserRouter has no data-router blocker. Keep the existing detail selection
+  // through subtab/query Back transitions instead of replacing an unsaved draft.
   useLayoutEffect(() => {
     if (location.key === accepted.current.key && view === current.view) return;
     if (guard.current?.()) {
+      notifyGuard.current?.();
       const prior = accepted.current;
       if (location.pathname === prior.pathname && location.search === prior.search && location.hash === prior.hash) {
         accepted.current = location; acceptedIndex.current = index; restoring.current = null; return;
@@ -36,22 +41,29 @@ export function OperationsRoute({ openPaige }: { openPaige: () => void }) {
       if (index !== null && acceptedIndex.current !== null && index !== acceptedIndex.current) {
         navigate(acceptedIndex.current - index);
       } else if (navigationType === "REPLACE") {
-        // Restore an overwritten current entry only; never overwrite a POP destination.
         navigate(`${prior.pathname}${prior.search}${prior.hash}`, { replace: true });
+      } else {
+        // An unindexed POP has no safe direction to infer. Keep the draft and
+        // make the unaccepted address explicit rather than destroy history.
+        setHistoryNotice("Your address changed, but this task stayed open to protect your work. Close it, then open the page again.");
       }
-      // Without a trustworthy index, preserve the guarded detail and history rather
-      // than guessing a direction or destroying an entry. The guard displays its reason.
       return;
     }
     accepted.current = location; acceptedIndex.current = index; restoring.current = null;
+    setHistoryNotice("");
     setCurrent({ view, search: location.search, key: location.key });
   }, [location, view, current.view, navigate, index, navigationType]);
-  return <OperationsWorkspace openPaige={openPaige} view={current.view}
+  return <>{historyNotice&&<p className="ops-inline-notice" role="status">{historyNotice}</p>}<OperationsWorkspace openPaige={openPaige} view={current.view}
     weeklySourceSearch={current.search} weeklySourceKey={current.key} onNavigationGuardChange={registerGuard}
-    onViewChange={next => { if (!guard.current?.()) setView(next); }}
+    onViewChange={next => { if (!notifyGuard.current?.()) setView(next); }}
     onWeeklySourceDismiss={() => {
-      if (guard.current?.()) return;
+      if (notifyGuard.current?.()) return;
       const query = new URLSearchParams(location.search); query.delete("weeklySource"); query.delete("item");
       navigate({ pathname: location.pathname, search: query.toString() ? `?${query}` : "", hash: location.hash }, { replace: true });
-    }} />;
+    }}
+    onTaskFocusDismiss={() => {
+      const prior = accepted.current;
+      const query = new URLSearchParams(prior.search); query.delete("task");
+      navigate({ pathname: prior.pathname, search: query.toString() ? `?${query}` : "", hash: prior.hash }, { replace: true });
+    }} /></>;
 }

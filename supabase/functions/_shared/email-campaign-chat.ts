@@ -15,7 +15,7 @@ const writable = (schema: unknown): Record<string, unknown> => JSON.parse(JSON.s
 export const EMAIL_CAMPAIGN_TOOLS = [
   {type:'function',function:{name:'read_email_campaigns',description:'Read this business\'s email campaigns (newest first), or pass campaign_id for one campaign\'s current version: its words, audience, schedule, goal, sender, approval state, and the audience choices (stages, sources, tags) its contacts carry. Read before changing a campaign. Shows no recipient names or addresses.',parameters:EMAIL_CAMPAIGNS_READ_CAPABILITY.input}},
   {type:'function',function:{name:'read_email_campaign_audience',description:'Count who one email campaign would reach today, and how many are left out because they have no address, opted out, are suppressed, or (for a newsletter) never subscribed. Counts only. Also reports today\'s sending limit and whether the business postal address is set.',parameters:EMAIL_CAMPAIGN_AUDIENCE_READ_CAPABILITY.input}},
-  {type:'function',function:{name:'email_campaign_draft',description:'Write a new email campaign draft (omit campaign_id) or change the current draft of one (pass campaign_id from read_email_campaigns). Only include fields you are setting. Write the body in plain marks, one per line: "# Heading", "- item", "[link text](https://...)", "[[Button text|https://...]]", blank line between paragraphs. Do not invent links, offers, dates or names; ask for any you need. The audience is a rule over the stages, sources and tags read_email_campaigns lists (empty means everyone who can be emailed), plus inactive_days for contacts not emailed in that many days, or a saved segment_id. Setting audience replaces the whole rule and any saved segment, so read the campaign first and include what should stay. Give send_at with the owner\'s UTC offset (ask their time zone if unknown), or leave it out. The sender is the business\'s connected email first; the owner changes it in the editor. A draft sends nothing. This saves the email into Marketing > Email; draft_marketing_content is only for words to paste somewhere else. A campaign awaiting approval, approved or sent cannot be changed here; the owner uses Make changes or Edit and send again in Marketing > Email.',parameters:writable(EMAIL_CAMPAIGN_DRAFT_CAPABILITY.input)}},
+  {type:'function',function:{name:'email_campaign_draft',description:'Write a new email campaign draft (omit campaign_id) or change the current draft of one (pass campaign_id from read_email_campaigns). Only include fields you are setting. Write the body in plain marks, one per line: "# Heading", "- item", "[link text](https://...)", "[[Button text|https://...]]", blank line between paragraphs. Do not invent links, offers, dates or names; ask for any you need. The audience is a rule over the stages, sources and tags read_email_campaigns lists (empty means everyone who can be emailed), plus inactive_days for contacts not emailed in that many days, plus portal:"active" for only the customers whose portal access is open, or a saved segment_id. A promotion or announcement never reaches a portal customer, current or former, who has not turned on updates and offers. Setting audience replaces the whole rule and any saved segment, so read the campaign first and include what should stay. Give send_at with the owner\'s UTC offset (ask their time zone if unknown), or leave it out. The sender is the business\'s connected email first; the owner changes it in the editor. A draft sends nothing. This saves the email into Marketing > Email; draft_marketing_content is only for words to paste somewhere else. A campaign awaiting approval, approved or sent cannot be changed here; the owner uses Make changes or Edit and send again in Marketing > Email.',parameters:writable(EMAIL_CAMPAIGN_DRAFT_CAPABILITY.input)}},
   {type:'function',function:{name:'email_campaign_request_approval',description:'File one campaign\'s current draft for the owner\'s approval. This freezes that version and counts its recipients; it does NOT approve or send. Only the owner or an admin approves and sends, in Marketing > Email or Approvals. Needs a subject, a body, the business postal address, a working sender and at least one person who can receive it.',parameters:writable(EMAIL_CAMPAIGN_REQUEST_APPROVAL_CAPABILITY.input)}},
 ] as const;
 export const EMAIL_CAMPAIGN_TOOL_NAMES = new Set<string>(EMAIL_CAMPAIGN_TOOLS.map((t) => t.function.name));
@@ -49,7 +49,8 @@ const REFUSALS: Record<string, string> = {
   not_an_editable_draft: 'That version is no longer a draft. Read the campaign again.',
   not_the_current_version: 'A newer draft of that campaign exists. Read the campaign again.',
   schedule_in_past: 'That send time is in the past. Pick a time ahead, or leave it unscheduled.',
-  audience_invalid: 'I couldn\'t read that audience. Choose by stage, source, tag, or how long since someone was last emailed.',
+  audience_invalid: 'I couldn\'t read that audience. Choose by stage, source, tag, how long since someone was last emailed, or customers with portal access.',
+  rule_invalid: 'I couldn\'t read that audience. Choose by stage, source, tag, how long since someone was last emailed, or customers with portal access.',
   segment_not_found: 'That saved segment is not in this business. Read the campaign again to see the saved segments.',
   subject_required: 'The campaign needs a subject before it can be filed for approval.',
   body_required: 'The campaign needs a message before it can be filed for approval.',
@@ -99,7 +100,7 @@ const invalid = (fix: string): EmailCampaignChatResult => ({ outcome: 'invalid',
 function audienceRule(value: unknown): Record<string, unknown> | null | 'invalid' {
   if (value === undefined) return null;
   const a = object(value);
-  if (!a || Object.keys(a).some((k) => !['stages', 'sources', 'tags', 'inactive_days'].includes(k))) return 'invalid';
+  if (!a || Object.keys(a).some((k) => !['stages', 'sources', 'tags', 'inactive_days', 'portal'].includes(k))) return 'invalid';
   const rule: Record<string, unknown> = {};
   for (const key of ['stages', 'sources', 'tags'] as const) {
     if (a[key] === undefined) continue;
@@ -110,6 +111,11 @@ function audienceRule(value: unknown): Record<string, unknown> | null | 'invalid
   if (a.inactive_days !== undefined && a.inactive_days !== null) {
     if (!Number.isInteger(a.inactive_days) || Number(a.inactive_days) < 1 || Number(a.inactive_days) > 3650) return 'invalid';
     rule.inactive_days = a.inactive_days;
+  }
+  // E09 C1: only the customers whose portal access is open. The database checks the same key (_email_campaign_rule_check).
+  if (a.portal !== undefined && a.portal !== null) {
+    if (a.portal !== 'active') return 'invalid';
+    rule.portal = 'active';
   }
   return rule;
 }
@@ -133,7 +139,8 @@ function campaignView(data: Record<string, unknown>): Record<string, unknown> {
     },
     from: text(data.from, 320), approval: data.approval_status ?? null, last_declined_reason: text(data.last_declined_reason, 500),
     saved_segments: Array.isArray(data.segments) ? data.segments.map((s) => object(s)).filter(Boolean).map((s) => ({ id: s!.id, name: text(s!.name, 200) })) : [],
-    audience_choices: { stages: keys(choices.stages), sources: keys(choices.sources), tags: keys(choices.tags) },
+    audience_choices: { stages: keys(choices.stages), sources: keys(choices.sources), tags: keys(choices.tags),
+      portal_customers: count(object(choices.portal)?.open) ?? undefined },
   };
 }
 
@@ -199,7 +206,7 @@ export async function dispatchEmailCampaignChat(ctx: EmailCampaignChatContext, d
       if (args[key] !== undefined && (typeof args[key] !== 'string' || (args[key] as string).length > max)) return invalid(`${key} must be text of at most ${max} characters.`);
     }
     const rule = audienceRule(args.audience);
-    if (rule === 'invalid') return invalid('audience may only hold stages, sources and tags (lists of text) and inactive_days.');
+    if (rule === 'invalid') return invalid('audience may only hold stages, sources and tags (lists of text), inactive_days, and portal ("active").');
     const segment = args.segment_id;
     if (segment !== undefined && segment !== null && (typeof segment !== 'string' || !UUID.test(segment))) return invalid('segment_id must be an id from read_email_campaigns.');
     // A saved segment decides the audience whenever one is set, so a rule and a segment together would save

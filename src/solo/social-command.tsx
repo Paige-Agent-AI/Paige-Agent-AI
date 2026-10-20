@@ -176,6 +176,12 @@ function RecordAccountsForm({ handles, canManage, onSave, onClose }) {
   const [message, setMessage] = React.useState("");
   const firstField = React.useRef(null);
   const dialog = React.useRef(null);
+  const mounted = React.useRef(false);
+
+  React.useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
 
   React.useEffect(() => { setDraft(initial); }, [initial]);
   React.useEffect(() => {
@@ -191,6 +197,7 @@ function RecordAccountsForm({ handles, canManage, onSave, onClose }) {
     setSaving(true);
     setMessage("");
     const result = await onSave(toHandlePayload(draft));
+    if (!mounted.current) return;
     setSaving(false);
     if (result.ok) {
       // Reports the count the SERVER read back, not the length of what was typed.
@@ -199,7 +206,6 @@ function RecordAccountsForm({ handles, canManage, onSave, onClose }) {
           ? "Saved. No account is on record now."
           : `Saved. ${result.recordedCount} account${result.recordedCount === 1 ? "" : "s"} on record.`,
       );
-      window.setTimeout(onClose, 900);
       return;
     }
     setMessage(result.message);
@@ -604,21 +610,50 @@ function TrustCompassSocialStatus({ trust }) {
 
 export function SocialCommand({ campaigns, onOpenStudio, onAskPaige, onOpenCompass, onOpenPipeline }) {
   const social = useSocialCommand();
+  const { recordHandles } = social;
   // Owned here rather than lifted into GrowthHub: the other five Campaigns tabs would otherwise pay
   // for two reads they never render.
   const pending = useSoloPendingActions(social.tenantId ?? null); // §9 — scope to the viewed workspace
   const trust = useSoloTrust(social.tenantId);
   const [recording, setRecording] = React.useState(false);
   const opener = React.useRef(null);
+  const dismissTimer = React.useRef(null);
+  const mounted = React.useRef(false);
+  const recordSession = React.useRef(0);
+  const cancelDismiss = React.useCallback(() => {
+    if (dismissTimer.current !== null) window.clearTimeout(dismissTimer.current);
+    dismissTimer.current = null;
+  }, []);
+  const retireSession = React.useCallback(() => {
+    recordSession.current++;
+    cancelDismiss();
+  }, [cancelDismiss]);
+  React.useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; retireSession(); };
+  }, [social.tenantId, retireSession]);
 
   const openRecord = React.useCallback((event) => {
+    retireSession();
     opener.current = event?.currentTarget ?? null;
     setRecording(true);
-  }, []);
+  }, [retireSession]);
   const closeRecord = React.useCallback(() => {
+    retireSession();
     setRecording(false);
     opener.current?.focus?.({ preventScroll: true });
-  }, []);
+  }, [retireSession]);
+  // The read refresh temporarily unmounts the form, but this page still owns its
+  // recording session. Retire that session's timer on close, context change or exit.
+  const saveRecord = React.useCallback(async (draft) => {
+    const session = recordSession.current;
+    cancelDismiss();
+    const result = await recordHandles(draft);
+    if (result.ok && mounted.current && recordSession.current === session) {
+      dismissTimer.current = window.setTimeout(closeRecord, 900);
+    }
+    return result;
+  }, [recordHandles, cancelDismiss, closeRecord]);
 
   /**
    * NOT SUCCESSFULLY READ — wider than "errored", and the width is the whole point.
@@ -778,7 +813,7 @@ export function SocialCommand({ campaigns, onOpenStudio, onAskPaige, onOpenCompa
         <RecordAccountsForm
           handles={social.handles}
           canManage={social.canManage}
-          onSave={social.recordHandles}
+          onSave={saveRecord}
           onClose={closeRecord}
         />
       )}

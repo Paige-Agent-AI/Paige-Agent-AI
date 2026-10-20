@@ -25,9 +25,11 @@ const outputTokens = async (scope: LiveRuntimeScope, content = "I hear you. Let 
     .filter((event) => event.paige_live_output).map((event) => event.paige_live_output as string);
 };
 async function fixture(authorize: (force?: boolean) => Promise<boolean> = async () => true,
-  mouth?: (text: string, signal: AbortSignal) => Promise<ReadableStream<Uint8Array>>) {
+  mouth?: (text: string, signal: AbortSignal) => Promise<ReadableStream<Uint8Array>>,
+  options: { now?: () => number; timing?: (event: { phase: string; elapsedMs: number }) => void | Promise<void>; omitTiming?: boolean } = {}) {
   const sent: Array<string | ArrayBuffer> = [];
   const usage: UsageEvent[] = [];
+  const timings: Array<{ phase: string; elapsedMs: number }> = [];
   const spoken: string[] = [];
   let ears!: LiveEarsEvents;
   let resolveDispatch!: (value: { turn_id: string; challenge: string }) => void;
@@ -41,7 +43,10 @@ async function fixture(authorize: (force?: boolean) => Promise<boolean> = async 
     openEars: async (events) => { ears = events; return { ok: true, ears: { sendPcm: (b) => b.byteLength / 32, close() {}, cancel() {} } }; },
     openMouth: mouth ?? (async (text) => { spoken.push(text); return new ReadableStream<Uint8Array>({ start(c) { c.enqueue(Uint8Array.of(1, 2, 3)); c.enqueue(Uint8Array.of(4, 5, 6)); c.close(); } }); }),
     runtimeProof: { issue: (turnId, text) => proof.issue({ ...base, turnId }, text), readOutput: proof.readOutput },
-    usage: { emit(event) { usage.push(event); } },
+    now: options.now,
+    usage: { emit(event) { usage.push(event); }, ...(options.omitTiming ? {} : {
+      timing(event: { phase: string; elapsedMs: number }) { timings.push(event); return options.timing?.(event); },
+    }) },
   });
   await bridge.open();
   check("ears open alone does not grant microphone readiness", sent.length === 0);
@@ -50,7 +55,7 @@ async function fixture(authorize: (force?: boolean) => Promise<boolean> = async 
   ears.startOfTurn("Hello", 0); ears.partial("Hello Paige", 0); ears.final("Hello Paige.", 0);
   const dispatch = await dispatchReady;
   const scope = (await proof.readChallenge(dispatch.challenge))!;
-  return { bridge, sent, spoken, usage, dispatch, scope, ears, closes: () => closes };
+  return { bridge, sent, spoken, usage, timings, dispatch, scope, ears, closes: () => closes };
 }
 const f = await fixture();
 check("challenge binds exact observed final transcript", f.scope.transcriptHash === await liveRuntimeDigest("Hello Paige."));
@@ -67,6 +72,48 @@ f.bridge.receive(JSON.stringify({ type: "playback.complete" }));
 check("observed playback settles to idle", f.bridge.phase === "idle");
 check("UsageSink records observed neutral units only", ["stt_audio_ms", "llm_turn", "tts_chars"].every((kind) => f.usage.some((u) => u.kind === kind)));
 f.bridge.end(); f.bridge.end(); check("end remains idempotent", f.closes() === 1);
+
+let timingClock = 100;
+let timingMouth!: ReadableStreamDefaultController<Uint8Array>;
+const measured = await fixture(undefined, async () => new ReadableStream<Uint8Array>({ start(c) { timingMouth = c; } }), { now: () => timingClock });
+const measuredTokens = await outputTokens(measured.scope, "Measured sentence.");
+timingClock = 130;
+for (const token of measuredTokens.slice(0, -1)) await measured.bridge.receive(JSON.stringify({ type: "runtime.proof", turn_id: measured.scope.turnId, proof: token }));
+await tick();
+check("Live phase uses accepted final transcript to first canonical runtime text", measured.timings.some(t => t.phase === "final_to_first_runtime_text_ms" && t.elapsedMs === 30));
+timingClock = 180; timingMouth.enqueue(Uint8Array.of(1, 2)); await tick();
+check("Live phase distinguishes first complete observed PCM from text and playback", measured.timings.some(t => t.phase === "final_to_first_pcm_observed_ms" && t.elapsedMs === 80));
+timingClock = 190; timingMouth.enqueue(Uint8Array.of(3, 4)); timingMouth.close(); await tick();
+check("subsequent PCM cannot duplicate first-output timing", measured.timings.filter(t => t.phase === "final_to_first_pcm_observed_ms").length === 1);
+timingClock = 200; measured.ears.startOfTurn("A new private utterance", 1);
+check("natural barge-in observes the local ordered clear effect", measured.timings.some(t => t.phase === "interrupt_to_clear_effect_ms" && t.elapsedMs === 0));
+const metricCount = measured.timings.length;
+await measured.bridge.receive(JSON.stringify({ type: "runtime.proof", turn_id: measured.scope.turnId, proof: measuredTokens.at(-1) }));
+check("stale interrupted output cannot create a newer turn metric", measured.timings.length === metricCount);
+check("Live phase observer receives only closed numeric fields", measured.timings.length >= 3 && measured.timings.every(t => Object.keys(t).sort().join(",") === "elapsedMs,phase") && !JSON.stringify(measured.timings).includes("private"));
+measured.bridge.end();
+
+for (const observer of [() => { throw new Error("synthetic observer failure"); }, () => Promise.reject(new Error("synthetic async observer failure"))]) {
+  const observerFailure = await fixture(undefined, undefined, { timing: observer });
+  for (const token of await outputTokens(observerFailure.scope, "Still speaking.")) await observerFailure.bridge.receive(JSON.stringify({ type: "runtime.proof", turn_id: observerFailure.scope.turnId, proof: token }));
+  await tick(); await tick();
+  check("optional timing observer failure never stops or retries output", observerFailure.spoken.length === 1 && observerFailure.sent.some(s => s instanceof ArrayBuffer));
+  observerFailure.bridge.end();
+}
+const oldSink = await fixture(undefined, undefined, { omitTiming: true });
+for (const token of await outputTokens(oldSink.scope, "Old sinks work.")) await oldSink.bridge.receive(JSON.stringify({ type: "runtime.proof", turn_id: oldSink.scope.turnId, proof: token }));
+await tick(); await tick();
+check("existing UsageSink without timing stays backward compatible", oldSink.spoken.length === 1 && oldSink.timings.length === 0);
+oldSink.bridge.end();
+for (const invalidClock of [99, Number.NaN, Number.POSITIVE_INFINITY, 100 + 86_400_001]) {
+  let clock = 100;
+  const invalidTiming = await fixture(undefined, undefined, { now: () => clock });
+  clock = invalidClock;
+  for (const token of await outputTokens(invalidTiming.scope, "No fake latency.")) await invalidTiming.bridge.receive(JSON.stringify({ type: "runtime.proof", turn_id: invalidTiming.scope.turnId, proof: token }));
+  await tick(); await tick();
+  check("clock anomaly does not fabricate duration or stop audio", invalidTiming.timings.length === 0 && invalidTiming.spoken.length === 1);
+  invalidTiming.bridge.end();
+}
 
 for (const attack of ["unsigned", "tamper", "replay", "gap", "wrong-scope", "after-cancel"] as const) {
   const a = await fixture();

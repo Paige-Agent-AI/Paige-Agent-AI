@@ -5,7 +5,7 @@
 // went out. This function is the single seam BOTH the UI (ApprovalRow) and Paige
 // (paige-mcp decide_pending_approval) call to actually run an approved action.
 //
-// It loads the approval, authorizes the caller (admin + tenant match), and
+// It loads the approval, authorizes the caller, and
 // dispatches by the drafted channel:
 //   • email / SMS  → forwards to the existing `send-message` executor, which
 //     sends and stamps the row approved+sent_at+audit_id (send drives status).
@@ -22,18 +22,45 @@
 // acknowledge and no send-message call. Those messages go out only through the governed email command
 // (comms-email-command / comms.email_send); there is no second sender path. The row stays pending and
 // can still be declined. reason_code tells the caller what the person can do: review_and_send (a reply
-// to a new lead: the reply screen) or decline_only (every other send kind, for now). A quiet-hours/DND hold that QUEUES a message on the generic comms path below
-// is accepted: the claim is kept so a second Approve cannot queue a second copy.
+// to a new lead: the reply screen) or decline_only (every other send kind, for now).
 //
-// LAYER C (C5): an approval minted by the event→act engine (metadata.source='paige_orchestration') carries a
+// A QUIET-HOURS / DO-NOT-DISTURB HOLD IS ANSWERED HELD, NEVER QUEUED BEHIND THE APPROVAL (#2132): on the
+// generic comms path below, the pre-send seam (runPreSend, the function send-message itself runs) is read
+// first; a hold returns HELD with nothing queued or sent and the approval pending and unclaimed. A queued
+// copy has a lifecycle the approval cannot follow (the drain never closes the approval; a decline never
+// stops the message), so it is not created. If send-message queues anyway (the hours began in between),
+// that copy is cancelled through the existing undo seam and the answer is the same HELD.
+//
+// ONE MESSAGE, ONE APPROVAL PATH (#2150): that cancel returns the row to an unsent draft, which
+// Conversations shows with its own "Approve & send". The draft's id is recorded on the approval
+// (metadata.held_draft_message_id, written only onto a row still pending, and checked). The next Approve
+// retries SMS against THAT row. Held email cannot be sent or settled from this legacy approval: it lacks
+// an immutable original sender/attachment binding. It stays pending and directs review in Conversations;
+// no mutable draft state is promoted to approval authority.
+//
+// LAYER C (C5): an approval minted by the event→act engine (source='paige_orchestration') carries a
 // held act's coordinates. This one door also delegates those to the Layer-C approval-executor — re-running the
 // governed decision as an execute and driving the adapter → ledger — so there is still ONE approve door (§18),
-// not a second. (Dormant until the engine mints those rows — the companion-minting is the next slice; this
-// branch fires only for orchestration-sourced rows and changes nothing for existing approvals, §58.)
+// not a second. The exact canonical owner.task companion admits this workspace's active owner/admin
+// seat. Unrelated approvals retain their existing global-admin + tenant admission; metadata alone can
+// never select Layer C, and no outbound-send permission is added here.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { approvalRefusalMessage, executeApprovedLayerCAct, type ApproveExecutorDb } from "../_shared/paige-orchestration/approve-executor.ts";
 import { CLIENT_CONTACT_METHODS_EMBED, clientAddresses } from "../_shared/contact-methods.ts";
-import { classifySendResult, refuseSendKindApproval, type SendKindAdmin } from "./action-email.ts";
+import { runPreSend } from "../_shared/pre-send-pipeline.ts";
+import {
+  ALREADY_SENT_STATUSES, DECIDED_MID_SEND_HELD, DECIDED_MID_SEND_QUEUED, HELD_DRAFT_CHANGED, HELD_DRAFT_KEY, HELD_DRAFT_UNCONFIRMED, HELD_EMAIL_REQUIRES_REVIEW,
+  QUEUED_UNCANCELLABLE, SCHEDULED_FROM_CONVERSATIONS, SENT_FROM_CONVERSATIONS, classifySendResult, heldDraftChange, heldPayload,
+  holdReasonOf, refuseSendKindApproval, type HeldDraftContent, type HoldReason, type SendKindAdmin,
+} from "./action-email.ts";
+import { resolveWorkspaceAuthority } from "../_shared/workspace-authority.ts";
+
+const objectRecord = (value: unknown): Record<string, unknown> | null =>
+  value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
+const isUuid = (value: unknown): value is string => typeof value === "string"
+  && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+type LayerCIdentity = { eventId: string; actId: string; ledgerId: string; automationId: string; capabilityKey: string };
+type LayerCRead = { ok: true; value: LayerCIdentity } | { ok: false; status: number; error: string };
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -59,11 +86,13 @@ Deno.serve(async (req) => {
   const userClient = createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: authHeader } },
   });
-  const { data: { user } } = await userClient.auth.getUser();
-  if (!user) return json(401, { error: "unauthorized" });
+  const { data: { user }, error: userError } = await userClient.auth.getUser();
+  if (userError || !user) return json(401, { error: "unauthorized" });
 
-  const { data: isAdmin } = await admin.rpc("has_role", { _user_id: user.id, _role: "admin" });
-  if (!isAdmin) return json(403, { error: "forbidden" });
+  // Existing unrelated paths keep their global-admin admission. Only the exact
+  // canonical owner.task companion below gains ordinary current-workspace seats.
+  const { data: isAdmin, error: adminRoleError } = await admin.rpc("has_role", { _user_id: user.id, _role: "admin" });
+  const legacyAdmin = !adminRoleError && isAdmin === true;
 
   let payload: { approval_id?: string };
   try { payload = await req.json(); } catch { return json(400, { error: "invalid_json" }); }
@@ -73,17 +102,26 @@ Deno.serve(async (req) => {
   // Load the approval (service role — we authorize explicitly below).
   const { data: approval, error: loadErr } = await admin
     .from("paige_pending_approvals")
-    .select("id, status, tenant_id, contact_id, conversation_id, category, type, draft_content, metadata")
+    .select("id, source, status, tenant_id, contact_id, conversation_id, category, type, draft_content, metadata")
     .eq("id", approvalId)
     .maybeSingle();
-  if (loadErr) return json(500, { error: loadErr.message });
-  if (!approval) return json(404, { error: "approval_not_found" });
+  if (loadErr) return json(503, { error: "approval_lookup_unavailable" });
+  if (!approval) return legacyAdmin ? json(404, { error: "approval_not_found" }) : json(403, { error: "forbidden" });
 
-  // Tenant isolation: unless the caller is the platform owner, the approval must
-  // belong to a tenant the caller is a member of (defense-in-depth over the
-  // global admin gate). Skip only when the row carries no tenant_id.
+  const taskSeat = async (): Promise<boolean> => {
+    try {
+      if (!isUuid(approval.tenant_id)) return false;
+      const current = await userClient.auth.getUser();
+      if (current.error || current.data.user?.id !== user.id) return false;
+      return (await resolveWorkspaceAuthority(userClient, admin, user.id, approval.tenant_id)).seat === true;
+    } catch { return false; }
+  };
+  if (!legacyAdmin && !await taskSeat()) return json(403, { error: "forbidden" });
+
+  // Preserve the existing tenant defense for unrelated global-admin paths. The
+  // owner.task exception is checked more strictly against the active seat below.
   const { data: isOwner } = await admin.rpc("is_platform_owner", { _user_id: user.id });
-  if (approval.tenant_id && !isOwner) {
+  if (legacyAdmin && approval.tenant_id && !isOwner) {
     const { data: membership } = await admin
       .from("tenant_members")
       .select("tenant_id")
@@ -94,17 +132,73 @@ Deno.serve(async (req) => {
     if (!membership) return json(403, { error: "cross_tenant_forbidden" });
   }
 
+  // Keep every send-kind refusal before claims AND route selection. Even a
+  // forged orchestration/campaign shape must not bypass this incumbent guard.
+  // Already-decided rows keep the existing idempotent response after admission.
+  if (approval.status !== "sent" && approval.status !== "approved") {
+    const sendRefusal = await refuseSendKindApproval(admin as unknown as SendKindAdmin, { id: approvalId, tenant_id: approval.tenant_id, metadata: approval.metadata });
+    if (sendRefusal) return json(sendRefusal.status, sendRefusal.payload);
+  }
+
+  const metaLc = objectRecord(approval.metadata);
+  // Metadata can request validation, never select a trusted execution route.
+  // Prove the requested row IS the unique native companion, not another row that
+  // merely points at it. These observations are not an execution lease; native
+  // approval/context/actor/claim and canonical CRM checks remain authoritative.
+  const readLayerCCompanion = async (ownedClaimAt?: string): Promise<LayerCRead> => {
+    const refused = (): LayerCRead => ({ ok: false, status: 403, error: "approval_companion_mismatch" });
+    const unavailable = (): LayerCRead => ({ ok: false, status: 503, error: "approval_companion_unconfirmed" });
+    try {
+      if (approval.source !== "paige_orchestration" || metaLc?.source !== "paige_orchestration"
+        || !isUuid(approval.id) || !isUuid(approval.tenant_id) || !isUuid(metaLc.event_id)
+        || !isUuid(metaLc.act_id) || !isUuid(metaLc.act_execution_id) || !isUuid(metaLc.automation_id)) return refused();
+      const { data: ledgers, error: ledgerError } = await admin.from("paige_act_executions")
+        .select("id,event_id,act_id,automation_id,tenant_id,capability_key,adapter_kind,effective_lane,detail")
+        .eq("id", metaLc.act_execution_id).eq("event_id", metaLc.event_id).eq("act_id", metaLc.act_id).limit(2);
+      if (ledgerError) return unavailable();
+      const ledger = Array.isArray(ledgers) && ledgers.length === 1 ? objectRecord(ledgers[0]) : null;
+      if (!ledger || ledger.tenant_id !== approval.tenant_id || ledger.automation_id !== metaLc.automation_id
+        || typeof ledger.capability_key !== "string" || !ledger.capability_key || ledger.capability_key !== metaLc.capability_id) return refused();
+      const { data: companions, error: companionError } = await admin.from("paige_pending_approvals")
+        .select("id,source,tenant_id,metadata,status,claimed_at,reviewed_by_user_id")
+        .eq("source", "paige_orchestration").eq("metadata->>event_id", metaLc.event_id).eq("metadata->>act_id", metaLc.act_id).limit(2);
+      if (companionError) return unavailable();
+      const companion = Array.isArray(companions) && companions.length === 1 ? objectRecord(companions[0]) : null;
+      const storedMeta = objectRecord(companion?.metadata);
+      if (!companion || companion.id !== approval.id || companion.source !== "paige_orchestration"
+        || companion.tenant_id !== ledger.tenant_id || storedMeta?.source !== "paige_orchestration"
+        || storedMeta.event_id !== ledger.event_id || storedMeta.act_id !== ledger.act_id
+        || storedMeta.act_execution_id !== ledger.id || storedMeta.automation_id !== ledger.automation_id
+        || storedMeta.capability_id !== ledger.capability_key) return refused();
+      if (ownedClaimAt && (companion.status !== "pending" || companion.reviewed_by_user_id !== user.id
+        || typeof companion.claimed_at !== "string" || Date.parse(companion.claimed_at) !== Date.parse(ownedClaimAt))) {
+        return { ok: false, status: 409, error: "approval_claim_changed" };
+      }
+      if (ledger.capability_key === "owner.task") {
+        const detail = objectRecord(ledger.detail);
+        if (ledger.adapter_kind !== "native" || ledger.effective_lane !== "confirm"
+          || objectRecord(detail?.owner_task_source)?.v !== 1 || !objectRecord(detail?.owner_task_approval)) return refused();
+      }
+      return { ok: true, value: { eventId: metaLc.event_id, actId: metaLc.act_id, ledgerId: metaLc.act_execution_id,
+        automationId: metaLc.automation_id, capabilityKey: ledger.capability_key } };
+    } catch { return unavailable(); }
+  };
+  let canonicalLayerC: LayerCIdentity | null = null;
+  if (approval.source === "paige_orchestration" || metaLc?.source === "paige_orchestration") {
+    const canonical = await readLayerCCompanion();
+    if (canonical.ok === false) return json(canonical.status, { error: canonical.error, executed: false });
+    canonicalLayerC = canonical.value;
+  }
+  const ownerTask = canonicalLayerC?.capabilityKey === "owner.task";
+  if ((!legacyAdmin && !ownerTask) || (ownerTask && !await taskSeat())) return json(403, { error: "forbidden" });
+
   // Idempotency: don't re-run a row that already went out.
   if (approval.status === "sent" || approval.status === "approved") {
     return json(200, { ok: true, executed: false, already: approval.status, approval_id: approvalId });
   }
 
-  // An outbound message (a send_via_approval action) is never sent or completed from this door — refuse it
-  // BEFORE the claim, so nothing is written at all: no claim, no reviewer stamp, no acknowledge, no send.
-  // Runs before every branch below (campaign, series, Layer C, comms, acknowledge), for ALL send kinds.
-  // Same structural bridge as the Layer-C executor below: the SDK's builders are thenables.
-  const sendRefusal = await refuseSendKindApproval(admin as unknown as SendKindAdmin, { id: approvalId, tenant_id: approval.tenant_id, metadata: approval.metadata });
-  if (sendRefusal) return json(sendRefusal.status, sendRefusal.payload);
+  // Recheck after the awaited send-kind and companion observations, before claim.
+  if (ownerTask && !await taskSeat()) return json(403, { error: "forbidden" });
 
   // Atomic claim: guard against a double-send from two concurrent Approve clicks
   // (two tabs, or the UI and Paige at once). Only the caller that flips
@@ -112,28 +206,44 @@ Deno.serve(async (req) => {
   // treats it as already handled. There is no transient status admitted by the
   // CHECK, so claimed_at is the lock. Released below if a comms send fails, so a
   // genuine retry is still possible.
-  const { data: claimed } = await admin
+  const claimAt = new Date().toISOString();
+  const { data: claimed, error: claimError } = await admin
     .from("paige_pending_approvals")
-    .update({ claimed_at: new Date().toISOString(), reviewed_by_user_id: user.id })
+    .update({ claimed_at: claimAt, reviewed_by_user_id: user.id })
     .eq("id", approvalId)
     .eq("status", "pending")
     .is("claimed_at", null)
     .select("id")
     .maybeSingle();
+  if (canonicalLayerC && claimError) return json(503, { ok: false, executed: false, error: "approval_claim_unconfirmed" });
   if (!claimed) {
+    // An unsuccessful cancellation proves neither a future queue nor an unsent message. Keep the
+    // original correlation and claim sticky, without turning a repeated press into a success receipt.
+    const sq = (typeof approval.metadata === "object" && approval.metadata) ? (approval.metadata as Record<string, unknown>).send_queued : null;
+    if (sq && typeof sq === "object" && (sq as Record<string, unknown>).cancel_failed === true) {
+      const q = sq as Record<string, unknown>;
+      return json(200, { ok: false, executed: false, already: "in_progress", message_id: q.message_id ?? null, error: QUEUED_UNCANCELLABLE, approval_id: approvalId });
+    }
+    if (metaLc && Object.prototype.hasOwnProperty.call(metaLc, HELD_DRAFT_KEY)) {
+      return json(200, { ok: false, executed: false, already: "in_progress", error: HELD_DRAFT_UNCONFIRMED,
+        message_id: typeof metaLc[HELD_DRAFT_KEY] === "string" ? metaLc[HELD_DRAFT_KEY] : null, approval_id: approvalId });
+    }
     return json(200, { ok: true, executed: false, already: "in_progress", approval_id: approvalId });
   }
-  const releaseClaim = () => admin
-    .from("paige_pending_approvals")
-    .update({ claimed_at: null })
-    .eq("id", approvalId);
+  const releaseClaim = () => {
+    let release = admin.from("paige_pending_approvals").update({ claimed_at: null }).eq("id", approvalId);
+    // Do not clear a replacement claim if this request was retired while awaiting
+    // scope/readback. Reuse the incumbent timestamp/reviewer CAS fields.
+    if (canonicalLayerC) release = release.eq("status", "pending").eq("claimed_at", claimAt).eq("reviewed_by_user_id", user.id);
+    return release;
+  };
 
   // A marketing email campaign's approval is decided by email_campaign_approve, never by flipping the row:
   // that RPC re-derives the frozen version's content hash, requires a person who owns or administers the
   // business, and schedules the dispatch. A DB guard refuses any other writer, so the generic acknowledge
   // path below would fail here rather than strand the campaign. Called with the caller's own JWT (§9).
-  const campaignVersionId = approval.type === "campaign_send"
-    ? String(((approval as any).metadata ?? {}).email_campaign_version_id ?? "")
+  const campaignVersionId = !canonicalLayerC && approval.type === "campaign_send"
+    ? String((approval.metadata ?? {}).email_campaign_version_id ?? "")
     : "";
   if (campaignVersionId) {
     const { data: scheduled, error: approveErr } = await userClient.rpc("email_campaign_approve", { p_version_id: campaignVersionId });
@@ -150,8 +260,8 @@ Deno.serve(async (req) => {
   // An email series' approval is the same kind of row and is decided the same way: email_sequence_approve
   // re-derives the version's hash, requires a person who owns or administers the business, and starts the
   // series. Its own DB guard refuses any other writer, so this must run before the acknowledge path.
-  const sequenceVersionId = approval.type === "campaign_send"
-    ? String(((approval as any).metadata ?? {}).email_sequence_version_id ?? "")
+  const sequenceVersionId = !canonicalLayerC && approval.type === "campaign_send"
+    ? String((approval.metadata ?? {}).email_sequence_version_id ?? "")
     : "";
   if (sequenceVersionId) {
     const { data: started, error: approveErr } = await userClient.rpc("email_sequence_approve", { p_version_id: sequenceVersionId });
@@ -168,17 +278,25 @@ Deno.serve(async (req) => {
   // the executor's approve RPC is a second idempotency guard on the ledger row). NATIVE acts this slice.
   //
   // ORDERING (§37/§32, slice 2): this branch runs BEFORE the isComms heuristic below on purpose. The
-  // orchestration branch keys off metadata.source === 'paige_orchestration' — an AUTHORITATIVE, exact signal
-  // the engine set — whereas isComms is a substring heuristic over category/channel. A future native
+  // orchestration branch uses the validated physical row/native companion identity,
+  // whereas isComms is a substring heuristic over category/channel. A future native
   // capability whose dotted action-kind happens to contain 'sms'/'email' would otherwise be mis-routed into
   // the comms send path; checking the authoritative source first makes that impossible.
-  const metaLc = (typeof (approval as any).metadata === "object" && (approval as any).metadata) || {};
-  if (metaLc && (metaLc as any).source === "paige_orchestration" && (metaLc as any).event_id && (metaLc as any).act_id) {
+  if (canonicalLayerC) {
+    const currentCompanion = await readLayerCCompanion(claimAt);
+    if (currentCompanion.ok === false) {
+      await releaseClaim();
+      return json(currentCompanion.status, { ok: false, executed: false, error: currentCompanion.error });
+    }
+    if (ownerTask && !await taskSeat()) {
+      await releaseClaim();
+      return json(403, { ok: false, executed: false, error: "forbidden" });
+    }
     const res = await executeApprovedLayerCAct({
       // The supabase-js client is bridged to the executor's minimal structural db the same way the engine's
       // drainer bridges it (`admin as unknown as EngineDb`): the SDK's rpc returns a thenable builder, not a bare
       // Promise, so a direct assignment is a Deno-strict type error (§32) — the cast is the sanctioned seam.
-      db: admin as unknown as ApproveExecutorDb, eventId: String((metaLc as any).event_id), actId: String((metaLc as any).act_id), approverUserId: user.id,
+      db: admin as unknown as ApproveExecutorDb, eventId: canonicalLayerC.eventId, actId: canonicalLayerC.actId, approverUserId: user.id,
       // §9/§59: the caller was authorised above against THIS approval row's tenant; the executor refuses unless
       // the held act's ledger tenant is the SAME (a crafted approval in tenant A must not drive tenant B's act).
       expectedTenantId: approval.tenant_id ?? null,
@@ -203,21 +321,22 @@ Deno.serve(async (req) => {
     }
     // A real attempt — the ledger records the outcome. Stamp the approval with it (metadata.act_outcome also
     // satisfies the DB direct-approve guard that blocks a bypass approve on an orchestration row, slice 2).
-    const { error: lcErr } = await admin
+    const { data: stamped, error: lcErr } = await admin
       .from("paige_pending_approvals")
       .update({
         status: "approved",
         reviewed_by_user_id: user.id,
         reviewed_at: new Date().toISOString(),
-        metadata: { ...(metaLc as Record<string, unknown>), executed: res.executed, act_outcome: res.outcome, execute_note: res.reason ?? null },
+        metadata: { ...(metaLc ?? {}), executed: res.executed, act_outcome: res.outcome, execute_note: res.reason ?? null },
       })
-      .eq("id", approvalId);
-    if (lcErr) {
+      .eq("id", approvalId).eq("status", "pending").eq("claimed_at", claimAt).eq("reviewed_by_user_id", user.id)
+      .select("id").maybeSingle();
+    if (lcErr || !stamped) {
       // §5 slice 2: the ACT already ran (terminal in the ledger), but the approval-row STAMP failed → the row
       // is still pending+claimed and would be stuck unrecoverable. Release the claim so it is reclaimable; the
       // ledger is the source of truth and a re-approval will RESUME (see the row already terminal) and re-stamp.
       await releaseClaim();
-      return json(500, { error: lcErr.message });
+      return json(503, { ok: false, executed: res.executed, act_outcome: res.outcome, error: "approval_receipt_unconfirmed", approval_id: approvalId });
     }
     return json(200, { ok: res.ok, executed: res.executed, act_outcome: res.outcome, approval_id: approvalId });
   }
@@ -248,6 +367,107 @@ Deno.serve(async (req) => {
     const body = String(dc.body ?? dc.message ?? "");
     if (!body) { await releaseClaim(); return json(422, { error: "empty_body" }); }
 
+    // HELD (#2132): release the claim — checked, so a hold is never reported while the row stays held.
+    const answerHeld = async (reason: HoldReason, retryAfter: string | null, extra: Record<string, unknown> = {}) => {
+      const { error: releaseErr } = await (channel === "sms" && Object.prototype.hasOwnProperty.call(objectRecord(approval.metadata) ?? {}, HELD_DRAFT_KEY)
+        ? releaseHeldClaim() : releaseClaim());
+      if (releaseErr) return json(500, { ok: false, executed: false, error: "claim_release_failed", detail: releaseErr.message, approval_id: approvalId });
+      return json(200, heldPayload(reason, retryAfter, channel, approvalId, extra));
+    };
+
+    // The hours are read from the ONE pre-send seam before anything is sent or queued. Only a hold stops
+    // here; a block (client DND, suppression, no consent) and a check error still go to send-message,
+    // which records them exactly as before and refuses the send.
+    // #2150: the draft an earlier hold returned to Conversations IS this message. Read it first: if it
+    // already went out (or is scheduled) from Conversations, nothing is sent again — whatever the hours.
+    const apprMeta: Record<string, unknown> = (typeof approval.metadata === "object" && approval.metadata) ? approval.metadata as Record<string, unknown> : {};
+    // Held-SMS observations never release or settle a later request's claim. The canonical Task
+    // path and unrelated generic release behavior above remain unchanged.
+    const releaseHeldClaim = () => admin.from("paige_pending_approvals").update({ claimed_at: null })
+      .eq("id", approvalId).eq("status", "pending").eq("claimed_at", claimAt).eq("reviewed_by_user_id", user.id);
+    const unconfirmedHeldDraft = async (messageId: string | null, release = true) => {
+      if (release) {
+        const { error: releaseErr } = await releaseHeldClaim();
+        if (releaseErr) return json(500, { ok: false, executed: false, error: "claim_release_failed", detail: releaseErr.message, approval_id: approvalId });
+      }
+      return json(200, { ok: false, executed: false, error: HELD_DRAFT_UNCONFIRMED, message_id: messageId, approval_id: approvalId });
+    };
+    // A legacy held-email approval records only the draft id, not the originally approved sending
+    // identity or attachment state. Reading those from the mutable draft now would bless an edit as
+    // original authority. Neither a matching body nor a sent status proves the same authorized email.
+    // Fail closed before reading/settling/sending that row; the owner reviews it in Conversations.
+    // Even malformed held-draft metadata cannot fall through to a fresh send. No new approval path.
+    if (channel === "email" && Object.prototype.hasOwnProperty.call(apprMeta, HELD_DRAFT_KEY)) {
+      const { error: releaseErr } = await releaseClaim();
+      if (releaseErr) return json(500, { ok: false, executed: false, error: "claim_release_failed", detail: releaseErr.message, approval_id: approvalId });
+      return json(200, { ok: false, executed: false, outcome: "held_email_requires_review", error: HELD_EMAIL_REQUIRES_REVIEW, channel, approval_id: approvalId });
+    }
+    const hasHeldDraft = Object.prototype.hasOwnProperty.call(apprMeta, HELD_DRAFT_KEY);
+    const heldDraftId = typeof apprMeta[HELD_DRAFT_KEY] === "string" && String(apprMeta[HELD_DRAFT_KEY]).trim() ? String(apprMeta[HELD_DRAFT_KEY]) : null;
+    type HeldMsg = HeldDraftContent & { id: string; tenant_id: string | null; status: string | null; scheduled_for: string | null; sent_at: string | null };
+    // The content columns are read too: an edited draft must never be sent with this approval's text (#2150).
+    const readHeldDraft = (id: string) => admin.from("messages")
+      .select("id, tenant_id, status, scheduled_for, sent_at, channel_type, recipients, subject, body_html, body_text")
+      .eq("id", id).eq("tenant_id", approval.tenant_id).maybeSingle();
+    /** Answers for a held draft that already left Conversations; null when the draft can still be sent. */
+    const settleOnHeldDraft = async (msg: HeldMsg | null, expectedId: string, afterSend = false): Promise<Response | null> => {
+      if (!msg || msg.id !== expectedId || typeof approval.tenant_id !== "string" || !approval.tenant_id
+        || msg.tenant_id !== approval.tenant_id) return await unconfirmedHeldDraft(expectedId, !afterSend);
+      // A terminal status is not proof that THIS approved content was sent. The same exact-content
+      // predicate applies before both initial and post-dedupe settlement, not just before dispatch.
+      const changed = heldDraftChange(msg, { channel, to, subject: dc.subject ? String(dc.subject) : null, body });
+      if (changed) {
+        if (afterSend) return await unconfirmedHeldDraft(expectedId, false);
+        const { error: releaseErr } = await releaseHeldClaim();
+        if (releaseErr) return json(500, { ok: false, executed: false, error: "claim_release_failed", detail: releaseErr.message, approval_id: approvalId });
+        return json(200, { ok: false, executed: false, outcome: "changed_in_conversations", changed, error: HELD_DRAFT_CHANGED, message_id: msg.id, channel, approval_id: approvalId });
+      }
+      if (msg.status && ALREADY_SENT_STATUSES.has(msg.status)) {
+        // It went out from Conversations: this approval was that message. Close the approval on it (only
+        // a row still pending, checked) and send nothing.
+        const now = new Date().toISOString();
+        const { data: settled, error: settleErr } = await admin.from("paige_pending_approvals").update({
+          status: "approved", reviewed_by_user_id: user.id, reviewed_at: now, sent_at: msg.sent_at ?? null,
+          metadata: { ...apprMeta, held_draft_outcome: { state: "sent_from_conversations", message_id: msg.id, at: now } },
+        }).eq("id", approvalId).eq("status", "pending").eq("claimed_at", claimAt).eq("reviewed_by_user_id", user.id).select("id");
+        if (settleErr) {
+          await releaseHeldClaim();
+          return json(500, { ok: false, executed: false, error: "held_draft_settle_failed", detail: settleErr.message, message_id: msg.id, approval_id: approvalId });
+        }
+        if (!settled || settled.length !== 1) {
+          return json(200, { ok: false, executed: false, already: "sent", error: SENT_FROM_CONVERSATIONS, message_id: msg.id, approval_id: approvalId });
+        }
+        return json(200, { ok: true, executed: false, already: "sent", sent_from: "conversations", note: SENT_FROM_CONVERSATIONS, message_id: msg.id, channel, approval_id: approvalId });
+      }
+      if (msg.status === "queued") {
+        // Scheduled from Conversations: it goes out then. Nothing is sent from here; the claim is released
+        // so the person can decline this, and every later Approve gets this same answer.
+        const { error: releaseErr } = await releaseHeldClaim();
+        if (releaseErr) return json(500, { ok: false, executed: false, error: "claim_release_failed", detail: releaseErr.message, approval_id: approvalId });
+        return json(200, { ok: false, executed: false, queued: true, outcome: "scheduled_elsewhere", error: SCHEDULED_FROM_CONVERSATIONS, message_id: msg.id, scheduled_for: msg.scheduled_for ?? null, channel, approval_id: approvalId });
+      }
+      if (msg.status !== "draft") return await unconfirmedHeldDraft(expectedId, !afterSend);
+      return null;
+    };
+    let reuseMessageId: string | null = null;
+    if (hasHeldDraft) {
+      if (!heldDraftId) return await unconfirmedHeldDraft(null);
+      const { data: heldMsg, error: heldErr } = await readHeldDraft(heldDraftId);
+      if (heldErr) {
+        await releaseHeldClaim();
+        return json(503, { ok: false, executed: false, error: "held_draft_read_failed", detail: heldErr.message, message_id: heldDraftId, approval_id: approvalId });
+      }
+      const settled = await settleOnHeldDraft(heldMsg as HeldMsg | null, heldDraftId);
+      if (settled) return settled;
+      reuseMessageId = heldDraftId;
+    }
+
+    const preSend = await runPreSend(admin as unknown as Parameters<typeof runPreSend>[0], {
+      tenantId: approval.tenant_id ?? null, channel, to, contactId: approval.contact_id ?? null,
+    });
+    const preHold = preSend.proceed ? null : holdReasonOf(preSend.outcome);
+    if (preHold) return await answerHeld(preHold, preSend.queueUntil);
+
     // Forward the caller's JWT so send-message authorizes the same user and
     // performs the send + status flip (status='approved' on success).
     const resp = await fetch(`${supabaseUrl.replace(/\/$/, "")}/functions/v1/send-message`, {
@@ -261,18 +481,73 @@ Deno.serve(async (req) => {
         contact_id: approval.contact_id ?? undefined,
         conversation_id: approval.conversation_id ?? undefined,
         approval_id: approvalId,
+        // #2150: send the SAME row the earlier hold returned to a draft, never a second one.
+        message_id: reuseMessageId ?? undefined,
       }),
     });
     const sendResult = await resp.json().catch(() => ({}));
+    if (reuseMessageId && resp.ok && (sendResult as Record<string, unknown>)?.deduped === true) {
+      // send-message found the draft already sent or scheduled (from Conversations, in between) and sent
+      // nothing. Its dedupe answer says status:'sent' for a scheduled row too, so the row is read back.
+      const { data: nowMsg, error: nowErr } = await readHeldDraft(reuseMessageId);
+      const settled = !nowErr ? await settleOnHeldDraft(nowMsg as HeldMsg | null, reuseMessageId, true) : null;
+      if (settled) return settled;
+      return await unconfirmedHeldDraft(reuseMessageId, false);
+    }
     const sendOutcome = classifySendResult(resp.ok, sendResult);
     if (sendOutcome.kind === "queued") {
-      // A quiet-hours/DND hold queued the message to go later: ACCEPTED. Keep the claim so a second
-      // Approve cannot queue a second copy; the row is not marked approved because nothing has gone yet.
-      const qMeta = (typeof approval.metadata === "object" && approval.metadata) || {};
-      await admin.from("paige_pending_approvals").update({
-        metadata: { ...qMeta, send_queued: { outcome: sendOutcome.outcome, scheduled_for: sendOutcome.scheduledFor, message_id: sendOutcome.messageId, at: new Date().toISOString() } },
-      }).eq("id", approvalId);
-      return json(200, { ok: true, executed: false, queued: true, outcome: sendOutcome.outcome, scheduled_for: sendOutcome.scheduledFor, channel, approval_id: approvalId });
+      // send-message held it after the check above said clear (the hours began in between). A queued row
+      // with no approval behind it is what #2132 removed, so cancel it through the existing undo seam
+      // (cancel_scheduled_message, the caller's own JWT: it returns the row to an unsent draft) and answer
+      // HELD. No message_id means send-message persisted no row: nothing is queued, so it is simply held.
+      const reason = holdReasonOf(sendOutcome.outcome) ?? "other";
+      if (!sendOutcome.messageId) return await answerHeld(reason, sendOutcome.scheduledFor);
+      const { data: cancelled, error: cancelErr } = await userClient.rpc("cancel_scheduled_message", { _id: sendOutcome.messageId });
+      if (!cancelErr && cancelled === true) {
+        // It is an unsent draft in Conversations now. Name it on the approval and release the claim in ONE
+        // write, onto a row still pending, and check exactly one row took it (#2150): the next Approve then
+        // sends that same draft, so the draft and the approval stay one message.
+        const { data: linked, error: linkErr } = await admin.from("paige_pending_approvals").update({
+          claimed_at: null, metadata: { ...apprMeta, [HELD_DRAFT_KEY]: sendOutcome.messageId },
+        }).eq("id", approvalId).eq("status", "pending").eq("claimed_at", claimAt).eq("reviewed_by_user_id", user.id).select("id");
+        if (linkErr) {
+          console.error(`[execute-approval] approval ${approvalId}: held draft ${sendOutcome.messageId} could not be recorded: ${linkErr.message}`);
+          return json(500, { ok: false, executed: false, error: "held_draft_link_not_recorded", detail: linkErr.message, returned_to_draft_message_id: sendOutcome.messageId, approval_id: approvalId });
+        }
+        if (!linked || linked.length !== 1) {
+          // Decided (declined) while send-message ran: nothing went out, and the copy is a plain draft.
+          return json(200, { ok: false, executed: false, held: false, link_recorded: false, error: DECIDED_MID_SEND_HELD, returned_to_draft_message_id: sendOutcome.messageId, approval_id: approvalId });
+        }
+        return json(200, heldPayload(reason, sendOutcome.scheduledFor, channel, approvalId, {
+          returned_to_draft_message_id: sendOutcome.messageId,
+          ...(channel === "email" ? { error: HELD_EMAIL_REQUIRES_REVIEW } : {}),
+        }));
+      }
+      // Cancellation false/error does not prove whether it is queued, claimed, sent or gone. The claim is KEPT: releasing it
+      // would let a second Approve queue a second copy to the same person. The link is recorded and its
+      // write is checked; if it fails, the answer is a 500 carrying the message id, never a success.
+      // The write must land on exactly ONE row still pending (#2150 P2a): PostgREST reports no error when the
+      // filter matches nothing, so the match is read back rather than assumed.
+      const { data: linked, error: linkErr } = await admin.from("paige_pending_approvals").update({
+        metadata: { ...apprMeta, send_queued: { outcome: sendOutcome.outcome, scheduled_for: sendOutcome.scheduledFor, message_id: sendOutcome.messageId, cancel_failed: true, at: new Date().toISOString() } },
+      }).eq("id", approvalId).eq("status", "pending").eq("claimed_at", claimAt).eq("reviewed_by_user_id", user.id).select("id");
+      if (linkErr) {
+        console.error(`[execute-approval] approval ${approvalId}: queued message ${sendOutcome.messageId} could not be cancelled and the link could not be recorded: ${linkErr.message}`);
+        return json(500, { ok: false, executed: false, error: "queued_link_not_recorded", detail: linkErr.message, message_id: sendOutcome.messageId, approval_id: approvalId });
+      }
+      if (!linked || linked.length !== 1) {
+        // Decided while send-message ran; cancellation did not confirm the original copy's state.
+        console.error(`[execute-approval] approval ${approvalId}: decided mid-send; queued message ${sendOutcome.messageId} could not be cancelled and is not linked`);
+        return json(200, {
+          ok: false, executed: false, already: "in_progress", link_recorded: false, message_id: sendOutcome.messageId,
+          channel, error: DECIDED_MID_SEND_QUEUED, approval_id: approvalId,
+        });
+      }
+      return json(200, {
+        ok: false, executed: false, already: "in_progress", link_recorded: true, message_id: sendOutcome.messageId, channel,
+        error: QUEUED_UNCANCELLABLE,
+        approval_id: approvalId,
+      });
     }
     if (sendOutcome.kind !== "sent") {
       // send-message leaves the row 'pending' on failure — release the claim so a
@@ -286,7 +561,7 @@ Deno.serve(async (req) => {
   // No automated executor for this category yet — acknowledge (mark approved)
   // exactly as the prior button did, and record that no outbound action ran.
   // metadata is now selected above, so the spread preserves existing keys.
-  const meta = (typeof (approval as any).metadata === "object" && (approval as any).metadata) || {};
+  const meta = (typeof approval.metadata === "object" && approval.metadata) || {};
   const { error: ackErr } = await admin
     .from("paige_pending_approvals")
     .update({

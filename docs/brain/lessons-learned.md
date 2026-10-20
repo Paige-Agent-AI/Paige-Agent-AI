@@ -1,10 +1,32 @@
 # Lessons Learned — recurring traps
 
+### Recover a saved review through its native publication, never a guessed intent (2026-10-17, BUG)
+
+A browser-only publication work reference disappears on reload while native work can still be claimed or unknown. Pending review text is not proof that publication never started, and an earlier active generation is not proof a replacement published. Extend the incumbent scoped reader with the exact native document/extraction/revision/hash association and existing job visibility; distinguish no submitted publication from unreadable/ambiguous work. Preserve original work, unknown-result and unrecorded-receipt truth. Never create a second job or replay because the acknowledgement was lost. Native fixture proof remains separate from integrated authenticated recovery and owner acceptance.
+
+### A streaming cache must obey the original cancellation (2026-10-16, E01)
+
+Starting playback early is incomplete if a second tee reader continues draining the paid provider after Stop. Keep one owned provider reader, cancel the original request/reader, count ambiguous dispatched spend, and upload only after complete EOF. Verify first chunk before EOF, caller/consumer abort, failed settlement, stalled first audio, malformed/empty response and no partial cache or automatic retry. Record provider-first-byte and whole-request readiness separately from audible speech; mocked timings are not provider p50/p95.
+
+**2026-10-16 E01 CI portability repair (#2262):** Node20 Response.blob() can return a valid Node Blob that is not an instance of jsdom’s Blob constructor. Two new fallback tests failed in hosted CI38982168086 while Node24 passed; the exact two failures reproduced locally on Node20.20.2. Assert same-response artifact identity, MIME and bytes instead of a cross-realm constructor. Keep one-fetch/one-body/cancel/refusal assertions; do not change production playback or retry CI as infrastructure. Before/after logs remain in the existing E01 evidence packet.
+
 The failures that have actually cost time/money, written as **symptom → root cause → rule** so the
 next session recognizes the trap before repeating it. These are the concrete instances behind the
 RED-LINE index and the §-doctrine; this file is the fast-lookup version.
 
 ---
+
+### Detach shared audio; do not load an empty URL (2026-10-16, E01)
+
+A progressive decoder fixture started correctly, but restarting after Stop went idle before playback. Clearing the shared element with an empty-string src can initiate a failing resource selection and deliver stale events into the next owner. Remove the source/load the detached element, fence media callbacks and play promises by the existing owner generation, and verify Stop followed by a real native restart. Preserve same-response fallback and request identity; mocks alone missed this. Synthetic decoder startup is not provider latency or an approved-voice audition.
+
+
+### SOLO guidance must be reachable, and native pixels need compositor evidence (2026-10-16, E01)
+
+**Symptom → cause → rule.** Passing a shared Chat `chips` prop did not expose the intended questions in the ordinary SOLO interface: that branch uses its existing slash menu. Inspect the actual rendered consumer rather than assuming a shared prop creates a usable control. E01 extends its existing expanded profile with explicit questions and reuses `handOffPaigePrompt` to append an unsent draft and focus the incumbent composer; never auto-send or create a parallel conversation control.
+
+Raw captures can agree with reported CSS/DPR yet omit native compositor proof, and some captures lose a pixel. Decode untouched images, verify native layout metrics as well as CSS/DPR, bind source and assets, and preserve invalid originals. Reuse the established native capture process; missing metrics remain HOLD rather than a product PASS. Synthetic UI, source/deployment readback and authenticated ordinary-owner persistence are separate evidence classes. The current E01 extension still requires ten metric-bearing replacements; this lesson does not close that gate.
+
 
 ### "Approved" was a category string match, and no test asserted a send happened (2026-10-13, Experience 03 S3)
 
@@ -53,6 +75,14 @@ had NOT persisted. The file rolled back as a whole.
 ### Verified enrollment can outpace the mounted workspace provider (2026-10-12, Experience01)
 
 **Symptom → root cause → rule.** Welcome received verified server enrollment and navigated, but real SoloEntry refused an empty workspace provider accepted before fulfillment. Server record writes emit no browser Auth event; a navigation-only mock missed this. Refresh the same canonical provider, prove an accepted new list has React-committed, and match fresh actor/profile/server-selected tenant/address before entry. The reference change is a completion marker, never authority. Failed refresh preserves old context, so merely awaiting its void Promise is insufficient. Subject invalidation must clear every prior actor status/error and scope its presentation to the corresponding current view; in-flight cancellation tests alone missed a settled-failure transition. Use the real provider/dispatcher in integration proof; keep native rendering, hosted release and protected ordinary-owner acceptance distinct. Post-merge #2096 review exposed a separate timing gap: verification late in polling exhausted canonical readback time. Budget sequential bounded phases independently and test a verified response both near and beyond the polling deadline; fast fulfillment alone misses that class. Current forward fix and evidence are in `docs/delivery/experience-01-admission-readback-window.md`.
+
+### Focus restoration can race disabled checkpoint controls (2026-10-12, Experience01)
+
+**Symptom → root cause → rule.** Rendered save put focus on BODY although an immediate-fixture test passed. Canonical save finished first; the private checkpoint still disabled the correction button when an animation-frame callback tried to focus it. Use deferred checkpoints and assert enabled-control focus after settlement. Restore through a scope-fenced effect, cancel on scope changes and retain the failed-save editor. Setup success and progress-write failure remain separate outcomes.
+
+### A theme class and DOM fit do not prove the captured surface (2026-10-12, Experience01)
+
+**Symptom → root cause → rule.** A harness declared dark while the shell's ThemeProvider emitted light tokens; rapid viewport changes also captured another viewport's dimensions. Drive the actual provider, compare computed token state, validate each native image's dimensions/state after settlement and reject mismatches.320CSS reflow does not substantiate native200%zoom when browser geometry is unchanged. Synthetic context/provider rendering cannot substantiate customer authentication or stored records.
 
 ### A per-person field is not a business setting (2026-10-12, Experience 04)
 
@@ -3466,3 +3496,22 @@ through PUBLIC, so revoking PUBLIC removes nothing. The test that would have cau
 - **The guard belongs in the body too (§59).** The recorder now refuses a browser role itself, so a later
   grant cannot reopen it; the proof grants anon EXECUTE back on purpose and expects the refusal.
 
+
+### A renamed pending migration leaves real Preview history behind (2026-10-13, Experience01)
+
+**Symptom → root cause → rule.** Forward-only production ordering moved the unchanged checkpoint file while the existing Preview retained its original260000 history row. The required check rejected remote versions absent from local files. Rebase alone did not clear that record. Compare stored SQL AND live definitions/ACL against canonical candidate before choosing supported history-only repair; preserve all original identities. Do not convert an infra/recovery failure into a fake SQL pass, reset/recreate blindly, pre-mark a new version applied, or bypass a403 credential endpoint. Normal Preview must still execute canonical pending SQL at the reviewed head.
+
+- **A forward source rename does not make identical Preview SQL unapplied (Experience01,2026-10-13).** Export and compare the original statements plus live function signatures/bodies/configuration/grants before history repair. Preserve the original export, use the supported applied/reverted metadata statuses to reconcile the new filename, and verify the old/new ledger keys and unchanged functions before normal Preview verification. Do not remove a ledger row merely to reexecute already-installed SQL; a read-only integration also does not establish branch repair authority. Production still owes normal migration execution.
+
+
+### 2026-10-14 — E1 conversation space requires native proof
+
+Component/SQL tests proved the canonical save/checkpoint contracts but did not expose the first-run header consuming transcript space or cropped Send at 320px. The native finish review correctly returned FIX despite source PASS. Apply the bounded correction once, bind before/after native captures to immutable source/compiled assets, and keep source review, rendered finish, deployment and ordinary-owner acceptance distinct. An expired review-round allowance requires the explicit bounded exception, not another automatic author/reviewer loop. Preserve invalid frames and source-attribution limitations rather than retroactively upgrading them.
+
+### 2026-10-14 E1 native source and pixels require independent binding
+
+The bounded presentation repair preserved the shared transcript controller and makes the complete opening question fit native320x720. Local tests/DOM dimensions cannot certify other pixels: requested390x844 encoded390x843, and rapid open-state labels disagreed with folded/transition screenshots. Independently decode dimensions, inspect pixels against visible state, complete source/asset hashes before navigation and after, preserve invalid originals and stop bounded confirmation on another mismatch. Reset/new own tab/DPR1.25 did not establish a cause or repair; route the existing capture integration defect instead of changing pixels, assertions, product state or drivers. Desktop focus/resize cannot prove a real OS keyboard. The original fixture used state, so validate query semantics before navigation. Private canonical records/23 acceptance permissions stay separate from synthetic native proof.
+
+### 2026-10-17 — Preserve the original actor through personal email execution
+
+The governed email sender must retain the canonical personal-mailbox owner rule across readiness, approval, native admission and transport. A service-role transport identity is not the person who granted a mailbox. Reuse the existing mailbox policy and canonical domain records; carry the server-resolved original actor, recheck current authority and preserve uncertain outcomes. Shared/company senders and provider configuration remain separate. Tests must include mailbox classification/owner fields matching the real schema, actor-free background work, current ownership drift and provider-call absence. Source/local proof is not production exposure, live delivery or authenticated acceptance. The bounded candidate and remaining review/release obligations are in [the existing restoration evidence](../evidence/ui-delivery/ant21-personal-email-authority.md); Master closeout remains with the root BUG integrator.

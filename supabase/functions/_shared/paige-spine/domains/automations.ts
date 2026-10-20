@@ -71,3 +71,36 @@ export const WEEKLY_COMMITMENT_STATUS = {
     riskPolicyKey: "read_only", approvalAuthority: "none" },
   chatBinding: "UNAVAILABLE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "NONE", maturity: "PARTIAL",
 } as const satisfies SpineCapability;
+
+// Prepared original-outcome reader, not an action or conversational offer. The
+// server transport reauthorizes the exact companion under its original caller
+// JWT before using this unchanged service-only native result reader. Current
+// Task inspection stays with crm_clients.task_read; registration grants no SQL.
+export const OWNER_TASK_HISTORY_READ_CAPABILITY = defineCapability({
+  identity: { id: "automations.owner_task_history", version: 1, domain: "automations", owner: "experience-05",
+    humanSurface: "Operations / internal task process inspection",
+    description: "Inspect one original internal-task occurrence, its approval and verified native Task/Rail result without dispatch, replay or a current Task-state claim." },
+  input: objectInputSchema({ properties: {
+    approvalId: { type: "string", format: "uuid", maxLength: 36, description: "Exact original native task approval; not a new approval." },
+    tenantId: { type: "string", format: "uuid", maxLength: 36, description: "Stale-workspace refusal guard only; authority is resolved from the original JWT." },
+  }, required: ["approvalId", "tenantId"] }),
+  effect: "read",
+  governance: { actionRiskKey: null, risk: "read_only", approval: "none", requiredPermission: ownerGrantablePermission("automations.owner_task_history.read") },
+  tenantScope: { source: "server", tenantResolver: "current_user_tenant_id", actorResolver: "authenticated_user",
+    revalidateAt: ["before_availability", "before_execution", "before_receipt"] },
+  availability: { resolver: "paige-capability-status", states: ["live", "not_for_tier", "unavailable"] },
+  providerBinding: { kind: "internal", operation: "public.read_owner_task_act", connectionResolver: null },
+  idempotency: { mode: "not_applicable" },
+  receipt: { rail: true, recorder: "record_capability_run", redaction: "tenant_safe", visibility: "owner_internal" },
+  outcome: { projector: "capability-record" },
+});
+export const OWNER_TASK_HISTORY_READ = {
+  key: "automations.owner_task_history", domain: "automations", owner: "experience-05",
+  humanSurface: "Operations / internal task process inspection", readiness: "none", selfDescribe: false,
+  action: { classification: "read", executor: "public.read_owner_task_act", seatAuthority: "door-seat",
+    idempotency: "Read-only original-JWT companion authorization and original native result/receipt correlation. No execution, settlement, receipt creation, retries or current Task substitution.",
+    riskPolicyKey: "read_only", approvalAuthority: "none" },
+  outcome: { kinds: ["ready", "refused", "unavailable"], projector: "public.read_owner_task_act",
+    railVisibility: "Returns the existing native creation receipt identity only when verified. Does not issue a new action receipt or imply optional orchestration/contact Rail publication." },
+  chatBinding: "UNAVAILABLE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "NONE", maturity: "PARTIAL",
+} as const satisfies SpineCapability;

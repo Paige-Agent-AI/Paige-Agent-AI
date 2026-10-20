@@ -1,0 +1,15 @@
+{
+  "status": "UNVERIFIED",
+  "reason": "Native zoom shortcuts did not change the browser viewport or device scale; no zoom PASS inferred.",
+  "baseline": {
+    "width": 1536,
+    "height": 735,
+    "dpr": 1.25
+  },
+  "after": {
+    "width": 1536,
+    "height": 735,
+    "dpr": 1.25
+  },
+  "reflowNativeCssWidth": 320
+}

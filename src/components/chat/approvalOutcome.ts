@@ -158,7 +158,7 @@ export type CheckDestination = "contacts" | "pipeline" | "tasks";
 const SOLO_CHECK: Record<CheckDestination, { path: string; label: string }> = {
   contacts: { path: "clients/people", label: "Open your clients" },
   pipeline: { path: "growth/pipeline", label: "Open your pipeline" },
-  tasks: { path: "calendar/tasks", label: "Open your tasks" },
+  tasks: { path: "operations/work", label: "Open your tasks" },
 };
 
 /**

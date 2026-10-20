@@ -649,8 +649,8 @@ describe('composeBusinessReview', () => {
     const f = fakeCaller({ scope: (n) => (n <= 3 ? TENANT : 'switched-workspace'), script: usdEverywhere });
     const r = await review(f);
     if (!('snapshot' in r)) throw new Error(r.reason);
-    // F2b: four adapters now run (payments, sales_pipeline, operations, clients).
-    expect(r.snapshot.budget.adapters_run).toBe(4);
+    // Existing four domains plus the canonical Game Plan projection.
+    expect(r.snapshot.budget.adapters_run).toBe(5);
     expect(f.issued().length).toBeGreaterThan(0);
     for (const d of r.snapshot.requested) expect(r.snapshot.domains[d].status).toBe('degraded');
     expect(r.snapshot.degradation.every((e) => e.reason === 'scope_changed')).toBe(true);

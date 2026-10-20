@@ -174,6 +174,22 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // act where the visibility decision belongs." This IS that separate act. The two entries are the
   // two halves of one sentence, and they only stay coherent together.
   ["crm_file_document", "high", "can put a document in front of the client, which cannot be undone"],
+  // E09 Slice 3. Sharing a work item puts its title, state and due date in front of the client in
+  // their portal; unsharing takes it away from someone who may already be relying on it. Both
+  // directions change what a client sees, so the tool is `high` whatever its `shared` argument says
+  // (rule 2: nothing in a request lowers a class). Its RPC re-proves owner/admin of the caller's own
+  // active workspace and refuses a reminder, an unlinked or cancelled item, and a stale version.
+  ["plan_item_set_client_share", "high", "changes what a client can see in their portal"],
+  // E09 Slice M. Showing, hiding, renaming or reordering an entry in the customer portal menu changes
+  // what EVERY client of the business sees on their next visit, and a hidden entry takes a page away
+  // from people who may be relying on it. `high` whatever the entries say. Its writer
+  // (set_tenant_portal_config) re-proves owner/admin of the tenant or an ancestor in its body.
+  ["portal_menu_update", "high", "changes what every client sees in their portal menu"],
+  // E09 Slice 7. Pausing or ending takes a real person's portal away from them on their next visit;
+  // ending needs a fresh invitation (a new email they must act on) to undo. Restoring gives it back.
+  // `high` whatever the action says, so clampLaneByRisk keeps it `confirm` on any grant — it can never
+  // run unattended. Its writer (set_client_portal_access) re-proves owner/admin of the CURRENT workspace.
+  ["client_portal_access_set", "high", "withholds or ends one client's portal access to this business; ending needs a new invitation to undo"],
 
   // ── high: spends money ────────────────────────────────────────────────────────────────────
   ["marketplace_install", "high", "installs a paid capability"],
@@ -453,6 +469,7 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   ["comms_upsert_email_template", "high", "overwrites a shared template every future send renders from"],
   // send_btf_template_email, send_transactional_email, send_composed_email
   ["comms_send_email", "high", "puts an email in a real person's inbox"],
+  ["client_portal_invitation_send", "high", "grants one customer's portal access and emails their verified saved recipient through the existing sender"],
   // #1140 two-mailbox pilot: reversible mailbox organization on the canonical mirror vs the real mailbox.
   ["gmail_organize", "high", "changes a real Gmail mailbox (labels, archive, trash, unsubscribe) — external and visible to the mailbox owner, so it needs the rendered approval card; the mailbox kinds are reversible, an unsubscribe proposal has no undo and its automatic sending is disabled, and permanent deletion is not expressible"],
   // cancel_workflow_run

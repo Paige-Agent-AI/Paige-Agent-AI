@@ -1,4 +1,6 @@
 import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
+import { handlePortalInvitationCommand } from "./command.ts";
+import { runPreSend } from "../_shared/pre-send-pipeline.ts";
 // send-portal-invite — emails a customer their branded invite to a tenant's
 // client portal (roadmap #2). The token is minted by create_tenant_invite_token
 // (admin-gated RPC) on the client; this function validates it server-side, reads
@@ -99,8 +101,11 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   if (req.method !== "POST") return json({ ok: false, error: "POST only" }, 405);
 
-  let body: { token?: string; email?: string; first_name?: string };
+  let body: { token?: string; email?: string; first_name?: string; operation_id?: unknown; contact_id?: unknown; expected_tenant_id?: unknown };
   try { body = await req.json(); } catch { return json({ ok: false, error: "bad request" }, 400); }
+  if (body && (Object.prototype.hasOwnProperty.call(body,"operation_id") || (!Object.prototype.hasOwnProperty.call(body,"token") && (Object.prototype.hasOwnProperty.call(body,"contact_id") || Object.prototype.hasOwnProperty.call(body,"expected_tenant_id"))))) {
+    return handlePortalInvitationCommand(req,body,{key:RESEND_KEY,site:PUBLIC_BASE,defaultFrom:EMAIL_FROM,senderFrom,copy:inviteCopy,html:inviteHtml});
+  }
   const token = String(body.token ?? "").trim();
   const email = String(body.email ?? "").trim().toLowerCase();
   const firstName = body.first_name ? String(body.first_name).trim() : "";
@@ -110,7 +115,21 @@ Deno.serve(async (req) => {
 
   const url = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (!url || !serviceKey) return json({ ok: false, error: "server not configured" }, 500);
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  if (!url || !serviceKey || !anonKey) return json({ ok: false, error: "server not configured" }, 500);
+  const authorization = req.headers.get("Authorization");
+  if (!authorization || !/^Bearer\s+\S+$/i.test(authorization))
+    return json({ ok: false, emailed: false, error: "Sign in to manage invitations." }, 401);
+  const caller = createClient(url, anonKey, {
+    global: { headers: { Authorization: authorization } },
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const verified = await caller.auth.getUser().catch(() => null);
+  if (!verified)
+    return json({ ok: false, emailed: false, error: "Invitation authorization could not be verified." }, 503);
+  if (verified.error || !verified.data.user?.id)
+    return json({ ok: false, emailed: false, error: "Sign in to manage invitations." }, 401);
+  const actorUserId = verified.data.user.id;
   const admin = createClient(url, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } });
 
   // Validate the token, then resolve the brand up the parent chain (below).
@@ -118,14 +137,42 @@ Deno.serve(async (req) => {
     .from("tenant_invite_tokens")
     // `id` is new here: it is the handle every later delivery event is matched back to. Without it
     // a webhook can prove an email was opened but not WHICH invitation it belonged to.
-    .select("id, tenant_id, revoked_at, expires_at, email, kind")
+    .select("id, tenant_id, contact_id, revoked_at, expires_at, email, kind, uses, max_uses, last_used_at")
     .eq("token", token)
     .maybeSingle();
   if (!tok || tok.revoked_at || new Date(tok.expires_at as string) <= new Date()) {
     return json({ ok: false, error: "invite is not valid" }, 400);
   }
 
-  if (!(await commsProviderExecutionAllowed(admin, { tenantId: tok.tenant_id }))) {
+  // Same caller-bound native predicates as create_tenant_invite_token. Neither
+  // token possession, recipient equality nor service-role reads grant send authority.
+  const authorized = async (): Promise<boolean> => {
+    try {
+      const current = await caller.auth.getUser();
+      if (current.error || current.data.user?.id !== actorUserId) return false;
+      const checks = await Promise.all([
+        caller.rpc("is_platform_owner"),
+        caller.rpc("is_tenant_admin", { _tenant: tok.tenant_id }),
+        caller.rpc("agency_can_manage_child", { _child: tok.tenant_id }),
+      ]);
+      if (checks.some((result) => result.error)) return false;
+      if (checks.some((result) => result.data === true)) return true;
+      // The incumbent Team writer also recognizes its native is_owner flag.
+      // Reuse that exact authority only for team tokens and the verified actor;
+      // it cannot grant permission on a consumer invitation.
+      if (tok.kind !== "team") return false;
+      const team = await admin.rpc("solo_team_invite_authority", {
+        _actor: actorUserId, _expected_tenant_id: tok.tenant_id,
+      });
+      return !team.error && team.data === tok.tenant_id;
+    } catch { return false; }
+  };
+  if (!(await authorized()))
+    return json({ ok: false, emailed: false, error: "Invitation is not available for sending." }, 403);
+
+  if (!(await commsProviderExecutionAllowed(admin, {
+    tenantId: tok.tenant_id, actorUserId, recipientEmail: email,
+  }))) {
     return json({ ok: false, emailed: false, status: "blocked", code: "COMMS_PROVIDER_EXECUTION_DISABLED" }, 403);
   }
 
@@ -137,6 +184,90 @@ Deno.serve(async (req) => {
     return json({ ok: false, error: "this invite is bound to a different address" }, 400);
   }
   const recipient = boundEmail ?? email;
+
+  const eligible = async (): Promise<boolean> => {
+    try {
+      const current = await admin.from("tenant_invite_tokens")
+        .select("id,tenant_id,contact_id,email,kind,revoked_at,expires_at,uses,max_uses,last_used_at")
+        .eq("id", tok.id).eq("tenant_id", tok.tenant_id).eq("token", token).maybeSingle();
+      const invite = current.data;
+      if (current.error || !invite || invite.id !== tok.id || invite.tenant_id !== tok.tenant_id
+        || invite.contact_id !== tok.contact_id || invite.kind !== tok.kind || invite.revoked_at
+        || String(invite.email ?? "").trim().toLowerCase() !== String(tok.email ?? "").trim().toLowerCase()
+        || !Number.isFinite(Date.parse(invite.expires_at)) || Date.parse(invite.expires_at) <= Date.now()
+        || (invite.max_uses !== null && invite.uses >= invite.max_uses)) return false;
+      if (String(invite.kind ?? "consumer") !== "consumer") return true;
+      if (!boundEmail || !invite.contact_id || invite.uses !== 0 || invite.last_used_at !== null) return false;
+      const client = await admin.from("clients")
+        .select("id,tenant_id,status,merged_into_contact_id,do_not_contact,linked_user_id")
+        .eq("id", invite.contact_id).eq("tenant_id", invite.tenant_id).maybeSingle();
+      const contact = client.data;
+      if (client.error || !contact || contact.id !== invite.contact_id || contact.tenant_id !== invite.tenant_id
+        || contact.status !== "active" || contact.merged_into_contact_id !== null
+        || contact.do_not_contact !== false || contact.linked_user_id !== null) return false;
+      const methods = await admin.from("client_contact_methods")
+        .select("client_id,tenant_id,kind,is_primary,value")
+        .eq("client_id", contact.id).eq("tenant_id", invite.tenant_id)
+        .eq("kind", "email").eq("is_primary", true).limit(2);
+      if (methods.error || !Array.isArray(methods.data) || methods.data.length !== 1) return false;
+      const method = methods.data[0];
+      return method.client_id === contact.id && method.tenant_id === invite.tenant_id
+        && method.kind === "email" && method.is_primary === true && typeof method.value === "string"
+        && method.value.trim().toLowerCase() === boundEmail;
+    } catch { return false; }
+  };
+  if (!(await eligible()))
+    return json({ ok: false, emailed: false, error: "Invitation details changed. Review the client before sending." }, 409);
+
+  // A consumer invitation is an email to one of the business's clients, so it passes the same runPreSend
+  // as the canonical command (command.ts): a client who turned email off, bounced or was paused by the
+  // business is not emailed (E09 Slice 6, M2a). Team and owner invitations are not client sends.
+  //
+  // Round 4 (verifier MINOR 2): a check that could not RUN is not a hold, and is never reported as the
+  // client's choice. It still sends nothing (§13: an unverified legal gate fails closed), but answers its
+  // own code. A hold names whose setting caused it: the business's own email quiet hours are not the
+  // client's preference, so staff are not told the client switched email off.
+  type PolicyGate = { clear: true } | { clear: false; hold: "contact" | "business_quiet_hours" } | { clear: false; unavailable: true };
+  const policyGate = async (): Promise<PolicyGate> => {
+    if (String(tok.kind ?? "consumer") !== "consumer") return { clear: true };
+    try {
+      const gate = await runPreSend(admin as unknown as Parameters<typeof runPreSend>[0], {
+        tenantId: tok.tenant_id, channel: "email", to: recipient, contactId: tok.contact_id ?? null,
+      });
+      if (gate.proceed) return { clear: true };
+      if (gate.outcome === "error") return { clear: false, unavailable: true };
+      return { clear: false, hold: gate.outcome === "queued_tenant_dnd" ? "business_quiet_hours" : "contact" };
+    } catch (e) {
+      console.error("[send-portal-invite] pre-send check threw", e instanceof Error ? e.message : "unknown");
+      return { clear: false, unavailable: true };
+    }
+  };
+  // Round 4 (verifier MEDIUM 1): the caller minted this token a moment ago for THIS send. When Paige does
+  // not send, the token must not stay live for 30 days reading "Invite pending" to staff. Revoke it with
+  // the same lifecycle write the staff cancel path makes (PortalInvitationManager): revoked_at on this
+  // exact, still-unused, legacy-minted consumer row — nothing else on the row changes. It runs only after
+  // authorized() and eligible() have both passed for this actor, and never touches a team or owner token
+  // or a token bound to a canonical invitation operation.
+  const notSent = async (gate: Exclude<PolicyGate, { clear: true }>): Promise<Response> => {
+    try {
+      const { data, error } = await admin.from("tenant_invite_tokens")
+        .update({ revoked_at: new Date().toISOString() })
+        .eq("id", tok.id).eq("tenant_id", tok.tenant_id).eq("contact_id", tok.contact_id).eq("token", token)
+        .eq("kind", "consumer").is("revoked_at", null).is("last_used_at", null).eq("uses", 0)
+        // A token the canonical command minted is its recovery handle (command.ts reuses it); leave it be.
+        .is("portal_operation_id", null)
+        .select("id");
+      if (error || !Array.isArray(data) || data.length !== 1)
+        console.error("[send-portal-invite] held invitation token was not revoked", error?.message ?? "no matching unused row");
+    } catch (e) {
+      console.error("[send-portal-invite] held invitation token revoke threw", e instanceof Error ? e.message : "unknown");
+    }
+    return "unavailable" in gate
+      ? json({ ok: false, emailed: false, status: "unavailable", code: "INVITATION_POLICY_UNAVAILABLE" }, 503)
+      : json({ ok: false, emailed: false, status: "held", code: "INVITATION_POLICY_HELD", hold: gate.hold }, 409);
+  };
+  const firstGate = await policyGate();
+  if (!firstGate.clear) return notSent(firstGate);
 
   // §6/§9: resolve the brand UP the parent chain so a sub-account invite wears its
   // AGENCY's logo + accent (not the child's empty stub, never Paige). The resolver
@@ -200,7 +331,7 @@ Deno.serve(async (req) => {
         // so scoping the row properly is what keeps one tenant's delivery data away from another's.
         tenant_id: (tok as { tenant_id?: string }).tenant_id ?? null,
         sender_account: "platform",
-        metadata: { via: "send-portal-invite", invite_id: (tok as { id?: string }).id ?? null, kind, ...detail },
+        metadata: { via: "send-portal-invite", invite_id: (tok as { id?: string }).id ?? null, kind, actor_user_id: actorUserId, ...detail },
       });
       if (error) console.error("[send-portal-invite] logSend insert failed", error.message);
     } catch (e) {
@@ -215,6 +346,14 @@ Deno.serve(async (req) => {
     return json({ ok: true, join_url: joinUrl, emailed: false, reason: "no_provider_configured" });
   }
   try {
+    // Final native readback before provider egress. Permission, identity,
+    // invitation and recipient changes cannot be hidden by a stale dashboard.
+    if (!(await authorized()) || !(await eligible()))
+      return json({ ok: false, emailed: false, error: "Invitation details changed. Review the client before sending." }, 409);
+    const finalGate = await policyGate();
+    if (!finalGate.clear) return notSent(finalGate);
+    if (!(await commsProviderExecutionAllowed(admin, { tenantId: tok.tenant_id, actorUserId, recipientEmail: recipient })))
+      return json({ ok: false, emailed: false, status: "blocked", code: "COMMS_PROVIDER_EXECUTION_DISABLED" }, 403);
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },

@@ -1,0 +1,416 @@
+[
+  {
+    "step": "unsaved-reload-refused",
+    "draft": "Protected local fixture note",
+    "focus": {
+      "label": null,
+      "tag": "BUTTON",
+      "text": "Reload"
+    },
+    "guard": true,
+    "healthy": false,
+    "panel": "open",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 1000,
+      "scale": 1,
+      "width": 900
+    }
+  },
+  {
+    "step": "native-escape-fold",
+    "draft": "Protected local fixture note",
+    "focus": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "guard": true,
+    "healthy": false,
+    "panel": "closed",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 1000,
+      "scale": 1,
+      "width": 900
+    }
+  },
+  {
+    "step": "native-enter-reopen",
+    "draft": "Protected local fixture note",
+    "focus": {
+      "label": "Direct PAIGE",
+      "tag": "BUTTON",
+      "text": "Direct PAIGE, or press ⌘\\⌘\\"
+    },
+    "guard": true,
+    "healthy": false,
+    "panel": "open",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 1000,
+      "scale": 1,
+      "width": 900
+    }
+  },
+  {
+    "step": "native-tab-1",
+    "draft": "Protected local fixture note",
+    "focus": {
+      "label": null,
+      "tag": "BUTTON",
+      "text": "Simulate missing screen"
+    },
+    "guard": true,
+    "healthy": false,
+    "panel": "open",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 1000,
+      "scale": 1,
+      "width": 900
+    }
+  },
+  {
+    "step": "native-tab-2",
+    "draft": "Protected local fixture note",
+    "focus": {
+      "label": null,
+      "tag": "BUTTON",
+      "text": "Switch synthetic account"
+    },
+    "guard": true,
+    "healthy": false,
+    "panel": "open",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 1000,
+      "scale": 1,
+      "width": 900
+    }
+  },
+  {
+    "step": "native-tab-3",
+    "draft": "Protected local fixture note",
+    "focus": {
+      "label": null,
+      "tag": "BUTTON",
+      "text": "Toggle fixture PAIGE"
+    },
+    "guard": true,
+    "healthy": false,
+    "panel": "open",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 1000,
+      "scale": 1,
+      "width": 900
+    }
+  },
+  {
+    "step": "native-tab-4",
+    "draft": "Protected local fixture note",
+    "focus": {
+      "label": null,
+      "tag": "BUTTON",
+      "text": "Toggle fixture theme"
+    },
+    "guard": true,
+    "healthy": false,
+    "panel": "open",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 1000,
+      "scale": 1,
+      "width": 900
+    }
+  },
+  {
+    "step": "native-tab-5",
+    "draft": "Protected local fixture note",
+    "focus": {
+      "label": "Fold PAIGE conversation",
+      "tag": "BUTTON",
+      "text": ""
+    },
+    "guard": true,
+    "healthy": false,
+    "panel": "open",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 1000,
+      "scale": 1,
+      "width": 900
+    }
+  },
+  {
+    "step": "native-tab-6",
+    "draft": "Protected local fixture note",
+    "focus": {
+      "label": "Expand PAIGE panel",
+      "tag": "BUTTON",
+      "text": ""
+    },
+    "guard": true,
+    "healthy": false,
+    "panel": "open",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 1000,
+      "scale": 1,
+      "width": 900
+    }
+  },
+  {
+    "step": "native-shift-tab",
+    "draft": "Protected local fixture note",
+    "focus": {
+      "label": "Fold PAIGE conversation",
+      "tag": "BUTTON",
+      "text": ""
+    },
+    "guard": true,
+    "healthy": false,
+    "panel": "open",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 1000,
+      "scale": 1,
+      "width": 900
+    }
+  },
+  {
+    "step": "native-tab-7",
+    "draft": "Protected local fixture note",
+    "focus": {
+      "label": "Expand PAIGE panel",
+      "tag": "BUTTON",
+      "text": ""
+    },
+    "guard": true,
+    "healthy": false,
+    "panel": "open",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 1000,
+      "scale": 1,
+      "width": 900
+    }
+  },
+  {
+    "step": "native-tab-8",
+    "draft": "Protected local fixture note",
+    "focus": {
+      "label": "Open PAIGE in full panel",
+      "tag": "BUTTON",
+      "text": ""
+    },
+    "guard": true,
+    "healthy": false,
+    "panel": "open",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 1000,
+      "scale": 1,
+      "width": 900
+    }
+  },
+  {
+    "step": "native-tab-9",
+    "draft": "Protected local fixture note",
+    "focus": {
+      "label": "Open PAIGE in a new window",
+      "tag": "BUTTON",
+      "text": ""
+    },
+    "guard": true,
+    "healthy": false,
+    "panel": "open",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 1000,
+      "scale": 1,
+      "width": 900
+    }
+  },
+  {
+    "step": "native-tab-10",
+    "draft": "Protected local fixture note",
+    "focus": {
+      "label": "Fold PAIGE conversation",
+      "tag": "BUTTON",
+      "text": ""
+    },
+    "guard": true,
+    "healthy": false,
+    "panel": "open",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 1000,
+      "scale": 1,
+      "width": 900
+    }
+  },
+  {
+    "step": "native-tab-11",
+    "draft": "Protected local fixture note",
+    "focus": {
+      "label": "Protected local draft",
+      "tag": "INPUT",
+      "text": ""
+    },
+    "guard": false,
+    "healthy": false,
+    "panel": "open",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 1000,
+      "scale": 1,
+      "width": 900
+    }
+  },
+  {
+    "step": "native-tab-12",
+    "draft": "Protected local fixture note",
+    "focus": {
+      "label": null,
+      "tag": "BUTTON",
+      "text": "Clear local fixture draft"
+    },
+    "guard": true,
+    "healthy": false,
+    "panel": "open",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 1000,
+      "scale": 1,
+      "width": 900
+    }
+  },
+  {
+    "step": "native-tab-13",
+    "draft": "Protected local fixture note",
+    "focus": {
+      "label": null,
+      "tag": "BUTTON",
+      "text": "Reload"
+    },
+    "guard": true,
+    "healthy": false,
+    "panel": "open",
+    "viewport": {
+      "dpr": 1.0000000149011612,
+      "height": 1000,
+      "scale": 1,
+      "width": 900
+    }
+  },
+  {
+    "step": "native-zoom-reset-before",
+    "draft": "Protected local fixture note",
+    "focus": {
+      "label": null,
+      "tag": "BUTTON",
+      "text": "Reload"
+    },
+    "guard": true,
+    "healthy": false,
+    "panel": "open",
+    "viewport": {
+      "dpr": 1.25,
+      "height": 774,
+      "scale": 1,
+      "width": 1514
+    }
+  },
+  {
+    "step": "native-zoom-plus-one",
+    "draft": "Protected local fixture note",
+    "focus": {
+      "label": null,
+      "tag": "BUTTON",
+      "text": "Reload"
+    },
+    "guard": true,
+    "healthy": false,
+    "panel": "open",
+    "viewport": {
+      "dpr": 1.25,
+      "height": 774,
+      "scale": 1,
+      "width": 1514
+    }
+  },
+  {
+    "step": "before-explicit-clear",
+    "draft": "Protected local fixture note",
+    "focus": {
+      "label": null,
+      "tag": "BUTTON",
+      "text": "Clear local fixture draft"
+    },
+    "guard": true,
+    "healthy": false,
+    "panel": "open",
+    "viewport": {
+      "dpr": 1.25,
+      "height": 774,
+      "scale": 1,
+      "width": 1514
+    }
+  },
+  {
+    "step": "native-clear-local-draft",
+    "draft": "",
+    "focus": {
+      "label": null,
+      "tag": "BUTTON",
+      "text": "Clear local fixture draft"
+    },
+    "guard": true,
+    "healthy": false,
+    "panel": "open",
+    "viewport": {
+      "dpr": 1.25,
+      "height": 774,
+      "scale": 1,
+      "width": 1514
+    }
+  },
+  {
+    "step": "ready-for-explicit-reload",
+    "draft": "",
+    "focus": {
+      "label": null,
+      "tag": "BUTTON",
+      "text": "Reload"
+    },
+    "guard": true,
+    "healthy": false,
+    "panel": "open",
+    "viewport": {
+      "dpr": 1.25,
+      "height": 774,
+      "scale": 1,
+      "width": 1514
+    }
+  },
+  {
+    "step": "native-explicit-reload-after-clear",
+    "draft": "",
+    "focus": {
+      "label": null,
+      "tag": "BUTTON",
+      "text": "Reload"
+    },
+    "guard": false,
+    "healthy": false,
+    "panel": "open",
+    "viewport": {
+      "dpr": 1.25,
+      "height": 774,
+      "scale": 1,
+      "width": 1514
+    }
+  }
+]

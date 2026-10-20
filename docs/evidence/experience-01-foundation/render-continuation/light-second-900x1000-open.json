@@ -1,0 +1,35 @@
+{
+  "label": "light-second-900x1000-open",
+  "requested": {
+    "width": 900,
+    "height": 1000
+  },
+  "screenshotDimensions": {
+    "width": 900,
+    "height": 1000
+  },
+  "url": "http://127.0.0.1:5204/interview.html?theme=light&state=populated&context=second",
+  "dom": {
+    "alerts": [],
+    "background": "rgb(251, 248, 244)",
+    "focus": {
+      "name": "Direct PAIGE",
+      "tag": "BUTTON"
+    },
+    "foreground": "rgb(33, 30, 36)",
+    "overflow": false,
+    "paige": "open",
+    "pg": "light",
+    "profileOverflow": false,
+    "profileScroll": 0,
+    "secondary": "rgb(103, 97, 107)",
+    "statuses": [],
+    "theme": "light",
+    "viewport": {
+      "height": 1000,
+      "width": 900
+    }
+  },
+  "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+  "captureAPI": "native screenshot after settled DOM"
+}

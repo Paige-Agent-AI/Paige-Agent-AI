@@ -33,9 +33,10 @@
  * redirect at all; the panel does, on the click. Said precisely, since the whole
  * point of the line is that the boundary is real.)
  *
- * §9: no tenant id is passed from the client. `manage-tenant-domain` derives the
+ * §9: no client tenant selects a write target. `manage-tenant-domain` derives the
  * tenant from the verified session, the connector read is RLS-scoped, and the
- * gmail functions resolve it server-side. (This adapter briefly also wrote the
+ * gmail functions resolve it server-side and compare an expected-tenant stale
+ * request guard. (This adapter briefly also wrote the
  * business record via `set_tenant_brand`, which DID take a client-supplied
  * `_tenant_id`; that editor moved to Setup on the owner's ruling, so the claim is
  * now true again — it was not while that write lived here.) Honest degrade (§13): a failed read surfaces an error and
@@ -45,7 +46,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { createSettingsRequestGate } from "../settings-contract";
-import { resolveFunctionError } from "@/lib/integrations/connectError";
+import { readFunctionErrorBody, resolveFunctionError } from "@/lib/integrations/connectError";
 
 export interface DnsRecord {
   record: string;
@@ -95,6 +96,9 @@ export interface SoloBillingPlan {
  * Calling it a mailbox would claim a capability the OAuth grant does not carry.
  */
 export interface SoloMailbox {
+  /** Identity/version of the exact visible connection; preconditions, never authority. */
+  connectorId?: string | null;
+  updatedAt?: string | null;
   connected: boolean;
   address: string | null;
   displayName: string | null;
@@ -127,8 +131,8 @@ export interface SoloCommsData {
    * Every one goes through a seam that already existed and already enforces
    * authority server-side: `manage-tenant-domain` derives its tenant from the
    * verified session and re-checks the caller's role, and the gmail functions
-   * resolve the tenant server-side. None of them takes a client-supplied
-   * tenant id.
+   * resolve the tenant server-side. Gmail takes an expected-tenant stale-request
+   * guard; that value never selects or authorizes a target.
    */
   addDomain: (input: { domain: string; fromEmailLocal: string; fromName: string }) => Promise<SoloMutationResult>;
   refreshDomain: (id: string) => Promise<SoloMutationResult>;
@@ -187,9 +191,19 @@ function formatDate(value: string | null | undefined): string | null {
 }
 
 export function useSoloComms(): SoloCommsData {
-  const { activeTenant, activeTenantId, loading: tenantLoading } = useTenantContext();
+  const { activeTenant, activeTenantId, activeUserId, loading: tenantLoading } = useTenantContext();
   const tenantId = activeTenantId;
   const isSubAccount = activeTenant?.parent_tenant_id != null;
+  const gmailScope = useRef({ tenantId, activeUserId, tenantLoading, epoch: 0 });
+  const gmailMounted = useRef(false);
+  if (gmailScope.current.tenantId !== tenantId || gmailScope.current.activeUserId !== activeUserId
+    || gmailScope.current.tenantLoading !== tenantLoading) {
+    gmailScope.current = { tenantId, activeUserId, tenantLoading, epoch: gmailScope.current.epoch + 1 };
+  }
+  useEffect(() => {
+    gmailMounted.current = true;
+    return () => { gmailMounted.current = false; gmailScope.current.epoch += 1; };
+  }, []);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -203,6 +217,8 @@ export function useSoloComms(): SoloCommsData {
   const [mailbox, setMailbox] = useState<SoloMailbox | null>(null);
   const [canManage, setCanManage] = useState(false);
   const [loadedTenantId, setLoadedTenantId] = useState<string | null>(null);
+  const visibleGmail = useRef<SoloMailbox | null>(null);
+  visibleGmail.current = loadedTenantId === tenantId ? mailbox : null;
   const requestGate = useRef(createSettingsRequestGate());
 
   const load = useCallback(async () => {
@@ -259,11 +275,13 @@ export function useSoloComms(): SoloCommsData {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- table not in generated types (repo-wide pattern, cf. OwnerWelcome/EmailIntegrationConfig)
         (supabase as any)
           .from("channel_connectors")
-          .select("provider, from_address, display_name, status, active")
+          .select("id, updated_at, provider, from_address, display_name, status, active")
           .eq("tenant_id", tenantId)
           .eq("channel_type", "email")
           .eq("provider", "gmail")
           .order("active", { ascending: false })
+          .order("updated_at", { ascending: false })
+          .order("id", { ascending: true })
           .limit(1),
         // Fail-closed authority for the write controls. The server re-checks on
         // every mutation regardless; this only decides whether to render them.
@@ -348,6 +366,8 @@ export function useSoloComms(): SoloCommsData {
         setMailbox(null);
       } else {
         setMailbox({
+          connectorId: str(mailboxRow.id),
+          updatedAt: str(mailboxRow.updated_at),
           connected: Boolean(mailboxRow.active) && str(mailboxRow.status) !== "revoked",
           address: str(mailboxRow.from_address),
           displayName: str(mailboxRow.display_name),
@@ -482,52 +502,92 @@ export function useSoloComms(): SoloCommsData {
    * on their behalf.
    */
   const startGmailConnect = useCallback(async (): Promise<{ url: string | null; error: string | null }> => {
+    const epoch = gmailScope.current.epoch;
+    const current = () => gmailMounted.current && gmailScope.current.epoch === epoch
+      && gmailScope.current.tenantId === tenantId && gmailScope.current.activeUserId === activeUserId
+      && !gmailScope.current.tenantLoading;
+    const changed = { url: null, error: "Workspace changed. Refresh this workspace before connecting Google." };
+    if (!tenantId || !activeUserId || tenantLoading || !current()) return changed;
     try {
       const { data, error: fnError } = await supabase.functions.invoke("gmail-oauth-start", {
-        body: { origin: window.location.origin },
+        body: { origin: window.location.origin, expected_tenant_id: tenantId },
       });
+      if (!current()) return changed;
       const rec = asRecord(data);
+      if (rec.error === "workspace_changed") return changed;
       const url = str(rec.authorization_url);
       if (fnError || rec.error || !url) {
         // The likeliest real answer here is `gmail_oauth_not_configured` — the
         // function's own header says so — and that is a "not switched on yet"
         // note, not a failure scream. Left raw it read as "Edge Function returned
         // a non-2xx status code".
-        const { message } = await resolveFunctionError({
+        const { message, code } = await resolveFunctionError({
           error: fnError, data, action: "connect a Google account",
         });
-        return { url: null, error: message };
+        if (code === "workspace_changed") return changed;
+        return current() ? { url: null, error: message } : changed;
       }
       return { url, error: null };
     } catch (e) {
-      return { url: null, error: asResult(e).error };
+      return current() ? { url: null, error: asResult(e).error } : changed;
     }
-  }, []);
+  }, [tenantId, activeUserId, tenantLoading]);
 
   const disconnectGmail = useCallback(async (): Promise<SoloMutationResult> => {
+    const selected = mailbox;
+    const epoch = gmailScope.current.epoch;
+    const current = () => gmailMounted.current && gmailScope.current.epoch === epoch
+      && gmailScope.current.tenantId === tenantId && gmailScope.current.activeUserId === activeUserId
+      && !gmailScope.current.tenantLoading;
+    const changed = { ok: false, error: "Workspace changed. Check the original workspace's Google connection before retrying." };
+    const unknown = { ok: false, error: "The Google disconnect could not be confirmed. Inspect the original workspace before retrying." };
+    const nativeFailure = (rec: Record<string, unknown>): SoloMutationResult | null => {
+      const code = rec.error;
+      if (code === "workspace_changed") return changed;
+      if (code === "gmail_connection_changed") return { ok: false,
+        error: "The Google connection changed. Refresh its current state before disconnecting it." };
+      if (code === "gmail_disconnected_result_withheld") return rec.disconnected === true ? { ok: false,
+        error: "PAIGE disconnected Google in the original workspace. Refresh that workspace to inspect the result." } : unknown;
+      if (code === "gmail_disconnect_outcome_unknown") return unknown;
+      return null;
+    };
+    if (!tenantId || !activeUserId || tenantLoading || !current()) return changed;
+    if (loadedTenantId !== tenantId || !selected?.connected || !selected.address || selected.provider !== "gmail" || !selected.connectorId || !selected.updatedAt
+      || !Number.isFinite(Date.parse(selected.updatedAt))
+      || visibleGmail.current?.connectorId !== selected.connectorId || visibleGmail.current?.updatedAt !== selected.updatedAt) {
+      return { ok: false, error: "The Google connection changed or could not be read. Refresh before disconnecting it." };
+    }
     try {
-      const { data, error: fnError } = await supabase.functions.invoke("gmail-disconnect", { body: {} });
-      const rec = asRecord(data);
+      const { data, error: fnError } = await supabase.functions.invoke("gmail-disconnect", {
+        body: { expected_tenant_id: tenantId, connector_id: selected.connectorId, expected_updated_at: selected.updatedAt },
+      });
+      if (!current()) return changed;
+      const rec = asRecord(data ?? await readFunctionErrorBody(fnError, data));
+      if (!current()) return changed;
+      const nativeMessage = nativeFailure(rec);
+      if (nativeMessage) return nativeMessage;
       if (fnError || rec.error) {
-        const { message } = await resolveFunctionError({
-          error: fnError, data, action: "disconnect the Google account",
+        const { message, code } = await resolveFunctionError({
+          error: fnError, data: rec, action: "disconnect the Google account",
         });
-        return { ok: false, error: message };
+        if (!current()) return changed;
+        return code ? { ok: false, error: message } : unknown;
       }
       // `gmail-disconnect` answers `{ ok: true, disconnected: false }` when it
       // found no connector to revoke — a NO-OP, not a disconnection. Reporting
       // that as "Disconnected." tells someone their account is detached while it
       // is still active and still sending, which is the §13 failure this branch
       // exists to remove, not to add.
-      if (rec.disconnected === false) {
+      if (rec.ok === true && rec.disconnected === false) {
         return { ok: false, error: "Nothing was disconnected — no connected Google account was found on this workspace." };
       }
+      if (rec.ok !== true || rec.disconnected !== true || rec.connector_id !== selected.connectorId) return unknown;
       await load();
-      return { ok: true, error: null };
-    } catch (e) {
-      return asResult(e);
+      return current() ? { ok: true, error: null } : changed;
+    } catch {
+      return current() ? unknown : changed;
     }
-  }, [load]);
+  }, [load, tenantId, activeUserId, tenantLoading, mailbox, loadedTenantId]);
 
   return useMemo(
     () => ({

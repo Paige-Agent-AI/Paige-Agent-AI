@@ -1,0 +1,171 @@
+{
+  "dialog": {
+    "clientHeight": 844,
+    "clientWidth": 374,
+    "controls": [
+      {
+        "disabled": false,
+        "rect": {
+          "bottom": 140,
+          "height": 40,
+          "left": 317.6000061035156,
+          "right": 359.200008392334,
+          "top": 100,
+          "width": 41.60000228881836,
+          "x": 317.6000061035156,
+          "y": 100
+        },
+        "text": "Refresh weekly responsibility"
+      },
+      {
+        "disabled": true,
+        "rect": {
+          "bottom": 710.5,
+          "height": 40,
+          "left": 16.80000114440918,
+          "right": 233.13751029968265,
+          "top": 670.5,
+          "width": 216.33750915527344,
+          "x": 16.80000114440918,
+          "y": 670.5
+        },
+        "text": "Authorize schedule unavailable"
+      },
+      {
+        "disabled": false,
+        "rect": {
+          "bottom": 760.5,
+          "height": 40,
+          "left": 16.80000114440918,
+          "right": 160.0250072479248,
+          "top": 720.5,
+          "width": 143.22500610351562,
+          "x": 16.80000114440918,
+          "y": 720.5
+        },
+        "text": "Put request in Chat"
+      },
+      {
+        "disabled": false,
+        "rect": {
+          "bottom": 760.5,
+          "height": 40,
+          "left": 170.02500915527344,
+          "right": 300.43751525878906,
+          "top": 720.5,
+          "width": 130.41250610351562,
+          "x": 170.02500915527344,
+          "y": 720.5
+        },
+        "text": "Change proposal"
+      },
+      {
+        "disabled": false,
+        "rect": {
+          "bottom": 810.5,
+          "height": 40,
+          "left": 16.80000114440918,
+          "right": 145.82501029968262,
+          "top": 770.5,
+          "width": 129.02500915527344,
+          "x": 16.80000114440918,
+          "y": 770.5
+        },
+        "text": "Discard proposal"
+      },
+      {
+        "disabled": false,
+        "rect": {
+          "bottom": 880.9999885559082,
+          "height": 21.700000762939453,
+          "left": 16.80000114440918,
+          "right": 132.08749961853027,
+          "top": 859.2999877929688,
+          "width": 115.2874984741211,
+          "x": 16.80000114440918,
+          "y": 859.2999877929688
+        },
+        "text": "Clients → Calendar"
+      },
+      {
+        "disabled": false,
+        "rect": {
+          "bottom": 880.9999885559082,
+          "height": 21.700000762939453,
+          "left": 142.08750915527344,
+          "right": 262.22501373291016,
+          "top": 859.2999877929688,
+          "width": 120.13750457763672,
+          "x": 142.08750915527344,
+          "y": 859.2999877929688
+        },
+        "text": "Operations → Work"
+      },
+      {
+        "disabled": false,
+        "rect": {
+          "bottom": 48,
+          "height": 44,
+          "left": 327.20001220703125,
+          "right": 371.2000122070313,
+          "top": 4,
+          "width": 44,
+          "x": 327.20001220703125,
+          "y": 4
+        },
+        "text": "Close"
+      }
+    ],
+    "padding": "24px 16px",
+    "rect": {
+      "bottom": 844,
+      "height": 844,
+      "left": 0,
+      "right": 390.3999938964844,
+      "top": 0,
+      "width": 390.3999938964844,
+      "x": 0,
+      "y": 0
+    },
+    "scrollHeight": 905,
+    "scrollWidth": 374,
+    "text": "Weekly responsibilityCurrent owner scope, canonical schedules and verified results.Weekly commitment checkReview the week. Keep the original work in Operations.Read Tue, Oct 20, 4:00 AM EDTNo weekly responsibility is registeredPrepare the schedule and scope for review. Recurring execution is currently unavailable.Review your proposalLocal proposal only. Nothing is scheduled or approved.Every Monday at 09:00America/New_YorkRead your personal outstanding Planning work, report attention and preserve an internal result. No task changes, customer contact or provider sends.Recurring scheduling and authorization are unavailable here. Preparing this request gives PAIGE no execution permission.Authorize schedule unavailablePut request in ChatChange proposalDiscard proposalClients → CalendarOperations → WorkClose",
+    "title": "Weekly responsibility",
+    "titleGlyphs": [
+      {
+        "bottom": 48.79999923706055,
+        "height": 22.399999618530273,
+        "left": 82.80000305175781,
+        "right": 261.20001220703125,
+        "top": 26.399999618530273,
+        "width": 178.40000915527344,
+        "x": 82.80000305175781,
+        "y": 26.399999618530273
+      }
+    ]
+  },
+  "document": {
+    "clientWidth": 390,
+    "scrollWidth": 390
+  },
+  "entry": {
+    "rect": {
+      "bottom": 166.0999984741211,
+      "height": 44,
+      "left": 215.40000915527344,
+      "right": 259.40000915527344,
+      "top": 122.0999984741211,
+      "width": 44,
+      "x": 215.40000915527344,
+      "y": 122.0999984741211
+    },
+    "visible": true
+  },
+  "focus": {
+    "name": null,
+    "text": "Weekly responsibilityCurrent owner scope, canonical schedules and verified resul"
+  },
+  "height": 844,
+  "reducedMotion": true,
+  "width": 390
+}

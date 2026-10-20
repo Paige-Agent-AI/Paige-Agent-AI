@@ -194,18 +194,19 @@ export async function performSignOut(
       isSigningOut = false;
       toast.error(settled === "refused"
         ? "Couldn't end your act-as in this tenant, so you're still signed in. Try again."
-        : "Paige couldn't confirm whether your act-as is still open, so you're still signed in. Try again.");
+        : "We couldn't confirm whether your act-as is still open, so you're still signed in. Try again.");
       return false;
     }
   }
 
   try {
     try {
-      await supabase.auth.signOut({ scope });
+      const { error } = await supabase.auth.signOut({ scope });
+      if (error) throw error;
     } catch (err) {
       console.error(`Sign out (${scope}) failed, falling back to local:`, err);
       try {
-        await supabase.auth.signOut();
+        await supabase.auth.signOut({ scope: "local" });
       } catch (innerErr) {
         console.error("Local sign out also failed:", innerErr);
       }

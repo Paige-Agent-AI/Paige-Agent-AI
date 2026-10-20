@@ -1,0 +1,18 @@
+{
+  "keyboardOpened": true,
+  "guardState": {
+    "draftRetained": true,
+    "errorStillContained": true,
+    "guardCopy": true,
+    "paige": "closed"
+  },
+  "recovered": {
+    "error": false,
+    "height": 1000,
+    "paige": "closed",
+    "ready": true,
+    "width": 900
+  },
+  "observedUtc": "2026-10-15T21:58:48.256Z",
+  "boundary": "Actual source and real guard/reload; synthetic local draft only"
+}

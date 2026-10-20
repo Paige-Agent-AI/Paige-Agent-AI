@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useCustomerIdentity } from "@/lib/portal/customerIdentity";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -50,10 +51,12 @@ const COMING_SOON: ComingSoonItem[] = [
   { key: "hubspot", name: "HubSpot", description: "Connect your CRM for CAC and pipeline analytics", icon: Users2 },
   { key: "google_drive", name: "Google Drive", description: "Sync financial documents and statements directly", icon: FileSpreadsheet },
   { key: "mailchimp", name: "Mailchimp", description: "Connect email marketing for CAC attribution", icon: Mail },
-  { key: "slack", name: "Slack", description: "Get Paige notifications and alerts in your Slack workspace", icon: MessageSquare },
+  { key: "slack", name: "Slack", description: "Get your portal's notifications and alerts in your Slack workspace", icon: MessageSquare },
 ];
 
 export function ConnectionsSection({ businessId, userId }: Props) {
+  // The customer's agent (Cura, or the business's own name for it), never PAIGE, the owner's COO.
+  const { agentName } = useCustomerIdentity();
   const [loading, setLoading] = useState(true);
   const [qbConnected, setQbConnected] = useState(false);
   const [qbCompanyName, setQbCompanyName] = useState<string | null>(null);
@@ -164,7 +167,7 @@ export function ConnectionsSection({ businessId, userId }: Props) {
             <div>
               <div className="font-semibold text-foreground">App Connections</div>
               <div className="text-xs text-muted-foreground">
-                Connect external apps so Paige can coach you with real data instead of estimates.
+                Connect external apps so {agentName} can work from your real data instead of estimates.
               </div>
             </div>
           </div>
@@ -183,7 +186,7 @@ export function ConnectionsSection({ businessId, userId }: Props) {
       <div className="space-y-3">
         <div>
           <h3 className="text-base font-semibold text-foreground">Connected Apps</h3>
-          <p className="text-xs text-muted-foreground">Live integrations — connect now to power Paige's coaching with real data.</p>
+          <p className="text-xs text-muted-foreground">Live integrations — connect now so {agentName} works from your real data.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -390,7 +393,7 @@ export function ConnectionsSection({ businessId, userId }: Props) {
             Coming Soon — Vote for what you want next
           </h3>
           <p className="text-xs text-muted-foreground">
-            We add integrations based on member demand. Tell Paige in chat which one you need most.
+            We add integrations based on member demand. Tell {agentName} in chat which one you need most.
           </p>
         </div>
 

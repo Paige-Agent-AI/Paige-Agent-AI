@@ -334,6 +334,94 @@ posture**, and **(d) permitted-RPC scoping**, each grounded in a named resolver 
 
 ## Surface ledger — what actually SHIPPED, per tier (§66)
 
+### E09 C1 — announcements to customers through the one campaign system (branch `e09-c1`, migration `20271111060000`, 2026-10-19; not yet merged)
+
+The campaign editor (Growth › Email, `src/solo/marketing-email-editor.tsx`) gains a "Customer portal" chip; the database gains the `portal` audience key, rule-key checks, and owner Q1 (Updates turned on, for promotions/announcements/newsletters to current or former portal-linked contacts, at plan and at send). Availability follows the existing campaign seams unchanged (`_email_caller_tenant`: owner/admin of the active business; `_email_paige_tenant` refuses agency accounts; Growth is not offered to Agency, §61 exception). §61 default: no new exception — the portal audience is part of campaigns, wherever campaigns already are.
+
+| Tier | Portal audience in a campaign | Updates consent for promotions / announcements |
+|---|---|---|
+| God / Operator | only inside a business it acts in through the existing campaign seams (no change) | applies to the business's portal-linked contacts |
+| Agency / Enterprise | Agency: N/A (no Growth; `email_campaign_draft` refuses agency accounts). Enterprise: as Solo where campaigns are used | as Solo |
+| Standalone (Solo) | ✓ open-access customers of this business only | ✓ at plan and at send |
+| Sub-account | ✓ its own customers only, never the parent's | ✓ |
+| Client | N/A — receives email; their Updates choice is honoured at plan and send; cannot read the audience (42501) | — |
+| Anonymous | ✗ | ✗ |
+
+Series (welcome / nurture / re-engagement) do not take the portal key. Evidence: pgTAP `supabase/tests/e09_campaign_portal_audience.sql` 84/84 locally (17 reinstated defects each fail it); harness frames light/dark at 390/1440 (not live). Authenticated runtime UNVERIFIED.
+
+### E09 K1 — customer Knowledge shared business-wide, with a kind and a window (branch `e09-k1`, migration `20271111050000`, 2026-10-19; not yet merged)
+
+Database only; no visible surface changes in this PR (the owner panel is K3a). Nothing is published by the migration. Publisher = `knowledge_actor_authorized` (active workspace = the business) AND an active owner/admin membership of the business or an ancestor agency (`_tenant_brand_manager_member`); the bare platform operator is excluded.
+
+| Tier | Publish business-wide (prepare/set) | Customer reads (context, document) | Finance-marked Knowledge |
+|---|---|---|---|
+| God / Operator | ✗ unless also an owner/admin member of that business (tested: bare operator refused at prepare and at a direct set with a self-computed hash) | N/A | — |
+| Agency / Enterprise | ✓ as owner/admin of the business or of an ancestor agency, with the business as active workspace (by construction; not exercised in pgTAP) | N/A | shareable only if the business is entitled |
+| Standalone (Solo) | ✓ owner/admin; ✗ plain member (tested at prepare and at a direct set with a self-computed valid hash; removing set's publisher checks fails it) | N/A | shareable only if entitled (tested refused when not) |
+| Sub-account | ✓ owner/admin of the sub-account or ancestor agency admin (by construction) | N/A | shareable only if entitled |
+| Client | ✗ (tested) | ✓ own open relationship: per-customer + business-wide, one source per document; paused/ended/merged/deactivated/suspended cut off (tested) | shown only while the business is entitled, re-checked at read (tested) |
+| Anonymous | ✗ (no grant) | ✗ (no grant) | ✗ |
+
+Evidence: pgTAP `supabase/tests/e09_customer_knowledge_v2.sql` 141/141 locally (round 1: 27 reinstated defects, 25 fail it, 2 equivalent mutants; round 2: 5 more, all fail it). Authenticated runtime UNVERIFIED (no session driven).
+
+### E09 F2 — funding and credit in the customer portal follow the business's entitlement (branch `e09-funding-f2`, migration `20271111045000`, 2026-10-19; not yet merged; after F1a and F1b)
+
+| Tier | `/app` funding/credit pages, menu entries, Home credit/funding tiles, bell credit alerts | `funding_readiness` surfaces (QuickStatsBar, credit-first onboarding and checklist steps, push-prompt credit wording) | Chat credit-report path / funding persona |
+|---|---|---|---|
+| God / Operator | ✓ as staff inside the `/app` shell (Q5 carve-out); the bell on the public landing header follows the entitlement alone | only with `funding_readiness` (0 businesses) | ✓ staff, unchanged |
+| Agency / Enterprise | ✓ as staff inside the `/app` shell (Q5); the owner's menu editor and previews show funding rows only for an entitled current workspace | only with `funding_readiness` (staff, as God and Solo) | ✓ staff, unchanged (a staff caller whose tier read fails is treated as a client for that turn) |
+| Standalone (Solo) | staff ✓ (Q5); a freshly provisioned Solo business is not entitled, so its customers get none (pgTAP + menu default proof) | staff: with `funding_readiness`; customers: `funding_readiness` AND entitled | ✓ staff, unchanged |
+| Sub-account | as Solo | as Solo | ✓ staff, unchanged |
+| Client | only when their business is finance-entitled (portal config `entitlements.finance`); otherwise redirected to `/app`, no menu entry, no tile, no alert read | `funding_readiness` AND entitled | ✗ never (tier resolved before the attachment branch; `funding_enabled` forced false) |
+| Anonymous | ✗ (behind sign-in, unchanged) | ✗ | ✗ |
+
+Production 2026-10-19: one business resolves entitled and keeps every surface; `funding_readiness` is on for 0 of 12. Evidence: pgTAP `e09_finance_portal_entitlement.sql` (17), Vitest route × viewer matrix, menu, Home, checklist, bell, AppShell and hook tests, Deno `client-portal-menu.test.ts`, `test:client-memory-authz` (10.6, 30.12–30.38), harness frames `portal-finance-entitlement-mount` (class 3). Authenticated runtime UNVERIFIED.
+
+### E09 F1b — credit paths refuse customers and other businesses; one edge reader of the entitlement (branch `e09-funding-f1b`, 2026-10-19; not yet merged; after F1a)
+
+Edge only; no visible surface changes (the portal-side funding surfaces are slice F2).
+
+| Tier | Credit processing (uploads, analysis, sync, scoring, predictions, projections, matches, soft pull) | Act on another business's credit records | Credit / funding pushes received |
+|---|---|---|---|
+| God / Operator | ✓ | ✓ the one cross-business path (`is_platform_owner`); the global `admin` role no longer is | N/A |
+| Agency / Enterprise | ✓ own business's records as owner/admin | a sub-account's records only with a direct owner/admin seat in it: `is_tenant_admin_as` does not follow the parent chain (production definition, 2026-10-19). `calculate-credit-factors`' contact check (`can_access_contact`) does follow it | staff of an entitled business only |
+| Standalone (Solo) | ✓ unchanged for staff, entitled or not (Q5 open) | ✗ | staff of an entitled business only |
+| Sub-account | ✓ unchanged for staff, entitled or not (Q5) | ✗ | staff of an entitled business only |
+| Client | ✗ refused at all twelve credit functions | ✗ | ✗ skipped (`not_entitled`) |
+| Anonymous | ✗ | ✗ | ✗ |
+
+`paige-mcp` credit-score and banking-snapshot ingest need the entitlement (they always concern a business's customer). Evidence: Deno suites incl. the SQL/TS drift test; driven harnesses `test:sync-credit-report-data` and `test:apply-extraction`. Authenticated runtime UNVERIFIED (no session driven).
+
+### E09 F1a — the finance entitlement is per business and cannot be self-granted from the browser (migration `20271111030000`, merged #2379 → `264687877`, live and read back 2026-10-19)
+
+Database only; no visible surface and no edge function changes in this PR (edge isolation is F1b, the next PR; the portal-side funding surfaces are slice F2). The one predicate is `_tenant_finance_entitled(business)` = an active `is_finance` Marketplace install OR `features.finance_in_scope` (the persona expression, verbatim). Production at grounding: 1 of 12 businesses entitled; it stays entitled.
+
+| Tier | Finance entitlement | Change install / flag directly from the browser | Credit alerts about a customer (staff insert/update) | Own credit upload (table + bucket) |
+|---|---|---|---|---|
+| God / Operator | per business | ✗ refused like every browser role (`FINANCE_*_REQUIRES_MARKETPLACE`), including inserting a business that carries the flag; Marketplace RPCs unchanged; `paige-mcp` `update_tenant_features` (service role) can still write the flag (known gap) | ✓ (`is_super_admin`) | ✓ unchanged |
+| Agency / Enterprise | per business | ✗ refused | only where the business is entitled; the policy follows the parent chain (`agency_can_manage_child`: agency owner/admin/manager, or a scoped specialist) | ✓ unchanged |
+| Standalone (Solo) | false unless a Marketplace install (new businesses false) | ✗ refused | only if entitled | ✓ unchanged, entitled or not (owner question Q5 open) |
+| Sub-account | false unless a Marketplace install; `'funding'` is no longer a starter preset | ✗ refused | only if entitled | ✓ unchanged (Q5) |
+| Client | `client_portal_finance_entitled` (open relationship + entitled business) | ✗ | N/A | ✗ refused |
+| Anonymous | ✗ | ✗ | ✗ | ✗ |
+
+Evidence: pgTAP `supabase/tests/e09_finance_entitlement.sql` 66/66 locally with production-equivalent grants (15 reinstated defects each fail it). Authenticated runtime UNVERIFIED (no session driven).
+
+### E09 H0 — credit alerts gated on the business's entitlement and a staff subject (branch `e09-h0-credit-alerts`, 2026-10-19; not yet merged)
+
+Backend only (`detect-credit-alerts`); no visible surface changes. Internal-only: service-role bearer, else 401. An alert is raised only for the staff of the one finance-entitled business the subject resolves to; production holds 0 credit alerts.
+
+| Tier | Credit alerts raised |
+|---|---|
+| God / Operator | N/A — no client book; the function is not callable by a person |
+| Agency / Enterprise | only if the subject is active staff of a finance-entitled business it resolves to (same rule) |
+| Standalone (Solo) | ✓ for staff of a finance-entitled business; skipped otherwise |
+| Sub-account | ✓ for staff of a finance-entitled business; skipped otherwise |
+| Client | ✗ — portal-customer subjects are skipped, until a customer credit authorization exists (EXP18) |
+| Anonymous | ✗ — 401 |
+
+Staff means an active owner/admin seat; a `member` seat is skipped. The coach email stays inside the resolved business. Evidence: Deno tests driving the real handler against a recording client (31/31; each guard bite-proven), `deno check` clean. Authenticated runtime UNVERIFIED (no entitled staff subject with a linked `clients` row exists in production).
+
 ### Experience 04 E4-S3 PR beta — display reads write no receipt; Collections "Overdue" and the client record's standing on the business calendar (merged as #2136 → main `d5a8e6e76`, 2026-10-14; deployed — remote `edge-live` and `db-live` at `d5a8e6e7`, migration `20271031005000` read back on production, Vercel production READY; authenticated runtime still owed)
 
 Three Exp04 SQL reads become pure reads (no Rail row for a page); Sales › Payments › Collections judges "Overdue" on the business's calendar day ("On hold" without a zone); "Where {client} stands" opens the Solo client record. `client_standing` is a §61 exception declared for the direct-client-book tiers and mounted on Solo only.
@@ -4684,3 +4772,419 @@ Styles are scoped to `.pa-site` so no tenant or operator surface changes.
 |---|---|---|---|---|---|---|---|
 | Public home page (`/`): COO positioning, capability map from `capabilities.ts`, stack calculator, Solo trial and login links | N/A — public page, same for every visitor | N/A — public page | N/A — public page | N/A — public page | N/A — public page | **LIVE** — signed-out production drive 2026-09-29 (evidence record, Post-deploy proof) | LIVE on paigeagent.ai, first live in `dpl_88F55qQSHtfRuUpivMcfQZZDZ8jr` (2026-09-29); carried by every later production deploy of `main` |
 
+
+### Customer Portal — Messages and Contact your team, `/app/messages` + the owner inbox Portal channel (E09 Slice 1, 2026-10-17)
+
+One conversation per customer relationship, held in the canonical inbox (`public.messages`,
+`channel_type = 'portal'`). The customer writes through `client_portal_send_message`; a business
+admin replies through `comms_portal_reply`; both are SECURITY DEFINER with in-body scope (§59). No
+provider is contacted on either side. Owner decision (2026-10-17): a customer's help comes from
+the business they are a customer of, so `/app/support` (Paige's platform desk and feature board)
+redirects customers to `/app/messages?topic=help`. Staff and owners without a customer
+relationship keep the platform desk.
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|
+| Read the portal thread in the inbox | Platform-owner read (existing `messages_select`) | Its own workspace only, as a tenant admin there | ✓ owner/admin of the current workspace | ✓ owner/admin of the current workspace | — | — | PROOF OWED |
+| Reply on the Portal channel (`comms_portal_reply`) | Refused unless it is an admin of the current workspace (no cross-tenant reply) | Only inside the current workspace it administers | ✓ admin; staff without admin are refused | ✓ admin | — | 42501 | PROOF OWED |
+| Customer conversation `/app/messages` (`client_portal_conversation`, `client_portal_send_message`) | — | — | — | — | ✓ own relationship only; more than one relationship is refused and explained (business choice is Slice 8) | 42501 | PROOF OWED |
+| Contact your team (`?topic=help`), replacing platform Support for customers | — | — | — | — | ✓ lands in the business inbox titled "Help request" | — | PROOF OWED |
+| Platform Support desk and feature board `/app/support` | ✓ unchanged | ✓ unchanged | ✓ unchanged | ✓ unchanged | Redirected to Contact your team | — | PROOF OWED |
+
+pgTAP (`supabase/tests/customer_portal_messages.sql`) covers cross-business, staff-member and
+anonymous refusals, and the multi-relationship refusal. Authenticated customer and owner
+send/read/reply on production are owed; the row becomes LIVE only after that drive. Deployed
+2026-10-17: PR #2320 merged as `eaeaf80d6`, migration `20271110010000` persisted on production,
+web deployment READY at that commit; the authenticated drive is still owed, so the rows stay PROOF OWED.
+
+### Customer Portal — Sessions, `/app/sessions` + the Solo New appointment client link (E09 Slice 2, 2026-10-18)
+
+A customer sees the sessions booked for them with the business they are a customer of
+(`client_portal_sessions`, SECURITY DEFINER, scoped in-body to the caller's own relationship) and
+can reschedule or cancel inside the calendar's notice window (`calendars.min_notice_min`). Every
+change goes through the one booking engine, `booking-manage` in `mode: 'customer'`, after
+`client_portal_session_change_admit` checks it as the caller; slot rules, notifications and Zoom
+stay in one place. Owner decision (2026-10-17): reschedule or cancel within the notice window,
+through the existing booking engine. A session reaches a customer only when its booking is linked
+to their client record; the Solo New appointment drawer now offers that link. Existing bookings
+are not backfilled.
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|
+| Customer sessions list `/app/sessions` (`client_portal_sessions`) | — | — | — | — | ✓ own relationship only; host, staff, intake and other guests are never projected; more than one relationship is refused and explained (Slice 8) | 42501 | PROOF OWED |
+| Customer reschedule / cancel inside the notice window (`booking-manage` customer mode) | — | — | — | — | ✓ own bookings on a calendar of that business, before `start − min_notice_min`; outside it the page offers Message the business | 401 | PROOF OWED |
+| Link a new booking to a client (Solo New appointment client picker → `create_internal_booking._contact_id`) | — | — (Solo calendar surface) | ✓ | ✓ | — | — | PROOF OWED |
+| Next session home tile (keeps Book a session) | — | — | — | — | ✓ single-business customer | — | PROOF OWED |
+| Guest manage link `/manage/:token` (`booking-manage` token path) | unchanged | unchanged | unchanged | unchanged | unchanged | ✓ unchanged | LIVE (unchanged) |
+
+pgTAP (`supabase/tests/customer_portal_sessions.sql`, 93 cases) covers other-customer,
+other-business, merged-contact, multi-relationship and anonymous refusals, the notice window and
+admission replay; the edge boundary suite drives customer mode, concurrent duplicates and guest
+equivalence. Authenticated customer change and owner client-linked booking on production are owed.
+Deployed 2026-10-18: PR #2335 merged as `d2bad7f07` (migration `20271110020000` persisted, `db-live` at
+`d2bad7f07`), and the `booking-manage` readback certified after #2337 (`edge-live` at `52c4dc471`); the
+authenticated drive is still owed, so the rows stay PROOF OWED.
+
+### Customer Portal — Progress, `/app/progress` + "Shared with {client}" on the Solo client record (E09 Slice 3, 2026-10-18)
+
+A business shares individual work items (milestones and tasks in the canonical `plan_items` store)
+with the client they belong to; the client sees only what was shared, at `/app/progress` and on the
+Home "Your progress" tile. Owner decision (2026-10-17): show only items the business shares. Sharing
+is an explicit per-item act (`plan_item_set_client_share`, SECURITY DEFINER, workspace owner/admin of
+the current workspace via `is_tenant_admin`, never a global role); new work is private; cancelling a
+shared item unshares it; the client sees title, state (Not started / In progress / Done — blocked
+reads as In progress) and due date only. The client read is `client_portal_progress` (SECURITY
+DEFINER, the caller's own relationship). Paige can propose a share from chat (`plan_item_set_client_share`,
+risk high, owner confirms on the card; catalogued in `list_tool_autonomy` so the owner can switch it off).
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|
+| Share / unshare a work item with its client (`plan_item_set_client_share`) | Only inside the company (system) workspace it administers; refused for any other business | Refused (`CLIENT_SHARE_UNAVAILABLE` for a top-level agency) | ✓ owner/admin; a plain member is refused | Allowed by the server (pgTAP); no screen mounted (same gap as `client_standing`, D1) | — | 42501 | PROOF OWED |
+| "Shared with {client}" section + "Add work for {client}" on the client record | — | — | ✓ (mounted under ClientStanding, `client_standing` gate) | Not mounted | — | — | PROOF OWED |
+| Customer progress `/app/progress` and Home tile (`client_portal_progress`) | — | — | — | — | ✓ own relationship, shared and not cancelled only; more than one relationship is refused and explained (Slice 8) | 42501 | PROOF OWED |
+| Paige proposes a share from chat (risk high, owner confirms) | — | — | ✓ business accounts | ✓ business accounts | never offered | — | PROOF OWED |
+| Customer action items `/app/actions` | unchanged | unchanged | unchanged | unchanged | ✓ unchanged; the table read narrows to the 10 columns the page uses (staff id and payload no longer readable) | anon SELECT revoked | PROOF OWED |
+
+pgTAP (`supabase/tests/customer_portal_progress.sql`, 110 cases) covers other-customer, other-business,
+unshared, cancelled, reminder and merged-contact refusals, the version check, state replay, the
+unshare-on-cancel and unshare-on-client-change trigger, the catalogue row and the column grants.
+Authenticated owner share and customer read on production are owed.
+
+### Customer Portal — per-tenant customer menu (E09 Slice M, 2026-10-18)
+
+Every business chooses which entries its customers see in the portal menu, in what order within each
+group, and what each is called. Owner rulings (2026-10-18): Home and Messages are fixed at the top; Get
+help, Account, Settings and Sign out are fixed at the bottom; Progress, Action items and Sessions ("Your
+work"), Documents, Agreements and Payments ("Paperwork") and Resources ("Learn") are configurable within
+their group; the group order is fixed. Agreements was held back from customers until Slice A (its route was
+still the platform-terms page); Slice A (below) lifts that hold — it is now core for customers and has an editor row. One registry and one assembly (`src/lib/portal/portalMenu.ts`,
+`assemblePortalNav`) feed the customer chrome (`AppNav`: phone drawer with group headings, desktop bar
+with a menu per group), the owner editor's preview and PortalStudio's "View as client". Floors are hard:
+the overlay can never reveal Messages, Sessions or Progress to anyone but a customer of one business, and
+catalog-only entries (funding keys, Approvals) render only when the Playbook catalog lists them
+(§2). Resources is core for customers: a customer of one business always has it, whatever the catalog
+lists, and only the owner's overlay hides it (staff and other viewers keep the catalog rule, as on main).
+When a catalog lists the `learn` alias and not `resources`, `learn` speaks for the route under its own name. An entry whose route is not live never renders and is
+never offered (Payments was the one such entry; Slice 5 made it live). The customer's catalog now comes from the server's `_catalog` in
+`get_client_portal_config` (§57), not the RLS-denied `tenants` read. No new feature key: §61 default, no
+exception. The owner dashboard's "Customer portal menu" summary and the customer's Messages "Browse
+resources first" hint read the same assembly, so neither can tell a different story from the menu.
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Enterprise | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|---|
+| Configure the customer menu (`set_tenant_portal_config`, Clients → Portal → Customize experience → "Customer portal menu") | Can write any tenant's config (`is_platform_owner` inside `can_manage_tenant_brand`); Paige's tool uses only the caller's current tenant | Its own and its sub-accounts' config (the ancestor chain); its own customers: none, by §61 | ✓ owns it (Solo Clients → Portal) | ✓ owns it (same gate); same PortalStudio in the non-Solo workspace | Same as Sub-account | Reads the menu only (`get_client_portal_config`) | Denied | PROOF OWED |
+| Customer menu rendered from the business's catalog + overlay (`assemblePortalNav`) | — | — | — | — | — | ✓ own relationship; fixed Home/Messages, grouped entries, floors enforced | — | PROOF OWED |
+| Paige reads / changes the menu from chat (`client.portal_menu_read`, `client.portal_menu_configure`, risk high, owner confirms) | Current workspace only | Current workspace only | ✓ | ✓ | ✓ | never offered | — | PROOF OWED |
+| "Customize Paige" → Portal catalog list (PortalSection) | unchanged | unchanged | ✓ renaming keeps the key; points to Clients → Portal | ✓ (plain-text pointer) | ✓ (plain-text pointer) | — | — | PROOF OWED |
+
+Vitest pins the menu destinations per Playbook preset and viewer kind against a capture of the real
+AppNav at `571ab923e`, and asserts nothing main rendered is missing. §58: before Slice M production
+customers could not read their business's Playbook, so every customer got the generic default (which
+lists Resources). Now each customer gets their own business's catalog (the §57 fix). Nothing a customer
+had is removed: Resources is core for customers, so a customer whose business's catalog omits it keeps it.
+The visible changes are additions — customers of a business that opted into the funding Playbook gain that
+business's own funding entries, and customers on Playbooks whose catalog never listed Resources (fitness,
+consultant, agency, funding) gain it. Agreements was held back from customers until Slice A connected it to
+their own agreements (next block). Harness frames
+(`scripts/live-drive/harness/portal-menu-mount`) cover the customer drawer and bar and the owner editor
+in both themes at 390 and 1440 wide. Authenticated owner save and customer menu on production are owed.
+
+### Customer Portal — Documents, `/app/documents` + "Files for {client}" on the Solo client record + client release in the Operations work item (E09 Slice 4, 2026-10-18)
+
+Owner decision (2026-10-17): the customer sees only what the business explicitly shares. Files stay in
+the one canonical store (`client_files` + the private `client-files` bucket); released work stays in
+`operations_delivery_client_releases`. A file the business adds starts private (D1) and is shared one
+file at a time (`client_file_set_client_share`, SECURITY DEFINER, owner/admin of the current workspace via
+`is_tenant_admin`, version-checked, audited, no notification — D4). The customer read is
+`client_portal_documents` (shared and finished files, plus the customer's own uploads; no description,
+uploader or private file); files open through 60-second signed links. Released work is reviewed and
+accepted on `/app/documents` through the existing client review; releasing needs a second team member
+as reviewer (D2) and exists only for standalone, top-level businesses (D3). Paige's `crm_file_document`
+routes a same-client visibility change to the same share writer, and re-files a shared file only after
+withdrawing it through that writer (no signed-in caller may move a shared file to another client). Both
+lists page by (`created_at`, `id`), so the owner's "Load more" reaches every file (round 3).
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Enterprise | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|---|
+| Owner file library / share (`client_file_owner_list`, `_begin_upload`, `_finish_upload`, `client_file_set_client_share`) | None: no membership, refused at the caller step | None: `CLIENT_FILES_UNAVAILABLE`, nothing mounted | ✓ owner/admin, on the client record ("Files for {client}", `client_standing` gate); a plain member is refused | Allowed by the server (pgTAP); UI declared, not mounted (same §60 gap as `client_standing`) | Allowed by the server; not mounted | — | no grant | PROOF OWED |
+| Owner upload reservation in the company workspace (`client_file_owner_begin_upload` → staff Storage PUT → `_finish_upload`; God / platform-admin reserve row, rounds 2–3) | super_admin: reserve, store and finish allowed — `is_tenant_admin` admits a platform operator in the company workspace and the reservation also needs `is_platform_owner()` or the global admin role (read from the function body; not driven in pgTAP). platform_admin: may list and share there, but reserving an upload is refused 42501 with no pending row left (pgTAP), because the staff Storage PUT would refuse it; outside the company workspace, refused at the caller step like any non-member | None: `CLIENT_FILES_UNAVAILABLE` | ✓ owner/admin (a tenant owner/admin membership is synced the global admin role, so the two checks agree); a plain member is refused | Allowed by the server; not mounted | Allowed by the server; not mounted | — | no grant | PROOF OWED |
+| Owner release work (prepare, internal review, release to the client) | None | None: release RPCs require a standalone business | ✓ in the Operations work item for client work inside a project, only with 2 or more active members; one-member teams see "Releasing work needs a second person on your team to review it." | None: release RPCs refuse child tenants | None: release RPCs refuse it | — | — | PROOF OWED |
+| Customer documents `/app/documents` and the Home Documents tile (`client_portal_documents`) | — | — | — | — | — | ✓ own relationship: shared and finished files plus their own uploads; uploads back (unchanged); more than one relationship is refused and explained (Slice 8) | 42501 | PROOF OWED |
+| Customer released work on `/app/documents` (`operations_delivery_client_reviews_scoped` / `_read_scoped` / `_decide_scoped`) | — | — | — | — | — | ✓ reads and decides only their own releases, from a standalone business; the section is hidden where releases are not offered; client and business must be active | denied | PROOF OWED |
+| Paige files / shares a document from chat (`crm_file_document` → the share writer for a visibility-only change) | — | — | ✓ business accounts (risk high, owner confirms) | ✓ business accounts | ✓ business accounts | never offered | — | PROOF OWED |
+
+pgTAP (`supabase/tests/customer_portal_documents.sql`) covers the share stamp, owner and customer reads,
+other-client and other-business refusals, the version check, state replay, the customer upload pipeline,
+the customer-delete fold-in and the reservation-required staff PUT. §58: the unreachable admin
+`ContactFilesPanel` upload (PUT then direct insert) no longer works because a staff PUT now needs a
+reservation; the panel is not deleted. Authenticated owner upload/share and customer read/decide on
+production are owed.
+
+Round 3 (2026-10-18, pgTAP 188 cases): deleting a user who shared a still-shared file succeeds and leaves
+the file shared with `shared_by` NULL (the stamp follows the `ON DELETE SET NULL`); no signed-in caller —
+business owner, a member holding the global admin role, or a write inside the share writer's gate — may
+move a shared file to another client (`FILE_SHARED_MOVE_REFUSED`), so the share is withdrawn first through
+`client_file_set_client_share` (one audit row) and the private file then moves; the service role's move
+arrives private. `client_file_owner_list` and `client_portal_documents` page by a (`created_at`, `id`)
+cursor, so a file saved in the same instant as the last one shown is never skipped; the owner's "Load more"
+is on the Solo client record.
+
+Round 4 (2026-10-18, pgTAP 197 cases): a file's object and uploader are fixed once its row exists. No
+signed-in caller — the business owner, a member holding the global admin role, or the uploader — may change
+`storage_path` or `uploaded_by_user_id` (`FILE_IDENTITY_IMMUTABLE`); only the service role or a direct
+database session may. Before this, two REST updates could point a shared row at another file's object and
+show it to that client, or to another client of the same business, with no share writer and no audit row.
+Same rule on every tier that can write a `client_files` row; `tenant_id` is not covered (its foreign key is
+`ON DELETE SET NULL`). Still open (client_files policy follow-up): a member holding the global admin role,
+or the uploader, can delete a shared file over REST, which takes it away from the client with no audit row.
+
+Round 5 (2026-10-18, pgTAP 229 cases): the only ways a customer gains a file are the audited share writer
+and their own upload, proven by a matrix of every signed-in role (owner, business admin, member holding the
+global admin role, plain member, customer, another business's owner, platform owner) against every write on
+`client_files` and the client-files bucket. A signed-in write may make a row `client_upload` only when its
+uploader is the contact's linked login (`FILE_CLIENT_UPLOAD_PROVENANCE`); a file's `id` and `tenant_id` are
+now fixed for signed-in writers too (`FILE_IDENTITY_IMMUTABLE`), with only the tenants foreign key's
+`ON DELETE SET NULL` passing. Same rule on every tier. Still open with the policy follow-up: a member can
+rename a shared file (MINOR-J) as well as delete one.
+
+Round 6 (2026-10-18, pgTAP 244 cases): a customer reads, and so opens, only files the business shared to
+their contact (once ready) and the uploads their own login made. Storage serves an object to anyone who can
+see a ready row whose uploader owns it, so the customer read policy now shows a `client_upload` row only to
+the login that uploaded it: never to another login on the same contact, and never to the next person linked
+to the contact after a former person's link is cleared (the former person's uploads stay with the contact,
+visible to the business). Files the business shared stay with the contact across that change (product
+decision, filed for Slice 7). Same rule on every tier.
+
+The Operations Delivery "Client outcome" line uses the same release gate as the work item
+(`src/solo/operations/operations-item-release.ts`): it reads "Released and accepted on each work item in the
+project" only for a standalone business with a linked project and a second active member, "Releasing needs a
+second reviewer on your team" for a one-member standalone business, and "Acceptance unavailable" everywhere
+else — a sub-account, agency or enterprise never sees an outcome it cannot produce (round 2, 2026-10-18).
+### Customer Portal — Profile & Consent, Your account + "How {client} can be reached" on the Solo client record (E09 Slice 6, 2026-10-18)
+
+A customer opens **Your account** (`/app/settings?view=client-account`, the existing `ClientAccount`, one
+home) and finds: Personal information (now with street, city, state and ZIP through the existing versioned
+writer `client_portal_update_self_profile`); **How {Business} can reach you** — Email, Texts, Updates and
+offers, each showing the state the business's sends through Paige actually respect, who set it and when,
+and the honest way to change it; and **What {Business} can use** — the existing data-sharing flag
+(`clients.paige_shared_context_consent`), which the customer can now allow or withdraw. One home for
+messaging preference: the existing ledger (`paige_consent_events` + `paige_suppressions`), derived once by
+`_client_communication_state` for the customer read, the owner read and Paige (§18). Owner decisions
+(2026-10-18): texts can be turned OFF from the portal but only turned on by replying START (D1); staff
+lifting their own pause no longer writes `granted` (D3); email consent stays unenforced and the ConsentTab
+toggle says so (D8); anything the business recorded itself is labelled "set by {Business}" on the customer's
+cards and "Set by your business" on the owner's (D7). Round 2 (integrator defaults, owner may overrule, 2026-10-18): a spam report is
+the customer's own act ("reported"), lifted only by that customer turning email back on in their portal; after a
+customer leaves Updates, staff cannot subscribe them again; booking confirmations and agreements the customer is
+asked to sign still send, and the email disclosure (`email-pref:v2`) says so, together with "email off also
+unsubscribes you from updates and offers". Round 3 (2026-10-18): the server records exactly the sentence the
+customer reads (`email-pref:v2`, `updates-optin:v2`, `sms-pref:v2`; v1 kept for old evidence), hash-pinned in pgTAP
+and checked against the page text in Vitest; with no usable zone of their own the texts line names the zone the
+pre-send check actually uses (`quiet_hours.fallback_time_zone`: the business's texting zone or Eastern); a customer
+of several businesses is told why their account can't be shown here yet, with no dead retry; and the legacy portal
+invite's held answer (409 `INVITATION_POLICY_HELD`) reads "{name} has email turned off or on hold, so Paige didn't
+send the invitation." on every staff surface that sends it, with no link copied or offered. The owner sees the same truth read-only on the Solo client record; there is no owner
+control that creates a customer's consent, and ledger writes by staff can't forge customer-sourced rows
+or delete customer-held ones (restrictive guards, reviewer B1).
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|
+| Read own preferences and sharing (`client_portal_communication_preferences`) | n/a, no relationship | n/a, no linked customers by construction | n/a | n/a | ✓ own relationship only; more than one relationship is refused and explained (Slice 8) | 42501 | PROOF OWED |
+| Set own email / texts-off / updates (`client_portal_set_communication_preference`) | — | — | — | — | ✓ off always; email back on lifts only the customer's own rows; texts on refused (`SMS_OPT_IN_UNAVAILABLE`, D1) | 42501 | PROOF OWED |
+| Allow / withdraw data sharing (`client_portal_set_shared_context_consent`, the flag's only granting writer) | refused by the guard (service role included) | refused (can withdraw) | refused (can withdraw) | refused (can withdraw) | ✓ own relationship | 42501 | PROOF OWED |
+| Address editing on Your account (existing `client_portal_update_self_profile`) | — | — | — | — | ✓ blank address fields clear to NULL; phone and names stay required | 42501 | PROOF OWED |
+| Owner consent view "How {client} can be reached" (`read_client_communication_state`, read-only) | refused (no tenant admin of that workspace) | server allows for its own contacts; no screen mounted | ✓ mounted under `client_standing`, below "Shared with {client}" | server allows (pgTAP); UI declared, not mounted (same §60 gap as `client_standing`) | — | 42501 | PROOF OWED |
+| Conversations DND pause/lift (`set_contact_channel_suppression`, restated) | refused (global-role path removed, §59) | own contacts only | ✓ owner/admin; lift refused while the contact holds the channel (`SUPPRESSION_HELD_BY_CONTACT`); rail shows the held reason | ✓ same | — | — | PROOF OWED |
+| Turn email back on after the customer's own spam report (`set_by` `reported`) | refused | refused (rail locked: "They reported email as spam. Only they can turn it back on.") | refused (same) | refused (same) | ✓ through `client_portal_set_communication_preference` email on | 42501 | PROOF OWED |
+| Subscribe a customer to Updates after they unsubscribed | refused | refused | refused (`NEWSLETTER_LEFT_BY_CONTACT`: any business-sourced newsletter grant, service context included, while the customer's own leaving stands) | refused | ✓ only the customer re-subscribes | 42501 | PROOF OWED |
+| Legacy portal invite to a client who can't be emailed (`send-portal-invite` 409 `INVITATION_POLICY_HELD`, consumer invites only) | n/a (no consumer book) | n/a (`customer_portal_invite` not on this tier; its sub-account owner invite is not a client send, never held) | ✓ Contact portal panel and Conversations card say "{name} has email turned off or on hold, so Paige didn't send the invitation."; no link copied or offered | ✓ same | — | — | PROOF OWED |
+| Account entry in the customer menu | — | — | — | — | ✓ customer of one business only (was: any resolved brand); a customer of several businesses reaches the page by URL only until Slice 8 | — | PROOF OWED |
+| Data & Privacy panel | — | credit control only with `funding_readiness` | credit control only with `funding_readiness`; no dead Manage link | same as Solo | no credit control or finance wording (fail-safe), no security pill; Manage → Your account preferences (customer of one business only — §58 call-out in the evidence record); deletion copy routes the business's records to the business (D6) | — | PROOF OWED |
+
+The customer surface is a §61 default (relationship-scoped, no tier filter, no new feature key); the owner
+view reuses `client_standing`. pgTAP (`supabase/tests/customer_portal_profile_consent.sql`) covers the
+grants, the widened CHECKs, the state table, every writer path and refusal, the staff-lift and ledger write
+guards, the sharing guard on INSERT and UPDATE, the owner read refusals and the sub-account parity case;
+the Vitest suites cover every card state, every refusal, readback-before-success, the exact-key readers
+and the disclosure sentences pinned byte for byte to `client_portal_consent_disclosure`. Customer
+assistant (Paige in the portal): the preference tools are UNAVAILABLE to it in this slice. Authenticated
+customer change and owner read on production are owed.
+
+### Customer Portal — Agreements, `/app/agreements` on the Sales Agreements engine (E09 Slice A, 2026-10-18)
+
+A business's customer sees the agreements that business sent them (`paige_agreements` whose contact IS the
+customer's one relationship, never a draft), opens one to sign through the existing, frozen `/sign/:token`
+page (§28), and downloads or opens the sealed signed copy. Owner ruling (2026-10-18): agreements stay in the
+portal and connect to Sales Agreements. Three SECURITY DEFINER functions with in-body scope (§59, migration
+`20271110225000`): `client_portal_agreements` (the list: exact keys, never a body, storage key, hash, token,
+signer, amount or offer), `client_portal_open_agreement_signing` (the only writer: re-mints the customer's own
+signer token, files one `paige_audit_log` row and NO agreement event, never writes `paige_agreements`) and
+`client_portal_agreement_document_scope` (the download door's scope check). The `agreement-document` edge
+function gains a third, session-scoped door (`portal=1`); doors one and two are unchanged. Paige reads the
+list through `client.portal_agreements_read` (read only; she never signs or mints a link). Integrator defaults
+in force: the portal signs only when the single counterparty signer's email is the customer's confirmed login
+email or the client's primary email. Where there are several co-signers and the customer's own co-signer row has
+not signed, the agreement is listed as `awaiting_signature` ("Waiting for a signature") and is neither headed nor
+counted as the customer's. (Superseded for a single signer by round 6: one signer at another address used to be
+listed as `awaiting_signature` too; under the VISIBILITY default below it is not listed at all.) A portal-issued link never expires later
+than the emailed one (the earlier of the agreement's and the emailed link's deadline, which is also the "Sign
+by" date the list shows); a dead emailed link (expired: `link_expired`, revoked: `link_revoked`) is never
+offered as the way to sign — the row offers "Ask {Business} for a new link" (Messages, plain: no `?draft=`
+until Slice 5); once every counterparty has signed (or there is none) and only the business's signatories
+remain the row reads "Waiting for {Business}" (`awaiting_countersign`), with "You've signed" only when the
+server proved the signature is the customer's (`counterparty`: you / other / none, decided before any signed
+or waiting state); a portal open REPLACES the emailed link (D-A4, stated on the page beside the act). Round 5
+integrator default, owner may overrule: a single signer at the login's own CONFIRMED email who was never
+emailed a link may sign here, on a link ending at the earlier of the agreement's deadline and 24 hours, and
+the page never mentions an emailed link for it (`link_emailed` false; `no_link_sent` where it is not
+signable here). Round 6 integrator default, owner may overrule — VISIBILITY: the list, the open and the
+download scope reach only agreements on which the customer is a counterparty signer (a counterparty row at the
+login's confirmed email or the client's primary email); one with no counterparty, or signed for only at other
+addresses, is not listed, not opened and not downloaded (its sealed certificate names other people). A witness
+ordered before the customer reads "Someone else signs first." (`awaiting_earlier_signer`); a co-signer row at
+the customer's address that has signed reads "You've signed" and is never asked to act; the page says a link
+was "sent", never "emailed". A read that fails before the login is known to be a customer keeps MyAgreements for
+staff (§58). Agreements is core for
+customers in the menu (D-A1: every customer of one business, hideable and renameable by the owner); staff
+and every other viewer keep the catalog rule. Home shows one quiet line only while something waits for the
+customer's signature AND Agreements is in their menu (D-A5). §61 default for the customer side
+(relationship-scoped, no tier filter); the owner side keeps the existing `agreement_signing` exception.
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Enterprise | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|---|
+| Owner sends an agreement (Solo Sales, existing) | None: no tenant book | Refused by `trg_agreement_tier` | ✓ owns it | Allowed (`agreement_tier_allows`); no Sales surface in the Agency shell, so the path is Paige's `agreement_draft` / `agreement_send` (owner confirms each on its card); 0 in production. Its Clients → Portal card says so and says file sharing is not offered on its client record (round 7) | Allowed | — | — | unchanged |
+| Customer list `/app/agreements` (`client_portal_agreements`) | — | n/a: no agreements can exist | — | — | — | ✓ own relationship, non-draft only, only where they are a counterparty signer (integrator default); more than one relationship is refused and explained (Slice 8) | 42501 | PROOF OWED |
+| Review and sign (`client_portal_open_agreement_signing` → frozen `/sign/:token`) | — | — | — | — | — | ✓ own agreement, single counterparty at the customer's own address, link not revoked; never emailed: confirmed login email only, link ≤ 24 hours; ≤10 opens/hour | 42501 | PROOF OWED |
+| Download / open the signed copy (`agreement-document` door 3) | — | — | — | — | — | ✓ own completed agreement with a sealed copy on which they are a counterparty signer (integrator default) | refused | PROOF OWED |
+| Platform terms `/app/agreements` fallback and `/app/agreements/platform` (MyAgreements, unchanged) | ✓ unchanged | ✓ unchanged | ✓ unchanged | ✓ unchanged | ✓ unchanged | ✓ via the link on their Agreements page | — | PROOF OWED |
+| Menu entry "Agreements" (Paperwork) | — | — | — | — | — | ✓ by default (D-A1); owner can hide/rename | — | PROOF OWED |
+| Paige reads the customer's agreements (`client.portal_agreements_read`) | — | — | — | — | — | customer assistant only | — | PROOF OWED |
+
+pgTAP (`supabase/tests/customer_portal_agreements.sql`, 168 cases) covers other-customer, other-business,
+draft and merged-contact exclusion, every state, the open's refusals (including a revoked link, a co-signer, a
+signer at another address and the 11th open in an hour), the byte-identical agreement row, no agreement event,
+the old emailed token stopping, the notes for a dead emailed link, the "Sign by" date, `awaiting_signature`
+and `awaiting_countersign`, whose signature it is (a signer at another address, no counterparty, co-signers
+both signed, a witness and the business both left), the never-emailed one-day link and its expiry arithmetic,
+document scope, the Sub-account tier and the unchanged policy set. Vitest
+covers the hook's exact keys, tenant pin, identity reset and focus/visibility refresh, the page's states and
+copy, the one gold act, StrictMode, the Home line and the routes. Harness frames
+(`scripts/live-drive/harness/portal-agreements-customer-mount`) show the page in every state, the Home line, the
+platform-terms page and the frozen signing page reached from the portal versus the email. Round 6: pgTAP
+184 cases, adding visibility (no counterparty and other-address rows absent from the list, refused by the open
+and by the download scope, including two completed sealed copies; a control proves the same copy is
+downloadable once its signer is the customer), a witness ordered first (W1) and a signed co-signer at the
+customer's address (W3). Authenticated customer sign and download on production are owed.
+
+### Customer Portal — Payments, `/app/billing` + one invoice at `/app/billing/:invoiceId` (E09 Slice 5, 2026-10-18)
+
+A customer sees the invoices their business **issued** to them (managed `issued` and `void` invoices with a
+frozen issued document; never a draft, a CSV `recorded` import, another client's or another business's
+invoice) at `/app/billing`, named **Payments** everywhere the customer reads it (owner ruling 2026-10-18; the
+route and the Playbook catalog key stay `billing`). Each invoice opens its own page with the frozen document
+and a payment panel. Owner decisions: invoices are visible once issued; the customer pays **only** through a
+payment link the business already sent (the existing validated `provider_url` projection), on the business's
+own processor — no customer-side charge producer, no Stripe call, no bearer grant, Paige never merchant of
+record (§38). With no link, the customer is offered "Ask {business} for a payment link", which pre-fills a
+Messages draft they edit and send through the Slice 1 send. The reads are `client_portal_invoices`,
+`client_portal_invoice_payment_request` and `client_portal_invoice_ledger` (SECURITY DEFINER, VOLATILE, the
+caller's own relationship via `client_portal_relationship_id`, no tier filter — the §60 fix to #2170/#2184's
+standalone-only rule), plus the `portal=1` branch of `sales-invoice-document` for the document and PDF.
+They are the one client invoice read home, derived from E04 #2170 (`aeb0db5f1`) and carrying its stricter caller
+guards (same-business staff, platform owner, deleted or banned account refused); they add no financial writer.
+This is a §61 **default** for the customer surface: relationship-scoped, no new feature key.
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Enterprise | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|---|
+| Issue, send and request payment for an invoice (existing, unchanged) | None: no tenant book (`_sales_invoice_actor` refuses) | No client book by §61; customer invites are UI-excluded | ✓ `/solo/:account/sales/payments` | Allowed by the server (no tier gate in `_sales_invoice_actor`); the Sub-account shell (`AgencyApp`, `/business/:account`) has no Sales screen, so invoices are created and issued only through Paige's sales invoice tools (owner confirms) | Allowed by the server; not separately mounted | — | Denied | unchanged |
+| Publish review says the invoice appears under Payments in the client's portal | — | — | Not in this slice: E04's `InvoiceCommandReview` is unchanged (restored to main 2026-10-18); the wording is proposed to E04 in the evidence record | same | same | — | — | NOT SHIPPED |
+| Owner portal panel card "Payments · PARTIAL" (says invoices are issued through Paige and reach a client once they have joined and Payments is in their menu) | — | — | — (Solo uses the owner dashboard, `OwnerPortalDashboard`) | ✓ Portal tab of the Sub-account shell (`AgencyApp`) | — (a top-level Enterprise account opens the relationships layout, which has no Portal tab: `workspaceModel.ts`) | — | — | PROOF OWED |
+| Customer Payments list `/app/billing` and Home balance line (`client_portal_invoices`) | — | — | — | — | — | ✓ own relationship, issued and void managed invoices only; balances, open and past-due counts across all pages; more than one relationship is refused and explained (Slice 8); a person who is also active staff of that business, a platform owner, and a deleted or banned account read nothing (guards from E04 #2170); a client whose membership of that business is no longer active (suspended) reads as a customer; the page tells a refused viewer the menu treats as a customer no false reason | Denied (no grant) | PROOF OWED |
+| Customer invoice page `/app/billing/:invoiceId`: document, PDF, payment state (`client_portal_invoice_payment_request`, `portal=1` document branch) | — | — | — | — | — | ✓ own issued invoice; "Pay" opens only the business's validated link in a new tab (`noopener noreferrer`); never writes | Denied | PROOF OWED |
+| Payments in the customer menu (Slice M registry key `billing`, default name "Payments", `live` flipped by Slice 5 in `portalMenu.ts` and its edge mirror `client-portal-menu.ts`) | — | — | — | — | — | ✓ "Paperwork" group, only where the business's Playbook catalog lists `billing` (every generic preset; never force-injected); the owner can hide or rename it in the menu editor; floor `customer`: shown only to a customer of one business. Known limitation: a Playbook without `billing` (the funding preset) gives its customers no in-app way in (the Home line follows the menu), only the address | — | PROOF OWED |
+| Bearer `/invoice?token=` page | unchanged | unchanged | unchanged | unchanged | unchanged | unchanged (works for clients without a portal login) | ✓ unchanged | unchanged |
+
+Customer-side proof: Vitest for the exact-key parsers, both pages, the menu entry and its floor, the Home line and the Messages
+draft; harness frames (`scripts/live-drive/harness/portal-payments-customer-mount`) in
+both themes at 390 and 1440. The database proof is `supabase/tests/customer_portal_payments.sql` (the backend
+lane's pgTAP; counts in the evidence record). Authenticated customer read, a test-mode payment link opened from
+the portal and the return to `/payment-return` on production are owed. The Agreements tab is not touched by
+this slice (owner reversal 2026-10-18; Slice A owns it).
+
+### Customer Portal — tenant host entry `<slug>.paigeagent.ai` and the app-origin gateway (E09 Slice H, 2026-10-18)
+
+Integrator decision D5 (owner may overrule): the authenticated Portal stays on the app origin; the tenant
+wildcard host is a public entry only. On `<slug>.paigeagent.ai` the existing `PortalGateway` wears the same
+brand (logo or initial, business name) and shows one link, "Sign in to your portal", to
+`<configured app origin>/portal/<slug>` (`PAIGE_APP_ORIGIN`, or `https://app.paigeagent.ai` once the host
+split is on), pinned to the hostname tenant. It never reads a session, never collects a password, never calls
+`get_client_portal_brand`, and never navigates to the relative `/app` that host routing pins back to
+`/portal/<slug>` on a tenant host (the redirect loop it replaces). Sessions stay per origin (Supabase
+`localStorage`), and none is born on a tenant host: there the Supabase client does not adopt a session from
+URL tokens (`detectSessionInUrl` false via `detectsSessionFromUrl`), canonicalising a tenant-host URL drops
+every auth-callback parameter (`sb_flow_id` included) from the query and hash, a tenant-host URL that is not
+redirected has them removed from the address bar in place (`scrubTenantHostAuthParams`, run while the
+Supabase client module loads, with a full same-origin URL so a `//` path cannot throw, and any failure
+logged rather than blocking start), and no sign-in form runs there. The app-wide session readers still run on
+every host — `BusinessProvider`, `GlobalAuthSessionManager`, `ClientOnlyRouteGuard`, analytics
+`usePageView`, and `TenantProvider`, `SubscriptionProvider` and `DashboardModeProvider` — and on a tenant
+host they read only that origin's own storage, which by code reading nothing in this slice writes to (no
+real tenant host driven). On every other host `detectSessionInUrl` keeps supabase-js's default, unchanged. Supabase
+Auth's redirect allowlist is not yet read (owed; on E10's attach checklist). Every password-reset link (the gateway's and the
+`/auth` dialog's) is built from `trustedAppOrigin`: a production app host over https and local development
+keep their own origin; a tenant, preview, unknown or hostile hostname gets the configured app origin.
+Hostnames remain routing context, never authorization. The wildcard is still not attached to Vercel (E10),
+so no tenant host serves this yet.
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|
+| Tenant-host entry on `<slug>.paigeagent.ai` (brand + link out, `tenantHostPortalEntryUrl`) | — | — | — | — | same page as Anonymous; the gateway never reads their session there, and no session is adopted there | ✓ any visitor, public brand only (`peek_tenant_portal_brand`, hostname tenant) | PROOF OWED (host not attached, E10) |
+| Sign-in and signed-in portal (`/portal/<slug>` → `/app` on the app origin) | unchanged | unchanged | unchanged | unchanged | ✓ unchanged: relative navigation on the app origin | unchanged | PROOF OWED |
+| Password-reset email target (`trustedAppOrigin`) | same rule | same rule | same rule | same rule | ✓ always an app origin | ✓ always an app origin | PROOF OWED |
+
+No tier gains or loses access: the tenant host showed a sign-in form before (unreachable, the host is a
+Vercel 404) and now shows a link to the same form on the app origin. A §61 default; no feature key.
+
+### Customer Portal — pause, restore or end a client's access (E09 Slice 7, 2026-10-18)
+
+A business can pause a joined client's portal access (temporary; the link is kept, so restoring needs no
+new invitation), restore it, or end it (the link is cleared and the person's history stays on the contact;
+coming back takes a new invitation). Owner decisions D1–D11 (2026-10-18). The state lives on the contact
+(`clients.portal_access_state` open | paused | ended, migration `20271111010000`, renumbered from 110000 at integration) and the one
+resolver every customer read goes through (`client_portal_relationship_id`) admits only `open`. The one
+writer is `set_client_portal_access` (SECURITY DEFINER; the tenant is always the caller's current workspace,
+never a parameter; the same predicate as the invitation owner gate, never a global role, §59). The customer
+reads only their own state through `client_portal_access_state()` (keyed on `auth.uid()`; business name and
+logo only — never the reason or the team note). Same §60 feature as invitation: `customer_portal_invite`;
+§61 default, no new feature key. No notification is sent (D4); the contact and its history stay; the person's
+login and every other business are untouched (End clears the link, so its coach grants and anything the person
+connected under their own login stop showing until they rejoin; open invitations are revoked).
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Enterprise | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|---|
+| Pause / restore / end (`set_client_portal_access`) | No UI (`customer_portal_invite` excluded). Server: only inside the operator's current workspace through the invitation predicate (D2); no cross-tenant parameter | Refused (`PORTAL_ACCESS_UNAVAILABLE`); no direct client book | ✓ owner/admin of the current workspace | Server ✓, including the parent agency after switching into the child; no Solo record card (same §60 gap as `client_standing`) | Server ✓, as Sub-account | Cannot call it | No grant | PROOF OWED |
+| "Portal access" card on the Solo client record (`ClientPortalAccess`) | — | — | ✓ mounted under "Shared with {client}" and "Files for {client}" (`client_standing` gate + `customer_portal_invite`) | Not mounted | Not mounted | — | — | PROOF OWED |
+| Contact panel access switch (`ContactPortalPanel`: non-Solo Portal view, admin contact detail, Conversations contact card) | — (feature-gated off) | — (feature-gated off) | ✓ OFF opens Pause (reversible); Pause and End are their own buttons, both take a reason; Restore (gold) gives a paused client back; never calls `admin-delete-user` (§58, D10) | ✓ same (round 2: Pause now on every tier the panel mounts on) | ✓ same | — | — | PROOF OWED |
+| Owner Portal dashboard states (Access paused / Access ended, filter, attention) | — | — | ✓ | Not mounted | Not mounted | — | — | PROOF OWED |
+| Owner inbox Portal channel for a paused client | — | — | Held with "access is paused — restore their portal access" (tier-neutral; server refuses `PORTAL_ACCESS_PAUSED`) | same | same | — | — | PROOF OWED |
+| Owner displays that read the link alone (inbox context pane, Client intake panel, Solo record header chip; round 2, 2026-10-19: "Files for {client}" share line and confirmation, "How {client} can be reached" Portal row, "Shared with {client}" ended line, and Paige's file / work-item share confirmations in chat) | — | — | ✓ name paused / ended (the Files, Shared with and reach cards read the record's access state; the share writers and `read_client_communication_state` return `portal_access`, and `portal_connected` is "linked AND access open") | ✓ inbox pane + intake panel; chat share confirmations (tier-neutral) | ✓ inbox pane + intake panel; chat share confirmations | — | — | PROOF OWED |
+| Old invitation link after access changed (`ConsumerInvitation`) | — | — | — | — | — | ✓ "Your access to {Business} is paused / has ended", Sign out | — | PROOF OWED |
+| Customer paused / ended page in place of the `/app` shell (`CustomerAccessGate`) | — | — | — | — | — | ✓ own state only; no menu, no Support, no platform persona; one action, Sign out | No grant | PROOF OWED |
+| Paige reads / changes access from chat (`client.portal_access_read`, `client.portal_access_set`, risk high, owner confirms) | Current workspace only | Refused | ✓ | ✓ | ✓ | never offered | — | PROOF OWED |
+| Customer doors added by Documents, Profile & Consent, Agreements and Payments refuse a paused or ended client (`_client_portal_lock_relationship`, the one gate: Documents list and upload check, preferences read and the two consent writers, agreements list / signing link / download scope, the three invoice reads) | — | — | — | — | — | ✓ open only; each door keeps its own refusal (NULL, `{ok:false,…}` or its 42501 message) | No grant | PROOF OWED (pgTAP `customer_portal_access_doors.sql` 113/113 locally at round 3; 61/61 in round 1) |
+| A signing link the portal issued, after a pause or an end (round 2, 2026-10-19; integrator default S7-D1, owner may overrule) | — | — | the owner's pause / end clears it | same | same | ✓ stops opening (`peek_agreement_signing` refuses); a link the business emailed and the portal never replaced still opens | No grant | PROOF OWED (pgTAP `customer_portal_access_doors.sql` §11) |
+
+Vitest drives the card, the panel, the gate, the frame phases (first open, mid-session, routes that require
+a customer, 42501), the landing route and gateway, the dashboard model, the inbox hold and Shared with's
+paused line; nine source mutations each fail their named test (round 2: 22 more, one per fix). Harness frames
+(`scripts/live-drive/harness/portal-access-mount`, re-rendered at round 3 in the real face, fontLoaded in
+every frame): 152 frames, 152 pass, both themes. Owner record: 16 states at 1440x900 and 390x844, paused and
+the pause confirm at 1366x768 and 1536x770, and paused, the pause confirm and the header chip at 1024x768 and
+900x1000 (84 frames). Contact panel: joined, paused, ended and each confirm on Standalone Solo, with joined on
+Sub-account and Enterprise and the pause confirm on Sub-account (36). Customer page: paused, ended, mid-session
+pause and paused with the business's logo (16). Old invitation link: paused and ended (8). Portal dashboard:
+every row and filtered to Access paused (8). Lowest text contrast 5.25 light, 6.85 dark; gold only on Restore
+or the reused invitation command's act, gradient gold included. The Slice 1 inbox harness adds the paused
+inbox (4 frames). Chat: the approval card is bound to the version it was built from (`access_version`, round 3).
+Authenticated owner pause/restore/end and the customer page on production are owed; the QA relationship is
+to be ended by that business's owner by 2026-10-30 (D11).

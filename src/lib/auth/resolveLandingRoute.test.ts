@@ -117,6 +117,27 @@ beforeEach(() => {
 });
 
 describe("resolveLandingRoute — agency landing (§65)", () => {
+  const customerActor="e0911000-0000-0000-0000-000000000001";
+  const ownCustomer=(stage="completed")=>({id:"e0931000-0000-0000-0000-000000000001",tenant_id:"e0921000-0000-0000-0000-000000000001",linked_user_id:customerActor,
+    first_name:"Test",last_name:"Customer",entity_name:null,street_address:null,city:null,state:null,zip_code:null,
+    onboarding_stage:stage,is_signup_contact:false,paige_shared_context_consent:false,paige_shared_context_consent_updated_at:null,
+    updated_at:null,email:"recipient@tests.invalid",phone:null,contact_methods:[]});
+  it("an explicit customer surface keeps an ordinary business owner in their actual customer relationship",async()=>{
+    rpc.mockImplementation(async(name:string)=>({data:name==="client_portal_self_profile"?ownCustomer():null,error:null}));
+    expect(await resolveLandingRoute(customerActor,{customerPortal:true})).toBe("/app");
+    expect(await resolveLandingRoute(customerActor)).toBe("/choose-account");
+  });
+  it.each(["pre_invite","invited","signing_agreement"])("the verified customer surface opens the portal without completing optional onboarding stage %s",async stage=>{
+    rpc.mockImplementation(async(name:string)=>({data:name==="client_portal_self_profile"?ownCustomer(stage):null,error:null}));
+    expect(await resolveLandingRoute(customerActor,{customerPortal:true})).toBe("/app");
+    expect(rpc.mock.calls.some(([name])=>name==="client_advance_onboarding_stage"||name==="client_portal_save_welcome")).toBe(false);
+  });
+  it("customer route intent cannot claim a foreign profile or override operator choice",async()=>{
+    rpc.mockImplementation(async(name:string)=>({data:name==="client_portal_self_profile"?{...ownCustomer(),linked_user_id:"foreign"}:null,error:null}));
+    expect(await resolveLandingRoute(customerActor,{customerPortal:true})).toBe("/auth?mode=login&route=retry");
+    mockTables({roles:["platform_admin"]});
+    expect(await resolveLandingRoute(customerActor,{customerPortal:true})).toBe("/choose-account");
+  });
   it("sends an eligible manager to their REAL numeric URL, not the legacy board", async () => {
     mockCtx(MANAGER);
     expect(await resolveLandingRoute("u1")).toBe("/agency/1924546/command-center");
@@ -248,5 +269,37 @@ describe("resolveLandingRoute — agency landing (§65)", () => {
   it("fails closed to a retryable auth door when role resolution throws", async () => {
     mockTables({ rolesThrow: true });
     await expect(resolveLandingRoute("u-transport-error")).resolves.toBe("/auth?mode=login&route=retry");
+  });
+});
+
+// E09 Slice 7 — a customer whose access was paused or ended has no open relationship, so every
+// resolver read is empty and they used to fall all the way through to `/pricing` (the platform's
+// enrolment page). They land on /app, where the shell shows the business's own paused/ended page.
+describe("resolveLandingRoute — withheld customer access (E09 Slice 7)", () => {
+  const actor = "e0917000-0000-0000-0000-000000000001";
+  const withheld = (state: "paused" | "ended" | "none" | "open") => rpc.mockImplementation(async (name: string) =>
+    name === "client_portal_access_state"
+      ? { data: state === "paused" || state === "ended" ? { state, business: { name: "Test Studio", logo_url: null }, since: null } : { state }, error: null }
+      : { data: null, error: null });
+  it.each(["paused", "ended"] as const)("a client-only person whose access is %s lands on /app, never /pricing", async (state) => {
+    mockTables({ roles: ["client"], agencyVisible: false });
+    withheld(state);
+    expect(await resolveLandingRoute(actor)).toBe("/app");
+    expect(await resolveLandingRoute(actor, { customerPortal: true })).toBe("/app");
+  });
+  it("a person with nothing recorded still goes to /pricing as before", async () => {
+    mockTables({ roles: [], agencyVisible: false });
+    withheld("none");
+    expect(await resolveLandingRoute(actor)).toBe("/pricing");
+  });
+  it("an unreadable access answer never invents a customer route", async () => {
+    mockTables({ roles: [], agencyVisible: false });
+    rpc.mockImplementation(async (name: string) => name === "client_portal_access_state" ? { data: null, error: { code: "500" } } : { data: null, error: null });
+    expect(await resolveLandingRoute(actor)).toBe("/pricing");
+  });
+  it("staff are never sent to the customer page by someone else's paused relationship", async () => {
+    mockTables({ roles: ["super_admin"], agencyVisible: false });
+    withheld("paused");
+    expect(await resolveLandingRoute(actor)).toBe("/choose-account");
   });
 });

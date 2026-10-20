@@ -128,7 +128,7 @@ export interface FabricAttempt {
   provider: FabricProvider;
   model: string;
   /** Present when this candidate did not serve the round. */
-  failure?: ProviderFailureClass | "budget_exceeded" | "skipped_disabled" | "unsupported_document" | "aborted";
+  failure?: ProviderFailureClass | "budget_exceeded" | "skipped_disabled" | "unsupported_document" | "aborted" | "caller_refused";
   status?: number;
 }
 
@@ -143,6 +143,8 @@ export interface FabricStream {
 
 export interface FabricOptions {
   trace?: TraceCtx;
+  /** Trusted caller authority after each leg's budget awaits; never model/request JSON. */
+  beforeProviderAttempt?: () => boolean | Promise<boolean>;
   /** Anthropic-only request extras the chat already sends (e.g. the dormant Studio thinking flag). */
   anthropicExtras?: Record<string, unknown>;
   /** Test seam: override the enabled set and transports. Never set by production callers. */
@@ -230,6 +232,11 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
 
   for (const c of use) {
     const model = c.model as string;
+    const callerRefused = (): FabricStream => {
+      attempts.push({ provider: c.provider, model, failure: "caller_refused", status: 0 });
+      if (opts.trace) opts.trace.fabric_route = null;
+      return { ok: false, status: 0, served: null, attempts };
+    };
     let opened: { ok: boolean; status: number; body?: ReadableStream<Uint8Array>; failureClass?: ProviderFailureClass };
     // #1856 — the projected route rides the ctx BEFORE the leg: the Anthropic gateway copies the ctx
     // at call time, so the attach must precede the dispatch; on open-success the projection is exact.
@@ -260,6 +267,11 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
         if (opts.trace?.tenant_id) {
           await fabricBudgetGate(opts.trace.tenant_id, "reasoning", "chat", opts.trace, Date.now(), opts.trace, body.messages);
         }
+        if (opts.beforeProviderAttempt) {
+          let current = false;
+          try { current = await opts.beforeProviderAttempt() === true; } catch { /* authority unavailable */ }
+          if (!current) return callerRefused();
+        }
         const effort = OPENAI_EFFORT_BY_CLASS[klass as OpenAIReasoningClass];
         opened = await responsesStream(body, { model, effort, fetchImpl: opts.openaiFetch }, opts.trace);
       } else {
@@ -269,7 +281,8 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ...body, model, stream: true, ...(opts.anthropicExtras ?? {}) }),
-        }, opts.trace);
+        }, opts.trace, opts.beforeProviderAttempt);
+        if (r.failureClass === "caller_refused") return callerRefused();
         const proven = PROVIDER_FAILURE_CLASSES.includes(r.failureClass as ProviderFailureClass) ? r.failureClass as ProviderFailureClass : undefined;
         opened = { ok: r.ok, status: r.status, body: r.body, failureClass: r.ok ? undefined : proven ?? classifyProviderFailure({ provider: "anthropic", status: r.status }) };
       }
@@ -377,11 +390,15 @@ export interface FabricCompletionResult {
   /** Chat-shaped (choices[0].message, model, usage, paige_stop) — the shape consumers already parse. */
   response?: Record<string, unknown>;
   /** The closed failure class of the last failed attempt; provider text is never kept. */
-  error?: { failure: ProviderFailureClass | "budget_exceeded" | "unsupported_document" | "aborted" };
+  error?: { failure: ProviderFailureClass | "budget_exceeded" | "unsupported_document" | "aborted" | "caller_refused" };
 }
 
 export interface FabricCompletionOpts {
   trace?: TraceCtx;
+  /** Trusted in-process caller authority, never model/request JSON. Checked after
+   * budget awaits before EACH provider leg, including fallback. Only true admits;
+   * false or throw stops here, never enters provider failure/fallback policy. */
+  beforeProviderAttempt?: () => boolean | Promise<boolean>;
   /** A caller deadline. Threads to the Anthropic leg's fetch; the OpenAI leg is bounded by the
    * caller's own race until the OpenAI-path slice adds native cancellation there. */
   signal?: AbortSignal;
@@ -477,6 +494,16 @@ export async function fabricCompletion(
       continue;
     }
 
+    if (opts.beforeProviderAttempt) {
+      let current = false;
+      try { current = await opts.beforeProviderAttempt() === true; } catch { /* authority unavailable */ }
+      if (!current || opts.signal?.aborted) {
+        const failure = opts.signal?.aborted ? "aborted" as const : "caller_refused" as const;
+        attempts.push({ provider: c.provider, model: c.model ?? "", failure, status: 0 });
+        clearRoute();
+        return { ok: false, route: route(null, opts.pinned ? "pinned_failed" : "failed", false), error: { failure } };
+      }
+    }
     const anthropicTier: ClaudeTier | null = c.provider === "anthropic" ? (c.model === CLAUDE_REASONING ? "reasoning" : "classification") : null;
     // #1856 — the projected route rides the ctx BEFORE the leg, so the leg's own trace row (the
     // OpenAI self-trace, or the streamed drain) carries it via its spread; the seam's Anthropic rows

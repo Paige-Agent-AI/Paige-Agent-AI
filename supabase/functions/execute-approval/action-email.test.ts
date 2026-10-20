@@ -51,6 +51,7 @@ const kinds = [
   { slug: "client.surface_note", executor: "surface_to_client" },
 ];
 const SEND_KINDS = kinds.filter((k) => k.executor === "send_via_approval").map((k) => k.slug);
+const REVIEWABLE_EMAIL_KINDS = ["owner.lead_followup", "client.followup", "owner.followup_email"];
 const action = (extra: Row = {}) => ({ id: ACT, tenant_id: T, action_kind: "client.followup", contact_id: null, approval_id: A, status: "pending_approval", ...extra });
 const declineOnly = { status: 409, payload: { ok: false, executed: false, error: "send_requires_review", reason_code: "decline_only", reason: SEND_REFUSAL.decline_only, approval_id: A } };
 const reviewAndSend = { status: 409, payload: { ok: false, executed: false, error: "send_requires_review", reason_code: "review_and_send", reason: SEND_REFUSAL.review_and_send, approval_id: A } };
@@ -67,9 +68,9 @@ describe("refuseSendKindApproval", () => {
     expect(d.reads.map((r) => [r.table, r.filters])).toEqual(Array(3).fill(["paige_actions", [["eq", "approval_id", A]]]));
   });
 
-  it("the 125 production rows' shape — legacy client.followup with a nested draft — is refused, decline_only", async () => {
+  it("the legacy client.followup shape is still refused here, with review_and_send guidance", async () => {
     const d = db({ paige_actions: [action()], paige_action_kinds: kinds });
-    expect(await refuseSendKindApproval(d.admin, ap({ action_id: ACT }))).toEqual(declineOnly);
+    expect(await refuseSendKindApproval(d.admin, ap({ action_id: ACT }))).toEqual(reviewAndSend);
     // Filtered reads, by server-held ids only: the named action, the back-pointer, the kind.
     expect(d.reads.map((r) => [r.table, r.filters])).toEqual([
       ["paige_actions", [["eq", "id", ACT]]],
@@ -78,7 +79,7 @@ describe("refuseSendKindApproval", () => {
     ]);
   });
 
-  it.each(SEND_KINDS.filter((k) => k !== "owner.lead_followup"))("every other send kind is refused decline_only: %s", async (slug) => {
+  it.each(SEND_KINDS.filter((k) => !REVIEWABLE_EMAIL_KINDS.includes(k)))("every unsupported send kind is refused decline_only: %s", async (slug) => {
     const d = db({ paige_actions: [action({ action_kind: slug })], paige_action_kinds: kinds });
     expect(await refuseSendKindApproval(d.admin, ap({ action_id: ACT }))).toEqual(declineOnly);
   });
@@ -100,13 +101,13 @@ describe("refuseSendKindApproval", () => {
 
   it("the named action ALONE is enough: it does not point back at this approval", async () => {
     const d = db({ paige_actions: [action({ approval_id: null })], paige_action_kinds: kinds });
-    expect(await refuseSendKindApproval(d.admin, ap({ action_id: ACT }))).toEqual(declineOnly);
+    expect(await refuseSendKindApproval(d.admin, ap({ action_id: ACT }))).toEqual(reviewAndSend);
   });
 
   it("an upper-case action_id names the same action (ids compare case-insensitively)", async () => {
     expect(ACT.toUpperCase()).not.toBe(ACT); // the fixture id has hex letters, or this proves nothing
     const d = db({ paige_actions: [action({ approval_id: null })], paige_action_kinds: kinds });
-    expect(await refuseSendKindApproval(d.admin, ap({ action_id: ACT.toUpperCase() }))).toEqual(declineOnly);
+    expect(await refuseSendKindApproval(d.admin, ap({ action_id: ACT.toUpperCase() }))).toEqual(reviewAndSend);
     expect(d.reads[0].filters).toEqual([["eq", "id", ACT]]);
   });
 
@@ -131,9 +132,9 @@ describe("refuseSendKindApproval", () => {
     expect(await refuseSendKindApproval(n.admin, ap({ action_id: ACT }, null))).toEqual(declineOnly);
   });
 
-  it("a reply plus any other send kind behind one approval is decline_only", async () => {
+  it("a reply plus an unsupported send kind behind one approval is decline_only", async () => {
     const d = db({ paige_actions: [action({ action_kind: "owner.lead_followup", approval_id: null }),
-      action({ id: "40000000-0000-4000-8000-000000000002", action_kind: "client.followup" })], paige_action_kinds: kinds });
+      action({ id: "40000000-0000-4000-8000-000000000002", action_kind: "owner.sms_nudge" })], paige_action_kinds: kinds });
     expect(await refuseSendKindApproval(d.admin, ap({ action_id: ACT }))).toEqual(declineOnly);
   });
 
@@ -155,6 +156,36 @@ describe("refuseSendKindApproval", () => {
 
   it("user-facing reasons never name an email provider", () => {
     for (const text of Object.values(SEND_REFUSAL)) expect(text).not.toMatch(/sendgrid|resend|twilio|mailgun|postmark/i);
+  });
+
+  it.each(REVIEWABLE_EMAIL_KINDS)("%s uses existing review guidance, with no write or send capability", async (slug) => {
+    const d = db({ paige_actions: [action({ action_kind: slug, contact_id: "not-authority", draft: { to: "ignored@example.invalid" } })], paige_action_kinds: kinds });
+    const result = await refuseSendKindApproval(d.admin, ap({ action_id: ACT }));
+    expect(result).toEqual(reviewAndSend);
+    expect(d.reads.map((r) => r.table)).toEqual(["paige_actions", "paige_actions", "paige_action_kinds"]);
+    // The fake exposes filtered reads only: neither content nor an address is returned as authority.
+    expect(JSON.stringify(result)).not.toMatch(/ignored@example|not-authority/);
+    expect(await refuseSendKindApproval(d.admin, ap({}))).toEqual(reviewAndSend);
+  });
+
+  it.each(REVIEWABLE_EMAIL_KINDS)("%s in another workspace, without a workspace, or mixed with a foreign action stays decline_only", async (slug) => {
+    const foreign = db({ paige_actions: [action({ action_kind: slug, tenant_id: OTHER, approval_id: null })], paige_action_kinds: kinds });
+    expect(await refuseSendKindApproval(foreign.admin, ap({ action_id: ACT }))).toEqual(declineOnly);
+    const own = db({ paige_actions: [action({ action_kind: slug })], paige_action_kinds: kinds });
+    expect(await refuseSendKindApproval(own.admin, ap({ action_id: ACT }, null))).toEqual(declineOnly);
+    expect(await refuseSendKindApproval(own.admin, ap({ action_id: ACT }, ""))).toEqual(declineOnly);
+    const mixed = db({ paige_actions: [action({ action_kind: slug, approval_id: null }),
+      action({ id: "40000000-0000-4000-8000-000000000002", action_kind: "owner.followup_email", tenant_id: OTHER })], paige_action_kinds: kinds });
+    const result = await refuseSendKindApproval(mixed.admin, ap({ action_id: ACT }));
+    expect(result).toEqual(declineOnly);
+    expect(JSON.stringify(result)).not.toContain(OTHER);
+  });
+
+  it("a kind merely resembling a supported email kind gets no new review guidance", async () => {
+    for (const slug of ["client.followup.extra", "Client.followup", "owner.followup_email.extra"]) {
+      const d = db({ paige_actions: [action({ action_kind: slug })], paige_action_kinds: [...kinds, { slug, executor: "send_via_approval" }] });
+      expect(await refuseSendKindApproval(d.admin, ap({ action_id: ACT }))).toEqual(declineOnly);
+    }
   });
 });
 

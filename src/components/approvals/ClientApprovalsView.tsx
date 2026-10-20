@@ -1,11 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useCustomerIdentity } from "@/lib/portal/customerIdentity";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Shield, Clock, CheckCircle2, AlertTriangle, RotateCcw, ListChecks } from "lucide-react";
+import { Shield, Clock, CheckCircle2, AlertTriangle, RotateCcw, ListChecks, type LucideIcon } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { Link } from "react-router-dom";
 import { useMyApprovals, type MyApprovalRow } from "@/hooks/useMyApprovals";
 
-const STATUS_META: Record<string, { label: string; tone: string; icon: any }> = {
+const STATUS_META: Record<string, { label: string; tone: string; icon: LucideIcon }> = {
   pending: { label: "Awaiting review", tone: "bg-amber-500/15 text-amber-700 border-amber-500/30", icon: Clock },
   approved: { label: "Approved", tone: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30", icon: CheckCircle2 },
   rejected: { label: "Rejected", tone: "bg-red-500/15 text-red-700 border-red-500/30", icon: AlertTriangle },
@@ -35,8 +37,8 @@ const CATEGORY_LABEL: Record<string, string> = {
 function nextStepFor(row: MyApprovalRow): string | null {
   if (row.status === "changes_requested") {
     return row.decision_rationale
-      ? `Your coach asked: "${row.decision_rationale}". Reply in Messages so we can finalize this.`
-      : "Your coach needs a quick reply before we can move forward. Check Messages.";
+      ? `Your team asked: "${row.decision_rationale}". Reply in Messages so we can finalize this.`
+      : "Your team needs a quick reply before we can move forward. Check Messages.";
   }
   if (row.status === "pending") {
     if (row.category === "field_ingest") return "We're confirming the details we have on file. No action needed unless we reach out.";
@@ -52,9 +54,10 @@ function nextStepFor(row: MyApprovalRow): string | null {
 }
 
 interface Props {
-  /** White-label switch: hide the "Paige" name in BTF workspace. (Sprint 211.b: BTF surface retired; prop preserved for future white-label reuse) */
+  /** White-label switch: name the team, not an assistant. (Sprint 211.b: BTF surface retired; prop preserved for future white-label reuse) */
   whiteLabel?: boolean;
-  brandedAgentName?: string; // e.g. "Paige" or "your coaching team"
+  /** Overrides the agent's name. By default it is the customer's agent (Cura, or the business's name for it), never PAIGE. */
+  brandedAgentName?: string;
   /** Optional stage line shown in the header card. */
   currentStage?: string | null;
 }
@@ -65,7 +68,8 @@ export function ClientApprovalsView({
   currentStage,
 }: Props) {
   const { pending, resolved, loading } = useMyApprovals();
-  const agent = brandedAgentName ?? (whiteLabel ? "your coaching team" : "Paige");
+  const { agentName } = useCustomerIdentity();
+  const agent = brandedAgentName ?? (whiteLabel ? "your coaching team" : agentName);
 
   if (loading) {
     return <div className="p-8 text-sm text-muted-foreground">Loading your approvals…</div>;
@@ -161,7 +165,7 @@ function ApprovalRow({ row, agent }: { row: MyApprovalRow; agent: string }) {
         {needsAction && (
           <div>
             <Button asChild size="sm" variant="outline">
-              <a href="/app/support">Reply to your coach</a>
+              <Link to="/app/messages">Reply to your team</Link>
             </Button>
           </div>
         )}

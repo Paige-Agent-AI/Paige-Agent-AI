@@ -113,6 +113,89 @@ function businessSnapshotReadDoorBound(resolver) {
  * Every `actionRiskKey` declared through `defineCapability()` in the scanned tree. A key here has a
  * governed declaration, so its `RISK` entry is the declaration's dependency rather than debt.
  */
+// Calendar reuses its incumbent public.list_team_bookings reader rather than adding a
+// naming-only read_* wrapper. Only this exact read tuple/schema and mounted caller-JWT
+// adapter qualify. This does not clear risk debt, arbitrary list_* tools or effects.
+const CALENDAR_BOOKING_DECLARATION_FILE = "supabase/functions/_shared/paige-spine/domains/calendar_booking.ts";
+const CALENDAR_BOOKING_ADAPTER_FILE = "supabase/functions/_shared/calendar-booking-read.ts";
+function calendarBookingReadDoorBound(resolver) {
+  const read = file => resolver.sourceFile(path.join(ROOT, file))?.text ?? "";
+  const chat = read("supabase/functions/paige-ai-chat/index.ts");
+  const adapter = read(CALENDAR_BOOKING_ADAPTER_FILE);
+  const classification = read("supabase/functions/_shared/solo-classification.ts");
+  const compact = value => value.replace(/\s+/g, "");
+  const mounted = compact(chat), native = compact(adapter);
+  return chat.includes('from "../_shared/calendar-booking-read.ts"')
+    && chat.includes('from "../_shared/paige-spine/domains/calendar_booking.ts"')
+    && mounted.includes('toolDefs.push(...CALENDAR_BOOKING_READ_TOOLS)')
+    && mounted.includes('accountShape:calendarBookingAccountShape')
+    && mounted.includes('constcalendarIdentity:ContextIdentity={actorId:user.id,tenantId:turnScopeTenantId,workspaceId:turnScopeTenantId')
+    && mounted.includes('awaitreadCalendarBooking(calendarIdentity,{caller:supabaseClientasunknownasCalendarBookingReadCaller,')
+    && mounted.includes('revalidateScope:()=>revalidateTenantKnowledgeScope(true),signal:req.signal')
+    && mounted.includes('awaitreadCalendarAccountShape(supabaseClientasunknownasCalendarBookingReadCaller,turnScopeTenantId,req.signal)')
+    && native.includes('deps.caller.auth.getUser()')
+    && native.includes('rpc("current_user_tenant_id")')
+    && native.includes('constbefore=awaitauth()') && native.includes('constafter=awaitauth()')
+    && native.includes('readCalendarAccountShape(deps.caller,tenantId,abort.signal)')
+    && native.includes('deps.caller.rpc("list_team_bookings",{_from:"-infinity",_to:"infinity",_host_ids:null,_tenant_id:tenantId,_booking_id:bookingId})')
+    && native.includes('.select(COLUMNS.join(",")).eq("id",bookingId).limit(2).abortSignal(abort.signal)')
+    && native.includes('caller.from("tenants").select("id,account_type,parent_tenant_id").eq("id",tenantId).limit(2).abortSignal(abort.signal)')
+    && native.includes('row.id!==tenantId') && native.includes('row.parent_tenant_id!==null')
+    && native.includes('!isSoloStandalone({account_type:row.account_type,parent_tenant_id:null})')
+    && compact(classification).includes('return!c.parent_tenant_id&&c.account_type==="standalone";');
+}
+
+// The canonical Operations reader is deliberately not renamed into public.read_*.
+// Only this exact Task selector/schema, original-JWT mount and reviewed native
+// read closure qualify. This never clears a classified mutation or list debt.
+const CRM_TASK_DECLARATION_FILE = "supabase/functions/_shared/paige-spine/domains/crm_task.ts";
+// EXP00 O-3: the Platform Operator's company reads. Exact platform.* SQL executors, empty
+// exact inputs, and a chat mount that only a verified operator turn reaches. The RPC gate
+// (is_platform_admin on auth.uid()) is the authority; this pin only names the reviewed
+// construction. Never clears risk debt or any list/effect tool.
+const PLATFORM_OPERATOR_READ_DECLARATION_FILE = "supabase/functions/_shared/paige-spine/domains/platform_operator_reads.ts";
+function platformOperatorReadDoorBound(resolver) {
+  const read = file => resolver.sourceFile(path.join(ROOT, file))?.text ?? "";
+  const chat = read("supabase/functions/paige-ai-chat/index.ts");
+  const declaration = read(PLATFORM_OPERATOR_READ_DECLARATION_FILE);
+  const compact = value => value.replace(/\s+/g, "");
+  return chat.includes('from "../_shared/paige-spine/domains/platform_operator_reads.ts"')
+    && compact(chat).includes('if(operatorConsolePersona)toolDefs.push(...PLATFORM_OPERATOR_READ_TOOLS);')
+    && chat.includes('surface: z.literal("operator-console").optional()')
+    && chat.includes('await supabaseClient.rpc("is_platform_operator")')
+    && chat.includes('if (!operatorConsolePersona) {')
+    && chat.includes('await supabaseClient.rpc("operator_commercial_customers")')
+    && chat.includes('await supabaseClient.rpc("operator_billing_overview")')
+    && compact(declaration).includes('providerBinding:{kind:"internal",operation:"public.operator_commercial_customers",connectionResolver:null}')
+    && compact(declaration).includes('providerBinding:{kind:"internal",operation:"public.operator_billing_overview",connectionResolver:null}')
+    && compact(declaration).includes('parameters:PLATFORM_CUSTOMER_OVERVIEW_CAPABILITY.input,')
+    && compact(declaration).includes('parameters:PLATFORM_COMMERCIAL_SUMMARY_CAPABILITY.input,');
+}
+const CRM_TASK_ADAPTER_FILE = "supabase/functions/_shared/operations-task-read.ts";
+function crmTaskReadDoorBound(resolver) {
+  const read = file => resolver.sourceFile(path.join(ROOT, file))?.text ?? "";
+  const compact = value => value.replace(/\s+/g, "");
+  const chat = read("supabase/functions/paige-ai-chat/index.ts"), mounted = compact(chat);
+  const native = compact(read(CRM_TASK_ADAPTER_FILE));
+  return calendarBookingReadDoorBound(resolver)
+    && chat.includes('from "../_shared/operations-task-read.ts"')
+    && chat.includes('from "../_shared/paige-spine/domains/crm_task.ts"')
+    && mounted.includes('toolDefs.push(...CRM_TASK_READ_TOOLS)')
+    && mounted.includes('taskSeats.length===1&&taskSeats[0].status==="available"&&typeoftaskSeats[0].value==="string"')
+    && mounted.includes('consttaskIdentity:ContextIdentity={actorId:user.id,tenantId:turnScopeTenantId,workspaceId:turnScopeTenantId,role:taskReadRole,accountShape:calendarBookingAccountShape,')
+    && mounted.includes('awaitreadOperationsTask(taskIdentity,{caller:supabaseClientasunknownasOperationsTaskReadCaller,')
+    && mounted.includes('revalidateScope:async(signal)=>{')
+    && mounted.includes('||!(awaitrevalidateTenantKnowledgeScope(true)))returnfalse;')
+    && mounted.includes('awaitloadTeamAuthorityForChat({rpc:(name,args)=>supabaseClient.rpc(name,args).abortSignal(signal)},turnScopeTenantId)')
+    && mounted.includes('seats[0].value!==taskReadRole')
+    && mounted.includes('awaitreadCalendarAccountShape(supabaseClientasunknownasCalendarBookingReadCaller,turnScopeTenantId,signal)')
+    && native.includes('sameScope(origin,deps.currentIdentity())')
+    && native.includes('deps.caller.auth.getUser()') && native.includes('deps.revalidateScope(abort.signal)')
+    && native.includes('deps.caller.rpc("operations_crm_work_read",{p_expected_actor_id:origin.actorId,p_expected_tenant_id:tenantId,p_task_id:taskId,}).abortSignal(abort.signal)')
+    && native.includes('constbefore=awaitauthority()') && native.includes('constafter=awaitauthority()')
+    && native.includes('constfirst=decode(awaitread())') && native.includes('constfinal=decode(awaitread())');
+}
+
 function collectDeclaredCapabilityNames(files, resolver) {
   const riskKeys = new Set();
   const toolNames = new Set();
@@ -170,6 +253,26 @@ function collectDeclaredCapabilityNames(files, resolver) {
                 const identity=nestedProperties(sections,'identity',sourceFile);
                 if(identity&&literalProperty(identity,'id')==='business.operating_snapshot'&&owner.name.text==='BUSINESS_OPERATING_SNAPSHOT_READ_CAPABILITY'
                   && businessSnapshotReadDoorBound(resolver))readTools.set('get_business_snapshot',owner.name.text);
+              }
+              else if(operation==='public.list_team_bookings'&&relative(file)===CALENDAR_BOOKING_DECLARATION_FILE){
+                const identity=nestedProperties(sections,'identity',sourceFile);
+                if(identity&&literalProperty(identity,'id')==='calendar.booking_read'&&owner.name.text==='CALENDAR_BOOKING_READ_CAPABILITY'
+                  && calendarBookingReadDoorBound(resolver))readTools.set('read_calendar_booking',owner.name.text);
+              }
+              else if(operation==='public.operations_crm_work_read'&&relative(file)===CRM_TASK_DECLARATION_FILE){
+                const identity=nestedProperties(sections,'identity',sourceFile);
+                if(identity&&literalProperty(identity,'id')==='crm_clients.task_read'&&owner.name.text==='CRM_TASK_READ_CAPABILITY'
+                  && crmTaskReadDoorBound(resolver))readTools.set('crm_get_task',owner.name.text);
+              }
+              else if(operation==='public.operator_commercial_customers'&&relative(file)===PLATFORM_OPERATOR_READ_DECLARATION_FILE){
+                const identity=nestedProperties(sections,'identity',sourceFile);
+                if(identity&&literalProperty(identity,'id')==='platform.customers_overview'&&owner.name.text==='PLATFORM_CUSTOMER_OVERVIEW_CAPABILITY'
+                  && platformOperatorReadDoorBound(resolver))readTools.set('platform_customer_overview',owner.name.text);
+              }
+              else if(operation==='public.operator_billing_overview'&&relative(file)===PLATFORM_OPERATOR_READ_DECLARATION_FILE){
+                const identity=nestedProperties(sections,'identity',sourceFile);
+                if(identity&&literalProperty(identity,'id')==='platform.commercial_summary'&&owner.name.text==='PLATFORM_COMMERCIAL_SUMMARY_CAPABILITY'
+                  && platformOperatorReadDoorBound(resolver))readTools.set('platform_commercial_summary',owner.name.text);
               }
               else if(operation==='edge.tenant-stripe-connect'&&relative(file)==='supabase/functions/_shared/sales-payments/merchant-capability.ts'){
                 const identity=nestedProperties(sections,'identity',sourceFile);
@@ -1240,6 +1343,60 @@ function runSelfTest() {
     const ast=ts.createSourceFile(file,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
     const texts=new Map([[adsAdapterPath,adapter],[path.join(ROOT,'supabase/functions/paige-ai-chat/index.ts'),chat]]);
     const names=collectDeclaredCapabilityNames([file],{sourceFile:p=>p===file?ast:texts.has(p)?ts.createSourceFile(p,texts.get(p),ts.ScriptTarget.Latest,true,ts.ScriptKind.TS):undefined});
+    const found=scanSource(tool,'src/probe.ts',{declaredReadTools:names.readTools}).some(item=>item.rule==='direct-tool-definition');
+    if(found!==expected){failed++;console.error(`  FAIL ${name}`);}else console.log(`  ok   ${name}`);
+  }
+  // Exercise the actual Calendar sources, not a renamed synthetic public.read_* door.
+  const calendarFile=path.join(ROOT,CALENDAR_BOOKING_DECLARATION_FILE);
+  const calendarAdapter=path.join(ROOT,CALENDAR_BOOKING_ADAPTER_FILE);
+  const calendarChat=path.join(ROOT,'supabase/functions/paige-ai-chat/index.ts');
+  const calendarShape=path.join(ROOT,'supabase/functions/_shared/solo-classification.ts');
+  const calendarSources=new Map([calendarFile,calendarAdapter,calendarChat,calendarShape].map(file=>[file,fs.readFileSync(file,'utf8')]));
+  const calendarTool='const tool={name:"read_calendar_booking",description:"Read only",parameters:CALENDAR_BOOKING_READ_CAPABILITY.input};';
+  for(const [name,file,from,to,expected] of [
+    ['Calendar exact incumbent caller door',calendarFile,null,null,false],
+    ['Calendar mutation cannot clear',calendarFile,'effect: "read"','effect: "mutation"',true],
+    ['Calendar wrong declaration',calendarFile,'calendar.booking_read','calendar.other',true],
+    ['Calendar arbitrary list executor',calendarFile,'public.list_team_bookings','public.list_secrets',true],
+    ['Calendar service caller',calendarChat,'caller: supabaseClient as unknown as CalendarBookingReadCaller','caller: supabase as unknown as CalendarBookingReadCaller',true],
+    ['Calendar model tenant',calendarChat,'tenantId: turnScopeTenantId, workspaceId: turnScopeTenantId','tenantId: args.tenant_id, workspaceId: turnScopeTenantId',true],
+    ['Calendar lost scope callback',calendarChat,'revalidateScope: () => revalidateTenantKnowledgeScope(true)','revalidateScope: () => Promise.resolve(true)',true],
+    ['Calendar not mounted',calendarChat,'toolDefs.push(...CALENDAR_BOOKING_READ_TOOLS)','toolDefs.push(...OTHER_TOOLS)',true],
+    ['Calendar missing native adapter',calendarAdapter,calendarSources.get(calendarAdapter),'',true],
+    ['Calendar wrong native read',calendarAdapter,'deps.caller.rpc("list_team_bookings"','deps.caller.rpc("dispatch_automation"',true],
+    ['Calendar classification omitted',calendarAdapter,'row.parent_tenant_id !== null','false',true],
+    ['Calendar missing classification source',calendarShape,calendarSources.get(calendarShape),'',true],
+    ['Calendar unrelated payload',null,null,null,true],
+  ]){
+    const texts=new Map(calendarSources);
+    if(from!==null){const original=texts.get(file);const changed=original.replace(from,to);if(changed===original)throw Error('Calendar negative did not mutate '+name);texts.set(file,changed);}
+    const names=collectDeclaredCapabilityNames([calendarFile],{sourceFile:file=>texts.has(file)?ts.createSourceFile(file,texts.get(file),ts.ScriptTarget.Latest,true,ts.ScriptKind.TS):undefined});
+    const tool=file===null?calendarTool.replace('CALENDAR_BOOKING_READ_CAPABILITY.input','{type:"object"}'):calendarTool;
+    const found=scanSource(tool,'src/probe.ts',{declaredReadTools:names.readTools}).some(item=>item.rule==='direct-tool-definition');
+    if(found!==expected){failed++;console.error(`  FAIL ${name}`);}else console.log(`  ok   ${name}`);
+  }
+  const taskFile=path.join(ROOT,CRM_TASK_DECLARATION_FILE);
+  const taskAdapter=path.join(ROOT,CRM_TASK_ADAPTER_FILE);
+  const taskSources=new Map([...calendarSources,[taskFile,fs.readFileSync(taskFile,'utf8')],[taskAdapter,fs.readFileSync(taskAdapter,'utf8')]]);
+  const taskTool='const tool={name:"crm_get_task",description:"Read only",parameters:CRM_TASK_READ_CAPABILITY.input};';
+  for(const [name,file,from,to,expected] of [
+    ['Task exact native caller door',taskFile,null,null,false],
+    ['Task read cannot clear an effect',taskFile,'effect: "read"','effect: "mutation"',true],
+    ['Task wrong capability key',taskFile,'identity: { id: "crm_clients.task_read"','identity: { id: "crm_clients.other"',true],
+    ['Task wrong native executor',taskFile,'operation: "public.operations_crm_work_read"','operation: "public.operations_other"',true],
+    ['Task service caller',calendarChat,'caller: supabaseClient as unknown as OperationsTaskReadCaller','caller: supabase as unknown as OperationsTaskReadCaller',true],
+    ['Task model scope',calendarChat,'const taskIdentity: ContextIdentity = {\n            actorId: user.id, tenantId: turnScopeTenantId','const taskIdentity: ContextIdentity = {\n            actorId: user.id, tenantId: args.tenant_id',true],
+    ['Task skipped server scope',calendarChat,'|| !(await revalidateTenantKnowledgeScope(true))) return false;','|| false) return false;',true],
+    ['Task missing adapter',taskAdapter,taskSources.get(taskAdapter),'',true],
+    ['Task effect instead of native read',taskAdapter,'deps.caller.rpc("operations_crm_work_read"','deps.caller.rpc("execute_crm_command"',true],
+    ['Task loses final native authority read',taskAdapter,'const final = decode(await read());','const final = first;',true],
+    ['Task missing current native Team read',calendarChat,'const authority = await loadTeamAuthorityForChat(','const authority = await counterfeitTeamAuthority(',true],
+    ['Task missing declared input',null,null,null,true],
+  ]){
+    const texts=new Map(taskSources);
+    if(from!==null){const original=texts.get(file);if(original.split(from).length!==2)throw Error('Task negative must mutate exactly one source: '+name);texts.set(file,original.replace(from,to));}
+    const names=collectDeclaredCapabilityNames([taskFile],{sourceFile:file=>texts.has(file)?ts.createSourceFile(file,texts.get(file),ts.ScriptTarget.Latest,true,ts.ScriptKind.TS):undefined});
+    const tool=file===null?taskTool.replace('CRM_TASK_READ_CAPABILITY.input','{type:"object"}'):taskTool;
     const found=scanSource(tool,'src/probe.ts',{declaredReadTools:names.readTools}).some(item=>item.rule==='direct-tool-definition');
     if(found!==expected){failed++;console.error(`  FAIL ${name}`);}else console.log(`  ok   ${name}`);
   }

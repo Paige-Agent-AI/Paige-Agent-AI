@@ -40,6 +40,8 @@ const freshSolo = (over: Record<string, unknown> = {}) => ({
   callerTier: "tenant",
   contactCreateLane: "confirm",
   journeyAdvanceLane: "confirm",    // crm_advance_journey_stage — the native journey write (Layer C · C2)
+  ownerTaskLane: "confirm",
+  ownerTaskEligible: true,          // an explicitly verified active owner/admin tenant seat
   campaignCreateLane: "confirm",
   workflowsLane: "confirm",
   documentCreateLane: "confirm",
@@ -80,6 +82,7 @@ const ALL_KEYS = [
   "integrations.list",
   "integrations.n8n_run_workflow",
   "knowledge.save",
+  "owner.task",
   "pipeline.deal_stage_evidence",
   "planning.create",
   "planning.weekly_commitment_check",
@@ -177,6 +180,14 @@ describe("buildCapabilitySignals — the manifest shape (§13/§947)", () => {
 });
 
 describe("the honest answer a FRESH SOLO owner is told", () => {
+  it("the native task is partial and refuses a missing active seat", () => {
+    const signal = byKey(buildCapabilitySignals(freshSolo()))["owner.task"];
+    expect(signal.maturity).toBe("PARTIAL");
+    expect(signal.actionKind).toBe("create");
+    expect(answer()["owner.task"].availability).toBe("needs_approval");
+    expect(answer({ ownerTaskEligible: undefined })["owner.task"].availability).toBe("not_for_tier");
+    expect(answer({ ownerTaskEligible: false })["owner.task"].availability).toBe("not_for_tier");
+  });
   it("the over-claimed / un-wired ACTIONS are never live — posting, texting, team mgmt, skills-in-chat, secure browser are PLANNED", () => {
     const a = answer();
     for (const k of ["social.publish", "comms.send", "team.manage", "skills.run", "browser.secure_session"]) {

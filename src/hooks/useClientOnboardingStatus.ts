@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { portalAccessStateOf } from "@/lib/client-portal-access";
 
 export type ClientOnboardingStatus = {
   contact_id: string;
@@ -10,6 +11,8 @@ export type ClientOnboardingStatus = {
   intake_submitted_at: string | null;
   stage: string | null;
   ready: boolean;
+  /** E09 Slice 7: the business's access decision, read beside the status (absent → open). */
+  portal_access_state?: "open" | "paused" | "ended";
 };
 
 /**
@@ -25,15 +28,20 @@ export function useClientOnboardingStatus(contactId: string | null | undefined) 
   const load = useCallback(async () => {
     if (!contactId) return;
     setLoading(true);
-    const { data: rows, error: err } = await supabase.rpc("client_onboarding_status", {
-      p_contact_id: contactId,
-    });
+    const [{ data: rows, error: err }, access] = await Promise.all([
+      supabase.rpc("client_onboarding_status", { p_contact_id: contactId }),
+      // A staff read of the contact's own access column. A failure (or a pre-migration database)
+      // only means the reason stays the generic one; it never gates anything.
+      Promise.resolve(supabase.from("clients").select("portal_access_state").eq("id", contactId).maybeSingle())
+        .catch(() => ({ data: null, error: true })),
+    ]);
     if (err) {
       setError(err.message);
       setData(null);
     } else {
       const row = Array.isArray(rows) ? rows[0] : rows;
-      setData((row as ClientOnboardingStatus) ?? null);
+      const state = access && !access.error ? portalAccessStateOf((access.data as { portal_access_state?: unknown } | null)?.portal_access_state) : "open";
+      setData(row ? { ...(row as ClientOnboardingStatus), portal_access_state: state } : null);
       setError(null);
     }
     setLoading(false);
@@ -64,6 +72,8 @@ export function useClientOnboardingStatus(contactId: string | null | undefined) 
 export function describeBlockedReason(s: ClientOnboardingStatus | null): string | null {
   if (!s) return "Loading…";
   if (s.ready) return null;
+  if (s.portal_access_state === "ended") return "Their portal access has ended";
+  if (s.portal_access_state === "paused") return "Their portal access is paused";
   if (!s.linked_user_id) return "Client hasn't accepted their invite yet";
   if (!s.agreement_signed_at) return "Client hasn't signed the agreement yet";
   if (s.stage !== "completed") return "Client hasn't completed intake yet";

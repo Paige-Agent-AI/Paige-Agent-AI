@@ -1,0 +1,35 @@
+{
+  "label": "dark-primary-1536x770-open",
+  "requested": {
+    "width": 1536,
+    "height": 770
+  },
+  "screenshotDimensions": {
+    "width": 1535,
+    "height": 770
+  },
+  "url": "http://127.0.0.1:5204/interview.html?theme=dark&state=populated",
+  "dom": {
+    "alerts": [],
+    "background": "rgb(17, 15, 21)",
+    "focus": {
+      "name": "Direct PAIGE",
+      "tag": "BUTTON"
+    },
+    "foreground": "rgb(246, 242, 234)",
+    "overflow": false,
+    "paige": "open",
+    "pg": "dark",
+    "profileOverflow": false,
+    "profileScroll": 777.5999755859375,
+    "secondary": "rgb(173, 167, 159)",
+    "statuses": [],
+    "theme": "dark",
+    "viewport": {
+      "height": 770,
+      "width": 1536
+    }
+  },
+  "evidenceClass": "RENDERED_SYNTHETIC_COMPONENT",
+  "captureAPI": "native screenshot after settled DOM"
+}

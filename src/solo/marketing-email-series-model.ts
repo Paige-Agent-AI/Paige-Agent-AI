@@ -136,7 +136,7 @@ export const SERIES_ERROR: Record<string, string> = {
   version_frozen: "This version is waiting for approval or has been approved, so it can’t be changed. Choose Make changes first.",
   not_an_editable_draft: "This series isn’t a draft right now. Choose Edit or Make changes first.",
   not_in_series: "That person is no longer in this series.",
-  rule_invalid: "That rule can’t be used. Choose stages, sources or tags, or a whole number of days.",
+  rule_invalid: "That rule can’t be used. Choose stages, sources or tags, or a whole number of days. A segment of customers with portal access works for a campaign, not a series.",
   campaign_belongs_to_series: "That email belongs to a series. Change it from the series page.",
 };
 

@@ -1,7 +1,30 @@
 project_id = "xygzykjyynhzqytbqnzu"
 
 [functions]
+  # Preserve the existing skill-runner gateway posture. Before any privileged skill
+  # lookup, the handler verifies credentials and resolves actor/workspace server-side.
+  # The canonical adapter refuses unattended service mutations; browser authority and
+  # exact send approval remain additional checks. Missing/invalid sessions return401.
+  [functions.skill-runner]
+    verify_jwt = false
+
+  # Explicit true is required on updates: CLI2.116 preserves the remote setting
+  # when verify_jwt is omitted. Both handlers retain their own authenticate-first
+  # authority checks; existing callers carry user or legacy service-role JWTs.
+  [functions.send-message]
+    verify_jwt = true
+
+  [functions.dispatch-stage-automation]
+    verify_jwt = true
+
   [functions.public-booking]
+    verify_jwt = false
+
+  # Explicit false matches the live gateway setting (CLI preserves the remote value when
+  # omitted, and the deployed-source readback expects the declared one). The guest manage
+  # link authenticates by its signed token; customer mode authenticates the caller's own
+  # JWT in-body (auth.getUser) before admission. Both checks live in the handler.
+  [functions.booking-manage]
     verify_jwt = false
 
   # Public form intake: anonymous visitors submit any active growth form. The function itself checks
@@ -700,9 +723,41 @@ verify_jwt = true
 verify_jwt = false # Internal service bearer / canonical cron token is checked in the function.
 [functions.paige-pipeline-outcome]
 verify_jwt = true
+
+# Original-JWT exact owner.task history; no mutation or approval/retry authority.
+[functions.paige-owner-task-history]
+verify_jwt = true
 [functions.operator-account-retirement]
 verify_jwt = true
 
 [functions.weekly-commitment-command]
 # Canonical owner draft/confirmation adapter only; recurrence and Chat/Live remain unadmitted.
 verify_jwt = true
+
+# Preserve deployed reminder worker68: pg_cron sends the Vault-held x-cron-token.
+# The handler fails closed through verify_cron_token before reading or dispatching.
+[functions.plan-reminder-cron]
+verify_jwt = false
+
+# Preserve the deployed booking-notification worker: pg_cron (job booking-notifications, */5) sends
+# only the Vault-held x-cron-token, never a Supabase JWT. The handler fails closed through
+# verify_cron_token before reading or sending. CLI2.116 preserves the remote setting when this is
+# omitted, so the deployed-source readback needs it declared to match production.
+[functions.process-booking-notifications]
+verify_jwt = false
+
+# Preserve the deployed MCP consent helper: the in-app /mcp/authorize screen calls action "lookup"
+# before the visitor may be signed in (it only elevates scopes when a session is present), and
+# "approve"/"deny" verify the caller's JWT in the handler (tryGetUser) before minting or redirecting.
+# Production already runs it with verify_jwt=false; CLI 2.116 preserves the remote setting when this
+# is omitted, so the deployed-source readback needs it declared to match production.
+[functions.paige-mcp-consent]
+verify_jwt = false
+
+# Preserve the deployed push sender: callers are server-side only (pg_net triggers, detect-credit-alerts,
+# task-reminder-notifications, and the browser's public-key read), and sending is gated in the handler by
+# isAuthorizedInternalCaller (a service-role bearer or a valid cron token) before any push goes out.
+# Production runs it with verify_jwt=false; the CLI keeps the remote setting when this is omitted, so the
+# deployed-source readback needs it declared to match production.
+[functions.send-push-notification]
+verify_jwt = false

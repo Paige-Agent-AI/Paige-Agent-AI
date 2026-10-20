@@ -1,0 +1,151 @@
+{
+  "_source": "Captured from the local disposable database: the setup of supabase/tests/customer_portal_payments.sql (synthetic Northwind Studio fixtures, test-mode link only) followed by SELECT client_portal_invoices() as the linked customer, the same with p_limit 1, and client_portal_invoice_payment_request for NW-0001. No production data.",
+  "list": {
+    "read_at": "2026-10-18T08:04:04.619375+00:00",
+    "balances": [
+      {
+        "currency": "eur",
+        "remaining_minor": "50000",
+        "test_provider_minor": "0",
+        "manual_recorded_minor": "0",
+        "provider_verified_minor": "0"
+      },
+      {
+        "currency": "usd",
+        "remaining_minor": "335000",
+        "test_provider_minor": "3000",
+        "manual_recorded_minor": "112000",
+        "provider_verified_minor": "3000"
+      }
+    ],
+    "has_more": false,
+    "invoices": [
+      {
+        "id": "e0995400-0000-4000-8000-000000000004",
+        "status": "issued",
+        "payable": false,
+        "currency": "eur",
+        "due_date": "2026-10-28",
+        "past_due": false,
+        "issued_at": "2026-10-14T08:04:03.882082+00:00",
+        "amount_minor": "50000",
+        "invoice_number": "NW-0004",
+        "remaining_minor": "50000",
+        "test_provider_minor": "0",
+        "manual_recorded_minor": "0",
+        "provider_verified_minor": "0"
+      },
+      {
+        "id": "e0995400-0000-4000-8000-000000000003",
+        "status": "void",
+        "payable": false,
+        "currency": "usd",
+        "due_date": "2026-09-18",
+        "past_due": false,
+        "issued_at": "2026-10-12T08:04:03.882082+00:00",
+        "amount_minor": "20000",
+        "invoice_number": "NW-0003",
+        "remaining_minor": "20000",
+        "test_provider_minor": "0",
+        "manual_recorded_minor": "0",
+        "provider_verified_minor": "0"
+      },
+      {
+        "id": "e0995400-0000-4000-8000-000000000002",
+        "status": "issued",
+        "payable": false,
+        "currency": "usd",
+        "due_date": "2026-11-07",
+        "past_due": false,
+        "issued_at": "2026-10-10T08:04:03.882082+00:00",
+        "amount_minor": "100000",
+        "invoice_number": "NW-0002",
+        "remaining_minor": "0",
+        "test_provider_minor": "0",
+        "manual_recorded_minor": "100000",
+        "provider_verified_minor": "0"
+      },
+      {
+        "id": "e0995400-0000-4000-8000-000000000001",
+        "status": "issued",
+        "payable": true,
+        "currency": "usd",
+        "due_date": "2026-10-15",
+        "past_due": true,
+        "issued_at": "2026-10-08T08:04:03.882082+00:00",
+        "amount_minor": "350000",
+        "invoice_number": "NW-0001",
+        "remaining_minor": "335000",
+        "test_provider_minor": "3000",
+        "manual_recorded_minor": "12000",
+        "provider_verified_minor": "3000"
+      }
+    ],
+    "tenant_id": "e0995200-0000-4000-8000-000000000001",
+    "open_count": 2,
+    "next_cursor": null,
+    "business_name": "Northwind Studio",
+    "invoice_count": 4,
+    "schema_version": 1
+  },
+  "page1": {
+    "read_at": "2026-10-18T08:04:04.645578+00:00",
+    "balances": [
+      {
+        "currency": "eur",
+        "remaining_minor": "50000",
+        "test_provider_minor": "0",
+        "manual_recorded_minor": "0",
+        "provider_verified_minor": "0"
+      },
+      {
+        "currency": "usd",
+        "remaining_minor": "335000",
+        "test_provider_minor": "3000",
+        "manual_recorded_minor": "112000",
+        "provider_verified_minor": "3000"
+      }
+    ],
+    "has_more": true,
+    "invoices": [
+      {
+        "id": "e0995400-0000-4000-8000-000000000004",
+        "status": "issued",
+        "payable": false,
+        "currency": "eur",
+        "due_date": "2026-10-28",
+        "past_due": false,
+        "issued_at": "2026-10-14T08:04:03.882082+00:00",
+        "amount_minor": "50000",
+        "invoice_number": "NW-0004",
+        "remaining_minor": "50000",
+        "test_provider_minor": "0",
+        "manual_recorded_minor": "0",
+        "provider_verified_minor": "0"
+      }
+    ],
+    "tenant_id": "e0995200-0000-4000-8000-000000000001",
+    "open_count": 2,
+    "next_cursor": {
+      "id": "e0995400-0000-4000-8000-000000000004",
+      "issued_at": "2026-10-14T08:04:03.882082+00:00"
+    },
+    "business_name": "Northwind Studio",
+    "invoice_count": 4,
+    "schema_version": 1
+  },
+  "request": {
+    "invoice_id": "e0995400-0000-4000-8000-000000000001",
+    "invoice_number": "NW-0001",
+    "payment_request": {
+      "state": "customer_action_required",
+      "currency": "usd",
+      "expires_at": "2026-10-18T09:04:03.882082+00:00",
+      "environment": "test",
+      "amount_minor": 50000,
+      "provider_url": "https://checkout.stripe.com/c/pay/cs_test_open02"
+    },
+    "remaining_cents": 335000,
+    "test_provider_cents": 3000
+  }
+}

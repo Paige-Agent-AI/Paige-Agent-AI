@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import ts from "typescript";
 
 const read = (path: string) => readFileSync(path, "utf8");
 
@@ -74,7 +75,36 @@ describe("dictation composer scope and send contract", () => {
     expect(paigeAiChat).toContain("const composerSendBlocked = composerBlocked || dictationActive");
     expect(paigeAiChat).toContain("if (dictationActive || !originDraft) { voiceSink?.failed(); return; }");
     expect(paigeChat).toContain("if (dictationActive) return;");
-    expect(paigeChat).toContain("disabled={isLoading || dictationActive || (!input.trim() && !attachedDoc)}");
+    // Drive the actual Send predicate. Customer history/availability adds a
+    // stricter guard; it must not remove dictation finalization or disable the
+    // ordinary ready composer. An exact old string cannot express both facts.
+    const source = ts.createSourceFile("PaigeChat.tsx", paigeChat, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+    const predicates: string[] = [];
+    const visit = (node: ts.Node) => {
+      if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
+        const attributes = node.attributes.properties.filter(ts.isJsxAttribute);
+        const send = attributes.some(a => a.name.getText(source) === "aria-label"
+          && a.initializer && ts.isStringLiteral(a.initializer) && a.initializer.text === "Send message");
+        const disabled = attributes.find(a => a.name.getText(source) === "disabled");
+        if (send && disabled?.initializer && ts.isJsxExpression(disabled.initializer) && disabled.initializer.expression)
+          predicates.push(disabled.initializer.expression.getText(source));
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
+    expect(predicates).toHaveLength(1);
+    const disabled = new Function("state", `const {isLoading,dictationActive,customerFrame,customerAvailable,historyState,input,attachedDoc}=state;return (${predicates[0]});`);
+    const ready = {isLoading:false,dictationActive:false,customerFrame:null,customerAvailable:true,historyState:"ready",input:"Ready to send",attachedDoc:null};
+    expect(disabled(ready)).toBe(false);
+    expect(disabled({...ready,dictationActive:true})).toBe(true);
+    expect(disabled({...ready,isLoading:true})).toBe(true);
+    expect(disabled({...ready,input:""})).toBe(true);
+    expect(disabled({...ready,input:"",attachedDoc:{}})).toBe(false);
+    expect(disabled({...ready,customerFrame:{}})).toBe(false);
+    expect(disabled({...ready,customerFrame:{},dictationActive:true})).toBe(true);
+    expect(disabled({...ready,customerFrame:{},customerAvailable:false})).toBe(true);
+    for (const historyState of ["loading","error"])
+      expect(disabled({...ready,customerFrame:{},historyState})).toBe(true);
     expect(conversations).toContain("sendDisabled={sendDisabled || dictationActive}");
   });
 

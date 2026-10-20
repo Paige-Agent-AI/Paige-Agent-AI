@@ -1,0 +1,42 @@
+[
+  {
+    "name": "campaign-summary.json",
+    "sha256": "4ad37c31cdefc3b81f3ce6abac3ebdc4b15cbadd80d116f76b1e2e4cde16b9da"
+  },
+  {
+    "name": "native-summary.json",
+    "sha256": "202ef8fd34fec7e6234b3c0b24fc908964ca2bc401bd59ff4bb5532c71010fc6"
+  },
+  {
+    "name": "keyboard-final.json",
+    "sha256": "9303e7b4e22af9c659723156bf8276f53a3ccfd88246ab7b898575676e32566f"
+  },
+  {
+    "name": "reduced-motion.final.json",
+    "sha256": "4f394f688a2c270f5251c5b6f0c5b3e15d0ed655415397504f3d43a4e6fb32e5"
+  },
+  {
+    "name": "shell-light-1536x770-closed-draft.png",
+    "sha256": "7ad65684f0b013081353c6ade3610607f448712afcfc0cf18f3e287bb0e60bb3"
+  },
+  {
+    "name": "shell-dark-1536x770-open-review.png",
+    "sha256": "0a7ef23a774759459d12870c5051b5a2a3c61486119620c325a3614df156c0ff"
+  },
+  {
+    "name": "shell-light-390x768-closed-unknown.png",
+    "sha256": "8810c3367a06c78746bd2eff24a30b09c495e4437a1fddcdea542bd740fbc6f6"
+  },
+  {
+    "name": "keyboard-reflow-cancel.png",
+    "sha256": "6f75bc86f7e6f3c37efbd2b92b20d851ccbc9c6cdf6d382a114fe50e80f138fb"
+  },
+  {
+    "name": "before-pipeline-copy-light-1536x770-closed-draft.png",
+    "sha256": "46ff638e7adfd6f84b8cf93fec5924c74ca08d0714dc2fd36c00b7141062466a"
+  },
+  {
+    "name": "before-copy-shell-light-390x768-closed-unknown.png",
+    "sha256": "42d1d22e89e18a91815651d7577d675f7c933de1a1bb5300223d77863c304ee2"
+  }
+]

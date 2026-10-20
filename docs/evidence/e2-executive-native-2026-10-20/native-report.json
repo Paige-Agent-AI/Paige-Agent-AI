@@ -1,0 +1,524 @@
+{
+  "schemaVersion": 1,
+  "scope": "synthetic interface/source proof only; no authenticated business result or owner acceptance",
+  "renderedSourceHead": "c0004b66e1c6d191459b94f6e07812e51f23eb9a",
+  "harnessSourceHead": "8804bafd660bee01741295853bbde9081f720cf7",
+  "capture": "Native foreground PNG; exact IHDR and SHA256 checked. No clipping, resampling, alternate driver or customer account. Final font-loaded matrix supersedes earlier shell-font-incomplete captures retained privately.",
+  "runtime": "Existing backend-disabled Executive harness, immutable static bundle; mocks supply read boundaries and Chat; no Auth/provider/business effects",
+  "sourceInputsSha256": {
+    "src/solo/ExecutiveOverview.tsx": "c19bd2ef27faca6aaea7d3788551e20ef02fb13702c631213f5d61c7f736c665",
+    "src/solo/ExecutiveTargets.tsx": "9383f1442dfe030c4e6a3f551ceb35866e25ddc8354a1586af21d0356351c7c5",
+    "src/solo/executive-overview.css": "b64dd6d8d5c43d95fd2c6b2270b33ea17862857705720507ca3ec2effeb842ee",
+    "src/solo/executive-review.ts": "e39e386707da27cde3e5ff4306f2051f3e7bb6c032ca4b72e47f529cd488c2bc",
+    "src/solo/CommandCenter.tsx": "f16ada48b0c2cbb8748fa253db3000c3bd5ec0cfd9081746b611fac282ef4a61",
+    "src/components/tenant-shell/TenantCommandCenterShell.tsx": "5a282f5f7c5627856470ae5062ba8cc8d657d3a9478f30261568a9f9c9d223f0"
+  },
+  "harnessInputsSha256": {
+    "scripts/live-drive/harness/executive-mount/main.tsx": "b6c0569960565056cd375a8b6603e0e861f27966bc61ab46a97fd327354bc56d",
+    "scripts/live-drive/harness/executive-mount/stubs.tsx": "540270cca63ea4f1189aa4a7e366819562cd029029614813d0dfd6c810621f28",
+    "scripts/live-drive/harness/executive-mount/slice-fixtures.ts": "8841c283f1cd99ac0de6ac84221d624b69fa92dbee5e6c47a0b9a39a602fe740",
+    "scripts/live-drive/harness/executive-mount/vite.config.ts": "5cfc71cf2cc8d60f5496d309ff49a9279b6d20539c2e9d2137dc9f7de3175856",
+    "scripts/live-drive/harness/executive-mount/index.html": "d651d00f4c738700ae0783efe127fdbe67b28272d6df33f561f3a8871c2a8513"
+  },
+  "loadedBundleSha256": {
+    "index.html": "d182d30854fd6ce52bf40a418bfd957a7f92ff698b95538d700ac660a24a2539",
+    "assets/index-Cc9UM01P.js": "b43d0d90968cbf44a6b3947a3bb9c7613ac679d1e1efe3258b6f012ce25c7ee3",
+    "assets/index-CKdAx--b.css": "e2f9de59857be9c6ccfebcf1a8ba4f5366b47011cc331d7124e25e7a7da94631"
+  },
+  "finding": {
+    "before": "before-fix-320x844.png",
+    "issue": "Variance status broke midword at320 CSS pixels",
+    "fix": "Stack target figures when Executive container is at most280px",
+    "confirmation": "fonts-320x844-target-keyboard.png"
+  },
+  "remaining": [
+    "Actual browser zoom shortcuts did not change viewport/device scale;320 CSS-pixel reflow proved separately",
+    "Authenticated owner target writes/reload/refusals and department readback",
+    "Actual Chat/Live/recovery and protected negative fixtures",
+    "Final exact-head CI, production deployment/readback and full nineteen-outcome/founder acceptance"
+  ],
+  "frames": [
+    {
+      "name": "fonts-1536x770-closed-light",
+      "file": "fonts-1536x770-closed-light.png",
+      "expected": {
+        "width": 1536,
+        "height": 770
+      },
+      "actual": {
+        "width": 1536,
+        "height": 770
+      },
+      "geometry": {
+        "documentWidth": 1536,
+        "executive": {
+          "height": 628,
+          "overflowY": "auto",
+          "scrollHeight": 2037,
+          "scrollWidth": 1449,
+          "width": 1449
+        },
+        "height": 770,
+        "main": {
+          "height": 672,
+          "overflowY": "hidden",
+          "scrollHeight": 672
+        },
+        "reducedMotion": true,
+        "tabs": {
+          "overflowX": "auto",
+          "scrollWidth": 1454,
+          "width": 1454
+        },
+        "theme": "light",
+        "width": 1536
+      },
+      "sha256": "b6702e9c5e07fc15bab876961258280629ddd342c11942c34ca060218ef1169f"
+    },
+    {
+      "name": "fonts-1536x770-open-dark",
+      "file": "fonts-1536x770-open-dark.png",
+      "expected": {
+        "width": 1536,
+        "height": 770
+      },
+      "actual": {
+        "width": 1536,
+        "height": 770
+      },
+      "geometry": {
+        "documentWidth": 1536,
+        "executive": {
+          "height": 628,
+          "overflowY": "auto",
+          "scrollHeight": 2123,
+          "scrollWidth": 927,
+          "width": 927
+        },
+        "height": 770,
+        "main": {
+          "height": 672,
+          "overflowY": "hidden",
+          "scrollHeight": 672
+        },
+        "reducedMotion": true,
+        "tabs": {
+          "overflowX": "auto",
+          "scrollWidth": 932,
+          "width": 932
+        },
+        "theme": "dark",
+        "width": 1536
+      },
+      "sha256": "578d33efa4c7db0a62d2c631c272e6c12c0e9f5177f09fd0b668cdcb92f09af5"
+    },
+    {
+      "name": "fonts-1366x768-open-dark",
+      "file": "fonts-1366x768-open-dark.png",
+      "expected": {
+        "width": 1366,
+        "height": 768
+      },
+      "actual": {
+        "width": 1366,
+        "height": 768
+      },
+      "geometry": {
+        "documentWidth": 1366,
+        "executive": {
+          "height": 625,
+          "overflowY": "auto",
+          "scrollHeight": 3423,
+          "scrollWidth": 815,
+          "width": 815
+        },
+        "height": 768,
+        "main": {
+          "height": 670,
+          "overflowY": "hidden",
+          "scrollHeight": 670
+        },
+        "reducedMotion": true,
+        "tabs": {
+          "overflowX": "auto",
+          "scrollWidth": 820,
+          "width": 820
+        },
+        "theme": "dark",
+        "width": 1366
+      },
+      "sha256": "29c501151e23b070f0e0417d7211b18164be3e4aa39548c28e95723c4c0e8a33"
+    },
+    {
+      "name": "fonts-1366x768-closed-light",
+      "file": "fonts-1366x768-closed-light.png",
+      "expected": {
+        "width": 1366,
+        "height": 768
+      },
+      "actual": {
+        "width": 1366,
+        "height": 768
+      },
+      "geometry": {
+        "documentWidth": 1366,
+        "executive": {
+          "height": 625,
+          "overflowY": "auto",
+          "scrollHeight": 2037,
+          "scrollWidth": 1279,
+          "width": 1279
+        },
+        "height": 768,
+        "main": {
+          "height": 670,
+          "overflowY": "hidden",
+          "scrollHeight": 670
+        },
+        "reducedMotion": true,
+        "tabs": {
+          "overflowX": "auto",
+          "scrollWidth": 1285,
+          "width": 1285
+        },
+        "theme": "light",
+        "width": 1366
+      },
+      "sha256": "b14dc4b6cea38919b75e98eaee3040332a32e0ee6b4878fb15677a5d8afb0a7a"
+    },
+    {
+      "name": "fonts-1024x768-closed-light",
+      "file": "fonts-1024x768-closed-light.png",
+      "expected": {
+        "width": 1024,
+        "height": 768
+      },
+      "actual": {
+        "width": 1024,
+        "height": 768
+      },
+      "geometry": {
+        "documentWidth": 1024,
+        "executive": {
+          "height": 625,
+          "overflowY": "auto",
+          "scrollHeight": 2123,
+          "scrollWidth": 937,
+          "width": 937
+        },
+        "height": 768,
+        "main": {
+          "height": 670,
+          "overflowY": "hidden",
+          "scrollHeight": 670
+        },
+        "reducedMotion": true,
+        "tabs": {
+          "overflowX": "auto",
+          "scrollWidth": 942,
+          "width": 942
+        },
+        "theme": "light",
+        "width": 1024
+      },
+      "sha256": "a2cd30f1d2bd0d589d5c13d1cfab9baeb36277284acb137a520df3b92e73ee34"
+    },
+    {
+      "name": "fonts-1024x768-open-dark",
+      "file": "fonts-1024x768-open-dark.png",
+      "expected": {
+        "width": 1024,
+        "height": 768
+      },
+      "actual": {
+        "width": 1024,
+        "height": 768
+      },
+      "geometry": {
+        "documentWidth": 1024,
+        "executive": {
+          "height": 625,
+          "overflowY": "auto",
+          "scrollHeight": 2123,
+          "scrollWidth": 937,
+          "width": 937
+        },
+        "height": 768,
+        "main": {
+          "height": 670,
+          "overflowY": "hidden",
+          "scrollHeight": 670
+        },
+        "reducedMotion": true,
+        "tabs": {
+          "overflowX": "auto",
+          "scrollWidth": 942,
+          "width": 942
+        },
+        "theme": "dark",
+        "width": 1024
+      },
+      "sha256": "8ee8fab8007933e57683fc7cf274d5d2cbfd917dd67eea556b6c3aa9cfdb6bd7"
+    },
+    {
+      "name": "fonts-900x1000-open-dark",
+      "file": "fonts-900x1000-open-dark.png",
+      "expected": {
+        "width": 900,
+        "height": 1000
+      },
+      "actual": {
+        "width": 900,
+        "height": 1000
+      },
+      "geometry": {
+        "documentWidth": 900,
+        "executive": {
+          "height": 857,
+          "overflowY": "auto",
+          "scrollHeight": 3423,
+          "scrollWidth": 813,
+          "width": 813
+        },
+        "height": 1000,
+        "main": {
+          "height": 902,
+          "overflowY": "hidden",
+          "scrollHeight": 902
+        },
+        "reducedMotion": true,
+        "tabs": {
+          "overflowX": "auto",
+          "scrollWidth": 818,
+          "width": 818
+        },
+        "theme": "dark",
+        "width": 900
+      },
+      "sha256": "ffef2ab9f9915c26be8df416cf0b430013b3c6364dc6f29d52a3b05b211839d7"
+    },
+    {
+      "name": "fonts-900x1000-closed-light",
+      "file": "fonts-900x1000-closed-light.png",
+      "expected": {
+        "width": 900,
+        "height": 1000
+      },
+      "actual": {
+        "width": 900,
+        "height": 1000
+      },
+      "geometry": {
+        "documentWidth": 900,
+        "executive": {
+          "height": 857,
+          "overflowY": "auto",
+          "scrollHeight": 3423,
+          "scrollWidth": 813,
+          "width": 813
+        },
+        "height": 1000,
+        "main": {
+          "height": 902,
+          "overflowY": "hidden",
+          "scrollHeight": 902
+        },
+        "reducedMotion": true,
+        "tabs": {
+          "overflowX": "auto",
+          "scrollWidth": 818,
+          "width": 818
+        },
+        "theme": "light",
+        "width": 900
+      },
+      "sha256": "fcf8d4376590787427188498ae8cb316cf0189065c706032abec5319e7857828"
+    },
+    {
+      "name": "fonts-390x844-closed-light",
+      "file": "fonts-390x844-closed-light.png",
+      "expected": {
+        "width": 390,
+        "height": 844
+      },
+      "actual": {
+        "width": 390,
+        "height": 844
+      },
+      "geometry": {
+        "documentWidth": 390,
+        "executive": {
+          "height": 699,
+          "overflowY": "auto",
+          "scrollHeight": 4513,
+          "scrollWidth": 303,
+          "width": 303
+        },
+        "height": 844,
+        "main": {
+          "height": 753,
+          "overflowY": "hidden",
+          "scrollHeight": 753
+        },
+        "reducedMotion": true,
+        "tabs": {
+          "overflowX": "auto",
+          "scrollWidth": 615,
+          "width": 309
+        },
+        "theme": "light",
+        "width": 390
+      },
+      "sha256": "136fe61907e08c3c986ddc06ad784a0576a32b29947c44d5c22b05fc06e4da55"
+    },
+    {
+      "name": "fonts-390x844-open-light",
+      "file": "fonts-390x844-open-light.png",
+      "expected": {
+        "width": 390,
+        "height": 844
+      },
+      "actual": {
+        "width": 390,
+        "height": 844
+      },
+      "geometry": {
+        "documentWidth": 390,
+        "executive": {
+          "height": 699,
+          "overflowY": "auto",
+          "scrollHeight": 4513,
+          "scrollWidth": 303,
+          "width": 303
+        },
+        "height": 844,
+        "main": {
+          "height": 753,
+          "overflowY": "hidden",
+          "scrollHeight": 753
+        },
+        "reducedMotion": true,
+        "tabs": {
+          "overflowX": "auto",
+          "scrollWidth": 615,
+          "width": 309
+        },
+        "theme": "light",
+        "width": 390
+      },
+      "sha256": "8851979d62ac436fe6293c5e4b4baf60a92a521de5897d2918ec3901d1da96f8"
+    },
+    {
+      "name": "fonts-320x844-target-keyboard",
+      "file": "fonts-320x844-target-keyboard.png",
+      "expected": {
+        "width": 320,
+        "height": 844
+      },
+      "actual": {
+        "width": 320,
+        "height": 844
+      },
+      "geometry": {
+        "documentWidth": 320,
+        "executive": {
+          "height": 699,
+          "overflowY": "auto",
+          "scrollHeight": 5300,
+          "scrollWidth": 233,
+          "width": 233
+        },
+        "height": 844,
+        "main": {
+          "height": 753,
+          "overflowY": "hidden",
+          "scrollHeight": 753
+        },
+        "reducedMotion": true,
+        "tabs": {
+          "overflowX": "auto",
+          "scrollWidth": 615,
+          "width": 238
+        },
+        "theme": "light",
+        "width": 320
+      },
+      "sha256": "5093c64590d0bca0dc8508043f83d2f2501f625aed3c4008b33ba3898230ac0c"
+    },
+    {
+      "name": "fonts-1536x770-target-detail-light",
+      "file": "fonts-1536x770-target-detail-light.png",
+      "expected": {
+        "width": 1536,
+        "height": 770
+      },
+      "actual": {
+        "width": 1536,
+        "height": 770
+      },
+      "geometry": {
+        "documentWidth": 1536,
+        "executive": {
+          "height": 628,
+          "overflowY": "auto",
+          "scrollHeight": 2056,
+          "scrollWidth": 1449,
+          "width": 1449
+        },
+        "height": 770,
+        "main": {
+          "height": 672,
+          "overflowY": "hidden",
+          "scrollHeight": 672
+        },
+        "reducedMotion": true,
+        "tabs": {
+          "overflowX": "auto",
+          "scrollWidth": 1454,
+          "width": 1454
+        },
+        "theme": "light",
+        "width": 1536
+      },
+      "sha256": "2e362a5b438ad5e92230da6c28b233cd61baa914d0b576ab689b0a7e4dedfead"
+    },
+    {
+      "name": "fonts-1536x770-target-detail-dark",
+      "file": "fonts-1536x770-target-detail-dark.png",
+      "expected": {
+        "width": 1536,
+        "height": 770
+      },
+      "actual": {
+        "width": 1536,
+        "height": 770
+      },
+      "geometry": {
+        "documentWidth": 1536,
+        "executive": {
+          "height": 628,
+          "overflowY": "auto",
+          "scrollHeight": 2056,
+          "scrollWidth": 1449,
+          "width": 1449
+        },
+        "height": 770,
+        "main": {
+          "height": 672,
+          "overflowY": "hidden",
+          "scrollHeight": 672
+        },
+        "reducedMotion": true,
+        "tabs": {
+          "overflowX": "auto",
+          "scrollWidth": 1454,
+          "width": 1454
+        },
+        "theme": "dark",
+        "width": 1536
+      },
+      "sha256": "ab00ec5c398eb7e02779a2436f4c82941836c8d5c45f23a513ae402b7860a30e"
+    }
+  ],
+  "typography": "Actual renderer fonts: Schibsted Grotesk target headings (incumbent data-pg heading rule); Geist target values/prose (incumbent solo-tokens). Native CSS.getPlatformFontsForNode confirms custom fonts. No typography redesign."
+}

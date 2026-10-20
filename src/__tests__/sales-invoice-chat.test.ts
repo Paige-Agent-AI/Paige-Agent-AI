@@ -13,7 +13,7 @@ function harness(rows: unknown[] = []) {
   for (const name of ['select', 'eq', 'in', 'is', 'not', 'gt']) query[name] = (...args: unknown[]) => { predicates.push([name, ...args]); return query; };
   query.limit = async (...args: unknown[]) => { predicates.push(['limit', ...args]); return { data: rows, error: null }; };
   const calls: unknown[] = [];
-  return { predicates, calls, deps: { admin: { from: () => query }, caller: { functions: { invoke: async (_name: string, options: unknown): Promise<{data: Record<string, unknown>; error: null}> => { calls.push(options); return { data: { ok: true, outcome: 'published', access_token: 'secret' }, error: null }; } }, rpc: async ():Promise<{data:unknown;error:unknown}> => ({ data: { id: invoice, status: 'issued' }, error: null }) } } };
+  return { predicates, calls, deps: { admin: { from: () => query }, caller: { functions: { invoke: async (_name: string, options: unknown): Promise<{data: Record<string, unknown>; error: null}> => { calls.push(options); return { data: { ok: true, outcome: 'published', access_token: 'secret' }, error: null }; } }, rpc: async ():Promise<{data:unknown;error:unknown}> => ({ data: { id: invoice, tenant_id: tenant, version: 1, status: 'issued' }, error: null }) } } };
 }
 describe('Sales invoice canonical Chat door', () => {
   it('hosted payment request uses shared invoice door and reports request state without claiming money received',async()=>{
@@ -92,7 +92,7 @@ describe('Sales invoice canonical Chat door', () => {
   });
   it('reads through authenticated RPC and projects no PII, actor or document', async () => {
     const h = harness();
-    h.deps.caller.rpc = async () => ({ data: { id: invoice, status: 'issued', amount_total_cents: 100, remaining_cents: 20, billing_draft: { email: 'private' }, document: 'private', issued_by: 'private', payments: [{ id: operation, method: 'cash', amount_cents: 80, reference: 'private', notes: 'private', actor_user_id: 'private' }] }, error: null });
+    h.deps.caller.rpc = async () => ({ data: { id: invoice, tenant_id: tenant, version: 1, status: 'issued', amount_total_cents: 100, remaining_cents: 20, billing_draft: { email: 'private' }, document: 'private', issued_by: 'private', payments: [{ id: operation, method: 'cash', amount_cents: 80, reference: 'private', notes: 'private', actor_user_id: 'private' }] }, error: null });
     const result = await dispatchSalesInvoiceChat({ ...context, toolName: 'read_sales_invoice', args: { invoice_id: invoice } }, h.deps as never);
     expect(result.content.success).toBe(true); expect(JSON.stringify(result)).not.toContain('private'); expect(h.calls).toHaveLength(0);
     expect(result.content.invoice).toMatchObject({ remaining_cents: 20, payments: [{ method: 'cash', amount_cents: 80 }] });

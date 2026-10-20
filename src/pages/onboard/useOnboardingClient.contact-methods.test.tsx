@@ -3,6 +3,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Session } from "@supabase/supabase-js";
+import type { ClientPortalSelfProfile } from "@/lib/client-portal-self-profile";
 
 const actorA = "e0911000-0000-0000-0000-000000000001";
 const actorB = "e0911000-0000-0000-0000-000000000002";
@@ -27,7 +28,7 @@ vi.mock("@/integrations/supabase/client", () => ({
   },
 }));
 const { useOnboardingClient } = await import("./useOnboardingClient");
-const profile = (actorId = actorA) => ({
+const profile = (actorId = actorA): ClientPortalSelfProfile => ({
   id: actorId === actorA ? "e0931000-0000-0000-0000-000000000001" : "e0931000-0000-0000-0000-000000000002",
   tenant_id: actorId === actorA ? "e0921000-0000-0000-0000-000000000001" : "e0921000-0000-0000-0000-000000000002",
   linked_user_id: actorId, first_name: "Test", last_name: "Customer", entity_name: null,
@@ -173,5 +174,24 @@ describe("safe onboarding relationship", () => {
     await act(async () => { await state?.refresh(); });
     expect(state?.error).toBeNull();
     expect(state?.client?.linked_user_id).toBe(actorA);
+  });
+  it("projects only the same native relationship after a confirmed save without clearing the parent", async () => {
+    await mount();const calls=rpc.mock.calls.length;
+    const saved={...profile(),first_name:"Saved",onboarding_stage:"signing_agreement"};
+    act(()=>{expect(state?.acceptSavedProfile(saved)).toBe(true);});
+    expect(state?.client?.first_name).toBe("Saved");expect(state?.client?.onboarding_stage).toBe("signing_agreement");
+    expect(state?.loading).toBe(false);expect(rpc.mock.calls).toHaveLength(calls);
+  });
+  it("refuses foreign or widened saved-profile projections", async () => {
+    await mount();const original=state?.client;
+    act(()=>{
+      expect(state?.acceptSavedProfile(profile(actorB))).toBe(false);
+      expect(state?.acceptSavedProfile({...profile(),tenant_id:"e0921000-0000-0000-0000-000000000099"})).toBe(false);
+      expect(state?.acceptSavedProfile({...profile(),current_notes:"PRIVATE"} as ReturnType<typeof profile>)).toBe(false);
+    });expect(state?.client).toEqual(original);
+  });
+  it("a save projection cannot resurrect a signed-out parent even before React commits", async () => {
+    await mount();act(()=>{authListener?.("SIGNED_OUT",null);expect(state?.acceptSavedProfile(profile())).toBe(false);});
+    expect(state?.client).toBeNull();expect(state?.error).toBe("not_authenticated");
   });
 });

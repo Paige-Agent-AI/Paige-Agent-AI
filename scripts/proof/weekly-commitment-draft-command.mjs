@@ -8,7 +8,7 @@ import {catalogueDeclarations} from '../ci/tool-catalogue-lint.mjs';
  */
 export async function weeklyDraftCommandProof({run,json,literal,source,check,refuses,concurrent,owner,tenant,otherOwner,foreign,member,admin,catalogueSource}) {
   const ctx={actor:owner,tenant,role:'authenticated'};
-  const migration='supabase/migrations/20271105090500_experience05_confirmed_weekly_draft.sql';
+  const migration='supabase/migrations/20271112130000_experience05_confirmed_weekly_draft.sql';
   const eventsBefore=run('SELECT count(*) FROM paige_native_events;');
   const flagBefore=run("SELECT is_live FROM paige_automation_triggers WHERE key='schedule.weekly_commitment_check';");
   run(source('supabase/migrations/20261023000000_confirmations_bind_the_approval_to_the_call.sql'));

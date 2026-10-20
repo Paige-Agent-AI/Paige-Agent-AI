@@ -51,7 +51,10 @@ vi.mock("@/integrations/supabase/client", () => {
   const channel = { on: () => channel, subscribe: () => channel };
   return {
     supabase: {
-      auth: { getUser: async () => ({ data: { user: { id: "u1", email: "dana@signin.example", identities: [] } } }) },
+      auth: {
+        getUser: async () => ({ data: { user: { id: "u1", email: "dana@signin.example", identities: [] } } }),
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => undefined } } }),
+      },
       from: (table: string) => ({
         select: (columns: string) => { db.selects.push({ table, columns }); return builder(table); },
         update: (patch: Record<string, unknown>) => {
@@ -227,6 +230,15 @@ const click = async (text: string) => {
 };
 
 describe("ProfileSettings › Personal (a person's own phone)", () => {
+  it.each(["missing", "refused"])("explicit customer Account view never mounts legacy loaders when relationship is %s", async kind => {
+    db.rpc.mockResolvedValue({ data: null, error: kind === "refused" ? { code: "42501" } : null });
+    act(() => root.render(<MemoryRouter initialEntries={["/app/settings?view=client-account"]}><ProfileSettings /></MemoryRouter>));
+    await flush();
+    expect(host.textContent).toContain("Your account");
+    expect(db.selects).toEqual([]); expect(db.updates).toEqual([]); expect(db.upserts).toEqual([]);
+    expect(db.rpc).toHaveBeenCalledWith("client_portal_self_profile");
+    expect(host.querySelector("form")).toBeNull();
+  });
   const renderSettings = async () => {
     act(() => root.render(<MemoryRouter><ProfileSettings /></MemoryRouter>));
     await flush();

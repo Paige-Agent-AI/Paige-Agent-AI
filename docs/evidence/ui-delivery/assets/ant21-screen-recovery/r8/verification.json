@@ -1,0 +1,623 @@
+{
+  "observedUtc": "2026-10-16T01:25:55.816917+00:00",
+  "head": "5d273849187796fad4566495b2c6e1fa9570458f",
+  "capturedStates": 32,
+  "allExpectedDomStatesPresent": true,
+  "sourceManifestFiles": 25,
+  "sourceManifestMatches": true,
+  "sourceIdentity": [
+    {
+      "file": "src/solo/SoloApp.tsx",
+      "match": true,
+      "mode": "Exact reviewed Git source, LF or CRLF checkout only"
+    },
+    {
+      "file": "src/solo/SoloScreenBoundary.tsx",
+      "match": true,
+      "mode": "Exact reviewed Git source, LF or CRLF checkout only"
+    },
+    {
+      "file": "src/hooks/usePlatformUpdate.ts",
+      "match": true,
+      "mode": "Exact reviewed Git source, LF or CRLF checkout only"
+    },
+    {
+      "file": "src/hooks/useBeforeUnloadGuard.ts",
+      "match": true,
+      "mode": "Exact reviewed Git source, LF or CRLF checkout only"
+    },
+    {
+      "file": "src/components/PlatformUpdateBanner.tsx",
+      "match": true,
+      "mode": "Exact reviewed Git source, LF or CRLF checkout only"
+    },
+    {
+      "file": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "match": true,
+      "mode": "Exact reviewed Git source, LF or CRLF checkout only"
+    },
+    {
+      "file": "scripts/proof/ant21-screen-recovery/source.tsx",
+      "match": true,
+      "mode": "Exact reviewed Git source, LF or CRLF checkout only"
+    },
+    {
+      "file": "scripts/proof/ant21-screen-recovery/adapter.tsx",
+      "match": true,
+      "mode": "Exact reviewed Git source, LF or CRLF checkout only"
+    },
+    {
+      "file": "scripts/proof/ant21-screen-recovery/build.mjs",
+      "match": true,
+      "mode": "Exact reviewed Git source, LF or CRLF checkout only"
+    },
+    {
+      "file": "dist/assets/AcceptInvite-Dkp0ubs5.css",
+      "match": true,
+      "mode": "Generated current5d production-build style artifact"
+    },
+    {
+      "file": "dist/assets/AgencyApp-CsVvuHEx.css",
+      "match": true,
+      "mode": "Generated current5d production-build style artifact"
+    },
+    {
+      "file": "dist/assets/AgreementSigning-BpHLFpA8.css",
+      "match": true,
+      "mode": "Generated current5d production-build style artifact"
+    },
+    {
+      "file": "dist/assets/CalendarAdmin-DjYJ6oVy.css",
+      "match": true,
+      "mode": "Generated current5d production-build style artifact"
+    },
+    {
+      "file": "dist/assets/ClientsConversations-BSWdY4So.css",
+      "match": true,
+      "mode": "Generated current5d production-build style artifact"
+    },
+    {
+      "file": "dist/assets/GrowthBlocks-CobXfkC_.css",
+      "match": true,
+      "mode": "Generated current5d production-build style artifact"
+    },
+    {
+      "file": "dist/assets/IntelligenceSurface-BUqL7fOQ.css",
+      "match": true,
+      "mode": "Generated current5d production-build style artifact"
+    },
+    {
+      "file": "dist/assets/LiveTranscriptPanel-DlN_jxWB.css",
+      "match": true,
+      "mode": "Generated current5d production-build style artifact"
+    },
+    {
+      "file": "dist/assets/main-DtUP0Tyx.css",
+      "match": true,
+      "mode": "Generated current5d production-build style artifact"
+    },
+    {
+      "file": "dist/assets/McpOAuthCallback-DzvJ9675.css",
+      "match": true,
+      "mode": "Generated current5d production-build style artifact"
+    },
+    {
+      "file": "dist/assets/OnboardLayout-BPiSIUKd.css",
+      "match": true,
+      "mode": "Generated current5d production-build style artifact"
+    },
+    {
+      "file": "dist/assets/paige-command-mark-DkDmfxtN.css",
+      "match": true,
+      "mode": "Generated current5d production-build style artifact"
+    },
+    {
+      "file": "dist/assets/PaigeAIChat-CTvdVEyj.css",
+      "match": true,
+      "mode": "Generated current5d production-build style artifact"
+    },
+    {
+      "file": "dist/assets/PaigeHome-4FoskblA.css",
+      "match": true,
+      "mode": "Generated current5d production-build style artifact"
+    },
+    {
+      "file": "dist/assets/SoloEntry-BTc4c4k8.css",
+      "match": true,
+      "mode": "Generated current5d production-build style artifact"
+    },
+    {
+      "file": "dist/assets/TenantRedesign-BHck4q1t.css",
+      "match": true,
+      "mode": "Generated current5d production-build style artifact"
+    }
+  ],
+  "exactRasters": 24,
+  "onePixelEdges": 6,
+  "invalidRenderProof": 2,
+  "captures": [
+    {
+      "label": "a-light-1536-770-closed",
+      "file": "a-light-1536-770-closed.jpg",
+      "sha256": "346e48f3473abfb99d20191a5a10abb7ed229647f55bcbed554fae4595f01b2f",
+      "viewport": [
+        1536,
+        770
+      ],
+      "encoded": [
+        1535,
+        770
+      ],
+      "rasterStatus": "ONE_PIXEL_EDGE",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "a-light-1536-770-open",
+      "file": "a-light-1536-770-open.jpg",
+      "sha256": "131a59806e560680a4aa339d2fe04dd45505f357f2eb57d280cd8029d70d1527",
+      "viewport": [
+        1536,
+        770
+      ],
+      "encoded": [
+        1535,
+        770
+      ],
+      "rasterStatus": "ONE_PIXEL_EDGE",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "a-light-1366-768-closed",
+      "file": "a-light-1366-768-closed.jpg",
+      "sha256": "1aa44605d09125cca03912d9de5fd771287c17fb8a40be99c0c9e594d1fe91aa",
+      "viewport": [
+        1366,
+        768
+      ],
+      "encoded": [
+        1366,
+        768
+      ],
+      "rasterStatus": "EXACT",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "a-light-1366-768-open",
+      "file": "a-light-1366-768-open.jpg",
+      "sha256": "fd1aa8e3e1ff2e289655386b8054813cf3837e022bd5ae5356441124680771ae",
+      "viewport": [
+        1366,
+        768
+      ],
+      "encoded": [
+        1366,
+        768
+      ],
+      "rasterStatus": "EXACT",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "a-light-1024-768-closed",
+      "file": "a-light-1024-768-closed.jpg",
+      "sha256": "b7c9a143f4b94e3c947eb0e5b80ec017ff6c8664039a1a4b40d4fc330a6bfe8b",
+      "viewport": [
+        1024,
+        768
+      ],
+      "encoded": [
+        1024,
+        768
+      ],
+      "rasterStatus": "EXACT",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "a-light-1024-768-open",
+      "file": "a-light-1024-768-open.jpg",
+      "sha256": "f20c0ef7db7b2616770757527366549a16c12451164eea33684414f53f79d8dc",
+      "viewport": [
+        1024,
+        768
+      ],
+      "encoded": [
+        1024,
+        768
+      ],
+      "rasterStatus": "EXACT",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "a-light-900-1000-closed",
+      "file": "a-light-900-1000-closed.jpg",
+      "sha256": "30e2c918dc5e89995b15fd1717f2326ff4b4f45e51c2af40f7aa9e22e4364185",
+      "viewport": [
+        900,
+        1000
+      ],
+      "encoded": [
+        900,
+        1000
+      ],
+      "rasterStatus": "EXACT",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "a-light-900-1000-open",
+      "file": "a-light-900-1000-open.jpg",
+      "sha256": "b97f81a26d02ecc0c4bc2b5ee0cea2b28a3f41e194ec0be0aedf9183a6d88b20",
+      "viewport": [
+        900,
+        1000
+      ],
+      "encoded": [
+        900,
+        1000
+      ],
+      "rasterStatus": "EXACT",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "a-dark-1536-770-closed",
+      "file": "a-dark-1536-770-closed.jpg",
+      "sha256": "e0d41ea4aa0fb12f25b820c685f6de6c10e456f989d73bd07851f4dc873a2db3",
+      "viewport": [
+        1536,
+        770
+      ],
+      "encoded": [
+        693,
+        770
+      ],
+      "rasterStatus": "INVALID_RENDER_PROOF",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "a-dark-1536-770-open",
+      "file": "a-dark-1536-770-open.jpg",
+      "sha256": "1375dcb93665a03c14b93a103014fac27f57131b84ef747571c5c83fd56d6613",
+      "viewport": [
+        1536,
+        770
+      ],
+      "encoded": [
+        1535,
+        770
+      ],
+      "rasterStatus": "ONE_PIXEL_EDGE",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "a-dark-1366-768-closed",
+      "file": "a-dark-1366-768-closed.jpg",
+      "sha256": "1afd0a36bdd796ef4513aa5e9d07ca9f6817bbd31abdd848bf2275f4d2be64b6",
+      "viewport": [
+        1366,
+        768
+      ],
+      "encoded": [
+        1366,
+        768
+      ],
+      "rasterStatus": "EXACT",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "a-dark-1366-768-open",
+      "file": "a-dark-1366-768-open.jpg",
+      "sha256": "506309563279cfe5ca734e9ea9d3a13a1065b6e25e498f539cd2524b20a45218",
+      "viewport": [
+        1366,
+        768
+      ],
+      "encoded": [
+        1366,
+        768
+      ],
+      "rasterStatus": "EXACT",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "a-dark-1024-768-closed",
+      "file": "a-dark-1024-768-closed.jpg",
+      "sha256": "036d7f47709475b5127a0cd12d1d4bfb2528b37410f4ba8de882009d7d95be4f",
+      "viewport": [
+        1024,
+        768
+      ],
+      "encoded": [
+        1024,
+        768
+      ],
+      "rasterStatus": "EXACT",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "a-dark-1024-768-open",
+      "file": "a-dark-1024-768-open.jpg",
+      "sha256": "775f3c223acfa6cfd080d3ad1c73988188b6994d9cc754b4902b47e64638c5e5",
+      "viewport": [
+        1024,
+        768
+      ],
+      "encoded": [
+        1024,
+        768
+      ],
+      "rasterStatus": "EXACT",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "a-dark-900-1000-closed",
+      "file": "a-dark-900-1000-closed.jpg",
+      "sha256": "a51c9a83f87b880d8be337762f92d4b2c6fb7233bc2ad8878bb63962144f0fd8",
+      "viewport": [
+        900,
+        1000
+      ],
+      "encoded": [
+        900,
+        1000
+      ],
+      "rasterStatus": "EXACT",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "a-dark-900-1000-open",
+      "file": "a-dark-900-1000-open.jpg",
+      "sha256": "fe0749cd8c1bbc8d85112b0f4e64caf5e97dba22839c6386c23f71074103532a",
+      "viewport": [
+        900,
+        1000
+      ],
+      "encoded": [
+        900,
+        1000
+      ],
+      "rasterStatus": "EXACT",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "b-dark-1536-770-closed",
+      "file": "b-dark-1536-770-closed.jpg",
+      "sha256": "a453e424196a95d26cb9986ef8f23cbad0c44f697ddd6a5bb448c35bc60e0b97",
+      "viewport": [
+        1536,
+        770
+      ],
+      "encoded": [
+        693,
+        770
+      ],
+      "rasterStatus": "INVALID_RENDER_PROOF",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "b-dark-1536-770-open",
+      "file": "b-dark-1536-770-open.jpg",
+      "sha256": "3005f00df037c36dd82d4c51f604a9373ab4ad61ee458c4ca08c90f3c81c251c",
+      "viewport": [
+        1536,
+        770
+      ],
+      "encoded": [
+        1535,
+        770
+      ],
+      "rasterStatus": "ONE_PIXEL_EDGE",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "b-dark-1366-768-closed",
+      "file": "b-dark-1366-768-closed.jpg",
+      "sha256": "9c8ea93250d2383a8e8513c7f06b87bc7be124b112550d8db94a4a39d75be1e3",
+      "viewport": [
+        1366,
+        768
+      ],
+      "encoded": [
+        1366,
+        768
+      ],
+      "rasterStatus": "EXACT",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "b-dark-1366-768-open",
+      "file": "b-dark-1366-768-open.jpg",
+      "sha256": "170f6bd3bd1eece90f1b9589e5bfc5f472fc35bbb21cae08e53dcfbc48aa1eea",
+      "viewport": [
+        1366,
+        768
+      ],
+      "encoded": [
+        1366,
+        768
+      ],
+      "rasterStatus": "EXACT",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "b-dark-1024-768-closed",
+      "file": "b-dark-1024-768-closed.jpg",
+      "sha256": "92619b0adbc1931b6d9d5b5670113ba703cf4e5d5f187cbdb12f32fecb8fd686",
+      "viewport": [
+        1024,
+        768
+      ],
+      "encoded": [
+        1024,
+        768
+      ],
+      "rasterStatus": "EXACT",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "b-dark-1024-768-open",
+      "file": "b-dark-1024-768-open.jpg",
+      "sha256": "45bb5c3d15b2b254cd1459c003126401dbba7a21d0dca3fc67c85f5bd63d1568",
+      "viewport": [
+        1024,
+        768
+      ],
+      "encoded": [
+        1024,
+        768
+      ],
+      "rasterStatus": "EXACT",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "b-dark-900-1000-closed",
+      "file": "b-dark-900-1000-closed.jpg",
+      "sha256": "6dfb9bb34a2914d28907b482cb324ee565755224ac768c0e0e1c52a38de5ad0c",
+      "viewport": [
+        900,
+        1000
+      ],
+      "encoded": [
+        900,
+        1000
+      ],
+      "rasterStatus": "EXACT",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "b-dark-900-1000-open",
+      "file": "b-dark-900-1000-open.jpg",
+      "sha256": "5e4c367da42bd443ac29c1317a08b0ee134f82f5c468c09be53b8cbc3da90633",
+      "viewport": [
+        900,
+        1000
+      ],
+      "encoded": [
+        900,
+        1000
+      ],
+      "rasterStatus": "EXACT",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "b-light-1536-770-closed",
+      "file": "b-light-1536-770-closed.jpg",
+      "sha256": "afdb2646214a2a9c315f6abc578012f33ca098e28baf35c8704b1e1d836480b8",
+      "viewport": [
+        1536,
+        770
+      ],
+      "encoded": [
+        1535,
+        770
+      ],
+      "rasterStatus": "ONE_PIXEL_EDGE",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "b-light-1536-770-open",
+      "file": "b-light-1536-770-open.jpg",
+      "sha256": "b82aac24b24e73e3abddfa4d602df7fd7b831f34be0c7951c204cc325339190b",
+      "viewport": [
+        1536,
+        770
+      ],
+      "encoded": [
+        1535,
+        770
+      ],
+      "rasterStatus": "ONE_PIXEL_EDGE",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "b-light-1366-768-closed",
+      "file": "b-light-1366-768-closed.jpg",
+      "sha256": "bc253479ba38f0ddad93ff6422ced765565f78672c726a8b23f6ff4a38625004",
+      "viewport": [
+        1366,
+        768
+      ],
+      "encoded": [
+        1366,
+        768
+      ],
+      "rasterStatus": "EXACT",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "b-light-1366-768-open",
+      "file": "b-light-1366-768-open.jpg",
+      "sha256": "3941c6ca9051d9ff91530ebbfac5121421d34711877f58136d72ef583269a5f6",
+      "viewport": [
+        1366,
+        768
+      ],
+      "encoded": [
+        1366,
+        768
+      ],
+      "rasterStatus": "EXACT",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "b-light-1024-768-closed",
+      "file": "b-light-1024-768-closed.jpg",
+      "sha256": "257def32d654dd18d319cc2b85b18e67c13622b51bc898a67f7a8897b2c33511",
+      "viewport": [
+        1024,
+        768
+      ],
+      "encoded": [
+        1024,
+        768
+      ],
+      "rasterStatus": "EXACT",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "b-light-1024-768-open",
+      "file": "b-light-1024-768-open.jpg",
+      "sha256": "7033ae6d9fb0609791a6467838c3162fab4449930ffd7b443b16220cc3a8ecd9",
+      "viewport": [
+        1024,
+        768
+      ],
+      "encoded": [
+        1024,
+        768
+      ],
+      "rasterStatus": "EXACT",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "b-light-900-1000-closed",
+      "file": "b-light-900-1000-closed.jpg",
+      "sha256": "b160af5e00efc5606025a97cae7d7c55ed13cb5a7f38cfb49ccf427334ea1899",
+      "viewport": [
+        900,
+        1000
+      ],
+      "encoded": [
+        900,
+        1000
+      ],
+      "rasterStatus": "EXACT",
+      "domWitnesses": "MATCH"
+    },
+    {
+      "label": "b-light-900-1000-open",
+      "file": "b-light-900-1000-open.jpg",
+      "sha256": "6d2a6e61f775f3c1a98d3f791f79549b685fe9a542c81330fc928e86f88de02d",
+      "viewport": [
+        900,
+        1000
+      ],
+      "encoded": [
+        900,
+        1000
+      ],
+      "rasterStatus": "EXACT",
+      "domWitnesses": "MATCH"
+    }
+  ],
+  "behavior": "Native guarded reload refused with sibling draft retained; Escape/Enter fold+reopen focus preserved; Tab/ShiftTab traversed native controls and draft; explicit clear verified. Final settled reload and200-percent browser zoom UNVERIFIED after automation deadline/no measured zoom change. No customer/provider APIs.",
+  "cleanup": "Viewport reset; owned tab closed; server process/listener0 verified",
+  "boundary": "DOM matrix matches, not complete visual/zoom/authenticated acceptance. Two narrow1536 dark closed rasters remain invalid; no resize/relabel or old-image promotion."
+}

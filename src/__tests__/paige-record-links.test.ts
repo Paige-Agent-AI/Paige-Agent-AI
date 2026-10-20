@@ -17,10 +17,17 @@ describe("readRecordLinks — the defensive reader for live frames and persisted
   it("retains the E4 destinations and admits only the bounded E2 Executive destinations", () => {
     expect([...READ_LINK_DESTINATIONS]).toEqual([
       "contacts", "sales_agreements", "sales_invoices", "sales_collections", "operations_work", "business_time_zone",
-      "executive", "finance", "sales_pipeline", "systems_check", "business_game_plan", "trust_compass", "mind",
+      "executive", "finance", "sales_pipeline", "systems_check", "business_game_plan", "trust_compass", "mind", "calendar", "pipeline",
     ]);
   });
 
+  it("pipeline retains only a canonical deal UUID, without subject, URL or stored route", () => {
+    expect(readRecordLinks([
+      { destination: "pipeline", record_id: A.toUpperCase(), subject: "discard", url: "https://foreign.invalid", path: "/foreign" },
+      { destination: "pipeline", record_id: "malformed" },
+      { destination: "calendar", record_id: A },
+    ])).toEqual([{ destination: "pipeline", record_id: A }, { destination: "pipeline", record_id: null }, { destination: "calendar", record_id: null }]);
+  });
   it("returns nothing for anything that is not an array", () => {
     for (const v of [null, undefined, "x", 3, { destination: "contacts" }]) expect(readRecordLinks(v)).toEqual([]);
   });
@@ -86,5 +93,12 @@ describe("readRecordLinks — the defensive reader for live frames and persisted
       { destination: "contacts", record_id: A, subject: "Acme" },
       { destination: "business_time_zone", record_id: null },
     ]);
+  });
+  it("round-trips an exact Play reference without retaining an old account, address or subject", () => {
+    const persisted = JSON.parse(JSON.stringify({ record_links: [{ destination: "business_game_plan", record_id: A,
+      subject: "Private Play", url: "/solo/old/command-center/business-game-plan", account: "old" }] }));
+    expect(readRecordLinks(persisted.record_links)).toEqual([{ destination: "business_game_plan", record_id: A }]);
+    expect(readRecordLinks([{ destination: "business_game_plan", record_id: "../foreign" }]))
+      .toEqual([{ destination: "business_game_plan", record_id: null }]);
   });
 });

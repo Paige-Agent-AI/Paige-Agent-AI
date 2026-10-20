@@ -11,6 +11,20 @@ import { SOLO_SETUP_TABS } from "@/solo/settings-business-context-contract";
 
 describe("canonical externally emitted app destinations", () => {
   it.each([
+    ["account", "solo", "101", "/solo/101/operations/work"],
+    ["account", "standalone", "202", "/solo/202/operations/work"],
+    ["account", "sub_account", "303", "/business/303/calendar/tasks"],
+    ["account", "agency", "404", "/agency/404/calendar/tasks"],
+    ["operator", "operator", null, "/operator/calendar/tasks"],
+  ] as const)("keeps task destinations on the native %s/%s owner", (actor, tier, account, path) => {
+    expect(resolveCanonicalAppPath({ actor, tier, account, destination: "tasks" })).toBe(path);
+    expect(resolveCanonicalRecordLink({ actor, tier, account, destination: "tasks", recordId: "00000000-0000-4000-8000-000000000001" }))
+      .toEqual(tier === "solo" || tier === "standalone"
+        ? { path: `${path}?task=00000000-0000-4000-8000-000000000001`, status: "exact" }
+        : { path, status: "surface_only" });
+  });
+
+  it.each([
     ["operator", "operator", null, "home", "/operator/fleet/systems-check"],
     ["account", "solo", "1971670", "home", "/solo/1971670/command-center/executive"],
     ["account", "sub_account", "1971671", "home", "/business/1971671/command-center/overview"],
@@ -86,6 +100,15 @@ describe("resolveCanonicalRecordLink", () => {
     expect(resolveCanonicalRecordLink({ ...solo, destination: "contacts", recordId: UUID }))
       .toEqual({ path: `/solo/1971670/clients/people?person=${UUID}`, status: "exact" });
   });
+  it("opens only a UUID Play locator through the mounted owner Game Plan surface", () => {
+    expect(resolveCanonicalRecordLink({ ...solo, destination: "business_game_plan", recordId: UUID }))
+      .toEqual({ path: `/solo/1971670/command-center/business-game-plan?play=${UUID}`, status: "exact" });
+    for (const recordId of ["../foreign", `${UUID}#x`, "", null]) {
+      expect(resolveCanonicalRecordLink({ ...solo, destination: "business_game_plan", recordId }))
+        .toEqual({ path: "/solo/1971670/command-center/business-game-plan", status: "surface_only" });
+    }
+    expect(resolveCanonicalRecordLink({ ...solo, tier: "sub_account", destination: "business_game_plan", recordId: UUID })).toBeNull();
+  });
 
   it.each([
     ["sales_agreements", "/solo/1971670/sales/agreements"],
@@ -95,9 +118,10 @@ describe("resolveCanonicalRecordLink", () => {
     ["business_time_zone", "/solo/1971670/settings/setup/business-profile#business-time-zone"],
   ] as const)("maps %s to its Solo surface, surface-only", (destination, path) => {
     expect(resolveCanonicalRecordLink({ ...solo, destination })).toEqual({ path, status: "surface_only" });
-    // The invoice destination supports exact focus; other department destinations remain lists.
+    // Only the mounted invoice and Task consumers support exact UUID focus.
     expect(resolveCanonicalRecordLink({ ...solo, destination, recordId: UUID })).toEqual(destination === 'sales_invoices'
       ? { path: `${path}&invoice=${UUID}`, status: "exact" }
+      : destination === 'operations_work' ? { path: `${path}?task=${UUID}`, status: "exact" }
       : { path, status: "surface_only" });
   });
 

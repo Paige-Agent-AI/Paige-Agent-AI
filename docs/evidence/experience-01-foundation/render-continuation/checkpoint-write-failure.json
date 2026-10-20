@@ -1,0 +1,49 @@
+{
+  "evidenceClass": "RENDERED_SYNTHETIC_ACTUAL_INTERVIEW_COMPONENT",
+  "sourceHead": "ab8e338d2f0fcd2b8760a61735f6bcc55d1d16e3",
+  "componentSha256": "5713f051b2c1d111ad11013bf61dd13d327deac13005069b48e4aadf6fac7145",
+  "cssSha256": "78ef156374ac6a320118df45d7905099e638b1f50adfd45b9d57972f84e6d178",
+  "url": "http://127.0.0.1:5204/interview.html?theme=light&state=progress-error",
+  "nativeDimensions": {
+    "height": 694,
+    "width": 686
+  },
+  "actualDom": {
+    "focus": {
+      "name": "Correct",
+      "tag": "BUTTON"
+    },
+    "overflow": false,
+    "text": "Your business profileReview a detail before saving it to Setup.Open SetupSetup was saved. Interview progress was not recorded; reopen this conversation and reload Setup before continuing.Saved to Setup and read back from the server. You can correct any detail below, then continue in the same conversation.Use Chat for this interview. Review suggestions when available, or enter a detail yourself. Never share passwords or connection secrets in chat.Business nameOwner-confirmedSynthetic / Example ServicesCorrectIndustryOwner-confirmedSynthetic review correctionCorrectWhat you offerNeeds confirmationNot yet recordedAddHow you deliverNeeds confirmationNot yet recordedAddYour customersNeeds confirmationNot yet recordedAddCurrent priorityNeeds confirmationNot yet recordedAddGoals for the next 90 daysNeeds confirmationNot yet recordedAddChallenges and constraintsNeeds confirmationNot yet recordedAddHow you work and the systems you useNeeds confirmationNot yet recordedAddWhat PAIGE should not assumeNeeds confirmationNot yet recordedAddReload SetupSkip this topicPause interview",
+    "theme": "light",
+    "viewport": {
+      "height": 694,
+      "width": 686
+    }
+  },
+  "style": {
+    "ancestors": [
+      {
+        "color": "rgb(251, 248, 244)",
+        "tag": "ASIDE"
+      },
+      {
+        "color": "rgb(245, 242, 236)",
+        "tag": "DIV"
+      },
+      {
+        "color": "rgb(251, 248, 244)",
+        "tag": "DIV"
+      }
+    ],
+    "background": "rgba(0, 0, 0, 0)",
+    "color": "rgb(164, 71, 61)",
+    "fontSize": "14px"
+  },
+  "drive": "Correct Industry → labelled synthetic value → Confirm and save to Setup → adapter returns readback → checkpoint adapter refuses; scroll upward to reveal error. Final focus Correct Industry.",
+  "requestedViewportOverrideAccepted": false,
+  "viewportLimitation": "Existing other tab remained at default686x694; no1366 viewport proof inferred.",
+  "persistence": "Synthetic adapter only; separate real PostgreSQL proof file owns persistence.",
+  "production": false,
+  "authenticated": false
+}

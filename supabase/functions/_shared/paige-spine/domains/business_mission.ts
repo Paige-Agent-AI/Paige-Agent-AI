@@ -18,14 +18,14 @@ export const BUSINESS_MISSION_TRANSITION = {
   outcome:{kinds:["active","blocked","paused","completed","stopped","refused","failed"],projector:"public.get_business_mission",railVisibility:"PARTIAL: paige-ai-chat re-reads and verifies the canonical Mission before recording mission_transition through the existing capability_run Rail writer; authenticated runtime proof remains owed."},
   chatBinding:"LIVE",mindBinding:"UNAVAILABLE",sharedPrimitiveChange:"NONE",maturity:"PARTIAL",
 } as const satisfies SpineCapability;
-/** Domain foundation only. No Chat tool or customer capability claim until consumer integration. */
+/** Native target contract. Indirect briefing reads use business.operating_snapshot; no direct Chat target tool. */
 export const BUSINESS_MISSION_TARGETS = {
   key: "business_mission.targets", domain: "business_mission", owner: "business-mission-system",
   humanSurface: "/solo/:account/command-center/business-game-plan", selfDescribe: false,
   action: { classification: "read", executor: "public.list_business_mission_targets", riskPolicyKey: "read_only",
     approvalAuthority: "none", idempotency: "Read-only current-owner projection of existing Play-linked target records; exact counts and bounded pagination." },
   outcome: { kinds: ["available", "refused", "unavailable"], projector: "public.list_business_mission_targets",
-    railVisibility: "Target mutation receipts reuse business_mission_mutation_receipts. This unmounted read records no activity; native verified mutation adapter and all customer consumers remain unreleased." },
+    railVisibility: "Target mutation receipts reuse business_mission_mutation_receipts and the verified native adapter uses existing Rail. Target reads create no action receipt. Indirect Game Plan briefings are read-only; authenticated customer acceptance remains owed." },
   chatBinding: "UNAVAILABLE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "NONE", maturity: "PARTIAL",
 } as const satisfies SpineCapability;
 export const BUSINESS_MISSION_CAPABILITIES=[BUSINESS_MISSION_CREATE,BUSINESS_MISSION_REVISE,BUSINESS_MISSION_TRANSITION,BUSINESS_MISSION_TARGETS] as const;

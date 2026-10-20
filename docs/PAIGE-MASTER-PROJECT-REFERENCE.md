@@ -830,8 +830,10 @@ SUCCESS. The original native owner approval/exact decline step in job11879688652
 passes; prior #2431 Unexpected end of JSON input remains retained. Local initdb
 timeout occurred before tests and is INVALID setup evidence, not native PASS.
 Test-only source delivery; no runtime, authorization, SQL, provider, activation,
-business record, Rail or customer capability change. Production web pipeline is
-separate automatic release housekeeping; no new functional or authenticated
+business record, Rail or customer capability change. Automatic production web
+`dpl_DmfoRWE81YXzLejn6QvbpamawfBE` is READY/exact main/canonical aliases; public
+HTTP200 buildId `d9b4ece722ef7ac6456124d2c54474a90b730db2-mvh0sfgr` read back.
+This is source-release housekeeping, not a new functional or authenticated
 customer claim, release identity or announcement. Edge/migrations NOT_APPLICABLE.
 Recovery: ordinary reviewed test-only forward correction/revert. Original18/25/50
 and full EXP05/Live/owner acceptance remain open, strict1/18 and2/50 unchanged.

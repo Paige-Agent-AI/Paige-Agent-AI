@@ -258,5 +258,102 @@
     "no new Rail/action receipt from inspection",
     "CSS release/production behavior not yet earned",
     "full EXP05 and18/25/50 acceptance unchanged"
-  ]
+  ],
+  "sampleTextEncodingCorrection": {
+    "recordedAt": "2026-10-20T08:33:24.139067+00:00",
+    "originalReviewedCommit": "48966ade2b2e5ba36d703a9019180c3787b3fe9c",
+    "originalFramesSha256": "436bf5bea42819ad9678da59104370d37e3cde979a3b89231350b4bd6990cb19",
+    "correctedFramesSha256": "0e1656a89657b6921318c9fdb43ee3a3a69b17a754e10db61a4f98eda94ae496",
+    "correctedFields": 13,
+    "reason": "Read native UTF8 JSON explicitly; original assembly interpreted 13 sampled apostrophes as Windows1252. No rendered text, pixels, geometry, colors, source hashes or acceptance claim changed.",
+    "preservation": "Original packet retained at the reviewed Git commit and private immutable evidence; this is a subsequent documentation correction, not a recapture.",
+    "changes": [
+      {
+        "frame": "1536-closed-light",
+        "sample": 8,
+        "oldValue": "Time uses your deviceâ€™s timezone. Review the exact date before confirming.",
+        "correctedValue": "Time uses your device’s timezone. Review the exact date before confirming."
+      },
+      {
+        "frame": "1366-closed-light",
+        "sample": 8,
+        "oldValue": "Time uses your deviceâ€™s timezone. Review the exact date before confirming.",
+        "correctedValue": "Time uses your device’s timezone. Review the exact date before confirming."
+      },
+      {
+        "frame": "1024-closed-light",
+        "sample": 8,
+        "oldValue": "Time uses your deviceâ€™s timezone. Review the exact date before confirming.",
+        "correctedValue": "Time uses your device’s timezone. Review the exact date before confirming."
+      },
+      {
+        "frame": "900-closed-light",
+        "sample": 8,
+        "oldValue": "Time uses your deviceâ€™s timezone. Review the exact date before confirming.",
+        "correctedValue": "Time uses your device’s timezone. Review the exact date before confirming."
+      },
+      {
+        "frame": "1536-open-light",
+        "sample": 8,
+        "oldValue": "Time uses your deviceâ€™s timezone. Review the exact date before confirming.",
+        "correctedValue": "Time uses your device’s timezone. Review the exact date before confirming."
+      },
+      {
+        "frame": "1366-open-light",
+        "sample": 8,
+        "oldValue": "Time uses your deviceâ€™s timezone. Review the exact date before confirming.",
+        "correctedValue": "Time uses your device’s timezone. Review the exact date before confirming."
+      },
+      {
+        "frame": "1024-open-light",
+        "sample": 8,
+        "oldValue": "Time uses your deviceâ€™s timezone. Review the exact date before confirming.",
+        "correctedValue": "Time uses your device’s timezone. Review the exact date before confirming."
+      },
+      {
+        "frame": "900-open-light",
+        "sample": 8,
+        "oldValue": "Time uses your deviceâ€™s timezone. Review the exact date before confirming.",
+        "correctedValue": "Time uses your device’s timezone. Review the exact date before confirming."
+      },
+      {
+        "frame": "390-open-light",
+        "sample": 8,
+        "oldValue": "Time uses your deviceâ€™s timezone. Review the exact date before confirming.",
+        "correctedValue": "Time uses your device’s timezone. Review the exact date before confirming."
+      },
+      {
+        "frame": "390-open-light-bottom",
+        "sample": 8,
+        "oldValue": "Time uses your deviceâ€™s timezone. Review the exact date before confirming.",
+        "correctedValue": "Time uses your device’s timezone. Review the exact date before confirming."
+      },
+      {
+        "frame": "1536-planning-dark-b",
+        "sample": 10,
+        "oldValue": "Activity couldnâ€™t be read. Retry activity",
+        "correctedValue": "Activity couldn’t be read. Retry activity"
+      },
+      {
+        "frame": "390-planning-dark-b",
+        "sample": 10,
+        "oldValue": "Activity couldnâ€™t be read. Retry activity",
+        "correctedValue": "Activity couldn’t be read. Retry activity"
+      },
+      {
+        "frame": "320-planning-dark-b",
+        "sample": 10,
+        "oldValue": "Activity couldnâ€™t be read. Retry activity",
+        "correctedValue": "Activity couldn’t be read. Retry activity"
+      }
+    ],
+    "rawWindowsAssemblyFramesSha256": "14fe6b3c1facf896f0cb9abd5e84062e015a44aa90f2f3e1fa7afdcd81ce45e5",
+    "correctedFramesHashEncoding": "UTF8 bytes with LF newlines, as committed by Git; raw Windows assembly used CRLF. JSON values are identical.",
+    "hashBindingCorrection": {
+      "previousCandidate": "47c9b6f53a4a6e229721747aba1ebc761d399358",
+      "formerDeclaredValue": "14fe6b3c1facf896f0cb9abd5e84062e015a44aa90f2f3e1fa7afdcd81ce45e5",
+      "resolvedValue": "0e1656a89657b6921318c9fdb43ee3a3a69b17a754e10db61a4f98eda94ae496",
+      "reason": "Independent review detected the raw-assembly hash was not labeled separately from the immutable LF Git blob. No source, pixel, geometry, sample text or acceptance change."
+    }
+  }
 }

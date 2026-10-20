@@ -1,8 +1,10 @@
 // @vitest-environment node
 // Protected caller/transport ports, not browser Auth, production RLS or acceptance.
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { createClient, FunctionsHttpError } from "@supabase/supabase-js";
 import { readOwnerTaskHistoryList, readOwnerTaskOutcome, type OwnerTaskCaller, type OwnerTaskHistoryInvoker, type OwnerTaskScope } from "./ownerTaskAutomation";
 import { ACT_OUTCOMES } from "../../../supabase/functions/_shared/paige-orchestration/outcomes";
+import { createOwnerTaskHistoryHandler } from "../../../supabase/functions/_shared/paige-orchestration/owner-task-history-handler";
 
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 const scope: OwnerTaskScope = { actorId: id(1), tenantId: id(2), epoch: 1 };
@@ -41,6 +43,59 @@ function fixture() {
   return { ...f, caller, functions, configure: f };
 }
 afterEach(() => { vi.useRealTimers(); });
+
+describe("actual history handler and standard SDK refusal transport", () => {
+  it.each(["handler-403", "handler-401", "http-400", "http-404", "http-409", "http-500", "fetch-error", "relay-error",
+    "plain-error-native-response", "genuine-error-fake-response", "retired-scope", "revoked-role"])("keeps authority and uncertainty distinct: %s", async scenario => {
+    const f = fixture();
+    let invocations = 0, privateReads = 0, httpCalls = 0;
+    let response: globalThis.Response | undefined, sdkError: unknown;
+    const handler = createOwnerTaskHistoryHandler({
+      caller: () => ({
+        auth: { getUser: async () => ({ data: { user: scenario === "handler-401" ? null : { id: scope.actorId } }, error: null }) },
+        rpc: async name => ({ data: name === "current_user_tenant_id" ? scope.tenantId : false, error: null }),
+        from: () => { throw Error("exact native predicate must refuse before reading the original row"); },
+      }),
+      service: () => ({
+        from: () => { privateReads++; throw Error("private reads forbidden"); },
+        rpc: async () => { privateReads++; throw Error("private reads forbidden"); },
+      }),
+    });
+    const sdk = createClient("https://unit-test.invalid", "synthetic-nonsecret-fixture", {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+      global: { headers: { Authorization: "Bearer ordinary-synthetic-fixture" }, fetch: async (url, init) => {
+        httpCalls++;
+        if (scenario === "fetch-error") throw Error("synthetic offline failure");
+        response = scenario.startsWith("http-") ? new Response("ignored private body", { status: Number(scenario.slice(5)) })
+          : scenario === "relay-error" ? new Response("ignored private body", { status: 403, headers: { "x-relay-error": "true" } })
+          : await handler(new Request(url, init));
+        return response;
+      } },
+    });
+    const functions: OwnerTaskHistoryInvoker = { invoke: async (name, options) => {
+      invocations++;
+      if (scenario === "plain-error-native-response") return { data: null, error: { name: "FunctionsHttpError", context: new Response(null, { status: 403 }) } };
+      if (scenario === "genuine-error-fake-response") return { data: null, error: new FunctionsHttpError({ status: 403 }) };
+      const received = await sdk.functions.invoke(name, options); sdkError = received.error;
+      if (scenario === "retired-scope") f.change({ ...scope, epoch: 2 });
+      if (scenario === "revoked-role") f.configure.role = "member";
+      return received;
+    } };
+    const refused = ["handler-403", "handler-401", "retired-scope", "revoked-role"].includes(scenario);
+    expect(await readOwnerTaskOutcome(scope, selected, f.caller, functions, f.current)).toEqual({ status: refused ? "refused" : "unavailable" });
+    expect(invocations).toBe(1); expect(privateReads).toBe(0);
+    expect(f.calls.every(x => ["auth", "current_user_tenant_id", "tenant_members"].includes(x.stage))).toBe(true);
+    if (response) {
+      expect(response.bodyUsed).toBe(false);
+      if (scenario !== "relay-error") {
+        expect(sdkError).toBeInstanceOf(FunctionsHttpError);
+        expect((sdkError as FunctionsHttpError).context).toBe(response);
+      }
+    }
+    expect(httpCalls).toBe(scenario === "plain-error-native-response" || scenario === "genuine-error-fake-response" ? 0 : 1);
+    if (scenario === "handler-403") expect(await response!.clone().json()).toEqual({ status: "refused" });
+  });
+});
 
 describe("existing process history caller projection (unmounted)", () => {
   it("reads settled locators through the existing caller view without treating them as execution", async () => {

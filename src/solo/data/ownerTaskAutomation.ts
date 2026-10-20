@@ -1,4 +1,5 @@
 /** Caller-JWT reader/control for the existing native task process. No execution or retry authority. */
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { ACT_OUTCOME_SET } from "../../../supabase/functions/_shared/paige-orchestration/outcomes.ts";
 import type { OwnerTaskHistory } from "../../../supabase/functions/_shared/paige-orchestration/owner-task-history.ts";
 export type OwnerTaskScope = { actorId: string; tenantId: string; epoch: number };
@@ -138,7 +139,8 @@ export async function readOwnerTaskOutcome(scope: OwnerTaskScope, selection: { p
     const after = await authority(captured, caller, current, deadline);
     deadline.check();
     if (after !== "ready") return { status: after };
-    if (response.error) return { status: "unavailable" };
+    if (response.error) return { status: response.error instanceof FunctionsHttpError
+      && response.error.context instanceof globalThis.Response && [401, 403].includes(response.error.context.status) ? "refused" : "unavailable" };
     const result = historyProjection(response.data, processId, approvalId);
     return !result || result.status === "ready" && result.occurrenceId !== occurrenceId ? { status: "unavailable" } : result;
   } catch { return { status: matches(captured, current) ? "unavailable" : "refused" }; }

@@ -3,10 +3,13 @@ import type { BusinessOperatingSnapshot, DomainSnapshot } from '../../../../supa
 import type { MissionTargetSnapshot } from '../../../../supabase/functions/_shared/business-mission-targets/presentation';
 
 const now = Date.now();
+export const SECOND_REVIEW_TENANT = '10000000-0000-4000-8000-000000000002';
 export function withTargetAndFinanceFixtures(snapshot: BusinessOperatingSnapshot, state: string, includeFinance: boolean): BusinessOperatingSnapshot {
+  const second = snapshot.tenant_id === SECOND_REVIEW_TENANT;
+  const missionId = second ? '33333333-3333-4333-8333-333333333334' : '33333333-3333-4333-8333-333333333333';
   const targets: MissionTargetSnapshot[] = state === 'empty' ? [] : [{
-    mission: { id: '33333333-3333-4333-8333-333333333333', title: 'Grow the recurring service business', revision: 3, state: 'active' },
-    target: { id: '22222222-2222-4222-8222-222222222222', tenant_id: snapshot.tenant_id, mission_id: '33333333-3333-4333-8333-333333333333', revision: 1, state: 'active', title: 'Active clients target',
+    mission: { id: missionId, title: 'Grow the recurring service business', revision: 3, state: 'active' },
+    target: { id: second ? '22222222-2222-4222-8222-222222222223' : '22222222-2222-4222-8222-222222222222', tenant_id: snapshot.tenant_id, mission_id: missionId, revision: 1, state: 'active', title: 'Active clients target',
       metric: { key: 'business.active_clients_current', version: '1.0.0', unit: 'count', value_kind: 'count', currency: null, dimensions: {}, range_key: 'month', semantics: 'current_snapshot', business_time_zone: null },
       period: { start: '2026-10-01T00:00:00Z', end: '2026-11-01T00:00:00Z', time_zone: 'UTC' }, comparison: 'at_least', desired_value: '10', upper_value: null },
     observation: { state: 'partial', actual: '12', variance: null, attainment: 'unknown', period_complete: false, as_of: new Date(now).toISOString(), source_revision_ref: 'sr_v1_' + 'a'.repeat(64), reference_expires_at: new Date(now + 3600000).toISOString(), caveats: ['Synthetic partial coverage. Attainment remains unverified.'] },

@@ -1,0 +1,140 @@
+Browser tab: 1738568133, Title: "Local actual SOLO Operations proof", URL: "http://127.0.0.1:51805/?context=b&theme=light".
+1 AXWebArea Local actual SOLO Operations proof, URL: 127.0.0.1:51805/?context=b&theme=light
+	2 container
+		3 text PAIGE workspace ready
+		4 link Description: Skip to content, Value: 127.0.0.1:51805/?context=b&theme=light#tenant-shell-main
+		5 container Tenant workspace
+			6 link Description: PAIGE Solo home, Value: 127.0.0.1:51805/solo/1702/command-center
+			7 button Fold navigation
+				8 image
+			9 link Description: Command Center, Value: 127.0.0.1:51805/solo/1702/command-center
+			10 link Description: Operations, Value: 127.0.0.1:51805/solo/1702/operations
+			11 link Description: Clients, Value: 127.0.0.1:51805/solo/1702/clients
+			12 link Description: Marketing, Value: 127.0.0.1:51805/solo/1702/growth
+			13 link Description: Ads, Value: 127.0.0.1:51805/solo/1702/ads
+			14 link Description: Sales, Value: 127.0.0.1:51805/solo/1702/sales
+			15 link Description: Finance, Value: 127.0.0.1:51805/solo/1702/finance
+			16 link Description: Marketplace, Value: 127.0.0.1:51805/solo/1702/marketplace
+			17 link Description: Settings, Value: 127.0.0.1:51805/solo/1702/settings
+			18 button Use Obsidian theme
+			19 button Sign out
+			20 text SY
+			21 text Synthetic Studio B
+			22 text Owner workspace
+		23 container
+			24 text SYNTHETIC STUDIO B Operations Solo
+			25 button (collapsed) Description: Direct PAIGE, Secondary Actions: Expand
+				26 image PAIGE
+				27 text Direct PAIGE, or press ⌘\
+				28 text ⌘\
+		29 container Operations department
+			30 container
+				31 container Department views
+					32 button Overview
+					33 button Work
+					34 button Projects
+					35 button Delivery
+					36 button Playbooks
+					37 button Capacity
+				38 button Refresh work and team profiles
+					39 image
+			40 container
+				41 container Overview
+					42 container
+						43 heading Your operating week, Value: 1
+							44 text Your operating week
+						45 text Current commitments, responsible people and the next decisions.
+						46 button Weekly responsibility
+						47 button Plan with PAIGE
+					48 container
+						49 text 14  active  commitments  ·  1  in progress ·  1 reminder  in the sources shown
+					50 container Priority work to inspect
+						51 container
+							52 heading Needs your attention, Value: 2
+								53 text Needs your attention
+							54 text Blocked
+						55 heading Confirm the project handoff, Value: 3
+							56 text Confirm the project handoff
+						57 text The next step needs an owner decision before delivery can continue.
+						58 text Client onboarding No due date
+						59 text Jordan Ellis
+						60 button Inspect the original work
+						61 container
+							62 text 1  other blocked or overdue  commitment  in the work shown.
+						63 button View attention in Work
+					64 container
+						65 heading Work in motion, Value: 2
+							66 text Work in motion
+						67 button All work
+						68 content list
+							69 container
+								70 button Confirm the next client check-in
+								71 text CRM task No due date Jordan Ellis In progress
+							72 container
+								73 button Share the agreed next steps
+								74 text Client onboarding Oct 21 Jordan Ellis Ready
+							75 container
+								76 button Review delivery milestone 1
+								77 text Planning work Nov 1 Jordan Ellis Ready
+							78 container
+								79 button Review delivery milestone 2
+								80 text Planning work Nov 2 Jordan Ellis Ready
+							81 container
+								82 button Review delivery milestone 3
+								83 text Planning work Nov 3 Jordan Ellis Ready
+							84 container
+								85 button Review delivery milestone 4
+								86 text Planning work Nov 4 Jordan Ellis Ready
+						87 text Showing 6 of  12  other active items. Open Work to inspect the rest.
+					88 container
+						89 heading Projects and milestones, Value: 2
+							90 text Projects and milestones
+						91 button All projects
+						92 content list
+							93 container
+								94 button Client onboarding
+								95 text 0  of  2  recorded items completed
+					96 container Connected Operations work
+						97 button Client promises
+						98 button People and workload
+						99 button Procedures
+					100 container
+						101 heading Next deadlines, Value: 2
+							102 text Next deadlines
+						103 content list
+							104 container
+								105 button Share the agreed next steps
+								106 text Client onboarding Oct 21 Jordan Ellis Ready
+							107 container
+								108 button Prepare the next milestone
+								109 text CRM task Oct 28 Morgan Lee Ready
+							110 container
+								111 button Review delivery milestone 1
+								112 text Planning work Nov 1 Jordan Ellis Ready
+							113 container
+								114 button Review delivery milestone 2
+								115 text Planning work Nov 2 Jordan Ellis Ready
+							116 container
+								117 button Review delivery milestone 3
+								118 text Planning work Nov 3 Jordan Ellis Ready
+						119 button View deadlines in Work
+						120 heading Recorded reminders, Value: 2
+							121 text Recorded reminders
+						122 content list
+							123 container
+								124 button Review unfinished commitments
+								125 text Planning reminder Oct 22, 10:00 AM Jordan Ellis Ready
+						126 button View reminders in Work
+						127 text These are saved reminder times. Open the original record to review its current state; a scheduled time does not prove delivery.
+						128 heading What to do next, Value: 2
+							129 text What to do next
+						130 container
+							131 text 2  active  commitments need  a confirmed due date. Start with the original work before choosing when it belongs.
+						132 button Review timing: Confirm the next client check-in
+							133 text Review timing:
+							134 text Confirm the next client check-in
+						135 button Review all missing dates
+						136 button Prepare a review with PAIGE
+				137 text Attention and deadlines reflect loaded Planning work and up to 200 CRM tasks. Unavailable sources are excluded.
+
+The focused UI element is 119 button View deadlines in Work

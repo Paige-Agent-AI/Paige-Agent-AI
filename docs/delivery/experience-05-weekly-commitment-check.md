@@ -1,5 +1,13 @@
 # Experience 05 Weekly Internal Commitment Check
 
+## October20 — reviewed draft source merged; bounded production readback
+
+PR#2427 reviewed head7589e0d5 merged at519da233250cc8ef6d1a18118d9017bba9ba5f3a/tree d4ee3afc. Independent NON-AUTHOR review5587316505 PASS; all13 required exact-head checks and both Vercel statuses passed. Production Vercel dpl_EKf1GBr9vEiKsX8JHEiP5UgXL3uB is READY at that exact source; public version519da…-mvgv7ypi read back. Migration20271112130000 is applied once; eight new SQL bodies match reviewed source, protected incumbent bodies and ACLs are preserved, and three indexes are valid/ready.
+
+All27 selected Edge sources/configurations verified PASS in run39452878730 attempt2 after the independently reviewed seven-file nav-pull-profile package repair (actual version48). This is distinct from the global Edge certificate: the existing canonical full recovery39457966267 deployed73 and verified70; business-mission-action, preview-transactional-email and send-transactional-email failed download_missing_dependency. Original strict verification held edge-live at e660dca7. Artifact12281766910 ZIP68f99c2dd0c3af6e0d6c276f0b980d31bcd9e322240a4e4772d3e22987fceb91 is retained; existing E02 packaging owner/#2413 notified, protected workflow/branch not taken over. No blind retry, forced certificate or verification waiver.
+
+Ordinary existing-owner production proof is limited to scoped read/empty proposal state and native required-time-zone refusal without saving. Unchanged-source supplemental local save/reload/original receipt/Escape/focus evidence passed independent review36161639, but is synthetic. Actual customer draft creation/record/receipt/reload, recurring authorization/activation, Chat/Live and the integrated Experience remain UNVERIFIED/owed. Original18/25/50 and nine E5 cases are preserved; strict closure stays1/18 and2/50. The dated preparation/source checkpoints below are historical and do not supersede this release boundary.
+
 ## October20 — exact-head attribution reconciliation after a63 CI
 
 The a63 candidate's hosted database/Spine/Preview and other checks passed; general verify failed its client-memory smoke. Local actual-handler reproduction retained1237PASS/1FAIL:19.8 identified only the newly classified native weekly draft missing from the existing canonical WRITE_TARGET. The correction adds `weekly_commitment_draft: "paige_automations"` beside the existing automation draft, matching the original native process and atomic Rail automation_id. No tool, dispatch, admission, permission, provider or recurrence change is introduced.

@@ -1,0 +1,188 @@
+[
+  {
+    "file": "a-1024-paige-closed.jpg",
+    "width": 1024,
+    "height": 768,
+    "format": "Jpeg"
+  },
+  {
+    "file": "a-1024-paige-open.jpg",
+    "width": 1024,
+    "height": 768,
+    "format": "Jpeg"
+  },
+  {
+    "file": "a-1366-paige-closed.jpg",
+    "width": 1366,
+    "height": 768,
+    "format": "Jpeg"
+  },
+  {
+    "file": "a-1366-paige-open.jpg",
+    "width": 1366,
+    "height": 768,
+    "format": "Jpeg"
+  },
+  {
+    "file": "a-1536-paige-closed.jpg",
+    "width": 1535,
+    "height": 770,
+    "format": "Jpeg"
+  },
+  {
+    "file": "a-1536-paige-open.jpg",
+    "width": 1535,
+    "height": 770,
+    "format": "Jpeg"
+  },
+  {
+    "file": "a-900-paige-closed.jpg",
+    "width": 900,
+    "height": 451,
+    "format": "Jpeg"
+  },
+  {
+    "file": "a-900-paige-open.jpg",
+    "width": 900,
+    "height": 1000,
+    "format": "Jpeg"
+  },
+  {
+    "file": "b-1024-paige-closed.jpg",
+    "width": 1024,
+    "height": 768,
+    "format": "Jpeg"
+  },
+  {
+    "file": "b-1024-paige-open.jpg",
+    "width": 1024,
+    "height": 768,
+    "format": "Jpeg"
+  },
+  {
+    "file": "b-1366-paige-closed.jpg",
+    "width": 1366,
+    "height": 768,
+    "format": "Jpeg"
+  },
+  {
+    "file": "b-1366-paige-open.jpg",
+    "width": 1366,
+    "height": 768,
+    "format": "Jpeg"
+  },
+  {
+    "file": "b-1536-paige-closed.jpg",
+    "width": 693,
+    "height": 770,
+    "format": "Jpeg"
+  },
+  {
+    "file": "b-1536-paige-open.jpg",
+    "width": 1535,
+    "height": 770,
+    "format": "Jpeg"
+  },
+  {
+    "file": "b-900-paige-closed.jpg",
+    "width": 900,
+    "height": 1000,
+    "format": "Jpeg"
+  },
+  {
+    "file": "b-900-paige-open.jpg",
+    "width": 900,
+    "height": 1000,
+    "format": "Jpeg"
+  },
+  {
+    "file": "deadline-set.jpg",
+    "width": 1535,
+    "height": 770,
+    "format": "Jpeg"
+  },
+  {
+    "file": "denied.jpg",
+    "width": 320,
+    "height": 844,
+    "format": "Jpeg"
+  },
+  {
+    "file": "empty.jpg",
+    "width": 320,
+    "height": 844,
+    "format": "Jpeg"
+  },
+  {
+    "file": "loading.jpg",
+    "width": 320,
+    "height": 844,
+    "format": "Jpeg"
+  },
+  {
+    "file": "narrow-overview.jpg",
+    "width": 320,
+    "height": 844,
+    "format": "Jpeg"
+  },
+  {
+    "file": "narrow-work.jpg",
+    "width": 320,
+    "height": 844,
+    "format": "Jpeg"
+  },
+  {
+    "file": "overview1536.jpg",
+    "width": 1535,
+    "height": 770,
+    "format": "Jpeg"
+  },
+  {
+    "file": "partial.jpg",
+    "width": 320,
+    "height": 844,
+    "format": "Jpeg"
+  },
+  {
+    "file": "phone-overview.jpg",
+    "width": 390,
+    "height": 843,
+    "format": "Jpeg"
+  },
+  {
+    "file": "phone-work.jpg",
+    "width": 390,
+    "height": 843,
+    "format": "Jpeg"
+  },
+  {
+    "file": "settled-a-1536-paige-closed.jpg",
+    "width": 1535,
+    "height": 770,
+    "format": "Jpeg"
+  },
+  {
+    "file": "settled-a-900-paige-closed.jpg",
+    "width": 900,
+    "height": 1000,
+    "format": "Jpeg"
+  },
+  {
+    "file": "settled-b-1366-paige-closed.jpg",
+    "width": 1366,
+    "height": 768,
+    "format": "Jpeg"
+  },
+  {
+    "file": "settled-b-1536-paige-closed.jpg",
+    "width": 1535,
+    "height": 770,
+    "format": "Jpeg"
+  },
+  {
+    "file": "settled-overview1536.jpg",
+    "width": 1535,
+    "height": 770,
+    "format": "Jpeg"
+  }
+]

@@ -1,0 +1,62 @@
+# EXP05 — From operational attention to original Work
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: Overview attention/deadlines/missing dates/reminders → all matching loaded Work in List → original native inspector → guarded close/return; normal Work retains its Board default.
+PAIGE_UI_DESIGN: PASS: installed PAIGE router and five modules, Flow-by-Flow, Flow Prototype, Impeccable Operate/craft floor; existing hierarchy, tokens, shell and native editors retained.
+MATERIAL_FLOW_CHANGE: YES: adds contextual continuation from four existing Overview sections into the existing native Work surface.
+FLOW_PROTOTYPE: PASS: actual-component interaction prototype selected before runtime edits under October18–20 owner full-Experience/prelaunch delegation. Selection and pre-edit contract exported; founder product acceptance is separate.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an eligible SOLO owner/member follows an important group to its complete matching loaded records and inspects the original work without losing local edits.
+VISUAL_DIRECTION: PASS: preserve the full operating-week/PAIGE/weekly hierarchy; compact contextual actions, useful group context, original Work/List and native Sheet; no new dashboard or engine.
+AUTOMATED_EVIDENCE: PASS:74 assertions across5 owning suites (31 in4suites plus43 Workspace). Covers full deadlines beyond summary, equal source IDs, date/reminder/DST semantics, refused/foreign/missing sources, source refresh/completion, actor/tenant/client changes, controlled routing, dirty guard and focus. First valid failing cases and the corrected focus race are retained.
+STATIC_EVIDENCE: PASS: scoped ESLint0 errors/warnings; TypeScript ratchet baseline10/current6/no new errors; production Vite build succeeds. Pinned Impeccable4.1.0 reports0 anti-patterns and4 advisories on unchanged incumbent font-size declarations; no changed-line advisory. Initial registry DNS failure is tooling evidence, not a product result.
+RENDERED_EVIDENCE: PASS:31 original native JPEGs, including5 retained INVALID captures and5 separate-call settled replacements. The acceptance index selects16 required desktop/context/panel frames, phone390 and narrow320, partial/empty/loading/refused states. Actual current SoloApp/Operations/Work/editor components with explicitly synthetic readers and no backend/provider access;285 project source hashes match the captured inputs. Nominal1536-CSS-pixel replacement frames encode1535 pixels; original bytes and exact DOM/image dimensions are disclosed without resampling.
+BEHAVIORAL_EVIDENCE: PASS: ten loaded deadlines versus five-row Overview summary; seventh added deadline opens its original native inspector; changed local status survives Escape with save/discard guidance; discard affects only that local form; settled Escape focuses original row, Back focuses original Overview entry. Native write/activity authority is not simulated as production success.
+AUTHENTICATED_RUNTIME: UNVERIFIED: this routing candidate is not deployed. Ordinary authorized read-only production traversal after release remains owed; native fixture contexts are not customer authentication.
+KEYBOARD_FOCUS: PASS: entry focuses chosen Work context; dirty Escape refuses departure; original inspector Close/Escape returns to source-qualified row; Back restores Overview group. Unit cases cover the Sheet-close/Overview-focus race and guarded transitions.
+ZOOM_REFLOW: PASS:390 and320 CSS-pixel native Work/Overview captures with no page overflow. This is content-width stress; actual browser zoom and screen-reader execution remain UNVERIFIED.
+REDUCED_MOTION: PASS: no added animation/transition; existing native Sheet reduced-motion rules unchanged.
+STATE_COVERAGE: PASS: first-use, group empty, loading, source partial/refused, truncated CRM/Team disclosure, original inspection, unsaved guard, refresh/completed removal, close/back, canonical route change and actor/tenant/client retirement. No retry write or successful provider effect is asserted.
+TRUTHFUL_STATE_LABELS: PASS: counts describe matching loaded records, not all business work; reminders are recorded times, not delivered notifications; an unchanged saved weekly draft is not authorized recurring execution.
+SOLO_UI: YES: existing operations.department Overview/Work/Workspace. Full Experience binding remains PROOF_OWED.
+SOLO_1536X770_PAIGE_CLOSED: PASS: settled-a/b-1536-paige-closed replacements and actual DOM1536x770 geometry;10 matching rows,44px actions, no page overflow. Native encoded width1535 is disclosed separately.
+SOLO_1536X770_PAIGE_OPEN: PASS: both1536 open frames; existing PAIGE dock preserves Work and scoped geometry.
+SOLO_1366X768_PAIGE_CLOSED: PASS: original A and settled-b-1366-paige-closed replacement; exact1366x768 pixels, original Operations scroll owner and complete loaded list.
+SOLO_1366X768_PAIGE_OPEN: PASS: both1366 open frames and exact native widths; panel controls retained.
+SOLO_1024X768_PAIGE_CLOSED: PASS: both1024 closed frames, original responsive rail and visible group actions.
+SOLO_1024X768_PAIGE_OPEN: PASS: both1024 open frames; incumbent modal backdrop blocks background interaction, not claimed as usable through it.
+SOLO_900X1000_PAIGE_CLOSED: PASS: settled-a-900-paige-closed replacement and original B; exact900x1000 pixels, context and Work remain reachable in native scrolling.
+SOLO_900X1000_PAIGE_OPEN: PASS: both900 open frames; original responsive panel and toolbar Fold retained. Initial ambiguous backdrop/toolbar selector corrected in the drive only.
+UNVERIFIED: candidate production/authenticated traversal, actual browser zoom/AT, canonical business writes/receipts through this navigation, Chat/Live, algorithm/automation activation, provisioning acceptance, ZION and full ten-outcome/E5-CV1–9/owner acceptance. Strict historical closure remains1/18 and2/50.
+OWNER_INTENT: Operations becomes the useful visible AI COO surface, connecting what matters with the actual responsible work and its evidence.
+MUST_NOT_HAPPEN: no fabricated completeness, account-specific code, duplicated reader/store/scheduler/approval, foreign work, silent lost edit or claimed action success from navigation.
+MUST_PRESERVE: original Overview, Work filters/Board/Timeline, Weekly responsibility, PAIGE review, Projects/Delivery/Playbooks/Capacity, source IDs/versions, native commands and all authority/activation gates.
+ACCEPTANCE_CRITERIA: same shared implementation for equivalently eligible existing/future SOLO; selected loaded set, original record, source limitations, guarded edits, contextual return/focus and scoped-state retirement.
+MOTION_PURPOSE: NONE: no motion added.
+PROTECTED_SEAMS: affected local record routing, tenant/actor/client retirement, source denial/readback, editor/navigation guards, focus and responsive geometry tested. Authentication/account choice, entitlements/signup/paywall/billing/provisioning, approvals/autonomy, Spine execution, canonical writers/readbacks, Rail/audit/Memory, Chat transcript/stream/history/popout, Live, Secure Browser/Vault/credentials, providers/external effects, durable scheduling/retry/idempotency and privacy serialization are not modified. Original caller/source/security tests remain authoritative; presentation is not a substitute for server proof.
+INTERNAL_BUILD_IDENTITY: base=519da233250cc8ef6d1a18118d9017bba9ba5f3a; captured-runtime=285 exact dirty-source hashes; deployment=NOT_DEPLOYED; environment=local isolated actual shell; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/exp05-attention-work/source-manifest.json.
+RELEASE_CHANNEL: development: reviewed-source candidate; no production activation or customer announcement.
+RELEASE_CLASSIFICATION: patch: connect existing operational questions to original canonical loaded work.
+CUSTOMER_RELEASE_IDENTITY: none: internal prelaunch increment; complete Experience release identity remains owner-reserved.
+RELEASE_NOTE_REQUIRED: no: no customer announcement requested; founder evaluates the integrated Experience after technical release.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: local source/behavior shown; exact-head review/CI, deployment and ordinary authenticated behavior remain separate.
+RELEASE_RECOVERY: position=bounded client forward fix/revert; reference=original native records, commands and readers unchanged.
+
+## Flow, applicability and ownership
+
+REUSE the original scoped Planning/CRM readers, native projection, Work views, inspector/editor and guards. EXTEND display-only grouping and ephemeral navigation state. REPAIR group return focus and disclose incumbent Team truncation. No new capability/provider/mutation/approval/event/Rail is required. Canonical plan_list_operations_scoped and operations_crm_work_read retain authority; navigation does not register a new Chat/Live capability.
+
+Group state lives only within the existing actor:tenant remount and is not a business record. Returning through ordinary Work or another destination clears it. A denied source is excluded, an unfinished read stays unfinished, and completion may remove a row from the active group while preserving its original open inspector. Source-qualified identities prevent equal CRM/Planning UUIDs from selecting the wrong record. Existing native search/status filters intersect the selected loaded set; View all loaded work restores ordinary Work.
+
+Universal applicability follows the unchanged shared SOLO route/provisioning/entitlement contracts; no account IDs, names, allowlist or creation-age branches select behavior. Two neutral fixture contexts demonstrate shared presentation, not authenticated RLS, provisioning or customer acceptance. No test tenant, role or provider was created.
+
+Grounding/collision check: ANT11/21/52/147 and overlapping ANT51/163 records; latest main519da and active PRs rechecked. E04#2161's pending Workspace delivery inspections/guards must be semantically composed on its release; none were overwritten. Its original branch, E04#2156, Team-presence#2153, original EXP05#2163/#2189, E02#2400/#2413 and E09#2404 remain untouched. EXP00#2428 is adjacent operator commercial work, not this tenant Operations source. No receiving-owner handoff is inferred.
+
+## Evidence and review
+
+[Native proof and limits](assets/exp05-attention-work/native-proof.json), [original byte integrity](assets/exp05-attention-work/export-integrity.json), [source bindings](assets/exp05-attention-work/source-manifest.json), [pre-edit routing contract](assets/exp05-attention-work/pre-edit-contract.txt), [selected interaction](assets/exp05-attention-work/flow-selection.json). Operations body remains the scroll owner; no global overflow suppression was added.
+
+Initial zero-assertion sandbox temp-file failure is INVALID tooling evidence. Four missing-group failures then two missing UI actions and three missing Workspace transitions reproduced before implementation. The first composed run caught a real focus race (67PASS/1FAIL); correction passed68. Subsequent negative tests passed72; the final extra completion case initially used incorrect label casing, corrected only its assertion to the original native `done` field;43 Workspace plus31 other owning assertions pass. No runtime change was made to satisfy that mistaken label. A redundant direct TypeScript run was cancelled after the original canonical ratchet reported PASS; it is not an additional verification claim.
+
+Independent early source review found no material defect and confirmed ten protected files byte-exact to519da. Final immutable-source/native finish review and required exact-head CI are still owed at this checkpoint. Impeccable source: https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md.
+
+Original independent finish review `a79988d1ec5435f945be728d1eca4133fbf8de5e7056f8f6990272d326eeee89` was REVISE_EVIDENCE_ONLY: all27 images (26 current plus1 earlier selected prototype),285 project/3762 private build bindings and original73 hashes inspected. It found five unsettled/wrongly labeled captures and the environment grammar; no runtime defect. All rejected bytes remain explicitly INVALID in native-proof.json. Five additive separate-call replacements have decoded dimensions, current route/record geometry and exact labels; remaining12 original matrix cells retain the reviewed coverage. Environment now begins with local. Final replacement applicability/immutable review remains separate; no rejected frame silently became acceptance proof.

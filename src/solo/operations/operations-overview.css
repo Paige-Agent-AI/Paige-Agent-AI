@@ -55,6 +55,7 @@
 .ops-desk-note { color: var(--pg-muted); font-size: 12px; line-height: 1.6; margin: 12px 0 0; }
 .ops-desk-next-action p { color: var(--pg-muted); line-height: 1.6; margin: 12px 0 16px; max-width: 65ch; }
 .ops-desk-next-action>.ops-view-text-action { display: block; text-align: left; min-height: 44px; margin-top: 8px; }
+.ops-operating-desk [data-ops-work-set] { margin-top: 12px; }
 .ops-desk-first-use { padding: 30px 0; max-width: 65ch; border-top: 1px solid var(--pg-line); }
 .ops-desk-first-use p { margin: 14px 0; color: var(--pg-muted); line-height: 1.6; }
 .ops-desk-first-use>div { display: flex; flex-wrap: wrap; gap: 12px 24px; }

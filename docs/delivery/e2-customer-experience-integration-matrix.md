@@ -373,3 +373,18 @@ SOLO workspace; populated Finance, provider readiness and full acceptance remain
 owed. Original 9/0 and 12/0/4 evidence remains historical. All nineteen outcomes,
 all nine owned capabilities and the single full-Experience founder evaluation
 remain required.
+
+Algorithm support for this catalogue correction: **NO VERIFIED ALGORITHM is added
+or activated.** ALG-03 COO business-health prioritization uses permitted source
+risks and freshness; ALG-13 Useful next-best-action recommendations needs a useful
+step and durable outcome. Their deterministic severity-order candidate is #2409,
+not full algorithm acceptance. ALG-06 Cash-flow forecasting is not established by
+receipt comparisons or stored Finance facts; ALG-04 Retention and customer-success
+signals still needs real cohort/activity evidence. ALG-11 Model quality and cost
+evaluation stays with the canonical Model Fabric/Intelligence contract; ALG-12
+Anomaly and incident detection stays with originating Operations evidence. These
+contracts are partial/unverified at their required acceptance level (official EXP
+Algorithms), not new implementations here. PAIGE/VERA consume NEXUS acquisition,
+MERIT commercial, CURA client, ZION operations and MENTOR knowledge/strategy outputs
+through the existing scoped Spine/Fabric/Rail contracts; historical coding lanes
+are not restarted.

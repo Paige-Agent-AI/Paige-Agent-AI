@@ -149,7 +149,7 @@ await check('pre-tool document request refuses before model/provider or storage 
  assert.equal(r.response.status,409);assert.ok(r.wire.includes('INTERACTIVE_RECOVERY_READ_ONLY'));assert.equal(bodies.length,0);assert.equal(r.rec.functions.length,0);
  const refusal=JSON.parse(r.wire);
  assert.equal(refusal.message_accepted,true);
- assert.equal(refusal.reason,'An earlier response was interrupted, and its outcomes still need checking. Your message was recorded, but new actions and attachments are on hold. PAIGE can still answer questions about existing records.');
+ assert.equal(refusal.reason,'An earlier response was interrupted, and its outcomes still need checking. Your message was recorded, but new actions and attachments are on hold. You can still ask questions about existing records.');
  assert.equal(receipts.length,1);assert.equal(receipts[0].content,refusal.reason);
  assert.deepEqual(receipts[0].bundle_ref.interactive_refusal,{v:1,code:refusal.code});
  assert.equal(receipts[0].bundle_ref.turn_state.state,'INTERRUPTED');

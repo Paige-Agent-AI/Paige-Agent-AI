@@ -2,6 +2,7 @@
 //
 // One pure function decides what a PAIGE answer's status line says, from TURN STATE ONLY:
 //  - the latest `paige_turn` frame (C1), or the persisted `bundle_ref.turn_state` on reload;
+//  - the exact saved pre-processing recovery refusal marker, when consistent with that record;
 //  - the action steps this turn (C2a/C2b: running → done | error | withdrawn on one id);
 //  - the client's own clock (the 400 ms gate, elapsed time, the 10 s research expectation);
 //  - how the read ended (done, the person pressed Stop, or the six-minute window);
@@ -18,6 +19,7 @@
 // progress the record cannot drive.
 import type { TurnFrame, TurnMode, TurnRecord, TurnState } from "../../../supabase/functions/_shared/paige-turn/contract";
 import { STEP_START_LABELS } from "../../../supabase/functions/_shared/paige-turn/step-start";
+import { RECOVERY_READ_ONLY_REFUSAL } from "../../../supabase/functions/_shared/paige-turn/interactive-refusal";
 import { normalizeStepStatus } from "./step-status";
 
 export type TurnRowStatus = "running" | "done" | "error" | "stopped";
@@ -90,6 +92,8 @@ export interface TurnSnapshot {
    *  record has `turn_state.resumed`): today, an approved act the server ran from its stored
    *  proposal. Presentation reads it to draw the two answers as one; it never decides a state. */
   resumed?: boolean;
+  /** Exact saved refusal metadata, never inferred from answer prose or recovery authority. */
+  recoveryReadOnlyRefusal?: true;
 }
 
 export interface LiveTurnInput {
@@ -191,6 +195,16 @@ export function readTurnTrace(value: unknown): TurnRow[] {
 }
 
 export { readTurnRecord } from "../../../supabase/functions/_shared/paige-turn/contract";
+
+/** Recognize only the original zero-work refusal record; unknown or contradictory records keep
+ * their normal interruption presentation. This observation cannot grant recovery or replay. */
+export function readRecoveryReadOnlyRefusal(value: unknown, record: TurnRecord | null): boolean {
+  if (!record || record.state !== "INTERRUPTED" || record.mode !== "pending"
+    || record.rounds !== 0 || record.tools !== 0) return false;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const marker = value as Record<string, unknown>;
+  return marker.v === 1 && marker.code === RECOVERY_READ_ONLY_REFUSAL.code;
+}
 
 /** A persisted record, reduced to what the line needs. */
 export function outcomeFromRecord(record: TurnRecord | null): TurnOutcome | null {
@@ -297,6 +311,10 @@ export function deriveSnapshotView(
     case "LIMIT_REACHED":
       return { kind: "warn", glyph: "triangle", text: "Reached the limit for one answer", elapsed: null, steps: rows.length || null, rows, footer: null, announce: `${name} reached a limit` };
     case "INTERRUPTED":
+      if (snap.source === "reload" && snap.recoveryReadOnlyRefusal === true && o.mode === "pending" && rows.length === 0) {
+        return { kind: "held", glyph: "lock", text: "New actions and attachments on hold", elapsed: null,
+          steps: null, rows, footer: null, announce: "New actions and attachments on hold" };
+      }
       return {
         kind: "warn", glyph: "triangle", text: "Stopped before finishing", elapsed, steps: null, rows,
         footer: { text: snap.hasContent ? "What arrived is above." : "", actions: ["askAgain"] },

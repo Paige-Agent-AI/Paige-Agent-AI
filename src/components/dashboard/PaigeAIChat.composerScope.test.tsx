@@ -891,6 +891,19 @@ data: [DONE]
     expect(textarea().value).toBe("");
   });
 
+  it.each([
+    [502, { code: "INTERACTIVE_RECOVERY_READ_ONLY", message_accepted: true }],
+    [409, { code: "OTHER_REFUSAL", message_accepted: true }],
+    [409, { code: "INTERACTIVE_RECOVERY_READ_ONLY" }],
+  ])("does not infer a known recovery refusal from an ambiguous response (%s, %j)", async (status, body) => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(body), { status })));
+    await render(); await type("Check the existing records");
+    await act(async () => { send().click(); await settle(); });
+    expect(host.textContent).toContain("Check what finished before repeating any action");
+    expect(host.textContent).not.toContain("Your message was recorded");
+    expect(Array.from(host.querySelectorAll("button")).some(b => b.textContent === "Retry")).toBe(false);
+  });
+
   it("explains a known recovery refusal without claiming a lost connection or replaying the request", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({code:"INTERACTIVE_RECOVERY_READ_ONLY",message_accepted:true},{status:409})));
     await render(); await type("Review the existing work");

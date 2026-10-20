@@ -8,6 +8,16 @@ let actual;
 test('all 29 reviewed incumbent adapters bind to real dispatch and dependency source',()=>{
  const result=validateIncumbentResourceBindings(chat,sources);actual=result;assert.deepEqual(result.findings,[]);assert.equal(result.tools.size,29);
 });
+for(const [label,before,after]of [
+ ['refusal code changed','INTERACTIVE_RECOVERY_READ_ONLY','ACTION_COMPLETED'],
+ ['false processing claim','new actions and attachments are on hold','your document was processed and saved'],
+])test(`rejects recovery feedback constant: ${label}`,()=>{
+ const path='supabase/functions/_shared/paige-turn/interactive-refusal.ts';
+ const raw=readFileSync(path,'utf8'),changed=raw.replace(before,after);
+ assert.notEqual(changed,raw,'fixture must mutate the actual reviewed constant');
+ const altered=new Map(sources);altered.set(path,changed);
+ assert.ok(validateIncumbentResourceBindings(chat,altered).findings.some(f=>f.includes(path)));
+});
 const mutations=[
  ['caller factory changed',s=>s.replace('createClient(supabaseUrl, supabaseKey, {','createClient(supabaseUrl, supabaseServiceKey, {')],
  ['caller JWT replaced',s=>s.replace("const authHeader = req.headers.get('Authorization');","const authHeader = 'Bearer counterfeit';")],

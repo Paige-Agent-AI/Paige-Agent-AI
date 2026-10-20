@@ -89,6 +89,7 @@ export {
   isDecisionReplyText,
   mergeResumedRows,
   outcomeFromRecord,
+  readRecoveryReadOnlyRefusal,
   readTurnRecord,
   readTurnTrace,
   settleTurnRows,

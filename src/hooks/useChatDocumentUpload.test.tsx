@@ -101,6 +101,41 @@ describe("INT-338 canonical attachment input", () => {
     let resolve!: (v: ArrayBuffer) => void; await act(async () => upload.handleDrop(drag([file("old.png", "image/png", 3, () => new Promise(r => { resolve = r; }))])));
     await act(async () => upload.setAttachedDoc(null)); await act(async () => resolve(new Uint8Array([9]).buffer)); await flush(); expect(upload.attachedDoc).toBeNull(); expect(upload.isProcessingFile).toBe(false);
   });
+  async function refusedFileRestore() {
+    await act(async () => upload.handleDrop(drag([file("unprocessed.pdf", "application/pdf")]))); await flush();
+    const original = upload.attachedDoc!;
+    await act(async () => upload.setAttachedDoc(null));
+    return { original, restore: upload.prepareAttachmentRestore(original) };
+  }
+  it("restores an unprocessed file only in its untouched composer, without reading it again", async () => {
+    const { original, restore } = await refusedFileRestore();
+    await act(async () => restore());
+    expect(upload.attachedDoc).toBe(original);
+    expect(original.file.arrayBuffer).toHaveBeenCalledTimes(1);
+  });
+  it("a refused-file restore cannot replace a newer completed selection", async () => {
+    const { restore } = await refusedFileRestore();
+    await act(async () => upload.handleDrop(drag([file("newer.png")]))); await flush();
+    await act(async () => restore()); expect(upload.attachedDoc?.name).toBe("newer.png");
+  });
+  it("a refused-file restore cannot cancel or overwrite newer processing", async () => {
+    const { restore } = await refusedFileRestore(); let finish!: (v: ArrayBuffer) => void;
+    await act(async () => upload.handleDrop(drag([file("pending.png", "image/png", 3, () => new Promise(r => { finish = r; }))])));
+    await act(async () => restore()); expect(upload.isProcessingFile).toBe(true); expect(upload.attachedDoc).toBeNull();
+    await act(async () => finish(new Uint8Array([9]).buffer)); await flush(); expect(upload.attachedDoc?.name).toBe("pending.png");
+  });
+  it("a refused-file restore cannot undo a later explicit clear", async () => {
+    const { restore } = await refusedFileRestore(); await act(async () => upload.removeAttachment());
+    await act(async () => restore()); expect(upload.attachedDoc).toBeNull();
+  });
+  it.each(["thread-b", null])("a refused-file restore cannot cross scope %s or revive after returning", async scope => {
+    const { restore } = await refusedFileRestore(); await render(scope); await render("thread-a");
+    await act(async () => restore()); expect(upload.attachedDoc).toBeNull();
+  });
+  it("a refused-file restore cannot reintroduce data while the composer is disabled", async () => {
+    const { restore } = await refusedFileRestore(); await render("thread-a", false);
+    await act(async () => restore()); expect(upload.attachedDoc).toBeNull();
+  });
   it("unready scope guard refuses actual file paste/drop without affecting text paste", async () => {
     await render("thread-a", false); const text = paste([], "Keep typing"); upload.handlePaste(text); expect(text.preventDefault).not.toHaveBeenCalled();
     const f = file(); await act(async () => upload.handlePaste(paste([f]))); await act(async () => upload.handleDrop(drag([f]))); expect(f.arrayBuffer).not.toHaveBeenCalled(); expect(upload.attachedDoc).toBeNull();

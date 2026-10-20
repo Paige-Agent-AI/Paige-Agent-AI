@@ -35,7 +35,7 @@ vi.mock("@/hooks/useChatDocumentUpload", () => ({
   useChatDocumentUpload: () => ({
     attachedDoc: harness.attachedDoc, isDragOver: false, fileInputRef: { current: null }, acceptString: ".pdf",
     handleFileSelect: vi.fn(), handleDragOver: vi.fn(), handleDragLeave: vi.fn(), handleDrop: vi.fn(),
-    removeAttachment: vi.fn(), openFilePicker: vi.fn(), setAttachedDoc: vi.fn(),
+    removeAttachment: vi.fn(), openFilePicker: vi.fn(), setAttachedDoc: vi.fn(), prepareAttachmentRestore: () => () => undefined,
   }),
 }));
 vi.mock("@/integrations/supabase/client", () => ({

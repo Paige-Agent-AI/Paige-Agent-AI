@@ -36,6 +36,7 @@ import {
 import { PaigeCrmResultCard, type PaigeCrmResult } from "@/components/chat/PaigeCrmResultCard";
 import { readCrmResultMetadata } from "../../../supabase/functions/_shared/paige-turn/crm-result-reference";
 import { CHAT_CONTROL_HEADER, CHAT_CONTROL_POLL_MS, chatControlRetryDelay } from "../../../supabase/functions/_shared/paige-turn/control-transport";
+import { RECOVERY_READ_ONLY_REFUSAL } from "../../../supabase/functions/_shared/paige-turn/interactive-refusal";
 import { CheckLinks } from "@/components/chat/CheckLinks";
 import { PaigeRecordLinks } from "@/components/chat/PaigeRecordLinks";
 import { mergeRecordLinks, readRecordLinks, type ReadRecordLink } from "../../../supabase/functions/_shared/paige-turn/record-links";
@@ -65,6 +66,7 @@ import {
   isDecisionReplyText,
   mergeResumedRows,
   outcomeFromRecord,
+  readRecoveryReadOnlyRefusal,
   readPaigeStreamWithRaw,
   readTurnRecord,
   readTurnTrace,
@@ -111,13 +113,6 @@ import {
 // server budget. The durable-work envelope remains the real disconnect/retry fix.
 const PAIGE_INTERACTIVE_TURN_BUDGET_MS = 360_000;
 const RESEARCH_HISTORY_READ_BUDGET_MS = 8_000;
-
-// Client feedback only. The separately governed server/reload recovery change
-// replaces this local value with its shared constant when that flow is released.
-const RECOVERY_READ_ONLY_REFUSAL = {
-  code: "INTERACTIVE_RECOVERY_READ_ONLY",
-  message: "An earlier response was interrupted, and its outcomes still need checking. Your message was recorded, but new actions and attachments are on hold. You can still ask questions about existing records.",
-} as const;
 
 type ResearchHistoryReference = { messageId: string; run_id: string | null; question: string; saved: boolean };
 
@@ -681,7 +676,7 @@ const PaigeAIChatInner = ({
     attachedDoc, isProcessingFile, isDragOver, fileInputRef, acceptString,
     handleFileSelect, handleDragOver, handleDragLeave, handleDrop, handlePaste,
     removeAttachment, openFilePicker, setAttachedDoc, clearDrag, preventFileNavigation,
-    processingFileNow,
+    processingFileNow, prepareAttachmentRestore,
   } = useChatDocumentUpload({
     scopeKey: requestScopeHandle ? requestScopeEpoch : null,
     enabled: composerScope.writable && !dictationActive && !submissionPreflightRef.current,
@@ -1160,6 +1155,7 @@ const PaigeAIChatInner = ({
           endCause: null,
           source: "reload",
           hasContent: t.content.trim() !== "",
+          ...(readRecoveryReadOnlyRefusal(b.interactive_refusal, record) ? { recoveryReadOnlyRefusal: true } : {}),
           // C4a — only an APPROVAL carried forward draws the two answers as one (a3/a4). An answer
           // carried forward (C4c) is the person speaking between them, so the two stay two (c3).
           ...(record.resumed?.kind === "approval" ? { resumed: true } : {}),
@@ -1624,6 +1620,7 @@ const PaigeAIChatInner = ({
       ticketAccepted(requestTicket) ? preserveSettledResearchHistory(next, previous) : previous);
     const priorInteractive = interactiveRequestRef.current;
     const typedInteractive = soloTenantSafety && !voiceSink;
+    const restoreRefusedAttachment = doc ? prepareAttachmentRestore(doc) : null;
     const supersedesIntentId = typedInteractive && priorInteractive
       && composerDraftHandlesMatch(priorInteractive.handle, requestHandle) ? priorInteractive.intentId : undefined;
     // Keep the last dispatched authority through local session/thread preflight.
@@ -1907,10 +1904,11 @@ const PaigeAIChatInner = ({
           if (!ticketAccepted(requestTicket)) return;
           if (refusal?.message_accepted !== false) {
             retryTurnRef.current = null;
-            // Explain the server's exact refusal; accepted text is not a business effect.
-            // Unknown outcomes retain the existing no-replay connection feedback.
+            // A known refusal after native message acceptance is not a lost connection.
+            // Keep the recorded turn and the no-replay rule; only explain the existing hold.
             const recoveryRefused = response.status === 409 && refusal?.code === RECOVERY_READ_ONLY_REFUSAL.code
               && refusal.message_accepted === true;
+            if (recoveryRefused) restoreRefusedAttachment?.();
             setConnectionIssue(recoveryRefused ? "recovery-read-only" : "interactive-unconfirmed");
             setStreamingThreadId(null);
             if (enableHistory) threadsApi.onTurnPersisted();
@@ -3647,7 +3645,7 @@ const PaigeAIChatInner = ({
             )}
             {soloTenantSafety && connectionIssue && (
               <div role="alert" className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/35 px-3 py-2 text-xs text-muted-foreground">
-                <span>{connectionIssue === "recovery-read-only" ? RECOVERY_READ_ONLY_REFUSAL.message : connectionIssue === "interactive-unconfirmed" ? "The connection ended before PAIGE confirmed the result. Your message may have reached the conversation. Check what finished before repeating any action." : connectionIssue === "live-interrupted" ? "Paige's answer was interrupted. What arrived is still shown here. You can continue in text chat." : connectionIssue === "offline" ? "You appear to be offline. This message has not been sent." : connectionIssue === "server" ? "Something went wrong on our side and PAIGE didn't get to answer. Your message wasn't sent — try again." : `PAIGE was ${writingPhase ? "writing the response" : "working on your request"} when the six-minute interactive window ended. This chat stopped listening, so I can't confirm whether that work finished or was saved.${retryTurnRef.current && !retryTurnRef.current.live ? " Retry may start the work again." : ""}`}</span>
+                <span>{connectionIssue === "recovery-read-only" ? <>{RECOVERY_READ_ONLY_REFUSAL.message}{attachedDoc && <span className="mt-1 block">Remove the attached file first to ask about existing records.</span>}</> : connectionIssue === "interactive-unconfirmed" ? "The connection ended before PAIGE confirmed the result. Your message may have reached the conversation. Check what finished before repeating any action." : connectionIssue === "live-interrupted" ? "Paige's answer was interrupted. What arrived is still shown here. You can continue in text chat." : connectionIssue === "offline" ? "You appear to be offline. This message has not been sent." : connectionIssue === "server" ? "Something went wrong on our side and PAIGE didn't get to answer. Your message wasn't sent — try again." : `PAIGE was ${writingPhase ? "writing the response" : "working on your request"} when the six-minute interactive window ended. This chat stopped listening, so I can't confirm whether that work finished or was saved.${retryTurnRef.current && !retryTurnRef.current.live ? " Retry may start the work again." : ""}`}</span>
                 {connectionIssue !== "live-interrupted" && connectionIssue !== "interactive-unconfirmed" && connectionIssue !== "recovery-read-only" && retryTurnRef.current && !retryTurnRef.current.live && <Button type="button" variant="outline" size="sm" disabled={!composerScope.writable || dictationActive} onClick={handleConnectionRetry}>Retry</Button>}
               </div>
             )}

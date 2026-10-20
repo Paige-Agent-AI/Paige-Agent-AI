@@ -282,6 +282,7 @@ import { PAIGE_SPINE_CAPABILITIES } from "../_shared/paige-spine/registry.ts";
 // started and how it ended, and the assistant turn records the same, from one pure reducer that only
 // OBSERVES the loop (§18: one home for the shape, shared with the client parser).
 import { turnFrameLine } from "../_shared/paige-turn/contract.ts";
+import { RECOVERY_READ_ONLY_REFUSAL } from "../_shared/paige-turn/interactive-refusal.ts";
 import { attachTurnRecord, createTurnTracker, NO_TOOLS, observeToolResult, type TurnClassifiers } from "../_shared/paige-turn/reducer.ts";
 // C2b — the present-tense START of a tool step; describeStep below stays the FINISH.
 import { specialistStepLabel, type SpecialistStepIdentity } from "../_shared/paige-turn/specialist-step-label.ts";
@@ -1522,11 +1523,14 @@ serve(async (req) => {
           "Content-Type": "application/json", "Cache-Control": "no-store" } });
       }
       // This exact query/fallback/order was driven in the isolated proposed handler.
+      let recoveryInputRefused = false;
       const interactiveFallback = async () => await appendAssistant({
         p_thread_id: validatedData.threadId, p_role: "assistant",
-        p_content: "Response interrupted before completing an answer. Read back earlier actions before repeating them.",
+        p_content: recoveryInputRefused ? RECOVERY_READ_ONLY_REFUSAL.message
+          : "Response interrupted before completing an answer. Read back earlier actions before repeating them.",
         p_surfaces_used: null, p_load_id: null, p_model: null, p_tokens_used: null, p_latency_ms: null,
         p_bundle_ref: { interactive: { request_intent_id: validatedData.requestIntentId },
+          ...(recoveryInputRefused ? { interactive_refusal: { v: 1, code: RECOVERY_READ_ONLY_REFUSAL.code } } : {}),
           turn_state: { v: 1, state: "INTERRUPTED", mode: "pending", rounds: 0, tools: 0 } }, p_tool_calls: null,
       });
       const beginTurn = (effectful: boolean) => supabaseClient.rpc(customerPortal ? "client_portal_assistant_begin" : "paige_chat_interactive_begin_v2", {
@@ -1595,8 +1599,9 @@ serve(async (req) => {
       if (interactiveRecoveryReadOnly && (validatedData.approvedConfirmations?.length || validatedData.declinedConfirmations?.length
         || validatedData.resume || validatedData.document || validatedData.attachments?.length
         || validatedData.sessionDocumentContext?.length || validatedData.canvasArtifact)) {
-        return new Response(JSON.stringify({ code: "INTERACTIVE_RECOVERY_READ_ONLY", message_accepted: true,
-          reason: "An earlier answer was interrupted and its business outcomes still need checking. This conversation can answer and read existing records; it cannot submit approvals, documents or actions." }),
+        recoveryInputRefused = true;
+        return new Response(JSON.stringify({ code: RECOVERY_READ_ONLY_REFUSAL.code, message_accepted: true,
+          reason: RECOVERY_READ_ONLY_REFUSAL.message }),
           { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       // Re-read only after the preceding executor has finished its receipts.

@@ -159,6 +159,41 @@ describe("INT-338 real composer attachment integration", () => {
     return e;
   };
   const remove = () => host.querySelector<HTMLButtonElement>('button[aria-label="Remove attachment"]');
+  it("explains a known recovery refusal without claiming the uploaded PDF was read or offering replay", async () => {
+    const bodies: Array<{ interactive?: { kind: string }; document?: { base64: string } }> = [];
+    vi.stubGlobal("fetch", vi.fn(async (_url, init: RequestInit) => {
+      const body = JSON.parse(String(init.body));
+      bodies.push(body);
+      return body.interactive?.kind === "message" && body.document
+        ? new Response(JSON.stringify({ code: "INTERACTIVE_RECOVERY_READ_ONLY", message_accepted: true }), { status: 409 })
+        : body.interactive?.kind === "message" ? streamed("Here are the existing records you asked about.")
+        : new Response(JSON.stringify({ settled: true }));
+    }));
+    harness.threads = [{ id: "held-thread", title: "Document review", updated_at: "2026-10-19T12:00:00Z" }];
+    await render({ activeThreadId: "held-thread" }); await waitForWritable();
+    await stage(file("Program-brief.pdf"), "drop"); await type("Review this brief");
+    await act(async () => { send().click(); await settle(); });
+    expect(host.textContent).toContain("An earlier response was interrupted, and its outcomes still need checking");
+    expect(host.textContent).toContain("Your message was recorded");
+    expect(host.textContent).toContain("new actions and attachments are on hold");
+    expect(host.textContent).toContain("You can still ask questions about existing records");
+    expect(host.textContent).toContain("Remove the attached file first to ask about existing records.");
+    expect(remove()).not.toBeNull();
+    expect(Array.from(host.querySelectorAll('[role="status"]')).some(status => status.textContent === "Program-brief.pdf attached")).toBe(true);
+    expect(host.textContent).not.toContain("The connection ended");
+    expect(host.textContent).not.toContain("I've read");
+    expect(host.textContent).not.toContain("Your message wasn't sent");
+    expect(Array.from(host.querySelectorAll("button")).some(b => b.textContent === "Retry")).toBe(false);
+    expect(bodies.filter(b => b.interactive?.kind === "message")).toHaveLength(1);
+    expect(bodies[0].document).toMatchObject({ base64: "AQID" });
+    await act(async () => { remove()!.click(); await settle(); });
+    expect(host.textContent).not.toContain("Remove the attached file first");
+    await type("Show my existing records");
+    await act(async () => { send().click(); await settle(); });
+    expect(host.textContent).toContain("Here are the existing records you asked about");
+    expect(bodies.filter(b => b.interactive?.kind === "message")).toHaveLength(2);
+    expect(bodies.filter(b => b.interactive?.kind === "message").at(-1)?.document).toBeUndefined();
+  });
   it.each(["paste", "drop"] as const)("%s during Thinking stages once and Send supersedes with one document", async route => {
     const bodies: Array<{ requestIntentId: string; interactive: { kind: string; supersedesIntentId?: string }; document?: { base64: string } }> = []; const controllers: ReadableStreamDefaultController<Uint8Array>[] = []; const signals: AbortSignal[] = [];
     vi.stubGlobal("fetch", vi.fn(async (_url, init: RequestInit) => {
@@ -178,6 +213,39 @@ describe("INT-338 real composer attachment integration", () => {
     expect(host.querySelector('[data-solo-composer]')?.textContent).not.toContain("Screenshot.png");
     await act(async () => { controllers[0].enqueue(new TextEncoder().encode('data: {"choices":[{"delta":{"content":"STALE TAIL"}}]}\n\n')); await settle(); });
     expect(host.textContent).not.toContain("STALE TAIL");
+  });
+  it("reload shows the original recorded recovery refusal without sending the document or replaying work", async () => {
+    const content = "An earlier response was interrupted, and its outcomes still need checking. Your message was recorded, but new actions and attachments are on hold. PAIGE can still answer questions about existing records.";
+    harness.threads = [{ id: "refused-thread", title: "Document review", updated_at: "2026-10-19T12:00:00Z" }];
+    harness.loadTurns.mockResolvedValue([
+      { id: "original-user", role: "user", content: "Review this brief" },
+      { id: "original-refusal", role: "assistant", content, bundle_ref: {
+        turn_state: { v: 1, state: "INTERRUPTED", mode: "pending", rounds: 0, tools: 0 },
+        interactive_refusal: { v: 1, code: "INTERACTIVE_RECOVERY_READ_ONLY" },
+      } },
+    ]);
+    await render({ activeThreadId: "refused-thread" }); await waitForWritable();
+    expect(host.textContent).toContain(content); expect(host.textContent).toContain("Review this brief");
+    expect(host.textContent).toContain("New actions and attachments on hold");
+    expect(host.textContent).not.toContain("Stopped before finishing");
+    expect(Array.from(host.querySelectorAll("button")).some(b => /ask again|retry/i.test(b.textContent ?? ""))).toBe(false);
+    expect(host.textContent).not.toContain("The connection ended"); expect(fetch).not.toHaveBeenCalled();
+    expect(remove()).toBeNull();
+    expect(host.textContent).not.toContain("Remove the attached file first");
+    expect(Array.from(host.querySelectorAll("button")).some(b => b.textContent === "Retry")).toBe(false);
+  });
+  it.each([undefined, { v: 1, code: "OTHER_REFUSAL" }, { v: 2, code: "INTERACTIVE_RECOVERY_READ_ONLY" }])("reload never infers recovery refusal from prose with unknown marker %j", async marker => {
+    harness.threads = [{ id: "unknown-thread", title: "Interrupted reply", updated_at: "2026-10-19T12:00:00Z" }];
+    harness.loadTurns.mockResolvedValue([
+      { id: "original-user", role: "user", content: "Review this brief" },
+      { id: "original-answer", role: "assistant", content: "Your message was recorded, but new actions and attachments are on hold.",
+        bundle_ref: { turn_state: { v: 1, state: "INTERRUPTED", mode: "pending", rounds: 0, tools: 0 }, interactive_refusal: marker } },
+    ]);
+    await render({ activeThreadId: "unknown-thread" }); await waitForWritable();
+    expect(host.textContent).toContain("Stopped before finishing");
+    expect(host.textContent).not.toContain("New actions and attachments on hold");
+    expect(Array.from(host.querySelectorAll("button")).some(b => /ask again/i.test(b.textContent ?? ""))).toBe(true);
+    expect(fetch).not.toHaveBeenCalled();
   });
   it("Stop preserves a staged attachment and the next draft", async () => {
     vi.stubGlobal("fetch", vi.fn(async (_url, init: RequestInit) => {

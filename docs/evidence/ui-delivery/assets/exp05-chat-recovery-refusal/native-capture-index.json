@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "source": "7fb77123cbab9caf8d4f284d1bc1c23afb5e86db",
+  "composed_source": "22bc436132a31cb9080dcabee5941a3b49a2e547",
+  "environment": "loopback actual-component mount with synthetic history and offline transport",
+  "observed_css_viewport": { "width": 1536, "height": 770 },
+  "observed_document_scroll_width": 1536,
+  "composer_bottom_css": 753.6000213623047,
+  "file_upload": "UNVERIFIED: normal extension file chooser rejects access after owner reports enabling it",
+  "responsive_matrix": "UNVERIFIED: requested1366x768 and1024x768 overrides did not apply; full SOLO shell absent from this mount",
+  "production_or_provider_effect": false,
+  "captures": [
+    {
+      "file": "saved-refusal-dark.jpg",
+      "format": "JPEG",
+      "raster": [1535, 770],
+      "sha256": "bf2792dd9786a88e9417d8e07e0b6334109f372dbb14564b1db473fac8e2ecb2",
+      "observed": "Held caption and original known reason; no Ask again or retry footer; no restored file"
+    },
+    {
+      "file": "readonly-send-focus-dark.jpg",
+      "format": "JPEG",
+      "raster": [1535, 770],
+      "sha256": "60bee75ce61109ef1204b2dc672f09525045d68ddd179496f19398b0dfb61d70",
+      "observed": "Stable Send focus after keyboard traversal; DOM and separate subsequent native frame agree. New draft remains unsent"
+    },
+    {
+      "file": "readonly-answer-dark.jpg",
+      "format": "JPEG",
+      "raster": [1535, 770],
+      "sha256": "00f8feaa26479683cb792d5945cc1f136bc8e0a5b3226908c47a4de283e8645d",
+      "observed": "One keyboard-submitted new read-only question received explicitly offline answer; no business action ran"
+    }
+  ],
+  "successor_capture": {
+    "source": "c19c03f0496388d56fdf4babbca43a37ca9e2a59",
+    "file": "saved-refusal-assistant-neutral.jpg",
+    "format": "JPEG",
+    "raster": [1535, 770],
+    "css_viewport": [1536, 770],
+    "sha256": "90cd33094199c200c680a298f18271fab0bfe6e1407b0d948daccff381bd51d6",
+    "observed": "Current shared assistant-neutral explanation after reload; held caption, no Ask again/retry or attachment; offline actual component only"
+  },
+  "limitations": [
+    "Original before image1536x791 differs from these rasters; no equal-viewport before/after claim",
+    "Screenshots retain original returned bytes; no resizing, cropping or synthetic composition",
+    "Neither rendered fixtures nor offline responses establish authenticated production functionality",
+    "Complete attachment/refusal/removal, responsive and finish verification remain required",
+    "Earlier immediate focus image lagged at Clear while AX reported Send; it is retained privately and not used as visible Send-focus evidence"
+  ]
+}

@@ -1,0 +1,14 @@
+[
+  {
+    "cohort": "a",
+    "ratio": 5.9040230020071185,
+    "foreground": "rgb(103, 97, 107)",
+    "background": "rgb(255, 253, 248)"
+  },
+  {
+    "cohort": "b",
+    "ratio": 6.848404814296711,
+    "foreground": "rgb(172, 166, 157)",
+    "background": "rgb(33, 29, 39)"
+  }
+]

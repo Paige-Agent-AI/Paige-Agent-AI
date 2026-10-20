@@ -1,0 +1,5 @@
+{
+  "kind": "TOOL_LOCATOR_AMBIGUITY",
+  "reason": "At narrow widths the incumbent PAIGE overlay exposes both backdrop and toolbar fold controls with the same accessible name. Initial unscoped selector rejected before clicking; resumed using the visible toolbar scoped to tenant-paige-workspace. No product state or policy changed, no failed reachability inferred.",
+  "preservedFrames": 6
+}

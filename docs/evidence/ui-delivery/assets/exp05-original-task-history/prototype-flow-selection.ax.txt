@@ -1,0 +1,59 @@
+Browser tab: 1738568092, Title: "EXP05 original history prototype", URL: "http://127.0.0.1:62911/".
+1 AXWebArea EXP05 original history prototype, URL: 127.0.0.1:62911/
+	2 container root
+		3 container Prototype review controls
+			4 heading Read-only interaction prototype, Value: 1
+				5 text Read-only interaction prototype
+			6 text Actual existing process controls plus proposed inline history. All context, records and responses are synthetic. No authentication, provider, approval, enablement or execution proof.
+			7 container
+				8 text History scenario
+				9 pop up button (collapsed, settable) History scenario, Value: many, Secondary Actions: Expand
+					10 menu
+						11 verified
+						12 unconfirmed
+						13 empty
+						14 limited
+						15 (selected) many
+						16 loading
+						17 refused
+						18 unavailable
+						19 outcome_loading
+						20 outcome_refused
+						21 outcome_unavailable
+			22 container
+				23 text Neutral context
+				24 pop up button (collapsed, settable) Neutral context, Value: A, Secondary Actions: Expand
+					25 menu
+						26 (selected) A
+						27 B
+			28 checkbox (settable, integer) Description: Another pipeline rule is being edited, Value: 0
+			29 text Inline disclosure retains process context. Close/Escape returns focus. No added motion or haptic. Native Task navigation is simulated; real server/epoch/privacy tests remain separate. Network is prohibited.
+			30 container
+				31 text Engineering flow decision
+				32 pop up button (collapsed, settable) Engineering flow decision, Value: select, Secondary Actions: Expand
+					33 menu
+						34 unselected
+						35 (selected) select
+						36 revise
+						37 reject
+			38 container
+				39 text Review notes
+				40 text entry area (settable) Description: Review notes, Value: Selected after NON-AUTHOR material flow correction: each original result immediately follows its selected attempt, including first and last of25. Native narrow/desktop token-context, refusal/unknown, Close/Escape and simulated draft hold checked. Product host wiring and authenticated/release proof still owed. Engineering selection under delegated owner scope, not founder acceptance.
+		41 container Internal task processes
+			42 container
+				43 heading Internal task processes, Value: 2, ID: :r0:-title
+					44 text Internal task processes
+				45 text A new contact can prepare a task for your approval.
+				46 button Refresh
+			47 content list
+				48 container
+					49 heading Prepare the next step for a new contact, Value: 3, ID: :r0:-00000000-0000-4000-8000-000000000101-name
+						50 text Prepare the next step for a new contact
+					51 text When a contact is created ·  Paused  · Each task needs your approval Review the contact and prepare an owner-approved follow-up Confirm the right next step before contacting anyone.
+					52 button (collapsed) Review to enable, Secondary Actions: Expand
+					53 button (collapsed) View history, Secondary Actions: Expand
+			161 container
+				162 link Description: Review pending tasks, Value: 127.0.0.1:62911/solo/123/command-center/business-game-plan
+				163 link Description: Open work, Value: 127.0.0.1:62911/solo/123/operations/work
+
+The focused UI element is 40 text entry area (settable) Description: Review notes, Value: Selected after NON-AUTHOR material flow correction: each original result immediately follows its selected attempt, including first and last of25. Native narrow/desktop token-context, refusal/unknown, Close/Escape and simulated draft hold checked. Product host wiring and authenticated/release proof still owed. Engineering selection under delegated owner scope, not founder acceptance.

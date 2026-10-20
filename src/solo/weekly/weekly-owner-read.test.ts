@@ -31,6 +31,43 @@ describe("browser weekly owner read", () => {
     expect((await readWeeklyOwner(f.scope, f.caller, f.current)).status).toBe("refused");
     expect(f.caller.auth.getSession).not.toHaveBeenCalled(); expect(f.caller.rpc).not.toHaveBeenCalled();
   });
+  it("retires a constructed lazy native query when a queued scope change wins", async () => {
+    const f = fixture(), starts: boolean[] = [], constructed: string[] = [];
+    const caller = { auth: f.caller.auth, rpc: (name: string) => {
+      constructed.push(name);
+      queueMicrotask(() => f.change(null));
+      return { then: <T = { data: unknown; error: unknown }, U = never>(
+        resolve?: ((value: { data: unknown; error: unknown }) => T | PromiseLike<T>) | null,
+        reject?: ((reason: unknown) => U | PromiseLike<U>) | null,
+      ) => { starts.push(f.current() !== null); return f.caller.rpc(name).then(resolve, reject); } };
+    } };
+    expect((await readWeeklyOwner(f.scope, caller, f.current)).status).toBe("unavailable");
+    expect(constructed).toEqual(["weekly_commitment_owner"]);
+    expect(starts).toEqual([]); expect(f.caller.rpc).not.toHaveBeenCalled();
+  });
+  it("retires a constructed lazy session lookup after queued logout", async () => {
+    const f = fixture(), starts: boolean[] = [], construct = vi.fn();
+    const caller = { rpc: f.caller.rpc, auth: { getSession: () => {
+      construct();
+      queueMicrotask(() => f.change(null));
+      return { then: <T = Awaited<ReturnType<typeof f.caller.auth.getSession>>, U = never>(
+        resolve?: ((value: Awaited<ReturnType<typeof f.caller.auth.getSession>>) => T | PromiseLike<T>) | null,
+        reject?: ((reason: unknown) => U | PromiseLike<U>) | null,
+      ) => { starts.push(f.current() !== null); return f.caller.auth.getSession().then(resolve, reject); } };
+    } } };
+    expect((await readWeeklyOwner(f.scope, caller, f.current)).status).toBe("unavailable");
+    expect(construct).toHaveBeenCalledTimes(1); expect(starts).toEqual([]); expect(f.caller.rpc).not.toHaveBeenCalled();
+  });
+  it("does not consume a lazy session after its factory exhausts the original budget", async () => {
+    vi.useFakeTimers();
+    try {
+      const f = fixture(), consume = vi.fn(), construct = vi.fn(() => {
+        vi.advanceTimersByTime(8001); return { then: consume };
+      });
+      expect(await readWeeklyOwner(f.scope, { rpc: f.caller.rpc, auth: { getSession: construct } }, f.current)).toEqual({ status: "unavailable" });
+      expect(construct).toHaveBeenCalledTimes(1); expect(consume).not.toHaveBeenCalled(); expect(f.caller.rpc).not.toHaveBeenCalled();
+    } finally { vi.useRealTimers(); }
+  });
   it("reads real canonical status with independent session/tenant/owner readback and no writes", async () => {
     const f = fixture();
     expect((await readWeeklyOwner(f.scope, f.caller, f.current)).status).toBe("ready");

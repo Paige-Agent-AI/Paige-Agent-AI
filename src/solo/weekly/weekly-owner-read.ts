@@ -17,11 +17,21 @@ export async function readWeeklyOwner(scope: WeeklyBrowserScope, caller: Caller,
   const refused: WeeklyOwnerRead = { status: "refused" };
   let retired = false;
   const stage = createWeeklyDraftDeadline(8000, () => !retired);
-  const scopedCaller = { rpc: (name: string, args?: Record<string, unknown>) => stage(() => caller.rpc(name, args)) };
+  const inspectStage = <T>(start: () => PromiseLike<T>) => stage(() => {
+    if (!matches()) throw new Error("scope_changed");
+    const request = start();
+    if (request instanceof Promise) void request.catch(() => {});
+    return stage(() => new Promise<T>((resolve, reject) => {
+      if (!matches()) throw new Error("scope_changed");
+      // Subscribe only after the original deadline and current scope recheck.
+      request.then(resolve, reject);
+    }));
+  });
+  const scopedCaller = { rpc: (name: string, args?: Record<string, unknown>) => inspectStage(() => caller.rpc(name, args)) };
   const inspect = async (): Promise<WeeklyOwnerRead> => {
     try {
       if (!matches()) return refused;
-      const session = await stage(() => caller.auth.getSession());
+      const session = await inspectStage(() => caller.auth.getSession());
       if (session.error || session.data.session?.user.id !== origin.actorId || !matches()) return refused;
       const owner = await scopedCaller.rpc("weekly_commitment_owner", { _tenant: origin.tenantId, _actor: origin.actorId });
       if (!matches()) return refused;
@@ -33,7 +43,7 @@ export async function readWeeklyOwner(scope: WeeklyBrowserScope, caller: Caller,
         role: "owner", accountShape: "solo", actAsClientId: null, scopeEpoch: origin.epoch };
       const result = await stage(() => readWeeklyCommitmentProjection(identity, { caller: scopedCaller, currentIdentity: () => !retired && matches() ? identity : null }));
       if (!matches()) return refused;
-      const after = await stage(() => caller.auth.getSession());
+      const after = await inspectStage(() => caller.auth.getSession());
       if (after.error || after.data.session?.user.id !== origin.actorId || !matches()) return refused;
       return result.status === "available" && result.data ? { status: "ready", snapshot: result.data } : { status: "unavailable" };
     } catch { return { status: "unavailable" }; }

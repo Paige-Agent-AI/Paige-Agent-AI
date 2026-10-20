@@ -40,6 +40,46 @@ describe("prepared owner-only weekly read — not conversationally admitted", ()
     expect((await read).data).toBeNull();
     expect(startedCancelled).toEqual([false]); expect(f.calls).toEqual(["current_user_tenant_id"]);
   });
+  it("retires a constructed lazy PostgREST RPC when queued cancellation wins", async () => {
+    const f = fixture(), stop = new AbortController(), startedCancelled: boolean[] = [], constructed: string[] = [];
+    const caller = { rpc: (name: string) => { constructed.push(name); return { then: <T = { data: unknown; error: unknown }, U = never>(
+      resolve?: ((value: { data: unknown; error: unknown }) => T | PromiseLike<T>) | null,
+      reject?: ((reason: unknown) => U | PromiseLike<U>) | null,
+    ) => { startedCancelled.push(stop.signal.aborted); return f.caller.rpc(name).then(resolve, reject); } }; } };
+    const read = readWeeklyCommitmentProjection(identity, { ...f, caller, signal: stop.signal });
+    queueMicrotask(() => stop.abort());
+    expect((await read).data).toBeNull();
+    expect(constructed).toEqual(["current_user_tenant_id"]);
+    expect(startedCancelled).toEqual([]); expect(f.calls).toEqual([]);
+  });
+  it("does not subscribe when lazy query construction exhausts the original budget", async () => {
+    vi.useFakeTimers();
+    try {
+      const f = fixture(), consume = vi.fn(), construct = vi.fn(() => {
+        vi.advanceTimersByTime(8001); return { then: consume };
+      });
+      expect((await readWeeklyCommitmentProjection(identity, { ...f, caller: { rpc: construct } })).data).toBeNull();
+      expect(construct).toHaveBeenCalledTimes(1); expect(consume).not.toHaveBeenCalled();
+    } finally { vi.useRealTimers(); }
+  });
+  it("does not consume a lazy query whose construction retired the scope", async () => {
+    const f = fixture(), stop = new AbortController(), consume = vi.fn();
+    const caller = { rpc: () => { stop.abort(); return { then: consume }; } };
+    expect((await readWeeklyCommitmentProjection(identity, { ...f, caller, signal: stop.signal })).data).toBeNull();
+    expect(consume).not.toHaveBeenCalled(); expect(f.calls).toEqual([]);
+  });
+  it("fences the private status helper's lazy RPC, not only tenant preflight", async () => {
+    const f = fixture(), stop = new AbortController(), consumed: string[] = [];
+    const caller = { rpc: (name: string) => {
+      if (name === "get_weekly_commitment_checks") queueMicrotask(() => stop.abort());
+      return { then: <T = { data: unknown; error: unknown }, U = never>(
+        resolve?: ((value: { data: unknown; error: unknown }) => T | PromiseLike<T>) | null,
+        reject?: ((reason: unknown) => U | PromiseLike<U>) | null,
+      ) => { consumed.push(name); return f.caller.rpc(name).then(resolve, reject); } };
+    } };
+    expect((await readWeeklyCommitmentProjection(identity, { ...f, caller, signal: stop.signal })).data).toBeNull();
+    expect(consumed).toEqual(["current_user_tenant_id", "weekly_commitment_owner"]);
+  });
   it("does not read private status after current server-context revalidation refuses", async () => {
     const f = fixture();
     const result = await readWeeklyCommitmentProjection(identity, { ...f, revalidateScope: async () => false });

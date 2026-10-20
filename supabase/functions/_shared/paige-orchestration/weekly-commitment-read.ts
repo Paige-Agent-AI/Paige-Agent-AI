@@ -19,12 +19,18 @@ export function isCurrentWeeklyCommitmentScope(expected: ContextIdentity, curren
     expected.role === current.role && expected.accountShape === current.accountShape &&
     expected.actAsClientId === current.actAsClientId;
 }
-async function bounded<T>(call: () => PromiseLike<T>, ms: number): Promise<T> {
+async function bounded<T>(call: () => PromiseLike<T>, ms: number, stage: ReturnType<typeof createWeeklyDraftDeadline>): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
-    // Start inside the elapsed stage's checked callback. An additional unchecked
-    // microtask could otherwise start this RPC after cancellation.
-    return await Promise.race([Promise.resolve(call()), new Promise<never>((_, reject) => {
+    // PostgREST starts in .then(). Recheck the SAME elapsed stage after query
+    // construction, then subscribe synchronously inside that checked callback.
+    const request = call();
+    // An eager native Promise may already be in flight when the next checkpoint
+    // retires. Observe rejection without subscribing to a lazy query early.
+    if (request instanceof Promise) void request.catch(() => {});
+    return await Promise.race([stage(() => new Promise<T>((resolve, reject) => {
+      request.then(resolve, reject);
+    })), new Promise<never>((_, reject) => {
       timer = setTimeout(() => reject(new Error("canonical_read_failed")), ms);
     })]);
   } finally { if (timer !== undefined) clearTimeout(timer); }
@@ -45,15 +51,15 @@ export async function readWeeklyCommitmentProjection(
   // succession of slow stages outlive the inspection's one eight-second budget.
   const stage = createWeeklyDraftDeadline(8000, scope);
   const revalidate = deps.revalidateScope;
-  const rpc = (name: string, args?: Record<string, unknown>) => stage(() => bounded(() => deps.caller.rpc(name, args), ms));
+  const rpc = (name: string, args?: Record<string, unknown>) => stage(() => bounded(() => deps.caller.rpc(name, args), ms, stage));
   try {
     if (!scope()) return contextDegraded("scope_changed");
-    if (revalidate && !(await stage(() => bounded(revalidate, ms)))) return contextDegraded("scope_changed");
+    if (revalidate && !(await stage(() => bounded(revalidate, ms, stage)))) return contextDegraded("scope_changed");
     const before = await rpc("current_user_tenant_id");
     if (before.error || before.data !== origin.tenantId || !scope()) return contextDegraded("scope_changed");
     const owner = await rpc("weekly_commitment_owner", { _tenant: origin.tenantId, _actor: origin.actorId });
     if (owner.error || owner.data !== true || !scope()) return contextUnavailable("owner_read_refused");
-    const read = await stage(() => bounded(() => readWeeklyCommitmentStatus(deps.caller), ms));
+    const read = await stage(() => bounded(() => readWeeklyCommitmentStatus({ rpc }), ms, stage));
     if (!scope()) return contextDegraded("scope_changed");
     if (read.status !== "available") return contextDegraded("canonical_read_failed");
     const parsed = parseWeeklyCommitmentSnapshot(read.checks, origin.tenantId, origin.actorId);
@@ -62,7 +68,7 @@ export async function readWeeklyCommitmentProjection(
     if (after.error || after.data !== origin.tenantId || !scope()) return contextDegraded("scope_changed");
     const stillOwner = await rpc("weekly_commitment_owner", { _tenant: origin.tenantId, _actor: origin.actorId });
     if (stillOwner.error || stillOwner.data !== true || !scope()) return contextUnavailable("owner_read_refused");
-    if (revalidate && !(await stage(() => bounded(revalidate, ms)))) return contextDegraded("scope_changed");
+    if (revalidate && !(await stage(() => bounded(revalidate, ms, stage)))) return contextDegraded("scope_changed");
     return contextAvailable(parsed);
   } catch { return contextDegraded(scope() ? "canonical_read_failed" : "scope_changed"); }
 }

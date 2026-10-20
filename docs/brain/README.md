@@ -1,5 +1,51 @@
 # 🧠 The Second Brain — master index & read-first orientation
 
+## EXP02 verified handoff v2026-10-20.2
+
+**Owner: EXP02; production source status is PARTIAL, customer proof is owed.**
+Target/Executive integration [#2181](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2181)
+reviewed `01f675e28c58a5883cd5049ca9db75a7b02d59f6`, merged
+`2d93594b69ec084ff770402eede09465ca9d179e`. Exact-head checks and previews passed.
+Web `dpl_7oFtLZVQzyrakTcvZaV41gRPvkTb` is READY at that merge; public buildId
+`2d93594b69ec084ff770402eede09465ca9d179e-mvg2sjpr` was read back.
+Migration `20271112100000` and its owner-only review permission contract were
+read back in production. These observations supersede earlier local-only target
+status; they do not establish target lifecycle or integrated customer acceptance.
+
+**Release lesson:** Edge run39360132655 retry passed22/23 selected packages;
+`business-mission-action` again lacked its configured import map after the default
+Docker upload. An explicit reviewed-source package previously passed10/10, but
+that observation was superseded by the retry. Upload exit zero, ACTIVE and matching
+metadata are insufficient: keep exact UTF-8 source/config hashes, complete dependency
+coverage and stable before/after identity. The bounded existing-workflow API-builder
+repair still requires its own review, CI and actual production readback. Global
+`edge-live` remains held at `e660dca7bdd3dd9cc32c4af033cdd5cacb426c0e`;
+do not force it forward or broaden this repair into unrelated source recovery.
+[Sanitized release evidence](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2181#issuecomment-6282365635).
+
+**Canonical integration guidance:** Executive and Chat reuse the same
+`business.operating_snapshot`, INT-340 metric issuer/resolver and Operating Fabric.
+Targets attach to canonical Strategic Plays; no second actuals or receipt store.
+VERA [#2400](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2400) at
+`d43fc22a104b6c4f947e7d95dae5b05150fada76` extends the existing global registry
+identity and addressed Chat; its guarded metadata migration121100 is not applied.
+Finance [#2402](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2402)
+consumes the existing caller-JWT Finance source contracts through the same snapshot;
+it remains unreleased. Null/unavailable is never zero, cash is never credit, and
+source observations are not action receipts. EXP01/05/09/11 may consume these shared
+contracts without duplicating engines or treating company L1 as tenant SOLO L2.
+
+**Proof limits:** actual-font native target and VERA frames exercise product source
+with synthetic data only. Capture exact PNG dimensions and rendered platform fonts;
+do not substitute resized screenshots or CSS font declarations for that evidence.
+Authenticated SOLO, actual zoom, Chat/Live continuity, governed effects and receipts,
+full19 and founder acceptance remain owed. Preserve original9 PASS/0 FAIL and
+supplement12 PASS/0 FAIL/4 BLOCKED. See the existing
+[19-outcome matrix](../delivery/e2-customer-experience-integration-matrix.md),
+[continuation contract](../delivery/e2-6-continuation-contract.md) and
+[Mission contract](../delivery/paige-business-mission-system-phase2.md).
+ANT-138/147 carry current release coordination; ANT-52 carries customer proof.
+
 **October19 EXP02 VERA continuation — development:** the existing VERA identity
 is being aligned to Intelligence, Finance & Risk through the existing registry,
 addressed Chat and native Executive handoff. PAIGE remains principal COO. Current

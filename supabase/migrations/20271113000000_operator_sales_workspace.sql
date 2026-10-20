@@ -375,8 +375,8 @@ BEGIN
         'recipient', l.recipient_email,
         'status', l.status,
         'created_at', l.created_at
-      ) ORDER BY l.created_at DESC LIMIT 50)
-      FROM public.email_send_log l
+      ) ORDER BY l.created_at DESC)
+      FROM (SELECT * FROM public.email_send_log ORDER BY created_at DESC LIMIT 50) l
     ), '[]'::jsonb)
   );
 END $$;

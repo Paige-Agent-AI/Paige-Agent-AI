@@ -1,5 +1,9 @@
 # Experience 05 Weekly Internal Commitment Check
 
+## October 20 — original internal-task outcomes, bounded source increment
+
+Existing Settings → Integrations → Automations now has a source-implemented original-history disclosure using the already-released owner-task history hook/reader/receiver and canonical exact Task route. Each selected result appears beside its own attempt; recorded outcome alone is not Task creation proof. The new Task link respects an open sibling pipeline-rule draft; exact native writer/editor contracts remain unchanged. [Actual source/native evidence](../evidence/ui-delivery/exp05-original-task-history.md) separates191 assertions/6 suites and neutral synthetic native frames from production/authenticated proof still owed. No process activation, approval, execution, scheduler, provider, new receipt, old-source ownership transfer or whole-Experience acceptance is implied. Preserve original18/25/50, ten outcomes, E5-CV1–9 and strict1/18+2/50 closure.
+
 ## October 20 — canonical SOLO weekly inspection eligibility
 
 Bounded repair replaces the obsolete shell-flag presentation gate with existing `useTierFeatures.soloStandalone`; original server owner/session/tenant/epoch reads remain mandatory. Existing and future canonical SOLO accounts use the same inspection without per-account flag repairs. Scoped weekly Sheet insets survive the late SOLO reset and preserve Close clearance. [Actual-source native proof](../evidence/ui-delivery/exp05-weekly-inspection-parity.md) separates sixteen synthetic frames/forty-four tests from post-repair authenticated proof still owed. This does not save/authorize a schedule, activate recurrence, change Spine admission, assume the old draft stack or close E5-CV/customer acceptance. Original #2163/#2189 and all nine cases remain preserved.

@@ -1,0 +1,10 @@
+Browser tab: 1738568092, Title: "Local SOLO internal task proof", URL: "http://127.0.0.1:62911/native-final/history-b-dark-900x1000-closed-verified.html".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 81-117
+~1 AXWebArea Local SOLO internal task proof, URL: 127.0.0.1:62911/native-final/history-b-dark-900x1000-closed-verified.html
+~		4 link Description: Skip to content, Value: 127.0.0.1:62911/native-final/history-b-dark-900x1000-closed-verified.html#tenant-shell-main
+~			22 button (collapsed) Description: Direct PAIGE, Secondary Actions: Expand
+~					32 heading Internal task processes, Value: 2, ID: :r7g:-title
+~						38 heading Review every new contact, Value: 3, ID: :r7g:-00000000-0000-4000-8000-000000000103-name
+~						43 container Description: Process history, ID: :r7g:-00000000-0000-4000-8000-000000000103-history
+The focused UI element is 1 AXWebArea Local SOLO internal task proof, URL: 127.0.0.1:62911/native-final/history-b-dark-900x1000-closed-verified.html

@@ -14,7 +14,7 @@
  * Its pipeline-message status/history never describes the separate internal task
  * controls, and it invents no run counts, success rates, health or delivery proof.
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { AlertTriangle, Check, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { OwnerTaskAutomations } from "./owner-task-automations";
@@ -61,14 +61,20 @@ function usePipelineHref(): string | null {
 }
 
 export function SoloAutomationsView() {
-  return <div className="sa-root"><OwnerTaskAutomations /><PipelineAutomationsView /></div>;
+  // Share only this UI navigation hold. The pipeline writer and its exact draft
+  // stay unchanged; reading Task history must not discard an open sibling edit.
+  const [editing, setEditing] = useState<AutomationRule | "new" | null>(null);
+  return <div className="sa-root"><OwnerTaskAutomations navigationHeld={editing !== null} />
+    <PipelineAutomationsView editing={editing} setEditing={setEditing} /></div>;
 }
 
 /** Pipeline message rules keep their own read/error state and off-only controls. */
-function PipelineAutomationsView() {
+function PipelineAutomationsView({ editing, setEditing }: {
+  editing: AutomationRule | "new" | null;
+  setEditing: Dispatch<SetStateAction<AutomationRule | "new" | null>>;
+}) {
   const a = useSoloAutomations();
   const pipelineHref = usePipelineHref();
-  const [editing, setEditing] = useState<AutomationRule | "new" | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
 
   // Stages are resolved PER RULE, never from a single "first" pipeline. A
@@ -96,7 +102,7 @@ function PipelineAutomationsView() {
   // Never leave an editor open against data that no longer supports it.
   useEffect(() => {
     if (!a.hasPipeline) setEditing(null);
-  }, [a.hasPipeline]);
+  }, [a.hasPipeline, setEditing]);
 
   if (a.loading) {
     return <div className="ss-state" role="status"><RefreshCw className="ss-spin" aria-hidden />Checking pipeline-message rules…</div>;

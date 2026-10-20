@@ -94,12 +94,12 @@ export async function readOwnerTaskHistoryList(scope: OwnerTaskScope, processId:
       const meta = object(row) && object(row.metadata) ? row.metadata : null;
       if (!object(row) || row.tenant_id !== captured.tenantId || row.source !== "paige_orchestration" || row.category !== "owner.task"
         || row.type !== "other" || !uuid(row.id) || ids.has(row.id) || !instant(row.updated_at)
-        || !["pending", "approved", "rejected"].includes(String(row.status)) || !meta || meta.source !== "paige_orchestration"
+        || typeof row.status !== "string" || !["pending", "approved", "rejected"].includes(row.status) || !meta || meta.source !== "paige_orchestration"
         || meta.capability_id !== "owner.task" || meta.automation_id !== processId || !uuid(meta.act_execution_id)
         || occurrences.has(meta.act_execution_id) || !uuid(meta.event_id) || !uuid(meta.act_id)
         || "action_id" in meta || "governed_send" in meta) return { status: "unavailable" };
       ids.add(row.id); occurrences.add(meta.act_execution_id);
-      items.push({ approvalId: row.id, occurrenceId: meta.act_execution_id, updatedAt: row.updated_at, approvalStatus: row.status as string });
+      items.push({ approvalId: row.id, occurrenceId: meta.act_execution_id, updatedAt: row.updated_at, approvalStatus: row.status });
     }
     const after = await authority(captured, caller, current, deadline);
     deadline.check();
@@ -112,15 +112,16 @@ function historyProjection(data: unknown, processId: string, approvalId: string)
   if (data.status === "refused" || data.status === "unavailable") return { status: data.status };
   const task = data.originalTask;
   if (data.status !== "ready" || data.processId !== processId || data.approvalId !== approvalId || !uuid(data.occurrenceId)
-    || !["pending", "approved", "rejected"].includes(String(data.approvalStatus)) || !ACT_OUTCOME_SET.has(String(data.recordedOutcome))
+    || typeof data.approvalStatus !== "string" || !["pending", "approved", "rejected"].includes(data.approvalStatus)
+    || typeof data.recordedOutcome !== "string" || !ACT_OUTCOME_SET.has(data.recordedOutcome)
     || !instant(data.decidedAt) || typeof data.title !== "string" || !data.title.trim() || [...data.title].length > 500
     || !object(data.currentTask) || data.currentTask.state !== "not_read" || !object(task)
     || !(task.state === "unconfirmed" || task.state === "verified" && data.approvalStatus === "approved"
       && uuid(task.taskId) && uuid(task.receiptId) && uuid(task.runId))) return null;
   // Copy only the closed projection. Never retain raw error/context/provider or
   // alleged current Task fields; the existing native inspector owns that read.
-  return { status: "ready", processId, approvalId, occurrenceId: data.occurrenceId, approvalStatus: data.approvalStatus as string,
-    recordedOutcome: data.recordedOutcome as string, decidedAt: data.decidedAt, title: data.title,
+  return { status: "ready", processId, approvalId, occurrenceId: data.occurrenceId, approvalStatus: data.approvalStatus,
+    recordedOutcome: data.recordedOutcome, decidedAt: data.decidedAt, title: data.title,
     originalTask: task.state === "verified" ? { state: "verified", taskId: task.taskId as string, receiptId: task.receiptId as string, runId: task.runId as string }
       : { state: "unconfirmed" }, currentTask: { state: "not_read" } };
 }

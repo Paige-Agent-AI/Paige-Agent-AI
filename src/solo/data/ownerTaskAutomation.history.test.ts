@@ -114,6 +114,16 @@ describe("existing process history caller projection (unmounted)", () => {
       originalTask: { ...result().originalTask, secret: "private" } };
     expect(await readOwnerTaskOutcome(scope, selected, f.caller, f.functions, f.current)).toEqual(result());
   });
+  it.each(["approvalStatus", "recordedOutcome"])("rejects coercible non-string %s at the actual receiver", async field => {
+    const f = fixture(), data = { ...result(), originalTask: { state: "unconfirmed" } };
+    f.configure.data = { ...data, [field]: [data[field as "approvalStatus" | "recordedOutcome"]] };
+    expect(await readOwnerTaskOutcome(scope, selected, f.caller, f.functions, f.current)).toEqual({ status: "unavailable" });
+    expect(f.calls.filter(x => x.stage === "paige-owner-task-history")).toHaveLength(1);
+  });
+  it("rejects a coercible approval status in the original locator list", async () => {
+    const f = fixture(); f.configure.rows = [{ ...approval(), status: ["approved"] }];
+    expect(await readOwnerTaskHistoryList(scope, selected.processId, f.caller, f.current)).toEqual({ status: "unavailable" });
+  });
   it.each(["refused", "unavailable"])("preserves finite server %s without replay", async status => {
     const f = fixture(); f.configure.data = { status, error: "private" };
     expect(await readOwnerTaskOutcome(scope, selected, f.caller, f.functions, f.current)).toEqual({ status });

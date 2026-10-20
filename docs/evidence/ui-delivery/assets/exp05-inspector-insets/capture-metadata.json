@@ -1,12 +1,24 @@
 {
-  "createdAt": "2026-10-20T07:06:46.694566+00:00",
+  "createdAt": "2026-10-20T07:31:39.083538+00:00",
   "boundary": "LOCAL_ACTUAL_SOLO_SOURCE_SYNTHETIC_READ_PORTS_NO_AUTH_NO_PROVIDER_OR_RECORD_EFFECTS",
-  "sourceBase": "8f54336c841c445db46ddf7118243a844074a578",
+  "sourceBase": "a79142c0bd1a4c3fa5b7fb40a2366149c9c13dc7",
   "sourceChange": {
     "path": "src/solo/operations/operations-workspace.css",
-    "sha256": "ea941011b56528e9828252145d273e38a4ab7a375134e7c6b9bbd48b2bd03442",
+    "sha256": "47915fa661f04b91672e1aed0fd15d8b432f785e490f38219470292c6053e314",
     "inverseRestoresBase": true,
-    "selectorsOnly": 2
+    "addedRules": 3,
+    "scope": "native role=dialog padding and heading clearance only; all original declarations preserved"
+  },
+  "priorCandidate": {
+    "head": "bcd8550dd66b090afb7ca1a199b488d0b8c3a692",
+    "review": "NON-AUTHOR REVISE",
+    "receiptSha256": "7ecd7a51ef2b9e7d5cb634581f0695ca0fcdbfa51c3ee9890f093075795c9d0c",
+    "findings": [
+      "whole-rule specificity changed Delivery alertdialog width precedence",
+      "320px Planning title intersected Close focus zone; historical causality unproved"
+    ],
+    "correction": "padding/header-only additions scoped to native role=dialog; alertdialog and original sizing untouched",
+    "withdrawnClaim": "reviewer withdrew initial blank-capture claim after original emission and hash verification"
   },
   "productionCause": {
     "observed": "padding0 in ordinary production drawer",
@@ -17,13 +29,65 @@
     ],
     "privateEvidence": "original production screenshot and matched rules retained privately; no customer payload in this packet"
   },
-  "fixtureOrder": "Flattened initial esbuild had32px24px and did not reproduce. Appending the exact existing SOLO root-reset rule reproduces observed late-production ordering. Red is0; same corrected runtime source keeps32px24px and mobile creator24px16px.",
+  "fixtureOrder": "Exact existing SOLO root reset appended after compiled CSS reproduces observed production order. Historical red source8f54336c is0px. Final native dialogs preserve32px24px and mobile creators24px16px.",
+  "captureAssembly": {
+    "source": "fresh final per-frame JSON/AX/JPEG files after settled native observation",
+    "sourceTimesUtc": {
+      "1536-closed-light.json": "2026-10-20T07:29:54.488041+00:00",
+      "1536-closed-light.ax.txt": "2026-10-20T07:29:54.486540+00:00",
+      "1536-closed-light.jpg": "2026-10-20T07:29:54.491055+00:00",
+      "1366-closed-light.json": "2026-10-20T07:29:59.929382+00:00",
+      "1366-closed-light.ax.txt": "2026-10-20T07:29:59.929382+00:00",
+      "1366-closed-light.jpg": "2026-10-20T07:29:59.931302+00:00",
+      "1024-closed-light.json": "2026-10-20T07:30:07.333263+00:00",
+      "1024-closed-light.ax.txt": "2026-10-20T07:30:07.332262+00:00",
+      "1024-closed-light.jpg": "2026-10-20T07:30:07.334271+00:00",
+      "900-closed-light.json": "2026-10-20T07:30:15.235263+00:00",
+      "900-closed-light.ax.txt": "2026-10-20T07:30:15.234276+00:00",
+      "900-closed-light.jpg": "2026-10-20T07:30:15.235263+00:00",
+      "1536-open-light.json": "2026-10-20T07:28:49.585806+00:00",
+      "1536-open-light.ax.txt": "2026-10-20T07:28:49.583811+00:00",
+      "1536-open-light.jpg": "2026-10-20T07:28:49.586808+00:00",
+      "1366-open-light.json": "2026-10-20T07:29:00.307085+00:00",
+      "1366-open-light.ax.txt": "2026-10-20T07:29:00.306177+00:00",
+      "1366-open-light.jpg": "2026-10-20T07:29:00.308299+00:00",
+      "1024-open-light.json": "2026-10-20T07:29:06.428785+00:00",
+      "1024-open-light.ax.txt": "2026-10-20T07:29:06.428785+00:00",
+      "1024-open-light.jpg": "2026-10-20T07:29:06.428785+00:00",
+      "900-open-light.json": "2026-10-20T07:29:11.954177+00:00",
+      "900-open-light.ax.txt": "2026-10-20T07:29:11.954177+00:00",
+      "900-open-light.jpg": "2026-10-20T07:29:11.954177+00:00",
+      "390-open-light.json": "2026-10-20T07:29:21.759993+00:00",
+      "390-open-light.ax.txt": "2026-10-20T07:29:21.758992+00:00",
+      "390-open-light.jpg": "2026-10-20T07:29:21.761263+00:00",
+      "390-open-light-bottom.json": "2026-10-20T07:29:27.994050+00:00",
+      "390-open-light-bottom.ax.txt": "2026-10-20T07:29:27.992896+00:00",
+      "390-open-light-bottom.jpg": "2026-10-20T07:29:27.995057+00:00",
+      "390-creator-dark-b.json": "2026-10-20T07:30:35.269686+00:00",
+      "390-creator-dark-b.ax.txt": "2026-10-20T07:30:35.269686+00:00",
+      "390-creator-dark-b.jpg": "2026-10-20T07:30:35.269686+00:00",
+      "1536-creator-dark-b.json": "2026-10-20T07:30:30.221183+00:00",
+      "1536-creator-dark-b.ax.txt": "2026-10-20T07:30:30.219878+00:00",
+      "1536-creator-dark-b.jpg": "2026-10-20T07:30:30.221183+00:00",
+      "1536-planning-dark-b.json": "2026-10-20T07:30:44.877798+00:00",
+      "1536-planning-dark-b.ax.txt": "2026-10-20T07:30:44.876736+00:00",
+      "1536-planning-dark-b.jpg": "2026-10-20T07:30:44.879449+00:00",
+      "390-planning-dark-b.json": "2026-10-20T07:30:51.839794+00:00",
+      "390-planning-dark-b.ax.txt": "2026-10-20T07:30:51.837791+00:00",
+      "390-planning-dark-b.jpg": "2026-10-20T07:30:51.839794+00:00",
+      "320-planning-dark-b.json": "2026-10-20T07:30:56.533295+00:00",
+      "320-planning-dark-b.ax.txt": "2026-10-20T07:30:56.532297+00:00",
+      "320-planning-dark-b.jpg": "2026-10-20T07:30:56.534660+00:00"
+    },
+    "correction": "REPL lexical capture-directory error and several unsettled resize screenshots rejected; final native batch uses an explicit directory with a separate observation before each capture",
+    "historicalEvidence": "original bcd8550 committed packet preserved in Git and private immutable archive; no old candidate capture relabelled as final"
+  },
   "compiled": {
-    "manifestSha256": "a897f547bd7f57111e1d1dfa287abdcd6552381b14f6627d354a19d0d4b4eb2b",
+    "manifestSha256": "828c99b511be66c2d6230a62efc7ad5108cf274bff61a36c96236a010f8e4285",
     "sources": 3746,
     "ports": 160,
-    "htmlSha256": "5c0dabfc768e7e96ab0792dd7c8e38892a417c67ffb9c15548267f2e76bbe17e",
-    "cssSha256": "733fa64812298ef65bcc86ae89b5e205ec73043b81a2374058686f58e6fcd864"
+    "htmlSha256": "fc515348c14b0abdd333552e2cc23fe593647d2cec95535ba4aad56cf6d4d42f",
+    "cssSha256": "c8e28db04178d160c43f836655d8bff8442aa80ad5c018af97f812383b84c647"
   },
   "captures": [
     {
@@ -41,8 +105,8 @@
         1535,
         770
       ],
-      "sha256": "8e3bdbb936148ad0e2dd0c86fb89ae80f5837214c52f83390c28b8bceb8e2586",
-      "bytes": 56998
+      "sha256": "74f7e8b89bf255e6852862d30d02bfa40e4c313ed372c5b34fc524801a4280ec",
+      "bytes": 55855
     },
     {
       "file": "1366-closed-light.jpg",
@@ -50,8 +114,8 @@
         1366,
         768
       ],
-      "sha256": "12f94b25259b31c98a5277093dc2434e664a8d3f86b2193f99d17772f54b7359",
-      "bytes": 53879
+      "sha256": "bfd0b401869484609485a1a77243ade1a226cdcaa6da7706670ec96106adb05f",
+      "bytes": 53180
     },
     {
       "file": "1024-closed-light.jpg",
@@ -77,8 +141,8 @@
         1535,
         770
       ],
-      "sha256": "a475893e34971f78c70e4fd565a3451fbb0a503fdc465a70912e9cd07dc5da65",
-      "bytes": 92240
+      "sha256": "bf11bfd1e06a665994638dbd2d9e5c98555b7850f14fade142fde565f283cc66",
+      "bytes": 58291
     },
     {
       "file": "1366-open-light.jpg",
@@ -86,8 +150,8 @@
         1366,
         768
       ],
-      "sha256": "c1380b1eb4fe1bdfe00eb9d7a4ca0b5297223f468206f850e37a566f9e9ddaac",
-      "bytes": 54802
+      "sha256": "31c2b55fed511222df5419c660bb8f78cdc296e1186036e4c6dfa46d4703826f",
+      "bytes": 55468
     },
     {
       "file": "1024-open-light.jpg",
@@ -95,8 +159,8 @@
         1024,
         768
       ],
-      "sha256": "1a19e374627d61d2828fb156a0a4656084674ce88ba335a1597bbfd8d72a2acd",
-      "bytes": 33904
+      "sha256": "605adca341de3880219e9a16a90f9187ed69714aa6457e8e897c18f682be8582",
+      "bytes": 34588
     },
     {
       "file": "900-open-light.jpg",
@@ -104,8 +168,8 @@
         900,
         1000
       ],
-      "sha256": "5177c7cde2f9ebed3c13c8f9f0868749c67491f91d0a3bba04d34a896d218fa6",
-      "bytes": 38933
+      "sha256": "9161c99595f47f34414ecbc55051fc0c3049d1c35596d1abe7485bb3b034a5a5",
+      "bytes": 39495
     },
     {
       "file": "390-open-light.jpg",
@@ -113,8 +177,8 @@
         390,
         843
       ],
-      "sha256": "9f45e76e4fab51e80983468394a5bc3a808fa763d6eb7ef1c79c18ddd3f3a33a",
-      "bytes": 26114
+      "sha256": "a11c5db64a554a89894039ef6fa90005f6d6a9aa8fc44c4443de669e32704daa",
+      "bytes": 26742
     },
     {
       "file": "390-open-light-bottom.jpg",
@@ -122,8 +186,8 @@
         390,
         843
       ],
-      "sha256": "0090bafb45ec884820093687b26d60fc6ff10426e05b76915ce5cc96055ea247",
-      "bytes": 23806
+      "sha256": "26c71638ff74af14f2ca59619b517fa7917bee84c239e42a1a282ac57c666944",
+      "bytes": 25566
     },
     {
       "file": "390-creator-dark-b.jpg",
@@ -131,8 +195,8 @@
         390,
         843
       ],
-      "sha256": "5b789b3ba9ae81d788cee48f2ff51e2370f67e30c03e8bd786d95db0a92e3ecf",
-      "bytes": 28779
+      "sha256": "b9b122435c78b52b4cae4013c418c1405e659653d3992a818e33c12df97db837",
+      "bytes": 28926
     },
     {
       "file": "1536-creator-dark-b.jpg",
@@ -149,8 +213,8 @@
         1535,
         770
       ],
-      "sha256": "e1d6ee6136185649575faa2161433577f5ce78e13fca377e90a1bb7e1cdfef48",
-      "bytes": 72032
+      "sha256": "86813111df91f02db00521e51217e29de1ff4a8b60b9eb9d71cc62a4a1ceb5d2",
+      "bytes": 51058
     },
     {
       "file": "390-planning-dark-b.jpg",
@@ -158,8 +222,8 @@
         390,
         843
       ],
-      "sha256": "dced7f749cb6cfffabf0959387d3a008179c761414ef227ac955f27c7e453f22",
-      "bytes": 26146
+      "sha256": "b4e54accf17957403aae3cceaafe372cd2ac493da03a93457e3d532518908d8c",
+      "bytes": 26142
     },
     {
       "file": "320-planning-dark-b.jpg",
@@ -167,8 +231,8 @@
         320,
         640
       ],
-      "sha256": "688daf3edbe1c6bc1219a89150b0d59ae8475867c5a3d38298fa1c91b69283cd",
-      "bytes": 17436
+      "sha256": "5ec2e8ab39a26813f1e0ab0e74c2ba5c2240fd02de55d7d1ff571915cd424380",
+      "bytes": 17321
     }
   ],
   "contrast": {
@@ -181,11 +245,11 @@
     "command": "node node_modules/vitest/vitest.mjs run Operations Capacity/Workspace/TaskFocus/CrmWorkEditor/WorkEditor/WorkCreator/ProjectCreator owning suites",
     "tests": 121,
     "suites": 8,
-    "logSha256": "bf60293f6a42657bb21b4ed0dbab2a590ead0c8a45e3e9aebddcf71e21615142"
+    "logSha256": "65e8a318a19d01cee3a4446a526c73c1906ecb611ce119d29e99d9f6ced0f2d0"
   },
   "detector": {
     "layout": "PASS exit0 []",
-    "full": "PASS exit0; four incumbent typography advisories at unchanged25px/22px/17px declarations; no new values"
+    "full": "PASS exit0; four incumbent typography advisories at unchanged25px/22px/17px declarations; no new color/type/motion values"
   },
   "limits": [
     "synthetic contexts A and B, not two authenticated cohorts",

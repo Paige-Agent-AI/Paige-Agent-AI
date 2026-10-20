@@ -75,7 +75,7 @@
         "color": "rgb(103, 97, 107)",
         "fontSize": "13px",
         "tag": "P",
-        "text": "Time uses your device’s timezone. Review the exact date before confirming."
+        "text": "Time uses your device\u00e2\u20ac\u2122s timezone. Review the exact date before confirming."
       }
     ],
     "titleBounds": {
@@ -165,7 +165,7 @@
         "color": "rgb(103, 97, 107)",
         "fontSize": "13px",
         "tag": "P",
-        "text": "Time uses your device’s timezone. Review the exact date before confirming."
+        "text": "Time uses your device\u00e2\u20ac\u2122s timezone. Review the exact date before confirming."
       }
     ],
     "titleBounds": {
@@ -255,7 +255,7 @@
         "color": "rgb(103, 97, 107)",
         "fontSize": "13px",
         "tag": "P",
-        "text": "Time uses your device’s timezone. Review the exact date before confirming."
+        "text": "Time uses your device\u00e2\u20ac\u2122s timezone. Review the exact date before confirming."
       }
     ],
     "titleBounds": {
@@ -345,7 +345,7 @@
         "color": "rgb(103, 97, 107)",
         "fontSize": "13px",
         "tag": "P",
-        "text": "Time uses your device’s timezone. Review the exact date before confirming."
+        "text": "Time uses your device\u00e2\u20ac\u2122s timezone. Review the exact date before confirming."
       }
     ],
     "titleBounds": {
@@ -435,7 +435,7 @@
         "color": "rgb(103, 97, 107)",
         "fontSize": "13px",
         "tag": "P",
-        "text": "Time uses your device’s timezone. Review the exact date before confirming."
+        "text": "Time uses your device\u00e2\u20ac\u2122s timezone. Review the exact date before confirming."
       }
     ],
     "titleBounds": {
@@ -525,7 +525,7 @@
         "color": "rgb(103, 97, 107)",
         "fontSize": "13px",
         "tag": "P",
-        "text": "Time uses your device’s timezone. Review the exact date before confirming."
+        "text": "Time uses your device\u00e2\u20ac\u2122s timezone. Review the exact date before confirming."
       }
     ],
     "titleBounds": {
@@ -615,7 +615,7 @@
         "color": "rgb(103, 97, 107)",
         "fontSize": "13px",
         "tag": "P",
-        "text": "Time uses your device’s timezone. Review the exact date before confirming."
+        "text": "Time uses your device\u00e2\u20ac\u2122s timezone. Review the exact date before confirming."
       }
     ],
     "titleBounds": {
@@ -705,7 +705,7 @@
         "color": "rgb(103, 97, 107)",
         "fontSize": "13px",
         "tag": "P",
-        "text": "Time uses your device’s timezone. Review the exact date before confirming."
+        "text": "Time uses your device\u00e2\u20ac\u2122s timezone. Review the exact date before confirming."
       }
     ],
     "titleBounds": {
@@ -795,7 +795,7 @@
         "color": "rgb(103, 97, 107)",
         "fontSize": "13px",
         "tag": "P",
-        "text": "Time uses your device’s timezone. Review the exact date before confirming."
+        "text": "Time uses your device\u00e2\u20ac\u2122s timezone. Review the exact date before confirming."
       }
     ],
     "titleBounds": {
@@ -885,18 +885,18 @@
         "color": "rgb(103, 97, 107)",
         "fontSize": "13px",
         "tag": "P",
-        "text": "Time uses your device’s timezone. Review the exact date before confirming."
+        "text": "Time uses your device\u00e2\u20ac\u2122s timezone. Review the exact date before confirming."
       }
     ],
     "titleBounds": {
-      "bottom": -68,
+      "bottom": -40,
       "height": 28,
       "left": 24.80000114440918,
       "right": 351.19999504089355,
-      "top": -96,
+      "top": -68,
       "width": 326.3999938964844,
       "x": 24.80000114440918,
-      "y": -96
+      "y": -68
     }
   },
   {
@@ -1083,7 +1083,7 @@
         "color": "rgb(172, 166, 157)",
         "fontSize": "12px",
         "tag": "P",
-        "text": "Activity couldn’t be read. Retry activity"
+        "text": "Activity couldn\u00e2\u20ac\u2122t be read. Retry activity"
       }
     ],
     "titleBounds": {
@@ -1185,7 +1185,7 @@
         "color": "rgb(172, 166, 157)",
         "fontSize": "12px",
         "tag": "P",
-        "text": "Activity couldn’t be read. Retry activity"
+        "text": "Activity couldn\u00e2\u20ac\u2122t be read. Retry activity"
       }
     ],
     "titleBounds": {
@@ -1220,7 +1220,7 @@
     "padding": "32px 24px",
     "pageScroll": 320,
     "pageWidth": 320,
-    "scrollHeight": 1132,
+    "scrollHeight": 1160,
     "scrollWidth": 304,
     "texts": [
       {
@@ -1287,12 +1287,12 @@
         "color": "rgb(172, 166, 157)",
         "fontSize": "12px",
         "tag": "P",
-        "text": "Activity couldn’t be read. Retry activity"
+        "text": "Activity couldn\u00e2\u20ac\u2122t be read. Retry activity"
       }
     ],
     "titleBounds": {
-      "bottom": 60,
-      "height": 28,
+      "bottom": 88,
+      "height": 56,
       "left": 24.80000114440918,
       "right": 280.8000011444092,
       "top": 32,

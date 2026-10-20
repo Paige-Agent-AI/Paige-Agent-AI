@@ -1,5 +1,23 @@
 # Finance department — current source and full operating target
 
+## October 20 observed statement-source release — #2021
+
+Original #2021 reviewedab3f8243ce0795127eb274e2eb0e3995fd6adc5c merged
+`ed305fb25cba16877684955092fb1d0f58976dd3`, exact reviewed composition
+tree737b577af762f5ab71ebaa95edf7e0e3981c6f64. Documented AUTHOR-REVIEW / LOWER
+ASSURANCE6296540246/6297250084, all11 applicable exact-head checks/Preview and both
+Vercel contexts SUCCESS. Four original statement/test leaves unchanged;
+108 controlled cases/strict ES2020/lint/Registry PASS. Production
+webdpl_3viZpseuJYT4Fh9cRESQnRW4LpiH READY/exact; public HTTP200 build
+`ed305fb25cba16877684955092fb1d0f58976dd3-mvgz1u7z` verified.
+Edge39468474106/job118785988601 succeeded with deployment/readback/tag SKIPPED:
+no production function imports these helpers. This supersedes candidate-only
+source status below, without changing **UNMOUNTED / customer proof owed**.
+Preserve canonical company/unfiltered request, currency, basis, period, source
+observation and Metric/Evidence authority before consumption. No provider call,
+new ledger, financial effect, customer announcement or authenticated acceptance.
+Full financial intelligence and all19 EXP02 outcomes remain incomplete.
+
 Grounded on 2026-10-09 against main `794a38263e2d1d565ccab20253751593ed9c8f5b`.
 Owner-approved design and subsequent “live merge on green” authorize normal delivery. They do not authorize a real provider connection or financial effects.
 

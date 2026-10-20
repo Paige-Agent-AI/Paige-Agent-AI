@@ -40,13 +40,11 @@ proof, never by accepting upload status, weakening hashing or manually forcing a
 `business.operating_snapshot`, INT-340 metric issuer/resolver and Operating Fabric.
 Targets attach to canonical Strategic Plays; no second actuals or receipt store.
 VERA [#2400](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2400) at
-`1b7565be158a4641e25c96341b75ce5466aa663f` extends the existing global registry
+`73fba3d366e7f9d3f177e1fd6d5bf71cadf178d1` extends the existing global registry
 identity and addressed Chat; its guarded role-remap migration is not applied. Main has since applied121100 for
 Chat executor acquisition (#2415), followed by Operations121300 (#2427).
-VERA's still-unapplied migration now reserves121400 beyond the production frontier;
-SQL bytes are preserved. Its required PR-only Preview remains failed on obsolete
-private121100/121200 history despite accepted reset requests. A reset response is
-not repair proof; never use include-all, rewrite production history or waive CI.
+VERA must move its still-unapplied reservation beyond the current production
+frontier before release; never use include-all or rewrite applied history.
 Finance [#2402](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2402)
 consumes the existing caller-JWT Finance source contracts through the same snapshot;
 it remains unreleased. Null/unavailable is never zero, cash is never credit, and

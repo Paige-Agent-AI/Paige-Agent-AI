@@ -807,6 +807,27 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-20 UTC — Finance supported historical statement helpers — source only.**
+Original PR [#2021](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2021),
+reviewed `ab3f8243ce0795127eb274e2eb0e3995fd6adc5c`, merged main
+`ed305fb25cba16877684955092fb1d0f58976dd3`; actual tree
+`737b577af762f5ab71ebaa95edf7e0e3981c6f64` matches reviewed current-main composition.
+AUTHOR-REVIEW / LOWER ASSURANCE6296540246/6297250084; all11 applicable exact-head
+checks, Supabase Preview and both Vercel contexts SUCCESS, zero review threads.
+Four original runtime/test leaves remain unchanged;108 controlled tests, strict
+ES2020, scoped lint and Registry validation PASS. Native report groups/columns
+and exact decimal measures preserve scope, currency, basis and period;
+partial/filtered/conflicting evidence withholds profit.
+Production web `dpl_3viZpseuJYT4Fh9cRESQnRW4LpiH` READY/exact; public HTTP200
+buildId `ed305fb25cba16877684955092fb1d0f58976dd3-mvgz1u7z` read back.
+Edge39468474106/job118785988601 SUCCESS with zero affected functions;
+deployment/readback/tag steps legitimately SKIPPED because helpers remain
+**UNMOUNTED**. No migration, provider call, ledger, financial effect, customer
+release identity or announcement. Actual company-authorized ingestion/evidence,
+Fabric/Spine/UI/Chat/Live adoption and authenticated financial acceptance remain
+required. Initial stale-mergeability approval rejection was resolved by fresh
+clean/true GitHub evidence before the normal expected-head merge.
+
 **2026-10-20 UTC — E02 configured Edge package recovery — source verified.**
 PR [#2413](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2413), reviewed
 `8d0ed1278417995481168cbb2c0cb710a6f7979a`, merged main

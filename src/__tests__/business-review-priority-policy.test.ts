@@ -19,6 +19,33 @@ it('never reintroduces an unrequested risk through the priority summary', () => 
   expect(text).not.toContain('blocking operating findings');
 });
 
+it('keeps complete original evidence when the extra interpretation cannot fit', () => {
+  const complete = projectOperatingSnapshot(TEST_BUSINESS_REVIEW, { maxChars: 100000 });
+  const tight = projectOperatingSnapshot(TEST_BUSINESS_REVIEW, { maxChars: complete.length - 1 });
+  expect(tight).not.toContain('Priority 1');
+  expect(tight).not.toContain('Left out for length');
+  for (const finding of ['2 blocking operating findings', 'USD 300.00 is overdue right now', '2 open opportunities older than 30 days']) {
+    expect(tight).toContain(finding);
+  }
+});
+
+it('keeps equal-severity risks in requested-domain and original finding order', () => {
+  const snapshot: typeof TEST_BUSINESS_REVIEW = {
+    ...TEST_BUSINESS_REVIEW, requested: ['sales_pipeline', 'payments'],
+    domains: { ...TEST_BUSINESS_REVIEW.domains, payments: {
+      status: 'available', data: { ...TEST_BUSINESS_REVIEW.domains.payments.data!, risks: [
+        ...TEST_BUSINESS_REVIEW.domains.payments.data!.risks,
+        { kind: 'second', severity: 'watch', summary: 'Second source finding' },
+      ] },
+    } },
+  };
+  expect(rankOperatingSnapshotRisks(snapshot).map(r => [r.domain, r.summary])).toEqual([
+    ['sales_pipeline', '2 open opportunities older than 30 days'],
+    ['payments', 'USD 300.00 is overdue right now'],
+    ['payments', 'Second source finding'],
+  ]);
+});
+
 it('preserves the fixed-lines-only budget without leaking omitted risk evidence', () => {
   const text = projectOperatingSnapshot(TEST_BUSINESS_REVIEW, { maxChars: 0 });
   expect(text).not.toContain('Priority 1');

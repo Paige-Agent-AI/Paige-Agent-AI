@@ -1,0 +1,52 @@
+Browser tab: 170269640, Title: "Local actual SOLO Operations proof", URL: "http://127.0.0.1:62499/?theme=light&workspace=a".
+1 AXWebArea Local actual SOLO Operations proof, URL: 127.0.0.1:62499/?theme=light&workspace=a
+	2 container
+		3 container
+			4 text PAIGE workspace ready
+		5 container Weekly responsibility, ID: radix-:r0:
+			6 heading Weekly responsibility, Value: 2, ID: radix-:r1:
+				7 text Weekly responsibility
+			8 text Current owner scope, canonical schedules and verified results.
+			9 container
+				10 heading Weekly commitment check, Value: 2
+					11 text Weekly commitment check
+				12 text Review the week. Keep the original work in Operations.
+				13 button Refresh weekly responsibility
+			14 container
+				15 text Read  Tue, Oct 20, 4:00 AM EDT
+			16 heading No weekly responsibility is registered, Value: 3
+				17 text No weekly responsibility is registered
+			18 text Prepare the schedule and scope for review. Recurring execution is currently unavailable.
+			19 container Prepare and retrieve weekly drafts
+				20 container Weekly responsibility draft
+					21 heading Review unfinished weekly commitments, Value: 3
+						22 text Review unfinished weekly commitments
+					23 container
+						24 text Every  Tuesday  at  10:00
+						25 text America/New_York
+					26 text Your outstanding personal Planning work. The original commitments stay in Operations → Work.
+					27 text Save this proposal for later review. Saving a draft does not authorize recurring execution.
+					28 container Needs your OK
+						29 text Needs your OK
+						30 content list
+							31 text Save this exact proposal as an unapproved draft. No recurrence, business task change or provider send is authorized.
+						32 button Approve
+							33 image
+							34 text Approve
+						35 button Not now
+							36 image
+							37 text Not now
+					38 container
+						39 text Confirmation expires  Tue, Oct 20, 9:16 AM EDT .
+					40 button Read saved status
+					41 container
+						42 text Last read  Tue, Oct 20, 9:06 AM EDT
+				43 button Prepare another responsibility
+			44 container Weekly responsibility records
+				45 link Description: Clients → Calendar, Value: 127.0.0.1:62499/solo/1701/clients/calendar
+				46 link Description: Operations → Work, Value: 127.0.0.1:62499/solo/1701/operations/work
+			47 button Close
+				48 image
+				49 text Close
+
+The focused UI element is 47 button Close

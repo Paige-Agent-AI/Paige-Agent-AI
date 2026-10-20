@@ -38,6 +38,7 @@ import { createClientsSnapshotAdapter } from "./adapters/clients.ts";
 import { createOperationsSnapshotAdapter } from "./adapters/operations.ts";
 import { createPaymentsSnapshotAdapter } from "./adapters/payments.ts";
 import { createSalesPipelineSnapshotAdapter } from "./adapters/sales-pipeline.ts";
+import { createGamePlanSnapshotAdapter } from "./adapters/game-plan.ts";
 
 export const BUSINESS_REVIEW_DEFAULT_PERIOD = "last_7_days";
 /** Each metric read is several RPCs and an adapter reads up to four metrics one after another. */
@@ -179,6 +180,7 @@ export async function composeBusinessReview(
     createSalesPipelineSnapshotAdapter(scope.caller, { tenantId }, clock),
     createOperationsSnapshotAdapter(scope.caller, { tenantId }, clock),
     createClientsSnapshotAdapter(scope.caller, { tenantId }, clock),
+    createGamePlanSnapshotAdapter(scope.caller, { tenantId }, clock),
   ];
   // Clamped the way the composer clamps it, so the workspace reads share the adapters' budget.
   const asked = opts?.timeoutMs;

@@ -1,0 +1,129 @@
+{
+  "dialog": {
+    "clientHeight": 844,
+    "clientWidth": 319,
+    "controls": [
+      {
+        "disabled": false,
+        "rect": {
+          "bottom": 140,
+          "height": 40,
+          "left": 262.3999938964844,
+          "right": 303.99999618530273,
+          "top": 100,
+          "width": 41.60000228881836,
+          "x": 262.3999938964844,
+          "y": 100
+        },
+        "text": "Refresh weekly responsibility"
+      },
+      {
+        "disabled": false,
+        "rect": {
+          "bottom": 420.2000122070313,
+          "height": 40,
+          "left": 16.80000114440918,
+          "right": 231.3625011444092,
+          "top": 380.2000122070313,
+          "width": 214.5625,
+          "x": 16.80000114440918,
+          "y": 380.2000122070313
+        },
+        "text": "Prepare a weekly responsibility"
+      },
+      {
+        "disabled": false,
+        "rect": {
+          "bottom": 490.70000076293945,
+          "height": 21.700000762939453,
+          "left": 16.80000114440918,
+          "right": 132.08749961853027,
+          "top": 469,
+          "width": 115.2874984741211,
+          "x": 16.80000114440918,
+          "y": 469
+        },
+        "text": "Clients → Calendar"
+      },
+      {
+        "disabled": false,
+        "rect": {
+          "bottom": 490.70000076293945,
+          "height": 21.700000762939453,
+          "left": 142.08750915527344,
+          "right": 262.22501373291016,
+          "top": 469,
+          "width": 120.13750457763672,
+          "x": 142.08750915527344,
+          "y": 469
+        },
+        "text": "Operations → Work"
+      },
+      {
+        "disabled": false,
+        "rect": {
+          "bottom": 48,
+          "height": 44,
+          "left": 272,
+          "right": 316,
+          "top": 4,
+          "width": 44,
+          "x": 272,
+          "y": 4
+        },
+        "text": "Close"
+      }
+    ],
+    "padding": "24px 16px",
+    "rect": {
+      "bottom": 844,
+      "height": 844,
+      "left": 0,
+      "right": 320,
+      "top": 0,
+      "width": 320,
+      "x": 0,
+      "y": 0
+    },
+    "scrollHeight": 844,
+    "scrollWidth": 319,
+    "text": "Weekly responsibilityCurrent owner scope, canonical schedules and verified results.Weekly commitment checkReview the week. Keep the original work in Operations.Read Tue, Oct 20, 4:00 AM EDTNo weekly responsibility is registeredPrepare the schedule and scope for review. Recurring execution is currently unavailable.Prepare a weekly responsibilityClients → CalendarOperations → WorkClose",
+    "title": "Weekly responsibility",
+    "titleGlyphs": [
+      {
+        "bottom": 48.79999923706055,
+        "height": 22.399999618530273,
+        "left": 55.20000076293945,
+        "right": 233.6000099182129,
+        "top": 26.399999618530273,
+        "width": 178.40000915527344,
+        "x": 55.20000076293945,
+        "y": 26.399999618530273
+      }
+    ]
+  },
+  "document": {
+    "clientWidth": 320,
+    "scrollWidth": 320
+  },
+  "entry": {
+    "rect": {
+      "bottom": 204.8500061035156,
+      "height": 44,
+      "left": 172.91250610351562,
+      "right": 216.9125061035156,
+      "top": 160.85000610351562,
+      "width": 44,
+      "x": 172.91250610351562,
+      "y": 160.85000610351562
+    },
+    "visible": true
+  },
+  "focus": {
+    "name": null,
+    "text": "Weekly responsibilityCurrent owner scope, canonical schedules and verified resul"
+  },
+  "height": 844,
+  "reducedMotion": true,
+  "width": 320
+}

@@ -1,10 +1,12 @@
 // Paige Runtime Harness — Layer C · C2: the NATIVE synchronous executor(s).
 //
-// A "native" action is one whose effect is a governed IN-TENANT Paige write with a canonical RPC — no
-// external provider, no per-tenant connection/consent to negotiate. C2 ships exactly ONE: advancing a
+// A "native" action uses a governed IN-TENANT canonical RPC — no external provider or connection.
+// The original C2 write advances a
 // contact's journey stage (`crm.advance_journey_stage` action_kind → the tenant-aware `set_journey_stage`
 // RPC). The native ActionAdapter (registered in adapters.ts) routes an action_kind to its executor here, so
-// adding the next native action is one registry entry — never a journey-specific engine (owner:
+// Experience 05 adds the owner-personal Planning observation using that same registry and claim seam;
+// its atomic observation/receipt readback does not mutate Planning. Adding an action is a registry entry,
+// never a journey-specific engine (owner:
 // connector-neutral).
 //
 // The contract this honours (adapters.ts): dispatch performs the effect and RETURNS THE TERMINAL OUTCOME
@@ -30,6 +32,7 @@
 //     alone, so a crash-recovery drain (which no longer holds the governed args) still confirms honestly (§39 F4).
 
 import type { ActionAdapter, AdapterCapability, DispatchInput, DispatchResult } from "./adapters.ts";
+import { weeklyCommitmentExecutor } from "./weekly-commitment-adapter.ts";
 
 // ── The native action registry: exact action_kind → executor. §18 one home; extend, never fork. ─────────
 type NativeExecutor = {
@@ -154,11 +157,49 @@ const journeyStageExecutor: NativeExecutor = {
   },
 };
 
+// owner.task is an internal task, not a generic tool invocation. The event/act
+// ledger supplies the native actor, exact reviewed args and occurrence identity.
+// Even an automatic process cannot use this vertical without native redemption.
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+async function ownerTaskCall(input: DispatchInput, readback: boolean): Promise<DispatchResult> {
+  const unknown = (): DispatchResult => ({ outcome: "ambiguous", detail: { reason: "owner_task_native_outcome_unconfirmed", proven_absent: false } });
+  if (input.subjectTable !== "clients" || !UUID.test(input.subjectId) || !UUID.test(input.tenantId)
+    || !UUID.test(input.eventId ?? "") || !UUID.test(input.actId ?? "") || !UUID.test(input.correlationRef)) {
+    return readback ? unknown() : { outcome: "failed", error: "owner_task_invalid_occurrence", detail: {} };
+  }
+  try {
+    // No browser/model args or actor are forwarded. The native bridge captures,
+    // locks and validates the protected held context and original native approver.
+    const { data, error } = await input.db.rpc(readback ? "read_owner_task_act" : "execute_owner_task_act", {
+      _event_id: input.eventId, _act_id: input.actId, _correlation: input.correlationRef,
+    });
+    if (error || data == null || typeof data !== "object") return unknown();
+    if (!readback && data.outcome === "accepted_for_execution" && data.proven_no_effect === true) {
+      return { outcome: "accepted_for_execution", detail: { reason: "owner_task_context_locked", proven_no_effect: true } };
+    }
+    if (!readback && data.outcome === "failed") return { outcome: "failed", error: "owner_task_native_rejected", detail: { reason: data.reason } };
+    if (readback && data.state === "absent") return { outcome: "ambiguous", detail: { reason: "owner_task_not_recorded", proven_absent: true } };
+    const result = data.result, task = result?.readback;
+    if (data.state !== "found" || result?.ok !== true || result.action !== "task.create" || result.outcome !== "succeeded"
+      || result.receipt_recorded !== true || !UUID.test(String(task?.id ?? "")) || !UUID.test(String(data.actor_id ?? ""))
+      || task?.assignee_user_id !== data.actor_id || task.external_effect !== false || task.notification_sent !== false) return unknown();
+    return { outcome: "executed", providerRef: null, detail: { confirmed_via: "crm_command_result", task_id: task.id,
+      native_actor_id: data.actor_id, correlation_ref: input.correlationRef } };
+  } catch { return unknown(); }
+}
+const ownerTaskExecutor: NativeExecutor = {
+  capability: { id: "crm_create_task", effect: "mutate", outcomeChannel: "paige_act_executions" },
+  dispatch: input => ownerTaskCall(input, false),
+  readback: (_providerRef, input) => ownerTaskCall(input, true),
+};
+
 // Keyed by the act's `action_kind` — the DOTTED action-bus slug (FK to paige_action_kinds), matching the
 // capability-status manifest key. The executor's capability.id below stays the UNDERSCORE tool/risk key
 // (crm_advance_journey_stage) that action-risk + the receipt use — the standard dotted-kind ↔ underscore-tool seam.
 const NATIVE_EXECUTORS: Readonly<Record<string, NativeExecutor>> = {
   "crm.advance_journey_stage": journeyStageExecutor,
+  "planning.weekly_commitment_check": weeklyCommitmentExecutor,
+  "owner.task": ownerTaskExecutor,
 };
 
 /** True when an action_kind has a registered native executor (adapters.ts routes these to "native"). */
@@ -169,6 +210,9 @@ export function isNativeActionKind(actionKind: string | null | undefined): boole
 /** The native ActionAdapter: resolveCapability + dispatch/readback delegate to the per-action executor. */
 export const nativeAdapter: ActionAdapter = {
   kind: "native",
+  // The readback finds the transition stamped with the act's own correlation reference or proves there is none,
+  // so an act whose dispatcher died without landing it may be dispatched again under a fresh claim.
+  lostClaimRecovery: "readback_proves_absence",
   resolveCapability(actionKind: string): AdapterCapability | null {
     const ex = NATIVE_EXECUTORS[actionKind];
     return ex ? ex.capability : null;

@@ -1,9 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
+  HOST_SPLIT_ENABLED,
   computeHostRedirect,
   computeTenantHostRedirect,
+  configuredAppOrigin,
+  detectsSessionFromUrl,
+  scrubTenantHostAuthParams,
+  stripAuthCallbackParams,
+  tenantHostPortalEntryUrl,
+  tenantHostUrlWithoutAuthParams,
   tenantSlugFromHostname,
+  trustedAppOrigin,
 } from "./hostRouting";
+import { PAIGE_APP_ORIGIN } from "../../supabase/functions/_shared/canonical-app-url";
 
 describe("tenant wildcard host routing", () => {
   it("extracts a valid tenant slug case-insensitively", () => {
@@ -57,5 +66,174 @@ describe("tenant wildcard host routing", () => {
     expect(computeHostRedirect("acme.paigeagent.ai", "/", "", "")).toBe("/portal/acme");
     expect(computeHostRedirect("acme.paigeagent.ai", "/solo/1/command-center", "", "")).toBe("/portal/acme");
     expect(computeHostRedirect("paigeagent.ai", "/solo/1/command-center", "", "")).toBeNull();
+  });
+});
+
+// E09 Slice H (D5): the tenant host is a public entry; sign-in, sessions and recovery live on the
+// configured app origin. A tenant, unknown or hostile hostname never chooses where a person is sent.
+describe("app-origin resolution for sign-in and recovery", () => {
+  const at = (href: string) => {
+    const u = new URL(href);
+    return { hostname: u.hostname, origin: u.origin, protocol: u.protocol };
+  };
+
+  it("names the configured app origin from the canonical constant while the host split is off", () => {
+    expect(HOST_SPLIT_ENABLED).toBe(false);
+    expect(configuredAppOrigin()).toBe(PAIGE_APP_ORIGIN);
+    expect(configuredAppOrigin()).toBe("https://paigeagent.ai");
+  });
+
+  it.each(["https://paigeagent.ai", "https://www.paigeagent.ai", "https://app.paigeagent.ai"])(
+    "keeps the trusted app host %s exactly as it is today",
+    (origin) => expect(trustedAppOrigin(at(`${origin}/portal/acme`))).toBe(origin),
+  );
+
+  it.each(["http://localhost:8080", "http://127.0.0.1:4173"])(
+    "keeps the local development origin %s",
+    (origin) => expect(trustedAppOrigin(at(`${origin}/portal/acme`))).toBe(origin),
+  );
+
+  it.each([
+    "https://acme.paigeagent.ai",
+    "https://evil.example",
+    "https://paigeagent.ai.evil.example",
+    "https://evilpaigeagent.ai",
+    "https://preview-123.vercel.app",
+    "http://paigeagent.ai",
+  ])("sends %s to the configured app origin instead of itself", (origin) => {
+    expect(trustedAppOrigin(at(`${origin}/portal/acme`))).toBe("https://paigeagent.ai");
+  });
+
+  it("builds the tenant-host sign-in link on the app origin, pinned to the hostname tenant", () => {
+    expect(tenantHostPortalEntryUrl("Acme.paigeagent.ai")).toBe("https://paigeagent.ai/portal/acme");
+  });
+
+  it.each(["paigeagent.ai", "app.paigeagent.ai", "evil.example", "localhost"])(
+    "has no tenant-host entry link on the non-tenant host %s",
+    (hostname) => expect(tenantHostPortalEntryUrl(hostname)).toBeNull(),
+  );
+
+  it("never routes the tenant-host entry link back onto a tenant host", () => {
+    const target = new URL(tenantHostPortalEntryUrl("acme.paigeagent.ai")!);
+    expect(tenantSlugFromHostname(target.hostname)).toBeNull();
+    expect(computeHostRedirect(target.hostname, target.pathname, "", "")).toBeNull();
+  });
+});
+
+describe("auth callback parameters never ride into a tenant host's canonical URL", () => {
+  const TOKENS = "access_token=at&refresh_token=rt&provider_token=pt&provider_refresh_token=prt"
+    + "&expires_at=1&expires_in=3600&token_type=bearer&type=recovery";
+
+  it("strips every auth parameter from the hash and keeps the rest byte for byte", () => {
+    expect(computeTenantHostRedirect("acme.paigeagent.ai", "/x", "", `#${TOKENS}&tab=Two%20words`))
+      .toBe("/portal/acme#tab=Two%20words");
+  });
+
+  it("strips code and error parameters from the query and keeps the rest", () => {
+    expect(computeTenantHostRedirect(
+      "acme.paigeagent.ai", "/auth", "?ref=partner&code=abc&error=x&error_code=y&error_description=z&utm=a+b", "",
+    )).toBe("/portal/acme?ref=partner&utm=a+b");
+  });
+
+  it("strips from both parts on a pinned route-slug rewrite", () => {
+    expect(computeTenantHostRedirect("acme.paigeagent.ai", "/portal/other", "?code=abc", `#${TOKENS}`))
+      .toBe("/portal/acme");
+  });
+
+  it("recognises an encoded key exactly as supabase-js decodes it", () => {
+    expect(computeTenantHostRedirect("acme.paigeagent.ai", "/", "", "#access%5Ftoken=at&keep=1"))
+      .toBe("/portal/acme#keep=1");
+  });
+
+  it.each(["", "?", "#", "#welcome", "?ref=partner&x=1", "#a=1&&b=2", "?codes=1&typed=2"])(
+    "leaves %j untouched when it carries no auth parameter",
+    (part) => expect(stripAuthCallbackParams(part)).toBe(part),
+  );
+
+  it("strips sb_flow_id, the PKCE flow id auth-js reads, with the other auth parameters", () => {
+    expect(computeTenantHostRedirect("acme.paigeagent.ai", "/", "?sb_flow_id=f1&code=abc&ref=1", ""))
+      .toBe("/portal/acme?ref=1");
+    expect(stripAuthCallbackParams("#sb_flow_id=f1")).toBe("");
+  });
+
+  it("does not rewrite a URL on a non-tenant host", () => {
+    expect(computeTenantHostRedirect("paigeagent.ai", "/x", "?code=abc", "#access_token=at")).toBeNull();
+  });
+
+  it("turns off URL session detection on a tenant host only", () => {
+    expect(detectsSessionFromUrl("acme.paigeagent.ai")).toBe(false);
+    expect(detectsSessionFromUrl("Acme.PaigeAgent.ai.")).toBe(false);
+  });
+
+  it.each(["paigeagent.ai", "www.paigeagent.ai", "app.paigeagent.ai", "localhost", "preview-1.vercel.app", ""])(
+    "keeps URL session detection on the non-tenant host %j exactly as today",
+    (hostname) => expect(detectsSessionFromUrl(hostname)).toBe(true),
+  );
+});
+
+describe("auth callback parameters are removed in place on a tenant host that is not redirected", () => {
+  it.each([
+    ["/portal/acme", "", "#access_token=at&refresh_token=rt&tab=1", "/portal/acme#tab=1"],
+    ["/book/intro", "?code=abc&ref=partner", "", "/book/intro?ref=partner"],
+    ["/form/f1", "?embed=1&sb_flow_id=f1", "#error=x&error_description=y", "/form/f1?embed=1"],
+    ["/u/tok", "?type=recovery", "#token_type=bearer", "/u/tok"],
+  ])("cleans %s%s%s", (path, search, hash, expected) => {
+    expect(computeTenantHostRedirect("acme.paigeagent.ai", path, search, hash)).toBeNull();
+    expect(tenantHostUrlWithoutAuthParams("acme.paigeagent.ai", path, search, hash)).toBe(expected);
+  });
+
+  it("returns null on a tenant host when nothing needs removing", () => {
+    expect(tenantHostUrlWithoutAuthParams("acme.paigeagent.ai", "/book/intro", "?ref=1&codes=2", "#tab")).toBeNull();
+  });
+
+  it.each(["paigeagent.ai", "www.paigeagent.ai", "app.paigeagent.ai", "localhost", "preview-1.vercel.app"])(
+    "never touches the non-tenant host %j",
+    (hostname) => expect(tenantHostUrlWithoutAuthParams(hostname, "/auth", "?code=abc", "#access_token=at")).toBeNull(),
+  );
+});
+
+describe("a tenant-host path that starts with // stays on the tenant origin", () => {
+  it("canonicalizes //evil.example/x to the tenant's own portal, a same-origin target", () => {
+    const target = computeTenantHostRedirect("acme.paigeagent.ai", "//evil.example/x", "?code=abc", "");
+    expect(target).toBe("/portal/acme");
+    expect(new URL(target!, "https://acme.paigeagent.ai").origin).toBe("https://acme.paigeagent.ai");
+  });
+
+  it.each(["//evil.example", "///evil.example/x", "/\\evil.example/x", "//portal/acme"])(
+    "never returns a protocol-relative target for the path %j",
+    (path) => {
+      const target = computeTenantHostRedirect("acme.paigeagent.ai", path, "?ref=1", "");
+      expect(target).not.toBeNull();
+      expect(target!.startsWith("//")).toBe(false);
+      expect(new URL(target!, "https://acme.paigeagent.ai").origin).toBe("https://acme.paigeagent.ai");
+    },
+  );
+
+  function fakeWindow(pathname: string, search: string, replaceState: (...args: unknown[]) => void) {
+    const origin = "https://acme.paigeagent.ai";
+    return {
+      location: { hostname: "acme.paigeagent.ai", origin, pathname, search, hash: "" },
+      history: { state: { k: 1 }, replaceState },
+    } as unknown as Window;
+  }
+
+  it("hands replaceState a full same-origin URL, keeping a // path byte for byte", () => {
+    const replaceState = vi.fn();
+    expect(scrubTenantHostAuthParams(fakeWindow("//evil.example/x", "?code=abc&ref=1", replaceState))).toBe(true);
+    expect(replaceState).toHaveBeenCalledWith({ k: 1 }, "", "https://acme.paigeagent.ai//evil.example/x?ref=1");
+    const passed = new URL(replaceState.mock.calls[0][2] as string);
+    expect(passed.origin).toBe("https://acme.paigeagent.ai");
+    expect(passed.pathname).toBe("//evil.example/x");
+  });
+
+  it("logs loudly and never throws when replaceState refuses the URL", () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const refused = new DOMException("refused", "SecurityError");
+    const win = fakeWindow("/book/intro", "?code=abc", () => { throw refused; });
+    expect(() => scrubTenantHostAuthParams(win)).not.toThrow();
+    expect(scrubTenantHostAuthParams(win)).toBe(false);
+    expect(error).toHaveBeenCalled();
+    expect(error.mock.calls[0]).toContain(refused);
+    error.mockRestore();
   });
 });

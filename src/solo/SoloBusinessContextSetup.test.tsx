@@ -31,6 +31,18 @@ state.brief = cleanSoloSetupBrief({
 });
 state.paigeProfile = EMPTY_PAIGE_PROFILE;
 
+// The real Knowledge library requires the app's settled actor/workspace context.
+// Keep this isolated Setup fixture aligned with the business-context tenant below.
+vi.mock("@/hooks/useTenantContext", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/hooks/useTenantContext")>()),
+  useTenantContext: () => ({
+    activeUserId: "owner-1",
+    activeTenantId: state.activeTenantId,
+    loading: false,
+    accountContextStatus: "ready",
+  }),
+}));
+
 vi.mock("./data/useSoloBusinessContext", () => ({
   useSoloBusinessContext: () => ({
     loading: false,
@@ -73,6 +85,15 @@ vi.mock("./data/useSoloBusinessContext", () => ({
     searchNaics: state.searchNaics,
     dismissProposal: vi.fn(),
     refresh: state.refresh,
+  }),
+}));
+// Business profile mounts the business time zone section, which reads its own store; its behaviour is
+// proven in setup-business-time-zone.test.tsx. Here it is a settled double so these tests stay isolated.
+vi.mock("./data/useBusinessTimeZone", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./data/useBusinessTimeZone")>()),
+  useBusinessTimeZone: () => ({
+    load: { status: "ready", value: { state: "configured", zone: "America/New_York", setAt: "2026-10-12T20:00:00Z", localDate: "2026-10-12", canSet: true } },
+    saving: false, refresh: async () => {}, save: async () => ({ ok: false, kind: "failed" }),
   }),
 }));
 vi.mock("@/hooks/useConfirm", () => ({
@@ -155,6 +176,90 @@ async function setValue(
 }
 
 describe("canonical Solo Setup business context", () => {
+  it("mounts the business time zone on Business profile, and only there (E4-S2)", async () => {
+    const { host, root } = await mount("100", "/solo/100/settings/setup/business-profile");
+    const section = host.querySelector("section#business-time-zone");
+    expect(section?.querySelector("h2")?.textContent).toBe("Business time zone");
+    expect(section?.textContent).toContain("America/New_York");
+    await act(async () => root.unmount());
+    const other = await mount("100", "/solo/100/settings/setup/direction");
+    expect(other.host.querySelector("section#business-time-zone")).toBeNull();
+    await act(async () => other.root.unmount());
+  });
+
+  // E4-S3 — the chat's "Open business time zone setting" links to …/business-profile#business-time-zone.
+  // The section sits below the whole profile form, so the link must land ON it, not at the top.
+  describe("a #business-time-zone link lands on the setting", () => {
+    const scroll = vi.fn();
+    const motion = { reduce: false };
+    const realMatchMedia = window.matchMedia;
+    beforeEach(() => {
+      scroll.mockReset();
+      motion.reduce = false;
+      Element.prototype.scrollIntoView = scroll as unknown as Element["scrollIntoView"];
+      window.matchMedia = ((query: string) => ({
+        matches: query.includes("prefers-reduced-motion") ? motion.reduce : false,
+        media: query, onchange: null,
+        addEventListener: () => {}, removeEventListener: () => {}, addListener: () => {}, removeListener: () => {},
+        dispatchEvent: () => false,
+      })) as unknown as typeof window.matchMedia;
+    });
+    afterEach(() => {
+      delete (Element.prototype as Partial<Element>).scrollIntoView;
+      window.matchMedia = realMatchMedia;
+    });
+
+    it("scrolls the section into view and focuses its heading", async () => {
+      const { host, root } = await mount("100", "/solo/100/settings/setup/business-profile#business-time-zone");
+      const section = host.querySelector("section#business-time-zone");
+      expect(scroll).toHaveBeenCalledTimes(1);
+      expect(scroll.mock.contexts[0]).toBe(section);
+      expect(scroll.mock.calls[0][0]).toMatchObject({ block: "start", behavior: "smooth" });
+      expect(document.activeElement).toBe(host.querySelector("#business-time-zone-title"));
+      await act(async () => root.unmount());
+      host.remove();
+    });
+
+    it("jumps without animation when reduced motion is asked for", async () => {
+      motion.reduce = true;
+      const { host, root } = await mount("100", "/solo/100/settings/setup/business-profile#business-time-zone");
+      expect(scroll.mock.calls[0][0]).toMatchObject({ block: "start", behavior: "auto" });
+      expect(document.activeElement).toBe(host.querySelector("#business-time-zone-title"));
+      await act(async () => root.unmount());
+      host.remove();
+    });
+
+    it("reacts when the hash changes on the open page", async () => {
+      function HashJump() {
+        const navigate = useNavigate();
+        return <button onClick={() => navigate("/solo/100/settings/setup/business-profile#business-time-zone")}>Jump to zone</button>;
+      }
+      const host = document.createElement("div");
+      document.body.append(host);
+      const root = createRoot(host);
+      await act(async () => root.render(
+        <MemoryRouter initialEntries={["/solo/100/settings/setup/business-profile"]}>
+          <HashJump />
+          <SoloBusinessContextSetup account="100" />
+        </MemoryRouter>,
+      ));
+      expect(scroll).not.toHaveBeenCalled();
+      await act(async () => button(host, "Jump to zone").click());
+      expect(scroll).toHaveBeenCalledTimes(1);
+      expect(scroll.mock.contexts[0]).toBe(host.querySelector("section#business-time-zone"));
+      expect(document.activeElement).toBe(host.querySelector("#business-time-zone-title"));
+      await act(async () => root.unmount());
+      host.remove();
+    });
+
+    it("ignores a hash that names nothing in Setup", async () => {
+      const { host, root } = await mount("100", "/solo/100/settings/setup/business-profile#not-a-section");
+      expect(scroll).not.toHaveBeenCalled();
+      await act(async () => root.unmount());
+      host.remove();
+    });
+  });
+
   it("opens the requested child URL and supplies real sibling links", async () => {
     const { host, root } = await mount(
       "100",
@@ -1342,6 +1447,30 @@ describe("canonical Solo Setup business context", () => {
     );
     expect(state.registerEmail).toHaveBeenCalledOnce();
     await act(async () => root.unmount());
+  });
+  it("offers the owner-scoped interview return on the People & email subtab only with a live thread pointer", async () => {
+    const thread = "10000000-0000-4000-8000-000000000001";
+    // Owner with the pointer: the return link renders on the comms destination subtab
+    // and points back at the original private thread for the SAME account.
+    const withPointer = await mount("100", `/solo/100/settings/setup/people-email?interviewThread=${thread}`);
+    const returnLink = [...withPointer.host.querySelectorAll("a")].find((a) => a.textContent === "Return to interview");
+    expect(returnLink?.getAttribute("href")).toBe(`/solo/100/paige/chat?interviewThread=${thread}`);
+    // Without the pointer there is no interview navigation on any subtab.
+    await act(async () => withPointer.root.unmount());
+    const noPointer = await mount("100", "/solo/100/settings/setup/people-email");
+    expect([...noPointer.host.querySelectorAll("a")].some((a) => a.textContent === "Return to interview")).toBe(false);
+    await act(async () => noPointer.root.unmount());
+    // A forged pointer cannot redirect the return to a foreign account; a non-owner
+    // scope never sees interview navigation even with a pointer.
+    const forged = await mount("100", `/solo/100/settings/setup/people-email?interviewThread=${thread}&account=foreign&tenantId=foreign`);
+    const forgedLink = [...forged.host.querySelectorAll("a")].find((a) => a.textContent === "Return to interview");
+    expect(forgedLink?.getAttribute("href")).toBe(`/solo/100/paige/chat?interviewThread=${thread}`);
+    await act(async () => forged.root.unmount());
+    state.accessScope = "read_only";
+    const readOnly = await mount("100", `/solo/100/settings/setup/people-email?interviewThread=${thread}`);
+    expect([...readOnly.host.querySelectorAll("a")].some((a) => a.textContent === "Return to interview")).toBe(false);
+    await act(async () => readOnly.root.unmount());
+    state.accessScope = "owner_full";
   });
   it("enforces read-only controls for a member", async () => {
     state.accessScope = "read_only";

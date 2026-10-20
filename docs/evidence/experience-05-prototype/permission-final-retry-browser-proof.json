@@ -1,0 +1,916 @@
+{
+  "artifact": "outputs/weekly-commitment-check.html",
+  "round": "permission-final-retry",
+  "generatedAt": "2026-10-13T00:14:42.588Z",
+  "url": "direct local file",
+  "checks": [
+    {
+      "name": "request proposes schedule",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEI can review your open, in-progress and blocked Planning commitments each week. This includes work assigned to or created by you. Please confirm the schedule and permission.Weekly commitment checkRequestedEvery week onSundayMondayTuesdayWednesdayThursdayFridaySaturdayTimeTime zoneUse an IANA time zone, such as America/New_York.OutputAvailable in later conversations.Permission: Read open, in-progress or blocked Planning commitments assigned to or created by you in this workspace. Summarize up to 50 items and report the full matching count. No emails, customer follow-ups, payments or changes to commitments.Approval: This authorization saves the schedule. Execution also follows the tool permission in existing Settings; the default requires confirmation. Broader actions need separate approval.I authorize this schedule and its internal-only scope. Future checks stop when I pause or cancel. Tool permission is reviewed separately in Settings.Authorize weekly checkDiscard proposal"
+    },
+    {
+      "name": "authorization required",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEI can review your open, in-progress and blocked Planning commitments each week. This includes work assigned to or created by you. Please confirm the schedule and permission.Weekly commitment checkRequestedEvery week onSundayMondayTuesdayWednesdayThursdayFridaySaturdayTimeTime zoneUse an IANA time zone, such as America/New_York.OutputAvailable in later conversations.Permission: Read open, in-progress or blocked Planning commitments assigned to or created by you in this workspace. Summarize up to 50 items and report the full matching count. No emails, customer follow-ups, payments or changes to commitments.Approval: This authorization saves the schedule. Execution also follows the tool permission in existing Settings; the default requires confirmation. Broader actions need separate approval.I authorize this schedule and its internal-only scope. Future checks stop when I pause or cancel. Tool permission is reviewed separately in Settings.Confirm the permission before authorizing the recurring check.Authorize weekly checkDiscard proposal"
+    },
+    {
+      "name": "IANA validation",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEI can review your open, in-progress and blocked Planning commitments each week. This includes work assigned to or created by you. Please confirm the schedule and permission.Weekly commitment checkRequestedEvery week onSundayMondayTuesdayWednesdayThursdayFridaySaturdayTimeTime zoneUse an IANA time zone, such as America/New_York.OutputAvailable in later conversations.Permission: Read open, in-progress or blocked Planning commitments assigned to or created by you in this workspace. Summarize up to 50 items and report the full matching count. No emails, customer follow-ups, payments or changes to commitments.Approval: This authorization saves the schedule. Execution also follows the tool permission in existing Settings; the default requires confirmation. Broader actions need separate approval.I authorize this schedule and its internal-only scope. Future checks stop when I pause or cancel. Tool permission is reviewed separately in Settings.Enter a valid IANA time zone, such as America/New_York.Authorize weekly checkDiscard proposal"
+    },
+    {
+      "name": "registration and due time",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEThere has not been a verified run yet. Your schedule is saved, but execution is held while internal-read permission is set to confirm. There is no actual next run. The intended slot is Mon, Oct 12, 9:00 AM EDT.Your schedule is saved. Execution is held.Internal reads currently require confirmation. There is no actual next run. Review this tool’s permission in existing Settings to allow future automatic checks. Authorizing this schedule has not changed that permission.Review permission in SettingsWeekly commitment checkExecution heldScheduleEvery Monday at 09:00 · America/New_YorkNext runNone — permission setup requiredIntended slotMon, Oct 12, 9:00 AM EDT · not an active executionTool permissionConfirmation required — current defaultRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksInspect details"
+    },
+    {
+      "name": "schedule authorization preserves default confirm and null actual next",
+      "status": "PASS",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T12:58:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "confirm",
+        "permissionSource": "default",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-12T13:00:00.000Z",
+          "next": null,
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": null,
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "",
+        "expired": false,
+        "draftMessage": "Check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "default confirm starts no act",
+      "status": "PASS",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T12:58:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "confirm",
+        "permissionSource": "default",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-12T13:00:00.000Z",
+          "next": null,
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": null,
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "Execution remains held. Review the existing tool permission in Settings; no run was started.",
+        "expired": false,
+        "draftMessage": "Check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "held later readback separates actual and intended slot",
+      "status": "PASS",
+      "detail": "YouHow did my commitment check go, and when is the next one?PAIGEThere has not been a verified run yet. Your schedule is saved, but execution is held while internal-read permission is set to confirm. There is no actual next run. The intended slot is Mon, Oct 12, 9:00 AM EDT.Your schedule is saved. Execution is held.Internal reads currently require confirmation. There is no actual next run. Review this tool’s permission in existing Settings to allow future automatic checks. Authorizing this schedule has not changed that permission.Review permission in SettingsWeekly commitment checkExecution heldScheduleEvery Monday at 09:00 · America/New_YorkNext runNone — permission setup requiredIntended slotMon, Oct 12, 9:00 AM EDT · not an active executionTool permissionConfirmation required — current defaultRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Execution remains held. Review the existing tool permission in Settings; no run was started.Pause future checksEdit scheduleCancel future checksInspect details"
+    },
+    {
+      "name": "keep Settings permission remains held",
+      "status": "PASS",
+      "detail": "YouHow did my commitment check go, and when is the next one?PAIGEThere has not been a verified run yet. Your schedule is saved, but execution is held while internal-read permission is set to confirm. There is no actual next run. The intended slot is Mon, Oct 12, 9:00 AM EDT.Your schedule is saved. Execution is held.Internal reads currently require confirmation. There is no actual next run. Review this tool’s permission in existing Settings to allow future automatic checks. Authorizing this schedule has not changed that permission.Review permission in SettingsWeekly commitment checkExecution heldScheduleEvery Monday at 09:00 · America/New_YorkNext runNone — permission setup requiredIntended slotMon, Oct 12, 9:00 AM EDT · not an active executionTool permissionConfirmation required — current defaultRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Execution remains held. Review the existing tool permission in Settings; no run was started.Pause future checksEdit scheduleCancel future checksInspect details"
+    },
+    {
+      "name": "unavailable Settings opt-in changes no permission",
+      "status": "PASS",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T12:58:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "confirm",
+        "permissionSource": "default",
+        "settingsReview": true,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-12T13:00:00.000Z",
+          "next": null,
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": null,
+        "later": true,
+        "editing": false,
+        "detail": false,
+        "error": "You’re offline. Reconnect and retry; your input is preserved.",
+        "expired": false,
+        "draftMessage": "Check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "only explicit Settings action enables auto and actual next",
+      "status": "PASS",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T12:58:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "auto",
+        "permissionSource": "explicit owner Settings action (simulated)",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-12T13:00:00.000Z",
+          "next": "2026-10-12T13:00:00.000Z",
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": null,
+        "later": true,
+        "editing": false,
+        "detail": false,
+        "error": "",
+        "expired": false,
+        "draftMessage": "Check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "refresh preserves schedule",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEYour authorized internal check is registered. I’ll report exceptions here and keep the result available in future conversations.Weekly commitment checkScheduledScheduleEvery Monday at 09:00 · America/New_YorkNext runMon, Oct 12, 9:00 AM EDTTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksInspect details"
+    },
+    {
+      "name": "due run starts",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEThe last run is still running. No completed outcome is recorded. The next check is Mon, Oct 19, 9:00 AM EDT.Commitment check statusRunningI’m checking the saved commitments. The result is still being verified.Inspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-12Scheduled forMon, Oct 12, 9:00 AM EDTStartedMon, Oct 12, 9:00 AM EDTReceiptNo verified completion receiptEvidence stateClaim recorded; verification pendingScopeActive workspace only · internal readsWeekly commitment checkScheduledScheduleEvery Monday at 09:00 · America/New_YorkNext runMon, Oct 19, 9:00 AM EDTTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksInspect detailsThese controls change future runs. This act is already running and will still be reconciled."
+    },
+    {
+      "name": "pause future running act retained",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEFuture checks are paused. Resume when you’re ready.Commitment check statusRunningI’m checking the saved commitments. The result is still being verified.Inspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-12Scheduled forMon, Oct 12, 9:00 AM EDTStartedMon, Oct 12, 9:00 AM EDTReceiptNo verified completion receiptEvidence stateClaim recorded; verification pendingScopeActive workspace only · internal readsWeekly commitment checkPausedScheduleEvery Monday at 09:00 · America/New_YorkNext runNone — future checks pausedTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Resume future checksEdit scheduleCancel future checksInspect detailsFuture runs are paused. This act is already running and will still be reconciled."
+    },
+    {
+      "name": "paused act completes with receipt",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEFuture checks are paused. Resume when you’re ready.Your commitment check is readyCompletedI checked your saved Planning commitments. Two need attention; I have not contacted anyone or changed the work.Review service-delivery outlineOverdue since Oct 9 · owner review requiredNeeds attentionConfirm next week’s capacityDue Oct 16 · still openUpcomingFinalize next month’s service scopeBlocked · waiting for your scope decisionBlocked3 matching owner commitments · 3 summarized · limit 50 · not truncated. Other owners’ commitments and process health are outside this check.Inspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-12Scheduled forMon, Oct 12, 9:00 AM EDTStartedMon, Oct 12, 9:00 AM EDTReceiptRECEIPT-CHECK-005-2026-10-12 · verified in this simulationEvidence stateCompleted and exception recordedScopeActive workspace only · internal readsWeekly commitment checkPausedScheduleEvery Monday at 09:00 · America/New_YorkNext runNone — future checks pausedTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Resume future checksEdit scheduleCancel future checksInspect details"
+    },
+    {
+      "name": "later conversation paused readback",
+      "status": "PASS",
+      "detail": "YouHow did my commitment check go, and when is the next one?PAIGEThe last run completed Mon, Oct 12, 9:00 AM EDT. One overdue commitment and one blocked commitment need attention. No future run is scheduled while the check is paused.Your commitment check is readyCompletedI checked your saved Planning commitments. Two need attention; I have not contacted anyone or changed the work.Review service-delivery outlineOverdue since Oct 9 · owner review requiredNeeds attentionConfirm next week’s capacityDue Oct 16 · still openUpcomingFinalize next month’s service scopeBlocked · waiting for your scope decisionBlocked3 matching owner commitments · 3 summarized · limit 50 · not truncated. Other owners’ commitments and process health are outside this check.Inspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-12Scheduled forMon, Oct 12, 9:00 AM EDTStartedMon, Oct 12, 9:00 AM EDTReceiptRECEIPT-CHECK-005-2026-10-12 · verified in this simulationEvidence stateCompleted and exception recordedScopeActive workspace only · internal readsWeekly commitment checkPausedScheduleEvery Monday at 09:00 · America/New_YorkNext runNone — future checks pausedTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Resume future checksEdit scheduleCancel future checksInspect details"
+    },
+    {
+      "name": "resume skips missed runs",
+      "status": "PASS",
+      "detail": "YouHow did my commitment check go, and when is the next one?PAIGEThe last run completed Mon, Oct 12, 9:00 AM EDT. One overdue commitment and one blocked commitment need attention. The next check is Mon, Oct 19, 9:00 AM EDT.Your commitment check is readyCompletedI checked your saved Planning commitments. Two need attention; I have not contacted anyone or changed the work.Review service-delivery outlineOverdue since Oct 9 · owner review requiredNeeds attentionConfirm next week’s capacityDue Oct 16 · still openUpcomingFinalize next month’s service scopeBlocked · waiting for your scope decisionBlocked3 matching owner commitments · 3 summarized · limit 50 · not truncated. Other owners’ commitments and process health are outside this check.Inspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-12Scheduled forMon, Oct 12, 9:00 AM EDTStartedMon, Oct 12, 9:00 AM EDTReceiptRECEIPT-CHECK-005-2026-10-12 · verified in this simulationEvidence stateCompleted and exception recordedScopeActive workspace only · internal readsWeekly commitment checkScheduledScheduleEvery Monday at 09:00 · America/New_YorkNext runMon, Oct 19, 9:00 AM EDTTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksInspect details"
+    },
+    {
+      "name": "discard edit preserves authorized configuration",
+      "status": "PASS",
+      "detail": "YouHow did my commitment check go, and when is the next one?PAIGEThe last run completed Mon, Oct 12, 9:00 AM EDT. One overdue commitment and one blocked commitment need attention. The next check is Mon, Oct 19, 9:00 AM EDT.Your commitment check is readyCompletedI checked your saved Planning commitments. Two need attention; I have not contacted anyone or changed the work.Review service-delivery outlineOverdue since Oct 9 · owner review requiredNeeds attentionConfirm next week’s capacityDue Oct 16 · still openUpcomingFinalize next month’s service scopeBlocked · waiting for your scope decisionBlocked3 matching owner commitments · 3 summarized · limit 50 · not truncated. Other owners’ commitments and process health are outside this check.Inspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-12Scheduled forMon, Oct 12, 9:00 AM EDTStartedMon, Oct 12, 9:00 AM EDTReceiptRECEIPT-CHECK-005-2026-10-12 · verified in this simulationEvidence stateCompleted and exception recordedScopeActive workspace only · internal readsWeekly commitment checkScheduledScheduleEvery Monday at 09:00 · America/New_YorkNext runMon, Oct 19, 9:00 AM EDTTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksInspect details"
+    },
+    {
+      "name": "edit reauthorization version",
+      "status": "PASS",
+      "detail": "YouHow did my commitment check go, and when is the next one?PAIGEThe last run completed Mon, Oct 12, 9:00 AM EDT. One overdue commitment and one blocked commitment need attention. The next check is Mon, Oct 12, 10:00 AM EDT.Your commitment check is readyCompletedI checked your saved Planning commitments. Two need attention; I have not contacted anyone or changed the work.Review service-delivery outlineOverdue since Oct 9 · owner review requiredNeeds attentionConfirm next week’s capacityDue Oct 16 · still openUpcomingFinalize next month’s service scopeBlocked · waiting for your scope decisionBlocked3 matching owner commitments · 3 summarized · limit 50 · not truncated. Other owners’ commitments and process health are outside this check.Inspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-12Scheduled forMon, Oct 12, 9:00 AM EDTStartedMon, Oct 12, 9:00 AM EDTReceiptRECEIPT-CHECK-005-2026-10-12 · verified in this simulationEvidence stateCompleted and exception recordedScopeActive workspace only · internal readsWeekly commitment checkScheduledScheduleEvery Monday at 10:00 · America/New_YorkNext runMon, Oct 12, 10:00 AM EDTTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 2ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksInspect details"
+    },
+    {
+      "name": "execution during unapproved edit preserves authorized next due",
+      "status": "PASS",
+      "detail": {
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-26T13:00:00.000Z",
+          "next": "2026-10-26T13:00:00.000Z",
+          "request": "REQUEST-CHECK-005"
+        },
+        "previousConfig": {
+          "day": "1",
+          "time": "09:00",
+          "zone": "America/New_York"
+        },
+        "draft": {
+          "day": "2",
+          "time": "10:00",
+          "zone": "Europe/London"
+        }
+      }
+    },
+    {
+      "name": "execution readback uses authorized time zone",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEThe last run is still running. No completed outcome is recorded. The next check is Mon, Oct 26, 9:00 AM EDT.Commitment check statusRunningI’m checking the saved commitments. The result is still being verified.Inspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-19Scheduled forMon, Oct 19, 9:00 AM EDTStartedMon, Oct 19, 9:00 AM EDTReceiptNo verified completion receiptEvidence stateClaim recorded; verification pendingScopeActive workspace only · internal readsWeekly commitment checkScheduledScheduleEvery Monday at 09:00 · America/New_YorkNext runMon, Oct 26, 9:00 AM EDTTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksInspect detailsThese controls change future runs. This act is already running and will still be reconciled.Edit future commitment checksRequestedEvery week onSundayMondayTuesdayWednesdayThursdayFridaySaturdayTimeTime zoneUse an IANA time zone, such as America/New_York.OutputAvailable in later conversations.Permission: Read open, in-progress or blocked Planning commitments assigned to or created by you in this workspace. Summarize up to 50 items and report the full matching count. No emails, customer follow-ups, payments or changes to commitments.Approval: This authorization saves the schedule. Execution also follows the tool permission in existing Settings; the default requires confirmation. Broader actions need separate approval.I authorize this schedule and its internal-only scope. Future checks stop when I pause or cancel. Tool permission is reviewed separately in Settings.Authorize changesKeep current schedule"
+    },
+    {
+      "name": "discard running edit returns authorized values",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEThe last run is still running. No completed outcome is recorded. The next check is Mon, Oct 26, 9:00 AM EDT.Commitment check statusRunningI’m checking the saved commitments. The result is still being verified.Inspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-19Scheduled forMon, Oct 19, 9:00 AM EDTStartedMon, Oct 19, 9:00 AM EDTReceiptNo verified completion receiptEvidence stateClaim recorded; verification pendingScopeActive workspace only · internal readsWeekly commitment checkScheduledScheduleEvery Monday at 09:00 · America/New_YorkNext runMon, Oct 26, 9:00 AM EDTTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksInspect detailsThese controls change future runs. This act is already running and will still be reconciled."
+    },
+    {
+      "name": "owner-personal Planning scope and bounded count",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEThe last run completed Mon, Oct 12, 9:00 AM EDT. One overdue commitment and one blocked commitment need attention. The next check is Mon, Oct 19, 9:00 AM EDT.Your commitment check is readyCompletedI checked your saved Planning commitments. Two need attention; I have not contacted anyone or changed the work.Review service-delivery outlineOverdue since Oct 9 · owner review requiredNeeds attentionConfirm next week’s capacityDue Oct 16 · still openUpcomingFinalize next month’s service scopeBlocked · waiting for your scope decisionBlocked3 matching owner commitments · 3 summarized · limit 50 · not truncated. Other owners’ commitments and process health are outside this check.Inspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-12Scheduled forMon, Oct 12, 9:00 AM EDTStartedMon, Oct 12, 9:00 AM EDTReceiptRECEIPT-CHECK-005-2026-10-12 · verified in this simulationEvidence stateCompleted and exception recordedScopeActive workspace only · internal readsWeekly commitment checkScheduledScheduleEvery Monday at 09:00 · America/New_YorkNext runMon, Oct 19, 9:00 AM EDTTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksInspect details"
+    },
+    {
+      "name": "safe dialog focus",
+      "status": "PASS"
+    },
+    {
+      "name": "Escape focus restored",
+      "status": "PASS"
+    },
+    {
+      "name": "cancel future act retained and completed",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEFuture checks are cancelled. The saved history remains available.Your commitment check is readyCompletedI checked your saved Planning commitments. Two need attention; I have not contacted anyone or changed the work.Review service-delivery outlineOverdue since Oct 9 · owner review requiredNeeds attentionConfirm next week’s capacityDue Oct 16 · still openUpcomingFinalize next month’s service scopeBlocked · waiting for your scope decisionBlocked3 matching owner commitments · 3 summarized · limit 50 · not truncated. Other owners’ commitments and process health are outside this check.Inspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-12Scheduled forMon, Oct 12, 9:00 AM EDTStartedMon, Oct 12, 9:00 AM EDTReceiptRECEIPT-CHECK-005-2026-10-12 · verified in this simulationEvidence stateCompleted and exception recordedScopeActive workspace only · internal readsWeekly commitment checkCancelledScheduleEvery Monday at 09:00 · America/New_YorkNext runNone — future checks cancelledTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Inspect detailsPrior receipts remain available. A new recurring check needs a fresh proposal and authorization."
+    },
+    {
+      "name": "unknown retry locked",
+      "status": "PASS"
+    },
+    {
+      "name": "uncertain readback remains locked",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEThe last run’s outcome is unknown. It must be reconciled before any retry. The next check is Mon, Oct 19, 9:00 AM EDT.Commitment check statusUnknownThe run was claimed, but its outcome is not confirmed. I will check the receipt before repeating any work.Repeating this run is lockedUnknown does not mean nothing happened. Read the execution record first.Check execution recordRetry runInspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-12Scheduled forMon, Oct 12, 9:00 AM EDTStartedMon, Oct 12, 9:00 AM EDTReceiptNo verified completion receiptEvidence stateClaim recorded; completion unknownScopeActive workspace only · internal readsWeekly commitment checkScheduledScheduleEvery Monday at 09:00 · America/New_YorkNext runMon, Oct 19, 9:00 AM EDTTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005The execution record is still uncertain. Repeating this run remains locked.Pause future checksEdit scheduleCancel future checksInspect details"
+    },
+    {
+      "name": "receipt reconciles no new run",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEThe last run completed Mon, Oct 12, 9:00 AM EDT. One overdue commitment and one blocked commitment need attention. The next check is Mon, Oct 19, 9:00 AM EDT.Your commitment check is readyCompletedI checked your saved Planning commitments. Two need attention; I have not contacted anyone or changed the work.Review service-delivery outlineOverdue since Oct 9 · owner review requiredNeeds attentionConfirm next week’s capacityDue Oct 16 · still openUpcomingFinalize next month’s service scopeBlocked · waiting for your scope decisionBlocked3 matching owner commitments · 3 summarized · limit 50 · not truncated. Other owners’ commitments and process health are outside this check.Inspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-12Scheduled forMon, Oct 12, 9:00 AM EDTStartedMon, Oct 12, 9:00 AM EDTReceiptRECEIPT-CHECK-005-2026-10-12 · verified in this simulationEvidence stateCompleted and exception recordedScopeActive workspace only · internal readsWeekly commitment checkScheduledScheduleEvery Monday at 09:00 · America/New_YorkNext runMon, Oct 19, 9:00 AM EDTTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksInspect details"
+    },
+    {
+      "name": "verified no-act unlocks same retry",
+      "status": "PASS"
+    },
+    {
+      "name": "retry retains run reference",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEThe last run is still running. No completed outcome is recorded. The next check is Mon, Oct 19, 9:00 AM EDT.Commitment check statusRunningI’m checking the saved commitments. The result is still being verified.Inspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-12Scheduled forMon, Oct 12, 9:00 AM EDTStartedMon, Oct 12, 9:00 AM EDTReceiptNo verified completion receiptEvidence stateClaim recorded; verification pendingScopeActive workspace only · internal readsWeekly commitment checkScheduledScheduleEvery Monday at 09:00 · America/New_YorkNext runMon, Oct 19, 9:00 AM EDTTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksInspect detailsThese controls change future runs. This act is already running and will still be reconciled."
+    },
+    {
+      "name": "lost save prevents repeat auth",
+      "status": "PASS"
+    },
+    {
+      "name": "lost response readback reuses schedule",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEYour authorized internal check is registered. I’ll report exceptions here and keep the result available in future conversations.Weekly commitment checkScheduledScheduleEvery Monday at 09:00 · America/New_YorkNext runMon, Oct 19, 9:00 AM EDTTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksInspect details"
+    },
+    {
+      "name": "member cannot see owner record",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEOwner authorization requiredYour member role cannot configure, control or read this owner-only check. Ask the workspace owner to review it."
+    },
+    {
+      "name": "workspace switch isolates record",
+      "status": "PASS",
+      "detail": "What can I keep an eye on?Describe a recurring internal check. I’ll confirm the schedule and permission before it can be registered.Check my commitments every week"
+    },
+    {
+      "name": "return workspace retains state",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEYour authorized internal check is registered. I’ll report exceptions here and keep the result available in future conversations.Weekly commitment checkScheduledScheduleEvery Monday at 09:00 · America/New_YorkNext runMon, Oct 19, 9:00 AM EDTTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksInspect details"
+    },
+    {
+      "name": "offline retains draft",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEI can review your open, in-progress and blocked Planning commitments each week. This includes work assigned to or created by you. Please confirm the schedule and permission.Weekly commitment checkRequestedEvery week onSundayMondayTuesdayWednesdayThursdayFridaySaturdayTimeTime zoneUse an IANA time zone, such as America/New_York.OutputAvailable in later conversations.Permission: Read open, in-progress or blocked Planning commitments assigned to or created by you in this workspace. Summarize up to 50 items and report the full matching count. No emails, customer follow-ups, payments or changes to commitments.Approval: This authorization saves the schedule. Execution also follows the tool permission in existing Settings; the default requires confirmation. Broader actions need separate approval.I authorize this schedule and its internal-only scope. Future checks stop when I pause or cancel. Tool permission is reviewed separately in Settings.You’re offline. Reconnect and retry; your input is preserved.Authorize weekly checkDiscard proposal"
+    },
+    {
+      "name": "offline retry durably registers without granting auto",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEThere has not been a verified run yet. Your schedule is saved, but execution is held while internal-read permission is set to confirm. There is no actual next run. The intended slot is Mon, Oct 19, 9:00 AM EDT.Your schedule is saved. Execution is held.Internal reads currently require confirmation. There is no actual next run. Review this tool’s permission in existing Settings to allow future automatic checks. Authorizing this schedule has not changed that permission.Review permission in SettingsWeekly commitment checkExecution heldScheduleEvery Monday at 09:00 · America/New_YorkNext runNone — permission setup requiredIntended slotMon, Oct 19, 9:00 AM EDT · not an active executionTool permissionConfirmation required — current defaultRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksInspect details"
+    },
+    {
+      "name": "expired session preserves proposal",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEI can review your open, in-progress and blocked Planning commitments each week. This includes work assigned to or created by you. Please confirm the schedule and permission.Weekly commitment checkRequestedEvery week onSundayMondayTuesdayWednesdayThursdayFridaySaturdayTimeTime zoneUse an IANA time zone, such as America/New_York.OutputAvailable in later conversations.Permission: Read open, in-progress or blocked Planning commitments assigned to or created by you in this workspace. Summarize up to 50 items and report the full matching count. No emails, customer follow-ups, payments or changes to commitments.Approval: This authorization saves the schedule. Execution also follows the tool permission in existing Settings; the default requires confirmation. Broader actions need separate approval.I authorize this schedule and its internal-only scope. Future checks stop when I pause or cancel. Tool permission is reviewed separately in Settings.Authorize weekly checkDiscard proposal"
+    },
+    {
+      "name": "manual registration pending resolves to saved held schedule",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEThere has not been a verified run yet. Your schedule is saved, but execution is held while internal-read permission is set to confirm. There is no actual next run. The intended slot is Mon, Oct 19, 9:00 AM EDT.Your schedule is saved. Execution is held.Internal reads currently require confirmation. There is no actual next run. Review this tool’s permission in existing Settings to allow future automatic checks. Authorizing this schedule has not changed that permission.Review permission in SettingsWeekly commitment checkExecution heldScheduleEvery Monday at 09:00 · America/New_YorkNext runNone — permission setup requiredIntended slotMon, Oct 19, 9:00 AM EDT · not an active executionTool permissionConfirmation required — current defaultRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksInspect details"
+    },
+    {
+      "name": "off permission has no actual next and starts no act",
+      "status": "PASS",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "off",
+        "permissionSource": "explicit off fixture",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-19T13:00:00.000Z",
+          "next": null,
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": null,
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "Execution remains held. Review the existing tool permission in Settings; no run was started.",
+        "expired": false,
+        "draftMessage": "Check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "pause resume does not grant tool auto",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEThere has not been a verified run yet. Your schedule is saved, but execution is held while internal-read permission is off. There is no actual next run. The intended slot is Mon, Oct 19, 9:00 AM EDT.Your schedule is saved. Execution is held.Internal reads are currently off. There is no actual next run. Review this tool’s permission in existing Settings to allow future automatic checks. Authorizing this schedule has not changed that permission.Review permission in SettingsWeekly commitment checkExecution heldScheduleEvery Monday at 09:00 · America/New_YorkNext runNone — permission setup requiredIntended slotMon, Oct 19, 9:00 AM EDT · not an active executionTool permissionOff — future execution disabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksInspect details"
+    },
+    {
+      "name": "permission hold preserves existing running act receipt",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEThe last run completed Mon, Oct 12, 9:00 AM EDT. One overdue commitment and one blocked commitment need attention. Your schedule is saved, but execution is held while internal-read permission is set to confirm. There is no actual next run. The intended slot is Mon, Oct 19, 9:00 AM EDT.Your commitment check is readyCompletedI checked your saved Planning commitments. Two need attention; I have not contacted anyone or changed the work.Review service-delivery outlineOverdue since Oct 9 · owner review requiredNeeds attentionConfirm next week’s capacityDue Oct 16 · still openUpcomingFinalize next month’s service scopeBlocked · waiting for your scope decisionBlocked3 matching owner commitments · 3 summarized · limit 50 · not truncated. Other owners’ commitments and process health are outside this check.Inspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-12Scheduled forMon, Oct 12, 9:00 AM EDTStartedMon, Oct 12, 9:00 AM EDTReceiptRECEIPT-CHECK-005-2026-10-12 · verified in this simulationEvidence stateCompleted and exception recordedScopeActive workspace only · internal readsYour schedule is saved. Execution is held.Internal reads currently require confirmation. There is no actual next run. Review this tool’s permission in existing Settings to allow future automatic checks. Authorizing this schedule has not changed that permission.Review permission in SettingsWeekly commitment checkExecution heldScheduleEvery Monday at 09:00 · America/New_YorkNext runNone — permission setup requiredIntended slotMon, Oct 19, 9:00 AM EDT · not an active executionTool permissionConfirmation required — current defaultRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksInspect details"
+    },
+    {
+      "name": "completed last run with held actual next readback",
+      "status": "PASS",
+      "detail": "YouHow did my commitment check go, and when is the next one?PAIGEThe last run completed Mon, Oct 12, 9:00 AM EDT. One overdue commitment and one blocked commitment need attention. Your schedule is saved, but execution is held while internal-read permission is set to confirm. There is no actual next run. The intended slot is Mon, Oct 19, 9:00 AM EDT.Your commitment check is readyCompletedI checked your saved Planning commitments. Two need attention; I have not contacted anyone or changed the work.Review service-delivery outlineOverdue since Oct 9 · owner review requiredNeeds attentionConfirm next week’s capacityDue Oct 16 · still openUpcomingFinalize next month’s service scopeBlocked · waiting for your scope decisionBlocked3 matching owner commitments · 3 summarized · limit 50 · not truncated. Other owners’ commitments and process health are outside this check.Inspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-12Scheduled forMon, Oct 12, 9:00 AM EDTStartedMon, Oct 12, 9:00 AM EDTReceiptRECEIPT-CHECK-005-2026-10-12 · verified in this simulationEvidence stateCompleted and exception recordedScopeActive workspace only · internal readsYour schedule is saved. Execution is held.Internal reads currently require confirmation. There is no actual next run. Review this tool’s permission in existing Settings to allow future automatic checks. Authorizing this schedule has not changed that permission.Review permission in SettingsWeekly commitment checkExecution heldScheduleEvery Monday at 09:00 · America/New_YorkNext runNone — permission setup requiredIntended slotMon, Oct 19, 9:00 AM EDT · not an active executionTool permissionConfirmation required — current defaultRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksInspect details"
+    },
+    {
+      "name": "geometry desktop-1536",
+      "status": "PASS",
+      "detail": {
+        "doc": 1536,
+        "viewport": 1536,
+        "transcript": 1308,
+        "buttons": [
+          {
+            "text": "Authorize weekly check",
+            "width": 155.921875,
+            "height": 38
+          },
+          {
+            "text": "Discard proposal",
+            "width": 119.390625,
+            "height": 38
+          }
+        ]
+      }
+    },
+    {
+      "name": "geometry desktop-1366",
+      "status": "PASS",
+      "detail": {
+        "doc": 1366,
+        "viewport": 1366,
+        "transcript": 1138,
+        "buttons": [
+          {
+            "text": "Authorize weekly check",
+            "width": 155.921875,
+            "height": 38
+          },
+          {
+            "text": "Discard proposal",
+            "width": 119.390625,
+            "height": 38
+          }
+        ]
+      }
+    },
+    {
+      "name": "geometry tablet-1024",
+      "status": "PASS",
+      "detail": {
+        "doc": 1024,
+        "viewport": 1024,
+        "transcript": 796,
+        "buttons": [
+          {
+            "text": "Authorize weekly check",
+            "width": 155.921875,
+            "height": 38
+          },
+          {
+            "text": "Discard proposal",
+            "width": 119.390625,
+            "height": 38
+          }
+        ]
+      }
+    },
+    {
+      "name": "geometry tablet-900",
+      "status": "PASS",
+      "detail": {
+        "doc": 900,
+        "viewport": 900,
+        "transcript": 710,
+        "buttons": [
+          {
+            "text": "Authorize weekly check",
+            "width": 155.921875,
+            "height": 38
+          },
+          {
+            "text": "Discard proposal",
+            "width": 119.390625,
+            "height": 38
+          }
+        ]
+      }
+    },
+    {
+      "name": "geometry mobile-390",
+      "status": "PASS",
+      "detail": {
+        "doc": 390,
+        "viewport": 390,
+        "transcript": 390,
+        "buttons": [
+          {
+            "text": "Authorize weekly check",
+            "width": 155.921875,
+            "height": 44
+          },
+          {
+            "text": "Discard proposal",
+            "width": 119.390625,
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "name": "geometry obsidian-desktop",
+      "status": "PASS",
+      "detail": {
+        "doc": 1366,
+        "viewport": 1366,
+        "transcript": 1138,
+        "buttons": [
+          {
+            "text": "Pause future checks",
+            "width": 135.390625,
+            "height": 38
+          },
+          {
+            "text": "Edit schedule",
+            "width": 100.140625,
+            "height": 38
+          },
+          {
+            "text": "Cancel future checks",
+            "width": 139.78125,
+            "height": 38
+          },
+          {
+            "text": "Inspect details",
+            "width": 106.21875,
+            "height": 38
+          }
+        ]
+      }
+    },
+    {
+      "name": "geometry obsidian-mobile",
+      "status": "PASS",
+      "detail": {
+        "doc": 390,
+        "viewport": 390,
+        "transcript": 390,
+        "buttons": [
+          {
+            "text": "Authorize weekly check",
+            "width": 155.921875,
+            "height": 44
+          },
+          {
+            "text": "Discard proposal",
+            "width": 119.390625,
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "name": "geometry result-desktop",
+      "status": "PASS",
+      "detail": {
+        "doc": 1366,
+        "viewport": 1366,
+        "transcript": 1138,
+        "buttons": [
+          {
+            "text": "Pause future checks",
+            "width": 135.390625,
+            "height": 38
+          },
+          {
+            "text": "Edit schedule",
+            "width": 100.140625,
+            "height": 38
+          },
+          {
+            "text": "Cancel future checks",
+            "width": 139.78125,
+            "height": 38
+          },
+          {
+            "text": "Inspect details",
+            "width": 106.21875,
+            "height": 38
+          }
+        ]
+      }
+    },
+    {
+      "name": "geometry result-mobile",
+      "status": "PASS",
+      "detail": {
+        "doc": 390,
+        "viewport": 390,
+        "transcript": 390,
+        "buttons": [
+          {
+            "text": "Pause future checks",
+            "width": 135.390625,
+            "height": 44
+          },
+          {
+            "text": "Edit schedule",
+            "width": 100.140625,
+            "height": 44
+          },
+          {
+            "text": "Cancel future checks",
+            "width": 139.78125,
+            "height": 44
+          },
+          {
+            "text": "Inspect details",
+            "width": 106.21875,
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "name": "geometry unknown-mobile",
+      "status": "PASS",
+      "detail": {
+        "doc": 390,
+        "viewport": 390,
+        "transcript": 390,
+        "buttons": [
+          {
+            "text": "Check execution record",
+            "width": 155.34375,
+            "height": 44
+          },
+          {
+            "text": "Retry run",
+            "width": 78.640625,
+            "height": 44
+          },
+          {
+            "text": "Pause future checks",
+            "width": 135.390625,
+            "height": 44
+          },
+          {
+            "text": "Edit schedule",
+            "width": 100.140625,
+            "height": 44
+          },
+          {
+            "text": "Cancel future checks",
+            "width": 139.78125,
+            "height": 44
+          },
+          {
+            "text": "Inspect details",
+            "width": 106.21875,
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "name": "geometry held-default-desktop",
+      "status": "PASS",
+      "detail": {
+        "doc": 1366,
+        "viewport": 1366,
+        "transcript": 1138,
+        "buttons": [
+          {
+            "text": "Review permission in Settings",
+            "width": 189.828125,
+            "height": 38
+          },
+          {
+            "text": "Pause future checks",
+            "width": 135.390625,
+            "height": 38
+          },
+          {
+            "text": "Edit schedule",
+            "width": 100.140625,
+            "height": 38
+          },
+          {
+            "text": "Cancel future checks",
+            "width": 139.78125,
+            "height": 38
+          },
+          {
+            "text": "Inspect details",
+            "width": 106.21875,
+            "height": 38
+          }
+        ]
+      }
+    },
+    {
+      "name": "geometry held-default-mobile",
+      "status": "PASS",
+      "detail": {
+        "doc": 390,
+        "viewport": 390,
+        "transcript": 390,
+        "buttons": [
+          {
+            "text": "Review permission in Settings",
+            "width": 189.828125,
+            "height": 44
+          },
+          {
+            "text": "Pause future checks",
+            "width": 135.390625,
+            "height": 44
+          },
+          {
+            "text": "Edit schedule",
+            "width": 100.140625,
+            "height": 44
+          },
+          {
+            "text": "Cancel future checks",
+            "width": 139.78125,
+            "height": 44
+          },
+          {
+            "text": "Inspect details",
+            "width": 106.21875,
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "name": "geometry held-off-mobile",
+      "status": "PASS",
+      "detail": {
+        "doc": 390,
+        "viewport": 390,
+        "transcript": 390,
+        "buttons": [
+          {
+            "text": "Review permission in Settings",
+            "width": 189.828125,
+            "height": 44
+          },
+          {
+            "text": "Pause future checks",
+            "width": 135.390625,
+            "height": 44
+          },
+          {
+            "text": "Edit schedule",
+            "width": 100.140625,
+            "height": 44
+          },
+          {
+            "text": "Cancel future checks",
+            "width": 139.78125,
+            "height": 44
+          },
+          {
+            "text": "Inspect details",
+            "width": 106.21875,
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "name": "reduced motion immediate",
+      "status": "PASS"
+    },
+    {
+      "name": "320 reflow no horizontal scroll",
+      "status": "PASS"
+    },
+    {
+      "name": "enlarged type content reachable",
+      "status": "PASS"
+    },
+    {
+      "name": "composer keyboard focus",
+      "status": "PASS"
+    },
+    {
+      "name": "no runtime errors",
+      "status": "PASS",
+      "detail": []
+    },
+    {
+      "name": "no external requests",
+      "status": "PASS",
+      "detail": [
+        "file:///C:/Users/tonig/Documents/Codex/2026-10-12/paige-engineering-2-0-experience-05/outputs/weekly-commitment-check.html",
+        "file:///C:/Users/tonig/Documents/Codex/2026-10-12/paige-engineering-2-0-experience-05/outputs/weekly-commitment-check.html"
+      ]
+    },
+    {
+      "name": "CSP external connect denied",
+      "status": "PASS"
+    },
+    {
+      "name": "composer and mobile scope minimum12",
+      "status": "PASS"
+    }
+  ],
+  "screens": [
+    {
+      "file": "permission-final-retry-desktop-1536.png",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "theme": "light",
+      "state": "draft"
+    },
+    {
+      "file": "permission-final-retry-desktop-1366.png",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "theme": "light",
+      "state": "draft"
+    },
+    {
+      "file": "permission-final-retry-tablet-1024.png",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "theme": "light",
+      "state": "draft"
+    },
+    {
+      "file": "permission-final-retry-tablet-900.png",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "theme": "light",
+      "state": "draft"
+    },
+    {
+      "file": "permission-final-retry-mobile-390.png",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "theme": "light",
+      "state": "draft"
+    },
+    {
+      "file": "permission-final-retry-obsidian-desktop.png",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "theme": "dark",
+      "state": "completed"
+    },
+    {
+      "file": "permission-final-retry-obsidian-mobile.png",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "theme": "dark",
+      "state": "draft"
+    },
+    {
+      "file": "permission-final-retry-result-desktop.png",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "theme": "light",
+      "state": "completed"
+    },
+    {
+      "file": "permission-final-retry-result-mobile.png",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "theme": "light",
+      "state": "completed"
+    },
+    {
+      "file": "permission-final-retry-unknown-mobile.png",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "theme": "light",
+      "state": "unknown"
+    },
+    {
+      "file": "permission-final-retry-held-default-desktop.png",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "theme": "light",
+      "state": "held-confirm"
+    },
+    {
+      "file": "permission-final-retry-held-default-mobile.png",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "theme": "light",
+      "state": "held-confirm"
+    },
+    {
+      "file": "permission-final-retry-held-off-mobile.png",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "theme": "dark",
+      "state": "held-off"
+    },
+    {
+      "file": "permission-final-retry-settings-handoff.png",
+      "viewport": {
+        "width": 1366,
+        "height": 1000
+      },
+      "theme": "light",
+      "state": "saved held; existing Settings permission review marker"
+    },
+    {
+      "file": "permission-final-retry-cancel-mobile.png",
+      "viewport": {
+        "width": 390,
+        "height": 843
+      },
+      "theme": "light",
+      "state": "cancel-dialog-running"
+    }
+  ],
+  "runtimeErrors": [],
+  "network": [
+    "file:///C:/Users/tonig/Documents/Codex/2026-10-12/paige-engineering-2-0-experience-05/outputs/weekly-commitment-check.html",
+    "file:///C:/Users/tonig/Documents/Codex/2026-10-12/paige-engineering-2-0-experience-05/outputs/weekly-commitment-check.html"
+  ],
+  "unverified": [
+    "Authenticated product behavior",
+    "Canonical backend durability/execution",
+    "Production SOLO open and closed shell matrix",
+    "Real screen reader and native haptics",
+    "Owner flow approval"
+  ]
+}

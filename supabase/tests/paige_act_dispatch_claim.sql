@@ -117,7 +117,7 @@ update public.paige_act_executions
  where act_id = '00000000-0000-4000-8000-0000000000a1';
 select isnt(pg_temp.claim('00000000-0000-4000-8000-0000000000a1', 'c0000000-0000-4000-8000-000000000009'), null,
   'G2 a missing or non-ISO claim timestamp is treated as stale, never a cast error that wedges the row');
--- G3–G9 (20271023000100): G3/G4 values the prefix regex accepted but that do not parse (they raised on the old
+-- G3–G9 (20271023000200): G3/G4 values the prefix regex accepted but that do not parse (they raised on the old
 -- body); G5–G7 special inputs that must stay stale; G8 a far-future value; G9 a fresh claim stays live.
 update public.paige_act_executions
    set detail = detail || '{"dispatch_claimed_at":"2026-99-99T99:99:99"}'::jsonb
@@ -159,8 +159,8 @@ select is(pg_temp.claim('00000000-0000-4000-8000-0000000000a1', 'c0000000-0000-4
   'G9 a claim stamped just ahead of this transaction''s now() is still live (the future check has a margin)');
 
 -- ── F. Service role only ─────────────────────────────────────────────────────────────────────────────────
-select ok(not has_function_privilege('authenticated', 'public.paige_claim_act_dispatch(uuid,uuid,uuid,interval)', 'execute')
-       and not has_function_privilege('anon', 'public.paige_claim_act_dispatch(uuid,uuid,uuid,interval)', 'execute'),
+select ok(not has_function_privilege('authenticated', 'public.paige_claim_act_dispatch(uuid,uuid,uuid,interval,boolean)', 'execute')
+       and not has_function_privilege('anon', 'public.paige_claim_act_dispatch(uuid,uuid,uuid,interval,boolean)', 'execute'),
   'F1 anon and authenticated cannot execute the claim');
 set local request.jwt.claims = '{"sub":"d0000000-0000-4000-8000-000000000000","role":"authenticated"}';
 select throws_ok($$ select public.paige_claim_act_dispatch('e0000000-0000-4000-8000-000000000000', '00000000-0000-4000-8000-0000000000a3', gen_random_uuid()) $$,

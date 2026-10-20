@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useCreditAlerts } from "@/hooks/useCreditAlerts";
+import { useFinancePortal } from "@/hooks/useFinanceEntitlement";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 
@@ -25,13 +26,16 @@ export const NotificationBell = () => {
     deleteNotification,
   } = useNotifications();
 
+  // E09 F2: credit alerts, and the bell's way into /app/credit, exist only for a finance-entitled business (staff
+  // keep theirs until their business has a deliberate install, Q5). Nothing is read or subscribed otherwise.
+  const { open: financePortal } = useFinancePortal();
   const {
     alerts: creditAlerts,
     unreadCount: alertUnread,
     highestSeverity,
     markAsRead: markAlertRead,
     markAllAsRead: markAllAlertsRead,
-  } = useCreditAlerts({ onlyUnread: false, limit: 5 });
+  } = useCreditAlerts({ onlyUnread: false, limit: 5, enabled: financePortal });
 
   const totalUnread = notifUnread + alertUnread;
 
@@ -69,7 +73,7 @@ export const NotificationBell = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- pre-existing type debt; hotfix changes only the retired route destination
   const handleAlertClick = (alert: any) => {
     markAlertRead(alert.id);
-    navigate("/app/credit");
+    if (financePortal) navigate("/app/credit");
   };
 
   const handleMarkAllRead = () => {
@@ -84,8 +88,9 @@ export const NotificationBell = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
+        {/* An icon-only control needs a name a screen reader can say (E09 F2, Impeccable harden). */}
+        <Button variant="ghost" size="icon" className="relative" aria-label={totalUnread > 0 ? `Notifications, ${totalUnread} unread` : "Notifications"}>
+          <Bell className="h-5 w-5" aria-hidden="true" />
           {totalUnread > 0 && (
             <Badge
               className={`absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs text-white border-0 ${badgeClass}`}
@@ -95,7 +100,7 @@ export const NotificationBell = () => {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[400px]">
+      <DropdownMenuContent align="end" collisionPadding={16} className="w-[min(400px,calc(100vw-2rem))]">
         <div className="flex items-center justify-between px-4 py-3">
           <h3 className="font-semibold">Notifications</h3>
           {totalUnread > 0 && (
@@ -126,9 +131,9 @@ export const NotificationBell = () => {
                         <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{alert.alert_description}</p>
                         <div className="flex items-center gap-2 mt-1">
                           {alert.bureau && (
-                            <span className="text-[10px] text-muted-foreground capitalize">{alert.bureau}</span>
+                            <span className="text-xs text-muted-foreground capitalize">{alert.bureau}</span>
                           )}
-                          <span className="text-[10px] text-muted-foreground">
+                          <span className="text-xs text-muted-foreground">
                             {formatDistanceToNow(new Date(alert.created_at), { addSuffix: true })}
                           </span>
                         </div>
@@ -184,7 +189,7 @@ export const NotificationBell = () => {
           )}
         </ScrollArea>
 
-        {(alertUnread > 3 || notifications.length > 5) && (
+        {financePortal && (alertUnread > 3 || notifications.length > 5) && (
           <>
             <DropdownMenuSeparator />
             <div className="p-2">

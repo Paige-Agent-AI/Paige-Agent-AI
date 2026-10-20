@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { DAY_MS, defaultPipelineReady, defaultPipelineTarget, defaultRouteLabel, deriveMarketingOverview, periodStartOf, pipelineRouteOf, sendsToPipeline, withServerOverview } from "./marketing-overview-model";
+import { DAY_MS, campaignRouteLabel, defaultPipelineReady, defaultPipelineTarget, defaultRouteLabel, deriveMarketingOverview, periodStartOf, pipelineRouteOf, sendsToPipeline, withServerOverview } from "./marketing-overview-model";
 import type { CampaignSubmission } from "./useSoloCampaigns";
 import type { CampaignBrief } from "./useSoloCampaignBriefs";
 
@@ -164,6 +164,19 @@ describe("default pipeline routing", () => {
     expect(defaultRouteLabel(target!)).toBe("Client work (default) → New enquiry");
     // The server checks only that oldest default: an open stage in a newer default does not make it ready.
     expect(defaultPipelineReady({ pipelines: [pipeline("new", { createdAt: "2026-10-01T00:00:00Z" }), pipeline("old", { createdAt: "2026-08-01T00:00:00Z" })], stages: [stage("y", "new")] })).toBe(false);
+  });
+
+  it("routes a form by its own route first, then its campaign's pipeline, then the default, then nowhere (Experience 03 S1b)", () => {
+    const campaignRoute = { briefId: "b", briefName: "Spring", pipelineId: "pc", pipelineName: "Consults", stageId: "sc", stageLabel: "Discovery" };
+    const own = { routingTargets: [], intakePipelineId: "p", campaignRoute };
+    const auto = { routingTargets: ["pipeline_attach"], intakePipelineId: null, campaignRoute };
+    const camp = { routingTargets: [], intakePipelineId: null, campaignRoute };
+    const skipped = { routingTargets: ["notify_team"], intakePipelineId: "p", campaignRoute };
+    expect([own, auto, camp, skipped].map((form) => pipelineRouteOf(form, true))).toEqual(["own", "own", "campaign", "campaign"]);
+    expect([own, auto, camp, skipped].map((form) => pipelineRouteOf(form, false))).toEqual(["own", "own", "campaign", "campaign"]);
+    expect(sendsToPipeline(camp)).toBe(true);
+    expect(pipelineRouteOf({ ...camp, campaignRoute: null }, false)).toBe("none");
+    expect(campaignRouteLabel(campaignRoute)).toBe("Campaign: Consults → Discovery");
   });
 
   it("routes a form by its own route first, then the default pipeline, then nowhere", () => {

@@ -171,6 +171,24 @@
   ],
   "entries": [
     {
+      "tool": "client_portal_invitation_send",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "send-portal-invite/command.ts records client.portal_invite through recordCapabilityRun after native operation/delivery readback. Original native audit and email_send_log receipts remain authoritative; a Rail failure cannot convert provider acceptance into retry permission."
+    },
+    {
+      "tool": "knowledge_update",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "public.update_tenant_knowledge_metadata in 20270531100000_knowledge_canonical_metadata.sql records revision-bound capability receipt; Chat suppresses duplicate audit; completed_unrecorded is preserved."
+    },
+    {
+      "tool": "knowledge_delete",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "public.delete_tenant_knowledge in 20270531200000_knowledge_canonical_delete.sql records verified absence receipt; Chat suppresses duplicate audit; source cleanup is not attempted."
+    },
+    {
       "tool": "action_advance",
       "risk": "ordinary",
       "receipt": "seeded_undeclared"
@@ -676,6 +694,30 @@
       "evidence": "paige-ai-chat dispatch (the EMAIL_SERIES_TOOL_NAMES branch) records the run via recordCapabilityRun after the adapter (_shared/email-series-chat.ts) returns: capability_succeeded only when a fresh read_email_series readback shows the draft with every email, wait and rule as written, or the version frozen with its approval pending; capability_refused for a database-named refusal; capability_outcome_unknown otherwise. A link, price or fill-in nobody gave is refused before any write and is not recorded (nothing reached the business); runId is stableRunId(tool, tenant, result or thread:tool-call)"
     },
     {
+      "tool": "campaign_step_plan",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the CAMPAIGN_STEP_TOOL_NAMES branch) records the run via recordCapabilityRun after the adapter (_shared/campaign-steps-chat.ts) returns: capability_succeeded only when a fresh caller-session read (read_campaign_steps / read_process_scope) shows the change as asked, capability_refused for a named refusal (not owner/admin, active business changed, step not finished or only marked done, already judged, scope not in this business), capability_outcome_unknown when the write may have landed but was not confirmed. A malformed request, a figure the owner did not give, or a read that failed before any write records nothing; runId is stableRunId(tool, tenant, the confirmed change) on success, else (tool, tenant, thread:tool-call)"
+    },
+    {
+      "tool": "campaign_step_record_result",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the CAMPAIGN_STEP_TOOL_NAMES branch) records the run via recordCapabilityRun after the adapter (_shared/campaign-steps-chat.ts) returns: capability_succeeded only when a fresh caller-session read (read_campaign_steps / read_process_scope) shows the change as asked, capability_refused for a named refusal (not owner/admin, active business changed, step not finished or only marked done, already judged, scope not in this business), capability_outcome_unknown when the write may have landed but was not confirmed. A malformed request, a figure the owner did not give, or a read that failed before any write records nothing; runId is stableRunId(tool, tenant, the confirmed change) on success, else (tool, tenant, thread:tool-call)"
+    },
+    {
+      "tool": "campaign_step_judge",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the CAMPAIGN_STEP_TOOL_NAMES branch) records the run via recordCapabilityRun after the adapter (_shared/campaign-steps-chat.ts) returns: capability_succeeded only when a fresh caller-session read (read_campaign_steps / read_process_scope) shows the change as asked, capability_refused for a named refusal (not owner/admin, active business changed, step not finished or only marked done, already judged, scope not in this business), capability_outcome_unknown when the write may have landed but was not confirmed. A malformed request, a figure the owner did not give, or a read that failed before any write records nothing; runId is stableRunId(tool, tenant, the confirmed change) on success, else (tool, tenant, thread:tool-call)"
+    },
+    {
+      "tool": "process_scope_set",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the CAMPAIGN_STEP_TOOL_NAMES branch) records the run via recordCapabilityRun after the adapter (_shared/campaign-steps-chat.ts) returns: capability_succeeded only when a fresh caller-session read (read_campaign_steps / read_process_scope) shows the change as asked, capability_refused for a named refusal (not owner/admin, active business changed, step not finished or only marked done, already judged, scope not in this business), capability_outcome_unknown when the write may have landed but was not confirmed. A malformed request, a figure the owner did not give, or a read that failed before any write records nothing; runId is stableRunId(tool, tenant, the confirmed change) on success, else (tool, tenant, thread:tool-call)"
+    },
+    {
       "tool": "set_ad_creative_featured",
       "risk": "ordinary",
       "receipt": "emits",
@@ -847,32 +889,38 @@
     {
       "tool": "plan_add_milestone",
       "risk": "ordinary",
-      "receipt": "seeded_undeclared"
+      "receipt": "emits",
+      "evidence": "20271108191000_planning_native_receipts_history.sql: executor-owned 10-argument record_capability_run using the native audit UUID; atomic active-member path, explicit unrecorded actor-less/service or nonmember platform-owner compatibility. Native proof: scripts/planning-native/check.mjs. This is record persistence, not delivery or request deduplication."
     },
     {
       "tool": "plan_assign_task",
       "risk": "ordinary",
-      "receipt": "seeded_undeclared"
+      "receipt": "emits",
+      "evidence": "20271108191000_planning_native_receipts_history.sql: executor-owned 10-argument record_capability_run using the native audit UUID; atomic active-member path, explicit unrecorded actor-less/service or nonmember platform-owner compatibility. Native proof: scripts/planning-native/check.mjs. This is record persistence, not delivery or request deduplication."
     },
     {
       "tool": "plan_create",
       "risk": "ordinary",
-      "receipt": "seeded_undeclared"
+      "receipt": "emits",
+      "evidence": "20271108191000_planning_native_receipts_history.sql: executor-owned 10-argument record_capability_run using the native audit UUID; atomic active-member path, explicit unrecorded actor-less/service or nonmember platform-owner compatibility. Native proof: scripts/planning-native/check.mjs. This is record persistence, not delivery or request deduplication."
     },
     {
       "tool": "plan_remove_item",
       "risk": "high",
-      "receipt": "seeded_undeclared"
+      "receipt": "emits",
+      "evidence": "20271108191000_planning_native_receipts_history.sql: executor-owned 10-argument record_capability_run using the native audit UUID; atomic active-member path, explicit unrecorded actor-less/service or nonmember platform-owner compatibility. Native proof: scripts/planning-native/check.mjs. This is record persistence, not delivery or request deduplication."
     },
     {
       "tool": "plan_set_reminder",
       "risk": "ordinary",
-      "receipt": "seeded_undeclared"
+      "receipt": "emits",
+      "evidence": "20271108191000_planning_native_receipts_history.sql: executor-owned 10-argument record_capability_run using the native audit UUID; atomic active-member path, explicit unrecorded actor-less/service or nonmember platform-owner compatibility. Native proof: scripts/planning-native/check.mjs. This is record persistence, not delivery or request deduplication."
     },
     {
       "tool": "plan_update_item",
       "risk": "ordinary",
-      "receipt": "seeded_undeclared"
+      "receipt": "emits",
+      "evidence": "20271108191000_planning_native_receipts_history.sql: executor-owned 10-argument record_capability_run using the native audit UUID; atomic active-member path, explicit unrecorded actor-less/service or nonmember platform-owner compatibility. Native proof: scripts/planning-native/check.mjs. This is record persistence, not delivery or request deduplication."
     },
     {
       "tool": "platform_post_notification",
@@ -1132,6 +1180,30 @@
       "risk": "high",
       "receipt": "emits",
       "evidence": "comms-mailbox-command/index.ts records the executed organize act through canonical recordCapabilityRun after the provider round answers and the canonical mirror lands (governance payload carries actor/tenant/tool/approval channel), so every approved mailbox change has a Rail receipt; the door refuses before dispatch when the receipt cannot be written."
+    },
+    {
+      "tool": "plan_item_set_client_share",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the plan_item_set_client_share branch) records the run via recordCapabilityRun after _shared/planning/scoped-write.ts setPlanItemClientShare returns: capability_succeeded only when a fresh caller-JWT read of plan_items shows client_shared_at in the asked state (a state replay included), capability_refused for a named refusal the database answered (not owner/admin, not linked to a client, reminder or cancelled, client not active, item changed, account type), capability_outcome_unknown when the write may have landed but was not confirmed (including a dispatch that throws). A malformed request is refused before any write and still records a capability_refused run, as does a workspace that no longer matches current_user_tenant_id(); the switch over ClientShareFailure is exhaustive, so no outcome goes unrecorded."
+    },
+    {
+      "tool": "client_portal_access_set",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the read_client_portal_access / client_portal_access_set branch) records the run via recordCapabilityRun after _shared/client-portal-access.ts setPortalAccess returns: capability_succeeded only when a fresh caller-JWT public.read_client_portal_access read shows the contact in the asked state (a state replay included), capability_refused for a request refused before any write (bad shape, no workspace or verified actor) or a refusal the database answered (a structured {ok:false} code: not found, not joined, restore unavailable, version changed, agency tier, invalid; or a SQLSTATE: not owner/admin, workspace changed), capability_outcome_unknown when the write may have landed but the readback did not confirm it (including a dispatch that throws). The switch over PortalAccessFailure is exhaustive, so no outcome goes unrecorded. The writer also writes its own audit_logs row (client_portal.access_paused/_restored/_ended)."
+    },
+    {
+      "tool": "weekly_commitment_draft",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "public.commit_weekly_commitment_draft in experience05_confirmed_weekly_draft.sql calls the existing record_capability_run with the stored request UUID, tenant and actor in the same native draft-save transaction. read_weekly_commitment_draft reads the exact original Rail row. This declares source coverage; migration, deployment and authenticated proof remain separate."
+    },
+    {
+      "tool": "portal_menu_update",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the read_tenant_portal_menu / portal_menu_update branch) records the run via recordCapabilityRun after _shared/client-portal-menu.ts configurePortalMenu returns: capability_succeeded only when a fresh caller-JWT public.read_tenant_portal_menu read of the stored overlay equals the merged array that was sent (a no-change replay included), capability_refused for a request refused before any write (bad shape, Home or Messages, an unknown or not-yet-live entry, an entry the Playbook does not list, no current workspace) or a refusal the database answered with a SQLSTATE (not owner/admin, shape), capability_outcome_unknown when the write may have landed but the readback did not confirm it (including a dispatch that throws). The switch over PortalMenuFailure is exhaustive, so no outcome goes unrecorded."
     }
   ]
 }

@@ -32,6 +32,7 @@ import {
 } from "../approval-outcome.ts";
 
 import { readTurnRecord, RESUME_KINDS, TURN_CONTRACT_VERSION, type ResumeKind, type TurnRecord } from "./contract.ts";
+import { parseCommsEmailCommand } from "../comms-email/contract.ts";
 export { RESUME_KINDS, type ResumeKind };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -167,8 +168,9 @@ export function classifyResumedApproval(input: {
   withheld?: boolean;
   refusal?: ApprovalRefusalReason;
   reportsOk?: boolean;
+  reportsKnowledge?: boolean;
 }) {
-  if (input.spent) return classifySpentApproval(input.spentContent, { reportsOk: input.reportsOk });
+  if (input.spent) return classifySpentApproval(input.spentContent, { reportsOk: input.reportsOk, reportsKnowledge: input.reportsKnowledge });
   if (input.lost) return settleUsedEarlier(classifyUnspentApproval(undefined), true);
   if (input.expired) return classifyUnspentApproval("expired");
   if (input.withheld) return classifyUnspentApproval("unclaimable");
@@ -330,7 +332,7 @@ export function selectDoorRow<R extends StoredDoorRow>(rows: ReadonlyArray<R>, f
 }
 
 /** The door families the resume can carry a proposal forward through. */
-export type DoorFamily = "crm" | "sales" | "publish";
+export type DoorFamily = "crm" | "sales" | "publish" | "comms";
 
 const UUID_ANY = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
@@ -347,6 +349,8 @@ export interface DoorCatalogs {
   salesTools: ReadonlySet<string>;
   /** growth-publish-command chat tools → the kind and id argument each names. */
   publishTools: Readonly<Record<string, { kind: string; idArg: string }>>;
+  /** Only generic one-to-one email. Portal invitation doors retain their own continuation. */
+  commsEmailTool?: "comms_send_email";
 }
 
 /**
@@ -388,6 +392,18 @@ export function doorResumeShape(
         ...(action === "invoice.sms_send" ? { channel: "sms" } : {}),
       },
     };
+  }
+  if (tool === "comms_send_email" && catalogs.commsEmailTool === tool) {
+    if (args.expected_tenant_id !== tenantId || typeof args.operation_id !== "string" || !UUID_ANY.test(args.operation_id)) return null;
+    if (Object.prototype.hasOwnProperty.call(args, "approval_id")
+      && (typeof args.approval_id !== "string" || !UUID_ANY.test(args.approval_id))) return null;
+    try {
+      const email = parseCommsEmailCommand(command);
+      return { family: "comms", callArgs: {
+        contact_id: email.contact_id, subject: email.subject, body: email.body,
+        ...(email.connector_id ? { connector_id: email.connector_id } : {}),
+      } };
+    } catch { return null; }
   }
   const publish = catalogs.publishTools[tool];
   if (publish) {
@@ -676,7 +692,80 @@ export type AskLiveness =
   | { state: "answered" }
   | { state: "stale"; reason: "superseded" | "not_found" | "not_waiting" };
 
-type TurnRow = { id?: unknown; role?: unknown; bundle_ref?: unknown; created_at?: unknown };
+type TurnRow = { id?: unknown; role?: unknown; content?: unknown; bundle_ref?: unknown; created_at?: unknown;
+  interactive_intent_id?: unknown; interactive_actor_id?: unknown; interactive_tenant_id?: unknown;
+  interactive_terminal_state?: unknown; interactive_supersedes_id?: unknown };
+
+/** The native begin's own control row is not a second human instruction. These columns are
+ * server-owned (paige_chat_turn_authority_guard), unlike bundle_ref. The caller must check its
+ * current executor after the scoped read before supplying an unclaimed admission here. */
+export function answerTurnsAfterAdmission(turns: ReadonlyArray<TurnRow>, scope: {
+  actorId: string; tenantId: string | null; askId: string;
+  admission?: { intentId: string; supersedesIntentId: string; markerId?: string };
+}): { turns: ReadonlyArray<TurnRow>; ownAdmissionMarkerId: string | null } {
+  const sameId = (a: unknown, b: unknown) => typeof a === "string" && typeof b === "string"
+    && UUID.test(a) && UUID.test(b) && a.toLowerCase() === b.toLowerCase();
+  const inScope = (turn: TurnRow) => sameId(turn.interactive_actor_id, scope.actorId)
+    && (scope.tenantId === null ? turn.interactive_tenant_id === null : sameId(turn.interactive_tenant_id, scope.tenantId));
+  const question = (turn: TurnRow) => turn.role === "assistant" && inScope(turn)
+    && turn.interactive_terminal_state === "ASK_USER" && typeof turn.interactive_intent_id === "string"
+    && UUID.test(turn.interactive_intent_id) && typeof turn.id === "string" && UUID.test(turn.id)
+    ? readAskRecord((turn.bundle_ref as { paige_ask?: unknown } | null)?.paige_ask) : null;
+  const marker = (turn: TurnRow, supersedes: unknown) => {
+    const bundle = turn.bundle_ref as { interactive?: Record<string, unknown> } | null;
+    return turn.role === "system" && turn.content === "" && typeof turn.id === "string" && UUID.test(turn.id)
+      && inScope(turn) && turn.interactive_intent_id === null && turn.interactive_terminal_state === null
+      && sameId(turn.interactive_supersedes_id, supersedes) && bundle && Object.keys(bundle).length === 1
+      && bundle.interactive && Object.keys(bundle.interactive).length === 1
+      && sameId(bundle.interactive.supersedes_intent_id, supersedes);
+  };
+  const omitted = new Set<string>();
+  let ownAdmissionMarkerId: string | null = null;
+  const admission = scope.admission;
+  // The question this answer targets, when it is present in the window (same predicate the
+  // own-marker capture below uses to stay inside a real answering context).
+  const askedTurn = turns.find(turn => question(turn)?.ask_id === scope.askId.toLowerCase()) ?? null;
+  // Native begin appends exactly one such marker for this accepted, currently owned request.
+  // A pending retry reuses it. Capture its exact ID for the post-claim read; do not hide any
+  // ordinary turn, Stop row, unrelated system message, or a JSON-only imitation.
+  if (admission && UUID.test(admission.intentId) && UUID.test(admission.supersedesIntentId)
+    && !sameId(admission.intentId, admission.supersedesIntentId)
+    && askedTurn) {
+    const own = turns.find(turn => marker(turn, admission.supersedesIntentId)
+      && (admission.markerId === undefined || sameId(turn.id, admission.markerId)));
+    if (own) { ownAdmissionMarkerId = own.id as string; omitted.add(ownAdmissionMarkerId); }
+  }
+  // A bound answer's admission marker is a CONTROL row of a request against THIS question's
+  // interactive intent — never a human message. A refused attempt (the gate said the answer
+  // could not be checked or bound, the gateway refused before PAIGE, the request died) leaves
+  // its marker behind, and the next honest answer used to read that leftover as "someone said
+  // something after the question", permanently marking the still-open question superseded —
+  // the customer-blocking loop reproduced from the live 2026-10-19 thread (four markers, zero
+  // model calls, every retry refused, reload-proof). Markers superseding the QUESTION'S OWN
+  // intent are exactly those control rows: omit them all, this request's and any leftovers.
+  // A marker superseding any OTHER intent stays visible — it is not this question's business.
+  if (askedTurn) {
+    const askedIntent = askedTurn.interactive_intent_id;
+    for (const turn of turns) {
+      if (marker(turn, askedIntent)) omitted.add(turn.id as string);
+    }
+  }
+  // A successful/stranded earlier answer retains this same native marker in history. Recognize
+  // only the exact adjacent claim -> protected marker -> issued question triple, so existing
+  // answered/pending/reopened recovery semantics survive without masking intervening messages.
+  for (let at = 1; at + 1 < turns.length; at += 1) {
+    const claimTurn = turns[at - 1], control = turns[at], asked = turns[at + 1];
+    const ask = question(asked);
+    const claim = claimTurn.role === "user" ? readAnswerClaim((claimTurn.bundle_ref as { paige_resume?: unknown } | null)?.paige_resume) : null;
+    const interactive = (claimTurn.bundle_ref as { interactive?: { request_intent_id?: unknown; supersedes_intent_id?: unknown } } | null)?.interactive;
+    if (ask && claim?.key === answerResumeKey(ask.ask_id) && sameId(claim.from_turn_id, asked.id)
+      && interactive && typeof interactive.request_intent_id === "string" && UUID.test(interactive.request_intent_id)
+      && !sameId(interactive.request_intent_id, asked.interactive_intent_id)
+      && sameId(interactive.supersedes_intent_id, asked.interactive_intent_id)
+      && marker(control, asked.interactive_intent_id)) omitted.add(control.id as string);
+  }
+  return { turns: turns.filter(turn => typeof turn.id !== "string" || !omitted.has(turn.id)), ownAdmissionMarkerId };
+}
 
 export function resolveAskLiveness(turns: ReadonlyArray<TurnRow>, askId: string, depth = 0): AskLiveness {
   const want = String(askId).toLowerCase();

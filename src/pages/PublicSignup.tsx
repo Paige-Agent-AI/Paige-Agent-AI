@@ -27,7 +27,6 @@ import { PageHead } from "@/components/seo/PageHead";
 import {
   CommunicationsConsent, EMPTY_COMMS_CONSENT, type CommsConsentState,
 } from "@/components/legal/CommunicationsConsent";
-import { recordCommsConsent } from "@/lib/legal/recordCommsConsent";
 import { MailCheck } from "lucide-react";
 
 export default function PublicSignup() {
@@ -107,7 +106,6 @@ export default function PublicSignup() {
         // wired yet — see the tenant-signup edge function), then straight to
         // onboarding. The "sent" phase stays for when real confirmation returns.
         await signUpTenant({ email, password, fullName });
-        await recordCommsConsent({ email, source: "tenant_signup", consent: commsConsent });
         goOnboarding();
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });

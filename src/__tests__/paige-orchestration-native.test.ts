@@ -79,6 +79,9 @@ type DbConfig = {
   // engine C1 surfaces
   acts?: Record<string, Array<{ id: string; position: number; action_kind: string | null; tool_key: string | null; config: unknown }>>;
   activeMembers?: Set<string>;
+  memberRole?: string;
+  memberStatus?: string;
+  laneResult?: unknown;
   lanes?: Record<string, { effective: string }>; // resolve_automation_autonomy
   persistOutcomeOverride?: Record<string, string>;
   failAdvance?: boolean;              // fail a phase-5 ledger advance (a call carrying _dispatched_at)
@@ -130,7 +133,9 @@ function mockDb(cfg: DbConfig): AdapterDb & EngineDb {
         } else if (table === "paige_automation_acts") {
           data = cfg.acts?.[filters.automation_id as string] ?? [];
         } else if (table === "tenant_members") {
-          data = cfg.activeMembers?.has(`${filters.tenant_id}:${filters.user_id}`) ? [{ user_id: filters.user_id }] : [];
+          data = cfg.activeMembers?.has(`${filters.tenant_id}:${filters.user_id}`)
+            && (cfg.memberStatus ?? "active") === "active"
+            ? [{ user_id: filters.user_id, role: cfg.memberRole, status: "active" }] : [];
         }
         return Promise.resolve({ data, error }).then(onF, onR);
       },
@@ -158,7 +163,7 @@ function mockDb(cfg: DbConfig): AdapterDb & EngineDb {
       }
       if (fn === "resolve_tool_autonomy") {
         if (cfg.gatewayError === "lane") return { data: null, error: { message: "resolve_tool_autonomy_failed" } };
-        return { data: cfg.toolLane ?? "auto", error: null };
+        return { data: Object.prototype.hasOwnProperty.call(cfg, "laneResult") ? cfg.laneResult : cfg.toolLane ?? "auto", error: null };
       }
       if (fn === "resolve_automation_autonomy") {
         return { data: cfg.lanes?.[args._automation_id as string] ?? { effective: "off" }, error: null };
@@ -166,6 +171,12 @@ function mockDb(cfg: DbConfig): AdapterDb & EngineDb {
       if (fn === "paige_claim_act_dispatch") {
         if (cfg.claim === "error") return { data: null, error: { message: "claim_failed" } };
         return { data: cfg.claim === "held" ? null : { id: `row-${args._act_id as string}` }, error: null };
+      }
+      if (fn === "execute_weekly_commitment_check") {
+        return { data: { outcome: "executed", detail: { confirmed_via: "weekly_commitment_observation", receipt_id: "test-receipt" } }, error: null };
+      }
+      if (fn === "read_weekly_commitment_check") {
+        return { data: null, error: { message: "readback unavailable" } };
       }
       if (fn === "paige_record_act_execution") {
         const actId = args._act_id as string;
@@ -605,6 +616,51 @@ describe("resolveNativeCapabilityStatus — availability resolved THROUGH the ca
 
 // ═══ Part D — registry sync (§39 F5) ═════════════════════════════════════════════════════════════════
 
+describe("owner task native Gateway authority", () => {
+  const cfgForOwner = (over: Partial<DbConfig> = {}): DbConfig => ({
+    actorTier: "tenant", actorRoles: [], workspaceSeat: true,
+    activeMembers: new Set(["t1:u1"]), memberRole: "owner", toolLane: "confirm",
+    rpcCalls: [], queryFilters: [], ...over,
+  });
+  const resolve = (cfg: DbConfig) => resolveNativeCapabilityStatus(mockDb(cfg), {
+    actorUserId: "u1", tenantId: "t1", actionKind: "owner.task",
+  });
+  it.each(["owner", "admin"])("an active %s uses the classified task tool and exact approval", async (memberRole) => {
+    const cfg = cfgForOwner({ memberRole });
+    const result = await resolve(cfg);
+    expect(result.ok && result.status.availability).toBe("needs_approval");
+    expect(cfg.rpcCalls.filter(c => c.fn === "resolve_tool_autonomy")).toEqual([
+      { fn: "resolve_tool_autonomy", args: { _tenant_id: "t1", _tool_key: "crm_create_task" } },
+    ]);
+    expect(cfg.rpcCalls.some(c => c.fn === "execute_owner_task_act")).toBe(false);
+  });
+  it("automatic tool permission cannot omit the native task's per-act approval", async () => {
+    const result = await resolve(cfgForOwner({ toolLane: "auto" }));
+    expect(result.ok && result.status.availability).toBe("needs_approval");
+  });
+  it("an off task tool cannot be widened by a stored process grant", async () => {
+    const result = await resolve(cfgForOwner({ toolLane: "off" }));
+    expect(result.ok && result.status.availability).toBe("unavailable");
+  });
+  it.each([
+    { memberRole: "member" },
+    { memberStatus: "inactive" },
+    { activeMembers: new Set<string>() },
+    { activeMembers: new Set<string>(), actorRoles: ["super_admin"] },
+    { activeMembers: new Set<string>(), actorTier: "agency", agencyManages: true },
+    { actorTier: "client" },
+  ])("requires the original actor's active tenant owner/admin seat: %o", async (over) => {
+    const result = await resolve(cfgForOwner(over));
+    expect(result.ok && result.status.availability).toBe("not_for_tier");
+  });
+  it.each([null, false, {}, "unexpected"])("an unrecognized tool lane %j is unresolved", async (laneResult) => {
+    expect((await resolve(cfgForOwner({ laneResult }))).ok).toBe(false);
+  });
+  it.each(["role", "lane"] as const)("a failed %s read is unresolved", async (gatewayError) => {
+    expect((await resolve(cfgForOwner({ gatewayError }))).ok).toBe(false);
+  });
+});
+
 describe("native registries stay in sync — no dark executor, no orphan binding (§39 F5)", () => {
   it("the native executor registry and the Gateway capability bindings carry IDENTICAL keys", () => {
     const executorKeys = Object.keys(nativeTest.NATIVE_EXECUTORS).sort();
@@ -613,5 +669,34 @@ describe("native registries stay in sync — no dark executor, no orphan binding
     // and the C2 vertical is present in both by its dotted action_kind
     expect(executorKeys).toContain(KIND);
     expect(hasNativeCapabilityBinding(KIND)).toBe(true);
+  });
+});
+
+describe("weekly read through the canonical engine", () => {
+  const weeklyEvent: ClaimedEvent = { event_id: "e1", tenant_id: "t1", event_key: "schedule.weekly_commitment_check",
+    subject_table: "paige_automations", subject_id: "a1", payload: {} };
+  const weeklyActs = { a1: [{ id: "act1", position: 1, action_kind: "planning.weekly_commitment_check", tool_key: null, config: {} }] };
+  it.each(["off", "confirm"] as const)("tool %s holds a weekly read even when the process grant is auto", async (toolLane) => {
+    const cfg = happy({ acts: weeklyActs, toolLane });
+    const result = await runEventActs(mockDb(cfg), weeklyEvent, [journeyAuto()]);
+    expect(cfg.rpcCalls.filter(c => c.fn === "execute_weekly_commitment_check")).toHaveLength(0);
+    expect(result.records[0].outcome).not.toBe("executed");
+    expect(result.records[0].outcome).not.toBe("accepted_for_execution");
+  });
+  it("auto executes once with process references and no contact Rail attribution", async () => {
+    const cfg = happy({ acts: weeklyActs });
+    const result = await runEventActs(mockDb(cfg), weeklyEvent, [journeyAuto()]);
+    expect(result.records[0].outcome).toBe("executed");
+    expect(cfg.rpcCalls.filter(c => c.fn === "execute_weekly_commitment_check")).toHaveLength(1);
+    const receipt = cfg.rpcCalls.find(c => c.fn === "record_capability_run");
+    expect(receipt?.args._detail).toMatchObject({ process_id: "a1" });
+    expect(receipt?.args._detail).not.toHaveProperty("contact_id");
+    expect(cfg.rpcCalls.filter(c => c.fn === "record_rail_event")).toHaveLength(0);
+  });
+  it.each(["accepted_for_execution", "ambiguous"])("%s and a readback error never redispatch", async (currentActOutcome) => {
+    const cfg = happy({ acts: weeklyActs, currentActOutcome });
+    const result = await runEventActs(mockDb(cfg), weeklyEvent, [journeyAuto()]);
+    expect(cfg.rpcCalls.filter(c => c.fn === "execute_weekly_commitment_check")).toHaveLength(0);
+    expect(result.records[0].outcome).toBe(currentActOutcome);
   });
 });

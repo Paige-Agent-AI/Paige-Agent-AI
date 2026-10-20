@@ -1,4 +1,5 @@
 import type { AnalyticsEvidenceBundle } from "../../data/useAnalyticsEvidence";
+import type { MetricBusinessTimeZone } from "@/lib/analytics/metric-contract";
 
 export type SalesPerformanceRangeKey = "week" | "month" | "quarter" | "year";
 export type SalesMetricTruth = "LIVE" | "PARTIAL" | "UNAVAILABLE";
@@ -25,6 +26,7 @@ export interface SalesMetricBundle {
   evidence_ref: string | null;
   evidence_state?: string;
   reference_expires_at?: string;
+  business_time_zone?: MetricBusinessTimeZone;
 }
 export type SalesPerformancePhase = "loading" | "ready" | "error" | "denied" | "unavailable";
 export interface SalesPerformanceDestination { tab: "opportunities" | "payments"; query?: string }

@@ -77,6 +77,13 @@ export const STEP_START_LABELS: Readonly<Record<string, string>> = Object.freeze
   // Ads
   get_pipeline_lead_funnel: "Checking how your campaigns and ads are doing",
   set_ad_creative_featured: "Updating your Ads showroom",
+  // Campaign steps and process scope (MBC 6c)
+  read_campaign_steps: "Reading the campaign's steps",
+  campaign_step_plan: "Planning a campaign step",
+  campaign_step_record_result: "Recording what came of a campaign step",
+  campaign_step_judge: "Recording your judgement",
+  read_process_scope: "Checking which form starts the process",
+  process_scope_set: "Choosing which form starts a process",
   // Agreements
   agreement_send: "Sending the agreement for signature",
   agreement_draft: "Drafting the agreement",
@@ -105,8 +112,14 @@ export const STEP_START_LABELS: Readonly<Record<string, string>> = Object.freeze
   growth_form_save: "Saving your form draft",
   // Scheduling
   calendar_book_meeting: "Booking the meeting",
+  read_calendar_booking: "Checking that booking",
+  crm_get_task: "Checking that Task",
   // Research and the specialist team
   web_search: "Searching the web",
+  // Business operating snapshot (shared read; E2-1 wired the dispatch)
+  get_business_snapshot: "Taking stock of your business",
+  read_client_engagement_status: "Checking where that client stands",
+  read_business_time_zone: "Checking your business time zone",
   deep_research: "Researching the live web",
   list_subagents: "Finding the right specialist",
 });
@@ -129,8 +142,6 @@ export const STEP_NO_START: Readonly<Record<string, string>> = Object.freeze({
   social_post: "always refused at dispatch",
   social_analytics: "always refused at dispatch",
   social_accounts: "always refused at dispatch",
-  // Labelled, but no dispatch branch handles it: it would answer "Unknown tool".
-  get_business_snapshot: "no dispatch",
   // THE DOORS decide remotely — authority, approval and execution in one call — so nothing can be
   // announced before their answer. They never reach the START point anyway (each `continue`s ahead
   // of dispatch); they are listed so the parity is explicit.

@@ -371,7 +371,7 @@
         {
           "path": "supabase/functions/google-calendar-oauth-start/index.ts",
           "role": "provider_adapter",
-          "note": "Google OAuth consent start — the only Google Workspace provider code that exists in the repo today."
+          "note": "Google Calendar OAuth consent plumbing; this is not a Drive/Docs adapter. Gmail has its own separate communications entry and connection paths."
         },
         {
           "path": "supabase/functions/google-calendar-oauth-callback/index.ts",
@@ -381,7 +381,7 @@
         {
           "path": "supabase/functions/_shared/calendarCrypto.ts",
           "role": "provider_adapter",
-          "note": "OAuth token crypto. PARTIAL gap (§13): NO Drive/Docs (productivity_documents) adapter edge function is built — only Google Calendar OAuth exists; the native Drive/Docs create/read path is not yet wired, which is why this entry is PARTIAL, not LIVE."
+          "note": "Calendar OAuth token crypto only. This anchor does not establish native Drive/Docs create/read or Gmail readiness. Drive/Docs provider-path proof remains separate; the Gmail communications entry records its existing implementation without raising this entry's PARTIAL status."
         }
       ],
       "sources": [
@@ -1445,10 +1445,124 @@
       ]
     },
     {
+      "id": "gmail",
+      "name": "Gmail (tenant mailbox connection / sending / inbox)",
+      "taxonomy": "crm_calendar_communications",
+      "business_reason": "Eligible businesses connect their own Google sending identity and, through a separate consent purpose, a private mailbox. Gmail is distinct from Google Drive/Docs, Calendar and the owner's intended SendGrid PAIGE Email service.",
+      "paige_use_cases": [
+        "owner/admin explicitly starts, completes or disconnects the existing same-workspace Google connection",
+        "send an exactly approved business email through comms.email_send, the existing comms-email-command/send-message path and the Gmail transport",
+        "use separately authorized private inbox read/organization plumbing; this repair does not add the missing SOLO inbox-consent UI binding or activate it"
+      ],
+      "connection_prerequisite": "Genuine ordinary-user Google consent, configured Google OAuth application/redirect URI and Gmail API readiness; the relevant Google verification and actual granted scopes must be proven. Canonical server actor/current workspace and is_tenant_admin_as authorize connection management; a global admin title alone is insufficient. Personal mailbox ownership remains binding. Normal SOLO provisioning sets explicit active workspace; missing/stale native authority fails closed, without a per-account patch.",
+      "required_scopes": [
+        "https://www.googleapis.com/auth/gmail.send (default send purpose)",
+        "https://www.googleapis.com/auth/gmail.modify (separate inbox purpose)",
+        "https://www.googleapis.com/auth/gmail.labels (separate inbox purpose)",
+        "https://www.googleapis.com/auth/userinfo.email (both consent purposes)"
+      ],
+      "safe_readable_context": "Only authorized same-tenant connection metadata and permitted mailbox context. Personal mailbox content and its derivatives remain owner-private under incumbent authorization/RLS; secrets never enter the browser, logs, registry or another tenant's context.",
+      "allowed_writes_external_effects": "Person-initiated Google consent/token exchange and local connection/disconnect are the existing Connections flow, not blanket Chat authority. Business email remains exactly approved through comms.email_send and the existing governed sender with native readback/Rail. Separate inbox organization requires its existing consent/policy. No new OAuth scope, send, inbox activation or autonomous provider effect is authorized by this entry.",
+      "authority_lane": [
+        "read",
+        "draft",
+        "confirm"
+      ],
+      "m1_dependency": "none for a discretionary purchase in this connection repair; mailbox/API operating usage remains separately visible. Existing governed send approval, provider refusal floor and engagement limits are preserved; internal LLM-cost metering does not grant provider authority.",
+      "canonical_provider_receipt": "Gmail message id (and thread id when returned) establishes provider acceptance, not delivery, reading or payment. OAuth consent/native connector persistence is not an email-send receipt; native connector readback and connection audit are separate facts.",
+      "rail_mind_memory": "Business sends retain existing canonical message/readback and capability-run Rail outcomes. Connection/disconnect use the existing connector and connection audit, with audit acknowledgement separate from native persistence. Personal bodies/derivatives remain private; no raw content is promoted into Mind/Memory by connection metadata or this repair.",
+      "status": "PROOF_OWED",
+      "owner": "SOLO Parity / Historical Chat Restoration BUG lead (Communications)",
+      "dependency": "Reviewed source candidate 36c24022f6c311226a677fc5177bea73c46e1388 has independent 150 focused / 34 real local PostgreSQL checks; no production/provider acceptance is claimed. Apply 20271108200000_gmail_connection_authority before deploying the three Gmail endpoints, then pass exact-head hosted CI/full-schema checks and verify deployed SQL/Edge source. Google consent/exchange/revocation is external and not atomic with PostgreSQL. Actual credentials, consent/scopes, private inbox behavior, send receipt/delivery and ordinary authenticated customer QA remain UNVERIFIED.",
+      "next_slice": "Release the reviewed native connection-authority slice with native-first migration/endpoint readback; prove authorized ordinary owner/admin consent and refusal behavior without unapproved sends. Bind/prove separate inbox consent and the governed email outcome as subsequent work; no automatic retry after uncertain acknowledgement.",
+      "tier_eligibility": {
+        "platform": "eligible",
+        "solo": "eligible",
+        "agency_future": "resell",
+        "enterprise_future": "eligible"
+      },
+      "expense_and_operations": {
+        "cost_responsibility": "tenant_direct",
+        "billing_owner": "tenant owns the mailbox/subscription; platform operates the shared Google OAuth application/quota project. No purchase or new billing arrangement is introduced.",
+        "operational_owner": "SOLO Parity / Historical Chat Restoration BUG lead (Communications)",
+        "pricing_model": "unknown",
+        "pricing_source_url": "https://developers.google.com/gmail/api/reference/quota",
+        "pricing_checked_as_of": null,
+        "pricing_note": "Current Gmail API quotas, mailbox subscription terms and any applicable fees were not verified in this source-only slice. No price, free entitlement or quota headroom is inferred.",
+        "access_prerequisite": "Existing Google OAuth application and tenant-chosen consent; relevant Google app verification/API/redirect setup and actual granted scopes. Send and personal inbox purposes remain distinct; eligibility does not prove connection readiness.",
+        "expected_cost_driver": [
+          "api_calls",
+          "messages"
+        ],
+        "rate_limits_quotas": "Google project/user and mailbox limits require current verification; the local protected tests establish no live quota, provider rate or capacity claim.",
+        "usage_review_cadence": "On controlled activation and provider/quota incidents; review ongoing mailbox/API usage through existing operations evidence.",
+        "renewal_deprecation_review": "Track Google OAuth/Gmail API scope and policy changes; tenant mailbox subscription remains separately owned.",
+        "data_privacy_retention": "Refresh token remains in the incumbent Vault bridge; connector carries only its reference. Native actor/workspace/privacy/collision checks and Vault+connector writes are one transaction. Private mailbox data/derivatives are owner-scoped; no secret or raw mailbox content is copied into this registry.",
+        "money_movement": {
+          "can_move_real_money": false,
+          "m1_dependency_track": "none",
+          "detail": "Connection, disconnect and ordinary email do not purchase a subscription or move customer money. Provider operating terms/usage and existing engagement controls remain separate."
+        },
+        "receipt_reconciliation": "Native connector identity/readback and audit acknowledgement establish only local connection facts. A governed send requires the existing message record, Gmail provider message id and Rail; unknown dispatch blocks resend, and acceptance is not delivery.",
+        "rail_outcome": "Existing governed email capability-run Rail; local connection audit is distinct and a missing audit acknowledgement must not rewrite a verified saved/disconnected result into absence.",
+        "pause_revoke_path": "Existing person-driven local disconnect atomically disables/unlinks the exact current connector and tombstones its exclusive canonical Vault reference. Optional Google revocation runs afterward and has a separate acknowledgement; lost native acknowledgement stays unknown and is not automatically retried. External grant retirement/concurrent provider outcomes are not proven by local absence.",
+        "next_owner": "SOLO Parity / Historical Chat Restoration BUG lead (Communications)",
+        "next_slice": "Native-first release and actual ordinary-account consent/readback; verify current provider quota/terms before making cost/readiness claims. SendGrid platform/tenant authority, existing Resend connections and generic SMTP/Apple limitations remain separate."
+      },
+      "code_anchors": [
+        {
+          "path": "supabase/functions/gmail-oauth-start/index.ts",
+          "role": "provider_adapter",
+          "note": "Existing signed user/workspace/origin/time/nonce consent; default send and separate inbox purposes. No scope activation from this registry."
+        },
+        {
+          "path": "supabase/functions/gmail-oauth-callback/index.ts",
+          "role": "provider_adapter",
+          "note": "Google code exchange and the native provision_gmail_connection transaction; saved-but-withheld and unknown remain truthful, with no automatic native retry."
+        },
+        {
+          "path": "supabase/functions/gmail-disconnect/index.ts",
+          "role": "provider_adapter",
+          "note": "Native exact-version local disconnect before separately acknowledged optional external revoke."
+        },
+        {
+          "path": "supabase/functions/_shared/gmail-connection-authority.ts",
+          "role": "fail_closed_containment",
+          "note": "Fresh Auth/current-workspace observations and canonical tenant-admin predicate; not a new permission engine, atomic snapshot or future authorization lease."
+        },
+        {
+          "path": "supabase/migrations/20271108200000_gmail_connection_authority.sql",
+          "role": "provider_adapter",
+          "note": "Service-only native provision/disconnect over existing connector/Vault; actor/authority locks, personal ownership, address/stable-key collisions and rollback. Must precede endpoint release."
+        },
+        {
+          "path": "supabase/functions/_shared/gmail.ts",
+          "role": "provider_adapter",
+          "note": "Incumbent Gmail token/send transport used by send-message; code existence is not authenticated provider proof."
+        },
+        {
+          "path": "src/pages/GmailCallback.tsx",
+          "role": "provider_adapter",
+          "note": "Connection response consumer only, not provider delivery reconciliation; preserves saved/unknown/refused states and retires stale invocation results."
+        },
+        {
+          "path": "src/solo/data/useSoloComms.ts",
+          "role": "provider_adapter",
+          "note": "Existing Connections caller supplies expected workspace as a stale-request guard; current default purpose is send, not inbox activation."
+        }
+      ],
+      "sources": [
+        "docs/evidence/ui-delivery/ant21-gmail-workspace-authority.md (reviewed source/protected 150 focused and 34 PostgreSQL checks; hosted/provider/authenticated proof UNVERIFIED)",
+        "docs/doctrine/one-approval-gate.md",
+        "docs/brain/comms-capability-map.md",
+        "docs/integration-registry/README.md (Gmail proof and provider separation boundary)"
+      ]
+    },
+    {
       "id": "resend",
       "name": "Resend (transactional / platform email)",
       "taxonomy": "crm_calendar_communications",
-      "business_reason": "Email delivery for platform and tenant sending identities.",
+      "business_reason": "Email delivery for platform and tenant sending identities. Owner policy 2026-10-13: Resend is the Platform Operator's own email, and a business's PAIGE Email moves to SendGrid (see the sendgrid entry). Existing tenant Resend connectors are not converted; the governed door still admits them, and only Resend sends can be reconciled.",
       "paige_use_cases": [
         "send platform/tenant email from a verified sending identity",
         "verify a sending domain",
@@ -1471,7 +1585,7 @@
       "status": "PARTIAL",
       "owner": "Comms workstream",
       "dependency": "Per-tenant sending-identity wiring. The 2026-10-04 invoice.settings_update numbering/presentation and six-tab Opportunities List/Board changes are internal Sales contracts, not new provider connections or sender readiness. Frozen issued invoice presentation is reused by email. The 2026-10-04 PDF workspace derives a version-checked PDF attachment server-side through the existing paige-browser host; Resend/Gmail/SMTP share the existing transport. Missing PDF host or changed invoice refuses dispatch. Authenticated customization, hosted PDF and real attachment acceptance remain UNVERIFIED. The post-merge invoice dispatch repair uses the existing claim/finalize state and invoice lock to refuse concurrent financial mutations while dispatching; no sender authority or provider maturity is added.",
-      "next_slice": "Confirm sending-identity resolution + send receipt on the Rail. Issued-invoice email source/isolated SQL and handler tests are implemented; authenticated sender/provider end-to-end remains PROOF_OWED (owner deferred actual email testing).",
+      "next_slice": "Confirm sending-identity resolution + send receipt on the Rail. Issued-invoice email source/isolated SQL and handler tests are implemented; authenticated sender/provider end-to-end remains PROOF_OWED (owner deferred actual email testing). Customer portal invitation command/source is a separate bounded adapter over the incumbent send-portal-invite, native token producer and email_send_log; it uses canonical high-risk confirmation and preserves original-operation uncertainty. Its actual Dashboard/typed Chat/Live binding, released provider readback and authenticated invitation/customer return remain PROOF_OWED. No sender, domain verification, connection maturity or execution activation is inferred.",
       "tier_eligibility": {
         "platform": "eligible",
         "solo": "eligible",
@@ -1517,6 +1631,16 @@
           "note": "provider-specific: providers.ts carries the Resend send branch."
         },
         {
+          "path": "supabase/functions/send-portal-invite/command.ts",
+          "role": "provider_adapter",
+          "note": "Customer invitation adapter to the existing canonical high-risk confirmation/kernel, native recipient-bound token producer and incumbent sender. No Chat/Live activation or authenticated provider proof is inferred."
+        },
+        {
+          "path": "supabase/functions/send-portal-invite/canonical-delivery.ts",
+          "role": "provider_adapter",
+          "note": "Internal incumbent Resend invitation transport, using native email_send_log claims, identical-payload provider keys, current recipient/policy/provider-floor rechecks and durable outcome readback. Unknown recovery remains effectful and requires fresh canonical approval; no delivery/open/human-read claim."
+        },
+        {
           "path": "supabase/functions/handle-resend-webhook/index.ts",
           "role": "callback_readback",
           "note": "Resend delivery-event webhook receiver."
@@ -1531,6 +1655,112 @@
         "docs/PAIGE-MASTER-PROJECT-REFERENCE.md §4 (Resend)",
         "docs/comms/SEND-MESSAGE-CONTRACT.md",
         "docs/product/provider-result-contract.md §4.3"
+      ]
+    },
+    {
+      "id": "sendgrid",
+      "name": "SendGrid (PAIGE Email — tenant one-to-one email)",
+      "taxonomy": "crm_calendar_communications",
+      "business_reason": "Owner policy 2026-10-13: a business's PAIGE Email sends through SendGrid on the platform's account. Resend stays the Platform Operator's own email, and existing tenant Resend connectors are not converted. Customers see 'PAIGE Email', never a provider name.",
+      "paige_use_cases": [
+        "send one approved email to one existing contact from the business's SendGrid-verified domain through the governed door (comms-email-command / comms.email_send); provider acceptance only",
+        "send an approved reply to a new lead (owner.lead_followup, Experience 03 S3) with approval_id; prepare stores the approval on the send binding and allows one live send per approval; record the send on that approval only (lead_reply_record_send_service, LEAD_REPLY_NOT_THIS_APPROVAL otherwise)",
+        "read back the provider's own outcome (delivered / bounced / blocked / dropped / deferred / spam report) from a signature-verified Event Webhook, correlated to the governed message"
+      ],
+      "connection_prerequisite": "Operator steps, none done on production as of 2026-10-13 (master §5): the restricted Mail Send key SENDGRID_MAIL_SEND_API_KEY set with its scopes recorded via comms-sendgrid-scopes; the business's sending domain authenticated in SendGrid (DNS); the verification facts (tenant_email_domains.sendgrid_domain_id / sendgrid_status='verified' / sendgrid_verified_at) written by the service role, since there is no automated SendGrid verification service and manage-tenant-domain is Resend-only; a channel_connectors row provider='sendgrid' on the verified domain, written by the service role (after 20271031000250 no signed-in user can create or change one); a per-business DNS proof of domain ownership before any automated verification writer ships; comms_provider_execution_allowed admitting the business and actor; the Event Webhook enabled with SENDGRID_WEBHOOK_PUBLIC_KEY set; owner sign-off on the first live test send.",
+      "required_scopes": [
+        "SendGrid restricted API key: Mail Send only (SENDGRID_MAIL_SEND_API_KEY)",
+        "a separate scoped key for Event Webhook setup only (SENDGRID_WEBHOOK_ADMIN_API_KEY, read only by comms-sendgrid-webhook-admin)"
+      ],
+      "safe_readable_context": "The provider message id (X-Message-Id), the event type, the bounce type and a sanitized provider reason (control characters stripped, addresses replaced by [address], 200 characters max). Never the message body from the provider, never a credential.",
+      "allowed_writes_external_effects": "Send one email. Only through comms-email-command after the person approves the exact email on the canonical confirmation. The sender domain must be SendGrid-verified at prepare and again at send time (COMMS_EMAIL_SENDER_UNVERIFIED / binding not eligible otherwise). HTTP 202 is provider acceptance, never delivery. A SendGrid outcome of 'unknown' is never re-sent by reconcile (_comms_email_reconcilable admits Resend only); the identical-content guard refuses a duplicate while it is unknown. execute-approval refuses every send_via_approval kind (409) and sends nothing. send-message refuses any SendGrid send that is not the email door's prepared operation (paige_email_requires_governed_send), before any provider call.",
+      "authority_lane": [
+        "read",
+        "draft",
+        "confirm"
+      ],
+      "m1_dependency": "none as a discretionary purchase (email delivery is an operating comms cost, recorded below).",
+      "canonical_provider_receipt": "SendGrid X-Message-Id stored as messages.provider_message_id at provider_accepted; Event Webhook sg_message_id prefix + custom_args paige_tenant_id / paige_operation_id / paige_message_id for correlation.",
+      "rail_mind_memory": "Rail: the governed send's outcome (provider_accepted, then any correlated provider-reported delivery state); a lead reply that reaches provider_accepted writes one communication_log row and, with an open deal, one deal_activities row saying 'handed to the email provider'. Mind: no bodies. Memory: none of raw content. Provider acceptance is never reported as delivered; a spam report keeps the status and sets delivery_state='spam_reported'.",
+      "status": "PROOF_OWED",
+      "owner": "Comms workstream (Experience 03 S3 for the lead-reply binding)",
+      "dependency": "Operator steps in connection_prerequisite; merge and persisted apply of 20271031000100, 20271031000200 and 20271031000250 (branch claude/stoic-archimedes-pv4r8u, not merged on 2026-10-13); the reply screen UI (owner design approval first). Production 2026-10-13 (read-only): 0 sendgrid connectors, 0 sendgrid_receipt_processing rows.",
+      "next_slice": "Complete the operator steps on one test business and run one owner-approved live send end to end: approve → provider_accepted → correlated Event Webhook → message state read back. Then build a SendGrid domain-verification service so the facts are not hand-written.",
+      "tier_eligibility": {
+        "platform": "ineligible",
+        "solo": "eligible",
+        "agency_future": "resell",
+        "enterprise_future": "eligible"
+      },
+      "expense_and_operations": {
+        "cost_responsibility": "platform_paid",
+        "billing_owner": "platform (Paige Agent AI Inc.) holds the SendGrid account and its Mail Send key",
+        "operational_owner": "Comms workstream",
+        "pricing_model": "metered_usage",
+        "pricing_source_url": "https://sendgrid.com/en-us/pricing",
+        "pricing_checked_as_of": null,
+        "pricing_note": "Plan tiers with monthly email volume; not verified in this slice, so no figure is recorded (§13). Whether tenant send volume is later passed through to the tenant is undecided.",
+        "access_prerequisite": "SendGrid account; restricted Mail Send key; per-business authenticated sending domain (DNS); Event Webhook with signature verification.",
+        "expected_cost_driver": [
+          "messages"
+        ],
+        "rate_limits_quotas": "Plan volume limits and Mail Send rate limits; send-message applies a 20 s deadline and treats a timeout/5xx as unknown (never retried by reconcile) and a 4xx as failed. Lead-reply drafting caps: 20 per business per hour, 100 per day, 1 per contact per day. Verify provider limits at source.",
+        "usage_review_cadence": "Monthly (send volume), and after the first live sends.",
+        "renewal_deprecation_review": "No fixed contract recorded; track Mail Send v3 and Event Webhook deprecations; rotation of the never-read SENDGRID_PLATFORM_ADMIN_API_KEY is owed.",
+        "data_privacy_retention": "Bodies never enter Mind/Memory; provider reasons are sanitized before storage; customer-facing text never names the vendor. A form submission is not marketing consent; a lead reply is a direct response to it (owner ruling 2026-10-13).",
+        "money_movement": {
+          "can_move_real_money": false,
+          "m1_dependency_track": "none",
+          "detail": "Email delivery is a metered operating comms cost, not a payment or discretionary purchase. Volume is bounded by the lead-reply caps and the governed door's per-send approval."
+        },
+        "receipt_reconciliation": "X-Message-Id at acceptance; Event Webhook events journalled in sendgrid_receipt_processing (correlated, uncorrelated with a reason, or apply_failed with the SQLSTATE) and applied forward-only to the governed message. A send with no stored provider id (unknown, or dispatching over 15 minutes) settles to provider_accepted only when all three custom_args claims and the recipient match; an event for a send still prepared (under 24 hours) or dispatching (under 15 minutes) is not kept and the webhook answers 503 for redelivery. Window lengths await sign-off.",
+        "rail_outcome": "governed send outcome; provider acceptance recorded separately from provider-reported delivery.",
+        "pause_revoke_path": "Unset SENDGRID_MAIL_SEND_API_KEY (readiness becomes EMAIL_PROVIDER_NOT_CONFIGURED), deactivate the business's sendgrid connector, or clear its sendgrid_status (the binding stops being eligible at send time).",
+        "next_owner": "Comms workstream",
+        "next_slice": "Verify pricing at source and record pricing_checked_as_of; decide tenant pass-through."
+      },
+      "code_anchors": [
+        {
+          "path": "supabase/functions/_shared/email/providers.ts",
+          "role": "provider_adapter",
+          "note": "No SendGrid adapter: buildProvider resolves sendgrid to a refusing provider (Experience 03 round-4 LOW-3); SendGrid sends only through send-message's governed arm."
+        },
+        {
+          "path": "supabase/functions/_shared/comms-email/readiness.ts",
+          "role": "fail_closed_containment",
+          "note": "SendGrid readiness: sender missing / domain not verified / key not configured, in that order; a connector row alone is never a verified sender."
+        },
+        {
+          "path": "supabase/migrations/20271031000100_paige_email_sendgrid_governed_door.sql",
+          "role": "fail_closed_containment",
+          "note": "SendGrid verification facts writable only by the service role; prepare and send-time admission only while the domain is verified."
+        },
+        {
+          "path": "supabase/functions/handle-sendgrid-webhook/index.ts",
+          "role": "callback_readback",
+          "note": "Signature-verified Event Webhook; 503 until SENDGRID_WEBHOOK_PUBLIC_KEY is set."
+        },
+        {
+          "path": "supabase/migrations/20271031000200_paige_email_sendgrid_receipts_and_history.sql",
+          "role": "callback_readback",
+          "note": "ingest_sendgrid_receipt + correlated, forward-only application to the governed message."
+        },
+        {
+          "path": "supabase/functions/send-message/index.ts",
+          "role": "provider_adapter",
+          "note": "the GENERIC dispatcher's governed SendGrid arm (custom_args, 20 s deadline, http_status); a SendGrid connector sends only for the email door's prepared operation (paige_email_requires_governed_send otherwise)."
+        },
+        {
+          "path": "supabase/migrations/20271031000250_paige_email_sendgrid_sender_integrity.sql",
+          "role": "fail_closed_containment",
+          "note": "only the service role may create or change a SendGrid connector (signed-in users may only switch one off); one SendGrid-verified claim per domain across businesses; one row per SendGrid domain id."
+        }
+      ],
+      "sources": [
+        "docs/PAIGE-MASTER-PROJECT-REFERENCE.md §4.0 (2026-10-13 Experience 03 S3) and §5",
+        "docs/brain/decision-log.md (Experience 03 S3, 2026-10-13)",
+        "docs/brain/config-registry.md (PAIGE Email — SendGrid)",
+        "docs/delivery/exp03-launch-email-providers-plan.md"
       ]
     },
     {
@@ -1659,12 +1889,12 @@
         {
           "path": "supabase/functions/_shared/elevenlabs.ts",
           "role": "provider_adapter",
-          "note": "Exact Jessica/v3 guards; Live dialogue WSS requires explicit scoped default-retention policy, cancellable PCM and terminal marker. HTTP read-aloud transport unchanged; missing key refuses."
+          "note": "Exact Jessica/v3 guards; Live dialogue WSS retains scoped default-retention policy, cancellable PCM and terminal marker. E01 development extends the existing HTTP message seam to cancellable MPEG streaming with unchanged profile/model/retention; mocked proof only, not provider acceptance."
         },
         {
           "path": "supabase/functions/paige-tts/index.ts",
           "role": "provider_adapter",
-          "note": "Existing profile-resolved read-aloud seam; active profile remains OpenAI and no ElevenLabs playback is activated by the Jessica candidate correction."
+          "note": "Existing profile-resolved read-aloud seam; October16 production metadata selects approved active elevenlabs-jessica-r1, not the earlier OpenAI snapshot. E01 stream delivery is source-released in #2268 with bounded production source proof and shared global certification held on #2271; it retains canonical reserve/settle/refusal, complete-only tenant cache and incumbent usage-stage measurements. Timing #2273 is source-released with actual paige-tts76 source readback: numeric same-response Server-Timing and optional native client phases, without customer identity, new telemetry storage or provider request. Optional Live phase observation remains development, and the existing neutral Live unit/cost callback is unbound. Live readiness still records transport/pilot off and missing verification/cost limits. No activation, provider audition or authenticated latency proof."
         },
         {
           "path": "supabase/functions/_shared/operator-storage-retirement.ts",
@@ -3189,7 +3419,6 @@
   "uncatalogued_wired_providers": {
     "note": "These providers are WIRED/CONFIGURED per master §4 but do NOT yet have a full catalogued entry above (including an expense_and_operations block). Their presence here is honest coverage (nothing hidden); the delivery rule requires the next PR that touches any of them to promote it to a full entry with its expense_and_operations block. Absence of a full entry is NOT a claim of absence of capability (§13).",
     "providers": [
-      "Gmail email (existing tenant channel_connectors/send-message + _shared/gmail.ts contract reused by issued-invoice email; authenticated/provider PROOF_OWED, full expense/capability entry owed to Comms/Integrations; no platform sender fallback or new OAuth connection claimed)",
       "SMTP email (existing tenant channel_connectors/send-message + _shared/smtp.ts contract reused by issued-invoice email; authenticated/provider PROOF_OWED, provider-specific expense/capability entry owed to Comms/Integrations; SMTP acceptance without a provider message receipt remains unknown, no delivered/paid claim)",
       "ElevenLabs (TTS/ConvAI voice)",
       "Zoom",

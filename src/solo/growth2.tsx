@@ -16,7 +16,7 @@ import { PipelineDelete } from "./PipelineDelete";
 import { PipelineCommandDesk } from "./PipelineCommandDesk";
 import CampaignOverview from "./campaign-desk";
 import { useSoloCampaignBriefs } from "./useSoloCampaignBriefs";
-import { SUBMISSION_READ_LIMIT, defaultPipelineHint, defaultPipelineTarget, defaultRouteLabel, pipelineRouteOf } from "./marketing-overview-model";
+import { SUBMISSION_READ_LIMIT, campaignRouteLabel, defaultPipelineHint, defaultPipelineTarget, defaultRouteLabel, pipelineRouteOf } from "./marketing-overview-model";
 import { useAdsIntakeCapability } from "./ads-intake-capability";
 import { MarketingAnalytics } from "./marketing-analytics";
 import { DEFAULT_RANGE, rangeOf } from "./marketing-analytics-model";
@@ -528,9 +528,11 @@ const MarketingWorkspace=({ salesInShell = false })=>{
   // Only listens: if this page load learned the default-pipeline functions are undeployed, say none of it.
   const intakeMissing=useAdsIntakeCapability(false)==="missing";
   const panelDefault=intakeMissing?null:defaultPipelineTarget(data.pipelineWorkspace);
-  const panelRoute=panelForm?pipelineRouteOf(panelForm,panelDefault!==null):null;
+  // Its campaign's pipeline (Experience 03 S1b) is filed by the same function, so it is gated the same way.
+  const panelRoute=panelForm?pipelineRouteOf(intakeMissing?{...panelForm,campaignRoute:null}:panelForm,panelDefault!==null):null;
   const formRoute=!panelForm?null
     :panelRoute==="own"?(panelForm.intakePipelineId?"Routed to a pipeline (set below)":"Sent to a pipeline by an automation")
+    :panelRoute==="campaign"&&panelForm.campaignRoute?`${campaignRouteLabel(panelForm.campaignRoute)}. With no route of its own, this form files its leads in the pipeline of its campaign, ${panelForm.campaignRoute.briefName}. ${panelForm.intakePipelineId&&panelForm.routingConfigured?"The route below is skipped while an automation is on; add a pipeline step to its automations in Vibe Studio to send them elsewhere.":"Set a route below to send them to a specific pipeline instead."}${panelForm.intakeAlert?" Each lead is also emailed to you.":""}`
     :panelRoute==="default"&&panelDefault?`${defaultRouteLabel(panelDefault)}. With no route of its own, this form files its leads in your default pipeline. ${panelForm.intakePipelineId&&panelForm.routingConfigured?"The route below is skipped while an automation is on; add a pipeline step to its automations in Vibe Studio to send them elsewhere.":"Set a route below to send them to a specific pipeline instead."}${panelForm.intakeAlert?" Each lead is also emailed to you.":""}`
     :`${panelForm.intakeAlert?"No pipeline: each lead is only emailed":panelForm.intakePipelineId&&panelForm.routingConfigured?"No pipeline: the route below is skipped while an automation is on. Add a pipeline step to its automations in Vibe Studio":panelForm.routingConfigured?"No pipeline: its automations run, but leads never reach one":"Not routed: no pipeline, no alert"}${intakeMissing?"":`. ${defaultPipelineHint(data.pipelineWorkspace)}.`}`;
   const formDetail=panelForm?{
@@ -542,7 +544,7 @@ const MarketingWorkspace=({ salesInShell = false })=>{
     actions:<>{panelForm.publicHref&&<a className="btn btn-s" href={panelForm.publicHref} target="_blank" rel="noreferrer">Open public link <Ic.arrow size={12}/></a>}{overviewCanManage&&<StudioLauncher label="Edit in Vibe Studio"/>}</>,
     note:"The form itself is built in Vibe Studio. Its route saves here or in Vibe Studio’s form settings; both are the same setting. While the form has an automation turned on, leads follow the automations instead.",
   }:null;
-  const openAsset=React.useCallback((artifact)=>setDetail({title:artifact.name,rows:[["Type",TYPE_LABEL[artifact.type]],["State","Live"],["Updated",formatDate(artifact.updatedAt)],["Where leads go",`Through the form on this ${artifact.type}. Its routing lives on that form.`]],actions:artifact.publicHref?<a className="btn btn-s" href={artifact.publicHref} target="_blank" rel="noreferrer">Open public link <Ic.arrow size={12}/></a>:null,note:"Visits aren’t recorded on public pages yet, so there is no conversion rate."}),[setDetail]);
+  const openAsset=React.useCallback((artifact)=>setDetail({title:artifact.name,rows:[["Type",TYPE_LABEL[artifact.type]],["State","Live"],["Updated",formatDate(artifact.updatedAt)],["Where leads go",`Through the form on this ${artifact.type}. Its routing lives on that form.`]],actions:artifact.publicHref?<a className="btn btn-s" href={artifact.publicHref} target="_blank" rel="noreferrer">Open public link <Ic.arrow size={12}/></a>:null,note:`Visits to this ${artifact.type} are recorded from now on, but aren’t counted here yet, so there is no conversion rate.`}),[setDetail]);
   const captureFilter=CAPTURE_FILTERS.includes(query.get("capture"))?query.get("capture"):"all";
   const moved=tab==="overview"&&Object.hasOwn(MOVED,query.get("moved")??"")?query.get("moved"):null;
   const toSales=React.useCallback(()=>{ const account=params.account; if(!account)return; navigate(salesInShell?subtabPath("solo",account,"sales","pipeline"):subtabPath("solo",account,"growth","pipeline")); },[navigate,params.account,salesInShell]);

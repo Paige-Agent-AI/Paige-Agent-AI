@@ -1,0 +1,8 @@
+{
+  "status": "INVALID",
+  "scope": "First four native layout captures",
+  "reason": "Fixture omitted incumbent SoloApp paige-solo/data-theme and inner flex/screen-host ancestors. This is a fixture defect, not a product defect.",
+  "preservedManifest": "render-manifest.invalid-missing-inner-frame.json",
+  "preservedGeometry": "first-geometry.invalid-missing-inner-frame.json",
+  "correction": "New renderer now mirrors SoloApp402-405 and includes solo-tokens.css; successor capture required."
+}

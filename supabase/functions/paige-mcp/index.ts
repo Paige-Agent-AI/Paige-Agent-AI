@@ -221,6 +221,7 @@ import { decideMcpToolCall, mcpGovernedAuditRow } from "../_shared/paige-mcp/gov
 // (public.get_actor_access) a human resolves through — so Paige's tier == a human's.
 import { getActorTier, isClientSeatByScopes } from "../_shared/actorTier.ts";
 import { classifyBusinessVerifyResponse } from "../_shared/business-verify-outcome.ts";
+import { requireFinanceEntitlement } from "../_shared/finance-entitlement.ts";
 // Master Twilio Basic-auth from the ONE home (twilio.ts) — API Key trio
 // (TWILIO_API_KEY_SID:TWILIO_API_KEY_SECRET); master TWILIO_AUTH_TOKEN absent in prod.
 
@@ -2693,7 +2694,7 @@ mcp.tool("create_invoice", {
       due_date: dueDate,
       memo: args.memo ?? null,
       payment_plan_key: args.payment_plan_key ?? null,
-      hosted_invoice_url: null, // populated when send_invoice runs (Stripe Connect or fallback)
+      hosted_invoice_url: null, // the legacy send_invoice that filled this is retired (#2072); governed delivery is sales-invoice-delivery
       created_by: createdBy,
     }).select("id, invoice_number, status, amount_total_cents, hosted_invoice_url").single();
     if (error) return err(error.message);
@@ -2713,95 +2714,19 @@ mcp.tool("create_invoice", {
 // ---------- send_invoice ----------
 mcp.tool("send_invoice", {
   description:
-    "Deliver a previously-created draft invoice. Emails the contact with the hosted invoice link and marks status='sent'. Separate from create_invoice so callers can review the draft first.",
+    "Retired. Invoices are delivered only through Paige's governed Sales invoice delivery (issue the invoice, then send it from Sales or ask Paige in chat), which checks the workspace, the sending identity, the recipient's consent and the owner's approval before anything is emailed. This tool sends nothing.",
   inputSchema: z.object({
     invoice_id: z.string(),
     custom_message: z.string().optional(),
   }),
   annotations: { destructiveHint: false },
-  handler: async (args) => {
-    const { data: inv, error: iErr } = await admin
-      .from("paige_invoices")
-      // Wildcard keeps this guard deployable before the managed-draft columns exist.
-      // The row stays internal; only the explicit legacy response below is returned.
-      .select("*")
-      .eq("id", args.invoice_id).maybeSingle();
-    if (iErr) return err(iErr.message);
-    if (!inv) return err("invoice_not_found");
-    // Managed drafts have no issue/send contract yet. Refuse BEFORE contact reads,
-    // sender resolution or delivery; a later DB constraint cannot undo an email.
-    if (inv.billing_draft_version != null || inv.billing_draft != null) {
-      return err("managed_billing_draft_dispatch_unavailable");
-    }
-    if (inv.status !== "draft") return err(`invoice_not_draft:${inv.status}`);
-
-    // The invoice goes to the contact's PRIMARY email, whichever of their addresses that is.
-    const { data: contactRow } = await admin
-      .from("clients").select(`first_name, last_name, ${CONTACT_METHOD_SELECT}`).eq("id", inv.contact_id).maybeSingle();
-    const contact = contactRow ? withPrimaryAddressFields(contactRow) : null;
-    if (!contact?.email) return err("contact_email_missing");
-
-    // Stripe Connect hosted URL — placeholder fallback (BYPASS_STRIPE_CONNECT) when not configured.
-    let hostedUrl = inv.hosted_invoice_url
-      ?? `${Deno.env.get("PAIGE_APP_ORIGIN") ?? "https://paigeagent.ai"}/i/${inv.invoice_number}`;
-
-    if (!RESEND_API_KEY) return err("resend_not_configured");
-    const { data: idn } = await admin.rpc("tenant_sender_identity", { _tenant_id: inv.tenant_id });
-    const fromAddress = (idn as any)?.from_address as string | undefined;
-    const fromName = (idn as any)?.from_name as string | undefined;
-    if (!fromAddress) return err("from_address_not_resolved");
-    const fromHeader = fromName ? `${fromName} <${fromAddress}>` : fromAddress;
-
-    const amountFmt = `$${(inv.amount_total_cents / 100).toFixed(2)} ${inv.currency}`;
-    const greeting = contact.first_name ? `Hi ${contact.first_name},` : "Hi,";
-    const intro = args.custom_message ? `<p>${args.custom_message}</p>` : "";
-    const html = `<!doctype html><html><body style="font-family:Inter,Arial,sans-serif;color:#111">
-      <p>${greeting}</p>${intro}
-      <p>Your invoice <strong>${inv.invoice_number}</strong> for <strong>${amountFmt}</strong> is ready.</p>
-      <p><a href="${hostedUrl}" style="display:inline-block;padding:12px 20px;background:#CFAE70;color:#000;text-decoration:none;border-radius:6px;font-weight:600">View & Pay Invoice</a></p>
-      ${inv.memo ? `<p style="color:#555;font-size:14px">${inv.memo}</p>` : ""}
-      <p>Thanks!</p>
-    </body></html>`;
-
-    const send_id = crypto.randomUUID();
-    let resendErr: string | null = null;
-    try {
-      const r = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${RESEND_API_KEY}` },
-        body: JSON.stringify({
-          from: fromHeader,
-          to: [contact.email],
-          subject: `Invoice ${inv.invoice_number} — ${amountFmt}`,
-          html,
-          headers: { "X-Paige-Send-Id": send_id },
-        }),
-      });
-      if (!r.ok) {
-        const j = await r.json().catch(() => ({} as any));
-        resendErr = (j as any)?.message ?? `resend_${r.status}`;
-      }
-    } catch (e) {
-      resendErr = (e as Error).message.slice(0, 300);
-    }
-    if (resendErr) return err(`email_send_failed: ${resendErr}`);
-
-    await admin.from("paige_invoices").update({
-      status: "sent",
-      sent_at: new Date().toISOString(),
-      sent_to_email: contact.email,
-      hosted_invoice_url: hostedUrl,
-    }).eq("id", inv.id);
-    await audit("send_invoice", "invoice", inv.id, { to: contact.email, send_id });
-
-    return ok({
-      invoice_id: inv.id,
-      status: "sent",
-      sent_to_email: contact.email,
-      send_id,
-      hosted_invoice_url: hostedUrl,
-    });
-  },
+  // Contained under #2072 (Experience 04): the legacy path read the invoice by id alone with the
+  // service role (no workspace check), wrote caller text unescaped into the email, skipped the
+  // provider floor and the pre-send consent/suppression gate, could link to a route that does not
+  // exist, and marked the invoice 'sent' outside the invoice lifecycle. It now refuses BEFORE any
+  // read, provider call or write, so nothing about the caller's request reaches a customer.
+  // The governed door is sales-invoice-delivery (Spine sales_invoice.email_send).
+  handler: async () => err("legacy_invoice_send_retired: use the governed Sales invoice delivery"),
 });
 
 
@@ -3066,6 +2991,10 @@ mcp.tool("ingest_credit_scores", {
   handler: async (args) => {
     const scope = await tenantScopedClient(args.client_id);
     if (!scope.ok) return err(scope.reason ?? "scope_denied");
+    // E09 F1b: recording a client's credit scores is a funding feature — only for a business that holds
+    // the finance entitlement (an active is_finance Marketplace install or finance_in_scope).
+    const entitled = await requireFinanceEntitlement(admin, scope.tenant_id);
+    if (!entitled.ok) return err(entitled.error);
 
     // Validation
     const reviewReasons: string[] = [];
@@ -3155,6 +3084,9 @@ mcp.tool("ingest_banking_snapshot", {
   handler: async (args) => {
     const scope = await tenantScopedClient(args.client_id);
     if (!scope.ok) return err(scope.reason ?? "scope_denied");
+    // E09 F1b: a client's banking snapshot is a funding feature — entitled businesses only.
+    const entitled = await requireFinanceEntitlement(admin, scope.tenant_id);
+    if (!entitled.ok) return err(entitled.error);
     const review: string[] = [];
     if ((args.current_balance ?? 0) < 0) review.push("negative_balance");
     if ((args.nsf_count_30d ?? 0) > 20) review.push("high_nsf_count");
@@ -3352,7 +3284,11 @@ async function applyProposal(proposal_id: string): Promise<{ ok: boolean; applie
         break;
       }
       case "ingest_credit_scores": {
-        const { data: cli } = await admin.from("clients").select("linked_user_id").eq("id", prop.client_id).maybeSingle();
+        // E09 F1b: re-checked at apply, so a proposal staged before the business lost the entitlement
+        // (or before this check existed) cannot land.
+        const { data: cli } = await admin.from("clients").select("linked_user_id, tenant_id").eq("id", prop.client_id).maybeSingle();
+        const ent = await requireFinanceEntitlement(admin, (cli?.tenant_id as string | null) ?? null);
+        if (!ent.ok) throw new Error(ent.error);
         const scores = payload.scores ?? [];
         if (cli?.linked_user_id) {
           const patch: Record<string, number | string> = {};
@@ -3385,9 +3321,12 @@ async function applyProposal(proposal_id: string): Promise<{ ok: boolean; applie
       case "ingest_banking_snapshot": {
         const { data: cli } = await admin
           .from("clients")
-          .select("linked_user_id")
+          .select("linked_user_id, tenant_id")
           .eq("id", prop.client_id)
           .maybeSingle();
+        // E09 F1b: re-checked at apply (see ingest_credit_scores above).
+        const ent = await requireFinanceEntitlement(admin, (cli?.tenant_id as string | null) ?? null);
+        if (!ent.ok) throw new Error(ent.error);
         if (!cli?.linked_user_id) {
           // No linked auth user — capture the snapshot as a structured memory entry instead.
           await admin.from("client_memory").insert({
@@ -4010,13 +3949,13 @@ mcp.tool("list_subaccounts", {
 
 mcp.tool("create_subaccount", {
   description:
-    "Agency only. Create a new sub-account (child workspace) under YOUR agency. Requires a display `name`; optional `industry` and `description`. The child arrives READY: by default (`inherit_from_parent`) it inherits your agency's white-label brand/voice, and it either carries your Playbook down or starts from `playbook_slug` — one of general, coaching-default, fitness, consultant, agency, or funding. Funding is an explicit opt-in only; it is never inherited or defaulted. The child is a standalone workspace owned by you. Only the agency OWNER may create sub-accounts.",
+    "Agency only. Create a new sub-account (child workspace) under YOUR agency. Requires a display `name`; optional `industry` and `description`. The child arrives READY: by default (`inherit_from_parent`) it inherits your agency's white-label brand/voice, and it either carries your Playbook down or starts from `playbook_slug` — one of general, coaching-default, fitness, consultant, or agency. Funding is never a starter preset, inherited or defaulted; a business gets it only through a deliberate Marketplace install. The child is a standalone workspace owned by you. Only the agency OWNER may create sub-accounts.",
   inputSchema: z.object({
     name: z.string().min(1),
     industry: z.string().optional(),
     description: z.string().optional(),
     playbook_slug: z
-      .enum(["general", "coaching-default", "fitness", "consultant", "agency", "funding"])
+      .enum(["general", "coaching-default", "fitness", "consultant", "agency"])
       .optional(),
     inherit_from_parent: z.boolean().optional(),
   }),
@@ -4027,8 +3966,8 @@ mcp.tool("create_subaccount", {
     if (!parent) return err("tenant_not_resolved");
     // Actor-explicit core (service_role): enforces owner-only + agency/enterprise-
     // parent + 100-child cap + forces child account_type, and seeds the inherited
-    // brand + chosen/inherited Playbook. §2: funding only ever via an explicit
-    // playbook_slug='funding' choice, never a default — do not force it on here.
+    // brand + chosen/inherited Playbook. §2 / E09 F1a: 'funding' is not a starter preset (the
+    // database refuses it, 22023); a business gets funding only through a Marketplace install.
     const { data, error } = await admin.rpc("create_subaccount", {
       _name: name,
       _industry: industry ?? null,
@@ -4702,8 +4641,13 @@ async function actorClient(): Promise<{ id: string; tenant_id: string | null; ow
   if (!a.user_id) return null;
   const { data } = await admin
     .from("clients")
-    .select("id, tenant_id, linked_user_id")
+    .select("id, tenant_id, linked_user_id, tenants!inner(status)")
     .eq("linked_user_id", a.user_id)
+    .eq("status", "active")
+    .is("merged_into_contact_id", null)
+    // E09 Slice 7: a paused relationship is not the client's (the resolver's own predicate).
+    .eq("portal_access_state", "open")
+    .eq("tenants.status", "active")
     .maybeSingle();
   if (!data?.id) return null;
   return { id: data.id, tenant_id: (data as any).tenant_id ?? null, owner_user_id: a.user_id };
@@ -4725,13 +4669,15 @@ mcp.tool("me_whoami", {
 });
 
 mcp.tool("me_get_profile", {
-  description: "Get the calling user's own client profile (name, email, phone, lifecycle stage, funding goal, notes). Reads only the row linked to the caller via clients.linked_user_id.",
+  description: "Get the calling customer's authorized contact information and onboarding stage. Internal CRM notes, assignments, scores and provider fields are private.",
   inputSchema: z.object({}),
   handler: async () => {
     const me = await actorClient();
     if (!me) return err("no_linked_client_record");
     const { data, error } = await admin.from("clients")
-      .select(`${CLIENT_RECORD_COLUMNS}, ${CONTACT_METHOD_SELECT}`).eq("id", me.id).maybeSingle();
+      .select("id, tenant_id, first_name, last_name, entity_name, street_address, city, state, zip_code, onboarding_stage, client_contact_methods(kind,value,is_primary)")
+      .eq("id", me.id).eq("tenant_id", me.tenant_id).eq("linked_user_id", currentActor().user_id)
+      .eq("status", "active").is("merged_into_contact_id", null).maybeSingle();
     if (error) return err(error.message);
     // The column list is built at runtime, so the row's type is stated rather than inferred.
     const record = data as unknown as ({ client_contact_methods?: unknown } & Record<string, unknown>) | null;
@@ -4744,18 +4690,20 @@ mcp.tool("me_get_profile", {
 });
 
 mcp.tool("me_update_profile", {
-  description: "Update the calling user's own client profile. Only safe self-editable fields are allowed: first_name, last_name, phone, entity_name, current_notes, funding_goal_amount. Cannot change lifecycle_stage, assigned coach, tier, or status.",
+  description: "Update your own contact names, company name and primary phone. Internal CRM notes, commercial fields, lifecycle, assignments, tier and access status are not customer-editable.",
   inputSchema: z.object({
     first_name: z.string().optional(),
     last_name: z.string().optional(),
     phone: z.string().optional(),
     entity_name: z.string().optional().describe("Their company / business name."),
-    current_notes: z.string().optional().describe("Free-form notes the user wants Paige to remember."),
-    funding_goal_amount: z.number().optional(),
+    current_notes: z.string().optional().describe("Internal field; customer updates are refused."),
+    funding_goal_amount: z.number().optional().describe("Commercial field; customer updates are refused."),
   }),
   handler: async (patch) => {
     const me = await actorClient();
     if (!me) return err("no_linked_client_record");
+    // These are internal CRM/commercial fields, not customer-editable profile data.
+    if (patch.current_notes !== undefined || patch.funding_goal_amount !== undefined) return err("field_not_customer_editable");
     // Each self-editable input, and the contact-row column it writes. `funding_goal_amount` is the
     // tool's input name; the column is `funding_goal` (there is no funding_goal_amount column, so
     // writing the input name straight through failed every time it was sent).

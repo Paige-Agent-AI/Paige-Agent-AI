@@ -2,13 +2,13 @@
 //
 // STATE AFTER C0a (2026-10-04) — read this first. The chat no longer uses this path: paige-ai-chat
 // projects its whole manifest from the tools it emits (projection.ts). What remains here is the hand-
-// written signals.ts manifest + resolver.ts, used for exactly ONE native binding below. That is a second
+// written signals.ts manifest + resolver.ts, used for the native bindings below. That is a second
 // capability-status engine (§18) and it is known: C0b retires it by resolving Layer C's binding through
 // the projection, then deletes signals.ts, the resolver's manifest path and renderCapabilityStatusBlock.
 // Tenant authority is NOT composed here — it comes from _shared/workspace-authority.ts, the one module
 // the chat gate also uses.
 //
-// This module is the server-side entry for ONE capability from a NON-JWT caller — the native-event engine
+// This module resolves one requested capability for a NON-JWT caller — the native-event engine
 // (Layer C), which holds a service-role client + the authorizing person's user id + the authoritative
 // tenant id, but no JWT. It exists so Layer C resolves a native act's availability THROUGH this canonical
 // Gateway seam (owner correction, 2026-09-13) — never a Layer-C inline `availability` literal, and never a
@@ -44,6 +44,8 @@ type Lane = "auto" | "confirm" | "off";
 // manifest key (equal to the slug); toolKey is the UNDERSCORE tool key resolve_tool_autonomy expects.
 const NATIVE_CAPABILITY_BINDINGS: Readonly<Record<string, { statusKey: string; toolKey: string }>> = {
   "crm.advance_journey_stage": { statusKey: "crm.advance_journey_stage", toolKey: "crm_advance_journey_stage" },
+  "planning.weekly_commitment_check": { statusKey: "planning.weekly_commitment_check", toolKey: "planning_weekly_commitment_check" },
+  "owner.task": { statusKey: "owner.task", toolKey: "crm_create_task" },
 };
 
 /** Whether an action_kind has a declared native capability binding (so it can be resolved through here). */
@@ -134,13 +136,38 @@ export async function resolveNativeCapabilityStatus(
       _tenant_id: opts.tenantId, _tool_key: binding.toolKey,
     });
     if (laneErr) return { ok: false, error: `lane resolve failed: ${laneErr.message ?? String(laneErr)}` };
+    const recognizedLane = typeof laneData === "string" && (laneData === "auto" || laneData === "confirm" || laneData === "off");
+    if (opts.actionKind === "owner.task" && !recognizedLane) {
+      return { ok: false, error: "task lane could not be confirmed" };
+    }
     const rawLane: Lane = (typeof laneData === "string" && (laneData === "auto" || laneData === "confirm" || laneData === "off"))
       ? laneData : "confirm"; // safe default, matching the chat helper
     const lane = clampLaneByRisk(rawLane, binding.toolKey);
 
-    const facts: CapabilityFacts = { ...neutralFacts(callerTier, ownerOpsEligible), journeyAdvanceLane: lane };
+    const facts: CapabilityFacts = { ...neutralFacts(callerTier, ownerOpsEligible), journeyAdvanceLane: lane,
+      weeklyCommitmentLane: opts.actionKind === "planning.weekly_commitment_check" ? lane : "off",
+      ownerTaskEligible: resolved.authority.seat,
+      // This bridge supports exact per-act approval only. Automatic tool permission
+      // is a ceiling, never permission to omit that approval.
+      ownerTaskLane: opts.actionKind === "owner.task" && lane !== "off" ? "confirm" : "off" };
     const status = resolveCapabilityStatus(buildCapabilitySignals(facts)).find((s) => s.key === binding.statusKey);
     if (!status) return { ok: false, error: `capability '${binding.statusKey}' not produced by the manifest` };
+    // The pure legacy manifest calls an off mutation manual. A native task has no
+    // separate manual executor, so a process grant must not widen this tool hold.
+    if (opts.actionKind === "owner.task" && lane === "off"
+      && (status.availability === "live" || status.availability === "needs_approval")) {
+      return { ok: true, status: { ...status, availability: "unavailable",
+        reason: "Task execution is disabled by this workspace's current permission." } };
+    }
+    // The governed core permits an ordinary read even at needs_approval. A recurring
+    // read additionally requires the tool's current automatic permission: a stored
+    // process grant cannot widen an off/confirm tool ceiling. No read is relabeled
+    // as an effectful mutation to force an approval path.
+    if (opts.actionKind === "planning.weekly_commitment_check" && lane !== "auto"
+      && (status.availability === "live" || status.availability === "needs_approval")) {
+      return { ok: true, status: { ...status, availability: "unavailable",
+        reason: "Recurring commitment checks are held until automatic read permission is available." } };
+    }
     return { ok: true, status };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };

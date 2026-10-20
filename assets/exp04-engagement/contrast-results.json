@@ -1,0 +1,452 @@
+[
+ {
+  "theme": "light",
+  "label": "ink on raised",
+  "fg": "#201e23",
+  "bg": "#fffdf8",
+  "ratio": 16.25,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "light",
+  "label": "ink2 on raised",
+  "fg": "#3d3941",
+  "bg": "#fffdf8",
+  "ratio": 11.11,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "light",
+  "label": "muted on raised",
+  "fg": "#67616b",
+  "bg": "#fffdf8",
+  "ratio": 5.9,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "light",
+  "label": "faint on raised",
+  "fg": "#6a646e",
+  "bg": "#fffdf8",
+  "ratio": 5.64,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "light",
+  "label": "positive on raised",
+  "fg": "#327458",
+  "bg": "#fffdf8",
+  "ratio": 5.47,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "light",
+  "label": "warning on raised",
+  "fg": "#986322",
+  "bg": "#fffdf8",
+  "ratio": 4.99,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "light",
+  "label": "negative on raised",
+  "fg": "#a5483d",
+  "bg": "#fffdf8",
+  "ratio": 5.75,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "light",
+  "label": "violet on raised",
+  "fg": "#655a96",
+  "bg": "#fffdf8",
+  "ratio": 5.98,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "light",
+  "label": "ink on well",
+  "fg": "#201e23",
+  "bg": "#f5f2ec",
+  "ratio": 14.78,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "light",
+  "label": "ink2 on well",
+  "fg": "#3d3941",
+  "bg": "#f5f2ec",
+  "ratio": 10.1,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "light",
+  "label": "muted on well",
+  "fg": "#67616b",
+  "bg": "#f5f2ec",
+  "ratio": 5.37,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "light",
+  "label": "faint on well",
+  "fg": "#6a646e",
+  "bg": "#f5f2ec",
+  "ratio": 5.13,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "light",
+  "label": "positive on well",
+  "fg": "#327458",
+  "bg": "#f5f2ec",
+  "ratio": 4.98,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "light",
+  "label": "warning on well",
+  "fg": "#986322",
+  "bg": "#f5f2ec",
+  "ratio": 4.54,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "light",
+  "label": "negative on well",
+  "fg": "#a5483d",
+  "bg": "#f5f2ec",
+  "ratio": 5.23,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "light",
+  "label": "violet on well",
+  "fg": "#655a96",
+  "bg": "#f5f2ec",
+  "ratio": 5.44,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "light",
+  "label": "positive chip text on its tint",
+  "fg": "#327458",
+  "bg": "#edf1ea",
+  "ratio": 4.87,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "light",
+  "label": "warning chip text on its tint",
+  "fg": "#986322",
+  "bg": "#f9f4eb",
+  "ratio": 4.63,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "light",
+  "label": "negative chip text on its tint",
+  "fg": "#a5483d",
+  "bg": "#f7ede7",
+  "ratio": 5.07,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "light",
+  "label": "violet chip text on its tint",
+  "fg": "#655a96",
+  "bg": "#f1eeef",
+  "ratio": 5.27,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "light",
+  "label": "focus ring (violet) on raised — non-text",
+  "fg": "#655a96",
+  "bg": "#fffdf8",
+  "ratio": 5.98,
+  "min": 3,
+  "pass": true
+ },
+ {
+  "theme": "light",
+  "label": "bar: verified segment vs track — non-text",
+  "fg": "#327458",
+  "bg": "#f5f2ec",
+  "ratio": 4.98,
+  "min": 3,
+  "pass": true
+ },
+ {
+  "theme": "light",
+  "label": "bar: invoiced segment vs track — non-text",
+  "fg": "#655a96",
+  "bg": "#f5f2ec",
+  "ratio": 5.44,
+  "min": 3,
+  "pass": true
+ },
+ {
+  "theme": "light",
+  "label": "bar: invoiced vs verified segments — non-text",
+  "fg": "#655a96",
+  "bg": "#327458",
+  "ratio": 1.09,
+  "min": 1,
+  "pass": true
+ },
+ {
+  "theme": "light",
+  "label": "control border (line-strong) on raised — non-text",
+  "fg": "#c4c1c1",
+  "bg": "#fffdf8",
+  "ratio": 1.76,
+  "min": 1,
+  "pass": true
+ },
+ {
+  "theme": "dark",
+  "label": "ink on raised",
+  "fg": "#f6f2ea",
+  "bg": "#211d27",
+  "ratio": 14.81,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "dark",
+  "label": "ink2 on raised",
+  "fg": "#d6d0c9",
+  "bg": "#211d27",
+  "ratio": 10.81,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "dark",
+  "label": "muted on raised",
+  "fg": "#aca69d",
+  "bg": "#211d27",
+  "ratio": 6.85,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "dark",
+  "label": "faint on raised",
+  "fg": "#969089",
+  "bg": "#211d27",
+  "ratio": 5.24,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "dark",
+  "label": "positive on raised",
+  "fg": "#8fd1ae",
+  "bg": "#211d27",
+  "ratio": 9.37,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "dark",
+  "label": "warning on raised",
+  "fg": "#edc17f",
+  "bg": "#211d27",
+  "ratio": 9.87,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "dark",
+  "label": "negative on raised",
+  "fg": "#eda093",
+  "bg": "#211d27",
+  "ratio": 7.92,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "dark",
+  "label": "violet on raised",
+  "fg": "#9b8de0",
+  "bg": "#211d27",
+  "ratio": 5.73,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "dark",
+  "label": "ink on well",
+  "fg": "#f6f2ea",
+  "bg": "#17141b",
+  "ratio": 16.32,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "dark",
+  "label": "ink2 on well",
+  "fg": "#d6d0c9",
+  "bg": "#17141b",
+  "ratio": 11.91,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "dark",
+  "label": "muted on well",
+  "fg": "#aca69d",
+  "bg": "#17141b",
+  "ratio": 7.55,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "dark",
+  "label": "faint on well",
+  "fg": "#969089",
+  "bg": "#17141b",
+  "ratio": 5.77,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "dark",
+  "label": "positive on well",
+  "fg": "#8fd1ae",
+  "bg": "#17141b",
+  "ratio": 10.33,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "dark",
+  "label": "warning on well",
+  "fg": "#edc17f",
+  "bg": "#17141b",
+  "ratio": 10.88,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "dark",
+  "label": "negative on well",
+  "fg": "#eda093",
+  "bg": "#17141b",
+  "ratio": 8.72,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "dark",
+  "label": "violet on well",
+  "fg": "#9b8de0",
+  "bg": "#17141b",
+  "ratio": 6.32,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "dark",
+  "label": "positive chip text on its tint",
+  "fg": "#8fd1ae",
+  "bg": "#2b2d33",
+  "ratio": 7.8,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "dark",
+  "label": "warning chip text on its tint",
+  "fg": "#edc17f",
+  "bg": "#2d272c",
+  "ratio": 8.72,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "dark",
+  "label": "negative chip text on its tint",
+  "fg": "#eda093",
+  "bg": "#332931",
+  "ratio": 6.69,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "dark",
+  "label": "violet chip text on its tint",
+  "fg": "#9b8de0",
+  "bg": "#2c2738",
+  "ratio": 5.01,
+  "min": 4.5,
+  "pass": true
+ },
+ {
+  "theme": "dark",
+  "label": "focus ring (violet) on raised — non-text",
+  "fg": "#9b8de0",
+  "bg": "#211d27",
+  "ratio": 5.73,
+  "min": 3,
+  "pass": true
+ },
+ {
+  "theme": "dark",
+  "label": "bar: verified segment vs track — non-text",
+  "fg": "#8fd1ae",
+  "bg": "#17141b",
+  "ratio": 10.33,
+  "min": 3,
+  "pass": true
+ },
+ {
+  "theme": "dark",
+  "label": "bar: invoiced segment vs track — non-text",
+  "fg": "#9b8de0",
+  "bg": "#17141b",
+  "ratio": 6.32,
+  "min": 3,
+  "pass": true
+ },
+ {
+  "theme": "dark",
+  "label": "bar: invoiced vs verified segments — non-text",
+  "fg": "#9b8de0",
+  "bg": "#8fd1ae",
+  "ratio": 1.63,
+  "min": 1,
+  "pass": true
+ },
+ {
+  "theme": "dark",
+  "label": "control border (line-strong) on raised — non-text",
+  "fg": "#605b5e",
+  "bg": "#211d27",
+  "ratio": 2.49,
+  "min": 1,
+  "pass": true
+ }
+]

@@ -1,0 +1,142 @@
+[
+  {
+    "action": "Escape",
+    "result": {
+      "body": {
+        "height": 812,
+        "scrollHeight": 812,
+        "scrollWidth": 320,
+        "width": 320
+      },
+      "focus": "Direct PAIGE",
+      "surfaces": [
+        {
+          "height": 753,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 812.0000114440918,
+            "height": 753.2000122070312,
+            "left": 72,
+            "right": 320,
+            "top": 58.79999923706055,
+            "width": 248,
+            "x": 72,
+            "y": 58.79999923706055
+          },
+          "scrollHeight": 753,
+          "scrollWidth": 248,
+          "selector": "tcs-main",
+          "width": 248
+        },
+        {
+          "height": 44,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 113.20000076293944,
+            "height": 54.400001525878906,
+            "left": 72,
+            "right": 320,
+            "top": 58.79999923706055,
+            "width": 248,
+            "x": 72,
+            "y": 58.79999923706055
+          },
+          "scrollHeight": 45,
+          "scrollWidth": 615,
+          "selector": "tablist",
+          "width": 238
+        },
+        {
+          "height": 699,
+          "overflow": "auto",
+          "rect": {
+            "bottom": 811.9999923706055,
+            "height": 698.7999877929688,
+            "left": 72,
+            "right": 320,
+            "top": 113.20000457763672,
+            "width": 248,
+            "x": 72,
+            "y": 113.20000457763672
+          },
+          "scrollHeight": 4480,
+          "scrollWidth": 233,
+          "selector": "executive-root",
+          "width": 233
+        },
+        {
+          "height": 3817,
+          "overflow": "visible",
+          "rect": {
+            "bottom": 4447.250183105469,
+            "height": 3816.900146484375,
+            "left": 88,
+            "right": 288.8000030517578,
+            "top": 630.3500366210938,
+            "width": 200.8000030517578,
+            "x": 88,
+            "y": 630.3500366210938
+          },
+          "scrollHeight": 3817,
+          "scrollWidth": 201,
+          "selector": "exec-layout",
+          "width": 201
+        },
+        {
+          "height": 0,
+          "overflow": "hidden",
+          "rect": {
+            "bottom": 0,
+            "height": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          "scrollHeight": 0,
+          "scrollWidth": 0,
+          "selector": "tcs-paige",
+          "width": 0
+        }
+      ],
+      "viewport": {
+        "height": 844,
+        "width": 320
+      }
+    }
+  },
+  {
+    "action": "End",
+    "result": {
+      "active": "command-tab-mind",
+      "selected": "command-tab-mind",
+      "tabScroll": 376.7999877929687
+    }
+  },
+  {
+    "action": "Home",
+    "result": {
+      "active": "command-tab-exec",
+      "selected": "command-tab-exec",
+      "tabScroll": 0
+    }
+  },
+  {
+    "action": "ArrowRight",
+    "result": {
+      "active": "command-tab-plan",
+      "selected": "command-tab-plan",
+      "tabScroll": 0
+    }
+  },
+  {
+    "action": "ArrowLeft",
+    "result": {
+      "active": "command-tab-exec",
+      "selected": "command-tab-exec",
+      "tabScroll": 28
+    }
+  }
+]

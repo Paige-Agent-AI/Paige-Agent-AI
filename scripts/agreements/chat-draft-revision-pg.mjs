@@ -1,0 +1,53 @@
+// Isolated PostgreSQL only. Canonical writer/triggers, synthetic auth-helper fixture; no provider.
+import {readFileSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import {randomUUID} from 'node:crypto';
+import assert from 'node:assert/strict';
+import {draftAgreement} from '../../supabase/functions/_shared/agreements/chat-write.ts';
+const [binary,port,user,expectedDirectory]=process.argv.slice(2);
+if(!binary||!/^\d+$/.test(port??'')||!user||!expectedDirectory)throw Error('Explicit isolated PostgreSQL cluster required');
+let db='postgres',checks=0;
+const sql=text=>{const p=spawnSync(binary,['-h','127.0.0.1','-p',port,'-U',user,'-d',db,'-qAt','-v','ON_ERROR_STOP=1','-v','VERBOSITY=verbose'],{input:text,encoding:'utf8',windowsHide:true,maxBuffer:8e6});if(p.status!==0)throw Error(p.stderr);return p.stdout.trim();};
+const normal=s=>s.replaceAll('\\','/').toLowerCase().replace(/\/$/,'');
+assert.equal(normal(sql('SHOW data_directory;')),normal(expectedDirectory),'refuse another cluster');
+const database='agreement_revision_'+randomUUID().replaceAll('-','');sql(`CREATE DATABASE ${database};`);db=database;
+const read=file=>readFileSync(new URL('../../'+file,import.meta.url),'utf8');
+const quote=v=>v===null?'NULL':"'"+String(v).replaceAll("'","''")+"'";
+const tenant='aaaaaaaa-0000-4000-8000-000000000001',foreign='bbbbbbbb-0000-4000-8000-000000000002';
+const contact='c1111111-0000-4000-8000-000000000001',otherContact='c2222222-0000-4000-8000-000000000002';
+const actor='11111111-0000-4000-8000-000000000001',offer='44444444-0000-4000-8000-000000000001',terms='55555555-0000-4000-8000-000000000001',template='66666666-0000-4000-8000-000000000001';
+let active=tenant,admin=true,betweenRead=null;
+const scope=()=>`SET test.uid=${quote(actor)}; SET test.tenant=${quote(active)}; SET test.admin=${quote(admin)}; SET test.member='true'; SET ROLE authenticated;`;
+const json=text=>{const out=sql(text);return out?JSON.parse(out):null;};
+const rawRow=id=>json(`SELECT row_to_json(a) FROM paige_agreements a WHERE id=${quote(id)};`);
+const call=args=>json(scope()+`SELECT public.save_paige_agreement(${Object.entries(args).map(([k,v])=>`${k} => ${quote(v)}`).join(',')});`);
+const caller={from(table){assert.equal(table,'paige_agreements');let filters=[];const q={eq(k,v){assert.ok(['tenant_id','id'].includes(k));filters.push(`${k}=${quote(v)}`);return q;},async maybeSingle(){try{const data=json(scope()+`SELECT row_to_json(a) FROM paige_agreements a WHERE ${filters.join(' AND ')};`);if(betweenRead){const fn=betweenRead;betweenRead=null;fn();}return {data,error:null};}catch(e){return {data:null,error:{code:'42501',message:e.message}};}}};return {select(){return q;}};},async rpc(name,args){assert.equal(name,'save_paige_agreement');try{return {data:call(args),error:null};}catch(e){return {data:null,error:{code:e.message.match(/(?:ERROR:|FATAL:)\s+(\w{5}):/)?.[1]??'XX000',message:'Isolated canonical writer refusal'}};}}};
+const revise=(row,extra={})=>draftAgreement({caller,expectedTenantId:tenant,contactId:contact,title:'Owner revision',bodyMarkdown:'Revised terms text',agreementId:row.id,expectedUpdatedAt:row.updated_at,...extra});
+const eq=(a,b)=>{assert.deepEqual(a,b);checks++;};
+try{
+  sql(read('scripts/agreements/_fixture-schema.sql'));
+  sql(read('supabase/migrations/20270401000000_agreements_engine_records.sql'));
+  sql(`GRANT USAGE ON SCHEMA auth,public TO authenticated;
+    INSERT INTO tenant_products(id,tenant_id) VALUES('${offer}','${tenant}');
+    INSERT INTO tenant_agreement_versions(id,tenant_id) VALUES('${template}','${tenant}');
+    INSERT INTO tenant_client_agreements(id,tenant_id,contact_id) VALUES('${terms}','${tenant}','${contact}');`);
+  // Current table-specific signing trigger contract; historical commercial fixture is not written afterward.
+  sql(read('supabase/migrations/20271020000310_sales_agreement_trigger_contracts.sql'));
+  const row=call({_expected_tenant_id:tenant,_agreement_id:null,_contact_id:contact,_title:'Bound draft',_body_markdown:'Original',_offer_id:offer,_commercial_terms_id:terms,_body_source:'tenant_template',_source_version_id:template});
+  const result=await revise(row);eq(result.success,true);
+  const saved=rawRow(row.id);for(const key of ['offer_id','commercial_terms_id','body_source','source_version_id','document_path','contact_id'])eq(saved[key],row[key]);
+  eq(saved.body_markdown,'Revised terms text');eq(saved.version,row.version+1);
+  eq(sql(`SELECT count(*) FROM paige_agreement_events WHERE agreement_id=${quote(row.id)} AND event_type='edited';`),'1');
+  eq((await revise(row)).reason,'conflict');eq(rawRow(row.id),saved);
+  eq((await revise(saved,{expectedUpdatedAt:undefined})).success,false);eq(rawRow(row.id),saved);
+  eq((await revise(saved,{contactId:otherContact})).success,false);eq(rawRow(row.id),saved);
+  active=foreign;eq((await revise(saved)).success,false);active=tenant;eq(rawRow(row.id),saved);
+  admin=false;eq((await revise(saved)).success,false);admin=true;eq(rawRow(row.id),saved);
+  betweenRead=()=>sql(`UPDATE paige_agreements SET title='Concurrent owner revision' WHERE id=${quote(row.id)};`);
+  eq((await revise(saved)).reason,'conflict');eq(rawRow(row.id).title,'Concurrent owner revision');
+  const uploaded=call({_expected_tenant_id:tenant,_agreement_id:null,_contact_id:contact,_title:'Uploaded draft',_body_markdown:null,_body_source:'tenant_upload',_document_path:`${tenant}/fixture/document.pdf`});
+  eq((await revise(uploaded)).success,false);eq(rawRow(uploaded.id),uploaded);
+  sql(`UPDATE paige_agreements SET status='sent',sent_at=now(),content_sha256=repeat('a',64),content_storage_key='fixture/frozen.pdf' WHERE id=${quote(row.id)};`);
+  const sent=rawRow(row.id);eq((await revise(sent)).reason,'already_sent');eq(rawRow(sent.id),sent);
+  console.log(JSON.stringify({proof:'PRE-1 canonical draft revision',checks,status:'PASS',database:'isolated synthetic PostgreSQL',authHelpers:'existing fixture stand-ins',providerCalls:0}));
+}finally{db='postgres';sql(`DROP DATABASE ${database};`);}

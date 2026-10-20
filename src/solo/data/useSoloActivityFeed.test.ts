@@ -113,6 +113,14 @@ describe("toActivityItem — a row must earn its line", () => {
     expect(toActivityItem({ ...base, actor_type: "owner_staff" })?.byPaige).toBe(false);
   });
 
+  it("E4-S3: names a recorded person (owner_staff) explicitly, and nothing else", () => {
+    expect(toActivityItem({ ...base, actor_type: "owner_staff" })?.byPerson).toBe(true);
+    expect(toActivityItem({ ...base, actor_type: "paige_agent" })?.byPerson).toBe(false);
+    // An unknown actor is not Paige — and not a NAMED person either: it stays unattributed.
+    expect(toActivityItem({ ...base, actor_type: "something_new" })?.byPerson).toBe(false);
+    expect(toActivityItem({ ...base, actor_type: undefined })?.byPerson).toBe(false);
+  });
+
   it("reports an UNKNOWN actor as a person, not as Paige", () => {
     // The safe direction. Crediting Paige with a person's work is the misattribution that
     // matters on a surface whose whole claim is "here is what Paige did".

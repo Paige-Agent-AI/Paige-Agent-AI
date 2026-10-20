@@ -10,13 +10,33 @@ const A = "a3400000-0000-4000-8000-000000000011", B = "a3400000-0000-4000-8000-0
 function response(args: Record<string,string>) {
   const capturedAt = new Date().toISOString();
   const money = /pipeline|receivables|cash|allocations|issued_amount/.test(args.p_metric_key);
-  return { metric_key: args.p_metric_key, metric_version: "1.0.0", owner_department: "sales", label: "Recorded sales", definition: "Canonical records", formula: "Server computation", range: {key: args.p_range_key,start: args.p_range_start,end: args.p_range_end,bounds:"[start,end)",timezone:"UTC",semantics:"current_snapshot"},dimensions:{},values: money ? {kind:"currency_totals",by_currency:[{currency:"usd",amount_minor:"50000",record_count:1}],breakdown:[]} : {kind:"count",count:1},unit:money?"currency_minor":"count",source_refs:["public.deals"],as_of:capturedAt,freshness:{queried_at:capturedAt,source_updated_through:null},coverage:{state:"complete",candidate_count:1,contributing_count:1,excluded_count:0},exclusions:[],truth_state:"LIVE",caveats:[],source_revision_ref:`sr_v1_${"a".repeat(64)}`,account_epoch:args.p_account_epoch,account_epoch_ref:`ae_v1_${"b".repeat(64)}`,evidence_ref:`aneb_v1_${"c".repeat(64)}`,reference_expires_at:new Date(Date.now()+900000).toISOString() };
+  const overdue = args.p_metric_key === "sales.receivables.overdue_current";
+  return { metric_key: args.p_metric_key, metric_version: args.p_metric_version, owner_department: "sales", label: "Recorded sales", definition: "Canonical records", formula: "Server computation", range: {key: args.p_range_key,start: args.p_range_start,end: args.p_range_end,bounds:"[start,end)",timezone:"UTC",semantics:"current_snapshot"},dimensions:{},values: money ? {kind:"currency_totals",by_currency:[{currency:"usd",amount_minor:"50000",record_count:1}],breakdown:[]} : {kind:"count",count:1},unit:money?"currency_minor":"count",source_refs:["public.deals"],as_of:capturedAt,freshness:{queried_at:capturedAt,source_updated_through:null},coverage:{state:"complete",candidate_count:1,contributing_count:1,excluded_count:0},exclusions:[],truth_state:"LIVE",caveats:[],source_revision_ref:`sr_v1_${"a".repeat(64)}`,account_epoch:args.p_account_epoch,account_epoch_ref:`ae_v1_${"b".repeat(64)}`,evidence_ref:`aneb_v1_${"c".repeat(64)}`,reference_expires_at:new Date(Date.now()+900000).toISOString(), ...(overdue ? {source_refs:["public.paige_invoices","public.tenant_business_time_zones"],business_time_zone:{state:"configured" as const,zone:"UTC",set_at:new Date(Date.now()-86400000).toISOString(),as_of_date:capturedAt.slice(0,10)}} : {}) };
 }
 function Probe({epoch,range="month"}:{epoch:string|null;range?:"month"|"week"}) { const read=useSalesPerformanceMetrics(epoch,range); return <output>{read.phase}:{read.metrics.length}:{read.metrics[0]?.evidence_ref ?? "none"}</output>; }
 beforeEach(()=>{rpc.mockReset();host=document.createElement("div");document.body.append(host);root=createRoot(host);});
 afterEach(()=>{act(()=>root.unmount());host.remove();});
 async function render(epoch:string|null,range:"month"|"week"="month") { await act(async()=>{root.render(<Probe epoch={epoch} range={range}/>);}); }
 describe("Sales shared metric consumer",()=>{
+  it("requests business-calendar overdue 1.1.0 without changing the other ten metric identities",async()=>{
+    rpc.mockImplementation(async(_name,args)=>({data:response(args),error:null}));
+    await render(A);
+    expect(rpc).toHaveBeenCalledTimes(11);
+    for(const [,args] of rpc.mock.calls) {
+      expect(args.p_metric_version).toBe(args.p_metric_key === "sales.receivables.overdue_current" ? "1.1.0" : "1.0.0");
+      expect(args.p_account_epoch).toBe(A);
+      expect(args.p_dimensions).toEqual({});
+    }
+  });
+  it("rejects legacy overdue evidence without silently reinterpreting its version",async()=>{
+    rpc.mockImplementation(async(_name,args)=>({data:args.p_metric_key==="sales.receivables.overdue_current"?{...response(args),metric_version:"1.0.0"}:response(args),error:null}));
+    await render(A);expect(host.textContent).toContain("ready:10");
+    expect(rpc.mock.calls.find(([,args])=>args.p_metric_key==="sales.receivables.overdue_current")?.[1].p_metric_version).toBe("1.1.0");
+  });
+  it.each(["missing","invalid"] as const)("keeps %s calendar evidence as a measured unavailable result",async state=>{
+    rpc.mockImplementation(async(_name,args)=>({data:args.p_metric_key==="sales.receivables.overdue_current"?{...response(args),values:null,truth_state:"UNAVAILABLE",coverage:{state:"unavailable",candidate_count:1,contributing_count:0,excluded_count:1,reason:`business_time_zone_${state}`},exclusions:[{reason:`business_time_zone_${state}`,count:1}],business_time_zone:{state,zone:null,set_at:state==="missing"?null:"2026-09-01T00:00:00Z",as_of_date:null}}:response(args),error:null}));
+    await render(A);expect(host.textContent).toContain("ready:11");
+  });
   it("preserves the Supabase client receiver for every metric RPC, including empty workspaces",async()=>{
     rpc.mockImplementation(async function(this: { rpc?: unknown } | undefined,_name,args){
       if(this?.rpc!==rpc)throw new TypeError("RPC requires its client receiver");

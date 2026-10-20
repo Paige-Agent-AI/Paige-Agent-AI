@@ -1,5 +1,6 @@
 /** LOCAL SYNTHETIC adapter for the existing isolated review root. Never a production import. */
 import canonical from '@/test/fixtures/canonical-task-scorecard.json';
+import corpus from '@/test/fixtures/canonical-regression-corpus.json';
 import { summarizeEvaluatorVerdicts } from '../../../../supabase/functions/_shared/eval/trajectory-registry';
 const pages = { '1.0.0': structuredClone(canonical.v1), '1.1.0': structuredClone(canonical.v2) };
 let serial = 100;
@@ -24,6 +25,21 @@ export const supabase = {
   auth: { getSession: async () => ({ data: { session: null } }), getUser: async () => ({ data: { user: null } }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }), signOut: async () => ({ error: null }) },
   rpc(name: string, args: Record<string, string> = {}) {
     return { abortSignal: async () => {
+      if (name === 'operator_intelligence_regression_corpus') {
+        const state = new URLSearchParams(location.search).get('corpusState');
+        if (state === 'loading') return new Promise(() => {});
+        if (state === 'error' || state === 'interrupted') throw new Error('LOCAL SYNTHETIC interrupted corpus read');
+        if (state === 'unavailable') return { data: null, error: { code: 'PGRST202' } };
+        if (state === 'denied' || state === 'expired') return { data: null, error: { code: '42501' } };
+        const page = structuredClone(corpus);
+        if (state === 'empty') page.items = [];
+        if (['missing','stale','partial','conflicting','unavailable_evidence','indeterminate'].includes(state ?? '')) {
+          const row = page.items[0].history[1]; row.verdict = 'indeterminate'; row.evidence_state = state === 'indeterminate' ? 'partial' : state === 'unavailable_evidence' ? 'unavailable' : state!;
+          if (state === 'missing') Object.assign(row, { result_ref: null });
+          page.items[0].latest_corrected_result = structuredClone(row);
+        }
+        return { data: page, error: null };
+      }
       const state = new URLSearchParams(location.search).get('scoreState');
       if (state === 'loading' || (name === 'operator_intelligence_evaluate_task' && state === 'pending')) return new Promise(() => {});
       if (state === 'error') throw new Error('LOCAL SYNTHETIC offline fixture');

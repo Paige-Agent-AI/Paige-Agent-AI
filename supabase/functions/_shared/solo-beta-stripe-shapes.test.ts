@@ -1,7 +1,10 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
+  rawErrorDetail,
   readInvoiceSubscriptionId,
   readSubscriptionItemPeriod,
+  safeStageCode,
+  stageError,
 } from "./solo-beta-stripe-shapes.ts";
 
 Deno.test("reads Basil subscription periods from the subscription item", () => {
@@ -32,4 +35,73 @@ Deno.test("reads a Basil invoice subscription only from subscription_details", (
 Deno.test("rejects invoices without a subscription parent", () => {
   assertEquals(readInvoiceSubscriptionId({ parent: { type: "quote_details" } }), null);
   assertEquals(readInvoiceSubscriptionId({}), null);
+});
+
+Deno.test("safeStageCode passes a Postgres raise name through verbatim", () => {
+  assertEquals(
+    safeStageCode("atomic_fulfillment_failed", new Error("solo_beta_provider_contract_mismatch")),
+    "solo_beta_provider_contract_mismatch",
+  );
+  assertEquals(
+    safeStageCode("event_claim_failed", new Error("solo_beta_checkout_fence_lost")),
+    "solo_beta_checkout_fence_lost",
+  );
+});
+
+Deno.test("safeStageCode reads the production Postgrest error shape (plain object)", () => {
+  assertEquals(
+    safeStageCode("atomic_fulfillment_failed", {
+      code: "P0001",
+      message: "solo_beta_provider_contract_mismatch",
+      details: null,
+      hint: null,
+    }),
+    "solo_beta_provider_contract_mismatch",
+  );
+  assertEquals(
+    safeStageCode("lifecycle_sync_failed", { message: "TypeError: fetch failed" }),
+    "lifecycle_sync_failed",
+  );
+  assertEquals(safeStageCode("event_claim_failed", { code: "23505" }), "event_claim_failed");
+  assertEquals(safeStageCode("event_claim_failed", {}), "event_claim_failed");
+  assertEquals(
+    safeStageCode("event_claim_failed", { message: "solo_beta_" + "x".repeat(120) }),
+    "event_claim_failed",
+  );
+});
+
+Deno.test("stageError carries the raw message out-of-band while the code stays stable", () => {
+  const named = stageError("atomic_fulfillment_failed", { code: "P0001", message: "solo_beta_tenant_invariant_failed" });
+  assertEquals(named.message, "solo_beta_tenant_invariant_failed");
+  assertEquals(rawErrorDetail(named), "solo_beta_tenant_invariant_failed");
+
+  const messy = stageError("atomic_fulfillment_failed", {
+    code: "23503",
+    message: "insert or update on table \"platform_subscriptions\" violates foreign key constraint",
+  });
+  assertEquals(messy.message, "atomic_fulfillment_failed");
+  assertEquals(
+    rawErrorDetail(messy),
+    "insert or update on table \"platform_subscriptions\" violates foreign key constraint",
+  );
+
+  assertEquals(rawErrorDetail(new Error("plain")), null);
+  assertEquals(rawErrorDetail(stageError("event_claim_failed", {})), null);
+});
+
+Deno.test("safeStageCode falls back to the stage code for uninformative causes", () => {
+  assertEquals(
+    safeStageCode("atomic_fulfillment_failed", new Error("Failed to fetch")),
+    "atomic_fulfillment_failed",
+  );
+  assertEquals(
+    safeStageCode("atomic_fulfillment_failed", new Error("column x of relation y does not exist")),
+    "atomic_fulfillment_failed",
+  );
+  assertEquals(safeStageCode("lifecycle_sync_failed", "not an error"), "lifecycle_sync_failed");
+  assertEquals(safeStageCode("lifecycle_sync_failed", null), "lifecycle_sync_failed");
+  assertEquals(
+    safeStageCode("event_claim_failed", new Error("a".repeat(121))),
+    "event_claim_failed",
+  );
 });

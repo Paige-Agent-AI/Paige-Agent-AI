@@ -21,6 +21,7 @@ import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from
 // Google's sensitive-scope verification. Until then the flow correctly degrades to
 // gmail_oauth_not_configured (or Google rejects the scope at consent) — expected, not a bug.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { readGmailConnectionAuthority } from "../_shared/gmail-connection-authority.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -93,19 +94,17 @@ Deno.serve(async (req) => {
       });
     }
 
-    // §9: only a tenant admin may START a connect that provisions the tenant-wide
-    // Gmail SENDING identity — connect and disconnect (gmail-disconnect) MUST require the
-    // same role, else a low-privilege member could bind their personal mailbox as the
-    // tenant's outbound sender. has_role is global, so the callback binds to the caller's
-    // own tenant server-side; this is the first, cheap authorization gate.
+    // Connection management uses the same canonical current-workspace owner/admin
+    // contract as SOLO Settings, callback and disconnect, not a global title role.
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
-    const { data: isAdmin } = await admin.rpc("has_role", { _user_id: user.id, _role: "admin" });
-    if (!isAdmin) {
-      return new Response(JSON.stringify({ error: "forbidden" }), {
-        status: 403,
+    const body = await req.json().catch(() => ({}));
+    const authority = await readGmailConnectionAuthority(supa, admin, user.id, body.expected_tenant_id);
+    if (!authority.ok) {
+      return new Response(JSON.stringify({ error: authority.error }), {
+        status: authority.status,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -120,7 +119,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    const body = await req.json().catch(() => ({}));
     const origin = body.origin as string | undefined;
     const returnOrigin = origin ? allowedReturnOrigin(origin) : null;
     if (!returnOrigin) {
@@ -143,8 +141,8 @@ Deno.serve(async (req) => {
     // Without this, a person who belongs to more than one tenant would connect
     // their mailbox to whichever workspace ranked first, not the one they were
     // looking at. `w`, not `t`: `t` is already this state's timestamp.
-    const { data: activeTenant } = await supa.rpc("current_user_tenant_id");
-    if (!await commsProviderExecutionAllowed(admin, { tenantId: typeof activeTenant === "string" ? activeTenant : null, actorUserId: user.id })) {
+    const activeTenant = authority.tenantId;
+    if (!await commsProviderExecutionAllowed(admin, { tenantId: activeTenant, actorUserId: user.id })) {
       return new Response(JSON.stringify({ error: COMMS_PROVIDER_EXECUTION_DISABLED }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -154,7 +152,11 @@ Deno.serve(async (req) => {
       n: crypto.randomUUID(),
       t: Date.now(),
       r: returnOrigin,
-      w: typeof activeTenant === "string" ? activeTenant : null,
+      w: activeTenant,
+    });
+    const current = await readGmailConnectionAuthority(supa, admin, user.id, activeTenant);
+    if (!current.ok) return new Response(JSON.stringify({ error: current.error }), {
+      status: current.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
     const params = new URLSearchParams({

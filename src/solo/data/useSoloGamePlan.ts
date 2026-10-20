@@ -879,10 +879,10 @@ export function useSoloGamePlan(account: string, workspaceId?: string | null): S
     if (drafts.length > 0) {
       out.push({
         id: "decision:drafts",
-        title: `Review ${drafts.length} draft${drafts.length === 1 ? "" : "s"} Paige is holding`,
+        title: `Review ${pending.total ?? "up to " + drafts.length} draft${pending.total === 1 ? "" : "s"} Paige is holding`,
         detail: drafts[0]?.rationale || "Paige prepared these and stopped for your approval.",
         source: "recommendation", waiting: true, destination: "paige",
-        evidence: `${drafts.length} item${drafts.length === 1 ? "" : "s"} Paige drafted, waiting on you.`,
+        evidence: `${pending.total ?? "up to " + drafts.length} filed items; ${drafts.length} loaded for preview.`,
       });
     }
     const at = (cc.attention ?? {}) as AttentionLike;
@@ -907,7 +907,7 @@ export function useSoloGamePlan(account: string, workspaceId?: string | null): S
       });
     }
     return out;
-  }, [pending.items, cc.attention]);
+  }, [pending.items, pending.total, cc.attention]);
 
   // A failed drafts read must never render as "All caught up" — an empty `decisions` from an errored
   // pending read is "couldn't check", not "nothing waiting" (§13, Codex P2).

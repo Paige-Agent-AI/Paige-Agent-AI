@@ -58,16 +58,21 @@ Processes on any other trigger are untouched.
   - Replaces any earlier scope and keeps every other condition. It is idempotent by construction.
 - `get_process_scope(_automation_id)` returns the scope with the form or campaign names, whether the process can
   go live, and its state.
-- The Campaigns screen (6b) and PAIGE's chat tools (6c) are to call these two functions; nothing calls them yet.
+- PAIGE's chat tools call them (6c): `read_process_scope` (through `read_process_scope(p_expected_tenant_id,
+  p_process_id)`, which refuses any business but the one the chat is in) and `process_scope_set` (`high`, so the chat
+  asks every time whatever autonomy is set). No screen switches a process on today (production holds 0 processes),
+  so the guard's `PROCESS_SCOPE_REQUIRED` has no screen copy yet; the first screen that switches a process on must
+  map it.
 
 **The engine is unchanged.** The scope conditions use operators the dispatcher already evaluates. A campaign scope
 does not match an event without `campaign_brief_ids`, such as one from before this slice; it fails closed.
 
 ## What this changes for PAIGE
 
-`automation_set_state` switching an unscoped form process to `live` is refused by the guard. PAIGE reports the
-failure, and the process stays as it was. Asking the owner which form or campaign, then setting the scope, is the
-Chat work in slice 6c.
+`automation_set_state` is retired from chat (owner-only, never advertised), so PAIGE does not switch processes on.
+She reads a process's scope and, on the owner's approval, sets it to one form, several forms or one campaign
+(`process_scope_set`, 6c). Setting a scope never switches a process on or off; on a live process it changes which
+submissions start it from now on, and the approval card says so.
 
 ## Proof
 

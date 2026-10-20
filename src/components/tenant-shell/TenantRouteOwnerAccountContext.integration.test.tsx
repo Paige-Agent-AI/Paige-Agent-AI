@@ -143,11 +143,8 @@ vi.mock("@/components/admin/voice/DialPadTrigger", () => ({ DialPadTrigger: () =
 vi.mock("@/components/admin/AdminBridgeBell", () => ({ AdminBridgeBell: () => null }));
 vi.mock("@/components/dashboard/PaigeAIChat", () => ({ PaigeAIChat: () => null }));
 vi.mock("@/components/systems-check/SystemsCheckTile", () => ({ SystemsCheckTile: () => null }));
-// Business Game Plan is the default Command Center landing. This suite proves auth/tenant-identity
-// resolution, not the panel content, so its composed data reads are stubbed out like every other
-// Solo screen mocked here (§18 — the surface's own tests own its behaviour). It still emits the
-// canonical shell-contract identity markers from the resolved account context CommandHub passes,
-// exactly as the real surface does, so identity resolution is verified on the DEFAULT landing.
+// This suite proves route/auth/tenant identity; composed business data belongs to the surface's
+// own tests. Keep the Game Plan boundary for its explicit route and the legacy Compass fallback.
 vi.mock("@/solo/SoloGamePlanWorkspace", () => ({
   SoloGamePlanWorkspace: ({ accountContext }: {
     accountContext?: { accountName?: string | null; accountTypeLabel?: string | null } | null;
@@ -155,6 +152,20 @@ vi.mock("@/solo/SoloGamePlanWorkspace", () => ({
     <output>
       <span data-tenant-account-name>{accountContext?.accountName}</span>
       <span data-tenant-account-tier>{accountContext?.accountTypeLabel}</span>
+    </output>
+  ),
+}));
+// Executive is now the default. Record only the actual props CommandHub passes; it receives no
+// account-type label, so SOLO tier assertions use the real shell identity rather than inventing
+// a new Executive prop. No data hook, Edge invocation or departmental query runs in this stub.
+vi.mock("@/solo/ExecutiveOverview", () => ({
+  ExecutiveOverview: ({ account, accountEpoch, accountName }: {
+    account?: string | null;
+    accountEpoch?: string | null;
+    accountName?: string | null;
+  }) => (
+    <output data-executive-workspace={accountEpoch ?? ""} data-executive-account={account ?? ""}>
+      <span data-tenant-account-name>{accountName}</span>
     </output>
   ),
 }));
@@ -349,7 +360,17 @@ function accountName() {
 }
 
 function accountTier() {
+  if (container.querySelector("[data-executive-workspace]")) return shellAccountTier();
   return container.querySelector("[data-tenant-account-tier]")?.textContent ?? "";
+}
+
+function expectExecutiveIdentity(expected: TenantFixture) {
+  const executive = container.querySelector("[data-executive-workspace]");
+  expect(executive).not.toBeNull();
+  expect(executive?.getAttribute("data-executive-workspace")).toBe(expected.id);
+  expect(executive?.getAttribute("data-executive-account")).toBe(String(expected.account_number));
+  expect(accountName()).toBe(expected.name);
+  expect(shellAccountName()).toBe(expected.name);
 }
 
 function shellAccountName() {
@@ -416,6 +437,7 @@ describe("tenant route owners preserve the newest authenticated account context"
     expect(container.querySelector("[data-tenant-shell]")).toBeNull();
 
     await resolveLoad(1, loadResult(recovered.id, [recovered]));
+    expectExecutiveIdentity(recovered);
     expect(accountName()).toBe("Recovered Solo Workspace");
     expect(accountTier()).toBe("Solo");
   });
@@ -504,6 +526,7 @@ describe("tenant route owners preserve the newest authenticated account context"
     await startOverlappingLoads();
 
     await resolveLoad(1, loadResult(solo.id, [solo]));
+    expectExecutiveIdentity(solo);
     expect(accountName()).toBe("Async Sterling Workspace");
     expect(accountTier()).toBe("Solo");
     expect(container.textContent).not.toContain("Your business");
@@ -511,6 +534,7 @@ describe("tenant route owners preserve the newest authenticated account context"
     await resolveLoad(0, loadResult(null, []));
     expect(container.querySelector("[data-provider-loading]")?.getAttribute("data-provider-loading")).toBe("false");
     expect(container.querySelector("[data-provider-tenant-id]")?.getAttribute("data-provider-tenant-id")).toBe(solo.id);
+    expectExecutiveIdentity(solo);
     expect(accountName()).toBe("Async Sterling Workspace");
     expect(accountTier()).toBe("Solo");
     expect(container.textContent).not.toContain("Your business");
@@ -620,6 +644,7 @@ describe("tenant route owners preserve the newest authenticated account context"
     expect(accountName()).toBe("");
 
     await resolveLoad(1, loadResult(userB.id, [userB]));
+    expectExecutiveIdentity(userB);
     expect(accountName()).toBe("User B Workspace");
     expect(accountTier()).toBe("Solo");
   });
@@ -634,6 +659,7 @@ describe("tenant route owners preserve the newest authenticated account context"
     mount("/solo/424242/command-center", <Route path="/solo/*" element={<SoloEntry />} />);
     await settle();
     await resolveLoad(0, loadResult(solo.id, [solo]));
+    expectExecutiveIdentity(solo);
     expect(accountName()).toBe("Stable Solo Workspace");
 
     await act(async () => {
@@ -646,6 +672,7 @@ describe("tenant route owners preserve the newest authenticated account context"
       tenants: { data: [], error: new Error("temporary tenants read failure") },
     });
 
+    expectExecutiveIdentity(solo);
     expect(accountName()).toBe("Stable Solo Workspace");
     expect(accountTier()).toBe("Solo");
     expect(container.querySelector("[data-provider-loading]")?.getAttribute("data-provider-loading")).toBe("false");
@@ -688,6 +715,7 @@ describe("tenant route owners preserve the newest authenticated account context"
     });
     expect(container.querySelector("[data-provider-loading]")?.getAttribute("data-provider-loading")).toBe("false");
     expect(window.localStorage.getItem("paige.auth.lastSignInAt.authenticated-owner")).toBe(harness.lastSignInAt);
+    expectExecutiveIdentity(solo);
     expect(accountName()).toBe("Fresh Solo Workspace");
     expect(accountTier()).toBe("Solo");
   });
@@ -727,6 +755,7 @@ describe("tenant route owners preserve the newest authenticated account context"
     });
 
     expect(container.querySelector("[data-provider-account-loading]")?.getAttribute("data-provider-account-loading")).toBe("false");
+    expectExecutiveIdentity(home);
     expect(accountName()).toBe("Home Solo Workspace");
     expect(accountTier()).toBe("Solo");
     expect(container.textContent).not.toContain("Parked Child Workspace");

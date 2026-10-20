@@ -1,0 +1,9 @@
+{
+  "alert": true,
+  "height": 1000,
+  "overflow": false,
+  "paige": "closed",
+  "scope": true,
+  "theme": "dark",
+  "width": 900
+}

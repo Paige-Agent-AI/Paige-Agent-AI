@@ -10,10 +10,18 @@
 //   nurture       → marketing consent
 //
 // If consent required but missing, event status = 'skipped_no_consent' — never silent.
+//
+// Callers: only the on_deal_stage_change trigger, with the service-role key (#2087). Any other bearer is
+// refused before the body is read: the body names the tenant, the contact and the webhook to call.
+// Marketing consent is the business's own ledger (paige_consent_events via _shared/tenant-consent.ts):
+// default-deny, and a ledger that cannot be read holds the event rather than sending.
+
+// Contact opt-outs (E09 Slice 6): see gate.ts. A contact who turned a channel off themselves is skipped
+// for every intent; channels the business has paused are named in the payload.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { emitAutomationRail } from "../_shared/railAutomation.ts";
-import { CLIENT_CONTACT_METHODS_EMBED, clientAddresses } from "../_shared/contact-methods.ts";
+import { INTENT_TO_CONSENT, stageAutomationGate } from "./gate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,20 +47,19 @@ interface Payload {
   rule: Rule;
 }
 
-const INTENT_TO_CONSENT: Record<Rule["compose_intent"], "transactional" | "marketing"> = {
-  transactional: "transactional",
-  notification: "transactional",
-  marketing: "marketing",
-  nurture: "marketing",
-};
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-  );
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const bearer = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
+  if (!serviceKey || bearer !== serviceKey) {
+    return new Response(JSON.stringify({ error: "forbidden" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, serviceKey);
 
   let body: Payload;
   try {
@@ -72,32 +79,13 @@ Deno.serve(async (req) => {
   };
 
   try {
-    // Consent gate (contact optional — only enforce when contact resolves to a real recipient)
-    if (body.contact_id) {
-      const { data: client } = await supabase
-        .from("clients")
-        .select(`linked_user_id, ${CLIENT_CONTACT_METHODS_EMBED}`)
-        .eq("id", body.contact_id)
-        .maybeSingle();
-
-      // Consent is checked against the contact's PRIMARY email — the address a send goes to.
-      const email = clientAddresses(client)?.email?.toLowerCase().trim();
-      if (email) {
-        const consentKind = INTENT_TO_CONSENT[body.rule.compose_intent];
-        const rpc =
-          consentKind === "marketing"
-            ? "has_email_marketing_consent"
-            : null; // transactional is universally allowed by relationship
-        if (rpc) {
-          const { data: hasConsent } = await supabase.rpc(rpc, { _email: email });
-          if (hasConsent === false) {
-            await mark("skipped_no_consent", { error: `${consentKind} consent missing` });
-            return new Response(JSON.stringify({ status: "skipped_no_consent" }), {
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
-          }
-        }
-      }
+    // Opt-out gate, then the marketing consent gate (gate.ts). A skip is recorded, never silent.
+    const gate = await stageAutomationGate(supabase, body);
+    if (gate.kind === "skip") {
+      await mark(gate.status, { error: gate.error });
+      return new Response(JSON.stringify({ status: gate.status, reason: gate.reason }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Normalize payload for downstream (n8n / Zapier / Make / custom endpoint)
@@ -109,6 +97,9 @@ Deno.serve(async (req) => {
       contact_id: body.contact_id,
       from_stage_id: body.from_stage_id,
       to_stage_id: body.to_stage_id,
+      // Channels this contact must not be messaged on (a business pause or a delivery block). The outside
+      // sender never sees the suppression list, so it is told here.
+      contact_opted_out_channels: gate.optedOutChannels,
       rule: {
         id: body.rule.id,
         compose_intent: body.rule.compose_intent,

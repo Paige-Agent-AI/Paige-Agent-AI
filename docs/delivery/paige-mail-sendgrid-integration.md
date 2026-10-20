@@ -9,7 +9,7 @@ remains available for Platform Operator communications.
 
 | Surface | State | Where |
 |---|---|---|
-| `EmailProvider` seam | `SendGridProvider implements EmailProvider` (Mail Send v3, Bearer, 202 contract, `X-Message-Id` as the durable id) + `buildProvider` case; missing executor key → `UnimplementedProvider` (honest readiness, no crash) | `_shared/email/providers.ts` |
+| `EmailProvider` seam | **Removed (Experience 03 round-4 security LOW-3).** The `SendGridProvider` adapter read the platform key on a tenant-controlled `email_provider` with no domain check; `buildProvider` now resolves `sendgrid` to `UnimplementedProvider` (refuses, never falls back to another provider). SendGrid sends only through the governed door below. | `_shared/email/providers.ts` |
 | Canonical send door | `send-message` gains a `sendgrid` dispatch arm, selected ONLY by `connectorRow.provider === "sendgrid"`; key is ALWAYS the platform executor secret `SENDGRID_MAIL_SEND_API_KEY` (the `buildProvider` seam separately honors namespaced `TENANT_EMAIL_KEY_*` tenant keys); List-Unsubscribe + In-Reply-To headers preserved; `provider_message_id` = `X-Message-Id` | `send-message/index.ts` |
 | Signature verification | Canonical ES256 verifier `verifySendgridEvent` (SPKI PEM public key, DER→P-1363 conversion, fail-closed reasons) with 2 deno tests | `_shared/webhookSig.ts` |
 | Scopes self-check | `comms-sendgrid-scopes` — operator-gated (JWT + `is_platform_owner`), GET `/v3/scopes` with the EXECUTOR key only, returns scopes + `can_send_mail`/`non_sending_scopes`; never the key; no send capability | `comms-sendgrid-scopes/index.ts` |
@@ -146,6 +146,19 @@ owner action remains: create the scoped key and install it as
 routing, real sends/paid tests, treating synthetic test events as delivery
 evidence, INT-346 activation. Unsubscribe/suppression protections preserved
 ahead of any customer-facing routing.
+
+**Update 2026-10-13 (Experience 03 S3, branch `claude/stoic-archimedes-pv4r8u`, not merged when recorded).**
+Owner policy: a business's PAIGE Email sends through SendGrid, and Resend is the Platform Operator's own email.
+S3 builds tenant SendGrid routing at the governed one-to-one door (`20271031000100`): verification facts on
+`tenant_email_domains` that only the service role may write, and admission at prepare and again at send time.
+It also builds the correlated, forward-only application of verified Event Webhook events to governed
+messages (`20271031000200`). Nothing is activated: there is no live send, no configured webhook and no
+verified domain. The operator steps are in master §5.
+Review round 4 adds `20271031000250` and closes `send-message`'s second path: a SendGrid connector sends only
+for the email door's prepared operation (`paige_email_requires_governed_send` otherwise), only the service role
+may create or change a SendGrid connector, and one SendGrid-verified claim is allowed per domain across
+businesses. A send whose outcome is unknown settles from a webhook event only when all three `custom_args`
+claims and the recipient match. A per-business DNS proof of domain ownership is still owed.
 
 
 ## S7.4 (ANT-78 closeout, 2026-10-12): broker hardening + credential setup package

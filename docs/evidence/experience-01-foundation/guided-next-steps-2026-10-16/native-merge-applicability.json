@@ -1,0 +1,10 @@
+{
+  "at": "2026-10-16T23:17:06.091Z",
+  "capturedHead": "baa1e5468e61d1aabcba8f6f33a66c3c4023f0fb",
+  "actualMerge": "943c3ab21b2f0830de21e82588944ccd0d4e2934",
+  "checks": 194,
+  "matched": 194,
+  "mismatches": [],
+  "passed": true,
+  "proofClass": "SYNTHETIC_UI_NOT_AUTHENTICATED"
+}

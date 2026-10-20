@@ -1,0 +1,29 @@
+{
+  "evidence_class": "read_only_production_metadata",
+  "observed_at": "2026-10-14T01:25:08.988404Z",
+  "scope": "Existing released backend baseline. The connected UI candidate is not deployed by this observation; no authenticated customer outcome is established.",
+  "chat_protocol": { "active": false, "version": 2 },
+  "recurring_trigger": { "key": "schedule.weekly_commitment_check", "is_live": false },
+  "weekly_processes": 0,
+  "weekly_events": 0,
+  "weekly_acts": 0,
+  "weekly_provider_references": 0,
+  "weekly_receipts": 0,
+  "weekly_permission_overrides": 0,
+  "cron_jobs": 27,
+  "weekly_cron_jobs": 0,
+  "migrations": [
+    { "version": "20271028000000", "statements": 75 },
+    { "version": "20271029000000", "statements": 4 },
+    { "version": "20271030000000", "statements": 9 }
+  ],
+  "getter_body_md5": "99218816ce1b8111e80360b1bd9aa189",
+  "getter_execute_grants": { "authenticated": true, "anon": false, "service_role": false },
+  "executor_execute_grants": { "authenticated": false, "anon": false, "service_role": true },
+  "history_indexes": [
+    { "name": "weekly_commitment_event_recency_idx", "valid": true, "ready": true },
+    { "name": "weekly_commitment_receipt_lookup_idx", "valid": true, "ready": true }
+  ],
+  "customer_outcome": "UNVERIFIED",
+  "effects_activated_by_this_work": false
+}

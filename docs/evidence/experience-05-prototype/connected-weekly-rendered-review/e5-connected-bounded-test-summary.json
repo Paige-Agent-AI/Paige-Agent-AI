@@ -1,0 +1,110 @@
+{
+  "evidence_class": "local_synthetic_component_and_contract_tests",
+  "reviewed_source": "5808be974fad9faf34082abb90c96ad94f833828",
+  "test_source_boundary": "Working checkout changed to e5700ed during run. Not exact reviewed-head/final-head CI proof.",
+  "success": true,
+  "tests": 246,
+  "passed": 246,
+  "failed": 0,
+  "unique_files": 19,
+  "suites": [
+    {
+      "file": "src/hooks/useBeforeUnloadGuard.test.tsx",
+      "assertions": 1,
+      "status": "passed"
+    },
+    {
+      "file": "src/hooks/usePlanList.tenant-switch.test.tsx",
+      "assertions": 4,
+      "status": "passed"
+    },
+    {
+      "file": "src/__tests__/weekly-commitment-check.test.ts",
+      "assertions": 12,
+      "status": "passed"
+    },
+    {
+      "file": "src/__tests__/weekly-commitment-read.test.ts",
+      "assertions": 29,
+      "status": "passed"
+    },
+    {
+      "file": "src/components/tenant-calendar/SoloCalendarWorkspace.test.tsx",
+      "assertions": 55,
+      "status": "passed"
+    },
+    {
+      "file": "src/components/tenant-calendar/useSoloCalendar.realtime.test.tsx",
+      "assertions": 33,
+      "status": "passed"
+    },
+    {
+      "file": "src/components/tenant-calendar/useSoloCalendar.test.ts",
+      "assertions": 31,
+      "status": "passed"
+    },
+    {
+      "file": "src/solo/operations/operations-weekly-source.test.ts",
+      "assertions": 8,
+      "status": "passed"
+    },
+    {
+      "file": "src/solo/operations/operations-work-update.test.ts",
+      "assertions": 7,
+      "status": "passed"
+    },
+    {
+      "file": "src/solo/operations/OperationsRoute.test.tsx",
+      "assertions": 2,
+      "status": "passed"
+    },
+    {
+      "file": "src/solo/operations/OperationsWorkActivity.test.tsx",
+      "assertions": 5,
+      "status": "passed"
+    },
+    {
+      "file": "src/solo/operations/OperationsWorkEditor.test.tsx",
+      "assertions": 13,
+      "status": "passed"
+    },
+    {
+      "file": "src/solo/operations/OperationsWorkspace.test.tsx",
+      "assertions": 17,
+      "status": "passed"
+    },
+    {
+      "file": "src/solo/weekly/useWeeklyResponsibility.test.tsx",
+      "assertions": 6,
+      "status": "passed"
+    },
+    {
+      "file": "src/solo/weekly/weekly-owner-read.test.ts",
+      "assertions": 9,
+      "status": "passed"
+    },
+    {
+      "file": "src/solo/weekly/weekly-responsibility.test.ts",
+      "assertions": 5,
+      "status": "passed"
+    },
+    {
+      "file": "src/solo/weekly/WeeklyCalendarResponsibility.test.tsx",
+      "assertions": 3,
+      "status": "passed"
+    },
+    {
+      "file": "src/solo/weekly/WeeklyResponsibilityPanel.test.tsx",
+      "assertions": 3,
+      "status": "passed"
+    },
+    {
+      "file": "src/lib/auth/accountSwitchGuard.test.ts",
+      "assertions": 3,
+      "status": "passed"
+    }
+  ],
+  "correction": "Replaces unsupported240 distinct cases/21files claim; overlap and stale subset counts were reconciled.",
+  "authenticated_acceptance": "NOT_RUN",
+  "effects": "NONE"
+}

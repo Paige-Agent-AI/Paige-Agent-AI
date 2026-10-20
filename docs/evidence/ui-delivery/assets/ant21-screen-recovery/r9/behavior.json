@@ -1,0 +1,34 @@
+{
+  "sourceHead": "57d155682bd46cd0a91f71475ea0c0dd649c4aae",
+  "synthetic": true,
+  "guardedReload": true,
+  "clearedDraftThenExplicitReload": true,
+  "recovered": {
+    "dpr": 1.0000000149011612,
+    "height": 386,
+    "overflow": false,
+    "paige": "closed",
+    "scale": 1,
+    "text": "PAIGE workspace ready\nSkip to content\nTE\nTEST STUDIO A\nClients\nSolo\nDirect PAIGE, or press ⌘\\\n⌘\\\nIsolated source proof · no business actions\nSimulate missing screen\nSwitch synthetic account\nToggle fixture PAIGE\nToggle fixture theme\nCurrent scoped page\n\nExisting native shell and source recovery components; synthetic department content.",
+    "width": 768
+  },
+  "zoom": {
+    "method": "Emulation.setPageScaleFactor",
+    "before": {
+      "width": 1514,
+      "height": 774,
+      "dpr": 1.25,
+      "scale": 1
+    },
+    "after": {
+      "width": 1514,
+      "height": 774,
+      "dpr": 1.25,
+      "scale": 2,
+      "visualWidth": 757.2,
+      "visualHeight": 387.2
+    },
+    "restored": 1,
+    "desktopBrowserZoom": "UNVERIFIED; no equivalence inferred"
+  }
+}

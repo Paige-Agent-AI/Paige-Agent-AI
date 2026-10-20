@@ -45,11 +45,11 @@ const formatDate = (iso: string | null) => {
 
 function RunCard({ row, onOpen }: { row: ResearchRunRow; onOpen: (id: string) => void }) {
   return (
-    <article className="spw-source-card dr-run-card">
+    <article className="spw-source-card dr-run-card min-w-0">
       <div className="spw-card-row">
         <span className="spw-symbol"><FileSearch aria-hidden size={16} /></span>
         <div className="spw-card-copy">
-          <h3>{row.question}</h3>
+          <h3 className="line-clamp-3 [overflow-wrap:anywhere] leading-5">{row.question}</h3>
           <p>
             {formatDate(row.created_at)}
             {row.domain && row.domain !== "general" ? ` · ${row.domain}` : ""}
@@ -78,6 +78,13 @@ function DetailBody({ run }: { run: NonNullable<ReturnType<typeof useDeepResearc
   const citedBy = (n: number) => sources.filter((s) => s.index === n);
   return (
     <div className="dr-detail">
+      {!run.evidenceComplete && (
+        <div className="spw-state" role="status">
+          <ShieldQuestion aria-hidden size={22} />
+          <strong>Incomplete evidence</strong>
+          <span>The available source records do not verify this run's findings. Claims without supporting evidence are withheld.</span>
+        </div>
+      )}
       <div className="dr-coverage">
         <ListChecks aria-hidden size={15} />
         <span>
@@ -86,7 +93,7 @@ function DetailBody({ run }: { run: NonNullable<ReturnType<typeof useDeepResearc
         </span>
       </div>
 
-      {findings.length === 0 && !profile && (
+      {run.evidenceComplete && findings.length === 0 && !profile && (
         <div className="spw-state">
           <ShieldQuestion aria-hidden size={22} />
           <strong>No findings survived validation</strong>
@@ -157,7 +164,7 @@ function DetailBody({ run }: { run: NonNullable<ReturnType<typeof useDeepResearc
 
 export function ResearchView({ activeTenantId }: { activeTenantId: string | null }) {
   const research = useDeepResearch(activeTenantId);
-  const { rows, listError, refresh, detail, detailError, open, close } = research;
+  const { rows, listError, refresh, detail, detailError, detailLoading, open, close } = research;
   const detailRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => { if (detail) detailRef.current?.focus(); }, [detail]);
@@ -169,9 +176,9 @@ export function ResearchView({ activeTenantId }: { activeTenantId: string | null
           <span className="spw-eyebrow">Evidence library</span>
           <h2>Research</h2>
           <p>
-            Every investigation PAIGE runs in Chat lands here — the question, the
-            findings with their citations, and the sources behind them. Ask PAIGE to
-            research something deeply and the saved run appears in this library.
+            Saved investigations appear here with their findings, citations and sources.
+            Request new research in Chat; it runs only when available and permitted
+            for that conversation.
           </p>
         </div>
         <span className="spw-truth spw-truth-live">Workspace-scoped</span>
@@ -180,6 +187,7 @@ export function ResearchView({ activeTenantId }: { activeTenantId: string | null
       <div className="spw-scroll">
         <div className="dr-layout">
           <section className="spw-stack" aria-label="Research runs">
+            {detailLoading && <div className="spw-state" role="status">Loading this run's evidence…</div>}
             {detail && (
               <article className="spw-source-card dr-detail-card" ref={detailRef} tabIndex={-1}>
                 <div className="spw-card-row">
@@ -229,8 +237,8 @@ export function ResearchView({ activeTenantId }: { activeTenantId: string | null
                 <Search aria-hidden size={24} />
                 <strong>No saved research yet</strong>
                 <span>
-                  Ask PAIGE in Chat — "research this deeply", "do a deep dive", or just a
-                  question that deserves real sources — and the saved run appears here.
+                  Ask PAIGE in Chat to "research this deeply". Availability depends on
+                  the conversation’s permissions and connected research services.
                 </span>
               </div>
             )}
@@ -244,9 +252,9 @@ export function ResearchView({ activeTenantId }: { activeTenantId: string | null
             <span className="spw-truth spw-truth-live">One research engine</span>
             <h3>The same engine chat uses</h3>
             <p>
-              Ask in Chat — PAIGE decides when a question deserves real sources — and the
-              saved run lands here: planned searches, reliability-ranked sources, and a
-              validation gate that refuses to invent. One history, however it was started.
+              Research starts in Chat when current permissions and research services
+              allow it. Saved runs share this history, including their searches,
+              sources and validated findings.
             </p>
             <hr />
             <span className="spw-truth spw-truth-neutral">Bounded by design</span>

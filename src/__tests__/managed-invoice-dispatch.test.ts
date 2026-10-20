@@ -67,56 +67,29 @@ function fixture(row: Record<string, unknown> | null = invoice, options: {
   return { admin, select, writes, fetch, audit, address, env, execute };
 }
 
-describe("legacy invoice dispatch managed-draft boundary", () => {
-  it.each([{ billing_draft_version: 1 }, { billing_draft: {} },
-    { billing_draft_version: 0 }, { billing_draft: false },
-    { billing_draft_version: 2, billing_draft: { schema_version: 1 } }])(
-    "refuses any non-null managed marker before all downstream effects %#", async (marker) => {
-      const f = fixture({ ...invoice, ...marker });
-      expect(await f.execute({ invoice_id: invoice.id })).toEqual({ ok: false, error: "managed_billing_draft_dispatch_unavailable" });
-      expect(f.select.mock.calls).toEqual([["paige_invoices", "*"]]);
-      expect(f.admin.from).toHaveBeenCalledTimes(1);
-      for (const spy of [f.admin.rpc, f.writes, f.fetch, f.audit, f.address, f.env]) expect(spy).not.toHaveBeenCalled();
-    });
+// #2072 containment (Experience 04): the legacy MCP send path is retired. Whatever the invoice,
+// configuration or provider would do, the handler refuses before ANY read, provider call, state
+// write or audit — so no customer can be emailed through it and no invoice is marked 'sent'.
+const RETIRED = { ok: false, error: "legacy_invoice_send_retired: use the governed Sales invoice delivery" };
 
-  it.each([{}, { billing_draft_version: null, billing_draft: null }])(
-    "retains successful legacy dispatch before/after migration %#", async (marker) => {
-      const f = fixture({ ...invoice, ...marker });
-      const result = await f.execute({ invoice_id: invoice.id });
-      expect(result.ok).toBe(true);
-      expect(result.data.status).toBe("sent");
-      expect(f.fetch).toHaveBeenCalledTimes(1);
-      expect(f.admin.rpc).toHaveBeenCalledWith("tenant_sender_identity", { _tenant_id: invoice.tenant_id });
-      expect(f.writes).toHaveBeenCalledWith(expect.objectContaining({ status: "sent", sent_to_email: "client@example.test" }));
-      expect(f.audit).toHaveBeenCalledTimes(1);
-    });
-
+describe("legacy invoice dispatch is contained (#2072)", () => {
   it.each([
-    { configured: false, expected: "resend_not_configured" },
-    { email: null, expected: "contact_email_missing" },
-    { sender: null, expected: "from_address_not_resolved" },
-  ])("retains legacy pre-send refusal $expected", async ({ expected, ...options }) => {
-    const f = fixture(invoice, options);
-    expect(await f.execute({ invoice_id: invoice.id })).toEqual({ ok: false, error: expected });
-    for (const spy of [f.fetch, f.writes, f.audit]) expect(spy).not.toHaveBeenCalled();
-  });
-
-  it.each(["refused", "throws"] as const)("retains legacy delivery failure %s without success writes", async (delivery) => {
-    const f = fixture(invoice, { delivery });
-    expect((await f.execute({ invoice_id: invoice.id })).error).toMatch(/^email_send_failed:/);
-    expect(f.fetch).toHaveBeenCalledTimes(1);
-    expect(f.writes).not.toHaveBeenCalled();
-    expect(f.audit).not.toHaveBeenCalled();
-  });
-
-  it.each([
-    { row: null, options: {}, expected: "invoice_not_found" },
-    { row: invoice, options: { readError: "read refused" }, expected: "read refused" },
-    { row: { ...invoice, status: "sent" }, options: {}, expected: "invoice_not_draft:sent" },
-  ])("retains initial invoice refusal $expected", async ({ row, options, expected }) => {
+    { name: "legacy draft that used to send", row: invoice, options: {} },
+    { name: "managed draft", row: { ...invoice, billing_draft_version: 1, billing_draft: {} }, options: {} },
+    { name: "already sent", row: { ...invoice, status: "sent" }, options: {} },
+    { name: "missing invoice", row: null, options: {} },
+    { name: "provider not configured", row: invoice, options: { configured: false } },
+    { name: "provider would fail", row: invoice, options: { delivery: "throws" as const } },
+  ])("refuses with zero effects: $name", async ({ row, options }) => {
     const f = fixture(row, options);
-    expect(await f.execute({ invoice_id: invoice.id })).toEqual({ ok: false, error: expected });
-    expect(f.admin.from).toHaveBeenCalledTimes(1);
-    for (const spy of [f.fetch, f.admin.rpc, f.writes, f.audit]) expect(spy).not.toHaveBeenCalled();
+    expect(await f.execute({ invoice_id: invoice.id, custom_message: "<script>x</script>" })).toEqual(RETIRED);
+    for (const spy of [f.admin.from, f.select, f.admin.rpc, f.writes, f.fetch, f.audit, f.address, f.env]) {
+      expect(spy).not.toHaveBeenCalled();
+    }
+  });
+
+  it("names the governed door instead of pretending to send", () => {
+    expect(source).toMatch(/mcp\.tool\("send_invoice", \{\s*description:\s*"Retired\./);
+    expect(source).not.toMatch(/\/i\/\$\{inv\.invoice_number\}/);
   });
 });

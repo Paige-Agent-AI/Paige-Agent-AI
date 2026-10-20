@@ -39,6 +39,16 @@ export type AgreementWriteRpcPort = {
     name: string,
     args?: Record<string, unknown>,
   ) => PromiseLike<{ data: unknown; error: { message?: string; code?: string } | null }>;
+  /** Caller-JWT read of the existing canonical record, never the service-role client. */
+  // Keep the generic Supabase select parser out of structural caller assignability. The
+  // narrow query shape is asserted at the single read below; returned records stay unknown
+  // and are validated before the writer is called.
+  from?: (table: "paige_agreements") => unknown;
+};
+
+type AgreementDraftQuery = {
+  eq: (column: string, value: string) => AgreementDraftQuery;
+  maybeSingle: () => PromiseLike<{ data: unknown; error: { message?: string; code?: string } | null }>;
 };
 
 /** Why a draft did not happen. Each maps to exactly one caller-safe sentence below. */
@@ -124,6 +134,8 @@ export async function draftAgreement(input: {
   title: unknown;
   bodyMarkdown: unknown;
   agreementId?: unknown;
+  /** The exact source revision shown on the approved proposal, not a freshly fetched timestamp. */
+  expectedUpdatedAt?: unknown;
 }): Promise<AgreementWriteResult> {
   const { caller, expectedTenantId } = input;
   if (!expectedTenantId) return fail("no_workspace");
@@ -146,6 +158,49 @@ export async function draftAgreement(input: {
   const bodyMarkdown = typeof input.bodyMarkdown === "string" ? input.bodyMarkdown.trim() : "";
   if (!bodyMarkdown) return fail("empty_body");
 
+  let revision: Record<string, unknown> = {};
+  if (hasId) {
+    const approvedStamp = typeof input.expectedUpdatedAt === "string" ? input.expectedUpdatedAt : "";
+    if (!/^\d{4}-\d{2}-\d{2}T.+(?:Z|[+-]\d{2}:\d{2})$/.test(approvedStamp) || !Number.isFinite(Date.parse(approvedStamp))) {
+      return { success: false, reason: "conflict", message: "Read this agreement again and approve a revision of that version before changing it. Nothing was written." };
+    }
+    if (!caller.from) return fail("unavailable");
+    let source: Record<string, unknown> | null;
+    try {
+      const table = caller.from("paige_agreements") as {
+        select: (columns: string) => AgreementDraftQuery;
+      };
+      const reply = await table
+        .select("id,tenant_id,contact_id,status,updated_at,offer_id,commercial_terms_id,body_source,source_version_id,document_path")
+        .eq("tenant_id", expectedTenantId).eq("id", agreementId).maybeSingle();
+      if (reply.error) return fail(classify(reply.error));
+      source = reply.data && typeof reply.data === "object" && !Array.isArray(reply.data)
+        ? reply.data as Record<string, unknown> : null;
+    } catch {
+      return fail("unavailable");
+    }
+    if (!source || source.id !== agreementId || source.tenant_id !== expectedTenantId || source.contact_id !== contactId) return fail("refused");
+    if (source.status !== "draft") return fail("already_sent");
+    // Keep microseconds intact. The read's exact timestamp must match the approved source token;
+    // the same token then guards the SQL UPDATE against a change after this read.
+    if (source.updated_at !== approvedStamp) return fail("conflict");
+    if (source.body_source === "tenant_upload") {
+      return { success: false, reason: "refused", message: "This agreement uses an uploaded document. Its file cannot be replaced by a text revision here. Open the agreement in Sales to review the document. Nothing was written." };
+    }
+    const nullableUuid = (value: unknown) => value === null || (typeof value === "string" && UUID.test(value));
+    if (!nullableUuid(source.offer_id) || !nullableUuid(source.commercial_terms_id)
+      || !nullableUuid(source.source_version_id) || source.document_path !== null
+      || !["paige_draft", "tenant_template"].includes(String(source.body_source))
+      || (source.body_source === "tenant_template" && source.source_version_id === null)
+      || (source.body_source === "paige_draft" && source.source_version_id !== null)) return fail("refused");
+    // Binding/provenance comes only from the scoped persisted row, never model-supplied fields.
+    revision = {
+      _offer_id: source.offer_id, _commercial_terms_id: source.commercial_terms_id,
+      _body_source: source.body_source, _source_version_id: source.source_version_id,
+      _document_path: null, _expected_updated_at: approvedStamp,
+    };
+  }
+
   let data: unknown;
   let error: { message?: string; code?: string } | null;
   try {
@@ -155,26 +210,30 @@ export async function draftAgreement(input: {
       _contact_id: contactId,
       _title: title,
       _body_markdown: bodyMarkdown,
+      ...revision,
     }));
   } catch (thrown) {
-    // A THROW is not a refusal, and must not be reported as one. PostgREST resolves its errors; a
-    // throw here is transport. Either way nothing is known to have been written.
+    // Transport failure does not establish whether the write landed. Do not invite a blind retry.
     console.error("[agreement_draft] save threw", {
       reason: thrown instanceof Error ? thrown.message : "unknown",
     });
-    return fail("unavailable");
+    return fail("no_readback");
   }
 
   if (error) {
     // The server's own words go where an operator reads them and the model does not.
     console.error("[agreement_draft] save refused", { code: error.code, message: error.message });
+    // PostgREST also RESOLVES fetch/abort faults as errors without a SQLSTATE. A gateway error
+    // likewise does not prove the transaction rolled back; only a server SQL refusal does.
+    if (!/^[0-9A-Z]{5}$/.test(error.code ?? "")) return fail("no_readback");
     return fail(classify(error));
   }
 
   // A resolved call with no row is NOT a success. The write may have landed, so this must never
   // advise a retry that could duplicate it — which is exactly what the create path would do.
   const row = data as { id?: unknown; title?: unknown; status?: unknown } | null;
-  if (!row || typeof row.id !== "string") {
+  if (!row || typeof row.id !== "string" || !UUID.test(row.id)
+    || (hasId && row.id !== agreementId) || row.status !== "draft") {
     console.error("[agreement_draft] save returned no row");
     return fail("no_readback");
   }

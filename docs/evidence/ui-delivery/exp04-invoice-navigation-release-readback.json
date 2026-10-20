@@ -1,0 +1,406 @@
+{
+  "schema": "exp04-postmerge-source-readback-v1",
+  "observed_at": "2026-10-14T15:14:04.662Z",
+  "reviewed_head": "d9e180e215b8c29386c4d609e13e5f24826a5583",
+  "merge_sha": "58ae0adcd476611cddba8bb2664d206e91fc0a05",
+  "project_id": "xygzykjyynhzqytbqnzu",
+  "workflow_run": 38585844377,
+  "packages": 16,
+  "modules": 17,
+  "matching_modules": 16,
+  "failures": [],
+  "results": [
+    {
+      "slug": "accept-invite",
+      "version": 71,
+      "previousVersion": 70,
+      "status": "ACTIVE",
+      "verify_jwt": true,
+      "verifyJwtPreserved": true,
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "expected_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "actual_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "matches": true,
+      "ezbr_sha256": "9eddc9c1c6bcba02441fb17d0ddf8688d15b36f4a8af191436632a3cfd835531"
+    },
+    {
+      "slug": "crm-command",
+      "version": 101,
+      "previousVersion": 100,
+      "status": "ACTIVE",
+      "verify_jwt": true,
+      "verifyJwtPreserved": true,
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "expected_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "actual_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "matches": true,
+      "ezbr_sha256": "79f08f6417c96bd8822233c8d0e805ef73d7ece2b9532d4aef89eb6311d7777a"
+    },
+    {
+      "slug": "marketplace-checkout-session",
+      "version": 66,
+      "previousVersion": 64,
+      "status": "ACTIVE",
+      "verify_jwt": true,
+      "verifyJwtPreserved": true,
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "expected_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "actual_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "matches": true,
+      "ezbr_sha256": "4721f5aa8063dca740b5daa07a20c58dbd7ad978899cbcca4507da0e87e78dc5"
+    },
+    {
+      "slug": "mcp-oauth-callback",
+      "version": 20,
+      "previousVersion": 18,
+      "status": "ACTIVE",
+      "verify_jwt": false,
+      "verifyJwtPreserved": true,
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "expected_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "actual_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "matches": true,
+      "ezbr_sha256": "43344f5bef79ee8308ad311c1d0f4ba808e4a045cab5c42b65bdd44dba21b753"
+    },
+    {
+      "slug": "notify-approval-event",
+      "version": 23,
+      "previousVersion": 22,
+      "status": "ACTIVE",
+      "verify_jwt": true,
+      "verifyJwtPreserved": true,
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "expected_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "actual_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "matches": true,
+      "ezbr_sha256": "e3bf22be13f605dc9e73ba534ce9ba1441d23667dff8edf84c0887b94c3abda6"
+    },
+    {
+      "slug": "notify-team-event",
+      "version": 1645,
+      "previousVersion": 1643,
+      "status": "ACTIVE",
+      "verify_jwt": true,
+      "verifyJwtPreserved": true,
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "expected_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "actual_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "matches": true,
+      "ezbr_sha256": "c96f12a3a4ec5affb1212f256fedea6cc671f0fd08c6b30753d0e924b5713e4e"
+    },
+    {
+      "slug": "paige-mcp",
+      "version": 702,
+      "previousVersion": 700,
+      "status": "ACTIVE",
+      "verify_jwt": false,
+      "verifyJwtPreserved": true,
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "expected_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "actual_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "matches": true,
+      "ezbr_sha256": "4c82cd85b430a6a152d15d6c4d718aefffa0915909b66057211a470bf65b3ac6"
+    },
+    {
+      "slug": "platform-billing-connect",
+      "version": 22,
+      "previousVersion": 22,
+      "status": "ACTIVE",
+      "verify_jwt": true,
+      "verifyJwtPreserved": true,
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "expected_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "actual_sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+      "matches": false,
+      "ezbr_sha256": "83c95b79303a840bc9f5be0a67c0cd0378bfa9ba8db4f5963d68eb9f0eca6498"
+    },
+    {
+      "slug": "platform-billing-portal",
+      "version": 33,
+      "previousVersion": 31,
+      "status": "ACTIVE",
+      "verify_jwt": true,
+      "verifyJwtPreserved": true,
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "expected_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "actual_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "matches": true,
+      "ezbr_sha256": "f50d5f0588448e03788763f52a724f67bdf1506cb6a8915f670115678712a65a"
+    },
+    {
+      "slug": "platform-subscription-checkout",
+      "version": 75,
+      "previousVersion": 73,
+      "status": "ACTIVE",
+      "verify_jwt": true,
+      "verifyJwtPreserved": true,
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "expected_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "actual_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "matches": true,
+      "ezbr_sha256": "e695d7c53cc55b4e6397470ac722b5125c688a253a8e1eac56c3bdfe636cbc1b"
+    },
+    {
+      "slug": "sales-invoice-command",
+      "version": 70,
+      "previousVersion": 69,
+      "status": "ACTIVE",
+      "verify_jwt": true,
+      "verifyJwtPreserved": true,
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "expected_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "actual_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "matches": true,
+      "ezbr_sha256": "08807d1fd98295a0731130038b8b93e0ac0e75108d4134f46f475c33031df49c"
+    },
+    {
+      "slug": "sales-invoice-delivery",
+      "version": 30,
+      "previousVersion": 28,
+      "status": "ACTIVE",
+      "verify_jwt": true,
+      "verifyJwtPreserved": true,
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "expected_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "actual_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "matches": true,
+      "ezbr_sha256": "fb62476040fe5b11b6d1ecf4535b81616d7fd12a4a9fc0fe3641b014c591e952"
+    },
+    {
+      "slug": "send-message",
+      "version": 96,
+      "previousVersion": 95,
+      "status": "ACTIVE",
+      "verify_jwt": false,
+      "verifyJwtPreserved": true,
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "expected_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "actual_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "matches": true,
+      "ezbr_sha256": "76ad9306d38258020dd86b6b91161856c94c467b85127698dcb1a12204894bd2"
+    },
+    {
+      "slug": "solo-beta-billing-portal",
+      "version": 19,
+      "previousVersion": 18,
+      "status": "ACTIVE",
+      "verify_jwt": true,
+      "verifyJwtPreserved": true,
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "expected_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "actual_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "matches": true,
+      "ezbr_sha256": "b048176eb7967dda405dcaa6652bfd77308bbc3e906c1551518ab38f541d0e7a"
+    },
+    {
+      "slug": "zoom-oauth-callback",
+      "version": 93,
+      "previousVersion": 91,
+      "status": "ACTIVE",
+      "verify_jwt": false,
+      "verifyJwtPreserved": true,
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "expected_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "actual_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+      "matches": true,
+      "ezbr_sha256": "6edaf62796530935047b462918c2740c4d6d29a0f87f31aa2786851bec3bb378"
+    },
+    {
+      "slug": "paige-ai-chat",
+      "version": 404,
+      "previousVersion": 403,
+      "status": "ACTIVE",
+      "verify_jwt": true,
+      "verifyJwtPreserved": true,
+      "path": "supabase/functions/_shared/client-engagement/labels.ts",
+      "expected_sha256": "c5b6c9f7301d15672126670b7b12e52940108a156ce1634c724755d06c52ac29",
+      "actual_sha256": "c5b6c9f7301d15672126670b7b12e52940108a156ce1634c724755d06c52ac29",
+      "matches": true,
+      "ezbr_sha256": "7547c9d8e138bfaa28ad93512c6eb1e3204b8581ef1f4eac54c2eb259afbe942"
+    },
+    {
+      "slug": "paige-ai-chat",
+      "version": 404,
+      "previousVersion": 403,
+      "status": "ACTIVE",
+      "verify_jwt": true,
+      "verifyJwtPreserved": true,
+      "path": "supabase/functions/_shared/paige-turn/record-links.ts",
+      "expected_sha256": "5304ca5bb2ee93b0dcf8cee35e395e90e7677fdb49615187ca8cecb6ff65872b",
+      "actual_sha256": "5304ca5bb2ee93b0dcf8cee35e395e90e7677fdb49615187ca8cecb6ff65872b",
+      "matches": true,
+      "ezbr_sha256": "7547c9d8e138bfaa28ad93512c6eb1e3204b8581ef1f4eac54c2eb259afbe942"
+    }
+  ],
+  "authenticated_qa": "BLOCKED_NOT_EXECUTED",
+  "all_modules_match": false,
+  "billing_exception": {
+    "status": "SOURCE_MISMATCH_RECORDED_CAUSE_UNVERIFIED",
+    "slug": "platform-billing-connect",
+    "version": 22,
+    "handler_import": "canonicalAppUrl",
+    "handler_call": {
+      "destination": "billing",
+      "line": 186
+    },
+    "changed_export": "resolveCanonicalRecordLink",
+    "only_module_difference": "RECORD_FOCUS.solo.sales_invoices = invoice",
+    "changed_export_called_by_handler": false,
+    "reachable_billing_paths_unchanged": true,
+    "package_file_hashes": [
+      {
+        "file": "supabase/functions/platform-billing-connect/index.ts",
+        "actual_sha256": "6dc6b2c8431bf7e7cc105ff1fb64600c8ce0c7ab2bffd30b5cef17863a03c690",
+        "expected_sha256": "6dc6b2c8431bf7e7cc105ff1fb64600c8ce0c7ab2bffd30b5cef17863a03c690",
+        "matches": true
+      },
+      {
+        "file": "supabase/functions/platform-billing-connect/safety.ts",
+        "actual_sha256": "197c5ba5500acaaaa96b3626753f25849f4ea5b85e8f6520e392c460a5224b63",
+        "expected_sha256": "197c5ba5500acaaaa96b3626753f25849f4ea5b85e8f6520e392c460a5224b63",
+        "matches": true
+      },
+      {
+        "file": "supabase/functions/_shared/canonical-app-url.ts",
+        "actual_sha256": "e10939d8ecc3c99510c8cf531c74986be63eb890ad8ed84dc9443ead2c5f4464",
+        "expected_sha256": "d0600d0c85eae3059d78710f5b0a1a438b3fc4a26cb5332b21aa886d168afed1",
+        "matches": false
+      },
+      {
+        "file": "supabase/functions/platform-billing-connect/decide.ts",
+        "actual_sha256": "1e439e8986e46dcb7e6e396db5075f9618de32e111dc2f03b2ed581ff0b3fab1",
+        "expected_sha256": "1e439e8986e46dcb7e6e396db5075f9618de32e111dc2f03b2ed581ff0b3fab1",
+        "matches": true
+      }
+    ],
+    "no_billing_invocation_performed": true,
+    "provider_deployment_noop_cause": "UNVERIFIED"
+  },
+  "method": "Current-source import graph joined to live inventory; individually retrieved packages, LF and trailing-whitespace normalization; only module memberships in this change are compared. Not an audit of every historical package.",
+  "web": {
+    "deployment_id": "dpl_DimwQp8LTD6CgLuuthFnY5pF1T9W",
+    "state": "READY",
+    "channel": "production",
+    "source_commit": "58ae0adcd476611cddba8bb2664d206e91fc0a05",
+    "public_version_url": "https://app.paigeagent.ai/version.json",
+    "public_build_id": "58ae0adcd476611cddba8bb2664d206e91fc0a05-mv88oplf",
+    "customer_update": null
+  },
+  "exact_head_checks": [
+    {
+      "id": 115917500234,
+      "name": "Supabase Preview",
+      "conclusion": "success",
+      "head_sha": "d9e180e215b8c29386c4d609e13e5f24826a5583"
+    },
+    {
+      "id": 115916309490,
+      "name": "Vercel Preview Comments",
+      "conclusion": "success",
+      "head_sha": "d9e180e215b8c29386c4d609e13e5f24826a5583"
+    },
+    {
+      "id": 115916269572,
+      "name": "verify",
+      "conclusion": "success",
+      "head_sha": "d9e180e215b8c29386c4d609e13e5f24826a5583"
+    },
+    {
+      "id": 115916269371,
+      "name": "comms-provider-boundary",
+      "conclusion": "success",
+      "head_sha": "d9e180e215b8c29386c4d609e13e5f24826a5583"
+    },
+    {
+      "id": 115916269157,
+      "name": "web-fetch-hardening-smoke",
+      "conclusion": "success",
+      "head_sha": "d9e180e215b8c29386c4d609e13e5f24826a5583"
+    },
+    {
+      "id": 115915809322,
+      "name": "Validate UI delivery evidence",
+      "conclusion": "success",
+      "head_sha": "d9e180e215b8c29386c4d609e13e5f24826a5583"
+    },
+    {
+      "id": 115915804924,
+      "name": "lint",
+      "conclusion": "success",
+      "head_sha": "d9e180e215b8c29386c4d609e13e5f24826a5583"
+    },
+    {
+      "id": 115915804413,
+      "name": "postgres-authority",
+      "conclusion": "success",
+      "head_sha": "d9e180e215b8c29386c4d609e13e5f24826a5583"
+    },
+    {
+      "id": 115915803817,
+      "name": "audit",
+      "conclusion": "success",
+      "head_sha": "d9e180e215b8c29386c4d609e13e5f24826a5583"
+    },
+    {
+      "id": 115915803619,
+      "name": "contract",
+      "conclusion": "success",
+      "head_sha": "d9e180e215b8c29386c4d609e13e5f24826a5583"
+    },
+    {
+      "id": 115915803370,
+      "name": "database-contract",
+      "conclusion": "success",
+      "head_sha": "d9e180e215b8c29386c4d609e13e5f24826a5583"
+    }
+  ],
+  "merge_workflows": [
+    {
+      "id": 38585844230,
+      "name": "Security Audit",
+      "conclusion": "success",
+      "head_sha": "58ae0adcd476611cddba8bb2664d206e91fc0a05"
+    },
+    {
+      "id": 38585844646,
+      "name": "ui-delivery-evidence",
+      "conclusion": "success",
+      "head_sha": "58ae0adcd476611cddba8bb2664d206e91fc0a05"
+    },
+    {
+      "id": 38585844091,
+      "name": "Finance source proof",
+      "conclusion": "success",
+      "head_sha": "58ae0adcd476611cddba8bb2664d206e91fc0a05"
+    },
+    {
+      "id": 38585844377,
+      "name": "deploy-edge-functions",
+      "conclusion": "success",
+      "head_sha": "58ae0adcd476611cddba8bb2664d206e91fc0a05"
+    },
+    {
+      "id": 38585843880,
+      "name": "PAIGE Spine contract",
+      "conclusion": "success",
+      "head_sha": "58ae0adcd476611cddba8bb2664d206e91fc0a05"
+    },
+    {
+      "id": 38585844312,
+      "name": "ci",
+      "conclusion": "success",
+      "head_sha": "58ae0adcd476611cddba8bb2664d206e91fc0a05"
+    }
+  ],
+  "edge_live": "58ae0adcd476611cddba8bb2664d206e91fc0a05",
+  "migrations": "NOT_APPLICABLE_NO_SQL_CHANGE",
+  "proof_boundary": {
+    "changed_chat_modules_match": true,
+    "all_discovered_module_copies_match": false,
+    "retained_billing_module_cause": "UNVERIFIED",
+    "billing_behavior_tested": false,
+    "invoice_navigation_authenticated": "UNVERIFIED",
+    "full_experience04": "INCOMPLETE",
+    "customer_publication": "NOT_AUTHORIZED_NO_VERSION_ASSIGNED"
+  }
+}

@@ -1,0 +1,63 @@
+Browser tab: 170265290, Title: "Isolated source recovery proof", URL: "http://127.0.0.1:5298/".
+1 AXWebArea Isolated source recovery proof, URL: 127.0.0.1:5298/
+	2 container root
+		3 container
+			4 text PAIGE conversation opened
+			5 link Description: Skip to content, Value: 127.0.0.1:5298/#tenant-shell-main
+			6 container Tenant workspace
+				7 button Expand navigation
+					8 image
+				9 container
+					10 link Description: Command Center, Value: 127.0.0.1:5298/solo/test-account/command-center
+					11 link Description: Operations, Value: 127.0.0.1:5298/solo/test-account/operations
+					12 link Description: Clients, Value: 127.0.0.1:5298/solo/test-account/clients
+					13 link Description: Marketing, Value: 127.0.0.1:5298/solo/test-account/growth
+					14 link Description: Ads, Value: 127.0.0.1:5298/solo/test-account/ads
+					15 link Description: Sales, Value: 127.0.0.1:5298/solo/test-account/sales
+					16 link Description: Finance, Value: 127.0.0.1:5298/solo/test-account/finance
+					17 link Description: Marketplace, Value: 127.0.0.1:5298/solo/test-account/marketplace
+					18 link Description: Settings, Value: 127.0.0.1:5298/solo/test-account/settings
+				19 button Description: Use Mineral theme, Help: Mineral theme
+				20 button Sign out
+				21 text TE
+			22 container
+				23 text TEST STUDIO B Clients Solo
+				24 button (expanded) Description: Direct PAIGE, Secondary Actions: Collapse
+					25 image PAIGE
+					26 text Direct PAIGE, or press ⌘\
+					27 text ⌘\
+			28 container tenant-shell-main
+				29 container Isolated proof controls
+					30 text Isolated source proof · no business actions
+					31 button Simulate missing screen
+					32 button Switch synthetic account
+					33 button Toggle fixture PAIGE
+					34 button Toggle fixture theme
+				35 container Page unavailable
+					36 heading This page couldn’t open, Value: 3
+						37 text This page couldn’t open
+					38 text You can keep working from the navigation.
+			39 button Fold PAIGE conversation
+			40 container Description: PAIGE command workspace, ID: tenant-paige-workspace
+				41 container
+					42 image PAIGE
+					43 text PAIGE Your live operating partner
+					44 button Description: Expand PAIGE panel, Help: Expand panel
+					45 button Description: Open PAIGE in full panel, Help: Open full panel
+					46 button Description: Open PAIGE in a new window, Help: Open in new window
+					47 button Description: Fold PAIGE conversation, Help: Fold PAIGE
+				48 heading PAIGE render fixture, Value: 2
+					49 text PAIGE render fixture
+				50 container
+					51 text Protected local draft
+					52 text field (settable) Description: Protected local draft, Value: Protected source recovery note
+				53 button Clear local fixture draft
+				54 text No Chat or business action is connected.
+		55 container Paige update
+			56 container
+				57 text An update is ready Finish or save your current work before reloading.
+				58 button Reload
+			59 button Dismiss update notice
+				60 image
+
+The focused UI element is 58 button Reload

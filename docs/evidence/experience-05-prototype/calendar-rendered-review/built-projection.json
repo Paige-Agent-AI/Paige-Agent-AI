@@ -1,0 +1,5 @@
+{
+  "path": "supabase/functions/_shared/paige-orchestration/weekly-commitment-projection.ts",
+  "sourceSHA256": "06D13D2C1B819D913FFB181DA487E1FEAED88C10F03EB6D0B57C553101440CBF",
+  "method": "TypeScript transpileModule to inline pure canonical projection; no imports/network/production UI mounting"
+}

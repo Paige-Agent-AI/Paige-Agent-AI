@@ -13,7 +13,7 @@ import type { Playbook } from "./types";
 
 export * from "./types";
 export { generalDefault, coachingDefault, fitnessCoach, businessConsultant, marketingAgency, PLAYBOOK_LIBRARY, RESOLVABLE_PLAYBOOKS } from "./presets";
-export { getPlaybookBySlug, resolveActivePlaybook } from "./resolve";
+export { getPlaybookBySlug, resolveActivePlaybook, resolvePortalCatalog, catalogInputFromFeatures } from "./resolve";
 
 /**
  * The synchronous neutral default. Use this only where a non-reactive default
@@ -29,18 +29,19 @@ export function getActivePlaybook(): Playbook {
  * default and updates once the tenant's authored config resolves, so call
  * sites can treat the return as a ready Playbook without a loading branch.
  */
-export function usePlaybook(): Playbook {
+export function usePlaybook(enabled = true): Playbook {
   const [playbook, setPlaybook] = useState<Playbook>(generalDefault);
 
   useEffect(() => {
     let cancelled = false;
+    if (!enabled) return;
     resolveActivePlaybook().then((pb) => {
       if (!cancelled) setPlaybook(pb);
     });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [enabled]);
 
   return playbook;
 }

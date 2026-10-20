@@ -1,0 +1,25 @@
+{
+  "evidence_class": "read_only_production_catalog",
+  "project": "xygzykjyynhzqytbqnzu",
+  "candidate_deployed": false,
+  "authenticated_weekly_acceptance": "UNVERIFIED",
+  "readback": [
+    {
+      "observed_at": "2026-10-13 04:06:38.045742+00",
+      "trigger_live": false,
+      "weekly_processes": 0,
+      "weekly_events": 0,
+      "weekly_acts": 0,
+      "weekly_receipts": 0,
+      "provider_references": 0,
+      "weekly_tool_overrides": 0,
+      "cron_total": 27,
+      "weekly_cron": 0,
+      "released_migration": 1,
+      "candidate_migration": 0,
+      "owner_rpc_auth_execute": true,
+      "owner_rpc_anon_execute": false,
+      "owner_rpc_service_execute": false
+    }
+  ]
+}

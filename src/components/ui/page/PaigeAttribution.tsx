@@ -52,7 +52,7 @@ export const VP_ROSTER: Record<VP, { name: string; remit: string }> = {
   VERA: { name: "Vera", remit: "Quality & standards" },
   NEXUS: { name: "Nexus", remit: "Marketing & growth" },
   CURA: { name: "Cura", remit: "Client success" },
-  MENTOR: { name: "Mentor", remit: "Curriculum & delivery" },
+  MENTOR: { name: "Mentor", remit: "Discovery, education & strategy" },
   MERIT: { name: "Merit", remit: "Sales & revenue" },
   ZION: { name: "Zion", remit: "Operations & automation" },
 };

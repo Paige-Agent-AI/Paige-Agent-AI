@@ -16,7 +16,7 @@
  * state — never a dead button (§13/§31). SMTP shows an inline host/port/username/
  * password/from form (A2PTab pattern) that invokes smtp-connect, then reloads state.
  */
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { PageShell, PageHeader, SectionCard, StatePill } from "@/components/ui/page";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,27 +26,52 @@ import { supabase } from "@/integrations/supabase/client";
 import { EmailDomainsPanel } from "@/components/admin/EmailDomainsPanel";
 import { TenantDomainIdentityCard } from "@/components/admin/TenantDomainIdentityCard";
 import { resolveFunctionError } from "@/lib/integrations/connectError";
+import { useTenantContext } from "@/hooks/useTenantContext";
 import { toast } from "sonner";
 import { ChevronDown, KeyRound, Loader2, Link as LinkIcon, Mail, Unlink } from "lucide-react";
 
 type GmailConnector = {
+  id: string;
+  tenant_id: string;
+  updated_at: string;
   from_address: string | null;
   display_name: string | null;
 };
 
 type SmtpConnector = {
+  tenant_id: string;
   from_address: string | null;
   display_name: string | null;
 };
+
+type EmailViewScope = { tenantId: string | null; actorId: string | null; ready: boolean; epoch: number };
 
 // SMTP + OAuth failure copy now lives in the ONE shared home (§18):
 // `resolveFunctionError` in @/lib/integrations/connectError — every connect/disconnect
 // site on this page consumes it so a tenant never sees a raw framework code.
 
 export default function EmailIntegrationConfig() {
+  const { activeTenantId, activeUserId, loading: tenantLoading, accountContextLoading, accountContextStatus } = useTenantContext();
+  const scopeReady = Boolean(activeTenantId && activeUserId && !tenantLoading && !accountContextLoading && accountContextStatus === "ready");
+  const scope = useRef<EmailViewScope>({ tenantId: activeTenantId, actorId: activeUserId, ready: scopeReady, epoch: 0 });
+  if (scope.current.tenantId !== activeTenantId || scope.current.actorId !== activeUserId || scope.current.ready !== scopeReady) {
+    scope.current = { tenantId: activeTenantId, actorId: activeUserId, ready: scopeReady, epoch: scope.current.epoch + 1 };
+  }
+  const renderedScope = scope.current;
+  const mounted = useRef(false);
+  const lifecycle = useRef(0);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; lifecycle.current += 1; };
+  }, []);
+  const current = useCallback((ticket: EmailViewScope, life: number) => mounted.current && lifecycle.current === life
+    && ticket.ready && scope.current.epoch === ticket.epoch, []);
   const [gmail, setGmail] = useState<GmailConnector | null>(null);
   const [smtp, setSmtp] = useState<SmtpConnector | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadedEpoch, setLoadedEpoch] = useState<number | null>(null);
+  const [gmailReadError, setGmailReadError] = useState(false);
+  const [smtpReadError, setSmtpReadError] = useState(false);
   const [gmailBusy, setGmailBusy] = useState(false);
   // Honest inline note when the OAuth flow isn't switched on yet (§13/§31) — never a
   // silent failure behind the Connect button.
@@ -61,47 +86,65 @@ export default function EmailIntegrationConfig() {
   const [smtpFrom, setSmtpFrom] = useState("");
   const [smtpError, setSmtpError] = useState<string | null>(null);
 
-  const loadGmail = async () => {
+  const loadGmail = useCallback(async () => {
+    const ticket = renderedScope; const life = lifecycle.current;
+    if (!current(ticket, life)) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = supabase as any;
-    // RLS scopes to the caller's tenant (§9). A live Gmail connector is provider='gmail'.
-    const { data } = await sb
-      .from("channel_connectors")
-      .select("from_address, display_name")
-      .eq("channel_type", "email")
-      .eq("provider", "gmail")
-      .eq("active", true)
-      .eq("status", "active")
-      .maybeSingle();
-    setGmail((data as GmailConnector | null) ?? null);
-  };
+    try {
+      // RLS may legitimately expose several tenants to platform staff. The existing
+      // workspace context narrows this view; it never grants endpoint authority.
+      const { data, error } = await sb.from("channel_connectors")
+        .select("id, tenant_id, updated_at, from_address, display_name")
+        .eq("tenant_id", ticket.tenantId).eq("channel_type", "email").eq("provider", "gmail")
+        .eq("active", true).eq("status", "active")
+        .order("updated_at", { ascending: false }).order("id", { ascending: true }).limit(1);
+      if (!current(ticket, life)) return;
+      const row = Array.isArray(data) ? data[0] as GmailConnector | undefined : undefined;
+      const refused = Boolean(error || !Array.isArray(data) || data.length > 1 || row && row.tenant_id !== ticket.tenantId);
+      setGmail(refused ? null : row ?? null); setGmailReadError(refused);
+    } catch {
+      if (current(ticket, life)) { setGmail(null); setGmailReadError(true); }
+    }
+  }, [renderedScope, current]);
 
-  const loadSmtp = async () => {
+  const loadSmtp = useCallback(async () => {
+    const ticket = renderedScope; const life = lifecycle.current;
+    if (!current(ticket, life)) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = supabase as any;
-    // RLS scopes to the caller's tenant (§9). A live SMTP connector is provider='smtp'.
-    const { data } = await sb
-      .from("channel_connectors")
-      .select("from_address, display_name")
-      .eq("channel_type", "email")
-      .eq("provider", "smtp")
-      .eq("active", true)
-      .eq("status", "active")
-      .maybeSingle();
-    setSmtp((data as SmtpConnector | null) ?? null);
-  };
+    try {
+      const { data, error } = await sb.from("channel_connectors")
+        .select("tenant_id, from_address, display_name")
+        .eq("tenant_id", ticket.tenantId).eq("channel_type", "email").eq("provider", "smtp")
+        .eq("active", true).eq("status", "active").maybeSingle();
+      if (!current(ticket, life)) return;
+      const row = data as SmtpConnector | null;
+      const refused = Boolean(error || row && row.tenant_id !== ticket.tenantId);
+      setSmtp(refused ? null : row); setSmtpReadError(refused);
+    } catch {
+      if (current(ticket, life)) { setSmtp(null); setSmtpReadError(true); }
+    }
+  }, [renderedScope, current]);
 
   useEffect(() => {
+    const ticket = renderedScope; const life = lifecycle.current;
+    setGmail(null); setSmtp(null); setLoadedEpoch(null); setGmailBusy(false);
+    setGmailReadError(false); setSmtpReadError(false); setGmailNote(null);
+    if (!current(ticket, life)) { setLoading(false); return; }
+    setLoading(true);
     void (async () => {
-      setLoading(true);
-      await loadGmail();
-      await loadSmtp();
-      setLoading(false);
+      await Promise.all([loadGmail(), loadSmtp()]);
+      if (current(ticket, life)) { setLoadedEpoch(ticket.epoch); setLoading(false); }
     })();
-  }, []);
+  }, [renderedScope, current, loadGmail, loadSmtp]);
 
-  const gmailConnected = Boolean(gmail?.from_address);
-  const smtpConnected = Boolean(smtp?.from_address);
+  const viewCurrent = scopeReady && loadedEpoch === renderedScope.epoch;
+  const viewLoading = tenantLoading || accountContextLoading || scopeReady && (loading || !viewCurrent);
+  const visibleGmail = viewCurrent ? gmail : null;
+  const visibleSmtp = viewCurrent ? smtp : null;
+  const gmailConnected = Boolean(visibleGmail?.from_address);
+  const smtpConnected = Boolean(visibleSmtp?.from_address);
 
   // §36: a non-technical coach clicks "Connect Gmail" and signs in — no prompt-engineering.
   // On {error:'gmail_oauth_not_configured'} we show an honest note, never a dead redirect.
@@ -127,16 +170,34 @@ export default function EmailIntegrationConfig() {
   };
 
   const disconnectGmail = async () => {
-    setGmailBusy(true);
-    const { data, error } = await supabase.functions.invoke("gmail-disconnect", { body: {} });
-    setGmailBusy(false);
-    if (error || (data as { error?: string } | null)?.error) {
-      toast.error((await resolveFunctionError({ error, data, action: "disconnect Gmail" })).message);
+    const ticket = renderedScope; const life = lifecycle.current;
+    if (!current(ticket, life) || !viewCurrent) return;
+    const selected = visibleGmail;
+    if (!selected?.id || selected.tenant_id !== ticket.tenantId || !selected.updated_at || !Number.isFinite(Date.parse(selected.updated_at))) {
+      toast.error("Refresh the Google connection before disconnecting it.");
       return;
     }
-    toast.success("Gmail disconnected");
-    setGmail(null);
-    void loadGmail();
+    setGmailBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("gmail-disconnect", { body: {
+        expected_tenant_id: ticket.tenantId, connector_id: selected.id, expected_updated_at: selected.updated_at,
+      } });
+      if (!current(ticket, life)) return;
+      if (error || (data as { error?: string } | null)?.error) {
+        const failure = await resolveFunctionError({ error, data, action: "disconnect Gmail" });
+        if (current(ticket, life)) toast.error(failure.message);
+        return;
+      }
+      if (data?.ok !== true || data.disconnected !== true || data.connector_id !== selected.id) {
+        toast.error("The Google disconnect could not be confirmed. Inspect the connection before retrying.");
+        return;
+      }
+      toast.success("Gmail disconnected");
+      setGmail(null);
+      await loadGmail();
+    } catch {
+      if (current(ticket, life)) toast.error("The Google disconnect could not be confirmed. Inspect the connection before retrying.");
+    } finally { if (current(ticket, life)) setGmailBusy(false); }
   };
 
   // #141c: a coach fills host/port/user/pass/from and it just connects (§36). smtp-connect
@@ -234,8 +295,10 @@ export default function EmailIntegrationConfig() {
             title="Gmail / Google Workspace"
             description="Connect your Google inbox with OAuth."
             actions={
-              loading ? (
+              viewLoading ? (
                 <Skeleton className="h-5 w-24 rounded-full" />
+              ) : !scopeReady || gmailReadError ? (
+                <StatePill state="off">Unavailable</StatePill>
               ) : gmailConnected ? (
                 <StatePill state="success">Connected</StatePill>
               ) : (
@@ -243,13 +306,17 @@ export default function EmailIntegrationConfig() {
               )
             }
           >
-            {loading ? (
+            {viewLoading ? (
               <Skeleton className="h-4 w-64" />
+            ) : !scopeReady ? (
+              <p role="status">Choose or refresh your workspace to manage this connection.</p>
+            ) : gmailReadError ? (
+              <p role="status">The Google connection could not be read. Refresh this workspace before changing it.</p>
             ) : gmailConnected ? (
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">
                   Paige sends as{" "}
-                  <span className="font-medium text-foreground">{gmail?.from_address}</span> through your
+                  <span className="font-medium text-foreground">{visibleGmail?.from_address}</span> through your
                   Google account — no DNS setup needed.
                 </p>
                 <Button variant="outline" size="sm" onClick={() => void disconnectGmail()} disabled={gmailBusy}>
@@ -279,8 +346,10 @@ export default function EmailIntegrationConfig() {
             title="SMTP"
             description="Bring your own SMTP mail server."
             actions={
-              loading ? (
+              viewLoading ? (
                 <Skeleton className="h-5 w-24 rounded-full" />
+              ) : !scopeReady || smtpReadError ? (
+                <StatePill state="off">Unavailable</StatePill>
               ) : smtpConnected ? (
                 <StatePill state="success">Connected</StatePill>
               ) : (
@@ -288,13 +357,17 @@ export default function EmailIntegrationConfig() {
               )
             }
           >
-            {loading ? (
+            {viewLoading ? (
               <Skeleton className="h-4 w-64" />
+            ) : !scopeReady ? (
+              <p role="status">Choose or refresh your workspace to manage this connection.</p>
+            ) : smtpReadError ? (
+              <p role="status">The SMTP connection could not be read. Refresh this workspace before changing it.</p>
             ) : smtpConnected ? (
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">
                   Paige sends as{" "}
-                  <span className="font-medium text-foreground">{smtp?.from_address}</span> through your
+                  <span className="font-medium text-foreground">{visibleSmtp?.from_address}</span> through your
                   SMTP server. Your credentials are stored encrypted — never shown again. We confirm the
                   username and password on your first send.
                 </p>

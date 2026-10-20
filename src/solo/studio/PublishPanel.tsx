@@ -11,6 +11,7 @@ import {
   PublishUnverified, type Prepared, type PublishAction, type PublishCheck, type PublishForbiddenReason,
 } from "./studio-data";
 import { artifactId, hasPendingChanges, isLive, type LoadedArtifact } from "./artifact-state";
+import { EmbedCode } from "./EmbedCode";
 
 // "error": nothing armed. The message says why; the button re-prepares ("Try again" when the door
 // said nothing ran, "Check again" otherwise). A used fingerprint is never left armed.
@@ -225,6 +226,7 @@ export function PublishPanel({ artifact, onClose, onDone, onRefresh }: {
         <h2>It's live</h2>
         <p>Anyone with the link can open it, and it's in Marketing › Overview.</p>
         <a href={url} target="_blank" rel="noreferrer" className="vs-link" style={{ wordBreak: "break-all" }}>{url}</a>
+        {artifact.kind === "form" && <EmbedCode formId={id} formName={artifact.form.name} />}
         <div className="vs-pop-foot"><button ref={doneRef} type="button" className="vs-btn" onClick={onClose}>Done</button></div>
       </div>
     );
@@ -277,6 +279,7 @@ export function PublishPanel({ artifact, onClose, onDone, onRefresh }: {
         <h2>This is live</h2>
         <p>Visitors see the published version. Unpublishing moves it back to a draft here; anything that depends on it stays as it is.</p>
         {kind === "funnel" && <p>Changed one of its pages or forms? Publish again to put every step's latest saved version live.</p>}
+        {artifact.kind === "form" && !confirming && <EmbedCode formId={id} formName={artifact.form.name} />}
         {!confirming && out?.state === "blocked" && <CheckList checks={out.preview.checks.filter((c) => !c.ok && c.blocking)} label="Why it can't come down yet" />}
         {!confirming && unpublishOff}
         {!confirming && (out?.state === "refused" || out?.state === "error") && (

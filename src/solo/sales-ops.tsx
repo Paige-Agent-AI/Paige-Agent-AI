@@ -29,6 +29,7 @@
 // and an order does not name a campaign — `utm_campaign` lives on `analytics_events` and
 // `referral_clicks`, never on the order — so send → click → order does not join. Attribution
 // therefore is not shown at all, rather than shown badly (§13).
+import { AGREEMENT_STATE, SIGNATURE_STATE } from "./sales/agreementVocabulary";
 import React from "react";
 import { Ic } from "./_shared";
 import { useCatalogOffers } from "./useCatalogOffers";
@@ -69,48 +70,7 @@ const CADENCE_LABEL = {
   year: "yearly",
 };
 
-/**
- * Five states and a sixth READING. There is no `paid`, `invoiced` or `delivered`, because this
- * record can observe none of them — it holds what was agreed, never what happened afterwards.
- *
- * This is the ENGAGEMENT's state: whether the work is running, paused or finished. It is NOT the
- * signature's state, and since the owner's 2026-09-22 ruling the two are kept apart on purpose —
- * see `SIGNATURE_STATE` below.
- */
-const AGREEMENT_STATE = {
-  draft: { label: "Draft", tone: "opportunity" },
-  active: { label: "Active", tone: "ok" },
-  paused: { label: "Paused", tone: "warn" },
-  completed: { label: "Completed", tone: "n" },
-  cancelled: { label: "Cancelled", tone: "n" },
-  unrecognised: { label: "Not readable", tone: "n" },
-};
-
-/**
- * The SIGNATURE's state — a different fact from the engagement's, and the owner ruled they must
- * never be merged: a document can be signed while the work has not started, and the work can be
- * running under a document nobody ever countersigned.
- *
- * There is no `Signed` separate from `Completed`. With one signer the two cannot be told apart, so
- * carrying both would put a word on the screen that nothing in the record could distinguish (§13).
- * `Expired` is DERIVED by the adapter from the state plus the clock, because nothing in this build
- * walks the table to flip it — see `useSoloAgreementSignings.displayState`.
- *
- * `none` is not a stored value either: it is what a commercial record with no document says, and
- * saying "Draft" there would claim a document exists.
- */
-const SIGNATURE_STATE = {
-  none: { label: "No document", tone: "n" },
-  draft: { label: "Not sent", tone: "opportunity" },
-  sent: { label: "Sent", tone: "warn" },
-  viewed: { label: "Opened", tone: "warn" },
-  partially_signed: { label: "Partly signed", tone: "warn" },
-  completed: { label: "Completed", tone: "ok" },
-  declined: { label: "Declined", tone: "bad" },
-  voided: { label: "Stopped", tone: "n" },
-  expired: { label: "Link expired", tone: "bad" },
-  unrecognised: { label: "Not readable", tone: "n" },
-};
+// The engagement and signature words live in one module (E4-S3 PR-0); see ./sales/agreementVocabulary.
 
 /** The life `agreement-send` gives a signing token, mirrored from `SIGNING_TOKEN_TTL_DAYS` in
  * `_shared/agreements/token.ts`. Stated rather than chosen: the send endpoint takes no duration,
@@ -1719,7 +1679,7 @@ function ScenarioLab({ offers, deals, stages, onAskPaige }) {
   );
 }
 
-export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages = [], submissions = [], submissionsPhase = "ready", submissionsRetry, onOpenCatalog, onOpenClients, onOpenPipeline, truth = null, controlledView = null, onViewChange = null, hideNavigation = false }) {
+export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages = [], submissions = [], submissionsPhase = "ready", submissionsRetry, onOpenCatalog, onOpenClients, onOpenPipeline, truth = null, controlledView = null, onViewChange = null, hideNavigation = false, invoiceAccountEpoch = null }) {
   const sales = useSoloSalesOps();
   const agreements = useSoloCommercialTerms();
   const signings = useSoloAgreementSignings();
@@ -1748,6 +1708,16 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
   // and it never touches the shell's `useSubtabRoute` growth-subtab registry. Overview is the bare
   // default; existing command/revenue/scenarios deep links remain supported.
   const rawView = new URLSearchParams(location.search).get("view");
+  const focusInvoiceIds = new URLSearchParams(location.search).getAll("invoice");
+  const clearInvoiceFocus = () => {
+    const proceed = () => {
+      const query = new URLSearchParams(location.search);
+      query.delete("invoice");
+      navigate({ pathname: location.pathname, search: query.toString() ? `?${query.toString()}` : "", hash: location.hash });
+    };
+    const event = new CustomEvent('paige:sales-before-navigation', { cancelable: true, detail: { proceed } });
+    if (window.dispatchEvent(event)) proceed();
+  };
   const view = controlledView ?? (SALES_VIEWS.some(([id]) => id === rawView) || LEGACY_SALES_VIEWS.includes(rawView) ? rawView : "overview");
   const setView = React.useCallback((next) => {
     if (onViewChange) { onViewChange(next); return; }
@@ -2104,7 +2074,7 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
       {!hideNavigation && <SubNav view={view} setView={setView} />}
       <div id="sales-view-panel" role={hideNavigation ? undefined : "tabpanel"} aria-labelledby={hideNavigation || LEGACY_SALES_VIEWS.includes(view) ? undefined : `sales-view-${view}`} aria-label={LEGACY_SALES_VIEWS.includes(view) ? view === "command" ? "Sales Command" : view === "scenarios" ? "Sales Scenarios" : "Recorded commercial activity" : undefined} className="so-view">
 
-      {["overview", "payments", "invoices", "recurring"].includes(view) && <SalesBillingWorkspace key={view} view={view} integrationsPath={location.pathname.split("/").slice(0, 3).join("/") + "/settings/integrations"} />}
+      {["overview", "payments", "invoices", "recurring"].includes(view) && <SalesBillingWorkspace key={view} view={view} focusInvoiceIds={focusInvoiceIds} onClearInvoiceFocus={clearInvoiceFocus} accountEpoch={`${location.pathname.split("/").slice(0, 3).join("/")}:${invoiceAccountEpoch ?? ""}`} integrationsPath={location.pathname.split("/").slice(0, 3).join("/") + "/settings/integrations"} />}
       {view === "command" && (
         <div className="so-cmd">
           <header className="so-cmd-head">

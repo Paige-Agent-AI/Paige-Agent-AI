@@ -205,7 +205,7 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
   it("verified Solo counts + first-is-default per the live-screen audit", () => {
     const count = (slug: string) => branchBySlug("solo", slug)?.subtabs?.length ?? 0;
     expect(count("operations")).toBe(6);
-    expect(count("command-center")).toBe(4);
+    expect(count("command-center")).toBe(5);
     expect(count("paige")).toBe(5); // +Deep Research (INT-303)
     expect(count("automations")).toBe(3);
     expect(count("clients")).toBe(6);
@@ -218,9 +218,9 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
     expect(count("marketplace")).toBe(4);
     expect(count("settings")).toBe(8);
     const total = SOLO_BRANCHES.reduce((n, b) => n + (b.subtabs?.length ?? 0), 0);
-    expect(total).toBe(72); // Operations adds six; one Settings Analytics destination; Ads moves out of Marketing with its five views
-    // first sub-tab is the screen's default (bare branch renders it) — now Business Game Plan.
-    expect(defaultSubtabSlug("solo", "command-center")).toBe("business-game-plan");
+    expect(total).toBe(73); // Executive extends Command Center; existing departmental destinations remain.
+    // First sub-tab is the screen's default; the bare Command Center opens Executive.
+    expect(defaultSubtabSlug("solo", "command-center")).toBe("executive");
     expect(defaultSubtabSlug("solo", "paige")).toBe("chat");
     expect(defaultSubtabSlug("solo", "sales")).toBe("overview");
     expect(defaultSubtabSlug("solo", "settings")).toBe("setup");
@@ -235,8 +235,9 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
     roundTrip("command-center", "systems-check", "sys");
     roundTrip("command-center", "trust-compass", "compass");
     roundTrip("command-center", "mind", "mind");
-    // `overview` is now a compatibility alias of the new default landing, Business Game Plan.
-    expect(subtabBySlug("solo", "command-center", "overview")?.key).toBe("plan");
+    // E2-6 (2026-10-13): `overview` is the compatibility alias of the Executive landing (the
+    // AI Executive Command Center IS the overview); Business Game Plan keeps its own slug.
+    expect(subtabBySlug("solo", "command-center", "overview")?.key).toBe("exec");
     expect(subtabBySlug("solo", "command-center", "directory")?.key).toBe("mind");
     expect(subtabBySlug("solo", "command-center", "history")?.key).toBe("mind");
     roundTrip("paige", "knowledge", "knowledge");

@@ -7,9 +7,11 @@ describe("platform A2P runtime boundaries", () => {
   it("gates operator sends on platform-only durable consent and registered framing", () => {
     const source = read("supabase/functions/paige-operator-sms-send/index.ts");
     expect(source).toContain('formatPaigeAgentAiSms({');
-    expect(source).toContain('.is("tenant_id", null)');
-    expect(source).toContain('.is("contact_id", null)');
-    expect(source).toContain('.is("revoked_at", null)');
+    // The platform-only, unrevoked, verified-number rules live in the one SQL gate (#2087), proven by
+    // supabase/tests/security_consent_and_form_links.sql; the sender must use it and hold on anything else.
+    expect(source).toContain('admin.rpc("has_sms_consent"');
+    expect(source).toContain("platformConsent !== true");
+    expect(source).not.toContain('.from("communications_consents")');
     expect(source).toContain('reason: "platform_sms_consent_required"');
     expect(source).not.toContain("STOP_SUFFIX");
   });

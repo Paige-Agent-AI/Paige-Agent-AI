@@ -891,6 +891,30 @@ data: [DONE]
     expect(textarea().value).toBe("");
   });
 
+  it("explains a known recovery refusal without claiming a lost connection or replaying the request", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({code:"INTERACTIVE_RECOVERY_READ_ONLY",message_accepted:true},{status:409})));
+    await render(); await type("Review the existing work");
+    await act(async () => { send().click(); await settle(); });
+    expect(host.textContent).toContain("Your message was recorded, but new actions and attachments are on hold");
+    expect(host.textContent).not.toContain("The connection ended before PAIGE confirmed");
+    expect(Array.from(host.querySelectorAll("button")).some(b=>b.textContent==="Retry")).toBe(false);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(host.textContent?.match(/Review the existing work/g)).toHaveLength(1);
+  });
+
+  it.each([
+    {status:502,body:{code:"INTERACTIVE_RECOVERY_READ_ONLY",message_accepted:true}},
+    {status:409,body:{code:"OTHER_REFUSAL",message_accepted:true}},
+    {status:409,body:{code:"INTERACTIVE_RECOVERY_READ_ONLY"}},
+    {status:409,body:{code:"INTERACTIVE_RECOVERY_READ_ONLY",message_accepted:false}},
+  ])("does not infer accepted recovery feedback from $status or contradictory metadata", async ({status,body}) => {
+    vi.stubGlobal("fetch",vi.fn(async()=>Response.json(body,{status})));
+    await render(); await type("Keep refusal truthful");
+    await act(async()=>{send().click();await settle();});
+    expect(host.textContent).not.toContain("Your message was recorded, but new actions and attachments are on hold");
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
   it("Stop during lazy thread creation releases submission readiness for a fresh Send", async () => {
     let resolveThread!: (id: string) => void;
     harness.ensureThread.mockImplementationOnce(() => new Promise<string>((resolve) => { resolveThread = resolve; }));
@@ -907,18 +931,31 @@ data: [DONE]
     expect(textarea().disabled).toBe(false);
   });
 
-  it("a superseded HTTP error body cannot overwrite the newer turn", async () => {
+  it.each([502,409])("a superseded HTTP %s error body cannot overwrite the newer turn", async status => {
     let resolveBody!: (body: unknown) => void;
-    const slowError = { ok: false, status: 502, clone: () => ({ json: () => new Promise((resolve) => { resolveBody = resolve; }) }) };
+    const slowError = { ok: false, status, clone: () => ({ json: () => new Promise((resolve) => { resolveBody = resolve; }) }) };
     const fetchMock = vi.fn().mockResolvedValueOnce(slowError).mockResolvedValueOnce(streamed("current answer"));
     vi.stubGlobal("fetch", fetchMock);
     await render(); await type("old instruction");
     await act(async () => { send().click(); await settle(); });
     await type("new instruction");
     await act(async () => { send().click(); await settle(); });
-    await act(async () => { resolveBody({ message_accepted: true }); await settle(); });
+    await act(async () => { resolveBody({ code:"INTERACTIVE_RECOVERY_READ_ONLY",message_accepted: true }); await settle(); });
     expect(host.textContent).toContain("current answer");
     expect(host.textContent).not.toContain("Check what finished before repeating any action");
+    expect(host.textContent).not.toContain("Your message was recorded, but new actions and attachments are on hold");
+  });
+
+  it("clears refusal wording only for the owner's next deliberate question without replaying the first",async()=>{
+    vi.stubGlobal("fetch",vi.fn().mockResolvedValueOnce(Response.json({code:"INTERACTIVE_RECOVERY_READ_ONLY",message_accepted:true},{status:409})).mockResolvedValueOnce(streamed("existing records answer")));
+    await render();await type("review the first request");
+    await act(async()=>{send().click();await settle();});
+    expect(fetch).toHaveBeenCalledTimes(1);
+    await type("what is already recorded?");
+    await act(async()=>{send().click();await settle();});
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(host.textContent).toContain("existing records answer");
+    expect(host.textContent).not.toContain("Your message was recorded, but new actions and attachments are on hold");
   });
 
   it("Stop preserves the canonical optimistic turn and a next draft without resending work", async () => {
@@ -1052,5 +1089,63 @@ data: [DONE]
     expect(releases).toHaveBeenCalledWith("thread_resumed");
     expect(harness.rail!.activeThreadId).toBe(createdThreadId);
     expect(textarea().value).toBe("focused failed draft");
+  });
+
+  // Reviewer's corrected actual-component fixture: publish a new query array to
+  // hydrate the legitimate switched scope before testing its explicit controls.
+  it.each(["actor", "workspace", "late actor", "late ABA"])("control scope review: %s keeps its own explicit Stop", async (mode) => {
+    const original = { user: harness.userId, tenant: harness.tenantId };
+    let release!: (response: Response) => void;
+    const pending = new Promise<Response>(resolve => { release = resolve; });
+    const stops: string[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (_url, init: RequestInit) => {
+      const body = JSON.parse(String(init.body));
+      if (body.interactive?.kind === "stop") {
+        stops.push(`${harness.userId}:${harness.tenantId}`);
+        return stops.length === 1 ? mode.startsWith("late") ? pending : new Response("{}", { status: 429, headers: { "Retry-After": "60" } }) : new Response("{}", { status: 200 });
+      }
+      if (body.interactive?.kind === "status") return Response.json({ settled: true });
+      return new Response(new ReadableStream({ start() {} }), { status: 200 });
+    }));
+    const stop = async () => act(async () => { host.querySelector<HTMLButtonElement>('button[aria-label="Stop PAIGE response"]')!.click(); await settle(); });
+    await render(); await type("Original actor request");
+    await act(async () => { send().click(); await settle(); }); await stop();
+    expect(stops).toHaveLength(1);
+    harness.userId = mode === "workspace" ? original.user : "other-current-actor";
+    harness.tenantId = "other-current-workspace";
+    harness.ensureThread.mockResolvedValue("thread-other"); harness.threads = [...harness.threads];
+    await render(); await waitForWritable();
+    if (mode === "late ABA") {
+      harness.userId = original.user; harness.tenantId = original.tenant;
+      harness.ensureThread.mockResolvedValue("thread-returned"); harness.threads = [...harness.threads];
+      await render(); await waitForWritable();
+    }
+    if (mode.startsWith("late")) await act(async () => { release(new Response("{}", { status: 429, headers: { "Retry-After": "60" } })); await settle(); });
+    await type("Current actor request"); await act(async () => { send().click(); await settle(); }); await stop();
+    expect(stops).toEqual([`${original.user}:${original.tenant}`, `${harness.userId}:${harness.tenantId}`]);
+  });
+
+  it.each(["actor", "workspace"])("control scope review: status cooldown does not carry to another %s", async mode => {
+    const statuses: string[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (_url, init: RequestInit) => {
+      const body = JSON.parse(String(init.body));
+      if (body.interactive?.kind === "status") {
+        statuses.push(`${harness.userId}:${harness.tenantId}`);
+        return statuses.length === 1 ? new Response("{}", { status: 429, headers: { "Retry-After": "60" } }) : Response.json({ settled: true });
+      }
+      if (body.interactive?.kind === "stop") return new Response("{}", { status: 200 });
+      return new Response(new ReadableStream({ start() {} }), { status: 200 });
+    }));
+    const stop = async () => act(async () => { host.querySelector<HTMLButtonElement>('button[aria-label="Stop PAIGE response"]')!.click(); await settle(); });
+    await render({ liveConversation: true }); await type("Original request");
+    await act(async () => { send().click(); await settle(); }); await stop();
+    expect(statuses).toHaveLength(1);
+    if (mode === "actor") harness.userId = "new-status-actor";
+    harness.tenantId = "new-status-workspace";
+    harness.ensureThread.mockResolvedValue("thread-status-new"); harness.threads = [...harness.threads];
+    await render({ liveConversation: true }); await waitForWritable(); await type("New scope request");
+    await act(async () => { send().click(); await settle(); }); await stop();
+    expect(statuses).toHaveLength(2);
+    expect(statuses[1]).toBe(`${harness.userId}:${harness.tenantId}`);
   });
 });

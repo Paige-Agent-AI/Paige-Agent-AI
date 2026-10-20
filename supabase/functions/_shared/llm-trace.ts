@@ -38,6 +38,8 @@ export function traceAdmin(): SupabaseClient | null {
 /** The minimal correlation context an LLM-call site threads in. All optional — a site with no tenant
  *  in scope still writes an honest row (tenant_id null), never a fabricated one. */
 export interface TraceCtx {
+  /** Private customer AI text stays in its canonical customer-only transcript. */
+  content_policy?: "metadata_only";
   tenant_id?: string | null;
   task_id?: string | null;
   agent_id?: string | null;
@@ -173,6 +175,7 @@ function safeMetadata(meta: Record<string, unknown> | undefined): Record<string,
 }
 
 export interface TraceRow {
+  content_policy?: "metadata_only";
   tenant_id?: string | null;
   /** Owner #489 — the caller's OWN active workspace tenant id, server-derived (never body-supplied),
    *  captured for operator display itemization. Soft ref (no FK); cleanTenantId coerces non-uuid→null. */
@@ -217,8 +220,8 @@ export function traceLLMCall(row: TraceRow): void {
   const admin = traceAdmin();
   if (!admin) return; // no service context → no-op (honest: no trace rather than a fake one)
 
-  const inp = toExcerpt(row.input);
-  const outp = toExcerpt(row.output);
+  const inp = toExcerpt(row.content_policy === "metadata_only" ? null : row.input);
+  const outp = toExcerpt(row.content_policy === "metadata_only" ? null : row.output);
   // A caller that priced its own call wins; otherwise price it here so no path can record tokens
   // without recording what they cost. Only a SUCCEEDED text call is priced: an error carries no
   // usage, and a per-artifact modality (image/3D/voice) is priced per artifact by the router, which
@@ -257,7 +260,8 @@ export function traceLLMCall(row: TraceRow): void {
     input_len: inp.len,
     output_len: outp.len,
     error_class: row.error_class ?? null,
-    error_message: row.error_message ? scrubSecrets(String(row.error_message)).slice(0, EXCERPT_CAP) : null,
+    error_message: row.content_policy === "metadata_only" ? null
+      : row.error_message ? scrubSecrets(String(row.error_message)).slice(0, EXCERPT_CAP) : null,
     deliverable_id: row.deliverable_id ?? null,
     doctrine_gate_hits: row.doctrine_gate_hits ?? null,
     router_version: ROUTER_VERSION,

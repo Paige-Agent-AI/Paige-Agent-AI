@@ -127,6 +127,11 @@ CREATE TABLE public.growth_forms (
   id uuid PRIMARY KEY, tenant_id uuid NOT NULL, name text, status text NOT NULL DEFAULT 'active',
   auto_create_deal boolean NOT NULL DEFAULT false, pipeline_id uuid, stage_id uuid, created_by uuid,
   updated_at timestamptz NOT NULL DEFAULT now());
+-- Experience 03 S1b (20271026100000) reads a form's campaign links; with none, every filing below is the
+-- default-pipeline filing this proof was written for, now run through the S1b body production runs.
+CREATE TABLE public.campaign_briefs (id uuid PRIMARY KEY, tenant_id uuid NOT NULL, name text NOT NULL DEFAULT 'Campaign',
+  lifecycle_status text NOT NULL DEFAULT 'draft', pipeline_id uuid);
+CREATE TABLE public.campaign_brief_asset_links (tenant_id uuid NOT NULL, brief_id uuid NOT NULL, asset_kind text NOT NULL, asset_id uuid NOT NULL);
 CREATE TABLE public.growth_automation_targets (slug text PRIMARY KEY, executor text NOT NULL, enabled boolean NOT NULL DEFAULT true);
 CREATE TABLE public.growth_form_automations (
   id uuid PRIMARY KEY, form_id uuid NOT NULL, tenant_id uuid NOT NULL, target_slug text NOT NULL,
@@ -180,6 +185,8 @@ $$ SELECT COALESCE(auth.role(), '') NOT IN ('anon', 'authenticated', 'service_ro
 \ir ../migrations/20270588326001_solo_form_deal_identity.sql
 \ir ../migrations/20271021042001_ads_intake_default_pipeline_and_lead_funnel.sql
 \ir ../migrations/20271021042001_ads_intake_default_pipeline_and_lead_funnel.sql
+\ir ../migrations/20271026100000_exp03_campaign_pipeline_routing.sql
+\ir ../migrations/20271026100000_exp03_campaign_pipeline_routing.sql
 
 -- ── Fixtures. A = business with a default pipeline, under agency AG; B = business with none. ──
 -- U1 owner of A · U2 plain member of A · U3 owner of B · U4 owner of agency AG (A's parent) · U5 platform owner.

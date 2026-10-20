@@ -1,0 +1,161 @@
+{
+  "classification": "HISTORICAL ONLY",
+  "oldAccessibility": {
+    "artifact": "3D5C2C…DE0E4",
+    "result": "114 of 116 checks passed; two immediate native-dialog wrap assumptions failed. Native browser chrome focus was distinguished from background content escape rather than claiming false PASS."
+  },
+  "repairedOldChat": {
+    "artifact": "9E97EE2F0F7FF4891BB6F9325F36EE6D9EE870F1892B94B1957CCD29C085429C",
+    "result": "130 checks / 44 captures, separate old Chat-only artifact; files remain untouched."
+  },
+  "prior64and13": "Earlier 64/13 proof applies to its recorded hashes only.",
+  "chatCalendarRounds": [
+    {
+      "folder": "round-1",
+      "file": "browser-proof.json",
+      "artifactSHA256": "0D0141E47D0D36BD28AD7A9DB850F26C61BE23357AF7D32D82CAE62F072D40F6",
+      "summary": {
+        "checks": 16,
+        "passed": 15,
+        "failed": [
+          "browser drive completion"
+        ],
+        "captures": 6
+      },
+      "generatedAt": "2026-10-13T03:54:27.050Z",
+      "classification": "HISTORICAL: not current artifact proof"
+    },
+    {
+      "folder": "round-2",
+      "file": "browser-proof.json",
+      "artifactSHA256": "201AF305E4EC13EF16CFD44D0C4238C81C6DB94BDDC0C70309D4DD77282EC181",
+      "summary": {
+        "checks": 23,
+        "passed": 22,
+        "failed": [
+          "browser drive completion"
+        ],
+        "captures": 8
+      },
+      "generatedAt": "2026-10-13T03:58:56.664Z",
+      "classification": "HISTORICAL: not current artifact proof"
+    },
+    {
+      "folder": "confirmation",
+      "file": "browser-proof.json",
+      "artifactSHA256": "201AF305E4EC13EF16CFD44D0C4238C81C6DB94BDDC0C70309D4DD77282EC181",
+      "summary": {
+        "checks": 157,
+        "passed": 157,
+        "failed": [],
+        "captures": 73
+      },
+      "generatedAt": "2026-10-13T03:59:53.257Z",
+      "classification": "HISTORICAL: not current artifact proof"
+    },
+    {
+      "folder": "final",
+      "file": "browser-proof.json",
+      "artifactSHA256": "0770EF81C72FAE788691F136FFB661C6264FFEFCCB9FFFD981186EBDEB353019",
+      "summary": {
+        "checks": 157,
+        "passed": 157,
+        "failed": [],
+        "captures": 73
+      },
+      "generatedAt": "2026-10-13T04:03:50.967Z",
+      "classification": "HISTORICAL: not current artifact proof"
+    },
+    {
+      "folder": "reviewer-final",
+      "file": "browser-proof.json",
+      "artifactSHA256": "1F21452C804E15F50A1D88D6DF0A98041F9C003500FA9FFFAB7B43776307D868",
+      "summary": {
+        "checks": 157,
+        "passed": 157,
+        "failed": [],
+        "captures": 73
+      },
+      "generatedAt": "2026-10-13T04:07:05.424Z",
+      "classification": "HISTORICAL: not current artifact proof"
+    },
+    {
+      "folder": "reviewer-final",
+      "file": "contract-negative-proof.json",
+      "artifactSHA256": "1F21452C804E15F50A1D88D6DF0A98041F9C003500FA9FFFAB7B43776307D868",
+      "summary": {
+        "checks": 14,
+        "passed": 14,
+        "failed": [],
+        "captures": 5
+      },
+      "generatedAt": "2026-10-13T04:06:59.497Z",
+      "classification": "HISTORICAL: not current artifact proof"
+    },
+    {
+      "folder": "reviewer-final",
+      "file": "reviewer-branch-proof.json",
+      "artifactSHA256": "1F21452C804E15F50A1D88D6DF0A98041F9C003500FA9FFFAB7B43776307D868",
+      "summary": {
+        "checks": 11,
+        "passed": 11,
+        "failed": [],
+        "captures": 8
+      },
+      "generatedAt": "2026-10-13T04:07:02.712Z",
+      "classification": "HISTORICAL: not current artifact proof"
+    },
+    {
+      "folder": "reviewer-final",
+      "file": "stale-recapture-proof.json",
+      "artifactSHA256": "1F21452C804E15F50A1D88D6DF0A98041F9C003500FA9FFFAB7B43776307D868",
+      "summary": null,
+      "generatedAt": "2026-10-13T04:11:27.561Z",
+      "classification": "HISTORICAL: not current artifact proof"
+    },
+    {
+      "folder": "projection-final",
+      "file": "browser-proof.json",
+      "artifactSHA256": "DDCAF8A128D788B5E1BFD14960CDEE514595C5FCC743B4DA174AE1E9720B1183",
+      "summary": {
+        "checks": 157,
+        "passed": 157,
+        "failed": [],
+        "captures": 73
+      },
+      "generatedAt": "2026-10-13T04:18:31.608Z",
+      "classification": "HISTORICAL: not current artifact proof"
+    },
+    {
+      "folder": "projection-final",
+      "file": "contract-negative-proof.json",
+      "artifactSHA256": "DDCAF8A128D788B5E1BFD14960CDEE514595C5FCC743B4DA174AE1E9720B1183",
+      "summary": {
+        "checks": 14,
+        "passed": 14,
+        "failed": [],
+        "captures": 5
+      },
+      "generatedAt": "2026-10-13T04:21:13.288Z",
+      "classification": "HISTORICAL: not current artifact proof"
+    },
+    {
+      "folder": "projection-final",
+      "file": "reviewer-branch-proof.json",
+      "artifactSHA256": "DDCAF8A128D788B5E1BFD14960CDEE514595C5FCC743B4DA174AE1E9720B1183",
+      "summary": {
+        "checks": 11,
+        "passed": 11,
+        "failed": [],
+        "captures": 8
+      },
+      "generatedAt": "2026-10-13T04:18:30.658Z",
+      "classification": "HISTORICAL: not current artifact proof"
+    }
+  ],
+  "reviewCorrections": [
+    "DDCAF whole packet had 182 PASS / 86 captures; reviewer opened all 86 and required visible dates for off-hours Week markers.",
+    "Earlier invalid screenshot framing for stale refusal, invalid business zone and offline retained proposal was recorded and replaced by actual current fresh captures; historical bytes and proof folders are preserved."
+  ],
+  "current": "Current 16CE artifact reran the complete browser flow and targeted branches after the date correction; no old counts are carried forward."
+}

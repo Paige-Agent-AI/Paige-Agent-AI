@@ -1,0 +1,87 @@
+{
+  "source_sha256": "1014c3ce62033d871ab039f43f3958ce5c9270f36c24ef1957765b46b2b583bd",
+  "cases": [
+    {
+      "width": 320,
+      "height": 568,
+      "theme": "light",
+      "geometry": {
+        "overflow": false,
+        "contentWidth": 288
+      },
+      "shot": "320-light.png"
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "theme": "dark",
+      "geometry": {
+        "overflow": false,
+        "contentWidth": 288
+      },
+      "shot": "320-dark.png"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "geometry": {
+        "overflow": false,
+        "contentWidth": 358
+      },
+      "shot": "390-light.png"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "geometry": {
+        "overflow": false,
+        "contentWidth": 358
+      },
+      "shot": "390-dark.png"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "theme": "light",
+      "geometry": {
+        "overflow": false,
+        "contentWidth": 848
+      },
+      "shot": "900-light.png"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "theme": "dark",
+      "geometry": {
+        "overflow": false,
+        "contentWidth": 848
+      },
+      "shot": "900-dark.png"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "theme": "light",
+      "geometry": {
+        "overflow": false,
+        "contentWidth": 848
+      },
+      "shot": "1366-light.png"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "theme": "dark",
+      "geometry": {
+        "overflow": false,
+        "contentWidth": 848
+      },
+      "shot": "1366-dark.png"
+    }
+  ],
+  "errors": [],
+  "boundary": "Offline deterministic prototype using actual UI primitives/tokens; network blocked. Not Auth, native haptics, production persistence, hosted real-account or full shell proof."
+}

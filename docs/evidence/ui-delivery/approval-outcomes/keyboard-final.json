@@ -1,0 +1,1305 @@
+[
+  {
+    "label": "mobile-unknown-refresh",
+    "source": "approval-light-390x768-closed-unknown.html",
+    "active": {
+      "label": null,
+      "role": null,
+      "text": "Refresh status"
+    },
+    "geometry": {
+      "bodyScrollTop": 0,
+      "buttons": [
+        {
+          "disabled": true,
+          "focusVisible": false,
+          "fullyVisible": true,
+          "outline": "rgb(23, 19, 49) none 2.4px",
+          "rect": {
+            "height": 36,
+            "width": 76.4000015258789,
+            "x": 141.9499969482422,
+            "y": 528.6000366210938
+          },
+          "text": "Approve",
+          "uncovered": false
+        },
+        {
+          "disabled": false,
+          "focusVisible": false,
+          "fullyVisible": true,
+          "outline": "rgb(23, 19, 49) none 2.4px",
+          "rect": {
+            "height": 36,
+            "width": 53.41250228881836,
+            "x": 224.3500061035156,
+            "y": 528.6000366210938
+          },
+          "text": "View",
+          "uncovered": true
+        },
+        {
+          "disabled": true,
+          "focusVisible": false,
+          "fullyVisible": true,
+          "outline": "rgb(23, 19, 49) none 2.4px",
+          "rect": {
+            "height": 36,
+            "width": 69.4375,
+            "x": 283.76251220703125,
+            "y": 528.6000366210938
+          },
+          "text": "Decline",
+          "uncovered": false
+        },
+        {
+          "disabled": false,
+          "focusVisible": true,
+          "fullyVisible": true,
+          "outline": "rgb(101, 90, 150) solid 1.6px",
+          "rect": {
+            "height": 36,
+            "width": 109.5875015258789,
+            "x": 99.5999984741211,
+            "y": 652.6000366210938
+          },
+          "text": "Refresh status",
+          "uncovered": true
+        }
+      ],
+      "client": [
+        390,
+        768
+      ],
+      "description": {
+        "scrollWidth": 254,
+        "text": "Read the complete customer notes.\nPreserve ownership, exact approvals and all existing context. No message is sent by this internal task.",
+        "width": 254
+      },
+      "fontLoaded": true,
+      "inner": [
+        390,
+        768
+      ],
+      "list": {
+        "rect": {
+          "height": 556.6000366210938,
+          "width": 277.20001220703125,
+          "x": 86.80000305175781,
+          "y": 142.8000030517578
+        },
+        "scrollWidth": 277,
+        "width": 277
+      },
+      "page": [
+        390,
+        768
+      ],
+      "paige": "closed",
+      "scrollOwners": [
+        {
+          "clientHeight": 709,
+          "overflowY": "auto",
+          "rect": {
+            "height": 709.2000122070312,
+            "width": 318.3999938964844,
+            "x": 72,
+            "y": 58.79999923706055
+          },
+          "scrollHeight": 709,
+          "scrollTop": 0,
+          "selector": "#tenant-shell-main"
+        },
+        {
+          "clientHeight": 655,
+          "overflowY": "visible",
+          "rect": {
+            "height": 654.7999877929688,
+            "width": 318.3999938964844,
+            "x": 72,
+            "y": 113.20000457763672
+          },
+          "scrollHeight": 655,
+          "scrollTop": 0,
+          "selector": "#command-panel-plan"
+        },
+        {
+          "clientHeight": 655,
+          "overflowY": "hidden",
+          "rect": {
+            "height": 654.7999877929688,
+            "width": 318.3999938964844,
+            "x": 72,
+            "y": 113.20000457763672
+          },
+          "scrollHeight": 655,
+          "scrollTop": 0,
+          "selector": ".gp"
+        },
+        {
+          "clientHeight": 412,
+          "overflowY": "auto",
+          "rect": {
+            "height": 411.5500183105469,
+            "width": 290.3999938964844,
+            "x": 86,
+            "y": 340.45001220703125
+          },
+          "scrollHeight": 1419,
+          "scrollTop": 774.4000244140625,
+          "selector": ".sd-field"
+        },
+        {
+          "clientHeight": 973,
+          "overflowY": "visible",
+          "rect": {
+            "height": 972.7999877929688,
+            "width": 280.8000183105469,
+            "x": 86,
+            "y": 12
+          },
+          "scrollHeight": 973,
+          "scrollTop": 0,
+          "selector": ".sd-rail"
+        },
+        {
+          "clientHeight": 432,
+          "overflowY": "visible",
+          "rect": {
+            "height": 431.9500122070313,
+            "width": 280.8000183105469,
+            "x": 86,
+            "y": -433.9500122070313
+          },
+          "scrollHeight": 432,
+          "scrollTop": 0,
+          "selector": ".sd-col"
+        }
+      ],
+      "statuses": [
+        {
+          "fullyVisible": true,
+          "rect": {
+            "height": 80,
+            "width": 253.6000061035156,
+            "x": 99.5999984741211,
+            "y": 568.6000366210938
+          },
+          "text": "The outcome could not be confirmed. It may have gone through. Inspect the record and refresh before making another decision.",
+          "uncovered": true
+        }
+      ],
+      "theme": "light",
+      "title": {
+        "scrollWidth": 254,
+        "text": "Review the new contact, verify their preferred next step, and prepare a clear owner follow-up. Preserve the complete request and check these long reference details: contactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreference",
+        "width": 254,
+        "wrap": "break-word"
+      },
+      "layout": {
+        "col": {
+          "lastChild": {
+            "bottom": -2,
+            "height": 80.0999984741211,
+            "width": 278.8000183105469,
+            "x": 86,
+            "y": -82.0999984741211
+          },
+          "rect": {
+            "bottom": -2,
+            "height": 431.9500122070313,
+            "width": 280.8000183105469,
+            "x": 86,
+            "y": -433.9500122070313
+          }
+        },
+        "field": {
+          "autoRows": "max-content",
+          "columns": "280.8px",
+          "rect": {
+            "bottom": 752.0000305175781,
+            "height": 411.5500183105469,
+            "width": 290.3999938964844,
+            "x": 86,
+            "y": 340.45001220703125
+          },
+          "scrollTop": 774.4000244140625
+        },
+        "header": {
+          "columns": "290.4px",
+          "rect": {
+            "bottom": 265.2000045776367,
+            "height": 138,
+            "width": 290.3999938964844,
+            "x": 86,
+            "y": 127.20000457763672
+          },
+          "subtitle": {
+            "bottom": 217.1999969482422,
+            "height": 37.5,
+            "width": 290.3999938964844,
+            "x": 86,
+            "y": 179.6999969482422
+          }
+        },
+        "incumbentFrame": true,
+        "innerTheme": "light",
+        "rail": {
+          "overflow": "visible",
+          "rect": {
+            "bottom": 984.7999877929688,
+            "height": 972.7999877929688,
+            "width": 280.8000183105469,
+            "x": 86,
+            "y": 12
+          },
+          "scrollTop": 0
+        }
+      }
+    },
+    "png": {
+      "name": "keyboard-mobile-unknown-refresh.png",
+      "width": 390,
+      "height": 768
+    },
+    "proofClass": "SYNTHETIC_STATIC_NATIVE_KEYBOARD"
+  },
+  {
+    "label": "mobile-decline-cancel",
+    "source": "approval-dark-390x768-closed-decline.html",
+    "active": {
+      "label": null,
+      "role": null,
+      "text": "Cancel"
+    },
+    "geometry": {
+      "bodyScrollTop": 0,
+      "buttons": [
+        {
+          "disabled": false,
+          "focusVisible": false,
+          "fullyVisible": true,
+          "outline": "rgb(239, 236, 250) none 2.4px",
+          "rect": {
+            "height": 36,
+            "width": 76.4000015258789,
+            "x": 141.9499969482422,
+            "y": 428.6000061035156
+          },
+          "text": "Approve",
+          "uncovered": true
+        },
+        {
+          "disabled": false,
+          "focusVisible": false,
+          "fullyVisible": true,
+          "outline": "rgb(239, 236, 250) none 2.4px",
+          "rect": {
+            "height": 36,
+            "width": 53.41250228881836,
+            "x": 224.3500061035156,
+            "y": 428.6000061035156
+          },
+          "text": "View",
+          "uncovered": true
+        },
+        {
+          "disabled": false,
+          "focusVisible": false,
+          "fullyVisible": true,
+          "outline": "rgb(239, 236, 250) none 2.4px",
+          "rect": {
+            "height": 36,
+            "width": 69.4375,
+            "x": 283.76251220703125,
+            "y": 428.6000061035156
+          },
+          "text": "Decline",
+          "uncovered": true
+        },
+        {
+          "disabled": false,
+          "focusVisible": true,
+          "fullyVisible": true,
+          "outline": "rgb(156, 143, 224) solid 1.6px",
+          "rect": {
+            "height": 36,
+            "width": 64.7249984741211,
+            "x": 162.75,
+            "y": 594.4000244140625
+          },
+          "text": "Cancel",
+          "uncovered": true
+        },
+        {
+          "disabled": true,
+          "focusVisible": false,
+          "fullyVisible": true,
+          "outline": "rgb(239, 236, 250) none 2.4px",
+          "rect": {
+            "height": 36,
+            "width": 110.9250030517578,
+            "x": 233.4750061035156,
+            "y": 594.4000244140625
+          },
+          "text": "Decline action",
+          "uncovered": false
+        }
+      ],
+      "client": [
+        390,
+        768
+      ],
+      "description": {
+        "scrollWidth": 254,
+        "text": "Read the complete customer notes.\nPreserve ownership, exact approvals and all existing context. No message is sent by this internal task.",
+        "width": 254
+      },
+      "fontLoaded": true,
+      "inner": [
+        390,
+        768
+      ],
+      "list": {
+        "rect": {
+          "height": 607.2000122070312,
+          "width": 277.20001220703125,
+          "x": 86.80000305175781,
+          "y": 42.79999923706055
+        },
+        "scrollWidth": 277,
+        "width": 277
+      },
+      "page": [
+        390,
+        768
+      ],
+      "paige": "closed",
+      "scrollOwners": [
+        {
+          "clientHeight": 709,
+          "overflowY": "auto",
+          "rect": {
+            "height": 709.2000122070312,
+            "width": 318.3999938964844,
+            "x": 72,
+            "y": 58.79999923706055
+          },
+          "scrollHeight": 709,
+          "scrollTop": 0,
+          "selector": "#tenant-shell-main"
+        },
+        {
+          "clientHeight": 655,
+          "overflowY": "visible",
+          "rect": {
+            "height": 654.7999877929688,
+            "width": 318.3999938964844,
+            "x": 72,
+            "y": 113.20000457763672
+          },
+          "scrollHeight": 655,
+          "scrollTop": 0,
+          "selector": "#command-panel-plan"
+        },
+        {
+          "clientHeight": 655,
+          "overflowY": "hidden",
+          "rect": {
+            "height": 654.7999877929688,
+            "width": 318.3999938964844,
+            "x": 72,
+            "y": 113.20000457763672
+          },
+          "scrollHeight": 655,
+          "scrollTop": 0,
+          "selector": ".gp"
+        },
+        {
+          "clientHeight": 412,
+          "overflowY": "auto",
+          "rect": {
+            "height": 411.5500183105469,
+            "width": 290.3999938964844,
+            "x": 86,
+            "y": 340.45001220703125
+          },
+          "scrollHeight": 1469,
+          "scrollTop": 874.4000244140625,
+          "selector": ".sd-field"
+        },
+        {
+          "clientHeight": 1023,
+          "overflowY": "visible",
+          "rect": {
+            "height": 1023.4000244140624,
+            "width": 280.8000183105469,
+            "x": 86,
+            "y": -88
+          },
+          "scrollHeight": 1023,
+          "scrollTop": 0,
+          "selector": ".sd-rail"
+        },
+        {
+          "clientHeight": 432,
+          "overflowY": "visible",
+          "rect": {
+            "height": 431.9500122070313,
+            "width": 280.8000183105469,
+            "x": 86,
+            "y": -533.9500122070312
+          },
+          "scrollHeight": 432,
+          "scrollTop": 0,
+          "selector": ".sd-col"
+        }
+      ],
+      "statuses": [],
+      "theme": "dark",
+      "title": {
+        "scrollWidth": 254,
+        "text": "Review the new contact, verify their preferred next step, and prepare a clear owner follow-up. Preserve the complete request and check these long reference details: contactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreference",
+        "width": 254,
+        "wrap": "break-word"
+      },
+      "layout": {
+        "col": {
+          "lastChild": {
+            "bottom": -102.00000762939452,
+            "height": 80.0999984741211,
+            "width": 278.8000183105469,
+            "x": 86,
+            "y": -182.1000061035156
+          },
+          "rect": {
+            "bottom": -102,
+            "height": 431.9500122070313,
+            "width": 280.8000183105469,
+            "x": 86,
+            "y": -533.9500122070312
+          }
+        },
+        "field": {
+          "autoRows": "max-content",
+          "columns": "280.8px",
+          "rect": {
+            "bottom": 752.0000305175781,
+            "height": 411.5500183105469,
+            "width": 290.3999938964844,
+            "x": 86,
+            "y": 340.45001220703125
+          },
+          "scrollTop": 874.4000244140625
+        },
+        "header": {
+          "columns": "290.4px",
+          "rect": {
+            "bottom": 265.2000045776367,
+            "height": 138,
+            "width": 290.3999938964844,
+            "x": 86,
+            "y": 127.20000457763672
+          },
+          "subtitle": {
+            "bottom": 217.1999969482422,
+            "height": 37.5,
+            "width": 290.3999938964844,
+            "x": 86,
+            "y": 179.6999969482422
+          }
+        },
+        "incumbentFrame": true,
+        "innerTheme": "dark",
+        "rail": {
+          "overflow": "visible",
+          "rect": {
+            "bottom": 935.4000244140624,
+            "height": 1023.4000244140624,
+            "width": 280.8000183105469,
+            "x": 86,
+            "y": -88
+          },
+          "scrollTop": 0
+        }
+      }
+    },
+    "png": {
+      "name": "keyboard-mobile-decline-cancel.png",
+      "width": 390,
+      "height": 768
+    },
+    "proofClass": "SYNTHETIC_STATIC_NATIVE_KEYBOARD"
+  },
+  {
+    "label": "desktop-details-close",
+    "source": "approval-dark-1536x770-open-details.html",
+    "active": {
+      "label": null,
+      "role": null,
+      "text": "Close details"
+    },
+    "geometry": {
+      "bodyScrollTop": 0,
+      "buttons": [
+        {
+          "disabled": false,
+          "focusVisible": false,
+          "fullyVisible": true,
+          "outline": "rgb(239, 236, 250) none 2.4px",
+          "rect": {
+            "height": 36,
+            "width": 76.4000015258789,
+            "x": 752.1124877929688,
+            "y": 498.6000061035156
+          },
+          "text": "Approve",
+          "uncovered": true
+        },
+        {
+          "disabled": false,
+          "focusVisible": false,
+          "fullyVisible": true,
+          "outline": "rgb(239, 236, 250) none 2.4px",
+          "rect": {
+            "height": 36,
+            "width": 53.41250228881836,
+            "x": 834.5125122070312,
+            "y": 498.6000061035156
+          },
+          "text": "View",
+          "uncovered": true
+        },
+        {
+          "disabled": false,
+          "focusVisible": false,
+          "fullyVisible": true,
+          "outline": "rgb(239, 236, 250) none 2.4px",
+          "rect": {
+            "height": 36,
+            "width": 69.4375,
+            "x": 893.9249877929688,
+            "y": 498.6000061035156
+          },
+          "text": "Decline",
+          "uncovered": true
+        },
+        {
+          "disabled": false,
+          "focusVisible": true,
+          "fullyVisible": true,
+          "outline": "rgb(156, 143, 224) solid 1.6px",
+          "rect": {
+            "height": 36,
+            "width": 101.1500015258789,
+            "x": 730.3875122070312,
+            "y": 643.4000244140625
+          },
+          "text": "Close details",
+          "uncovered": true
+        }
+      ],
+      "client": [
+        1536,
+        770
+      ],
+      "description": {
+        "scrollWidth": 242,
+        "text": "Read the complete customer notes.\nPreserve ownership, exact approvals and all existing context. No message is sent by this internal task.",
+        "width": 242
+      },
+      "fontLoaded": true,
+      "inner": [
+        1536,
+        770
+      ],
+      "list": {
+        "rect": {
+          "height": 606.2000122070312,
+          "width": 265.375,
+          "x": 708.7875366210938,
+          "y": 92.8000030517578
+        },
+        "scrollWidth": 265,
+        "width": 265
+      },
+      "page": [
+        1536,
+        770
+      ],
+      "paige": "open",
+      "scrollOwners": [
+        {
+          "clientHeight": 704,
+          "overflowY": "auto",
+          "rect": {
+            "height": 704.4000244140625,
+            "width": 797.7625122070312,
+            "x": 216,
+            "y": 66
+          },
+          "scrollHeight": 704,
+          "scrollTop": 0,
+          "selector": "#tenant-shell-main"
+        },
+        {
+          "clientHeight": 660,
+          "overflowY": "visible",
+          "rect": {
+            "height": 659.6000366210938,
+            "width": 797.7625122070312,
+            "x": 216,
+            "y": 110.8000030517578
+          },
+          "scrollHeight": 660,
+          "scrollTop": 0,
+          "selector": "#command-panel-plan"
+        },
+        {
+          "clientHeight": 660,
+          "overflowY": "hidden",
+          "rect": {
+            "height": 659.6000366210938,
+            "width": 797.7625122070312,
+            "x": 216,
+            "y": 110.8000030517578
+          },
+          "scrollHeight": 660,
+          "scrollTop": 0,
+          "selector": ".gp"
+        },
+        {
+          "clientHeight": 476,
+          "overflowY": "visible",
+          "rect": {
+            "height": 475.6000061035156,
+            "width": 741.7625122070312,
+            "x": 244,
+            "y": 278.8000183105469
+          },
+          "scrollHeight": 476,
+          "scrollTop": 0,
+          "selector": ".sd-field"
+        },
+        {
+          "clientHeight": 476,
+          "overflowY": "auto",
+          "rect": {
+            "height": 475.6000061035156,
+            "width": 277.7749938964844,
+            "x": 707.9874877929688,
+            "y": 278.8000183105469
+          },
+          "scrollHeight": 1034,
+          "scrollTop": 316.79998779296875,
+          "selector": ".sd-rail"
+        },
+        {
+          "clientHeight": 476,
+          "overflowY": "auto",
+          "rect": {
+            "height": 475.6000061035156,
+            "width": 449.9875183105469,
+            "x": 244,
+            "y": 278.8000183105469
+          },
+          "scrollHeight": 476,
+          "scrollTop": 0,
+          "selector": ".sd-col"
+        }
+      ],
+      "statuses": [],
+      "theme": "dark",
+      "title": {
+        "scrollWidth": 242,
+        "text": "Review the new contact, verify their preferred next step, and prepare a clear owner follow-up. Preserve the complete request and check these long reference details: contactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreference",
+        "width": 242,
+        "wrap": "break-word"
+      },
+      "layout": {
+        "col": {
+          "lastChild": {
+            "bottom": 660.7500228881836,
+            "height": 80.0999984741211,
+            "width": 447.9875183105469,
+            "x": 244,
+            "y": 580.6500244140625
+          },
+          "rect": {
+            "bottom": 754.4000244140625,
+            "height": 475.6000061035156,
+            "width": 449.9875183105469,
+            "x": 244,
+            "y": 278.8000183105469
+          }
+        },
+        "field": {
+          "autoRows": "auto",
+          "columns": "449.987px 277.775px",
+          "rect": {
+            "bottom": 754.4000244140625,
+            "height": 475.6000061035156,
+            "width": 741.7625122070312,
+            "x": 244,
+            "y": 278.8000183105469
+          },
+          "scrollTop": 0
+        },
+        "header": {
+          "columns": "499.975px 227.788px",
+          "rect": {
+            "bottom": 203.5500030517578,
+            "height": 78.75,
+            "width": 741.7625122070312,
+            "x": 244,
+            "y": 124.8000030517578
+          },
+          "subtitle": {
+            "bottom": 203.5500030517578,
+            "height": 18.75,
+            "width": 444.5750122070313,
+            "x": 244,
+            "y": 184.8000030517578
+          }
+        },
+        "incumbentFrame": true,
+        "innerTheme": "dark",
+        "rail": {
+          "overflow": "auto",
+          "rect": {
+            "bottom": 754.4000244140625,
+            "height": 475.6000061035156,
+            "width": 277.7749938964844,
+            "x": 707.9874877929688,
+            "y": 278.8000183105469
+          },
+          "scrollTop": 316.79998779296875
+        }
+      }
+    },
+    "png": {
+      "name": "keyboard-desktop-details-close.png",
+      "width": 1536,
+      "height": 770
+    },
+    "proofClass": "SYNTHETIC_STATIC_NATIVE_KEYBOARD"
+  },
+  {
+    "label": "reflow-details-close",
+    "source": "approval-dark-768x384-closed-details.html",
+    "active": {
+      "label": null,
+      "role": null,
+      "text": "Close details"
+    },
+    "geometry": {
+      "bodyScrollTop": 0,
+      "buttons": [
+        {
+          "disabled": false,
+          "focusVisible": false,
+          "fullyVisible": false,
+          "outline": "rgb(239, 236, 250) none 2.4px",
+          "rect": {
+            "height": 36,
+            "width": 76.4000015258789,
+            "x": 516.6625366210938,
+            "y": 206.1999969482422
+          },
+          "text": "Approve",
+          "uncovered": false
+        },
+        {
+          "disabled": false,
+          "focusVisible": false,
+          "fullyVisible": false,
+          "outline": "rgb(239, 236, 250) none 2.4px",
+          "rect": {
+            "height": 36,
+            "width": 53.41250228881836,
+            "x": 599.0625,
+            "y": 206.1999969482422
+          },
+          "text": "View",
+          "uncovered": false
+        },
+        {
+          "disabled": false,
+          "focusVisible": false,
+          "fullyVisible": false,
+          "outline": "rgb(239, 236, 250) none 2.4px",
+          "rect": {
+            "height": 36,
+            "width": 69.4375,
+            "x": 658.4750366210938,
+            "y": 206.1999969482422
+          },
+          "text": "Decline",
+          "uncovered": false
+        },
+        {
+          "disabled": false,
+          "focusVisible": true,
+          "fullyVisible": true,
+          "outline": "rgb(156, 143, 224) solid 1.6px",
+          "rect": {
+            "height": 36,
+            "width": 101.1500015258789,
+            "x": 111.2874984741211,
+            "y": 311
+          },
+          "text": "Close details",
+          "uncovered": true
+        }
+      ],
+      "client": [
+        768,
+        384
+      ],
+      "description": {
+        "scrollWidth": 625,
+        "text": "Read the complete customer notes.\nPreserve ownership, exact approvals and all existing context. No message is sent by this internal task.",
+        "width": 625
+      },
+      "fontLoaded": true,
+      "inner": [
+        768,
+        384
+      ],
+      "list": {
+        "rect": {
+          "height": 366.8000183105469,
+          "width": 649.0250244140625,
+          "x": 89.6875,
+          "y": -0.20000000298023224
+        },
+        "scrollWidth": 649,
+        "width": 649
+      },
+      "page": [
+        768,
+        384
+      ],
+      "paige": "closed",
+      "scrollOwners": [
+        {
+          "clientHeight": 318,
+          "overflowY": "auto",
+          "rect": {
+            "height": 318,
+            "width": 696,
+            "x": 72,
+            "y": 66
+          },
+          "scrollHeight": 318,
+          "scrollTop": 0,
+          "selector": "#tenant-shell-main"
+        },
+        {
+          "clientHeight": 273,
+          "overflowY": "visible",
+          "rect": {
+            "height": 273.20001220703125,
+            "width": 696,
+            "x": 72,
+            "y": 110.8000030517578
+          },
+          "scrollHeight": 273,
+          "scrollTop": 0,
+          "selector": "#command-panel-plan"
+        },
+        {
+          "clientHeight": 273,
+          "overflowY": "hidden",
+          "rect": {
+            "height": 273.20001220703125,
+            "width": 696,
+            "x": 72,
+            "y": 110.8000030517578
+          },
+          "scrollHeight": 273,
+          "scrollTop": 0,
+          "selector": ".gp"
+        },
+        {
+          "clientHeight": 78,
+          "overflowY": "auto",
+          "rect": {
+            "height": 77.95000457763672,
+            "width": 662.2250366210938,
+            "x": 88.88750457763672,
+            "y": 290.0500183105469
+          },
+          "scrollHeight": 1074,
+          "scrollTop": 728,
+          "selector": ".sd-field"
+        },
+        {
+          "clientHeight": 725,
+          "overflowY": "visible",
+          "rect": {
+            "height": 724.9000244140625,
+            "width": 652.625,
+            "x": 88.88750457763672,
+            "y": -89
+          },
+          "scrollHeight": 725,
+          "scrollTop": 0,
+          "selector": ".sd-rail"
+        },
+        {
+          "clientHeight": 335,
+          "overflowY": "visible",
+          "rect": {
+            "height": 334.95001220703125,
+            "width": 652.625,
+            "x": 88.88750457763672,
+            "y": -437.9500122070313
+          },
+          "scrollHeight": 335,
+          "scrollTop": 0,
+          "selector": ".sd-col"
+        }
+      ],
+      "statuses": [],
+      "theme": "dark",
+      "title": {
+        "scrollWidth": 625,
+        "text": "Review the new contact, verify their preferred next step, and prepare a clear owner follow-up. Preserve the complete request and check these long reference details: contactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreference",
+        "width": 625,
+        "wrap": "break-word"
+      },
+      "layout": {
+        "col": {
+          "lastChild": {
+            "bottom": -103.00000762939452,
+            "height": 80.0999984741211,
+            "width": 650.625,
+            "x": 88.88750457763672,
+            "y": -183.1000061035156
+          },
+          "rect": {
+            "bottom": -103,
+            "height": 334.95001220703125,
+            "width": 652.625,
+            "x": 88.88750457763672,
+            "y": -437.9500122070313
+          }
+        },
+        "field": {
+          "autoRows": "max-content",
+          "columns": "652.625px",
+          "rect": {
+            "bottom": 368.0000228881836,
+            "height": 77.95000457763672,
+            "width": 662.2250366210938,
+            "x": 88.88750457763672,
+            "y": 290.0500183105469
+          },
+          "scrollTop": 728
+        },
+        "header": {
+          "columns": "420.438px 227.788px",
+          "rect": {
+            "bottom": 214.8000030517578,
+            "height": 90,
+            "width": 662.2250366210938,
+            "x": 88.88750457763672,
+            "y": 124.8000030517578
+          },
+          "subtitle": {
+            "bottom": 214.8000030517578,
+            "height": 37.5,
+            "width": 420.4375,
+            "x": 88.88750457763672,
+            "y": 177.3000030517578
+          }
+        },
+        "incumbentFrame": true,
+        "innerTheme": "dark",
+        "rail": {
+          "overflow": "visible",
+          "rect": {
+            "bottom": 635.9000244140625,
+            "height": 724.9000244140625,
+            "width": 652.625,
+            "x": 88.88750457763672,
+            "y": -89
+          },
+          "scrollTop": 0
+        }
+      }
+    },
+    "png": {
+      "name": "keyboard-reflow-details-close.png",
+      "width": 1536,
+      "height": 768
+    },
+    "proofClass": "SYNTHETIC_STATIC_NATIVE_KEYBOARD"
+  },
+  {
+    "label": "reflow-unknown-refresh",
+    "source": "approval-light-768x384-closed-unknown.html",
+    "active": {
+      "label": null,
+      "role": null,
+      "text": "Refresh status"
+    },
+    "geometry": {
+      "bodyScrollTop": 0,
+      "buttons": [
+        {
+          "disabled": true,
+          "focusVisible": false,
+          "fullyVisible": false,
+          "outline": "rgb(23, 19, 49) none 2.4px",
+          "rect": {
+            "height": 36,
+            "width": 76.4000015258789,
+            "x": 516.6625366210938,
+            "y": 227
+          },
+          "text": "Approve",
+          "uncovered": false
+        },
+        {
+          "disabled": false,
+          "focusVisible": false,
+          "fullyVisible": false,
+          "outline": "rgb(23, 19, 49) none 2.4px",
+          "rect": {
+            "height": 36,
+            "width": 53.41250228881836,
+            "x": 599.0625,
+            "y": 227
+          },
+          "text": "View",
+          "uncovered": false
+        },
+        {
+          "disabled": true,
+          "focusVisible": false,
+          "fullyVisible": false,
+          "outline": "rgb(23, 19, 49) none 2.4px",
+          "rect": {
+            "height": 36,
+            "width": 69.4375,
+            "x": 658.4750366210938,
+            "y": 227
+          },
+          "text": "Decline",
+          "uncovered": false
+        },
+        {
+          "disabled": false,
+          "focusVisible": true,
+          "fullyVisible": true,
+          "outline": "rgb(101, 90, 150) solid 1.6px",
+          "rect": {
+            "height": 36,
+            "width": 109.5875015258789,
+            "x": 102.4875030517578,
+            "y": 311
+          },
+          "text": "Refresh status",
+          "uncovered": true
+        }
+      ],
+      "client": [
+        768,
+        384
+      ],
+      "description": {
+        "scrollWidth": 625,
+        "text": "Read the complete customer notes.\nPreserve ownership, exact approvals and all existing context. No message is sent by this internal task.",
+        "width": 625
+      },
+      "fontLoaded": true,
+      "inner": [
+        768,
+        384
+      ],
+      "list": {
+        "rect": {
+          "height": 337.20001220703125,
+          "width": 649.0250244140625,
+          "x": 89.6875,
+          "y": 20.600000381469727
+        },
+        "scrollWidth": 649,
+        "width": 649
+      },
+      "page": [
+        768,
+        384
+      ],
+      "paige": "closed",
+      "scrollOwners": [
+        {
+          "clientHeight": 318,
+          "overflowY": "auto",
+          "rect": {
+            "height": 318,
+            "width": 696,
+            "x": 72,
+            "y": 66
+          },
+          "scrollHeight": 318,
+          "scrollTop": 0,
+          "selector": "#tenant-shell-main"
+        },
+        {
+          "clientHeight": 273,
+          "overflowY": "visible",
+          "rect": {
+            "height": 273.20001220703125,
+            "width": 696,
+            "x": 72,
+            "y": 110.8000030517578
+          },
+          "scrollHeight": 273,
+          "scrollTop": 0,
+          "selector": "#command-panel-plan"
+        },
+        {
+          "clientHeight": 273,
+          "overflowY": "hidden",
+          "rect": {
+            "height": 273.20001220703125,
+            "width": 696,
+            "x": 72,
+            "y": 110.8000030517578
+          },
+          "scrollHeight": 273,
+          "scrollTop": 0,
+          "selector": ".gp"
+        },
+        {
+          "clientHeight": 78,
+          "overflowY": "auto",
+          "rect": {
+            "height": 77.95000457763672,
+            "width": 662.2250366210938,
+            "x": 88.88750457763672,
+            "y": 290.0500183105469
+          },
+          "scrollHeight": 1044,
+          "scrollTop": 707.2000122070312,
+          "selector": ".sd-field"
+        },
+        {
+          "clientHeight": 695,
+          "overflowY": "visible",
+          "rect": {
+            "height": 695.2999877929688,
+            "width": 652.625,
+            "x": 88.88750457763672,
+            "y": -68.20000457763672
+          },
+          "scrollHeight": 695,
+          "scrollTop": 0,
+          "selector": ".sd-rail"
+        },
+        {
+          "clientHeight": 335,
+          "overflowY": "visible",
+          "rect": {
+            "height": 334.95001220703125,
+            "width": 652.625,
+            "x": 88.88750457763672,
+            "y": -417.1499938964844
+          },
+          "scrollHeight": 335,
+          "scrollTop": 0,
+          "selector": ".sd-col"
+        }
+      ],
+      "statuses": [
+        {
+          "fullyVisible": false,
+          "rect": {
+            "height": 40,
+            "width": 625.4249877929688,
+            "x": 102.4875030517578,
+            "y": 267
+          },
+          "text": "The outcome could not be confirmed. It may have gone through. Inspect the record and refresh before making another decision.",
+          "uncovered": false
+        }
+      ],
+      "theme": "light",
+      "title": {
+        "scrollWidth": 625,
+        "text": "Review the new contact, verify their preferred next step, and prepare a clear owner follow-up. Preserve the complete request and check these long reference details: contactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreference",
+        "width": 625,
+        "wrap": "break-word"
+      },
+      "layout": {
+        "col": {
+          "lastChild": {
+            "bottom": -82.20000457763672,
+            "height": 80.0999984741211,
+            "width": 650.625,
+            "x": 88.88750457763672,
+            "y": -162.3000030517578
+          },
+          "rect": {
+            "bottom": -82.19998168945312,
+            "height": 334.95001220703125,
+            "width": 652.625,
+            "x": 88.88750457763672,
+            "y": -417.1499938964844
+          }
+        },
+        "field": {
+          "autoRows": "max-content",
+          "columns": "652.625px",
+          "rect": {
+            "bottom": 368.0000228881836,
+            "height": 77.95000457763672,
+            "width": 662.2250366210938,
+            "x": 88.88750457763672,
+            "y": 290.0500183105469
+          },
+          "scrollTop": 707.2000122070312
+        },
+        "header": {
+          "columns": "420.438px 227.788px",
+          "rect": {
+            "bottom": 214.8000030517578,
+            "height": 90,
+            "width": 662.2250366210938,
+            "x": 88.88750457763672,
+            "y": 124.8000030517578
+          },
+          "subtitle": {
+            "bottom": 214.8000030517578,
+            "height": 37.5,
+            "width": 420.4375,
+            "x": 88.88750457763672,
+            "y": 177.3000030517578
+          }
+        },
+        "incumbentFrame": true,
+        "innerTheme": "light",
+        "rail": {
+          "overflow": "visible",
+          "rect": {
+            "bottom": 627.099983215332,
+            "height": 695.2999877929688,
+            "width": 652.625,
+            "x": 88.88750457763672,
+            "y": -68.20000457763672
+          },
+          "scrollTop": 0
+        }
+      }
+    },
+    "png": {
+      "name": "keyboard-reflow-unknown-refresh.png",
+      "width": 1536,
+      "height": 768
+    },
+    "proofClass": "SYNTHETIC_STATIC_NATIVE_KEYBOARD"
+  }
+]

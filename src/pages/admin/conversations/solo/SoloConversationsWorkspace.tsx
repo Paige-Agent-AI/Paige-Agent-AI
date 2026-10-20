@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import type { ClientContact, Label, MessageRow } from "../inbox-shared";
+import { CHANNEL_ICON, type ClientContact, type Label, type MessageRow } from "../inbox-shared";
 import type { SoloChannelTruth } from "./soloConversationModel";
 import "./solo-conversations-workspace.css";
 
@@ -101,6 +101,8 @@ const MODE_OPTIONS: Array<{ id: ConversationHandlingMode; label: string; status:
   { id: "draft", label: "PAIGE drafts", status: "PARTIAL", icon: Sparkles },
   { id: "governed", label: "Governed handling", status: "PROPOSED", icon: Bot },
 ];
+
+const PortalChannelIcon = CHANNEL_ICON.portal;
 
 export function SoloConversationOperatingBar({
   mode, onModeChange, channels, activeChannel, canDraftWithPaige, connectionsHref,
@@ -199,7 +201,11 @@ export function SoloConversationOperatingBar({
               }}
             >
               <summary aria-label={`Current channel: ${activeChannelTruth.label}, ${activeChannelTruth.availability}`}>
-                {activeChannelTruth.id === "email" ? <Mail aria-hidden /> : activeChannelTruth.id === "voice" ? <Phone aria-hidden /> : <MessageSquareText aria-hidden />}
+                {activeChannelTruth.id === "email" ? <Mail aria-hidden />
+                  : activeChannelTruth.id === "voice" ? <Phone aria-hidden />
+                  // The portal reads with the same door the thread, the list and the composer use.
+                  : activeChannelTruth.id === "portal" ? <PortalChannelIcon aria-hidden />
+                  : <MessageSquareText aria-hidden />}
                 <span>{activeChannelTruth.label}</span>
                 <small>{activeChannelTruth.availability}</small>
                 <ChevronDown aria-hidden />
@@ -327,7 +333,11 @@ export function SoloClientContextPane({ contact, labels, recentMessages, links }
 
       <ContextSection eyebrow="Client access" title="Portal access">
         <ContextFact label="Invitation" value="Not reported" />
-        <ContextFact label="Access / account link" value={contact.linked_user_id ? "Linked account reported" : "Not reported"} />
+        {/* E09 Slice 7: a paused client keeps their link, so "linked" alone would read as able to get in. */}
+        <ContextFact label="Access / account link" value={
+          contact.portal_access_state === "paused" ? (contact.linked_user_id ? "Linked account · portal access paused" : "Portal access paused")
+            : contact.portal_access_state === "ended" ? "Portal access ended"
+              : contact.linked_user_id ? "Linked account reported" : "Not reported"} />
         <ContextFact label="Readiness" value="Not reported" />
         <Link className="solo-context-owner-link" to={links.portal}>Open Portal <ExternalLink aria-hidden /></Link>
       </ContextSection>

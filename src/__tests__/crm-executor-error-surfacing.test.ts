@@ -276,7 +276,7 @@ describe("the executor error that reaches Paige", () => {
    */
   it("forwards the whole failure body to the model, not a hand-picked subset", () => {
     expect(CHAT).toContain(
-      'crmContent = { success: false, ...crmBody,\n              error: crmBody.message ?? crmBody.code ??',
+      'crmContent = { ...crmBody, success: false,\n              error: crmBody.message ?? crmBody.code ??',
     );
     // …and that object is what reaches the model, serialised whole.
     expect(CHAT).toContain('toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(crmContent) });');

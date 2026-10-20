@@ -1,0 +1,167 @@
+{
+  "scope": "Focused changed failure/recovery branch only; not a full current-artifact suite",
+  "artifact": "outputs/weekly-commitment-check.html",
+  "artifactSHA256": "C57AECBBA940ED11824C10EC4AF72B3A0460222004D5E31147388238B073526D",
+  "priorFullSuite": {
+    "artifactSHA256": "F895DA7C1A56FAF3CDDDD5A9286404009C20351D2AF38A0515FE3D77BCC5FB4C",
+    "checks": 64,
+    "status": "PASS",
+    "proof": "permission-final-retry-browser-proof.json",
+    "boundary": "Different artifact bytes; prior full suite is historical regression evidence"
+  },
+  "generatedAt": "2026-10-13T00:35:57.856Z",
+  "checks": [
+    {
+      "name": "failed fixture has verified canonical absence",
+      "status": "PASS",
+      "detail": {
+        "id": "RUN-CHECK-005-2026-10-12",
+        "status": "failed",
+        "due": "2026-10-12T13:00:00Z",
+        "started": null,
+        "receipt": null,
+        "finished": null,
+        "absenceReadback": {
+          "verified": true,
+          "noCommittedObservation": true,
+          "noLiveClaim": true,
+          "source": "canonical act readback (simulated)"
+        }
+      }
+    },
+    {
+      "name": "failed copy names canonical absence and simulation",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEThe last run failed. Verified act readback in this simulation confirms no committed observation and no live claim; no completed check result is available. The next check is Mon, Oct 19, 9:00 AM EDT.Commitment check statusFailedThe check did not complete. Canonical act readback in this simulation verified no committed observation and no live claim. This verified absence permits retrying with the same run reference.Retry this verified failed runInspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-12Scheduled forMon, Oct 12, 9:00 AM EDTStartedNot confirmedReceiptNo verified completion receiptEvidence stateCanonical act readback (simulated): no committed observation and no live claimScopeActive workspace only · internal readsWeekly commitment checkScheduledScheduleEvery Monday at 09:00 · America/New_YorkNext runMon, Oct 19, 9:00 AM EDTTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksInspect details"
+    },
+    {
+      "name": "verified absence permits retry",
+      "status": "PASS"
+    },
+    {
+      "name": "evidence disclosure names committed observation and live claim",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEThe last run failed. Verified act readback in this simulation confirms no committed observation and no live claim; no completed check result is available. The next check is Mon, Oct 19, 9:00 AM EDT.Commitment check statusFailedThe check did not complete. Canonical act readback in this simulation verified no committed observation and no live claim. This verified absence permits retrying with the same run reference.Retry this verified failed runInspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-12Scheduled forMon, Oct 12, 9:00 AM EDTStartedNot confirmedReceiptNo verified completion receiptEvidence stateCanonical act readback (simulated): no committed observation and no live claimScopeActive workspace only · internal readsWeekly commitment checkScheduledScheduleEvery Monday at 09:00 · America/New_YorkNext runMon, Oct 19, 9:00 AM EDTTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksHide details"
+    },
+    {
+      "name": "verified retry retains same run reference",
+      "status": "PASS",
+      "detail": {
+        "id": "RUN-CHECK-005-2026-10-12",
+        "status": "running",
+        "due": "2026-10-12T13:00:00Z",
+        "started": "2026-10-12T13:00:00Z",
+        "receipt": null,
+        "finished": null,
+        "absenceReadback": {
+          "verified": true,
+          "noCommittedObservation": true,
+          "noLiveClaim": true,
+          "source": "canonical act readback (simulated)"
+        }
+      }
+    },
+    {
+      "name": "unknown replay remains locked",
+      "status": "PASS"
+    },
+    {
+      "name": "uncertain readback leaves unknown and replay locked",
+      "status": "PASS",
+      "detail": {
+        "id": "RUN-CHECK-005-2026-10-12",
+        "status": "unknown",
+        "due": "2026-10-12T13:00:00Z",
+        "started": "2026-10-12T13:00:00Z",
+        "receipt": null,
+        "finished": null,
+        "absenceReadback": null
+      }
+    },
+    {
+      "name": "unknown to failed requires verified canonical absence",
+      "status": "PASS",
+      "detail": {
+        "id": "RUN-CHECK-005-2026-10-12",
+        "status": "failed",
+        "due": "2026-10-12T13:00:00Z",
+        "started": null,
+        "receipt": null,
+        "finished": null,
+        "absenceReadback": {
+          "verified": true,
+          "noCommittedObservation": true,
+          "noLiveClaim": true,
+          "source": "canonical act readback (simulated)"
+        }
+      }
+    },
+    {
+      "name": "failed label without verified absence does not permit replay",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEThe last run failed. Absence has not been verified, so canonical act readback is required before retrying. The next check is Mon, Oct 19, 9:00 AM EDT.Commitment check statusFailedThe check did not complete. Absence has not been verified. Canonical act readback is required before any retry.Retry locked pending act readbackInspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-12Scheduled forMon, Oct 12, 9:00 AM EDTStartedNot confirmedReceiptNo verified completion receiptEvidence stateAbsence has not been verified; retry lockedScopeActive workspace only · internal readsWeekly commitment checkScheduledScheduleEvery Monday at 09:00 · America/New_YorkNext runMon, Oct 19, 9:00 AM EDTTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksInspect details"
+    },
+    {
+      "name": "unverified absence makes no verified safety claim",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEThe last run failed. Absence has not been verified, so canonical act readback is required before retrying. The next check is Mon, Oct 19, 9:00 AM EDT.Commitment check statusFailedThe check did not complete. Absence has not been verified. Canonical act readback is required before any retry.Retry locked pending act readbackInspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-12Scheduled forMon, Oct 12, 9:00 AM EDTStartedNot confirmedReceiptNo verified completion receiptEvidence stateAbsence has not been verified; retry lockedScopeActive workspace only · internal readsWeekly commitment checkScheduledScheduleEvery Monday at 09:00 · America/New_YorkNext runMon, Oct 19, 9:00 AM EDTTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksInspect details"
+    },
+    {
+      "name": "unverified retry label makes no verification claim",
+      "status": "PASS",
+      "detail": "Retry locked pending act readback"
+    },
+    {
+      "name": "no runtime errors",
+      "status": "PASS",
+      "detail": []
+    },
+    {
+      "name": "no external requests",
+      "status": "PASS",
+      "detail": [
+        "file:///C:/Users/tonig/Documents/Codex/2026-10-12/paige-engineering-2-0-experience-05/outputs/weekly-commitment-check.html",
+        "file:///C:/Users/tonig/Documents/Codex/2026-10-12/paige-engineering-2-0-experience-05/outputs/weekly-commitment-check.html"
+      ]
+    }
+  ],
+  "captures": [
+    {
+      "file": "absence-final-desktop.png",
+      "viewport": {
+        "width": 1366,
+        "height": 1100
+      },
+      "theme": "Mineral",
+      "state": "failed; verified absence and receipt disclosure"
+    },
+    {
+      "file": "absence-final-mobile.png",
+      "viewport": {
+        "width": 390,
+        "height": 1000
+      },
+      "theme": "Mineral",
+      "state": "failed; verified absence and receipt disclosure"
+    },
+    {
+      "file": "absence-final-unverified-mobile.png",
+      "viewport": {
+        "width": 390,
+        "height": 1000
+      },
+      "theme": "Mineral",
+      "state": "failed without verified absence; retry locked pending act readback"
+    }
+  ],
+  "runtimeErrors": [],
+  "network": [
+    "file:///C:/Users/tonig/Documents/Codex/2026-10-12/paige-engineering-2-0-experience-05/outputs/weekly-commitment-check.html",
+    "file:///C:/Users/tonig/Documents/Codex/2026-10-12/paige-engineering-2-0-experience-05/outputs/weekly-commitment-check.html"
+  ],
+  "unverified": [
+    "Authenticated canonical readback",
+    "Production recovery and side effects",
+    "Owner approval"
+  ]
+}

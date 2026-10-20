@@ -1,0 +1,1079 @@
+{
+  "runtime": {
+    "engine": "chromium",
+    "browserVersion": "155.0.8059.40",
+    "executable": "C:/Program Files/Google/Chrome/Application/chrome.exe",
+    "os": "Windows_NT",
+    "osVersion": "10.0.26300",
+    "headless": true,
+    "route": "actual-source owner Clients/Portal/Client access via setContent",
+    "auth": "synthetic actual-subject/tenant fixtures",
+    "permissions": "network blocked; no media, file picker, OAuth or customer permission operation"
+  },
+  "sourceHashes": [
+    {
+      "file": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "sha256": "5a282f5f7c5627856470ae5062ba8cc8d657d3a9478f30261568a9f9c9d223f0"
+    },
+    {
+      "file": "src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx",
+      "sha256": "2252ba7088725a87aacacb25c3bace9c57a527ac95927814fd87a7be7afa6ca1"
+    },
+    {
+      "file": "src/components/tenant-relationships/OwnerPortalDashboard.tsx",
+      "sha256": "ebd37ad34899155ca0769496aece5876f0df68fcf1d9428f18f28be5bd300e8f"
+    },
+    {
+      "file": "src/components/tenant-relationships/PortalInvitationHistory.tsx",
+      "sha256": "a73437850e0080967e48fd2a7cbf13e43ae59617e9d2d96dbf922941751dd1be"
+    },
+    {
+      "file": "src/components/tenant-relationships/portalInvitationEvidence.ts",
+      "sha256": "d450631122bde8159d20c7627ca948dfdab985b1c24476f76853b1611f9b3ab5"
+    },
+    {
+      "file": "src/components/tenant-relationships/portalDashboardModel.ts",
+      "sha256": "a09f85b5189a6915fa11a2eb2064e3a73730a4fc522d4ab304ac2291add6776f"
+    },
+    {
+      "file": "src/components/tenant-relationships/PortalInvitationManager.tsx",
+      "sha256": "2f2bc7dd822cc7c3653de4009def21f23770cdb850c272d55a493911030441ca"
+    },
+    {
+      "file": "src/components/tenant-relationships/usePortalInvitations.ts",
+      "sha256": "897c6f52b730f06015a375efba2e835819210de2003fb6244d5d17620f7431c3"
+    },
+    {
+      "file": "src/components/tenant-relationships/owner-portal-dashboard.css",
+      "sha256": "fdc4dee8b948f9d5b47c47a402db2679e09e03839774f133ee0dc4c9014f959e"
+    },
+    {
+      "file": "scripts/proof/e09-invitation-history-ui/adapter.tsx",
+      "sha256": "30e23db8f6e788bdac9b6d5ecbeee504f0eb80e1d4ff25a1f73a8ede033f70ba"
+    },
+    {
+      "file": "scripts/proof/e09-invitation-history-ui/source.tsx",
+      "sha256": "e2ff49f38fdde2e9f524b8fe4511b0dc4eeebc9e208e8672debb96697c12b087"
+    },
+    {
+      "file": "scripts/proof/e09-invitation-history-ui/check.mjs",
+      "sha256": "1b86bcf809ad8d950106642d0a96d7a8957c0067ca4aaa8adf9d4f527cc81ab4"
+    },
+    {
+      "file": "scripts/proof/e09-dashboard-ui/adapter.tsx",
+      "sha256": "862b2df92ad6e6078d06c77a1799288d92a38d26a7fd7ebec3326c34f1448617"
+    }
+  ],
+  "cases": [
+    {
+      "width": 320,
+      "height": 568,
+      "open": false,
+      "theme": "light",
+      "tenant": "e0921000-0000-0000-0000-000000000001",
+      "state": "ready",
+      "geometry": {
+        "documentOverflow": false,
+        "scrollOwner": "auto",
+        "actualPaigeState": "closed",
+        "historyWidth": 216,
+        "historyOverflow": false,
+        "modalAssistant": false
+      },
+      "filename": "320-568-closed-light-1-ready.png",
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "focusOutline": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(111, 86, 54)",
+        "focused": true
+      },
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 320,
+        "innerHeight": 568,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "320 CSS px reflow equivalence; actual browser400% untested"
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "open": false,
+      "theme": "dark",
+      "tenant": "e0921000-0000-0000-0000-000000000001",
+      "state": "ready",
+      "geometry": {
+        "documentOverflow": false,
+        "scrollOwner": "auto",
+        "actualPaigeState": "closed",
+        "historyWidth": 216,
+        "historyOverflow": false,
+        "modalAssistant": false
+      },
+      "filename": null,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "focusOutline": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 240, 207)",
+        "focused": true
+      },
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 320,
+        "innerHeight": 568,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "320 CSS px reflow equivalence; actual browser400% untested"
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "open": true,
+      "theme": "light",
+      "tenant": "e0921000-0000-0000-0000-000000000001",
+      "state": "ready",
+      "geometry": {
+        "documentOverflow": false,
+        "scrollOwner": "auto",
+        "actualPaigeState": "open",
+        "historyWidth": 216,
+        "historyOverflow": false,
+        "modalAssistant": true
+      },
+      "filename": null,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "focusOutline": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(111, 86, 54)",
+        "focused": true
+      },
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 320,
+        "innerHeight": 568,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "320 CSS px reflow equivalence; actual browser400% untested"
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "open": true,
+      "theme": "dark",
+      "tenant": "e0921000-0000-0000-0000-000000000001",
+      "state": "ready",
+      "geometry": {
+        "documentOverflow": false,
+        "scrollOwner": "auto",
+        "actualPaigeState": "open",
+        "historyWidth": 216,
+        "historyOverflow": false,
+        "modalAssistant": true
+      },
+      "filename": null,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "focusOutline": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 240, 207)",
+        "focused": true
+      },
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 320,
+        "innerHeight": 568,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "320 CSS px reflow equivalence; actual browser400% untested"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "open": false,
+      "theme": "light",
+      "tenant": "e0921000-0000-0000-0000-000000000001",
+      "state": "ready",
+      "geometry": {
+        "documentOverflow": false,
+        "scrollOwner": "auto",
+        "actualPaigeState": "closed",
+        "historyWidth": 286,
+        "historyOverflow": false,
+        "modalAssistant": false
+      },
+      "filename": null,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "focusOutline": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(111, 86, 54)",
+        "focused": true
+      },
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "open": false,
+      "theme": "dark",
+      "tenant": "e0921000-0000-0000-0000-000000000001",
+      "state": "ready",
+      "geometry": {
+        "documentOverflow": false,
+        "scrollOwner": "auto",
+        "actualPaigeState": "closed",
+        "historyWidth": 286,
+        "historyOverflow": false,
+        "modalAssistant": false
+      },
+      "filename": null,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "focusOutline": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 240, 207)",
+        "focused": true
+      },
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "open": true,
+      "theme": "light",
+      "tenant": "e0921000-0000-0000-0000-000000000001",
+      "state": "ready",
+      "geometry": {
+        "documentOverflow": false,
+        "scrollOwner": "auto",
+        "actualPaigeState": "open",
+        "historyWidth": 286,
+        "historyOverflow": false,
+        "modalAssistant": true
+      },
+      "filename": null,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "focusOutline": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(111, 86, 54)",
+        "focused": true
+      },
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "open": true,
+      "theme": "dark",
+      "tenant": "e0921000-0000-0000-0000-000000000001",
+      "state": "ready",
+      "geometry": {
+        "documentOverflow": false,
+        "scrollOwner": "auto",
+        "actualPaigeState": "open",
+        "historyWidth": 286,
+        "historyOverflow": false,
+        "modalAssistant": true
+      },
+      "filename": null,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "focusOutline": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 240, 207)",
+        "focused": true
+      },
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "open": false,
+      "theme": "light",
+      "tenant": "e0921000-0000-0000-0000-000000000001",
+      "state": "ready",
+      "geometry": {
+        "documentOverflow": false,
+        "scrollOwner": "auto",
+        "actualPaigeState": "closed",
+        "historyWidth": 636,
+        "historyOverflow": false,
+        "modalAssistant": false
+      },
+      "filename": null,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "focusOutline": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(111, 86, 54)",
+        "focused": true
+      },
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 768,
+        "innerHeight": 1024,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "open": false,
+      "theme": "dark",
+      "tenant": "e0921000-0000-0000-0000-000000000001",
+      "state": "ready",
+      "geometry": {
+        "documentOverflow": false,
+        "scrollOwner": "auto",
+        "actualPaigeState": "closed",
+        "historyWidth": 636,
+        "historyOverflow": false,
+        "modalAssistant": false
+      },
+      "filename": null,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "focusOutline": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 240, 207)",
+        "focused": true
+      },
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 768,
+        "innerHeight": 1024,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "open": true,
+      "theme": "light",
+      "tenant": "e0921000-0000-0000-0000-000000000001",
+      "state": "ready",
+      "geometry": {
+        "documentOverflow": false,
+        "scrollOwner": "auto",
+        "actualPaigeState": "open",
+        "historyWidth": 636,
+        "historyOverflow": false,
+        "modalAssistant": true
+      },
+      "filename": null,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "focusOutline": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(111, 86, 54)",
+        "focused": true
+      },
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 768,
+        "innerHeight": 1024,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "open": true,
+      "theme": "dark",
+      "tenant": "e0921000-0000-0000-0000-000000000001",
+      "state": "ready",
+      "geometry": {
+        "documentOverflow": false,
+        "scrollOwner": "auto",
+        "actualPaigeState": "open",
+        "historyWidth": 636,
+        "historyOverflow": false,
+        "modalAssistant": true
+      },
+      "filename": null,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "focusOutline": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 240, 207)",
+        "focused": true
+      },
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 768,
+        "innerHeight": 1024,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "open": false,
+      "theme": "light",
+      "tenant": "e0921000-0000-0000-0000-000000000001",
+      "state": "ready",
+      "geometry": {
+        "documentOverflow": false,
+        "scrollOwner": "auto",
+        "actualPaigeState": "closed",
+        "historyWidth": 860,
+        "historyOverflow": false,
+        "modalAssistant": false
+      },
+      "filename": null,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "focusOutline": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(111, 86, 54)",
+        "focused": true
+      },
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 1920,
+        "innerHeight": 1080,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "open": false,
+      "theme": "dark",
+      "tenant": "e0921000-0000-0000-0000-000000000001",
+      "state": "ready",
+      "geometry": {
+        "documentOverflow": false,
+        "scrollOwner": "auto",
+        "actualPaigeState": "closed",
+        "historyWidth": 860,
+        "historyOverflow": false,
+        "modalAssistant": false
+      },
+      "filename": null,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "focusOutline": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 240, 207)",
+        "focused": true
+      },
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 1920,
+        "innerHeight": 1080,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "open": true,
+      "theme": "light",
+      "tenant": "e0921000-0000-0000-0000-000000000001",
+      "state": "ready",
+      "geometry": {
+        "documentOverflow": false,
+        "scrollOwner": "auto",
+        "actualPaigeState": "open",
+        "historyWidth": 860,
+        "historyOverflow": false,
+        "modalAssistant": false
+      },
+      "filename": null,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "focusOutline": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(111, 86, 54)",
+        "focused": true
+      },
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 1920,
+        "innerHeight": 1080,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "open": true,
+      "theme": "dark",
+      "tenant": "e0921000-0000-0000-0000-000000000001",
+      "state": "ready",
+      "geometry": {
+        "documentOverflow": false,
+        "scrollOwner": "auto",
+        "actualPaigeState": "open",
+        "historyWidth": 860,
+        "historyOverflow": false,
+        "modalAssistant": false
+      },
+      "filename": null,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "focusOutline": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 240, 207)",
+        "focused": true
+      },
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 1920,
+        "innerHeight": 1080,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
+    },
+    {
+      "width": 2560,
+      "height": 1440,
+      "open": false,
+      "theme": "light",
+      "tenant": "e0921000-0000-0000-0000-000000000001",
+      "state": "ready",
+      "geometry": {
+        "documentOverflow": false,
+        "scrollOwner": "auto",
+        "actualPaigeState": "closed",
+        "historyWidth": 860,
+        "historyOverflow": false,
+        "modalAssistant": false
+      },
+      "filename": null,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "focusOutline": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(111, 86, 54)",
+        "focused": true
+      },
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 2560,
+        "innerHeight": 1440,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
+    },
+    {
+      "width": 2560,
+      "height": 1440,
+      "open": false,
+      "theme": "dark",
+      "tenant": "e0921000-0000-0000-0000-000000000001",
+      "state": "ready",
+      "geometry": {
+        "documentOverflow": false,
+        "scrollOwner": "auto",
+        "actualPaigeState": "closed",
+        "historyWidth": 860,
+        "historyOverflow": false,
+        "modalAssistant": false
+      },
+      "filename": null,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "focusOutline": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 240, 207)",
+        "focused": true
+      },
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 2560,
+        "innerHeight": 1440,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
+    },
+    {
+      "width": 2560,
+      "height": 1440,
+      "open": true,
+      "theme": "light",
+      "tenant": "e0921000-0000-0000-0000-000000000001",
+      "state": "ready",
+      "geometry": {
+        "documentOverflow": false,
+        "scrollOwner": "auto",
+        "actualPaigeState": "open",
+        "historyWidth": 860,
+        "historyOverflow": false,
+        "modalAssistant": false
+      },
+      "filename": null,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "focusOutline": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(111, 86, 54)",
+        "focused": true
+      },
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 2560,
+        "innerHeight": 1440,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
+    },
+    {
+      "width": 2560,
+      "height": 1440,
+      "open": true,
+      "theme": "dark",
+      "tenant": "e0921000-0000-0000-0000-000000000001",
+      "state": "ready",
+      "geometry": {
+        "documentOverflow": false,
+        "scrollOwner": "auto",
+        "actualPaigeState": "open",
+        "historyWidth": 860,
+        "historyOverflow": false,
+        "modalAssistant": false
+      },
+      "filename": null,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "focusOutline": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 240, 207)",
+        "focused": true
+      },
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 2560,
+        "innerHeight": 1440,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
+    },
+    {
+      "width": 3840,
+      "height": 2160,
+      "open": false,
+      "theme": "light",
+      "tenant": "e0921000-0000-0000-0000-000000000001",
+      "state": "ready",
+      "geometry": {
+        "documentOverflow": false,
+        "scrollOwner": "auto",
+        "actualPaigeState": "closed",
+        "historyWidth": 860,
+        "historyOverflow": false,
+        "modalAssistant": false
+      },
+      "filename": null,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "focusOutline": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(111, 86, 54)",
+        "focused": true
+      },
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 3840,
+        "innerHeight": 2160,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
+    },
+    {
+      "width": 3840,
+      "height": 2160,
+      "open": false,
+      "theme": "dark",
+      "tenant": "e0921000-0000-0000-0000-000000000001",
+      "state": "ready",
+      "geometry": {
+        "documentOverflow": false,
+        "scrollOwner": "auto",
+        "actualPaigeState": "closed",
+        "historyWidth": 860,
+        "historyOverflow": false,
+        "modalAssistant": false
+      },
+      "filename": "3840-2160-closed-dark-1-ready.png",
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "focusOutline": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 240, 207)",
+        "focused": true
+      },
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 3840,
+        "innerHeight": 2160,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
+    },
+    {
+      "width": 3840,
+      "height": 2160,
+      "open": true,
+      "theme": "light",
+      "tenant": "e0921000-0000-0000-0000-000000000001",
+      "state": "ready",
+      "geometry": {
+        "documentOverflow": false,
+        "scrollOwner": "auto",
+        "actualPaigeState": "open",
+        "historyWidth": 860,
+        "historyOverflow": false,
+        "modalAssistant": false
+      },
+      "filename": null,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "focusOutline": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(111, 86, 54)",
+        "focused": true
+      },
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 3840,
+        "innerHeight": 2160,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
+    },
+    {
+      "width": 3840,
+      "height": 2160,
+      "open": true,
+      "theme": "dark",
+      "tenant": "e0921000-0000-0000-0000-000000000001",
+      "state": "ready",
+      "geometry": {
+        "documentOverflow": false,
+        "scrollOwner": "auto",
+        "actualPaigeState": "open",
+        "historyWidth": 860,
+        "historyOverflow": false,
+        "modalAssistant": false
+      },
+      "filename": null,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "focusOutline": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(255, 240, 207)",
+        "focused": true
+      },
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 3840,
+        "innerHeight": 2160,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "open": false,
+      "theme": "light",
+      "tenant": "e0921000-0000-0000-0000-000000000002",
+      "state": "ready",
+      "geometry": {
+        "documentOverflow": false,
+        "scrollOwner": "auto",
+        "actualPaigeState": "closed",
+        "historyWidth": 860,
+        "historyOverflow": false,
+        "modalAssistant": false
+      },
+      "filename": "1920-1080-closed-light-2-ready.png",
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "focusOutline": {
+        "style": "solid",
+        "width": "2px",
+        "color": "rgb(111, 86, 54)",
+        "focused": true
+      },
+      "keyboardDisclosure": true,
+      "display": {
+        "innerWidth": 1920,
+        "innerHeight": 1080,
+        "devicePixelRatio": 2
+      },
+      "displayProof": "synthetic DPR2; not physical4K/OS200%",
+      "zoom": "100% automated context; actual browser zoom untested"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": false,
+      "theme": "light",
+      "tenant": "e0921000-0000-0000-0000-000000000002",
+      "state": "history-error",
+      "geometry": {
+        "documentOverflow": false,
+        "scrollOwner": "auto",
+        "actualPaigeState": "closed",
+        "historyWidth": null,
+        "historyOverflow": false,
+        "modalAssistant": false
+      },
+      "filename": null,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true
+      },
+      "focusOutline": null,
+      "keyboardDisclosure": false,
+      "display": {
+        "innerWidth": 1366,
+        "innerHeight": 768,
+        "devicePixelRatio": 1
+      },
+      "displayProof": "CSS viewport; OS scaling and physical display untested",
+      "zoom": "100% automated context; actual browser zoom untested"
+    }
+  ],
+  "errors": [],
+  "boundary": "Actual owner shell/dashboard/history/parser/hook; SDK/records/Auth are synthetic, network blocked, PAIGE leaf is placeholder. Automated installed binaries/engine builds only; no real customer/provider operation, legitimate cohort, full customer frame, Safari/iOS/Android/physical-device, OS scaling or actual browser zoom acceptance. Only named screenshot cases received visual artifacts; all cases rendered and exercised."
+}

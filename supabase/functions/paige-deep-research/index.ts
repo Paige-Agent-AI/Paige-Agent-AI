@@ -33,15 +33,17 @@
 // resolved workspace, and sources inherit it verbatim. Lineage is strict for persistence:
 // user JWT → current_user_tenant_id; service-role caller → profiles.active_tenant_id of the
 // validated acting user — and NO first-membership fallback (too ambiguous: the platform must
-// not persist a run under guessed ownership). Ambiguous lineage SKIPS persistence with an
-// honest log while the research itself still runs and returns. An optional
-// body.expected_tenant_id is a CROSS-CHECK only (a mismatch skips persistence); it is never
-// the persisted value and never authority.
+// not persist a run under guessed ownership). ANT-21 additionally verifies the actor and
+// active membership BEFORE provider effects and rechecks them at phase boundaries.
+// An optional body.expected_tenant_id is a CROSS-CHECK only (a mismatch refuses the run);
+// it is never the persisted value and never authority. No historical row is changed.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
-import { researchCompletion, type RunRequestCtx } from "./fabric.ts";
+import { researchCompletion, RESEARCH_FABRIC_ENABLED, type RunRequestCtx } from "./fabric.ts";
 import { strategizeBeforeReasoning } from "../_shared/reasoning/strategize.ts";
+import { recordCapabilityRun, type CapabilityOutcome } from "../_shared/capability-record.ts";
+import { parseResearchSourcePolicy, researchSourceUrl, RESEARCH_SEARCH_LIMIT, type ResearchSourcePolicy, type ResearchSourceCoverage } from "../_shared/research-source-policy.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -103,6 +105,8 @@ interface DeepResearchRequest {
   client_user_id?: string | null;
   domain?: string;
   max_hops?: number;
+  max_sources?: number;
+  allowed_domains?: string[];
   freshness_days?: number;
   persist?: boolean;
   /** Optional CROSS-CHECK (never authority): when provided and ≠ the server-resolved
@@ -203,6 +207,10 @@ interface DeepResearchResult {
   question: string;
   findings: Finding[];
   sources: OutSource[];
+  /** Investigation output, saved-report proof and receipt acknowledgement are separate facts. */
+  persistence_verified?: boolean;
+  receipt_recorded?: boolean;
+  receipt_outcome?: CapabilityOutcome;
   // Present ONLY in dossier mode (entity target detected) AND only when ≥1 typed
   // item survived the profile gate. Absent on the general path → back-compat.
   entity_profile?: EntityProfile;
@@ -213,6 +221,7 @@ interface DeepResearchResult {
     reads: number;
     note: string;
     configured: boolean;
+    source_policy?: ResearchSourceCoverage;
     // Mirror of entity_profile.unverified_notes for consumers that read only
     // `coverage`. Canonical source is entity_profile.unverified_notes.
     unverified_notes?: string[];
@@ -376,13 +385,15 @@ async function callWebSearch(
   supabaseUrl: string,
   serviceKey: string,
   query: string,
+  policy: ResearchSourcePolicy = {},
+  limit = RESEARCH_SEARCH_LIMIT,
 ): Promise<WebSearchOut> {
   let body: any = {};
   try {
     const r = await fetch(`${supabaseUrl}/functions/v1/paige-web-search`, {
       method: "POST",
       headers: { Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({ query, ...(policy.allowed_domains ? { allowed_domains: policy.allowed_domains } : {}), limit }),
     });
     if (!r.ok) {
       // A non-OK response is NOT "0 results" (§13). Most often the search
@@ -415,16 +426,18 @@ async function callWebSearch(
   };
 }
 
-function upsertSource(sources: SourceRec[], hit: { title: string; description: string; url: string; published_at?: string | null }): void {
-  if (!hit.url || sources.find((s) => s.url === hit.url)) return;
+function upsertSource(sources: SourceRec[], hit: { title: string; description: string; url: string; published_at?: string | null }, policy: ResearchSourcePolicy = {}): void {
+  if (policy.max_sources !== undefined && sources.length >= policy.max_sources) return;
+  const url = researchSourceUrl(hit.url, policy);
+  if (!url || sources.find((s) => s.url === url)) return;
   sources.push({
     index: -1,
-    url: hit.url,
+    url,
     title: hit.title || hit.url,
     snippet: (hit.description || "").slice(0, 600),
     content: "",
     read: false,
-    host: hostOf(hit.url),
+    host: hostOf(url),
     published_at: hit.published_at ?? null,
     fetched_at: new Date().toISOString(),
     authority: 0, recency: 0, corroboration: 0,
@@ -479,6 +492,7 @@ async function planHop(
   evidence: Array<{ index: number; title: string; snippet: string }>,
   strategyHint = "", // §34 L4: optional pre-reasoning steer, appended like domainHint (hop-0, non-degraded only)
   ctx: RunRequestCtx = { tenantId: null, runId: null }, // R6-B: threads the server-resolved run context to the adapter
+  sourcePolicy: ResearchSourcePolicy = {},
 ): Promise<PlanOut> {
   const sys =
     "You are a research planner. Break a research goal into orthogonal, specific web-search " +
@@ -494,6 +508,8 @@ async function planHop(
   const user =
     `RESEARCH GOAL: ${question}\n` +
     (domainHint ? `TOPIC HINT: ${domainHint}\n` : "") +
+    (sourcePolicy.allowed_domains ? `ALLOWED HOSTNAMES (including their subdomains): ${sourcePolicy.allowed_domains.join(", ")}\n` : "") +
+    (sourcePolicy.max_sources !== undefined ? `MAXIMUM UNIQUE SOURCES: ${sourcePolicy.max_sources}\n` : "") +
     (strategyHint ? `${strategyHint}\n` : "") +
     `HOP: ${hop}\n\nEVIDENCE SO FAR:\n${evidenceBlock}`;
 
@@ -1835,6 +1851,17 @@ function validateProfile(
 }
 
 // ── Persistence (service-role) ──────────────────────────────────────────────
+class ResearchScopeError extends Error {
+  constructor(readonly status = 403) { super("RESEARCH_SCOPE_UNVERIFIED"); }
+}
+
+function sameResearchJson(a: unknown, b: unknown): boolean {
+  const canonical = (value: unknown) => JSON.stringify(value, (_key, item) =>
+    item && typeof item === "object" && !Array.isArray(item)
+      ? Object.fromEntries(Object.keys(item).sort().map(key => [key, item[key]])) : item);
+  return canonical(a) === canonical(b);
+}
+
 async function persistRun(
   serviceUrl: string,
   serviceKey: string,
@@ -1843,7 +1870,10 @@ async function persistRun(
   result: DeepResearchResult,
   tenantId: string | null,
   dossier?: unknown, // R3: bounded diagnostics; NULL on pre-R3 callers
+  assertScope: () => Promise<void> = async () => { throw new ResearchScopeError(); },
 ): Promise<void> {
+  result.persistence_verified = false;
+  result.receipt_recorded = false;
   // M0 FAIL-CLOSED FOR PERSISTENCE: without unambiguous tenant lineage the run is NOT
   // stored — the research result still returns to the caller, but the platform never
   // persists a run under guessed ownership (owner ruling 2026-10-03).
@@ -1853,6 +1883,7 @@ async function persistRun(
     );
     return;
   }
+  await assertScope();
   try {
     const admin = createClient(serviceUrl, serviceKey, {
       auth: { autoRefreshToken: false, persistSession: false },
@@ -1873,9 +1904,29 @@ async function persistRun(
       entity_profile: result.entity_profile ?? null,
       dossier: (dossier ?? null) as never, // R3: bounded diagnostics on the canonical record
     });
-    if (runErr) { console.error("[paige-deep-research] persist run failed:", runErr.message); return; }
+    // An error can be a lost acknowledgement after commit. Read the exact native
+    // identity before continuing; never blindly repeat this insert or the research.
+    if (runErr) console.error("[paige-deep-research] persist run unconfirmed");
+    await assertScope();
+    // Base grants remain INSERT-only. This server-only RPC revalidates current
+    // authority and reads the exact native identity without broad table SELECT.
+    const readbackArgs = { _run_id: runId, _tenant_id: tenantId, _actor_id: req.user_id };
+    const runRead = await admin.rpc("research_readback_persisted_run", readbackArgs);
+    const matchesParent = (value: unknown): boolean => {
+      if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+      const savedRun = value as Record<string, unknown>;
+      return savedRun.id === runId &&
+      savedRun.tenant_id === tenantId && savedRun.user_id === req.user_id &&
+      savedRun.question === req.question && savedRun.domain === (req.domain ?? "general") &&
+      savedRun.caller === (req.caller ?? "chat") && savedRun.stop_reason === result.coverage.stop_reason &&
+      savedRun.configured === result.coverage.configured && sameResearchJson(savedRun.coverage, result.coverage) &&
+      sameResearchJson(savedRun.findings, result.findings) &&
+      sameResearchJson(savedRun.entity_profile ?? null, result.entity_profile ?? null);
+    };
+    const parentVerified = !runRead.error && matchesParent(runRead.data);
 
-    if (result.sources.length) {
+    if (parentVerified && result.sources.length) {
+      await assertScope();
       // Sources inherit the parent run's lineage VERBATIM — never independently resolved.
       const rows = result.sources.map((s) => ({
         run_id: runId,
@@ -1895,8 +1946,39 @@ async function persistRun(
       const { error: srcErr } = await admin.from("research_sources").insert(rows);
       if (srcErr) console.error("[paige-deep-research] persist sources failed:", srcErr.message);
     }
+    await assertScope();
+    const sourceRead = parentVerified
+      ? await admin.rpc("research_readback_persisted_run", readbackArgs) : null;
+    const storedSources = sourceRead?.data?.sources;
+    const sourceFields = ["url", "title", "snippet", "reliability_score", "tier", "reliability", "excluded"] as const;
+    const sameTime = (a: unknown, b: unknown) => a === null && b === null ||
+      typeof a === "string" && typeof b === "string" && Number.isFinite(Date.parse(a)) && Date.parse(a) === Date.parse(b);
+    result.persistence_verified = parentVerified && !sourceRead?.error && matchesParent(sourceRead?.data) && Array.isArray(storedSources) &&
+      storedSources.length === result.sources.length && result.sources.every((item, index) => {
+        const stored = storedSources[index];
+        return stored && stored.run_id === runId && stored.tenant_id === tenantId && stored.user_id === req.user_id &&
+          stored.source_index === item.index && sourceFields.every(key => stored[key] === item[key]) &&
+          sameTime(stored.published_at, item.published_at) && sameTime(stored.fetched_at, item.fetched_at);
+      });
+    await assertScope();
+    const outcome: CapabilityOutcome = result.coverage.stop_reason === "error" ? "capability_failed"
+      : result.persistence_verified ? "capability_succeeded" : "capability_completed_unrecorded";
+    // The server run UUID is the existing receipt identity, not request idempotency.
+    // Never file source text, question, URLs or findings in the workspace-wide Rail.
+    result.receipt_recorded = await recordCapabilityRun(admin, {
+      tenantId, actorId: req.user_id, capabilityKey: "deep_research", runId, outcome,
+      detail: { operation: "deep_research", report_saved: result.persistence_verified,
+        findings_count: result.findings.length, sources_count: result.sources.length,
+        stop_reason: result.coverage.stop_reason, configured: result.coverage.configured },
+    });
+    result.receipt_outcome = result.receipt_recorded ? outcome : "capability_completed_unrecorded";
+    await assertScope();
   } catch (e) {
-    console.error("[paige-deep-research] persist error:", (e as Error)?.message);
+    if (e instanceof ResearchScopeError || (e as Error)?.message === "RESEARCH_SCOPE_UNVERIFIED") throw e;
+    // The report may already exist. Preserve its result and reconciliation UUID;
+    // no cleanup/re-ingestion/research retry follows a persistence exception.
+    result.receipt_outcome = "capability_completed_unrecorded";
+    console.error("[paige-deep-research] persistence/receipt could not be confirmed");
   }
 }
 
@@ -1915,6 +1997,7 @@ serve(async (req) => {
   } catch {
     return json({ error: "Invalid JSON" }, 400);
   }
+  if (!body || typeof body !== "object" || Array.isArray(body)) return json({ error: "Invalid research request" }, 400);
 
   // ── INT-305: delegated-specialist envelope normalization ────────────────────
   // The orchestrator's invokeLocal contract posts { input, context } to every local
@@ -1930,6 +2013,16 @@ serve(async (req) => {
     const raw = body as unknown as Record<string, unknown>;
     const missingCanonical = typeof raw.question !== "string" || typeof raw.user_id !== "string";
     const env = typeof raw.input === "object" && raw.input !== null ? raw.input as Record<string, unknown> : null;
+    // Constraints may narrow any existing entry path; never discard supplied nested
+    // constraints when the caller also supplies canonical identity fields.
+    if (env) for (const key of ["max_sources", "allowed_domains"] as const) {
+      if (Object.prototype.hasOwnProperty.call(env, key)) {
+        if (Object.prototype.hasOwnProperty.call(raw, key) && JSON.stringify(raw[key]) !== JSON.stringify(env[key])) {
+          return json({ error: "Conflicting research source constraints" }, 400);
+        }
+        raw[key] = env[key];
+      }
+    }
     if (missingCanonical && env) {
       const ctx = typeof raw.context === "object" && raw.context !== null ? raw.context as Record<string, unknown> : null;
       if (typeof raw.question !== "string") {
@@ -1954,6 +2047,11 @@ serve(async (req) => {
   // bounds (A8), facet-driven planning (A4-A6), and the profile gate (Section C).
   const entityTarget = detectEntityTarget(question, domainHint);
   const BND: RunBounds = entityTarget ? DOSSIER_BOUNDS : DEFAULT_BOUNDS;
+  let sourcePolicy: ResearchSourcePolicy;
+  try { sourcePolicy = parseResearchSourcePolicy(body as unknown as Record<string, unknown>); }
+  catch { return json({ error: "Invalid research source constraints. Use an integer source limit of 1-90 and 1-20 bare allowed hostnames." }, 400); }
+  if (sourcePolicy.max_sources !== undefined) sourcePolicy.max_sources = Math.min(sourcePolicy.max_sources, BND.MAX_TOTAL_SEARCHES * RESEARCH_SEARCH_LIMIT);
+  const hasSourcePolicy = sourcePolicy.max_sources !== undefined || !!sourcePolicy.allowed_domains;
   // A7 — flavor injection MECHANISM only. Effective facets = the (empty) in-file
   // registry keyed by the opaque domain hint + any caller-supplied templates.
   // No vertical vocabulary lives in this file (§2/§9 grep must stay empty).
@@ -1983,85 +2081,86 @@ serve(async (req) => {
   let stop: StopReason = "max_hops";
   let configured = true;
 
-  // ── §9/#361 server-resolved tenant — NEVER trust a body tenant field ────────
-  // A tenant is derived SERVER-SIDE only. A service-role bearer (every current caller:
-  // paige-ai-chat, subagent-financial-research, lender-research) is trusted to name the
-  // acting user via the already-validated body.user_id — we then look the tenant up
-  // ourselves (profiles.active_tenant_id, else first active tenant_members row — the repo's
-  // canonical resolution, mirrored from admin-list-users). A user JWT is instead pinned to
-  // its OWN tenant via the current_user_tenant_id RLS rpc (the paige-eval pattern); body.user_id
-  // is NOT trusted for a JWT caller. On any miss → null (research still runs; strategize just
-  // gets no memory anchors and writes a platform-null trace — §13 honest-degrade).
+  // ── Exact actor and explicitly active workspace, before any provider effect ──
+  // The previous JWT branch resolved the caller's tenant but still persisted body.user_id.
+  // Bind both together. Service callers may delegate an actor only through the existing
+  // trusted server contract; that actor must still exist and hold active membership.
+  // No first-membership fallback, role grant or caller-selected tenant can authorize a run.
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const expectedTenantId = typeof body.expected_tenant_id === "string" && UUID_RE.test(body.expected_tenant_id)
+    ? body.expected_tenant_id.toLowerCase() : body.expected_tenant_id;
   let resolvedTenantId: string | null = null;
-  // M0: the STRICT lineage used ONLY for persistence (see the auth block below). Null ⇒
-  // ambiguous ⇒ persistence is skipped, never guessed.
   let lineageTenantId: string | null = null;
-  try {
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const bearer = authHeader.replace(/^Bearer\s+/i, "").trim();
-    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
-    if (bearer && bearer === SERVICE_KEY) {
-      // Trusted service-role caller → derive tenant from the (trusted) body.user_id).
-      // TWO resolutions with different strictness (M0):
-      //   resolvedTenantId — for strategize/tracing: active_tenant_id, else first active
-      //     membership (honest-degrade context only; nothing persisted under it).
-      //   lineageTenantId — for PERSISTENCE: active_tenant_id ONLY. A user whose active
-      //     workspace is unset has AMBIGUOUS ownership and the run is NOT persisted
-      //     (fail-closed per the owner ruling — never a guessed membership).
-      const userId = typeof body.user_id === "string" ? body.user_id : "";
-      if (userId) {
-        const { data: prof } = await admin
-          .from("profiles").select("active_tenant_id").eq("user_id", userId).maybeSingle();
-        const activeTid = (prof?.active_tenant_id as string | null) ?? null;
-        lineageTenantId = activeTid && UUID_RE.test(activeTid) ? activeTid : null;
-        let tid: string | null = activeTid;
-        if (!tid) {
-          const { data: memberRows } = await admin
-            .from("tenant_members").select("tenant_id")
-            .eq("user_id", userId).eq("status", "active")
-            .order("joined_at", { ascending: true }).limit(1);
-          tid = (memberRows?.[0]?.tenant_id as string | null) ?? null;
-        }
-        resolvedTenantId = tid && UUID_RE.test(tid) ? tid : null;
-      }
-    } else if (bearer) {
-      // User JWT → pin to the caller's OWN tenant via RLS rpc (body.user_id NOT trusted here).
-      const anon = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
-        global: { headers: { Authorization: authHeader } },
-      });
-      const { data: { user } } = await anon.auth.getUser();
-      if (user) {
-        const { data: activeTenant } = await anon.rpc("current_user_tenant_id");
-        resolvedTenantId = typeof activeTenant === "string" && UUID_RE.test(activeTenant) ? activeTenant : null;
-        // The JWT path is exact by construction (RLS-pinned resolver) — lineage = resolved.
-        lineageTenantId = resolvedTenantId;
-      }
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const bearer = authHeader.replace(/^Bearer\s+/i, "").trim();
+  const delegated = !!SERVICE_KEY && bearer === SERVICE_KEY;
+  const scopeAdmin = createClient(SUPABASE_URL, SERVICE_KEY);
+  const scopeCaller = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  let boundActor: string | null = null;
+  let modelAuthorityRefused = false;
+  const assertResearchScope = async (): Promise<void> => {
+    try {
+    if (modelAuthorityRefused || req.signal.aborted) throw new ResearchScopeError();
+    if (!bearer) throw new ResearchScopeError(401);
+    // Two fresh requests, ONE parallel network stage. Neither grants authority
+    // alone: Auth validates the identity and the canonical SQL composes the exact
+    // incumbent profile/current-workspace/member predicates in one read snapshot.
+    const [identity, scope] = await Promise.all([
+      delegated ? scopeAdmin.auth.admin.getUserById(body.user_id) : scopeCaller.auth.getUser(),
+      (delegated ? scopeAdmin : scopeCaller).rpc("research_assert_current_scope", {
+        _expected_actor_id: body.user_id,
+        _expected_tenant_id: lineageTenantId ?? expectedTenantId ?? null,
+      }),
+    ]);
+    const actor = identity.data?.user?.id;
+    if (identity.error || !actor || !UUID_RE.test(actor)) throw new ResearchScopeError(401);
+    if (actor !== body.user_id || boundActor && actor !== boundActor) throw new ResearchScopeError();
+    const active = scope.data?.tenant_id;
+    if (scope.error || scope.data?.actor_id !== actor || typeof active !== "string" || !UUID_RE.test(active) ||
+      lineageTenantId && active !== lineageTenantId ||
+      expectedTenantId !== undefined && expectedTenantId !== active) throw new ResearchScopeError();
+    boundActor = actor;
+    resolvedTenantId = active;
+    lineageTenantId = active;
+    } catch (error) {
+      if (error instanceof ResearchScopeError) throw error;
+      throw new ResearchScopeError();
     }
-  } catch (e) {
-    console.warn("[paige-deep-research] tenant resolution failed (non-fatal):", (e as Error)?.message);
-    resolvedTenantId = null;
-    lineageTenantId = null;
-  }
+  };
+  try { await assertResearchScope(); }
+  catch (error) { return json({ error: "Research identity or current workspace could not be verified.", not_applied: true },
+    error instanceof ResearchScopeError ? error.status : 403); }
+  const refuseChangedScope = () => json({ error: "Research workspace changed or access could not be verified. Earlier authorized work may have run; inspect the original workspace before repeating it.", outcome_unknown: true }, 409);
 
-  // M0 CROSS-CHECK: an upstream expected_tenant_id is honored only when it AGREES with the
-  // server-resolved lineage. A disagreement is ambiguity — persistence is skipped, the
-  // caller's value is never persisted and never granted authority.
-  const expectedTenant = typeof body.expected_tenant_id === "string" && UUID_RE.test(body.expected_tenant_id)
-    ? (body.expected_tenant_id as string).toLowerCase()
-    : null;
-  if (expectedTenant && lineageTenantId && expectedTenant !== lineageTenantId) {
-    console.warn(
-      "[paige-deep-research] persistence skipped: upstream expected_tenant_id disagrees with the server-resolved lineage (treated as ambiguous, §9/M0)",
-    );
-    lineageTenantId = null;
-  }
+  // Immutable native context per phase. Match the existing provider's 120s maximum,
+  // narrowed by the incumbent gathering/synthesis deadline; never renew an expired
+  // phase on fallback. These options reach HTTP ONLY on the dormant Fabric path.
+  const modelContext = (phaseDeadline: number): Pick<RunRequestCtx, "beforeProviderAttempt" | "signal"> => {
+    const deadline = Math.min(phaseDeadline, Date.now() + 120_000);
+    const signal = AbortSignal.any([req.signal, AbortSignal.timeout(Math.max(0, deadline - Date.now()))]);
+    const inTime = () => !signal.aborted && Date.now() < deadline;
+    return {
+      signal,
+      beforeProviderAttempt: () => new Promise<boolean>(resolve => {
+        if (!inTime() || modelAuthorityRefused) { resolve(false); return; }
+        const stopped = () => resolve(false);
+        signal.addEventListener("abort", stopped, { once: true });
+        void assertResearchScope().then(() => resolve(inTime() && !modelAuthorityRefused), () => {
+          // A later A→B→A observation may not revive a refused run.
+          modelAuthorityRefused = true;
+          resolve(false);
+        }).finally(() => signal.removeEventListener("abort", stopped));
+      }),
+    };
+  };
 
   try {
   // §34 L4 phase-1: strategize BEFORE the research loop. Honest-degrade — it NEVER throws and can never
   // break the run (contract in strategize.ts); its one reason:strategize trace self-writes to L1 (§34).
   // Only the GENERAL path (planHop) consumes the strategy; dossier mode uses the deterministic
-  // planEntityHop and would discard it — so skip the frontier "plan" call there rather than pay for a
+  // planEntityHop and would discard it — so skip the shared strategy call there rather than pay for a
   // strategy nothing reads (§13/efficiency). General-path runs still land the trace + steer hop-0.
   const strategy = entityTarget
     ? null
@@ -2069,8 +2168,11 @@ serve(async (req) => {
         task: question,
         tenantId: resolvedTenantId,   // §9/#361: server-resolved, NEVER body.user_id
         taskId: runId,                // correlates the trace to this exact research run
+        fabricEnabled: RESEARCH_FABRIC_ENABLED,
+        ...modelContext(Date.now() + 120_000),
         // agentId omitted → defaults to "paige-strategist" (the first live paige-strategist trace row)
       });
+  await assertResearchScope();
 
   // §32 correctness: reset the wall-clock baseline AFTER strategize so pre-reasoning latency is NOT
   // billed against the gathering budget. The three WALL_CLOCK_MS comparisons below all read this t0.
@@ -2124,7 +2226,8 @@ serve(async (req) => {
             ? `\nKEY SUB-GOALS:\n${strategy.decomposition.slice(0, 3).map((d) => `- ${d}`).join("\n")}`
             : "")
         : "";
-      const plan = await planHop(question, domainHint, hop, evidence, strategyHint, fabricCtx);
+      await assertResearchScope();
+      const plan = await planHop(question, domainHint, hop, evidence, strategyHint, { ...fabricCtx, ...modelContext(t0 + BND.WALL_CLOCK_MS) }, sourcePolicy);
       if (plan.done && hop > 0) { stop = "answered"; break; }
       queries = plan.queries.slice(0, BND.MAX_QUERIES_PER_HOP);
       if (queries.length === 0) {
@@ -2137,14 +2240,18 @@ serve(async (req) => {
     const searchesRun: string[] = [];
     const sourcesBeforeSearch = sources.length;
     for (const q of queries) {
+      if (sourcePolicy.max_sources !== undefined && sources.length >= sourcePolicy.max_sources) break;
       if (searches >= BND.MAX_TOTAL_SEARCHES) break;
       if (Date.now() - t0 > BND.WALL_CLOCK_MS) { stop = "wall_clock"; break outer; }
-      const r = await callWebSearch(SUPABASE_URL, SERVICE_KEY, q);
+      await assertResearchScope();
+      const searchLimit = Math.min(RESEARCH_SEARCH_LIMIT, sourcePolicy.max_sources === undefined ? RESEARCH_SEARCH_LIMIT : sourcePolicy.max_sources - sources.length);
+      const r = await callWebSearch(SUPABASE_URL, SERVICE_KEY, q, sourcePolicy, searchLimit);
+      await assertResearchScope();
       if (!r.configured) { configured = false; stop = "unconfigured"; break outer; } // §13 — never fabricate
       searches++;
       searchesRun.push(q.slice(0, 160));
       costUSD += COST.search;
-      for (const hit of r.results) upsertSource(sources, hit);
+      for (const hit of r.results) upsertSource(sources, hit, sourcePolicy);
     }
 
     // (c) READ — top-ranked unread sources' full body
@@ -2158,7 +2265,9 @@ serve(async (req) => {
       if (Date.now() - t0 > BND.WALL_CLOCK_MS) { stop = "wall_clock"; break outer; }
       const live = sources.find((x) => x.url === s.url)!;
       readsSelected.push(sources.indexOf(live)); // R3: run-local source position (canonical indexes are stamped by rankSources)
+      await assertResearchScope();
       const content = await fetchUrl(SUPABASE_URL, SERVICE_KEY, s.url);
+      await assertResearchScope();
       live.read = true;
       reads++;
       costUSD += COST.read;
@@ -2178,6 +2287,9 @@ serve(async (req) => {
       budget: hopBudget(),
     });
 
+    // A full source budget stops gathering only AFTER reading admitted evidence.
+    // Synthesis below still runs and binds its citations to these exact sources.
+    if (sourcePolicy.max_sources !== undefined && sources.length >= sourcePolicy.max_sources) { stop = "budget"; break; }
     if (searches >= BND.MAX_TOTAL_SEARCHES && reads >= BND.MAX_READS) { stop = "budget"; break; }
     if (hop + 1 >= effectiveMaxHops) stop = "max_hops";
   }
@@ -2206,11 +2318,14 @@ serve(async (req) => {
     question,
     findings,
     sources: outSources,
-    coverage: { stop_reason: stopReason, hops_used: hopsUsed, searches, reads, note, configured },
+    coverage: { stop_reason: stopReason, hops_used: hopsUsed, searches, reads, note, configured,
+      ...(hasSourcePolicy ? { source_policy: { ...sourcePolicy, admitted_sources: outSources.length,
+        limit_reached: sourcePolicy.max_sources !== undefined && outSources.length >= sourcePolicy.max_sources } } : {}) },
   });
 
   // Unconfigured → no synthesis, findings [], persist NOTHING (test iii).
   if (!configured) {
+    await assertResearchScope();
     return json(buildResult(
       [], "unconfigured",
       "Live web search is not connected, so no sources could be gathered. No facts were produced — nothing was invented.",
@@ -2225,7 +2340,8 @@ serve(async (req) => {
         ? "Search ran but returned no results. No verifiable sources, so no findings — nothing was fabricated."
         : "Sources were found but none met the reliability bar. No findings produced rather than surface unverifiable claims.",
     );
-    if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier);
+    if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier, assertResearchScope);
+    await assertResearchScope();
     return json(result);
   }
 
@@ -2236,11 +2352,13 @@ serve(async (req) => {
   // ── R4 — decomposed claim formation (general path only; dossier mode keeps its own
   // single specialized call by design — entity profiles are already atomic per field).
   let synth: SynthOut;
+  await assertResearchScope();
   if (entityTarget) {
-    const mono = await synthesize(question, domainHint, citable, entityTarget, fabricCtx);
+    const mono = await synthesize(question, domainHint, citable, entityTarget, { ...fabricCtx, ...modelContext(t0 + BND.WALL_CLOCK_MS + 110_000) });
     if (!mono) {
       const result = buildResult([], "error", "Synthesis failed; no findings returned rather than risk fabrication.");
-      if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier);
+      if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier, assertResearchScope);
+      await assertResearchScope();
       return json(result);
     }
     // R6-B: the fabric's closed served-route projection on the dossier record (absent on
@@ -2249,7 +2367,7 @@ serve(async (req) => {
     if (monoRoute) dossier.synthesis.served_route = monoRoute;
     synth = mono;
   } else {
-    const units = await planSynthesisUnits(question, domainHint, citable, fabricCtx);
+    const units = await planSynthesisUnits(question, domainHint, citable, { ...fabricCtx, ...modelContext(t0 + BND.WALL_CLOCK_MS + 110_000) });
     for (const u of units) u.source_refs = citable.slice(0, 14).map((x) => x.index);
     costUSD += COST.cheapLLM; // the unit planner's extract call
     // bounded lanes: R4_UNIT_CONCURRENCY at a time, hard call ceiling R4_MAX_SYNTH_CALLS
@@ -2266,7 +2384,7 @@ serve(async (req) => {
         break;
       }
       const lane = units.slice(i, i + R4_UNIT_CONCURRENCY).slice(0, Math.max(0, R4_MAX_SYNTH_CALLS - callsMade));
-      const outs = await Promise.all(lane.map((u) => { callsMade++; costUSD += COST.synthesis; return synthesizeUnit(u, question, domainHint, citable, RESEARCH_COGNITIVE_CLASSES.unit_synthesis, fabricCtx); }));
+      const outs = await Promise.all(lane.map(async (u) => { await assertResearchScope(); callsMade++; costUSD += COST.synthesis; return synthesizeUnit(u, question, domainHint, citable, RESEARCH_COGNITIVE_CLASSES.unit_synthesis, { ...fabricCtx, ...modelContext(synthDeadline) }); }));
       lane.forEach((u, j) => perUnit.push({ unit: u, out: outs[j] }));
     }
     const { findings: unitFindings, unitDiagnostics } = aggregateUnits(perUnit);
@@ -2282,7 +2400,8 @@ serve(async (req) => {
     // all units failed at the transport level = the monolithic failure class (honest error)
     if (perUnit.length > 0 && perUnit.every((pu) => pu.out === null)) {
       const result = buildResult([], "error", "Synthesis failed; no findings returned rather than risk fabrication.");
-      if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier);
+      if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier, assertResearchScope);
+      await assertResearchScope();
       return json(result);
     }
   }
@@ -2323,9 +2442,16 @@ serve(async (req) => {
     // only `coverage` (B1). entity_profile.unverified_notes stays canonical.
     result.coverage.unverified_notes = entityProfile.unverified_notes;
   }
-  if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier);
+  await assertResearchScope();
+  if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier, assertResearchScope);
+  await assertResearchScope();
   return json(result);
   } catch (e) {
+    if (e instanceof ResearchScopeError) return refuseChangedScope();
+    // Error responses also carry identity/evidence. Persistence is optional,
+    // while authorization immediately before returning any result is not.
+    try { await assertResearchScope(); }
+    catch { return refuseChangedScope(); }
     // §13 — any unexpected failure returns a STRUCTURED honest error, never a
     // bare 500 and never a fabricated result. Nothing is persisted on this path.
     console.error("[paige-deep-research] run error:", (e as Error)?.message);
@@ -2341,6 +2467,7 @@ serve(async (req) => {
         reads,
         note: "Research hit an unexpected error; returning no findings rather than risk an unverified answer.",
         configured,
+        ...(hasSourcePolicy ? { source_policy: { ...sourcePolicy, admitted_sources: 0, limit_reached: false } } : {}),
       },
     });
   }

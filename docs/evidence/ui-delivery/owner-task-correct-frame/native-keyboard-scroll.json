@@ -1,0 +1,205 @@
+{
+  "proofClass": "NATIVE_KEYBOARD_ON_STATIC_HTML",
+  "keyboard": [
+    {
+      "name": "shell-dark-390x768-closed-review.html",
+      "target": "Cancel",
+      "proof": {
+        "bodyScrollTop": 0,
+        "boxShadow": "none",
+        "documentScrollTop": 0,
+        "focusVisible": true,
+        "height": 30,
+        "hostScrollTop": 413.6000061035156,
+        "outline": "rgb(255, 240, 207) solid 1.6px",
+        "text": "Cancel",
+        "width": 60.72500228881836,
+        "x": 122.8000030517578,
+        "y": 441.2875061035156
+      },
+      "screenshot": "keyboard/mobile-dark-cancel.png",
+      "pngSha256": "ce046041cb7a2017c7f1f5a61d492e9e2cb4d393f7204a384858f262de27e227",
+      "pixelWidth": 390,
+      "pixelHeight": 768,
+      "failures": []
+    },
+    {
+      "name": "shell-light-390x768-closed-review.html",
+      "target": "Cancel",
+      "proof": {
+        "bodyScrollTop": 0,
+        "boxShadow": "none",
+        "documentScrollTop": 0,
+        "focusVisible": true,
+        "height": 30,
+        "hostScrollTop": 413.6000061035156,
+        "outline": "rgb(111, 86, 54) solid 1.6px",
+        "text": "Cancel",
+        "viewportHeight": 768,
+        "width": 60.72500228881836,
+        "x": 122.8000030517578,
+        "y": 441.2875061035156
+      },
+      "screenshot": "keyboard/shell-light-390x768-closed-review-cancel.png",
+      "pngSha256": "b9cf976b1ba6acad6073e1218f30f6f57586324cbd1edd2e88a2ce7aa0c07d17",
+      "failures": [],
+      "pixelWidth": 390,
+      "pixelHeight": 768
+    },
+    {
+      "name": "shell-light-390x768-closed-unknown.html",
+      "target": "Refresh",
+      "proof": {
+        "bodyScrollTop": 0,
+        "boxShadow": "none",
+        "documentScrollTop": 0,
+        "focusVisible": true,
+        "height": 30,
+        "hostScrollTop": 0,
+        "outline": "rgb(111, 86, 54) solid 1.6px",
+        "text": "Refresh",
+        "viewportHeight": 768,
+        "width": 65.5250015258789,
+        "x": 106.8000030517578,
+        "y": 215.5375061035156
+      },
+      "screenshot": "keyboard/shell-light-390x768-closed-unknown-refresh.png",
+      "pngSha256": "5ae26ce8a9f8e4c65e11704d4293a7709d18bb501ba3f142ff86e97611c85707",
+      "failures": [],
+      "pixelWidth": 390,
+      "pixelHeight": 768
+    },
+    {
+      "name": "shell-dark-390x768-closed-unknown.html",
+      "target": "Refresh",
+      "proof": {
+        "bodyScrollTop": 0,
+        "boxShadow": "none",
+        "documentScrollTop": 0,
+        "focusVisible": true,
+        "height": 30,
+        "hostScrollTop": 0,
+        "outline": "rgb(255, 240, 207) solid 1.6px",
+        "text": "Refresh",
+        "viewportHeight": 768,
+        "width": 65.5250015258789,
+        "x": 106.8000030517578,
+        "y": 215.5375061035156
+      },
+      "screenshot": "keyboard/shell-dark-390x768-closed-unknown-refresh.png",
+      "pngSha256": "cba908cdba534c02cb157365f3ab2b63a8d9778f099391acaad0f3d8b4e3fc81",
+      "failures": [],
+      "pixelWidth": 390,
+      "pixelHeight": 768
+    },
+    {
+      "name": "reflow-light-768x384-closed-review.html",
+      "target": "Cancel",
+      "proof": {
+        "bodyScrollTop": 0,
+        "boxShadow": "none",
+        "documentScrollTop": 0,
+        "focusVisible": true,
+        "height": 30,
+        "hostScrollTop": 334.3999938964844,
+        "outline": "rgb(111, 86, 54) solid 1.6px",
+        "text": "Cancel",
+        "viewportHeight": 384,
+        "width": 60.72500228881836,
+        "x": 297.70001220703125,
+        "y": 210.0375061035156
+      },
+      "screenshot": "keyboard/reflow-light-768x384-closed-review-cancel.png",
+      "pngSha256": "acf6fd0debb3782a9f6abcd7d95df62ae19640407039ebfdd044058d40dd048d",
+      "failures": [],
+      "pixelWidth": 1536,
+      "pixelHeight": 768
+    },
+    {
+      "name": "reflow-light-768x384-closed-unknown.html",
+      "target": "Refresh",
+      "proof": {
+        "bodyScrollTop": 0,
+        "boxShadow": "none",
+        "documentScrollTop": 0,
+        "focusVisible": true,
+        "height": 30,
+        "hostScrollTop": 0,
+        "outline": "rgb(111, 86, 54) solid 1.6px",
+        "text": "Refresh",
+        "viewportHeight": 384,
+        "width": 65.5250015258789,
+        "x": 658.0750122070312,
+        "y": 157.3625030517578
+      },
+      "screenshot": "keyboard/reflow-light-768x384-closed-unknown-refresh.png",
+      "pngSha256": "79259a661ff85bf9682e7a10d302edbf83dd7966bf6b69ce0565fbe6668e8edf",
+      "failures": [],
+      "pixelWidth": 1536,
+      "pixelHeight": 768
+    },
+    {
+      "name": "reflow-dark-768x384-closed-review.html",
+      "target": "Cancel",
+      "proof": {
+        "bodyScrollTop": 0,
+        "boxShadow": "none",
+        "documentScrollTop": 0,
+        "focusVisible": true,
+        "height": 30,
+        "hostScrollTop": 334.3999938964844,
+        "outline": "rgb(255, 240, 207) solid 1.6px",
+        "text": "Cancel",
+        "viewportHeight": 384,
+        "width": 60.72500228881836,
+        "x": 297.70001220703125,
+        "y": 210.0375061035156
+      },
+      "screenshot": "keyboard/reflow-dark-768x384-closed-review-cancel.png",
+      "pngSha256": "279e63d8a33e8facaa4de4f2b89ef1793f1af831d50d5585f0faf74fa5ceacc1",
+      "failures": [],
+      "pixelWidth": 1536,
+      "pixelHeight": 768
+    },
+    {
+      "name": "reflow-dark-768x384-closed-unknown.html",
+      "target": "Refresh",
+      "proof": {
+        "bodyScrollTop": 0,
+        "boxShadow": "none",
+        "documentScrollTop": 0,
+        "focusVisible": true,
+        "height": 30,
+        "hostScrollTop": 0,
+        "outline": "rgb(255, 240, 207) solid 1.6px",
+        "text": "Refresh",
+        "viewportHeight": 384,
+        "width": 65.5250015258789,
+        "x": 658.0750122070312,
+        "y": 157.3625030517578
+      },
+      "screenshot": "keyboard/reflow-dark-768x384-closed-unknown-refresh.png",
+      "pngSha256": "bd50eabdb740099299650945ebb8d102df61a9035efe26f3bbb5e3f47c4e8b07",
+      "failures": [],
+      "pixelWidth": 1536,
+      "pixelHeight": 768
+    }
+  ],
+  "scroll": {
+    "end": {
+      "bodyScrollTop": 0,
+      "hostClientHeight": 709,
+      "hostScrollHeight": 1816,
+      "hostScrollTop": 1106.4000244140625,
+      "outerMainScrollTop": 0
+    },
+    "home": {
+      "bodyScrollTop": 0,
+      "hostScrollTop": 0,
+      "outerMainScrollTop": 0
+    },
+    "result": "PASS"
+  },
+  "customerEffects": 0,
+  "hydratedBehavior": "NOT_TESTED"
+}

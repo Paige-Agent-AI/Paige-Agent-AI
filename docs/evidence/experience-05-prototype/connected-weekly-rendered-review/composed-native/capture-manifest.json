@@ -1,0 +1,599 @@
+{
+  "artifactSHA256": "40D39A4DDC50B071A4CBF2E28A88EA34C93CCC2E141A57DFFB8C7CD1B550037F",
+  "scope": "Exact PNG bytes from current actual-source synthetic render. No historical image counts carried forward.",
+  "count": 148,
+  "captures": [
+    {
+      "file": "dark-primary-hover.png",
+      "sha256": "3B0F1006FF3F8BEB9537A823D8F68866A2D264DEB49BF448184A7C588A0ED413"
+    },
+    {
+      "file": "desktop-calendar-effective-client-suppressed.png",
+      "sha256": "95E549E96D634363F77C3B9D284C8E45239BFB7AB8505637ECBF8F9E3B97EB1F"
+    },
+    {
+      "file": "desktop-calendar-view-client-suppressed.png",
+      "sha256": "95E549E96D634363F77C3B9D284C8E45239BFB7AB8505637ECBF8F9E3B97EB1F"
+    },
+    {
+      "file": "desktop-cancelled.png",
+      "sha256": "6D6D450D0C5104CC4A7E2CF70B36ECFCBC29DD0AB72A1EF3F5EDD6A8DFA1D100"
+    },
+    {
+      "file": "desktop-chat-effective-client-suppressed.png",
+      "sha256": "67CDEE9D8652F4354891A0D1497E734553174B1436F6FF989AE3BD76F686285A"
+    },
+    {
+      "file": "desktop-chat-view-client-suppressed.png",
+      "sha256": "42BF2CC10EAB00335AA0B36C24E440A7233AD5A79FA528494F78870979AFC6B4"
+    },
+    {
+      "file": "desktop-completed.png",
+      "sha256": "D958FDFD2ED8E16183357042E29FAB2EBBDC858524071CC6FB089116EF51A516"
+    },
+    {
+      "file": "desktop-dark-actual-operations-source.png",
+      "sha256": "1AE8901880AA5DB4512F6A16C6AAB21C03B7FDCEB7F976FFE4CAC1CAB8A1A5E2"
+    },
+    {
+      "file": "desktop-dark-calendar-sheet-future-controls.png",
+      "sha256": "FAFD94BACE86E34C63E3AD5275C669C3910B8526B4F5D5474634A977A15114D1"
+    },
+    {
+      "file": "desktop-dark-calendar-sheet-receipt.png",
+      "sha256": "E7880358E37BDA310534E739518E7507C9EDA98FAAEA1B58C9EFF72CB9ED6F31"
+    },
+    {
+      "file": "desktop-dark-calendar-sheet.png",
+      "sha256": "574F145065AA1410FD762D4B05D35A6FA3D8F55A4F533DADEA8D65D88DDDDC69"
+    },
+    {
+      "file": "desktop-dark-chat-sheet-future-controls.png",
+      "sha256": "C36C0E7CF58F700906DD7BD7C55EE2A0D1F5735C0905C8F5F8DFF48B0C2FB852"
+    },
+    {
+      "file": "desktop-dark-chat-sheet-receipt.png",
+      "sha256": "A1EBF6FFD1A8D24EDD7CDB325CFE057987D933755CE1B112B0D8ABD514D0371A"
+    },
+    {
+      "file": "desktop-dark-chat-sheet.png",
+      "sha256": "ADB29E936E1945A666E128379A3CAC96789263076804D352C873FC272275C4AE"
+    },
+    {
+      "file": "desktop-dark-discarded.png",
+      "sha256": "3FC1EFCC6CD10215EA3AB80E5A95EE1DBF1BC121B924921D7C67AA181934F4A8"
+    },
+    {
+      "file": "desktop-dark-invalid-proposal.png",
+      "sha256": "619558579B63E0EBD792DFAFDBB48A9CBE8BE5DD8600394AC762D5143533EAFD"
+    },
+    {
+      "file": "desktop-dark-native-calendar.png",
+      "sha256": "16B9343A6BDFF5DA8834874975B5B4A1BE81E28E29AD8B87D2078EFFA0A541B2"
+    },
+    {
+      "file": "desktop-dark-native-chat.png",
+      "sha256": "C2D77BEDFBCBBE09D356848EC060B198A2CB8839AF0D979AFF0A10EA5B6E5C08"
+    },
+    {
+      "file": "desktop-dark-prepared-chat.png",
+      "sha256": "0C85FCAFD8340D514FA2DCE663F7E5A3B855C0052540844A7B58B4F95EAEE6D5"
+    },
+    {
+      "file": "desktop-dark-proposal-fields.png",
+      "sha256": "2351E7617DB8BED928E0B33FBB9D8E203363DF84DC225B749928166672269E17"
+    },
+    {
+      "file": "desktop-dark-proposal-review.png",
+      "sha256": "4D3D47FEFE31E553A0AFED122962692D0810852972CC108872FF3412A23D045E"
+    },
+    {
+      "file": "desktop-empty.png",
+      "sha256": "3FC1EFCC6CD10215EA3AB80E5A95EE1DBF1BC121B924921D7C67AA181934F4A8"
+    },
+    {
+      "file": "desktop-failed.png",
+      "sha256": "02809D019E3B449B7E29B3CCFBA8C05480A45354DC325AECD96C055ED6F3B9DD"
+    },
+    {
+      "file": "desktop-held.png",
+      "sha256": "478C4654881D1DB0383395BE94E318BD44EAA268AF4F5F5C2BE2C0EB5D549852"
+    },
+    {
+      "file": "desktop-light-actual-operations-source.png",
+      "sha256": "7131F6FD7A49E34B4B02CA499E0FB4F731E5B98A754F46D346A1921E1E98B1F7"
+    },
+    {
+      "file": "desktop-light-calendar-sheet-future-controls.png",
+      "sha256": "05E5B8DDD5917F24878A88B559EBCB580862E4987575831F5563165975AB0E63"
+    },
+    {
+      "file": "desktop-light-calendar-sheet-receipt.png",
+      "sha256": "28F569107708EED8EAEA4D4930F133A7900E47D2B1E7833B72EC070EB85F86B0"
+    },
+    {
+      "file": "desktop-light-calendar-sheet.png",
+      "sha256": "2ECA6FAFA39CB0E0C3DEDEF594E85DF623D31FB879C10C7362E1CD0037646CE6"
+    },
+    {
+      "file": "desktop-light-chat-sheet-future-controls.png",
+      "sha256": "AF5E3FCAAF4D6F433764ECF50BB57B29C6398A962648F1FD89FA12D3ECC3B902"
+    },
+    {
+      "file": "desktop-light-chat-sheet-receipt.png",
+      "sha256": "D41002046F814AEE6489D2A09E8C4AA37D77AC57F87C869ABE5BDC08356FC44A"
+    },
+    {
+      "file": "desktop-light-chat-sheet.png",
+      "sha256": "9BF209118DA8DE124D561ABF93DD5DB04CDACA5FE280A16F842083CC7ED89797"
+    },
+    {
+      "file": "desktop-light-discarded.png",
+      "sha256": "C939496EB5EF196679C21BE11447F4C01C61BCEBEFBDEE3BA88C53DE290D85D5"
+    },
+    {
+      "file": "desktop-light-invalid-proposal.png",
+      "sha256": "022F5950F678FAFB4469EA698C856AD58B50C856A30453729194EF63F886C371"
+    },
+    {
+      "file": "desktop-light-native-calendar.png",
+      "sha256": "399FAE9FDD9E6DF5C5FDE0ABA62BCDA689C3A7AD3CDF6984D6CE2FF94E8BC05F"
+    },
+    {
+      "file": "desktop-light-native-chat.png",
+      "sha256": "EB92A49C1C3C8EAD1DF619976323EA56021CFDE76F3ACCA362DB9A5693E9868A"
+    },
+    {
+      "file": "desktop-light-prepared-chat.png",
+      "sha256": "C785D121D670AB76A262EC2038DC0BD2CB0F093C3C2CDC038C4D0BA1AFD6A3BA"
+    },
+    {
+      "file": "desktop-light-proposal-fields.png",
+      "sha256": "12A2544E02E76EB4A90AA757F16EAB17F6475C6AFFE0A6A1FB132BC7DA8D43ED"
+    },
+    {
+      "file": "desktop-light-proposal-review.png",
+      "sha256": "3F47F423A127FF858102C9AD894C20EE54736558D8C94EAEEC8E7D89E6773C70"
+    },
+    {
+      "file": "desktop-loading.png",
+      "sha256": "C38B6B96BCF5F4F4E7E4797A825BE0E9E5CB5B140636B60AA11BFEFC9EA15BB8"
+    },
+    {
+      "file": "desktop-paused.png",
+      "sha256": "9E5E279F9359BC24DAE6774AC4341A1F245DFE94F7227EBE4C02B7BFD2D3A312"
+    },
+    {
+      "file": "desktop-refused.png",
+      "sha256": "B972E38BA4EACE3A295E6510992F5A5A1A78F2AA717FE8468427409B2B8E14F3"
+    },
+    {
+      "file": "desktop-requested.png",
+      "sha256": "CB53D028C60A8CB440BBAC107432200BA017C0710A24E7DDFACF759E55AECACE"
+    },
+    {
+      "file": "desktop-running.png",
+      "sha256": "5EDD56BB2CBD6FC987F66CFB1AFB9E9ED98C61F4D86DF3DCB80FF0F27F8B6D8C"
+    },
+    {
+      "file": "desktop-scheduled-future-controls.png",
+      "sha256": "8F6AB32451D9098A47EF68AA2D612A878D7D8E28D60C9565757EC1007E273992"
+    },
+    {
+      "file": "desktop-scheduled.png",
+      "sha256": "AE61E958BDACBDDF32C030CE58EAC89484D7F1A1E1D29E357E0E77BA1A15F3AC"
+    },
+    {
+      "file": "desktop-truncated.png",
+      "sha256": "06D274A86EC43E084BF56BC0F196B09998E0B823BFCAF76E2D898A1E8A47E103"
+    },
+    {
+      "file": "desktop-unavailable.png",
+      "sha256": "1F6477FA74DC392DD8376D4921647E2F66A8A313595572F1AEA03A2D6330C419"
+    },
+    {
+      "file": "desktop-unknown-future-controls.png",
+      "sha256": "D7C25E99A684C26E7C878DBF2D153E34A1DD2CDEE45306EF919262DB3F3A3E47"
+    },
+    {
+      "file": "desktop-unknown.png",
+      "sha256": "2DEC4880DB927DBE7ACA725DFEF0465C487F044BDCE46E361B6AB074C29979BA"
+    },
+    {
+      "file": "desktop-zone-missing.png",
+      "sha256": "332BFAEF1A9C91ABD3DB033B4B0CFB822429BA4BEB39F4AF739F242E944C102C"
+    },
+    {
+      "file": "geometry-1024-dark-paige-closed.png",
+      "sha256": "64405777978AB69D35038561D5EC3CCFEA0D180AA095E297CE69788CE836F50F"
+    },
+    {
+      "file": "geometry-1024-dark-paige-open.png",
+      "sha256": "99F8F68ACAC3CF02344A70C41221C9E45D1FF4967CC8D4118277EC1D24DF13C0"
+    },
+    {
+      "file": "geometry-1024-light-paige-closed.png",
+      "sha256": "69AAAE93294A3696C65A1CA51DB775327FB75A6C9AED9138329EAF332853C866"
+    },
+    {
+      "file": "geometry-1024-light-paige-open.png",
+      "sha256": "6C35C77E0405DC0AFD4810681BB9FF4DC3F64A49B1F4C586FFA1920F27F20004"
+    },
+    {
+      "file": "geometry-1366-dark-paige-closed.png",
+      "sha256": "478C4654881D1DB0383395BE94E318BD44EAA268AF4F5F5C2BE2C0EB5D549852"
+    },
+    {
+      "file": "geometry-1366-dark-paige-open.png",
+      "sha256": "8008452C6ECC456301461C3AFB498122AA9C7EA40AAC4EEBAB04BD6267BCC99B"
+    },
+    {
+      "file": "geometry-1366-light-paige-closed.png",
+      "sha256": "D7FBC79208E0C62C33E4915427579FBAF954E237A1CD6378ABA141F2AC2091A8"
+    },
+    {
+      "file": "geometry-1366-light-paige-open.png",
+      "sha256": "32EB6DE9F93125AA19885115522B73695C8B1119E46F5E389CCFE53888E17E0B"
+    },
+    {
+      "file": "geometry-1536-dark-paige-closed.png",
+      "sha256": "A3BAF568E1F01DA05BAE5C6122A6B3C31022CB7217FAC2B44D8BEDBA691B2694"
+    },
+    {
+      "file": "geometry-1536-dark-paige-open.png",
+      "sha256": "5DEAEFBCE679389C67816848D75CC1DD2B5546CE5DFFA1C580D57FF23407CCAE"
+    },
+    {
+      "file": "geometry-1536-light-paige-closed.png",
+      "sha256": "8B26742A256FC5B93D7596C398F59FB0E4854CC2509F3F8DEEABB99DCCD57B8D"
+    },
+    {
+      "file": "geometry-1536-light-paige-open.png",
+      "sha256": "1ED5D291934E204D07EF3124597AD06761E8409955FAE6F3DD1989686EF4C4CE"
+    },
+    {
+      "file": "geometry-320-dark-paige-closed.png",
+      "sha256": "E06C660D3912F4C70CE5EB2C4BBC4EA53786AE4BA42445596EE92E5F9E3A0852"
+    },
+    {
+      "file": "geometry-320-dark-paige-open.png",
+      "sha256": "5F9A7C458C29CC98D752F07C144EC8D27E0673C1FA5C3CFACFEA69588AFB5E13"
+    },
+    {
+      "file": "geometry-320-light-paige-closed.png",
+      "sha256": "F6DAE22E3DF30BD99938E0D653AA0EC7136048A237AFE33F71E839106694B6D8"
+    },
+    {
+      "file": "geometry-320-light-paige-open.png",
+      "sha256": "C18F04633D1EA5C946FE2D4B657415EE87114664B057C092673D4AB004A62C8E"
+    },
+    {
+      "file": "geometry-390-dark-paige-closed.png",
+      "sha256": "F10A654DE6460BEBF58963A92684CBC140E668214851EF0DFA7EEC50A964BCE5"
+    },
+    {
+      "file": "geometry-390-dark-paige-open.png",
+      "sha256": "8EADFE4B9AD465485CEE1643E39A9AA69AE5AE1EA87F87477445FF5A0B1C7D76"
+    },
+    {
+      "file": "geometry-390-light-paige-closed.png",
+      "sha256": "8348DC23A2358999C8325D0DB630AEC917396EAA4AECE74951A8BCA62729A0CF"
+    },
+    {
+      "file": "geometry-390-light-paige-open.png",
+      "sha256": "A261BE40BADE88B41C9E4634CA664FD9A5BB1D6C6FBF22C4DA87557E47937F3A"
+    },
+    {
+      "file": "geometry-900-dark-paige-closed.png",
+      "sha256": "79F0F28F05C9BBD5884C8A62F45C39D3584AA870F75CFC5E60F684676EDAE6D2"
+    },
+    {
+      "file": "geometry-900-dark-paige-open.png",
+      "sha256": "B397DD16050402D8983D482C6D4232D023D4F0CB8F02CBCEB9DE5D2CA01092B6"
+    },
+    {
+      "file": "geometry-900-light-paige-closed.png",
+      "sha256": "BE4B4307528F35016FCF1E11DBEB27F5375711D981E7B3FB60104BCD480FB49B"
+    },
+    {
+      "file": "geometry-900-light-paige-open.png",
+      "sha256": "F72661D0F5B2AABC15FBCF10FA258217A9CA9DFD606F09AE072028C4DE60576D"
+    },
+    {
+      "file": "light-primary-hover.png",
+      "sha256": "B377BB5BDC555F2C3D0AD0D7F0AE1E8E83FF8A7D8F927F3502B3E9CD63019BD2"
+    },
+    {
+      "file": "mobile-calendar-effective-client-suppressed.png",
+      "sha256": "41CFF16C044224BEC8A679BA171940257B573DE25D0137F81267EA0CB9A27567"
+    },
+    {
+      "file": "mobile-calendar-fixture-state-readback.png",
+      "sha256": "99DDDAC72D9A52BDEF1E5F3C1417B64305BA78461E2FDFDB7CA156BB9F20F9A3"
+    },
+    {
+      "file": "mobile-calendar-view-client-suppressed.png",
+      "sha256": "41CFF16C044224BEC8A679BA171940257B573DE25D0137F81267EA0CB9A27567"
+    },
+    {
+      "file": "mobile-cancelled.png",
+      "sha256": "D9C832DBFCD278F277A636A9530D25CC66BF94D57C25453F56E941251EF5E658"
+    },
+    {
+      "file": "mobile-chat-effective-client-suppressed.png",
+      "sha256": "37E3EEED1FEB5BC04A70BE38E359E5A39B011F7A1BE1F3C3D8BCFD6BCDC9DECF"
+    },
+    {
+      "file": "mobile-chat-view-client-suppressed.png",
+      "sha256": "37E3EEED1FEB5BC04A70BE38E359E5A39B011F7A1BE1F3C3D8BCFD6BCDC9DECF"
+    },
+    {
+      "file": "mobile-completed.png",
+      "sha256": "DB2D3FACBE5F21959F71EFC19007C019EF1EEE133831175CF5A0C4D90F15D94F"
+    },
+    {
+      "file": "mobile-dark-actual-operations-source.png",
+      "sha256": "D0717EB496A571CE861E2BD3C137BCAC3AC8B81113B143FEE5F9E763E63F02A7"
+    },
+    {
+      "file": "mobile-dark-calendar-sheet-future-controls.png",
+      "sha256": "B984E6B8AD782D2FE9A8F2EDF3082F0769C4A75BD72EA9C9C59A2AA75AAF0483"
+    },
+    {
+      "file": "mobile-dark-calendar-sheet-receipt.png",
+      "sha256": "81E9CDF224EEA0E1B9596A0BFAEBA87ADE71CADEF510E941CF40AF293E440D50"
+    },
+    {
+      "file": "mobile-dark-calendar-sheet.png",
+      "sha256": "19DE8AEC6E32C38F12F8D52ADAA0F24DFE9C11BB4E441514DB3A8F27A461D08D"
+    },
+    {
+      "file": "mobile-dark-chat-sheet-future-controls.png",
+      "sha256": "511BB5353BE3E474C62EDE1521940061A793A38BB8168FEEF292821C7E1A313A"
+    },
+    {
+      "file": "mobile-dark-chat-sheet-receipt.png",
+      "sha256": "FE4B46FE374A42ABE744CAA2FA1AA10D8CAAC7130EFA349BCC9EAAF9716E1224"
+    },
+    {
+      "file": "mobile-dark-chat-sheet.png",
+      "sha256": "E0D92B6080BC28E70362388E3D3DB87BF93559CA69E428635A5D37878F7D83AE"
+    },
+    {
+      "file": "mobile-dark-discarded.png",
+      "sha256": "DB2D5C49B27DE4115671C2E12467668C0B85D5FC780F073F5F0CDAEAD04E692F"
+    },
+    {
+      "file": "mobile-dark-invalid-proposal.png",
+      "sha256": "4F95438CE27BBBA4404EA9796D3F63DAE5931BAEAC578406FCF020AFBA2ABB81"
+    },
+    {
+      "file": "mobile-dark-native-calendar.png",
+      "sha256": "B25B3418EA282635DA926759858E5956375B22B882F2695D00982FCF927CFDA6"
+    },
+    {
+      "file": "mobile-dark-native-chat.png",
+      "sha256": "29DA62CA310998657448979777F205636C6CCEB52E1D250014B3BE411965D6F5"
+    },
+    {
+      "file": "mobile-dark-prepared-chat.png",
+      "sha256": "F97E10DA9D311E89CD130F309B3523C6191ACBBF00A1A1BF76465985AF4CAEFA"
+    },
+    {
+      "file": "mobile-dark-proposal-fields.png",
+      "sha256": "B015F6A5D7E5DAD048FA45946C380DD5CE796758591CCD5642531E9DD04064D5"
+    },
+    {
+      "file": "mobile-dark-proposal-review.png",
+      "sha256": "835F4EF087156F1BD1898500ABB1A53BE6A26382B52F6CEAF37D844A57546170"
+    },
+    {
+      "file": "mobile-empty.png",
+      "sha256": "DB2D5C49B27DE4115671C2E12467668C0B85D5FC780F073F5F0CDAEAD04E692F"
+    },
+    {
+      "file": "mobile-failed.png",
+      "sha256": "C8AAF12D95C46BFDF2604863349FC3D565B8B1E7507F799A4DF236C7BC9D8DB0"
+    },
+    {
+      "file": "mobile-held.png",
+      "sha256": "F10A654DE6460BEBF58963A92684CBC140E668214851EF0DFA7EEC50A964BCE5"
+    },
+    {
+      "file": "mobile-light-actual-operations-source.png",
+      "sha256": "D2DCC901A724ABC66A7BC17C7070F4EE14BC0A394A4A8E625808862022FC88CE"
+    },
+    {
+      "file": "mobile-light-calendar-sheet-future-controls.png",
+      "sha256": "715DC23D9A61C932ED35B91BAFA3B5EF4ABBA9909BC9694B755F774BB4E84757"
+    },
+    {
+      "file": "mobile-light-calendar-sheet-receipt.png",
+      "sha256": "A2207842103C8166D5BB334C51E7BDC89D3537858D6E766C13FC7ECDAABB8006"
+    },
+    {
+      "file": "mobile-light-calendar-sheet.png",
+      "sha256": "97BCB660D65EBF690DFB279812CD903C2E021DDB7C6F8998580C10E7EA40EF6D"
+    },
+    {
+      "file": "mobile-light-chat-sheet-future-controls.png",
+      "sha256": "D7E7CD440B24009D575622290E0D215E4C804BF2F0D98C804747F5AF21047B4D"
+    },
+    {
+      "file": "mobile-light-chat-sheet-receipt.png",
+      "sha256": "82DB4E32E1B5298D9474D8CEA0FC22D77ACF2C017AAF6F6374CC21ACBEE2A3FC"
+    },
+    {
+      "file": "mobile-light-chat-sheet.png",
+      "sha256": "155FA06039F5843089C3612FC9D9B813F4BAB3496A3AC11AFF27D20B88C083AD"
+    },
+    {
+      "file": "mobile-light-discarded.png",
+      "sha256": "DF9FE0BD4F7453E48C4EFBFE5009D101A63D56BAE98D502F478B96E1C191C6F6"
+    },
+    {
+      "file": "mobile-light-invalid-proposal.png",
+      "sha256": "C50AD91F1CB507E524FAD462F13EFB43F3A2B3A4446EB3DC849A213B0452BB86"
+    },
+    {
+      "file": "mobile-light-native-calendar.png",
+      "sha256": "A3C29DB251E6DECD0F12A110913470F49C7CB9D9E0DBB38C2A169AAD3D1E4606"
+    },
+    {
+      "file": "mobile-light-native-chat.png",
+      "sha256": "EEA8079B45C1B38B2F65731191A15D25E573D5C0D7838C1676E7CE063CE6492F"
+    },
+    {
+      "file": "mobile-light-prepared-chat.png",
+      "sha256": "467E58E2B5EA63FDAC946CCEC7B88C70E616786D356558E36A0946CA2ED3F4D3"
+    },
+    {
+      "file": "mobile-light-proposal-fields.png",
+      "sha256": "25CCBC776DCC18D3AD4585E44211345CB4EB62342CF6881469CDDB7924619687"
+    },
+    {
+      "file": "mobile-light-proposal-review.png",
+      "sha256": "2934EE0BAB83A1F31786BF8FD7C3B54992287D2B97DD24D52B5DBFDF757C38AB"
+    },
+    {
+      "file": "mobile-loading.png",
+      "sha256": "C4622194D43CABF8AF97A7757439DDF1E47D76FABD87CD67698EB53F86D235DE"
+    },
+    {
+      "file": "mobile-operations-persona-suppressed.png",
+      "sha256": "950B33496697E624E22B282D540D0DB75C71C247AC83C4E17A89E100E389BC48"
+    },
+    {
+      "file": "mobile-paused.png",
+      "sha256": "1934AB83B1A8AA732BC1DF84BE380B093D69573276C533832EDFC9881A89036A"
+    },
+    {
+      "file": "mobile-refused.png",
+      "sha256": "F080503516FEF6CC212FAA7C98E41898C2060D9E297809E538268ADCA936AD5C"
+    },
+    {
+      "file": "mobile-requested.png",
+      "sha256": "7F46579E5435070F50F7DA5143F08B86A2F39685B7AC3EA0260CB5A71629D2A3"
+    },
+    {
+      "file": "mobile-running.png",
+      "sha256": "5BA30FD14C57DB245C3C26AAF90123938AE960CA0C181621B7E2E38CE945F8CC"
+    },
+    {
+      "file": "mobile-scheduled-future-controls.png",
+      "sha256": "4B98CF0D0063EDC904D9518B3813ABF4A368C982758EB178B0ED42D255392CE2"
+    },
+    {
+      "file": "mobile-scheduled.png",
+      "sha256": "8C7CA933C6198A74297CC0B080293B149C3B708789EE960844156CC986DFB03F"
+    },
+    {
+      "file": "mobile-truncated.png",
+      "sha256": "7815C84D813E5485B5EB9A7EB86A8DA6FE15749D2C407110A2F73D722180B69B"
+    },
+    {
+      "file": "mobile-unavailable.png",
+      "sha256": "70BCA870AB35664E068190771485E785461767A706AB2D9F3F7359DB7CDC8952"
+    },
+    {
+      "file": "mobile-unknown-future-controls.png",
+      "sha256": "F37D3CA56A056FBB5407304236C252F36DA75BBF14D3A191D4C44713B38521D9"
+    },
+    {
+      "file": "mobile-unknown.png",
+      "sha256": "9515A07AC0D8A6EF169EAE990BCE85E7658E3EF5571C9BD7C28E0F150439745A"
+    },
+    {
+      "file": "mobile-zone-missing.png",
+      "sha256": "561FF561E6895BBE5C1AD5DB0BC23459286F16664277D15EF91935A16A89F618"
+    },
+    {
+      "file": "mobile320-calendar-effective-client-suppressed.png",
+      "sha256": "00CA8C8168D83B3D5212D506E8A637CD32BB8996433B3875A4DA73FD81E24667"
+    },
+    {
+      "file": "mobile320-calendar-view-client-suppressed.png",
+      "sha256": "00CA8C8168D83B3D5212D506E8A637CD32BB8996433B3875A4DA73FD81E24667"
+    },
+    {
+      "file": "mobile320-chat-effective-client-suppressed.png",
+      "sha256": "BC6149FC34CFBCA920CA632EDDD7B9BEF622EBE920232A33EB57CD3617613BE1"
+    },
+    {
+      "file": "mobile320-chat-view-client-suppressed.png",
+      "sha256": "BC6149FC34CFBCA920CA632EDDD7B9BEF622EBE920232A33EB57CD3617613BE1"
+    },
+    {
+      "file": "mobile320-dark-actual-operations-source.png",
+      "sha256": "37FAF74E433709D0D9F87F13FF4D9A5BBD33B51283A0AA33DA8286C4B2304E51"
+    },
+    {
+      "file": "mobile320-dark-calendar-sheet-future-controls.png",
+      "sha256": "5377AE3D7BA61983ED2BFB91E3B69DE91822DD308B4F7A17F221530F5E83B430"
+    },
+    {
+      "file": "mobile320-dark-calendar-sheet-receipt.png",
+      "sha256": "545F134665D14AF08C6D83048D1916BC4209D9E823461C6FCAD219FEB8530013"
+    },
+    {
+      "file": "mobile320-dark-calendar-sheet.png",
+      "sha256": "5018604F40A715B518B7B483281D36A44494A4C67B2AC9AF997C9242BB6406E7"
+    },
+    {
+      "file": "mobile320-dark-chat-sheet-future-controls.png",
+      "sha256": "F091C4EB6A9AC6B03AA4C6618825E5A72CE205E3B71FE168B158F2AF963DA178"
+    },
+    {
+      "file": "mobile320-dark-chat-sheet-receipt.png",
+      "sha256": "D5B3576A7515F43B6660898B72FC1ACA71ACDD96A8520EB0EBEA5327069863F5"
+    },
+    {
+      "file": "mobile320-dark-chat-sheet.png",
+      "sha256": "516F51509A716810AD627CB67E8F222B0796D9B68467DCC2365D70511038C852"
+    },
+    {
+      "file": "mobile320-dark-native-calendar.png",
+      "sha256": "B7CA7E3F59335AD41C5AE473B17501C069E89D7C8DD289AD855E109B911B8692"
+    },
+    {
+      "file": "mobile320-dark-native-chat.png",
+      "sha256": "5D1119C617C5687C34A51D10DBCC4B9F83DBFF6768F5DE334CC18266EB056821"
+    },
+    {
+      "file": "mobile320-light-actual-operations-source.png",
+      "sha256": "31277967735509CFF7BAD512BD6C201D4365187BBED9204FDFFAC954DD046B54"
+    },
+    {
+      "file": "mobile320-light-calendar-sheet-future-controls.png",
+      "sha256": "B4D28A43A94F825BBF30EB6F87A6E53A3F305631110C54CCFB4D57FBF17D3550"
+    },
+    {
+      "file": "mobile320-light-calendar-sheet-receipt.png",
+      "sha256": "85F3FBD82281FE435F7A154250586BAC964C5D7C7F485FC33A9E7DDC7A184993"
+    },
+    {
+      "file": "mobile320-light-calendar-sheet.png",
+      "sha256": "D64DEF8063FCAFF52A08BB5D2376160B8B046CB63EDDD5DDAEABE813CD2EB5BC"
+    },
+    {
+      "file": "mobile320-light-chat-sheet-future-controls.png",
+      "sha256": "35CC00F940A8494F171FAD4A66CFBE56A1CBA30A01585DCCA8676DD070BA2BF0"
+    },
+    {
+      "file": "mobile320-light-chat-sheet-receipt.png",
+      "sha256": "D43286E0C1F1CBB919F378E79CA3EA7D369BFA742B3FF3EF8269385E41627CBF"
+    },
+    {
+      "file": "mobile320-light-chat-sheet.png",
+      "sha256": "D7075C55696D8ECA770CE18FEFB1A1755DE928086A826A5EBD972539BD8223CB"
+    },
+    {
+      "file": "mobile320-light-native-calendar.png",
+      "sha256": "D04F25A6973562742422036305667AB6B15342DB3DC080A4B939FD792A45B0D6"
+    },
+    {
+      "file": "mobile320-light-native-chat.png",
+      "sha256": "4336E7EDEDAB9395AEAA94FA10101127D6AFA2315387A13B0C232AED80F0C31E"
+    }
+  ]
+}

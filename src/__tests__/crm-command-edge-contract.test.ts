@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
 
 const edge = readFileSync("supabase/functions/crm-command/index.ts", "utf8");
@@ -7,6 +8,26 @@ const identityMigrationPath = "supabase/migrations/20270523000000_crm_contact_na
 const originalCrmMigration = readFileSync("supabase/migrations/20270204000000_governed_crm_contact_company_commands.sql", "utf8");
 
 describe("canonical CRM action door", () => {
+  it("renders canonical create summaries through the actual approval handler without changing the approved command", () => {
+    const processKeys = ["SystemRoot", "SYSTEMROOT", "WINDIR", "PATH", "Path", "PATHEXT", "COMSPEC", "TEMP", "TMP"];
+    const env = Object.fromEntries(processKeys.filter(key => process.env[key] !== undefined)
+      .map(key => [key, process.env[key] as string]));
+    const output = execFileSync(process.execPath, ["--import", "./scripts/knowledge-scope/register.mjs",
+      "scripts/crm-approval-summary-check.mjs"], {
+      cwd: process.cwd(), env, encoding: "utf8", windowsHide: true, timeout: 60_000,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    // execFileSync returns only for exit 0: an assertion, loader failure or timeout
+    // still fails this test. Accept additional regressions, never fewer proven checks.
+    const completed = output.match(/^PASS (\d+) actual CRM approval-summary checks:/m);
+    expect(completed).not.toBeNull();
+    expect(Number(completed?.[1])).toBeGreaterThanOrEqual(90);
+    expect(output).toContain("canonical task/deal titles");
+    expect(output).toContain("task locators");
+    expect(output).toContain("truthful task assignment");
+    expect(output).toContain("unchanged stored arguments/fingerprints");
+  }, 65_000);
+
   it("accepts no tenant, actor, role, or account identity from the request", () => {
     expect(edge).toContain("bodySchema");
     expect(edge).toContain("}).strict()");
@@ -112,7 +133,8 @@ describe("canonical CRM action door", () => {
     for (const action of ["contact.assign_coach", "contact.assign_owner", "deal.assign_owner", "deal.assign_contact", "deal.move", "deal.close", "deal.reopen", "task.assign", "task.cancel"]) {
       expect(edge).toContain(`case "${action}"`);
     }
-    expect(edge).toContain('recordId && action.startsWith("contact.")');
+    expect(edge).toContain('resolveCanonicalRecordLink({ actor: "account", tier, account: tenantRoute?.account_number ?? null, destination, recordId })');
+    expect(edge).toContain('/^(contact|deal|task)\\./.test(action)');
     expect(edge).not.toContain('action.startsWith("contact.") || action.startsWith("company.")');
     expect(edge).toContain('At least one reversible deal field is required for deal.update.');
     expect(edge).toContain('Contact tags must be an array of 1-80 character strings.');

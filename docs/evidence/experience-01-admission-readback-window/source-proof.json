@@ -1,0 +1,30 @@
+{
+  "generatedAt": "2026-10-13T03:54:46.690Z",
+  "class": "AUTOMATED_REAL_PROVIDER_ENTRY_SYNTHETIC_PORTS",
+  "baselineCommit": "fed6e6a64c75f8ddad1b4725dc67ac91852a9f9a",
+  "baselineWelcomeSha256": "0059f9fd7eec039a1f9681bee7022dd9f8e6676faa838c58fff66579df4a537c",
+  "repairedWelcomeSha256": "db0dde17af9d584d4085fd49d47407b5c076f37aeb7104e0ae5afcedcc6503a6",
+  "failingFirst": {
+    "failed": 2,
+    "skipped": 21,
+    "reason": "Expected confirming workspace state, actual recoverable workspace failure at late verified response"
+  },
+  "repaired": {
+    "passed": 102,
+    "total": 102,
+    "failed": 0,
+    "mountedProviderCases": 23
+  },
+  "coverage": "Late verified response at28s and network-delayed response after31s; genuine mounted TenantProvider and SoloEntry with deterministic no-network Supabase port; existing bounded timeout, subject/scope/route/generation and stale failure cases retained",
+  "render": "Existing16 native actual-Welcome synthetic frames belong to prior source; fresh IAB webview attach timed out twice, so current-head native render UNVERIFIED",
+  "auth": false,
+  "production": false,
+  "providerEffects": false,
+  "static": {
+    "lintExit": 0,
+    "tscBaseline": 10,
+    "tscCurrent": 10,
+    "impeccableExit": 0,
+    "impeccableDiagnostic": "none returned; no finding count inferred"
+  }
+}

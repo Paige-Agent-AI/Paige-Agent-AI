@@ -6,6 +6,7 @@ import { useTenantContext } from "@/hooks/useTenantContext";
 import { subtabByKey, subtabBySlug, type RouteTierKey } from "@/lib/routing/tierBranches";
 import { tenantRoutePrefixForPath } from "@/components/tenant-shell/tenantShellRoutes";
 import { SoloCalendarWorkspace } from "./SoloCalendarWorkspace";
+import { WeeklyCalendarResponsibility } from "@/solo/weekly/WeeklyCalendarResponsibility";
 
 export interface TenantCanonicalCalendarWorkspaceProps {
   tier: Extract<RouteTierKey, "solo" | "agency">;
@@ -43,7 +44,7 @@ function CalendarBoundary({ kind }: { kind: "loading" | "permission" }) {
  * navigating. Every read/write receives the server-resolved activeTenantId.
  */
 export function TenantCanonicalCalendarWorkspace({ tier, openPaige, owner = "direct" }: TenantCanonicalCalendarWorkspaceProps) {
-  const { activeTenantId, loading, accountContextLoading } = useTenantContext();
+  const { activeTenantId, activeUserId, loading, accountContextLoading } = useTenantContext();
   const location = useLocation();
   const navigate = useNavigate();
   const routeRoot = tenantRoutePrefixForPath(location.pathname);
@@ -62,9 +63,15 @@ export function TenantCanonicalCalendarWorkspace({ tier, openPaige, owner = "dir
   useEffect(() => {
     if (tier !== "solo" || owner !== "direct" || !calendarRoot || !clientsCalendarRoot) return;
     if (!location.pathname.startsWith(calendarRoot)) return;
+    // Previously emitted CRM task result URLs belong to Operations Work. Keep this exact
+    // Solo alias without redirecting Clients-owned Calendar views or other account trees.
+    if (routeRoot?.startsWith("/solo/") && (location.pathname === `${calendarRoot}/tasks` || location.pathname === `${calendarRoot}/tasks/`)) {
+      navigate(`${routeRoot}/operations/work`, { replace: true });
+      return;
+    }
     const view = resolvedDirectTab || "calendar";
     navigate(`${clientsCalendarRoot}?calendarView=${view}`, { replace: true });
-  }, [calendarRoot, clientsCalendarRoot, location.pathname, navigate, owner, resolvedDirectTab, tier]);
+  }, [calendarRoot, clientsCalendarRoot, location.pathname, navigate, owner, resolvedDirectTab, routeRoot, tier]);
 
   if (loading || accountContextLoading) return <CalendarBoundary kind="loading" />;
   if (!activeTenantId) return <CalendarBoundary kind="permission" />;
@@ -83,12 +90,14 @@ export function TenantCanonicalCalendarWorkspace({ tier, openPaige, owner = "dir
       ? `${routeRoot}/settings/connections${clientsCalendarRoot ? `?origin=calendar&returnTo=${encodeURIComponent(clientsCalendarRoot)}` : ""}`
       : "/choose-account";
     return (
-      <SoloCalendarWorkspace
-        key={activeTenantId}
+      <WeeklyCalendarResponsibility>{weeklySlot => <SoloCalendarWorkspace
+        key={`${activeUserId}:${activeTenantId}`}
         activeTenantId={activeTenantId}
         connectionsHref={soloConnections}
         openPaige={openPaige}
+        weeklyResponsibility={weeklySlot}
       />
+      }</WeeklyCalendarResponsibility>
     );
   }
 

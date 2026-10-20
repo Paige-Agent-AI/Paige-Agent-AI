@@ -20,6 +20,7 @@ import { resolveGrowthTheme, resolveGrowthFontPair, GROWTH_BRAND_FLOOR, buildGro
 import { useBrandFontFaces } from "@/hooks/useBrandFontFaces";
 import { GP_FADE_RISE, GP_PRESS, fadeRiseStyle, useReducedMotion } from "@/components/growth/growth-motion";
 import { GrowthFormEmbed } from "@/pages/public/GrowthFormRenderer";
+import { useGrowthVisit } from "@/hooks/useGrowthVisit";
 
 interface Funnel {
   id: string;
@@ -118,6 +119,9 @@ export default function GrowthFunnelRenderer() {
   useEffect(() => {
     if (funnel?.name) document.title = funnel.name;
   }, [funnel?.name]);
+
+  // One visit for the whole funnel, carried step by step: the server keeps the furthest step reached (MBC 7a).
+  useGrowthVisit("funnel", steps.length > 0 ? funnel?.id : null, idx);
 
   // Land each new step at the top rather than mid-scroll from the previous one.
   useEffect(() => {

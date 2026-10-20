@@ -1,15 +1,20 @@
 // Public form renderer — standalone hosted form at /form/:id and embeddable
-// inside landing pages via <GrowthFormEmbed>.
+// inside landing pages via <GrowthFormEmbed>. The same /form/:id page is what public/embed.js puts on a
+// business's own website (`data-form`): framed, it drops the full-page layout, reports its height to the
+// loader, and sends a success redirect to the visitor's whole page instead of inside the frame.
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
+import { isEmbedded, parentOrigin, useEmbedHeight } from "@/hooks/useEmbedHeight";
 import type { GrowthField, GrowthSubmitOutcome, PublicGrowthForm } from "@/lib/growth";
 import { loadPublicGrowthForm, submitGrowthForm, readUtm, growthOptionValue, growthOptionLabel } from "@/lib/growth";
 import { Input } from "@/components/ui/input";
+import { useGrowthVisit } from "@/hooks/useGrowthVisit";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { safeWebUrl } from "@/lib/safe-web-url";
 
 type FormRow = PublicGrowthForm;
 
@@ -30,6 +35,19 @@ export default function GrowthFormPage() {
   const { id } = useParams();
   const [form, setForm] = useState<FormRow | null>(null);
   const [loading, setLoading] = useState(true);
+  // On a business's own site (public/embed.js), or asked for by ?embed=1: the compact card, no page chrome.
+  const [search] = useSearchParams();
+  const [embedded] = useState(() => isEmbedded() || search.get("embed") === "1");
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  useEmbedHeight(cardRef, { type: "paige-form-height", formId: id ?? null }, [id, loading, Boolean(form), embedded]);
+  // The frame shows the business's own page around the card, never a coloured box.
+  useEffect(() => {
+    if (!embedded) return;
+    const html = document.documentElement, body = document.body;
+    const prev = [html.style.background, body.style.background];
+    html.style.background = "transparent"; body.style.background = "transparent";
+    return () => { html.style.background = prev[0]; body.style.background = prev[1]; };
+  }, [embedded]);
 
   useEffect(() => {
     if (!id) return;
@@ -40,6 +58,34 @@ export default function GrowthFormPage() {
   }, [id]);
 
   useEffect(() => { if (form?.name) document.title = form.name; }, [form?.name]);
+
+  // The standalone form page records its own visit (MBC 7a); a form embedded in a page or funnel uses theirs.
+  useGrowthVisit("form", form?.id);
+
+  if (embedded) {
+    return (
+      <div ref={cardRef} className="p-1">
+        <div className="rounded-xl border border-border bg-card text-card-foreground p-5 sm:p-7 shadow-sm">
+          {loading ? (
+            <div className="space-y-4" aria-busy="true" aria-label="Loading form">
+              <div className="h-7 w-2/3 animate-pulse rounded-md bg-muted motion-reduce:animate-none" />
+              <div className="h-32 animate-pulse rounded-lg bg-muted/60 motion-reduce:animate-none" />
+            </div>
+          ) : !form ? (
+            <div className="text-center py-4" role="status">
+              <h1 className="font-display text-lg font-semibold text-foreground">This form isn't available right now</h1>
+              <p className="mt-1 text-sm text-muted-foreground">It may have been taken offline. Please check back later.</p>
+            </div>
+          ) : (
+            <>
+              <h1 className="text-2xl font-bold mb-2">{form.name}</h1>
+              <FormBody form={form} embedded />
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -147,7 +193,7 @@ function answersToSend(data: Record<string, Answer>, fields: GrowthField[]): Rec
   return out;
 }
 
-function FormBody({ form, accent, onComplete }: { form: FormRow; accent?: string; onComplete?: () => void }) {
+function FormBody({ form, accent, onComplete, embedded = false }: { form: FormRow; accent?: string; onComplete?: () => void; embedded?: boolean }) {
   const schema = form.schema_json ?? { sections: [] };
   const totalSteps = schema.sections.length;
   const [step, setStep] = useState(0);
@@ -177,8 +223,20 @@ function FormBody({ form, accent, onComplete }: { form: FormRow; accent?: string
     // A download_url wins over an immediate redirect — navigating straight away would strand
     // the visitor before they ever see the download button (additive: pages with ONLY
     // redirect_url set, which is every page today, behave exactly as before).
-    if (form.success_action_json?.redirect_url && !form.success_action_json?.download_url) {
-      window.location.href = form.success_action_json.redirect_url;
+    const redirect = safeWebUrl(form.success_action_json?.redirect_url);
+    if (redirect && !form.success_action_json?.download_url) {
+      // On a business's own site the next page replaces the visitor's page, not the inside of the frame. The
+      // loader (public/embed.js) moves its own page when asked (a framed page may not, without a fresh click);
+      // the success card stays as the fallback, its Continue link aimed at the whole page.
+      if (embedded) {
+        // A parent that refuses the message (an opaque sandbox) can't stop the success card: the answer is saved.
+        try {
+          if (isEmbedded()) window.parent.postMessage({ type: "paige-form-redirect", formId: form.id, url: redirect }, parentOrigin());
+        } catch { /* the Continue link on the success card still works */ }
+        setDone(true);
+        return;
+      }
+      window.location.href = redirect;
       return;
     }
     // Embedded in a funnel with a next step: hand control back to the step machine so the
@@ -193,19 +251,21 @@ function FormBody({ form, accent, onComplete }: { form: FormRow; accent?: string
 
   if (done) {
     const success = form.success_action_json;
+    const download = safeWebUrl(success?.download_url);
+    const next = safeWebUrl(success?.redirect_url);
     return <div className="text-center py-12 space-y-4">
       <div className="text-3xl mb-2">✓</div>
       <p className="text-lg">{success?.message ?? "Thanks — we'll be in touch."}</p>
-      {success?.download_url && (
+      {download && (
         <Button asChild>
-          <a href={success.download_url} target="_blank" rel="noopener noreferrer" download>
-            Download {filenameFromDownloadUrl(success.download_url)}
+          <a href={download} target="_blank" rel="noopener noreferrer" download>
+            Download {filenameFromDownloadUrl(download)}
           </a>
         </Button>
       )}
-      {success?.redirect_url && (
+      {next && (
         <p className="text-sm">
-          <a href={success.redirect_url} className="underline">Continue</a>
+          <a href={next} target={embedded ? "_top" : undefined} className="underline">Continue</a>
         </p>
       )}
     </div>;

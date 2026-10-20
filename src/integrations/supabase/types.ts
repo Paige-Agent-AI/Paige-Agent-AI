@@ -21537,6 +21537,7 @@ export type Database = {
       operator_sales_deal_move: { Args: { p_deal_id: string; p_to_stage_id: string }; Returns: Json }
       operator_sales_workspace: { Args: never; Returns: Json }
       operator_company_people: { Args: never; Returns: Json }
+      operator_company_conversations: { Args: never; Returns: Json }
       operator_signup_funnel: { Args: { p_window_days?: number }; Returns: Json }
       operator_tier_send_feed: {
         Args: { _since?: string; _tier?: string }

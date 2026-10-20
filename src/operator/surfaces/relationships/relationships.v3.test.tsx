@@ -47,7 +47,7 @@ const text = (html: string) =>
 describe("nothing is invented when nothing is wired", () => {
   const empties = [
     // People graduated to real reads (EXP00) — absence assertions moved below
-    ["Conversations", renderToStaticMarkup(<ConversationsSurface />)],
+    // Conversations graduated to real reads (EXP00)
     ["Segments", renderToStaticMarkup(<SegmentsSurface />)],
   ] as const;
 

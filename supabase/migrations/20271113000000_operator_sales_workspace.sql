@@ -327,6 +327,63 @@ END $$;
 REVOKE ALL ON FUNCTION public.operator_company_people() FROM public, anon;
 GRANT EXECUTE ON FUNCTION public.operator_company_people() TO authenticated;
 
+-- ── 6. Company Conversations: PAIGE Inc's communication records. ─────────────────────────
+-- The company's own outbound communications — welcome emails, transactional sends, and
+-- delivery events. Not a separate email engine: these ARE the records the existing
+-- Communications architecture already wrote, presented at company L1 scope.
+CREATE OR REPLACE FUNCTION public.operator_company_conversations()
+RETURNS jsonb
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = pg_catalog, public, pg_temp
+AS $$
+DECLARE
+  v_admin boolean;
+BEGIN
+  SELECT public.is_platform_admin(auth.uid()) INTO v_admin;
+  IF NOT COALESCE(v_admin, false) THEN
+    RAISE EXCEPTION 'operator_company_conversations: platform administrator required'
+      USING ERRCODE = '42501';
+  END IF;
+
+  RETURN jsonb_build_object(
+    'summary', jsonb_build_object(
+      'total_sends', (SELECT count(*) FROM public.email_send_log),
+      'sent', (SELECT count(*) FROM public.email_send_log WHERE status = 'sent'),
+      'delivered_events', (SELECT count(*) FROM public.email_send_log WHERE template_name = 'sendgrid_event'),
+      'welcome_sent', (SELECT count(*) FROM public.solo_beta_welcome_deliveries WHERE state = 'sent'),
+      'welcome_pending', (SELECT count(*) FROM public.solo_beta_welcome_deliveries WHERE state IN ('pending','sending')),
+      'welcome_attention', (SELECT count(*) FROM public.solo_beta_welcome_deliveries WHERE state IN ('needs_attention','retryable_failure'))
+    ),
+    'welcome_deliveries', COALESCE((
+      SELECT jsonb_agg(jsonb_build_object(
+        'user_id', w.user_id,
+        'state', w.state,
+        'attempts', w.attempt_count,
+        'last_error', w.last_error_code,
+        'provider_message_id', w.provider_message_id,
+        'first_attempt_at', w.first_attempt_at,
+        'sent_at', w.sent_at
+      ) ORDER BY COALESCE(w.sent_at, w.first_attempt_at) DESC)
+      FROM public.solo_beta_welcome_deliveries w
+    ), '[]'::jsonb),
+    'send_log', COALESCE((
+      SELECT jsonb_agg(jsonb_build_object(
+        'message_id', l.message_id,
+        'template', l.template_name,
+        'recipient', l.recipient_email,
+        'status', l.status,
+        'created_at', l.created_at
+      ) ORDER BY l.created_at DESC LIMIT 50)
+      FROM public.email_send_log l
+    ), '[]'::jsonb)
+  );
+END $$;
+
+REVOKE ALL ON FUNCTION public.operator_company_conversations() FROM public, anon;
+GRANT EXECUTE ON FUNCTION public.operator_company_conversations() TO authenticated;
+
 COMMENT ON FUNCTION public.operator_sales_workspace() IS
   'EXP00: read-only company Sales workspace for platform admins — company pipelines, stages and deals (tenant_id IS NULL).';
 COMMENT ON FUNCTION public.operator_sales_deal_create(text, uuid, uuid, bigint, text, date, text, text) IS

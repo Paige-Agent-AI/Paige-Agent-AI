@@ -1,0 +1,45 @@
+Browser tab: 1738568092, Title: "Local SOLO internal task proof", URL: "http://127.0.0.1:62911/native-final/history-b-dark-1536x770-open-verified.html".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+~1 AXWebArea Local SOLO internal task proof, URL: 127.0.0.1:62911/native-final/history-b-dark-1536x770-open-verified.html
+~		4 link Description: Skip to content, Value: 127.0.0.1:62911/native-final/history-b-dark-1536x770-open-verified.html#tenant-shell-main
+~			27 button (expanded) Description: Direct PAIGE, Secondary Actions: Collapse
+~					37 heading Internal task processes, Value: 2, ID: :r55:-title
+~						43 heading Review every new contact, Value: 3, ID: :r55:-00000000-0000-4000-8000-000000000103-name
+~						48 container Description: Process history, ID: :r55:-00000000-0000-4000-8000-000000000103-history
++		86 container Description: PAIGE command workspace, ID: tenant-paige-workspace
++			87 container
++				88 image PAIGE
++				89 text PAIGE Your live operating partner
++				90 button Description: Expand PAIGE panel, Help: Expand panel
++				91 button Description: Open PAIGE in full panel, Help: Open full panel
++				92 button Description: Open PAIGE in a new window, Help: Open in new window
++				93 button Description: Fold PAIGE conversation, Help: Fold PAIGE
++			94 tab group Solo PAIGE workspace
++				95 tab (selected, settable, boolean) Chat, Value: 1, ID: spw-tab-chat
++				96 tab (selectable, settable, boolean) Knowledge, Value: 0, ID: spw-tab-knowledge
++				97 tab (selectable, settable, boolean) Research, Value: 0, ID: spw-tab-research
++				98 tab (selectable, settable, boolean) Helpers, Value: 0, ID: spw-tab-helpers
++				99 tab (selectable, settable, boolean) Capabilities, Value: 0, ID: spw-tab-capabilities
++			100 container Description: Chat, ID: spw-panel-chat
++				101 button Chats
++					102 image
++					103 text Chats
++				104 button New chat
++				105 container
++					106 text PAIGE Active Solo account · tenant-scoped
++					107 button (collapsed) Business interview, Secondary Actions: Expand
++					108 container Description: PAIGE conversation, ID: solo-paige-transcript
++						109 container
++							110 text What are we moving? Tell me the outcome, and I’ll show what I can read, draft, or ask you to approve. 06:34 AM
++							111 button Copy message
++								112 image
++							113 checkbox Description: Play message aloud, Value: 0
++								114 image
++					115 text entry area (settable) Message PAIGE
++					116 pop up button (collapsed) Description: Paige permissions, currently Ask first, ID: radix-:r56:, Secondary Actions: Expand
++					117 pop up button (collapsed) Talk live with Paige, Secondary Actions: Expand
++					118 button Description: Attach a document, Help: Attach a PDF, image, or Word document
++						119 image
++					120 button (disabled) Send message
++			121 text Chat view open
+The focused UI element is 1 AXWebArea Local SOLO internal task proof, URL: 127.0.0.1:62911/native-final/history-b-dark-1536x770-open-verified.html

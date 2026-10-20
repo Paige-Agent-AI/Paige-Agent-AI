@@ -1,5 +1,6 @@
 // Original owner.task observation. No dispatch, approval, reconciliation or
 // receipt writer is available through these ports. Not a callable endpoint.
+import { ACT_OUTCOMES } from './outcomes.ts';
 type Row = Record<string, unknown>;
 type Result = { data: unknown; error: unknown };
 interface Query {
@@ -25,8 +26,7 @@ const instant = (v: unknown): v is string => typeof v === 'string' && Number.isF
 const canonical = (v: unknown): string => JSON.stringify(v, (_k, x) => obj(x) ? Object.fromEntries(Object.keys(x).sort().map(k => [k, x[k]])) : x);
 const APPROVAL_COLUMNS = 'id,tenant_id,source,category,type,status,updated_at,metadata';
 const OCCURRENCE_COLUMNS = 'id,tenant_id,event_id,act_id,automation_id,adapter_kind,capability_key,effective_lane,outcome,correlation_ref,idempotency_key,decided_at,updated_at,detail';
-const OUTCOMES = new Set(['condition_not_matched', 'held_by_lane', 'approval_pending', 'refused_authority', 'refused_budget',
-  'refused_trust_compass', 'refused_consent', 'accepted_for_execution', 'retrying', 'executed', 'failed', 'ambiguous', 'cancelled']);
+const OUTCOMES = new Set<string>(ACT_OUTCOMES);
 class Refused extends Error {}
 
 /** Exact original approval is the only locator; actor, occurrence, args and

@@ -2,6 +2,7 @@
 // Protected client doubles: not PostgreSQL ACL/RLS or authenticated acceptance.
 import { describe, expect, it, vi } from 'vitest';
 import { readOwnerTaskHistory, type OwnerTaskHistoryClients } from '../../supabase/functions/_shared/paige-orchestration/owner-task-history';
+import { ACT_OUTCOMES } from '../../supabase/functions/_shared/paige-orchestration/outcomes';
 
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 const request = { approvalId: id(1), tenantId: id(2) };
@@ -43,6 +44,12 @@ function fixture() {
 }
 
 describe('original internal-task history read', () => {
+  it.each(ACT_OUTCOMES)('keeps canonical recorded %s separate from unverified execution', async outcome => {
+    const f = fixture(); f.occurrence.outcome = outcome; f.native.state = 'unknown';
+    const r = await readOwnerTaskHistory(request, f.clients);
+    expect(r.status === 'ready' && r.recordedOutcome).toBe(outcome);
+    expect(r.status === 'ready' && r.originalTask.state).toBe('unconfirmed');
+  });
   it('recovers the original task and receipt without an optional ledger task locator', async () => {
     const f = fixture(), result = await readOwnerTaskHistory(request, f.clients);
     expect(result.status).toBe('ready');

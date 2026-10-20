@@ -1,8 +1,21 @@
 # 🧠 The Second Brain — master index & read-first orientation
 
-## EXP02 verified handoff v2026-10-20.2
+## EXP02 verified handoff v2026-10-20.3
 
-**Owner: EXP02; production source status is PARTIAL, customer proof is owed.**
+**Owner: EXP02; deployed package recovery is VERIFIED, full Experience proof is owed.**
+Configured-input repair [#2413](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2413)
+reviewed8d0ed127 merged main `2c47f529d7db83965c024ea42bb350c457826cdb` with the
+exact reviewed tree91176116, documented AUTHOR-REVIEW / LOWER ASSURANCE and all
+applicable exact-head CI. Production webdpl_7c6wsMQFHfpeQBAPLcYDqpvi6BCu/public
+build2c47f529…mvgy1980 verified. Canonical recovery39465899854/job118777104680
+SUCCESS: **73/73 selected source/configuration matches, zero failures/retirements**.
+Artifact12285685747 SHA256938c988040d16920d1ce55b8fd655a138247c8b51e1a057083140c202ebac7a9.
+The existing guarded workflow advanced `edge-live` e660→exact2c only after complete
+readback; independent ref read matches. Prior70/73 and automatic five-pass/final-tag
+FAILs remain historical. This closes packaging/source certification, without
+activating any provider, business action, permission or full19 customer outcome.
+[Observed release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2413#issuecomment-6297092322).
+
 Target/Executive integration [#2181](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2181)
 reviewed `01f675e28c58a5883cd5049ca9db75a7b02d59f6`, merged
 `2d93594b69ec084ff770402eede09465ca9d179e`. Exact-head checks and previews passed.
@@ -18,20 +31,22 @@ Docker upload. An explicit reviewed-source package previously passed10/10, but
 that observation was superseded by the retry. Upload exit zero, ACTIVE and matching
 metadata are insufficient: keep exact UTF-8 source/config hashes, complete dependency
 coverage and stable before/after identity. The bounded existing-workflow API-builder
-repair still requires its own review, CI and actual production readback. Global
-`edge-live` remains held at `e660dca7bdd3dd9cc32c4af033cdd5cacb426c0e`;
-do not force it forward or broaden this repair into unrelated source recovery.
+repair and its separately reviewed normal recovery are now verified above.
+The historical global hold at e660 was closed by that complete unchanged-verifier
+proof, never by accepting upload status, weakening hashing or manually forcing a tag.
 [Sanitized release evidence](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2181#issuecomment-6282365635).
 
 **Canonical integration guidance:** Executive and Chat reuse the same
 `business.operating_snapshot`, INT-340 metric issuer/resolver and Operating Fabric.
 Targets attach to canonical Strategic Plays; no second actuals or receipt store.
 VERA [#2400](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2400) at
-`73fba3d366e7f9d3f177e1fd6d5bf71cadf178d1` extends the existing global registry
+`1b7565be158a4641e25c96341b75ce5466aa663f` extends the existing global registry
 identity and addressed Chat; its guarded role-remap migration is not applied. Main has since applied121100 for
 Chat executor acquisition (#2415), followed by Operations121300 (#2427).
-VERA must move its still-unapplied reservation beyond the current production
-frontier before release; never use include-all or rewrite applied history.
+VERA's still-unapplied migration now reserves121400 beyond the production frontier;
+SQL bytes are preserved. Its required PR-only Preview remains failed on obsolete
+private121100/121200 history despite accepted reset requests. A reset response is
+not repair proof; never use include-all, rewrite production history or waive CI.
 Finance [#2402](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2402)
 consumes the existing caller-JWT Finance source contracts through the same snapshot;
 it remains unreleased. Null/unavailable is never zero, cash is never credit, and

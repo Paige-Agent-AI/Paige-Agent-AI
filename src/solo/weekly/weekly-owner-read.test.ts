@@ -12,6 +12,20 @@ function fixture() {
   return { scope: current!, caller, raw, current: () => current, change: (next: WeeklyBrowserScope | null) => { current = next; }, changeSession: (value: string) => { sessionActor = value; } };
 }
 describe("browser weekly owner read", () => {
+  it("does not start RPCs after a slow session lookup outlives the original inspection", async () => {
+    vi.useFakeTimers();
+    try {
+      const f = fixture();
+      f.caller.auth.getSession.mockImplementationOnce(() => new Promise(resolve => {
+        setTimeout(() => resolve({ data: { session: { user: { id: actor } } }, error: null }), 9000);
+      }));
+      const result = readWeeklyOwner(f.scope, f.caller, f.current);
+      await vi.advanceTimersByTimeAsync(8001);
+      expect(await result).toEqual({ status: "unavailable" });
+      await vi.advanceTimersByTimeAsync(2000);
+      expect(f.caller.rpc).not.toHaveBeenCalled();
+    } finally { vi.useRealTimers(); }
+  });
   it("refuses an active client persona without any authenticated session or RPC call", async () => {
     const f = fixture(); f.scope.actAsClientId = tenant;
     expect((await readWeeklyOwner(f.scope, f.caller, f.current)).status).toBe("refused");

@@ -222,7 +222,10 @@ jobs:
           while IFS= read -r fn; do
             [ -z "$fn" ] && continue
             echo "::group::deploy $fn"
-            if supabase functions deploy "$fn" --project-ref "$ref"; then
+            # Use the vendor's server-side builder. The Docker upload omitted a
+            # configured deno.json even though it reported success. Keep strict
+            # source/config readback below: this flag is not release evidence.
+            if supabase functions deploy "$fn" --project-ref "$ref" --use-api; then
               echo "✓ deployed $fn"
             else
               echo "::error::failed to deploy $fn"

@@ -1,0 +1,37 @@
+[
+  {
+    "background": "rgb(16, 14, 20)",
+    "color": "rgb(239, 236, 250)",
+    "fontSize": "16px",
+    "selector": ".exec-targets h4",
+    "ratio": 16.48365492044487
+  },
+  {
+    "background": "rgb(16, 14, 20)",
+    "color": "rgb(172, 166, 157)",
+    "fontSize": "12px",
+    "selector": ".exec-targets .exec-note",
+    "ratio": 7.941454567611965
+  },
+  {
+    "background": "rgb(16, 14, 20)",
+    "color": "rgb(214, 208, 201)",
+    "fontSize": "13px",
+    "selector": ".exec-target-values dt",
+    "ratio": 12.534826312657467
+  },
+  {
+    "background": "rgb(16, 14, 20)",
+    "color": "rgb(246, 242, 234)",
+    "fontSize": "21px",
+    "selector": ".exec-target-values dd",
+    "ratio": 17.176628146214266
+  },
+  {
+    "background": "rgb(16, 14, 20)",
+    "color": "rgb(246, 242, 234)",
+    "fontSize": "16px",
+    "selector": ".exec-targets .exec-link",
+    "ratio": 17.176628146214266
+  }
+]

@@ -929,6 +929,51 @@ Full weekly lifecycle/customer outcome remains PROOF OWED. Internal production
 patch without customer release identity; forward fix retains historical
 confirmation, process and Rail records and never resets migration history.
 
+**2026-10-20 UTC — Finance supported historical statement helpers — source only.**
+Original PR [#2021](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2021),
+reviewed `ab3f8243ce0795127eb274e2eb0e3995fd6adc5c`, merged main
+`ed305fb25cba16877684955092fb1d0f58976dd3`; actual tree
+`737b577af762f5ab71ebaa95edf7e0e3981c6f64` matches reviewed current-main composition.
+AUTHOR-REVIEW / LOWER ASSURANCE6296540246/6297250084; all11 applicable exact-head
+checks, Supabase Preview and both Vercel contexts SUCCESS, zero review threads.
+Four original runtime/test leaves remain unchanged;108 controlled tests, strict
+ES2020, scoped lint and Registry validation PASS. Native report groups/columns
+and exact decimal measures preserve scope, currency, basis and period;
+partial/filtered/conflicting evidence withholds profit.
+Production web `dpl_3viZpseuJYT4Fh9cRESQnRW4LpiH` READY/exact; public HTTP200
+buildId `ed305fb25cba16877684955092fb1d0f58976dd3-mvgz1u7z` read back.
+Edge39468474106/job118785988601 SUCCESS with zero affected functions;
+deployment/readback/tag steps legitimately SKIPPED because helpers remain
+**UNMOUNTED**. No migration, provider call, ledger, financial effect, customer
+release identity or announcement. Actual company-authorized ingestion/evidence,
+Fabric/Spine/UI/Chat/Live adoption and authenticated financial acceptance remain
+required. Initial stale-mergeability approval rejection was resolved by fresh
+clean/true GitHub evidence before the normal expected-head merge.
+
+**2026-10-20 UTC — E02 configured Edge package recovery — source verified.**
+PR [#2413](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2413), reviewed
+`8d0ed1278417995481168cbb2c0cb710a6f7979a`, merged main
+`2c47f529d7db83965c024ea42bb350c457826cdb`, exact reviewed tree
+`91176116ffca422a7894dfd6861f5c9de013e233`. Documented AUTHOR-REVIEW / LOWER
+ASSURANCE6296076503; ten applicable final check-runs and both Vercel contexts
+SUCCESS, schema-free Supabase Preview legitimately SKIPPED. Existing serialized
+Edge workflow uses the vendor API builder to retain configured compiler inputs;
+selection, credentials, JWT, source hashes and certification guards are preserved.
+Production web `dpl_7c6wsMQFHfpeQBAPLcYDqpvi6BCu` READY/exact; public buildId
+`2c47f529d7db83965c024ea42bb350c457826cdb-mvgy1980` read back.
+Automatic39464330442 retained five scoped PASSes and its correct final-tag FAIL.
+Reviewed normal recovery39465899854/job118777104680 then SUCCESS: **73/73 selected
+packages source/configuration PASS, zero failures/retirements**, including all
+three previously missing configured-input packages. Artifact12285685747,
+SHA256 `938c988040d16920d1ce55b8fd655a138247c8b51e1a057083140c202ebac7a9`.
+The existing workflow advanced `edge-live` from e660dca7 to exact2c47f529 only
+after complete certification; independent GitHub ref read agrees. This supersedes
+the global package hold recorded below for #2181 and later releases, while retaining
+their failed-run history. No provider/action activation, customer effect, new
+permission or verifier waiver. Target lifecycle, VERA/Finance integration, full19
+authenticated acceptance and founder evaluation remain owed.
+[Observed release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2413#issuecomment-6297092322).
+
 **2026-10-20 UTC — E02 target/Executive source integration, partial release.**
 PR [#2181](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2181), reviewed
 `01f675e28c58a5883cd5049ca9db75a7b02d59f6`, merged main

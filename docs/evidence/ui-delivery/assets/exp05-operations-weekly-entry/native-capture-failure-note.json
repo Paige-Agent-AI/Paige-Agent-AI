@@ -1,0 +1,6 @@
+{
+  "kind": "NATIVE_SCREENSHOT_TIMEOUT",
+  "lastGeometryRecord": "actual-a-light-900x1000-closed",
+  "observedAt": "2026-10-20T11:05:36.072Z",
+  "boundary": "Geometry was recorded before screenshot; the row is not complete pixel evidence until a separately saved native capture exists. No UI product failure or PASS inferred."
+}

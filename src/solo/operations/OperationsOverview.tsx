@@ -1,4 +1,5 @@
 import { ArrowRight, ArrowUpRight, CalendarClock, CirclePause, Sparkles } from "lucide-react";
+import { WeeklyResponsibilityEntry } from "../weekly/WeeklyResponsibilityEntry";
 import type { Plan, PlanItem } from "@/hooks/usePlanList";
 import type { TeamMemberRecord } from "../team-workspace-contract";
 import { OperationsAssignee } from "./OperationsAssignee";
@@ -45,7 +46,9 @@ export function OperationsOverview({ tenantId, plans, items, members, crmTasks =
 
   return <section className="ops-views ops-operating-desk" aria-label="Overview">
     <header className="ops-desk-heading"><div><h1>Your operating week</h1><p>Current commitments, responsible people and the next decisions.</p></div>
-      {onReviewWithPaige && <button type="button" className="ops-desk-primary" onClick={onReviewWithPaige}><Sparkles size={16} aria-hidden="true" />Plan with PAIGE</button>}
+      <div className="ops-desk-actions"><WeeklyResponsibilityEntry />
+        {onReviewWithPaige && <button type="button" className="ops-desk-primary" onClick={onReviewWithPaige}><Sparkles size={16} aria-hidden="true" />Plan with PAIGE</button>}
+      </div>
     </header>
     {work.active.length > 0 && <p className="ops-desk-read-scope">{work.active.length} active {work.active.length === 1 ? "commitment" : "commitments"} · {work.inProgress.length} in progress · {work.reminders.length} {work.reminders.length === 1 ? "reminder" : "reminders"} in the sources shown</p>}
     {!work.active.length && !plans.length ? <section className="ops-desk-first-use"><h2>Start with one real commitment</h2>

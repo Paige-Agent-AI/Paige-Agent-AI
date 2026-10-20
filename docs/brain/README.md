@@ -1,5 +1,61 @@
 # 🧠 The Second Brain — master index & read-first orientation
 
+## EXP02 verified handoff v2026-10-20.2
+
+**Owner: EXP02; production source status is PARTIAL, customer proof is owed.**
+Target/Executive integration [#2181](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2181)
+reviewed `01f675e28c58a5883cd5049ca9db75a7b02d59f6`, merged
+`2d93594b69ec084ff770402eede09465ca9d179e`. Exact-head checks and previews passed.
+Web `dpl_7oFtLZVQzyrakTcvZaV41gRPvkTb` is READY at that merge; public buildId
+`2d93594b69ec084ff770402eede09465ca9d179e-mvg2sjpr` was read back.
+Migration `20271112100000` and its owner-only review permission contract were
+read back in production. These observations supersede earlier local-only target
+status; they do not establish target lifecycle or integrated customer acceptance.
+
+**Release lesson:** Edge run39360132655 retry passed22/23 selected packages;
+`business-mission-action` again lacked its configured import map after the default
+Docker upload. An explicit reviewed-source package previously passed10/10, but
+that observation was superseded by the retry. Upload exit zero, ACTIVE and matching
+metadata are insufficient: keep exact UTF-8 source/config hashes, complete dependency
+coverage and stable before/after identity. The bounded existing-workflow API-builder
+repair still requires its own review, CI and actual production readback. Global
+`edge-live` remains held at `e660dca7bdd3dd9cc32c4af033cdd5cacb426c0e`;
+do not force it forward or broaden this repair into unrelated source recovery.
+[Sanitized release evidence](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2181#issuecomment-6282365635).
+
+**Canonical integration guidance:** Executive and Chat reuse the same
+`business.operating_snapshot`, INT-340 metric issuer/resolver and Operating Fabric.
+Targets attach to canonical Strategic Plays; no second actuals or receipt store.
+VERA [#2400](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2400) at
+`73fba3d366e7f9d3f177e1fd6d5bf71cadf178d1` extends the existing global registry
+identity and addressed Chat; its guarded role-remap migration is not applied. Main has since applied121100 for
+Chat executor acquisition (#2415), followed by Operations121300 (#2427).
+VERA must move its still-unapplied reservation beyond the current production
+frontier before release; never use include-all or rewrite applied history.
+Finance [#2402](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2402)
+consumes the existing caller-JWT Finance source contracts through the same snapshot;
+it remains unreleased. Null/unavailable is never zero, cash is never credit, and
+source observations are not action receipts. EXP01/05/09/11 may consume these shared
+contracts without duplicating engines or treating company L1 as tenant SOLO L2.
+
+**Proof limits:** actual-font native target and VERA frames exercise product source
+with synthetic data only. Capture exact PNG dimensions and rendered platform fonts;
+do not substitute resized screenshots or CSS font declarations for that evidence.
+Authorized ordinary SOLO access was re-established on October20; opening the
+target-review control produced the correct unsent draft. A read-only COO briefing
+also completed against the visible source subset and survived ordinary reload
+with one question, one answer and six same-workspace links (ANT-52). This is
+bounded customer proof on the earlier build8ada5c00, not a new full nine-point
+acceptance. Final Finance recaptures were interrupted by browser transport.
+Authenticated target lifecycle, actual zoom,
+Chat/Live continuity, governed effects and receipts,
+full19 and founder acceptance remain owed. Preserve original9 PASS/0 FAIL and
+supplement12 PASS/0 FAIL/4 BLOCKED. See the existing
+[19-outcome matrix](../delivery/e2-customer-experience-integration-matrix.md),
+[continuation contract](../delivery/e2-6-continuation-contract.md) and
+[Mission contract](../delivery/paige-business-mission-system-phase2.md).
+ANT-138/147 carry current release coordination; ANT-52 carries customer proof.
+
 > **2026-10-20 EXP05 inherited-source reconciliation — NOT RELEASED:** Original EXP05 lead is verified archived; clean #2163/36ab and #2189/9f sources remain preserved. Their October14/15 paragraphs below are historical unmerged checkpoints, not current ownership, activation, public-only Computer/Sandbox scope or acceptance authority. Current ANT11/21/147 owner direction governs the complete ten-outcome Run My Week Experience. Source-only reviewed e9704371 composes current main12386ae4 and reviewed b27 deadline/body corrections; the native unapproved draft reuses existing confirmations, Kit, Trust, process records and Rails. The unapplied forward migration121300 preserves its original SQL body and the current196-row catalogue in local proof; no applied history, role or recurring grant changes. Local full PostgreSQL proof86PASS and corrected owning suite203PASS are engineering evidence, not full-schema or authenticated execution. A new scoped44px draft-control correction and final current native evidence/review/CI/release remain owed. Formal source/receiving-owner handoffs and original18/25/50/E5-CV1–9 acceptance remain separate.
 
 **2026-10-15 UTC E02 #2174 observed source-release identity:** reviewed7a898a10d6954d3ed6c31b1a540b51222810a5e9 → main3fa8b501619782f533ac80d778fb309bf21b53b0, all8 exact-head workflows and both preview checks SUCCESS; owner-authorized author self-review/lower assurance. Production web/database/Edge and exact source readback verified. Master§4.0 and [receipt6183804911](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2174#issuecomment-6183804911) identify this bounded native delivery; detailed evidence stays ANT-138/147. Authenticated target acceptance, complete Executive/Chat/Live integration and final owner review remain owed. All19 outcomes and9/0 plus12/0/4 boundaries unchanged. This paired mechanical closeout introduces no capability or activation.

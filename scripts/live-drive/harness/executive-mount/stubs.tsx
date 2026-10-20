@@ -2,7 +2,7 @@
 import { createContext, useCallback, useContext, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { TEST_BUSINESS_REVIEW, TEST_REVIEW_TENANT } from "@/test/fixtures/business-review";
-import { withTargetAndFinanceFixtures } from "./slice-fixtures";
+import { SECOND_REVIEW_TENANT, withTargetAndFinanceFixtures } from "./slice-fixtures";
 export { businessDateLabel, businessCalendarHeldNote } from "@/solo/data/useBusinessTimeZone";
 const Presence = createContext({ railExpanded: false, expandRail: () => {}, collapseRail: () => {} });
 export function HarnessPresence({ children }: { children: React.ReactNode }) {
@@ -14,15 +14,16 @@ export const useAgentPresence = () => useContext(Presence);
 function params() { return new URLSearchParams(useLocation().search); }
 const noop = () => {};
 export const supabase = { rpc: () => { throw Error("HARNESS_NO_BACKEND"); }, from: () => { throw Error("HARNESS_NO_BACKEND"); }, functions: { invoke: () => { throw Error("HARNESS_NO_BACKEND"); } } };
-export function useTenantContext() { const p = params(); return { activeTenantId: p.get("workspace") === "b" ? "test-tenant-b" : TEST_REVIEW_TENANT, activeUserId: "test-owner" }; }
+export function useTenantContext() { const p = params(); return { activeTenantId: p.get("workspace") === "b" ? SECOND_REVIEW_TENANT : TEST_REVIEW_TENANT, activeUserId: "test-owner" }; }
 export function useTierFeatures() { return { has: () => true, loading: false }; }
 export function useBusinessReview() {
   const p = params(), variant = p.get("state");
   if (variant === "loading") return { state: "loading", refresh: noop };
   if (variant === "error" || variant === "member") return { state: "failed", message: variant === "member" ? "This business review is not authorized for this role." : "Your business review could not be read right now. Nothing was changed.", refresh: noop };
-  const snapshot = withTargetAndFinanceFixtures(structuredClone(TEST_BUSINESS_REVIEW), variant ?? "ready", import.meta.env.E2_HARNESS_SLICE === "finance");
+  const input = structuredClone(TEST_BUSINESS_REVIEW);
+  if (p.get("workspace") === "b") { input.tenant_id = SECOND_REVIEW_TENANT; input.domains.clients.data!.headline = [{ ...input.domains.clients.data!.headline[0], value: 2 }]; }
+  const snapshot = withTargetAndFinanceFixtures(input, variant ?? "ready", import.meta.env.E2_HARNESS_SLICE === "finance");
   if (variant === "unavailable") for (const d of snapshot.requested) snapshot.domains[d] = { status: "degraded", data: null, reason: "scope_changed" };
-  if (p.get("workspace") === "b") { snapshot.tenant_id = "test-tenant-b"; snapshot.domains.clients.data!.headline = [{ ...snapshot.domains.clients.data!.headline[0], value: 2 }]; }
   return { state: "ready", snapshot, refresh: noop };
 }
 export function useSoloPendingActions() {

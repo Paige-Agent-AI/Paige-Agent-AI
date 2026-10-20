@@ -845,10 +845,16 @@ or conversational tool admission was activated. Web
 ready indexes match production; eight incumbent native bodies remain unchanged.
 Run39452878730 attempt2 verified all27 selected Edge source/config packages,
 including nav-pull-profile48 ACTIVE/JWTtrue after bounded reviewed packaging
-recovery. Global Edge certification is PARTIAL: subsequent canonical full
-recovery39457966267 verified70/73, with three missing compiler inputs; tag remained
-held. E02#2413 owns the accepted packaging repair and subsequent strict global
-readback; later source merge is not retrospective certification. Authorized owner
+recovery. The subsequent canonical full recovery39457966267 initially verified70/73,
+with three missing compiler inputs; that failure and its held tag remain historical.
+E02#2413 then repaired packaging in main2c47f529. Canonical recovery39465899854 /
+job118777104680 SUCCESS independently read back73/73 source/configuration packages;
+artifact12285685747 ZIP SHA256938c988040d16920d1ce55b8fd655a138247c8b51e1a057083140c202ebac7a9,
+JSON SHA2563687810aeb4e83ce1a898b6dafbced063dd653c6e5dccad16cede4e23b87c853.
+The existing guarded workflow advanced edge-live to2c47f529 only after verification;
+independent ref/artifact reads match, with no retirement or activation. Edge source,
+configuration and verifier remain unchanged through9ad8a9d3. This is source
+certification, not customer execution proof. Authorized owner
 production reads/form required-time-zone negatives were verified; no draft was
 approved/saved, recurring process activated or new receipt generated in those
 browser drives. [Canonical release packet](delivery/experience-05-weekly-commitment-check.md).

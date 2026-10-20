@@ -1,0 +1,23 @@
+[
+  {
+    "file": "known-refusal-390-light.jpg",
+    "width": 390,
+    "height": 843,
+    "format": "JPEG",
+    "sha256": "1a031e40f14919b9a0de601eaf8d9297e269199fe4ec31554cd9a3323be09831"
+  },
+  {
+    "file": "known-refusal-confirmed-light.jpg",
+    "width": 1536,
+    "height": 735,
+    "format": "JPEG",
+    "sha256": "1fc14d740084c91be45a4306a04a140ac3ff2f896e01ddddbd835b4d241fc9a9"
+  },
+  {
+    "file": "unknown-response-dark.jpg",
+    "width": 1536,
+    "height": 735,
+    "format": "JPEG",
+    "sha256": "a0dbf60147a81f905cc51dbcbbfc40f493d7e43d1162cba1f8ba2a572485fff8"
+  }
+]

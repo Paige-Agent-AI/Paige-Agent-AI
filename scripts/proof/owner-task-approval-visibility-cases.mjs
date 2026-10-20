@@ -150,7 +150,8 @@ export async function proveOwnerTaskApprovalVisibility(c) {
   const results=await Promise.all(Array.from({length:8},(_,i)=>new Promise((yes,no)=>{
     const peer=spawn(exe('psql'),[...args(database),'-c',statement(race.id,version,'Reviewed decline',i%2?actor:other)],{windowsHide:true,stdio:['ignore','pipe','pipe']});
     let out='',err='';const timer=setTimeout(()=>peer.kill(),30000);peer.stdout.on('data',d=>{out+=d;});peer.stderr.on('data',d=>{err+=d;});peer.on('error',no);
-    peer.on('exit',code=>{clearTimeout(timer);yes({code,out,err});});
+    // Exit does not guarantee drained stdout/stderr. Parse only after both streams close.
+    peer.on('close',code=>{clearTimeout(timer);yes({code,out,err});});
   })));
   check('eight actual concurrent decisions produce one rejection/receipt; others are original-result replay or lock refusal',()=>{
     const success=results.filter(r=>r.code===0).map(r=>JSON.parse(r.out));assert.ok(success.length>=1);assert.equal(success.filter(r=>!r.replayed).length,1);

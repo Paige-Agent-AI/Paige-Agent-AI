@@ -1,5 +1,5 @@
 import type { ReadLinkDestination } from "../../supabase/functions/_shared/paige-turn/record-links";
-import { formatSnapshotMetricValue } from "../../supabase/functions/_shared/paige-context/snapshot";
+import { formatSnapshotMetricValue, rankOperatingSnapshotRisks } from "../../supabase/functions/_shared/paige-context/snapshot";
 import type { BusinessReviewSnapshot, ReviewMetric } from "./data/useBusinessReview";
 
 /** Presentation metadata only. The Fabric owns figures, risks, coverage and provenance. */
@@ -28,10 +28,10 @@ export function executiveAreas(snapshot: BusinessReviewSnapshot) {
 }
 
 export function executivePriorities(snapshot: BusinessReviewSnapshot) {
-  const rank = { act: 0, watch: 1, info: 2 };
-  return executiveAreas(snapshot).flatMap((area) => area.entry.status === "available" && area.entry.data
-    ? area.entry.data.risks.filter((risk) => risk.severity !== "info").map((risk) => ({ ...risk, area })) : [])
-    .sort((a, b) => rank[a.severity] - rank[b.severity]);
+  const areas = executiveAreas(snapshot);
+  return rankOperatingSnapshotRisks(snapshot).map(({ domain, ...risk }) => ({
+    ...risk, area: areas.find(area => area.key === domain)!,
+  }));
 }
 
 export function formatReviewMetric(metric: ReviewMetric): string {

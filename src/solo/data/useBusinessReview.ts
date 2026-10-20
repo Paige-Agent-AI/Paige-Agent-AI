@@ -62,7 +62,7 @@ export function useBusinessReview(accountEpoch: string | null | undefined, perio
         // Same reporting clock as PaigeAIChat. This does not substitute for E4's saved
         // BUSINESS calendar: mission due-date judgements keep that separate fail-closed read.
         const timezone = getUserClock().userTimezone;
-        const { data, error } = await supabase.functions.invoke("paige-business-review", { body: { period, timezone }, signal: controller.signal });
+        const { data, error } = await supabase.functions.invoke("paige-business-review?finance_sources=1", { body: { period, timezone }, signal: controller.signal });
         if (!alive) return;
         if (error || !data || typeof data !== "object") {
           update({ state: "failed", message: "Your business review could not be read right now. Nothing was changed." });

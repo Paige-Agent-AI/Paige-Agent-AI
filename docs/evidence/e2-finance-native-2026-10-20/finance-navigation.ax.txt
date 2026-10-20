@@ -1,0 +1,59 @@
+- generic: PAIGE folded; your conversation is preserved
+- link "Skip to content":
+  - /url: "#tenant-shell-main"
+- navigation "Tenant workspace":
+  - link "PAIGE Solo home":
+    - /url: /solo/1234567/command-center
+    - img "PAIGE"
+  - button "Expand navigation":
+  - link "Command Center":
+    - /url: /solo/1234567/command-center
+  - link "Operations":
+    - /url: /solo/1234567/operations
+  - link "Clients":
+    - /url: /solo/1234567/clients
+  - link "Marketing":
+    - /url: /solo/1234567/growth
+  - link "Ads":
+    - /url: /solo/1234567/ads
+  - link "Sales":
+    - /url: /solo/1234567/sales
+  - link "Finance":
+    - /url: /solo/1234567/finance
+  - link "Marketplace":
+    - /url: /solo/1234567/marketplace
+  - link "Settings":
+    - /url: /solo/1234567/settings
+  - button "Use Mineral theme":
+  - button "Sign out":
+  - generic "Example Services":
+    - generic: EX
+- generic: Example Services
+- strong: Finance
+- generic: Solo
+- button "Direct PAIGE" [active]:
+  - img "PAIGE"
+  - generic: Direct PAIGE, or press ⌘\
+  - generic: ⌘\
+- main:
+  - heading "Canonical destination" [level=2]
+  - paragraph: /solo/1234567/finance
+  - paragraph: Destination resolution only; the actual departmental read is not executed by this walkthrough.
+  - link "Back to Executive":
+    - /url: /solo/1234567/command-center/executive
+- navigation "Development-only scenario controls":
+  - strong: SYNTHETIC WALKTHROUGH · NO BACKEND
+  - link "ready":
+    - /url: /solo/1234567/command-center/executive?state=ready&theme=dark
+  - link "loading":
+    - /url: /solo/1234567/command-center/executive?state=loading&theme=dark
+  - link "error":
+    - /url: /solo/1234567/command-center/executive?state=error&theme=dark
+  - link "unavailable":
+    - /url: /solo/1234567/command-center/executive?state=unavailable&theme=dark
+  - link "empty":
+    - /url: /solo/1234567/command-center/executive?state=empty&theme=dark
+  - link "member":
+    - /url: /solo/1234567/command-center/executive?state=member&theme=dark
+  - link "workspace B":
+    - /url: /solo/1234567/command-center/executive?workspace=b

@@ -1,5 +1,21 @@
 # Finance department — current source and full operating target
 
+## October20 EXP02 integration checkpoint
+
+Original statement helper#2021 is source-released at mained305fb25 with exact
+reviewed tree737b577a, required CI and productionweb readback; it stays UNMOUNTED.
+Paired actual release closeout is in#2430, whose required CI remains pending.
+The Finance/Executive consumer candidate composes currentmain/VERA atbaceaaa8:
+262/262 focused cases, type ratchet10/6, productionbuild5603modules and scoped
+lint0errors PASS. Nineteen source-bound native synthetic PNGs preserve product
+fonts, corrected contrast, desktop/phone states, keyboard disclosure and truthful
+source/zero/unavailable/provenance labels. See the existing UI delivery record
+and e2-finance-native-2026-10-20 manifest. A development-only hook helper was
+renamed without changing expressions/fixtures/rendering; exact equivalence is
+recorded separately from the frozen captures. Actual zoom, deployed Finance
+behavior/provider readiness, Chat/Live, account isolation/reload and full19/founder
+acceptance remain owed. No new issuer, ledger, provider, approval or action activation.
+
 Grounded on 2026-10-09 against main `794a38263e2d1d565ccab20253751593ed9c8f5b`.
 Owner-approved design and subsequent “live merge on green” authorize normal delivery. They do not authorize a real provider connection or financial effects.
 

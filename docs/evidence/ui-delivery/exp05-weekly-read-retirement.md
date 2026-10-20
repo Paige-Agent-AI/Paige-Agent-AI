@@ -55,4 +55,3 @@ Root final scoped lint0 and TypeScript10→6 completed onf9d2. Compositionab15 p
 The optional AbortSignal/revalidation ports can only refuse. A previously started PromiseLike/RPC may still finish in its original runtime; this repair retires later stages and publication. It does not claim transport/server cancellation or undo a business action.
 
 [Impeccable guidance](https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md): preserve existing interface and truthful feedback. No visible design change or new anti-pattern/animation is introduced; mechanical source review and the native owning functions are the proportional quality checks here.
-

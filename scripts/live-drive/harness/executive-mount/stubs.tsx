@@ -2,6 +2,7 @@
 import { createContext, useCallback, useContext, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { TEST_BUSINESS_REVIEW, TEST_REVIEW_TENANT } from "@/test/fixtures/business-review";
+import { withTargetAndFinanceFixtures } from "./slice-fixtures";
 export { businessDateLabel, businessCalendarHeldNote } from "@/solo/data/useBusinessTimeZone";
 const Presence = createContext({ railExpanded: false, expandRail: () => {}, collapseRail: () => {} });
 export function HarnessPresence({ children }: { children: React.ReactNode }) {
@@ -19,7 +20,7 @@ export function useBusinessReview() {
   const p = params(), variant = p.get("state");
   if (variant === "loading") return { state: "loading", refresh: noop };
   if (variant === "error" || variant === "member") return { state: "failed", message: variant === "member" ? "This business review is not authorized for this role." : "Your business review could not be read right now. Nothing was changed.", refresh: noop };
-  const snapshot = structuredClone(TEST_BUSINESS_REVIEW);
+  const snapshot = withTargetAndFinanceFixtures(structuredClone(TEST_BUSINESS_REVIEW), variant ?? "ready", import.meta.env.E2_HARNESS_SLICE === "finance");
   if (variant === "unavailable") for (const d of snapshot.requested) snapshot.domains[d] = { status: "degraded", data: null, reason: "scope_changed" };
   if (p.get("workspace") === "b") { snapshot.tenant_id = "test-tenant-b"; snapshot.domains.clients.data!.headline = [{ ...snapshot.domains.clients.data!.headline[0], value: 2 }]; }
   return { state: "ready", snapshot, refresh: noop };

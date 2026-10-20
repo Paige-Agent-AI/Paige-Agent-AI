@@ -1,0 +1,106 @@
+[
+  {
+    "file": "1024-closed.jpg",
+    "width": 1024,
+    "height": 768,
+    "format": "JPEG",
+    "bytes": 67789,
+    "sha256": "02e10a3f347334cbe30442c9ff254d76d4e7ffca1391e65eae6d2d010b2cc171"
+  },
+  {
+    "file": "1024-open.jpg",
+    "width": 1024,
+    "height": 768,
+    "format": "JPEG",
+    "bytes": 31044,
+    "sha256": "1f4625723e00a15e1eae9ce638cf4f3a5873e0bc6fcdfe43ebf73a43d5fea17b"
+  },
+  {
+    "file": "1366-closed.jpg",
+    "width": 1366,
+    "height": 768,
+    "format": "JPEG",
+    "bytes": 79880,
+    "sha256": "ec6846bf27f6a8e694b0e8a02cec1b2b2aa1dfa665432f21a5435dc34af0f5cc"
+  },
+  {
+    "file": "1366-open.jpg",
+    "width": 1366,
+    "height": 768,
+    "format": "JPEG",
+    "bytes": 76688,
+    "sha256": "93ef6abf223f43b8ce08720e84b91f649bb62c2df1dddc0ab86dc183468b4e11"
+  },
+  {
+    "file": "1536-closed.jpg",
+    "width": 1535,
+    "height": 770,
+    "format": "JPEG",
+    "bytes": 82701,
+    "sha256": "1e7946f61a2aefcba00e3005d21a0ed3f57867a3c07c8b4518e1efcbc023eeb1"
+  },
+  {
+    "file": "1536-open.jpg",
+    "width": 1535,
+    "height": 770,
+    "format": "JPEG",
+    "bytes": 86413,
+    "sha256": "de018fde337ec898cc014556cea1b544bf137f839a5ac9eed676c8b8f70beac9"
+  },
+  {
+    "file": "390-partial-dark.jpg",
+    "width": 390,
+    "height": 843,
+    "format": "JPEG",
+    "bytes": 42687,
+    "sha256": "c278420333dd2d90124e0b0f95c45444af4758ed8c26737f520088cee4579f9a"
+  },
+  {
+    "file": "900-closed.jpg",
+    "width": 900,
+    "height": 1000,
+    "format": "JPEG",
+    "bytes": 65443,
+    "sha256": "2b08a364bcfcaa564bf9a9c96a66ecd5d1925dd99a304aaa821569e601bd980b"
+  },
+  {
+    "file": "900-open.jpg",
+    "width": 900,
+    "height": 1000,
+    "format": "JPEG",
+    "bytes": 30879,
+    "sha256": "748ec622a41cc3605327cc55f01aa2811fce748e39ab6a7b7476b91c65bbdf6f"
+  },
+  {
+    "file": "denied-light.jpg",
+    "width": 1536,
+    "height": 735,
+    "format": "JPEG",
+    "bytes": 50639,
+    "sha256": "3c3d413c477023c8528342c9cce2e8ce0fe0c435211368fa15b9f3994e0e0882"
+  },
+  {
+    "file": "empty-light.jpg",
+    "width": 1536,
+    "height": 735,
+    "format": "JPEG",
+    "bytes": 66773,
+    "sha256": "de3f7330373972ff7db153d184792116fb082451f42870901a9fe1a08337621e"
+  },
+  {
+    "file": "original-inspector.jpg",
+    "width": 1536,
+    "height": 735,
+    "format": "JPEG",
+    "bytes": 52858,
+    "sha256": "500d4b7f90c3c3cbab7e7d57eaec5edd9b6df691f5e50ecb8ca5f57678f69106"
+  },
+  {
+    "file": "partial-dark.jpg",
+    "width": 1536,
+    "height": 735,
+    "format": "JPEG",
+    "bytes": 75757,
+    "sha256": "2017213f3b51e4c583a3cc8d814a27a5fb96a4561175e1dd250273c500d4cf8a"
+  }
+]

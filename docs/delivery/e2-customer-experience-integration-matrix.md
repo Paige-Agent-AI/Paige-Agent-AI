@@ -1,5 +1,19 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+**October20 small-PR continuation:** all nineteen definitions below remain required.
+The owner's current release sequence is published in ANT-138 comment
+`3276f0e0-05de-48c2-a2ff-764bbb292337` and existing #2402. Each new increment
+has one outcome, normally1–5 related source files/100–400net lines; source owners
+in EXP03/04/05/09/11 retain their records, calculations and departmental interfaces.
+Finish the isolated required-audit repair #2434, then existing cohesive Finance
+#2402; do not add statements, liabilities, budgets or another department to it.
+VERA #2400 is now merged61b32a37, its original identity/121400 migration and
+strict production Chat source recovery39503591507 verified. Bounded genuine
+invitation/read/reload evidence is ANT-52 `ad6487c1-5a79-428c-a004-51809931cd0e`;
+it is not dedicated-runtime activation, Live or full-Experience acceptance.
+Finance remains unreleased. Review, exact-head CI, production source, authenticated
+behavior, actual effects/receipts and the single founder evaluation stay distinct.
+
 **October19 Finance continuation — implemented locally, not released or accepted.**
 REUSE the existing Finance caller-JWT catalogue/account-source contracts and their
 company/binding/owner/admin authority; EXTEND the incumbent

@@ -222,7 +222,7 @@ BEGIN
       lifecycle_status, created_by, short_ref, created_through)
     VALUES (gen_random_uuid(), 'Company Sales', 'PAIGE Agent AI Inc''s own sales pipeline — every opportunity from first contact to close.',
             '#2563eb', false, NULL, 'active',
-            '00000000-0000-0000-0000-000000000000'::uuid, v_short_ref, 'paige')
+            NULL, v_short_ref, 'paige')
     RETURNING id INTO v_pipeline;
     ALTER TABLE public.pipelines ENABLE TRIGGER zz_assign_pipeline_identity;
 

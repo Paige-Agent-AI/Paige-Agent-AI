@@ -791,7 +791,7 @@ const ANCESTRY_SOURCES = {
  // proposal b4ebdf9d / review 8b83d5c5. Existing114 pins and verifier unchanged.
  "supabase/functions/_shared/paige-turn/resume.ts": "dbcdf4de1ca3d1e36d4841650fcb42a43d3d747ddc0c88488e80bb3859cbaff6",
  "supabase/functions/_shared/comms-email/chat.ts": "b2c63f538935839cbafa9642b2d0ca83b8c24b1fc61be8200bda2efc19e9044e",
- "supabase/functions/_shared/paige-turn/interactive-refusal.ts": "0e36012da59cc56e5b01e77047af4811c90e068e795163439d95422418209086",
+ "supabase/functions/_shared/paige-turn/interactive-refusal.ts": "908219d36f0b49358553e4ea9e03a846f19b1f0995ef6b56e09295f1e1e7b240",
 };
 export function validateIncumbentResourceBindings(chatText,sourceTexts) {
  const findings=[],tools=new Map();

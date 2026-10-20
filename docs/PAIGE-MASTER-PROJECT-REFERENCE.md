@@ -826,6 +826,34 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-20 UTC — EXP05 retires cancelled or stale weekly owner inspections.**
+PR [#2435](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2435), reviewed
+`727a0ff17e670b387b23e921bdf2c931f0258904`, merged main
+`126621500fe603d649b6872c3f81c34b1c395cc4`, actual tree
+`f0d800867f150b5f3cd23c4d93a95dbcadf7d6fd`. Canonical reader stages recheck the
+original deadline, cancellation and current identity immediately before lazy RPC
+and session subscription; retired scopes cannot start later stages or publish
+stale private results. Already-started server work is not physically undone.
+All11 applicable exact-head checks and both Vercel statuses SUCCESS. NON-AUTHOR
+correction review38439bd3 and composition544e2564 PASS; concurrent accepted
+EXP00#2428/1e98 main advance is preserved by actual-merge reviewc8d3ce80: five
+owned entries exact, all other incoming entries and116 security inputs unchanged.
+Production `dpl_DBsnXQHdw9E89YaKiGoB5b1VFPef` READY/exact126/canonical aliases;
+public HTTP200 build `126621500fe603d649b6872c3f81c34b1c395cc4-mvhbixkr` read back.
+Edge39515648797/job118947041699 and independent selector report zero affected
+functions; provider deploy/source-verification/tag-record steps SKIPPED, no new
+Edge certificate or tag advance claimed. Own schema change NOT_APPLICABLE;
+dependency121500 present, separate accepted Operator frontier13000000 retained.
+Ordinary-owner weekly inspection, refresh/close and reload/reopen returned the
+same correct empty registered scope with explicit missing time-zone context.
+No proposal, approval, recurring execution, booking or provider effect requested.
+Source/web and bounded read/reload verified; freshv2 execution/original record/Rail,
+second eligible cohort/new provisioning, Chat/Live, ZION and full Experience remain
+PROOF OWED. CAP-082 native reliability is not generic skill admission; no catalogue
+maturity promotion. Original1/18 and2/50 unchanged. Internal patch only, no customer
+release identity or announcement. Recovery preserves original records/authorities.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2435#issuecomment-6304251608).
+
 **2026-10-20 — EXP05 weekly work deadlines and reminder-time truthfulness.**
 PR [#2433](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2433), reviewed
 `155436c7a88dedbaa961fc9aa3b1f795c934876c`, merged

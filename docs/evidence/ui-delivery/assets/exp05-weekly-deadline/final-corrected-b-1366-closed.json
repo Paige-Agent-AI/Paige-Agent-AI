@@ -1,0 +1,51 @@
+{
+  "cohort": "b",
+  "w": 1366,
+  "h": 768,
+  "open": false,
+  "ax": "Browser tab: 1738573782, Title: \"Local actual SOLO Operations proof\", URL: \"http://127.0.0.1:61544/?context=b&theme=light\".\nThe following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.\n~\t\t\t\t55 button (expanded) Verified receipt, Secondary Actions: Collapse\n+\t\t\t\t69 definition list\n+\t\t\t\t\t70 container Receipt\n+\t\t\t\t\t\t71 text Receipt\n+\t\t\t\t\t72 text 40000000-0000-4000-8000-000000000013\n+\t\t\t\t\t73 container Occurrence\n+\t\t\t\t\t\t74 text Occurrence\n+\t\t\t\t\t75 text 40000000-0000-4000-8000-000000000011\n+\t\t\t\t\t76 container Act\n+\t\t\t\t\t\t77 text Act\n+\t\t\t\t\t78 text 40000000-0000-4000-8000-000000000012\n+\t\t\t\t\t79 container Schedule revision\n+\t\t\t\t\t\t80 text Schedule revision\n+\t\t\t\t\t81 text 1\n+\t\t\t\t\t82 container Source\n+\t\t\t\t\t\t83 text Source\n+\t\t\t\t\t84 text Planning work · observation preserved at the check\nThe focused UI element is 55 button (expanded) Verified receipt, Secondary Actions: Collapse",
+  "meta": {
+    "dialog": {
+      "clientHeight": 768,
+      "height": 768,
+      "scrollHeight": 1690,
+      "scrollTop": 745.5999755859375,
+      "width": 600,
+      "x": 766.4000244140625,
+      "y": 0
+    },
+    "documentWidth": 1366,
+    "focus": "Verified receipt",
+    "links": [
+      {
+        "href": "/solo/1702/operations/work?weeklySource=planning_item&item=40000000-0000-4000-8000-000000000020",
+        "text": "Confirm the project handoff"
+      },
+      {
+        "href": "/solo/1702/operations/work?weeklySource=planning_item&item=40000000-0000-4000-8000-000000000021",
+        "text": "Review unfinished commitments"
+      },
+      {
+        "href": "/solo/1702/operations/work?weeklySource=planning_item&item=40000000-0000-4000-8000-000000000022",
+        "text": "Share the agreed next steps"
+      },
+      {
+        "href": "/solo/1702/operations/work?weeklySource=planning_item&item=40000000-0000-4000-8000-000000000023",
+        "text": "Confirm the next work deadline"
+      },
+      {
+        "href": "/solo/1702/clients/calendar",
+        "text": "Clients → Calendar"
+      },
+      {
+        "href": "/solo/1702/operations/work",
+        "text": "Operations → Work"
+      }
+    ],
+    "text": "Weekly responsibilityCurrent owner scope, canonical schedules and verified results.Weekly commitment checkReview the week. Keep the original work in Operations.Read Tue, Oct 20, 10:05 AM EDTWeekly commitment checkPausedEvery Monday at 09:00America/New_YorkNext executionNo executable next run is availableScopeYour open, in-progress and blocked Planning work assigned to you or created by you.PermissionRecorded configuration; execution also requires current permission and availability.Execution is held. The requested time is not a promise of a run. No booking reserves this slot.Latest attemptAwaiting attention · Tue, Oct 20, 10:04 AM EDTThe result is unknown. It must be reconciled before any replay; an older verified check does not resolve this attempt.Last verified checkCompleted check · Tue, Oct 20, 10:00 AM EDT4 outstanding · 1 blocked. Work deadlines: 1 overdue · 1 due in the following week · 1 without a deadline.The check reviewed this work. It did not complete or change the underlying tasks.Confirm the project handoffblocked at the checkReview unfinished commitmentsopen at the checkReminder at the check: Thu, Oct 22, 10:00 AM EDTShare the agreed next stepsopen at the checkConfirm the next work deadlineopen at the checkVerified receiptReceipt40000000-0000-4000-8000-000000000013Occurrence40000000-0000-4000-8000-000000000011Act40000000-0000-4000-8000-000000000012Schedule revision1SourcePlanning work · observation preserved at the checkFuture executionsPause, change, resume and cancel affect future runs. They do not terminate an act already processing.Pause unavailableChange unavailableResume unavailableCancel unavailableThese controls require the existing authorized action path. They are not activated in this interface.Draft status is unavailable. Your proposal has not been reported as saved.Read saved proposalsPrepare a weekly responsibilityClients → CalendarOperations → WorkClose",
+    "viewport": [
+      1366,
+      768
+    ]
+  }
+}

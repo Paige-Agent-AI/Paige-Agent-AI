@@ -1,5 +1,36 @@
 # 🧠 The Second Brain — master index & read-first orientation
 
+## EXP02 VERA observed source-release identity — 2026-10-20
+
+This observed release supersedes the candidate-only VERA status in the dated
+handoff below. Original [#2400](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2400)
+reviewed `1b7565be158a4641e25c96341b75ce5466aa663f` merged
+`61b32a3735816dbf1e01734abc9c50d2f82aa35f`, exact reviewed treee66a8912;
+all13 latest required checks/Preview and both Vercel contexts SUCCESS.
+AUTHOR-REVIEW / LOWER ASSURANCE6297904162. Existing global VERA is now version2,
+Intelligence, Finance & Risk; the original identity, soft runtime, enabled state,
+unconfigured prompt/config, permissions and tenant/custom records are preserved.
+PAIGE remains principal COO. No delegated runtime, provider or action activation.
+
+Normal migration39473193723 applied20271112140000 after Chat121100/Operations121300;
+production migration and exact guarded identity readback verified. Vercel
+dpl_2NM5XgUmMGXdjgm9nLZVcbUzSVfr is READY at exact61b. Canonical normal recovery
+39503591507/job118906876458 on source-identical main26418b2b strictly verified
+paige-ai-chat1/1,253 expected inputs, zero retirements; the existing guarded workflow
+advanced edge-live to26418b2b, independently read back. Artifact12302121954,
+SHA256b539a546c9be61e40ca38dff80997ec98ba0838fcf1530a25b26b8dbc3c5cba2.
+Public build26418b2b6c743eaaf98b3db6d7420d1f3908383b-mvh1ttm5 observed.
+Earlier automatic source-PASS/final-marker-FAIL remains historical. The stale,
+data-free VERA Preview was replaced through the same PR's normal close/reopen
+lifecycle, retaining foreign branches; its new correct migration history/check passed.
+Neither ineffective earlier private reset nor source certification establishes
+customer acceptance. [Observed receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2400#issuecomment-6302505761).
+
+Channel production, internal source prerequisite, no customer release identity or
+announcement. Full19, governed effects/receipts, Live, required authenticated
+negatives and founder acceptance remain owed; preserve9/0 and12/0/4.
+Detailed customer proof stays ANT-52, source coordination ANT-138/147.
+
 ## EXP02 verified handoff v2026-10-20.2
 
 **Owner: EXP02; production source status is PARTIAL, customer proof is owed.**

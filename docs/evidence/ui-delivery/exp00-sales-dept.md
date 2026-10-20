@@ -68,4 +68,4 @@ RELEASE_CLASSIFICATION: internal-only: Operator console capability.
 CUSTOMER_RELEASE_IDENTITY: none: internal Operator capability.
 RELEASE_NOTE_REQUIRED: no: internal Operator surface.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: source + migration + review + CI verified; authenticated Operator drive and production readback PROOF OWED.
-RELEASE_RECOVERY: position=forward-fix (additive slot + migration; revert-safe); reference=PR CI + this record.
+RELEASE_RECOVERY: position=forward-fix (additive slot plus migration; revert-safe); reference=PR CI plus this record.

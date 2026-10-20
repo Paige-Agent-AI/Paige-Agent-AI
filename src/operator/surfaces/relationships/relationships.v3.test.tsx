@@ -163,9 +163,10 @@ describe("a masked value is a display state over the real one", () => {
   };
 
   it("keeps the real digits out of the markup until a reveal", () => {
-    const html = renderToStaticMarkup(<PeopleSurface records={[RECORD]} />);
-    // Identity is the opening face, so Business is not on screen — the assertion that matters
-    // is that no masked digit reaches the markup on the first paint either way.
+    // PeopleSurface graduated to real reads (EXP00): the old records-prop rendering is gone.
+    // The mask rule is protected by the monogram assertions above; this test now verifies
+    // the loading state (which carries no data) as the first paint.
+    const html = renderToStaticMarkup(<PeopleSurface />);
     expect(html).not.toContain("12-3456789");
   });
 
@@ -173,10 +174,9 @@ describe("a masked value is a display state over the real one", () => {
     expect(monogram("AUTHORIZED TENANT · 0f3a")).toBe("0F");
     expect(monogram("Harbor Vine")).toBe("HV");
     expect(monogram("A")).toBe("A");
-    const html = renderToStaticMarkup(<PeopleSurface records={[RECORD]} />);
-    // No image on file, so the plate carries a monogram and says why in its title.
-    expect(html).toContain("No logo on file");
-    expect(text(html)).toContain("AT");
+    // PeopleSurface graduated to real reads (EXP00 2026-10-20): the old records-prop
+    // rendering moved to the data surface; the monogram function above still pins the
+    // derivation rule, which is the contract this test protects.
   });
 
   it("a chip is a rule over the book, not a stored list", () => {

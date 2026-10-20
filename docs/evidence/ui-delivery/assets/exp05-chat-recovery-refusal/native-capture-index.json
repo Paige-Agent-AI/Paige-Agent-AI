@@ -32,6 +32,15 @@
       "observed": "One keyboard-submitted new read-only question received explicitly offline answer; no business action ran"
     }
   ],
+  "successor_capture": {
+    "source": "c19c03f0496388d56fdf4babbca43a37ca9e2a59",
+    "file": "saved-refusal-assistant-neutral.jpg",
+    "format": "JPEG",
+    "raster": [1535, 770],
+    "css_viewport": [1536, 770],
+    "sha256": "90cd33094199c200c680a298f18271fab0bfe6e1407b0d948daccff381bd51d6",
+    "observed": "Current shared assistant-neutral explanation after reload; held caption, no Ask again/retry or attachment; offline actual component only"
+  },
   "limitations": [
     "Original before image1536x791 differs from these rasters; no equal-viewport before/after claim",
     "Screenshots retain original returned bytes; no resizing, cropping or synthetic composition",

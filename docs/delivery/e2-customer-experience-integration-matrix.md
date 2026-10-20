@@ -267,18 +267,32 @@ evidence exists.
 All nineteen outcome definitions remain required. O04 is not limited to bank
 account cards. The following recovered source is reused before new domain work:
 
-- Existing #2021 (`e1e1a9f250a535273b4364c7410538f0e6d12209`, OPEN) owns
+- Original #2021 reviewed `ab3f8243ce0795127eb274e2eb0e3995fd6adc5c` is now
+  MERGED `ed305fb25cba16877684955092fb1d0f58976dd3` with exact reviewed composition,
+  required CI and production web/source readback. It owns
   native QuickBooks statement semantics and exact historical profit/margin math.
   These helpers are UNMOUNTED; source tests are not authoritative ingestion,
   persisted evidence, a live financial statement or customer acceptance.
-- Existing #2032 (`c8865a21c58d693936742487aa561c37fa3be6f0`, OPEN) owns
+- Original #2032 (`7bba113fda01a7480c4530f282682319f83fd442`, OPEN) owns
   sparse canonical liability compatibility and native obligation normalizers.
   Reconcile its existing reader correction before interpreting these records;
   do not invent a second liability/expense engine or infer settled bank cash.
+  Fresh172 controlled cases and actual PostgreSQL-to-reader proof PASS; required
+  native CI retained an18/19 crash-recovery failure and has one bounded same-head
+  reproducibility rerun. Source release/customer acceptance is not inferred.
 - #2047 is MERGED (`210ebbc3d2b750ae67a0dbe2b94a77a365f9888f`); its
   company/version-authorized `read_finance_plan_catalog` is deployed, while
   Finance/Spine/Fabric/UI consumer integration remains owed. Budgets/scenarios
   already have canonical stores/readers; no replacement goal or plan store.
+
+Current Finance/Executive source compositionbaceaaa8 preserves VERA1b and mained305.
+Fresh262/262 owning/incumbent cases, type ratchet10/6 and productionbuild5603modules
+PASS. The preserved native packet has nineteen synthetic PNGs, exact product
+fonts, repaired contrast, keyboard/state/navigation and320/390px reflow proof.
+Actual browser zoom and authenticated Finance/Live/tenant/reload proof remain
+UNVERIFIED. VERA's recreated PR-only Preview passes correct121100/121300/121400
+history; required final source CI/release still gates its integration. These are
+prerequisite receipts, not additional accepted customer outcomes.
 
 Completion sequence after the current VERA/Finance source release: finish actual
 Banking consumer/native proof; integrate existing permitted liability/obligation

@@ -1,0 +1,196 @@
+{
+  "kind": "synthetic actual-component native proof, not authenticated acceptance",
+  "freeze": "ef4c5c52e3218d77b0112766c4548c4626a71400",
+  "composed_source": "baceaaa82984b440ee5643e82fec1e5a056f52c4",
+  "files": [
+    {
+      "file": "actual-fonts.json",
+      "sha256": "307eb04df4c935371be78e6b2455d7aff7e70eb99d1fe8b08b4785b0b70ac51d",
+      "bytes": 692
+    },
+    {
+      "file": "contrast-inputs.json",
+      "sha256": "0a2d413cd25cf50fd1a7a8e6c2085844accc931719d848c033d0f89d3cf8ffb3",
+      "bytes": 4307
+    },
+    {
+      "file": "contrast-review.json",
+      "sha256": "be845efbb76fcbc7b80eec1b7320e50e769866e26f057d6882cc5be645e39ad0",
+      "bytes": 1123
+    },
+    {
+      "file": "finance-1024x768-closed-light.png",
+      "sha256": "f97cb28c54b143ef8aef1a4c76b5be698bcb2ee0be01e21a2476c74d452d98e6",
+      "bytes": 110826
+    },
+    {
+      "file": "finance-1024x768-open-dark.png",
+      "sha256": "f16a0603f351171acb46457e2fad9ce9e9420439cc621acfa9ce3fb9b1a64584",
+      "bytes": 165014
+    },
+    {
+      "file": "finance-1366x768-closed-light.png",
+      "sha256": "f72eb4e29723feb2af571b01462a8b9dd377b5969f94491742c2f93ec24d7301",
+      "bytes": 108622
+    },
+    {
+      "file": "finance-1366x768-open-dark.png",
+      "sha256": "a8e5a1d9f7c6823ba24170ca20019380db8d2a7d7de1716601929688ceefca75",
+      "bytes": 131410
+    },
+    {
+      "file": "finance-1536x770-closed-light.png",
+      "sha256": "c05c865f70fb6a492736bf580f7272dfebf1c05787254bdb5d3f4bc2478454ed",
+      "bytes": 108831
+    },
+    {
+      "file": "finance-1536x770-open-dark.png",
+      "sha256": "d31a5d9f407b559ec77d1a4b3dc53bb61d5dd9829cd3c5b8cdbc079e7735491c",
+      "bytes": 135863
+    },
+    {
+      "file": "finance-320x844-closed-dark.png",
+      "sha256": "c5d4c4e0fe38b64afa8c2f888c25a390a17bc6081eca7d89b76011dc16aa1535",
+      "bytes": 70900
+    },
+    {
+      "file": "finance-320x844-closed-light.png",
+      "sha256": "2c30c202ffc1f762cfd2133d6a513daca58992fc6054ee6df2abbd31420c3dd4",
+      "bytes": 71195
+    },
+    {
+      "file": "finance-390x844-closed-light.png",
+      "sha256": "396392874d6a6be77e22e8f5c271efe3e5904a38b88437f87dd1c49a1e4e97d7",
+      "bytes": 78156
+    },
+    {
+      "file": "finance-900x1000-closed-light.png",
+      "sha256": "da2e8122cbbdf1bad5806bf85a74437c0c3246b1b4db202478c2cdd4751ffc32",
+      "bytes": 125737
+    },
+    {
+      "file": "finance-900x1000-open-dark.png",
+      "sha256": "bdd4e89e7fc142dad9b8267d733c83d75acc86655f5fb60029b2a8be1e604170",
+      "bytes": 168754
+    },
+    {
+      "file": "finance-navigation.ax.txt",
+      "sha256": "88461339e8951942463c0c35dd0a040981ed9f937f1b34613e2a3dffb8361a9b",
+      "bytes": 2083
+    },
+    {
+      "file": "finance-navigation.png",
+      "sha256": "b8ade7323669c463720e6c55aadc9dbbed84bd17ad1252cc8b97d31ebc125e47",
+      "bytes": 47589
+    },
+    {
+      "file": "keyboard.json",
+      "sha256": "d724d6c5248444b7f3dd27cbd9bacd4d158d5250323eefff9e8c70b0142c005e",
+      "bytes": 263
+    },
+    {
+      "file": "native-report.json",
+      "sha256": "e8a3b36331e4fdcb1813826c48b6075866f87b244162b024412e0ca53332d46d",
+      "bytes": 7522
+    },
+    {
+      "file": "reduced-motion.json",
+      "sha256": "625a061ccbadb1d9c5e766c377abaebd6304e61a17518609178289595bef1519",
+      "bytes": 126
+    },
+    {
+      "file": "state-empty.png",
+      "sha256": "d1e115318ab8ab49ecf3b3f4b0d74c45fc1cbe1833822f4e7a945ba58dcf4d13",
+      "bytes": 139530
+    },
+    {
+      "file": "state-error.png",
+      "sha256": "eaf340d3cc29f6a6c9c9683b12ec188c7bc4f41f4a3b7e03c35fd567e516bdba",
+      "bytes": 79521
+    },
+    {
+      "file": "state-loading.png",
+      "sha256": "6db7fdcb673cc4d32d1b46a65a04fe915d625fd6f9decafe20471819c4862cbc",
+      "bytes": 91673
+    },
+    {
+      "file": "state-member.png",
+      "sha256": "00543d92701b2b4e31e7f6dbda845fdce55b6c75b34fd3963a50b54c57ac894d",
+      "bytes": 91420
+    },
+    {
+      "file": "state-ready.png",
+      "sha256": "d4cdf979cad07b0dd790275bc5b50ea4c16a865028ff46bfa95858707b1734a3",
+      "bytes": 143162
+    },
+    {
+      "file": "state-unavailable.png",
+      "sha256": "a16ff38e5f4f24fdc9c68288f1aaba00c51040498e2e30c25534177b94f40799",
+      "bytes": 161852
+    },
+    {
+      "file": "state-workspace B.png",
+      "sha256": "3485959a93549f67e231f3d3b742ff1a3cd0077ec302740691665b07eee24f03",
+      "bytes": 155921
+    },
+    {
+      "file": "states.json",
+      "sha256": "5f14de4b99d5e0261fb39a6666cdbff71e83331aaa9dd2dc5520a617aa3cb2fe",
+      "bytes": 20209
+    }
+  ],
+  "source_bindings": [
+    {
+      "path": "src/solo/ExecutiveOverview.tsx",
+      "git_blob": "111f7a4fb54cde5ee6bdea26f566ebcd1ce5983e",
+      "sha256": "cb0402e62f7689bbd8e88ee155fec751c78468f697ea74ef7949ccaad61c611d"
+    },
+    {
+      "path": "src/solo/ExecutiveFinanceEvidence.tsx",
+      "git_blob": "afa0afe34ca97dfa5c5fd1294fb76c1c8adc7a47",
+      "sha256": "ee035178b96f582cc90b931a625d4fe067a4480795fecf81602ca9511be28401"
+    },
+    {
+      "path": "src/solo/executive-overview.css",
+      "git_blob": "6f8294c7a3c246e8db053d55c056d30c3e20aff1",
+      "sha256": "88c8c878a583d90c94cc5aaa4a3202e6ded5d6b9b10d4b8cc6ba44ab911a182c"
+    },
+    {
+      "path": "src/solo/executive-review.ts",
+      "git_blob": "631e44c78f97f771c265fe8ce8bd9a88723cca5f",
+      "sha256": "40447c0cd7794e8b710c1989a0ec4c8a127a73c90240f12a2fda3f593e696479"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/main.tsx",
+      "git_blob": "de70a160d19a3e630905fc487f8ec4ac523274a2",
+      "sha256": "b6c0569960565056cd375a8b6603e0e861f27966bc61ab46a97fd327354bc56d"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/stubs.tsx",
+      "git_blob": "4aff355233c1775adbfafb7d23ad908792830c6d",
+      "sha256": "540270cca63ea4f1189aa4a7e366819562cd029029614813d0dfd6c810621f28"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/slice-fixtures.ts",
+      "git_blob": "51153a213deed7c9386fcf406a5a1fae60242d45",
+      "sha256": "8841c283f1cd99ac0de6ac84221d624b69fa92dbee5e6c47a0b9a39a602fe740"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/vite.config.ts",
+      "git_blob": "e8682c642b0873ecf3b0881d1acc68dd67d71d7b",
+      "sha256": "5cfc71cf2cc8d60f5496d309ff49a9279b6d20539c2e9d2137dc9f7de3175856"
+    },
+    {
+      "path": "src/index.css",
+      "git_blob": "b5301f83c946ebd189e516c28dacd0233881e75d",
+      "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc"
+    }
+  ],
+  "later_harness_identifier_equivalence": {
+    "path": "scripts/live-drive/harness/executive-mount/stubs.tsx",
+    "before_sha256": "540270cca63ea4f1189aa4a7e366819562cd029029614813d0dfd6c810621f28",
+    "after_sha256": "c3714890f405d6cdff08a27f739134a424ac0c852fe089af7fe353448fb70573",
+    "transformation": "Only rename the helper identifier and five callers from params to useHarnessParams. Expressions, fixtures, render and backend containment unchanged.",
+    "native_capture_rebuilt": false
+  }
+}

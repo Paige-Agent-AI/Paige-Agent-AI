@@ -1,0 +1,14 @@
+{
+  "close": {
+    "focusVisible": true,
+    "focused": true,
+    "open": false,
+    "outline": "rgb(156, 143, 224) solid 1.6px"
+  },
+  "open": {
+    "focused": true,
+    "hitHeight": 46.400001525878906,
+    "open": true
+  },
+  "overlayFoldedWithKeyboard": true
+}

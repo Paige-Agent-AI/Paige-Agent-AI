@@ -1,0 +1,8 @@
+{
+  "during": {
+    "reduced": true,
+    "sourceAnimation": "none",
+    "sourceTransition": "1e-05s"
+  },
+  "restored": true
+}

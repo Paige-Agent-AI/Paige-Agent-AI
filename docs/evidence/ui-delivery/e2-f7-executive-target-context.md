@@ -48,6 +48,17 @@ author self-review under Antonio's standing sole-lead exception, lower assurance
 Canonical guidance: https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md.
 Source/DOM evidence does not substitute for authenticated or captured product acceptance.
 
+October20 native verification continuation: the same browser's foreground native PNG
+capture now returns exact requested dimensions, without clipping or resampling. The
+eight required desktop closed/open layouts and390px phone were inspected over the
+real target components/CSS in the backend-disabled static Executive harness. Keyboard
+End/Home reaches the offscreen Mind tab and returns; target caveats have visible
+focus, and the owning-Play link measures44px. These are synthetic interface checks,
+not customer/tenant-authorization acceptance. At320px, the variance status broke midword
+in a two-column figure row; the narrow container now stacks those values. Final native
+confirmation and the separate finish disposition remain owed on the corrected head.
+Historical JPEG/paused-document failures are retained, not promoted to PASS.
+
 Hosted CI38674852193 on cbf906bf8467326324cdb36bd54584dac124f150 found one new
 strict-Deno TS2322 diagnostic in the shared currency helper, repeated through five
 dependent packages: Intl fraction metadata may be undefined. The helper now converts

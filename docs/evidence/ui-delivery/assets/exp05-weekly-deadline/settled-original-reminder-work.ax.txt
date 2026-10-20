@@ -1,0 +1,74 @@
+Browser tab: 1738573782, Title: "Local actual SOLO Operations proof", URL: "http://127.0.0.1:61544/?context=a&theme=light&result=corrected".
+1 AXWebArea Local actual SOLO Operations proof, URL: 127.0.0.1:61544/?context=a&theme=light&result=corrected
+	2 container
+		3 container
+			4 text PAIGE workspace ready
+		5 container Review unfinished commitments, ID: radix-:r3:
+			6 heading Review unfinished commitments, Value: 2, ID: radix-:r4:
+				12 text Review unfinished commitments
+			13 text Details from your current workspace.
+			14 text Planning work referenced by the weekly check. Completing a check does not complete this work.
+			7 button Refresh source work
+			15 definition list
+				16 container Responsible person
+					17 text Responsible person
+				18 text Jordan Ellis
+				19 container Status
+					20 text Status
+				21 text Open
+				22 container Priority
+					23 text Priority
+				24 text Normal
+				25 container Reminder time
+					26 text Reminder time
+				27 text 10/22/2026, 10:00:00 AM
+				28 container Project
+					29 text Project
+				30 text Standalone Work
+				31 container Work type
+					32 text Work type
+				33 text Reminder
+			34 container
+				35 heading Update this work, Value: 2
+					36 text Update this work
+				37 text Status
+				38 pop up button (collapsed, settable) Status, Value: Ready, Secondary Actions: Expand
+					39 menu
+						40 (selected) Ready
+						41 In progress
+						42 Blocked
+						43 Completed
+				44 text New reminder time
+				45 date field (settable) New reminder time
+					46 container
+						47 stepper
+						48 stepper
+						49 stepper
+						50 stepper
+						51 stepper
+						52 stepper
+					53 pop up button Show local date and time picker Show local date and time picker
+				54 text Priority
+				55 pop up button (collapsed, settable) Description: Priority, Value: normal, Secondary Actions: Expand
+					56 menu
+						57 low
+						58 (selected) normal
+						59 high
+						60 urgent
+				61 text Responsible person
+				62 pop up button (collapsed, settable) Responsible person, Value: Jordan Ellis, Secondary Actions: Expand
+					63 menu
+						64 (selected) Jordan Ellis
+						65 Morgan Lee
+				66 button (disabled) Save change
+			8 container Recorded work activity
+				9 heading Activity, Value: 2
+					67 text Activity
+				68 container
+					69 text Activity couldn’t be read. 
+					70 button Retry activity
+			10 button Close
+				11 image
+				71 text Close
+
+The focused UI element is 7 button Refresh source work

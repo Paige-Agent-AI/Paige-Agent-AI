@@ -1,0 +1,39 @@
+{
+  "observedAt": "2026-10-20T11:22:10.980Z",
+  "proof": {
+    "overflow": false,
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 418.900016784668,
+          "height": 70.5999984741211,
+          "left": 86,
+          "right": 179.20000457763672,
+          "top": 348.3000183105469,
+          "width": 93.20000457763672,
+          "x": 86,
+          "y": 348.3000183105469
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 400.7000198364258,
+          "height": 52.400001525878906,
+          "left": 187.1999969482422,
+          "right": 296.4000015258789,
+          "top": 348.3000183105469,
+          "width": 109.20000457763672,
+          "x": 187.1999969482422,
+          "y": 348.3000183105469
+        }
+      }
+    ],
+    "viewport": [
+      320,
+      768
+    ]
+  },
+  "note": "Earlier same-call 320px captures include stale painting and shell transition; excluded from PASS. These separate-call settled images use the same actual source without a product fix. CSS width stress, not browser zoom."
+}

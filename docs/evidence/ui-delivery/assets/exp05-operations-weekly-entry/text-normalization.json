@@ -1,0 +1,266 @@
+[
+  {
+    "path": "actual-a-light-1024x768-closed.ax.txt",
+    "rawPrivateSha256": "39f3b61081cb378b05844c3df540c4eead2a3e010c01b9d516c46f36ae3d899e",
+    "canonicalUtf8LfSha256": "683b993a392656824711da371425964955061ba04876c095e9a7cfe15d6d1407",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-a-light-1024x768-open.ax.txt",
+    "rawPrivateSha256": "197aa6eecd4df6a314bc07d760df1e5b48c35ab96593073b9dcee04f623039ec",
+    "canonicalUtf8LfSha256": "ab56d05e3b69022e73fb62442607deed099f719890d9e4884deee9e62d190e77",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-a-light-1366x768-closed.ax.txt",
+    "rawPrivateSha256": "39f3b61081cb378b05844c3df540c4eead2a3e010c01b9d516c46f36ae3d899e",
+    "canonicalUtf8LfSha256": "683b993a392656824711da371425964955061ba04876c095e9a7cfe15d6d1407",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-a-light-1366x768-open.ax.txt",
+    "rawPrivateSha256": "151236dde938bf8160b56022785656f9382efc8a1dd52ff043ce33e7d79562e8",
+    "canonicalUtf8LfSha256": "ceacb5706917ead4436268449a70904a69b8a04098cb11926deafe06fe2749eb",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-a-light-1536x770-closed.ax.txt",
+    "rawPrivateSha256": "39f3b61081cb378b05844c3df540c4eead2a3e010c01b9d516c46f36ae3d899e",
+    "canonicalUtf8LfSha256": "683b993a392656824711da371425964955061ba04876c095e9a7cfe15d6d1407",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-a-light-1536x770-open.ax.txt",
+    "rawPrivateSha256": "151236dde938bf8160b56022785656f9382efc8a1dd52ff043ce33e7d79562e8",
+    "canonicalUtf8LfSha256": "ceacb5706917ead4436268449a70904a69b8a04098cb11926deafe06fe2749eb",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-a-light-320x768-closed.ax.txt",
+    "rawPrivateSha256": "5188f69c982146460e74077c7fe0f6c887c4ff3990b94a3f4f210cb33cfdcd8e",
+    "canonicalUtf8LfSha256": "d1460c599cfc8f44868e2a8917bd733e6f3d32552e230c17b9dd679f97457feb",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-a-light-320x768-open.ax.txt",
+    "rawPrivateSha256": "0375ea3e701cdd97a00fca8ea929d2636567c998d1b272cbc949259d5187cf8d",
+    "canonicalUtf8LfSha256": "07cdd0de416d528a6b7293b1fb3151faba80d23a1a0ee284dd0cba68ac11e75d",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-a-light-390x844-closed.ax.txt",
+    "rawPrivateSha256": "c8b51a6af1b7301fd0d9e4e28b125f5438236fe02bda734b9c3c6754b716546b",
+    "canonicalUtf8LfSha256": "e459978a420dbd37b9795ed298844059334b15eb44158b4255532672f98d3582",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-a-light-390x844-open.ax.txt",
+    "rawPrivateSha256": "4e1fa5316fdf507c8bfc70a6254269822aad73e5a35aad7674cefb3e6d7b532d",
+    "canonicalUtf8LfSha256": "5d9325b084a845a0c0a39e3f53f7a39a758b7fc984461d84a962531eb52f9d92",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-a-light-900x1000-closed.ax.txt",
+    "rawPrivateSha256": "7781115d48cfdfd8d2f7c0c67185d283892dc24c6c34c09e0a4ebc2ef12c2bc1",
+    "canonicalUtf8LfSha256": "550cb5c6d40afe76ec5cbbd05736021073f4eb77c9eaa31823fe69fc07155e93",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-a-light-900x1000-open.ax.txt",
+    "rawPrivateSha256": "59b59923118fa3d9b9a28e3a694053f8f3f105c55fe0b13c798fc39d5517f8a4",
+    "canonicalUtf8LfSha256": "03a310a886e6c4118d2fbd34b3c4b804bc428e3f12a1c94d7269129229785935",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-b-dark-1024x768-closed.ax.txt",
+    "rawPrivateSha256": "fdf5fb6bf70d4906e853d81f02c617b0e7c321f1c10af8875f88e80b8b4dbf19",
+    "canonicalUtf8LfSha256": "d775a819ef8ad94fa00a812c2abda82a6cb0c35afd78c7bb0f60718baa97632e",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-b-dark-1024x768-open.ax.txt",
+    "rawPrivateSha256": "8624088d72ab7eee32a2389874dbe68cc8cdb3ff232fb4a4610b58d2a82d71d4",
+    "canonicalUtf8LfSha256": "a9b09c7c61547d42a0c69e169133337394bb15c5747a459c8c5dcae7bd4eb683",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-b-dark-1366x768-closed.ax.txt",
+    "rawPrivateSha256": "de1b75aadecf96adc4d6da6523e7d13bfbe941e982b468ca9319b5177d5a7bd9",
+    "canonicalUtf8LfSha256": "b6e2264d3a9d6e25f29d0d90ee3952a063480d5c1d3c722e66bcb6319bc6ee75",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-b-dark-1366x768-open.ax.txt",
+    "rawPrivateSha256": "75704122f6c6ebc14e91dfd9f8a69258e4afa2576db13c01033b6b7ee299ebd5",
+    "canonicalUtf8LfSha256": "bbf28a5c6027a505dbd77b119cf1310fc68981e7026096efbef382f52617732c",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-b-dark-1536x770-closed.ax.txt",
+    "rawPrivateSha256": "572795196d93cd6f8df517999c122bbbcd976dbbad489fb8efe83e9117438f6f",
+    "canonicalUtf8LfSha256": "9f1e03e69db36a40307840aac447c5d173ee3ac464730440b70ea8677dc0d641",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-b-dark-1536x770-open.ax.txt",
+    "rawPrivateSha256": "540220160751139482e212a254219822bfe0568448073190ca090c327812a7b1",
+    "canonicalUtf8LfSha256": "e9276117445c33ceb404f01167e0904fafb5f1d8ad99da5b4b65076c19251fbc",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-b-dark-320x768-closed.ax.txt",
+    "rawPrivateSha256": "5a68298c496ac4de16ee367682c3349e7349a80fd5218187008edba58e862a4d",
+    "canonicalUtf8LfSha256": "a9363a1d84760a44734f05cb3a2ff20ca0f43b4d1ae2ee6b5cad26d3c7f82b52",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-b-dark-320x768-open.ax.txt",
+    "rawPrivateSha256": "ac2c688c2c02f8b7ff0e34a2d815553bd4629aed78b27e498962da5ada23b040",
+    "canonicalUtf8LfSha256": "bf7f2c28f64dc6a7ad1b22c1b5465dbbf6580e499cab1d606a2a856e15812fd5",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-b-dark-390x844-closed.ax.txt",
+    "rawPrivateSha256": "344b6be4c9f642125caa709168ed5f70243987ade29af5385c01c0c68bcc0098",
+    "canonicalUtf8LfSha256": "fd15a79794b64cb8e153aa94c7088126a3da78823682052244c85ee33570aa2a",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-b-dark-390x844-open.ax.txt",
+    "rawPrivateSha256": "f8cf6b1ad861542aeb504c4d22294341421da28639fa354674bd3af19a775f67",
+    "canonicalUtf8LfSha256": "06c99f9988722565123b0b675db976f0a1bbecac5e47f0d7fcd4558ef2bdaf8d",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-b-dark-900x1000-closed.ax.txt",
+    "rawPrivateSha256": "0198f51a02c0859fce071a7af322afcf54a041a86b25183c1fb6ac660771cb14",
+    "canonicalUtf8LfSha256": "9ab4c4de8bb9f0209e53a368d88fae6cc56fa0edebf5bcc4d1f5e2fc461c0684",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-b-dark-900x1000-open.ax.txt",
+    "rawPrivateSha256": "0a3cc4d01ea6b4cc164f0391ec442cb21b8b84b73a28a0fbea6c7a614ff3a097",
+    "canonicalUtf8LfSha256": "1360cc360df12b874bcc888e2e32c2c712c613b1fdaa61406177a907640cb18a",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-b-dark-phone-weekly.ax.txt",
+    "rawPrivateSha256": "d84697fe08d39187011e3c8575e837b68b5e5fc796c600fcd8270f93d41ad898",
+    "canonicalUtf8LfSha256": "50700c688923db705db623699a7db82b039806328917b67f988fbce71391459b",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-dialog-keyboard.json",
+    "rawPrivateSha256": "cd9dee214458b0a101f4cf87c3a8cd64be02e20010f7c59d9ece6041c81456ea",
+    "canonicalUtf8LfSha256": "fa48ba2091b905f33085c2ac7b3f101e29208adbe73b6c0cdc9e48f56b8f642e",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-keyboard-reflow.json",
+    "rawPrivateSha256": "c8eb4b1ca938ddb0bf0cea313e109dfde68447bee195c75e8dbe28e6182abd9b",
+    "canonicalUtf8LfSha256": "804bab2ca2326a845ee1ebd55a8e5e85cac8dfe23e11ec10d4581a9b7b6f8dea",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-owner-refusal.ax.txt",
+    "rawPrivateSha256": "eb057895d4fdb136c5f50551f70d3756b881d23b0036cb8e99cb3b9f47ab194e",
+    "canonicalUtf8LfSha256": "b290d45ed9b2273c89a5cb105cacb5b2e6e480e90eaff42d202e77b1e06c200d",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-owner-unavailable.ax.txt",
+    "rawPrivateSha256": "8f195494b38bc2a57e0657e662671a67421b2989dc8289f88c2380ca921134b3",
+    "canonicalUtf8LfSha256": "476e6a687c78a9e2c0210a7bc160a39fd8e9ebea35004a4e33295aa8bad00831",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "actual-refusal-reload.json",
+    "rawPrivateSha256": "fa5a8c1979cebb70e5b5199045afe3c7603b918410808d3e3eca975f43bd4034",
+    "canonicalUtf8LfSha256": "caa38e90993c9c22d3b4ff035fc9532ce21d62d34b9a7bfd7bed3383869769b1",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "flow-selection.json",
+    "rawPrivateSha256": "cf0cea9abb207f49d1aa95697b5f8cf0ef257a5dba7cfacab788de413d255a8d",
+    "canonicalUtf8LfSha256": "aab3f50caa923fc84ed978184f4e4a5760aef5660948e3d916c60dec3f5d408d",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "native-capture-failure-note.json",
+    "rawPrivateSha256": "6608ed86cd9588884f21571543946a8b366815c10085438a374fbea1cc8322fd",
+    "canonicalUtf8LfSha256": "5043a5e4ff3fb7742646d8edf39ee77933d4a0f8dce9ff225f9470b0ea5fdc19",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "native-selector-note.json",
+    "rawPrivateSha256": "ee335791b7dfb0d779f75b7fcaed2d4e30e1b353c6a3352596f316fd03f44c88",
+    "canonicalUtf8LfSha256": "844f0fa583697be2f0170f044d89485d40b296153dad28481748e40780f57e50",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "prototype-desktop-dialog.ax.txt",
+    "rawPrivateSha256": "d90d86b73c79a74d80b0d4d3619b0ad4b07ddad5c8c40a53cb55b050d905c62f",
+    "canonicalUtf8LfSha256": "c7b464dbf698237f1a1e188427aa99a180b114bfe6147333150fb56dcb2cf7b5",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "prototype-layout-amendment.json",
+    "rawPrivateSha256": "c8d774be3dfd839beaaf630db85b7e6f10f6daf310d63f8be71981079e64eea9",
+    "canonicalUtf8LfSha256": "834f794574543d1851a1470c506a9a85a3e591023d92b3029fc613d23e6bf539",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "prototype-phone-confirm.ax.txt",
+    "rawPrivateSha256": "4295e491dcce8995a1f21e41df4758085586c5c76242063c4a26ec33a55c643a",
+    "canonicalUtf8LfSha256": "5228c95239315ef0c97797392da2055c12864a1eadd9492c17b8b0769c817ed0",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "prototype-phone-dialog.ax.txt",
+    "rawPrivateSha256": "5c65415f40359ae8b9f01483b0d05923fcdc06595ae16ebb27df14ebb1fc8cf3",
+    "canonicalUtf8LfSha256": "7e1cff6bb414074c930c71a5d3b125c5da30ba451b751a8e3d47cd441ce0cbc0",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "replacement-a-light-1024x768-closed.ax.txt",
+    "rawPrivateSha256": "5dac2dcbab570ae0258e67a2c3a5483d5393fcad1684a89828ee0442950a5edc",
+    "canonicalUtf8LfSha256": "3887ced9597017f6f856fad1331b9df1404f0743950df59b09c05dc29ba253c1",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "replacement-a-light-1024x768-open.ax.txt",
+    "rawPrivateSha256": "b199f071e6094042186694aec3f7c5e3278266058ea040e1faa54ccb4a4f4d78",
+    "canonicalUtf8LfSha256": "a05b56865683afea8dbda007f483ee572a79761f17ffa6fa7810724fdfe8e013",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "replacement-b-dark-390x844-closed.ax.txt",
+    "rawPrivateSha256": "73073b4a62479b8ba02ba25004707d8e68630eef367c350643663e6c1256815b",
+    "canonicalUtf8LfSha256": "a397df5cc48961dc5caf9e0fb29e50643569776bedd04c158c747da00e5b207c",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "replacement-native-matrix.json",
+    "rawPrivateSha256": "2f2eda403939580431a0af5efaf5991c4a657e06c4a83f01f3b54f32e96489ec",
+    "canonicalUtf8LfSha256": "7de81db7e550c34e34e97e0479f353a5bc3c32fa7e5fcaca7b6b46246eb2aa88",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "settled-edge-a-light-320x768-closed.ax.txt",
+    "rawPrivateSha256": "24559f217bd0726209b60fc5df3542de1cc6d6fcd25883151c886296589fd0e2",
+    "canonicalUtf8LfSha256": "589baadc41610b36f89a6cc207485320965fb86e2827ab3c0e5e2317a4e337c2",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "settled-edge-b-dark-320x768-closed.ax.txt",
+    "rawPrivateSha256": "5b4578c8ae966a67582482e8a00c88b84dafd70170502c98560d4d073ba60b9a",
+    "canonicalUtf8LfSha256": "4103c8eb7be5449d9c953ee2498653da296740e05ed486695058e19aca5e7a1b",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  },
+  {
+    "path": "settled-reflow.json",
+    "rawPrivateSha256": "705ceefcc4731f2d4676a0c17fb3df5ec26efeb692b62aff4156ce5568854f7a",
+    "canonicalUtf8LfSha256": "8673bb445c86d8e513316f0292181e6f55f4dfdece12563ba5d61abf423d170b",
+    "normalization": "UTF8/LF, remove trailing horizontal whitespace and one final newline; private raw AX retained"
+  }
+]

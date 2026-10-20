@@ -1,0 +1,24 @@
+[
+  {
+    "selector": ".exec-briefing-copy h2",
+    "fonts": [
+      {
+        "familyName": "Schibsted Grotesk",
+        "glyphCount": 42,
+        "isCustomFont": true,
+        "postScriptName": "Schibsted-Grotesk-SemiBold"
+      }
+    ]
+  },
+  {
+    "selector": ".exec-briefing-actions .exec-text-button",
+    "fonts": [
+      {
+        "familyName": "Geist",
+        "glyphCount": 30,
+        "isCustomFont": true,
+        "postScriptName": "Geist"
+      }
+    ]
+  }
+]

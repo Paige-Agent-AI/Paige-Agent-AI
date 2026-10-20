@@ -29,8 +29,9 @@ Targets attach to canonical Strategic Plays; no second actuals or receipt store.
 VERA [#2400](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2400) at
 `d43fc22a104b6c4f947e7d95dae5b05150fada76` extends the existing global registry
 identity and addressed Chat; its guarded role-remap migration is not applied. Main has since applied121100 for
-Chat executor acquisition (#2415); VERA must move its unapplied reservation
-forward without changing the applied Chat migration or granting runtime authority.
+Chat executor acquisition (#2415); VERA now reserves121200 for the same
+byte-identical unapplied role-remap SQL. Applied history and runtime authority
+are unchanged. The rollback test includes follow the new filename.
 Finance [#2402](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2402)
 consumes the existing caller-JWT Finance source contracts through the same snapshot;
 it remains unreleased. Null/unavailable is never zero, cash is never credit, and

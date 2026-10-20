@@ -6,7 +6,8 @@ import type { TeamMemberRecord } from "@/solo/team-workspace-contract";
 import { setScopedUserId } from "@/lib/scopedUser";
 
 const harness = vi.hoisted(() => ({ tenant: "test-tenant-a", user: "test-user", status: "ready", foreign: false,
-  crmTasks:[] as CrmWorkRecord[], crmError:null as string|null, planningError:null as string|null, members:[] as TeamMemberRecord[], guard:null as string|null, planningOptions: [] as unknown[], planningOverrides:{} as Record<string,unknown> }));
+  crmTasks:[] as CrmWorkRecord[], crmError:null as string|null, planningError:null as string|null, members:[] as TeamMemberRecord[], guard:null as string|null, planningOptions: [] as unknown[], planningOverrides:{} as Record<string,unknown>,
+  planningLoading:false, crmLoading:false, crmHasMore:false, peoplePartial:false }));
 const weekly = vi.hoisted(() => ({ read: vi.fn(), refresh: vi.fn(), taskRead: vi.fn() }));
 vi.mock("./operations-weekly-source", async importOriginal => ({ ...await importOriginal<typeof import("./operations-weekly-source")>(), readWeeklyPlanningSource: weekly.read }));
 const paige = vi.hoisted(() => ({ handoff: vi.fn(), clearClient: vi.fn(), clearPublic: vi.fn() }));
@@ -16,8 +17,8 @@ vi.mock("@/solo/paigePublicPresenceScope", () => ({ clearPaigePublicPresenceScop
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: harness.tenant,
   activeUserId: harness.user, loading: false, accountContextStatus: harness.status }) }));
 vi.mock("./useOperationsPeople", () => ({ useOperationsPeople: () => ({ members: harness.members, loading: false,
-  error: null, partial: false, refresh: vi.fn() }) }));
-vi.mock("@/hooks/usePlanList", () => ({ usePlanList: (options: unknown) => { harness.planningOptions.push(options); return ({ plans: [], loading: false, error: harness.planningError,
+  error: null, partial: harness.peoplePartial, refresh: vi.fn() }) }));
+vi.mock("@/hooks/usePlanList", () => ({ usePlanList: (options: unknown) => { harness.planningOptions.push(options); return ({ plans: [], loading: harness.planningLoading, error: harness.planningError,
   forbidden: false, refresh: weekly.refresh, allItems: [{ id: "test-item", tenant_id: harness.foreign ? "test-foreign" : harness.tenant,
     plan_id: null, title: `${harness.tenant} assigned work`, summary: "Test source", status: "open", priority: "normal",
     item_type: "task", assigned_to_user_id: null, due_at: null,...harness.planningOverrides }] }); } }));
@@ -35,7 +36,7 @@ vi.mock("./OperationsWorkEditor", () => ({ OperationsWorkEditor: ({ refresh, onN
 } }));
 vi.mock("./OperationsCrmWorkEditor",()=>({OperationsCrmWorkEditor:()=> <div>Native assignment/date edit test seam</div>}));
 vi.mock("./OperationsProjectCreator", () => ({ OperationsProjectCreator: ({ onRecover }: { onRecover: (id?: string) => Promise<void> }) => <div data-testid="project-creator"><button onClick={() => void onRecover()}>Refresh unknown project</button><button onClick={() => void onRecover("test-project")}>Inspect acknowledged project</button></div> }));
-vi.mock("./useOperationsCrmWork",()=>({useOperationsCrmWork:()=>({tasks:harness.crmTasks,loading:false,error:harness.crmError,forbidden:false,hasMore:false,refresh:vi.fn(),readTask:weekly.taskRead})}));
+vi.mock("./useOperationsCrmWork",()=>({useOperationsCrmWork:()=>({tasks:harness.crmTasks,loading:harness.crmLoading,error:harness.crmError,forbidden:false,hasMore:harness.crmHasMore,refresh:vi.fn(),readTask:weekly.taskRead})}));
 vi.mock("./OperationsCrmStageReview",()=>({OperationsCrmStageReview:({operation}:{operation:{taskId:string}})=><div>Recovery test seam: {operation.taskId}</div>}));
 import { OperationsWorkspace } from "./OperationsWorkspace";
 let container: HTMLDivElement;
@@ -45,6 +46,7 @@ beforeEach(() => { setScopedUserId(null); harness.tenant = "test-tenant-a"; harn
   vi.clearAllMocks();
   harness.planningOptions=[];
   harness.planningOverrides={};release.standalone=false;
+  harness.planningLoading=false;harness.crmLoading=false;harness.crmHasMore=false;harness.peoplePartial=false;
   sessionStorage.clear();harness.crmTasks=[];harness.crmError=null;harness.planningError=null;harness.members=[];harness.guard=null;
   weekly.read.mockResolvedValue({kind:"unavailable"});weekly.refresh.mockResolvedValue(undefined);
   harness.foreign = false; container = document.createElement("div"); document.body.append(container); root = createRoot(container); });
@@ -91,6 +93,124 @@ async function click(text: string) {
   const button = Array.from(container.querySelectorAll("button")).find((entry) => entry.textContent === text);
   expect(button).toBeTruthy(); await act(async () => button?.click());
 }
+it("continues an Overview group through List and the original guarded inspector",async()=>{
+ await act(async()=>root.render(<OperationsWorkspace/>));
+ await click("Review all missing dates");
+ expect(container.querySelector('[aria-label="Work list"]')).toBeTruthy();
+ const row=container.querySelector<HTMLButtonElement>('[data-work-key="planning:test-item"]')!;
+ await act(async()=>row.click());
+ expect(document.querySelector('[role="dialog"]')?.textContent).toContain("test-tenant-a assigned work");
+ harness.guard="Finish the original edit before leaving.";
+ await click("Back to Overview");
+ expect(container.textContent).toContain("Finish the original edit before leaving.");
+ expect(container.querySelector('[aria-label="Work list"]')).toBeTruthy();
+ expect(document.querySelector('[role="dialog"]')).toBeTruthy();
+ harness.guard=null;
+ await click("Back to Overview");
+ expect(container.textContent).toContain("Your operating week");
+ expect(container.querySelector('[aria-label="Work list"]')).toBeNull();
+ await vi.waitFor(()=>expect((document.activeElement as HTMLElement)?.dataset.opsWorkSet).toBe("timing"));
+});
+it("clears an attention group through the ordinary Work destination",async()=>{
+ await act(async()=>root.render(<OperationsWorkspace/>));await click("Review all missing dates");
+ await click("Work");
+ expect(container.querySelector('[aria-label="Work board. Scroll horizontally to view later stages."]')).toBeTruthy();
+ expect(container.textContent).not.toContain("Back to Overview");
+});
+it("retires group context and original selection on a workspace change",async()=>{
+ await act(async()=>root.render(<OperationsWorkspace/>));await click("Review all missing dates");
+ harness.tenant="test-tenant-b";
+ await act(async()=>root.render(<OperationsWorkspace/>));
+ expect(container.textContent).toContain("Your operating week");expect(container.textContent).not.toContain("Back to Overview");
+ expect(container.textContent).not.toContain("test-tenant-a assigned work");
+ harness.tenant="test-tenant-a";
+ await act(async()=>root.render(<OperationsWorkspace/>));
+ expect(container.textContent).toContain("Your operating week");expect(container.textContent).not.toContain("Back to Overview");
+});
+it("retains a group across the canonical controlled-view transition and clears it on URL navigation",async()=>{
+ const change=vi.fn();
+ await act(async()=>root.render(<OperationsWorkspace view="overview" onViewChange={change}/>));
+ await click("Review all missing dates");
+ expect(change).toHaveBeenLastCalledWith("work");
+ expect(container.textContent).toContain("Your operating week");
+ await act(async()=>root.render(<OperationsWorkspace view="work" onViewChange={change}/>));
+ expect(container.querySelector('[aria-label="Timing to confirm in Work"]')).toBeTruthy();
+ expect(container.querySelector('[aria-label="Work list"]')).toBeTruthy();
+ await act(async()=>root.render(<OperationsWorkspace view="projects" onViewChange={change}/>));
+ await act(async()=>root.render(<OperationsWorkspace view="work" onViewChange={change}/>));
+ expect(container.textContent).not.toContain("Back to Overview");
+ expect(container.querySelector('[aria-label="Work board. Scroll horizontally to view later stages."]')).toBeTruthy();
+});
+it("keeps a selected group truthful when its source fails, then recovers the original record",async()=>{
+ await act(async()=>root.render(<OperationsWorkspace/>));await click("Review all missing dates");
+ harness.planningError="Planning refused";harness.crmHasMore=true;harness.peoplePartial=true;
+ await act(async()=>root.render(<OperationsWorkspace/>));
+ expect(container.textContent).toContain("Planning work is unavailable");
+ expect(container.textContent).toContain("No loaded work matches this group");
+ expect(container.textContent).toContain("More CRM tasks exist beyond this read");
+ expect(container.textContent).toContain("Some team profiles are outside the current read");
+ expect(container.textContent).not.toContain("Start with one real commitment");
+ expect(container.textContent).not.toContain("test-tenant-a assigned work");
+ harness.planningError=null;
+ await act(async()=>root.render(<OperationsWorkspace/>));
+ expect(container.querySelector('[aria-label="Timing to confirm in Work"]')).toBeTruthy();
+ expect(container.querySelector('[data-work-key="planning:test-item"]')).toBeTruthy();
+});
+it("preserves bounded group loading and total refusal without presenting unavailable work",async()=>{
+ await act(async()=>root.render(<OperationsWorkspace/>));await click("Review all missing dates");
+ harness.planningError="Planning refused";harness.crmLoading=true;
+ await act(async()=>root.render(<OperationsWorkspace/>));
+ expect(container.textContent).toContain("Reading CRM tasks");
+ expect(container.textContent).toContain("Loading your work");
+ expect(container.textContent).not.toContain("matching loaded records");
+ harness.planningError=null;harness.planningOverrides={due_at:"2099-01-01T00:00:00Z"};
+ await act(async()=>root.render(<OperationsWorkspace/>));
+ expect(container.textContent).toContain("No loaded work matches this group");
+ expect(container.textContent).toContain("Some sources are still being read");
+ harness.planningError="Planning refused";
+ harness.crmLoading=false;harness.crmError="CRM refused";
+ await act(async()=>root.render(<OperationsWorkspace/>));
+ expect(container.textContent).toContain("Current work isn’t available");
+ expect(container.querySelector('[aria-label="Work list"]')).toBeNull();
+ expect(container.querySelector('[data-work-key]')).toBeNull();
+ expect(container.textContent).not.toContain("matching loaded records");
+});
+it("retires grouped work and its open inspector on actor change or client view",async()=>{
+ await act(async()=>root.render(<OperationsWorkspace/>));await click("Review all missing dates");
+ await act(async()=>container.querySelector<HTMLButtonElement>('[data-work-key="planning:test-item"]')!.click());
+ expect(document.querySelector('[role="dialog"]')).toBeTruthy();
+ harness.user="test-user-second";
+ await act(async()=>root.render(<OperationsWorkspace/>));
+ expect(container.textContent).toContain("Your operating week");
+ expect(container.textContent).not.toContain("Back to Overview");
+ expect(document.querySelector('[role="dialog"]')).toBeNull();
+ await click("Review all missing dates");
+ await act(async()=>setScopedUserId("client"));
+ expect(container.textContent).toContain("Business work is unavailable in this view");
+ expect(container.querySelector('[data-work-key]')).toBeNull();
+});
+it("keeps the original inspector on refresh while its completed record leaves the active group",async()=>{
+ await act(async()=>root.render(<OperationsWorkspace/>));await click("Review all missing dates");
+ await act(async()=>container.querySelector<HTMLButtonElement>('[data-work-key="planning:test-item"]')!.click());
+ harness.planningOverrides={status:"done"};
+ await act(async()=>root.render(<OperationsWorkspace/>));
+ expect(container.textContent).toContain("No loaded work matches this group");
+ expect(container.querySelector('[data-work-key="planning:test-item"]')).toBeNull();
+ expect(document.querySelector('[role="dialog"]')?.textContent).toContain("test-tenant-a assigned work");
+ const status=Array.from(document.querySelectorAll('[role="dialog"] dt')).find(node=>node.textContent==="Status");
+ expect(status?.nextElementSibling?.textContent).toBe("done");
+ expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Recorded as completed work");
+});
+it("keeps same-UUID CRM and Planning rows routed to their own original inspectors",async()=>{
+ harness.crmTasks=[{id:"test-item",tenant_id:harness.tenant,user_id:harness.user,title:"Original CRM responsibility",description:null,
+  status:"pending",due_date:null,updated_at:"2026-10-20T12:00:00Z",created_at:null,deal_id:null,biz_id:null,recorded_priority:null,estimated_minutes:null}];
+ await act(async()=>root.render(<OperationsWorkspace/>));await click("Review all missing dates");
+ expect(container.querySelectorAll('[data-work-key]')).toHaveLength(2);
+ await act(async()=>container.querySelector<HTMLButtonElement>('[data-work-key="crm:test-item"]')!.click());
+ expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Original CRM responsibility");
+ expect(document.querySelector('[role="dialog"]')?.textContent).toContain("CRM task");
+ expect(document.querySelector('[role="dialog"]')?.textContent).not.toContain("Work edit test seam");
+});
 it("removes old workspace work and the open detail drawer on switching", async () => {
   await act(async () => root.render(<OperationsWorkspace />));
   await click("Work");

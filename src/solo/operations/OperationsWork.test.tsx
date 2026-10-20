@@ -8,6 +8,14 @@ let container: HTMLDivElement;
 let root: Root;
 const item = { id: "local-work", title: "Review the draft", status: "open", priority: "normal", item_type: "task",
   updated_at: "2026-10-10T12:00:00.123456Z", assigned_to_user_id: null, plan_id: null, due_at: null } as PlanItem;
+
+it("opens a requested List entry and retains the exact native focus key",async()=>{
+ const inspect=vi.fn();
+ await act(async()=>root.render(<OperationsWork plans={[]} items={[item]} members={[]} initialView="List" onInspectItem={inspect}/>));
+ const row=container.querySelector<HTMLButtonElement>(`[data-work-key="planning:${item.id}"]`);
+ expect(container.querySelector('[aria-label="Work list"]')).toBeTruthy();expect(row).toBeTruthy();
+ await act(async()=>row!.click());expect(inspect).toHaveBeenCalledExactlyOnceWith(item);
+});
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 beforeEach(() => { container = document.createElement("div"); document.body.append(container); root = createRoot(container); });
 afterEach(() => { act(() => root.unmount()); container.remove(); });

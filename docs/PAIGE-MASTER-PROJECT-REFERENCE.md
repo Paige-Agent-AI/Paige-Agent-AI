@@ -816,6 +816,26 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-20 UTC — Existing concurrent decision proof drains complete child output.**
+PR [#2432](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2432), exact reviewed
+`7d8787e3c68a3fa1efbfff75cfdff2e3bc122614`, merged main
+`d9b4ece722ef7ac6456124d2c54474a90b730db2`, tree
+`0ad03c161f13da80783b29364ddb89045df80e6a`. One proof collector now waits for
+child close/stdio completion before parsing; eight competing decisions and all
+seven original assertions remain unchanged. Independent NON-AUTHOR review14
+checks PASS/seal6dd9247b and current-main applicability10 checks PASS/seale1b9c3c4;
+actual merged tree equals that independently verified union. All10 applicable
+exact-head checks SUCCESS, no-Supabase-change Preview SKIPPED, both Vercel statuses
+SUCCESS. The original native owner approval/exact decline step in job118796886527
+passes; prior #2431 Unexpected end of JSON input remains retained. Local initdb
+timeout occurred before tests and is INVALID setup evidence, not native PASS.
+Test-only source delivery; no runtime, authorization, SQL, provider, activation,
+business record, Rail or customer capability change. Production web pipeline is
+separate automatic release housekeeping; no new functional or authenticated
+customer claim, release identity or announcement. Edge/migrations NOT_APPLICABLE.
+Recovery: ordinary reviewed test-only forward correction/revert. Original18/25/50
+and full EXP05/Live/owner acceptance remain open, strict1/18 and2/50 unchanged.
+
 **2026-10-20 UTC — EXP05 Operations attention opens original Work; bounded production release.**
 PR [#2429](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2429), reviewed
 `eab461cc1a1ebea7b14d3726e57e35f83abd9f7b`, merged main

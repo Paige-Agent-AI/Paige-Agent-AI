@@ -2,6 +2,7 @@ import { decideDeclaredOrdinaryCapability } from "../capability-kit/decision.ts"
 import { confirmFingerprint } from "../confirm-fingerprint.ts";
 import { WEEKLY_COMMITMENT_DRAFT_CAPABILITY } from "../paige-spine/domains/automations.ts";
 import { bindWeeklyControlForReview, parseWeeklyControlIntent } from "./weekly-commitment-control-input.ts";
+import { createWeeklyDraftDeadline, WeeklyDraftDeadlineExpired } from "./weekly-draft-deadline.ts";
 
 type Result = { data: unknown; error: unknown };
 type Caller = { auth: { getUser(): PromiseLike<{ data: { user: { id: string } | null }; error: unknown }> };
@@ -40,27 +41,29 @@ export function createWeeklyDraftCommand(deps: Deps) {
   return async (req: Request): Promise<Response> => {
     if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
     if (req.method !== "POST") return fail(405, "METHOD_NOT_ALLOWED");
+    const stage = createWeeklyDraftDeadline(12_000, () => !req.signal.aborted);
+    let effectConfirmation: string | null = null;
     try {
       const authorization = req.headers.get("authorization") ?? "";
       if (!/^Bearer \S+$/i.test(authorization)) return fail(401, "AUTHENTICATION_REQUIRED");
       const caller = deps.caller(authorization);
-      const auth = await caller.auth.getUser();
+      const auth = await stage(() => caller.auth.getUser());
       const actor = !auth.error ? auth.data.user?.id : null;
       if (!actor || !UUID.test(actor)) return fail(401, "AUTHENTICATION_REQUIRED");
-      const tenantRead = await caller.rpc("current_user_tenant_id");
+      const tenantRead = await stage(() => caller.rpc("current_user_tenant_id"));
       const tenant = !tenantRead.error && typeof tenantRead.data === "string" ? tenantRead.data : null;
       if (!tenant || !UUID.test(tenant)) return fail(403, "OWNER_SCOPE_REQUIRED");
       // A captured surface address is a constraint, never authority. Refuse stale
       // pre-switch UI even if the JWT now resolves a different legitimate workspace.
       if (req.headers.get("x-paige-expected-tenant") !== tenant) return fail(409, "SCOPE_CHANGED");
       const current = async () => {
-        const t = await caller.rpc("current_user_tenant_id");
+        const t = await stage(() => caller.rpc("current_user_tenant_id"));
         if (t.error || t.data !== tenant) return false;
-        const owner = await caller.rpc("weekly_commitment_owner", { _tenant: tenant, _actor: actor });
+        const owner = await stage(() => caller.rpc("weekly_commitment_owner", { _tenant: tenant, _actor: actor }));
         return !owner.error && owner.data === true;
       };
       if (!(await current())) return fail(403, "OWNER_SCOPE_REQUIRED");
-      const text = await req.text();
+      const text = await stage(() => req.text());
       if (new TextEncoder().encode(text).length > 8192) return fail(413, "REQUEST_TOO_LARGE");
       let body: unknown;
       try { body = JSON.parse(text); } catch { return fail(400, "INVALID_REQUEST"); }
@@ -74,7 +77,7 @@ export function createWeeklyDraftCommand(deps: Deps) {
         return fail(400, "INVALID_REQUEST");
       }
       const read = async (id: string) => {
-        const r = await caller.rpc("read_weekly_commitment_draft", { _confirmation_id: id });
+        const r = await stage(() => caller.rpc("read_weekly_commitment_draft", { _confirmation_id: id }));
         return !r.error && object(r.data) && r.data.ok === true ? r.data : null;
       };
       const scoped = (query: StoreQuery) => query.eq("user_id", actor).eq("tenant_id", tenant)
@@ -82,14 +85,14 @@ export function createWeeklyDraftCommand(deps: Deps) {
         .not("server_issued_at", "is", null).not("issued_in_request", "is", null);
       const finish = async (state: unknown, status = 200) => await current() ? response(status, state) : fail(409, "SCOPE_CHANGED");
       const lookup = async (fingerprint: string) => {
-        const r = await caller.rpc("list_weekly_commitment_drafts", { _fingerprint: fingerprint });
+        const r = await stage(() => caller.rpc("list_weekly_commitment_drafts", { _fingerprint: fingerprint }));
         if (r.error || !object(r.data) || r.data.ok !== true || !Array.isArray(r.data.requests) || r.data.requests.length > 1) return { error: true, state: null };
         const state = r.data.requests[0];
         if (state !== undefined && (!object(state) || state.ok !== true || state.tenant_id !== tenant || state.actor_id !== actor)) return { error: true, state: null };
         return { error: false, state: object(state) ? state : null };
       };
       if (operation === "pending") {
-        const r = await caller.rpc("list_weekly_commitment_drafts", { _fingerprint: null });
+        const r = await stage(() => caller.rpc("list_weekly_commitment_drafts", { _fingerprint: null }));
         return !r.error && object(r.data) && r.data.ok === true ? await finish(r.data) : fail(503, "DRAFT_STATUS_UNAVAILABLE");
       }
       if (operation === "status") {
@@ -98,7 +101,7 @@ export function createWeeklyDraftCommand(deps: Deps) {
       }
       const nonce = (deps.uuid ?? (() => crypto.randomUUID()))();
       if (!UUID.test(nonce)) return fail(503, "REQUEST_IDENTITY_UNAVAILABLE");
-      const laneResult = await caller.rpc("resolve_tool_autonomy", { _tenant_id: tenant, _tool_key: KEY });
+      const laneResult = await stage(() => caller.rpc("resolve_tool_autonomy", { _tenant_id: tenant, _tool_key: KEY }));
       const lane = !laneResult.error && ["confirm", "auto", "off"].includes(String(laneResult.data)) ? String(laneResult.data) : "off";
       const decide = (args: Record<string, unknown>, claimed?: Record<string, unknown>) => decideDeclaredOrdinaryCapability(
         WEEKLY_COMMITMENT_DRAFT_CAPABILITY, {
@@ -114,9 +117,9 @@ export function createWeeklyDraftCommand(deps: Deps) {
         const binding = intent ? bindWeeklyControlForReview("draft", intent, { requestId: nonce }) : null;
         if (!binding || !intent || !("name" in intent) || !("weekday" in intent)) return fail(400, "INVALID_DRAFT");
         if (decide(binding.args).kind !== "propose") return fail(403, "DRAFT_AUTHORITY_HELD");
-        const schedule = await deps.admin.rpc("weekly_commitment_schedule", { _weekday: intent.weekday, _local_time: intent.local_time, _timezone: intent.timezone });
+        const schedule = await stage(() => deps.admin.rpc("weekly_commitment_schedule", { _weekday: intent.weekday, _local_time: intent.local_time, _timezone: intent.timezone }));
         if (schedule.error) return fail(400, "INVALID_SCHEDULE");
-        const fingerprint = await confirmFingerprint(KEY, { ...binding.args, scope_tenant_id: tenant });
+        const fingerprint = await stage(() => confirmFingerprint(KEY, { ...binding.args, scope_tenant_id: tenant }));
         const prior = await lookup(fingerprint);
         if (prior.error) return fail(503, "CONFIRMATION_STORE_UNAVAILABLE");
         const now = (deps.now ?? Date.now)();
@@ -126,17 +129,17 @@ export function createWeeklyDraftCommand(deps: Deps) {
           if (["name", "weekday", "local_time", "timezone"].some(k => d[k] !== intent[k as keyof typeof intent])) return fail(409, "PROPOSAL_CONFLICT");
           if (!["expired", "declined"].includes(String(state.phase))) return await finish(state);
           if (!(await current())) return fail(409, "SCOPE_CHANGED");
-          const retired = await scoped(store().update({ consumed_at: new Date(now).toISOString() }))
-            .eq("id", state.confirmation_id).is("consumed_at", null).lte("expires_at", new Date(now).toISOString());
+          const retired = await stage(() => scoped(store().update({ consumed_at: new Date(now).toISOString() }))
+            .eq("id", state.confirmation_id).is("consumed_at", null).lte("expires_at", new Date(now).toISOString()));
           if (retired.error) return fail(503, "CONFIRMATION_STORE_UNAVAILABLE");
         }
         if (!(await current())) return fail(409, "SCOPE_CHANGED");
         const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
         const summary = `Save “${intent.name}” as an unapproved draft: every ${days[intent.weekday - 1]} at ${intent.local_time} in ${intent.timezone}. Scope: your outstanding personal Planning commitments. No recurrence, task changes or provider sends are authorized.`;
-        const issued = await store().insert({ user_id: actor, tenant_id: tenant,
+        const issued = await stage(() => store().insert({ user_id: actor, tenant_id: tenant,
           tool_name: KEY, thread_id: null, scoped_client_id: null, fingerprint, args: binding.args, summary,
           issued_in_request: nonce, server_issued_at: new Date(now).toISOString(), expires_at: new Date(now + 600000).toISOString() })
-          .select("id").maybeSingle();
+          .select("id").maybeSingle());
         let id = issued.data?.id;
         if (issued.error?.code === "23505") {
           const winner = await lookup(fingerprint);
@@ -156,14 +159,14 @@ export function createWeeklyDraftCommand(deps: Deps) {
         || !/^[0-9a-f]{16}:[0-9a-f-]{36}$/.test(tokens[0])) return fail(400, "SURFACE_CONFIRMATION_REQUIRED");
       if (!(await current())) return fail(409, "SCOPE_CHANGED");
       if (operation === "decline") {
-        const declined = await caller.rpc("decline_weekly_commitment_draft", { _confirmation_id: body.confirmation_id, _declined_token: tokens[0] });
+        const declined = await stage(() => { effectConfirmation = String(body.confirmation_id); return caller.rpc("decline_weekly_commitment_draft", { _confirmation_id: body.confirmation_id, _declined_token: tokens[0] }); });
         return !declined.error ? await finish(declined.data) : fail(503, "DECLINE_UNCONFIRMED");
       }
       // Only the existing SQL atomic claim supplies claimedArgs. Never synthesize it
       // from model/body arguments or from a status read of an unconsumed proposal.
       if (decide({}).kind === "refuse") return fail(403, "DRAFT_AUTHORITY_HELD");
-      const claim = await caller.rpc("claim_weekly_commitment_draft", { _confirmation_id: body.confirmation_id,
-        _approved_token: tokens[0], _request_nonce: nonce });
+      const claim = await stage(() => { effectConfirmation = String(body.confirmation_id); return caller.rpc("claim_weekly_commitment_draft", { _confirmation_id: body.confirmation_id,
+        _approved_token: tokens[0], _request_nonce: nonce }); });
       if (claim.error || !object(claim.data)) return fail(503, "CLAIM_UNCONFIRMED");
       if (claim.data.claimed !== true) return await finish(claim.data.state ?? { ok: false, phase: "unknown" });
       if (claim.data.actor_id !== actor || claim.data.tenant_id !== tenant || claim.data.confirmation_id !== body.confirmation_id || !object(claim.data.args)) {
@@ -172,8 +175,8 @@ export function createWeeklyDraftCommand(deps: Deps) {
       if (!(await current())) return fail(409, "SCOPE_CHANGED");
       const decision = decide(claim.data.args, claim.data.args);
       if (decision.kind !== "execute") return fail(403, "DRAFT_AUTHORITY_HELD");
-      const saved = await caller.rpc("commit_weekly_commitment_draft", { _confirmation_id: body.confirmation_id,
-        _request_nonce: nonce, _expected_args: decision.args });
+      const saved = await stage(() => caller.rpc("commit_weekly_commitment_draft", { _confirmation_id: body.confirmation_id,
+        _request_nonce: nonce, _expected_args: decision.args }));
       // A lost/failed write response is not permission to try a new request. The
       // original canonical proposal remains inspectable after reload/session changes.
       if (saved.error) {
@@ -181,6 +184,11 @@ export function createWeeklyDraftCommand(deps: Deps) {
         return await finish(reconciled ?? { ok: false, phase: "unknown", confirmation_id: body.confirmation_id, code: "SAVE_UNCONFIRMED" });
       }
       return await finish(saved.data);
-    } catch { return fail(503, "WEEKLY_DRAFT_UNAVAILABLE"); }
+    } catch (error) {
+      if (error instanceof WeeklyDraftDeadlineExpired && effectConfirmation) return response(503, {
+        ok: false, phase: "unknown", confirmation_id: effectConfirmation, code: "SAVE_UNCONFIRMED",
+      });
+      return fail(503, "WEEKLY_DRAFT_UNAVAILABLE");
+    }
   };
 }

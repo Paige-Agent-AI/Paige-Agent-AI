@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createWeeklyDraftCommand } from "../../supabase/functions/_shared/paige-orchestration/weekly-draft-command";
 import { classifyAction } from "../../supabase/functions/_shared/action-risk";
 
@@ -8,6 +8,7 @@ const id="33333333-3333-4333-8333-333333333333",nonce="44444444-4444-4444-8444-4
 const token="0123456789abcdef:55555555-5555-4555-8555-555555555555";
 const draft={name:"Weekly commitment check",weekday:1,local_time:"09:00",timezone:"America/New_York"};
 const args={_request_id:nonce,_name:draft.name,_weekday:1,_local_time:"09:00",_timezone:draft.timezone};
+afterEach(()=>vi.useRealTimers());
 function fixture(){
   let active=tenant,owner=true,lane="confirm",row:Record<string,unknown>|null=null;
   let state:Record<string,unknown>={ok:true,phase:"awaiting_approval",confirmation_id:id,tenant_id:tenant,actor_id:actor,draft};
@@ -39,10 +40,48 @@ function fixture(){
   return {send,handler,caller,admin,writes,queries,setOwner:(v:boolean)=>{owner=v;},setTenant:(v:string)=>{active=v;},setLane:(v:string)=>{lane=v;},setRow:(v:Record<string,unknown>)=>{row=v;},setState:(v:Record<string,unknown>)=>{state={...state,...v};}};
 }
 describe("weekly draft canonical domain adapter",()=>{
+  it("bounds unresolved authentication and never issues a proposal after late Auth",async()=>{
+    vi.useFakeTimers({toFake:["setTimeout","clearTimeout","performance"]});const f=fixture();
+    let release!:(v:Awaited<ReturnType<typeof f.caller.auth.getUser>>)=>void;
+    f.caller.auth.getUser.mockReturnValueOnce(new Promise(resolve=>{release=resolve;}));let result:unknown=null;
+    const pending=f.send({action:"prepare",draft}).then(v=>{result=v;});await vi.advanceTimersByTimeAsync(12001);
+    expect(result).toMatchObject({status:503,body:{code:"WEEKLY_DRAFT_UNAVAILABLE"}});
+    release({data:{user:{id:actor}},error:null});await pending;await vi.advanceTimersByTimeAsync(1);
+    expect(f.writes).toEqual([]);expect(f.caller.rpc).not.toHaveBeenCalled();expect(f.admin.from).not.toHaveBeenCalled();
+  });
+  it("a late atomic claim cannot start a commit after the overall deadline",async()=>{
+    vi.useFakeTimers({toFake:["setTimeout","clearTimeout","performance"]});const f=fixture(),original=f.caller.rpc.getMockImplementation()!;
+    let release!:(v:{data:unknown;error:unknown})=>void;
+    f.caller.rpc.mockImplementation((name,values)=>name==="claim_weekly_commitment_draft"?new Promise(resolve=>{release=resolve;}):original(name,values));
+    let result:unknown=null;const pending=f.send({action:"commit",confirmation_id:id,approvedConfirmations:[token]}).then(v=>{result=v;});
+    await vi.advanceTimersByTimeAsync(12001);expect(result).toMatchObject({status:503,body:{phase:"unknown",confirmation_id:id,code:"SAVE_UNCONFIRMED"}});
+    release({data:{claimed:true,confirmation_id:id,tenant_id:tenant,actor_id:actor,args},error:null});await pending;await vi.advanceTimersByTimeAsync(1);
+    expect(f.caller.rpc.mock.calls.filter(v=>v[0]==="claim_weekly_commitment_draft")).toHaveLength(1);
+    expect(f.caller.rpc.mock.calls.map(v=>v[0])).not.toContain("commit_weekly_commitment_draft");expect(f.writes).toEqual([]);
+  });
   it("classifies only the unapproved draft while preserving owner-only activation and refusal of undeclared controls",()=>{
     expect(classifyAction("weekly_commitment_draft")).toBe("ordinary");
     for(const key of ["automation_set_state","automation_set_grant"])expect(classifyAction(key)).toBe("owner_only");
     for(const key of ["weekly_commitment_activate","weekly_commitment_resume","weekly_commitment_run","constructor","__proto__"])expect(classifyAction(key)).toBe("unclassified");
+  });
+  it.each(["commit_weekly_commitment_draft","decline_weekly_commitment_draft"])("a stalled %s remains unknown and is never repeated",async delayed=>{
+    vi.useFakeTimers({toFake:["setTimeout","clearTimeout","performance"]});const f=fixture(),rpc=f.caller.rpc.getMockImplementation()!;
+    let release!:(v:{data:unknown;error:unknown})=>void;
+    f.caller.rpc.mockImplementation((name,values)=>name===delayed?new Promise(resolve=>{release=resolve;}):rpc(name,values));
+    const command=delayed.startsWith("decline")?{action:"decline",confirmation_id:id,declinedConfirmations:[token]}:{action:"commit",confirmation_id:id,approvedConfirmations:[token]};
+    let result:unknown=null;const pending=f.send(command).then(v=>{result=v;});await vi.advanceTimersByTimeAsync(12001);
+    expect(result).toMatchObject({status:503,body:{phase:"unknown",confirmation_id:id,code:"SAVE_UNCONFIRMED"}});
+    release({data:{ok:true,phase:"saved"},error:null});await pending;await vi.advanceTimersByTimeAsync(1);
+    expect(f.caller.rpc.mock.calls.filter(v=>v[0]===delayed)).toHaveLength(1);
+    expect(f.caller.rpc.mock.calls.map(v=>v[0])).not.toContain("read_weekly_commitment_draft");expect(vi.getTimerCount()).toBe(0);
+  });
+  it("an aborted request cannot commit after its original claim settles",async()=>{
+    const f=fixture(),rpc=f.caller.rpc.getMockImplementation()!,controller=new AbortController();
+    f.caller.rpc.mockImplementation(async(name,values)=>{const result=await rpc(name,values);if(name==="claim_weekly_commitment_draft")controller.abort();return result;});
+    const r=await f.handler(new Request("https://unit.invalid",{method:"POST",headers:{authorization:"Bearer unit","x-paige-expected-tenant":tenant},signal:controller.signal,
+      body:JSON.stringify({action:"commit",confirmation_id:id,approvedConfirmations:[token]})}));
+    expect(r.status).toBe(503);expect(await r.json()).toMatchObject({phase:"unknown",confirmation_id:id,code:"SAVE_UNCONFIRMED"});
+    expect(f.caller.rpc.mock.calls.map(v=>v[0])).not.toContain("commit_weekly_commitment_draft");expect(f.writes).toEqual([]);
   });
   it("refuses absent credentials before any tenant query",async()=>{const f=fixture();expect((await f.send({action:"pending"},{authorization:""})).status).toBe(401);expect(f.caller.rpc).not.toHaveBeenCalled();});
   it("refuses an old surface address before querying or issuing proposals",async()=>{const f=fixture();f.setTenant(actor);expect((await f.send({action:"prepare",draft})).status).toBe(409);expect(f.admin.from).not.toHaveBeenCalled();});

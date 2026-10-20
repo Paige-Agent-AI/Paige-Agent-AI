@@ -31,6 +31,9 @@ export default function ConversationsSurface(_props: { onAnnounce?: (msg: string
           {loading ? "Reading the company communication records..."
             : s ? `${s.welcome_sent} welcome emails sent / ${s.welcome_pending} pending / ${s.welcome_attention} need attention / ${s.total_sends} total sends` : ""}
         </p>
+        <p className="mt-1 text-[10px] text-[var(--pg-muted)]/70">
+          Outbound communication records (welcome emails, transactional sends). Inbound replies and live send are handled by the governed Communications system, not this view.
+        </p>
       </div>
       <div className="flex items-center gap-2 border-b border-[var(--pg-line)] px-6 py-2">
         <button onClick={() => setTab("welcome")} aria-pressed={tab === "welcome"}

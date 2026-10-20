@@ -195,16 +195,22 @@ describe("the composer finally has its host", () => {
     draft: "A held reply",
   };
 
-  it("renders the thread, the person rail and the composer in one console", () => {
-    // ConversationsSurface graduated to real reads (EXP00): it no longer takes a threads prop.
-    // The loading state (which carries no data) is the first paint.
+  it("Conversations surface is a communication-records view, not a two-way inbox (EXP00)", () => {
+    // The graduated surface reads real company communication records (welcome deliveries,
+    // transactional send log). It is NOT a two-way Conversations inbox — inbound replies
+    // and live send depend on the governed Communications architecture's inbound path,
+    // which is a separate system not yet wired to the company Operator surface.
     const t = text(renderToStaticMarkup(<ConversationsSurface />));
     expect(t).toContain("Conversations");
+    expect(t).toContain("Loading the company communication records");
+    // What it must NOT claim (two-way inbox features it does not have):
+    expect(t).not.toContain("composer");
+    expect(t).not.toContain("thread rail");
   });
 
-  it("says plainly when the send-as channel has no substrate", () => {
-    // ConversationsSurface graduated (EXP00): no threads prop. The loading state
-    // carries no send-as UI, so the warning correctly cannot appear.
+  it("the send-as channel warning is absent because send-as is not offered (not because a channel is live)", () => {
+    // The graduated surface has no composer/send-as UI at all — it is a records view.
+    // The absence of the warning is correct for the right reason: no send capability exists.
     const t = text(renderToStaticMarkup(<ConversationsSurface />));
     expect(t).not.toContain("nothing will send");
   });

@@ -1,0 +1,45 @@
+[
+  {
+    "selector": ".exec-targets h4",
+    "fonts": [
+      {
+        "familyName": "Schibsted Grotesk",
+        "glyphCount": 21,
+        "isCustomFont": true,
+        "postScriptName": "Schibsted-Grotesk-SemiBold"
+      }
+    ]
+  },
+  {
+    "selector": ".exec-targets dd",
+    "fonts": [
+      {
+        "familyName": "Geist",
+        "glyphCount": 2,
+        "isCustomFont": true,
+        "postScriptName": "Geist-SemiBold"
+      }
+    ]
+  },
+  {
+    "selector": ".exec-targets p",
+    "fonts": [
+      {
+        "familyName": "Geist",
+        "glyphCount": 9,
+        "isCustomFont": true,
+        "postScriptName": "Geist"
+      },
+      {
+        "familyName": "Geist",
+        "glyphCount": 2,
+        "isCustomFont": true,
+        "postScriptName": "Geist-Bold"
+      }
+    ]
+  },
+  {
+    "selector": "[data-tenant-shell] .tcs-brand",
+    "fonts": []
+  }
+]

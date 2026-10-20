@@ -1,0 +1,27 @@
+{
+  "dialog": null,
+  "document": {
+    "clientWidth": 1366,
+    "scrollWidth": 1366
+  },
+  "entry": {
+    "rect": {
+      "bottom": 0,
+      "height": 0,
+      "left": 0,
+      "right": 0,
+      "top": 0,
+      "width": 0,
+      "x": 0,
+      "y": 0
+    },
+    "visible": false
+  },
+  "focus": {
+    "name": "Direct PAIGE",
+    "text": "Direct PAIGE, or press ⌘\\⌘\\"
+  },
+  "height": 768,
+  "reducedMotion": true,
+  "width": 1366
+}

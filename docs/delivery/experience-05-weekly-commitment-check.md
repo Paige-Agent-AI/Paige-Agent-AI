@@ -1,5 +1,9 @@
 # Experience 05 Weekly Internal Commitment Check
 
+## October 20 — canonical SOLO weekly inspection eligibility
+
+Bounded repair replaces the obsolete shell-flag presentation gate with existing `useTierFeatures.soloStandalone`; original server owner/session/tenant/epoch reads remain mandatory. Existing and future canonical SOLO accounts use the same inspection without per-account flag repairs. Scoped weekly Sheet insets survive the late SOLO reset and preserve Close clearance. [Actual-source native proof](../evidence/ui-delivery/exp05-weekly-inspection-parity.md) separates sixteen synthetic frames/forty-four tests from post-repair authenticated proof still owed. This does not save/authorize a schedule, activate recurrence, change Spine admission, assume the old draft stack or close E5-CV/customer acceptance. Original #2163/#2189 and all nine cases remain preserved.
+
 ## October 20 — Capacity consumes original Work deadlines
 
 Bounded presentation increment reuses `overviewNativeWork` and existing tenant-fenced Planning/CRM/Team readers. Capacity shows each original owner's overdue count, missing due dates and recorded deadline/reminder times; original inspectors and unavailable-source controls remain authoritative. No new scheduling, optimization, autonomy, provider or business-action claim. [UI proof boundary](../evidence/ui-delivery/exp05-capacity-deadline-context.md) preserves native synthetic versus authenticated evidence and the unchanged `operations.department` PROOF_OWED state. Full ten-outcome/E5-CV1–9 and original18/25/50 acceptance remain open. Current source does not imply deployment, activation, customer acceptance or completed ZION integration.

@@ -41,6 +41,7 @@ export interface ElevenLabsTtsInput {
  * the key is unset (honest degrade) and a typed Error on an API failure — never a fake artifact.
  */
 async function speechResponse(opts: ElevenLabsTtsInput, stream: boolean, signal?: AbortSignal): Promise<{ response: Response; modelId: PaigeElevenLabsModel }> {
+  if (signal?.aborted) throw new DOMException("Speech cancelled", "AbortError");
   const key = elevenlabsKey();
   const voiceId = opts.voiceId;
   if (voiceId !== APPROVED_PAIGE_ELEVENLABS_VOICE_ID) {
@@ -53,12 +54,12 @@ async function speechResponse(opts: ElevenLabsTtsInput, stream: boolean, signal?
   // The server-resolved reference is still encoded so no unexpected provider value can reshape
   // the request path (§13 secure-by-construction).
   const suffix = stream ? "/stream" : "";
-  const query = stream ? "enable_logging=false&output_format=pcm_16000" : "enable_logging=false";
+  const query = stream ? "enable_logging=false&output_format=mp3_44100_128" : "enable_logging=false";
   const resp = await fetch(`${ELEVENLABS_BASE}/text-to-speech/${encodeURIComponent(voiceId)}${suffix}?${query}`, {
     method: "POST",
     // Key in the xi-api-key header only — never the URL — so a network-level fetch reject
     // (which echoes the request URL into a TypeError) can never leak the secret.
-    headers: { "xi-api-key": key, "content-type": "application/json", accept: stream ? "audio/pcm" : "audio/mpeg" },
+    headers: { "xi-api-key": key, "content-type": "application/json", accept: "audio/mpeg" },
     body: JSON.stringify({ text: opts.text, model_id: modelId }),
     signal,
   });
@@ -68,6 +69,18 @@ async function speechResponse(opts: ElevenLabsTtsInput, stream: boolean, signal?
     throw new Error(`ElevenLabs HTTP ${resp.status}`);
   }
   return { response: resp, modelId };
+}
+
+/** Ordinary message playback, through the same profile/voice/model/retention transport.
+ * Return the provider body unchanged; the governed handler owns budget settlement,
+ * cancellation and complete-only tenant cache. Live's separate PCM seam is unchanged. */
+export async function elevenlabsMessageStream(opts: ElevenLabsTtsInput, signal: AbortSignal): Promise<Response> {
+  const { response } = await speechResponse(opts, true, signal);
+  if (!response.body || !/^audio\/(mpeg|mp3)(?:;|$)/i.test(response.headers.get("Content-Type") ?? "")) {
+    await response.body?.cancel().catch(() => {});
+    throw new Error("ElevenLabs: unsupported audio response");
+  }
+  return response;
 }
 
 export interface ElevenLabsLiveInput extends ElevenLabsTtsInput {

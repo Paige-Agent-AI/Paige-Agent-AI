@@ -1,0 +1,19 @@
+e09-chat-identity-cura-light-desktop-1440x900 OK {"problems":[],"contrastMin":5.2,"placeholder":"Ask Cura… (Shift+Enter for new line)","dialog":null}
+e09-chat-identity-cura-light-phone-390x844 OK {"problems":[],"contrastMin":5.2,"placeholder":"Message Cura…","dialog":null}
+e09-chat-identity-cura-dark-desktop-1440x900 OK {"problems":[],"contrastMin":4.53,"placeholder":"Ask Cura… (Shift+Enter for new line)","dialog":null}
+e09-chat-identity-cura-dark-phone-390x844 OK {"problems":[],"contrastMin":5.62,"placeholder":"Message Cura…","dialog":null}
+e09-chat-identity-ava-light-desktop-1440x900 OK {"problems":[],"contrastMin":5.2,"placeholder":"Ask Ava… (Shift+Enter for new line)","dialog":null}
+e09-chat-identity-ava-light-phone-390x844 OK {"problems":[],"contrastMin":5.2,"placeholder":"Message Ava…","dialog":null}
+e09-chat-identity-ava-dark-desktop-1440x900 OK {"problems":[],"contrastMin":4.53,"placeholder":"Ask Ava… (Shift+Enter for new line)","dialog":null}
+e09-chat-identity-ava-dark-phone-390x844 OK {"problems":[],"contrastMin":5.62,"placeholder":"Message Ava…","dialog":null}
+e09-chat-identity-inactive-light-desktop-1440x900 OK {"problems":[],"contrastMin":5.2,"placeholder":null,"dialog":null}
+e09-chat-identity-inactive-light-phone-390x844 OK {"problems":[],"contrastMin":5.2,"placeholder":null,"dialog":null}
+e09-chat-identity-inactive-dark-desktop-1440x900 OK {"problems":[],"contrastMin":4.87,"placeholder":null,"dialog":null}
+e09-chat-identity-inactive-dark-phone-390x844 OK {"problems":[],"contrastMin":5.62,"placeholder":null,"dialog":null}
+e09-chat-identity-push-credit-light-desktop-1440x900 OK {"problems":[],"contrastMin":5.2,"placeholder":"Ask Ava… (Shift+Enter for new line)","dialog":"Stay in the Loop Get a notification on this device when one of your credit scores changes or a dispute is updated. We only notify you when it matters. Enable No"}
+e09-chat-identity-push-credit-light-phone-390x844 OK {"problems":[],"contrastMin":5.2,"placeholder":"Message Ava…","dialog":"Stay in the Loop Get a notification on this device when one of your credit scores changes or a dispute is updated. We only notify you when it matters. Enable No"}
+e09-chat-identity-push-credit-dark-desktop-1440x900 OK {"problems":[],"contrastMin":4.53,"placeholder":"Ask Ava… (Shift+Enter for new line)","dialog":"Stay in the Loop Get a notification on this device when one of your credit scores changes or a dispute is updated. We only notify you when it matters. Enable No"}
+e09-chat-identity-push-credit-dark-phone-390x844 OK {"problems":[],"contrastMin":5.62,"placeholder":"Message Ava…","dialog":"Stay in the Loop Get a notification on this device when one of your credit scores changes or a dispute is updated. We only notify you when it matters. Enable No"}
+e09-chat-identity-push-none-light-desktop-1440x900 OK {"problems":[],"contrastMin":5.2,"placeholder":"Ask Ava… (Shift+Enter for new line)","dialog":null}
+
+17/17 OK. Frames in ../r5-identity-out

@@ -20,6 +20,7 @@ const useTenantRelationshipsData = vi.fn();
 const ownerHarness = vi.hoisted(() => ({ conversations: 0, calendars: 0, portals: 0 }));
 const editorHarness = vi.hoisted(() => ({
   rpc: vi.fn(async (..._args: unknown[]) => ({ data: [] })),
+  portalPermission: vi.fn(async (..._args: unknown[]) => ({ data: true, error: null })),
   upsert: vi.fn(async (..._args: unknown[]) => "saved-contact"),
   // What `clients` answers when the editor re-reads a contact after a stale refusal.
   latest: { data: null as unknown, error: null as unknown },
@@ -29,7 +30,7 @@ const editorHarness = vi.hoisted(() => ({
   }),
 }));
 
-vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => useTenantContext() }));
+vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeUserId: "actor-test", accountContextStatus: "ready", ...useTenantContext() }) }));
 vi.mock("@/components/tenant-calendar/SoloCalendarWorkspace", async () => {
   const ReactModule = await import("react");
   return {
@@ -58,11 +59,20 @@ vi.mock("@/pages/admin/PortalStudio", async () => {
   return { default: class MockPortal extends ReactModule.Component { mountId = ++ownerHarness.portals; render() { return ReactModule.createElement("div", { "data-mocked-portal-studio": this.mountId }); } } };
 });
 vi.mock("@/components/admin/contacts/ContactPortalPanel", () => ({ ContactPortalPanel: ({ contactId }: { contactId: string }) => <div data-mocked-contact-access={contactId} /> }));
+vi.mock("./ClientPortalAccess", () => ({ ClientPortalAccess: ({ person }: { person: { id: string } }) => <div data-mocked-portal-access={person.id} /> }));
 vi.mock("@/lib/routing/useSubtabRoute", () => ({ useSubtabRoute: (...args: unknown[]) => useSubtabRoute(...args) }));
 vi.mock("./useTenantRelationshipsData", () => ({
   useTenantRelationshipsData: (...args: unknown[]) => useTenantRelationshipsData(...args),
 }));
-vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: editorHarness.rpc, from: editorHarness.from } }));
+vi.mock("@/integrations/supabase/client", () => ({ supabase: {
+  rpc: (...args: unknown[]) => args[0] === "can_manage_tenant_brand" ? editorHarness.portalPermission(...args) : editorHarness.rpc(...args),
+  from: editorHarness.from,
+  auth: {
+    getUser: async () => ({ data: { user: { id: "actor-test" } }, error: null }),
+    getSession: async () => ({ data: { session: { user: { id: "actor-test" } } }, error: null }),
+    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }),
+  },
+} }));
 vi.mock("./contactUpsert", () => ({
   upsertRelationshipContact: (...args: unknown[]) => editorHarness.upsert(...args),
 }));
@@ -101,6 +111,7 @@ const baseData = {
   peopleLoading: false,
   peopleError: false,
   retryPeople: vi.fn(),
+  refreshPeopleAfterTurn: vi.fn(async () => {}),
   peopleAvailable: true,
   portalConfig: { welcome: { headline: "Welcome" } },
   portalLoading: false,
@@ -126,7 +137,9 @@ describe("tenant Relationships / Clients workspace", () => {
     useTenantContext.mockReset();
     useSubtabRoute.mockReset();
     useTenantRelationshipsData.mockReset();
+    baseData.refreshPeopleAfterTurn.mockReset().mockResolvedValue(undefined);
     editorHarness.rpc.mockClear();
+    editorHarness.portalPermission.mockReset().mockResolvedValue({ data: true, error: null });
     editorHarness.upsert.mockReset();
     editorHarness.upsert.mockImplementation(async () => "saved-contact");
     editorHarness.from.mockClear();
@@ -245,6 +258,72 @@ describe("tenant Relationships / Clients workspace", () => {
     expect(html).toContain("New contact");
     expect(html).toContain("0 clients · Tenant read · LIVE");
     expect(html).not.toContain("Create remains in its existing legacy owner");
+  });
+
+  it("uses the existing settled-turn event to read People again and cleans up on unmount", async () => {
+    const host = document.createElement("div"); document.body.append(host); const root = createRoot(host);
+    await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/clients/people"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>));
+    await act(async () => window.dispatchEvent(new CustomEvent("paige:turn-settled")));
+    expect(baseData.refreshPeopleAfterTurn).toHaveBeenCalledTimes(1);
+    act(() => root.unmount());
+    await act(async () => window.dispatchEvent(new CustomEvent("paige:turn-settled")));
+    expect(baseData.refreshPeopleAfterTurn).toHaveBeenCalledTimes(1);
+    host.remove();
+  });
+
+  it("coalesces turn readbacks while editing, preserves a draft/focus through a background error, and reads after close", async () => {
+    const host = document.createElement("div"); document.body.append(host); const root = createRoot(host);
+    const tree = () => <MemoryRouter initialEntries={["/solo/42/clients/people"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>;
+    await act(async () => root.render(tree()));
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-contact-editor-origin="toolbar-new"]')?.click());
+    const field = Array.from(host.querySelectorAll<HTMLInputElement>("input")).find((input) => input.previousElementSibling?.textContent === "First name")!;
+    await act(async () => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(field, "Keep this draft"); field.dispatchEvent(new Event("input", { bubbles: true })); });
+    field.focus();
+    await act(async () => { for (let n = 0; n < 3; n++) window.dispatchEvent(new CustomEvent("paige:turn-settled")); });
+    expect(baseData.refreshPeopleAfterTurn).not.toHaveBeenCalled();
+    expect(field.value).toBe("Keep this draft");
+    expect(document.activeElement).toBe(field);
+    // A read started before the editor opened may fail later; it must not unmount the draft.
+    useTenantRelationshipsData.mockReturnValue({ ...baseData, peopleError: true });
+    await act(async () => root.render(tree()));
+    expect(host.querySelector("[data-contact-editor]")).not.toBeNull();
+    expect(field.value).toBe("Keep this draft");
+    expect(document.activeElement).toBe(field);
+    await act(async () => Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((button) => button.textContent === "Cancel")!.click());
+    await act(async () => Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((button) => button.textContent === "Discard and return")!.click());
+    await vi.waitFor(() => expect(baseData.refreshPeopleAfterTurn).toHaveBeenCalledTimes(1));
+    act(() => root.unmount()); host.remove();
+  });
+
+  it("drops an old account's deferred readback when the People workspace changes", async () => {
+    const seen: string[] = [];
+    useTenantRelationshipsData.mockImplementation(({ activeTenantId }: { activeTenantId: string }) => ({ ...baseData, refreshPeopleAfterTurn: async () => { seen.push(activeTenantId); } }));
+    const host = document.createElement("div"); document.body.append(host); const root = createRoot(host);
+    const tree = () => <MemoryRouter initialEntries={["/solo/42/clients/people"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>;
+    await act(async () => root.render(tree()));
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-contact-editor-origin="toolbar-new"]')?.click());
+    await act(async () => window.dispatchEvent(new CustomEvent("paige:turn-settled")));
+    expect(seen).toEqual([]);
+    useTenantContext.mockReturnValue({ activeTenantId: "tenant-b", activeTenant: { id: "tenant-b", name: "Other workspace", account_type: "standalone" }, accountContextLoading: false });
+    await act(async () => root.render(tree()));
+    expect(host.querySelector("[data-contact-editor]")).toBeNull();
+    expect(seen).toEqual([]);
+    await act(async () => window.dispatchEvent(new CustomEvent("paige:turn-settled")));
+    expect(seen).toEqual(["tenant-b"]);
+    act(() => root.unmount()); host.remove();
+  });
+
+  it("does not refresh hidden People or the legacy roster from a settled Chat turn", async () => {
+    const host = document.createElement("div"); const root = createRoot(host);
+    useSubtabRoute.mockReturnValue(["conversations", vi.fn()]);
+    await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/clients/conversations"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>));
+    await act(async () => window.dispatchEvent(new CustomEvent("paige:turn-settled")));
+    expect(baseData.refreshPeopleAfterTurn).not.toHaveBeenCalled();
+    useSubtabRoute.mockReturnValue(["people", vi.fn()]);
+    await act(async () => root.render(<MemoryRouter initialEntries={["/sub_account/42/clients/people"]}><TenantRelationshipsClientsWorkspace routeTier="sub_account" openPaige={vi.fn()} /></MemoryRouter>));
+    await act(async () => window.dispatchEvent(new CustomEvent("paige:turn-settled")));
+    expect(baseData.refreshPeopleAfterTurn).not.toHaveBeenCalled();
+    act(() => root.unmount());
   });
 
   it("runs the approved three-step editor in-place, retains the draft, and restores the exact entry action", async () => {
@@ -849,12 +928,27 @@ describe("tenant Relationships / Clients workspace", () => {
   it("makes only the covered narrow list inert and restores the exact originating row", async () => {
     const originalResizeObserver = globalThis.ResizeObserver;
     const originalInnerWidth = window.innerWidth;
-    let resizeCallback: ResizeObserverCallback | null = null;
+    let observedCallback: ResizeObserverCallback | null = null;
     let observerDisconnected = false;
+    // jsdom lays nothing out, so getBoundingClientRect() reports width 0 — and the workspace re-measures 260 ms
+    // after mount (and on window resize). Unstubbed, that late measure flips the record to overlay whenever the
+    // mount's async work crosses the deadline, which made this test fail most runs under load. The record's
+    // measured width is therefore the width this test last reported through the ResizeObserver, exactly as the
+    // test above stubs it.
+    let recordWidth = 1000;
+    const rectSpy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function mockRect(this: HTMLElement) {
+      const width = this.matches("[data-solo-client-record]") ? recordWidth : 0;
+      return { x: 0, y: 0, top: 0, left: 0, right: width, bottom: width ? 600 : 0, width, height: width ? 600 : 0, toJSON: () => ({}) } as DOMRect;
+    });
+    const report = (target: Element, width: number) => {
+      recordWidth = width;
+      observedCallback?.([{ target, contentRect: { width } as DOMRectReadOnly } as unknown as ResizeObserverEntry], {} as ResizeObserver);
+    };
     class NarrowResizeObserver {
       private callback: ResizeObserverCallback;
-      constructor(callback: ResizeObserverCallback) { this.callback = callback; resizeCallback = callback; }
+      constructor(callback: ResizeObserverCallback) { this.callback = callback; observedCallback = callback; }
       observe(target: Element) {
+        recordWidth = 1000;
         this.callback([{ target, contentRect: { width: 1000 } as DOMRectReadOnly } as ResizeObserverEntry], this as unknown as ResizeObserver);
       }
       unobserve() {}
@@ -889,18 +983,18 @@ describe("tenant Relationships / Clients workspace", () => {
       expect(document.activeElement).toBe(host.querySelector<HTMLButtonElement>(".trc-record-back"));
 
       rows[1]?.focus();
-      await act(async () => resizeCallback?.([{ target: workspace!, contentRect: { width: 700 } as DOMRectReadOnly } as unknown as ResizeObserverEntry], {} as ResizeObserver));
+      await act(async () => report(workspace!, 700));
       await vi.waitFor(() => {
         expect(workspace?.dataset.recordLayout).toBe("overlay");
         expect(list?.inert).toBe(true);
         expect(document.activeElement).toBe(host.querySelector<HTMLButtonElement>(".trc-record-back"));
       });
-      await act(async () => resizeCallback?.([{ target: workspace!, contentRect: { width: 762 } as DOMRectReadOnly } as unknown as ResizeObserverEntry], {} as ResizeObserver));
+      await act(async () => report(workspace!, 762));
       await vi.waitFor(() => {
         expect(workspace?.dataset.recordLayout).toBe("docked");
         expect(list?.inert).toBe(false);
       });
-      await act(async () => resizeCallback?.([{ target: workspace!, contentRect: { width: 1000 } as DOMRectReadOnly } as unknown as ResizeObserverEntry], {} as ResizeObserver));
+      await act(async () => report(workspace!, 1000));
       await vi.waitFor(() => {
         expect(workspace?.dataset.recordLayout).toBe("docked");
         expect(list?.inert).toBe(false);
@@ -919,14 +1013,15 @@ describe("tenant Relationships / Clients workspace", () => {
       });
 
       Object.defineProperty(window, "innerWidth", { configurable: true, value: 900 });
-      await act(async () => resizeCallback?.([{ target: workspace!, contentRect: { width: 1000 } as DOMRectReadOnly } as unknown as ResizeObserverEntry], {} as ResizeObserver));
+      await act(async () => report(workspace!, 1000));
       await vi.waitFor(() => expect(workspace?.dataset.recordLayout).toBe("overlay"));
       Object.defineProperty(window, "innerWidth", { configurable: true, value: 1536 });
-      await act(async () => resizeCallback?.([{ target: workspace!, contentRect: { width: 1000 } as DOMRectReadOnly } as unknown as ResizeObserverEntry], {} as ResizeObserver));
+      await act(async () => report(workspace!, 1000));
       await vi.waitFor(() => expect(workspace?.dataset.recordLayout).toBe("docked"));
     } finally {
       act(() => root.unmount());
       host.remove();
+      rectSpy.mockRestore();
       globalThis.ResizeObserver = originalResizeObserver;
       Object.defineProperty(window, "innerWidth", { configurable: true, value: originalInnerWidth });
     }
@@ -1134,7 +1229,13 @@ describe("tenant Relationships / Clients workspace", () => {
     act(() => root.unmount());
   });
 
-  it("renders the approved Portal audience boundaries only for client contexts", () => {
+  it("says on the Client-visible home card where the customer menu is configured (E09 Slice M)", () => {
+    useSubtabRoute.mockReturnValue(["portal", vi.fn()]);
+    const html = render("/business/2/clients/portal", "sub_account");
+    expect(html).toContain("Your customers’ menu follows the order and names you set in Portal configuration.");
+  });
+
+  it("retains the incumbent non-Solo Portal audience boundaries", () => {
     useSubtabRoute.mockReturnValue(["portal", vi.fn()]);
     const html = render("/business/2/clients/portal", "sub_account");
     expect(html).toContain("One relationship. Two authorized views.");
@@ -1145,14 +1246,42 @@ describe("tenant Relationships / Clients workspace", () => {
     expect(html).toContain("Portal conversation");
     expect(html).toContain("Requests and action items");
     expect(html).toContain("Engagement progress");
+    // E09 Slice 3: sharing lives on the Solo client record only, so this non-Solo card must not claim it.
+    expect(html).toContain("UNAVAILABLE here · sharing work with a client is on the Solo client record");
+    // E09 Slice 5: this card renders for a Sub-account only (AgencyApp, no Sales screen), so invoices are issued through
+    // Paige; a client sees them only after joining the portal and only where Payments is in their menu; Pay needs a request.
+    expect(html).toContain("PARTIAL · this account has no Sales screen: invoices you ask Paige to create and issue to a client appear under Payments once that client has joined their portal and Payments is shown in their menu. A Pay button appears only after you send them a payment request.");
+    expect(html).not.toContain("invoices you publish to a client appear under Payments in their portal");
     expect(html).toContain("Files and agreements");
+    // E09 Slice A round 7: this card renders for a Sub-account only (AgencyApp shell), which has no Sales surface and no
+    // client file library. Agreements reach it through Paige's draft/send tools; file sharing is said to be absent.
+    expect(html.replace(/&#x27;/g, "'")).toContain("PARTIAL · once your client has joined their portal, agreements you ask Paige to draft and send them appear in Agreements to sign and download. This account's client record does not offer file sharing yet.");
+    expect(html).not.toContain("agreements unchanged");
+    expect(html).not.toContain("from Sales");
+    expect(html).not.toContain("on their Solo client record appear in Documents");
+    expect(html).not.toContain("other files vary by authorized account");
     expect(html).toContain("Configuration remains owner/admin gated");
     expect(html).toContain("Choose a client to manage access");
     const source = readFileSync(resolve("src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx"), "utf8");
-    expect(source).toContain("<RoleGate allow={[\"admin\"]}");
+    expect(source).toContain("<PortalConfigurationGate tenantId={activeTenantId}>");
     expect(source).toContain("<PortalStudio key={activeTenantId} />");
     expect(source).toContain("<ContactPortalAccess");
     expect(html).toContain("UNAVAILABLE");
+  });
+
+  it("keeps the mounted Portal editor closed when the tenant permission refuses", async () => {
+    editorHarness.portalPermission.mockResolvedValue({ data: false, error: null });
+    useSubtabRoute.mockReturnValue(["portal", vi.fn()]);
+    const host = document.createElement("div");
+    const root = createRoot(host);
+    try {
+      await act(async () => root.render(<MemoryRouter initialEntries={["/business/2/clients/portal"]}><TenantRelationshipsClientsWorkspace routeTier="sub_account" openPaige={vi.fn()} /></MemoryRouter>));
+      const open = Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((button) => button.textContent === "Open gated Portal configuration");
+      await act(async () => open?.click());
+      expect(editorHarness.portalPermission).toHaveBeenCalledWith("can_manage_tenant_brand", { _tenant_id: "tenant-solo" });
+      expect(host.querySelector("[data-mocked-portal-studio]")).toBeNull();
+      expect(host.textContent).toContain("Configuration access required");
+    } finally { act(() => root.unmount()); }
   });
 
   it("requires explicit keyboard-operable People selection before mounting client access", async () => {
@@ -1168,6 +1297,7 @@ describe("tenant Relationships / Clients workspace", () => {
     const configurationButton = Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((button) => button.textContent === "Open gated Portal configuration");
     await act(async () => configurationButton?.click());
     await vi.waitFor(() => expect(host.querySelector("[data-mocked-portal-studio]")).not.toBeNull());
+    expect(editorHarness.portalPermission).toHaveBeenCalledWith("can_manage_tenant_brand", { _tenant_id: "tenant-solo" });
     const accessButton = Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((button) => button.textContent === "Open selected client access");
     expect(accessButton?.disabled).toBe(false);
     await act(async () => accessButton?.click());
@@ -1202,5 +1332,178 @@ describe("tenant Relationships / Clients workspace", () => {
   it("does not mount another PAIGE provider or workspace", () => {
     const html = render();
     expect(html).not.toMatch(/tenant-paige-workspace|PAIGE command workspace|AgentPresenceProvider/);
+  });
+
+  // Experience 04 E4-S3 PR beta (Track D): where the client stands, first on the Solo client record.
+  it("E4-S3: a Solo client record opens on where the client stands, read once through the governed read", async () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    try {
+      await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/clients/people?person=p-1"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>));
+      await act(async () => { await Promise.resolve(); });
+      const body = host.querySelector(".trc-record-body");
+      expect(body?.firstElementChild?.id).toBe("client-standing");
+      expect(body?.firstElementChild?.querySelector("h3")?.textContent).toBe("Where Supplied Person stands");
+      const reads = editorHarness.rpc.mock.calls.filter(([name]) => name === "read_client_engagement_status");
+      expect(reads).toEqual([["read_client_engagement_status", { _expected_tenant_id: "tenant-solo", _contact_id: "p-1" }]]);
+      // E09 Slice 3: what the client sees, chosen item by item, sits directly under it — on the SAME one read.
+      expect(body?.children[1]?.id).toBe("client-shared-work");
+      // E09 Slice 4: this client's files come next.
+      expect(body?.children[2]?.id).toBe("client-files");
+      // The other record sections are all still there, after it (§58).
+      expect([...host.querySelectorAll(".trc-record-body > .trc-record-section h3")].map(h => h.textContent)).toEqual(
+        ["Where Supplied Person stands", "Shared with Supplied Person", "Files for Supplied Person", "How Supplied Person can be reached", "Relationship overview", "Contact details", "Relationship intelligence", "Relationship connections", "Data boundaries"]);
+      // The static "upload is not exposed here" card now says where the live library is.
+      expect(host.textContent).toContain("Client files · LIVE");
+      // E09 Slice 6: the record's footer no longer repeats the two flags the new section shows (§58: moved, not lost).
+      expect(host.querySelector(".trc-record-footer")?.textContent).not.toMatch(/do-not-contact flag|consent flag/);
+    } finally {
+      act(() => root.unmount());
+      host.remove();
+    }
+  });
+
+  it("E09 Slice 7: the Solo record carries the portal access card under what the client is shown (Shared with, then Files for), behind the invitation feature", async () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    try {
+      await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/clients/people?person=p-1"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>));
+      await act(async () => { await Promise.resolve(); });
+      const body = host.querySelector(".trc-record-body");
+      expect(body?.children[1]?.id).toBe("client-shared-work");
+      // Integration with Slice 4: Files for {client} stays directly under Shared with (pinned above), so the card follows it.
+      expect(body?.children[2]?.id).toBe("client-files");
+      expect(body?.children[3]?.getAttribute("data-mocked-portal-access")).toBe("p-1");
+      // The static "Portal access · PARTIAL" placeholder now points at the card instead of claiming nothing.
+      expect(host.textContent).toContain("Pause, restore or end this client’s portal access in Portal access above.");
+      expect(host.textContent).not.toContain("Portal access · PARTIAL");
+    } finally {
+      act(() => root.unmount());
+      host.remove();
+    }
+    const source = readFileSync(resolve("src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx"), "utf8");
+    expect(source.match(/<ClientPortalAccess /g) ?? []).toHaveLength(1);
+    expect(source).toContain('portalAccess={standing && hasTierFeature("customer_portal_invite")');
+  });
+
+  // E09 Slice 7, review 12: the card sits under an unbounded "Shared with" list, so a withheld portal
+  // is also named at the top of the record, linking down to the card that changes it.
+  it.each([
+    ["paused", "Portal access paused"],
+    ["ended", "Portal access ended"],
+  ] as const)("E09 Slice 7: a %s client's record names it in the header and links to the card", async (state, label) => {
+    useTenantRelationshipsData.mockReturnValue({ ...baseData, people: [{ ...baseData.people[0], portalAccess: state, linkedUserId: state === "paused" ? "login-test" : null }] });
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    try {
+      await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/clients/people?person=p-1"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>));
+      await act(async () => { await Promise.resolve(); });
+      const chip = host.querySelector<HTMLAnchorElement>(".trc-record-header a.trc-record-access");
+      expect(chip?.textContent).toBe(label);
+      expect(chip?.getAttribute("href")).toBe("#client-portal-access");
+    } finally {
+      act(() => root.unmount());
+      host.remove();
+    }
+  });
+
+  it("E09 Slice 7: an open client's record header carries no access chip", async () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    try {
+      await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/clients/people?person=p-1"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>));
+      await act(async () => { await Promise.resolve(); });
+      expect(host.querySelector(".trc-record-access")).toBeNull();
+    } finally {
+      act(() => root.unmount());
+      host.remove();
+    }
+  });
+
+  it("E4-S3: no client selected, no read", async () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    try {
+      await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/clients/people"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>));
+      expect(editorHarness.rpc.mock.calls.some(([name]) => name === "read_client_engagement_status")).toBe(false);
+      expect(host.querySelector("#client-standing")).toBeNull();
+    } finally {
+      act(() => root.unmount());
+      host.remove();
+    }
+  });
+
+  it("E09 Slice 3 (D1): the share section mounts only behind the same standing gate (Solo + client_standing)", () => {
+    // The record itself mounts only in the Solo People view, so no non-Solo render can reach this line;
+    // the gate is pinned at source, the way the Portal mounts are pinned above.
+    const source = readFileSync(resolve("src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx"), "utf8");
+    const mounts = source.match(/[^\n]*<ClientSharedWork[^\n]*/g) ?? [];
+    expect(mounts).toHaveLength(1);
+    expect(mounts[0].trim().startsWith("{standing && <ClientSharedWork")).toBe(true);
+    expect(source).toContain('const standing = routeTier === "solo" && hasTierFeature("client_standing")');
+  });
+
+  it("E09 Slice 4 (D1): the file library mounts only behind the same standing gate (Solo + client_standing)", () => {
+    const source = readFileSync(resolve("src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx"), "utf8");
+    const mounts = source.match(/[^\n]*<ClientFiles[^\n]*/g) ?? [];
+    expect(mounts).toHaveLength(1);
+    expect(mounts[0].trim().startsWith("{standing && <ClientFiles")).toBe(true);
+  });
+
+  // E09 Slice 7 round 2 (compliance 1): a paused client keeps their login link, so the record must hand
+  // both cards its ACCESS state, never the link alone (that is what made Files say "can open it" while
+  // paused). Pinned at source like the mounts above; the cards' own tests drive each state.
+  it("E09 Slice 7: Shared with and Files for take the record's access state, not the login link alone", () => {
+    const source = readFileSync(resolve("src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx"), "utf8");
+    const files = (source.match(/[^\n]*<ClientFiles[^\n]*/g) ?? [])[0] ?? "";
+    expect(files).toContain('portalConnected={access.joined && access.state === "open"} portalAccess={access.state}');
+    expect(files).not.toContain("linkedUserId");
+    const shared = (source.match(/[^\n]*<ClientSharedWork[^\n]*/g) ?? [])[0] ?? "";
+    expect(shared).toContain('portalConnected={access.joined && access.state === "open"} portalPaused={access.state === "paused"} portalEnded={access.state === "ended"}');
+    // Round 3 (low): the reach card re-reads when the access state changes in this session.
+    const reach = (source.match(/[^\n]*<ClientCommunicationState[^\n]*/g) ?? [])[0] ?? "";
+    expect(reach).toContain("accessState={access.state}");
+  });
+
+  it("E09 Slice 6: the reach section mounts only behind the same standing gate, and the footer keeps its flags everywhere else", () => {
+    const source = readFileSync(resolve("src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx"), "utf8");
+    const mounts = source.match(/[^\n]*<ClientCommunicationState[^\n]*/g) ?? [];
+    expect(mounts).toHaveLength(1);
+    expect(mounts[0].trim().startsWith("{standing && <ClientCommunicationState")).toBe(true);
+    // Where the section is not shown, the footer still carries both flag phrases (§58).
+    const footer = source.slice(source.indexOf('<footer className="trc-record-footer">'));
+    expect(footer).toMatch(/\{standing\s*\?\s*`Created/);
+    expect(footer).toContain("do-not-contact flag recorded");
+    expect(footer).toContain("consent flag recorded");
+  });
+
+  it("E4-S3: declared, not mounted — a sub-account's People view does not read or render client standing (§60 gap pinned)", async () => {
+    useTenantContext.mockReturnValue({
+      activeTenantId: "tenant-sub",
+      activeTenant: { id: "tenant-sub", name: "Sub", account_type: "sub_account", parent_tenant_id: "parent" },
+      accountContextLoading: false,
+      isPlatformOwner: false,
+      refresh: vi.fn(),
+    });
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    try {
+      await act(async () => root.render(<MemoryRouter initialEntries={["/business/2/clients/people?person=p-1"]}><TenantRelationshipsClientsWorkspace routeTier="sub_account" openPaige={vi.fn()} /></MemoryRouter>));
+      expect(editorHarness.rpc.mock.calls.some(([name]) => name === "read_client_engagement_status")).toBe(false);
+      expect(host.querySelector("#client-standing")).toBeNull();
+      // E09 Slice 6: declared, not mounted on a sub-account either — no read, no section.
+      expect(editorHarness.rpc.mock.calls.some(([name]) => name === "read_client_communication_state")).toBe(false);
+      expect(host.querySelector(".trc-reach")).toBeNull();
+      expect(host.querySelector("[data-mocked-portal-access]")).toBeNull();
+    } finally {
+      act(() => root.unmount());
+      host.remove();
+    }
   });
 });

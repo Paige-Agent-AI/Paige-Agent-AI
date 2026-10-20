@@ -1,0 +1,117 @@
+{
+  "source": "work/approval-outcomes-render",
+  "selectedSanitizedEngineeringArtifacts": [
+    {
+      "name": "campaign-summary.json",
+      "sha256": "22c4a61eae7206c566814bb9023421fe77a366ac4b57c8ea61e2a5cdb16d5832",
+      "bytes": 4827
+    },
+    {
+      "name": "native-summary.json",
+      "sha256": "ec86bf7f69c65e364a0c5d302ed693d22dd558fb209c5953b4bd391c7ee1d796",
+      "bytes": 848
+    },
+    {
+      "name": "png-integrity.json",
+      "sha256": "74dc529d0068a1615e7df6aa879971ea3eb15d2d90df56906522d0e735ce0c78",
+      "bytes": 57300
+    },
+    {
+      "name": "browser-geometry.json",
+      "sha256": "7f755dda2ba12aa4a8c61de0d1df9bb0dfcef6480ca8d78d28d186bad3405427",
+      "bytes": 709206
+    },
+    {
+      "name": "keyboard-final.json",
+      "sha256": "9208c31d23dfb866db20f4d1d03f7d461da5d9d1e144d0f4e7be5ff9643abe2f",
+      "bytes": 36111
+    },
+    {
+      "name": "reflow-readability.json",
+      "sha256": "c6a6c5cb3a9b5468fe1e866613501658bd4aa4195760ad462161a8fa3237c92c",
+      "bytes": 6889
+    },
+    {
+      "name": "scroll-final.json",
+      "sha256": "a3c5de9143b7d6b681969c51a1af2885631d3ba4c1597dc64f0bd64636a9e3f7",
+      "bytes": 206
+    },
+    {
+      "name": "reduced-motion.final.json",
+      "sha256": "a837c7c8f9d13e537c1201261644ece50137c47b671c7115ea0065e59c1dd8a7",
+      "bytes": 473
+    },
+    {
+      "name": "browser-cleanup.json",
+      "sha256": "3544cd7dcf3cdcb547b72bd756af3757ee1eb53910868d86943da7048e9a9e7e",
+      "bytes": 265
+    },
+    {
+      "name": "render-manifest.json",
+      "sha256": "fcb46a27a3a0ec97fcba2cc8e86ee3a28d38604f376ee73ed581333e02a1fbc2",
+      "bytes": 101637
+    },
+    {
+      "name": "responsive-findings.json",
+      "sha256": "af6f448625b8940f75822dc00bc1e78d932e2015fd5c1aec99e163477ef9c365",
+      "bytes": 1530
+    },
+    {
+      "name": "invalid-first-round.json",
+      "sha256": "57d392c58a800bf15d5959a0bc56e18a8c07dad2e2262a915c0814f31b68aa6d",
+      "bytes": 496
+    },
+    {
+      "name": "approval-light-1536x770-closed-review.png",
+      "sha256": "201760dc92f512e9dae98b4f1bb232ff366713a362545a3668b8cfb04a8f31cf",
+      "bytes": 129079
+    },
+    {
+      "name": "approval-dark-1366x768-open-refused.png",
+      "sha256": "280d797b24d5d7acbc8e3e1a8c0b4211267d6721c661b1ceb1686590f8a4b700",
+      "bytes": 165603
+    },
+    {
+      "name": "approval-light-1024x768-closed-review.png",
+      "sha256": "f3bd3bb8e1ab9250ce0cc01b8313bec61a079d27815bed0a113f827475959f08",
+      "bytes": 86643
+    },
+    {
+      "name": "approval-dark-900x1000-open-review.png",
+      "sha256": "26c523d7d4ac9190cd398d074a9f85e50e725d8187f33e3f512ddc91b6e04950",
+      "bytes": 208501
+    },
+    {
+      "name": "approval-light-390x768-closed-unknown.png",
+      "sha256": "49ce5edff0882cdaf228a9e38e74094c51de7d44a4453170c483fd2071918dfd",
+      "bytes": 60123
+    },
+    {
+      "name": "keyboard-mobile-unknown-refresh.png",
+      "sha256": "9f67b92a2431c3c0c1d655ec21db3f85764d886230ab824ea6045f0da1354bf9",
+      "bytes": 59737
+    },
+    {
+      "name": "keyboard-mobile-decline-cancel.png",
+      "sha256": "cec7f62168ae20f5d7325fb1209f4faf43987bddb730fda272e08bd6437eb68f",
+      "bytes": 55969
+    },
+    {
+      "name": "keyboard-reflow-details-close.png",
+      "sha256": "dfa2e4763db656201487c7891fb1de86eeb2cb3155a14666064a70bdc649c8ea",
+      "bytes": 123830
+    },
+    {
+      "name": "keyboard-reflow-unknown-readback.png",
+      "sha256": "998ceaf9e8a81f554e91ca7b320293917ca54afb8ac3dc6e32b290e2ea9d16f1",
+      "bytes": 121125
+    },
+    {
+      "name": "frame-mobile-focused-overlap.png",
+      "sha256": "a9c3e481239f3a4fb4bd2ef27fc888780f01c6df6843f5da46ec1492225996f1",
+      "bytes": 41138
+    }
+  ],
+  "full94PngSet": "Retained in original local packet; selected originals copied unchanged",
+  "customerData": false
+}

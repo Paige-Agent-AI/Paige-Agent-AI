@@ -1,0 +1,5833 @@
+{
+  "e09-sessions-upcoming-light-desktop-1440x900": {
+    "ok": true,
+    "chromeOk": false,
+    "expectations": [],
+    "state": "upcoming",
+    "theme": "light",
+    "viewport": "1440x900",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "closedRow": {
+        "hasReschedule": 0,
+        "hasCancel": 0,
+        "messageLink": 1,
+        "text": "FRI 16 Oct Brand strategy session Today · in 45 min Fri, Oct 16, 4:15 PM – 5:15 PM CDT Phone call Changes closed at 3:15 PM Message Northwind Studio"
+      },
+      "onlineRow": {
+        "join": "https://meet.example.test/northwind/kickoff-4821",
+        "joinTarget": "_blank",
+        "otherZone": "10:00 AM – 10:45 AM EDT in New York time",
+        "reschedule": 1,
+        "cancel": 1
+      },
+      "pastPills": [
+        "Brand strategy session · Completed",
+        "Brand strategy session · Cancelled",
+        "Kickoff call · Missed",
+        "Intro consultation · Completed"
+      ],
+      "locations": [
+        "Brand strategy session · Phone call · lucide-phone",
+        "Kickoff call · Zoom · lucide-video",
+        "Quarterly review · In person: 14 Harbour Lane, Suite 3 · lucide-map-pin"
+      ],
+      "pastLocations": [
+        "Zoom · lucide-video",
+        "Zoom · lucide-video",
+        "Phone call · lucide-phone",
+        "Location not recorded · lucide-map-pin"
+      ],
+      "pastPillRights": [
+        1344
+      ],
+      "pastTimeRights": [
+        1236
+      ],
+      "deadlines": [
+        "Changes closed at 3:15 PM",
+        "Change until Mon, Oct 19, 8:00 AM",
+        "Change until Tue, Oct 27, 1:00 PM"
+      ],
+      "pills": [
+        "Today · in 45 min"
+      ],
+      "hostLeak": false
+    },
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Your sessions with Northwind Studio. Upcoming FRI 16 Oct Brand strategy session Today · in 45 min Fri, Oct 16, 4:15 PM – 5:15 PM CDT Phone call Changes closed at 3:15 PM Message Northwind Studio MON 19 Oct Kickoff call Mon, Oct 19, 9:00 AM – 9:45 AM CDT 10:00 AM – 10:45 AM EDT in New York time Zoom Change until Mon, Oct 19, 8:00 AM Join Kickoff call (opens in a new tab) Reschedule Cancel TUE 27 Oct Quarterly review Tue, Oct 27, 2:00 PM – 3:30 PM CDT In person: 14 Harbour Lane, Suite 3 Change until Tue, Oct 27, 1:00 PM Reschedule Cancel Past sessions Fri, Oct 9 Brand strategy session Zoom 10:00 AM – 11:00 AM CDT Completed Fri, Oct 2 Brand strategy session Zoom 10:00 AM – 11:00 AM CDT",
+    "overlayText": [],
+    "navText": "N Northwind Studio Home Messages Your work Documents Resources Client jordan.rivera@example.test Sign Out",
+    "contrastMin": 5.2,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 9,
+    "lowNav": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [
+      {
+        "el": "div",
+        "text": "Client",
+        "hits": [
+          "text",
+          "border"
+        ]
+      }
+    ],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 1440,
+      "viewport": 1440,
+      "scroller": [
+        863,
+        863
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Message Northwind Studio",
+        "h": 44,
+        "w": 203,
+        "hitH": 44,
+        "hitW": 203,
+        "region": "page"
+      },
+      {
+        "text": "Join Kickoff call (opens in a new ",
+        "h": 44,
+        "w": 84,
+        "hitH": 44,
+        "hitW": 84,
+        "region": "page"
+      },
+      {
+        "text": "Reschedule",
+        "h": 44,
+        "w": 142,
+        "hitH": 44,
+        "hitW": 142,
+        "region": "page"
+      },
+      {
+        "text": "Cancel",
+        "h": 44,
+        "w": 109,
+        "hitH": 44,
+        "hitW": 109,
+        "region": "page"
+      },
+      {
+        "text": "Reschedule",
+        "h": 44,
+        "w": 142,
+        "hitH": 44,
+        "hitW": 142,
+        "region": "page"
+      },
+      {
+        "text": "Cancel",
+        "h": 44,
+        "w": 109,
+        "hitH": 44,
+        "hitW": 109,
+        "region": "page"
+      },
+      {
+        "text": "Past sessions",
+        "h": 44,
+        "w": 129,
+        "hitH": 44,
+        "hitW": 129,
+        "region": "page"
+      },
+      {
+        "text": "NNorthwind Studio",
+        "h": 28,
+        "w": 173,
+        "hitH": 28,
+        "hitW": 173,
+        "region": "nav"
+      },
+      {
+        "text": "Home",
+        "h": 44,
+        "w": 87,
+        "hitH": 44,
+        "hitW": 87,
+        "region": "nav"
+      },
+      {
+        "text": "Messages",
+        "h": 44,
+        "w": 116,
+        "hitH": 44,
+        "hitW": 116,
+        "region": "nav"
+      },
+      {
+        "text": "Your work",
+        "h": 44,
+        "w": 114,
+        "hitH": 44,
+        "hitW": 114,
+        "region": "nav"
+      },
+      {
+        "text": "Documents",
+        "h": 44,
+        "w": 123,
+        "hitH": 44,
+        "hitW": 123,
+        "region": "nav"
+      },
+      {
+        "text": "Resources",
+        "h": 44,
+        "w": 118,
+        "hitH": 44,
+        "hitW": 118,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 40,
+        "w": 40,
+        "hitH": 40,
+        "hitW": 40,
+        "region": "nav"
+      },
+      {
+        "text": "jordan.rivera@example.test",
+        "h": 36,
+        "w": 188,
+        "hitH": 36,
+        "hitW": 188,
+        "region": "nav"
+      },
+      {
+        "text": "Sign Out",
+        "h": 36,
+        "w": 95,
+        "hitH": 36,
+        "hitW": 95,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      576,
+      863
+    ],
+    "tag": true,
+    "opts": {
+      "phone": false,
+      "home": false
+    }
+  },
+  "e09-sessions-upcoming-dark-desktop-1440x900": {
+    "ok": true,
+    "chromeOk": false,
+    "expectations": [],
+    "state": "upcoming",
+    "theme": "dark",
+    "viewport": "1440x900",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "closedRow": {
+        "hasReschedule": 0,
+        "hasCancel": 0,
+        "messageLink": 1,
+        "text": "FRI 16 Oct Brand strategy session Today · in 45 min Fri, Oct 16, 4:15 PM – 5:15 PM CDT Phone call Changes closed at 3:15 PM Message Northwind Studio"
+      },
+      "onlineRow": {
+        "join": "https://meet.example.test/northwind/kickoff-4821",
+        "joinTarget": "_blank",
+        "otherZone": "10:00 AM – 10:45 AM EDT in New York time",
+        "reschedule": 1,
+        "cancel": 1
+      },
+      "pastPills": [
+        "Brand strategy session · Completed",
+        "Brand strategy session · Cancelled",
+        "Kickoff call · Missed",
+        "Intro consultation · Completed"
+      ],
+      "locations": [
+        "Brand strategy session · Phone call · lucide-phone",
+        "Kickoff call · Zoom · lucide-video",
+        "Quarterly review · In person: 14 Harbour Lane, Suite 3 · lucide-map-pin"
+      ],
+      "pastLocations": [
+        "Zoom · lucide-video",
+        "Zoom · lucide-video",
+        "Phone call · lucide-phone",
+        "Location not recorded · lucide-map-pin"
+      ],
+      "pastPillRights": [
+        1344
+      ],
+      "pastTimeRights": [
+        1236
+      ],
+      "deadlines": [
+        "Changes closed at 3:15 PM",
+        "Change until Mon, Oct 19, 8:00 AM",
+        "Change until Tue, Oct 27, 1:00 PM"
+      ],
+      "pills": [
+        "Today · in 45 min"
+      ],
+      "hostLeak": false
+    },
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Your sessions with Northwind Studio. Upcoming FRI 16 Oct Brand strategy session Today · in 45 min Fri, Oct 16, 4:15 PM – 5:15 PM CDT Phone call Changes closed at 3:15 PM Message Northwind Studio MON 19 Oct Kickoff call Mon, Oct 19, 9:00 AM – 9:45 AM CDT 10:00 AM – 10:45 AM EDT in New York time Zoom Change until Mon, Oct 19, 8:00 AM Join Kickoff call (opens in a new tab) Reschedule Cancel TUE 27 Oct Quarterly review Tue, Oct 27, 2:00 PM – 3:30 PM CDT In person: 14 Harbour Lane, Suite 3 Change until Tue, Oct 27, 1:00 PM Reschedule Cancel Past sessions Fri, Oct 9 Brand strategy session Zoom 10:00 AM – 11:00 AM CDT Completed Fri, Oct 2 Brand strategy session Zoom 10:00 AM – 11:00 AM CDT",
+    "overlayText": [],
+    "navText": "N Northwind Studio Home Messages Your work Documents Resources Client jordan.rivera@example.test Sign Out",
+    "contrastMin": 7.27,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 3.25,
+    "lowNav": [
+      {
+        "text": "Client",
+        "ratio": 3.25,
+        "inactive": false,
+        "size": "10px"
+      },
+      {
+        "text": "Sign Out",
+        "ratio": 3.59,
+        "inactive": false,
+        "size": "12px"
+      }
+    ],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [
+      {
+        "el": "div",
+        "text": "Client",
+        "hits": [
+          "text",
+          "border"
+        ]
+      }
+    ],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 1440,
+      "viewport": 1440,
+      "scroller": [
+        863,
+        863
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Message Northwind Studio",
+        "h": 44,
+        "w": 203,
+        "hitH": 44,
+        "hitW": 203,
+        "region": "page"
+      },
+      {
+        "text": "Join Kickoff call (opens in a new ",
+        "h": 44,
+        "w": 84,
+        "hitH": 44,
+        "hitW": 84,
+        "region": "page"
+      },
+      {
+        "text": "Reschedule",
+        "h": 44,
+        "w": 142,
+        "hitH": 44,
+        "hitW": 142,
+        "region": "page"
+      },
+      {
+        "text": "Cancel",
+        "h": 44,
+        "w": 109,
+        "hitH": 44,
+        "hitW": 109,
+        "region": "page"
+      },
+      {
+        "text": "Reschedule",
+        "h": 44,
+        "w": 142,
+        "hitH": 44,
+        "hitW": 142,
+        "region": "page"
+      },
+      {
+        "text": "Cancel",
+        "h": 44,
+        "w": 109,
+        "hitH": 44,
+        "hitW": 109,
+        "region": "page"
+      },
+      {
+        "text": "Past sessions",
+        "h": 44,
+        "w": 129,
+        "hitH": 44,
+        "hitW": 129,
+        "region": "page"
+      },
+      {
+        "text": "NNorthwind Studio",
+        "h": 28,
+        "w": 173,
+        "hitH": 28,
+        "hitW": 173,
+        "region": "nav"
+      },
+      {
+        "text": "Home",
+        "h": 44,
+        "w": 87,
+        "hitH": 44,
+        "hitW": 87,
+        "region": "nav"
+      },
+      {
+        "text": "Messages",
+        "h": 44,
+        "w": 116,
+        "hitH": 44,
+        "hitW": 116,
+        "region": "nav"
+      },
+      {
+        "text": "Your work",
+        "h": 44,
+        "w": 114,
+        "hitH": 44,
+        "hitW": 114,
+        "region": "nav"
+      },
+      {
+        "text": "Documents",
+        "h": 44,
+        "w": 123,
+        "hitH": 44,
+        "hitW": 123,
+        "region": "nav"
+      },
+      {
+        "text": "Resources",
+        "h": 44,
+        "w": 118,
+        "hitH": 44,
+        "hitW": 118,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 40,
+        "w": 40,
+        "hitH": 40,
+        "hitW": 40,
+        "region": "nav"
+      },
+      {
+        "text": "jordan.rivera@example.test",
+        "h": 36,
+        "w": 188,
+        "hitH": 36,
+        "hitW": 188,
+        "region": "nav"
+      },
+      {
+        "text": "Sign Out",
+        "h": 36,
+        "w": 95,
+        "hitH": 36,
+        "hitW": 95,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      576,
+      863
+    ],
+    "tag": true,
+    "opts": {
+      "phone": false,
+      "home": false
+    }
+  },
+  "e09-sessions-empty-light-desktop-1440x900": {
+    "ok": true,
+    "chromeOk": false,
+    "expectations": [],
+    "state": "empty",
+    "theme": "light",
+    "viewport": "1440x900",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {},
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Your sessions with Northwind Studio. Upcoming No upcoming sessions When Northwind Studio books a time with you, it shows up here. Want to set one up? Send them a message. Message Northwind Studio Past sessions",
+    "overlayText": [],
+    "navText": "N Northwind Studio Home Messages Your work Documents Resources Client jordan.rivera@example.test Sign Out",
+    "contrastMin": 5.2,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 9,
+    "lowNav": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [
+      {
+        "el": "div",
+        "text": "Client",
+        "hits": [
+          "text",
+          "border"
+        ]
+      }
+    ],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 1440,
+      "viewport": 1440,
+      "scroller": [
+        863,
+        863
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Message Northwind Studio",
+        "h": 44,
+        "w": 237,
+        "hitH": 44,
+        "hitW": 237,
+        "region": "page"
+      },
+      {
+        "text": "Past sessions",
+        "h": 44,
+        "w": 129,
+        "hitH": 44,
+        "hitW": 129,
+        "region": "page"
+      },
+      {
+        "text": "NNorthwind Studio",
+        "h": 28,
+        "w": 173,
+        "hitH": 28,
+        "hitW": 173,
+        "region": "nav"
+      },
+      {
+        "text": "Home",
+        "h": 44,
+        "w": 87,
+        "hitH": 44,
+        "hitW": 87,
+        "region": "nav"
+      },
+      {
+        "text": "Messages",
+        "h": 44,
+        "w": 116,
+        "hitH": 44,
+        "hitW": 116,
+        "region": "nav"
+      },
+      {
+        "text": "Your work",
+        "h": 44,
+        "w": 114,
+        "hitH": 44,
+        "hitW": 114,
+        "region": "nav"
+      },
+      {
+        "text": "Documents",
+        "h": 44,
+        "w": 123,
+        "hitH": 44,
+        "hitW": 123,
+        "region": "nav"
+      },
+      {
+        "text": "Resources",
+        "h": 44,
+        "w": 118,
+        "hitH": 44,
+        "hitW": 118,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 40,
+        "w": 40,
+        "hitH": 40,
+        "hitW": 40,
+        "region": "nav"
+      },
+      {
+        "text": "jordan.rivera@example.test",
+        "h": 36,
+        "w": 188,
+        "hitH": 36,
+        "hitW": 188,
+        "region": "nav"
+      },
+      {
+        "text": "Sign Out",
+        "h": 36,
+        "w": 95,
+        "hitH": 36,
+        "hitW": 95,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      576,
+      863
+    ],
+    "tag": true,
+    "opts": {
+      "phone": false,
+      "home": false
+    }
+  },
+  "e09-sessions-empty-dark-desktop-1440x900": {
+    "ok": true,
+    "chromeOk": false,
+    "expectations": [],
+    "state": "empty",
+    "theme": "dark",
+    "viewport": "1440x900",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {},
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Your sessions with Northwind Studio. Upcoming No upcoming sessions When Northwind Studio books a time with you, it shows up here. Want to set one up? Send them a message. Message Northwind Studio Past sessions",
+    "overlayText": [],
+    "navText": "N Northwind Studio Home Messages Your work Documents Resources Client jordan.rivera@example.test Sign Out",
+    "contrastMin": 7.27,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 3.25,
+    "lowNav": [
+      {
+        "text": "Client",
+        "ratio": 3.25,
+        "inactive": false,
+        "size": "10px"
+      },
+      {
+        "text": "Sign Out",
+        "ratio": 3.59,
+        "inactive": false,
+        "size": "12px"
+      }
+    ],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [
+      {
+        "el": "div",
+        "text": "Client",
+        "hits": [
+          "text",
+          "border"
+        ]
+      }
+    ],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 1440,
+      "viewport": 1440,
+      "scroller": [
+        863,
+        863
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Message Northwind Studio",
+        "h": 44,
+        "w": 237,
+        "hitH": 44,
+        "hitW": 237,
+        "region": "page"
+      },
+      {
+        "text": "Past sessions",
+        "h": 44,
+        "w": 129,
+        "hitH": 44,
+        "hitW": 129,
+        "region": "page"
+      },
+      {
+        "text": "NNorthwind Studio",
+        "h": 28,
+        "w": 173,
+        "hitH": 28,
+        "hitW": 173,
+        "region": "nav"
+      },
+      {
+        "text": "Home",
+        "h": 44,
+        "w": 87,
+        "hitH": 44,
+        "hitW": 87,
+        "region": "nav"
+      },
+      {
+        "text": "Messages",
+        "h": 44,
+        "w": 116,
+        "hitH": 44,
+        "hitW": 116,
+        "region": "nav"
+      },
+      {
+        "text": "Your work",
+        "h": 44,
+        "w": 114,
+        "hitH": 44,
+        "hitW": 114,
+        "region": "nav"
+      },
+      {
+        "text": "Documents",
+        "h": 44,
+        "w": 123,
+        "hitH": 44,
+        "hitW": 123,
+        "region": "nav"
+      },
+      {
+        "text": "Resources",
+        "h": 44,
+        "w": 118,
+        "hitH": 44,
+        "hitW": 118,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 40,
+        "w": 40,
+        "hitH": 40,
+        "hitW": 40,
+        "region": "nav"
+      },
+      {
+        "text": "jordan.rivera@example.test",
+        "h": 36,
+        "w": 188,
+        "hitH": 36,
+        "hitW": 188,
+        "region": "nav"
+      },
+      {
+        "text": "Sign Out",
+        "h": 36,
+        "w": 95,
+        "hitH": 36,
+        "hitW": 95,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      576,
+      863
+    ],
+    "tag": true,
+    "opts": {
+      "phone": false,
+      "home": false
+    }
+  },
+  "e09-sessions-reschedule-light-desktop-1440x900": {
+    "ok": true,
+    "chromeOk": false,
+    "expectations": [],
+    "state": "reschedule",
+    "theme": "light",
+    "viewport": "1440x900",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "dayCount": 5,
+      "timesOnDay2": [
+        "9:00 AM",
+        "10:00 AM",
+        "1:00 PM",
+        "2:30 PM",
+        "4:00 PM"
+      ],
+      "confirm": "Move session",
+      "confirmEnabled": true,
+      "offersCurrentStart": false
+    },
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Your sessions with Northwind Studio. Upcoming FRI 16 Oct Brand strategy session Today · in 45 min Fri, Oct 16, 4:15 PM – 5:15 PM CDT Phone call Changes closed at 3:15 PM Message Northwind Studio MON 19 Oct Kickoff call Mon, Oct 19, 9:00 AM – 9:45 AM CDT 10:00 AM – 10:45 AM EDT in New York time Zoom Change until Mon, Oct 19, 8:00 AM Join Kickoff call (opens in a new tab) Reschedule Cancel TUE 27 Oct Quarterly review Tue, Oct 27, 2:00 PM – 3:30 PM CDT In person: 14 Harbour Lane, Suite 3 Change until Tue, Oct 27, 1:00 PM Reschedule Cancel Past sessions",
+    "overlayText": [
+      "Reschedule Kickoff call Now Mon, Oct 19, 9:00 AM. Pick a new time and it updates on Northwind Studio's calendar. MON Oct 19 TUE Oct 20 WED Oct 21 THU Oct 22 FRI Oct 23 9:00 AM 10:00 AM 1:00 PM 2:30 PM 4:00 PM Times are shown in your time zone (CDT). From Mon 9:00 AM to Tue 10:00 AM Move session Close"
+    ],
+    "navText": "N Northwind Studio Home Messages Your work Documents Resources Client jordan.rivera@example.test Sign Out",
+    "contrastMin": null,
+    "lowPage": [],
+    "overlayContrastMin": 5.2,
+    "lowOverlay": [],
+    "navContrastMin": null,
+    "lowNav": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [
+      {
+        "el": "div",
+        "text": "Client",
+        "hits": [
+          "text",
+          "border"
+        ]
+      }
+    ],
+    "overflowX": false,
+    "overlayOverflow": [
+      {
+        "role": "dialog",
+        "over": false,
+        "w": [
+          447,
+          447
+        ],
+        "right": 1440,
+        "vw": 1440
+      }
+    ],
+    "dayStrip": {
+      "scrollWidth": 359,
+      "clientWidth": 359
+    },
+    "widths": {
+      "doc": 1440,
+      "viewport": 1440,
+      "scroller": [
+        863,
+        863
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Mon, Oct 19",
+        "h": 50,
+        "w": 65,
+        "hitH": 50,
+        "hitW": 65,
+        "region": "overlay"
+      },
+      {
+        "text": "Tue, Oct 20",
+        "h": 50,
+        "w": 65,
+        "hitH": 50,
+        "hitW": 65,
+        "region": "overlay"
+      },
+      {
+        "text": "Wed, Oct 21",
+        "h": 50,
+        "w": 65,
+        "hitH": 50,
+        "hitW": 65,
+        "region": "overlay"
+      },
+      {
+        "text": "Thu, Oct 22",
+        "h": 50,
+        "w": 65,
+        "hitH": 50,
+        "hitW": 65,
+        "region": "overlay"
+      },
+      {
+        "text": "Fri, Oct 23",
+        "h": 50,
+        "w": 65,
+        "hitH": 50,
+        "hitW": 65,
+        "region": "overlay"
+      },
+      {
+        "text": "9:00 AM",
+        "h": 44,
+        "w": 114,
+        "hitH": 44,
+        "hitW": 114,
+        "region": "overlay"
+      },
+      {
+        "text": "10:00 AM",
+        "h": 44,
+        "w": 114,
+        "hitH": 44,
+        "hitW": 114,
+        "region": "overlay"
+      },
+      {
+        "text": "1:00 PM",
+        "h": 44,
+        "w": 114,
+        "hitH": 44,
+        "hitW": 114,
+        "region": "overlay"
+      },
+      {
+        "text": "2:30 PM",
+        "h": 44,
+        "w": 114,
+        "hitH": 44,
+        "hitW": 114,
+        "region": "overlay"
+      },
+      {
+        "text": "4:00 PM",
+        "h": 44,
+        "w": 114,
+        "hitH": 44,
+        "hitW": 114,
+        "region": "overlay"
+      },
+      {
+        "text": "Move session",
+        "h": 44,
+        "w": 359,
+        "hitH": 44,
+        "hitW": 359,
+        "region": "overlay"
+      },
+      {
+        "text": "Close",
+        "h": 44,
+        "w": 44,
+        "hitH": 44,
+        "hitW": 44,
+        "region": "overlay"
+      }
+    ],
+    "panels": [
+      576,
+      863
+    ],
+    "tag": true,
+    "opts": {
+      "phone": false,
+      "home": false
+    }
+  },
+  "e09-sessions-reschedule-dark-desktop-1440x900": {
+    "ok": true,
+    "chromeOk": false,
+    "expectations": [],
+    "state": "reschedule",
+    "theme": "dark",
+    "viewport": "1440x900",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "dayCount": 5,
+      "timesOnDay2": [
+        "9:00 AM",
+        "10:00 AM",
+        "1:00 PM",
+        "2:30 PM",
+        "4:00 PM"
+      ],
+      "confirm": "Move session",
+      "confirmEnabled": true,
+      "offersCurrentStart": false
+    },
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Your sessions with Northwind Studio. Upcoming FRI 16 Oct Brand strategy session Today · in 45 min Fri, Oct 16, 4:15 PM – 5:15 PM CDT Phone call Changes closed at 3:15 PM Message Northwind Studio MON 19 Oct Kickoff call Mon, Oct 19, 9:00 AM – 9:45 AM CDT 10:00 AM – 10:45 AM EDT in New York time Zoom Change until Mon, Oct 19, 8:00 AM Join Kickoff call (opens in a new tab) Reschedule Cancel TUE 27 Oct Quarterly review Tue, Oct 27, 2:00 PM – 3:30 PM CDT In person: 14 Harbour Lane, Suite 3 Change until Tue, Oct 27, 1:00 PM Reschedule Cancel Past sessions",
+    "overlayText": [
+      "Reschedule Kickoff call Now Mon, Oct 19, 9:00 AM. Pick a new time and it updates on Northwind Studio's calendar. MON Oct 19 TUE Oct 20 WED Oct 21 THU Oct 22 FRI Oct 23 9:00 AM 10:00 AM 1:00 PM 2:30 PM 4:00 PM Times are shown in your time zone (CDT). From Mon 9:00 AM to Tue 10:00 AM Move session Close"
+    ],
+    "navText": "N Northwind Studio Home Messages Your work Documents Resources Client jordan.rivera@example.test Sign Out",
+    "contrastMin": null,
+    "lowPage": [],
+    "overlayContrastMin": 7.56,
+    "lowOverlay": [],
+    "navContrastMin": null,
+    "lowNav": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [
+      {
+        "el": "div",
+        "text": "Client",
+        "hits": [
+          "text",
+          "border"
+        ]
+      }
+    ],
+    "overflowX": false,
+    "overlayOverflow": [
+      {
+        "role": "dialog",
+        "over": false,
+        "w": [
+          447,
+          447
+        ],
+        "right": 1440,
+        "vw": 1440
+      }
+    ],
+    "dayStrip": {
+      "scrollWidth": 359,
+      "clientWidth": 359
+    },
+    "widths": {
+      "doc": 1440,
+      "viewport": 1440,
+      "scroller": [
+        863,
+        863
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Mon, Oct 19",
+        "h": 50,
+        "w": 65,
+        "hitH": 50,
+        "hitW": 65,
+        "region": "overlay"
+      },
+      {
+        "text": "Tue, Oct 20",
+        "h": 50,
+        "w": 65,
+        "hitH": 50,
+        "hitW": 65,
+        "region": "overlay"
+      },
+      {
+        "text": "Wed, Oct 21",
+        "h": 50,
+        "w": 65,
+        "hitH": 50,
+        "hitW": 65,
+        "region": "overlay"
+      },
+      {
+        "text": "Thu, Oct 22",
+        "h": 50,
+        "w": 65,
+        "hitH": 50,
+        "hitW": 65,
+        "region": "overlay"
+      },
+      {
+        "text": "Fri, Oct 23",
+        "h": 50,
+        "w": 65,
+        "hitH": 50,
+        "hitW": 65,
+        "region": "overlay"
+      },
+      {
+        "text": "9:00 AM",
+        "h": 44,
+        "w": 114,
+        "hitH": 44,
+        "hitW": 114,
+        "region": "overlay"
+      },
+      {
+        "text": "10:00 AM",
+        "h": 44,
+        "w": 114,
+        "hitH": 44,
+        "hitW": 114,
+        "region": "overlay"
+      },
+      {
+        "text": "1:00 PM",
+        "h": 44,
+        "w": 114,
+        "hitH": 44,
+        "hitW": 114,
+        "region": "overlay"
+      },
+      {
+        "text": "2:30 PM",
+        "h": 44,
+        "w": 114,
+        "hitH": 44,
+        "hitW": 114,
+        "region": "overlay"
+      },
+      {
+        "text": "4:00 PM",
+        "h": 44,
+        "w": 114,
+        "hitH": 44,
+        "hitW": 114,
+        "region": "overlay"
+      },
+      {
+        "text": "Move session",
+        "h": 44,
+        "w": 359,
+        "hitH": 44,
+        "hitW": 359,
+        "region": "overlay"
+      },
+      {
+        "text": "Close",
+        "h": 44,
+        "w": 44,
+        "hitH": 44,
+        "hitW": 44,
+        "region": "overlay"
+      }
+    ],
+    "panels": [
+      576,
+      863
+    ],
+    "tag": true,
+    "opts": {
+      "phone": false,
+      "home": false
+    }
+  },
+  "e09-sessions-cancel-light-desktop-1440x900": {
+    "ok": true,
+    "chromeOk": false,
+    "expectations": [],
+    "state": "cancel",
+    "theme": "light",
+    "viewport": "1440x900",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "dialog": "Cancel Kickoff call? Mon, Oct 19, 9:00 AM – 9:45 AM CDT. It comes off Northwind Studio's calendar. To book again, message them or ask Ava. Keep session Cancel session"
+    },
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Your sessions with Northwind Studio. Upcoming FRI 16 Oct Brand strategy session Today · in 45 min Fri, Oct 16, 4:15 PM – 5:15 PM CDT Phone call Changes closed at 3:15 PM Message Northwind Studio MON 19 Oct Kickoff call Mon, Oct 19, 9:00 AM – 9:45 AM CDT 10:00 AM – 10:45 AM EDT in New York time Zoom Change until Mon, Oct 19, 8:00 AM Join Kickoff call (opens in a new tab) Reschedule Cancel TUE 27 Oct Quarterly review Tue, Oct 27, 2:00 PM – 3:30 PM CDT In person: 14 Harbour Lane, Suite 3 Change until Tue, Oct 27, 1:00 PM Reschedule Cancel Past sessions",
+    "overlayText": [
+      "Cancel Kickoff call? Mon, Oct 19, 9:00 AM – 9:45 AM CDT. It comes off Northwind Studio's calendar. To book again, message them or ask Ava. Keep session Cancel session"
+    ],
+    "navText": "N Northwind Studio Home Messages Your work Documents Resources Client jordan.rivera@example.test Sign Out",
+    "contrastMin": null,
+    "lowPage": [],
+    "overlayContrastMin": 4.6,
+    "lowOverlay": [],
+    "navContrastMin": null,
+    "lowNav": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [
+      {
+        "el": "div",
+        "text": "Client",
+        "hits": [
+          "text",
+          "border"
+        ]
+      }
+    ],
+    "overflowX": false,
+    "overlayOverflow": [
+      {
+        "role": "alertdialog",
+        "over": false,
+        "w": [
+          510,
+          510
+        ],
+        "right": 976,
+        "vw": 1440
+      }
+    ],
+    "dayStrip": null,
+    "widths": {
+      "doc": 1440,
+      "viewport": 1440,
+      "scroller": [
+        863,
+        863
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Keep session",
+        "h": 44,
+        "w": 123,
+        "hitH": 44,
+        "hitW": 123,
+        "region": "overlay"
+      },
+      {
+        "text": "Cancel session",
+        "h": 44,
+        "w": 134,
+        "hitH": 44,
+        "hitW": 134,
+        "region": "overlay"
+      }
+    ],
+    "panels": [
+      576,
+      863
+    ],
+    "tag": true,
+    "opts": {
+      "phone": false,
+      "home": false
+    }
+  },
+  "e09-sessions-cancel-dark-desktop-1440x900": {
+    "ok": true,
+    "chromeOk": false,
+    "expectations": [],
+    "state": "cancel",
+    "theme": "dark",
+    "viewport": "1440x900",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "dialog": "Cancel Kickoff call? Mon, Oct 19, 9:00 AM – 9:45 AM CDT. It comes off Northwind Studio's calendar. To book again, message them or ask Ava. Keep session Cancel session"
+    },
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Your sessions with Northwind Studio. Upcoming FRI 16 Oct Brand strategy session Today · in 45 min Fri, Oct 16, 4:15 PM – 5:15 PM CDT Phone call Changes closed at 3:15 PM Message Northwind Studio MON 19 Oct Kickoff call Mon, Oct 19, 9:00 AM – 9:45 AM CDT 10:00 AM – 10:45 AM EDT in New York time Zoom Change until Mon, Oct 19, 8:00 AM Join Kickoff call (opens in a new tab) Reschedule Cancel TUE 27 Oct Quarterly review Tue, Oct 27, 2:00 PM – 3:30 PM CDT In person: 14 Harbour Lane, Suite 3 Change until Tue, Oct 27, 1:00 PM Reschedule Cancel Past sessions",
+    "overlayText": [
+      "Cancel Kickoff call? Mon, Oct 19, 9:00 AM – 9:45 AM CDT. It comes off Northwind Studio's calendar. To book again, message them or ask Ava. Keep session Cancel session"
+    ],
+    "navText": "N Northwind Studio Home Messages Your work Documents Resources Client jordan.rivera@example.test Sign Out",
+    "contrastMin": null,
+    "lowPage": [],
+    "overlayContrastMin": 4.6,
+    "lowOverlay": [],
+    "navContrastMin": null,
+    "lowNav": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [
+      {
+        "el": "div",
+        "text": "Client",
+        "hits": [
+          "text",
+          "border"
+        ]
+      }
+    ],
+    "overflowX": false,
+    "overlayOverflow": [
+      {
+        "role": "alertdialog",
+        "over": false,
+        "w": [
+          510,
+          510
+        ],
+        "right": 976,
+        "vw": 1440
+      }
+    ],
+    "dayStrip": null,
+    "widths": {
+      "doc": 1440,
+      "viewport": 1440,
+      "scroller": [
+        863,
+        863
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Keep session",
+        "h": 44,
+        "w": 123,
+        "hitH": 44,
+        "hitW": 123,
+        "region": "overlay"
+      },
+      {
+        "text": "Cancel session",
+        "h": 44,
+        "w": 134,
+        "hitH": 44,
+        "hitW": 134,
+        "region": "overlay"
+      }
+    ],
+    "panels": [
+      576,
+      863
+    ],
+    "tag": true,
+    "opts": {
+      "phone": false,
+      "home": false
+    }
+  },
+  "e09-sessions-failed-light-desktop-1440x900": {
+    "ok": true,
+    "chromeOk": false,
+    "expectations": [],
+    "state": "failed",
+    "theme": "light",
+    "viewport": "1440x900",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "refusal": "Changes can't be made online right now. Send a message instead. Message Northwind Studio Dismiss",
+      "heldActions": {
+        "reschedule": 0,
+        "cancel": 0,
+        "messageLinkInAlert": 1,
+        "dismiss": 1,
+        "tryAgain": 0
+      }
+    },
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Your sessions with Northwind Studio. Upcoming FRI 16 Oct Brand strategy session Today · in 45 min Fri, Oct 16, 4:15 PM – 5:15 PM CDT Phone call Changes closed at 3:15 PM Message Northwind Studio MON 19 Oct Kickoff call Mon, Oct 19, 9:00 AM – 9:45 AM CDT 10:00 AM – 10:45 AM EDT in New York time Zoom Change until Mon, Oct 19, 8:00 AM Join Kickoff call (opens in a new tab) Reschedule Cancel TUE 27 Oct Quarterly review Tue, Oct 27, 2:00 PM – 3:30 PM CDT In person: 14 Harbour Lane, Suite 3 Changes can't be made online right now. Send a message instead. Message Northwind Studio Dismiss Past sessions",
+    "overlayText": [],
+    "navText": "N Northwind Studio Home Messages Your work Documents Resources Client jordan.rivera@example.test Sign Out",
+    "contrastMin": 5.2,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 9,
+    "lowNav": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [
+      {
+        "el": "div",
+        "text": "Client",
+        "hits": [
+          "text",
+          "border"
+        ]
+      }
+    ],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 1440,
+      "viewport": 1440,
+      "scroller": [
+        863,
+        863
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Message Northwind Studio",
+        "h": 44,
+        "w": 203,
+        "hitH": 44,
+        "hitW": 203,
+        "region": "page"
+      },
+      {
+        "text": "Join Kickoff call (opens in a new ",
+        "h": 44,
+        "w": 84,
+        "hitH": 44,
+        "hitW": 84,
+        "region": "page"
+      },
+      {
+        "text": "Reschedule",
+        "h": 44,
+        "w": 142,
+        "hitH": 44,
+        "hitW": 142,
+        "region": "page"
+      },
+      {
+        "text": "Cancel",
+        "h": 44,
+        "w": 109,
+        "hitH": 44,
+        "hitW": 109,
+        "region": "page"
+      },
+      {
+        "text": "Message Northwind Studio",
+        "h": 44,
+        "w": 203,
+        "hitH": 44,
+        "hitW": 203,
+        "region": "page"
+      },
+      {
+        "text": "Dismiss",
+        "h": 44,
+        "w": 51,
+        "hitH": 44,
+        "hitW": 51,
+        "region": "page"
+      },
+      {
+        "text": "Past sessions",
+        "h": 44,
+        "w": 129,
+        "hitH": 44,
+        "hitW": 129,
+        "region": "page"
+      },
+      {
+        "text": "NNorthwind Studio",
+        "h": 28,
+        "w": 173,
+        "hitH": 28,
+        "hitW": 173,
+        "region": "nav"
+      },
+      {
+        "text": "Home",
+        "h": 44,
+        "w": 87,
+        "hitH": 44,
+        "hitW": 87,
+        "region": "nav"
+      },
+      {
+        "text": "Messages",
+        "h": 44,
+        "w": 116,
+        "hitH": 44,
+        "hitW": 116,
+        "region": "nav"
+      },
+      {
+        "text": "Your work",
+        "h": 44,
+        "w": 114,
+        "hitH": 44,
+        "hitW": 114,
+        "region": "nav"
+      },
+      {
+        "text": "Documents",
+        "h": 44,
+        "w": 123,
+        "hitH": 44,
+        "hitW": 123,
+        "region": "nav"
+      },
+      {
+        "text": "Resources",
+        "h": 44,
+        "w": 118,
+        "hitH": 44,
+        "hitW": 118,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 40,
+        "w": 40,
+        "hitH": 40,
+        "hitW": 40,
+        "region": "nav"
+      },
+      {
+        "text": "jordan.rivera@example.test",
+        "h": 36,
+        "w": 188,
+        "hitH": 36,
+        "hitW": 188,
+        "region": "nav"
+      },
+      {
+        "text": "Sign Out",
+        "h": 36,
+        "w": 95,
+        "hitH": 36,
+        "hitW": 95,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      576,
+      863
+    ],
+    "tag": true,
+    "opts": {
+      "phone": false,
+      "home": false
+    }
+  },
+  "e09-sessions-failed-dark-desktop-1440x900": {
+    "ok": true,
+    "chromeOk": false,
+    "expectations": [],
+    "state": "failed",
+    "theme": "dark",
+    "viewport": "1440x900",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "refusal": "Changes can't be made online right now. Send a message instead. Message Northwind Studio Dismiss",
+      "heldActions": {
+        "reschedule": 0,
+        "cancel": 0,
+        "messageLinkInAlert": 1,
+        "dismiss": 1,
+        "tryAgain": 0
+      }
+    },
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Your sessions with Northwind Studio. Upcoming FRI 16 Oct Brand strategy session Today · in 45 min Fri, Oct 16, 4:15 PM – 5:15 PM CDT Phone call Changes closed at 3:15 PM Message Northwind Studio MON 19 Oct Kickoff call Mon, Oct 19, 9:00 AM – 9:45 AM CDT 10:00 AM – 10:45 AM EDT in New York time Zoom Change until Mon, Oct 19, 8:00 AM Join Kickoff call (opens in a new tab) Reschedule Cancel TUE 27 Oct Quarterly review Tue, Oct 27, 2:00 PM – 3:30 PM CDT In person: 14 Harbour Lane, Suite 3 Changes can't be made online right now. Send a message instead. Message Northwind Studio Dismiss Past sessions",
+    "overlayText": [],
+    "navText": "N Northwind Studio Home Messages Your work Documents Resources Client jordan.rivera@example.test Sign Out",
+    "contrastMin": 7.27,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 3.25,
+    "lowNav": [
+      {
+        "text": "Client",
+        "ratio": 3.25,
+        "inactive": false,
+        "size": "10px"
+      },
+      {
+        "text": "Sign Out",
+        "ratio": 3.59,
+        "inactive": false,
+        "size": "12px"
+      }
+    ],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [
+      {
+        "el": "div",
+        "text": "Client",
+        "hits": [
+          "text",
+          "border"
+        ]
+      }
+    ],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 1440,
+      "viewport": 1440,
+      "scroller": [
+        863,
+        863
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Message Northwind Studio",
+        "h": 44,
+        "w": 203,
+        "hitH": 44,
+        "hitW": 203,
+        "region": "page"
+      },
+      {
+        "text": "Join Kickoff call (opens in a new ",
+        "h": 44,
+        "w": 84,
+        "hitH": 44,
+        "hitW": 84,
+        "region": "page"
+      },
+      {
+        "text": "Reschedule",
+        "h": 44,
+        "w": 142,
+        "hitH": 44,
+        "hitW": 142,
+        "region": "page"
+      },
+      {
+        "text": "Cancel",
+        "h": 44,
+        "w": 109,
+        "hitH": 44,
+        "hitW": 109,
+        "region": "page"
+      },
+      {
+        "text": "Message Northwind Studio",
+        "h": 44,
+        "w": 203,
+        "hitH": 44,
+        "hitW": 203,
+        "region": "page"
+      },
+      {
+        "text": "Dismiss",
+        "h": 44,
+        "w": 51,
+        "hitH": 44,
+        "hitW": 51,
+        "region": "page"
+      },
+      {
+        "text": "Past sessions",
+        "h": 44,
+        "w": 129,
+        "hitH": 44,
+        "hitW": 129,
+        "region": "page"
+      },
+      {
+        "text": "NNorthwind Studio",
+        "h": 28,
+        "w": 173,
+        "hitH": 28,
+        "hitW": 173,
+        "region": "nav"
+      },
+      {
+        "text": "Home",
+        "h": 44,
+        "w": 87,
+        "hitH": 44,
+        "hitW": 87,
+        "region": "nav"
+      },
+      {
+        "text": "Messages",
+        "h": 44,
+        "w": 116,
+        "hitH": 44,
+        "hitW": 116,
+        "region": "nav"
+      },
+      {
+        "text": "Your work",
+        "h": 44,
+        "w": 114,
+        "hitH": 44,
+        "hitW": 114,
+        "region": "nav"
+      },
+      {
+        "text": "Documents",
+        "h": 44,
+        "w": 123,
+        "hitH": 44,
+        "hitW": 123,
+        "region": "nav"
+      },
+      {
+        "text": "Resources",
+        "h": 44,
+        "w": 118,
+        "hitH": 44,
+        "hitW": 118,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 40,
+        "w": 40,
+        "hitH": 40,
+        "hitW": 40,
+        "region": "nav"
+      },
+      {
+        "text": "jordan.rivera@example.test",
+        "h": 36,
+        "w": 188,
+        "hitH": 36,
+        "hitW": 188,
+        "region": "nav"
+      },
+      {
+        "text": "Sign Out",
+        "h": 36,
+        "w": 95,
+        "hitH": 36,
+        "hitW": 95,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      576,
+      863
+    ],
+    "tag": true,
+    "opts": {
+      "phone": false,
+      "home": false
+    }
+  },
+  "e09-sessions-unavailable-light-desktop-1440x900": {
+    "ok": true,
+    "chromeOk": false,
+    "expectations": [],
+    "state": "unavailable",
+    "theme": "light",
+    "viewport": "1440x900",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {},
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Sessions aren't available on this account Your sessions show here once your account is connected to a business. Sign in with the email your business invited. Back to Home",
+    "overlayText": [],
+    "navText": "Client Portal Home Action items Resources Client Contact Advisor jordan.rivera@example.test Sign Out",
+    "contrastMin": 5.43,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 9,
+    "lowNav": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [
+      {
+        "el": "div",
+        "text": "Client",
+        "hits": [
+          "text",
+          "border"
+        ]
+      }
+    ],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 1440,
+      "viewport": 1440,
+      "scroller": [
+        863,
+        863
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Back to Home",
+        "h": 44,
+        "w": 149,
+        "hitH": 44,
+        "hitW": 149,
+        "region": "page"
+      },
+      {
+        "text": "Client Portal",
+        "h": 24,
+        "w": 97,
+        "hitH": 24,
+        "hitW": 97,
+        "region": "nav"
+      },
+      {
+        "text": "Home",
+        "h": 44,
+        "w": 87,
+        "hitH": 44,
+        "hitW": 87,
+        "region": "nav"
+      },
+      {
+        "text": "Action items",
+        "h": 44,
+        "w": 130,
+        "hitH": 44,
+        "hitW": 130,
+        "region": "nav"
+      },
+      {
+        "text": "Resources",
+        "h": 44,
+        "w": 118,
+        "hitH": 44,
+        "hitW": 118,
+        "region": "nav"
+      },
+      {
+        "text": "Contact Advisor",
+        "h": 36,
+        "w": 139,
+        "hitH": 36,
+        "hitW": 139,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 40,
+        "w": 40,
+        "hitH": 40,
+        "hitW": 40,
+        "region": "nav"
+      },
+      {
+        "text": "jordan.rivera@example.test",
+        "h": 36,
+        "w": 188,
+        "hitH": 36,
+        "hitW": 188,
+        "region": "nav"
+      },
+      {
+        "text": "Sign Out",
+        "h": 36,
+        "w": 95,
+        "hitH": 36,
+        "hitW": 95,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      576,
+      863
+    ],
+    "tag": true,
+    "opts": {
+      "phone": false,
+      "home": false
+    }
+  },
+  "e09-sessions-unavailable-dark-desktop-1440x900": {
+    "ok": true,
+    "chromeOk": false,
+    "expectations": [],
+    "state": "unavailable",
+    "theme": "dark",
+    "viewport": "1440x900",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {},
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Sessions aren't available on this account Your sessions show here once your account is connected to a business. Sign in with the email your business invited. Back to Home",
+    "overlayText": [],
+    "navText": "Client Portal Home Action items Resources Client Contact Advisor jordan.rivera@example.test Sign Out",
+    "contrastMin": 7.27,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 3.25,
+    "lowNav": [
+      {
+        "text": "Client",
+        "ratio": 3.25,
+        "inactive": false,
+        "size": "10px"
+      },
+      {
+        "text": "Contact Advisor",
+        "ratio": 3.59,
+        "inactive": false,
+        "size": "12px"
+      },
+      {
+        "text": "Sign Out",
+        "ratio": 3.59,
+        "inactive": false,
+        "size": "12px"
+      }
+    ],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [
+      {
+        "el": "div",
+        "text": "Client",
+        "hits": [
+          "text",
+          "border"
+        ]
+      }
+    ],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 1440,
+      "viewport": 1440,
+      "scroller": [
+        863,
+        863
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Back to Home",
+        "h": 44,
+        "w": 149,
+        "hitH": 44,
+        "hitW": 149,
+        "region": "page"
+      },
+      {
+        "text": "Client Portal",
+        "h": 24,
+        "w": 97,
+        "hitH": 24,
+        "hitW": 97,
+        "region": "nav"
+      },
+      {
+        "text": "Home",
+        "h": 44,
+        "w": 87,
+        "hitH": 44,
+        "hitW": 87,
+        "region": "nav"
+      },
+      {
+        "text": "Action items",
+        "h": 44,
+        "w": 130,
+        "hitH": 44,
+        "hitW": 130,
+        "region": "nav"
+      },
+      {
+        "text": "Resources",
+        "h": 44,
+        "w": 118,
+        "hitH": 44,
+        "hitW": 118,
+        "region": "nav"
+      },
+      {
+        "text": "Contact Advisor",
+        "h": 36,
+        "w": 139,
+        "hitH": 36,
+        "hitW": 139,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 40,
+        "w": 40,
+        "hitH": 40,
+        "hitW": 40,
+        "region": "nav"
+      },
+      {
+        "text": "jordan.rivera@example.test",
+        "h": 36,
+        "w": 188,
+        "hitH": 36,
+        "hitW": 188,
+        "region": "nav"
+      },
+      {
+        "text": "Sign Out",
+        "h": 36,
+        "w": 95,
+        "hitH": 36,
+        "hitW": 95,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      576,
+      863
+    ],
+    "tag": true,
+    "opts": {
+      "phone": false,
+      "home": false
+    }
+  },
+  "e09-sessions-multiple-light-desktop-1440x900": {
+    "ok": true,
+    "chromeOk": false,
+    "expectations": [],
+    "state": "multiple",
+    "theme": "light",
+    "viewport": "1440x900",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {},
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Sessions for more than one business aren't available yet Your account is connected to more than one business. Sessions here work with one business at a time for now. For help in the meantime, use Support. Back to Home",
+    "overlayText": [],
+    "navText": "Client Portal Home Action items Resources Client Contact Advisor jordan.rivera@example.test Sign Out",
+    "contrastMin": 5.43,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 9,
+    "lowNav": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [
+      {
+        "el": "div",
+        "text": "Client",
+        "hits": [
+          "text",
+          "border"
+        ]
+      }
+    ],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 1440,
+      "viewport": 1440,
+      "scroller": [
+        863,
+        863
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Support",
+        "h": 17,
+        "w": 54,
+        "hitH": 17,
+        "hitW": 54,
+        "region": "page"
+      },
+      {
+        "text": "Back to Home",
+        "h": 44,
+        "w": 149,
+        "hitH": 44,
+        "hitW": 149,
+        "region": "page"
+      },
+      {
+        "text": "Client Portal",
+        "h": 24,
+        "w": 97,
+        "hitH": 24,
+        "hitW": 97,
+        "region": "nav"
+      },
+      {
+        "text": "Home",
+        "h": 44,
+        "w": 87,
+        "hitH": 44,
+        "hitW": 87,
+        "region": "nav"
+      },
+      {
+        "text": "Action items",
+        "h": 44,
+        "w": 130,
+        "hitH": 44,
+        "hitW": 130,
+        "region": "nav"
+      },
+      {
+        "text": "Resources",
+        "h": 44,
+        "w": 118,
+        "hitH": 44,
+        "hitW": 118,
+        "region": "nav"
+      },
+      {
+        "text": "Contact Advisor",
+        "h": 36,
+        "w": 139,
+        "hitH": 36,
+        "hitW": 139,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 40,
+        "w": 40,
+        "hitH": 40,
+        "hitW": 40,
+        "region": "nav"
+      },
+      {
+        "text": "jordan.rivera@example.test",
+        "h": 36,
+        "w": 188,
+        "hitH": 36,
+        "hitW": 188,
+        "region": "nav"
+      },
+      {
+        "text": "Sign Out",
+        "h": 36,
+        "w": 95,
+        "hitH": 36,
+        "hitW": 95,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      576,
+      863
+    ],
+    "tag": true,
+    "opts": {
+      "phone": false,
+      "home": false
+    }
+  },
+  "e09-sessions-multiple-dark-desktop-1440x900": {
+    "ok": true,
+    "chromeOk": false,
+    "expectations": [],
+    "state": "multiple",
+    "theme": "dark",
+    "viewport": "1440x900",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {},
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Sessions for more than one business aren't available yet Your account is connected to more than one business. Sessions here work with one business at a time for now. For help in the meantime, use Support. Back to Home",
+    "overlayText": [],
+    "navText": "Client Portal Home Action items Resources Client Contact Advisor jordan.rivera@example.test Sign Out",
+    "contrastMin": 7.27,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 3.25,
+    "lowNav": [
+      {
+        "text": "Client",
+        "ratio": 3.25,
+        "inactive": false,
+        "size": "10px"
+      },
+      {
+        "text": "Contact Advisor",
+        "ratio": 3.59,
+        "inactive": false,
+        "size": "12px"
+      },
+      {
+        "text": "Sign Out",
+        "ratio": 3.59,
+        "inactive": false,
+        "size": "12px"
+      }
+    ],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [
+      {
+        "el": "div",
+        "text": "Client",
+        "hits": [
+          "text",
+          "border"
+        ]
+      }
+    ],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 1440,
+      "viewport": 1440,
+      "scroller": [
+        863,
+        863
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Support",
+        "h": 17,
+        "w": 54,
+        "hitH": 17,
+        "hitW": 54,
+        "region": "page"
+      },
+      {
+        "text": "Back to Home",
+        "h": 44,
+        "w": 149,
+        "hitH": 44,
+        "hitW": 149,
+        "region": "page"
+      },
+      {
+        "text": "Client Portal",
+        "h": 24,
+        "w": 97,
+        "hitH": 24,
+        "hitW": 97,
+        "region": "nav"
+      },
+      {
+        "text": "Home",
+        "h": 44,
+        "w": 87,
+        "hitH": 44,
+        "hitW": 87,
+        "region": "nav"
+      },
+      {
+        "text": "Action items",
+        "h": 44,
+        "w": 130,
+        "hitH": 44,
+        "hitW": 130,
+        "region": "nav"
+      },
+      {
+        "text": "Resources",
+        "h": 44,
+        "w": 118,
+        "hitH": 44,
+        "hitW": 118,
+        "region": "nav"
+      },
+      {
+        "text": "Contact Advisor",
+        "h": 36,
+        "w": 139,
+        "hitH": 36,
+        "hitW": 139,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 40,
+        "w": 40,
+        "hitH": 40,
+        "hitW": 40,
+        "region": "nav"
+      },
+      {
+        "text": "jordan.rivera@example.test",
+        "h": 36,
+        "w": 188,
+        "hitH": 36,
+        "hitW": 188,
+        "region": "nav"
+      },
+      {
+        "text": "Sign Out",
+        "h": 36,
+        "w": 95,
+        "hitH": 36,
+        "hitW": 95,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      576,
+      863
+    ],
+    "tag": true,
+    "opts": {
+      "phone": false,
+      "home": false
+    }
+  },
+  "e09-sessions-loading-light-desktop-1440x900": {
+    "ok": true,
+    "chromeOk": false,
+    "expectations": [],
+    "state": "loading",
+    "theme": "light",
+    "viewport": "1440x900",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {},
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Your sessions with Northwind Studio. Loading your sessions… Upcoming",
+    "overlayText": [],
+    "navText": "N Northwind Studio Home Messages Your work Documents Resources Client jordan.rivera@example.test Sign Out",
+    "contrastMin": 5.2,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 9,
+    "lowNav": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [
+      {
+        "el": "div",
+        "text": "Client",
+        "hits": [
+          "text",
+          "border"
+        ]
+      }
+    ],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 1440,
+      "viewport": 1440,
+      "scroller": [
+        863,
+        863
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "NNorthwind Studio",
+        "h": 28,
+        "w": 173,
+        "hitH": 28,
+        "hitW": 173,
+        "region": "nav"
+      },
+      {
+        "text": "Home",
+        "h": 44,
+        "w": 87,
+        "hitH": 44,
+        "hitW": 87,
+        "region": "nav"
+      },
+      {
+        "text": "Messages",
+        "h": 44,
+        "w": 116,
+        "hitH": 44,
+        "hitW": 116,
+        "region": "nav"
+      },
+      {
+        "text": "Your work",
+        "h": 44,
+        "w": 114,
+        "hitH": 44,
+        "hitW": 114,
+        "region": "nav"
+      },
+      {
+        "text": "Documents",
+        "h": 44,
+        "w": 123,
+        "hitH": 44,
+        "hitW": 123,
+        "region": "nav"
+      },
+      {
+        "text": "Resources",
+        "h": 44,
+        "w": 118,
+        "hitH": 44,
+        "hitW": 118,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 40,
+        "w": 40,
+        "hitH": 40,
+        "hitW": 40,
+        "region": "nav"
+      },
+      {
+        "text": "jordan.rivera@example.test",
+        "h": 36,
+        "w": 188,
+        "hitH": 36,
+        "hitW": 188,
+        "region": "nav"
+      },
+      {
+        "text": "Sign Out",
+        "h": 36,
+        "w": 95,
+        "hitH": 36,
+        "hitW": 95,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      576,
+      863
+    ],
+    "tag": true,
+    "opts": {
+      "phone": false,
+      "home": false
+    }
+  },
+  "e09-sessions-loading-dark-desktop-1440x900": {
+    "ok": true,
+    "chromeOk": false,
+    "expectations": [],
+    "state": "loading",
+    "theme": "dark",
+    "viewport": "1440x900",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {},
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Your sessions with Northwind Studio. Loading your sessions… Upcoming",
+    "overlayText": [],
+    "navText": "N Northwind Studio Home Messages Your work Documents Resources Client jordan.rivera@example.test Sign Out",
+    "contrastMin": 7.56,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 3.25,
+    "lowNav": [
+      {
+        "text": "Client",
+        "ratio": 3.25,
+        "inactive": false,
+        "size": "10px"
+      },
+      {
+        "text": "Sign Out",
+        "ratio": 3.59,
+        "inactive": false,
+        "size": "12px"
+      }
+    ],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [
+      {
+        "el": "div",
+        "text": "Client",
+        "hits": [
+          "text",
+          "border"
+        ]
+      }
+    ],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 1440,
+      "viewport": 1440,
+      "scroller": [
+        863,
+        863
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "NNorthwind Studio",
+        "h": 28,
+        "w": 173,
+        "hitH": 28,
+        "hitW": 173,
+        "region": "nav"
+      },
+      {
+        "text": "Home",
+        "h": 44,
+        "w": 87,
+        "hitH": 44,
+        "hitW": 87,
+        "region": "nav"
+      },
+      {
+        "text": "Messages",
+        "h": 44,
+        "w": 116,
+        "hitH": 44,
+        "hitW": 116,
+        "region": "nav"
+      },
+      {
+        "text": "Your work",
+        "h": 44,
+        "w": 114,
+        "hitH": 44,
+        "hitW": 114,
+        "region": "nav"
+      },
+      {
+        "text": "Documents",
+        "h": 44,
+        "w": 123,
+        "hitH": 44,
+        "hitW": 123,
+        "region": "nav"
+      },
+      {
+        "text": "Resources",
+        "h": 44,
+        "w": 118,
+        "hitH": 44,
+        "hitW": 118,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 40,
+        "w": 40,
+        "hitH": 40,
+        "hitW": 40,
+        "region": "nav"
+      },
+      {
+        "text": "jordan.rivera@example.test",
+        "h": 36,
+        "w": 188,
+        "hitH": 36,
+        "hitW": 188,
+        "region": "nav"
+      },
+      {
+        "text": "Sign Out",
+        "h": 36,
+        "w": 95,
+        "hitH": 36,
+        "hitW": 95,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      576,
+      863
+    ],
+    "tag": true,
+    "opts": {
+      "phone": false,
+      "home": false
+    }
+  },
+  "e09-sessions-upcoming-light-desktop-past-1440x900": {
+    "ok": true,
+    "chromeOk": false,
+    "expectations": [],
+    "state": "upcoming",
+    "theme": "light",
+    "viewport": "1440x900",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "closedRow": {
+        "hasReschedule": 0,
+        "hasCancel": 0,
+        "messageLink": 1,
+        "text": "FRI 16 Oct Brand strategy session Today · in 45 min Fri, Oct 16, 4:15 PM – 5:15 PM CDT Phone call Changes closed at 3:15 PM Message Northwind Studio"
+      },
+      "onlineRow": {
+        "join": "https://meet.example.test/northwind/kickoff-4821",
+        "joinTarget": "_blank",
+        "otherZone": "10:00 AM – 10:45 AM EDT in New York time",
+        "reschedule": 1,
+        "cancel": 1
+      },
+      "pastPills": [
+        "Brand strategy session · Completed",
+        "Brand strategy session · Cancelled",
+        "Kickoff call · Missed",
+        "Intro consultation · Completed"
+      ],
+      "locations": [
+        "Brand strategy session · Phone call · lucide-phone",
+        "Kickoff call · Zoom · lucide-video",
+        "Quarterly review · In person: 14 Harbour Lane, Suite 3 · lucide-map-pin"
+      ],
+      "pastLocations": [
+        "Zoom · lucide-video",
+        "Zoom · lucide-video",
+        "Phone call · lucide-phone",
+        "Location not recorded · lucide-map-pin"
+      ],
+      "pastPillRights": [
+        1344
+      ],
+      "pastTimeRights": [
+        1236
+      ],
+      "deadlines": [
+        "Changes closed at 3:15 PM",
+        "Change until Mon, Oct 19, 8:00 AM",
+        "Change until Tue, Oct 27, 1:00 PM"
+      ],
+      "pills": [
+        "Today · in 45 min"
+      ],
+      "hostLeak": false
+    },
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Your sessions with Northwind Studio. Upcoming FRI 16 Oct Brand strategy session Today · in 45 min Fri, Oct 16, 4:15 PM – 5:15 PM CDT Phone call Changes closed at 3:15 PM Message Northwind Studio MON 19 Oct Kickoff call Mon, Oct 19, 9:00 AM – 9:45 AM CDT 10:00 AM – 10:45 AM EDT in New York time Zoom Change until Mon, Oct 19, 8:00 AM Join Kickoff call (opens in a new tab) Reschedule Cancel TUE 27 Oct Quarterly review Tue, Oct 27, 2:00 PM – 3:30 PM CDT In person: 14 Harbour Lane, Suite 3 Change until Tue, Oct 27, 1:00 PM Reschedule Cancel Past sessions Fri, Oct 9 Brand strategy session Zoom 10:00 AM – 11:00 AM CDT Completed Fri, Oct 2 Brand strategy session Zoom 10:00 AM – 11:00 AM CDT",
+    "overlayText": [],
+    "navText": "N Northwind Studio Home Messages Your work Documents Resources Client jordan.rivera@example.test Sign Out",
+    "contrastMin": 5.2,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 9,
+    "lowNav": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [
+      {
+        "el": "div",
+        "text": "Client",
+        "hits": [
+          "text",
+          "border"
+        ]
+      }
+    ],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 1440,
+      "viewport": 1440,
+      "scroller": [
+        863,
+        863
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Message Northwind Studio",
+        "h": 44,
+        "w": 203,
+        "hitH": 44,
+        "hitW": 203,
+        "region": "page"
+      },
+      {
+        "text": "Join Kickoff call (opens in a new ",
+        "h": 44,
+        "w": 84,
+        "hitH": 44,
+        "hitW": 84,
+        "region": "page"
+      },
+      {
+        "text": "Reschedule",
+        "h": 44,
+        "w": 142,
+        "hitH": 44,
+        "hitW": 142,
+        "region": "page"
+      },
+      {
+        "text": "Cancel",
+        "h": 44,
+        "w": 109,
+        "hitH": 44,
+        "hitW": 109,
+        "region": "page"
+      },
+      {
+        "text": "Reschedule",
+        "h": 44,
+        "w": 142,
+        "hitH": 44,
+        "hitW": 142,
+        "region": "page"
+      },
+      {
+        "text": "Cancel",
+        "h": 44,
+        "w": 109,
+        "hitH": 44,
+        "hitW": 109,
+        "region": "page"
+      },
+      {
+        "text": "Past sessions",
+        "h": 44,
+        "w": 129,
+        "hitH": 44,
+        "hitW": 129,
+        "region": "page"
+      },
+      {
+        "text": "NNorthwind Studio",
+        "h": 28,
+        "w": 173,
+        "hitH": 28,
+        "hitW": 173,
+        "region": "nav"
+      },
+      {
+        "text": "Home",
+        "h": 44,
+        "w": 87,
+        "hitH": 44,
+        "hitW": 87,
+        "region": "nav"
+      },
+      {
+        "text": "Messages",
+        "h": 44,
+        "w": 116,
+        "hitH": 44,
+        "hitW": 116,
+        "region": "nav"
+      },
+      {
+        "text": "Your work",
+        "h": 44,
+        "w": 114,
+        "hitH": 44,
+        "hitW": 114,
+        "region": "nav"
+      },
+      {
+        "text": "Documents",
+        "h": 44,
+        "w": 123,
+        "hitH": 44,
+        "hitW": 123,
+        "region": "nav"
+      },
+      {
+        "text": "Resources",
+        "h": 44,
+        "w": 118,
+        "hitH": 44,
+        "hitW": 118,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 40,
+        "w": 40,
+        "hitH": 40,
+        "hitW": 40,
+        "region": "nav"
+      },
+      {
+        "text": "jordan.rivera@example.test",
+        "h": 36,
+        "w": 188,
+        "hitH": 36,
+        "hitW": 188,
+        "region": "nav"
+      },
+      {
+        "text": "Sign Out",
+        "h": 36,
+        "w": 95,
+        "hitH": 36,
+        "hitW": 95,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      576,
+      863
+    ],
+    "tag": true,
+    "opts": {
+      "phone": false,
+      "home": false
+    }
+  },
+  "e09-sessions-upcoming-dark-desktop-past-1440x900": {
+    "ok": true,
+    "chromeOk": false,
+    "expectations": [],
+    "state": "upcoming",
+    "theme": "dark",
+    "viewport": "1440x900",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "closedRow": {
+        "hasReschedule": 0,
+        "hasCancel": 0,
+        "messageLink": 1,
+        "text": "FRI 16 Oct Brand strategy session Today · in 45 min Fri, Oct 16, 4:15 PM – 5:15 PM CDT Phone call Changes closed at 3:15 PM Message Northwind Studio"
+      },
+      "onlineRow": {
+        "join": "https://meet.example.test/northwind/kickoff-4821",
+        "joinTarget": "_blank",
+        "otherZone": "10:00 AM – 10:45 AM EDT in New York time",
+        "reschedule": 1,
+        "cancel": 1
+      },
+      "pastPills": [
+        "Brand strategy session · Completed",
+        "Brand strategy session · Cancelled",
+        "Kickoff call · Missed",
+        "Intro consultation · Completed"
+      ],
+      "locations": [
+        "Brand strategy session · Phone call · lucide-phone",
+        "Kickoff call · Zoom · lucide-video",
+        "Quarterly review · In person: 14 Harbour Lane, Suite 3 · lucide-map-pin"
+      ],
+      "pastLocations": [
+        "Zoom · lucide-video",
+        "Zoom · lucide-video",
+        "Phone call · lucide-phone",
+        "Location not recorded · lucide-map-pin"
+      ],
+      "pastPillRights": [
+        1344
+      ],
+      "pastTimeRights": [
+        1236
+      ],
+      "deadlines": [
+        "Changes closed at 3:15 PM",
+        "Change until Mon, Oct 19, 8:00 AM",
+        "Change until Tue, Oct 27, 1:00 PM"
+      ],
+      "pills": [
+        "Today · in 45 min"
+      ],
+      "hostLeak": false
+    },
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Your sessions with Northwind Studio. Upcoming FRI 16 Oct Brand strategy session Today · in 45 min Fri, Oct 16, 4:15 PM – 5:15 PM CDT Phone call Changes closed at 3:15 PM Message Northwind Studio MON 19 Oct Kickoff call Mon, Oct 19, 9:00 AM – 9:45 AM CDT 10:00 AM – 10:45 AM EDT in New York time Zoom Change until Mon, Oct 19, 8:00 AM Join Kickoff call (opens in a new tab) Reschedule Cancel TUE 27 Oct Quarterly review Tue, Oct 27, 2:00 PM – 3:30 PM CDT In person: 14 Harbour Lane, Suite 3 Change until Tue, Oct 27, 1:00 PM Reschedule Cancel Past sessions Fri, Oct 9 Brand strategy session Zoom 10:00 AM – 11:00 AM CDT Completed Fri, Oct 2 Brand strategy session Zoom 10:00 AM – 11:00 AM CDT",
+    "overlayText": [],
+    "navText": "N Northwind Studio Home Messages Your work Documents Resources Client jordan.rivera@example.test Sign Out",
+    "contrastMin": 7.27,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 3.25,
+    "lowNav": [
+      {
+        "text": "Client",
+        "ratio": 3.25,
+        "inactive": false,
+        "size": "10px"
+      },
+      {
+        "text": "Sign Out",
+        "ratio": 3.59,
+        "inactive": false,
+        "size": "12px"
+      }
+    ],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [
+      {
+        "el": "div",
+        "text": "Client",
+        "hits": [
+          "text",
+          "border"
+        ]
+      }
+    ],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 1440,
+      "viewport": 1440,
+      "scroller": [
+        863,
+        863
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Message Northwind Studio",
+        "h": 44,
+        "w": 203,
+        "hitH": 44,
+        "hitW": 203,
+        "region": "page"
+      },
+      {
+        "text": "Join Kickoff call (opens in a new ",
+        "h": 44,
+        "w": 84,
+        "hitH": 44,
+        "hitW": 84,
+        "region": "page"
+      },
+      {
+        "text": "Reschedule",
+        "h": 44,
+        "w": 142,
+        "hitH": 44,
+        "hitW": 142,
+        "region": "page"
+      },
+      {
+        "text": "Cancel",
+        "h": 44,
+        "w": 109,
+        "hitH": 44,
+        "hitW": 109,
+        "region": "page"
+      },
+      {
+        "text": "Reschedule",
+        "h": 44,
+        "w": 142,
+        "hitH": 44,
+        "hitW": 142,
+        "region": "page"
+      },
+      {
+        "text": "Cancel",
+        "h": 44,
+        "w": 109,
+        "hitH": 44,
+        "hitW": 109,
+        "region": "page"
+      },
+      {
+        "text": "Past sessions",
+        "h": 44,
+        "w": 129,
+        "hitH": 44,
+        "hitW": 129,
+        "region": "page"
+      },
+      {
+        "text": "NNorthwind Studio",
+        "h": 28,
+        "w": 173,
+        "hitH": 28,
+        "hitW": 173,
+        "region": "nav"
+      },
+      {
+        "text": "Home",
+        "h": 44,
+        "w": 87,
+        "hitH": 44,
+        "hitW": 87,
+        "region": "nav"
+      },
+      {
+        "text": "Messages",
+        "h": 44,
+        "w": 116,
+        "hitH": 44,
+        "hitW": 116,
+        "region": "nav"
+      },
+      {
+        "text": "Your work",
+        "h": 44,
+        "w": 114,
+        "hitH": 44,
+        "hitW": 114,
+        "region": "nav"
+      },
+      {
+        "text": "Documents",
+        "h": 44,
+        "w": 123,
+        "hitH": 44,
+        "hitW": 123,
+        "region": "nav"
+      },
+      {
+        "text": "Resources",
+        "h": 44,
+        "w": 118,
+        "hitH": 44,
+        "hitW": 118,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 40,
+        "w": 40,
+        "hitH": 40,
+        "hitW": 40,
+        "region": "nav"
+      },
+      {
+        "text": "jordan.rivera@example.test",
+        "h": 36,
+        "w": 188,
+        "hitH": 36,
+        "hitW": 188,
+        "region": "nav"
+      },
+      {
+        "text": "Sign Out",
+        "h": 36,
+        "w": 95,
+        "hitH": 36,
+        "hitW": 95,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      576,
+      863
+    ],
+    "tag": true,
+    "opts": {
+      "phone": false,
+      "home": false
+    }
+  },
+  "e09-sessions-upcoming-light-phone-390x844": {
+    "ok": true,
+    "chromeOk": true,
+    "expectations": [],
+    "state": "upcoming",
+    "theme": "light",
+    "viewport": "390x844",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "closedRow": {
+        "hasReschedule": 0,
+        "hasCancel": 0,
+        "messageLink": 1,
+        "text": "FRI 16 Oct Brand strategy session Today · in 45 min Fri, Oct 16, 4:15 PM – 5:15 PM CDT Phone call Changes closed at 3:15 PM Message Northwind Studio"
+      },
+      "onlineRow": {
+        "join": "https://meet.example.test/northwind/kickoff-4821",
+        "joinTarget": "_blank",
+        "otherZone": "10:00 AM – 10:45 AM EDT in New York time",
+        "reschedule": 1,
+        "cancel": 1
+      },
+      "pastPills": [
+        "Brand strategy session · Completed",
+        "Brand strategy session · Cancelled",
+        "Kickoff call · Missed",
+        "Intro consultation · Completed"
+      ],
+      "locations": [
+        "Brand strategy session · Phone call · lucide-phone",
+        "Kickoff call · Zoom · lucide-video",
+        "Quarterly review · In person: 14 Harbour Lane, Suite 3 · lucide-map-pin"
+      ],
+      "pastLocations": [
+        "Zoom · lucide-video",
+        "Zoom · lucide-video",
+        "Phone call · lucide-phone",
+        "Location not recorded · lucide-map-pin"
+      ],
+      "pastPillRights": [
+        374
+      ],
+      "pastTimeRights": [
+        266
+      ],
+      "deadlines": [
+        "Changes closed at 3:15 PM",
+        "You can change this until Mon, Oct 19, 8:00 AM",
+        "You can change this until Tue, Oct 27, 1:00 PM"
+      ],
+      "pills": [
+        "Today · in 45 min"
+      ],
+      "hostLeak": false
+    },
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Your sessions with Northwind Studio. Upcoming FRI 16 Oct Brand strategy session Today · in 45 min Fri, Oct 16, 4:15 PM – 5:15 PM CDT Phone call Changes closed at 3:15 PM Message Northwind Studio MON 19 Oct Kickoff call Mon, Oct 19, 9:00 AM – 9:45 AM CDT 10:00 AM – 10:45 AM EDT in New York time Zoom You can change this until Mon, Oct 19, 8:00 AM Join Kickoff call (opens in a new tab) Reschedule Cancel TUE 27 Oct Quarterly review Tue, Oct 27, 2:00 PM – 3:30 PM CDT In person: 14 Harbour Lane, Suite 3 You can change this until Tue, Oct 27, 1:00 PM Reschedule Cancel Past sessions Brand strategy session Zoom Fri, Oct 9 · 10:00 AM – 11:00 AM CDT Completed Brand strategy session Zoom Fri, O",
+    "overlayText": [],
+    "navText": "Northwind Studio",
+    "contrastMin": 5.2,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 17.82,
+    "lowNav": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 390,
+      "viewport": 390,
+      "scroller": [
+        390,
+        390
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Message Northwind Studio",
+        "h": 44,
+        "w": 203,
+        "hitH": 44,
+        "hitW": 203,
+        "region": "page"
+      },
+      {
+        "text": "Join Kickoff call (opens in a new ",
+        "h": 44,
+        "w": 158,
+        "hitH": 44,
+        "hitW": 158,
+        "region": "page"
+      },
+      {
+        "text": "Reschedule",
+        "h": 44,
+        "w": 158,
+        "hitH": 44,
+        "hitW": 158,
+        "region": "page"
+      },
+      {
+        "text": "Cancel",
+        "h": 44,
+        "w": 324,
+        "hitH": 44,
+        "hitW": 324,
+        "region": "page"
+      },
+      {
+        "text": "Reschedule",
+        "h": 44,
+        "w": 324,
+        "hitH": 44,
+        "hitW": 324,
+        "region": "page"
+      },
+      {
+        "text": "Cancel",
+        "h": 44,
+        "w": 324,
+        "hitH": 44,
+        "hitW": 324,
+        "region": "page"
+      },
+      {
+        "text": "Past sessions",
+        "h": 44,
+        "w": 129,
+        "hitH": 44,
+        "hitW": 129,
+        "region": "page"
+      },
+      {
+        "text": "Open navigation",
+        "h": 44,
+        "w": 44,
+        "hitH": 44,
+        "hitW": 44,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 44,
+        "w": 44,
+        "hitH": 44,
+        "hitW": 44,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      0,
+      390
+    ],
+    "tag": true,
+    "opts": {
+      "phone": true,
+      "home": false
+    }
+  },
+  "e09-sessions-upcoming-dark-phone-390x844": {
+    "ok": true,
+    "chromeOk": true,
+    "expectations": [],
+    "state": "upcoming",
+    "theme": "dark",
+    "viewport": "390x844",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "closedRow": {
+        "hasReschedule": 0,
+        "hasCancel": 0,
+        "messageLink": 1,
+        "text": "FRI 16 Oct Brand strategy session Today · in 45 min Fri, Oct 16, 4:15 PM – 5:15 PM CDT Phone call Changes closed at 3:15 PM Message Northwind Studio"
+      },
+      "onlineRow": {
+        "join": "https://meet.example.test/northwind/kickoff-4821",
+        "joinTarget": "_blank",
+        "otherZone": "10:00 AM – 10:45 AM EDT in New York time",
+        "reschedule": 1,
+        "cancel": 1
+      },
+      "pastPills": [
+        "Brand strategy session · Completed",
+        "Brand strategy session · Cancelled",
+        "Kickoff call · Missed",
+        "Intro consultation · Completed"
+      ],
+      "locations": [
+        "Brand strategy session · Phone call · lucide-phone",
+        "Kickoff call · Zoom · lucide-video",
+        "Quarterly review · In person: 14 Harbour Lane, Suite 3 · lucide-map-pin"
+      ],
+      "pastLocations": [
+        "Zoom · lucide-video",
+        "Zoom · lucide-video",
+        "Phone call · lucide-phone",
+        "Location not recorded · lucide-map-pin"
+      ],
+      "pastPillRights": [
+        374
+      ],
+      "pastTimeRights": [
+        266
+      ],
+      "deadlines": [
+        "Changes closed at 3:15 PM",
+        "You can change this until Mon, Oct 19, 8:00 AM",
+        "You can change this until Tue, Oct 27, 1:00 PM"
+      ],
+      "pills": [
+        "Today · in 45 min"
+      ],
+      "hostLeak": false
+    },
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Your sessions with Northwind Studio. Upcoming FRI 16 Oct Brand strategy session Today · in 45 min Fri, Oct 16, 4:15 PM – 5:15 PM CDT Phone call Changes closed at 3:15 PM Message Northwind Studio MON 19 Oct Kickoff call Mon, Oct 19, 9:00 AM – 9:45 AM CDT 10:00 AM – 10:45 AM EDT in New York time Zoom You can change this until Mon, Oct 19, 8:00 AM Join Kickoff call (opens in a new tab) Reschedule Cancel TUE 27 Oct Quarterly review Tue, Oct 27, 2:00 PM – 3:30 PM CDT In person: 14 Harbour Lane, Suite 3 You can change this until Tue, Oct 27, 1:00 PM Reschedule Cancel Past sessions Brand strategy session Zoom Fri, Oct 9 · 10:00 AM – 11:00 AM CDT Completed Brand strategy session Zoom Fri, O",
+    "overlayText": [],
+    "navText": "Northwind Studio",
+    "contrastMin": 7.27,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 5.62,
+    "lowNav": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 390,
+      "viewport": 390,
+      "scroller": [
+        390,
+        390
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Message Northwind Studio",
+        "h": 44,
+        "w": 203,
+        "hitH": 44,
+        "hitW": 203,
+        "region": "page"
+      },
+      {
+        "text": "Join Kickoff call (opens in a new ",
+        "h": 44,
+        "w": 158,
+        "hitH": 44,
+        "hitW": 158,
+        "region": "page"
+      },
+      {
+        "text": "Reschedule",
+        "h": 44,
+        "w": 158,
+        "hitH": 44,
+        "hitW": 158,
+        "region": "page"
+      },
+      {
+        "text": "Cancel",
+        "h": 44,
+        "w": 324,
+        "hitH": 44,
+        "hitW": 324,
+        "region": "page"
+      },
+      {
+        "text": "Reschedule",
+        "h": 44,
+        "w": 324,
+        "hitH": 44,
+        "hitW": 324,
+        "region": "page"
+      },
+      {
+        "text": "Cancel",
+        "h": 44,
+        "w": 324,
+        "hitH": 44,
+        "hitW": 324,
+        "region": "page"
+      },
+      {
+        "text": "Past sessions",
+        "h": 44,
+        "w": 129,
+        "hitH": 44,
+        "hitW": 129,
+        "region": "page"
+      },
+      {
+        "text": "Open navigation",
+        "h": 44,
+        "w": 44,
+        "hitH": 44,
+        "hitW": 44,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 44,
+        "w": 44,
+        "hitH": 44,
+        "hitW": 44,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      0,
+      390
+    ],
+    "tag": true,
+    "opts": {
+      "phone": true,
+      "home": false
+    }
+  },
+  "e09-sessions-reschedule-light-phone-390x844": {
+    "ok": true,
+    "chromeOk": true,
+    "expectations": [],
+    "state": "reschedule",
+    "theme": "light",
+    "viewport": "390x844",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "dayCount": 5,
+      "timesOnDay2": [
+        "9:00 AM",
+        "10:00 AM",
+        "1:00 PM",
+        "2:30 PM",
+        "4:00 PM"
+      ],
+      "confirm": "Move session",
+      "confirmEnabled": true,
+      "offersCurrentStart": false
+    },
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Your sessions with Northwind Studio. Upcoming FRI 16 Oct Brand strategy session Today · in 45 min Fri, Oct 16, 4:15 PM – 5:15 PM CDT Phone call Changes closed at 3:15 PM Message Northwind Studio MON 19 Oct Kickoff call Mon, Oct 19, 9:00 AM – 9:45 AM CDT 10:00 AM – 10:45 AM EDT in New York time Zoom You can change this until Mon, Oct 19, 8:00 AM Join Kickoff call (opens in a new tab) Reschedule Cancel TUE 27 Oct Quarterly review Tue, Oct 27, 2:00 PM – 3:30 PM CDT In person: 14 Harbour Lane, Suite 3 You can change this until Tue, Oct 27, 1:00 PM Reschedule Cancel Past sessions",
+    "overlayText": [
+      "Reschedule Kickoff call Now Mon, Oct 19, 9:00 AM. Pick a new time and it updates on Northwind Studio's calendar. MON Oct 19 TUE Oct 20 WED Oct 21 THU Oct 22 FRI Oct 23 9:00 AM 10:00 AM 1:00 PM 2:30 PM 4:00 PM Times are shown in your time zone (CDT). From Mon 9:00 AM to Tue 10:00 AM Move session Close"
+    ],
+    "navText": "Northwind Studio",
+    "contrastMin": null,
+    "lowPage": [],
+    "overlayContrastMin": 5.2,
+    "lowOverlay": [],
+    "navContrastMin": null,
+    "lowNav": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [],
+    "overflowX": false,
+    "overlayOverflow": [
+      {
+        "role": "dialog",
+        "over": false,
+        "w": [
+          389,
+          389
+        ],
+        "right": 390,
+        "vw": 390
+      }
+    ],
+    "dayStrip": {
+      "scrollWidth": 349,
+      "clientWidth": 349
+    },
+    "widths": {
+      "doc": 390,
+      "viewport": 390,
+      "scroller": [
+        390,
+        390
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Mon, Oct 19",
+        "h": 50,
+        "w": 111,
+        "hitH": 50,
+        "hitW": 111,
+        "region": "overlay"
+      },
+      {
+        "text": "Tue, Oct 20",
+        "h": 50,
+        "w": 111,
+        "hitH": 50,
+        "hitW": 111,
+        "region": "overlay"
+      },
+      {
+        "text": "Wed, Oct 21",
+        "h": 50,
+        "w": 111,
+        "hitH": 50,
+        "hitW": 111,
+        "region": "overlay"
+      },
+      {
+        "text": "Thu, Oct 22",
+        "h": 50,
+        "w": 111,
+        "hitH": 50,
+        "hitW": 111,
+        "region": "overlay"
+      },
+      {
+        "text": "Fri, Oct 23",
+        "h": 50,
+        "w": 111,
+        "hitH": 50,
+        "hitW": 111,
+        "region": "overlay"
+      },
+      {
+        "text": "9:00 AM",
+        "h": 44,
+        "w": 171,
+        "hitH": 44,
+        "hitW": 171,
+        "region": "overlay"
+      },
+      {
+        "text": "10:00 AM",
+        "h": 44,
+        "w": 171,
+        "hitH": 44,
+        "hitW": 171,
+        "region": "overlay"
+      },
+      {
+        "text": "1:00 PM",
+        "h": 44,
+        "w": 171,
+        "hitH": 44,
+        "hitW": 171,
+        "region": "overlay"
+      },
+      {
+        "text": "2:30 PM",
+        "h": 44,
+        "w": 171,
+        "hitH": 44,
+        "hitW": 171,
+        "region": "overlay"
+      },
+      {
+        "text": "4:00 PM",
+        "h": 44,
+        "w": 171,
+        "hitH": 44,
+        "hitW": 171,
+        "region": "overlay"
+      },
+      {
+        "text": "Move session",
+        "h": 44,
+        "w": 349,
+        "hitH": 44,
+        "hitW": 349,
+        "region": "overlay"
+      },
+      {
+        "text": "Close",
+        "h": 44,
+        "w": 44,
+        "hitH": 44,
+        "hitW": 44,
+        "region": "overlay"
+      }
+    ],
+    "panels": [
+      0,
+      390
+    ],
+    "tag": true,
+    "opts": {
+      "phone": true,
+      "home": false
+    }
+  },
+  "e09-sessions-reschedule-dark-phone-390x844": {
+    "ok": true,
+    "chromeOk": true,
+    "expectations": [],
+    "state": "reschedule",
+    "theme": "dark",
+    "viewport": "390x844",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "dayCount": 5,
+      "timesOnDay2": [
+        "9:00 AM",
+        "10:00 AM",
+        "1:00 PM",
+        "2:30 PM",
+        "4:00 PM"
+      ],
+      "confirm": "Move session",
+      "confirmEnabled": true,
+      "offersCurrentStart": false
+    },
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Your sessions with Northwind Studio. Upcoming FRI 16 Oct Brand strategy session Today · in 45 min Fri, Oct 16, 4:15 PM – 5:15 PM CDT Phone call Changes closed at 3:15 PM Message Northwind Studio MON 19 Oct Kickoff call Mon, Oct 19, 9:00 AM – 9:45 AM CDT 10:00 AM – 10:45 AM EDT in New York time Zoom You can change this until Mon, Oct 19, 8:00 AM Join Kickoff call (opens in a new tab) Reschedule Cancel TUE 27 Oct Quarterly review Tue, Oct 27, 2:00 PM – 3:30 PM CDT In person: 14 Harbour Lane, Suite 3 You can change this until Tue, Oct 27, 1:00 PM Reschedule Cancel Past sessions",
+    "overlayText": [
+      "Reschedule Kickoff call Now Mon, Oct 19, 9:00 AM. Pick a new time and it updates on Northwind Studio's calendar. MON Oct 19 TUE Oct 20 WED Oct 21 THU Oct 22 FRI Oct 23 9:00 AM 10:00 AM 1:00 PM 2:30 PM 4:00 PM Times are shown in your time zone (CDT). From Mon 9:00 AM to Tue 10:00 AM Move session Close"
+    ],
+    "navText": "Northwind Studio",
+    "contrastMin": null,
+    "lowPage": [],
+    "overlayContrastMin": 7.56,
+    "lowOverlay": [],
+    "navContrastMin": null,
+    "lowNav": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [],
+    "overflowX": false,
+    "overlayOverflow": [
+      {
+        "role": "dialog",
+        "over": false,
+        "w": [
+          389,
+          389
+        ],
+        "right": 390,
+        "vw": 390
+      }
+    ],
+    "dayStrip": {
+      "scrollWidth": 349,
+      "clientWidth": 349
+    },
+    "widths": {
+      "doc": 390,
+      "viewport": 390,
+      "scroller": [
+        390,
+        390
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Mon, Oct 19",
+        "h": 50,
+        "w": 111,
+        "hitH": 50,
+        "hitW": 111,
+        "region": "overlay"
+      },
+      {
+        "text": "Tue, Oct 20",
+        "h": 50,
+        "w": 111,
+        "hitH": 50,
+        "hitW": 111,
+        "region": "overlay"
+      },
+      {
+        "text": "Wed, Oct 21",
+        "h": 50,
+        "w": 111,
+        "hitH": 50,
+        "hitW": 111,
+        "region": "overlay"
+      },
+      {
+        "text": "Thu, Oct 22",
+        "h": 50,
+        "w": 111,
+        "hitH": 50,
+        "hitW": 111,
+        "region": "overlay"
+      },
+      {
+        "text": "Fri, Oct 23",
+        "h": 50,
+        "w": 111,
+        "hitH": 50,
+        "hitW": 111,
+        "region": "overlay"
+      },
+      {
+        "text": "9:00 AM",
+        "h": 44,
+        "w": 171,
+        "hitH": 44,
+        "hitW": 171,
+        "region": "overlay"
+      },
+      {
+        "text": "10:00 AM",
+        "h": 44,
+        "w": 171,
+        "hitH": 44,
+        "hitW": 171,
+        "region": "overlay"
+      },
+      {
+        "text": "1:00 PM",
+        "h": 44,
+        "w": 171,
+        "hitH": 44,
+        "hitW": 171,
+        "region": "overlay"
+      },
+      {
+        "text": "2:30 PM",
+        "h": 44,
+        "w": 171,
+        "hitH": 44,
+        "hitW": 171,
+        "region": "overlay"
+      },
+      {
+        "text": "4:00 PM",
+        "h": 44,
+        "w": 171,
+        "hitH": 44,
+        "hitW": 171,
+        "region": "overlay"
+      },
+      {
+        "text": "Move session",
+        "h": 44,
+        "w": 349,
+        "hitH": 44,
+        "hitW": 349,
+        "region": "overlay"
+      },
+      {
+        "text": "Close",
+        "h": 44,
+        "w": 44,
+        "hitH": 44,
+        "hitW": 44,
+        "region": "overlay"
+      }
+    ],
+    "panels": [
+      0,
+      390
+    ],
+    "tag": true,
+    "opts": {
+      "phone": true,
+      "home": false
+    }
+  },
+  "e09-sessions-cancel-light-phone-390x844": {
+    "ok": true,
+    "chromeOk": true,
+    "expectations": [],
+    "state": "cancel",
+    "theme": "light",
+    "viewport": "390x844",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "dialog": "Cancel Kickoff call? Mon, Oct 19, 9:00 AM – 9:45 AM CDT. It comes off Northwind Studio's calendar. To book again, message them or ask Ava. Keep session Cancel session"
+    },
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Your sessions with Northwind Studio. Upcoming FRI 16 Oct Brand strategy session Today · in 45 min Fri, Oct 16, 4:15 PM – 5:15 PM CDT Phone call Changes closed at 3:15 PM Message Northwind Studio MON 19 Oct Kickoff call Mon, Oct 19, 9:00 AM – 9:45 AM CDT 10:00 AM – 10:45 AM EDT in New York time Zoom You can change this until Mon, Oct 19, 8:00 AM Join Kickoff call (opens in a new tab) Reschedule Cancel TUE 27 Oct Quarterly review Tue, Oct 27, 2:00 PM – 3:30 PM CDT In person: 14 Harbour Lane, Suite 3 You can change this until Tue, Oct 27, 1:00 PM Reschedule Cancel Past sessions",
+    "overlayText": [
+      "Cancel Kickoff call? Mon, Oct 19, 9:00 AM – 9:45 AM CDT. It comes off Northwind Studio's calendar. To book again, message them or ask Ava. Keep session Cancel session"
+    ],
+    "navText": "Northwind Studio",
+    "contrastMin": null,
+    "lowPage": [],
+    "overlayContrastMin": 4.6,
+    "lowOverlay": [],
+    "navContrastMin": null,
+    "lowNav": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [],
+    "overflowX": false,
+    "overlayOverflow": [
+      {
+        "role": "alertdialog",
+        "over": false,
+        "w": [
+          356,
+          356
+        ],
+        "right": 374,
+        "vw": 390
+      }
+    ],
+    "dayStrip": null,
+    "widths": {
+      "doc": 390,
+      "viewport": 390,
+      "scroller": [
+        390,
+        390
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Keep session",
+        "h": 44,
+        "w": 308,
+        "hitH": 44,
+        "hitW": 308,
+        "region": "overlay"
+      },
+      {
+        "text": "Cancel session",
+        "h": 44,
+        "w": 308,
+        "hitH": 44,
+        "hitW": 308,
+        "region": "overlay"
+      }
+    ],
+    "panels": [
+      0,
+      390
+    ],
+    "tag": true,
+    "opts": {
+      "phone": true,
+      "home": false
+    }
+  },
+  "e09-sessions-cancel-dark-phone-390x844": {
+    "ok": true,
+    "chromeOk": true,
+    "expectations": [],
+    "state": "cancel",
+    "theme": "dark",
+    "viewport": "390x844",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "dialog": "Cancel Kickoff call? Mon, Oct 19, 9:00 AM – 9:45 AM CDT. It comes off Northwind Studio's calendar. To book again, message them or ask Ava. Keep session Cancel session"
+    },
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Your sessions with Northwind Studio. Upcoming FRI 16 Oct Brand strategy session Today · in 45 min Fri, Oct 16, 4:15 PM – 5:15 PM CDT Phone call Changes closed at 3:15 PM Message Northwind Studio MON 19 Oct Kickoff call Mon, Oct 19, 9:00 AM – 9:45 AM CDT 10:00 AM – 10:45 AM EDT in New York time Zoom You can change this until Mon, Oct 19, 8:00 AM Join Kickoff call (opens in a new tab) Reschedule Cancel TUE 27 Oct Quarterly review Tue, Oct 27, 2:00 PM – 3:30 PM CDT In person: 14 Harbour Lane, Suite 3 You can change this until Tue, Oct 27, 1:00 PM Reschedule Cancel Past sessions",
+    "overlayText": [
+      "Cancel Kickoff call? Mon, Oct 19, 9:00 AM – 9:45 AM CDT. It comes off Northwind Studio's calendar. To book again, message them or ask Ava. Keep session Cancel session"
+    ],
+    "navText": "Northwind Studio",
+    "contrastMin": null,
+    "lowPage": [],
+    "overlayContrastMin": 4.6,
+    "lowOverlay": [],
+    "navContrastMin": null,
+    "lowNav": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [],
+    "overflowX": false,
+    "overlayOverflow": [
+      {
+        "role": "alertdialog",
+        "over": false,
+        "w": [
+          356,
+          356
+        ],
+        "right": 374,
+        "vw": 390
+      }
+    ],
+    "dayStrip": null,
+    "widths": {
+      "doc": 390,
+      "viewport": 390,
+      "scroller": [
+        390,
+        390
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Keep session",
+        "h": 44,
+        "w": 308,
+        "hitH": 44,
+        "hitW": 308,
+        "region": "overlay"
+      },
+      {
+        "text": "Cancel session",
+        "h": 44,
+        "w": 308,
+        "hitH": 44,
+        "hitW": 308,
+        "region": "overlay"
+      }
+    ],
+    "panels": [
+      0,
+      390
+    ],
+    "tag": true,
+    "opts": {
+      "phone": true,
+      "home": false
+    }
+  },
+  "e09-sessions-failed-light-phone-390x844": {
+    "ok": true,
+    "chromeOk": true,
+    "expectations": [],
+    "state": "failed",
+    "theme": "light",
+    "viewport": "390x844",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "refusal": "Changes can't be made online right now. Send a message instead. Message Northwind Studio Dismiss",
+      "heldActions": {
+        "reschedule": 0,
+        "cancel": 0,
+        "messageLinkInAlert": 1,
+        "dismiss": 1,
+        "tryAgain": 0
+      }
+    },
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Your sessions with Northwind Studio. Upcoming FRI 16 Oct Brand strategy session Today · in 45 min Fri, Oct 16, 4:15 PM – 5:15 PM CDT Phone call Changes closed at 3:15 PM Message Northwind Studio MON 19 Oct Kickoff call Mon, Oct 19, 9:00 AM – 9:45 AM CDT 10:00 AM – 10:45 AM EDT in New York time Zoom You can change this until Mon, Oct 19, 8:00 AM Join Kickoff call (opens in a new tab) Reschedule Cancel TUE 27 Oct Quarterly review Tue, Oct 27, 2:00 PM – 3:30 PM CDT In person: 14 Harbour Lane, Suite 3 Changes can't be made online right now. Send a message instead. Message Northwind Studio Dismiss Past sessions",
+    "overlayText": [],
+    "navText": "Northwind Studio",
+    "contrastMin": 5.2,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 17.82,
+    "lowNav": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 390,
+      "viewport": 390,
+      "scroller": [
+        390,
+        390
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Message Northwind Studio",
+        "h": 44,
+        "w": 203,
+        "hitH": 44,
+        "hitW": 203,
+        "region": "page"
+      },
+      {
+        "text": "Join Kickoff call (opens in a new ",
+        "h": 44,
+        "w": 158,
+        "hitH": 44,
+        "hitW": 158,
+        "region": "page"
+      },
+      {
+        "text": "Reschedule",
+        "h": 44,
+        "w": 158,
+        "hitH": 44,
+        "hitW": 158,
+        "region": "page"
+      },
+      {
+        "text": "Cancel",
+        "h": 44,
+        "w": 324,
+        "hitH": 44,
+        "hitW": 324,
+        "region": "page"
+      },
+      {
+        "text": "Message Northwind Studio",
+        "h": 44,
+        "w": 203,
+        "hitH": 44,
+        "hitW": 203,
+        "region": "page"
+      },
+      {
+        "text": "Dismiss",
+        "h": 44,
+        "w": 51,
+        "hitH": 44,
+        "hitW": 51,
+        "region": "page"
+      },
+      {
+        "text": "Past sessions",
+        "h": 44,
+        "w": 129,
+        "hitH": 44,
+        "hitW": 129,
+        "region": "page"
+      },
+      {
+        "text": "Open navigation",
+        "h": 44,
+        "w": 44,
+        "hitH": 44,
+        "hitW": 44,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 44,
+        "w": 44,
+        "hitH": 44,
+        "hitW": 44,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      0,
+      390
+    ],
+    "tag": true,
+    "opts": {
+      "phone": true,
+      "home": false
+    }
+  },
+  "e09-sessions-failed-dark-phone-390x844": {
+    "ok": true,
+    "chromeOk": true,
+    "expectations": [],
+    "state": "failed",
+    "theme": "dark",
+    "viewport": "390x844",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "refusal": "Changes can't be made online right now. Send a message instead. Message Northwind Studio Dismiss",
+      "heldActions": {
+        "reschedule": 0,
+        "cancel": 0,
+        "messageLinkInAlert": 1,
+        "dismiss": 1,
+        "tryAgain": 0
+      }
+    },
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Your sessions with Northwind Studio. Upcoming FRI 16 Oct Brand strategy session Today · in 45 min Fri, Oct 16, 4:15 PM – 5:15 PM CDT Phone call Changes closed at 3:15 PM Message Northwind Studio MON 19 Oct Kickoff call Mon, Oct 19, 9:00 AM – 9:45 AM CDT 10:00 AM – 10:45 AM EDT in New York time Zoom You can change this until Mon, Oct 19, 8:00 AM Join Kickoff call (opens in a new tab) Reschedule Cancel TUE 27 Oct Quarterly review Tue, Oct 27, 2:00 PM – 3:30 PM CDT In person: 14 Harbour Lane, Suite 3 Changes can't be made online right now. Send a message instead. Message Northwind Studio Dismiss Past sessions",
+    "overlayText": [],
+    "navText": "Northwind Studio",
+    "contrastMin": 7.27,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 5.62,
+    "lowNav": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 390,
+      "viewport": 390,
+      "scroller": [
+        390,
+        390
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Message Northwind Studio",
+        "h": 44,
+        "w": 203,
+        "hitH": 44,
+        "hitW": 203,
+        "region": "page"
+      },
+      {
+        "text": "Join Kickoff call (opens in a new ",
+        "h": 44,
+        "w": 158,
+        "hitH": 44,
+        "hitW": 158,
+        "region": "page"
+      },
+      {
+        "text": "Reschedule",
+        "h": 44,
+        "w": 158,
+        "hitH": 44,
+        "hitW": 158,
+        "region": "page"
+      },
+      {
+        "text": "Cancel",
+        "h": 44,
+        "w": 324,
+        "hitH": 44,
+        "hitW": 324,
+        "region": "page"
+      },
+      {
+        "text": "Message Northwind Studio",
+        "h": 44,
+        "w": 203,
+        "hitH": 44,
+        "hitW": 203,
+        "region": "page"
+      },
+      {
+        "text": "Dismiss",
+        "h": 44,
+        "w": 51,
+        "hitH": 44,
+        "hitW": 51,
+        "region": "page"
+      },
+      {
+        "text": "Past sessions",
+        "h": 44,
+        "w": 129,
+        "hitH": 44,
+        "hitW": 129,
+        "region": "page"
+      },
+      {
+        "text": "Open navigation",
+        "h": 44,
+        "w": 44,
+        "hitH": 44,
+        "hitW": 44,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 44,
+        "w": 44,
+        "hitH": 44,
+        "hitW": 44,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      0,
+      390
+    ],
+    "tag": true,
+    "opts": {
+      "phone": true,
+      "home": false
+    }
+  },
+  "e09-sessions-hover-light-desktop-1440x900": {
+    "ok": true,
+    "chromeOk": false,
+    "expectations": [],
+    "state": "hover",
+    "theme": "light",
+    "viewport": "1440x900",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "rescheduleHover": {
+        "fill": "rgb(242, 240, 244)",
+        "text": "rgb(4, 20, 57)"
+      },
+      "cancelHover": {
+        "fill": "rgb(242, 240, 244)",
+        "text": "rgb(4, 20, 57)"
+      }
+    },
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Your sessions with Northwind Studio. Upcoming FRI 16 Oct Brand strategy session Today · in 45 min Fri, Oct 16, 4:15 PM – 5:15 PM CDT Phone call Changes closed at 3:15 PM Message Northwind Studio MON 19 Oct Kickoff call Mon, Oct 19, 9:00 AM – 9:45 AM CDT 10:00 AM – 10:45 AM EDT in New York time Zoom Change until Mon, Oct 19, 8:00 AM Join Kickoff call (opens in a new tab) Reschedule Cancel TUE 27 Oct Quarterly review Tue, Oct 27, 2:00 PM – 3:30 PM CDT In person: 14 Harbour Lane, Suite 3 Change until Tue, Oct 27, 1:00 PM Reschedule Cancel Past sessions",
+    "overlayText": [],
+    "navText": "N Northwind Studio Home Messages Your work Documents Resources Client jordan.rivera@example.test Sign Out",
+    "contrastMin": 5.2,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 9,
+    "lowNav": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [
+      {
+        "el": "div",
+        "text": "Client",
+        "hits": [
+          "text",
+          "border"
+        ]
+      }
+    ],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 1440,
+      "viewport": 1440,
+      "scroller": [
+        863,
+        863
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Message Northwind Studio",
+        "h": 44,
+        "w": 203,
+        "hitH": 44,
+        "hitW": 203,
+        "region": "page"
+      },
+      {
+        "text": "Join Kickoff call (opens in a new ",
+        "h": 44,
+        "w": 84,
+        "hitH": 44,
+        "hitW": 84,
+        "region": "page"
+      },
+      {
+        "text": "Reschedule",
+        "h": 44,
+        "w": 142,
+        "hitH": 44,
+        "hitW": 142,
+        "region": "page"
+      },
+      {
+        "text": "Cancel",
+        "h": 44,
+        "w": 109,
+        "hitH": 44,
+        "hitW": 109,
+        "region": "page"
+      },
+      {
+        "text": "Reschedule",
+        "h": 44,
+        "w": 142,
+        "hitH": 44,
+        "hitW": 142,
+        "region": "page"
+      },
+      {
+        "text": "Cancel",
+        "h": 44,
+        "w": 109,
+        "hitH": 44,
+        "hitW": 109,
+        "region": "page"
+      },
+      {
+        "text": "Past sessions",
+        "h": 44,
+        "w": 129,
+        "hitH": 44,
+        "hitW": 129,
+        "region": "page"
+      },
+      {
+        "text": "NNorthwind Studio",
+        "h": 28,
+        "w": 173,
+        "hitH": 28,
+        "hitW": 173,
+        "region": "nav"
+      },
+      {
+        "text": "Home",
+        "h": 44,
+        "w": 87,
+        "hitH": 44,
+        "hitW": 87,
+        "region": "nav"
+      },
+      {
+        "text": "Messages",
+        "h": 44,
+        "w": 116,
+        "hitH": 44,
+        "hitW": 116,
+        "region": "nav"
+      },
+      {
+        "text": "Your work",
+        "h": 44,
+        "w": 114,
+        "hitH": 44,
+        "hitW": 114,
+        "region": "nav"
+      },
+      {
+        "text": "Documents",
+        "h": 44,
+        "w": 123,
+        "hitH": 44,
+        "hitW": 123,
+        "region": "nav"
+      },
+      {
+        "text": "Resources",
+        "h": 44,
+        "w": 118,
+        "hitH": 44,
+        "hitW": 118,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 40,
+        "w": 40,
+        "hitH": 40,
+        "hitW": 40,
+        "region": "nav"
+      },
+      {
+        "text": "jordan.rivera@example.test",
+        "h": 36,
+        "w": 188,
+        "hitH": 36,
+        "hitW": 188,
+        "region": "nav"
+      },
+      {
+        "text": "Sign Out",
+        "h": 36,
+        "w": 95,
+        "hitH": 36,
+        "hitW": 95,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      576,
+      863
+    ],
+    "tag": true,
+    "opts": {
+      "phone": false,
+      "home": false
+    }
+  },
+  "e09-sessions-hover-dark-desktop-1440x900": {
+    "ok": true,
+    "chromeOk": false,
+    "expectations": [],
+    "state": "hover",
+    "theme": "dark",
+    "viewport": "1440x900",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "rescheduleHover": {
+        "fill": "rgb(31, 23, 43)",
+        "text": "rgb(245, 245, 245)"
+      },
+      "cancelHover": {
+        "fill": "rgb(31, 23, 43)",
+        "text": "rgb(245, 245, 245)"
+      }
+    },
+    "smallTargets": [],
+    "heading": "Sessions",
+    "pageText": "Sessions Your sessions with Northwind Studio. Upcoming FRI 16 Oct Brand strategy session Today · in 45 min Fri, Oct 16, 4:15 PM – 5:15 PM CDT Phone call Changes closed at 3:15 PM Message Northwind Studio MON 19 Oct Kickoff call Mon, Oct 19, 9:00 AM – 9:45 AM CDT 10:00 AM – 10:45 AM EDT in New York time Zoom Change until Mon, Oct 19, 8:00 AM Join Kickoff call (opens in a new tab) Reschedule Cancel TUE 27 Oct Quarterly review Tue, Oct 27, 2:00 PM – 3:30 PM CDT In person: 14 Harbour Lane, Suite 3 Change until Tue, Oct 27, 1:00 PM Reschedule Cancel Past sessions",
+    "overlayText": [],
+    "navText": "N Northwind Studio Home Messages Your work Documents Resources Client jordan.rivera@example.test Sign Out",
+    "contrastMin": 7.27,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 3.25,
+    "lowNav": [
+      {
+        "text": "Client",
+        "ratio": 3.25,
+        "inactive": false,
+        "size": "10px"
+      },
+      {
+        "text": "Sign Out",
+        "ratio": 3.59,
+        "inactive": false,
+        "size": "12px"
+      }
+    ],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [
+      {
+        "el": "div",
+        "text": "Client",
+        "hits": [
+          "text",
+          "border"
+        ]
+      }
+    ],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 1440,
+      "viewport": 1440,
+      "scroller": [
+        863,
+        863
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Message Northwind Studio",
+        "h": 44,
+        "w": 203,
+        "hitH": 44,
+        "hitW": 203,
+        "region": "page"
+      },
+      {
+        "text": "Join Kickoff call (opens in a new ",
+        "h": 44,
+        "w": 84,
+        "hitH": 44,
+        "hitW": 84,
+        "region": "page"
+      },
+      {
+        "text": "Reschedule",
+        "h": 44,
+        "w": 142,
+        "hitH": 44,
+        "hitW": 142,
+        "region": "page"
+      },
+      {
+        "text": "Cancel",
+        "h": 44,
+        "w": 109,
+        "hitH": 44,
+        "hitW": 109,
+        "region": "page"
+      },
+      {
+        "text": "Reschedule",
+        "h": 44,
+        "w": 142,
+        "hitH": 44,
+        "hitW": 142,
+        "region": "page"
+      },
+      {
+        "text": "Cancel",
+        "h": 44,
+        "w": 109,
+        "hitH": 44,
+        "hitW": 109,
+        "region": "page"
+      },
+      {
+        "text": "Past sessions",
+        "h": 44,
+        "w": 129,
+        "hitH": 44,
+        "hitW": 129,
+        "region": "page"
+      },
+      {
+        "text": "NNorthwind Studio",
+        "h": 28,
+        "w": 173,
+        "hitH": 28,
+        "hitW": 173,
+        "region": "nav"
+      },
+      {
+        "text": "Home",
+        "h": 44,
+        "w": 87,
+        "hitH": 44,
+        "hitW": 87,
+        "region": "nav"
+      },
+      {
+        "text": "Messages",
+        "h": 44,
+        "w": 116,
+        "hitH": 44,
+        "hitW": 116,
+        "region": "nav"
+      },
+      {
+        "text": "Your work",
+        "h": 44,
+        "w": 114,
+        "hitH": 44,
+        "hitW": 114,
+        "region": "nav"
+      },
+      {
+        "text": "Documents",
+        "h": 44,
+        "w": 123,
+        "hitH": 44,
+        "hitW": 123,
+        "region": "nav"
+      },
+      {
+        "text": "Resources",
+        "h": 44,
+        "w": 118,
+        "hitH": 44,
+        "hitW": 118,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 40,
+        "w": 40,
+        "hitH": 40,
+        "hitW": 40,
+        "region": "nav"
+      },
+      {
+        "text": "jordan.rivera@example.test",
+        "h": 36,
+        "w": 188,
+        "hitH": 36,
+        "hitW": 188,
+        "region": "nav"
+      },
+      {
+        "text": "Sign Out",
+        "h": 36,
+        "w": 95,
+        "hitH": 36,
+        "hitW": 95,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      576,
+      863
+    ],
+    "tag": true,
+    "opts": {
+      "phone": false,
+      "home": false
+    }
+  },
+  "e09-sessions-home-light-desktop-1440x900": {
+    "ok": true,
+    "chromeOk": false,
+    "expectations": [],
+    "state": "home",
+    "theme": "light",
+    "viewport": "1440x900",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "tile": "Next session Today · in 45 min 4:15 PM CDT Brand strategy session Changes closed",
+      "headline": "Today · in 45 min",
+      "closedLine": 1,
+      "tileBook": 1,
+      "homeText": "Set your first goal Tell Ava what you're working toward and you'll map the path together. Set your first goal Your progress Couldn't check right now Open Progress to try again. Open progress Next session Today · in 45 min 4:15 PM CDT Brand strategy session Changes closed Book a session Documents Couldn't check right now Open Documents to try again. Open documents Ask Ava Ask Ava a question anytime. Send your first message Your next steps Couldn't check right now Open your action items to try again. Open action items",
+      "bookPrefill": "Help me schedule my next session",
+      "tileOpens": "/app/sessions"
+    },
+    "smallTargets": [],
+    "heading": null,
+    "pageText": "Next session Today · in 45 min 4:15 PM CDT Brand strategy session Changes closed Book a session",
+    "overlayText": [],
+    "navText": "N Northwind Studio Home Messages Your work Documents Resources Client jordan.rivera@example.test Sign Out",
+    "contrastMin": 5.43,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 9,
+    "lowNav": [],
+    "homeTileFound": true,
+    "wholePageContrastMin": 5.43,
+    "lowWholePage": [],
+    "goldWholePage": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [
+      {
+        "el": "div",
+        "text": "Client",
+        "hits": [
+          "text",
+          "border"
+        ]
+      }
+    ],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 1440,
+      "viewport": 1440,
+      "scroller": [
+        863,
+        863
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Next sessionToday · in 45 min4:15 ",
+        "h": 167,
+        "w": 398,
+        "hitH": 167,
+        "hitW": 398,
+        "region": "page"
+      },
+      {
+        "text": "Book a session",
+        "h": 36,
+        "w": 155,
+        "hitH": 46,
+        "hitW": 155,
+        "region": "page"
+      },
+      {
+        "text": "NNorthwind Studio",
+        "h": 28,
+        "w": 173,
+        "hitH": 28,
+        "hitW": 173,
+        "region": "nav"
+      },
+      {
+        "text": "Home",
+        "h": 44,
+        "w": 88,
+        "hitH": 44,
+        "hitW": 88,
+        "region": "nav"
+      },
+      {
+        "text": "Messages",
+        "h": 44,
+        "w": 116,
+        "hitH": 44,
+        "hitW": 116,
+        "region": "nav"
+      },
+      {
+        "text": "Your work",
+        "h": 44,
+        "w": 113,
+        "hitH": 44,
+        "hitW": 113,
+        "region": "nav"
+      },
+      {
+        "text": "Documents",
+        "h": 44,
+        "w": 123,
+        "hitH": 44,
+        "hitW": 123,
+        "region": "nav"
+      },
+      {
+        "text": "Resources",
+        "h": 44,
+        "w": 118,
+        "hitH": 44,
+        "hitW": 118,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 40,
+        "w": 40,
+        "hitH": 40,
+        "hitW": 40,
+        "region": "nav"
+      },
+      {
+        "text": "jordan.rivera@example.test",
+        "h": 36,
+        "w": 188,
+        "hitH": 36,
+        "hitW": 188,
+        "region": "nav"
+      },
+      {
+        "text": "Sign Out",
+        "h": 36,
+        "w": 95,
+        "hitH": 36,
+        "hitW": 95,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      576,
+      863
+    ],
+    "tag": true,
+    "opts": {
+      "phone": false,
+      "home": true
+    }
+  },
+  "e09-sessions-home-hover-light-desktop-1440x900": {
+    "ok": true,
+    "chromeOk": false,
+    "expectations": [],
+    "state": "home-hover",
+    "theme": "light",
+    "viewport": "1440x900",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "bookHover": {
+        "fill": "rgb(242, 240, 244)",
+        "text": "rgb(4, 20, 57)",
+        "h": 36
+      },
+      "bookHovered": true
+    },
+    "smallTargets": [],
+    "heading": null,
+    "pageText": "Next session Today · in 45 min 4:15 PM CDT Brand strategy session Changes closed Book a session",
+    "overlayText": [],
+    "navText": "N Northwind Studio Home Messages Your work Documents Resources Client jordan.rivera@example.test Sign Out",
+    "contrastMin": 5.43,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 9,
+    "lowNav": [],
+    "homeTileFound": true,
+    "wholePageContrastMin": 5.43,
+    "lowWholePage": [],
+    "goldWholePage": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [
+      {
+        "el": "div",
+        "text": "Client",
+        "hits": [
+          "text",
+          "border"
+        ]
+      }
+    ],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 1440,
+      "viewport": 1440,
+      "scroller": [
+        863,
+        863
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Next sessionToday · in 45 min4:15 ",
+        "h": 167,
+        "w": 398,
+        "hitH": 167,
+        "hitW": 398,
+        "region": "page"
+      },
+      {
+        "text": "Book a session",
+        "h": 36,
+        "w": 155,
+        "hitH": 46,
+        "hitW": 155,
+        "region": "page"
+      },
+      {
+        "text": "NNorthwind Studio",
+        "h": 28,
+        "w": 173,
+        "hitH": 28,
+        "hitW": 173,
+        "region": "nav"
+      },
+      {
+        "text": "Home",
+        "h": 44,
+        "w": 88,
+        "hitH": 44,
+        "hitW": 88,
+        "region": "nav"
+      },
+      {
+        "text": "Messages",
+        "h": 44,
+        "w": 116,
+        "hitH": 44,
+        "hitW": 116,
+        "region": "nav"
+      },
+      {
+        "text": "Your work",
+        "h": 44,
+        "w": 113,
+        "hitH": 44,
+        "hitW": 113,
+        "region": "nav"
+      },
+      {
+        "text": "Documents",
+        "h": 44,
+        "w": 123,
+        "hitH": 44,
+        "hitW": 123,
+        "region": "nav"
+      },
+      {
+        "text": "Resources",
+        "h": 44,
+        "w": 118,
+        "hitH": 44,
+        "hitW": 118,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 40,
+        "w": 40,
+        "hitH": 40,
+        "hitW": 40,
+        "region": "nav"
+      },
+      {
+        "text": "jordan.rivera@example.test",
+        "h": 36,
+        "w": 188,
+        "hitH": 36,
+        "hitW": 188,
+        "region": "nav"
+      },
+      {
+        "text": "Sign Out",
+        "h": 36,
+        "w": 95,
+        "hitH": 36,
+        "hitW": 95,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      576,
+      863
+    ],
+    "tag": true,
+    "opts": {
+      "phone": false,
+      "home": true
+    }
+  },
+  "e09-sessions-home-empty-light-desktop-1440x900": {
+    "ok": true,
+    "chromeOk": false,
+    "expectations": [],
+    "state": "home-empty",
+    "theme": "light",
+    "viewport": "1440x900",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "tile": "No upcoming sessions When Northwind Studio books a time with you, it shows up in Sessions. Message Northwind Studio Book a session",
+      "tileActions": [
+        "Message Northwind Studio",
+        "Book a session"
+      ]
+    },
+    "smallTargets": [],
+    "heading": null,
+    "pageText": "No upcoming sessions When Northwind Studio books a time with you, it shows up in Sessions. Message Northwind Studio Book a session",
+    "overlayText": [],
+    "navText": "N Northwind Studio Home Messages Your work Documents Resources Client jordan.rivera@example.test Sign Out",
+    "contrastMin": 5.43,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 9,
+    "lowNav": [],
+    "homeTileFound": true,
+    "wholePageContrastMin": 5.43,
+    "lowWholePage": [],
+    "goldWholePage": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [
+      {
+        "el": "div",
+        "text": "Client",
+        "hits": [
+          "text",
+          "border"
+        ]
+      }
+    ],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 1440,
+      "viewport": 1440,
+      "scroller": [
+        863,
+        863
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Message Northwind Studio",
+        "h": 36,
+        "w": 207,
+        "hitH": 46,
+        "hitW": 207,
+        "region": "page"
+      },
+      {
+        "text": "Book a session",
+        "h": 36,
+        "w": 155,
+        "hitH": 46,
+        "hitW": 155,
+        "region": "page"
+      },
+      {
+        "text": "NNorthwind Studio",
+        "h": 28,
+        "w": 173,
+        "hitH": 28,
+        "hitW": 173,
+        "region": "nav"
+      },
+      {
+        "text": "Home",
+        "h": 44,
+        "w": 88,
+        "hitH": 44,
+        "hitW": 88,
+        "region": "nav"
+      },
+      {
+        "text": "Messages",
+        "h": 44,
+        "w": 116,
+        "hitH": 44,
+        "hitW": 116,
+        "region": "nav"
+      },
+      {
+        "text": "Your work",
+        "h": 44,
+        "w": 113,
+        "hitH": 44,
+        "hitW": 113,
+        "region": "nav"
+      },
+      {
+        "text": "Documents",
+        "h": 44,
+        "w": 123,
+        "hitH": 44,
+        "hitW": 123,
+        "region": "nav"
+      },
+      {
+        "text": "Resources",
+        "h": 44,
+        "w": 118,
+        "hitH": 44,
+        "hitW": 118,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 40,
+        "w": 40,
+        "hitH": 40,
+        "hitW": 40,
+        "region": "nav"
+      },
+      {
+        "text": "jordan.rivera@example.test",
+        "h": 36,
+        "w": 188,
+        "hitH": 36,
+        "hitW": 188,
+        "region": "nav"
+      },
+      {
+        "text": "Sign Out",
+        "h": 36,
+        "w": 95,
+        "hitH": 36,
+        "hitW": 95,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      576,
+      863
+    ],
+    "tag": true,
+    "opts": {
+      "phone": false,
+      "home": true
+    }
+  },
+  "e09-sessions-home-light-phone-390x844": {
+    "ok": true,
+    "chromeOk": true,
+    "expectations": [],
+    "state": "home",
+    "theme": "light",
+    "viewport": "390x844",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "tile": "Next session Today · in 45 min 4:15 PM CDT Brand strategy session Changes closed",
+      "headline": "Today · in 45 min",
+      "closedLine": 1,
+      "tileBook": 1,
+      "homeText": "Set your first goal Tell Ava what you're working toward and you'll map the path together. Set your first goal Your progress Couldn't check right now Open Progress to try again. Open progress Next session Today · in 45 min 4:15 PM CDT Brand strategy session Changes closed Book a session Documents Couldn't check right now Open Documents to try again. Open documents Ask Ava Ask Ava a question anytime. Send your first message Your next steps Couldn't check right now Open your action items to try again. Open action items",
+      "bookPrefill": "Help me schedule my next session",
+      "tileOpens": "/app/sessions"
+    },
+    "smallTargets": [],
+    "heading": null,
+    "pageText": "Next session Today · in 45 min 4:15 PM CDT Brand strategy session Changes closed Book a session",
+    "overlayText": [],
+    "navText": "Northwind Studio",
+    "contrastMin": 5.43,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 17.82,
+    "lowNav": [],
+    "homeTileFound": true,
+    "wholePageContrastMin": 5.43,
+    "lowWholePage": [],
+    "goldWholePage": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 390,
+      "viewport": 390,
+      "scroller": [
+        390,
+        390
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Next sessionToday · in 45 min4:15 ",
+        "h": 167,
+        "w": 356,
+        "hitH": 167,
+        "hitW": 356,
+        "region": "page"
+      },
+      {
+        "text": "Book a session",
+        "h": 36,
+        "w": 155,
+        "hitH": 46,
+        "hitW": 155,
+        "region": "page"
+      },
+      {
+        "text": "Open navigation",
+        "h": 44,
+        "w": 44,
+        "hitH": 44,
+        "hitW": 44,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 44,
+        "w": 44,
+        "hitH": 44,
+        "hitW": 44,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      0,
+      390
+    ],
+    "tag": true,
+    "opts": {
+      "phone": true,
+      "home": true
+    }
+  },
+  "e09-sessions-home-dark-desktop-1440x900": {
+    "ok": true,
+    "chromeOk": false,
+    "expectations": [],
+    "state": "home",
+    "theme": "dark",
+    "viewport": "1440x900",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "tile": "Next session Today · in 45 min 4:15 PM CDT Brand strategy session Changes closed",
+      "headline": "Today · in 45 min",
+      "closedLine": 1,
+      "tileBook": 1,
+      "homeText": "Set your first goal Tell Ava what you're working toward and you'll map the path together. Set your first goal Your progress Couldn't check right now Open Progress to try again. Open progress Next session Today · in 45 min 4:15 PM CDT Brand strategy session Changes closed Book a session Documents Couldn't check right now Open Documents to try again. Open documents Ask Ava Ask Ava a question anytime. Send your first message Your next steps Couldn't check right now Open your action items to try again. Open action items",
+      "bookPrefill": "Help me schedule my next session",
+      "tileOpens": "/app/sessions"
+    },
+    "smallTargets": [],
+    "heading": null,
+    "pageText": "Next session Today · in 45 min 4:15 PM CDT Brand strategy session Changes closed Book a session",
+    "overlayText": [],
+    "navText": "N Northwind Studio Home Messages Your work Documents Resources Client jordan.rivera@example.test Sign Out",
+    "contrastMin": 7.27,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 3.25,
+    "lowNav": [
+      {
+        "text": "Client",
+        "ratio": 3.25,
+        "inactive": false,
+        "size": "10px"
+      },
+      {
+        "text": "Sign Out",
+        "ratio": 3.59,
+        "inactive": false,
+        "size": "12px"
+      }
+    ],
+    "homeTileFound": true,
+    "wholePageContrastMin": 7.27,
+    "lowWholePage": [],
+    "goldWholePage": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [
+      {
+        "el": "div",
+        "text": "Client",
+        "hits": [
+          "text",
+          "border"
+        ]
+      }
+    ],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 1440,
+      "viewport": 1440,
+      "scroller": [
+        863,
+        863
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Next sessionToday · in 45 min4:15 ",
+        "h": 167,
+        "w": 398,
+        "hitH": 167,
+        "hitW": 398,
+        "region": "page"
+      },
+      {
+        "text": "Book a session",
+        "h": 36,
+        "w": 155,
+        "hitH": 46,
+        "hitW": 155,
+        "region": "page"
+      },
+      {
+        "text": "NNorthwind Studio",
+        "h": 28,
+        "w": 173,
+        "hitH": 28,
+        "hitW": 173,
+        "region": "nav"
+      },
+      {
+        "text": "Home",
+        "h": 44,
+        "w": 88,
+        "hitH": 44,
+        "hitW": 88,
+        "region": "nav"
+      },
+      {
+        "text": "Messages",
+        "h": 44,
+        "w": 116,
+        "hitH": 44,
+        "hitW": 116,
+        "region": "nav"
+      },
+      {
+        "text": "Your work",
+        "h": 44,
+        "w": 113,
+        "hitH": 44,
+        "hitW": 113,
+        "region": "nav"
+      },
+      {
+        "text": "Documents",
+        "h": 44,
+        "w": 123,
+        "hitH": 44,
+        "hitW": 123,
+        "region": "nav"
+      },
+      {
+        "text": "Resources",
+        "h": 44,
+        "w": 118,
+        "hitH": 44,
+        "hitW": 118,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 40,
+        "w": 40,
+        "hitH": 40,
+        "hitW": 40,
+        "region": "nav"
+      },
+      {
+        "text": "jordan.rivera@example.test",
+        "h": 36,
+        "w": 188,
+        "hitH": 36,
+        "hitW": 188,
+        "region": "nav"
+      },
+      {
+        "text": "Sign Out",
+        "h": 36,
+        "w": 95,
+        "hitH": 36,
+        "hitW": 95,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      576,
+      863
+    ],
+    "tag": true,
+    "opts": {
+      "phone": false,
+      "home": true
+    }
+  },
+  "e09-sessions-home-hover-dark-desktop-1440x900": {
+    "ok": true,
+    "chromeOk": false,
+    "expectations": [],
+    "state": "home-hover",
+    "theme": "dark",
+    "viewport": "1440x900",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "bookHover": {
+        "fill": "rgb(31, 23, 43)",
+        "text": "rgb(245, 245, 245)",
+        "h": 36
+      },
+      "bookHovered": true
+    },
+    "smallTargets": [],
+    "heading": null,
+    "pageText": "Next session Today · in 45 min 4:15 PM CDT Brand strategy session Changes closed Book a session",
+    "overlayText": [],
+    "navText": "N Northwind Studio Home Messages Your work Documents Resources Client jordan.rivera@example.test Sign Out",
+    "contrastMin": 7.27,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 3.25,
+    "lowNav": [
+      {
+        "text": "Client",
+        "ratio": 3.25,
+        "inactive": false,
+        "size": "10px"
+      },
+      {
+        "text": "Sign Out",
+        "ratio": 3.59,
+        "inactive": false,
+        "size": "12px"
+      }
+    ],
+    "homeTileFound": true,
+    "wholePageContrastMin": 7.27,
+    "lowWholePage": [],
+    "goldWholePage": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [
+      {
+        "el": "div",
+        "text": "Client",
+        "hits": [
+          "text",
+          "border"
+        ]
+      }
+    ],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 1440,
+      "viewport": 1440,
+      "scroller": [
+        863,
+        863
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Next sessionToday · in 45 min4:15 ",
+        "h": 167,
+        "w": 398,
+        "hitH": 167,
+        "hitW": 398,
+        "region": "page"
+      },
+      {
+        "text": "Book a session",
+        "h": 36,
+        "w": 155,
+        "hitH": 46,
+        "hitW": 155,
+        "region": "page"
+      },
+      {
+        "text": "NNorthwind Studio",
+        "h": 28,
+        "w": 173,
+        "hitH": 28,
+        "hitW": 173,
+        "region": "nav"
+      },
+      {
+        "text": "Home",
+        "h": 44,
+        "w": 88,
+        "hitH": 44,
+        "hitW": 88,
+        "region": "nav"
+      },
+      {
+        "text": "Messages",
+        "h": 44,
+        "w": 116,
+        "hitH": 44,
+        "hitW": 116,
+        "region": "nav"
+      },
+      {
+        "text": "Your work",
+        "h": 44,
+        "w": 113,
+        "hitH": 44,
+        "hitW": 113,
+        "region": "nav"
+      },
+      {
+        "text": "Documents",
+        "h": 44,
+        "w": 123,
+        "hitH": 44,
+        "hitW": 123,
+        "region": "nav"
+      },
+      {
+        "text": "Resources",
+        "h": 44,
+        "w": 118,
+        "hitH": 44,
+        "hitW": 118,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 40,
+        "w": 40,
+        "hitH": 40,
+        "hitW": 40,
+        "region": "nav"
+      },
+      {
+        "text": "jordan.rivera@example.test",
+        "h": 36,
+        "w": 188,
+        "hitH": 36,
+        "hitW": 188,
+        "region": "nav"
+      },
+      {
+        "text": "Sign Out",
+        "h": 36,
+        "w": 95,
+        "hitH": 36,
+        "hitW": 95,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      576,
+      863
+    ],
+    "tag": true,
+    "opts": {
+      "phone": false,
+      "home": true
+    }
+  },
+  "e09-sessions-home-empty-dark-desktop-1440x900": {
+    "ok": true,
+    "chromeOk": false,
+    "expectations": [],
+    "state": "home-empty",
+    "theme": "dark",
+    "viewport": "1440x900",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "tile": "No upcoming sessions When Northwind Studio books a time with you, it shows up in Sessions. Message Northwind Studio Book a session",
+      "tileActions": [
+        "Message Northwind Studio",
+        "Book a session"
+      ]
+    },
+    "smallTargets": [],
+    "heading": null,
+    "pageText": "No upcoming sessions When Northwind Studio books a time with you, it shows up in Sessions. Message Northwind Studio Book a session",
+    "overlayText": [],
+    "navText": "N Northwind Studio Home Messages Your work Documents Resources Client jordan.rivera@example.test Sign Out",
+    "contrastMin": 7.27,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 3.25,
+    "lowNav": [
+      {
+        "text": "Client",
+        "ratio": 3.25,
+        "inactive": false,
+        "size": "10px"
+      },
+      {
+        "text": "Sign Out",
+        "ratio": 3.59,
+        "inactive": false,
+        "size": "12px"
+      }
+    ],
+    "homeTileFound": true,
+    "wholePageContrastMin": 7.27,
+    "lowWholePage": [],
+    "goldWholePage": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [
+      {
+        "el": "div",
+        "text": "Client",
+        "hits": [
+          "text",
+          "border"
+        ]
+      }
+    ],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 1440,
+      "viewport": 1440,
+      "scroller": [
+        863,
+        863
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Message Northwind Studio",
+        "h": 36,
+        "w": 207,
+        "hitH": 46,
+        "hitW": 207,
+        "region": "page"
+      },
+      {
+        "text": "Book a session",
+        "h": 36,
+        "w": 155,
+        "hitH": 46,
+        "hitW": 155,
+        "region": "page"
+      },
+      {
+        "text": "NNorthwind Studio",
+        "h": 28,
+        "w": 173,
+        "hitH": 28,
+        "hitW": 173,
+        "region": "nav"
+      },
+      {
+        "text": "Home",
+        "h": 44,
+        "w": 88,
+        "hitH": 44,
+        "hitW": 88,
+        "region": "nav"
+      },
+      {
+        "text": "Messages",
+        "h": 44,
+        "w": 116,
+        "hitH": 44,
+        "hitW": 116,
+        "region": "nav"
+      },
+      {
+        "text": "Your work",
+        "h": 44,
+        "w": 113,
+        "hitH": 44,
+        "hitW": 113,
+        "region": "nav"
+      },
+      {
+        "text": "Documents",
+        "h": 44,
+        "w": 123,
+        "hitH": 44,
+        "hitW": 123,
+        "region": "nav"
+      },
+      {
+        "text": "Resources",
+        "h": 44,
+        "w": 118,
+        "hitH": 44,
+        "hitW": 118,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 40,
+        "w": 40,
+        "hitH": 40,
+        "hitW": 40,
+        "region": "nav"
+      },
+      {
+        "text": "jordan.rivera@example.test",
+        "h": 36,
+        "w": 188,
+        "hitH": 36,
+        "hitW": 188,
+        "region": "nav"
+      },
+      {
+        "text": "Sign Out",
+        "h": 36,
+        "w": 95,
+        "hitH": 36,
+        "hitW": 95,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      576,
+      863
+    ],
+    "tag": true,
+    "opts": {
+      "phone": false,
+      "home": true
+    }
+  },
+  "e09-sessions-home-dark-phone-390x844": {
+    "ok": true,
+    "chromeOk": true,
+    "expectations": [],
+    "state": "home",
+    "theme": "dark",
+    "viewport": "390x844",
+    "driveError": null,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "dialogs": [],
+    "notes": {
+      "tile": "Next session Today · in 45 min 4:15 PM CDT Brand strategy session Changes closed",
+      "headline": "Today · in 45 min",
+      "closedLine": 1,
+      "tileBook": 1,
+      "homeText": "Set your first goal Tell Ava what you're working toward and you'll map the path together. Set your first goal Your progress Couldn't check right now Open Progress to try again. Open progress Next session Today · in 45 min 4:15 PM CDT Brand strategy session Changes closed Book a session Documents Couldn't check right now Open Documents to try again. Open documents Ask Ava Ask Ava a question anytime. Send your first message Your next steps Couldn't check right now Open your action items to try again. Open action items",
+      "bookPrefill": "Help me schedule my next session",
+      "tileOpens": "/app/sessions"
+    },
+    "smallTargets": [],
+    "heading": null,
+    "pageText": "Next session Today · in 45 min 4:15 PM CDT Brand strategy session Changes closed Book a session",
+    "overlayText": [],
+    "navText": "Northwind Studio",
+    "contrastMin": 7.27,
+    "lowPage": [],
+    "overlayContrastMin": null,
+    "lowOverlay": [],
+    "navContrastMin": 5.62,
+    "lowNav": [],
+    "homeTileFound": true,
+    "wholePageContrastMin": 7.27,
+    "lowWholePage": [],
+    "goldWholePage": [],
+    "inactiveText": [],
+    "goldPage": [],
+    "goldOverlay": [],
+    "goldNav": [],
+    "overflowX": false,
+    "overlayOverflow": [],
+    "dayStrip": null,
+    "widths": {
+      "doc": 390,
+      "viewport": 390,
+      "scroller": [
+        390,
+        390
+      ]
+    },
+    "clipped": [],
+    "targets": [
+      {
+        "text": "Next sessionToday · in 45 min4:15 ",
+        "h": 167,
+        "w": 356,
+        "hitH": 167,
+        "hitW": 356,
+        "region": "page"
+      },
+      {
+        "text": "Book a session",
+        "h": 36,
+        "w": 155,
+        "hitH": 46,
+        "hitW": 155,
+        "region": "page"
+      },
+      {
+        "text": "Open navigation",
+        "h": 44,
+        "w": 44,
+        "hitH": 44,
+        "hitW": 44,
+        "region": "nav"
+      },
+      {
+        "text": "BUTTON",
+        "h": 44,
+        "w": 44,
+        "hitH": 44,
+        "hitW": 44,
+        "region": "nav"
+      }
+    ],
+    "panels": [
+      0,
+      390
+    ],
+    "tag": true,
+    "opts": {
+      "phone": true,
+      "home": true
+    }
+  }
+}

@@ -89,7 +89,15 @@ function anthropicStream(kind = "text") {
     : kind === "lender-text"
     ? "CHILD-PRIVATE-MARKER — consider: Summit Capital. This is not legal advice."
     : "Scoped response.";
-  const events = kind === "tool"
+  const events = kind && typeof kind === "object" && kind.tool
+    ? [
+        {type:"message_start",message:{usage:{input_tokens:1}}},
+        {type:"content_block_start",index:0,content_block:{type:"tool_use",id:"knowledge-tool",name:kind.tool}},
+        {type:"content_block_delta",index:0,delta:{type:"input_json_delta",partial_json:JSON.stringify(kind.args ?? {})}},
+        {type:"message_delta",delta:{stop_reason:"tool_use"},usage:{output_tokens:1}},
+        {type:"message_stop"},
+      ]
+    : kind === "tool"
     ? [
         { type: "message_start", message: { usage: { input_tokens: 1 } } },
         { type: "content_block_start", index: 0, content_block: { type: "tool_use", id: "tool-1", name: "plan_list" } },
@@ -465,6 +473,14 @@ async function drive({ personaTenant, personaSequence = null, memberships, kbRej
     tables: {
       tenant_members: () => memberships.map((t) => ({ tenant_id: t })),
       profiles: () => [{ active_tenant_id: declaredActiveTenant }],
+      // Positive legacy persistence fixtures name the caller's existing native
+      // thread. A deliberately scripted missing/foreign/held row stays controlling.
+      ...(!Object.hasOwn(tableExtras, "paige_chat_threads") && typeof bodyExtras.threadId === "string"
+        && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(bodyExtras.threadId) ? {
+        paige_chat_threads: [{ id: bodyExtras.threadId, caller_user_id: USER,
+          tenant_id: typeof personaStates[0] === "string" ? personaStates[0] : null,
+          audience: "workspace", interactive_recovery_hold: null }],
+      } : {}),
       ...tableExtras,
       // A THREAD ROW ALWAYS HAS AN OWNER. The handler refuses a thread whose `tenant_id` is not the
       // turn's workspace (owner addition 2026-10-05), and a production row always carries that column.
@@ -473,8 +489,11 @@ async function drive({ personaTenant, personaSequence = null, memberships, kbRej
       // scenario that scripts `tenant_id` (including null) keeps exactly what it wrote.
       ...(typeof tableExtras.paige_chat_threads === "function" ? {
         paige_chat_threads: (filters) => (tableExtras.paige_chat_threads(filters) ?? []).map((row) =>
-          row && typeof row === "object" && !("tenant_id" in row)
-            ? { tenant_id: typeof personaStates[0] === "string" ? personaStates[0] : null, ...row } : row),
+          row && typeof row === "object"
+            ? { id: bodyExtras.threadId, caller_user_id: USER,
+              ...(!Object.hasOwn(row, "audience") ? { audience: "workspace" } : {}),
+              ...(!Object.hasOwn(row, "interactive_recovery_hold") ? { interactive_recovery_hold: null } : {}),
+              ...(!("tenant_id" in row) ? { tenant_id: typeof personaStates[0] === "string" ? personaStates[0] : null } : {}), ...row } : row),
       } : {}),
     },
   });
@@ -841,6 +860,10 @@ group("active-account changes after retrieval fail closed before provider egress
 // answer binding) now runs the turn classifier, and re-checks the account after it. That inserts ONE
 // boundary right after the pre-egress check — "post-classifier" — and every later index moves up by one.
 // The tables below are re-derived for it, not bumped.
+// Streaming authority now adds ONE post-budget scope boundary per provider attempt.
+// Measured controls: tool+text11, two-tools+text12, text7, tool+fail+text12,
+// credit-document11. Initial stream is index3 on fresh agentic turns; later stream
+// attempts add their own boundary after the existing pre-continuation/closing check.
 const personaCalls = (r) => r.rec.rpc.filter((c) => c.name === "get_paige_persona_context").length;
 const assertShape = async (label, plan, expected) => {
   const control = await drive({
@@ -856,12 +879,12 @@ const assertShape = async (label, plan, expected) => {
 
 group("active-account changes during the agent loop stop later provider calls");
 {
-  await assertShape("grp13 tool+text", ["tool", "text"], 9);
+  await assertShape("grp13 tool+text", ["tool", "text"], 11);
   const r = await drive({
     personaTenant: CHILD,
-    // initial resolution → initial provider boundary → post-classifier boundary → post-round
-    // boundary → actual tool-dispatch boundary (where the switch occurs)
-    personaSequence: [CHILD, CHILD, CHILD, CHILD, AGENCY],
+    // initial resolution → pre-egress → post-classifier → stream-budget
+    // → post-round → actual tool dispatch
+    personaSequence: [CHILD, CHILD, CHILD, CHILD, CHILD, AGENCY],
     memberships: [AGENCY, CHILD],
     chunkContent: "CHILD-PRIVATE-MARKER",
     provider: ["tool", "text"],
@@ -1310,10 +1333,10 @@ group("attached-document turns DO carry tenant Knowledge, and its guard actually
   // race that cannot be un-sent. This exercises the document stream's OWN close-boundary check
   // rather than either 409 above — the point at which the provider reply exists and
   // `holdDirectFramesForKnowledgeScope` is holding it back. The sequence carries one extra CHILD
-  // vs. 15.9d so the AGENCY switch lands at the close boundary (call 4), not the re-check (call 3).
+  // vs.15.9d plus the new stream-budget check: switch at close, after both providers.
   const lateSwitch = await drive({
     personaTenant: CHILD,
-    personaSequence: [CHILD, CHILD, CHILD, AGENCY],
+    personaSequence: [CHILD, CHILD, CHILD, CHILD, AGENCY],
     memberships: [CHILD, AGENCY],
     chunkContent: "PRIVATE-KB-SOURCE-MARKER",
     bodyExtras: { document },
@@ -1321,7 +1344,7 @@ group("attached-document turns DO carry tenant Knowledge, and its guard actually
   });
   assert(
     "15.10a the late-switch case really reached the provider (else it is just the 409 again)",
-    lateSwitch.providerCalls.length > 0,
+    lateSwitch.providerCalls.length === 2,
     `provider calls: ${lateSwitch.providerCalls.length}`,
   );
   assert(
@@ -1345,7 +1368,7 @@ group("attached-document turns DO carry tenant Knowledge, and its guard actually
 // ── 16 · The dispatch guard is asserted PER TOOL, not once per batch ──────────────
 group("tool dispatch re-asserts scope for every tool, not once per round");
 {
-  await assertShape("grp16 two-tools", ["two-tools", "private-text"], 10);
+  await assertShape("grp16 two-tools", ["two-tools", "private-text"], 12);
   // WHY THIS GROUP EXISTS. Reverting the dispatch check from per-tool back to per-batch
   // was undetectable by every other check in this file: a round with ONE tool behaves
   // identically either way, and every earlier group uses a one-tool round. A batch is not
@@ -1417,8 +1440,8 @@ group("tool dispatch re-asserts scope for every tool, not once per round");
   // honest statement of the gap rather than a claim that one exists.
   assert(
     "16.0 the round first completes at the boundary a PER-TOOL guard implies",
-    firstComplete === 6,
-    `first complete at n=${firstComplete}; 6 means four refusal boundaries precede completion (post-classifier, post-round, tool-1, tool-2). 5 means only three — the per-tool guard is gone. Any other value means a boundary moved: re-derive this group's timings, do not bump the number.`,
+    firstComplete === 7,
+    `first complete at n=${firstComplete}; 7 means five refusal boundaries precede completion (post-classifier, stream-budget, post-round, tool-1, tool-2). 6 means one was removed. Any other value means a boundary moved: re-derive this group's timings, do not bump the number.`,
   );
 
   const beforeFirst = await runTools(firstComplete - 2);
@@ -1455,7 +1478,7 @@ group("tool dispatch re-asserts scope for every tool, not once per round");
 // ── 17 · The durable record is written at the LAST boundary, not the first ────────
 group("Knowledge telemetry commits only after the reply has actually crossed");
 {
-  await assertShape("grp17 tool-less round", ["private-text"], 6);
+  await assertShape("grp17 tool-less round", ["private-text"], 7);
   // Telemetry is the one DURABLE row this mechanism writes, so it is committed after the
   // reply has been forwarded and the scope re-asserted a final time — not before the frames,
   // where a later cancellation would leave a permanent record claiming a retrieval grounded
@@ -1464,11 +1487,11 @@ group("Knowledge telemetry commits only after the reply has actually crossed");
   // either way) or holds scope throughout (so telemetry either way).
   //
   // Call indices on a tool-less agentic round: 0 turn start, 1 pre-egress, 2 post-classifier,
-  // 3 post-round, 4 pre-emission, 5 post-drain. n=5 therefore switches the account at the post-drain
+  // 3 stream-budget,4 post-round,5 pre-emission,6 post-drain. n=6 switches at post-drain
   // boundary ALONE — the reply is already out, and only the durable write is left to refuse.
   const atPostDrain = await drive({
     personaTenant: CHILD,
-    personaSequence: [CHILD, CHILD, CHILD, CHILD, CHILD, AGENCY],
+    personaSequence: [CHILD, CHILD, CHILD, CHILD, CHILD, CHILD, AGENCY],
     memberships: [CHILD, AGENCY],
     chunkContent: "PRIVATE-KB-SOURCE-MARKER",
     provider: ["private-text"],
@@ -1512,7 +1535,7 @@ group("Knowledge telemetry commits only after the reply has actually crossed");
   // its own reason rather than as a side effect of shifting later call indices.
   const atPreEmission = await drive({
     personaTenant: CHILD,
-    personaSequence: [CHILD, CHILD, CHILD, CHILD, AGENCY],
+    personaSequence: [CHILD, CHILD, CHILD, CHILD, CHILD, AGENCY],
     memberships: [CHILD, AGENCY],
     chunkContent: "PRIVATE-KB-SOURCE-MARKER",
     provider: ["private-text"],
@@ -1533,20 +1556,21 @@ group("Knowledge telemetry commits only after the reply has actually crossed");
 // ── 18 · Each loop-continuation boundary is individually load-bearing ─────────────
 group("every provider re-entry in the agent loop re-asserts scope on its own");
 {
-  await assertShape("grp18a tool+text", ["tool", "text"], 9);
-  await assertShape("grp18b tool+fail+text", ["tool", "fail", "text"], 9);
+  await assertShape("grp18a tool+text", ["tool", "text"], 11);
+  await assertShape("grp18b tool+fail+text", ["tool", "fail", "text"], 12);
   // The loop re-asserts scope at three distinct points and, until this group existed, TWO of
   // them could be deleted with the suite still fully green — the surviving checks happened to
   // catch the switch at a neighbouring boundary instead. A guard that no check can distinguish
   // from its neighbour is a guard nobody will notice losing. Each assertion below pins ONE
   // boundary by timing the switch to land exactly on it (indices, single-tool round:
-  //   0 turn start · 1 pre-egress · 2 post-classifier · 3 post-round · 4 tool dispatch
-  //   · 5 pre-continuation · 6 pre-closing-call · 7 pre-emission · 8 post-drain)
+  //   0 turn start ·1 pre-egress ·2 post-classifier ·3 stream-budget ·4 post-round
+  //   ·5 tool dispatch ·6 pre-continuation ·7 continuation-budget ·8 pre-closing-call
+  //   ·9 closing-budget ·10 pre-emission ·11 post-drain)
   // and by counting provider calls, which is the only signal that separates "the next call was
   // never made" from "it was made and its result was later suppressed".
   //
   // THE TABLE ABOVE IS ONLY VALID FOR THE FAILED-CONTINUATION SHAPE both assertions below
-  // drive. When the continuation SUCCEEDS there is no closing call, and index 6 is the second
+  // drive. When the continuation SUCCEEDS there is no closing call, and index8 is the second
   // round's post-round check instead of the pre-closing-call one. No assertion here is wrong —
   // 18.3 proves the failed-continuation path was actually taken — but do not time a new switch
   // off this table without re-deriving it for the round shape you are driving. Groups 16 and 17
@@ -1557,7 +1581,7 @@ group("every provider re-entry in the agent loop re-asserts scope on its own");
   //     after a switch re-sends the prior account's private content to the provider.
   const atContinuation = await drive({
     personaTenant: CHILD,
-    personaSequence: [CHILD, CHILD, CHILD, CHILD, CHILD, AGENCY],
+    personaSequence: [CHILD, CHILD, CHILD, CHILD, CHILD, CHILD, AGENCY],
     memberships: [CHILD, AGENCY],
     chunkContent: "CHILD-PRIVATE-MARKER",
     provider: ["tool", "text"],
@@ -1579,7 +1603,7 @@ group("every provider re-entry in the agent loop re-asserts scope on its own");
   //     a different code path from (a) and cannot be covered by it.
   const atClosingCall = await drive({
     personaTenant: CHILD,
-    personaSequence: [CHILD, CHILD, CHILD, CHILD, CHILD, CHILD, AGENCY],
+    personaSequence: [CHILD, CHILD, CHILD, CHILD, CHILD, CHILD, CHILD, CHILD, AGENCY],
     memberships: [CHILD, AGENCY],
     chunkContent: "CHILD-PRIVATE-MARKER",
     provider: ["tool", "fail", "text"],
@@ -1747,7 +1771,8 @@ group("a document turn withholds its reply at every scope boundary, including a 
   // total happens to land where it started; a pin that only watched the total would have shown
   // green through both. It did not, because it failed at 9 and made the missing upload row
   // visible. NOT "bumped because the test failed": each change was found, named and driven.
-  const DOC_TURN_PERSONA_CALLS = 10;
+  // The gateway's new post-budget check adds exactly one to this one-stream shape.
+  const DOC_TURN_PERSONA_CALLS = 11;
   assert(
     "19.0 the control run makes enough persona calls for these timings to mean anything",
     TOTAL >= 9,
@@ -1941,6 +1966,13 @@ const nonNeutralFrames = (text) => text.split("\n").filter((l) => {
   return true;
 });
 const personaCallsOf = (r) => r.rec.rpc.filter((c) => c.name === "get_paige_persona_context").length;
+// A thread now also checks scope in optional post-turn maintenance. Calibrate
+// publication refusals at the actual assistant-write boundary, not that later call.
+const personaCallsBeforeAssistantWrite = (r) => {
+  const write = r.rec.rpc.findIndex(c => c.name === "paige_chat_turn_append" && c.args?.p_role === "assistant");
+  if (write < 0) throw new Error("positive publication control did not persist its assistant turn");
+  return r.rec.rpc.slice(0, write).filter(c => c.name === "get_paige_persona_context").length;
+};
 
 group("safety-first streaming: protected turns buffer, ordinary turns stream");
 {
@@ -2273,7 +2305,7 @@ group("safety-first streaming: the sources the first enumeration missed");
     artifactFrames(artifactClean.responseText).length === 0,
     artifactClean.responseText.slice(0, 400),
   );
-  const artifactTotal = personaCallsOf(artifactClean);
+  const artifactTotal = personaCallsBeforeAssistantWrite(artifactClean);
   const artifactAtGate = await drive({
     personaTenant: CHILD,
     personaSequence: Array(artifactTotal - 1).fill(CHILD).concat([AGENCY]),
@@ -2438,7 +2470,7 @@ group("safety-first streaming: the sources the first enumeration missed");
     choiceFrames(choiceClean.responseText).join("").includes("CHILD-PRIVATE-MARKER"),
     choiceFrames(choiceClean.responseText).join("").slice(0, 300),
   );
-  const choiceTotal = personaCallsOf(choiceClean);
+  const choiceTotal = personaCallsBeforeAssistantWrite(choiceClean);
   const choiceAtGate = await drive({
     personaTenant: CHILD,
     personaSequence: Array(choiceTotal - 1).fill(CHILD).concat([AGENCY]),
@@ -2545,7 +2577,7 @@ group("safety-first streaming: the sources the first enumeration missed");
     artifactFrames(studioClean.responseText).length === 0,
     studioClean.responseText.slice(0, 500),
   );
-  const studioTotal = personaCallsOf(studioClean);
+  const studioTotal = personaCallsBeforeAssistantWrite(studioClean);
   const studioAtGate = await drive({
     personaTenant: CHILD,
     personaSequence: Array(studioTotal - 1).fill(CHILD).concat([AGENCY]),
@@ -3044,7 +3076,7 @@ group("safety-first streaming: the sources the first enumeration missed");
     sumClean.providerCalls.some((c) => JSON.stringify(c).includes("PRIVATE-SUMMARY-MARKER")),
     JSON.stringify(sumClean.providerCalls).slice(0, 200),
   );
-  const sumTotal = personaCallsOf(sumClean);
+  const sumTotal = personaCallsBeforeAssistantWrite(sumClean);
   assert(
     "21.s CONTROL — and a summary-bearing turn is protected",
     sumTotal >= 2,
@@ -3392,7 +3424,7 @@ group("safety-first streaming: the sources the first enumeration missed");
     assistantAppends(persistClean).length > 0,
     JSON.stringify(persistClean.rec.rpc.map((c) => c.name)),
   );
-  const persistTotal = personaCallsOf(persistClean);
+  const persistTotal = personaCallsBeforeAssistantWrite(persistClean);
   const persistAtGate = await drive({
     personaTenant: CHILD,
     personaSequence: Array(persistTotal - 1).fill(CHILD).concat([AGENCY]),
@@ -3866,7 +3898,7 @@ group("a turn that stops on a changed workspace still says what became of each a
   // approvals that was — or it can only guess.
   const token = "e".repeat(16);
   const r = await drive({
-    personaTenant: CHILD, personaSequence: [CHILD, CHILD, CHILD, AGENCY], memberships: [AGENCY, CHILD],
+    personaTenant: CHILD, personaSequence: [CHILD, CHILD, CHILD, CHILD, AGENCY], memberships: [AGENCY, CHILD],
     chunkContent: "CHILD-PRIVATE-MARKER", provider: ["tool", "text"],
     bodyExtras: { approvedConfirmations: [token] },
   });
@@ -4142,6 +4174,253 @@ group("the turn frame on every stream this harness drove (paige-turn)");
     interrupted >= 10 && violations.length === 0, JSON.stringify({ interrupted, withheld }));
   assert("29.13 on every drive that saved an assistant turn, the answer a reader got up to [DONE] is exactly the saved text, and nothing follows [DONE]",
     answersCompared >= 10 && answerMismatches.length === 0, JSON.stringify({ answersCompared, mismatches: answerMismatches.slice(0, 6) }));
+}
+
+group("30 Knowledge canonical tools on the actual Chat gate");
+{
+  const docId="55555555-5555-4555-8555-555555555555";
+  const doc={id:docId,tenant_id:CHILD,revision:2,title:"CHILD-PRIVATE-MARKER",summary:null,category:null,tags:[],source:"paste",source_url:null,chunk_count:1,content:"CHILD-PRIVATE-MARKER"};
+  for (const switchAfterRead of [false,true]) {
+    let read=false;
+    const r=await drive({personaTenant:CHILD,memberships:[CHILD],provider:[{tool:"read_tenant_knowledge",args:{document_id:docId}},"private-text"],rpcExtras:{
+      match_tenant_knowledge:{data:[],error:null},
+      read_tenant_knowledge:()=>{read=true;return {data:{tenant_id:CHILD,documents:[doc]},error:null};},
+    },tableExtras:{profiles:()=>[{active_tenant_id:switchAfterRead && read ? AGENCY : CHILD}]}});
+    assert(`30 read ${switchAfterRead}: JWT canonical RPC`,r.rec.rpc.some(x=>x.name==="read_tenant_knowledge" && x.args.p_expected_tenant===CHILD && x.client==="jwt"));
+    assert(`30 read ${switchAfterRead}: late protected evidence`,r.logged.some(x=>x.msg.includes("tool:read_tenant_knowledge")));
+    assert(`30 read ${switchAfterRead}: no stale next provider`,r.providerCalls.length===(switchAfterRead ? 1 : 2),r.providerCalls.length);
+    assert(`30 read ${switchAfterRead}: response scope`,switchAfterRead ? !r.responseText.includes("CHILD-PRIVATE-MARKER") : r.responseText.includes("CHILD-PRIVATE-MARKER"));
+    if(switchAfterRead) assert("30 read switch: no stale summary",!r.rec.inserts.some(x=>x.table==="paige_chat_threads" && x.row.summary));
+  }
+  for(const tool of ["read_tenant_knowledge","knowledge_update","knowledge_delete"]) {
+    const args=tool==="read_tenant_knowledge" ? {} : {document_id:docId,expected_revision:2,...(tool==="knowledge_update" ? {patch:{title:"Guide"}} : {}),confirm:true};
+    const r=await drive({personaTenant:CHILD,memberships:[CHILD],provider:[{tool,args},"text"],rpcExtras:{get_actor_access:{data:{tier:"client"},error:null},resolve_tool_autonomy:{data:"auto",error:null}}});
+    assert(`30 ${tool}: client seat refused`,!r.rec.rpc.some(x=>["read_tenant_knowledge","update_tenant_knowledge_metadata","delete_tenant_knowledge"].includes(x.name)));
+  }
+  for(const tool of ["knowledge_update","knowledge_delete"]) {
+    const args={document_id:docId,expected_revision:2,...(tool==="knowledge_update" ? {patch:{title:"Guide"}} : {}),confirm:true};
+    const r=await drive({personaTenant:CHILD,memberships:[CHILD],provider:[{tool,args},"text"]});
+    assert(`30 ${tool}: model confirm alone cannot write`,!r.rec.rpc.some(x=>x.name==="update_tenant_knowledge_metadata" || x.name==="delete_tenant_knowledge"));
+  }
+  for(const [tool,mode] of [["knowledge_delete","auto"],["knowledge_update","off"]]) {
+    const args={document_id:docId,expected_revision:2,patch:{title:"Guide"},confirm:true};
+    if(tool==="knowledge_delete") delete args.patch;
+    const r=await drive({personaTenant:CHILD,memberships:[CHILD],provider:[{tool,args},"text"],rpcExtras:{resolve_tool_autonomy:{data:mode,error:null}}});
+    assert(`30 ${tool} ${mode}: canonical lane refuses dispatch`,!r.rec.rpc.some(x=>x.name==="update_tenant_knowledge_metadata" || x.name==="delete_tenant_knowledge"));
+  }
+  for(const result of [{data:null,error:{message:"network lost"}},{data:null,error:{code:"40001",message:"KNOWLEDGE_REVISION_CONFLICT"}}]) {
+    const call={tool:"knowledge_update",args:{document_id:docId,expected_revision:2,patch:{title:"Guide"}}};
+    const uncertain=result.error.message==="network lost";
+    const r=await drive({personaTenant:CHILD,memberships:[CHILD],provider:uncertain ? [call,{...call,args:{...call.args,patch:{title:"Other"}}},"text"] : [call,"text"],rpcExtras:{resolve_tool_autonomy:{data:"auto",error:null},update_tenant_knowledge_metadata:result}});
+    assert(`30 ${result.error.message}: one attempt`,r.rec.rpc.filter(x=>x.name==="update_tenant_knowledge_metadata").length===1);
+    assert(`30 ${result.error.message}: structured refusal reaches provider`,JSON.stringify(r.providerCalls).includes(uncertain ? "KNOWLEDGE_REVIEW_REQUIRED" : "KNOWLEDGE_REVISION_CONFLICT"));
+  }
+  for(const outcome of ["capability_succeeded","capability_completed_unrecorded"]) {
+    const r=await drive({personaTenant:CHILD,memberships:[CHILD],provider:[{tool:"knowledge_update",args:{document_id:docId,expected_revision:2,patch:{title:" Guide "}}},"text"],rpcExtras:{resolve_tool_autonomy:{data:"auto",error:null},update_tenant_knowledge_metadata:{data:{tenant_id:CHILD,document:{...doc,title:"Guide",revision:3},outcome,run_id:docId},error:null}}});
+    const writes=r.rec.rpc.filter(x=>x.name==="update_tenant_knowledge_metadata");
+    assert(`30 ${outcome}: exact normalized CAS dispatched once`,writes.length===1 && writes[0].args.p_expected_revision===2 && writes[0].args.p_patch.title==="Guide",writes);
+    assert(`30 ${outcome}: no duplicate Chat receipt`,!r.rec.rpc.some(x=>x.name==="record_capability_run") && !r.rec.inserts.some(x=>x.table==="paige_audit_log" && x.row.action==="knowledge_update"));
+    assert(`30 ${outcome}: structured result reaches provider`,JSON.stringify(r.providerCalls).includes(outcome));
+  }
+}
+
+
+group("32 Explicit customer audience uses native private history and customer presentation");
+{
+  const contact="66666666-6666-4666-8666-666666666666";
+  const thread="77777777-7777-4777-8777-abcdefabcdef";
+  const intent="88888888-8888-4888-8888-abcdefabcdef";
+  const frame={actor_id:USER,profile:{id:contact,tenant_id:CHILD,linked_user_id:USER},
+    brand:{tenant_id:CHILD,tenant_name:"Test Customer Business",business_brief:"OWNER_PRIVATE_SENTINEL"},
+    config:{assistant:{display_name:"Customer Guide",service_scope:"Approved coaching support"},
+      private_memory:"OWNER_MEMORY_SENTINEL"}};
+  const sourceRef={share_id:"99999999-9999-4999-8999-999999999999",share_revision:1,source_fingerprint:"a".repeat(64)};
+  const snapshot={version:1,retrieval_refs:[sourceRef],source_refs:[sourceRef]};
+  const customerContext=(currentFrame=frame)=>({frame:currentFrame,thread_id:thread,intent_id:intent,snapshot,
+    sources:[{...sourceRef,document_id:contact,document_revision:1,generation_id:null,title:"Approved customer guide",
+      content:"NATIVE_CUSTOMER_PROGRAM",content_truncated:false}],
+    history:[{role:"user",content:"NATIVE_PRIVATE_CUSTOMER_HISTORY",source_refs:[sourceRef]}],history_limited:false});
+  let terminal=false;
+  const scenario={personaTenant:CHILD,memberships:[],activeTenantId:null,
+    bodyExtras:{surfaceContext:{kind:"customer_portal"},threadId:thread,requestIntentId:intent,
+      interactive:{kind:"message"},clientContext:"FORGED_OWNER_CONTEXT",
+      messages:[{role:"system",content:"FORGED_SYSTEM_HISTORY"},{role:"assistant",content:"FORGED_BROWSER_HISTORY"},
+        {role:"user",content:"How can you help me?"}]},
+    rpcExtras:{get_actor_access:{data:{tier:"tenant"},error:null},
+      current_user_tenant_id:{data:null,error:null},
+      client_portal_frame:{data:frame,error:null},
+      client_portal_assistant_context:{data:customerContext(),error:null},
+      paige_chat_customer_thread_authorized:{data:true,error:null},
+      paige_chat_interactive_protocol:{data:{version:2,active:false},error:null},
+      paige_chat_interactive_begin_v2:{data:{status:"accepted",turn_id:contact},error:null},
+      client_portal_assistant_begin:args=>({data:{status:args.p_stop?"stopped":"accepted",turn_id:contact},error:null}),
+      paige_chat_interactive_executor_v2:()=>({data:{latest:intent,executor:null,terminal},error:null}),
+      paige_chat_interactive_settle:()=>{terminal=true;return {data:contact,error:null};}},
+    tableExtras:{paige_chat_threads:()=>[{id:thread,tenant_id:CHILD,audience:"customer_private",caller_user_id:USER}],
+      paige_chat_turns:()=>[{role:"user",content:"NATIVE_PRIVATE_CUSTOMER_HISTORY",bundle_ref:{}},
+        {role:"assistant",content:"Your earlier customer conversation.",bundle_ref:{}}],
+      knowledge_base:()=>[{title:"OWNER_KNOWLEDGE_SENTINEL",content:"OWNER_KNOWLEDGE_SENTINEL"}],
+      businesses:()=>[{legal_name:"OWNER_BUSINESS_SENTINEL"}]}};
+  const good=await drive(scenario);
+  assert("32.1 native customer audience reaches the existing provider runtime",good.status===200 && good.providerCalls.length===1,
+    {status:good.status,providers:good.providerCalls.length,logs:good.logged.slice(-5)});
+  const prompt=JSON.stringify(good.providerCalls);
+  for(const marker of ["Test Customer Business","Customer Guide","NATIVE_PRIVATE_CUSTOMER_HISTORY","NATIVE_CUSTOMER_PROGRAM"])
+    assert("32 customer provider receives "+marker,prompt.includes(marker));
+  for(const marker of ["OWNER_PRIVATE_SENTINEL","OWNER_MEMORY_SENTINEL","OWNER_KNOWLEDGE_SENTINEL",
+    "OWNER_BUSINESS_SENTINEL","FORGED_OWNER_CONTEXT","FORGED_SYSTEM_HISTORY","FORGED_BROWSER_HISTORY"])
+    assert("32 customer provider excludes "+marker,!prompt.includes(marker));
+  assert("32 no owner persona, Knowledge, operating Memory or shared message emitter",
+    !good.rec.rpc.some(x=>["get_paige_persona_context","match_tenant_knowledge","match_rag_documents",
+      "paige_operating_memory","emit_client_event","emit_client_rail_event"].includes(x.name)));
+  assert("32 customer text settles once through the canonical server receipt",
+    good.rec.rpc.filter(x=>x.name==="paige_chat_interactive_settle").length===1);
+  assert("32 customer uses the native source-binding adapter and exact terminal snapshot",
+    good.rec.rpc.some(x=>x.name==="client_portal_assistant_begin")
+    &&!good.rec.rpc.some(x=>x.name==="paige_chat_interactive_begin_v2")
+    &&JSON.stringify(good.rec.rpc.find(x=>x.name==="paige_chat_interactive_settle")?.args.p_bundle_ref.customer_knowledge)===JSON.stringify(snapshot));
+  const privateTraces=good.rec.inserts.filter(x=>x.table==="paige_llm_trace");
+  assert("32 customer provider telemetry contains no private transcript excerpts",
+    privateTraces.length>0&&privateTraces.every(x=>x.row.input_excerpt===null&&x.row.output_excerpt===null&&x.row.error_message===null),
+    privateTraces.map(x=>({input:x.row.input_excerpt,output:x.row.output_excerpt})));
+  // Production currently uses active v2. Preserve its executor/settlement path;
+  // a customer conversation must not depend on the staged fallback being active.
+  terminal=false;
+  let activeExecutor=null;
+  const activeRpcs={...scenario.rpcExtras,
+    paige_chat_interactive_protocol:{data:{version:2,active:true},error:null},
+    paige_chat_interactive_executor_v2:args=>{
+      let acquired=false;
+      if(args.p_operation==="acquire"&&activeExecutor===null&&!terminal){activeExecutor=intent;acquired=true;}
+      if(args.p_operation==="release"&&terminal)activeExecutor=null;
+      return {data:{latest:intent,executor:activeExecutor,acquired,terminal,stopped:false},error:null};
+    },
+    paige_chat_interactive_publication_context_v2:()=>({data:terminal&&activeExecutor===null,error:null}),
+  };
+  const active=await drive({...scenario,rpcExtras:activeRpcs});
+  assert("32 active v2 customer reaches the canonical provider and returns its answer",
+    active.status===200&&active.providerCalls.length===1&&active.responseText.includes("Scoped response."),
+    {status:active.status,providers:active.providerCalls.length,response:active.responseText.slice(-600),logs:active.logged.slice(-5)});
+  assert("32 active customer preserves canonical settlement and executor release",
+    terminal&&activeExecutor===null&&active.rec.rpc.filter(x=>x.name==="paige_chat_interactive_settle").length===1);
+  assert("32 active customer provider still excludes private owner context and owner tools",
+    !/OWNER_PRIVATE_SENTINEL|OWNER_MEMORY_SENTINEL|OWNER_KNOWLEDGE_SENTINEL|OWNER_BUSINESS_SENTINEL|FORGED_/.test(JSON.stringify(active.providerCalls))
+    &&active.providerCalls.every(x=>!x.tools?.length));
+  terminal=false;activeExecutor=null;
+  const untrustedTool=await drive({...scenario,provider:["action-file","text"],rpcExtras:activeRpcs});
+  assert("32 unsolicited owner-tool output is refused without breaking the customer answer",
+    untrustedTool.status===200&&untrustedTool.responseText.includes("Scoped response."),
+    {status:untrustedTool.status,response:untrustedTool.responseText.slice(-600),logs:untrustedTool.logged.slice(-5)});
+  assert("32 unsolicited owner-tool output creates no business action or shared customer record",
+    !untrustedTool.rec.inserts.some(x=>["tasks","client_notes","paige_acts","paige_processes","paige_events","paige_customer_actions","messages"].includes(x.table))
+    &&!untrustedTool.rec.rpc.some(x=>["file_act","create_paige_act","emit_client_event","emit_client_rail_event"].includes(x.name)));
+  for(const [label,extra] of [
+    ["disabled",{client_portal_assistant_context:{data:customerContext({...frame,config:{assistant:{enabled:false}}}),error:null}}],
+    ["revoked",{client_portal_assistant_context:{data:null,error:{code:"42501"}}}],
+    ["wrong private thread",{paige_chat_customer_thread_authorized:{data:false,error:null}}],
+    ["policy withdrawn after egress",{client_portal_assistant_context:()=>({data:customerContext(providerCalls.length
+      ? {...frame,config:{assistant:{enabled:false}}}:frame),error:null})}],
+    ["program withdrawn after egress",{client_portal_assistant_context:()=>providerCalls.length
+      ? {data:null,error:{code:"42501"}}:{data:customerContext(),error:null}}],
+  ]) {
+    terminal=false;
+    const r=await drive({...scenario,rpcExtras:{...scenario.rpcExtras,...extra}});
+    assert("32 "+label+" withholds the answer",!r.responseText.includes("Scoped response."));
+    assert("32 "+label+" does not dispatch an unauthorized next call",
+      r.providerCalls.length===(label.endsWith("after egress")?1:0));
+  }
+  terminal=false;
+  const stopped=await drive({...scenario,bodyExtras:{...scenario.bodyExtras,interactive:{kind:"stop",supersedesIntentId:intent}},
+    rpcExtras:{...scenario.rpcExtras,client_portal_assistant_context:{data:null,error:{code:"42501"}}}});
+  assert("32 Stop remains available after accepted program withdrawal without model dispatch",
+    stopped.providerCalls.length===0&&stopped.rec.rpc.some(x=>x.name==="client_portal_assistant_begin"&&x.args.p_stop===true));
+  terminal=false;
+  const legacyProjection={...customerContext(),snapshot:null,sources:[],
+    history:[{role:"user",content:"My own earlier words",source_refs:[]}]};
+  const legacy=await drive({...scenario,rpcExtras:{...scenario.rpcExtras,
+    client_portal_assistant_context:{data:legacyProjection,error:null}},
+    tableExtras:{...scenario.tableExtras,paige_chat_turns:()=>[{role:"user",content:"My own earlier words",bundle_ref:{}},
+      {role:"assistant",content:"WITHDRAWN_PROGRAM_HISTORY",bundle_ref:{customer_knowledge:snapshot}}]}});
+  assert("32 compatible direct-admission retry stays knowledgeless at the real provider boundary",
+    legacy.status===200&&legacy.providerCalls.length===1&&legacy.responseText.includes("Scoped response.")
+    &&!JSON.stringify(legacy.providerCalls).includes("NATIVE_CUSTOMER_PROGRAM")
+    &&!JSON.stringify(legacy.providerCalls).includes("WITHDRAWN_PROGRAM_HISTORY"));
+  assert("32 compatible retry cannot manufacture source attestation in its terminal",
+    legacy.rec.rpc.filter(x=>x.name==="paige_chat_interactive_settle").length===1
+    &&!legacy.rec.rpc.find(x=>x.name==="paige_chat_interactive_settle")?.args.p_bundle_ref.customer_knowledge);
+  for(const [label,overrides]of [["thread",{threadId:thread.toUpperCase()}],["intent",{requestIntentId:intent.toUpperCase()}]]){
+    terminal=false;
+    const r=await drive({...scenario,bodyExtras:{...scenario.bodyExtras,...overrides}});
+    assert("32 uppercase "+label+" UUID preserves customer reply and canonical receipt identity",
+      r.status===200&&r.providerCalls.length===1&&r.responseText.includes("Scoped response.")
+      &&r.rec.rpc.find(x=>x.name==="paige_chat_interactive_settle")?.args.p_bundle_ref.interactive.request_intent_id===intent);
+  }
+}
+
+group("31 Ordinary customer relationship at the protected Chat boundary");
+{
+  const customerId="66666666-6666-4666-8666-666666666666";
+  const profile={id:customerId,tenant_id:CHILD,linked_user_id:USER};
+  const customer={personaTenant:CHILD,memberships:[],activeTenantId:null,
+    bodyExtras:{clientContext:"Current page: Home"},
+    rpcExtras:{get_actor_access:{data:{tier:"client"},error:null},client_portal_self_profile:{data:profile,error:null}}};
+  const valid=await drive(customer);
+  assert("31.1 an ordinary linked customer without a staff workspace receives a reply",
+    valid.status===200 && valid.responseText.includes("Scoped response."),valid.status);
+  assert("31.2 customer scope is read and rechecked through the caller JWT, without staff grants",
+    valid.rec.rpc.filter(x=>x.name==="client_portal_self_profile" && x.client==="jwt").length>=2);
+  assert("31.3 customer continuation never reads owner Knowledge or owner Memory",
+    !valid.rec.rpc.some(x=>["match_tenant_knowledge","recall_owner_memory","match_paige_memory"].includes(x.name)));
+  for(const [label,result] of [
+    ["missing",{data:null,error:null}],
+    ["wrong actor",{data:{...profile,linked_user_id:AGENCY},error:null}],
+    ["foreign business",{data:{...profile,tenant_id:AGENCY},error:null}],
+    ["malformed",{data:{...profile,id:"not-a-client"},error:null}],
+    ["ambiguous",{data:null,error:{code:"42501",message:"select a relationship"}}],
+    ["unknown",{data:null,error:{message:"connection lost"}}],
+  ]) {
+    const r=await drive({...customer,rpcExtras:{...customer.rpcExtras,client_portal_self_profile:result}});
+    assert(`31.4 ${label}: refuses before a provider call`,r.status===409 && r.providerCalls.length===0,r.status);
+  }
+  for(const [label,next] of [["revoked",null],["client replaced",{...profile,id:SOLO}],["business changed",{...profile,tenant_id:AGENCY}],["actor changed",{...profile,linked_user_id:AGENCY}]]){
+    let reads=0;
+    const r=await drive({...customer,rpcExtras:{...customer.rpcExtras,client_portal_self_profile:()=>({data:++reads===1?profile:next,error:null})}});
+    assert(`31.5 ${label} after capture: no stale provider dispatch`,r.status===409 && r.providerCalls.length===0,r.status);
+  }
+  let reads=0;
+  // Trigger revocation on observed provider egress, not a fixed read count:
+  // Model Fabric may add a legitimate protected-scope read before dispatch.
+  const during=await drive({...customer,rpcExtras:{...customer.rpcExtras,client_portal_self_profile:()=>{
+    reads++;return {data:providerCalls.length===0?profile:null,error:null};
+  }}});
+  assert("31.6 relationship revoked during the provider round withholds the answer",
+    during.providerCalls.length===1 && during.status===200 && !during.responseText.includes("Scoped response.") && during.responseText.includes("active workspace changed"),
+    JSON.stringify({status:during.status,reads,providers:during.providerCalls.length}));
+  const owner=await drive({personaTenant:CHILD,memberships:[CHILD],activeTenantId:null,
+    bodyExtras:{clientContext:"Current page: Home"},rpcExtras:{client_portal_self_profile:{data:profile,error:null}}});
+  assert("31.7 an owner cannot borrow a customer binding when their declared workspace is unset",
+    owner.status===409 && owner.providerCalls.length===0,owner.status);
+}
+
+group("native thread fixture authority remains explicit");
+{
+  const THREAD="99999999-9999-4999-8999-999999999998";
+  const input={personaTenant:CHILD,memberships:[CHILD],bodyExtras:{threadId:THREAD}};
+  for(const [label,tableExtras]of[["positive own stored thread",{}],["positive scripted stored row",{paige_chat_threads:()=>[{summary:null}]}]]){
+    const r=await drive({...input,tableExtras});
+    assert(`32.1 ${label}: actual provider path remains reachable`,r.status===200&&r.providerCalls.length>0,r.status);
+    assert(`32.2 ${label}: native hold is actually read`,r.rec.from.some(c=>c.table==="paige_chat_threads"&&c.filters.some(f=>f[0]==="select"&&f[1].includes("interactive_recovery_hold"))));
+  }
+  for(const [label,table]of[
+    ["explicit missing row",()=>[]],["explicit undefined table",undefined],
+    ["foreign owner",()=>[{caller_user_id:AGENCY}]],["private audience",()=>[{audience:"customer_private"}]],
+    ["explicit undefined audience",()=>[{audience:undefined}]],["explicit undefined hold",()=>[{interactive_recovery_hold:undefined}]],
+    ["malformed hold",()=>[{interactive_recovery_hold:[]}]],["held thread",()=>[{interactive_recovery_hold:SOLO}]],
+  ]){
+    const r=await drive({...input,tableExtras:{paige_chat_threads:table}});
+    assert(`32.3 ${label}: no authority is fabricated`,r.status===409&&r.providerCalls.length===0,r.status);
+    assert(`32.4 ${label}: no document or memory writer`,!r.rec.rpc.some(c=>/record_paige_memory|submit_paige_document_work/.test(c.name))&&r.rec.functions.length===0);
+  }
 }
 
 console.log(`\n${checks - failures} passed, ${failures} failed`);

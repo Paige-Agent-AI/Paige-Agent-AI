@@ -1,0 +1,18 @@
+{
+  "artifactSHA256": "16CE82114E898DA28324E4C866DB3E078692BCFA99FC32950FF74F7E5590B090",
+  "projectionSourceSHA256": "06D13D2C1B819D913FFB181DA487E1FEAED88C10F03EB6D0B57C553101440CBF",
+  "reviewer": "/root/flow_prototype/prototype_finish",
+  "independent": true,
+  "disposition": "ship",
+  "scope": "Non-author correction review on current exact bytes; earlier full 86-capture review on DDCAF retained its positive fidelity findings except the dated off-hours seam, which this review resolved.",
+  "priorArtifactSHA256": "DDCAF8A128D788B5E1BFD14960CDEE514595C5FCC743B4DA174AE1E9720B1183",
+  "priorDisposition": "fix",
+  "resolved": [
+    "Off-hours Week markers visibly associate configured business-zone weekday/date with time for New York and Auckland at desktop/mobile.",
+    "Output and repository prototype hashes match; no material regression found in the scoped date correction."
+  ],
+  "limits": [
+    "This is prototype scope, not whole-surface production approval.",
+    "Owner design ruling and authenticated customer acceptance remain UNVERIFIED."
+  ]
+}

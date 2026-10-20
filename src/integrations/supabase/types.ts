@@ -3135,41 +3135,75 @@ export type Database = {
       communication_log: {
         Row: {
           channel: string
+          contact_id: string | null
           created_at: string
           error_message: string | null
           id: string
+          message_id: string | null
           message_type: string
+          operation_id: string | null
           preview: string | null
           provider_message_id: string | null
           status: string
           subject: string | null
-          user_id: string
+          tenant_id: string | null
+          user_id: string | null
         }
         Insert: {
           channel: string
+          contact_id?: string | null
           created_at?: string
           error_message?: string | null
           id?: string
+          message_id?: string | null
           message_type: string
+          operation_id?: string | null
           preview?: string | null
           provider_message_id?: string | null
           status: string
           subject?: string | null
-          user_id: string
+          tenant_id?: string | null
+          user_id?: string | null
         }
         Update: {
           channel?: string
+          contact_id?: string | null
           created_at?: string
           error_message?: string | null
           id?: string
+          message_id?: string | null
           message_type?: string
+          operation_id?: string | null
           preview?: string | null
           provider_message_id?: string | null
           status?: string
           subject?: string | null
-          user_id?: string
+          tenant_id?: string | null
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "communication_log_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_log_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_log_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       communication_preferences: {
         Row: {
@@ -19823,6 +19857,14 @@ export type Database = {
           updated_at: string
         }[]
       }
+      client_portal_relationship_id: {
+        Args: { p_tenant_id?: string | null }
+        Returns: string | null
+      }
+      client_portal_self_profile: {
+        Args: { p_tenant_id?: string | null }
+        Returns: Json
+      }
       client_custom_fields_upsert: {
         Args: { p_client_id: string; p_tenant_id: string; p_values: Json }
         Returns: {
@@ -21481,10 +21523,14 @@ export type Database = {
           tier: string
         }[]
       }
+      operator_billing_overview: { Args: never; Returns: Json }
+      operator_commercial_customers: { Args: never; Returns: Json }
+      operator_customer_history: { Args: { p_user_id: string }; Returns: Json }
       operator_dashboard_metrics: {
         Args: { p_window_days?: number }
         Returns: Json
       }
+      operator_signup_funnel: { Args: { p_window_days?: number }; Returns: Json }
       operator_tier_send_feed: {
         Args: { _since?: string; _tier?: string }
         Returns: {
@@ -21627,6 +21673,7 @@ export type Database = {
           p_contact_id?: string
           p_from?: string
           p_horizon?: string
+          p_include_cancelled?: boolean
           p_limit?: number
           p_plan_id?: string
           p_status?: string
@@ -21637,6 +21684,21 @@ export type Database = {
       }
       plan_remove_item: {
         Args: { p_item_id: string; p_tenant_id?: string }
+        Returns: Json
+      }
+      plan_remove_item_versioned: {
+        Args: { p_item_id: string; p_expected_actor_id: string; p_expected_tenant_id: string; p_expected_updated_at: string }
+        Returns: Json
+      }
+      plan_reschedule_reminder_versioned: {
+        Args: { p_item_id: string; p_expected_actor_id: string; p_expected_tenant_id: string;
+          p_expected_updated_at: string; p_remind_at: string }
+        Returns: Json
+      }
+      plan_list_operations_scoped: {
+        Args: { p_expected_actor_id: string; p_expected_tenant_id: string; p_from?: string; p_to?: string;
+          p_status?: string; p_limit?: number; p_contact_id?: string; p_by_item_date?: boolean;
+          p_assigned_to_user_id?: string; p_include_cancelled?: boolean }
         Returns: Json
       }
       plan_set_reminder: {

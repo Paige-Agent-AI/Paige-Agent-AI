@@ -74,6 +74,8 @@
     <script>
       (function () {
         if (/^\/render-frame(?:\/|$)/i.test(window.location.pathname)) return;
+        // A form on a business's own website (public/embed.js, Experience 03): its visitors are the business's.
+        if (/^\/form\//.test(window.location.pathname) && (window.parent !== window || /[?&]embed=1(&|$)/.test(window.location.search))) return;
         var tracker = document.createElement("script");
         tracker.defer = true;
         tracker.setAttribute("data-domain", "paigeagent.ai");
@@ -175,15 +177,24 @@
       // so the SEO marketing markup in #root never flashes) for a fast, dull
       // transition into the tenant's own booking card. Marketing + app keep the
       // cinematic splash. Runs synchronously before first paint.
+      // A business's hosted form (/form/:id) is tenant-facing in the same way. Framed on the business's own
+      // website (public/embed.js, Experience 03), the cover is transparent and the static fallback below is
+      // hidden, so the visitor sees their page, then the form — never a Paige box.
       (function () {
-        if (/^\/(book|booking)(\/|$)/.test(window.location.pathname)) {
+        if (/^\/(book|booking|form)(\/|$)/.test(window.location.pathname)) {
           var el = document.getElementById("paige-splash");
+          var framed = /^\/form\//.test(window.location.pathname) && (window.parent !== window || /[?&]embed=1(&|$)/.test(window.location.search));
           if (el) {
             el.innerHTML = "";
-            el.style.background = "#F4F5F7";
+            el.style.background = framed ? "transparent" : "#F4F5F7";
             el.style.gap = "0";
             el.style.perspective = "none";
             el.setAttribute("aria-label", "Loading");
+          }
+          if (framed) {
+            var hide = document.createElement("style");
+            hide.textContent = "html,body{background:transparent!important}#root>main{display:none!important}";
+            document.head.appendChild(hide);
           }
         }
       })();

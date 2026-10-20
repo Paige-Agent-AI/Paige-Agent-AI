@@ -44,7 +44,7 @@ type Token = DonutSlice["colorToken"];
 const SERIES: Token[] = ["--chart-1", "--chart-2", "--chart-3", "--chart-4"];
 
 const Ic = SharedIcons as unknown as Record<string, React.ComponentType<{ size?: number }>>;
-const ROUTE_WORDS = { pipeline: "Routed to a pipeline", default: "Default pipeline", alert: "Email alert only, no pipeline", automations: "No pipeline", none: "Not routed" } as const;
+const ROUTE_WORDS = { pipeline: "Routed to a pipeline", campaign: "Campaign pipeline", default: "Default pipeline", alert: "Email alert only, no pipeline", automations: "No pipeline", none: "Not routed" } as const;
 const plural = (count: number, noun: string) => `${count.toLocaleString()} ${noun}${count === 1 ? "" : "s"}`;
 const n = (count: number) => count.toLocaleString();
 
@@ -76,7 +76,9 @@ export function MarketingAnalytics({ tenantId, submissions, forms, briefs, brief
   // Not while this page load knows the default-pipeline functions are undeployed (the funnel below asks).
   const intakeMissing = useAdsIntakeCapability(false) === "missing";
   const defaultTarget = React.useMemo(() => (intakeMissing ? null : defaultPipelineTarget(pipelineWorkspace)), [intakeMissing, pipelineWorkspace]);
-  const records = React.useMemo(() => deriveMarketingAnalytics({ submissions, briefs, forms, days: current.days, defaultReady: defaultTarget !== null }), [submissions, briefs, forms, current.days, defaultTarget]);
+  // A campaign's pipeline takes a form's leads through the same intake function, so it is gated the same way.
+  const routedForms = React.useMemo(() => (intakeMissing ? forms.map((form) => (form.campaignRoute ? { ...form, campaignRoute: null } : form)) : forms), [intakeMissing, forms]);
+  const records = React.useMemo(() => deriveMarketingAnalytics({ submissions, briefs, forms: routedForms, days: current.days, defaultReady: defaultTarget !== null }), [submissions, briefs, routedForms, current.days, defaultTarget]);
   // The headline figures, the funnel and the source mix are counted on the server over every lead in the
   // range (owners and admins); anyone else, or a read that fails, keeps the counts from the records read
   // here. The trend, the outcome ring, the heatmap and the capture points always draw from the records.
@@ -97,7 +99,7 @@ export function MarketingAnalytics({ tenantId, submissions, forms, briefs, brief
     : liveForms
       ? <>No leads in {period}, so there’s nothing to trace yet. {liveForms === 1 ? "Your live form is" : `All ${liveForms} live forms are`} ready to record the source on its link.</>
       : <>No leads in {period}, and no form is live to collect them.</>;
-  const prompt = `Look at my marketing for ${period}: ${floor(model.leads)} leads, ${floor(model.tagged)} with a source tag, ${floor(model.matched)} matched to a campaign, and ${floor(model.opportunities)} became opportunities. Where should I focus next? Use only what my records show; this workspace does not record visits, spend, reach or revenue.`;
+  const prompt = `Look at my marketing for ${period}: ${floor(model.leads)} leads, ${floor(model.tagged)} with a source tag, ${floor(model.matched)} matched to a campaign, and ${floor(model.opportunities)} became opportunities. Where should I focus next? Use only what my records show; page visits are recorded but not yet counted here, and this workspace does not record spend, reach or revenue.`;
 
   const prev = model.previous;
   const share = (part: number, whole: number) => (whole ? Math.round((part / whole) * 100) : 0);
@@ -322,14 +324,14 @@ function Capture({ model, floor, onOpenForm, studioLauncher, defaultLabel }: { m
       {model.leads > 0 && <div className="mva-body mva-body-tight"><RingWithKeys slices={slices} total={floor(model.leads)} caption="Leads" label="Leads by form" active={active} setActive={setActive} floor={floor} whole={model.leads} onPick={(key) => { if (key !== "rest") onOpenForm(key); }}/></div>}
       <ul className="mva-cap-list">{model.capture.map((form) => <li key={form.id}>
         <button type="button" className="mva-cap-row" onClick={() => onOpenForm(form.id)}>
-          <span className="mva-row-t">{form.name}<small className={form.route === "pipeline" || form.route === "default" ? undefined : "is-warn"}>{form.route === "default" && defaultLabel ? defaultLabel : ROUTE_WORDS[form.route]}{form.failed ? ` · ${plural(form.failed, "automation run")} failed recently` : ""}</small></span>
+          <span className="mva-row-t">{form.name}<small className={form.route === "pipeline" || form.route === "campaign" || form.route === "default" ? undefined : "is-warn"}>{form.route === "campaign" && form.routeLabel ? form.routeLabel : form.route === "default" && defaultLabel ? defaultLabel : ROUTE_WORDS[form.route]}{form.failed ? ` · ${plural(form.failed, "automation run")} failed recently` : ""}</small></span>
           <b>{floor(form.count)}</b>
         </button>
       </li>)}
         {model.fromRetired > 0 && <li className="mva-cap-row is-static"><span className="mva-row-t">Forms no longer live<small>Leads in this range from a form since unpublished</small></span><b>{floor(model.fromRetired)}</b></li>}
       </ul>
     </> : <div className="mov-empty-block"><p>No form is live. Publish one in Vibe Studio and its leads are counted here.</p>{studioLauncher}</div>}
-    <p className="mov-foot">Conversion rate needs visits, which public pages don’t record yet.</p>
+    <p className="mov-foot">Conversion rate isn’t shown yet: visits to your public pages are recorded from now on, but aren’t counted here yet.</p>
   </section>;
 }
 
@@ -344,7 +346,7 @@ function Channels({ days, email, onOpenEmail }: { days: number; email: EmailRead
   const rows: { name: string; line: string; flag?: string; act?: React.ReactNode }[] = [
     { name: "Email", line: emailLine, act: email.phase === "error" ? <button type="button" className="btn btn-s" onClick={email.retry}>Try again</button> : <button type="button" className="mov-lnk" onClick={onOpenEmail}>Open Email</button> },
     { name: "Social", line: "Reach and engagement aren’t read from any provider", flag: "Not available" },
-    { name: "Your pages", line: "Visits aren’t recorded on public pages", flag: "Not available" },
+    { name: "Your pages", line: "Visits are recorded, but aren’t counted here yet", flag: "Not available" },
   ];
   const points = s && s.tracked > 0 && s.series?.length ? ratePoints(s.series) : null;
   return <section className="mov-card" aria-labelledby="mva-ch-h">

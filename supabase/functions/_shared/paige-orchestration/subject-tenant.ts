@@ -38,6 +38,7 @@ export type SubjectTenantVerdict =
  */
 const SUBJECT_TENANT_COLUMN: Readonly<Record<string, string>> = {
   clients: "tenant_id",
+  paige_automations: "tenant_id",
 };
 
 /** Which subject tables Layer C can currently verify — exported so a test can assert the registry's shape. */

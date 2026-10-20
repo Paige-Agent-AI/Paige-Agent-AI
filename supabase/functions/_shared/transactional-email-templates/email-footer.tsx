@@ -1,7 +1,14 @@
 import * as React from 'npm:react@18.3.1'
 import { Link, Text } from 'npm:@react-email/components@0.0.22'
+import { footerLine } from './email-footer-line.ts'
 
 interface EmailFooterProps {
+  /**
+   * Customer-bound mail (a business writing to its own client): the business's name, or null when none
+   * resolved. Omit it for the platform's own mail. A customer never reads the platform's COO name here
+   * (owner ruling, 2026-10-19).
+   */
+  businessName?: string | null
   /**
    * Absolute https link to the tenant-agnostic, platform-level unsubscribe page.
    * When present, a visible opt-out line renders. When absent, nothing renders —
@@ -23,11 +30,12 @@ interface EmailFooterProps {
  * §2/§3 — copy is coaching-generic and in-voice: no finance vocabulary, and the
  * link points at the platform unsubscribe page, never a tenant domain.
  */
-export const EmailFooter = ({ unsubscribeUrl }: EmailFooterProps) => {
+
+export const EmailFooter = ({ unsubscribeUrl, businessName }: EmailFooterProps) => {
   if (!unsubscribeUrl) return null
   return (
     <Text style={optOut}>
-      You're receiving this as part of your Paige Agent AI updates.{' '}
+      {footerLine(businessName)}{' '}
       <Link href={unsubscribeUrl} style={optOutLink}>Unsubscribe</Link>
     </Text>
   )

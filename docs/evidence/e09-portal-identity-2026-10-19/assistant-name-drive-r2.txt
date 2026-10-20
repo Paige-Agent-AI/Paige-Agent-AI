@@ -1,0 +1,9 @@
+e09-owner-agent-name-saved-light-1536x770 OK {"problems":[],"contrast":5.32,"errors":[]}
+e09-owner-agent-name-saved-light-1366x768 OK {"problems":[],"contrast":5.32,"errors":[]}
+e09-owner-agent-name-saved-light-1024x768 OK {"problems":[],"contrast":5.32,"errors":[]}
+e09-owner-agent-name-saved-light-900x1000 OK {"problems":[],"contrast":5.32,"errors":[]}
+e09-owner-agent-name-saved-dark-1536x770 OK {"problems":[],"contrast":7.27,"errors":[]}
+e09-owner-agent-name-saved-dark-1366x768 OK {"problems":[],"contrast":7.27,"errors":[]}
+e09-owner-agent-name-saved-dark-1024x768 OK {"problems":[],"contrast":7.27,"errors":[]}
+e09-owner-agent-name-saved-dark-900x1000 OK {"problems":[],"contrast":7.27,"errors":[]}
+e09-owner-agent-name-typed-light-1366x768 OK {"problems":[],"contrast":5.32,"errors":[]}

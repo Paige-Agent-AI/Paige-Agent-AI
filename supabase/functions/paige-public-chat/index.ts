@@ -27,7 +27,8 @@ import { routedChatCompletion } from "../_shared/model-router.ts";
 import { overRateLimit, trustedClientIp } from "../_shared/rateLimit.ts";
 // #184 — the lane guard + finance-in-scope signal are DATA-DRIVEN and live in ONE
 // home (§18). This public surface imports them; it does not fork a second copy.
-import { buildLaneGuardSection, deriveFinanceInScopeFromFeatures } from "../_shared/client-context.ts";
+import { buildLaneGuardSection } from "../_shared/client-context.ts";
+import { financeEntitled } from "../_shared/finance-entitlement.ts";
 
 const corsHeaders = {
   // Public, credential-less endpoint (no cookies, no auth required) — "*" is safe and lets a
@@ -239,16 +240,16 @@ serve(async (req) => {
     if (pErr) { console.error("[paige-public-chat] page gate:", pErr.message); return json(500, { ok: false, error: "server_error" }); }
     if (!pubPages || pubPages.length === 0) return json(403, { ok: false, error: "chat_not_enabled" });
 
-    // 5) Persona + finance-in-scope flag. #184 — GENERIC signal, no vertical literal:
-    //    the SQL resolver derives funding_enabled from the is_finance marketplace catalog
-    //    gate OR features.finance_in_scope; this no-join public path reads the flag (set by
-    //    any is_finance Blueprint's install + backfilled for legacy funding tenants). §2 —
-    //    finance scope stays a per-tenant OPT-IN, never a default.
+    // 5) Persona + the business's finance entitlement. #184 — GENERIC signal, no vertical literal.
+    //    E09 F1b: read through the ONE edge reader (_tenant_finance_entitled: an active is_finance
+    //    Marketplace install OR features.finance_in_scope), the same predicate the persona resolver
+    //    uses; this path used to read the flag alone. A read error is not entitled (fail closed).
+    //    §2 — finance scope stays a per-business OPT-IN, never a default.
     const featuresRaw = tenantRow.features;
     const features = (featuresRaw && typeof featuresRaw === "object" && !Array.isArray(featuresRaw))
       ? (featuresRaw as Record<string, any>) : {};
     const playbookConfig = features.playbook_config ?? null;
-    const fundingEnabled = deriveFinanceInScopeFromFeatures(features);
+    const fundingEnabled = (await financeEntitled(admin, tenantId)) === "entitled";
 
     // Brand cascade (service_role may call this SECURITY DEFINER resolver). Feeds product name +
     // tagline into the persona; a brand miss is never a request failure.

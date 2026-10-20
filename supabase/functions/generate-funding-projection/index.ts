@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { refuseCustomerTier } from "../_shared/finance-entitlement.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -23,6 +24,14 @@ Deno.serve(async (req) => {
       authHeader.replace("Bearer ", "")
     );
     if (authError || !user) throw new Error("Unauthorized");
+
+    // E09 F1b: funding projections and matches are not a customer feature — a portal customer is
+    // refused before any read. Staff of a business without the funding entitlement are not gated
+    // here (owner question Q5 is open).
+    const tier = await refuseCustomerTier(supabase, user.id);
+    if (!tier.ok) {
+      return new Response(JSON.stringify({ error: tier.error }), { status: tier.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     const { scenario_name, scenario_params } = await req.json();
     if (!scenario_name || !scenario_params) {

@@ -188,7 +188,8 @@ describe("the record left where the card was", () => {
       <PaigeConfirmRecord decision="approved" count={1} />
       <PaigeConfirmRecord decision="declined" count={2} />
     </>);
-    expect(ui.host.textContent).toBe("Approved · 2 actionsApprovedSkipped · nothing changed");
+    expect(ui.host.textContent).toBe("Approved · 2 actionsApprovedYou chose Not now");
+    expect(ui.host.textContent).not.toContain("nothing changed");
     expect(ui.host.querySelectorAll("button")).toHaveLength(0);
   });
 });

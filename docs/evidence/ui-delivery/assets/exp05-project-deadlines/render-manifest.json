@@ -1,0 +1,545 @@
+{
+  "sourceHead": "cc896de04a21dcf2f41b99f2034d88ca46438320",
+  "sourceTree": "33432a4c7c843befa91243aa2dee058c10fe6493",
+  "boundary": "LOCAL_ACTUAL_SOURCE_SYNTHETIC_HOOKS_NO_AUTH_NO_EFFECTS",
+  "notes": [
+    "Original native screenshot bytes, no resizing or compositing.",
+    "Expected panel state is confirmed by the reviewed image; DOM presence is not used as visibility evidence.",
+    "Viewport emulation is not browser magnification.",
+    "Source fixture with network/CSP and mutation blocks, not a new product executor or authenticated record proof."
+  ],
+  "frames": [
+    {
+      "file": "a-dark-1024-closed.jpg",
+      "sha256": "fa027efb87cfed3cc4521e6da593a61cfb7152df0a94be58ee8d819b2572cea6",
+      "nativeImageSize": [
+        1024,
+        768
+      ],
+      "capturedAt": "2026-10-19T16:36:18.965Z",
+      "expectedPanel": "closed",
+      "geometry": {
+        "directPaigeExpanded": "false",
+        "document": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024
+        },
+        "focusTag": "BUTTON",
+        "focusText": "Direct PAIGE, or press \u2318\\\u2318\\",
+        "mainRect": {
+          "width": 952,
+          "x": 72
+        },
+        "viewport": {
+          "height": 768,
+          "width": 1024
+        }
+      },
+      "boundary": "LOCAL_SOURCE_RENDER_SYNTHETIC_NO_AUTH_NO_EFFECTS"
+    },
+    {
+      "file": "a-dark-1024-open.jpg",
+      "sha256": "ede19760ecd753c6a809eec7dfa24682edaf7c580c4e49f3373c5e183142fbc4",
+      "nativeImageSize": [
+        1024,
+        768
+      ],
+      "capturedAt": "2026-10-19T16:36:23.976Z",
+      "expectedPanel": "open",
+      "geometry": {
+        "directPaigeExpanded": "true",
+        "document": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024
+        },
+        "focusTag": "BUTTON",
+        "focusText": "Direct PAIGE, or press \u2318\\\u2318\\",
+        "mainRect": {
+          "width": 952,
+          "x": 72
+        },
+        "viewport": {
+          "height": 768,
+          "width": 1024
+        }
+      },
+      "boundary": "LOCAL_SOURCE_RENDER_SYNTHETIC_NO_AUTH_NO_EFFECTS"
+    },
+    {
+      "file": "a-dark-1366-closed.jpg",
+      "sha256": "3152feb24f7bcee647d4df7283781bba8e5c90143d21abcf8c6980955065ff8a",
+      "nativeImageSize": [
+        1366,
+        768
+      ],
+      "capturedAt": "2026-10-19T16:35:11.216Z",
+      "expectedPanel": "closed",
+      "geometry": {
+        "directPaigeExpanded": "false",
+        "document": {
+          "clientWidth": 1366,
+          "scrollWidth": 1366
+        },
+        "focusTag": "BUTTON",
+        "focusText": "Direct PAIGE, or press \u2318\\\u2318\\",
+        "mainRect": {
+          "width": 1150.4000244140625,
+          "x": 216
+        },
+        "viewport": {
+          "height": 768,
+          "width": 1366
+        }
+      },
+      "boundary": "LOCAL_SOURCE_RENDER_SYNTHETIC_NO_AUTH_NO_EFFECTS"
+    },
+    {
+      "file": "a-dark-1366-open.jpg",
+      "sha256": "858d1bfd30921830108eb2fcdac3c0138b962342ce1d004f737b856c6656aaa3",
+      "nativeImageSize": [
+        1366,
+        768
+      ],
+      "capturedAt": "2026-10-19T16:35:37.631Z",
+      "expectedPanel": "open",
+      "geometry": {
+        "directPaigeExpanded": "true",
+        "document": {
+          "clientWidth": 1366,
+          "scrollWidth": 1366
+        },
+        "focusTag": "BUTTON",
+        "focusText": "Direct PAIGE, or press \u2318\\\u2318\\",
+        "mainRect": {
+          "width": 685.8250122070312,
+          "x": 216
+        },
+        "viewport": {
+          "height": 768,
+          "width": 1366
+        }
+      },
+      "boundary": "LOCAL_SOURCE_RENDER_SYNTHETIC_NO_AUTH_NO_EFFECTS"
+    },
+    {
+      "file": "a-dark-1536-closed.jpg",
+      "sha256": "0128d08e9bff046cc01df368dcc5a50022079fdc3683a177c9c06054200662f8",
+      "nativeImageSize": [
+        1535,
+        770
+      ],
+      "capturedAt": "2026-10-19T16:34:58.788Z",
+      "expectedPanel": "closed",
+      "geometry": {
+        "directPaigeExpanded": "false",
+        "document": {
+          "clientWidth": 1536,
+          "scrollWidth": 1536
+        },
+        "focusTag": "BODY",
+        "focusText": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localStorage.getItem('theme');if(e){c.add(e|| '')}else{c.add('dark');}if(e==='light'||e=",
+        "mainRect": {
+          "width": 1320,
+          "x": 216
+        },
+        "viewport": {
+          "height": 770,
+          "width": 1536
+        }
+      },
+      "boundary": "LOCAL_SOURCE_RENDER_SYNTHETIC_NO_AUTH_NO_EFFECTS"
+    },
+    {
+      "file": "a-dark-1536-open.jpg",
+      "sha256": "aa7d65a8d56868563f07280f4394ec9b08bd89611f5a53e72c0e7d046780f455",
+      "nativeImageSize": [
+        1535,
+        770
+      ],
+      "capturedAt": "2026-10-19T16:35:05.066Z",
+      "expectedPanel": "open",
+      "geometry": {
+        "directPaigeExpanded": "true",
+        "document": {
+          "clientWidth": 1536,
+          "scrollWidth": 1536
+        },
+        "focusTag": "BUTTON",
+        "focusText": "Direct PAIGE, or press \u2318\\\u2318\\",
+        "mainRect": {
+          "width": 797.7625122070312,
+          "x": 216
+        },
+        "viewport": {
+          "height": 770,
+          "width": 1536
+        }
+      },
+      "boundary": "LOCAL_SOURCE_RENDER_SYNTHETIC_NO_AUTH_NO_EFFECTS"
+    },
+    {
+      "file": "a-dark-900-closed.jpg",
+      "sha256": "5c49769fcd8d0403cd6ed31dd74dbe971c55f453b4197a39f4ac21efbd465454",
+      "nativeImageSize": [
+        900,
+        1000
+      ],
+      "capturedAt": "2026-10-19T16:36:49.240Z",
+      "expectedPanel": "closed",
+      "geometry": {
+        "directPaigeExpanded": "false",
+        "document": {
+          "clientWidth": 900,
+          "scrollWidth": 900
+        },
+        "focusTag": "BUTTON",
+        "focusText": "Direct PAIGE, or press \u2318\\\u2318\\",
+        "mainRect": {
+          "width": 828,
+          "x": 72
+        },
+        "viewport": {
+          "height": 1000,
+          "width": 900
+        }
+      },
+      "boundary": "LOCAL_SOURCE_RENDER_SYNTHETIC_NO_AUTH_NO_EFFECTS"
+    },
+    {
+      "file": "a-dark-900-open.jpg",
+      "sha256": "3d34e7554df4e246cced266404a6f49f7d96d3913c8fded18e0bf2e1295a8fed",
+      "nativeImageSize": [
+        900,
+        1000
+      ],
+      "capturedAt": "2026-10-19T16:36:58.345Z",
+      "expectedPanel": "open",
+      "geometry": {
+        "directPaigeExpanded": "true",
+        "document": {
+          "clientWidth": 900,
+          "scrollWidth": 900
+        },
+        "focusTag": "BUTTON",
+        "focusText": "Direct PAIGE, or press \u2318\\\u2318\\",
+        "mainRect": {
+          "width": 828,
+          "x": 72
+        },
+        "viewport": {
+          "height": 1000,
+          "width": 900
+        }
+      },
+      "boundary": "LOCAL_SOURCE_RENDER_SYNTHETIC_NO_AUTH_NO_EFFECTS"
+    },
+    {
+      "file": "b-light-1024-closed.jpg",
+      "sha256": "e4c87e7cbb85cb0f4140d5fa429f10352b1a9282f43c46a7b0a741babf743dd6",
+      "nativeImageSize": [
+        1024,
+        768
+      ],
+      "capturedAt": "2026-10-19T16:37:37.509Z",
+      "expectedPanel": "closed",
+      "geometry": {
+        "directPaigeExpanded": "false",
+        "document": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024
+        },
+        "focusTag": "BUTTON",
+        "focusText": "Direct PAIGE, or press \u2318\\\u2318\\",
+        "mainRect": {
+          "width": 952,
+          "x": 72
+        },
+        "viewport": {
+          "height": 768,
+          "width": 1024
+        }
+      },
+      "boundary": "LOCAL_SOURCE_RENDER_SYNTHETIC_NO_AUTH_NO_EFFECTS"
+    },
+    {
+      "file": "b-light-1024-open.jpg",
+      "sha256": "d9a3f36335f4cae740bae7be6e3a41cf37227ea90ef886721697b30a6b9d4773",
+      "nativeImageSize": [
+        1024,
+        768
+      ],
+      "capturedAt": "2026-10-19T16:37:47.931Z",
+      "expectedPanel": "open",
+      "geometry": {
+        "directPaigeExpanded": "true",
+        "document": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024
+        },
+        "focusTag": "BUTTON",
+        "focusText": "Direct PAIGE, or press \u2318\\\u2318\\",
+        "mainRect": {
+          "width": 952,
+          "x": 72
+        },
+        "viewport": {
+          "height": 768,
+          "width": 1024
+        }
+      },
+      "boundary": "LOCAL_SOURCE_RENDER_SYNTHETIC_NO_AUTH_NO_EFFECTS"
+    },
+    {
+      "file": "b-light-1366-closed.jpg",
+      "sha256": "55610094d9bb2cc315711f6707b0755dd6d0d72047d7dda5d0dad2d3b4f0454c",
+      "nativeImageSize": [
+        1366,
+        768
+      ],
+      "capturedAt": "2026-10-19T16:37:15.727Z",
+      "expectedPanel": "closed",
+      "geometry": {
+        "directPaigeExpanded": "false",
+        "document": {
+          "clientWidth": 1366,
+          "scrollWidth": 1366
+        },
+        "focusTag": "BUTTON",
+        "focusText": "Direct PAIGE, or press \u2318\\\u2318\\",
+        "mainRect": {
+          "width": 1294.4000244140625,
+          "x": 72
+        },
+        "viewport": {
+          "height": 768,
+          "width": 1366
+        }
+      },
+      "boundary": "LOCAL_SOURCE_RENDER_SYNTHETIC_NO_AUTH_NO_EFFECTS"
+    },
+    {
+      "file": "b-light-1366-open.jpg",
+      "sha256": "dd8fbb713a625b9332737a1877fb38d7a9793496205c3820b7511f6a2ff90b35",
+      "nativeImageSize": [
+        1366,
+        768
+      ],
+      "capturedAt": "2026-10-19T16:37:25.853Z",
+      "expectedPanel": "open",
+      "geometry": {
+        "directPaigeExpanded": "true",
+        "document": {
+          "clientWidth": 1366,
+          "scrollWidth": 1366
+        },
+        "focusTag": "BUTTON",
+        "focusText": "Direct PAIGE, or press \u2318\\\u2318\\",
+        "mainRect": {
+          "width": 829.8250122070312,
+          "x": 72
+        },
+        "viewport": {
+          "height": 768,
+          "width": 1366
+        }
+      },
+      "boundary": "LOCAL_SOURCE_RENDER_SYNTHETIC_NO_AUTH_NO_EFFECTS"
+    },
+    {
+      "file": "b-light-1536-closed.jpg",
+      "sha256": "d6fa6ce7bd9cc111250b46e0602463d4bb8661a1231b3ee7b19d2defe61a098c",
+      "nativeImageSize": [
+        1535,
+        770
+      ],
+      "capturedAt": "2026-10-19T16:37:05.340Z",
+      "expectedPanel": "closed",
+      "geometry": {
+        "directPaigeExpanded": "false",
+        "document": {
+          "clientWidth": 1536,
+          "scrollWidth": 1536
+        },
+        "focusTag": "BODY",
+        "focusText": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localStorage.getItem('theme');if(e){c.add(e|| '')}else{c.add('light');}if(e==='light'||e",
+        "mainRect": {
+          "width": 1464,
+          "x": 72
+        },
+        "viewport": {
+          "height": 770,
+          "width": 1536
+        }
+      },
+      "boundary": "LOCAL_SOURCE_RENDER_SYNTHETIC_NO_AUTH_NO_EFFECTS"
+    },
+    {
+      "file": "b-light-1536-open.jpg",
+      "sha256": "9f6ed242f27225630ca28bf898101c20475fcbf7c677450deaf131c84687de9e",
+      "nativeImageSize": [
+        1535,
+        770
+      ],
+      "capturedAt": "2026-10-19T16:37:11.805Z",
+      "expectedPanel": "open",
+      "geometry": {
+        "directPaigeExpanded": "true",
+        "document": {
+          "clientWidth": 1536,
+          "scrollWidth": 1536
+        },
+        "focusTag": "BUTTON",
+        "focusText": "Direct PAIGE, or press \u2318\\\u2318\\",
+        "mainRect": {
+          "width": 941.7625122070312,
+          "x": 72
+        },
+        "viewport": {
+          "height": 770,
+          "width": 1536
+        }
+      },
+      "boundary": "LOCAL_SOURCE_RENDER_SYNTHETIC_NO_AUTH_NO_EFFECTS"
+    },
+    {
+      "file": "b-light-390-milestone.jpg",
+      "sha256": "706db987d3c546a462534eb58738696592877f898bfcf209624ea425381f427a",
+      "nativeImageSize": [
+        390,
+        843
+      ],
+      "capturedAt": "2026-10-19T16:38:18.890Z",
+      "expectedPanel": "closed-inspector-open",
+      "geometry": {
+        "directPaigeExpanded": "false",
+        "document": {
+          "clientWidth": 390,
+          "scrollWidth": 390
+        },
+        "focusTag": "BUTTON",
+        "focusText": "Close",
+        "mainRect": {
+          "width": 318.3999938964844,
+          "x": 72
+        },
+        "viewport": {
+          "height": 844,
+          "width": 390
+        }
+      },
+      "boundary": "LOCAL_SOURCE_RENDER_SYNTHETIC_NO_AUTH_NO_EFFECTS"
+    },
+    {
+      "file": "b-light-390-project.jpg",
+      "sha256": "519697182ef119ef026981cc98afe2baa180306de164d92084b840d2a970baf1",
+      "nativeImageSize": [
+        390,
+        843
+      ],
+      "capturedAt": "2026-10-19T16:38:29.439Z",
+      "expectedPanel": "closed-inspector-open",
+      "geometry": {
+        "directPaigeExpanded": "false",
+        "document": {
+          "clientWidth": 390,
+          "scrollWidth": 390
+        },
+        "focusTag": "BUTTON",
+        "focusText": "Add milestone",
+        "mainRect": {
+          "width": 318.3999938964844,
+          "x": 72
+        },
+        "viewport": {
+          "height": 844,
+          "width": 390
+        }
+      },
+      "boundary": "LOCAL_SOURCE_RENDER_SYNTHETIC_NO_AUTH_NO_EFFECTS"
+    },
+    {
+      "file": "b-light-390-return.jpg",
+      "sha256": "4c361ededb6c43c2d57c1197bd913e88a68a4e906debd0c72798488689cb4865",
+      "nativeImageSize": [
+        390,
+        843
+      ],
+      "capturedAt": "2026-10-19T16:38:25.011Z",
+      "expectedPanel": "closed",
+      "geometry": {
+        "directPaigeExpanded": "false",
+        "document": {
+          "clientWidth": 390,
+          "scrollWidth": 390
+        },
+        "focusTag": "BUTTON",
+        "focusText": "Share the agreed next stepsJan 2 \u00b7 Ready",
+        "mainRect": {
+          "width": 318.3999938964844,
+          "x": 72
+        },
+        "viewport": {
+          "height": 844,
+          "width": 390
+        }
+      },
+      "boundary": "LOCAL_SOURCE_RENDER_SYNTHETIC_NO_AUTH_NO_EFFECTS"
+    },
+    {
+      "file": "b-light-900-closed.jpg",
+      "sha256": "b3d5956f11f3566a5be8f95ef481ce007a9463d1768ba659b1b5446382b86e31",
+      "nativeImageSize": [
+        900,
+        1000
+      ],
+      "capturedAt": "2026-10-19T16:38:00.665Z",
+      "expectedPanel": "closed",
+      "geometry": {
+        "directPaigeExpanded": "false",
+        "document": {
+          "clientWidth": 900,
+          "scrollWidth": 900
+        },
+        "focusTag": "BUTTON",
+        "focusText": "Direct PAIGE, or press \u2318\\\u2318\\",
+        "mainRect": {
+          "width": 828,
+          "x": 72
+        },
+        "viewport": {
+          "height": 1000,
+          "width": 900
+        }
+      },
+      "boundary": "LOCAL_SOURCE_RENDER_SYNTHETIC_NO_AUTH_NO_EFFECTS"
+    },
+    {
+      "file": "b-light-900-open.jpg",
+      "sha256": "9aada200587957ef0416ba4baca1d5f0c822ed473e40dd83c91de30317d897d1",
+      "nativeImageSize": [
+        900,
+        1000
+      ],
+      "capturedAt": "2026-10-19T16:38:10.828Z",
+      "expectedPanel": "open",
+      "geometry": {
+        "directPaigeExpanded": "true",
+        "document": {
+          "clientWidth": 900,
+          "scrollWidth": 900
+        },
+        "focusTag": "BUTTON",
+        "focusText": "Direct PAIGE, or press \u2318\\\u2318\\",
+        "mainRect": {
+          "width": 828,
+          "x": 72
+        },
+        "viewport": {
+          "height": 1000,
+          "width": 900
+        }
+      },
+      "boundary": "LOCAL_SOURCE_RENDER_SYNTHETIC_NO_AUTH_NO_EFFECTS"
+    }
+  ]
+}

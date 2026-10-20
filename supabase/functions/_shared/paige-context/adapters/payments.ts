@@ -29,6 +29,7 @@ import {
   knownAmount,
   noteSalesSource,
   readSalesFigure,
+  salesReportingPeriod,
   SALES_METRIC_REASON,
   SALES_NOTE,
   type CurrencyFigures,
@@ -114,12 +115,15 @@ export function createPaymentsSnapshotAdapter(
       const aborted = () => ctx.signal?.aborted === true;
       const tenantId = scope.tenantId;
       const draft = emptySalesDraft();
+      const reporting = salesReportingPeriod(ctx.period, ctx.now);
+      if (reporting?.coverageNote) draft.notes.push(reporting.coverageNote);
+      if (!reporting) draft.notes.push("No readable completed UTC-day Sales activity window for this period.");
 
       // a) recorded receipts in the period
       if (aborted()) return contextDegraded(SALES_METRIC_REASON.aborted);
-      const cash = await readSalesFigure(
-        caller, tenantId, PAYMENTS_SALES_METRICS.cashReceived, ctx.period, ctx.now, "currency_totals", clock,
-      );
+      const cash = reporting ? await readSalesFigure(
+        caller, tenantId, PAYMENTS_SALES_METRICS.cashReceived, reporting.period, ctx.now, "currency_totals", clock,
+      ) : { failure: SALES_METRIC_REASON.windowUnreadable, window: null };
       let current: Window | null = null;
       if ("metric" in cash) {
         draft.headlineReads += 1;
@@ -129,7 +133,7 @@ export function createPaymentsSnapshotAdapter(
           basis: "in_period",
           metric: cash.metric,
           partial: cash.partial,
-          windowNote: cash.window?.window_note,
+          windowNote: reporting?.windowNote,
         });
         current = { figures, partial: cash.partial };
       } else {
@@ -138,9 +142,9 @@ export function createPaymentsSnapshotAdapter(
       }
 
       // b) the same figure for the window just before — only worth reading when there is something to compare
-      if (current !== null) {
+      if (current !== null && reporting !== null) {
         if (aborted()) return contextDegraded(SALES_METRIC_REASON.aborted);
-        const prior = previousPeriod(ctx.period);
+        const prior = previousPeriod(reporting.period);
         const before = await readSalesFigure(
           caller, tenantId, PAYMENTS_SALES_METRICS.cashReceived, prior, ctx.now, "currency_totals", clock,
         );

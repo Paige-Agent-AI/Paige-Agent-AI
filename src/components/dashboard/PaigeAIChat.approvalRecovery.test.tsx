@@ -386,7 +386,8 @@ describe("PAIGE chat, Solo — after Approve the card answers for what happened"
     await press(buttons(host, /Not now/)[0]);
 
     expect(bodies[1]?.declinedConfirmations).toEqual([FP_A, FP_B]);
-    expect(host.textContent).toContain("Skipped · nothing changed");
+    expect(host.textContent).toContain("You chose Not now");
+    expect(host.textContent).not.toContain("nothing changed");
     expect(reports(host)).toHaveLength(0);
   });
 });
@@ -406,7 +407,8 @@ describe("PAIGE chat, Solo — when the interactive window runs out", () => {
     expect(host.textContent).toContain("six-minute interactive window ended");
     expect(host.textContent).not.toContain("Retry may start the work again");
     expect(buttons(host, /^Retry$/)).toHaveLength(0);
-    expect(host.textContent).toContain("Skipped · nothing changed");
+    expect(host.textContent).toContain("You chose Not now");
+    expect(host.textContent).not.toContain("nothing changed");
   });
 
   it("lets the approval's own card say it couldn't confirm, with no second notice", async () => {

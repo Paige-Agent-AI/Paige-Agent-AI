@@ -138,10 +138,33 @@ department and lane, so Marketing now shows a second act, "Carry out a campaign 
 derived level is unchanged (every Marketing act is `confirm`). The chat `file_action` tool can file this kind
 without a campaign link; such an action simply has no campaign until it is linked.
 
+## Chat and Live (MBC 6c)
+
+PAIGE reaches the same writer and read from chat and Live (Live is the same chat runtime; it has no tool
+registry of its own). Spine domain `marketing_actions`; tool JSON and dispatcher in
+`supabase/functions/_shared/campaign-steps-chat.ts`; migration `20271023100000`.
+
+| Tool | Calls | Risk | Seat |
+|---|---|---|---|
+| `read_campaign_steps` | `read_campaign_steps(p_expected_tenant_id, p_brief_id)` → `get_campaign_brief_actions` | read | member (redacted as the read already is) |
+| `campaign_step_plan` | `configure_campaign_brief_actions` `plan_action`, actor `paige` | ordinary | owner/admin |
+| `campaign_step_record_result` | `record_outcome`, actor `paige` | ordinary | owner/admin |
+| `campaign_step_judge` | `evaluate_outcome`, actor `paige` | ordinary | owner/admin |
+
+- **The caller's own session, never the service role.** The database decides who may; the adapter also reads the
+  active business before and after each call, and the read wrappers refuse any business but the one the chat is in.
+- **Done only on readback.** Each write counts only once a fresh read shows it; otherwise PAIGE says the outcome is
+  unknown and does not retry.
+- **Only what the owner said.** A figure must be a number the owner wrote in the conversation, or nothing is written.
+  A step marked done with nothing behind it, or one not finished, is refused before any write.
+- **One key per ask.** The idempotency key is derived from the business, the person, the conversation and the
+  change asked for, so a confirmed replay returns what was recorded.
+- **Gating.** The writes ask first by default (Autonomy settings, category Campaigns). On a typed Solo turn while
+  INT-346 is DRAINING, conversational mode removes every tool, these included.
+
 ## Not in this slice
 
-- A Campaigns dossier view of the actions (slice 6b).
-- Chat/Live tools over `plan_action` and the read (slice 6c, with INT-346 gating for effectful paths).
+- Linking an existing action, setting a dependency or a process from the dossier or chat.
 - Writing `campaign_briefs.mission_id`: the brief writer still does not set it, so the strategy shows only
   where a mission is already attached.
 

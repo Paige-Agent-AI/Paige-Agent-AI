@@ -20,6 +20,7 @@ import {
   Video, Phone, MapPin, Link2, HelpCircle, Users, Globe, Search, CalendarPlus, Download, ExternalLink,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { isEmbedded, useEmbedHeight } from "@/hooks/useEmbedHeight";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -236,56 +237,11 @@ export default function BookingPage() {
   const tzOptions = useMemo(() => allTimezones().map((z) => ({ value: z, label: tzLabel(z) })), []);
 
   // --- Auto-resize when embedded (see public/embed.js) ---------------------
-  // The card whose height the parent iframe should match. When this page runs
-  // inside a tenant's <iframe> we post its measured height on mount and on every
-  // content change so the embed loader can size the frame with no inner scroll.
+  // The card whose height the parent iframe should match (one home: useEmbedHeight).
   const cardRef = useRef<HTMLDivElement | null>(null);
   // Stable for the life of the page: are we rendered inside a parent frame?
-  const embedded = typeof window !== "undefined" && window.parent !== window;
-  useEffect(() => {
-    // Only speak to a parent frame — a stand-alone visit has none to size.
-    if (!embedded) return;
-    const el = cardRef.current;
-    if (!el) return;
-
-    // Height is non-sensitive, but we still aim the message at the real parent
-    // origin rather than "*". We derive it from the embedding chain (Chromium /
-    // WebKit) or the referrer, falling back to "*" only when the browser hides
-    // it (height leaks nothing, so this is safe).
-    const parentOrigin = (() => {
-      try {
-        const ao = (window.location as unknown as { ancestorOrigins?: DOMStringList }).ancestorOrigins;
-        if (ao && ao.length > 0) return ao[0];
-      } catch { /* cross-origin access can throw; fall through */ }
-      if (document.referrer) {
-        try { return new URL(document.referrer).origin; } catch { /* malformed referrer */ }
-      }
-      return "*";
-    })();
-
-    let last = 0;
-    let frame = 0;
-    const post = () => {
-      frame = 0;
-      // Round up so sub-pixel growth never leaves a hairline scrollbar.
-      const height = Math.ceil(el.getBoundingClientRect().height);
-      if (!height || Math.abs(height - last) < 1) return;
-      last = height;
-      window.parent.postMessage({ type: "paige-booking-height", height, slug }, parentOrigin);
-    };
-    // Coalesce bursts (fonts, images, phase changes) into one post per frame.
-    const schedule = () => { if (!frame) frame = window.requestAnimationFrame(post); };
-
-    schedule();
-    const ro = new ResizeObserver(schedule);
-    ro.observe(el);
-    window.addEventListener("load", schedule);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("load", schedule);
-      if (frame) window.cancelAnimationFrame(frame);
-    };
-  }, [slug, embedded]);
+  const embedded = isEmbedded();
+  useEmbedHeight(cardRef, { type: "paige-booking-height", slug }, [slug, embedded]);
 
   // Fetch availability up to `toIso` (omitted = the calendar's default window).
   // The edge function always serves from "now" and caps at the booking horizon,

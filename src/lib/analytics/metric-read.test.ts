@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { metricReadContext, readBusinessMetric } from '../../../supabase/functions/_shared/analytics-metrics/read.ts';
+import { metricReadContext, readBusinessMetric, readBusinessMetricEvidence } from '../../../supabase/functions/_shared/analytics-metrics/read.ts';
 
 const tenant = 'a3400000-0000-4000-8000-000000000011';
 const now = Date.parse('2026-10-08T12:00:00Z');
@@ -23,9 +23,79 @@ function harness(change: (result: Fixture) => void = () => {}, denied = false, s
     if (name === 'resolve_analytics_evidence_reference' && returned) resolve(returned);
     return { data: returned, error: null };
   } };
-  return { calls, run: (input: unknown = args) => readBusinessMetric(caller, { tenantId: tenant }, input, () => now) };
+  return { calls, caller, run: (input: unknown = args) => readBusinessMetric(caller, { tenantId: tenant }, input, () => now) };
 }
 describe('governed conversational metric read', () => {
+  it('supplies actual verified epoch evidence internally while keeping raw producer extras out', async () => {
+    const h = harness(r => { r.values = { kind: 'count', count: 4, private_customer: 'NEVER_PROJECT' }; });
+    const result = await readBusinessMetricEvidence(h.caller, { tenantId: tenant }, args, () => now);
+    expect(result.status).toBe('available');
+    if (result.status !== 'available') throw Error('Expected verified domain evidence');
+    expect(result.metric.account_epoch).toBe(tenant);
+    expect(result.metric.account_epoch_ref).toBe('ae_v1_' + 'b'.repeat(64));
+    expect(result.request.accountEpoch).toBe(tenant);
+    expect(JSON.stringify(result)).not.toContain('NEVER_PROJECT');
+    expect(JSON.stringify(result)).not.toContain('private_payload');
+    expect(JSON.stringify(await h.run())).not.toContain(tenant);
+  });
+  it('coordinates overlapping Fabric and target evidence reads through the incumbent issuer', async () => {
+    const h = harness(), original = h.caller.rpc;
+    let active: Fixture | null = null, issued = 0;
+    h.caller.rpc = async (name, input) => {
+      const result = await original(name, input);
+      if (name === 'issue_analytics_evidence_bundle') {
+        active = { ...result.data!, evidence_ref: 'aneb_v1_' + String(++issued).padStart(64, '0') };
+        return { data: active, error: null };
+      }
+      if (name === 'resolve_analytics_evidence_reference') return input?.p_evidence_ref === active?.evidence_ref
+        ? { data: active!, error: null } : { data: null, error: { code: '42501', message: 'Reference revoked' } };
+      return result;
+    };
+    const results = await Promise.all([
+      readBusinessMetricEvidence(h.caller, { tenantId: tenant }, args, () => now),
+      h.run({ metric_key: args.metric_key, period: 'custom', range_key: 'week', range_start: '2026-10-02T12:00:00.000Z', range_end: new Date(now).toISOString() }),
+    ]);
+    expect(results.map(result => result.status)).toEqual(['available', 'available']);
+    expect(h.calls.filter(c => /analytics_evidence/.test(c.name)).map(c => c.name)).toEqual([
+      'issue_analytics_evidence_bundle', 'resolve_analytics_evidence_reference',
+      'issue_analytics_evidence_bundle', 'resolve_analytics_evidence_reference',
+    ]);
+  });
+  const overdue = { metric_key: 'sales.receivables.overdue_current', period: 'last_7_days' };
+  const calendar = { state: 'configured', zone: 'America/New_York', set_at: '2026-10-01T00:00:00Z', as_of_date: '2026-10-08' };
+  function overdueFixture(r: Fixture) {
+    r.metric_version = '1.1.0'; r.owner_department = 'sales'; r.unit = 'currency_minor';
+    r.values = { kind: 'currency_totals', by_currency: [], breakdown: [] };
+    r.coverage = { state: 'complete', candidate_count: 0, contributing_count: 0, excluded_count: 0 };
+    r.source_refs = ['public.paige_invoices', 'public.paige_invoice_payments', 'public._sales_invoice_balance_rows', 'public.tenant_business_time_zones'];
+    r.business_time_zone = calendar;
+  }
+  it('requests only the overdue metric at 1.1.0 and preserves verified business calendar evidence', async () => {
+    const h = harness(overdueFixture); const result = await h.run(overdue);
+    expect(result.status).toBe('available');
+    expect(h.calls.find(c => c.name === 'issue_analytics_evidence_bundle')?.args?.p_metric_version).toBe('1.1.0');
+    expect(result.metric).toHaveProperty('business_time_zone', calendar);
+  });
+  it.each(['missing', 'invalid'])('preserves %s calendar as unavailable/null instead of currency zero', async state => {
+    const result = await harness(r => {
+      overdueFixture(r); r.business_time_zone = { state, zone: null, set_at: state === 'missing' ? null : calendar.set_at, as_of_date: null };
+      r.truth_state = 'UNAVAILABLE'; r.values = null;
+      r.coverage = { state: 'unavailable', reason: `business_time_zone_${state}`, candidate_count: 2, contributing_count: 0, excluded_count: 2 };
+      r.exclusions = [{ reason: `business_time_zone_${state}`, count: 2 }];
+    }).run(overdue);
+    expect(result.status).toBe('available'); expect(result.metric?.values).toBeNull();
+    expect(result.metric).toHaveProperty('business_time_zone.state', state);
+    expect(result.metric?.coverage.reason).toBe(`business_time_zone_${state}`);
+  });
+  it.each([undefined, { ...calendar, as_of_date: '2026-10-07' }, { ...calendar, zone: 'Invalid/Zone' }, { ...calendar, private_payload: 'hidden' }])('refuses missing or inconsistent calendar evidence', async value => {
+    const result = await harness(r => { overdueFixture(r); r.business_time_zone = value; }).run(overdue);
+    expect(result.status).toBe('unavailable');
+  });
+  it('refuses legacy overdue evidence without a replacement read', async () => {
+    const h = harness(r => { overdueFixture(r); r.metric_version = '1.0.0'; });
+    expect((await h.run(overdue)).status).toBe('unavailable');
+    expect(h.calls.filter(c => c.name === 'issue_analytics_evidence_bundle')).toHaveLength(1);
+  });
   it('issues and resolves through caller authority and projects closed current-turn evidence', async () => {
     const h = harness(); const result = await h.run();
     expect(result.status).toBe('available');

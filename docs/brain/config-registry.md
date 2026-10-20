@@ -1,5 +1,18 @@
 # Config Registry — infra & integration state
 
+## October20 — current-main composition preparation; NOT RELEASED
+
+Original2163/36ab and2189/9f sources/acceptance are preserved, with bounded successor b27e95 corrections independently reviewed. This own composition retains currentmain40c1 authority, source, Task recovery/navigation and all later Experience work. The inherited dated sections below remain historical; old deployment observations and ownership statements are not current proof or a formal Coordinator handoff. The draft writer/Edge and old090500 migration are absent/unapplied in current production; forward migration/schema proof, current source-pin derivation/review, final exact-head CI/deployment and ordinary authenticated acceptance remain owed. No recurrence, provider, Chat/Live activation or18/25/50 closure. Current owner EXP-only doctrine and the ten-outcome/E5-CV1–9 contract control.
+
+**2026-10-16 E01 timing source RELEASED:** PR [#2273](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2273), reviewed `00f9726e5a9c86da27ea4e625d0eaff1b69cac0c` -> main `6a2c4258033c6438deab211f56d5188f1b32c9ec`. All11 exact-head checks including Preview, six workflows and both Vercel statuses SUCCESS; AUTHOR-REVIEW / LOWER ASSURANCE. Production Vercel `dpl_FqwfkNiPWWdkzQVTfvoP5j36na5E` READY; stable served-module graph13/13. Actual paige-tts76 source/configuration matches7/7 merged files, separately from deployment artifact75. Three canonical checkpoint definitions/access controls unchanged. Optional native playback phases and same-response numeric Server-Timing are source-released, not actual Jessica/provider p50/p95 or customer acceptance. Global Edge certification remains HELD on shared BUG#2271 after the selected deployment/source checks passed and final baseline-record step failed; no tag bypass. No provider/customer operation. Original23 cases and all ten outcomes remain OPEN. Subsequent Live phase observation remains development-only; its neutral unit/cost binding is separately incomplete. No interim owner testing request.
+
+
+### Preserved inherited EXP05 checkpoint (historical, unmerged source)
+
+## 2026-10-15 — E5 A3 prepared owner draft command (not deployed)
+
+`weekly-commitment-command` is a prepared JWT-verified owner-only Edge wrapper over existing confirmations/Kit/Trust/native draft/Rail. It reuses existing Supabase URL/anon/service credentials; no new secret, provider, budget, cron or flag. Browser `x-paige-expected-tenant` is a stale-scope constraint, never authority; real caller/tenant/owner are server-verified. Draft permission metadata defaults confirm and writes no tenant override. Migration20271105090500 is forward-only, adds nullable consuming nonce and indexes for canonical draft reconciliation/history, and is **not applied**. Prepared Spine metadata is unregistered; no Chat/Live tool offer changes. Production04:11:56UTC confirms writer absent, triggerOFF and all weekly process/event/receipt/cron/permission-override counts0. See the [existing E5 matrix](../delivery/experience-05-weekly-commitment-check.md). Deployment/accepted customer operation are not inferred.
+
 Durable record of the platform's integration configuration so no future session re-diagnoses
 "how is X wired / what's the account / which secret drives this."
 
@@ -211,8 +224,7 @@ relying on either. (Secret **values** intentionally not recorded.)
 
 ## Signup / onboarding / provisioning (✅ code + migration-verified 2026-08-09)
 
-- **Signup verification = EMAIL only.** `src/pages/PublicSignup.tsx` uses email verification
-  (`CommunicationsConsent … showSms={false}`, "click it to verify your account"). **SMS/phone
+- **Signup verification = EMAIL only.** Current mounted public route (2026-10-12): `App.tsx` SignupRedirect → `Auth.tsx` → `signUpWithReferral` → ordinary `supabase.auth.signUp` and verification redirect/UI. Historical2026-08-09 pointer `PublicSignup.tsx` is unmounted; preserve it as history, not current routing authority. **SMS/phone
   verification is NOT wired into the signup flow** — the `input-otp` primitive exists and OTP is used
   for Auth/MFA, but signup doesn't use it. **SMS phone-verify itself DOES exist** for notification
   opt-in: `send-sms-verification` + `verify-sms-code` edge fns + `sms_verifications` table, wired in
@@ -310,6 +322,16 @@ not re-propose it.)* Module header `_shared/twilio.ts:24-35` states the model ex
 
 ## Voice / TTS / STT — Paige Voice Profile
 
+**2026-10-16 backend release identity:** #2268 maindd27f5a5a47b0e19d1a1ad8967be2538e1f93669 has exact READY production web and actual source/configuration PASS for paige-tts73 and paige-live-relay31. Global marker certification is still HELD pending shared BUG#2271; existing recovery does not authorize overriding that result. Earlier local streaming/frontend notes below are historical. Numeric same-response/client timing remains LOCAL; Live readiness and real provider/customer proof remain owed. No config/profile/credential/activation or spending-limit change.
+
+**2026-10-16 E01 metadata recheck (read only):** the existing global readiness row still has surface enabled but transport disabled, pilot disabled and rollout scope `off`; availability/realtime STT are `PROOF OWED`, streaming TTS `PARTIAL`. Scope, voice, retention, zero-retention and quota verification flags remain false; cost limits and provider/account verification are absent. This is recorded authorization/readiness, not proof of provider incapability. The separately approved active Jessica profile does not override this Live gate. No flag, credential, account or budget was changed. Complete Live/provider latency acceptance requires the existing verified-provider/readiness process, never an E01 bypass.
+
+**2026-10-16 timing continuation (LOCAL/UNRELEASED):** same-response numeric Server-Timing stages and optional native Performance entries extend incumbent paige-tts/messageTts. No request-reference header, business/message/thread identity, network reporter or parallel telemetry store.52 focused Node20 assertions pass. Two native synthetic decoder observations start before EOF; they establish neither approved-voice/provider p50/p95 nor customer acceptance. Backend streaming #2268 remains separately gated.
+
+**2026-10-16 E01 streaming development:** existing HTTP read-aloud adapter/handler now have local first-byte delivery, original-request cancellation, complete-only cache and stage durations on incumbent usage records; model, approved voice, retention, budgets and Live dialogue transport remain unchanged. Provider-neutral56 checks and real Deno graph pass; production provider latency, activated transport and ordinary-customer acceptance are not established by this candidate. Cache remains provider:model:voice:text under existing tenant prefix, with revision attribution in cost/usage.
+
+**2026-10-16 E01 read-only production metadata:** active slot remains ElevenLabs revision `elevenlabs-jessica-r1`, approved/active/status approved. The separate `elevenlabs-jessica-take5-r1` candidate remains unapproved/inactive/pending-provider-proof. No profile, credential, readiness, routing or budget was changed. This supersedes the earlier activation snapshot below; it does not establish current provider latency, consented Live acceptance or full readiness. Local progressive message playback is unreleased and retains this existing server selection.
+
 **2026-09-08 full-audio continuation (development):** owner authority now permits existing-account
 inspection and server-only use of the existing credential, not purchase/upgrade or legal acceptance.
 The existing `paige-voice-profile-admin` gains `inspect-configured-account`: platform-owner JWT
@@ -332,12 +354,12 @@ voice reference. Profile rows carry an immutable revision, approval/effective me
 speech policy, and operator audit trail; a new session resolves the current revision while an active
 session retains its snapshot. Customer UI shows only Paige.
 
-The requested ElevenLabs reference is stored only in the service-owned profile table as a pending,
+Historical activation snapshot (2026-09-07; superseded above): the requested ElevenLabs reference was stored only in the service-owned profile table as a pending,
 inactive candidate. The separately approved OpenAI fallback is the initial active profile. Neither
 provider reference is a client setting, prompt value, or request override. Missing/deleted/
 unauthorized profiles fail closed unless a separately approved fallback resolves.
 
-**Provider-backed realtime audio: `PROOF OWED`.** The production readiness record is deliberately
+**Historical readiness snapshot (2026-09-08): `PROOF OWED`.** At that read the production readiness record was deliberately
 transport-disabled until an authorized operator independently verifies the existing account's
 minimum key scopes, exact voice authorization, realtime STT eligibility/concurrency, quota, Paige
 calendar-month UTC hard cost ceiling, approved maximum price per 1,000 characters, and retention
@@ -535,6 +557,23 @@ Values intentionally omitted.
 - **Email:** `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, plus from-address names
   `PLATFORM_DEFAULT_EMAIL_FROM`, `BILLING_EMAIL_FROM`, `WELCOME_EMAIL_FROM`, `CALENDAR_EMAIL_FROM`,
   `PLATFORM_SUPPORT_EMAIL`.
+- **PAIGE Email — SendGrid (tenant email under the 2026-10-13 owner policy; Resend stays the Platform Operator's own email).** Edge secret NAMES only; values are never recorded. Whether each one is set on production was NOT re-read by this record.
+  - `SENDGRID_MAIL_SEND_API_KEY` is the restricted Mail Send key. Readers:
+    - `_shared/email/providers.ts` no longer reads it: `buildProvider` resolves `sendgrid` to a provider that refuses to send, so SendGrid is reachable only through the governed door (Experience 03 round-4 security LOW-3; the `SendGridProvider` adapter was removed);
+    - `send-message/index.ts`: the governed SendGrid arm (20 s deadline, `custom_args` `paige_tenant_id`/`paige_operation_id`/`paige_message_id`). It sends through a SendGrid connector only for the email door's prepared operation; anything else is refused before any provider call (`paige_email_requires_governed_send`);
+    - `growth-process-submission/lead-reply.ts`: presence only, so the lead-reply drafter counts a SendGrid sender with the door's own provider list (`emailProvidersFor`);
+    - `_shared/comms-email/readiness.ts`: presence only, giving the `EMAIL_PROVIDER_NOT_CONFIGURED` state;
+    - `comms-email-command/index.ts`: presence decides whether `sendgrid` counts as a sender provider (`emailProvidersFor`);
+    - `comms-sendgrid-scopes/index.ts`: records the key's scopes, and returns `SENDGRID_EXECUTOR_KEY_NOT_CONFIGURED` when unset.
+  - `SENDGRID_WEBHOOK_PUBLIC_KEY` verifies Event Webhook signatures. Read only by `handle-sendgrid-webhook/index.ts`, which returns 503 until it is set. The `comms-sendgrid-webhook-admin` setup path does not read it; it hands back the key to install under this name.
+  - `SENDGRID_WEBHOOK_ADMIN_API_KEY` is the scoped key used to configure the Event Webhook. Read ONLY by `comms-sendgrid-webhook-admin/index.ts`. `scripts/ci/forbid-sendgrid-admin-key-refs.mjs` fails CI on any other reference to it, or to `SENDGRID_PLATFORM_ADMIN_API_KEY`, which must never be read (rotation owed).
+  - **Database facts, not secrets (`20271031000100`):**
+    - `tenant_email_domains.sendgrid_domain_id`, `.sendgrid_status` and `.sendgrid_verified_at`, writable only by the service role (`guard_tenant_email_domain_sendgrid_facts`);
+    - a `channel_connectors` row with `provider='sendgrid'`, which only the service role or a non-JWT database session may create or change (`guard_channel_connector_sendgrid_writer`, `20271031000250`); anyone signed in may only switch one off;
+    - unique indexes `tenant_email_domains_sendgrid_verified_domain` (one SendGrid-verified claim per domain across businesses) and `tenant_email_domains_sendgrid_domain_id` (one row per SendGrid domain id), both `20271031000250`;
+    - receipt journal `sendgrid_receipt_processing`, written by `ingest_sendgrid_receipt` (10-argument form, `20271031000200`; SECURITY DEFINER, refuses any caller with `auth.uid()` set; correlation `correlated` | `uncorrelated` | `apply_failed`). The applier it calls is not executable by `service_role`.
+
+    On 2026-10-13, production had 0 `sendgrid` connectors and 0 journal rows. The operator steps to go live are in master §5.
 - **Calendars / meetings:** Google (`GOOGLE_OAUTH_CLIENT_ID`/`_SECRET`, `CALENDAR_ENCRYPTION_KEY`,
   `CALENDAR_OAUTH_REDIRECT_ORIGIN`, `GOOGLE_DRIVE_API_KEY`), Cal.com (`CAL_API_KEY`, `CAL_BASE_URL`,
   `CAL_WEBHOOK_SECRET`), Zoom (`ZOOM_CLIENT_ID`/`_SECRET`, `ZOOM_OAUTH_REDIRECT_URL`).

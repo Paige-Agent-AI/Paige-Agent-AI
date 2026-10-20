@@ -1,0 +1,30 @@
+{
+  "label": "dark-retry-handoff",
+  "requested": {
+    "width": 1366,
+    "height": 768
+  },
+  "screenshotDimensions": {
+    "height": 768,
+    "width": 1366
+  },
+  "url": "http://127.0.0.1:5205/welcome.html?scenario=retry&theme=dark",
+  "dom": {
+    "controls": [],
+    "focus": {
+      "name": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localStorage.getItem('theme');if(e){c.add(e|| '')}else{c.add('dark');}if(e==='light'||e==='dark'||!e)d.style.colorScheme=e||'dark'}catch(t){}}();Synthetic Welcome render — no Auth, database or provider requestsHandoff reached the synthetic destinationActual customer workspace and authentication are unverified.",
+      "tag": "BODY"
+    },
+    "heading": "Handoff reached the synthetic destination",
+    "overflow": false,
+    "reducedMotion": true,
+    "theme": "dark",
+    "viewport": {
+      "height": 768,
+      "width": 1366
+    }
+  },
+  "state": "- generic: Synthetic Welcome render — no Auth, database or provider requests\n- main:\n  - heading \"Handoff reached the synthetic destination\" [level=1]\n  - paragraph: Actual customer workspace and authentication are unverified.",
+  "evidenceClass": "RENDERED_SYNTHETIC_WELCOME",
+  "captureAPI": "native screenshot after settled DOM"
+}

@@ -3,8 +3,13 @@
 // series, posts and ad copy that bring people in — and Land — the pages, forms and funnels they arrive on.
 // Owners and admins attach and remove pieces through the governed links (useCampaignAssets); members read
 // them. A piece here is part of the plan; it never means anything was sent or published.
+// The third lane, Brought in (Experience 03 S1d-1), is the approved map's outcome lane: how many leads the
+// campaign was credited with when they arrived, and how many became opportunities. Opportunities and revenue
+// are Sales' records, so the lane counts and routes there; it never values a deal or claims revenue.
 import React from "react";
 import { Ic as SharedIcons } from "./_shared";
+import { broughtInNote, useCampaignLeads, type CampaignLeadsState } from "./useCampaignLeads";
+import { CampaignLeadRows } from "./campaign-leads";
 import { kindLabel, statusLabel, type AttachableAsset, type CampaignAssetKind, type CampaignAssetLink, type CampaignAssetsState, type LinkableKind } from "./useCampaignAssets";
 
 const Ic = SharedIcons as unknown as Record<string, React.ComponentType<{ size?: number }>>;
@@ -58,7 +63,43 @@ function Lane({ id, title, help, kinds, links, available, canManage, addLabel, m
   );
 }
 
-export function CampaignComposition({ briefId, assets, onToast }: { briefId: string; assets: CampaignAssetsState; onToast: (message: string, kind: "ok" | "err") => void }) {
+/** The outcome lane. Counts are the server's, over every lead credited to this campaign. */
+export function BroughtIn({ id, leads, archived = false, onRoute }: { id: string; leads: CampaignLeadsState; archived?: boolean; onRoute?: (route: string) => void }) {
+  const headingRef = React.useRef<HTMLHeadingElement>(null);
+  // S1d-2 (owner-approved): the rows open under the counts on request, so the lane stays a summary by default.
+  const [open, setOpen] = React.useState(false);
+  // Try again unmounts while the read reloads, so focus moves to the lane's heading rather than the page.
+  const retry = () => { leads.retry(); requestAnimationFrame(() => headingRef.current?.focus()); };
+  return (
+    <section className="cc-lane cc-out" aria-labelledby={`${id}-h`} aria-busy={leads.phase === "loading"}>
+      <div className="cc-h"><h5 id={`${id}-h`} ref={headingRef} tabIndex={-1}>Brought in</h5><span>What came of it</span></div>
+      {leads.phase === "loading" && <div className="campaigns-skeleton" style={{ padding: 0 }}><span style={{ height: 52 }}/></div>}
+      {leads.phase === "error" && <p className="cc-empty" role="alert">The leads this campaign brought in couldn’t load. <button type="button" className="btn btn-s" onClick={retry}>Try again</button></p>}
+      {leads.phase === "ready" && <>
+        <dl className="cc-outs">
+          <div className="cc-outv"><dt>{leads.counts.leads}</dt><dd>{leads.counts.leads === 1 ? "lead" : "leads"} credited to this campaign</dd></div>
+          <div className="cc-outv"><dt>{leads.counts.opportunities}</dt><dd>{leads.counts.opportunities === 1 ? "opportunity" : "opportunities"}
+            {onRoute && leads.counts.opportunities > 0 && <> · <button type="button" className="cc-lnk" onClick={() => onRoute("sales")}>open Sales</button></>}</dd></div>
+          <div className="cc-outv cc-muted"><dt><span aria-hidden="true">—</span><span className="campaigns-sr-only">No figure:</span></dt><dd>Revenue lives in Sales</dd></div>
+        </dl>
+        {leads.leads.length > 0 && <>
+          {/* The label counts the rows it will show (the server lists the newest 200). */}
+          <button type="button" className="cc-add cl-toggle" aria-expanded={open} aria-controls={`${id}-rows`} onClick={() => setOpen((value) => !value)}>
+            {leads.leads.length === 1 ? (open ? "Hide the lead" : "Show the lead") : open ? "Hide the leads" : `Show the ${leads.leads.length.toLocaleString()} newest leads`}
+          </button>
+          {open && <CampaignLeadRows id={`${id}-rows`} leads={leads}/>}
+        </>}
+        <p className="cc-foot">{broughtInNote(leads, archived)}</p>
+      </>}
+    </section>
+  );
+}
+
+export function CampaignComposition({ briefId, assets, onToast, tenantId = null, archived = false, onRoute }: {
+  briefId: string; assets: CampaignAssetsState; onToast: (message: string, kind: "ok" | "err") => void;
+  tenantId?: string | null; archived?: boolean; onRoute?: (route: string) => void;
+}) {
+  const leads = useCampaignLeads(tenantId, briefId);
   if (assets.phase === "loading") return <div className="campaigns-skeleton" style={{ padding: 0 }}><span style={{ height: 64 }}/></div>;
   if (assets.phase === "error") return <div className="dw-note" role="alert">What this campaign uses couldn’t load. Nothing was changed. <button type="button" className="btn btn-s" onClick={assets.retry}>Try again</button></div>;
   const mine = assets.links.filter((link) => link.briefId === briefId);
@@ -70,6 +111,7 @@ export function CampaignComposition({ briefId, assets, onToast }: { briefId: str
         available={assets.available} canManage={assets.canManage} addLabel="Add an email, series or library piece" makeWhere="Email, or save it to your library from Vibe Studio" onAttach={attach} onDetach={detach}/>
       <Lane id={`cc-land-${briefId}`} title="Land" help="Where they arrive and sign up" kinds={LAND} links={mine.filter((link) => LAND.includes(link.kind))}
         available={assets.available} canManage={assets.canManage} addLabel="Add the page, form or funnel they land on" makeWhere="Vibe Studio" onAttach={attach} onDetach={detach}/>
+      {tenantId && <BroughtIn id={`cc-out-${briefId}`} leads={leads} archived={archived} onRoute={onRoute}/>}
       <p className="cc-foot">Attaching a piece records that it's part of this campaign. Nothing is sent or published from here. A social post that names this campaign shows here too.</p>
     </div>
   );

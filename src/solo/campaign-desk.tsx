@@ -7,8 +7,9 @@
 // TRUTH MODEL (§13/§70). A campaign is an OWNER-AUTHORED brief (useSoloCampaignBriefs), never proof
 // of a live campaign. Each growth-loop stage reads "Ready" ONLY where a real fact backs it: a
 // tenant-validated offer link, a tenant-validated pipeline link (with a LIVE deal count), or a
-// recorded workspace artifact. Distribution, Conversations and Recorded outcome are UNAVAILABLE —
-// no connected provider, no campaign attribution — and say so. No counts, revenue, reach, ad spend,
+// recorded workspace artifact. Distribution and Conversations are UNAVAILABLE (no connected provider) and
+// say so. Recorded outcome is PARTIAL since Experience 03 S1: each lead is credited to its campaign at
+// arrival (server-stamped, counted in the dossier's Brought in lane), revenue is not. No counts, revenue, reach, ad spend,
 // audience size, active status, or completion is invented.
 import React from "react";
 import { createPortal } from "react-dom";
@@ -47,7 +48,7 @@ const LOOP = [
   { k: "distribution",  name: "Distribution",     ic: "send",  owner: "Social",    route: "social",      src: "No connected provider" },
   { k: "conversations", name: "Conversations",    ic: "mail",  owner: "Social",    route: "social",      src: "No connected provider" },
   { k: "pipeline",      name: "Pipeline",         ic: "trend", owner: "Pipeline",  route: "pipeline",    src: "Deal workspace" },
-  { k: "outcome",       name: "Recorded outcome", ic: "chart", owner: "Analytics", route: "analytics",   src: "No campaign attribution" },
+  { k: "outcome",       name: "Recorded outcome", ic: "chart", owner: "Analytics", route: "analytics",   src: "Leads credited at arrival" },
 ];
 
 // Owner ruling 2026-09-23: the four capability states are said in the customer's words on a tenant
@@ -71,7 +72,7 @@ function briefLoop(b) {
     distribution:  "unavail",
     conversations: "unavail",
     pipeline:      b.pipelineId ? "ready" : "setup",
-    outcome:       "unavail",
+    outcome:       "partial",
   };
 }
 // Workspace-scope loop posture, derived ONLY from real reads. Every non-"setup"/"unavail" state
@@ -94,7 +95,7 @@ function workspaceLoop(data, offerSignal) {
     distribution:  "unavail",
     conversations: "unavail",
     pipeline:      pipelineFailed ? "blocked" : hasPipelines ? "ready" : "setup",
-    outcome:       "unavail",
+    outcome:       "partial",
   };
 }
 
@@ -107,7 +108,7 @@ function loopNeed(seg, stKey, b, data) {
   if (seg.k === "offer" && stKey === "ready" && b) return `Linked offer: ${b.offerName || "recorded in Offers"}.`;
   if (seg.k === "offer" && stKey === "partial" && !b) return "Your offers are recorded. Link one to a brief to make the ask concrete.";
   if (seg.k === "distribution" || seg.k === "conversations") return "No connected provider. Connect one in Social — no reach, queue or schedule is shown.";
-  if (seg.k === "outcome") return "Attribution needs a verified source; not available yet.";
+  if (seg.k === "outcome") return b ? "Leads are credited to this campaign as they arrive; see them under Brought in in its dossier. Revenue isn't credited to campaigns yet." : "Each lead is credited to its campaign as it arrives; open a campaign to see what it brought in. Revenue isn't credited to campaigns yet.";
   if (stKey === "ready") return "Source connected.";
   if (seg.k === "offer") return "Define or link what this campaign sells.";
   if (seg.k === "audience") return "Name the segment this reaches.";
@@ -170,8 +171,10 @@ function readinessRows(b, links = []) {
     ["Target channels connected", "unavail", "social", "No customer-facing social / publishing provider is connected."],
     ["Publishing / distribution path", "unavail", "social", "Depends on a connected provider — not checked."],
     ["Conversations / follow-up path", "unavail", "social", "No connected messaging provider on this workspace."],
-    ["Pipeline route ready", loop.pipeline, "pipeline", b.pipelineId ? `Linked to “${b.pipelineName || "a pipeline"}” · ${b.pipelineDealCount} deal${b.pipelineDealCount === 1 ? "" : "s"} (live).` : "Not routed to a pipeline."],
-    ["Tracking / attribution evidence", "unavail", "analytics", "Leads count toward a campaign only when their link carries its tag (see Analytics). No order names a campaign, so revenue is never attributed to one."],
+    // Experience 03 S1b: the server files a form's leads here when the form has no route of its own and is
+    // attached to this campaign only (_growth_form_campaign_route). Stated as the rule, never per lead.
+    ["Pipeline route ready", loop.pipeline, "pipeline", b.pipelineId ? `Linked to “${b.pipelineName || "a pipeline"}” · ${b.pipelineDealCount} deal${b.pipelineDealCount === 1 ? "" : "s"} (live). ${b.lifecycleStatus === "archived" ? "" : " While it has an open stage, a form attached only to this campaign, with no route of its own, files its leads here."}` : "Not routed to a pipeline."],
+    ["Tracking / attribution evidence", "partial", "analytics", "Leads are credited to this campaign as they arrive, through its form or its tagged link (see Brought in above). Analytics’ per-campaign figure still counts tagged links only. No order names a campaign, so revenue is never attributed to one."],
     ["Approvals complete", b.lifecycleStatus === "approved" || b.lifecycleStatus === "active" ? "ready" : b.lifecycleStatus === "ready_for_review" ? "await" : "planned", "overview",
       b.lifecycleStatus === "ready_for_review" ? "Awaiting your review." : b.lifecycleStatus === "approved" || b.lifecycleStatus === "active" ? "Approved." : "Not sent for review yet."],
   ];
@@ -200,7 +203,18 @@ function Readiness({ brief, links, onRoute }) {
 
 export default function CampaignOverview({ data, onRoute, autoOpenBrief = false, onAutoOpenConsumed = undefined }) {
   const briefsState = useSoloCampaignBriefs();
-  const assets = useCampaignAssets(briefsState.tenantId);
+  const rawAssets = useCampaignAssets(briefsState.tenantId);
+  // Experience 03 S1b: where a form's leads go now depends on its campaign link and the campaign's pipeline,
+  // and Overview, Analytics and the form panel state it from the shared Marketing read. A successful change
+  // here re-reads it (a silent refresh: a ready page stays ready). Production publishes none of these tables
+  // to realtime, so a change made elsewhere (PAIGE in chat) shows on the next load.
+  const refreshRoutes = React.useCallback(() => { if (typeof data.retry === "function") data.retry(); }, [data]);
+  const assets = React.useMemo(() => ({
+    ...rawAssets,
+    attach: async (...args) => { const r = await rawAssets.attach(...args); if (r.ok && args[1] === "form") refreshRoutes(); return r; },
+    detach: async (...args) => { const r = await rawAssets.detach(...args); if (r.ok && args[1] === "form") refreshRoutes(); return r; },
+  }), [rawAssets, refreshRoutes]);
+  const afterBriefWrite = async (write) => { const r = await write; if (r && r.ok) refreshRoutes(); return r; };
   // A REAL tenant-scoped Catalog read — the honest backing for the workspace-scope "Offer" loop
   // stage (§13). Only EXISTENCE is needed here, so a single-row page is enough (never the whole
   // catalog). "has" only when offers truly exist; "error" when the read failed; else unknown.
@@ -251,7 +265,9 @@ export default function CampaignOverview({ data, onRoute, autoOpenBrief = false,
     if (filters.q && !(b.name + " " + (b.objective || "")).toLowerCase().includes(filters.q.toLowerCase())) return false;
     if (filters.src !== "all") {
       const l = briefLoop(b);
-      const live = Object.values(l).some((v) => v === "ready" || v === "partial");
+      // A source the brief itself is backed by. Recorded outcome is a platform capability every brief shares
+      // (leads are credited at arrival), so it never makes a bare brief "live-backed".
+      const live = Object.entries(l).some(([k, v]) => k !== "outcome" && (v === "ready" || v === "partial"));
       if (filters.src === "live" && !live) return false;
       if (filters.src === "unavail" && live) return false;
     }
@@ -326,13 +342,13 @@ export default function CampaignOverview({ data, onRoute, autoOpenBrief = false,
       {drawer?.kind === "dossier" && portalHost && (() => { const b = briefs.find((x) => x.id === drawer.briefId); return b
         ? createPortal(<DossierDrawer brief={b} canManage={canManage} assets={assets} tenantId={briefsState.tenantId} onToast={showToast} onClose={closeDrawer} onRoute={onRoute} onAsk={() => askPaige(b)}
             onEdit={() => setDrawer({ kind: "brief", briefId: b.id })}
-            onTransition={async (status, blocker, idem) => { const r = await briefsState.transitionBrief(b.id, status, b.version, blocker, idem); showToast(r.message, r.ok ? "ok" : "err"); if (r.ok) closeDrawer(); return r; }}
-            onArchive={async (idem) => { const r = await briefsState.archiveBrief(b.id, b.version, idem); showToast(r.message, r.ok ? "ok" : "err"); if (r.ok) closeDrawer(); return r; }}/>, portalHost)
+            onTransition={async (status, blocker, idem) => { const r = await afterBriefWrite(briefsState.transitionBrief(b.id, status, b.version, blocker, idem)); showToast(r.message, r.ok ? "ok" : "err"); if (r.ok) closeDrawer(); return r; }}
+            onArchive={async (idem) => { const r = await afterBriefWrite(briefsState.archiveBrief(b.id, b.version, idem)); showToast(r.message, r.ok ? "ok" : "err"); if (r.ok) closeDrawer(); return r; }}/>, portalHost)
         : null; })()}
       {drawer?.kind === "brief" && portalHost && createPortal(
         <BriefBuilder existing={drawer.briefId ? briefs.find((x) => x.id === drawer.briefId) : null} data={data}
           onClose={closeDrawer} onRoute={onRoute}
-          onSave={(draft, idem) => briefsState.saveBrief(draft, idem)}
+          onSave={(draft, idem) => afterBriefWrite(briefsState.saveBrief(draft, idem))}
           onRequestReview={async (briefId, version, idem) => briefsState.transitionBrief(briefId, "ready_for_review", version, undefined, idem)}
           onDone={(msg, kind = "ok") => { closeDrawer(); showToast(msg, kind); }}/>,
         portalHost,
@@ -580,7 +596,7 @@ function DossierDrawer({ brief: b, canManage, assets, tenantId, onToast, onClose
             {b.budgetTarget && <div className="dw-note" style={{ marginTop: 8 }}>The budget target is a figure you set — not actual ad spend, a forecast, or connected media buying.</div>}
           </div>
           {b.blocker && <div className="dw-note" style={{ borderColor: "var(--bad)", background: "var(--bad-tint)", color: "var(--bad)" }}><Ic.bell size={13}/> Blocker: {b.blocker}</div>}
-          <div className="dw-sec"><h4>What this campaign uses</h4><CampaignComposition briefId={b.id} assets={assets} onToast={onToast}/></div>
+          <div className="dw-sec"><h4>What this campaign uses</h4><CampaignComposition briefId={b.id} assets={assets} onToast={onToast} tenantId={tenantId} archived={b.lifecycleStatus === "archived"} onRoute={onRoute}/></div>
           <div className="dw-sec"><h4>Steps and results</h4><CampaignActions tenantId={tenantId} briefId={b.id} onToast={onToast}/></div>
           <div className="dw-sec"><h4>Launch readiness</h4><Readiness brief={b} links={links} onRoute={onRoute}/></div>
           <div className="dw-sec"><h4>Source-linked evidence</h4>

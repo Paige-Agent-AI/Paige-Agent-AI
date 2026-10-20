@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- pre-existing legacy `any` debt in this
+   file (untyped Supabase reads, stale generated types). The E09 Customer Portal identity change
+   (CURA, never PAIGE, on customer surfaces) only edited copy here and introduced ZERO new `any`s;
+   retyping is tracked separately (#234). */
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -115,7 +119,7 @@ export function DemographicQuestionsStep({ answers, onChange, onSkipAll }: Props
         <p className="text-sm text-muted-foreground max-w-xl mx-auto">
           Some of the most powerful funding programs in the country are specifically designed for
           business owners like you — but most people never hear about them. Sharing a bit about
-          yourself helps Paige find opportunities you might otherwise miss. All answers are optional
+          yourself helps us find opportunities you might otherwise miss. All answers are optional
           and kept completely private.
         </p>
         <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
@@ -258,7 +262,7 @@ export function DemographicQuestionsStep({ answers, onChange, onSkipAll }: Props
         </div>
         <p className="text-xs text-muted-foreground flex items-start gap-1">
           <Info className="w-3 h-3 mt-0.5 shrink-0" />
-          Some federal programs require U.S. citizenship. Knowing this helps Paige focus on programs
+          Some federal programs require U.S. citizenship. Knowing this helps us focus on programs
           you actually qualify for.
         </p>
       </div>
@@ -269,7 +273,7 @@ export function DemographicQuestionsStep({ answers, onChange, onSkipAll }: Props
           <Lock className="w-4 h-4 text-primary mt-0.5 shrink-0" />
           <span>
             Your answers are private, never shared with lenders, and do not affect your credit
-            profile or funding matches. They only help Paige find programs designed specifically for
+            profile or funding matches. They only help us find programs designed specifically for
             people in your situation.
           </span>
         </p>

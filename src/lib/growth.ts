@@ -7,6 +7,7 @@
 // shapes — so a block or field type is added here first, in lockstep with the validator
 // and the renderer, never in only one place.
 import { supabase } from "@/integrations/supabase/client";
+import { activeVisitToken } from "@/lib/growth-visit";
 
 // ────────────────────────────────────────────────────────────────────────────
 // Forms & questionnaires
@@ -360,6 +361,7 @@ export async function submitGrowthForm(opts: {
 }): Promise<GrowthSubmitOutcome> {
   const wait = MIN_ELAPSED_MS - (Date.now() - opts.startedAt);
   if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+  const visit = activeVisitToken();
   const { data, error } = await supabase.functions.invoke("growth-public-submit", {
     body: {
       form_id: opts.formId,
@@ -367,6 +369,8 @@ export async function submitGrowthForm(opts: {
       utm: opts.utm ?? {},
       hp: opts.trap,
       elapsed_ms: Date.now() - opts.startedAt,
+      // The recorded visit this answer came from, when there is one (MBC 7a); the server confirms it before linking.
+      ...(visit ? { visit } : {}),
     },
   });
   if (error) {

@@ -1,0 +1,1035 @@
+{
+  "schema_version": 1,
+  "release_date_owner_timezone": "2026-10-13",
+  "timezone": "America/New_York",
+  "repository": "Paige-Agent-AI/Paige-Agent-AI",
+  "pr": 2112,
+  "reviewed_head": "6ef72eb60aa686b4aebe1e7bad74a172c6263b52",
+  "merge_sha": "f5c79b7da0786699f4b915bda33ef40a4b860601",
+  "release_channel": "production",
+  "classification": "internal-only",
+  "customer_release_identity": null,
+  "review": {
+    "verdict": "SHIP",
+    "non_author": true,
+    "reviewer": "backend_review",
+    "commit_anchored_review_id": 5505241739,
+    "unresolved_material_findings": 0,
+    "owner_exception_comment": 6147764221,
+    "limit": "Exactly one additional review used; no further round implied."
+  },
+  "premerge_ci": {
+    "status": "PASS",
+    "head": "6ef72eb60aa686b4aebe1e7bad74a172c6263b52",
+    "synthetic_merge": "f97bf3297c1e80c5af36e2fe85c81a4b50150148",
+    "base": "7f3217af597ad779b332515391f492a25f8ba811",
+    "workflow_groups": [
+      {
+        "id": 38349038073,
+        "name": "ci",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 7226,
+        "jobs_url": "https://api.github.com/repos/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38349038073/jobs",
+        "logs_url": "https://api.github.com/repos/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38349038073/logs",
+        "workflow_id": 317017712
+      },
+      {
+        "id": 38349038079,
+        "name": "ui-delivery-evidence",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 4449,
+        "jobs_url": "https://api.github.com/repos/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38349038079/jobs",
+        "logs_url": "https://api.github.com/repos/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38349038079/logs",
+        "workflow_id": 351047354
+      },
+      {
+        "id": 38349038011,
+        "name": "migration-lint",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 3292,
+        "jobs_url": "https://api.github.com/repos/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38349038011/jobs",
+        "logs_url": "https://api.github.com/repos/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38349038011/logs",
+        "workflow_id": 307356653
+      },
+      {
+        "id": 38349038137,
+        "name": "Security Audit",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 7565,
+        "jobs_url": "https://api.github.com/repos/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38349038137/jobs",
+        "logs_url": "https://api.github.com/repos/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38349038137/logs",
+        "workflow_id": 305694535
+      },
+      {
+        "id": 38349038066,
+        "name": "Sales invoice channel SQL proof",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 716,
+        "jobs_url": "https://api.github.com/repos/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38349038066/jobs",
+        "logs_url": "https://api.github.com/repos/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38349038066/logs",
+        "workflow_id": 374669820
+      },
+      {
+        "id": 38349038067,
+        "name": "Sales Collections SQL proof",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 715,
+        "jobs_url": "https://api.github.com/repos/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38349038067/jobs",
+        "logs_url": "https://api.github.com/repos/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38349038067/logs",
+        "workflow_id": 374669819
+      },
+      {
+        "id": 38349038027,
+        "name": "PAIGE Spine contract",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 3286,
+        "jobs_url": "https://api.github.com/repos/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38349038027/jobs",
+        "logs_url": "https://api.github.com/repos/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38349038027/logs",
+        "workflow_id": 348023061
+      },
+      {
+        "id": 38349037941,
+        "name": "Finance source proof",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 625,
+        "jobs_url": "https://api.github.com/repos/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38349037941/jobs",
+        "logs_url": "https://api.github.com/repos/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38349037941/logs",
+        "workflow_id": 380735562
+      }
+    ],
+    "later_main_collision_review": "0a7062a/E2 and closeouts inspected before merge; no E5 collision. Not described as fresh CI of that merge."
+  },
+  "deployment": {
+    "migration": {
+      "workflow": 38415072940,
+      "status": "SUCCESS",
+      "migration": "20271029000000",
+      "statements": 4,
+      "body_md5": "1524b4343c135bde86982852e7aac787"
+    },
+    "edge": {
+      "workflow": 38415072485,
+      "status": "SUCCESS",
+      "functions": [
+        {
+          "id": "667d3426-25fd-4135-addb-6e763cae52ef",
+          "slug": "paige-ai-chat",
+          "name": "paige-ai-chat",
+          "status": "ACTIVE",
+          "version": 399,
+          "created_at": 1783376232043,
+          "updated_at": 1791902340003,
+          "verify_jwt": true,
+          "import_map": false,
+          "entrypoint_path": "file:///home/runner/work/Paige-Agent-AI/Paige-Agent-AI/supabase/functions/paige-ai-chat/index.ts",
+          "ezbr_sha256": "a274dbd889ee787e2f0e0d23139315aa7448e438f48dcae16dc6c5997a501697"
+        },
+        {
+          "id": "c228559d-e42c-4426-b3e9-96a60a40ae1b",
+          "slug": "execute-approval",
+          "name": "execute-approval",
+          "status": "ACTIVE",
+          "version": 123,
+          "created_at": 1783702770294,
+          "updated_at": 1791902336249,
+          "verify_jwt": true,
+          "import_map": false,
+          "entrypoint_path": "file:///home/runner/work/Paige-Agent-AI/Paige-Agent-AI/supabase/functions/execute-approval/index.ts",
+          "ezbr_sha256": "5b70d61d4d05187bc2e8c00d1720071d09df7efb9f66e612303d6fb5b2f6017d"
+        },
+        {
+          "id": "e05ea886-505d-4f17-90a4-c6111503c568",
+          "slug": "paige-native-event-dispatch",
+          "name": "paige-native-event-dispatch",
+          "status": "ACTIVE",
+          "version": 127,
+          "created_at": 1789240491325,
+          "updated_at": 1791902343756,
+          "verify_jwt": false,
+          "entrypoint_path": "file:///home/runner/work/Paige-Agent-AI/Paige-Agent-AI/supabase/functions/paige-native-event-dispatch/index.ts",
+          "ezbr_sha256": "3574f5434db990e96f476d8d8001dbe89b2954cfccd2e9afb44836c694d626d3"
+        }
+      ]
+    },
+    "web": {
+      "deployment_id": "dpl_4nr8dn3fJBMfDzTDXXX7eD9NBW5K",
+      "state": "READY",
+      "target": "production",
+      "commit": "f5c79b7da0786699f4b915bda33ef40a4b860601",
+      "origin": "https://app.paigeagent.ai",
+      "http_status": 200,
+      "build_id": "f5c79b7da0786699f4b915bda33ef40a4b860601-mv6sdgfb",
+      "observed_at": "2026-10-13T14:42:55.301Z"
+    },
+    "receipt_tags": {
+      "db_live": "f5c79b7da0786699f4b915bda33ef40a4b860601",
+      "edge_live": "f5c79b7da0786699f4b915bda33ef40a4b860601"
+    }
+  },
+  "production_readback": {
+    "dark": [
+      {
+        "observed_at": "2026-10-13 14:40:21.43967+00",
+        "recurring_trigger": {
+          "key": "schedule.weekly_commitment_check",
+          "is_live": false,
+          "dark_reason": "Weekly occurrence publication is awaiting released and authenticated acceptance."
+        },
+        "weekly_processes": 0,
+        "weekly_events": 0,
+        "weekly_acts": 0,
+        "weekly_receipts": 0,
+        "weekly_provider_refs": 0,
+        "weekly_permission_overrides": 0,
+        "cron_total": 27,
+        "weekly_cron": 0,
+        "migrations": [
+          {
+            "name": "experience05_weekly_commitment_check",
+            "version": "20271028000000",
+            "statements": 75
+          },
+          {
+            "name": "experience05_weekly_status_readback",
+            "version": "20271029000000",
+            "statements": 4
+          }
+        ],
+        "zone_anon_select": false,
+        "zone_authenticated_select": false,
+        "existing_zone_retirement_disposition": "blocked"
+      }
+    ],
+    "sql_contracts": [
+      {
+        "name": "_workspace_event_display",
+        "signature": "_source_kind text, _outcome text, _capability text",
+        "deployed": true,
+        "security_definer": false,
+        "volatility": "i",
+        "config": [
+          "search_path=pg_catalog, public"
+        ],
+        "source_body_matches": true,
+        "anon_execute": false,
+        "authenticated_execute": false,
+        "service_execute": false,
+        "acl": "{postgres=X/postgres}"
+      },
+      {
+        "name": "configure_weekly_commitment_check",
+        "signature": "_automation_id uuid, _weekday integer, _local_time text, _timezone text, _expected_revision integer",
+        "deployed": true,
+        "security_definer": true,
+        "volatility": "v",
+        "config": [
+          "search_path=\"\""
+        ],
+        "source_body_matches": true,
+        "anon_execute": false,
+        "authenticated_execute": true,
+        "service_execute": false,
+        "acl": "{postgres=X/postgres,authenticated=X/postgres}"
+      },
+      {
+        "name": "control_weekly_commitment_check",
+        "signature": "_automation_id uuid, _action text, _expected_revision integer",
+        "deployed": true,
+        "security_definer": true,
+        "volatility": "v",
+        "config": [
+          "search_path=\"\""
+        ],
+        "source_body_matches": true,
+        "anon_execute": false,
+        "authenticated_execute": true,
+        "service_execute": false,
+        "acl": "{postgres=X/postgres,authenticated=X/postgres}"
+      },
+      {
+        "name": "draft_weekly_commitment_check",
+        "signature": "_request_id uuid, _name text, _weekday integer, _local_time text, _timezone text",
+        "deployed": true,
+        "security_definer": true,
+        "volatility": "v",
+        "config": [
+          "search_path=\"\""
+        ],
+        "source_body_matches": true,
+        "anon_execute": false,
+        "authenticated_execute": true,
+        "service_execute": false,
+        "acl": "{postgres=X/postgres,authenticated=X/postgres}"
+      },
+      {
+        "name": "execute_weekly_commitment_check",
+        "signature": "_automation_id uuid, _event_id uuid, _act_id uuid, _correlation text, _receipt_id uuid",
+        "deployed": true,
+        "security_definer": true,
+        "volatility": "v",
+        "config": [
+          "search_path=\"\""
+        ],
+        "source_body_matches": true,
+        "anon_execute": false,
+        "authenticated_execute": false,
+        "service_execute": true,
+        "acl": "{postgres=X/postgres,service_role=X/postgres}"
+      },
+      {
+        "name": "get_weekly_commitment_checks",
+        "signature": "",
+        "deployed": true,
+        "security_definer": true,
+        "volatility": "s",
+        "config": [
+          "search_path=\"\""
+        ],
+        "source_body_matches": true,
+        "anon_execute": false,
+        "authenticated_execute": true,
+        "service_execute": false,
+        "acl": "{postgres=X/postgres,authenticated=X/postgres}"
+      },
+      {
+        "name": "guard_weekly_commitment_act",
+        "signature": "",
+        "deployed": true,
+        "security_definer": false,
+        "volatility": "v",
+        "config": [
+          "search_path=\"\""
+        ],
+        "source_body_matches": true,
+        "anon_execute": false,
+        "authenticated_execute": false,
+        "service_execute": false,
+        "acl": "{postgres=X/postgres}"
+      },
+      {
+        "name": "guard_weekly_commitment_process",
+        "signature": "",
+        "deployed": true,
+        "security_definer": false,
+        "volatility": "v",
+        "config": [
+          "search_path=\"\""
+        ],
+        "source_body_matches": true,
+        "anon_execute": false,
+        "authenticated_execute": false,
+        "service_execute": false,
+        "acl": "{postgres=X/postgres}"
+      },
+      {
+        "name": "list_tool_autonomy",
+        "signature": "_tenant_id uuid",
+        "deployed": true,
+        "security_definer": true,
+        "volatility": "s",
+        "config": [
+          "search_path=pg_catalog, public"
+        ],
+        "source_body_matches": true,
+        "anon_execute": false,
+        "authenticated_execute": true,
+        "service_execute": true,
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+      },
+      {
+        "name": "paige_reconcile_orchestration_acts",
+        "signature": "",
+        "deployed": true,
+        "security_definer": true,
+        "volatility": "v",
+        "config": [
+          "search_path=public"
+        ],
+        "source_body_matches": true,
+        "anon_execute": false,
+        "authenticated_execute": false,
+        "service_execute": true,
+        "acl": "{postgres=X/postgres,service_role=X/postgres}"
+      },
+      {
+        "name": "paige_reconcile_weekly_commitment_acts",
+        "signature": "",
+        "deployed": true,
+        "security_definer": true,
+        "volatility": "v",
+        "config": [
+          "search_path=\"\""
+        ],
+        "source_body_matches": true,
+        "anon_execute": false,
+        "authenticated_execute": false,
+        "service_execute": true,
+        "acl": "{postgres=X/postgres,service_role=X/postgres}"
+      },
+      {
+        "name": "paige_sweep_stuck_events",
+        "signature": "",
+        "deployed": true,
+        "security_definer": true,
+        "volatility": "v",
+        "config": [
+          "search_path=\"\""
+        ],
+        "source_body_matches": true,
+        "anon_execute": false,
+        "authenticated_execute": false,
+        "service_execute": true,
+        "acl": "{postgres=X/postgres,service_role=X/postgres}"
+      },
+      {
+        "name": "publish_due_weekly_commitment_checks",
+        "signature": "",
+        "deployed": true,
+        "security_definer": true,
+        "volatility": "v",
+        "config": [
+          "search_path=\"\""
+        ],
+        "source_body_matches": true,
+        "anon_execute": false,
+        "authenticated_execute": false,
+        "service_execute": true,
+        "acl": "{postgres=X/postgres,service_role=X/postgres}"
+      },
+      {
+        "name": "read_weekly_commitment_check",
+        "signature": "_automation_id uuid, _event_id uuid, _act_id uuid, _correlation text",
+        "deployed": true,
+        "security_definer": true,
+        "volatility": "v",
+        "config": [
+          "search_path=\"\""
+        ],
+        "source_body_matches": true,
+        "anon_execute": false,
+        "authenticated_execute": false,
+        "service_execute": true,
+        "acl": "{postgres=X/postgres,service_role=X/postgres}"
+      },
+      {
+        "name": "weekly_commitment_claim_live",
+        "signature": "_detail jsonb",
+        "deployed": true,
+        "security_definer": false,
+        "volatility": "s",
+        "config": [
+          "search_path=\"\""
+        ],
+        "source_body_matches": true,
+        "anon_execute": false,
+        "authenticated_execute": false,
+        "service_execute": true,
+        "acl": "{postgres=X/postgres,service_role=X/postgres}"
+      },
+      {
+        "name": "weekly_commitment_conditions",
+        "signature": "_id uuid, _revision integer",
+        "deployed": true,
+        "security_definer": false,
+        "volatility": "i",
+        "config": [
+          "search_path=\"\""
+        ],
+        "source_body_matches": true,
+        "anon_execute": false,
+        "authenticated_execute": false,
+        "service_execute": true,
+        "acl": "{postgres=X/postgres,service_role=X/postgres}"
+      },
+      {
+        "name": "weekly_commitment_next",
+        "signature": "_config jsonb, _after timestamp with time zone",
+        "deployed": true,
+        "security_definer": true,
+        "volatility": "s",
+        "config": [
+          "search_path=\"\""
+        ],
+        "source_body_matches": true,
+        "anon_execute": false,
+        "authenticated_execute": false,
+        "service_execute": true,
+        "acl": "{postgres=X/postgres,service_role=X/postgres}"
+      },
+      {
+        "name": "weekly_commitment_owner",
+        "signature": "_tenant uuid, _actor uuid",
+        "deployed": true,
+        "security_definer": true,
+        "volatility": "s",
+        "config": [
+          "search_path=\"\""
+        ],
+        "source_body_matches": true,
+        "anon_execute": false,
+        "authenticated_execute": true,
+        "service_execute": true,
+        "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+      },
+      {
+        "name": "weekly_commitment_retirement_allowed",
+        "signature": "_tenant uuid",
+        "deployed": true,
+        "security_definer": true,
+        "volatility": "s",
+        "config": [
+          "search_path=\"\""
+        ],
+        "source_body_matches": true,
+        "anon_execute": false,
+        "authenticated_execute": false,
+        "service_execute": false,
+        "acl": "{postgres=X/postgres}"
+      },
+      {
+        "name": "weekly_commitment_schedule",
+        "signature": "_weekday integer, _local_time text, _timezone text",
+        "deployed": true,
+        "security_definer": true,
+        "volatility": "s",
+        "config": [
+          "search_path=\"\""
+        ],
+        "source_body_matches": true,
+        "anon_execute": false,
+        "authenticated_execute": false,
+        "service_execute": true,
+        "acl": "{postgres=X/postgres,service_role=X/postgres}"
+      },
+      {
+        "name": "weekly_commitment_stop_occurrences",
+        "signature": "_id uuid, _tenant uuid, _at timestamp with time zone",
+        "deployed": true,
+        "security_definer": true,
+        "volatility": "v",
+        "config": [
+          "search_path=\"\""
+        ],
+        "source_body_matches": true,
+        "anon_execute": false,
+        "authenticated_execute": false,
+        "service_execute": false,
+        "acl": "{postgres=X/postgres}"
+      }
+    ],
+    "rls_guards_index": [
+      {
+        "kind": "private_policy",
+        "name": "weekly_commitment_observation_owner",
+        "evidence": {
+          "roles": "{authenticated}",
+          "table": "paige_act_executions",
+          "using": "((capability_key IS DISTINCT FROM 'planning.weekly_commitment_check'::text) OR (EXISTS ( SELECT 1\n   FROM paige_automations a\n  WHERE ((a.id = paige_act_executions.automation_id) AND (a.created_by = auth.uid()) AND (a.tenant_id = current_user_tenant_id()) AND weekly_commitment_owner(a.tenant_id, auth.uid())))))",
+          "command": "r",
+          "restrictive": true
+        }
+      },
+      {
+        "kind": "private_policy",
+        "name": "weekly_commitment_process_owner",
+        "evidence": {
+          "roles": "{authenticated}",
+          "table": "paige_automations",
+          "using": "((trigger_key <> 'schedule.weekly_commitment_check'::text) OR ((created_by = auth.uid()) AND (tenant_id = current_user_tenant_id()) AND weekly_commitment_owner(tenant_id, auth.uid())))",
+          "command": "r",
+          "restrictive": true
+        }
+      },
+      {
+        "kind": "process_guard",
+        "name": "weekly_commitment_act_guard",
+        "evidence": {
+          "enabled": "O",
+          "definition": "CREATE TRIGGER weekly_commitment_act_guard BEFORE INSERT OR DELETE OR UPDATE ON public.paige_automation_acts FOR EACH ROW EXECUTE FUNCTION guard_weekly_commitment_act()"
+        }
+      },
+      {
+        "kind": "process_guard",
+        "name": "weekly_commitment_process_guard",
+        "evidence": {
+          "enabled": "O",
+          "definition": "CREATE TRIGGER weekly_commitment_process_guard BEFORE INSERT OR DELETE OR UPDATE ON public.paige_automations FOR EACH ROW EXECUTE FUNCTION guard_weekly_commitment_process()"
+        }
+      },
+      {
+        "kind": "request_idempotency",
+        "name": "weekly_commitment_request_once",
+        "evidence": {
+          "valid": true,
+          "unique": true,
+          "definition": "CREATE UNIQUE INDEX weekly_commitment_request_once ON public.paige_automations USING btree (tenant_id, created_by, ((trigger_config ->> 'request_id'::text))) WHERE (trigger_key = 'schedule.weekly_commitment_check'::text)"
+        }
+      },
+      {
+        "kind": "table_rls",
+        "name": "paige_act_executions",
+        "evidence": {
+          "forced": false,
+          "enabled": true
+        }
+      },
+      {
+        "kind": "table_rls",
+        "name": "paige_automation_acts",
+        "evidence": {
+          "forced": false,
+          "enabled": true
+        }
+      },
+      {
+        "kind": "table_rls",
+        "name": "paige_automations",
+        "evidence": {
+          "forced": false,
+          "enabled": true
+        }
+      },
+      {
+        "kind": "table_rls",
+        "name": "paige_native_events",
+        "evidence": {
+          "forced": false,
+          "enabled": true
+        }
+      },
+      {
+        "kind": "table_rls",
+        "name": "paige_workspace_events",
+        "evidence": {
+          "forced": true,
+          "enabled": true
+        }
+      },
+      {
+        "kind": "table_rls",
+        "name": "tenant_tool_autonomy",
+        "evidence": {
+          "forced": false,
+          "enabled": true
+        }
+      }
+    ],
+    "source_comparison": [
+      {
+        "slug": "paige-ai-chat",
+        "version": 399,
+        "verify_jwt": true,
+        "ezbr_sha256": "a274dbd889ee787e2f0e0d23139315aa7448e438f48dcae16dc6c5997a501697",
+        "files": [
+          {
+            "path": "_shared/paige-orchestration/engine.ts",
+            "absent": true
+          },
+          {
+            "path": "_shared/paige-spine/governedExecution.ts",
+            "absent": true
+          },
+          {
+            "path": "_shared/paige-orchestration/native-adapter.ts",
+            "absent": true
+          },
+          {
+            "path": "_shared/paige-orchestration/weekly-commitment-adapter.ts",
+            "absent": true
+          },
+          {
+            "path": "_shared/paige-orchestration/dispatch-claim.ts",
+            "absent": true
+          },
+          {
+            "path": "_shared/paige-orchestration/subject-tenant.ts",
+            "absent": true
+          },
+          {
+            "path": "_shared/paige-spine/domains/automations.ts",
+            "local_sha256": "fefe20e6a9582ac27e0590c96245af273ddf0047f1c2fa6abc03699aca43d7ad",
+            "live_sha256": "fefe20e6a9582ac27e0590c96245af273ddf0047f1c2fa6abc03699aca43d7ad",
+            "bytes_equal": true,
+            "tokens_equal": true
+          }
+        ],
+        "unmounted_modules": {
+          "reader_in_bundle": false,
+          "projection_in_bundle": false
+        }
+      },
+      {
+        "slug": "execute-approval",
+        "version": 123,
+        "verify_jwt": true,
+        "ezbr_sha256": "5b70d61d4d05187bc2e8c00d1720071d09df7efb9f66e612303d6fb5b2f6017d",
+        "files": [
+          {
+            "path": "_shared/paige-orchestration/engine.ts",
+            "local_sha256": "3877a58e20a24f1eb57d695cae00d3b892e55441b3088820f98f001a14828f89",
+            "live_sha256": "3877a58e20a24f1eb57d695cae00d3b892e55441b3088820f98f001a14828f89",
+            "bytes_equal": true,
+            "tokens_equal": true
+          },
+          {
+            "path": "_shared/paige-spine/governedExecution.ts",
+            "local_sha256": "ba5362d01e7aa35bac6ee6b2fe9d88f991e79149e5ff9bdd0de913206df75b59",
+            "live_sha256": "ba5362d01e7aa35bac6ee6b2fe9d88f991e79149e5ff9bdd0de913206df75b59",
+            "bytes_equal": true,
+            "tokens_equal": true
+          },
+          {
+            "path": "_shared/paige-orchestration/native-adapter.ts",
+            "local_sha256": "1c16d6478e3e82fcfb7a63bc3da84bf79ebe101a6ca96c7d156499e3148f5c60",
+            "live_sha256": "1c16d6478e3e82fcfb7a63bc3da84bf79ebe101a6ca96c7d156499e3148f5c60",
+            "bytes_equal": true,
+            "tokens_equal": true
+          },
+          {
+            "path": "_shared/paige-orchestration/weekly-commitment-adapter.ts",
+            "local_sha256": "8b4a35dc8abb4d0a9c82e8d23b35403d24be58749a5657d333fb7b69e5602d62",
+            "live_sha256": "8b4a35dc8abb4d0a9c82e8d23b35403d24be58749a5657d333fb7b69e5602d62",
+            "bytes_equal": true,
+            "tokens_equal": true
+          },
+          {
+            "path": "_shared/paige-orchestration/dispatch-claim.ts",
+            "local_sha256": "14ca0bfd6d2839d4ea32034f4fe61d0d454ef7cd2655f9dbad25ad2b62f129c7",
+            "live_sha256": "14ca0bfd6d2839d4ea32034f4fe61d0d454ef7cd2655f9dbad25ad2b62f129c7",
+            "bytes_equal": true,
+            "tokens_equal": true
+          },
+          {
+            "path": "_shared/paige-orchestration/subject-tenant.ts",
+            "absent": true
+          },
+          {
+            "path": "_shared/paige-spine/domains/automations.ts",
+            "local_sha256": "fefe20e6a9582ac27e0590c96245af273ddf0047f1c2fa6abc03699aca43d7ad",
+            "live_sha256": "fefe20e6a9582ac27e0590c96245af273ddf0047f1c2fa6abc03699aca43d7ad",
+            "bytes_equal": true,
+            "tokens_equal": true
+          }
+        ],
+        "unmounted_modules": {
+          "reader_in_bundle": false,
+          "projection_in_bundle": false
+        }
+      },
+      {
+        "slug": "paige-native-event-dispatch",
+        "version": 127,
+        "verify_jwt": false,
+        "ezbr_sha256": "3574f5434db990e96f476d8d8001dbe89b2954cfccd2e9afb44836c694d626d3",
+        "files": [
+          {
+            "path": "_shared/paige-orchestration/engine.ts",
+            "local_sha256": "3877a58e20a24f1eb57d695cae00d3b892e55441b3088820f98f001a14828f89",
+            "live_sha256": "3877a58e20a24f1eb57d695cae00d3b892e55441b3088820f98f001a14828f89",
+            "bytes_equal": true,
+            "tokens_equal": true
+          },
+          {
+            "path": "_shared/paige-spine/governedExecution.ts",
+            "local_sha256": "ba5362d01e7aa35bac6ee6b2fe9d88f991e79149e5ff9bdd0de913206df75b59",
+            "live_sha256": "ba5362d01e7aa35bac6ee6b2fe9d88f991e79149e5ff9bdd0de913206df75b59",
+            "bytes_equal": true,
+            "tokens_equal": true
+          },
+          {
+            "path": "_shared/paige-orchestration/native-adapter.ts",
+            "local_sha256": "1c16d6478e3e82fcfb7a63bc3da84bf79ebe101a6ca96c7d156499e3148f5c60",
+            "live_sha256": "1c16d6478e3e82fcfb7a63bc3da84bf79ebe101a6ca96c7d156499e3148f5c60",
+            "bytes_equal": true,
+            "tokens_equal": true
+          },
+          {
+            "path": "_shared/paige-orchestration/weekly-commitment-adapter.ts",
+            "local_sha256": "8b4a35dc8abb4d0a9c82e8d23b35403d24be58749a5657d333fb7b69e5602d62",
+            "live_sha256": "8b4a35dc8abb4d0a9c82e8d23b35403d24be58749a5657d333fb7b69e5602d62",
+            "bytes_equal": true,
+            "tokens_equal": true
+          },
+          {
+            "path": "_shared/paige-orchestration/dispatch-claim.ts",
+            "local_sha256": "14ca0bfd6d2839d4ea32034f4fe61d0d454ef7cd2655f9dbad25ad2b62f129c7",
+            "live_sha256": "14ca0bfd6d2839d4ea32034f4fe61d0d454ef7cd2655f9dbad25ad2b62f129c7",
+            "bytes_equal": true,
+            "tokens_equal": true
+          },
+          {
+            "path": "_shared/paige-orchestration/subject-tenant.ts",
+            "local_sha256": "a07b3f5dae4159aed62699f095000800fc4951e7b866b20f1f39f52144c97f62",
+            "live_sha256": "a07b3f5dae4159aed62699f095000800fc4951e7b866b20f1f39f52144c97f62",
+            "bytes_equal": true,
+            "tokens_equal": true
+          },
+          {
+            "path": "_shared/paige-spine/domains/automations.ts",
+            "local_sha256": "fefe20e6a9582ac27e0590c96245af273ddf0047f1c2fa6abc03699aca43d7ad",
+            "live_sha256": "fefe20e6a9582ac27e0590c96245af273ddf0047f1c2fa6abc03699aca43d7ad",
+            "bytes_equal": true,
+            "tokens_equal": true
+          }
+        ],
+        "unmounted_modules": {
+          "reader_in_bundle": false,
+          "projection_in_bundle": false
+        }
+      }
+    ],
+    "boundary": "Read-only metadata/source/aggregate proof, not a real owner session, fixture write, scheduled occurrence or provider execution.",
+    "later_dark": [
+      {
+        "observed_at": "2026-10-13 14:55:34.60209+00",
+        "trigger_live": false,
+        "weekly_processes": 0,
+        "weekly_events": 0,
+        "weekly_acts": 0,
+        "weekly_receipts": 0,
+        "weekly_provider_refs": 0,
+        "weekly_permission_overrides": 0,
+        "cron_total": 27,
+        "weekly_cron": 0,
+        "status_migration": 1,
+        "chat_protocol": {
+          "active": false,
+          "version": 2
+        }
+      }
+    ]
+  },
+  "merged_head_ci": {
+    "workflow": 38415071899,
+    "status": "CANCELLED",
+    "cause": "Shared main advanced via QA #2107/7c2f9f1; concurrency ci-${github.ref} cancel-in-progress=true.",
+    "verify_step": "Cancelled during C0b binding check before main unit Test. Always-run unit-attribution diagnostic failed because the unit result was absent; not represented as passing.",
+    "actual_weekly_engine_job": 115357226850,
+    "weekly_engine_status": "SUCCESS",
+    "other_runs": [
+      {
+        "id": 38415072914,
+        "name": "Security Audit",
+        "head_sha": "f5c79b7da0786699f4b915bda33ef40a4b860601",
+        "event": "push",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38415072914",
+        "run_attempt": 1,
+        "created_at": "2026-10-13T14:38:20Z",
+        "updated_at": "2026-10-13T14:38:45Z"
+      },
+      {
+        "id": 38415073683,
+        "name": "ui-delivery-evidence",
+        "head_sha": "f5c79b7da0786699f4b915bda33ef40a4b860601",
+        "event": "push",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38415073683",
+        "run_attempt": 1,
+        "created_at": "2026-10-13T14:38:20Z",
+        "updated_at": "2026-10-13T14:38:50Z"
+      },
+      {
+        "id": 38415073246,
+        "name": "PAIGE Spine contract",
+        "head_sha": "f5c79b7da0786699f4b915bda33ef40a4b860601",
+        "event": "push",
+        "status": "in_progress",
+        "conclusion": null,
+        "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38415073246",
+        "run_attempt": 1,
+        "created_at": "2026-10-13T14:38:20Z",
+        "updated_at": "2026-10-13T14:38:24Z"
+      },
+      {
+        "id": 38415072940,
+        "name": "deploy-migrations",
+        "head_sha": "f5c79b7da0786699f4b915bda33ef40a4b860601",
+        "event": "push",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38415072940",
+        "run_attempt": 1,
+        "created_at": "2026-10-13T14:38:20Z",
+        "updated_at": "2026-10-13T14:39:16Z"
+      },
+      {
+        "id": 38415072671,
+        "name": "Sales invoice channel SQL proof",
+        "head_sha": "f5c79b7da0786699f4b915bda33ef40a4b860601",
+        "event": "push",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38415072671",
+        "run_attempt": 1,
+        "created_at": "2026-10-13T14:38:20Z",
+        "updated_at": "2026-10-13T14:39:28Z"
+      },
+      {
+        "id": 38415072485,
+        "name": "deploy-edge-functions",
+        "head_sha": "f5c79b7da0786699f4b915bda33ef40a4b860601",
+        "event": "push",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38415072485",
+        "run_attempt": 1,
+        "created_at": "2026-10-13T14:38:20Z",
+        "updated_at": "2026-10-13T14:39:08Z"
+      },
+      {
+        "id": 38415072966,
+        "name": "Sales Collections SQL proof",
+        "head_sha": "f5c79b7da0786699f4b915bda33ef40a4b860601",
+        "event": "push",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38415072966",
+        "run_attempt": 1,
+        "created_at": "2026-10-13T14:38:20Z",
+        "updated_at": "2026-10-13T14:39:58Z"
+      },
+      {
+        "id": 38415072861,
+        "name": "Finance source proof",
+        "head_sha": "f5c79b7da0786699f4b915bda33ef40a4b860601",
+        "event": "push",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38415072861",
+        "run_attempt": 1,
+        "created_at": "2026-10-13T14:38:20Z",
+        "updated_at": "2026-10-13T14:39:33Z"
+      },
+      {
+        "id": 38415071899,
+        "name": "ci",
+        "head_sha": "f5c79b7da0786699f4b915bda33ef40a4b860601",
+        "event": "push",
+        "status": "completed",
+        "conclusion": "cancelled",
+        "url": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/38415071899",
+        "run_attempt": 1,
+        "created_at": "2026-10-13T14:38:20Z",
+        "updated_at": "2026-10-13T14:43:42Z"
+      }
+    ],
+    "boundary": "PR exact-head PASS and successful deployments remain separate from cancelled merged-head CI."
+  },
+  "security_advisors": {
+    "groups_total": 8,
+    "scoped": [
+      {
+        "name": "rls_enabled_no_policy",
+        "level": "INFO",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy",
+        "findings": [
+          {
+            "detail": "Table \\`public.tenant_business_time_zones\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "tenant_business_time_zones",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-13T14:42:54.477Z"
+          }
+        ]
+      },
+      {
+        "name": "authenticated_security_definer_function_executable",
+        "level": "WARN",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable",
+        "findings": [
+          {
+            "detail": "Function `public.configure_weekly_commitment_check(_automation_id uuid, _weekday integer, _local_time text, _timezone text, _expected_revision integer)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/configure_weekly_commitment_check`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "configure_weekly_commitment_check",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "_automation_id uuid, _weekday integer, _local_time text, _timezone text, _expected_revision integer",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T14:42:54.477Z"
+          },
+          {
+            "detail": "Function `public.control_weekly_commitment_check(_automation_id uuid, _action text, _expected_revision integer)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/control_weekly_commitment_check`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "control_weekly_commitment_check",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "_automation_id uuid, _action text, _expected_revision integer",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T14:42:54.477Z"
+          },
+          {
+            "detail": "Function `public.draft_weekly_commitment_check(_request_id uuid, _name text, _weekday integer, _local_time text, _timezone text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/draft_weekly_commitment_check`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "draft_weekly_commitment_check",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "_request_id uuid, _name text, _weekday integer, _local_time text, _timezone text",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T14:42:54.477Z"
+          },
+          {
+            "detail": "Function `public.get_weekly_commitment_checks()` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/get_weekly_commitment_checks`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "get_weekly_commitment_checks",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T14:42:54.477Z"
+          },
+          {
+            "detail": "Function `public.weekly_commitment_owner(_tenant uuid, _actor uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/weekly_commitment_owner`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "weekly_commitment_owner",
+              "schema": "public",
+              "language": "sql",
+              "arguments": "_tenant uuid, _actor uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T14:42:54.477Z"
+          }
+        ]
+      }
+    ],
+    "boundary": "Generic advisor notices are not a validated vulnerability finding. Owner APIs intentionally use caller/tenant/role-guarded SECURITY DEFINER; business-zone raw table has no anon/authenticated SELECT grant. Existing #2111 is separate. No clean whole-project audit claim."
+  },
+  "prototype": {
+    "gallery": "docs/evidence/experience-05-prototype/calendar-rendered-review/OWNER-REVIEW.md",
+    "hash": "16CE82114E898DA28324E4C866DB3E078692BCFA99FC32950FF74F7E5590B090",
+    "checks": 186,
+    "png_captures": 86,
+    "owner_design": "PENDING",
+    "production_ui_mounted": false
+  },
+  "holds": {
+    "weekly_chat_live_admission": "UNAVAILABLE",
+    "prepared_reader_in_runtime_bundle": false,
+    "prepared_projection_in_runtime_bundle": false,
+    "recurring_trigger": "OFF",
+    "production_schedule_created": false,
+    "unapproved_provider_effects_activated": false,
+    "authenticated_weekly_end_to_end": "UNVERIFIED"
+  },
+  "recovery": "Preserve canonical occurrence/act/receipt identity, reconcile committed evidence before replay, hold unknown outcomes. Keep trigger OFF; only reviewed forward repair or scoped rollback.",
+  "shared_handoff": {
+    "issue": 2111,
+    "status": "Existing business-zone retirement classification remains blocked; no production retirement proof or policy change."
+  }
+}

@@ -75,7 +75,14 @@ class QueryBuilder {
   _rows() {
     const fn = this._scenario.tables?.[this._table];
     if (typeof fn === "function") return fn(this._filters) ?? [];
-    if (Array.isArray(fn)) return fn;
+    if (Array.isArray(fn)) return this._table === "paige_chat_threads" ? fn.map(row => {
+      if (!row || typeof row !== "object" || Array.isArray(row)) return row;
+      // Stored-row fixtures inherit these actual native SQL defaults only when
+      // omitted. Function fixtures model response projections verbatim, allowing
+      // missing fields; explicit undefined/malformed values are never repaired.
+      return { ...(!Object.hasOwn(row, "audience") ? { audience: "workspace" } : {}),
+        ...(!Object.hasOwn(row, "interactive_recovery_hold") ? { interactive_recovery_hold: null } : {}), ...row };
+    }) : fn;
     return [];
   }
 
@@ -138,7 +145,7 @@ class FakeClient {
     // function returning one. Never a bare payload that this fake then wraps: wrapping
     // silently produced `{ data: { data: … } }`, which the handler read as null and which
     // made a real assertion look like a code defect. Be strict rather than convenient (§13).
-    const result = typeof configured === "function" ? configured(args) : configured;
+    const result = await (typeof configured === "function" ? configured(args) : configured);
     if (result === undefined) return { data: null, error: null };
     if (result === null || typeof result !== "object" || !("data" in result || "error" in result)) {
       throw new Error(

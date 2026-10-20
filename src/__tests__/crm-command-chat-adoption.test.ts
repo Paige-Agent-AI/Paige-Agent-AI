@@ -41,6 +41,28 @@ describe("Paige Chat canonical CRM adoption", () => {
     expect(dealUpdate?.function.parameters).not.toHaveProperty("anyOf");
   });
 
+  it("offers deal creation without the owner field rejected by its native executor", () => {
+    const create = CRM_COMMAND_TOOLS.find((tool) => tool.function.name === "deal_create")!;
+    expect(create.function.parameters.additionalProperties).toBe(false);
+    expect(create.function.parameters.properties).not.toHaveProperty("owner_user_id");
+    expect(create.function.parameters.properties).toMatchObject({
+      title: expect.any(Object), pipeline_id: expect.any(Object), stage_id: expect.any(Object),
+      client_ref: expect.any(Object), value_cents: expect.any(Object), currency: expect.any(Object),
+    });
+    expect(create.function.description).toMatch(/separately governed.*owner/i);
+    expect(create.function.description).toContain("crm_assign_deal_owner");
+  });
+
+  it("retains the exact record, owner and current version contract for separate deal assignment", () => {
+    const assign = CRM_COMMAND_TOOLS.find((tool) => tool.function.name === "crm_assign_deal_owner")!;
+    expect(assign.function.parameters.required).toEqual(["deal_id", "owner_user_id", "expected_version"]);
+    expect(assign.function.parameters.properties).toMatchObject({
+      owner_user_id: { type: ["string", "null"] },
+      expected_version: { type: "integer", minimum: 1 },
+    });
+    expect(assign.function.parameters.additionalProperties).toBe(false);
+  });
+
   it("uses one stable record subject to disambiguate same-tool approval batches", async () => {
     const first = await crmApprovalSubject("task.cancel", { action: "task.cancel", task_id: "task-a", expected_updated_at: "v1" });
     const reordered = await crmApprovalSubject("task.cancel", { expected_updated_at: "v1", task_id: "task-a", action: "task.cancel" });
@@ -263,8 +285,8 @@ describe("Paige Chat canonical CRM adoption", () => {
     expect(hashAt).toBeGreaterThan(identityAt);
     expect(invokeAt).toBeGreaterThan(hashAt);
     expect(chat).toContain('const idempotencyKey = action === "contact.create"\n            ? fallbackKeys.current\n            : (suppliedKey || fallbackKeys.current)');
-    expect(chat).toContain("body: { command: canonicalCrmCommand, idempotency_key: idempotencyKey");
-    expect(chat).not.toContain("body: { command: { action, ...crmArgs }, idempotency_key: idempotencyKey");
+    expect(chat).toContain("body: { command: canonicalCrmCommand, expected_tenant_id: turnScopeTenantId, idempotency_key: idempotencyKey");
+    expect(chat).not.toContain("body: { command: { action, ...crmArgs }");
 
     const legacy = canonicalizeCrmCommand({
       action: "contact.create",

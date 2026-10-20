@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
  * only that role was classed as a client and bounced from every `/operator` address to `/app` —
  * locked out of the console the server already admits it to (`is_platform_admin()`).
  */
-const STAFF_ROLES = new Set([
+export const STAFF_ROLES: ReadonlySet<string> = new Set([
   "admin",
   "super_admin",
   "platform_admin",

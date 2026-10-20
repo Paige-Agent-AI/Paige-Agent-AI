@@ -1,0 +1,2000 @@
+{
+  "runtime": {
+    "engine": "chromium",
+    "browserVersion": "151.0.7922.34",
+    "executable": "C:\\Users\\tonig\\AppData\\Local\\ms-playwright\\chromium-1234\\chrome-win64\\chrome.exe",
+    "os": "Windows_NT",
+    "osVersion": "10.0.26300",
+    "headless": true,
+    "route": "actual-source owner Clients/Portal/Client access via intercepted HTTPS document",
+    "auth": "synthetic actual-subject/tenant fixtures",
+    "permissions": "network blocked; no media, file picker, OAuth or customer permission operation"
+  },
+  "sourceHashes": [
+    {
+      "file": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "sha256": "5a282f5f7c5627856470ae5062ba8cc8d657d3a9478f30261568a9f9c9d223f0"
+    },
+    {
+      "file": "src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx",
+      "sha256": "912306ca64c4541a8cf34444053f823d33cda60e7da42f112e9601094ca7b46b"
+    },
+    {
+      "file": "src/components/tenant-relationships/OwnerPortalDashboard.tsx",
+      "sha256": "5ecc9b2986709f723a1abb40a3ae6b4331027863def34203205a8816edd5d9e1"
+    },
+    {
+      "file": "src/components/tenant-relationships/PortalInvitationHistory.tsx",
+      "sha256": "a73437850e0080967e48fd2a7cbf13e43ae59617e9d2d96dbf922941751dd1be"
+    },
+    {
+      "file": "src/components/tenant-relationships/portalInvitationEvidence.ts",
+      "sha256": "d450631122bde8159d20c7627ca948dfdab985b1c24476f76853b1611f9b3ab5"
+    },
+    {
+      "file": "src/components/tenant-relationships/portalDashboardModel.ts",
+      "sha256": "a09f85b5189a6915fa11a2eb2064e3a73730a4fc522d4ab304ac2291add6776f"
+    },
+    {
+      "file": "src/components/tenant-relationships/PortalInvitationManager.tsx",
+      "sha256": "36de8defda42d94a61e39e8014cf14b233083856aecec28cff0218ec505f81e5"
+    },
+    {
+      "file": "src/components/tenant-relationships/usePortalInvitations.ts",
+      "sha256": "897c6f52b730f06015a375efba2e835819210de2003fb6244d5d17620f7431c3"
+    },
+    {
+      "file": "src/components/tenant-relationships/owner-portal-dashboard.css",
+      "sha256": "fdc4dee8b948f9d5b47c47a402db2679e09e03839774f133ee0dc4c9014f959e"
+    },
+    {
+      "file": "scripts/proof/e09-invitation-history-ui/adapter.tsx",
+      "sha256": "30e23db8f6e788bdac9b6d5ecbeee504f0eb80e1d4ff25a1f73a8ede033f70ba"
+    },
+    {
+      "file": "scripts/proof/e09-invitation-history-ui/source.tsx",
+      "sha256": "e2ff49f38fdde2e9f524b8fe4511b0dc4eeebc9e208e8672debb96697c12b087"
+    },
+    {
+      "file": "scripts/proof/e09-invitation-history-ui/check.mjs",
+      "sha256": "c050743f7c019d8534294ff77a13d3f9c2ca70ab8ed22b69763b144fa071479d"
+    },
+    {
+      "file": "scripts/proof/e09-dashboard-ui/adapter.tsx",
+      "sha256": "862b2df92ad6e6078d06c77a1799288d92a38d26a7fd7ebec3326c34f1448617"
+    },
+    {
+      "file": "src/components/ui/dialog.tsx",
+      "sha256": "9107e63b84d67eafb311c13cb52bc48f32ef3b36eddebe65365b10fdfbd9d2ca"
+    },
+    {
+      "file": "src/index.css",
+      "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc"
+    },
+    {
+      "file": "scripts/proof/e09-invitation-history-ui/canonical-adapter.tsx",
+      "sha256": "4661040fad192fcab2130fc2ab71ac8e27f916c397e66718e990705b7028f4ad"
+    },
+    {
+      "file": "src/components/chat/PaigeConfirmCard.tsx",
+      "sha256": "3978f0637c43e6a5f030f19c7b1d5af60b13c9b046cef7a9e7db8f5f44823e88"
+    },
+    {
+      "file": "src/components/tenant-relationships/PortalInvitationCommand.tsx",
+      "sha256": "ff4560a6324d6dc4bdc4df2bf529b419ac5d1ad5544c180d02e425b151d08076"
+    },
+    {
+      "file": "src/components/tenant-relationships/portalInvitationUiDeadline.ts",
+      "sha256": "e6e6bff5a79926aef755514cd3e6cc8cb51e28b51eb2db6d5dfec9252e45089e"
+    }
+  ],
+  "cases": [
+    {
+      "width": 1536,
+      "height": 770,
+      "open": false,
+      "theme": "light",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(245, 242, 236)",
+        "color": "rgb(32, 30, 35)",
+        "surface": "#f5f2ec",
+        "theme": "light",
+        "shellTheme": "light",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 14.782646509174324,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true,
+        "command": {
+          "calls": [
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "61169c8a-afa9-4361-a13d-32caf832437d"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "61169c8a-afa9-4361-a13d-32caf832437d"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "61169c8a-afa9-4361-a13d-32caf832437d",
+                "approved_fingerprint": "0000000000000002"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "61169c8a-afa9-4361-a13d-32caf832437d"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "61169c8a-afa9-4361-a13d-32caf832437d"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "61169c8a-afa9-4361-a13d-32caf832437d",
+                "approved_fingerprint": "0000000000000003"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "61169c8a-afa9-4361-a13d-32caf832437d"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "67ec9c7c-e06f-44c5-a220-888a6a7b2325"
+              }
+            }
+          ],
+          "effects": 2,
+          "reads": 2,
+          "provider": "NOT_CALLED",
+          "actualAuthority": false
+        }
+      },
+      "filename": "1536-770-closed-light-invite-ready.png"
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "open": false,
+      "theme": "dark",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(25, 22, 30)",
+        "color": "rgb(246, 242, 234)",
+        "surface": "#19161e",
+        "theme": "dark",
+        "shellTheme": "dark",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 16.008500761955702,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true,
+        "command": {
+          "calls": [
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "06dbf40c-f78b-48a4-b9f2-b293b7f2d138"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "06dbf40c-f78b-48a4-b9f2-b293b7f2d138"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "06dbf40c-f78b-48a4-b9f2-b293b7f2d138",
+                "approved_fingerprint": "0000000000000002"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "06dbf40c-f78b-48a4-b9f2-b293b7f2d138"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "06dbf40c-f78b-48a4-b9f2-b293b7f2d138"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "06dbf40c-f78b-48a4-b9f2-b293b7f2d138",
+                "approved_fingerprint": "0000000000000003"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "06dbf40c-f78b-48a4-b9f2-b293b7f2d138"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "1d61817a-8c2f-4480-9b21-054bf8dea231"
+              }
+            }
+          ],
+          "effects": 2,
+          "reads": 2,
+          "provider": "NOT_CALLED",
+          "actualAuthority": false
+        }
+      },
+      "filename": "1536-770-closed-dark-invite-ready.png"
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "open": true,
+      "theme": "light",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(245, 242, 236)",
+        "color": "rgb(32, 30, 35)",
+        "surface": "#f5f2ec",
+        "theme": "light",
+        "shellTheme": "light",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "open"
+      },
+      "contrast": 14.782646509174324,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true,
+        "command": {
+          "calls": [
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "10658bfe-e788-41e8-af60-8ac9822e8450"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "10658bfe-e788-41e8-af60-8ac9822e8450"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "10658bfe-e788-41e8-af60-8ac9822e8450",
+                "approved_fingerprint": "0000000000000002"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "10658bfe-e788-41e8-af60-8ac9822e8450"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "10658bfe-e788-41e8-af60-8ac9822e8450"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "10658bfe-e788-41e8-af60-8ac9822e8450",
+                "approved_fingerprint": "0000000000000003"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "10658bfe-e788-41e8-af60-8ac9822e8450"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "1b2eca09-76cc-4abd-8517-4df68f93f62f"
+              }
+            }
+          ],
+          "effects": 2,
+          "reads": 2,
+          "provider": "NOT_CALLED",
+          "actualAuthority": false
+        }
+      },
+      "filename": "1536-770-open-light-invite-ready.png"
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "open": true,
+      "theme": "dark",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(25, 22, 30)",
+        "color": "rgb(246, 242, 234)",
+        "surface": "#19161e",
+        "theme": "dark",
+        "shellTheme": "dark",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "open"
+      },
+      "contrast": 16.008500761955702,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true,
+        "command": {
+          "calls": [
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "cd60de49-9f9a-4108-ad1b-7645ac1eef0d"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "cd60de49-9f9a-4108-ad1b-7645ac1eef0d"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "cd60de49-9f9a-4108-ad1b-7645ac1eef0d",
+                "approved_fingerprint": "0000000000000002"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "cd60de49-9f9a-4108-ad1b-7645ac1eef0d"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "cd60de49-9f9a-4108-ad1b-7645ac1eef0d"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "cd60de49-9f9a-4108-ad1b-7645ac1eef0d",
+                "approved_fingerprint": "0000000000000003"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "cd60de49-9f9a-4108-ad1b-7645ac1eef0d"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "e3142d72-32bb-44ab-b0a9-f32059a3da8f"
+              }
+            }
+          ],
+          "effects": 2,
+          "reads": 2,
+          "provider": "NOT_CALLED",
+          "actualAuthority": false
+        }
+      },
+      "filename": "1536-770-open-dark-invite-ready.png"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": false,
+      "theme": "light",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(245, 242, 236)",
+        "color": "rgb(32, 30, 35)",
+        "surface": "#f5f2ec",
+        "theme": "light",
+        "shellTheme": "light",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 14.782646509174324,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true,
+        "command": {
+          "calls": [
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "48c311d1-aad6-4ea6-ad33-0fa2d0cd1f3d"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "48c311d1-aad6-4ea6-ad33-0fa2d0cd1f3d"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "48c311d1-aad6-4ea6-ad33-0fa2d0cd1f3d",
+                "approved_fingerprint": "0000000000000002"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "48c311d1-aad6-4ea6-ad33-0fa2d0cd1f3d"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "48c311d1-aad6-4ea6-ad33-0fa2d0cd1f3d"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "48c311d1-aad6-4ea6-ad33-0fa2d0cd1f3d",
+                "approved_fingerprint": "0000000000000003"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "48c311d1-aad6-4ea6-ad33-0fa2d0cd1f3d"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "e075c13c-025d-43f7-8c5a-8a3fc7da103e"
+              }
+            }
+          ],
+          "effects": 2,
+          "reads": 2,
+          "provider": "NOT_CALLED",
+          "actualAuthority": false
+        }
+      },
+      "filename": null
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": false,
+      "theme": "dark",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(25, 22, 30)",
+        "color": "rgb(246, 242, 234)",
+        "surface": "#19161e",
+        "theme": "dark",
+        "shellTheme": "dark",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 16.008500761955702,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true,
+        "command": {
+          "calls": [
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "a9862e68-29d7-41ee-9490-109a54929668"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "a9862e68-29d7-41ee-9490-109a54929668"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "a9862e68-29d7-41ee-9490-109a54929668",
+                "approved_fingerprint": "0000000000000002"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "a9862e68-29d7-41ee-9490-109a54929668"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "a9862e68-29d7-41ee-9490-109a54929668"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "a9862e68-29d7-41ee-9490-109a54929668",
+                "approved_fingerprint": "0000000000000003"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "a9862e68-29d7-41ee-9490-109a54929668"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "572e5550-3e5f-40d1-9e19-05fe60ee8a05"
+              }
+            }
+          ],
+          "effects": 2,
+          "reads": 2,
+          "provider": "NOT_CALLED",
+          "actualAuthority": false
+        }
+      },
+      "filename": null
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": true,
+      "theme": "light",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(245, 242, 236)",
+        "color": "rgb(32, 30, 35)",
+        "surface": "#f5f2ec",
+        "theme": "light",
+        "shellTheme": "light",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "open"
+      },
+      "contrast": 14.782646509174324,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true,
+        "command": {
+          "calls": [
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "229895d2-06bf-438a-815e-fd03391f5fc6"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "229895d2-06bf-438a-815e-fd03391f5fc6"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "229895d2-06bf-438a-815e-fd03391f5fc6",
+                "approved_fingerprint": "0000000000000002"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "229895d2-06bf-438a-815e-fd03391f5fc6"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "229895d2-06bf-438a-815e-fd03391f5fc6"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "229895d2-06bf-438a-815e-fd03391f5fc6",
+                "approved_fingerprint": "0000000000000003"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "229895d2-06bf-438a-815e-fd03391f5fc6"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "f1ee0070-4dc7-42cc-8fe9-3cbcb0fde9bf"
+              }
+            }
+          ],
+          "effects": 2,
+          "reads": 2,
+          "provider": "NOT_CALLED",
+          "actualAuthority": false
+        }
+      },
+      "filename": null
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": true,
+      "theme": "dark",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(25, 22, 30)",
+        "color": "rgb(246, 242, 234)",
+        "surface": "#19161e",
+        "theme": "dark",
+        "shellTheme": "dark",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "open"
+      },
+      "contrast": 16.008500761955702,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true,
+        "command": {
+          "calls": [
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "2c2cd0c6-8fc4-4bad-aca2-6811f519aafa"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "2c2cd0c6-8fc4-4bad-aca2-6811f519aafa"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "2c2cd0c6-8fc4-4bad-aca2-6811f519aafa",
+                "approved_fingerprint": "0000000000000002"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "2c2cd0c6-8fc4-4bad-aca2-6811f519aafa"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "2c2cd0c6-8fc4-4bad-aca2-6811f519aafa"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "2c2cd0c6-8fc4-4bad-aca2-6811f519aafa",
+                "approved_fingerprint": "0000000000000003"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "2c2cd0c6-8fc4-4bad-aca2-6811f519aafa"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "8dd3f3a6-81e2-4c69-a3da-2f81a4daab8c"
+              }
+            }
+          ],
+          "effects": 2,
+          "reads": 2,
+          "provider": "NOT_CALLED",
+          "actualAuthority": false
+        }
+      },
+      "filename": null
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "open": false,
+      "theme": "light",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(245, 242, 236)",
+        "color": "rgb(32, 30, 35)",
+        "surface": "#f5f2ec",
+        "theme": "light",
+        "shellTheme": "light",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 14.782646509174324,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true,
+        "command": {
+          "calls": [
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "cdc05cd1-8376-4975-b5a6-406814d688b6"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "cdc05cd1-8376-4975-b5a6-406814d688b6"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "cdc05cd1-8376-4975-b5a6-406814d688b6",
+                "approved_fingerprint": "0000000000000002"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "cdc05cd1-8376-4975-b5a6-406814d688b6"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "cdc05cd1-8376-4975-b5a6-406814d688b6"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "cdc05cd1-8376-4975-b5a6-406814d688b6",
+                "approved_fingerprint": "0000000000000003"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "cdc05cd1-8376-4975-b5a6-406814d688b6"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "ff9fabf5-efb1-4a32-aa72-5c9bc2aa7847"
+              }
+            }
+          ],
+          "effects": 2,
+          "reads": 2,
+          "provider": "NOT_CALLED",
+          "actualAuthority": false
+        }
+      },
+      "filename": null
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "open": false,
+      "theme": "dark",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(25, 22, 30)",
+        "color": "rgb(246, 242, 234)",
+        "surface": "#19161e",
+        "theme": "dark",
+        "shellTheme": "dark",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 16.008500761955702,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true,
+        "command": {
+          "calls": [
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "3f2b40b0-bc51-431f-85af-3df1712ea9a3"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "3f2b40b0-bc51-431f-85af-3df1712ea9a3"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "3f2b40b0-bc51-431f-85af-3df1712ea9a3",
+                "approved_fingerprint": "0000000000000002"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "3f2b40b0-bc51-431f-85af-3df1712ea9a3"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "3f2b40b0-bc51-431f-85af-3df1712ea9a3"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "3f2b40b0-bc51-431f-85af-3df1712ea9a3",
+                "approved_fingerprint": "0000000000000003"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "3f2b40b0-bc51-431f-85af-3df1712ea9a3"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "49a7ff8d-3b8c-45d3-b680-d926850be824"
+              }
+            }
+          ],
+          "effects": 2,
+          "reads": 2,
+          "provider": "NOT_CALLED",
+          "actualAuthority": false
+        }
+      },
+      "filename": null
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "open": true,
+      "theme": "light",
+      "kind": "invite",
+      "state": "ready",
+      "assistantModal": true,
+      "dialog": "not opened while native PAIGE modal owns focus",
+      "filename": null
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "open": true,
+      "theme": "dark",
+      "kind": "invite",
+      "state": "ready",
+      "assistantModal": true,
+      "dialog": "not opened while native PAIGE modal owns focus",
+      "filename": null
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "open": false,
+      "theme": "light",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(245, 242, 236)",
+        "color": "rgb(32, 30, 35)",
+        "surface": "#f5f2ec",
+        "theme": "light",
+        "shellTheme": "light",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 14.782646509174324,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true,
+        "command": {
+          "calls": [
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "f54b5600-1a94-4ce9-a902-bba3bc84c06f"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "f54b5600-1a94-4ce9-a902-bba3bc84c06f"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "f54b5600-1a94-4ce9-a902-bba3bc84c06f",
+                "approved_fingerprint": "0000000000000002"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "f54b5600-1a94-4ce9-a902-bba3bc84c06f"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "f54b5600-1a94-4ce9-a902-bba3bc84c06f"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "f54b5600-1a94-4ce9-a902-bba3bc84c06f",
+                "approved_fingerprint": "0000000000000003"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "f54b5600-1a94-4ce9-a902-bba3bc84c06f"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "0de702d7-bd0a-4ea5-9bd7-423ecf3f9a69"
+              }
+            }
+          ],
+          "effects": 2,
+          "reads": 2,
+          "provider": "NOT_CALLED",
+          "actualAuthority": false
+        }
+      },
+      "filename": null
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "open": false,
+      "theme": "dark",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(25, 22, 30)",
+        "color": "rgb(246, 242, 234)",
+        "surface": "#19161e",
+        "theme": "dark",
+        "shellTheme": "dark",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 16.008500761955702,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true,
+        "command": {
+          "calls": [
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "a528ee86-3d23-4e28-b51a-ab69e342d55f"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "a528ee86-3d23-4e28-b51a-ab69e342d55f"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "a528ee86-3d23-4e28-b51a-ab69e342d55f",
+                "approved_fingerprint": "0000000000000002"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "a528ee86-3d23-4e28-b51a-ab69e342d55f"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "a528ee86-3d23-4e28-b51a-ab69e342d55f"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "a528ee86-3d23-4e28-b51a-ab69e342d55f",
+                "approved_fingerprint": "0000000000000003"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "a528ee86-3d23-4e28-b51a-ab69e342d55f"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "08f1007b-7de8-48af-aec4-9c986290013a"
+              }
+            }
+          ],
+          "effects": 2,
+          "reads": 2,
+          "provider": "NOT_CALLED",
+          "actualAuthority": false
+        }
+      },
+      "filename": null
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "open": true,
+      "theme": "light",
+      "kind": "invite",
+      "state": "ready",
+      "assistantModal": true,
+      "dialog": "not opened while native PAIGE modal owns focus",
+      "filename": null
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "open": true,
+      "theme": "dark",
+      "kind": "invite",
+      "state": "ready",
+      "assistantModal": true,
+      "dialog": "not opened while native PAIGE modal owns focus",
+      "filename": null
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "open": false,
+      "theme": "light",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(245, 242, 236)",
+        "color": "rgb(32, 30, 35)",
+        "surface": "#f5f2ec",
+        "theme": "light",
+        "shellTheme": "light",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 14.782646509174324,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true,
+        "command": {
+          "calls": [
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000002",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "a82d5f95-8cb5-414c-8c93-388ae4749626"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000002",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "a82d5f95-8cb5-414c-8c93-388ae4749626"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000002",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "a82d5f95-8cb5-414c-8c93-388ae4749626",
+                "approved_fingerprint": "0000000000000002"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000002",
+                "p_operation_id": "a82d5f95-8cb5-414c-8c93-388ae4749626"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000002",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "a82d5f95-8cb5-414c-8c93-388ae4749626"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000002",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "a82d5f95-8cb5-414c-8c93-388ae4749626",
+                "approved_fingerprint": "0000000000000003"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000002",
+                "p_operation_id": "a82d5f95-8cb5-414c-8c93-388ae4749626"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000002",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "2c2cc117-c96a-4679-b27d-09d3ae0673ac"
+              }
+            }
+          ],
+          "effects": 2,
+          "reads": 2,
+          "provider": "NOT_CALLED",
+          "actualAuthority": false
+        }
+      },
+      "filename": "390-844-closed-light-invite-ready.png"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": false,
+      "theme": "light",
+      "kind": "preview",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(245, 242, 236)",
+        "color": "rgb(32, 30, 35)",
+        "surface": "#f5f2ec",
+        "theme": "light",
+        "shellTheme": "light",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 14.782646509174324,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true,
+        "command": {
+          "calls": [],
+          "effects": 0,
+          "reads": 0,
+          "provider": "NOT_CALLED",
+          "actualAuthority": false
+        }
+      },
+      "filename": "1366-768-closed-light-preview-ready.png"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "open": false,
+      "theme": "dark",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(25, 22, 30)",
+        "color": "rgb(246, 242, 234)",
+        "surface": "#19161e",
+        "theme": "dark",
+        "shellTheme": "dark",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 16.008500761955702,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true,
+        "command": {
+          "calls": [
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000002",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "6604ec0f-3528-4ad0-9902-716773ed01b6"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000002",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "6604ec0f-3528-4ad0-9902-716773ed01b6"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000002",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "6604ec0f-3528-4ad0-9902-716773ed01b6",
+                "approved_fingerprint": "0000000000000002"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000002",
+                "p_operation_id": "6604ec0f-3528-4ad0-9902-716773ed01b6"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000002",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "6604ec0f-3528-4ad0-9902-716773ed01b6"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000002",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "6604ec0f-3528-4ad0-9902-716773ed01b6",
+                "approved_fingerprint": "0000000000000003"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000002",
+                "p_operation_id": "6604ec0f-3528-4ad0-9902-716773ed01b6"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000002",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "ee90a62c-ae33-40f8-8f92-fbc6e63c2496"
+              }
+            }
+          ],
+          "effects": 2,
+          "reads": 2,
+          "provider": "NOT_CALLED",
+          "actualAuthority": false
+        }
+      },
+      "filename": "390-844-closed-dark-invite-ready.png"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": false,
+      "theme": "dark",
+      "kind": "preview",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(25, 22, 30)",
+        "color": "rgb(246, 242, 234)",
+        "surface": "#19161e",
+        "theme": "dark",
+        "shellTheme": "dark",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 16.008500761955702,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true,
+        "command": {
+          "calls": [],
+          "effects": 0,
+          "reads": 0,
+          "provider": "NOT_CALLED",
+          "actualAuthority": false
+        }
+      },
+      "filename": "1366-768-closed-dark-preview-ready.png"
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "open": false,
+      "theme": "light",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(245, 242, 236)",
+        "color": "rgb(32, 30, 35)",
+        "surface": "#f5f2ec",
+        "theme": "light",
+        "shellTheme": "light",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 14.782646509174324,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true,
+        "command": {
+          "calls": [
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "d3c8049c-f429-4880-864c-fe9db72e0296"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "d3c8049c-f429-4880-864c-fe9db72e0296"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "d3c8049c-f429-4880-864c-fe9db72e0296",
+                "approved_fingerprint": "0000000000000002"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "d3c8049c-f429-4880-864c-fe9db72e0296"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "d3c8049c-f429-4880-864c-fe9db72e0296"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "d3c8049c-f429-4880-864c-fe9db72e0296",
+                "approved_fingerprint": "0000000000000003"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "d3c8049c-f429-4880-864c-fe9db72e0296"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "1cb2c890-4ca0-4d7b-b566-e9a7fa8c899d"
+              }
+            }
+          ],
+          "effects": 2,
+          "reads": 2,
+          "provider": "NOT_CALLED",
+          "actualAuthority": false
+        }
+      },
+      "filename": null
+    },
+    {
+      "width": 768,
+      "height": 385,
+      "open": false,
+      "theme": "dark",
+      "kind": "invite",
+      "state": "ready",
+      "geometry": {
+        "background": "rgb(25, 22, 30)",
+        "color": "rgb(246, 242, 234)",
+        "surface": "#19161e",
+        "theme": "dark",
+        "shellTheme": "dark",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 16.008500761955702,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations",
+          "can_manage_tenant_brand",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations",
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true,
+        "command": {
+          "calls": [
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "0c93cc79-315c-4816-ae03-429683b3ba4a"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "0c93cc79-315c-4816-ae03-429683b3ba4a"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "0c93cc79-315c-4816-ae03-429683b3ba4a",
+                "approved_fingerprint": "0000000000000002"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "0c93cc79-315c-4816-ae03-429683b3ba4a"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "0c93cc79-315c-4816-ae03-429683b3ba4a"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "0c93cc79-315c-4816-ae03-429683b3ba4a",
+                "approved_fingerprint": "0000000000000003"
+              }
+            },
+            {
+              "name": "read_client_portal_invitation_delivery",
+              "args": {
+                "p_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "p_operation_id": "0c93cc79-315c-4816-ae03-429683b3ba4a"
+              }
+            },
+            {
+              "name": "send-portal-invite",
+              "args": {
+                "expected_tenant_id": "e0921000-0000-0000-0000-000000000001",
+                "contact_id": "e0931000-0000-0000-0000-000000000001",
+                "operation_id": "b2422b9d-7870-4414-8cf6-ae94a6462594"
+              }
+            }
+          ],
+          "effects": 2,
+          "reads": 2,
+          "provider": "NOT_CALLED",
+          "actualAuthority": false
+        }
+      },
+      "filename": null
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": false,
+      "theme": "light",
+      "kind": "invite",
+      "state": "history-error",
+      "geometry": {
+        "background": "rgb(245, 242, 236)",
+        "color": "rgb(32, 30, 35)",
+        "surface": "#f5f2ec",
+        "theme": "light",
+        "shellTheme": "light",
+        "outsideShell": true,
+        "rootUnthemed": true,
+        "overflow": false,
+        "documentOverflow": false,
+        "overflowY": "auto",
+        "insideViewport": true,
+        "assistantState": "closed"
+      },
+      "contrast": 14.782646509174324,
+      "focusRestored": true,
+      "snapshot": {
+        "calls": [
+          "client_portal_owner_invitations"
+        ],
+        "actualAuth": false,
+        "synthetic": true,
+        "command": {
+          "calls": [],
+          "effects": 0,
+          "reads": 0,
+          "provider": "NOT_CALLED",
+          "actualAuthority": false
+        }
+      },
+      "filename": "1366-768-closed-light-invite-history-error.png"
+    }
+  ],
+  "errors": [],
+  "boundary": "Actual owner shell/dashboard/history/parser/hook; SDK/records/Auth are synthetic, network blocked, PAIGE leaf is placeholder. Automated installed binaries/engine builds only; no real customer/provider operation, legitimate cohort, full customer frame, Safari/iOS/Android/physical-device, OS scaling or actual browser zoom acceptance. Only named screenshot cases received visual artifacts; all cases rendered and exercised."
+}

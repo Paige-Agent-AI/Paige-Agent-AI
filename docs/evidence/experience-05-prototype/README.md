@@ -1,0 +1,9 @@
+# Weekly commitment check rendered review evidence
+
+Open `../../prototypes/weekly-commitment-check.html` directly in a browser. It is one self-contained, unmounted HTML simulation; it makes no network request or canonical write. Final SHA256: `3D5C2C08090B69AF8403742996C4711FF6DB7F2E2DCBB869699E6BDC8D9DE0E4`.
+
+`executor-alignment-browser-proof.json` records14 focused checks on these exact bytes, with four captures. `executor-alignment.md` records the independent ship verdict. No owner replay control/handler remains for settled failures. Absence-only or uncertain readback preserves UNKNOWN and the replay lock; committed observation plus receipt can be adopted. Bounded recovery is existing executor behavior. The earlier13-check `absence-final-browser-proof.json` and three captures belong to C57AECBB…73526D and are historical; its proposed human retry path is superseded.
+
+`permission-final-retry-browser-proof.json` records the prior full 64-check run on different bytes, SHA256 `F895DA7C1A56FAF3CDDDD5A9286404009C20351D2AF38A0515FE3D77BCC5FB4C`. Its 15 captures plus four supplemental captures cover default-confirm permission, explicit simulated existing-Settings opt-in, future controls, later readback, roles, offline/session and responsive states. It is historical regression evidence, not a full run on the final artifact. `permission-gate-review.md` and `finish-review.md` preserve the independent gate and prior fixes; `incumbent-system-check.md` records the incumbent design system.
+
+All browser checks used bundled Playwright Chromium against a local file. Authenticated persistence, mounted SOLO shell geometry, actual 200% zoom, screen reader, owner rendered approval, Chat/Live admission and production recovery remain UNVERIFIED. The prototype's consent changes only local simulation state. Source SQL/engine proof is recorded separately in `../experience-05-weekly-postgres-proof.json`.

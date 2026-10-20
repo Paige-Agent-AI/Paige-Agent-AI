@@ -1,0 +1,1368 @@
+[
+  {
+    "name": "actual-a-light-1536x770-closed",
+    "cssViewport": [
+      1536,
+      770
+    ],
+    "opened": false,
+    "header": {
+      "bottom": 207.5000114440918,
+      "height": 56.10000228881836,
+      "left": 240,
+      "right": 1502.4000244140625,
+      "top": 151.40000915527344,
+      "width": 1262.4000244140625,
+      "x": 240,
+      "y": 151.40000915527344
+    },
+    "pageOverflow": false,
+    "paige": "closed",
+    "scrollOwner": "auto",
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 1182.7874755859375,
+          "right": 1349.7999725341797,
+          "top": 151.40000915527344,
+          "width": 167.0124969482422,
+          "x": 1182.7874755859375,
+          "y": 151.40000915527344
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 1357.800048828125,
+          "right": 1502.4000549316406,
+          "top": 151.40000915527344,
+          "width": 144.60000610351562,
+          "x": 1357.800048828125,
+          "y": 151.40000915527344
+        }
+      }
+    ],
+    "disposition": "PASS: original native capture; responsive PAIGE overlay is not simultaneous background interactivity"
+  },
+  {
+    "name": "actual-a-light-1536x770-open",
+    "cssViewport": [
+      1536,
+      770
+    ],
+    "opened": true,
+    "header": {
+      "bottom": 207.5000114440918,
+      "height": 56.10000228881836,
+      "left": 240,
+      "right": 980.1625366210938,
+      "top": 151.40000915527344,
+      "width": 740.1625366210938,
+      "x": 240,
+      "y": 151.40000915527344
+    },
+    "pageOverflow": false,
+    "paige": "open",
+    "scrollOwner": "auto",
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 660.5499877929688,
+          "right": 827.5624847412109,
+          "top": 151.40000915527344,
+          "width": 167.0124969482422,
+          "x": 660.5499877929688,
+          "y": 151.40000915527344
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 835.5625,
+          "right": 980.1625061035156,
+          "top": 151.40000915527344,
+          "width": 144.60000610351562,
+          "x": 835.5625,
+          "y": 151.40000915527344
+        }
+      }
+    ],
+    "disposition": "PASS: original native capture; responsive PAIGE overlay is not simultaneous background interactivity"
+  },
+  {
+    "name": "actual-a-light-1366x768-closed",
+    "cssViewport": [
+      1366,
+      768
+    ],
+    "opened": false,
+    "header": {
+      "bottom": 207.5000114440918,
+      "height": 56.10000228881836,
+      "left": 240,
+      "right": 1332.800048828125,
+      "top": 151.40000915527344,
+      "width": 1092.800048828125,
+      "x": 240,
+      "y": 151.40000915527344
+    },
+    "pageOverflow": false,
+    "paige": "closed",
+    "scrollOwner": "auto",
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 1013.1875,
+          "right": 1180.1999969482422,
+          "top": 151.40000915527344,
+          "width": 167.0124969482422,
+          "x": 1013.1875,
+          "y": 151.40000915527344
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 1188.2000732421875,
+          "right": 1332.8000793457031,
+          "top": 151.40000915527344,
+          "width": 144.60000610351562,
+          "x": 1188.2000732421875,
+          "y": 151.40000915527344
+        }
+      }
+    ],
+    "disposition": "PASS: original native capture; responsive PAIGE overlay is not simultaneous background interactivity"
+  },
+  {
+    "name": "actual-a-light-1366x768-open",
+    "cssViewport": [
+      1366,
+      768
+    ],
+    "opened": true,
+    "header": {
+      "bottom": 271.50000762939453,
+      "height": 120.0999984741211,
+      "left": 240,
+      "right": 868.2250366210938,
+      "top": 151.40000915527344,
+      "width": 628.2250366210938,
+      "x": 240,
+      "y": 151.40000915527344
+    },
+    "pageOverflow": false,
+    "paige": "open",
+    "scrollOwner": "auto",
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 271.5,
+          "height": 44,
+          "left": 240,
+          "right": 407.0124969482422,
+          "top": 227.5,
+          "width": 167.0124969482422,
+          "x": 240,
+          "y": 227.5
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 271.5,
+          "height": 44,
+          "left": 415.0125122070313,
+          "right": 559.6125183105469,
+          "top": 227.5,
+          "width": 144.60000610351562,
+          "x": 415.0125122070313,
+          "y": 227.5
+        }
+      }
+    ],
+    "disposition": "PASS: original native capture; responsive PAIGE overlay is not simultaneous background interactivity"
+  },
+  {
+    "name": "actual-a-light-1024x768-closed",
+    "cssViewport": [
+      1024,
+      768
+    ],
+    "opened": false,
+    "header": {
+      "bottom": 207.5000114440918,
+      "height": 56.10000228881836,
+      "left": 240,
+      "right": 990.4000244140624,
+      "top": 151.40000915527344,
+      "width": 750.4000244140625,
+      "x": 240,
+      "y": 151.40000915527344
+    },
+    "pageOverflow": false,
+    "paige": "closed",
+    "scrollOwner": "auto",
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 670.7875366210938,
+          "right": 837.8000335693359,
+          "top": 151.40000915527344,
+          "width": 167.0124969482422,
+          "x": 670.7875366210938,
+          "y": 151.40000915527344
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 845.7999877929688,
+          "right": 990.3999938964844,
+          "top": 151.40000915527344,
+          "width": 144.60000610351562,
+          "x": 845.7999877929688,
+          "y": 151.40000915527344
+        }
+      }
+    ],
+    "disposition": "INVALID: NON-AUTHOR visual review found stale/cropped pixels; exact raw original retained",
+    "replacement": "replacement-a-light-1024x768-closed"
+  },
+  {
+    "name": "actual-a-light-1024x768-open",
+    "cssViewport": [
+      1024,
+      768
+    ],
+    "opened": true,
+    "header": {
+      "bottom": 207.5000114440918,
+      "height": 56.10000228881836,
+      "left": 96,
+      "right": 990.4000244140624,
+      "top": 151.40000915527344,
+      "width": 894.4000244140625,
+      "x": 96,
+      "y": 151.40000915527344
+    },
+    "pageOverflow": false,
+    "paige": "open",
+    "scrollOwner": "auto",
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 670.7875366210938,
+          "right": 837.8000335693359,
+          "top": 151.40000915527344,
+          "width": 167.0124969482422,
+          "x": 670.7875366210938,
+          "y": 151.40000915527344
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 845.7999877929688,
+          "right": 990.3999938964844,
+          "top": 151.40000915527344,
+          "width": 144.60000610351562,
+          "x": 845.7999877929688,
+          "y": 151.40000915527344
+        }
+      }
+    ],
+    "disposition": "INVALID: NON-AUTHOR visual review found stale/cropped pixels; exact raw original retained",
+    "replacement": "replacement-a-light-1024x768-open"
+  },
+  {
+    "name": "actual-a-light-900x1000-closed",
+    "cssViewport": [
+      900,
+      1000
+    ],
+    "opened": false,
+    "header": {
+      "bottom": 207.5000114440918,
+      "height": 56.10000228881836,
+      "left": 96,
+      "right": 1502.4000244140625,
+      "top": 151.40000915527344,
+      "width": 1406.4000244140625,
+      "x": 96,
+      "y": 151.40000915527344
+    },
+    "pageOverflow": false,
+    "paige": "closed",
+    "scrollOwner": "auto",
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 1182.7874755859375,
+          "right": 1349.7999725341797,
+          "top": 151.40000915527344,
+          "width": 167.0124969482422,
+          "x": 1182.7874755859375,
+          "y": 151.40000915527344
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 1357.800048828125,
+          "right": 1502.4000549316406,
+          "top": 151.40000915527344,
+          "width": 144.60000610351562,
+          "x": 1357.800048828125,
+          "y": 151.40000915527344
+        }
+      }
+    ],
+    "pixelRecovery": "Separately settled native capture after initial timeout; original helper failure retained.",
+    "disposition": "PASS: original native capture; responsive PAIGE overlay is not simultaneous background interactivity"
+  },
+  {
+    "name": "actual-a-light-900x1000-open",
+    "cssViewport": [
+      900,
+      1000
+    ],
+    "opened": true,
+    "header": {
+      "bottom": 207.5000114440918,
+      "height": 56.10000228881836,
+      "left": 96,
+      "right": 866.4000244140625,
+      "top": 151.40000915527344,
+      "width": 770.4000244140625,
+      "x": 96,
+      "y": 151.40000915527344
+    },
+    "pageOverflow": false,
+    "paige": "open",
+    "scrollOwner": "auto",
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 546.7875366210938,
+          "right": 713.8000335693359,
+          "top": 151.40000915527344,
+          "width": 167.0124969482422,
+          "x": 546.7875366210938,
+          "y": 151.40000915527344
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 721.7999877929688,
+          "right": 866.3999938964844,
+          "top": 151.40000915527344,
+          "width": 144.60000610351562,
+          "x": 721.7999877929688,
+          "y": 151.40000915527344
+        }
+      }
+    ],
+    "disposition": "PASS: original native capture; responsive PAIGE overlay is not simultaneous background interactivity"
+  },
+  {
+    "name": "actual-a-light-390x844-closed",
+    "cssViewport": [
+      390,
+      844
+    ],
+    "opened": false,
+    "header": {
+      "bottom": 363.1000061035156,
+      "height": 149.3000030517578,
+      "left": 86,
+      "right": 366.8000183105469,
+      "top": 213.8000030517578,
+      "width": 280.8000183105469,
+      "x": 86,
+      "y": 213.8000030517578
+    },
+    "pageOverflow": false,
+    "paige": "closed",
+    "scrollOwner": "auto",
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 363.10001373291016,
+          "height": 52.400001525878906,
+          "left": 86,
+          "right": 214.40000915527344,
+          "top": 310.70001220703125,
+          "width": 128.40000915527344,
+          "x": 86,
+          "y": 310.70001220703125
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 354.70001220703125,
+          "height": 44,
+          "left": 222.40000915527344,
+          "right": 366.8000183105469,
+          "top": 310.70001220703125,
+          "width": 144.40000915527344,
+          "x": 222.40000915527344,
+          "y": 310.70001220703125
+        }
+      }
+    ],
+    "disposition": "PASS: original native capture; responsive PAIGE overlay is not simultaneous background interactivity"
+  },
+  {
+    "name": "actual-a-light-390x844-open",
+    "cssViewport": [
+      390,
+      844
+    ],
+    "opened": true,
+    "header": {
+      "bottom": 363.1000061035156,
+      "height": 149.3000030517578,
+      "left": 86,
+      "right": 366.8000183105469,
+      "top": 213.8000030517578,
+      "width": 280.8000183105469,
+      "x": 86,
+      "y": 213.8000030517578
+    },
+    "pageOverflow": false,
+    "paige": "open",
+    "scrollOwner": "auto",
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 363.10001373291016,
+          "height": 52.400001525878906,
+          "left": 86,
+          "right": 214.40000915527344,
+          "top": 310.70001220703125,
+          "width": 128.40000915527344,
+          "x": 86,
+          "y": 310.70001220703125
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 354.70001220703125,
+          "height": 44,
+          "left": 222.40000915527344,
+          "right": 366.8000183105469,
+          "top": 310.70001220703125,
+          "width": 144.40000915527344,
+          "x": 222.40000915527344,
+          "y": 310.70001220703125
+        }
+      }
+    ],
+    "disposition": "PASS: original native capture; responsive PAIGE overlay is not simultaneous background interactivity"
+  },
+  {
+    "name": "actual-b-dark-1536x770-closed",
+    "cssViewport": [
+      1536,
+      770
+    ],
+    "opened": false,
+    "header": {
+      "bottom": 207.5000114440918,
+      "height": 56.10000228881836,
+      "left": 240,
+      "right": 1502.4000244140625,
+      "top": 151.40000915527344,
+      "width": 1262.4000244140625,
+      "x": 240,
+      "y": 151.40000915527344
+    },
+    "pageOverflow": false,
+    "paige": "closed",
+    "scrollOwner": "auto",
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 1182.7874755859375,
+          "right": 1349.7999725341797,
+          "top": 151.40000915527344,
+          "width": 167.0124969482422,
+          "x": 1182.7874755859375,
+          "y": 151.40000915527344
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 1357.800048828125,
+          "right": 1502.4000549316406,
+          "top": 151.40000915527344,
+          "width": 144.60000610351562,
+          "x": 1357.800048828125,
+          "y": 151.40000915527344
+        }
+      }
+    ],
+    "disposition": "PASS: original native capture; responsive PAIGE overlay is not simultaneous background interactivity"
+  },
+  {
+    "name": "actual-b-dark-1536x770-open",
+    "cssViewport": [
+      1536,
+      770
+    ],
+    "opened": true,
+    "header": {
+      "bottom": 207.5000114440918,
+      "height": 56.10000228881836,
+      "left": 240,
+      "right": 980.1625366210938,
+      "top": 151.40000915527344,
+      "width": 740.1625366210938,
+      "x": 240,
+      "y": 151.40000915527344
+    },
+    "pageOverflow": false,
+    "paige": "open",
+    "scrollOwner": "auto",
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 660.5499877929688,
+          "right": 827.5624847412109,
+          "top": 151.40000915527344,
+          "width": 167.0124969482422,
+          "x": 660.5499877929688,
+          "y": 151.40000915527344
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 835.5625,
+          "right": 980.1625061035156,
+          "top": 151.40000915527344,
+          "width": 144.60000610351562,
+          "x": 835.5625,
+          "y": 151.40000915527344
+        }
+      }
+    ],
+    "disposition": "PASS: original native capture; responsive PAIGE overlay is not simultaneous background interactivity"
+  },
+  {
+    "name": "actual-b-dark-1366x768-closed",
+    "cssViewport": [
+      1366,
+      768
+    ],
+    "opened": false,
+    "header": {
+      "bottom": 207.5000114440918,
+      "height": 56.10000228881836,
+      "left": 240,
+      "right": 1332.800048828125,
+      "top": 151.40000915527344,
+      "width": 1092.800048828125,
+      "x": 240,
+      "y": 151.40000915527344
+    },
+    "pageOverflow": false,
+    "paige": "closed",
+    "scrollOwner": "auto",
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 1013.1875,
+          "right": 1180.1999969482422,
+          "top": 151.40000915527344,
+          "width": 167.0124969482422,
+          "x": 1013.1875,
+          "y": 151.40000915527344
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 1188.2000732421875,
+          "right": 1332.8000793457031,
+          "top": 151.40000915527344,
+          "width": 144.60000610351562,
+          "x": 1188.2000732421875,
+          "y": 151.40000915527344
+        }
+      }
+    ],
+    "disposition": "PASS: original native capture; responsive PAIGE overlay is not simultaneous background interactivity"
+  },
+  {
+    "name": "actual-b-dark-1366x768-open",
+    "cssViewport": [
+      1366,
+      768
+    ],
+    "opened": true,
+    "header": {
+      "bottom": 271.50000762939453,
+      "height": 120.0999984741211,
+      "left": 240,
+      "right": 868.2250366210938,
+      "top": 151.40000915527344,
+      "width": 628.2250366210938,
+      "x": 240,
+      "y": 151.40000915527344
+    },
+    "pageOverflow": false,
+    "paige": "open",
+    "scrollOwner": "auto",
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 271.5,
+          "height": 44,
+          "left": 240,
+          "right": 407.0124969482422,
+          "top": 227.5,
+          "width": 167.0124969482422,
+          "x": 240,
+          "y": 227.5
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 271.5,
+          "height": 44,
+          "left": 415.0125122070313,
+          "right": 559.6125183105469,
+          "top": 227.5,
+          "width": 144.60000610351562,
+          "x": 415.0125122070313,
+          "y": 227.5
+        }
+      }
+    ],
+    "disposition": "PASS: original native capture; responsive PAIGE overlay is not simultaneous background interactivity"
+  },
+  {
+    "name": "actual-b-dark-1024x768-closed",
+    "cssViewport": [
+      1024,
+      768
+    ],
+    "opened": false,
+    "header": {
+      "bottom": 207.5000114440918,
+      "height": 56.10000228881836,
+      "left": 96,
+      "right": 990.4000244140624,
+      "top": 151.40000915527344,
+      "width": 894.4000244140625,
+      "x": 96,
+      "y": 151.40000915527344
+    },
+    "pageOverflow": false,
+    "paige": "closed",
+    "scrollOwner": "auto",
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 670.7875366210938,
+          "right": 837.8000335693359,
+          "top": 151.40000915527344,
+          "width": 167.0124969482422,
+          "x": 670.7875366210938,
+          "y": 151.40000915527344
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 845.7999877929688,
+          "right": 990.3999938964844,
+          "top": 151.40000915527344,
+          "width": 144.60000610351562,
+          "x": 845.7999877929688,
+          "y": 151.40000915527344
+        }
+      }
+    ],
+    "disposition": "PASS: original native capture; responsive PAIGE overlay is not simultaneous background interactivity"
+  },
+  {
+    "name": "actual-b-dark-1024x768-open",
+    "cssViewport": [
+      1024,
+      768
+    ],
+    "opened": true,
+    "header": {
+      "bottom": 207.5000114440918,
+      "height": 56.10000228881836,
+      "left": 96,
+      "right": 990.4000244140624,
+      "top": 151.40000915527344,
+      "width": 894.4000244140625,
+      "x": 96,
+      "y": 151.40000915527344
+    },
+    "pageOverflow": false,
+    "paige": "open",
+    "scrollOwner": "auto",
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 670.7875366210938,
+          "right": 837.8000335693359,
+          "top": 151.40000915527344,
+          "width": 167.0124969482422,
+          "x": 670.7875366210938,
+          "y": 151.40000915527344
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 845.7999877929688,
+          "right": 990.3999938964844,
+          "top": 151.40000915527344,
+          "width": 144.60000610351562,
+          "x": 845.7999877929688,
+          "y": 151.40000915527344
+        }
+      }
+    ],
+    "disposition": "PASS: original native capture; responsive PAIGE overlay is not simultaneous background interactivity"
+  },
+  {
+    "name": "actual-b-dark-900x1000-closed",
+    "cssViewport": [
+      900,
+      1000
+    ],
+    "opened": false,
+    "header": {
+      "bottom": 207.5000114440918,
+      "height": 56.10000228881836,
+      "left": 96,
+      "right": 866.4000244140625,
+      "top": 151.40000915527344,
+      "width": 770.4000244140625,
+      "x": 96,
+      "y": 151.40000915527344
+    },
+    "pageOverflow": false,
+    "paige": "closed",
+    "scrollOwner": "auto",
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 546.7875366210938,
+          "right": 713.8000335693359,
+          "top": 151.40000915527344,
+          "width": 167.0124969482422,
+          "x": 546.7875366210938,
+          "y": 151.40000915527344
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 721.7999877929688,
+          "right": 866.3999938964844,
+          "top": 151.40000915527344,
+          "width": 144.60000610351562,
+          "x": 721.7999877929688,
+          "y": 151.40000915527344
+        }
+      }
+    ],
+    "disposition": "PASS: original native capture; responsive PAIGE overlay is not simultaneous background interactivity"
+  },
+  {
+    "name": "actual-b-dark-900x1000-open",
+    "cssViewport": [
+      900,
+      1000
+    ],
+    "opened": true,
+    "header": {
+      "bottom": 207.5000114440918,
+      "height": 56.10000228881836,
+      "left": 96,
+      "right": 866.4000244140625,
+      "top": 151.40000915527344,
+      "width": 770.4000244140625,
+      "x": 96,
+      "y": 151.40000915527344
+    },
+    "pageOverflow": false,
+    "paige": "open",
+    "scrollOwner": "auto",
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 546.7875366210938,
+          "right": 713.8000335693359,
+          "top": 151.40000915527344,
+          "width": 167.0124969482422,
+          "x": 546.7875366210938,
+          "y": 151.40000915527344
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 721.7999877929688,
+          "right": 866.3999938964844,
+          "top": 151.40000915527344,
+          "width": 144.60000610351562,
+          "x": 721.7999877929688,
+          "y": 151.40000915527344
+        }
+      }
+    ],
+    "disposition": "PASS: original native capture; responsive PAIGE overlay is not simultaneous background interactivity"
+  },
+  {
+    "name": "actual-b-dark-390x844-closed",
+    "cssViewport": [
+      390,
+      844
+    ],
+    "opened": false,
+    "header": {
+      "bottom": 363.1000061035156,
+      "height": 149.3000030517578,
+      "left": 86,
+      "right": 366.8000183105469,
+      "top": 213.8000030517578,
+      "width": 280.8000183105469,
+      "x": 86,
+      "y": 213.8000030517578
+    },
+    "pageOverflow": false,
+    "paige": "closed",
+    "scrollOwner": "auto",
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 363.10001373291016,
+          "height": 52.400001525878906,
+          "left": 86,
+          "right": 214.40000915527344,
+          "top": 310.70001220703125,
+          "width": 128.40000915527344,
+          "x": 86,
+          "y": 310.70001220703125
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 354.70001220703125,
+          "height": 44,
+          "left": 222.40000915527344,
+          "right": 366.8000183105469,
+          "top": 310.70001220703125,
+          "width": 144.40000915527344,
+          "x": 222.40000915527344,
+          "y": 310.70001220703125
+        }
+      }
+    ],
+    "disposition": "INVALID: NON-AUTHOR visual review found stale/cropped pixels; exact raw original retained",
+    "replacement": "replacement-b-dark-390x844-closed"
+  },
+  {
+    "name": "actual-b-dark-390x844-open",
+    "cssViewport": [
+      390,
+      844
+    ],
+    "opened": true,
+    "header": {
+      "bottom": 363.1000061035156,
+      "height": 149.3000030517578,
+      "left": 86,
+      "right": 366.8000183105469,
+      "top": 213.8000030517578,
+      "width": 280.8000183105469,
+      "x": 86,
+      "y": 213.8000030517578
+    },
+    "pageOverflow": false,
+    "paige": "open",
+    "scrollOwner": "auto",
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 363.10001373291016,
+          "height": 52.400001525878906,
+          "left": 86,
+          "right": 214.40000915527344,
+          "top": 310.70001220703125,
+          "width": 128.40000915527344,
+          "x": 86,
+          "y": 310.70001220703125
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 354.70001220703125,
+          "height": 44,
+          "left": 222.40000915527344,
+          "right": 366.8000183105469,
+          "top": 310.70001220703125,
+          "width": 144.40000915527344,
+          "x": 222.40000915527344,
+          "y": 310.70001220703125
+        }
+      }
+    ],
+    "disposition": "PASS: original native capture; responsive PAIGE overlay is not simultaneous background interactivity"
+  },
+  {
+    "name": "actual-b-dark-320x768-closed",
+    "cssViewport": [
+      320,
+      768
+    ],
+    "opened": false,
+    "header": {
+      "bottom": 418.90000915527344,
+      "height": 167.5,
+      "left": 86,
+      "right": 296.40000915527344,
+      "top": 251.40000915527344,
+      "width": 210.40000915527344,
+      "x": 86,
+      "y": 251.40000915527344
+    },
+    "pageOverflow": false,
+    "paige": "closed",
+    "scrollOwner": "auto",
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 418.900016784668,
+          "height": 70.5999984741211,
+          "left": 86,
+          "right": 179.20000457763672,
+          "top": 348.3000183105469,
+          "width": 93.20000457763672,
+          "x": 86,
+          "y": 348.3000183105469
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 400.7000198364258,
+          "height": 52.400001525878906,
+          "left": 187.1999969482422,
+          "right": 296.4000015258789,
+          "top": 348.3000183105469,
+          "width": 109.20000457763672,
+          "x": 187.1999969482422,
+          "y": 348.3000183105469
+        }
+      }
+    ],
+    "disposition": "INVALID: same-call resize/shell transition pixels; use separate-call settled reflow"
+  },
+  {
+    "name": "actual-b-dark-320x768-open",
+    "cssViewport": [
+      320,
+      768
+    ],
+    "opened": true,
+    "header": {
+      "bottom": 418.90000915527344,
+      "height": 167.5,
+      "left": 86,
+      "right": 296.40000915527344,
+      "top": 251.40000915527344,
+      "width": 210.40000915527344,
+      "x": 86,
+      "y": 251.40000915527344
+    },
+    "pageOverflow": false,
+    "paige": "open",
+    "scrollOwner": "auto",
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 418.900016784668,
+          "height": 70.5999984741211,
+          "left": 86,
+          "right": 179.20000457763672,
+          "top": 348.3000183105469,
+          "width": 93.20000457763672,
+          "x": 86,
+          "y": 348.3000183105469
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 400.7000198364258,
+          "height": 52.400001525878906,
+          "left": 187.1999969482422,
+          "right": 296.4000015258789,
+          "top": 348.3000183105469,
+          "width": 109.20000457763672,
+          "x": 187.1999969482422,
+          "y": 348.3000183105469
+        }
+      }
+    ],
+    "disposition": "INVALID: same-call resize/shell transition pixels; use separate-call settled reflow"
+  },
+  {
+    "name": "actual-a-light-320x768-closed",
+    "cssViewport": [
+      320,
+      768
+    ],
+    "opened": false,
+    "header": {
+      "bottom": 1027.3000183105469,
+      "height": 619.9000244140625,
+      "left": 240,
+      "right": 286.4000015258789,
+      "top": 407.3999938964844,
+      "width": 46.400001525878906,
+      "x": 240,
+      "y": 407.3999938964844
+    },
+    "pageOverflow": false,
+    "paige": "closed",
+    "scrollOwner": "auto",
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 1027.2999877929688,
+          "height": 406,
+          "left": 240,
+          "right": 264,
+          "top": 621.2999877929688,
+          "width": 24,
+          "x": 240,
+          "y": 621.2999877929688
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 699.7999877929688,
+          "height": 78.5,
+          "left": 248,
+          "right": 276,
+          "top": 621.2999877929688,
+          "width": 28,
+          "x": 248,
+          "y": 621.2999877929688
+        }
+      }
+    ],
+    "disposition": "INVALID: same-call resize/shell transition pixels; use separate-call settled reflow"
+  },
+  {
+    "name": "actual-a-light-320x768-open",
+    "cssViewport": [
+      320,
+      768
+    ],
+    "opened": true,
+    "header": {
+      "bottom": 418.90000915527344,
+      "height": 167.5,
+      "left": 86,
+      "right": 296.40000915527344,
+      "top": 251.40000915527344,
+      "width": 210.40000915527344,
+      "x": 86,
+      "y": 251.40000915527344
+    },
+    "pageOverflow": false,
+    "paige": "open",
+    "scrollOwner": "auto",
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 418.900016784668,
+          "height": 70.5999984741211,
+          "left": 86,
+          "right": 179.20000457763672,
+          "top": 348.3000183105469,
+          "width": 93.20000457763672,
+          "x": 86,
+          "y": 348.3000183105469
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 400.7000198364258,
+          "height": 52.400001525878906,
+          "left": 187.1999969482422,
+          "right": 296.4000015258789,
+          "top": 348.3000183105469,
+          "width": 109.20000457763672,
+          "x": 187.1999969482422,
+          "y": 348.3000183105469
+        }
+      }
+    ],
+    "disposition": "INVALID: same-call resize/shell transition pixels; use separate-call settled reflow"
+  },
+  {
+    "name": "replacement-a-light-1024x768-closed",
+    "cssViewport": [
+      1024,
+      768
+    ],
+    "opened": false,
+    "header": {
+      "bottom": 207.5000114440918,
+      "height": 56.10000228881836,
+      "left": 96,
+      "right": 990.4000244140624,
+      "top": 151.40000915527344,
+      "width": 894.4000244140625,
+      "x": 96,
+      "y": 151.40000915527344
+    },
+    "pageOverflow": false,
+    "paige": "closed",
+    "scrollOwner": "auto",
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 670.7875366210938,
+          "right": 837.8000335693359,
+          "top": 151.40000915527344,
+          "width": 167.0124969482422,
+          "x": 670.7875366210938,
+          "y": 151.40000915527344
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 845.7999877929688,
+          "right": 990.3999938964844,
+          "top": 151.40000915527344,
+          "width": 144.60000610351562,
+          "x": 845.7999877929688,
+          "y": 151.40000915527344
+        }
+      }
+    ],
+    "viewport": [
+      1024,
+      768
+    ],
+    "disposition": "PASS: separate-call settled replacement, source unchanged"
+  },
+  {
+    "name": "replacement-a-light-1024x768-open",
+    "cssViewport": [
+      1024,
+      768
+    ],
+    "opened": true,
+    "header": {
+      "bottom": 207.5000114440918,
+      "height": 56.10000228881836,
+      "left": 96,
+      "right": 990.4000244140624,
+      "top": 151.40000915527344,
+      "width": 894.4000244140625,
+      "x": 96,
+      "y": 151.40000915527344
+    },
+    "pageOverflow": false,
+    "paige": "open",
+    "scrollOwner": "auto",
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 670.7875366210938,
+          "right": 837.8000335693359,
+          "top": 151.40000915527344,
+          "width": 167.0124969482422,
+          "x": 670.7875366210938,
+          "y": 151.40000915527344
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 195.40000915527344,
+          "height": 44,
+          "left": 845.7999877929688,
+          "right": 990.3999938964844,
+          "top": 151.40000915527344,
+          "width": 144.60000610351562,
+          "x": 845.7999877929688,
+          "y": 151.40000915527344
+        }
+      }
+    ],
+    "viewport": [
+      1024,
+      768
+    ],
+    "disposition": "PASS: separate-call settled replacement, source unchanged"
+  },
+  {
+    "name": "replacement-b-dark-390x844-closed",
+    "cssViewport": [
+      390,
+      844
+    ],
+    "opened": false,
+    "header": {
+      "bottom": 363.1000061035156,
+      "height": 149.3000030517578,
+      "left": 86,
+      "right": 366.8000183105469,
+      "top": 213.8000030517578,
+      "width": 280.8000183105469,
+      "x": 86,
+      "y": 213.8000030517578
+    },
+    "pageOverflow": false,
+    "paige": "closed",
+    "scrollOwner": "auto",
+    "targets": [
+      {
+        "name": "Weekly responsibility",
+        "rect": {
+          "bottom": 363.10001373291016,
+          "height": 52.400001525878906,
+          "left": 86,
+          "right": 214.40000915527344,
+          "top": 310.70001220703125,
+          "width": 128.40000915527344,
+          "x": 86,
+          "y": 310.70001220703125
+        }
+      },
+      {
+        "name": "Plan with PAIGE",
+        "rect": {
+          "bottom": 354.70001220703125,
+          "height": 44,
+          "left": 222.40000915527344,
+          "right": 366.8000183105469,
+          "top": 310.70001220703125,
+          "width": 144.40000915527344,
+          "x": 222.40000915527344,
+          "y": 310.70001220703125
+        }
+      }
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "disposition": "PASS: separate-call settled replacement, source unchanged"
+  }
+]

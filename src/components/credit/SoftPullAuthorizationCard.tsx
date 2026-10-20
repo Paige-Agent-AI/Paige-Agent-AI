@@ -108,6 +108,7 @@ export function SoftPullAuthorizationCard() {
           <DialogHeader>
             <DialogTitle>Authorize Credit Report Access</DialogTitle>
             <DialogDescription className="text-foreground/80 leading-relaxed pt-2">
+              {/* customer-identity-exempt: consent text naming the platform company; wording awaits legal review (owner/legal decision, round 2 list) */}
               By clicking Authorize you consent to PaigeAgent pulling your credit report via a
               soft inquiry. This will not impact your credit score. Your report will be used only
               to provide personalized funding and credit coaching.
@@ -125,6 +126,7 @@ export function SoftPullAuthorizationCard() {
               htmlFor="soft-pull-consent"
               className="text-sm text-foreground leading-snug cursor-pointer"
             >
+              {/* customer-identity-exempt: consent text naming the platform company; wording awaits legal review (owner/legal decision, round 2 list) */}
               I authorize PaigeAgent to perform a soft credit inquiry on my behalf.
             </label>
           </div>

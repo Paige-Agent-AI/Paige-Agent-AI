@@ -1,0 +1,22 @@
+{
+  "dialogs": [
+    {
+      "rect": {
+        "height": 770.4000244140625,
+        "width": 600,
+        "x": 936,
+        "y": 0
+      },
+      "text": "Weekly responsibilityCurrent owner scope, canonical schedules and verified results.Weekly commitment checkReview the week. Keep the original work in Operations.Read Tue, Oct 20, 4:00 AM EDTNo weekly responsibility is registeredPrepare the schedule and scope for review. Recurring execution is currently unavailable.Read saved proposalsPrepare a weekly responsibilityClients → CalendarOperations → WorkClose"
+    }
+  ],
+  "document": {
+    "scrollWidth": 1536,
+    "width": 1536
+  },
+  "focus": "Close",
+  "viewport": {
+    "height": 770,
+    "width": 1536
+  }
+}

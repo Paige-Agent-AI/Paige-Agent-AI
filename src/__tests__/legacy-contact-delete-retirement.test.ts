@@ -1,4 +1,4 @@
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -128,8 +128,10 @@ describe("the retirement reaches the provider, not just the source tree", () => 
     // retirement: an expired SUPABASE_ACCESS_TOKEN 401'd every deploy, the
     // failed deploy step SKIPPED the delete (no always() guard), and the
     // retired function stayed ACTIVE in production. The repaired invariants:
-    // the delete runs BEFORE any deploy, is guarded only by always() plus its
-    // own inputs, a credential preflight fails with one actionable error
+    // the delete runs BEFORE any deploy and survives later deploy failure,
+    // AFTER successful target/configuration and retired-set validation. A
+    // rejected project is never deletion authority. The credential preflight
+    // still fails with one actionable error
     // before N deploy attempts, and an operator can dispatch the workflow
     // directly after a secret rotation instead of waiting for the next
     // functions-touching push.
@@ -138,14 +140,35 @@ describe("the retirement reaches the provider, not just the source tree", () => 
     expect(deleteIdx).toBeGreaterThan(-1);
     expect(deployIdx).toBeGreaterThan(-1);
     expect(deleteIdx, "retirement delete must precede the deploy loop").toBeLessThan(deployIdx);
-    expect(wf).toContain("if: always() && steps.retired.outputs.count != '0'");
+    const deleteStep = wf.slice(deleteIdx, wf.indexOf("- name:", deleteIdx + 10));
+    expect(deleteStep).toContain("if: always() && steps.affected.outcome == 'success' && steps.retired.outcome == 'success' && steps.retired.outputs.count != '0'");
     expect(wf).toContain("Preflight — the provider accepts the credential");
     expect(wf).toContain("The provider REJECTED SUPABASE_ACCESS_TOKEN");
     expect(wf).toContain("workflow_dispatch");
     // edge-live still advances only when everything succeeded — a failed
     // deploy must never be recorded as live.
-    expect(wf).toContain("if: success() && (steps.affected.outputs.count != '0' || steps.retired.outputs.count != '0')");
+    const recordIdx = wf.indexOf("Record deployed commit");
+    expect(recordIdx).toBeGreaterThan(-1);
+    const recordStep = wf.slice(recordIdx, wf.indexOf("run: |", recordIdx));
+    expect(recordStep).toContain("if: success() && (steps.affected.outputs.count == '0' || steps.readback.outcome == 'success') && (steps.affected.outputs.count != '0' || steps.retired.outputs.count != '0')");
   });
+
+  it("executes the reviewed helper: valid retirement survives deploy failure while refused projects and missing anchors never delete", () => {
+    // Reuse the existing protected workflow/helper fixtures, including their
+    // actual step condition and Bash delete body with a local Supabase stub.
+    // These never call a provider or use a real credential. Exact string checks
+    // above cannot alone prove that retirement reaches the correct project.
+    const result = spawnSync(process.platform === "win32" ? "python" : "python3", [
+      "-B", "-m", "unittest", "-v",
+      "test_edge_source_readback.ReleaseFixtures.test_valid_retirement_still_runs_despite_later_ordinary_deploy_failure",
+      "test_edge_source_readback.ReleaseFixtures.test_project_refusal_with_retirement_blocks_actual_delete_and_deploy",
+      "test_edge_source_readback.ReleaseFixtures.test_missing_or_noncommit_certified_anchor_refuses_before_provider_mutation",
+    ], { cwd: root(".github/scripts"), encoding: "utf8", timeout: 60_000 });
+    expect(result.error, "Reviewed runtime fixture runner must start").toBeUndefined();
+    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
+    expect(result.stderr).toMatch(/Ran 3 tests/);
+    expect(result.stderr).not.toContain("skipped=");
+  }, 65_000);
 
   it("manual dispatch resolves its baseline from edge-live, never HEAD^ (the vacuous-recovery fix)", () => {
     // A dispatch on a main whose prior merge already carried the retirement

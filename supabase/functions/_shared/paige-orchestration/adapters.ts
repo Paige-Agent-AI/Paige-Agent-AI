@@ -52,6 +52,9 @@ export type DispatchInput = {
   /** the event's canonical subject coordinates — the subject IS the target (a contact id is never an arg). */
   subjectTable: string;
   subjectId: string;
+  /** Canonical claimed occurrence coordinates, supplied by the engine/claim seam. */
+  eventId?: string;
+  actId?: string;
 };
 
 /** The connector-neutral result of a dispatch or a readback. `outcome` is the exact per-act outcome the
@@ -63,8 +66,18 @@ export type DispatchResult = {
   error?: string | null;
 };
 
+/** What a LOST dispatch claim means for an adapter (Slice 2b crash recovery). A dispatcher can die after claiming
+ *  an act and before recording what its dispatch did; the act is then accepted with a stale claim.
+ *    * "readback_proves_absence" — the adapter's readback is authoritative: when it finds nothing, the effect never
+ *      happened, so the act may be dispatched again under a fresh claim (native: the correlation-stamped write).
+ *    * "outcome_unknown" — a readback cannot prove the effect did not happen (an external call may have gone out
+ *      before the crash), so a lost claim is NEVER taken over: the act is recorded ambiguous and not replayed. */
+export type LostClaimRecovery = "readback_proves_absence" | "outcome_unknown";
+
 export interface ActionAdapter {
   kind: AdapterKind;
+  /** Required for every adapter, so a new one cannot reach dispatch without declaring it. */
+  lostClaimRecovery: LostClaimRecovery;
   /** Map an act's action_kind to the governed capability. Pure. Returns null if this adapter does not
    *  own the action_kind (the engine then fails closed as unsupported). */
   resolveCapability(actionKind: string): AdapterCapability | null;
@@ -103,6 +116,9 @@ export function resolveAdapterKind(actionKind: string | null | undefined): Adapt
  *  the canonical action-risk key). dispatch/readback land in slice 2 over the shared n8n run seam. */
 const n8nAdapter: ActionAdapter = {
   kind: "n8n",
+  // A fired webhook cannot be proved absent by a poll (no execution id is bound until the fire returns), so a
+  // dispatcher that died after claiming may already have run the workflow: never take that claim over.
+  lostClaimRecovery: "outcome_unknown",
   resolveCapability(actionKind: string): AdapterCapability | null {
     if (resolveAdapterKind(actionKind) !== "n8n") return null;
     return { id: actionKind, effect: "mutate", outcomeChannel: "paige_act_executions" };

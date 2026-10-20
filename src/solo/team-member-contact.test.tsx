@@ -123,6 +123,36 @@ describe("Team → how the team reaches a person", () => {
     expect(dirty).toHaveBeenLastCalledWith(false);
   });
 
+  it("focuses the saved outcome even when a zero-delay callback runs before its render commits", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      mocks.rows = [row("e1", "email", "sam@example.com", true, 0, "Work")];
+      await mount(person({ user_id: "viewer-1" }), space("member"));
+      await click(host.querySelector('[data-ctm-add="email"]'));
+      const input = host.querySelectorAll<HTMLInputElement>('input[type="email"]')[1];
+      await act(async () => { type(input, "sam.personal@example.com"); });
+      mocks.rpc.mockResolvedValue({
+        data: [
+          row("e1", "email", "sam@example.com", true, 0, "Work"),
+          row("e9", "email", "sam.personal@example.com", false, 1, "Personal"),
+        ],
+        error: null,
+      });
+      // A browser timer does not guarantee that React has committed the new status node.
+      // Keep that commit inside the pending act while the already-due callback runs.
+      await act(async () => {
+        button("Save contact details")!.click();
+        for (let i = 0; i < 16; i++) await Promise.resolve();
+        vi.advanceTimersByTime(0);
+      });
+      expect(host.textContent).toContain("Your contact details are saved.");
+      expect(document.activeElement?.textContent).toBe("Your contact details are saved.");
+      expect(mocks.rpc).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("an admin's save over a list the person changed meanwhile is refused; the screen shows theirs and keeps the admin's addition", async () => {
     mocks.rows = [row("e1", "email", "sam@example.com", true, 0, "Work")];
     await mount(person(), space("admin"));

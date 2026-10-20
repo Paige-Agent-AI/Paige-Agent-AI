@@ -1,0 +1,38 @@
+{
+  "label": "light-pending-1366x768",
+  "requested": {
+    "width": 1366,
+    "height": 768
+  },
+  "screenshotDimensions": {
+    "height": 768,
+    "width": 1366
+  },
+  "url": "http://127.0.0.1:5205/welcome.html?scenario=pending&theme=light",
+  "dom": {
+    "controls": [
+      {
+        "bottom": 531.1499938964844,
+        "height": 40,
+        "name": "Contact support",
+        "top": 491.1499938964844,
+        "width": 448
+      }
+    ],
+    "focus": {
+      "name": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localStorage.getItem('theme');if(e){c.add(e|| '')}else{c.add('light');}if(e==='light'||e==='dark'||!e)d.style.colorScheme=e||'light'}catch(t){}}();Synthetic Welcome render — no Auth, database or provider requestsVerifying your Paige Solo access…Your enrollment is verified. Confirming the selected workspace before opening it.Reference: synthetic-referenceContact support",
+      "tag": "BODY"
+    },
+    "heading": "Verifying your Paige Solo access…",
+    "overflow": false,
+    "reducedMotion": true,
+    "theme": "light",
+    "viewport": {
+      "height": 768,
+      "width": 1366
+    }
+  },
+  "state": "- generic: Synthetic Welcome render — no Auth, database or provider requests\n- main:\n  - region \"Verifying your Paige Solo access…\":\n    - img \"Paige\"\n    - status:\n      - heading \"Verifying your Paige Solo access…\" [level=1]\n      - paragraph: Your enrollment is verified. Confirming the selected workspace before opening it.\n      - paragraph: \"Reference: synthetic-reference\"\n    - link \"Contact support\":\n      - /url: mailto:support@paigeagent.ai?subject=Solo%20enrollment%20verification",
+  "evidenceClass": "RENDERED_SYNTHETIC_WELCOME",
+  "captureAPI": "native screenshot after settled DOM"
+}

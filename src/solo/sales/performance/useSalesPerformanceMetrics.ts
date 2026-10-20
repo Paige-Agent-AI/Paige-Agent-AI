@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { parseMetricResult, type MetricRequestIdentity } from "@/lib/analytics/metric-contract";
+import { currentMetricVersion, parseMetricResult, type MetricRequestIdentity } from "@/lib/analytics/metric-contract";
 import type { SalesMetricBundle, SalesPerformancePhase, SalesPerformanceRangeKey } from "./types";
 
 export const SALES_METRIC_KEYS = ["sales.opportunities.created", "sales.opportunities.open_current", "sales.opportunities.won_current_close_date", "sales.opportunities.lost_current_close_date", "sales.pipeline.open_value", "sales.invoices.issued_count", "sales.invoices.issued_amount", "sales.receivables.outstanding_current", "sales.receivables.overdue_current", "sales.cash.recorded_received", "sales.payments.posted_net_allocations"] as const;
@@ -46,10 +46,11 @@ export function useSalesPerformanceMetrics(epoch: string | null | undefined, ran
       const unavailableKeys: Record<string, string> = {};
       let denied = false;
       await Promise.all(SALES_METRIC_KEYS.map(async metricKey => {
-        const expected: MetricRequestIdentity = { metricKey, metricVersion: "1.0.0", accountEpoch: epoch, rangeKey: range, rangeStart: bounds.start, rangeEnd: bounds.end, dimensions: {} };
+        const metricVersion = currentMetricVersion(metricKey);
+        const expected: MetricRequestIdentity = { metricKey, metricVersion, accountEpoch: epoch, rangeKey: range, rangeStart: bounds.start, rangeEnd: bounds.end, dimensions: {} };
         try {
           const issue = supabase.rpc.bind(supabase) as unknown as (name: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { code?: string } | null }>;
-          const { data, error } = await issue("issue_analytics_evidence_bundle", { p_metric_key: metricKey, p_metric_version: "1.0.0", p_dimensions: {}, p_range_key: range, p_range_start: bounds.start, p_range_end: bounds.end, p_account_epoch: epoch });
+          const { data, error } = await issue("issue_analytics_evidence_bundle", { p_metric_key: metricKey, p_metric_version: metricVersion, p_dimensions: {}, p_range_key: range, p_range_start: bounds.start, p_range_end: bounds.end, p_account_epoch: epoch });
           if (error) { if (["42501", "28000"].includes(error.code ?? "")) denied = true; throw error; }
           const result = parseMetricResult(data, expected);
           if (result.owner_department !== "sales") throw new Error("Unexpected metric owner");

@@ -1,0 +1,176 @@
+{
+  "boundary": "Unmounted real Operations component and helpers using explicit synthetic local caller ports. No customer account, client acceptance, provider effects, shared shell/PAIGE continuity or INT-346 proof.",
+  "results": [
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "cancelNoWrite": true,
+      "keyboardDocument": true,
+      "internalApproval": true,
+      "releaseNotAcceptance": true
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "cancelNoWrite": true,
+      "keyboardDocument": true,
+      "internalApproval": true,
+      "releaseNotAcceptance": true
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "cancelNoWrite": true,
+      "keyboardDocument": true,
+      "internalApproval": true,
+      "releaseNotAcceptance": true
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "cancelNoWrite": true,
+      "keyboardDocument": true,
+      "internalApproval": true,
+      "releaseNotAcceptance": true
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "cancelNoWrite": true,
+      "keyboardDocument": true,
+      "internalApproval": true,
+      "releaseNotAcceptance": true
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "cancelNoWrite": true,
+      "keyboardDocument": true,
+      "internalApproval": true,
+      "releaseNotAcceptance": true
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "cancelNoWrite": true,
+      "keyboardDocument": true,
+      "internalApproval": true,
+      "releaseNotAcceptance": true
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "cancelNoWrite": true,
+      "keyboardDocument": true,
+      "internalApproval": true,
+      "releaseNotAcceptance": true
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "cancelNoWrite": true,
+      "keyboardDocument": true,
+      "internalApproval": true,
+      "releaseNotAcceptance": true
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "cancelNoWrite": true,
+      "keyboardDocument": true,
+      "internalApproval": true,
+      "releaseNotAcceptance": true
+    },
+    {
+      "theme": "dark",
+      "mode": "empty",
+      "stateHonest": true
+    },
+    {
+      "theme": "dark",
+      "mode": "loading",
+      "stateHonest": true
+    },
+    {
+      "theme": "dark",
+      "mode": "unavailable",
+      "stateHonest": true
+    },
+    {
+      "theme": "dark",
+      "mode": "source-refused",
+      "stateHonest": true
+    },
+    {
+      "theme": "dark",
+      "mode": "refused",
+      "stateHonest": true
+    },
+    {
+      "theme": "dark",
+      "mode": "unknown",
+      "stateHonest": true
+    },
+    {
+      "theme": "dark",
+      "mode": "revoked",
+      "stateHonest": true
+    },
+    {
+      "theme": "dark",
+      "mode": "accepted",
+      "stateHonest": true
+    },
+    {
+      "theme": "light",
+      "mode": "empty",
+      "stateHonest": true
+    },
+    {
+      "theme": "light",
+      "mode": "loading",
+      "stateHonest": true
+    },
+    {
+      "theme": "light",
+      "mode": "unavailable",
+      "stateHonest": true
+    },
+    {
+      "theme": "light",
+      "mode": "source-refused",
+      "stateHonest": true
+    },
+    {
+      "theme": "light",
+      "mode": "refused",
+      "stateHonest": true
+    },
+    {
+      "theme": "light",
+      "mode": "unknown",
+      "stateHonest": true
+    },
+    {
+      "theme": "light",
+      "mode": "revoked",
+      "stateHonest": true
+    },
+    {
+      "theme": "light",
+      "mode": "accepted",
+      "stateHonest": true
+    }
+  ],
+  "errors": []
+}

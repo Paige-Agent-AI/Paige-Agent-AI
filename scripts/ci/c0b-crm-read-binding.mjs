@@ -119,27 +119,59 @@ function inspectCrmReadBindings(chatText, dependencySources) {
     const admins = scope ? scope.statements.flatMap(s => ts.isVariableStatement(s) ? [...s.declarationList.declarations].filter(n => id(n.name) === "admin") : []) : [];
     require(admins.length === 1 && text(admins[0].initializer) === "createClient(supabaseUrl,supabaseServiceKey)", `${tool}: actual server client`);
     require(tenants[0]?.pos < branches[0].pos && refused[0]?.pos < branches[0].pos && checks[0]?.pos < branches[0].pos, `${tool}: guards dominate dispatch`);
-    require(!visit(body, n => (ts.isVariableDeclaration(n) || ts.isParameter(n)) && ["admin", "crmTenantId", "Math", "Date", "Promise", "Number", "String", "Boolean", ...helpers.keys()].includes(id(n.name))).length, `${tool}: trusted bindings cannot be shadowed`);
-    require(!visit(body, n => ts.isBinaryExpression(n) && ["admin", "crmTenantId"].includes(id(n.left))).length, `${tool}: trusted bindings cannot be reassigned`);
-    const reads = calls.filter(c => root(c.expression) === "admin" && method(c) === "from");
+    const summary = tool === "crm_get_contact_summary";
+    const protectedNames = ["admin", "crmTenantId", "Math", "Date", "Promise", "Number", "String", "Boolean", ...helpers.keys(), ...(summary ? ["supabaseClient", "Array"] : [])];
+    require(!visit(body, n => (ts.isVariableDeclaration(n) || ts.isParameter(n)) && protectedNames.includes(id(n.name))).length, `${tool}: trusted bindings cannot be shadowed`);
+    require(!visit(body, n => ts.isBinaryExpression(n) && ["admin", "crmTenantId", ...(summary ? ["supabaseClient", "Array"] : [])].includes(id(n.left))).length, `${tool}: trusted bindings cannot be reassigned`);
+    const reads = calls.filter(c => (root(c.expression) === "admin" || summary && root(c.expression) === "supabaseClient") && method(c) === "from");
     require(reads.some(c => str(c.arguments[0]) === primaryTable), `${tool}: real primary read`);
+    if (summary) {
+      const callers = decls("supabaseClient").filter(ts.isVariableDeclaration);
+      require(callers.length === 1 && text(callers[0].initializer) === "createClient(supabaseUrl,supabaseKey,{global:{headers:{Authorization:authHeader}}})", `${tool}: actual caller-JWT client`);
+      const contactIds = visit(body, n => ts.isVariableDeclaration(n) && id(n.name) === "id");
+      require(contactIds.length === 1 && text(contactIds[0].initializer) === "awaitresolveClientReference(admin,crmTenantId,args.client_ref)", `${tool}: contact identity is the scoped canonical reference`);
+      const dealIds = visit(body, n => ts.isVariableDeclaration(n) && id(n.name) === "dealIds");
+      require(dealIds.length === 1 && text(dealIds[0].initializer) === "deals.data.slice(0,20).map((d:any)=>d.id)", `${tool}: activity parents are verified contact deals`);
+      for (const table of ["clients", "tasks", "plan_items", "deal_activities", "communication_log"]) require(reads.filter(c => str(c.arguments[0]) === table).length === 1, `${tool}: one mandatory ${table} read`);
+      for (const check of ["if(deals.error)throwdeals.error;", "if(tasksRes.error)throwtasksRes.error;", "if(planningRes.error)throwplanningRes.error;", "if(activityError)throwactivityError;", "if(commError)throwcommError;", "if(unlinked.error)throwunlinked.error;"])
+        require(text(body).includes(check), `${tool}: child-query errors cannot become empty success`);
+      require(calls.filter(c => text(c.expression) === "supabaseClient.rpc" && str(c.arguments[0]) === "current_user_tenant_id").length === 1
+        && text(body).includes('if(currentScope.error||currentScope.data!==crmTenantId)thrownewError("contact_work_scope_changed");'), `${tool}: final caller workspace recheck`);
+    }
     for (const from of reads) {
       const table = str(from.arguments[0]), chain = scopedChain(from);
-      const tenant = chain.some(c => method(c) === "eq" && str(c.arguments[0]) === "tenant_id" && id(c.arguments[1]) === "crmTenantId");
+      const eq = (field, binding) => chain.some(c => method(c) === "eq" && str(c.arguments[0]) === field && id(c.arguments[1]) === binding);
+      const tenant = eq("tenant_id", "crmTenantId");
       let scoped = tenant;
-      if (tool === "crm_get_contact_summary" && table === "tasks") scoped = chain.some(c => method(c) === "eq" && str(c.arguments[0]) === "biz_id" && id(c.arguments[1]) === "id");
-      if (tool === "crm_get_contact_summary" && table === "deal_activities") scoped = chain.some(c => method(c) === "in" && str(c.arguments[0]) === "deal_id" && ["[]", "dealIds"].includes(text(c.arguments[1])));
-      if (tool === "crm_get_contact_summary" && table === "communication_log") scoped = chain.some(c => method(c) === "eq" && str(c.arguments[0]) === "user_id" && text(c.arguments[1]) === '(contact.dataasany)?.linked_user_id||"00000000-0000-0000-0000-000000000000"');
-      require(scoped && ["clients", "deals", "tasks", "deal_activities", "communication_log"].includes(table), `${tool}: ${table} preserves direct or verified-parent scope`);
+      if (summary && table === "clients") scoped = tenant && eq("id", "id");
+      if (summary && table === "deals") scoped = tenant && (eq("contact_client_id", "id") || chain.some(c => method(c) === "is" && str(c.arguments[0]) === "contact_client_id" && text(c.arguments[1]) === "null"));
+      if (summary && table === "tasks") scoped = tenant && eq("deals.tenant_id", "crmTenantId") && eq("deals.contact_client_id", "id")
+        && !chain.some(c => method(c) === "eq" && str(c.arguments[0]) === "biz_id");
+      if (summary && table === "plan_items") scoped = root(from.expression) === "supabaseClient" && tenant && eq("contact_id", "id");
+      if (summary && table === "deal_activities") scoped = eq("deals.tenant_id", "crmTenantId") && eq("deals.contact_client_id", "id")
+        && chain.some(c => method(c) === "in" && str(c.arguments[0]) === "deal_id" && text(c.arguments[1]) === "dealIds");
+      if (summary && table === "communication_log") scoped = tenant && chain.some(c => method(c) === "eq" && str(c.arguments[0]) === "user_id" && text(c.arguments[1]) === '(contact.dataasany)?.linked_user_id||"00000000-0000-0000-0000-000000000000"');
+      require(scoped && ["clients", "deals", "tasks", "deal_activities", "communication_log", ...(summary ? ["plan_items"] : [])].includes(table), `${tool}: ${table} preserves direct or verified-parent scope`);
       const select = chain.find(c => method(c) === "select");
       require(!!select && !text(select.arguments[0]).includes("*") && (ts.isStringLiteral(select.arguments[0]) || text(select.arguments[0]) === '`${CLIENT_RECORD_COLUMNS},client_contact_methods(kind,value,label,is_primary,position)`'), `${tool}: closed explicit columns`);
+      if (summary && ["tasks", "plan_items", "deal_activities"].includes(table)) {
+        const columns = { tasks: "id, tenant_id, deal_id, title, status, due_date, track, updated_at, created_at, deals!inner(id, tenant_id, contact_client_id)",
+          plan_items: "id, tenant_id, contact_id, item_type, title, summary, status, due_at, remind_at, assigned_to_user_id, updated_at, created_at",
+          deal_activities: "id, deal_id, type, summary, created_at, deals!inner(tenant_id, contact_client_id)" };
+        require(str(select?.arguments[0]) === columns[table], `${tool}: ${table} native relationship and version projection`);
+        require(chain.some(c => method(c) === "limit" && text(c.arguments[0]) === (table === "deal_activities" ? "10" : "21")), `${tool}: ${table} bounded read`);
+        if (table !== "deal_activities") require(chain.some(c => method(c) === "in" && str(c.arguments[0]) === "status"
+          && text(c.arguments[1]) === (table === "tasks" ? '["pending","in_progress"]' : '["open","in_progress","blocked"]')), `${tool}: ${table} native open statuses`);
+      }
     }
     for (const call of calls) {
       const name = text(call.expression), r = root(call.expression), m = method(call);
       let safe = ["Math.min", "Math.max", "Math.round", "Number", "String", "Boolean", "Promise.all", "Date.now"].includes(name)
         || (pureMethods.has(m) && ["", "us", "String", "Date", "data", "deals", "unlinked"].includes(r))
         || helpers.has(name) || (tool === "crm_get_contact_summary" && name === "resolveClientReference");
+      if (summary && (name === "Array.isArray" || ["map", "slice", "some", "includes"].includes(m) && ["", "deals", "tasksRes", "planningRes"].includes(r))) safe = true;
       if (r === "admin") safe = readMethods.has(m) || (name === "admin.auth.admin.listUsers" && ["crm_search_contacts", "crm_list_deals", "crm_list_tasks"].includes(tool));
+      if (summary && r === "supabaseClient") safe = readMethods.has(m) || (name === "supabaseClient.rpc" && str(call.arguments[0]) === "current_user_tenant_id");
       if (r === "q") safe = readMethods.has(m) && m !== "from" && m !== "select";
       require(safe, `${tool}: unknown/effectful call ${name}`);
       if (name === "contactIdsByAddressToken") require(text(call.arguments[0]) === "admin" && text(call.arguments[1]) === "crmTenantId", `${tool}: address lookup tenant pin`);

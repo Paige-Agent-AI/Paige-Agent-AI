@@ -1,6 +1,9 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 import { readInteractiveOutcomeStatus } from '../../supabase/functions/_shared/paige-turn/outcome-status';
+import { interactiveEffect, interactiveReceiptContext } from '../../supabase/functions/_shared/paige-turn/interactive';
+import { PAIGE_SPINE_CAPABILITIES } from '../../supabase/functions/_shared/paige-spine/registry';
+import type { SpineCapability } from '../../supabase/functions/_shared/paige-spine/contracts';
 
 describe('authenticated status outcome enrichment', () => {
   it('uses final ownership after both original-operation and durable observations', async () => {
@@ -74,4 +77,65 @@ describe('automatic lookup preserves ordinary status and ownership',()=>{
   expect(await readInteractiveOutcomeStatus({state,readOutcome:async()=>undefined})).toEqual({executor_active:true,settled:false});
   expect(state).toHaveBeenCalledTimes(2);
  });
+});
+
+describe('canonical closed-read interactive receipt truth', () => {
+  const statuses = ['available', 'needs_input', 'refused', 'unavailable'] as const;
+  const currentReads = ['read_business_metric', 'get_business_snapshot', 'read_client_engagement_status', 'read_business_time_zone', 'read_calendar_booking'];
+  // Task is now composed into the real server registry. Appending the former
+  // isolated declaration would correctly trigger the duplicate-registration refusal.
+  const spine = PAIGE_SPINE_CAPABILITIES;
+  const taskDeclaration: SpineCapability = spine.find(capability => capability.action?.chatTool === 'crm_get_task')!;
+  const envelope = { status: 'available', message: 'Authorized lookup. No business action ran.' };
+  const id = '00000000-0000-4000-8000-000000000001';
+  it.each([...currentReads, 'crm_get_task'].flatMap(tool => statuses.map(status => ({ tool, status }))))(
+    'projects $tool $status as a read result rather than an uncertain effect', ({ tool, status }) => {
+      expect(interactiveEffect(tool, { ...envelope, status }, spine)).toEqual({ tool, outcome: status === 'available' ? 'reported_success' : 'reported_failure' });
+    });
+  it.each([true, false])('records completed lookup with found=%s without asserting a record or copying its contents', found => {
+    const effect = interactiveEffect('read_calendar_booking', { ...envelope, found, booking: found ? { id, title: 'PRIVATE' } : null }, spine);
+    expect(effect).toEqual({ tool: 'read_calendar_booking', outcome: 'reported_success' });
+    const context = interactiveReceiptContext({ interactive: { effects: [effect] } });
+    expect(context).not.toContain('"outcome":"outcome_unknown"'); expect(context).not.toContain('PRIVATE'); expect(context).not.toContain(id);
+  });
+  it('requires the canonical server declaration, not result-authored metadata', () => {
+    expect(interactiveEffect('read_calendar_booking', { ...envelope, classification: 'read', riskPolicyKey: 'read_only' })?.outcome).toBe('outcome_unknown');
+  });
+  it.each(['comms_send_email', 'crm_create_contact', 'unregistered_tool'])('never upgrades %s from an available-shaped result', tool => {
+    expect(interactiveEffect(tool, envelope, spine)?.outcome).toBe('outcome_unknown');
+  });
+  it.each([
+    { classification: 'mutate' }, { classification: 'external_effect' }, { riskPolicyKey: 'ordinary' },
+    { riskPolicyKey: 'high' }, { approvalAuthority: 'chat-canonical' },
+  ])('does not recognize a non-read canonical contract %j', patch => {
+    const changed = { ...taskDeclaration, action: { ...taskDeclaration.action!, ...patch } } as typeof taskDeclaration;
+    expect(interactiveEffect('crm_get_task', envelope, [changed])?.outcome).toBe('outcome_unknown');
+  });
+  it.each([
+    undefined, ['available'], [...statuses, 'no_pipeline'], ['available', 'available', 'refused', 'unavailable'],
+  ].map(kinds => ({ kinds })))('requires the complete unique closed status vocabulary $kinds', ({ kinds }) => {
+    const changed = { ...taskDeclaration, outcome: kinds ? { ...taskDeclaration.outcome!, kinds } : undefined };
+    expect(interactiveEffect('crm_get_task', envelope, [changed])?.outcome).toBe('outcome_unknown');
+  });
+  it('refuses ambiguous duplicate declarations', () => {
+    expect(interactiveEffect('crm_get_task', envelope, [taskDeclaration, taskDeclaration])?.outcome).toBe('outcome_unknown');
+  });
+  it.each([
+    [{ outcome_unknown: true }, 'outcome_unknown'], [{ code: 'RESULT_UNKNOWN' }, 'outcome_unknown'],
+    [{ error: 'uncertain transport' }, 'outcome_unknown'], [{ needs_confirm: true }, 'approval_required'],
+    [{ queued: true }, 'approval_required'], [{ accepted: true, work_id: id }, 'durable_accepted'],
+    [{ work_id: id }, 'outcome_unknown'], [{ run_id: id }, 'outcome_unknown'], [{ task_id: id }, 'outcome_unknown'],
+    [{ booking_id: id }, 'outcome_unknown'], [{ approval_id: id }, 'outcome_unknown'],
+    [{ confirm_command: {} }, 'outcome_unknown'], [{ receipt_recorded: true }, 'outcome_unknown'],
+    [{ verified_readback: true }, 'outcome_unknown'], [{ success: false }, 'reported_failure'],
+    [{ ok: false }, 'outcome_unknown'], [{ outcome: 'failed' }, 'reported_failure'],
+  ])('retains the existing effect contract for contradiction %j', (patch, expected) => {
+    expect(interactiveEffect('read_calendar_booking', { ...envelope, ...patch }, spine)?.outcome).toBe(expected);
+  });
+  it.each([
+    { status: ['available'] }, { status: { value: 'available' } }, { status: true }, { status: null },
+    { message: undefined }, { message: ['data'] }, { message: null },
+  ])('does not normalize malformed envelope %j', patch => {
+    expect(interactiveEffect('read_calendar_booking', { ...envelope, ...patch }, spine)?.outcome).toBe('outcome_unknown');
+  });
 });

@@ -28,4 +28,15 @@ describe("Solo Sales department mount", () => {
     expect(source).toContain('sales:<SalesWorkspace');
     expect(source.match(/data-solo-screen-host/g)?.length).toBe(1);
   });
+
+  it("E4-S3: Collections opens the business time zone through the one link home and the Sales navigation guard", () => {
+    const source = readFileSync("src/solo/SalesWorkspace.tsx", "utf8");
+    const mount = source.slice(source.indexOf("<CollectionsWorkspace"), source.indexOf("/>", source.indexOf("<CollectionsWorkspace")));
+    expect(mount).toContain("onOpenBusinessTimeZone={openBusinessTimeZone}");
+    const fn = source.slice(source.indexOf("const openBusinessTimeZone"), source.indexOf("\n", source.indexOf("const openBusinessTimeZone")));
+    expect(fn).toContain('routeLinkTarget({ destination: "business_time_zone", record_id: null }, "solo", params.account)');
+    expect(fn).toContain("requestSalesNavigation(");
+    // Never a hand-built Setup address beside the shared route map.
+    expect(source).not.toContain("#business-time-zone");
+  });
 });

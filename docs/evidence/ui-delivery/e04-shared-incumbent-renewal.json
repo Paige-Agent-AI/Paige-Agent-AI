@@ -1,0 +1,794 @@
+{
+  "status": "PASS",
+  "mainSha": "58ae0adcd476611cddba8bb2664d206e91fc0a05",
+  "candidateSha": "9c24862dfae49f8ee43ee34f5a6cb5fa4a8230be",
+  "extractorUnchanged": true,
+  "changedFingerprintScalars": 29,
+  "restoredGuardByteEqualsCurrentMain": true,
+  "allGuardBytesOutside29LiteralsUnchanged": true,
+  "currentMainGuardSha256": "8a67195b093bc958d2d48c9ea477492bfc0207eb9ad0e87a89249c0a380956e2",
+  "candidateGuardSha256": "39bea152e16d95738f78703536ed6d58f168a253a3e15a030d60ec4ace0702b2",
+  "restoredGuardSha256": "8a67195b093bc958d2d48c9ea477492bfc0207eb9ad0e87a89249c0a380956e2",
+  "e04UrlPin": {
+    "main": "68872b4bbe9b846150405a04def428b331fc26d763672cabfec9c1bfb24dd15b",
+    "candidate": "68872b4bbe9b846150405a04def428b331fc26d763672cabfec9c1bfb24dd15b"
+  },
+  "candidateFileSha256": "b74ace32a20c6601ea915405f0f559ba84c0754e30af84241a14bee760e43ffe",
+  "baselineFileSha256": "f9dd625efd232775da5bf1ccf1abc7054bc5778ae5646ef9ff7ecb4a026c2808",
+  "extractorFileSha256": "39bea152e16d95738f78703536ed6d58f168a253a3e15a030d60ec4ace0702b2",
+  "wholeChatRestorationCanonicalEqual": true,
+  "wholeChatRestorationRawEqual": true,
+  "baselineAuthPrefix": [
+    {
+      "kind": "IfStatement",
+      "line": 1075,
+      "endLine": 1077
+    },
+    {
+      "kind": "FirstStatement",
+      "line": 1081,
+      "endLine": 1081
+    },
+    {
+      "kind": "FirstStatement",
+      "line": 1082,
+      "endLine": 1082
+    },
+    {
+      "kind": "FirstStatement",
+      "line": 1083,
+      "endLine": 1083
+    },
+    {
+      "kind": "FirstStatement",
+      "line": 1084,
+      "endLine": 1084
+    },
+    {
+      "kind": "FirstStatement",
+      "line": 1089,
+      "endLine": 1089
+    },
+    {
+      "kind": "TryStatement",
+      "line": 1090,
+      "endLine": 18783
+    }
+  ],
+  "candidateAuthPrefix": [
+    {
+      "kind": "IfStatement",
+      "line": 1075,
+      "endLine": 1077
+    },
+    {
+      "kind": "FirstStatement",
+      "line": 1081,
+      "endLine": 1081
+    },
+    {
+      "kind": "FirstStatement",
+      "line": 1082,
+      "endLine": 1082
+    },
+    {
+      "kind": "FirstStatement",
+      "line": 1083,
+      "endLine": 1083
+    },
+    {
+      "kind": "FirstStatement",
+      "line": 1084,
+      "endLine": 1084
+    },
+    {
+      "kind": "FirstStatement",
+      "line": 1089,
+      "endLine": 1089
+    },
+    {
+      "kind": "TryStatement",
+      "line": 1090,
+      "endLine": 18796
+    }
+  ],
+  "count": 29,
+  "rows": [
+    {
+      "tool": "comms_setup_calling",
+      "old": "43373fcdd301998d8d1b5e2c7608ef6cbbc294554489133a12b153e426b0bdb0",
+      "new": "48faa2a332dd9567807b97e006e50e948115204a593e2bc54d101fa193343705",
+      "declaredCandidatePin": "48faa2a332dd9567807b97e006e50e948115204a593e2bc54d101fa193343705",
+      "candidatePinMatchesComputed": true,
+      "restored": "43373fcdd301998d8d1b5e2c7608ef6cbbc294554489133a12b153e426b0bdb0",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "calendar_book_meeting",
+      "old": "434cad557b0a351e32677ca3946b84f93636a968c5262d0fc40d125463c197d9",
+      "new": "dfe7156cdf1f73948085e9dd4fe6832225f2c561b56dcd20d133c5a53de58c18",
+      "declaredCandidatePin": "dfe7156cdf1f73948085e9dd4fe6832225f2c561b56dcd20d133c5a53de58c18",
+      "candidatePinMatchesComputed": true,
+      "restored": "434cad557b0a351e32677ca3946b84f93636a968c5262d0fc40d125463c197d9",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "calendar_link_send",
+      "old": "aa0c90855760978a15f348a443442a7ee42879fc325890ccd2be508577d93f20",
+      "new": "42e7142bccc1792082534a25596a3d37cf408fc431074e619ac7bc9dd31728dc",
+      "declaredCandidatePin": "42e7142bccc1792082534a25596a3d37cf408fc431074e619ac7bc9dd31728dc",
+      "candidatePinMatchesComputed": true,
+      "restored": "aa0c90855760978a15f348a443442a7ee42879fc325890ccd2be508577d93f20",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "propose_business_brief_update",
+      "old": "e8896dd70e6f0e97b757fb736d570dcd68a7f852e4baa087acc37599abe2691b",
+      "new": "efde3994c1d6b34239de21be7d46a788a5069c64b7f5f0425d84599223dc8f12",
+      "declaredCandidatePin": "efde3994c1d6b34239de21be7d46a788a5069c64b7f5f0425d84599223dc8f12",
+      "candidatePinMatchesComputed": true,
+      "restored": "e8896dd70e6f0e97b757fb736d570dcd68a7f852e4baa087acc37599abe2691b",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "update_business_profile",
+      "old": "cbe55abb9c629e91a9567aa258060a62ab60202108c335b7410bcf46e4833ed4",
+      "new": "c529313386db942fda857bf77e1d3fd0d80e780bb0c730d1d4e14581c6b7b511",
+      "declaredCandidatePin": "c529313386db942fda857bf77e1d3fd0d80e780bb0c730d1d4e14581c6b7b511",
+      "candidatePinMatchesComputed": true,
+      "restored": "cbe55abb9c629e91a9567aa258060a62ab60202108c335b7410bcf46e4833ed4",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "capability_status",
+      "old": "f98e03f9dddecc4acf2792373a1c8439086e1cc8aaff926a76c81d7cb6a64bc1",
+      "new": "bc14002d4088d30d1c55766a224931696b5641ef13c47a2939bfa0513e78a2dd",
+      "declaredCandidatePin": "bc14002d4088d30d1c55766a224931696b5641ef13c47a2939bfa0513e78a2dd",
+      "candidatePinMatchesComputed": true,
+      "restored": "f98e03f9dddecc4acf2792373a1c8439086e1cc8aaff926a76c81d7cb6a64bc1",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "improvement_propose",
+      "old": "c1aaf4deba874b89716566c2ed4895d84013e81d8a14325e33f9de0eb1554e59",
+      "new": "f0d33fa50c833549a804663575c88501903b6d22c5851a08e41f395c90303e10",
+      "declaredCandidatePin": "f0d33fa50c833549a804663575c88501903b6d22c5851a08e41f395c90303e10",
+      "candidatePinMatchesComputed": true,
+      "restored": "c1aaf4deba874b89716566c2ed4895d84013e81d8a14325e33f9de0eb1554e59",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "improvement_decide",
+      "old": "a02e67a82f24de9d18f3b0ef0e6cf3e3a8c649022c4625f401ef7d1999043dac",
+      "new": "bdf87a8343cf8012773a9eb21bde442d05e5471dfacf79a9f3c2949135bcfc22",
+      "declaredCandidatePin": "bdf87a8343cf8012773a9eb21bde442d05e5471dfacf79a9f3c2949135bcfc22",
+      "candidatePinMatchesComputed": true,
+      "restored": "a02e67a82f24de9d18f3b0ef0e6cf3e3a8c649022c4625f401ef7d1999043dac",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "list_subagents",
+      "old": "390be91ea410658abc769d74b18b1a91769cc777b5d0702afbf4806353d38525",
+      "new": "eed48facc9b269939cc736839fb9772d260499261f27200c6ab695f72d8bb51c",
+      "declaredCandidatePin": "eed48facc9b269939cc736839fb9772d260499261f27200c6ab695f72d8bb51c",
+      "candidatePinMatchesComputed": true,
+      "restored": "390be91ea410658abc769d74b18b1a91769cc777b5d0702afbf4806353d38525",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "delegate_to_subagent",
+      "old": "390be91ea410658abc769d74b18b1a91769cc777b5d0702afbf4806353d38525",
+      "new": "eed48facc9b269939cc736839fb9772d260499261f27200c6ab695f72d8bb51c",
+      "declaredCandidatePin": "eed48facc9b269939cc736839fb9772d260499261f27200c6ab695f72d8bb51c",
+      "candidatePinMatchesComputed": true,
+      "restored": "390be91ea410658abc769d74b18b1a91769cc777b5d0702afbf4806353d38525",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "forge_subagent",
+      "old": "691a7b2fc27b9bf61465ee554a97556dc3663b59435f5ddba9405a0a19a55874",
+      "new": "dad45583778d4163cabd17483838de62ad89fcb6dcea6c63d0150edab80fe134",
+      "declaredCandidatePin": "dad45583778d4163cabd17483838de62ad89fcb6dcea6c63d0150edab80fe134",
+      "candidatePinMatchesComputed": true,
+      "restored": "691a7b2fc27b9bf61465ee554a97556dc3663b59435f5ddba9405a0a19a55874",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "author_event_kind",
+      "old": "00b2b0c9d060c97a7825b598b2163ffb4d5550dae3254e058a509c20dbb5148e",
+      "new": "5944e516e188623ac9250e13db83f834765358f2ec171fbc3c479dbb5921f00a",
+      "declaredCandidatePin": "5944e516e188623ac9250e13db83f834765358f2ec171fbc3c479dbb5921f00a",
+      "candidatePinMatchesComputed": true,
+      "restored": "00b2b0c9d060c97a7825b598b2163ffb4d5550dae3254e058a509c20dbb5148e",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "crm_add_note",
+      "old": "545123d0013e34b46c59598b7b7017d12fb6e6a93b1dff76cb120186700fc4e9",
+      "new": "79df53f4b512fe4cff6ba810d254263195dd9ebba7daaaaac6bee0147564b613",
+      "declaredCandidatePin": "79df53f4b512fe4cff6ba810d254263195dd9ebba7daaaaac6bee0147564b613",
+      "candidatePinMatchesComputed": true,
+      "restored": "545123d0013e34b46c59598b7b7017d12fb6e6a93b1dff76cb120186700fc4e9",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "crm_file_document",
+      "old": "bfacb308a83d7b82fc1430158ea845a75b8314a676a9e363ab18f4107ae41ef0",
+      "new": "55c87e7d84d1e24d0e29ef5a0b289e43cbfd8eff31683d134ade1353cc139b77",
+      "declaredCandidatePin": "55c87e7d84d1e24d0e29ef5a0b289e43cbfd8eff31683d134ade1353cc139b77",
+      "candidatePinMatchesComputed": true,
+      "restored": "bfacb308a83d7b82fc1430158ea845a75b8314a676a9e363ab18f4107ae41ef0",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "update_client_data",
+      "old": "3405aac3f2a17b7a2255f8882ea7e6e310be1ef06eaadadbd41f5a7086e2b0d1",
+      "new": "b1baef60f7a464e6fa328963a952655e874b976f680be4b1710875e63decc3ec",
+      "declaredCandidatePin": "b1baef60f7a464e6fa328963a952655e874b976f680be4b1710875e63decc3ec",
+      "candidatePinMatchesComputed": true,
+      "restored": "3405aac3f2a17b7a2255f8882ea7e6e310be1ef06eaadadbd41f5a7086e2b0d1",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "pipeline_configure",
+      "old": "e1894c97053f9b000e37ac9c74f43d44ef37edc8f787328f15e20d71b12f2977",
+      "new": "d27f1c2d112045fc4955d5eac698736ededefd24fddb2c02106645ca3543c9b3",
+      "declaredCandidatePin": "d27f1c2d112045fc4955d5eac698736ededefd24fddb2c02106645ca3543c9b3",
+      "candidatePinMatchesComputed": true,
+      "restored": "e1894c97053f9b000e37ac9c74f43d44ef37edc8f787328f15e20d71b12f2977",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "deep_research",
+      "old": "abad03d78c5cffe84a4ea7a737b69c128be70cf28e7ecbf003b2b1c95ca2a054",
+      "new": "77cfeca9f5635844406861cba823a587946f3bda73618c517806c2ca30eb46fd",
+      "declaredCandidatePin": "77cfeca9f5635844406861cba823a587946f3bda73618c517806c2ca30eb46fd",
+      "candidatePinMatchesComputed": true,
+      "restored": "abad03d78c5cffe84a4ea7a737b69c128be70cf28e7ecbf003b2b1c95ca2a054",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "web_search",
+      "old": "5323da654cc3999b772d4e71970842aa40aeab86ac758fbe90d21f01aaebb667",
+      "new": "6c312e108d3e5bd7dc1f3cf9fb3a54c16d1dfbf6ce8202a1fea942b8f11a74d0",
+      "declaredCandidatePin": "6c312e108d3e5bd7dc1f3cf9fb3a54c16d1dfbf6ce8202a1fea942b8f11a74d0",
+      "candidatePinMatchesComputed": true,
+      "restored": "5323da654cc3999b772d4e71970842aa40aeab86ac758fbe90d21f01aaebb667",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "web_fetch",
+      "old": "a223141e8e29e5f0f6dc2e25ed6b2b83fc8375404d755e8d55d142208ca6ab97",
+      "new": "083098b77532eb6e743157ea34af3c07d66604c29b144c92c27f72aa6b7a5171",
+      "declaredCandidatePin": "083098b77532eb6e743157ea34af3c07d66604c29b144c92c27f72aa6b7a5171",
+      "candidatePinMatchesComputed": true,
+      "restored": "a223141e8e29e5f0f6dc2e25ed6b2b83fc8375404d755e8d55d142208ca6ab97",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "save_to_knowledge_base",
+      "old": "a0dad2d09c243be23ef2eb38abd0c24df8b47b30b6a546fd5ea70920a80f1f11",
+      "new": "646ad6e27bcfec42f58afb5d83d6dc092f180d726a334ab3a5cb7113638b125d",
+      "declaredCandidatePin": "646ad6e27bcfec42f58afb5d83d6dc092f180d726a334ab3a5cb7113638b125d",
+      "candidatePinMatchesComputed": true,
+      "restored": "a0dad2d09c243be23ef2eb38abd0c24df8b47b30b6a546fd5ea70920a80f1f11",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "automation_draft",
+      "old": "c166f7d92e7bf8633793b1ab1a35c9b7b703c757611303f9a465a793766a0cbc",
+      "new": "c9478b9453e74fd65f9d8aff2c12c9c2f5dd1aee39168715b9c79cf461b26b8b",
+      "declaredCandidatePin": "c9478b9453e74fd65f9d8aff2c12c9c2f5dd1aee39168715b9c79cf461b26b8b",
+      "candidatePinMatchesComputed": true,
+      "restored": "c166f7d92e7bf8633793b1ab1a35c9b7b703c757611303f9a465a793766a0cbc",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "comms_connection_summary",
+      "old": "4bc905b730bf403b2baeb6bcfca5532ce105c3bfc827ce42cd832e5fc623edae",
+      "new": "b09c762d884e143efc9a0ea796516c12fc192e53cf2d29aa961a347b751608db",
+      "declaredCandidatePin": "b09c762d884e143efc9a0ea796516c12fc192e53cf2d29aa961a347b751608db",
+      "candidatePinMatchesComputed": true,
+      "restored": "4bc905b730bf403b2baeb6bcfca5532ce105c3bfc827ce42cd832e5fc623edae",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "comms_registration_status",
+      "old": "fe8d66a2281732745861703b2c5b7a6f9d9bf4670e766bd12c1f6bc068ff6c52",
+      "new": "c6330b3221b1af9afc8b42309740b03f6fba6c85eddf41f65edbfda2867c1862",
+      "declaredCandidatePin": "c6330b3221b1af9afc8b42309740b03f6fba6c85eddf41f65edbfda2867c1862",
+      "candidatePinMatchesComputed": true,
+      "restored": "fe8d66a2281732745861703b2c5b7a6f9d9bf4670e766bd12c1f6bc068ff6c52",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "comms_list_numbers",
+      "old": "d60fd91ef11499d2f21f03801395f2588a0f1d2bb32cb117e701233ccde5e215",
+      "new": "deae61db92848c768851c9846e726a7ae2471f0a3ebc11470e281ecb5dbf3e75",
+      "declaredCandidatePin": "deae61db92848c768851c9846e726a7ae2471f0a3ebc11470e281ecb5dbf3e75",
+      "candidatePinMatchesComputed": true,
+      "restored": "d60fd91ef11499d2f21f03801395f2588a0f1d2bb32cb117e701233ccde5e215",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "comms_search_numbers",
+      "old": "af07405850951e47ac3468c3173d2dc02926efd621f739ab69ca176710316cd1",
+      "new": "47f5f03db184741593764e6e1d3a7dbd014b0735119864a0160807b55f84e614",
+      "declaredCandidatePin": "47f5f03db184741593764e6e1d3a7dbd014b0735119864a0160807b55f84e614",
+      "candidatePinMatchesComputed": true,
+      "restored": "af07405850951e47ac3468c3173d2dc02926efd621f739ab69ca176710316cd1",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "comms_buy_number",
+      "old": "67b5519e01274e1834a031976a1eb335509f32c68e8cbdf8d63b3e87d53e9184",
+      "new": "cd882f4034cf230abe88534344eb1a10865f7ec3f9bfa1ee6f6b348799d2276f",
+      "declaredCandidatePin": "cd882f4034cf230abe88534344eb1a10865f7ec3f9bfa1ee6f6b348799d2276f",
+      "candidatePinMatchesComputed": true,
+      "restored": "67b5519e01274e1834a031976a1eb335509f32c68e8cbdf8d63b3e87d53e9184",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "comms_draft_registration",
+      "old": "973fac42eb52bfe9f42e43dc961fc0980e2f699048d83b2af4525c642206c57b",
+      "new": "354c678304e66e5ca77b12ef2cf6ed16845077b6b34dcba86469bfc6534348d7",
+      "declaredCandidatePin": "354c678304e66e5ca77b12ef2cf6ed16845077b6b34dcba86469bfc6534348d7",
+      "candidatePinMatchesComputed": true,
+      "restored": "973fac42eb52bfe9f42e43dc961fc0980e2f699048d83b2af4525c642206c57b",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "comms_name_number",
+      "old": "c5b0a3dc4eeea5ba6baf0a396b22c4f4a33e3ef8a0b9b6997aa406f00887ca42",
+      "new": "94269f6ad190449cd60ca1e8d5eb3c6f76e1e3267a495994c152f519706808b0",
+      "declaredCandidatePin": "94269f6ad190449cd60ca1e8d5eb3c6f76e1e3267a495994c152f519706808b0",
+      "candidatePinMatchesComputed": true,
+      "restored": "c5b0a3dc4eeea5ba6baf0a396b22c4f4a33e3ef8a0b9b6997aa406f00887ca42",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    },
+    {
+      "tool": "comms_set_primary_number",
+      "old": "2e69df1f763f3de012c4d71032d6a2a3ced94f2e2731776648cbbaa2c42ed191",
+      "new": "f1b301657627d59534579c434c860270fcc3e99d032fcaa29f4e77cb38e1bd58",
+      "declaredCandidatePin": "f1b301657627d59534579c434c860270fcc3e99d032fcaa29f4e77cb38e1bd58",
+      "candidatePinMatchesComputed": true,
+      "restored": "2e69df1f763f3de012c4d71032d6a2a3ced94f2e2731776648cbbaa2c42ed191",
+      "changedIdentityIndices": [
+        12
+      ],
+      "checks": {
+        "oldPinMatchesBaseline": true,
+        "selectorsUnchanged": true,
+        "bodiesUnchanged": true,
+        "controlsUnchanged": true,
+        "helpersUnchanged": true,
+        "importsUnchanged": true,
+        "onlySharedOuterTryIdentityChanged": true,
+        "allOtherProtectedBindingsUnchanged": true,
+        "restorationMatchesOldPin": true,
+        "restorationMatchesAllOldComponents": true
+      },
+      "pass": true
+    }
+  ]
+}

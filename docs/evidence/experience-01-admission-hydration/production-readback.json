@@ -1,0 +1,44 @@
+{
+  "observedAt": "2026-10-13T03:38:37.366Z",
+  "class": "PUBLIC_PRODUCTION_ARTIFACT_READ_ONLY",
+  "originalMerge": "f5494e863a9ccf6380154cb4b2fc85ef4ffdb2f0",
+  "canonicalCommit": "fed6e6a64c75f8ddad1b4725dc67ac91852a9f9a",
+  "ancestry": {
+    "status": "AHEAD",
+    "aheadBy": 1,
+    "behindBy": 0,
+    "mergeBase": "f5494e863a9ccf6380154cb4b2fc85ef4ffdb2f0",
+    "delta": "documentation/evidence only; Welcome and runtime source unchanged",
+    "evidence": "GitHub compare f5494e8...fed6e6a"
+  },
+  "originalProductionDeployment": "dpl_FVEmN3vu4UyjsLqiG8W4QAst3eve",
+  "canonicalProductionDeployment": "dpl_ArPvH2DVCJCUeJBSPA5JkqNWQQHq",
+  "welcomeSourceSha256": "0059f9fd7eec039a1f9681bee7022dd9f8e6676faa838c58fff66579df4a537c",
+  "buildId": "fed6e6a64c75f8ddad1b4725dc67ac91852a9f9a-mv647lzz",
+  "customerUpdate": null,
+  "version": {
+    "url": "https://paigeagent.ai/version.json?t=1791862716345",
+    "status": 200
+  },
+  "index": {
+    "url": "https://paigeagent.ai/assets/main-BXD1iOlL.js",
+    "status": 200
+  },
+  "welcome": {
+    "url": "https://paigeagent.ai/assets/Welcome-WiklRifb.js",
+    "status": 200,
+    "sha256": "f91d55609e34abd51737c090b11f5fc3da2a1475766900405f643d3bf01e89b7",
+    "markers": {
+      "current_user_tenant_id": true,
+      "active_tenant_id": true,
+      "solo-beta-enrollment-status": true,
+      "getUser": true,
+      "sign_in": false,
+      "failed": true
+    },
+    "markerLimit": "Literal substrings only; minification may remove enum names. These do not establish runtime behavior."
+  },
+  "authenticated": false,
+  "rendered": false,
+  "privateDataRead": false
+}

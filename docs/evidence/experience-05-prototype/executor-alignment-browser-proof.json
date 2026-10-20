@@ -1,0 +1,231 @@
+{
+  "scope": "Focused executor/owner-command alignment only; no full-suite claim on these bytes",
+  "artifact": "outputs/weekly-commitment-check.html",
+  "artifactSHA256": "3D5C2C08090B69AF8403742996C4711FF6DB7F2E2DCBB869699E6BDC8D9DE0E4",
+  "priorEvidence": [
+    {
+      "proof": "permission-final-retry-browser-proof.json",
+      "checks": 64,
+      "status": "PASS",
+      "artifactSHA256": "F895DA7C1A56FAF3CDDDD5A9286404009C20351D2AF38A0515FE3D77BCC5FB4C"
+    },
+    {
+      "proof": "absence-final-browser-proof.json",
+      "checks": 13,
+      "status": "PASS",
+      "artifactSHA256": "C57AECBBA940ED11824C10EC4AF72B3A0460222004D5E31147388238B073526D"
+    }
+  ],
+  "priorBoundary": "Historical evidence on different hashes; owner replay path in prior artifact is superseded",
+  "generatedAt": "2026-10-13T00:49:36.375Z",
+  "checks": [
+    {
+      "name": "settled failed has no human replay control",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEThe last run failed. Verified act readback in this simulation found no committed observation and no live claim. No completed check result or owner replay action is available. The next check is Mon, Oct 19, 9:00 AM EDT.Commitment check statusFailedThis settled run failed. Canonical act readback in this simulation found no committed observation and no live claim. No completed result is available. There is no owner replay action.Eligible accepted or retrying acts that never started may recover through the existing executor. This settled failed act has no owner replay command; future checks follow the saved weekly schedule and permission.Inspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-12Scheduled forMon, Oct 12, 9:00 AM EDTStartedNot confirmedCommitted resultNo committed observation verifiedReceiptNo verified completion receiptEvidence stateCanonical act readback (simulated): no committed observation and no live claimScopeActive workspace only · internal readsWeekly commitment checkScheduledScheduleEvery Monday at 09:00 · America/New_YorkNext runMon, Oct 19, 9:00 AM EDTTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksInspect details"
+    },
+    {
+      "name": "failed preserves no result and next weekly slot",
+      "status": "PASS",
+      "detail": {
+        "phase": "registered",
+        "clock": "2026-10-12T13:00:00Z",
+        "day": "1",
+        "time": "09:00",
+        "zone": "America/New_York",
+        "consent": true,
+        "toolPermission": "auto",
+        "permissionSource": "explicit preapproved auto fixture",
+        "settingsReview": false,
+        "schedule": {
+          "id": "CHECK-005",
+          "status": "scheduled",
+          "version": 1,
+          "intendedNext": "2026-10-19T13:00:00.000Z",
+          "next": "2026-10-19T13:00:00.000Z",
+          "request": "REQUEST-CHECK-005"
+        },
+        "run": {
+          "id": "RUN-CHECK-005-2026-10-12",
+          "status": "failed",
+          "due": "2026-10-12T13:00:00Z",
+          "started": null,
+          "receipt": null,
+          "committedObservation": null,
+          "finished": null,
+          "absenceReadback": {
+            "verified": true,
+            "noCommittedObservation": true,
+            "noLiveClaim": true,
+            "source": "canonical act readback (simulated)"
+          }
+        },
+        "later": false,
+        "editing": false,
+        "detail": false,
+        "error": "",
+        "expired": false,
+        "draftMessage": "Check my outstanding commitments every Monday."
+      }
+    },
+    {
+      "name": "failed canonical absence is evidence not replay permission",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEThe last run failed. Verified act readback in this simulation found no committed observation and no live claim. No completed check result or owner replay action is available. The next check is Mon, Oct 19, 9:00 AM EDT.Commitment check statusFailedThis settled run failed. Canonical act readback in this simulation found no committed observation and no live claim. No completed result is available. There is no owner replay action.Eligible accepted or retrying acts that never started may recover through the existing executor. This settled failed act has no owner replay command; future checks follow the saved weekly schedule and permission.Inspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-12Scheduled forMon, Oct 12, 9:00 AM EDTStartedNot confirmedCommitted resultNo committed observation verifiedReceiptNo verified completion receiptEvidence stateCanonical act readback (simulated): no committed observation and no live claimScopeActive workspace only · internal readsWeekly commitment checkScheduledScheduleEvery Monday at 09:00 · America/New_YorkNext runMon, Oct 19, 9:00 AM EDTTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksHide details"
+    },
+    {
+      "name": "unknown has no human replay control",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEThe last run’s outcome is unknown. It remains locked unless a committed observation and receipt confirm completion. The next check is Mon, Oct 19, 9:00 AM EDT.Commitment check statusUnknownThe run was claimed, but its outcome is not confirmed. Only a committed observation and receipt can confirm completion. Reading an absence record does not unlock replay.Repeating this run is lockedUnknown does not mean nothing happened. Inspect the record; authoritative absence without a committed result remains unknown and locked.Check execution recordInspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-12Scheduled forMon, Oct 12, 9:00 AM EDTStartedMon, Oct 12, 9:00 AM EDTCommitted resultNo committed observation verifiedReceiptNo verified completion receiptEvidence stateClaim recorded; completion unknownScopeActive workspace only · internal readsWeekly commitment checkScheduledScheduleEvery Monday at 09:00 · America/New_YorkNext runMon, Oct 19, 9:00 AM EDTTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksInspect details"
+    },
+    {
+      "name": "uncertain readback remains unknown",
+      "status": "PASS",
+      "detail": {
+        "id": "RUN-CHECK-005-2026-10-12",
+        "status": "unknown",
+        "due": "2026-10-12T13:00:00Z",
+        "started": "2026-10-12T13:00:00Z",
+        "receipt": null,
+        "committedObservation": null,
+        "finished": null,
+        "absenceReadback": null
+      }
+    },
+    {
+      "name": "authoritative absence remains unknown with no committed result",
+      "status": "PASS",
+      "detail": {
+        "id": "RUN-CHECK-005-2026-10-12",
+        "status": "unknown",
+        "due": "2026-10-12T13:00:00Z",
+        "started": "2026-10-12T13:00:00Z",
+        "receipt": null,
+        "committedObservation": null,
+        "finished": null,
+        "absenceReadback": {
+          "verified": true,
+          "noCommittedObservation": true,
+          "noLiveClaim": true,
+          "source": "canonical act readback (simulated)"
+        }
+      }
+    },
+    {
+      "name": "absence has no replay control or unlocked promise",
+      "status": "PASS",
+      "detail": "YouCheck my outstanding commitments every Monday.PAIGEThe last run’s outcome is unknown. It remains locked unless a committed observation and receipt confirm completion. The next check is Mon, Oct 19, 9:00 AM EDT.Commitment check statusUnknownThe run was claimed, but its outcome is not confirmed. Only a committed observation and receipt can confirm completion. Reading an absence record does not unlock replay.Repeating this run is lockedUnknown does not mean nothing happened. Inspect the record; authoritative absence without a committed result remains unknown and locked.Check execution recordInspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-12Scheduled forMon, Oct 12, 9:00 AM EDTStartedMon, Oct 12, 9:00 AM EDTCommitted resultNo committed observation verifiedReceiptNo verified completion receiptEvidence stateAuthoritative absence read (simulated): no committed observation or live claim; outcome remains unknown; replay lockedScopeActive workspace only · internal readsWeekly commitment checkScheduledScheduleEvery Monday at 09:00 · America/New_YorkNext runMon, Oct 19, 9:00 AM EDTTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Authoritative absence contains no committed result. The outcome remains unknown and replay stays locked.Pause future checksEdit scheduleCancel future checksInspect details"
+    },
+    {
+      "name": "unknown absence cannot start another run",
+      "status": "PASS",
+      "detail": {
+        "id": "RUN-CHECK-005-2026-10-12",
+        "status": "unknown",
+        "due": "2026-10-12T13:00:00Z",
+        "started": "2026-10-12T13:00:00Z",
+        "receipt": null,
+        "committedObservation": null,
+        "finished": null,
+        "absenceReadback": {
+          "verified": true,
+          "noCommittedObservation": true,
+          "noLiveClaim": true,
+          "source": "canonical act readback (simulated)"
+        }
+      }
+    },
+    {
+      "name": "committed observation plus receipt may resolve outcome",
+      "status": "PASS",
+      "detail": {
+        "id": "RUN-CHECK-005-2026-10-12",
+        "status": "completed",
+        "due": "2026-10-12T13:00:00Z",
+        "started": "2026-10-12T13:00:00Z",
+        "receipt": "RECEIPT-CHECK-005-2026-10-12",
+        "committedObservation": "OBSERVATION-CHECK-005-2026-10-12",
+        "finished": "2026-10-12T13:00:00Z",
+        "absenceReadback": {
+          "verified": true,
+          "noCommittedObservation": true,
+          "noLiveClaim": true,
+          "source": "canonical act readback (simulated)"
+        }
+      }
+    },
+    {
+      "name": "adopted canonical evidence displayed",
+      "status": "PASS",
+      "detail": "Inspect execution evidence\nCheck reference\nCHECK-005\nRun reference\nRUN-CHECK-005-2026-10-12\nScheduled for\nMon, Oct 12, 9:00 AM EDT\nStarted\nMon, Oct 12, 9:00 AM EDT\nCommitted result\nOBSERVATION-CHECK-005-2026-10-12\nReceipt\nRECEIPT-CHECK-005-2026-10-12 · verified in this simulation\nEvidence state\nCompleted and exception recorded\nScope\nActive workspace only · internal reads"
+    },
+    {
+      "name": "later conversation reports adopted result and future slot",
+      "status": "PASS",
+      "detail": "YouHow did my commitment check go, and when is the next one?PAIGEThe last run completed Mon, Oct 12, 9:00 AM EDT. One overdue commitment and one blocked commitment need attention. The next check is Mon, Oct 19, 9:00 AM EDT.Your commitment check is readyCompletedI checked your saved Planning commitments. Two need attention; I have not contacted anyone or changed the work.Review service-delivery outlineOverdue since Oct 9 · owner review requiredNeeds attentionConfirm next week’s capacityDue Oct 16 · still openUpcomingFinalize next month’s service scopeBlocked · waiting for your scope decisionBlocked3 matching owner commitments · 3 summarized · limit 50 · not truncated. Other owners’ commitments and process health are outside this check.Inspect execution evidenceCheck referenceCHECK-005Run referenceRUN-CHECK-005-2026-10-12Scheduled forMon, Oct 12, 9:00 AM EDTStartedMon, Oct 12, 9:00 AM EDTCommitted resultOBSERVATION-CHECK-005-2026-10-12ReceiptRECEIPT-CHECK-005-2026-10-12 · verified in this simulationEvidence stateCompleted and exception recordedScopeActive workspace only · internal readsWeekly commitment checkScheduledScheduleEvery Monday at 09:00 · America/New_YorkNext runMon, Oct 19, 9:00 AM EDTTool permissionAutomatic internal reads enabledRead scopeRead your open, in-progress or blocked Planning commitments; up to 50 summarized; internal output onlyAuthorizationSchedule saved by workspace owner · Oct 12, 2026 · version 1ReferenceCHECK-005Pause future checksEdit scheduleCancel future checksHide details"
+    },
+    {
+      "name": "owner replay handler removed from artifact",
+      "status": "PASS"
+    },
+    {
+      "name": "no runtime errors",
+      "status": "PASS",
+      "detail": []
+    },
+    {
+      "name": "no external requests",
+      "status": "PASS",
+      "detail": [
+        "file:///C:/Users/tonig/Documents/Codex/2026-10-12/paige-engineering-2-0-experience-05/outputs/weekly-commitment-check.html"
+      ]
+    }
+  ],
+  "captures": [
+    {
+      "file": "executor-alignment-failed-desktop.png",
+      "viewport": {
+        "width": 1366,
+        "height": 1100
+      },
+      "theme": "Mineral",
+      "state": "settled failed; evidence inspected; no human replay; next weekly slot"
+    },
+    {
+      "file": "executor-alignment-failed-mobile.png",
+      "viewport": {
+        "width": 390,
+        "height": 1000
+      },
+      "theme": "Mineral",
+      "state": "settled failed; no human replay; bounded executor recovery explained"
+    },
+    {
+      "file": "executor-alignment-unknown-absence-mobile.png",
+      "viewport": {
+        "width": 390,
+        "height": 1000
+      },
+      "theme": "Mineral",
+      "state": "authoritative absence; outcome remains unknown; replay locked"
+    },
+    {
+      "file": "executor-alignment-committed-readback-desktop.png",
+      "viewport": {
+        "width": 1366,
+        "height": 1100
+      },
+      "theme": "Mineral",
+      "state": "committed observation and receipt adopted; no replay command"
+    }
+  ],
+  "runtimeErrors": [],
+  "network": [
+    "file:///C:/Users/tonig/Documents/Codex/2026-10-12/paige-engineering-2-0-experience-05/outputs/weekly-commitment-check.html"
+  ],
+  "unverified": [
+    "Authenticated canonical readback",
+    "Production executor reconciliation",
+    "Owner approval"
+  ]
+}

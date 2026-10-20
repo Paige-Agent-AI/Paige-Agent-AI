@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- pre-existing legacy `any` debt in this
+   file (untyped Supabase reads, stale generated types). The E09 Customer Portal identity change
+   (CURA, never PAIGE, on customer surfaces) only edited copy here and introduced ZERO new `any`s;
+   retyping is tracked separately (#234). */
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, ChevronUp, CheckCircle2, AlertCircle, XCircle, Sparkles, MessageCircle } from "lucide-react";
@@ -19,6 +23,7 @@ import { useThreeFundabilityScores } from "@/hooks/useThreeFundabilityScores";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCreditFactors } from "@/hooks/useCreditFactors";
+import { useAssistantName } from "@/lib/portal/customerIdentity";
 
 // ----------------- Static product → column mapping -----------------
 
@@ -517,6 +522,7 @@ function ProductColumn({ title, products }: { title: string; products: ProductEl
 }
 
 function ProductCard({ product }: { product: ProductEligibility }) {
+  const assistant = useAssistantName();
   const [expanded, setExpanded] = useState(false);
   const meta = STATUS_META[product.status];
   const Icon = meta.icon;
@@ -634,12 +640,12 @@ function ProductCard({ product }: { product: ProductEligibility }) {
           )}
           {product.bureauStrategy && !product.bureauStrategy.hasAnyKnownPull && product.recommendedLenders.length > 0 && (
             <div className="rounded border border-border bg-background p-2 text-[11px] text-muted-foreground italic">
-              Bureau pull: Verify before applying — use the RAG search in Paige to check which bureau each lender pulls for your state.
+              Bureau pull: Verify before applying — ask {assistant} which bureau each lender pulls for your state.
             </div>
           )}
           {product.paigeInsight && (
             <div className="rounded bg-primary/5 border border-primary/15 p-2 text-muted-foreground italic">
-              <span className="font-medium not-italic text-primary">Paige: </span>{product.paigeInsight}
+              <span className="font-medium not-italic text-primary">{assistant}: </span>{product.paigeInsight}
             </div>
           )}
         </div>

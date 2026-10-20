@@ -287,7 +287,7 @@ Both replaced an earlier shared-token model with per-tenant credentials. `paige-
 
 ### Email — Resend is the only implemented provider
 
-A pluggable `EmailProvider` interface (`buildProvider`) falls back to the platform `RESEND_API_KEY` when a tenant has no BYO config. SMTP/Mailgun/Mailchimp/Postmark are **registered-but-stubbed** (fail-loud). **SendGrid is not a wired provider** — only Resend is implemented; other names are future stubs.
+A pluggable `EmailProvider` interface (`buildProvider`) falls back to the platform `RESEND_API_KEY` when a tenant has no BYO config. SMTP/Mailgun/Mailchimp/Postmark are **registered-but-stubbed** (fail-loud). **SendGrid is not a wired provider** — only Resend is implemented; other names are future stubs. *(Corrected 2026-10-13: no longer true. `SendGridProvider` shipped in PR #1995 (2026-10-11, master §4.0). Experience 03 S3 adds SendGrid to the governed one-to-one door (not merged when recorded). Owner policy 2026-10-13: a business's PAIGE Email is SendGrid, and Resend is the Platform Operator's own email.)*
 
 ### Model Router — multi-provider in code, Anthropic-only on prod
 

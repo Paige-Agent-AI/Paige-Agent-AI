@@ -27,6 +27,7 @@ import {
   noteSalesSource,
   pushSalesHeadline,
   readSalesFigure,
+  salesReportingPeriod,
   SALES_METRIC_REASON,
   SALES_NOTE,
 } from "./sales-metric.ts";
@@ -66,12 +67,15 @@ export function createSalesPipelineSnapshotAdapter(
       const aborted = () => ctx.signal?.aborted === true;
       const tenantId = scope.tenantId;
       const draft = emptySalesDraft();
+      const reporting = salesReportingPeriod(ctx.period, ctx.now);
+      if (reporting?.coverageNote) draft.notes.push(reporting.coverageNote);
+      if (!reporting) draft.notes.push("No readable completed UTC-day Sales activity window for this period.");
 
       // a) opportunities created in the period
       if (aborted()) return contextDegraded(SALES_METRIC_REASON.aborted);
-      const created = await readSalesFigure(
-        caller, tenantId, SALES_PIPELINE_SALES_METRICS.created, ctx.period, ctx.now, "count", clock,
-      );
+      const created = reporting ? await readSalesFigure(
+        caller, tenantId, SALES_PIPELINE_SALES_METRICS.created, reporting.period, ctx.now, "count", clock,
+      ) : { failure: SALES_METRIC_REASON.windowUnreadable, window: null };
       let current: { readonly count: number; readonly partial: boolean } | null = null;
       if ("metric" in created) {
         const count = countFigure(created.metric);
@@ -81,7 +85,7 @@ export function createSalesPipelineSnapshotAdapter(
         } else {
           draft.headlineReads += 1;
           noteSalesSource(draft, SALES_PIPELINE_ADAPTER_ID, created.metric);
-          const windowNote = created.window?.window_note;
+          const windowNote = reporting?.windowNote;
           pushSalesHeadline(draft, {
             key: CREATED.key,
             label: CREATED.label,
@@ -99,9 +103,9 @@ export function createSalesPipelineSnapshotAdapter(
       }
 
       // b) the window just before, for a change — only when there is a current count to compare
-      if (current !== null) {
+      if (current !== null && reporting !== null) {
         if (aborted()) return contextDegraded(SALES_METRIC_REASON.aborted);
-        const prior = previousPeriod(ctx.period);
+        const prior = previousPeriod(reporting.period);
         const before = await readSalesFigure(
           caller, tenantId, SALES_PIPELINE_SALES_METRICS.created, prior, ctx.now, "count", clock,
         );

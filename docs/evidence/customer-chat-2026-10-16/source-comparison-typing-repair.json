@@ -1,0 +1,35 @@
+{
+  "baselineConsumer": "42096b95dbaaea52131a1869211035d0a6523bcc",
+  "dispatchBodiesUnchanged": 29,
+  "personaEmittedJavaScriptUnchanged": true,
+  "changedRuntime": [
+    "customer policy requires a nonnull enabled data value",
+    "unsupported customer tools return the canonical round result envelope with no executed action"
+  ],
+  "sourceAuthority": "Existing native actor/business/private audience, source predicates, receipts and execution gates unchanged",
+  "handlerRegression": {
+    "before": {
+      "passed": 503,
+      "failed": 1
+    },
+    "after": {
+      "passed": 504,
+      "failed": 0
+    }
+  },
+  "personaTypeCheck": {
+    "beforeNewDiagnostics": 4,
+    "afterNewDiagnostics": 0
+  },
+  "memory": {
+    "passed": 1111,
+    "failed": 0
+  },
+  "persona": {
+    "passed": 39,
+    "failed": 0
+  },
+  "guardApplication": "APPLIED_REVIEW_6230009520; EXACT_INVERSE_AND_59_CONTROLS_PASS",
+  "spineSelfTest": "PASS",
+  "sdkAudiencePredicate": "UNCHANGED; explicit SDK filter overload; 9 client tests pass"
+}

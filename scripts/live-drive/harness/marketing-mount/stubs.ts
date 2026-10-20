@@ -51,6 +51,15 @@ function generated() {
   return rows;
 }
 
+// `?routes=campaign` (Experience 03 S1b): the unrouted Scorecard opt-in is attached to one campaign whose
+// pipeline can take its leads, as get_form_campaign_routes returns it.
+const campaignRouted = new URLSearchParams(window.location.search).get("routes") === "campaign";
+const withRoutes = <T extends { artifacts: Array<Record<string, unknown>> }>(data: T): T => campaignRouted
+  ? { ...data, artifacts: data.artifacts.map((item) => item.id === "f2"
+    ? { ...item, campaignRoute: { briefId: "b1", briefName: "Spring advisory intake", pipelineId: "pc", pipelineName: "Advisory consults", stageId: "sc", stageLabel: "Discovery call" } }
+    : item) }
+  : data;
+
 export function useSoloCampaigns() {
   const base = {
     tenantId: "t", campaigns: [],
@@ -61,8 +70,8 @@ export function useSoloCampaigns() {
   if (mode === "loading") return { ...base, phase: "loading", artifacts: [], drafts: [], submissions: [] };
   if (mode === "error") return { ...base, phase: "error", artifacts: [], drafts: [], submissions: [] };
   if (mode === "first") return { ...base, phase: "ready", artifacts: [], drafts: [], submissions: [] };
-  if (mode === "full") return { ...base, phase: "ready", ...populated, submissions: FULL_READ };
-  return { ...base, phase: "ready", ...populated };
+  if (mode === "full") return { ...base, phase: "ready", ...withRoutes(populated), submissions: FULL_READ };
+  return { ...base, phase: "ready", ...withRoutes(populated) };
 }
 
 // `?mode=full` (Analytics only): the page's 200-row read is full and every row is inside the range, so its own

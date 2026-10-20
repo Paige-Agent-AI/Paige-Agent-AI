@@ -1,0 +1,22 @@
+{
+  "evidenceClass": "SIMULATED_DOM_MEASUREMENT_ONLY",
+  "forms": 0,
+  "height": 720,
+  "pageOverflow": false,
+  "panelOverflow": false,
+  "paragraphs": [
+    {
+      "overflow": false,
+      "text": "Saved investigations appear here with their findings, citations and sources. Request new research in Chat; it runs only when available and permitted for that conversation."
+    },
+    {
+      "overflow": false,
+      "text": "Research starts in Chat when current permissions and research services allow it. Saved runs share this history, including their searches, sources and validated findings."
+    },
+    {
+      "overflow": false,
+      "text": "Each run is bounded in time, searches, and reads. Sparse verified truth beats polished guessing: a finding only appears when a real, openable source stands behind it."
+    }
+  ],
+  "width": 320
+}

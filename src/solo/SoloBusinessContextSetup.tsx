@@ -11,6 +11,7 @@ import {
 import { createPortal } from "react-dom";
 import { useTheme } from "next-themes";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { interviewReturnPath } from "./solo-interview-navigation";
 import {
   BookOpen,
   CheckCircle2,
@@ -58,6 +59,7 @@ import {
 import "./settings-setup.css";
 import { KnowledgeLibrary } from "./knowledge/KnowledgeLibrary";
 import { RepresentativePhonePicker } from "./setup-representative-phone";
+import { BusinessTimeZoneSetting } from "./setup-business-time-zone";
 import { resolveSetupSubtabRoute, setupSubtabPath } from "./setup-subtab-route";
 import { settingsScrollOwner } from "./settings-scroll-owner";
 import { PeopleEmailPreferences } from "./settings-people-email-preferences";
@@ -637,7 +639,7 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
     text: string;
   } | null>(null);
   const [recovery, setRecovery] = useState<
-    "failed" | "conflict" | "stale" | null
+    "failed" | "conflict" | "stale" | "unknown" | null
   >(null);
   const [knowledgeEditor, setKnowledgeEditor] = useState<number | null>(null);
   const [emailEditor, setEmailEditor] = useState(false);
@@ -996,6 +998,23 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
         ?.focus({ preventScroll: true });
     }
   }, [location.pathname, tab, data.loading]);
+  // Experience 04 E4-S3 — a link to one setting (the chat's "Open business time zone setting",
+  // …/business-profile#business-time-zone) lands ON that setting once its section has rendered, not at
+  // the top of the long form above it (the settings-analytics `#metric-` pattern). Only a Setup section
+  // is a target; the heading takes focus so a keyboard or screen-reader user arrives there too. Runs
+  // after the layout effect above, which resets the scroll on a tab change.
+  useEffect(() => {
+    if (data.loading || data.error || location.hash.length < 2) return;
+    let id = location.hash.slice(1);
+    try { id = decodeURIComponent(id); } catch { return; }
+    const target = document.getElementById(id);
+    if (!target?.matches("section.setup-section") || !formSurface.current?.contains(target)) return;
+    const reduce = typeof window.matchMedia === "function"
+      && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    target.scrollIntoView({ block: "start", behavior: reduce ? "auto" : "smooth" });
+    const headingId = target.getAttribute("aria-labelledby");
+    (headingId ? document.getElementById(headingId) : null)?.focus({ preventScroll: true });
+  }, [data.loading, data.error, tab, location.pathname, location.hash]);
   const switchTab = (value: SoloSetupTab) => {
     if (data.saving) return;
     reconcileMountedDraft();
@@ -1096,7 +1115,10 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
           <strong>Setup could not load safely.</strong>
           {data.error}
         </span>
-        <button className="setup-button" onClick={data.refresh}>
+        <button className="setup-button" onClick={() => {
+          if (data.saveOutcomeUnknown) void data.reconcileSave();
+          else void data.refresh();
+        }}>
           Retry
         </button>
       </div>
@@ -1124,8 +1146,8 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
         className="setup-brief"
         onInput={reconcileMountedDraft}
         onClickCapture={reconcileMountedDraft}
-        disabled={data.saving}
-        aria-busy={data.saving}
+        disabled={data.saving || data.reconciling}
+        aria-busy={data.saving || data.reconciling}
         style={{ border: 0, padding: "0 0 32px", margin: 0, minWidth: 0 }}
       >
         {!data.canEdit && (
@@ -1169,7 +1191,15 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
                   setEditing(false);
                   setRecovery(null);
                   setNotice(null);
-                  data.refresh();
+                  if (data.saveOutcomeUnknown) {
+                    const checked = await data.reconcileSave();
+                    setNotice({ tone: checked.ok ? "ok" : "bad", text: checked.ok
+                      ? "Stored Setup checked. Review these current values before making another change."
+                      : checked.error });
+                    if (!checked.ok) setRecovery("unknown");
+                  } else {
+                    void data.refresh();
+                  }
                 }}
               >
                 Load stored version
@@ -1177,6 +1207,7 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
             )}
           </div>
         )}
+        {interviewReturnPath(account, location.search) && data.canEdit && data.accessScope === "owner_full" && <Link className="setup-button" to={interviewReturnPath(account, location.search)!}>Return to interview</Link>}
         {data.pendingProposal && !proposalId && owner && (
           <aside className="setup-proposal">
             <div>
@@ -1332,7 +1363,7 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
               )}
               <button
                 className="setup-button setup-button--primary"
-                disabled={!data.canEdit || data.saving}
+                disabled={!data.canEdit || data.saving || data.saveOutcomeUnknown || data.reconciling}
                 onClick={editing ? () => void save() : () => void beginEdit()}
               >
                 {data.saving
@@ -1384,6 +1415,16 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
                 onNaics={(value) => void chooseNaics(value)}
                 searchNaics={data.searchNaics}
               />
+            )}
+            {tab === "business-profile" && (
+              // Experience 04 E4-S2: its own store and its own save, outside the brief's edit cycle.
+              <section className="setup-section" id="business-time-zone" aria-labelledby="business-time-zone-title">
+                <header className="setup-section__head">
+                  <h2 id="business-time-zone-title" tabIndex={-1}>Business time zone</h2>
+                  <p>The calendar Paige uses to decide which payments are due and which are overdue. Saved on its own, the moment you confirm it.</p>
+                </header>
+                <BusinessTimeZoneSetting key={data.activeTenantId ?? "none"} tenantId={data.activeTenantId} />
+              </section>
             )}{" "}
             {tab === "public-presence" && (
               <SettingsPublicPresence

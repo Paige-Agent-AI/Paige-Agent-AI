@@ -27,7 +27,6 @@ import {
   EMPTY_COMMS_CONSENT,
   type CommsConsentState,
 } from "@/components/legal/CommunicationsConsent";
-import { recordCommsConsent } from "@/lib/legal/recordCommsConsent";
 
 const BROKER_AGREEMENT_SLUG = "broker-agreement";
 
@@ -149,15 +148,7 @@ export default function AffiliateApplyForm({
         why_join: form.why_join,
         requested_tier_key: tierKey,
         user_id: userId ?? null,
-      });
-
-      // Record communications consent (non-blocking).
-      void recordCommsConsent({
-        email: form.email,
-        phone: form.phone || null,
-        source: "affiliate_apply",
-        consent: commsConsent,
-      });
+      }, commsConsent);
 
       // If the applicant is signed in, also write the versioned legal_acceptance
       // row immediately. Anonymous applicants get their acceptance recorded by

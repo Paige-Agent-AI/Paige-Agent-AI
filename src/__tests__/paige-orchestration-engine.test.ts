@@ -74,7 +74,7 @@ describe("outcomeFromDecision — exact per-act outcome, never a success on a no
 
 // ── A minimal chainable, thenable mock of the supabase-js surface the engine uses. ─────────────────────
 type MockConfig = {
-  acts: Record<string, Array<{ id: string; position: number; action_kind: string | null; tool_key: string | null; config: unknown }>>;
+  acts: Record<string, Array<{ id: string; position: number; action_kind: string | null; tool_key: string | null; config: unknown; created_at?: string }>>;
   activeMembers: Set<string>;                       // `${tenantId}:${userId}`
   lanes: Record<string, { effective: string }>;
   recorded: Array<Record<string, unknown>>;         // every paige_record_act_execution call the engine made
@@ -82,26 +82,38 @@ type MockConfig = {
   persistOutcomeOverride?: Record<string, string>;  // act_id → the outcome the RPC actually persisted (monotonic)
   fromErrors?: Set<string>;                         // table names whose READ returns an infra error
   laneError?: boolean;                              // resolve_automation_autonomy returns an infra error
+  ledgerActs?: Array<{ event_id: string; automation_id: string; act_id: string }>; // existing ledger rows
+};
+type MockResult = { data: unknown; error: { message: string } | null };
+type MockQuery = PromiseLike<MockResult> & {
+  _table: string;
+  select(): MockQuery;
+  order(): MockQuery;
+  eq(k: string, v: unknown): MockQuery;
+  limit(): MockQuery;
 };
 function mockDb(cfg: MockConfig): EngineDb {
   const makeQuery = (table: string) => {
     const state: Record<string, unknown> = {};
-    const q: any = {
+    const q: MockQuery = {
       _table: table,
       select() { return q; },
       order() { return q; },
       eq(k: string, v: unknown) { state[k] = v; return q; },
       limit() { return q; },
-      then(onF: any, onR: any) {
+      then(onF, onR) {
         if (cfg.fromErrors?.has(table)) {
-          return Promise.resolve({ data: null, error: { message: `${table}_read_failed` } }).then(onF, onR);
+          return Promise.resolve<MockResult>({ data: null, error: { message: `${table}_read_failed` } }).then(onF, onR);
         }
         let data: unknown = [];
         if (table === "paige_automation_acts") data = cfg.acts[state.automation_id as string] ?? [];
+        else if (table === "paige_act_executions") {
+          data = (cfg.ledgerActs ?? []).filter((r) => r.event_id === state.event_id && r.automation_id === state.automation_id);
+        }
         else if (table === "tenant_members") {
           data = cfg.activeMembers.has(`${state.tenant_id}:${state.user_id}`) ? [{ user_id: state.user_id }] : [];
         }
-        return Promise.resolve({ data, error: null }).then(onF, onR);
+        return Promise.resolve<MockResult>({ data, error: null }).then(onF, onR);
       },
     };
     return q;
@@ -218,6 +230,38 @@ describe("runEventActs — the exact per-act outcome for every branch", () => {
     expect(res.records[0].adapter_kind).toBe("unsupported");
     expect(res.records[0].outcome).toBe("failed");
     expect(res.records[0].error).toBe("unsupported_adapter");
+  });
+});
+
+describe("runEventActs — a recovery re-open governs only acts that existed when the event happened (Slice 2b)", () => {
+  const cfg = (): MockConfig => ({
+    acts: { a1: [
+      { id: "old", position: 1, action_kind: "n8n_run_workflow", tool_key: null, config: {}, created_at: "2026-10-01T00:00:00Z" },
+      { id: "late", position: 2, action_kind: "n8n_run_workflow", tool_key: null, config: {}, created_at: "2026-10-03T00:00:00Z" },
+    ] },
+    activeMembers: new Set(), lanes: { a1: { effective: "confirm" } }, recorded: [],
+  });
+  it("with the cutoff, an act added after the event is never governed or recorded", async () => {
+    const c = cfg();
+    const r = await runEventActs(mockDb(c), event, [auto({})], { actsCreatedAtOrBefore: "2026-10-02T00:00:00Z" });
+    expect(r.records.map((x) => x.act_id)).toEqual(["old"]);
+    expect(c.recorded.map((x) => x._act_id)).toEqual(["old"]);
+  });
+  it("an act added after the event that the first drain already governed (and stranded) is still recovered", async () => {
+    const c = cfg();
+    c.ledgerActs = [{ event_id: "e1", automation_id: "a1", act_id: "late" }];
+    const r = await runEventActs(mockDb(c), event, [auto({})], { actsCreatedAtOrBefore: "2026-10-02T00:00:00Z" });
+    expect(r.records.map((x) => x.act_id)).toEqual(["old", "late"]);
+  });
+  it("a failed ledger read during a recovery drain retries the subscriber, never governs blind", async () => {
+    const c = cfg(); c.fromErrors = new Set(["paige_act_executions"]);
+    const r = await runEventActs(mockDb(c), event, [auto({})], { actsCreatedAtOrBefore: "2026-10-02T00:00:00Z" });
+    expect(r.subscriber_retry).toEqual(["a1"]);
+    expect(r.records).toEqual([]);
+  });
+  it("without it (a normal event) every configured act is governed, as before", async () => {
+    const r = await runEventActs(mockDb(cfg()), event, [auto({})]);
+    expect(r.records.map((x) => x.act_id)).toEqual(["old", "late"]);
   });
 });
 

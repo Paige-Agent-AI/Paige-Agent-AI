@@ -1,0 +1,132 @@
+{
+  "boundary": "Actual unmounted source components/helper/callers through explicit synthetic ports; genuine React unmount/remount, original CAS and no-replay proof. Full shared shell/PAIGE/router and authenticated acceptance not established.",
+  "results": [
+    {
+      "theme": "dark",
+      "kind": "preparation-draft",
+      "realUnmount": true,
+      "freshWorkVersion": true,
+      "sourceAuthorityRevalidated": true,
+      "automaticReplay": false,
+      "writes": 1
+    },
+    {
+      "theme": "dark",
+      "kind": "preparation-unknown",
+      "realUnmount": true,
+      "freshWorkVersion": true,
+      "sourceAuthorityRevalidated": true,
+      "automaticReplay": false,
+      "writes": 1
+    },
+    {
+      "theme": "dark",
+      "kind": "review-draft",
+      "realUnmount": true,
+      "freshWorkVersion": true,
+      "sourceAuthorityRevalidated": true,
+      "automaticReplay": false,
+      "writes": 0
+    },
+    {
+      "theme": "dark",
+      "kind": "review-unknown",
+      "realUnmount": true,
+      "freshWorkVersion": true,
+      "sourceAuthorityRevalidated": true,
+      "automaticReplay": false,
+      "writes": 1
+    },
+    {
+      "theme": "dark",
+      "kind": "review-revoked",
+      "realUnmount": true,
+      "freshWorkVersion": true,
+      "sourceAuthorityRevalidated": true,
+      "automaticReplay": false,
+      "writes": 0
+    },
+    {
+      "theme": "dark",
+      "kind": "review-replaced",
+      "realUnmount": true,
+      "freshWorkVersion": true,
+      "sourceAuthorityRevalidated": true,
+      "automaticReplay": false,
+      "writes": 0
+    },
+    {
+      "theme": "dark",
+      "kind": "review-cleared",
+      "realUnmount": true,
+      "freshWorkVersion": true,
+      "sourceAuthorityRevalidated": true,
+      "automaticReplay": false,
+      "writes": 0
+    },
+    {
+      "theme": "light",
+      "kind": "preparation-draft",
+      "realUnmount": true,
+      "freshWorkVersion": true,
+      "sourceAuthorityRevalidated": true,
+      "automaticReplay": false,
+      "writes": 1
+    },
+    {
+      "theme": "light",
+      "kind": "preparation-unknown",
+      "realUnmount": true,
+      "freshWorkVersion": true,
+      "sourceAuthorityRevalidated": true,
+      "automaticReplay": false,
+      "writes": 1
+    },
+    {
+      "theme": "light",
+      "kind": "review-draft",
+      "realUnmount": true,
+      "freshWorkVersion": true,
+      "sourceAuthorityRevalidated": true,
+      "automaticReplay": false,
+      "writes": 0
+    },
+    {
+      "theme": "light",
+      "kind": "review-unknown",
+      "realUnmount": true,
+      "freshWorkVersion": true,
+      "sourceAuthorityRevalidated": true,
+      "automaticReplay": false,
+      "writes": 1
+    },
+    {
+      "theme": "light",
+      "kind": "review-revoked",
+      "realUnmount": true,
+      "freshWorkVersion": true,
+      "sourceAuthorityRevalidated": true,
+      "automaticReplay": false,
+      "writes": 0
+    },
+    {
+      "theme": "light",
+      "kind": "review-replaced",
+      "realUnmount": true,
+      "freshWorkVersion": true,
+      "sourceAuthorityRevalidated": true,
+      "automaticReplay": false,
+      "writes": 0
+    },
+    {
+      "theme": "light",
+      "kind": "review-cleared",
+      "realUnmount": true,
+      "freshWorkVersion": true,
+      "sourceAuthorityRevalidated": true,
+      "automaticReplay": false,
+      "writes": 0
+    }
+  ],
+  "errors": []
+}

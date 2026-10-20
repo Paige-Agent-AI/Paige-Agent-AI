@@ -187,3 +187,46 @@
 .setup-paige-drawer__fields input { width: 100%; }
 .setup-ownership__legal { display: block; }
 @container (max-width: 620px) { .setup-metrics { grid-template-columns: 1fr; }.setup-knowledge-list article { grid-template-columns: minmax(0,1fr) auto; }.setup-knowledge-list article > div:last-child { grid-column: 1 / -1; }.setup-search { grid-template-columns: 1fr; }.setup-search .setup-button { width: 100%; justify-content: center; } }
+
+/* Business time zone (Experience 04 E4-S2). Same vocabulary as the brief: lift panels, chip radii, violet primary. */
+.setup-tz { display: grid; gap: 10px; }
+.setup-tz__current, .setup-tz__confirm { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--pg-line-soft); border-radius: var(--pg-r-chip); background: var(--pg-lift); }
+.setup-tz__current > svg { width: 18px; height: 18px; flex: none; color: var(--pg-muted); }
+.setup-tz__current > div, .setup-tz__confirm > div:first-child { display: grid; flex: 1; min-width: 0; gap: 3px; }
+.setup-tz__current strong, .setup-tz__confirm strong { color: var(--pg-ink); font: 650 13px/1.35 var(--pg-font-sans); }
+.setup-tz__current span, .setup-tz__confirm span { color: var(--pg-muted); font-size: 11.5px; line-height: 1.5; font-variant-numeric: tabular-nums; }
+.setup-tz__confirm { align-items: flex-start; border-color: var(--pg-line-strong); background: var(--pg-raised); }
+.setup-tz__actions { display: flex; flex: none; gap: 8px; }
+.setup-tz__trigger { display: inline-flex; flex: none; align-items: center; gap: 6px; }
+.setup-tz__trigger svg { width: 13px; height: 13px; }
+.setup-tz__state, .setup-tz__note { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--pg-muted); font-size: 11.5px; }
+.setup-tz__state svg, .setup-tz__note svg { width: 15px; height: 15px; flex: none; }
+.setup-tz__state[role="status"] svg.lucide-refresh-cw { animation: setup-tz-spin 1.2s linear infinite; }
+@keyframes setup-tz-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .setup-tz__state svg.lucide-refresh-cw { animation: none; } }
+.setup-tz__picker { width: min(360px, calc(100vw - 32px)); padding: 0; border: 1px solid var(--pg-line); border-radius: var(--pg-r-chip); color: var(--pg-ink); background: var(--pg-raised); box-shadow: var(--pg-lift-2); }
+.setup-tz__picker [cmdk-input] { font-size: 13px; }
+.setup-tz__picker [cmdk-group-heading] { color: var(--pg-faint); font-size: 10px; font-weight: 750; letter-spacing: .05em; text-transform: uppercase; }
+.setup-tz__option { cursor: pointer; }
+.setup-tz__option > span { display: grid; gap: 1px; }
+.setup-tz__option strong { font-weight: 600; font-size: 13px; }
+.setup-tz__option small { color: var(--pg-muted); font-size: 11px; }
+/* The highlighted row is neutral violet with ink text, never the shared gold accent (§11: gold is the act only). */
+.setup-tz__picker .setup-tz__option { color: var(--pg-ink); }
+.setup-tz__picker .setup-tz__option[data-selected="true"] { color: var(--pg-ink); background: color-mix(in srgb, var(--pg-violet) 16%, var(--pg-raised)); }
+.setup-tz__picker .setup-tz__option[data-selected="true"] small { color: var(--pg-ink-2); }
+@media (max-width: 560px) {
+  .setup-tz__current, .setup-tz__confirm { flex-wrap: wrap; }
+  .setup-tz__actions { width: 100%; justify-content: flex-end; }
+}
+.setup-tz__confirm strong:focus-visible, .setup-tz .setup-notice:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 3px; border-radius: 4px; }
+/* The shell's `.paige-solo button` reset (0,1,1) out-ranks `.setup-button` (0,1,0) and flattens every
+   Setup button to bare text. Scoped here so this section's controls read as controls without
+   restyling the rest of Setup. */
+.setup-tz .setup-button { border: 1px solid var(--pg-line); background: var(--pg-raised); color: var(--pg-ink); font: 700 11px/1 var(--pg-font-sans); }
+.setup-tz .setup-button--primary { border-color: var(--pg-violet); background: var(--pg-violet); color: var(--pg-env); }
+.setup-tz .setup-button--quiet { border-color: transparent; background: transparent; }
+.setup-tz .setup-button:hover:not(:disabled) { border-color: var(--pg-line-strong); }
+.setup-tz .setup-button--primary:hover:not(:disabled) { background: color-mix(in srgb, var(--pg-violet) 88%, var(--pg-ink)); }
+/* The search field sits flush in the picker, where an outset ring is clipped; focus shows as an inset bar. */
+.setup-tz__picker [cmdk-input]:focus-visible { outline: none; box-shadow: inset 0 -2px 0 var(--pg-violet); }

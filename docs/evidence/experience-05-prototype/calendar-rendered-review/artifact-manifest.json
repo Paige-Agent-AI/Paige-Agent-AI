@@ -1,0 +1,3151 @@
+{
+  "artifactSHA256": "16CE82114E898DA28324E4C866DB3E078692BCFA99FC32950FF74F7E5590B090",
+  "projectionSourceSHA256": "06D13D2C1B819D913FFB181DA487E1FEAED88C10F03EB6D0B57C553101440CBF",
+  "generatedAt": "2026-10-13T04:28:11.337Z",
+  "browser": "151.0.7922.34",
+  "scope": "Deterministic local review only; zero external requests in the main proof; no real records, accounts or production UI mount.",
+  "summary": {
+    "checks": 186,
+    "passed": 186,
+    "failed": 0,
+    "captures": 86
+  },
+  "proofs": [
+    {
+      "file": "current/browser-proof.json",
+      "summary": {
+        "checks": 157,
+        "passed": 157,
+        "failed": [],
+        "captures": 73
+      }
+    },
+    {
+      "file": "current/contract-negative-proof.json",
+      "summary": {
+        "checks": 14,
+        "passed": 14,
+        "failed": [],
+        "captures": 5
+      }
+    },
+    {
+      "file": "current/reviewer-branch-proof.json",
+      "summary": {
+        "checks": 15,
+        "passed": 15,
+        "failed": [],
+        "captures": 8
+      }
+    }
+  ],
+  "captures": [
+    {
+      "file": "current/desktop-business-zone-change.png",
+      "sha256": "EC2B3051A95A53C1A5B3817753568EC9508EFA4E3149A0CBE622A55C760DE99A",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-business-zone-change.png",
+        "name": "desktop-business-zone-change",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "DIV",
+          "id": "calendar-scroll"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 506,
+            "scrollHeight": 1494,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-business-zone-missing.png",
+      "sha256": "986E6CA9F1A73D10C21D6B6CE603249882C8D46C8BA5B272C4C8D0B473D1A706",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-business-zone-missing.png",
+        "name": "desktop-business-zone-missing",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "DIV",
+          "id": "calendar-scroll"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 506,
+            "scrollHeight": 740,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-calendar-authorization-pending.png",
+      "sha256": "DCC34388CC3E4F516D4528CC991D65C45E37BE2AEE198161098655CBA580A720",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-calendar-authorization-pending.png",
+        "name": "desktop-calendar-authorization-pending",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "DIV",
+          "id": "calendar-scroll"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 506,
+            "scrollHeight": 1663,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-calendar-cancelled.png",
+      "sha256": "74B0AB57AC46C496C2EB532B3C15B4DA152A7F6D9E208D8546AED107A71299F0",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-calendar-cancelled.png",
+        "name": "desktop-calendar-cancelled",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "DIV",
+          "id": "calendar-scroll"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 506,
+            "scrollHeight": 1689,
+            "scrollTop": 1006
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-calendar-completed-receipt.png",
+      "sha256": "FE700451254E24BEBE9213480A7D4ED710431872A7FC1A8E7DE79844A03D201A",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-calendar-completed-receipt.png",
+        "name": "desktop-calendar-completed-receipt",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "SUMMARY",
+          "id": ""
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 506,
+            "scrollHeight": 1997,
+            "scrollTop": 1491
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-calendar-failed.png",
+      "sha256": "70F21F376DB7092A227169F92F8C6504805084EBA64DDF217731BB213F90F3D7",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-calendar-failed.png",
+        "name": "desktop-calendar-failed",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "DIV",
+          "id": "calendar-scroll"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 506,
+            "scrollHeight": 1644,
+            "scrollTop": 1138
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-calendar-held.png",
+      "sha256": "A3046510B57637C2A7D4B337CCF2866AB1DC7C82EAF8B1FEF660DB98E3511C07",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-calendar-held.png",
+        "name": "desktop-calendar-held",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 506,
+            "scrollHeight": 1634,
+            "scrollTop": 1025
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-calendar-paused.png",
+      "sha256": "431F08B865D2D046C047D76EC40CAFBE361925F48ABC6BCE25BEAFB8B9D19E4A",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-calendar-paused.png",
+        "name": "desktop-calendar-paused",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "DIV",
+          "id": "calendar-scroll"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 506,
+            "scrollHeight": 1655,
+            "scrollTop": 1006
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-calendar-resumed-dst.png",
+      "sha256": "67D8BC019AFE608FC121483793BE14091BF67AF773E8FADDC64C34A03036DD1A",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-calendar-resumed-dst.png",
+        "name": "desktop-calendar-resumed-dst",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "BUTTON",
+          "id": "next"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 506,
+            "scrollHeight": 1644,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-calendar-running.png",
+      "sha256": "C5522713148066197F275047592E003ABDAE133D93D99C9E74BCB86520548715",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-calendar-running.png",
+        "name": "desktop-calendar-running",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "DIV",
+          "id": "calendar-scroll"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 506,
+            "scrollHeight": 1572,
+            "scrollTop": 1066
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-calendar-scheduled.png",
+      "sha256": "3495E9F01693B0BDF99A5C0A7A21D21C826EB7D3C800CA9353E8BEFFC7F7E5E1",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-calendar-scheduled.png",
+        "name": "desktop-calendar-scheduled",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "DIV",
+          "id": "calendar-scroll"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 506,
+            "scrollHeight": 1494,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-calendar-unknown-prior-verified.png",
+      "sha256": "3BFD31ACCF6FBA4A81D12B7224A63DB371982655EB989856CB31DA73303742A8",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-calendar-unknown-prior-verified.png",
+        "name": "desktop-calendar-unknown-prior-verified",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "SUMMARY",
+          "id": ""
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 506,
+            "scrollHeight": 1952,
+            "scrollTop": 1305
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-cancel-consequence.png",
+      "sha256": "6062B9FDC816EA5F9C7A2BCEF5B46AA631DCBC84172AEDE8FF815E52305035BA",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-cancel-consequence.png",
+        "name": "desktop-cancel-consequence",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "BUTTON",
+          "id": "keep-schedule"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 506,
+            "scrollHeight": 1662,
+            "scrollTop": 1033
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 462,
+            "scrollHeight": 1327,
+            "scrollTop": 449
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-chat-authorization-pending.png",
+      "sha256": "F6D3C0D953BD2B1D3ABACE05AD579A5E1AF0B9E4AFE694B444E2CF648074D3F8",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-chat-authorization-pending.png",
+        "name": "desktop-chat-authorization-pending",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 458,
+            "scrollHeight": 906,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-chat-cancelled.png",
+      "sha256": "2D84F2EAE0FD89BD536D4F47EA16937F67B4E6404E3C1117DECC456FD7A7C0E4",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-chat-cancelled.png",
+        "name": "desktop-chat-cancelled",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 506,
+            "scrollHeight": 1707,
+            "scrollTop": 1033
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 462,
+            "scrollHeight": 1062,
+            "scrollTop": 243
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-chat-completed-receipt.png",
+      "sha256": "9BF33D766CAC5B1BC8EA5B4AE9F979CF21AF32A49E8B4B7D815ACF1662E52ABB",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-chat-completed-receipt.png",
+        "name": "desktop-chat-completed-receipt",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "SUMMARY",
+          "id": ""
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 458,
+            "scrollHeight": 1261,
+            "scrollTop": 767
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-chat-edit-proposal.png",
+      "sha256": "425E0DE69DEFEFEED5562F99FB979AEE1E118DAD2049BF42390E038DFD175F91",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-chat-edit-proposal.png",
+        "name": "desktop-chat-edit-proposal",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "INPUT",
+          "id": "time"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 506,
+            "scrollHeight": 1662,
+            "scrollTop": 1033
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 462,
+            "scrollHeight": 1681,
+            "scrollTop": 222
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-chat-edited-revision-needs-authorization.png",
+      "sha256": "FB1E30DE01B9E2D05A7FA65F07F693D042234D690A063DB68541A64F417CBA0D",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-chat-edited-revision-needs-authorization.png",
+        "name": "desktop-chat-edited-revision-needs-authorization",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 506,
+            "scrollHeight": 1745,
+            "scrollTop": 1033
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 462,
+            "scrollHeight": 1488,
+            "scrollTop": 749
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-chat-empty.png",
+      "sha256": "4A1655FD4D2B7C16EDC292BB4A8BE94DF2F5DAF0C207E0F979D0F4E49A977680",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-chat-empty.png",
+        "name": "desktop-chat-empty",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 458,
+            "scrollHeight": 458,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-chat-failed.png",
+      "sha256": "1640815C1E4C8B21C0F59B57A3591F6B355CF6E4952D5BA22EECCE766DE24435",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-chat-failed.png",
+        "name": "desktop-chat-failed",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "INPUT",
+          "id": "message"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 458,
+            "scrollHeight": 874,
+            "scrollTop": 416
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-chat-held.png",
+      "sha256": "D7689352398EB2C67410DA8F60E8C5FC17F9F6B548854682F92356862700AAC3",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-chat-held.png",
+        "name": "desktop-chat-held",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "INPUT",
+          "id": "message"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 458,
+            "scrollHeight": 902,
+            "scrollTop": 444
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-chat-pause-confirmed.png",
+      "sha256": "88C8832A20AFED74613504541F567117893464799BD5805D11B2E89595D98BD3",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-chat-pause-confirmed.png",
+        "name": "desktop-chat-pause-confirmed",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 506,
+            "scrollHeight": 1673,
+            "scrollTop": 1066
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 462,
+            "scrollHeight": 1055,
+            "scrollTop": 243
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-chat-proposal.png",
+      "sha256": "8820E195584820D611382B70C6292DCC49BDECB3CB08306A03F8D596AA8E69C4",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-chat-proposal.png",
+        "name": "desktop-chat-proposal",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "INPUT",
+          "id": "time"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 458,
+            "scrollHeight": 763,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-chat-running.png",
+      "sha256": "C208EE2D8E2990066C29BA3EA6F122C3B0CF7B9150B5C2B6372411A158D3C217",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-chat-running.png",
+        "name": "desktop-chat-running",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 458,
+            "scrollHeight": 783,
+            "scrollTop": 325
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-chat-scheduling-confirmation.png",
+      "sha256": "7F23952BF6B5DE5325A70D340882BB064FCB246C3545D17DA1025A8BA117F7FA",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-chat-scheduling-confirmation.png",
+        "name": "desktop-chat-scheduling-confirmation",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "INPUT",
+          "id": "consent"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 458,
+            "scrollHeight": 1113,
+            "scrollTop": 651
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-chat-unknown-prior-verified.png",
+      "sha256": "03726CA680A5969CB8A548DBC71794E45D295B0FB5C5DE34698111EFFBDE424D",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-chat-unknown-prior-verified.png",
+        "name": "desktop-chat-unknown-prior-verified",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "SUMMARY",
+          "id": ""
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 458,
+            "scrollHeight": 1200,
+            "scrollTop": 513
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-display-zone-shift-off-hours.png",
+      "sha256": "48E98F4D80F237215C88A78B4F2E9D2F731C796E70766D64993370D24D24D339",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-display-zone-shift-off-hours.png",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "proof": "reviewer-branch-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-in-flight-edit-historical-receipt.png",
+      "sha256": "59DF72EFE093A0934632A431A73EDBEF445CAE40BAE3ECADB62BF9CA0087567B",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-in-flight-edit-historical-receipt.png",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "proof": "reviewer-branch-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-later-calendar-status.png",
+      "sha256": "4F2624D74876787BD32DEC890A862FDB91BF106A5F84AD7C5F9402FA9A8645D5",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-later-calendar-status.png",
+        "name": "desktop-later-calendar-status",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "DIV",
+          "id": "calendar-scroll"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 506,
+            "scrollHeight": 1682,
+            "scrollTop": 923
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-later-chat-status.png",
+      "sha256": "1892C65236553FC8404B516AC771EE58231DE71FD4D7181B18A9908232054377",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-later-chat-status.png",
+        "name": "desktop-later-chat-status",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "BUTTON",
+          "id": "later-thread"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 458,
+            "scrollHeight": 941,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-off-hours-agenda.png",
+      "sha256": "145D2E08352AF211CB561A42106C813710C4F294BAD8A43A4E0FA19F015F2477",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-off-hours-agenda.png",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "proof": "reviewer-branch-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-off-hours-week-marker.png",
+      "sha256": "E5725523D7E9DAF8B1BCBFAFD6B03C7E70BB7B5EA4064D9DE3F3E3336191C115",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-off-hours-week-marker.png",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "proof": "reviewer-branch-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-readback-unavailable.png",
+      "sha256": "710581206F3D4C53CC748840DCD779483F0A819393DA29D5CEC43A689A8C474E",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-readback-unavailable.png",
+        "name": "desktop-readback-unavailable",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 506,
+            "scrollHeight": 1635,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 462,
+            "scrollHeight": 935,
+            "scrollTop": 121
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/desktop-stale-revision-refused.png",
+      "sha256": "44441F7B48C90FA4AA669FD25362BE046029423858B226044339DF19D0A31358",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "desktop-stale-revision-refused.png",
+        "name": "desktop-stale-revision-refused",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 506,
+            "scrollHeight": 1616,
+            "scrollTop": 988
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 462,
+            "scrollHeight": 924,
+            "scrollTop": 243
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/member-owner-record-refused.png",
+      "sha256": "397802EE6C60E9D265630AE4E42C8A026853774F69B9C47D468B42BEE3163DCE",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "member-owner-record-refused.png",
+        "name": "member-owner-record-refused",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "dark",
+        "focus": {
+          "tag": "INPUT",
+          "id": "message"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 480,
+            "scrollHeight": 480,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-business-zone-change.png",
+      "sha256": "166195ED226C2ED4F919D437F94F5966457F187FD27A8B6B45697E1F7DBC959B",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-business-zone-change.png",
+        "name": "mobile-business-zone-change",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "DIV",
+          "id": "calendar-scroll"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 421,
+            "scrollHeight": 1666,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-business-zone-invalid.png",
+      "sha256": "B46990535B980E2E9DB3829B5BD36CD70F8E404B1EEA8F8B34F0C793E280D355",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-business-zone-invalid.png",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "artifactSHA256": "16CE82114E898DA28324E4C866DB3E078692BCFA99FC32950FF74F7E5590B090",
+        "proof": "contract-negative-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-business-zone-missing.png",
+      "sha256": "706087D516674682DAEC51EAF6A017C5B940A7B4CC1F732F066B3BF96A7E8CC1",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-business-zone-missing.png",
+        "name": "mobile-business-zone-missing",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "DIV",
+          "id": "calendar-scroll"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 421,
+            "scrollHeight": 951,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-calendar-authorization-pending.png",
+      "sha256": "C9F15113FCB854E85F0A4C82BDF22EF5BE876C52ACF79164C69E55BD9B8A99C2",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-calendar-authorization-pending.png",
+        "name": "mobile-calendar-authorization-pending",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "DIV",
+          "id": "calendar-scroll"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 421,
+            "scrollHeight": 1775,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-calendar-cancelled.png",
+      "sha256": "ED1ABC96CACB419F5840F3A9EB077A374F738C8C5D83506345A30BC262398349",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-calendar-cancelled.png",
+        "name": "mobile-calendar-cancelled",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "DIV",
+          "id": "calendar-scroll"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 421,
+            "scrollHeight": 1811,
+            "scrollTop": 996
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-calendar-completed-receipt.png",
+      "sha256": "5E7E5B55330CE8C4763314111A69DA7DAC5CF66CA26C25618EA180F12C1A0CB6",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-calendar-completed-receipt.png",
+        "name": "mobile-calendar-completed-receipt",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "SUMMARY",
+          "id": ""
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 421,
+            "scrollHeight": 2217,
+            "scrollTop": 1671
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-calendar-failed.png",
+      "sha256": "C0DA37B61A9DAD7CEF0EFA6A53E3BE4B47A1002863868C5AA914CD78024DEC2A",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-calendar-failed.png",
+        "name": "mobile-calendar-failed",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "DIV",
+          "id": "calendar-scroll"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 421,
+            "scrollHeight": 1804,
+            "scrollTop": 1383
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-calendar-held.png",
+      "sha256": "483CBD0087B4C198B828E48649A445CA10DB9FD16EF5EF082FA6910EE85EDC27",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-calendar-held.png",
+        "name": "mobile-calendar-held",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 421,
+            "scrollHeight": 1813,
+            "scrollTop": 1054
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-calendar-paused.png",
+      "sha256": "FDA28A0BF43C6BDBD1ED4AFDE6B23F1CF83E041AE50059F204B4055006CF1E69",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-calendar-paused.png",
+        "name": "mobile-calendar-paused",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "DIV",
+          "id": "calendar-scroll"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 421,
+            "scrollHeight": 1796,
+            "scrollTop": 996
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-calendar-resumed-dst.png",
+      "sha256": "FC47BF72050D5428C998E572F9BD14FCB63A62CE6C7B646D925E14A524D76688",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-calendar-resumed-dst.png",
+        "name": "mobile-calendar-resumed-dst",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "BUTTON",
+          "id": "next"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 421,
+            "scrollHeight": 1834,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-calendar-running.png",
+      "sha256": "AA620B8A712A4C98D063F26E289033AF1E1DFCF0B9A112EC9F9E65B68CB053E1",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-calendar-running.png",
+        "name": "mobile-calendar-running",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "DIV",
+          "id": "calendar-scroll"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 421,
+            "scrollHeight": 1694,
+            "scrollTop": 1273
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-calendar-scheduled.png",
+      "sha256": "894B2042F97064507CD32DD784F2FDB7F24E23EF7FAAA5BC00571327A3473696",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-calendar-scheduled.png",
+        "name": "mobile-calendar-scheduled",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "DIV",
+          "id": "calendar-scroll"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 421,
+            "scrollHeight": 1666,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-calendar-unknown-prior-verified.png",
+      "sha256": "E282AFF8AD609EB34A89ABB7FFB49B3AAB3AF61C4386D9D99C88934B24F7611E",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-calendar-unknown-prior-verified.png",
+        "name": "mobile-calendar-unknown-prior-verified",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "SUMMARY",
+          "id": ""
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 421,
+            "scrollHeight": 2178,
+            "scrollTop": 1388
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-cancel-consequence.png",
+      "sha256": "71E2315B9ED6D3F7EB96827F1FB24535090DCDA39956341C9A876D2A5A7EE804",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-cancel-consequence.png",
+        "name": "mobile-cancel-consequence",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "BUTTON",
+          "id": "keep-schedule"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 480,
+            "scrollHeight": 1339,
+            "scrollTop": 444
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-chat-authorization-pending.png",
+      "sha256": "37BF9BEBCD31C96356A8E75BA551FD021A633FE417BDF8E64797DCD56C702E5A",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-chat-authorization-pending.png",
+        "name": "mobile-chat-authorization-pending",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 480,
+            "scrollHeight": 1068,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-chat-cancelled.png",
+      "sha256": "62AAF25B292A659DE2C8BA3663FAE820EBF5332101192E6C98AA3C21B0C5A5A0",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-chat-cancelled.png",
+        "name": "mobile-chat-cancelled",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 480,
+            "scrollHeight": 1076,
+            "scrollTop": 238
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-chat-completed-receipt.png",
+      "sha256": "99D5092D9E91AB9B813030FDF6BAB35C6079DA1134BF572DD6165E0825415BB4",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-chat-completed-receipt.png",
+        "name": "mobile-chat-completed-receipt",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "SUMMARY",
+          "id": ""
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 480,
+            "scrollHeight": 1500,
+            "scrollTop": 937
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-chat-edit-proposal.png",
+      "sha256": "9DCA5252A3D311381254972E518DDBB15FE297619D48F1AAE900CDABCE5E4B2F",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-chat-edit-proposal.png",
+        "name": "mobile-chat-edit-proposal",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "INPUT",
+          "id": "time"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 480,
+            "scrollHeight": 1705,
+            "scrollTop": 217
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-chat-edited-revision-needs-authorization.png",
+      "sha256": "A50B671699BBD80134B7BCBA79C71FE18E88B10678C184B3797D0F430BE9D70D",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-chat-edited-revision-needs-authorization.png",
+        "name": "mobile-chat-edited-revision-needs-authorization",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 480,
+            "scrollHeight": 1500,
+            "scrollTop": 756
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-chat-empty.png",
+      "sha256": "2D192473F36D226A32BC67E60E51B725C2274CACE91C796F02C8A4FC76D2E5B4",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-chat-empty.png",
+        "name": "mobile-chat-empty",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "INPUT",
+          "id": "message"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 480,
+            "scrollHeight": 480,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-chat-failed.png",
+      "sha256": "0BE0B2B20EB2B2B0A4CDBA5060B8942790D35CEA4AAA4C944904155079D6CE4C",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-chat-failed.png",
+        "name": "mobile-chat-failed",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "INPUT",
+          "id": "message"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 480,
+            "scrollHeight": 1059,
+            "scrollTop": 579
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-chat-held.png",
+      "sha256": "64EF9F5BC6608FB9D8A627D7C3E3C9D49ADEE66A3EA0E4811170E4BF600252C7",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-chat-held.png",
+        "name": "mobile-chat-held",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "INPUT",
+          "id": "message"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 480,
+            "scrollHeight": 1093,
+            "scrollTop": 613
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-chat-pause-confirmed.png",
+      "sha256": "4E3AA1C8E8E9F3DE3AE863AECB0DDD47824FBA9B6907734BD9EE8FF0949A1A04",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-chat-pause-confirmed.png",
+        "name": "mobile-chat-pause-confirmed",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 480,
+            "scrollHeight": 1062,
+            "scrollTop": 238
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-chat-proposal.png",
+      "sha256": "DD3CA74E1E4D36E5EA179E89C7663437DF2F111BD238F7FFB360204E345C3DDC",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-chat-proposal.png",
+        "name": "mobile-chat-proposal",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "INPUT",
+          "id": "time"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 480,
+            "scrollHeight": 1038,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-chat-running.png",
+      "sha256": "F3C3856CB6A41E1695F5BC7A7834E25C4C133E98AB73DFC7161F2BFB374BD204",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-chat-running.png",
+        "name": "mobile-chat-running",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 480,
+            "scrollHeight": 948,
+            "scrollTop": 468
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-chat-scheduling-confirmation.png",
+      "sha256": "92CCCA9BCBF42A0F1AF4CF72A2FBE67A8360E85BA374E2F290E23294231F0000",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-chat-scheduling-confirmation.png",
+        "name": "mobile-chat-scheduling-confirmation",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "INPUT",
+          "id": "consent"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 480,
+            "scrollHeight": 1365,
+            "scrollTop": 805
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-chat-unknown-prior-verified.png",
+      "sha256": "920ADFE5FDD193329EE9DBEF06FF58C6D0233DF7CB83363AA0F7DD22A58020F3",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-chat-unknown-prior-verified.png",
+        "name": "mobile-chat-unknown-prior-verified",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "SUMMARY",
+          "id": ""
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 480,
+            "scrollHeight": 1445,
+            "scrollTop": 642
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-display-zone-shift-off-hours.png",
+      "sha256": "5B1CFB3E3EE26ECA527696F7D339F41192ECD804E0B1CFD0B53B1B9489ED7546",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-display-zone-shift-off-hours.png",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "proof": "reviewer-branch-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-in-flight-edit-historical-receipt.png",
+      "sha256": "15A37294763A933577EC01DCA7C8D07BEEF1809C039AEC06AAD658A161318E1E",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-in-flight-edit-historical-receipt.png",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "proof": "reviewer-branch-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-later-calendar-status.png",
+      "sha256": "3DF14CA3871CF59A378589056BE3E47E0EA1C871701131F55359AA68703BE535",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-later-calendar-status.png",
+        "name": "mobile-later-calendar-status",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "DIV",
+          "id": "calendar-scroll"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 421,
+            "scrollHeight": 1848,
+            "scrollTop": 894
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-later-chat-status.png",
+      "sha256": "194286F52BFE1CD8A8831B0DC3039CD3F392C24B36437159125F245E9901A3E9",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-later-chat-status.png",
+        "name": "mobile-later-chat-status",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "SECTION",
+          "id": "conversation"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 480,
+            "scrollHeight": 1151,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-lost-command-awaiting-read.png",
+      "sha256": "13E9EDC943461491961993484CDA8CA320E7AF4024DD019BC93240CFEB599209",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-lost-command-awaiting-read.png",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "artifactSHA256": "16CE82114E898DA28324E4C866DB3E078692BCFA99FC32950FF74F7E5590B090",
+        "proof": "contract-negative-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-off-hours-agenda.png",
+      "sha256": "8FCC2256C7779CF007D536127345712E8E3F74EB627792F7A88DFEFE9E4B95C8",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-off-hours-agenda.png",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "proof": "reviewer-branch-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-off-hours-week-marker.png",
+      "sha256": "163D5EFE93A7C5CED83EE21F1AAFB447C7A05A8344105E0ABA5CE23EC3CB567C",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-off-hours-week-marker.png",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "proof": "reviewer-branch-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-offline-proposal-retained.png",
+      "sha256": "6D7DCB3E0B79A5C47C7514362CF1505179393B2FFC313BD79C9787F6E0259FA5",
+      "width": 390,
+      "height": 1001,
+      "capture": {
+        "file": "mobile-offline-proposal-retained.png",
+        "viewport": {
+          "width": 390,
+          "height": 1000
+        },
+        "artifactSHA256": "16CE82114E898DA28324E4C866DB3E078692BCFA99FC32950FF74F7E5590B090",
+        "proof": "contract-negative-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-permission-off-no-marker.png",
+      "sha256": "B8B6A42385F305E945E00F02936E68DA014251564D3891DA00C508FE5CFBBA2F",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-permission-off-no-marker.png",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "artifactSHA256": "16CE82114E898DA28324E4C866DB3E078692BCFA99FC32950FF74F7E5590B090",
+        "proof": "contract-negative-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-readback-unavailable.png",
+      "sha256": "B4CCD0F587F2F6FAB33130A412F5BA720ADA47894E8DA3966FA4BC3F35C82868",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-readback-unavailable.png",
+        "name": "mobile-readback-unavailable",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 480,
+            "scrollHeight": 934,
+            "scrollTop": 109
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-stale-readback-unconfirmed.png",
+      "sha256": "E498CFA8C50C3918FB101166EA7D4923E8993FF7CCDCE99B5E188C67BE932DEA",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-stale-readback-unconfirmed.png",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "artifactSHA256": "16CE82114E898DA28324E4C866DB3E078692BCFA99FC32950FF74F7E5590B090",
+        "proof": "contract-negative-proof.json"
+      }
+    },
+    {
+      "file": "current/mobile-stale-revision-refused.png",
+      "sha256": "2193D191BB544EFAA02E6D41887281AECBA90E1699936D3C53BF3F467707C082",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "mobile-stale-revision-refused.png",
+        "name": "mobile-stale-revision-refused",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "light",
+        "focus": {
+          "tag": "BODY",
+          "id": ""
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 480,
+            "scrollHeight": 925,
+            "scrollTop": 238
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/obsidian-mobile-calendar.png",
+      "sha256": "A97D61D5ADAC577C663984543611F70D4D2E700674CFA6EA13FBF4666B7D1916",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "obsidian-mobile-calendar.png",
+        "name": "obsidian-mobile-calendar",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "dark",
+        "focus": {
+          "tag": "DIV",
+          "id": "calendar-scroll"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 421,
+            "scrollHeight": 1666,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/obsidian-mobile-chat.png",
+      "sha256": "F1C7F046A6F15044B01CDFCEC0025C60A0EDCFC84F32A42DE693E82D93493B09",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "obsidian-mobile-chat.png",
+        "name": "obsidian-mobile-chat",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "dark",
+        "focus": {
+          "tag": "INPUT",
+          "id": "message"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 480,
+            "scrollHeight": 875,
+            "scrollTop": 243
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/reflow-320-confirmation.png",
+      "sha256": "2CD5931834C7E4A050FCBB8C39EA410EC57DD2AF9E8679B9ECD4DB0EC44AC1A1",
+      "width": 320,
+      "height": 736,
+      "capture": {
+        "file": "reflow-320-confirmation.png",
+        "name": "reflow-320-confirmation",
+        "viewport": {
+          "width": 320,
+          "height": 700
+        },
+        "documentWidth": 320,
+        "documentHeight": 736,
+        "theme": "light",
+        "focus": {
+          "tag": "INPUT",
+          "id": "message"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 319,
+            "scrollHeight": 1439,
+            "scrollTop": 860
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/solo-1024-calendar-paige-closed.png",
+      "sha256": "338CC1EDFBBA2C9A372164AFB6C328CE9E22A376CBDFBBCF6D5E3FFAB0A1E9FB",
+      "width": 1024,
+      "height": 768,
+      "capture": {
+        "file": "solo-1024-calendar-paige-closed.png",
+        "name": "solo-1024-calendar-paige-closed",
+        "viewport": {
+          "width": 1024,
+          "height": 768
+        },
+        "documentWidth": 1024,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "DIV",
+          "id": "calendar-scroll"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 485,
+            "scrollHeight": 1486,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/solo-1024-calendar-paige-open.png",
+      "sha256": "B51E013E87365258DF866A435EDE69FB4F39FC4689C3ED4B524908D7B6E13AF3",
+      "width": 1024,
+      "height": 768,
+      "capture": {
+        "file": "solo-1024-calendar-paige-open.png",
+        "name": "solo-1024-calendar-paige-open",
+        "viewport": {
+          "width": 1024,
+          "height": 768
+        },
+        "documentWidth": 1024,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "INPUT",
+          "id": "message"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 467,
+            "scrollHeight": 1517,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 462,
+            "scrollHeight": 869,
+            "scrollTop": 249
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/solo-1366-calendar-paige-closed.png",
+      "sha256": "64F70C3ECE32EC8E22D83EE4A104D36E6B3B090250F738F497C502FF59FBBBA2",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "solo-1366-calendar-paige-closed.png",
+        "name": "solo-1366-calendar-paige-closed",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "DIV",
+          "id": "calendar-scroll"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 506,
+            "scrollHeight": 1494,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/solo-1366-calendar-paige-open.png",
+      "sha256": "D0E082A652CF26654F5EA366D18897FF53E0689BC9D813A8EECD4E9588BEE18C",
+      "width": 1366,
+      "height": 768,
+      "capture": {
+        "file": "solo-1366-calendar-paige-open.png",
+        "name": "solo-1366-calendar-paige-open",
+        "viewport": {
+          "width": 1366,
+          "height": 768
+        },
+        "documentWidth": 1366,
+        "documentHeight": 768,
+        "theme": "light",
+        "focus": {
+          "tag": "INPUT",
+          "id": "message"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 506,
+            "scrollHeight": 1512,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 462,
+            "scrollHeight": 863,
+            "scrollTop": 249
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/solo-1536-calendar-paige-closed.png",
+      "sha256": "A36798669FA70E9D0D3248FF2874453D07107BF378AC66F97BBF768B52D1A665",
+      "width": 1536,
+      "height": 770,
+      "capture": {
+        "file": "solo-1536-calendar-paige-closed.png",
+        "name": "solo-1536-calendar-paige-closed",
+        "viewport": {
+          "width": 1536,
+          "height": 770
+        },
+        "documentWidth": 1536,
+        "documentHeight": 770,
+        "theme": "light",
+        "focus": {
+          "tag": "DIV",
+          "id": "calendar-scroll"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 508,
+            "scrollHeight": 1494,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/solo-1536-calendar-paige-open.png",
+      "sha256": "46AB135287A97545B1D91D554C1BCBA892ACF20E0B0781192A31C2FE10933AB5",
+      "width": 1536,
+      "height": 770,
+      "capture": {
+        "file": "solo-1536-calendar-paige-open.png",
+        "name": "solo-1536-calendar-paige-open",
+        "viewport": {
+          "width": 1536,
+          "height": 770
+        },
+        "documentWidth": 1536,
+        "documentHeight": 770,
+        "theme": "light",
+        "focus": {
+          "tag": "INPUT",
+          "id": "message"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 508,
+            "scrollHeight": 1512,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 464,
+            "scrollHeight": 863,
+            "scrollTop": 249
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/solo-900-calendar-paige-closed.png",
+      "sha256": "69E27C2482FC0EFACB5931152826CBDA213C4FD86772B6C82E97A5C066B8532C",
+      "width": 900,
+      "height": 1000,
+      "capture": {
+        "file": "solo-900-calendar-paige-closed.png",
+        "name": "solo-900-calendar-paige-closed",
+        "viewport": {
+          "width": 900,
+          "height": 1000
+        },
+        "documentWidth": 900,
+        "documentHeight": 1000,
+        "theme": "light",
+        "focus": {
+          "tag": "DIV",
+          "id": "calendar-scroll"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 717,
+            "scrollHeight": 1486,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/solo-900-calendar-paige-open.png",
+      "sha256": "DD3A969E52FC70A59C3C79346FFC0B74D8341FBDA347DB3E39FC2A75698E2DD6",
+      "width": 900,
+      "height": 1000,
+      "capture": {
+        "file": "solo-900-calendar-paige-open.png",
+        "name": "solo-900-calendar-paige-open",
+        "viewport": {
+          "width": 900,
+          "height": 1000
+        },
+        "documentWidth": 900,
+        "documentHeight": 1000,
+        "theme": "light",
+        "focus": {
+          "tag": "INPUT",
+          "id": "message"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 681,
+            "scrollHeight": 1596,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 694,
+            "scrollHeight": 869,
+            "scrollTop": 19
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    },
+    {
+      "file": "current/workspace-switch-empty.png",
+      "sha256": "D4AC585BEB70EC56951AF0CA2E93874784E1531772C749BFB2725637CDECBBD9",
+      "width": 390,
+      "height": 844,
+      "capture": {
+        "file": "workspace-switch-empty.png",
+        "name": "workspace-switch-empty",
+        "viewport": {
+          "width": 390,
+          "height": 843
+        },
+        "documentWidth": 390,
+        "documentHeight": 844,
+        "theme": "dark",
+        "focus": {
+          "tag": "INPUT",
+          "id": "message"
+        },
+        "scrollOwners": [
+          {
+            "id": "calendar-scroll",
+            "visible": false,
+            "overflowY": "auto",
+            "clientHeight": 0,
+            "scrollHeight": 0,
+            "scrollTop": 0
+          },
+          {
+            "id": "transcript",
+            "visible": true,
+            "overflowY": "auto",
+            "clientHeight": 470,
+            "scrollHeight": 470,
+            "scrollTop": 0
+          }
+        ],
+        "proof": "browser-proof.json"
+      }
+    }
+  ]
+}

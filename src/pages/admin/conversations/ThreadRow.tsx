@@ -12,6 +12,7 @@ import {
 import { SnoozeMenu } from "./SnoozeMenu";
 import { LabelPopover } from "./LabelPopover";
 import { isApprovableDraft } from "./governedSend";
+import { isPortalHelpRequest } from "./portalReply";
 
 // Real contact avatar: deterministic INITIALS in a tokenized indigo-family circle (no fake
 // photo — clients has no avatar column, §13), with the channel glyph as a small corner badge.
@@ -180,6 +181,9 @@ export function ThreadRow({
           <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
             {preview?.direction === "outbound" && preview.status !== "draft"
               ? <span className="text-muted-foreground/60">You: </span> : ""}
+            {/* A customer's "Contact your team" request leads with its name so it reads apart from chat. */}
+            {preview && isPortalHelpRequest(preview)
+              ? <span className="font-medium text-foreground">Help request: </span> : null}
             {preview ? (bodyPreview(preview) || preview.subject || "—") : "—"}
           </span>
           {hasDraft && <StatePill state="building">Draft ready</StatePill>}

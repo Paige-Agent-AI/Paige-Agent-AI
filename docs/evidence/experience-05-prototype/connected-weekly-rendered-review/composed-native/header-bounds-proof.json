@@ -1,0 +1,167 @@
+{
+  "scope": "Actual native Chat header entry bounded by pane clip and context/header rows. Document-wide width fit alone does not verify this. Synthetic fixture only.",
+  "artifactSHA256": "40D39A4DDC50B071A4CBF2E28A88EA34C93CCC2E141A57DFFB8C7CD1B550037F",
+  "summary": {
+    "checks": 4,
+    "passed": 4,
+    "failed": 0
+  },
+  "results": [
+    {
+      "width": 320,
+      "theme": "dark",
+      "geometry": {
+        "button": {
+          "left": 244.5,
+          "right": 288.5,
+          "top": 258.796875,
+          "bottom": 302.796875,
+          "width": 44,
+          "height": 44
+        },
+        "header": {
+          "left": 94.5,
+          "right": 298.5,
+          "top": 254.5,
+          "bottom": 308.09375,
+          "width": 204,
+          "height": 53.59375
+        },
+        "clipRoot": {
+          "left": 83,
+          "right": 310,
+          "top": 153,
+          "bottom": 833,
+          "width": 227,
+          "height": 680
+        },
+        "context": {
+          "left": 104.5,
+          "right": 232.5,
+          "top": 255.5,
+          "bottom": 306.09375,
+          "width": 128,
+          "height": 50.59375
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "width": 320,
+      "theme": "light",
+      "geometry": {
+        "button": {
+          "left": 244.5,
+          "right": 288.5,
+          "top": 258.796875,
+          "bottom": 302.796875,
+          "width": 44,
+          "height": 44
+        },
+        "header": {
+          "left": 94.5,
+          "right": 298.5,
+          "top": 254.5,
+          "bottom": 308.09375,
+          "width": 204,
+          "height": 53.59375
+        },
+        "clipRoot": {
+          "left": 83,
+          "right": 310,
+          "top": 153,
+          "bottom": 833,
+          "width": 227,
+          "height": 680
+        },
+        "context": {
+          "left": 104.5,
+          "right": 232.5,
+          "top": 255.5,
+          "bottom": 306.09375,
+          "width": 128,
+          "height": 50.59375
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "geometry": {
+        "button": {
+          "left": 314.5,
+          "right": 358.5,
+          "top": 255.5,
+          "bottom": 299.5,
+          "width": 44,
+          "height": 44
+        },
+        "header": {
+          "left": 94.5,
+          "right": 368.5,
+          "top": 254.5,
+          "bottom": 301.5,
+          "width": 274,
+          "height": 47
+        },
+        "clipRoot": {
+          "left": 83,
+          "right": 380,
+          "top": 153,
+          "bottom": 833,
+          "width": 297,
+          "height": 680
+        },
+        "context": {
+          "left": 104.5,
+          "right": 271.640625,
+          "top": 259.953125,
+          "bottom": 295.046875,
+          "width": 167.140625,
+          "height": 35.09375
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "width": 390,
+      "theme": "light",
+      "geometry": {
+        "button": {
+          "left": 314.5,
+          "right": 358.5,
+          "top": 255.5,
+          "bottom": 299.5,
+          "width": 44,
+          "height": 44
+        },
+        "header": {
+          "left": 94.5,
+          "right": 368.5,
+          "top": 254.5,
+          "bottom": 301.5,
+          "width": 274,
+          "height": 47
+        },
+        "clipRoot": {
+          "left": 83,
+          "right": 380,
+          "top": 153,
+          "bottom": 833,
+          "width": 297,
+          "height": 680
+        },
+        "context": {
+          "left": 104.5,
+          "right": 271.640625,
+          "top": 259.953125,
+          "bottom": 295.046875,
+          "width": 167.140625,
+          "height": 35.09375
+        }
+      },
+      "status": "PASS"
+    }
+  ]
+}

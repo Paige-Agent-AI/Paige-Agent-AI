@@ -52,6 +52,8 @@ export type ActionRiskVerdict = ActionRisk | "unclassified";
  * says where it goes. An entry with no defensible reason is an entry that should be `high`.
  */
 const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
+  ["knowledge_update", "ordinary", "changes only reversible in-workspace Knowledge metadata at an exact revision"],
+  ["knowledge_delete", "high", "permanently deletes the reviewed Knowledge document and chunks"],
   // ── owner_only ────────────────────────────────────────────────────────────────────────────
   // §67's red line. How much Paige may do unattended is the operator's decision about Paige, and
   // an assistant that can argue its way into more authority has no ceiling — the wording of the
@@ -172,6 +174,22 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // act where the visibility decision belongs." This IS that separate act. The two entries are the
   // two halves of one sentence, and they only stay coherent together.
   ["crm_file_document", "high", "can put a document in front of the client, which cannot be undone"],
+  // E09 Slice 3. Sharing a work item puts its title, state and due date in front of the client in
+  // their portal; unsharing takes it away from someone who may already be relying on it. Both
+  // directions change what a client sees, so the tool is `high` whatever its `shared` argument says
+  // (rule 2: nothing in a request lowers a class). Its RPC re-proves owner/admin of the caller's own
+  // active workspace and refuses a reminder, an unlinked or cancelled item, and a stale version.
+  ["plan_item_set_client_share", "high", "changes what a client can see in their portal"],
+  // E09 Slice M. Showing, hiding, renaming or reordering an entry in the customer portal menu changes
+  // what EVERY client of the business sees on their next visit, and a hidden entry takes a page away
+  // from people who may be relying on it. `high` whatever the entries say. Its writer
+  // (set_tenant_portal_config) re-proves owner/admin of the tenant or an ancestor in its body.
+  ["portal_menu_update", "high", "changes what every client sees in their portal menu"],
+  // E09 Slice 7. Pausing or ending takes a real person's portal away from them on their next visit;
+  // ending needs a fresh invitation (a new email they must act on) to undo. Restoring gives it back.
+  // `high` whatever the action says, so clampLaneByRisk keeps it `confirm` on any grant — it can never
+  // run unattended. Its writer (set_client_portal_access) re-proves owner/admin of the CURRENT workspace.
+  ["client_portal_access_set", "high", "withholds or ends one client's portal access to this business; ending needs a new invitation to undo"],
 
   // ── high: spends money ────────────────────────────────────────────────────────────────────
   ["marketplace_install", "high", "installs a paid capability"],
@@ -250,6 +268,16 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // (or not) in Ads › Overview through the same RPC the Ads desk calls; at most six, an archived item
   // refused by the server. In-business and reversible by the same tool; it publishes, sends and spends
   // nothing and touches no ad account — the same class as content_save.
+  // Campaign steps (INT-298 MBC 6c). Plan files one record-only step on the action list at `confirm` (approving
+  // it records it; nothing is drafted, sent, published or spent); record/judge store what the owner said
+  // happened and their verdict on a finished step. In-business statements — the same class as content_save.
+  ["campaign_step_plan", "ordinary", "plans one record-only campaign step on the action list, waiting for the owner's approval; nothing is drafted, sent, published or spent"],
+  ["campaign_step_record_result", "ordinary", "records what the owner said happened on a finished campaign step, as stated and never as a measured figure"],
+  ["campaign_step_judge", "ordinary", "records the owner's met / partly met / not met judgement of a campaign step's recorded result"],
+  // Process scope (MBC 6c). Chooses which form(s) or campaign start a form-started process. It never switches a
+  // process on, but re-scoping a LIVE process changes which submissions run it from now on — an automation's
+  // reach — so it is `high`: the risk clamp makes the chat ask every time, whatever autonomy is set.
+  ["process_scope_set", "high", "changes which form submissions start a form-started process; on a live process that changes what runs automatically from now on"],
   ["set_ad_creative_featured", "ordinary", "features (or unfeatures) one of the business's own library pictures in its Ads showroom, at most six at once; reversible, and nothing is published, sent or spent"],
   // ── Calendar booking presets (E5, 2026-09-13). The SAME server-authorized RPCs the Settings ›
   // Connections › Calendars UI drives, adopted into Chat (no parallel model). Per-tool risk assumes
@@ -367,6 +395,7 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // Born at `confirm` + `draft` by construction, so it creates something that cannot act. Turning
   // it on is `automation_set_state`, which is owner_only.
   ["automation_draft", "ordinary", "writes down a process that cannot yet run"],
+  ["weekly_commitment_draft", "ordinary", "saves a private weekly definition as an unapproved draft that cannot execute"],
   // Solo Team work details, added 2026-09-02. A job title and a written set of responsibilities
   // describe what somebody does; they are not a claim about what that person may do. The product
   // makes that separation load-bearing in three places at once — the RPC writes only those two
@@ -440,6 +469,7 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   ["comms_upsert_email_template", "high", "overwrites a shared template every future send renders from"],
   // send_btf_template_email, send_transactional_email, send_composed_email
   ["comms_send_email", "high", "puts an email in a real person's inbox"],
+  ["client_portal_invitation_send", "high", "grants one customer's portal access and emails their verified saved recipient through the existing sender"],
   // #1140 two-mailbox pilot: reversible mailbox organization on the canonical mirror vs the real mailbox.
   ["gmail_organize", "high", "changes a real Gmail mailbox (labels, archive, trash, unsubscribe) — external and visible to the mailbox owner, so it needs the rendered approval card; the mailbox kinds are reversible, an unsubscribe proposal has no undo and its automatic sending is disabled, and permanent deletion is not expressible"],
   // cancel_workflow_run

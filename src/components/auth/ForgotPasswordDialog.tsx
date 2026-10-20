@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { trustedAppOrigin } from "@/lib/hostRouting";
 import { Loader2, Mail, ArrowLeft } from "lucide-react";
 import {
   Dialog,
@@ -29,7 +30,8 @@ export const ForgotPasswordDialog = ({ open, onOpenChange }: Props) => {
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        // Always an app origin: an unknown or hostile hostname never picks the email's target.
+        redirectTo: `${trustedAppOrigin(window.location)}/reset-password`,
       });
       if (error) {
         toast({ title: "Error", description: error.message, variant: "destructive" });

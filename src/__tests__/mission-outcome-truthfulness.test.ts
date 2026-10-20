@@ -2,6 +2,7 @@ import { createRequestKeyKeeper, classifyInvokeFailure } from "@/solo/mission-re
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { harnessApi } from "./mission-retry-component-harness";
 
 /**
  * PR-B — P0 mission outcome-unknown truthfulness + retry idempotency.
@@ -128,8 +129,15 @@ describe("the backend replay contract this fix relies on (source pins)", () => {
 });
 
 describe("owner-facing truthfulness in PlanInMotion (component)", () => {
+  it("withholds the form and writer while the account is unresolved", async () => {
+    const harness = harnessApi;
+    harness.setAccountReady(false);
+    await harness.renderPlan(); await harness.openCreate();
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+    expect(harness.mutate).not.toHaveBeenCalled(); expect(harness.reconcileBanner()).toBeNull();
+  });
   it("outcome-unknown renders the distinct reconcile state, not the generic failure copy", async () => {
-    const harness = (await import("./mission-retry-component-harness")).harnessApi;
+    const harness = harnessApi;
     await harness.renderPlan();
     await harness.fillCreateForm();
     harness.mutate.mockResolvedValueOnce({ ok: false, verified: false, railRecorded: false, outcomeUnknown: true, code: "MISSION_WRITE_OUTCOME_UNKNOWN" });
@@ -142,7 +150,7 @@ describe("owner-facing truthfulness in PlanInMotion (component)", () => {
   });
 
   it("Check again after outcome-unknown reuses the EXACT original request key", async () => {
-    const harness = (await import("./mission-retry-component-harness")).harnessApi;
+    const harness = harnessApi;
     await harness.renderPlan();
     await harness.fillCreateForm();
     harness.mutate.mockResolvedValueOnce({ ok: false, verified: false, railRecorded: false, outcomeUnknown: true });
@@ -155,7 +163,7 @@ describe("owner-facing truthfulness in PlanInMotion (component)", () => {
   });
 
   it("editing the content after outcome-unknown is a new intent and gets a new key", async () => {
-    const harness = (await import("./mission-retry-component-harness")).harnessApi;
+    const harness = harnessApi;
     await harness.renderPlan();
     await harness.fillCreateForm();
     harness.mutate.mockResolvedValueOnce({ ok: false, verified: false, railRecorded: false, outcomeUnknown: true });
@@ -168,7 +176,7 @@ describe("owner-facing truthfulness in PlanInMotion (component)", () => {
   });
 
   it("a definite failure keeps the ordinary error path — no reconcile banner", async () => {
-    const harness = (await import("./mission-retry-component-harness")).harnessApi;
+    const harness = harnessApi;
     await harness.renderPlan();
     await harness.fillCreateForm();
     harness.mutate.mockResolvedValueOnce({ ok: false, verified: false, railRecorded: false, outcomeUnknown: false, code: "MISSION_REVISION_CONFLICT" });
@@ -178,7 +186,7 @@ describe("owner-facing truthfulness in PlanInMotion (component)", () => {
   });
 
   it("success settles the operation: a later identical save is a new identity", async () => {
-    const harness = (await import("./mission-retry-component-harness")).harnessApi;
+    const harness = harnessApi;
     await harness.renderPlan();
     await harness.fillCreateForm();
     harness.mutate.mockResolvedValueOnce({ ok: true, verified: true, railRecorded: true, missionId: "m1" });
@@ -197,7 +205,7 @@ describe("owner-facing truthfulness in PlanInMotion (component)", () => {
     // directly without a pending confirm, so reconcile() must remember the
     // last attempted transition target — otherwise Check again is a dead
     // button exactly where an ambiguous approval needs it.
-    const harness = (await import("./mission-retry-component-harness")).harnessApi;
+    const harness = harnessApi;
     await harness.renderPlan();
     harness.seedProposedPlay();
     // Re-render so the seeded items are picked up, then open the play drawer.
@@ -213,7 +221,7 @@ describe("owner-facing truthfulness in PlanInMotion (component)", () => {
   });
 
   it("an account switch mid-flight fails closed and does not offer reconcile", async () => {
-    const harness = (await import("./mission-retry-component-harness")).harnessApi;
+    const harness = harnessApi;
     await harness.renderPlan();
     await harness.fillCreateForm();
     harness.mutate.mockResolvedValueOnce({ ok: false, verified: false, railRecorded: false, outcomeUnknown: false, code: "ACTIVE_ACCOUNT_CHANGED" });

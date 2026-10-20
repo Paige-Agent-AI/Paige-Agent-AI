@@ -620,11 +620,12 @@ export async function trackEvent(
 /**
  * Mount once near the top of the tree to fire `page_view` on every route change.
  */
-export function usePageView(): void {
+export function usePageView(enabled = true): void {
   const location = useLocation();
   const lastPathRef = useRef<string | null>(null);
 
   useEffect(() => {
+    if (!enabled) return;
     const path = location.pathname + location.search;
     if (lastPathRef.current === path) return;
     lastPathRef.current = path;
@@ -634,7 +635,7 @@ export function usePageView(): void {
       // `/unsubscribe?token=<t>` and `?ct=<t>` are live token-bearing surfaces.
       search: location.search ? redactSecretSearch(location.search) : null,
     });
-  }, [location.pathname, location.search]);
+  }, [enabled, location.pathname, location.search]);
 }
 
 /**

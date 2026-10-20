@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenantContext } from "@/hooks/useTenantContext";
+import { projectResearchHistoryRun, type ResearchHistoryDetail, type ResearchHistorySource } from "@/lib/paigeResearchReadback";
 
 /**
  * Deep Research workspace data hook (R1+R2, INT-303).
@@ -31,35 +33,8 @@ export type ResearchRunRow = {
   created_at: string;
 };
 
-export type ResearchSourceRow = {
-  index: number;
-  url: string;
-  title: string | null;
-  snippet: string | null;
-  reliability_score: number | null;
-  tier: string | null;
-  reliability: string | null;
-  published_at: string | null;
-  fetched_at: string | null;
-  excluded: boolean | null;
-};
-
-export type ResearchRunDetail = {
-  id: string;
-  question: string;
-  domain: string | null;
-  caller: string | null;
-  stop_reason: string | null;
-  configured: boolean | null;
-  findings: Array<{ text: string; citations: number[]; confidence: string; unverifiedFields?: string[] }> | null;
-  coverage: {
-    stop_reason?: string; hops_used?: number; searches?: number; reads?: number;
-    note?: string; configured?: boolean; unverified_notes?: string[];
-  } | null;
-  entity_profile: unknown | null;
-  created_at: string;
-  sources: ResearchSourceRow[];
-};
+export type ResearchSourceRow = ResearchHistorySource;
+export type ResearchRunDetail = ResearchHistoryDetail;
 
 export type ResearchDepth = "quick" | "standard" | "thorough";
 
@@ -79,155 +54,151 @@ export type RunPhase =
 
 const RUN_TIMEOUT_MS = 150_000; // engine wall clock is 60s general / 90s dossier; generous transport margin
 
-export function useDeepResearch(activeTenantId: string | null) {
-  const [rows, setRows] = useState<ResearchRunRow[] | null>(null);
-  const [listError, setListError] = useState<string | null>(null);
-  const [detail, setDetail] = useState<ResearchRunDetail | null>(null);
-  const [detailError, setDetailError] = useState<string | null>(null);
-  const [phase, setPhase] = useState<RunPhase>({ kind: "idle" });
-  const scopeRef = useRef<string | null>(activeTenantId);
-  scopeRef.current = activeTenantId;
+const READ_TIMEOUT_MS = 8_000;
+type ReadReply = { data: unknown; error: unknown };
+type Ticket = { epoch: number; lifecycle: number; controller: AbortController; deadline: number };
+const blankView = (epoch: number) => ({ epoch, rows: null as ResearchRunRow[] | null, listError: null as string | null,
+  detail: null as ResearchRunDetail | null, detailError: null as string | null, detailLoading: false, phase: { kind: "idle" } as RunPhase });
 
-  const refresh = useCallback(async () => {
-    const scope = scopeRef.current;
-    if (!scope) return;
-    const { data, error } = await supabase.rpc("list_workspace_research", { _limit: 20, _offset: 0 });
-    if (scopeRef.current !== scope) return; // the workspace changed mid-flight — discard
-    if (error) { setListError(error.message); return; }
-    setListError(null);
-    setRows((data ?? []) as ResearchRunRow[]);
+// Cancel the installed PostgREST transport AND settle the local state. The local
+// deadline still applies if an old transport ignores abort or its timer is delayed.
+function boundedRead(request: PromiseLike<ReadReply>, ticket: Ticket): Promise<ReadReply> {
+  return new Promise(resolve => {
+    let settled = false;
+    const finish = (result: ReadReply) => {
+      if (settled) return;
+      settled = true; clearTimeout(timer); ticket.controller.signal.removeEventListener("abort", abort);
+      resolve(Date.now() >= ticket.deadline ? { data: null, error: true } : result);
+    };
+    const abort = () => finish({ data: null, error: true });
+    const timer = setTimeout(() => ticket.controller.abort(), Math.max(0, ticket.deadline - Date.now()));
+    ticket.controller.signal.addEventListener("abort", abort, { once: true });
+    if (ticket.controller.signal.aborted) { abort(); return; }
+    Promise.resolve(request).then(finish, () => finish({ data: null, error: true }));
+  });
+}
+
+export function useDeepResearch(activeTenantId: string | null) {
+  const context = useTenantContext();
+  const ready = !!activeTenantId && activeTenantId === context.activeTenantId && !!context.activeUserId
+    && !context.loading && !context.accountContextLoading && context.accountContextStatus === "ready";
+  const key = JSON.stringify([activeTenantId, context.activeTenantId, context.activeUserId, ready]);
+  const identity = useRef({ key, epoch: 1, ready, tenant: activeTenantId, actor: context.activeUserId });
+  if (identity.current.key !== key) identity.current = { key, epoch: identity.current.epoch + 1, ready, tenant: activeTenantId, actor: context.activeUserId };
+  const lifecycle = useRef(0);
+  const mounted = useRef(true);
+  const reads = useRef<{ list: Ticket | null; detail: Ticket | null }>({ list: null, detail: null });
+  const selection = useRef(0);
+  const running = useRef(false);
+  const [view, setView] = useState(() => blankView(identity.current.epoch));
+  const current = useCallback((ticket: Ticket) => mounted.current && identity.current.ready
+    && ticket.epoch === identity.current.epoch && ticket.lifecycle === lifecycle.current, []);
+  const put = useCallback((ticket: Ticket, patch: Partial<ReturnType<typeof blankView>>) => {
+    if (!current(ticket)) return;
+    setView(previous => ({ ...(previous.epoch === ticket.epoch ? previous : blankView(ticket.epoch)), ...patch }));
+  }, [current]);
+  const begin = useCallback((kind: "list" | "detail") => {
+    reads.current[kind]?.controller.abort();
+    if (!mounted.current || !identity.current.ready) return null;
+    const ticket = { epoch: identity.current.epoch, lifecycle: lifecycle.current, controller: new AbortController(), deadline: Date.now() + READ_TIMEOUT_MS };
+    reads.current[kind] = ticket;
+    return ticket;
   }, []);
+  const refresh = useCallback(async () => {
+    const ticket = begin("list"); if (!ticket) return;
+    const { data, error } = await boundedRead(supabase.rpc("list_workspace_research", { _limit: 20, _offset: 0 }).abortSignal(ticket.controller.signal), ticket);
+    if (!current(ticket) || reads.current.list !== ticket) return;
+    const valid = Array.isArray(data) && data.every(row => row && typeof row === "object"
+      && typeof row.id === "string" && typeof row.question === "string" && typeof row.created_at === "string"
+      && Number.isInteger(row.source_count) && row.source_count >= 0 && typeof row.is_dossier === "boolean"
+      && [row.domain, row.caller, row.stop_reason].every(value => value === null || typeof value === "string")
+      && (row.configured === null || typeof row.configured === "boolean"));
+    put(ticket, error || !valid ? { rows: null, listError: "Research history is unavailable. Try refreshing it." }
+      : { rows: data as ResearchRunRow[], listError: null });
+  }, [begin, current, put]);
 
   useEffect(() => {
-    setRows(null); setListError(null); setDetail(null); setDetailError(null);
-    setPhase((p) => (p.kind === "running" ? { kind: "failed", reason: "workspace_changed" } : p));
-    if (activeTenantId) void refresh();
-    else setRows([]);
-  }, [activeTenantId, refresh]);
+    mounted.current = true;
+    const pending = reads.current;
+    return () => { mounted.current = false; lifecycle.current += 1; pending.list?.controller.abort(); pending.detail?.controller.abort(); };
+  }, []);
+  useEffect(() => {
+    selection.current += 1; running.current = false;
+    setView(blankView(identity.current.epoch));
+    if (ready) void refresh();
+    const pending = reads.current;
+    return () => { pending.list?.controller.abort(); pending.detail?.controller.abort(); };
+  }, [key, ready, refresh]);
 
   const open = useCallback(async (runId: string) => {
-    const scope = scopeRef.current;
-    if (!scope) return;
-    setDetailError(null);
-    const { data, error } = await supabase.rpc("get_workspace_research_run", { _run_id: runId });
-    if (scopeRef.current !== scope) return; // foreign/late for the OLD view
-    if (error) { setDetailError(error.message); return; }
-    setDetail((data ?? null) as unknown as ResearchRunDetail | null);
+    selection.current += 1;
+    const ticket = begin("detail"); if (!ticket) return;
+    put(ticket, { detail: null, detailError: null, detailLoading: true });
+    const { data, error } = await boundedRead(supabase.rpc("get_workspace_research_run", { _run_id: runId }).abortSignal(ticket.controller.signal), ticket);
+    if (!current(ticket) || reads.current.detail !== ticket) return;
+    const detail = error ? null : projectResearchHistoryRun(data, runId);
+    put(ticket, { detail, detailLoading: false, detailError: detail ? null : "This run's evidence is unavailable. Return to history and try opening it again." });
+  }, [begin, current, put]);
+  const close = useCallback(() => {
+    selection.current += 1; reads.current.detail?.controller.abort(); reads.current.detail = null;
+    setView(previous => ({ ...(previous.epoch === identity.current.epoch ? previous : blankView(identity.current.epoch)), detail: null, detailError: null, detailLoading: false }));
   }, []);
 
-  const close = useCallback(() => { setDetail(null); setDetailError(null); }, []);
-
-  /**
-   * Start research through the canonical engine. Truthful runtime (ruling §5):
-   * the engine emits no per-step states, so the UI shows elapsed time only —
-   * never fabricated "Searching…" steps. After success, the run is proven
-   * PERSISTED through the governed read RPC before "saved" is claimed (ruling
-   * §6); a result whose readback fails renders with the honest not-saved state.
-   */
+  // Incumbent explicit execution API; Research Home exposes no start control.
+  // It keeps its current canonical engine and verifies the exact read projection
+  // before claiming persisted. Neither reads nor errors automatically call it.
   const start = useCallback(async (question: string, depth: ResearchDepth) => {
-    const scope = scopeRef.current;
-    if (!scope || phase.kind === "running") return;
-    setPhase({ kind: "running", question, startedAt: Date.now() });
-
-    const userId = (await supabase.auth.getUser()).data.user?.id ?? null;
-    if (scopeRef.current !== scope) { setPhase({ kind: "failed", reason: "workspace_changed" }); return; }
-    if (!userId) {
-      setPhase({ kind: "failed", reason: "not_signed_in" });
-      return;
-    }
-
-    let outcome: Record<string, unknown> | null = null;
-    let invokeError: unknown = null;
+    if (!identity.current.ready || running.current) return;
+    const ticket = { epoch: identity.current.epoch, lifecycle: lifecycle.current, controller: new AbortController(), deadline: Date.now() + RUN_TIMEOUT_MS };
+    const scope = identity.current.tenant!;
+    const actor = identity.current.actor;
+    const selected = selection.current;
+    running.current = true; put(ticket, { phase: { kind: "running", question, startedAt: Date.now() } });
     try {
+      const { data: auth, error: authError } = await supabase.auth.getUser();
+      if (!current(ticket)) return;
+      if (Date.now() >= ticket.deadline) { put(ticket, { phase: { kind: "failed", reason: "engine_unreachable" } }); return; }
+      if (authError || !auth.user?.id || auth.user.id !== actor) { put(ticket, { phase: { kind: "failed", reason: "not_signed_in" } }); return; }
       const { data, error } = await supabase.functions.invoke("paige-deep-research", {
-        body: {
-          question,
-          max_hops: DEPTH_TO_HOPS[depth],
-          user_id: userId,
-          caller: "workspace",
-          persist: true,
+        body: { question, max_hops: DEPTH_TO_HOPS[depth], user_id: auth.user.id, caller: "workspace", persist: true,
           expected_tenant_id: scope, // cross-check only — the engine resolves lineage server-side
         },
       });
-      if (error) invokeError = error;
-      outcome = (data ?? null) as Record<string, unknown> | null;
-    } catch (e) {
-      invokeError = e;
-    }
-
-    // SCOPE FENCE: if the active workspace changed while the engine ran, the
-    // result belongs to the OLD workspace. Discard it from THIS view entirely —
-    // it is already persisted under the old workspace server-side (the engine
-    // resolved that lineage at creation), and rendering it here would leak A's
-    // research into B's home.
-    if (scopeRef.current !== scope) {
-      setPhase({ kind: "failed", reason: "workspace_changed" });
-      return;
-    }
-
-    if (invokeError || !outcome) {
-      setPhase({ kind: "failed", reason: "engine_unreachable" });
-      return;
-    }
-    const coverage = (outcome.coverage ?? {}) as Record<string, unknown>;
-    if (coverage.configured === false) {
-      setPhase({ kind: "failed", reason: "search_unconfigured" });
-      return;
-    }
-    if (coverage.stop_reason === "error") {
-      setPhase({ kind: "failed", reason: "engine_error" });
-      return;
-    }
-
-    const runId = typeof outcome.run_id === "string" ? outcome.run_id : null;
-    // PERSISTENCE READBACK: prove the row exists in THIS workspace through the
-    // governed RPC before claiming saved. The engine response alone is not the
-    // proof (ruling §6).
-    let persisted = false;
-    if (runId) {
-      const { data } = await supabase.rpc("get_workspace_research_run", { _run_id: runId });
-      if (scopeRef.current !== scope) { setPhase({ kind: "failed", reason: "workspace_changed" }); return; }
-      persisted = !!data;
-      if (persisted) {
-        setDetail(data as unknown as ResearchRunDetail);
-        void refresh();
-      } else {
-        // The RESULT is real but UNSAVED — it still renders (from the engine's
-        // own outcome, the same closed contract the saved readback returns), with
-        // the honest not-saved banner above it. Ruling §6: show the result while
-        // truthfully stating that saving failed.
-        setDetail({
-          id: runId,
-          question: typeof outcome.question === "string" ? outcome.question : question,
-          domain: null,
-          caller: "workspace",
-          stop_reason: typeof coverage.stop_reason === "string" ? coverage.stop_reason : null,
-          configured: coverage.configured === true,
-          findings: Array.isArray(outcome.findings) ? outcome.findings as ResearchRunDetail["findings"] : null,
-          coverage: coverage as ResearchRunDetail["coverage"],
-          entity_profile: outcome.entity_profile ?? null,
-          created_at: new Date().toISOString(),
-          sources: Array.isArray(outcome.sources)
-            ? (outcome.sources as Array<Record<string, unknown>>).map((src) => ({
-                index: Number(src.index ?? 0),
-                url: String(src.url ?? ""),
-                title: typeof src.title === "string" ? src.title : null,
-                snippet: typeof src.snippet === "string" ? src.snippet : null,
-                reliability_score: typeof src.reliability_score === "number" ? src.reliability_score : null,
-                tier: typeof src.tier === "string" ? src.tier : null,
-                reliability: typeof src.reliability === "string" ? src.reliability : null,
-                published_at: typeof src.published_at === "string" ? src.published_at : null,
-                fetched_at: typeof src.fetched_at === "string" ? src.fetched_at : null,
-                excluded: src.excluded === true,
-              }))
-            : [],
-        });
+      // SCOPE FENCE: already persisted under the old workspace server-side;
+      // a late result cannot enter a later actor/workspace/selection generation.
+      if (!current(ticket)) return;
+      if (Date.now() >= ticket.deadline) { put(ticket, { phase: { kind: "failed", reason: "engine_unreachable" } }); return; }
+      if (error || !data || typeof data !== "object") { put(ticket, { phase: { kind: "failed", reason: "engine_unreachable" } }); return; }
+      const outcome = data as Record<string, unknown>;
+      const coverage = (outcome.coverage ?? {}) as Record<string, unknown>;
+      if (coverage.configured === false || coverage.stop_reason === "error") {
+        put(ticket, { phase: { kind: "failed", reason: coverage.configured === false ? "search_unconfigured" : "engine_error" } }); return;
       }
-    }
-    setPhase({ kind: "done", runId, persisted });
-  }, [phase.kind, refresh]);
-
-  const reset = useCallback(() => setPhase({ kind: "idle" }), []);
-
-  return { rows, listError, refresh, detail, detailError, open, close, phase, start, reset, runTimeoutMs: RUN_TIMEOUT_MS };
+      const runId = typeof outcome.run_id === "string" ? outcome.run_id : null;
+      let persisted = false;
+      // PERSISTENCE READBACK: a visible parent alone never proves complete evidence.
+      if (runId && selected === selection.current) {
+        const readTicket = begin("detail");
+        if (readTicket) {
+          readTicket.deadline = Math.min(readTicket.deadline, ticket.deadline);
+          const reply = await boundedRead(supabase.rpc("get_workspace_research_run", { _run_id: runId }).abortSignal(readTicket.controller.signal), readTicket);
+          if (!current(ticket) || reads.current.detail !== readTicket) return;
+          const result = reply.error ? null : projectResearchHistoryRun(reply.data, runId);
+          persisted = result?.evidenceComplete === true;
+          const unsaved = projectResearchHistoryRun({ ...outcome, id: runId, question: outcome.question ?? question,
+            configured: coverage.configured === true, stop_reason: coverage.stop_reason ?? null, caller: "workspace", created_at: new Date().toISOString() }, runId);
+          put(ticket, { detail: result ?? unsaved, detailError: null });
+          if (persisted) void refresh();
+        }
+      }
+      put(ticket, { phase: { kind: "done", runId, persisted } });
+    } catch { put(ticket, { phase: { kind: "failed", reason: "engine_unreachable" } }); }
+    finally { if (current(ticket)) running.current = false; }
+  }, [begin, current, put, refresh]);
+  const reset = useCallback(() => setView(previous => ({ ...previous, phase: { kind: "idle" } })), []);
+  // Mask synchronously on identity changes, before effect cleanup/refetch. A→B→A
+  // receives a new epoch even when its tenant string is equal again.
+  const visible = view.epoch === identity.current.epoch && ready ? view : blankView(identity.current.epoch);
+  return { rows: visible.rows, listError: visible.listError, refresh, detail: visible.detail, detailError: visible.detailError,
+    detailLoading: visible.detailLoading, open, close, phase: visible.phase, start, reset, runTimeoutMs: RUN_TIMEOUT_MS };
 }

@@ -1,0 +1,21 @@
+Browser tab: 170265210, Title: "Isolated source recovery proof", URL: "http://localhost:8776/#tenant-shell-main".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+~			3 text PAIGE conversation opened
+~				59 button (expanded) Description: Direct PAIGE, Secondary Actions: Collapse
++			63 button Fold PAIGE conversation
++			64 container Description: PAIGE command workspace, ID: tenant-paige-workspace
++				65 container
++					66 image PAIGE
++					67 text PAIGE Your live operating partner
++					68 button Description: Expand PAIGE panel, Help: Expand panel
++					69 button Description: Open PAIGE in full panel, Help: Open full panel
++					70 button Description: Open PAIGE in a new window, Help: Open in new window
++					71 button Description: Fold PAIGE conversation, Help: Fold PAIGE
++				72 heading PAIGE render fixture, Value: 2
++					73 text PAIGE render fixture
++				74 container
++					75 text Protected local draft
++					76 text field (settable) Protected local draft
++				77 button Clear local fixture draft
++				78 text No Chat or business action is connected.
+The focused UI element is 77 button Clear local fixture draft

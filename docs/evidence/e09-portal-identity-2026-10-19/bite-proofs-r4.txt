@@ -1,0 +1,22 @@
+# E09 CURA round 4 bite proofs (2026-10-19). Each fix reverted one at a time (scratchpad r4bite/bite.py), the test re-run, then restored.
+# Every new or changed assertion below FAILED with its defect reinstated. Head of the fix: 38f400de7 (base origin/main a26efbcc9).
+
+BITE [namesPaige folds before the Paiget exemption (r3)] vitest src/lib/portal/customerAgentName.test.ts: FAILED (1 failed) :: refuses PAIGE with a superscript or subscript t, or written in modifier letters
+BITE [namesPaige folds before the Paiget exemption (r3)] deno supabase/functions/_shared/client-portal-persona.test.ts: FAILED | 53 passed | 1 failed :: frame name "Paigeᵗ" resolves to Cura | frame name "Paigeᵗ" resolves to Cura
+BITE [look-alike map without round-4 entries] vitest src/lib/portal/customerAgentName.test.ts: FAILED (1 failed) :: refuses small capitals, Latin and APL alpha, Cyrillic ie and palochka, and Cherokee look-alikes
+BITE [look-alike map without round-4 entries] deno supabase/functions/_shared/client-portal-persona.test.ts: FAILED | 53 passed | 1 failed :: frame name "ᴘᴀɪɢᴇ" resolves to Cura | frame name "ᴘᴀɪɢᴇ" resolves to Cura
+BITE [digit and symbol swaps folded] vitest src/lib/portal/customerAgentName.test.ts: FAILED (1 failed) :: keeps digit and symbol swaps by design
+BITE [notice compares raw typed text (r3)] vitest src/lib/portal/assistantSettings.test.ts: FAILED (1 failed) :: says nothing when only invisible characters or the length differ
+BITE [notice says includes Paige (r3)] vitest src/lib/portal/assistantSettings.test.ts: FAILED (2 failed) :: explains a typed name that reads like Paige | explains a saved name that was replaced, while the field still shows the replacement
+BITE [TS sentence back to r3] vitest src/lib/client-portal-preferences.test.ts: FAILED (3 failed) :: data-sharing:v2 matches client_portal_consent_disclosure | data-sharing:v2: the page's sentence hashes to the pin the database test holds every writer to | says what the data-sharing switch governs and what it does not change
+BITE [TS sentence back to r3] vitest src/components/client/ClientPreferences.test.tsx: FAILED (1 failed) :: the data-sharing row says what the switch governs, matching its heading and the line under it
+BITE [row label back to r3] vitest src/components/client/ClientPreferences.test.tsx: FAILED (1 failed) :: the data-sharing row says what the switch governs, matching its heading and the line under it
+BITE [heading back to r3] vitest src/components/client/ClientPreferences.test.tsx: FAILED (2 failed) :: nothing on record: email on, texts not set up, not subscribed, sharing not allowed | the data-sharing row says what the switch governs, matching its heading and the line under it
+BITE [detail line straight apostrophe] vitest src/components/client/ClientPreferences.test.tsx: FAILED (1 failed) :: the data-sharing row says what the switch governs, matching its heading and the line under it
+BITE [Client badge shown to inactive (r3)] vitest src/components/app/AppNav.no-access.test.tsx: FAILED (2 failed) :: does not label them a client in the header | offers Home only and drops the Client label
+BITE [unavailable not resolved like not-client (r3)] vitest src/components/app/AppNav.no-access.test.tsx: FAILED (2 failed) :: offers Home only and drops the Client label | waits for staff standing before choosing a menu
+BITE [unavailable not resolved like not-client (r3)] vitest src/pages/AppShell.home-identity.test.tsx: FAILED (2 failed) :: gives a customer whose access ended mid-session the no-access home | keeps staff whose customer frame ended on the owner's own home (§58)
+BITE [unavailable resolved like not-client, re-run after moving frameAbsent local] vitest AppNav.no-access + AppShell.home-identity: 4 failed | 8 passed :: offers Home only and drops the Client label | waits for staff standing before choosing a menu | gives a customer whose access ended mid-session the no-access home | keeps staff whose customer frame ended on the owner's own home (§58)
+BITE [round-3 data-sharing:v2 sentence in the migration] pgTAP customer_portal_profile_consent: not ok 228 - pin: data-sharing:v2 | not ok 230 - data-sharing:v2 says what the switch governs and what it does not change, and makes no stale claim
+BITE [round-3 sentence in the page] consent-drive --only default: 4 of 4 frames FAIL (sharing says what the switch governs)
+BITE [Client badge shown to an inactive viewer] identity-drive: 15/17 OK; inactive light and dark desktop FAIL role badge "Client"

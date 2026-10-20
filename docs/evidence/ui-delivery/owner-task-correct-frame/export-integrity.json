@@ -1,0 +1,112 @@
+{
+  "selectedSanitizedNeutralFixtureExports": [
+    {
+      "name": "render-manifest.json",
+      "source": "render-manifest.json",
+      "bytes": 82352,
+      "sha256": "4269957a718a3cbce403c0c0a30347d011d14331af9a92b776d275e211c34866"
+    },
+    {
+      "name": "native-frame-results.json",
+      "source": "native/native-frame-results.json",
+      "bytes": 934708,
+      "sha256": "7d500c0ef9d2d6cc7941cdfc550131b218bf2fa7adff2224d1604ce0db5205e3"
+    },
+    {
+      "name": "native-keyboard-scroll.json",
+      "source": "native/native-keyboard-scroll.json",
+      "bytes": 6363,
+      "sha256": "951a743ec2aafcd348e7cd0da0a1edd0d5e75eb2629f2d8cd37bb49dd9bc188f"
+    },
+    {
+      "name": "browser-cleanup.json",
+      "source": "native/browser-cleanup.json",
+      "bytes": 193,
+      "sha256": "2c867452c478c9c146e63e04296d63c746b63c52bcf7d4c11f76db2b3b9e8467"
+    },
+    {
+      "name": "style-hash-transport-boundary.json",
+      "source": "native/style-hash-transport-boundary.json",
+      "bytes": 476,
+      "sha256": "dc6cbe19fdfd680c59050d4b9a3c72d7d3d86578727ab93f1d7c13f6ba1dd31a"
+    },
+    {
+      "name": "shell-light-1536x770-closed-draft.png",
+      "source": "native/shell-light-1536x770-closed-draft.png",
+      "bytes": 104680,
+      "sha256": "740ade9a7b4b85c0e8dfb173a89d26da3438d7ff773a4799a9cb6bd48bebeae9"
+    },
+    {
+      "name": "shell-dark-1536x770-open-review.png",
+      "source": "native/shell-dark-1536x770-open-review.png",
+      "bytes": 149950,
+      "sha256": "3b01b5ec73160794961e0c7e722bab26383421e39c6e78e8184ddd19afaa9a5e"
+    },
+    {
+      "name": "shell-dark-390x768-closed-unknown.png",
+      "source": "native/shell-dark-390x768-closed-unknown.png",
+      "bytes": 54005,
+      "sha256": "44f445533eff2d68a2486b5132f7ccd6d6d9a5f3cd1c738213220193d3c75bc4"
+    },
+    {
+      "name": "shell-light-390x768-closed-unknown.png",
+      "source": "native/shell-light-390x768-closed-unknown.png",
+      "bytes": 52908,
+      "sha256": "5b09e84c59be57f9ce8660425c7d0001ab203c5c41683f30f0c97b993752f1fd"
+    },
+    {
+      "name": "mobile-dark-cancel.png",
+      "source": "native/keyboard/mobile-dark-cancel.png",
+      "bytes": 50429,
+      "sha256": "ce046041cb7a2017c7f1f5a61d492e9e2cb4d393f7204a384858f262de27e227"
+    },
+    {
+      "name": "shell-light-390x768-closed-review-cancel.png",
+      "source": "native/keyboard/shell-light-390x768-closed-review-cancel.png",
+      "bytes": 50461,
+      "sha256": "b9cf976b1ba6acad6073e1218f30f6f57586324cbd1edd2e88a2ce7aa0c07d17"
+    },
+    {
+      "name": "shell-light-390x768-closed-unknown-refresh.png",
+      "source": "native/keyboard/shell-light-390x768-closed-unknown-refresh.png",
+      "bytes": 53645,
+      "sha256": "5ae26ce8a9f8e4c65e11704d4293a7709d18bb501ba3f142ff86e97611c85707"
+    },
+    {
+      "name": "shell-dark-390x768-closed-unknown-refresh.png",
+      "source": "native/keyboard/shell-dark-390x768-closed-unknown-refresh.png",
+      "bytes": 54836,
+      "sha256": "cba908cdba534c02cb157365f3ab2b63a8d9778f099391acaad0f3d8b4e3fc81"
+    },
+    {
+      "name": "reflow-light-768x384-closed-review-cancel.png",
+      "source": "native/keyboard/reflow-light-768x384-closed-review-cancel.png",
+      "bytes": 99984,
+      "sha256": "acf6fd0debb3782a9f6abcd7d95df62ae19640407039ebfdd044058d40dd048d"
+    },
+    {
+      "name": "reflow-light-768x384-closed-unknown-refresh.png",
+      "source": "native/keyboard/reflow-light-768x384-closed-unknown-refresh.png",
+      "bytes": 116145,
+      "sha256": "79259a661ff85bf9682e7a10d302edbf83dd7966bf6b69ce0565fbe6668e8edf"
+    },
+    {
+      "name": "reflow-dark-768x384-closed-review-cancel.png",
+      "source": "native/keyboard/reflow-dark-768x384-closed-review-cancel.png",
+      "bytes": 99927,
+      "sha256": "279e63d8a33e8facaa4de4f2b89ef1793f1af831d50d5585f0faf74fa5ceacc1"
+    },
+    {
+      "name": "reflow-dark-768x384-closed-unknown-refresh.png",
+      "source": "native/keyboard/reflow-dark-768x384-closed-unknown-refresh.png",
+      "bytes": 116681,
+      "sha256": "bd50eabdb740099299650945ebb8d102df61a9035efe26f3bbb5e3f47c4e8b07"
+    },
+    {
+      "name": "native-summary.json",
+      "sha256": "43ece1278e6abb2de15d59bb5fd2d913daf048d5e37e280a002b9dc341306257"
+    }
+  ],
+  "full72PngSet": "Retained in original local packet;selected images copied unchanged",
+  "customerData": false
+}

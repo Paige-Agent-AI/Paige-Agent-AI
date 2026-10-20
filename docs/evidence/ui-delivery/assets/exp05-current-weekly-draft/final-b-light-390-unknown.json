@@ -1,0 +1,38 @@
+{
+  "dialogs": [
+    {
+      "rect": {
+        "height": 844,
+        "width": 390.3999938964844,
+        "x": 0,
+        "y": 0
+      },
+      "text": "Weekly responsibilityCurrent owner scope, canonical schedules and verified results.Weekly commitment checkReview the week. Keep the original work in Operations.Read Tue, Oct 20, 9:20 AM EDTNo weekly responsibility is registeredPrepare the schedule and scope for review. Recurring execution is currently unavailable.The response could not be verified. Read the original saved status before trying any action again.Review pending service commitmentsEvery Wednesday at 09:00America/New_YorkYour outstanding personal Planning work. The original commitments stay in Operations → Work.Couldn't confirmThe draft save could not be verified.Current draft status is unavailable. Read it again before approving.Read the original request’s status before any retry. An uncertain response is not permission to save another copy.Read saved statusLast read Tue, Oct 20, 9:21 AM EDTPrepare another responsibilityClients → CalendarOperations → WorkClose"
+    }
+  ],
+  "document": {
+    "scrollWidth": 390,
+    "width": 390
+  },
+  "draftControls": [
+    {
+      "disabled": false,
+      "height": 44,
+      "text": "Read saved status",
+      "width": 135.1999969482422
+    },
+    {
+      "disabled": true,
+      "height": 44,
+      "text": "Prepare another responsibility",
+      "width": 209.8500061035156
+    }
+  ],
+  "focus": "Weekly responsibilityCurrent owner scope, canonical schedules and verified results.Weekly commitment checkReview the week. Keep the original work in Operations.Read Tue, Oct 20, 9:20 AM EDTNo weekly responsibility is registeredPrepare the schedule and scope for review. Recurring execution is currently unavailable.The response could not be verified. Read the original saved status before trying any action again.Review pending service commitmentsEvery Wednesday at 09:00America/New_YorkYour outstanding personal Planning work. The original commitments stay in Operations → Work.Couldn't confirmThe draft save could not be verified.Current draft status is unavailable. Read it again before approving.Read the original request’s status before any retry. An uncertain response is not permission to save another copy.Read saved statusLast read Tue, Oct 20, 9:21 AM EDTPrepare another responsibilityClients → CalendarOperations → WorkClose",
+  "paigeState": "closed",
+  "theme": null,
+  "viewport": {
+    "height": 844,
+    "width": 390
+  }
+}

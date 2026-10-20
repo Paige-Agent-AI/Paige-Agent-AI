@@ -1,0 +1,89 @@
+{
+  "background": "rgb(251, 249, 245)",
+  "samples": [
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "fontSize": "18px",
+      "fontWeight": "600",
+      "foreground": "rgb(23, 19, 49)",
+      "text": "Weekly responsibility"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": "rgb(103, 97, 107)",
+      "text": "Current owner scope, canonical schedules and verified results."
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "fontSize": "20px",
+      "fontWeight": "650",
+      "foreground": "rgb(23, 19, 49)",
+      "text": "Weekly commitment check"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": "rgb(32, 30, 35)",
+      "text": "Review the week. Keep the original work in Operations."
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": "rgb(32, 30, 35)",
+      "text": ""
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": "rgb(32, 30, 35)",
+      "text": "Read Tue, Oct 20, 4:00 AM EDT"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "fontSize": "16px",
+      "fontWeight": "600",
+      "foreground": "rgb(23, 19, 49)",
+      "text": "No weekly responsibility is registered"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": "rgb(32, 30, 35)",
+      "text": "Prepare the schedule and scope for review. Recurring execution is"
+    },
+    {
+      "background": "rgb(32, 30, 35)",
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": "rgb(251, 249, 245)",
+      "text": "Prepare a weekly responsibility"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": "rgb(91, 63, 214)",
+      "text": "Clients → Calendar"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": "rgb(91, 63, 214)",
+      "text": "Operations → Work"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": "rgb(32, 30, 35)",
+      "text": "Close"
+    }
+  ]
+}

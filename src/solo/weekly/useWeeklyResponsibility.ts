@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useTenantContext } from "@/hooks/useTenantContext";
+import { useTierFeatures } from "@/hooks/useTierFeatures";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { getScopedUserId, subscribeScopedUser } from "@/lib/scopedUser";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,10 +11,11 @@ const serverPersona = () => null;
 /** Presentation eligibility only; each read still proves canonical session, tenant and owner authority. */
 export function useWeeklyOwnerAudience() {
   const context = useTenantContext();
+  const { soloStandalone } = useTierFeatures();
   const persona = useImpersonation();
   const scopedUser = useSyncExternalStore(subscribePersona, getScopedUserId, serverPersona);
   const eligible = !context.loading && context.accountContextStatus === "ready" && !context.isPlatformStaff &&
-    Boolean(context.activeUserId && context.activeTenantId) && context.soloShellEnabled && !persona.isImpersonating && scopedUser === null;
+    Boolean(context.activeUserId && context.activeTenantId) && soloStandalone && !persona.isImpersonating && scopedUser === null;
   return { context, eligible, key: `${eligible}:${context.activeUserId}:${context.activeTenantId}:${persona.target?.contactId}:${scopedUser}` };
 }
 

@@ -4,7 +4,7 @@
 // wire shapes the server emits. HARNESS RENDER · NOT LIVE: nothing here proves the deployed,
 // signed-in app — that drive stays owed (§32/§70.1).
 //
-// ?scenario=fast|normal|research|approval|limit|interrupted|stop|refused|reload|first
+// ?scenario=fast|normal|research|approval|limit|interrupted|stop|refused|reload|first|recovery-copy|unconfirmed-copy
 // ?hold=<n>        stop the stream after n chunks and keep it open (a mid-turn frame)
 // ?theme=light|dark  ?layout=page|drawer  (page = the Solo PAIGE workspace, drawer = the docked panel)
 // ?scenario=ask|askfree|askreload|askreload-answered  C4c: PAIGE pauses to ask; an answer (a request
@@ -228,6 +228,11 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   const body = JSON.parse(String(init?.body ?? "{}"));
   const log = (window as unknown as { __c3: { requests: unknown[] } }).__c3.requests;
   log.push(body);
+  // Text-only transport fixtures: no upload, domain action or recovery replay.
+  if (scenario === "recovery-copy" || scenario === "unconfirmed-copy") {
+    return Response.json({ code: "INTERACTIVE_RECOVERY_READ_ONLY", message_accepted: true },
+      { status: scenario === "recovery-copy" ? 409 : 502 });
+  }
   const chunks = body.approvedConfirmations ? (resume ? followUps.resumed : followUps.approved) : body.declinedConfirmations ? followUps.declined
     : body.resume ? (params.get("answerFollow") === "card" ? followUps.answeredCard : followUps.answered)
     : log.length > 1 && scenario.startsWith("ask") ? followUps.other

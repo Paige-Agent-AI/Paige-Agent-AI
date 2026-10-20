@@ -1,0 +1,1304 @@
+[
+  {
+    "label": "1536-closed-light",
+    "background": "rgb(251, 249, 245)",
+    "bounds": {
+      "bottom": 770.4000244140625,
+      "height": 770.4000244140625,
+      "left": 1056,
+      "right": 1536,
+      "top": 0,
+      "width": 480,
+      "x": 1056,
+      "y": 0
+    },
+    "clientHeight": 770,
+    "clientWidth": 464,
+    "focused": "Refresh task details",
+    "found": true,
+    "overflow": "auto",
+    "padding": "32px 24px",
+    "pageScroll": 1536,
+    "pageWidth": 1536,
+    "scrollHeight": 972,
+    "scrollWidth": 464,
+    "texts": [
+      {
+        "color": "rgb(32, 30, 35)",
+        "fontSize": "18px",
+        "tag": "H2",
+        "text": "Confirm the next client check-in"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "14px",
+        "tag": "P",
+        "text": "A commitment with no confirmed due date yet."
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Responsible person"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Status"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Priority"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Due date"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Estimated effort"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Source"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "13px",
+        "tag": "P",
+        "text": "Time uses your device\u2019s timezone. Review the exact date before confirming."
+      }
+    ],
+    "titleBounds": {
+      "bottom": 60,
+      "height": 28,
+      "left": 1080.800048828125,
+      "right": 1496.800048828125,
+      "top": 32,
+      "width": 416,
+      "x": 1080.800048828125,
+      "y": 32
+    }
+  },
+  {
+    "label": "1366-closed-light",
+    "background": "rgb(251, 249, 245)",
+    "bounds": {
+      "bottom": 768,
+      "height": 768,
+      "left": 886.4000244140625,
+      "right": 1366.4000244140625,
+      "top": 0,
+      "width": 480,
+      "x": 886.4000244140625,
+      "y": 0
+    },
+    "clientHeight": 768,
+    "clientWidth": 464,
+    "focused": "Refresh task details",
+    "found": true,
+    "overflow": "auto",
+    "padding": "32px 24px",
+    "pageScroll": 1366,
+    "pageWidth": 1366,
+    "scrollHeight": 972,
+    "scrollWidth": 464,
+    "texts": [
+      {
+        "color": "rgb(32, 30, 35)",
+        "fontSize": "18px",
+        "tag": "H2",
+        "text": "Confirm the next client check-in"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "14px",
+        "tag": "P",
+        "text": "A commitment with no confirmed due date yet."
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Responsible person"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Status"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Priority"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Due date"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Estimated effort"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Source"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "13px",
+        "tag": "P",
+        "text": "Time uses your device\u2019s timezone. Review the exact date before confirming."
+      }
+    ],
+    "titleBounds": {
+      "bottom": 60,
+      "height": 28,
+      "left": 911.2000122070312,
+      "right": 1327.2000122070312,
+      "top": 32,
+      "width": 416,
+      "x": 911.2000122070312,
+      "y": 32
+    }
+  },
+  {
+    "label": "1024-closed-light",
+    "background": "rgb(251, 249, 245)",
+    "bounds": {
+      "bottom": 768,
+      "height": 768,
+      "left": 544,
+      "right": 1024,
+      "top": 0,
+      "width": 480,
+      "x": 544,
+      "y": 0
+    },
+    "clientHeight": 768,
+    "clientWidth": 464,
+    "focused": "Refresh task details",
+    "found": true,
+    "overflow": "auto",
+    "padding": "32px 24px",
+    "pageScroll": 1024,
+    "pageWidth": 1024,
+    "scrollHeight": 972,
+    "scrollWidth": 464,
+    "texts": [
+      {
+        "color": "rgb(32, 30, 35)",
+        "fontSize": "18px",
+        "tag": "H2",
+        "text": "Confirm the next client check-in"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "14px",
+        "tag": "P",
+        "text": "A commitment with no confirmed due date yet."
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Responsible person"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Status"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Priority"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Due date"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Estimated effort"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Source"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "13px",
+        "tag": "P",
+        "text": "Time uses your device\u2019s timezone. Review the exact date before confirming."
+      }
+    ],
+    "titleBounds": {
+      "bottom": 60,
+      "height": 28,
+      "left": 568.7999877929688,
+      "right": 984.7999877929688,
+      "top": 32,
+      "width": 416,
+      "x": 568.7999877929688,
+      "y": 32
+    }
+  },
+  {
+    "label": "900-closed-light",
+    "background": "rgb(251, 249, 245)",
+    "bounds": {
+      "bottom": 1000,
+      "height": 1000,
+      "left": 420,
+      "right": 900,
+      "top": 0,
+      "width": 480,
+      "x": 420,
+      "y": 0
+    },
+    "clientHeight": 1000,
+    "clientWidth": 479,
+    "focused": "Refresh task details",
+    "found": true,
+    "overflow": "auto",
+    "padding": "32px 24px",
+    "pageScroll": 900,
+    "pageWidth": 900,
+    "scrollHeight": 1000,
+    "scrollWidth": 479,
+    "texts": [
+      {
+        "color": "rgb(32, 30, 35)",
+        "fontSize": "18px",
+        "tag": "H2",
+        "text": "Confirm the next client check-in"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "14px",
+        "tag": "P",
+        "text": "A commitment with no confirmed due date yet."
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Responsible person"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Status"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Priority"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Due date"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Estimated effort"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Source"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "13px",
+        "tag": "P",
+        "text": "Time uses your device\u2019s timezone. Review the exact date before confirming."
+      }
+    ],
+    "titleBounds": {
+      "bottom": 60,
+      "height": 28,
+      "left": 444.8000183105469,
+      "right": 876.0000305175781,
+      "top": 32,
+      "width": 431.2000122070313,
+      "x": 444.8000183105469,
+      "y": 32
+    }
+  },
+  {
+    "label": "1536-open-light",
+    "background": "rgb(251, 249, 245)",
+    "bounds": {
+      "bottom": 770.4000244140625,
+      "height": 770.4000244140625,
+      "left": 1056,
+      "right": 1536,
+      "top": 0,
+      "width": 480,
+      "x": 1056,
+      "y": 0
+    },
+    "clientHeight": 770,
+    "clientWidth": 464,
+    "focused": "Refresh task details",
+    "found": true,
+    "overflow": "auto",
+    "padding": "32px 24px",
+    "pageScroll": 1536,
+    "pageWidth": 1536,
+    "scrollHeight": 972,
+    "scrollWidth": 464,
+    "texts": [
+      {
+        "color": "rgb(32, 30, 35)",
+        "fontSize": "18px",
+        "tag": "H2",
+        "text": "Confirm the next client check-in"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "14px",
+        "tag": "P",
+        "text": "A commitment with no confirmed due date yet."
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Responsible person"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Status"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Priority"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Due date"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Estimated effort"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Source"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "13px",
+        "tag": "P",
+        "text": "Time uses your device\u2019s timezone. Review the exact date before confirming."
+      }
+    ],
+    "titleBounds": {
+      "bottom": 60,
+      "height": 28,
+      "left": 1080.800048828125,
+      "right": 1496.800048828125,
+      "top": 32,
+      "width": 416,
+      "x": 1080.800048828125,
+      "y": 32
+    }
+  },
+  {
+    "label": "1366-open-light",
+    "background": "rgb(251, 249, 245)",
+    "bounds": {
+      "bottom": 768,
+      "height": 768,
+      "left": 886.4000244140625,
+      "right": 1366.4000244140625,
+      "top": 0,
+      "width": 480,
+      "x": 886.4000244140625,
+      "y": 0
+    },
+    "clientHeight": 768,
+    "clientWidth": 464,
+    "focused": "Refresh task details",
+    "found": true,
+    "overflow": "auto",
+    "padding": "32px 24px",
+    "pageScroll": 1366,
+    "pageWidth": 1366,
+    "scrollHeight": 972,
+    "scrollWidth": 464,
+    "texts": [
+      {
+        "color": "rgb(32, 30, 35)",
+        "fontSize": "18px",
+        "tag": "H2",
+        "text": "Confirm the next client check-in"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "14px",
+        "tag": "P",
+        "text": "A commitment with no confirmed due date yet."
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Responsible person"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Status"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Priority"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Due date"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Estimated effort"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Source"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "13px",
+        "tag": "P",
+        "text": "Time uses your device\u2019s timezone. Review the exact date before confirming."
+      }
+    ],
+    "titleBounds": {
+      "bottom": 60,
+      "height": 28,
+      "left": 911.2000122070312,
+      "right": 1327.2000122070312,
+      "top": 32,
+      "width": 416,
+      "x": 911.2000122070312,
+      "y": 32
+    }
+  },
+  {
+    "label": "1024-open-light",
+    "background": "rgb(251, 249, 245)",
+    "bounds": {
+      "bottom": 768,
+      "height": 768,
+      "left": 544,
+      "right": 1024,
+      "top": 0,
+      "width": 480,
+      "x": 544,
+      "y": 0
+    },
+    "clientHeight": 768,
+    "clientWidth": 464,
+    "focused": "Refresh task details",
+    "found": true,
+    "overflow": "auto",
+    "padding": "32px 24px",
+    "pageScroll": 1024,
+    "pageWidth": 1024,
+    "scrollHeight": 972,
+    "scrollWidth": 464,
+    "texts": [
+      {
+        "color": "rgb(32, 30, 35)",
+        "fontSize": "18px",
+        "tag": "H2",
+        "text": "Confirm the next client check-in"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "14px",
+        "tag": "P",
+        "text": "A commitment with no confirmed due date yet."
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Responsible person"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Status"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Priority"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Due date"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Estimated effort"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Source"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "13px",
+        "tag": "P",
+        "text": "Time uses your device\u2019s timezone. Review the exact date before confirming."
+      }
+    ],
+    "titleBounds": {
+      "bottom": 60,
+      "height": 28,
+      "left": 568.7999877929688,
+      "right": 984.7999877929688,
+      "top": 32,
+      "width": 416,
+      "x": 568.7999877929688,
+      "y": 32
+    }
+  },
+  {
+    "label": "900-open-light",
+    "background": "rgb(251, 249, 245)",
+    "bounds": {
+      "bottom": 1000,
+      "height": 1000,
+      "left": 420,
+      "right": 900,
+      "top": 0,
+      "width": 480,
+      "x": 420,
+      "y": 0
+    },
+    "clientHeight": 1000,
+    "clientWidth": 479,
+    "focused": "Refresh task details",
+    "found": true,
+    "overflow": "auto",
+    "padding": "32px 24px",
+    "pageScroll": 900,
+    "pageWidth": 900,
+    "scrollHeight": 1000,
+    "scrollWidth": 479,
+    "texts": [
+      {
+        "color": "rgb(32, 30, 35)",
+        "fontSize": "18px",
+        "tag": "H2",
+        "text": "Confirm the next client check-in"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "14px",
+        "tag": "P",
+        "text": "A commitment with no confirmed due date yet."
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Responsible person"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Status"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Priority"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Due date"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Estimated effort"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Source"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "13px",
+        "tag": "P",
+        "text": "Time uses your device\u2019s timezone. Review the exact date before confirming."
+      }
+    ],
+    "titleBounds": {
+      "bottom": 60,
+      "height": 28,
+      "left": 444.8000183105469,
+      "right": 876.0000305175781,
+      "top": 32,
+      "width": 431.2000122070313,
+      "x": 444.8000183105469,
+      "y": 32
+    }
+  },
+  {
+    "label": "390-open-light",
+    "background": "rgb(251, 249, 245)",
+    "bounds": {
+      "bottom": 844,
+      "height": 844,
+      "left": 0,
+      "right": 390.3999938964844,
+      "top": 0,
+      "width": 390.3999938964844,
+      "x": 0,
+      "y": 0
+    },
+    "clientHeight": 844,
+    "clientWidth": 374,
+    "focused": "Refresh task details",
+    "found": true,
+    "overflow": "auto",
+    "padding": "32px 24px",
+    "pageScroll": 390,
+    "pageWidth": 390,
+    "scrollHeight": 972,
+    "scrollWidth": 374,
+    "texts": [
+      {
+        "color": "rgb(32, 30, 35)",
+        "fontSize": "18px",
+        "tag": "H2",
+        "text": "Confirm the next client check-in"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "14px",
+        "tag": "P",
+        "text": "A commitment with no confirmed due date yet."
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Responsible person"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Status"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Priority"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Due date"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Estimated effort"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Source"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "13px",
+        "tag": "P",
+        "text": "Time uses your device\u2019s timezone. Review the exact date before confirming."
+      }
+    ],
+    "titleBounds": {
+      "bottom": 60,
+      "height": 28,
+      "left": 24.80000114440918,
+      "right": 351.19999504089355,
+      "top": 32,
+      "width": 326.3999938964844,
+      "x": 24.80000114440918,
+      "y": 32
+    }
+  },
+  {
+    "label": "390-open-light-bottom",
+    "background": "rgb(251, 249, 245)",
+    "bounds": {
+      "bottom": 844,
+      "height": 844,
+      "left": 0,
+      "right": 390.3999938964844,
+      "top": 0,
+      "width": 390.3999938964844,
+      "x": 0,
+      "y": 0
+    },
+    "clientHeight": 844,
+    "clientWidth": 374,
+    "focused": "Refresh task details",
+    "found": true,
+    "overflow": "auto",
+    "padding": "32px 24px",
+    "pageScroll": 390,
+    "pageWidth": 390,
+    "scrollHeight": 972,
+    "scrollWidth": 374,
+    "texts": [
+      {
+        "color": "rgb(32, 30, 35)",
+        "fontSize": "18px",
+        "tag": "H2",
+        "text": "Confirm the next client check-in"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "14px",
+        "tag": "P",
+        "text": "A commitment with no confirmed due date yet."
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Responsible person"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Status"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Priority"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Due date"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Estimated effort"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Source"
+      },
+      {
+        "color": "rgb(103, 97, 107)",
+        "fontSize": "13px",
+        "tag": "P",
+        "text": "Time uses your device\u2019s timezone. Review the exact date before confirming."
+      }
+    ],
+    "titleBounds": {
+      "bottom": -40,
+      "height": 28,
+      "left": 24.80000114440918,
+      "right": 351.19999504089355,
+      "top": -68,
+      "width": 326.3999938964844,
+      "x": 24.80000114440918,
+      "y": -68
+    }
+  },
+  {
+    "label": "390-creator-dark-b",
+    "background": "rgb(16, 14, 20)",
+    "bounds": {
+      "bottom": 844,
+      "height": 844,
+      "left": 0,
+      "right": 390.3999938964844,
+      "top": 0,
+      "width": 390.3999938964844,
+      "x": 0,
+      "y": 0
+    },
+    "clientHeight": 844,
+    "clientWidth": 374,
+    "focused": "Close",
+    "found": true,
+    "overflow": "auto",
+    "padding": "24px 16px",
+    "pageScroll": 390,
+    "pageWidth": 390,
+    "scrollHeight": 857,
+    "scrollWidth": 374,
+    "texts": [
+      {
+        "color": "rgb(246, 242, 234)",
+        "fontSize": "18px",
+        "tag": "H2",
+        "text": "Give the next step an owner"
+      },
+      {
+        "color": "rgb(172, 166, 157)",
+        "fontSize": "14px",
+        "tag": "P",
+        "text": "Create a task with a clear responsibility and deadline."
+      }
+    ],
+    "titleBounds": {
+      "bottom": 52,
+      "height": 28,
+      "left": 16.80000114440918,
+      "right": 359.19999504089355,
+      "top": 24,
+      "width": 342.3999938964844,
+      "x": 16.80000114440918,
+      "y": 24
+    }
+  },
+  {
+    "label": "1536-creator-dark-b",
+    "background": "rgb(16, 14, 20)",
+    "bounds": {
+      "bottom": 770.4000244140625,
+      "height": 770.4000244140625,
+      "left": 1056,
+      "right": 1536,
+      "top": 0,
+      "width": 480,
+      "x": 1056,
+      "y": 0
+    },
+    "clientHeight": 770,
+    "clientWidth": 464,
+    "focused": "Close",
+    "found": true,
+    "overflow": "auto",
+    "padding": "32px 24px",
+    "pageScroll": 1536,
+    "pageWidth": 1536,
+    "scrollHeight": 873,
+    "scrollWidth": 464,
+    "texts": [
+      {
+        "color": "rgb(246, 242, 234)",
+        "fontSize": "18px",
+        "tag": "H2",
+        "text": "Give the next step an owner"
+      },
+      {
+        "color": "rgb(172, 166, 157)",
+        "fontSize": "14px",
+        "tag": "P",
+        "text": "Create a task with a clear responsibility and deadline."
+      }
+    ],
+    "titleBounds": {
+      "bottom": 60,
+      "height": 28,
+      "left": 1080.800048828125,
+      "right": 1496.800048828125,
+      "top": 32,
+      "width": 416,
+      "x": 1080.800048828125,
+      "y": 32
+    }
+  },
+  {
+    "label": "1536-planning-dark-b",
+    "background": "rgb(16, 14, 20)",
+    "bounds": {
+      "bottom": 770.4000244140625,
+      "height": 770.4000244140625,
+      "left": 1056,
+      "right": 1536,
+      "top": 0,
+      "width": 480,
+      "x": 1056,
+      "y": 0
+    },
+    "clientHeight": 770,
+    "clientWidth": 464,
+    "focused": "Close",
+    "found": true,
+    "overflow": "auto",
+    "padding": "32px 24px",
+    "pageScroll": 1536,
+    "pageWidth": 1536,
+    "scrollHeight": 1132,
+    "scrollWidth": 464,
+    "texts": [
+      {
+        "color": "rgb(246, 242, 234)",
+        "fontSize": "18px",
+        "tag": "H2",
+        "text": "Confirm the project handoff"
+      },
+      {
+        "color": "rgb(172, 166, 157)",
+        "fontSize": "14px",
+        "tag": "P",
+        "text": "The next step needs an owner decision before delivery can continue."
+      },
+      {
+        "color": "rgb(172, 166, 157)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Responsible person"
+      },
+      {
+        "color": "rgb(172, 166, 157)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Status"
+      },
+      {
+        "color": "rgb(172, 166, 157)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Priority"
+      },
+      {
+        "color": "rgb(172, 166, 157)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Due date"
+      },
+      {
+        "color": "rgb(172, 166, 157)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Project"
+      },
+      {
+        "color": "rgb(172, 166, 157)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Work type"
+      },
+      {
+        "color": "rgb(246, 242, 234)",
+        "fontSize": "17px",
+        "tag": "H2",
+        "text": "Update this work"
+      },
+      {
+        "color": "rgb(246, 242, 234)",
+        "fontSize": "17px",
+        "tag": "H2",
+        "text": "Activity"
+      },
+      {
+        "color": "rgb(172, 166, 157)",
+        "fontSize": "12px",
+        "tag": "P",
+        "text": "Activity couldn\u2019t be read. Retry activity"
+      }
+    ],
+    "titleBounds": {
+      "bottom": 60,
+      "height": 28,
+      "left": 1080.800048828125,
+      "right": 1496.800048828125,
+      "top": 32,
+      "width": 416,
+      "x": 1080.800048828125,
+      "y": 32
+    }
+  },
+  {
+    "label": "390-planning-dark-b",
+    "background": "rgb(16, 14, 20)",
+    "bounds": {
+      "bottom": 844,
+      "height": 844,
+      "left": 0,
+      "right": 390.3999938964844,
+      "top": 0,
+      "width": 390.3999938964844,
+      "x": 0,
+      "y": 0
+    },
+    "clientHeight": 844,
+    "clientWidth": 374,
+    "focused": "Close",
+    "found": true,
+    "overflow": "auto",
+    "padding": "32px 24px",
+    "pageScroll": 390,
+    "pageWidth": 390,
+    "scrollHeight": 1132,
+    "scrollWidth": 374,
+    "texts": [
+      {
+        "color": "rgb(246, 242, 234)",
+        "fontSize": "18px",
+        "tag": "H2",
+        "text": "Confirm the project handoff"
+      },
+      {
+        "color": "rgb(172, 166, 157)",
+        "fontSize": "14px",
+        "tag": "P",
+        "text": "The next step needs an owner decision before delivery can continue."
+      },
+      {
+        "color": "rgb(172, 166, 157)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Responsible person"
+      },
+      {
+        "color": "rgb(172, 166, 157)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Status"
+      },
+      {
+        "color": "rgb(172, 166, 157)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Priority"
+      },
+      {
+        "color": "rgb(172, 166, 157)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Due date"
+      },
+      {
+        "color": "rgb(172, 166, 157)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Project"
+      },
+      {
+        "color": "rgb(172, 166, 157)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Work type"
+      },
+      {
+        "color": "rgb(246, 242, 234)",
+        "fontSize": "17px",
+        "tag": "H2",
+        "text": "Update this work"
+      },
+      {
+        "color": "rgb(246, 242, 234)",
+        "fontSize": "17px",
+        "tag": "H2",
+        "text": "Activity"
+      },
+      {
+        "color": "rgb(172, 166, 157)",
+        "fontSize": "12px",
+        "tag": "P",
+        "text": "Activity couldn\u2019t be read. Retry activity"
+      }
+    ],
+    "titleBounds": {
+      "bottom": 60,
+      "height": 28,
+      "left": 24.80000114440918,
+      "right": 351.19999504089355,
+      "top": 32,
+      "width": 326.3999938964844,
+      "x": 24.80000114440918,
+      "y": 32
+    }
+  },
+  {
+    "label": "320-planning-dark-b",
+    "background": "rgb(16, 14, 20)",
+    "bounds": {
+      "bottom": 640,
+      "height": 640,
+      "left": 0,
+      "right": 320,
+      "top": 0,
+      "width": 320,
+      "x": 0,
+      "y": 0
+    },
+    "clientHeight": 640,
+    "clientWidth": 304,
+    "focused": "Close",
+    "found": true,
+    "overflow": "auto",
+    "padding": "32px 24px",
+    "pageScroll": 320,
+    "pageWidth": 320,
+    "scrollHeight": 1160,
+    "scrollWidth": 304,
+    "texts": [
+      {
+        "color": "rgb(246, 242, 234)",
+        "fontSize": "18px",
+        "tag": "H2",
+        "text": "Confirm the project handoff"
+      },
+      {
+        "color": "rgb(172, 166, 157)",
+        "fontSize": "14px",
+        "tag": "P",
+        "text": "The next step needs an owner decision before delivery can continue."
+      },
+      {
+        "color": "rgb(172, 166, 157)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Responsible person"
+      },
+      {
+        "color": "rgb(172, 166, 157)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Status"
+      },
+      {
+        "color": "rgb(172, 166, 157)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Priority"
+      },
+      {
+        "color": "rgb(172, 166, 157)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Due date"
+      },
+      {
+        "color": "rgb(172, 166, 157)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Project"
+      },
+      {
+        "color": "rgb(172, 166, 157)",
+        "fontSize": "12px",
+        "tag": "DT",
+        "text": "Work type"
+      },
+      {
+        "color": "rgb(246, 242, 234)",
+        "fontSize": "17px",
+        "tag": "H2",
+        "text": "Update this work"
+      },
+      {
+        "color": "rgb(246, 242, 234)",
+        "fontSize": "17px",
+        "tag": "H2",
+        "text": "Activity"
+      },
+      {
+        "color": "rgb(172, 166, 157)",
+        "fontSize": "12px",
+        "tag": "P",
+        "text": "Activity couldn\u2019t be read. Retry activity"
+      }
+    ],
+    "titleBounds": {
+      "bottom": 88,
+      "height": 56,
+      "left": 24.80000114440918,
+      "right": 280.8000011444092,
+      "top": 32,
+      "width": 256,
+      "x": 24.80000114440918,
+      "y": 32
+    }
+  }
+]

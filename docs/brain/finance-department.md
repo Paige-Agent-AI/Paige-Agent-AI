@@ -1,5 +1,21 @@
 # Finance department — current source and full operating target
 
+## October20 EXP02 integration checkpoint
+
+Original statement helper#2021 is source-released at mained305fb25 with exact
+reviewed tree737b577a, required CI and productionweb readback; it stays UNMOUNTED.
+Paired actual release closeout is in#2430, whose required CI remains pending.
+The Finance/Executive consumer candidate composes currentmain/VERA atbaceaaa8:
+262/262 focused cases, type ratchet10/6, productionbuild5603modules and scoped
+lint0errors PASS. Nineteen source-bound native synthetic PNGs preserve product
+fonts, corrected contrast, desktop/phone states, keyboard disclosure and truthful
+source/zero/unavailable/provenance labels. See the existing UI delivery record
+and e2-finance-native-2026-10-20 manifest. A development-only hook helper was
+renamed without changing expressions/fixtures/rendering; exact equivalence is
+recorded separately from the frozen captures. Actual zoom, deployed Finance
+behavior/provider readiness, Chat/Live, account isolation/reload and full19/founder
+acceptance remain owed. No new issuer, ledger, provider, approval or action activation.
+
 ## EXP02 consumer continuation v2026-10-20.1 — local, not released
 
 EXP02 extends the approved Banking & Cash destination using the same
@@ -254,3 +270,24 @@ Legacy OAuth initiation/callback, refresh and disconnect lack the adopted compan
 Finance-owned `domains/finance_reads.ts` consumes the released company/source, account, liability, Bill/Purchase, budget and scenario RPCs through the existing caller-JWT client. Six read declarations remain **unregistered**, with Chat/Mind/maturity **UNAVAILABLE** and self-description disabled. Original labels, nullable exact values, currencies, source snapshots and owner-entered assumptions retain their meaning; no company-wide debt, bank settlement or actual opening cash is invented. Current actor/workspace are resolved on the server, selectors are frozen before awaits, and current owner/admin, company and binding revision/lifecycle are revalidated after the read. Final actor/workspace changes discard facts. Permission refusal stays distinct from transport failure; private error details and unknown raw fields are withheld.
 
 Controlled source tests: **54 PASS**, including eleven failing-first authority/refusal controls. Strict ES2020 compilation and focused lint also PASS. Underlying released PostgreSQL contracts retain tenant/company/role, optimistic revisions and canonical receipt rules. This source slice changes no shared registry, protected Chat/Live executor, composer, model router, provider transport, mutation or UI. Registration ownership overlaps #1615; the Finance contribution is coordinated without competing edits. Operating Fabric F2a #2022 preserves Sales-owned receipt/AR adapters; a distinct Finance domain contribution remains to be reconciled with its standing owner. Canonical Metric/Evidence issuance/freshness and actual UI/Spine/Fabric/Chat/Live/authenticated/provider acceptance remain PROOF OWED. Dynamic financial facts never become durable Memory. Full Finance stays PARTIAL.
+
+### Historical statement measures — controlled source candidate
+
+Finance derives exact gross/operating/net profit and rounded margins only from supported native statement components/subtotals with company, source version, classification version, currency, reporting basis and period metadata. Conflicting subtotals refuse the statement; partial coverage withholds conclusions and missing detail remains unknown. Native report group/column keys carry semantics, while localized labels remain unchanged. Recognized filter dimensions are refused for company-wide summary interpretation; an unfiltered request and legitimate company-source scope still require canonical producer evidence. No bank cash, financial effect, provider call, ledger, model route or UI/Spine/Fabric binding is introduced. This source candidate remains unmounted and owes independent review, CI and release proof.
+
+### QuickBooks lifecycle production safety closeout — #2016
+
+**2026-10-11 — Finance QuickBooks lifecycle safety source — PR [#2016](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2016) → main `de699f0984194391c5c5fd10bea36491c4c8ecbc`; reviewed head `962a278ab0cfd6dc93a0f729de5d468aa5c97bb6`.** Independent non-author review COMPLETE/SHIP with limitations dispositioned; all latest required exact-head CI PASS. 57 controlled actual-handler/helper tests and focused ESLint/strict TypeScript/registry lint PASS. Normal Edge workflow `38195625528` and both Vercel production statuses SUCCESS; migration NOT_APPLICABLE. Production four ACTIVE v1/JWT-enabled endpoint bodies and shared refusal helper match merged source; four anonymous GETs returned gateway401. These are deployed-source and anonymous-refusal proofs, not authenticated or native provider acceptance. Stored connections/tokens untouched; unavailable disconnect is not revocation. Working company-bound consent/token lifecycle, ingestion and source-backed UI/Spine/Fabric/Chat/Live acceptance remain PROOF OWED; full Finance PARTIAL. Own preview absent; foreign previews preserved. No real OAuth, provider calls, customer financial effects or customer announcement. Recovery uses a reviewed company-authorized forward replacement. [Observed closeout](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2016#issuecomment-6116707364).
+
+### October20 EXP02 statement-source reuse checkpoint
+
+Existing #2021 sourcee1e1a9f2 is composed with main519da233 at supporting
+source freeze1acc3bc5fca988d3efff74fce3b8fcb6c6c66060. Four statement/test
+leaves are unchanged. Fresh108/108 statement/provider tests, strict ES2020 and
+scoped lint pass; the existing registry validates33 providers/120 anchors.
+No statement ingestion, persistence, mounted UI/Spine/Chat/Live or provider
+activation follows from these checks. EXP02 O04 must bind the canonical company,
+unfiltered source request, basis/period and immutable evidence before consuming
+these exact helpers. Missing/filtered/partial facts stay unknown; cash-basis
+statement income is not bank cash. See the existing statement delivery contract
+and E02 nineteen-outcome matrix; do not build a duplicate calculation engine.

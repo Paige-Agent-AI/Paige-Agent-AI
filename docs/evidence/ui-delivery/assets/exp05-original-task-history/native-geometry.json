@@ -1,0 +1,794 @@
+[
+  {
+    "name": "history-a-light-1536x770-closed-verified.html",
+    "geometry": {
+      "history": {
+        "scrollWidth": 1146,
+        "width": 1146
+      },
+      "host": {
+        "height": 704,
+        "overflow": "auto",
+        "scrollHeight": 1513
+      },
+      "pageOverflow": false,
+      "targets": [
+        {
+          "height": 44,
+          "label": "Close history"
+        },
+        {
+          "height": 44,
+          "label": "Inspect outcome"
+        },
+        {
+          "height": 44,
+          "label": "Open task"
+        }
+      ],
+      "taskHref": "/solo/1234567/operations/work?task=00000000-0000-4000-8000-000000000114",
+      "theme": "light",
+      "viewport": [
+        1536,
+        770
+      ]
+    },
+    "axHasResult": true
+  },
+  {
+    "name": "history-a-light-1536x770-open-verified.html",
+    "geometry": {
+      "history": {
+        "scrollWidth": 695,
+        "width": 695
+      },
+      "host": {
+        "height": 704,
+        "overflow": "auto",
+        "scrollHeight": 1575
+      },
+      "pageOverflow": false,
+      "targets": [
+        {
+          "height": 44,
+          "label": "Close history"
+        },
+        {
+          "height": 44,
+          "label": "Inspect outcome"
+        },
+        {
+          "height": 44,
+          "label": "Open task"
+        }
+      ],
+      "taskHref": "/solo/1234567/operations/work?task=00000000-0000-4000-8000-000000000114",
+      "theme": "light",
+      "viewport": [
+        1536,
+        770
+      ]
+    },
+    "axHasResult": false
+  },
+  {
+    "name": "history-a-light-1366x768-closed-verified.html",
+    "geometry": {
+      "history": {
+        "scrollWidth": 1146,
+        "width": 1146
+      },
+      "host": {
+        "height": 702,
+        "overflow": "auto",
+        "scrollHeight": 1513
+      },
+      "pageOverflow": false,
+      "targets": [
+        {
+          "height": 44,
+          "label": "Close history"
+        },
+        {
+          "height": 44,
+          "label": "Inspect outcome"
+        },
+        {
+          "height": 44,
+          "label": "Open task"
+        }
+      ],
+      "taskHref": "/solo/1234567/operations/work?task=00000000-0000-4000-8000-000000000114",
+      "theme": "light",
+      "viewport": [
+        1366,
+        768
+      ]
+    },
+    "axHasResult": true
+  },
+  {
+    "name": "history-a-light-1366x768-open-verified.html",
+    "geometry": {
+      "history": {
+        "scrollWidth": 727,
+        "width": 727
+      },
+      "host": {
+        "height": 702,
+        "overflow": "auto",
+        "scrollHeight": 1554
+      },
+      "pageOverflow": false,
+      "targets": [
+        {
+          "height": 44,
+          "label": "Close history"
+        },
+        {
+          "height": 44,
+          "label": "Inspect outcome"
+        },
+        {
+          "height": 44,
+          "label": "Open task"
+        }
+      ],
+      "taskHref": "/solo/1234567/operations/work?task=00000000-0000-4000-8000-000000000114",
+      "theme": "light",
+      "viewport": [
+        1366,
+        768
+      ]
+    },
+    "axHasResult": false
+  },
+  {
+    "name": "history-a-light-1024x768-closed-verified.html",
+    "geometry": {
+      "history": {
+        "scrollWidth": 864,
+        "width": 864
+      },
+      "host": {
+        "height": 702,
+        "overflow": "auto",
+        "scrollHeight": 1539
+      },
+      "pageOverflow": false,
+      "targets": [
+        {
+          "height": 44,
+          "label": "Close history"
+        },
+        {
+          "height": 44,
+          "label": "Inspect outcome"
+        },
+        {
+          "height": 44,
+          "label": "Open task"
+        }
+      ],
+      "taskHref": "/solo/1234567/operations/work?task=00000000-0000-4000-8000-000000000114",
+      "theme": "light",
+      "viewport": [
+        1024,
+        768
+      ]
+    },
+    "axHasResult": false
+  },
+  {
+    "name": "history-a-light-1024x768-open-verified.html",
+    "geometry": {
+      "history": {
+        "scrollWidth": 864,
+        "width": 864
+      },
+      "host": {
+        "height": 702,
+        "overflow": "auto",
+        "scrollHeight": 1539
+      },
+      "pageOverflow": false,
+      "targets": [
+        {
+          "height": 44,
+          "label": "Close history"
+        },
+        {
+          "height": 44,
+          "label": "Inspect outcome"
+        },
+        {
+          "height": 44,
+          "label": "Open task"
+        }
+      ],
+      "taskHref": "/solo/1234567/operations/work?task=00000000-0000-4000-8000-000000000114",
+      "theme": "light",
+      "viewport": [
+        1024,
+        768
+      ]
+    },
+    "axHasResult": false
+  },
+  {
+    "name": "history-a-light-900x1000-closed-verified.html",
+    "geometry": {
+      "history": {
+        "scrollWidth": 745,
+        "width": 745
+      },
+      "host": {
+        "height": 934,
+        "overflow": "auto",
+        "scrollHeight": 1534
+      },
+      "pageOverflow": false,
+      "targets": [
+        {
+          "height": 44,
+          "label": "Close history"
+        },
+        {
+          "height": 44,
+          "label": "Inspect outcome"
+        },
+        {
+          "height": 44,
+          "label": "Open task"
+        }
+      ],
+      "taskHref": "/solo/1234567/operations/work?task=00000000-0000-4000-8000-000000000114",
+      "theme": "light",
+      "viewport": [
+        900,
+        1000
+      ]
+    },
+    "axHasResult": false
+  },
+  {
+    "name": "history-a-light-900x1000-open-verified.html",
+    "geometry": {
+      "history": {
+        "scrollWidth": 745,
+        "width": 745
+      },
+      "host": {
+        "height": 934,
+        "overflow": "auto",
+        "scrollHeight": 1534
+      },
+      "pageOverflow": false,
+      "targets": [
+        {
+          "height": 44,
+          "label": "Close history"
+        },
+        {
+          "height": 44,
+          "label": "Inspect outcome"
+        },
+        {
+          "height": 44,
+          "label": "Open task"
+        }
+      ],
+      "taskHref": "/solo/1234567/operations/work?task=00000000-0000-4000-8000-000000000114",
+      "theme": "light",
+      "viewport": [
+        900,
+        1000
+      ]
+    },
+    "axHasResult": false
+  },
+  {
+    "name": "history-a-light-390x768-closed-verified.html",
+    "geometry": {
+      "history": {
+        "scrollWidth": 239,
+        "width": 239
+      },
+      "host": {
+        "height": 709,
+        "overflow": "auto",
+        "scrollHeight": 2383
+      },
+      "pageOverflow": false,
+      "targets": [
+        {
+          "height": 44,
+          "label": "Close history"
+        },
+        {
+          "height": 44,
+          "label": "Inspect outcome"
+        },
+        {
+          "height": 44,
+          "label": "Open task"
+        }
+      ],
+      "taskHref": "/solo/1234567/operations/work?task=00000000-0000-4000-8000-000000000114",
+      "theme": "light",
+      "viewport": [
+        390,
+        768
+      ]
+    },
+    "axHasResult": true
+  },
+  {
+    "name": "history-a-light-390x768-open-verified.html",
+    "geometry": {
+      "history": {
+        "scrollWidth": 239,
+        "width": 239
+      },
+      "host": {
+        "height": 709,
+        "overflow": "auto",
+        "scrollHeight": 2383
+      },
+      "pageOverflow": false,
+      "targets": [
+        {
+          "height": 44,
+          "label": "Close history"
+        },
+        {
+          "height": 44,
+          "label": "Inspect outcome"
+        },
+        {
+          "height": 44,
+          "label": "Open task"
+        }
+      ],
+      "taskHref": "/solo/1234567/operations/work?task=00000000-0000-4000-8000-000000000114",
+      "theme": "light",
+      "viewport": [
+        390,
+        768
+      ]
+    },
+    "axHasResult": false
+  },
+  {
+    "name": "history-b-dark-1536x770-closed-verified.html",
+    "geometry": {
+      "history": {
+        "scrollWidth": 1146,
+        "width": 1146
+      },
+      "host": {
+        "height": 704,
+        "overflow": "auto",
+        "scrollHeight": 1513
+      },
+      "pageOverflow": false,
+      "targets": [
+        {
+          "height": 44,
+          "label": "Close history"
+        },
+        {
+          "height": 44,
+          "label": "Inspect outcome"
+        },
+        {
+          "height": 44,
+          "label": "Open task"
+        }
+      ],
+      "taskHref": "/solo/7654321/operations/work?task=00000000-0000-4000-8000-000000000114",
+      "theme": "dark",
+      "viewport": [
+        1536,
+        770
+      ]
+    },
+    "axHasResult": true
+  },
+  {
+    "name": "history-b-dark-1536x770-open-verified.html",
+    "geometry": {
+      "history": {
+        "scrollWidth": 695,
+        "width": 695
+      },
+      "host": {
+        "height": 704,
+        "overflow": "auto",
+        "scrollHeight": 1575
+      },
+      "pageOverflow": false,
+      "targets": [
+        {
+          "height": 44,
+          "label": "Close history"
+        },
+        {
+          "height": 44,
+          "label": "Inspect outcome"
+        },
+        {
+          "height": 44,
+          "label": "Open task"
+        }
+      ],
+      "taskHref": "/solo/7654321/operations/work?task=00000000-0000-4000-8000-000000000114",
+      "theme": "dark",
+      "viewport": [
+        1536,
+        770
+      ]
+    },
+    "axHasResult": false
+  },
+  {
+    "name": "history-b-dark-1366x768-closed-verified.html",
+    "geometry": {
+      "history": {
+        "scrollWidth": 1146,
+        "width": 1146
+      },
+      "host": {
+        "height": 702,
+        "overflow": "auto",
+        "scrollHeight": 1513
+      },
+      "pageOverflow": false,
+      "targets": [
+        {
+          "height": 44,
+          "label": "Close history"
+        },
+        {
+          "height": 44,
+          "label": "Inspect outcome"
+        },
+        {
+          "height": 44,
+          "label": "Open task"
+        }
+      ],
+      "taskHref": "/solo/7654321/operations/work?task=00000000-0000-4000-8000-000000000114",
+      "theme": "dark",
+      "viewport": [
+        1366,
+        768
+      ]
+    },
+    "axHasResult": true
+  },
+  {
+    "name": "history-b-dark-1366x768-open-verified.html",
+    "geometry": {
+      "history": {
+        "scrollWidth": 727,
+        "width": 727
+      },
+      "host": {
+        "height": 702,
+        "overflow": "auto",
+        "scrollHeight": 1554
+      },
+      "pageOverflow": false,
+      "targets": [
+        {
+          "height": 44,
+          "label": "Close history"
+        },
+        {
+          "height": 44,
+          "label": "Inspect outcome"
+        },
+        {
+          "height": 44,
+          "label": "Open task"
+        }
+      ],
+      "taskHref": "/solo/7654321/operations/work?task=00000000-0000-4000-8000-000000000114",
+      "theme": "dark",
+      "viewport": [
+        1366,
+        768
+      ]
+    },
+    "axHasResult": false
+  },
+  {
+    "name": "history-b-dark-1024x768-closed-verified.html",
+    "geometry": {
+      "history": {
+        "scrollWidth": 864,
+        "width": 864
+      },
+      "host": {
+        "height": 702,
+        "overflow": "auto",
+        "scrollHeight": 1539
+      },
+      "pageOverflow": false,
+      "targets": [
+        {
+          "height": 44,
+          "label": "Close history"
+        },
+        {
+          "height": 44,
+          "label": "Inspect outcome"
+        },
+        {
+          "height": 44,
+          "label": "Open task"
+        }
+      ],
+      "taskHref": "/solo/7654321/operations/work?task=00000000-0000-4000-8000-000000000114",
+      "theme": "dark",
+      "viewport": [
+        1024,
+        768
+      ]
+    },
+    "axHasResult": false
+  },
+  {
+    "name": "history-b-dark-1024x768-open-verified.html",
+    "geometry": {
+      "history": {
+        "scrollWidth": 864,
+        "width": 864
+      },
+      "host": {
+        "height": 702,
+        "overflow": "auto",
+        "scrollHeight": 1539
+      },
+      "pageOverflow": false,
+      "targets": [
+        {
+          "height": 44,
+          "label": "Close history"
+        },
+        {
+          "height": 44,
+          "label": "Inspect outcome"
+        },
+        {
+          "height": 44,
+          "label": "Open task"
+        }
+      ],
+      "taskHref": "/solo/7654321/operations/work?task=00000000-0000-4000-8000-000000000114",
+      "theme": "dark",
+      "viewport": [
+        1024,
+        768
+      ]
+    },
+    "axHasResult": false
+  },
+  {
+    "name": "history-b-dark-900x1000-closed-verified.html",
+    "geometry": {
+      "history": {
+        "scrollWidth": 745,
+        "width": 745
+      },
+      "host": {
+        "height": 934,
+        "overflow": "auto",
+        "scrollHeight": 1534
+      },
+      "pageOverflow": false,
+      "targets": [
+        {
+          "height": 44,
+          "label": "Close history"
+        },
+        {
+          "height": 44,
+          "label": "Inspect outcome"
+        },
+        {
+          "height": 44,
+          "label": "Open task"
+        }
+      ],
+      "taskHref": "/solo/7654321/operations/work?task=00000000-0000-4000-8000-000000000114",
+      "theme": "dark",
+      "viewport": [
+        900,
+        1000
+      ]
+    },
+    "axHasResult": false
+  },
+  {
+    "name": "history-b-dark-900x1000-open-verified.html",
+    "geometry": {
+      "history": {
+        "scrollWidth": 745,
+        "width": 745
+      },
+      "host": {
+        "height": 934,
+        "overflow": "auto",
+        "scrollHeight": 1534
+      },
+      "pageOverflow": false,
+      "targets": [
+        {
+          "height": 44,
+          "label": "Close history"
+        },
+        {
+          "height": 44,
+          "label": "Inspect outcome"
+        },
+        {
+          "height": 44,
+          "label": "Open task"
+        }
+      ],
+      "taskHref": "/solo/7654321/operations/work?task=00000000-0000-4000-8000-000000000114",
+      "theme": "dark",
+      "viewport": [
+        900,
+        1000
+      ]
+    },
+    "axHasResult": false
+  },
+  {
+    "name": "history-b-dark-390x768-closed-verified.html",
+    "geometry": {
+      "history": {
+        "scrollWidth": 239,
+        "width": 239
+      },
+      "host": {
+        "height": 709,
+        "overflow": "auto",
+        "scrollHeight": 2383
+      },
+      "pageOverflow": false,
+      "targets": [
+        {
+          "height": 44,
+          "label": "Close history"
+        },
+        {
+          "height": 44,
+          "label": "Inspect outcome"
+        },
+        {
+          "height": 44,
+          "label": "Open task"
+        }
+      ],
+      "taskHref": "/solo/7654321/operations/work?task=00000000-0000-4000-8000-000000000114",
+      "theme": "dark",
+      "viewport": [
+        390,
+        768
+      ]
+    },
+    "axHasResult": true
+  },
+  {
+    "name": "history-b-dark-390x768-open-verified.html",
+    "geometry": {
+      "history": {
+        "scrollWidth": 239,
+        "width": 239
+      },
+      "host": {
+        "height": 709,
+        "overflow": "auto",
+        "scrollHeight": 2383
+      },
+      "pageOverflow": false,
+      "targets": [
+        {
+          "height": 44,
+          "label": "Close history"
+        },
+        {
+          "height": 44,
+          "label": "Inspect outcome"
+        },
+        {
+          "height": 44,
+          "label": "Open task"
+        }
+      ],
+      "taskHref": "/solo/7654321/operations/work?task=00000000-0000-4000-8000-000000000114",
+      "theme": "dark",
+      "viewport": [
+        390,
+        768
+      ]
+    },
+    "axHasResult": false
+  },
+  {
+    "name": "history-a-light-768x384-closed-verified.html",
+    "geometry": {
+      "history": {
+        "scrollWidth": 617,
+        "width": 617
+      },
+      "host": {
+        "height": 318,
+        "overflow": "auto",
+        "scrollHeight": 1551
+      },
+      "pageOverflow": false,
+      "targets": [
+        {
+          "height": 44,
+          "label": "Close history"
+        },
+        {
+          "height": 44,
+          "label": "Inspect outcome"
+        },
+        {
+          "height": 44,
+          "label": "Open task"
+        }
+      ],
+      "taskHref": "/solo/1234567/operations/work?task=00000000-0000-4000-8000-000000000114",
+      "theme": "light",
+      "viewport": [
+        768,
+        384
+      ]
+    },
+    "axHasResult": true
+  },
+  {
+    "name": "history-b-dark-768x384-closed-verified.html",
+    "geometry": {
+      "history": {
+        "scrollWidth": 617,
+        "width": 617
+      },
+      "host": {
+        "height": 318,
+        "overflow": "auto",
+        "scrollHeight": 1551
+      },
+      "pageOverflow": false,
+      "targets": [
+        {
+          "height": 44,
+          "label": "Close history"
+        },
+        {
+          "height": 44,
+          "label": "Inspect outcome"
+        },
+        {
+          "height": 44,
+          "label": "Open task"
+        }
+      ],
+      "taskHref": "/solo/7654321/operations/work?task=00000000-0000-4000-8000-000000000114",
+      "theme": "dark",
+      "viewport": [
+        768,
+        384
+      ]
+    },
+    "axHasResult": false
+  }
+]

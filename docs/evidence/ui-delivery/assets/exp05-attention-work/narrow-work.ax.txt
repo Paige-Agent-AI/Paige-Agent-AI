@@ -1,0 +1,107 @@
+Browser tab: 1738568133, Title: "Local actual SOLO Operations proof", URL: "http://127.0.0.1:51805/?context=b&theme=light".
+1 AXWebArea Local actual SOLO Operations proof, URL: 127.0.0.1:51805/?context=b&theme=light
+	2 container
+		3 text PAIGE folded; your conversation is preserved
+		4 link Description: Skip to content, Value: 127.0.0.1:51805/?context=b&theme=light#tenant-shell-main
+		5 container Tenant workspace
+			6 link Description: PAIGE Solo home, Value: 127.0.0.1:51805/solo/1702/command-center
+			7 button Expand navigation
+				8 image
+			9 link Description: Command Center, Value: 127.0.0.1:51805/solo/1702/command-center
+			10 link Description: Operations, Value: 127.0.0.1:51805/solo/1702/operations
+			11 link Description: Clients, Value: 127.0.0.1:51805/solo/1702/clients
+			12 link Description: Marketing, Value: 127.0.0.1:51805/solo/1702/growth
+			13 link Description: Ads, Value: 127.0.0.1:51805/solo/1702/ads
+			14 link Description: Sales, Value: 127.0.0.1:51805/solo/1702/sales
+			15 link Description: Finance, Value: 127.0.0.1:51805/solo/1702/finance
+			16 link Description: Marketplace, Value: 127.0.0.1:51805/solo/1702/marketplace
+			17 link Description: Settings, Value: 127.0.0.1:51805/solo/1702/settings
+			18 button Description: Use Obsidian theme, Help: Obsidian theme
+			19 button Sign out
+			20 text SY
+		181 button (collapsed) Description: Direct PAIGE, Secondary Actions: Expand
+			182 image PAIGE
+			183 text Direct PAIGE, or press ⌘\
+			184 text ⌘\
+		27 container Operations department
+			28 container
+				29 container Department views
+					30 button Overview
+					31 button Work
+					32 button Projects
+					33 button Delivery
+					34 button Playbooks
+					35 button Capacity
+				185 button New task
+				36 button Refresh work and team profiles
+					37 image
+				186 button Review with PAIGE
+			38 container
+				187 container Timing to confirm in Work
+					188 button Back to Overview
+					189 container
+						190 text Timing to confirm  ·  2  matching loaded records
+					191 button View all loaded work
+				192 container Work
+					193 container
+						194 heading Move the work forward, Value: 1
+							195 text Move the work forward
+						196 text See the next step and the person responsible.
+					197 container Work view
+						198 checkbox Board, Value: 0
+						199 checkbox List, Value: 1
+						200 checkbox Timeline, Value: 0
+					201 container
+						202 text Search work, people and projects
+						203 text field (settable) Search work, people and projects
+					204 container
+						205 text Filter work
+						206 pop up button (collapsed, settable) Filter work, Value: Active work, Secondary Actions: Expand
+							207 menu
+								208 (selected) Active work
+								209 All work
+								210 Blocked
+								211 Overdue
+								212 Completed
+								213 Cancelled
+					214 text 2  items shown
+					215 container Work list
+						216 table
+							217 row
+								218 cell
+									219 text Work / project
+								220 cell
+									221 text Owner
+								222 cell
+									223 text Status
+								224 cell
+									225 text Due / reminder
+							226 row
+								227 cell
+									228 button Confirm the project handoff
+									229 text Client onboarding
+								230 cell
+									231 text Owner
+									232 text Jordan Ellis
+								233 cell
+									234 text Status
+									235 text Blocked
+								236 cell
+									237 text Due
+									238 text No due date
+							239 row
+								240 cell
+									241 button Confirm the next client check-in
+									242 text Standalone work
+								243 cell
+									244 text Owner
+									245 text Jordan Ellis
+								246 cell
+									247 text Status
+									248 text In progress
+								249 cell
+									250 text Due
+									251 text No due date
+				252 text This view combines the Planning work and CRM tasks loaded here. Planning uses a 200-plan read with its visible work; CRM returns up to 200 tasks. Unavailable sources are excluded.
+
+The focused UI element is 187 container Timing to confirm in Work

@@ -75,4 +75,3 @@ Impeccable source pass: no new cards, colors, typography, decorative copy, motio
 Independent source review is in progress against95f4; no review PASS, hosted CI, preview, migration application, deployed function/version, authenticated action, owner acceptance or full capability closure is asserted here.
 
 Browser connection attempts timed out before a current local frame was produced. Continue safe source/test/review/CI work; preserve the rendered gate and original effect authority. Do not profile-hop, copy a session or bypass the browser transport to manufacture evidence.
-

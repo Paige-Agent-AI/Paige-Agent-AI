@@ -745,3 +745,11 @@ verify_jwt = false
 # is omitted, so the deployed-source readback needs it declared to match production.
 [functions.paige-mcp-consent]
 verify_jwt = false
+
+# Preserve the deployed push sender: callers are server-side only (pg_net triggers, detect-credit-alerts,
+# task-reminder-notifications, and the browser's public-key read), and sending is gated in the handler by
+# isAuthorizedInternalCaller (a service-role bearer or a valid cron token) before any push goes out.
+# Production runs it with verify_jwt=false; the CLI keeps the remote setting when this is omitted, so the
+# deployed-source readback needs it declared to match production.
+[functions.send-push-notification]
+verify_jwt = false

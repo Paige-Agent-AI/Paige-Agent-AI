@@ -149,6 +149,28 @@ function calendarBookingReadDoorBound(resolver) {
 // Only this exact Task selector/schema, original-JWT mount and reviewed native
 // read closure qualify. This never clears a classified mutation or list debt.
 const CRM_TASK_DECLARATION_FILE = "supabase/functions/_shared/paige-spine/domains/crm_task.ts";
+// EXP00 O-3: the Platform Operator's company reads. Exact platform.* SQL executors, empty
+// exact inputs, and a chat mount that only a verified operator turn reaches. The RPC gate
+// (is_platform_admin on auth.uid()) is the authority; this pin only names the reviewed
+// construction. Never clears risk debt or any list/effect tool.
+const PLATFORM_OPERATOR_READ_DECLARATION_FILE = "supabase/functions/_shared/paige-spine/domains/platform_operator_reads.ts";
+function platformOperatorReadDoorBound(resolver) {
+  const read = file => resolver.sourceFile(path.join(ROOT, file))?.text ?? "";
+  const chat = read("supabase/functions/paige-ai-chat/index.ts");
+  const declaration = read(PLATFORM_OPERATOR_READ_DECLARATION_FILE);
+  const compact = value => value.replace(/\s+/g, "");
+  return chat.includes('from "../_shared/paige-spine/domains/platform_operator_reads.ts"')
+    && compact(chat).includes('if(operatorConsolePersona)toolDefs.push(...PLATFORM_OPERATOR_READ_TOOLS);')
+    && chat.includes('surface: z.literal("operator-console").optional()')
+    && chat.includes('await supabaseClient.rpc("is_platform_operator")')
+    && chat.includes('if (!operatorConsolePersona) {')
+    && chat.includes('await supabaseClient.rpc("operator_commercial_customers")')
+    && chat.includes('await supabaseClient.rpc("operator_billing_overview")')
+    && compact(declaration).includes('providerBinding:{kind:"internal",operation:"public.operator_commercial_customers",connectionResolver:null}')
+    && compact(declaration).includes('providerBinding:{kind:"internal",operation:"public.operator_billing_overview",connectionResolver:null}')
+    && compact(declaration).includes('parameters:PLATFORM_CUSTOMER_OVERVIEW_CAPABILITY.input,')
+    && compact(declaration).includes('parameters:PLATFORM_COMMERCIAL_SUMMARY_CAPABILITY.input,');
+}
 const CRM_TASK_ADAPTER_FILE = "supabase/functions/_shared/operations-task-read.ts";
 function crmTaskReadDoorBound(resolver) {
   const read = file => resolver.sourceFile(path.join(ROOT, file))?.text ?? "";
@@ -241,6 +263,16 @@ function collectDeclaredCapabilityNames(files, resolver) {
                 const identity=nestedProperties(sections,'identity',sourceFile);
                 if(identity&&literalProperty(identity,'id')==='crm_clients.task_read'&&owner.name.text==='CRM_TASK_READ_CAPABILITY'
                   && crmTaskReadDoorBound(resolver))readTools.set('crm_get_task',owner.name.text);
+              }
+              else if(operation==='public.operator_commercial_customers'&&relative(file)===PLATFORM_OPERATOR_READ_DECLARATION_FILE){
+                const identity=nestedProperties(sections,'identity',sourceFile);
+                if(identity&&literalProperty(identity,'id')==='platform.customers_overview'&&owner.name.text==='PLATFORM_CUSTOMER_OVERVIEW_CAPABILITY'
+                  && platformOperatorReadDoorBound(resolver))readTools.set('platform_customer_overview',owner.name.text);
+              }
+              else if(operation==='public.operator_billing_overview'&&relative(file)===PLATFORM_OPERATOR_READ_DECLARATION_FILE){
+                const identity=nestedProperties(sections,'identity',sourceFile);
+                if(identity&&literalProperty(identity,'id')==='platform.commercial_summary'&&owner.name.text==='PLATFORM_COMMERCIAL_SUMMARY_CAPABILITY'
+                  && platformOperatorReadDoorBound(resolver))readTools.set('platform_commercial_summary',owner.name.text);
               }
               else if(operation==='edge.tenant-stripe-connect'&&relative(file)==='supabase/functions/_shared/sales-payments/merchant-capability.ts'){
                 const identity=nestedProperties(sections,'identity',sourceFile);

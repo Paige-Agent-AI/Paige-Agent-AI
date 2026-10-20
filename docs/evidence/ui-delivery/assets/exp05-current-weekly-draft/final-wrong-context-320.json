@@ -1,0 +1,38 @@
+{
+  "dialogs": [
+    {
+      "rect": {
+        "height": 768,
+        "width": 320,
+        "x": 0,
+        "y": 0
+      },
+      "text": "Weekly responsibilityCurrent owner scope, canonical schedules and verified results.Weekly commitment checkReview the week. Keep the original work in Operations.Read Tue, Oct 20, 9:26 AM EDTNo weekly responsibility is registeredPrepare the schedule and scope for review. Recurring execution is currently unavailable.Draft status is unavailable. Your proposal has not been reported as saved.Read saved proposalsPrepare a weekly responsibilityClients → CalendarOperations → WorkClose"
+    }
+  ],
+  "document": {
+    "scrollWidth": 320,
+    "width": 320
+  },
+  "draftControls": [
+    {
+      "disabled": false,
+      "height": 44,
+      "text": "Read saved proposals",
+      "width": 158.83750915527344
+    },
+    {
+      "disabled": false,
+      "height": 44,
+      "text": "Prepare a weekly responsibility",
+      "width": 214.5625
+    }
+  ],
+  "focus": "Close",
+  "paigeState": "closed",
+  "theme": null,
+  "viewport": {
+    "height": 768,
+    "width": 320
+  }
+}

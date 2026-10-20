@@ -1,0 +1,27 @@
+{
+  "dialog": null,
+  "document": {
+    "clientWidth": 1536,
+    "scrollWidth": 1536
+  },
+  "entry": {
+    "rect": {
+      "bottom": 0,
+      "height": 0,
+      "left": 0,
+      "right": 0,
+      "top": 0,
+      "width": 0,
+      "x": 0,
+      "y": 0
+    },
+    "visible": false
+  },
+  "focus": {
+    "name": null,
+    "text": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','d"
+  },
+  "height": 770,
+  "reducedMotion": true,
+  "width": 1536
+}

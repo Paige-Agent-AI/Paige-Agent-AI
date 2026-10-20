@@ -75,7 +75,7 @@ SKILLS_APPLIED: Flow-by-Flow, PAIGE UI Design and Impeccable (incumbent world,
 source truth, hierarchy, wrapping, touch/keyboard states, no invented activity).
 https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md
 
-INTERNAL_BUILD_IDENTITY: 1a18c6447bfa9e11ca3a8390054eed22e84ff2d4; deployment=none-native-source-proof; environment=local; migrations=PROOF_OWED(20271112120000_e2_vera_intelligence_role); edge=PROOF_OWED(existing Chat addressing); evidence=docs/evidence/e2-vera-native-2026-10-20/native-report.json; identity-role=supporting source/native proof; final release head in PR2400 receipt.
+INTERNAL_BUILD_IDENTITY: 1a18c6447bfa9e11ca3a8390054eed22e84ff2d4; deployment=none-native-source-proof; environment=local; migrations=PROOF_OWED(20271112140000_e2_vera_intelligence_role); edge=PROOF_OWED(existing Chat addressing); evidence=docs/evidence/e2-vera-native-2026-10-20/native-report.json; identity-role=supporting source/native proof; final release head in PR2400 receipt.
 RELEASE_CHANNEL: development: local integration of the existing specialist; no release inferred.
 RELEASE_CLASSIFICATION: internal-only: bounded VERA integration prerequisite for the complete EXP02 experience.
 CUSTOMER_RELEASE_IDENTITY: none: full-Experience release and founder acceptance remain due.
@@ -104,3 +104,8 @@ apply121100 to the Chat executor repair. The unapplied VERA migration moves to
 121200 with identical SQL bytes; rollback-test include paths move with it. The
 frozen native frames above remain supporting product-source evidence, not
 production registry or authenticated specialist proof.
+
+Current-main refresh after the browser interruption: production frontier is121300
+(#2427), so VERA advances its still-unapplied reservation again to121400. Same
+SQL bytes and ten include paths; plain db push remains mandatory. The earlier
+121200 reservation is superseded and was never applied.

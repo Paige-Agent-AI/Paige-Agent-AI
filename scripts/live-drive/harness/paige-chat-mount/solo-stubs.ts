@@ -41,6 +41,7 @@ export function useTenantContext() {
   }), []);
 }
 export const TenantProvider = ({ children }: { children: unknown }) => children;
+export const useOptionalTenantContext = useTenantContext;
 
 export function useScopedUserId() { return "harness-owner"; }
 

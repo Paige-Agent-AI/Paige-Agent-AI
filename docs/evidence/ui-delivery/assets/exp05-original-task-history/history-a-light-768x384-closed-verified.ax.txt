@@ -1,0 +1,85 @@
+Browser tab: 1738568092, Title: "Local SOLO internal task proof", URL: "http://127.0.0.1:62911/native-final/history-a-light-768x384-closed-verified.html".
+1 AXWebArea Local SOLO internal task proof, URL: 127.0.0.1:62911/native-final/history-a-light-768x384-closed-verified.html
+	2 container
+		3 text PAIGE workspace ready
+		4 link Description: Skip to content, Value: 127.0.0.1:62911/native-final/history-a-light-768x384-closed-verified.html#tenant-shell-main
+		5 container Tenant workspace
+			6 button Expand navigation
+				7 image
+			8 container
+				9 link Description: Command Center, Value: 127.0.0.1:62911/solo/1234567/command-center
+				10 link Description: Operations, Value: 127.0.0.1:62911/solo/1234567/operations
+				11 link Description: Clients, Value: 127.0.0.1:62911/solo/1234567/clients
+				12 link Description: Marketing, Value: 127.0.0.1:62911/solo/1234567/growth
+				13 link Description: Ads, Value: 127.0.0.1:62911/solo/1234567/ads
+				14 link Description: Sales, Value: 127.0.0.1:62911/solo/1234567/sales
+				15 link Description: Finance, Value: 127.0.0.1:62911/solo/1234567/finance
+				16 link Description: Marketplace, Value: 127.0.0.1:62911/solo/1234567/marketplace
+				17 link Description: Settings, Value: 127.0.0.1:62911/solo/1234567/settings
+			18 button Description: Use Obsidian theme, Help: Obsidian theme
+			19 button Sign out
+			20 text TE
+		21 container
+			22 text TEST SERVICES Settings Solo
+			23 button (collapsed) Description: Direct PAIGE, Secondary Actions: Expand
+				24 image PAIGE
+				25 text Direct PAIGE, or press ⌘\
+				26 text ⌘\
+		27 container
+			28 tab group Integrations sections
+				29 tab (selectable, settable, boolean) Integrations, Value: 0
+				30 tab (selected, settable, boolean) Automations, Value: 1
+			31 container Internal task processes
+				32 container
+					33 heading Internal task processes, Value: 2, ID: :r9c:-title
+						34 text Internal task processes
+					35 text A new contact can prepare a task for your approval.
+					36 button Refresh
+				37 content list
+					38 container
+						39 heading Review every new contact, Value: 3, ID: :r9c:-00000000-0000-4000-8000-000000000103-name
+							40 text Review every new contact
+						41 text When a contact is created · Draft · Each task needs your approval Review the new contact, verify their preferred next step, and prepare a clear owner follow-up. Preserve the complete request and check these long reference details: contactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreference Read the contact record and confirm the next internal task before taking any action.
+Keep the original notes, verify ownership, and let the owner approve each occurrence. This synthetic task never sends a message.
+						42 button (collapsed) Review to enable, Secondary Actions: Expand
+						43 button (expanded) View history, Secondary Actions: Collapse
+						44 container Description: Process history, ID: :r9c:-00000000-0000-4000-8000-000000000103-history
+							45 heading Original attempts, Value: 4
+								46 text Original attempts
+							47 button Close history
+							48 text Read the original approval and result. Inspecting history does not run this process.
+							49 content list
+								50 container
+									51 text Approved · Updated Oct 18, 2026, 12:30 PM UTC
+									52 checkbox Inspect outcome, Value: 1
+									53 heading Value: 4, Review the new contact, verify their preferred next step, and prepare a clear owner follow-up. Preserve the complete request and check these long reference details: contactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreference
+										54 text Review the new contact, verify their preferred next step, and prepare a clear owner follow-up. Preserve the complete request and check these long reference details: contactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreferencecontactreference
+									55 text Execution recorded · Oct 18, 2026, 12:31 PM UTC
+									56 text Original task creation is verified against its saved result and receipt. Open the task to read its current state.
+									57 link Description: Open task, Value: 127.0.0.1:62911/solo/1234567/operations/work?task=00000000-0000-4000-8000-000000000114
+				58 container
+					59 link Description: Review pending tasks, Value: 127.0.0.1:62911/solo/1234567/command-center/business-game-plan
+					60 link Description: Open work, Value: 127.0.0.1:62911/solo/1234567/operations/work
+			61 container No pipeline-message rules saved
+				62 heading No pipeline-message rules saved, Value: 2, ID: sa-status-title
+					63 text No pipeline-message rules saved
+				64 text None saved
+				65 text Pipeline-message rules follow a client through your pipeline. Their message delivery depends on the supported delivery path and its current readiness.
+				66 container
+					67 text Before building a pipeline-message rule.  New pipeline-message rules are saved switched off. This section cannot enable a pipeline-message rule. Creating or editing one does not enable it; delivery readiness and deliberate activation remain separate from saving.
+				68 link Description: Set up your pipeline, Value: 127.0.0.1:62911/solo/1234567/growth/pipeline
+				69 text A rule watches for a client reaching a stage, so your stages come first. You can create them yourself.
+			70 container Pipeline-message rules
+				71 container
+					72 heading Pipeline-message rules, Value: 2, ID: sa-list-title
+						73 text Pipeline-message rules
+					74 text No pipeline-message rules here yet.
+				75 text You can create pipeline-message rules here once your pipeline exists.
+			76 container Pipeline-message outcomes
+				77 container
+					78 heading Pipeline-message outcomes, Value: 2, ID: sa-history-title
+						79 text Pipeline-message outcomes
+					80 text No pipeline-message outcomes recorded.
+				81 text When a running pipeline-message rule is considered after a client moves, its outcome appears here, including when it held back and why.
+
+The focused UI element is 1 AXWebArea Local SOLO internal task proof, URL: 127.0.0.1:62911/native-final/history-a-light-768x384-closed-verified.html

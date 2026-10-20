@@ -7,6 +7,15 @@
 .ops-operating-desk button:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 3px; }
 .ops-operating-desk .ops-desk-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0; min-height: 44px; border: 0; border-radius: 8px; padding: 10px 14px; background: var(--pg-ink); color: var(--pg-canvas); font-weight: 550; }
 .ops-desk-primary:hover { background: var(--pg-ink-2); }
+.ops-desk-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.ops-desk-actions .e5-weekly-open { min-height: 44px; }
+.ops-desk-actions .e5-weekly-chat-entry { margin-left: 0; }
+@container (max-width: 420px) {
+  .ops-desk-actions { width: 100%; flex-wrap: nowrap; justify-content: flex-start; align-items: stretch; }
+  .ops-desk-actions > * { flex: 1 1 0; min-width: 0; }
+  .ops-desk-actions .e5-weekly-open, .ops-desk-actions .ops-desk-primary { width: 100%; height: 100%; min-height: 44px; white-space: normal; line-height: 1.4; justify-content: center; padding: 8px; }
+  .ops-desk-actions .e5-weekly-open-label { min-width: 0; overflow-wrap: anywhere; }
+}
 .ops-desk-read-scope { margin: 0 0 24px; color: var(--pg-muted); font-size: 12px; line-height: 1.6; }
 .ops-desk-columns { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(250px, 1fr); gap: 30px; }
 .ops-desk-primary-column,.ops-desk-next-column { min-width: 0; }

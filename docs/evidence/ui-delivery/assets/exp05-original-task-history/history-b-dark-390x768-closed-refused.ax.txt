@@ -1,0 +1,34 @@
+Browser tab: 1738568092, Title: "Local SOLO internal task proof", URL: "http://127.0.0.1:62911/native-final/history-b-dark-390x768-closed-refused.html".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 51-77
+~1 AXWebArea Local SOLO internal task proof, URL: 127.0.0.1:62911/native-final/history-b-dark-390x768-closed-refused.html
+~		4 link Description: Skip to content, Value: 127.0.0.1:62911/native-final/history-b-dark-390x768-closed-refused.html#tenant-shell-main
+~					30 heading Internal task processes, Value: 2, ID: :r8k:-title
+~						36 heading Review every new contact, Value: 3, ID: :r8k:-00000000-0000-4000-8000-000000000103-name
+~						41 container Description: Process history, ID: :r8k:-00000000-0000-4000-8000-000000000103-history
+~									50 text This result is no longer available in your current workspace or role.
++				51 container
++					52 link Description: Review pending tasks, Value: 127.0.0.1:62911/solo/7654321/command-center/business-game-plan
++					53 link Description: Open work, Value: 127.0.0.1:62911/solo/7654321/operations/work
++			54 container No pipeline-message rules saved
++				55 heading No pipeline-message rules saved, Value: 2, ID: sa-status-title
++					56 text No pipeline-message rules saved
++				57 text None saved
++				58 text Pipeline-message rules follow a client through your pipeline. Their message delivery depends on the supported delivery path and its current readiness.
++				59 container
++					60 text Before building a pipeline-message rule.  New pipeline-message rules are saved switched off. This section cannot enable a pipeline-message rule. Creating or editing one does not enable it; delivery readiness and deliberate activation remain separate from saving.
++				61 link Description: Set up your pipeline, Value: 127.0.0.1:62911/solo/7654321/growth/pipeline
++				62 text A rule watches for a client reaching a stage, so your stages come first. You can create them yourself.
++			63 container Pipeline-message rules
++				64 container
++					65 heading Pipeline-message rules, Value: 2, ID: sa-list-title
++						66 text Pipeline-message rules
++					67 text No pipeline-message rules here yet.
++				68 text You can create pipeline-message rules here once your pipeline exists.
++			69 container Pipeline-message outcomes
++				70 container
++					71 heading Pipeline-message outcomes, Value: 2, ID: sa-history-title
++						72 text Pipeline-message outcomes
++					73 text No pipeline-message outcomes recorded.
++				74 text When a running pipeline-message rule is considered after a client moves, its outcome appears here, including when it held back and why.
+The focused UI element is 1 AXWebArea Local SOLO internal task proof, URL: 127.0.0.1:62911/native-final/history-b-dark-390x768-closed-refused.html

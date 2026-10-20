@@ -4,6 +4,8 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { PlanItem } from "@/hooks/usePlanList";
 import type { CrmWorkRecord } from "./operations-native-work";
 import { OperationsOverview } from "./OperationsOverview";
+// This pure work-ordering suite isolates the separately tested weekly entry.
+vi.mock("../weekly/WeeklyResponsibilityEntry", () => ({ WeeklyResponsibilityEntry: () => null }));
 
 let container: HTMLDivElement, root: Root;
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;

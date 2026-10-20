@@ -34,7 +34,7 @@ describe("Business review transport — canonical shape and workspace fence", ()
   it("runs no request before workspace resolution", async () => { await render(null); expect(api.invoke).not.toHaveBeenCalled(); });
   it("uses the same explicit reporting clock as Chat and the existing seam", async () => {
     api.invoke.mockResolvedValue({ data: { ok: true, snapshot: TEST_BUSINESS_REVIEW }, error: null }); await render(TEST_REVIEW_TENANT);
-    expect(api.invoke).toHaveBeenCalledWith("paige-business-review", expect.objectContaining({ body: { period: "last_7_days", timezone: "America/New_York" } }));
+    expect(api.invoke).toHaveBeenCalledWith("paige-business-review?finance_sources=1", expect.objectContaining({ body: { period: "last_7_days", timezone: "America/New_York" } }));
     expect(host.textContent).toBe(TEST_REVIEW_TENANT);
   });
   it("drops an old request across a workspace switch, including its late completion", async () => {

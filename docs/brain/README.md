@@ -64,6 +64,40 @@ supplement12 PASS/0 FAIL/4 BLOCKED. See the existing
 [Mission contract](../delivery/paige-business-mission-system-phase2.md).
 ANT-138/147 carry current release coordination; ANT-52 carries customer proof.
 
+**Finance/priority consumer guidance:** `finance_sources=1` negotiates the richer
+Finance shape through the existing snapshot without changing the old caller.
+The pending #2409 priority policy orders requested, available-domain risks act
+before watch with stable source ties; no health score, engine or authority grant.
+Company L1 and tenant SOLO L2 remain distinct; EXP01/05/09/11 consumers reuse the
+same permitted sources and original records. This supersedes the stale v1 release
+status, without converting supporting native proof into customer acceptance.
+
+**Finance native contrast lesson (October20, development):** real rendered
+amounts inherited muted provenance ink and measured3.195:1 in Obsidian.
+Source repairef4c5c52 uses existing semantic ink tokens, preserving exact
+decimal strings and product fonts. Final native repaint/finish and customer
+proof remain owed after transport loss; pre-fix frames are supporting evidence.
+See the existing Finance flow evidence; reuse the same presenter, not another
+financial reader or theme.
+
+**Recovered Finance source (October20):** existing open #2021/e1e1a9f2
+contains historical statement measures, and #2032/c8865a21 contains obligation/
+liability normalization and sparse-reader compatibility. These remain unmerged/
+unmounted, not customer intelligence. #2047/210ebbc3 already deployed authorized
+plan metadata discovery. Reuse these original contracts for remaining O04 depth;
+see the existing19-outcome matrix for exact heads and completion sequence. No
+new financial engine, store or dormant/provider activation is authorized by
+source discovery.
+
+**October19 EXP02 Finance — local integration, not released:** the existing
+business operating snapshot now consumes canonical caller-JWT Finance catalogue
+and stored account-source reads. Source-specific exact decimal facts retain their
+company, currency, coverage and observed/synchronized times; source balances,
+available cash and credit stay separate. No provider request, new metric/store,
+financial calculation or action activation. Native/authenticated/Live and all19
+full-Experience acceptance remain due. See the existing [E02 matrix](../delivery/e2-customer-experience-integration-matrix.md)
+and [Finance flow evidence](../evidence/ui-delivery/e2-finance-business-review.md).
+
 **October19 EXP02 VERA continuation — development:** the existing VERA identity
 is being aligned to Intelligence, Finance & Risk through the existing registry,
 addressed Chat and native Executive handoff. PAIGE remains principal COO. Current

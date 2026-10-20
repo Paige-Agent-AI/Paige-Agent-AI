@@ -38,6 +38,7 @@ import {
   type ContextSourceResult,
   type DegradationEntry,
 } from "./mod.ts";
+import { formatFinanceSourceAmount, validateFinanceReviewEvidence, type FinanceReviewEvidence } from '../finance/business-review-evidence.ts';
 import { formatMissionTargetValue, validateMissionTargetSnapshot, type MissionTargetSnapshot } from "../business-mission-targets/presentation.ts";
 
 export const OPERATING_SNAPSHOT_VERSION = 1 as const;
@@ -405,6 +406,7 @@ export function periodIsRollingDays(period: SnapshotPeriod): boolean {
 
 export const SNAPSHOT_DOMAINS = [
   "revenue",
+  "finance",
   "sales_pipeline",
   "clients",
   "payments",
@@ -503,6 +505,8 @@ export type DomainSnapshot = {
   }[];
   /** Canonical Play target definitions plus issued observations; game_plan only. */
   readonly mission_targets?: readonly MissionTargetSnapshot[];
+  /** Source-specific exact decimal facts from existing Finance readers; finance only. */
+  readonly finance_evidence?: FinanceReviewEvidence;
   /** Provenance; at least one. */
   readonly sources: readonly { readonly system: string; readonly adapter: string; readonly reference?: string }[];
 };
@@ -664,7 +668,7 @@ export function validateDomainSnapshot(
   try {
     const s = record(value, "snapshot", [
       "domain", "owner", "period", "as_of", "freshness", "coverage", "coverage_note",
-      "headline", "changes", "outcomes", "risks", "upcoming", "goal_links", "sources", "mission_targets",
+      "headline", "changes", "outcomes", "risks", "upcoming", "goal_links", "sources", "mission_targets", "finance_evidence",
     ]);
     if (s.domain !== expected.domain) fail("domain_mismatch");
     const domain = expected.domain;
@@ -763,6 +767,14 @@ export function validateDomainSnapshot(
       if (new Set(mission_targets.map(row => row.target.id)).size !== mission_targets.length) fail('duplicate_target');
     }
 
+    let finance_evidence: FinanceReviewEvidence | undefined;
+    if (s.finance_evidence !== undefined) {
+      if (domain !== 'finance') fail('finance_domain_mismatch');
+      const checked = validateFinanceReviewEvidence(s.finance_evidence, expected.tenantId, Number.isFinite(notAfterMs) ? notAfterMs : Date.now());
+      if (!checked) fail('finance_projection_invalid');
+      finance_evidence = checked;
+    }
+
     const sourcesRaw = list(s, "sources", "snapshot", SNAPSHOT_BOUNDS.sources);
     if (sourcesRaw.length === 0) fail("sources_required");
     const sources = sourcesRaw.map((c, i) => {
@@ -790,6 +802,7 @@ export function validateDomainSnapshot(
       upcoming,
       goal_links,
       mission_targets,
+      finance_evidence,
       sources,
     });
     return { ok: true, snapshot };
@@ -880,7 +893,7 @@ export type ComposeOperatingSnapshotInput = {
 };
 
 export const SNAPSHOT_DEFAULT_TIMEOUT_MS = 4000;
-export const SNAPSHOT_DEFAULT_MAX_DOMAINS = 12;
+export const SNAPSHOT_DEFAULT_MAX_DOMAINS = 13;
 
 /**
  * Composer-issued reason codes. An adapter's own code passes through unchanged, EXCEPT one that collides
@@ -1159,6 +1172,7 @@ export async function composeOperatingSnapshot(
 
 export const DEFAULT_REVIEW_DOMAINS: readonly SnapshotDomain[] = Object.freeze([
   "revenue",
+  "finance",
   "sales_pipeline",
   "clients",
   "payments",
@@ -1174,6 +1188,8 @@ export const DEFAULT_REVIEW_DOMAINS: readonly SnapshotDomain[] = Object.freeze([
 
 /** Plain-language names people use for a domain. Keys are lower case. */
 export const SNAPSHOT_DOMAIN_ALIASES: Readonly<Record<string, SnapshotDomain>> = Object.freeze({
+  finances: "finance",
+  banking: "finance",
   sales: "sales_pipeline",
   pipeline: "sales_pipeline",
   money: "revenue",
@@ -1218,6 +1234,7 @@ export function selectSnapshotDomains(request: { readonly focus?: readonly strin
 
 export const SNAPSHOT_DOMAIN_LABELS: Readonly<Record<SnapshotDomain, string>> = Object.freeze({
   revenue: "Revenue",
+  finance: "Financial source evidence",
   sales_pipeline: "Sales pipeline",
   clients: "Clients",
   payments: "Payments and collections",
@@ -1409,6 +1426,17 @@ function domainSection(domain: SnapshotDomain, result: ContextSourceResult<Domai
         : target.comparison === 'at_most' ? 'above limit' : target.comparison === 'within_range' ? 'outside target range' : 'below target';
       lines.push(`  Actual ${q(value(o.actual))}; variance ${o.variance === null ? 'unverified' : q(value(o.variance))}; attainment ${t(attainment)}; ${t(o.state)} as of ${t(o.as_of)}. This is performance evidence, not execution.`);
       for (const caveat of o.caveats) lines.push(`  Measurement caveat: ${q(caveat)}`);
+    }
+  }
+  if (s.finance_evidence) {
+    const finance = s.finance_evidence;
+    lines.push(`- Finance: ${finance.sources.length} of ${finance.eligible_sources} eligible production sources sampled. Stored source snapshots, not live bank-wide cash, profit or a forecast. Test/unverified sources excluded; credit is not cash.`);
+    if (!finance.sources.length) lines.push('- Financial figures unavailable: no eligible verified production source returned. This is not a zero balance.');
+    for (const source of finance.sources) {
+      lines.push(`- Financial source for ${q(source.company_label)}: ${q(source.provider)}; company revision ${source.company_version}, binding revision ${source.binding_revision}.`);
+      if (source.state === 'unavailable') { lines.push('  Source snapshot unavailable; no financial figure inferred.'); continue; }
+      lines.push(`  ${t(source.coverage)} snapshot revision ${source.snapshot_version}; observed ${t(source.source_observed_at)}, synchronized ${t(source.synchronized_at)}. Institution freshness is unverified; amounts are decimal major units. Showing ${Math.min(2, source.accounts.length)} of ${source.accounts_count} source accounts.`);
+      for (const account of source.accounts.slice(0, 2)) lines.push(`  ${q(account.label)}: source balance ${q(formatFinanceSourceAmount(account.current_balance, account.currency))}; available cash ${q(formatFinanceSourceAmount(account.available_cash, account.currency))}; available credit ${q(formatFinanceSourceAmount(account.available_credit, account.currency))}; credit limit ${q(formatFinanceSourceAmount(account.credit_limit, account.currency))}.`);
     }
   }
   lines.push(`- Source: ${s.sources.map((x) => `${q(x.system)}/${q(x.adapter)}`).join(", ")}`);

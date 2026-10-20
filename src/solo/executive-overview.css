@@ -13,6 +13,15 @@
 .executive-root .exec-button svg { flex-shrink:0; }
 .exec-button-label { min-width:0; }
 .exec-briefing-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px 16px; }
+.exec-finance-source { margin-top:12px; }
+.exec-finance-evidence :is(.exec-note,.exec-finance-source) { color:var(--pg-ink-2); }
+.exec-finance-source .exec-figures dd { color:var(--pg-ink); }
+.executive-root .exec-finance-source summary { min-height:44px; max-width:100%; overflow-wrap:anywhere; }
+.executive-root .exec-finance-source .exec-figures > div { display:grid; }
+.exec-finance-source summary small { display:block; margin-top:4px; font-weight:400; }
+.exec-finance-account { padding-top:12px; border-top:1px solid var(--pg-line); margin-top:12px; min-width:0; }
+.exec-finance-account h4 { margin:0; overflow-wrap:anywhere; }
+.exec-finance-references dd { overflow-wrap:anywhere; }
 .executive-root .exec-briefing-actions button { min-height:44px; max-width:100%; }
 .executive-root .exec-button:hover:not(:disabled) { background:var(--pg-raised); }
 .executive-root .exec-button.exec-primary { background:var(--pg-gold-fill); border-color:transparent; color:#211a10; font-weight:650; }

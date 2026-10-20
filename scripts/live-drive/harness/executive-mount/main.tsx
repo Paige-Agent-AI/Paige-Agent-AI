@@ -18,7 +18,7 @@ function App() {
   const { expandRail } = useAgentPresence();
   const { resolvedTheme, setTheme } = useTheme();
   const l = useLocation(), p = new URLSearchParams(l.search);
-  useEffect(() => { setTheme(new URLSearchParams(l.search).get("theme") === "light" ? "light" : "dark"); }, [l.search, setTheme]);
+  useEffect(() => { const requested = new URLSearchParams(l.search).get("theme"); if (requested === "light" || requested === "dark") setTheme(requested); }, [l.search, setTheme]);
   const theme = resolvedTheme === "light" ? "light" : "dark";
   const name = p.get("workspace") === "b" ? "Example Studio" : "Example Services";
   return <>

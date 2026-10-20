@@ -142,6 +142,10 @@ serve(async (req: Request) => {
       // decides authority), matching the chat dispatch's honest nulls.
       { actorId: user.id, tenantId, role: null, accountShape: null },
       { ...parsed.request, timezone: parsed.request.timezone },
+      // Additive response negotiation on this existing endpoint. Old web tabs
+      // omit the marker and keep their original closed snapshot shape. Old Edge
+      // versions ignore the query, so the new web can also read their response.
+      { financeEvidence: new URL(req.url).searchParams.get('finance_sources') === '1' },
     );
 
     // The composer is total: a bad period is the only ok:false; every read gap is in-snapshot.

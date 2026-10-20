@@ -112,6 +112,13 @@ import {
 const PAIGE_INTERACTIVE_TURN_BUDGET_MS = 360_000;
 const RESEARCH_HISTORY_READ_BUDGET_MS = 8_000;
 
+// Client feedback only. The separately governed server/reload recovery change
+// replaces this local value with its shared constant when that flow is released.
+const RECOVERY_READ_ONLY_REFUSAL = {
+  code: "INTERACTIVE_RECOVERY_READ_ONLY",
+  message: "An earlier response was interrupted, and its outcomes still need checking. Your message was recorded, but new actions and attachments are on hold. You can still ask questions about existing records.",
+} as const;
+
 type ResearchHistoryReference = { messageId: string; run_id: string | null; question: string; saved: boolean };
 
 // INT-328 — the server's preview of the exact email a confirm card will send rides the
@@ -736,7 +743,7 @@ const PaigeAIChatInner = ({
   // the turn did not happen and trying again is worth doing. A 4xx is NOT in this set — a request
   // the server refused on its merits will be refused identically on a retry, and offering one
   // would be a button that cannot work (§70).
-  const [connectionIssue, setConnectionIssue] = useState<"offline" | "timeout" | "server" | "interactive-unconfirmed" | "live-interrupted" | null>(null);
+  const [connectionIssue, setConnectionIssue] = useState<"offline" | "timeout" | "server" | "interactive-unconfirmed" | "recovery-read-only" | "live-interrupted" | null>(null);
   // INT-346 — true while the server says this turn runs in conversational mode (interactive
   // rollout staged, actions unavailable). Cleared at every turn start; set only by the
   // server's own `paige_mode` frame, never assumed locally.
@@ -1900,7 +1907,11 @@ const PaigeAIChatInner = ({
           if (!ticketAccepted(requestTicket)) return;
           if (refusal?.message_accepted !== false) {
             retryTurnRef.current = null;
-            setConnectionIssue("interactive-unconfirmed");
+            // Explain the server's exact refusal; accepted text is not a business effect.
+            // Unknown outcomes retain the existing no-replay connection feedback.
+            const recoveryRefused = response.status === 409 && refusal?.code === RECOVERY_READ_ONLY_REFUSAL.code
+              && refusal.message_accepted === true;
+            setConnectionIssue(recoveryRefused ? "recovery-read-only" : "interactive-unconfirmed");
             setStreamingThreadId(null);
             if (enableHistory) threadsApi.onTurnPersisted();
             return;
@@ -3636,8 +3647,8 @@ const PaigeAIChatInner = ({
             )}
             {soloTenantSafety && connectionIssue && (
               <div role="alert" className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/35 px-3 py-2 text-xs text-muted-foreground">
-                <span>{connectionIssue === "interactive-unconfirmed" ? "The connection ended before PAIGE confirmed the result. Your message may have reached the conversation. Check what finished before repeating any action." : connectionIssue === "live-interrupted" ? "Paige's answer was interrupted. What arrived is still shown here. You can continue in text chat." : connectionIssue === "offline" ? "You appear to be offline. This message has not been sent." : connectionIssue === "server" ? "Something went wrong on our side and PAIGE didn't get to answer. Your message wasn't sent — try again." : `PAIGE was ${writingPhase ? "writing the response" : "working on your request"} when the six-minute interactive window ended. This chat stopped listening, so I can't confirm whether that work finished or was saved.${retryTurnRef.current && !retryTurnRef.current.live ? " Retry may start the work again." : ""}`}</span>
-                {connectionIssue !== "live-interrupted" && connectionIssue !== "interactive-unconfirmed" && retryTurnRef.current && !retryTurnRef.current.live && <Button type="button" variant="outline" size="sm" disabled={!composerScope.writable || dictationActive} onClick={handleConnectionRetry}>Retry</Button>}
+                <span>{connectionIssue === "recovery-read-only" ? RECOVERY_READ_ONLY_REFUSAL.message : connectionIssue === "interactive-unconfirmed" ? "The connection ended before PAIGE confirmed the result. Your message may have reached the conversation. Check what finished before repeating any action." : connectionIssue === "live-interrupted" ? "Paige's answer was interrupted. What arrived is still shown here. You can continue in text chat." : connectionIssue === "offline" ? "You appear to be offline. This message has not been sent." : connectionIssue === "server" ? "Something went wrong on our side and PAIGE didn't get to answer. Your message wasn't sent — try again." : `PAIGE was ${writingPhase ? "writing the response" : "working on your request"} when the six-minute interactive window ended. This chat stopped listening, so I can't confirm whether that work finished or was saved.${retryTurnRef.current && !retryTurnRef.current.live ? " Retry may start the work again." : ""}`}</span>
+                {connectionIssue !== "live-interrupted" && connectionIssue !== "interactive-unconfirmed" && connectionIssue !== "recovery-read-only" && retryTurnRef.current && !retryTurnRef.current.live && <Button type="button" variant="outline" size="sm" disabled={!composerScope.writable || dictationActive} onClick={handleConnectionRetry}>Retry</Button>}
               </div>
             )}
             </div>

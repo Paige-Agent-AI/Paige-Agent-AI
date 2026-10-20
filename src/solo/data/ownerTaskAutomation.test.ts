@@ -28,13 +28,15 @@ function fixture(fault = "") {
     },
     from(table: string) {
       const filters: [string, unknown][] = []; queries.push({ table, filters });
-      const q = { select: () => q, eq: (k: string, v: unknown) => { filters.push([k, v]); return q; }, order: () => q, limit: () => q, maybeSingle: () => q,
+      const q = { select: () => q, eq: (k: string, v: unknown) => { filters.push([k, v]); return q; },
+        in: (k: string, v: unknown) => { filters.push([k, v]); return q; }, range: () => q, order: () => q, limit: () => q, maybeSingle: () => q,
         then(resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) {
           if (fault === "switch-read" && table === "paige_automation_acts") now = { ...scope, tenantId: "other", epoch: 2 };
           const data = table === "tenant_members" ? { role: fault === "member" ? "member" : "owner", status: fault === "inactive" ? "inactive" : "active" }
             : table === "paige_automations" ? [{ ...row, tenant_id: fault === "foreign-row" ? "other" : "tenant", granted_lane: fault === "pause-auto" ? "auto" : "confirm" }]
             : [{ ...step, automation_id: fault === "foreign-act" ? "other" : "process", config: fault === "malformed-config" ? ["unsupported"] : step.config }];
-          return Promise.resolve({ data, error: fault === "read-error" && table === "paige_automations" ? { code: "PGRST000" } : null }).then(resolve, reject);
+          return Promise.resolve({ data, count: table === "paige_automation_acts" ? 1 : null,
+            error: fault === "read-error" && table === "paige_automations" ? { code: "PGRST000" } : null }).then(resolve, reject);
         } };
       return q;
     },
@@ -50,7 +52,7 @@ describe("ordinary owner task process control", () => {
     expect(r.items[0].process).toEqual((({ updated_at: _, ...p }) => p)(row));
     expect(r.items[0].acts[0]).toEqual((({ automation_id: _, ...a }) => a)(step));
     expect(f.queries.find(x => x.table === "paige_automations")?.filters).toContainEqual(["tenant_id", "tenant"]);
-    expect(f.queries.find(x => x.table === "paige_automation_acts")?.filters).toContainEqual(["automation_id", "process"]);
+    expect(f.queries.find(x => x.table === "paige_automation_acts")?.filters).toContainEqual(["automation_id", ["process"]]);
   });
   it.each(["wrong-actor", "wrong-tenant", "member", "inactive", "foreign-row", "foreign-act", "switch-read"])("never exposes another authority/context: %s", async fault => {
     const f = fixture(fault); expect((await readOwnerTaskAutomations(scope, f.caller, f.current)).status).not.toBe("ready");
@@ -107,7 +109,7 @@ function deferred<T>() {
   return { promise, resolve };
 }
 function waitingQuery(response: Promise<TestResponse>) {
-  const q = { select: () => q, eq: () => q, order: () => q, limit: () => q, maybeSingle: () => q,
+  const q = { select: () => q, eq: () => q, in: () => q, range: () => q, order: () => q, limit: () => q, maybeSingle: () => q,
     then: (yes: (v: TestResponse) => unknown, no: (e: unknown) => unknown) => response.then(yes, no) };
   return q as unknown as ReturnType<OwnerTaskCaller["from"]>;
 }

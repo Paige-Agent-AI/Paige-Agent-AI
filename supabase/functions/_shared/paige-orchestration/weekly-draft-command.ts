@@ -22,6 +22,32 @@ type Admin = { from(table: string): unknown; rpc(name: string, args?: Record<str
 type Deps = { caller: (authorization: string) => Caller; admin: Admin; uuid?: () => string; now?: () => number };
 const KEY = "weekly_commitment_draft";
 const UUID = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
+// Same bounded-byte/cancel/release transport pattern as canonical outcome/history
+// readers. A deadline must stop body consumption, not merely stop awaiting text().
+async function readDraftBody(req: Request, stage: ReturnType<typeof createWeeklyDraftDeadline>): Promise<{ text: string } | { status: 413 }> {
+  if (!req.body) return { text: "" };
+  const reader = req.body.getReader(), chunks: Uint8Array[] = [];
+  let size = 0, complete = false;
+  const stop = () => { void reader.cancel().catch(() => {}); };
+  req.signal.addEventListener("abort", stop, { once: true });
+  try {
+    while (true) {
+      const part = await stage(() => reader.read());
+      if (part.done) { complete = true; break; }
+      if (!(part.value instanceof Uint8Array)) throw Error("invalid_body");
+      size += part.value.byteLength;
+      if (size > 8192) return { status: 413 };
+      chunks.push(part.value);
+    }
+    const bytes = new Uint8Array(size); let offset = 0;
+    for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+    return { text: new TextDecoder().decode(bytes) };
+  } finally {
+    req.signal.removeEventListener("abort", stop);
+    if (!complete) stop();
+    reader.releaseLock();
+  }
+}
 const object = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === "object" && !Array.isArray(v);
 const exact = (v: Record<string, unknown>, keys: string[]) => Object.keys(v).length === keys.length && Object.keys(v).every(k => keys.includes(k));
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-paige-expected-tenant" };
@@ -63,10 +89,10 @@ export function createWeeklyDraftCommand(deps: Deps) {
         return !owner.error && owner.data === true;
       };
       if (!(await current())) return fail(403, "OWNER_SCOPE_REQUIRED");
-      const text = await stage(() => req.text());
-      if (new TextEncoder().encode(text).length > 8192) return fail(413, "REQUEST_TOO_LARGE");
+      const input = await readDraftBody(req, stage);
+      if ("status" in input) return fail(input.status, "REQUEST_TOO_LARGE");
       let body: unknown;
-      try { body = JSON.parse(text); } catch { return fail(400, "INVALID_REQUEST"); }
+      try { body = JSON.parse(input.text); } catch { return fail(400, "INVALID_REQUEST"); }
       if (!object(body) || typeof body.action !== "string") return fail(400, "INVALID_REQUEST");
       const operation = body.action;
       const allowed = operation === "prepare" ? ["action", "draft"] : operation === "pending" ? ["action"]

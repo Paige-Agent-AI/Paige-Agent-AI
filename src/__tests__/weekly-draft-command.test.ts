@@ -40,6 +40,30 @@ function fixture(){
   return {send,handler,caller,admin,writes,queries,setOwner:(v:boolean)=>{owner=v;},setTenant:(v:string)=>{active=v;},setLane:(v:string)=>{lane=v;},setRow:(v:Record<string,unknown>)=>{row=v;},setState:(v:Record<string,unknown>)=>{state={...state,...v};}};
 }
 describe("weekly draft canonical domain adapter",()=>{
+  function streamingRequest(stream:ReadableStream<Uint8Array>,signal?:AbortSignal){
+    const options:RequestInit&{duplex:"half"}={method:"POST",headers:{authorization:"Bearer unit","x-paige-expected-tenant":tenant},body:stream,signal,duplex:"half"};
+    return new Request("https://unit.invalid",options);
+  }
+  it.each(["resolve","reject","hang"])("oversized body stops at actual8KiB and contains %s cancellation",async cancelMode=>{
+    vi.useFakeTimers({toFake:["setTimeout","clearTimeout","performance"]});
+    const f=fixture(),cancel=vi.fn(()=>cancelMode==="hang"?new Promise<void>(()=>{}):cancelMode==="reject"?Promise.reject(Error("private stream")):Promise.resolve());
+    let controller!:ReadableStreamDefaultController<Uint8Array>;
+    const stream=new ReadableStream<Uint8Array>({start(v){controller=v;},cancel});
+    controller.enqueue(new Uint8Array(8193));const req=streamingRequest(stream),pending=f.handler(req);let r:Response|null=null;
+    pending.then(value=>{r=value;});await vi.advanceTimersByTimeAsync(1);
+    expect(r?.status).toBe(413);expect(cancel).toHaveBeenCalledTimes(1);expect(req.body?.locked).toBe(false);
+    expect(()=>controller.enqueue(new Uint8Array(1))).toThrow();expect(f.writes).toEqual([]);expect(f.admin.from).not.toHaveBeenCalled();
+    await pending;expect(vi.getTimerCount()).toBe(0);
+  });
+  it("body deadline cancels and releases the unfinished reader without waiting for source cleanup",async()=>{
+    vi.useFakeTimers({toFake:["setTimeout","clearTimeout","performance"]});const f=fixture(),cancel=vi.fn(()=>new Promise<void>(()=>{}));
+    let controller!:ReadableStreamDefaultController<Uint8Array>;
+    const stream=new ReadableStream<Uint8Array>({start(v){controller=v;},cancel});controller.enqueue(new TextEncoder().encode('{"action":'));
+    const req=streamingRequest(stream);let result:Response|null=null;const pending=f.handler(req).then(r=>{result=r;});
+    await vi.advanceTimersByTimeAsync(12001);await pending;expect(result?.status).toBe(503);
+    expect(cancel).toHaveBeenCalledTimes(1);expect(req.body?.locked).toBe(false);expect(()=>controller.enqueue(new Uint8Array(128))).toThrow();
+    expect(f.writes).toEqual([]);expect(vi.getTimerCount()).toBe(0);
+  });
   it("bounds unresolved authentication and never issues a proposal after late Auth",async()=>{
     vi.useFakeTimers({toFake:["setTimeout","clearTimeout","performance"]});const f=fixture();
     let release!:(v:Awaited<ReturnType<typeof f.caller.auth.getUser>>)=>void;

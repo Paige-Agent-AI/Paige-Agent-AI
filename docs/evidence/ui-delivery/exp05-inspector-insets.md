@@ -42,7 +42,7 @@ RELEASE_CLASSIFICATION: patch: Restore existing Operations drawer spacing across
 CUSTOMER_RELEASE_IDENTITY: none: Full integrated EXP05 has not earned customer release identity or owner acceptance.
 RELEASE_NOTE_REQUIRED: no: Bounded prelaunch visual repair; no customer publication or announcement authorized.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: Reviewed source, hosted CI, merge, production deployment and corrected ordinary customer proof remain separate; source/prototype/synthetic captures do not establish execution or whole-Experience acceptance.
-RELEASE_RECOVERY: position=Reviewed source correction/reversal of the two selectors, retaining all canonical records and existing authority; no database or business-record rollback; reference=This record and original source diff.
+RELEASE_RECOVERY: position=Reviewed source correction or reversal of the two selectors while retaining all canonical records and existing authority without a database or business-record rollback; reference=This record and original source diff.
 
 ## Reproduction, cause and preservation
 

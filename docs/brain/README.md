@@ -1,44 +1,124 @@
 # 🧠 The Second Brain — master index & read-first orientation
 
-**EXP02 knowledge handoff v2026-10-20.1 — source verified, release/acceptance separate.**
-Owner: existing SOLO EXP02 Journey Lead. This dated checkpoint supersedes older
-"pending publication approval" and native-capture-only guidance, not historical
-acceptance. Target [#2181](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2181)
-head `01f675e28c58a5883cd5049ca9db75a7b02d59f6` composes main
-`0352072882b26d570f2cec3f41a2e0e1a43b412f`; review is documented sequential
-AUTHOR-REVIEW / LOWER ASSURANCE,64 binding negatives and30 target/navigation cases
-PASS, final required CI/Preview pending. Historical closeout #2185 is merged
-`4ebf1b0b763fdf9319ae38eecccbb073132f45bb` with exact READY production web;
-it added no capability. Target migration121000 and VERA121100 remain production-unapplied
-at the read-only preflight frontier20271112010000; no deployment inferred from source.
+## EXP02 VERA observed source-release identity — 2026-10-20
 
-Integration contracts: targets attach to canonical Strategic Plays and use the same
-Metric/Evidence issuer and serialized issue/resolve cycle; target authority is
-revalidated after awaited reads. VERA [#2400](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2400)
-`1a18c6447bfa9e11ca3a8390054eed22e84ff2d4` corrects the existing identity's remit
-without enabling its dormant delegate/model path; an addressed Chat reply is not an
-executed delegation. Finance [#2402](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2402)
-reuses caller-JWT source catalogue/account reads inside the existing snapshot;
-`finance_sources=1` negotiates the richer web shape without changing the old caller.
-Balances, available cash and credit remain separate; unknown is not zero or profit.
-The shared priority baseline [#2409](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2409)
-orders existing requested available-domain risks, act before watch, with stable source
-ties; it creates no health score, recommendation engine or execution authority.
+This observed release supersedes the candidate-only VERA status in the dated
+handoff below. Original [#2400](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2400)
+reviewed `1b7565be158a4641e25c96341b75ce5466aa663f` merged
+`61b32a3735816dbf1e01734abc9c50d2f82aa35f`, exact reviewed treee66a8912;
+all13 latest required checks/Preview and both Vercel contexts SUCCESS.
+AUTHOR-REVIEW / LOWER ASSURANCE6297904162. Existing global VERA is now version2,
+Intelligence, Finance & Risk; the original identity, soft runtime, enabled state,
+unconfigured prompt/config, permissions and tenant/custom records are preserved.
+PAIGE remains principal COO. No delegated runtime, provider or action activation.
 
-Preserve SOLO tenant/L2 scope: incoming EXP00 company/L1 tools and source pins stay
-isolated; Operator access or another customer's proof cannot establish SOLO acceptance.
-Reuse these contracts in EXP01/05/09/11 consumers; originating domains retain records
-and permissions, and EXP03/04 inactivity does not license substitute engines.
-[Thirteen native PNGs and finish review](../evidence/e2-executive-native-2026-10-20/native-report.json)
-prove synthetic source layout only: actual Schibsted headings/Geist values, original
-product font loaders, narrow320px variance repair, keyboard focus and both palettes.
-Validate exact PNG dimensions and actual renderer fonts; never resize a capture into
-passing evidence. Browser zoom, assistive technology, authorized SOLO session/runtime,
-Chat/Live, tenant/role negatives, real receipts/reload and all19/founder acceptance
-remain PROOF OWED. Preserve9 PASS/0 FAIL and12 PASS/0 FAIL/4 BLOCKED.
-Canonical detail: [E02 outcome matrix](../delivery/e2-customer-experience-integration-matrix.md),
-[Mission contract](../delivery/paige-business-mission-system-phase2.md), ANT-138/147;
-ANT-52 retains acceptance. Update this entry after actual source release/readback.
+Normal migration39473193723 applied20271112140000 after Chat121100/Operations121300;
+production migration and exact guarded identity readback verified. Vercel
+dpl_2NM5XgUmMGXdjgm9nLZVcbUzSVfr is READY at exact61b. Canonical normal recovery
+39503591507/job118906876458 on source-identical main26418b2b strictly verified
+paige-ai-chat1/1,253 expected inputs, zero retirements; the existing guarded workflow
+advanced edge-live to26418b2b, independently read back. Artifact12302121954,
+SHA256b539a546c9be61e40ca38dff80997ec98ba0838fcf1530a25b26b8dbc3c5cba2.
+Public build26418b2b6c743eaaf98b3db6d7420d1f3908383b-mvh1ttm5 observed.
+Earlier automatic source-PASS/final-marker-FAIL remains historical. The stale,
+data-free VERA Preview was replaced through the same PR's normal close/reopen
+lifecycle, retaining foreign branches; its new correct migration history/check passed.
+Neither ineffective earlier private reset nor source certification establishes
+customer acceptance. [Observed receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2400#issuecomment-6302505761).
+
+Channel production, internal source prerequisite, no customer release identity or
+announcement. Full19, governed effects/receipts, Live, required authenticated
+negatives and founder acceptance remain owed; preserve9/0 and12/0/4.
+Detailed customer proof stays ANT-52, source coordination ANT-138/147.
+
+## EXP02 verified handoff v2026-10-20.2
+
+**Owner: EXP02; production source status is PARTIAL, customer proof is owed.**
+Target/Executive integration [#2181](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2181)
+reviewed `01f675e28c58a5883cd5049ca9db75a7b02d59f6`, merged
+`2d93594b69ec084ff770402eede09465ca9d179e`. Exact-head checks and previews passed.
+Web `dpl_7oFtLZVQzyrakTcvZaV41gRPvkTb` is READY at that merge; public buildId
+`2d93594b69ec084ff770402eede09465ca9d179e-mvg2sjpr` was read back.
+Migration `20271112100000` and its owner-only review permission contract were
+read back in production. These observations supersede earlier local-only target
+status; they do not establish target lifecycle or integrated customer acceptance.
+
+**Release lesson:** Edge run39360132655 retry passed22/23 selected packages;
+`business-mission-action` again lacked its configured import map after the default
+Docker upload. An explicit reviewed-source package previously passed10/10, but
+that observation was superseded by the retry. Upload exit zero, ACTIVE and matching
+metadata are insufficient: keep exact UTF-8 source/config hashes, complete dependency
+coverage and stable before/after identity. The bounded existing-workflow API-builder
+repair still requires its own review, CI and actual production readback. Global
+`edge-live` remains held at `e660dca7bdd3dd9cc32c4af033cdd5cacb426c0e`;
+do not force it forward or broaden this repair into unrelated source recovery.
+[Sanitized release evidence](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2181#issuecomment-6282365635).
+
+**Canonical integration guidance:** Executive and Chat reuse the same
+`business.operating_snapshot`, INT-340 metric issuer/resolver and Operating Fabric.
+Targets attach to canonical Strategic Plays; no second actuals or receipt store.
+VERA [#2400](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2400) at
+`73fba3d366e7f9d3f177e1fd6d5bf71cadf178d1` extends the existing global registry
+identity and addressed Chat; its guarded role-remap migration is not applied. Main has since applied121100 for
+Chat executor acquisition (#2415), followed by Operations121300 (#2427).
+VERA reserves121400 beyond the verified121300 production frontier. Only its
+unapplied role-remap filename and ten rollback-test includes change; SQL bytes
+and applied history are preserved. Never use include-all or rewrite applied history.
+**Preview recovery lesson:** the existing data-free VERA Preview retained its
+obsolete private121100/121200 migration set after a default reset. A bounded
+development-only reset to the merged121000 baseline is followed by normal
+current-source migration replay. Required Preview stays failed until actual
+Chat121100/Operations121300/VERA121400 readback and a new green check. This is
+not production history repair, include-all or an authenticated-customer result.
+
+Finance [#2402](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2402)
+consumes the existing caller-JWT Finance source contracts through the same snapshot;
+it remains unreleased. Null/unavailable is never zero, cash is never credit, and
+source observations are not action receipts. EXP01/05/09/11 may consume these shared
+contracts without duplicating engines or treating company L1 as tenant SOLO L2.
+
+**Proof limits:** actual-font native target and VERA frames exercise product source
+with synthetic data only. Capture exact PNG dimensions and rendered platform fonts;
+do not substitute resized screenshots or CSS font declarations for that evidence.
+Authorized ordinary SOLO access was re-established on October20; opening the
+target-review control produced the correct unsent draft. A read-only COO briefing
+also completed against the visible source subset and survived ordinary reload
+with one question, one answer and six same-workspace links (ANT-52). This is
+bounded customer proof on the earlier build8ada5c00, not a new full nine-point
+acceptance. Final Finance recaptures were interrupted by browser transport.
+Authenticated target lifecycle, actual zoom,
+Chat/Live continuity, governed effects and receipts,
+full19 and founder acceptance remain owed. Preserve original9 PASS/0 FAIL and
+supplement12 PASS/0 FAIL/4 BLOCKED. See the existing
+[19-outcome matrix](../delivery/e2-customer-experience-integration-matrix.md),
+[continuation contract](../delivery/e2-6-continuation-contract.md) and
+[Mission contract](../delivery/paige-business-mission-system-phase2.md).
+ANT-138/147 carry current release coordination; ANT-52 carries customer proof.
+
+**Finance/priority consumer guidance:** `finance_sources=1` negotiates the richer
+Finance shape through the existing snapshot without changing the old caller.
+The pending #2409 priority policy orders requested, available-domain risks act
+before watch with stable source ties; no health score, engine or authority grant.
+Company L1 and tenant SOLO L2 remain distinct; EXP01/05/09/11 consumers reuse the
+same permitted sources and original records. This supersedes the stale v1 release
+status, without converting supporting native proof into customer acceptance.
+
+**Finance native contrast lesson (October20, development):** real rendered
+amounts inherited muted provenance ink and measured3.195:1 in Obsidian.
+Source repairef4c5c52 uses existing semantic ink tokens, preserving exact
+decimal strings and product fonts. Final native repaint/finish and customer
+proof remain owed after transport loss; pre-fix frames are supporting evidence.
+See the existing Finance flow evidence; reuse the same presenter, not another
+financial reader or theme.
+
+**Recovered Finance source (October20):** existing open #2021/e1e1a9f2
+contains historical statement measures, and #2032/c8865a21 contains obligation/
+liability normalization and sparse-reader compatibility. These remain unmerged/
+unmounted, not customer intelligence. #2047/210ebbc3 already deployed authorized
+plan metadata discovery. Reuse these original contracts for remaining O04 depth;
+see the existing19-outcome matrix for exact heads and completion sequence. No
+new financial engine, store or dormant/provider activation is authorized by
+source discovery.
 
 **October19 EXP02 Finance — local integration, not released:** the existing
 business operating snapshot now consumes canonical caller-JWT Finance catalogue
@@ -59,6 +139,12 @@ deployed/customer-accepted or complete EXP02. See the existing [roster](../doctr
 [E02 matrix](../delivery/e2-customer-experience-integration-matrix.md) and
 [VERA evidence](../evidence/ui-delivery/e2-vera-intelligence.md). All19 outcomes remain required.
 
+> **2026-10-20 EXP05 current weekly source boundary:** #2427 draft source merged519da; original writer/approval/recurring/activation boundaries remain intact. The new deadline-semantics correction is development only: native92 and focused72 tests pass, source95f4 preserves historical observations/receipts and isolates work deadlines from reminder times. Currentmain61b32/VERA121400 is composed without an identity or authority change; candidate121500 remains unapplied. Rendered verification, final review/CI, production readback and authenticated execution are owed. The [existing weekly delivery record](../delivery/experience-05-weekly-commitment-check.md) preserves original history and additive source-certificate/version corrections. Original18/25/50 and E5-CV1-9/ten outcomes remain open; strict1/18 and2/50 is unchanged.
+
+> **2026-10-20 EXP05 verified release boundary:** #2427/7589 source merged519da; migration121300 exact body/ACL/index readback and selected27-package attempt2 retained (nav-pull-profile49, correcting the separate earlier48 observation). E02#2413 recovery39465899854 subsequently certified73/73 after the original70/73 failure; source certification is not customer execution. #2429/eab461cc merged9ad8 and ordinary-owner read-only Overview-group/native-Work/return-focus/Board/reload traversal was verified, without a write or new receipt. The [existing weekly packet](../delivery/experience-05-weekly-commitment-check.md) preserves dated corrections and exact proof limits; Master4.0 remains the sole Shipped Delivery Log. Draft creation/approval/receipt through ordinary authenticated use, full weekly lifecycle/recurring activation, Chat/Live, ZION, original18/25/50 and full E5-CV1-9/ten outcomes remain owed; strict1/18 and2/50 unchanged.
+
+> **2026-10-20 EXP05 inherited-source reconciliation — NOT RELEASED:** Original EXP05 lead is verified archived; clean #2163/36ab and #2189/9f sources remain preserved. Their October14/15 paragraphs below are historical unmerged checkpoints, not current ownership, activation, public-only Computer/Sandbox scope or acceptance authority. Current ANT11/21/147 owner direction governs the complete ten-outcome Run My Week Experience. Source-only reviewed e9704371 composes current main12386ae4 and reviewed b27 deadline/body corrections; the native unapproved draft reuses existing confirmations, Kit, Trust, process records and Rails. The unapplied forward migration121300 preserves its original SQL body and the current196-row catalogue in local proof; no applied history, role or recurring grant changes. Local full PostgreSQL proof86PASS and corrected owning suite203PASS are engineering evidence, not full-schema or authenticated execution. A new scoped44px draft-control correction and final current native evidence/review/CI/release remain owed. Formal source/receiving-owner handoffs and original18/25/50/E5-CV1–9 acceptance remain separate.
+
 **2026-10-15 UTC E02 #2174 observed source-release identity:** reviewed7a898a10d6954d3ed6c31b1a540b51222810a5e9 → main3fa8b501619782f533ac80d778fb309bf21b53b0, all8 exact-head workflows and both preview checks SUCCESS; owner-authorized author self-review/lower assurance. Production web/database/Edge and exact source readback verified. Master§4.0 and [receipt6183804911](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2174#issuecomment-6183804911) identify this bounded native delivery; detailed evidence stays ANT-138/147. Authenticated target acceptance, complete Executive/Chat/Live integration and final owner review remain owed. All19 outcomes and9/0 plus12/0/4 boundaries unchanged. This paired mechanical closeout introduces no capability or activation.
 
 **2026-10-14 E02 numeric targets — local consumer continuation:** #2167 shared foundation remains a separately reviewed/CI-gated prerequisite. Native Strategic Play target rows/editor, exact issued actuals, same-request recovery, history/receipt projection and owner-attributed Rail adapter are implemented locally, not deployed or customer accepted. Existing [Mission contract](../delivery/paige-business-mission-system-phase2.md) and [19-outcome matrix](../delivery/e2-customer-experience-integration-matrix.md) retain all required outcomes. No new actuals/receipt system or consequential Chat/provider activation. Final human review is of the complete deployed experience; sole-lead source review is author self-review/lower assurance.
@@ -66,6 +152,8 @@ deployed/customer-accepted or complete EXP02. See the existing [roster](../doctr
 **2026-10-14 E02 #2167 source-release identity:** reviewedb420c1253152cc6129ef058d36f1e226405b603b -> main892b1bdfe207a8e1c2e16f934748376e734e0a2f, eight exact-head workflows SUCCESS; owner-authorized author self-review/lower assurance. Production pipeline and source readback verified for the bounded Play-linked target foundation. Master§4.0 carries the minimal identity and canonical Linear release-evidence pointer; no customer target, complete native UI/Executive/Chat/Live integration or owner acceptance is claimed. All19 outcomes and existing9/0 plus12/0/4 acceptance boundaries remain unchanged. This paired mechanical closeout introduces no capability or activation.
 
 **2026-10-14 E02 #2128 post-merge identity readback:** reviewed594fcf3655a538d3c656db449d00f37f2bc9a8cd → mainbf0a8b60bee8d3a83c17c214655ea6425fc168d4; exact requiredCI SUCCESS, independent nonauthorSHIP. Vercel dpl_6PZKJTwWLQ8C5gGpFky9DaNWbemm READY/production, publicbuildbf0-mv8ojmxl; trustedEdge38647681553 SUCCESS/edge-livebf0 and384/384 returned files matchsource across16 affected+existingreview. Bounded source release only; historical9PASS/0FAIL preserved, sixteen-case supplement and ALL19/customer/owner acceptance still owed. No provider/consequentialChat/privileged activation or customer publication. Exact identifiers, proof boundary and [receipt6180003073](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2128#issuecomment-6180003073) are in Master §4.0. This is the paired mechanical closeout of that delivery, not a new capability claim.
+
+**2026-10-15 E5 A3 source development:** The existing E5 session directly owns all ten outcomes without retired-agent delegation. Canonical unapproved weekly draft save/retrieval now has an owner HTTP adapter, Kit/Trust/one-confirmation-store claim, native draft+stable Rail transaction and the shared Chat/Calendar review. Prepared mutation metadata remains unregistered/unadmitted; recurrence is not authorized. [Current delivery matrix](../delivery/experience-05-weekly-commitment-check.md#owner-full-completion-resumption--2026-10-14), [native rendered review](../evidence/experience-05-draft-review/owner-rendered-review.md), [UI proof boundaries](../evidence/ui-delivery/experience-05-canonical-draft-save.md). Development only, not deployed or independently accepted. Production04:11:56UTC was OFF/zero/no weekly cron and new writer/migration absent. Independent review, final-head CI, guarded release, all original/E5-CV QA and all-ten owner acceptance remain owed; no source test is customer acceptance.
 
 **2026-10-14 Sales overdue calendar candidate (#2086), not released:** Sales producer and Performance consumer are composed with Analytics-owned issuer/resolver compatibility. Only overdue advances to1.1.0, using the canonical business calendar: due today excluded, missing/invalid calendar null/UNAVAILABLE. Other ten versions remain1.0.0. Local175 native PostgreSQL checks use synthetic auth stand-ins;88 consumer tests and19 browser fixture cases passed. Final review, exact-head CI, migration/runtime readback and ordinary customer acceptance remain owed. [Sales evidence](../evidence/ui-delivery/int2086-sales-performance-calendar.md), [shared compatibility](../evidence/ui-delivery/int2086-shared-overdue-compatibility.md). C1 signed economics, Chat execution and Stripe TEST acceptance are not established here.
 
@@ -164,7 +252,7 @@ worse than none — it lies with authority.
 | `../delivery/exp03-launch-email-providers-plan.md` | **Experience 03 launch email providers — Gmail and iCloud Mail grounded plan** (2026-10-13): Gmail REUSE/REPAIR/MISSING per part, iCloud gap (Supabase blocks outbound 587; no IMAP code), Google sensitive vs restricted scopes and CASA, the provider-neutral Communications/Conversations contract changes, launch-critical vs later, first bounded PRs ordered around S3, Central QA strategy, owner-only Google actions | Before any Gmail/iCloud/IMAP/SMTP connection work, or claiming customer mailbox send/receive works |
 | `../guides/put-a-paige-form-on-a-cloudflare-or-genspark-site.md` | **Install guide: a Paige form on a site built elsewhere** (Genspark, Cloudflare Pages/Workers, any host) — the one-line code, the Genspark agent instruction, CSP, the no-script frame, builder sandboxes, how to check it, what was tested and what was not (live edge, real Genspark site, COEP) | Before telling an owner how to put a form on their own site |
 | `../delivery/experience-05-weekly-history-performance-repair.md` | **Experience 05 history repair released DARK**: #2117/maincd2f1fad4abb9875597680ca37cfb4029912b825, forward30/two indexes and equivalent event-ordered query; same owner/receipt/state contract.100k seeded history proof, independent SHIP/CI and actual read-only deployment/zero-effect evidence; no design/admission/acceptance promotion | Before historical-status performance work or repair closeout |
-| `../delivery/experience-05-weekly-commitment-check.md` + `../delivery/experience-05-weekly-acceptance-packet.md` | **Experience 05 Weekly Internal Commitment Check**: existing backend/history repair remains DARK/OFF/zero/no weekly cron. Owner2026-10-13 delegates routine customer UI and inert guarded release preparation. Connected E5-A1/B1/C1/D1 candidate adds local review, canonical owner status/receipts, existing Calendar visibility and typed personal Planning navigation; development/source proof is separate from release/authentication. Matrix and E5-CV1–9 remain canonical; all cases NOT_RUN. Exact recurring authorization, full history/future controls and shared no-send notice producer/readback remain extensions. Weekly Chat/Live admission, finished-design/fixture/activation decision and authenticated acceptance remain held | Before recurring checks, departmental visibility, source-record navigation or continuity claims |
+| `../delivery/experience-05-weekly-commitment-check.md` + `../delivery/experience-05-weekly-acceptance-packet.md` | **Experience05 full completion, direct E5 ownership (owner2026-10-14)**: all ten customer capabilities including public-only PC-1; no older-agent handoff dependencies. #2130 inert UI historically deployed, subsequent three correctness findings now under one authorized bounded correction. Source0f1941f repairs Back history/current-RLS source links/ordinary draft retention; local and synthetic proof is distinct from independent final review, CI and release. #2134 closeout still pending. Latest observed backend remains DARK/OFF/zero/no weekly cron. Existing matrix, original QA and E5-CV1–9 remain canonical and NOT_RUN; all-ten authenticated acceptance unverified. Exact authorization, history/controls, in-app notices, Chat/Live admission and PC-1 customer integration remain work; first activation/design/fixture/cost decision separately held | Before recurring checks, departmental visibility, source-record navigation or continuity claims |
 | `../evidence/experience-05-calendar-dark-release.json` + `../evidence/experience-05-calendar-final-head-review.md` | **#2112 exact dark-release evidence**: final reviewed6ef head, mainf5c79b7, migration/edge/web identities,21 SQL/seven source matches, owner grants/RLS/guards, OFF/zero readback and the cancelled merged-main CI boundary; independent final non-author SHIP | Before asserting this source release, design approval, activation or customer acceptance |
 | `../evidence/experience-05-weekly-history-dark-release.json` + `../evidence/experience-05-weekly-history-independent-review.md` | **#2117 actual DARK repair release**: exactdeec/cd2 identities, persisted30, valid indexes/repaired body/20 unchanged bodies and preserved ACL/RLS/guards/OFF/zero; source CI and merged-main CI separate | Before closing the accepted post-merge P2 or asserting activation/acceptance |
 | `../delivery/marketing-s3-6-acceptance-package.md` | **The Marketing slices 3–6 (and 7a) authenticated acceptance package** — the one canonical QA account, what is already proven at database level, what is UNAVAILABLE and why, the runner runbook and pass criteria. Its matrix is `../product/int342-marketing-convergence.md` §N | Before any signed-in Marketing acceptance run, or claiming a Marketing capability is tested |

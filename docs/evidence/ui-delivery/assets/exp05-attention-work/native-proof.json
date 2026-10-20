@@ -1,0 +1,1000 @@
+{
+  "boundary": "LOCAL_ACTUAL_SHELL_SYNTHETIC_READERS_NOT_AUTHENTICATED_BACKEND_PROOF",
+  "matrices": [
+    {
+      "key": "a-1536-paige-closed",
+      "buttons": [
+        {
+          "height": 44,
+          "right": 371.33750915527344,
+          "text": "Back to Overview",
+          "width": 131.33750915527344,
+          "x": 240
+        },
+        {
+          "height": 44,
+          "right": 1502.4000091552734,
+          "text": "View all loaded work",
+          "width": 152.65000915527344,
+          "x": 1349.75
+        }
+      ],
+      "focus": "Next deadlines in Work",
+      "pageWidth": 1536,
+      "scrollOwners": [
+        {
+          "class": "ops-department-body",
+          "height": 643,
+          "overflowY": "auto",
+          "scroll": 1195
+        },
+        {
+          "class": "ops-work-set-context",
+          "height": 60,
+          "overflowY": "visible",
+          "scroll": 60
+        }
+      ],
+      "viewport": {
+        "height": 770,
+        "width": 1536
+      },
+      "workCount": 10,
+      "acceptedImage": "settled-a-1536-paige-closed.jpg"
+    },
+    {
+      "key": "a-1536-paige-open",
+      "buttons": [
+        {
+          "height": 44,
+          "right": 371.33750915527344,
+          "text": "Back to Overview",
+          "width": 131.33750915527344,
+          "x": 240
+        },
+        {
+          "height": 44,
+          "right": 980.1625213623048,
+          "text": "View all loaded work",
+          "width": 152.65000915527344,
+          "x": 827.5125122070312
+        }
+      ],
+      "focus": "Direct PAIGE",
+      "pageWidth": 1536,
+      "scrollOwners": [
+        {
+          "class": "ops-department-body",
+          "height": 594,
+          "overflowY": "auto",
+          "scroll": 1211
+        },
+        {
+          "class": "ops-work-set-context",
+          "height": 60,
+          "overflowY": "visible",
+          "scroll": 60
+        }
+      ],
+      "viewport": {
+        "height": 770,
+        "width": 1536
+      },
+      "workCount": 10,
+      "acceptedImage": "a-1536-paige-open.jpg"
+    },
+    {
+      "key": "a-1366-paige-closed",
+      "buttons": [
+        {
+          "height": 44,
+          "right": 371.33750915527344,
+          "text": "Back to Overview",
+          "width": 131.33750915527344,
+          "x": 240
+        },
+        {
+          "height": 44,
+          "right": 1332.800033569336,
+          "text": "View all loaded work",
+          "width": 152.65000915527344,
+          "x": 1180.1500244140625
+        }
+      ],
+      "focus": "Direct PAIGE",
+      "pageWidth": 1366,
+      "scrollOwners": [
+        {
+          "class": "ops-department-body",
+          "height": 641,
+          "overflowY": "auto",
+          "scroll": 1195
+        },
+        {
+          "class": "ops-work-set-context",
+          "height": 60,
+          "overflowY": "visible",
+          "scroll": 60
+        }
+      ],
+      "viewport": {
+        "height": 768,
+        "width": 1366
+      },
+      "workCount": 10,
+      "acceptedImage": "a-1366-paige-closed.jpg"
+    },
+    {
+      "key": "a-1366-paige-open",
+      "buttons": [
+        {
+          "height": 44,
+          "right": 371.33750915527344,
+          "text": "Back to Overview",
+          "width": 131.33750915527344,
+          "x": 240
+        },
+        {
+          "height": 44,
+          "right": 868.2250213623047,
+          "text": "View all loaded work",
+          "width": 152.65000915527344,
+          "x": 715.5750122070312
+        }
+      ],
+      "focus": "Direct PAIGE",
+      "pageWidth": 1366,
+      "scrollOwners": [
+        {
+          "class": "ops-department-body",
+          "height": 592,
+          "overflowY": "auto",
+          "scroll": 1211
+        },
+        {
+          "class": "ops-work-set-context",
+          "height": 60,
+          "overflowY": "visible",
+          "scroll": 60
+        }
+      ],
+      "viewport": {
+        "height": 768,
+        "width": 1366
+      },
+      "workCount": 10,
+      "acceptedImage": "a-1366-paige-open.jpg"
+    },
+    {
+      "key": "a-1024-paige-closed",
+      "buttons": [
+        {
+          "height": 44,
+          "right": 227.33750915527344,
+          "text": "Back to Overview",
+          "width": 131.33750915527344,
+          "x": 96
+        },
+        {
+          "height": 44,
+          "right": 990.4000091552734,
+          "text": "View all loaded work",
+          "width": 152.65000915527344,
+          "x": 837.75
+        }
+      ],
+      "focus": "Direct PAIGE",
+      "pageWidth": 1024,
+      "scrollOwners": [
+        {
+          "class": "ops-department-body",
+          "height": 641,
+          "overflowY": "auto",
+          "scroll": 1195
+        },
+        {
+          "class": "ops-work-set-context",
+          "height": 60,
+          "overflowY": "visible",
+          "scroll": 60
+        }
+      ],
+      "viewport": {
+        "height": 768,
+        "width": 1024
+      },
+      "workCount": 10,
+      "acceptedImage": "a-1024-paige-closed.jpg"
+    },
+    {
+      "key": "a-1024-paige-open",
+      "buttons": [
+        {
+          "height": 44,
+          "right": 227.33750915527344,
+          "text": "Back to Overview",
+          "width": 131.33750915527344,
+          "x": 96
+        },
+        {
+          "height": 44,
+          "right": 990.4000091552734,
+          "text": "View all loaded work",
+          "width": 152.65000915527344,
+          "x": 837.75
+        }
+      ],
+      "focus": "Direct PAIGE",
+      "pageWidth": 1024,
+      "scrollOwners": [
+        {
+          "class": "ops-department-body",
+          "height": 641,
+          "overflowY": "auto",
+          "scroll": 1195
+        },
+        {
+          "class": "ops-work-set-context",
+          "height": 60,
+          "overflowY": "visible",
+          "scroll": 60
+        }
+      ],
+      "viewport": {
+        "height": 768,
+        "width": 1024
+      },
+      "workCount": 10,
+      "acceptedImage": "a-1024-paige-open.jpg"
+    },
+    {
+      "key": "a-900-paige-closed",
+      "buttons": [
+        {
+          "height": 44,
+          "right": 227.33750915527344,
+          "text": "Back to Overview",
+          "width": 131.33750915527344,
+          "x": 96
+        },
+        {
+          "height": 44,
+          "right": 866.4000091552734,
+          "text": "View all loaded work",
+          "width": 152.65000915527344,
+          "x": 713.75
+        }
+      ],
+      "pageWidth": 900,
+      "scrollOwners": [
+        {
+          "class": "ops-department-body",
+          "height": 824,
+          "overflowY": "auto",
+          "scroll": 1211
+        },
+        {
+          "class": "ops-work-set-context",
+          "height": 60,
+          "overflowY": "visible",
+          "scroll": 60
+        }
+      ],
+      "viewport": {
+        "height": 1000,
+        "width": 900
+      },
+      "workCount": 10,
+      "acceptedImage": "settled-a-900-paige-closed.jpg"
+    },
+    {
+      "key": "a-900-paige-open",
+      "buttons": [
+        {
+          "height": 44,
+          "right": 227.33750915527344,
+          "text": "Back to Overview",
+          "width": 131.33750915527344,
+          "x": 96
+        },
+        {
+          "height": 44,
+          "right": 866.4000091552734,
+          "text": "View all loaded work",
+          "width": 152.65000915527344,
+          "x": 713.75
+        }
+      ],
+      "pageWidth": 900,
+      "scrollOwners": [
+        {
+          "class": "ops-department-body",
+          "height": 824,
+          "overflowY": "auto",
+          "scroll": 1211
+        },
+        {
+          "class": "ops-work-set-context",
+          "height": 60,
+          "overflowY": "visible",
+          "scroll": 60
+        }
+      ],
+      "viewport": {
+        "height": 1000,
+        "width": 900
+      },
+      "workCount": 10,
+      "acceptedImage": "a-900-paige-open.jpg"
+    },
+    {
+      "key": "b-1536-paige-closed",
+      "buttons": [
+        {
+          "height": 44,
+          "right": 227.33750915527344,
+          "text": "Back to Overview",
+          "width": 131.33750915527344,
+          "x": 96
+        },
+        {
+          "height": 44,
+          "right": 1502.4000091552734,
+          "text": "View all loaded work",
+          "width": 152.65000915527344,
+          "x": 1349.75
+        }
+      ],
+      "pageWidth": 1536,
+      "scrollOwners": [
+        {
+          "class": "ops-department-body",
+          "height": 643,
+          "overflowY": "auto",
+          "scroll": 1195
+        },
+        {
+          "class": "ops-work-set-context",
+          "height": 60,
+          "overflowY": "visible",
+          "scroll": 60
+        }
+      ],
+      "viewport": {
+        "height": 770,
+        "width": 1536
+      },
+      "workCount": 10,
+      "acceptedImage": "settled-b-1536-paige-closed.jpg"
+    },
+    {
+      "key": "b-1536-paige-open",
+      "buttons": [
+        {
+          "height": 44,
+          "right": 227.33750915527344,
+          "text": "Back to Overview",
+          "width": 131.33750915527344,
+          "x": 96
+        },
+        {
+          "height": 44,
+          "right": 980.1625213623048,
+          "text": "View all loaded work",
+          "width": 152.65000915527344,
+          "x": 827.5125122070312
+        }
+      ],
+      "pageWidth": 1536,
+      "scrollOwners": [
+        {
+          "class": "ops-department-body",
+          "height": 643,
+          "overflowY": "auto",
+          "scroll": 1195
+        },
+        {
+          "class": "ops-work-set-context",
+          "height": 60,
+          "overflowY": "visible",
+          "scroll": 60
+        }
+      ],
+      "viewport": {
+        "height": 770,
+        "width": 1536
+      },
+      "workCount": 10,
+      "acceptedImage": "b-1536-paige-open.jpg"
+    },
+    {
+      "key": "b-1366-paige-closed",
+      "buttons": [
+        {
+          "height": 44,
+          "right": 227.33750915527344,
+          "text": "Back to Overview",
+          "width": 131.33750915527344,
+          "x": 96
+        },
+        {
+          "height": 44,
+          "right": 1332.800033569336,
+          "text": "View all loaded work",
+          "width": 152.65000915527344,
+          "x": 1180.1500244140625
+        }
+      ],
+      "pageWidth": 1366,
+      "scrollOwners": [
+        {
+          "class": "ops-department-body",
+          "height": 641,
+          "overflowY": "auto",
+          "scroll": 1195
+        },
+        {
+          "class": "ops-work-set-context",
+          "height": 60,
+          "overflowY": "visible",
+          "scroll": 60
+        }
+      ],
+      "viewport": {
+        "height": 768,
+        "width": 1366
+      },
+      "workCount": 10,
+      "acceptedImage": "settled-b-1366-paige-closed.jpg"
+    },
+    {
+      "key": "b-1366-paige-open",
+      "buttons": [
+        {
+          "height": 44,
+          "right": 227.33750915527344,
+          "text": "Back to Overview",
+          "width": 131.33750915527344,
+          "x": 96
+        },
+        {
+          "height": 44,
+          "right": 868.2250213623047,
+          "text": "View all loaded work",
+          "width": 152.65000915527344,
+          "x": 715.5750122070312
+        }
+      ],
+      "pageWidth": 1366,
+      "scrollOwners": [
+        {
+          "class": "ops-department-body",
+          "height": 592,
+          "overflowY": "auto",
+          "scroll": 1211
+        },
+        {
+          "class": "ops-work-set-context",
+          "height": 60,
+          "overflowY": "visible",
+          "scroll": 60
+        }
+      ],
+      "viewport": {
+        "height": 768,
+        "width": 1366
+      },
+      "workCount": 10,
+      "acceptedImage": "b-1366-paige-open.jpg"
+    },
+    {
+      "key": "b-1024-paige-closed",
+      "buttons": [
+        {
+          "height": 44,
+          "right": 227.33750915527344,
+          "text": "Back to Overview",
+          "width": 131.33750915527344,
+          "x": 96
+        },
+        {
+          "height": 44,
+          "right": 990.4000091552734,
+          "text": "View all loaded work",
+          "width": 152.65000915527344,
+          "x": 837.75
+        }
+      ],
+      "pageWidth": 1024,
+      "scrollOwners": [
+        {
+          "class": "ops-department-body",
+          "height": 641,
+          "overflowY": "auto",
+          "scroll": 1195
+        },
+        {
+          "class": "ops-work-set-context",
+          "height": 60,
+          "overflowY": "visible",
+          "scroll": 60
+        }
+      ],
+      "viewport": {
+        "height": 768,
+        "width": 1024
+      },
+      "workCount": 10,
+      "acceptedImage": "b-1024-paige-closed.jpg"
+    },
+    {
+      "key": "b-1024-paige-open",
+      "buttons": [
+        {
+          "height": 44,
+          "right": 227.33750915527344,
+          "text": "Back to Overview",
+          "width": 131.33750915527344,
+          "x": 96
+        },
+        {
+          "height": 44,
+          "right": 990.4000091552734,
+          "text": "View all loaded work",
+          "width": 152.65000915527344,
+          "x": 837.75
+        }
+      ],
+      "pageWidth": 1024,
+      "scrollOwners": [
+        {
+          "class": "ops-department-body",
+          "height": 641,
+          "overflowY": "auto",
+          "scroll": 1195
+        },
+        {
+          "class": "ops-work-set-context",
+          "height": 60,
+          "overflowY": "visible",
+          "scroll": 60
+        }
+      ],
+      "viewport": {
+        "height": 768,
+        "width": 1024
+      },
+      "workCount": 10,
+      "acceptedImage": "b-1024-paige-open.jpg"
+    },
+    {
+      "key": "b-900-paige-closed",
+      "buttons": [
+        {
+          "height": 44,
+          "right": 227.33750915527344,
+          "text": "Back to Overview",
+          "width": 131.33750915527344,
+          "x": 96
+        },
+        {
+          "height": 44,
+          "right": 866.4000091552734,
+          "text": "View all loaded work",
+          "width": 152.65000915527344,
+          "x": 713.75
+        }
+      ],
+      "pageWidth": 900,
+      "scrollOwners": [
+        {
+          "class": "ops-department-body",
+          "height": 824,
+          "overflowY": "auto",
+          "scroll": 1211
+        },
+        {
+          "class": "ops-work-set-context",
+          "height": 60,
+          "overflowY": "visible",
+          "scroll": 60
+        }
+      ],
+      "viewport": {
+        "height": 1000,
+        "width": 900
+      },
+      "workCount": 10,
+      "acceptedImage": "b-900-paige-closed.jpg"
+    },
+    {
+      "key": "b-900-paige-open",
+      "buttons": [
+        {
+          "height": 44,
+          "right": 227.33750915527344,
+          "text": "Back to Overview",
+          "width": 131.33750915527344,
+          "x": 96
+        },
+        {
+          "height": 44,
+          "right": 866.4000091552734,
+          "text": "View all loaded work",
+          "width": 152.65000915527344,
+          "x": 713.75
+        }
+      ],
+      "pageWidth": 900,
+      "scrollOwners": [
+        {
+          "class": "ops-department-body",
+          "height": 824,
+          "overflowY": "auto",
+          "scroll": 1211
+        },
+        {
+          "class": "ops-work-set-context",
+          "height": 60,
+          "overflowY": "visible",
+          "scroll": 60
+        }
+      ],
+      "viewport": {
+        "height": 1000,
+        "width": 900
+      },
+      "workCount": 10,
+      "acceptedImage": "b-900-paige-open.jpg"
+    }
+  ],
+  "rejectedOriginals": {
+    "a-1536-paige-closed.jpg": "INVALID: Work body over unsettled Overview navigation paint",
+    "a-900-paige-closed.jpg": "INVALID: native pixels900x451 versus intended DOM900x1000",
+    "b-1536-paige-closed.jpg": "INVALID: native pixels693x770 and Overview versus intended Work1536x770",
+    "b-1366-paige-closed.jpg": "INVALID: unsettled right-side controls clipped despite intended DOM metrics",
+    "overview1536.jpg": "INVALID for Overview: pixels show prior Work state"
+  },
+  "replacements": [
+    {
+      "original": "a-1536-paige-closed.jpg",
+      "accepted": "settled-a-1536-paige-closed.jpg",
+      "reason": "INVALID: Work body over unsettled Overview navigation paint"
+    },
+    {
+      "original": "a-900-paige-closed.jpg",
+      "accepted": "settled-a-900-paige-closed.jpg",
+      "reason": "INVALID: native pixels900x451 versus intended DOM900x1000"
+    },
+    {
+      "original": "b-1536-paige-closed.jpg",
+      "accepted": "settled-b-1536-paige-closed.jpg",
+      "reason": "INVALID: native pixels693x770 and Overview versus intended Work1536x770"
+    },
+    {
+      "original": "b-1366-paige-closed.jpg",
+      "accepted": "settled-b-1366-paige-closed.jpg",
+      "reason": "INVALID: unsettled right-side controls clipped despite intended DOM metrics"
+    },
+    {
+      "original": "overview1536.jpg",
+      "accepted": "settled-overview1536.jpg",
+      "reason": "INVALID for Overview: pixels show prior Work state"
+    }
+  ],
+  "settled": [
+    {
+      "key": "settled-a-1536-paige-closed",
+      "active": "Work",
+      "height": 770,
+      "pageWidth": 1536,
+      "rows": 10,
+      "width": 1536,
+      "work": true
+    },
+    {
+      "key": "settled-a-900-paige-closed",
+      "active": "Work",
+      "buttons": [
+        {
+          "height": 44,
+          "right": 227.33750915527344,
+          "text": "Back to Overview",
+          "width": 131.33750915527344,
+          "x": 96
+        },
+        {
+          "height": 44,
+          "right": 866.4000091552734,
+          "text": "View all loaded work",
+          "width": 152.65000915527344,
+          "x": 713.75
+        }
+      ],
+      "height": 1000,
+      "pageWidth": 900,
+      "rows": 10,
+      "width": 900,
+      "work": true
+    },
+    {
+      "key": "settled-b-1536-paige-closed",
+      "active": "Work",
+      "buttons": [
+        {
+          "height": 44,
+          "right": 371.33750915527344,
+          "text": "Back to Overview",
+          "width": 131.33750915527344,
+          "x": 240
+        },
+        {
+          "height": 44,
+          "right": 1502.4000091552734,
+          "text": "View all loaded work",
+          "width": 152.65000915527344,
+          "x": 1349.75
+        }
+      ],
+      "height": 770,
+      "pageWidth": 1536,
+      "rows": 10,
+      "width": 1536,
+      "work": true
+    },
+    {
+      "key": "settled-b-1366-paige-closed",
+      "active": "Work",
+      "buttons": [
+        {
+          "height": 44,
+          "right": 371.33750915527344,
+          "text": "Back to Overview",
+          "width": 131.33750915527344,
+          "x": 240
+        },
+        {
+          "height": 44,
+          "right": 1332.800033569336,
+          "text": "View all loaded work",
+          "width": 152.65000915527344,
+          "x": 1180.1500244140625
+        }
+      ],
+      "height": 768,
+      "pageWidth": 1366,
+      "rows": 10,
+      "width": 1366,
+      "work": true
+    },
+    {
+      "key": "settled-overview1536",
+      "active": "Overview",
+      "buttons": [],
+      "height": 770,
+      "pageWidth": 1536,
+      "rows": 0,
+      "width": 1536,
+      "work": false
+    }
+  ],
+  "dimensions": [
+    {
+      "file": "a-1024-paige-closed.jpg",
+      "width": 1024,
+      "height": 768,
+      "format": "Jpeg"
+    },
+    {
+      "file": "a-1024-paige-open.jpg",
+      "width": 1024,
+      "height": 768,
+      "format": "Jpeg"
+    },
+    {
+      "file": "a-1366-paige-closed.jpg",
+      "width": 1366,
+      "height": 768,
+      "format": "Jpeg"
+    },
+    {
+      "file": "a-1366-paige-open.jpg",
+      "width": 1366,
+      "height": 768,
+      "format": "Jpeg"
+    },
+    {
+      "file": "a-1536-paige-closed.jpg",
+      "width": 1535,
+      "height": 770,
+      "format": "Jpeg"
+    },
+    {
+      "file": "a-1536-paige-open.jpg",
+      "width": 1535,
+      "height": 770,
+      "format": "Jpeg"
+    },
+    {
+      "file": "a-900-paige-closed.jpg",
+      "width": 900,
+      "height": 451,
+      "format": "Jpeg"
+    },
+    {
+      "file": "a-900-paige-open.jpg",
+      "width": 900,
+      "height": 1000,
+      "format": "Jpeg"
+    },
+    {
+      "file": "b-1024-paige-closed.jpg",
+      "width": 1024,
+      "height": 768,
+      "format": "Jpeg"
+    },
+    {
+      "file": "b-1024-paige-open.jpg",
+      "width": 1024,
+      "height": 768,
+      "format": "Jpeg"
+    },
+    {
+      "file": "b-1366-paige-closed.jpg",
+      "width": 1366,
+      "height": 768,
+      "format": "Jpeg"
+    },
+    {
+      "file": "b-1366-paige-open.jpg",
+      "width": 1366,
+      "height": 768,
+      "format": "Jpeg"
+    },
+    {
+      "file": "b-1536-paige-closed.jpg",
+      "width": 693,
+      "height": 770,
+      "format": "Jpeg"
+    },
+    {
+      "file": "b-1536-paige-open.jpg",
+      "width": 1535,
+      "height": 770,
+      "format": "Jpeg"
+    },
+    {
+      "file": "b-900-paige-closed.jpg",
+      "width": 900,
+      "height": 1000,
+      "format": "Jpeg"
+    },
+    {
+      "file": "b-900-paige-open.jpg",
+      "width": 900,
+      "height": 1000,
+      "format": "Jpeg"
+    },
+    {
+      "file": "deadline-set.jpg",
+      "width": 1535,
+      "height": 770,
+      "format": "Jpeg"
+    },
+    {
+      "file": "denied.jpg",
+      "width": 320,
+      "height": 844,
+      "format": "Jpeg"
+    },
+    {
+      "file": "empty.jpg",
+      "width": 320,
+      "height": 844,
+      "format": "Jpeg"
+    },
+    {
+      "file": "loading.jpg",
+      "width": 320,
+      "height": 844,
+      "format": "Jpeg"
+    },
+    {
+      "file": "narrow-overview.jpg",
+      "width": 320,
+      "height": 844,
+      "format": "Jpeg"
+    },
+    {
+      "file": "narrow-work.jpg",
+      "width": 320,
+      "height": 844,
+      "format": "Jpeg"
+    },
+    {
+      "file": "overview1536.jpg",
+      "width": 1535,
+      "height": 770,
+      "format": "Jpeg"
+    },
+    {
+      "file": "partial.jpg",
+      "width": 320,
+      "height": 844,
+      "format": "Jpeg"
+    },
+    {
+      "file": "phone-overview.jpg",
+      "width": 390,
+      "height": 843,
+      "format": "Jpeg"
+    },
+    {
+      "file": "phone-work.jpg",
+      "width": 390,
+      "height": 843,
+      "format": "Jpeg"
+    },
+    {
+      "file": "settled-a-1536-paige-closed.jpg",
+      "width": 1535,
+      "height": 770,
+      "format": "Jpeg"
+    },
+    {
+      "file": "settled-a-900-paige-closed.jpg",
+      "width": 900,
+      "height": 1000,
+      "format": "Jpeg"
+    },
+    {
+      "file": "settled-b-1366-paige-closed.jpg",
+      "width": 1366,
+      "height": 768,
+      "format": "Jpeg"
+    },
+    {
+      "file": "settled-b-1536-paige-closed.jpg",
+      "width": 1535,
+      "height": 770,
+      "format": "Jpeg"
+    },
+    {
+      "file": "settled-overview1536.jpg",
+      "width": 1535,
+      "height": 770,
+      "format": "Jpeg"
+    }
+  ],
+  "flow": {
+    "loadedDeadlines": 10,
+    "overviewPreview": 5,
+    "opened": "planning:deadline-6",
+    "title": "Review delivery milestone 7",
+    "nativeInspector": "Original OperationsWorkspace/OperationsWorkEditor, no writer invoked",
+    "dirtyEscape": "original local change retained; Save or discard guidance",
+    "discard": "local fixture form only; no domain command",
+    "closeFocus": "original seventh row",
+    "backFocus": "View deadlines in Work"
+  },
+  "states": [
+    "partial",
+    "empty",
+    "loading",
+    "denied"
+  ],
+  "reflow": [
+    390,
+    320
+  ],
+  "limits": [
+    "Actual browser zoom and screen reader not exercised",
+    "Underlying Activity read unavailable in isolated fixture",
+    "No backend/Auth/RLS/Spine/Chat/Live/recurrence/provider/production capability acceptance",
+    "No business-wide completeness or business-local-week claim",
+    "1536-CSS-pixel replacement desktop screenshots are1535 encoded pixels wide; raw bytes retained, DOM width1536 and rightmost controls within viewport independently measured; no resampling/exact1536-pixel claim",
+    "Runtime fixture control selectors initially ambiguous at tablet backdrop; toolbar selector corrected without product source change",
+    "First sandbox loopback unreachable and first browser connection reset; no product PASS inferred"
+  ],
+  "review": "Original finish review REVISE_EVIDENCE_ONLY a79988d1; additive replacements pending independent applicability/frozen-head review; exact-head CI owed"
+}

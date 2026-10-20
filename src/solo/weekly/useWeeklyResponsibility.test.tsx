@@ -5,7 +5,7 @@ import { useWeeklyResponsibility } from "./useWeeklyResponsibility";
 import type { WeeklyOwnerRead } from "./weekly-owner-read";
 import { setScopedUserId } from "@/lib/scopedUser";
 
-const harness = vi.hoisted(() => ({ context: { loading: false, accountContextStatus: "ready", activeUserId: "actor-a", activeTenantId: "tenant-a", isPlatformStaff: false, soloShellEnabled: true },
+const harness = vi.hoisted(() => ({ context: { loading: false, accountContextStatus: "ready", activeUserId: "actor-a", activeTenantId: "tenant-a", activeTenant: { account_type: "standalone" as string | null, parent_tenant_id: null as string | null }, isPlatformStaff: false, soloShellEnabled: true },
   impersonating: false, read: vi.fn(), authEvent: null as null | ((event: string) => void) }));
 vi.mock("@/contexts/ImpersonationContext", () => ({ useImpersonation: () => ({ isImpersonating: harness.impersonating, target: harness.impersonating ? { contactId: "client" } : null }) }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => harness.context }));
@@ -15,8 +15,40 @@ let root: Root, container: HTMLDivElement;
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 function Harness() { const { read, refresh } = useWeeklyResponsibility(); return <div>{read.status === "ready" ? read.snapshot.read_at : read.status}<button onClick={() => void refresh()}>Refresh</button></div>; }
 function ready(label: string): WeeklyOwnerRead { return { status: "ready", snapshot: { source: "canonical_process_and_act_receipts", read_at: label, business_time_zone: { state: "missing", zone: null }, limit: 50, has_more: false, checks: [] } }; }
-beforeEach(() => { setScopedUserId(null); harness.impersonating = false; harness.context = { loading: false, accountContextStatus: "ready", activeUserId: "actor-a", activeTenantId: "tenant-a", isPlatformStaff: false, soloShellEnabled: true }; harness.read.mockReset(); container = document.createElement("div"); document.body.append(container); root = createRoot(container); });
+beforeEach(() => { setScopedUserId(null); harness.impersonating = false; harness.context = { loading: false, accountContextStatus: "ready", activeUserId: "actor-a", activeTenantId: "tenant-a", activeTenant: { account_type: "standalone", parent_tenant_id: null }, isPlatformStaff: false, soloShellEnabled: true }; harness.read.mockReset(); container = document.createElement("div"); document.body.append(container); root = createRoot(container); });
 afterEach(() => { act(() => root.unmount()); setScopedUserId(null); container.remove(); });
+it.each([false, true])("canonical SOLO inspection does not require legacy shell flag %s", async legacyFlag => {
+  harness.context.soloShellEnabled = legacyFlag;
+  harness.read.mockResolvedValue(ready("canonical owner result"));
+  await act(async () => root.render(<Harness />));
+  expect(container.textContent).toContain("canonical owner result");
+  expect(harness.read).toHaveBeenCalledTimes(1);
+});
+it.each([
+  { account_type: null, parent_tenant_id: null },
+  { account_type: "unknown", parent_tenant_id: null },
+  { account_type: "agency", parent_tenant_id: null },
+  { account_type: "standalone", parent_tenant_id: "parent-tenant" },
+])("legacy flag cannot admit noncanonical classification %j", async classification => {
+  harness.context.activeTenant = classification;
+  harness.read.mockResolvedValue(ready("PRIVATE non-SOLO result"));
+  await act(async () => root.render(<Harness />));
+  expect(container.textContent).toContain("refused");
+  expect(container.textContent).not.toContain("PRIVATE");
+  expect(harness.read).not.toHaveBeenCalled();
+});
+it.each(["resolving", "error", "signed_out"])("unresolved account state %s cannot read even with a canonical classification", async status => {
+  harness.context.accountContextStatus = status;
+  await act(async () => root.render(<Harness />));
+  expect(container.textContent).toContain("refused");
+  expect(harness.read).not.toHaveBeenCalled();
+});
+it("platform staff do not enter the ordinary owner reader", async () => {
+  harness.context.isPlatformStaff = true;
+  await act(async () => root.render(<Harness />));
+  expect(container.textContent).toContain("refused");
+  expect(harness.read).not.toHaveBeenCalled();
+});
 it("StrictMode setup still performs the current canonical read after cleanup", async () => {
   harness.read.mockResolvedValue(ready("current owner read"));
   await act(async () => root.render(<StrictMode><Harness /></StrictMode>));

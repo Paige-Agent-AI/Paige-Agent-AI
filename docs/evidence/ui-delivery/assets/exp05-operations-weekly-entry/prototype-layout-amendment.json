@@ -1,0 +1,7 @@
+{
+  "reason": "Initial desktop/phone batch found phone actions right-stacked with excessive header height. One bounded narrow-parent layout correction retains both full labels and existing controls in two flexible columns.",
+  "originalHtmlSha256": "04126bd135e77f89979891a0d252e82f8281f6de095ecd9914b0c0d9b98ae25f",
+  "correctedHtmlSha256": "006d144cf38fe80d470859016e87f473cab63b159072e9d7602fbc16d2695b5f",
+  "productionSource": "UNCHANGED",
+  "next": "One native confirmation then stop refinement."
+}

@@ -1,0 +1,675 @@
+{
+  "generatedAt": "2026-10-20T14:20:16.048Z",
+  "proofClass": "ACTUAL_COMPONENTS_SYNTHETIC_PORTS_NOT_AUTHENTICATED",
+  "validCurrentFrames": 28,
+  "requiredMatrixFrames": 16,
+  "allRetainedImages": 34,
+  "originals": "Five pre-final fixture/touch states are supporting only; one final-b-light-390-review is INVALID_WRONG_TAB_CAPTURE, not B review proof. Correct final-b-light-390-current-review is explicit tab170269643; exact original bytes preserved. Initial automated time fill did not update state and was declined, never approved. Native keyboard edit preserves10:00 in actual review.",
+  "transition": "Post-cleanup same-call dialog-open/action attempt briefly showed retirement/refused text and then closed; NOT acceptance. Separate-call settled entry/form worked without source/authority changes. No product root cause inferred.",
+  "matrix": "Both themes at1536x770,1366x768,1024x768,900x1000 with PAIGE folded/open. Underlying narrow PAIGE overlay is not simultaneous background interactivity. Captures made in separate calls after sizing; native pixels and CSS viewport may differ by one rounding pixel.",
+  "imagePolicy": "Original native bytes, no editing/cropping/compositing/reencoding",
+  "textPolicy": "Explicit UTF8/LF/trailing horizontal whitespace/final newline normalization; raw private bytes and paired hashes retained",
+  "artifacts": [
+    {
+      "path": "a-light-1536-empty.ax.txt",
+      "bytes": 1444,
+      "sha256": "38780a822f75967138547ede39023acd44ae16c1dbb6410eafcb36afb1ac0684"
+    },
+    {
+      "path": "a-light-1536-empty.jpg",
+      "bytes": 55211,
+      "sha256": "981823f13eb16ecf69873bb8137235c1b319ecf968da1598287cac2723bea827",
+      "pixels": {
+        "width": 1535,
+        "height": 770
+      }
+    },
+    {
+      "path": "a-light-1536-empty.json",
+      "bytes": 721,
+      "sha256": "a9200b6e91654fc7d492317f607d389b73866c749c3769ac07de9e5f6bb0ff43"
+    },
+    {
+      "path": "a-light-declined.ax.txt",
+      "bytes": 2053,
+      "sha256": "c660163f590254d9fd63bece30d5ea3ce0569abd0c2de9ce43e1810d54b42131"
+    },
+    {
+      "path": "a-light-declined.jpg",
+      "bytes": 72177,
+      "sha256": "168d0bc1b6807d33a5d78939c5256b2e0bec33bcc14447638dc51ec787f37434",
+      "pixels": {
+        "width": 1535,
+        "height": 770
+      }
+    },
+    {
+      "path": "a-light-declined.json",
+      "bytes": 1666,
+      "sha256": "6b54fb4d2a32618b17a2440ab47080c73de6a1481f0d2fe9f2d58c622b87d772"
+    },
+    {
+      "path": "a-light-form-keyboard-time.ax.txt",
+      "bytes": 2924,
+      "sha256": "336a138d7a257cc6985c107174bcd2c773c28a533c28c9a50236bc3b1dfd62d7"
+    },
+    {
+      "path": "a-light-form-keyboard-time.jpg",
+      "bytes": 67763,
+      "sha256": "9d14b404c93060020a213905a897e3529e754aac81f0cd06f115ed685f7275fd",
+      "pixels": {
+        "width": 1535,
+        "height": 770
+      }
+    },
+    {
+      "path": "a-light-form-keyboard-time.json",
+      "bytes": 1199,
+      "sha256": "e1390d3df5b78c2c5fa20b108b01e28cc64dad1d101f333c1b3585c2fa04add5"
+    },
+    {
+      "path": "final-a-light-1536-receipt.ax.txt",
+      "bytes": 3300,
+      "sha256": "1d1ff01b9a5d10ef9bb8154310319bf88e2d6b4826166212ec29c7c1b57f2dd1"
+    },
+    {
+      "path": "final-a-light-1536-receipt.jpg",
+      "bytes": 66734,
+      "sha256": "c2796d43365815757261c1ed04eab7f4b18240b4af7f0fea5ee2550c7e66ac6a",
+      "pixels": {
+        "width": 1535,
+        "height": 770
+      }
+    },
+    {
+      "path": "final-a-light-1536-receipt.json",
+      "bytes": 2127,
+      "sha256": "b54abe4e7edae425ab04bbee904f31bb360aaa59b16bd78c578ba9f07512038d"
+    },
+    {
+      "path": "final-b-light-320-after-reload.ax.txt",
+      "bytes": 2918,
+      "sha256": "6b1b47f8c1fa1d96160108438266cb60694a60eda87585b9a26b86a171fa384b"
+    },
+    {
+      "path": "final-b-light-320-after-reload.jpg",
+      "bytes": 35648,
+      "sha256": "826df20ac659b1842bd7dee70ff3d0d2885dc427d74cc1c8f6d66d413d09b703",
+      "pixels": {
+        "width": 320,
+        "height": 768
+      }
+    },
+    {
+      "path": "final-b-light-320-after-reload.json",
+      "bytes": 2138,
+      "sha256": "8d470f3427f45396e2971084e71233ac5bdb91d2c6fb9148b4d4ed2562bc2f6f"
+    },
+    {
+      "path": "final-b-light-320-recovered-receipt.ax.txt",
+      "bytes": 3320,
+      "sha256": "c080f2b7d779e4ea0b6593ae61d41250a76f310868792fef8bbe440b27ccdd73"
+    },
+    {
+      "path": "final-b-light-320-recovered-receipt.jpg",
+      "bytes": 34110,
+      "sha256": "3210fd8d4178d69649c0527dae67f59888f9998139690d1a927dffef1259058b",
+      "pixels": {
+        "width": 320,
+        "height": 768
+      }
+    },
+    {
+      "path": "final-b-light-320-recovered-receipt.json",
+      "bytes": 2151,
+      "sha256": "ba2cc8d24ed3633cf2117f0cc02229b4c6e1bc8e006e48d215eb7e9c7d635eaf"
+    },
+    {
+      "path": "final-b-light-390-current-review.ax.txt",
+      "bytes": 3092,
+      "sha256": "f4395e76a5f19426033594eb1c8de988ef251b28abf557e6fdc304536ebab4ef"
+    },
+    {
+      "path": "final-b-light-390-current-review.jpg",
+      "bytes": 43935,
+      "sha256": "64c354f4cd4851975cff4623848dee41f6972f232c22a52b9801483c7cdd4732",
+      "pixels": {
+        "width": 390,
+        "height": 843
+      }
+    },
+    {
+      "path": "final-b-light-390-current-review.json",
+      "bytes": 3822,
+      "sha256": "d6dd02269963d0a064fb86dcb4ff35840854081d4c18fe2aa0a50fd82ceb7c63"
+    },
+    {
+      "path": "final-b-light-390-declined.ax.txt",
+      "bytes": 2719,
+      "sha256": "fe2fe412e29c4b1310bb0cf75fc55dbf1447d9b278597277eace1f6939b3ba77"
+    },
+    {
+      "path": "final-b-light-390-declined.jpg",
+      "bytes": 43852,
+      "sha256": "6be4c7f6a47a87d19ac01290f7574e31030e2ee94c03c857ecf9781754f8685e",
+      "pixels": {
+        "width": 390,
+        "height": 843
+      }
+    },
+    {
+      "path": "final-b-light-390-declined.json",
+      "bytes": 3184,
+      "sha256": "f96d49ce70371192a3a528a7bdddd9210cc7a1fa4eaa0c4dea3472129a4f657a"
+    },
+    {
+      "path": "final-b-light-390-form.ax.txt",
+      "bytes": 3817,
+      "sha256": "0834436ffe47033891517aa126a2b0fe01af092d508190b9daac454df77c443b"
+    },
+    {
+      "path": "final-b-light-390-form.jpg",
+      "bytes": 41108,
+      "sha256": "b249eadf9bebf38b2463d80a8e0cd4734f8fbc274b1d90ee09ae50898d031c40",
+      "pixels": {
+        "width": 390,
+        "height": 843
+      }
+    },
+    {
+      "path": "final-b-light-390-form.json",
+      "bytes": 2953,
+      "sha256": "d78c55315b1cd9f85b4889cc6ad3d5231862da44b6c5892a5df6a9ef1fa44a54"
+    },
+    {
+      "path": "final-b-light-390-review.ax.txt",
+      "bytes": 3323,
+      "sha256": "1faf5eaa91c67f8c409a60fb2b6f24ec34b27b6b73a27d4b79b58ecee85e8081"
+    },
+    {
+      "path": "final-b-light-390-review.jpg",
+      "bytes": 41735,
+      "sha256": "d453c17c4a55fd92a9c9c91be55ebca651f10107d4cc78f8ebc6016ad2d6850c",
+      "pixels": {
+        "width": 390,
+        "height": 843
+      }
+    },
+    {
+      "path": "final-b-light-390-review.json",
+      "bytes": 2122,
+      "sha256": "74c26f71298e8614fe1afa129c3a89f8f157c126b64a3b081c133b42fc8cd6c3"
+    },
+    {
+      "path": "final-b-light-390-unknown.ax.txt",
+      "bytes": 2397,
+      "sha256": "a0c88d161c79ab06ee18d4d6b4af7bdbb5eac65d212329976703bb20f7c864c4"
+    },
+    {
+      "path": "final-b-light-390-unknown.jpg",
+      "bytes": 49227,
+      "sha256": "f0b69acbd89d143a82c0ee8b2286aa042d3d465208ecfd384b751c051fdd4fd3",
+      "pixels": {
+        "width": 390,
+        "height": 843
+      }
+    },
+    {
+      "path": "final-b-light-390-unknown.json",
+      "bytes": 2519,
+      "sha256": "db979ed3faffdd08cb579d69449a5493607117f1699ab07cd132fcaee986ae09"
+    },
+    {
+      "path": "final-dark-1024-paige-closed.ax.txt",
+      "bytes": 2921,
+      "sha256": "cdb1d9dc3e1315bda5ac23e60994378799f333627a1c0c701b04fb9dcd615d48"
+    },
+    {
+      "path": "final-dark-1024-paige-closed.jpg",
+      "bytes": 65992,
+      "sha256": "04372bc84a49ece92f24dbe429fe1473afb21c97b6408e722561e0dffcc96ce2",
+      "pixels": {
+        "width": 1024,
+        "height": 768
+      }
+    },
+    {
+      "path": "final-dark-1024-paige-closed.json",
+      "bytes": 2100,
+      "sha256": "4166a0ead6fc794baa9b8558f3f9ab107b2a0866cc47ec8fd7e4949b068090cf"
+    },
+    {
+      "path": "final-dark-1024-paige-open.ax.txt",
+      "bytes": 3092,
+      "sha256": "9d6d54ac036a64d48cd9cd0e8bc228301d2c3bed2a9086d12e5499f0fbab5dcd"
+    },
+    {
+      "path": "final-dark-1024-paige-open.jpg",
+      "bytes": 57807,
+      "sha256": "09edcf66e9b60c6694e7f833d801107c8d4404152233ce1b9bac694a3b8063e8",
+      "pixels": {
+        "width": 1024,
+        "height": 768
+      }
+    },
+    {
+      "path": "final-dark-1024-paige-open.json",
+      "bytes": 2100,
+      "sha256": "1dee5df839555dcc6e312c7cab9c35c60fbef52322fc1a0925f025fdd42976b7"
+    },
+    {
+      "path": "final-dark-1366-paige-closed.ax.txt",
+      "bytes": 2921,
+      "sha256": "cdb1d9dc3e1315bda5ac23e60994378799f333627a1c0c701b04fb9dcd615d48"
+    },
+    {
+      "path": "final-dark-1366-paige-closed.jpg",
+      "bytes": 71346,
+      "sha256": "5d977defeec7503a850abebe2d465087946633a237434781d77185854edba999",
+      "pixels": {
+        "width": 1366,
+        "height": 768
+      }
+    },
+    {
+      "path": "final-dark-1366-paige-closed.json",
+      "bytes": 2114,
+      "sha256": "d96e8175205ca597110667c9c4f94ebc1b654c9c5c050e175abd3f072b124eca"
+    },
+    {
+      "path": "final-dark-1366-paige-open.ax.txt",
+      "bytes": 3092,
+      "sha256": "9d6d54ac036a64d48cd9cd0e8bc228301d2c3bed2a9086d12e5499f0fbab5dcd"
+    },
+    {
+      "path": "final-dark-1366-paige-open.jpg",
+      "bytes": 78531,
+      "sha256": "7e70904ca95cf4b0db796810dcce5f943f3714e2a5d6511509c5465f4e57a3cb",
+      "pixels": {
+        "width": 1366,
+        "height": 768
+      }
+    },
+    {
+      "path": "final-dark-1366-paige-open.json",
+      "bytes": 2114,
+      "sha256": "a09dd0581dc0a755d1db9402b3dd18a68ae95a482e321ac426c0cd4a5c1c4b35"
+    },
+    {
+      "path": "final-dark-1536-paige-closed.ax.txt",
+      "bytes": 2921,
+      "sha256": "cdb1d9dc3e1315bda5ac23e60994378799f333627a1c0c701b04fb9dcd615d48"
+    },
+    {
+      "path": "final-dark-1536-paige-closed.jpg",
+      "bytes": 73690,
+      "sha256": "eafdc8a6903e5c1d7d8d402d3ed8a26c3b6bc2811b8a3d25012c7a9975cb1919",
+      "pixels": {
+        "width": 1535,
+        "height": 770
+      }
+    },
+    {
+      "path": "final-dark-1536-paige-closed.json",
+      "bytes": 2114,
+      "sha256": "857103bcec54f227bb4d8e57ca5c9eb63ee719a727d9eb95d6f5aad8f239a08b"
+    },
+    {
+      "path": "final-dark-1536-paige-open.ax.txt",
+      "bytes": 3092,
+      "sha256": "9d6d54ac036a64d48cd9cd0e8bc228301d2c3bed2a9086d12e5499f0fbab5dcd"
+    },
+    {
+      "path": "final-dark-1536-paige-open.jpg",
+      "bytes": 81836,
+      "sha256": "453de8cf43545af4a7c3d3745d82c98d04b2cc321c53588f5c2da7743f98f8ea",
+      "pixels": {
+        "width": 1535,
+        "height": 770
+      }
+    },
+    {
+      "path": "final-dark-1536-paige-open.json",
+      "bytes": 2114,
+      "sha256": "bd861a39aa7845b1116ab5257d90263ca13757709c61e9bba0dea129aaf9e7be"
+    },
+    {
+      "path": "final-dark-320-receipt.ax.txt",
+      "bytes": 3323,
+      "sha256": "1faf5eaa91c67f8c409a60fb2b6f24ec34b27b6b73a27d4b79b58ecee85e8081"
+    },
+    {
+      "path": "final-dark-320-receipt.jpg",
+      "bytes": 34709,
+      "sha256": "62ee3e963ccffca30a9d84c06f7bb7178c0e70a7be3b62779f838d1092377ceb",
+      "pixels": {
+        "width": 320,
+        "height": 768
+      }
+    },
+    {
+      "path": "final-dark-320-receipt.json",
+      "bytes": 2108,
+      "sha256": "2e1fce9fbceab8855be4fe4cdbb3cf8fd566abd5babb2c296ddb5ada8fe3d44e"
+    },
+    {
+      "path": "final-dark-320-saved.ax.txt",
+      "bytes": 2921,
+      "sha256": "cdb1d9dc3e1315bda5ac23e60994378799f333627a1c0c701b04fb9dcd615d48"
+    },
+    {
+      "path": "final-dark-320-saved.jpg",
+      "bytes": 37652,
+      "sha256": "d4b48028be91488c18aac09c85e9dae0e80c5992d24b43343f2f108e2278589b",
+      "pixels": {
+        "width": 320,
+        "height": 768
+      }
+    },
+    {
+      "path": "final-dark-320-saved.json",
+      "bytes": 2095,
+      "sha256": "cdae52c48bc21466cb26dfb925233d06ac0d314d13305596e56cfbde0d231207"
+    },
+    {
+      "path": "final-dark-390-receipt.ax.txt",
+      "bytes": 3323,
+      "sha256": "1faf5eaa91c67f8c409a60fb2b6f24ec34b27b6b73a27d4b79b58ecee85e8081"
+    },
+    {
+      "path": "final-dark-390-receipt.jpg",
+      "bytes": 41750,
+      "sha256": "9bf9dc38a2a5609d729b2c5640ad34bb8d358ca40c73913290c91f489100cea4",
+      "pixels": {
+        "width": 390,
+        "height": 843
+      }
+    },
+    {
+      "path": "final-dark-390-receipt.json",
+      "bytes": 2122,
+      "sha256": "74c26f71298e8614fe1afa129c3a89f8f157c126b64a3b081c133b42fc8cd6c3"
+    },
+    {
+      "path": "final-dark-390-saved.ax.txt",
+      "bytes": 2921,
+      "sha256": "cdb1d9dc3e1315bda5ac23e60994378799f333627a1c0c701b04fb9dcd615d48"
+    },
+    {
+      "path": "final-dark-390-saved.jpg",
+      "bytes": 47284,
+      "sha256": "794845252a365da82e7eca50b28e1d50ccaa767079db556dace629fcd002761e",
+      "pixels": {
+        "width": 390,
+        "height": 843
+      }
+    },
+    {
+      "path": "final-dark-390-saved.json",
+      "bytes": 2109,
+      "sha256": "ad19ee1bc39120d3a3220225a57e01144e48ae05473981d94f9f5aedb849970d"
+    },
+    {
+      "path": "final-dark-900-paige-closed.ax.txt",
+      "bytes": 2921,
+      "sha256": "cdb1d9dc3e1315bda5ac23e60994378799f333627a1c0c701b04fb9dcd615d48"
+    },
+    {
+      "path": "final-dark-900-paige-closed.jpg",
+      "bytes": 84020,
+      "sha256": "18c53d29236e940c917afbd7bf338f8f1eea3d42baf881b2b148145b0da236ea",
+      "pixels": {
+        "width": 900,
+        "height": 1000
+      }
+    },
+    {
+      "path": "final-dark-900-paige-closed.json",
+      "bytes": 2099,
+      "sha256": "8a239d8d38a640352af4285012ce446347b6bc46f855bc20cdda32d10c6bc558"
+    },
+    {
+      "path": "final-dark-900-paige-open.ax.txt",
+      "bytes": 3092,
+      "sha256": "9d6d54ac036a64d48cd9cd0e8bc228301d2c3bed2a9086d12e5499f0fbab5dcd"
+    },
+    {
+      "path": "final-dark-900-paige-open.jpg",
+      "bytes": 75993,
+      "sha256": "51391715c87de067c3ee2e89b8e18657777cab471b0e89dae707d2408f463ef8",
+      "pixels": {
+        "width": 900,
+        "height": 1000
+      }
+    },
+    {
+      "path": "final-dark-900-paige-open.json",
+      "bytes": 2099,
+      "sha256": "f547981d6cb9065356d6d97f51fd55b65796fc52a6b6a8e3b09dd8d54f68e044"
+    },
+    {
+      "path": "final-light-1024-paige-closed.ax.txt",
+      "bytes": 3247,
+      "sha256": "0ce36d90d2b16de8a1c27b875db91dcf3b3e48c0f77f5ba838bf20807793787c"
+    },
+    {
+      "path": "final-light-1024-paige-closed.jpg",
+      "bytes": 62807,
+      "sha256": "87c6cfa6ec4e7cee204a13e32e6e9dd1f147ac2b04caa6cf8904a3fde4d295c3",
+      "pixels": {
+        "width": 1024,
+        "height": 768
+      }
+    },
+    {
+      "path": "final-light-1024-paige-closed.json",
+      "bytes": 2100,
+      "sha256": "32f61f1ee4fb81aa5a1d92e1062e7cbc0b1313fa7477de00b104de098d12ca87"
+    },
+    {
+      "path": "final-light-1024-paige-open.ax.txt",
+      "bytes": 3092,
+      "sha256": "7dd340088ef1fdf626099b5475a82e6acf14121984d4dfe78ae204b04456900c"
+    },
+    {
+      "path": "final-light-1024-paige-open.jpg",
+      "bytes": 54920,
+      "sha256": "34192cb7186df56067051675963ecba3c138ceffe92816b8b5380a17e9c8cbfc",
+      "pixels": {
+        "width": 1024,
+        "height": 768
+      }
+    },
+    {
+      "path": "final-light-1024-paige-open.json",
+      "bytes": 2100,
+      "sha256": "15a6ff1ea4e254fa1929e4c19f1a80c9bedead28bbfd3354f2990e8a6d2f69b1"
+    },
+    {
+      "path": "final-light-1366-paige-closed.ax.txt",
+      "bytes": 3247,
+      "sha256": "0ce36d90d2b16de8a1c27b875db91dcf3b3e48c0f77f5ba838bf20807793787c"
+    },
+    {
+      "path": "final-light-1366-paige-closed.jpg",
+      "bytes": 70723,
+      "sha256": "8109f4055b6ae95a6ccab8eca0e07848161434df569bdbccc78ebc817a4c41ee",
+      "pixels": {
+        "width": 1366,
+        "height": 768
+      }
+    },
+    {
+      "path": "final-light-1366-paige-closed.json",
+      "bytes": 2114,
+      "sha256": "d94545dd48369025293c7b82fc7509f164f79029d5b8d4d6bee3825359a4d485"
+    },
+    {
+      "path": "final-light-1366-paige-open.ax.txt",
+      "bytes": 3092,
+      "sha256": "7dd340088ef1fdf626099b5475a82e6acf14121984d4dfe78ae204b04456900c"
+    },
+    {
+      "path": "final-light-1366-paige-open.jpg",
+      "bytes": 75117,
+      "sha256": "7188e72dfba50822bf0a3f11ad131e9eb2f6211fdb20a1ef8c8b2c83e9133cca",
+      "pixels": {
+        "width": 1366,
+        "height": 768
+      }
+    },
+    {
+      "path": "final-light-1366-paige-open.json",
+      "bytes": 2114,
+      "sha256": "6570713b2280a35217a8bf48ce03cb172aca54db622af5453ca87cd90b2468a5"
+    },
+    {
+      "path": "final-light-1536-paige-closed.ax.txt",
+      "bytes": 3247,
+      "sha256": "0ce36d90d2b16de8a1c27b875db91dcf3b3e48c0f77f5ba838bf20807793787c"
+    },
+    {
+      "path": "final-light-1536-paige-closed.jpg",
+      "bytes": 70376,
+      "sha256": "0c0980ccec590598f6b7e663c49623e4ed8fe7c1985b3d9bd9b45eb85968d968",
+      "pixels": {
+        "width": 1535,
+        "height": 770
+      }
+    },
+    {
+      "path": "final-light-1536-paige-closed.json",
+      "bytes": 2114,
+      "sha256": "158458724a342adb15ca686fa3d2a54476adb3faa6e7f51a1426727dbc4add23"
+    },
+    {
+      "path": "final-light-1536-paige-open.ax.txt",
+      "bytes": 3092,
+      "sha256": "7dd340088ef1fdf626099b5475a82e6acf14121984d4dfe78ae204b04456900c"
+    },
+    {
+      "path": "final-light-1536-paige-open.jpg",
+      "bytes": 78137,
+      "sha256": "a1cada76db0149b4a3ce6ba65915c66a7804b36d1b9dc232cf0e6d77a387403f",
+      "pixels": {
+        "width": 1535,
+        "height": 770
+      }
+    },
+    {
+      "path": "final-light-1536-paige-open.json",
+      "bytes": 2114,
+      "sha256": "a7e05006f07467b56f31354d0067b2782f3aababe67057c10787c694e53797bd"
+    },
+    {
+      "path": "final-light-900-paige-closed.ax.txt",
+      "bytes": 3247,
+      "sha256": "0ce36d90d2b16de8a1c27b875db91dcf3b3e48c0f77f5ba838bf20807793787c"
+    },
+    {
+      "path": "final-light-900-paige-closed.jpg",
+      "bytes": 79928,
+      "sha256": "5633813cdf750d31af695ce1410f5416273d61bf3fd710133be7678d883bfee0",
+      "pixels": {
+        "width": 900,
+        "height": 1000
+      }
+    },
+    {
+      "path": "final-light-900-paige-closed.json",
+      "bytes": 2099,
+      "sha256": "cacc909076d62dc296cf70ea37492a055c20dbc98e77a79873f0484ac8cb33bd"
+    },
+    {
+      "path": "final-light-900-paige-open.ax.txt",
+      "bytes": 3092,
+      "sha256": "7dd340088ef1fdf626099b5475a82e6acf14121984d4dfe78ae204b04456900c"
+    },
+    {
+      "path": "final-light-900-paige-open.jpg",
+      "bytes": 72247,
+      "sha256": "4d74f46867cb1f66a0f7b6604afe1881e47c5abee03076c828d6eea0fd34b842",
+      "pixels": {
+        "width": 900,
+        "height": 1000
+      }
+    },
+    {
+      "path": "final-light-900-paige-open.json",
+      "bytes": 2099,
+      "sha256": "eea8c8572c3200d12f51541039bfd198ce6b42f11bd2b26ab19021b40d8a5908"
+    },
+    {
+      "path": "final-wrong-context-320.ax.txt",
+      "bytes": 1556,
+      "sha256": "1888fb7b74242deadb1d4e24a60f037fa7d57a63b2db0c90edac1dfe25325f01"
+    },
+    {
+      "path": "final-wrong-context-320.jpg",
+      "bytes": 30775,
+      "sha256": "f4f30b99499d423cd73bddce813110338c503b0a9c8f17654238135736371752",
+      "pixels": {
+        "width": 320,
+        "height": 768
+      }
+    },
+    {
+      "path": "final-wrong-context-320.json",
+      "bytes": 1105,
+      "sha256": "baa124a8ea3af435e3ec3c322485f6ca71b151d1fa85648af95a2978fb2a15ea"
+    },
+    {
+      "path": "native-frame-index.json",
+      "bytes": 78236,
+      "sha256": "2a8696ac43f9fadf4f96ed0988e787b51e8cb65605622b71b7577ddba5a599c9"
+    },
+    {
+      "path": "source-manifest.json",
+      "bytes": 42470,
+      "sha256": "6aad7f760a4940e701898343e7757e5b850db7363da7ad02fe7e4f046eb5a38c"
+    },
+    {
+      "path": "text-normalization.json",
+      "bytes": 16669,
+      "sha256": "48ca1cb63aa60c8e20f36ba934a8abf407bbf0733f053732acaa06b5b78082be"
+    },
+    {
+      "path": "time-fill-not-accepted-review.ax.txt",
+      "bytes": 2425,
+      "sha256": "9c7e25100bc7e0d407f09cdbe667c3aa779ce9c2d23267972459e1e3b44bee25"
+    },
+    {
+      "path": "time-fill-not-accepted-review.jpg",
+      "bytes": 73936,
+      "sha256": "7613c33668b85bddd1ecfa9fd25bdf7879008ecf54cc44075866e851400f87c9",
+      "pixels": {
+        "width": 1535,
+        "height": 770
+      }
+    },
+    {
+      "path": "time-fill-not-accepted-review.json",
+      "bytes": 2084,
+      "sha256": "91191ce2f61b069d1d806e065fbba3bacf05113b6a09b672acd38dbfc4c3aa4e"
+    },
+    {
+      "path": "touch-corrected-a-light-1536-review.ax.txt",
+      "bytes": 2392,
+      "sha256": "eb8df6695e429900b347e86e7e73b4355e9b39f4d86c536162cc67b6314503ef"
+    },
+    {
+      "path": "touch-corrected-a-light-1536-review.jpg",
+      "bytes": 79027,
+      "sha256": "7c755c99e1b2b746af4ce4b95ba9d9d9546612e2279e8c9d116e3a161fb60d1f",
+      "pixels": {
+        "width": 1535,
+        "height": 770
+      }
+    },
+    {
+      "path": "touch-corrected-a-light-1536-review.json",
+      "bytes": 1200,
+      "sha256": "ed4ae3612c58c937cc827ac80cad2bcdde7b9bad6b9257b9384dbd590a3c46e0"
+    }
+  ]
+}

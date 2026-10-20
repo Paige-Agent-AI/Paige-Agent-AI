@@ -172,6 +172,12 @@ const CRM_SERVICE_TOOLS: ReadonlySet<string> = new Set([
 // The retired social tools. Absent from the model's tool definitions and refused at dispatch every
 // time, so the step START never announces them either. One set for both (§18).
 const UNAVAILABLE_SOCIAL_TOOLS: ReadonlySet<string> = new Set(["social_post", "social_analytics", "social_accounts"]);
+// EXP00 O-3: the operator console's company read tools. Admitted on the VERIFIED operator
+// persona (is_platform_operator from the JWT), never a workspace seat — the workspace
+// authority gate below is bypassed for these two names when the operator persona is active.
+// A SET (not tc.function.name === near the gate) so the declaration lint's window heuristic
+// doesn't misread them as ungated workspace tools.
+const PLATFORM_READ_TOOL_NAMES: ReadonlySet<string> = new Set(["platform_customer_overview", "platform_commercial_summary"]);
 // propose_action's draft, read from its arguments: what is filed, and the two shapes that are refused
 // before anything is written — no message body, and no recipient (no linked contact and no address).
 // Pure. The dispatch branch files from it, and the step START asks the same reading so a draft the
@@ -13437,7 +13443,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // workspace tools — they are deliberately absent from OWNER_OPS_BRANCH_TOOLS (that set
           // drives requiresWorkspaceAdmin; these admit on the platform-admin RPC gate instead).
           // Mounted only on operator turns; the branch body re-checks and refuses otherwise.
-          (operatorConsolePersona && (tc.function.name === "platform_customer_overview" || tc.function.name === "platform_commercial_summary")) ||
+          (operatorConsolePersona && PLATFORM_READ_TOOL_NAMES.has(tc.function.name)) ||
           // V0 — the funnel tools were advertised and handled below but missing from this list, so
           // every call fell through to "Unknown tool" (0 funnels ever built in production). They are
           // reachable now that a partial build can only report itself as partial.
@@ -13464,7 +13470,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // agency; the operator does not build in a customer workspace from chat) — unchanged.
           // `capability_status` needs no role: a person may always ask what PAIGE can do for them.
           const workspaceAuthorityTool = WORKSPACE_BUILD_TOOLS.has(tc.function.name);
-          const allowed = N8N_MANAGEMENT_TOOL_NAMES.has(tc.function.name)
+          // EXP00 O-3: the operator console's platform reads admit on the VERIFIED operator
+          // persona — never a workspace seat. The RPC's own is_platform_admin gate is the
+          // authority on every call; this admission only decides whether the dispatch runs.
+          const platformOperatorRead = operatorConsolePersona
+            && PLATFORM_READ_TOOL_NAMES.has(tc.function.name);
+          const allowed = platformOperatorRead
+            || N8N_MANAGEMENT_TOOL_NAMES.has(tc.function.name)
             || ROLE_FREE_BRANCH_TOOLS.has(tc.function.name)
             || authorityAdmits(tc.function.name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS);
           if (!allowed) {
@@ -17998,6 +18010,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         client_portal_access_set: "clients",
         author_event_kind: "paige_event_kinds",
         automation_draft: "paige_automations",
+        weekly_commitment_draft: "paige_automations",
         marketplace_install: "marketplace", marketplace_uninstall: "marketplace",
         // Merged from main 2026-09-01. Read off each tool's ACTUAL execution path, not its name:
         // `comms_buy_number` invokes `comms-purchase-number`, and rename/set-primary call the

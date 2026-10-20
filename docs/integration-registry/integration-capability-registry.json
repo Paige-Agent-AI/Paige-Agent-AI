@@ -736,6 +736,11 @@
           "note": "Caller-JWT authentication precedes a truthful unavailable refusal; no privileged rows, token operations or provider effects through legacy user-only selection."
         },
         {
+          "path": "supabase/functions/_shared/finance/quickbooks-statement-summary.ts",
+          "role": "provider_adapter",
+          "note": "Controlled native historical summary classification only; preserves labels and refuses incomplete/ambiguous/recognized-filtered reports. Company authority and unfiltered request evidence are producer duties; no transport, ingestion or live financial claim."
+        },
+        {
           "path": "supabase/functions/_shared/finance/quickbooks-read-contract.ts",
           "role": "provider_adapter",
           "note": "Pure controlled normalization and bounded pagination/report metadata; no network, authority, credentials or live ingestion. Accounting balances never establish available bank cash."

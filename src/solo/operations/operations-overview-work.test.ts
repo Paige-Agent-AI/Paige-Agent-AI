@@ -40,3 +40,13 @@ it("does not treat invalid dates or unknown priority as verified urgency",()=>{
  expect(result.attention).toEqual([]);expect(result.upcoming).toEqual([]);
  expect(result.timingToConfirm[0].native.record).toBe(invalid);expect(result.timingToConfirm[0].priority).toBeNull();
 });
+
+it("shares exact overdue deadlines without turning reminders or finished work into late tasks",()=>{
+ const now=Date.parse("2026-11-01T06:00:00Z");
+ const overdue={...crm,id:"late",due_date:"2026-11-01T01:30:00-04:00"};
+ const later={...crm,id:"later",due_date:"2026-11-01T01:30:00-05:00"};
+ const reminder={...planning,id:"reminder",item_type:"reminder",status:"open",due_at:"2026-01-01T00:00:00Z",remind_at:"2026-01-01T00:00:00Z"} as PlanItem;
+ const result=overviewNativeWork("tenant",[reminder],[overdue,later,{...overdue,id:"done",status:"completed"},{...overdue,id:"unknown",due_date:"invalid"}],now);
+ expect(result.overdue.map(row=>row.native.record)).toEqual([overdue]);
+ expect(result.upcoming.map(row=>row.native.record)).toEqual([later]);
+});

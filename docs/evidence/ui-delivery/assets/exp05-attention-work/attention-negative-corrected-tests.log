@@ -1,0 +1,84 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - `__dirname` (vitest.config.ts:10:25). Use `import.meta.dirname` instead
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+12:32:53 PM [vite] warning: `optimizeDeps.esbuildOptions` option was specified by "vite:react-swc" plugin. This option is deprecated, please use `optimizeDeps.rolldownOptions` instead.
+
+ RUN  v4.1.11 C:/Users/tonig/Documents/Codex/2026-10-14/paige-engineering-2-0-solo-to/work/weekly-solo-eligibility
+
+ ✓ src/solo/operations/operations-overview-work.test.ts > includes native overdue work without copying identity or accepting completed work 2ms
+ ✓ src/solo/operations/operations-overview-work.test.ts > orders actual instants across offsets and keeps missing deadlines unknown 0ms
+ ✓ src/solo/operations/operations-overview-work.test.ts > refuses a mixed-tenant executive read rather than showing foreign work 1ms
+ ✓ src/solo/operations/operations-overview-work.test.ts > keeps real undated assignments visible when there is no project, blocker or deadline 0ms
+ ✓ src/solo/operations/operations-overview-work.test.ts > keeps reminders separate from task deadlines and preserves their original inspection identity 0ms
+ ✓ src/solo/operations/operations-overview-work.test.ts > does not treat invalid dates or unknown priority as verified urgency 0ms
+ ✓ src/solo/operations/operations-overview-work.test.ts > shares exact overdue deadlines without turning reminders or finished work into late tasks 0ms
+ ✓ src/solo/operations/operations-attention-routing.test.ts > opens every loaded upcoming deadline rather than only the five-row summary 4ms
+ ✓ src/solo/operations/operations-attention-routing.test.ts > preserves original source identities across blocked and overdue work 1ms
+ ✓ src/solo/operations/operations-attention-routing.test.ts > separates undated active work and saved reminders without substituting a legacy due date 22ms
+ ✓ src/solo/operations/operations-attention-routing.test.ts > does not turn an empty loaded set into business-wide completion 0ms
+ ✓ src/solo/operations/operations-attention-routing.test.ts > keeps the existing mixed-tenant refusal before any group can be presented 1ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > opens a requested List entry and retains the exact native focus key 196ms
+ ✓ src/solo/operations/OperationsOverview.test.tsx > surfaces undated active native work without a project and opens the original inspector 139ms
+ ✓ src/solo/operations/OperationsOverview.test.tsx > keeps recorded reminders inspectable without presenting their scheduled time as delivery proof 87ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > proposes a move from current work without changing the saved card or accepting external payloads 136ms
+ ✓ src/solo/operations/OperationsOverview.test.tsx > offers an honest first-use state without fabricated commitments, automation or specialist activity 18ms
+ ✓ src/solo/operations/OperationsOverview.test.tsx > routes each attention group to Work while preserving the original record inspector 159ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > does not offer dragging without a source version, retaining keyboard inspection 83ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > keeps equal native IDs distinct and routes inspection to the original CRM record 42ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > refuses an unsupported CRM blocked move and proposes completion without browser mutation 26ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > orders the shared deadline timeline chronologically across ISO offsets 106ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > proposes pending CRM progress without moving the saved card and refuses terminal progress 46ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > shows a reminder's saved local time rather than a task due date 17ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > does not substitute due_at for an absent or unavailable reminder time (null) 14ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > does not substitute due_at for an absent or unavailable reminder time (invalid-date) 12ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > does not substitute due_at for an absent or unavailable reminder time (undefined) 8ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > does not substitute due_at for an absent or unavailable reminder time () 9ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > retains the native due_at date for task even when remind_at is present 8ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > retains the native due_at date for milestone even when remind_at is present 8ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > keeps a saved reminder time visible in List and outside the deadline/overdue views 31ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > inspects the reminder time truthfully without reading due_at (2099-01-02T13:15:00+03:00) 556ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > inspects the reminder time truthfully without reading due_at (null) 54ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > inspects the reminder time truthfully without reading due_at (invalid-date) 37ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > inspects the reminder time truthfully without reading due_at (undefined) 33ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > retains the task inspector's native due date 55ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > retains the milestone inspector's native due date 32ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > opts into native cancellation history only for Work 24ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > effective client view immediately removes business work and its open inspection 25ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > continues an Overview group through List and the original guarded inspector 64ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > clears an attention group through the ordinary Work destination 27ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > retires group context and original selection on a workspace change 28ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > retains a group across the canonical controlled-view transition and clears it on URL navigation 53ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > keeps a selected group truthful when its source fails, then recovers the original record 16ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > preserves bounded group loading and total refusal without presenting unavailable work 26ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > retires grouped work and its open inspector on actor change or client view 43ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > removes old workspace work and the open detail drawer on switching 61ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > refuses an inconsistent source bundle instead of rendering foreign work 3ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > does not mount the department while authenticated context is unresolved or failed 1ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > closes details when a canonical URL-controlled view changes 41ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > hands a bounded review draft to existing PAIGE after clearing old customer scope 8ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > retains uncertain project creation after refresh without an identity 19ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > keeps native CRM work usable while Planning is unavailable 62ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > inspects overdue native work from Overview while disclosing the missing project source 123ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > keeps the original source and current record in a prepared PAIGE task review without executing work 12ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > keeps native capacity assignments visible with an explicit Planning gap 23ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > offers scoped retained recovery even when the original task is outside the loaded read 57ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > shows the original pending task before confirmation instead of the newly selected task 28ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > offers the existing In progress selector for pending CRM work and routes it to review 39ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > excludes In progress from a completed CRM task selector 27ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > excludes In progress from a cancelled CRM task selector 34ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > opens the point-read Planning record outside the loaded bundle and refreshes that exact record 30ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > never uses a loaded row or CRM UUID as authority for a weekly source link 17ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > rejects malformed or duplicate typed targets without reading or replacing work 5ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > drops a delayed point read when the actor/workspace changes 54ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > preserves dirty work through a repeated link, URL Back removal, destination change and sheet close 106ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > opens an exact Task independently of failed bounded lists 14ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > mounts the client release flow in the work item only for a standalone business, client work in a project 27ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > mounts the client release flow in the work item only for work with no client 21ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > mounts the client release flow in the work item only for client work outside a project 29ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > mounts the client release flow in the work item only for work with no row version 21ms
+ ✓ src/solo/operations/OperationsWorkspace.test.tsx > mounts the client release flow in the work item only for a business that is not standalone 17ms
+
+ Test Files  5 passed (5)
+      Tests  72 passed (72)
+   Start at  12:32:53
+   Duration  7.60s (transform 3.69s, setup 391ms, import 5.53s, tests 3.15s, environment 9.82s)

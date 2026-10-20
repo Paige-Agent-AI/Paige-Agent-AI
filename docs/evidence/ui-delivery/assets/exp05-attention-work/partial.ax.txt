@@ -1,0 +1,95 @@
+Browser tab: 1738568133, Title: "Local actual SOLO Operations proof", URL: "http://127.0.0.1:51805/?context=b&theme=light&scene=partial".
+1 AXWebArea Local actual SOLO Operations proof, URL: 127.0.0.1:51805/?context=b&theme=light&scene=partial
+	2 container
+		3 text PAIGE workspace ready
+		4 link Description: Skip to content, Value: 127.0.0.1:51805/?context=b&theme=light&scene=partial#tenant-shell-main
+		5 container Tenant workspace
+			6 link Description: PAIGE Solo home, Value: 127.0.0.1:51805/solo/1702/command-center
+			7 button Expand navigation
+				8 image
+			9 link Description: Command Center, Value: 127.0.0.1:51805/solo/1702/command-center
+			10 link Description: Operations, Value: 127.0.0.1:51805/solo/1702/operations
+			11 link Description: Clients, Value: 127.0.0.1:51805/solo/1702/clients
+			12 link Description: Marketing, Value: 127.0.0.1:51805/solo/1702/growth
+			13 link Description: Ads, Value: 127.0.0.1:51805/solo/1702/ads
+			14 link Description: Sales, Value: 127.0.0.1:51805/solo/1702/sales
+			15 link Description: Finance, Value: 127.0.0.1:51805/solo/1702/finance
+			16 link Description: Marketplace, Value: 127.0.0.1:51805/solo/1702/marketplace
+			17 link Description: Settings, Value: 127.0.0.1:51805/solo/1702/settings
+			18 button Description: Use Obsidian theme, Help: Obsidian theme
+			19 button Sign out
+			20 text SY
+		21 button (collapsed) Description: Direct PAIGE, Secondary Actions: Expand
+			22 image PAIGE
+			23 text Direct PAIGE, or press ⌘\
+			24 text ⌘\
+		25 container Operations department
+			26 container
+				27 container Department views
+					28 button Overview
+					29 button Work
+					30 button Projects
+					31 button Delivery
+					32 button Playbooks
+					33 button Capacity
+				34 button Refresh work and team profiles
+					35 image
+			36 container
+				37 text Project work is unavailable.
+				38 button Retry planning work
+				39 container Overview
+					40 container
+						41 heading Your operating week, Value: 1
+							42 text Your operating week
+						43 text Current commitments, responsible people and the next decisions.
+						44 button Weekly responsibility
+						45 button Plan with PAIGE
+					46 container
+						47 text 3  active  commitments  ·  1  in progress ·  0 reminders  in the sources shown
+					48 container Priority work to inspect
+						49 container
+							50 heading Needs your attention, Value: 2
+								51 text Needs your attention
+							52 text Overdue
+						53 heading Confirm the delivery brief, Value: 3
+							54 text Confirm the delivery brief
+						55 text A commitment with no confirmed due date yet.
+						56 text CRM task Oct 19
+						57 text Jordan Ellis
+						58 button Inspect the original work
+						59 button View attention in Work
+					60 container
+						61 heading Work in motion, Value: 2
+							62 text Work in motion
+						63 button All work
+						64 content list
+							65 container
+								66 button Confirm the next client check-in
+								67 text CRM task No due date Jordan Ellis In progress
+							68 container
+								69 button Prepare the next milestone
+								70 text CRM task Oct 28 Morgan Lee Ready
+					71 container Connected Operations work
+						72 button Client promises
+						73 button People and workload
+						74 button Procedures
+					75 container
+						76 heading Next deadlines, Value: 2
+							77 text Next deadlines
+						78 content list
+							79 container
+								80 button Prepare the next milestone
+								81 text CRM task Oct 28 Morgan Lee Ready
+						82 button View deadlines in Work
+						83 heading What to do next, Value: 2
+							84 text What to do next
+						85 container
+							86 text 1  active  commitment needs  a confirmed due date. Start with the original work before choosing when it belongs.
+						87 button Review timing: Confirm the next client check-in
+							88 text Review timing:
+							89 text Confirm the next client check-in
+						90 button Review all missing dates
+						91 button Prepare a review with PAIGE
+				92 text Attention and deadlines reflect loaded Planning work and up to 200 CRM tasks. Unavailable sources are excluded.  More CRM tasks exist beyond this read.  Some team profiles are outside the current read.
+
+The focused UI element is 1 AXWebArea Local actual SOLO Operations proof, URL: 127.0.0.1:51805/?context=b&theme=light&scene=partial

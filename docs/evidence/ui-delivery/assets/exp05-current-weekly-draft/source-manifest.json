@@ -1,0 +1,1042 @@
+{
+  "renderObservedHead": "e97043716181316514a935bfc80a98ab0a30a0f0",
+  "renderObservedTree": "01b8b68ec4bd9c062799413543514b963cadba46",
+  "renderObservedDirty": " M src/solo/operations/OperationsOverview.weekly.test.tsx\n M src/solo/weekly/weekly-responsibility.css\n?? work/\n",
+  "boundSource": "c930bac6d78fbf84a8b8c7547f786900433fd37e",
+  "boundTree": "8f38acca3d16e87e6c1811acc392b93f9ab9080a",
+  "composition": "Captured before source freeze with exactly the current draft CSS correction and test-only port correction pending. Listed actual runtime input bytes match frozen c930 source; no rendered source has changed.",
+  "sourceCount": 3762,
+  "explicitSyntheticPortCount": 156,
+  "cssSha256": "f39792a97ede046badee3d112165c81ec2af14a7c1fecf90a448642871749915",
+  "htmlSha256": "07d1cc0b23c309c15c107e9964101fad166e2f087824ddd7ebbe72a228f76b5c",
+  "sourceHashes": [
+    {
+      "path": "src/solo/SoloSetupReadinessNotice.tsx",
+      "assemblyRawSha256": "1fd2c146ad91dfcfb37063c60896bc32abeeec8bc0c126fb1bb0595f561f9653",
+      "canonicalUtf8LfSha256": "1fd2c146ad91dfcfb37063c60896bc32abeeec8bc0c126fb1bb0595f561f9653"
+    },
+    {
+      "path": "src/solo/SoloScreenBoundary.tsx",
+      "assemblyRawSha256": "084f56aaf783d098b55f8da3c95c4022db8bfbcebc52cb243b2318c77fcd05ef",
+      "canonicalUtf8LfSha256": "084f56aaf783d098b55f8da3c95c4022db8bfbcebc52cb243b2318c77fcd05ef"
+    },
+    {
+      "path": "src/components/ui/sheet.tsx",
+      "assemblyRawSha256": "56877e67e260514dc8df4347ae2a0d516c9d5cfbb341d104da2a9bc9484865a5",
+      "canonicalUtf8LfSha256": "56877e67e260514dc8df4347ae2a0d516c9d5cfbb341d104da2a9bc9484865a5"
+    },
+    {
+      "path": "src/components/tenant-shell/tenantShellRoutes.ts",
+      "assemblyRawSha256": "7efe0044151935edd51fd0754201cd7cebcf938f7fb5ee24c85b5cc87da8d1c5",
+      "canonicalUtf8LfSha256": "7efe0044151935edd51fd0754201cd7cebcf938f7fb5ee24c85b5cc87da8d1c5"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-orchestration/weekly-commitment-chat.ts",
+      "assemblyRawSha256": "07b8f49acb4e300a3632cf86289c335892783874fb50e91ad1045156a53ccd32",
+      "canonicalUtf8LfSha256": "07b8f49acb4e300a3632cf86289c335892783874fb50e91ad1045156a53ccd32"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-orchestration/weekly-commitment-projection.ts",
+      "assemblyRawSha256": "30db8790dcd3a26b7cc13d26295ee70538d95fe97d06d2309fbc71f8b4fed56e",
+      "canonicalUtf8LfSha256": "30db8790dcd3a26b7cc13d26295ee70538d95fe97d06d2309fbc71f8b4fed56e"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-orchestration/weekly-commitment-read.ts",
+      "assemblyRawSha256": "836dc2d6de0677a74e78039b277a73900871ee04658255fd76df6cd7df04623e",
+      "canonicalUtf8LfSha256": "836dc2d6de0677a74e78039b277a73900871ee04658255fd76df6cd7df04623e"
+    },
+    {
+      "path": "src/solo/weekly/weekly-owner-read.ts",
+      "assemblyRawSha256": "5245dadde3301d4fe1c87f15ec131d30523d4e6c285a5f6b2654f4560bbed742",
+      "canonicalUtf8LfSha256": "5245dadde3301d4fe1c87f15ec131d30523d4e6c285a5f6b2654f4560bbed742"
+    },
+    {
+      "path": "src/solo/weekly/useWeeklyResponsibility.ts",
+      "assemblyRawSha256": "3ebd35b4b778ba603ecc52628aaa0112cd0112b90182de97b3b97644e0c6df4d",
+      "canonicalUtf8LfSha256": "3ebd35b4b778ba603ecc52628aaa0112cd0112b90182de97b3b97644e0c6df4d"
+    },
+    {
+      "path": "src/solo/weekly/weekly-responsibility.ts",
+      "assemblyRawSha256": "796067513eaad0f1144c92757c9dfe3aecf092e6f973c04095cae25d14446553",
+      "canonicalUtf8LfSha256": "796067513eaad0f1144c92757c9dfe3aecf092e6f973c04095cae25d14446553"
+    },
+    {
+      "path": "src/solo/weekly/weekly-responsibility.css",
+      "assemblyRawSha256": "440b8cd83b032538e28ea2a428e9263c0930085fbafbd2076dd5e171f522a458",
+      "canonicalUtf8LfSha256": "440b8cd83b032538e28ea2a428e9263c0930085fbafbd2076dd5e171f522a458"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyResponsibilityPanel.tsx",
+      "assemblyRawSha256": "e2ecc8dbc7f0be02925e1f821c0ccbfc7a53a6d0687a16a22cd25b84b1d7f1f1",
+      "canonicalUtf8LfSha256": "e2ecc8dbc7f0be02925e1f821c0ccbfc7a53a6d0687a16a22cd25b84b1d7f1f1"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-orchestration/weekly-commitment-control-intent.ts",
+      "assemblyRawSha256": "4c5336d7b98bbb8f829120e453e548d18fd8face1640a40b945c53279cf299db",
+      "canonicalUtf8LfSha256": "4c5336d7b98bbb8f829120e453e548d18fd8face1640a40b945c53279cf299db"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-orchestration/weekly-draft-deadline.ts",
+      "assemblyRawSha256": "f8ee3cd39d5b942eb64b0343ae50bcd0614c750f111c3c1a1a1cf77d7c103bda",
+      "canonicalUtf8LfSha256": "f8ee3cd39d5b942eb64b0343ae50bcd0614c750f111c3c1a1a1cf77d7c103bda"
+    },
+    {
+      "path": "src/solo/weekly/weekly-draft-command.ts",
+      "assemblyRawSha256": "bff21801abfc5295542569985ffffe11e69f0e1617bebab0fb6e8414736d5f48",
+      "canonicalUtf8LfSha256": "bff21801abfc5295542569985ffffe11e69f0e1617bebab0fb6e8414736d5f48"
+    },
+    {
+      "path": "src/components/chat/PaigeConfirmCard.tsx",
+      "assemblyRawSha256": "3978f0637c43e6a5f030f19c7b1d5af60b13c9b046cef7a9e7db8f5f44823e88",
+      "canonicalUtf8LfSha256": "3978f0637c43e6a5f030f19c7b1d5af60b13c9b046cef7a9e7db8f5f44823e88"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyDraftReview.tsx",
+      "assemblyRawSha256": "1b92366f988ecd34cbba3a8818ca2f310a3a93911c346bb50823f0602a676240",
+      "canonicalUtf8LfSha256": "1b92366f988ecd34cbba3a8818ca2f310a3a93911c346bb50823f0602a676240"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyDraftComposer.tsx",
+      "assemblyRawSha256": "47977d096e408d3b9994368d47fde4b2c53d11ef0a1e941edaca07ecfcbb0fd1",
+      "canonicalUtf8LfSha256": "47977d096e408d3b9994368d47fde4b2c53d11ef0a1e941edaca07ecfcbb0fd1"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyResponsibilityEntry.tsx",
+      "assemblyRawSha256": "9c0456ecd776291f3e589f938302e66d186c652d77d6584870a8b635b324b1ea",
+      "canonicalUtf8LfSha256": "9c0456ecd776291f3e589f938302e66d186c652d77d6584870a8b635b324b1ea"
+    },
+    {
+      "path": "src/solo/SoloOnboardingStage.tsx",
+      "assemblyRawSha256": "0643620f2f267f948118e97f093454751efeef47f77d981ec9fd25d0f4616fa3",
+      "canonicalUtf8LfSha256": "0643620f2f267f948118e97f093454751efeef47f77d981ec9fd25d0f4616fa3"
+    },
+    {
+      "path": "src/solo/SoloPaigeWorkspace.tsx",
+      "assemblyRawSha256": "8b9020ed2791f94c240f3044b43cc85c8555e770a9f1d557da7ee863b0d6a6a0",
+      "canonicalUtf8LfSha256": "8b9020ed2791f94c240f3044b43cc85c8555e770a9f1d557da7ee863b0d6a6a0"
+    },
+    {
+      "path": "src/solo/operations/OperationsAssignee.tsx",
+      "assemblyRawSha256": "d47cc80849a7fbd0f9bc91ffdc5ccebcd3f46bc24771e4e390eb714464a00dd7",
+      "canonicalUtf8LfSha256": "d47cc80849a7fbd0f9bc91ffdc5ccebcd3f46bc24771e4e390eb714464a00dd7"
+    },
+    {
+      "path": "src/solo/operations/operations-work-create.ts",
+      "assemblyRawSha256": "fa432d93bcdbec44815410f39e6b4d2ef511f7c5207f4fb050c7f4d44e43d599",
+      "canonicalUtf8LfSha256": "fa432d93bcdbec44815410f39e6b4d2ef511f7c5207f4fb050c7f4d44e43d599"
+    },
+    {
+      "path": "src/solo/operations/OperationsWorkCreator.tsx",
+      "assemblyRawSha256": "cab2b22f14caface089feea983bc127ffb2a33f9c36c62714d944146f081ef9b",
+      "canonicalUtf8LfSha256": "cab2b22f14caface089feea983bc127ffb2a33f9c36c62714d944146f081ef9b"
+    },
+    {
+      "path": "src/solo/operations/useOperationsPeople.ts",
+      "assemblyRawSha256": "1be23965426a05e98dc1dbaeb56fdc1f4c528d00b1fcdb9cbbdd15c056a774a6",
+      "canonicalUtf8LfSha256": "1be23965426a05e98dc1dbaeb56fdc1f4c528d00b1fcdb9cbbdd15c056a774a6"
+    },
+    {
+      "path": "src/solo/operations/operations-presentation.ts",
+      "assemblyRawSha256": "6e61315e808af0701e8c8cb34e9021b8bff97f9961257fce2b70cf465a7d1844",
+      "canonicalUtf8LfSha256": "6e61315e808af0701e8c8cb34e9021b8bff97f9961257fce2b70cf465a7d1844"
+    },
+    {
+      "path": "src/solo/operations/operations-workspace.css",
+      "assemblyRawSha256": "47915fa661f04b91672e1aed0fd15d8b432f785e490f38219470292c6053e314",
+      "canonicalUtf8LfSha256": "47915fa661f04b91672e1aed0fd15d8b432f785e490f38219470292c6053e314"
+    },
+    {
+      "path": "src/solo/operations/operations-work-update.ts",
+      "assemblyRawSha256": "40900e64691a49a6da313da7035cbccd19c1ed0577b7e25747d179f8632adbb5",
+      "canonicalUtf8LfSha256": "40900e64691a49a6da313da7035cbccd19c1ed0577b7e25747d179f8632adbb5"
+    },
+    {
+      "path": "src/solo/operations/OperationsWorkEditor.tsx",
+      "assemblyRawSha256": "fa04762f75f30eeab96ad61391b2fd06781d91dd0043a12993293a29b4caa52e",
+      "canonicalUtf8LfSha256": "fa04762f75f30eeab96ad61391b2fd06781d91dd0043a12993293a29b4caa52e"
+    },
+    {
+      "path": "src/solo/operations/OperationsWorkActivity.tsx",
+      "assemblyRawSha256": "8ede652ffa232088eaeb1a67c668f0e388f9f0cb7cbf57c393a214852138c93e",
+      "canonicalUtf8LfSha256": "8ede652ffa232088eaeb1a67c668f0e388f9f0cb7cbf57c393a214852138c93e"
+    },
+    {
+      "path": "src/solo/operations/operations-delivery-staff.ts",
+      "assemblyRawSha256": "f15f58315473e265db9c14f37a4b42c8049ab1cd2f46b05e3e7ebdbe3d1b01ab",
+      "canonicalUtf8LfSha256": "f15f58315473e265db9c14f37a4b42c8049ab1cd2f46b05e3e7ebdbe3d1b01ab"
+    },
+    {
+      "path": "src/solo/operations/operations-delivery-source.ts",
+      "assemblyRawSha256": "6aff6452e60b63c57e9c95b0786c35429d5212534f72c87d20062a69533aba84",
+      "canonicalUtf8LfSha256": "6aff6452e60b63c57e9c95b0786c35429d5212534f72c87d20062a69533aba84"
+    },
+    {
+      "path": "src/solo/operations/operations-delivery-local-recovery.ts",
+      "assemblyRawSha256": "57d75f90ff9ab2f4492315771fed47fef7ec7b8a010de507dbfcc2a80112e94a",
+      "canonicalUtf8LfSha256": "57d75f90ff9ab2f4492315771fed47fef7ec7b8a010de507dbfcc2a80112e94a"
+    },
+    {
+      "path": "src/solo/operations/operations-staff-delivery-review.css",
+      "assemblyRawSha256": "933346721554d0c362b7955057deb3fb113c1ca0f2e7b62d18b3a482e0dffdb0",
+      "canonicalUtf8LfSha256": "933346721554d0c362b7955057deb3fb113c1ca0f2e7b62d18b3a482e0dffdb0"
+    },
+    {
+      "path": "src/solo/operations/OperationsDeliverablePreparation.tsx",
+      "assemblyRawSha256": "0e178bdf866a7fe13f0891c8b3fc4c462e847e557a3928957228d37f050ca4be",
+      "canonicalUtf8LfSha256": "0e178bdf866a7fe13f0891c8b3fc4c462e847e557a3928957228d37f050ca4be"
+    },
+    {
+      "path": "src/solo/operations/OperationsStaffDeliveryReview.tsx",
+      "assemblyRawSha256": "6d50108f9dd707b3a47c178a102eb6b02eaed59627e28a4c12f791fa018fc304",
+      "canonicalUtf8LfSha256": "6d50108f9dd707b3a47c178a102eb6b02eaed59627e28a4c12f791fa018fc304"
+    },
+    {
+      "path": "src/solo/operations/operations-item-release.ts",
+      "assemblyRawSha256": "e43a0e0d43f48a1949722600668415d48bb0fde5550d40ad62681cd47d28370d",
+      "canonicalUtf8LfSha256": "e43a0e0d43f48a1949722600668415d48bb0fde5550d40ad62681cd47d28370d"
+    },
+    {
+      "path": "src/solo/operations/OperationsItemRelease.tsx",
+      "assemblyRawSha256": "e7bbe8799fef0eb3f4a77626f15d64e7743a09efdd5e4250d84605740df0446d",
+      "canonicalUtf8LfSha256": "e7bbe8799fef0eb3f4a77626f15d64e7743a09efdd5e4250d84605740df0446d"
+    },
+    {
+      "path": "src/solo/operations/operations-project-create.ts",
+      "assemblyRawSha256": "cbdce3c997bc95ec2692cbfb419e61a3a4e24ec7ec639cd7d2197e083e2ac586",
+      "canonicalUtf8LfSha256": "cbdce3c997bc95ec2692cbfb419e61a3a4e24ec7ec639cd7d2197e083e2ac586"
+    },
+    {
+      "path": "src/solo/operations/OperationsProjectCreator.tsx",
+      "assemblyRawSha256": "73f8fae5e490484dc810cdc2c440112e3f9ebaeca69d267dfa184b952caf7f9c",
+      "canonicalUtf8LfSha256": "73f8fae5e490484dc810cdc2c440112e3f9ebaeca69d267dfa184b952caf7f9c"
+    },
+    {
+      "path": "src/solo/operations/operations-project-update.ts",
+      "assemblyRawSha256": "4b73cbf1013ddbd83bb600e2ed03cc82476cd800db9b1abd99025d870c4606f8",
+      "canonicalUtf8LfSha256": "4b73cbf1013ddbd83bb600e2ed03cc82476cd800db9b1abd99025d870c4606f8"
+    },
+    {
+      "path": "src/solo/operations/OperationsProjectEditor.tsx",
+      "assemblyRawSha256": "7faab43dd1ac2c89ca178246fb6103d037759345776f32d494ea936d4c6f7e91",
+      "canonicalUtf8LfSha256": "7faab43dd1ac2c89ca178246fb6103d037759345776f32d494ea936d4c6f7e91"
+    },
+    {
+      "path": "src/solo/operations/operations-native-work.ts",
+      "assemblyRawSha256": "6088d748b01cc8925ae78e64f1d0866beffde0598d8bbff81b1a39bcba045d66",
+      "canonicalUtf8LfSha256": "6088d748b01cc8925ae78e64f1d0866beffde0598d8bbff81b1a39bcba045d66"
+    },
+    {
+      "path": "src/solo/operations/operations-views.css",
+      "assemblyRawSha256": "4660be9eb39ef6989ccd6104a3942f6536ed998e5745f926aaa1c04c6f42f519",
+      "canonicalUtf8LfSha256": "4660be9eb39ef6989ccd6104a3942f6536ed998e5745f926aaa1c04c6f42f519"
+    },
+    {
+      "path": "src/solo/operations/OperationsWork.tsx",
+      "assemblyRawSha256": "4ecba4498703668640160d46f10c1905aa09619808ac3aaac05bbb8f9a5f404f",
+      "canonicalUtf8LfSha256": "4ecba4498703668640160d46f10c1905aa09619808ac3aaac05bbb8f9a5f404f"
+    },
+    {
+      "path": "src/solo/operations/operations-crm-work-edit.ts",
+      "assemblyRawSha256": "32c8ad0cb4f335f97fce7dd39014b88df06abfeeb9bb55b63d02898b6da8744b",
+      "canonicalUtf8LfSha256": "32c8ad0cb4f335f97fce7dd39014b88df06abfeeb9bb55b63d02898b6da8744b"
+    },
+    {
+      "path": "src/solo/operations/operations-crm-work-command.ts",
+      "assemblyRawSha256": "0b9777b21f2583456e0dc5d715be3f75c76e38f7acac89a5b0012540a0e544e8",
+      "canonicalUtf8LfSha256": "0b9777b21f2583456e0dc5d715be3f75c76e38f7acac89a5b0012540a0e544e8"
+    },
+    {
+      "path": "src/solo/operations/OperationsCrmStageReview.tsx",
+      "assemblyRawSha256": "233c36924bc40dda327083984edbf9990677fc1d9b23a4730d8f1dd5e0a011ec",
+      "canonicalUtf8LfSha256": "233c36924bc40dda327083984edbf9990677fc1d9b23a4730d8f1dd5e0a011ec"
+    },
+    {
+      "path": "src/solo/operations/OperationsCrmWorkEditor.tsx",
+      "assemblyRawSha256": "9b3d84accd9dba81e03760f4d39dff1d5ec989a265be18d807bf764b384d320d",
+      "canonicalUtf8LfSha256": "9b3d84accd9dba81e03760f4d39dff1d5ec989a265be18d807bf764b384d320d"
+    },
+    {
+      "path": "src/solo/operations/OperationsProjects.tsx",
+      "assemblyRawSha256": "a82e08482cbfc5ec150dd6ae30ddfaf67f7d45c3caa5afbb1ef31af5fc29f5e8",
+      "canonicalUtf8LfSha256": "a82e08482cbfc5ec150dd6ae30ddfaf67f7d45c3caa5afbb1ef31af5fc29f5e8"
+    },
+    {
+      "path": "src/solo/operations/operations-overview-work.ts",
+      "assemblyRawSha256": "60739350dfa0bd9f87195cb5e54e353f6afc3028e7b6c7daed46f50e2090c4c0",
+      "canonicalUtf8LfSha256": "60739350dfa0bd9f87195cb5e54e353f6afc3028e7b6c7daed46f50e2090c4c0"
+    },
+    {
+      "path": "src/solo/operations/operations-overview.css",
+      "assemblyRawSha256": "4712386f8df5878eadc8a6ec67ae09fe7fb5cb4c089efc51be331d5838434267",
+      "canonicalUtf8LfSha256": "4712386f8df5878eadc8a6ec67ae09fe7fb5cb4c089efc51be331d5838434267"
+    },
+    {
+      "path": "src/solo/operations/OperationsOverview.tsx",
+      "assemblyRawSha256": "b1223276602d430f20d0265b3ecf6da2f09e921efb7ae8e91817ef3c89091b02",
+      "canonicalUtf8LfSha256": "b1223276602d430f20d0265b3ecf6da2f09e921efb7ae8e91817ef3c89091b02"
+    },
+    {
+      "path": "src/solo/operations/OperationsCapacity.tsx",
+      "assemblyRawSha256": "35b22a0ae1c9b2b6e78982325dbce4b05731ddfd90a26015b4faa3036537a042",
+      "canonicalUtf8LfSha256": "35b22a0ae1c9b2b6e78982325dbce4b05731ddfd90a26015b4faa3036537a042"
+    },
+    {
+      "path": "src/solo/operations/operations-engagement-readiness.ts",
+      "assemblyRawSha256": "a2f9818bd4c5e678354b924c35eddcb118f9c306cfde30cf782f01d48cf36f0f",
+      "canonicalUtf8LfSha256": "a2f9818bd4c5e678354b924c35eddcb118f9c306cfde30cf782f01d48cf36f0f"
+    },
+    {
+      "path": "src/solo/operations/operations-engagement-read.ts",
+      "assemblyRawSha256": "8c78081bc1a064d56e89df51d69b3c9d85a7ebc2a70c2007066dcfa9efc4b2a5",
+      "canonicalUtf8LfSha256": "8c78081bc1a064d56e89df51d69b3c9d85a7ebc2a70c2007066dcfa9efc4b2a5"
+    },
+    {
+      "path": "src/solo/operations/useOperationsEngagementEvidence.ts",
+      "assemblyRawSha256": "939b8cbc2c7f5540cc85195e671a2c693f041894fd1f227349c5b0384ae2eef4",
+      "canonicalUtf8LfSha256": "939b8cbc2c7f5540cc85195e671a2c693f041894fd1f227349c5b0384ae2eef4"
+    },
+    {
+      "path": "src/solo/operations/operations-engagement-handoff.ts",
+      "assemblyRawSha256": "d108c49cb762f96054824888afcce44bad15a5618d5d321f54cdeef3e7e344f7",
+      "canonicalUtf8LfSha256": "d108c49cb762f96054824888afcce44bad15a5618d5d321f54cdeef3e7e344f7"
+    },
+    {
+      "path": "src/solo/operations/operations-engagement-handoff-write.ts",
+      "assemblyRawSha256": "b634ff270341c2240cbb0241ba9d4af7e73e09fb3d8752922b27b5b207210c8e",
+      "canonicalUtf8LfSha256": "b634ff270341c2240cbb0241ba9d4af7e73e09fb3d8752922b27b5b207210c8e"
+    },
+    {
+      "path": "src/solo/operations/operations-handoff-recovery.ts",
+      "assemblyRawSha256": "557b4f135f5607bd5bcf5c6315d92b8ae9c5a8d1d03a1b56053098ad4fb1624f",
+      "canonicalUtf8LfSha256": "557b4f135f5607bd5bcf5c6315d92b8ae9c5a8d1d03a1b56053098ad4fb1624f"
+    },
+    {
+      "path": "src/solo/operations/operations-handoff-intent.ts",
+      "assemblyRawSha256": "68c7ac65cdf45098acc73be5a8720b5389db5ac942cd72d8c1051d41a334b114",
+      "canonicalUtf8LfSha256": "68c7ac65cdf45098acc73be5a8720b5389db5ac942cd72d8c1051d41a334b114"
+    },
+    {
+      "path": "src/solo/operations/operations-handoff-date.ts",
+      "assemblyRawSha256": "ff4ecee41ea95041d115850aa898a20de9acc50ffd0493d70b7216152c64de0c",
+      "canonicalUtf8LfSha256": "ff4ecee41ea95041d115850aa898a20de9acc50ffd0493d70b7216152c64de0c"
+    },
+    {
+      "path": "src/solo/operations/OperationsEngagementHandoff.tsx",
+      "assemblyRawSha256": "0839ebfed98ca9a143c7d2d2f306923e49c101c7baa231a9b6d042c96fbe0166",
+      "canonicalUtf8LfSha256": "0839ebfed98ca9a143c7d2d2f306923e49c101c7baa231a9b6d042c96fbe0166"
+    },
+    {
+      "path": "src/solo/operations/OperationsEngagementEvidence.tsx",
+      "assemblyRawSha256": "ba3aefdc6b3d88d320970e49aee653ef11450e46bd45f0d4decb7d485d6ef79e",
+      "canonicalUtf8LfSha256": "ba3aefdc6b3d88d320970e49aee653ef11450e46bd45f0d4decb7d485d6ef79e"
+    },
+    {
+      "path": "src/solo/operations/operations-source-contract.ts",
+      "assemblyRawSha256": "6ef3b484c2902e2a9b6fb623241a290ad460b62012fa2911b6d708a979e787d3",
+      "canonicalUtf8LfSha256": "6ef3b484c2902e2a9b6fb623241a290ad460b62012fa2911b6d708a979e787d3"
+    },
+    {
+      "path": "src/solo/operations/operations-engagement-project.ts",
+      "assemblyRawSha256": "1b4606e1178fb97b8a9e900cd2820e024e8f2498ebef7d356b6fc87f84dfd2ec",
+      "canonicalUtf8LfSha256": "1b4606e1178fb97b8a9e900cd2820e024e8f2498ebef7d356b6fc87f84dfd2ec"
+    },
+    {
+      "path": "src/solo/operations/operations-delivery.css",
+      "assemblyRawSha256": "30d3442ff5d883da841c9ebeb797ac343fbe4d3417b27c75cf2fceb42d2cc4ad",
+      "canonicalUtf8LfSha256": "30d3442ff5d883da841c9ebeb797ac343fbe4d3417b27c75cf2fceb42d2cc4ad"
+    },
+    {
+      "path": "src/solo/operations/OperationsDelivery.tsx",
+      "assemblyRawSha256": "94523bbdb3961c7d27a89fcf864412a2632a46b062516c195a6916831a8c2a5a",
+      "canonicalUtf8LfSha256": "94523bbdb3961c7d27a89fcf864412a2632a46b062516c195a6916831a8c2a5a"
+    },
+    {
+      "path": "src/solo/operations/OperationsPlaybooks.tsx",
+      "assemblyRawSha256": "e4a4eda15b968b2084e05523519bed7a27c8da4cbaf8ac6739e47e4cdbba9e92",
+      "canonicalUtf8LfSha256": "e4a4eda15b968b2084e05523519bed7a27c8da4cbaf8ac6739e47e4cdbba9e92"
+    },
+    {
+      "path": "src/solo/operations/operations-weekly-source.ts",
+      "assemblyRawSha256": "12539858b50560e4d84b2525db4bce25daa7f237370b31505ac80f162dde14c7",
+      "canonicalUtf8LfSha256": "12539858b50560e4d84b2525db4bce25daa7f237370b31505ac80f162dde14c7"
+    },
+    {
+      "path": "src/solo/operations/operations-task-focus.ts",
+      "assemblyRawSha256": "493b92d6c9194a34ebd07af2e349184693c3cee1a84ec1364d584be458fc3945",
+      "canonicalUtf8LfSha256": "493b92d6c9194a34ebd07af2e349184693c3cee1a84ec1364d584be458fc3945"
+    },
+    {
+      "path": "src/solo/operations/OperationsWorkspace.tsx",
+      "assemblyRawSha256": "ea78a7b58c1c32f58beedbd4647f01d86c86b6bae34333d909343938979873a0",
+      "canonicalUtf8LfSha256": "ea78a7b58c1c32f58beedbd4647f01d86c86b6bae34333d909343938979873a0"
+    },
+    {
+      "path": "src/solo/operations/OperationsRoute.tsx",
+      "assemblyRawSha256": "6c2c33dc988a42cd2c79db855a4170bd5081c859b139d94ebd4e213971b03264",
+      "canonicalUtf8LfSha256": "6c2c33dc988a42cd2c79db855a4170bd5081c859b139d94ebd4e213971b03264"
+    },
+    {
+      "path": "src/components/tenant-shell/settings-scroll-contract.ts",
+      "assemblyRawSha256": "082ad58f4c84460e2cde6c87d3b219c468fc345c0a76f1733bce5911024aeeed",
+      "canonicalUtf8LfSha256": "082ad58f4c84460e2cde6c87d3b219c468fc345c0a76f1733bce5911024aeeed"
+    },
+    {
+      "path": "src/components/tenant-shell/tenant-content-focus.ts",
+      "assemblyRawSha256": "7f32786447b99863e649add8d7f9acbf4486c780ca63de3ab66dd0e5fb312106",
+      "canonicalUtf8LfSha256": "7f32786447b99863e649add8d7f9acbf4486c780ca63de3ab66dd0e5fb312106"
+    },
+    {
+      "path": "src/components/tenant-shell/tenant-command-center-shell.css",
+      "assemblyRawSha256": "e9756f8cfc04a330748711d798afeda35cb8f02bd133914dfee9a5fe4b0bf355",
+      "canonicalUtf8LfSha256": "e9756f8cfc04a330748711d798afeda35cb8f02bd133914dfee9a5fe4b0bf355"
+    },
+    {
+      "path": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "assemblyRawSha256": "5a282f5f7c5627856470ae5062ba8cc8d657d3a9478f30261568a9f9c9d223f0",
+      "canonicalUtf8LfSha256": "5a282f5f7c5627856470ae5062ba8cc8d657d3a9478f30261568a9f9c9d223f0"
+    },
+    {
+      "path": "src/solo/SoloApp.tsx",
+      "assemblyRawSha256": "39976b1d05e268e957e61b4a746055684a4170b5d3804639dddf6ea83ce9c2af",
+      "canonicalUtf8LfSha256": "39976b1d05e268e957e61b4a746055684a4170b5d3804639dddf6ea83ce9c2af"
+    },
+    {
+      "path": "src/index.css",
+      "assemblyRawSha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc",
+      "canonicalUtf8LfSha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc"
+    },
+    {
+      "path": "tailwind.config.ts",
+      "assemblyRawSha256": "05fb4b0f7b025bc2e09cf7169e7f225082e3948f19d06a9c2000d2388a71e257",
+      "canonicalUtf8LfSha256": "05fb4b0f7b025bc2e09cf7169e7f225082e3948f19d06a9c2000d2388a71e257"
+    }
+  ],
+  "ports": [
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "@/components/auth/WorkspaceExitControl"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "@/hooks/usePendingApprovals"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "./CommandCenter"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "./conversations"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "./growth2"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "./AdsWorkspace"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "./SalesWorkspace"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "./finance/FinanceWorkspace"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "@/components/tenant-calendar/TenantCanonicalCalendarWorkspace"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "./marketplace"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "./settings"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "./vault/useBusinessVault"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "./vibe"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "@/lib/voice/VoiceDeviceProvider"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "@/components/admin/voice/DialPadSurface"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "@/components/admin/voice/IncomingCallOverlay"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "@/components/admin/voice/LiveTranscriptPanel"
+    },
+    {
+      "importer": "src\\lib\\auth\\signOut.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\auth\\RequireSetupComplete.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\solo\\SoloPaigeWorkspace.tsx",
+      "module": "@/components/dashboard/PaigeAIChat"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\TenantRelationshipsClientsWorkspace.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\components\\tenant-shell\\TenantCommandCenterShell.tsx",
+      "module": "@/components/admin/voice/DialPadTrigger"
+    },
+    {
+      "importer": "src\\solo\\SoloPaigeWorkspace.tsx",
+      "module": "@/components/dashboard/paige/PaigeComposerAutonomyChip"
+    },
+    {
+      "importer": "src\\solo\\SoloPaigeWorkspace.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\TenantRelationshipsClientsWorkspace.tsx",
+      "module": "./useTenantRelationshipsData"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\TenantRelationshipsClientsWorkspace.tsx",
+      "module": "@/components/tenant-calendar/TenantCanonicalCalendarWorkspace"
+    },
+    {
+      "importer": "src\\solo\\SoloPaigeWorkspace.tsx",
+      "module": "./data/useSoloKnowledge"
+    },
+    {
+      "importer": "src\\solo\\SoloPaigeWorkspace.tsx",
+      "module": "./data/useSoloSkills"
+    },
+    {
+      "importer": "src\\components\\tenant-shell\\TenantCommandCenterShell.tsx",
+      "module": "@/components/dashboard/PaigeAIChat"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsWorkspace.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsWorkspace.tsx",
+      "module": "@/contexts/ImpersonationContext"
+    },
+    {
+      "importer": "src\\solo\\SoloPaigeWorkspace.tsx",
+      "module": "./SoloBusinessInterview"
+    },
+    {
+      "importer": "src\\solo\\SoloPaigeWorkspace.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsWorkspace.tsx",
+      "module": "@/hooks/usePlanList"
+    },
+    {
+      "importer": "src\\hooks\\useTierFeatures.ts",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\components\\auth\\RoleGate.tsx",
+      "module": "@/hooks/useUserRoles"
+    },
+    {
+      "importer": "src\\components\\admin\\contacts\\ContactPortalPanel.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\auth\\RoleGate.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsWorkspace.tsx",
+      "module": "./useOperationsPeople"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\ClientCommunicationState.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\PortalConfigurationGate.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsWorkspace.tsx",
+      "module": "./useOperationsCrmWork"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\ClientCommunicationState.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\PortalConfigurationGate.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\PeopleContactEditor.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\ClientPortalAccess.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\ClientPortalAccess.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\ClientSharedWork.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\pages\\admin\\ClientsConversations.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\data\\deepResearch.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\ClientSharedWork.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\solo\\data\\deepResearch.ts",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\ClientSharedWork.tsx",
+      "module": "@/hooks/usePlanList"
+    },
+    {
+      "importer": "src\\solo\\weekly\\WeeklyDraftComposer.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\weekly\\useWeeklyResponsibility.ts",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\solo\\weekly\\useWeeklyResponsibility.ts",
+      "module": "@/contexts/ImpersonationContext"
+    },
+    {
+      "importer": "src\\solo\\weekly\\useWeeklyResponsibility.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\hooks\\useClientFilesOwner.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\hooks\\useClientFilesOwner.ts",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\lib\\scopedUser.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\pages\\admin\\CalendarAdmin.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\pages\\admin\\PortalStudio.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\components\\admin\\contacts\\ContactPortalPanel.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\lib\\client-portal-access.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\contactUpsert.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\lib\\contacts.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\PortalInvitationManager.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\PortalInvitationManager.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\solo\\engagement\\useClientEngagementStatus.ts",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\solo\\engagement\\useClientEngagementStatus.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\data\\useBusinessTimeZone.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\usePortalInvitations.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\usePortalInvitations.ts",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\solo\\operations\\useOperationsPeople.ts",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsWorkCreator.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\operations\\useOperationsPeople.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\hooks\\useClientPortalProgress.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\pages\\admin\\CalendarAdmin.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\pages\\admin\\CalendarAdmin.tsx",
+      "module": "@/hooks/usePlanList"
+    },
+    {
+      "importer": "src\\lib\\functions\\adminAccountActions.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\operations\\operations-crm-work-command.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\operations\\operations-weekly-source.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsProjectEditor.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsWorkEditor.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsWorkActivity.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsCrmWorkEditor.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsProjectCreator.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsCrmStageReview.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\PortalInvitationCommand.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\PortalInvitationCommand.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsPlaybooks.tsx",
+      "module": "@/hooks/useKnowledgeDocuments"
+    },
+    {
+      "importer": "src\\lib\\planning.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\operations\\operations-work-create.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsDelivery.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsDelivery.tsx",
+      "module": "@/solo/useSoloCommercialTerms"
+    },
+    {
+      "importer": "src\\solo\\operations\\operations-project-update.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsDelivery.tsx",
+      "module": "@/solo/useSoloAgreementSignings"
+    },
+    {
+      "importer": "src\\hooks\\useRealtimeTable.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\lib\\playbook\\resolve.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\admin\\calendar\\CalendarsPanel.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsWorkEditor.tsx",
+      "module": "@/hooks/useUserRoles"
+    },
+    {
+      "importer": "src\\hooks\\useFinanceEntitlement.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\hooks\\useRailEvents.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\hooks\\usePortalConfig.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\planning\\QuickAddDialog.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\hooks\\useBrandKit.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\hooks\\useFinanceEntitlement.ts",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\hooks\\useClientPortalConfig.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\operations\\operations-work-update.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\operations\\operations-project-create.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\OwnerCustomerResources.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\OwnerCustomerResources.tsx",
+      "module": "@/hooks/useKnowledgeDocuments"
+    },
+    {
+      "importer": "src\\hooks\\useClientPortalRead.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\pages\\admin\\ClientsConversations.tsx",
+      "module": "@/lib/voice/VoiceDeviceProvider"
+    },
+    {
+      "importer": "src\\solo\\operations\\operations-delivery-staff.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\pages\\admin\\ClientsConversations.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\solo\\operations\\operations-delivery-source.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\hooks\\useOwnerResourceShares.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\admin\\calendar\\CalendarsPanel.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsEngagementHandoff.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\operations\\useOperationsEngagementEvidence.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\useCatalogOffers.ts",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\solo\\useCatalogOffers.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\lib\\voice\\useDictation.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\pages\\admin\\conversations\\portalReply.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\pages\\admin\\conversations\\useLeadReplyReview.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\pages\\admin\\conversations\\ComposeThreadDialog.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\pages\\admin\\conversations\\LeadReplyDrafts.tsx",
+      "module": "@/hooks/usePendingApprovals"
+    },
+    {
+      "importer": "src\\pages\\admin\\conversations\\LeadReplyDrafts.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\pages\\admin\\conversations\\inbox-shared.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\pages\\admin\\conversations\\shell\\ConversationsCallButton.tsx",
+      "module": "@/lib/voice/VoiceDeviceProvider"
+    },
+    {
+      "importer": "src\\solo\\operations\\operations-engagement-handoff-write.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\operations\\operations-handoff-recovery.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\pages\\admin\\conversations\\ContactCardRail.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\pages\\admin\\conversations\\AttachmentChip.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\paige\\CustomerSelector.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\lib\\customFields.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\admin\\contacts\\ContactAutomationHistory.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\admin\\voice\\CallButton.tsx",
+      "module": "@/lib/voice/VoiceDeviceProvider"
+    },
+    {
+      "importer": "src\\components\\admin\\contacts\\ContactBillingPanel.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\pages\\admin\\conversations\\AgentsLog.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\admin\\contacts\\ContactDealsSection.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\components\\admin\\contacts\\ContactDealsSection.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\hooks\\useClientOnboardingStatus.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\lib\\pipelines.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\admin\\pipeline\\NewDealDialog.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\hooks\\useTenantFeature.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\lib\\team\\assignableStaff.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\deals\\CrmDealCommandReview.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\deals\\CrmDealCommandReview.tsx",
+      "module": "@/hooks/useTenantContext"
+    },
+    {
+      "importer": "src\\solo\\deals\\useSoloDealClients.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\hooks\\useTenantOffers.ts",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\components\\admin\\contacts\\NewContactDialog.tsx",
+      "module": "@/integrations/supabase/client"
+    },
+    {
+      "importer": "src\\solo\\deals\\useSoloDealClients.ts",
+      "module": "@/hooks/useTenantContext"
+    }
+  ],
+  "boundary": "LOCAL_ACTUAL_SHELL_COMPONENTS_SYNTHETIC_WEEKLY_PORTS_NO_BACKEND_AUTH_PROVIDERS",
+  "fixtures": "Single synthetic request per tab/context for UI states only. Selected native PostgreSQL proof separately verifies real records, concurrent unique claims, stored args and original Rails. No fixture is ordinary authentication or production execution."
+}

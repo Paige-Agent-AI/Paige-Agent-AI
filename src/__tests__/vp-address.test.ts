@@ -5,8 +5,22 @@ import {
   buildVpAddressBlock,
   detectVpAddress,
 } from '../../supabase/functions/_shared/paige-context/vp-address.ts';
+import { looksLikeFinanceAgent } from '../../supabase/functions/_shared/finance-gate.ts';
 
 describe('detectVpAddress — the roster\'s addressing rule', () => {
+  it('uses the existing VERA identity for source-backed intelligence without granting action authority', () => {
+    const addressed = detectVpAddress('VERA, how is my business doing?')!;
+    expect(addressed.vp.slug).toBe('vera');
+    expect(VP_ROSTER.filter(v => v.slug === 'vera')).toHaveLength(1);
+    expect(addressed.vp.role).toBe('VP Intelligence, Finance & Risk');
+    expect(addressed.vp.scope.toLowerCase()).toContain('source-backed');
+    expect(looksLikeFinanceAgent({ domain: 'intelligence_finance_risk', name: addressed.vp.name, description: addressed.vp.scope })).toBe(false);
+    const block = buildVpAddressBlock(addressed, 'Test business');
+    expect(block).toContain('permitted business evidence');
+    expect(block).toContain('unavailable');
+    expect(block).toContain('PAIGE remains');
+    expect(block).toContain("no action's authority changes because a name was said");
+  });
   it('detects a direct address with the name stripped', () => {
     const a = detectVpAddress('ZION, what about my Q2 pricing?');
     expect(a?.vp.slug).toBe('zion');

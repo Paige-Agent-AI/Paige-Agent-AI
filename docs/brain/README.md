@@ -30,8 +30,16 @@ VERA [#2400](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2400) at
 `73fba3d366e7f9d3f177e1fd6d5bf71cadf178d1` extends the existing global registry
 identity and addressed Chat; its guarded role-remap migration is not applied. Main has since applied121100 for
 Chat executor acquisition (#2415), followed by Operations121300 (#2427).
-VERA must move its still-unapplied reservation beyond the current production
-frontier before release; never use include-all or rewrite applied history.
+VERA reserves121400 beyond the verified121300 production frontier. Only its
+unapplied role-remap filename and ten rollback-test includes change; SQL bytes
+and applied history are preserved. Never use include-all or rewrite applied history.
+**Preview recovery lesson:** the existing data-free VERA Preview retained its
+obsolete private121100/121200 migration set after a default reset. A bounded
+development-only reset to the merged121000 baseline is followed by normal
+current-source migration replay. Required Preview stays failed until actual
+Chat121100/Operations121300/VERA121400 readback and a new green check. This is
+not production history repair, include-all or an authenticated-customer result.
+
 Finance [#2402](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2402)
 consumes the existing caller-JWT Finance source contracts through the same snapshot;
 it remains unreleased. Null/unavailable is never zero, cash is never credit, and
@@ -55,6 +63,16 @@ supplement12 PASS/0 FAIL/4 BLOCKED. See the existing
 [continuation contract](../delivery/e2-6-continuation-contract.md) and
 [Mission contract](../delivery/paige-business-mission-system-phase2.md).
 ANT-138/147 carry current release coordination; ANT-52 carries customer proof.
+
+**October19 EXP02 VERA continuation — development:** the existing VERA identity
+is being aligned to Intelligence, Finance & Risk through the existing registry,
+addressed Chat and native Executive handoff. PAIGE remains principal COO. Current
+department context is not historical draft authorship. The guarded forward metadata
+correction preserves custom configuration, permissions, enabled/runtime state and
+specialist parents; it does not activate the legacy soft-delegate path. This is not
+deployed/customer-accepted or complete EXP02. See the existing [roster](../doctrine/paige-c-suite-roster.md),
+[E02 matrix](../delivery/e2-customer-experience-integration-matrix.md) and
+[VERA evidence](../evidence/ui-delivery/e2-vera-intelligence.md). All19 outcomes remain required.
 
 > **2026-10-20 EXP05 inherited-source reconciliation — NOT RELEASED:** Original EXP05 lead is verified archived; clean #2163/36ab and #2189/9f sources remain preserved. Their October14/15 paragraphs below are historical unmerged checkpoints, not current ownership, activation, public-only Computer/Sandbox scope or acceptance authority. Current ANT11/21/147 owner direction governs the complete ten-outcome Run My Week Experience. Source-only reviewed e9704371 composes current main12386ae4 and reviewed b27 deadline/body corrections; the native unapproved draft reuses existing confirmations, Kit, Trust, process records and Rails. The unapplied forward migration121300 preserves its original SQL body and the current196-row catalogue in local proof; no applied history, role or recurring grant changes. Local full PostgreSQL proof86PASS and corrected owning suite203PASS are engineering evidence, not full-schema or authenticated execution. A new scoped44px draft-control correction and final current native evidence/review/CI/release remain owed. Formal source/receiving-owner handoffs and original18/25/50/E5-CV1–9 acceptance remain separate.
 

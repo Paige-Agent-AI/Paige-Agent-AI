@@ -8,7 +8,7 @@ import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { PaigeAttribution } from "@/components/ui/page";
+import { VP_ROSTER } from "@/components/ui/page";
 import { cn } from "@/lib/utils";
 import { resolveVpForActionKind } from "@/lib/paige/vpDepartments";
 import { isNativeOwnerTaskApproval, type ApprovalQueueRow } from "@/hooks/usePendingApprovals";
@@ -180,7 +180,7 @@ function ApprovalRowContent({a,showDecline=false,onResolved,actorId,tenantId,cur
   const fallback=object(dc) ? [dc.subject,dc.body,dc.preview].find(x=>typeof x==="string") as string|undefined : typeof dc==="string" ? dc:"";
   const summary=a.summary ?? fallback;
   const args=a.source==="paige_orchestration" && a.category==="owner.task" && object(dc) && dc.capability==="owner.task" && object(dc.args) ? dc.args:null;
-  const state=a.sla_state,draftedVp=resolveVpForActionKind(a.category);
+  const state=a.sla_state,departmentVp=resolveVpForActionKind(a.category);
   return <div className="cc-collapse" aria-busy={busy}><div>
     <div className="relative flex items-start gap-2.5 rounded-md border p-2.5 pl-3 hover:bg-muted/40 transition-colors">
       <span className={cn("absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full",TICK_COLOR[state] ?? "bg-muted-foreground/30")}/>
@@ -196,7 +196,7 @@ function ApprovalRowContent({a,showDecline=false,onResolved,actorId,tenantId,cur
           {a.category && <span className="capitalize">{a.category.replace(/_/g," ")}</span>}
           {a.contact_id && <span className="inline-flex items-center gap-1 min-w-0"><User className="h-3 w-3 shrink-0"/><span className="break-words">{contactLabel(a)}</span></span>}
         </div>
-        {draftedVp && <PaigeAttribution contributors={[{vp:draftedVp}]} size="sm" showMark={false} leadIn="Drafted by your Paige team"/>}
+        {departmentVp && <p className="text-xs text-muted-foreground">Department specialist: {VP_ROSTER[departmentVp].name}</p>}
         <div className="flex flex-wrap items-center justify-end gap-1.5 pt-0.5">
           {followup||heldEmail ? <FollowupReviewLink a={a} followup={followup}/>
             :<Button size="sm" onClick={()=>void decide(false)} disabled={busy || !!report || a.status!=="pending"}

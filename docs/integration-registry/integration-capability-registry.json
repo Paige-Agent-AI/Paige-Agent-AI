@@ -736,6 +736,16 @@
           "note": "Caller-JWT authentication precedes a truthful unavailable refusal; no privileged rows, token operations or provider effects through legacy user-only selection."
         },
         {
+          "path": "supabase/migrations/20270602000429_finance_accounting_obligation_projections.sql",
+          "role": "provider_adapter",
+          "note": "Controlled company-bound Bill/Purchase cache; original native references and unknown amounts. No verified bank settlement, automatic expense recognition, provider activation or live ingestion claim."
+        },
+        {
+          "path": "supabase/functions/_shared/finance/quickbooks-obligation-contract.ts",
+          "role": "provider_adapter",
+          "note": "Controlled Bill/Purchase normalization; original references, exact nullable amounts and accounting status. No automatic expense recognition, bank settlement, company consent or provider ingestion."
+        },
+        {
           "path": "supabase/functions/_shared/finance/quickbooks-read-contract.ts",
           "role": "provider_adapter",
           "note": "Pure controlled normalization and bounded pagination/report metadata; no network, authority, credentials or live ingestion. Accounting balances never establish available bank cash."
@@ -848,6 +858,11 @@
       },
       "code_anchors": [
         {
+          "path": "supabase/functions/_shared/finance/plaid-liability-contract.ts",
+          "role": "provider_adapter",
+          "note": "Controlled selected-item/account liability normalization; distinct card/LOC/loan terms and unknown coverage. No product eligibility, company ownership, institution freshness or complete debt claim."
+        },
+        {
           "path": "supabase/functions/_shared/finance/plaid-read-contract.ts",
           "role": "provider_adapter",
           "note": "Pure controlled account/transaction normalization and item-wide pagination; immutable selected-account filtering, restart/refusal behavior, no network, authority or live provider ingestion."
@@ -875,11 +890,6 @@
           "path": "supabase/migrations/20270602000423_finance_account_source_projections.sql",
           "role": "provider_adapter",
           "note": "Controlled company-account projection candidate; exact native account identity and observation provenance. No provider activation, live ingestion or verified institution freshness."
-        },
-        {
-          "path": "supabase/migrations/20270602000429_finance_accounting_obligation_projections.sql",
-          "role": "provider_adapter",
-          "note": "Controlled company-bound Bill/Purchase cache; original native references and unknown amounts. No verified bank settlement, automatic expense recognition, provider activation or live ingestion claim."
         },
         {
           "path": "supabase/migrations/20270602000428_finance_liability_source_projections.sql",

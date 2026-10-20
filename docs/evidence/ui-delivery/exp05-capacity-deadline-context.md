@@ -36,11 +36,11 @@ ACCEPTANCE_CRITERIA: each displayed overdue record belongs to active authorized 
 MOTION_PURPOSE: NONE: no motion changes.
 PROTECTED_SEAMS: existing projectNativeOperationsWork tenant/source projection and Overview caller regression tested; Chat, Live, Spine, Harness, Trust, approvals, domain writers, providers, Rail production and provisioning unchanged.
 INTERNAL_BUILD_IDENTITY: base=40e99e2310e3e54b35a2d91e8c068c0e77748ea2; source=exact reviewed PR head in Git; deployment=NOT_DEPLOYED; environment=local isolated web render; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record and native metadata.
-RELEASE_CHANNEL: production after Independent Review and required exact-head green CI under existing owner prelaunch authority; no rollout/activation change.
-RELEASE_CLASSIFICATION: incremental read-only Operations presentation refinement.
+RELEASE_CHANNEL: development: local isolated evidence; ordinary production release follows Independent Review and required exact-head green CI under existing owner prelaunch authority, with no rollout/activation change.
+RELEASE_CLASSIFICATION: patch: incremental read-only Operations presentation refinement.
 CUSTOMER_RELEASE_IDENTITY: none: no new branded customer release or Experience acceptance.
 RELEASE_NOTE_REQUIRED: no: internal prelaunch iteration with no new action or entitlement; full owner evaluation follows integrated completion.
-RELEASE_TRUTH_BOUNDARY: source implemented; native synthetic proof only; customer capability/production/authenticated acceptance PROOF_OWED.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: source implemented and native synthetic proof only; customer capability, production and authenticated acceptance remain unverified.
 RELEASE_RECOVERY: position=forward fix preferred; reference=revert this bounded presentation change through the same reviewed release path, retaining canonical records and source authorization.
 
 ## Scope, source and collisions

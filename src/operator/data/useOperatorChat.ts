@@ -150,6 +150,10 @@ export function useOperatorChat(enabled: boolean = true): OperatorChat {
             // No `threadId` is sent, deliberately — proposals are recorded and matched against a
             // null thread, and the two turns must agree or the claim silently never binds.
             body: JSON.stringify({
+              // EXP00 O-3: the operator console names its surface. A hint the SERVER hard-gates
+              // on is_platform_operator() from this token — it can only select the platform
+              // persona for a real operator; it grants nothing on its own.
+              surface: "operator-console",
               messages: history.current,
               ...(approvals?.approved?.length ? { approvedConfirmations: approvals.approved } : {}),
               ...(approvals?.declined?.length ? { declinedConfirmations: approvals.declined } : {}),

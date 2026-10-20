@@ -97,6 +97,14 @@ describe("original process history interaction lifetime", () => {
     expect(h.result.current.history.status).toBe("closed");
     expect(m.history).toHaveBeenCalledTimes(1); expect(m.outcome).not.toHaveBeenCalled();
   });
+  it("does not retarget history when the exact returned process object has both IDs edited", async () => {
+    const h = await historyLoaded(), original = item(h.result.current.read);
+    original.id = "88888888-8888-4888-8888-888888888888";
+    original.process.id = original.id;
+    await act(async () => { await h.result.current.openHistory(original); });
+    expect(m.history).not.toHaveBeenCalled();
+    expect(h.result.current.history.status).toBe("closed"); expect(m.control).not.toHaveBeenCalled();
+  });
   it("close retires a pending read synchronously and never exposes its late result", async () => {
     const pending = deferred<unknown>(); m.history.mockReturnValue(pending.promise);
     const h = await historyLoaded(); let request!: Promise<void>;

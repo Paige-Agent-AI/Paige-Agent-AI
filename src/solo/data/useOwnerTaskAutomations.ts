@@ -29,6 +29,7 @@ export function useOwnerTaskAutomations() {
   const scopeRef = useRef<OwnerTaskScope | null>(null), sequence = useRef(0);
   const flight = useRef<object | null>(null);
   const historyTicket = useRef(0), historyRef = useRef<HistorySnapshot | null>(null);
+  const historyProcesses = useRef(new WeakMap<OwnerTaskReview, Readonly<{ processId: string; tenantId: string }>>());
   const [authRevision, setAuthRevision] = useState(0);
   if (identityRef.current !== identity) { identityRef.current = identity; epoch.current++; }
   scopeRef.current = allowed ? { actorId: tenant.activeUserId!, tenantId: tenant.activeTenantId!, epoch: epoch.current } : null;
@@ -50,6 +51,7 @@ export function useOwnerTaskAutomations() {
     if (flight.current) return;
     const scope = current(), ticket = ++sequence.current;
     if (!scope) return;
+    historyProcesses.current = new WeakMap();
     closeHistory();
     const key = keyOf(scope);
     publish({ key, read: { status: "loading" }, busy: false, needsRefresh: false, feedback: null });
@@ -57,6 +59,9 @@ export function useOwnerTaskAutomations() {
     try { read = await readOwnerTaskAutomations(scope, caller, current); }
     catch { read = { status: "unavailable" }; }
     if (!same(scope, current()) || ticket !== sequence.current) return;
+    if (read.status === "ready") for (const review of read.items) {
+      historyProcesses.current.set(review, Object.freeze({ processId: review.id, tenantId: scope.tenantId }));
+    }
     publish({ key, read, busy: false, needsRefresh: false, feedback: null });
   }, [current, publish, closeHistory]);
 
@@ -65,6 +70,7 @@ export function useOwnerTaskAutomations() {
       // Synchronous invalidation; never invoke a Supabase read from its auth callback.
       epoch.current++; scopeRef.current = null; sequence.current++;
       historyTicket.current++; historyRef.current = null;
+      historyProcesses.current = new WeakMap();
       setAuthRevision(n => n + 1);
     });
     return () => subscription.unsubscribe();
@@ -76,6 +82,7 @@ export function useOwnerTaskAutomations() {
     return () => {
       mounted.current = false; generation.current++; scopeRef.current = null; reads.current++;
       historyReads.current++; historyRef.current = null;
+      historyProcesses.current = new WeakMap();
     };
   }, [identity, authRevision, allowed, tenant.activeUserId, tenant.activeTenantId]);
   useEffect(() => {
@@ -86,10 +93,12 @@ export function useOwnerTaskAutomations() {
 
   const openHistory = useCallback(async (review: OwnerTaskReview): Promise<void> => {
     const scope = current(), before = snapshotRef.current;
+    const original = historyProcesses.current.get(review);
     if (flight.current || !scope || before.key !== keyOf(scope) || before.read.status !== "ready"
-      || before.needsRefresh || !before.read.items.includes(review)
-      || review.process.id !== review.id || review.process.tenant_id !== scope.tenantId) return;
-    const processId = review.id, key = keyOf(scope), ticket = ++historyTicket.current;
+      || before.needsRefresh || !before.read.items.includes(review) || !original
+      || original.tenantId !== scope.tenantId || review.id !== original.processId
+      || review.process.id !== original.processId || review.process.tenant_id !== original.tenantId) return;
+    const processId = original.processId, key = keyOf(scope), ticket = ++historyTicket.current;
     const stillCurrent = () => ticket === historyTicket.current && same(scope, current()) ? current() : null;
     publishHistory({ key, view: { status: "loading", processId } });
     let read: OwnerTaskHistoryList;

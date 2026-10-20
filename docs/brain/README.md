@@ -65,6 +65,14 @@ Company L1 and tenant SOLO L2 remain distinct; EXP01/05/09/11 consumers reuse th
 same permitted sources and original records. This supersedes the stale v1 release
 status, without converting supporting native proof into customer acceptance.
 
+**Finance native contrast lesson (October20, development):** real rendered
+amounts inherited muted provenance ink and measured3.195:1 in Obsidian.
+Source repairef4c5c52 uses existing semantic ink tokens, preserving exact
+decimal strings and product fonts. Final native repaint/finish and customer
+proof remain owed after transport loss; pre-fix frames are supporting evidence.
+See the existing Finance flow evidence; reuse the same presenter, not another
+financial reader or theme.
+
 **October19 EXP02 Finance — local integration, not released:** the existing
 business operating snapshot now consumes canonical caller-JWT Finance catalogue
 and stored account-source reads. Source-specific exact decimal facts retain their

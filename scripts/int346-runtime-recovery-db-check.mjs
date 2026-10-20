@@ -70,9 +70,47 @@ try{
   unnest(ARRAY['crm_create_contact','n8n_run_workflow','plan_create','unclassified_synthetic'])c`);
  const displayBefore=displayed();
  const migration=fs.readFileSync(m('20271110021000_chat_runtime_recovery.sql'),'utf8');
- if(!baseline){sql(migration);sql(migration);}
+ const boundAnswerFix=strip(fs.readFileSync(m('20271112110000_bound_answer_executor_acquire.sql'),'utf8'));
+ if(!baseline){sql(migration);sql(migration);sql(boundAnswerFix);sql(boundAnswerFix);}
  const th=thread(10),intent=id(11);admit(th,intent);
  check('future bound acquire reaches actual incumbent native authority',()=>assert.equal(acquire(th,intent).acquired,true));
+ // The 2026-10-19 live incident shape (thread ad0e6231): a TYPED ANSWER is admitted by
+ // begin_v2 as a bound answer — NO admission user row is written (the claim is appended
+ // at the model call). The bound acquire must recognize that admission instead of raising
+ // 'runtime admission unavailable' (which surfaced as INTERACTIVE_AUTHORITY_UNAVAILABLE
+ // and killed every interview answer after the first exchange).
+ const answerThread=thread(70),answerIntent=id(71);
+ sql(`SET test.actor=${q(actor)};SET test.tenant=${q(tenant)};SET ROLE authenticated;
+  SELECT public.paige_chat_interactive_begin_v2(${q(answerThread)},${q(answerIntent)},NULL,'Protected synthetic answer',true,false,true);RESET ROLE`);
+ check('bound-answer admission without supersedes writes no user row',()=>assert.equal(sql(`SELECT count(*) FROM public.paige_chat_turns WHERE thread_id=${q(answerThread)} AND interactive_intent_id=${q(answerIntent)}`),'0'));
+ const answerAcquired=acquire(answerThread,answerIntent,id(88));
+ check('bound-answer admission acquires the incumbent executor',()=>{assert.equal(answerAcquired.acquired,true);const b=json(`SELECT interactive_runtime_binding FROM public.paige_chat_threads WHERE id=${q(answerThread)}`);assert.equal(b.admission,'bound_answer');assert.equal(b.mode,'normal');});
+ check('bound-answer acquire leaves no turn-level binding to forge',()=>assert.equal(sql(`SELECT count(*) FROM public.paige_chat_turns WHERE thread_id=${q(answerThread)} AND interactive_runtime_binding IS NOT NULL`),'0'));
+ const markerThread=thread(73),plainIntent=id(74),answerTwo=id(75);admit(markerThread,plainIntent);
+ sql(`SET test.actor=${q(actor)};SET test.tenant=${q(tenant)};SET ROLE authenticated;
+  SELECT public.paige_chat_interactive_begin_v2(${q(markerThread)},${q(answerTwo)},${q(plainIntent)},'',true,false,true);RESET ROLE`);
+ check('bound-answer admission with supersedes (marker only, no user row) also acquires',()=>{const r=acquire(markerThread,answerTwo,id(89));assert.equal(r.acquired,true);assert.equal(json(`SELECT interactive_runtime_binding FROM public.paige_chat_threads WHERE id=${q(markerThread)}`).intent_id,answerTwo);});
+ const unadmittedThread=thread(76),unadmittedIntent=id(77);
+ sql(`SET test.actor=${q(actor)};SET test.tenant=${q(tenant)};SET ROLE authenticated;
+  SELECT public.paige_chat_interactive_begin_v2(${q(unadmittedThread)},${q(unadmittedIntent)},NULL,'Shape fixture',true,false,true);RESET ROLE`);
+ sql(`UPDATE public.paige_chat_threads SET interactive_admitted_intent=NULL WHERE id=${q(unadmittedThread)}`);
+ rejects('admitted-intent shape mismatch with executor free still raises',()=>acquire(unadmittedThread,unadmittedIntent),/runtime admission unavailable/);
+ // P1-2 companion: the claim-bind trigger makes a bound-answer runtime recoverable —
+ // the claim turn is stamped in the SAME transaction as its append, through the
+ // REAL append RPC the production handler uses.
+ const claimId=id(78);
+ sql(`SET test.actor=${q(actor)};SET test.tenant=${q(tenant)};SET ROLE authenticated;
+  SELECT public.paige_chat_turn_append(${q(answerThread)},'user','Synthetic claim',NULL,NULL,NULL,NULL,NULL,
+   jsonb_build_object('paige_resume',jsonb_build_object('kind','answer','key','answer:'||${q(answerIntent)},'from_turn_id',${q(answerIntent)})),NULL);RESET ROLE`);
+ // capture the appended turn's id (the RPC returns it; find by claim key instead for the assertion)
+ const stamped=json(`SELECT to_jsonb(t) FROM (SELECT interactive_intent_id::text AS intent, interactive_actor_id::text AS actor, interactive_tenant_id::text AS tenant, interactive_runtime_binding->>'admission' AS admission, interactive_runtime_binding->>'admission_turn_id' AS turn_ref FROM public.paige_chat_turns WHERE thread_id=${q(answerThread)} AND bundle_ref->'paige_resume'->>'key'=${q('answer:'+answerIntent)})t`);
+ check('claim turn is auto-bound with actor/tenant and self-naming admission_turn_id',()=>{assert.equal(stamped.intent,answerIntent);assert.equal(stamped.actor,actor);assert.equal(stamped.tenant,tenant);assert.equal(stamped.admission,'bound_answer');assert.equal(sql(`SELECT interactive_runtime_binding->>'admission_turn_id' FROM public.paige_chat_threads WHERE id=${q(answerThread)}`),stamped.turn_ref);});
+ check('attest/recover count predicate sees exactly one bound user turn',()=>assert.equal(sql(`SELECT count(*) FROM public.paige_chat_turns WHERE thread_id=${q(answerThread)} AND role='user' AND interactive_intent_id=${q(answerIntent)} AND interactive_actor_id=${q(actor)} AND interactive_tenant_id=${q(tenant)} AND interactive_runtime_binding->>'request_nonce' IS NOT NULL AND id::text=interactive_runtime_binding->>'admission_turn_id'`),'1'));
+ check('exactly-one: a second claim-shaped turn on the same intent is not stamped',()=>{
+  sql(`SET test.actor=${q(actor)};SET test.tenant=${q(tenant)};SET ROLE authenticated;
+   SELECT public.paige_chat_turn_append(${q(answerThread)},'user','Second synthetic claim',NULL,NULL,NULL,NULL,NULL,
+    jsonb_build_object('paige_resume',jsonb_build_object('kind','answer','key','answer:'||${q(id(81))},'from_turn_id',${q(id(81))})),NULL);RESET ROLE`);
+  assert.equal(sql(`SELECT count(*) FROM public.paige_chat_turns WHERE thread_id=${q(answerThread)} AND interactive_intent_id=${q(answerIntent)}`),'1');});
  check('incumbent v2 function body and five-argument ABI unchanged',()=>assert.equal(sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='public.paige_chat_interactive_executor_v2(uuid,uuid,uuid,uuid,text)'::regprocedure`),oldBody));
  check('non-target Rail projection outputs/OID/ACL unchanged after two applications',()=>{
   assert.deepEqual(displayed(),displayBefore);assert.equal(sql(`SELECT oid::text||':'||coalesce(proacl::text,'NULL') FROM pg_proc WHERE oid='public._workspace_event_display(text,text,text)'::regprocedure`),displayIdentity);

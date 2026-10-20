@@ -82,6 +82,17 @@ export const VIEW_SOURCES: Readonly<Record<string, ViewSource>> = {
   },
   "relationships/segments": { bespoke: "SegmentsSurface", carries: [] },
 
+  // ── Sales ─────────────────────────────────────────────────────────────────────────────────
+  /**
+   * EXP00: PAIGE Inc's own Sales department — leads, opportunities, pipelines
+   * and governed stage transitions through the canonical pipeline tables
+   * (tenant_id IS NULL = company L1 scope). The operator_sales_* RPCs are
+   * platform-admin-gated reads/writes; no parallel engine.
+   */
+  "sales/pipeline": { bespoke: "SalesDept", carries: [] },
+  "sales/leads": { bespoke: "SalesDept", carries: [] },
+  "sales/activity": { bespoke: "SalesDept", carries: [] },
+
   // ── Campaigns ──────────────────────────────────────────────────────────────────────────────
   /**
    * `campVals` (5159). The old keys were the Growth branch's page/funnel/form builders — a

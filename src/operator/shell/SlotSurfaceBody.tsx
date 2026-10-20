@@ -70,6 +70,7 @@ const SalesSurface = lazy(() => import("@/operator/surfaces/campaigns/SalesSurfa
 const SocialSurface = lazy(() => import("@/operator/surfaces/campaigns/SocialSurface"));
 const PeopleSurface = lazy(() => import("@/operator/surfaces/relationships/PeopleSurface"));
 const CustomersDesk = lazy(() => import("@/operator/surfaces/relationships/CustomersDesk"));
+const SalesDept = lazy(() => import("@/operator/surfaces/sales/SalesDept"));
 const ConversationsSurface = lazy(
   () => import("@/operator/surfaces/relationships/ConversationsSurface"),
 );
@@ -203,6 +204,8 @@ export default function SlotSurfaceBody({ slot, view }: { slot: OperatorSlot; vi
             The one figure that is already real is the campaign grant: `clampGrant` runs it
             through the SAME scale the Trust Compass ceiling uses, so a campaign can never read
             a grant the platform's rung does not permit. */}
+        {bespoke === "SalesDept" && <SalesDept />}
+        {/* Marketing (formerly Campaigns) — EXP00 department restructure, nav-only rename */}
         {bespoke === "CampaignsActive" && <CampaignsActive />}
         {bespoke === "CatalogSurface" && <CatalogSurface />}
         {bespoke === "SalesSurface" && <SalesSurface />}

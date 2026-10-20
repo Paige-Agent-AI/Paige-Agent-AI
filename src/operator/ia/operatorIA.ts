@@ -27,7 +27,7 @@
  */
 
 export type OperatorSlotId =
-  | "fleet" | "relationships" | "campaigns" | "marketplace" | "analytics" | "settings";
+  | "fleet" | "relationships" | "sales" | "campaigns" | "marketplace" | "analytics" | "settings";
 
 export type OperatorSlot = {
   readonly id: OperatorSlotId;
@@ -58,8 +58,13 @@ export const OPERATOR_SLOTS: readonly OperatorSlot[] = [
     },
   },
   {
+    id: "sales",
+    label: "Sales",
+    views: ["Pipeline", "Leads", "Activity"],
+  },
+  {
     id: "campaigns",
-    label: "Campaigns",
+    label: "Marketing",
     views: ["Active", "Catalog", "Sales", "Pipeline", "Social", "Performance"],
     absence: {
       title: "Substrate exists \u00b7 one seam missing",

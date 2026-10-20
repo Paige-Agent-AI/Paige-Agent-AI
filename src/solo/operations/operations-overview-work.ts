@@ -1,6 +1,8 @@
 import type { PlanItem } from "@/hooks/usePlanList";
 import { presentNativeWork, projectNativeOperationsWork, type CrmWorkRecord } from "./operations-native-work";
 
+export type OperationsWorkSet = "attention" | "deadlines" | "timing" | "reminders";
+
 /** Display-only executive ordering over the same native work used in Work. */
 export function overviewNativeWork(tenantId: string, items: PlanItem[], tasks: CrmWorkRecord[], now = Date.now()) {
   const work = projectNativeOperationsWork(tenantId, items, tasks).map(presentNativeWork);
@@ -14,12 +16,14 @@ export function overviewNativeWork(tenantId: string, items: PlanItem[], tasks: C
     Number(b.status === "in_progress") - Number(a.status === "in_progress") ||
     (priority[b.priority ?? ""] ?? 0) - (priority[a.priority ?? ""] ?? 0) || dueOrder(a,b);
   const currentWork = [...active].sort(operatingOrder);
+  const deadlines = active.filter(item => Number.isFinite(time(item)) && time(item) >= now).sort(dueOrder);
   const reminderTime = (item: typeof work[number]) => item.remind_at ? Date.parse(item.remind_at) : Number.NaN;
   return {
     overdue: active.filter(item => time(item) < now).sort(dueOrder),
     attention: active.filter(item => item.status === "blocked" || time(item) < now).sort((a,b) =>
       (priority[b.priority ?? ""] ?? 0) - (priority[a.priority ?? ""] ?? 0) || Number(b.status === "blocked") - Number(a.status === "blocked") || dueOrder(a,b)),
-    upcoming: active.filter(item => Number.isFinite(time(item)) && time(item) >= now).sort(dueOrder).slice(0,5),
+    upcoming: deadlines.slice(0,5),
+    deadlines,
     active: currentWork,
     inProgress: currentWork.filter(item => item.status === "in_progress"),
     timingToConfirm: currentWork.filter(item => item.item_type !== "reminder" && !Number.isFinite(time(item))),
@@ -27,4 +31,14 @@ export function overviewNativeWork(tenantId: string, items: PlanItem[], tasks: C
       (Number.isFinite(reminderTime(a)) ? reminderTime(a) : Infinity) -
       (Number.isFinite(reminderTime(b)) ? reminderTime(b) : Infinity) || a.title.localeCompare(b.title)),
   };
+}
+
+/** The complete matching set of these loaded records, never a business-wide census. */
+export function operationsWorkSetRows(work: ReturnType<typeof overviewNativeWork>, group: OperationsWorkSet) {
+  switch (group) {
+    case "attention": return work.attention;
+    case "deadlines": return work.deadlines;
+    case "timing": return work.timingToConfirm;
+    case "reminders": return work.reminders;
+  }
 }

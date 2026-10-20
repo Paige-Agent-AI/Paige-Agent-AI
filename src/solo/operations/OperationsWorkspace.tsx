@@ -27,6 +27,7 @@ import { OperationsCrmWorkEditor } from "./OperationsCrmWorkEditor";
 import { workDateLabel, workStatusLabel } from "./operations-presentation";
 import { OperationsProjects } from "./OperationsProjects";
 import { OperationsOverview } from "./OperationsOverview";
+import { overviewNativeWork, operationsWorkSetRows, type OperationsWorkSet } from "./operations-overview-work";
 import { OperationsCapacity } from "./OperationsCapacity";
 import OperationsDelivery from "./OperationsDelivery";
 import { OperationsPlaybooks } from "./OperationsPlaybooks";
@@ -37,6 +38,9 @@ import "./operations-workspace.css";
 
 const DESTINATIONS = ["Overview", "Work", "Projects", "Delivery", "Playbooks", "Capacity"] as const;
 type Destination = typeof DESTINATIONS[number];
+const WORK_SET_LABELS: Record<OperationsWorkSet, string> = {
+  attention: "Needs attention", deadlines: "Next deadlines", timing: "Timing to confirm", reminders: "Recorded reminders",
+};
 type Inspection = { kind: "item"; id: string; view: Destination; proposedStage?: PlanItemStatus; weeklySource?: boolean } | { kind: "plan"; id: string; view: Destination } | {kind:"crm";id:string;view:Destination;record:CrmWorkRecord} | {kind:"crm_recovery";id:string;view:Destination} | {kind:"crm_focus";id:string;view:Destination} | null;
 
 type WorkspaceProps = { openPaige?: () => void; view?: string; onViewChange?: (view: string) => void;
@@ -72,6 +76,11 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
 }) {
   const [localDestination, setLocalDestination] = useState<Destination>(() => DESTINATIONS.find(name => name.toLowerCase() === view) ?? "Overview");
   const destination = localDestination;
+  const [workSet, setWorkSet] = useState<OperationsWorkSet | null>(null);
+  const workSetEntry = useRef<HTMLDivElement | null>(null);
+  const focusWorkEntry = useRef(false);
+  const overviewReturn = useRef<OperationsWorkSet | null>(null);
+  const overviewInspectionReturn = useRef<OperationsWorkSet | null>(null);
   const desiredDestination = view === undefined ? destination : DESTINATIONS.find(name => name.toLowerCase() === view) ?? "Overview";
   const editorGuard = useRef<(() => string | null) | null>(null);
   const crmInspectionHeld = useRef(false);
@@ -93,9 +102,14 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
   // rerenders when the hold changes; no draft or record leaves Operations.
   useLayoutEffect(() => { onNavigationGuardChange?.(navigationReason, checkNavigation); });
   useLayoutEffect(() => () => onNavigationGuardChange?.(null), [onNavigationGuardChange]);
-  const setDestination = (name: Destination) => {
-    if (name !== destination && checkNavigation()) return;
+  const setDestination = (name: Destination, group: OperationsWorkSet | null = null) => {
+    if ((name !== destination || name === "Work" && group !== workSet) && checkNavigation()) return false;
+    if (name === "Work") {
+      focusWorkEntry.current = group !== workSet;
+      setWorkSet(group);
+    }
     if (onViewChange) onViewChange(name.toLowerCase()); else setLocalDestination(name);
+    return true;
   };
   const [inspection, setInspection] = useState<Inspection>(null);
   const [creatingWork, setCreatingWork] = useState(false);
@@ -103,6 +117,18 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
   const [creatingProject, setCreatingProject] = useState<{ project?: Plan } | null>(null);
   const projectCreationInvoker = useRef<HTMLElement | null>(null);
   const contentRef = useRef<HTMLElement | null>(null);
+  useLayoutEffect(() => { if (destination !== "Work") setWorkSet(null); }, [destination]);
+  useLayoutEffect(() => {
+    if (destination === "Work" && focusWorkEntry.current) {
+      const target = workSetEntry.current ?? contentRef.current?.querySelector<HTMLElement>("[data-operations-work-heading]");
+      if (target) { target.focus(); focusWorkEntry.current = false; }
+    }
+    if (destination === "Overview" && overviewReturn.current) {
+      const target = contentRef.current?.querySelector<HTMLElement>(`[data-ops-work-set="${overviewReturn.current}"]`)
+        ?? contentRef.current?.querySelector<HTMLElement>("h1");
+      if (target) { target.focus(); overviewReturn.current = null; }
+    }
+  }, [destination, workSet]);
   useLayoutEffect(() => {
     if (desiredDestination !== destination && !checkNavigation()) setLocalDestination(desiredDestination);
   }, [desiredDestination, destination, checkNavigation]);
@@ -254,20 +280,33 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
   const refreshCrmInspection = () => crmReview ? readFocusedTask(crmReview.taskId,true)
     : inspection?.kind==="crm_focus" ? readFocusedTask(inspection.id,true) : crm.refresh();
   const workReadable = (!source.loading && planningAvailable) || (!crm.loading && crmAvailable);
+  const groupedWork = workSet ? operationsWorkSetRows(overviewNativeWork(tenantId, items, crmTasks), workSet) : null;
+  const workItems = groupedWork ? groupedWork.flatMap(row => row.native.source === "planning" ? [row.native.record] : []) : items;
+  const workTasks = groupedWork ? groupedWork.flatMap(row => row.native.source === "crm" ? [row.native.record] : []) : crmTasks;
   const workView = <>
+    {workSet && <div className="ops-work-set-context" ref={workSetEntry} tabIndex={-1} role="region" aria-label={`${WORK_SET_LABELS[workSet]} in Work`}>
+      <button type="button" onClick={() => { const origin = workSet; if (setDestination("Overview")) {
+        overviewReturn.current = origin;
+        overviewInspectionReturn.current = inspection ? origin : null;
+      } }}>Back to Overview</button>
+      <p><strong>{WORK_SET_LABELS[workSet]}</strong>{workReadable && <span> · {groupedWork?.length ?? 0} matching loaded records</span>}</p>
+      <button type="button" onClick={() => setDestination("Work")}>View all loaded work</button>
+    </div>}
     {people.error && <div className="ops-inline-notice" role="status">Work is available, but team names and photos couldn’t be loaded. <button type="button" onClick={()=>void people.refresh()}>Retry profiles</button></div>}
     {(source.error || source.forbidden || !matches) && <div className="ops-inline-notice" role="status">Planning work is unavailable in this workspace. <button type="button" onClick={()=>void source.refresh()}>Retry planning work</button></div>}
     {source.loading && <p role="status">Reading Planning work…</p>}
     {crm.loading && <p role="status">Reading CRM tasks…</p>}
     {(crm.error || !crmMatches) && <div className="ops-inline-notice" role="status">{crm.error ?? "CRM work couldn’t be verified for this workspace."} <button type="button" onClick={()=>void crm.refresh()}>Retry CRM tasks</button></div>}
-    {workReadable ? <OperationsWork {...props} crmTasks={crmTasks} onInspectCrmTask={inspectCrm} onProposeCrmStage={proposeCrm}
+    {workReadable ? workSet && groupedWork?.length === 0 ? <div className="ops-view-empty" role="status"><h2>No loaded work matches this group</h2>
+      <p>Refresh the sources above or view the rest of your loaded work.{(source.loading || crm.loading) && " Some sources are still being read."}</p></div>
+      : <OperationsWork key={workSet ?? "all"} {...props} items={workItems} crmTasks={workTasks} initialView={workSet ? "List" : "Board"} onInspectCrmTask={inspectCrm} onProposeCrmStage={proposeCrm}
       onProposeStage={(item,proposedStage,invoker)=>{
         if (checkNavigation()) return;
         selectionEpoch.current += 1;
         if(invoker?.isConnected)inspectionInvoker.current=invoker;else rememberInvoker();
         setInspection({kind:"item",id:item.id,view:destination,proposedStage});
       }} /> : source.loading || crm.loading ? <OperationsLoading /> : <div className="ops-state" role="alert"><h1>Current work isn’t available</h1><p>Retry a source above or ask your workspace owner to review access.</p></div>}
-    <p className="ops-source-limit">This view combines the Planning work and CRM tasks loaded here. Planning uses a 200-plan read with its visible work; CRM returns up to 200 tasks. Unavailable sources are excluded.{crm.hasMore&&" More CRM tasks exist beyond this read."}</p>
+    <p className="ops-source-limit">This view combines the Planning work and CRM tasks loaded here. Planning uses a 200-plan read with its visible work; CRM returns up to 200 tasks. Unavailable sources are excluded.{crm.hasMore&&" More CRM tasks exist beyond this read."}{people.partial && " Some team profiles are outside the current read."}</p>
   </>;
   const isPlanning = !["Delivery", "Playbooks"].includes(destination);
   const overviewView = <>
@@ -277,10 +316,10 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
     {crm.loading && <p role="status">Reading CRM tasks…</p>}
     {!crmAvailable && !crm.loading && <div className="ops-inline-notice" role="status">CRM tasks couldn’t be verified for this workspace. <button type="button" onClick={()=>void crm.refresh()}>Retry CRM tasks</button></div>}
     {workReadable ? <OperationsOverview {...props} tenantId={tenantId} crmTasks={crmTasks} onInspectCrmTask={inspectCrm}
-      onNavigate={setDestination} onReviewWithPaige={openPaige ? reviewWithPaige : undefined}
+      onNavigate={setDestination} onInspectWorkSet={group => setDestination("Work", group)} onReviewWithPaige={openPaige ? reviewWithPaige : undefined}
       onReviewWorkWithPaige={openPaige ? reviewWorkWithPaige : undefined} />
       : source.loading || crm.loading ? <OperationsLoading /> : <div className="ops-state" role="alert"><h1>Current work isn’t available</h1><p>Retry a source above or ask your workspace owner to review access.</p></div>}
-    <p className="ops-source-limit">Attention and deadlines reflect loaded Planning work and up to 200 CRM tasks. Unavailable sources are excluded.{crm.hasMore && " More CRM tasks exist beyond this read."}</p>
+    <p className="ops-source-limit">Attention and deadlines reflect loaded Planning work and up to 200 CRM tasks. Unavailable sources are excluded.{crm.hasMore && " More CRM tasks exist beyond this read."}{people.partial && " Some team profiles are outside the current read."}</p>
   </>;
   const capacityView = <>
     {people.error && <div className="ops-inline-notice" role="status">Team names and photos couldn’t be loaded. <button type="button" onClick={()=>void people.refresh()}>Retry profiles</button></div>}
@@ -290,7 +329,7 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
     {(crm.error || !crmMatches) && <div className="ops-inline-notice" role="status">CRM assignments couldn’t be verified for this workspace. <button type="button" onClick={()=>void crm.refresh()}>Retry tasks</button></div>}
     {workReadable ? <OperationsCapacity {...props} tenantId={tenantId} crmTasks={crmTasks} onInspectCrmTask={inspectCrm} />
       : source.loading || crm.loading ? <OperationsLoading /> : <div className="ops-state" role="alert"><h1>Assignments aren’t available</h1><p>Retry a source above or ask your workspace owner to review access.</p></div>}
-    <p className="ops-source-limit">Workload reflects loaded project work and up to 200 CRM tasks. Unavailable sources are excluded.{crm.hasMore && " More CRM tasks exist beyond this read."} Recorded effort is an estimate, not confirmed availability.</p>
+    <p className="ops-source-limit">Workload reflects loaded project work and up to 200 CRM tasks. Unavailable sources are excluded.{crm.hasMore && " More CRM tasks exist beyond this read."}{people.partial && " Some team profiles are outside the current read."} Recorded effort is an estimate, not confirmed availability.</p>
   </>;
   const member = people.members.find((person) => person.user_id === selectedItem?.assigned_to_user_id);
   // Releases exist only for a standalone, top-level business and only for client work inside a project.
@@ -371,6 +410,13 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
         onPointerDownOutside={event=>{if(checkNavigation())event.preventDefault();}}
         onInteractOutside={event=>{if(checkNavigation())event.preventDefault();}}
         onCloseAutoFocus={(event) => {
+        const returnGroup = overviewInspectionReturn.current;
+        overviewInspectionReturn.current = null;
+        if (destination === "Overview" && returnGroup) {
+          const target = contentRef.current?.querySelector<HTMLElement>(`[data-ops-work-set="${returnGroup}"]`)
+            ?? contentRef.current?.querySelector<HTMLElement>("h1");
+          if (target) { event.preventDefault(); target.focus(); return; }
+        }
         if (inspectionInvoker.current?.isConnected) { event.preventDefault(); inspectionInvoker.current.focus(); }
         else {
           const workKey = inspectionInvoker.current?.dataset.workKey;

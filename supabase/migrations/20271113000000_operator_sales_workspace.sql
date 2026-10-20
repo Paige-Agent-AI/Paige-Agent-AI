@@ -212,9 +212,9 @@ DECLARE
   v_short_ref text;
   v_chars text := '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 BEGIN
-  IF NOT EXISTS (SELECT 1 FROM public.pipelines WHERE short_ref = 'PPL-COSAL') THEN
+  IF NOT EXISTS (SELECT 1 FROM public.pipelines WHERE short_ref = 'PPL-SALES') THEN
     -- Generate a valid PPL-xxxxx short_ref (5 chars from the allowed alphabet)
-    v_short_ref := 'PPL-COSAL';
+    v_short_ref := 'PPL-SALES';
 
     -- The identity trigger forbids L1 rows by design; suspend it for the seed only.
     ALTER TABLE public.pipelines DISABLE TRIGGER zz_assign_pipeline_identity;

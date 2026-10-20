@@ -826,6 +826,41 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-20 — EXP05 weekly work deadlines and reminder-time truthfulness.**
+PR [#2433](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2433), reviewed
+`155436c7a88dedbaa961fc9aa3b1f795c934876c`, merged
+`e390c4027313d55dff6aef25b49313ab52db4ecc`; actual merge tree
+`7b227ff5f4d2d887f4bf301254da76d3bd0a3b83` exactly equals the reviewed tree.
+Fresh version2 observations count actual work deadlines separately from reminder
+times and retain real reminder timestamps; native inspection qualifies original
+version1 totals without rewriting their original outcomes or receipts. Existing
+binding, service-only authority, atomic outcome/readback and minimized Rail remain.
+Distinct NON-AUTHOR final source/presentation review
+`c1121e962bf040951da32d9d5368ba00d23803482fc8ba8c51f66e6d57b48a46`
+and final dependency-composition review
+`d80b7c985b3c08100e42c9bd7cd5cd531195205528477a444c319bee781ac77b`
+PASS; native92 PostgreSQL checks,220 assertions/12 regression suites, scoped lint,
+type ratchet, build and proportionate native presentation evidence passed. All13
+applicable exact-head checks, Supabase Preview and both Vercel statuses SUCCESS.
+Production Vercel `dpl_9GMz5ztFHSbKV6KQUzBBnEex4Dg2` READY/exact/canonical aliases;
+public HTTP200 build `e390c4027313d55dff6aef25b49313ab52db4ecc-mvh9vcyj`,
+customerUpdate null. Canonical migration run39510436840/deploy118929980102 SUCCESS;
+`20271112150000_experience05_weekly_deadline_semantics.sql` persisted/3statements.
+Actual function-body MD5 `346e307a72ae1077e758c8e0375cedaa` equals the reviewed
+migration body; SECURITY DEFINER, empty search_path and postgres/service_role-only
+execute ACL read back. Edge run39510436745 SUCCESS selects zero affected functions;
+provider deploy/readback steps correctly SKIPPED, no new Edge version/certificate.
+[Production release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2433#issuecomment-6303538854),
+[source/presentation evidence](evidence/ui-delivery/exp05-weekly-deadline-truth.md).
+Channel production; internal patch, no customer version or announcement. Fresh
+ordinary-owner version2 run/record/receipt/reload, separate Chat/Live admission,
+recurring activation, ZION and full EXP05/18/25/50 acceptance remain PROOF OWED;
+strict closure stays1/18 and2/50. No business record, provider send/spend or schedule
+activation was performed for release verification. #2435's separate lazy-read
+retirement correction is not covered by this release. Recovery is a reviewed
+forward correction preserving original historical observations and receipts.
+This mechanical exact-identity closeout is not logged recursively.
+
 **2026-10-20 UTC — Existing concurrent decision proof drains complete child output.**
 PR [#2432](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2432), exact reviewed
 `7d8787e3c68a3fa1efbfff75cfdff2e3bc122614`, merged main

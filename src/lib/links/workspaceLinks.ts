@@ -82,7 +82,9 @@ export function routeLinkTarget(link: ReadRecordLink, tier: WorkspaceLinkTier, a
         ? "Open deal"
         : resolved.status === "exact" && link.destination === "operations_work"
           ? "Open task"
-        : DESTINATION_LABEL[link.destination];
+          : resolved.status === "exact" && link.destination === "business_game_plan"
+            ? "Open Strategic Play"
+            : DESTINATION_LABEL[link.destination];
   return { label, to: resolved.path, status: resolved.status };
 }
 

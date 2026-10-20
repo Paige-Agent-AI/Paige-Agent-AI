@@ -46,3 +46,32 @@ it("a closed drawer cannot reopen when a pending lifecycle write returns", async
   await act(async () => { done({ ok: true, verified: true, railRecorded: true, outcomeUnknown: false, missionId: "play" }); });
   expect(host.querySelector('[role="dialog"]')).toBeNull();
 });
+it("opens a referenced Play through the existing authorized reader and never dispatches a mutation", async () => {
+  h.detail.mockResolvedValue(detail("Referenced canonical Play"));
+  const close = vi.fn();
+  await act(async () => root.render(<PlanInMotion workspaceId={h.tenant} selectedPlayId="play" onClosePlay={close} />));
+  expect(h.detail).toHaveBeenCalledWith("play"); expect(host.textContent).toContain("Referenced canonical Play");
+  await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="Close"]')!.click());
+  expect(close).toHaveBeenCalledTimes(1); expect(host.querySelector('[role="dialog"]')).toBeNull(); expect(h.mutate).not.toHaveBeenCalled();
+});
+it("withholds a referenced record when context is unresolved, and offers an honest failed read", async () => {
+  h.ready = false;
+  await act(async () => root.render(<PlanInMotion workspaceId={h.tenant} selectedPlayId="play" />));
+  expect(h.detail).not.toHaveBeenCalled();
+  h.ready = true; h.detail.mockRejectedValue(Error("MISSION_NOT_FOUND"));
+  await act(async () => root.render(<PlanInMotion workspaceId={h.tenant} selectedPlayId="play" />));
+  expect(host.textContent).toContain("could not be verified in the current workspace");
+  expect(host.textContent).toContain("Retry Play read"); expect(h.mutate).not.toHaveBeenCalled();
+});
+it("retires a previous route read across record changes and removal", async () => {
+  let late!: (value: unknown) => void;
+  h.detail.mockImplementationOnce(() => new Promise(resolve => { late = resolve; }));
+  const route = async (id: string | null) => { await act(async () => root.render(<PlanInMotion workspaceId={h.tenant} selectedPlayId={id} />)); };
+  await route("play-a");
+  h.detail.mockResolvedValue({ ...detail("Current referenced Play"), mission: { id: "play-b", title: "Current referenced Play", state: "active", revision: 2 } });
+  await route("play-b");
+  await act(async () => { late(detail("Retired route response")); });
+  expect(host.textContent).toContain("Current referenced Play"); expect(host.textContent).not.toContain("Retired route response");
+  await route(null);
+  expect(host.querySelector('[role="dialog"]')).toBeNull(); expect(h.mutate).not.toHaveBeenCalled();
+});

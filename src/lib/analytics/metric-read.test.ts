@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { metricReadContext, readBusinessMetric } from '../../../supabase/functions/_shared/analytics-metrics/read.ts';
+import { metricReadContext, readBusinessMetric, readBusinessMetricEvidence } from '../../../supabase/functions/_shared/analytics-metrics/read.ts';
 
 const tenant = 'a3400000-0000-4000-8000-000000000011';
 const now = Date.parse('2026-10-08T12:00:00Z');
@@ -23,9 +23,44 @@ function harness(change: (result: Fixture) => void = () => {}, denied = false, s
     if (name === 'resolve_analytics_evidence_reference' && returned) resolve(returned);
     return { data: returned, error: null };
   } };
-  return { calls, run: (input: unknown = args) => readBusinessMetric(caller, { tenantId: tenant }, input, () => now) };
+  return { calls, caller, run: (input: unknown = args) => readBusinessMetric(caller, { tenantId: tenant }, input, () => now) };
 }
 describe('governed conversational metric read', () => {
+  it('supplies actual verified epoch evidence internally while keeping raw producer extras out', async () => {
+    const h = harness(r => { r.values = { kind: 'count', count: 4, private_customer: 'NEVER_PROJECT' }; });
+    const result = await readBusinessMetricEvidence(h.caller, { tenantId: tenant }, args, () => now);
+    expect(result.status).toBe('available');
+    if (result.status !== 'available') throw Error('Expected verified domain evidence');
+    expect(result.metric.account_epoch).toBe(tenant);
+    expect(result.metric.account_epoch_ref).toBe('ae_v1_' + 'b'.repeat(64));
+    expect(result.request.accountEpoch).toBe(tenant);
+    expect(JSON.stringify(result)).not.toContain('NEVER_PROJECT');
+    expect(JSON.stringify(result)).not.toContain('private_payload');
+    expect(JSON.stringify(await h.run())).not.toContain(tenant);
+  });
+  it('coordinates overlapping Fabric and target evidence reads through the incumbent issuer', async () => {
+    const h = harness(), original = h.caller.rpc;
+    let active: Fixture | null = null, issued = 0;
+    h.caller.rpc = async (name, input) => {
+      const result = await original(name, input);
+      if (name === 'issue_analytics_evidence_bundle') {
+        active = { ...result.data!, evidence_ref: 'aneb_v1_' + String(++issued).padStart(64, '0') };
+        return { data: active, error: null };
+      }
+      if (name === 'resolve_analytics_evidence_reference') return input?.p_evidence_ref === active?.evidence_ref
+        ? { data: active!, error: null } : { data: null, error: { code: '42501', message: 'Reference revoked' } };
+      return result;
+    };
+    const results = await Promise.all([
+      readBusinessMetricEvidence(h.caller, { tenantId: tenant }, args, () => now),
+      h.run({ metric_key: args.metric_key, period: 'custom', range_key: 'week', range_start: '2026-10-02T12:00:00.000Z', range_end: new Date(now).toISOString() }),
+    ]);
+    expect(results.map(result => result.status)).toEqual(['available', 'available']);
+    expect(h.calls.filter(c => /analytics_evidence/.test(c.name)).map(c => c.name)).toEqual([
+      'issue_analytics_evidence_bundle', 'resolve_analytics_evidence_reference',
+      'issue_analytics_evidence_bundle', 'resolve_analytics_evidence_reference',
+    ]);
+  });
   const overdue = { metric_key: 'sales.receivables.overdue_current', period: 'last_7_days' };
   const calendar = { state: 'configured', zone: 'America/New_York', set_at: '2026-10-01T00:00:00Z', as_of_date: '2026-10-08' };
   function overdueFixture(r: Fixture) {

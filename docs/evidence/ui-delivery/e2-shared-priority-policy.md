@@ -9,12 +9,12 @@ PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an eligible SOLO owner understands one to
 VISUAL_DIRECTION: PASS: incumbent Mineral/Obsidian Executive; no JSX, CSS, token, layout or navigation change.
 AUTOMATED_EVIDENCE: PASS: failing-first two failed/one passed; successor185/185 across priority policy, Operating Snapshot, Business Review and Executive suites. Omitted-source, budget, hostile-text, unavailable and unchanged-source controls are retained.
 STATIC_EVIDENCE: UNVERIFIED: scoped lint/diff checks passed; type ratchet, final source review and hosted exact-head release checks remain due.
-RENDERED_EVIDENCE: UNVERIFIED: paused-document browser capture prevents the complete inherited viewport matrix; a single diagnostic PNG does not establish the matrix or finish pass.
+RENDERED_EVIDENCE: UNVERIFIED: the target prerequisite now has thirteen valid native font-loaded frames in docs/evidence/e2-executive-native-2026-10-20/. They prove that exact target source, not the later Finance/VERA stack. The priority change adds no layout; current browser transport prevents final-stack native confirmation.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: production conversation and return must verify the shared priority interpretation after release.
 AUTHENTICATED_RUNTIME: UNVERIFIED: the currently available session has not been confirmed as the designated ordinary SOLO customer account.
 KEYBOARD_FOCUS: UNVERIFIED: unchanged controls; full candidate keyboard proof remains owed.
-ZOOM_REFLOW: UNVERIFIED: unchanged layout; complete native reflow proof remains owed.
-REDUCED_MOTION: UNVERIFIED: no motion change; inherited preference proof remains separate.
+ZOOM_REFLOW: UNVERIFIED: actual browser zoom remains unverified; prerequisite target320px native reflow passes separately. Final-stack reflow is still owed.
+REDUCED_MOTION: UNVERIFIED: no motion change; prerequisite target captures report reduced motion, while final-stack preference verification remains separate.
 STATE_COVERAGE: PASS: source controls distinguish unavailable/degraded/omitted evidence, real source risks, stable ties and bounded summary fallback; runtime coverage remains owed.
 TRUTHFUL_STATE_LABELS: PASS: no aggregate health score or healthy-from-silence inference; missing sources remain unknown and priorities grant no action authority.
 SOLO_UI: YES: existing Executive priority list and PAIGE Business Review briefing.

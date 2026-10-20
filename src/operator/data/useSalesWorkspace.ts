@@ -36,7 +36,7 @@ export interface SalesDeal {
   source: string | null;
   tags: string[] | null;
   notes: string | null;
-  created_by: string;
+  created_by: string | null;
   created_at: string;
   updated_at: string;
 }

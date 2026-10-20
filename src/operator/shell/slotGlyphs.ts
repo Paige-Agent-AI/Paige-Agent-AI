@@ -1,5 +1,5 @@
 /**
- * The rail's six glyphs, lifted verbatim from the pack's `P.PLACES` path data
+ * The rail's glyphs. Six from the pack's `P.PLACES` path data
  * (`docs/design-references/cd-packs/super-admin-shell-v3/paige-ia.js`, L8-L15).
  *
  * They live HERE rather than in `ia/operatorIA.ts` because that module is the six-slot

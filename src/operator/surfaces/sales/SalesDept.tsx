@@ -252,17 +252,9 @@ function StageColumn({ stage, deals, onSelect, onMove, stages, busy }: {
         ))}
       </div>
       {busy && deals.length > 0 && <div className="px-3 pb-2 text-[10px] text-[var(--pg-muted)]">Moving…</div>}
-      {/* Quick-move dropdown */}
-      <select
-        className="m-2 rounded border border-[var(--pg-line)] bg-transparent px-1 py-0.5 text-[10px] text-[var(--pg-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        aria-label={`Move a deal to ${stage.label}`}
-        defaultValue=""
-        onChange={e => { if (e.target.value) onMove(e.target.value, stage.id); e.target.value = ""; }}
-      >
-        <option value="" disabled>Move deal here…</option>
-        {stages.flatMap(s => s.id !== stage.id ? [<option key={s.id} value={s.id}>{s.label}</option>] : []).map((opt, i) => opt)}
-      </select>
-      {/* Note: the quick-move select moves BY deal id; stage-to-stage drag is a follow-up */}
+      {deals.length > 0 && (
+        <p className="px-3 pb-2 text-[9px] text-[var(--pg-muted)]">Click a card to move it</p>
+      )}
     </div>
   );
 }

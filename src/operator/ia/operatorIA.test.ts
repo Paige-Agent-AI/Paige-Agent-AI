@@ -16,7 +16,7 @@ const PACK = path.resolve(
 function packSlots(): { id: string; views: string[] }[] {
   const src = fs.readFileSync(PACK, "utf8");
   const dest = src.slice(src.indexOf("P.DEST = {"));
-  const ids = ["fleet", "relationships", "sales", "campaigns", "marketplace", "analytics", "settings"];
+  const ids = ["fleet", "relationships", "campaigns", "marketplace", "analytics", "settings"];
   return ids.map((id) => {
     const at = dest.search(new RegExp(`\\n    ${id}:\\s*\\{`));
     const seg = dest.slice(at, at + 4000);
@@ -31,8 +31,11 @@ function packSlots(): { id: string; views: string[] }[] {
 describe("the operator IA mirrors the design pack", () => {
   const pack = packSlots();
 
-  it("carries exactly seven slots, in the pack's order", () => {
-    expect(OPERATOR_SLOTS.map((s) => s.id)).toEqual(pack.map((p) => p.id));
+  it("carries exactly six slots, in the pack's order", () => {
+    // Sales is code-side-only (EXP00 dept restructure): it is NOT in the pack, so it is
+  // filtered from the pack-mirror comparison and asserted in its own test below.
+  const packMirrorSlots = OPERATOR_SLOTS.filter((s) => s.id !== "sales");
+  expect(packMirrorSlots.map((s) => s.id)).toEqual(pack.map((p) => p.id));
   });
 
   /**
@@ -52,13 +55,7 @@ describe("the operator IA mirrors the design pack", () => {
     // Relationships — live SOLO enrollment records, first tab of the slot. Added beside the
     // pack's four; none of the pack's views moved or were replaced.
     { slot: "relationships", view: "Customers", index: 0 },
-    // EXP00 department restructure (owner directive 2026-10-20): Sales is a standalone
-    // company department; Campaigns is renamed Marketing (future portfolio). Sales views
-    // are Pipeline/Leads/Activity — a new company surface, not a rename of Campaigns views.
-    { slot: "sales", view: "Pipeline", index: 0 },
-    { slot: "sales", view: "Leads", index: 1 },
-    { slot: "sales", view: "Activity", index: 2 },
-    { slot: "settings", view: "Numbers", index: 3 },
+      { slot: "settings", view: "Numbers", index: 3 },
     // Owner INT-280 ruling, 2026-10-10: within Settings, never a seventh primary slot.
     { slot: "settings", view: "PAIGE Intelligence", index: 4 },
     { slot: "settings", view: "Connections", index: 11 },
@@ -85,6 +82,13 @@ describe("the operator IA mirrors the design pack", () => {
       expect(ours.views[a.index], `${a.view} moved out of its ruled position`).toBe(a.view);
     }
   });
+  it("carries the code-side-only Sales slot (EXP00 department restructure)", () => {
+    // The pack does not define this slot; it exists by owner directive 2026-10-20.
+    const sales = findSlot("sales");
+    expect(sales).toBeDefined();
+    expect(sales?.label).toBe("Sales");
+    expect(sales?.views).toEqual(["Pipeline", "Leads", "Activity"]);
+      });
   it("moves Mind to Fleet exactly once while preserving the remaining pack views", () => {
     for (const move of RULED_MOVES) {
       expect(findSlot(move.from)?.views).not.toContain(move.view);
@@ -106,7 +110,9 @@ describe("the operator IA mirrors the design pack", () => {
   it("totals the pack's views plus the ruled additions, derived rather than typed", () => {
     const packTotal = pack.reduce((n, p) => n + p.views.length, 0);
     expect(packTotal).toBe(32);
-    expect(OPERATOR_VIEW_COUNT).toBe(packTotal + RULED_ADDITIONS.length);
+    // Sales (code-side-only, EXP00) contributes 3 views not in the pack; add them.
+    const salesViews = findSlot("sales")?.views.length ?? 0;
+    expect(OPERATOR_VIEW_COUNT).toBe(packTotal + RULED_ADDITIONS.length + salesViews);
   });
 
   /**

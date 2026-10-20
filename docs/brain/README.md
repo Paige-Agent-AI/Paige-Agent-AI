@@ -1,44 +1,64 @@
 # 🧠 The Second Brain — master index & read-first orientation
 
-**EXP02 knowledge handoff v2026-10-20.1 — source verified, release/acceptance separate.**
-Owner: existing SOLO EXP02 Journey Lead. This dated checkpoint supersedes older
-"pending publication approval" and native-capture-only guidance, not historical
-acceptance. Target [#2181](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2181)
-head `01f675e28c58a5883cd5049ca9db75a7b02d59f6` composes main
-`0352072882b26d570f2cec3f41a2e0e1a43b412f`; review is documented sequential
-AUTHOR-REVIEW / LOWER ASSURANCE,64 binding negatives and30 target/navigation cases
-PASS, final required CI/Preview pending. Historical closeout #2185 is merged
-`4ebf1b0b763fdf9319ae38eecccbb073132f45bb` with exact READY production web;
-it added no capability. Target migration121000 and VERA121100 remain production-unapplied
-at the read-only preflight frontier20271112010000; no deployment inferred from source.
+## EXP02 verified handoff v2026-10-20.2
 
-Integration contracts: targets attach to canonical Strategic Plays and use the same
-Metric/Evidence issuer and serialized issue/resolve cycle; target authority is
-revalidated after awaited reads. VERA [#2400](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2400)
-`1a18c6447bfa9e11ca3a8390054eed22e84ff2d4` corrects the existing identity's remit
-without enabling its dormant delegate/model path; an addressed Chat reply is not an
-executed delegation. Finance [#2402](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2402)
-reuses caller-JWT source catalogue/account reads inside the existing snapshot;
-`finance_sources=1` negotiates the richer web shape without changing the old caller.
-Balances, available cash and credit remain separate; unknown is not zero or profit.
-The shared priority baseline [#2409](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2409)
-orders existing requested available-domain risks, act before watch, with stable source
-ties; it creates no health score, recommendation engine or execution authority.
+**Owner: EXP02; production source status is PARTIAL, customer proof is owed.**
+Target/Executive integration [#2181](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2181)
+reviewed `01f675e28c58a5883cd5049ca9db75a7b02d59f6`, merged
+`2d93594b69ec084ff770402eede09465ca9d179e`. Exact-head checks and previews passed.
+Web `dpl_7oFtLZVQzyrakTcvZaV41gRPvkTb` is READY at that merge; public buildId
+`2d93594b69ec084ff770402eede09465ca9d179e-mvg2sjpr` was read back.
+Migration `20271112100000` and its owner-only review permission contract were
+read back in production. These observations supersede earlier local-only target
+status; they do not establish target lifecycle or integrated customer acceptance.
 
-Preserve SOLO tenant/L2 scope: incoming EXP00 company/L1 tools and source pins stay
-isolated; Operator access or another customer's proof cannot establish SOLO acceptance.
-Reuse these contracts in EXP01/05/09/11 consumers; originating domains retain records
-and permissions, and EXP03/04 inactivity does not license substitute engines.
-[Thirteen native PNGs and finish review](../evidence/e2-executive-native-2026-10-20/native-report.json)
-prove synthetic source layout only: actual Schibsted headings/Geist values, original
-product font loaders, narrow320px variance repair, keyboard focus and both palettes.
-Validate exact PNG dimensions and actual renderer fonts; never resize a capture into
-passing evidence. Browser zoom, assistive technology, authorized SOLO session/runtime,
-Chat/Live, tenant/role negatives, real receipts/reload and all19/founder acceptance
-remain PROOF OWED. Preserve9 PASS/0 FAIL and12 PASS/0 FAIL/4 BLOCKED.
-Canonical detail: [E02 outcome matrix](../delivery/e2-customer-experience-integration-matrix.md),
-[Mission contract](../delivery/paige-business-mission-system-phase2.md), ANT-138/147;
-ANT-52 retains acceptance. Update this entry after actual source release/readback.
+**Release lesson:** Edge run39360132655 retry passed22/23 selected packages;
+`business-mission-action` again lacked its configured import map after the default
+Docker upload. An explicit reviewed-source package previously passed10/10, but
+that observation was superseded by the retry. Upload exit zero, ACTIVE and matching
+metadata are insufficient: keep exact UTF-8 source/config hashes, complete dependency
+coverage and stable before/after identity. The bounded existing-workflow API-builder
+repair still requires its own review, CI and actual production readback. Global
+`edge-live` remains held at `e660dca7bdd3dd9cc32c4af033cdd5cacb426c0e`;
+do not force it forward or broaden this repair into unrelated source recovery.
+[Sanitized release evidence](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2181#issuecomment-6282365635).
+
+**Canonical integration guidance:** Executive and Chat reuse the same
+`business.operating_snapshot`, INT-340 metric issuer/resolver and Operating Fabric.
+Targets attach to canonical Strategic Plays; no second actuals or receipt store.
+VERA [#2400](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2400) at
+`d43fc22a104b6c4f947e7d95dae5b05150fada76` extends the existing global registry
+identity and addressed Chat; its guarded role-remap migration is not applied. Main has since applied121100 for
+Chat executor acquisition (#2415); VERA now reserves121200 for the same
+byte-identical unapplied role-remap SQL. Applied history and runtime authority
+are unchanged. The rollback test includes follow the new filename.
+Finance [#2402](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2402)
+consumes the existing caller-JWT Finance source contracts through the same snapshot;
+it remains unreleased. Null/unavailable is never zero, cash is never credit, and
+source observations are not action receipts. EXP01/05/09/11 may consume these shared
+contracts without duplicating engines or treating company L1 as tenant SOLO L2.
+
+**Proof limits:** actual-font native target and VERA frames exercise product source
+with synthetic data only. Capture exact PNG dimensions and rendered platform fonts;
+do not substitute resized screenshots or CSS font declarations for that evidence.
+Authorized ordinary SOLO access was re-established on October20; opening the
+target-review control produced the correct unsent draft. This is access and
+bounded UI evidence only. Authenticated target lifecycle, actual zoom,
+Chat/Live continuity, governed effects and receipts,
+full19 and founder acceptance remain owed. Preserve original9 PASS/0 FAIL and
+supplement12 PASS/0 FAIL/4 BLOCKED. See the existing
+[19-outcome matrix](../delivery/e2-customer-experience-integration-matrix.md),
+[continuation contract](../delivery/e2-6-continuation-contract.md) and
+[Mission contract](../delivery/paige-business-mission-system-phase2.md).
+ANT-138/147 carry current release coordination; ANT-52 carries customer proof.
+
+**Finance/priority consumer guidance:** `finance_sources=1` negotiates the richer
+Finance shape through the existing snapshot without changing the old caller.
+The pending #2409 priority policy orders requested, available-domain risks act
+before watch with stable source ties; no health score, engine or authority grant.
+Company L1 and tenant SOLO L2 remain distinct; EXP01/05/09/11 consumers reuse the
+same permitted sources and original records. This supersedes the stale v1 release
+status, without converting supporting native proof into customer acceptance.
 
 **October19 EXP02 Finance — local integration, not released:** the existing
 business operating snapshot now consumes canonical caller-JWT Finance catalogue

@@ -1,0 +1,14 @@
+{
+  "name": "unsupported",
+  "query": "result=unsupported",
+  "ax": "Browser tab: 1738573782, Title: \"Local actual SOLO Operations proof\", URL: \"http://127.0.0.1:61544/?context=a&theme=light&result=unsupported\".\n1 AXWebArea Local actual SOLO Operations proof, URL: 127.0.0.1:61544/?context=a&theme=light&result=unsupported\n\t2 container\n\t\t3 container\n\t\t\t4 text PAIGE workspace ready\n\t\t5 container Weekly responsibility, ID: radix-:r0:\n\t\t\t6 heading Weekly responsibility, Value: 2, ID: radix-:r1:\n\t\t\t\t7 text Weekly responsibility\n\t\t\t8 text Current owner scope, canonical schedules and verified results.\n\t\t\t9 container\n\t\t\t\t10 heading Weekly commitment check, Value: 2\n\t\t\t\t\t11 text Weekly commitment check\n\t\t\t\t12 text Review the week. Keep the original work in Operations.\n\t\t\t\t13 button Refresh weekly responsibility\n\t\t\t29 text Weekly responsibility inspection is available to the current workspace owner. No other account’s records are shown.\n\t\t\t23 container Weekly responsibility records\n\t\t\t\t24 link Description: Clients → Calendar, Value: 127.0.0.1:61544/solo/1701/clients/calendar\n\t\t\t\t25 link Description: Operations → Work, Value: 127.0.0.1:61544/solo/1701/operations/work\n\t\t\t26 button Close\n\t\t\t\t27 image\n\t\t\t\t28 text Close\n\nThe focused UI element is 1 AXWebArea Local actual SOLO Operations proof, URL: 127.0.0.1:61544/?context=a&theme=light&result=unsupported",
+  "meta": {
+    "state": "closed",
+    "text": "Weekly responsibilityCurrent owner scope, canonical schedules and verified results.Weekly commitment checkReview the week. Keep the original work in Operations.Weekly responsibility inspection is available to the current workspace owner. No other account’s records are shown.Clients → CalendarOperations → WorkClose",
+    "viewport": [
+      1366,
+      768
+    ],
+    "width": 1366
+  }
+}

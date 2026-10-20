@@ -1,5 +1,15 @@
 # Paige Agent AI — Master Project Reference
 
+> **October19 EXP02 Finance — local, not released:** one existing business-review
+> composition extends to caller-authorized Finance source facts, using the canonical
+> company/binding/account-source contracts. Exact decimal major amounts and source
+> provenance appear in the same UI/Chat projection, with no cross-company/currency
+> totals, bank-wide cash, profit or forecast inference. Test/unverified sources are
+> excluded. No new provider, permission, ledger, algorithm or action admission.
+> [Existing E02 matrix](delivery/e2-customer-experience-integration-matrix.md),
+> [flow/evidence](evidence/ui-delivery/e2-finance-business-review.md). Production,
+> authenticated/Live, full19 and founder acceptance remain due; this is not a shipped row.
+
 > **October19 EXP02 VERA — development, not released:** existing VERA remit,
 > addressed Chat, department labels and the Executive invitation are being aligned
 > to Intelligence, Finance & Risk. PAIGE remains principal COO; department context
@@ -815,6 +825,32 @@ Reference or any domain ledger; it governs how their facts become release and cu
 > **Established login workspace choice + stale-checkout recovery — shipped (2026-09-13).** PR #1219 (`4bc9cf771e992614701d6f4e1b94f1d5c3d513d6`) restores the existing server-derived account/workspace card after every fresh login for any identity with an active direct membership, including one-workspace legacy and promotional Solo identities. Multiple memberships remain separately selectable; Platform remains an explicit authorized peer context. Stale Solo intent and `/welcome?checkout=success|recovery` can no longer override established access, and one-workspace users are not silently auto-entered. The current production descendant `c287a4f86ad42f35903a7dc297012514e1480c8a` contains the repair unchanged; Vercel is `READY`, `solo-beta-enrollment-status` is deployed, and current `edge-live` `d33f67180f2a55691e55dec39fd807610d71fc63` is a descendant of the hotfix with no scoped Edge drift. Authenticated legacy/promotional sign-in, card selection, persisted switching, refresh, and repeat-login proof remain `PROOF OWED`; no Stripe, billing, entitlement, tenant, membership, migration, or unsupported-enrollment behavior changed. Authority: [login workspace-choice recovery evidence](evidence/ui-delivery/login-workspace-choice-recovery.md).
 
 ### 4.0 Shipped Delivery Log
+
+**2026-10-20 UTC — Existing VERA intelligence identity and Executive handoff source.**
+Original PR [#2400](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2400),
+reviewed `1b7565be158a4641e25c96341b75ce5466aa663f`, merged main
+`61b32a3735816dbf1e01734abc9c50d2f82aa35f`; actual tree
+`e66a8912f77f2ff9706af30a13749fe88bf39e09` equals the reviewed current-main union.
+AUTHOR-REVIEW / LOWER ASSURANCE6297904162; all13 latest checks/required Preview
+and both Vercel contexts SUCCESS, no unresolved threads. Existing VERA metadata,
+addressing, historical-author attribution and editable unsent Executive invitation
+align Intelligence, Finance & Risk while PAIGE remains principal COO. Existing
+identity/runtime/enabled/prompt/config/permissions/custom and tenant boundaries
+are preserved; no delegated runtime/provider/action activation.
+Normal migration39473193723 applied20271112140000; production migration and global
+version2 guarded-identity readback verified. Vercel
+`dpl_2NM5XgUmMGXdjgm9nLZVcbUzSVfr` READY/exact61b. Normal canonical recovery
+39503591507/job118906876458 on source-identical main26418b2b SUCCESS:
+paige-ai-chat1/1 strict source/config match,253 inputs,0retirements. Artifact
+12302121954 SHA256b539a546c9be61e40ca38dff80997ec98ba0838fcf1530a25b26b8dbc3c5cba2;
+guarded edge-live26418b2b independently verified. Public HTTP200 build
+`26418b2b6c743eaaf98b3db6d7420d1f3908383b-mvh1ttm5` read back. Previous automatic
+source-PASS/final-marker-FAIL and obsolete private Preview failures remain historical;
+no forced tag, applied-history repair or include-all. Internal production source
+prerequisite without customer identity/announcement; authenticated/Live/effects,
+full19 and final founder acceptance remain separate. Forward fix preserves original
+registry identity and applied migration history.
+[Observed release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2400#issuecomment-6302505761).
 
 **2026-10-20 UTC — Existing concurrent decision proof drains complete child output.**
 PR [#2432](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2432), exact reviewed

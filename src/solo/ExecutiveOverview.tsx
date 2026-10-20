@@ -16,6 +16,7 @@ import { clearPaigePublicPresenceScope } from "./paigePublicPresenceScope";
 import { executiveAreas, executivePriorities, formatReviewInstant, formatReviewMetric, reviewGapNote } from "./executive-review";
 import "./executive-overview.css";
 import { ExecutiveTargets } from './ExecutiveTargets';
+import { ExecutiveFinanceEvidence } from './ExecutiveFinanceEvidence';
 
 const BRIEFING = "How's my business doing, what needs attention, and what should we work on today?";
 const PERIODS: Array<{ key: SnapshotPeriodKey; label: string }> = [
@@ -38,9 +39,10 @@ function DomainEvidence({ domain, timezone, account }: { domain: ReviewDomain; t
         <dd>{formatReviewMetric(metric)}{metric.window_note && <small>{metric.window_note}</small>}</dd>
       </div>)}
     </dl>
-    {!domain.headline.length && <p className="exec-note">This source returned no headline figures. No value is inferred.</p>}
+    {!domain.headline.length && !domain.finance_evidence && <p className="exec-note">This source returned no headline figures. No value is inferred.</p>}
     {domain.changes.map((change, i) => <p className="exec-change" key={i}>{change.summary}</p>)}
     {domain.mission_targets && <ExecutiveTargets targets={domain.mission_targets} account={account} />}
+    {domain.finance_evidence && <ExecutiveFinanceEvidence evidence={domain.finance_evidence} timezone={timezone} />}
     <details className="exec-provenance">
       <summary>Source &amp; freshness</summary>
       <dl>

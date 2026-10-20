@@ -1,5 +1,36 @@
 # 🧠 The Second Brain — master index & read-first orientation
 
+## EXP02 VERA observed source-release identity — 2026-10-20
+
+This observed release supersedes the candidate-only VERA status in the dated
+handoff below. Original [#2400](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2400)
+reviewed `1b7565be158a4641e25c96341b75ce5466aa663f` merged
+`61b32a3735816dbf1e01734abc9c50d2f82aa35f`, exact reviewed treee66a8912;
+all13 latest required checks/Preview and both Vercel contexts SUCCESS.
+AUTHOR-REVIEW / LOWER ASSURANCE6297904162. Existing global VERA is now version2,
+Intelligence, Finance & Risk; the original identity, soft runtime, enabled state,
+unconfigured prompt/config, permissions and tenant/custom records are preserved.
+PAIGE remains principal COO. No delegated runtime, provider or action activation.
+
+Normal migration39473193723 applied20271112140000 after Chat121100/Operations121300;
+production migration and exact guarded identity readback verified. Vercel
+dpl_2NM5XgUmMGXdjgm9nLZVcbUzSVfr is READY at exact61b. Canonical normal recovery
+39503591507/job118906876458 on source-identical main26418b2b strictly verified
+paige-ai-chat1/1,253 expected inputs, zero retirements; the existing guarded workflow
+advanced edge-live to26418b2b, independently read back. Artifact12302121954,
+SHA256b539a546c9be61e40ca38dff80997ec98ba0838fcf1530a25b26b8dbc3c5cba2.
+Public build26418b2b6c743eaaf98b3db6d7420d1f3908383b-mvh1ttm5 observed.
+Earlier automatic source-PASS/final-marker-FAIL remains historical. The stale,
+data-free VERA Preview was replaced through the same PR's normal close/reopen
+lifecycle, retaining foreign branches; its new correct migration history/check passed.
+Neither ineffective earlier private reset nor source certification establishes
+customer acceptance. [Observed receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2400#issuecomment-6302505761).
+
+Channel production, internal source prerequisite, no customer release identity or
+announcement. Full19, governed effects/receipts, Live, required authenticated
+negatives and founder acceptance remain owed; preserve9/0 and12/0/4.
+Detailed customer proof stays ANT-52, source coordination ANT-138/147.
+
 ## EXP02 verified handoff v2026-10-20.3
 
 **Owner: EXP02; deployed package recovery is VERIFIED, full Experience proof is owed.**
@@ -77,6 +108,40 @@ supplement12 PASS/0 FAIL/4 BLOCKED. See the existing
 [Mission contract](../delivery/paige-business-mission-system-phase2.md).
 ANT-138/147 carry current release coordination; ANT-52 carries customer proof.
 
+**Finance/priority consumer guidance:** `finance_sources=1` negotiates the richer
+Finance shape through the existing snapshot without changing the old caller.
+The pending #2409 priority policy orders requested, available-domain risks act
+before watch with stable source ties; no health score, engine or authority grant.
+Company L1 and tenant SOLO L2 remain distinct; EXP01/05/09/11 consumers reuse the
+same permitted sources and original records. This supersedes the stale v1 release
+status, without converting supporting native proof into customer acceptance.
+
+**Finance native contrast lesson (October20, development):** real rendered
+amounts inherited muted provenance ink and measured3.195:1 in Obsidian.
+Source repairef4c5c52 uses existing semantic ink tokens, preserving exact
+decimal strings and product fonts. Final native repaint/finish and customer
+proof remain owed after transport loss; pre-fix frames are supporting evidence.
+See the existing Finance flow evidence; reuse the same presenter, not another
+financial reader or theme.
+
+**Recovered Finance source (October20):** existing open #2021/e1e1a9f2
+contains historical statement measures, and #2032/c8865a21 contains obligation/
+liability normalization and sparse-reader compatibility. These remain unmerged/
+unmounted, not customer intelligence. #2047/210ebbc3 already deployed authorized
+plan metadata discovery. Reuse these original contracts for remaining O04 depth;
+see the existing19-outcome matrix for exact heads and completion sequence. No
+new financial engine, store or dormant/provider activation is authorized by
+source discovery.
+
+**October19 EXP02 Finance — local integration, not released:** the existing
+business operating snapshot now consumes canonical caller-JWT Finance catalogue
+and stored account-source reads. Source-specific exact decimal facts retain their
+company, currency, coverage and observed/synchronized times; source balances,
+available cash and credit stay separate. No provider request, new metric/store,
+financial calculation or action activation. Native/authenticated/Live and all19
+full-Experience acceptance remain due. See the existing [E02 matrix](../delivery/e2-customer-experience-integration-matrix.md)
+and [Finance flow evidence](../evidence/ui-delivery/e2-finance-business-review.md).
+
 **October19 EXP02 VERA continuation — development:** the existing VERA identity
 is being aligned to Intelligence, Finance & Risk through the existing registry,
 addressed Chat and native Executive handoff. PAIGE remains principal COO. Current
@@ -86,6 +151,8 @@ specialist parents; it does not activate the legacy soft-delegate path. This is 
 deployed/customer-accepted or complete EXP02. See the existing [roster](../doctrine/paige-c-suite-roster.md),
 [E02 matrix](../delivery/e2-customer-experience-integration-matrix.md) and
 [VERA evidence](../evidence/ui-delivery/e2-vera-intelligence.md). All19 outcomes remain required.
+
+> **2026-10-20 EXP05 current weekly source boundary:** #2427 draft source merged519da; original writer/approval/recurring/activation boundaries remain intact. The new deadline-semantics correction is development only: native92 and focused72 tests pass, source95f4 preserves historical observations/receipts and isolates work deadlines from reminder times. Currentmain61b32/VERA121400 is composed without an identity or authority change; candidate121500 remains unapplied. Rendered verification, final review/CI, production readback and authenticated execution are owed. The [existing weekly delivery record](../delivery/experience-05-weekly-commitment-check.md) preserves original history and additive source-certificate/version corrections. Original18/25/50 and E5-CV1-9/ten outcomes remain open; strict1/18 and2/50 is unchanged.
 
 > **2026-10-20 EXP05 verified release boundary:** #2427/7589 source merged519da; migration121300 exact body/ACL/index readback and selected27-package attempt2 retained (nav-pull-profile49, correcting the separate earlier48 observation). E02#2413 recovery39465899854 subsequently certified73/73 after the original70/73 failure; source certification is not customer execution. #2429/eab461cc merged9ad8 and ordinary-owner read-only Overview-group/native-Work/return-focus/Board/reload traversal was verified, without a write or new receipt. The [existing weekly packet](../delivery/experience-05-weekly-commitment-check.md) preserves dated corrections and exact proof limits; Master4.0 remains the sole Shipped Delivery Log. Draft creation/approval/receipt through ordinary authenticated use, full weekly lifecycle/recurring activation, Chat/Live, ZION, original18/25/50 and full E5-CV1-9/ten outcomes remain owed; strict1/18 and2/50 unchanged.
 

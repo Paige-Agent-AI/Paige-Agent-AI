@@ -1,5 +1,38 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+**October20 small-PR continuation:** all nineteen definitions below remain required.
+The owner's current release sequence is published in ANT-138 comment
+`3276f0e0-05de-48c2-a2ff-764bbb292337` and existing #2402. Each new increment
+has one outcome, normally1–5 related source files/100–400net lines; source owners
+in EXP03/04/05/09/11 retain their records, calculations and departmental interfaces.
+Finish the isolated required-audit repair #2434, then existing cohesive Finance
+#2402; do not add statements, liabilities, budgets or another department to it.
+VERA #2400 is now merged61b32a37, its original identity/121400 migration and
+strict production Chat source recovery39503591507 verified. Bounded genuine
+invitation/read/reload evidence is ANT-52 `ad6487c1-5a79-428c-a004-51809931cd0e`;
+it is not dedicated-runtime activation, Live or full-Experience acceptance.
+Finance remains unreleased. Review, exact-head CI, production source, authenticated
+behavior, actual effects/receipts and the single founder evaluation stay distinct.
+
+**October19 Finance continuation — implemented locally, not released or accepted.**
+REUSE the existing Finance caller-JWT catalogue/account-source contracts and their
+company/binding/owner/admin authority; EXTEND the incumbent
+`business.operating_snapshot` / `get_business_snapshot` / `paige-business-review`
+composition and existing Executive source disclosure. Original authoritative records
+remain `finance_company_entities`, `finance_source_bindings` and
+`finance_account_source_snapshots`. Up to four verified production sources, twelve
+displayed accounts per source, exact decimal major values, explicit source/account
+sampling, company/currency separation and observed/sync provenance are the bounded
+projection. Missing amounts stay unavailable; recorded Sales receipts remain distinct.
+Canonical Finance department navigation is reused. No new provider call/activation,
+metric issuer, total/calculation engine, financial ledger, model/runtime or effectful
+tool is admitted. Dormant direct Finance capabilities remain unregistered. Missing
+bank-wide cash/profit/forecast/debt/budget integration is still mandatory remaining
+work, not optional scope. Existing Finance algorithms and originating records must
+be reused for later slices. Native viewport/accessibility, actual production source,
+authorized SOLO/tenant/permission/reload/Live and final whole-Experience acceptance
+remain owed. [Pre-edit routing and proof boundaries](../evidence/ui-delivery/e2-finance-business-review.md).
+
 **October19 reactivation — current-source reconciliation, not full acceptance.**
 Existing EXP02 Codex lead resumes the entire19-outcome contract under ANT-161's
 EXP-only ownership direction. Main/public web baseline is
@@ -7,7 +40,7 @@ EXP-only ownership direction. Main/public web baseline is
 dated meaning. #2128, #2167 and native target UI #2174 are merged; target Executive/
 briefing integration #2181 and native mechanical closeout #2185 remain unmerged at
 this checkpoint. #2181 composes that main and preserves incoming exact Deal/Task
-links alongside Play focus. Only its never-applied migration moves byte-identically
+links alongside Play focus. Only its production-unapplied migration moves byte-identically
 from20271104102000 to20271112100000. Fresh364 local assertions,64 incumbent controls
 and61 isolated PostgreSQL assertions pass; current-head hosted review/CI/release and
 customer acceptance remain owed.
@@ -242,3 +275,46 @@ isolated synthetic state/role/scope walkthroughs do not establish authenticated 
 Exact-head independent review/CI, deployment identity/readback, authenticated behavior and owner
 acceptance are separate evidence legs. No candidate result is marked PASS here before its own
 evidence exists.
+
+### October20 financial completion — inherited source reconciliation
+
+All nineteen outcome definitions remain required. O04 is not limited to bank
+account cards. The following recovered source is reused before new domain work:
+
+- Original #2021 reviewed `ab3f8243ce0795127eb274e2eb0e3995fd6adc5c` is now
+  MERGED `ed305fb25cba16877684955092fb1d0f58976dd3` with exact reviewed composition,
+  required CI and production web/source readback. It owns
+  native QuickBooks statement semantics and exact historical profit/margin math.
+  These helpers are UNMOUNTED; source tests are not authoritative ingestion,
+  persisted evidence, a live financial statement or customer acceptance.
+- Original #2032 (`7bba113fda01a7480c4530f282682319f83fd442`, OPEN) owns
+  sparse canonical liability compatibility and native obligation normalizers.
+  Reconcile its existing reader correction before interpreting these records;
+  do not invent a second liability/expense engine or infer settled bank cash.
+  Fresh172 controlled cases and actual PostgreSQL-to-reader proof PASS; required
+  native CI retained an18/19 crash-recovery failure and has one bounded same-head
+  reproducibility rerun. Source release/customer acceptance is not inferred.
+- #2047 is MERGED (`210ebbc3d2b750ae67a0dbe2b94a77a365f9888f`); its
+  company/version-authorized `read_finance_plan_catalog` is deployed, while
+  Finance/Spine/Fabric/UI consumer integration remains owed. Budgets/scenarios
+  already have canonical stores/readers; no replacement goal or plan store.
+
+Current Finance/Executive source compositionbaceaaa8 preserves VERA1b and mained305.
+Fresh262/262 owning/incumbent cases, type ratchet10/6 and productionbuild5603modules
+PASS. The preserved native packet has nineteen synthetic PNGs, exact product
+fonts, repaired contrast, keyboard/state/navigation and320/390px reflow proof.
+Actual browser zoom and authenticated Finance/Live/tenant/reload proof remain
+UNVERIFIED. VERA's recreated PR-only Preview passes correct121100/121300/121400
+history; required final source CI/release still gates its integration. These are
+prerequisite receipts, not additional accepted customer outcomes.
+
+Completion sequence after the current VERA/Finance source release: finish actual
+Banking consumer/native proof; integrate existing permitted liability/obligation
+reads with truthful sparse/partial/source-period states; bind statement helpers
+to canonical company/request/period/basis/source observations before any profit
+claim; integrate existing plan discovery/read/recovery, labeling assumptions
+separately and withholding unmatched actual variance. Then exact-head review/CI,
+production source/readback, ordinary SOLO permissions/isolation/reload and final
+owner evaluation. Provider activation, consequential actions and protected real
+fixtures keep their existing gates. No dormant tool/provider is activated by
+this inventory; originating records, issuer and authority remain canonical.

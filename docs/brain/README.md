@@ -28,7 +28,9 @@ do not force it forward or broaden this repair into unrelated source recovery.
 Targets attach to canonical Strategic Plays; no second actuals or receipt store.
 VERA [#2400](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2400) at
 `d43fc22a104b6c4f947e7d95dae5b05150fada76` extends the existing global registry
-identity and addressed Chat; its guarded metadata migration121100 is not applied.
+identity and addressed Chat; its guarded role-remap migration is not applied. Main has since applied121100 for
+Chat executor acquisition (#2415); VERA must move its unapplied reservation
+forward without changing the applied Chat migration or granting runtime authority.
 Finance [#2402](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2402)
 consumes the existing caller-JWT Finance source contracts through the same snapshot;
 it remains unreleased. Null/unavailable is never zero, cash is never credit, and
@@ -38,7 +40,10 @@ contracts without duplicating engines or treating company L1 as tenant SOLO L2.
 **Proof limits:** actual-font native target and VERA frames exercise product source
 with synthetic data only. Capture exact PNG dimensions and rendered platform fonts;
 do not substitute resized screenshots or CSS font declarations for that evidence.
-Authenticated SOLO, actual zoom, Chat/Live continuity, governed effects and receipts,
+Authorized ordinary SOLO access was re-established on October20; opening the
+target-review control produced the correct unsent draft. This is access and
+bounded UI evidence only. Authenticated target lifecycle, actual zoom,
+Chat/Live continuity, governed effects and receipts,
 full19 and founder acceptance remain owed. Preserve original9 PASS/0 FAIL and
 supplement12 PASS/0 FAIL/4 BLOCKED. See the existing
 [19-outcome matrix](../delivery/e2-customer-experience-integration-matrix.md),

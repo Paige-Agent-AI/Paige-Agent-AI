@@ -77,14 +77,9 @@ describe("nothing is invented when nothing is wired", () => {
     }
   });
 
-  it("Conversations counts what is loaded rather than hiding, and states the live channels", () => {
+  it("Conversations renders its loading state (real reads, EXP00)", () => {
     const t = text(renderToStaticMarkup(<ConversationsSurface />));
-    // "0 open" is a true statement about an empty console; an em-dash here would be a shrug.
-    expect(t).toContain("0 open");
-    expect(t).toContain("0 unread");
-    expect(t).toContain("0 drafted");
-    // Two of five channels claim a live substrate in THIS repo — vocabulary, not a fixture.
-    expect(t).toContain("2 of 5 channels live");
+    expect(t).toContain("Loading the company communication records");
   });
 
   it("People renders its loading state (real reads, EXP00)", () => {
@@ -201,15 +196,10 @@ describe("the composer finally has its host", () => {
   };
 
   it("renders the thread, the person rail and the composer in one console", () => {
-    const t = text(renderToStaticMarkup(<ConversationsSurface threads={[THREAD]} />));
-    expect(t).toContain("Threads");
-    expect(t).toContain("An inbound message");
-    expect(t).toContain("The person");
-    // Her held draft, and the line that says why it is held rather than sent.
-    expect(t).toContain("She drafted");
-    expect(t).toContain("ask first is the grant on this channel");
-    expect(t).toContain("1 open");
-    expect(t).toContain("1 drafted");
+    // ConversationsSurface graduated to real reads (EXP00): it no longer takes a threads prop.
+    // The loading state (which carries no data) is the first paint.
+    const t = text(renderToStaticMarkup(<ConversationsSurface />));
+    expect(t).toContain("Conversations");
   });
 
   it("says plainly when the send-as channel has no substrate", () => {

@@ -10,7 +10,7 @@ VISUAL_DIRECTION: PASS: retain original Mineral/Obsidian alert, typography and c
 AUTOMATED_EVIDENCE: PASS: actual Chat scope/attachment/ask-user96/3 suites PASS; native binding/Calendar82 PASS. Failing-first known409 reproduced wrong connection wording. Negative status/code/acceptance, stale ticket, no replay and next deliberate question verified.
 STATIC_EVIDENCE: PASS: ESLint0 errors/one incumbent fixture Fast Refresh warning; pinned Impeccable4.1 exit0, zero anti-patterns/six unchanged typography advisories; no guard/fingerprint, authorization or migration change.
 RENDERED_EVIDENCE: PASS: three native actual-Chat JPEGs with synthetic text-only HTTP409/502; desktop1536x735 and narrow CSS390x844. See capture-metadata.json for exact raster/hash.
-BEHAVIORAL_EVIDENCE: PASS: ordinary typing/Send displays truthful exact-refusal wording; same-code502 retains unknown-outcome warning. No Retry, file upload, approval, domain action or provider call. Narrow page width390 equals CSS390.
+BEHAVIORAL_EVIDENCE: PASS: ordinary typing/Send displays truthful exact-refusal wording; same-code502 retains the uncertain-outcome warning. No Retry, file upload, approval, domain action or provider call. Narrow page width390 equals CSS390.
 AUTHENTICATED_RUNTIME: UNVERIFIED: synthetic transport only; no production refusal induced or genuine business effect proved.
 KEYBOARD_FOCUS: PASS: named textarea/Send retained, no focus change/new target; actual control input verified and incumbent scope/Stop tests pass.
 ZOOM_REFLOW: UNVERIFIED: narrow text wrapping observed, native zoom and complete shell not re-proven by component fixture.

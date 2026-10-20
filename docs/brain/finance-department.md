@@ -21,9 +21,7 @@ statement helpers still remain UNMOUNTED; this release does not activate ingesti
 Actual authorized SOLO no-source/provenance/navigation/return/reload passed.
 Populated amounts, connected-provider readiness, tenant/permission negatives,
 new Chat/Live behavior and full financial acceptance remain owed. Stored facts
-are not an ALG-06 cash-flow forecast or a backtest. The nine EXP02 catalogue
-descriptions/status consumer is a separate bounded follow-up (#2440, ANT-161),
-not replacement financial or analytics infrastructure. Master §4.0 and ANT-52
+are not an ALG-06 cash-flow forecast or a backtest. Master §4.0 and ANT-52
 hold sanitized release/customer receipts; private captures remain local.
 This observed release supersedes the dated candidate checkpoint below.
 

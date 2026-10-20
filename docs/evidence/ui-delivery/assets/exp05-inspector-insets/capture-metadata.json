@@ -1,0 +1,198 @@
+{
+  "createdAt": "2026-10-20T07:06:46.694566+00:00",
+  "boundary": "LOCAL_ACTUAL_SOLO_SOURCE_SYNTHETIC_READ_PORTS_NO_AUTH_NO_PROVIDER_OR_RECORD_EFFECTS",
+  "sourceBase": "8f54336c841c445db46ddf7118243a844074a578",
+  "sourceChange": {
+    "path": "src/solo/operations/operations-workspace.css",
+    "sha256": "ea941011b56528e9828252145d273e38a4ab7a375134e7c6b9bbd48b2bd03442",
+    "inverseRestoresBase": true,
+    "selectorsOnly": 2
+  },
+  "productionCause": {
+    "observed": "padding0 in ordinary production drawer",
+    "order": [
+      "main utility CSS",
+      "Operations .ops-detail-sheet32px24px",
+      "later SoloEntry .paige-solo padding0"
+    ],
+    "privateEvidence": "original production screenshot and matched rules retained privately; no customer payload in this packet"
+  },
+  "fixtureOrder": "Flattened initial esbuild had32px24px and did not reproduce. Appending the exact existing SOLO root-reset rule reproduces observed late-production ordering. Red is0; same corrected runtime source keeps32px24px and mobile creator24px16px.",
+  "compiled": {
+    "manifestSha256": "a897f547bd7f57111e1d1dfa287abdcd6552381b14f6627d354a19d0d4b4eb2b",
+    "sources": 3746,
+    "ports": 160,
+    "htmlSha256": "5c0dabfc768e7e96ab0792dd7c8e38892a417c67ffb9c15548267f2e76bbe17e",
+    "cssSha256": "733fa64812298ef65bcc86ae89b5e205ec73043b81a2374058686f58e6fcd864"
+  },
+  "captures": [
+    {
+      "file": "baseline-red.jpg",
+      "raster": [
+        1536,
+        735
+      ],
+      "sha256": "5910681449feeecfa04a354658ea0171a7fd291a04e2715cd46a3c9830889627",
+      "bytes": 90329
+    },
+    {
+      "file": "1536-closed-light.jpg",
+      "raster": [
+        1535,
+        770
+      ],
+      "sha256": "8e3bdbb936148ad0e2dd0c86fb89ae80f5837214c52f83390c28b8bceb8e2586",
+      "bytes": 56998
+    },
+    {
+      "file": "1366-closed-light.jpg",
+      "raster": [
+        1366,
+        768
+      ],
+      "sha256": "12f94b25259b31c98a5277093dc2434e664a8d3f86b2193f99d17772f54b7359",
+      "bytes": 53879
+    },
+    {
+      "file": "1024-closed-light.jpg",
+      "raster": [
+        1024,
+        768
+      ],
+      "sha256": "2d99d7b64ac4668a289b5815a9597c0403e0237f595ad492d8b1fa1dd10c0520",
+      "bytes": 44256
+    },
+    {
+      "file": "900-closed-light.jpg",
+      "raster": [
+        900,
+        1000
+      ],
+      "sha256": "2eb62f391de486f98e52ca79e27257c35cb8aeb936c1b6fa85dca25f6f066b2a",
+      "bytes": 46276
+    },
+    {
+      "file": "1536-open-light.jpg",
+      "raster": [
+        1535,
+        770
+      ],
+      "sha256": "a475893e34971f78c70e4fd565a3451fbb0a503fdc465a70912e9cd07dc5da65",
+      "bytes": 92240
+    },
+    {
+      "file": "1366-open-light.jpg",
+      "raster": [
+        1366,
+        768
+      ],
+      "sha256": "c1380b1eb4fe1bdfe00eb9d7a4ca0b5297223f468206f850e37a566f9e9ddaac",
+      "bytes": 54802
+    },
+    {
+      "file": "1024-open-light.jpg",
+      "raster": [
+        1024,
+        768
+      ],
+      "sha256": "1a19e374627d61d2828fb156a0a4656084674ce88ba335a1597bbfd8d72a2acd",
+      "bytes": 33904
+    },
+    {
+      "file": "900-open-light.jpg",
+      "raster": [
+        900,
+        1000
+      ],
+      "sha256": "5177c7cde2f9ebed3c13c8f9f0868749c67491f91d0a3bba04d34a896d218fa6",
+      "bytes": 38933
+    },
+    {
+      "file": "390-open-light.jpg",
+      "raster": [
+        390,
+        843
+      ],
+      "sha256": "9f45e76e4fab51e80983468394a5bc3a808fa763d6eb7ef1c79c18ddd3f3a33a",
+      "bytes": 26114
+    },
+    {
+      "file": "390-open-light-bottom.jpg",
+      "raster": [
+        390,
+        843
+      ],
+      "sha256": "0090bafb45ec884820093687b26d60fc6ff10426e05b76915ce5cc96055ea247",
+      "bytes": 23806
+    },
+    {
+      "file": "390-creator-dark-b.jpg",
+      "raster": [
+        390,
+        843
+      ],
+      "sha256": "5b789b3ba9ae81d788cee48f2ff51e2370f67e30c03e8bd786d95db0a92e3ecf",
+      "bytes": 28779
+    },
+    {
+      "file": "1536-creator-dark-b.jpg",
+      "raster": [
+        1535,
+        770
+      ],
+      "sha256": "8618ffa3de2cb98cd48cb1af961c839224ffac9ae224d08af68661e693ce28c5",
+      "bytes": 54701
+    },
+    {
+      "file": "1536-planning-dark-b.jpg",
+      "raster": [
+        1535,
+        770
+      ],
+      "sha256": "e1d6ee6136185649575faa2161433577f5ce78e13fca377e90a1bb7e1cdfef48",
+      "bytes": 72032
+    },
+    {
+      "file": "390-planning-dark-b.jpg",
+      "raster": [
+        390,
+        843
+      ],
+      "sha256": "dced7f749cb6cfffabf0959387d3a008179c761414ef227ac955f27c7e453f22",
+      "bytes": 26146
+    },
+    {
+      "file": "320-planning-dark-b.jpg",
+      "raster": [
+        320,
+        640
+      ],
+      "sha256": "688daf3edbe1c6bc1219a89150b0d59ae8475867c5a3d38298fa1c91b69283cd",
+      "bytes": 17436
+    }
+  ],
+  "contrast": {
+    "method": "WCAG sRGB relative luminance of measured opaque heading/body/definition text and actual sheet canvas; no full accessibility certification",
+    "samples": 127,
+    "minimum": 5.708,
+    "allAtLeast4_5": true
+  },
+  "regressions": {
+    "command": "node node_modules/vitest/vitest.mjs run Operations Capacity/Workspace/TaskFocus/CrmWorkEditor/WorkEditor/WorkCreator/ProjectCreator owning suites",
+    "tests": 121,
+    "suites": 8,
+    "logSha256": "bf60293f6a42657bb21b4ed0dbab2a590ead0c8a45e3e9aebddcf71e21615142"
+  },
+  "detector": {
+    "layout": "PASS exit0 []",
+    "full": "PASS exit0; four incumbent typography advisories at unchanged25px/22px/17px declarations; no new values"
+  },
+  "limits": [
+    "synthetic contexts A and B, not two authenticated cohorts",
+    "actual browser zoom, device hardware and physical4K UNVERIFIED",
+    "reduced-motion source rule unchanged; preference not changed",
+    "no new Rail/action receipt from inspection",
+    "CSS release/production behavior not yet earned",
+    "full EXP05 and18/25/50 acceptance unchanged"
+  ]
+}

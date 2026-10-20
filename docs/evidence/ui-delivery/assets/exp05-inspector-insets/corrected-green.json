@@ -1,0 +1,6 @@
+{
+  "expectedPadding": "32px 24px",
+  "found": true,
+  "padding": "32px 24px",
+  "pass": true
+}

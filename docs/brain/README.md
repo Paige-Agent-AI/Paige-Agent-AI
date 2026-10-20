@@ -73,6 +73,15 @@ proof remain owed after transport loss; pre-fix frames are supporting evidence.
 See the existing Finance flow evidence; reuse the same presenter, not another
 financial reader or theme.
 
+**Recovered Finance source (October20):** existing open #2021/e1e1a9f2
+contains historical statement measures, and #2032/c8865a21 contains obligation/
+liability normalization and sparse-reader compatibility. These remain unmerged/
+unmounted, not customer intelligence. #2047/210ebbc3 already deployed authorized
+plan metadata discovery. Reuse these original contracts for remaining O04 depth;
+see the existing19-outcome matrix for exact heads and completion sequence. No
+new financial engine, store or dormant/provider activation is authorized by
+source discovery.
+
 **October19 EXP02 Finance — local integration, not released:** the existing
 business operating snapshot now consumes canonical caller-JWT Finance catalogue
 and stored account-source reads. Source-specific exact decimal facts retain their

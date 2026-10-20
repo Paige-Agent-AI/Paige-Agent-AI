@@ -261,3 +261,32 @@ isolated synthetic state/role/scope walkthroughs do not establish authenticated 
 Exact-head independent review/CI, deployment identity/readback, authenticated behavior and owner
 acceptance are separate evidence legs. No candidate result is marked PASS here before its own
 evidence exists.
+
+### October20 financial completion — inherited source reconciliation
+
+All nineteen outcome definitions remain required. O04 is not limited to bank
+account cards. The following recovered source is reused before new domain work:
+
+- Existing #2021 (`e1e1a9f250a535273b4364c7410538f0e6d12209`, OPEN) owns
+  native QuickBooks statement semantics and exact historical profit/margin math.
+  These helpers are UNMOUNTED; source tests are not authoritative ingestion,
+  persisted evidence, a live financial statement or customer acceptance.
+- Existing #2032 (`c8865a21c58d693936742487aa561c37fa3be6f0`, OPEN) owns
+  sparse canonical liability compatibility and native obligation normalizers.
+  Reconcile its existing reader correction before interpreting these records;
+  do not invent a second liability/expense engine or infer settled bank cash.
+- #2047 is MERGED (`210ebbc3d2b750ae67a0dbe2b94a77a365f9888f`); its
+  company/version-authorized `read_finance_plan_catalog` is deployed, while
+  Finance/Spine/Fabric/UI consumer integration remains owed. Budgets/scenarios
+  already have canonical stores/readers; no replacement goal or plan store.
+
+Completion sequence after the current VERA/Finance source release: finish actual
+Banking consumer/native proof; integrate existing permitted liability/obligation
+reads with truthful sparse/partial/source-period states; bind statement helpers
+to canonical company/request/period/basis/source observations before any profit
+claim; integrate existing plan discovery/read/recovery, labeling assumptions
+separately and withholding unmatched actual variance. Then exact-head review/CI,
+production source/readback, ordinary SOLO permissions/isolation/reload and final
+owner evaluation. Provider activation, consequential actions and protected real
+fixtures keep their existing gates. No dormant tool/provider is activated by
+this inventory; originating records, issuer and authority remain canonical.

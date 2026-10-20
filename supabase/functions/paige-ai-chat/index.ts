@@ -13464,7 +13464,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // agency; the operator does not build in a customer workspace from chat) — unchanged.
           // `capability_status` needs no role: a person may always ask what PAIGE can do for them.
           const workspaceAuthorityTool = WORKSPACE_BUILD_TOOLS.has(tc.function.name);
-          const allowed = N8N_MANAGEMENT_TOOL_NAMES.has(tc.function.name)
+          // EXP00 O-3: the operator console's platform reads admit on the VERIFIED operator
+          // persona — never a workspace seat. The RPC's own is_platform_admin gate is the
+          // authority on every call; this admission only decides whether the dispatch runs.
+          const platformOperatorRead = operatorConsolePersona
+            && (tc.function.name === "platform_customer_overview" || tc.function.name === "platform_commercial_summary");
+          const allowed = platformOperatorRead
+            || N8N_MANAGEMENT_TOOL_NAMES.has(tc.function.name)
             || ROLE_FREE_BRANCH_TOOLS.has(tc.function.name)
             || authorityAdmits(tc.function.name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS);
           if (!allowed) {

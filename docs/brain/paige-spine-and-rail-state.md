@@ -1,5 +1,9 @@
 # PAIGE Spine & Rail — verified current state
 
+## October 20 — bounded client refusal wording candidate
+
+Existing typed Chat HTTP409 / INTERACTIVE_RECOVERY_READ_ONLY / message_accepted=true receives accurate existing-alert wording. Unknown outcomes retain their no-replay warning; request-ticket, actor/tenant, authority and effects are unchanged. This is client copy/classification only, not full attachment recovery, saved refusal metadata, execution restoration or customer acceptance. [Evidence and limits](../evidence/ui-delivery/exp05-known-refusal-feedback-copy.md). Original2401 material attachment/reload flow and its browser/UI proof hold remain separate. No Edge consumer imports the new shared constant in this increment, no source fingerprint renewal, provider activation or mutation. Source implementation is not merge/deployment/authenticated/owner acceptance.
+
 ## 2026-10-18 — Original-reminder history reader released
 
 Master§4.0 records #2351/main654888138e5c0b0056b126396bc706a7944a3bad, reviewed613c18096394e33e43d77b027dd7fd8b6d899180/tree5920770a7b7a04a853e5df3b994ae5ced52425ef. Exact-head review/CI passed, official Edge39153099481 and independent245-file Git/source comparison verify Chat453/JWTtrue, and webdpl_9ge21VAe35DenHk4Ae7tARLqnpYi is READY/exact. This supplements the earlier dated unmerged-candidate note. The reader restores no approval or execution authority and performs no replay, mutation or new receipt. Completed-reminder authenticated recovery remains PROOF OWED; the original expired unconsumed proposal is not a successful action.

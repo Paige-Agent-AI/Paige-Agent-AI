@@ -1,0 +1,18 @@
+# Current attention routing slice — pre-runtime-edit contract
+
+Current main519da233250cc8ef6d1a18118d9017bba9ba5f3a/tree d4ee; fresh ANT11/21/147 and adjacent open PRs checked. The routing-only prototype was selected before production implementation; preserve its private decision and original rendered traversal. This is one increment toward all ten EXP05 outcomes, not a reduced Experience.
+
+1. Intended outcome: an eligible owner/member opens a meaningful Overview group, sees every matching record in the loaded authorized sources, inspects the original record and returns without losing work or context.
+2. Domain: EXP05 Operations presentation. Planning/CRM/Team writers and E04 delivery remain authoritative; E04#2161 pending Workspace inspection/guard additions and #2153 Team-presence preparation are preserved. E02#2400, E09#2404 and release#2413 sources are excluded.
+3. Harness/Gateway: no new execution seam. Reuse current OperationsWorkspace caller/tenant/persona fences and original native readers/inspectors. This slice cannot execute delegated or recurring work.
+4. Spine: no new registration/tool/admission. This is native navigation over plan_list_operations_scoped and operations_crm_work_read; no new assistant execution capability is claimed. Chat/Live integration is UNVERIFIED separately.
+5. Provider: no external provider required; internal Operations reads only. Existing integration registry and readiness contracts remain unchanged; a record reference is not a connected provider.
+6. Authority: read-only local selection, not a mutation or Trust/autonomy grant. No new approval or spending lane. Original editors retain their current exact confirmation/version/permission rules.
+7. Durable job/event: none. No scheduler, polling, task, ledger, event producer or drainer is added.
+8. Readback/receipt: original native identity/version and inspector, existing activity/receipt readers. Navigation produces no business record or new Rail; loaded counts are not execution evidence.
+9. Surface: operations.department remains PROOF_OWED for the complete Experience. Overview, Work/List and Workspace flow state are the owned screens; current Overview hierarchy, weekly entry and PAIGE connections remain.
+10. Proof: deterministic current-component positive/empty/partial/loading/refusal/guard/focus/identity tests, actual native desktop/phone behavior, independent exact-head review/CI/deployment and two authorized ordinary-owner read-only cohorts. New-account/permissions/isolation/customer completeness and full builder/ZION/Chat/Live/owner acceptance retain their separate evidence requirements.
+
+Regression impact: preserve completed/cancelled exclusion, original planning/CRM identity even for equal raw IDs, reminder-time versus work-deadline semantics, real instants across DST offsets, unknown due dates, current source errors/truncation and Team limits, actor/workspace retirement, dirty editors, native creation, stage/version commands and original inspector focus fallback. Add no business-local week claim or successful-read timestamp that does not exist.
+
+Failing-first baseline: initial sandbox temp-file EPERM executed zero tests and is INVALID tooling evidence. With only process TEMP/TMP redirected into the writable work directory, the real suite executes5:4 missing-function failures and1 existing mixed-tenant refusal PASS. No product/runtime source had changed at that point.

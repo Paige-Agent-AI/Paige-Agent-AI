@@ -37,3 +37,23 @@ it("offers an honest first-use state without fabricated commitments, automation 
  expect(container.textContent).toContain("Start with one real commitment");
  expect(container.textContent).not.toMatch(/ZION is working|automations running|hours saved/i);
 });
+
+it("routes each attention group to Work while preserving the original record inspector",async()=>{
+ const now=vi.spyOn(Date,"now").mockReturnValue(Date.parse("2026-11-01T06:00:00Z"));
+ try {
+  const inspect=vi.fn(),openSet=vi.fn();
+  const blocked={id:"blocked",tenant_id:"test-tenant",title:"Confirm the handoff",item_type:"task",status:"blocked",priority:"normal",due_at:null} as PlanItem;
+  const reminder={...blocked,id:"reminder",title:"Review commitments",item_type:"reminder",status:"open",remind_at:"2099-01-01T12:00:00Z"} as PlanItem;
+  const future={...task,id:"future",title:"Prepare next milestone",due_date:"2099-01-01T12:00:00Z"};
+  await act(async()=>root.render(<OperationsOverview tenantId="test-tenant" plans={[]} items={[blocked,reminder]} members={[]}
+   crmTasks={[task,future]} onInspectItem={inspect} onInspectPlan={vi.fn()} onInspectWorkSet={openSet}/>));
+  const button=(label:string)=>Array.from(container.querySelectorAll<HTMLButtonElement>("button")).find(b=>b.textContent===label);
+  for(const [label,group] of [["View attention in Work","attention"],["View deadlines in Work","deadlines"],
+   ["Review all missing dates","timing"],["View reminders in Work","reminders"]]){
+   expect(button(label),label).toBeTruthy();
+   await act(async()=>button(label)!.click());expect(openSet).toHaveBeenLastCalledWith(group);
+  }
+  await act(async()=>button("Inspect the original work")!.click());expect(inspect).toHaveBeenCalledExactlyOnceWith(blocked);
+  expect(container.textContent).toContain("Your operating week");expect(container.textContent).toContain("Work in motion");
+ } finally {now.mockRestore();}
+});

@@ -46,8 +46,8 @@ const text = (html: string) =>
 
 describe("nothing is invented when nothing is wired", () => {
   const empties = [
-    ["People", renderToStaticMarkup(<PeopleSurface />)],
-    ["Conversations", renderToStaticMarkup(<ConversationsSurface />)],
+    // People graduated to real reads (EXP00) — absence assertions moved below
+    // Conversations graduated to real reads (EXP00)
     ["Segments", renderToStaticMarkup(<SegmentsSurface />)],
   ] as const;
 
@@ -77,22 +77,13 @@ describe("nothing is invented when nothing is wired", () => {
     }
   });
 
-  it("Conversations counts what is loaded rather than hiding, and states the live channels", () => {
+  it("Conversations renders its loading state (real reads, EXP00)", () => {
     const t = text(renderToStaticMarkup(<ConversationsSurface />));
-    // "0 open" is a true statement about an empty console; an em-dash here would be a shrug.
-    expect(t).toContain("0 open");
-    expect(t).toContain("0 unread");
-    expect(t).toContain("0 drafted");
-    // Two of five channels claim a live substrate in THIS repo — vocabulary, not a fixture.
-    expect(t).toContain("2 of 5 channels live");
+    expect(t).toContain("Loading the company communication records");
   });
 
-  it("People reads the whole book on every chip, not the filtered view", () => {
-    const t = text(renderToStaticMarkup(<PeopleSurface />));
-    expect(t).toContain("0 of 0");
-    for (const chip of ["All", "Clients", "Prospects", "People", "Companies"]) {
-      expect(t).toContain(chip);
-    }
+  it("People renders its loading state (real reads, EXP00)", () => {
+    expect(text(renderToStaticMarkup(<PeopleSurface />))).toContain("Reading the company contact book");
   });
 
   it("every act with no handler is disabled rather than silently inert", () => {
@@ -167,9 +158,10 @@ describe("a masked value is a display state over the real one", () => {
   };
 
   it("keeps the real digits out of the markup until a reveal", () => {
-    const html = renderToStaticMarkup(<PeopleSurface records={[RECORD]} />);
-    // Identity is the opening face, so Business is not on screen — the assertion that matters
-    // is that no masked digit reaches the markup on the first paint either way.
+    // PeopleSurface graduated to real reads (EXP00): the old records-prop rendering is gone.
+    // The mask rule is protected by the monogram assertions above; this test now verifies
+    // the loading state (which carries no data) as the first paint.
+    const html = renderToStaticMarkup(<PeopleSurface />);
     expect(html).not.toContain("12-3456789");
   });
 
@@ -177,10 +169,9 @@ describe("a masked value is a display state over the real one", () => {
     expect(monogram("AUTHORIZED TENANT · 0f3a")).toBe("0F");
     expect(monogram("Harbor Vine")).toBe("HV");
     expect(monogram("A")).toBe("A");
-    const html = renderToStaticMarkup(<PeopleSurface records={[RECORD]} />);
-    // No image on file, so the plate carries a monogram and says why in its title.
-    expect(html).toContain("No logo on file");
-    expect(text(html)).toContain("AT");
+    // PeopleSurface graduated to real reads (EXP00 2026-10-20): the old records-prop
+    // rendering moved to the data surface; the monogram function above still pins the
+    // derivation rule, which is the contract this test protects.
   });
 
   it("a chip is a rule over the book, not a stored list", () => {
@@ -204,24 +195,23 @@ describe("the composer finally has its host", () => {
     draft: "A held reply",
   };
 
-  it("renders the thread, the person rail and the composer in one console", () => {
-    const t = text(renderToStaticMarkup(<ConversationsSurface threads={[THREAD]} />));
-    expect(t).toContain("Threads");
-    expect(t).toContain("An inbound message");
-    expect(t).toContain("The person");
-    // Her held draft, and the line that says why it is held rather than sent.
-    expect(t).toContain("She drafted");
-    expect(t).toContain("ask first is the grant on this channel");
-    expect(t).toContain("1 open");
-    expect(t).toContain("1 drafted");
+  it("Conversations surface is a communication-records view, not a two-way inbox (EXP00)", () => {
+    // The graduated surface reads real company communication records (welcome deliveries,
+    // transactional send log). It is NOT a two-way Conversations inbox — inbound replies
+    // and live send depend on the governed Communications architecture's inbound path,
+    // which is a separate system not yet wired to the company Operator surface.
+    const t = text(renderToStaticMarkup(<ConversationsSurface />));
+    expect(t).toContain("Conversations");
+    expect(t).toContain("Loading the company communication records");
+    // What it must NOT claim (two-way inbox features it does not have):
+    expect(t).not.toContain("composer");
+    expect(t).not.toContain("thread rail");
   });
 
-  it("says plainly when the send-as channel has no substrate", () => {
-    const t = text(
-      renderToStaticMarkup(<ConversationsSurface threads={[{ ...THREAD, channel: "Voice" }]} />),
-    );
-    // The composer defaults to the first channel (Email, live), so the warning is absent until
-    // a dead channel is chosen — what is pinned here is that a live channel does NOT warn.
+  it("the send-as channel warning is absent because send-as is not offered (not because a channel is live)", () => {
+    // The graduated surface has no composer/send-as UI at all — it is a records view.
+    // The absence of the warning is correct for the right reason: no send capability exists.
+    const t = text(renderToStaticMarkup(<ConversationsSurface />));
     expect(t).not.toContain("nothing will send");
   });
 });

@@ -99,7 +99,9 @@ function loadEdge(
   const load = (abs: string): unknown => {
     if (cache.has(abs)) return cache.get(abs);
     let src = readFileSync(abs, "utf8");
-    const rel = abs.slice(fnDir.length + 1);
+    // Fixture dictionaries use portable paths. Windows separators previously
+    // skipped the requested mutations/stubs and tested the original handler.
+    const rel = abs.slice(fnDir.length + 1).replace(/\\/g, "/");
     if (opts.mutate?.[rel]) {
       const before = src;
       src = opts.mutate[rel](src);
@@ -115,7 +117,7 @@ function loadEdge(
       if (spec.startsWith("npm:@supabase/supabase-js") || spec.includes("esm.sh/@supabase/supabase-js")) return supa;
       if (spec.startsWith(".")) {
         const target = resolve(dirname(abs), spec);
-        const key = target.slice(fnDir.length + 1);
+        const key = target.slice(fnDir.length + 1).replace(/\\/g, "/");
         if (opts.stubs && key in opts.stubs) return opts.stubs[key];
         return load(target);
       }

@@ -1,0 +1,17 @@
+[
+  {
+    "background": "rgb(241, 238, 232)",
+    "color": "rgb(32, 30, 35)",
+    "editable": true,
+    "surfaceTheme": "light",
+    "theme": "light",
+    "ratio": 14.264030274263538
+  },
+  {
+    "background": "rgb(18, 16, 23)",
+    "color": "rgb(246, 242, 234)",
+    "surfaceTheme": "dark",
+    "theme": "dark",
+    "ratio": 16.91006875637585
+  }
+]

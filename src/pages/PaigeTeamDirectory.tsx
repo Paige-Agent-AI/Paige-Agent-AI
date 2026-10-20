@@ -80,13 +80,13 @@ export type PaigeTeamScope = "tenant" | "operator" | "agency";
 const ORDER: VP[] = ["PAIGE", "VERA", "NEXUS", "CURA", "MENTOR", "MERIT", "ZION"];
 
 /**
- * The one-line "what they do", in the house voice (§3) and coaching-generic (§2 —
- * no finance/credit/vertical wording). Keyed by `VP` so it can never miss a roster
+ * The one-line "what they do", in the house voice (§3), for ordinary businesses.
+ * Funding/credit stays opt-in. Keyed by `VP` so it can never miss a roster
  * member or name one that doesn't exist.
  */
 const WHAT_THEY_DO: Record<VP, string> = {
   PAIGE: "Runs your whole team and hands each job to the right specialist.",
-  VERA: "Checks every piece of work before it reaches you or a client.",
+  VERA: "Explains your business performance, financial evidence and risks.",
   NEXUS: "Fills your pipeline — campaigns, content, and reaching new clients.",
   CURA: "Keeps every client cared for, onboarded, and moving forward.",
   MENTOR: "Builds and delivers your programs, sessions, and materials.",

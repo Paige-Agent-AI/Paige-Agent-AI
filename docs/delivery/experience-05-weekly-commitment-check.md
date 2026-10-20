@@ -1,5 +1,11 @@
 # Experience 05 Weekly Internal Commitment Check
 
+## October20 — release evidence correction and current proof boundary
+
+The dated #2427 release below remains historical. Its selected canonical run39452878730 attempt2 actually reported nav-pull-profile version49/JWTtrue (artifact12279791845);48 belonged to an earlier separate bounded package verification. Original full recovery39457966267 verified70/73 and held its certificate. E02#2413 then merged2c47f529; canonical recovery39465899854/job118777104680 succeeded with73/73 exact source/configuration matches, no retirements, and the guarded edge-live reference advanced only after proof. Root independently checked artifact12285685747 ZIP SHA256938c988040d16920d1ce55b8fd655a138247c8b51e1a057083140c202ebac7a9 and JSON3687810aeb4e83ce1a898b6dafbced063dd653c6e5dccad16cede4e23b87c853 against all selected records. That source/configuration certificate and unchanged follow-on inputs through9ad8 do not certify later changes or customer execution.
+
+The real #2427 production boundary remains scoped ordinary-owner reads and required-time-zone refusal without saving. Synthetic draft save/reload/receipt proof does not become an authenticated business action. #2429 separately shipped9ad8 with verified ordinary read-only attention-group→native Work inspector→row/Overview focus/default Board/reload; no business write, approval or new receipt. Full weekly lifecycle, Chat/Live, recurring authorization/activation, ZION, E5-CV1–9 and ten-outcome acceptance remain owed. This additive correction preserves prior failed evidence and strict1/18 and2/50 closure. Exact release identities are in Master§4.0; it is the sole Shipped Delivery Log.
+
 ## October20 — reviewed draft source merged; bounded production readback
 
 PR#2427 reviewed head7589e0d5 merged at519da233250cc8ef6d1a18118d9017bba9ba5f3a/tree d4ee3afc. Independent NON-AUTHOR review5587316505 PASS; all13 required exact-head checks and both Vercel statuses passed. Production Vercel dpl_EKf1GBr9vEiKsX8JHEiP5UgXL3uB is READY at that exact source; public version519da…-mvgv7ypi read back. Migration20271112130000 is applied once; eight new SQL bodies match reviewed source, protected incumbent bodies and ACLs are preserved, and three indexes are valid/ready.

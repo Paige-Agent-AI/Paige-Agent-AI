@@ -1,5 +1,15 @@
 # The Paige C-Suite — Named-Agent Roster
 
+> **Owner remap — October19, VERA:** VERA is the existing **Intelligence, Finance
+> and Risk** specialist for EXP02/11/12. This supersedes her Trust-only remit below;
+> PAIGE remains principal COO. Existing Chat addressing uses the same scoped
+> capabilities and Model Fabric. Department ownership is not historical authorship.
+> Registry correction is forward-only, seed-guarded and preserves identity, custom
+> configuration, permissions, runtime/enabled state and specialist parents. It adds
+> no soft-delegate prompt or provider activation. Source/deployment/real analysis and
+> final Experience acceptance are separate; see the existing E02 matrix and
+> [VERA evidence](../evidence/ui-delivery/e2-vera-intelligence.md).
+
 **Owner:** Antonio Cook
 **Date:** 2026-07-27
 **Status:** Doctrine draft — § section below is ready to paste into `CLAUDE.md` (recommended slot: §42, following the §39/§40/§41 amendments)

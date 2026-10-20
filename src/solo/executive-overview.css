@@ -12,6 +12,8 @@
 .executive-root .exec-button { border:1px solid var(--pg-line); border-radius:9px; padding:8px 12px; background:var(--pg-surface); color:var(--pg-ink); }
 .executive-root .exec-button svg { flex-shrink:0; }
 .exec-button-label { min-width:0; }
+.exec-briefing-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px 16px; }
+.executive-root .exec-briefing-actions button { min-height:44px; max-width:100%; }
 .executive-root .exec-button:hover:not(:disabled) { background:var(--pg-raised); }
 .executive-root .exec-button.exec-primary { background:var(--pg-gold-fill); border-color:transparent; color:#211a10; font-weight:650; }
 .executive-root .exec-button.exec-primary:hover:not(:disabled) { background:var(--pg-gold-fill); opacity:.88; }

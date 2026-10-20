@@ -8,7 +8,7 @@ const m = vi.hoisted(() => ({ invoke: vi.fn(), rpc: vi.fn(), getUser: vi.fn(), q
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => m.context }));
 vi.mock("@/contexts/ImpersonationContext", () => ({ useImpersonation: () => ({ isImpersonating: m.impersonating }) }));
 vi.mock("sonner", () => ({ toast: { error: m.error } }));
-vi.mock("@/components/ui/page", () => ({ PaigeAttribution: () => null }));
+vi.mock("@/components/ui/page", async (original) => ({ ...await original<typeof import("@/components/ui/page")>(), PaigeAttribution: () => null }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { functions: { invoke: m.invoke }, rpc: m.rpc,
   auth: { getUser: m.getUser, onAuthStateChange: (cb: () => void) => { m.auth = cb; return { data: { subscription: { unsubscribe: vi.fn() } } }; } },
   from: (...args: unknown[]) => m.query(...args) } }));
@@ -39,6 +39,13 @@ const click = async (name: string) => { await act(async () => button(name).click
 const text = () => host.textContent ?? "";
 
 describe("shared approval row reports canonical outcomes", () => {
+  it("names the department specialist without inventing authorship from a category", () => {
+    row = { ...row, category: "finance.retainer_reminder" };
+    view();
+    expect(text()).toContain("Department specialist: Vera");
+    expect(text()).not.toContain("Drafted by your Paige team");
+    expect(m.invoke).not.toHaveBeenCalled();
+  });
   it.each(["owner.lead_followup","client.followup","owner.followup_email"])("routes %s to the exact existing composer without executing",async category=>{
     row={...row,id:"44444444-4444-4444-8444-444444444444",contact_id:"22222222-2222-4222-8222-222222222222",category};
     act(()=>root.render(<MemoryRouter initialEntries={["/solo/123/overview"]}><ApprovalRow a={row} showDecline onResolved={resolved}/></MemoryRouter>));

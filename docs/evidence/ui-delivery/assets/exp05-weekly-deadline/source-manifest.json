@@ -1428,69 +1428,73 @@
   ],
   "artifacts": [
     {
-      "path": "final-corrected-a-1536-closed-result.png",
+      "path": "final-corrected-a-1536-closed-result.jpg",
       "sha256": "f4efa5deba8adf5b8ea9d0dda5ba901d4b3842c9b90296bc4f25d640e945436e",
       "bytes": 68869,
       "status": "PASS",
-      "reason": "Native settled result/receipt frame; synthetic input, not authentication or execution proof.",
+      "reason": "Valid responsive result/count/reminder frame with receipt disclosure visually COLLAPSED. Paired AX was read separately after expansion; no same-instant expanded receipt or focus claim.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        1535,
+        770
+      ],
+      "native_format": "JPEG"
     },
     {
       "path": "final-corrected-a-1536-closed.json",
       "sha256": "12b2064e34df683b87f2a81e316732f8fa1375db9bb841bc334a793b89b3163d",
       "bytes": 4376,
       "status": "PASS",
-      "reason": "Actual DOM/AX/geometry for the selected responsive case."
+      "reason": "Separate DOM/AX/geometry read after expansion; not a same-instant raster/expanded-receipt or focus attestation. Corresponding raster shows collapsed disclosure."
     },
     {
-      "path": "final-corrected-a-1536-open-result.png",
+      "path": "final-corrected-a-1536-open-result.jpg",
       "sha256": "86bbb6a3155cbe0ae1c93d5064aa3bc2d4a2ad4d6dc744f527db2812d78f9f02",
       "bytes": 76098,
       "status": "PASS",
-      "reason": "Native settled result/receipt frame; synthetic input, not authentication or execution proof.",
+      "reason": "Valid responsive result/count/reminder frame with receipt disclosure visually COLLAPSED. Paired AX was read separately after expansion; no same-instant expanded receipt or focus claim.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        1535,
+        770
+      ],
+      "native_format": "JPEG"
     },
     {
       "path": "final-corrected-a-1536-open.json",
       "sha256": "58dc9b8afaf24159ac964026ce6de26d8b9a1e2899841c8d4f684c114e5888d3",
       "bytes": 4375,
       "status": "PASS",
-      "reason": "Actual DOM/AX/geometry for the selected responsive case."
+      "reason": "Separate DOM/AX/geometry read after expansion; not a same-instant raster/expanded-receipt or focus attestation. Corresponding raster shows collapsed disclosure."
     },
     {
-      "path": "final-corrected-a-1366-closed-result.png",
+      "path": "final-corrected-a-1366-closed-result.jpg",
       "sha256": "a93e1f34f6c93d3f749982d7aad4791e2716c3ff6e1a1939f59978c496b7f133",
       "bytes": 65095,
       "status": "PASS",
-      "reason": "Native settled result/receipt frame; synthetic input, not authentication or execution proof.",
+      "reason": "Valid responsive result/count/reminder frame with receipt disclosure visually COLLAPSED. Paired AX was read separately after expansion; no same-instant expanded receipt or focus claim.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        1366,
+        768
+      ],
+      "native_format": "JPEG"
     },
     {
       "path": "final-corrected-a-1366-closed.json",
       "sha256": "31caf84824fc914f8b465bf0220cca48b06bbfa034c601de3925faa328cab6df",
       "bytes": 4376,
       "status": "PASS",
-      "reason": "Actual DOM/AX/geometry for the selected responsive case."
+      "reason": "Separate DOM/AX/geometry read after expansion; not a same-instant raster/expanded-receipt or focus attestation. Corresponding raster shows collapsed disclosure."
     },
     {
-      "path": "final-corrected-a-1366-open-result.png",
+      "path": "final-corrected-a-1366-open-result.jpg",
       "sha256": "b0fa618a786bd885402b6fec07a9777ae0694e3210caf12c51b84b7dff7a669e",
       "bytes": 73885,
       "status": "PASS",
       "reason": "Native settled result/receipt frame; synthetic input, not authentication or execution proof.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        1366,
+        768
+      ],
+      "native_format": "JPEG"
     },
     {
       "path": "final-corrected-a-1366-open.json",
@@ -1500,15 +1504,16 @@
       "reason": "Actual DOM/AX/geometry for the selected responsive case."
     },
     {
-      "path": "final-corrected-a-1024-closed-result.png",
+      "path": "final-corrected-a-1024-closed-result.jpg",
       "sha256": "5154457ff5a49e86e3f3766cb9ac6e3387fc5d37ad23426295fbce8b79e8b664",
       "bytes": 61934,
       "status": "PASS",
       "reason": "Native settled result/receipt frame; synthetic input, not authentication or execution proof.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        1024,
+        768
+      ],
+      "native_format": "JPEG"
     },
     {
       "path": "final-corrected-a-1024-closed.json",
@@ -1518,15 +1523,16 @@
       "reason": "Actual DOM/AX/geometry for the selected responsive case."
     },
     {
-      "path": "final-corrected-a-1024-open-result.png",
+      "path": "final-corrected-a-1024-open-result.jpg",
       "sha256": "55625907c61c0852fbede46a80692883be39f24611f6b30b994d38ad7554aba6",
       "bytes": 53935,
       "status": "PASS",
       "reason": "Native settled result/receipt frame; synthetic input, not authentication or execution proof.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        1024,
+        768
+      ],
+      "native_format": "JPEG"
     },
     {
       "path": "final-corrected-a-1024-open.json",
@@ -1536,15 +1542,16 @@
       "reason": "Actual DOM/AX/geometry for the selected responsive case."
     },
     {
-      "path": "final-corrected-a-900-closed-result.png",
+      "path": "final-corrected-a-900-closed-result.jpg",
       "sha256": "e3c2da4a963628622e8176cc977813c68317d1daa2d3b4ee2fcd738e46480e4f",
       "bytes": 80379,
       "status": "PASS",
       "reason": "Native settled result/receipt frame; synthetic input, not authentication or execution proof.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        900,
+        1000
+      ],
+      "native_format": "JPEG"
     },
     {
       "path": "final-corrected-a-900-closed.json",
@@ -1554,33 +1561,35 @@
       "reason": "Actual DOM/AX/geometry for the selected responsive case."
     },
     {
-      "path": "final-corrected-a-900-open-result.png",
+      "path": "final-corrected-a-900-open-result.jpg",
       "sha256": "eb0d1b0bf74d45f68618df3f5b77f89f8871ad897e7f516c1143492b71114ed6",
       "bytes": 70364,
       "status": "PASS",
-      "reason": "Native settled result/receipt frame; synthetic input, not authentication or execution proof.",
+      "reason": "Valid responsive result/count/reminder frame with receipt disclosure visually COLLAPSED. Paired AX was read separately after expansion; no same-instant expanded receipt or focus claim.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        900,
+        1000
+      ],
+      "native_format": "JPEG"
     },
     {
       "path": "final-corrected-a-900-open.json",
       "sha256": "45507b024a65bb9abd3a5e5004765d24061967ddc832b6672e1fb83d80188f6e",
       "bytes": 4362,
       "status": "PASS",
-      "reason": "Actual DOM/AX/geometry for the selected responsive case."
+      "reason": "Separate DOM/AX/geometry read after expansion; not a same-instant raster/expanded-receipt or focus attestation. Corresponding raster shows collapsed disclosure."
     },
     {
-      "path": "final-corrected-b-1536-closed-result.png",
+      "path": "final-corrected-b-1536-closed-result.jpg",
       "sha256": "0318d3a61e7e053258709e0e2a12c71e056a8c6e50a48b50a8c8635605cd2e0b",
       "bytes": 70561,
       "status": "PASS",
       "reason": "Native settled result/receipt frame; synthetic input, not authentication or execution proof.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        1535,
+        770
+      ],
+      "native_format": "JPEG"
     },
     {
       "path": "final-corrected-b-1536-closed.json",
@@ -1590,33 +1599,35 @@
       "reason": "Actual DOM/AX/geometry for the selected responsive case."
     },
     {
-      "path": "final-corrected-b-1536-open-result.png",
+      "path": "final-corrected-b-1536-open-result.jpg",
       "sha256": "18178d62aa836b616ab6ab150189752b372a05de3596bc78daf05c8fcdf4d1c3",
       "bytes": 76142,
       "status": "PASS",
-      "reason": "Native settled result/receipt frame; synthetic input, not authentication or execution proof.",
+      "reason": "Valid responsive result/count/reminder frame with receipt disclosure visually COLLAPSED. Paired AX was read separately after expansion; no same-instant expanded receipt or focus claim.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        1535,
+        770
+      ],
+      "native_format": "JPEG"
     },
     {
       "path": "final-corrected-b-1536-open.json",
       "sha256": "7a7c9656bf4f11a356819c8e49c62b0f84575d2dfb19c2c5922ecf4d0d585474",
       "bytes": 4375,
       "status": "PASS",
-      "reason": "Actual DOM/AX/geometry for the selected responsive case."
+      "reason": "Separate DOM/AX/geometry read after expansion; not a same-instant raster/expanded-receipt or focus attestation. Corresponding raster shows collapsed disclosure."
     },
     {
-      "path": "final-corrected-b-1366-closed-result.png",
+      "path": "final-corrected-b-1366-closed-result.jpg",
       "sha256": "98331c6ad6b133615cf236e722356f2613dbcdb01075ca474fb48b06cfb7e2f0",
       "bytes": 67297,
       "status": "PASS",
       "reason": "Native settled result/receipt frame; synthetic input, not authentication or execution proof.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        1366,
+        768
+      ],
+      "native_format": "JPEG"
     },
     {
       "path": "final-corrected-b-1366-closed.json",
@@ -1626,15 +1637,16 @@
       "reason": "Actual DOM/AX/geometry for the selected responsive case."
     },
     {
-      "path": "final-corrected-b-1366-open-result.png",
+      "path": "final-corrected-b-1366-open-result.jpg",
       "sha256": "6d426706ac06aa96b5f857bfcae73be2d4caf27c4f89caa6dec2f48059818b1a",
       "bytes": 73938,
       "status": "PASS",
       "reason": "Native settled result/receipt frame; synthetic input, not authentication or execution proof.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        1366,
+        768
+      ],
+      "native_format": "JPEG"
     },
     {
       "path": "final-corrected-b-1366-open.json",
@@ -1644,15 +1656,16 @@
       "reason": "Actual DOM/AX/geometry for the selected responsive case."
     },
     {
-      "path": "final-corrected-b-1024-closed-result.png",
+      "path": "final-corrected-b-1024-closed-result.jpg",
       "sha256": "6ce663aaac8c543edb789c866391f4a987cd316a4044fc3a4d4b863de9cfa394",
       "bytes": 61914,
       "status": "PASS",
       "reason": "Native settled result/receipt frame; synthetic input, not authentication or execution proof.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        1024,
+        768
+      ],
+      "native_format": "JPEG"
     },
     {
       "path": "final-corrected-b-1024-closed.json",
@@ -1662,33 +1675,35 @@
       "reason": "Actual DOM/AX/geometry for the selected responsive case."
     },
     {
-      "path": "final-corrected-b-1024-open-result.png",
+      "path": "final-corrected-b-1024-open-result.jpg",
       "sha256": "e2642364e4bd6cf36a4fa9762c3c95cd1fc2eec17d074a79b1855a943e4c56d7",
       "bytes": 52066,
       "status": "PASS",
-      "reason": "Native settled result/receipt frame; synthetic input, not authentication or execution proof.",
+      "reason": "Valid responsive result/count/reminder frame with receipt disclosure visually COLLAPSED. Paired AX was read separately after expansion; no same-instant expanded receipt or focus claim.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        1024,
+        768
+      ],
+      "native_format": "JPEG"
     },
     {
       "path": "final-corrected-b-1024-open.json",
       "sha256": "2346c9b98b0dbd35535ef81f02f026676276f1dee8a358280447751fb3af0551",
       "bytes": 4361,
       "status": "PASS",
-      "reason": "Actual DOM/AX/geometry for the selected responsive case."
+      "reason": "Separate DOM/AX/geometry read after expansion; not a same-instant raster/expanded-receipt or focus attestation. Corresponding raster shows collapsed disclosure."
     },
     {
-      "path": "final-corrected-b-900-closed-result.png",
+      "path": "final-corrected-b-900-closed-result.jpg",
       "sha256": "92faaa741e247d63b71e2aedb4e5b2ba95663588f65ccc11ccddb07517201a33",
       "bytes": 80468,
       "status": "PASS",
       "reason": "Native settled result/receipt frame; synthetic input, not authentication or execution proof.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        900,
+        1000
+      ],
+      "native_format": "JPEG"
     },
     {
       "path": "final-corrected-b-900-closed.json",
@@ -1698,33 +1713,35 @@
       "reason": "Actual DOM/AX/geometry for the selected responsive case."
     },
     {
-      "path": "final-corrected-b-900-open-result.png",
+      "path": "final-corrected-b-900-open-result.jpg",
       "sha256": "df8abc3ffc5d14a9518ad6d9218a9a9547965aae966e3c3fa9db7d17e14b92ad",
       "bytes": 70371,
       "status": "PASS",
-      "reason": "Native settled result/receipt frame; synthetic input, not authentication or execution proof.",
+      "reason": "Valid responsive result/count/reminder frame with receipt disclosure visually COLLAPSED. Paired AX was read separately after expansion; no same-instant expanded receipt or focus claim.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        900,
+        1000
+      ],
+      "native_format": "JPEG"
     },
     {
       "path": "final-corrected-b-900-open.json",
       "sha256": "faddd09876182ca7bbf70292917f22785101f99ba0abd5a8ce06336056800442",
       "bytes": 4362,
       "status": "PASS",
-      "reason": "Actual DOM/AX/geometry for the selected responsive case."
+      "reason": "Separate DOM/AX/geometry read after expansion; not a same-instant raster/expanded-receipt or focus attestation. Corresponding raster shows collapsed disclosure."
     },
     {
-      "path": "settled-historical.png",
+      "path": "settled-historical.jpg",
       "sha256": "6ad34ba343756e9090e5e67717001f77379daa77779cb3cbeffa575ca463b982",
       "bytes": 63455,
       "status": "PASS",
       "reason": "Bounded local native presentation/interaction evidence only; see UI record for exact limits.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        1366,
+        768
+      ],
+      "native_format": "JPEG"
     },
     {
       "path": "settled-historical.json",
@@ -1734,26 +1751,28 @@
       "reason": "Bounded local native presentation/interaction evidence only; see UI record for exact limits."
     },
     {
-      "path": "settled-malformed-result.png",
+      "path": "settled-malformed-result.jpg",
       "sha256": "c5e61542d42d7aeaa3d35653b4d563db1cd6aef67a187c1d67116312cfe8add8",
       "bytes": 71558,
       "status": "PASS",
       "reason": "Bounded local native presentation/interaction evidence only; see UI record for exact limits.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        1366,
+        768
+      ],
+      "native_format": "JPEG"
     },
     {
-      "path": "settled-denied-top.png",
+      "path": "settled-denied-top.jpg",
       "sha256": "f330f3c1c2c9b3dd1a44e605ea9e65dafe2d28b15413b8cca57ae6272281c0a9",
       "bytes": 70124,
-      "status": "PASS",
-      "reason": "Bounded local native presentation/interaction evidence only; see UI record for exact limits.",
+      "status": "INVALID",
+      "reason": "Premature entry-animation capture visibly shows Overview without the settled Sheet. Paired AX is separate; replaced by review-settled image.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        1366,
+        768
+      ],
+      "native_format": "JPEG"
     },
     {
       "path": "settled-denied.json",
@@ -1763,15 +1782,16 @@
       "reason": "Bounded local native presentation/interaction evidence only; see UI record for exact limits."
     },
     {
-      "path": "settled-unavailable-top.png",
+      "path": "settled-unavailable-top.jpg",
       "sha256": "f330f3c1c2c9b3dd1a44e605ea9e65dafe2d28b15413b8cca57ae6272281c0a9",
       "bytes": 70124,
-      "status": "PASS",
-      "reason": "Bounded local native presentation/interaction evidence only; see UI record for exact limits.",
+      "status": "INVALID",
+      "reason": "Premature entry-animation capture visibly shows Overview without the settled Sheet. Paired AX is separate; replaced by review-settled image.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        1366,
+        768
+      ],
+      "native_format": "JPEG"
     },
     {
       "path": "settled-unavailable.json",
@@ -1781,15 +1801,16 @@
       "reason": "Bounded local native presentation/interaction evidence only; see UI record for exact limits."
     },
     {
-      "path": "settled-empty-top.png",
+      "path": "settled-empty-top.jpg",
       "sha256": "f330f3c1c2c9b3dd1a44e605ea9e65dafe2d28b15413b8cca57ae6272281c0a9",
       "bytes": 70124,
-      "status": "PASS",
-      "reason": "Bounded local native presentation/interaction evidence only; see UI record for exact limits.",
+      "status": "INVALID",
+      "reason": "Premature entry-animation capture visibly shows Overview without the settled Sheet. Paired AX is separate; replaced by review-settled image.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        1366,
+        768
+      ],
+      "native_format": "JPEG"
     },
     {
       "path": "settled-empty.json",
@@ -1799,15 +1820,16 @@
       "reason": "Bounded local native presentation/interaction evidence only; see UI record for exact limits."
     },
     {
-      "path": "settled-unsupported-top.png",
+      "path": "settled-unsupported-top.jpg",
       "sha256": "f330f3c1c2c9b3dd1a44e605ea9e65dafe2d28b15413b8cca57ae6272281c0a9",
       "bytes": 70124,
-      "status": "PASS",
-      "reason": "Bounded local native presentation/interaction evidence only; see UI record for exact limits.",
+      "status": "INVALID",
+      "reason": "Premature entry-animation capture visibly shows Overview without the settled Sheet. Paired AX is separate; replaced by review-settled image.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        1366,
+        768
+      ],
+      "native_format": "JPEG"
     },
     {
       "path": "settled-unsupported.json",
@@ -1824,15 +1846,16 @@
       "reason": "Bounded local native presentation/interaction evidence only; see UI record for exact limits."
     },
     {
-      "path": "settled-original-reminder-work.png",
+      "path": "settled-original-reminder-work.jpg",
       "sha256": "5d01185578df82f6238b36c7c2e6d8b777266f6d1f45d8cc2a4e05bed64c6197",
       "bytes": 50448,
       "status": "PASS",
       "reason": "Bounded local native presentation/interaction evidence only; see UI record for exact limits.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        1366,
+        768
+      ],
+      "native_format": "JPEG"
     },
     {
       "path": "settled-original-reminder-work.ax.txt",
@@ -1849,15 +1872,16 @@
       "reason": "Bounded local native presentation/interaction evidence only; see UI record for exact limits."
     },
     {
-      "path": "settled-reflow-683-dark-result.png",
+      "path": "settled-reflow-683-dark-result.jpg",
       "sha256": "6e1e5b8356884167ee6807901ff0e82e80bcb8f9c10ea38cb8b1458e5bc20c65",
       "bytes": 20743,
       "status": "PASS",
       "reason": "Bounded local native presentation/interaction evidence only; see UI record for exact limits.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        683,
+        384
+      ],
+      "native_format": "JPEG"
     },
     {
       "path": "settled-reflow-683-dark-result.json",
@@ -1867,15 +1891,16 @@
       "reason": "Bounded local native presentation/interaction evidence only; see UI record for exact limits."
     },
     {
-      "path": "settled-mobile-360-dark.png",
+      "path": "settled-mobile-360-dark.jpg",
       "sha256": "af1ed0fd7e14134c2e7e7669b325dead02f42edfbe2c4bbe3ba202eba872e376",
       "bytes": 36739,
       "status": "PASS",
       "reason": "Bounded local native presentation/interaction evidence only; see UI record for exact limits.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        360,
+        800
+      ],
+      "native_format": "JPEG"
     },
     {
       "path": "settled-mobile-360-dark.json",
@@ -1885,26 +1910,28 @@
       "reason": "Bounded local native presentation/interaction evidence only; see UI record for exact limits."
     },
     {
-      "path": "reduced-motion.png",
+      "path": "reduced-motion.jpg",
       "sha256": "1d50044f6b312b849887209b1536b7359c132f03e3fe7836b2e3d16c50aeaed1",
       "bytes": 62232,
-      "status": "PASS",
-      "reason": "Bounded local native presentation/interaction evidence only; see UI record for exact limits.",
+      "status": "INVALID",
+      "reason": "Media preference was observed separately, but this unsettled panel geometry is excluded from rendered/reflow acceptance.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        1366,
+        654
+      ],
+      "native_format": "JPEG"
     },
     {
-      "path": "settled-loading.png",
+      "path": "settled-loading.jpg",
       "sha256": "f330f3c1c2c9b3dd1a44e605ea9e65dafe2d28b15413b8cca57ae6272281c0a9",
       "bytes": 70124,
-      "status": "PASS",
-      "reason": "Bounded local native presentation/interaction evidence only; see UI record for exact limits.",
+      "status": "INVALID",
+      "reason": "Premature entry-animation capture visibly shows Overview without the settled Sheet. Paired AX is separate; replaced by review-settled image.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        1366,
+        768
+      ],
+      "native_format": "JPEG"
     },
     {
       "path": "settled-loading.ax.txt",
@@ -1914,15 +1941,16 @@
       "reason": "Bounded local native presentation/interaction evidence only; see UI record for exact limits."
     },
     {
-      "path": "settled-loading-timeout.png",
+      "path": "settled-loading-timeout.jpg",
       "sha256": "0423c51d0f7134a7d1f27c27a4e608533274766d5ec8f1edaa192074d5754c23",
       "bytes": 53709,
       "status": "PASS",
       "reason": "Bounded local native presentation/interaction evidence only; see UI record for exact limits.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        1366,
+        768
+      ],
+      "native_format": "JPEG"
     },
     {
       "path": "settled-loading-timeout.ax.txt",
@@ -1932,15 +1960,16 @@
       "reason": "Bounded local native presentation/interaction evidence only; see UI record for exact limits."
     },
     {
-      "path": "corrected-a-1536-closed.png",
+      "path": "corrected-a-1536-closed.jpg",
       "sha256": "156d5b64e6ae674ed8040c3e1069b9ced975536b690d2157abc7687be5495e0d",
       "bytes": 78084,
       "status": "INVALID",
       "reason": "Not acceptance evidence: initial inconsistent fixture, premature interaction/closing state, or transient first attempt; retained candidly. First transient screenshot was overwritten and is not claimed retained.",
       "native_image_dimensions": [
-        65536,
-        4292542531
-      ]
+        1535,
+        770
+      ],
+      "native_format": "JPEG"
     },
     {
       "path": "initial-fixture-manifest.json",
@@ -1990,9 +2019,151 @@
       "bytes": 979,
       "status": "PASS",
       "reason": "Exact original AX bytes before text-only trailing whitespace normalization; native raster is unchanged."
+    },
+    {
+      "path": "review-settled-denied.jpg",
+      "sha256": "c8e5551d6fe58d50941736931f9375a8795d591706a4acd80d0147a5ac6afb61",
+      "bytes": 53319,
+      "status": "PASS",
+      "reason": "Separate-round-trip settled native state capture/geometry; synthetic inputs, not authentication or business execution.",
+      "native_format": "JPEG",
+      "native_image_dimensions": [
+        1366,
+        768
+      ]
+    },
+    {
+      "path": "review-settled-denied.json",
+      "sha256": "1e9e7fb6f391bf7184e42bbd2e64eb0596a6a0314c228f18d0c4fa3479c9b76d",
+      "bytes": 657,
+      "status": "PASS",
+      "reason": "Separate-round-trip settled native state capture/geometry; synthetic inputs, not authentication or business execution."
+    },
+    {
+      "path": "review-settled-unavailable.jpg",
+      "sha256": "0423c51d0f7134a7d1f27c27a4e608533274766d5ec8f1edaa192074d5754c23",
+      "bytes": 53709,
+      "status": "PASS",
+      "reason": "Separate-round-trip settled native state capture/geometry; synthetic inputs, not authentication or business execution.",
+      "native_format": "JPEG",
+      "native_image_dimensions": [
+        1366,
+        768
+      ]
+    },
+    {
+      "path": "review-settled-unavailable.json",
+      "sha256": "8768991581dac24a0b7610652694b0054b506eaa47060e489b91598ee2adf8e8",
+      "bytes": 661,
+      "status": "PASS",
+      "reason": "Separate-round-trip settled native state capture/geometry; synthetic inputs, not authentication or business execution."
+    },
+    {
+      "path": "review-settled-empty.jpg",
+      "sha256": "32d24120e65ba86b4621b7b37b5bd830c970e2b3a0eab8eca4a48d34c252418a",
+      "bytes": 54387,
+      "status": "PASS",
+      "reason": "Separate-round-trip settled native state capture/geometry; synthetic inputs, not authentication or business execution.",
+      "native_format": "JPEG",
+      "native_image_dimensions": [
+        1366,
+        768
+      ]
+    },
+    {
+      "path": "review-settled-empty.json",
+      "sha256": "f1f26d49ce6a21b15e695dd7daac69df0af0d0a2c8dd347e17142be9b6889116",
+      "bytes": 679,
+      "status": "PASS",
+      "reason": "Separate-round-trip settled native state capture/geometry; synthetic inputs, not authentication or business execution."
+    },
+    {
+      "path": "review-settled-unsupported.jpg",
+      "sha256": "0423c51d0f7134a7d1f27c27a4e608533274766d5ec8f1edaa192074d5754c23",
+      "bytes": 53709,
+      "status": "PASS",
+      "reason": "Separate-round-trip settled native state capture/geometry; synthetic inputs, not authentication or business execution.",
+      "native_format": "JPEG",
+      "native_image_dimensions": [
+        1366,
+        768
+      ]
+    },
+    {
+      "path": "review-settled-unsupported.json",
+      "sha256": "8768991581dac24a0b7610652694b0054b506eaa47060e489b91598ee2adf8e8",
+      "bytes": 661,
+      "status": "PASS",
+      "reason": "Separate-round-trip settled native state capture/geometry; synthetic inputs, not authentication or business execution."
+    },
+    {
+      "path": "review-settled-loading.jpg",
+      "sha256": "0423c51d0f7134a7d1f27c27a4e608533274766d5ec8f1edaa192074d5754c23",
+      "bytes": 53709,
+      "status": "PASS",
+      "reason": "Settled bounded timeout (unavailable), not the earlier loading frame; actual loading is review-loading-refresh-second.jpg with its paired AX.",
+      "native_format": "JPEG",
+      "native_image_dimensions": [
+        1366,
+        768
+      ]
+    },
+    {
+      "path": "review-settled-loading.json",
+      "sha256": "8768991581dac24a0b7610652694b0054b506eaa47060e489b91598ee2adf8e8",
+      "bytes": 661,
+      "status": "PASS",
+      "reason": "Settled bounded timeout (unavailable), not the earlier loading frame; actual loading is review-loading-refresh-second.jpg with its paired AX."
+    },
+    {
+      "path": "review-loading-refresh-first.jpg",
+      "sha256": "ec436c4f80c54c84ecc97d973dd16280e4c34ca543713f3eff4ed6ec4d91e135",
+      "bytes": 47910,
+      "status": "INVALID",
+      "reason": "Retained first-refresh frame; selected loading evidence is separately inspected review-loading-refresh-second.jpg.",
+      "native_format": "JPEG",
+      "native_image_dimensions": [
+        1366,
+        768
+      ]
+    },
+    {
+      "path": "review-loading-refresh-second.jpg",
+      "sha256": "ec436c4f80c54c84ecc97d973dd16280e4c34ca543713f3eff4ed6ec4d91e135",
+      "bytes": 47910,
+      "status": "PASS",
+      "reason": "Separate-round-trip settled native state capture/geometry; synthetic inputs, not authentication or business execution.",
+      "native_format": "JPEG",
+      "native_image_dimensions": [
+        1366,
+        768
+      ]
+    },
+    {
+      "path": "review-loading-refresh.ax.txt",
+      "sha256": "1aa3ca991521b12992cc748255cea89238934c2df15144e066cc74e822ec0867",
+      "bytes": 1454,
+      "status": "PASS",
+      "reason": "Separate-round-trip settled native state capture/geometry; synthetic inputs, not authentication or business execution."
     }
   ],
   "font_boundary": "Actual canonical CSS font stack; offline Windows fallback Segoe UI, not a claim of loaded Google Geist. No font or CSS change in product.",
   "zoom_boundary": "683 and360 CSS-pixel content reflow only. Native CTRL+plus left DPR/viewport unchanged; actual browser zoom UNVERIFIED.",
-  "cleanup": "Temporary viewport reset; media override cleared through supported CDP; owned tab closed and localhost allowlist server stopped."
+  "cleanup": "Temporary viewport reset; media override cleared through supported CDP; owned tab closed and localhost allowlist server stopped.",
+  "raster_metadata_correction": {
+    "superseded_commit": "ca40f2ba71094d4bdb4cc74131315e68a909370d",
+    "method": "Native JPEG SOF metadata, independently compare with reviewer decoder. Renamed .png to .jpg without changing any image byte. No resize, crop, re-encoding or pixel edit.",
+    "matrix_receipt_boundary": "16 result-width frames are valid.7 show collapsed disclosure,9 expanded. DOM/AX snapshots are separate observations; only expanded rasters/native mobile/original history frames prove receipt visibility.",
+    "collapsed_matrix_frames": [
+      "final-corrected-a-1366-closed",
+      "final-corrected-a-1536-closed",
+      "final-corrected-a-1536-open",
+      "final-corrected-a-900-open",
+      "final-corrected-b-1024-open",
+      "final-corrected-b-1536-open",
+      "final-corrected-b-900-open"
+    ],
+    "initial_state_boundary": "5 premature state rasters and one reduced-motion geometry raster are INVALID. Settled replacements + loading-refresh second frame provide actual presentation.",
+    "superseded_manifest_retained_in_git": true
+  }
 }

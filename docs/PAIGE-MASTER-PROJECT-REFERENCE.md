@@ -850,7 +850,8 @@ issuer, provider, action or permission activation. Finance facts are not a
 cash-flow forecast (ALG-06 remains partial-source, not backtested here).
 Internal production increment, no customer identity or announcement. Forward fix
 preserves the original domain records and applied history.
-[Release and bounded QA receipts](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2402#issuecomment-6303710400);
+[Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2402#issuecomment-6303710400),
+[bounded QA receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2402#issuecomment-6303868061);
 detailed customer evidence stays in ANT-52.
 
 **2026-10-20 UTC — Required npm audit prerequisite for EXP02 releases.**

@@ -18010,6 +18010,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         client_portal_access_set: "clients",
         author_event_kind: "paige_event_kinds",
         automation_draft: "paige_automations",
+        weekly_commitment_draft: "paige_automations",
         marketplace_install: "marketplace", marketplace_uninstall: "marketplace",
         // Merged from main 2026-09-01. Read off each tool's ACTUAL execution path, not its name:
         // `comms_buy_number` invokes `comms-purchase-number`, and rename/set-primary call the

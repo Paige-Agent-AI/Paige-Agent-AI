@@ -1,5 +1,7 @@
 # EXP05 — current-main weekly draft composition
 
+Corrective source lineage after a63 CI: the only later runtime delta adds canonical `weekly_commitment_draft`→`paige_automations` attribution; the strictly derived29 whole-handler fingerprints follow independent proposal review2fbe9a7c. No frontend/render-bearing source, native draft SQL or any of the105 retained UI artifacts changed. Current screenshots therefore retain their original exact lineage and limitations; the correction requires physical source review and fresh CI, not a fabricated new browser capture. Original actual-handler1237PASS/1FAIL and hosted smoke failure remain historical FAIL evidence. This correction grants no Chat/Live admission, recurrence or customer acceptance.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: docs/delivery/experience-05-weekly-commitment-check.md traces Operations/PAIGE/Calendar original weekly inspection → editable proposal → exact canonical confirmation → inert draft save → original receipt/status → reload/readback; an unconfirmed response offers original status instead of another approval.
 PAIGE_UI_DESIGN: PASS: installed PAIGE router/five quality modules, Flow-by-Flow, Flow Prototype and Impeccable Operate/craft floor; existing SOLO tokens, Sheet, PaigeConfirmCard and domain records reused.

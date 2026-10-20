@@ -218,9 +218,9 @@ BEGIN
 
     -- The identity trigger forbids L1 rows by design; suspend it for the seed only.
     ALTER TABLE public.pipelines DISABLE TRIGGER zz_assign_pipeline_identity;
-    INSERT INTO public.pipelines (name, description, color, is_default, tenant_id,
+    INSERT INTO public.pipelines (id, name, description, color, is_default, tenant_id,
       lifecycle_status, created_by, short_ref, created_through)
-    VALUES ('Company Sales', 'PAIGE Agent AI Inc''s own sales pipeline — every opportunity from first contact to close.',
+    VALUES (gen_random_uuid(), 'Company Sales', 'PAIGE Agent AI Inc''s own sales pipeline — every opportunity from first contact to close.',
             '#2563eb', false, NULL, 'active',
             '00000000-0000-0000-0000-000000000000'::uuid, v_short_ref, 'paige')
     RETURNING id INTO v_pipeline;

@@ -29,7 +29,7 @@ export async function weeklyDraftCommandProof({run,json,literal,source,check,ref
   for(const declaration of laterCatalogues)run(catalogueSource(declaration));
   const catalogueBefore=json(`SELECT jsonb_agg(to_jsonb(t) ORDER BY tool_key) FROM list_tool_autonomy(${literal(tenant)}) t;`,ctx);
   run(source(migration));run(source(migration));
-  const declineScopeMigration='supabase/migrations/20271113010000_experience05_weekly_decline_scope.sql';
+  const declineScopeMigration='supabase/migrations/20271113020000_experience05_weekly_decline_scope.sql';
   run(source(declineScopeMigration));run(source(declineScopeMigration));
   check('native decline freezes the same owner scope in the same lock order as claim and commit',()=>{
     const body=name=>run(`SELECT prosrc FROM pg_proc WHERE oid='public.${name}'::regprocedure;`);

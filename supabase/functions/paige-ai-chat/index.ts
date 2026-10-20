@@ -3934,6 +3934,13 @@ JSON:`;
             typeof declaredProfile?.active_tenant_id === "string" &&
             declaredProfile.active_tenant_id === turnScopeTenantId;
         }
+        // EXP00 O-3: an operator-console turn's scope is PINNED tenant-less by the verified
+        // is_platform_operator gate. The persona resolver's membership fallback (an operator's
+        // oldest workspace) is irrelevant to a platform-scoped turn and must not read as a
+        // scope change mid-turn — the only failure that matters here is a resolution error,
+        // which `resolved` already carries fail-closed.
+        if (operatorConsolePersona && resolved && turnScopeTenantId === null &&
+            (summaryMaintenance || !revalidateSummaryBinding || await revalidateSummaryBinding())) return true;
         if (resolved && currentTenantId === turnScopeTenantId && declaredScopeMatches &&
             (summaryMaintenance || !revalidateSummaryBinding || await revalidateSummaryBinding())) return true;
         console.error(

@@ -2,6 +2,8 @@
 // production URL, alternate store, executor or auth implementation.
 import assert from 'node:assert/strict';
 import { readOwnerTaskHistory } from '../../supabase/functions/_shared/paige-orchestration/owner-task-history.ts';
+import { createOwnerTaskHistoryHandler } from '../../supabase/functions/_shared/paige-orchestration/owner-task-history-handler.ts';
+import { readOwnerTaskHistoryList, readOwnerTaskOutcome } from '../../src/solo/data/ownerTaskAutomation.ts';
 
 export async function proveOwnerTaskHistory(c) {
   const { sql, held, actor, tenant, other, human, check, literal } = c;
@@ -60,6 +62,46 @@ export async function proveOwnerTaskHistory(c) {
     assert.equal(observed.originalTask.taskId, landed.result.readback.id); assert.equal(observed.originalTask.runId, landed.result.correlation_id);
     assert.equal(observed.currentTask.state, 'not_read');
     assert.equal(json(`select detail from paige_act_executions where id=${literal(f.row.id)};`).approve?.task_id, undefined);
+  });
+  // Extend the same original-record proof through the actual client receiver and
+  // HTTP handler. getUser and the client's membership projection are explicit
+  // fixture ports; the native companion, queue RLS, result and Rail remain real.
+  const scope = { actorId: actor, tenantId: tenant, epoch: 1 }, base = clients();
+  const caller = { ...base.caller, from(table) {
+    assert.ok(['tenant_members', 'paige_approval_queue_v'].includes(table));
+    let columns = '', filters = [], orders = [], limit = 0, single = false;
+    const q = { select(value) { assert.match(value, /^[a-z_,]+$/); columns = value; return q; },
+      eq(key, value) { assert.ok(['tenant_id', 'user_id', 'source', 'category', 'metadata->>automation_id'].includes(key));
+        filters.push(`${key === 'metadata->>automation_id' ? "metadata->>'automation_id'" : key}=${literal(value)}`); return q; },
+      order(key, options) { assert.ok(['updated_at', 'id'].includes(key)); orders.push(`${key} ${options.ascending ? 'asc' : 'desc'}`); return q; },
+      limit(value) { assert.equal(value, 26); limit = value; return q; }, maybeSingle() { single = true; return q; },
+      async then(resolve, reject) { try {
+        assert.ok(filters.length); const suffix = `${orders.length ? ` order by ${orders.join(',')}` : ''}${limit ? ` limit ${limit}` : ''}`;
+        const prefix = table === 'tenant_members' ? '' : human(actor); // Explicit membership projection port.
+        const rows = json(prefix + `select coalesce(jsonb_agg(to_jsonb(r)),'[]')::text from(select ${columns} from public.${table} where ${filters.join(' and ')}${suffix})r;`);
+        resolve({ data: single ? rows[0] ?? null : rows, error: null });
+      } catch (error) { reject(error); } } };
+    return q;
+  } };
+  const history = await readOwnerTaskHistoryList(scope, f.process, caller, () => scope);
+  check('client locates a settled original native approval through actual queue RLS with process and tenant filters', () => {
+    assert.equal(history.status, 'ready'); assert.equal(history.items.length, 1);
+    assert.equal(history.items[0].approvalId, approvalId); assert.equal(history.items[0].occurrenceId, f.row.id);
+    assert.equal(history.items[0].approvalStatus, 'approved'); assert.equal(history.hasMore, false);
+  });
+  let httpReads = 0;
+  const handler = createOwnerTaskHistoryHandler({ caller: authorization => { assert.equal(authorization, 'Bearer protected-fixture'); return base.caller; }, service: () => base.service });
+  const viaHttp = await readOwnerTaskOutcome(scope, { processId: f.process, approvalId, occurrenceId: f.row.id }, caller, {
+    async invoke(name, options) {
+      assert.equal(name, 'paige-owner-task-history'); assert.equal(options.method, 'POST'); httpReads++;
+      const response = await handler(new Request('https://unit-test.invalid/paige-owner-task-history', { method: 'POST',
+        headers: { Authorization: 'Bearer protected-fixture', 'Content-Type': 'application/json' }, body: JSON.stringify(options.body) }));
+      return { data: await response.json(), error: response.ok ? null : true };
+    },
+  }, () => scope);
+  check('actual client and HTTP handler preserve the original native Task and receipt without an effect or retry', () => {
+    assert.equal(httpReads, 1); assert.deepEqual(viaHttp, observed);
+    assert.equal(viaHttp.originalTask.taskId, landed.result.readback.id);
   });
   await readOwnerTaskHistory(request, clients());
   const after = sql("select jsonb_build_object('tasks',(select count(*)from tasks),'results',(select count(*)from crm_command_results),'rails',(select count(*)from paige_workspace_events),'approvals',(select jsonb_agg(to_jsonb(a)order by id)from paige_pending_approvals a),'acts',(select jsonb_agg(to_jsonb(l)order by id)from paige_act_executions l))::text;");

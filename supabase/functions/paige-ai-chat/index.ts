@@ -13433,6 +13433,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(payload) });
         } else if (
           OWNER_OPS_BRANCH_TOOLS.has(tc.function.name) ||
+          // EXP00 O-3: the operator console's company reads ride this dispatch block but are NOT
+          // workspace tools — they are deliberately absent from OWNER_OPS_BRANCH_TOOLS (that set
+          // drives requiresWorkspaceAdmin; these admit on the platform-admin RPC gate instead).
+          // Mounted only on operator turns; the branch body re-checks and refuses otherwise.
+          (operatorConsolePersona && (tc.function.name === "platform_customer_overview" || tc.function.name === "platform_commercial_summary")) ||
           // V0 — the funnel tools were advertised and handled below but missing from this list, so
           // every call fell through to "Unknown tool" (0 funnels ever built in production). They are
           // reachable now that a partial build can only report itself as partial.

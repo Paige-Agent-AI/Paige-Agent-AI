@@ -21530,6 +21530,12 @@ export type Database = {
         Args: { p_window_days?: number }
         Returns: Json
       }
+      operator_sales_deal_create: {
+        Args: { p_title: string; p_pipeline_id: string; p_stage_id?: string; p_value_cents?: number; p_currency?: string; p_expected_close_date?: string; p_source?: string; p_notes?: string }
+        Returns: Json
+      }
+      operator_sales_deal_move: { Args: { p_deal_id: string; p_to_stage_id: string }; Returns: Json }
+      operator_sales_workspace: { Args: never; Returns: Json }
       operator_signup_funnel: { Args: { p_window_days?: number }; Returns: Json }
       operator_tier_send_feed: {
         Args: { _since?: string; _tier?: string }

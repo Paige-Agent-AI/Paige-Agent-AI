@@ -16,7 +16,7 @@ const PACK = path.resolve(
 function packSlots(): { id: string; views: string[] }[] {
   const src = fs.readFileSync(PACK, "utf8");
   const dest = src.slice(src.indexOf("P.DEST = {"));
-  const ids = ["fleet", "relationships", "campaigns", "marketplace", "analytics", "settings"];
+  const ids = ["fleet", "relationships", "sales", "campaigns", "marketplace", "analytics", "settings"];
   return ids.map((id) => {
     const at = dest.search(new RegExp(`\\n    ${id}:\\s*\\{`));
     const seg = dest.slice(at, at + 4000);
@@ -31,7 +31,7 @@ function packSlots(): { id: string; views: string[] }[] {
 describe("the operator IA mirrors the design pack", () => {
   const pack = packSlots();
 
-  it("carries exactly six slots, in the pack's order", () => {
+  it("carries exactly seven slots, in the pack's order", () => {
     expect(OPERATOR_SLOTS.map((s) => s.id)).toEqual(pack.map((p) => p.id));
   });
 
@@ -52,6 +52,12 @@ describe("the operator IA mirrors the design pack", () => {
     // Relationships — live SOLO enrollment records, first tab of the slot. Added beside the
     // pack's four; none of the pack's views moved or were replaced.
     { slot: "relationships", view: "Customers", index: 0 },
+    // EXP00 department restructure (owner directive 2026-10-20): Sales is a standalone
+    // company department; Campaigns is renamed Marketing (future portfolio). Sales views
+    // are Pipeline/Leads/Activity — a new company surface, not a rename of Campaigns views.
+    { slot: "sales", view: "Pipeline", index: 0 },
+    { slot: "sales", view: "Leads", index: 1 },
+    { slot: "sales", view: "Activity", index: 2 },
     { slot: "settings", view: "Numbers", index: 3 },
     // Owner INT-280 ruling, 2026-10-10: within Settings, never a seventh primary slot.
     { slot: "settings", view: "PAIGE Intelligence", index: 4 },

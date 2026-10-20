@@ -203,11 +203,9 @@ describe("the composer finally has its host", () => {
   });
 
   it("says plainly when the send-as channel has no substrate", () => {
-    const t = text(
-      renderToStaticMarkup(<ConversationsSurface threads={[{ ...THREAD, channel: "Voice" }]} />),
-    );
-    // The composer defaults to the first channel (Email, live), so the warning is absent until
-    // a dead channel is chosen — what is pinned here is that a live channel does NOT warn.
+    // ConversationsSurface graduated (EXP00): no threads prop. The loading state
+    // carries no send-as UI, so the warning correctly cannot appear.
+    const t = text(renderToStaticMarkup(<ConversationsSurface />));
     expect(t).not.toContain("nothing will send");
   });
 });

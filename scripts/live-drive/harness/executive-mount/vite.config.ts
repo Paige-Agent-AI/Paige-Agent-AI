@@ -8,7 +8,7 @@ if (!["targets", "vera", "finance"].includes(slice)) throw Error("Unknown E02 ha
 const repo = slice === "finance" ? harnessRepo : path.resolve(harnessRepo, "../e2-" + slice);
 const stubs = path.join(root, "stubs.tsx");
 export default defineConfig({
-  root, cacheDir: path.join(harnessRepo, "node_modules/.vite/harness-executive-" + slice), css: { postcss: repo }, plugins: [react()],
+  root, publicDir: path.join(repo, "public"), cacheDir: path.join(harnessRepo, "node_modules/.vite/harness-executive-" + slice), css: { postcss: repo }, plugins: [react()],
   resolve: { alias: [
     { find: /^@\/integrations\/supabase\/client$/, replacement: stubs },
     { find: /^@\/hooks\/useTenantContext$/, replacement: stubs },

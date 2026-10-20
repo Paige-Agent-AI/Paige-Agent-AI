@@ -87,7 +87,7 @@ STATE_COVERAGE: PASS: bounded synthetic loading, unavailable/old-release, error/
 TRUTHFUL_STATE_LABELS: PASS: same source presenter retains exact amounts, zero/unknown, company/currency separation, observation provenance and explicit no-aggregate/no-execution claims.
 SOLO_UI: YES: originating department receiver, shared for every eligible SOLO account.
 UNVERIFIED: native Finance viewports/finish, actual zoom/keyboard, hosted exact-head CI, production source and authenticated/full19/founder acceptance remain release/acceptance obligations.
-INTERNAL_BUILD_IDENTITY: 100a6d0ea9bdbafc0296aceb3f85259f4d7771ad; role=supporting-source-base; branch=codex/e2-finance-department-sources; environment=local; deployment=none; migrations=NOT_APPLICABLE; edge=unchanged-by-receiver; final-head=PR-review-receipt.
+INTERNAL_BUILD_IDENTITY: f602c3a0790be8461b7dc3570b830c3b74dfc610; role=supporting-source-freeze; branch=codex/e2-finance-department-sources; environment=local; deployment=none-local-receiver; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e2-finance-department-sources.md; final-head=PR-review-receipt.
 RELEASE_CHANNEL: development: bounded consumer of the existing Finance review source.
 RELEASE_CLASSIFICATION: internal-only: full EXP02 prerequisite; no customer announcement.
 CUSTOMER_RELEASE_IDENTITY: none: no released or accepted customer outcome claimed.

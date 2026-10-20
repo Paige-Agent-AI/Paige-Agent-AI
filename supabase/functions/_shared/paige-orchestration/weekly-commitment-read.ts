@@ -22,7 +22,9 @@ export function isCurrentWeeklyCommitmentScope(expected: ContextIdentity, curren
 async function bounded<T>(call: () => PromiseLike<T>, ms: number): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
-    return await Promise.race([Promise.resolve().then(call), new Promise<never>((_, reject) => {
+    // Start inside the elapsed stage's checked callback. An additional unchecked
+    // microtask could otherwise start this RPC after cancellation.
+    return await Promise.race([Promise.resolve(call()), new Promise<never>((_, reject) => {
       timer = setTimeout(() => reject(new Error("canonical_read_failed")), ms);
     })]);
   } finally { if (timer !== undefined) clearTimeout(timer); }

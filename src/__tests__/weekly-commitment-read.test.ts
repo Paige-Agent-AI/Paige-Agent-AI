@@ -32,6 +32,14 @@ describe("prepared owner-only weekly read — not conversationally admitted", ()
     const result = await readWeeklyCommitmentProjection(identity, { ...f, signal: stop.signal });
     expect(result.data).toBeNull(); expect(f.calls).toEqual([]);
   });
+  it("never starts a queued RPC after cancellation at the first stage boundary", async () => {
+    const f = fixture(), stop = new AbortController(), startedCancelled: boolean[] = [], rpc = f.caller.rpc;
+    f.caller.rpc = async name => { startedCancelled.push(stop.signal.aborted); return rpc(name); };
+    const read = readWeeklyCommitmentProjection(identity, { ...f, signal: stop.signal });
+    queueMicrotask(() => stop.abort());
+    expect((await read).data).toBeNull();
+    expect(startedCancelled).toEqual([false]); expect(f.calls).toEqual(["current_user_tenant_id"]);
+  });
   it("does not read private status after current server-context revalidation refuses", async () => {
     const f = fixture();
     const result = await readWeeklyCommitmentProjection(identity, { ...f, revalidateScope: async () => false });

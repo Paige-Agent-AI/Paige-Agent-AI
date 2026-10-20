@@ -1,5 +1,9 @@
 # Experience 05 Weekly Internal Commitment Check
 
+## October20 — native deadline presentation verified locally; final release pending
+
+The deadline-semantics candidate now has source146/final-composition170 NON-AUTHOR review checks,92 native cases,220 assertions/12 suites and exacta07413 green check runs. The recovered same Chrome connection produced16 selected native responsive result frames in two neutral contexts, narrow/mobile, historical/corrected/refused/unavailable/empty/malformed/unsupported/loading-timeout states, settled keyboard return and original reminder Work inspection.308 captured project inputs remain exact through compositiondf048/currentmain26418b. The hashed UI artifact record explicitly preserves invalid attempts, offline font fallback and actual zoom/authentication limits. Final evidence-bearing-head Independent Review/CI, migration/Edge/web release and genuine authenticated results remain owed. No recurring authority, Chat/Live activation, new receipt or strict1/18 and2/50 closure is claimed. Earlier dated development/browser checkpoints below remain historical.
+
 ## October20 — deadline-semantics repair in development; not released
 
 Source95f4da1ae40c27283d182653eb70ef90da959798 repairs the existing native weekly observation: fresh version2 work-deadline counts exclude reminders, record their real remind_at, and retain the original bounded source read, actor/tenant/claim/autonomy checks and atomic Rail. Committed version1 observations and receipts remain unchanged on read/replay and receive an explicit historical qualification in the existing result panel. Minimized Chat/control-review context names the version/deadline scope without private source titles or dates. No trigger, schedule authorization, recurring execution, provider, Chat/Live admission or ZION activation is granted.

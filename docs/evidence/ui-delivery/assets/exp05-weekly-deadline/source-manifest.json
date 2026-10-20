@@ -1836,10 +1836,10 @@
     },
     {
       "path": "settled-original-reminder-work.ax.txt",
-      "sha256": "97b074e3437554896929a145e64c5845983f29191232cd26513a397059d05ffa",
+      "sha256": "ede3f5c0047c47756fc66a33bdef6968d4c45cdf63e818b87f0b8d23a692e3da",
       "bytes": 2467,
       "status": "PASS",
-      "reason": "Bounded local native presentation/interaction evidence only; see UI record for exact limits."
+      "reason": "Bounded local native presentation/interaction evidence only; see UI record for exact limits. Text-only trailing whitespace normalization; exact original bytes retained in .original.gz."
     },
     {
       "path": "settled-keyboard-escape.json",
@@ -1983,6 +1983,13 @@
       "bytes": 1871,
       "status": "INVALID",
       "reason": "Not acceptance evidence: initial inconsistent fixture, premature interaction/closing state, or transient first attempt; retained candidly. First transient screenshot was overwritten and is not claimed retained."
+    },
+    {
+      "path": "settled-original-reminder-work.ax.txt.original.gz",
+      "sha256": "5d98dad5161aff71379419f2a1db0b7f9e003d2cdab2b80d197cf686c864baf3",
+      "bytes": 979,
+      "status": "PASS",
+      "reason": "Exact original AX bytes before text-only trailing whitespace normalization; native raster is unchanged."
     }
   ],
   "font_boundary": "Actual canonical CSS font stack; offline Windows fallback Segoe UI, not a claim of loaded Google Geist. No font or CSS change in product.",

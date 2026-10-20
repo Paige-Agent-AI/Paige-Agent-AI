@@ -65,7 +65,7 @@ Browser tab: 1738573782, Title: "Local actual SOLO Operations proof", URL: "http
 				9 heading Activity, Value: 2
 					67 text Activity
 				68 container
-					69 text Activity couldn’t be read. 
+					69 text Activity couldn’t be read.
 					70 button Retry activity
 			10 button Close
 				11 image

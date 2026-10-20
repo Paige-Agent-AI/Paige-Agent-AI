@@ -1,0 +1,56 @@
+[
+  {
+    "state": "loading",
+    "loading": true,
+    "reviewError": false,
+    "roleRefusal": false,
+    "emptyTargets": false,
+    "unreadable": false,
+    "targetValuesShown": false
+  },
+  {
+    "state": "error",
+    "loading": false,
+    "reviewError": true,
+    "roleRefusal": false,
+    "emptyTargets": false,
+    "unreadable": false,
+    "targetValuesShown": false
+  },
+  {
+    "state": "member",
+    "loading": false,
+    "reviewError": false,
+    "roleRefusal": true,
+    "emptyTargets": false,
+    "unreadable": false,
+    "targetValuesShown": false
+  },
+  {
+    "state": "empty",
+    "loading": false,
+    "reviewError": false,
+    "roleRefusal": false,
+    "emptyTargets": true,
+    "unreadable": false,
+    "targetValuesShown": false
+  },
+  {
+    "state": "unavailable",
+    "loading": false,
+    "reviewError": false,
+    "roleRefusal": false,
+    "emptyTargets": false,
+    "unreadable": true,
+    "targetValuesShown": false
+  },
+  {
+    "state": "synthetic-workspace-b",
+    "nameCorrect": true,
+    "owningPlay": "/solo/1234567/command-center/business-game-plan?play=33333333-3333-4333-8333-333333333334"
+  },
+  {
+    "state": "synthetic-workspace-a-return",
+    "owningPlay": "/solo/1234567/command-center/business-game-plan?play=33333333-3333-4333-8333-333333333333"
+  }
+]

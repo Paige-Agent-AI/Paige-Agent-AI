@@ -46,7 +46,7 @@ const text = (html: string) =>
 
 describe("nothing is invented when nothing is wired", () => {
   const empties = [
-    ["People", renderToStaticMarkup(<PeopleSurface />)],
+    // People graduated to real reads (EXP00) — absence assertions moved below
     ["Conversations", renderToStaticMarkup(<ConversationsSurface />)],
     ["Segments", renderToStaticMarkup(<SegmentsSurface />)],
   ] as const;
@@ -87,12 +87,8 @@ describe("nothing is invented when nothing is wired", () => {
     expect(t).toContain("2 of 5 channels live");
   });
 
-  it("People reads the whole book on every chip, not the filtered view", () => {
-    const t = text(renderToStaticMarkup(<PeopleSurface />));
-    expect(t).toContain("0 of 0");
-    for (const chip of ["All", "Clients", "Prospects", "People", "Companies"]) {
-      expect(t).toContain(chip);
-    }
+  it("People renders its loading state (real reads, EXP00)", () => {
+    expect(text(renderToStaticMarkup(<PeopleSurface />))).toContain("Reading the company contact book");
   });
 
   it("every act with no handler is disabled rather than silently inert", () => {

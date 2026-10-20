@@ -274,6 +274,59 @@ BEGIN
   RETURN NEW;
 END $fn$;
 
+-- ── 5. Company People: PAIGE Inc's real contacts from enrollment/intake data. ──────────────
+-- Not a parallel CRM: these are the SAME people the Customers desk and Sales pipeline
+-- reference, presented as a contact list. Data comes from the canonical enrollment and
+-- intake tables — no invented profiles, no tenant L2 contact leakage.
+CREATE OR REPLACE FUNCTION public.operator_company_people()
+RETURNS jsonb
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = pg_catalog, public, pg_temp
+AS $$
+DECLARE
+  v_admin boolean;
+BEGIN
+  SELECT public.is_platform_admin(auth.uid()) INTO v_admin;
+  IF NOT COALESCE(v_admin, false) THEN
+    RAISE EXCEPTION 'operator_company_people: platform administrator required'
+      USING ERRCODE = '42501';
+  END IF;
+
+  RETURN jsonb_build_object(
+    'summary', jsonb_build_object(
+      'total', (SELECT count(*) FROM public.solo_beta_enrollments),
+      'with_workspace', (SELECT count(*) FROM public.solo_beta_enrollments WHERE tenant_id IS NOT NULL),
+      'fulfilled', (SELECT count(*) FROM public.solo_beta_enrollments WHERE state = 'fulfilled'),
+      'in_progress', (SELECT count(*) FROM public.solo_beta_enrollments WHERE state NOT IN ('fulfilled','canceled','expired'))
+    ),
+    'people', COALESCE((
+      SELECT jsonb_agg(jsonb_build_object(
+        'user_id', e.user_id,
+        'name', COALESCE(si.business_name, split_part(u.email, '@', 1), 'Unknown'),
+        'email', u.email,
+        'business_name', si.business_name,
+        'industry', si.industry,
+        'team_size', si.team_size,
+        'enrollment_state', e.state,
+        'enrolled_at', e.checkout_claimed_at,
+        'tenant_id', e.tenant_id,
+        'workspace_name', t.name,
+        'has_workspace', e.tenant_id IS NOT NULL,
+        'reference_id', e.reference_id
+      ) ORDER BY COALESCE(e.checkout_claimed_at, e.created_at) DESC)
+      FROM public.solo_beta_enrollments e
+      LEFT JOIN public.signup_intake si ON si.user_id = e.user_id
+      LEFT JOIN auth.users u ON u.id = e.user_id
+      LEFT JOIN public.tenants t ON t.id = e.tenant_id
+    ), '[]'::jsonb)
+  );
+END $$;
+
+REVOKE ALL ON FUNCTION public.operator_company_people() FROM public, anon;
+GRANT EXECUTE ON FUNCTION public.operator_company_people() TO authenticated;
+
 COMMENT ON FUNCTION public.operator_sales_workspace() IS
   'EXP00: read-only company Sales workspace for platform admins — company pipelines, stages and deals (tenant_id IS NULL).';
 COMMENT ON FUNCTION public.operator_sales_deal_create(text, uuid, uuid, bigint, text, date, text, text) IS

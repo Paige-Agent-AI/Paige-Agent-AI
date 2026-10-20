@@ -9,6 +9,23 @@ const headers = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Head
 const reply = (status: number, data: unknown) => new Response(JSON.stringify(data), { status, headers });
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 const uuid = (v: unknown): v is string => typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+function authenticate<T>(signal: AbortSignal, start: () => PromiseLike<T>): Promise<T> {
+  if (signal.aborted) return Promise.reject(Error('cancelled'));
+  const expires = performance.now() + 5_000;
+  return new Promise<T>((resolve, reject) => {
+    let settled = false;
+    const finish = (value: { data: T } | { error: true }) => {
+      if (settled) return;
+      settled = true; clearTimeout(timer); signal.removeEventListener('abort', stop);
+      if ('error' in value) reject(Error('auth_unavailable')); else resolve(value.data);
+    };
+    const stop = () => finish({ error: true });
+    const timer = setTimeout(stop, 5_000);
+    signal.addEventListener('abort', stop, { once: true });
+    Promise.resolve().then(() => { if (signal.aborted || settled || performance.now() >= expires) throw Error('cancelled'); return start(); })
+      .then(data => { if (signal.aborted || performance.now() >= expires) stop(); else finish({ data }); }, stop);
+  });
+}
 async function body(req: Request): Promise<unknown> {
   if (!req.body) return null;
   const reader = req.body.getReader(), chunks: Uint8Array[] = []; let size = 0;
@@ -20,7 +37,7 @@ async function body(req: Request): Promise<unknown> {
     while (true) {
       if (expired || req.signal.aborted) throw Error('cancelled');
       const part = await reader.read(); if (part.done) break;
-      size += part.value.byteLength; if (size > 1024) { await reader.cancel(); return null; } chunks.push(part.value);
+      size += part.value.byteLength; if (size > 1024) { stop(); return null; } chunks.push(part.value);
     }
     if (expired || req.signal.aborted) throw Error('cancelled');
     const bytes = new Uint8Array(size); let offset = 0;
@@ -38,7 +55,7 @@ export function createOwnerTaskHistoryHandler(transport: OwnerTaskHistoryTranspo
     if (!authorization || !/^Bearer \S+$/.test(authorization)) return reply(401, { error: 'unauthorized' });
     try {
       const caller = transport.caller(authorization);
-      const auth = await caller.auth.getUser();
+      const auth = await authenticate(req.signal, () => caller.auth.getUser());
       if (auth.error || !uuid(auth.data.user?.id)) return reply(401, { error: 'unauthorized' });
       const input = await body(req);
       if (!object(input) || Object.keys(input).length !== 2 || !Object.keys(input).every(k => ['approvalId', 'tenantId'].includes(k))

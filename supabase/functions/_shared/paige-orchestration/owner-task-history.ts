@@ -3,11 +3,10 @@
 type Row = Record<string, unknown>;
 type Result = { data: unknown; error: unknown };
 interface Query {
-  select(columns: string): Query;
   eq(column: string, value: unknown): Query;
   maybeSingle(): PromiseLike<Result>;
 }
-interface Reads { from(table: string): Query; rpc(name: string, args?: Row): PromiseLike<Result> }
+interface Reads { from(table: string): { select(columns: string): Query }; rpc(name: string, args?: Row): PromiseLike<Result> }
 export interface OwnerTaskHistoryClients {
   /** Must carry the original request JWT, never the service key. */
   caller: Reads & { auth: { getUser(): PromiseLike<{ data: { user: { id: string } | null }; error: unknown }> } };

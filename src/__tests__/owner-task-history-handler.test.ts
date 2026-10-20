@@ -14,7 +14,7 @@ function fixture() {
     service: () => { calls.push('service_client'); return { from: () => { calls.push('private_lookup'); throw Error('forbidden'); },
       rpc: async () => { calls.push('private_lookup'); throw Error('forbidden'); } }; },
   };
-  return { calls, handler: createOwnerTaskHistoryHandler(transport), logout: () => { signedIn = false; } };
+  return { calls, transport, handler: createOwnerTaskHistoryHandler(transport), logout: () => { signedIn = false; } };
 }
 const request = (value: unknown) => new Request('https://fixture.invalid/history', { method: 'POST', headers: { Authorization: 'Bearer ordinary-fixture' }, body: JSON.stringify(value) });
 const valid = { approvalId: id(3), tenantId: id(2) };
@@ -52,5 +52,24 @@ describe('exact owner-task history transport', () => {
       const pending = f.handler(req); await vi.advanceTimersByTimeAsync(5001); const r = await pending;
       expect(await r.json()).toEqual({ status: 'unavailable' }); expect(cancelled).toBe(true); expect(f.calls).toEqual(['caller']);
     } finally { vi.useRealTimers(); }
+  });
+  it.each(['deadline', 'abort'])('ends suspended initial Auth on %s without continuing on its late answer', async mode => {
+    vi.useFakeTimers(); try {
+      const f = fixture(), abort = new AbortController(); let release!: (value: { data: { user: { id: string } }; error: null }) => void;
+      const original = f.transport.caller;
+      f.transport.caller = header => ({ ...original(header), auth: { getUser: () => new Promise(resolve => { release = resolve; }) } });
+      const req = new Request(request(valid), { signal: abort.signal }); const pending = f.handler(req);
+      await vi.advanceTimersByTimeAsync(1);
+      if (mode === 'abort') abort.abort(); else await vi.advanceTimersByTimeAsync(5001);
+      expect(await (await pending).json()).toEqual({ status: 'unavailable' }); expect(f.calls).toEqual(['caller']);
+      release({ data: { user: { id: id(1) } }, error: null }); await vi.advanceTimersByTimeAsync(1);
+      expect(f.calls).toEqual(['caller']);
+    } finally { vi.useRealTimers(); }
+  });
+  it('does not wait for a suspended oversized-body cancellation hook', async () => {
+    const f = fixture(); let cancelled = false;
+    const stream = new ReadableStream({ start(controller) { controller.enqueue(new Uint8Array(1025)); }, cancel() { cancelled = true; return new Promise(() => {}); } });
+    const req = new Request('https://fixture.invalid', { method: 'POST', headers: { Authorization: 'Bearer ordinary-fixture' }, body: stream, duplex: 'half' } as RequestInit);
+    const r = await f.handler(req); expect(r.status).toBe(400); expect(cancelled).toBe(true); expect(f.calls).toEqual(['caller']);
   });
 });

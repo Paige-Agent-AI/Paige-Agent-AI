@@ -1,5 +1,9 @@
 # Experience 05 Weekly Internal Commitment Check
 
+## October 20 — Capacity consumes original Work deadlines
+
+Bounded presentation increment reuses `overviewNativeWork` and existing tenant-fenced Planning/CRM/Team readers. Capacity shows each original owner's overdue count, missing due dates and recorded deadline/reminder times; original inspectors and unavailable-source controls remain authoritative. No new scheduling, optimization, autonomy, provider or business-action claim. [UI proof boundary](../evidence/ui-delivery/exp05-capacity-deadline-context.md) preserves native synthetic versus authenticated evidence and the unchanged `operations.department` PROOF_OWED state. Full ten-outcome/E5-CV1–9 and original18/25/50 acceptance remain open. Current source does not imply deployment, activation, customer acceptance or completed ZION integration.
+
 ## Resumed connected customer development — owner direction, 2026-10-13
 
 The owner accepted the matrix and delegated ordinary customer-interface engineering and inert, safely gated release preparation. This supersedes intermediate prototype/design approval pauses in earlier dated entries. The finished Chat/Calendar design, permission boundaries, protected fixture plan and activation proposal still require the owner's ruling before the first live recurring execution. Recurrence, weekly Chat/Live admission, provider effects and genuine authenticated acceptance remain separate gates.

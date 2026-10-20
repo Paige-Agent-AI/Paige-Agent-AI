@@ -16,6 +16,7 @@ export function overviewNativeWork(tenantId: string, items: PlanItem[], tasks: C
   const currentWork = [...active].sort(operatingOrder);
   const reminderTime = (item: typeof work[number]) => item.remind_at ? Date.parse(item.remind_at) : Number.NaN;
   return {
+    overdue: active.filter(item => time(item) < now).sort(dueOrder),
     attention: active.filter(item => item.status === "blocked" || time(item) < now).sort((a,b) =>
       (priority[b.priority ?? ""] ?? 0) - (priority[a.priority ?? ""] ?? 0) || Number(b.status === "blocked") - Number(a.status === "blocked") || dueOrder(a,b)),
     upcoming: active.filter(item => Number.isFinite(time(item)) && time(item) >= now).sort(dueOrder).slice(0,5),

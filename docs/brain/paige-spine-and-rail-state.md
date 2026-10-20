@@ -2,7 +2,7 @@
 
 ## October 20 — bounded client refusal wording candidate
 
-Existing typed Chat HTTP409 / INTERACTIVE_RECOVERY_READ_ONLY / message_accepted=true receives accurate existing-alert wording. Unknown outcomes retain their no-replay warning; request-ticket, actor/tenant, authority and effects are unchanged. This is client copy/classification only, not full attachment recovery, saved refusal metadata, execution restoration or customer acceptance. [Evidence and limits](../evidence/ui-delivery/exp05-known-refusal-feedback-copy.md). Original2401 material attachment/reload flow and its browser/UI proof hold remain separate. No Edge consumer imports the new shared constant in this increment, no source fingerprint renewal, provider activation or mutation. Source implementation is not merge/deployment/authenticated/owner acceptance.
+Existing typed Chat HTTP409 / INTERACTIVE_RECOVERY_READ_ONLY / message_accepted=true receives accurate existing-alert wording. Unknown outcomes retain their no-replay warning; request-ticket, actor/tenant, authority and effects are unchanged. This is client copy/classification only, not full attachment recovery, saved refusal metadata, execution restoration or customer acceptance. [Evidence and limits](../evidence/ui-delivery/exp05-known-refusal-feedback-copy.md). Original2401 material attachment/reload flow and its browser/UI proof hold remain separate. No Edge/shared-backend path changes, source fingerprint renewal, provider activation or mutation. The full2401 recovery will replace the local feedback value with its shared import when releasable. Source implementation is not merge/deployment/authenticated/owner acceptance.
 
 ## 2026-10-18 — Original-reminder history reader released
 

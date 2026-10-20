@@ -45,7 +45,7 @@ RELEASE_RECOVERY: position=forward fix preferred; reference=reviewed revert of t
 
 ## Scope and proof limits
 
-Reuse the exact shared refusal constant from2401; no Edge imports it in this increment. Existing server fallback/metadata/admission unchanged, no source fingerprint renewed.2401 remains a separate material recovery flow, not reclassified or waived. No alternate uploader, profile, permission change or document input was used. The incumbent fixture adds only text409/502 and the missing optional context export. Authentication/source are mocked; no tenant-authority claim.
+The fixed client wording/code values match2401's proposed shared feedback. This bounded patch keeps them in the existing Chat module;2401 will replace the local value with its shared import when its server/reload flow is releasable. No Edge/shared-backend path changes, server fallback/metadata/admission or source fingerprint renewal.2401 remains a separate material recovery flow, not reclassified or waived. No alternate uploader, profile, permission change or document input was used. The incumbent fixture adds only text409/502 and the missing optional context export. Authentication/source are mocked; no tenant-authority claim.
 
 Three committed captures are known-refusal-confirmed-light.jpg, unknown-response-dark.jpg and known-refusal-390-light.jpg. Earlier blank development-refresh screenshot and missing-dependency startup are private INVALID observations, not passing proof. Exact native raster sizes may differ by one pixel from CSS dimensions; metadata is authoritative.
 

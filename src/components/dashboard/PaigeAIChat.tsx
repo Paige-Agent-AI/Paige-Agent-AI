@@ -36,7 +36,6 @@ import {
 import { PaigeCrmResultCard, type PaigeCrmResult } from "@/components/chat/PaigeCrmResultCard";
 import { readCrmResultMetadata } from "../../../supabase/functions/_shared/paige-turn/crm-result-reference";
 import { CHAT_CONTROL_HEADER, CHAT_CONTROL_POLL_MS, chatControlRetryDelay } from "../../../supabase/functions/_shared/paige-turn/control-transport";
-import { RECOVERY_READ_ONLY_REFUSAL } from "../../../supabase/functions/_shared/paige-turn/interactive-refusal";
 import { CheckLinks } from "@/components/chat/CheckLinks";
 import { PaigeRecordLinks } from "@/components/chat/PaigeRecordLinks";
 import { mergeRecordLinks, readRecordLinks, type ReadRecordLink } from "../../../supabase/functions/_shared/paige-turn/record-links";
@@ -112,6 +111,13 @@ import {
 // server budget. The durable-work envelope remains the real disconnect/retry fix.
 const PAIGE_INTERACTIVE_TURN_BUDGET_MS = 360_000;
 const RESEARCH_HISTORY_READ_BUDGET_MS = 8_000;
+
+// Client feedback only. The separately governed server/reload recovery change
+// replaces this local value with its shared constant when that flow is released.
+const RECOVERY_READ_ONLY_REFUSAL = {
+  code: "INTERACTIVE_RECOVERY_READ_ONLY",
+  message: "An earlier response was interrupted, and its outcomes still need checking. Your message was recorded, but new actions and attachments are on hold. You can still ask questions about existing records.",
+} as const;
 
 type ResearchHistoryReference = { messageId: string; run_id: string | null; question: string; saved: boolean };
 

@@ -244,3 +244,17 @@ Controlled source tests: **54 PASS**, including eleven failing-first authority/r
 Individual selected-account Plaid credit card, revolving-line and loan terms remain separate, with partial institution/product coverage and unknown company ownership/freshness. Native item/account IDs control selection; shared names and masks never merge records. QuickBooks bills preserve recorded outstanding amounts and supplier dates without claiming payment settlement; purchases are not automatically recognized expense. Pure readers are unmounted and have no native provider, ledger, financial-effect, shared executor or UI authority. 43 obligation cases plus65 provider-reader regressions PASS at current main; independent current-head review and exact-head CI/release still owed.
 
 Canonical PostgreSQL RPC compatibility now identifies and corrects omitted optional liability fields/verification markers in the unregistered caller-bound reader. Valid balances remain readable; missing terms stay null and verification stays false. Non-null unsupported facts/positive verification remain refused. Three failing-first controls, seven negative controls and the existing suites total172 PASS; an actual synthetic PostgreSQL producer-to-reader compatibility proof covers native-account distinctions, currencies, explicit zero, wrong company/tenant, post-read revocation and membership changes. Corrected-head independent review/CI/release remain owed; no registered or customer/provider execution claim.
+
+**October 20 EXP02 continuation of original #2032:** original branch/source is
+preserved and composed with main2c47f529, without another Finance engine, store,
+registry or provider transport. Fresh172/172 controlled cases, scoped lint/strict
+ES2020/Registry checks and the existing actual PostgreSQL producer-to-reader
+runner PASS. Local SQL proof uses explicit synthetic Auth dependencies; its
+disposable database was dropped and task-owned server stopped. Missing optional
+debt terms stay null, omitted verification stays false; supplied unsupported facts
+remain refused. Source review/required exact-head CI/release are still owed.
+The six reads/provider normalizers remain unregistered and unmounted;
+`finance.department` stays PROOF_OWED. Native consent/ingestion, immutable source
+evidence, Fabric/Spine/UI/Chat/Live adoption and authenticated reload/isolation
+acceptance remain required. Continue the original PR before mounting these
+financial contracts; helper tests are not customer acceptance.

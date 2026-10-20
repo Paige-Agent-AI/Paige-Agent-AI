@@ -1,5 +1,26 @@
 # Finance department — current source and full operating target
 
+## EXP02 consumer continuation v2026-10-20.1 — local, not released
+
+EXP02 extends the approved Banking & Cash destination using the same
+`useBusinessReview`/`paige-business-review`/Operating Fabric Finance source contract
+as Executive and the same `ExecutiveFinanceEvidence` presenter. #2402 remains the
+source prerequisite; branch `codex/e2-finance-department-sources` adds no metric,
+provider, store, calculation or capability registration. Read only while Banking
+is selected and department access is not refused; existing toolbar refresh reuses
+that reader, while tab/workspace changes discard the prior display. Preserve exact
+company/account/currency amounts, null versus zero, source observations and existing
+Reconciliation limitations. Do not describe a source receipt as executed work.
+
+Thirty component/shared-hook/parser assertions pass, including refresh/refusal and
+workspace change; the pre-change100a component fails the new consumer regression.
+This is source proof only. Native Finance/keyboard/zoom, final review/CI, production
+and authorized SOLO/reload/provider/full19/founder acceptance remain owed. Existing
+native target/VERA packets prove their own synthetic surfaces only. See
+[consumer contract and evidence](../evidence/ui-delivery/e2-finance-department-sources.md).
+EXP01/05/09/11 may reuse the canonical domain contract; do not create another reader
+or infer company-wide cash, profit or forecast from recorded account observations.
+
 Grounded on 2026-10-09 against main `794a38263e2d1d565ccab20253751593ed9c8f5b`.
 Owner-approved design and subsequent “live merge on green” authorize normal delivery. They do not authorize a real provider connection or financial effects.
 

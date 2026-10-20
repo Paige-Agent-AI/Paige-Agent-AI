@@ -1,5 +1,16 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+**October20 originating Finance receiver — local development, not released.**
+The existing Banking & Cash destination now consumes the same scoped
+`useBusinessReview`/Operating Fabric Finance evidence and source presenter as
+Executive, with canonical refresh, unavailable/error handling and workspace/refusal
+guards. No additional metric/provider read, store or financial calculation is created.
+This follows #2402 and advances required O04/O14 without closing full Finance or
+customer acceptance. Thirty component/shared-hook/parser assertions pass; actual
+native Finance, production and authorized SOLO/Live/reload/permission proof remain
+owed. [Existing consumer evidence](../evidence/ui-delivery/e2-finance-department-sources.md).
+All19 requirements and historical9/0 plus12/0/4 remain unchanged.
+
 **October19 Finance continuation — implemented locally, not released or accepted.**
 REUSE the existing Finance caller-JWT catalogue/account-source contracts and their
 company/binding/owner/admin authority; EXTEND the incumbent

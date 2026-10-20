@@ -1,5 +1,9 @@
 # PAIGE Spine & Rail — verified current state
 
+## October20 — current-main composition preparation; NOT RELEASED
+
+Original2163/36ab and2189/9f sources/acceptance are preserved, with bounded successor b27e95 corrections independently reviewed. This own composition retains currentmain40c1 authority, source, Task recovery/navigation and all later Experience work. The inherited dated sections below remain historical; old deployment observations and ownership statements are not current proof or a formal Coordinator handoff. The draft writer/Edge and old090500 migration are absent/unapplied in current production; forward migration/schema proof, current source-pin derivation/review, final exact-head CI/deployment and ordinary authenticated acceptance remain owed. No recurrence, provider, Chat/Live activation or18/25/50 closure. Current owner EXP-only doctrine and the ten-outcome/E5-CV1–9 contract control.
+
 ## October 20 — bounded client refusal wording candidate
 
 Existing typed Chat HTTP409 / INTERACTIVE_RECOVERY_READ_ONLY / message_accepted=true receives accurate existing-alert wording. Unknown outcomes retain their no-replay warning; request-ticket, actor/tenant, authority and effects are unchanged. This is client copy/classification only, not full attachment recovery, saved refusal metadata, execution restoration or customer acceptance. [Evidence and limits](../evidence/ui-delivery/exp05-known-refusal-feedback-copy.md). Original2401 material attachment/reload flow and its browser/UI proof hold remain separate. No Edge/shared-backend path changes, source fingerprint renewal, provider activation or mutation. The full2401 recovery will replace the local feedback value with its shared import when releasable. Source implementation is not merge/deployment/authenticated/owner acceptance.
@@ -31,6 +35,16 @@ All18 historical capabilities and50 parity requirements remain authoritative, wi
 ## DEVELOPMENT 2026-10-17 — Portal invitation common command
 
 `client.portal_invite` / `client_portal_invitation_send` joins the existing owner communications dispatcher, canonical confirmation/kernel, incumbent sender and Rail. Native preparation2330 is source-verified from production; delivery2340 is production source-verified from merged #2292. [Work packet](../delivery/e09-canonical-invitation-command.md) records exact CRM recipient/version binding, original-operation recovery, high-risk approval and protected provider floor. Source maturity PARTIAL; registration is not Dashboard/Live/provider/customer acceptance. The private customer assistant gets no owner tool/context/history. No shared core handler or execution activation changes.
+
+### Preserved inherited EXP05 checkpoint (historical, unmerged source)
+
+## DEVELOPMENT 2026-10-15 — E5 canonical draft save, not recurrence or admission
+
+Existing E5 branch `codex/experience05-canonical-control-integration` adds the missing owner-surface draft save/reload adapter. Canonical path: verified current owner/tenant → Kit/Trust → existing `paige_pending_confirmations` server-issued exact call/single-use consuming nonce → native `draft_weekly_commitment_check` → atomic `paige_automations`/audit/stable `record_capability_run` receipt. The new declaration lives in the existing Automations domain but is **not registered**: incumbent Spine mutation registration requires a real live Chat binding; E5 does not invent one or widen offer/dispatch. The same `PaigeConfirmCard` is mounted in the existing Chat/Calendar weekly sheet. Calendar refreshes the existing owner projection after verified draft save; “saved draft” remains separate from recurring authorization and completed check/task.
+
+Forward migration20271105090500 extends the canonical store with nullable consuming nonce and indexed decline/proposal-history reconciliation; existing applied migrations and other issuers remain unchanged. JWT-only owner read/claim/save/decline RPCs recheck scope, current authority, expiry and exact stored args. Repeated/lost-response commands adopt the same durable request/receipt; unknown remains unconfirmed with no automatic replay. No new scheduler, ledger, store or approval framework. [Current source/proof and all-ten matrix](../delivery/experience-05-weekly-commitment-check.md), [rendered native review](../evidence/experience-05-draft-review/owner-rendered-review.md).
+
+Production04:11:56.827728UTC read-only metadata: weekly triggerOFF, processes/events/receipts/cron/permission overrides0, new writer absent and migration not applied. No new release or source-to-production equality is claimed. Review/CI/release and authenticated customer behavior remain PROOF OWED; weekly conversational tools/recurrence/PC-1 activation remain held. Original QA and E5-CV1–9 remain NOT_RUN. No other agent was spawned or contacted.
 
 ## CANDIDATE 2026-10-14 UTC — E5 connected inspection, not deployed
 

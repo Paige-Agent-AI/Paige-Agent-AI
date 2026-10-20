@@ -1194,6 +1194,12 @@
       "evidence": "paige-ai-chat dispatch (the read_client_portal_access / client_portal_access_set branch) records the run via recordCapabilityRun after _shared/client-portal-access.ts setPortalAccess returns: capability_succeeded only when a fresh caller-JWT public.read_client_portal_access read shows the contact in the asked state (a state replay included), capability_refused for a request refused before any write (bad shape, no workspace or verified actor) or a refusal the database answered (a structured {ok:false} code: not found, not joined, restore unavailable, version changed, agency tier, invalid; or a SQLSTATE: not owner/admin, workspace changed), capability_outcome_unknown when the write may have landed but the readback did not confirm it (including a dispatch that throws). The switch over PortalAccessFailure is exhaustive, so no outcome goes unrecorded. The writer also writes its own audit_logs row (client_portal.access_paused/_restored/_ended)."
     },
     {
+      "tool": "weekly_commitment_draft",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "public.commit_weekly_commitment_draft in experience05_confirmed_weekly_draft.sql calls the existing record_capability_run with the stored request UUID, tenant and actor in the same native draft-save transaction. read_weekly_commitment_draft reads the exact original Rail row. This declares source coverage; migration, deployment and authenticated proof remain separate."
+    },
+    {
       "tool": "portal_menu_update",
       "risk": "high",
       "receipt": "emits",

@@ -27,6 +27,93 @@ function fixture(data: unknown = canonical(), mutate?: (name: string) => void) {
   return { caller, calls, currentIdentity: () => current, switchIdentity: (next: ContextIdentity) => { current = next; } };
 }
 describe("prepared owner-only weekly read — not conversationally admitted", () => {
+  it("refuses an already cancelled inspection before any RPC", async () => {
+    const f = fixture(), stop = new AbortController(); stop.abort();
+    const result = await readWeeklyCommitmentProjection(identity, { ...f, signal: stop.signal });
+    expect(result.data).toBeNull(); expect(f.calls).toEqual([]);
+  });
+  it("never starts a queued RPC after cancellation at the first stage boundary", async () => {
+    const f = fixture(), stop = new AbortController(), startedCancelled: boolean[] = [], rpc = f.caller.rpc;
+    f.caller.rpc = async name => { startedCancelled.push(stop.signal.aborted); return rpc(name); };
+    const read = readWeeklyCommitmentProjection(identity, { ...f, signal: stop.signal });
+    queueMicrotask(() => stop.abort());
+    expect((await read).data).toBeNull();
+    expect(startedCancelled).toEqual([false]); expect(f.calls).toEqual(["current_user_tenant_id"]);
+  });
+  it("retires a constructed lazy PostgREST RPC when queued cancellation wins", async () => {
+    const f = fixture(), stop = new AbortController(), startedCancelled: boolean[] = [], constructed: string[] = [];
+    const caller = { rpc: (name: string) => { constructed.push(name); return { then: <T = { data: unknown; error: unknown }, U = never>(
+      resolve?: ((value: { data: unknown; error: unknown }) => T | PromiseLike<T>) | null,
+      reject?: ((reason: unknown) => U | PromiseLike<U>) | null,
+    ) => { startedCancelled.push(stop.signal.aborted); return f.caller.rpc(name).then(resolve, reject); } }; } };
+    const read = readWeeklyCommitmentProjection(identity, { ...f, caller, signal: stop.signal });
+    queueMicrotask(() => stop.abort());
+    expect((await read).data).toBeNull();
+    expect(constructed).toEqual(["current_user_tenant_id"]);
+    expect(startedCancelled).toEqual([]); expect(f.calls).toEqual([]);
+  });
+  it("does not subscribe when lazy query construction exhausts the original budget", async () => {
+    vi.useFakeTimers();
+    try {
+      const f = fixture(), consume = vi.fn(), construct = vi.fn(() => {
+        vi.advanceTimersByTime(8001); return { then: consume };
+      });
+      expect((await readWeeklyCommitmentProjection(identity, { ...f, caller: { rpc: construct } })).data).toBeNull();
+      expect(construct).toHaveBeenCalledTimes(1); expect(consume).not.toHaveBeenCalled();
+    } finally { vi.useRealTimers(); }
+  });
+  it("does not consume a lazy query whose construction retired the scope", async () => {
+    const f = fixture(), stop = new AbortController(), consume = vi.fn();
+    const caller = { rpc: () => { stop.abort(); return { then: consume }; } };
+    expect((await readWeeklyCommitmentProjection(identity, { ...f, caller, signal: stop.signal })).data).toBeNull();
+    expect(consume).not.toHaveBeenCalled(); expect(f.calls).toEqual([]);
+  });
+  it("fences the private status helper's lazy RPC, not only tenant preflight", async () => {
+    const f = fixture(), stop = new AbortController(), consumed: string[] = [];
+    const caller = { rpc: (name: string) => {
+      if (name === "get_weekly_commitment_checks") queueMicrotask(() => stop.abort());
+      return { then: <T = { data: unknown; error: unknown }, U = never>(
+        resolve?: ((value: { data: unknown; error: unknown }) => T | PromiseLike<T>) | null,
+        reject?: ((reason: unknown) => U | PromiseLike<U>) | null,
+      ) => { consumed.push(name); return f.caller.rpc(name).then(resolve, reject); } };
+    } };
+    expect((await readWeeklyCommitmentProjection(identity, { ...f, caller, signal: stop.signal })).data).toBeNull();
+    expect(consumed).toEqual(["current_user_tenant_id", "weekly_commitment_owner"]);
+  });
+  it("does not read private status after current server-context revalidation refuses", async () => {
+    const f = fixture();
+    const result = await readWeeklyCommitmentProjection(identity, { ...f, revalidateScope: async () => false });
+    expect(result.data).toBeNull(); expect(f.calls).toEqual([]);
+  });
+  it("withholds a private result cancelled while its original read is pending", async () => {
+    const f = fixture(), stop = new AbortController(), rpc = f.caller.rpc;
+    f.caller.rpc = async name => { const result = await rpc(name); if (name === "get_weekly_commitment_checks") stop.abort(); return result; };
+    const result = await readWeeklyCommitmentProjection(identity, { ...f, signal: stop.signal });
+    expect(result.data).toBeNull(); expect(f.calls).toEqual(["current_user_tenant_id", "weekly_commitment_owner", "get_weekly_commitment_checks"]);
+  });
+  it("does not let successive slow reads extend the original eight-second inspection", async () => {
+    vi.useFakeTimers();
+    try {
+      const f = fixture(), rpc = f.caller.rpc;
+      f.caller.rpc = name => new Promise(resolve => { setTimeout(() => { void rpc(name).then(resolve); }, 1900); });
+      let result: Awaited<ReturnType<typeof readWeeklyCommitmentProjection>> | undefined;
+      const read = readWeeklyCommitmentProjection(identity, f).then(value => { result = value; });
+      await vi.advanceTimersByTimeAsync(8001);
+      expect(result).toMatchObject({ status: "degraded", data: null });
+      await vi.advanceTimersByTimeAsync(3000); await read;
+    } finally { vi.useRealTimers(); }
+  });
+  it("withholds completed native data when the final incumbent context check refuses", async () => {
+    const f = fixture(), revalidateScope = vi.fn().mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+    const result = await readWeeklyCommitmentProjection(identity, { ...f, revalidateScope });
+    expect(revalidateScope).toHaveBeenCalledTimes(2); expect(result.data).toBeNull();
+    expect(f.calls.filter(name => name === "get_weekly_commitment_checks")).toHaveLength(1);
+  });
+  it("a failing current-context callback produces an unavailable result without reading", async () => {
+    const f = fixture();
+    const result = await readWeeklyCommitmentProjection(identity, { ...f, currentIdentity: () => { throw new Error("retired context"); } });
+    expect(result.data).toBeNull(); expect(f.calls).toEqual([]);
+  });
   it("retains legacy receipt totals with an explicit legacy semantics marker", () => {
     const raw = canonical();
     Object.assign(raw.checks[0].last_verified_run.observation, { version: 1 });

@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
+import { viewPath } from "@/operator/shell/operatorAddress";
 import {
   useCommercialCustomers,
   useCustomerHistory,
@@ -23,12 +25,26 @@ import {
 type StageFilter = "all" | "trialing" | "fulfilled" | "attention" | "pending";
 
 const STAGE_LABELS: Record<string, string> = {
-  fulfilled: "Fulfilled",
-  checkout_open: "Checkout open",
-  verification_pending: "Verifying",
-  needs_intake: "Needs intake",
-  needs_checkout: "Needs checkout",
+  fulfilled: "Enrolled",
+  checkout_open: "Incomplete checkout",
+  verification_pending: "Verifying payment",
+  needs_intake: "Prospect — needs intake",
+  needs_checkout: "Prospect — needs checkout",
 };
+
+// The customer's LIFECYCLE stage — a derived signal from enrollment + subscription state,
+// more meaningful to a founder than the raw enrollment state alone.
+function lifecycleStage(c: { enrollment_state: string; subscription_status: string | null; is_paid?: boolean }): {
+  label: string;
+  tone: string;
+  dot: "green" | "blue" | "orange" | "gray" | "red";
+} {
+  if (c.enrollment_state === "fulfilled" && c.is_paid) return { label: "Paying customer", tone: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20", dot: "green" };
+  if (c.enrollment_state === "fulfilled" && c.subscription_status === "trialing") return { label: "Active trial", tone: "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20", dot: "blue" };
+  if (c.enrollment_state === "fulfilled") return { label: "Enrolled", tone: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20", dot: "blue" };
+  if (c.enrollment_state === "checkout_open" || c.enrollment_state === "verification_pending") return { label: "Incomplete checkout", tone: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20", dot: "orange" };
+  return { label: "Prospect", tone: "bg-muted text-muted-foreground border-border", dot: "gray" };
+}
 
 const SUB_TONES: Record<string, string> = {
   trialing: "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20",
@@ -292,7 +308,7 @@ function CustomerRow({
         </div>
       </td>
       <td className="px-3 py-2.5">
-        <Badge>{STAGE_LABELS[customer.enrollment_state] ?? customer.enrollment_state}</Badge>
+        <Badge>{lifecycleStage(customer).label}</Badge>
       </td>
       <td className="px-3 py-2.5">
         <Badge tone={SUB_TONES[customer.subscription_status ?? ""] ?? undefined}>
@@ -428,6 +444,13 @@ function CustomerDrilldown({ userId, onBack }: { userId: string; onBack: () => v
             )}
           </Section>
         )}
+
+        {/* Cross-navigation to connected workflows */}
+        <div className="flex gap-2 text-[11px]">
+          <Link to={viewPath("settings", "Billing")} className="text-[var(--pg-muted)] underline underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            View in Billing →
+          </Link>
+        </div>
 
         {/* O-4: observed activation timeline — only stages whose record exists */}
         {h.activation && h.activation.length > 0 && (

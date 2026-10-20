@@ -31,9 +31,22 @@ announcement. Full19, governed effects/receipts, Live, required authenticated
 negatives and founder acceptance remain owed; preserve9/0 and12/0/4.
 Detailed customer proof stays ANT-52, source coordination ANT-138/147.
 
-## EXP02 verified handoff v2026-10-20.2
+## EXP02 verified handoff v2026-10-20.3
 
-**Owner: EXP02; production source status is PARTIAL, customer proof is owed.**
+**Owner: EXP02; deployed package recovery is VERIFIED, full Experience proof is owed.**
+Configured-input repair [#2413](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2413)
+reviewed8d0ed127 merged main `2c47f529d7db83965c024ea42bb350c457826cdb` with the
+exact reviewed tree91176116, documented AUTHOR-REVIEW / LOWER ASSURANCE and all
+applicable exact-head CI. Production webdpl_7c6wsMQFHfpeQBAPLcYDqpvi6BCu/public
+build2c47f529…mvgy1980 verified. Canonical recovery39465899854/job118777104680
+SUCCESS: **73/73 selected source/configuration matches, zero failures/retirements**.
+Artifact12285685747 SHA256938c988040d16920d1ce55b8fd655a138247c8b51e1a057083140c202ebac7a9.
+The existing guarded workflow advanced `edge-live` e660→exact2c only after complete
+readback; independent ref read matches. Prior70/73 and automatic five-pass/final-tag
+FAILs remain historical. This closes packaging/source certification, without
+activating any provider, business action, permission or full19 customer outcome.
+[Observed release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2413#issuecomment-6297092322).
+
 Target/Executive integration [#2181](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2181)
 reviewed `01f675e28c58a5883cd5049ca9db75a7b02d59f6`, merged
 `2d93594b69ec084ff770402eede09465ca9d179e`. Exact-head checks and previews passed.
@@ -49,9 +62,9 @@ Docker upload. An explicit reviewed-source package previously passed10/10, but
 that observation was superseded by the retry. Upload exit zero, ACTIVE and matching
 metadata are insufficient: keep exact UTF-8 source/config hashes, complete dependency
 coverage and stable before/after identity. The bounded existing-workflow API-builder
-repair still requires its own review, CI and actual production readback. Global
-`edge-live` remains held at `e660dca7bdd3dd9cc32c4af033cdd5cacb426c0e`;
-do not force it forward or broaden this repair into unrelated source recovery.
+repair and its separately reviewed normal recovery are now verified above.
+The historical global hold at e660 was closed by that complete unchanged-verifier
+proof, never by accepting upload status, weakening hashing or manually forcing a tag.
 [Sanitized release evidence](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2181#issuecomment-6282365635).
 
 **Canonical integration guidance:** Executive and Chat reuse the same

@@ -844,7 +844,7 @@ or conversational tool admission was activated. Web
 `20271112130000` applied once; eight new reviewed function bodies/ACLs and three
 ready indexes match production; eight incumbent native bodies remain unchanged.
 Run39452878730 attempt2 verified all27 selected Edge source/config packages,
-including nav-pull-profile48 ACTIVE/JWTtrue after bounded reviewed packaging
+including nav-pull-profile49/JWTtrue after bounded reviewed packaging
 recovery. The subsequent canonical full recovery39457966267 initially verified70/73,
 with three missing compiler inputs; that failure and its held tag remain historical.
 E02#2413 then repaired packaging in main2c47f529. Canonical recovery39465899854 /

@@ -41,8 +41,8 @@ RELEASE_CHANNEL: development: Unmounted source preparation; production identity/
 RELEASE_CLASSIFICATION: internal-only: No customer-visible outcome or announcement added by this receiver slice.
 CUSTOMER_RELEASE_IDENTITY: none: The complete integrated Operations/history Experience has not earned a customer release identity.
 RELEASE_NOTE_REQUIRED: no: Internal preparation only; future coherent customer outcome retains its existing release-governance obligations.
-RELEASE_TRUTH_BOUNDARY: PARTIAL source preparation; customer history/Chat/Live UNAVAILABLE or UNVERIFIED as above. No historical capability/parity closure or production LIVE claim.
-RELEASE_RECOVERY: position=Withhold the unmounted consumer; no database migration or business-record rollback is involved; reference=docs/delivery/experience-05-weekly-commitment-check.md
+RELEASE_TRUTH_BOUNDARY: PARTIAL: Unmounted source preparation only; customer history/Chat/Live UNAVAILABLE or UNVERIFIED as above. No historical capability/parity closure or production LIVE claim.
+RELEASE_RECOVERY: position=Withhold the unmounted consumer without a database migration or business-record rollback; reference=docs/delivery/experience-05-weekly-commitment-check.md
 
 ## Scope, source and review
 

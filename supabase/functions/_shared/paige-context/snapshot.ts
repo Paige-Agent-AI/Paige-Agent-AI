@@ -1505,7 +1505,7 @@ export function projectOperatingSnapshot(
     // Never recover a priority from a domain excluded by this summary's budget.
     const priorities = rankOperatingSnapshotRisks({ requested: s.requested.slice(0, kept), domains: s.domains }).slice(0, 3);
     if (!priorities.length) return plain;
-    const order = [`Priority order (${SNAPSHOT_PRIORITY_POLICY}): Only source-reported risks are ranked; act before watch, source order breaks ties; unreadable areas remain unknown.`,
+    const order = ['Priority order: Only source-reported risks are ranked; act before watch, source order breaks ties; unreadable areas remain unknown.',
       ...priorities.map((risk, index) => `- Priority ${index + 1} (${risk.severity}) from ${SNAPSHOT_DOMAIN_LABELS[risk.domain]}: ${quoted(risk.summary)}`)];
     const prioritized = [header, ...order, ...parts.slice(1)].join('\n');
     // Prefer complete original evidence to an extra interpretation when space is tight.

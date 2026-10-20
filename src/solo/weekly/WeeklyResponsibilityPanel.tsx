@@ -51,12 +51,14 @@ export function WeeklyResponsibilityPanel({ read, refresh, pathname, onRequestPr
             {check.last_run.status === "unknown" && <p>The result is unknown. It must be reconciled before any replay; an older verified check does not resolve this attempt.</p>}
             {check.last_run.status === "failed" && <p>This attempt did not produce a verified completed check. Review the failure before another execution.</p>}</div>}
           {last ? <div className="e5-weekly-result"><h4>Last verified check</h4><p>Completed check · {weeklyInstantLabel(last.observed_at, businessZone)}</p>
-            <p><strong>{last.counts.open} outstanding</strong> · {last.counts.blocked} blocked · {last.counts.overdue} overdue · {last.counts.due_next_week} due in the following week · {last.counts.undated} undated.</p>
+            {last.observation_version === 2 ? <p><strong>{last.counts.open} outstanding</strong> · {last.counts.blocked} blocked. Work deadlines: {last.counts.overdue} overdue · {last.counts.due_next_week} due in the following week · {last.counts.undated} without a deadline.</p>
+              : <><p><strong>{last.counts.open} outstanding</strong> · {last.counts.blocked} blocked · Historical totals: {last.counts.overdue} overdue · {last.counts.due_next_week} due in the following week · {last.counts.undated} undated.</p><p>These historical date totals may include reminder dates. Inspect the original work to verify its current deadline.</p></>}
             <p>The check reviewed this work. It did not complete or change the underlying tasks.</p>
             {last.truncated && <p>Results show up to 50 source items. Counts cover the full eligible observation.</p>}
             {last.source_items ? <ul className="e5-weekly-sources">{last.source_items.map(item => {
               const href = planningItemHref(pathname, { kind: "planning_item", id: item.id });
-              return <li key={item.id}>{href ? <Link to={href}>{item.title}<ArrowUpRight size={14} aria-hidden /></Link> : <span>{item.title}</span>}<small>{item.status.replace(/_/g, " ")} at the check</small></li>;
+              return <li key={item.id}>{href ? <Link to={href}>{item.title}<ArrowUpRight size={14} aria-hidden /></Link> : <span>{item.title}</span>}<small>{item.status.replace(/_/g, " ")} at the check</small>
+                {item.kind === "reminder" && <small>{item.remind_at ? `Reminder at the check: ${weeklyInstantLabel(item.remind_at, businessZone)}` : "Reminder time was not recorded in this historical check."}</small>}</li>;
             })}</ul> : <p>Source links are unavailable for this receipt. Open Operations to inspect current work.</p>}
             <details><summary>Verified receipt</summary><dl className="e5-weekly-facts e5-weekly-receipt">
               <div><dt>Receipt</dt><dd>{last.receipt_id}</dd></div><div><dt>Occurrence</dt><dd>{last.event_id}</dd></div><div><dt>Act</dt><dd>{last.act_id}</dd></div>

@@ -47,6 +47,8 @@ export async function prepareWeeklyControlReview(identity: ContextIdentity, deps
     event_id: verified.event_id, act_id: verified.act_id, receipt_id: verified.receipt_id,
     observed_at: verified.observed_at, scheduled_for: verified.scheduled_for,
     schedule_revision: verified.schedule_revision, status: verified.status,
+    observation_version: verified.observation_version ?? 1,
+    deadline_scope: verified.observation_version === 2 ? "work_only" : "legacy_mixed",
     truncated: verified.truncated, counts: verified.counts,
   } : null;
   return {

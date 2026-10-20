@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { CalendarDays, RefreshCw, ArrowUpRight } from "lucide-react";
 import { tenantRoutePrefixForPath } from "@/components/tenant-shell/tenantShellRoutes";
@@ -7,8 +7,8 @@ import { planningItemHref, reviewWeeklyProposal, WEEKDAYS, weeklyInstantLabel, w
 import type { WeeklyOwnerRead } from "./weekly-owner-read";
 import "./weekly-responsibility.css";
 
-export function WeeklyResponsibilityPanel({ read, refresh, pathname, onRequestPrepared }: {
-  read: WeeklyOwnerRead; refresh: () => void; pathname: string; onRequestPrepared?: () => void;
+export function WeeklyResponsibilityPanel({ read, refresh, pathname, onRequestPrepared, draftComposer }: {
+  read: WeeklyOwnerRead; refresh: () => void; pathname: string; onRequestPrepared?: () => void; draftComposer?: ReactNode;
 }) {
   const snapshot = read.status === "ready" ? read.snapshot : null;
   const businessZone = snapshot?.business_time_zone.state === "configured" ? snapshot.business_time_zone.zone : null;
@@ -69,7 +69,7 @@ export function WeeklyResponsibilityPanel({ read, refresh, pathname, onRequestPr
         </article>;
       })}
       {snapshot.has_more && <p>This bounded read shows up to 50 responsibilities; more records may exist.</p>}
-      {!planning ? <button type="button" className="e5-weekly-primary" onClick={() => setPlanning(true)}>Prepare a weekly responsibility</button> : <form className="e5-weekly-planning" onSubmit={event => { event.preventDefault(); if (!proposal) setFeedback("Choose a valid schedule and time zone."); else { setReviewing(true); setFeedback(""); } }}>
+      {!draftComposer && (!planning ? <button type="button" className="e5-weekly-primary" onClick={() => setPlanning(true)}>Prepare a weekly responsibility</button> : <form className="e5-weekly-planning" onSubmit={event => { event.preventDefault(); if (!proposal) setFeedback("Choose a valid schedule and time zone."); else { setReviewing(true); setFeedback(""); } }}>
         <h3>{reviewing ? "Review your proposal" : "Prepare the schedule"}</h3>
         <p>Local proposal only. Nothing is scheduled or approved.</p>
         {!reviewing ? <div className="e5-weekly-fields"><label>Day<select value={weekday} onChange={event => setWeekday(Number(event.target.value))}>{WEEKDAYS.map((day, i) => <option value={i + 1} key={day}>{day}</option>)}</select></label>
@@ -78,9 +78,10 @@ export function WeeklyResponsibilityPanel({ read, refresh, pathname, onRequestPr
           : <><p className="e5-weekly-schedule">Every {WEEKDAYS[weekday - 1]} at {time}<br />{proposal?.timezone}</p><p>Read your personal outstanding Planning work, report attention and preserve an internal result. No task changes, customer contact or provider sends.</p><p>Recurring scheduling and authorization are unavailable here. Preparing this request gives PAIGE no execution permission.</p></>}
         <div className="e5-weekly-actions">{!reviewing ? <button className="e5-weekly-primary" type="submit">Review proposal</button> : <><button type="button" disabled>Authorize schedule unavailable</button><button type="button" className="e5-weekly-primary" onClick={prepare}>Put request in Chat</button><button type="button" onClick={() => setReviewing(false)}>Change proposal</button></>}
           <button type="button" onClick={() => { setPlanning(false); setReviewing(false); setFeedback(""); }}>Discard proposal</button></div>
-      </form>}
+      </form>)}
       {feedback && <p role="status">{feedback}</p>}
     </>}
+    {draftComposer}
     {root && <nav className="e5-weekly-navigation" aria-label="Weekly responsibility records"><Link to={`${root}/clients/calendar`}>Clients → Calendar</Link><Link to={`${root}/operations/work`}>Operations → Work</Link></nav>}
   </div>;
 }

@@ -1,0 +1,36 @@
+{
+  "dialogs": [
+    {
+      "rect": {
+        "height": 844,
+        "width": 390.3999938964844,
+        "x": 0,
+        "y": 0
+      },
+      "text": "Weekly responsibilityCurrent owner scope, canonical schedules and verified results.Weekly commitment checkReview the week. Keep the original work in Operations.Read Tue, Oct 20, 9:17 AM EDTReview unfinished weekly commitmentsAwaiting approvalEvery Tuesday at 10:00America/New_YorkNext executionNo executable next run is availableScopeYour open, in-progress and blocked Planning work assigned to you or created by you.PermissionExact recurring configuration awaits authorization.Execution is held. The requested time is not a promise of a run. No booking reserves this slot.No receipt-backed completed check has been verified.Future executionsPause, change, resume and cancel affect future runs. They do not terminate an act already processing.Pause unavailableChange unavailableResume unavailableCancel unavailableThese controls require the existing authorized action path. They are not activated in this interface.Review unfinished weekly commitmentsEvery Tuesday at 10:00America/New_YorkYour outstanding personal Planning work. The original commitments stay in Operations → Work.DoneWeekly responsibility saved as an unapproved draft.No executable next run. Recurring authorization and activation are still required. No business task was completed or changed.Draft save receiptResponsibility40000000-0000-4000-8000-000000000008Revision1Rail receipt40000000-0000-4000-8000-000000000009Read saved statusLast read Tue, Oct 20, 9:09 AM EDTPrepare another responsibilityClients → CalendarOperations → WorkClose"
+    }
+  ],
+  "document": {
+    "scrollWidth": 390,
+    "width": 390
+  },
+  "draftControls": [
+    {
+      "disabled": false,
+      "height": 44,
+      "text": "Read saved status",
+      "width": 135.1999969482422
+    },
+    {
+      "disabled": false,
+      "height": 44,
+      "text": "Prepare another responsibility",
+      "width": 209.8500061035156
+    }
+  ],
+  "focus": "Close",
+  "viewport": {
+    "height": 844,
+    "width": 390
+  }
+}

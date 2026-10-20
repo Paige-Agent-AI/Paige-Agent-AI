@@ -730,6 +730,10 @@ verify_jwt = true
 [functions.operator-account-retirement]
 verify_jwt = true
 
+[functions.weekly-commitment-command]
+# Canonical owner draft/confirmation adapter only; recurrence and Chat/Live remain unadmitted.
+verify_jwt = true
+
 # Preserve deployed reminder worker68: pg_cron sends the Vault-held x-cron-token.
 # The handler fails closed through verify_cron_token before reading or dispatching.
 [functions.plan-reminder-cron]

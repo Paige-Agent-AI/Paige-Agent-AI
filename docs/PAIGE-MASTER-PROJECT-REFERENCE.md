@@ -826,6 +826,50 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-20 UTC — EXP02 Finance evidence consumer: source verified, bounded customer proof.**
+PR [#2402](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2402),
+reviewed `d0aafc53ed81273868b4160684677ed02175454b`, merged
+`ddf12b6bbda085cdb9f66587f9e803e11fc3cc18`; actual union tree
+`1472c4813cec3991bf280b9527b1071ada96b8bb` matches review and preserves EXP05.
+AUTHOR-REVIEW / LOWER ASSURANCE 6303545504; all 11 exact-head checks/Preview
+and both Vercel contexts passed. Production web
+`dpl_6qkA2AUtNSxr9ntZt9EMn21Gpcrm` READY at exact merge; public HTTP 200 build
+`ddf12b6bbda085cdb9f66587f9e803e11fc3cc18-mvha1pjq` observed.
+Canonical guarded recovery 39511759880 / job 118934244917 passed strict source
+and configuration for all five selected importers, with zero retirements.
+Artifact 12306466169, SHA256
+`c4d9267ee8bbb068337ade9efdaefff5d8d7f9a0cb7f4f6a0970147215e7eb74`;
+remote edge-live independently confirmed ddf12b6. Initial selected-source PASS /
+final-marker FAIL remains historical; no manual tag override or verifier waiver.
+Own migrations NOT_APPLICABLE; applied VERA history remains intact.
+Actual authorized SOLO no-source disclosure, provenance expansion, Finance
+navigation, return and full reload passed. Populated amounts, provider readiness,
+isolation negatives, new conversational/Live behavior, effects and full acceptance
+remain owed. Same Fabric composer and caller-JWT Finance readers; no ledger,
+issuer, provider, action or permission activation. Finance facts are not a
+cash-flow forecast (ALG-06 remains partial-source, not backtested here).
+Internal production increment, no customer identity or announcement. Forward fix
+preserves the original domain records and applied history.
+[Release and bounded QA receipts](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2402#issuecomment-6303710400);
+detailed customer evidence stays in ANT-52.
+
+**2026-10-20 UTC — Required npm audit prerequisite for EXP02 releases.**
+PR [#2434](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2434),
+reviewed `ee5ae9ebf16f8eda3c648aee36acabae81d6cd28`, merged
+`25d01c84f41c372bc85d84975c0c3a96818e22a9`, exact reviewed tree
+`6b9f4cfd5eda140aa8ffe31f33f190b66db49391`. AUTHOR-REVIEW / LOWER ASSURANCE
+6303184883; ten checks and both Vercel contexts passed; no-SQL Preview skipped.
+Only three fields of npm's nested Vite node changed from 8.2.2 to 8.2.4.
+Locked npm Vitest remains 4.1.11; manifest ^4.1.9, root Vite and the separate
+Bun graph are unchanged. The required production-dependency audit passed with
+zero high/critical findings; five moderate findings remained. This is not a
+claim that every dependency graph or advisory is resolved.
+Web `dpl_3aPTDJHD5nFrXwNnhtBGCSTKGYde` READY at exact merge; public build
+`25d01c84f41c372bc85d84975c0c3a96818e22a9-mvh98tl3` read back.
+No migration, Edge, provider, permission or algorithm change. Internal production
+prerequisite, no customer announcement; recovery is a reviewed lock correction.
+
+
 **2026-10-20 UTC — Existing VERA intelligence identity and Executive handoff source.**
 Original PR [#2400](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2400),
 reviewed `1b7565be158a4641e25c96341b75ce5466aa663f`, merged main

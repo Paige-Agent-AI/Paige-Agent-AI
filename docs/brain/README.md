@@ -1,5 +1,47 @@
 # 🧠 The Second Brain — master index & read-first orientation
 
+## EXP02 current release checkpoint — 2026-10-20
+
+Finance #2402 merged `ddf12b6bbda085cdb9f66587f9e803e11fc3cc18`, exact reviewed
+union tree 1472c481. All 11 exact-head checks/Preview and two Vercel contexts passed;
+production web dpl_6qkA2AUtNSxr9ntZt9EMn21Gpcrm and public ddf12b6…mvha1pjq
+were read back. Canonical guarded recovery 39511759880 strictly verified all five
+selected functions and advanced edge-live to ddf12b6, independently confirmed.
+The earlier final-marker hold remains historical. Own migrations NOT_APPLICABLE.
+Authorized ordinary SOLO no-source disclosure, source/freshness expansion, actual
+Finance navigation, return and full reload passed; populated financial evidence,
+provider readiness, isolation negatives, new Chat/Live and effects remain owed.
+
+Required audit prerequisite #2434 merged 25d01c84, exact tree 6b9f4cfd, with
+all applicable CI and production web/public readback. Only npm's nested Vite
+8.2.2→8.2.4 node changed (three fields); locked npm Vitest is unchanged at 4.1.11.
+Required high/critical audit findings became zero; moderate findings and the
+separate unchanged Bun graph retain their own evidence limits. No product-runtime source,
+permission, provider or algorithm activation.
+
+The existing VERA source release below remains valid; PAIGE is principal COO.
+Targets #2181 is merged, with canonical Play-linked targets and issuer actuals.
+Catalogue CAP-009–017 correction #2440 is a development candidate, not deployed
+status proof: guarded descriptions, no new registry/engine or blanket Live claim.
+The shared panel/source-writer contract is coordinated in ANT-161. Current native
+panel baseline is Listed/Unverified for all nine; weekly review and compatible
+receipt-comparison subsets are preserved, while deeper sources and filed artifacts
+retain their explicit gaps. See the existing 19-outcome matrix.
+
+Algorithm support: **NO VERIFIED ALGORITHM is added by these release receipts.**
+ALG-03 (COO business-health prioritization) and ALG-13 (useful next-best-action
+recommendations) have a separate unreleased deterministic ordering slice #2409.
+ALG-06 cash-flow forecasting is not established by stored Finance facts;
+ALG-04 retention/churn needs originating evidence; ALG-11 model evaluation and
+ALG-12 detection retain their shared originating contracts. PAIGE/VERA consume
+NEXUS, MERIT, CURA, ZION and MENTOR domain outputs through existing scoped seams,
+without reviving historical coding lanes. All 19 outcomes, 9/0 and 12/0/4 evidence
+boundaries, and the single full-Experience founder evaluation remain required.
+No new customer release identity, provider, consequential action or privilege
+activation. Current release evidence is in Master §4.0 and ANT-138/147/52.
+This checkpoint supersedes candidate-only status in dated entries below.
+
+
 ## EXP02 VERA observed source-release identity — 2026-10-20
 
 This observed release supersedes the candidate-only VERA status in the dated

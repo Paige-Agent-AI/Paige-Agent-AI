@@ -270,6 +270,8 @@ async function ownerTaskNativeProof() {
       // An extension of THIS disposable native harness, not a second engine.
       const {proveOwnerTaskApprovalVisibility}=await import('./owner-task-approval-visibility-cases.mjs');
       await proveOwnerTaskApprovalVisibility({sql,text,fn,held,control,actor,tenant,other,human,check,refuses,id,literal,json,scratch,exe,args,database});
+      const {proveOwnerTaskHistory}=await import('./owner-task-history-cases.mjs');
+      await proveOwnerTaskHistory({sql,held,actor,tenant,other,human,check,literal});
       writeFileSync(resolve(scratch,'approval-visibility-result.json'),JSON.stringify({passed:cases.length,cases,
         proofClass:'DISPOSABLE_POSTGRES_ACTUAL_RLS_VIEW_COMPANION_CANCELLATION_RECEIPT',authenticatedQA:'NOT_RUN',fullSchema:'NOT_RUN'},null,2));
       console.log(JSON.stringify({result:resolve(scratch,'approval-visibility-result.json'),passed:cases.length,failed:0}));return;

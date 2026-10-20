@@ -33,7 +33,7 @@ MUST_PRESERVE: original Plan with PAIGE, Work/Projects/Delivery/Playbooks/Capaci
 ACCEPTANCE_CRITERIA: same tenant-neutral entry for eligible current/future SOLO accounts; no read until opening; original owner contract; truthful reader state and same native destinations; close/focus/reload; no new side effects.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: affected Overview entry/layout and original reader privacy tested; weekly authority/writers, OperationsWorkspace/Route, Chat/Live, Spine/Harness/Trust/Rail, providers, migrations, provisioning and activation untouched.
-INTERNAL_BUILD_IDENTITY: base=40c1a4d8e5a067d6386c2b39517d6f9965ae38f7; final source head/tree in Git/PR; deployment=NOT_DEPLOYED; environment=isolated local current source; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/exp05-operations-weekly-entry/export-integrity.json.
+INTERNAL_BUILD_IDENTITY: base=40c1a4d8e5a067d6386c2b39517d6f9965ae38f7; final source head/tree in Git/PR; deployment=NOT_DEPLOYED; environment=local isolated current source; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/exp05-operations-weekly-entry/export-integrity.json.
 RELEASE_CHANNEL: development: reviewed-source candidate, not production or authenticated proof.
 RELEASE_CLASSIFICATION: patch: connect original weekly inspection to existing Operations.
 CUSTOMER_RELEASE_IDENTITY: none: internal prelaunch increment, no whole-Experience identity or publication.

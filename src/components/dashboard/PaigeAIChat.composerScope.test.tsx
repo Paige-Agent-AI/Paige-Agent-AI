@@ -904,6 +904,30 @@ data: [DONE]
     expect(Array.from(host.querySelectorAll("button")).some(b => b.textContent === "Retry")).toBe(false);
   });
 
+  it("explains a known recovery refusal without claiming a lost connection or replaying the request", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({code:"INTERACTIVE_RECOVERY_READ_ONLY",message_accepted:true},{status:409})));
+    await render(); await type("Review the existing work");
+    await act(async () => { send().click(); await settle(); });
+    expect(host.textContent).toContain("Your message was recorded, but new actions and attachments are on hold");
+    expect(host.textContent).not.toContain("The connection ended before PAIGE confirmed");
+    expect(Array.from(host.querySelectorAll("button")).some(b=>b.textContent==="Retry")).toBe(false);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(host.textContent?.match(/Review the existing work/g)).toHaveLength(1);
+  });
+
+  it.each([
+    {status:502,body:{code:"INTERACTIVE_RECOVERY_READ_ONLY",message_accepted:true}},
+    {status:409,body:{code:"OTHER_REFUSAL",message_accepted:true}},
+    {status:409,body:{code:"INTERACTIVE_RECOVERY_READ_ONLY"}},
+    {status:409,body:{code:"INTERACTIVE_RECOVERY_READ_ONLY",message_accepted:false}},
+  ])("does not infer accepted recovery feedback from $status or contradictory metadata", async ({status,body}) => {
+    vi.stubGlobal("fetch",vi.fn(async()=>Response.json(body,{status})));
+    await render(); await type("Keep refusal truthful");
+    await act(async()=>{send().click();await settle();});
+    expect(host.textContent).not.toContain("Your message was recorded, but new actions and attachments are on hold");
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
   it("Stop during lazy thread creation releases submission readiness for a fresh Send", async () => {
     let resolveThread!: (id: string) => void;
     harness.ensureThread.mockImplementationOnce(() => new Promise<string>((resolve) => { resolveThread = resolve; }));
@@ -920,18 +944,31 @@ data: [DONE]
     expect(textarea().disabled).toBe(false);
   });
 
-  it("a superseded HTTP error body cannot overwrite the newer turn", async () => {
+  it.each([502,409])("a superseded HTTP %s error body cannot overwrite the newer turn", async status => {
     let resolveBody!: (body: unknown) => void;
-    const slowError = { ok: false, status: 502, clone: () => ({ json: () => new Promise((resolve) => { resolveBody = resolve; }) }) };
+    const slowError = { ok: false, status, clone: () => ({ json: () => new Promise((resolve) => { resolveBody = resolve; }) }) };
     const fetchMock = vi.fn().mockResolvedValueOnce(slowError).mockResolvedValueOnce(streamed("current answer"));
     vi.stubGlobal("fetch", fetchMock);
     await render(); await type("old instruction");
     await act(async () => { send().click(); await settle(); });
     await type("new instruction");
     await act(async () => { send().click(); await settle(); });
-    await act(async () => { resolveBody({ message_accepted: true }); await settle(); });
+    await act(async () => { resolveBody({ code:"INTERACTIVE_RECOVERY_READ_ONLY",message_accepted: true }); await settle(); });
     expect(host.textContent).toContain("current answer");
     expect(host.textContent).not.toContain("Check what finished before repeating any action");
+    expect(host.textContent).not.toContain("Your message was recorded, but new actions and attachments are on hold");
+  });
+
+  it("clears refusal wording only for the owner's next deliberate question without replaying the first",async()=>{
+    vi.stubGlobal("fetch",vi.fn().mockResolvedValueOnce(Response.json({code:"INTERACTIVE_RECOVERY_READ_ONLY",message_accepted:true},{status:409})).mockResolvedValueOnce(streamed("existing records answer")));
+    await render();await type("review the first request");
+    await act(async()=>{send().click();await settle();});
+    expect(fetch).toHaveBeenCalledTimes(1);
+    await type("what is already recorded?");
+    await act(async()=>{send().click();await settle();});
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(host.textContent).toContain("existing records answer");
+    expect(host.textContent).not.toContain("Your message was recorded, but new actions and attachments are on hold");
   });
 
   it("Stop preserves the canonical optimistic turn and a next draft without resending work", async () => {

@@ -14,6 +14,7 @@ import {randomUUID,createHash} from 'node:crypto';
 import {catalogueDeclarations,preservesCataloguePredecessor} from '../ci/tool-catalogue-lint.mjs';
 import {historyPerformanceProof} from './weekly-commitment-history-performance.mjs';
 import {weeklyDraftCommandProof} from './weekly-commitment-draft-command.mjs';
+import {weeklyDeadlineProof} from './weekly-commitment-deadlines.mjs';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const migration='supabase/migrations/20271028000000_experience05_weekly_commitment_check.sql';
@@ -21,11 +22,13 @@ const readMigration='supabase/migrations/20271029000000_experience05_weekly_stat
 const historyMigration='supabase/migrations/20271030000000_experience05_weekly_history_indexes.sql';
 const baselineRead=process.argv.includes('--baseline-read-preparation');
 const draftOnly=process.argv.includes('--draft-command-only');
+const deadlineBaseline=process.argv.includes('--baseline-weekly-deadlines');
 const ci=process.argv.includes('--postgres');
 const simulateCiRole=process.argv.includes('--simulate-ci-role');
 if(ci&&process.env.CI!=='true')throw new Error('--postgres is limited to the disposable CI service');
 if(ci&&simulateCiRole)throw new Error('Role simulation is limited to a newly created local disposable cluster');
 if(ci&&baselineRead)throw new Error('Negative baseline is limited to a newly created local disposable cluster');
+if(ci&&deadlineBaseline)throw new Error('Negative deadline baseline is limited to a newly created local disposable cluster');
 if(ci&&draftOnly)throw new Error('Draft-only iteration is local only; CI always runs the complete native proof');
 if(ci&&process.env.PGHOST&&!['localhost','127.0.0.1'].includes(process.env.PGHOST))throw new Error('Loopback only');
 const bin=process.env.WEEKLY_PROOF_PG_BIN??(process.platform==='win32'?'C:/Program Files/PostgreSQL/16/bin':'');
@@ -366,6 +369,9 @@ try{
       ALTER TABLE paige_act_executions ENABLE TRIGGER trg_paige_act_executions_touch;
       UPDATE paige_native_events SET processing_state='error',attempts=5 WHERE id=${literal(s.eventId)};`);
   }
+  const deadlineProof=weeklyDeadlineProof({run,json,literal,source,check,occurrence,owner,tenant,member,otherOwner,foreign,
+    original:{event,receipt,execute:executeSQL,read:`SELECT read_weekly_commitment_check(${literal(automation)},${literal(event)},${literal(act)},${literal(correlation)});`},
+    baseline:deadlineBaseline});
   const darkAfterPublish=occurrence('Released then held');run(darkAfterPublish.claim);
   check('catalogue dark after publication blocks a new observation',()=>{
     run("UPDATE paige_automation_triggers SET is_live=false,dark_reason='Isolated proof hold' WHERE key='schedule.weekly_commitment_check';");
@@ -592,7 +598,7 @@ try{
   const schemaFingerprint=run("SELECT md5(string_agg(pg_get_functiondef(p.oid),E'\\n' ORDER BY p.oid)) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname LIKE '%weekly_commitment%';");
   evidence={status:'PASS',cases:cases.length,checks:cases,source:migration,migration_sha256:migrationHash,
     read_preparation:{source:readMigration,migration_sha256:readMigrationHash,actual_canonical_owner_rpc:true,actual_prepared_owner_reader:true,calendar_records_written:0},
-    schema_fingerprint:schemaFingerprint,history_performance:historyPerformance,draft_command:draftCommand,
+    schema_fingerprint:schemaFingerprint,history_performance:historyPerformance,draft_command:draftCommand,deadline_proof:deadlineProof,
     fixture_service_role:roleParity,
     incumbent_catalogue:{source:declarations.at(-1).file,rows:priorCatalogue.length,preserved_metadata_and_defaults:true},
     boundary:'isolated PostgreSQL selected canonical substrate; auth/context/trust/cron/network/display and operator preflight/provider/inventory doubles; actual operator gate/delete loop; no deployed/authenticated browser claim'};

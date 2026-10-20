@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { readWeeklyCommitmentProjection, prepareWeeklyCommitmentChatResponse } from "../../supabase/functions/_shared/paige-orchestration/weekly-commitment-read";
-import { projectWeeklyCalendar } from "../../supabase/functions/_shared/paige-orchestration/weekly-commitment-projection";
+import { projectWeeklyCalendar, parseWeeklyCommitmentSnapshot, parseWeeklySourceItems, projectWeeklyCommitmentChat } from "../../supabase/functions/_shared/paige-orchestration/weekly-commitment-projection";
 import type { ContextIdentity } from "../../supabase/functions/_shared/paige-context/mod";
 
 const actor = "11111111-1111-4111-8111-111111111111", tenant = "22222222-2222-4222-8222-222222222222";
@@ -27,6 +27,36 @@ function fixture(data: unknown = canonical(), mutate?: (name: string) => void) {
   return { caller, calls, currentIdentity: () => current, switchIdentity: (next: ContextIdentity) => { current = next; } };
 }
 describe("prepared owner-only weekly read — not conversationally admitted", () => {
+  it("retains legacy receipt totals with an explicit legacy semantics marker", () => {
+    const raw = canonical();
+    Object.assign(raw.checks[0].last_verified_run.observation, { version: 1 });
+    const parsed = parseWeeklyCommitmentSnapshot(raw, tenant, actor)!;
+    expect(parsed.checks[0].last_verified_run).toMatchObject({ observation_version: 1, counts: { overdue: 2 } });
+    expect(parsed.checks[0].last_run?.status).toBe("unknown");
+    expect(projectWeeklyCommitmentChat(parsed)).toContain('"deadline_scope":"legacy_mixed"');
+  });
+  it("carries corrected semantics and genuine reminder time privately while keeping model context minimized", () => {
+    const raw = canonical();
+    Object.assign(raw.checks[0].last_verified_run.observation, { version: 2, overdue_count: 1,
+      items: [{ id: receipt, kind: "reminder", title: "PRIVATE future reminder", status: "open", priority: "normal", due_at: null, remind_at: "2099-11-03T15:00:00Z" }] });
+    const parsed = parseWeeklyCommitmentSnapshot(raw, tenant, actor)!;
+    expect(parsed.checks[0].last_verified_run).toMatchObject({ observation_version: 2, counts: { overdue: 1 },
+      source_items: [{ due_at: null, remind_at: "2099-11-03T15:00:00Z" }] });
+    const context = projectWeeklyCommitmentChat(parsed);
+    expect(context).toContain('"observation_version":2');
+    expect(context).toContain('"deadline_scope":"work_only"');
+    for (const privateValue of ["PRIVATE", "source_items", "remind_at", "2099-11-03"]) expect(context).not.toContain(privateValue);
+  });
+  it("refuses unsupported result formats and malformed corrected reminder dates", () => {
+    const raw = canonical(); Object.assign(raw.checks[0].last_verified_run.observation, { version: 3 });
+    expect(parseWeeklyCommitmentSnapshot(raw, tenant, actor)).toBeNull();
+    const reminder = { id: receipt, kind: "reminder", title: "Reminder", status: "open", priority: "normal", due_at: null, remind_at: "2099-11-03T15:00:00Z" };
+    expect(parseWeeklySourceItems([reminder], 2)).toHaveLength(1);
+    for (const mutation of [{ remind_at: undefined }, { remind_at: null }, { remind_at: "not a date" }, { due_at: "2020-01-01T00:00:00Z" }]) {
+      expect(parseWeeklySourceItems([{ ...reminder, ...mutation }], 2)).toBeNull();
+    }
+    expect(parseWeeklySourceItems([{ id: receipt, kind: "reminder", title: "Historical reminder", status: "open", priority: "normal", due_at: null }], 1)?.[0]).not.toHaveProperty("remind_at");
+  });
   it("re-reads the same canonical process in a later conversation without another store or receipt", async () => {
     const f = fixture();
     for (let i = 0; i < 2; i++) {

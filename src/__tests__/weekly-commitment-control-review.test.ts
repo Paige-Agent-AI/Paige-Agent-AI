@@ -19,6 +19,19 @@ function fixture(data:unknown=canonical()) {
 const target={automation_id:process};
 
 describe("canonical weekly conversation review without approval or execution",()=>{
+  it.each([1,2] as const)("carries v%s deadline semantics without private source content",async version=>{
+    const data=canonical(),stamp="2026-10-12T13:00:00Z";
+    Object.assign(data.checks[0],{last_verified_run:{event_id:request,act_id:actor,correlation_ref:"weekly-source-fixture",scheduled_for:stamp,status:"completed",
+      observation:{version,tenant_id:tenant,authorized_by:actor,automation_id:process,event_id:request,act_id:actor,
+        correlation_ref:"weekly-source-fixture",receipt_id:request,source:"public.plan_items",observed_at:stamp,schedule_revision:1,
+        open_count:2,blocked_count:0,overdue_count:version===2?1:2,due_next_week_count:0,undated_count:0,truncated:false,
+        items:[{id:request,kind:"reminder",title:"PRIVATE reminder source",status:"open",priority:"normal",due_at:null,
+          ...(version===2?{remind_at:"2099-11-03T15:00:00Z"}:{})}]}}});
+    const result=await prepareWeeklyControlReview(identity,fixture(data),"pause",target,request);
+    expect(result).toMatchObject({status:"review_ready",review:{last_verified_run:{observation_version:version,
+      deadline_scope:version===2?"work_only":"legacy_mixed"},latest_attempt:{status:"unknown"},authorization:"not_granted_by_review"}});
+    for(const value of ["PRIVATE reminder source","source_items","remind_at","2099-11-03"])expect(JSON.stringify(result)).not.toContain(value);
+  });
   it("prepares exact draft intent against the current business zone without inventing a next run",async()=>{
     const f=fixture(); const r=await prepareWeeklyControlReview(identity,f,"draft",{name:"Weekly commitment check",...schedule},request);
     expect(r).toMatchObject({status:"review_ready",review:{operation:"draft",automation_id:null,revision:null,proposed_schedule:schedule,

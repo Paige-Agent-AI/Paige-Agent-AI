@@ -33,6 +33,13 @@ Chat executor acquisition (#2415), followed by Operations121300 (#2427).
 VERA reserves121400 beyond the verified121300 production frontier. Only its
 unapplied role-remap filename and ten rollback-test includes change; SQL bytes
 and applied history are preserved. Never use include-all or rewrite applied history.
+**Preview recovery lesson:** the existing data-free VERA Preview retained its
+obsolete private121100/121200 migration set after a default reset. A bounded
+development-only reset to the merged121000 baseline is followed by normal
+current-source migration replay. Required Preview stays failed until actual
+Chat121100/Operations121300/VERA121400 readback and a new green check. This is
+not production history repair, include-all or an authenticated-customer result.
+
 Finance [#2402](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2402)
 consumes the existing caller-JWT Finance source contracts through the same snapshot;
 it remains unreleased. Null/unavailable is never zero, cash is never credit, and

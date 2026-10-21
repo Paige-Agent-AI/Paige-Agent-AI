@@ -54,6 +54,12 @@ The official [EXP Algorithms tab](https://docs.google.com/spreadsheets/d/1qMN3h4
 was reread. Keep its IDs/meanings; broader performance/context goals do not silently
 rename ALG06 or ALG11. Expected benefits below are goals, not measured results.
 
+Consumer source anchors: `_shared/paige-context/snapshot.ts`,
+`_shared/paige-context/business-review-chat.ts`,
+`_shared/paige-context/adapters/finance.ts`, `src/solo/executive-review.ts`,
+`_shared/model-router.ts` and `_shared/llm-trace.ts`. Shared Edge paths are under
+`supabase/functions/`; the source release identities above bound this inspection.
+
 | Algorithm | Actual source; input/logic | Owner/maturity | Production and visible result | Impact/acceptance still owed |
 | --- | --- | --- | --- | --- |
 | ALG03 COO business-health prioritization | Existing snapshot rank/projection and Executive consumer; authorized act before watch, stable source ties, complete evidence/reference limits | Operating Fabric; EXP02 consumer. Partial-source deterministic baseline, no invented health score | #2510 certified; bounded genuine ranked customer findings and native links | Identify a supported blocker; full outcome and measured business improvement unverified |
@@ -69,9 +75,9 @@ weekly FINAL (~57s/six references/reload), last30 and quarter advisory reads pro
 bounded successful cases, not universal recovery or filed documents. A fresh single
 released read/reload check completed by its44s observation (one read step/22s shown).
 Original request/narrative/six links persist after optimistic-to-canonical row
-reconciliation and a second stable reload, with no duplicate/empty composer. This
+reconciliation and a second stable reload, with no duplicate and an empty composer. This
 adds one bounded post-release success, not an SLO or action/report outcome. Private
-original evidence and the separate ANT-52 receipt retain the observation boundary.
+original evidence and ANT-52 6799af27 retain the observation boundary.
 Never auto-resend an unknown result or hold HTTP indefinitely. Continuation
 foundations do not activate work.
 

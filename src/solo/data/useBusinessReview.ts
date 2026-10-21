@@ -107,7 +107,7 @@ export function useBusinessReview(accountEpoch: string | null | undefined, perio
         }
         const snapshot = parseBusinessReview(data, accountEpoch, timezone,
           focus ? { focus, actorId: focusedActor!, period } : undefined);
-        if (!snapshot) {
+        if (!snapshot || snapshot.period.key !== period) {
           update({ state: "failed", message: "The review could not be verified for this workspace. Refresh to read it again." });
           return;
         }

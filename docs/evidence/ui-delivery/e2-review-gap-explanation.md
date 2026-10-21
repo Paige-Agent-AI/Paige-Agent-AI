@@ -34,9 +34,9 @@ MUST_PRESERVE: original canonical reader/issuer, actual zero, source periods/cur
 ACCEPTANCE_CRITERIA: explain the actual composer gap, retain other failure meanings, render the same source disclosure at prescribed sizes, and later verify the released ordinary customer path without promoting incomplete outcomes.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: existing caller-bound review and source permissions unchanged; actual composer namespace/Executive negatives tested; no Chat execution, approval, ledger, registry, provider or originating-domain change.
-INTERNAL_BUILD_IDENTITY: development atop87ccff84221497f298041fb33a0e16ee85d8c719; exact final head/review recorded in PR; deployment=PROOF_OWED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e2-review-gap/native-index.json
+INTERNAL_BUILD_IDENTITY: development atop 87ccff84221497f298041fb33a0e16ee85d8c719; exact final head/review recorded in PR; deployment=PROOF_OWED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e2-review-gap/native-index.json
 RELEASE_CHANNEL: development: bounded internal UI correction pending required exact-head CI and normal release/readback.
-RELEASE_CLASSIFICATION: internal UI clarity repair: existing source disclosure and product font, no capability activation.
+RELEASE_CLASSIFICATION: internal-only: existing source disclosure and product font repair, no capability activation.
 CUSTOMER_RELEASE_IDENTITY: none: incomplete full Experience; no customer announcement authorized or created.
 RELEASE_NOTE_REQUIRED: no: internal repair; one complete founder evaluation remains required.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: source/native-synthetic disclosure proof; PROOF OWED production/customer/full19; no LIVE promotion.

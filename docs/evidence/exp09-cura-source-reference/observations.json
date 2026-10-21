@@ -4,62 +4,6 @@
     {
       "file": "source-1536-closed.jpg",
       "dock": "closed",
-      "controls": [
-        {
-          "height": 39.29999923706055,
-          "label": "Preview portal"
-        },
-        {
-          "height": 39.29999923706055,
-          "label": "Invite client"
-        },
-        {
-          "height": 43,
-          "label": "Overview"
-        },
-        {
-          "height": 43,
-          "label": "Experience"
-        },
-        {
-          "height": 43,
-          "label": "Client access"
-        },
-        {
-          "height": 43,
-          "label": "Activity"
-        },
-        {
-          "height": 44,
-          "label": "Back to experience"
-        },
-        {
-          "height": 44,
-          "label": "Add a source"
-        },
-        {
-          "height": 44,
-          "label": "Show all sources"
-        },
-        {
-          "height": 44,
-          "label": "Search"
-        },
-        {
-          "height": 44,
-          "label": "Refresh"
-        },
-        {
-          "height": 44,
-          "label": "Review sharing Getting started: coaching FAQ"
-        },
-        {
-          "height": 44,
-          "label": "Review or correct Getting started: coaching FAQ"
-        }
-      ],
-      "focus": "Teach CURA",
-      "heading": "Teach CURA",
       "mainScrollWidth": 1454,
       "mainWidth": 1454,
       "scrollOwner": "auto",
@@ -71,62 +15,6 @@
     {
       "file": "source-1536-open.jpg",
       "dock": "open",
-      "controls": [
-        {
-          "height": 39.29999923706055,
-          "label": "Preview portal"
-        },
-        {
-          "height": 39.29999923706055,
-          "label": "Invite client"
-        },
-        {
-          "height": 43,
-          "label": "Overview"
-        },
-        {
-          "height": 43,
-          "label": "Experience"
-        },
-        {
-          "height": 43,
-          "label": "Client access"
-        },
-        {
-          "height": 43,
-          "label": "Activity"
-        },
-        {
-          "height": 44,
-          "label": "Back to experience"
-        },
-        {
-          "height": 44,
-          "label": "Add a source"
-        },
-        {
-          "height": 44,
-          "label": "Show all sources"
-        },
-        {
-          "height": 44,
-          "label": "Search"
-        },
-        {
-          "height": 44,
-          "label": "Refresh"
-        },
-        {
-          "height": 44,
-          "label": "Review sharing Getting started: coaching FAQ"
-        },
-        {
-          "height": 44,
-          "label": "Review or correct Getting started: coaching FAQ"
-        }
-      ],
-      "focus": "Dock",
-      "heading": "Teach CURA",
       "mainScrollWidth": 1055,
       "mainWidth": 1055,
       "scrollOwner": "auto",
@@ -138,62 +26,6 @@
     {
       "file": "source-1366-closed.jpg",
       "dock": "closed",
-      "controls": [
-        {
-          "height": 39.29999923706055,
-          "label": "Preview portal"
-        },
-        {
-          "height": 39.29999923706055,
-          "label": "Invite client"
-        },
-        {
-          "height": 43,
-          "label": "Overview"
-        },
-        {
-          "height": 43,
-          "label": "Experience"
-        },
-        {
-          "height": 43,
-          "label": "Client access"
-        },
-        {
-          "height": 43,
-          "label": "Activity"
-        },
-        {
-          "height": 44,
-          "label": "Back to experience"
-        },
-        {
-          "height": 44,
-          "label": "Add a source"
-        },
-        {
-          "height": 44,
-          "label": "Show all sources"
-        },
-        {
-          "height": 44,
-          "label": "Search"
-        },
-        {
-          "height": 44,
-          "label": "Refresh"
-        },
-        {
-          "height": 44,
-          "label": "Review sharing Getting started: coaching FAQ"
-        },
-        {
-          "height": 44,
-          "label": "Review or correct Getting started: coaching FAQ"
-        }
-      ],
-      "focus": "Dock",
-      "heading": "Teach CURA",
       "mainScrollWidth": 1285,
       "mainWidth": 1285,
       "scrollOwner": "auto",
@@ -205,62 +37,6 @@
     {
       "file": "source-1366-open.jpg",
       "dock": "open",
-      "controls": [
-        {
-          "height": 39.29999923706055,
-          "label": "Preview portal"
-        },
-        {
-          "height": 39.29999923706055,
-          "label": "Invite client"
-        },
-        {
-          "height": 43,
-          "label": "Overview"
-        },
-        {
-          "height": 43,
-          "label": "Experience"
-        },
-        {
-          "height": 43,
-          "label": "Client access"
-        },
-        {
-          "height": 43,
-          "label": "Activity"
-        },
-        {
-          "height": 44,
-          "label": "Back to experience"
-        },
-        {
-          "height": 44,
-          "label": "Add a source"
-        },
-        {
-          "height": 44,
-          "label": "Show all sources"
-        },
-        {
-          "height": 44,
-          "label": "Search"
-        },
-        {
-          "height": 44,
-          "label": "Refresh"
-        },
-        {
-          "height": 44,
-          "label": "Review sharing Getting started: coaching FAQ"
-        },
-        {
-          "height": 44,
-          "label": "Review or correct Getting started: coaching FAQ"
-        }
-      ],
-      "focus": "Dock",
-      "heading": "Teach CURA",
       "mainScrollWidth": 930,
       "mainWidth": 930,
       "scrollOwner": "auto",

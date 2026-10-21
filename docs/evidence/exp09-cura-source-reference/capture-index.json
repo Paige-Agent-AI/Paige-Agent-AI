@@ -1,0 +1,171 @@
+{
+  "date": "2026-10-21T17:37:10.171Z",
+  "scope": "LOCAL_SOURCE_RENDER_SYNTHETIC_NOT_AUTHENTICATED",
+  "build": "4ac29322c1324b9b3a91b341dbe087a508c04b7e",
+  "main": "950d1dac0f355050eb46e6ce5f39850eefc59620",
+  "sourceHashes": [
+    {
+      "file": "src/components/tenant-relationships/CuraKnowledgePanel.tsx",
+      "sha256": "00ddc15eb22cffcfaaf0a3288b4bba650bf904f7c399551fb7ed106335f452c7"
+    },
+    {
+      "file": "src/components/tenant-relationships/OwnerPortalDashboard.tsx",
+      "sha256": "ab97284369555d28c8f649c0f6443248051f3f813213230cc764355394d7cf1f"
+    },
+    {
+      "file": "src/hooks/useCuraKnowledge.ts",
+      "sha256": "8b40569221a6c12b2dc2d750acd2078b8c1cc5a1ed68a9217c527809cb0e69bf"
+    },
+    {
+      "file": "src/lib/cura-knowledge-reference.ts",
+      "sha256": "93e0df43b7039ee79fda6a63cccf23b435957071af71c811cd3e6134e2ca2b62"
+    }
+  ],
+  "captures": [
+    {
+      "file": "source-1024-closed.jpg",
+      "sha256": "49088fa428b81d4dad40ca36141ab1e4094f6084e0f3c41e793bef290641792a",
+      "format": "JPEG",
+      "w": 1024,
+      "h": 768,
+      "origin": "Native CUA Chromium screenshot; bytes retained without image editing. Production components with synthetic identity/RPC/navigation/dock."
+    },
+    {
+      "file": "source-1024-open.jpg",
+      "sha256": "863c6f43e407989e393b3d6cfdb015a2edc09abb714e9ce3f5a2b96a2c2aec1c",
+      "format": "JPEG",
+      "w": 1024,
+      "h": 768,
+      "origin": "Native CUA Chromium screenshot; bytes retained without image editing. Production components with synthetic identity/RPC/navigation/dock."
+    },
+    {
+      "file": "source-1366-closed.jpg",
+      "sha256": "3c8d42885eb7b0b0a94ff50c544da5d3d065065ac9dc79d2f4288f404fdead2e",
+      "format": "JPEG",
+      "w": 1366,
+      "h": 768,
+      "origin": "Native CUA Chromium screenshot; bytes retained without image editing. Production components with synthetic identity/RPC/navigation/dock."
+    },
+    {
+      "file": "source-1366-open.jpg",
+      "sha256": "081c70d38ea9b82321a2078415a14408b6e5828442746eae157ccb0d1f4cf9af",
+      "format": "JPEG",
+      "w": 1366,
+      "h": 768,
+      "origin": "Native CUA Chromium screenshot; bytes retained without image editing. Production components with synthetic identity/RPC/navigation/dock."
+    },
+    {
+      "file": "source-1536-closed.jpg",
+      "sha256": "c1568da7720b5c6d176fb7637f8998efcf91ee8e57e7bbaab468f8236cf82c8e",
+      "format": "JPEG",
+      "w": 1535,
+      "h": 770,
+      "origin": "Native CUA Chromium screenshot; bytes retained without image editing. Production components with synthetic identity/RPC/navigation/dock."
+    },
+    {
+      "file": "source-1536-open.jpg",
+      "sha256": "68645c22eaf696a8f71821eaaa906e66027c18b64d1915020c916a40e6f31bb6",
+      "format": "JPEG",
+      "w": 1535,
+      "h": 770,
+      "origin": "Native CUA Chromium screenshot; bytes retained without image editing. Production components with synthetic identity/RPC/navigation/dock."
+    },
+    {
+      "file": "source-390-focus-return.jpg",
+      "sha256": "19af0564b88613ff27aa4fd31250df41d9c85f4a93755d5b9f400ceed2432856",
+      "format": "JPEG",
+      "w": 390,
+      "h": 843,
+      "origin": "Native CUA Chromium screenshot; bytes retained without image editing. Production components with synthetic identity/RPC/navigation/dock."
+    },
+    {
+      "file": "source-390-sharing-form.jpg",
+      "sha256": "27da59753c6f5e563b2e9b0e7b212c9006e6258d19c8c8aa4beaa97fd8c9d3e5",
+      "format": "JPEG",
+      "w": 390,
+      "h": 843,
+      "origin": "Native CUA Chromium screenshot; bytes retained without image editing. Production components with synthetic identity/RPC/navigation/dock."
+    },
+    {
+      "file": "source-390.jpg",
+      "sha256": "765be02df22137f1ee4fe2a4816d1c9311b080564a41b6a26ba4916cec2f179b",
+      "format": "JPEG",
+      "w": 390,
+      "h": 843,
+      "origin": "Native CUA Chromium screenshot; bytes retained without image editing. Production components with synthetic identity/RPC/navigation/dock."
+    },
+    {
+      "file": "source-450-reflow-reduced.jpg",
+      "sha256": "c70f93e90ea0c44756b38b7be1890178b0dc7874a85bca9950519267cc9cdfb0",
+      "format": "JPEG",
+      "w": 450,
+      "h": 899,
+      "origin": "Native CUA Chromium screenshot; bytes retained without image editing. Production components with synthetic identity/RPC/navigation/dock."
+    },
+    {
+      "file": "source-900-closed.jpg",
+      "sha256": "f1cd4833d976c070be67ab692cb781ba02385a7e612e0ebe41505c6e3ecdd697",
+      "format": "JPEG",
+      "w": 900,
+      "h": 1000,
+      "origin": "Native CUA Chromium screenshot; bytes retained without image editing. Production components with synthetic identity/RPC/navigation/dock."
+    },
+    {
+      "file": "source-900-open.jpg",
+      "sha256": "41bd3bc16248236501446f2873b74fcbc3ebc87fc9ade73a2018b85a515a5fbb",
+      "format": "JPEG",
+      "w": 900,
+      "h": 1000,
+      "origin": "Native CUA Chromium screenshot; bytes retained without image editing. Production components with synthetic identity/RPC/navigation/dock."
+    },
+    {
+      "file": "source-dark-1366.jpg",
+      "sha256": "26816200b051229028c10f53b722392d9c4444d59cb7a3ed1f286f8f511d3f33",
+      "format": "JPEG",
+      "w": 1366,
+      "h": 768,
+      "origin": "Native CUA Chromium screenshot; bytes retained without image editing. Production components with synthetic identity/RPC/navigation/dock."
+    },
+    {
+      "file": "source-incoming-held.jpg",
+      "sha256": "4e2fbb6757ae7f035418acd0a65dcb504e21d9ef80286b0ad677d1090232aec8",
+      "format": "JPEG",
+      "w": 1366,
+      "h": 768,
+      "origin": "Native CUA Chromium screenshot; bytes retained without image editing. Production components with synthetic identity/RPC/navigation/dock."
+    },
+    {
+      "file": "source-incoming-resumed.jpg",
+      "sha256": "32d309122934359135bbc769457fa95e1c99b52fce0364e43a512db40189c8f5",
+      "format": "JPEG",
+      "w": 1366,
+      "h": 768,
+      "origin": "Native CUA Chromium screenshot; bytes retained without image editing. Production components with synthetic identity/RPC/navigation/dock."
+    },
+    {
+      "file": "source-invalid.jpg",
+      "sha256": "38050e825d6692f1cca6a013f1c8edce2c5f57e6c3478bbc6a27a64a84d4087f",
+      "format": "JPEG",
+      "w": 1366,
+      "h": 768,
+      "origin": "Native CUA Chromium screenshot; bytes retained without image editing. Production components with synthetic identity/RPC/navigation/dock."
+    },
+    {
+      "file": "source-missing.jpg",
+      "sha256": "bb0e7ec84e24f2bf707b14355a1d62333f38b000a1378f59a5e47c1676f7b52f",
+      "format": "JPEG",
+      "w": 1366,
+      "h": 768,
+      "origin": "Native CUA Chromium screenshot; bytes retained without image editing. Production components with synthetic identity/RPC/navigation/dock."
+    },
+    {
+      "file": "source-other-business-retired.jpg",
+      "sha256": "ed9117ebd663a608c369d1008fcdea8024c6d20a0ba8d703482319f11c488713",
+      "format": "JPEG",
+      "w": 1366,
+      "h": 768,
+      "origin": "Native CUA Chromium screenshot; bytes retained without image editing. Production components with synthetic identity/RPC/navigation/dock."
+    }
+  ],
+  "boundary": "Eight layout captures refreshed after950d main integration; earlier state captures show the same final Panel review/focus controls. Media and viewport overrides cleared. Native200percent zoom/iOS/AT, authenticated shell/publication/provider and Chat teaching not proven."
+}

@@ -13,8 +13,8 @@ RENDERED_EVIDENCE: PASS: ../exp09-cura-source-reference native captures; origina
 BEHAVIORAL_EVIDENCE: PASS: exact source read; missing/malformed refusal; no substitute; terms/review preserved through incoming reference, cancel then opens intended next source; business switch retires old source.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no ordinary authenticated publication/source link/CURA answer or same-login multi-business drive for this candidate.
 KEYBOARD_FOCUS: PASS: valid linked read focuses its heading after loading; review heading and cancel-to-original-row; deferred-source cancel focuses new source heading.
-ZOOM_REFLOW: UNVERIFIED:390 mobile source fits without horizontal overflow; native200percent zoom and iOS/AT remain owed;450 reflow separately recorded when exercised.
-REDUCED_MOTION: UNVERIFIED: no new motion authored; current preference/computed-duration observation still owed.
+ZOOM_REFLOW: UNVERIFIED:390 mobile source fits without horizontal overflow; native200percent zoom and iOS/AT remain owed;450 reflow has main clientWidth=scrollWidth369 and a native capture; this is not browser zoom.
+REDUCED_MOTION: PASS: native preference reduce confirmed; actual rendered control/text animation and transition durations0.00001s, no new motion; override cleared.
 STATE_COVERAGE: PASS: valid/missing/malformed/retired source and exact filter; original offline/refusal/unknown/save/source-version controls retained and tested.
 TRUTHFUL_STATE_LABELS: PASS: link is not authority, missing is not empty-success, private publication is not customer sharing, Chat dispatch remains unconnected.
 SOLO_UI: YES: shared Portal Experience for every eligible current/future business through existing context/native predicates.
@@ -35,7 +35,7 @@ MUST_PRESERVE: original invitation, Portal tabs, publisher/Knowledge/K1 authorit
 ACCEPTANCE_CRITERIA: exact source or honest refusal; protected review survives another reference; explicit original publication/share controls; private data retires with business/actor.
 MOTION_PURPOSE: NONE: no new motion; original reduced-motion safety retained.
 PROTECTED_SEAMS: caller-JWT Knowledge and native publisher/K1 unchanged; shared sender/booking/money/Chat/Harness/Spine/activation source untouched.
-INTERNAL_BUILD_IDENTITY: source9af75be15 plus integrationf6f570c4c and documented focused corrections; exact final commit in PR; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/exp09-cura-source-reference/capture-index.json.
+INTERNAL_BUILD_IDENTITY: source4ac29322c1324b9b3a91b341dbe087a508c04b7e plus evidence-only completion; exact final commit in PR; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/exp09-cura-source-reference/capture-index.json.
 RELEASE_CHANNEL: development: original-source local verification, required production web readback follows review/CI.
 RELEASE_CLASSIFICATION: internal-only: exact-source recovery prerequisite within incomplete EXP09.
 CUSTOMER_RELEASE_IDENTITY: none: no integrated founder acceptance or customer-publication decision.

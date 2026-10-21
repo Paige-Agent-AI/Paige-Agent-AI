@@ -162,6 +162,7 @@
   "dependencies": {
     "@vercel/speed-insights": "^1.0.0",
     "@hookform/resolvers": "^3.10.0",
+    "@mdxeditor/editor": "4.3.3",
     "@react-three/drei": "^9.122.0",
     "@react-three/postprocessing": "^2.19.1",
     "@rive-app/react-canvas": "^4.29.5",

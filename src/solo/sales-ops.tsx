@@ -48,6 +48,7 @@ import { SalesDialogPortal, useSalesDraftExit } from "./sales-dialog";
 import { useLocation, useNavigate } from "react-router-dom";
 import { deriveSalesCommand } from "./sales/deriveSalesCommand";
 import { deriveScenario } from "./sales/salesScenario";
+const AgreementPreparationWorkspace = React.lazy(() => import("./sales/AgreementPreparationWorkspace").then(module => ({ default: module.AgreementPreparationWorkspace })));
 
 /**
  * The five shapes a Solo business can sell on. Deliberately not narrower: the owner's instruction
@@ -1704,6 +1705,35 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
   const [success, setSuccess] = React.useState("");
   const location = useLocation();
   const navigate = useNavigate();
+  const selectedAgreement = new URLSearchParams(location.search).get("agreement");
+  const agreementRequest = new URLSearchParams(location.search).get("agreement_request");
+  const agreementBusiness = new URLSearchParams(location.search).get("agreement_business");
+  const canStartAgreement = Boolean(signings.tenantId && signings.phase === "ready" && signings.canManage && !signings.authorityUnknown && agreements.tenantId === signings.tenantId);
+  // Only ephemeral entry metadata; private agreement wording stays in the author
+  // component until its native canonical save. The opaque request URL survives reload.
+  const freshAgreementRequests = React.useRef(new Set());
+  const openAgreementDocument = (id) => {
+    setDetail(null);
+    const query = new URLSearchParams(location.search);
+    query.set("agreement", id); query.delete("agreement_request"); query.delete("agreement_business");
+    signings.retry();
+    navigate({ pathname: location.pathname, search: `?${query.toString()}`, hash: location.hash }, { replace: selectedAgreement === "new" });
+  };
+  const startAgreementDocument = () => {
+    if (!canStartAgreement) return;
+    const request = crypto.randomUUID();
+    freshAgreementRequests.current.add(request);
+    setDetail(null); setEditor(null); setEditing(null);
+    const query = new URLSearchParams(location.search);
+    query.set("agreement", "new"); query.set("agreement_request", request); query.set("agreement_business", signings.tenantId);
+    navigate({ pathname: location.pathname, search: `?${query.toString()}`, hash: location.hash });
+  };
+  const closeAgreementDocument = () => {
+    const query = new URLSearchParams(location.search);
+    freshAgreementRequests.current.delete(agreementRequest);
+    query.delete("agreement"); query.delete("agreement_request"); query.delete("agreement_business");
+    navigate({ pathname: location.pathname, search: query.toString() ? `?${query.toString()}` : "", hash: location.hash });
+  };
   // The Sales-internal view lives in a Sales-local `?view=` param — deep-linkable and testable,
   // and it never touches the shell's `useSubtabRoute` growth-subtab registry. Overview is the bare
   // default; existing command/revenue/scenarios deep links remain supported.
@@ -1898,7 +1928,7 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
    * A declined or unrecognised document still offers nothing, because there genuinely is nothing
    * to do to it — and a control that pretends otherwise is the dead end §70 refuses.
    */
-  const signingAction = (signing, contactId, agreement) => {
+  const legacySigningAction = (signing, contactId, agreement) => {
     if (!canSign || !signing) return null;
     const state = signing.displayState;
     if (state === "completed") {
@@ -1921,6 +1951,10 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
       </button>
     );
   };
+  const signingAction = (signing, contactId, agreement) => <>
+    {signing && signings.canManage ? <button className="btn btn-p" onClick={() => openAgreementDocument(signing.id)}><Ic.doc size={13} />Open agreement document</button> : null}
+    {legacySigningAction(signing, contactId, agreement)}
+  </>;
 
   /** A document that stands on its own — no offer, no price (owner ruling 3). It gets the same
    * drawer, minus the commercial rows it genuinely does not have. */
@@ -2217,7 +2251,16 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
         : <ScenarioLab offers={offers} deals={deals} stages={stages} onAskPaige={askPaige} />
       )}
 
-      {view === "terms" && (<>
+      {view === "terms" && selectedAgreement && <React.Suspense fallback={<div className="so-absent" role="status">Opening the agreement workspace…</div>}>
+        <AgreementPreparationWorkspace tenantId={signings.tenantId} canManage={signings.canManage} authorityUnknown={signings.authorityUnknown}
+          authorizationReady={signings.phase === "ready"} clients={agreements.clients}
+          clientsReady={agreements.phase === "ready" && agreements.tenantId === signings.tenantId} clientsReadable={agreements.clientsReadable}
+          agreementId={selectedAgreement} requestId={agreementRequest} requestTenantId={agreementBusiness} freshlyOpened={freshAgreementRequests.current.has(agreementRequest)}
+          onDraftAttempted={(request) => freshAgreementRequests.current.delete(request)}
+          onOpenRecord={openAgreementDocument} onClose={closeAgreementDocument} onOpenClients={onOpenClients}
+          signings={signings} onRefresh={() => { signings.retry(); agreements.retry(); }} />
+      </React.Suspense>}
+      {view === "terms" && !selectedAgreement && (<>
       {/* ── ONE BAND: what each client agreed, and the document they signed to agree it ─────
         * There were two bands here. The second browsed the Catalog beside a table that had
         * nothing to do with browsing, and the owner removed it (2026-09-22). Its capabilities did
@@ -2244,7 +2287,7 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
             <button className="btn btn-s btn-q" onClick={() => onOpenCatalog()}>Open Catalog</button>
           ) : null}
           {agreements.canManage
-            ? <button className="btn btn-s btn-p" onClick={() => { setEditing(null); setEditor("agreement"); }}>New agreement</button>
+            ? <><button className="btn btn-s" onClick={() => { setEditing(null); setEditor("agreement"); }}>Record terms or upload</button><button className="btn btn-s btn-p" onClick={startAgreementDocument} disabled={!canStartAgreement}>New agreement</button>{!canStartAgreement && <span className="so-quiet">Agreement author access must be confirmed.</span>}</>
             : agreements.phase === "ready" && agreements.agreementsReadable
               // A reader who cannot write is told WHO may — never a silently missing button (§36/§70).
               ? <span className="so-quiet">An owner or admin records this.</span>
@@ -2312,7 +2355,7 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
               ? (onOpenClients ? <div className="so-blank-acts"><button className="btn btn-p" onClick={() => onOpenClients()}>Go to Clients <Ic.arrow size={13} /></button></div> : null)
               : agreements.canManage ? (
                 <div className="so-blank-acts">
-                  <button className="btn btn-p" onClick={() => { setEditing(null); setEditor("agreement"); }}>New agreement</button>
+                  <button className="btn btn-p" onClick={startAgreementDocument} disabled={!canStartAgreement}>New agreement</button>
                   {onOpenCatalog ? <button className="btn btn-s" onClick={() => onOpenCatalog()}>Open Catalog <Ic.arrow size={12} /></button> : null}
                 </div>
               ) : null}

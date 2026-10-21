@@ -167,7 +167,7 @@
       "chain": {
         "canonical_source": {
           "status": "real",
-          "note": "Mounted presentations reuse existing Pipeline RPC, offer prices, terms/signing and draft adapters; no aggregate financial source is invented."
+          "note": "Mounted presentations reuse existing Pipeline RPC, offer prices, terms/signing and draft adapters; no aggregate financial source is invented. Native agreement authoring reuses paige_agreements, its original created event/counterparty and the create_paige_agreement_draft_once/read_paige_agreement_preparation/recover_paige_agreement_draft_creation seams. It introduces no second document or execution store."
         },
         "tenant_scope": {
           "status": "inherited_contract",
@@ -222,6 +222,10 @@
       ],
       "sources": [
         "src/solo/SalesWorkspace.tsx",
+        "src/solo/sales/AgreementPreparationWorkspace.tsx",
+        "src/solo/sales/AgreementBodyEditor.tsx",
+        "src/solo/sales/agreementPreparationApi.ts",
+        "docs/evidence/ui-delivery/e04-agreement-authoring-workspace.md",
         "src/solo/useSoloCampaigns.ts",
         "docs/delivery/solo-sales-domain-mount.md",
         "docs/evidence/ui-delivery/solo-sales-domain-mount.md",

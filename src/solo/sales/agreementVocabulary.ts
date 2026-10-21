@@ -43,3 +43,21 @@ export const SIGNATURE_STATE: Record<string, { label: string; tone: string }> = 
   expired: { label: "Link expired", tone: "bad" },
   unrecognised: { label: "Not readable", tone: "n" },
 };
+
+/** Original signing-hook display rule, moved verbatim for the selected-record page. */
+export function displaySignatureState<T extends string>(stored: T, expiresAt: string | null): T | 'expired' {
+  if (stored !== 'sent' && stored !== 'viewed') return stored;
+  const at = expiresAt ? Date.parse(expiresAt) : NaN;
+  return !Number.isNaN(at) && at <= Date.now() ? 'expired' : stored;
+}
+
+/** Pending signatures never establish message delivery or document review. */
+export function signingPreparationLabel(stored: string, expiresAt: string | null): string {
+  const state = displaySignatureState(stored, expiresAt);
+  if (state === 'sent') return 'Awaiting signature';
+  if (state === 'viewed') return 'Signing link opened';
+  return SIGNATURE_STATE[state]?.label ?? 'Status unavailable';
+}
+export const SIGNER_STATE: Record<string, string> = {
+  pending: 'Awaiting signature', viewed: 'Signing link opened', signed: 'Signature recorded', declined: 'Declined',
+};

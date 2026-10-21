@@ -13,13 +13,15 @@ export function SalesDialogPortal({ children }: { children: React.ReactNode }) {
   return createPortal(children, document.querySelector(".solo-campaigns") ?? document.body);
 }
 
-export function useSalesDraftExit(draft: unknown, busy: boolean, onClose: () => void) {
+export function useSalesDraftExit(draft: unknown, busy: boolean, onClose: () => void, options?: { uncertain?: boolean; recordedDraftFound?: boolean }) {
   const initial = React.useRef(JSON.stringify(draft));
-  const dirty = initial.current !== JSON.stringify(draft);
-  useBeforeUnloadGuard(dirty || busy);
+  const uncertain = options?.uncertain === true;
+  const recordedDraftFound = options?.recordedDraftFound === true;
+  const dirty = initial.current !== JSON.stringify(draft) || uncertain || recordedDraftFound;
+  const bypass = React.useRef(false);
+  useBeforeUnloadGuard(dirty || busy, bypass);
   const [pending, setPending] = React.useState<null | (() => void)>(null);
   const confirmationRef = React.useRef<HTMLDivElement>(null);
-  const bypass = React.useRef(false);
   const alive = React.useRef(true);
   React.useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   const request = React.useCallback((action = onClose) => {
@@ -32,9 +34,6 @@ export function useSalesDraftExit(draft: unknown, busy: boolean, onClose: () => 
       if (event.key !== "Escape") return;
       event.preventDefault();
       if (pending) setPending(null); else request();
-    };
-    const unload = (event: BeforeUnloadEvent) => {
-      if ((dirty || busy) && !bypass.current) { event.preventDefault(); event.returnValue = ""; }
     };
     // Browser Back/Forward and same-document navigation in browsers with Navigation API.
     // Full-page exits also retain the standard beforeunload protection.
@@ -63,12 +62,10 @@ export function useSalesDraftExit(draft: unknown, busy: boolean, onClose: () => 
     };
     if (!navigation) window.addEventListener("popstate", pop, true);
     document.addEventListener("keydown", key);
-    window.addEventListener("beforeunload", unload);
     navigation?.addEventListener("navigate", navigate);
     return () => {
       window.removeEventListener("popstate", pop, true);
       document.removeEventListener("keydown", key);
-      window.removeEventListener("beforeunload", unload);
       navigation?.removeEventListener("navigate", navigate);
     };
   }, [dirty, busy, pending, request]);
@@ -87,10 +84,13 @@ export function useSalesDraftExit(draft: unknown, busy: boolean, onClose: () => 
     const buttons = [...event.currentTarget.querySelectorAll<HTMLButtonElement>("button")];
     buttons[document.activeElement === buttons[0] ? 1 : 0]?.focus();
   }}>
-    <h3 id="so-discard-title">Discard unsaved changes?</h3>
-    <p id="so-discard-description">Your changes have not been saved. Continue editing to keep working.</p>
+    <h3 id="so-discard-title">{recordedDraftFound ? "Leave this wording?" : uncertain ? "Leave while the save is unconfirmed?" : "Discard unsaved changes?"}</h3>
+    <p id="so-discard-description">{recordedDraftFound ? "A retained draft was found. Leaving this editor does not apply its current wording to that record. Review the recorded draft before making corrections." : uncertain ? "An earlier save may still complete. You can check the original request when you return." : "Your changes have not been saved. Continue editing to keep working."}</p>
     <button className="btn btn-p" onClick={() => setPending(null)}>Continue editing</button>
-    <button className="btn" onClick={() => { const action = pending; bypass.current = true; setPending(null); action(); }}>Discard changes</button>
+    <button className="btn" onClick={() => { const action = pending; bypass.current = true; setPending(null); action(); }}>{recordedDraftFound ? "Leave current editor" : uncertain ? "Leave and check later" : "Discard changes"}</button>
   </div> : null;
-  return { close: () => request(), request, confirmation, alive };
+  // Only a verified canonical receipt permits the caller's immediate transition
+  // from the editor to that original record. This does not authorize a write.
+  const exitAfterSave = (action = onClose) => { bypass.current = true; action(); };
+  return { close: () => request(), request, confirmation, alive, exitAfterSave };
 }

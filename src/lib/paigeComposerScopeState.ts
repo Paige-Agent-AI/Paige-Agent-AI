@@ -396,6 +396,29 @@ type SessionOwner = Readonly<{ tenantId: string; userId: string }>;
 type SessionDraft = Readonly<{ key: string; text: string; updatedAt: number }>;
 let sessionOwner: SessionOwner | null = null;
 const draftTouchedAt = new Map<string, number>();
+let persistedDraftKeys = new Set<string>();
+
+export type ComposerDraftReloadProtection = "disabled" | "protected" | "unavailable";
+
+function publishPersistedDraftKeys(keys: string[]): void {
+  const next = new Set(keys);
+  const changed = new Set([...persistedDraftKeys, ...next]);
+  const previous = persistedDraftKeys;
+  persistedDraftKeys = next;
+  for (const key of changed) {
+    if (previous.has(key) !== next.has(key)) emit(key);
+  }
+}
+
+function reloadProtectionForKey(key: string | null): ComposerDraftReloadProtection {
+  if (!key || !sessionOwner || !sessionOwns(key, sessionOwner)) return "disabled";
+  const age = Date.now() - (draftTouchedAt.get(key) ?? 0);
+  return persistedDraftKeys.has(key) && age >= 0 && age < DRAFT_SESSION_TTL ? "protected" : "unavailable";
+}
+
+export function readComposerDraftReloadProtection(handle: ComposerDraftHandle): ComposerDraftReloadProtection {
+  return reloadProtectionForKey(composerDraftKey(handle));
+}
 
 function sessionKeyParts(key: string): string[] | null {
   try {
@@ -412,6 +435,7 @@ function sessionOwns(key: string, owner: SessionOwner): boolean {
 }
 
 function discardSessionCache(): void {
+  publishPersistedDraftKeys([]);
   try { window.sessionStorage.removeItem(DRAFT_SESSION_KEY); } catch { /* Current memory still works. */ }
 }
 
@@ -438,7 +462,10 @@ function persistSessionDrafts(): void {
         retained.pop();
         raw = serialize();
       }
-      if (retained.length) window.sessionStorage.setItem(DRAFT_SESSION_KEY, raw);
+      if (retained.length) {
+        window.sessionStorage.setItem(DRAFT_SESSION_KEY, raw);
+        publishPersistedDraftKeys(retained.map(entry => entry.key));
+      }
       else discardSessionCache();
     }
   } catch {
@@ -625,6 +652,8 @@ export function useComposerDraft(state: ComposerScopeState) {
   const subscribe = useCallback((listener: Listener) => subscribeKey(visibleKey, listener), [visibleKey]);
   const getSnapshot = useCallback(() => readKey(visibleKey), [visibleKey]);
   const value = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const getReloadSnapshot = useCallback(() => reloadProtectionForKey(visibleKey), [visibleKey]);
+  const reloadProtection = useSyncExternalStore(subscribe, getReloadSnapshot, getReloadSnapshot);
 
   const setValue = useCallback((next: SetStateAction<string>) => {
     const writableHandle = state.writableHandle;
@@ -641,6 +670,7 @@ export function useComposerDraft(state: ComposerScopeState) {
 
   return {
     value,
+    reloadProtection,
     setValue,
     visibleHandle: state.visibleHandle,
     writableHandle: state.writableHandle,

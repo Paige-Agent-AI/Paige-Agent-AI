@@ -64,4 +64,15 @@ describe("Ask PAIGE handoff", () => {
     expect(mergeIntoDraft("Keep my note.", "ZION?", { preserveAddressee: true }))
       .toBe("ZION, Keep my note.");
   });
+
+  it("retains notes added after the prepared question when the same invitation is reopened", () => {
+    const prompt = "ZION, review our work.";
+    const options = { preserveAddressee: true };
+    for (const current of [
+      "ZION, review our work.\n\nAlso check the deadline I mentioned.",
+      "ZION, Keep my earlier note.\n\nreview our work.\n\nKeep this later note too.",
+    ]) expect(mergeIntoDraft(current, prompt, options)).toBe(current);
+    const partial = "ZION, My note mentions review our work. without being the prepared question.";
+    expect(mergeIntoDraft(partial, prompt, options)).toBe(`${partial}\n\nreview our work.`);
+  });
 });

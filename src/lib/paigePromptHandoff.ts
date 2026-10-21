@@ -53,7 +53,9 @@ export function mergeIntoDraft(current: string, prompt: string, options?: { pres
   const currentAddress = detectVpAddress(current);
   const same = currentAddress?.vp.slug === addressed.vp.slug;
   const original = current.replace(/\s+$/, "");
-  if (same && addressed.rest && (currentAddress?.rest === addressed.rest || original.endsWith(`\n\n${addressed.rest}`))) return original;
+  const existingParagraphs = `\n\n${currentAddress?.rest.replace(/\r\n/g, "\n") ?? ""}\n\n`;
+  const preparedParagraphs = `\n\n${addressed.rest.replace(/\r\n/g, "\n")}\n\n`;
+  if (same && addressed.rest && existingParagraphs.includes(preparedParagraphs)) return original;
   return `${same ? original : `${addressed.vp.name}, ${original}`}${addressed.rest ? `\n\n${addressed.rest}` : ""}`;
 }
 

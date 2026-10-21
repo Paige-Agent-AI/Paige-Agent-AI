@@ -170,6 +170,10 @@ describe("PaigeAIChat ComposerScopeState integration", () => {
     await render(); await waitForWritable(); await type("Keep my delivery note.");
     await act(async () => { handOffPaigePrompt("ZION, review this week's work."); await settle(); });
     expect(textarea().value).toBe("ZION, Keep my delivery note.\n\nreview this week's work.");
+    const edited = `${textarea().value}\n\nAlso check the deadline I mentioned.`;
+    await type(edited);
+    await act(async () => { handOffPaigePrompt("ZION, review this week's work."); await settle(); });
+    expect(textarea().value).toBe(edited);
     expect(host.querySelectorAll("textarea")).toHaveLength(1);
     expect(harness.ensureThread).not.toHaveBeenCalled();
     expect(fetch).not.toHaveBeenCalled();

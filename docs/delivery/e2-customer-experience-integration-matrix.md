@@ -1,5 +1,22 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+**October21 UTC readback checkpoint (supersedes candidate statuses below):**
+Presenter#2444/ec83d109, priority baseline#2409/a5a139e7, coverage#2445/b70738fe
+and CI-only#2449/5dbf6e20 are merged/source/web verified. Priority's normal strict
+Edge5-source/config readback PASS; catalogue13030000 is applied and all9 public
+fields match. Ordinary authorized SOLO read/reload and320px coverage reflow PASS:
+4 Coming Soon,3 Limited,2 Unverified, every Access Unverified. Reload defaults to
+Chat; explicit Capabilities return re-reads the same states. Full effective actor/
+provider availability is still owed; no Live/activation or algorithm acceptance.
+Two fresh weekly Chat requests, including released priority source, **FAIL** with
+correlated worker CPUTime shutdown and no assistant settlement; reload keeps the
+question only. Current rollout is ACTIVE, not historical DRAINING. The original9/0
+is unchanged and cannot accept current full-loop behavior. ALG03/13 is only a
+partial shared ordering policy. Actual release/evidence identities are in
+Master§4.0 and the Second Brain; ANT52/0c6dfd90/dc01d1b6. Backend repair remains
+inside canonical Chat/Business Review; all19/9 definitions and founder acceptance
+obligations below remain required, with no originating-domain takeover.
+
 **October20 verified release checkpoint (supersedes older candidate statuses):**
 VERA#2400/61b32a37, Finance#2402/ddf12b6b, audit prerequisite#2434/25d01c84,
 and catalogue descriptions#2440/a0389c3f are merged and production-source verified.

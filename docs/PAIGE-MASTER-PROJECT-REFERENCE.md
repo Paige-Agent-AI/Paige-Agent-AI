@@ -967,6 +967,132 @@ Access Unverified. All 19 outcomes, nine analytics entries and founder evaluatio
 remain required. Recovery is a reviewed forward correction preserving caller scope
 and original records. This factual post-merge closeout is not logged recursively.
 
+**2026-10-21 UTC — EXP02 Chat consumes the canonical Business Review worker.**
+PR [#2455](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2455), reviewed
+`76ecfbb977626df04bae379abb4075e5469aec34`, merged
+`d331534c898d8c032b467902da635c3c9a914613`; actual tree
+`08dfc6ab7bbfc426b5f44b55f8c1e6363b7a35d8` equals the inspected current-main union,
+preserving E05's released focused-hook and weekly-feedback changes. That union
+passes 125 focused/shared-hook cases and 124 actual-Chat/real-review-handler offline
+controls. AUTHOR-REVIEW / LOWER ASSURANCE 6307917121/6308353449; all 11 exact-head
+checks including Preview and both Vercel contexts SUCCESS, zero review threads.
+The existing `get_business_snapshot` now invokes the original-scope caller-JWT
+transport from #2451. Same composer, Metric/Evidence issuer, read authority,
+bounded projection, E4 references and canonical Chat settlement; no local retry
+or fallback. C0b renews only reviewed ancestry scalars, retaining 67 negative
+controls and 228 declarations. The exact Capability Kit read carve-out now proves
+the transport scope at both ends, with eight new negatives; existing debt remains
+288/296, with 40 self-tests and 48 focused cases passing. No guard waiver.
+Normal [Edge 39546490979](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/39546490979)
+/job 119045723620 SUCCESS: `paige-ai-chat` deployed source/configuration PASS,
+independent version 483 ACTIVE and `edge-live` at the exact merge. Existing
+`paige-business-review` version 45 retained. Artifact 12321628380 SHA256
+`89483cfcbd2f98398838ea7a8b2e3046c428013069f2db21fa4f29bc041e336e`.
+Exact web `dpl_Rku3ENn2avVDGDMPGoYxdXEXdQX7` READY; actual customer-origin public
+build `d331534c898d8c032b467902da635c3c9a914613-mvhn04o7` observed, customerUpdate=null.
+Production Finance source proof and Security Audit SUCCESS. Migrations NOT_APPLICABLE;
+no additional configuration, provider/model/limit, permission, action or algorithm activation.
+[Source release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2455#issuecomment-6308425183).
+The deployed review endpoint rejects an anonymous POST with HTTP 401/error only;
+this is anonymous denial, not authenticated role or tenant-isolation proof.
+**Authenticated recovery remains PROOF OWED:** the fresh designated customer tab
+is signed out; no new live model question was sent. Sign-in restoration is requested
+without credentials, alternate account, Operator access or new tenant. Prior two
+canonical-bound CPU shutdown/no-final-answer failures remain open; source/ACTIVE
+and synthetic tests do not close them. CAP-017 stays Limited/Access Unverified.
+ANT-52/64065542 and all 19 outcomes/nine entries/founder evaluation remain owed.
+Channel production; internal reliability repair, no customer version/announcement.
+Recovery is a reviewed forward correction preserving original scope and records.
+This factual post-merge closeout is not logged recursively.
+
+**2026-10-21 UTC — EXP02 labels recorded contact follow-up truthfully.**
+PR [#2460](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2460), reviewed
+`0042e90d850aaec15146a1c2abd810371d625018`, merged
+`c5b40526b10ecfb7935b832045e18990f420c138`; actual tree
+`5e6ed6f5807d179f5f28e566862bd329d7e35f03` equals expected. Final
+AUTHOR-REVIEW / LOWER ASSURANCE6309173482; all10 applicable head checks and
+both Vercel contexts SUCCESS, schema-unaffected PreviewSKIP, zero review threads.
+The current production attention reader counts active/contactable CRM records
+without recorded contact/activity in21days, including possible leads. Greeting,
+Game Plan decision copy and Systems Check now describe that follow-up signal;
+they no longer infer client lapsing, a custom threshold or unconditional drafts/
+sends. Original count/key/priority math, records, Clients destination and domain
+authority remain unchanged; CAP010 stays Coming Soon. Three causal baseline
+failures are retained; corrected77 focused cases and scoped lint/guards PASS.
+Later actual-component synthetic Systems Check proof at1536x770/320x760 verifies
+loaded Schibsted and wrapped notice without horizontal overflow. This is bounded
+component evidence, not authenticated/full-shell/Game Plan acceptance. Native
+[desktop](evidence/ui-delivery/assets/e2-contact-followup-desktop.png) and
+[phone](evidence/ui-delivery/assets/e2-contact-followup-320.png) captures are retained.
+The later three-patch source union8e6b209c passes77 UI/Rail+83 PDF/authority cases with
+unchanged source throughout; the earlier cleanup-racing attempt is excluded.
+Exact production web `dpl_BdkL2nLYHvdM97eyqp535zX3hjSX` READY/gitSource exact;
+actual customer-origin public200 reports
+`c5b40526b10ecfb7935b832045e18990f420c138-mvhpa75k`, customerUpdate=null.
+Migrations/Edge NOT_APPLICABLE. Channel production; internal factual UI repair,
+no customer name/version/announcement or provider/algorithm/action activation.
+[Production source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2460#issuecomment-6309201428).
+Actual customer record navigation/reload, complete health/retention intelligence,
+all19/9 and founder acceptance remain PROOF OWED; authorized sign-in is held.
+Recovery is a reviewed forward correction preserving original source records and
+navigation. This factual post-merge closeout is not logged recursively.
+
+**2026-10-21 UTC — EXP02 distinguishes successful business reads in activity.**
+PR [#2459](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2459), reviewed
+`4e5f315ad1af9e0fd08a239ba6dc1378143c7e3d`, merged
+`7922abf874db30682bf45ccc5894e7ebedbb8901`; actual/expected tree
+`d4ad684f89c8c59c223ece1ff646c741fbb54c3e`. Final sequential
+AUTHOR-REVIEW / LOWER ASSURANCE6309283886, all13 head checks/Preview and both
+Vercel statuses SUCCESS, zero review threads. A pure existing-Rail display wrapper
+labels exact successful `read_sales_collections` and
+`read_sales_commercial_package` tuples as reads/no business changes. No new event,
+receipt producer, historical-row rewrite, Sales reader or authorization exists.
+All other fields, families, outcomes and owner attribution delegate unchanged.
+Actual hosted20-case pgTAP and25 component/hook/mount cases PASS; local native
+SQL/replay proof is supporting, not authenticated customer acceptance.
+Normal migration39553306213/deploy119067305353 SUCCESS; production history
+contains `20271113040000_e2_read_receipt_labels`. Original predecessor OID309375/
+prosrc MD5 `7b197b5aba7fbbc4d28fca078bf0a6fc` is preserved; wrapper OID309465/
+MD5 `8798140accd05c06fa406796efd7dbdd`, immutable invoker/pinned path/private
+anon/authenticated/service ACLs independently verified. Both new summaries and
+unchanged non-display fields/failure/weekly/target delegation read back without
+customer-row access. Web `dpl_GiBfewAHk1SSKcbRWvQmceFwv352` READY/production,
+provider metadata exact7922abf; public HTTP200 build
+`7922abf874db30682bf45ccc5894e7ebedbb8901-mvhpkubs`, customerUpdate=null.
+Edge NOT_APPLICABLE. Channel production/internal-only, no customer identity,
+announcement, algorithm/provider/action activation or catalogue promotion.
+CAP012/016/017 stays Limited/account-access-Unverified. Bounded native synthetic
+Schibsted/1536px/320px evidence is preserved in the
+[existing UI record](evidence/ui-delivery/e2-read-receipt-labels.md).
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2459#issuecomment-6309393445).
+Actual customer read-row/reload/full shell, current Chat CPU recovery, all19/9
+and founder acceptance remain PROOF OWED. Recovery is a reviewed forward
+correction preserving original receipts. This factual closeout is not logged recursively.
+
+**2026-10-21 UTC — Deterministic existing Agreements integrity test.**
+PR [#2461](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2461), reviewed
+`f2014bbd61dcfbb397bb7b3858de3e1afa023b35`, merged
+`20ac409589f0692a0db8b8d3cd24cad0fd11c82c`; actual tree
+`8e6b209c236ad25dedcb44ee220aba1750a51fd0` equals the verified source union.
+The earlier docs-only#2458 verify failed because two immediate PDF renders crossed
+a clock-second boundary (82PASS/1FAIL). One test now uses the existing pinned
+Deno std virtual clock, retaining real-PDF same-time equality and later-time
+inequality with finally cleanup. No renderer, stored-artifact/seal, signing,
+authority, permission, provider, skip or weaker assertion change. Fresh-cache
+local83 cases PASS under exact CI deny flags; zero-advance negative FAIL then
+exact restored test PASS. Earlier unprepared-cache errors remain recorded, not
+misrepresented as passing tests. Final sequential AUTHOR-REVIEW / LOWER ASSURANCE
+6309402913, all11 exact-head checks/Preview plus both Vercel statuses SUCCESS,
+zero review threads; actual hosted Agreements step96/verify SUCCESS.
+Web `dpl_54trqoKUXtFsfi8XfvY1uMJE6nYT` READY/production/exact provider metadata;
+actual public HTTP200 build
+`20ac409589f0692a0db8b8d3cd24cad0fd11c82c-mvhpvn8i`, customerUpdate=null.
+Migrations/Edge NOT_APPLICABLE. Channel production/internal-only CI repair,
+no customer identity/announcement, product/capability/algorithm activation or
+authenticated acceptance. All19/9 and founder evaluation remain owed. Recovery
+is a reviewed bounded test correction/revert preserving the render-once contract.
+This factual post-merge closeout is not logged recursively.
+
 **2026-10-20 UTC — EXP05 retires cancelled or stale weekly owner inspections.**
 PR [#2435](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2435), reviewed
 `727a0ff17e670b387b23e921bdf2c931f0258904`, merged main

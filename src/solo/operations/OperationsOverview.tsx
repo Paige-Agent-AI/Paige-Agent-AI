@@ -1,4 +1,5 @@
 import { ArrowRight, ArrowUpRight, CalendarClock, CirclePause, Sparkles } from "lucide-react";
+import type { ReactNode } from 'react';
 import { WeeklyResponsibilityEntry } from "../weekly/WeeklyResponsibilityEntry";
 import type { Plan, PlanItem } from "@/hooks/usePlanList";
 import type { TeamMemberRecord } from "../team-workspace-contract";
@@ -18,13 +19,15 @@ export interface OperationsOverviewProps {
   onInspectWorkSet?: (group: OperationsWorkSet) => void;
   onReviewWithPaige?: () => void;
   onReviewWorkWithPaige?: (work: NativeOperationsWork) => void;
+  recordedFindings?: ReactNode; nativeWorkState?: 'ready' | 'loading' | 'unavailable';
 }
 
 export function OperationsOverview({ tenantId, plans, items, members, crmTasks = [], onInspectCrmTask,
-  onInspectItem, onInspectPlan, onNavigate, onInspectWorkSet, onReviewWithPaige, onReviewWorkWithPaige }: OperationsOverviewProps) {
+  onInspectItem, onInspectPlan, onNavigate, onInspectWorkSet, onReviewWithPaige, onReviewWorkWithPaige,
+  recordedFindings, nativeWorkState = 'ready' }: OperationsOverviewProps) {
   const people = new Map(members.map(member => [member.user_id, member]));
   const projects = new Map(plans.map(plan => [plan.id, plan]));
-  const work = overviewNativeWork(tenantId, items, crmTasks);
+  const work = overviewNativeWork(tenantId, nativeWorkState === 'ready' ? items : [], nativeWorkState === 'ready' ? crmTasks : []);
   const spotlight = work.attention[0];
   const operating = work.active.filter(item => item.item_type !== "reminder" && item.id !== spotlight?.id);
   const timing = work.timingToConfirm[0];
@@ -54,11 +57,14 @@ export function OperationsOverview({ tenantId, plans, items, members, crmTasks =
       </div>
     </header>
     {work.active.length > 0 && <p className="ops-desk-read-scope">{work.active.length} active {work.active.length === 1 ? "commitment" : "commitments"} · {work.inProgress.length} in progress · {work.reminders.length} {work.reminders.length === 1 ? "reminder" : "reminders"} in the sources shown</p>}
-    {!work.active.length && !plans.length ? <section className="ops-desk-first-use"><h2>Start with one real commitment</h2>
+    {nativeWorkState !== 'ready' ? <>{recordedFindings}<p role="status">{nativeWorkState === 'loading'
+      ? 'Native Work is still being read. Recorded findings are a separate source.'
+      : 'Current Work could not be read. Retry a source above to inspect its records.'}</p></>
+      : !work.active.length && !plans.length ? <>{recordedFindings}<section className="ops-desk-first-use"><h2>Start with one real commitment</h2>
       <p>What needs to happen next, who should own it, and when does it matter? Prepare it with PAIGE or open Work to record the next step.</p>
       <div>{navigate("Open Work", "Work")}{navigate("Plan a project", "Projects")}</div>
       <p className="ops-view-muted">Only work available in the current sources appears here.</p>
-    </section> : <div className="ops-desk-columns"><div className="ops-desk-primary-column">
+    </section></> : <div className="ops-desk-columns"><div className="ops-desk-primary-column">
       {spotlight ? <section className="ops-desk-attention" aria-label="Priority work to inspect"><header>
         <h2>{spotlight.status === "blocked" ? <CirclePause size={17} aria-hidden="true" /> : <CalendarClock size={17} aria-hidden="true" />}Needs your attention</h2>
         <span className="ops-view-status" data-status="blocked">{spotlight.status === "blocked" ? "Blocked" : "Overdue"}</span></header>
@@ -69,7 +75,7 @@ export function OperationsOverview({ tenantId, plans, items, members, crmTasks =
         {work.attention.length > 1 && <p className="ops-view-muted">{work.attention.length - 1} other blocked or overdue {work.attention.length === 2 ? "commitment" : "commitments"} in the work shown.</p>}
         {inspectGroup("View attention in Work", "attention", work.attention.length)}
       </section> : <p className="ops-desk-attention-clear">No blocked or overdue work in the sources shown. Undated work and recorded reminders are included below.</p>}
-      <section><div className="ops-desk-section-heading"><h2>Work in motion</h2>{navigate("All work", "Work")}</div>
+      {recordedFindings}<section><div className="ops-desk-section-heading"><h2>Work in motion</h2>{navigate("All work", "Work")}</div>
         {operating.length ? rows(operating.slice(0, 6)) : <p className="ops-view-muted">{spotlight ? "The priority commitment is shown above." : "No other active tasks or milestones in the sources shown."}</p>}
         {operating.length > 6 && <p className="ops-view-muted">Showing 6 of {operating.length} other active items. Open Work to inspect the rest.</p>}
       </section>

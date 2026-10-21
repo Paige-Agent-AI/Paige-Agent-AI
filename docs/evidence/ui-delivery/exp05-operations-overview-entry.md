@@ -32,7 +32,7 @@ MUST_PRESERVE: original tenant resolution, shell guards, source/deep links, six 
 ACCEPTANCE_CRITERIA: clicking Operations uses the current account's /operations/overview and selects Overview; legacy /operations remains valid and selected; other subview addresses and authorization stay unchanged; required review/CI and actual release/readback precede production claims.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: only shared shell href/section-alias selection affected and tested. Original SoloApp/Operations route retention suites cover history and dirty guards. Chat/Spine/Harness/Trust/Rail, providers, business writes, migrations and permissions unchanged.
-INTERNAL_BUILD_IDENTITY: source parent950d1dac0f355050eb46e6ce5f39850eefc59620; final candidate identity in immutable PR review; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp05-operations-overview-entry.md
+INTERNAL_BUILD_IDENTITY: source parent 950d1dac0f355050eb46e6ce5f39850eefc59620; final candidate identity in immutable PR review; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp05-operations-overview-entry.md
 RELEASE_CHANNEL: development: bounded shared routing correction, not deployed at capture.
 RELEASE_CLASSIFICATION: patch: explicit address for the existing Overview entry.
 CUSTOMER_RELEASE_IDENTITY: none: internal small correction; no customer version or announcement.

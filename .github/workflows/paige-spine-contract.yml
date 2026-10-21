@@ -622,6 +622,12 @@ jobs:
       # approval, and Updates consent for promotions/announcements to portal-linked contacts at plan AND send.
       - run: supabase test db supabase/tests/e09_campaign_portal_audience.sql
         if: ${{ !cancelled() }}
+      # E09 K2: relevant retrieval — the asker re-resolved from the thread; authorized set first, candidates only
+      # through the exact-chunk check, ranked by distance, five sources, eight passages within 4,800 characters
+      # in index order; unrankable shares fill by recency; no embedding = the K1 read's documents, order and text; finance re-checked;
+      # begin binds the read's exact snapshot, replay is byte-identical and never re-embeds, hashes re-checked.
+      - run: supabase test db supabase/tests/e09_customer_knowledge_retrieval.sql
+        if: ${{ !cancelled() }}
       # The owner's real send through create_solo_team_invite, accepted through accept_solo_team_invite,
       # for Member and Admin across two businesses: no hand-written token.
       - run: supabase test db supabase/tests/solo_team_invite_accept_end_to_end.sql

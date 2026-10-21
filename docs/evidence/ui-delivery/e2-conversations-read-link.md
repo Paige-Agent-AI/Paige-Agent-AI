@@ -73,3 +73,13 @@ Catalogue gap: the current platform/system skill catalogue has no `inbox_list`
 entry. ANT-161/f4d0733a records canonical-panel reconciliation owed, not a new
 registry or new skill activation. Existing comms.messages_read stays PARTIAL;
 CAP009–017 and their access labels are unchanged. NO VERIFIED ALGORITHM added.
+
+The restrictive C0b proof initially refused the changed whole-handler ancestry.
+Separate component comparison of immutable Chat b772485f against foundation95d61084
+found all29 exact branches, dominating controls, helpers and imports identical;
+only identity input15 changes, the same whole-handler try. Its canonical diff is
+limited to the inbox dispatcher/reference wiring and trusted-call Map collector.
+Only29 reviewed scalar fingerprints are renewed; extractor, metadata and dependency
+pins remain unchanged. Two added negatives reject substituting the inbox caller or
+trusting references supplied by a result. Actual final guard/CI receipts are required;
+there is no automatic acceptance path, activation or failed-check waiver.

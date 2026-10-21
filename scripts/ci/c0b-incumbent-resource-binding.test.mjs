@@ -54,6 +54,13 @@ test('canonical Conversations reference cannot be redirected to Operator by chan
  assert.ok(validateIncumbentResourceBindings(chat,modified).findings.includes(`incumbent reviewed source changed: ${path}`));
 });
 for(const [label,before,after]of [
+ ['inbox read caller substituted','caller: { rpc: async (name, readArgs) => await supabaseClient.rpc(name, readArgs) }','caller: { rpc: async (name, readArgs) => await supabase.rpc(name, readArgs) }'],
+ ['inbox verification references supplied by a result','const links = readRecordLinkSource.get(tc);','const links = parsed.paige_record_links;'],
+])test(`rejects reviewed Conversations binding: ${label}`,()=>{
+ const changed=chat.replace(before,after);assert.notEqual(changed,chat,'fixture must alter the actual reviewed reader');
+ assert.ok(validateIncumbentResourceBindings(changed,sources).findings.length);
+});
+for(const [label,before,after]of [
  ['activation authority lowered','["automation_set_state", "owner_only",','["automation_set_state", "ordinary",'],
  ['unapproved draft policy changed','["weekly_commitment_draft", "ordinary",','["weekly_commitment_draft", "high",'],
  ['unknown actions become ordinary','RISK_BY_TOOL.get(tool) ?? "unclassified"','RISK_BY_TOOL.get(tool) ?? "ordinary"'],

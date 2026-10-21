@@ -15,6 +15,7 @@ function useHarnessParams() { return new URLSearchParams(useLocation().search); 
 const noop = () => {};
 export const supabase = { rpc: () => { throw Error("HARNESS_NO_BACKEND"); }, from: () => { throw Error("HARNESS_NO_BACKEND"); }, functions: { invoke: () => { throw Error("HARNESS_NO_BACKEND"); } } };
 export function useTenantContext() { const p = useHarnessParams(); return { activeTenantId: p.get("workspace") === "b" ? SECOND_REVIEW_TENANT : TEST_REVIEW_TENANT, activeUserId: "test-owner" }; }
+export const useOptionalTenantContext = useTenantContext;
 export function useTierFeatures() { return { has: () => true, loading: false }; }
 export function useBusinessReview() {
   const p = useHarnessParams(), variant = p.get("state");
@@ -22,7 +23,7 @@ export function useBusinessReview() {
   if (variant === "error" || variant === "member") return { state: "failed", message: variant === "member" ? "This business review is not authorized for this role." : "Your business review could not be read right now. Nothing was changed.", refresh: noop };
   const input = structuredClone(TEST_BUSINESS_REVIEW);
   if (p.get("workspace") === "b") { input.tenant_id = SECOND_REVIEW_TENANT; input.domains.clients.data!.headline = [{ ...input.domains.clients.data!.headline[0], value: 2 }]; }
-  const snapshot = withTargetAndFinanceFixtures(input, variant ?? "ready", import.meta.env.E2_HARNESS_SLICE === "finance");
+  const snapshot = withTargetAndFinanceFixtures(input, variant ?? "ready", ["finance", "catalogue"].includes(import.meta.env.E2_HARNESS_SLICE));
   if (variant === "unavailable") for (const d of snapshot.requested) snapshot.domains[d] = { status: "degraded", data: null, reason: "scope_changed" };
   return { state: "ready", snapshot, refresh: noop };
 }
@@ -53,3 +54,14 @@ export const SoloGamePlanWorkspace = () => <Placeholder name="Business Game Plan
 export const TrustCompass = () => <Placeholder name="Trust Compass" />;
 export const DialPadTrigger = () => null;
 export const PaigeAIChat = () => <p>Conversation is synthetic in this walkthrough.</p>;
+
+// Synthetic public registry coverage only. This never registers or executes a skill.
+export function useSoloSkills() {
+  const state = useHarnessParams().get("state");
+  const skills = state === "empty" || state === "error" || state === "loading" ? [] : [
+    { slug: "weekly_business_review", n: "Weekly Business Review", d: "Review the available business evidence and its gaps. This synthetic fixture grants no runtime access.", catalogueCoverage: { version: 1, state: "limited" } },
+    { slug: "cohort_analysis", n: "Cohort Analysis Read", d: "Cohort comparisons need authoritative acquisition and retention evidence. These are synthetic catalogue inputs.", catalogueCoverage: { version: 1, state: "coming_soon" } },
+    { slug: "monthly_qbr_draft", n: "Monthly Business Review Draft", d: "A filed review document and later retrieval require their own verified outcome.", catalogueCoverage: { version: 1, state: "unverified" } },
+  ].map(row => ({ ...row, on: true }));
+  return { skills, loading: state === "loading", error: state === "error" ? "Synthetic catalogue refusal" : null, empty: state === "empty", refresh: noop };
+}

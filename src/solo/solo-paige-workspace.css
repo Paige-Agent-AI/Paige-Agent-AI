@@ -26,3 +26,6 @@
   #spw-panel-knowledge .spw-view-head>.spw-truth{margin-top:10px}
   #spw-panel-knowledge .spw-provenance dl{grid-template-columns:minmax(0,1fr)}
 }
+.spw-cap-row>div{min-width:0;overflow-wrap:anywhere}.spw-capabilities .spw-truth{justify-self:start}.spw-capabilities .spw-truth-partial{color:hsl(35 80% 29%)}
+@container(max-width:560px){.spw-cap-head,.spw-cap-row{grid-template-columns:minmax(0,1fr) 92px 76px}}
+@container(max-width:400px){.spw-cap-head{display:none}.spw-cap-row{grid-template-columns:minmax(0,1fr) auto;padding:12px}.spw-cap-row>span:last-child{grid-column:1/-1}}

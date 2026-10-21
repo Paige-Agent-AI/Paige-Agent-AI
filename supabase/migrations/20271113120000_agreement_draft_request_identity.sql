@@ -177,4 +177,49 @@ END;
 $function$;
 REVOKE ALL ON FUNCTION public.read_paige_agreement_preparation(uuid,uuid) FROM PUBLIC,anon,authenticated,service_role;
 GRANT EXECUTE ON FUNCTION public.read_paige_agreement_preparation(uuid,uuid) TO authenticated;
+
+-- A later page may retain ONLY its opaque request ID, never private legal text.
+-- Reconcile that original request before loading its selected preparation record.
+-- A missing row is UNCONFIRMED, never proof of rollback or permission to create
+-- a replacement: an earlier request may not yet have arrived at the lock.
+CREATE OR REPLACE FUNCTION public.recover_paige_agreement_draft_creation(
+  _expected_tenant_id uuid,_request_id uuid
+) RETURNS jsonb
+LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path='' AS $function$
+DECLARE
+  _actor uuid := auth.uid();
+  _tenant uuid := public.current_user_tenant_id();
+  _row public.paige_agreements%ROWTYPE;
+  _event uuid;
+BEGIN
+  IF _actor IS NULL OR _tenant IS NULL OR _expected_tenant_id IS DISTINCT FROM _tenant
+    OR public.is_tenant_admin(_tenant) IS DISTINCT FROM true THEN
+    RAISE EXCEPTION 'Agreement workspace or authority unavailable' USING ERRCODE='42501';
+  END IF;
+  IF _request_id IS NULL THEN
+    RAISE EXCEPTION 'The original draft creation request is required' USING ERRCODE='22023';
+  END IF;
+  -- VOLATILE deliberately reads a fresh snapshot after waiting for a creator's
+  -- transaction. A STABLE statement snapshot could miss the newly committed row.
+  PERFORM pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended(
+    'paige-agreement-draft:'||_tenant::text||':'||_request_id::text,0));
+  SELECT * INTO _row FROM public.paige_agreements
+    WHERE tenant_id=_tenant AND draft_creation_request_id=_request_id AND created_by=_actor;
+  IF NOT FOUND THEN
+    RETURN pg_catalog.jsonb_build_object('state','unconfirmed');
+  END IF;
+  SELECT id INTO _event FROM public.paige_agreement_events
+    WHERE tenant_id=_tenant AND agreement_id=_row.id AND event_type='created'
+      AND actor_kind='owner' AND actor_user_id=_actor ORDER BY seq LIMIT 1;
+  IF _event IS NULL THEN
+    RAISE EXCEPTION 'The original draft creation receipt is unavailable' USING ERRCODE='55000';
+  END IF;
+  RETURN pg_catalog.jsonb_build_object('state','recovered','signing_id',_row.id,
+    'signature_state',_row.status,'version',_row.version,'updated_at',_row.updated_at,
+    'creation_event_id',_event);
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.recover_paige_agreement_draft_creation(uuid,uuid)
+  FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.recover_paige_agreement_draft_creation(uuid,uuid) TO authenticated;
 COMMIT;

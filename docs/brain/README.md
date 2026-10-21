@@ -32,7 +32,9 @@ New local native draft foundation reuses unchanged SAVE/agreements/signers/event
 and canonical author authority. Nullable immutable creation correlation, a thin
 create/recover wrapper and selected human DTO are UNMOUNTED, NOT_DEPLOYED.
 Original-call baseline creates two drafts/two signers; native PostgreSQL16 repaired
-proof73 assertions, two concurrent sessions and migration replay twice PASS.
+proof90 assertions, four concurrent sessions and migration replay twice PASS.
+Original-author request recovery supports later-page reconciliation using only an
+opaque UUID, preserving private legal input off browser storage; absent is unconfirmed.
 Existing integrity runner is extended, not replaced. Reserved20271113120000
 follows EXP09 pending100000/110000; reconcile before release.
 No Chat/Spine activation, Portal UI, send/sign/payment, new role or provider change.

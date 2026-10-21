@@ -1,6 +1,9 @@
 -- E04 native preparation foundation. Same agreement/signers/events and SAVE writer.
 -- Nullable metadata preserves all old rows/callers. No backfill, signature, send,
 -- financial obligation, provider activation, Chat registration or new execution store.
+BEGIN;
+SET LOCAL lock_timeout='5s';
+
 ALTER TABLE public.paige_agreements
   ADD COLUMN IF NOT EXISTS draft_creation_request_id uuid,
   ADD COLUMN IF NOT EXISTS draft_creation_request_sha256 text;
@@ -174,3 +177,4 @@ END;
 $function$;
 REVOKE ALL ON FUNCTION public.read_paige_agreement_preparation(uuid,uuid) FROM PUBLIC,anon,authenticated,service_role;
 GRANT EXECUTE ON FUNCTION public.read_paige_agreement_preparation(uuid,uuid) TO authenticated;
+COMMIT;

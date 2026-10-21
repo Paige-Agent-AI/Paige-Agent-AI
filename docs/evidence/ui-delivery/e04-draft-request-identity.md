@@ -24,7 +24,7 @@ MUST_PRESERVE: Existing records, signed versions, native SAVE and CAS, actual co
 ACCEPTANCE_CRITERIA: Same business and actor/request intent recover one original canonical draft and receipt; incompatible intent refuses; a selected human read excludes credentials/private locators and requires existing author authority. Real mounted save/reload/recovery and legitimate role QA remain subsequent acceptance work.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: AFFECTED original agreement row nullable immutable creation metadata and two additive domain routines. UNCHANGED existing SAVE, Chat/Live executor/admission, Spine registrations/fingerprints, Trust/Kit/Rail, approvals, sender, Jobs, Finance calculations, Knowledge and Portal UI. Same existing integrity runner gains this native proof.
-INTERNAL_BUILD_IDENTITY: candidate=LOCAL_UNCOMMITTED; deployment=NOT_DEPLOYED; environment=development; migration=20271113120000 reserved/unapplied; edge=NOT_APPLICABLE; evidence=docs/delivery/exp04-get-paid-deliver-journey.md
+INTERNAL_BUILD_IDENTITY: branch=codex/e04-agreement-draft-identity; initial_product=a8b231fd5e2b4d02b2a6bd83f688db48e9ff9e52; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migration=20271113120000 reserved/unapplied; edge=NOT_APPLICABLE; evidence=docs/delivery/exp04-get-paid-deliver-journey.md
 REMAINING_LIMITATIONS: UNMOUNTED. Request hash covers normalized creation input/reference, not uploaded bytes, an immutable legal revision or accepted economics. No historical body-version store, governed template management, rich editor, generic PDF preparation/fields, signing recovery, C4–C7 accepted/effective terms, provider sending or full E04 closure. Missing original creation event refuses instead of manufacturing a receipt. Current and future eligible SOLO scope remains universal, without account-specific branches. Legal review and complete live founder evaluation remain owed.
 
 ## Native evidence and release boundary
@@ -39,6 +39,8 @@ The paired metadata CHECK explicitly rejects a non-null request with SQL NULL ha
 SQL UNKNOWN must not silently satisfy that constraint. Once recorded, request/hash,
 tenant and original author cannot be rewritten. Deliberate separate request IDs may
 create separate agreements. Later edits use the original existing-ID/CAS writer.
+Migration DDL/grants are explicitly transactional with a five-second lock timeout;
+the final transactional form repeats all73 native assertions successfully.
 
 Reserved120000 follows EXP09's pending100000/110000. Reconcile the actual current
 frontier before release; do not leapfrog those reservations or rewrite applied history.

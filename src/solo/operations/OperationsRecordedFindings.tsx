@@ -10,7 +10,7 @@ import { clearPaigePublicPresenceScope } from '../paigePublicPresenceScope';
 import './operations-recorded-findings.css';
 
 const RETURN_FOCUS = 'exp05RecordedFindingsReturn';
-const readPrompt = 'Review the current recorded Operations findings in this workspace. Read the authorized Operations business snapshot again. Distinguish Systems Check findings from recorded automation-run outcomes and native blocked or overdue Work. Keep missing evidence unknown, explain source time and coverage, and prepare bounded next steps for my review. Do not run checks, create work, change settings or execute an action.';
+const readPrompt = 'ZION, review the current recorded Operations findings in this workspace. Read the authorized Operations business snapshot again. Distinguish Systems Check findings from recorded automation-run outcomes and native blocked or overdue Work. Keep missing evidence unknown, explain source time and coverage, and prepare bounded next steps for my review. Do not run checks, create work, change settings or execute an action.';
 const historyRecord = (value: unknown): Record<string, unknown> | null => value !== null && typeof value === 'object'
   && (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null)
   ? value as Record<string, unknown> : null;
@@ -76,7 +76,7 @@ export function OperationsRecordedFindings({ tenantId, userId, openPaige, canLea
           {data.coverage_note && <p className="ops-findings-note">{data.coverage_note}</p>}
           <div className="ops-findings-actions">{target && <button type="button" className="ops-findings-action" onClick={openSource}>
             {target.label}<ArrowUpRight size={15} aria-hidden="true" /></button>}
-            {openPaige && <button type="button" className="ops-findings-action" onClick={prepareReview}><Sparkles size={15} aria-hidden="true" />Prepare a read-only PAIGE review</button>}
+            {openPaige && <button type="button" className="ops-findings-action" onClick={prepareReview}><Sparkles size={15} aria-hidden="true" />Prepare a read-only ZION review</button>}
           </div>
         </>}
   </section>;

@@ -8,7 +8,7 @@
         "theme": "dark",
         "state": "available"
       },
-      "filename": "links-available-1536-dark.png",
+      "filename": "links-available-1536-dark.jpg",
       "dom": {
         "anchors": [
           {
@@ -44,7 +44,14 @@
           "normal": 17.831114557361992,
           "hoverOpacity80": 11.368002806514582
         }
-      ]
+      ],
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 770,
+        "width": 1535
+      },
+      "exactRaster": false,
+      "dimensionEvidence": "UNVERIFIED:1536 CSS produced1535px native JPEG"
     },
     {
       "case": {
@@ -53,7 +60,7 @@
         "theme": "light",
         "state": "available"
       },
-      "filename": "links-available-1366-light.png",
+      "filename": "links-available-1366-light.jpg",
       "dom": {
         "anchors": [
           {
@@ -89,7 +96,14 @@
           "normal": 15.546595318534123,
           "hoverOpacity80": 8.299328310250834
         }
-      ]
+      ],
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 768,
+        "width": 1366
+      },
+      "exactRaster": true,
+      "dimensionEvidence": "PASS"
     },
     {
       "case": {
@@ -98,7 +112,7 @@
         "theme": "dark",
         "state": "available"
       },
-      "filename": "links-available-1024-dark.png",
+      "filename": "links-available-1024-dark.jpg",
       "dom": {
         "anchors": [
           {
@@ -134,7 +148,14 @@
           "normal": 17.831114557361992,
           "hoverOpacity80": 11.368002806514582
         }
-      ]
+      ],
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 768,
+        "width": 1024
+      },
+      "exactRaster": true,
+      "dimensionEvidence": "PASS"
     },
     {
       "case": {
@@ -143,7 +164,7 @@
         "theme": "light",
         "state": "available"
       },
-      "filename": "links-available-900-light.png",
+      "filename": "links-available-900-light.jpg",
       "dom": {
         "anchors": [
           {
@@ -179,7 +200,14 @@
           "normal": 15.546595318534123,
           "hoverOpacity80": 8.299328310250834
         }
-      ]
+      ],
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 1000,
+        "width": 900
+      },
+      "exactRaster": true,
+      "dimensionEvidence": "PASS"
     },
     {
       "case": {
@@ -188,7 +216,7 @@
         "theme": "dark",
         "state": "available"
       },
-      "filename": "links-available-320-dark.png",
+      "filename": "links-available-320-dark.jpg",
       "dom": {
         "anchors": [
           {
@@ -224,7 +252,14 @@
           "normal": 17.831114557361992,
           "hoverOpacity80": 11.368002806514582
         }
-      ]
+      ],
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 780,
+        "width": 320
+      },
+      "exactRaster": true,
+      "dimensionEvidence": "PASS"
     },
     {
       "case": {
@@ -233,7 +268,7 @@
         "theme": "light",
         "state": "available"
       },
-      "filename": "links-available-320-light.png",
+      "filename": "links-available-320-light.jpg",
       "dom": {
         "anchors": [
           {
@@ -269,7 +304,14 @@
           "normal": 15.546595318534123,
           "hoverOpacity80": 8.299328310250834
         }
-      ]
+      ],
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 780,
+        "width": 320
+      },
+      "exactRaster": true,
+      "dimensionEvidence": "PASS"
     },
     {
       "case": {
@@ -278,7 +320,7 @@
         "theme": "light",
         "state": "unavailable"
       },
-      "filename": "links-unavailable-320-light.png",
+      "filename": "links-unavailable-320-light.jpg",
       "dom": {
         "anchors": [],
         "background": "rgb(251, 248, 244)",
@@ -290,7 +332,14 @@
         "width": 320
       },
       "sha256": "f902eea7597f63cf5f2d2823e5f50360551cde926e0f33f152d10d74207e3107",
-      "contrast": []
+      "contrast": [],
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 780,
+        "width": 320
+      },
+      "exactRaster": true,
+      "dimensionEvidence": "PASS"
     },
     {
       "case": {
@@ -299,7 +348,7 @@
         "theme": "dark",
         "state": "parented"
       },
-      "filename": "links-parented-320-dark.png",
+      "filename": "links-parented-320-dark.jpg",
       "dom": {
         "anchors": [
           {
@@ -324,7 +373,14 @@
           "normal": 17.831114557361992,
           "hoverOpacity80": 11.368002806514582
         }
-      ]
+      ],
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 780,
+        "width": 320
+      },
+      "exactRaster": true,
+      "dimensionEvidence": "PASS"
     }
   ],
   "keyboard": {
@@ -333,7 +389,7 @@
     "outline": "rgb(101, 90, 150) solid 1.6px",
     "outlineOffset": "2.4px",
     "visible": true,
-    "filename": "links-keyboard-320-light.png",
+    "filename": "links-keyboard-320-light.jpg",
     "sha256": "4e776c46add81c92041a43233d402ff2ebcf4ed576641127a26f411082df7d2a"
   },
   "firstPassFinding": "Existing light citation contrast corrected by scoped foreground token; prior artifacts retained in owned outputs",
@@ -354,6 +410,14 @@
     "firstPassFinding": "Existing light citation color failed contrast; scoped foreground correction applied",
     "finalMaterialFindings": [],
     "fullAuthenticatedShell": "PROOF OWED",
-    "synthetic": true
+    "synthetic": true,
+    "currentEvidenceFinding": "Exact1536 raster UNVERIFIED: native JPEG was1535px; historical render/contrast review did not establish exact raster or customer acceptance"
+  },
+  "rasterCorrection": {
+    "date": "2026-10-21",
+    "format": "JPEG",
+    "bytesPreserved": true,
+    "exact1536": "UNVERIFIED: actual1535x770; never accepted as exact native proof",
+    "proofBoundary": "Supporting component render only; source, deployment, authenticated account QA and owner acceptance are separate"
   }
 }

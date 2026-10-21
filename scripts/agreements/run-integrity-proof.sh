@@ -217,4 +217,9 @@ if ! grep -q 'C1 .*signed' "$OUT" || ! grep -q 'C2 .*signed' "$OUT"; then
   echo "FAIL — positive controls did not succeed, so the negatives prove nothing."
   exit 1
 fi
+# E04: reuse this same disposable cluster for the current pgcrypto-qualified
+# signing-context contract. The proof fences the exact data directory before
+# creating its own synthetic database and always drops that database afterward.
+node "$HERE/signing-context-economics-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired
+
 echo "OK — every negative refused with its expected SQLSTATE; positive controls succeeded."

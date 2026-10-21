@@ -155,6 +155,42 @@ ZION approved delivery, PAIGE conversational coordination through the same gover
 
 ### Remaining whole-Experience and legal acceptance
 
+**Current-main historical signing context — October 21, source only.**
+REPAIR / REUSE of the narrow #2158 unknown-economics correction. Read-only production
+catalog returned `peek_agreement_signing(text)` body MD5
+`1436a0512f2373ae5f0d84d3552a6aba`; current migration20271110040000 qualifies
+`extensions.digest`. The earlier E04 draft predates that fix. Forward13090000 retains
+that exact current function apart from its mutable commercial-header lookup; original
+document/body/path, token/refusal, first-open event and twelve-column response stay.
+Amounts/currency/term summary remain unknown until immutable accepted presentation
+supports them. This does not create an accepted snapshot or fix all PRE1 behavior.
+
+1. Owner outcome: recipient reviews the original document without a current mutable
+   amount being mistaken for accepted economics from that document.
+2. Domain: E04 / CRM–Sales; E09 keeps Portal UI and relationship/access contracts.
+3. Harness: existing native token authorization, record read and opening event; no new
+   admission, executor or current/future-account exception.
+4. Spine: existing agreement.list/status/draft/send remain unchanged and PARTIAL;
+   no Chat/Live tool or capability activation.
+5. Provider: no new provider/connection or Integration Registry entry; private native
+   document and original token contract only.
+6. Authority: same anon/authenticated token credential and explicit ACL, no additional
+   service-role access, approval lane, budget or mutation authority.
+7. Events: existing first-open event only; no new scheduler, job or tracking claim.
+8. Readback: original immutable document/digest and native function outcome; no new Rail.
+9. Surface: original /sign/:token and Portal contract, unchanged PARTIAL/proof-owed state.
+10. Acceptance: native positive/negative/refusal/ACL/replay proof, required CI/Preview,
+    safe migration readback and legitimate recipient/owner/client operation remain separate.
+
+The production-fingerprint baseline reproduced the unsupported-header assertion.
+Final native PG16 proof passed27 checks with migration replay2, original anon/auth
+calls and no new service-role grant. Source fixture auth/commercial dependencies are
+declared stand-ins; this is not production authentication or a real signature. Reuse
+the original integrity runner's same disposable cluster in CI. Source/evidence only;
+no production function execution, migration or actual opening/signature occurred.
+E09 already reserves13070000 and E05 reserves13080000; this unapplied file was renamed
+forward to13090000 with identical SQL SHA256, preserving applied migration history.
+
 O1–O12 remain incomplete: exact accepted economics/effective terms; duplicate-free deposits,
 installments and allocation; invoice lifecycle; Stripe TEST/live settlement and uncertain
 outcomes/refunds/reversals/disputes; qualified onboarding; canonical Operations/assignments;

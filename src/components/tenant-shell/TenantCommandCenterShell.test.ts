@@ -44,7 +44,7 @@ describe("tenant Command Center shell routing", () => {
     ]);
     expect(destinations.map(({ id, href }) => [id, href])).toEqual([
       ["command", "/solo/42/command-center"],
-      ["operations", "/solo/42/operations"],
+      ["operations", "/solo/42/operations/overview"],
       ["clients", "/solo/42/clients"],
       ["campaigns", "/solo/42/growth"],
       ["ads", "/solo/42/ads"],
@@ -66,6 +66,23 @@ describe("tenant Command Center shell routing", () => {
       "Settings",
     ]);
   });
+
+  it.each(["42", "7000002"])("opens the explicit Operations Overview for eligible Solo %s", (account) => {
+    for (const suffix of ["", "/overview", "/work", "/projects", "/delivery", "/playbooks", "/capacity"]) {
+      const path = `/solo/${account}/operations${suffix}`;
+      const operations = tenantShellDestinationsForPath(path, "standalone").find(({ id }) => id === "operations");
+      expect(operations?.href).toBe(`/solo/${account}/operations/overview`);
+      expect(operations?.aliases).toContain(`/solo/${account}/operations`);
+      expect(resolveTenantShellDestination(path, "standalone").id).toBe("operations");
+    }
+  });
+
+  it.each([undefined, null, "sub_account", "agency", "enterprise"])(
+    "does not infer an Operations entry from a Solo URL with %s classification", (accountType) => {
+      expect(tenantShellDestinationsForPath("/solo/42/operations", accountType)
+        .some(({ id }) => id === "operations")).toBe(false);
+    },
+  );
 
   it.each([
     ["/agency/1924546/clients", "agency", "Relationships"],

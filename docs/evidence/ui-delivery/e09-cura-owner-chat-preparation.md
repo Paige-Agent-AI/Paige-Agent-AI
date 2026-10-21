@@ -8,14 +8,14 @@ FLOW_PROTOTYPE: PASS: actual shared PaigeConfirmCard in local synthetic flow;66 
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: authorized SOLO publisher prepares exact approved business Knowledge for CURA review, through owner PAIGE.
 VISUAL_DIRECTION: PASS: refinement of canonical owner Chat; shared component, existing typography/tokens/gold approval hierarchy, no new shell or design system.
 AUTOMATED_EVIDENCE: PASS:15 actual-handler recording cases,221 complete C0b guards and111 related adapter/legacy-save/declaration/reference-renderer tests. Historical handler fails the new outcome; exact guarded source restored. These are offline boundaries, not native/customer proof.
-STATIC_EVIDENCE: PARTIAL: exact diff/AST/import/119-source ancestry reviewed, git diff check clean; original118 dependency pins and extractor preserved. Hosted exact-head Deno/type/build/CI remain required.
-RENDERED_EVIDENCE: PARTIAL: assets/e09-cura-teach-chat/pending-390.png, unknown-390.png, accepted-1536.png, unknown-390-dark.png; responsive-state-proof.json records66 actual component renders. This is a local component prototype, not a signed-in full-shell rendering or backend success claim.
-BEHAVIORAL_EVIDENCE: PARTIAL: local prototype exercises approval/decline, uncertainty observation, source/back and mock-business clearing. Actual-handler proof verifies source reference emission, original actor/card/native call and no blind retry. The new production joined flow remains unverified.
+STATIC_EVIDENCE: UNVERIFIED: bounded evidence below does not close the full live claim; exact diff/AST/import/119-source ancestry reviewed, git diff check clean; original118 dependency pins and extractor preserved. Hosted exact-head Deno/type/build/CI remain required.
+RENDERED_EVIDENCE: UNVERIFIED: bounded evidence below does not close the full live claim; assets/e09-cura-teach-chat/pending-390.png, unknown-390.png, accepted-1536.png, unknown-390-dark.png; responsive-state-proof.json records66 actual component renders. This is a local component prototype, not a signed-in full-shell rendering or backend success claim.
+BEHAVIORAL_EVIDENCE: UNVERIFIED: bounded evidence below does not close the full live claim; local prototype exercises approval/decline, uncertainty observation, source/back and mock-business clearing. Actual-handler proof verifies source reference emission, original actor/card/native call and no blind retry. The new production joined flow remains unverified.
 AUTHENTICATED_RUNTIME: UNVERIFIED: this integration is not deployed; no real owner Knowledge mutation, client retrieval, publication/share, eligible Live or returning-session claim. Native prerequisite #2503 has separate production body/ACL proof.
-KEYBOARD_FOCUS: PARTIAL: Enter activates original Approve; prototype transitions focus heading and all66 states retain focus. Full live shell/assistive-technology acceptance remains owed.
-ZOOM_REFLOW: PARTIAL:320px/390px actual prototype reflow has no horizontal overflow or clipped controls; literal200% browser zoom and native iPhone not tested.
+KEYBOARD_FOCUS: UNVERIFIED: bounded evidence below does not close the full live claim; Enter activates original Approve; prototype transitions focus heading and all66 states retain focus. Full live shell/assistive-technology acceptance remains owed.
+ZOOM_REFLOW: UNVERIFIED: bounded evidence below does not close the full live claim;320px/390px actual prototype reflow has no horizontal overflow or clipped controls; literal200% browser zoom and native iPhone not tested.
 REDUCED_MOTION: NOT_APPLICABLE: no production motion change; original shared component behavior retained, no new animation.
-STATE_COVERAGE: PARTIAL: ready, pending, working, recorded preparation, unknown, denied, offline, expired, cancelled, source and business switch covered in synthetic component flow. The prototype's Check original status control is next-increment planning, not claimed as wired in this producer PR.
+STATE_COVERAGE: UNVERIFIED: bounded evidence below does not close the full live claim; ready, pending, working, recorded preparation, unknown, denied, offline, expired, cancelled, source and business switch covered in synthetic component flow. The prototype's Check original status control is next-increment planning, not claimed as wired in this producer PR.
 TRUTHFUL_STATE_LABELS: PASS: private preparation acknowledgment is distinct from extraction completion, publication, indexing, sharing and client retrieval; unknown is not failure or retry authority. No capability or algorithm promoted LIVE.
 SOLO_UI: YES: existing PAIGE owner Chat; no production renderer, dock, page layout, navigation or scroll-owner change. Bounded prototype captures do not substitute for signed-in shell evidence.
 UNVERIFIED: exact final-head CI/deployment/readback; real owner preparation/review/share/client answer/reload; two legitimate cohorts; actual full-shell viewport grid, native mobile,200% zoom and screen reader; eligible Live and visible original-result recovery remain NOT_CONNECTED.
@@ -36,12 +36,12 @@ ACCEPTANCE_CRITERIA: Owner prepares exact information, inspects original source,
 MOTION_PURPOSE: NONE: no new motion.
 PROTECTED_SEAMS: Original claimed-card association extended after successful claim; no claim/approval/admission/risk change. Source collector admits only its native-acknowledged CURA reference; all other28 tool implementations and119 dependency protections preserved.
 
-INTERNAL_BUILD_IDENTITY: 298a03819dab238e2839cf2dc74b5038ac59f97c supporting source commit; final PR head recorded in review/PR body; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_DEPLOYED(paige-ai-chat); evidence=docs/delivery/e09-cura-owner-chat-preparation.md
+INTERNAL_BUILD_IDENTITY: 298a03819dab238e2839cf2dc74b5038ac59f97c supporting source commit; final PR head recorded in review/PR body; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat owner preparation not deployed); evidence=docs/delivery/e09-cura-owner-chat-preparation.md
 RELEASE_CHANNEL: development: production remains unchanged until reviewed exact-head green CI and normal deployment/readback.
-RELEASE_CLASSIFICATION: internal bounded integration, no complete Experience claim.
+RELEASE_CLASSIFICATION: internal-only: bounded integration, no complete Experience claim.
 CUSTOMER_RELEASE_IDENTITY: none: full customer outcome/founder acceptance remains owed.
 RELEASE_NOTE_REQUIRED: no: no customer announcement authorized for this development increment.
-RELEASE_TRUTH_BOUNDARY: BUILT/UNVERIFIED typed preparation; NOT_CONNECTED eligible Live and visible original-status recovery; PROOF OWED authenticated joined Teach CURA and seven-pillar journey.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: typed preparation is built but not deployed or authenticated; eligible Live and visible original-status recovery remain NOT_CONNECTED; joined Teach CURA and seven-pillar journey unverified.
 RELEASE_RECOVERY: position=ordinary reviewed compatible forward fix/revert; reference=docs/delivery/e09-cura-owner-chat-preparation.md; preserve original work/approval/source records, no data rollback.
 
 ## Scope, review and limitations

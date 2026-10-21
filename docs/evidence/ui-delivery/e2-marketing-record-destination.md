@@ -57,3 +57,17 @@ Impeccable: https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impec
 Applied incumbent wording, factual navigation, failure boundaries and preserved
 native renderer; no component/style or visual world to redesign. Source review
 uses the allowed sequential AUTHOR-REVIEW / LOWER ASSURANCE, with no delegation.
+
+Required contract CI initially refused the changed canonical route helper's
+reviewed AST fingerprint. The generic positive-binding failure was reproduced
+locally. Main's old492e6c96 digest reproduced exactly; restoring only that helper
+in an in-memory comparison restored all29 dispatch proofs. Of116 source paths,
+only this helper changed. The two-line type/route extension was re-reviewed:
+actor/account gates, prior routes, focus map and actual Chat source are unchanged.
+Only this helper's inspected digest is renewed to f3336677; no extractor, metadata,
+other dependency or dispatch scalar is weakened. Original70 incumbent mutation
+and refusal cases pass, as do the registry self-test and actual228-capability
+lint. The new Marketing-to-Operator route mutation separately passes its targeted
+refusal check. Existing
+EXP09#2404 pin changes do not overlap this scalar. Failed hosted CI remains
+recorded; new exact-head checks are required after this compatibility repair.

@@ -733,7 +733,11 @@ const SOURCES = {
  // E02 #2467 AUTHOR-REVIEW / LOWER ASSURANCE: only an additive SOLO Conversations
  // destination/type entry; resolver, account/actor gates and exact-focus map unchanged.
  // Renew this helper alone; keep all dispatch pins and the route-mutation refusal.
- "supabase/functions/_shared/canonical-app-url.ts": "492e6c96e3e26109277e659fe0ca1797116191e856044854a3c3964edb6abdcf",
+ // E02 #2481 AUTHOR-REVIEW / LOWER ASSURANCE: additive SOLO Marketing type/route
+ // only; current-account/actor gates, prior routes and focus map unchanged. Old
+ // 492e6c96 digest reproduced from main; all29 dispatches and other115 sources match.
+ // Renew only this inspected helper; extractor/metadata/route refusal stay exact.
+ "supabase/functions/_shared/canonical-app-url.ts": "f3336677d275074ed0c64cfc5d8ac24e42cacb9fa70d9b3069bb21670f936345",
   "supabase/functions/_shared/gmail.ts": "78f697e312d18eb9d73ff2a3802142003a843b109f5e2a956182befb5d6160ff",
   "supabase/functions/_shared/smtp.ts": "0e3ea569f3728dde3329bb5281ef0afb9d592a4f080b3535b2bb7da62799f5ff",
   "supabase/functions/_shared/sales-invoice-delivery/binding.ts": "4e95a90d3a145278d3cb27f64865d26dc968d1c8cf7937dea2feac584e307b77",

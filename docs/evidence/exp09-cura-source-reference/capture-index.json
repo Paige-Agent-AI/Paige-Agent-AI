@@ -167,5 +167,12 @@
       "origin": "Native CUA Chromium screenshot; bytes retained without image editing. Production components with synthetic identity/RPC/navigation/dock."
     }
   ],
-  "boundary": "Eight layout captures refreshed after950d main integration; earlier state captures show the same final Panel review/focus controls. Media and viewport overrides cleared. Native200percent zoom/iOS/AT, authenticated shell/publication/provider and Chat teaching not proven."
+  "boundary": "Eight layout captures refreshed after950d main integration; earlier state captures show the same final Panel review/focus controls. Media and viewport overrides cleared. Native200percent zoom/iOS/AT, authenticated shell/publication/provider and Chat teaching not proven.",
+  "permissionLossCorrection": {
+    "date": "2026-10-21T17:47:58.015Z",
+    "panelSha256": "f5976d2496fd5b52b144f6721ed63a498a9ed724e127b7f57521c91cab7028cc",
+    "reason": "Only a ready selected-source form holds navigation. Native loss releases Back and parent pending state; original unknown-result hold remains protected.",
+    "tests": "Final13 related suites405 PASS; targetedPanel+Hook41 PASS.",
+    "priorSourceHashes": "Historical source hashes above remain tied to their captures; this correction does not relabel earlier snapshots."
+  }
 }

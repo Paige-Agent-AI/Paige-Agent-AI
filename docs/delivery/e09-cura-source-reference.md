@@ -61,3 +61,11 @@ Recovery is a reviewed bounded consumer revert/forward fix, preserving native
 Knowledge, sharing and receipts. No verified new algorithm: original ALG-01/12
 reconciliation/exception handling only. Full seven-pillar acceptance, owner
 Chat/Live teaching and seven assigned capabilities remain active EXP09 work.
+
+Distinct source review of4e07cd41 found a permission-loss exit trap: a locally
+selected form kept the parent locked after the native hook cleared unavailable.
+The form hold now requires a ready phase; an added panel regression requires
+enabled Back, released pending state, no private form and no retry/write.
+Unknown-result protection stays intact. Fresh source recheck remains required.
+The closed destination regression was extended explicitly for portal_knowledge,
+retaining all released Marketing/Finance destinations and unknown-input limits.

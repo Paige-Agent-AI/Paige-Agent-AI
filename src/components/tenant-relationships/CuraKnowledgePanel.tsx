@@ -42,7 +42,7 @@ function CuraKnowledgeSession({tenantId,actor,onBack,onPendingChange,reference}:
   .find(node=>node?.isConnected&&!node.matches(':disabled')&&!node.closest('[hidden], [inert]'))??null,[]);
  const busy=model.outcome==='saving',unknown=model.outcome==='unknown',preparing=model.outcome==='preparing';
  const correction=model.outcome==='correction'?model.correction:undefined;
- const reviewing=model.outcome==='review'&&!!model.proposal,showForm=!!selected&&!reviewing&&!preparing&&!busy&&!unknown&&!['saved','conflict','refused'].includes(model.outcome);
+ const reviewing=model.outcome==='review'&&!!model.proposal,showForm=model.phase==='ready'&&!!selected&&!reviewing&&!preparing&&!busy&&!unknown&&!['saved','conflict','refused'].includes(model.outcome);
  const dialogOpen=adding||!!correction,exitBlocked=busy||unknown||dialogOpen||showForm||preparing||reviewing;
  useBeforeUnloadGuard(exitBlocked);useClientAccountExit(exitBlocked,exitBlocked);
  useLayoutEffect(()=>{onPendingChange?.(exitBlocked);return()=>onPendingChange?.(false);},[exitBlocked,onPendingChange]);

@@ -100,3 +100,9 @@ it('holds an incoming reference through source terms and exact review, releasing
  model.outcome='preparing';await render();expect(pending).toHaveBeenLastCalledWith(true);model.outcome='review';model.proposal=proposal();await render();expect(pending).toHaveBeenLastCalledWith(true);
  model.outcome='saved';model.proposal=null;await render();expect(pending).toHaveBeenLastCalledWith(false);expect(button('Back to experience').disabled).toBe(false);
 });
+
+it("releases a selected-source hold after access is lost without restoring its private form or retrying a write",async()=>{
+ await render();await click("Review sharing");expect(pending).toHaveBeenLastCalledWith(true);model.phase="unavailable";model.outcome="list";model.rows=[];model.notice="Your account or permission changed.";await render();
+ expect(host.textContent).not.toContain("Test welcome FAQ");expect(host.querySelector("select")).toBeNull();expect(pending).toHaveBeenLastCalledWith(false);expect(button("Back to experience").disabled).toBe(false);
+ await click("Back to experience");expect(back).toHaveBeenCalledTimes(1);expect(model.confirm).not.toHaveBeenCalled();expect(model.recover).not.toHaveBeenCalled();expect(model.load).not.toHaveBeenCalled();
+});

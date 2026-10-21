@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: YES: an exact original Knowledge source opens from a refer
 FLOW_PROTOTYPE: PASS: ../exp09-teach-cura-owner/prototype.html;25 exact-reference checks at five widths; owner ANT-163 delegates implementation within approved Knowledge review/sharing intent.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: authorized business publisher opens and reviews the intended Knowledge source without unrelated substitution or lost work.
 VISUAL_DIRECTION: PASS: incumbent Mineral/Obsidian/Schibsted, existing source rows, controls and publication dialog; no redesign or new shell.
-AUTOMATED_EVIDENCE: PASS: inherited reference candidate385 tests/12 suites; final focused panel/hook/dashboard/original-flow72 tests; exact-head complete results recorded before release.
+AUTOMATED_EVIDENCE: PASS: final13 related suites405 tests, no failed or unhandled cases; original real publication flow, actor/tenant/reference retirement, selected-review loss, closed destination/Marketing preservation and unknown receipt protection.
 STATIC_EVIDENCE: UNVERIFIED: final changed-file lint, type/build and exact-head CI/review still pending for this local candidate.
 RENDERED_EVIDENCE: PASS: ../exp09-cura-source-reference native captures; original production components with synthetic identity/RPC/nav/dock, not authenticated acceptance.
 BEHAVIORAL_EVIDENCE: PASS: exact source read; missing/malformed refusal; no substitute; terms/review preserved through incoming reference, cancel then opens intended next source; business switch retires old source.

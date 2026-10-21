@@ -87,6 +87,12 @@ it('resumes the real original draft review and saves against its original work, 
  expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Publish to Knowledge');
  expect(f.invoke).not.toHaveBeenCalled();expect(f.rpc.mock.calls.some(call=>call[0]==='set_client_portal_business_knowledge_share')).toBe(false);
 });
+it('returns focus to Review or correct after closing a real draft flow whose sharing control is disabled',async()=>{
+ await mount();button('Review or correct').focus();await click('Review or correct');
+ expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Review what Paige read');expect(button('Review sharing').disabled).toBe(true);
+ await click('Close');await act(async()=>vi.advanceTimersByTimeAsync(0));await flush();
+ expect(document.querySelector('[role="dialog"]')).toBeNull();expect(document.activeElement).toBe(button('Review or correct'));expect(button('Review or correct').disabled).toBe(false);expect(f.invoke).not.toHaveBeenCalled();
+});
 it('retains saved staged metadata and resumes publication without replacing the source',async()=>{
  saved=true;metadata={title:'Saved FAQ',summary:'Approved summary',category:'Services',tags:['onboarding']};
  await mount();await click('Review or correct');expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Your saved review is ready');

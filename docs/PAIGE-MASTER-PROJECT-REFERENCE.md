@@ -826,6 +826,38 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-21 — EXP09 original skill-result MCP readback.**
+PR [#2484](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2484),
+reviewed `9250c6083ccd24ef2e2909da3654516cbb6beac7`, merged
+`14283117beed124ad055d13728b55481e3655d23`. The existing governed
+get_skill_run door uses verified request identity and the original native
+actor/business/contact authority. Explicit platform-key behavior and field-correct
+aliases remain intact. It reads an existing result; it does not execute a skill,
+change admission or make a capability LIVE. NON-AUTHOR review5604668033 CLEAR;
+current-main compatibility5605095290 is AUTHOR-REVIEW / LOWER ASSURANCE.
+All 11 exact-head checks and both Vercel statuses SUCCESS, including full
+verify119418506532 and database-contract119418504204. Native prerequisite #2482
+was already deployed and body/ACL verified. Push39661817560/job119436506311
+deployed and verified selected source but correctly refused certification over an
+earlier uncertified source gap. Existing workflow_dispatch recovery
+[39662050930](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/39662050930)/
+job119437357876 SUCCESS; actual edge-live equals the merge. Direct production
+paige-mcp v755 ACTIVE, verify_jwt=false preserved for original bearer validation;
+all 19 served bundle files exactly match the merged source. Index SHA256
+3aad35d529cdbb3070d710003846012f85bd97e9fb6080d8d4e22c0cf880f7b3 and policy
+1a370cf9d84d267a2d5dd87f7ed6413dd5969724c5947df2e26106415e6000a8 verified.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2484#issuecomment-6324724661).
+This increment has no migration/web change, activation, send or provider effect.
+Functional: deployed source/readback PASS; authenticated MCP and seven-capability
+outcomes remain PROOF OWED. Visual: NOT_APPLICABLE. Experiential: original
+read-only result path retained; full owner/client journey remains UNVERIFIED.
+Acceptance: complete EXP09 founder evaluation remains separate. Company resolver
+limitation remains UNAVAILABLE. Channel production, internal-only, no customer
+version or announcement. Recovery is a bounded reviewed consumer forward fix or
+revert preserving native authority and records. This factual closeout is not
+logged recursively.
+
+
 **2026-10-21 — EXP04 truthful historical signing economics.**
 PR [#2493](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2493), reviewed
 `ed2964b5024f672492b5db6deac38ff95cb1929b`, merged
@@ -1091,6 +1123,12 @@ records. All19 outcomes/nine analytics and the single founder acceptance remain 
 Both are internal-only production prerequisites, with no customer version or announcement.
 A bounded reviewed correction/revert preserves canonical records and protected action holds.
 All19 outcomes/nine analytics/Live/cohort and single founder acceptance remain required.
+**2026-10-21 — EXP02 factual closeout identity (mechanical post-merge row).**
+
+| Delivery | Exact source and release evidence | Proof boundary / customer release |
+| --- | --- | --- |
+| [#2479](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2479): reconcile original EXP02 Brain, Master, matrix and scoped customer receipts | Reviewed `a0999f2361f7da484f76a5e8d5d51055328d2e18`; merged `4546c21196d8acabe6edb8a7afa39465d9702c96`, exact reviewed union `b9ad1f3d4af5eccb0d348327ffe5cd710ff1170e`. AUTHOR-REVIEW / LOWER ASSURANCE5604605041/5605198830; six exact-head workflows/ten applicable checks and two Vercel contexts SUCCESS, schema-free Preview SKIPPED/N/A. Verceldpl_GD6tk7yBJKzWgsAaSX5z6D7p5uzZ READY/exact merge; actual public `4546c21196d8acabe6edb8a7afa39465d9702c96-mviik65g`, customerUpdate:null. | Documentation/evidence only; own Edge/migrations N/A. Preserves original historical9/0 and12/0/4, observed unsent-Chat/source-absent Finance proof and all19/nine analytics obligations; consumer#2494 remains unreleased. Functional/Visual/Experiential/Acceptance stay distinct. No capability, provider, permission, action or acceptance promotion. [Merge receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2479#issuecomment-6324879476). This one-file mechanical row is not logged recursively. |
+
 **2026-10-21 — EXP02 canonical Conversations read-reference consumer.**
 
 PR [#2470](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2470), reviewed
@@ -5863,6 +5901,30 @@ customer release name/announcement or verified algorithm. No effectful provider,
 Chat/Live or payment activation. Recovery: reviewed forward correction preserving
 original records/native compatibility. [Readback receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2476#issuecomment-6319079327);
 [native contract](delivery/e09-cura-knowledge-inventory.md).
+
+**2026-10-21 — EXP09 Teach CURA owner dashboard.**
+PR [#2480](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2480), reviewed
+`b8dce725ad96fb39c04a9b948aee1fa33f7ffd42` → main
+`1edf3e1f06eb9b372ed347e006bd6d932df1ef26`. Authorized publishers inspect
+original Knowledge and resume its original private review/publication before a
+separate exact native K1 customer audience/source/version/date decision. Original
+receipt recovery and unknown-result no-retry behavior retained. Final NON-AUTHOR
+source/focus review5603393242; all11 exact-head checks/two Vercel statuses pass,
+including177-step database proof and legitimate no-SQL Preview skip. Local304
+tests, build/type/lint and fresh incumbent Impeccable finish passed. Production
+web `dpl_GV6NSfKJvY35FHHV5JzuYCyZFDTB` READY at this main SHA, aliases
+paigeagent.ai/app.paigeagent.ai; four reviewed primary source bodies match main.
+Actual existing authorized owner session opens Experience→Manage Knowledge and
+reads native private/unpublished inventory with sharing correctly disabled. This
+is read-only owner-entry/inventory proof, not publication or customer retrieval.
+Migration/Edge NOT_APPLICABLE here; prior native inventory2476 remains applied.
+No publication, external send, provider/action activation or customer identity
+change performed. Production/internal prerequisite; no customer version or
+announcement. Exact-source recovery, owner Chat/Live teaching, ordinary client
+publication→CURA answer/private reload and complete seven-pillar/founder
+acceptance remain PROOF OWED. Recovery: reviewed consumer forward fix/bounded
+revert preserving original Knowledge/share/receipt contracts. No new verified
+algorithm. [Original action/record contract](delivery/e09-teach-cura-owner-controls.md).
 
 
 **2026-10-21 — EXP09 original skill-result native authority.**

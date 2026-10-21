@@ -8,7 +8,7 @@ FLOW_PROTOTYPE: PASS: this is an incremental implementation of the existing owne
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an eligible SOLO user sees the recorded work dates in the confirmed business time zone and opens the same canonical Work record.
 VISUAL_DIRECTION: PASS: compact working hierarchy, existing Mineral/Obsidian tokens, meaningful source/calendar holds and44px controls. Full native visual confirmation is UNVERIFIED.
 AUTOMATED_EVIDENCE: PASS:89 assertions/5 actual projection, component, Overview, weekly-entry and Workspace suites pass in66.08s. Cases include business midnight, Sunday/year boundary, DST, separate reminder times, missing/malformed dates, no-op week navigation, original object identity, tenant retirement/refusal and original Work/approval/exit regressions. First new projection worker timed out before any test and is INVALID. The first combined run45PASS/44FAIL caught missing calendar data doubles; the two owning fixtures now supply the reader port without changing the network guard or assertions. The corrected89/5 pass supersedes that failed fixture run.
-STATIC_EVIDENCE: PASS: scoped ESLint on the four new files plus touched Overview/owning fixtures and diff checks pass. Full app type ratchet is still running, not counted green. No shared reader, schema, writer, provider or permission changes.
+STATIC_EVIDENCE: PARTIAL: scoped ESLint on the four new files plus touched Overview/owning fixtures and diff checks passed before final composition. Full app type attempts stalled or ended with the Windows host interruption before diagnostics; these attempts are INVALID, not green. No shared reader, schema, writer, provider or permission changes.
 RENDERED_EVIDENCE: UNVERIFIED: actual React DOM is tested, but final native shell screenshots, both themes and supported viewport/panel states remain owed after repeated extension/webview timeouts. No source-only or synthetic mount is relabeled as rendered browser acceptance.
 BEHAVIORAL_EVIDENCE: PASS: native callback identity, next-week/current-week return, weekend work, reminder truth, read-only retry and tenant-selection retirement tested in the mounted component. Genuine customer/reload and final shell interaction remain owed.
 AUTHENTICATED_RUNTIME: UNVERIFIED: source is not released. No test tenant, real task, provider effect, receipt or new obligation created.
@@ -61,3 +61,50 @@ preserved #2189/#2163 lineage, E04 #2161 delivery preparation ownership, E09's
 status/history lease and held EXP10 connectors. Compact banners #2506 are a
 separate reviewed release and will be composed before this slice's final review.
 No other lead's protected source is changed or another agent activated.
+
+## Orchestration Contract — October 21 owner addendum
+
+Entry point: the existing tenant/actor-keyed Operations Overview reads original
+Planning items and CRM tasks, groups their recorded dates using the existing
+business-calendar reader, and opens their original native inspectors. This slice
+does not create an act, approve work, dispatch an ActionAdapter or issue a receipt.
+Its Spine source is the existing Planning/CRM read path, not a new registry entry.
+Existing domain permissions, caller RLS, source failure and scope retirement remain
+authoritative. Refresh and week navigation cannot schedule or replay an action.
+
+Current main observed: 38b6a9d51121d89123a4f286fba28d34fe4dfb84.
+Canonical Layer C is runEventActs in paige-orchestration/engine.ts, the native
+ActionAdapter registry, approve-executor, dispatchUnderClaim and original
+paige_act_executions/receipt/Rail records. Native owner.task maps to crm_create_task
+and execute_owner_task_act/read_owner_task_act; planning.weekly_commitment_check
+uses the existing weekly adapter and native sweeper. Direct interactive Work and
+weekly-draft commands remain legitimate existing Kit/Trust/domain pathways;
+preparing or saving their draft is not a Layer C execution outcome.
+
+Read-only production checkpoint: native-event dispatcher v232 ACTIVE;
+weekly-commitment-command v6 ACTIVE; owner-task-history v6 ACTIVE. Existing native
+sweeper and orchestration reconciler jobs are active. Aggregates show one recorded
+owner.task executed occurrence and one cancelled occurrence, with the contact-created
+process currently paused/confirm. The weekly trigger is_live=false and there are
+no weekly processes or weekly execution rows. Deployment/job presence is not
+ordinary-owner authenticated execution proof or permission to activate recurrence.
+No private record identifiers, customer payloads or credentials are published.
+
+Actual remaining gaps: full weekly authorization/enablement/trigger/receipt proof;
+the broader Workflow Automation Builder lifecycle; bounded ZION assignment/return
+and interruption proof. A contextual Plan with ZION composer handoff is not a
+specialist runtime. Existing n8n ActionAdapter is reused only within its original
+governance; provider connections remain with owner-held EXP10. EXP08 may consume
+the same original task, approval, execution and receipt references after its own
+permission checks; no Team Hub implementation or new event ledger is added here.
+
+Algorithm Support: ALG-01 REUSE original-record identity and no-write navigation;
+this view does not newly prove effect reconciliation. ALG-08 EXTEND confirmed-zone
+date presentation only, not capacity/dependency optimization. ALG-12 REUSE existing
+source/calendar unavailable states, not a new anomaly detector. ALG-13 REUSE current
+source-backed Operations recommendations, not a new recommendation engine.
+
+Functional: local proof is qualified above; final composed verification is owed.
+Visual: actual-source responsive and finish review remain UNVERIFIED.
+Experiential: original-record callback tests pass; native keyboard/reload remain owed.
+Founder Acceptance: not requested and not claimed; full EXP05 evaluation comes later.

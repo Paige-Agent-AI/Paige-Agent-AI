@@ -28,21 +28,54 @@ are not permission, provider readiness, execution or analytics acceptance.
 The compatible Business Review transport foundation #2451 is production-source
 verified at `a76bb957beb7d51c536e6bab6ebcf27994a74157`: all exact-head checks,
 normal Edge source/configuration and exact web readback passed (Master §4.0).
-It leaves Chat's previous dispatch unchanged. The separate consumer #2455 is a
-reviewed development candidate with required CI pending; no CPU recovery or
-authenticated completion follows from either local tests or this foundation.
+That foundation leaves the previous Chat dispatch unchanged. Its consumer #2455
+is now source-deployed at `d331534c898d8c032b467902da635c3c9a914613`; all 11 head
+checks, exact web and strict normal Chat source/configuration readback pass.
+Current-main integration includes E05's focused hook and passes 125 focused cases
+plus 124 offline stream controls. Actual fresh weekly recovery is **PROOF OWED**:
+the designated customer session requires sign-in restoration; no new model question
+was sent. Anonymous review POST returns 401/error only, not authenticated isolation
+proof. Master §4.0 and ANT-52/64065542 retain the exact release/access boundary.
+
+Contact follow-up clarity#2460 is source/web released at
+`c5b40526b10ecfb7935b832045e18990f420c138`, exact tree5e6ed6f5 and production
+web `dpl_BdkL2nLYHvdM97eyqp535zX3hjSX`/publicc5…-mvhpa75k verified.
+The existing21day recorded-contact/activity count may include leads; its copy
+no longer predicts client lapsing or promises automatic drafts/sends. Original
+count/key/order/navigation/authority remain, CAP010 stays Coming Soon. Native
+synthetic component/font/phone proof and77 source cases are supporting evidence;
+actual customer navigation/reload/full health and all19/9/founder acceptance remain
+owed. Master§4.0 and #2460/6309201428 record exact review/CI/release boundaries.
+
+Read-receipt presentation#2459 merged/source-deployed
+`7922abf874db30682bf45ccc5894e7ebedbb8901`, actual/expected treed4ad684f.
+Normal migration39553306213 applied13040000; both successful read summaries,
+original predecessor identity, private ACLs and unchanged delegation read back.
+Web dpl_GiBfewAHk1SSKcbRWvQmceFwv352 READY/exact provider metadata; actual
+public7922…-mvhpkubs verified. Existing Rail now names those two lookups without
+implying a business mutation. No ledger/producer/history/authority or catalogue
+status changed. Native SQL/pgTAP/component/phone evidence is supporting only;
+authenticated read-row/reload and all19/9 remain owed (Master§4.0).
 
 Two fresh authorized ordinary weekly Chat reads **FAIL** with correlated CPUTime
 shutdown and no persisted assistant answer; reload retains the question only.
 Historical9/0 remains historical. Production rollout is ACTIVE; do not reuse old
-DRAINING/refusal as the current complete-product limit. Existing92 offline stream
-controls do not close the production failure. Backend-only repair continues through
-the existing canonical review/Chat contracts; no replacement engine, source-domain
+DRAINING/refusal as the current complete-product limit. Offline stream/composition
+controls do not close the production failure. Released repair and remaining continuity
+work use the existing canonical review/Chat contracts; no replacement engine, source-domain
 takeover, provider/limit activation or manual intent reset. ALG03/13 priority order
 is only a partial deterministic baseline; no new verified algorithm/outcome is
 accepted. All19 outcomes,9 analytics entries and one founder evaluation remain
 required. See [existing integration matrix](../delivery/e2-customer-experience-integration-matrix.md),
 ANT138/147/161 and ANT52/0c6dfd90/dc01d1b6. Raw customer QA stays private.
+
+Isolated CI repair#2461 merged `20ac409589f0692a0db8b8d3cd24cad0fd11c82c`,
+exact verified union8e6b209c; all11 head checks and two statuses PASS. The real
+PDF integrity test uses a fixed clock without weakening either hash assertion.
+Local83 and hosted Agreements/verify PASS; actual production web/public identity
+verified (Master§4.0). No product, catalogue, provider, authority, migration/Edge
+or authenticated acceptance change. This unblocks fresh composed-head CI for
+the existing factual closeout; the original clock-boundary failure is retained.
 
 Finance #2402 merged `ddf12b6bbda085cdb9f66587f9e803e11fc3cc18`, exact reviewed
 union tree 1472c481. All 11 exact-head checks/Preview and two Vercel contexts passed;

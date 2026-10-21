@@ -664,10 +664,11 @@ const PaigeAIChatInner = ({
   const input = draft.value;
   const setInput = draft.setValue;
   // Ask PAIGE from any surface puts its question in this composer (never sends it); see
-  // src/lib/paigePromptHandoff.ts. A draft already typed here is kept, the question appended.
+  // src/lib/paigePromptHandoff.ts. Typed work is kept; an explicitly addressed
+  // surface invitation retains its specialist address. Recovery merges are unchanged.
   // The composer accepts writes only once its scope is writable; until then a question waits.
   const composerWritable = Boolean(draft.writableHandle);
-  useEffect(() => composerWritable ? subscribePaigePromptHandoff((prompt) => setInput((current) => mergeIntoDraft(current, prompt))) : undefined, [composerWritable, setInput]);
+  useEffect(() => composerWritable ? subscribePaigePromptHandoff((prompt) => setInput((current) => mergeIntoDraft(current, prompt, { preserveAddressee: true }))) : undefined, [composerWritable, setInput]);
   const dictationEpoch = requestScopeEpoch;
   const dictationDeliveryEpoch = `${dictationEpoch}:${dictationGeneration}`;
   const [dictationActivity, setDictationActivity] = useState({

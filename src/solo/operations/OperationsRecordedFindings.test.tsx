@@ -90,7 +90,7 @@ it.each(['loading', 'failed', 'unavailable'] as const)('keeps %s truthful and ca
   else if (port.result.state === 'ready') port.result = { state: 'ready', snapshot: { ...port.result.snapshot,
     domains: { operations: { status: 'unavailable', data: null, reason: 'forbidden' } } } };
   await render(); expect(host.querySelector('[role="status"]')).not.toBeNull();
-  expect(button('Prepare a read-only PAIGE review')).toBeUndefined();
+  expect(button('Prepare a read-only ZION review')).toBeUndefined();
   expect(host.textContent).not.toContain('No findings were returned');
   expect(host.textContent).not.toContain('Your work is still available');
   expect(port.handoff).not.toHaveBeenCalled();
@@ -99,9 +99,9 @@ it('retries through the original reader and prepares only an unsent context-safe
   await render();
   await act(async () => (host.querySelector('[aria-label="Refresh recorded Operations findings"]') as HTMLButtonElement).click());
   expect(port.refresh).toHaveBeenCalledTimes(1);
-  await click('Prepare a read-only PAIGE review');
+  await click('Prepare a read-only ZION review');
   expect(port.clearClient).toHaveBeenCalledTimes(1); expect(port.clearPublic).toHaveBeenCalledTimes(1);
-  expect(port.handoff).toHaveBeenCalledExactlyOnceWith(expect.stringContaining('Do not run checks, create work, change settings or execute an action.'));
+    expect(port.handoff).toHaveBeenCalledExactlyOnceWith(expect.stringMatching(/^ZION, .*Do not run checks, create work, change settings or execute an action\.$/));
   expect(open).toHaveBeenCalledTimes(1); expect(button('Send')).toBeUndefined();
 });
 it('honors the existing departure guard without replacing original history', async () => {

@@ -16,6 +16,7 @@ import { readOperationsTask, type OperationsTaskReadCaller } from "../_shared/op
 import { CRM_TASK_READ_TOOLS } from "../_shared/paige-spine/domains/crm_task.ts";
 import { adoptApprovedReminder, executeApprovedReminder, type ReminderExecutionBinding } from "../_shared/planning/approved-reminder.ts";
 import { readOriginalReminderApprovalHistory } from "../_shared/paige-turn/interactive-reminder-history.ts";
+import { readOriginalCuraPreparationHistory } from "../_shared/paige-turn/interactive-cura-history.ts";
 import type { ContextIdentity } from "../_shared/paige-context/mod.ts";
 import { BUSINESS_METRIC_TOOLS, metricReadContext, readBusinessMetric, type MetricReadOutcome } from '../_shared/analytics-metrics/read.ts';
 import { BUSINESS_SNAPSHOT_TOOLS, readBusinessSnapshotTransport } from '../_shared/paige-context/business-review-chat.ts';
@@ -1468,8 +1469,23 @@ serve(async (req) => {
               caller: supabaseClient as unknown as Parameters<typeof readOriginalReminderApprovalHistory>[0]["caller"],
               service: supabase as unknown as ApprovalRecoveryDb, current: () => !req.signal.aborted,
             }) : null;
+          const cura_preparation_history = protocolActive && thread.audience === "workspace"
+            && approval_recovery.status !== "available"
+            ? await readOriginalCuraPreparationHistory({
+              actorId: user.id, tenantId: thread.tenant_id, threadId: validatedData.threadId,
+              intentId: validatedData.requestIntentId, turnId: validatedData.interactive.approvalTurnId,
+              caller: {
+                auth: supabaseClient.auth,
+                from: supabaseClient.from.bind(supabaseClient),
+                rpc: supabaseClient.rpc.bind(supabaseClient),
+                readActiveTenant: (actorId: string) => supabaseClient.from("profiles")
+                  .select("active_tenant_id").eq("id", actorId).maybeSingle(),
+              } as unknown as Parameters<typeof readOriginalCuraPreparationHistory>[0]["caller"],
+              service: supabase as unknown as ApprovalRecoveryDb, current: () => !req.signal.aborted,
+            }) : null;
           return new Response(JSON.stringify({ approval_recovery,
             ...(approval_history?.status === "verified_original" ? { approval_history } : {}),
+            ...(cura_preparation_history?.status === "recorded_preparation" ? { cura_preparation_history } : {}),
           }), { headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" } });
         }
         const originalScope = { threadId: validatedData.threadId!,

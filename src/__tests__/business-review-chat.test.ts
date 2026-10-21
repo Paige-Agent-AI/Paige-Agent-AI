@@ -200,7 +200,7 @@ describe("E2-1 wiring pins (source contracts)", () => {
 
   it("dispatches through the shared module on the caller's own session with the turn's timezone", () => {
     expect(CHAT_SOURCE).toMatch(/tc\.function\.name === "get_business_snapshot"/);
-    expect(CHAT_SOURCE).toMatch(/dispatchBusinessSnapshotChat\(/);
+    expect(CHAT_SOURCE).toMatch(/readBusinessSnapshotTransport\(/);
     expect(CHAT_SOURCE).toMatch(/timezone: userTimezone \?\? "UTC"/);
     expect(CHAT_SOURCE).toMatch(/caller: supabaseClient/);
   });

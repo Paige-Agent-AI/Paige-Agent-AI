@@ -109,7 +109,9 @@ UPDATE public.profiles SET active_tenant_id=pg_temp.t('a') WHERE user_id=pg_temp
 UPDATE public.tenant_members SET is_owner=false,role='member' WHERE user_id=pg_temp.u('a1') AND tenant_id=pg_temp.t('a');
 SELECT ok(public.knowledge_actor_authorized(pg_temp.u('a1'),pg_temp.t('a')),'downgraded member retains ordinary private Knowledge authority');
 SELECT is(pg_temp.prepare()->>'sqlstate','42501','native publisher boundary rejects downgrade despite ordinary writer eligibility');
-UPDATE public.tenant_members SET role='admin' WHERE user_id=pg_temp.u('a1') AND tenant_id=pg_temp.t('a');
+UPDATE public.tenant_members SET role='admin',status='inactive' WHERE user_id=pg_temp.u('a1') AND tenant_id=pg_temp.t('a');
+SELECT is(pg_temp.prepare()->>'sqlstate','42501','inactive publisher membership is refused');
+UPDATE public.tenant_members SET status='active' WHERE user_id=pg_temp.u('a1') AND tenant_id=pg_temp.t('a');
 SELECT is(pg_temp.prepare()->>'replayed','true','business admin retains incumbent publishing permission');
 UPDATE public.tenant_members SET role='member' WHERE user_id=pg_temp.u('a1') AND tenant_id=pg_temp.t('a');
 UPDATE public.tenants SET parent_tenant_id=pg_temp.t('b') WHERE id=pg_temp.t('a');

@@ -39,7 +39,7 @@ before this consumer can be represented as available.
 ## Proof and release boundary
 Both independent findings were reproduced before repair: an array status passed
 the old decoder and a publisher downgrade between initial check/submission was
-accepted by the old member-capable writer route. The final adapter has46 focused transport-isolated tests PASS. The two late-awaited actor/business regressions also failed before their final scope-fence repair. Native42 actual-role assertions are
+accepted by the old member-capable writer route. The final adapter has46 focused transport-isolated tests PASS. The two late-awaited actor/business regressions also failed before their final scope-fence repair. Native43 actual-role assertions are
 prepared for the existing full-schema CI job, execution UNVERIFIED at creation.
 They cover exact original replay, real private creation, hash drift, actual caller,
 direct/inherited role, customer/operator/service refusals, workspace change,

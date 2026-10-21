@@ -1,0 +1,50 @@
+{
+  "boundary": "Real production Dashboard, Panel and hook; synthetic identity/RPC/navigation/dock; reference-removal control changes parent prop, not a literal browser-Back assertion. No sharing, publishing or network effects.",
+  "held": {
+    "backDisabled": true,
+    "kind": "faq",
+    "notice": true,
+    "overflow": false,
+    "viewport": {
+      "height": 844,
+      "width": 390
+    }
+  },
+  "canceled": {
+    "focusedLabel": "Manage Knowledge",
+    "focusedTag": "BUTTON",
+    "overflow": false,
+    "reviewVisible": false,
+    "viewport": {
+      "height": 844,
+      "width": 390
+    }
+  },
+  "reopened": {
+    "linkedSourceNotice": false,
+    "overflow": false,
+    "searchValue": "",
+    "sourceHeadings": [
+      "Getting started: coaching FAQ",
+      "New-client offer",
+      "How to submit your work"
+    ],
+    "viewport": {
+      "height": 844,
+      "width": 390
+    }
+  },
+  "desktop": {
+    "linkedSourceNotice": false,
+    "overflow": false,
+    "sourceHeadings": [
+      "Getting started: coaching FAQ",
+      "New-client offer",
+      "How to submit your work"
+    ],
+    "viewport": {
+      "height": 720,
+      "width": 1280
+    }
+  }
+}

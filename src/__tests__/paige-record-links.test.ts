@@ -32,10 +32,10 @@ describe("Marketing surface reference", () => {
 const B = "e4000000-0000-4000-8000-0000000c0002";
 
 describe("readRecordLinks — the defensive reader for live frames and persisted bundle_ref", () => {
-  it("retains the E4 destinations and admits only the bounded E2 Executive destinations", () => {
+  it("retains the existing destinations and admits the bounded owner Portal Knowledge reference", () => {
     expect([...READ_LINK_DESTINATIONS]).toEqual([
       "contacts", "sales_agreements", "sales_invoices", "sales_collections", "operations_work", "business_time_zone",
-      "executive", "finance", "marketing", "sales_pipeline", "systems_check", "business_game_plan", "trust_compass", "mind", "calendar", "pipeline", "conversations",
+      "executive", "finance", "marketing", "sales_pipeline", "systems_check", "business_game_plan", "trust_compass", "mind", "portal_knowledge", "calendar", "pipeline", "conversations",
     ]);
   });
 
@@ -129,3 +129,8 @@ describe("readRecordLinks — the defensive reader for live frames and persisted
       .toEqual([{ destination: "business_game_plan", record_id: null }]);
   });
 });
+
+ it("keeps only an original Knowledge UUID, without supplied identity, source text or publication claims",()=>{
+  expect(readRecordLinks([{destination:"portal_knowledge",record_id:A.toUpperCase(),subject:"Private source",tenant:"foreign",actor:"other",url:"https://foreign.invalid",published:true}])).toEqual([{destination:"portal_knowledge",record_id:A}]);
+  expect(readRecordLinks([{destination:"portal_knowledge",record_id:"invalid"},{destination:"portal_knowledge?published=true",record_id:A}])).toEqual([{destination:"portal_knowledge",record_id:null}]);
+ });

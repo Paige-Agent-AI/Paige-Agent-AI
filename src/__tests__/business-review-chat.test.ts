@@ -16,6 +16,7 @@ import {
 import { PAIGE_SPINE_CAPABILITIES } from "../../supabase/functions/_shared/paige-spine/registry.ts";
 import { STEP_START_LABELS, STEP_NO_START } from "../../supabase/functions/_shared/paige-turn/step-start.ts";
 import type { BusinessReviewWho } from "../../supabase/functions/_shared/paige-context/business-review.ts";
+import type { BusinessOperatingSnapshot } from "../../supabase/functions/_shared/paige-context/snapshot.ts";
 import { TEST_BUSINESS_REVIEW } from "@/test/fixtures/business-review";
 
 const TENANT = "d2000000-0000-4000-8000-0000000000e2";
@@ -116,9 +117,21 @@ describe("E2-3a briefing narrative contract", () => {
 describe("E2-1 dispatch behavior", () => {
   it("E2-6 names only readable sources through E4 references, with no persisted account path", () => {
     const links = businessReviewRecordLinks(TEST_BUSINESS_REVIEW);
-    expect(links.map((link) => link.destination)).toEqual(["executive", "finance", "sales_collections", "sales_pipeline", "systems_check", "contacts"]);
+    expect(links.map((link) => link.destination)).toEqual(["executive", "systems_check", "finance", "sales_collections", "sales_pipeline", "contacts"]);
     expect(links.every((link) => link.record_id === null)).toBe(true);
     expect(JSON.stringify(links)).not.toMatch(/tenant_id|actor_id|\/solo\/|125000/);
+  });
+  it('keeps critical source destinations inside the existing six-reference budget when Marketing joins the review', () => {
+    const snapshot: BusinessOperatingSnapshot = { ...structuredClone(TEST_BUSINESS_REVIEW), requested: ['payments', 'sales_pipeline', 'clients', 'campaigns', 'operations'] };
+    snapshot.domains.campaigns = { status: 'available', data: { ...snapshot.domains.clients!.data!, domain: 'campaigns', owner: 'marketing',
+      risks: [{ kind: 'marketing_failed', severity: 'act', summary: '2 recorded submissions failed' }] } };
+    const links = businessReviewRecordLinks(snapshot);
+    expect(links.map(row => row.destination)).toEqual(['executive', 'marketing', 'systems_check', 'finance', 'sales_collections', 'sales_pipeline']);
+    expect(links).toHaveLength(6);
+    const focused: BusinessOperatingSnapshot = { ...snapshot, requested: ['campaigns'] };
+    expect(businessReviewRecordLinks(focused)).toEqual([{ destination: 'executive', record_id: null }, { destination: 'marketing', record_id: null }]);
+    snapshot.domains.campaigns = { status: 'unavailable', data: null, reason: 'authorization_denied' };
+    expect(businessReviewRecordLinks(focused)).toEqual([]);
   });
   it("E2-6 exposes no reference when every domain was refused or invalidated by a scope switch", () => {
     const snapshot = structuredClone(TEST_BUSINESS_REVIEW);

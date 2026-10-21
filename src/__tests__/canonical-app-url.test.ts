@@ -10,6 +10,12 @@ import { SOLO_BRANCHES } from "@/lib/routing/tierBranches";
 import { SOLO_SETUP_TABS } from "@/solo/settings-business-context-contract";
 
 describe("canonical externally emitted app destinations", () => {
+  it('uses the existing Portal for owner Knowledge references and refuses unmounted tiers',()=>{
+    const input={actor:'account',tier:'solo',account:'1234567',destination:'portal_knowledge'} as const,id='b3b60300-0000-4000-8000-000000000001';
+    expect(resolveCanonicalRecordLink({...input,recordId:id})).toEqual({path:'/solo/1234567/clients/portal?view=knowledge&source='+id,status:'exact'});
+    expect(resolveCanonicalRecordLink({...input,recordId:'not-an-id'})).toEqual({path:'/solo/1234567/clients/portal?view=knowledge',status:'surface_only'});
+    for(const tier of ['sub_account','agency','enterprise','operator'] as const)expect(resolveCanonicalAppPath({...input,tier})).toBeNull();
+  });
   it.each(["solo", "standalone"] as const)("routes %s Marketing to its existing native Overview without invented record focus", tier => {
     const input = { actor: "account" as const, tier, account: "1971670", destination: "marketing" as const };
     const path = "/solo/1971670/growth/overview";

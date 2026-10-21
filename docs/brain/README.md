@@ -11,6 +11,23 @@ This original-intent metadata observation cannot resubmit, wake, publish, share 
 an interrupted turn. Owner Chat/status/eligible Live and complete owner/client/founder
 acceptance remain PROOF OWED; no source activation or customer version/announcement.
 
+## EXP04 current delivery checkpoint — 2026-10-21
+
+Released bounded prerequisites #2486 register discovery, #2487 actual retained-copy
+completion readback, and #2493 truthful historical signing economics are recorded
+with exact source/CI/production identities in Master§4.0. They do not accept O1–O12.
+Current #2499 / product44c3d8e20142e6753706f0635a3b8648921dbd86 selectively reuses
+#2175 recipient UI: strict native acknowledgment, partial/completed distinction,
+no-effect cancellation, token retirement, keyboard/document lock, result focus,
+contrast and canvas correction.28 source cases/12 native PDF viewport-theme cases
+plus five synthetic result modes pass; hosted CI/release and real signing acceptance
+remain separate. [Source evidence](../evidence/ui-delivery/e04-signing-result-reconcile.md).
+Isolated workspace prototype062d9ed34 models the full preparation flow using the
+shared system; it is not production rich editing, assigned PDF fields or acceptance.
+Functional/Visual/Experiential/Acceptance are reported independently. All twelve
+outcomes, effective terms, financial/provider, service-delivery and role QA remain open.
+The older restart observations below are retained historical source checkpoints.
+
 ## EXP04 restarted — Agreements source continuation, 2026-10-21
 
 Owner resumes the same sole E04 lead and all original twelve outcomes, expanding native
@@ -891,3 +908,10 @@ Production binding shipped in PR #1200 (`4ccb8a9a`): live Product/Price, migrati
 ## EXP09 Teach CURA owner controls — 2026-10-21 source candidate
 
 [Original Knowledge action/record contract](../delivery/e09-teach-cura-owner-controls.md) and [UI evidence](../evidence/ui-delivery/e09-teach-cura-owner-controls.md) extend the existing Portal Experience. Native inventory2476 is production verified; this owner consumer is release-gated. Original Knowledge publication and K1 prepare/set/receipt remain authoritative, customer private history separate. Dashboard controls are implemented; typed Chat/eligible Live teaching is not mounted by this slice. No new Spine key, model/Knowledge store, entitlement or approval path. Universal native publisher predicates; all signed-in publication→customer answer proof remains UNVERIFIED. Existing ALG-01/12 reconciliation/recovery reused; no verified new ALG-02/04/13 algorithm.
+
+Exact-source recovery extends the same Teach CURA view through the canonical
+portal_knowledge reference and native document filter, not a new permission or
+publication path. Missing/foreign records never substitute another source;
+incoming references wait behind original terms/review/dialog/unknown-save state.
+Owner Chat/eligible Live teaching dispatch remains UNAVAILABLE in this bounded
+navigation prerequisite. [Source contract](../delivery/e09-cura-source-reference.md).

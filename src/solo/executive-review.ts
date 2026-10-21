@@ -12,7 +12,7 @@ const AREAS: Record<string, { label: string; destination?: ReadLinkDestination; 
   revenue: { label: "Revenue", recommendation: "Review the available financial sources." },
   communications: { label: "Conversations", recommendation: "Review communications readiness." },
   email: { label: "Email", recommendation: "Review email readiness." },
-  campaigns: { label: "Marketing campaigns", recommendation: "Review campaign evidence." },
+  campaigns: { label: "Marketing intake", destination: "marketing", recommendation: "Review routing and processing in the existing Marketing records. No correction has run." },
   bookings: { label: "Bookings", recommendation: "Review the recorded bookings." },
   work: { label: "Delivery work", destination: "operations_work", recommendation: "Review the delivery records." },
   game_plan: { label: "Game Plan performance", destination: "business_game_plan", recommendation: "Review the recorded direction and strategic plays." },

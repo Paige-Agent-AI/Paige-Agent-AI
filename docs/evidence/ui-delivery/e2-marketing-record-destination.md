@@ -33,7 +33,7 @@ MUST_PRESERVE: canonical actor/tier/account refusal, six-reference cap, persiste
 ACCEPTANCE_CRITERIA: one sanitized marketing reference resolves only to the current eligible SOLO account's mounted growth/overview page, with surface_only status; other identities fail closed. Actual source and navigation/reload require the subsequent consumer release.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: affected reference sanitization, actor/tier/account route resolution and reload rehydration are covered by owning negatives. No auth/session/provisioning, financial writer, approval/autonomy, model/provider, job/retry, Rail/Memory or execution change; destination authorization remains final.
-INTERNAL_BUILD_IDENTITY: foundation atop2b2a0b61b3043f77fafa062629da4661691d6d4e; exact final head/tree/review in PR; deployment=PROOF_OWED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED for affected shared-module consumers; evidence=owning tests and ANT-138 comment87aec5f2.
+INTERNAL_BUILD_IDENTITY: 2b2a0b61b3043f77fafa062629da4661691d6d4e; role=supporting-base; final-head=PR-review-receipt; deployment=PROOF_OWED(not-released); environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(affected-shared-module-consumers); evidence=docs/evidence/ui-delivery/e2-marketing-record-destination.md and ANT-138 comment87aec5f2.
 RELEASE_CHANNEL: development: source foundation, no active Marketing review integration claim.
 RELEASE_CLASSIFICATION: internal-only: additive closed reference contract, no customer announcement.
 CUSTOMER_RELEASE_IDENTITY: none: full integrated Experience and founder evaluation remain required.

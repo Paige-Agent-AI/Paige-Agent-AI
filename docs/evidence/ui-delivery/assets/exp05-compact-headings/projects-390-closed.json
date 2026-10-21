@@ -1,0 +1,22 @@
+{
+  "actions": [],
+  "fixtureError": "",
+  "focus": "Projects",
+  "fontSize": "25px",
+  "h1Count": 1,
+  "headerIntroCount": 0,
+  "headerRect": {
+    "height": 97.5,
+    "width": 280.8000183105469,
+    "x": 86,
+    "y": 235.40000915527344
+  },
+  "heading": "Every project, a clear next step",
+  "headingColor": "rgb(23, 19, 49)",
+  "height": 844,
+  "lineHeight": "35px",
+  "pageWidth": 390,
+  "url": "/solo/1701/operations/projects",
+  "weight": "600",
+  "width": 390
+}

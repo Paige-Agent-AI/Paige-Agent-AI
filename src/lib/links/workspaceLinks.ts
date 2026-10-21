@@ -48,6 +48,7 @@ export const DESTINATION_LABEL: Readonly<Record<ReadLinkDestination, string>> = 
   business_game_plan: "Open Business Game Plan",
   trust_compass: "Open Trust Compass",
   mind: "Open Mind",
+  portal_knowledge: "Open CURA Knowledge",
   calendar: "Open Calendar",
   pipeline: "Open pipeline",
   conversations: "Open Conversations",
@@ -86,6 +87,8 @@ export function routeLinkTarget(link: ReadRecordLink, tier: WorkspaceLinkTier, a
           ? "Open task"
           : resolved.status === "exact" && link.destination === "business_game_plan"
             ? "Open Strategic Play"
+            : resolved.status === "exact" && link.destination === "portal_knowledge"
+              ? "Review CURA source"
             : DESTINATION_LABEL[link.destination];
   return { label, to: resolved.path, status: resolved.status };
 }

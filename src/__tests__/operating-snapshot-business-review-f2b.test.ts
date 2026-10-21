@@ -494,7 +494,12 @@ describe('composeBusinessReview with F2b', () => {
     expect(d.game_plan.status).toBe('degraded');
     expect(d.game_plan.reason).toBe('mission_review_unavailable');
     expect(d.game_plan.data).toBeNull();
-    for (const area of ['work', 'campaigns', 'revenue', 'communications', 'email', 'bookings', 'outcomes']) {
+    // This fixture has no Marketing producer proof. Its mounted read fails
+    // verification honestly, rather than claiming that the adapter is absent.
+    expect(d.campaigns.status).toBe('degraded');
+    expect(d.campaigns.data).toBeNull();
+    expect(d.campaigns.reason).not.toMatch(/^no_adapter/);
+    for (const area of ['work', 'revenue', 'communications', 'email', 'bookings', 'outcomes']) {
       expect(d[area].status).toBe('unavailable');
       expect(d[area].reason).toMatch(/^no_adapter/);
     }

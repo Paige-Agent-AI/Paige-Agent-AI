@@ -14,7 +14,7 @@ const source=():CuraKnowledgeSource=>({document_id:doc,document_revision:3,title
 let rows:CuraKnowledgeSource[],state:ReturnType<typeof useCuraKnowledge>,host:HTMLDivElement,root:Root;
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 const flush=async()=>act(async()=>{for(let i=0;i<50;i++)await Promise.resolve();});
-function Probe({business=scope.tenant,actor=scope.actor}:{business?:string;actor?:string}){state=useCuraKnowledge({actor,tenant:business});return <output>{state.phase}:{state.outcome}:{state.notice}</output>;}
+function Probe({business=scope.tenant,actor=scope.actor,reference=null}:{business?:string;actor?:string;reference?:string|null}){state=useCuraKnowledge({actor,tenant:business},reference);return <output>{state.phase}:{state.outcome}:{state.notice}</output>;}
 const mount=async(props:Parameters<typeof Probe>[0]={})=>{await act(async()=>root.render(<Probe {...props}/>));await flush();};
 const inventory=(args:Record<string,unknown>)=>({tenant_id:args.p_tenant_id,audience:'business',as_of:now,documents:rows,next_offset:(args.p_offset as number)+rows.length,has_more:false});
 const proposal=(args:Record<string,unknown>):CuraShareProposal=>({tenant_id:args.p_tenant_id as string,audience:'business',document_id:doc,available:args.p_available as boolean,
@@ -122,4 +122,28 @@ it.each(['publication refresh','focus refresh'])('closing an original publicatio
  if(reason==='publication refresh')act(()=>{job=state.load();});else act(()=>window.dispatchEvent(new Event('focus')));
  await flush();expect(state.phase).toBe('loading');act(()=>state.cancel());read.resolve({data:inventory({p_tenant_id:scope.tenant,p_offset:0}),error:null});
  if(job)await act(async()=>job);await flush();expect(state.phase).toBe('ready');expect(state.rows).toHaveLength(1);expect(writes()).toHaveLength(0);
+});
+
+it('reads the exact linked source directly, even outside the ordinary first page',async()=>{
+ await mount({reference:doc});
+ expect(f.rpc).toHaveBeenCalledExactlyOnceWith('read_client_portal_business_knowledge',expect.objectContaining({p_document_id:doc,p_offset:0,p_query:''}));
+ expect(state.focusedId).toBe(doc);expect(state.rows[0].document_id).toBe(doc);expect(writes()).toHaveLength(0);
+ await act(async()=>state.load());expect(f.rpc.mock.calls.every(c=>c[1].p_document_id===doc)).toBe(true);
+ await act(async()=>state.correct(doc));expect(state.correction?.id).toBe(doc);expect(writes()).toHaveLength(0);
+});
+it('keeps a missing linked source distinct from empty inventory and never substitutes another source',async()=>{
+ rows=[];await mount({reference:doc});expect(state.phase).toBe('ready');expect(state.focusedId).toBe(doc);expect(state.rows).toEqual([]);
+ expect(f.rpc.mock.calls.every(c=>c[1].p_document_id===doc)).toBe(true);
+ await act(async()=>state.search(''));expect(f.rpc.mock.calls.at(-1)?.[1].p_document_id).toBeNull();expect(state.focusedId).toBeNull();expect(writes()).toHaveLength(0);
+});
+it('refuses a foreign linked read without a global-inventory fallback',async()=>{
+ f.rpc.mockResolvedValue({data:{tenant_id:other,audience:'business',as_of:now,documents:[source()],next_offset:1,has_more:false},error:null});
+ await mount({reference:doc});expect(state.phase).toBe('error');expect(state.rows).toEqual([]);expect(f.rpc).toHaveBeenCalledTimes(1);expect(writes()).toHaveLength(0);
+});
+it('retires late reference A-to-B-to-A reads within the same authenticated business',async()=>{
+ const late=deferred<{data:ReturnType<typeof inventory>;error:null}>(),original=f.rpc.getMockImplementation()!;
+ f.rpc.mockImplementationOnce(()=>late.promise);await mount({reference:doc});expect(state.phase).toBe('loading');
+ rows=[{...source(),document_id:other}];await mount({reference:other});expect(state.rows[0].document_id).toBe(other);
+ rows=[source()];await mount({reference:doc});late.resolve({data:inventory({p_tenant_id:scope.tenant,p_offset:0}),error:null});await flush();
+ expect(state.focusedId).toBe(doc);expect(state.rows[0].document_id).toBe(doc);expect(writes()).toHaveLength(0);expect(original).toBeDefined();
 });

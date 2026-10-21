@@ -1,0 +1,22 @@
+{
+  "kind": "synthetic-native-not-customer-acceptance",
+  "keyboard": {
+    "focusVisible": true,
+    "label": "Review source connections",
+    "outline": "rgb(101, 90, 150) solid 1.6px",
+    "rect": {
+      "bottom": 498.9500122070313,
+      "height": 61,
+      "top": 437.9500122070313,
+      "width": 190.40000915527344
+    },
+    "tag": "BUTTON",
+    "viewport": [
+      320,
+      740
+    ]
+  },
+  "disclosureEnter": "PASS",
+  "refreshRenderedNewFixtureLabel": "PASS",
+  "integrationExitAndBankingReturn": "PASS"
+}

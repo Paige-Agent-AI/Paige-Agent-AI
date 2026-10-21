@@ -6,6 +6,22 @@
 .finance-evidence{color:var(--ink)}.finance-evidence button:focus-visible{outline:2px solid var(--violet);outline-offset:3px}
 
 @media(max-width:600px){}
+
+.finance-banking-sources { min-width:0; padding:22px 0; border-top:1px solid var(--line); }
+.finance-banking-sources .exec-note { font-size:12px; line-height:1.6; }
+.finance-banking-sources .exec-provenance { border-top:1px solid var(--line); margin:20px 0; }
+.finance-banking-sources summary { min-height:44px; padding:12px 0; cursor:pointer; overflow-wrap:anywhere; }
+.finance-banking-sources summary:focus-visible { outline:2px solid var(--violet); outline-offset:3px; }
+.finance-banking-sources summary small { display:block; color:var(--ink-3); margin:4px 0 0; }
+.finance-banking-sources .exec-finance-account { min-width:0; margin:18px 0; padding-top:16px; border-top:1px solid var(--line); }
+.finance-banking-sources h3 { margin:0 0 8px; font-size:14px; font-weight:600; overflow-wrap:anywhere; }
+.finance-banking-sources dl { display:grid; gap:12px; margin:16px 0; }
+.finance-banking-sources dl > div { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px; }
+.finance-banking-sources dt { color:var(--ink-3); font-size:12px; }
+.finance-banking-sources dd { margin:0; min-width:0; overflow-wrap:anywhere; font-size:13px; }
+.finance-banking-sources .exec-figures dd { font-size:17px; font-variant-numeric:tabular-nums; }
+.finance-banking-sources > button,.finance-banking-sources [role=alert] button { min-height:44px!important; }
+@media(max-width:480px) { .finance-banking-sources dl > div { grid-template-columns:minmax(0,1fr); gap:4px; } }
 @media(prefers-reduced-motion:reduce){.finance-evidence{animation:none!important;transition:none!important}}
 
 /* Owner-approved compact Finance: controls stay above the working content. */

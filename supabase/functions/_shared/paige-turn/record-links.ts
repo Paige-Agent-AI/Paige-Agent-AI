@@ -28,6 +28,8 @@ export const READ_LINK_DESTINATIONS = [
   "mind",
   "calendar",
   "pipeline",
+  // The inbox has no canonical message-focus URL. Never carry a subject or thread key.
+  "conversations",
 ] as const;
 
 export type ReadLinkDestination = (typeof READ_LINK_DESTINATIONS)[number];

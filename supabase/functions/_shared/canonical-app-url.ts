@@ -29,6 +29,7 @@ export type CanonicalDestination =
   | "tasks"
   | "calendar"
   | "contacts"
+  | "conversations"
   | "pipeline"
   | "executive"
   | "finance"
@@ -88,6 +89,7 @@ const ROUTES: Record<MountedTier, Partial<Record<CanonicalDestination, string>>>
     tasks: "/solo/{account}/operations/work",
     calendar: "/solo/{account}/calendar/week",
     contacts: "/solo/{account}/clients/people",
+    conversations: "/solo/{account}/clients/conversations",
     pipeline: "/solo/{account}/growth/pipeline",
     marketplace: "/solo/{account}/marketplace/browse",
     sales_agreements: "/solo/{account}/sales/agreements",

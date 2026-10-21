@@ -34,7 +34,7 @@ MUST_PRESERVE: originating public.messages/list_inbox_messages and mailbox polic
 ACCEPTANCE_CRITERIA: legitimate permitted empty/nonempty results remain distinguishable from unavailable; only successful trusted-call references reach the existing renderer; the current eligible account determines a surface-only link and the inbox independently reauthorizes. Authenticated verification remains owed.
 MOTION_PURPOSE: NONE: no new animation or execution indicator.
 PROTECTED_SEAMS: no tool offer/admission/rollout/authority/provider/permission changes. Global late-protected evidence and final scope/cancellation gates retain ownership; no reference supplied in model/tool data is trusted.
-INTERNAL_BUILD_IDENTITY: development consumer atop20d4fd278f891ecc52b6728b42b6d35fe1b298fb; foundation#2467 release required first; final head/review/CI in PR; environment=development; deployment=PROOF_OWED; migrations=NOT_APPLICABLE; edge=PROOF_OWED normal affected-source pipeline.
+INTERNAL_BUILD_IDENTITY: development consumer atop95d6108497676bfa86b1d08da2eb015d5fa63407; foundation#2467 release required first; final head/review/CI in PR; environment=development; deployment=PROOF_OWED; migrations=NOT_APPLICABLE; edge=PROOF_OWED(normal affected-source deployment and source readback for the existing Chat reader); evidence=assets/e2-conversations-read-link/native-index.json
 RELEASE_CHANNEL: development: local consumer, unpublished until the canonical foundation releases.
 RELEASE_CLASSIFICATION: internal-only: bounded existing-read status/projection/reference integration; no capability or provider activation.
 CUSTOMER_RELEASE_IDENTITY: none: full Experience acceptance pending, no announcement.

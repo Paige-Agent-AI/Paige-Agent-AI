@@ -1,0 +1,23 @@
+{
+  "render_base": "5b53390569b4aecb02491fe22ec832254ec8dab7",
+  "composed_base": "0cb76386e769de810648408b2044a6d5e269e221",
+  "boundary": "RENDER_BASE_UNCHANGED_OWNED_SOURCE_DISJOINT_MAIN_IMPORT_DELTAS_NOT_A_FRESH_FULL_RENDER",
+  "changed_imports": [
+    {
+      "path": "src/solo/solo-paige-workspace.css",
+      "render_sha256": "8757691399d40bf17a564336f232b64fae4aac42e2e9908a342e290a5a322e37",
+      "current_sha256": "102217d07536ce43e9eec9a258deb541ecb7ccb226f43752c3cc2d06fdd736aa"
+    },
+    {
+      "path": "src/solo/SoloPaigeWorkspace.tsx",
+      "render_sha256": "e7859140074565bca8286e7b96137625ae4968f65ad3522c83b13155c99ccc04",
+      "current_sha256": "61d864e49f46b0c481e6974dfaf2a4a635174cfbef4d51f121036115e04d3967"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-context/snapshot.ts",
+      "render_sha256": "5d1258b4e47f3a40eac88c3e8496f916efd495c9339481708945d4766bd5b45d",
+      "current_sha256": "b84e6d771f7eb214f5341ebe01668e1a97769f17e12c23179aebc9afc936b015"
+    }
+  ],
+  "applicability": "Capabilities-only view/remount and CSS selectors do not alter the weekly entry, native Sheet or Composer. Snapshot source adds risk ordering but read ports are synthetic. No updated screenshot or runtime proof inferred."
+}

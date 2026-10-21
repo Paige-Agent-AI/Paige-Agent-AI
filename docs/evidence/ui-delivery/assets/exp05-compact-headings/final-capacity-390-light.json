@@ -1,0 +1,30 @@
+{
+  "actions": [],
+  "fixtureError": "",
+  "focus": {
+    "label": null,
+    "outline": "rgb(101, 90, 150) solid 1.6px",
+    "text": "Capacity"
+  },
+  "fontSize": "16px",
+  "h1Count": 1,
+  "headerIntroCount": 0,
+  "headerRect": {
+    "height": 22.399999618530273,
+    "width": 280.8000183105469,
+    "x": 86,
+    "y": 214.40000915527344
+  },
+  "heading": "The people behind the progress",
+  "headingColor": "rgb(23, 19, 49)",
+  "lineHeight": "22.4px",
+  "pageWidth": 390,
+  "theme": "light",
+  "url": "/solo/1701/operations/capacity",
+  "viewport": {
+    "dpr": 1.0000000149011612,
+    "height": 844,
+    "width": 390
+  },
+  "weight": "600"
+}

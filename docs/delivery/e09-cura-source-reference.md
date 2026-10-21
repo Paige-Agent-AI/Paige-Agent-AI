@@ -75,3 +75,16 @@ Final13 related suites407 tests PASS. Unknown-result protection stays intact.
 Fresh immutable-head source recheck remains required.
 The closed destination regression was extended explicitly for portal_knowledge,
 retaining all released Marketing/Finance destinations and unknown-input limits.
+
+## Single reviewed route-lease renewal
+
+The restrictive C0b suite first failed its one positive binding case (70 other
+controls passed) because the new canonical Portal Knowledge route changed its
+whole-source fingerprint. Main2a799 reproduces prior f3336677 digest. Replacing
+only that helper with main bytes makes all29 dispatch bindings pass; the other115
+dependency sources, extractor, metadata and dispatch pins are unchanged. The
+inspected additive route/type/UUID focus change renews only that helper to
+636e3844fb6655481940649f3471c3bcd4c645e416b28e58ac51855e44b947b1.
+A new hostile CURA route mutation joins the original Conversations/Marketing
+controls. Final renewed-suite execution and immutable-head review are required;
+this is source compatibility, not runtime authority or provider proof.

@@ -747,7 +747,13 @@ const SOURCES = {
  // only; current-account/actor gates, prior routes and focus map unchanged. Old
  // 492e6c96 digest reproduced from main; all29 dispatches and other115 sources match.
  // Renew only this inspected helper; extractor/metadata/route refusal stay exact.
- "supabase/functions/_shared/canonical-app-url.ts": "f3336677d275074ed0c64cfc5d8ac24e42cacb9fa70d9b3069bb21670f936345",
+ // EXP09 #2492 bounded renewal: source1c88645ce / composedbe57dd5fc
+ // NON-AUTHOR source review5604204248: additive current-SOLO Portal Knowledge
+ // route and UUID source focus only; original routes/account/actor gates unchanged.
+ // Prior f3336677 digest reproduced from main2a799. All29 dispatch pins and
+ // other115 dependency sources pass unchanged; renew this inspected helper only.
+ // Extractor, metadata and route-mutation refusals remain restrictive.
+ "supabase/functions/_shared/canonical-app-url.ts": "636e3844fb6655481940649f3471c3bcd4c645e416b28e58ac51855e44b947b1",
   "supabase/functions/_shared/gmail.ts": "78f697e312d18eb9d73ff2a3802142003a843b109f5e2a956182befb5d6160ff",
   "supabase/functions/_shared/smtp.ts": "0e3ea569f3728dde3329bb5281ef0afb9d592a4f080b3535b2bb7da62799f5ff",
   "supabase/functions/_shared/sales-invoice-delivery/binding.ts": "4e95a90d3a145278d3cb27f64865d26dc968d1c8cf7937dea2feac584e307b77",

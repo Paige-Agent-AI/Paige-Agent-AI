@@ -1,0 +1,21 @@
+{
+  "before": {
+    "composerCount": 1,
+    "draft": "ZION, Keep this neutral planning note for my review.\n\nreview our active projects and work this week. What is behind schedule, who is responsible, and which blockers need attention today? Use current work records and propose bounded next steps for my review.",
+    "expanded": "true",
+    "h1": "Your operating week",
+    "height": 768,
+    "overflow": false,
+    "path": "/solo/1701/operations/overview",
+    "selected": [
+      "Operations",
+      "Overview"
+    ],
+    "theme": "dark",
+    "width": 1366
+  },
+  "after": {
+    "height": 768,
+    "width": 1366
+  }
+}

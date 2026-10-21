@@ -249,9 +249,10 @@ it("closes details when a canonical URL-controlled view changes", async () => {
 it("hands a bounded review draft to existing PAIGE after clearing old customer scope", async () => {
   const open = vi.fn();
   await act(async () => root.render(<OperationsWorkspace openPaige={open} />));
-  await click("Plan with PAIGE");
+  await click("Plan with ZION");
   expect(paige.clearClient).toHaveBeenCalledOnce(); expect(paige.clearPublic).toHaveBeenCalledOnce();
   expect(paige.handoff).toHaveBeenCalledWith(expect.stringContaining("Use current work records"));
+  expect(paige.handoff).toHaveBeenCalledWith(expect.stringMatching(/^ZION, /));
   expect(open).toHaveBeenCalledOnce();
 });
 
@@ -297,15 +298,16 @@ it("keeps the original source and current record in a prepared PAIGE task review
  harness.crmTasks=[{id:"native-timing-task",tenant_id:harness.tenant,user_id:harness.user,title:"Confirm the next client step",description:null,
   status:"pending",due_date:null,updated_at:"2026-10-19T12:00:00Z",created_at:null,deal_id:null,biz_id:null,recorded_priority:null,estimated_minutes:null}];
  await act(async()=>root.render(<OperationsWorkspace view="overview" openPaige={open}/>));
- await click("Prepare a review with PAIGE");
+ await click("Prepare a review with ZION");
  expect(paige.handoff).toHaveBeenCalledOnce();
  const prompt=paige.handoff.mock.calls[0][0] as string;
+ expect(prompt).toMatch(/^ZION, /);
  expect(prompt).toContain('"source":"crm"');expect(prompt).toContain('"record_id":"native-timing-task"');
  expect(prompt).toContain("Confirm the next client step");expect(prompt).toContain("do not infer completion or execute a change");
  expect(paige.clearClient).toHaveBeenCalledOnce();expect(paige.clearPublic).toHaveBeenCalledOnce();expect(open).toHaveBeenCalledOnce();
  harness.tenant="test-tenant-b";await act(async()=>root.render(<OperationsWorkspace view="overview" openPaige={open}/>));
  expect(container.textContent).not.toContain("Confirm the next client step");
- expect(Array.from(container.querySelectorAll("button")).some(b=>b.textContent==="Prepare a review with PAIGE")).toBe(false);
+ expect(Array.from(container.querySelectorAll("button")).some(b=>b.textContent==="Prepare a review with ZION")).toBe(false);
  expect(paige.handoff).toHaveBeenCalledOnce();
 });
 

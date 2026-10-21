@@ -4,6 +4,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TEST_BUSINESS_REVIEW, TEST_REVIEW_TENANT } from "@/test/fixtures/business-review";
 import { parseBusinessReview, useBusinessReview } from "./useBusinessReview";
+import { resolveSnapshotPeriod, type SnapshotPeriodKey } from "../../../supabase/functions/_shared/paige-context/snapshot";
 
 const api = vi.hoisted(() => ({ invoke: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { functions: { invoke: api.invoke } } }));
@@ -12,8 +13,15 @@ vi.mock("@/lib/userClock", () => ({ getUserClock: () => ({ userTimezone: "Americ
 let root: Root; let host: HTMLDivElement;
 beforeEach(() => { api.invoke.mockReset(); host = document.createElement("div"); document.body.appendChild(host); root = createRoot(host); });
 afterEach(() => { act(() => root.unmount()); host.remove(); });
-function Probe({ tenant }: { tenant: string | null }) { const r = useBusinessReview(tenant); return <div>{r.state === "ready" ? r.snapshot.tenant_id : r.state}</div>; }
-async function render(tenant: string | null) { await act(async () => { root.render(<Probe tenant={tenant} />); }); }
+function Probe({ tenant, period }: { tenant: string | null; period?: SnapshotPeriodKey }) { const r = useBusinessReview(tenant, period); return <div data-review-period={r.state === 'ready' ? r.snapshot.period.key : undefined}>{r.state === "ready" ? r.snapshot.tenant_id : r.state}</div>; }
+async function render(tenant: string | null, period?: SnapshotPeriodKey) { await act(async () => { root.render(<Probe tenant={tenant} period={period} />); }); }
+function reviewForPeriod(key: SnapshotPeriodKey) {
+  const resolved = resolveSnapshotPeriod({ key, now: new Date(TEST_BUSINESS_REVIEW.composed_at), timezone: TEST_BUSINESS_REVIEW.period.timezone });
+  if ('reason' in resolved) throw Error(resolved.reason);
+  return { ...structuredClone(TEST_BUSINESS_REVIEW), period: resolved.period,
+    domains: Object.fromEntries(Object.entries(TEST_BUSINESS_REVIEW.domains).map(([domain, entry]) => [domain,
+      entry?.data ? { ...entry, data: { ...structuredClone(entry.data), period: resolved.period } } : entry])) };
+}
 
 describe("Business review transport — canonical shape and workspace fence", () => {
   it("accepts a real Fabric-shaped response and retains its actual full/partial coverage", () => {
@@ -36,6 +44,23 @@ describe("Business review transport — canonical shape and workspace fence", ()
     api.invoke.mockResolvedValue({ data: { ok: true, snapshot: TEST_BUSINESS_REVIEW }, error: null }); await render(TEST_REVIEW_TENANT);
     expect(api.invoke).toHaveBeenCalledWith("paige-business-review?finance_sources=1", expect.objectContaining({ body: { period: "last_7_days", timezone: "America/New_York" } }));
     expect(host.textContent).toBe(TEST_REVIEW_TENANT);
+  });
+  it('withholds an internally valid different-period response from the default Executive', async () => {
+    const snapshot = reviewForPeriod('last_30_days');
+    expect(parseBusinessReview({ ok: true, snapshot }, TEST_REVIEW_TENANT, 'America/New_York')).not.toBeNull();
+    api.invoke.mockResolvedValue({ data: { ok: true, snapshot }, error: null });
+    await render(TEST_REVIEW_TENANT, 'last_7_days');
+    expect(host.textContent).toBe('failed');
+    expect(host.querySelector('[data-review-period]')).toBeNull();
+  });
+  it('ignores the old period response after the selected period rebinds', async () => {
+    let oldAnswer: (value: unknown) => void = () => {};
+    api.invoke.mockImplementationOnce(() => new Promise(resolve => { oldAnswer = resolve; }))
+      .mockResolvedValueOnce({ data: { ok: true, snapshot: reviewForPeriod('last_30_days') }, error: null });
+    await render(TEST_REVIEW_TENANT, 'last_7_days'); await render(TEST_REVIEW_TENANT, 'last_30_days');
+    await act(async () => oldAnswer({ data: { ok: true, snapshot: TEST_BUSINESS_REVIEW }, error: null }));
+    expect(host.querySelector('[data-review-period]')?.getAttribute('data-review-period')).toBe('last_30_days');
+    expect(api.invoke).toHaveBeenLastCalledWith('paige-business-review?finance_sources=1', expect.objectContaining({ body: { period: 'last_30_days', timezone: 'America/New_York' } }));
   });
   it("drops an old request across a workspace switch, including its late completion", async () => {
     let answer: (value: unknown) => void = () => {};

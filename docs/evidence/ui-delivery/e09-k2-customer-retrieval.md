@@ -10,7 +10,7 @@ VISUAL_DIRECTION: PASS: existing approved tenant-branded customer frame and SOLO
 AUTOMATED_EVIDENCE: PASS: consumer19/19; strict context decoder73/73; actual-handler Knowledge-scope538/538; composed incumbent C0b215/215; Spine self-test; failing-first replay egress reproduced before repair. Fake provider, not live model or customer proof.
 STATIC_EVIDENCE: PASS: whitespace and migration collision checks; independent29-part source decomposition preserves dispatch/control/import/helper/other identity inputs and115/116 existing source digests; only reviewed context digest changes. Required hosted consumer checks remain release gates.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no frontend source, stylesheet, component or geometry changes; complete EXP09 rendered acceptance remains separately owed.
-BEHAVIORAL_EVIDENCE: PASS: actual-handler harness verifies protocol/audience/scope-before-embedding, observed replay avoidance, bounded fallback, private source snapshot and terminal cleanup; browser customer behavior remains unverified.
+BEHAVIORAL_EVIDENCE: PASS: actual-handler harness verifies scope-before-embedding, observed replay avoidance, bounded fallback, private source snapshot and terminal cleanup. Protocol/private-audience-before-egress ordering is a static source assertion, not a dynamic full-handler protocol test. Browser customer behavior remains unverified.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no current ordinary external-client session was exercised in this source repair. No owner impersonation or credential copying.
 KEYBOARD_FOCUS: NOT_APPLICABLE: existing Chat controls and focus source untouched.
 ZOOM_REFLOW: NOT_APPLICABLE: existing frame/Chat DOM and CSS untouched.

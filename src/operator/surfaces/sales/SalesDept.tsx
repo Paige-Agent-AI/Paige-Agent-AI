@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+import { viewPath } from "@/operator/shell/operatorAddress";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useSalesWorkspace, type SalesDeal, type SalesStage } from "@/operator/data/useSalesWorkspace";
@@ -283,6 +285,11 @@ function DealDetail({ deal, stages, onClose, onMove, busy }: {
         {deal.notes && <p className="mt-1 text-[11px] text-[var(--pg-muted)]">{deal.notes}</p>}
         {deal.expected_close_date && <p className="mt-1 text-[11px] text-[var(--pg-muted)]">Expected close: {dateShort(deal.expected_close_date)}</p>}
         {deal.lost_reason && <p className="mt-1 text-[11px] text-[var(--pg-attention,#b45309)]">Lost: {deal.lost_reason}</p>}
+        <div className="mt-3">
+          <Link to={viewPath("relationships", "Customers")} className="text-[11px] text-[var(--pg-muted)] underline underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            View customer lifecycle in Customers →
+          </Link>
+        </div>
         <div className="mt-4">
           <label className="text-[10px] font-medium uppercase tracking-wider text-[var(--pg-muted)]">Move to stage</label>
           <div className="mt-1 flex flex-wrap gap-1.5">

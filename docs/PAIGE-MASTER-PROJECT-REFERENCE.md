@@ -826,6 +826,39 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-21 — EXP04 truthful recipient signing results and accessible feedback.**
+PR [#2499](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2499), reviewed
+`6c52856dac9aede3ada2bf7c2c8713438ab0e641`, merged
+`3ff77d368d2bf5a4261d6ee1e3ce7ab314516892`; actual parents18d442548 and6c52856,
+combined tree`e187a7140e4a957a76ef069ca79c6669be34cf70` exactly matches the
+precomputed integration tree, preserving EXP02/EXP05 shared work. Selective reuse
+of original#2175 UI/tests: strict native acknowledgment, recorded-versus-completed
+signature, truthful declined/refused result, no-effect cancellation, token reset,
+real keyboard PDF fieldset, result focus/error announcement and scoped contrast/
+canvas fixes. Native consent, engine, Portal permissions and external effects unchanged.
+Sequential AUTHOR-REVIEW / LOWER ASSURANCE6324793518/6325354064, no independent
+non-author claim. All10 applicable exact-head checks and both Vercel statuses
+SUCCESS; schema-free Supabase Preview SKIPPED. Source28 tests and native12 viewport/
+theme cases plus5 synthetic result modes pass; actual PDF viewer/source-hash fence
+retained. Web`dpl_6ckWCMdrgyQxE5XJLnXCMNdunoWN` READY/production/main;
+canonical public version`3ff77d368d2bf5a4261d6ee1e3ce7ab314516892-mvijj2va`.
+Served main-Bl26e46b → main-BWv7M3uc → AgreementSigning-B2rWC9PP contains all
+three corrected result/progress strings; final chunk SHA256
+`3aa408f132bd87b841585f68cef421e69f8662115684f0b8935d93ea08cd0d15`.
+Schema/Edge/provider/activation changes NOT_APPLICABLE.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2499#issuecomment-6325421847),
+[source/render evidence](evidence/ui-delivery/e04-signing-result-reconcile.md).
+Functional: bounded correction released/read back. Visual: responsive actual-source
+renders and contrast/focus/canvas repaired; legacy visual advisories and professional
+modernization remain open. Experiential: bounded recovery/result semantics verified
+with synthetic ports; full original O1–O12 integrated customer journey incomplete.
+Acceptance: actual recipient/owner/staff/client signing, legal/provider evidence and
+one complete founder evaluation remain owed. Prior owner-smoke browser connection
+is unavailable; no fallback account, credential or real effect used. Source/release
+proof does not establish customer acceptance. No customer version/announcement;
+recovery is a reviewed forward correction preserving originals. This factual
+post-merge closeout does not require recursive logging.
+
 **2026-10-21 — EXP04 truthful historical signing economics.**
 PR [#2493](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2493), reviewed
 `ed2964b5024f672492b5db6deac38ff95cb1929b`, merged

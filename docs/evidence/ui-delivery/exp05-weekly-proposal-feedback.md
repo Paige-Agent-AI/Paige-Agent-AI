@@ -1,11 +1,11 @@
 # EXP05 — explicit weekly proposal-read feedback
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
-FLOW_BY_FLOW: PASS: existing weekly entry → current-owner pending read → empty/found/unavailable/refused result → existing reread or prepare/close. No save, approval or recurrence is added.
+FLOW_BY_FLOW: PASS: src/solo/weekly/WeeklyDraftComposer.test.tsx and assets/exp05-weekly-feedback/manifest.json cover existing entry → current-owner retrieval → empty/found/unavailable/refused → reread or prepare/close. No save, approval or recurrence is added.
 PAIGE_UI_DESIGN: PASS: installed router and routed standards; existing Sheet, typography, tokens, controls, scroll owner and source authority preserved. Impeccable Clarify/Operate/craft checks applied to factual loading/empty/error distinctions and keyboard/reflow.
 MATERIAL_FLOW_CHANGE: NO: repairs feedback in the existing pending-read flow; no new goal, route, action, permission or confirmation.
 FLOW_PROTOTYPE: NOT_REQUIRED: original native weekly interaction remains; the actual current components were rendered with isolated read ports before review. This is an incremental state-feedback repair.
-PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an eligible SOLO owner can tell whether the original saved-proposal read is still pending, returned none, found a proposal or failed verification.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an eligible SOLO owner can distinguish active retrieval, zero returned proposals, an original proposal and failed verification; assets/exp05-weekly-feedback/manifest.json preserves the rendered states.
 VISUAL_DIRECTION: PASS: preserve PAIGE's existing Operate surface in Mineral/Obsidian; one inline status paragraph, no new badge, card, color or layout system.
 AUTOMATED_EVIDENCE: PASS:56 assertions in3 owning suites, including all8 incumbent Composer cases. Before implementation, two new assertions failed while11 passed: no empty announcement and no explicit refresh progress. After correction,13 Composer cases pass, including refresh focus, found receipt, failed/refused refresh and retired-session late completion. Existing Panel/command contracts remain green.
 STATIC_EVIDENCE: PASS: scoped ESLint0 errors, diff-check, canonical TypeScript ratchet (baseline10/current6) and production Vite build. Existing large-chunk warnings retained. Initial sandbox typecheck attempts were stopped and are not extra passes. Final immutable-source review and hosted CI remain separate gates.
@@ -15,7 +15,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: ordinary-owner production QA reproduced missi
 KEYBOARD_FOCUS: PASS: native keyboard reread/normal Escape return and regression assertion preserve original focus; live screen-reader execution remains UNVERIFIED.
 ZOOM_REFLOW: PASS: native390/320 widths and eight desktop contexts have no document overflow; actual browser zoom is UNVERIFIED. Copy wraps without changing controls or scroll ownership.
 REDUCED_MOTION: PASS: no added motion; existing native Sheet preference rules remain unchanged. No new OS-preference execution claimed.
-STATE_COVERAGE: PASS: initial/explicit reading, successful empty, found/saved original record, failure/refusal, uncertain existing action, duplicate-flight and auth/scope retirement. A failed read cannot become empty because the empty label is set only by a successful pending[] result.
+STATE_COVERAGE: PASS: src/solo/weekly/WeeklyDraftComposer.test.tsx and the existing Panel/command suites cover initial/explicit reading, successful empty, found/saved original record, failure/refusal, uncertain existing action, duplicate-flight and auth/scope retirement. Only successful empty-list retrieval sets the empty label.
 TRUTHFUL_STATE_LABELS: PASS: returned-none is owner/read-qualified, not all business work empty; loading is not success; reading a proposal is not creating, saving, authorizing or executing a responsibility.
 SOLO_UI: YES: same canonical weekly composer used in Operations, PAIGE and Calendar, under existing owner audience/server authority.
 SOLO_1536X770_PAIGE_CLOSED: PASS: Mineral/native weekly Sheet, feedback-light-1536-closed.jpg.

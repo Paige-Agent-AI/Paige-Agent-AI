@@ -318,3 +318,73 @@ production source/readback, ordinary SOLO permissions/isolation/reload and final
 owner evaluation. Provider activation, consequential actions and protected real
 fixtures keep their existing gates. No dormant tool/provider is activated by
 this inventory; originating records, issuer and authority remain canonical.
+
+## October 20: nine analytics catalogue entries and the required outcomes
+
+This is a reconciliation within the existing matrix, not another registry or a
+reduction of O01–O19. Official ownership is CAP-009–CAP-017 in the
+[Capabilities Ownership Register](https://docs.google.com/spreadsheets/d/1qMN3h4fU4zVftWY-KPheBL95SxrbyI7ykn7kIcWb_J4/edit#gid=1786286225).
+The original nine platform-authored `paige_skills` rows are present and active in
+production. Active/default-auto describes a recipe, not its caller's effective
+permission, Chat admission, source readiness or customer acceptance.
+
+| ID / existing slug | Existing outcomes | Supported customer subset and missing requirement | Canonical originating dependency / proposed panel ceiling |
+|---|---|---|---|
+| CAP-009 `ad_spend_efficiency` | O03–04/O08 | No canonical Business Review ad-efficiency producer. Do not reconstruct ROAS, CPL or attributed revenue. | EXP03 campaign/attribution evidence → existing Metric issuer; Coming Soon for this integration |
+| CAP-010 `churn_signal_detection` | O05/O08/O15 | Current client/lifecycle counts work; they do not prove a named client's churn risk. | EXP09 authorized health/service signals, EXP05 delivery → Fabric; Coming Soon for churn detection |
+| CAP-011 `cohort_analysis` | O03–05/O08 | Current snapshots cannot reconstruct historical acquisition-cohort retention/expansion. The issuer explicitly withholds unsupported retention. | EXP03 acquisition + EXP09 lifecycle + EXP04/11 financial evidence; Coming Soon |
+| CAP-012 `conversion_funnel_diagnosis` | O03/O08 | Permitted pipeline counts/current evidence work. Historical stage conversion, drop-off and causal diagnosis are absent. | EXP03/04 canonical pipeline/attribution → Metric issuer; Limited to current evidence |
+| CAP-013 `engagement_read` | O05/O08/O17 | Business Review has no channel engagement producer; contact totals or a listed provider are not engagement. | EXP03/09 authorized email/content/customer signals; Coming Soon for this integration |
+| CAP-014 `monthly_qbr_draft` | O01–02/O08/O13/O16 | The existing review supports last_30_days. A filed monthly document, exact approval and later artifact retrieval need proof. | Existing document/approval/Rail contracts, no new report store; Unverified for the filed deliverable |
+| CAP-015 `quarterly_narrative` | O01–02/O08/O13/O16 | The existing review supports current_quarter. A filed quarterly narrative with source/period continuity and recovery needs proof. | Same canonical document/approval/Rail contracts; Unverified for the filed deliverable |
+| CAP-016 `revenue_trend_read` | O03–04/O08 | The issuer-backed payments adapter compares compatible, complete recorded-receipt windows by currency. This is not recognized revenue, MRR/ARR, bank cash, profit or a forecast. | EXP04 receipts, EXP11 authoritative revenue series; Limited to the recorded-receipt subset |
+| CAP-017 `weekly_business_review` | O01–06/O08/O10/O14–16 | The same governed operating snapshot supports sourced weekly Chat and Executive reviews, named gaps, priorities, targets and departmental links. Full financial/client/marketing depth and Live/effects remain separate. | Existing business.operating_snapshot + owning domain adapters; Limited to available permitted evidence |
+
+These are ceilings for the bounded stated subsets, not unconditional badges.
+The shared panel must resolve the current shell, actor, tenant, entitlement and
+runtime/source evidence before claiming availability. A denied or failed read
+cannot inherit another account's Limited/Live state; an absent adapter does not
+prove that a specific external provider is disconnected. No nine-entry Live
+promotion follows from the recipe seed or a successful CI run.
+
+The current deployed panel was observed showing all nine as Listed/Unverified.
+ANT-161 coordinates the shared source writer and presentation contract; no parallel
+status engine or same-file panel edit is introduced here. The first small follow-up
+corrects only the canonical descriptions, with original-name/description/category/
+platform/system guards. It preserves slugs, tools, steps, tiers, lanes, activation,
+custom rows and every permission. Rollback-only PostgreSQL proof covers all nine
+updates, replay, custom/tenant/renamed/reclassified/unrelated negatives, inactive
+preservation and read-only update denial before/after. Actual badges and improved
+descriptions require the shared consumer's release and deployed panel verification.
+
+Source anchors: `20260903000000_skills_s2_cat6_analytics_interpretation.sql`;
+`_shared/skill-interpreter.ts` (generic context is not a Metric issuer read);
+`_shared/paige-skill/governed-adapter.ts`; `_shared/analytics-metrics/keys.ts`
+and `read.ts`; `_shared/paige-context/business-review.ts`, adapters and snapshot;
+`_shared/paige-spine/domains/business-review.ts`; `SoloPaigeWorkspace.tsx`
+and `useSoloSkills.ts`. Generic recipe execution and its confirmations must not
+be confused with already-admitted read-only Chat/domain tools.
+
+VERA #2400 and Finance #2402 are merged and source-verified; VERA remains the same
+addressable Intelligence/Finance/Risk specialist, with PAIGE principal COO and no
+new delegated runtime. Targets #2181 is merged; all actuals still use the issuer.
+Finance's bounded no-source read/navigation/reload was observed in the authorized
+SOLO workspace; populated Finance, provider readiness and full acceptance remain
+owed. Original 9/0 and 12/0/4 evidence remains historical. All nineteen outcomes,
+all nine owned capabilities and the single full-Experience founder evaluation
+remain required.
+
+Algorithm support for this catalogue correction: **NO VERIFIED ALGORITHM is added
+or activated.** ALG-03 COO business-health prioritization uses permitted source
+risks and freshness; ALG-13 Useful next-best-action recommendations needs a useful
+step and durable outcome. Their deterministic severity-order candidate is #2409,
+not full algorithm acceptance. ALG-06 Cash-flow forecasting is not established by
+receipt comparisons or stored Finance facts; ALG-04 Retention and customer-success
+signals still needs real cohort/activity evidence. ALG-11 Model quality and cost
+evaluation stays with the canonical Model Fabric/Intelligence contract; ALG-12
+Anomaly and incident detection stays with originating Operations evidence. These
+contracts are partial/unverified at their required acceptance level (official EXP
+Algorithms), not new implementations here. PAIGE/VERA consume NEXUS acquisition,
+MERIT commercial, CURA client, ZION operations and MENTOR knowledge/strategy outputs
+through the existing scoped Spine/Fabric/Rail contracts; historical coding lanes
+are not restarted.

@@ -21,4 +21,3 @@ export function useBusinessReview() {
   if (generation && snapshot.domains.finance?.data?.finance_evidence?.sources[0]) snapshot.domains.finance.data.finance_evidence.sources[0].company_label = 'Example refreshed source';
   return { state: 'ready', snapshot, refresh };
 }
-

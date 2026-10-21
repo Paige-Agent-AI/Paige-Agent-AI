@@ -623,7 +623,9 @@
     },
     {
       "path": "scripts/live-drive/harness/finance-review-mount/stubs.tsx",
-      "sha256": "52e522b99d497ca5336b5cfbb1dcb3ec20cd1d9bf8d44be27139fc353a4901c3"
+      "sha256": "eada5fdec9eac8f163e959b2deff589e2547cfedd8d3da46f9ac24debc63332c",
+      "capturedWorkingSha256": "52e522b99d497ca5336b5cfbb1dcb3ec20cd1d9bf8d44be27139fc353a4901c3",
+      "relationship": "Only UTF8 BOM, CRLF and trailing blank-line normalization after capture; fixture values and execution are unchanged"
     },
     {
       "path": "scripts/live-drive/harness/finance-review-mount/vite.config.ts",

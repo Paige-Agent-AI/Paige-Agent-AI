@@ -45,3 +45,122 @@ describe("Business review transport — canonical shape and workspace fence", ()
     expect(host.textContent).toBe("failed"); expect(host.textContent).not.toContain(TEST_REVIEW_TENANT);
   });
 });
+
+const operationReview = () => ({ ...structuredClone(TEST_BUSINESS_REVIEW), requested: ['operations'],
+  domains: { operations: structuredClone(TEST_BUSINESS_REVIEW.domains.operations) }, degradation: [] });
+const focused = { focus: ['operations'] as const, actorId: 'test-owner' };
+const expectation = { ...focused, period: 'last_7_days' as const };
+const parseFocused = (snapshot: unknown, ok: unknown = true) =>
+  parseBusinessReview({ ok, snapshot }, TEST_REVIEW_TENANT, 'America/New_York', expectation);
+function FocusProbe({ tenant, actor = focused.actorId, focus = focused.focus }: {
+  tenant: string | null; actor?: string; focus?: readonly ('operations' | 'clients')[];
+}) {
+  const review = useBusinessReview(tenant, 'last_7_days', { focus, actorId: actor });
+  return <><div>{review.state === 'ready' ? `${review.snapshot.actor_id}:${review.snapshot.requested.join(',')}` : review.state}</div>
+    <button onClick={review.refresh}>Refresh</button></>;
+}
+async function renderFocus(tenant: string | null = TEST_REVIEW_TENANT, actor = focused.actorId,
+  focus: readonly ('operations' | 'clients')[] = focused.focus) {
+  await act(async () => root.render(<FocusProbe tenant={tenant} actor={actor} focus={focus} />));
+}
+
+describe('Focused canonical review, without changing the Executive default', () => {
+  it('preserves the source coverage, period, ordering and bounded evidence', () => {
+    const original = operationReview();
+    expect(parseFocused(original)).toEqual(original);
+    expect(parseFocused(original)?.domains.operations.data?.coverage_note).toContain('Two figures');
+  });
+  it.each([
+    ['empty requested domains', (s: ReturnType<typeof operationReview>) => ({ ...s, requested: [] })],
+    ['wrong requested domain', (s: ReturnType<typeof operationReview>) => ({ ...s, requested: ['clients'] })],
+    ['duplicate requested domains', (s: ReturnType<typeof operationReview>) => ({ ...s, requested: ['operations', 'operations'] })],
+    ['missing Operations entry', (s: ReturnType<typeof operationReview>) => ({ ...s, domains: {} })],
+    ['unrequested data', (s: ReturnType<typeof operationReview>) => ({ ...s, domains: { ...s.domains, clients: TEST_BUSINESS_REVIEW.domains.clients } })],
+    ['foreign actor', (s: ReturnType<typeof operationReview>) => ({ ...s, actor_id: 'another-actor' })],
+    ['different period', (s: ReturnType<typeof operationReview>) => ({ ...s, period: { ...s.period, key: 'last_30_days' } })],
+    ['unavailable with embedded data', (s: ReturnType<typeof operationReview>) => ({ ...s, domains: { operations: { ...s.domains.operations, status: 'unavailable', reason: 'failed' } } })],
+    ['array domain container', (s: ReturnType<typeof operationReview>) => ({ ...s, domains: [] })],
+  ])('refuses %s before publishing focused business evidence', (_name, corrupt) => {
+    expect(parseFocused(corrupt(operationReview()))).toBeNull();
+  });
+  it('rejects a coerced success and retains a real unavailable source as unavailable', () => {
+    expect(parseFocused(operationReview(), 'true')).toBeNull();
+    const review = { ...operationReview(), domains: { operations: { status: 'unavailable', reason: 'not_connected', data: null } } };
+    expect(parseFocused(review)?.domains.operations).toEqual(review.domains.operations);
+  });
+  it('uses one incumbent endpoint with only the requested focus and verifies the returned actor', async () => {
+    api.invoke.mockResolvedValue({ data: { ok: true, snapshot: operationReview() }, error: null });
+    await renderFocus();
+    expect(api.invoke).toHaveBeenCalledTimes(1);
+    expect(api.invoke).toHaveBeenCalledWith('paige-business-review?finance_sources=1', expect.objectContaining({
+      body: { period: 'last_7_days', timezone: 'America/New_York', focus: ['operations'] },
+    }));
+    expect(host.textContent).toContain('test-owner:operations');
+  });
+  it('does not issue an unresolved, empty or duplicate focus request', async () => {
+    await renderFocus(null); await renderFocus(TEST_REVIEW_TENANT, '');
+    await renderFocus(TEST_REVIEW_TENANT, focused.actorId, []);
+    await renderFocus(TEST_REVIEW_TENANT, focused.actorId, ['operations', 'operations']);
+    expect(api.invoke).not.toHaveBeenCalled();
+  });
+  it('retires the old actor result in the same business, even when transport ignores abort', async () => {
+    let answer!: (value: unknown) => void;
+    api.invoke.mockImplementationOnce(() => new Promise(resolve => { answer = resolve; }))
+      .mockResolvedValueOnce({ data: null, error: new Error('unavailable') });
+    await renderFocus(); await renderFocus(TEST_REVIEW_TENANT, 'new-owner');
+    expect(api.invoke).toHaveBeenCalledTimes(2);
+    expect(api.invoke.mock.calls[0][1].signal.aborted).toBe(true);
+    await act(async () => answer({ data: { ok: true, snapshot: operationReview() }, error: null }));
+    expect(host.textContent).toBe('failedRefresh');
+  });
+  it('re-reads on a focus change without painting the prior domain result', async () => {
+    api.invoke.mockResolvedValueOnce({ data: { ok: true, snapshot: operationReview() }, error: null })
+      .mockResolvedValueOnce({ data: null, error: new Error('unavailable') });
+    await renderFocus(); await renderFocus(TEST_REVIEW_TENANT, focused.actorId, ['clients']);
+    expect(api.invoke).toHaveBeenCalledTimes(2);
+    expect(host.textContent).toBe('failedRefresh');
+  });
+  it.each(['actor', 'focus', 'default workspace'] as const)('does not resurrect settled evidence during a layout-phase %s A→B→A transition', async changing => {
+    const afterReturn: string[] = [];
+    api.invoke.mockResolvedValueOnce({ data: { ok: true, snapshot: operationReview() }, error: null })
+      .mockImplementation(() => new Promise(() => {}));
+    function CycleProbe() {
+      const [phase, setPhase] = React.useState(0);
+      const review = useBusinessReview(phase === 1 && changing === 'default workspace' ? 'test-tenant-2' : TEST_REVIEW_TENANT,
+        'last_7_days', changing === 'default workspace' ? undefined : {
+        actorId: phase === 1 && changing === 'actor' ? 'another-actor' : focused.actorId,
+        focus: phase === 1 && changing === 'focus' ? ['clients'] : ['operations'],
+        });
+      React.useLayoutEffect(() => {
+        if (phase === 2) afterReturn.push(review.state);
+        if (phase === 1) setPhase(2);
+      }, [phase, review.state]);
+      return <><span>{review.state}</span><button onClick={() => setPhase(1)}>Cycle</button></>;
+    }
+    await act(async () => root.render(<CycleProbe />));
+    expect(host.textContent).toBe('readyCycle');
+    await act(async () => host.querySelector('button')!.click());
+    expect(api.invoke).toHaveBeenCalledTimes(3);
+    expect(afterReturn.length).toBeGreaterThan(0);
+    expect(afterReturn).not.toContain('ready');
+    expect(host.textContent).toBe('loadingCycle');
+  });
+  it('bounds a stalled read, ignores its late success and refreshes only on request', async () => {
+    vi.useFakeTimers();
+    try {
+      let answer!: (value: unknown) => void;
+      api.invoke.mockImplementationOnce(() => new Promise(resolve => { answer = resolve; }));
+      await renderFocus();
+      await act(async () => { vi.advanceTimersByTime(15_000); });
+      expect(host.textContent).toBe('failedRefresh');
+      expect(api.invoke.mock.calls[0][1].signal.aborted).toBe(true);
+      await act(async () => answer({ data: { ok: true, snapshot: operationReview() }, error: null }));
+      expect(host.textContent).toBe('failedRefresh');
+      expect(api.invoke).toHaveBeenCalledTimes(1);
+      api.invoke.mockResolvedValueOnce({ data: { ok: true, snapshot: operationReview() }, error: null });
+      await act(async () => host.querySelector('button')!.click());
+      expect(host.textContent).toContain('test-owner:operations');
+      expect(api.invoke).toHaveBeenCalledTimes(2);
+    } finally { vi.useRealTimers(); }
+  });
+});

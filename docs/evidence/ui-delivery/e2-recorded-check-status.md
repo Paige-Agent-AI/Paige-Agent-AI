@@ -61,7 +61,9 @@ context state and exact prohibited boundaries while clarifying the separate nati
 [Native index and exact source hashes](assets/e2-recorded-check-status/native-index.json)
 contains ten cases plus the phone reread frame. The existing Systems Check harness
 adds explicit scenarios and a quiet Rail double, retains actual helper exports and
-models the real product theme container/font assets. All evidence is synthetic;
+models the real product theme container, SoloApp's legacy paige-solo wrapper and
+font assets. The console explicitly binds its existing canonical UI font token,
+preventing legacy font inheritance without changing global typography. All evidence is synthetic;
 no authenticated or real worker/scan/provider outcome is established. Initial11px,
 pre-edge and incomplete-wrapper observations remain local/excluded. Final images
 were captured natively at complete viewport bounds, without editing or rescaling.

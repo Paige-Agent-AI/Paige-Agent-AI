@@ -82,7 +82,8 @@ try {
     const dto=JSON.parse(sql(context()+`SELECT ${readOne()};`));
     check(dto.agreement.id===id&&dto.agreement.body_markdown==='Original synthetic scope'&&dto.agreement.can_edit===true,'Human reader returns real editable original record');
     check(dto.signers.length===1&&dto.signers[0].email==='a-client@example.com','Actual original signer, not input echo');
-    check(Object.keys(dto).sort().join(',')==='agreement,signers'&&Object.keys(dto.agreement).sort().join(',')==='body_markdown,body_source,can_edit,commercial_terms_id,contact_id,content_sha256,has_source_document,id,offer_id,sealed_sha256,source_version_id,status,title,updated_at,version'&&Object.keys(dto.signers[0]).sort().join(',')==='declined_at,email,full_name,id,signed_at,signer_role,signing_order,status','Reader has exact closed human DTO shape');
+    check(Object.keys(dto).sort().join(',')==='agreement,signers'&&Object.keys(dto.agreement).sort().join(',')==='body_markdown,body_source,can_edit,commercial_terms_id,contact_id,content_sha256,expires_at,has_source_document,id,offer_id,sealed_sha256,source_version_id,status,title,updated_at,version'&&Object.keys(dto.signers[0]).sort().join(',')==='declined_at,email,full_name,id,signed_at,signer_role,signing_order,status','Reader has exact closed human DTO shape');
+    check(dto.agreement.expires_at===null,'Unissued draft does not invent a signing deadline');
     check(!/token|storage_key|ip_address|document_path|request_sha256/.test(JSON.stringify(dto)),'Reader excludes credentials, private object locators and request digests');
     check(sql('SELECT count(*) FROM paige_agreement_events;')==='1','Preparation read is not an activity write');
     const keyRecovery=JSON.parse(sql(context()+`SELECT ${recover()};`));
@@ -135,6 +136,8 @@ try {
     const lateRecovery=JSON.parse(sql(context()+`SELECT ${recover()};`));
     check(lateRecovery.signature_state==='sent'&&lateRecovery.version===2&&lateRecovery.signing_id===id,'Later-page request read returns actual current sent revision');
     check(JSON.parse(sql(context()+`SELECT ${readOne()};`)).agreement.can_edit===false,'Frozen record is read-only');
+    sql(`UPDATE paige_agreements SET expires_at=now()-interval '1 day' WHERE id='${id}';`);
+    check(JSON.parse(sql(context()+`SELECT ${readOne()};`)).agreement.expires_at!==null&&sql(`SELECT expires_at<now() FROM paige_agreements WHERE id='${id}';`)==='t','Selected reader exposes the actual expired instant for the existing display-state rule');
     refused(`PERFORM save_paige_agreement('${tenant}','${id}','${client}','Rewrite sent','Unauthorized rewrite')`,'23514');
     check(sql(`SELECT count(*) FROM paige_agreement_events WHERE agreement_id='${id}';`)==='2','Only native created+edited activity, no recovery or mock sending event');
 

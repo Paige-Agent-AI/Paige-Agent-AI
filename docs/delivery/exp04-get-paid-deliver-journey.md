@@ -44,7 +44,7 @@ Reserved forward migration20271113120000 follows EXP09's pending100000/110000;
 release must reconcile the actual frontier rather than leapfrogging their work.
 
 Local native checkpoint: original-call baseline produced two agreements and two
-counterparties; repaired native PostgreSQL16 proof90 assertions PASS, including four
+counterparties; repaired native PostgreSQL16 proof92 assertions PASS, including four
 real concurrent sessions, exact current SAVE body, original CAS, metadata constraints,
 closed human DTO/ACL, templates/upload references/missing-email and tier refusals.
 Migration replay twice, no production/authenticated claim. Existing integrity runner

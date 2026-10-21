@@ -169,7 +169,7 @@ BEGIN
     'id',_row.id,'contact_id',_row.contact_id,'offer_id',_row.offer_id,'commercial_terms_id',_row.commercial_terms_id,
     'title',_row.title,'body_source',_row.body_source,'source_version_id',_row.source_version_id,
     'body_markdown',_row.body_markdown,'has_source_document',_row.document_path IS NOT NULL,
-    'status',_row.status,'version',_row.version,'updated_at',_row.updated_at,
+    'status',_row.status,'version',_row.version,'updated_at',_row.updated_at,'expires_at',_row.expires_at,
     'can_edit',_row.status='draft' AND _row.content_sha256 IS NULL AND _row.content_storage_key IS NULL,
     'content_sha256',_row.content_sha256,'sealed_sha256',_row.sealed_sha256),
     'signers',_signers);

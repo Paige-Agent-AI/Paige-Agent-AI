@@ -17,6 +17,18 @@ or full19/9/founder outcomes. NO VERIFIED ALGORITHM added. See Master§4.0 and
 
 ## EXP02 current release checkpoint — 2026-10-21 UTC
 
+Canonical Conversations consumer#2470 reviewed e0c51511, merged
+`46c6514f917ec00d423fd83e36e6bd9714ba915b`, actual tree6325bae4. Required
+exact-head11 checks/two statuses and fresh Preview pass; normal production web/
+public and strict Edge39602968655/source+JWTv487/edge-live verify. The existing
+caller-JWT envelope read now withholds fabricated empty results and supplies only
+the trusted shared persisted Conversations reference after available. No provider,
+permission, sender, protected-read, catalogue or algorithm activation. Native
+synthetic/source proofs do not establish actual customer read/link/reload/privacy,
+current Chat CPU recovery, Live/cohorts or all19/nine analytics/founder acceptance.
+Native-read catalogue representation remains ANT-161; see Master§4.0 and
+[#2470 source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2470#issuecomment-6316598288).
+
 Chat disposal correction#2469 revieweda7d847f9, merged
 `4aaa84e218121c33a3f510a99a2d1dd9038a1795`, exact treef0b804ac. Required checks,
 normal production web/public and actual served callback condition verify; the old

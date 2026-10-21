@@ -1,5 +1,24 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+**October21 recorded-check source release:** #2466 reviewed e7600799, merged
+`4d667a52adde822221c96f10d884ba95e8ccfdd9`, actual/expected tree81f98c76.
+Required CI, normal production web/public and actual served status/font/outline
+readback verified (Master§4.0). O06 separates completed findings from the last-read
+unfinished timestamp; age-only and empty states withhold unsupported run/health
+claims. Refresh remains read-only. Initial design CI failure was repaired, not
+waived.115 source cases/11 native synthetic frames support source only; actual
+customer unfinished/completed/reload/permissions proof remains owed. Mind context
+and O07/O19 execution remain held; no provider/permission/catalogue/algorithm activation.
+
+**October21 Executive source-disclosure repair:** #2464 reviewed79d39462, merged
+`720485f3955ae1b591fca2dfc6125ad0bbde2ccf`, exact composition tree91b3de9e.
+Required checks, normal production web/public build and actual served explanation
+and canonical-font CSS readback verified (Master§4.0). O01/O02 now explain the
+composer's domain-qualified missing-adapter state without changing zero, source
+coverage, links, permissions or catalogue availability. Ten native synthetic frames
+and bounded regressions are supporting source proof, not authenticated acceptance.
+No verified algorithm/provider/action activation; all19/nine analytics remain owed.
+
 **October21 scoped continuity source releases:** #2462 reviewed18a560d5 merged
 `87ccff84221497f298041fb33a0e16ee85d8c719`, exact treef728d532; required checks,
 production web/provider metadata and public build readback verified (Master§4.0).
@@ -290,7 +309,7 @@ PENDING. Each available subset must be tested independently of its remaining req
 | O03 Sales pipeline/performance with valid period comparisons and separate currencies | S39/S13; registered Sales metrics; Sales/Analytics; `deals/pipelines/pipeline_stages` | Executive, Chat and owning Sales board | D bounded reads and visual source. Existing SOLO read/navigation/reload supplement passed; populated comparisons, protected negatives and complete commercial acceptance remain owed |
 | O04 Full financial and commercial intelligence: actual cash, collections, income, expense and profit source coverage | S39/S41/S13; Sales receipts/receivables in `paige_invoices/paige_invoice_payments`, business calendar; Finance-owned financial books and Analytics producer | Executive/Chat plus Finance and Sales collections | D bounded Finance evidence#2402/ddf12b6b and authorized no-source/provenance/navigation/reload proof. B complete financial coverage. Current receipts are not bank balance or profit; populated company/source/currency evidence, permissions/isolation, profit/cash/forecast/budget/provider readiness and full acceptance remain owed |
 | O05 Client health, lifecycle/onboarding and unified service-delivery progress/history | Client/CRM, Operations/Planning, Fabric/Analytics; `clients`, canonical work/task/delivery/acceptance records | Executive/Chat, Clients and Operations Work | D bounded client counts / B full health. Operations owns missing permission-filtered delivery projection; lifecycle/health producers and exact accepted-version evidence owed |
-| O06 Inspect actual Systems Check findings, timestamps, coverage and severity | Existing Systems Check/Operations reader; `systems_check_snapshot`; `paige_systems_check_run/finding`, `paige_workflow_runs` | Systems Check drawer/page, Executive risks and Chat | D recorded checks and Executive source; existing SOLO recorded findings/read navigation exercised. New-run execution is O07; protected negatives, native coverage and final acceptance remain owed |
+| O06 Inspect actual Systems Check findings, timestamps, coverage and severity | Existing Systems Check/Operations reader; `systems_check_snapshot`; `paige_systems_check_run/finding`, `paige_workflow_runs` | Systems Check drawer/page, Executive risks and Chat | D recorded checks/Executive and last-read unfinished/empty-state repair#2466/4d667a52 with web/served-source readback. Existing SOLO recorded findings/navigation proof is historical; new unfinished/completed/reload/permission/full-shell/cohort acceptance remains owed. Refresh starts no check; new-run execution is O07 |
 | O07 Run real Systems checks and authorized corrective workflows with new result and receipt | Existing Systems Check runner, remediation domain writer, Spine/Harness/Trust/Rail; existing run/finding/action records | Systems Check → PAIGE/approval → canonical result | B on-demand consumer and verified runner owner. Current Refresh only rereads; Ask First only opens PAIGE. Bind actual run lifecycle and correction after authority, prove persisted outcome/reload |
 | O08 Evidence-backed priorities, recommendations and useful next steps | Fabric/Analytics adapter evidence and severity; no priority store | Executive priorities and sourced Chat question | D visual and bounded narration. Full Finance/client/goal evidence integration and populated recommendation provenance remain owed; a recommendation is not execution |
 | O09 Save direction and create/revise/transition the same Strategic Play truthfully | Existing Setup get/save RPCs; `tenants.brand.business_brief/tenant_setup_private_context`; `business_mission.create/revise/transition`, mission-system owner; missions/versions/mutation receipts | Business Game Plan forms, Plan in Motion, Chat and Executive projection | D manual records and released Executive projection#2181/2d93594b / G consequential Chat mutation. Prove stale revision, idempotency, unknown reconciliation, readback and continuity. Lifecycle Complete is not actual business work |

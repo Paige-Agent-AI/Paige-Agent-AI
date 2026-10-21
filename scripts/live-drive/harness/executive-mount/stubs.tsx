@@ -22,6 +22,7 @@ export function useBusinessReview() {
   if (variant === "loading") return { state: "loading", refresh: noop };
   if (variant === "error" || variant === "member") return { state: "failed", message: variant === "member" ? "This business review is not authorized for this role." : "Your business review could not be read right now. Nothing was changed.", refresh: noop };
   const input = structuredClone(TEST_BUSINESS_REVIEW);
+  if (p.get("gap") === "missing") input.domains.campaigns = { status: "unavailable", data: null, reason: "no_adapter: campaigns" };
   if (p.get("workspace") === "b") { input.tenant_id = SECOND_REVIEW_TENANT; input.domains.clients.data!.headline = [{ ...input.domains.clients.data!.headline[0], value: 2 }]; }
   const snapshot = withTargetAndFinanceFixtures(input, variant ?? "ready", ["finance", "catalogue"].includes(import.meta.env.E2_HARNESS_SLICE));
   if (variant === "unavailable") for (const d of snapshot.requested) snapshot.domains[d] = { status: "degraded", data: null, reason: "scope_changed" };

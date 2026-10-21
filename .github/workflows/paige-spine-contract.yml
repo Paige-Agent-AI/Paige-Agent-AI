@@ -625,6 +625,10 @@ jobs:
       # customers, ordinary members, bare operators and another active workspace.
       - run: supabase test db supabase/tests/e09_cura_knowledge_inventory.sql
         if: ${{ !cancelled() }}
+      # Original client-success result read: the same native actor/workspace and
+      # staff predicates, service-only delegation and no contactless self grant.
+      - run: supabase test db supabase/tests/e09_skill_run_readback.sql
+        if: ${{ !cancelled() }}
       # E09 C1: announcements through the one campaign system — the `portal` audience (open access only,
       # the same predicate as the customer's own resolver), rule keys checked on every draft write and at
       # approval, and Updates consent for promotions/announcements to portal-linked contacts at plan AND send.

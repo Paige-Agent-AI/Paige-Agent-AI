@@ -38,6 +38,21 @@ All nine actual catalogue descriptions/statuses were read and reloaded: CAP009/0
 
 Subsequent authorized VERA-labelled last30days and current-quarter advisory reads completed with six scoped native references and stable narrative/period/reference reload (ANT-52 comments59b05e9a-b5b5-4862-a2b8-65d977d88519 and10fc213a-21d9-4213-bc27-09ebf6468719). Quarter-to-date, completed-day Sales windows, comparable observed-day windows, current snapshots and unavailable evidence remained distinct. This does not prove a distinct VERA dispatch or the original monthly/quarterly skill contract: rendered written deliverables filed for human review/retrieval remain required, so CAP014/015 stay Unverified. Actual Executive handoff from open Capabilities hid the correctly prefilled unsent question (ANT-52 212ec981); small repair#2483 is in development/review/CI, not yet released or customer-accepted. Existing native Marketing Overview and saved-reference Executive return also worked; this is not acceptance of the unmounted Marketing review consumer. All are bounded read evidence, not business-action receipts or full-Experience acceptance.
 
+## EXP04 restarted — Agreements source continuation, 2026-10-21
+
+Owner resumes the same sole E04 lead and all original twelve outcomes, expanding native
+Sales Terms & Agreements to professional creation/preparation/signing/management.
+Main d7f55f217f78a1576b21f65d92c06fb5b1e56ac2 and production metadata grounded;
+#1352/#2367 reused, old E04 agreement drafts preserved for selective current-main
+reconciliation. Current Portal billing explicitly supersedes #2170/#2184 UI; no duplicate
+Portal source. First local discovery repair adds title/signer search and explicit missing/
+unreadable states; final131 source tests and20 source-render frames/9 paths pass.
+Exact-head type/CI, merge/release/readback and authenticated acceptance remain owed.
+No new signing, send, payment, provider activation, legal or algorithm availability claim.
+Full architecture/sequence, EXP09 source contract and ALG01/02/12/13 original-register
+status are in [the existing E04 journey](../delivery/exp04-get-paid-deliver-journey.md)
+and [bounded source evidence](../evidence/ui-delivery/e04-agreement-register-discovery.md).
+Master4.0 shipped row N/A until merge; this is not whole-Experience completion.
 
 ## EXP02 catalogue copy/readback checkpoint — 2026-10-20
 

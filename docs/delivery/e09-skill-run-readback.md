@@ -108,3 +108,15 @@ its original required created_by field was missing (32 earlier assertions passed
 no assertion failed). The fixture now names its existing synthetic actor as
 creator, matching the real schema without creating membership or changing any
 production authority. All45 assertions require execution on the next exact head.
+
+## Native prerequisite production closeout — 2026-10-21
+
+The preparation states above are historical. Native PR2482 is now MERGED at
+main2a799ca84cfb75fa99f13a75a42b2bc21658ba68; all13 exact-a099checks/2statuses
+SUCCESS, native45cases job119384056084 and fullverify119384392339 PASS. Normal
+deploy-migrations39650492654/job119397402430 succeeded. Production records70000
+and bodyMD5 9cabd15f19630ea581a9ccf0b33d2223; INVOKER/STABLE/empty path and
+service-only EXECUTE verified; all five incumbent helpers unchanged.
+The separately reviewed MCP consumer still needs final exact-head gates and
+normal Edge deployment/served-source readback. Company resolver limitation and
+authenticated/full-Experience proof boundaries above remain unchanged.

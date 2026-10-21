@@ -46,6 +46,13 @@ test('missing or modified endpoint/helper cannot be accepted',()=>{
  const path=incumbentSourcePaths[0];const missing=new Map(sources);missing.delete(path);assert.ok(validateIncumbentResourceBindings(chat,missing).findings.length);
  const changed=new Map(sources);changed.set(path,sources.get(path)+'\nconst counterfeitEffect = () => fetch("https://counterfeit.invalid");');assert.ok(validateIncumbentResourceBindings(chat,changed).findings.length);
 });
+test('canonical Conversations reference cannot be redirected to Operator by changing its reviewed helper',()=>{
+ const path='supabase/functions/_shared/canonical-app-url.ts',raw=sources.get(path);
+ const changed=raw.replace('conversations: "/solo/{account}/clients/conversations"','conversations: "/operator/fleet/systems-check"');
+ assert.notEqual(changed,raw,'fixture must alter the actual SOLO route');
+ const modified=new Map(sources);modified.set(path,changed);
+ assert.ok(validateIncumbentResourceBindings(chat,modified).findings.includes(`incumbent reviewed source changed: ${path}`));
+});
 for(const [label,before,after]of [
  ['activation authority lowered','["automation_set_state", "owner_only",','["automation_set_state", "ordinary",'],
  ['unapproved draft policy changed','["weekly_commitment_draft", "ordinary",','["weekly_commitment_draft", "high",'],

@@ -1,0 +1,286 @@
+{
+  "kind": "NATIVE SYNTHETIC existing Executive/shell with explicit hook/account/model doubles; not authenticated customer acceptance",
+  "baseline": "87ccff84221497f298041fb33a0e16ee85d8c719",
+  "sourceSha256": {
+    "src/solo/executive-review.ts": "937947f2e76ad52a2f8f35eb35c428ea2722f003041bc2623ab64fcc53cdad63",
+    "src/solo/executive-overview.css": "53fb1c3af02e8d6d2a0f0e3d09007ec68b27c1e4e33d2f09bf4990fb28d3bda3",
+    "src/solo/ExecutiveOverview.tsx": "cb0402e62f7689bbd8e88ee155fec751c78468f697ea74ef7949ccaad61c611d",
+    "scripts/live-drive/harness/executive-mount/stubs.tsx": "10f0312b86ad8df4fb5b4e886fc7a5497d1a31d2e0c99fc42f09ae9a681ddf73"
+  },
+  "cases": [
+    {
+      "conversationOpen": false,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "gapFits": true,
+      "pageFits": true,
+      "scrollOwner": ".executive-root",
+      "text": "What this review cannot measureMarketing campaignsThis area is not included in this business review yet.",
+      "viewport": [
+        1536,
+        770
+      ],
+      "visibleWithinScrollOwner": true,
+      "native": {
+        "width": 1536,
+        "height": 770
+      },
+      "filename": "gap-1536-closed-light.jpg",
+      "sha256": "f79b4e9ecd259b564382ad99eb7898337bd8a7dce4670f0b6b438a8595830854"
+    },
+    {
+      "conversationOpen": true,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "gapFits": true,
+      "pageFits": true,
+      "scrollOwner": ".executive-root",
+      "text": "What this review cannot measureMarketing campaignsThis area is not included in this business review yet.",
+      "viewport": [
+        1536,
+        770
+      ],
+      "visibleWithinScrollOwner": true,
+      "native": {
+        "width": 1536,
+        "height": 770
+      },
+      "filename": "gap-1536-open-dark.jpg",
+      "sha256": "908906a4a8c986b5979e7379fe286c70b46a75c2f42188c009e3355b91ba08ac"
+    },
+    {
+      "conversationOpen": false,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "gapFits": true,
+      "pageFits": true,
+      "scrollOwner": ".executive-root",
+      "text": "What this review cannot measureMarketing campaignsThis area is not included in this business review yet.",
+      "viewport": [
+        1366,
+        768
+      ],
+      "visibleWithinScrollOwner": true,
+      "native": {
+        "width": 1366,
+        "height": 768
+      },
+      "filename": "gap-1366-closed-light.jpg",
+      "sha256": "852e4c952898b49822286041e947045fbd5ce6b00e31f7f946003d23499dad2d"
+    },
+    {
+      "conversationOpen": true,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "gapFits": true,
+      "pageFits": true,
+      "scrollOwner": ".executive-root",
+      "text": "What this review cannot measureMarketing campaignsThis area is not included in this business review yet.",
+      "viewport": [
+        1366,
+        768
+      ],
+      "visibleWithinScrollOwner": true,
+      "native": {
+        "width": 1366,
+        "height": 768
+      },
+      "filename": "gap-1366-open-dark.jpg",
+      "sha256": "fef6fb15fb4a838d3dd8d20f92bde3dda7086729121f7d597ae08abeafc12216"
+    },
+    {
+      "conversationOpen": false,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "gapFits": true,
+      "pageFits": true,
+      "scrollOwner": ".executive-root",
+      "text": "What this review cannot measureMarketing campaignsThis area is not included in this business review yet.",
+      "viewport": [
+        1024,
+        768
+      ],
+      "visibleWithinScrollOwner": true,
+      "native": {
+        "width": 1024,
+        "height": 768
+      },
+      "filename": "gap-1024-closed-light.jpg",
+      "sha256": "858f3edc020b662a38b073128ba8ea82ff8861fea3ff32ff2e8b2205d21bde72"
+    },
+    {
+      "conversationOpen": true,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "gapFits": true,
+      "pageFits": true,
+      "scrollOwner": ".executive-root",
+      "sourceObscuredByPanel": true,
+      "text": "What this review cannot measureMarketing campaignsThis area is not included in this business review yet.",
+      "viewport": [
+        1024,
+        768
+      ],
+      "visibleWithinScrollOwner": true,
+      "closedGapVisible": true,
+      "native": {
+        "width": 1024,
+        "height": 768
+      },
+      "filename": "gap-1024-open-dark.jpg",
+      "sha256": "84c5520b119e2ca5f779037a649f8b5fce71aeb6ae8110c77ebc3c6c73021372"
+    },
+    {
+      "conversationOpen": false,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "gapFits": true,
+      "pageFits": true,
+      "scrollOwner": ".executive-root",
+      "sourceObscuredByPanel": false,
+      "text": "What this review cannot measureMarketing campaignsThis area is not included in this business review yet.",
+      "viewport": [
+        900,
+        1000
+      ],
+      "visibleWithinScrollOwner": true,
+      "closedGapVisible": true,
+      "native": {
+        "width": 900,
+        "height": 1000
+      },
+      "filename": "gap-900-closed-light.jpg",
+      "sha256": "6d7be8b99cca49caff9d333b62f91593bce8f6fef0780ac2d5948c8670f6d023"
+    },
+    {
+      "conversationOpen": true,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "gapFits": true,
+      "pageFits": true,
+      "scrollOwner": ".executive-root",
+      "sourceObscuredByPanel": true,
+      "text": "What this review cannot measureMarketing campaignsThis area is not included in this business review yet.",
+      "viewport": [
+        900,
+        1000
+      ],
+      "visibleWithinScrollOwner": true,
+      "closedGapVisible": true,
+      "native": {
+        "width": 900,
+        "height": 1000
+      },
+      "filename": "gap-900-open-dark.jpg",
+      "sha256": "af4df50a96f8123a7ed20a68cbd43df4c1ff05aadfe23c9357ac646949d65e7e"
+    },
+    {
+      "conversationOpen": false,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "gapFits": true,
+      "pageFits": true,
+      "scrollOwner": ".executive-root",
+      "sourceObscuredByPanel": false,
+      "text": "What this review cannot measureMarketing campaignsThis area is not included in this business review yet.",
+      "viewport": [
+        320,
+        760
+      ],
+      "visibleWithinScrollOwner": true,
+      "closedGapVisible": true,
+      "native": {
+        "width": 320,
+        "height": 760
+      },
+      "filename": "gap-320-closed-light.jpg",
+      "sha256": "0f0ad684bf2fac93469d71cf6c1796e3e32a4b2ef5ea7ed78501d16d4a841688"
+    },
+    {
+      "conversationOpen": true,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "gapFits": true,
+      "pageFits": true,
+      "scrollOwner": ".executive-root",
+      "sourceObscuredByPanel": true,
+      "text": "What this review cannot measureMarketing campaignsThis area is not included in this business review yet.",
+      "viewport": [
+        320,
+        760
+      ],
+      "visibleWithinScrollOwner": true,
+      "closedGapVisible": true,
+      "native": {
+        "width": 320,
+        "height": 760
+      },
+      "filename": "gap-320-open-dark.jpg",
+      "sha256": "8e7bcdb99d08f76d786b3bead197ce5a9642041d92d4055276afe25bb2f0a975"
+    }
+  ],
+  "flows": [
+    {
+      "case": "native phone Escape folds existing PAIGE overlay",
+      "gap": "What this review cannot measureMarketing campaignsThis area is not included in this business review yet.",
+      "open": "false"
+    },
+    {
+      "case": "synthetic Executive full reload",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "gap": "What this review cannot measureMarketing campaignsThis area is not included in this business review yet.",
+      "zero": "0"
+    }
+  ],
+  "contrast": {
+    "light": {
+      "background": "rgb(251, 249, 245)",
+      "text": [
+        {
+          "color": "rgb(23, 19, 49)",
+          "contrast": 17.011763025157094,
+          "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Display\", \"SF Pro Display\", system-ui, sans-serif",
+          "tag": "H3"
+        },
+        {
+          "color": "rgb(103, 97, 107)",
+          "contrast": 5.707692331559825,
+          "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+          "tag": "LI"
+        },
+        {
+          "color": "rgb(103, 97, 107)",
+          "contrast": 5.707692331559825,
+          "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+          "tag": "SPAN"
+        }
+      ],
+      "theme": "light"
+    },
+    "dark": {
+      "background": "rgb(16, 14, 20)",
+      "text": [
+        {
+          "color": "rgb(239, 236, 250)",
+          "contrast": 16.48365492044487,
+          "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Display\", \"SF Pro Display\", system-ui, sans-serif",
+          "tag": "H3"
+        },
+        {
+          "color": "rgb(172, 166, 157)",
+          "contrast": 7.941454567611965,
+          "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+          "tag": "LI"
+        },
+        {
+          "color": "rgb(172, 166, 157)",
+          "contrast": 7.941454567611965,
+          "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+          "tag": "SPAN"
+        }
+      ]
+    }
+  },
+  "boundary": "Unmodified native JPEGs captured directly at the complete measured viewport bounds. The compact PAIGE overlay intentionally obscures and blocks background review input; source copy is read after folding it. This harness uses a synthetic conversation and does not establish actual Chat/Live, authorization, providers, production cohorts or owner acceptance.",
+  "excluded": "Initial legacy-font frames, the first one-pixel wrapper capture and the initial attempt to scroll behind the compact overlay remain local/excluded; no rescaling or pixel editing."
+}

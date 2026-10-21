@@ -826,6 +826,34 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-21 — EXP05 explicit Operations Overview entry, bounded authenticated release.**
+PR [#2488](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2488), reviewed
+`638f467cc4cca0a65942fec3e2ca40a67ed2fe83`, merged
+`fed0b412d1de3aad1b8455ee9b50fd864c536371`; actual tree
+`a19782402efc4e27155f252ff68872137581080f` equals the reviewed union.
+AUTHOR-REVIEW / LOWER ASSURANCE6324483465; all10 applicable exact-head checks
+and2Vercel statuses SUCCESS, schema-free Preview SKIPPED. The material missing
+responsive-evidence finding was corrected and resolved, not waived. Eight fresh
+original captures retain the disclosed1536CSS/1535raster discrepancy; no resizing.
+Production web `dpl_7fftfYytkwa1VHsW5jvaSd4t2Mrx` READY/exact/canonical aliases,
+public build `fed0b412d1de3aad1b8455ee9b50fd864c536371-mvihx2x3`, customerUpdate:null.
+Existing ordinary-owner Work → main Operations mouse click opens explicit
+current-workspace `/operations/overview`; selected Overview/focused anchor and
+normal reload PASS. Direct legacy `/operations` still renders/selects Overview;
+its main Operations link then normalizes to explicit Overview PASS. No business
+write, approval, effect or new receipt; migrations/Edge/activation NOT_APPLICABLE.
+Original private reload-image SHA256
+`c80eda1fa71ca780fb8240ca3b2089d5362ab67048116f37ed7de391c38a2eb9`;
+[production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2488#issuecomment-6324749960),
+ANT11/deae8a48, ANT52/42dd31bb and
+[source/render evidence](evidence/ui-delivery/exp05-operations-overview-entry.md).
+Channel production; internal patch, no customer version/announcement. Shared
+server-classified SOLO helper, no account-specific implementation. Second-cohort
+authenticated proof, full premium redesign, delegated execution, automation/Live
+and whole-Experience owner acceptance remain owed; catalogue skills unchanged.
+Recovery is a reviewed compatible helper correction or bounded revert preserving
+all canonical records. This factual post-merge closeout is not logged recursively.
+
 **2026-10-21 — EXP05 original findings return-focus repair, bounded authenticated release.**
 PR [#2485](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2485), reviewed
 `1d0f3ad778aa541c4ace2d3a7bf0e5f3d56a4f84`, merged
@@ -5814,6 +5842,30 @@ customer version or availability claim. Native releases2475/2476 preserved;
 consumer2404, teaching controls and full EXP09 authenticated acceptance remain
 separately gated. [Original repair evidence](delivery/e09-production-acl-baseline-repair.md).
 
+
+**2026-10-21 — EXP09 CURA relevant authorized Knowledge consumer.**
+PR [#2404](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2404), reviewed
+`a9211fb4de258d0f2891c2748a69eac75a8d9c5c`, merged
+`52d45822a54950c84c8e80fbb1aa06b7748fcf14`. The original customer Chat now selects
+relevant passages only from currently authorized Knowledge after native customer,
+private-thread and protocol admission. Source/manifest/entitlement/withdrawal
+checks and authorized recency fallback remain. Known accepted/replayed intents
+avoid query embedding; no global simultaneous at-most-once reservation is claimed.
+NON-AUTHOR5602292026;11 exact-head checks/Preview and two Vercel statuses passed.
+Consumer19, context73, scope538 and native90/53 tests passed at their stated
+boundaries. Normal production Edge run39633553865/job119337861469 succeeded,
+including selected-source verification. Direct provider read: Chat489 ACTIVE,
+JWTtrue; exact served handler c69403b2cdacd14e76f1966b0b0f087eb1dc8ba61e86e34973070fdc2bc56c20,
+context0aca33229b6d6180c13ea3cf2fff9da8f65edb69a854f43c3229d11049534cd2
+and unchanged persona60da934797c9953c1a8062bc89689139d10f8f3328dc82b45e2ebf1f3df2356b
+match reviewed source. Native50000 was separately verified in2475; no new migration
+or frontend source in this consumer. No new share, identity/privilege, provider
+activation, live query, external send or payment was performed. Internal production
+increment, no customer version/announcement; original query-metering gap remains.
+Actual ordinary customer answer quality, isolation/private reload, all seven
+pillars/algorithm/capability proof and founder acceptance remain PROOF OWED.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2404#issuecomment-6320887890).
+
 **2026-10-21 — EXP09 original CURA Knowledge publishing inventory.**
 PR [#2476](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2476), reviewed
 `d40bbfa1352a22e7ac860c47173837c1d034ed97` → main
@@ -5831,6 +5883,24 @@ customer release name/announcement or verified algorithm. No effectful provider,
 Chat/Live or payment activation. Recovery: reviewed forward correction preserving
 original records/native compatibility. [Readback receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2476#issuecomment-6319079327);
 [native contract](delivery/e09-cura-knowledge-inventory.md).
+
+
+**2026-10-21 — EXP09 original skill-result native authority.**
+PR [#2482](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2482), reviewed
+`a099e3334018b627efb52bbc95d210725221f59a` → main
+`2a799ca84cfb75fa99f13a75a42b2bc21658ba68`. Distinct final source/integration
+5603897793 and current-main compatibility5604151389 CLEAR; all13 exact-head
+checks and both Vercel statuses SUCCESS. Hosted native45 actual-role assertions
+PASS job119384056084; fullverify119384392339 PASS. Normal migration deployment
+run39650492654/job119397402430 SUCCESS; production records20271113070000 and
+exact reader bodyMD5 9cabd15f19630ea581a9ccf0b33d2223. INVOKER/STABLE/empty
+search_path; postgres/service_role execute only, anon/authenticated denied. All
+five original authority-helper fingerprints unchanged. No RLS/table/writer or
+execution/activation change. Internal production/native prerequisite; web/Edge
+NOT_APPLICABLE, no customer version/announcement or verified new algorithm.
+Separately gated MCP consumer2484 and authenticated capability/customer/full
+Experience proof remain PROOF OWED; native source cannot establish those claims.
+Recovery: reviewed additive forward correction preserving original records.
 
 ## 5. Current focus + known gaps
 

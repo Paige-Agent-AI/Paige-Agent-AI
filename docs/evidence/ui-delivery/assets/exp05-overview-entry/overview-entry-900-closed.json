@@ -1,0 +1,26 @@
+{
+  "before": {
+    "focus": "Direct PAIGE",
+    "height": 1000,
+    "overflow": false,
+    "panels": 1,
+    "path": "/solo/1701/operations/overview",
+    "selected": [
+      {
+        "href": "/solo/1701/operations/overview",
+        "text": "Operations"
+      },
+      {
+        "href": null,
+        "text": "Overview"
+      }
+    ],
+    "theme": "light",
+    "width": 900
+  },
+  "after": {
+    "height": 1000,
+    "path": "/solo/1701/operations/overview",
+    "width": 900
+  }
+}

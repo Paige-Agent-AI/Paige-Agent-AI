@@ -42,6 +42,7 @@ describe("DESTINATION_LABEL — the frozen words", () => {
       business_game_plan: "Open Business Game Plan",
       trust_compass: "Open Trust Compass",
       mind: "Open Mind",
+      portal_knowledge: "Open CURA Knowledge",
       calendar: "Open Calendar",
       pipeline: "Open pipeline",
       conversations: "Open Conversations",
@@ -50,6 +51,13 @@ describe("DESTINATION_LABEL — the frozen words", () => {
 });
 
 describe("workspaceLinkTarget", () => {
+  it('reopens only a source reference in the current SOLO business, with no stored address or authority',()=>{
+    const [reference]=readRecordLinks(JSON.parse(JSON.stringify([{destination:'portal_knowledge',record_id:UUID.toUpperCase(),subject:'Private source title',tenant:'foreign',url:'https://foreign.invalid',published:true}])));
+    expect(reference).toEqual({destination:'portal_knowledge',record_id:UUID});
+    for(const account_number of [3855,9999])expect(workspaceLinkTarget(reference,{...soloTenant,account_number})).toEqual({label:'Review CURA source',to:`/solo/${account_number}/clients/portal?view=knowledge&source=${UUID}`,status:'exact'});
+    expect(workspaceLinkTarget({destination:'portal_knowledge',record_id:null},soloTenant)).toEqual({label:'Open CURA Knowledge',to:'/solo/3855/clients/portal?view=knowledge',status:'surface_only'});
+    for(const tenant of [subTenant,{...soloTenant,account_type:'agency'},{...soloTenant,account_type:'enterprise'},{...soloTenant,account_number:null},null])expect(workspaceLinkTarget(reference,tenant)).toBeNull();
+  });
   it("rehydrates Marketing only against the current eligible SOLO account, never campaign focus or a saved URL", () => {
     const [reference] = readRecordLinks(JSON.parse(JSON.stringify([
       { destination: "marketing", record_id: UUID, subject: "Private campaign", path: "/solo/1/growth/overview" },

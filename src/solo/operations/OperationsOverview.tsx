@@ -4,6 +4,7 @@ import { WeeklyResponsibilityEntry } from "../weekly/WeeklyResponsibilityEntry";
 import type { Plan, PlanItem } from "@/hooks/usePlanList";
 import type { TeamMemberRecord } from "../team-workspace-contract";
 import { OperationsAssignee } from "./OperationsAssignee";
+import { OperationsWeek } from "./OperationsWeek";
 import { workDateLabel, workStatusLabel } from "./operations-presentation";
 import { overviewNativeWork, type OperationsWorkSet } from "./operations-overview-work";
 import type { CrmWorkRecord, NativeOperationsWork } from "./operations-native-work";
@@ -58,6 +59,8 @@ export function OperationsOverview({ tenantId, plans, items, members, crmTasks =
       </div>
     </header>
     {work.active.length > 0 && <p className="ops-desk-read-scope">{work.active.length} active {work.active.length === 1 ? "commitment" : "commitments"} · {work.inProgress.length} in progress · {work.reminders.length} {work.reminders.length === 1 ? "reminder" : "reminders"} in the sources shown</p>}
+    {hasNativeWork && <OperationsWeek tenantId={tenantId} items={items} tasks={crmTasks}
+      onInspectItem={onInspectItem} onInspectTask={onInspectCrmTask} />}
     <div className={hasNativeWork ? 'ops-desk-columns' : undefined}><div className={hasNativeWork ? 'ops-desk-primary-column' : undefined}>
       {hasNativeWork && (spotlight ? <section className="ops-desk-attention" aria-label="Priority work to inspect"><header>
         <h2>{spotlight.status === "blocked" ? <CirclePause size={17} aria-hidden="true" /> : <CalendarClock size={17} aria-hidden="true" />}Needs your attention</h2>

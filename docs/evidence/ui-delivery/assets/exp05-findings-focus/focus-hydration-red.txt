@@ -1,0 +1,63 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - `__dirname` (vitest.config.ts:10:25). Use `import.meta.dirname` instead
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+12:48:31 PM [vite] warning: `optimizeDeps.esbuildOptions` option was specified by "vite:react-swc" plugin. This option is deprecated, please use `optimizeDeps.rolldownOptions` instead.
+
+ RUN  v4.1.11 C:/Users/tonig/Documents/Codex/2026-10-14/paige-engineering-2-0-solo-to/work/operations-owner-desk
+
+stderr | src/solo/operations/OperationsOverview.findingsFocus.test.tsx > keeps original Back focus when loading native Work settles and gains records
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+ ❯ src/solo/operations/OperationsOverview.findingsFocus.test.tsx (3 tests | 3 failed) 310ms
+   × keeps original Back focus when loading native Work settles and gains records 184ms
+   × keeps original Back focus when unavailable native Work settles and gains records 73ms
+   × does not remount or refocus the recorded source when native Work becomes unreadable 48ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/solo/operations/OperationsOverview.findingsFocus.test.tsx > keeps original Back focus when loading native Work settles and gains records
+ FAIL  src/solo/operations/OperationsOverview.findingsFocus.test.tsx > keeps original Back focus when unavailable native Work settles and gains records
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/solo/operations/OperationsOverview.findingsFocus.test.tsx:43:72
+     41|   expect(host.textContent).toContain('Start with one real commitment');
+     42|   await render('ready', true);
+     43|   expect(host.querySelector('#recorded-findings-heading') === heading)…
+       |                                                                        ^
+     44|   expect(document.activeElement === heading).toBe(true);
+     45|   expect(host.textContent).toContain(task.title);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/solo/operations/OperationsOverview.findingsFocus.test.tsx > does not remount or refocus the recorded source when native Work becomes unreadable
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/solo/operations/OperationsOverview.findingsFocus.test.tsx:52:97
+     50|   refresh.focus();
+     51|   await render('loading'); await render('unavailable');
+     52|   expect(host.querySelector('[aria-label="Refresh recorded Operations …
+       |                                                                                                 ^
+     53|   expect(document.activeElement === refresh).toBe(true);
+     54|   expect(host.textContent).toContain('Current Work could not be read');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  12:48:32
+   Duration  5.79s (transform 1.80s, setup 280ms, import 2.81s, tests 310ms, environment 2.03s)
+

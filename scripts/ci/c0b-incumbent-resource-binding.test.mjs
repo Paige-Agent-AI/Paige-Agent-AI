@@ -177,3 +177,11 @@ test('rejects customer source-context authority widening',()=>{
  assert.notEqual(changed,raw);const altered=new Map(sources);altered.set(path,changed);
  assert.ok(validateIncumbentResourceBindings(chat,altered).findings.length);
 });
+
+test('canonical CURA source reference cannot escape the current SOLO Portal',()=>{
+ const path='supabase/functions/_shared/canonical-app-url.ts',raw=sources.get(path);
+ const changed=raw.replace('portal_knowledge: "/solo/{account}/clients/portal?view=knowledge"','portal_knowledge: "/operator/fleet/systems-check"');
+ assert.notEqual(changed,raw,'fixture must alter the actual Portal destination');
+ const modified=new Map(sources);modified.set(path,changed);
+ assert.ok(validateIncumbentResourceBindings(chat,modified).findings.includes(`incumbent reviewed source changed: ${path}`));
+});

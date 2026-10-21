@@ -98,7 +98,7 @@ export async function readBusinessSnapshotTransport(
     const envelope = object(data), result = object(envelope?.result);
     if (error || envelope?.version !== 1 || envelope.actor_id !== ctx.who.actorId
       || envelope.tenant_id !== tenant || envelope.timezone !== ctx.timezone || !result
-      || !['available', 'needs_input', 'refused', 'unavailable'].includes(String(result.status))
+      || typeof result.status !== 'string' || !['available', 'needs_input', 'refused', 'unavailable'].includes(result.status)
       || typeof result.message !== 'string' || !result.message.trim() || result.message.length > 12_000) return unavailable();
     const status = result.status as BusinessSnapshotStatus;
     if (status !== 'available') return { status, message: result.message };

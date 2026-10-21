@@ -52,7 +52,9 @@ describe('Chat uses the existing authenticated review transport', () => {
     expect(r.status).toBe('unavailable'); expect(r.projection).toBeUndefined(); expect(f.invoke).toHaveBeenCalledTimes(1);
   });
   it.each([null, {}, { ...envelope(), result: { status: 'available', message: 'read', projection: 'x'.repeat(12_001) } },
-    { ...envelope(), result: { status: 'completed', message: 'read' } }])('rejects malformed/oversized/non-read response', async data => {
+    { ...envelope(), result: { status: 'completed', message: 'read' } },
+    { ...envelope(), result: { status: ['available'], message: 'read' } },
+    { ...envelope(), result: { status: ['refused'], message: 'read' } }])('rejects malformed/oversized/non-read response', async data => {
     const f = fixture(data);
     expect((await readBusinessSnapshotTransport(ctx, { caller: f.caller }, {})).status).toBe('unavailable');
     expect(f.invoke).toHaveBeenCalledTimes(1);

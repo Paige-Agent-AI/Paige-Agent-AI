@@ -120,3 +120,8 @@ service-only EXECUTE verified; all five incumbent helpers unchanged.
 The separately reviewed MCP consumer still needs final exact-head gates and
 normal Edge deployment/served-source readback. Company resolver limitation and
 authenticated/full-Experience proof boundaries above remain unchanged.
+
+
+## Consumer CI evidence-format correction — 2026-10-21
+
+Exact e90 CI run39651704415 executed18,769 unit tests:18,765 passed, one failed and three pending. The original mcp-governed-door test correctly rejected the updated read policy evidence because it lacked a file:line reference. The policy now cites the actual original handler index.ts:3731-3762; no classifier, permission, callback, assertion or guard changes. Required exact repaired-head checks remain owed.

@@ -19,6 +19,8 @@ on:
       - "supabase/functions/_shared/paige-spine/**"
       - "supabase/migrations/**"
       - "supabase/tests/e09_cura_preparation_readback.sql"
+      - "scripts/proof/e09-cura-preparation-concurrency.mjs"
+      - "scripts/proof/e09-cura-preparation-concurrency.test.mjs"
       - "supabase/tests/e09_cura_teaching_authority.sql"
       - "scripts/proof/e09-cura-teaching-concurrency.mjs"
       - "scripts/proof/e09-cura-teaching-concurrency.test.mjs"
@@ -636,6 +638,11 @@ jobs:
         if: ${{ !cancelled() }}
       - run: supabase test db supabase/tests/e09_cura_preparation_readback.sql
         if: ${{ !cancelled() }}
+      - name: CURA preparation recovery native publisher concurrency
+        run: |
+          node --test scripts/proof/e09-cura-preparation-concurrency.test.mjs
+          node scripts/proof/e09-cura-preparation-concurrency.mjs
+        if: ${{ !cancelled() }}
       - run: supabase test db supabase/tests/e09_cura_teaching_authority.sql
         if: ${{ !cancelled() }}
       - name: CURA private preparation native publisher concurrency
@@ -646,6 +653,8 @@ jobs:
       # Original client-success result read: the same native actor/workspace and
       # staff predicates, service-only delegation and no contactless self grant.
       - run: supabase test db supabase/tests/e09_skill_run_readback.sql
+        if: ${{ !cancelled() }}
+      - run: node --test scripts/proof/mcp-skill-run-read.mjs
         if: ${{ !cancelled() }}
       # E09 C1: announcements through the one campaign system — the `portal` audience (open access only,
       # the same predicate as the customer's own resolver), rule keys checked on every draft write and at

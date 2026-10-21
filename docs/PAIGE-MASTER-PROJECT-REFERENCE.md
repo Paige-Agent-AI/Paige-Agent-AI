@@ -826,6 +826,29 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-21 — EXP02 disposed Chat status callback correction.**
+PR [#2469](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2469), reviewed
+`a7d847f9636e7aedde173f8d935fd46701fa64c8`, merged
+`4aaa84e218121c33a3f510a99a2d1dd9038a1795`; actual/head/prospective tree
+`f0b804ac32622af076cffcb6295c2f1b9d3c528e`. The existing 400ms presentation
+callback now checks the sole request fence before updating state after disposal.
+A real mounted teardown regression fails before the fix; 128 cases/five owning
+suites pass afterward. Scoped lint/evidence and pinned design detector pass
+(zero anti-patterns/six incumbent advisories). AUTHOR-REVIEW / LOWER ASSURANCE
+6314235318; final gate6314897529: ten applicable head checks and two statuses
+SUCCESS, no-SQL Preview N/A, zero review threads. Normal production web
+`dpl_HxGDTumqkwuRRRcb8BM1TM4gmQqU` READY/exact metadata/canonical aliases;
+public HTTP200 build4aaa84e2…-mvi1brbc, customerUpdate present/null. Actual served
+`PaigeAIChat-Do5v8-9S.js` contains the request-ticket condition before the gate
+state update. Migrations/Edge NOT_APPLICABLE. Prior CI failure is preserved;
+this is not closure of the separate backend CPU/no-assistant-settlement failures.
+No provider, permission, registry, approval or execution activation. Internal
+repair/no announcement; actual SOLO recovery, Live/isolation/full19/nine analytics
+and founder acceptance remain owed. Recovery: bounded reviewed frontend correction
+or revert preserving canonical records and action holds.
+[Production source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2469#issuecomment-6315061088),
+[Lifecycle evidence](evidence/ui-delivery/e2-chat-gate-lifecycle.md).
+
 **2026-10-21 — EXP02 canonical Conversations reference foundation.**
 PR [#2467](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2467), reviewed
 `95d6108497676bfa86b1d08da2eb015d5fa63407`, merged

@@ -17,6 +17,15 @@ or full19/9/founder outcomes. NO VERIFIED ALGORITHM added. See Master§4.0 and
 
 ## EXP02 current release checkpoint — 2026-10-21 UTC
 
+Chat disposal correction#2469 revieweda7d847f9, merged
+`4aaa84e218121c33a3f510a99a2d1dd9038a1795`, exact treef0b804ac. Required checks,
+normal production web/public and actual served callback condition verify; the old
+400ms gate now reuses request-fence invalidation. 128 owning cases pass; original
+CI failure is retained. Migrations/Edge N/A; no provider/permission/registry/action
+activation. Prior backend CPU/no-settlement findings and real customer/Live/full19/
+nine analytics/founder acceptance remain open. See Master§4.0 and
+[#2469 source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2469#issuecomment-6315061088).
+
 Canonical Conversations foundation#2467 reviewed95d61084, merged
 `268ff690df500345cc3c81eec7ca2a2baa60b13e`, exact treeb305fba3. Eleven exact-head
 checks/two statuses, normal production web/public and actual served destination/label

@@ -35,12 +35,12 @@ MUST_PRESERVE: existing Portal navigation, Knowledge publication/review, K1/nati
 ACCEPTANCE_CRITERIA: original source privately reviewed/published; exact customer terms approved; persisted original receipt; current authorized client/CURA read; withdrawal/expiry/source change/foreign scope fail closed. Authenticated completion remains owed.
 MOTION_PURPOSE: NONE: no added motion; inherited reduced-motion safety retained.
 PROTECTED_SEAMS: native Knowledge/K1 authorization and atomic receipts reused; extraction/review services and original AddKnowledgeFlow unchanged. Customer identity, invitations, shared Chat/Harness/Spine/Rails, billing, booking and provider activation source unchanged.
-INTERNAL_BUILD_IDENTITY: source base2b2a0b61b3043f77fafa062629da4661691d6d4e plus indexed source hashes; exact final head in PR review/CI; deployment=NOT_DEPLOYED; environment=development; migrations=APPLIED(20271113060000_e09_cura_knowledge_inventory); edge=NOT_APPLICABLE; evidence=docs/evidence/exp09-teach-cura-owner/capture-index.json.
+INTERNAL_BUILD_IDENTITY: source13409ad1d46a8a953d3d5ed5cc166a346a8806d1 plus this evidence correction; exact final head in PR review/CI; deployment=NOT_DEPLOYED; environment=development; migrations=APPLIED(20271113060000_e09_cura_knowledge_inventory); edge=NOT_APPLICABLE; evidence=docs/evidence/exp09-teach-cura-owner/capture-index.json.
 RELEASE_CHANNEL: development: reviewed source render; ordinary production web deployment/readback follows exact-head release gates.
 RELEASE_CLASSIFICATION: internal-only: bounded owner controls within incomplete EXP09; source render is not a complete customer release.
 CUSTOMER_RELEASE_IDENTITY: none: no integrated founder acceptance or announcement decision.
 RELEASE_NOTE_REQUIRED: no: internal prerequisite without customer-release publication authority.
-RELEASE_TRUTH_BOUNDARY: PARTIAL source implementation/native inventory deployed; authenticated publication/customer answer and integrated EXP09 PROOF OWED. Chat/Live teaching not mounted by this UI.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: source implementation/native inventory deployed; authenticated publication/customer answer and integrated EXP09 PROOF OWED. Chat/Live teaching not mounted by this UI.
 RELEASE_RECOVERY: position=reviewed consumer forward correction or bounded revert retaining all original Knowledge/shares/receipts/native contracts; reference=docs/delivery/e09-teach-cura-owner-controls.md.
 
 ## Review and evidence limits

@@ -21,6 +21,9 @@ on:
       - "supabase/tests/e09_cura_preparation_readback.sql"
       - "scripts/proof/e09-cura-preparation-concurrency.mjs"
       - "scripts/proof/e09-cura-preparation-concurrency.test.mjs"
+      - "supabase/tests/e09_cura_teaching_authority.sql"
+      - "scripts/proof/e09-cura-teaching-concurrency.mjs"
+      - "scripts/proof/e09-cura-teaching-concurrency.test.mjs"
       - "supabase/tests/research_tenant_lineage.sql"
       - "supabase/tests/research_persist_service_grants.sql"
       - "supabase/tests/mcp_gateway_endpoint_revokes_approvals.sql"
@@ -639,6 +642,13 @@ jobs:
         run: |
           node --test scripts/proof/e09-cura-preparation-concurrency.test.mjs
           node scripts/proof/e09-cura-preparation-concurrency.mjs
+        if: ${{ !cancelled() }}
+      - run: supabase test db supabase/tests/e09_cura_teaching_authority.sql
+        if: ${{ !cancelled() }}
+      - name: CURA private preparation native publisher concurrency
+        run: |
+          node --test scripts/proof/e09-cura-teaching-concurrency.test.mjs
+          node scripts/proof/e09-cura-teaching-concurrency.mjs
         if: ${{ !cancelled() }}
       # Original client-success result read: the same native actor/workspace and
       # staff predicates, service-only delegation and no contactless self grant.

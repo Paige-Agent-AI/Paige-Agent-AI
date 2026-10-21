@@ -54,9 +54,10 @@ PAIGE shell, native iOS/200% zoom, provider behavior or cross-business productio
 ## Release boundary
 
 Internal-only development prerequisite, exact immutable head in the PR and
-capture index. Migration NOT_APPLICABLE; no deployed Edge handler change from
-the canonical pure reference adapters. Web NOT_DEPLOYED until required exact-head
-CI/Preview/review and production readback. No customer version or announcement.
+capture index. Migration NOT_APPLICABLE. No Edge entrypoint changes, but the two pure shared
+reference adapters are imported by existing Edge consumers. Normal affected-Edge
+deployment and served-source readback are required alongside web deployment
+after exact-head CI/Preview/review; both are NOT_DEPLOYED at preparation. No customer version or announcement.
 Recovery is a reviewed bounded consumer revert/forward fix, preserving native
 Knowledge, sharing and receipts. No verified new algorithm: original ALG-01/12
 reconciliation/exception handling only. Full seven-pillar acceptance, owner

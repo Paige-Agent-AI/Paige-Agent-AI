@@ -35,7 +35,7 @@ MUST_PRESERVE: original invitation, Portal tabs, publisher/Knowledge/K1 authorit
 ACCEPTANCE_CRITERIA: exact source or honest refusal; protected review survives another reference; explicit original publication/share controls; private data retires with business/actor.
 MOTION_PURPOSE: NONE: no new motion; original reduced-motion safety retained.
 PROTECTED_SEAMS: caller-JWT Knowledge and native publisher/K1 unchanged; shared sender/booking/money/Chat/Harness/Spine/activation source untouched.
-INTERNAL_BUILD_IDENTITY: source4ac29322c1324b9b3a91b341dbe087a508c04b7e plus evidence-only completion; exact final commit in PR; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/exp09-cura-source-reference/capture-index.json.
+INTERNAL_BUILD_IDENTITY: source4ac29322c1324b9b3a91b341dbe087a508c04b7e plus evidence-only completion; exact final commit in PR; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=SHARED_SOURCE_DEPLOYMENT_PENDING; evidence=docs/evidence/exp09-cura-source-reference/capture-index.json.
 RELEASE_CHANNEL: development: original-source local verification, required production web readback follows review/CI.
 RELEASE_CLASSIFICATION: internal-only: exact-source recovery prerequisite within incomplete EXP09.
 CUSTOMER_RELEASE_IDENTITY: none: no integrated founder acceptance or customer-publication decision.

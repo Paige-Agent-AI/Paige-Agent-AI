@@ -826,6 +826,38 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-21 — EXP09 original skill-result MCP readback.**
+PR [#2484](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2484),
+reviewed `9250c6083ccd24ef2e2909da3654516cbb6beac7`, merged
+`14283117beed124ad055d13728b55481e3655d23`. The existing governed
+get_skill_run door uses verified request identity and the original native
+actor/business/contact authority. Explicit platform-key behavior and field-correct
+aliases remain intact. It reads an existing result; it does not execute a skill,
+change admission or make a capability LIVE. NON-AUTHOR review5604668033 CLEAR;
+current-main compatibility5605095290 is AUTHOR-REVIEW / LOWER ASSURANCE.
+All 11 exact-head checks and both Vercel statuses SUCCESS, including full
+verify119418506532 and database-contract119418504204. Native prerequisite #2482
+was already deployed and body/ACL verified. Push39661817560/job119436506311
+deployed and verified selected source but correctly refused certification over an
+earlier uncertified source gap. Existing workflow_dispatch recovery
+[39662050930](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/39662050930)/
+job119437357876 SUCCESS; actual edge-live equals the merge. Direct production
+paige-mcp v755 ACTIVE, verify_jwt=false preserved for original bearer validation;
+all 19 served bundle files exactly match the merged source. Index SHA256
+3aad35d529cdbb3070d710003846012f85bd97e9fb6080d8d4e22c0cf880f7b3 and policy
+1a370cf9d84d267a2d5dd87f7ed6413dd5969724c5947df2e26106415e6000a8 verified.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2484#issuecomment-6324724661).
+This increment has no migration/web change, activation, send or provider effect.
+Functional: deployed source/readback PASS; authenticated MCP and seven-capability
+outcomes remain PROOF OWED. Visual: NOT_APPLICABLE. Experiential: original
+read-only result path retained; full owner/client journey remains UNVERIFIED.
+Acceptance: complete EXP09 founder evaluation remains separate. Company resolver
+limitation remains UNAVAILABLE. Channel production, internal-only, no customer
+version or announcement. Recovery is a bounded reviewed consumer forward fix or
+revert preserving native authority and records. This factual closeout is not
+logged recursively.
+
+
 **2026-10-21 — EXP04 truthful historical signing economics.**
 PR [#2493](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2493), reviewed
 `ed2964b5024f672492b5db6deac38ff95cb1929b`, merged

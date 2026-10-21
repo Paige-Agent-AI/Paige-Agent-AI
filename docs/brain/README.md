@@ -1,3 +1,17 @@
+## EXP09 original status observation — 2026-10-21 production
+
+PR2511 reviewed0c6a7cff merged f7cc0cb6a0c92350680578336bcc08d95cbbd26d;
+all11 checks/two statuses and lower-assurance final review pass. Normal Edge39692766955
+source/configuration verification and direct Chat@500 JWTtrue/all261 served digests
+match the actual merge. Production web READY/public build exact; receipt6328805431
+and Master4.0 retain identities. No effect/retry/approval restoration/hold settlement.
+Owner Chat private preparation2519 remains in CI, not deployed. The original saved-card
+browser consumer is development at6a145405e226c80c3eafad7385f865e185271bbd;
+284 focused original/consumer regressions and bounded actual rendered component
+proof pass, not signed-in full-shell/customer proof. Publication/sharing, eligible
+Live, full seven pillars, capabilities/algorithms and one final founder evaluation
+remain incomplete. No customer version/announcement or LIVE promotion.
+
 ## EXP09 original preparation readback — 2026-10-21 production
 
 Native reader2496 merged5b03e90302e19ee1ef4a8dacbd677329378fa06e and normal

@@ -38,6 +38,7 @@ import { readCrmResultMetadata } from "../../../supabase/functions/_shared/paige
 import { CHAT_CONTROL_HEADER, CHAT_CONTROL_POLL_MS, chatControlRetryDelay } from "../../../supabase/functions/_shared/paige-turn/control-transport";
 import { CheckLinks } from "@/components/chat/CheckLinks";
 import { PaigeRecordLinks } from "@/components/chat/PaigeRecordLinks";
+import { workspaceLinkTargets } from "@/lib/links/workspaceLinks";
 import { mergeRecordLinks, readRecordLinks, type ReadRecordLink } from "../../../supabase/functions/_shared/paige-turn/record-links";
 import { usePlaybook } from "@/lib/playbook";
 import { cn } from "@/lib/utils";
@@ -3353,6 +3354,9 @@ const PaigeAIChatInner = ({
                 >
                   {message.role === "assistant" ? (() => {
                     const { before, diagram, after } = extractEntityDiagram(message.content);
+                    const verifiedAppPaths = soloTenantSafety && !platform
+                      ? workspaceLinkTargets(message.recordLinks ?? [], activeTenant).map(target => target.to)
+                      : undefined;
                     return (
                       <>
                         {/* C3a — the status line leads the answer: what PAIGE is doing, is waiting
@@ -3379,9 +3383,9 @@ const PaigeAIChatInner = ({
                             />
                           );
                         })()}
-                        {before && <MarkdownMessage content={before} />}
+                        {before && <MarkdownMessage content={before} verifiedAppPaths={verifiedAppPaths} />}
                         {diagram && <EntityDiagramCard data={diagram} />}
-                        {after && <MarkdownMessage content={after} />}
+                        {after && <MarkdownMessage content={after} verifiedAppPaths={verifiedAppPaths} />}
                         {/* C4c — the question's choices while it is open (c2), then its record in place:
                             answered below, PAIGE chose, or not answered (c3 / c6 / c5). */}
                         {message.ask && (() => {

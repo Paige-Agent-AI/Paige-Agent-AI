@@ -36,6 +36,7 @@ describe("DESTINATION_LABEL — the frozen words", () => {
       business_time_zone: "Open business time zone setting",
       executive: "Open Executive",
       finance: "Open Finance",
+      marketing: "Open Marketing",
       sales_pipeline: "Open Sales pipeline",
       systems_check: "Open Systems Check",
       business_game_plan: "Open Business Game Plan",
@@ -49,6 +50,22 @@ describe("DESTINATION_LABEL — the frozen words", () => {
 });
 
 describe("workspaceLinkTarget", () => {
+  it("rehydrates Marketing only against the current eligible SOLO account, never campaign focus or a saved URL", () => {
+    const [reference] = readRecordLinks(JSON.parse(JSON.stringify([
+      { destination: "marketing", record_id: UUID, subject: "Private campaign", path: "/solo/1/growth/overview" },
+    ])));
+    for (const account_number of [3855, 9999]) {
+      expect(workspaceLinkTarget(reference, { ...soloTenant, account_number })).toEqual({
+        label: "Open Marketing", to: `/solo/${account_number}/growth/overview`, status: "surface_only",
+      });
+    }
+    for (const tenant of [subTenant, { ...soloTenant, parent_tenant_id: "parent" },
+      { ...soloTenant, account_type: "agency" }, { ...soloTenant, account_type: "enterprise" },
+      { ...soloTenant, account_type: "operator" }, { ...soloTenant, account_type: null },
+      { ...soloTenant, account_number: null }, { ...soloTenant, account_number: "bad/account" }, null]) {
+      expect(workspaceLinkTarget(reference, tenant)).toBeNull();
+    }
+  });
   it("reopens a saved Conversations reference only as the current SOLO inbox", () => {
     const [reference] = readRecordLinks(JSON.parse(JSON.stringify([
       { destination: "conversations", record_id: UUID, subject: "Private subject", thread_key: "private@example.invalid", account: 1, path: "/solo/1/clients/conversations" },

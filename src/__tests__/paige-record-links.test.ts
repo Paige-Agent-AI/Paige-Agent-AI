@@ -11,13 +11,31 @@ import {
 // from the current account through the one route map. Never a path, a URL or a readback.
 
 const A = "e4000000-0000-4000-8000-0000000c0001";
+describe("Marketing surface reference", () => {
+  it("persists only the closed destination, discarding source labels, record IDs and injected destinations", () => {
+    const saved = JSON.parse(JSON.stringify([
+      { destination: "marketing", record_id: A, subject: "Private campaign", account: "other",
+        path: "/solo/1/growth/overview", url: "https://other.invalid", campaign: A },
+    ]));
+    expect(readRecordLinks(saved)).toEqual([{ destination: "marketing", record_id: null }]);
+    expect(readRecordLinks([{ destination: "/growth/overview" }, { destination: "marketing?account=other" }])).toEqual([]);
+  });
+  it("deduplicates the new surface without increasing the shared six-reference limit", () => {
+    expect(mergeRecordLinks([{ destination: "marketing", record_id: A }],
+      [{ destination: "marketing", record_id: null }, { destination: "executive" }]))
+      .toEqual([{ destination: "marketing", record_id: null }, { destination: "executive", record_id: null }]);
+    const destinations = ["executive", "finance", "sales_pipeline", "contacts", "sales_collections", "systems_check", "marketing"];
+    expect(readRecordLinks(destinations.map(destination => ({ destination })))).toHaveLength(6);
+    expect(readRecordLinks(destinations.map(destination => ({ destination }))).some(link => link.destination === "marketing")).toBe(false);
+  });
+});
 const B = "e4000000-0000-4000-8000-0000000c0002";
 
 describe("readRecordLinks — the defensive reader for live frames and persisted bundle_ref", () => {
   it("retains the E4 destinations and admits only the bounded E2 Executive destinations", () => {
     expect([...READ_LINK_DESTINATIONS]).toEqual([
       "contacts", "sales_agreements", "sales_invoices", "sales_collections", "operations_work", "business_time_zone",
-      "executive", "finance", "sales_pipeline", "systems_check", "business_game_plan", "trust_compass", "mind", "calendar", "pipeline", "conversations",
+      "executive", "finance", "marketing", "sales_pipeline", "systems_check", "business_game_plan", "trust_compass", "mind", "calendar", "pipeline", "conversations",
     ]);
   });
 

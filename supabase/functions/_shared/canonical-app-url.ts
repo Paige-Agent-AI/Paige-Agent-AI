@@ -33,6 +33,7 @@ export type CanonicalDestination =
   | "pipeline"
   | "executive"
   | "finance"
+  | "marketing"
   | "sales_pipeline"
   | "systems_check"
   | "business_game_plan"
@@ -76,6 +77,7 @@ const ROUTES: Record<MountedTier, Partial<Record<CanonicalDestination, string>>>
     home: "/solo/{account}/command-center/executive",
     executive: "/solo/{account}/command-center/executive",
     finance: "/solo/{account}/finance",
+    marketing: "/solo/{account}/growth/overview",
     sales_pipeline: "/solo/{account}/sales/opportunities?view=board",
     systems_check: "/solo/{account}/command-center/systems-check",
     business_game_plan: "/solo/{account}/command-center/business-game-plan",

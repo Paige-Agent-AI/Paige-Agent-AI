@@ -111,7 +111,6 @@
       "result": "PASS"
     }
   ],
-  "nativeViewerResources": 240,
   "sourceSHA256": {
     "src/pages/sign/AgreementSigning.tsx": "24dc050816882a0c664ca8e97f82273ca326ed23fcbb2f32dd603d5470512838",
     "src/pages/sign/agreement-signing.css": "42720dd7a23b315d5144fe2cc7fd22524a5cc5dd3860ecdb4de030fc39ae9dbd",
@@ -119,5 +118,7 @@
     "scripts/proof/e04-signing-ui/fixtures/source.tsx": "e3babd77e985f981ad9d64fd0479ad42f295b420d1374afda57d8d87ad9908e6",
     "scripts/proof/e04-signing-ui/vite.config.mjs": "4ddeb80e598ca319bdab2393351b4096195cf2e7a7e6686022b945e79f5ea8bd"
   },
-  "additional": "Actual component/PDF load, keyboard, failure, text fallback, token retirement and reduced-motion preference; five explicit result/decline fixtures, no actual signature/send/payment or authenticated acceptance. Native zoom/print remain unverified."
+  "additional": "Actual component/PDF load, keyboard, failure, text fallback, token retirement and reduced-motion preference; five explicit result/decline fixtures, no actual signature/send/payment or authenticated acceptance. Native zoom/print remain unverified.",
+  "nativeViewerResourcesThisRun": 70,
+  "reusedViewportMatrixFromIdenticalSources": true
 }

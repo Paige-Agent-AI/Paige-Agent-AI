@@ -35,7 +35,15 @@ async function waitForNativePdf(){
 const directory='docs/evidence/ui-delivery/assets/e04-signing-exact-record';mkdirSync(directory,{recursive:true});
 const url='http://127.0.0.1:54383/scripts/proof/e04-signing-ui/fixtures/index.html';
 const widths=[{width:1536,height:770},{width:1366,height:768},{width:1024,height:768},{width:900,height:1000},{width:390,height:844},{width:320,height:720}];
+const resultsOnly=process.argv.includes('--results-only');
+if(resultsOnly){
+  const previous=JSON.parse(readFileSync(`${directory}/result.json`,'utf8'));
+  assert.equal(previous.result,'PASS');assert.equal(previous.cases,12);
+  assert.deepEqual(previous.sourceSHA256,before,'Viewport evidence may be reused only for identical owning source and fixtures');
+  cases.push(...previous.details);
+}
 try{
+  if(!resultsOnly){
   for(const viewport of widths){
     await page.setViewportSize(viewport);
     for(const colorScheme of ['light','dark']){
@@ -68,6 +76,8 @@ try{
   await page.goto(url+'?mode=denied');await page.getByRole('heading',{name:'This signing link is no longer available',exact:true}).waitFor();assert.equal(await page.locator('iframe').count(),0);
   await page.goto(url+'?mode=ready');await page.locator('iframe').waitFor();await page.emulateMedia({reducedMotion:'reduce'});assert(await page.evaluate(()=>matchMedia('(prefers-reduced-motion: reduce)').matches));
   const calls=await page.evaluate(()=>window.signingFixture.calls);assert(calls.every(name=>name==='peek_agreement_signing'||name.startsWith('agreement-document?token=')));assert.deepEqual(external,[]);assert.deepEqual(errors,[]);
+  }
+  await page.setViewportSize({width:320,height:720});await page.emulateMedia({colorScheme:'dark'});
   for(const mode of ['signature-recorded','completed','uncertain']){
     await page.goto(url+'?mode='+mode);await page.waitForFunction(()=>document.querySelector('.ags-gate')?.getAttribute('data-locked')==='false');
     await waitForNativePdf();
@@ -78,7 +88,8 @@ try{
     if(mode!=='uncertain')assert(await page.locator('h2').evaluate(el=>el===document.activeElement));
     assert.equal(await page.locator('.ags').evaluate(el=>el.getBoundingClientRect().top+scrollY),0);
     assert.equal(await page.getByText('a copy is on its way',{exact:false}).count(),0);
-    await page.screenshot({path:`${directory}/320-${mode}.png`,fullPage:true});
+    if(mode==='uncertain')await page.getByRole('alert').scrollIntoViewIfNeeded();
+    await page.screenshot({path:`${directory}/320-${mode}.png`});
     assert.equal((await page.evaluate(()=>window.signingFixture.calls)).filter(name=>name==='sign-agreement').length,1);
   }
   for(const mode of ['decline-refused','decline-confirmed']){
@@ -90,8 +101,9 @@ try{
     else await page.getByRole('heading',{name:'You declined this agreement',exact:true}).waitFor();
     if(mode==='decline-confirmed')assert(await page.locator('h2').evaluate(el=>el===document.activeElement));
     assert.equal(await page.getByText('has been told',{exact:false}).count(),0);
-    await page.screenshot({path:`${directory}/320-${mode}.png`,fullPage:true});
+    if(mode==='decline-refused')await page.getByRole('alert').scrollIntoViewIfNeeded();
+    await page.screenshot({path:`${directory}/320-${mode}.png`});
   }
   assert.deepEqual(sourceHashes(),before,'Owning source changed during browser proof');assert.deepEqual(external,[]);assert.deepEqual(errors,[]);
-  const result={result:'PASS',cases:cases.length,details:cases,nativeViewerResources,sourceSHA256:before,additional:'Actual component/PDF load, keyboard, failure, text fallback, token retirement and reduced-motion preference; five explicit result/decline fixtures, no actual signature/send/payment or authenticated acceptance. Native zoom/print remain unverified.'};writeFileSync(`${directory}/result.json`,JSON.stringify(result,null,2));console.log(JSON.stringify({...result,details:undefined}));
+  const result={result:'PASS',cases:cases.length,details:cases,nativeViewerResourcesThisRun:nativeViewerResources,reusedViewportMatrixFromIdenticalSources:resultsOnly,sourceSHA256:before,additional:'Actual component/PDF load, keyboard, failure, text fallback, token retirement and reduced-motion preference; five explicit result/decline fixtures, no actual signature/send/payment or authenticated acceptance. Native zoom/print remain unverified.'};writeFileSync(`${directory}/result.json`,JSON.stringify(result,null,2));console.log(JSON.stringify({...result,details:undefined}));
 }finally{await context.close();await browser.close();await server.close();}

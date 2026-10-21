@@ -2,7 +2,7 @@ import { defineCapability, objectInputSchema, ownerGrantablePermission } from '.
 import type { SpineCapability } from '../paige-spine/contracts.ts';
 import { currentMetricVersion, parseMetricResult, type MetricRequestIdentity, type MetricResult } from './metric-contract.ts';
 import { contextAvailable, contextDegraded, contextUnavailable, type ContextSourceResult } from '../paige-context/mod.ts';
-import { BUSINESS_METRIC_KEYS } from './keys.ts';
+import { BUSINESS_METRIC_KEYS, MARKETING_METRIC_KEYS } from './keys.ts';
 export { BUSINESS_METRIC_KEYS } from './keys.ts';
 
 // The deployed issuer owns this vocabulary and every definition/calculation. No raw-table fallback.
@@ -69,7 +69,8 @@ export function completedUtcDayBoundary(at: Date): Date {
 
 function request(input: unknown, now: number) {
   if (!object(input) || Object.keys(input).some(k => !['metric_key', 'period', 'range_key', 'range_start', 'range_end', 'evidence_ref'].includes(k))
-    || !BUSINESS_METRIC_KEYS.includes(input.metric_key as typeof BUSINESS_METRIC_KEYS[number])) return null;
+    || (!BUSINESS_METRIC_KEYS.includes(input.metric_key as typeof BUSINESS_METRIC_KEYS[number])
+      && !MARKETING_METRIC_KEYS.includes(input.metric_key as typeof MARKETING_METRIC_KEYS[number]))) return null;
   const period = input.period ?? 'last_30_days';
   if (!PERIODS.includes(period as typeof PERIODS[number])) return null;
   const ref = input.evidence_ref;
@@ -153,6 +154,13 @@ async function readEvidenceCycle(caller: MetricCaller, scope: { tenantId: string
       || (issued && (verified.source_revision_ref !== issued.source_revision_ref || verified.as_of !== issued.as_of))) return unavailableEvidence();
     if (r.metricKey.startsWith('sales.') && (verified.owner_department !== 'sales'
       || (verified.values && !['count', 'currency_totals'].includes(verified.values.kind)))) return unavailableEvidence();
+    if (MARKETING_METRIC_KEYS.includes(r.metricKey as typeof MARKETING_METRIC_KEYS[number])) {
+      const kind = r.metricKey === 'marketing.leads.daily' ? 'series'
+        : ['marketing.leads.by_utm_source', 'marketing.leads.by_campaign_tag', 'marketing.submissions.failed_current'].includes(r.metricKey) ? 'distribution' : 'count';
+      if (verified.owner_department !== 'marketing' || verified.unit !== (kind === 'series' ? 'count_per_day' : 'count')
+        || verified.range.semantics !== (r.metricKey.endsWith('_current') ? 'current_snapshot' : 'event_timestamp_cohort')
+        || (verified.values && verified.values.kind !== kind)) return unavailableEvidence();
+    }
     if (!await ownsScope()) return refusedEvidence();
     // Parse again after the last async boundary: expired evidence never reaches the model.
     const parsed = parseMetricResult(verified, identity, clock()), metric = project(parsed);
@@ -163,6 +171,8 @@ async function readEvidenceCycle(caller: MetricCaller, scope: { tenantId: string
 
 /** Only pass the real authenticated caller. The model-facing projection still excludes account identity. */
 export async function readBusinessMetric(caller: MetricCaller, scope: { tenantId: string | null }, input: unknown, clock = Date.now): Promise<MetricReadOutcome> {
+  // Public Chat admission remains the original33 keys; domain evidence is internal.
+  if (!object(input) || !BUSINESS_METRIC_KEYS.includes(input.metric_key as typeof BUSINESS_METRIC_KEYS[number])) return needsInput();
   const result = await readBusinessMetricEvidence(caller, scope, input, clock);
   if (result.status !== 'available') return result;
   try {

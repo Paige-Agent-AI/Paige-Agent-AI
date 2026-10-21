@@ -829,8 +829,11 @@ const ANCESTRY_SOURCES = {
  // Pin BOTH reviewed files; no generated digest acceptance or effect guard waiver.
  // E02 AUTHOR-REVIEW / LOWER ASSURANCE: existing issuer cycle serialized; internal
  // evidence retains verified epochs, model projection still strips identity. No authority change.
- "supabase/functions/_shared/analytics-metrics/read.ts": "ddac0565d904af0860679f80dbc8fc8c4c5be1a0532557e0a1afa85809542376",
- "supabase/functions/_shared/analytics-metrics/keys.ts": "7d6469a106f5200147e360e46b0ef1846581795207fa74d7c48f0ecc14d4fbc6",
+ // E02 internal Marketing foundation: original33 public keys/schema/refusal retained;
+ // existing11 originating producer keys only in verified internal evidence, with owner/kind/unit/period checks.
+ // Renew only these two inspected dependency digests; Chat/29 dispatch scalars, extractor and metadata unchanged.
+ "supabase/functions/_shared/analytics-metrics/read.ts": "8b423b4ceb27da109c88e4901512c98298f17a099a510f6b8add3fe68dbfc25d",
+ "supabase/functions/_shared/analytics-metrics/keys.ts": "2334724562df2138494c0dbe28076840b81145a258d65c78667a5d3b86bf2400",
  "supabase/functions/_shared/analytics-metrics/metric-contract.ts": "8bbc6b91d259e2ab80643dd37667d88736043066e14d725bbca5344874d0c2a5",
  "supabase/functions/_shared/pipeline-original-discovery.ts": "4c55fee76bc2622a0b57b33282276f36aa3a8552725168c45ab1b2774b7e7fa9",
  "supabase/functions/_shared/paige-turn/outcome-status.ts": "1cfab94676e27a705b620e0a4401ed7712cab25b597bc233aaddcd4d638a1942",

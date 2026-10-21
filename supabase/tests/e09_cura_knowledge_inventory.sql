@@ -22,6 +22,7 @@ INSERT INTO public.tenants(id,slug,name,status,account_type,parent_tenant_id,fea
 INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner,joined_at) VALUES
  ('e0b10200-0000-4000-8000-00000000000a','e0b10100-0000-4000-8000-0000000000a1','owner','active',true,now()),
  ('e0b10200-0000-4000-8000-00000000000a','e0b10100-0000-4000-8000-0000000000a5','member','active',false,now()),
+ ('e0b10200-0000-4000-8000-00000000000b','e0b10100-0000-4000-8000-0000000000a1','owner','active',true,now()),
  ('e0b10200-0000-4000-8000-00000000000b','e0b10100-0000-4000-8000-0000000000b1','owner','active',true,now());
 UPDATE public.profiles SET active_tenant_id='e0b10200-0000-4000-8000-00000000000a'
  WHERE user_id IN ('e0b10100-0000-4000-8000-0000000000a1','e0b10100-0000-4000-8000-0000000000a5','e0b10100-0000-4000-8000-0000000000f1');
@@ -122,7 +123,12 @@ SELECT is(pg_temp.inventory('a2','a')->>'sqlstate','42501','customer cannot insp
 SELECT is(pg_temp.inventory('a5','a')->>'sqlstate','42501','ordinary member cannot publish or inspect publisher inventory');
 SELECT is(pg_temp.inventory('f1','a')->>'sqlstate','42501','bare platform operator is not the business publisher');
 SELECT is(pg_temp.inventory('b1','a')->>'sqlstate','42501','another business owner cannot read this inventory');
-SELECT is(pg_temp.inventory('a1','b')->>'sqlstate','42501','selected workspace equality binds the read');
+SELECT is(pg_temp.inventory('a1','b')->>'sqlstate','42501','dual-business owner still cannot read the unselected business');
+UPDATE public.profiles SET active_tenant_id=pg_temp.t('b') WHERE user_id=pg_temp.u('a1');
+SELECT is(pg_temp.inventory('a1','a')->>'sqlstate','42501','same legitimate dual owner loses A read while B is selected');
+SELECT is(pg_temp.inventory('a1','b')->>'tenant_id',pg_temp.t('b')::text,'same legitimate dual owner can read selected B');
+UPDATE public.profiles SET active_tenant_id=pg_temp.t('a') WHERE user_id=pg_temp.u('a1');
+SELECT is(pg_temp.inventory('a1','a')->>'tenant_id',pg_temp.t('a')::text,'returning to A requires and uses fresh authoritative scope');
 SELECT is(jsonb_array_length(pg_temp.inventory('a1','a',7)->'documents'),0,'foreign source ID returns no private record');
 SELECT is(jsonb_array_length(pg_temp.inventory('a1','a',1)->'documents'),1,'exact authorized source ID narrows');
 SELECT is(jsonb_array_length(pg_temp.inventory('a1','a',NULL,'PROGRAM')->'documents'),2,'case-insensitive title search');

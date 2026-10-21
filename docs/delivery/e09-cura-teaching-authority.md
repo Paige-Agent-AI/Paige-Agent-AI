@@ -60,3 +60,5 @@ Internal build is the immutable PR head, channel development/preview until norma
 migration deployment and body/ACL/five-helper readback. No customer version or
 announcement, source activation, INT-346 bypass, external send or payment.
 Recovery is a reviewed compatible forward fix/revert preserving original records.
+
+The identical disposable-race fixture lifecycle correction from reader55 proof is applied here: committed concurrency seeds omit the unused synthetic platform-admin grant and its active staff-workspace assignment, and verify platform-role count unchanged. Native43 rolled-back role tests retain their original operator negative. The original last-admin and workspace guards remain intact. Historical reader core races reached PASS but cleanup failed; only a fresh complete native/race/downstream job can establish final PASS.

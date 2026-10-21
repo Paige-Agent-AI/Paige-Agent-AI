@@ -5555,6 +5555,30 @@ customer version or availability claim. Native releases2475/2476 preserved;
 consumer2404, teaching controls and full EXP09 authenticated acceptance remain
 separately gated. [Original repair evidence](delivery/e09-production-acl-baseline-repair.md).
 
+
+**2026-10-21 — EXP09 CURA relevant authorized Knowledge consumer.**
+PR [#2404](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2404), reviewed
+`a9211fb4de258d0f2891c2748a69eac75a8d9c5c`, merged
+`52d45822a54950c84c8e80fbb1aa06b7748fcf14`. The original customer Chat now selects
+relevant passages only from currently authorized Knowledge after native customer,
+private-thread and protocol admission. Source/manifest/entitlement/withdrawal
+checks and authorized recency fallback remain. Known accepted/replayed intents
+avoid query embedding; no global simultaneous at-most-once reservation is claimed.
+NON-AUTHOR5602292026;11 exact-head checks/Preview and two Vercel statuses passed.
+Consumer19, context73, scope538 and native90/53 tests passed at their stated
+boundaries. Normal production Edge run39633553865/job119337861469 succeeded,
+including selected-source verification. Direct provider read: Chat489 ACTIVE,
+JWTtrue; exact served handler c69403b2cdacd14e76f1966b0b0f087eb1dc8ba61e86e34973070fdc2bc56c20,
+context0aca33229b6d6180c13ea3cf2fff9da8f65edb69a854f43c3229d11049534cd2
+and unchanged persona60da934797c9953c1a8062bc89689139d10f8f3328dc82b45e2ebf1f3df2356b
+match reviewed source. Native50000 was separately verified in2475; no new migration
+or frontend source in this consumer. No new share, identity/privilege, provider
+activation, live query, external send or payment was performed. Internal production
+increment, no customer version/announcement; original query-metering gap remains.
+Actual ordinary customer answer quality, isolation/private reload, all seven
+pillars/algorithm/capability proof and founder acceptance remain PROOF OWED.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2404#issuecomment-6320887890).
+
 ## 5. Current focus + known gaps
 
 **E09 CURA identity — tracked follow-ups (2026-10-19; CURA merged #2378 and live; recorded, not fixed there).** (a) **Action-item kind mapping.** `advance_action` (`20271110220000`) builds the portal action item with `action_type` = the action kind (`client.portal_recommendation`, `client.portal_welcome`, `owner.onboarding_nudge`, `owner.schedule_meeting`), but `paige_customer_actions_action_type_check` allows only `task`, `message`, `recommendation`, `nudge`. Every action item the owner's PAIGE chat files through `action_file` / `action_advance` therefore ends `blocked` with `client_surface_failed: … action_type_check` (proved in a rolled-back transaction on the round-4 pgTAP fixtures with the synthetic customer Jordan Rivera). Consequence today: the customer's data-sharing switch (CURA-D1) has no practical effect, because neither route that it gates delivers anything (the staff `ContactPaigePanel` is unmounted). (b) **PAIGE in AI-drafted action-item text.** The chat's model-written title and draft reach `paige_customer_actions` unfiltered, so nothing stops one that names PAIGE; the owner ruled PAIGE is never in the Customer Portal. **(b) must be fixed before (a)**, or fixing the mapping starts delivering PAIGE-named items to customers. Neither is changed on this branch.

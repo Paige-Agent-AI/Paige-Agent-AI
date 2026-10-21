@@ -1,0 +1,1331 @@
+{
+  "evidenceClass": "local rendered synthetic flow; actual shared confirmation component; no native or authenticated action proof",
+  "rows": [
+    {
+      "size": {
+        "width": 1536,
+        "height": 770
+      },
+      "state": "ready",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Review preparation",
+          "left": 444,
+          "right": 583.1500091552734
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BTeach CURA our approved Session preparation FAQ.PAIGE will prepare a private source. You choose the approved version, customers and dates in its existing review.Review preparationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or na",
+      "width": 1536
+    },
+    {
+      "size": {
+        "width": 1536,
+        "height": 770
+      },
+      "state": "pending",
+      "controls": [
+        {
+          "height": 31.5,
+          "label": "Approve",
+          "left": 486.8000183105469,
+          "right": 584.025016784668
+        },
+        {
+          "height": 31.5,
+          "label": "Not now",
+          "left": 591.0250244140625,
+          "right": 686.2250289916992
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BNeeds your OKPrepare “Session preparation FAQ” for CURA. This preparation does not publish or share it.Approve Not nowFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The",
+      "width": 1536
+    },
+    {
+      "size": {
+        "width": 1536,
+        "height": 770
+      },
+      "state": "working",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Simulate native acceptance",
+          "left": 444,
+          "right": 631.2125091552734
+        },
+        {
+          "height": 35,
+          "label": "Simulate interruption",
+          "left": 631.2125244140625,
+          "right": 780.6500244140625
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BRunning…Prepare “Session preparation FAQ” for CURA. This preparation does not publish or share it.Preparing a private Knowledge source.Simulate native acceptanceSimulate interruptionFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or",
+      "width": 1536
+    },
+    {
+      "size": {
+        "width": 1536,
+        "height": 770
+      },
+      "state": "accepted",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Open Knowledge source",
+          "left": 444,
+          "right": 614.7125091552734
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BDonePrepare “Session preparation FAQ” for CURA. This preparation does not publish or share it.The private preparation request is recorded. This action does not publish, index or share it. Open the source for its current state.Open Knowledge sourceFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses an",
+      "width": 1536
+    },
+    {
+      "size": {
+        "width": 1536,
+        "height": 770
+      },
+      "state": "unknown",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Check original status",
+          "left": 486.8000183105469,
+          "right": 636.5125274658203
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BCouldn't confirmPrepare “Session preparation FAQ” for CURA. This preparation does not publish or share it.The preparation could not be confirmed. Check the original result before another attempt.Check original statusFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider,",
+      "width": 1536
+    },
+    {
+      "size": {
+        "width": 1536,
+        "height": 770
+      },
+      "state": "denied",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Back to conversation",
+          "left": 444,
+          "right": 594.1000061035156
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BThis business’s Knowledge publishing permission could not be verified. Earlier saved work is unchanged.Back to conversationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context",
+      "width": 1536
+    },
+    {
+      "size": {
+        "width": 1536,
+        "height": 770
+      },
+      "state": "offline",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Return to draft",
+          "left": 444,
+          "right": 556.1500015258789
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BYou’re offline. Your draft is retained; no preparation was submitted.Return to draftFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The existing approval card owns keybo",
+      "width": 1536
+    },
+    {
+      "size": {
+        "width": 1536,
+        "height": 770
+      },
+      "state": "expired",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Return to conversation",
+          "left": 444,
+          "right": 603.4625091552734
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BThis approval has expired. No new preparation was requested.Return to conversationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The existing approval card owns keyboar",
+      "width": 1536
+    },
+    {
+      "size": {
+        "width": 1536,
+        "height": 770
+      },
+      "state": "cancelled",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Return to conversation",
+          "left": 444,
+          "right": 603.4625091552734
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BPreparation cancelled. Nothing was submitted.Return to conversationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The existing approval card owns keyboard, pending/repo",
+      "width": 1536
+    },
+    {
+      "size": {
+        "width": 1536,
+        "height": 770
+      },
+      "state": "source",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Back to preparation",
+          "left": 444,
+          "right": 586.1500091552734
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BSession preparation FAQMock boundary to the existing Knowledge source review. The actual source keeps its author, work and version. Publication and customer sharing use the existing controls.Mock source for business B: Bring your approved session notes.Back to preparationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic sourc",
+      "width": 1536
+    },
+    {
+      "size": {
+        "width": 1536,
+        "height": 770
+      },
+      "state": "switched",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Start in this business",
+          "left": 444,
+          "right": 592.6125030517578
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BThe business changed. Previous private source details and controls have been removed.Start in this businessFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The existing a",
+      "width": 1536
+    },
+    {
+      "size": {
+        "width": 1366,
+        "height": 768
+      },
+      "state": "ready",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Review preparation",
+          "left": 359.20001220703125,
+          "right": 498.3500213623047
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BTeach CURA our approved Session preparation FAQ.PAIGE will prepare a private source. You choose the approved version, customers and dates in its existing review.Review preparationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or na",
+      "width": 1366
+    },
+    {
+      "size": {
+        "width": 1366,
+        "height": 768
+      },
+      "state": "pending",
+      "controls": [
+        {
+          "height": 31.5,
+          "label": "Approve",
+          "left": 402,
+          "right": 499.2249984741211
+        },
+        {
+          "height": 31.5,
+          "label": "Not now",
+          "left": 506.2250061035156,
+          "right": 601.4250106811523
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BNeeds your OKPrepare “Session preparation FAQ” for CURA. This preparation does not publish or share it.Approve Not nowFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The",
+      "width": 1366
+    },
+    {
+      "size": {
+        "width": 1366,
+        "height": 768
+      },
+      "state": "working",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Simulate native acceptance",
+          "left": 359.20001220703125,
+          "right": 546.4125213623047
+        },
+        {
+          "height": 35,
+          "label": "Simulate interruption",
+          "left": 546.4125366210938,
+          "right": 695.8500366210938
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BRunning…Prepare “Session preparation FAQ” for CURA. This preparation does not publish or share it.Preparing a private Knowledge source.Simulate native acceptanceSimulate interruptionFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or",
+      "width": 1366
+    },
+    {
+      "size": {
+        "width": 1366,
+        "height": 768
+      },
+      "state": "accepted",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Open Knowledge source",
+          "left": 359.20001220703125,
+          "right": 529.9125213623047
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BDonePrepare “Session preparation FAQ” for CURA. This preparation does not publish or share it.The private preparation request is recorded. This action does not publish, index or share it. Open the source for its current state.Open Knowledge sourceFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses an",
+      "width": 1366
+    },
+    {
+      "size": {
+        "width": 1366,
+        "height": 768
+      },
+      "state": "unknown",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Check original status",
+          "left": 402,
+          "right": 551.7125091552734
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BCouldn't confirmPrepare “Session preparation FAQ” for CURA. This preparation does not publish or share it.The preparation could not be confirmed. Check the original result before another attempt.Check original statusFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider,",
+      "width": 1366
+    },
+    {
+      "size": {
+        "width": 1366,
+        "height": 768
+      },
+      "state": "denied",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Back to conversation",
+          "left": 359.20001220703125,
+          "right": 509.3000183105469
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BThis business’s Knowledge publishing permission could not be verified. Earlier saved work is unchanged.Back to conversationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context",
+      "width": 1366
+    },
+    {
+      "size": {
+        "width": 1366,
+        "height": 768
+      },
+      "state": "offline",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Return to draft",
+          "left": 359.20001220703125,
+          "right": 471.35001373291016
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BYou’re offline. Your draft is retained; no preparation was submitted.Return to draftFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The existing approval card owns keybo",
+      "width": 1366
+    },
+    {
+      "size": {
+        "width": 1366,
+        "height": 768
+      },
+      "state": "expired",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Return to conversation",
+          "left": 359.20001220703125,
+          "right": 518.6625213623047
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BThis approval has expired. No new preparation was requested.Return to conversationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The existing approval card owns keyboar",
+      "width": 1366
+    },
+    {
+      "size": {
+        "width": 1366,
+        "height": 768
+      },
+      "state": "cancelled",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Return to conversation",
+          "left": 359.20001220703125,
+          "right": 518.6625213623047
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BPreparation cancelled. Nothing was submitted.Return to conversationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The existing approval card owns keyboard, pending/repo",
+      "width": 1366
+    },
+    {
+      "size": {
+        "width": 1366,
+        "height": 768
+      },
+      "state": "source",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Back to preparation",
+          "left": 359.20001220703125,
+          "right": 501.3500213623047
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BSession preparation FAQMock boundary to the existing Knowledge source review. The actual source keeps its author, work and version. Publication and customer sharing use the existing controls.Mock source for business B: Bring your approved session notes.Back to preparationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic sourc",
+      "width": 1366
+    },
+    {
+      "size": {
+        "width": 1366,
+        "height": 768
+      },
+      "state": "switched",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Start in this business",
+          "left": 359.20001220703125,
+          "right": 507.81251525878906
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BThe business changed. Previous private source details and controls have been removed.Start in this businessFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The existing a",
+      "width": 1366
+    },
+    {
+      "size": {
+        "width": 1024,
+        "height": 768
+      },
+      "state": "ready",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Review preparation",
+          "left": 188,
+          "right": 327.15000915527344
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BTeach CURA our approved Session preparation FAQ.PAIGE will prepare a private source. You choose the approved version, customers and dates in its existing review.Review preparationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or na",
+      "width": 1024
+    },
+    {
+      "size": {
+        "width": 1024,
+        "height": 768
+      },
+      "state": "pending",
+      "controls": [
+        {
+          "height": 31.5,
+          "label": "Approve",
+          "left": 230.8000030517578,
+          "right": 328.0250015258789
+        },
+        {
+          "height": 31.5,
+          "label": "Not now",
+          "left": 335.0249938964844,
+          "right": 430.2249984741211
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BNeeds your OKPrepare “Session preparation FAQ” for CURA. This preparation does not publish or share it.Approve Not nowFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The",
+      "width": 1024
+    },
+    {
+      "size": {
+        "width": 1024,
+        "height": 768
+      },
+      "state": "working",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Simulate native acceptance",
+          "left": 188,
+          "right": 375.21250915527344
+        },
+        {
+          "height": 35,
+          "label": "Simulate interruption",
+          "left": 375.2124938964844,
+          "right": 524.6499938964844
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BRunning…Prepare “Session preparation FAQ” for CURA. This preparation does not publish or share it.Preparing a private Knowledge source.Simulate native acceptanceSimulate interruptionFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or",
+      "width": 1024
+    },
+    {
+      "size": {
+        "width": 1024,
+        "height": 768
+      },
+      "state": "accepted",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Open Knowledge source",
+          "left": 188,
+          "right": 358.71250915527344
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BDonePrepare “Session preparation FAQ” for CURA. This preparation does not publish or share it.The private preparation request is recorded. This action does not publish, index or share it. Open the source for its current state.Open Knowledge sourceFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses an",
+      "width": 1024
+    },
+    {
+      "size": {
+        "width": 1024,
+        "height": 768
+      },
+      "state": "unknown",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Check original status",
+          "left": 230.8000030517578,
+          "right": 380.5125122070313
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BCouldn't confirmPrepare “Session preparation FAQ” for CURA. This preparation does not publish or share it.The preparation could not be confirmed. Check the original result before another attempt.Check original statusFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider,",
+      "width": 1024
+    },
+    {
+      "size": {
+        "width": 1024,
+        "height": 768
+      },
+      "state": "denied",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Back to conversation",
+          "left": 188,
+          "right": 338.1000061035156
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BThis business’s Knowledge publishing permission could not be verified. Earlier saved work is unchanged.Back to conversationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context",
+      "width": 1024
+    },
+    {
+      "size": {
+        "width": 1024,
+        "height": 768
+      },
+      "state": "offline",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Return to draft",
+          "left": 188,
+          "right": 300.1500015258789
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BYou’re offline. Your draft is retained; no preparation was submitted.Return to draftFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The existing approval card owns keybo",
+      "width": 1024
+    },
+    {
+      "size": {
+        "width": 1024,
+        "height": 768
+      },
+      "state": "expired",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Return to conversation",
+          "left": 188,
+          "right": 347.46250915527344
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BThis approval has expired. No new preparation was requested.Return to conversationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The existing approval card owns keyboar",
+      "width": 1024
+    },
+    {
+      "size": {
+        "width": 1024,
+        "height": 768
+      },
+      "state": "cancelled",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Return to conversation",
+          "left": 188,
+          "right": 347.46250915527344
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BPreparation cancelled. Nothing was submitted.Return to conversationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The existing approval card owns keyboard, pending/repo",
+      "width": 1024
+    },
+    {
+      "size": {
+        "width": 1024,
+        "height": 768
+      },
+      "state": "source",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Back to preparation",
+          "left": 188,
+          "right": 330.15000915527344
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BSession preparation FAQMock boundary to the existing Knowledge source review. The actual source keeps its author, work and version. Publication and customer sharing use the existing controls.Mock source for business B: Bring your approved session notes.Back to preparationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic sourc",
+      "width": 1024
+    },
+    {
+      "size": {
+        "width": 1024,
+        "height": 768
+      },
+      "state": "switched",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Start in this business",
+          "left": 188,
+          "right": 336.6125030517578
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BThe business changed. Previous private source details and controls have been removed.Start in this businessFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The existing a",
+      "width": 1024
+    },
+    {
+      "size": {
+        "width": 900,
+        "height": 1000
+      },
+      "state": "ready",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Review preparation",
+          "left": 126,
+          "right": 265.15000915527344
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BTeach CURA our approved Session preparation FAQ.PAIGE will prepare a private source. You choose the approved version, customers and dates in its existing review.Review preparationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or na",
+      "width": 900
+    },
+    {
+      "size": {
+        "width": 900,
+        "height": 1000
+      },
+      "state": "pending",
+      "controls": [
+        {
+          "height": 31.5,
+          "label": "Approve",
+          "left": 168.8000030517578,
+          "right": 266.0250015258789
+        },
+        {
+          "height": 31.5,
+          "label": "Not now",
+          "left": 273.0249938964844,
+          "right": 368.2249984741211
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BNeeds your OKPrepare “Session preparation FAQ” for CURA. This preparation does not publish or share it.Approve Not nowFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The",
+      "width": 900
+    },
+    {
+      "size": {
+        "width": 900,
+        "height": 1000
+      },
+      "state": "working",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Simulate native acceptance",
+          "left": 126,
+          "right": 313.21250915527344
+        },
+        {
+          "height": 35,
+          "label": "Simulate interruption",
+          "left": 313.2124938964844,
+          "right": 462.6499938964844
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BRunning…Prepare “Session preparation FAQ” for CURA. This preparation does not publish or share it.Preparing a private Knowledge source.Simulate native acceptanceSimulate interruptionFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or",
+      "width": 900
+    },
+    {
+      "size": {
+        "width": 900,
+        "height": 1000
+      },
+      "state": "accepted",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Open Knowledge source",
+          "left": 126,
+          "right": 296.71250915527344
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BDonePrepare “Session preparation FAQ” for CURA. This preparation does not publish or share it.The private preparation request is recorded. This action does not publish, index or share it. Open the source for its current state.Open Knowledge sourceFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses an",
+      "width": 900
+    },
+    {
+      "size": {
+        "width": 900,
+        "height": 1000
+      },
+      "state": "unknown",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Check original status",
+          "left": 168.8000030517578,
+          "right": 318.51251220703125
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BCouldn't confirmPrepare “Session preparation FAQ” for CURA. This preparation does not publish or share it.The preparation could not be confirmed. Check the original result before another attempt.Check original statusFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider,",
+      "width": 900
+    },
+    {
+      "size": {
+        "width": 900,
+        "height": 1000
+      },
+      "state": "denied",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Back to conversation",
+          "left": 126,
+          "right": 276.1000061035156
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BThis business’s Knowledge publishing permission could not be verified. Earlier saved work is unchanged.Back to conversationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context",
+      "width": 900
+    },
+    {
+      "size": {
+        "width": 900,
+        "height": 1000
+      },
+      "state": "offline",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Return to draft",
+          "left": 126,
+          "right": 238.1500015258789
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BYou’re offline. Your draft is retained; no preparation was submitted.Return to draftFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The existing approval card owns keybo",
+      "width": 900
+    },
+    {
+      "size": {
+        "width": 900,
+        "height": 1000
+      },
+      "state": "expired",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Return to conversation",
+          "left": 126,
+          "right": 285.46250915527344
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BThis approval has expired. No new preparation was requested.Return to conversationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The existing approval card owns keyboar",
+      "width": 900
+    },
+    {
+      "size": {
+        "width": 900,
+        "height": 1000
+      },
+      "state": "cancelled",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Return to conversation",
+          "left": 126,
+          "right": 285.46250915527344
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BPreparation cancelled. Nothing was submitted.Return to conversationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The existing approval card owns keyboard, pending/repo",
+      "width": 900
+    },
+    {
+      "size": {
+        "width": 900,
+        "height": 1000
+      },
+      "state": "source",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Back to preparation",
+          "left": 126,
+          "right": 268.15000915527344
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BSession preparation FAQMock boundary to the existing Knowledge source review. The actual source keeps its author, work and version. Publication and customer sharing use the existing controls.Mock source for business B: Bring your approved session notes.Back to preparationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic sourc",
+      "width": 900
+    },
+    {
+      "size": {
+        "width": 900,
+        "height": 1000
+      },
+      "state": "switched",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Start in this business",
+          "left": 126,
+          "right": 274.6125030517578
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BThe business changed. Previous private source details and controls have been removed.Start in this businessFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The existing a",
+      "width": 900
+    },
+    {
+      "size": {
+        "width": 390,
+        "height": 844
+      },
+      "state": "ready",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Review preparation",
+          "left": 16,
+          "right": 155.15000915527344
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BTeach CURA our approved Session preparation FAQ.PAIGE will prepare a private source. You choose the approved version, customers and dates in its existing review.Review preparationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or na",
+      "width": 390
+    },
+    {
+      "size": {
+        "width": 390,
+        "height": 844
+      },
+      "state": "pending",
+      "controls": [
+        {
+          "height": 31.5,
+          "label": "Approve",
+          "left": 57.04999923706055,
+          "right": 154.27499771118164
+        },
+        {
+          "height": 31.5,
+          "label": "Not now",
+          "left": 161.27500915527344,
+          "right": 256.47501373291016
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BNeeds your OKPrepare “Session preparation FAQ” for CURA. This preparation does not publish or share it.Approve Not nowFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The",
+      "width": 390
+    },
+    {
+      "size": {
+        "width": 390,
+        "height": 844
+      },
+      "state": "working",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Simulate native acceptance",
+          "left": 16,
+          "right": 203.21250915527344
+        },
+        {
+          "height": 35,
+          "label": "Simulate interruption",
+          "left": 203.21250915527344,
+          "right": 352.65000915527344
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BRunning…Prepare “Session preparation FAQ” for CURA. This preparation does not publish or share it.Preparing a private Knowledge source.Simulate native acceptanceSimulate interruptionFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or",
+      "width": 390
+    },
+    {
+      "size": {
+        "width": 390,
+        "height": 844
+      },
+      "state": "accepted",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Open Knowledge source",
+          "left": 16,
+          "right": 186.71250915527344
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BDonePrepare “Session preparation FAQ” for CURA. This preparation does not publish or share it.The private preparation request is recorded. This action does not publish, index or share it. Open the source for its current state.Open Knowledge sourceFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses an",
+      "width": 390
+    },
+    {
+      "size": {
+        "width": 390,
+        "height": 844
+      },
+      "state": "unknown",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Check original status",
+          "left": 57.04999923706055,
+          "right": 206.762508392334
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BCouldn't confirmPrepare “Session preparation FAQ” for CURA. This preparation does not publish or share it.The preparation could not be confirmed. Check the original result before another attempt.Check original statusFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider,",
+      "width": 390
+    },
+    {
+      "size": {
+        "width": 390,
+        "height": 844
+      },
+      "state": "denied",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Back to conversation",
+          "left": 16,
+          "right": 166.10000610351562
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BThis business’s Knowledge publishing permission could not be verified. Earlier saved work is unchanged.Back to conversationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context",
+      "width": 390
+    },
+    {
+      "size": {
+        "width": 390,
+        "height": 844
+      },
+      "state": "offline",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Return to draft",
+          "left": 16,
+          "right": 128.1500015258789
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BYou’re offline. Your draft is retained; no preparation was submitted.Return to draftFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The existing approval card owns keybo",
+      "width": 390
+    },
+    {
+      "size": {
+        "width": 390,
+        "height": 844
+      },
+      "state": "expired",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Return to conversation",
+          "left": 16,
+          "right": 175.46250915527344
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BThis approval has expired. No new preparation was requested.Return to conversationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The existing approval card owns keyboar",
+      "width": 390
+    },
+    {
+      "size": {
+        "width": 390,
+        "height": 844
+      },
+      "state": "cancelled",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Return to conversation",
+          "left": 16,
+          "right": 175.46250915527344
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BPreparation cancelled. Nothing was submitted.Return to conversationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The existing approval card owns keyboard, pending/repo",
+      "width": 390
+    },
+    {
+      "size": {
+        "width": 390,
+        "height": 844
+      },
+      "state": "source",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Back to preparation",
+          "left": 16,
+          "right": 158.15000915527344
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BSession preparation FAQMock boundary to the existing Knowledge source review. The actual source keeps its author, work and version. Publication and customer sharing use the existing controls.Mock source for business B: Bring your approved session notes.Back to preparationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic sourc",
+      "width": 390
+    },
+    {
+      "size": {
+        "width": 390,
+        "height": 844
+      },
+      "state": "switched",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Start in this business",
+          "left": 16,
+          "right": 164.6125030517578
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BThe business changed. Previous private source details and controls have been removed.Start in this businessFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The existing a",
+      "width": 390
+    },
+    {
+      "size": {
+        "width": 320,
+        "height": 740
+      },
+      "state": "ready",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Review preparation",
+          "left": 16,
+          "right": 155.15000915527344
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BTeach CURA our approved Session preparation FAQ.PAIGE will prepare a private source. You choose the approved version, customers and dates in its existing review.Review preparationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or na",
+      "width": 320
+    },
+    {
+      "size": {
+        "width": 320,
+        "height": 740
+      },
+      "state": "pending",
+      "controls": [
+        {
+          "height": 31.5,
+          "label": "Approve",
+          "left": 57.04999923706055,
+          "right": 154.27499771118164
+        },
+        {
+          "height": 31.5,
+          "label": "Not now",
+          "left": 161.27500915527344,
+          "right": 256.47501373291016
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BNeeds your OKPrepare “Session preparation FAQ” for CURA. This preparation does not publish or share it.Approve Not nowFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The",
+      "width": 320
+    },
+    {
+      "size": {
+        "width": 320,
+        "height": 740
+      },
+      "state": "working",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Simulate native acceptance",
+          "left": 16,
+          "right": 203.21250915527344
+        },
+        {
+          "height": 35,
+          "label": "Simulate interruption",
+          "left": 16,
+          "right": 165.4375
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BRunning…Prepare “Session preparation FAQ” for CURA. This preparation does not publish or share it.Preparing a private Knowledge source.Simulate native acceptanceSimulate interruptionFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or",
+      "width": 320
+    },
+    {
+      "size": {
+        "width": 320,
+        "height": 740
+      },
+      "state": "accepted",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Open Knowledge source",
+          "left": 16,
+          "right": 186.71250915527344
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BDonePrepare “Session preparation FAQ” for CURA. This preparation does not publish or share it.The private preparation request is recorded. This action does not publish, index or share it. Open the source for its current state.Open Knowledge sourceFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses an",
+      "width": 320
+    },
+    {
+      "size": {
+        "width": 320,
+        "height": 740
+      },
+      "state": "unknown",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Check original status",
+          "left": 57.04999923706055,
+          "right": 206.762508392334
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BCouldn't confirmPrepare “Session preparation FAQ” for CURA. This preparation does not publish or share it.The preparation could not be confirmed. Check the original result before another attempt.Check original statusFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider,",
+      "width": 320
+    },
+    {
+      "size": {
+        "width": 320,
+        "height": 740
+      },
+      "state": "denied",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Back to conversation",
+          "left": 16,
+          "right": 166.10000610351562
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BThis business’s Knowledge publishing permission could not be verified. Earlier saved work is unchanged.Back to conversationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context",
+      "width": 320
+    },
+    {
+      "size": {
+        "width": 320,
+        "height": 740
+      },
+      "state": "offline",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Return to draft",
+          "left": 16,
+          "right": 128.1500015258789
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BYou’re offline. Your draft is retained; no preparation was submitted.Return to draftFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The existing approval card owns keybo",
+      "width": 320
+    },
+    {
+      "size": {
+        "width": 320,
+        "height": 740
+      },
+      "state": "expired",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Return to conversation",
+          "left": 16,
+          "right": 175.46250915527344
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BThis approval has expired. No new preparation was requested.Return to conversationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The existing approval card owns keyboar",
+      "width": 320
+    },
+    {
+      "size": {
+        "width": 320,
+        "height": 740
+      },
+      "state": "cancelled",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Return to conversation",
+          "left": 16,
+          "right": 175.46250915527344
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BPreparation cancelled. Nothing was submitted.Return to conversationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The existing approval card owns keyboard, pending/repo",
+      "width": 320
+    },
+    {
+      "size": {
+        "width": 320,
+        "height": 740
+      },
+      "state": "source",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Back to preparation",
+          "left": 16,
+          "right": 158.15000915527344
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BSession preparation FAQMock boundary to the existing Knowledge source review. The actual source keeps its author, work and version. Publication and customer sharing use the existing controls.Mock source for business B: Bring your approved session notes.Back to preparationFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic sourc",
+      "width": 320
+    },
+    {
+      "size": {
+        "width": 320,
+        "height": 740
+      },
+      "state": "switched",
+      "controls": [
+        {
+          "height": 35,
+          "label": "Start in this business",
+          "left": 16,
+          "right": 164.6125030517578
+        }
+      ],
+      "focus": true,
+      "overflow": false,
+      "text": "Teach CURA in PAIGE · Mock business BThe business changed. Previous private source details and controls have been removed.Start in this businessFlow review and proof boundaryReal PAIGE confirmation component and tokens; synthetic source, business, responses and navigation. No API, provider, mutation, publication, account or native haptic proof. Inline conversation preserves context. The existing a",
+      "width": 320
+    }
+  ]
+}

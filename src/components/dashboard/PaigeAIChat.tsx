@@ -45,6 +45,7 @@ import { cn } from "@/lib/utils";
 import type { QuickChip } from "@/components/paige/commandCenterTypes";
 import { usePaigeThreads, type PaigeThread } from "@/hooks/usePaigeThreads";
 import { readOriginalReminderHistory, type OriginalReminderHistory } from "@/components/chat/reminderHistory";
+import { readOriginalCuraPreparationHistory, preparationWorkLabel, type OriginalCuraPreparationHistory, type OriginalPreparationScope } from "@/components/chat/curaPreparationHistory";
 import { useScopedUserId } from "@/hooks/useScopedUserId";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { ThreadRail } from "@/components/dashboard/paige/ThreadRail";
@@ -156,6 +157,10 @@ type Message = {
   approvalRecovery?: "checking" | "unavailable";
   originalReminderHistory?: OriginalReminderHistory;
   originalReminderHistoryStatus?: "checking" | "unverified";
+  /** Read-only origin/projection; no stored token or permission is restored. */
+  originalPreparationOrigin?: OriginalPreparationScope;
+  originalCuraPreparationHistory?: OriginalCuraPreparationHistory;
+  originalCuraPreparationHistoryStatus?: "checking" | "unverified";
   recoveredApprovalExpiresAt?: string;
   /** Solo: what the person decided on this turn's card. The card settles into a record where it
    *  was asked, with no button left to press twice. Live session only; a reloaded turn shows the
@@ -706,9 +711,13 @@ const PaigeAIChatInner = ({
     transcriptScrollRef.current = createAnchoredTranscriptScroll({
       storagePrefix: "paige-transcript-position-v1",
       onPinnedChange: (pinned) => {
-        atLatestRef.current = pinned;
-        setIsAtLatest(pinned);
-        if (pinned) {
+        // Layout readback may repeat without a pin transition. Do not schedule
+        // another React layout pass for the same observed state.
+        if (atLatestRef.current !== pinned) {
+          atLatestRef.current = pinned;
+          setIsAtLatest(pinned);
+        }
+        if (pinned && hasNewerContentRef.current) {
           hasNewerContentRef.current = false;
           setLatestAnnouncement("");
         }
@@ -803,8 +812,10 @@ const PaigeAIChatInner = ({
   }, []);
   const abortActiveRequest = useCallback(() => {
     originalReminderHydrationRef.current?.cancel();
-    setMessages(previous => previous.map(message => message.originalReminderHistoryStatus === "checking"
-      ? { ...message, originalReminderHistoryStatus: "unverified" } : message));
+    setMessages(previous => previous.map(message => ({ ...message,
+      ...(message.originalReminderHistoryStatus === "checking" ? { originalReminderHistoryStatus: "unverified" as const } : {}),
+      ...(message.originalCuraPreparationHistoryStatus === "checking" ? { originalCuraPreparationHistoryStatus: "unverified" as const } : {}),
+    })));
     undispatchedDraftRef.current = null;
     submissionPreflightRef.current = false;
     documentRequestActiveRef.current = false;
@@ -1120,7 +1131,7 @@ const PaigeAIChatInner = ({
   // Rebuild the message list from a thread's stored turns. Cards are reconstructed
   // from bundle_ref and marked resolved — a reloaded confirm renders settled, never
   // a live Approve button for an action already taken (§15).
-  const turnsToMessages = (turns: Awaited<ReturnType<typeof threadsApi.loadTurns>>) => {
+  const turnsToMessages = (turns: Awaited<ReturnType<typeof threadsApi.loadTurns>>, originThreadId: string) => {
     // R2b §12 — every reload run reference across the transcript, resolved after the
     // map through the governed get RPC (see the runner below the map).
     const researchRefsAll: ResearchHistoryReference[] = [];
@@ -1196,6 +1207,14 @@ const PaigeAIChatInner = ({
           queued: queued?.length ? queued : undefined,
           confirm: confirm?.length ? confirm : undefined,
           confirmResolved: true,
+          // This only offers an inert read. Native status re-proves the actual
+          // actor, business, original card and publisher authority independently.
+          ...(t.role === "assistant" && t.interactive_terminal_state === "WAIT_APPROVAL"
+            && confirm?.some(card => card.tool === "save_to_knowledge_base")
+            && [originThreadId, tid, t.interactive_intent_id, activeTenantId].every(value => typeof value === "string"
+              && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value))
+            ? { originalPreparationOrigin: { threadId: originThreadId, turnId: tid!,
+                intentId: t.interactive_intent_id!, tenantId: activeTenantId! } } : {}),
           crmResults: crmResults?.length ? crmResults : undefined,
           recordLinks: recordLinks.length ? recordLinks : undefined,
           research: turnResearchRefs?.length
@@ -1325,16 +1344,24 @@ const PaigeAIChatInner = ({
 
   const restoreOriginalReminderHistory = async (
     threadId: string, turns: Awaited<ReturnType<typeof threadsApi.loadTurns>>, scopeStillCurrent: () => boolean,
+    curaOrigin?: OriginalPreparationScope,
   ) => {
+    const cura = !!curaOrigin;
+    if (!soloTenantSafety || platform || !activeTenantId || !scopeStillCurrent()
+      || (cura ? typeof threadsApi.loadOriginalCuraPreparationHistory !== "function"
+        : typeof threadsApi.loadOriginalReminderHistory !== "function")
+      || curaOrigin && (curaOrigin.tenantId !== activeTenantId || curaOrigin.threadId !== threadId)) return;
+    // One physical read owner and lifecycle for both original projections.
     originalReminderHydrationRef.current?.cancel();
-    if (!soloTenantSafety || platform || !activeTenantId || typeof threadsApi.loadOriginalReminderHistory !== "function"
-      || !scopeStillCurrent()) return;
-    // One selected original card per hydration, including a non-last card. Its
-    // saved token stays server-side; Message.confirm still loses live tokens.
-    const candidate = [...turns].reverse().find(turn => turn.role === "assistant"
-      && turn.interactive_terminal_state === "WAIT_APPROVAL" && !!turn.interactive_intent_id
-      && Array.isArray(turn.bundle_ref?.paige_confirm) && turn.bundle_ref.paige_confirm.some(card =>
-        !!card && typeof card === "object" && (card as { tool?: unknown }).tool === "plan_set_reminder"));
+    setMessages(previous => previous.map(message => ({ ...message,
+      ...(message.originalReminderHistoryStatus === "checking" ? { originalReminderHistoryStatus: "unverified" as const } : {}),
+      ...(message.originalCuraPreparationHistoryStatus === "checking" ? { originalCuraPreparationHistoryStatus: "unverified" as const } : {}),
+    })));
+    const candidate = curaOrigin ? { id: curaOrigin.turnId, interactive_intent_id: curaOrigin.intentId }
+      : [...turns].reverse().find(turn => turn.role === "assistant"
+        && turn.interactive_terminal_state === "WAIT_APPROVAL" && !!turn.interactive_intent_id
+        && Array.isArray(turn.bundle_ref?.paige_confirm) && turn.bundle_ref.paige_confirm.some(card =>
+          !!card && typeof card === "object" && (card as { tool?: unknown }).tool === "plan_set_reminder"));
     if (!candidate?.interactive_intent_id) return;
     const turnId = candidate.id, intentId = candidate.interactive_intent_id;
     const controller = new AbortController();
@@ -1351,18 +1378,30 @@ const PaigeAIChatInner = ({
       && scope.epoch === requestScopeRef.current.epoch
       && composerDraftHandlesMatch(scope.handle, requestScopeRef.current.handle);
     const markUnverified = () => setMessages(previous => previous.map(message => message.id === turnId
-      ? { ...message, originalReminderHistory: undefined, originalReminderHistoryStatus: "unverified" } : message));
+      ? cura ? { ...message, originalCuraPreparationHistory: undefined, originalCuraPreparationHistoryStatus: "unverified" }
+        : { ...message, originalReminderHistory: undefined, originalReminderHistoryStatus: "unverified" } : message));
     const timer = window.setTimeout(() => { if (current()) markUnverified(); owner.cancel(); }, 10_000);
     setMessages(previous => previous.map(message => message.id === turnId
-      ? { ...message, originalReminderHistoryStatus: "checking" } : message));
+      ? cura ? { ...message, originalCuraPreparationHistoryStatus: "checking" }
+        : { ...message, originalReminderHistoryStatus: "checking" } : message));
     try {
-      const raw = await threadsApi.loadOriginalReminderHistory(threadId, turnId, intentId, controller.signal);
-      if (!current()) return;
-      const history = readOriginalReminderHistory(raw, { threadId, turnId, intentId, tenantId: activeTenantId });
-      setMessages(previous => previous.map(message => message.id === turnId
-        ? history ? { ...message, originalReminderHistory: history, originalReminderHistoryStatus: undefined }
-          : { ...message, originalReminderHistory: undefined, originalReminderHistoryStatus: "unverified" }
-        : message));
+      if (cura) {
+        const raw = await threadsApi.loadOriginalCuraPreparationHistory(threadId, turnId, intentId, controller.signal);
+        if (!current()) return;
+        const history = readOriginalCuraPreparationHistory(raw, { threadId, turnId, intentId, tenantId: activeTenantId });
+        setMessages(previous => previous.map(message => message.id === turnId
+          ? history ? { ...message, originalCuraPreparationHistory: history, originalCuraPreparationHistoryStatus: undefined }
+            : { ...message, originalCuraPreparationHistory: undefined, originalCuraPreparationHistoryStatus: "unverified" }
+          : message));
+      } else {
+        const raw = await threadsApi.loadOriginalReminderHistory(threadId, turnId, intentId, controller.signal);
+        if (!current()) return;
+        const history = readOriginalReminderHistory(raw, { threadId, turnId, intentId, tenantId: activeTenantId });
+        setMessages(previous => previous.map(message => message.id === turnId
+          ? history ? { ...message, originalReminderHistory: history, originalReminderHistoryStatus: undefined }
+            : { ...message, originalReminderHistory: undefined, originalReminderHistoryStatus: "unverified" }
+          : message));
+      }
     } catch { if (current()) markUnverified(); }
     finally { owner.cancel(); }
   };
@@ -1477,7 +1516,7 @@ const PaigeAIChatInner = ({
     try {
       const turns = await threadsApi.loadTurns(id);
       if (!ticketAccepted(requestTicket)) return;
-      const hydrated = turnsToMessages(turns);
+      const hydrated = turnsToMessages(turns, id);
       setMessages(hydrated.messages.length ? hydrated.messages : [mkMsg({ role: "assistant", content: openingGreeting })]);
       hydratedFromRef.current = id;
       applyConversationEvent({ type: "thread-loaded", id });
@@ -1914,7 +1953,7 @@ const PaigeAIChatInner = ({
               try {
                 const turns = await threadsApi.loadTurns(threadId);
                 if (ticketAccepted(requestTicket) && turns.length) {
-                  const hydrated = turnsToMessages(turns);
+                  const hydrated = turnsToMessages(turns, threadId);
                   setMessages(hydrated.messages);
                   restoreResearchReferences(threadId, hydrated.researchRefsAll);
                   void restorePendingApproval(threadId, turns, () => ticketAccepted(requestTicket));
@@ -3521,6 +3560,34 @@ const PaigeAIChatInner = ({
                             {message.confirmReceipt?.result && (
                               <p className="mt-1 text-xs text-muted-foreground" data-paige-card-result>Result: {message.confirmReceipt.result}</p>
                             )}
+                            {soloTenantSafety && !platform && message.originalPreparationOrigin
+                              && typeof threadsApi.loadOriginalCuraPreparationHistory === "function" && (
+                              <Button type="button" variant="outline" size="sm" className="mt-2"
+                                disabled={composerSendBlocked}
+                                aria-disabled={message.originalCuraPreparationHistoryStatus === "checking" || undefined}
+                                aria-busy={message.originalCuraPreparationHistoryStatus === "checking" || undefined}
+                                onClick={() => {
+                                  if (message.originalCuraPreparationHistoryStatus === "checking") return;
+                                  const origin = message.originalPreparationOrigin!;
+                                  void restoreOriginalReminderHistory(origin.threadId, [], () => composerScopeRef.current.writable, origin);
+                                }}>
+                                {message.originalCuraPreparationHistoryStatus === "checking" ? "Checking original status…" : "Check original status"}
+                              </Button>
+                            )}
+                            {message.originalCuraPreparationHistoryStatus === "unverified" && (
+                              <p role="status" className="mt-1 break-words text-xs text-muted-foreground" data-paige-cura-preparation-status="unverified">
+                                The earlier result could not be verified here. Nothing was retried.
+                              </p>
+                            )}
+                            {message.originalCuraPreparationHistory?.preparations.map(preparation => (
+                              <div key={preparation.work_id} className="mt-2" data-paige-cura-preparation-result>
+                                <p role="status" className="break-words text-xs text-muted-foreground">
+                                  {preparationWorkLabel[preparation.work_status]}. Publishing and customer sharing are separate.
+                                </p>
+                                {preparation.knowledge_doc_id && <PaigeRecordLinks
+                                  links={[{ destination: "portal_knowledge", record_id: preparation.knowledge_doc_id }]} account={activeTenant} />}
+                              </div>
+                            ))}
                             {message.originalReminderHistoryStatus && (
                               <p role="status" className="mt-1 break-words text-xs text-muted-foreground" data-paige-original-reminder-status={message.originalReminderHistoryStatus}>
                                 {message.originalReminderHistoryStatus === "checking" ? "Checking the earlier reminder…"

@@ -18503,7 +18503,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         if (!text || text.length < 3) return false;
         // A question mark anywhere in a short message means the user asked, not commanded.
         if (text.includes("?")) return false;
-        return ACTION_INTENT_RE.test(text);
+        // A forbidden comma-list ("do not create, send or schedule") is not a
+        // request to execute its later verbs. Ignore that negative clause only
+        // for this continuation heuristic; independent sentences/contrast keep
+        // their affirmative requests. This neither admits nor authorizes tools.
+        const continuationRequest = text.replace(
+          /\b(?:do\s+not|don['’]t|never)\b(?!\s+(?:forget|mind|only|hesitate)\b)[^.!?\n;]*?(?:\b(?:but|however|instead|then)\s+|(?=[.!?\n;]|$))/gi,
+          ". ",
+        );
+        return ACTION_INTENT_RE.test(continuationRequest);
       })();
       // A prose round can itself be a terminal state the signal flags cannot see: the model may
       // refuse in prose, ask the clarification the platform's own prompt rules demand, or state

@@ -44,6 +44,7 @@ import { SubscriptionProvider } from "./contexts/SubscriptionContext";
 import { DashboardModeProvider } from "./contexts/DashboardModeContext";
 import { BusinessProvider } from "./contexts/BusinessContext";
 import { ImpersonationProvider } from "./contexts/ImpersonationContext";
+import { ComposerDraftSessionBinding } from "./components/paige/ComposerDraftSessionBinding";
 import { ClientOnlyRouteGuard } from "./components/auth/ClientOnlyRouteGuard";
 import { useHostRouting } from "./lib/hostRouting";
 import { useReferralTracking } from "./hooks/useReferralTracking";
@@ -233,6 +234,7 @@ const App = () => /^\/payment-return\/?$/i.test(window.location.pathname) ? <Pay
         <BusinessProvider>
         <DashboardModeProvider>
         <ImpersonationProvider>
+        <ComposerDraftSessionBinding />
         <Toaster />
         <Sonner />
         {/* Global platform auto-update banner (#177) — outside <Routes> so it

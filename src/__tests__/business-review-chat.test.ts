@@ -121,17 +121,16 @@ describe("E2-1 dispatch behavior", () => {
     expect(JSON.stringify(links)).not.toMatch(/tenant_id|actor_id|\/solo\/|125000/);
   });
   it('keeps critical source destinations inside the existing six-reference budget when Marketing joins the review', () => {
-    const snapshot = structuredClone(TEST_BUSINESS_REVIEW);
-    snapshot.requested = ['payments', 'sales_pipeline', 'clients', 'campaigns', 'operations'];
+    const snapshot = { ...structuredClone(TEST_BUSINESS_REVIEW), requested: ['payments', 'sales_pipeline', 'clients', 'campaigns', 'operations'] as const };
     snapshot.domains.campaigns = { status: 'available', data: { ...snapshot.domains.clients!.data!, domain: 'campaigns', owner: 'marketing',
       risks: [{ kind: 'marketing_failed', severity: 'act', summary: '2 recorded submissions failed' }] } };
     const links = businessReviewRecordLinks(snapshot);
     expect(links.map(row => row.destination)).toEqual(['executive', 'marketing', 'systems_check', 'finance', 'sales_collections', 'sales_pipeline']);
     expect(links).toHaveLength(6);
-    snapshot.requested = ['campaigns'];
-    expect(businessReviewRecordLinks(snapshot)).toEqual([{ destination: 'executive', record_id: null }, { destination: 'marketing', record_id: null }]);
+    const focused = { ...snapshot, requested: ['campaigns'] as const };
+    expect(businessReviewRecordLinks(focused)).toEqual([{ destination: 'executive', record_id: null }, { destination: 'marketing', record_id: null }]);
     snapshot.domains.campaigns = { status: 'unavailable', data: null, reason: 'authorization_denied' };
-    expect(businessReviewRecordLinks(snapshot)).toEqual([]);
+    expect(businessReviewRecordLinks(focused)).toEqual([]);
   });
   it("E2-6 exposes no reference when every domain was refused or invalidated by a scope switch", () => {
     const snapshot = structuredClone(TEST_BUSINESS_REVIEW);

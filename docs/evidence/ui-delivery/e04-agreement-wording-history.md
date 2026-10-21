@@ -32,7 +32,7 @@ MUST_PRESERVE: Original authoring/save/recovery, canonical agreement identity/na
 ACCEPTANCE_CRITERIA: Authorized user selects actual retained wording by exact original IDs and source metadata, pages with native cursor, returns to current record with focus and recovers explicit read failures. Native producer release/readback and actual-role QA remain separate gates.
 MOTION_PURPOSE: NONE: read navigation and source feedback reuse immediate native behavior.
 PROTECTED_SEAMS: AFFECTED E04 preparation/history component/API/CSS and existing source-mount drive/Binding Ledger row. UNCHANGED backend writer, financial calculations, native signatures, Gateway/Spine/Harness/Trust/Kit/Rail/admission, scheduler, sender, provider and Portal UI. No Mind/Memory promotion.
-INTERNAL_BUILD_IDENTITY: branch=codex/e04-agreement-wording-history; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migration=NOT_APPLICABLE; dependency=native producer2521/20271113130000 release/readback; edge=NOT_APPLICABLE
+INTERNAL_BUILD_IDENTITY: branch=codex/e04-agreement-wording-history; product_sha=3ceaaf6c24704c318de8eda4026cc47960b553d7; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; dependency=native producer2521/20271113130000 release/readback; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-agreement-wording-history.md
 RELEASE_CHANNEL: development: source, review/CI, deployment, customer operation and acceptance states remain independent.
 RELEASE_CLASSIFICATION: internal-only: prelaunch bounded history prerequisite; all twelve and full professional agreement outcome remain incomplete.
 CUSTOMER_RELEASE_IDENTITY: none: no finished Experience or founder-acceptance announcement.
@@ -62,3 +62,11 @@ Functional: current source/render/70 tests pass; final review/CI/release owed.
 Visual: native-system20-case render and focus repair pass; AT/zoom still owed.
 Experiential: bounded inspection flow; correction and full original journey owed.
 Founder Acceptance: one complete integrated live Experience evaluation pending.
+
+Final seven-suite frozen-source attempt176/177 PASS, with the incumbent completed-
+agreement async case timing out at unchanged5000ms. Its unchanged complete102-case
+Sales file then passes in5.10s; the other six suites passed in the broad attempt.
+Failed logs remain retained; no assertion, required inclusion or timeout was changed.
+The earlier whole-src gold scan also identified an unchanged BusinessCreditDashboard
+incumbent; this PR changes neither it nor the gold guard. The required changed-source
+gold scope passes; no whole-src clean claim is made. Exact-head hosted CI is required.

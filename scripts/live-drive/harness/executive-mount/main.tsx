@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Link, Route, Routes, useLocation } from "react-router-dom";
 import { ThemeProvider, useTheme } from "next-themes";
@@ -8,6 +8,12 @@ import { subscribePaigePromptHandoff } from "@/lib/paigePromptHandoff";
 import { HarnessPresence, useAgentPresence } from "./stubs";
 import "@/index.css";
 import "@/solo/solo-tokens.css";
+
+const Catalogue = lazy(() => import("@/solo/SoloPaigeWorkspace").then(module => ({ default: module.SoloPaigeWorkspace })));
+function CataloguePanel() {
+  const [tab, setTab] = useState<"chat" | "knowledge" | "research" | "helpers" | "capabilities">("capabilities");
+  return <Suspense fallback={<p>Loading the synthetic catalogue…</p>}><Catalogue dockedTab={tab} onDockedTabChange={setTab} /></Suspense>;
+}
 
 function Conversation() {
   const [draft, setDraft] = useState("");
@@ -24,7 +30,7 @@ function App() {
   return <>
     <style>{".e2-walkthrough-shell > [data-tenant-shell]{height:100%}.e2-walkthrough-shell .tcs-main{overflow:hidden}"}</style>
     <div className="e2-walkthrough-shell" style={{ height: "calc(100dvh - 32px)" }}>
-      <TenantCommandCenterShell accountName={name} accountType="standalone" userRole={p.get("state") === "member" ? "member" : "admin"} onSignOut={() => {}} brandHomeHref="/solo/1234567/command-center" soloPaigeWorkspace={<Conversation />}>
+      <TenantCommandCenterShell accountName={name} accountType="standalone" userRole={p.get("state") === "member" ? "member" : "admin"} onSignOut={() => {}} brandHomeHref="/solo/1234567/command-center" soloPaigeWorkspace={p.get("view") === "capabilities" ? <CataloguePanel /> : <Conversation />}>
         <div className="paige-solo" data-theme={theme} style={{ height: "100%", minHeight: 0, minWidth: 0 }}>
           <Routes><Route path="/solo/:account/*" element={l.pathname.includes("command-center") ? <CommandHub account="1234567" accountContext={{ accountName: name, accountType: "standalone" }} openPaige={expandRail} /> : <section style={{ padding: 24 }}><h2>Canonical destination</h2><p>{l.pathname + l.search}</p><p>Destination resolution only; the actual departmental read is not executed by this walkthrough.</p><Link to="/solo/1234567/command-center/executive">Back to Executive</Link></section>} /></Routes>
         </div>

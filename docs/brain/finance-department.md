@@ -1,5 +1,31 @@
 # Finance department — current source and full operating target
 
+## October 20 observed EXP02 Finance consumer release
+
+Original #2402 reviewed d0aafc53ed81273868b4160684677ed02175454b merged
+ddf12b6bbda085cdb9f66587f9e803e11fc3cc18 with exact reviewed union tree 1472c481.
+All 11 checks/Preview and two Vercel contexts passed; AUTHOR-REVIEW / LOWER
+ASSURANCE 6303545504. Web dpl_6qkA2AUtNSxr9ntZt9EMn21Gpcrm READY/exact and
+public ddf12b6…mvha1pjq observed. Normal guarded recovery 39511759880 verified
+five of five importers' complete source/configuration; actual edge-live ddf12b6
+independently confirmed. Artifact 12306466169 SHA256
+c4d9267ee8bbb068337ade9efdaefff5d8d7f9a0cb7f4f6a0970147215e7eb74.
+No own migration or new provider/permission/action activation.
+
+The same caller-JWT Finance contracts now feed the canonical Business Review
+composer, Executive and admitted read-only briefing. Decimal source facts retain
+currency, basis, period, company/source scope, revocation and null-versus-zero
+boundaries. Provenance remains separate from execution receipts. Original #2021
+statement helpers still remain UNMOUNTED; this release does not activate ingestion.
+
+Actual authorized SOLO no-source/provenance/navigation/return/reload passed.
+Populated amounts, connected-provider readiness, tenant/permission negatives,
+new Chat/Live behavior and full financial acceptance remain owed. Stored facts
+are not an ALG-06 cash-flow forecast or a backtest. Master §4.0 and ANT-52
+hold sanitized release/customer receipts; private captures remain local.
+This observed release supersedes the dated candidate checkpoint below.
+
+
 ## October20 EXP02 integration checkpoint
 
 Original statement helper#2021 is source-released at mained305fb25 with exact
@@ -36,6 +62,25 @@ native target/VERA packets prove their own synthetic surfaces only. See
 [consumer contract and evidence](../evidence/ui-delivery/e2-finance-department-sources.md).
 EXP01/05/09/11 may reuse the canonical domain contract; do not create another reader
 or infer company-wide cash, profit or forecast from recorded account observations.
+
+## October 20 observed statement-source release — #2021
+
+Original #2021 reviewedab3f8243ce0795127eb274e2eb0e3995fd6adc5c merged
+`ed305fb25cba16877684955092fb1d0f58976dd3`, exact reviewed composition
+tree737b577af762f5ab71ebaa95edf7e0e3981c6f64. Documented AUTHOR-REVIEW / LOWER
+ASSURANCE6296540246/6297250084, all11 applicable exact-head checks/Preview and both
+Vercel contexts SUCCESS. Four original statement/test leaves unchanged;
+108 controlled cases/strict ES2020/lint/Registry PASS. Production
+webdpl_3viZpseuJYT4Fh9cRESQnRW4LpiH READY/exact; public HTTP200 build
+`ed305fb25cba16877684955092fb1d0f58976dd3-mvgz1u7z` verified.
+Edge39468474106/job118785988601 succeeded with deployment/readback/tag SKIPPED:
+no production function imports these helpers. This supersedes candidate-only
+source status below, without changing **UNMOUNTED / customer proof owed**.
+Preserve canonical company/unfiltered request, currency, basis, period, source
+observation and Metric/Evidence authority before consumption. No provider call,
+new ledger, financial effect, customer announcement or authenticated acceptance.
+Full financial intelligence and all19 EXP02 outcomes remain incomplete.
+
 
 Grounded on 2026-10-09 against main `794a38263e2d1d565ccab20253751593ed9c8f5b`.
 Owner-approved design and subsequent “live merge on green” authorize normal delivery. They do not authorize a real provider connection or financial effects.

@@ -49,6 +49,7 @@ export const DESTINATION_LABEL: Readonly<Record<ReadLinkDestination, string>> = 
   mind: "Open Mind",
   calendar: "Open Calendar",
   pipeline: "Open pipeline",
+  conversations: "Open Conversations",
 });
 
 export type WorkspaceLinkTarget = { label: string; to: string; status: "exact" | "surface_only" };

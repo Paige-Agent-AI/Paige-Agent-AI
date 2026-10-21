@@ -12,6 +12,14 @@ const ids={actor:'e0913400-0000-4000-8000-000000000001',tenant:'e0923400-0000-40
 const input={expected_tenant_id:ids.tenant,invitation_id:ids.invite,delivery_operation_id:ids.operation};
 const code=file=>stripTypeScriptTypes(readFileSync(new URL(file,import.meta.url),'utf8').replace(/^import[\s\S]*?from\s+["'][^"']+["'];\s*/gm,''));
 function harness(config={}){
+ // The actual pre-send helper uses the VM clock. Fix it so a quiet-hours test
+ // cannot escape its 00:00–23:59 window during the runner's final UTC minute.
+ const instant=Date.parse(config.now??'2026-10-17T12:00:00Z');
+ assert.ok(Number.isFinite(instant));
+ const ClockDate=class extends Date{
+  constructor(...args){super(...(args.length?args:[instant]));}
+  static now(){return instant;}
+ };
  const calls=[],effects=[],reads=[];let saved=config.saved??null,contextCalls=0,tokenReads=0,policyReads=0;
  const native=(outcome='pending')=>({actor_id:ids.actor,tenant_id:ids.tenant,found:true,operation_id:ids.operation,invitation_id:ids.invite,
   receipt_id:ids.receipt,requested_by:ids.actor,reconciled_by:ids.actor,outcome,provider_message_id:outcome==='provider_accepted'?'controlled-message':null,observed_at:'2026-10-17T12:00:00Z'});
@@ -52,7 +60,7 @@ function harness(config={}){
   };
   const query=new Proxy({}, {get(_,prop){if(prop==='then')return resolve=>resolve(result());if(prop==='maybeSingle')return async()=>result();return(...args)=>{filters.push([prop,...args]);return query}}});return query;
  }};
- const ctx=vm.createContext({Response,Request,Headers,URL,TextEncoder,TextDecoder,crypto:webcrypto,Date,AbortController,setTimeout,clearTimeout,
+ const ctx=vm.createContext({Response,Request,Headers,URL,TextEncoder,TextDecoder,crypto:webcrypto,Date:ClockDate,AbortController,setTimeout,clearTimeout,
   console:{warn:()=>{},error:()=>{}},createClient:(_url,key)=>key==='controlled-anon'?caller:admin,
   Deno:{env:{get:name=>({SUPABASE_URL:'https://sdk.invalid',SUPABASE_ANON_KEY:'controlled-anon',SUPABASE_SERVICE_ROLE_KEY:'controlled-service',RESEND_API_KEY:'controlled-provider',PLATFORM_DEFAULT_EMAIL_FROM:'no-reply@tests.invalid',PUBLIC_SITE_URL:'https://portal.invalid'}[name])},serve:fn=>ctx.handler=fn},
   fetch:async(url,options)=>{effects.push({url,options});if(config.transport)throw Error('controlled transport failure');return new Response(JSON.stringify(config.providerBody??{id:'controlled-message'}),{status:config.providerStatus??200});}
@@ -90,3 +98,16 @@ test('Native recovery uses the same key and is explicitly effectful',async()=>{c
 test('A revoked invitation stops recovery without declaring the original uncertain send refused',async()=>{const h=harness({saved:'outcome_unknown',disposition:'reconcile',revokeAt:2}),r=await h.run();assert.equal(r.body.outcome,'outcome_unknown');assert.equal(r.body.replayed,true);assert.equal(h.effects.length,0)});
 test('A rejected provider recovery preserves original uncertainty',async()=>{const h=harness({saved:'outcome_unknown',disposition:'reconcile',providerStatus:400}),r=await h.run();assert.equal(r.body.outcome,'outcome_unknown');assert.equal(h.effects.length,1)});
 for(const body of [{...input,email:'changed@tests.invalid'},{...input,approved:true},{...input,token:'FORBIDDEN'},{...input,invitation_id:'invalid'}])test('Request cannot override authority/recipient '+Object.keys(body).join(','),async()=>{const h=harness(),r=await h.run(body);assert.equal(r.status,400);assert.equal(h.calls.length,0);assert.equal(h.effects.length,0)});
+
+// Preserve the real [start,end) policy; fixing the test clock must not turn a
+// 23:59 end into an all-day hold or relax the before-claim/provider checks.
+for(const [now,held] of [
+ ['2026-10-17T00:00:00Z',true],['2026-10-17T23:58:59Z',true],
+ ['2026-10-17T23:59:00Z',false],['2026-10-17T23:59:59Z',false],
+])test('Actual handler respects the quiet-hours boundary at '+now,async()=>{
+ const h=harness({quiet:true,now}),r=await h.run();
+ assert.equal(r.body.ok,!held);
+ assert.equal(r.body.outcome,held?'held':'provider_accepted');
+ assert.equal(h.calls.some(call=>call.name==='claim_client_portal_invitation_delivery'),!held);
+ assert.equal(h.effects.length,held?0:1);
+});

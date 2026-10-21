@@ -15,6 +15,12 @@ const id = "11111111-1111-4111-8111-111111111111";
 function snapshot(): WeeklyCommitmentSnapshot {
   return { source: "canonical_process_and_act_receipts", read_at: "2026-10-13T13:00:00Z", business_time_zone: { state: "configured", zone: "America/New_York" }, limit: 50, has_more: false, checks: [] };
 }
+function recordedSnapshot() {
+  const data = snapshot();
+  data.checks.push({ automation_id: id, name: "Weekly check", revision: 2, schedule_status: "paused", schedule: { weekday: 1, local_time: "09:00", timezone: "UTC" },
+    execution_availability: "held", execution_hold_reason: "paused", next_run_at: null, intended_next_run_at: null, last_run: null, last_verified_run: null });
+  return data;
+}
 async function render(read: WeeklyOwnerRead) {
   await act(async () => root.render(<MemoryRouter><WeeklyResponsibilityPanel read={read} refresh={() => {}} pathname="/solo/42/paige/chat" /></MemoryRouter>));
 }
@@ -61,4 +67,26 @@ it("permission and failed read clear all private result content and never claim 
     expect(container.querySelector("form")).toBeNull();
     expect(container.querySelector('a[href*="weeklySource"]')).toBeNull();
   }
+});
+it("qualifies historical totals without inventing a missing reminder time", async () => {
+  const data = recordedSnapshot();
+  data.checks[0].last_verified_run = { event_id: id, act_id: id, receipt_id: id, observed_at: "2026-10-12T13:00:00Z", scheduled_for: "2026-10-12T13:00:00Z", schedule_revision: 1,
+    status: "completed", truncated: false, observation_version: 1, counts: { open: 2, blocked: 0, overdue: 2, due_next_week: 0, undated: 0 },
+    source_items: [{ id, kind: "reminder", title: "Historical reminder", status: "open", priority: "normal", due_at: "2020-01-01T00:00:00Z" }] };
+  await render({ status: "ready", snapshot: data });
+  expect(container.textContent).toContain("Historical totals: 2 overdue");
+  expect(container.textContent).toContain("may include reminder dates");
+  expect(container.textContent).toContain("Reminder time was not recorded");
+  expect(container.textContent).not.toContain("not scheduled");
+});
+it("distinguishes corrected work deadlines from the reminder time observed at the check", async () => {
+  const data = recordedSnapshot();
+  data.checks[0].last_verified_run = { event_id: id, act_id: id, receipt_id: id, observed_at: "2026-10-12T13:00:00Z", scheduled_for: "2026-10-12T13:00:00Z", schedule_revision: 1,
+    status: "completed", truncated: false, observation_version: 2, counts: { open: 2, blocked: 0, overdue: 1, due_next_week: 0, undated: 0 },
+    source_items: [{ id, kind: "reminder", title: "Future reminder", status: "open", priority: "normal", due_at: null, remind_at: "2099-11-03T15:00:00Z" }] };
+  await render({ status: "ready", snapshot: data });
+  expect(container.textContent).toContain("Work deadlines: 1 overdue");
+  expect(container.textContent).toContain("Reminder at the check:");
+  expect(container.textContent).toContain("Nov 3");
+  expect(container.textContent).not.toContain("Historical totals");
 });

@@ -1,8 +1,235 @@
 # 🧠 The Second Brain — master index & read-first orientation
 
-## EXP02 verified handoff v2026-10-20.2
+## EXP02 catalogue copy/readback checkpoint — 2026-10-20
 
-**Owner: EXP02; production source status is PARTIAL, customer proof is owed.**
+Nine canonical analytics descriptions#2440 merged
+`a0389c3f9800da302395ab1e665c851b25d672f4`, reviewed current-main treea9493652.
+All13 exact-head checks/Preview and2Vercel contexts PASS; exact production web
+dpl_3Y2aWLf7bidRmSpVuAzER3P2J2qf READY. Normal migration39521004035 SUCCESS,
+history13010000 and all9 descriptions independently read back. Original custom
+rows/identity/metadata/tools/lanes/tiers/permissions remain unchanged. No Edge effect.
+Authorized ordinary customer read and full-reload/explicit-return proof passed
+(ANT52/053be67a); reload defaults to Chat, not auto-restored Capabilities. Displayed
+Listed/Unverified does not establish permission/provider readiness. This copy-only
+release does not accept algorithms, filed monthly/quarterly artifacts, Live/actions
+or full19/9/founder outcomes. NO VERIFIED ALGORITHM added. See Master§4.0 and
+[Skills inventory](paige-skills-inventory.md); no competing registry or runtime.
+
+## EXP02 current release checkpoint — 2026-10-21 UTC
+
+Chat disposal correction#2469 revieweda7d847f9, merged
+`4aaa84e218121c33a3f510a99a2d1dd9038a1795`, exact treef0b804ac. Required checks,
+normal production web/public and actual served callback condition verify; the old
+400ms gate now reuses request-fence invalidation. 128 owning cases pass; original
+CI failure is retained. Migrations/Edge N/A; no provider/permission/registry/action
+activation. Prior backend CPU/no-settlement findings and real customer/Live/full19/
+nine analytics/founder acceptance remain open. See Master§4.0 and
+[#2469 source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2469#issuecomment-6315061088).
+
+Canonical Conversations foundation#2467 reviewed95d61084, merged
+`268ff690df500345cc3c81eec7ca2a2baa60b13e`, exact treeb305fba3. Eleven exact-head
+checks/two statuses, normal production web/public and actual served destination/label
+verify. Existing guarded Edge recovery39583487762 succeeds for all17 selected
+sources/JWT; certified edge-live matches268ff690, no workflow/tag/security bypass.
+This is the existing E4 surface-reference extension only: no new read emitter,
+provider/permission/admission or catalogue activation. O17 consumer/customer/privacy/
+reload and full19/nine analytics/founder acceptance remain owed. Native-read catalogue
+gap stays ANT-161; see Master§4.0 and
+[#2467 source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2467#issuecomment-6313888651).
+
+Recorded Systems Check status#2466 reviewed e7600799, merged
+`4d667a52adde822221c96f10d884ba95e8ccfdd9`, exact tree81f98c76.
+Ten required applicable checks/two statuses passed after repairing the initial
+design failure. Normal production web `dpl_9AatUsPhvzvsCKdrePWTi4Rn5AF1` READY/exact
+metadata; public4d667a52…-mvhx4at9 and actual served status/font/outline readback
+verified. Completed results remain separate from a bounded unfinished-at-last-read
+timestamp; age is no run and Refresh starts no check. Migrations/Edge N/A; Mind
+context remains UNAVAILABLE, no worker/scan/remediation/provider/permission or
+catalogue/algorithm activation.115 source cases/11 native synthetic frames are
+supporting only. Real customer reads/reload, O07/O19, full19/nine analytics and
+founder acceptance remain owed. See Master§4.0 and
+[#2466 source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2466#issuecomment-6312891491).
+
+Executive explanation/font repair#2464 reviewed79d39462, merged
+`720485f3955ae1b591fca2dfc6125ad0bbde2ccf`, exact composition tree91b3de9e.
+Required ten checks/two statuses passed; normal production web
+`dpl_A1RKsoqgU4o9dVUyLTofc9c12pdA` READY/exact metadata, public build720485f3…-mvhv4qzd
+and actual served explanation/font independently verified. The existing
+domain-qualified no-adapter state now explains the missing area; zero and owning
+links retain their semantics. Canonical self-hosted font is bound through the real
+SOLO wrapper. Migrations/Edge N/A; no permission/provider/status/algorithm activation.
+Native synthetic ten frames and source regressions are supporting proof only;
+customer/full19/nine analytics/founder acceptance remains owed. See Master§4.0 and
+[#2464 source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2464#issuecomment-6311881627).
+
+Scoped unsent-question foundation#2462 merged
+`87ccff84221497f298041fb33a0e16ee85d8c719`, reviewed
+`18a560d5ee80a9294b7a23d0b26a08cecca5d30f`, exact treef728d532.
+All10 applicable head checks and two Vercel statuses SUCCESS; no-schema Preview
+SKIPPED. Production web `dpl_EaZdH8W1nJEu2iswf7X9DcNqkBRx` READY/exact provider
+metadata; public HTTP200 build87ccff84…-mvhrft4w, customerUpdate=null verified.
+The optional bounded tab-session cache extends the sole existing five-axis
+composer store; it has no product caller in that released tree. No automatic
+send/replay, attachments, business Memory, job, permission or provider activation.
+Source126 cases/3 suites pass, including expiry/size/actor/revision/refusal
+negatives; those tests are not authenticated reload acceptance. Its separate
+consumer#2463 is source-released as recorded next. Migrations/Edge NOT_APPLICABLE; catalogue
+states and all19/9/founder obligations remain unchanged. Master§4.0 and
+[#2462 production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2462#issuecomment-6310134039)
+retain exact proof and recovery boundaries. NO VERIFIED ALGORITHM added.
+
+Scoped composer consumer#2463 reviewed
+`b7577fc9f950048120d411a59f4a4cbc38eeac7d`, merged
+`73d8a03db8df273fe45dfb122854c05b24886e6b`, exact treee3d3c17a.
+The released source mounts the existing actual-subject/ready-SOLO/persona binding,
+shows unavailable-reload guidance and sizes restored text with the same capped
+rule as typing. Ten applicable checks plus two statuses SUCCESS; no-schema Preview
+SKIPPED, zero review threads, documented AUTHOR-REVIEW / LOWER ASSURANCE.
+Normal web `dpl_FrDoJrgNRtUfrS7NwrbCL3xkgpCu` READY/exact provider metadata;
+public HTTP200 build73d8a03d…-mvhthuqm and actual served cache validation/Chat
+guidance/resize code independently read back. No schema/Edge effect or business
+capability/algorithm/permission/provider activation. Native10 exact JPEGs and161
+affected cases/284 bounded E05 frontend cases are supporting proof, not customer
+acceptance. Actual original thread/focus return, ordinary customer reload/current
+CPU recovery, full shell/cohorts/Live/full19/9/founder proof remain owed.
+[Production source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2463#issuecomment-6311081808).
+
+Shared presenter#2444/ec83d109, priority policy#2409/a5a139e7, nine coverage
+fields#2445/b70738fe and CI-only serialization proof#2449/5dbf6e20 are merged.
+Actual merge trees, reviewed heads, exact-head CI, web/Edge/migration and bounded
+customer readbacks are in Master§4.0. Coverage producer13030000 is independently
+applied after13010000/13020000. Ordinary SOLO panel reads/reloads4 Coming Soon,
+3 Limited,2 Unverified with all Access Unverified;320px rows fit. Those labels
+are not permission, provider readiness, execution or analytics acceptance.
+
+The compatible Business Review transport foundation #2451 is production-source
+verified at `a76bb957beb7d51c536e6bab6ebcf27994a74157`: all exact-head checks,
+normal Edge source/configuration and exact web readback passed (Master §4.0).
+That foundation leaves the previous Chat dispatch unchanged. Its consumer #2455
+is now source-deployed at `d331534c898d8c032b467902da635c3c9a914613`; all 11 head
+checks, exact web and strict normal Chat source/configuration readback pass.
+Current-main integration includes E05's focused hook and passes 125 focused cases
+plus 124 offline stream controls. Actual fresh weekly recovery is **PROOF OWED**:
+the designated customer session requires sign-in restoration; no new model question
+was sent. Anonymous review POST returns 401/error only, not authenticated isolation
+proof. Master §4.0 and ANT-52/64065542 retain the exact release/access boundary.
+
+Contact follow-up clarity#2460 is source/web released at
+`c5b40526b10ecfb7935b832045e18990f420c138`, exact tree5e6ed6f5 and production
+web `dpl_BdkL2nLYHvdM97eyqp535zX3hjSX`/publicc5…-mvhpa75k verified.
+The existing21day recorded-contact/activity count may include leads; its copy
+no longer predicts client lapsing or promises automatic drafts/sends. Original
+count/key/order/navigation/authority remain, CAP010 stays Coming Soon. Native
+synthetic component/font/phone proof and77 source cases are supporting evidence;
+actual customer navigation/reload/full health and all19/9/founder acceptance remain
+owed. Master§4.0 and #2460/6309201428 record exact review/CI/release boundaries.
+
+Read-receipt presentation#2459 merged/source-deployed
+`7922abf874db30682bf45ccc5894e7ebedbb8901`, actual/expected treed4ad684f.
+Normal migration39553306213 applied13040000; both successful read summaries,
+original predecessor identity, private ACLs and unchanged delegation read back.
+Web dpl_GiBfewAHk1SSKcbRWvQmceFwv352 READY/exact provider metadata; actual
+public7922…-mvhpkubs verified. Existing Rail now names those two lookups without
+implying a business mutation. No ledger/producer/history/authority or catalogue
+status changed. Native SQL/pgTAP/component/phone evidence is supporting only;
+authenticated read-row/reload and all19/9 remain owed (Master§4.0).
+
+Two fresh authorized ordinary weekly Chat reads **FAIL** with correlated CPUTime
+shutdown and no persisted assistant answer; reload retains the question only.
+Historical9/0 remains historical. Production rollout is ACTIVE; do not reuse old
+DRAINING/refusal as the current complete-product limit. Offline stream/composition
+controls do not close the production failure. Released repair and remaining continuity
+work use the existing canonical review/Chat contracts; no replacement engine, source-domain
+takeover, provider/limit activation or manual intent reset. ALG03/13 priority order
+is only a partial deterministic baseline; no new verified algorithm/outcome is
+accepted. All19 outcomes,9 analytics entries and one founder evaluation remain
+required. See [existing integration matrix](../delivery/e2-customer-experience-integration-matrix.md),
+ANT138/147/161 and ANT52/0c6dfd90/dc01d1b6. Raw customer QA stays private.
+
+Isolated CI repair#2461 merged `20ac409589f0692a0db8b8d3cd24cad0fd11c82c`,
+exact verified union8e6b209c; all11 head checks and two statuses PASS. The real
+PDF integrity test uses a fixed clock without weakening either hash assertion.
+Local83 and hosted Agreements/verify PASS; actual production web/public identity
+verified (Master§4.0). No product, catalogue, provider, authority, migration/Edge
+or authenticated acceptance change. This unblocks fresh composed-head CI for
+the existing factual closeout; the original clock-boundary failure is retained.
+
+Finance #2402 merged `ddf12b6bbda085cdb9f66587f9e803e11fc3cc18`, exact reviewed
+union tree 1472c481. All 11 exact-head checks/Preview and two Vercel contexts passed;
+production web dpl_6qkA2AUtNSxr9ntZt9EMn21Gpcrm and public ddf12b6…mvha1pjq
+were read back. Canonical guarded recovery 39511759880 strictly verified all five
+selected functions and advanced edge-live to ddf12b6, independently confirmed.
+The earlier final-marker hold remains historical. Own migrations NOT_APPLICABLE.
+Authorized ordinary SOLO no-source disclosure, source/freshness expansion, actual
+Finance navigation, return and full reload passed; populated financial evidence,
+provider readiness, isolation negatives, new Chat/Live and effects remain owed.
+
+Required audit prerequisite #2434 merged 25d01c84, exact tree 6b9f4cfd, with
+all applicable CI and production web/public readback. Only npm's nested Vite
+8.2.2→8.2.4 node changed (three fields); locked npm Vitest is unchanged at 4.1.11.
+Required high/critical audit findings became zero; moderate findings and the
+separate unchanged Bun graph retain their own evidence limits. No product-runtime source,
+permission, provider or algorithm activation.
+
+Algorithm support: **NO VERIFIED ALGORITHM is added by these release receipts.**
+ALG-06 cash-flow forecasting is not established by stored Finance facts. The
+existing originating algorithms retain their contracts and acceptance gaps.
+PAIGE remains principal COO; the existing VERA source receipt below is unchanged.
+All 19 outcomes, 9/0 and 12/0/4 evidence
+boundaries, and the single full-Experience founder evaluation remain required.
+No new customer release identity, provider, consequential action or privilege
+activation. Current release evidence is in Master §4.0 and ANT-138/147/52.
+This checkpoint supersedes Finance candidate-only status in dated entries below;
+other workstreams retain their own reviewed release and acceptance records.
+
+
+## EXP02 VERA observed source-release identity — 2026-10-20
+
+This observed release supersedes the candidate-only VERA status in the dated
+handoff below. Original [#2400](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2400)
+reviewed `1b7565be158a4641e25c96341b75ce5466aa663f` merged
+`61b32a3735816dbf1e01734abc9c50d2f82aa35f`, exact reviewed treee66a8912;
+all13 latest required checks/Preview and both Vercel contexts SUCCESS.
+AUTHOR-REVIEW / LOWER ASSURANCE6297904162. Existing global VERA is now version2,
+Intelligence, Finance & Risk; the original identity, soft runtime, enabled state,
+unconfigured prompt/config, permissions and tenant/custom records are preserved.
+PAIGE remains principal COO. No delegated runtime, provider or action activation.
+
+Normal migration39473193723 applied20271112140000 after Chat121100/Operations121300;
+production migration and exact guarded identity readback verified. Vercel
+dpl_2NM5XgUmMGXdjgm9nLZVcbUzSVfr is READY at exact61b. Canonical normal recovery
+39503591507/job118906876458 on source-identical main26418b2b strictly verified
+paige-ai-chat1/1,253 expected inputs, zero retirements; the existing guarded workflow
+advanced edge-live to26418b2b, independently read back. Artifact12302121954,
+SHA256b539a546c9be61e40ca38dff80997ec98ba0838fcf1530a25b26b8dbc3c5cba2.
+Public build26418b2b6c743eaaf98b3db6d7420d1f3908383b-mvh1ttm5 observed.
+Earlier automatic source-PASS/final-marker-FAIL remains historical. The stale,
+data-free VERA Preview was replaced through the same PR's normal close/reopen
+lifecycle, retaining foreign branches; its new correct migration history/check passed.
+Neither ineffective earlier private reset nor source certification establishes
+customer acceptance. [Observed receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2400#issuecomment-6302505761).
+
+Channel production, internal source prerequisite, no customer release identity or
+announcement. Full19, governed effects/receipts, Live, required authenticated
+negatives and founder acceptance remain owed; preserve9/0 and12/0/4.
+Detailed customer proof stays ANT-52, source coordination ANT-138/147.
+
+## EXP02 verified handoff v2026-10-20.3
+
+**Owner: EXP02; deployed package recovery is VERIFIED, full Experience proof is owed.**
+Configured-input repair [#2413](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2413)
+reviewed8d0ed127 merged main `2c47f529d7db83965c024ea42bb350c457826cdb` with the
+exact reviewed tree91176116, documented AUTHOR-REVIEW / LOWER ASSURANCE and all
+applicable exact-head CI. Production webdpl_7c6wsMQFHfpeQBAPLcYDqpvi6BCu/public
+build2c47f529…mvgy1980 verified. Canonical recovery39465899854/job118777104680
+SUCCESS: **73/73 selected source/configuration matches, zero failures/retirements**.
+Artifact12285685747 SHA256938c988040d16920d1ce55b8fd655a138247c8b51e1a057083140c202ebac7a9.
+The existing guarded workflow advanced `edge-live` e660→exact2c only after complete
+readback; independent ref read matches. Prior70/73 and automatic five-pass/final-tag
+FAILs remain historical. This closes packaging/source certification, without
+activating any provider, business action, permission or full19 customer outcome.
+[Observed release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2413#issuecomment-6297092322).
+
 Target/Executive integration [#2181](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2181)
 reviewed `01f675e28c58a5883cd5049ca9db75a7b02d59f6`, merged
 `2d93594b69ec084ff770402eede09465ca9d179e`. Exact-head checks and previews passed.
@@ -18,9 +245,9 @@ Docker upload. An explicit reviewed-source package previously passed10/10, but
 that observation was superseded by the retry. Upload exit zero, ACTIVE and matching
 metadata are insufficient: keep exact UTF-8 source/config hashes, complete dependency
 coverage and stable before/after identity. The bounded existing-workflow API-builder
-repair still requires its own review, CI and actual production readback. Global
-`edge-live` remains held at `e660dca7bdd3dd9cc32c4af033cdd5cacb426c0e`;
-do not force it forward or broaden this repair into unrelated source recovery.
+repair and its separately reviewed normal recovery are now verified above.
+The historical global hold at e660 was closed by that complete unchanged-verifier
+proof, never by accepting upload status, weakening hashing or manually forcing a tag.
 [Sanitized release evidence](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2181#issuecomment-6282365635).
 
 **Canonical integration guidance:** Executive and Chat reuse the same
@@ -107,6 +334,10 @@ specialist parents; it does not activate the legacy soft-delegate path. This is 
 deployed/customer-accepted or complete EXP02. See the existing [roster](../doctrine/paige-c-suite-roster.md),
 [E02 matrix](../delivery/e2-customer-experience-integration-matrix.md) and
 [VERA evidence](../evidence/ui-delivery/e2-vera-intelligence.md). All19 outcomes remain required.
+
+> **2026-10-20 EXP05 current weekly source boundary:** #2427 draft source merged519da; original writer/approval/recurring/activation boundaries remain intact. The new deadline-semantics correction is development only: native92 and focused72 tests pass, source95f4 preserves historical observations/receipts and isolates work deadlines from reminder times. Currentmain61b32/VERA121400 is composed without an identity or authority change; candidate121500 remains unapplied. Rendered verification, final review/CI, production readback and authenticated execution are owed. The [existing weekly delivery record](../delivery/experience-05-weekly-commitment-check.md) preserves original history and additive source-certificate/version corrections. Original18/25/50 and E5-CV1-9/ten outcomes remain open; strict1/18 and2/50 is unchanged.
+
+> **2026-10-20 EXP05 verified release boundary:** #2427/7589 source merged519da; migration121300 exact body/ACL/index readback and selected27-package attempt2 retained (nav-pull-profile49, correcting the separate earlier48 observation). E02#2413 recovery39465899854 subsequently certified73/73 after the original70/73 failure; source certification is not customer execution. #2429/eab461cc merged9ad8 and ordinary-owner read-only Overview-group/native-Work/return-focus/Board/reload traversal was verified, without a write or new receipt. The [existing weekly packet](../delivery/experience-05-weekly-commitment-check.md) preserves dated corrections and exact proof limits; Master4.0 remains the sole Shipped Delivery Log. Draft creation/approval/receipt through ordinary authenticated use, full weekly lifecycle/recurring activation, Chat/Live, ZION, original18/25/50 and full E5-CV1-9/ten outcomes remain owed; strict1/18 and2/50 unchanged.
 
 > **2026-10-20 EXP05 inherited-source reconciliation — NOT RELEASED:** Original EXP05 lead is verified archived; clean #2163/36ab and #2189/9f sources remain preserved. Their October14/15 paragraphs below are historical unmerged checkpoints, not current ownership, activation, public-only Computer/Sandbox scope or acceptance authority. Current ANT11/21/147 owner direction governs the complete ten-outcome Run My Week Experience. Source-only reviewed e9704371 composes current main12386ae4 and reviewed b27 deadline/body corrections; the native unapproved draft reuses existing confirmations, Kit, Trust, process records and Rails. The unapplied forward migration121300 preserves its original SQL body and the current196-row catalogue in local proof; no applied history, role or recurring grant changes. Local full PostgreSQL proof86PASS and corrected owning suite203PASS are engineering evidence, not full-schema or authenticated execution. A new scoped44px draft-control correction and final current native evidence/review/CI/release remain owed. Formal source/receiving-owner handoffs and original18/25/50/E5-CV1–9 acceptance remain separate.
 

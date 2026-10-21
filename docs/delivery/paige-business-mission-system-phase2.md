@@ -336,3 +336,38 @@ its owner-only definitions do not inherit Analytics' broader owner/admin permiss
 A synthetic late-owner-refusal control failed before repair;294 cases across the same
 15-file bounded suite now pass, including this case and absent currency precision.
 The private authority helper remains ungranted; no new RPC or database change is added.
+
+### October20 pre-edit routing — shared evidence priority baseline
+
+O08/O01/O02 need the same explainable ordering in Executive and PAIGE. Extend the
+existing Operating Fabric snapshot projection, and reuse that pure policy in the
+Executive presentation. This is the deterministic severity baseline for ALG-03/13,
+not a numeric business-health score, a forecast, a recommendation database or
+evidence of measured customer improvement. ALG-12's originating risk detectors and
+ALG-06/11's Finance/Model Fabric owners retain their calculations and boundaries.
+
+1. Owner outcome: inspect one to three source-backed act/watch priorities and their
+   evidence without disagreement between the two review representations.
+2. Domain/scope: existing EXP02 lead; universal eligible SOLO/L2, never company/L1.
+3. Harness: existing caller-authorized context composition and bounded projection;
+   no new shared layer or execution path.
+4. Spine: existing business.operating_snapshot/get_business_snapshot and its same
+   composeBusinessReview result, not a separately registered capability.
+5. Providers: none added or invoked; originating domain readiness stays unchanged.
+6. Authority: read/read_only, no approval or mutation verb; no consequential action
+   or activation. Source severity does not grant execution permission.
+7. Durable work: none; transient interpretation of an already-authorized snapshot.
+8. Evidence: preserve source/domain/as-of/coverage and exact finding wording.
+   A priority is not an executed outcome or a new Rail receipt.
+9. Surface: command-center.executive stays PARTIAL in the existing binding ledger.
+   Existing ordering is reused; no layout, controls or navigation redesign.
+10. Proof: deterministic ordering/ties, nonmutation, missing/degraded and omitted
+    source negatives, quoted-data injection and projection-budget controls, same UI
+    order, existing nine-point and nineteen-outcome preservation. Native/authenticated
+    Chat/Live, production source and comparative improvement remain separately owed.
+
+Classification: REUSE adapter risk evidence and the existing Executive order;
+EXTEND the canonical bounded model projection; REPAIR duplicated interpretation;
+NEW only a pure shared function and proportional regression controls. Insufficient
+evidence remains unknown. No role/tenant override, synthetic production claim,
+health probability, provider spend or new authoritative store is authorized.

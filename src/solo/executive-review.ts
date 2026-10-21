@@ -1,5 +1,5 @@
 import type { ReadLinkDestination } from "../../supabase/functions/_shared/paige-turn/record-links";
-import { formatSnapshotMetricValue } from "../../supabase/functions/_shared/paige-context/snapshot";
+import { formatSnapshotMetricValue, rankOperatingSnapshotRisks } from "../../supabase/functions/_shared/paige-context/snapshot";
 import type { BusinessReviewSnapshot, ReviewMetric } from "./data/useBusinessReview";
 
 /** Presentation metadata only. The Fabric owns figures, risks, coverage and provenance. */
@@ -28,10 +28,10 @@ export function executiveAreas(snapshot: BusinessReviewSnapshot) {
 }
 
 export function executivePriorities(snapshot: BusinessReviewSnapshot) {
-  const rank = { act: 0, watch: 1, info: 2 };
-  return executiveAreas(snapshot).flatMap((area) => area.entry.status === "available" && area.entry.data
-    ? area.entry.data.risks.filter((risk) => risk.severity !== "info").map((risk) => ({ ...risk, area })) : [])
-    .sort((a, b) => rank[a.severity] - rank[b.severity]);
+  const areas = executiveAreas(snapshot);
+  return rankOperatingSnapshotRisks(snapshot).map(({ domain, ...risk }) => ({
+    ...risk, area: areas.find(area => area.key === domain)!,
+  }));
 }
 
 export function formatReviewMetric(metric: ReviewMetric): string {
@@ -51,7 +51,7 @@ export function formatReviewInstant(instant: string, timezone: string, withTime 
 
 export function reviewGapNote(reason?: string): string {
   if (reason?.replace(/^adapter:/, '').startsWith('finance_')) return 'Financial evidence could not be verified for this review. Inspect its sources in Finance, then refresh.';
-  if (reason === "no_adapter") return "This source is not connected to the business review yet.";
+  if (reason === "no_adapter" || reason?.startsWith("no_adapter:")) return "This area is not included in this business review yet.";
   if (reason === "not_connected") return "Not connected. No figures are available from this source.";
   if (reason === "scope_changed") return "The workspace changed during the read. Refresh to read the active workspace.";
   if (reason === "forbidden" || reason === "authorization_denied") return "This read was not authorized for the current workspace.";

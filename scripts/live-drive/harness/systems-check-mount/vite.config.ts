@@ -6,11 +6,14 @@ const repo = path.resolve(import.meta.dirname, "../../../..");
 
 export default defineConfig({
   root: import.meta.dirname,
+  publicDir: path.join(repo, "public"),
+  cacheDir: path.join(repo, "node_modules/.vite/e2-recorded-check-status"),
   css: { postcss: repo },
   plugins: [react()],
   resolve: {
     alias: [
       { find: "./data/useCommandCenter", replacement: path.join(import.meta.dirname, "useCommandCenter-stub.ts") },
+      { find: /^\.\/data\/useSoloActivityFeed$/, replacement: path.join(import.meta.dirname, "useSoloActivityFeed-stub.ts") },
       { find: "@/hooks/useSystemsCheck", replacement: path.join(import.meta.dirname, "useSystemsCheck-stub.ts") },
       { find: "@", replacement: path.join(repo, "src") },
     ],

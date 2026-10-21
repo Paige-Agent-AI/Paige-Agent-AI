@@ -43,11 +43,28 @@ describe("DESTINATION_LABEL — the frozen words", () => {
       mind: "Open Mind",
       calendar: "Open Calendar",
       pipeline: "Open pipeline",
+      conversations: "Open Conversations",
     });
   });
 });
 
 describe("workspaceLinkTarget", () => {
+  it("reopens a saved Conversations reference only as the current SOLO inbox", () => {
+    const [reference] = readRecordLinks(JSON.parse(JSON.stringify([
+      { destination: "conversations", record_id: UUID, subject: "Private subject", thread_key: "private@example.invalid", account: 1, path: "/solo/1/clients/conversations" },
+    ])));
+    for (const account_number of [3855, 9999]) {
+      expect(workspaceLinkTarget(reference, { ...soloTenant, account_number })).toEqual({
+        label: "Open Conversations", to: `/solo/${account_number}/clients/conversations`, status: "surface_only",
+      });
+    }
+    for (const tenant of [subTenant, { ...soloTenant, parent_tenant_id: "parent" },
+      { ...soloTenant, account_type: "agency" }, { ...soloTenant, account_type: "enterprise" },
+      { ...soloTenant, account_type: "operator" }, { ...soloTenant, account_type: null },
+      { ...soloTenant, account_number: null }, { ...soloTenant, account_number: "bad/account" }, null]) {
+      expect(workspaceLinkTarget(reference, tenant)).toBeNull();
+    }
+  });
   it("reopens persisted Play, Deal, Task and invoice references together in the current account", () => {
     const destinations = ["business_game_plan", "pipeline", "operations_work", "sales_invoices"] as const;
     const persisted = JSON.parse(JSON.stringify(destinations.map(destination => ({

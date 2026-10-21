@@ -1082,7 +1082,26 @@ const PaigeAIChatInner = ({
   useEffect(() => { onTrace?.(steps, isLoading); }, [steps, isLoading, onTrace]);
 
   // Collapse the composer back to one line once it's cleared (after send / new chat).
-  useEffect(() => { if (input === "" && inputRef.current) inputRef.current.style.height = "auto"; }, [input]);
+  const resizeComposerInput = useCallback(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    if (el.value) el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+  }, []);
+  // A restored or handed-off draft needs the same readable geometry as typed input.
+  useLayoutEffect(resizeComposerInput, [input, resizeComposerInput]);
+  useEffect(() => {
+    if (!inputRef.current || typeof ResizeObserver !== "function") return;
+    let width = 0;
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry && entry.contentRect.width !== width) {
+        width = entry.contentRect.width;
+        resizeComposerInput();
+      }
+    });
+    observer.observe(inputRef.current);
+    return () => observer.disconnect();
+  }, [resizeComposerInput]);
 
   // Chip click: prefill the composer + focus so the operator can edit before
   // Paige acts (cc-spec §3). Only chips flagged autoSend dispatch immediately.
@@ -1677,7 +1696,9 @@ const PaigeAIChatInner = ({
       assistantId, startedAt: assistantTs, frame: null, rows: [], writing: false, gateOpen: false,
       streaming: true, endCause: null, elapsedMs: null, userText, stopFocus: true, resumed: false, answering: !!answer,
     });
-    const gateId = window.setTimeout(() => updateLiveTurn(assistantId, (t) => ({ ...t, gateOpen: true })), TURN_LINE_GATE_MS);
+    const gateId = window.setTimeout(() => {
+      if (ticketAccepted(requestTicket)) updateLiveTurn(assistantId, (t) => ({ ...t, gateOpen: true }));
+    }, TURN_LINE_GATE_MS);
     const timeoutId = soloTenantSafety ? window.setTimeout(() => {
       if (!ticketAccepted(requestTicket)) return;
       // The line stops honestly ("Stopped listening at six minutes"), never "Done".
@@ -2803,8 +2824,6 @@ const PaigeAIChatInner = ({
       onChange={(e) => {
         setInput(e.target.value);
         setSlashActive(0);
-        const el = e.target; el.style.height = "auto";
-        el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
       }}
       onPaste={handlePaste}
       onKeyDown={(e) => {
@@ -3909,8 +3928,11 @@ const PaigeAIChatInner = ({
                       it is filed as owed rather than filled in by me. */}
                   <div
                     data-solo-composer-guidance
-                    className="truncate px-3.5 pb-2 text-[10px] leading-4 text-muted-foreground"
-                  />
+                    role={input && draft.reloadProtection === "unavailable" ? "status" : undefined}
+                    className="whitespace-normal break-words px-3.5 pb-2 text-[10px] leading-4 text-muted-foreground"
+                  >{input && draft.reloadProtection === "unavailable"
+                    ? "Your draft isn't saved for reload. Keep this tab open or copy it."
+                    : null}</div>
                   <div
                     data-solo-composer-actions
                     className="flex min-w-0 flex-wrap items-center gap-1.5 border-t border-border/70 px-2.5 py-2"

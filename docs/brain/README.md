@@ -1,5 +1,24 @@
 # 🧠 The Second Brain — master index & read-first orientation
 
+## EXP05 Operations/ZION checkpoint — 2026-10-21
+
+Original findings return-focus #2485 is deployed and ordinary-owner source/Back,
+settled hydration and reload/repeat Back pass; earlier #2474 FAIL remains dated.
+Existing ZION remit #2490 is merged/deployed in web, original registry and the
+addressing source. His soft runtime/prompt/permissions remain unchanged.
+Initial addressed introduction QA failed: the original continuation heuristic
+misread a forbidden action list and exhausted4rounds/0tools. Correction#2498 is
+now deployed; ordinary-owner exact no-action introduction FINAL/1round/0tools,
+normal reload and original2-turn persistence PASS. This restores the prose
+reply, not delegated execution or a complete Operations outcome. Explicit
+Overview entry#2488 also passes ordinary-owner click/reload/legacy-entry proof.
+Exact release and
+proof boundaries are in [Master§4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log),
+ANT-11 and ANT-161. Contextual ZION UI and the approved full immersive Operations
+Experience remain separate unfinished increments; no catalogue Live promotion.
+Assess functional, visual and experiential quality independently; owner acceptance
+still requires the one complete integrated Experience.
+
 ## EXP04 current delivery checkpoint — 2026-10-21
 
 Released bounded prerequisites #2486 register discovery, #2487 actual retained-copy
@@ -42,6 +61,45 @@ and #2175's byte verifier: existing completed/replayed seal must match its actua
 private PDF. Native106 plus5 Portal-wiring tests and three Edge type checks pass;
 release, authenticated recovery and full ALG01/12 acceptance remain proof owed.
 [Exact scope and limitations](../evidence/ui-delivery/e04-retained-completion-reconcile.md).
+
+## EXP02 Marketing consumer released — October21 20:35 UTC
+
+This checkpoint supersedes the earlier dated unmounted/DRAFT statements below.
+#2494 reviewed `f791480428c42894ec6833c3304d5a2642add1f2` is merged
+`dd58164de75479212428f7e26581eeec3a333951`; exact reviewed current-main union
+`ad78adf3ff42dc7dc8f97bfe869540ad5aab6089` preserves adjacent Experience work.
+Sequential AUTHOR-REVIEW / LOWER ASSURANCE5605269345/5605649901, six exact-head
+workflows, all11 checks including real Preview and both Vercel contexts passed.
+Original Deno TS2322 failure is retained; the corrected refusal reconstructs the
+incumbent status/reason/null contract without a cast or guard/baseline change.
+
+Production webdpl_BJ7Xrdk4z4ABh1FYcWC6yh763i8U is READY/exact merge; actual
+public `dd58164de75479212428f7e26581eeec3a333951-mvijxzap`, customerUpdate:null.
+Normal strict Edge39668706898 succeeded including deployed-source/configuration
+verification and certified the same commit. Direct readback: Business Reviewv59
+ACTIVE/JWT=true,32/32 source files byte-identical; Chatv495 ACTIVE/JWT=true,
+three changed shared modules byte-identical, with full selected-package proof
+belonging to the original strict pipeline. Own migrations N/A. Master§4.0 and
+[#2494 receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2494#issuecomment-6325768347)
+hold the release evidence.
+
+Functional: recorded first-party intake now reaches the original Executive and
+Chat readers, existing risk order and original Marketing destination. Visual:
+original-font desktop/tablet/320 native synthetic evidence passed; exact encoded
+raster and native zoom are separate. Experiential: source disclosure, truthful
+unknowns and synthetic navigation/recovery are verified; released customer
+Marketing read/navigation/Chat/reload is still UNVERIFIED. Restored Edge is listed,
+but page control still fails before dispatch, including the fresh QA tab; this is
+an access/control hold, not a product FAIL or substitute-account permission.
+Acceptance: all19 outcomes/nine analytics, role/isolation/cohorts/Live, genuine
+actions/receipts, filed reports and final complete-Experience founder evaluation
+remain required. Historical9/0 and12/0/4 are unchanged; no catalogue Live promotion.
+
+Next bounded slice retains the existing review-period choice through exact
+URL/reload/browser Back and refuses mismatched-period responses in the same
+reader. It is local only:93 related tests, zero new frontend types, scoped lint
+and actual-source native synthetic continuity proof passed; own review, hosted
+exact-head CI, release/readback and authorized customer proof remain owed.
 
 ## EXP02 Marketing release and quality checkpoint — October21 UTC
 

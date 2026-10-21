@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ArrowRight, MessageSquareText, RefreshCw } from "lucide-react";
 import { PaigePresence } from "@/components/paige/live/PaigePresence";
 import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
@@ -66,7 +65,17 @@ export function ExecutiveOverview(props: ExecutiveProps) {
 }
 
 function ResolvedExecutiveOverview({ account, accountEpoch, accountName, openPaige }: ExecutiveProps) {
-  const [period, setPeriod] = useState<SnapshotPeriodKey>("last_7_days");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const routePeriod = new URLSearchParams(location.search).get("review_period");
+  const period = PERIODS.find(item => item.key === routePeriod)?.key ?? "last_7_days";
+  const setPeriod = (value: string) => {
+    const selected = PERIODS.find(item => item.key === value);
+    if (!selected) return;
+    const query = new URLSearchParams(location.search);
+    if (selected.key === "last_7_days") query.delete("review_period"); else query.set("review_period", selected.key);
+    navigate({ pathname: location.pathname, search: query.toString() ? "?" + query.toString() : "", hash: location.hash }, { replace: true });
+  };
   const review = useBusinessReview(accountEpoch ?? null, period);
   const pending = useSoloPendingActions(accountEpoch ?? null);
   const activity = useSoloActivityFeed(accountEpoch ?? null);
@@ -110,7 +119,7 @@ function ResolvedExecutiveOverview({ account, accountEpoch, accountName, openPai
 
       <div className="exec-layout">
         <section className="exec-intelligence" aria-labelledby="exec-intelligence-title">
-          <div className="exec-section-head"><h2 id="exec-intelligence-title">Business intelligence</h2><label className="exec-period">Review period<select value={period} onChange={(event) => setPeriod(event.target.value as SnapshotPeriodKey)}>{PERIODS.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}</select></label></div>
+          <div className="exec-section-head"><h2 id="exec-intelligence-title">Business intelligence</h2><label className="exec-period">Review period<select value={period} onChange={(event) => setPeriod(event.target.value)}>{PERIODS.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}</select></label></div>
           {snapshot && <p className="exec-period-note">{snapshot.period.label} · {formatReviewInstant(snapshot.period.start, snapshot.period.timezone)} – {formatReviewInstant(snapshot.period.end, snapshot.period.timezone)} · Reporting zone: {snapshot.period.timezone}<br />Read {formatReviewInstant(snapshot.composed_at, snapshot.period.timezone, true)}. Source windows below may be narrower.</p>}
           {review.state === "loading" && <p className="exec-read-state" role="status">{accountEpoch ? "Reading your business review…" : "Resolving this workspace…"}</p>}
           {review.state === "failed" && <div className="exec-read-state" role="alert"><p>{review.message}</p><button className="exec-button" type="button" onClick={review.refresh}>Try again</button></div>}

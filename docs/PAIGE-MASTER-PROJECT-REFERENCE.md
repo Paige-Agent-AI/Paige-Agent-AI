@@ -826,6 +826,51 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-21 — EXP05 original findings return-focus repair, bounded authenticated release.**
+PR [#2485](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2485), reviewed
+`1d0f3ad778aa541c4ace2d3a7bf0e5f3d56a4f84`, merged
+`8f12cc73fafa3b0ffbfa562cdbfacde01d444dd7`; actual tree
+`52191a7d566732ea27aba1dc67d30b480fa41988` equals the reviewed current-main union.
+AUTHOR-REVIEW / LOWER ASSURANCE6323211571; all10 applicable exact-head checks
+and2Vercel statuses SUCCESS, schema-free Preview SKIPPED. Production web
+`dpl_He7KmebhPbL9aZivBiGgauyQJt8B` READY/exact/canonical aliases. Ordinary-owner
+source→Back, settled native reads, reload and repeat Back pass on later production
+`4fa7ea57abf8bb643b4ab7ec191e9b2e3488d837-mvifnfgl`, deployment
+`dpl_FqUiGdmgxjzhZBrhZGAj4nAJ8uQi` READY; exact Overview blob
+`3d377f354bb394d6e907087c95bef5f146cf01f6` is retained. Focus stays on original
+H2#recorded-findings-heading after hydration; actual findings/native Work agree.
+Private artifact seal `8e79fcba76d3f0ddab621c3cabfdc81fed0e57fd4f45700cea0fabbc1b538c92`;
+ANT11/67ce4a2a and ANT52/0ae65675. The earlier #2474 Back-focus FAIL below remains
+historical evidence, superseded only for this repaired case. No action, mutation,
+provider, migration, Edge/config, activation or new completion receipt.
+[Source/native evidence](evidence/ui-delivery/exp05-findings-hydration-focus.md).
+Internal patch, no customer version/announcement; compatible forward correction
+or bounded revert preserves original records. Full EXP05 acceptance remains open.
+
+**2026-10-21 — EXP05 existing ZION remit, source/registry deployment with customer proof still failing.**
+PR [#2490](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2490), reviewed
+`ad53554a731a62232cdd1295369723fe27d7a03a`, merged
+`a04637af9468a6e6e1f3a65e508eb07e56cba326`; tree
+`6ec991d2a444db65c894ba9933381bf1782b9b87` matches the reviewed current-main union.
+Final AUTHOR-REVIEW / LOWER ASSURANCE6323658309; all13 exact-head checks,
+including fully migrated native SQL, and2Vercel statuses SUCCESS. Web
+`dpl_HTvhxszsgrJgaCdP1WpchpTK9eTe` READY/exact/canonical aliases; public build
+`a04637af9468a6e6e1f3a65e508eb07e56cba326-mvigg5w5`, customerUpdate:null.
+Normal pipeline applied `20271113080000_exp05_zion_operations_role` once; original
+global ZION version2 and all reviewed Operations metadata read back correctly.
+Soft runtime, enabled state, absent prompt and empty config remain; no execution
+or permission activation. Deployed `paige-ai-chat`492 ACTIVE/verify_jwt=true has
+normalized-exact reviewed `vp-address.ts`; this is changed-leaf parity, not a
+claim about every file. [Source/native proof](evidence/ui-delivery/exp05-zion-operations-remit.md).
+**Authenticated addressed reply FAIL:** a protected ordinary-owner read-only
+introduction persisted LIMIT_REACHED with0tools/4rounds. Existing continuation
+heuristic matches a verb inside an explicitly forbidden comma-list; focused
+source repair is under engineering in ANT-161/cffa815e and49f7ce1d. No business
+effect or delegated-worker outcome. Role deployment is not a working ZION
+assignment, full ten-outcome Experience or Live proof. Internal patch only, no
+customer release identity or announcement. Forward source correction preserves
+original identity, business records, exact approvals and all domain authority.
+
 **2026-10-21 — EXP05 recorded findings in Operations, bounded production release.**
 PR [#2474](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2474), final reviewed
 `f9dff45e6c2214412da05d4fb70153937c254309`, merged

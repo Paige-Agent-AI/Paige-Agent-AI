@@ -1,5 +1,20 @@
 # 🧠 The Second Brain — master index & read-first orientation
 
+## EXP05 Operations/ZION checkpoint — 2026-10-21
+
+Original findings return-focus #2485 is deployed and ordinary-owner source/Back,
+settled hydration and reload/repeat Back pass; earlier #2474 FAIL remains dated.
+Existing ZION remit #2490 is merged/deployed in web, original registry and the
+addressing source. His soft runtime/prompt/permissions remain unchanged.
+Actual addressed introduction QA still fails: the original continuation heuristic
+misreads a forbidden action list and exhausts4rounds/0tools. Correction is under
+engineering, not a completed or delegated Operations outcome. Exact release and
+proof boundaries are in [Master§4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log),
+ANT-11 and ANT-161. Contextual ZION UI and the approved full immersive Operations
+Experience remain separate unfinished increments; no catalogue Live promotion.
+Assess functional, visual and experiential quality independently; owner acceptance
+still requires the one complete integrated Experience.
+
 ## EXP04 restarted — Agreements source continuation, 2026-10-21
 
 Owner resumes the same sole E04 lead and all original twelve outcomes, expanding native

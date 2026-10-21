@@ -878,6 +878,28 @@ production test write/provider action. Internal production prerequisite, no cust
 version or announcement. Recovery uses reviewed forward correction preserving originals.
 
 
+**2026-10-21 — EXP09 atomic private CURA preparation admission.**
+PR [#2503](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2503), reviewed
+`137623d536bd86b62e48a6df3303c642eb831207`, merged
+`a9c8503b9e66849a1f371865dc0dfb7c73f34fd9`. The isolated caller-JWT adapter
+submits through the original Knowledge extraction writer in the same locked
+publisher transaction. No new permission predicate, store, worker, scheduler,
+approval channel or Layer C executor. All 13 exact-head checks and two statuses
+passed; distinct runtime/factual/composition reviews 5606298470, 5606442295 and
+5606611932 were clear. Native 55-reader/43-writer assertions and actual authority
+concurrency/cleanup passed; the original audit-marker guard caught an earlier
+head and remained unchanged after its 69-case focused repair.
+Normal migration [39684011502](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/39684011502),
+job119513522361, pushed and verified persisted `20271113110000` and recorded the
+applied commit. Actual production body `3596b87b764dcaf9fa309231719ccb60` matches
+merged source; postgres/VOLATILE/SECURITY DEFINER/empty search path and
+authenticated-only execution were verified. All five original helper/writer
+bodies and owners plus the deployed original reader remain unchanged.
+Evidence: [production readback](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2503#issuecomment-6327753609).
+Native preparation is APPLIED; owner Chat/Live dispatch remains UNWIRED.
+No customer release/version, publication, indexing, sharing, provider activation
+or founder acceptance is inferred. Full integrated EXP09 delivery remains owed.
+
 **2026-10-21 — EXP09 exact CURA Knowledge source recovery.**
 PR [#2492](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2492), reviewed
 `530809fb0ae05d642251f9ddba6b362ae44929f3`, merged

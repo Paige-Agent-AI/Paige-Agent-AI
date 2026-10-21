@@ -10,6 +10,19 @@ an interrupted turn. Owner Chat/status/eligible Live and complete owner/client/f
 acceptance remain PROOF OWED; no source activation or customer version/announcement.
 
 
+## EXP09 atomic preparation admission — 2026-10-21 production
+
+PR2503 merged a9c8503b9e66849a1f371865dc0dfb7c73f34fd9 after exact13checks,
+two statuses and distinct review. Migration39684011502/job119513522361 verified
+persisted110000 and exact body3596b87b764dcaf9fa309231719ccb60, authenticated-only
+ACL/empty path/postgres/VOLATILE/SECDEF; five original bodies/owners and the
+original preparation reader remain unchanged. Native55/43, real authority races
+and cleanup PASS; earlier audit-marker failure was repaired without weakening
+its original guard (69 focused PASS). Receipt6327753609. This is original
+Knowledge extraction/publisher admission, not another Layer C executor/store.
+Chat/Live producer remains UNWIRED; source preparation is not customer
+publication, indexing, sharing, full Experience availability or acceptance.
+
 ## EXP09 Knowledge recovery production readback — 2026-10-21
 
 PR2492 merged `a156c48eb97b0e18cfdd55008e18176f6d174125`; exact production web

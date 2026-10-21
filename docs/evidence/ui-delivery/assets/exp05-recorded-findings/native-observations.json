@@ -1,0 +1,213 @@
+{
+  "frames": [
+    {
+      "name": "final-light-1536-closed",
+      "focus": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localSto",
+      "height": 770,
+      "scrollWidth": 1536,
+      "width": 1536
+    },
+    {
+      "name": "final-dark-1536-open",
+      "focus": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localSto",
+      "height": 770,
+      "scrollWidth": 1536,
+      "width": 1536
+    },
+    {
+      "name": "final-dark-1366-open",
+      "focus": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localSto",
+      "height": 768,
+      "scrollWidth": 1366,
+      "width": 1366
+    },
+    {
+      "name": "final-dark-1366-open-findings",
+      "focus": "",
+      "height": 768,
+      "scrollWidth": 1366,
+      "width": 1366
+    },
+    {
+      "name": "final-light-1366-closed",
+      "focus": "Obsidian",
+      "height": 768,
+      "scrollWidth": 1366,
+      "width": 1366
+    },
+    {
+      "name": "final-light-1024-closed",
+      "focus": "Direct PAIGE, or press ⌘\\⌘\\",
+      "height": 768,
+      "scrollWidth": 1024,
+      "width": 1024
+    },
+    {
+      "name": "final-dark-1024-open",
+      "focus": "Direct PAIGE, or press ⌘\\⌘\\",
+      "height": 768,
+      "scrollWidth": 1024,
+      "width": 1024
+    },
+    {
+      "name": "final-dark-900-open",
+      "focus": "Direct PAIGE, or press ⌘\\⌘\\",
+      "height": 1000,
+      "scrollWidth": 900,
+      "width": 900
+    },
+    {
+      "name": "final-light-900-closed",
+      "focus": "Obsidian",
+      "height": 1000,
+      "scrollWidth": 900,
+      "width": 900
+    },
+    {
+      "name": "final-light-390-closed",
+      "focus": "Obsidian",
+      "height": 844,
+      "scrollWidth": 390,
+      "width": 390
+    },
+    {
+      "name": "final-light-390-open",
+      "focus": "Direct PAIGE, or press ⌘\\⌘\\",
+      "height": 844,
+      "scrollWidth": 390,
+      "width": 390
+    },
+    {
+      "name": "final-light-320-open",
+      "focus": "Direct PAIGE, or press ⌘\\⌘\\",
+      "height": 844,
+      "scrollWidth": 320,
+      "width": 320
+    },
+    {
+      "name": "final-light-320-closed",
+      "focus": "Direct PAIGE, or press ⌘\\⌘\\",
+      "height": 844,
+      "scrollWidth": 320,
+      "width": 320
+    },
+    {
+      "name": "final-keyboard-action-focus",
+      "focus": "Prepare a read-only PAIGE review",
+      "height": 768,
+      "scrollWidth": 1366,
+      "width": 1366
+    },
+    {
+      "name": "final-original-systems-check",
+      "focus": "Direct PAIGE, or press ⌘\\⌘\\",
+      "height": 768,
+      "scrollWidth": 1366,
+      "width": 1366
+    },
+    {
+      "name": "final-source-return-focus",
+      "focus": "Recorded Operations findings",
+      "height": 768,
+      "scrollWidth": 1366,
+      "width": 1366
+    },
+    {
+      "name": "final-preserved-unsent-review",
+      "focus": "Prepare a read-only PAIGE review",
+      "height": 768,
+      "scrollWidth": 1366,
+      "width": 1366
+    },
+    {
+      "name": "final-empty-findings-work-unavailable",
+      "focus": "Native integration controls · offline",
+      "height": 782,
+      "scrollWidth": 1528,
+      "width": 1528
+    },
+    {
+      "name": "final-role-denied",
+      "focus": "",
+      "height": 782,
+      "scrollWidth": 1528,
+      "width": 1528
+    },
+    {
+      "name": "final-late-response-workspace-b",
+      "focus": "Native integration controls · offline",
+      "height": 782,
+      "scrollWidth": 1528,
+      "width": 1528
+    },
+    {
+      "name": "final-work-loading-independent-findings",
+      "focus": "Native integration controls · offline",
+      "height": 782,
+      "scrollWidth": 1528,
+      "width": 1528
+    },
+    {
+      "name": "final-native-work-edit-hold",
+      "focus": "Close",
+      "height": 782,
+      "scrollWidth": 1528,
+      "width": 1528
+    },
+    {
+      "name": "final-320-keyboard-actions",
+      "focus": "Prepare a read-only PAIGE review",
+      "height": 844,
+      "scrollWidth": 320,
+      "width": 320
+    },
+    {
+      "name": "final-dark-1536-open-settled",
+      "focus": "Direct PAIGE, or press ⌘\\⌘\\",
+      "height": 770,
+      "scrollWidth": 1536,
+      "width": 1536
+    },
+    {
+      "name": "final-full-findings-no-native-work",
+      "focus": "",
+      "height": 782,
+      "scrollWidth": 1528,
+      "width": 1528
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "role-denied",
+      "expect": "could not be verified",
+      "pass": false
+    },
+    {
+      "name": "role-denied-correct-copy",
+      "pass": true,
+      "prior": "first check used an incorrect expected copy string; product refusal was correct"
+    },
+    {
+      "name": "transport-failure",
+      "expect": "Recorded Operations findings are unavailable.",
+      "pass": false
+    },
+    {
+      "name": "transport-failure-correct-copy",
+      "pass": true
+    },
+    {
+      "name": "wrong-focus-refused",
+      "pass": false
+    },
+    {
+      "name": "wrong-focus-correct-copy",
+      "pass": true
+    },
+    {
+      "name": "held-read-loading",
+      "pass": true
+    }
+  ],
+  "scope": "Actual candidate components with synthetic transport/Auth/domain ports; no Save/Send/API writes. First dark1536 capture1513px retained invalid; settled replacement is final. Incorrect literal-copy probes retained INVALID expectations."
+}

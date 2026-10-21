@@ -38,6 +38,22 @@ it("offers an honest first-use state without fabricated commitments, automation 
  expect(container.textContent).not.toMatch(/ZION is working|automations running|hours saved/i);
 });
 
+it.each(['loading','unavailable'] as const)('keeps recorded findings independent of %s Work without inventing zero or an empty first use',async nativeWorkState=>{
+ await act(async()=>root.render(<OperationsOverview tenantId="test-tenant" plans={[]} items={[]} members={[]}
+  crmTasks={[task]} nativeWorkState={nativeWorkState} recordedFindings={<p>Independent recorded source</p>}
+  onInspectItem={vi.fn()} onInspectPlan={vi.fn()}/>));
+ expect(container.textContent).toContain('Independent recorded source');
+ expect(container.textContent).not.toContain(task.title);
+ expect(container.textContent).not.toContain('Start with one real commitment');
+ expect(container.textContent).not.toContain('0 active commitments');
+});
+
+it('keeps recorded findings beside genuine empty Work and preserves its native first-use actions',async()=>{
+ await act(async()=>root.render(<OperationsOverview tenantId="test-tenant" plans={[]} items={[]} members={[]}
+  recordedFindings={<p>Independent recorded source</p>} onInspectItem={vi.fn()} onInspectPlan={vi.fn()}/>));
+ expect(container.textContent).toContain('Independent recorded source');expect(container.textContent).toContain('Start with one real commitment');
+});
+
 it("routes each attention group to Work while preserving the original record inspector",async()=>{
  const now=vi.spyOn(Date,"now").mockReturnValue(Date.parse("2026-11-01T06:00:00Z"));
  try {

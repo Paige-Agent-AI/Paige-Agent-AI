@@ -152,3 +152,16 @@ it('preserves source A terms when B is queued across a real deferred window-focu
  expect((host.querySelector('select[id$="-kind"]') as HTMLSelectElement).value).toBe('faq');expect(host.textContent).not.toContain('Second approved source');
  await click('Cancel');expect(host.textContent).toContain('Second approved source');expect(f.rpc.mock.calls.some(call=>call[0]==='set_client_portal_business_knowledge_share')).toBe(false);expect(f.invoke).not.toHaveBeenCalled();
 });
+
+it('defers a removed URL reference through real source terms then reopens all Knowledge without the stale filter',async()=>{
+ published=true;
+ const data={people:[],peopleLoading:false,peopleError:false,retryPeople:()=>{},portalLoading:false,portalError:false,portalConfig:{welcome:{headline:'Welcome'},modules:[]},retryPortal:()=>{}} as unknown as React.ComponentProps<typeof OwnerPortalDashboard>['data'];
+ const show=async(documentId:string|null)=>{await act(async()=>root.render(<MemoryRouter><OwnerPortalDashboard tenantId={tenant} tenantName="Test Service" data={data} openClient={()=>{}} openPaige={()=>{}} knowledgeReference={documentId?{documentId,invalid:false}:null}/></MemoryRouter>));await flush();};
+ await show(doc);await click('Review sharing');const kind=host.querySelector('select[id$="-kind"]') as HTMLSelectElement;
+ await act(async()=>{kind.value='faq';kind.dispatchEvent(new Event('change',{bubbles:true}));});await show(null);
+ expect((host.querySelector('select[id$="-kind"]') as HTMLSelectElement).value).toBe('faq');expect(button('Back to experience').disabled).toBe(true);expect(host.textContent).toContain('Finish or close your current review');
+ await click('Cancel');expect(host.querySelector('select[id$="-kind"]')).toBeNull();expect(button('Manage Knowledge')).toBeDefined();await vi.waitFor(()=>expect(document.activeElement).toBe(button('Manage Knowledge')));
+ await click('Manage Knowledge');expect(host.textContent).not.toContain('Showing the linked source');
+ expect(f.rpc.mock.calls.some(call=>call[0]==='read_client_portal_business_knowledge'&&call[1].p_document_id===null)).toBe(true);
+ expect(f.rpc.mock.calls.some(call=>call[0]==='set_client_portal_business_knowledge_share')).toBe(false);expect(f.invoke).not.toHaveBeenCalled();
+});

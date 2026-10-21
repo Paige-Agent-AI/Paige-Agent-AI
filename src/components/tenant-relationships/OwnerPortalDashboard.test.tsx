@@ -60,6 +60,16 @@ describe("approved owner dashboard is a real scoped product surface", () => {
     expect(host.querySelector('[data-teaching-reference]')?.getAttribute('data-teaching-reference')).toBe(first.documentId);expect(host.textContent).toContain('Finish or close');
     fixture.teachingPending=false;await show('test-tenant-a',next);expect(host.querySelector('[data-teaching-reference]')?.getAttribute('data-teaching-reference')).toBe(next.documentId);
   });
+  it('retires an exact source when the URL reference disappears and reopens an unfiltered inventory',async()=>{
+    await show('test-tenant-a',{documentId:'b3b60300-0000-4000-8000-000000000001',invalid:false});
+    await show('test-tenant-a');expect(host.querySelector('[data-teaching-reference]')).toBeNull();
+    await click('Manage Knowledge');expect(host.querySelector('[data-teaching-reference]')?.getAttribute('data-teaching-reference')).toBe('all');
+  });
+  it('defers reference removal until the active review releases its exit hold',async()=>{
+    fixture.teachingPending=true;await show('test-tenant-a',{documentId:'b3b60300-0000-4000-8000-000000000001',invalid:false});
+    await show('test-tenant-a');expect(host.querySelector('[data-teaching-reference]')?.getAttribute('data-teaching-reference')).toBe('b3b60300-0000-4000-8000-000000000001');
+    fixture.teachingPending=false;await show('test-tenant-a');expect(host.querySelector('[data-teaching-reference]')).toBeNull();
+  });
   it('does not treat a source reference as publisher permission',async()=>{
     fixture.allowed=false;await show('test-tenant-a',{documentId:'b3b60300-0000-4000-8000-000000000001',invalid:false});expect(host.querySelector('[data-teaching-reference]')).toBeNull();expect(host.textContent).toContain('Configuration access required');
   });

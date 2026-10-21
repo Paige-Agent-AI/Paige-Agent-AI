@@ -181,12 +181,21 @@ export function OwnerPortalDashboard({
   useEffect(() => {
     if (openedReference.current === referenceKey || referenceExitBlocked) return;
     openedReference.current = referenceKey;
-    if (!knowledgeReference) return;
+    if (!knowledgeReference) {
+      setTeachingReference(null);
+      setTeachingBoundary(null);
+      return;
+    }
     setTab("Experience");
     setTeachingReference(knowledgeReference);
     setTeachingBoundary(resourceBoundary.current);
   }, [referenceKey, referenceExitBlocked, knowledgeReference]);
   const teachTrigger = useRef<HTMLButtonElement>(null);
+  const wasTeaching = useRef(teaching);
+  useEffect(() => {
+    if (wasTeaching.current && !teaching) teachTrigger.current?.focus();
+    wasTeaching.current = teaching;
+  }, [teaching]);
   const resourcePerson = resourceSelection?.boundary === resourceBoundary.current ? data.people.find(person => person.id === resourceSelection.id) : null;
   const resourceTriggers = useRef(new Map<string, HTMLButtonElement>());
   const resourceReturn = useRef<string | null>(null);
@@ -806,7 +815,7 @@ export function OwnerPortalDashboard({
           teaching ? <PortalConfigurationGate tenantId={tenantId}><Suspense fallback={<Status title="Loading CURA Knowledge…"/>}>
             {openedReference.current !== referenceKey && referenceExitBlocked && <p role="status">Finish or close your current review before opening another source.</p>}
             <CuraKnowledgePanel key={`${tenantId}:${curaKnowledgeReferenceKey(teachingReference)}`} tenantId={tenantId} reference={teachingReference} onPendingChange={setTeachingExitBlocked}
-              onBack={()=>{setTeachingBoundary(null);onKnowledgeReferenceExit?.();requestAnimationFrame(()=>teachTrigger.current?.focus());}}/>
+              onBack={()=>{setTeachingBoundary(null);onKnowledgeReferenceExit?.();}}/>
           </Suspense></PortalConfigurationGate> : <div hidden={editing}>
             <div className="opd-page-heading">
               <h2>Your brand. Their space.</h2>

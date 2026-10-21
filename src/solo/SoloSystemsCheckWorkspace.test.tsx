@@ -120,6 +120,17 @@ describe("Solo Systems Check workspace", () => {
     expect(css).toContain("@media(prefers-reduced-motion:reduce)");
   });
 
+  it("keeps contact follow-up counts separate from client-risk predictions and setup findings", () => {
+    render();
+    expect(host.textContent).toContain("contacts without recent follow-up");
+    expect(host.textContent).not.toContain("clients at risk");
+    expect(host.textContent).toContain("existing business records, separate from the last setup check");
+    expect(host.textContent).not.toContain("These come from your live client records");
+    // A read-only summary does not change or resolve any originating record.
+    expect(baseCommand.approve).not.toHaveBeenCalled();
+    expect(baseCommand.decline).not.toHaveBeenCalled();
+  });
+
   it("sorts findings into what needs the owner and what is already working", () => {
     render();
 

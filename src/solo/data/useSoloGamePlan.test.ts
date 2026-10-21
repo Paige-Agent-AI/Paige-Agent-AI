@@ -303,9 +303,38 @@ describe("useSoloGamePlan derivation", () => {
     render();
     const byLabel = (needle: string) => view.attention.find((a) => a.label.includes(needle));
     expect(byLabel("drafts waiting")?.destination).toBe("paige");
-    expect(byLabel("clients at risk")?.destination).toBe("clients");
+    expect(byLabel("contacts without recent follow-up")?.destination).toBe("clients");
     expect(byLabel("follow-up")?.destination).toBe("clients");
     // Every chip has SOME real destination — none is a dead label.
     expect(view.attention.every((a) => typeof a.destination === "string" && a.destination.length > 0)).toBe(true);
+  });
+
+  it("a legacy inactivity count is contact follow-up evidence, never predicted client churn or a send promise", () => {
+    m.setup.brief = { publicName: "Test business", legalName: "Test company", industry: "Consulting", website: "test.example", provenance: { website: { source: "owner_confirmed" } } };
+    m.setup.managedSendingEmail = "owner@test.example";
+    m.catalog.offers = [{ availability: "active" }];
+    m.knowledge = { ...m.knowledge, documentsIndexed: 1, empty: false };
+    m.cc = { ...m.cc, attention: { at_risk_clients: 3 } };
+    render();
+    const move = [view.bestMove, ...view.priorities].find((item) => item?.id === "attn:atrisk");
+    const decision = view.decisions.find((item) => item.id === "decision:atrisk");
+    expect(move?.title).toContain("3 contacts");
+    expect(move?.destination).toBe("clients");
+    expect(move?.why).toContain("21 days");
+    expect(move?.why).toContain("leads");
+    expect(move?.ctaLabel).toBe("Review contacts");
+    expect(move?.outcome).not.toMatch(/she sends|drafts the outreach|will send/i);
+    expect(decision?.destination).toBe("clients");
+    expect(decision?.detail).toContain("recorded contact or activity");
+    const copy = JSON.stringify({ move, decision, chips: view.attention });
+    expect(copy).not.toMatch(/before they lapse|usual quiet threshold|flagged at risk|clients at risk/i);
+  });
+
+  it.each([undefined, 0])("does not manufacture a contact follow-up recommendation from %s", (count) => {
+    m.cc = { ...m.cc, attention: count === undefined ? {} : { at_risk_clients: count } };
+    render();
+    expect(view.decisions.some((item) => item.id === "decision:atrisk")).toBe(false);
+    expect([view.bestMove, ...view.priorities].some((item) => item?.id === "attn:atrisk")).toBe(false);
+    expect(view.attention.some((item) => item.label.includes("without recent follow-up"))).toBe(false);
   });
 });

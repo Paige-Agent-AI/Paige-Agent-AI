@@ -29,6 +29,19 @@ export async function weeklyDraftCommandProof({run,json,literal,source,check,ref
   for(const declaration of laterCatalogues)run(catalogueSource(declaration));
   const catalogueBefore=json(`SELECT jsonb_agg(to_jsonb(t) ORDER BY tool_key) FROM list_tool_autonomy(${literal(tenant)}) t;`,ctx);
   run(source(migration));run(source(migration));
+  const declineScopeMigration='supabase/migrations/20271113020000_experience05_weekly_decline_scope.sql';
+  run(source(declineScopeMigration));run(source(declineScopeMigration));
+  check('native decline freezes the same owner scope in the same lock order as claim and commit',()=>{
+    const body=name=>run(`SELECT prosrc FROM pg_proc WHERE oid='public.${name}'::regprocedure;`);
+    const authorityPrefix=value=>value.slice(value.indexOf('BEGIN'),value.indexOf('_p:=public._weekly_draft_proposal'))
+      .replace(/--[^\n]*/g,'').replace(/\s+/g,' ').trim();
+    const prefix=authorityPrefix(body('decline_weekly_commitment_draft(uuid,text)'));
+    assert(prefix.includes('FROM public.profiles WHERE user_id=_uid FOR SHARE;'));
+    assert(prefix.includes('public.current_user_tenant_id() IS DISTINCT FROM _tid'));
+    assert(prefix.includes('FOR SHARE OF m,t;'));
+    assert.equal(prefix,authorityPrefix(body('claim_weekly_commitment_draft(uuid,text,uuid)')));
+    assert.equal(prefix,authorityPrefix(body('commit_weekly_commitment_draft(uuid,uuid,jsonb)')));
+  });
   check('draft catalogue preserves every incumbent permission and adds only default-confirm metadata',()=>{
     const after=json(`SELECT jsonb_agg(to_jsonb(t) ORDER BY tool_key) FROM list_tool_autonomy(${literal(tenant)}) t;`,ctx);
     assert.deepEqual(after.filter(v=>v.tool_key!=='weekly_commitment_draft'),catalogueBefore);
@@ -118,6 +131,17 @@ export async function weeklyDraftCommandProof({run,json,literal,source,check,ref
     try{refuses(commitSQL(revoked,c.nonce),ctx);}finally{run(`UPDATE tenant_members SET status='active' WHERE tenant_id=${literal(tenant)} AND user_id=${literal(owner)};`);}
     assert.equal(processes(revoked),'0');assert.equal(inspect(revoked).phase,'unknown');
   });
+  check('invalid decline tokens and non-owner callers cannot consume the original proposal',()=>{
+    const pending=proposal();
+    const auditBefore=run('SELECT count(*) FROM audit_logs;');
+    for(const token of [null,'0000000000000000:'+pending.issued])
+      refuses(`SELECT decline_weekly_commitment_draft(${literal(pending.id)},${literal(token)});`,ctx);
+    for(const caller of [{actor:member,tenant,role:'authenticated'},{actor:admin,tenant,role:'authenticated'},
+      {actor:otherOwner,tenant:foreign,role:'authenticated'},{role:'anon'},{role:'service_role'}])
+      refuses(`SELECT decline_weekly_commitment_draft(${literal(pending.id)},${literal(pending.token)});`,caller);
+    assert.equal(inspect(pending).phase,'awaiting_approval');
+    assert.equal(run('SELECT count(*) FROM audit_logs;'),auditBefore);assert.equal(processes(pending),'0');
+  });
   const declined=proposal();
   check('decline is durable on the same store and cannot later be executed',()=>{
     assert.equal(json(`SELECT decline_weekly_commitment_draft(${literal(declined.id)},${literal(declined.token)});`,ctx).phase,'declined');
@@ -189,6 +213,8 @@ export async function weeklyDraftCommandProof({run,json,literal,source,check,ref
     proposalHistory={rows:10000,list: listPlan,point:pointPlan,actual_owner_rpc:true,read_writes:0};
   });
   return {status:'PASS',source:migration,migration_sha256:createHash('sha256').update(source(migration)).digest('hex'),
+    decline_scope:{source:declineScopeMigration,migration_sha256:createHash('sha256').update(source(declineScopeMigration)).digest('hex'),
+      same_claim_commit_authority_prefix:true,current_owner_denials:true},
     incumbent_catalogue:{source:laterCatalogues.at(-1)?.file??'original_weekly_frontier',rows:catalogueBefore.length,preserved_metadata_and_defaults:true},
     decline_history:{rows:10000,actual_extracted_query:true,plan:declinePlan},proposal_history:proposalHistory,actual_native_drafts:true,actual_rail:true,concurrent_claims:6,concurrent_commits:6,
     additional_occurrences:0,provider_effects:0,authenticated_customer_acceptance:'NOT_RUN'};

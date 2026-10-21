@@ -20,6 +20,11 @@ vi.mock("@/integrations/supabase/client", () => ({
 }));
 vi.mock("./data/useCommandCenter", () => ({ useCommandCenter: () => harness.command() }));
 vi.mock("@/hooks/useSystemsCheck", () => ({ useSystemsCheck: () => harness.systems() }));
+vi.mock("./data/useSoloActivityFeed", async (original) => ({
+  ...await original<typeof import("./data/useSoloActivityFeed")>(),
+  // Rail's own states have a separate owning suite; keep this console suite synchronous.
+  useSoloActivityFeed: () => ({ status: "ready", items: [], refresh: () => {} }),
+}));
 
 import { SoloSystemsCheckWorkspace } from "./SoloSystemsCheckWorkspace";
 
@@ -86,6 +91,57 @@ function button(name: string) {
 }
 
 describe("Solo Systems Check workspace", () => {
+  it("keeps completed findings while naming the unfinished check reported at the last read", () => {
+    harness.systems.mockReturnValue({ ...baseSystems, scanInProgressSince: "2026-08-27T18:00:00Z" });
+    render();
+    const notice = host.querySelector('[aria-label="Unfinished check at last read"]');
+    expect(notice?.textContent).toContain("An unfinished check was reported at the last read");
+    expect(notice?.textContent).toContain("Results below still come from the last completed check");
+    expect(host.textContent).toContain("Last checked");
+    expect(host.textContent).toContain("1 passed");
+    expect(host.textContent).toContain("1 needs attention");
+    expect(host.querySelector(".sc-spin")).toBeNull();
+    const refresh = button("Refresh current data")!;
+    expect(refresh.disabled).toBe(false);
+    act(() => refresh.click());
+    expect(refreshSystems).toHaveBeenCalledOnce();
+    expect(refreshCommand).toHaveBeenCalledOnce();
+    expect(openPaige).not.toHaveBeenCalled();
+  });
+
+  it("withholds results when only an unfinished check is reported", () => {
+    harness.systems.mockReturnValue({ ...baseSystems, run: null, findings: [], scanInProgressSince: "2026-08-27T18:00:00Z" });
+    render();
+    expect(host.textContent).toContain("No completed results are available yet");
+    expect(host.querySelector(".sc-strip")?.textContent).not.toContain("Nothing has been recorded");
+    expect(host.textContent).not.toContain("Nothing has been checked yet");
+    expect(host.textContent).not.toContain("0 passed");
+    expect(host.textContent).not.toContain("Everything the check looked at returned an answer");
+    expect(host.textContent).not.toContain("Nothing from the last check is waiting on you");
+    expect(host.querySelector(".sc-spin")).toBeNull();
+  });
+
+  it("does not report a running check or active read from recent workspace age alone", () => {
+    harness.systems.mockReturnValue({ ...baseSystems, run: null, findings: [], scanPending: true, scanInProgressSince: null });
+    render();
+    expect(host.textContent).toContain("Awaiting the first completed check");
+    expect(host.textContent).not.toContain("Your first check is running");
+    expect(host.querySelector('[aria-label="Unfinished check at last read"]')).toBeNull();
+    expect(host.querySelector(".sc-spin")).toBeNull();
+  });
+
+  it.each([
+    { scanInProgressSince: null },
+    { scanInProgressSince: "not-a-date" },
+    { scanInProgressSince: "2026-08-27T18:00:00Z", isError: true },
+    { scanInProgressSince: "2026-08-27T18:00:00Z", loading: true },
+  ])("withholds an invalid or unverified unfinished-check notice: %j", (patch) => {
+    harness.systems.mockReturnValue({ ...baseSystems, ...patch });
+    render();
+    expect(host.querySelector('[aria-label="Unfinished check at last read"]')).toBeNull();
+    expect(host.textContent).not.toContain("Invalid Date");
+  });
+
   it("renders the five parts of the operating-readiness console", () => {
     render();
 
@@ -118,6 +174,17 @@ describe("Solo Systems Check workspace", () => {
     const css = readFileSync(resolve(process.cwd(), "src/solo/solo-systems-check-workspace.css"), "utf8");
     expect(css).toContain(".sc-heading h1{font:700 19px/1.2");
     expect(css).toContain("@media(prefers-reduced-motion:reduce)");
+  });
+
+  it("keeps contact follow-up counts separate from client-risk predictions and setup findings", () => {
+    render();
+    expect(host.textContent).toContain("contacts without recent follow-up");
+    expect(host.textContent).not.toContain("clients at risk");
+    expect(host.textContent).toContain("existing business records, separate from the last setup check");
+    expect(host.textContent).not.toContain("These come from your live client records");
+    // A read-only summary does not change or resolve any originating record.
+    expect(baseCommand.approve).not.toHaveBeenCalled();
+    expect(baseCommand.decline).not.toHaveBeenCalled();
   });
 
   it("sorts findings into what needs the owner and what is already working", () => {
@@ -234,13 +301,11 @@ describe("Solo Systems Check workspace", () => {
   // action link never renders at all. Asserting an href here would test the harness, not the app.
 
   it("animates only the honest read state and does not manufacture category progress", () => {
-    harness.systems.mockReturnValue({ ...baseSystems, scanPending: true });
+    harness.systems.mockReturnValue({ ...baseSystems, loading: true });
     render();
 
     expect(host.querySelector(".sc-spin")).not.toBeNull();
-    expect(host.textContent).toContain("Your first check is running");
-    // A running check reports that it is running. It never reports how far along it is,
-    // because nothing measures that.
+    // Read loading is distinct from execution. Neither reports invented percentage progress.
     expect(host.textContent).not.toMatch(/\d+\s?%/);
   });
 
@@ -585,7 +650,7 @@ describe("Solo Systems Check workspace", () => {
     expect(css).toContain('@media(min-width:761px) and (max-width:940px){[data-tenant-shell][data-nav="expanded"][data-paige="open"] #tenant-shell-main nav[aria-label="Command Center sections"]');
     expect(css).toContain('nav[aria-label="Command Center sections"] button{gap:0!important;padding-inline:6px!important;font-size:0!important;border-radius:6px}');
     expect(css).toContain('nav[aria-label="Command Center sections"] button:hover{background:var(--pg-canvas)!important;color:var(--pg-ink)!important;box-shadow:inset 0 0 0 1px var(--pg-line)}');
-    expect(css).toContain('nav[aria-label="Command Center sections"] button[aria-current="page"]{border-bottom:3px solid Highlight!important}');
+    expect(css).toContain('nav[aria-label="Command Center sections"] button[aria-current="page"]{outline:2px solid Highlight!important;outline-offset:-2px}');
     expect(css).not.toMatch(/--pg-(?:bg|card|shadow-sm|shadow-lg)\b/);
     expect(css).toContain("--sc-paige:var(--pg-violet)");
     expect(css).toContain("--sc-critical:var(--pg-negative)");

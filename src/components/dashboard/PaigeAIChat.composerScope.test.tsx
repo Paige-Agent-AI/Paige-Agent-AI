@@ -75,6 +75,7 @@ vi.mock("@/components/paige/live/PaigeLiveConversation", () => ({
 import { PaigeAIChat } from "./PaigeAIChat";
 import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import { supabase } from "@/integrations/supabase/client";
+import { setComposerDraftSessionScope } from "@/lib/paigeComposerScopeState";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -132,6 +133,7 @@ describe("PaigeAIChat ComposerScopeState integration", () => {
   afterEach(async () => {
     await act(async () => root.unmount());
     host.remove();
+    setComposerDraftSessionScope({ kind: "clear" });
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
@@ -163,6 +165,46 @@ describe("PaigeAIChat ComposerScopeState integration", () => {
     }
     expect(textarea().disabled).toBe(false);
   };
+
+  it("ignores the pending status gate after unmount and browser teardown", async () => {
+    let resolveSession!: (value: Awaited<ReturnType<typeof supabase.auth.getSession>>) => void;
+    const pendingSession = new Promise<Awaited<ReturnType<typeof supabase.auth.getSession>>>(resolve => { resolveSession = resolve; });
+    vi.mocked(supabase.auth.getSession).mockReturnValueOnce(pendingSession);
+    const schedule = vi.spyOn(window, "setTimeout");
+    await render(); await type("Read my business state");
+    await act(async () => { send().click(); await settle(); });
+    const gate = schedule.mock.calls.find(([, delay]) => delay === 400)?.[0];
+    expect(typeof gate).toBe("function");
+    await act(async () => root.unmount());
+    const browserWindow = window;
+    try {
+      vi.stubGlobal("window", undefined);
+      expect(() => (gate as () => void)()).not.toThrow();
+    } finally {
+      vi.stubGlobal("window", browserWindow);
+      resolveSession({ data: { session: null }, error: null });
+      await act(async () => settle());
+    }
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("uses the incumbent composer guidance for failed reload retention without sending", async () => {
+    setComposerDraftSessionScope({ kind: "ready", tenantId: harness.tenantId!, userId: harness.userId! });
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("Quota"); });
+    await render(); await waitForWritable();
+    await type("Keep this unsent review question");
+    const guidance = host.querySelector('[data-solo-composer-guidance]');
+    expect(guidance?.getAttribute("role")).toBe("status");
+    expect(guidance?.textContent).toContain("Your draft isn't saved for reload");
+    expect(textarea().value).toBe("Keep this unsent review question");
+    expect(fetch).not.toHaveBeenCalled();
+    const clear = host.querySelector<HTMLButtonElement>('button[aria-label="Clear message"]')
+      ?? Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find(button => button.getAttribute("aria-label")?.startsWith("Clear"));
+    expect(clear).toBeDefined();
+    await act(async () => clear!.click());
+    expect(guidance?.textContent).toBe("");
+    expect(textarea().value).toBe("");
+  });
 
   // Ask PAIGE from a surface (src/lib/paigePromptHandoff.ts): the question lands in the composer and
   it("keeps Live guarded after Stop until canonical settlement, while text remains writable", async () => {

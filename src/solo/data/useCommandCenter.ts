@@ -197,7 +197,7 @@ export function useCommandCenter(): CommandCenterData {
     if (approvals.length)
       parts.push(`${approvals.length} draft${approvals.length === 1 ? "" : "s"} waiting`);
     if (at.at_risk_clients)
-      parts.push(`${at.at_risk_clients} client${at.at_risk_clients === 1 ? "" : "s"} at risk`);
+      parts.push(`${at.at_risk_clients} contact${at.at_risk_clients === 1 ? "" : "s"} without recent recorded follow-up`);
     if (at.follow_ups_due)
       parts.push(`${at.follow_ups_due} follow-up${at.follow_ups_due === 1 ? "" : "s"} due`);
     const summary = parts.length ? `${parts.join(" · ")}.` : "You're all caught up.";

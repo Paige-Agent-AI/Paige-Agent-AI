@@ -62,6 +62,27 @@ export async function dispatchInboxIntelligenceChat(
   args: Record<string, unknown>,
   deps: InboxReadDependencies,
 ): Promise<Record<string, unknown>> {
+  if (toolName === "inbox_list") {
+    const unavailable = { success: false, status: "unavailable", error: "Recent message records could not be read. Try again or open Conversations." };
+    try {
+      // Existing envelope-only port. The JWT resolves tenant and private-mailbox access;
+      // this consumer never supplies a tenant or uses the separately gated body reader.
+      const { data, error } = await deps.caller.rpc("list_inbox_messages", {
+        p_limit: args.limit ?? 20, p_direction: args.direction ?? null,
+      });
+      const keys = ["id", "direction", "channel", "subject", "status", "contact_id", "thread_key", "created_at"] as const;
+      if (error || !Array.isArray(data) || data.length > 50 || !data.every(row =>
+        row && typeof row === "object" && !Array.isArray(row) && UUID.test(row.id ?? "") &&
+        keys.every(key => row[key] === null || typeof row[key] === "string") &&
+        Number.isFinite(Date.parse(row.created_at)))) return unavailable;
+      const messages = data.map(row => Object.fromEntries(keys.map(key => [key, row[key]])));
+      return { success: true, status: "available", count: messages.length, messages,
+        note: "This bounded list contains only permitted message records. Its count is not the business total or a reporting-period measurement. A sent status does not establish delivery. Message bodies were not read; nothing was sent or changed." };
+    } catch {
+      return unavailable;
+    }
+  }
+
   if (toolName === "read_message_content") {
     if (typeof args.message_id !== "string" || !UUID.test(args.message_id)) return { success: false, error: "Pass one message_id from inbox_list." };
     const { data, error } = await deps.caller.rpc("read_message_content", { p_message_id: args.message_id.toLowerCase() });

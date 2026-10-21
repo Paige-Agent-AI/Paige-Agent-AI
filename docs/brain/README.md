@@ -17,6 +17,83 @@ or full19/9/founder outcomes. NO VERIFIED ALGORITHM added. See Master§4.0 and
 
 ## EXP02 current release checkpoint — 2026-10-21 UTC
 
+Chat disposal correction#2469 revieweda7d847f9, merged
+`4aaa84e218121c33a3f510a99a2d1dd9038a1795`, exact treef0b804ac. Required checks,
+normal production web/public and actual served callback condition verify; the old
+400ms gate now reuses request-fence invalidation. 128 owning cases pass; original
+CI failure is retained. Migrations/Edge N/A; no provider/permission/registry/action
+activation. Prior backend CPU/no-settlement findings and real customer/Live/full19/
+nine analytics/founder acceptance remain open. See Master§4.0 and
+[#2469 source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2469#issuecomment-6315061088).
+
+Canonical Conversations foundation#2467 reviewed95d61084, merged
+`268ff690df500345cc3c81eec7ca2a2baa60b13e`, exact treeb305fba3. Eleven exact-head
+checks/two statuses, normal production web/public and actual served destination/label
+verify. Existing guarded Edge recovery39583487762 succeeds for all17 selected
+sources/JWT; certified edge-live matches268ff690, no workflow/tag/security bypass.
+This is the existing E4 surface-reference extension only: no new read emitter,
+provider/permission/admission or catalogue activation. O17 consumer/customer/privacy/
+reload and full19/nine analytics/founder acceptance remain owed. Native-read catalogue
+gap stays ANT-161; see Master§4.0 and
+[#2467 source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2467#issuecomment-6313888651).
+
+Recorded Systems Check status#2466 reviewed e7600799, merged
+`4d667a52adde822221c96f10d884ba95e8ccfdd9`, exact tree81f98c76.
+Ten required applicable checks/two statuses passed after repairing the initial
+design failure. Normal production web `dpl_9AatUsPhvzvsCKdrePWTi4Rn5AF1` READY/exact
+metadata; public4d667a52…-mvhx4at9 and actual served status/font/outline readback
+verified. Completed results remain separate from a bounded unfinished-at-last-read
+timestamp; age is no run and Refresh starts no check. Migrations/Edge N/A; Mind
+context remains UNAVAILABLE, no worker/scan/remediation/provider/permission or
+catalogue/algorithm activation.115 source cases/11 native synthetic frames are
+supporting only. Real customer reads/reload, O07/O19, full19/nine analytics and
+founder acceptance remain owed. See Master§4.0 and
+[#2466 source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2466#issuecomment-6312891491).
+
+Executive explanation/font repair#2464 reviewed79d39462, merged
+`720485f3955ae1b591fca2dfc6125ad0bbde2ccf`, exact composition tree91b3de9e.
+Required ten checks/two statuses passed; normal production web
+`dpl_A1RKsoqgU4o9dVUyLTofc9c12pdA` READY/exact metadata, public build720485f3…-mvhv4qzd
+and actual served explanation/font independently verified. The existing
+domain-qualified no-adapter state now explains the missing area; zero and owning
+links retain their semantics. Canonical self-hosted font is bound through the real
+SOLO wrapper. Migrations/Edge N/A; no permission/provider/status/algorithm activation.
+Native synthetic ten frames and source regressions are supporting proof only;
+customer/full19/nine analytics/founder acceptance remains owed. See Master§4.0 and
+[#2464 source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2464#issuecomment-6311881627).
+
+Scoped unsent-question foundation#2462 merged
+`87ccff84221497f298041fb33a0e16ee85d8c719`, reviewed
+`18a560d5ee80a9294b7a23d0b26a08cecca5d30f`, exact treef728d532.
+All10 applicable head checks and two Vercel statuses SUCCESS; no-schema Preview
+SKIPPED. Production web `dpl_EaZdH8W1nJEu2iswf7X9DcNqkBRx` READY/exact provider
+metadata; public HTTP200 build87ccff84…-mvhrft4w, customerUpdate=null verified.
+The optional bounded tab-session cache extends the sole existing five-axis
+composer store; it has no product caller in that released tree. No automatic
+send/replay, attachments, business Memory, job, permission or provider activation.
+Source126 cases/3 suites pass, including expiry/size/actor/revision/refusal
+negatives; those tests are not authenticated reload acceptance. Its separate
+consumer#2463 is source-released as recorded next. Migrations/Edge NOT_APPLICABLE; catalogue
+states and all19/9/founder obligations remain unchanged. Master§4.0 and
+[#2462 production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2462#issuecomment-6310134039)
+retain exact proof and recovery boundaries. NO VERIFIED ALGORITHM added.
+
+Scoped composer consumer#2463 reviewed
+`b7577fc9f950048120d411a59f4a4cbc38eeac7d`, merged
+`73d8a03db8df273fe45dfb122854c05b24886e6b`, exact treee3d3c17a.
+The released source mounts the existing actual-subject/ready-SOLO/persona binding,
+shows unavailable-reload guidance and sizes restored text with the same capped
+rule as typing. Ten applicable checks plus two statuses SUCCESS; no-schema Preview
+SKIPPED, zero review threads, documented AUTHOR-REVIEW / LOWER ASSURANCE.
+Normal web `dpl_FrDoJrgNRtUfrS7NwrbCL3xkgpCu` READY/exact provider metadata;
+public HTTP200 build73d8a03d…-mvhthuqm and actual served cache validation/Chat
+guidance/resize code independently read back. No schema/Edge effect or business
+capability/algorithm/permission/provider activation. Native10 exact JPEGs and161
+affected cases/284 bounded E05 frontend cases are supporting proof, not customer
+acceptance. Actual original thread/focus return, ordinary customer reload/current
+CPU recovery, full shell/cohorts/Live/full19/9/founder proof remain owed.
+[Production source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2463#issuecomment-6311081808).
+
 Shared presenter#2444/ec83d109, priority policy#2409/a5a139e7, nine coverage
 fields#2445/b70738fe and CI-only serialization proof#2449/5dbf6e20 are merged.
 Actual merge trees, reviewed heads, exact-head CI, web/Edge/migration and bounded
@@ -25,17 +102,57 @@ applied after13010000/13020000. Ordinary SOLO panel reads/reloads4 Coming Soon,
 3 Limited,2 Unverified with all Access Unverified;320px rows fit. Those labels
 are not permission, provider readiness, execution or analytics acceptance.
 
+The compatible Business Review transport foundation #2451 is production-source
+verified at `a76bb957beb7d51c536e6bab6ebcf27994a74157`: all exact-head checks,
+normal Edge source/configuration and exact web readback passed (Master §4.0).
+That foundation leaves the previous Chat dispatch unchanged. Its consumer #2455
+is now source-deployed at `d331534c898d8c032b467902da635c3c9a914613`; all 11 head
+checks, exact web and strict normal Chat source/configuration readback pass.
+Current-main integration includes E05's focused hook and passes 125 focused cases
+plus 124 offline stream controls. Actual fresh weekly recovery is **PROOF OWED**:
+the designated customer session requires sign-in restoration; no new model question
+was sent. Anonymous review POST returns 401/error only, not authenticated isolation
+proof. Master §4.0 and ANT-52/64065542 retain the exact release/access boundary.
+
+Contact follow-up clarity#2460 is source/web released at
+`c5b40526b10ecfb7935b832045e18990f420c138`, exact tree5e6ed6f5 and production
+web `dpl_BdkL2nLYHvdM97eyqp535zX3hjSX`/publicc5…-mvhpa75k verified.
+The existing21day recorded-contact/activity count may include leads; its copy
+no longer predicts client lapsing or promises automatic drafts/sends. Original
+count/key/order/navigation/authority remain, CAP010 stays Coming Soon. Native
+synthetic component/font/phone proof and77 source cases are supporting evidence;
+actual customer navigation/reload/full health and all19/9/founder acceptance remain
+owed. Master§4.0 and #2460/6309201428 record exact review/CI/release boundaries.
+
+Read-receipt presentation#2459 merged/source-deployed
+`7922abf874db30682bf45ccc5894e7ebedbb8901`, actual/expected treed4ad684f.
+Normal migration39553306213 applied13040000; both successful read summaries,
+original predecessor identity, private ACLs and unchanged delegation read back.
+Web dpl_GiBfewAHk1SSKcbRWvQmceFwv352 READY/exact provider metadata; actual
+public7922…-mvhpkubs verified. Existing Rail now names those two lookups without
+implying a business mutation. No ledger/producer/history/authority or catalogue
+status changed. Native SQL/pgTAP/component/phone evidence is supporting only;
+authenticated read-row/reload and all19/9 remain owed (Master§4.0).
+
 Two fresh authorized ordinary weekly Chat reads **FAIL** with correlated CPUTime
 shutdown and no persisted assistant answer; reload retains the question only.
 Historical9/0 remains historical. Production rollout is ACTIVE; do not reuse old
-DRAINING/refusal as the current complete-product limit. Existing92 offline stream
-controls do not close the production failure. Backend-only repair continues through
-the existing canonical review/Chat contracts; no replacement engine, source-domain
+DRAINING/refusal as the current complete-product limit. Offline stream/composition
+controls do not close the production failure. Released repair and remaining continuity
+work use the existing canonical review/Chat contracts; no replacement engine, source-domain
 takeover, provider/limit activation or manual intent reset. ALG03/13 priority order
 is only a partial deterministic baseline; no new verified algorithm/outcome is
 accepted. All19 outcomes,9 analytics entries and one founder evaluation remain
 required. See [existing integration matrix](../delivery/e2-customer-experience-integration-matrix.md),
 ANT138/147/161 and ANT52/0c6dfd90/dc01d1b6. Raw customer QA stays private.
+
+Isolated CI repair#2461 merged `20ac409589f0692a0db8b8d3cd24cad0fd11c82c`,
+exact verified union8e6b209c; all11 head checks and two statuses PASS. The real
+PDF integrity test uses a fixed clock without weakening either hash assertion.
+Local83 and hosted Agreements/verify PASS; actual production web/public identity
+verified (Master§4.0). No product, catalogue, provider, authority, migration/Edge
+or authenticated acceptance change. This unblocks fresh composed-head CI for
+the existing factual closeout; the original clock-boundary failure is retained.
 
 Finance #2402 merged `ddf12b6bbda085cdb9f66587f9e803e11fc3cc18`, exact reviewed
 union tree 1472c481. All 11 exact-head checks/Preview and two Vercel contexts passed;

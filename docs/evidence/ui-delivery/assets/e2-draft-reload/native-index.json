@@ -1,0 +1,292 @@
+{
+  "kind": "NATIVE SYNTHETIC actual Chat/store/binding; account/history/model adapters; not authenticated/full shell",
+  "cases": [
+    {
+      "bg": "rgb(244, 241, 235)",
+      "color": "rgb(103, 97, 107)",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "height": 770,
+      "inputHeight": 52,
+      "inputScrollHeight": 52,
+      "notice": "Your draft isn't saved for reload. Keep this tab open or copy it.",
+      "noticeOverflow": false,
+      "pageOverflow": false,
+      "requests": "0",
+      "sendReachable": true,
+      "width": 1536,
+      "layout": "page",
+      "theme": "light",
+      "filename": "e2-draft-reload-1536-page-light.jpg",
+      "contrast": 5.324067740718742,
+      "nativeCapture": {
+        "format": "JPEG",
+        "width": 1536,
+        "height": 770,
+        "sha256": "9270a9a9226387c4a3d2a7919f8cf02469dc18d48bf2d5989a76a378ba531ae6"
+      }
+    },
+    {
+      "bg": "rgb(244, 241, 235)",
+      "color": "rgb(103, 97, 107)",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "height": 768,
+      "inputHeight": 52,
+      "inputScrollHeight": 52,
+      "notice": "Your draft isn't saved for reload. Keep this tab open or copy it.",
+      "noticeOverflow": false,
+      "pageOverflow": false,
+      "requests": "0",
+      "sendReachable": true,
+      "width": 1366,
+      "layout": "page",
+      "theme": "light",
+      "filename": "e2-draft-reload-1366-page-light.jpg",
+      "contrast": 5.324067740718742,
+      "nativeCapture": {
+        "format": "JPEG",
+        "width": 1366,
+        "height": 768,
+        "sha256": "93093fae27598c144bb70aea48f6d0c7675f573eb5b87729140cfb659bcdd3e7"
+      }
+    },
+    {
+      "bg": "rgb(244, 241, 235)",
+      "color": "rgb(103, 97, 107)",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "height": 768,
+      "inputHeight": 52,
+      "inputScrollHeight": 52,
+      "notice": "Your draft isn't saved for reload. Keep this tab open or copy it.",
+      "noticeOverflow": false,
+      "pageOverflow": false,
+      "requests": "0",
+      "sendReachable": true,
+      "width": 1024,
+      "layout": "page",
+      "theme": "light",
+      "filename": "e2-draft-reload-1024-page-light.jpg",
+      "contrast": 5.324067740718742,
+      "nativeCapture": {
+        "format": "JPEG",
+        "width": 1024,
+        "height": 768,
+        "sha256": "06b7974a2608e7815727684c5b4233c93f9778d33e5768658c498e2dd6b7f236"
+      }
+    },
+    {
+      "bg": "rgb(244, 241, 235)",
+      "color": "rgb(103, 97, 107)",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "height": 1000,
+      "inputHeight": 52,
+      "inputScrollHeight": 52,
+      "notice": "Your draft isn't saved for reload. Keep this tab open or copy it.",
+      "noticeOverflow": false,
+      "pageOverflow": false,
+      "requests": "0",
+      "sendReachable": true,
+      "width": 900,
+      "layout": "page",
+      "theme": "light",
+      "filename": "e2-draft-reload-900-page-light.jpg",
+      "contrast": 5.324067740718742,
+      "nativeCapture": {
+        "format": "JPEG",
+        "width": 900,
+        "height": 1000,
+        "sha256": "cd80ed68d991cbce0a4c2c54912ed2569bc08637365d1e77a690f0d5b542c41f"
+      }
+    },
+    {
+      "bg": "rgb(244, 241, 235)",
+      "color": "rgb(103, 97, 107)",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "height": 760,
+      "inputHeight": 74,
+      "inputScrollHeight": 74,
+      "notice": "Your draft isn't saved for reload. Keep this tab open or copy it.",
+      "noticeOverflow": false,
+      "pageOverflow": false,
+      "requests": "0",
+      "sendReachable": true,
+      "width": 320,
+      "layout": "page",
+      "theme": "light",
+      "filename": "e2-draft-reload-320-page-light.jpg",
+      "contrast": 5.324067740718742,
+      "nativeCapture": {
+        "format": "JPEG",
+        "width": 320,
+        "height": 760,
+        "sha256": "f7a42eecce1f4abb0465dff9973938f630a4970aa1eb2f0585a07b1e078fda26"
+      }
+    },
+    {
+      "bg": "rgb(24, 22, 29)",
+      "color": "rgb(173, 167, 159)",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "height": 770,
+      "inputHeight": 52,
+      "inputScrollHeight": 52,
+      "notice": "Your draft isn't saved for reload. Keep this tab open or copy it.",
+      "noticeOverflow": false,
+      "pageOverflow": false,
+      "requests": "0",
+      "sendReachable": true,
+      "width": 1536,
+      "layout": "drawer",
+      "theme": "dark",
+      "filename": "e2-draft-reload-1536-drawer-dark.jpg",
+      "contrast": 7.516987891095814,
+      "nativeCapture": {
+        "format": "JPEG",
+        "width": 1536,
+        "height": 770,
+        "sha256": "20959b3568c85bdcd401f188d3b9c684e44a18ee8e07e71c6adeae24730010d9"
+      }
+    },
+    {
+      "bg": "rgb(24, 22, 29)",
+      "color": "rgb(173, 167, 159)",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "height": 768,
+      "inputHeight": 52,
+      "inputScrollHeight": 52,
+      "notice": "Your draft isn't saved for reload. Keep this tab open or copy it.",
+      "noticeOverflow": false,
+      "pageOverflow": false,
+      "requests": "0",
+      "sendReachable": true,
+      "width": 1366,
+      "layout": "drawer",
+      "theme": "dark",
+      "filename": "e2-draft-reload-1366-drawer-dark.jpg",
+      "contrast": 7.516987891095814,
+      "nativeCapture": {
+        "format": "JPEG",
+        "width": 1366,
+        "height": 768,
+        "sha256": "f14ed7b412aac9ed0bc197ad13a320968959adb8a14d369234ed3a4716544aa6"
+      }
+    },
+    {
+      "bg": "rgb(24, 22, 29)",
+      "color": "rgb(173, 167, 159)",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "height": 768,
+      "inputHeight": 60,
+      "inputScrollHeight": 60,
+      "notice": "Your draft isn't saved for reload. Keep this tab open or copy it.",
+      "noticeOverflow": false,
+      "pageOverflow": false,
+      "requests": "0",
+      "sendReachable": true,
+      "width": 1024,
+      "layout": "drawer",
+      "theme": "dark",
+      "filename": "e2-draft-reload-1024-drawer-dark.jpg",
+      "contrast": 7.516987891095814,
+      "nativeCapture": {
+        "format": "JPEG",
+        "width": 1024,
+        "height": 768,
+        "sha256": "b1911df9f6e14d41ccec8f8ef4ece76dc43edfce3e7f3d3b373dcca01b912dd3"
+      }
+    },
+    {
+      "bg": "rgb(24, 22, 29)",
+      "color": "rgb(173, 167, 159)",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "height": 1000,
+      "inputHeight": 60,
+      "inputScrollHeight": 60,
+      "notice": "Your draft isn't saved for reload. Keep this tab open or copy it.",
+      "noticeOverflow": false,
+      "pageOverflow": false,
+      "requests": "0",
+      "sendReachable": true,
+      "width": 900,
+      "layout": "drawer",
+      "theme": "dark",
+      "filename": "e2-draft-reload-900-drawer-dark.jpg",
+      "contrast": 7.516987891095814,
+      "nativeCapture": {
+        "format": "JPEG",
+        "width": 900,
+        "height": 1000,
+        "sha256": "a6e3d9456ecac49c0dd2a8d446b5e3112cdcce4b99c4e1c5fcca3dc8e96b51ef"
+      }
+    },
+    {
+      "bg": "rgb(24, 22, 29)",
+      "color": "rgb(173, 167, 159)",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "height": 760,
+      "inputHeight": 74,
+      "inputScrollHeight": 74,
+      "notice": "Your draft isn't saved for reload. Keep this tab open or copy it.",
+      "noticeOverflow": false,
+      "pageOverflow": false,
+      "requests": "0",
+      "sendReachable": true,
+      "width": 320,
+      "layout": "drawer",
+      "theme": "dark",
+      "filename": "e2-draft-reload-320-drawer-dark.jpg",
+      "contrast": 7.516987891095814,
+      "nativeCapture": {
+        "format": "JPEG",
+        "width": 320,
+        "height": 760,
+        "sha256": "e6f7801f917424c3d3e90e4302b6184eed0124c51e2eef10cecd3f6cc89556e7"
+      }
+    }
+  ],
+  "flows": [
+    {
+      "case": "ordinary full reload",
+      "height": 74,
+      "requests": "0",
+      "scrollHeight": 74,
+      "text": "Keep the original business review question.\nDo not send or take an action."
+    },
+    {
+      "case": "keyboard after restored draft",
+      "focus": "Start voice typing"
+    },
+    {
+      "case": "clear then full reload",
+      "requests": "0",
+      "text": ""
+    },
+    {
+      "case": "operator · none · page",
+      "requests": "0",
+      "textAfterReload": ""
+    },
+    {
+      "case": "effective · none · page",
+      "requests": "0",
+      "textAfterReload": ""
+    }
+  ],
+  "sourceSha256": {
+    "src/components/dashboard/PaigeAIChat.tsx": "f33ff183988e086d48dd8e215b3b26df073fc6a7d63000f945a0fc19a6880255",
+    "src/components/paige/ComposerDraftSessionBinding.tsx": "b31162e2a5aa0072a9b1754f8d43d3ce9a183e036d32595d71cba3f036808592",
+    "src/lib/paigeComposerScopeState.ts": "3f7a1e9f71ead22ecc9d6f190dc07cffd0417fb9ee9e03236c33e971262b0cec",
+    "src/App.tsx": "30200a562c696e4f3491a90ce2904ab047c0a36d16c6cf7266540fd02d993663"
+  },
+  "baseline": "18a560d5ee80a9294b7a23d0b26a08cecca5d30f",
+  "proofBoundary": "Actual native in-app browser, real Chat/store/binding and product font; context/history/model/upload adapters; synthetic quota exception; no authenticated customer or full-shell evidence.",
+  "captureBoundary": "width/height describe the measured DOM viewport; nativeCapture independently records the JPEG format, pixel dimensions and SHA256. All ten native images match their declared viewport. Original pixel data was not converted, rescaled or edited. Full-shell/cohort fields remain UNVERIFIED."
+}

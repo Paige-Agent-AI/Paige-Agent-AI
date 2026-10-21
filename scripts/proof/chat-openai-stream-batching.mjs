@@ -30,7 +30,7 @@ globalThis.fetch=async(url,init)=>{
   const event=value=>packet.push(`data: ${JSON.stringify(value)}\n\n`);
   event({type:'response.created',response:{model:request.model}});
   if(!fixture.answerOnly&&round<3){
-    const item={id:`neutral-item-${round}`,type:'function_call',call_id:`neutral-call-${round}`,name:round===1?'capability_status':'integrations_list',arguments:'{}'};
+    const item={id:`neutral-item-${round}`,type:'function_call',call_id:`neutral-call-${round}`,name:round===1?(fixture.review?'get_business_snapshot':'capability_status'):'integrations_list',arguments:'{}'};
     event({type:'response.output_item.added',output_index:0,item:{...item,arguments:''}});
     event({type:'response.function_call_arguments.delta',item_id:item.id,delta:'{}'});
     event({type:'response.output_item.done',output_index:0,item});
@@ -46,8 +46,10 @@ globalThis.fetch=async(url,init)=>{
     c.close();
   }}),{status:200,headers:{'content-type':'text/event-stream'}});
 };
-await import('../../supabase/functions/paige-ai-chat/index.ts');
+await import('../../supabase/functions/paige-business-review/index.ts');
 const {capturedHandler}=await import('../client-memory-authz/stub-serve.mjs');
+const reviewHandler=capturedHandler();
+await import('../../supabase/functions/paige-ai-chat/index.ts');
 const handler=capturedHandler();
 let passed=0,failed=0;
 const check=(condition,name)=>{if(condition)passed++;else{failed++;console.log(`FAIL ${name}`);}};
@@ -57,11 +59,11 @@ const settleWithin=async(promise)=>{
   finally{clearTimeout(timer);}
 };
 const summaries=[];
-for(const topology of ['packed','fragmented','fragmented_answer_only'])
+for(const topology of ['packed','fragmented','fragmented_answer_only','fragmented_review'])
 for(const mode of ['normal','lost_ack','receipt_unknown','foreign_thread','scope_changed','actor_revoked','superseded','consumer_cancel']){
   let releaseFinished;
   const finished=new Promise(accept=>{releaseFinished=accept;});
-  fixture={mode,topology,answerOnly:topology==='fragmented_answer_only',round:0,revoked:false,executor:null,latest:INTENT,terminal:false,modelCalls:[],settlements:[]};
+  fixture={mode,topology,review:topology==='fragmented_review',answerOnly:topology==='fragmented_answer_only',round:0,revoked:false,executor:null,latest:INTENT,terminal:false,modelCalls:[],settlements:[]};
   const expectedCalls=fixture.answerOnly?2:4;
   const activeTenant=()=>fixture.revoked&&mode==='scope_changed'?OTHER:TENANT;
   const rec=setScenario({authUser:{id:USER,email:'owner@example.test'},declaredActiveTenantId:TENANT,
@@ -89,6 +91,12 @@ for(const mode of ['normal','lost_ack','receipt_unknown','foreign_thread','scope
       },
       list_integration_surface:{data:[],error:null},
     },
+    functions:{'paige-business-review?chat=1&finance_sources=1':async options=>{
+      const response=await reviewHandler(new Request('https://test.supabase.co/functions/v1/paige-business-review?chat=1&finance_sources=1',{
+        method:'POST',headers:{authorization:'Bearer synthetic-jwt','content-type':'application/json',...options.headers},body:JSON.stringify(options.body),signal:options.signal,
+      }));
+      return{data:await response.json(),error:response.ok?null:{message:'bounded review refusal'}};
+    }},
     tables:{profiles:()=>[{user_id:USER,active_tenant_id:activeTenant()}],tenants:()=>[{id:TENANT,account_type:'standalone',parent_tenant_id:null}],tenant_members:()=>[{tenant_id:TENANT,user_id:USER,role:'owner',status:'active'}],client_memory:()=>[],
       // Honor the actual caller/id predicates. The recording fake deliberately
       // delegates filtering to fixtures; returning an invisible foreign row here
@@ -111,12 +119,15 @@ for(const mode of ['normal','lost_ack','receipt_unknown','foreign_thread','scope
   const stateReads=rec.rpc.filter(call=>call.name==='paige_chat_interactive_executor_v2'&&call.args?.p_operation==='state').length;
   const effects=rec.inserts.filter(row=>row.table!=='paige_llm_trace');
   const authorities=rec.rpc.filter(call=>call.name==='paige_chat_interactive_executor_v2'||call.name==='paige_chat_interactive_settle');
-  check(effects.length===0&&rec.functions.length===0,`${mode}: no business write or sibling execution`);
+  const reviewCalls=rec.functions.filter(call=>call.name==='paige-business-review?chat=1&finance_sources=1');
+  check(effects.length===0&&rec.functions.every(call=>fixture.review&&call.client==='jwt'&&call.name==='paige-business-review?chat=1&finance_sources=1'
+    &&call.headers?.['x-paige-review-scope']===TENANT)&&reviewCalls.length<=1,`${mode}: no business write or sibling execution; only the bound review read`);
   check(authorities.every(call=>call.args.p_actor===USER&&call.args.p_tenant===TENANT&&call.args.p_thread===THREAD&&call.args.p_intent===INTENT),`${mode}: original actor/tenant/thread/intent retained`);
   if(mode==='foreign_thread'){
     check(response.status>=400&&fixture.modelCalls.length===0&&fixture.settlements.length===0&&authorities.length===0,`${mode}: invisible foreign thread refuses before admission/model/settlement`);
   }else if(['normal','lost_ack'].includes(mode)){
     check(response.status===200&&fixture.modelCalls.length===expectedCalls&&fixture.modelCalls.filter(call=>call.stream).length===expectedCalls-1,`${topology}/${mode}: actual classifier and expected model rounds`);
+    if(fixture.review)check(reviewCalls.length===1,`${topology}/${mode}: actual Chat uses the existing review handler exactly once`);
     if(fixture.answerOnly)check(fixture.modelCalls.filter(call=>call.stream).every(call=>call.tools.every(name=>name==='ask_choices')),`${topology}/${mode}: incident-shaped frontier answer offers only presentation, no domain tools`);
     check(stateReads>0&&stateReads<=80,`${topology}/${mode}: provider records keep native state reads bounded`);
     check(fixture.settlements.length===1&&fixture.terminal&&fixture.executor===null&&!streamError&&wire.includes('[DONE]'),`${mode}: one canonical receipt/readback and release without replay`);

@@ -8,7 +8,7 @@ FLOW_PROTOTYPE: NOT_REQUIRED: existing read/Refresh flow retained; the previousl
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an eligible owner distinguishes completed findings, an unfinished check reported at the last read and recent setup without a verified run.
 VISUAL_DIRECTION: PASS: preserve the console and existing semantic colors; no new dashboard, progress score, provider or style system.
 AUTOMATED_EVIDENCE: PASS:78 cases/5 owning console, resolver-contract, destination, source-integrity and Rail suites; zero skips. Three initial source failures and an additional empty-state overclaim were reproduced and corrected.
-STATIC_EVIDENCE: PASS: scoped lint/diff and retained forced-colors source contract; design detector's remaining finding is explicitly dispositioned below, not reported as a clean exit. Exact-head hosted CI remains mandatory.
+STATIC_EVIDENCE: PASS: scoped lint/diff and forced-colors selection contract. Required CI initially failed the design detector; the corrective outline treatment and fresh detector result are recorded below. Exact-head hosted CI remains mandatory.
 RENDERED_EVIDENCE: PASS:11 unmodified native JPEGs; four prescribed desktop sizes and320px, real component/product theme/font with explicit reader/command/Rail doubles. All native dimensions exact; no horizontal overflow; Refresh reachable; notice contrast10.10 light/11.68 dark.
 BEHAVIORAL_EVIDENCE: PASS: simulated Refresh clears only the unfinished signal while preserving the original completed timestamp/counts. Age alone produces no running notice/spinner; invalid/error/loading withhold unfinished claims. No actual scan or business action.
 AUTHENTICATED_RUNTIME: UNVERIFIED: designated ordinary SOLO sign-in/control is unavailable. No alternate customer, Operator, credentials, scan, approval or provider action used; actual released customer behavior remains owed.
@@ -30,7 +30,7 @@ UNVERIFIED: real unfinished/completed production readback, full keyboard/AT/zoom
 
 OWNER_INTENT: truthful operational state and readable evidence throughout the complete AI COO journey.
 MUST_NOT_HAPPEN: infer running work from tenant age; replace completed findings with unfinished zeros; imply a rescan, worker heartbeat, successful correction or new receipt from Refresh; bypass Mind/authority holds.
-MUST_PRESERVE: canonical run/finding readers and permissions, completed-result provenance, finding-derived counts, owning navigation, existing approvals/unknown-effect restrictions and high-contrast selection.
+MUST_PRESERVE: canonical run/finding readers and permissions, completed-result provenance, finding-derived counts, owning navigation, existing approvals/unknown-effect restrictions and system-Highlight high-contrast selection.
 ACCEPTANCE_CRITERIA: inspect completed results alongside the separate reported unfinished timestamp; withhold unsupported claims; Refresh rereads without starting work; later verify through the authorized released customer path.
 MOTION_PURPOSE: NONE: no new motion; read loading and recorded execution state are deliberately distinct.
 PROTECTED_SEAMS: original scope-resolved reader/runner/history/approval/receipt contracts retained. Mind SCR-2/SCR-3 and prohibited-context boundaries stay held; no new context publication or Memory eligibility.
@@ -71,11 +71,18 @@ were captured natively at complete viewport bounds, without editing or rescaling
 Impeccable: https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md
 Applied incumbent/clarify/craft floor, readable type/measure/contrast, state truth
 and sequential finish review. Corrected the existing3px card edge to1px. The pinned
-detector still returns nonzero with one finding: **FALSE_POSITIVE** on the unchanged
-forced-colors navigation button's3px system Highlight selection. It is an intentional
-accessibility affordance, not a decorated rounded card; the owning source contract
-assertion remains intact and passes.29 incumbent CSS type/radius advisories remain.
-No detector suppression/config or accessibility contract was weakened.
+detector initially returned nonzero on the forced-colors navigation button's3px
+system Highlight selection. Although review identified an intentional accessibility
+affordance, required hosted CI also failed and was not waived. The corrective pass
+uses a2px inset system-Highlight outline around the selected button, including its
+icon when compact navigation hides text. The owning assertion requires that outline
+and its inset offset; no selection, guard or detector suppression was removed.
+Normal-theme captures retain their original source hashes: only the inactive
+forced-colors declaration changed afterward, as recorded in their index. Native
+forced-colors rendering remains UNVERIFIED; no supported media emulation was available.
+The fresh pinned4.1.0 detector exits0: zero anti-patterns,29 incumbent advisories.
+The composed current-main corrective pass has115 PASS/0skip across seven owning
+Systems Check, Rail and Executive suites. Exact-head CI is recorded in the PR receipts.
 NO VERIFIED ALGORITHM added: ALG12 detection remains with its original producer;
 this consumer reads recorded status only. All19 outcomes and nine catalogue entries
 retain their full acceptance obligations.

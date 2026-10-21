@@ -311,5 +311,14 @@
     "scripts/live-drive/harness/systems-check-mount/vite.config.ts": "0ae755ec5ee4178923ee62dc015d1f41a5af674ee32dafcad6685ca5f9b26f93"
   },
   "boundary": "Native synthetic actual Systems Check component, existing harness, explicit reader/command/Rail doubles, real theme container AND actual SoloApp paige-solo wrapper. Canonical UI font explicitly bound by the component. No actual scan/backend/provider/business action or authenticated customer proof. Full native JPEG viewport, no pixel edits/rescaling; all earlier wrapper/type/edge captures remain local/excluded.",
-  "baseline": "73d8a03db8df273fe45dfb122854c05b24886e6b"
+  "baseline": "73d8a03db8df273fe45dfb122854c05b24886e6b",
+  "postCaptureCompatibility": {
+    "capturedHead": "325410a36a2e1db4922c3f42a70467ca7f8bffb6",
+    "composedMain": "720485f3955ae1b591fca2dfc6125ad0bbde2ccf",
+    "changedSource": "src/solo/solo-systems-check-workspace.css",
+    "currentSha256": "382fca42fdd572fa86cf8a9c1215a154265513e3a2144af16da95f63892148a4",
+    "change": "Only the forced-colors selected navigation button changes from a bottom border to a 2px inset system-Highlight outline. The original sourceSha256 map remains the capture identity. Normal-theme declarations and captured component/harness source are unchanged.",
+    "nativeForcedColors": "UNVERIFIED: supported browser controls provide no forced-colors media emulation; the owning source assertion retains a required system-color selection cue.",
+    "regression": "115 cases in seven Systems Check, Rail and composed Executive suites PASS; pinned Impeccable 4.1.0 exits 0 with zero anti-patterns and 29 incumbent advisories. Required exact-head CI is recorded in the PR."
+  }
 }

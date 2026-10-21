@@ -9,7 +9,7 @@ PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: every server-classified eligible SOLO own
 VISUAL_DIRECTION: PASS: incumbent Mineral/Obsidian Operations. No visual or CSS change in this PR; the separately owner-approved ZION-led redesign is not represented as delivered here.
 AUTOMATED_EVIDENCE: PASS: predecessor route assertion plus two neutral-account cases fail before the correction (3 failures, 56 passes); corrected owning routing/selection suites142/4 pass and original SoloApp Operations retention19/1 pass. Current-main composition checks are recorded separately in the immutable PR review.
 STATIC_EVIDENCE: PASS: scoped ESLint and diff check; current-main TypeScript ratchet baseline10/current6/no new errors. No security baseline, assertion or route-owner guard was weakened.
-RENDERED_EVIDENCE: PASS: actual candidate shell/SoloApp/Operations source, 296 product inputs, 169 synthetic data/Auth ports and zero product-source transforms; original unresized1536x770 screenshot under assets/exp05-overview-entry. No authenticated or production proof inferred.
+RENDERED_EVIDENCE: PASS: actual candidate shell/SoloApp/Operations source, 296 product inputs, 169 synthetic data/Auth ports and zero product-source transforms. Eight fresh original viewport captures and DOM observations are bound in assets/exp05-overview-entry/responsive-review-manifest.json. No authenticated or production proof inferred.
 BEHAVIORAL_EVIDENCE: PASS: Work → main Operations opens /solo/1701/operations/overview and selects both Operations and Overview. After the native identity-switch retirement to the second workspace's Command Center, the same menu opens /solo/1702/operations/overview with its own selection. Original unsaved-task Close presents Keep open/Close task; only the disposable offline draft was discarded. No Save, send, approval or provider effect.
 AUTHENTICATED_RUNTIME: UNVERIFIED: this exact correction is not deployed; ordinary-owner menu/reload and legacy entry readback remain required after release.
 KEYBOARD_FOCUS: PASS: the original main-menu link retains its focused anchor after navigation and aria-current=page; Overview also has aria-current=page. Original host retention tests cover guarded exits. No new keyboard behavior or focus trap.
@@ -18,14 +18,14 @@ REDUCED_MOTION: NOT_APPLICABLE: no CSS, motion, timers or scrolling behavior cha
 STATE_COVERAGE: PASS: both neutral eligible SOLO roots and all six existing subviews; old section alias; unresolved, null, foreign shell classifications; original history/dirty-work retention. Source loading/empty/error/writer contracts are unchanged.
 TRUTHFUL_STATE_LABELS: PASS: no availability or execution label changes. Menu presence still requires server-provided standalone classification and a SOLO route; a URL never confers authority.
 SOLO_UI: YES: the existing shared shell helper applies to every eligible existing/future SOLO account; no account-specific branch or provisioning change.
-SOLO_1536X770_PAIGE_CLOSED: PASS: assets/exp05-overview-entry/overview-entry-1536.png, actual measured1536x770; original component geometry, synthetic neutral records.
-SOLO_1536X770_PAIGE_OPEN: NOT_APPLICABLE: no panel/layout change; this href-only correction inherits the original shell and original recorded-findings panel coverage, without claiming a new open-panel capture.
-SOLO_1366X768_PAIGE_CLOSED: NOT_APPLICABLE: no markup/CSS/geometry delta; prior canonical shell evidence remains at its original source identity.
-SOLO_1366X768_PAIGE_OPEN: NOT_APPLICABLE: no markup/CSS/panel delta; no fresh responsive claim.
-SOLO_1024X768_PAIGE_CLOSED: NOT_APPLICABLE: no markup/CSS/geometry delta; no fresh responsive claim.
-SOLO_1024X768_PAIGE_OPEN: NOT_APPLICABLE: original modal panel contract is unchanged; no fresh responsive claim.
-SOLO_900X1000_PAIGE_CLOSED: NOT_APPLICABLE: no markup/CSS/geometry delta; no fresh responsive claim.
-SOLO_900X1000_PAIGE_OPEN: NOT_APPLICABLE: original modal panel contract is unchanged; no fresh responsive claim.
+SOLO_1536X770_PAIGE_CLOSED: PASS: assets/exp05-overview-entry/overview-entry-1536-closed.jpg; measured CSS viewport1536x770, original browser raster1535x770. Overview selected, no page overflow; one-pixel capture discrepancy explicitly retained in manifest, never resized/padded.
+SOLO_1536X770_PAIGE_OPEN: PASS: assets/exp05-overview-entry/overview-entry-1536-open.jpg; measured CSS viewport1536x770, original browser raster1535x770; selected Overview and original side panel inspected. Same disclosed capture discrepancy.
+SOLO_1366X768_PAIGE_CLOSED: PASS: assets/exp05-overview-entry/overview-entry-1366-closed.jpg and matching DOM observation; exact1366x768, selected explicit Overview, no page overflow.
+SOLO_1366X768_PAIGE_OPEN: PASS: assets/exp05-overview-entry/overview-entry-1366-open.jpg and matching DOM observation; exact1366x768, original side panel and Overview retained.
+SOLO_1024X768_PAIGE_CLOSED: PASS: assets/exp05-overview-entry/overview-entry-1024-closed.jpg and matching DOM observation; exact1024x768, explicit Overview and six original views visible.
+SOLO_1024X768_PAIGE_OPEN: PASS: assets/exp05-overview-entry/overview-entry-1024-open.jpg and matching DOM observation; exact1024x768, original modal panel/backdrop inspected; underlying Overview retained.
+SOLO_900X1000_PAIGE_CLOSED: PASS: assets/exp05-overview-entry/overview-entry-900-closed.jpg and matching DOM observation; exact900x1000, original internal scrolling and selected Overview retained.
+SOLO_900X1000_PAIGE_OPEN: PASS: assets/exp05-overview-entry/overview-entry-900-open.jpg and matching DOM observation; exact900x1000, original modal panel/backdrop, composer and fold control inspected.
 OWNER_INTENT: owner Oct21 screenshot asks the primary Operations item to open the explicit Overview URL, preserving the larger approved EXP05/ZION redesign.
 MUST_NOT_HAPPEN: root links lose selection, subview links become rewrites, dirty drafts are discarded, unresolved account classes gain Operations, or a route is treated as identity authority.
 MUST_PRESERVE: original tenant resolution, shell guards, source/deep links, six subviews, Back/Forward, unsaved editors, shared Chat handoff, domain writers and all adjacent E02/E09 source.
@@ -39,7 +39,7 @@ CUSTOMER_RELEASE_IDENTITY: none: internal small correction; no customer version 
 RELEASE_NOTE_REQUIRED: NO: routine entry repair, no new customer capability.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: production menu click/reload; this patch does not establish ZION delegation, any catalogue skill execution or full EXP05 acceptance.
 RELEASE_RECOVERY: position=reviewed route-helper forward correction or ordinary bounded revert preserving original data and domain authority; reference=tenantShellRoutes.ts and original SoloApp Operations retention tests.
-UNVERIFIED: deployed ordinary-owner href/click/reload, fresh browser zoom/screen reader and new responsive captures. Native fixture results prove only the stated address/selection/retention behavior.
+UNVERIFIED: deployed ordinary-owner href/click/reload and fresh browser zoom/screen reader. Original viewport artifacts prove the bounded responsive/navigation inspection, not authenticated execution or the approved future redesign.
 
 ## Source and collision boundary
 
@@ -63,3 +63,33 @@ Impeccable: https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impec
 Applied incumbent composition/clarity, preserved focus and guard contracts, no
 visual redesign claim. Separate exact-head AUTHOR-REVIEW / LOWER ASSURANCE is
 recorded in the PR under the standing review policy; no non-author claim.
+
+## October21 review correction and visual finish inspection
+
+Accepted review thread PRRT_kwDOSAAXqM6u4tIq: seven required viewport states were
+incorrectly marked not applicable. Those attestations above are superseded by
+eight fresh rendered captures of the unchanged candidate, rather than inherited
+images. All296 product blobs were independently matched to immutable source
+74d475cd4255e66e1c2cb76e087eb341b6a1c87f and the compiled bundle hash matched;
+zero product-source transforms. The old dated1536 image remains historical.
+
+At each required CSS size, native Work then the main Operations anchor were
+activated with the keyboard; URL and both aria-current selections were checked.
+The original mouse transition and two neutral scopes remain recorded above.
+Native panels were folded before interacting with the underlying workspace.
+Each original image was visually inspected: correct Overview content, six views,
+hierarchy, action placement, scroll ownership, closed/open side or modal panel,
+composer and focus ring. No material visual or interaction regression found in
+this address-only repair. No new visual system or premium-Experience completion
+claim. Send stays disabled in the synthetic composer; no record was saved.
+
+Initial immediate-after-transition images, failed full-page/clip captures and
+mouse transport timeouts are invalid tooling attempts and excluded. Settled
+viewport captures retain their raw JPEG bytes with matching extensions. The two
+1536 CSS captures are1535 raster pixels wide as returned by the browser; the
+manifest reports both dimensions without concealing, resampling or padding.
+All other dimensions match exactly. The original page has no horizontal overflow.
+
+Owner October21 quality directive applied proportionately: functional address
+proof, visual rendered proof, workflow/keyboard continuity and still-unverified
+production/owner acceptance are distinct. Full ZION-led EXP05 remains unfinished.

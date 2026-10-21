@@ -89,3 +89,21 @@ inspected additive route/type/UUID focus change renews only that helper to
 A new hostile CURA route mutation joins the original Conversations/Marketing
 controls. Final renewed-suite execution and immutable-head review are required;
 this is source compatibility, not runtime authority or provider proof.
+
+## URL-reference retirement repair
+
+Automatic review4340444637 identified retained exact-source state after browser
+Back/removal of the URL reference. Two new regressions both failed on old code.
+The parent now clears teaching reference/boundary when the reference disappears,
+after any active exit hold releases. The real parent/panel/hook case also proves
+edited FAQ terms survive pending removal, Cancel retires the source and Manage
+Knowledge reopens the unfiltered inventory without a native write. Final13suites
+410PASS; changed-file lint exit0. Earlier captures/build/type receipts remain
+attributed to their prior source; new exact-head review/CI and deployment required.
+
+
+## Owner visual standard and final recovery correction — 2026-10-21
+
+Functional: source-retirement repair13 related suites410PASS; final focus change36 parent/panel/dashboard tests PASS. Required final-head CI and deployment remain owed. Visual: four fresh unedited native captures at390/1280 with no horizontal document overflow, existing design system retained, configured/raw detector[] and changed-file lint exit0. Experiential: active FAQ selection survives reference removal; keyboard Cancel restores visible Manage Knowledge focus, and Enter reopens the unfiltered authorized inventory. This is actual component rendering with synthetic identity/RPC/navigation/dock; the fixture control is not literal browser Back or signed-in proof. Acceptance: complete seven-pillar owner/client acceptance remains PROOF OWED; no founder walkthrough requested.
+
+The rendered check found the old animation-frame focus return did not execute reliably in a background tab. A failing-first real parent/panel/hook focus assertion reproduced body focus. Post-commit transition focus now restores the original trigger without a delayed animation-frame callback; native390 verification confirms it. Native200percent zoom, iOS/AT and complete authenticated journey remain separately unverified.

@@ -31,6 +31,7 @@ export function OperationsOverview({ tenantId, plans, items, members, crmTasks =
   const spotlight = work.attention[0];
   const operating = work.active.filter(item => item.item_type !== "reminder" && item.id !== spotlight?.id);
   const timing = work.timingToConfirm[0];
+  const hasNativeWork = nativeWorkState === 'ready' && (work.active.length > 0 || plans.length > 0);
   const inspect = (item: typeof work.active[number]) => item.native.source === "planning"
     ? onInspectItem(item.native.record) : onInspectCrmTask?.(item.native.record);
   const canInspect = (item: typeof work.active[number]) => item.native.source === "planning" || Boolean(onInspectCrmTask);
@@ -57,15 +58,8 @@ export function OperationsOverview({ tenantId, plans, items, members, crmTasks =
       </div>
     </header>
     {work.active.length > 0 && <p className="ops-desk-read-scope">{work.active.length} active {work.active.length === 1 ? "commitment" : "commitments"} · {work.inProgress.length} in progress · {work.reminders.length} {work.reminders.length === 1 ? "reminder" : "reminders"} in the sources shown</p>}
-    {nativeWorkState !== 'ready' ? <>{recordedFindings}<p role="status">{nativeWorkState === 'loading'
-      ? 'Native Work is still being read. Recorded findings are a separate source.'
-      : 'Current Work could not be read. Retry a source above to inspect its records.'}</p></>
-      : !work.active.length && !plans.length ? <>{recordedFindings}<section className="ops-desk-first-use"><h2>Start with one real commitment</h2>
-      <p>What needs to happen next, who should own it, and when does it matter? Prepare it with PAIGE or open Work to record the next step.</p>
-      <div>{navigate("Open Work", "Work")}{navigate("Plan a project", "Projects")}</div>
-      <p className="ops-view-muted">Only work available in the current sources appears here.</p>
-    </section></> : <div className="ops-desk-columns"><div className="ops-desk-primary-column">
-      {spotlight ? <section className="ops-desk-attention" aria-label="Priority work to inspect"><header>
+    <div className={hasNativeWork ? 'ops-desk-columns' : undefined}><div className={hasNativeWork ? 'ops-desk-primary-column' : undefined}>
+      {hasNativeWork && (spotlight ? <section className="ops-desk-attention" aria-label="Priority work to inspect"><header>
         <h2>{spotlight.status === "blocked" ? <CirclePause size={17} aria-hidden="true" /> : <CalendarClock size={17} aria-hidden="true" />}Needs your attention</h2>
         <span className="ops-view-status" data-status="blocked">{spotlight.status === "blocked" ? "Blocked" : "Overdue"}</span></header>
         <h3>{spotlight.title}</h3>{spotlight.summary && <p>{spotlight.summary}</p>}
@@ -74,8 +68,17 @@ export function OperationsOverview({ tenantId, plans, items, members, crmTasks =
         <button type="button" className="ops-desk-inspect" disabled={!canInspect(spotlight)} onClick={() => inspect(spotlight)}>Inspect the original work<ArrowUpRight size={16} aria-hidden="true" /></button>
         {work.attention.length > 1 && <p className="ops-view-muted">{work.attention.length - 1} other blocked or overdue {work.attention.length === 2 ? "commitment" : "commitments"} in the work shown.</p>}
         {inspectGroup("View attention in Work", "attention", work.attention.length)}
-      </section> : <p className="ops-desk-attention-clear">No blocked or overdue work in the sources shown. Undated work and recorded reminders are included below.</p>}
-      {recordedFindings}<section><div className="ops-desk-section-heading"><h2>Work in motion</h2>{navigate("All work", "Work")}</div>
+      </section> : <p className="ops-desk-attention-clear">No blocked or overdue work in the sources shown. Undated work and recorded reminders are included below.</p>)}
+      {/* Keep the source in one mounted position while independent Work reads settle. */}
+      {recordedFindings}
+      {nativeWorkState !== 'ready' ? <p role="status">{nativeWorkState === 'loading'
+        ? 'Native Work is still being read. Recorded findings are a separate source.'
+        : 'Current Work could not be read. Retry a source above to inspect its records.'}</p>
+        : !hasNativeWork ? <section className="ops-desk-first-use"><h2>Start with one real commitment</h2>
+          <p>What needs to happen next, who should own it, and when does it matter? Prepare it with PAIGE or open Work to record the next step.</p>
+          <div>{navigate("Open Work", "Work")}{navigate("Plan a project", "Projects")}</div>
+          <p className="ops-view-muted">Only work available in the current sources appears here.</p>
+        </section> : <><section><div className="ops-desk-section-heading"><h2>Work in motion</h2>{navigate("All work", "Work")}</div>
         {operating.length ? rows(operating.slice(0, 6)) : <p className="ops-view-muted">{spotlight ? "The priority commitment is shown above." : "No other active tasks or milestones in the sources shown."}</p>}
         {operating.length > 6 && <p className="ops-view-muted">Showing 6 of {operating.length} other active items. Open Work to inspect the rest.</p>}
       </section>
@@ -83,8 +86,8 @@ export function OperationsOverview({ tenantId, plans, items, members, crmTasks =
         <ul className="ops-desk-project-list">{plans.slice(0, 3).map(plan => <li key={plan.id}><button type="button" className="ops-view-text-action" onClick={() => onInspectPlan(plan)}>{plan.title}<ArrowUpRight size={15} aria-hidden="true" /></button>
           <span className="ops-view-muted">{plan.items.filter(item => item.status === "done").length} of {plan.items.filter(item => item.status !== "cancelled").length} recorded items completed</span></li>)}</ul>
       </section>}
-      {onNavigate && <nav className="ops-desk-connections" aria-label="Connected Operations work">{navigate("Client promises", "Delivery")}{navigate("People and workload", "Capacity")}{navigate("Procedures", "Playbooks")}</nav>}
-    </div><aside className="ops-desk-next-column">
+      {onNavigate && <nav className="ops-desk-connections" aria-label="Connected Operations work">{navigate("Client promises", "Delivery")}{navigate("People and workload", "Capacity")}{navigate("Procedures", "Playbooks")}</nav>}</>}
+    </div>{hasNativeWork && <aside className="ops-desk-next-column">
       <section className="ops-desk-commitments"><h2>Next deadlines</h2>{work.upcoming.length ? rows(work.upcoming) : <p className="ops-view-muted">No upcoming task deadlines in the work shown.</p>}
         {inspectGroup("View deadlines in Work", "deadlines", work.deadlines.length)}</section>
       {work.reminders.length > 0 && <section className="ops-desk-reminders"><div className="ops-desk-section-heading"><h2>Recorded reminders</h2>{!onInspectWorkSet && navigate("Inspect in Work", "Work")}</div>{rows(work.reminders.slice(0, 4))}
@@ -98,6 +101,6 @@ export function OperationsOverview({ tenantId, plans, items, members, crmTasks =
         {inspectGroup("Review all missing dates", "timing", work.timingToConfirm.length)}
         {onReviewWorkWithPaige && <button type="button" className="ops-view-text-action" onClick={() => onReviewWorkWithPaige(timing.native)}>Prepare a review with PAIGE</button>}
       </> : <p className="ops-view-muted">Review the current commitments with PAIGE before preparing changes. Missing business context and unavailable sources still need checking.</p>}</section>
-    </aside></div>}
+    </aside>}</div>
   </section>;
 }

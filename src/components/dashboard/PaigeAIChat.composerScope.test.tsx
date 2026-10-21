@@ -166,6 +166,28 @@ describe("PaigeAIChat ComposerScopeState integration", () => {
     expect(textarea().disabled).toBe(false);
   };
 
+  it("ignores the pending status gate after unmount and browser teardown", async () => {
+    let resolveSession!: (value: Awaited<ReturnType<typeof supabase.auth.getSession>>) => void;
+    const pendingSession = new Promise<Awaited<ReturnType<typeof supabase.auth.getSession>>>(resolve => { resolveSession = resolve; });
+    vi.mocked(supabase.auth.getSession).mockReturnValueOnce(pendingSession);
+    const schedule = vi.spyOn(window, "setTimeout");
+    await render(); await type("Read my business state");
+    await act(async () => { send().click(); await settle(); });
+    const gate = schedule.mock.calls.find(([, delay]) => delay === 400)?.[0];
+    expect(typeof gate).toBe("function");
+    await act(async () => root.unmount());
+    const browserWindow = window;
+    try {
+      vi.stubGlobal("window", undefined);
+      expect(() => (gate as () => void)()).not.toThrow();
+    } finally {
+      vi.stubGlobal("window", browserWindow);
+      resolveSession({ data: { session: null }, error: null });
+      await act(async () => settle());
+    }
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
   it("uses the incumbent composer guidance for failed reload retention without sending", async () => {
     setComposerDraftSessionScope({ kind: "ready", tenantId: harness.tenantId!, userId: harness.userId! });
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("Quota"); });

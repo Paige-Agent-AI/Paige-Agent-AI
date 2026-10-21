@@ -1696,7 +1696,9 @@ const PaigeAIChatInner = ({
       assistantId, startedAt: assistantTs, frame: null, rows: [], writing: false, gateOpen: false,
       streaming: true, endCause: null, elapsedMs: null, userText, stopFocus: true, resumed: false, answering: !!answer,
     });
-    const gateId = window.setTimeout(() => updateLiveTurn(assistantId, (t) => ({ ...t, gateOpen: true })), TURN_LINE_GATE_MS);
+    const gateId = window.setTimeout(() => {
+      if (ticketAccepted(requestTicket)) updateLiveTurn(assistantId, (t) => ({ ...t, gateOpen: true }));
+    }, TURN_LINE_GATE_MS);
     const timeoutId = soloTenantSafety ? window.setTimeout(() => {
       if (!ticketAccepted(requestTicket)) return;
       // The line stops honestly ("Stopped listening at six minutes"), never "Done".

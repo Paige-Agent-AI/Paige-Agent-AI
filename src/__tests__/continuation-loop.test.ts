@@ -12,6 +12,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it, expect } from "vitest";
+import { ScriptTarget, transpile } from "typescript";
 
 const root = join(__dirname, "..", "..");
 const chat = readFileSync(join(root, "supabase/functions/paige-ai-chat/index.ts"), "utf8");
@@ -24,6 +25,44 @@ function extractRegex(name: string): RegExp {
 
 const actionIntent = extractRegex("ACTION_INTENT_RE");
 const proseTerminal = extractRegex("PROSE_TERMINAL_RE");
+
+// Exercise the actual handler gate, including negation and accepted-offer/client
+// precedence, rather than testing a second implementation of its text rules.
+function continuesRequest(text: string, overrides: Record<string, unknown> = {}): boolean {
+  const start = chat.indexOf("const ACTION_INTENT_RE =");
+  const end = chat.indexOf("\n      })();", start);
+  if (start < 0 || end < 0) throw new Error("actual continuation gate not found");
+  const gate = chat.slice(start, end + "\n      })();".length);
+  const context = { callerTier: "owner", acceptedKind: null, resumeCalls: [], answerResume: false,
+    heldAccept: false, aiMessages: [{ role: "user", content: text }], ...overrides };
+  const javascript = transpile(gate, { target: ScriptTarget.ES2022 });
+  return new Function(...Object.keys(context), `${javascript}\nreturn isActionIntent;`)(...Object.values(context));
+}
+
+describe("actual continuation gate — forbidden actions are not requests", () => {
+  for (const text of [
+    "ZION, briefly introduce your Operations and Automation responsibilities and explain how you work under PAIGE. This is a read-only release check: do not read or change business records, create, schedule, send, approve or run anything.",
+    "Review this week's work. Do not create, change, send or schedule anything.",
+    "Explain the plan. Don't create tasks, send emails, or approve anything.",
+    "Explain the plan. Don’t create tasks, send emails, or approve anything.",
+    "Review priorities. Never create tasks, send emails, or schedule reminders during this review.",
+  ]) it(`ends a read-only request: ${text.slice(0, 65)}`, () => expect(continuesRequest(text)).toBe(false));
+
+  for (const text of [
+    "Create an internal task. Do not send any emails.",
+    "Do not send any emails. Create an internal task.",
+    "Do not send any emails; I need you to create an internal task.",
+    "Do not send any emails, but I need you to create an internal task.",
+    "Never mind, create an internal task.",
+    "Don't forget, create an internal task.",
+  ]) it(`preserves a separate affirmative request: ${text}`, () => expect(continuesRequest(text)).toBe(true));
+
+  it("preserves the client-seat refusal and original accepted-offer precedence", () => {
+    expect(continuesRequest("Create an internal task", { callerTier: "client" })).toBe(false);
+    expect(continuesRequest("Go ahead", { acceptedKind: "prose", heldAccept: false })).toBe(false);
+    expect(continuesRequest("Go ahead", { acceptedKind: "act", heldAccept: true })).toBe(true);
+  });
+});
 
 describe("action intent — the reviewer's false-positive class is dead", () => {
   const NOT_ACTIONS = [

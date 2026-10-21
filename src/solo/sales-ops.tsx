@@ -2264,7 +2264,7 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
         {agreements.agreementsReadable && termRows.length > 0 && <div className="so-filters">
           <label className="so-search"><span>Find an agreement</span><input type="search" value={termSearch} placeholder="Client, document or signer…" onChange={(e) => { setTermSearch(e.target.value); setTermPage(0); }} /></label>
           <label className="so-search"><span>Signature</span><select aria-label="Signature state" value={visibleTermStatus} onChange={(e) => { setTermStatus(e.target.value); setTermPage(0); }}><option value="all">Any signature state</option>{Object.entries(SIGNATURE_STATE).filter(([key]) => key !== "none" || signingsReadable).map(([key, value]) => <option key={key} value={key}>{value.label}</option>)}</select></label>
-          <small className="so-filters-note">Searches the latest {termRows.length} loaded records (up to 200).</small>
+          <small className="so-filters-note">Searches {termRows.length} loaded records only. Each source loads up to 200 records.</small>
         </div>}
         {["loading", "resolving"].includes(agreements.phase) ? <p role="status">Loading commercial terms…</p> : agreements.phase === "error" ? (
           <p className="so-absent">

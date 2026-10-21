@@ -59,10 +59,17 @@ input and width changes. Final phone height/content both74px, no clipping. Earli
 initial captures stay local/excluded. No unrelated visual redesign.
 
 [Native index and exact source hashes](assets/e2-draft-reload/native-index.json)
-records10 native captures, contrasts5.32:1 light/7.52:1 dark, correct product fonts,
+records10 unmodified native JPEG captures, contrasts5.32:1 light/7.52:1 dark, correct product fonts,
 no overflow and five bounded functional observations. Context/history/model/upload
 adapters and scripted quota failures are explicit. No real business data, account,
 provider action, source capability execution or production security proof.
+
+Final artifact inspection corrected the original `.png` filenames to `.jpg`:
+all ten files already contained JPEG bytes. Git blob equality proves each rename
+preserves the original pixels; independently parsed JPEG dimensions match every
+declared DOM viewport. The index now records format, pixel dimensions and SHA256.
+Production source hashes are unchanged. This evidence correction receives fresh
+exact-head review/CI; it does not convert the full-shell UNVERIFIED fields to PASS.
 
 Reproduction extends the existing actual-Chat harness, not a separate QA engine:
 `node node_modules/vite/bin/vite.js --config scripts/live-drive/harness/paige-chat-mount/draft-reload.vite.config.ts`,

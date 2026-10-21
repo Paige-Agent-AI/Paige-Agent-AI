@@ -39,6 +39,7 @@ export type CanonicalDestination =
   | "business_game_plan"
   | "trust_compass"
   | "mind"
+  | "portal_knowledge"
   | "marketplace"
   | "marketplace_submissions"
   // Experience 04 E4-S3: where a read PAIGE answered from can be checked. Solo only — the other
@@ -83,6 +84,7 @@ const ROUTES: Record<MountedTier, Partial<Record<CanonicalDestination, string>>>
     business_game_plan: "/solo/{account}/command-center/business-game-plan",
     trust_compass: "/solo/{account}/command-center/trust-compass",
     mind: "/solo/{account}/command-center/mind",
+    portal_knowledge: "/solo/{account}/clients/portal?view=knowledge",
     billing: "/solo/{account}/settings/billing",
     security: "/solo/{account}/settings/security-data",
     settings: "/solo/{account}/settings/setup",
@@ -171,7 +173,7 @@ export type CanonicalRecordLink = { path: string; status: "exact" | "surface_onl
 /** The focus parameters the mounted surfaces already read (UUIDs only). */
 const RECORD_FOCUS: Record<MountedTier, Partial<Record<CanonicalDestination, string>>> = {
   operator: {},
-  solo: { contacts: "person", pipeline: "deal", sales_invoices: "invoice", tasks: "task", operations_work: "task", business_game_plan: "play" },
+  solo: { contacts: "person", pipeline: "deal", sales_invoices: "invoice", tasks: "task", operations_work: "task", business_game_plan: "play", portal_knowledge: "source" },
   sub_account: {},
   agency: {},
 };

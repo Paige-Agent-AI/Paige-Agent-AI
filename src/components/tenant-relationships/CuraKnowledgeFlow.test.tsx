@@ -5,11 +5,24 @@ import {webcrypto} from 'node:crypto';
 import {setImmediate as nextNodeTurn,setTimeout as nodeDelay} from 'node:timers';
 import {afterEach,beforeEach,expect,it,vi} from 'vitest';
 import {CuraKnowledgePanel} from './CuraKnowledgePanel';
+import {OwnerPortalDashboard} from './OwnerPortalDashboard';
+
+
+// Unrelated dashboard producers are neutral transport boundaries; the parent,
+// teaching panel, focus listener and native Knowledge adapters below stay real.
+vi.mock('next-themes',()=>({useTheme:()=>({resolvedTheme:'light'})}));
+vi.mock('@/hooks/useFinanceEntitlement',()=>({useFinanceEntitlement:()=>({entitled:false,loading:false,staffViewer:false})}));
+vi.mock('@/hooks/useBrandKit',()=>({useBrandKit:()=>({state:{effective:{product_name:'Test Service',primary_color:'#44414e',tagline:'',logo_url:null}},isLoading:false,isError:false,refetch:()=>{}})}));
+vi.mock('@/hooks/useRailEvents',()=>({useRailEvents:()=>({events:[],historyStatus:'ready'})}));
+vi.mock('@/hooks/usePortalConfig',()=>({usePortalCatalogInput:()=>({data:{slug:null,authoredUsable:true,modules:[]},isLoading:false,isError:false,refetch:()=>{}})}));
+vi.mock('./usePortalInvitations',()=>({usePortalInvitations:()=>({data:[],isLoading:false,isError:false,refetch:()=>{}})}));
+vi.mock('./PortalConfigurationGate',()=>({PortalConfigurationGate:({children}:{children:React.ReactNode})=><>{children}</>}));
 
 // Real panel, review hook, closed service adapters and original AddKnowledgeFlow.
 // Only transport/identity are synthetic. This is not authenticated/provider proof.
 const f=vi.hoisted(()=>({rpc:vi.fn(),invoke:vi.fn()}));
 const actor='b3b50100-0000-4000-8000-000000000001',tenant='b3b50200-0000-4000-8000-000000000001';
+const secondDoc='b3b50300-0000-4000-8000-000000000002';
 const doc='b3b50300-0000-4000-8000-000000000001',extract='b3b50400-0000-4000-8000-000000000001',publication='b3b50500-0000-4000-8000-000000000001',run='b3b50600-0000-4000-8000-000000000001';
 const now='2026-10-21T12:00:00Z';
 vi.mock('@/hooks/useTenantContext',()=>({useTenantContext:()=>({activeTenantId:tenant,activeUserId:actor,accountContextStatus:'ready',accountContextLoading:false,loading:false})}));
@@ -53,7 +66,11 @@ beforeEach(()=>{
  revision=3;saved=false;published=false;exists=true;inventoryHold=null;
  metadata={title:'Draft service FAQ',summary:null,category:null,tags:[]};
  f.rpc.mockImplementation(async(name:string,args:Record<string,unknown>)=>{
-  if(name==='read_client_portal_business_knowledge')return inventoryHold?inventoryHold.promise:{data:inventory(),error:null};
+  if(name==='read_client_portal_business_knowledge'){
+   if(inventoryHold)return inventoryHold.promise;const value=inventory();
+   if(args.p_document_id===secondDoc)value.documents=value.documents.map(row=>({...row,document_id:String(args.p_document_id),title:'Second approved source'}));
+   return{data:value,error:null};
+  }
   // Native canonical reader deliberately excludes the original draft.
   if(name==='read_tenant_knowledge')return{data:{tenant_id:tenant,documents:[]},error:null};
   if(name==='read_tenant_knowledge_review')return{data:review(),error:null};
@@ -121,4 +138,31 @@ it('settles publication refresh even when Done closes the real original flow fir
  expect(document.querySelector('[role="dialog"]')).toBeNull();expect(host.querySelector('[aria-label="Loading CURA Knowledge"]')).toBeNull();expect(host.textContent).toContain('Private Knowledge');
  expect(f.invoke).toHaveBeenCalledTimes(1);expect(f.rpc.mock.calls.filter(call=>call[0]==='submit_tenant_knowledge_publication')).toHaveLength(1);
  expect(f.rpc.mock.calls.some(call=>call[0]==='set_client_portal_business_knowledge_share')).toBe(false);
+});
+
+it('preserves source A terms when B is queued across a real deferred window-focus refresh',async()=>{
+ published=true;const second=secondDoc;
+ const data={people:[],peopleLoading:false,peopleError:false,retryPeople:()=>{},portalLoading:false,portalError:false,portalConfig:{welcome:{headline:'Welcome'},modules:[]},retryPortal:()=>{}} as unknown as React.ComponentProps<typeof OwnerPortalDashboard>['data'];
+ const show=async(documentId:string)=>{await act(async()=>root.render(<MemoryRouter><OwnerPortalDashboard tenantId={tenant} tenantName="Test Service" data={data} openClient={()=>{}} openPaige={()=>{}} knowledgeReference={{documentId,invalid:false}}/></MemoryRouter>));await flush();};
+ await show(doc);await click('Review sharing');const kind=host.querySelector('select[id$="-kind"]') as HTMLSelectElement;
+ await act(async()=>{kind.value='faq';kind.dispatchEvent(new Event('change',{bubbles:true}));});await show(second);expect(host.textContent).toContain('Finish or close your current review');
+ inventoryHold=deferred();await act(async()=>window.dispatchEvent(new Event('focus')));await flush();
+ expect(host.querySelector('[role="status"][aria-label="Loading CURA Knowledge"]')).not.toBeNull();expect(button('Back to experience').disabled).toBe(true);expect(button('Cancel source review').disabled).toBe(false);
+ expect(f.rpc.mock.calls.some(call=>call[0]==='read_client_portal_business_knowledge'&&call[1].p_document_id===second)).toBe(false);
+ const held=inventoryHold;inventoryHold=null;await act(async()=>held.resolve({data:inventory(),error:null}));await flush();
+ expect((host.querySelector('select[id$="-kind"]') as HTMLSelectElement).value).toBe('faq');expect(host.textContent).not.toContain('Second approved source');
+ await click('Cancel');expect(host.textContent).toContain('Second approved source');expect(f.rpc.mock.calls.some(call=>call[0]==='set_client_portal_business_knowledge_share')).toBe(false);expect(f.invoke).not.toHaveBeenCalled();
+});
+
+it('defers a removed URL reference through real source terms then reopens all Knowledge without the stale filter',async()=>{
+ published=true;
+ const data={people:[],peopleLoading:false,peopleError:false,retryPeople:()=>{},portalLoading:false,portalError:false,portalConfig:{welcome:{headline:'Welcome'},modules:[]},retryPortal:()=>{}} as unknown as React.ComponentProps<typeof OwnerPortalDashboard>['data'];
+ const show=async(documentId:string|null)=>{await act(async()=>root.render(<MemoryRouter><OwnerPortalDashboard tenantId={tenant} tenantName="Test Service" data={data} openClient={()=>{}} openPaige={()=>{}} knowledgeReference={documentId?{documentId,invalid:false}:null}/></MemoryRouter>));await flush();};
+ await show(doc);await click('Review sharing');const kind=host.querySelector('select[id$="-kind"]') as HTMLSelectElement;
+ await act(async()=>{kind.value='faq';kind.dispatchEvent(new Event('change',{bubbles:true}));});await show(null);
+ expect((host.querySelector('select[id$="-kind"]') as HTMLSelectElement).value).toBe('faq');expect(button('Back to experience').disabled).toBe(true);expect(host.textContent).toContain('Finish or close your current review');
+ await click('Cancel');expect(host.querySelector('select[id$="-kind"]')).toBeNull();expect(button('Manage Knowledge')).toBeDefined();await vi.waitFor(()=>expect(document.activeElement).toBe(button('Manage Knowledge')));
+ await click('Manage Knowledge');expect(host.textContent).not.toContain('Showing the linked source');
+ expect(f.rpc.mock.calls.some(call=>call[0]==='read_client_portal_business_knowledge'&&call[1].p_document_id===null)).toBe(true);
+ expect(f.rpc.mock.calls.some(call=>call[0]==='set_client_portal_business_knowledge_share')).toBe(false);expect(f.invoke).not.toHaveBeenCalled();
 });

@@ -1,0 +1,194 @@
+{
+  "scope": "LOCAL_SOURCE_RENDER_SYNTHETIC_NOT_AUTHENTICATED",
+  "viewports": [
+    {
+      "file": "source-1536-closed.jpg",
+      "dock": "closed",
+      "mainScrollWidth": 1454,
+      "mainWidth": 1454,
+      "scrollOwner": "auto",
+      "viewport": [
+        1536,
+        770
+      ]
+    },
+    {
+      "file": "source-1536-open.jpg",
+      "dock": "open",
+      "mainScrollWidth": 1055,
+      "mainWidth": 1055,
+      "scrollOwner": "auto",
+      "viewport": [
+        1536,
+        770
+      ]
+    },
+    {
+      "file": "source-1366-closed.jpg",
+      "dock": "closed",
+      "mainScrollWidth": 1285,
+      "mainWidth": 1285,
+      "scrollOwner": "auto",
+      "viewport": [
+        1366,
+        768
+      ]
+    },
+    {
+      "file": "source-1366-open.jpg",
+      "dock": "open",
+      "mainScrollWidth": 930,
+      "mainWidth": 930,
+      "scrollOwner": "auto",
+      "viewport": [
+        1366,
+        768
+      ]
+    },
+    {
+      "file": "source-1024-closed.jpg",
+      "dock": "closed",
+      "mainScrollWidth": 942,
+      "mainWidth": 942,
+      "scrollOwner": "auto",
+      "viewport": [
+        1024,
+        768
+      ]
+    },
+    {
+      "file": "source-1024-open.jpg",
+      "dock": "open",
+      "mainScrollWidth": 942,
+      "mainWidth": 942,
+      "scrollOwner": "auto",
+      "viewport": [
+        1024,
+        768
+      ]
+    },
+    {
+      "file": "source-900-closed.jpg",
+      "dock": "closed",
+      "mainScrollWidth": 828,
+      "mainWidth": 828,
+      "scrollOwner": "auto",
+      "viewport": [
+        900,
+        1000
+      ]
+    },
+    {
+      "file": "source-900-open.jpg",
+      "dock": "open",
+      "mainScrollWidth": 828,
+      "mainWidth": 828,
+      "scrollOwner": "auto",
+      "viewport": [
+        900,
+        1000
+      ]
+    }
+  ],
+  "reflow": {
+    "durations": [
+      {
+        "animation": "1e-05s",
+        "transition": "1e-05s"
+      },
+      {
+        "animation": "1e-05s",
+        "transition": "1e-05s"
+      },
+      {
+        "animation": "1e-05s",
+        "transition": "1e-05s"
+      },
+      {
+        "animation": "1e-05s",
+        "transition": "1e-05s"
+      },
+      {
+        "animation": "1e-05s",
+        "transition": "1e-05s"
+      },
+      {
+        "animation": "1e-05s",
+        "transition": "1e-05s"
+      },
+      {
+        "animation": "1e-05s",
+        "transition": "1e-05s"
+      },
+      {
+        "animation": "1e-05s",
+        "transition": "1e-05s"
+      },
+      {
+        "animation": "1e-05s",
+        "transition": "1e-05s"
+      },
+      {
+        "animation": "1e-05s",
+        "transition": "1e-05s"
+      },
+      {
+        "animation": "1e-05s",
+        "transition": "1e-05s"
+      },
+      {
+        "animation": "1e-05s",
+        "transition": "1e-05s"
+      },
+      {
+        "animation": "1e-05s",
+        "transition": "1e-05s"
+      },
+      {
+        "animation": "1e-05s",
+        "transition": "1e-05s"
+      },
+      {
+        "animation": "1e-05s",
+        "transition": "1e-05s"
+      },
+      {
+        "animation": "1e-05s",
+        "transition": "1e-05s"
+      },
+      {
+        "animation": "1e-05s",
+        "transition": "1e-05s"
+      },
+      {
+        "animation": "1e-05s",
+        "transition": "1e-05s"
+      },
+      {
+        "animation": "1e-05s",
+        "transition": "1e-05s"
+      },
+      {
+        "animation": "1e-05s",
+        "transition": "1e-05s"
+      }
+    ],
+    "reduced": true,
+    "scrollWidth": 369,
+    "viewport": [
+      450,
+      900
+    ],
+    "width": 369
+  },
+  "heldReview": {
+    "backDisabled": true,
+    "held": true,
+    "kind": "faq",
+    "original": true
+  },
+  "retirement": {
+    "missingStatus": true,
+    "oldSourceVisible": false
+  }
+}

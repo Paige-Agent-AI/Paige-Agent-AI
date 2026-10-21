@@ -18,8 +18,11 @@ INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner,joined_
  ('e0c10200-0000-4000-8000-00000000000a','e0c10100-0000-4000-8000-0000000000a5','member','active',false,now()),
  ('e0c10200-0000-4000-8000-00000000000b','e0c10100-0000-4000-8000-0000000000a1','owner','active',true,now()),
  ('e0c10200-0000-4000-8000-00000000000b','e0c10100-0000-4000-8000-0000000000b1','owner','active',true,now());
+-- A real external-client relationship is not staff workspace membership.
+INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,status) VALUES
+ ('e0c10300-0000-4000-8000-0000000000a2','e0c10200-0000-4000-8000-00000000000a','e0c10100-0000-4000-8000-0000000000a2','e0c10100-0000-4000-8000-0000000000a1','Test','Customer','active');
 UPDATE public.profiles SET active_tenant_id='e0c10200-0000-4000-8000-00000000000a' WHERE user_id IN
- ('e0c10100-0000-4000-8000-0000000000a1','e0c10100-0000-4000-8000-0000000000a2','e0c10100-0000-4000-8000-0000000000a5','e0c10100-0000-4000-8000-0000000000f1');
+ ('e0c10100-0000-4000-8000-0000000000a1','e0c10100-0000-4000-8000-0000000000a5','e0c10100-0000-4000-8000-0000000000f1');
 UPDATE public.profiles SET active_tenant_id='e0c10200-0000-4000-8000-00000000000b' WHERE user_id='e0c10100-0000-4000-8000-0000000000b1';
 CREATE FUNCTION pg_temp.u(w text) RETURNS uuid LANGUAGE sql AS $$ SELECT ('e0c10100-0000-4000-8000-0000000000'||w)::uuid $$;
 CREATE FUNCTION pg_temp.t(w text) RETURNS uuid LANGUAGE sql AS $$ SELECT ('e0c10200-0000-4000-8000-00000000000'||w)::uuid $$;

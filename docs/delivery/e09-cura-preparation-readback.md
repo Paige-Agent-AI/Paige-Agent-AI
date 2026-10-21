@@ -23,3 +23,8 @@ Native role/isolation proof is supabase/tests/e09_cura_preparation_readback.sql 
 Functional: BUILT/source only, native tests UNVERIFIED until execution. Visual: NOT_APPLICABLE, no UI change. Experiential: prerequisite only; actual owner Chat/Live recovery and integrated customer journey PROOF OWED. Acceptance: no founder walkthrough requested before complete Experience.
 
 Internal build identity is the exact owning PR head; development/preview channel. Migration20271113100000 NOT_DEPLOYED at preparation, after actual production13090000 (E04 signing-context release); all five dependency bodies/owners re-read unchanged. Existing originating capability/ALG-01/12 reconciliation support only; no new verified algorithm or catalogue-LIVE claim. Web/Edge NOT_APPLICABLE for this native-only slice. No customer version/announcement. Merge requires distinct review and exact-head required CI/Preview; production requires normal deployment and direct body/ACL/dependency readback. Recovery is a reviewed additive forward correction or caller disuse, preserving original sources, work, shares and receipts.
+
+
+## Hosted fixture correction — 2026-10-21
+
+Initial4239 database job119425240415 reached the new proof but its setup was refused before any subtests: the fixture tried assigning an external-client login to an owner/staff active workspace. The production guard correctly rejected this. The corrected fixture creates the original CRM linked-client relationship and leaves that external customer outside staff workspace selection; no staff role, guard, production function or assertion changed. All47 original assertions still require execution on the repaired head; the earlier source review is not a test PASS.

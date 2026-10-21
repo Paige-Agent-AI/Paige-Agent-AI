@@ -149,18 +149,21 @@ try{
   run(auth(`SELECT public.paige_chat_interactive_begin_v2(${q(thread)},${q(intent)},NULL,'Approve exact native reminder',false,false,true)`));
   run(service(`SELECT public.paige_chat_interactive_acquire_bound(${[thread,actor,tenant,intent,nonce,id(70)].map(q).join(',')},'abcdefghijklmnopqrst_${id(80)}_445')`));
   async function serialized(label,sql,secondSql=sql,{delayMs=0,errorCode}={}){
-   const held=await db.holdArchive(sql);
+   const held=await db.holdArchive(sql,[],{manualRelease:true});
    if(delayMs)await new Promise(r=>setTimeout(r,delayMs));
    const child=spawn(db.psql,db.args(),{stdio:['pipe','pipe','pipe'],windowsHide:true});let output='',error='';
    child.stdout.on('data',d=>output+=d);child.stderr.on('data',d=>error+=d);
    const done=new Promise((resolve,reject)=>{child.on('error',reject);child.on('close',code=>code===0||errorCode&&error.includes(` ${errorCode}:`)?resolve():reject(Error(error)));});
    child.stdin.end(`\\set VERBOSITY verbose\nSET application_name='reminder_${label}';${secondSql};`);
    let waited=false;
-   for(let i=0;i<8;i++){
-    const state=run(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name='reminder_${label}' AND wait_event_type='Lock')`);
-    if(state==='t'){waited=true;break;}
-    await new Promise(r=>setTimeout(r,30));
-   }
+   done.catch(()=>{}); // preserve rejection for await without racing the observation loop
+   try{
+    for(let i=0;i<8;i++){
+     const state=run(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name='reminder_${label}' AND wait_event_type='Lock')`);
+     if(state==='t'){waited=true;break;}
+     await new Promise(r=>setTimeout(r,30));
+    }
+   }finally{held.release(waited);}
    await Promise.all([done,held.completed]);assert(waited,`${label}: actual second connection must wait on first native transaction`);
    console.log(`PASS actual two-connection ${label}: second call observed waiting on native transaction lock`);
    if(errorCode){assert.match(error,new RegExp(` ${errorCode}:`));return {sqlstate:errorCode};}

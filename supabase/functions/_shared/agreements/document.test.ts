@@ -27,6 +27,7 @@ import {
   wouldLoseCharacters,
 } from "./document.ts";
 import { sanitizeWinAnsi } from "../doc-render.ts";
+import { FakeTime } from "https://deno.land/std@0.190.0/testing/time.ts";
 
 const PDF_MAGIC = "%PDF";
 
@@ -122,16 +123,20 @@ Deno.test("re-rendering does NOT reproduce the bytes — which is why the sealed
   // re-making the document on demand and trusting the stored hash — and the hash would then
   // describe an artifact that no longer exists. The RENDER ONCE, NEVER RE-RENDER rule at the top
   // of this file is load-bearing precisely because of what is asserted below.
-  const first = await renderPresentedPdf({ title: "Services Agreement", bodyMarkdown: BODY });
-  const immediate = await renderPresentedPdf({ title: "Services Agreement", bodyMarkdown: BODY });
-  // Within one clock tick the bytes DO agree — the timestamp is the only varying input.
-  assertEquals(await hashDocument(first), await hashDocument(immediate));
+  // "Immediate" is not necessarily the same second: CI can cross the boundary
+  // between two fast renders. Control the clock, retaining both integrity checks.
+  const time = new FakeTime("2026-06-01T12:00:00.000Z");
+  try {
+    const first = await renderPresentedPdf({ title: "Services Agreement", bodyMarkdown: BODY });
+    const immediate = await renderPresentedPdf({ title: "Services Agreement", bodyMarkdown: BODY });
+    assertEquals(await hashDocument(first), await hashDocument(immediate));
 
-  // Across a tick they do not. 1.1s is measured to be sufficient; if that ever stops being true
-  // this fails loudly and the next person re-measures rather than inheriting a false claim.
-  await new Promise((resolve) => setTimeout(resolve, 1100));
-  const later = await renderPresentedPdf({ title: "Services Agreement", bodyMarkdown: BODY });
-  assertNotEquals(await hashDocument(first), await hashDocument(later));
+    time.tick(1100);
+    const later = await renderPresentedPdf({ title: "Services Agreement", bodyMarkdown: BODY });
+    assertNotEquals(await hashDocument(first), await hashDocument(later));
+  } finally {
+    time.restore();
+  }
 });
 
 Deno.test("different content hashes differently — the digest tracks the document", async () => {

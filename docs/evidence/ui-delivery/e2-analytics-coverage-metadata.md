@@ -28,7 +28,7 @@ MOTION_PURPOSE: NONE: data-only producer.
 PROTECTED_SEAMS: Metric/Evidence Fabric, Spine/Harness/Trust/Rail, originating domain records, provider readiness and execution remain unchanged.
 ALGORITHM_SUPPORT: NO VERIFIED ALGORITHM added or activated; canonical ALG03/04/06/11/12/13 remain partial/unverified dependencies, not coverage labels.
 
-INTERNAL_BUILD_IDENTITY: d545ef2c90d1d941ce656673868e394bb8a6a714; deployment=none; environment=local; migrations=20271113030000 candidate; edge=NOT_APPLICABLE; evidence=ANT-161/8e106d97; identity-role=supporting current-main foundation, exact final producer identified by PR receipt.
+INTERNAL_BUILD_IDENTITY: d545ef2c90d1d941ce656673868e394bb8a6a714; deployment=none; environment=local; migrations=PROOF_OWED(20271113030000 normal forward release after EXP05/13020000); edge=NOT_APPLICABLE; evidence=ANT-161/8e106d97; identity-role=supporting current-main foundation, exact final producer identified by PR receipt.
 RELEASE_CHANNEL: development: producer follows compatible presenter2444 and coordinated EXP05/13020000.
 RELEASE_CLASSIFICATION: internal-only: no complete capability availability or full Experience claim.
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement.

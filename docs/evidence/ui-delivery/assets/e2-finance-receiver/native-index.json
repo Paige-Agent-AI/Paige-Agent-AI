@@ -1,0 +1,786 @@
+{
+  "kind": "synthetic-native-render-not-customer-acceptance",
+  "viewportReview": {
+    "date": "2026-10-21",
+    "standard": "docs/doctrine/paige-ui-delivery-standard.md Solo requirements",
+    "css1536": "PASS: both original captures measure actual1536x770 CSS viewport, document1536/1536 and panel1310/1310 or787/787, loaded font and correct light/dark context; original native pixels independently inspected",
+    "exact1536Raster": "UNVERIFIED: original JPEG remains1535x770, no image transformation",
+    "disposition": "Earlier exact-raster release hold was overbroad: the standard requires viewport/behavior verification, not an exact encoded raster width. Native CSS viewport coverage is proven; exact-image and real-customer/provider/cohort/Live/founder claims remain separate. Native320px reflow is proven; actual browser zoom remains unverified."
+  },
+  "captures": [
+    {
+      "w": 1536,
+      "h": 770,
+      "theme": "light",
+      "open": false,
+      "file": "banking-1536-light-closed-ready.jpg",
+      "sha256": "9cebd832471c5ddc0897b1100b3e1425eeafe6691fb2c7c4241701086dedd94f",
+      "metric": {
+        "colors": [
+          {
+            "background": "rgb(251, 249, 245)",
+            "color": "rgb(103, 97, 107)"
+          },
+          {
+            "background": "rgb(251, 249, 245)",
+            "color": "rgb(32, 30, 35)"
+          }
+        ],
+        "details": true,
+        "font": true,
+        "panelExpanded": "false",
+        "panelScroll": 1310,
+        "panelWidth": 1310,
+        "scroll": [
+          1536,
+          1536
+        ],
+        "text": "Company account readiness\n\nShowing 1 of 1 eligible production sources. Each company, account and currency stays separate. Source amounts use decimal major units; credit is not cash.\n\nExample Services — original company source label\nPlaid · Recorded source facts\n\nPartial source snapshot · Showing 1 of 1 source accounts. Institution freshness is unverified.\n\nSource observed\nOct 18, 2026, 4:00 AM · America/New_York\nSynchronized\nOct 18, 2026, 4:02 AM · America/New_York\nOriginal operating account label\n\nSource product: deposit\n\nSource balance\nUSD 900719925474099312345.123456\nAvailable cash\nUSD 0\nAvailable credit\nUnavailable\nCredit limit\nUnavailable\nCompany / source revisions\n1 / 2\nSnapshot revision\n3\nSource observation\n60000000-0000-4000-8000-000000000001\nSource receipt reference\n70000000-0000-4000-8000-000000000001\n\nThese are source observations, not proof PAIGE executed work. No company-wide balance, profit or forecast is calculated here.\n\nReview source connections\nReconciliation workbench\n\nBank activity and its matching accounting records are needed before reviewing unmatched postings.\n\nBank activity\nUnavailable\nMatching records\nAccounting coverage needed\nUnmatched items\nNot calculated",
+        "themes": [
+          "light",
+          "light"
+        ],
+        "viewport": [
+          1536,
+          770
+        ]
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 770,
+        "width": 1535
+      },
+      "exactDimensions": false,
+      "dimensionStatus": "UNVERIFIED"
+    },
+    {
+      "w": 1536,
+      "h": 770,
+      "theme": "dark",
+      "open": true,
+      "file": "banking-1536-dark-open-ready.jpg",
+      "sha256": "80c021c3e65acb15c0f100ba0119855a4616b3126c54ff1999cf8579e6afb07a",
+      "metric": {
+        "colors": [
+          {
+            "background": "rgb(16, 14, 20)",
+            "color": "rgb(172, 166, 157)"
+          },
+          {
+            "background": "rgb(16, 14, 20)",
+            "color": "rgb(246, 242, 234)"
+          }
+        ],
+        "details": true,
+        "font": true,
+        "panelExpanded": "true",
+        "panelScroll": 787,
+        "panelWidth": 787,
+        "scroll": [
+          1536,
+          1536
+        ],
+        "text": "Company account readiness\n\nShowing 1 of 1 eligible production sources. Each company, account and currency stays separate. Source amounts use decimal major units; credit is not cash.\n\nExample Services — original company source label\nPlaid · Recorded source facts\n\nPartial source snapshot · Showing 1 of 1 source accounts. Institution freshness is unverified.\n\nSource observed\nOct 18, 2026, 4:00 AM · America/New_York\nSynchronized\nOct 18, 2026, 4:02 AM · America/New_York\nOriginal operating account label\n\nSource product: deposit\n\nSource balance\nUSD 900719925474099312345.123456\nAvailable cash\nUSD 0\nAvailable credit\nUnavailable\nCredit limit\nUnavailable\nCompany / source revisions\n1 / 2\nSnapshot revision\n3\nSource observation\n60000000-0000-4000-8000-000000000001\nSource receipt reference\n70000000-0000-4000-8000-000000000001\n\nThese are source observations, not proof PAIGE executed work. No company-wide balance, profit or forecast is calculated here.\n\nReview source connections\nReconciliation workbench\n\nBank activity and its matching accounting records are needed before reviewing unmatched postings.\n\nBank activity\nUnavailable\nMatching records\nAccounting coverage needed\nUnmatched items\nNot calculated",
+        "themes": [
+          "dark",
+          "dark"
+        ],
+        "viewport": [
+          1536,
+          770
+        ]
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 770,
+        "width": 1535
+      },
+      "exactDimensions": false,
+      "dimensionStatus": "UNVERIFIED"
+    },
+    {
+      "w": 1366,
+      "h": 768,
+      "theme": "light",
+      "open": false,
+      "file": "banking-1366-light-closed-ready.jpg",
+      "sha256": "bb237893bea4b8e71713282b8b70b424910f3160e0bc5dfad864f8225aab5fc8",
+      "metric": {
+        "colors": [
+          {
+            "background": "rgb(251, 249, 245)",
+            "color": "rgb(103, 97, 107)"
+          },
+          {
+            "background": "rgb(251, 249, 245)",
+            "color": "rgb(32, 30, 35)"
+          }
+        ],
+        "details": true,
+        "font": true,
+        "panelExpanded": "false",
+        "panelScroll": 1284,
+        "panelWidth": 1284,
+        "scroll": [
+          1366,
+          1366
+        ],
+        "text": "Company account readiness\n\nShowing 1 of 1 eligible production sources. Each company, account and currency stays separate. Source amounts use decimal major units; credit is not cash.\n\nExample Services — original company source label\nPlaid · Recorded source facts\n\nPartial source snapshot · Showing 1 of 1 source accounts. Institution freshness is unverified.\n\nSource observed\nOct 18, 2026, 4:00 AM · America/New_York\nSynchronized\nOct 18, 2026, 4:02 AM · America/New_York\nOriginal operating account label\n\nSource product: deposit\n\nSource balance\nUSD 900719925474099312345.123456\nAvailable cash\nUSD 0\nAvailable credit\nUnavailable\nCredit limit\nUnavailable\nCompany / source revisions\n1 / 2\nSnapshot revision\n3\nSource observation\n60000000-0000-4000-8000-000000000001\nSource receipt reference\n70000000-0000-4000-8000-000000000001\n\nThese are source observations, not proof PAIGE executed work. No company-wide balance, profit or forecast is calculated here.\n\nReview source connections\nReconciliation workbench\n\nBank activity and its matching accounting records are needed before reviewing unmatched postings.\n\nBank activity\nUnavailable\nMatching records\nAccounting coverage needed\nUnmatched items\nNot calculated",
+        "themes": [
+          "light",
+          "light"
+        ],
+        "viewport": [
+          1366,
+          768
+        ]
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 768,
+        "width": 1366
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
+    },
+    {
+      "w": 1366,
+      "h": 768,
+      "theme": "dark",
+      "open": true,
+      "file": "banking-1366-dark-open-ready.jpg",
+      "sha256": "6d662428c1f2b24369259ff5b6a105e6d934a6f91bdc3543eaf4972b3f6d3b23",
+      "metric": {
+        "colors": [
+          {
+            "background": "rgb(16, 14, 20)",
+            "color": "rgb(172, 166, 157)"
+          },
+          {
+            "background": "rgb(16, 14, 20)",
+            "color": "rgb(246, 242, 234)"
+          }
+        ],
+        "details": true,
+        "font": true,
+        "panelExpanded": "true",
+        "panelScroll": 819,
+        "panelWidth": 819,
+        "scroll": [
+          1366,
+          1366
+        ],
+        "text": "Company account readiness\n\nShowing 1 of 1 eligible production sources. Each company, account and currency stays separate. Source amounts use decimal major units; credit is not cash.\n\nExample Services — original company source label\nPlaid · Recorded source facts\n\nPartial source snapshot · Showing 1 of 1 source accounts. Institution freshness is unverified.\n\nSource observed\nOct 18, 2026, 4:00 AM · America/New_York\nSynchronized\nOct 18, 2026, 4:02 AM · America/New_York\nOriginal operating account label\n\nSource product: deposit\n\nSource balance\nUSD 900719925474099312345.123456\nAvailable cash\nUSD 0\nAvailable credit\nUnavailable\nCredit limit\nUnavailable\nCompany / source revisions\n1 / 2\nSnapshot revision\n3\nSource observation\n60000000-0000-4000-8000-000000000001\nSource receipt reference\n70000000-0000-4000-8000-000000000001\n\nThese are source observations, not proof PAIGE executed work. No company-wide balance, profit or forecast is calculated here.\n\nReview source connections\nReconciliation workbench\n\nBank activity and its matching accounting records are needed before reviewing unmatched postings.\n\nBank activity\nUnavailable\nMatching records\nAccounting coverage needed\nUnmatched items\nNot calculated",
+        "themes": [
+          "dark",
+          "dark"
+        ],
+        "viewport": [
+          1366,
+          768
+        ]
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 768,
+        "width": 1366
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
+    },
+    {
+      "w": 1024,
+      "h": 768,
+      "theme": "light",
+      "open": false,
+      "file": "banking-1024-light-closed-ready.jpg",
+      "sha256": "cd2a6a93b049d870e2d11c7a04d8f4b9feba5e96ba97707d4c7779598affd933",
+      "metric": {
+        "colors": [
+          {
+            "background": "rgb(251, 249, 245)",
+            "color": "rgb(103, 97, 107)"
+          },
+          {
+            "background": "rgb(251, 249, 245)",
+            "color": "rgb(32, 30, 35)"
+          }
+        ],
+        "details": true,
+        "font": true,
+        "panelExpanded": "false",
+        "panelScroll": 942,
+        "panelWidth": 942,
+        "scroll": [
+          1024,
+          1024
+        ],
+        "text": "Company account readiness\n\nShowing 1 of 1 eligible production sources. Each company, account and currency stays separate. Source amounts use decimal major units; credit is not cash.\n\nExample Services — original company source label\nPlaid · Recorded source facts\n\nPartial source snapshot · Showing 1 of 1 source accounts. Institution freshness is unverified.\n\nSource observed\nOct 18, 2026, 4:00 AM · America/New_York\nSynchronized\nOct 18, 2026, 4:02 AM · America/New_York\nOriginal operating account label\n\nSource product: deposit\n\nSource balance\nUSD 900719925474099312345.123456\nAvailable cash\nUSD 0\nAvailable credit\nUnavailable\nCredit limit\nUnavailable\nCompany / source revisions\n1 / 2\nSnapshot revision\n3\nSource observation\n60000000-0000-4000-8000-000000000001\nSource receipt reference\n70000000-0000-4000-8000-000000000001\n\nThese are source observations, not proof PAIGE executed work. No company-wide balance, profit or forecast is calculated here.\n\nReview source connections\nReconciliation workbench\n\nBank activity and its matching accounting records are needed before reviewing unmatched postings.\n\nBank activity\nUnavailable\nMatching records\nAccounting coverage needed\nUnmatched items\nNot calculated",
+        "themes": [
+          "light",
+          "light"
+        ],
+        "viewport": [
+          1024,
+          768
+        ]
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 768,
+        "width": 1024
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
+    },
+    {
+      "w": 1024,
+      "h": 768,
+      "theme": "dark",
+      "open": true,
+      "file": "banking-1024-dark-open-ready.jpg",
+      "sha256": "bc34355ef283a582fe9cf795a143a17f0b315fbafcd5835b12aa7c5987b9163f",
+      "metric": {
+        "colors": [
+          {
+            "background": "rgb(16, 14, 20)",
+            "color": "rgb(172, 166, 157)"
+          },
+          {
+            "background": "rgb(16, 14, 20)",
+            "color": "rgb(246, 242, 234)"
+          }
+        ],
+        "details": true,
+        "font": true,
+        "panelExpanded": "true",
+        "panelScroll": 942,
+        "panelWidth": 942,
+        "scroll": [
+          1024,
+          1024
+        ],
+        "text": "Company account readiness\n\nShowing 1 of 1 eligible production sources. Each company, account and currency stays separate. Source amounts use decimal major units; credit is not cash.\n\nExample Services — original company source label\nPlaid · Recorded source facts\n\nPartial source snapshot · Showing 1 of 1 source accounts. Institution freshness is unverified.\n\nSource observed\nOct 18, 2026, 4:00 AM · America/New_York\nSynchronized\nOct 18, 2026, 4:02 AM · America/New_York\nOriginal operating account label\n\nSource product: deposit\n\nSource balance\nUSD 900719925474099312345.123456\nAvailable cash\nUSD 0\nAvailable credit\nUnavailable\nCredit limit\nUnavailable\nCompany / source revisions\n1 / 2\nSnapshot revision\n3\nSource observation\n60000000-0000-4000-8000-000000000001\nSource receipt reference\n70000000-0000-4000-8000-000000000001\n\nThese are source observations, not proof PAIGE executed work. No company-wide balance, profit or forecast is calculated here.\n\nReview source connections\nReconciliation workbench\n\nBank activity and its matching accounting records are needed before reviewing unmatched postings.\n\nBank activity\nUnavailable\nMatching records\nAccounting coverage needed\nUnmatched items\nNot calculated",
+        "themes": [
+          "dark",
+          "dark"
+        ],
+        "viewport": [
+          1024,
+          768
+        ]
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 768,
+        "width": 1024
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
+    },
+    {
+      "w": 900,
+      "h": 1000,
+      "theme": "light",
+      "open": false,
+      "file": "banking-900-light-closed-ready.jpg",
+      "sha256": "69c44557af6423f0a5207d25bb1ceb87525027bf49b2f0d943b410fbbec33f4b",
+      "metric": {
+        "colors": [
+          {
+            "background": "rgb(251, 249, 245)",
+            "color": "rgb(103, 97, 107)"
+          },
+          {
+            "background": "rgb(251, 249, 245)",
+            "color": "rgb(32, 30, 35)"
+          }
+        ],
+        "details": true,
+        "font": true,
+        "panelExpanded": "false",
+        "panelScroll": 818,
+        "panelWidth": 818,
+        "scroll": [
+          900,
+          900
+        ],
+        "text": "Company account readiness\n\nShowing 1 of 1 eligible production sources. Each company, account and currency stays separate. Source amounts use decimal major units; credit is not cash.\n\nExample Services — original company source label\nPlaid · Recorded source facts\n\nPartial source snapshot · Showing 1 of 1 source accounts. Institution freshness is unverified.\n\nSource observed\nOct 18, 2026, 4:00 AM · America/New_York\nSynchronized\nOct 18, 2026, 4:02 AM · America/New_York\nOriginal operating account label\n\nSource product: deposit\n\nSource balance\nUSD 900719925474099312345.123456\nAvailable cash\nUSD 0\nAvailable credit\nUnavailable\nCredit limit\nUnavailable\nCompany / source revisions\n1 / 2\nSnapshot revision\n3\nSource observation\n60000000-0000-4000-8000-000000000001\nSource receipt reference\n70000000-0000-4000-8000-000000000001\n\nThese are source observations, not proof PAIGE executed work. No company-wide balance, profit or forecast is calculated here.\n\nReview source connections\nReconciliation workbench\n\nBank activity and its matching accounting records are needed before reviewing unmatched postings.\n\nBank activity\nUnavailable\nMatching records\nAccounting coverage needed\nUnmatched items\nNot calculated",
+        "themes": [
+          "light",
+          "light"
+        ],
+        "viewport": [
+          900,
+          1000
+        ]
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 1000,
+        "width": 900
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
+    },
+    {
+      "w": 900,
+      "h": 1000,
+      "theme": "dark",
+      "open": true,
+      "file": "banking-900-dark-open-ready.jpg",
+      "sha256": "aa4764fcfd0aa54387dc0574c468356c136aa58d1d452cfa1a71f32412cb9a5d",
+      "metric": {
+        "colors": [
+          {
+            "background": "rgb(16, 14, 20)",
+            "color": "rgb(172, 166, 157)"
+          },
+          {
+            "background": "rgb(16, 14, 20)",
+            "color": "rgb(246, 242, 234)"
+          }
+        ],
+        "details": true,
+        "font": true,
+        "panelExpanded": "true",
+        "panelScroll": 818,
+        "panelWidth": 818,
+        "scroll": [
+          900,
+          900
+        ],
+        "text": "Company account readiness\n\nShowing 1 of 1 eligible production sources. Each company, account and currency stays separate. Source amounts use decimal major units; credit is not cash.\n\nExample Services — original company source label\nPlaid · Recorded source facts\n\nPartial source snapshot · Showing 1 of 1 source accounts. Institution freshness is unverified.\n\nSource observed\nOct 18, 2026, 4:00 AM · America/New_York\nSynchronized\nOct 18, 2026, 4:02 AM · America/New_York\nOriginal operating account label\n\nSource product: deposit\n\nSource balance\nUSD 900719925474099312345.123456\nAvailable cash\nUSD 0\nAvailable credit\nUnavailable\nCredit limit\nUnavailable\nCompany / source revisions\n1 / 2\nSnapshot revision\n3\nSource observation\n60000000-0000-4000-8000-000000000001\nSource receipt reference\n70000000-0000-4000-8000-000000000001\n\nThese are source observations, not proof PAIGE executed work. No company-wide balance, profit or forecast is calculated here.\n\nReview source connections\nReconciliation workbench\n\nBank activity and its matching accounting records are needed before reviewing unmatched postings.\n\nBank activity\nUnavailable\nMatching records\nAccounting coverage needed\nUnmatched items\nNot calculated",
+        "themes": [
+          "dark",
+          "dark"
+        ],
+        "viewport": [
+          900,
+          1000
+        ]
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 1000,
+        "width": 900
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
+    },
+    {
+      "w": 320,
+      "h": 740,
+      "theme": "light",
+      "open": false,
+      "file": "banking-320-light-closed-ready.jpg",
+      "sha256": "92bb362ddb1818b61c17ccf46c3b8eba578c66d1c2c394efe469e9b18abb873e",
+      "metric": {
+        "colors": [
+          {
+            "background": "rgb(251, 249, 245)",
+            "color": "rgb(103, 97, 107)"
+          },
+          {
+            "background": "rgb(251, 249, 245)",
+            "color": "rgb(32, 30, 35)"
+          }
+        ],
+        "details": true,
+        "font": true,
+        "panelExpanded": "false",
+        "panelScroll": 222,
+        "panelWidth": 222,
+        "scroll": [
+          320,
+          320
+        ],
+        "text": "Company account readiness\n\nShowing 1 of 1 eligible production sources. Each company, account and currency stays separate. Source amounts use decimal major units; credit is not cash.\n\nExample Services — original company source label\nPlaid · Recorded source facts\n\nPartial source snapshot · Showing 1 of 1 source accounts. Institution freshness is unverified.\n\nSource observed\nOct 18, 2026, 4:00 AM · America/New_York\nSynchronized\nOct 18, 2026, 4:02 AM · America/New_York\nOriginal operating account label\n\nSource product: deposit\n\nSource balance\nUSD 900719925474099312345.123456\nAvailable cash\nUSD 0\nAvailable credit\nUnavailable\nCredit limit\nUnavailable\nCompany / source revisions\n1 / 2\nSnapshot revision\n3\nSource observation\n60000000-0000-4000-8000-000000000001\nSource receipt reference\n70000000-0000-4000-8000-000000000001\n\nThese are source observations, not proof PAIGE executed work. No company-wide balance, profit or forecast is calculated here.\n\nReview source connections\nReconciliation workbench\n\nBank activity and its matching accounting records are needed before reviewing unmatched postings.\n\nBank activity\nUnavailable\nMatching records\nAccounting coverage needed\nUnmatched items\nNot calculated",
+        "themes": [
+          "light",
+          "light"
+        ],
+        "viewport": [
+          320,
+          740
+        ]
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 740,
+        "width": 320
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
+    },
+    {
+      "w": 320,
+      "h": 740,
+      "theme": "dark",
+      "open": false,
+      "file": "banking-320-dark-closed-ready.jpg",
+      "sha256": "5d5c6191d075bbd02adbc206ae9e0a0c8dad62bff03f5a1681ece579fb8a6a84",
+      "metric": {
+        "colors": [
+          {
+            "background": "rgb(16, 14, 20)",
+            "color": "rgb(172, 166, 157)"
+          },
+          {
+            "background": "rgb(16, 14, 20)",
+            "color": "rgb(246, 242, 234)"
+          }
+        ],
+        "details": true,
+        "font": true,
+        "panelExpanded": "false",
+        "panelScroll": 222,
+        "panelWidth": 222,
+        "scroll": [
+          320,
+          320
+        ],
+        "text": "Company account readiness\n\nShowing 1 of 1 eligible production sources. Each company, account and currency stays separate. Source amounts use decimal major units; credit is not cash.\n\nExample Services — original company source label\nPlaid · Recorded source facts\n\nPartial source snapshot · Showing 1 of 1 source accounts. Institution freshness is unverified.\n\nSource observed\nOct 18, 2026, 4:00 AM · America/New_York\nSynchronized\nOct 18, 2026, 4:02 AM · America/New_York\nOriginal operating account label\n\nSource product: deposit\n\nSource balance\nUSD 900719925474099312345.123456\nAvailable cash\nUSD 0\nAvailable credit\nUnavailable\nCredit limit\nUnavailable\nCompany / source revisions\n1 / 2\nSnapshot revision\n3\nSource observation\n60000000-0000-4000-8000-000000000001\nSource receipt reference\n70000000-0000-4000-8000-000000000001\n\nThese are source observations, not proof PAIGE executed work. No company-wide balance, profit or forecast is calculated here.\n\nReview source connections\nReconciliation workbench\n\nBank activity and its matching accounting records are needed before reviewing unmatched postings.\n\nBank activity\nUnavailable\nMatching records\nAccounting coverage needed\nUnmatched items\nNot calculated",
+        "themes": [
+          "dark",
+          "dark"
+        ],
+        "viewport": [
+          320,
+          740
+        ]
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 740,
+        "width": 320
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
+    },
+    {
+      "w": 900,
+      "h": 1000,
+      "theme": "light",
+      "open": false,
+      "state": "empty",
+      "file": "banking-900-light-closed-empty.jpg",
+      "sha256": "c93528f57df70498a348f4391a7f0a1881381c227177c00bf0955e4d5860988b",
+      "metric": {
+        "colors": [
+          {
+            "background": "rgb(251, 249, 245)",
+            "color": "rgb(103, 97, 107)"
+          }
+        ],
+        "details": false,
+        "font": true,
+        "panelExpanded": "false",
+        "panelScroll": 828,
+        "panelWidth": 828,
+        "scroll": [
+          900,
+          900
+        ],
+        "text": "Company account readiness\n\nNo verified production financial source was returned. Financial figures are unavailable; this does not mean a zero balance. Review source setup in Finance.\n\nReview source connections\nReconciliation workbench\n\nBank activity and its matching accounting records are needed before reviewing unmatched postings.\n\nBank activity\nUnavailable\nMatching records\nAccounting coverage needed\nUnmatched items\nNot calculated",
+        "themes": [
+          "light",
+          "light"
+        ],
+        "viewport": [
+          900,
+          1000
+        ]
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 1000,
+        "width": 900
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
+    },
+    {
+      "w": 900,
+      "h": 1000,
+      "theme": "dark",
+      "open": false,
+      "state": "loading",
+      "file": "banking-900-dark-closed-loading.jpg",
+      "sha256": "45a9f0a2575845ad410e882471e9d98559c4452c1eb44eeb0ba71968b4dbdd18",
+      "metric": {
+        "colors": [
+          {
+            "background": "rgb(16, 14, 20)",
+            "color": "rgb(172, 166, 157)"
+          }
+        ],
+        "details": false,
+        "font": true,
+        "panelExpanded": "false",
+        "panelScroll": 828,
+        "panelWidth": 828,
+        "scroll": [
+          900,
+          900
+        ],
+        "text": "Company account readiness\n\nReading permitted financial source snapshots…\n\nReview source connections\nReconciliation workbench\n\nBank activity and its matching accounting records are needed before reviewing unmatched postings.\n\nBank activity\nUnavailable\nMatching records\nAccounting coverage needed\nUnmatched items\nNot calculated",
+        "themes": [
+          "dark",
+          "dark"
+        ],
+        "viewport": [
+          900,
+          1000
+        ]
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 1000,
+        "width": 900
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
+    },
+    {
+      "w": 900,
+      "h": 1000,
+      "theme": "light",
+      "open": false,
+      "state": "error",
+      "file": "banking-900-light-closed-error.jpg",
+      "sha256": "8c616cff038273bb73a21e410e17fe6109adb743384f058bf81914222e017cc7",
+      "metric": {
+        "colors": [
+          {
+            "background": "rgb(251, 249, 245)",
+            "color": "rgb(103, 97, 107)"
+          }
+        ],
+        "details": false,
+        "font": true,
+        "panelExpanded": "false",
+        "panelScroll": 828,
+        "panelWidth": 828,
+        "scroll": [
+          900,
+          900
+        ],
+        "text": "Company account readiness\n\nFinancial sources could not be read. No balance is inferred.\n\nRetry financial sources\nReview source connections\nReconciliation workbench\n\nBank activity and its matching accounting records are needed before reviewing unmatched postings.\n\nBank activity\nUnavailable\nMatching records\nAccounting coverage needed\nUnmatched items\nNot calculated",
+        "themes": [
+          "light",
+          "light"
+        ],
+        "viewport": [
+          900,
+          1000
+        ]
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 1000,
+        "width": 900
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
+    },
+    {
+      "w": 900,
+      "h": 1000,
+      "theme": "dark",
+      "open": false,
+      "state": "unavailable",
+      "file": "banking-900-dark-closed-unavailable.jpg",
+      "sha256": "5ea71e22b4c4f2ae4ac566cd2ea24b4f3edf2c773750dfb38dd36bcc8de97740",
+      "metric": {
+        "colors": [
+          {
+            "background": "rgb(16, 14, 20)",
+            "color": "rgb(172, 166, 157)"
+          }
+        ],
+        "details": false,
+        "font": true,
+        "panelExpanded": "false",
+        "panelScroll": 828,
+        "panelWidth": 828,
+        "scroll": [
+          900,
+          900
+        ],
+        "text": "Company account readiness\n\nFinancial source details are unavailable for this review. Refresh or review integrations; unavailable does not mean a zero balance.\n\nReview source connections\nReconciliation workbench\n\nBank activity and its matching accounting records are needed before reviewing unmatched postings.\n\nBank activity\nUnavailable\nMatching records\nAccounting coverage needed\nUnmatched items\nNot calculated",
+        "themes": [
+          "dark",
+          "dark"
+        ],
+        "viewport": [
+          900,
+          1000
+        ]
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 1000,
+        "width": 900
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
+    },
+    {
+      "w": 900,
+      "h": 1000,
+      "theme": "light",
+      "open": false,
+      "state": "member",
+      "file": "banking-900-light-closed-member.jpg",
+      "sha256": "7f6e2d1a20d4022bb86979b8d7f205afbccf6b81fc0fadcf3f4a333e720372b6",
+      "metric": {
+        "colors": [],
+        "details": false,
+        "font": true,
+        "panelExpanded": "false",
+        "panelScroll": 828,
+        "panelWidth": 828,
+        "scroll": [
+          900,
+          900
+        ],
+        "text": "Financial access is restricted\n\nAn active workspace owner or administrator must authorize this read.\n\nRetry access check",
+        "themes": [
+          "light",
+          "light"
+        ],
+        "viewport": [
+          900,
+          1000
+        ]
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 1000,
+        "width": 900
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
+    },
+    {
+      "w": 900,
+      "h": 1000,
+      "theme": "dark",
+      "open": false,
+      "state": "ready",
+      "workspace": true,
+      "file": "banking-900-dark-closed-ready-workspace-b.jpg",
+      "sha256": "e96a2f82c08100f146101499454ebda0b7e5d3402db6b14d90a3bc8cd69c009d",
+      "metric": {
+        "colors": [
+          {
+            "background": "rgb(16, 14, 20)",
+            "color": "rgb(172, 166, 157)"
+          },
+          {
+            "background": "rgb(16, 14, 20)",
+            "color": "rgb(246, 242, 234)"
+          }
+        ],
+        "details": true,
+        "font": true,
+        "panelExpanded": "false",
+        "panelScroll": 818,
+        "panelWidth": 818,
+        "scroll": [
+          900,
+          900
+        ],
+        "text": "Company account readiness\n\nShowing 1 of 1 eligible production sources. Each company, account and currency stays separate. Source amounts use decimal major units; credit is not cash.\n\nExample Services — original company source label\nPlaid · Recorded source facts\n\nPartial source snapshot · Showing 1 of 1 source accounts. Institution freshness is unverified.\n\nSource observed\nOct 18, 2026, 4:00 AM · America/New_York\nSynchronized\nOct 18, 2026, 4:02 AM · America/New_York\nOriginal operating account label\n\nSource product: deposit\n\nSource balance\nUSD 900719925474099312345.123456\nAvailable cash\nUSD 0\nAvailable credit\nUnavailable\nCredit limit\nUnavailable\nCompany / source revisions\n1 / 2\nSnapshot revision\n3\nSource observation\n60000000-0000-4000-8000-000000000001\nSource receipt reference\n70000000-0000-4000-8000-000000000001\n\nThese are source observations, not proof PAIGE executed work. No company-wide balance, profit or forecast is calculated here.\n\nReview source connections\nReconciliation workbench\n\nBank activity and its matching accounting records are needed before reviewing unmatched postings.\n\nBank activity\nUnavailable\nMatching records\nAccounting coverage needed\nUnmatched items\nNot calculated",
+        "themes": [
+          "dark",
+          "dark"
+        ],
+        "viewport": [
+          900,
+          1000
+        ]
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 1000,
+        "width": 900
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
+    }
+  ],
+  "sources": [
+    {
+      "path": "src/solo/finance/FinanceBankingSources.tsx",
+      "sha256": "e6b8ba5237ef1cdc35e18c7e74dd3a68c5ed4e911d89efb69cada7a60941557e"
+    },
+    {
+      "path": "src/solo/finance/FinanceWorkspace.tsx",
+      "sha256": "a4da15b442b892842a013ba9afbb268300a4e904fcd3c7086f143008cb71fe5c"
+    },
+    {
+      "path": "src/solo/finance/finance.css",
+      "sha256": "d84ba2b80aebb33947f84ee62b7ad0f675ef54410e801f584dd3ece50bb46c77"
+    },
+    {
+      "path": "src/solo/ExecutiveFinanceEvidence.tsx",
+      "sha256": "4946edf561942a1c70b376b4023436dc592423eb842ca9ad1e3982789e9db778"
+    },
+    {
+      "path": "src/solo/data/useBusinessReview.ts",
+      "sha256": "11c5b57ab30100496a891b3a044139b5ad6c24b7e4ca8ac42f394e3f99807e53"
+    },
+    {
+      "path": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "sha256": "5a282f5f7c5627856470ae5062ba8cc8d657d3a9478f30261568a9f9c9d223f0"
+    },
+    {
+      "path": "scripts/live-drive/harness/finance-review-mount/main.tsx",
+      "sha256": "d85f4bc9c206d0b843ac32b6f847192fa65397a5a8a008b69729544306d6b55e"
+    },
+    {
+      "path": "scripts/live-drive/harness/finance-review-mount/stubs.tsx",
+      "sha256": "eada5fdec9eac8f163e959b2deff589e2547cfedd8d3da46f9ac24debc63332c",
+      "capturedWorkingSha256": "52e522b99d497ca5336b5cfbb1dcb3ec20cd1d9bf8d44be27139fc353a4901c3",
+      "relationship": "Only UTF8 BOM, CRLF and trailing blank-line normalization after capture; fixture values and execution are unchanged"
+    },
+    {
+      "path": "scripts/live-drive/harness/finance-review-mount/vite.config.ts",
+      "sha256": "501b0ec5791494f47885eef6cba9fd3dbc5a537fb87926cfd0db8f6d5751999d"
+    },
+    {
+      "path": "scripts/live-drive/harness/finance-review-mount/index.html",
+      "sha256": "d7275281517a70794ad3b61311587eea312a5c1f8c2ef9d67b143ac311c7fe0f"
+    }
+  ],
+  "method": {
+    "browser": "native Edge through CUA",
+    "data": "synthetic; all backend calls refused",
+    "capturedSource": "main-compatible local receiver plus development-only data boundaries",
+    "scope": "14 state/view captures and separate keyboard frame match exact raster; two1536 CSS captures are retained as1535x770 support only",
+    "unverified": [
+      "authenticated receiver/provider proof",
+      "actual browser zoom",
+      "assistive technology",
+      "Live",
+      "second legitimate customer cohort",
+      "full19 and founder acceptance",
+      "exact1536x770 raster: browser wrapper returned1535x770"
+    ],
+    "preliminaryPass": "retained locally; requested dark context remained light, then a stale proof tab timed out; no preliminary dark proof promoted",
+    "metricTiming": "UI properties read immediately before each screenshot; actual screenshots remain authoritative, not the detail-open boolean alone",
+    "format": "JPEG native bytes; corrected extensions preserve original bytes"
+  },
+  "normalTextMinimumContrast": 5.707692331559825,
+  "keyboard": {
+    "file": "banking-320-light-keyboard.jpg",
+    "sha256": "9d098392b6e6ed9f02ab33a9178ecdc8d11c52194386517dcc5cd7de605a16ad",
+    "nativeRaster": {
+      "format": "JPEG",
+      "height": 740,
+      "width": 320
+    }
+  }
+}

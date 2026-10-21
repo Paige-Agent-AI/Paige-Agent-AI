@@ -3,7 +3,8 @@ import { formatFinanceSourceAmount } from '../../supabase/functions/_shared/fina
 import { formatReviewInstant } from './executive-review';
 
 /** Same closed Finance facts as PAIGE's review. No totals or provider requests in the UI. */
-export function ExecutiveFinanceEvidence({ evidence, timezone }: { evidence: FinanceReviewEvidence; timezone: string }) {
+export function ExecutiveFinanceEvidence({ evidence, timezone, accountHeadingLevel = 4 }: { evidence: FinanceReviewEvidence; timezone: string; accountHeadingLevel?: 3 | 4 }) {
+  const AccountHeading = accountHeadingLevel === 3 ? 'h3' : 'h4';
   return <section className="exec-finance-evidence" aria-label="Financial source snapshots">
     {!evidence.sources.length ? <p className="exec-note">No verified production financial source was returned. Financial figures are unavailable; this does not mean a zero balance. Review source setup in Finance.</p>
       : <p className="exec-note">Showing {evidence.sources.length} of {evidence.eligible_sources} eligible production sources. Each company, account and currency stays separate. Source amounts use decimal major units; credit is not cash.</p>}
@@ -17,7 +18,7 @@ export function ExecutiveFinanceEvidence({ evidence, timezone }: { evidence: Fin
         </dl>
         {!source.accounts.length && <p className="exec-note">The source returned no account figures. No balance is inferred.</p>}
         {source.accounts.map(account => <section className="exec-finance-account" key={account.native_id} aria-label={account.label}>
-          <h4>{account.label}</h4>{account.product && <p className="exec-note">Source product: {account.product}</p>}
+          <AccountHeading>{account.label}</AccountHeading>{account.product && <p className="exec-note">Source product: {account.product}</p>}
           <dl className="exec-figures">
             <div><dt>Source balance</dt><dd>{formatFinanceSourceAmount(account.current_balance, account.currency)}</dd></div>
             <div><dt>Available cash</dt><dd>{formatFinanceSourceAmount(account.available_cash, account.currency)}</dd></div>

@@ -37,7 +37,7 @@ import { canShowVaultNavigation, useVaultAccess } from "./vault/useBusinessVault
 import { VibeStudio } from "./vibe";
 import { TenantCommandCenterShell } from "@/components/tenant-shell/TenantCommandCenterShell";
 import { resolveTenantAccountContext, tenantShellDestinationsForPath } from "@/components/tenant-shell/tenantShellRoutes";
-import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
+import { cleanPaigePrompt, handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import { AgentPresenceProvider, useAgentPresence } from "@/components/ui/paige";
 import { VoiceDeviceProvider } from "@/lib/voice/VoiceDeviceProvider";
 import { DialPadSurface } from "@/components/admin/voice/DialPadSurface";
@@ -343,7 +343,7 @@ const theme=resolvedTheme==='light'?'light':'dark';
 // Owner directive (2026-08-18) — the slide-in panel pops out from THIS launcher ONLY
 // (the TopBar spark / ⌘K). EVERY rail item, "Paige" included, navigates to its own URL
 // and nothing more; the rail is navigation, never a panel trigger.
-const openPaige=()=>expandRail();
+const openPaige=()=>{setPaigeDockedTab('chat');expandRail()};
 // `paige:open` had three dispatchers in this app and NO listener, so every "Ask PAIGE"
 // on Pipeline dispatched into nothing. This is that listener. It does three separable
 // things and none depends on another: it opens the fold, it hands the surface's drafted
@@ -356,6 +356,7 @@ React.useEffect(()=>{const h=(event:Event)=>{
   const detail=(event as CustomEvent)?.detail;
   const scope=readPaigeOpenScope(detail,activeTenantId);
   if(scope){clearPaigePublicPresenceScope();setPaigeClientScope(scope);}
+  if(scope||cleanPaigePrompt(detail?.prompt))setPaigeDockedTab('chat');
   // The question a surface drafted goes into PAIGE's composer for the owner to send (prefill only).
   handOffPaigePrompt(detail?.prompt);
   expandRail();

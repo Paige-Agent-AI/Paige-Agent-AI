@@ -53,6 +53,13 @@ test('canonical Conversations reference cannot be redirected to Operator by chan
  const modified=new Map(sources);modified.set(path,changed);
  assert.ok(validateIncumbentResourceBindings(chat,modified).findings.includes(`incumbent reviewed source changed: ${path}`));
 });
+test('canonical Marketing reference cannot bypass the reviewed current-account destination',()=>{
+ const path='supabase/functions/_shared/canonical-app-url.ts',raw=sources.get(path);
+ const changed=raw.replace('marketing: "/solo/{account}/growth/overview"','marketing: "/operator/fleet/systems-check"');
+ assert.notEqual(changed,raw,'fixture must alter the actual Marketing destination');
+ const modified=new Map(sources);modified.set(path,changed);
+ assert.ok(validateIncumbentResourceBindings(chat,modified).findings.includes(`incumbent reviewed source changed: ${path}`));
+});
 for(const [label,before,after]of [
  ['inbox read caller substituted','caller: { rpc: async (name, readArgs) => await supabaseClient.rpc(name, readArgs) }','caller: { rpc: async (name, readArgs) => await supabase.rpc(name, readArgs) }'],
  ['inbox verification references supplied by a result','const links = readRecordLinkSource.get(tc);','const links = parsed.paige_record_links;'],

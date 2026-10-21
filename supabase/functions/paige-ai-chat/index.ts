@@ -16,6 +16,7 @@ import { readOperationsTask, type OperationsTaskReadCaller } from "../_shared/op
 import { CRM_TASK_READ_TOOLS } from "../_shared/paige-spine/domains/crm_task.ts";
 import { adoptApprovedReminder, executeApprovedReminder, type ReminderExecutionBinding } from "../_shared/planning/approved-reminder.ts";
 import { readOriginalReminderApprovalHistory } from "../_shared/paige-turn/interactive-reminder-history.ts";
+import { readOriginalCuraPreparationHistory } from "../_shared/paige-turn/interactive-cura-history.ts";
 import type { ContextIdentity } from "../_shared/paige-context/mod.ts";
 import { BUSINESS_METRIC_TOOLS, metricReadContext, readBusinessMetric, type MetricReadOutcome } from '../_shared/analytics-metrics/read.ts';
 import { BUSINESS_SNAPSHOT_TOOLS, readBusinessSnapshotTransport } from '../_shared/paige-context/business-review-chat.ts';
@@ -870,7 +871,14 @@ const messageSchema = z.object({
   // submission uses this as its cross-request identity; a server-generated per-request UUID would
   // recreate INT-180 by dispatching the same document again after a lost response.
   requestIntentId: z.string().uuid().optional(),
-  interactive: z.object({ kind: z.enum(["message", "stop", "status"]), supersedesIntentId: z.string().uuid().optional(), pipelineEffectId: z.string().uuid().optional(), workId: z.string().uuid().optional(), approvalTurnId: z.string().uuid().optional() }).optional(),
+  interactive: z.object({ kind: z.enum(["message", "stop", "status"]), supersedesIntentId: z.string().uuid().optional(), pipelineEffectId: z.string().uuid().optional(), workId: z.string().uuid().optional(), approvalTurnId: z.string().uuid().optional(),
+    includeCuraPreparationHistory: z.literal(true).optional(),
+  }).superRefine((control, context) => {
+    // A projection selector, never actor, permission, approval or execution authority.
+    if (control.includeCuraPreparationHistory && (control.kind !== "status" || !control.approvalTurnId)) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ["includeCuraPreparationHistory"], message: "Preparation history requires the original approval status request." });
+    }
+  }).optional(),
   clientContext: z.string().max(100000).optional().transform((v) => (v && v.length > 50000 ? v.slice(0, 50000) : v)),
   // #292 — what's currently on the Studio canvas. Lets the model UPDATE that artifact in place
   // (stacking its version history) when a turn refines it, instead of minting a fresh sibling. The
@@ -1468,8 +1476,24 @@ serve(async (req) => {
               caller: supabaseClient as unknown as Parameters<typeof readOriginalReminderApprovalHistory>[0]["caller"],
               service: supabase as unknown as ApprovalRecoveryDb, current: () => !req.signal.aborted,
             }) : null;
+          const cura_preparation_history = validatedData.interactive.includeCuraPreparationHistory === true
+            && protocolActive && thread.audience === "workspace"
+            && approval_recovery.status !== "available"
+            ? await readOriginalCuraPreparationHistory({
+              actorId: user.id, tenantId: thread.tenant_id, threadId: validatedData.threadId,
+              intentId: validatedData.requestIntentId, turnId: validatedData.interactive.approvalTurnId,
+              caller: {
+                auth: supabaseClient.auth,
+                from: supabaseClient.from.bind(supabaseClient),
+                rpc: supabaseClient.rpc.bind(supabaseClient),
+                readActiveTenant: (actorId: string) => supabaseClient.from("profiles")
+                  .select("active_tenant_id").eq("user_id", actorId).maybeSingle(),
+              } as unknown as Parameters<typeof readOriginalCuraPreparationHistory>[0]["caller"],
+              service: supabase as unknown as ApprovalRecoveryDb, current: () => !req.signal.aborted,
+            }) : null;
           return new Response(JSON.stringify({ approval_recovery,
             ...(approval_history?.status === "verified_original" ? { approval_history } : {}),
+            ...(cura_preparation_history?.status === "recorded_preparation" ? { cura_preparation_history } : {}),
           }), { headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" } });
         }
         const originalScope = { threadId: validatedData.threadId!,

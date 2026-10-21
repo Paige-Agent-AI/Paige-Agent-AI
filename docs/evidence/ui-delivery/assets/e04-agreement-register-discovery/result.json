@@ -1,5 +1,14 @@
 {
   "proofClass": "actual-source browser; synthetic identity/network only",
+  "normalizedLFSourceSHA256": {
+    "src/solo/sales-ops.tsx": "c3c0d1eebe20889b6c68340b9950225c7c7f5b67597e36d60e354c7341881434",
+    "src/solo/SalesWorkspace.tsx": "7c76c109cf9262f5332c2e5964deb7911c1444ea756a378db2d0a91a9acfd91d",
+    "src/solo/sales-ops.css": "6bf9a9ffa25c077824746abf041b9e1561f269d82e87ecc7f7e07d5f250a9fa0",
+    "src/solo/sales/sales-department.css": "5179a2a2da649cb76f79cc05b4d6f9df73fb8531538d02875d5f8bf961654b0e",
+    "src/components/tenant-shell/TenantCommandCenterShell.tsx": "5a282f5f7c5627856470ae5062ba8cc8d657d3a9478f30261568a9f9c9d223f0",
+    "scripts/live-drive/harness/sales-mount/agreements-register.tsx": "274a110775883ac9903b23bee5c52ff5104ac4c001ff358f8678ffea4c34d8cb",
+    "scripts/live-drive/harness/sales-mount/vite.agreements-register.config.ts": "a25d45c840d82788c9eb9209aa4d6e1be186984722f8701c842d501a9e90a43f"
+  },
   "results": [
     {
       "theme": "light",

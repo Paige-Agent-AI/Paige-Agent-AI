@@ -2,9 +2,13 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { buildLaunchOptions, resolvePlaywright } from "./live-drive.mjs";
 
 const root = path.resolve(import.meta.dirname, "../..");
+const sourcePaths = ["src/solo/sales-ops.tsx", "src/solo/SalesWorkspace.tsx", "src/solo/sales-ops.css", "src/solo/sales/sales-department.css", "src/components/tenant-shell/TenantCommandCenterShell.tsx", "scripts/live-drive/harness/sales-mount/agreements-register.tsx", "scripts/live-drive/harness/sales-mount/vite.agreements-register.config.ts"];
+const sourceHashes = async () => Object.fromEntries(await Promise.all(sourcePaths.map(async file => [file,createHash("sha256").update((await fs.readFile(path.join(root,file),"utf8")).replaceAll("\r\n","\n")).digest("hex")])));
+const beforeSources = await sourceHashes();
 const out = path.join(root, "docs/evidence/ui-delivery/assets/e04-agreement-register-discovery");
 await fs.mkdir(out, { recursive: true });
 const { chromium } = await resolvePlaywright();
@@ -83,7 +87,8 @@ try {
   assert.match(await page.locator('.so-terms').innerText(), /could not be read/);
   assert.equal(errors.length, 0, errors.join("\n"));
   assert.equal(blocked.filter(origin => origin !== "https://fonts.googleapis.com").length, 0, `Unexpected external request: ${blocked.join(",")}`);
-  const report = { proofClass:"actual-source browser; synthetic identity/network only", results, behavioral:["document search","signer search","literal no match","clear","terms-only filter","completed filter","original detail and Escape","keyboard input to filter","unreadable read is unknown"], errors, blocked, authenticated:"UNVERIFIED", providers:"NOT_EXERCISED" };
+  assert.deepEqual(await sourceHashes(),beforeSources,"Source changed during browser proof");
+  const report = { proofClass:"actual-source browser; synthetic identity/network only", normalizedLFSourceSHA256:beforeSources, results, behavioral:["document search","signer search","literal no match","clear","terms-only filter","completed filter","original detail and Escape","keyboard input to filter","unreadable read is unknown"], errors, blocked, authenticated:"UNVERIFIED", providers:"NOT_EXERCISED" };
   await fs.writeFile(path.join(out,"result.json"), JSON.stringify(report,null,2)+"\n");
   console.log(JSON.stringify({ frames:results.length, behavioral:report.behavioral.length, errors:errors.length, externalRequests:blocked.length }));
 } catch (error) {

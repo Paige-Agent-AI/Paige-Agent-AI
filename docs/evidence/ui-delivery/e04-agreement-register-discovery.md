@@ -14,8 +14,8 @@ ACCEPTANCE_CRITERIA: Existing loaded document can be found by its title, client 
 MOTION_PURPOSE: NONE: no motion added or changed.
 PROTECTED_SEAMS: AFFECTED read presentation, existing workspace-masking consumer, accessibility and responsive geometry; test real SalesOps root and original adapter/shell contracts. NOT AFFECTED Auth/account choice, signup/entitlement/provisioning/billing, authority/autonomy, Spine dispatch, domain writes, Rail/receipts/Memory, transcript/stream/thread/popout/history, Live state, Secure Browser/Vault, credentials/provider effects and durable jobs/retries. No stored agreement field or permission changes.
 AUTOMATED_EVIDENCE: PASS: final131/3 suites (102 mounted Sales cases, vocabulary and original commercial read adapter), unchanged assertions/time limits. Baseline98; first regression batch5FAIL/1PASS before correction; earlier130PASS predecessor. Intermediate fork startup failed before tests; first final run had130PASS/one unchanged commercial-quote timeout; original full131 then passed after closing this lane's local browser/server. No timeout, baseline or test waiver.
-STATIC_EVIDENCE: UNVERIFIED: changed source/test lint zero errors, one unchanged exhaustive-deps warning at existing editor line602; SOLO parity SP1–SP5 PASS; Impeccable detector []; diff whitespace PASS. Production build PASS before final filter-recovery guard. Final type ratchet and exact-head hosted CI/build still owed; stalled local npx/direct compiler checks were stopped, not reported as passing.
-RENDERED_EVIDENCE: PASS: assets/e04-agreement-register-discovery/result.json and20 native PNGs:1536x770/1366x768/1024x768/900x1000 with PAIGE closed/open in both themes, plus390x844/320x740 both themes. Actual unchanged SalesWorkspace/SalesOps and TenantCommandCenterShell; original host hierarchy; synthetic identity/network ports. Product source timestamp precedes first successful capture. All20 dimensions checked and frames inspected via indexed contact sheets; not authenticated acceptance or a complete professional Agreements redesign.
+STATIC_EVIDENCE: PASS: changed source/test lint zero errors, one unchanged exhaustive-deps warning at existing editor line602; SOLO parity SP1–SP5 PASS; Impeccable detector []; diff whitespace PASS. Actual final type ratchet baseline10/current6/no new errors, no baseline edit. Earlier stalled npx/direct checks were stopped and remain non-proof; the final offline-npm ratchet completed with six actual incumbent diagnostics. Production build PASS before final filter-recovery guard; exact-head hosted CI/build still owed.
+RENDERED_EVIDENCE: PASS: assets/e04-agreement-register-discovery/result.json and20 native PNGs:1536x770/1366x768/1024x768/900x1000 with PAIGE closed/open in both themes, plus390x844/320x740 both themes. Actual SalesWorkspace/SalesOps and TenantCommandCenterShell; original host hierarchy; synthetic identity/network ports. Seven normalized-LF source hashes are unchanged throughout the final capture and match product99a996ca6. All20 dimensions checked and frames inspected via indexed contact sheets; not authenticated acceptance or a complete professional Agreements redesign.
 BEHAVIORAL_EVIDENCE: PASS: scripts/live-drive/agreements-register-drive.mjs,20 document-search/frame checks and9 interaction paths: title/signer search, literal no-match, clear, terms-only, completed, original detail/Escape, keyboard input-to-filter, failed-read unknown. Zero page errors, zero permitted remote requests;22 legacy Google font requests explicitly blocked. No provider/business action executed.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no ordinary signed-in owner/client register lookup driven for this candidate.
 KEYBOARD_FOCUS: PASS: actual browser input-to-select keyboard path and original detail Escape; native names and status announcement verified. Physical assistive technology and complete signing keyboard flow UNVERIFIED.
@@ -32,14 +32,14 @@ SOLO_1024X768_PAIGE_CLOSED: PASS: assets/e04-agreement-register-discovery/1024-7
 SOLO_1024X768_PAIGE_OPEN: PASS: assets/e04-agreement-register-discovery/1024-768-light-open.png and dark counterpart; original PAIGE overlay intentionally covers the underlying department.
 SOLO_900X1000_PAIGE_CLOSED: PASS: assets/e04-agreement-register-discovery/900-1000-light-closed.png and dark counterpart; document search/geometry.
 SOLO_900X1000_PAIGE_OPEN: PASS: assets/e04-agreement-register-discovery/900-1000-light-open.png and dark counterpart; original overlay, no new geometry policy.
-INTERNAL_BUILD_IDENTITY: d7f55f217f78a1576b21f65d92c06fb5b1e56ac2; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/delivery/exp04-get-paid-deliver-journey.md
+INTERNAL_BUILD_IDENTITY: 99a996ca6b9f63a9b59f97dfd8a9a6953622a74a; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/assets/e04-agreement-register-discovery/result.json
 RELEASE_CHANNEL: development: first bounded source increment on current main, no release inferred.
 RELEASE_CLASSIFICATION: patch: correctness of existing local record discovery only.
 CUSTOMER_RELEASE_IDENTITY: none: no complete customer Experience or release announcement.
 RELEASE_NOTE_REQUIRED: no: internal small repair, full owner Experience package remains pending.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: current candidate native rendering, signed-in owner and full twelve-outcome acceptance remain separate from source checks.
-RELEASE_RECOVERY: position=restore prior local filtering through a reviewed code revert; no durable record/provider or database change; reference=docs/delivery/exp04-get-paid-deliver-journey.md
-UNVERIFIED: exact-head type/CI/release/readback; real owner/client/two legitimate SOLO cohorts; native zoom/AT and complete signing/consent/field/version/provider/Portal lifecycle; all O1–O12 and founder acceptance. Remote font import was blocked in local proof, so exact production font fidelity is not claimed. No legal sufficiency or new executed capability/algorithm claim.
+RELEASE_RECOVERY: position=reviewed code revert preserving all canonical records; reference=docs/delivery/exp04-get-paid-deliver-journey.md
+UNVERIFIED: exact-head hosted CI/build/release/readback; real owner/client/two legitimate SOLO cohorts; native zoom/AT and complete signing/consent/field/version/provider/Portal lifecycle; all O1–O12 and founder acceptance. Remote font import was blocked in local proof, so exact production font fidelity is not claimed. No legal sufficiency or new executed capability/algorithm claim.
 
 ## Separate author review / lower assurance
 
@@ -57,7 +57,9 @@ Impeccable fallback at this bounded patch scope:
   actual searchable metadata. This is not a finish verdict for the expanded Agreements Experience.
 - **ceiling:** whole editor/templates/fields/history remain incomplete; no full-product SHIP claim.
 - **material_fixes:** no remaining material source finding in this local discovery diff;
-  final type/CI/release and authenticated proof remain separate gates, not assumed green.
+  final type passed; hosted CI/release and authenticated proof remain separate gates, not assumed green.
+  One legacy loaded-limit wording finding was corrected: each canonical source loads200,
+  so their union must not claim a combined200-record maximum. This is copy only; no query limit changed.
 - **keep:** unknown document reads must remain distinct from a proven missing document;
   preserve exact agreement identity and separate commercial/signature state.
 

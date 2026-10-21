@@ -181,4 +181,126 @@ DO $$ BEGIN
 END $$;
 RESET ROLE;
 \echo 'PASS: coverage added no reader write authority'
+
+-- Released intake copy uses the SAME migration/registry and protects every other field.
+TRUNCATE public.paige_skills;
+INSERT INTO public.paige_skills SELECT * FROM catalogue_after;
+\ir ../migrations/20271113030000_e2_analytics_catalogue_coverage.sql
+CREATE TEMP TABLE intake_copy_before AS TABLE public.paige_skills;
+\ir ../migrations/20271113113000_e2_intake_catalogue_copy.sql
+DO $$ BEGIN
+  IF (SELECT count(*) FROM public.paige_skills s JOIN intake_copy_before b USING (slug)
+      WHERE s.description IS DISTINCT FROM b.description) <> 2
+      OR (SELECT count(*) FROM public.paige_skills) <> 9 THEN
+    RAISE EXCEPTION 'Intake copy did not change exactly the two existing descriptions';
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.paige_skills s JOIN intake_copy_before b USING (slug)
+      WHERE s.slug NOT IN ('conversion_funnel_diagnosis','weekly_business_review')
+        AND to_jsonb(s) IS DISTINCT FROM to_jsonb(b)) THEN
+    RAISE EXCEPTION 'Intake copy changed another capability';
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.paige_skills s JOIN intake_copy_before b USING (slug)
+      WHERE (to_jsonb(s)-'description'-'updated_at') IS DISTINCT FROM (to_jsonb(b)-'description'-'updated_at')) THEN
+    RAISE EXCEPTION 'Intake copy changed coverage, identity, tools, tiers, lanes or activation';
+  END IF;
+  IF (SELECT count(*) FROM public.paige_skills
+      WHERE slug IN ('conversion_funnel_diagnosis','weekly_business_review')
+        AND description LIKE '%recorded form intake%'
+        AND metadata->'catalogue_coverage'='{"version":1,"state":"limited"}'::jsonb) <> 2 THEN
+    RAISE EXCEPTION 'Recorded intake is missing or Limited coverage changed';
+  END IF;
+END $$;
+\echo 'PASS: two intake descriptions, seven untouched capabilities and all authority fields preserved'
+CREATE TEMP TABLE intake_copy_after AS TABLE public.paige_skills;
+\ir ../migrations/20271113113000_e2_intake_catalogue_copy.sql
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM public.paige_skills s JOIN intake_copy_after b USING (slug)
+      WHERE to_jsonb(s) IS DISTINCT FROM to_jsonb(b)) THEN
+    RAISE EXCEPTION 'Intake copy replay changed the corrected registry';
+  END IF;
+END $$;
+\echo 'PASS: intake copy replay is idempotent including update timestamps'
+
+CREATE TEMP TABLE intake_guarded_before AS TABLE intake_copy_before WITH NO DATA;
+CREATE FUNCTION pg_temp.reset_intake_copy_case() RETURNS void LANGUAGE plpgsql AS $$
+BEGIN
+  TRUNCATE public.paige_skills;
+  INSERT INTO public.paige_skills SELECT * FROM intake_copy_before;
+END $$;
+CREATE FUNCTION pg_temp.snapshot_intake_copy_case() RETURNS void LANGUAGE plpgsql AS $$
+BEGIN
+  TRUNCATE intake_guarded_before;
+  INSERT INTO intake_guarded_before SELECT * FROM public.paige_skills;
+END $$;
+CREATE FUNCTION pg_temp.assert_intake_copy_unchanged() RETURNS void LANGUAGE plpgsql AS $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM public.paige_skills s JOIN intake_guarded_before b USING (slug)
+      WHERE to_jsonb(s) IS DISTINCT FROM to_jsonb(b)) THEN
+    RAISE EXCEPTION 'Intake copy overwrote a protected classification or custom row';
+  END IF;
+END $$;
+
+SELECT pg_temp.reset_intake_copy_case();
+UPDATE public.paige_skills SET description='Custom intake copy' WHERE slug='conversion_funnel_diagnosis';
+UPDATE public.paige_skills SET name='Custom weekly review' WHERE slug='weekly_business_review';
+SELECT pg_temp.snapshot_intake_copy_case();
+\ir ../migrations/20271113113000_e2_intake_catalogue_copy.sql
+SELECT pg_temp.assert_intake_copy_unchanged();
+
+SELECT pg_temp.reset_intake_copy_case();
+UPDATE public.paige_skills SET scoping='tenant' WHERE slug='conversion_funnel_diagnosis';
+UPDATE public.paige_skills SET created_by='admin' WHERE slug='weekly_business_review';
+SELECT pg_temp.snapshot_intake_copy_case();
+\ir ../migrations/20271113113000_e2_intake_catalogue_copy.sql
+SELECT pg_temp.assert_intake_copy_unchanged();
+
+SELECT pg_temp.reset_intake_copy_case();
+UPDATE public.paige_skills SET category='marketing_content' WHERE slug='conversion_funnel_diagnosis';
+UPDATE public.paige_skills SET risk_level='high' WHERE slug='weekly_business_review';
+SELECT pg_temp.snapshot_intake_copy_case();
+\ir ../migrations/20271113113000_e2_intake_catalogue_copy.sql
+SELECT pg_temp.assert_intake_copy_unchanged();
+
+SELECT pg_temp.reset_intake_copy_case();
+UPDATE public.paige_skills SET metadata='{"catalogue_coverage":{"version":2,"state":"limited"}}' WHERE slug='conversion_funnel_diagnosis';
+UPDATE public.paige_skills SET metadata='{"catalogue_coverage":{"version":1,"state":"coming_soon"}}' WHERE slug='weekly_business_review';
+SELECT pg_temp.snapshot_intake_copy_case();
+\ir ../migrations/20271113113000_e2_intake_catalogue_copy.sql
+SELECT pg_temp.assert_intake_copy_unchanged();
+
+SELECT pg_temp.reset_intake_copy_case();
+UPDATE public.paige_skills SET metadata='[]' WHERE slug='conversion_funnel_diagnosis';
+UPDATE public.paige_skills SET metadata='{"catalogue_coverage":{"version":1,"state":"limited","providerReady":true}}' WHERE slug='weekly_business_review';
+SELECT pg_temp.snapshot_intake_copy_case();
+\ir ../migrations/20271113113000_e2_intake_catalogue_copy.sql
+SELECT pg_temp.assert_intake_copy_unchanged();
+
+SELECT pg_temp.reset_intake_copy_case();
+UPDATE public.paige_skills SET metadata=NULL WHERE slug='conversion_funnel_diagnosis';
+UPDATE public.paige_skills SET metadata='{"catalogue_coverage":null}' WHERE slug='weekly_business_review';
+SELECT pg_temp.snapshot_intake_copy_case();
+\ir ../migrations/20271113113000_e2_intake_catalogue_copy.sql
+SELECT pg_temp.assert_intake_copy_unchanged();
+\echo 'PASS: intake custom/name/scope/author/category/risk/version/state/malformed/extra/null guards'
+
+SELECT pg_temp.reset_intake_copy_case();
+UPDATE public.paige_skills SET status='disabled' WHERE slug IN ('conversion_funnel_diagnosis','weekly_business_review');
+\ir ../migrations/20271113113000_e2_intake_catalogue_copy.sql
+DO $$ BEGIN
+  IF (SELECT count(*) FROM public.paige_skills WHERE slug IN ('conversion_funnel_diagnosis','weekly_business_review')
+      AND status='disabled' AND description LIKE '%recorded form intake%'
+      AND metadata->'catalogue_coverage'='{"version":1,"state":"limited"}'::jsonb) <> 2 THEN
+    RAISE EXCEPTION 'Intake correction activated a disabled skill or changed its coverage';
+  END IF;
+END $$;
+SET LOCAL ROLE test_e2_catalogue_reader;
+DO $$ BEGIN
+  BEGIN
+    UPDATE public.paige_skills SET description='unauthorized intake change';
+    RAISE EXCEPTION 'Intake correction granted reader update authority';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+END $$;
+RESET ROLE;
+\echo 'PASS: disabled skills remain disabled and existing reader gains no write authority'
 ROLLBACK;

@@ -94,6 +94,30 @@ The older restart observations below are retained historical source checkpoints.
 
 ## EXP04 restarted — Agreements source continuation, 2026-10-21
 
+Current checkpoint supersedes the source-only release status in the restart history
+below. #2486 register discovery merged719a39437f1553eb280e820fbe84686fa4afc965;
+#2487 retained completion merged4fa7ea57abf8bb643b4ab7ec191e9b2e3488d837;
+#2493 truthful legacy signing context mergedec8d882d9d7b6044197c82def22ffdc221924bcd.
+Exact reviewed CI, normal web/Edge/migration readback and factual Master closeouts
+#2491/15e5c44a4 and#2497/baf6c89b6 are recorded in the original journey/Master.
+Bounded ordinary owner navigation/empty register/form cancel/reload is verified;
+actual signature/provider/staff/client/full Experience acceptance remains owed.
+
+New local native draft foundation reuses unchanged SAVE/agreements/signers/events
+and canonical author authority. Nullable immutable creation correlation, a thin
+create/recover wrapper and selected human DTO are UNMOUNTED, NOT_DEPLOYED.
+Original-call baseline creates two drafts/two signers; native PostgreSQL16 repaired
+proof92 assertions, four concurrent sessions and migration replay twice PASS.
+Original-author request recovery supports later-page reconciliation using only an
+opaque UUID, preserving private legal input off browser storage; absent is unconfirmed.
+Existing integrity runner is extended, not replaced. Reserved20271113120000
+follows EXP09 pending100000/110000; reconcile before release.
+No Chat/Spine activation, Portal UI, send/sign/payment, new role or provider change.
+[Foundation evidence](../evidence/ui-delivery/e04-draft-request-identity.md).
+Functional bounded prerequisites differ from Visual professional prototype/render
+evidence, Experiential full integrated O1–O12, and Acceptance one complete live
+founder evaluation. All twelve outcomes remain incomplete.
+
 Owner resumes the same sole E04 lead and all original twelve outcomes, expanding native
 Sales Terms & Agreements to professional creation/preparation/signing/management.
 Main d7f55f217f78a1576b21f65d92c06fb5b1e56ac2 and production metadata grounded;

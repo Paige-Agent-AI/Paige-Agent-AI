@@ -7,7 +7,7 @@
 .ops-department-controls button:focus-visible,.ops-state button:focus-visible,.ops-inline-notice button:focus-visible,.ops-detail-sheet button:focus-visible{outline:2px solid var(--pg-violet);outline-offset:3px}
 .ops-department-actions{display:flex;gap:5px}.ops-department-actions button{display:flex;align-items:center;gap:7px}.ops-department-actions button:disabled{opacity:.5;cursor:wait}
 .ops-department-body{flex:1;min-height:0;overflow:auto;padding:24px;scrollbar-gutter:stable}
-.ops-state{padding:28px;color:var(--pg-ink)}.ops-state h1{font-size:25px;font-weight:600;letter-spacing:-.025em;margin:0 0 12px}.ops-state p{color:var(--pg-muted);max-width:60ch}.ops-state button{border-color:var(--pg-line);margin-top:18px}
+.ops-state{padding:28px;color:var(--pg-ink)}.ops-state h1{font-size:var(--pg-t-lead,16px);line-height:1.4;font-weight:600;letter-spacing:-.015em;margin:0 0 8px}.ops-state p{color:var(--pg-muted);max-width:60ch}.ops-state button{border-color:var(--pg-line);margin-top:18px}
 .ops-loading-lines{display:grid;gap:14px;margin-top:28px}.ops-loading-lines i{display:block;background:var(--pg-surface);border-radius:8px;height:55px}.ops-loading-lines i:last-child{width:65%}
 .ops-inline-notice{padding:10px 0;margin-bottom:20px;color:var(--pg-warning);font-size:13px}.ops-inline-notice button{text-decoration:underline;color:inherit}
 .ops-source-limit{color:var(--pg-muted);font-size:11px;margin:24px 0 0}

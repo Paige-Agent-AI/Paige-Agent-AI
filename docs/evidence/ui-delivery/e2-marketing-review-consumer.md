@@ -38,7 +38,7 @@ RELEASE_CHANNEL: development: separate consumer of released unmounted foundation
 RELEASE_CLASSIFICATION: internal-only: one recorded Marketing intake review workflow, exact source/deployment and authenticated proof separately required.
 CUSTOMER_RELEASE_IDENTITY: none: complete19-outcome founder evaluation remains required.
 RELEASE_NOTE_REQUIRED: no: no customer version or announcement authorized by this increment.
-RELEASE_TRUTH_BOUNDARY: PARTIAL existing Executive; PROOF OWED active Marketing consumer and customer evidence; UNAVAILABLE unsupported provider/intelligence claims. No catalogue Live promotion.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: active Marketing consumer and customer evidence; PARTIAL: existing Executive; UNAVAILABLE: unsupported provider/intelligence claims. No catalogue Live promotion.
 RELEASE_RECOVERY: position=bounded reviewed correction/revert retaining canonical producers, records and persisted turns; reference=existing Business Review/Metric/E4 contracts.
 
 REUSE existing Marketing1.0.0 producer/Metric issuer, Operating Fabric, priority

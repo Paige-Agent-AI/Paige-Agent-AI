@@ -16,6 +16,27 @@ describe("canonical externally emitted app destinations", () => {
     expect(resolveCanonicalRecordLink({...input,recordId:'not-an-id'})).toEqual({path:'/solo/1234567/clients/portal?view=knowledge',status:'surface_only'});
     for(const tier of ['sub_account','agency','enterprise','operator'] as const)expect(resolveCanonicalAppPath({...input,tier})).toBeNull();
   });
+  it.each(["solo", "standalone"] as const)("routes %s Marketing to its existing native Overview without invented record focus", tier => {
+    const input = { actor: "account" as const, tier, account: "1971670", destination: "marketing" as const };
+    const path = "/solo/1971670/growth/overview";
+    expect(resolveCanonicalAppPath(input)).toBe(path);
+    expect(resolveCanonicalRecordLink({ ...input, recordId: "00000000-0000-4000-8000-000000000001" }))
+      .toEqual({ path, status: "surface_only" });
+    const mounted = SOLO_BRANCHES.find(branch => branch.slug === "growth");
+    expect(mounted?.subtabs.some(tab => tab.slug === "overview" && !tab.hidden)).toBe(true);
+  });
+  it.each([
+    { actor: "operator", tier: "operator", account: null },
+    { actor: "operator", tier: "solo", account: "1971670" },
+    { actor: "account", tier: "sub_account", account: "1971670" },
+    { actor: "account", tier: "agency", account: "1971670" },
+    { actor: "account", tier: "enterprise", account: "1971670" },
+    { actor: "account", tier: "solo", account: null },
+    { actor: "account", tier: "solo", account: "1971670/../../other" },
+  ] as const)("withholds the Marketing destination for unsupported identity %#", input => {
+    expect(resolveCanonicalAppPath({ ...input, destination: "marketing" })).toBeNull();
+  });
+
   it.each([
     ["account", "solo", "101", "/solo/101/operations/work"],
     ["account", "standalone", "202", "/solo/202/operations/work"],

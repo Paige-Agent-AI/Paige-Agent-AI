@@ -42,6 +42,7 @@ export const DESTINATION_LABEL: Readonly<Record<ReadLinkDestination, string>> = 
   business_time_zone: "Open business time zone setting",
   executive: "Open Executive",
   finance: "Open Finance",
+  marketing: "Open Marketing",
   sales_pipeline: "Open Sales pipeline",
   systems_check: "Open Systems Check",
   business_game_plan: "Open Business Game Plan",

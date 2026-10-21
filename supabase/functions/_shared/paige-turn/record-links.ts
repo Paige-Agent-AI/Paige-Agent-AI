@@ -21,6 +21,7 @@ export const READ_LINK_DESTINATIONS = [
   "business_time_zone",
   "executive",
   "finance",
+  "marketing",
   "sales_pipeline",
   "systems_check",
   "business_game_plan",

@@ -826,6 +826,31 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-21 — EXP04 existing Agreements register discovery repair.**
+PR [#2486](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2486), reviewed
+`f854bcf150961caaeeb1548d70a33c72567f34aa`, merged
+`719a39437f1553eb280e820fbe84686fa4afc965`. Existing loaded records can be found by
+client, document or recorded signer; missing and unreadable signature states remain
+distinct, a failed read retires the missing-document filter, and each source's
+200-record limit is disclosed accurately. Canonical records, authority, original
+details, signature/commercial separation and all prior source work are retained.
+AUTHOR-REVIEW / LOWER ASSURANCE6322377043/6322812270; ten applicable exact-head
+checks and two Vercel statuses SUCCESS, schema-free Supabase Preview SKIPPED.
+Web `dpl_GgavqzeUH1HqS1Pkr1UKRZyU4vU6` READY on exact merge; stable public
+`719a39437f1553eb280e820fbe84686fa4afc965-mviexe9v` and actual imported SOLO
+bundle's three changed discovery strings verified. Migrations/Edge NOT_APPLICABLE.
+Local composed202 cases and20 native synthetic frames/nine paths are source proof.
+Actual ordinary owner Sales/Agreements navigation, genuine empty source, original
+create-form opening/cancellation and full reload passed. Populated lookup/filter,
+staff/client/signing/provider outcomes and whole O1–O12/founder acceptance remain
+UNVERIFIED; no record was created to manufacture proof. Protected bounded smoke
+ANT52/e96d6e3f is not independent Central QA or full Experience acceptance.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2486#issuecomment-6322994905),
+[source evidence](evidence/ui-delivery/e04-agreement-register-discovery.md).
+Channel production; internal correctness increment, no customer release/version or
+announcement. Recovery is a reviewed source correction/revert preserving all records.
+This identity-only post-merge closeout is not logged recursively.
+
 **2026-10-21 — EXP09 native relevant Knowledge retrieval prerequisite.**
 PR [#2475](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2475), reviewed
 `0764d6e16565042f1124652fa20cd1ddec81688f`, merged

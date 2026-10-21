@@ -22,6 +22,9 @@ const contactEnd=seed.indexOf('UPDATE public.profiles',contactStart);
 assert.ok(contactStart>0&&contactEnd>contactStart,'Bounded original contact fixture boundary required');
 // Publisher races need no CRM client or contact-created event.
 seed=seed.slice(0,contactStart)+seed.slice(contactEnd);
+const operatorSeed=/INSERT INTO public\.user_roles\(user_id,role\) VALUES\('[^']+','super_admin'\);/g;
+assert.equal([...seed.matchAll(operatorSeed)].length,1,'Exactly one unneeded operator fixture must be omitted');
+seed=seed.replace(operatorSeed,'');
 const u=s=>`e0c10100-0000-4000-8000-0000000000${s}`;
 const t=s=>`e0c10200-0000-4000-8000-00000000000${s}`;
 const actor=u('a1'),a=t('a'),b=t('b'),c=t('c'),intent='e0c10500-0000-4000-8000-000000000001';
@@ -66,6 +69,8 @@ const inherited=()=>run(`BEGIN;
  UPDATE public.tenants SET parent_tenant_id='${b}' WHERE id='${a}'; COMMIT;`);
 const count=()=>run(`SELECT count(*) FROM public.paige_durable_work WHERE tenant_id IN ('${a}','${b}','${c}')`);
 let originalDefinition,seeded=false;
+const platformAdminCount=()=>run("SELECT count(*) FROM public.user_roles WHERE role='super_admin'");
+const originalAdminCount=platformAdminCount();
 try{
  originalDefinition=run("SELECT pg_get_functiondef('public.read_cura_knowledge_preparation(uuid,uuid,text,text)'::regprocedure)");
  assert.equal(run(`SELECT (SELECT count(*) FROM public.tenants WHERE id IN ('${a}','${b}','${c}'))+(SELECT count(*) FROM auth.users WHERE id IN ('${u('a1')}','${u('a2')}','${u('a5')}','${u('b1')}','${u('f1')}'))`),'0','Fixture IDs must be absent before seeding');
@@ -76,6 +81,7 @@ try{
    '{"fixture_cancelled":true}'::jsonb,'Synthetic concurrency fixture: no worker dispatch') transition
   WHERE work.tenant_id IN ('${a}','${b}'); COMMIT;`);
  seeded=true;
+ assert.equal(platformAdminCount(),originalAdminCount,'Authority races create no platform administrator');
  assert.equal(count(),'5','Only original synthetic accepted work is seeded');
  assert.equal(run(`SELECT count(*) FROM public.paige_durable_work WHERE tenant_id IN ('${a}','${b}') AND status='cancelled' AND jsonb_typeof(terminal_outcome)='object' AND settled_at IS NOT NULL`),'5','Canonical cancellation terminal fields verified');
  const cases=[
@@ -140,5 +146,6 @@ try{
   DELETE FROM public.user_roles WHERE user_id IN ('${u('a1')}','${u('a2')}','${u('a5')}','${u('b1')}','${u('f1')}');
   DELETE FROM auth.users WHERE id IN ('${u('a1')}','${u('a2')}','${u('a5')}','${u('b1')}','${u('f1')}'); COMMIT;`);
  assert.equal(run(`SELECT count(*) FROM public.tenants WHERE id IN ('${a}','${b}','${c}')`),'0','Synthetic fixture cleanup verified');
+ assert.equal(platformAdminCount(),originalAdminCount,'Synthetic cleanup preserves platform roles');
  }
 }

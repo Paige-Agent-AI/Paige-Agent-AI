@@ -1,5 +1,45 @@
 # 🧠 The Second Brain — master index & read-first orientation
 
+## EXP04 restarted — Agreements source continuation, 2026-10-21
+
+Owner resumes the same sole E04 lead and all original twelve outcomes, expanding native
+Sales Terms & Agreements to professional creation/preparation/signing/management.
+Main d7f55f217f78a1576b21f65d92c06fb5b1e56ac2 and production metadata grounded;
+#1352/#2367 reused, old E04 agreement drafts preserved for selective current-main
+reconciliation. Current Portal billing explicitly supersedes #2170/#2184 UI; no duplicate
+Portal source. First local discovery repair adds title/signer search and explicit missing/
+unreadable states; final131 source tests and20 source-render frames/9 paths pass.
+Exact-head type/CI, merge/release/readback and authenticated acceptance remain owed.
+No new signing, send, payment, provider activation, legal or algorithm availability claim.
+Full architecture/sequence, EXP09 source contract and ALG01/02/12/13 original-register
+status are in [the existing E04 journey](../delivery/exp04-get-paid-deliver-journey.md)
+and [bounded source evidence](../evidence/ui-delivery/e04-agreement-register-discovery.md).
+Master4.0 shipped row N/A until merge; this is not whole-Experience completion.
+
+Current-main retained-completion continuation selectively reuses #2186/558e65a2a
+and #2175's byte verifier: existing completed/replayed seal must match its actual
+private PDF. Native106 plus5 Portal-wiring tests and three Edge type checks pass;
+release, authenticated recovery and full ALG01/12 acceptance remain proof owed.
+[Exact scope and limitations](../evidence/ui-delivery/e04-retained-completion-reconcile.md).
+
+## EXP02 Marketing release and quality checkpoint — October21 UTC
+
+Unmounted canonical Marketing adapter#2489 is merged
+`51af8283191e2cf913ba35446de90f33185101c0`; exact production web
+dpl_3FTZEvwa12mthXeqkrMy5LmWpK7X and public51af8283-mvifz54p verified.
+Six exact-head workflows/all11 checks/Preview/two contexts passed. Actual
+treec64087d6 retains the concurrent Master-only#2473; runtime equals the reviewed
+union. Normal Edge39652429685 selects zero functions and correctly skips
+deployment/certification; no provider, migration, authority or capability activation.
+The related active consumer#2494 is DRAFT d8373ccf on maina04637af, with182
+focused cases,71 unchanged authority controls and actual type10/6/0new PASS.
+Native recapture/finish review, required exact-head CI, release/readback and actual
+customer Marketing acceptance remain owed; no synthetic proof is customer proof.
+Owner's October21 quality standard is binding: report Functional, Visual,
+Experiential and Acceptance separately. The existing font/narrow evidence,
+all19 outcomes/nine analytics, historical9/0 and12/0/4, canonical architecture and
+single final founder evaluation remain intact. No other agent was assigned.
+
 ## EXP02 released customer loops — October21 17:35 UTC
 
 #2483 merged a5a30f5d, #2481 merged b4532809 and original #2414 merged950d1dac.
@@ -37,28 +77,6 @@ Actual authorized ordinary unheld read-only weekly Chat completed FINAL with six
 All nine actual catalogue descriptions/statuses were read and reloaded: CAP009/010/011/013 Coming Soon;012/016/017 Limited;014/015 Unverified; Access Unverified for all. No Live promotion. Native-read catalogue representation remains ANT-161. Supporting Chat/Finance images retain original JPEG bytes and1535px for nominal1536; exact-raster proof stays UNVERIFIED. Finance's separate author review5602749879 rechecked measured1536x770 CSS viewport, overflow and original pixels against the actual viewport standard; the earlier blanket encoded-raster release hold was overbroad. #2414 remains draft/in fresh required CI; no image resampling or customer acceptance inference. Earlier CPU failures, provider/permission/isolation, actual effects and Rail readback, Research/Memory/Knowledge completion, mobile/Live/cohorts and all19/founder acceptance remain open as applicable. Historical9/0 and12/0/4 remain unchanged.
 
 Subsequent authorized VERA-labelled last30days and current-quarter advisory reads completed with six scoped native references and stable narrative/period/reference reload (ANT-52 comments59b05e9a-b5b5-4862-a2b8-65d977d88519 and10fc213a-21d9-4213-bc27-09ebf6468719). Quarter-to-date, completed-day Sales windows, comparable observed-day windows, current snapshots and unavailable evidence remained distinct. This does not prove a distinct VERA dispatch or the original monthly/quarterly skill contract: rendered written deliverables filed for human review/retrieval remain required, so CAP014/015 stay Unverified. Actual Executive handoff from open Capabilities hid the correctly prefilled unsent question (ANT-52 212ec981); small repair#2483 is in development/review/CI, not yet released or customer-accepted. Existing native Marketing Overview and saved-reference Executive return also worked; this is not acceptance of the unmounted Marketing review consumer. All are bounded read evidence, not business-action receipts or full-Experience acceptance.
-
-## EXP04 restarted — Agreements source continuation, 2026-10-21
-
-Owner resumes the same sole E04 lead and all original twelve outcomes, expanding native
-Sales Terms & Agreements to professional creation/preparation/signing/management.
-Main d7f55f217f78a1576b21f65d92c06fb5b1e56ac2 and production metadata grounded;
-#1352/#2367 reused, old E04 agreement drafts preserved for selective current-main
-reconciliation. Current Portal billing explicitly supersedes #2170/#2184 UI; no duplicate
-Portal source. First local discovery repair adds title/signer search and explicit missing/
-unreadable states; final131 source tests and20 source-render frames/9 paths pass.
-Exact-head type/CI, merge/release/readback and authenticated acceptance remain owed.
-No new signing, send, payment, provider activation, legal or algorithm availability claim.
-Full architecture/sequence, EXP09 source contract and ALG01/02/12/13 original-register
-status are in [the existing E04 journey](../delivery/exp04-get-paid-deliver-journey.md)
-and [bounded source evidence](../evidence/ui-delivery/e04-agreement-register-discovery.md).
-Master4.0 shipped row N/A until merge; this is not whole-Experience completion.
-
-Current-main retained-completion continuation selectively reuses #2186/558e65a2a
-and #2175's byte verifier: existing completed/replayed seal must match its actual
-private PDF. Native106 plus5 Portal-wiring tests and three Edge type checks pass;
-release, authenticated recovery and full ALG01/12 acceptance remain proof owed.
-[Exact scope and limitations](../evidence/ui-delivery/e04-retained-completion-reconcile.md).
 
 ## EXP02 catalogue copy/readback checkpoint — 2026-10-20
 

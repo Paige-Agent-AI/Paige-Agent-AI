@@ -6,9 +6,13 @@ import {readFileSync} from 'node:fs';
 import {retireSyntheticTenantSQL} from './operator-postgres-fixture.mjs';
 
 const url=new URL(process.env.CURA_TEACHING_TEST_DB_URL??'postgresql://postgres:postgres@127.0.0.1:54322/postgres');
-assert.ok(process.env.CI==='true'&&url.hostname==='127.0.0.1'&&url.port==='54322'&&url.pathname==='/postgres', 'Disposable CI loopback stack required');
+assert.ok(process.env.CI==='true'&&process.env.GITHUB_ACTIONS==='true'
+ &&['postgresql:','postgres:'].includes(url.protocol)&&url.hostname==='127.0.0.1'&&url.port==='54322'
+ &&url.pathname==='/postgres'&&url.username==='postgres'&&url.password==='postgres'&&!url.search&&!url.hash,
+ 'Disposable CI loopback stack required');
+const childEnv=Object.fromEntries(Object.entries(process.env).filter(([key])=>!key.startsWith('PG')&&key!=='DATABASE_URL'));
 const psql=process.env.PSQL_BIN||'psql',args=['-X','-q','-A','-t','-v','ON_ERROR_STOP=1','-d',url.toString()];
-const run=sql=>execFileSync(psql,args,{input:sql,encoding:'utf8',windowsHide:true,timeout:20000}).trim();
+const run=sql=>execFileSync(psql,args,{input:sql,encoding:'utf8',windowsHide:true,timeout:20000,env:childEnv}).trim();
 const fixture=readFileSync(new URL('../../supabase/tests/e09_cura_teaching_authority.sql',import.meta.url),'utf8');
 const start=fixture.indexOf('INSERT INTO auth.users'),end=fixture.indexOf('CREATE FUNCTION pg_temp.prepare(');
 assert.ok(start>0&&end>start&&fixture.includes('cura-teaching-writer-a'),'Original synthetic fixture required');
@@ -20,7 +24,7 @@ const claim=`DO $$ BEGIN PERFORM set_config('request.jwt.claims','{"sub":"${acto
 const prepare=`SELECT public.submit_cura_knowledge_preparation('${a}','${intent}','Program FAQ','Approved program details.')`;
 const processes=new Set();
 const session=(sql,name,{hold=false}={})=>{
- const child=spawn(psql,args,{windowsHide:true,stdio:['pipe','pipe','pipe']});processes.add(child);
+ const child=spawn(psql,args,{windowsHide:true,stdio:['pipe','pipe','pipe'],env:childEnv});processes.add(child);
  let out='',err='',readyResolve,readyReject;
  const ready=new Promise((resolve,reject)=>{readyResolve=resolve;readyReject=reject;});
  const timer=setTimeout(()=>child.kill('SIGKILL'),15000);
@@ -61,7 +65,10 @@ try{
  originalDefinition=run("SELECT pg_get_functiondef('public.submit_cura_knowledge_preparation(uuid,uuid,text,text)'::regprocedure)");
  run(`BEGIN; ${seed}
   INSERT INTO public.tenants(id,slug,name,status,account_type) VALUES('${c}','test-tenant-cura-concurrency-c','Authority test C','active','standalone');
-  UPDATE public.paige_durable_work SET status='cancelled' WHERE tenant_id IN ('${a}','${b}'); COMMIT;`);
+  SELECT transition.work_status FROM public.paige_durable_work work
+  CROSS JOIN LATERAL public.transition_paige_durable_work(work.id,work.idempotency_key,'cancelled',
+   '{"fixture_cancelled":true}'::jsonb,'Synthetic concurrency fixture: no worker dispatch') transition
+  WHERE work.tenant_id IN ('${a}','${b}'); COMMIT;`);
  assert.equal(count(),'5','Only original synthetic accepted work is seeded');
  const cases=[
   {name:'direct-downgrade',setup:()=>{},revoke:`UPDATE public.tenant_members SET role='member',is_owner=false WHERE user_id='${actor}' AND tenant_id='${a}'`},

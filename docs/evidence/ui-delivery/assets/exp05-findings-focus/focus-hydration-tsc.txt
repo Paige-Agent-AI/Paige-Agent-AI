@@ -1,0 +1,6 @@
+ℹ️  4 baseline type error(s) now FIXED — ratchet scripts/ci/tsc-baseline.txt down:
+   -1 src/hooks/useClientPortalBrand.ts: error TS2339: Property 'catch' does not exist on type 'PromiseLike<void>'.
+   -1 src/hooks/useMyActions.ts: error TS2352: Conversion of type 'GenericStringError[]' to type 'CustomerAction[]' may be a mistake because neither type su
+   -1 src/lib/playbook/resolve.ts: error TS2352: Conversion of type 'Record<string, unknown>' to type 'PortalConfig' may be a mistake because neither type s
+   -1 src/pages/onboard/Step1Welcome.tsx: error TS2322: Type 'Record<string, unknown>' is not assignable to type 'Json'.
+✅ tsc ratchet: no new type errors (baseline 10, current 6).

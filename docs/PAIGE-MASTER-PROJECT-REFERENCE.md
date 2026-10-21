@@ -5583,6 +5583,23 @@ Grouped:
 **2026-10-17 — Atomic customer identity and presentation read, PR [#2267](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2267), reviewed `ea533da0c1f076addd6cd37524f9016043f5e2a0`, main `efd55ca6db1c563cf735cdea37258d4c654d0ef2`.** Additive `client_portal_frame()` composes the existing own-customer profile, public business brand and portal configuration in one STABLE snapshot. No actor/business arguments, new identity, staff grant, raw CRM access, action, model tool or provider activation. Existing relationship/ambiguity and business-match guards remain decisive. Separate AUTHOR-REVIEW / LOWER ASSURANCE6227974548; all13 exact-head check runs and both Vercel contexts SUCCESS; actual rebuilt-schema self-projection84/84 PASS; isolated native62/0 plus61/one intended unsafe-control failure. The failed earlier fixture run is retained; final fixtures reuse incumbent governed CRM states without weakening its lineage guard. [Release gate](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2267#issuecomment-6228163254). Actual first parent585e37bb26f2d3fb700873d1fbccae80ec4c068f and treea3d3a2205a3db03729fc5f5a550b0c287d6d13fe preserve concurrent peer work; all five delivered blobs match review. Normal deploy-migrations38992602668 SUCCESS; production records20271108190000/e09_customer_frame_projection, exact prosrc MD5b3826e6b52ba34cd40348112b8145883, STABLE/definer/fixed search path and authenticated-only EXECUTE, with anon/service_role/PUBLIC denied. Security-advisor delta0 against eight incumbent notices is not global clearance. Vercel `dpl_7ErHFYzbPE4s2cLTs5rQB5mUradu` READY/exact merge; live and authenticated immutable HTTP200 JSON build `efd55ca6db1c563cf735cdea37258d4c654d0ef2-mvbqqoso`, customerUpdate null. Edge NOT_APPLICABLE. [Production source/ACL receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2267#issuecomment-6228188168). Existing [Brain context contract](brain/paige-context-assembly-contract.md) records the seam. Channel production/internal prerequisite for equivalent eligible current/future relationships; no customer release identity or announcement. The approved frame/assistant consumer is not wired by this PR: genuine authenticated API/consumer behavior, customer Knowledge publication, private AI history, Chat/Live, multi-business selection and complete seven-pillar acceptance remain PROOF OWED/PARTIAL. Recovery is a reviewed additive forward correction preserving canonical records. This mechanical closeout is not logged recursively.
 
 
+**2026-10-21 — EXP09 production-ACL reconstruction repair.**
+PR [#2478](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2478), reviewed
+`a46381879361823f02d777ae70fc1f6894654387`, merged
+`4022be66bd64424c7f3fc9ef22568f9da6827cc5`. The original read-only production
+baseline now keeps public vector-function permissions through the official public
+schema dump, while retaining the full dump for global/default permissions. No
+production grant, native authorization test, parser/minimum/ledger or ordering
+guard changed. Seven shell tests pass; removing the repair causes five failures.
+NON-AUTHOR5601988302; all exact-head checks and two Vercel statuses passed;
+CI-only Preview skipped legitimately. Hosted database-contract119305830089 ran
+all177 steps successfully, including unchanged K2 90/90, inventory53/53 and the
+original default/order controls. Main's complete tree matches the reviewed head.
+Migration/Edge/runtime activation NOT_APPLICABLE; internal-only CI delivery, no
+customer version or availability claim. Native releases2475/2476 preserved;
+consumer2404, teaching controls and full EXP09 authenticated acceptance remain
+separately gated. [Original repair evidence](delivery/e09-production-acl-baseline-repair.md).
+
 **2026-10-21 — EXP09 original CURA Knowledge publishing inventory.**
 PR [#2476](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2476), reviewed
 `d40bbfa1352a22e7ac860c47173837c1d034ed97` → main

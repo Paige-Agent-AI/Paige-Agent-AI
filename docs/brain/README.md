@@ -1,5 +1,36 @@
 # 🧠 The Second Brain — master index & read-first orientation
 
+## EXP02 current release checkpoint — 2026-10-20
+
+Finance #2402 merged `ddf12b6bbda085cdb9f66587f9e803e11fc3cc18`, exact reviewed
+union tree 1472c481. All 11 exact-head checks/Preview and two Vercel contexts passed;
+production web dpl_6qkA2AUtNSxr9ntZt9EMn21Gpcrm and public ddf12b6…mvha1pjq
+were read back. Canonical guarded recovery 39511759880 strictly verified all five
+selected functions and advanced edge-live to ddf12b6, independently confirmed.
+The earlier final-marker hold remains historical. Own migrations NOT_APPLICABLE.
+Authorized ordinary SOLO no-source disclosure, source/freshness expansion, actual
+Finance navigation, return and full reload passed; populated financial evidence,
+provider readiness, isolation negatives, new Chat/Live and effects remain owed.
+
+Required audit prerequisite #2434 merged 25d01c84, exact tree 6b9f4cfd, with
+all applicable CI and production web/public readback. Only npm's nested Vite
+8.2.2→8.2.4 node changed (three fields); locked npm Vitest is unchanged at 4.1.11.
+Required high/critical audit findings became zero; moderate findings and the
+separate unchanged Bun graph retain their own evidence limits. No product-runtime source,
+permission, provider or algorithm activation.
+
+Algorithm support: **NO VERIFIED ALGORITHM is added by these release receipts.**
+ALG-06 cash-flow forecasting is not established by stored Finance facts. The
+existing originating algorithms retain their contracts and acceptance gaps.
+PAIGE remains principal COO; the existing VERA source receipt below is unchanged.
+All 19 outcomes, 9/0 and 12/0/4 evidence
+boundaries, and the single full-Experience founder evaluation remain required.
+No new customer release identity, provider, consequential action or privilege
+activation. Current release evidence is in Master §4.0 and ANT-138/147/52.
+This checkpoint supersedes Finance candidate-only status in dated entries below;
+other workstreams retain their own reviewed release and acceptance records.
+
+
 ## EXP02 VERA observed source-release identity — 2026-10-20
 
 This observed release supersedes the candidate-only VERA status in the dated

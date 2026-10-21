@@ -185,3 +185,9 @@ test('canonical CURA source reference cannot escape the current SOLO Portal',()=
  const modified=new Map(sources);modified.set(path,changed);
  assert.ok(validateIncumbentResourceBindings(chat,modified).findings.includes(`incumbent reviewed source changed: ${path}`));
 });
+
+for(const [label,path,from,to] of [
+ ['original CURA approval fingerprint removed','supabase/functions/_shared/paige-turn/interactive-cura-history.ts','fingerprint!==parsed.fingerprint','false'],
+ ['CURA status replaced by writer','supabase/functions/_shared/cura-knowledge-teaching.ts',"caller.rpc('read_cura_knowledge_preparation'","caller.rpc('submit_cura_knowledge_preparation'"],
+ ['CURA status selector loses original approval requirement','supabase/functions/_shared/paige-turn/control-transport.ts','typeof control.approvalTurnId !== "string"','false'],
+])test(label,()=>{const raw=sources.get(path);assert.equal(typeof raw,'string');const changed=raw.replace(from,to);assert.notEqual(changed,raw);const modified=new Map(sources);modified.set(path,changed);assert.ok(validateIncumbentResourceBindings(chat,modified).findings.includes(`incumbent reviewed source changed: ${path}`));});

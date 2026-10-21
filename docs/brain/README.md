@@ -20,6 +20,12 @@ status are in [the existing E04 journey](../delivery/exp04-get-paid-deliver-jour
 and [bounded source evidence](../evidence/ui-delivery/e04-agreement-register-discovery.md).
 Master4.0 shipped row N/A until merge; this is not whole-Experience completion.
 
+Current-main retained-completion continuation selectively reuses #2186/558e65a2a
+and #2175's byte verifier: existing completed/replayed seal must match its actual
+private PDF. Native106 plus5 Portal-wiring tests and three Edge type checks pass;
+release, authenticated recovery and full ALG01/12 acceptance remain proof owed.
+[Exact scope and limitations](../evidence/ui-delivery/e04-retained-completion-reconcile.md).
+
 ## EXP02 catalogue copy/readback checkpoint — 2026-10-20
 
 Nine canonical analytics descriptions#2440 merged

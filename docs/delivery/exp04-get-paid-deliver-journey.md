@@ -9,6 +9,37 @@ The dated Claude ownership and October 15 hold below are historical. No old agen
 is restarted. EXP09 Codex owns the Portal; this lane owns originating Sales and signing.
 All original O1–O12 remain mandatory. One complete founder evaluation follows integration.
 
+### Current-main reconciliation — retained completion (October 21)
+
+REUSE / REPAIR of #2186 `558e65a2ad5f84958e6d1770580ae6d46be19d8d`,
+with its existing retained-byte verifier from #2175. Only the completion helper,
+its tests and two additional CI test entries are adopted; the old parent stack,
+Portal UI, migrations and policy changes are not merged wholesale.
+
+The original `sealAndComplete` retry returned success from a digest alone and the
+losing completion request trusted the winning row without reading its PDF. Replays
+now require a completed canonical row, complete retained reference, actual private
+PDF bytes and an exact digest match. An unavailable/corrupt copy withholds that
+request's confirmation; it does not undo completion, re-seal, rotate tokens, file
+new events or resend notices. Initial sealing and its original authority remain.
+
+Routing: E04 / CRM–Sales owns this native agreement correction. Existing scoped
+signing admission and storage are reused; `agreement.list/status/draft/send` and
+the current PARTIAL binding remain unchanged. No new MUTATION_VERB, approval,
+budget, provider, job, Rail stream or Integration Registry entry is introduced.
+The original records/digest/private bytes are the readback. Production Edge parity,
+authorized signer/owner/client recovery and ALG01 acceptance remain PROOF OWED.
+Only `sign-agreement` imports the changed seal helper in the inspected source;
+actual deployment/import closure must be established by the normal release tooling.
+
+Preserved completion regressions first failed19/20 against unchanged current-main
+implementation. Native denied-effect Deno suites then passed106, plus5 original
+Portal door wiring cases; all three agreement Edge entrypoints type-checked.
+Race cases use controlled native helper ports, not a real concurrent production
+signature. No source test is customer acceptance. The signing page's separate
+truthful completion/interruption fixes in #2175, and full exact commercial terms
+in #2158/#2192, remain subsequent reconciliation work.
+
 ### Grounded source and release, not customer acceptance
 
 - Main `d7f55f217f78a1576b21f65d92c06fb5b1e56ac2`; production web provider metadata

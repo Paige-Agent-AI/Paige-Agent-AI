@@ -1,0 +1,612 @@
+{
+  "schema": 1,
+  "base": "d7f55f217f78a1576b21f65d92c06fb5b1e56ac2",
+  "baseTree": "15733dc2dc3a12462e61b78065ef788b3c67dd6b",
+  "productInputs": 296,
+  "syntheticPorts": 169,
+  "productTransforms": [],
+  "bundleSha256": "4d93288f4d0062d96c84c3996d8230601d824c163364ea2f823156648fe5a074",
+  "htmlSha256": "27308c2044d615d960a489a956f26067d7774a7ef5d3aaa89fcdf50c86310da5",
+  "files": [
+    {
+      "file": "light-1536-closed-full.jpg",
+      "sha256": "d6aabe9f9cceddd7b950ae85236537f2b3c0fbb3eb4eed43a8afb9e75616eb17",
+      "capture": {
+        "file": "light-1536-closed-full.jpg",
+        "dom": {
+          "documentHeight": 770,
+          "height": 770,
+          "overflow": false,
+          "width": 1536
+        },
+        "raster": {
+          "height": 770,
+          "width": 1536
+        },
+        "method": "original supported full-page capture; document is viewport-height",
+        "exact": true,
+        "sha256": "d6aabe9f9cceddd7b950ae85236537f2b3c0fbb3eb4eed43a8afb9e75616eb17"
+      }
+    },
+    {
+      "file": "dark-1536-open-full.jpg",
+      "sha256": "8716aac81d6505793018094d105d6b000453a72b0836df719748f9c66f21df1e",
+      "capture": {
+        "file": "dark-1536-open-full.jpg",
+        "dom": {
+          "documentHeight": 770,
+          "height": 770,
+          "overflow": false,
+          "width": 1536
+        },
+        "raster": {
+          "height": 770,
+          "width": 1536
+        },
+        "method": "original supported full-page capture; document is viewport-height",
+        "exact": true,
+        "sha256": "8716aac81d6505793018094d105d6b000453a72b0836df719748f9c66f21df1e"
+      }
+    },
+    {
+      "file": "light-1366-closed-full.jpg",
+      "sha256": "3892ae7a6a1a4fc179aeff1bdb4abe9d696099808f9eca8a3163026137e53aa3",
+      "capture": {
+        "file": "light-1366-closed-full.jpg",
+        "dom": {
+          "documentHeight": 768,
+          "height": 768,
+          "overflow": false,
+          "width": 1366
+        },
+        "raster": {
+          "height": 768,
+          "width": 1366
+        },
+        "method": "original supported full-page capture; document is viewport-height",
+        "exact": true,
+        "sha256": "3892ae7a6a1a4fc179aeff1bdb4abe9d696099808f9eca8a3163026137e53aa3"
+      }
+    },
+    {
+      "file": "dark-1366-open-full.jpg",
+      "sha256": "9ad467124409c0aa7c1a19e39d6a257a32db69f32bdfffc323373afde340a906",
+      "capture": {
+        "file": "dark-1366-open-full.jpg",
+        "dom": {
+          "documentHeight": 768,
+          "height": 768,
+          "overflow": false,
+          "width": 1366
+        },
+        "raster": {
+          "height": 768,
+          "width": 1366
+        },
+        "method": "original supported full-page capture; document is viewport-height",
+        "exact": true,
+        "sha256": "9ad467124409c0aa7c1a19e39d6a257a32db69f32bdfffc323373afde340a906"
+      }
+    },
+    {
+      "file": "light-1024-closed-full.jpg",
+      "sha256": "480cab2891587e7fdfe9114560771f0c0698ac3fb332fdd7ad4da93f7e78ab37",
+      "capture": {
+        "file": "light-1024-closed-full.jpg",
+        "dom": {
+          "documentHeight": 768,
+          "height": 768,
+          "overflow": false,
+          "width": 1024
+        },
+        "raster": {
+          "height": 768,
+          "width": 1024
+        },
+        "method": "original supported full-page capture; document is viewport-height",
+        "exact": true,
+        "sha256": "480cab2891587e7fdfe9114560771f0c0698ac3fb332fdd7ad4da93f7e78ab37"
+      }
+    },
+    {
+      "file": "dark-1024-open-full.jpg",
+      "sha256": "5f26dca3dc595a40ff75fade5cadc9631e85ec27209644fcc0c34ca6e409731c",
+      "capture": {
+        "file": "dark-1024-open-full.jpg",
+        "dom": {
+          "documentHeight": 768,
+          "height": 768,
+          "overflow": false,
+          "width": 1024
+        },
+        "raster": {
+          "height": 768,
+          "width": 1024
+        },
+        "method": "original supported full-page capture; document is viewport-height",
+        "exact": true,
+        "sha256": "5f26dca3dc595a40ff75fade5cadc9631e85ec27209644fcc0c34ca6e409731c"
+      }
+    },
+    {
+      "file": "light-900-closed-full.jpg",
+      "sha256": "79ee099fd8f1b5a44043091c9f2fa1f169348a08f994a69c2d6538745e86e5fd",
+      "capture": {
+        "file": "light-900-closed-full.jpg",
+        "dom": {
+          "documentHeight": 1000,
+          "height": 1000,
+          "overflow": false,
+          "width": 900
+        },
+        "raster": {
+          "height": 1000,
+          "width": 900
+        },
+        "method": "original supported full-page capture; document is viewport-height",
+        "exact": true,
+        "sha256": "79ee099fd8f1b5a44043091c9f2fa1f169348a08f994a69c2d6538745e86e5fd"
+      }
+    },
+    {
+      "file": "dark-900-open-native-direct.jpg",
+      "sha256": "c0d470d010e0d38366ce693da5d2202516066f33dcf2f2fa0dac640f87adb5ee",
+      "capture": {
+        "file": "dark-900-open-native-direct.jpg",
+        "dom": {
+          "width": 900,
+          "height": 1000,
+          "documentHeight": 1000,
+          "overflow": false
+        },
+        "raster": {
+          "height": 1000,
+          "width": 900
+        },
+        "exact": true,
+        "method": "atomic supported viewport override and original full-page capture; before/after DOM900x1000",
+        "sha256": "c0d470d010e0d38366ce693da5d2202516066f33dcf2f2fa0dac640f87adb5ee"
+      }
+    },
+    {
+      "file": "light-390-closed-full.jpg",
+      "sha256": "0df47c2d683c9766f800848f3505396adb52155407e8478745939ee4eb9e11a6",
+      "capture": {
+        "file": "light-390-closed-full.jpg",
+        "dom": {
+          "documentHeight": 844,
+          "height": 844,
+          "overflow": false,
+          "width": 390
+        },
+        "raster": {
+          "height": 844,
+          "width": 390
+        },
+        "method": "original supported full-page capture; document is viewport-height",
+        "exact": true,
+        "sha256": "0df47c2d683c9766f800848f3505396adb52155407e8478745939ee4eb9e11a6"
+      }
+    },
+    {
+      "file": "light-320-closed-layout-read.jpg",
+      "sha256": "9e44de0b7087a67465c384580a850d5b352232713f74ae34af6d41e4629885ee",
+      "capture": {
+        "file": "light-320-closed-layout-read.jpg",
+        "dom": {
+          "documentHeight": 760,
+          "height": 760,
+          "overflow": false,
+          "width": 320
+        },
+        "after": {
+          "height": 760,
+          "width": 320
+        },
+        "raster": {
+          "height": 760,
+          "width": 320
+        },
+        "exact": true,
+        "method": "supported override then layout read, original full-page capture and after-layout read",
+        "sha256": "9e44de0b7087a67465c384580a850d5b352232713f74ae34af6d41e4629885ee"
+      }
+    },
+    {
+      "file": "native-back-focus.jpg",
+      "sha256": "e1ea9b923fd5497de945623ece15924313518b9e9d173ad6211ed770780adf1e",
+      "capture": null
+    },
+    {
+      "file": "native-back-focus.json",
+      "sha256": "c750cb30de477a05a5e9b350819d5451709ca3777d6ad0a2250bbb9fc0c73db6",
+      "capture": null
+    },
+    {
+      "file": "focus-hydration-red.txt",
+      "sha256": "8594f50a1b9a2466968248585fa81dcb199115aac800510f88e1385a36413c83",
+      "normalization": "transcript CRLF to LF only; original private log retained"
+    },
+    {
+      "file": "focus-hydration-green.txt",
+      "sha256": "ee498d13c3372540583f386fc48e59ed235a5dbf6cb62bbcd0b96c87a4584f87",
+      "normalization": "transcript CRLF to LF only; original private log retained"
+    },
+    {
+      "file": "focus-hydration-tsc.txt",
+      "sha256": "4971be1fab210ff0cb41402ba78c1d7f66550e8ec46ac8092039255730c4cb96",
+      "normalization": "transcript CRLF to LF only; original private log retained"
+    }
+  ],
+  "invalidProbes": [
+    "viewport-only1536 returned1535; retained",
+    "viewport-only900 returned900x431; retained",
+    "900/390/320 full-page timeouts; no returned proof",
+    "fresh900 named frame actually1536x735, invalid requested dimensions",
+    "fresh320 named frame actually1536x735, invalid requested dimensions",
+    "unscoped Fold PAIGE strict locator failed before effect; corrected scoped locator",
+    "visible option unsupported on existing extension before tab creation"
+  ],
+  "additionalInvalidCaptures": [
+    {
+      "file": "light-1536-closed.jpg",
+      "dom": {
+        "focusId": "recorded-findings-heading",
+        "focusTag": "H2",
+        "height": 770,
+        "overflow": false,
+        "width": 1536
+      },
+      "raster": {
+        "height": 770,
+        "width": 1535
+      },
+      "sha256": "d2d93f09e72e93390368a681197e20eb487baa781172bca4a1c05474b831f426"
+    },
+    {
+      "file": "dark-900-open-fresh-full.jpg",
+      "dom": {
+        "documentHeight": 735,
+        "height": 735,
+        "overflow": false,
+        "width": 1536
+      },
+      "raster": {
+        "height": 735,
+        "width": 1536
+      },
+      "method": "original supported full-page capture; document is viewport-height",
+      "exact": true,
+      "sha256": "c2cb8d6abd1ed030f8d0b29be128a756e2f6ab3024649d001fd0a9dd466702dc"
+    },
+    {
+      "file": "light-320-closed-native-direct.jpg",
+      "dom": {
+        "documentHeight": 735,
+        "height": 735,
+        "overflow": false,
+        "width": 1536
+      },
+      "raster": {
+        "height": 735,
+        "width": 1536
+      },
+      "method": "original supported full-page capture; document is viewport-height",
+      "exact": true,
+      "sha256": "29f1eb2c5279de46b3e96ac71ab5ea9ca783ac29f32d34c056261ef45582af6f"
+    }
+  ],
+  "nativeBack": {
+    "id": "recorded-findings-heading",
+    "loading": false,
+    "tag": "H2",
+    "workVisible": true
+  },
+  "boundaries": {
+    "identity": "synthetic",
+    "domainAndAPI": "synthetic; sends/writes refuse",
+    "productSource": "actual, untransformed",
+    "authenticatedRuntime": "UNVERIFIED until correction production release",
+    "focusRegression": "3 failing before;110 passing after across7 suites",
+    "narrowOpenRaster": "UNVERIFIED fresh; predecessor unchanged layout evidence retained",
+    "browserViewport": "temporary override reset"
+  },
+  "sources": [
+    {"path":"src/lib/paigePromptHandoff.ts","sha256":"f712f4a4862d88269bd6be01657ae33af31a1aca9e39570b892ddec2aded89d3","gitBlob":"62823b628939714d7de5b268407e180ea6a8e60a","acceptedBlob":"62823b628939714d7de5b268407e180ea6a8e60a","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/voice/voiceCallSafety.ts","sha256":"d0bca6b1c6a1c6922305865990c243677dac3543023c309a1f5f357672c47b10","gitBlob":"736c8a9a77a5f2793bd6e99774c760bf2a152bbe","acceptedBlob":"736c8a9a77a5f2793bd6e99774c760bf2a152bbe","normalization":"raw","role":"accepted product source"},
+    {"path":"src/test/fixtures/business-review.ts","sha256":"cf6046734a45ccff3d66d41e83b9e6ff304097e9105fb5a2a75a4278a7ae31fa","gitBlob":"d9c677cb052d74f0290f243f07a5fc39822304a9","acceptedBlob":"d9c677cb052d74f0290f243f07a5fc39822304a9","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/auth/signOut.ts","sha256":"27ce12c219727abff8130cb1a1c7de66bce065b4312f44f02e077d91f4ab12f7","gitBlob":"d00ff7945c693d311601ad298eb3f6f5c6df0a4c","acceptedBlob":"d00ff7945c693d311601ad298eb3f6f5c6df0a4c","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/SoloSetupReadinessNotice.tsx","sha256":"1fd2c146ad91dfcfb37063c60896bc32abeeec8bc0c126fb1bb0595f561f9653","gitBlob":"bf936c5e4dc03660d1ce1bf2d592ded85a41e70d","acceptedBlob":"bf936c5e4dc03660d1ce1bf2d592ded85a41e70d","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/utils.ts","sha256":"d1f1e0d62cb8d8d1e04c26e14de842d8a151f75812d81b046c65b5d1fe8e4b27","gitBlob":"a5ef193506d07d0459fec4f187af08283094d7c8","acceptedBlob":"a5ef193506d07d0459fec4f187af08283094d7c8","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/page/EmptyState.tsx","sha256":"af2ec5f89ae19650a3c526316700db94663612e5d4355f160950b3edfd47ee5e","gitBlob":"1101944d17fad51981017b1397dab2e55bc218e2","acceptedBlob":"1101944d17fad51981017b1397dab2e55bc218e2","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/SoloScreenBoundary.tsx","sha256":"084f56aaf783d098b55f8da3c95c4022db8bfbcebc52cb243b2318c77fcd05ef","gitBlob":"209ed6bb0fb3682e6eeb20b1f8c86f07dbc097ee","acceptedBlob":"209ed6bb0fb3682e6eeb20b1f8c86f07dbc097ee","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/shell-role.ts","sha256":"aa2b7dad38a38b5181944ae0b095fccf5a12eb6d00be2cd6372fa185381a9e2d","gitBlob":"27efc928dd97a25957efb3a95a271f4aa58dafb9","acceptedBlob":"27efc928dd97a25957efb3a95a271f4aa58dafb9","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/tier/tierFeatures.ts","sha256":"ba484c578aa74e52357be19aaf0050f0a04877f62f6271b2b9455c9774505ae9","gitBlob":"0d6e505f1ee8a534210b1e848a8d1be368d75151","acceptedBlob":"0d6e505f1ee8a534210b1e848a8d1be368d75151","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/auth/RequireSetupComplete.tsx","sha256":"49fc0d50de281311401a851e429e55a2525a91db023fe190ee9e283a77d46977","gitBlob":"2f23245d021e2f05667acce0ebc461cabc909ad0","acceptedBlob":"2f23245d021e2f05667acce0ebc461cabc909ad0","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/routing/tierBranches.ts","sha256":"801680b21cfd8b473fce6473bfffdb6c3e6a1115b81842ca1cd2d98e8da809e3","gitBlob":"8ed1366301662793b4b3a31fe27177642a0f46c6","acceptedBlob":"8ed1366301662793b4b3a31fe27177642a0f46c6","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/routing/useSubtabRoute.ts","sha256":"02dd34efa28e4a11d25e13b8574f6c6f9893a6485ee1be06c50c5eb498277216","gitBlob":"13c9eefd63c000279aa30e3ea124c72583b59b16","acceptedBlob":"13c9eefd63c000279aa30e3ea124c72583b59b16","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/solo-tokens.css","sha256":"77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197","gitBlob":"406e71f99b5292c0024bd911a4b782989f2c73f0","acceptedBlob":"406e71f99b5292c0024bd911a4b782989f2c73f0","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/_shared.tsx","sha256":"b6537ce521b4d83232dfcc21b5f03c00202d6360c1678f4d72628835aba0ce0c","gitBlob":"33656bf8c5e655cfe303ec5c59440b8665d71787","acceptedBlob":"33656bf8c5e655cfe303ec5c59440b8665d71787","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-shell/tenantShellRoutes.ts","sha256":"7efe0044151935edd51fd0754201cd7cebcf938f7fb5ee24c85b5cc87da8d1c5","gitBlob":"89d4941564e029262d897df80399eb7f1f7af767","acceptedBlob":"89d4941564e029262d897df80399eb7f1f7af767","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/systems-check-areas.ts","sha256":"2b6acc107464c318c2e0170b831bea19ad8b601730a132823c4c4c0dd318f4e0","gitBlob":"5374c1e102b1465e67bb1e788cb3e226b04279bb","acceptedBlob":"5374c1e102b1465e67bb1e788cb3e226b04279bb","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/solo-systems-check-workspace.css","sha256":"382fca42fdd572fa86cf8a9c1215a154265513e3a2144af16da95f63892148a4","gitBlob":"410c80d7c47a475a4e5ecb8bef11703b64eaea15","acceptedBlob":"410c80d7c47a475a4e5ecb8bef11703b64eaea15","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/SoloSystemsCheckWorkspace.tsx","sha256":"8cb6352fed0f3aa77ea53d9de9cadfd3b3be70d59a15859d170d8d4d91357c0b","gitBlob":"f9e9f4b2bf5e887a6e2d090e6ce7d98f11981259","acceptedBlob":"f9e9f4b2bf5e887a6e2d090e6ce7d98f11981259","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/page/GlyphPlate.tsx","sha256":"9e6063e589cbd28e2774fbb4de01cee2acb9b0b046d9eaa40744c061120a3c5a","gitBlob":"06c1b14ab1b81b6a7b4eac7d6f72466cc82ec682","acceptedBlob":"06c1b14ab1b81b6a7b4eac7d6f72466cc82ec682","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/brand/paige-command-mark.css","sha256":"e2d17ad14b748140f6c55f08a6d248497515061e0053dcf7730539d06d5b41b8","gitBlob":"bc228fa7710d86a1bbc3981dfadd33e0d4deab18","acceptedBlob":"bc228fa7710d86a1bbc3981dfadd33e0d4deab18","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/brand/PaigeCommandMark.tsx","sha256":"da4aa525f2a5eb44080c63d9768d4c6d2dfb62f73720cef3417f2879b77a7310","gitBlob":"5266b3c6f9805eb2c84079098071416161473f27","acceptedBlob":"5266b3c6f9805eb2c84079098071416161473f27","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/page/ArtifactPreview.tsx","sha256":"a38622162e4409fee4f8a69f379cc0bc5f4e4129104b86f6fb04624a46273906","gitBlob":"365c78f5418bf3d7f6260abc4a177ef25013332d","acceptedBlob":"365c78f5418bf3d7f6260abc4a177ef25013332d","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/page/PageShell.tsx","sha256":"2c9db0bf3dae4bdac35f8ad17a324d208011a505ad3cdd2e1b93d4a6c5a5cc8a","gitBlob":"a83a19c481f020a4eb54fd156ba541c076cfa1ad","acceptedBlob":"a83a19c481f020a4eb54fd156ba541c076cfa1ad","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/page/PageHeader.tsx","sha256":"efd6c59507d106da7a49443730c8977ba7cddbed84088478b61346a217fd6e3e","gitBlob":"f0901bca8528c54769486e683d51aac5904611de","acceptedBlob":"f0901bca8528c54769486e683d51aac5904611de","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/skeleton.tsx","sha256":"a229c310b9cbcb01ddd5e580865a6f14a19061aff7f6a97ef82a40b6a83583a4","gitBlob":"6690a131f28488723d7b4bb7d952e12ea3d03ee7","acceptedBlob":"6690a131f28488723d7b4bb7d952e12ea3d03ee7","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/page/StatTile.tsx","sha256":"6b94f8b8f4d54e550eddc1257f76033881ef56bca6818320417e6cbe6358420a","gitBlob":"aac4e2689cde92c6c76699266df27050372dcc78","acceptedBlob":"aac4e2689cde92c6c76699266df27050372dcc78","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/table.tsx","sha256":"fab18d9eeb84781f534330ff4b2c2cbe3a93f9bdf5c449debff2f682a83a4876","gitBlob":"991cdbf3ba12cf4d8e768a7b161471077568d4a6","acceptedBlob":"991cdbf3ba12cf4d8e768a7b161471077568d4a6","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/page/DataTableShell.tsx","sha256":"b4ad4f32b4177ca05220545d52b75d688681137548cccab6fe65bafe5d9bd4f0","gitBlob":"f70e9bee71a0af7a7fcc5a2d858c3cfed9625975","acceptedBlob":"f70e9bee71a0af7a7fcc5a2d858c3cfed9625975","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/page/PageSkeleton.tsx","sha256":"c6a9a1c80c7634136fdc0e6d81a3dd8b95ba23825cc05397bfc592defabb8dfe","gitBlob":"5ce8296f707bc63b562a433816af965834a2413d","acceptedBlob":"5ce8296f707bc63b562a433816af965834a2413d","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/page/SectionCard.tsx","sha256":"b8fa7de3319f12c8df50df15c74e131ece9bc3c3ccc21ca7e217808ccc7bb43e","gitBlob":"1293ac03ba9ae9bb4fccb8d192fa263e416d35c7","acceptedBlob":"1293ac03ba9ae9bb4fccb8d192fa263e416d35c7","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/page/SectionNote.tsx","sha256":"0bd97e46483204ed61c4a86bfec4cf22378abaa51679b9b3b65cd264e8f55f7a","gitBlob":"42ff3bb6bf7ce90815c70c02bf2d7ca6f01b0de9","acceptedBlob":"42ff3bb6bf7ce90815c70c02bf2d7ca6f01b0de9","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/chart.tsx","sha256":"1889cbad6e8f0014667d05caea6bac7eaa2390562dace4c81e0c63fa7866af93","gitBlob":"70a412e58891174fb3bb063bb485d49dd7567cb2","acceptedBlob":"70a412e58891174fb3bb063bb485d49dd7567cb2","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/page/Sparkline.tsx","sha256":"e9102b940e9ddc36e120c34b34e2837c5f23dfa20b134ab35da57f57a2b408f1","gitBlob":"fd6618aa74964577a7c82417065cf94ebb892473","acceptedBlob":"fd6618aa74964577a7c82417065cf94ebb892473","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/page/StatPill.tsx","sha256":"e4d79201baf3d3d1ce1854ef64674a0e28611bab66f44c6113f77ebd04b49eee","gitBlob":"b29492b2c084aa60a554c4bf861ac0934e5ae3f6","acceptedBlob":"b29492b2c084aa60a554c4bf861ac0934e5ae3f6","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/page/DrillContainer.tsx","sha256":"34565d2b1147e4c5313c21eb07680450f34a238a61401dacdc56528a00fd369f","gitBlob":"1c9e2f10c4aa413ab70009c6e55162c8f507d821","acceptedBlob":"1c9e2f10c4aa413ab70009c6e55162c8f507d821","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/page/MetricEntityCard.tsx","sha256":"a2a51dcee3fc30382b6bb9f5d8f2b379b919764ad6fce8266c0c045951c48717","gitBlob":"f7ab19836550aab82b96fd57910ca0d5b547e15a","acceptedBlob":"f7ab19836550aab82b96fd57910ca0d5b547e15a","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/button.tsx","sha256":"af60647e810333eab6c4a99139445436a21e11ccbb7d5531cb171685ba752f77","gitBlob":"fe9b3393ab137e691855228e734efc81fb7fdc98","acceptedBlob":"fe9b3393ab137e691855228e734efc81fb7fdc98","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/page/ExploreChart.tsx","sha256":"e3134ae3eb9b453ac4d6d540e98ebf73579749ae12081f9152097c7cdee22238","gitBlob":"e4543b8ee5741b0616fc8b4eefac18f0854b9c74","acceptedBlob":"e4543b8ee5741b0616fc8b4eefac18f0854b9c74","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/page/ChartCards.tsx","sha256":"c069e22e912363a058e2c29911e4c130af2f7b4257cb3624086020041576a20d","gitBlob":"bc7bc1ee5473b8a6335d2008401ce0531c1dccb7","acceptedBlob":"bc7bc1ee5473b8a6335d2008401ce0531c1dccb7","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/popover.tsx","sha256":"ee5f78ece57c9e8eb5f9b4186e2bb9ebe46b69b52f03f1edd9a601883bc64772","gitBlob":"59dd5252e9f4fe4c1a2da378af41ca4b0eea072b","acceptedBlob":"59dd5252e9f4fe4c1a2da378af41ca4b0eea072b","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/calendar.tsx","sha256":"845a0b0fdec33d8d49ab8ed05dd29a12c10b5bbcf60f24d0b9fc0a731ab18621","gitBlob":"900a69e45bafe9f68c2bf073b7441b9a943555fd","acceptedBlob":"900a69e45bafe9f68c2bf073b7441b9a943555fd","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/page/Toolbar.tsx","sha256":"8ed6c1958fafccfe4b82e3a87d16dfbc408079b4034d871ee5f57b5baa676fee","gitBlob":"fa825f6af59ed0f97af415ae67a8e1d1341ac86e","acceptedBlob":"fa825f6af59ed0f97af415ae67a8e1d1341ac86e","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/page/DateRangePicker.tsx","sha256":"ce7ea2b2d2465c405ffa4e09d19e9b55b0ff89051c6955d616ac2d3a9f7c60af","gitBlob":"2c97470cba15249c05d1a606adda900a21008dea","acceptedBlob":"2c97470cba15249c05d1a606adda900a21008dea","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/page/StatePill.tsx","sha256":"c5801f43ee3abd177b85ae861d05e7818e2fda0db938f1d06d2fbdc8845d2fdc","gitBlob":"4e20e0e3309eeaf9b0abb13b3dcca51dfa9d9f36","acceptedBlob":"4e20e0e3309eeaf9b0abb13b3dcca51dfa9d9f36","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/input.tsx","sha256":"aacef8933fe99ab553e12a82c874a23c97e2b5602eb6f00018454fa0a8d4f7f2","gitBlob":"09700f605e069e1856565869ac994f978d1be0b3","acceptedBlob":"09700f605e069e1856565869ac994f978d1be0b3","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/select.tsx","sha256":"a2b62120a033b36c8d6c4a1693aa9231645fa69251740e15eacec24c1eea4d82","gitBlob":"6f2525465bc450154ac8083461d0f84b2c1360f2","acceptedBlob":"6f2525465bc450154ac8083461d0f84b2c1360f2","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/brand-fonts.files.ts","sha256":"512aa69eb757081fd911c459267cf8cb96094e8da809eebd616a2aacb3d7a2e4","gitBlob":"88a367d636b719e9a52e1623e6ba2b995cd5cfa9","acceptedBlob":"88a367d636b719e9a52e1623e6ba2b995cd5cfa9","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/brand-fonts.ts","sha256":"be20a5e5903f015424d32f6003ef4603eb951d2a3b499461e5a5443d91737a8f","gitBlob":"dceaf6b05a81b77fb84edaa1e7aa4704a80e6d5b","acceptedBlob":"dceaf6b05a81b77fb84edaa1e7aa4704a80e6d5b","normalization":"raw","role":"accepted product source"},
+    {"path":"src/hooks/useBrandFontFaces.ts","sha256":"cf7065c88d9e9d657752a44543890f13c9b2221d4543d7f86d12516060a63854","gitBlob":"c14a707aec25943d63b1f61c31d9076a4edac6b1","acceptedBlob":"c14a707aec25943d63b1f61c31d9076a4edac6b1","normalization":"raw","role":"accepted product source"},
+    {"path":"src/hooks/use-toast.ts","sha256":"0602ac84d95719f2a27075ce60333db73128e09c0b07365dce7f9c77441c9d7c","gitBlob":"ca1316d678d31c11c213ce717c5e064a17e85ecd","acceptedBlob":"ca1316d678d31c11c213ce717c5e064a17e85ecd","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/brand/resolveBrand.ts","sha256":"df466f5a96dd86c26c48dbf92802ea08995fe55115fd6dddf063ee58dc4622ea","gitBlob":"961c3fb2c47facf33abb1893ad2daf07991ff0f6","acceptedBlob":"961c3fb2c47facf33abb1893ad2daf07991ff0f6","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/page/BrandControls.tsx","sha256":"78898e24d7169a31927671e6d6f472efab2e82eb36ad9f9001903d6b13ced0fb","gitBlob":"bb7fe6800c9962f6e2d5d2fd894d30aa097a6c1b","acceptedBlob":"bb7fe6800c9962f6e2d5d2fd894d30aa097a6c1b","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/avatar.tsx","sha256":"4a8bc00e5514912c54d414e207266fa100906aec2754d590adcc8ccc46d4c5c9","gitBlob":"68d21bbf6d29fc68b1a19d10e4eaf1e72fa2d68c","acceptedBlob":"68d21bbf6d29fc68b1a19d10e4eaf1e72fa2d68c","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/page/PresenceDot.tsx","sha256":"760feb343f3b9b30cebe51f3226b5c80ac988253801c1647e058ea4d7f3bf326","gitBlob":"4e48c4ee9e844708a60568f12722ca10ac66cf2c","acceptedBlob":"4e48c4ee9e844708a60568f12722ca10ac66cf2c","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/page/PaigeAttribution.tsx","sha256":"a882da474e5a37cecdb0d18cd51174f8e9b91a225a45ab5b1f9de709ae50ee53","gitBlob":"4bf5c36db9389da7140a2cb3d6b77ebb511b21d3","acceptedBlob":"4bf5c36db9389da7140a2cb3d6b77ebb511b21d3","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/page/index.ts","sha256":"f7e1f8ae0c064198f6997584b216dbec9bd7f01b86316c30027dda7738953616","gitBlob":"ab0aeab156abe110f17c2251c1e0491df60ae653","acceptedBlob":"ab0aeab156abe110f17c2251c1e0491df60ae653","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/dashboard/EntityDossier.tsx","sha256":"a8cc5d761b48ccab7e35d164b88d47f3a58c10bde9e63eda709c91c427e6d256","gitBlob":"51a60871241f570b31a0d613d31467b277a0ab16","acceptedBlob":"51a60871241f570b31a0d613d31467b277a0ab16","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/paigeResearchReadback.ts","sha256":"820408782697494e7401223ffa1c1aee1ecb25732401c7f23caa6627983753c6","gitBlob":"9da2affa756e89fee0640bf5ecd1d436351a28fc","acceptedBlob":"9da2affa756e89fee0640bf5ecd1d436351a28fc","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/data/deepResearch.ts","sha256":"76f74b8a27300bb0d5d5945821b81f7e5dad91c055c6849aafb8a60c350b6c62","gitBlob":"4e117680a73bb578047d865be12d8bab242a8370","acceptedBlob":"4e117680a73bb578047d865be12d8bab242a8370","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/paige-research.tsx","sha256":"b9a8f1e4bcff14aecc288a78c7ecdaf625f5c59c31a5e735084abf9f658e786d","gitBlob":"7b738bb8868fb99b7276e7a3c83f6d9e83207879","acceptedBlob":"7b738bb8868fb99b7276e7a3c83f6d9e83207879","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/catalogue-coverage.ts","sha256":"de41b8b4a2ceff34043da027308aa46ff2fdc2732cbcd9044573548cef0d3919","gitBlob":"1161b4c0d7470868e316346b42479b2506e519c2","acceptedBlob":"1161b4c0d7470868e316346b42479b2506e519c2","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/paigeClientScope.ts","sha256":"670a2031a4f180b564348fcd2592a83a87a1f0fe4df43c67f28318c472fbd1c0","gitBlob":"f21fd4a231750429c83f132c06540689d43fba55","acceptedBlob":"f21fd4a231750429c83f132c06540689d43fba55","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/paigePublicPresenceScope.ts","sha256":"52f11ac31abcfb748744866c102b5a2f67139ede2c2bf6add0a0c2bad4b56d70","gitBlob":"339bc955709d453b0976b27e21935d39e82bb8fa","acceptedBlob":"339bc955709d453b0976b27e21935d39e82bb8fa","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/solo-paige-workspace.css","sha256":"102217d07536ce43e9eec9a258deb541ecb7ccb226f43752c3cc2d06fdd736aa","gitBlob":"2a3a9e904e537976a9d2d55a9e5eb0ba33dbb5db","acceptedBlob":"2a3a9e904e537976a9d2d55a9e5eb0ba33dbb5db","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/solo-interview-navigation.ts","sha256":"827f85888accaaf11936b5321252f83374ca02ff2698afadd71dcb796b393069","gitBlob":"72e899d20049e59ece6dd7be4eefb2ee1c10b2ca","acceptedBlob":"72e899d20049e59ece6dd7be4eefb2ee1c10b2ca","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/solo-business-interview-contract.ts","sha256":"5bc8314e7236566425f266df21a5ef49d2fd535c040bcf6deaa66c2887f6d71a","gitBlob":"ac4bedb1a5844c00b6cb0d5e979064e337419d86","acceptedBlob":"ac4bedb1a5844c00b6cb0d5e979064e337419d86","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/paigeLiveConversation/presence.ts","sha256":"fb8434a88a8e134d19c4858cf56cacba4ac34426ba99c9d74862375ed61dfaa7","gitBlob":"20966e3f48981624e2c8bfe2bf3d9ec8991fd1f4","acceptedBlob":"20966e3f48981624e2c8bfe2bf3d9ec8991fd1f4","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/paige/live/paige-presence.css","sha256":"ae19b83af2309c9abe32fe0f1a6b415eee6ff2d06c8f698ff518695dd1d37e99","gitBlob":"d923764edae0e8d5acdebb360f1a04016c67adc5","acceptedBlob":"d923764edae0e8d5acdebb360f1a04016c67adc5","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/paige/live/PaigePresence.tsx","sha256":"ceabefdf83b24dba197ee62a40cefdcd1c8a0aa1f3ad4d3d10fc40c2bdef198b","gitBlob":"9f935ad4e90ec0e0668dc618b1f7561b2f73aa59","acceptedBlob":"9f935ad4e90ec0e0668dc618b1f7561b2f73aa59","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/solo-onboarding-stage.css","sha256":"14a21b19714259e1f3aea8b5856e04eafbe4ff22eecddc8146e8682797985fb8","gitBlob":"c1d5945ef58df0ac85494f4f9dbb921a9b9b111e","acceptedBlob":"c1d5945ef58df0ac85494f4f9dbb921a9b9b111e","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/SoloOnboardingStage.tsx","sha256":"6679ad6a5f48994062c1f5ca359a4da47cffd23bbd3124fe931ad30c962324ae","gitBlob":"6189e5e5aa2150938cfee2ad37c1b0944ce6358d","acceptedBlob":"6189e5e5aa2150938cfee2ad37c1b0944ce6358d","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/SoloPaigeWorkspace.tsx","sha256":"61d864e49f46b0c481e6974dfaf2a4a635174cfbef4d51f121036115e04d3967","gitBlob":"107f462a4c11a28a6ed6c92fce734665fc057b52","acceptedBlob":"107f462a4c11a28a6ed6c92fce734665fc057b52","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/auth/RoleGate.tsx","sha256":"d405d0a7417b41518c9241dc4248ff030e979f7607095a072c9b0f95ceb06d13","gitBlob":"f1d23ea8b3e4d6453647790a515c2b1834b6f5c2","acceptedBlob":"f1d23ea8b3e4d6453647790a515c2b1834b6f5c2","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/workspaceModel.ts","sha256":"cf83ee616ac6da1116b5b14d9c827b39f9a82829e2d97fd33cc113c9cb984877","gitBlob":"0a7981a112ddb64f88698a9a3f8c0bbaca850a62","acceptedBlob":"0a7981a112ddb64f88698a9a3f8c0bbaca850a62","normalization":"raw","role":"accepted product source"},
+    {"path":"src/hooks/useBeforeUnloadGuard.ts","sha256":"ff338d12cf00be2013c549dd69f4741c2191fac70f76d7cb544fb3299038bb14","gitBlob":"667bb406fc664bb4c0662910632d5262d61ec6f4","acceptedBlob":"667bb406fc664bb4c0662910632d5262d61ec6f4","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/label.tsx","sha256":"d5dc9497cbb28a5401b864bd44a15f010c302584fbe8e07e015dbe443f103753","gitBlob":"80e30eec8d12ded7da1f57c8bb83f461bc1a5d25","acceptedBlob":"80e30eec8d12ded7da1f57c8bb83f461bc1a5d25","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/switch.tsx","sha256":"32355cc478fb82aff85b8bc1646a86386cb93b40167056689df3064d5f5fd09d","gitBlob":"a7830b79b63798b5df681d88e9d6f74319a158d7","acceptedBlob":"a7830b79b63798b5df681d88e9d6f74319a158d7","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/textarea.tsx","sha256":"2f5b24d28dc5c41817ca69653a396adcb2fe495200f8184777d086a62fc70461","gitBlob":"4a5643e87fe235bde0aa67a092a4d5d585618eaf","acceptedBlob":"4a5643e87fe235bde0aa67a092a4d5d585618eaf","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/contact-methods.ts","sha256":"810bf4319fd744f4a27a59d868cb890376c156d9fabd7314a08ebb0c04f09e6d","gitBlob":"936a73dcce271eb0b1d23ca4cc68d416a9e18217","acceptedBlob":"936a73dcce271eb0b1d23ca4cc68d416a9e18217","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/contacts.ts","sha256":"b5fdbb6c0cff63875b0b6ff3d97ddcd044c7ce18e2b5aae3512f61f7b462e769","gitBlob":"465456abed3a44c318888e5f999284907a858074","acceptedBlob":"465456abed3a44c318888e5f999284907a858074","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/contact-methods/contact-methods.css","sha256":"c4abb9e9ad91b34bceabecee852ff7cf10779034ce7e046022077b80edf46718","gitBlob":"c7878307d37a06d15c74a616676e8840a91cf62c","acceptedBlob":"c7878307d37a06d15c74a616676e8840a91cf62c","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/contact-methods/ContactMethodsEditor.tsx","sha256":"58d01494e807b70540d6e89c1b7a7fe685b0294590966ae3eb5cd404acc1bcbb","gitBlob":"362026bbc2aa2c615f303646acb64cda7e4d7c64","acceptedBlob":"362026bbc2aa2c615f303646acb64cda7e4d7c64","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/contactUpsert.ts","sha256":"218dea5112cdcd7e779c28bebe1e1f6a00cac0832bb6c346e53459dbbb3ddf51","gitBlob":"06f40e750c92b41519281602be45da7989f741dc","acceptedBlob":"06f40e750c92b41519281602be45da7989f741dc","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/PeopleContactEditor.tsx","sha256":"94b412e4f2149301dd4bd28245789ff96af99a77ebf56c05eaea2c48a491b340","gitBlob":"12cf12cc427f599c0796111da4fc65156e053c8c","acceptedBlob":"12cf12cc427f599c0796111da4fc65156e053c8c","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/links/workspaceLinks.ts","sha256":"31ed8eac9f0d2f271bd006601480558092bf54c603d79ce00801436757886920","gitBlob":"f9537a8cadba9bf3edb60b98c1646655fd01c441","acceptedBlob":"f9537a8cadba9bf3edb60b98c1646655fd01c441","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/engagement/useClientEngagementStatus.ts","sha256":"c9def5f37cf3a313af66527ba872d86685bed8ae36e42c1f281de4136e4c5bf2","gitBlob":"a9672537efcd2aef7ab298727837f2edb46c9e3e","acceptedBlob":"a9672537efcd2aef7ab298727837f2edb46c9e3e","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/data/useBusinessTimeZone.ts","sha256":"c53f1dff5e929f521ea2eeaaf7ae0706e0e7537511d9986cc8b56a2e1d860bb8","gitBlob":"7418aba3eb3615a8588b40f6cce03c42a4fbd6e4","acceptedBlob":"7418aba3eb3615a8588b40f6cce03c42a4fbd6e4","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/sales/agreementVocabulary.ts","sha256":"6a1851d04544ce10a8b4d060e9b157f921effab29ccc71ba3d08617027dd3ba2","gitBlob":"5f44033eb68e0f0bc262dfd9e39b4016a9d67042","acceptedBlob":"5f44033eb68e0f0bc262dfd9e39b4016a9d67042","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/sales/collections/presentation.ts","sha256":"e6e0cf5d0021dcf12d5833774c642f4645c5e50b43a73a997f292eb8a294fb9f","gitBlob":"c6635f6885b4e60fa88d3524e50c90c4a23e86fe","acceptedBlob":"c6635f6885b4e60fa88d3524e50c90c4a23e86fe","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/client-standing.css","sha256":"5842a90db61d91838b70a6aeba3e804a90e4fcadded525aa24e5aac427756671","gitBlob":"794ecae598ece4b429ab6a7cda8e3cc2e7aa0ce6","acceptedBlob":"794ecae598ece4b429ab6a7cda8e3cc2e7aa0ce6","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/ClientStanding.tsx","sha256":"4d020eb8c46263ce74728f68d086d7c79205f404bac933f841244d105933e1be","gitBlob":"16ec07b299bd119bd79ad8357ca60b791b0b41c6","acceptedBlob":"16ec07b299bd119bd79ad8357ca60b791b0b41c6","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/auth/accountSwitchGuard.ts","sha256":"81b5ceff2074c87aa364d70bd334b7d16c4a6311d52d83c267bdc9149c93dd97","gitBlob":"bd448925a4915775f63a363ed0221ffc9f80c616","acceptedBlob":"bd448925a4915775f63a363ed0221ffc9f80c616","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/sheet.tsx","sha256":"56877e67e260514dc8df4347ae2a0d516c9d5cfbb341d104da2a9bc9484865a5","gitBlob":"445e5ca572f2813e02ee8bcc07855f8c0bb34b00","acceptedBlob":"445e5ca572f2813e02ee8bcc07855f8c0bb34b00","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/alert-dialog.tsx","sha256":"c8b01137c7552e63c9ccf2c38ef92e5417bd6616b6980d56d3015db027465283","gitBlob":"6dfbfb49fedb30753b1b2c08402953d40cc3389c","acceptedBlob":"6dfbfb49fedb30753b1b2c08402953d40cc3389c","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/team-workspace-contract.ts","sha256":"29e038ceb56e5dbfe13d68c9ce4d6414cf89878cda9431a4f6214315e08ae9df","gitBlob":"d5860e73e7659c2f111b322dc43fe3cc768b293e","acceptedBlob":"d5860e73e7659c2f111b322dc43fe3cc768b293e","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/OperationsAssignee.tsx","sha256":"d47cc80849a7fbd0f9bc91ffdc5ccebcd3f46bc24771e4e390eb714464a00dd7","gitBlob":"016ab7cfc4d2ea5269bc9fbdbffe5636b2281a63","acceptedBlob":"016ab7cfc4d2ea5269bc9fbdbffe5636b2281a63","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-work-create.ts","sha256":"fa432d93bcdbec44815410f39e6b4d2ef511f7c5207f4fb050c7f4d44e43d599","gitBlob":"27def55033856d156ddca2f4f58f1428c832f36a","acceptedBlob":"27def55033856d156ddca2f4f58f1428c832f36a","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/OperationsWorkCreator.tsx","sha256":"cab2b22f14caface089feea983bc127ffb2a33f9c36c62714d944146f081ef9b","gitBlob":"fb8d3728298fb7dec85329ee16b18028b1cae14e","acceptedBlob":"fb8d3728298fb7dec85329ee16b18028b1cae14e","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/settings-contract.ts","sha256":"dac7493f3c3c665d3697cf68b54537af435ce9548aa06fc5a4801e96f44e1656","gitBlob":"b4b79d1354fe06002ca5edb80d29b47e66abefc3","acceptedBlob":"b4b79d1354fe06002ca5edb80d29b47e66abefc3","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/useOperationsPeople.ts","sha256":"1be23965426a05e98dc1dbaeb56fdc1f4c528d00b1fcdb9cbbdd15c056a774a6","gitBlob":"911c92adf1215be436a6b4498c931e7e22c45d09","acceptedBlob":"911c92adf1215be436a6b4498c931e7e22c45d09","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-presentation.ts","sha256":"6e61315e808af0701e8c8cb34e9021b8bff97f9961257fce2b70cf465a7d1844","gitBlob":"3bdb9f68f05778a7894cc55b45bffb9e4b8673e4","acceptedBlob":"3bdb9f68f05778a7894cc55b45bffb9e4b8673e4","normalization":"raw","role":"accepted product source"},
+    {"path":"src/hooks/useClientPortalProgress.ts","sha256":"514baa207a8451a0813070fbfce8c64290afa6493deafa75025fe0fb6af2e946","gitBlob":"34945c7a30726c88755e89a71019aace2cad7b34","acceptedBlob":"34945c7a30726c88755e89a71019aace2cad7b34","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-workspace.css","sha256":"3c1384d5f589c5ac3a2a5ba8546c932726a62ffdb0e4347c4b37e92b53b71ab8","gitBlob":"58e3f8aa9cf3c48d8372e4a97a8aee413869db4e","acceptedBlob":"58e3f8aa9cf3c48d8372e4a97a8aee413869db4e","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/client-shared-work.css","sha256":"1b46696b60f425ff63e5d7542aa6346f5cbc5619b560ff431eea063306b745e8","gitBlob":"e622d1982e11f6a90234e61dd22593b13ee632f7","acceptedBlob":"e622d1982e11f6a90234e61dd22593b13ee632f7","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/ClientSharedWork.tsx","sha256":"079edd3603f7b6bafb548253beb49da563f0bdbd442671cb8716a11351853743","gitBlob":"e02b74113165ccd3e2353d8527e4c1dbed3510cb","acceptedBlob":"e02b74113165ccd3e2353d8527e4c1dbed3510cb","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/client-portal-documents.ts","sha256":"a2f947a6ac3b6bb9425ca2e28a04a9f9b0ad3f702b1fb2129fa864ab0713861b","gitBlob":"0b787a524b747d292bedf984c7ab34a84311d249","acceptedBlob":"0b787a524b747d292bedf984c7ab34a84311d249","normalization":"raw","role":"accepted product source"},
+    {"path":"src/hooks/useClientFilesOwner.ts","sha256":"2edb0a8fbf6de6ac3d62c44e1e7f827907b97b0eafeda0cc106238a964af1c5e","gitBlob":"11bdb58810b66ae9dff80677329048be49ea86fc","acceptedBlob":"11bdb58810b66ae9dff80677329048be49ea86fc","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/client-files.css","sha256":"47c0dfa799d3a14e9960c0f8697b1726c81a967a55ad8041239bd5013454ca4a","gitBlob":"141b947404c7148ad12c16881f423bdf7617e922","acceptedBlob":"141b947404c7148ad12c16881f423bdf7617e922","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/ClientFiles.tsx","sha256":"be85e9ed98a626ef3ba8feaee4fa63f7ff8242055bb0c71b43d7b614bc9b7365","gitBlob":"ebb903f63921dc60514eda18af9bfa9e69a310ab","acceptedBlob":"ebb903f63921dc60514eda18af9bfa9e69a310ab","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/client-portal-preferences.ts","sha256":"9f8c68962ce849c38ea8cb72963f8723c9491c7367c695f310cac1dc6197d476","gitBlob":"f0a9c393f4397f42b813c3bcebc58bec5ac183d0","acceptedBlob":"f0a9c393f4397f42b813c3bcebc58bec5ac183d0","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/clientCommunicationRows.ts","sha256":"819f2e4025f3fb42da5fa880123d4be10b71fe35198ce7b855d695433fdf2a72","gitBlob":"f2570aadbd60de1f4998bf36a0b05f43d2dcd49c","acceptedBlob":"f2570aadbd60de1f4998bf36a0b05f43d2dcd49c","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/client-communication-state.css","sha256":"7f9cdefa403ea932c997bd6604ce4c0fd8a82745409aa17ab77516b16296a47b","gitBlob":"e2a5c30adb718698bed5e126df435b75f8842069","acceptedBlob":"e2a5c30adb718698bed5e126df435b75f8842069","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/ClientCommunicationState.tsx","sha256":"95c16603028961759f3204ae36be7ad43dd3a7c76a1c31286ae2ddf691a43ae2","gitBlob":"4b31da6e26432c11bde31925506ded78c8ed0d2a","acceptedBlob":"4b31da6e26432c11bde31925506ded78c8ed0d2a","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/radio-group.tsx","sha256":"995ec983735b204597f11ae5dd22ba0175dfc633da2ddecf222847bbca387adb","gitBlob":"5d32e58a4efc47c81ec86c0d31831dfab9c87c2e","acceptedBlob":"5d32e58a4efc47c81ec86c0d31831dfab9c87c2e","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/client-portal-access.ts","sha256":"74aa8601b16e8d9fcb352ea681970c2b0bfd6c0cc20420e1949070204276f79b","gitBlob":"157b345bea230edfd7d9913af2e90f5266c83300","acceptedBlob":"157b345bea230edfd7d9913af2e90f5266c83300","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/portalInvitationEvidence.ts","sha256":"d450631122bde8159d20c7627ca948dfdab985b1c24476f76853b1611f9b3ab5","gitBlob":"e6f1b595015bea2ee4b801d86ce247ada7b6f693","acceptedBlob":"e6f1b595015bea2ee4b801d86ce247ada7b6f693","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/usePortalInvitations.ts","sha256":"897c6f52b730f06015a375efba2e835819210de2003fb6244d5d17620f7431c3","gitBlob":"e487d99da5cff421858922bd6d4524846bd42c46","acceptedBlob":"e487d99da5cff421858922bd6d4524846bd42c46","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/chat/PaigeConfirmCard.tsx","sha256":"3978f0637c43e6a5f030f19c7b1d5af60b13c9b046cef7a9e7db8f5f44823e88","gitBlob":"3f6a9d687dd61aa0dca564bc2e71823ff4f98fb2","acceptedBlob":"3f6a9d687dd61aa0dca564bc2e71823ff4f98fb2","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/portalInvitationUiDeadline.ts","sha256":"e6e6bff5a79926aef755514cd3e6cc8cb51e28b51eb2db6d5dfec9252e45089e","gitBlob":"59665e0432a51f37973427da0a5e96eb8d5fcffe","acceptedBlob":"59665e0432a51f37973427da0a5e96eb8d5fcffe","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/PortalInvitationCommand.tsx","sha256":"ff4560a6324d6dc4bdc4df2bf529b419ac5d1ad5544c180d02e425b151d08076","gitBlob":"8028b99894e2d0ad9da6351b81566e3fd09bc00e","acceptedBlob":"8028b99894e2d0ad9da6351b81566e3fd09bc00e","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/PortalInvitationManager.tsx","sha256":"cc920a3a7f915ffd273670126a0576083389a5f77517267fce61baf52914843d","gitBlob":"ce8248d9352c0111dccfb3f74192ee9ab6481111","acceptedBlob":"ce8248d9352c0111dccfb3f74192ee9ab6481111","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/PortalConfigurationGate.tsx","sha256":"9e0f7cb8136d1e5c396982e61a9b42eeed79b02638a8073c4279560b4cfee414","gitBlob":"3ac13119213b59f123df543c90b5e9800579f519","acceptedBlob":"3ac13119213b59f123df543c90b5e9800579f519","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/owner-portal-dashboard.css","sha256":"6d8536a15513d251280af2f55be9a80dabac1cce08d838453df250a68c24be4b","gitBlob":"555619ddedf26423d660930b421b1c074404325c","acceptedBlob":"555619ddedf26423d660930b421b1c074404325c","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/client-portal-access.css","sha256":"0184fe1871ffc09b1868d483fda779dc8f4906672ce10e4b2eca5a79c84e8681","gitBlob":"0d79f4255698a3b788bbdd268bfcd871eb70007d","acceptedBlob":"0d79f4255698a3b788bbdd268bfcd871eb70007d","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/ClientPortalAccess.tsx","sha256":"1a60e7680be9dcd45a0006d2f15016ebc6327873c0a3d043aaa4dd81bc254017","gitBlob":"e2076ee5ed705376766779f72b94de8ede742775","acceptedBlob":"e2076ee5ed705376766779f72b94de8ede742775","normalization":"raw","role":"accepted product source"},
+    {"path":"src/hooks/useBrandKit.ts","sha256":"cdc7f17ebb694d3631bed1f37d5690021dd40f714d645e660395d721b8cc63cf","gitBlob":"58651eabe90d42c03f7e2d6d94ce96be134a87e3","acceptedBlob":"58651eabe90d42c03f7e2d6d94ce96be134a87e3","normalization":"raw","role":"accepted product source"},
+    {"path":"src/hooks/useRailEvents.ts","sha256":"dd861fca025f5224e51ec6a49fb2b6448e48a4d7e34cb6898a657ae59d2bdd1a","gitBlob":"d1a1efb8cefe12b4cc2355b68b8a340b845bcb68","acceptedBlob":"d1a1efb8cefe12b4cc2355b68b8a340b845bcb68","normalization":"raw","role":"accepted product source"},
+    {"path":"src/hooks/useClientPortalRead.ts","sha256":"2343f958ff6bd4e2a154635e2fd0ef3e17a645a019460616c9176d704546a018","gitBlob":"d86ff296c91541854dab1c20c18c8ec2933e5591","acceptedBlob":"d86ff296c91541854dab1c20c18c8ec2933e5591","normalization":"raw","role":"accepted product source"},
+    {"path":"src/hooks/useClientPortalConfig.ts","sha256":"fcee65e4c1f20133dedba8960267147e2c7aece4cac3d110d3ad0f9b34505c5e","gitBlob":"b9d847ccca3f81e0c4e74fb48b23bc75010e07df","acceptedBlob":"b9d847ccca3f81e0c4e74fb48b23bc75010e07df","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/playbook/presets.ts","sha256":"af73d67c907458d9ff99f95e39b3e2ea0d94eb4d14f000c3c5b2b1b05ee0754b","gitBlob":"5239261fec7b2f10e44cb4aa998e5b7d7dbbf4d1","acceptedBlob":"5239261fec7b2f10e44cb4aa998e5b7d7dbbf4d1","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/playbook/resolve.ts","sha256":"a7e4ebc0a458a6d19e0b915d06c29d20e025f4b191b82fc94da167c854a98bef","gitBlob":"cf86fb4499f9a0b7a703f00f23e4274f306d7304","acceptedBlob":"cf86fb4499f9a0b7a703f00f23e4274f306d7304","normalization":"raw","role":"accepted product source"},
+    {"path":"src/hooks/usePortalConfig.ts","sha256":"cab005741009224813ad43a32237a1174e53da752d758b738139ab30b7cce0f3","gitBlob":"54369fcd07d5b0655a7d887773e55913eb057c6e","acceptedBlob":"54369fcd07d5b0655a7d887773e55913eb057c6e","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/portal/portalMenu.ts","sha256":"635ecbcde4055f740fdc54a33abc954f3bcabeca63852f19b7ffd6d51af09238","gitBlob":"02a8a419dd9872d1a2aba4191f74654e734dfe78","acceptedBlob":"02a8a419dd9872d1a2aba4191f74654e734dfe78","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/dialog.tsx","sha256":"9107e63b84d67eafb311c13cb52bc48f32ef3b36eddebe65365b10fdfbd9d2ca","gitBlob":"e6d52110725caad8f3c1627e7a608ca997c772ab","acceptedBlob":"e6d52110725caad8f3c1627e7a608ca997c772ab","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/portalDashboardModel.ts","sha256":"618f276e61a24f9611cc2fc8eb6dd8c40f78e72be59019fb428d8f1a25dc1015","gitBlob":"a2820c90874d3984de74d7b7158241f0dfc52f0b","acceptedBlob":"a2820c90874d3984de74d7b7158241f0dfc52f0b","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/portal/customerIdentity.tsx","sha256":"fbd7e1a6c0a27e6df161469b0e103a9cbd17daae5022ab73b523397e07cfb32c","gitBlob":"c285c3a2d508040c85127541d1fb2d575a470d23","acceptedBlob":"c285c3a2d508040c85127541d1fb2d575a470d23","normalization":"raw","role":"accepted product source"},
+    {"path":"src/hooks/useFinanceEntitlement.ts","sha256":"a83dbe043e338d85f3c4b218cb5ccd72dfd4ca080137064617038ae464751308","gitBlob":"9db2e054c7eba68fc6d0e9b646d3822ac79d45e5","acceptedBlob":"9db2e054c7eba68fc6d0e9b646d3822ac79d45e5","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/PortalInvitationHistory.tsx","sha256":"a73437850e0080967e48fd2a7cbf13e43ae59617e9d2d96dbf922941751dd1be","gitBlob":"720442bed98b5f136f1d188fd5606414bafc0608","acceptedBlob":"720442bed98b5f136f1d188fd5606414bafc0608","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/customer-resources.ts","sha256":"7cff94dc3dfce84a4e723d9aa75d37b598d76be4e9a48db1aa2a6481eba5f3a2","gitBlob":"5f070a6df082a7affa01b521387034354d5e4eb9","acceptedBlob":"5f070a6df082a7affa01b521387034354d5e4eb9","normalization":"raw","role":"accepted product source"},
+    {"path":"src/hooks/useOwnerResourceShares.ts","sha256":"58c2e55e0c24a645e9017a7844bbcbd8382f068da9c120a7de56d709575ec8a2","gitBlob":"d215aa8f68810ffe81ca81eb0b960f2a75d09d3d","acceptedBlob":"d215aa8f68810ffe81ca81eb0b960f2a75d09d3d","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/client/useClientAccountExit.ts","sha256":"866c2ed37bb00c37114a083f5c8c4432b815ae0d5041a9a23b2d4928c962ece3","gitBlob":"c661caf5498ffe938681503b24d821aa84758ea2","acceptedBlob":"c661caf5498ffe938681503b24d821aa84758ea2","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/OwnerCustomerResources.tsx","sha256":"da378399771ca91da94309c68fe20af8d69f6ad10b74b987d2dc7b4213d87b65","gitBlob":"86d947a32db2149f50785b8838171124be7c977a","acceptedBlob":"86d947a32db2149f50785b8838171124be7c977a","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/PortalMenuEditor.tsx","sha256":"57956f83f64aee1ab341fcf0df6cb67a4c4f5759334b696f390847bf4f58f78b","gitBlob":"572ae89cff6a756b4a93ef544b626e38999ab72a","acceptedBlob":"572ae89cff6a756b4a93ef544b626e38999ab72a","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/portal/assistantSettings.ts","sha256":"0af480ce12651fce4695dded1e17893f90c30aeea9af4d319442b0ed7f5c1e8f","gitBlob":"50e592d8a9077feb4195f9743eda97c97b5a6827","acceptedBlob":"50e592d8a9077feb4195f9743eda97c97b5a6827","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/CustomerAssistantSettings.tsx","sha256":"81721057f1c019f90b01d681d2caa7b158e10436e6726f7feace4548237fb404","gitBlob":"79227ed5c2f5b460f328e97a3fd932268208abef","acceptedBlob":"79227ed5c2f5b460f328e97a3fd932268208abef","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/PortalStudio.tsx","sha256":"632391ff05c157a376bc7d3cae88e15f72acc71c5172ea03b1150f3f8400a221","gitBlob":"aacf6608eade299cc844095689ab3cfa007c0618","acceptedBlob":"aacf6608eade299cc844095689ab3cfa007c0618","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/OwnerPortalDashboard.tsx","sha256":"7cbba6420960ac27ac1588306562033b827badd1f632e7813bff9ead8339d87b","gitBlob":"38bef4eeb5f3ff6e8fb7f8b714350dab31ee8130","acceptedBlob":"38bef4eeb5f3ff6e8fb7f8b714350dab31ee8130","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/tenant-relationships-clients-workspace.css","sha256":"bd2e43ee695a6c14f47b375ccac961e66947d268372e1a81b4653bbb6d7c4a49","gitBlob":"b92486570c1dbf78f1ea642d3e43abb5202d01e0","acceptedBlob":"b92486570c1dbf78f1ea642d3e43abb5202d01e0","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/conversations/inbox-shared.ts","sha256":"64bea7a60f5d4e8e00c49ffe0a6dc72a297279b762a6c87db78f6a6c3eef957d","gitBlob":"3796f65b19f9005c7c8e8b230effb48f3bf26ba8","acceptedBlob":"3796f65b19f9005c7c8e8b230effb48f3bf26ba8","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/command.tsx","sha256":"004926ab33465d7f7fb5b7ad80aec626317171c4e15dabf21c756332be8ddbb5","gitBlob":"b9743094d1726c8ca5ee62d5c48b10ee2ce15fda","acceptedBlob":"b9743094d1726c8ca5ee62d5c48b10ee2ce15fda","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/paige/CustomerSelector.tsx","sha256":"25cd889742b507684726e3b26a720d9fa47de0cb05b46cce0dc3103c64cfdc4a","gitBlob":"5ddd84794bd8578eadaf8a43d050ee9167887672","acceptedBlob":"5ddd84794bd8578eadaf8a43d050ee9167887672","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/conversations/AttachmentChip.tsx","sha256":"205b74fdd1085af8177272e63524c6dd565e30ec931b72431982f8ea76539600","gitBlob":"741e56c673448c73488f4cd66ea7d432bdd6c5bc","acceptedBlob":"741e56c673448c73488f4cd66ea7d432bdd6c5bc","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/conversations/connectorRouting.ts","sha256":"081ecab0f79f866df38ce80b2c998452f72083f43383ec820eb27d9ba89734d9","gitBlob":"1a6d1bb410477e6be45c01d9489b63d7f878e19f","acceptedBlob":"1a6d1bb410477e6be45c01d9489b63d7f878e19f","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/chat/confirmPreview.ts","sha256":"14958f071cdc0d67777c640c638ad2bf4de675d6fc1e6641b543e2663d2f1945","gitBlob":"ecb602b479d86e15c3447a70ff4db6afc86d6db7","acceptedBlob":"ecb602b479d86e15c3447a70ff4db6afc86d6db7","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/conversations/governedSend.ts","sha256":"12236e8b81be9c36ecd0a8d55b7aca0d2f94976c38dd1712cf8a5b8140cd4e2d","gitBlob":"1979cabf4c756e0cde50ab72794a0b8eb3fbd5b6","acceptedBlob":"1979cabf4c756e0cde50ab72794a0b8eb3fbd5b6","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/conversations/useLeadReplyReview.tsx","sha256":"748946ed94ef97ab52fd306d5288fcc02af3305b2a7c3d4ab86f733a1c7b0089","gitBlob":"80748527596e80f0d63826c3080c1381b25a42e8","acceptedBlob":"80748527596e80f0d63826c3080c1381b25a42e8","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/conversations/LeadReplyDrafts.tsx","sha256":"7d265e084317c0ae5a4508ddf4d47b3c16b57b6cdd5d6574313f5d9f091361dc","gitBlob":"673668158d23d9f48e86fd341919bdbbf1d638b6","acceptedBlob":"673668158d23d9f48e86fd341919bdbbf1d638b6","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/conversations/ComposeThreadDialog.tsx","sha256":"54a4b15694e3ec0ee5cec1f21f83d5ff77e390d03811e682e6a2821bdb6c0290","gitBlob":"4a0bbf2aecbf6e778ec579906049ca75f6dfb4fc","acceptedBlob":"4a0bbf2aecbf6e778ec579906049ca75f6dfb4fc","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/conversations/FirstRunOnboarding.tsx","sha256":"5e95e6f0d94838aa019824b1aa7a469eda60f0d29cc219fae6c5fed14c6fd0bc","gitBlob":"03465948355b3c8b870ec8d63f8811200a7415ba","acceptedBlob":"03465948355b3c8b870ec8d63f8811200a7415ba","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/checkbox.tsx","sha256":"178f8177bedb1704b4dd3e748f4826848981c8af43178c04e1a276a7f017cf1f","gitBlob":"759a41ce202eb6da0310bcb05bb697bc9fe611dd","acceptedBlob":"759a41ce202eb6da0310bcb05bb697bc9fe611dd","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/dropdown-menu.tsx","sha256":"0aa6dfd88b188940c62d27d6f2b6b09beb4491bf5b54933fac8b5a3a1c72201e","gitBlob":"8e82d968c82972b99c3c437e5a6a22ffbed52a25","acceptedBlob":"8e82d968c82972b99c3c437e5a6a22ffbed52a25","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/conversations/SnoozeMenu.tsx","sha256":"bea8ec16492b79d461cf8ecd728e9d4f25398d98dffa49455859c6fb785c5764","gitBlob":"5ea7cb9bc7582fad7c6ff359b19bf187d7e292e3","acceptedBlob":"5ea7cb9bc7582fad7c6ff359b19bf187d7e292e3","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/conversations/LabelPopover.tsx","sha256":"cd855ab792cd68c1da757c84f6a9edb889cee26ccbeb60977278e622a07236d8","gitBlob":"4f294ed43daec5180cfa3277d334b31f5607448b","acceptedBlob":"4f294ed43daec5180cfa3277d334b31f5607448b","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/portal-message-body.ts","sha256":"7b93b95676c1da6829f04e2cd7733dbae193be89a5b26f8b8bfbb812e07c7c80","gitBlob":"ba2ae60af5198d95911ec32ee7f314a138318e17","acceptedBlob":"ba2ae60af5198d95911ec32ee7f314a138318e17","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/conversations/portalReply.ts","sha256":"6958f27fd43dffc43a94ff29c8f0ab548b790742791d53cca8ff119c52eadc79","gitBlob":"5761ce918279617412c8cff39907abd6ed521dfa","acceptedBlob":"5761ce918279617412c8cff39907abd6ed521dfa","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/conversations/ThreadRow.tsx","sha256":"dab17937bef74c160ff9d7cf302894cc721673edc501cddb657c586820a61ef6","gitBlob":"a12b7f0eb03b39cbc32aff6ebff8c40213eacd94","acceptedBlob":"a12b7f0eb03b39cbc32aff6ebff8c40213eacd94","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/conversations/ThreadFilters.tsx","sha256":"b468f3d0d05021ce9d9d7dbc660fa6c3ec5dc2d5ab941ac3424ab0b3d55250c7","gitBlob":"1f5b4344b351afdeb68906753dc7815978323a90","acceptedBlob":"1f5b4344b351afdeb68906753dc7815978323a90","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/tabs.tsx","sha256":"836c323b760f0b36af64b319b679d116c726546577b22e8d60b63f2343e62e2a","gitBlob":"3d750c8ba464084479a143585cfd2f1866d1a618","acceptedBlob":"3d750c8ba464084479a143585cfd2f1866d1a618","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/accordion.tsx","sha256":"9587b5ca80cf0aa68bc2a4e6baacebbe07eab14e1c66c6b6420033aeca9219d1","gitBlob":"1e7878cede299282b94353d31e073bca26f85811","acceptedBlob":"1e7878cede299282b94353d31e073bca26f85811","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/customFields.ts","sha256":"8131885242fb7b8f39d744764b3d6e3addc13590498266c0074cc7be6991b370","gitBlob":"2e445e8f194403f615881e588730c453affeaf8a","acceptedBlob":"2e445e8f194403f615881e588730c453affeaf8a","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/admin/voice/CallButton.tsx","sha256":"c2649d8ab38040c3a0f32064f7e9c59e2bc3dc98be33e27c334b4b0f41621ca1","gitBlob":"6a3226836ae2f73e3808977392ae44ed40901c04","acceptedBlob":"6a3226836ae2f73e3808977392ae44ed40901c04","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/card.tsx","sha256":"1dfb17920034a5659ddec7e016d8b8d572cda2449c67a6ab31d35d441c4a9d06","gitBlob":"7907689caea46bb7ca51ee74053a31f634656529","acceptedBlob":"7907689caea46bb7ca51ee74053a31f634656529","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/badge.tsx","sha256":"b851d9ba385c4d60de471c5f43da38067298bbcc3470807e992acb224041c75c","gitBlob":"0853c441dffc3ca2251118d2cca041423023f1a6","acceptedBlob":"0853c441dffc3ca2251118d2cca041423023f1a6","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/functions/adminAccountActions.ts","sha256":"641f1dbce87ea55beae49cf0928ab7b988963720e906bc11cee9cb77d0977f68","gitBlob":"b5bed7df00532937e07ae3f6dfec9a84d2ec713e","acceptedBlob":"b5bed7df00532937e07ae3f6dfec9a84d2ec713e","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/integrations/connectError.ts","sha256":"0f5e8cfa7481b9260a167e377e968bde022feb1b39f56a4049929c8342912ae1","gitBlob":"c5058c0401454f12284be462bbecc615347ec61c","acceptedBlob":"c5058c0401454f12284be462bbecc615347ec61c","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/portal/legacyInviteSend.ts","sha256":"09cfdd7bc2234addf9215cd207979bf28d5586d47de79df04d30e57d2c805b93","gitBlob":"b6d06e532160b470e1d84f5ca0c54c32223ee00f","acceptedBlob":"b6d06e532160b470e1d84f5ca0c54c32223ee00f","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/admin/contacts/ContactPortalPanel.tsx","sha256":"6931799f95b3c77ee0f3828e390a74b090413aaa31bc307ca6c200d5f88d099c","gitBlob":"49092eeb136837a033eea763699af5fa46de9a52","acceptedBlob":"49092eeb136837a033eea763699af5fa46de9a52","normalization":"raw","role":"accepted product source"},
+    {"path":"src/hooks/useTenantFeature.ts","sha256":"fc604ede70f97534c010190907307a93c7dbf6fb1358c287c06add6567dfa4cd","gitBlob":"f7022fd9e96881e56f6f7a55f10f3884fd91d69a","acceptedBlob":"f7022fd9e96881e56f6f7a55f10f3884fd91d69a","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/admin/contacts/ContactBillingPanel.tsx","sha256":"4da867a472bf16b1c097bcf399372d8f7c85dfee80617e290dcd51b5000270a2","gitBlob":"d886c0fc161c2cb2e15447426b412d6dace293c5","acceptedBlob":"d886c0fc161c2cb2e15447426b412d6dace293c5","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/admin/contacts/ContactAutomationHistory.tsx","sha256":"958adc962274e1e8ef92a1702c0c4c2c1fa0de5b3856753909e774ac9138f476","gitBlob":"45d154cdf6216b8e08e92710194677046a348ace","acceptedBlob":"45d154cdf6216b8e08e92710194677046a348ace","normalization":"raw","role":"accepted product source"},
+    {"path":"src/hooks/useClientOnboardingStatus.ts","sha256":"10f940c03e4c73eddbdc4ee13c70a7ef0d3952cd150133385a04a6ec27b9305a","gitBlob":"f5e26cf55dc4dbd8ebe242f3b501d3e0d02fa431","acceptedBlob":"f5e26cf55dc4dbd8ebe242f3b501d3e0d02fa431","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/admin/contacts/ClientOnboardingStatusPanel.tsx","sha256":"d6d0567aeab4585e433ded3b930a9782457b73ae726cd0293ff8341899488b92","gitBlob":"96ad9bc120c63a97c2e882c982bf6efb80605d3e","acceptedBlob":"96ad9bc120c63a97c2e882c982bf6efb80605d3e","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/conversations/AgentsLog.tsx","sha256":"f027e18aaa41d379931f0b433b3138c8883ec0aabf2e3bc1668812fc5b1aa814","gitBlob":"9b8ad5ae3764847e6cfdd3fcc5985080a5d3c597","acceptedBlob":"9b8ad5ae3764847e6cfdd3fcc5985080a5d3c597","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/contactTags.ts","sha256":"308a23fad33246cf08341afa000f8f4c07ee3d3518c52e8b3a9a715891db0123","gitBlob":"2daecce47f660ec5f4d6d05eb1d0956270613faa","acceptedBlob":"2daecce47f660ec5f4d6d05eb1d0956270613faa","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/admin/contacts/TagPicker.tsx","sha256":"4f54e114f95f9d3fcc03769799be019cd7b456bbebfe8d3484b5b1f2bd281a91","gitBlob":"4466f13a28fe42943c1ba9240e6c01ed59ce15e8","acceptedBlob":"4466f13a28fe42943c1ba9240e6c01ed59ce15e8","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/pipelines.ts","sha256":"551f43bcef4b09f7288dfdf83eb2b37141eeb5931104cd4926eb1f4e874c3677","gitBlob":"6f4e61f9a361bfcdae0bd9af38e5adb4558b2d42","acceptedBlob":"6f4e61f9a361bfcdae0bd9af38e5adb4558b2d42","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/team/assignableStaff.ts","sha256":"38b37667faba2eef642c1aab3f6545e594eff4909691bcfa4bd00a7268de57e2","gitBlob":"c1e705a7066c80f4d4f9183979f149c1a34e3bc2","acceptedBlob":"c1e705a7066c80f4d4f9183979f149c1a34e3bc2","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/deals/CrmDealCommandReview.tsx","sha256":"88305af7db14253c781c03dfa50748371373f7c5f88b72795dab9967642097f2","gitBlob":"28acdaa504dc9d00cbc180ec77f85df09a5badf1","acceptedBlob":"28acdaa504dc9d00cbc180ec77f85df09a5badf1","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/deals/useSoloDealClients.ts","sha256":"7e369e92f8e55c01ef7669ed869fa4576be1b18cd9b0a5ab47e4b8fc77c90619","gitBlob":"3a34dae60471019acb6b388539d8eb4c84d5d93f","acceptedBlob":"3a34dae60471019acb6b388539d8eb4c84d5d93f","normalization":"raw","role":"accepted product source"},
+    {"path":"src/hooks/useTenantOffers.ts","sha256":"d675017e786a21e0b79b9b9040b66785230104840976400f46375b1dadc626ea","gitBlob":"2d0f272e373a85c6bdd15cd6d5263a03a1172fb8","acceptedBlob":"2d0f272e373a85c6bdd15cd6d5263a03a1172fb8","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/admin/contacts/NewContactDialog.tsx","sha256":"08a526c290f7258524693a04e1719f1e39a7268534a8fc175c7991c353705121","gitBlob":"3d7384ab844f2d0b8ca04eaa27571e62f9368fe3","acceptedBlob":"3d7384ab844f2d0b8ca04eaa27571e62f9368fe3","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/admin/pipeline/NewDealDialog.tsx","sha256":"579d9d660bcccb59a13680bcc9fddae610d8c2b17289fbfc3dce19b8f1ef1279","gitBlob":"6871fee8ae705887bfcf604fd755de630a833301","acceptedBlob":"6871fee8ae705887bfcf604fd755de630a833301","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/admin/contacts/ContactDealsSection.tsx","sha256":"88df65c9a21b90908bb222b17ba07b1726ae4a1662635a431348f75820c1c725","gitBlob":"ac24606dfc9218f1f6aab14e45baf22f8938186b","acceptedBlob":"ac24606dfc9218f1f6aab14e45baf22f8938186b","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/planning.ts","sha256":"ea3452628fa4faecf191f0e369caced62649d9ad340e1b7df1ea3257aa426b14","gitBlob":"7acc5ed380c3bb9efcd2a2483881b3ed5b096dfa","acceptedBlob":"7acc5ed380c3bb9efcd2a2483881b3ed5b096dfa","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/planning/QuickAddDialog.tsx","sha256":"b3ca9a6b90c29a1920cbf2867b0f279632ec059d8d1cbb09f6676b8185bfbbb8","gitBlob":"f639bf010642674465402c0ae2731905c9a56cd2","acceptedBlob":"f639bf010642674465402c0ae2731905c9a56cd2","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/conversations/ContactCardRail.tsx","sha256":"907230d0d91344ebf32c56d7ce2b9f9e99c4d06930c44de2f221add39965c2d1","gitBlob":"bf0606e01e48a3c23279c40c6d60b0a798d5b170","acceptedBlob":"bf0606e01e48a3c23279c40c6d60b0a798d5b170","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/conversations/messageReading.ts","sha256":"4511737573a132e960b4e9dfe05fd5bae5f748c11f82104638b7991eb2713661","gitBlob":"315f92336f071702c80fc3b3db51b977536bdb3a","acceptedBlob":"315f92336f071702c80fc3b3db51b977536bdb3a","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/conversations/MessageBubble.tsx","sha256":"153c7ec2311342fa02496da6e83f9d3a90f873e66ee3e28aa1367ff356418f42","gitBlob":"2fed528f1d111df2899c66c049e97633102d896f","acceptedBlob":"2fed528f1d111df2899c66c049e97633102d896f","normalization":"raw","role":"accepted product source"},
+    {"path":"src/utils/VoiceAudio.ts","sha256":"6b263aaf434f8a90fce5c0f78fd0dfdb5d0508b0811fc866637ef437376fac7a","gitBlob":"4facceb30df306b47eb5cd34d1c938b8e03817fc","acceptedBlob":"4facceb30df306b47eb5cd34d1c938b8e03817fc","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/voice/useDictation.ts","sha256":"e356270667b3885b88fdf483480f826ad53e15d3fdbe1c010aeea1d5c6441b4f","gitBlob":"165f029fc33e4008aac3a08c6542dae3681c8fc7","acceptedBlob":"165f029fc33e4008aac3a08c6542dae3681c8fc7","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/conversations/shell/ConversationsThreeColumnShell.tsx","sha256":"42b7e3d4c60fd3eba70e2e01ce32774bc65c98004b97930958b159d437a21f88","gitBlob":"77790808f5508d4d885ab66a63b428ea7979fc6d","acceptedBlob":"77790808f5508d4d885ab66a63b428ea7979fc6d","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/conversations/shell/ConversationsThreadList.tsx","sha256":"087b76a6925d2fccf8bd31a2e940dde08eb355a9aef5b45f710dd9c7561b289a","gitBlob":"4934121e529c6cb8df3326aee0d44762dc3423f1","acceptedBlob":"4934121e529c6cb8df3326aee0d44762dc3423f1","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/conversations/MessageComposer.tsx","sha256":"a1cf9a84ac5409c2ddc2332262c41be1307d98a900b9eb8782d7861ec2126746","gitBlob":"f14e01e50823ea3ff0a3ccc040573ab3d4892e43","acceptedBlob":"f14e01e50823ea3ff0a3ccc040573ab3d4892e43","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/voice/DictationMicButton.tsx","sha256":"2c8d60b0ee4693b604c883588ab884ca2cd00559874de2c71aeffd4334054f70","gitBlob":"ef49c0ee993cd059e6aa8ee09d970c91a9d8907f","acceptedBlob":"ef49c0ee993cd059e6aa8ee09d970c91a9d8907f","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/conversations/shell/ConversationsRichComposer.tsx","sha256":"f93b27270a0fa4a1887b39ed9df15f92977c757c3be8e7b859288162ba483381","gitBlob":"0738b5d71c0a2a50bc23f981b32f8e3be1f2a3ba","acceptedBlob":"0738b5d71c0a2a50bc23f981b32f8e3be1f2a3ba","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/conversations/shell/ConversationsContactPanel.tsx","sha256":"f0d040ebb25d557111ab4281a723f6f705d23c9f7eacd38c7d7eedf1b51cc484","gitBlob":"f005dd68917672af8489feac6226e391de08a25f","acceptedBlob":"f005dd68917672af8489feac6226e391de08a25f","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/tooltip.tsx","sha256":"bd9361649477cf9496f4b48415a2eafb9ae1ebca81af58a29b61b1516adc88c1","gitBlob":"2dece61d05221533410c21ed07bd1fae8e91dbb5","acceptedBlob":"2dece61d05221533410c21ed07bd1fae8e91dbb5","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/conversations/shell/ConversationsCallButton.tsx","sha256":"4b5533fa2110dcf05b8afb1bb4382c84f80a791dc05b7247a34feabded44c37a","gitBlob":"6bb75a054c77b4f1653882bd0923e5819da54636","acceptedBlob":"6bb75a054c77b4f1653882bd0923e5819da54636","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/ui/paige/AgentPresenceContext.tsx","sha256":"e5f737f324fa90b1efef4a60195913413ff90d28a9148fd4ce30f794cf49771b","gitBlob":"6b9e680dcf591bde81ad44a81bd8a0aa9af6ee7d","acceptedBlob":"6b9e680dcf591bde81ad44a81bd8a0aa9af6ee7d","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/conversations/solo/solo-conversations-workspace.css","sha256":"7e6e5e261b048ec44baca82ed3c13626f899ffff8a9529b0685784f2e1666a3e","gitBlob":"d80c53cbf2f1a6ff7e044357420872ce985de343","acceptedBlob":"d80c53cbf2f1a6ff7e044357420872ce985de343","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/conversations/solo/SoloConversationsWorkspace.tsx","sha256":"18abe3dbeda250262ed8bb44cb55e033fd16f43fe268dddc7c8e3ec17c510800","gitBlob":"7dd380d91e88ed8f32f84cd3e58f066281539b55","acceptedBlob":"7dd380d91e88ed8f32f84cd3e58f066281539b55","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/conversations/solo/soloConversationModel.ts","sha256":"73c3f65c3ad74f0766c622979536917db87905ff64a5c181e5813ba78f41867e","gitBlob":"86e432954cccc2c2649b066b6a2931b21ad60459","acceptedBlob":"86e432954cccc2c2649b066b6a2931b21ad60459","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/ClientsConversations.tsx","sha256":"322ae23610dc5ff64dd0d647ae0e32860041d11beaa0753185c82a8767440e1f","gitBlob":"2149cfa9f5f4b9a8ae04c21c579c75cb2b0ebf03","acceptedBlob":"2149cfa9f5f4b9a8ae04c21c579c75cb2b0ebf03","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/calendar/config.ts","sha256":"182c977fbb4fb2fc520dd555f2e77c4889d2edd6b8eaa41ea0e3e68ddc7c7efb","gitBlob":"9eadc210c60dd361e1d97a6fb266587d89e6e26b","acceptedBlob":"9eadc210c60dd361e1d97a6fb266587d89e6e26b","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/admin/calendar/CalendarsPanel.tsx","sha256":"77904c118aec92ad3864b3e3cbdf20be100c3113a1ed3774e1e1bd86858c6a5c","gitBlob":"84866a2f5d238d6550fa0692f21582c23e2fc282","acceptedBlob":"84866a2f5d238d6550fa0692f21582c23e2fc282","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/admin/calendar/CalendarGrid.tsx","sha256":"65db8f37fce986ee322dd1ad682dd5c19956a1bc8e2fc7f77b584f7e4a1825d1","gitBlob":"c8cf05922f1958c3d062a7108baa45b2ab598831","acceptedBlob":"c8cf05922f1958c3d062a7108baa45b2ab598831","normalization":"raw","role":"accepted product source"},
+    {"path":"src/hooks/useRealtimeTable.ts","sha256":"bc9bb60ed73ef4bff820d277fdccd54257f9816ff7b12a66e1d6c80eca586f24","gitBlob":"dff974443e4862b54e556d19fa4d725a65d8e41a","acceptedBlob":"dff974443e4862b54e556d19fa4d725a65d8e41a","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/planning/PlanItemRow.tsx","sha256":"33522d2248f9e30348646db5c3bc2e930a43243c1e893f7b59270bdbbb1c99ca","gitBlob":"5ac92f065b3bb4c99d13f3e0230d5ec9bfd79d7b","acceptedBlob":"5ac92f065b3bb4c99d13f3e0230d5ec9bfd79d7b","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-calendar/tenant-canonical-calendar.css","sha256":"28434ee7283a52363bbf516f2213e33f23af570915116320d7cef8e5426c660b","gitBlob":"fcc58da30426640826e815e4301d7ca56a559833","acceptedBlob":"fcc58da30426640826e815e4301d7ca56a559833","normalization":"raw","role":"accepted product source"},
+    {"path":"src/pages/admin/CalendarAdmin.tsx","sha256":"fe17d2fcc335b9644f010c82ee60a93f7f33d643481ab48a21063496b0cb55e1","gitBlob":"0f33a3f9ae32f67e6371aab0fed924dd02518e6b","acceptedBlob":"0f33a3f9ae32f67e6371aab0fed924dd02518e6b","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx","sha256":"35b2e2d22e8378b819df7c8a1b491974867c239a704808d54453b5f2489888ce","gitBlob":"0930ecf69cc461062c311d3ae6ae9ba970b982f1","acceptedBlob":"0930ecf69cc461062c311d3ae6ae9ba970b982f1","normalization":"raw","role":"accepted product source"},
+    {"path":"src/lib/scopedUser.ts","sha256":"ba4a0e7293f21bdd9a9f7a19be4dde43fc65cfdf920fb6ee05e659309db3e7ca","gitBlob":"d6be5bfe5dad5b0b9b275d14e548959d987e3150","acceptedBlob":"d6be5bfe5dad5b0b9b275d14e548959d987e3150","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-work-update.ts","sha256":"40900e64691a49a6da313da7035cbccd19c1ed0577b7e25747d179f8632adbb5","gitBlob":"625c309f645270e613a0715931ed6bae61436049","acceptedBlob":"625c309f645270e613a0715931ed6bae61436049","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/OperationsWorkEditor.tsx","sha256":"fa04762f75f30eeab96ad61391b2fd06781d91dd0043a12993293a29b4caa52e","gitBlob":"8e6849a4594acddb25fa82b7caa883ec12ff2345","acceptedBlob":"8e6849a4594acddb25fa82b7caa883ec12ff2345","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/OperationsWorkActivity.tsx","sha256":"8ede652ffa232088eaeb1a67c668f0e388f9f0cb7cbf57c393a214852138c93e","gitBlob":"0143431f4614c0cf7dfb7ec8efd0c148ee2775b3","acceptedBlob":"0143431f4614c0cf7dfb7ec8efd0c148ee2775b3","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-delivery-staff.ts","sha256":"f15f58315473e265db9c14f37a4b42c8049ab1cd2f46b05e3e7ebdbe3d1b01ab","gitBlob":"ceb8b4427931690c900ad599cf8bd9f21055be00","acceptedBlob":"ceb8b4427931690c900ad599cf8bd9f21055be00","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-delivery-source.ts","sha256":"6aff6452e60b63c57e9c95b0786c35429d5212534f72c87d20062a69533aba84","gitBlob":"8ce0a85320a82e31faa8fce58bd94ba4a73fcc68","acceptedBlob":"8ce0a85320a82e31faa8fce58bd94ba4a73fcc68","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-delivery-local-recovery.ts","sha256":"57d75f90ff9ab2f4492315771fed47fef7ec7b8a010de507dbfcc2a80112e94a","gitBlob":"91bdb14600d1375e790bfb7fa961110a7fa51bdf","acceptedBlob":"91bdb14600d1375e790bfb7fa961110a7fa51bdf","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-staff-delivery-review.css","sha256":"933346721554d0c362b7955057deb3fb113c1ca0f2e7b62d18b3a482e0dffdb0","gitBlob":"7bb0fa05703f54355f538717bd0f4b24978c7665","acceptedBlob":"7bb0fa05703f54355f538717bd0f4b24978c7665","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/OperationsDeliverablePreparation.tsx","sha256":"0e178bdf866a7fe13f0891c8b3fc4c462e847e557a3928957228d37f050ca4be","gitBlob":"bf0e5bf045d521719b7d3ac6d08c2253b542fe49","acceptedBlob":"bf0e5bf045d521719b7d3ac6d08c2253b542fe49","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/OperationsStaffDeliveryReview.tsx","sha256":"6d50108f9dd707b3a47c178a102eb6b02eaed59627e28a4c12f791fa018fc304","gitBlob":"49e63b7084e86cb0d3047fc91899ce38e13e4c33","acceptedBlob":"49e63b7084e86cb0d3047fc91899ce38e13e4c33","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-item-release.ts","sha256":"e43a0e0d43f48a1949722600668415d48bb0fde5550d40ad62681cd47d28370d","gitBlob":"bc225163d10ba1de4c8daf65353751569d218318","acceptedBlob":"bc225163d10ba1de4c8daf65353751569d218318","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/OperationsItemRelease.tsx","sha256":"e7bbe8799fef0eb3f4a77626f15d64e7743a09efdd5e4250d84605740df0446d","gitBlob":"8b1a3bd894ec18a60207046ba148cf1fa502d857","acceptedBlob":"8b1a3bd894ec18a60207046ba148cf1fa502d857","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-project-create.ts","sha256":"cbdce3c997bc95ec2692cbfb419e61a3a4e24ec7ec639cd7d2197e083e2ac586","gitBlob":"d35488dd13616d791b4a39312fc6a7325cd18335","acceptedBlob":"d35488dd13616d791b4a39312fc6a7325cd18335","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/OperationsProjectCreator.tsx","sha256":"73f8fae5e490484dc810cdc2c440112e3f9ebaeca69d267dfa184b952caf7f9c","gitBlob":"2837214786fa7c274faa6ece0febacc507c7be09","acceptedBlob":"2837214786fa7c274faa6ece0febacc507c7be09","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-project-update.ts","sha256":"4b73cbf1013ddbd83bb600e2ed03cc82476cd800db9b1abd99025d870c4606f8","gitBlob":"dc496d9a60fcd8aa206d5e9c267320fab02ea650","acceptedBlob":"dc496d9a60fcd8aa206d5e9c267320fab02ea650","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/OperationsProjectEditor.tsx","sha256":"7faab43dd1ac2c89ca178246fb6103d037759345776f32d494ea936d4c6f7e91","gitBlob":"881dac7fe74b08692353ece0483e7ef03ae2e084","acceptedBlob":"881dac7fe74b08692353ece0483e7ef03ae2e084","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-native-work.ts","sha256":"6088d748b01cc8925ae78e64f1d0866beffde0598d8bbff81b1a39bcba045d66","gitBlob":"7efc59e0f82676d6633cea6af7b76b8b3df048ab","acceptedBlob":"7efc59e0f82676d6633cea6af7b76b8b3df048ab","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-views.css","sha256":"4660be9eb39ef6989ccd6104a3942f6536ed998e5745f926aaa1c04c6f42f519","gitBlob":"1c7933e606175751fda69c19b02606c3287e83f3","acceptedBlob":"1c7933e606175751fda69c19b02606c3287e83f3","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/OperationsWork.tsx","sha256":"05363c245edb182b646b4aed028509dcda1784d818ff2535a8034a1b381db20c","gitBlob":"00ad46e03fbb3ee2aa5eaed5d3880a7dde21ec9e","acceptedBlob":"00ad46e03fbb3ee2aa5eaed5d3880a7dde21ec9e","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-crm-work-edit.ts","sha256":"32c8ad0cb4f335f97fce7dd39014b88df06abfeeb9bb55b63d02898b6da8744b","gitBlob":"dbcdee20f565f93232556bb169ec359ad49f5518","acceptedBlob":"dbcdee20f565f93232556bb169ec359ad49f5518","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-crm-work-command.ts","sha256":"0b9777b21f2583456e0dc5d715be3f75c76e38f7acac89a5b0012540a0e544e8","gitBlob":"2b5e33ade3e53f9f5a4349e9d29f4ecfaede785e","acceptedBlob":"2b5e33ade3e53f9f5a4349e9d29f4ecfaede785e","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/OperationsCrmStageReview.tsx","sha256":"233c36924bc40dda327083984edbf9990677fc1d9b23a4730d8f1dd5e0a011ec","gitBlob":"0e4e7e9e0ee594d85203518ef79a01ee831f44cf","acceptedBlob":"0e4e7e9e0ee594d85203518ef79a01ee831f44cf","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/OperationsCrmWorkEditor.tsx","sha256":"9b3d84accd9dba81e03760f4d39dff1d5ec989a265be18d807bf764b384d320d","gitBlob":"2dc3c4e6ce58da758d2780238e3c03344bd71f72","acceptedBlob":"2dc3c4e6ce58da758d2780238e3c03344bd71f72","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/OperationsProjects.tsx","sha256":"a82e08482cbfc5ec150dd6ae30ddfaf67f7d45c3caa5afbb1ef31af5fc29f5e8","gitBlob":"dd9a9b21d564d3610725de0accf07efd4799333a","acceptedBlob":"dd9a9b21d564d3610725de0accf07efd4799333a","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/weekly/weekly-owner-read.ts","sha256":"53a1e46f212d83cefc2ebee1e09b9f961521efd484dc1c25c60e3d86508c1d6e","gitBlob":"b473d0a459cd4d368dbf17849d0c9988e151fb12","acceptedBlob":"b473d0a459cd4d368dbf17849d0c9988e151fb12","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/weekly/useWeeklyResponsibility.ts","sha256":"3ebd35b4b778ba603ecc52628aaa0112cd0112b90182de97b3b97644e0c6df4d","gitBlob":"406425948106edb61e2e881cd6e49e9ca876a903","acceptedBlob":"406425948106edb61e2e881cd6e49e9ca876a903","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/weekly/weekly-responsibility.ts","sha256":"796067513eaad0f1144c92757c9dfe3aecf092e6f973c04095cae25d14446553","gitBlob":"15f4f10f09afc59345b57063d010e8c04b1dd5ae","acceptedBlob":"15f4f10f09afc59345b57063d010e8c04b1dd5ae","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/weekly/weekly-responsibility.css","sha256":"440b8cd83b032538e28ea2a428e9263c0930085fbafbd2076dd5e171f522a458","gitBlob":"d600b50ff91dc5a34e99c11e0faa61370de17a0b","acceptedBlob":"d600b50ff91dc5a34e99c11e0faa61370de17a0b","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/weekly/WeeklyResponsibilityPanel.tsx","sha256":"7b2c59d72d75a363d5ff414fb80743a9be351200eea69892184f79ed515e4994","gitBlob":"9031603ce1cf7813b65ffc6794a01be0aa0fdbbc","acceptedBlob":"9031603ce1cf7813b65ffc6794a01be0aa0fdbbc","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/weekly/weekly-draft-command.ts","sha256":"bff21801abfc5295542569985ffffe11e69f0e1617bebab0fb6e8414736d5f48","gitBlob":"6bb0b5001d548019292ffcdb0523c72d5c0bf2e9","acceptedBlob":"6bb0b5001d548019292ffcdb0523c72d5c0bf2e9","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/weekly/WeeklyDraftReview.tsx","sha256":"1b92366f988ecd34cbba3a8818ca2f310a3a93911c346bb50823f0602a676240","gitBlob":"47eb4569b7d21d05731c6ac7aae32cbe2afdb848","acceptedBlob":"47eb4569b7d21d05731c6ac7aae32cbe2afdb848","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/weekly/WeeklyDraftComposer.tsx","sha256":"5a63a4123af59ba971bf5846601d2dfcc748a8bbcc0ad6da55b8143f2ff68a5c","gitBlob":"a8637c0ce4ffed6db8c35735d48b2be948d94b52","acceptedBlob":"a8637c0ce4ffed6db8c35735d48b2be948d94b52","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/weekly/WeeklyResponsibilityEntry.tsx","sha256":"9c0456ecd776291f3e589f938302e66d186c652d77d6584870a8b635b324b1ea","gitBlob":"6d79e26e5cfadfe73c4cafa0a9fa8d0246911727","acceptedBlob":"6d79e26e5cfadfe73c4cafa0a9fa8d0246911727","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-overview-work.ts","sha256":"b828c44d62ac5f67c3db0c536b5e28d9e64fae4a9591ee407cac9db0ec20f253","gitBlob":"87e4846d31e218662ad36714d8f33e91909dc265","acceptedBlob":"87e4846d31e218662ad36714d8f33e91909dc265","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-overview.css","sha256":"a04bc9f57ce80108039514e8be33331102fd4f4b286eaf156c059273ece51c76","gitBlob":"be3c209d23af41b9976f3dd0a4b538993a254bcc","acceptedBlob":"be3c209d23af41b9976f3dd0a4b538993a254bcc","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/OperationsOverview.tsx","sha256":"a87d1beed96b3107bcc9eff7cf487b89ddeb193a9182ef68ae2f7b5521f5daa1","gitBlob":"3d377f354bb394d6e907087c95bef5f146cf01f6","acceptedBlob":"308f40b0511328fcf981e9ab105ccd900f562ec4","normalization":"CRLF-to-LF only","role":"explicit candidate product source"},
+    {"path":"src/lib/userClock.ts","sha256":"9582325d04f5b18599330a1126f66886800e0b59f2982400e736e9a1132e42cf","gitBlob":"9e5c54e3e0a338676aa397e2479435f253e3abb2","acceptedBlob":"9e5c54e3e0a338676aa397e2479435f253e3abb2","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/data/useBusinessReview.ts","sha256":"11c5b57ab30100496a891b3a044139b5ad6c24b7e4ca8ac42f394e3f99807e53","gitBlob":"faf0686bdd9adbde1a422673f34d6b7ae4d6bc17","acceptedBlob":"faf0686bdd9adbde1a422673f34d6b7ae4d6bc17","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/executive-review.ts","sha256":"937947f2e76ad52a2f8f35eb35c428ea2722f003041bc2623ab64fcc53cdad63","gitBlob":"268a9e6c0d33a02ec7f098817bd165753fc113ff","acceptedBlob":"268a9e6c0d33a02ec7f098817bd165753fc113ff","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-recorded-findings.css","sha256":"f9490234ef94a9e8ca0b1e1ab737b8976a3a0cf77e80ff9b15ed214bb0155578","gitBlob":"097ad13e551f6c2ce5ccf0c62e3105235b529bea","acceptedBlob":"097ad13e551f6c2ce5ccf0c62e3105235b529bea","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/OperationsRecordedFindings.tsx","sha256":"48851932d478e01433b74b83ac5f6593e80a097091e628e0fca08d64ab2a5eb4","gitBlob":"7b6c5f3b8e0c25e97ee905fc1c55d6d2a85d6bea","acceptedBlob":"7b6c5f3b8e0c25e97ee905fc1c55d6d2a85d6bea","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/OperationsCapacity.tsx","sha256":"35b22a0ae1c9b2b6e78982325dbce4b05731ddfd90a26015b4faa3036537a042","gitBlob":"027fb6b16293d00259f9b80421cbca6b5f593798","acceptedBlob":"027fb6b16293d00259f9b80421cbca6b5f593798","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/useCatalogOffers.ts","sha256":"4afdb0eaf5c05d9780d7c398ca7a0b05470bc2a47e0e43f48b9c06e71d564bcd","gitBlob":"8ea050e2c773f715489373b7d3069887789ba531","acceptedBlob":"8ea050e2c773f715489373b7d3069887789ba531","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/catalog-offers.css","sha256":"3baf710ea48c59b7728758cdaba1d229d6acd8c8cdbb2485cd4170cb5088cb90","gitBlob":"e539b4ad24a8d940f8779d215f24e29988e4011e","acceptedBlob":"e539b4ad24a8d940f8779d215f24e29988e4011e","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/catalog-offers.tsx","sha256":"df369a826ecee87ef97e96a6077e47a506f07ce7e2ac979dbf0496a5eac0818d","gitBlob":"1f1a4ea96f3c53377c603b44d818243d6bec8f90","acceptedBlob":"1f1a4ea96f3c53377c603b44d818243d6bec8f90","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-engagement-readiness.ts","sha256":"a2f9818bd4c5e678354b924c35eddcb118f9c306cfde30cf782f01d48cf36f0f","gitBlob":"daafb6c10a3b6ee9dc7ed95f4f98189caecadd09","acceptedBlob":"daafb6c10a3b6ee9dc7ed95f4f98189caecadd09","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-engagement-read.ts","sha256":"8c78081bc1a064d56e89df51d69b3c9d85a7ebc2a70c2007066dcfa9efc4b2a5","gitBlob":"c4e59258224bef832e9ad987700bc811c97b4466","acceptedBlob":"c4e59258224bef832e9ad987700bc811c97b4466","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/useOperationsEngagementEvidence.ts","sha256":"939b8cbc2c7f5540cc85195e671a2c693f041894fd1f227349c5b0384ae2eef4","gitBlob":"e7138a5e0e4f7b9c28af88a2e91a853c54c67bbe","acceptedBlob":"e7138a5e0e4f7b9c28af88a2e91a853c54c67bbe","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-engagement-handoff.ts","sha256":"d108c49cb762f96054824888afcce44bad15a5618d5d321f54cdeef3e7e344f7","gitBlob":"f2c5c68c34eadf7f712f632281b1c3a6a287fe7a","acceptedBlob":"f2c5c68c34eadf7f712f632281b1c3a6a287fe7a","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-engagement-handoff-write.ts","sha256":"b634ff270341c2240cbb0241ba9d4af7e73e09fb3d8752922b27b5b207210c8e","gitBlob":"9ebeadacaab1fb34135ad2c7a11d33bf3204e189","acceptedBlob":"9ebeadacaab1fb34135ad2c7a11d33bf3204e189","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-handoff-recovery.ts","sha256":"557b4f135f5607bd5bcf5c6315d92b8ae9c5a8d1d03a1b56053098ad4fb1624f","gitBlob":"cce442dbf7fa1c4f4adf1fb145e6ca111b2f1dd7","acceptedBlob":"cce442dbf7fa1c4f4adf1fb145e6ca111b2f1dd7","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-handoff-intent.ts","sha256":"68c7ac65cdf45098acc73be5a8720b5389db5ac942cd72d8c1051d41a334b114","gitBlob":"594c22a18cb5e0ae22927b4ba2ad10bec5c0c94a","acceptedBlob":"594c22a18cb5e0ae22927b4ba2ad10bec5c0c94a","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-handoff-date.ts","sha256":"ff4ecee41ea95041d115850aa898a20de9acc50ffd0493d70b7216152c64de0c","gitBlob":"da657275b03f26ff279e9d2a442438a8ec7e0112","acceptedBlob":"da657275b03f26ff279e9d2a442438a8ec7e0112","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/OperationsEngagementHandoff.tsx","sha256":"0839ebfed98ca9a143c7d2d2f306923e49c101c7baa231a9b6d042c96fbe0166","gitBlob":"0464796a502092daca90325d986eda7ad7075527","acceptedBlob":"0464796a502092daca90325d986eda7ad7075527","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/OperationsEngagementEvidence.tsx","sha256":"ba3aefdc6b3d88d320970e49aee653ef11450e46bd45f0d4decb7d485d6ef79e","gitBlob":"76170b59bfd30ca28ff9b105a87ab014109a1c32","acceptedBlob":"76170b59bfd30ca28ff9b105a87ab014109a1c32","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-source-contract.ts","sha256":"6ef3b484c2902e2a9b6fb623241a290ad460b62012fa2911b6d708a979e787d3","gitBlob":"8a5ead430330711d7c10d378677381300ff08653","acceptedBlob":"8a5ead430330711d7c10d378677381300ff08653","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-engagement-project.ts","sha256":"1b4606e1178fb97b8a9e900cd2820e024e8f2498ebef7d356b6fc87f84dfd2ec","gitBlob":"0e7ed46a7c7756d37fa9ffebe1a4370c51559374","acceptedBlob":"0e7ed46a7c7756d37fa9ffebe1a4370c51559374","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-delivery.css","sha256":"30d3442ff5d883da841c9ebeb797ac343fbe4d3417b27c75cf2fceb42d2cc4ad","gitBlob":"3fd3bd28109e2b98d83383c70770314c9ad289e4","acceptedBlob":"3fd3bd28109e2b98d83383c70770314c9ad289e4","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/OperationsDelivery.tsx","sha256":"94523bbdb3961c7d27a89fcf864412a2632a46b062516c195a6916831a8c2a5a","gitBlob":"162596be30611ff7181328852d60ef66d7fdff04","acceptedBlob":"162596be30611ff7181328852d60ef66d7fdff04","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/OperationsPlaybooks.tsx","sha256":"e4a4eda15b968b2084e05523519bed7a27c8da4cbaf8ac6739e47e4cdbba9e92","gitBlob":"716a2f7c47071753548c1a2bbea7e2f136090c1c","acceptedBlob":"716a2f7c47071753548c1a2bbea7e2f136090c1c","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-weekly-source.ts","sha256":"12539858b50560e4d84b2525db4bce25daa7f237370b31505ac80f162dde14c7","gitBlob":"2cb9a8c4717649292933689c519044d583f96c29","acceptedBlob":"2cb9a8c4717649292933689c519044d583f96c29","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/operations-task-focus.ts","sha256":"493b92d6c9194a34ebd07af2e349184693c3cee1a84ec1364d584be458fc3945","gitBlob":"73069461cb702554cd817a73da5e12e24d107d66","acceptedBlob":"73069461cb702554cd817a73da5e12e24d107d66","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/OperationsWorkspace.tsx","sha256":"1b40ff69c309c798a36ed73699abf83cfad4fc0da51fb9a445bcd90cda3e6d4a","gitBlob":"8ffb259888e530c89c4c3eab6781676180b5d117","acceptedBlob":"8ffb259888e530c89c4c3eab6781676180b5d117","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/operations/OperationsRoute.tsx","sha256":"6c2c33dc988a42cd2c79db855a4170bd5081c859b139d94ebd4e213971b03264","gitBlob":"94935938b6cc6a125053e98a3154072ca297efb2","acceptedBlob":"94935938b6cc6a125053e98a3154072ca297efb2","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/analytics-routing.ts","sha256":"2b75cb60aa0c29c7a033e58961583b932ca1391d84a87b08e5d04d15b7b69345","gitBlob":"d34da9b8a5063978b3a2dec22f693f650d4f9b1d","acceptedBlob":"d34da9b8a5063978b3a2dec22f693f650d4f9b1d","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-shell/settings-scroll-contract.ts","sha256":"082ad58f4c84460e2cde6c87d3b219c468fc345c0a76f1733bce5911024aeeed","gitBlob":"d3586571f60b7519404aa36cc13bde8ac44c9ebe","acceptedBlob":"d3586571f60b7519404aa36cc13bde8ac44c9ebe","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-shell/tenant-content-focus.ts","sha256":"7f32786447b99863e649add8d7f9acbf4486c780ca63de3ab66dd0e5fb312106","gitBlob":"7bae43e8a3b8d15163b283afee5db8faf63aadc6","acceptedBlob":"7bae43e8a3b8d15163b283afee5db8faf63aadc6","normalization":"raw","role":"accepted product source"},
+    {"path":"src/operator/shell/CommandMark.tsx","sha256":"f16530566302d4b78151658e0b02ee76eaf57c2d73b97ef2bce30c27f201d46a","gitBlob":"53f8f47d7cb27f6c9cbf8bc7123db52103e64da7","acceptedBlob":"53f8f47d7cb27f6c9cbf8bc7123db52103e64da7","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-shell/tenant-command-center-shell.css","sha256":"e9756f8cfc04a330748711d798afeda35cb8f02bd133914dfee9a5fe4b0bf355","gitBlob":"8f596a9dcc571c4786b7671814f031e94462c737","acceptedBlob":"8f596a9dcc571c4786b7671814f031e94462c737","normalization":"raw","role":"accepted product source"},
+    {"path":"src/components/tenant-shell/TenantCommandCenterShell.tsx","sha256":"5a282f5f7c5627856470ae5062ba8cc8d657d3a9478f30261568a9f9c9d223f0","gitBlob":"221de1826c710e733b4abfdf3a4b412eabb58768","acceptedBlob":"221de1826c710e733b4abfdf3a4b412eabb58768","normalization":"raw","role":"accepted product source"},
+    {"path":"src/solo/SoloApp.tsx","sha256":"39976b1d05e268e957e61b4a746055684a4170b5d3804639dddf6ea83ce9c2af","gitBlob":"f628db4aa8a95bf72b8309f0e88f6d5e76e81a43","acceptedBlob":"f628db4aa8a95bf72b8309f0e88f6d5e76e81a43","normalization":"raw","role":"accepted product source"},
+    {"path":"src/index.css","sha256":"f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc","gitBlob":"b5301f83c946ebd189e516c28dacd0233881e75d","acceptedBlob":"b5301f83c946ebd189e516c28dacd0233881e75d","normalization":"raw","role":"accepted product source"},
+    {"path":"tailwind.config.ts","sha256":"05fb4b0f7b025bc2e09cf7169e7f225082e3948f19d06a9c2000d2388a71e257","gitBlob":"b593e66269295cb13614c76833361312275f5f31","acceptedBlob":"b593e66269295cb13614c76833361312275f5f31","normalization":"raw","role":"accepted product source"},
+    {"path":"public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-normal.woff2","sha256":"4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05","gitBlob":"ea0f36f0a91e480b4d8848f125a7ad041a3bee00","acceptedBlob":"ea0f36f0a91e480b4d8848f125a7ad041a3bee00","normalization":"raw","role":"accepted product source"}
+  ]
+}

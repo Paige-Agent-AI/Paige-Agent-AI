@@ -871,6 +871,62 @@ assignment, full ten-outcome Experience or Live proof. Internal patch only, no
 customer release identity or announcement. Forward source correction preserves
 original identity, business records, exact approvals and all domain authority.
 
+**2026-10-21 — EXP04 retained agreement completion verification.**
+PR [#2487](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2487), reviewed
+`82e33f96c9fbac525db0f7b95151cc63b46095de`, merged
+`4fa7ea57abf8bb643b4ab7ec191e9b2e3488d837`; actual composition tree
+`a2d32ebc3edbfc2f78d4fcd35b3ace7e56bbe2e8` independently reproduced against
+actual parent8f12cc73, retaining concurrent E09/EXP05 work and the reviewed native
+agreement source. Selectively reuses #2186 and #2175's retained-byte verifier.
+Completed helper retries and losing writes require the original completed row and
+its actual matching private PDF; unavailable evidence withholds confirmation without
+rewriting completion, re-sealing or replaying notices/tokens. No new signing engine.
+AUTHOR-REVIEW / LOWER ASSURANCE6322702330/6323215493; all10 exact-head checks,
+including actual Supabase Preview, and both Vercel statuses SUCCESS. Native106 plus5
+original Portal wiring cases and three Edge type checks pass; these are source proof.
+Normal Edge push39651063122/job119399192802 SUCCESS: affected sign-agreement source
+and JWT configuration PASS, ordinary certified tag advancement recorded. Artifact
+12369491053 SHA2563b87d89bc0215baaefed2174595ac14c4d76a8096af94f1f60ba39366b9e3d6a.
+Direct production package firstv25, subsequentlyv27 ACTIVE/verify_jwt=false: all11
+source files exactly match merged4fa7ea57; later metadata reads retainv27/update time.
+Current EZBR SHA25640cdcda53edcd960013a548b09cb2f991b374c0206e68772a4f56f4d9344195c.
+Web dpl_FqUiGdmgxjzhZBrhZGAj4nAJ8uQi READY on exact merge. Later public
+fc2f4324…-mvifvof7 observed; compare confirms a docs-only descendant. This increment's
+migrations NOT_APPLICABLE. No manual deployment, tag, JWT or source-verification waiver.
+Actual signer/owner/client completed-copy recovery, real concurrency, full ALG01/12,
+accepted/effective terms and all O1–O12/founder acceptance remain PROOF OWED. No real
+signature, send, payment or provider activation was executed for this proof.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2487#issuecomment-6323403903),
+[source evidence](evidence/ui-delivery/e04-retained-completion-reconcile.md).
+Channel production; internal integrity prerequisite, no customer version/announcement.
+Recovery is reviewed forward correction preserving immutable records. This factual
+post-merge identity closeout is not logged recursively.
+
+**2026-10-21 — EXP04 existing Agreements register discovery repair.**
+PR [#2486](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2486), reviewed
+`f854bcf150961caaeeb1548d70a33c72567f34aa`, merged
+`719a39437f1553eb280e820fbe84686fa4afc965`. Existing loaded records can be found by
+client, document or recorded signer; missing and unreadable signature states remain
+distinct, a failed read retires the missing-document filter, and each source's
+200-record limit is disclosed accurately. Canonical records, authority, original
+details, signature/commercial separation and all prior source work are retained.
+AUTHOR-REVIEW / LOWER ASSURANCE6322377043/6322812270; ten applicable exact-head
+checks and two Vercel statuses SUCCESS, schema-free Supabase Preview SKIPPED.
+Web `dpl_GgavqzeUH1HqS1Pkr1UKRZyU4vU6` READY on exact merge; stable public
+`719a39437f1553eb280e820fbe84686fa4afc965-mviexe9v` and actual imported SOLO
+bundle's three changed discovery strings verified. Migrations/Edge NOT_APPLICABLE.
+Local composed202 cases and20 native synthetic frames/nine paths are source proof.
+Actual ordinary owner Sales/Agreements navigation, genuine empty source, original
+create-form opening/cancellation and full reload passed. Populated lookup/filter,
+staff/client/signing/provider outcomes and whole O1–O12/founder acceptance remain
+UNVERIFIED; no record was created to manufacture proof. Protected bounded smoke
+ANT52/e96d6e3f is not independent Central QA or full Experience acceptance.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2486#issuecomment-6322994905),
+[source evidence](evidence/ui-delivery/e04-agreement-register-discovery.md).
+Channel production; internal correctness increment, no customer release/version or
+announcement. Recovery is a reviewed source correction/revert preserving all records.
+This identity-only post-merge closeout is not logged recursively.
+
 **2026-10-21 — EXP05 recorded findings in Operations, bounded production release.**
 PR [#2474](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2474), final reviewed
 `f9dff45e6c2214412da05d4fb70153937c254309`, merged

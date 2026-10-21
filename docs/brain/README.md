@@ -26,6 +26,10 @@ Portal source. First local discovery repair adds title/signer search and explici
 unreadable states; final131 source tests and20 source-render frames/9 paths pass.
 Exact-head type/CI, merge/release/readback and authenticated acceptance remain owed.
 No new signing, send, payment, provider activation, legal or algorithm availability claim.
+Historical signing context is also reconciled prospectively in source: retain current
+pgcrypto-qualified native peek while withholding mutable unproven economic headers.
+Forward13090000 and native27 checks/replay2 preserve E09/E05 reservations and original
+document/token/ACL behavior. This source candidate is not deployed or accepted.
 Full architecture/sequence, EXP09 source contract and ALG01/02/12/13 original-register
 status are in [the existing E04 journey](../delivery/exp04-get-paid-deliver-journey.md)
 and [bounded source evidence](../evidence/ui-delivery/e04-agreement-register-discovery.md).

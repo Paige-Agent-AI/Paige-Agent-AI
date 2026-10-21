@@ -1,5 +1,33 @@
 # 🧠 The Second Brain — master index & read-first orientation
 
+## EXP02 released customer loops — October21 17:35 UTC
+
+#2483 merged a5a30f5d, #2481 merged b4532809 and original #2414 merged950d1dac.
+Exact reviewed trees, lower-assurance author reviews, required CI, web deployments and
+customer receipts are in Master§4.0. Current verified public950d1dac-mvidsevg and exact
+webdpl_uzk6FuLF3foxBVRubz1ykJu25xAq contain all three. Normal strict Edge39642473836
+verified17 selected source/configurations and certified b453; direct Business Review
+v56/JWT=true readback matches31/31 files. Earlier changing-deployment verification
+failure remains recorded, without a check/hash/JWT waiver. Receiver/handoff migrations
+and Edge changes are N/A; the shared Marketing destination's Edge release is separate.
+
+Actual ordinary authorized customer PASS: Capabilities → monthly Ask VERA reveals the
+same Chat and correct unsent question; reload preserves draft and original messages
+(ANT-52 e07a8907). Banking & Cash completes the same Finance source read, honestly reports
+unavailable rather than zero, refreshes, exits to existing Integrations, returns and
+reloads with original conversation/empty composer intact (ANT-52 f9b5b986). No question
+was sent or business effect performed for either check. Private native proof stays local.
+The original VERA identity remains registry version2/Intelligence, Finance & Risk;
+addressed analysis uses the existing single Harness, not a required separate runtime.
+
+Marketing intake adapter/active consumer remains unmounted; source destination alone
+is not customer acceptance. Filed monthly/quarterly documents, populated Finance,
+permission/isolation/second-cohort, true check/action/approval/Rail follow-through,
+Research/Memory/Knowledge completion, period return/phone invitation refinements,
+zoom/Live/all19/nine analytics and final founder acceptance remain required as applicable.
+Original9/0 and12/0/4 are unchanged. Earlier dated checkpoints below retain their
+historical source and proof boundaries; they do not supersede this later release record.
+
 ## EXP02 source and actual customer evidence — October21 UTC
 
 #2471 original Marketing evidence is released6f07299a, web/public and normal strict Edge39610734384/direct reader parity verified; actual Marketing-target acceptance remains owed. #2477 scoped Chat links is releasedfa7ff6cf with exact reviewed composition75578718 and required CI; production webdpl_FTe9T4Qy7XEST45o3xvXcArBde18 and containing public2b2a0b61-mvi8obs6 verify. No new issuer, provider, registry, algorithm or consequential activation. Master§4.0 holds exact identities and receipt links.

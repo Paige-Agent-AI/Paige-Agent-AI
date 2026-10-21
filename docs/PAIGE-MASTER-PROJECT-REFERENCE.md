@@ -5577,6 +5577,24 @@ customer version or availability claim. Native releases2475/2476 preserved;
 consumer2404, teaching controls and full EXP09 authenticated acceptance remain
 separately gated. [Original repair evidence](delivery/e09-production-acl-baseline-repair.md).
 
+**2026-10-21 — EXP09 original CURA Knowledge publishing inventory.**
+PR [#2476](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2476), reviewed
+`d40bbfa1352a22e7ac860c47173837c1d034ed97` → main
+`2b2a0b61b3043f77fafa062629da4661691d6d4e`. Final NON-AUTHOR integration
+review5601644573; all13 exact-head checks/two Vercel statuses SUCCESS. Hosted
+database job119275565456 executes53 assertions. Normal migration run39620841656/
+job119293717171 SUCCESS; production records20271113060000 and exact native body
+MD5 `6a56d1a198560299e238a6facece0f9c`, authenticated-only caller ACL/empty
+search_path. Five original publisher/entitlement/source bodies unchanged;15sources
+and zero shares unchanged. Original Knowledge/share records project draft, private,
+prepared, scheduled, expired, stale, withdrawn or entitled states; no new writer,
+Knowledge store or customer identity. Channel production/native internal prerequisite.
+Owner UI and actual teaching/customer retrieval remain separately gated; no new
+customer release name/announcement or verified algorithm. No effectful provider,
+Chat/Live or payment activation. Recovery: reviewed forward correction preserving
+original records/native compatibility. [Readback receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2476#issuecomment-6319079327);
+[native contract](delivery/e09-cura-knowledge-inventory.md).
+
 ## 5. Current focus + known gaps
 
 **E09 CURA identity — tracked follow-ups (2026-10-19; CURA merged #2378 and live; recorded, not fixed there).** (a) **Action-item kind mapping.** `advance_action` (`20271110220000`) builds the portal action item with `action_type` = the action kind (`client.portal_recommendation`, `client.portal_welcome`, `owner.onboarding_nudge`, `owner.schedule_meeting`), but `paige_customer_actions_action_type_check` allows only `task`, `message`, `recommendation`, `nudge`. Every action item the owner's PAIGE chat files through `action_file` / `action_advance` therefore ends `blocked` with `client_surface_failed: … action_type_check` (proved in a rolled-back transaction on the round-4 pgTAP fixtures with the synthetic customer Jordan Rivera). Consequence today: the customer's data-sharing switch (CURA-D1) has no practical effect, because neither route that it gates delivers anything (the staff `ContactPaigePanel` is unmounted). (b) **PAIGE in AI-drafted action-item text.** The chat's model-written title and draft reach `paige_customer_actions` unfiltered, so nothing stops one that names PAIGE; the owner ruled PAIGE is never in the Customer Portal. **(b) must be fixed before (a)**, or fixing the mapping starts delivering PAIGE-named items to customers. Neither is changed on this branch.

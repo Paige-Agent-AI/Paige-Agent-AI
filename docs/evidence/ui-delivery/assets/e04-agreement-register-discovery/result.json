@@ -1,0 +1,603 @@
+{
+  "proofClass": "actual-source browser; synthetic identity/network only",
+  "results": [
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "paige": "closed",
+      "fit": {
+        "viewport": 1536,
+        "document": 1536,
+        "input": {
+          "left": 108,
+          "right": 428,
+          "top": 269.34375,
+          "bottom": 303.34375
+        },
+        "select": {
+          "left": 438,
+          "right": 580,
+          "top": 269.34375,
+          "bottom": 303.34375
+        },
+        "scrollOwner": {
+          "className": "campaigns-scroll sales-department-body",
+          "top": 0
+        },
+        "pageScroll": 0
+      },
+      "search": "PASS"
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "paige": "open",
+      "fit": {
+        "viewport": 1536,
+        "document": 1536,
+        "input": {
+          "left": 108,
+          "right": 428,
+          "top": 269.34375,
+          "bottom": 303.34375
+        },
+        "select": {
+          "left": 438,
+          "right": 580,
+          "top": 269.34375,
+          "bottom": 303.34375
+        },
+        "scrollOwner": {
+          "className": "campaigns-scroll sales-department-body",
+          "top": 0
+        },
+        "pageScroll": 0
+      },
+      "search": "PASS"
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "paige": "closed",
+      "fit": {
+        "viewport": 1366,
+        "document": 1366,
+        "input": {
+          "left": 108,
+          "right": 428,
+          "top": 269.34375,
+          "bottom": 303.34375
+        },
+        "select": {
+          "left": 438,
+          "right": 580,
+          "top": 269.34375,
+          "bottom": 303.34375
+        },
+        "scrollOwner": {
+          "className": "campaigns-scroll sales-department-body",
+          "top": 0
+        },
+        "pageScroll": 0
+      },
+      "search": "PASS"
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "paige": "open",
+      "fit": {
+        "viewport": 1366,
+        "document": 1366,
+        "input": {
+          "left": 108,
+          "right": 428,
+          "top": 315.34375,
+          "bottom": 349.34375
+        },
+        "select": {
+          "left": 438,
+          "right": 580,
+          "top": 315.34375,
+          "bottom": 349.34375
+        },
+        "scrollOwner": {
+          "className": "campaigns-scroll sales-department-body",
+          "top": 0
+        },
+        "pageScroll": 0
+      },
+      "search": "PASS"
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "paige": "closed",
+      "fit": {
+        "viewport": 1024,
+        "document": 1024,
+        "input": {
+          "left": 108,
+          "right": 428,
+          "top": 269.34375,
+          "bottom": 303.34375
+        },
+        "select": {
+          "left": 438,
+          "right": 580,
+          "top": 269.34375,
+          "bottom": 303.34375
+        },
+        "scrollOwner": {
+          "className": "campaigns-scroll sales-department-body",
+          "top": 0
+        },
+        "pageScroll": 0
+      },
+      "search": "PASS"
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "paige": "open",
+      "fit": {
+        "viewport": 1024,
+        "document": 1024,
+        "input": {
+          "left": 108,
+          "right": 428,
+          "top": 269.34375,
+          "bottom": 303.34375
+        },
+        "select": {
+          "left": 438,
+          "right": 580,
+          "top": 269.34375,
+          "bottom": 303.34375
+        },
+        "scrollOwner": {
+          "className": "campaigns-scroll sales-department-body",
+          "top": 0
+        },
+        "pageScroll": 0
+      },
+      "search": "PASS"
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "paige": "closed",
+      "fit": {
+        "viewport": 900,
+        "document": 900,
+        "input": {
+          "left": 108,
+          "right": 428,
+          "top": 315.34375,
+          "bottom": 349.34375
+        },
+        "select": {
+          "left": 438,
+          "right": 580,
+          "top": 315.34375,
+          "bottom": 349.34375
+        },
+        "scrollOwner": {
+          "className": "campaigns-scroll sales-department-body",
+          "top": 0
+        },
+        "pageScroll": 0
+      },
+      "search": "PASS"
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "paige": "open",
+      "fit": {
+        "viewport": 900,
+        "document": 900,
+        "input": {
+          "left": 108,
+          "right": 428,
+          "top": 315.34375,
+          "bottom": 349.34375
+        },
+        "select": {
+          "left": 438,
+          "right": 580,
+          "top": 315.34375,
+          "bottom": 349.34375
+        },
+        "scrollOwner": {
+          "className": "campaigns-scroll sales-department-body",
+          "top": 0
+        },
+        "pageScroll": 0
+      },
+      "search": "PASS"
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "paige": "closed",
+      "fit": {
+        "viewport": 390,
+        "document": 390,
+        "input": {
+          "left": 108,
+          "right": 354,
+          "top": 483.1875,
+          "bottom": 517.1875
+        },
+        "select": {
+          "left": 108,
+          "right": 250,
+          "top": 549.6875,
+          "bottom": 583.6875
+        },
+        "scrollOwner": {
+          "className": "campaigns-scroll sales-department-body",
+          "top": 0
+        },
+        "pageScroll": 0
+      },
+      "search": "PASS"
+    },
+    {
+      "theme": "light",
+      "width": 320,
+      "height": 740,
+      "paige": "closed",
+      "fit": {
+        "viewport": 320,
+        "document": 320,
+        "input": {
+          "left": 108,
+          "right": 284,
+          "top": 639.75,
+          "bottom": 673.75
+        },
+        "select": {
+          "left": 108,
+          "right": 250,
+          "top": 706.25,
+          "bottom": 740.25
+        },
+        "scrollOwner": {
+          "className": "campaigns-scroll sales-department-body",
+          "top": 30
+        },
+        "pageScroll": 0
+      },
+      "search": "PASS"
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "paige": "closed",
+      "fit": {
+        "viewport": 1536,
+        "document": 1536,
+        "input": {
+          "left": 108,
+          "right": 428,
+          "top": 269.34375,
+          "bottom": 303.34375
+        },
+        "select": {
+          "left": 438,
+          "right": 580,
+          "top": 269.34375,
+          "bottom": 303.34375
+        },
+        "scrollOwner": {
+          "className": "campaigns-scroll sales-department-body",
+          "top": 0
+        },
+        "pageScroll": 0
+      },
+      "search": "PASS"
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "paige": "open",
+      "fit": {
+        "viewport": 1536,
+        "document": 1536,
+        "input": {
+          "left": 108,
+          "right": 428,
+          "top": 269.34375,
+          "bottom": 303.34375
+        },
+        "select": {
+          "left": 438,
+          "right": 580,
+          "top": 269.34375,
+          "bottom": 303.34375
+        },
+        "scrollOwner": {
+          "className": "campaigns-scroll sales-department-body",
+          "top": 0
+        },
+        "pageScroll": 0
+      },
+      "search": "PASS"
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "paige": "closed",
+      "fit": {
+        "viewport": 1366,
+        "document": 1366,
+        "input": {
+          "left": 108,
+          "right": 428,
+          "top": 269.34375,
+          "bottom": 303.34375
+        },
+        "select": {
+          "left": 438,
+          "right": 580,
+          "top": 269.34375,
+          "bottom": 303.34375
+        },
+        "scrollOwner": {
+          "className": "campaigns-scroll sales-department-body",
+          "top": 0
+        },
+        "pageScroll": 0
+      },
+      "search": "PASS"
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "paige": "open",
+      "fit": {
+        "viewport": 1366,
+        "document": 1366,
+        "input": {
+          "left": 108,
+          "right": 428,
+          "top": 315.34375,
+          "bottom": 349.34375
+        },
+        "select": {
+          "left": 438,
+          "right": 580,
+          "top": 315.34375,
+          "bottom": 349.34375
+        },
+        "scrollOwner": {
+          "className": "campaigns-scroll sales-department-body",
+          "top": 0
+        },
+        "pageScroll": 0
+      },
+      "search": "PASS"
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "paige": "closed",
+      "fit": {
+        "viewport": 1024,
+        "document": 1024,
+        "input": {
+          "left": 108,
+          "right": 428,
+          "top": 269.34375,
+          "bottom": 303.34375
+        },
+        "select": {
+          "left": 438,
+          "right": 580,
+          "top": 269.34375,
+          "bottom": 303.34375
+        },
+        "scrollOwner": {
+          "className": "campaigns-scroll sales-department-body",
+          "top": 0
+        },
+        "pageScroll": 0
+      },
+      "search": "PASS"
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "paige": "open",
+      "fit": {
+        "viewport": 1024,
+        "document": 1024,
+        "input": {
+          "left": 108,
+          "right": 428,
+          "top": 269.34375,
+          "bottom": 303.34375
+        },
+        "select": {
+          "left": 438,
+          "right": 580,
+          "top": 269.34375,
+          "bottom": 303.34375
+        },
+        "scrollOwner": {
+          "className": "campaigns-scroll sales-department-body",
+          "top": 0
+        },
+        "pageScroll": 0
+      },
+      "search": "PASS"
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "paige": "closed",
+      "fit": {
+        "viewport": 900,
+        "document": 900,
+        "input": {
+          "left": 108,
+          "right": 428,
+          "top": 315.34375,
+          "bottom": 349.34375
+        },
+        "select": {
+          "left": 438,
+          "right": 580,
+          "top": 315.34375,
+          "bottom": 349.34375
+        },
+        "scrollOwner": {
+          "className": "campaigns-scroll sales-department-body",
+          "top": 0
+        },
+        "pageScroll": 0
+      },
+      "search": "PASS"
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "paige": "open",
+      "fit": {
+        "viewport": 900,
+        "document": 900,
+        "input": {
+          "left": 108,
+          "right": 428,
+          "top": 315.34375,
+          "bottom": 349.34375
+        },
+        "select": {
+          "left": 438,
+          "right": 580,
+          "top": 315.34375,
+          "bottom": 349.34375
+        },
+        "scrollOwner": {
+          "className": "campaigns-scroll sales-department-body",
+          "top": 0
+        },
+        "pageScroll": 0
+      },
+      "search": "PASS"
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "paige": "closed",
+      "fit": {
+        "viewport": 390,
+        "document": 390,
+        "input": {
+          "left": 108,
+          "right": 354,
+          "top": 483.1875,
+          "bottom": 517.1875
+        },
+        "select": {
+          "left": 108,
+          "right": 250,
+          "top": 549.6875,
+          "bottom": 583.6875
+        },
+        "scrollOwner": {
+          "className": "campaigns-scroll sales-department-body",
+          "top": 0
+        },
+        "pageScroll": 0
+      },
+      "search": "PASS"
+    },
+    {
+      "theme": "dark",
+      "width": 320,
+      "height": 740,
+      "paige": "closed",
+      "fit": {
+        "viewport": 320,
+        "document": 320,
+        "input": {
+          "left": 108,
+          "right": 284,
+          "top": 639.75,
+          "bottom": 673.75
+        },
+        "select": {
+          "left": 108,
+          "right": 250,
+          "top": 706.25,
+          "bottom": 740.25
+        },
+        "scrollOwner": {
+          "className": "campaigns-scroll sales-department-body",
+          "top": 30
+        },
+        "pageScroll": 0
+      },
+      "search": "PASS"
+    }
+  ],
+  "behavioral": [
+    "document search",
+    "signer search",
+    "literal no match",
+    "clear",
+    "terms-only filter",
+    "completed filter",
+    "original detail and Escape",
+    "keyboard input to filter",
+    "unreadable read is unknown"
+  ],
+  "errors": [],
+  "blocked": [
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com"
+  ],
+  "authenticated": "UNVERIFIED",
+  "providers": "NOT_EXERCISED"
+}

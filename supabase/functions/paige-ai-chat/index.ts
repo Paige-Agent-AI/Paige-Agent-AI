@@ -16653,7 +16653,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   ...(curaApprovedAct.has(tc) ? { approvedAct: curaApprovedAct.get(tc) } : {}),
                 }, preparationArgs, { caller: {
                   auth: supabaseClient.auth,
-                  rpc: supabaseClient.rpc.bind(supabaseClient),
+                  rpc: async (name: string, args?: Record<string, unknown>) => {
+                    if (name === "submit_cura_knowledge_preparation") {
+                      // Permission reads may outlast Stop/supersession. Reuse the
+                      // original execution check at the actual native dispatch.
+                      if (!interactive || req.signal.aborted) throw new Error("interactive_scope_unavailable");
+                      await interactive.check();
+                      if (req.signal.aborted) throw new Error("interactive_request_withdrawn");
+                    }
+                    return supabaseClient.rpc(name, args);
+                  },
                   readActiveTenant: (actorId: string) => supabaseClient.from("profiles")
                     .select("active_tenant_id").eq("user_id", actorId).maybeSingle(),
                 } as unknown as Parameters<typeof stageCuraKnowledge>[2]["caller"] })

@@ -8,7 +8,7 @@ FLOW_PROTOTYPE: PASS: ../exp09-teach-cura-owner/prototype.html;25 exact-referenc
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: authorized business publisher opens and reviews the intended Knowledge source without unrelated substitution or lost work.
 VISUAL_DIRECTION: PASS: incumbent Mineral/Obsidian/Schibsted, existing source rows, controls and publication dialog; no redesign or new shell.
 AUTOMATED_EVIDENCE: PASS: final13 related suites407 tests, no failed or unhandled cases; original real publication flow, actor/tenant/reference retirement, selected-review loss, real-parent deferred-focus terms hold and explicit cancel, closed destination/Marketing preservation and unknown receipt protection.
-STATIC_EVIDENCE: PARTIAL: changed-file ESLint exit0; final production build PASS2m7s; actual Impeccable0.1.5 configured and raw-no-config JSON scans both[] exit0 (detector.json). Final type ratchet PASS (baseline10/current6); distinct immutable1c88645ce source and bounded finish rechecks CLEAR/SHIP. Exact-head required CI/Preview and main compatibility remain release gates.
+STATIC_EVIDENCE: PASS: changed-file ESLint exit0; final production build PASS2m7s; actual Impeccable0.1.5 configured and raw-no-config JSON scans both[] exit0 (detector.json). Final type ratchet PASS (baseline10/current6); distinct immutable1c88645ce source and bounded finish rechecks CLEAR/SHIP. Exact-head required CI/Preview and main compatibility remain release gates.
 RENDERED_EVIDENCE: PASS: ../exp09-cura-source-reference native captures; original production components with synthetic identity/RPC/nav/dock, not authenticated acceptance.
 BEHAVIORAL_EVIDENCE: PASS: exact source read; missing/malformed refusal; no substitute; terms/review preserved through incoming reference, cancel then opens intended next source; business switch retires old source.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no ordinary authenticated publication/source link/CURA answer or same-login multi-business drive for this candidate.
@@ -35,7 +35,7 @@ MUST_PRESERVE: original invitation, Portal tabs, publisher/Knowledge/K1 authorit
 ACCEPTANCE_CRITERIA: exact source or honest refusal; protected review survives another reference; explicit original publication/share controls; private data retires with business/actor.
 MOTION_PURPOSE: NONE: no new motion; original reduced-motion safety retained.
 PROTECTED_SEAMS: caller-JWT Knowledge and native publisher/K1 unchanged; shared sender/booking/money/Chat/Harness/Spine/activation source untouched.
-INTERNAL_BUILD_IDENTITY: source4ac29322c1324b9b3a91b341dbe087a508c04b7e plus evidence-only completion; exact final commit in PR; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=SHARED_SOURCE_DEPLOYMENT_PENDING; evidence=docs/evidence/exp09-cura-source-reference/capture-index.json.
+INTERNAL_BUILD_IDENTITY: source 17bb061317c479e474cc43b540599432e4de84d3 (runtime/tests identical to reviewed 04bdd5a8); exact final commit in PR; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(existing affected Edge consumers require normal deployment and served adapter readback after reviewed merge); evidence=docs/evidence/exp09-cura-source-reference/capture-index.json.
 RELEASE_CHANNEL: development: original-source local verification, required production web readback follows review/CI.
 RELEASE_CLASSIFICATION: internal-only: exact-source recovery prerequisite within incomplete EXP09.
 CUSTOMER_RELEASE_IDENTITY: none: no integrated founder acceptance or customer-publication decision.

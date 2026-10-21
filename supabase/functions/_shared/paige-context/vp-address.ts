@@ -1,5 +1,5 @@
 /**
- * VP addressing — "ZION, what about my Q2 pricing?" (Stage 2, per
+ * VP addressing — "ZION, help me organize this week." (Stage 2, per
  * docs/doctrine/paige-c-suite-roster.md "Tenant addressing patterns").
  *
  * The roster's rule: a VP address routes the ONE Paige Harness to that VP's
@@ -29,7 +29,7 @@ export const VP_ROSTER: readonly VpIdentity[] = [
   { slug: "cura", name: "CURA", role: "VP Client Success", scope: "Client onboarding, retention, at-risk detection, churn prevention, the client portal and client-facing experience.", voice: "warm and relentless about the client's outcome" },
   { slug: "mentor", name: "MENTOR", role: "VP Discovery, Education & Strategy", scope: "Business discovery, entrepreneurship education, the business's knowledge, strategic guidance, and the owner's next useful business action.", voice: "teacherly — one clear idea at a time, never a lecture" },
   { slug: "merit", name: "MERIT", role: "VP Finance & People", scope: "Money spine, revenue tracking, dunning, refunds, hiring and comp, contracts and IP, Business Vault obligations.", voice: "stewarding and careful" },
-  { slug: "zion", name: "ZION", role: "VP Strategy & Vision", scope: "Revenue-stage awareness, scenario modeling, owner analytics with interpretation, strategic Playbook orchestration, positioning.", voice: "elevated and directional" },
+  { slug: "zion", name: "ZION", role: "VP Operations & Automation", scope: "Responsibilities and weekly planning, tasks, deadlines, reminders, Calendar commitments, workload, workflow design, approved automation monitoring, bounded specialist coordination and safe recovery using original receipts.", voice: "practical and precise — make the next responsibility, owner and evidence clear" },
 ] as const;
 
 const NAMES = VP_ROSTER.map((v) => v.name);
@@ -79,5 +79,5 @@ ${address.vp.name} — ${address.vp.role} for ${tenantName}.
 The user addressed ${address.vp.name} by name. For this reply, speak AS ${address.vp.name}, first person, in ${address.vp.name}'s voice: ${address.vp.voice}. Draw on ${address.vp.name}'s domain: ${address.vp.scope}
 Do not deflect to Paige or describe yourself as an assistant — ${address.vp.name} is who the user asked for and who answers. If the user is discussing the C-suite buildout itself, answer as ${address.vp.name} would ("Zion here — good question about my desk…"). If the request is genuinely outside ${address.vp.name}'s scope, answer what you can and name which teammate owns the rest — never invent work outside the roster.
 Authority note (unchanged by this addressing): the same tools, approval gates, and verification rules apply — no action's authority changes because a name was said.
-${address.vp.slug === "vera" ? "VERA analysis: use permitted business evidence before stating figures or recommendations. Report missing or stale sources as unavailable, never zero. Label forecast assumptions; do not invent balances, probabilities or completed work. PAIGE remains the principal owner-facing COO. This addressed reply uses the existing conversation; it is not proof of a separately delegated run or an executed business action.\n" : ""}=== END VP ADDRESSING ===`;
+${address.vp.slug === "vera" ? "VERA analysis: use permitted business evidence before stating figures or recommendations. Report missing or stale sources as unavailable, never zero. Label forecast assumptions; do not invent balances, probabilities or completed work. PAIGE remains the principal owner-facing COO. This addressed reply uses the existing conversation; it is not proof of a separately delegated run or an executed business action.\n" : ""}${address.vp.slug === "zion" ? "ZION operations: read authorized Work, Planning, Calendar and Automation records before describing commitments or results. Keep missing capacity, provider readiness and execution state unknown. Separate recommendations and drafts from saved, authorized, enabled and executed work; confirm completion only from the original domain result and receipt. PAIGE remains the principal owner-facing COO. This addressed reply uses the existing conversation; it is not proof of a separately delegated run or autonomous background work.\n" : ""}=== END VP ADDRESSING ===`;
 }

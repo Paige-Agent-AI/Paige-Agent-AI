@@ -14,6 +14,7 @@ const fixture = vi.hoisted(() => ({
   rail: { events: [] as unknown[], historyStatus: "ready" },
   allowed: true,
   resourcesPending: false,
+  teachingPending: false,
 }));
 vi.mock("next-themes", () => ({ useTheme: () => ({ resolvedTheme: fixture.resolvedTheme }) }));
 vi.mock("@/hooks/useBrandKit", () => ({ useBrandKit: () => fixture.brand }));
@@ -24,13 +25,15 @@ vi.mock("./usePortalInvitations", () => ({ usePortalInvitations: () => fixture.i
 vi.mock("./PortalConfigurationGate", () => ({ PortalConfigurationGate: ({ children }: { children: React.ReactNode }) => fixture.allowed ? <>{children}</> : <p>Configuration access required</p> }));
 vi.mock("./PortalInvitationManager", () => ({ PortalInvitationManager: ({ person }: { person: RelationshipPerson }) => <div data-invite-for={person.id}>{person.email}</div> }));
 vi.mock("./OwnerCustomerResources", () => ({OwnerCustomerResources:({onBack,onPendingChange}:{onBack:()=>void;onPendingChange:(blocked:boolean)=>void})=>{React.useEffect(()=>{onPendingChange(fixture.resourcesPending);return()=>onPendingChange(false);},[onPendingChange]);return <button onClick={onBack}>Back to client access</button>;}}));
+vi.mock("./CuraKnowledgePanel",()=>({CuraKnowledgePanel:({reference,onBack,onPendingChange}:{reference?:{documentId:string|null};onBack:()=>void;onPendingChange:(blocked:boolean)=>void})=>{React.useLayoutEffect(()=>{onPendingChange(fixture.teachingPending);return()=>onPendingChange(false);},[onPendingChange,fixture.teachingPending]);return <div data-teaching-reference={reference?.documentId??'all'}><button onClick={onBack}>Back to experience</button></div>;}}));
 vi.mock("@/pages/admin/PortalStudio", () => ({ default: ({ onDirtyChange }: { onDirtyChange: (dirty: boolean) => void }) => <input aria-label="Welcome draft" defaultValue="Saved" onChange={() => onDirtyChange(true)} /> }));
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 const person = { id: "client-a", name: "Test Client", email: "client@example.test", contactMethods: [{ kind: "email", value: "client@example.test" }], company: "Test Company", linkedUserId: null, primaryOffer: null, doNotContact: false, status: "active" } as RelationshipPerson;
 let host: HTMLDivElement; let root: Root;
 let data: ReturnType<typeof useTenantRelationshipsData>;
 const openClient = vi.fn(); const openPaige = vi.fn();
-const show = async (tenant = "test-tenant-a") => { await act(async () => root.render(<OwnerPortalDashboard key={tenant} tenantId={tenant} tenantName="Test Service" data={data} openClient={openClient} openPaige={openPaige} />)); };
+const referenceExit=vi.fn();
+const show = async (tenant = "test-tenant-a",reference?:{documentId:string|null;invalid:boolean}) => { await act(async () => root.render(<OwnerPortalDashboard key={tenant} tenantId={tenant} tenantName="Test Service" data={data} openClient={openClient} openPaige={openPaige} knowledgeReference={reference} onKnowledgeReferenceExit={referenceExit} />)); };
 const button = (name: string) => Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((node) => node.textContent?.trim() === name)!;
 const click = async (name: string) => { await act(async () => button(name).click()); };
 beforeEach(() => {
@@ -40,11 +43,29 @@ beforeEach(() => {
   fixture.brand.isError = false; fixture.brand.isLoading = false;
   fixture.rail = { events: [], historyStatus: "ready" }; fixture.allowed = true;
   fixture.resourcesPending = false;
+  fixture.teachingPending=false;referenceExit.mockReset();
   openClient.mockReset(); openPaige.mockReset();
   host = document.createElement("div"); document.body.append(host); root = createRoot(host);
 });
 afterEach(() => { act(() => root.unmount()); host.remove(); });
 describe("approved owner dashboard is a real scoped product surface", () => {
+  it('opens a source reference inside the same gated Experience and clears it on return',async()=>{
+    await show('test-tenant-a',{documentId:'b3b60300-0000-4000-8000-000000000001',invalid:false});
+    expect(host.querySelector('[aria-selected="true"]')?.textContent).toBe('Experience');expect(host.querySelector('[data-teaching-reference]')?.getAttribute('data-teaching-reference')).toBe('b3b60300-0000-4000-8000-000000000001');
+    await click('Back to experience');expect(referenceExit).toHaveBeenCalledTimes(1);expect(host.querySelector('[data-teaching-reference]')).toBeNull();
+  });
+  it('holds a new reference while the current review or receipt is unresolved',async()=>{
+    const first={documentId:'b3b60300-0000-4000-8000-000000000001',invalid:false},next={...first,documentId:'b3b60300-0000-4000-8000-000000000002'};
+    fixture.teachingPending=true;await show('test-tenant-a',first);await show('test-tenant-a',next);
+    expect(host.querySelector('[data-teaching-reference]')?.getAttribute('data-teaching-reference')).toBe(first.documentId);expect(host.textContent).toContain('Finish or close');
+    fixture.teachingPending=false;await show('test-tenant-a',next);expect(host.querySelector('[data-teaching-reference]')?.getAttribute('data-teaching-reference')).toBe(next.documentId);
+  });
+  it('does not treat a source reference as publisher permission',async()=>{
+    fixture.allowed=false;await show('test-tenant-a',{documentId:'b3b60300-0000-4000-8000-000000000001',invalid:false});expect(host.querySelector('[data-teaching-reference]')).toBeNull();expect(host.textContent).toContain('Configuration access required');
+  });
+  it('clears source navigation when deliberately changing Portal tabs',async()=>{
+    await show('test-tenant-a',{documentId:null,invalid:false});await click('Overview');expect(referenceExit).toHaveBeenCalledTimes(1);
+  });
   it.each([
     ["light", "light"], ["dark", "dark"], [undefined, "dark"],
   ])("preserves the shell theme %s across both native body portals", async (resolvedTheme, expected) => {

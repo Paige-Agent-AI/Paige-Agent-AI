@@ -42,6 +42,7 @@ import { PortalInvitationManager, type PortalInvitationActionLock } from "./Port
 import { PortalInvitationHistory } from "./PortalInvitationHistory";
 import { invitationDeliveryText } from "./portalInvitationEvidence";
 import { OwnerCustomerResources } from "./OwnerCustomerResources";
+import { curaKnowledgeReferenceKey, type CuraKnowledgeReference } from "@/lib/cura-knowledge-reference";
 import "./owner-portal-dashboard.css";
 
 const PortalStudio = lazy(() => import("@/pages/admin/PortalStudio"));
@@ -143,16 +144,20 @@ export function OwnerPortalDashboard({
   data,
   openClient,
   openPaige,
+  knowledgeReference,
+  onKnowledgeReferenceExit,
 }: {
   tenantId: string;
   tenantName: string;
   data: WorkspaceData;
   openClient: (id?: string) => void;
   openPaige: () => void;
+  knowledgeReference?: CuraKnowledgeReference | null;
+  onKnowledgeReferenceExit?: () => void;
 }) {
   const { resolvedTheme } = useTheme();
   const dialogTheme = resolvedTheme === "light" ? "light" : "dark";
-  const [tab, setTab] = useState<Tab>("Overview");
+  const [tab, setTab] = useState<Tab>(knowledgeReference ? "Experience" : "Overview");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [preview, setPreview] = useState(false);
@@ -165,10 +170,22 @@ export function OwnerPortalDashboard({
   if (resourceBoundary.current.tenantId !== tenantId) resourceBoundary.current = { tenantId };
   const [resourceSelection, setResourceSelection] = useState<{ boundary: { tenantId: string }; id: string } | null>(null);
   const [resourceExitBlocked, setResourceExitBlocked] = useState(false);
-  const [teachingBoundary, setTeachingBoundary] = useState<{tenantId:string}|null>(null);
+  const [teachingBoundary, setTeachingBoundary] = useState<{tenantId:string}|null>(knowledgeReference ? resourceBoundary.current : null);
+  const [teachingReference, setTeachingReference] = useState(knowledgeReference ?? null);
   const [teachingExitBlocked, setTeachingExitBlocked] = useState(false);
   const teaching = teachingBoundary === resourceBoundary.current;
   const portalExitBlocked = resourceExitBlocked || teachingExitBlocked;
+  const referenceKey = curaKnowledgeReferenceKey(knowledgeReference);
+  const openedReference = useRef(referenceKey);
+  const referenceExitBlocked = portalExitBlocked || editing || inviting || preview;
+  useEffect(() => {
+    if (openedReference.current === referenceKey || referenceExitBlocked) return;
+    openedReference.current = referenceKey;
+    if (!knowledgeReference) return;
+    setTab("Experience");
+    setTeachingReference(knowledgeReference);
+    setTeachingBoundary(resourceBoundary.current);
+  }, [referenceKey, referenceExitBlocked, knowledgeReference]);
   const teachTrigger = useRef<HTMLButtonElement>(null);
   const resourcePerson = resourceSelection?.boundary === resourceBoundary.current ? data.people.find(person => person.id === resourceSelection.id) : null;
   const resourceTriggers = useRef(new Map<string, HTMLButtonElement>());
@@ -520,7 +537,7 @@ export function OwnerPortalDashboard({
             ref={(node) => {
               tabRefs.current[index] = node;
             }}
-            onClick={() => setTab(label)}
+            onClick={() => { setTab(label); if (label !== "Experience" && knowledgeReference) onKnowledgeReferenceExit?.(); }}
             onKeyDown={(e) => {
               if (portalExitBlocked) return;
               if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key))
@@ -536,6 +553,7 @@ export function OwnerPortalDashboard({
                         tabs.length) %
                       tabs.length;
               setTab(tabs[next]);
+              if (tabs[next] !== "Experience" && knowledgeReference) onKnowledgeReferenceExit?.();
               tabRefs.current[next]?.focus();
             }}
           >
@@ -786,8 +804,9 @@ export function OwnerPortalDashboard({
         )}
         {tab === "Experience" && (
           teaching ? <PortalConfigurationGate tenantId={tenantId}><Suspense fallback={<Status title="Loading CURA Knowledge…"/>}>
-            <CuraKnowledgePanel key={tenantId} tenantId={tenantId} onPendingChange={setTeachingExitBlocked}
-              onBack={()=>{setTeachingBoundary(null);requestAnimationFrame(()=>teachTrigger.current?.focus());}}/>
+            {openedReference.current !== referenceKey && referenceExitBlocked && <p role="status">Finish or close your current review before opening another source.</p>}
+            <CuraKnowledgePanel key={`${tenantId}:${curaKnowledgeReferenceKey(teachingReference)}`} tenantId={tenantId} reference={teachingReference} onPendingChange={setTeachingExitBlocked}
+              onBack={()=>{setTeachingBoundary(null);onKnowledgeReferenceExit?.();requestAnimationFrame(()=>teachTrigger.current?.focus());}}/>
           </Suspense></PortalConfigurationGate> : <div hidden={editing}>
             <div className="opd-page-heading">
               <h2>Your brand. Their space.</h2>
@@ -858,7 +877,7 @@ export function OwnerPortalDashboard({
                 <section className="opd-experience-row">
                   <div><h2>Teach CURA</h2><p>Review the answers, services and current offers your customers may use.</p></div>
                   <button ref={teachTrigger} className="opd-text-button" type="button"
-                    onClick={()=>setTeachingBoundary(resourceBoundary.current)}>Manage Knowledge <ArrowRight/></button>
+                    onClick={()=>{setTeachingReference(null);setTeachingBoundary(resourceBoundary.current);onKnowledgeReferenceExit?.();}}>Manage Knowledge <ArrowRight/></button>
                 </section>
               </section>
               <aside className="opd-experience-card">

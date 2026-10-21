@@ -7,8 +7,8 @@ import {commitCuraKnowledgeShare,curaShareMatches,prepareCuraKnowledgeShare,read
 
 type Outcome='list'|'preparing'|'review'|'saving'|'saved'|'unknown'|'conflict'|'refused'|'correction';
 type Model={phase:'loading'|'ready'|'error'|'unavailable';rows:CuraKnowledgeSource[];hasMore:boolean;
- outcome:Outcome;proposal:Readonly<CuraShareProposal>|null;correction:CuraCorrectionTarget|null;notice:string;query:string};
-const initial=():Model=>({phase:'loading',rows:[],hasMore:false,outcome:'list',proposal:null,correction:null,notice:'',query:''});
+ outcome:Outcome;proposal:Readonly<CuraShareProposal>|null;correction:CuraCorrectionTarget|null;notice:string;query:string;focusedId:string|null};
+const initial=():Model=>({phase:'loading',rows:[],hasMore:false,outcome:'list',proposal:null,correction:null,notice:'',query:'',focusedId:null});
 const same=(a:CuraKnowledgeScope|null,b:CuraKnowledgeScope|null)=>a===b||!!a&&!!b&&a.actor===b.actor&&a.tenant===b.tenant;
 const sdk:KnowledgeRpcClient={rpc:(name,args)=>supabase.rpc(name as never,args as never) as unknown as ReturnType<KnowledgeRpcClient['rpc']>};
 const extractionSdk={...sdk,functions:{invoke:(name:string,options:{body:Record<string,unknown>})=>supabase.functions.invoke(name,options)}};
@@ -17,13 +17,15 @@ async function wait<T>(promise:PromiseLike<T>,deadline:number):Promise<T>{
  try{return await Promise.race([Promise.resolve(promise),new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(Error('Request timed out')),remaining);})]);}
  finally{clearTimeout(timer!);}
 }
-type Actions={load:(query?:string,append?:boolean)=>Promise<void>;review:(id:string,available:boolean,terms:CuraShareTerms)=>Promise<void>;
+type Actions={load:(query?:string,append?:boolean,documentId?:string|null)=>Promise<void>;review:(id:string,available:boolean,terms:CuraShareTerms)=>Promise<void>;
  correct:(id:string)=>Promise<void>;confirm:()=>Promise<void>;recover:()=>Promise<void>;cancel:()=>void;leave:()=>void};
 
 /** Ephemeral review state only. Existing Knowledge publication, K1 grants and atomic
  * audit receipts are authoritative. A lost write response is followed by reads only. */
-export function useCuraKnowledge(scope:CuraKnowledgeScope|null){
+export function useCuraKnowledge(scope:CuraKnowledgeScope|null,initialDocumentId:string|null=null){
  const boundary=useRef(scope);if(!same(boundary.current,scope))boundary.current=scope;
+ const reference=useRef(initialDocumentId);
+ if(reference.current!==initialDocumentId){reference.current=initialDocumentId;boundary.current=scope?{...scope}:null;}
  const incarnation=boundary.current;
  const [state,setState]=useState({boundary:incarnation,value:initial()});
  const actions=useRef<Actions|null>(null);
@@ -39,17 +41,17 @@ export function useCuraKnowledge(scope:CuraKnowledgeScope|null){
    if(value.data.user?.id!==incarnation.actor)throw new ResourceError('42501');
   };
   const lostAccess=()=>{retired=true;++request;pending=null;publish({...initial(),phase:'unavailable',notice:'Your account or permission changed. An interrupted change may already be saved. Reopen this business and inspect its recorded sharing.'});};
-  const load=async(query=model.query,append=false)=>{
+  const load=async(query=model.query,append=false,documentId=model.focusedId)=>{
    if(!alive||retired||working||pending||boundary.current!==incarnation)return;
    const mine=++request,deadline=Date.now()+20_000,from=append?offset:0,previous=append?model.rows:[];
-   publish({...model,phase:'loading',outcome:'list',proposal:null,correction:null,notice:'',query});
+   publish({...model,phase:'loading',outcome:'list',proposal:null,correction:null,notice:'',query,focusedId:documentId});
    try{
     await verify(deadline);if(!current(mine))return;
-    const value=await wait(readCuraKnowledge(sdk,incarnation,{query,offset:from}),deadline);if(!current(mine))return;
+    const value=await wait(readCuraKnowledge(sdk,incarnation,{query,offset:from,documentId:documentId??undefined}),deadline);if(!current(mine))return;
     await verify(deadline);if(!current(mine))return;
     offset=value.nextOffset;
-    publish({...initial(),phase:'ready',query,rows:Array.from(new Map([...previous,...value.documents].map(row=>[row.document_id,row])).values()),hasMore:value.hasMore});
-   }catch(error){if(current(mine))publish({...initial(),query,phase:error instanceof ResourceError&&error.code==='42501'?'unavailable':'error',notice:'Knowledge sharing could not be checked. Check your account and connection, then reload.'});}
+    publish({...initial(),phase:'ready',query,focusedId:documentId,rows:Array.from(new Map([...previous,...value.documents].map(row=>[row.document_id,row])).values()),hasMore:value.hasMore});
+   }catch(error){if(current(mine))publish({...initial(),query,focusedId:documentId,phase:error instanceof ResourceError&&error.code==='42501'?'unavailable':'error',notice:'Knowledge sharing could not be checked. Check your account and connection, then reload.'});}
   };
   const review=async(id:string,available:boolean,terms:CuraShareTerms)=>{
    if(!alive||retired||working||pending||model.phase!=='ready'||boundary.current!==incarnation)return;
@@ -131,10 +133,10 @@ export function useCuraKnowledge(scope:CuraKnowledgeScope|null){
    if(event==='SIGNED_OUT'||!session||session.user.id!==incarnation.actor)lostAccess();
   });
   const focus=()=>{if(alive&&!retired&&!working&&!pending&&!['review','preparing','correction'].includes(model.outcome))void load();};
-  window.addEventListener('focus',focus);void load();
+  window.addEventListener('focus',focus);void load('',false,initialDocumentId);
   return()=>{alive=false;++request;pending=null;subscription.unsubscribe();window.removeEventListener('focus',focus);};
  },[incarnation]);
- const load=useCallback(()=>actions.current?.load()??Promise.resolve(),[]),search=useCallback((query:string)=>actions.current?.load(query)??Promise.resolve(),[]);
+ const load=useCallback(()=>actions.current?.load()??Promise.resolve(),[]),search=useCallback((query:string)=>actions.current?.load(query,false,null)??Promise.resolve(),[]);
  const loadMore=useCallback(()=>actions.current?.load(undefined,true)??Promise.resolve(),[]);
  const review=useCallback((id:string,available:boolean,terms:CuraShareTerms)=>actions.current?.review(id,available,terms)??Promise.resolve(),[]);
  const correct=useCallback((id:string)=>actions.current?.correct(id)??Promise.resolve(),[]);

@@ -5,9 +5,9 @@ import {DialogContent,DialogDescription,DialogTitle} from '@/components/ui/dialo
 import {CuraKnowledgePanel} from './CuraKnowledgePanel';
 import type {CuraKnowledgeSource,CuraShareProposal} from '@/lib/cura-knowledge';
 
-const f=vi.hoisted(()=>({model:null as unknown,context:{accountContextLoading:false,accountContextStatus:'ready',activeTenantId:'b3b30200-0000-4000-8000-000000000001',activeUserId:'b3b30100-0000-4000-8000-000000000001'},exit:vi.fn(),beforeUnload:vi.fn()}));
+const f=vi.hoisted(()=>({model:null as unknown,context:{accountContextLoading:false,accountContextStatus:'ready',activeTenantId:'b3b30200-0000-4000-8000-000000000001',activeUserId:'b3b30100-0000-4000-8000-000000000001'},exit:vi.fn(),beforeUnload:vi.fn(),hook:vi.fn()}));
 vi.mock('@/hooks/useTenantContext',()=>({useTenantContext:()=>f.context}));
-vi.mock('@/hooks/useCuraKnowledge',()=>({useCuraKnowledge:()=>f.model}));
+vi.mock('@/hooks/useCuraKnowledge',()=>({useCuraKnowledge:(...args:unknown[])=>{f.hook(...args);return f.model;}}));
 vi.mock('@/hooks/useBeforeUnloadGuard',()=>({useBeforeUnloadGuard:(...args:unknown[])=>f.beforeUnload(...args)}));
 vi.mock('@/components/client/useClientAccountExit',()=>({useClientAccountExit:(...args:unknown[])=>f.exit(...args)}));
 vi.mock('@/solo/knowledge/AddKnowledgeFlow',()=>({AddKnowledgeFlow:({replacementTarget,onPublished,onClose}:{replacementTarget?:{content?:string};onPublished:()=>void;onClose:()=>void})=><DialogContent><DialogTitle>Review private source</DialogTitle><DialogDescription>Original publication flow</DialogDescription><p>{replacementTarget?.content??'New source'}</p><button onClick={onPublished}>Complete private publication</button><button onClick={onClose}>Done</button></DialogContent>}));
@@ -75,4 +75,16 @@ it('retires the teaching interface when the selected business is no longer curre
 });
 it('returns focus to the original source control when a sharing form is canceled',async()=>{
  await render();const sourceButton=button('Review sharing');sourceButton.focus();await click('Review sharing');await click('Cancel');expect(document.activeElement?.textContent?.trim()).toBe('Review sharing');expect(model.confirm).not.toHaveBeenCalled();
+});
+it('loads a valid exact source through the same authenticated hook and offers the full inventory',async()=>{
+ model.focusedId=doc;await act(async()=>root.render(<CuraKnowledgePanel tenantId={tenant} reference={{documentId:doc,invalid:false}} onBack={back}/>));
+ expect(f.hook).toHaveBeenLastCalledWith({tenant,actor:f.context.activeUserId},doc);expect(host.textContent).toContain('Showing the linked source');
+ await click('Show all sources');expect(model.search).toHaveBeenCalledExactlyOnceWith('');expect(model.confirm).not.toHaveBeenCalled();
+});
+it('reports a missing linked record without replacing it or presenting a true-empty first use',async()=>{
+ model.focusedId=doc;model.rows=[];await render();expect(host.textContent).toContain('linked source is not available');expect(host.textContent).toContain('No source has been substituted');expect(host.textContent).not.toContain('Start with an answer');expect(model.confirm).not.toHaveBeenCalled();
+});
+it('refuses malformed references before loading private inventory',async()=>{
+ await act(async()=>root.render(<CuraKnowledgePanel tenantId={tenant} reference={{documentId:null,invalid:true}} onBack={back}/>));
+ expect(f.hook).not.toHaveBeenCalled();expect(host.textContent).not.toContain('Test welcome FAQ');expect(host.querySelector('[role="alert"]')?.textContent).toContain('address could not be read');await click('Back to experience');expect(back).toHaveBeenCalledTimes(1);
 });

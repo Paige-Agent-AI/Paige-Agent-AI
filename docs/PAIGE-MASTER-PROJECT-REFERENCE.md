@@ -826,6 +826,37 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-21 — EXP04 retained agreement completion verification.**
+PR [#2487](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2487), reviewed
+`82e33f96c9fbac525db0f7b95151cc63b46095de`, merged
+`4fa7ea57abf8bb643b4ab7ec191e9b2e3488d837`; actual composition tree
+`a2d32ebc3edbfc2f78d4fcd35b3ace7e56bbe2e8` independently reproduced against
+actual parent8f12cc73, retaining concurrent E09/EXP05 work and the reviewed native
+agreement source. Selectively reuses #2186 and #2175's retained-byte verifier.
+Completed helper retries and losing writes require the original completed row and
+its actual matching private PDF; unavailable evidence withholds confirmation without
+rewriting completion, re-sealing or replaying notices/tokens. No new signing engine.
+AUTHOR-REVIEW / LOWER ASSURANCE6322702330/6323215493; all10 exact-head checks,
+including actual Supabase Preview, and both Vercel statuses SUCCESS. Native106 plus5
+original Portal wiring cases and three Edge type checks pass; these are source proof.
+Normal Edge push39651063122/job119399192802 SUCCESS: affected sign-agreement source
+and JWT configuration PASS, ordinary certified tag advancement recorded. Artifact
+12369491053 SHA2563b87d89bc0215baaefed2174595ac14c4d76a8096af94f1f60ba39366b9e3d6a.
+Direct production package firstv25, subsequentlyv27 ACTIVE/verify_jwt=false: all11
+source files exactly match merged4fa7ea57; later metadata reads retainv27/update time.
+Current EZBR SHA25640cdcda53edcd960013a548b09cb2f991b374c0206e68772a4f56f4d9344195c.
+Web dpl_FqUiGdmgxjzhZBrhZGAj4nAJ8uQi READY on exact merge. Later public
+fc2f4324…-mvifvof7 observed; compare confirms a docs-only descendant. This increment's
+migrations NOT_APPLICABLE. No manual deployment, tag, JWT or source-verification waiver.
+Actual signer/owner/client completed-copy recovery, real concurrency, full ALG01/12,
+accepted/effective terms and all O1–O12/founder acceptance remain PROOF OWED. No real
+signature, send, payment or provider activation was executed for this proof.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2487#issuecomment-6323403903),
+[source evidence](evidence/ui-delivery/e04-retained-completion-reconcile.md).
+Channel production; internal integrity prerequisite, no customer version/announcement.
+Recovery is reviewed forward correction preserving immutable records. This factual
+post-merge identity closeout is not logged recursively.
+
 **2026-10-21 — EXP04 existing Agreements register discovery repair.**
 PR [#2486](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2486), reviewed
 `f854bcf150961caaeeb1548d70a33c72567f34aa`, merged

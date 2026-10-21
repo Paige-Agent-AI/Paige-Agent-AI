@@ -15948,12 +15948,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             } else if (tc.function.name === "inbox_list") {
               // #1104 — the comms read verb (spine: comms.messages_read). Caller-scoped:
               // the RPC derives the tenant from the JWT (§59) — no tenant param exists.
-              const { data, error } = await supabaseClient.rpc("list_inbox_messages", {
-                p_limit: args.limit ?? 20,
-                p_direction: args.direction ?? null,
+              result = await dispatchInboxIntelligenceChat(tc.function.name, args, {
+                caller: { rpc: async (name, readArgs) => await supabaseClient.rpc(name, readArgs) },
               });
-              if (error) throw error;
-              result = { success: true, count: (data as any[])?.length ?? 0, messages: data ?? [] };
+              if (result.status === "available") readRecordLinkSource.set(tc, [{ destination: "conversations", record_id: null }]);
             } else if (tc.function.name === "improvement_propose" || tc.function.name === "improvement_list" || tc.function.name === "improvement_decide") {
               // Runway 4 — the evaluation loop's chat surface. Role-gated like delegation;
               // deciding is admin-only (the doctrine's owner gate).
@@ -19040,8 +19038,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                       ...(typeof parsed.external_effect === "boolean" ? { external_effect: parsed.external_effect } : {}),
                     });
                   }
-                  // E4-S3 — an available admitted read's record links (held beside its result, never in it).
-                  if (CONVERSATIONAL_ADMITTED_READ_TOOLS.has(String(tc.function?.name ?? "")) && parsed?.status === "available") {
+                  // E4-S3 — only references held by an executed read, never model/result-supplied links.
+                  // Tool admission remains enforced separately before dispatch, including degraded turns.
+                  if (parsed?.status === "available" && readRecordLinkSource.has(tc)) {
                     const links = readRecordLinkSource.get(tc);
                     if (links?.length) readLinkTrace.splice(0, readLinkTrace.length, ...mergeRecordLinks(readLinkTrace, links));
                     // Describe the actual bounded outgoing selection, never a candidate

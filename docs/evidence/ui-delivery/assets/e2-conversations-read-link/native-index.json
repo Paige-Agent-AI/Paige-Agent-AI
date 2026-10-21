@@ -1,0 +1,229 @@
+{
+  "cases": [
+    {
+      "filename": "messages-available-1536-dark.jpg",
+      "state": "available",
+      "theme": "dark",
+      "dom": {
+        "background": "rgb(16, 14, 20)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true,
+        "fontSize": "13px",
+        "height": 770,
+        "link": {
+          "color": "rgb(246, 242, 234)",
+          "height": 27.80000114440918,
+          "href": "/solo/7001/clients/conversations",
+          "text": "Open Conversations"
+        },
+        "overflow": false,
+        "text": "Message review\n\nThe permitted message records can be checked in Conversations. This bounded read is not a business total or evidence of delivery. Nothing was sent or changed.\n\nSee it in your workspace\nOpen Conversations\n\nSynthetic reference preview. No real account, message, provider or scan.",
+        "width": 1536
+      },
+      "native": {
+        "width": 1536,
+        "height": 770
+      },
+      "sha256": "295ecc5166b32a5886c6d260cb0540b68ed5673b7d1fcefcb2826d5589da75bf",
+      "contrast": 17.176628146214266
+    },
+    {
+      "filename": "messages-available-1366-light.jpg",
+      "state": "available",
+      "theme": "light",
+      "dom": {
+        "background": "rgb(251, 249, 245)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true,
+        "fontSize": "13px",
+        "height": 768,
+        "link": {
+          "color": "rgb(33, 30, 36)",
+          "height": 27.80000114440918,
+          "href": "/solo/7001/clients/conversations",
+          "text": "Open Conversations"
+        },
+        "overflow": false,
+        "text": "Message review\n\nThe permitted message records can be checked in Conversations. This bounded read is not a business total or evidence of delivery. Nothing was sent or changed.\n\nSee it in your workspace\nOpen Conversations\n\nSynthetic reference preview. No real account, message, provider or scan.",
+        "width": 1366
+      },
+      "native": {
+        "width": 1366,
+        "height": 768
+      },
+      "sha256": "f0d2f3e36996a4924e4df0525f9503ff68b17f1f2ee0a6ebe6d1981d254ecd6c",
+      "contrast": 15.652795628490818
+    },
+    {
+      "filename": "messages-available-1024-dark.jpg",
+      "state": "available",
+      "theme": "dark",
+      "dom": {
+        "background": "rgb(16, 14, 20)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true,
+        "fontSize": "13px",
+        "height": 768,
+        "link": {
+          "color": "rgb(246, 242, 234)",
+          "height": 27.80000114440918,
+          "href": "/solo/7001/clients/conversations",
+          "text": "Open Conversations"
+        },
+        "overflow": false,
+        "text": "Message review\n\nThe permitted message records can be checked in Conversations. This bounded read is not a business total or evidence of delivery. Nothing was sent or changed.\n\nSee it in your workspace\nOpen Conversations\n\nSynthetic reference preview. No real account, message, provider or scan.",
+        "width": 1024
+      },
+      "native": {
+        "width": 1024,
+        "height": 768
+      },
+      "sha256": "3cd8084e17e74914831389cc8349c49629ed55c979f3512f0c00a0acb3276e07",
+      "contrast": 17.176628146214266
+    },
+    {
+      "filename": "messages-available-900-light.jpg",
+      "state": "available",
+      "theme": "light",
+      "dom": {
+        "background": "rgb(251, 249, 245)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true,
+        "fontSize": "13px",
+        "height": 1000,
+        "link": {
+          "color": "rgb(33, 30, 36)",
+          "height": 27.80000114440918,
+          "href": "/solo/7001/clients/conversations",
+          "text": "Open Conversations"
+        },
+        "overflow": false,
+        "text": "Message review\n\nThe permitted message records can be checked in Conversations. This bounded read is not a business total or evidence of delivery. Nothing was sent or changed.\n\nSee it in your workspace\nOpen Conversations\n\nSynthetic reference preview. No real account, message, provider or scan.",
+        "width": 900
+      },
+      "native": {
+        "width": 900,
+        "height": 1000
+      },
+      "sha256": "ab18639952c108542e4fa18a1ffb057a859d2e83b4a67258195080487fc7d985",
+      "contrast": 15.652795628490818
+    },
+    {
+      "filename": "messages-available-320-light.jpg",
+      "state": "available",
+      "theme": "light",
+      "dom": {
+        "background": "rgb(251, 249, 245)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true,
+        "fontSize": "13px",
+        "height": 760,
+        "link": {
+          "color": "rgb(33, 30, 36)",
+          "height": 27.80000114440918,
+          "href": "/solo/7001/clients/conversations",
+          "text": "Open Conversations"
+        },
+        "overflow": false,
+        "text": "Message review\n\nThe permitted message records can be checked in Conversations. This bounded read is not a business total or evidence of delivery. Nothing was sent or changed.\n\nSee it in your workspace\nOpen Conversations\n\nSynthetic reference preview. No real account, message, provider or scan.",
+        "width": 320
+      },
+      "native": {
+        "width": 320,
+        "height": 760
+      },
+      "sha256": "57f281f0280c87f13777cf76a858870adbe6362d4ca72c27ebdfdf6a791379b7",
+      "contrast": 15.652795628490818
+    },
+    {
+      "filename": "messages-available-320-dark.jpg",
+      "state": "available",
+      "theme": "dark",
+      "dom": {
+        "background": "rgb(16, 14, 20)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true,
+        "fontSize": "13px",
+        "height": 760,
+        "link": {
+          "color": "rgb(246, 242, 234)",
+          "height": 27.80000114440918,
+          "href": "/solo/7001/clients/conversations",
+          "text": "Open Conversations"
+        },
+        "overflow": false,
+        "text": "Message review\n\nThe permitted message records can be checked in Conversations. This bounded read is not a business total or evidence of delivery. Nothing was sent or changed.\n\nSee it in your workspace\nOpen Conversations\n\nSynthetic reference preview. No real account, message, provider or scan.",
+        "width": 320
+      },
+      "native": {
+        "width": 320,
+        "height": 760
+      },
+      "sha256": "83ba3f9b98bde81b0431d55e52eae068454debfafab8ffe6b7422754719a1f6c",
+      "contrast": 17.176628146214266
+    },
+    {
+      "filename": "messages-unavailable-320-light.jpg",
+      "state": "unavailable",
+      "theme": "light",
+      "dom": {
+        "background": "rgb(251, 249, 245)",
+        "font": null,
+        "fontLoaded": true,
+        "fontSize": null,
+        "height": 760,
+        "link": null,
+        "overflow": false,
+        "text": "Message review\n\nRecent message records could not be read. Try again or open Conversations.\n\nSynthetic reference preview. No real account, message, provider or scan.",
+        "width": 320
+      },
+      "native": {
+        "width": 320,
+        "height": 760
+      },
+      "sha256": "fc1932072aad518a0fc17d1425e27f8dcf1c67a4feb81f38c94dc95175c9d719"
+    },
+    {
+      "filename": "messages-parented-320-dark.jpg",
+      "state": "parented",
+      "theme": "dark",
+      "dom": {
+        "background": "rgb(16, 14, 20)",
+        "font": null,
+        "fontLoaded": true,
+        "fontSize": null,
+        "height": 760,
+        "link": null,
+        "overflow": false,
+        "text": "Message review\n\nThe permitted message records can be checked in Conversations. This bounded read is not a business total or evidence of delivery. Nothing was sent or changed.\n\nSynthetic reference preview. No real account, message, provider or scan.",
+        "width": 320
+      },
+      "native": {
+        "width": 320,
+        "height": 760
+      },
+      "sha256": "527f14f4029e6601c4fc1ca6fafd0a508f0aebe7948e608fb44cbf33c375db8f"
+    }
+  ],
+  "keyboard": "Native Tab focuses Open Conversations with visible focus. No navigation/provider/customer read driven.",
+  "boundary": "Actual unchanged PaigeRecordLinks/CheckLinks with synthetic envelope outcome, canonical current-account reference and product font/tokens. Component only; not authenticated Chat, inbox, tenant isolation, provider or persistence acceptance.",
+  "keyboardFrame": {
+    "filename": "messages-keyboard-320-light.jpg",
+    "sha256": "3c6f15798614410864114c4217896fcfba252fa46514649280b06bbd7b3e1d09",
+    "native": {
+      "height": 760,
+      "width": 320
+    }
+  },
+  "sourceSha256": {
+    "supabase/functions/paige-ai-chat/index.ts": "c2ab7cf9bd6373345990b1d65b906a953682f7bab32ed02bed4f1cecf4f1ff24",
+    "supabase/functions/_shared/inbox-intelligence/chat.ts": "ee21e6b33bbf4799ecf5c6c5e5f9adb1700fde722942e142de415c5a06002920",
+    "supabase/functions/_shared/paige-turn/record-links.ts": "1f99474e881532a2c1f23adefccbdea012e8afd6e506df13685a34a7cdc8b304",
+    "supabase/functions/_shared/canonical-app-url.ts": "ab8700bfcf5d5adbd75e87362862c3feac2cce6b9eba31770dc81de881180150",
+    "src/lib/links/workspaceLinks.ts": "31ed8eac9f0d2f271bd006601480558092bf54c603d79ce00801436757886920",
+    "src/components/chat/PaigeRecordLinks.tsx": "43a92f89a51c591068c5b5176d9c0318997eb6e903f6366d97f6bbfe919f3caf",
+    "src/components/chat/CheckLinks.tsx": "ee9149270246b42dc725e9946f5b4714b64ba28f868fd8af9c309f546ddc5b15",
+    "scripts/live-drive/harness/paige-chat-mount/messages-read-main.tsx": "7c1eb9ecab57eaedf1d9cac5af72b766ffe9823cddcd387230ab452c16f7e4e7"
+  },
+  "incumbent": "Shared lead label computes10.5px under the14px root; unchanged source, not represented as a new readability improvement. Full-shell/AT/zoom/customer proof remains owed."
+}

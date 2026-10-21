@@ -18,7 +18,7 @@
   --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif;
   --canvas: #F6F5F1; --surface: #FFFFFF; --surface-2: #FBFAF7; --surface-sunk: #F0EEE8;
   --line: #E5E1D8; --line-soft: #EFECE4;
-  --ink: #171331; --ink-2: #4A4566; --ink-3: #7E7995;
+  --ink: #171331; --ink-2: #4A4566; --ink-3: #6B657F;
   --rail: #171331; --rail-2: #221C46; --rail-line: #332C5E; --rail-text: #C9C4E0;
   --gold: #C9860C; --gold-bright: #E9A83A; --gold-tint: #FBF1DE; --gold-line: #EFDCB4;
   --violet: #5B3FD6; --violet-2: #7A62E8; --violet-tint: #EEEAFD; --violet-line: #DAD1FA;
@@ -36,7 +36,7 @@
   .ags {
     --canvas: #0C0A1B; --surface: #141129; --surface-2: #191637; --surface-sunk: #100D24;
     --line: #282348; --line-soft: #221D3E;
-    --ink: #EFECFA; --ink-2: #B0AACB; --ink-3: #7D779A;
+    --ink: #EFECFA; --ink-2: #B0AACB; --ink-3: #9B95B4;
     --rail: #100D24; --rail-2: #1B1738; --rail-line: #282348; --rail-text: #B0AACB;
     --gold: #E9A83A; --gold-bright: #F5C266; --gold-tint: #2C2211; --gold-line: #4A3A17;
     --violet: #8A72F5; --violet-2: #A692FF; --violet-tint: #221C4A; --violet-line: #352C68;
@@ -58,7 +58,7 @@
   --sd-ring-g: 0 0 0 1px color-mix(in srgb, var(--gold) 42%, transparent);
   --sd-cast: 0 10px 26px -10px color-mix(in srgb, var(--ink) 30%, transparent);
 
-  position: relative; isolation: isolate; min-height: 100vh;
+  position: relative; isolation: isolate; min-height: 100vh; display: flow-root;
   padding-bottom: calc(46px + env(safe-area-inset-bottom, 0px));
   font-family: var(--font); font-size: 14px; line-height: 1.5; color: var(--ink);
   -webkit-font-smoothing: antialiased; text-wrap: pretty;

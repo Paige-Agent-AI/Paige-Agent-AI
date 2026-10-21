@@ -1,0 +1,134 @@
+{
+  "kind": "SYNTHETIC_ACTUAL_SOURCE",
+  "sourceProductCommit": "212a4cddda27a0e99be02e3ec4c439e52b4161ff",
+  "sourceComposedCommit": "130f18006596e191cd11d0618d1a66d69246ebfd",
+  "frames": [
+    {
+      "frame": "1536-closed.jpg",
+      "docWidth": 1536,
+      "execScrollWidth": 1305,
+      "execWidth": 1305,
+      "expanded": "false",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "height": 770,
+      "marketing": {
+        "bottom": 406.60001945495605,
+        "height": 20.30000114440918,
+        "left": 252,
+        "right": 359.6624984741211,
+        "top": 386.3000183105469,
+        "width": 107.6624984741211,
+        "x": 252,
+        "y": 386.3000183105469
+      },
+      "width": 1536
+    },
+    {
+      "frame": "1536-open.jpg",
+      "docWidth": 1536,
+      "execScrollWidth": 783,
+      "execWidth": 783,
+      "expanded": "true",
+      "height": 770,
+      "width": 1536
+    },
+    {
+      "frame": "1366-closed.jpg",
+      "docWidth": 1366,
+      "execScrollWidth": 1135,
+      "execWidth": 1135,
+      "expanded": "false",
+      "height": 768,
+      "width": 1366
+    },
+    {
+      "frame": "1366-open.jpg",
+      "docWidth": 1366,
+      "execScrollWidth": 671,
+      "execWidth": 671,
+      "expanded": "true",
+      "height": 768,
+      "width": 1366
+    },
+    {
+      "frame": "1024-closed.jpg",
+      "docWidth": 1024,
+      "execScrollWidth": 937,
+      "execWidth": 937,
+      "expanded": "false",
+      "height": 768,
+      "width": 1024
+    },
+    {
+      "frame": "1024-open.jpg",
+      "docWidth": 1024,
+      "execScrollWidth": 937,
+      "execWidth": 937,
+      "expanded": "true",
+      "height": 768,
+      "width": 1024
+    },
+    {
+      "frame": "900-closed.jpg",
+      "docWidth": 900,
+      "execScrollWidth": 813,
+      "execWidth": 813,
+      "expanded": "false",
+      "height": 1000,
+      "width": 900
+    },
+    {
+      "frame": "900-open.jpg",
+      "docWidth": 900,
+      "execScrollWidth": 813,
+      "execWidth": 813,
+      "expanded": "true",
+      "height": 1000,
+      "width": 900
+    }
+  ],
+  "phone": [
+    {
+      "frame": "320-closed-corrected.jpg",
+      "width": 320,
+      "height": 740,
+      "documentWidth": 320,
+      "state": "closed; keyboard-expanded Marketing source"
+    },
+    {
+      "frame": "320-closed-top.jpg",
+      "width": 320,
+      "height": 740,
+      "state": "closed; Executive top"
+    },
+    {
+      "frame": "320-open.jpg",
+      "width": 320,
+      "height": 740,
+      "documentWidth": 320,
+      "state": "open; existing synthetic Chat"
+    },
+    {
+      "frame": "320-light-source.jpg",
+      "docWidth": 320,
+      "executiveWidth": [
+        233,
+        233
+      ],
+      "focus": "SUMMARY",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "sourceOpen": true,
+      "viewport": [
+        320,
+        740
+      ]
+    }
+  ],
+  "limits": [
+    "44px synthetic review-controls footer is outside the product shell; its own horizontal review control scroll is not product overflow",
+    "Native JPEG original bytes retained; measured CSS viewport is not a claim of exact encoded raster width",
+    "All source/scope/identity/data/composer ports are synthetic; no authenticated business or provider acceptance",
+    "Original outgoing-overlay 900 image and incorrectly labeled 320 image retained locally as INVALID; neither included in this manifest",
+    "Native browser zoom, actual Live, role/cohort and founder acceptance remain unverified"
+  ]
+}

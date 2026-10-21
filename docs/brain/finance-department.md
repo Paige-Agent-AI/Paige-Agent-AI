@@ -1,5 +1,18 @@
 # Finance department — current source and full operating target
 
+## October21 17:35 UTC — Banking receiver released, bounded customer proof
+
+Original #2414 merged `950d1dac0f355050eb46e6ce5f39850eefc59620`, exact reviewed
+tree744715d84f25e4205692c957fc14b2964b7fffae and required CI PASS. Exact production
+webdpl_uzk6FuLF3foxBVRubz1ykJu25xAq/public950d1dac-mvidsevg and actual served source
+verify. Ordinary authorized customer no-source class PASS: native Finance link,
+Banking & Cash read with unavailable-not-zero disclosure, Refresh, existing Integrations
+exit/Back and full reload; saved conversation/empty composer preserved. ANT-52
+f9b5b986-e844-4e18-ae4c-837f3a299365; Master§4.0 holds exact review/release identities.
+No source/provider connection, fixture or financial action. Populated company/account/
+currency/provider, role/isolation/cohort, zoom/Live/full Finance/all19/founder acceptance
+remain owed. Earlier development records below remain historical evidence.
+
 ## EXP02 receiver checkpoint — October21, development only
 
 Original #2414 Banking & Cash consumer is recovered on current main; no replacement Finance read or originating records.49 actual workspace/shared-hook/presenter cases support its existing canonical Finance contract, correct product fonts, source disclosure, loading/refusal/empty states, keyboard, refresh and integrations return. Native raster audit leaves two1536 frames unverified (actual1535x770);14 other view/state frames plus keyboard match their dimensions. Full native finish, final review/required CI, safe release/readback and actual authorized receiver/provider/permission/reload proof remain owed. Source observations are not bank-wide totals or action receipts. Existing nine analytics catalogue states remain bounded; no Live promotion or capability/provider/algorithm activation. See [receiver evidence](../evidence/ui-delivery/e2-finance-department-sources.md). Historical source checkpoints below remain dated evidence.

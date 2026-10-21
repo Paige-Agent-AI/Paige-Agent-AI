@@ -1,5 +1,22 @@
 # 🧠 The Second Brain — master index & read-first orientation
 
+## EXP04 current delivery checkpoint — 2026-10-21
+
+Released bounded prerequisites #2486 register discovery, #2487 actual retained-copy
+completion readback, and #2493 truthful historical signing economics are recorded
+with exact source/CI/production identities in Master§4.0. They do not accept O1–O12.
+Current #2499 / product44c3d8e20142e6753706f0635a3b8648921dbd86 selectively reuses
+#2175 recipient UI: strict native acknowledgment, partial/completed distinction,
+no-effect cancellation, token retirement, keyboard/document lock, result focus,
+contrast and canvas correction.28 source cases/12 native PDF viewport-theme cases
+plus five synthetic result modes pass; hosted CI/release and real signing acceptance
+remain separate. [Source evidence](../evidence/ui-delivery/e04-signing-result-reconcile.md).
+Isolated workspace prototype062d9ed34 models the full preparation flow using the
+shared system; it is not production rich editing, assigned PDF fields or acceptance.
+Functional/Visual/Experiential/Acceptance are reported independently. All twelve
+outcomes, effective terms, financial/provider, service-delivery and role QA remain open.
+The older restart observations below are retained historical source checkpoints.
+
 ## EXP04 restarted — Agreements source continuation, 2026-10-21
 
 Owner resumes the same sole E04 lead and all original twelve outcomes, expanding native
@@ -25,6 +42,62 @@ and #2175's byte verifier: existing completed/replayed seal must match its actua
 private PDF. Native106 plus5 Portal-wiring tests and three Edge type checks pass;
 release, authenticated recovery and full ALG01/12 acceptance remain proof owed.
 [Exact scope and limitations](../evidence/ui-delivery/e04-retained-completion-reconcile.md).
+
+## EXP02 Marketing release and quality checkpoint — October21 UTC
+
+Unmounted canonical Marketing adapter#2489 is merged
+`51af8283191e2cf913ba35446de90f33185101c0`; exact production web
+dpl_3FTZEvwa12mthXeqkrMy5LmWpK7X and public51af8283-mvifz54p verified.
+Six exact-head workflows/all11 checks/Preview/two contexts passed. Actual
+treec64087d6 retains the concurrent Master-only#2473; runtime equals the reviewed
+union. Normal Edge39652429685 selects zero functions and correctly skips
+deployment/certification; no provider, migration, authority or capability activation.
+The related active consumer#2494 is DRAFT d8373ccf on maina04637af, with182
+focused cases,71 unchanged authority controls and actual type10/6/0new PASS.
+Native recapture/finish review, required exact-head CI, release/readback and actual
+customer Marketing acceptance remain owed; no synthetic proof is customer proof.
+Owner's October21 quality standard is binding: report Functional, Visual,
+Experiential and Acceptance separately. The existing font/narrow evidence,
+all19 outcomes/nine analytics, historical9/0 and12/0/4, canonical architecture and
+single final founder evaluation remain intact. No other agent was assigned.
+
+## EXP02 released customer loops — October21 17:35 UTC
+
+#2483 merged a5a30f5d, #2481 merged b4532809 and original #2414 merged950d1dac.
+Exact reviewed trees, lower-assurance author reviews, required CI, web deployments and
+customer receipts are in Master§4.0. Current verified public950d1dac-mvidsevg and exact
+webdpl_uzk6FuLF3foxBVRubz1ykJu25xAq contain all three. Normal strict Edge39642473836
+verified17 selected source/configurations and certified b453; direct Business Review
+v56/JWT=true readback matches31/31 files. Earlier changing-deployment verification
+failure remains recorded, without a check/hash/JWT waiver. Receiver/handoff migrations
+and Edge changes are N/A; the shared Marketing destination's Edge release is separate.
+
+Actual ordinary authorized customer PASS: Capabilities → monthly Ask VERA reveals the
+same Chat and correct unsent question; reload preserves draft and original messages
+(ANT-52 e07a8907). Banking & Cash completes the same Finance source read, honestly reports
+unavailable rather than zero, refreshes, exits to existing Integrations, returns and
+reloads with original conversation/empty composer intact (ANT-52 f9b5b986). No question
+was sent or business effect performed for either check. Private native proof stays local.
+The original VERA identity remains registry version2/Intelligence, Finance & Risk;
+addressed analysis uses the existing single Harness, not a required separate runtime.
+
+Marketing intake adapter/active consumer remains unmounted; source destination alone
+is not customer acceptance. Filed monthly/quarterly documents, populated Finance,
+permission/isolation/second-cohort, true check/action/approval/Rail follow-through,
+Research/Memory/Knowledge completion, period return/phone invitation refinements,
+zoom/Live/all19/nine analytics and final founder acceptance remain required as applicable.
+Original9/0 and12/0/4 are unchanged. Earlier dated checkpoints below retain their
+historical source and proof boundaries; they do not supersede this later release record.
+
+## EXP02 source and actual customer evidence — October21 UTC
+
+#2471 original Marketing evidence is released6f07299a, web/public and normal strict Edge39610734384/direct reader parity verified; actual Marketing-target acceptance remains owed. #2477 scoped Chat links is releasedfa7ff6cf with exact reviewed composition75578718 and required CI; production webdpl_FTe9T4Qy7XEST45o3xvXcArBde18 and containing public2b2a0b61-mvi8obs6 verify. No new issuer, provider, registry, algorithm or consequential activation. Master§4.0 holds exact identities and receipt links.
+
+Actual authorized ordinary unheld read-only weekly Chat completed FINAL with six persisted canonical department references and reload continuity (ANT-52c770056a). This is distinct from the earlier recovered thread, whose original runtime shutdown was attested and interrupted/outcome-unknown receipt replayed through existing native contracts; that thread retains its read-only hold and no business operation was retried. At15:49UTC the original authorized Owner workspace was reverified: #2477's exact saved inbox answer retains its explanation, exposes no obsolete model app anchor, and its canonical Conversations reference opens the same workspace's actual owning page. Reload, Executive return and Chat reopen retain both saved answers and references. This bounded production regression is PASS (ANT-52 comment57b35961-3800-4d64-985e-ac74ab7feb4a), superseding the earlier custody hold; no new prompt, business effect or transcript rewrite was used. Private native proof remains local.
+
+All nine actual catalogue descriptions/statuses were read and reloaded: CAP009/010/011/013 Coming Soon;012/016/017 Limited;014/015 Unverified; Access Unverified for all. No Live promotion. Native-read catalogue representation remains ANT-161. Supporting Chat/Finance images retain original JPEG bytes and1535px for nominal1536; exact-raster proof stays UNVERIFIED. Finance's separate author review5602749879 rechecked measured1536x770 CSS viewport, overflow and original pixels against the actual viewport standard; the earlier blanket encoded-raster release hold was overbroad. #2414 remains draft/in fresh required CI; no image resampling or customer acceptance inference. Earlier CPU failures, provider/permission/isolation, actual effects and Rail readback, Research/Memory/Knowledge completion, mobile/Live/cohorts and all19/founder acceptance remain open as applicable. Historical9/0 and12/0/4 remain unchanged.
+
+Subsequent authorized VERA-labelled last30days and current-quarter advisory reads completed with six scoped native references and stable narrative/period/reference reload (ANT-52 comments59b05e9a-b5b5-4862-a2b8-65d977d88519 and10fc213a-21d9-4213-bc27-09ebf6468719). Quarter-to-date, completed-day Sales windows, comparable observed-day windows, current snapshots and unavailable evidence remained distinct. This does not prove a distinct VERA dispatch or the original monthly/quarterly skill contract: rendered written deliverables filed for human review/retrieval remain required, so CAP014/015 stay Unverified. Actual Executive handoff from open Capabilities hid the correctly prefilled unsent question (ANT-52 212ec981); small repair#2483 is in development/review/CI, not yet released or customer-accepted. Existing native Marketing Overview and saved-reference Executive return also worked; this is not acceptance of the unmounted Marketing review consumer. All are bounded read evidence, not business-action receipts or full-Experience acceptance.
 
 ## EXP02 catalogue copy/readback checkpoint — 2026-10-20
 

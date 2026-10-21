@@ -935,6 +935,38 @@ No Edge/migration, algorithm or customer acceptance. Internal test correction;
 recovery preserves existing assertions and production authority. No customer
 announcement/version. This factual post-merge closeout is not logged recursively.
 
+**2026-10-21 UTC — EXP02 original-scope Business Review transport foundation.**
+PR [#2451](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2451), reviewed
+`1887db7a1206a2a68877bde6b6ce76b80439da76`, merged
+`a76bb957beb7d51c536e6bab6ebcf27994a74157`; actual tree
+`1260d929e96725884ce4e8a935ced28653bcb488` equals the reviewed current-main union.
+AUTHOR-REVIEW / LOWER ASSURANCE 6306673184/6306743005; all 11 exact-head checks,
+including Preview, and both Vercel contexts SUCCESS; zero review threads.
+The existing caller-JWT Executive endpoint adds an opt-in Chat envelope bound to
+the original actor, workspace and reporting timezone. Its shared transport checks
+scope before/after, rejects malformed or oversized results, and never retries or
+falls back to local composition after an uncertain response. The existing direct
+formatter, Metric/Evidence issuer and E4 record-reference reader remain canonical.
+This foundation leaves the previous Chat dispatch unchanged; it is not a proven
+CPU repair or authenticated weekly-review completion. Fifty-two focused tests,
+eight real-handler offline cases and scope-guard mutation evidence support source
+contracts only. No new reader, store, runtime, provider or action authority.
+Normal [Edge 39534921715](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/39534921715)
+and job 119009244854 SUCCESS; strict deployed source/configuration PASS for
+`paige-ai-chat` and `paige-business-review`, independent `edge-live` exact at readback.
+Artifact 12317297168 SHA256
+`d4b449020ecba35f4579850a30dc7db23cb683200ff4b51bde0b90787f9415b1`.
+Web `dpl_DFfZg1Lnm1Rjv8mivtubhWHuS2uc` READY at the exact merge; public descendant
+`1eb4d1e66bfd7111994f4912880aaa6a092579b2-mvhjfbye` observed, customerUpdate=null.
+Migrations NOT_APPLICABLE; no additional function configuration or retirement.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2451#issuecomment-6307549600).
+Channel production; internal reliability foundation, no customer version or
+announcement. The separate consumer, final assistant settlement/reload and current
+weekly CPU failure remain unverified/open; catalogue CAP-017 remains Limited with
+Access Unverified. All 19 outcomes, nine analytics entries and founder evaluation
+remain required. Recovery is a reviewed forward correction preserving caller scope
+and original records. This factual post-merge closeout is not logged recursively.
+
 **2026-10-20 UTC — EXP05 retires cancelled or stale weekly owner inspections.**
 PR [#2435](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2435), reviewed
 `727a0ff17e670b387b23e921bdf2c931f0258904`, merged main

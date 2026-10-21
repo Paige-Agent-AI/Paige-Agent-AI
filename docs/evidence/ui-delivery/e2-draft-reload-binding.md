@@ -64,7 +64,28 @@ no overflow and five bounded functional observations. Context/history/model/uplo
 adapters and scripted quota failures are explicit. No real business data, account,
 provider action, source capability execution or production security proof.
 
+Reproduction extends the existing actual-Chat harness, not a separate QA engine:
+`node node_modules/vite/bin/vite.js --config scripts/live-drive/harness/paige-chat-mount/draft-reload.vite.config.ts`,
+then `/draft-reload.html`. Its native captures used the local copy of these
+account/history/model adapters; the checked-in entry uses relative links so it
+coexists with existing harness pages. `mode=blocked|operator|effective` and
+`layout=page|drawer&theme=light|dark` are explicitly synthetic controls. Clear the
+disposable unsent input before changing proof routes; no request must be sent.
+
 Impeccable source: https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md
 Applied incumbent direction, clarity/adapt/craft floor and sequential finish review:
 contrast/type/wrapping/reachability PASS within named native component boundary;
 full shell/zoom/AT/authenticated proof remains UNVERIFIED. No other agent involved.
+
+Pinned detector reports0 anti-patterns and6 existing literal-size advisories in
+the shared Chat file; no new font-size value is introduced. React review confirms
+existing contexts/subscriptions, primitive binding dependencies, no new auth/data
+fetch, and cleaned-up width observer. The initial evidence guard rejected3 field
+grammar mistakes; corrected fields pass the unchanged guard, without a waiver.
+
+Bounded E05 composition: prospective frontend against#2401/d3e0857c contains both
+source changes without Chat/attachment conflicts;284 cases/9suites PASS, sources
+held unchanged until process exit, then exact temporary files restored. The full
+foreign PR's C0b pin conflict is excluded from that frontend proof, not waived.
+E05 retains its runtime/guard release ownership; no foreign source is published
+in this consumer. Current-main integration and actual release gates remain separate.

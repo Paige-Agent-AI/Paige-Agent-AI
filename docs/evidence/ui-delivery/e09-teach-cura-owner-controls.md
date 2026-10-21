@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: YES: owner source review/private publication, explicit cus
 FLOW_PROTOTYPE: PASS: docs/evidence/exp09-teach-cura-owner/prototype.html;28 synthetic interaction checks; owner ANT-163 October21 autonomous implementation directive controls, no per-stage founder voting gate.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: authorized business publisher chooses the exact approved information CURA may use with customers.
 VISUAL_DIRECTION: PASS: incumbent Mineral/Obsidian/Schibsted, source rows/thin rules, retained four Portal tabs; pinned .impeccable/surfaces/nt-relationships-ownerportaldashboard-tsx-2fff7d6a.md.
-AUTOMATED_EVIDENCE: PASS: eight suites303 tests; service45/hook18/panel13/real original AddKnowledgeFlow4 plus dashboard/resources/extraction regressions; exact tenant/revision/receipt and interrupted/retired scope negatives.
+AUTOMATED_EVIDENCE: PASS: eight suites304 tests; service45/hook18/panel13/real original AddKnowledgeFlow5 plus dashboard/resources/extraction regressions; exact tenant/revision/receipt and interrupted/retired scope negatives.
 STATIC_EVIDENCE: PASS: focused ESLint, production build, type ratchet baseline10/current6; canonical Impeccable detector[]; shared Button/AddKnowledgeFlow/Knowledge services unchanged.
 RENDERED_EVIDENCE: PASS: native source-render captures indexed in docs/evidence/exp09-teach-cura-owner/capture-index.json; eight required desktop/dock views,390mobile, Obsidian,450reflow and recovery/refusal states. Identity/RPC/nav/dock boundaries are synthetic.
 BEHAVIORAL_EVIDENCE: PASS: source→terms→exact review→cancel/focus restore; trusted native UTC date adjustment; uncertain write→original receipt; conflict/reload, offline/empty, publisher refusal and synthetic business-switch retirement. Actual provider/runtime remains separately owed.
@@ -59,3 +59,17 @@ Distinct source review cleared the two draft/refresh findings; final immutable-h
 review and required CI remain release gates. Tests/fixtures and synthetic identities
 cannot close ordinary authenticated customer acceptance. No external send, provider
 spend, charge, identity creation, privilege change or action activation was performed.
+
+## Review correction — draft dialog focus
+
+GitHub review4339108225 identified that draft sharing is disabled, so it cannot
+receive focus when the original review dialog closes. The panel now remembers
+the actual Review or correct opener and returns only to a connected, enabled
+control, with Add a source/heading fallbacks. Original publication controls,
+native authority and shared AddKnowledgeFlow remain unchanged. Regression
+executes the real original dialog; eight focused suites304 tests PASS. Native
+Chromium confirmed the closed dialog and enabled Review or correct focus;
+`../exp09-teach-cura-owner/focus-return-draft.jpg` records that source render.
+Identity/RPC remain synthetic, not authenticated production. The original20
+geometry captures retain their original source hashes; the added correction
+record carries its own current Panel hash and does not relabel older captures.

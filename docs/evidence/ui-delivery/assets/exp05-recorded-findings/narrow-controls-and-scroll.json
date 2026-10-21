@@ -1,0 +1,31 @@
+{
+  "actions": [
+    {
+      "height": 44,
+      "label": "Open Systems Check",
+      "top": 516.9000244140625,
+      "width": 210.40000915527344
+    },
+    {
+      "height": 55,
+      "label": "Prepare a read-only PAIGE review",
+      "top": 568.9000244140625,
+      "width": 210.40000915527344
+    }
+  ],
+  "focus": "Prepare a read-only PAIGE review",
+  "scrollWidth": 320,
+  "scrollers": [
+    {
+      "class": "",
+      "client": 549,
+      "scroll": 637
+    },
+    {
+      "class": "ops-department-body",
+      "client": 611,
+      "scroll": 2572
+    }
+  ],
+  "width": 320
+}

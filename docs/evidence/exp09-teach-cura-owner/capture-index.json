@@ -195,5 +195,17 @@
       "sha256": "4bf2adf7e258ce7f0252a7d462d5459d7766e410b491804297e715853216e9ae",
       "origin": "Observed browser geometry/state/contrast record"
     }
-  ]
+  ],
+  "focusCorrection": {
+    "date": "2026-10-21",
+    "file": "focus-return-draft.jpg",
+    "sha256": "d444b3ba73440133d5b48bb3ee9cdcb41d2e474bd0e7c0b37da5a573b554caf7",
+    "panelSha256": "53173b2c7374544b699bd504ba2831b1ab29a1cc4caa843b937b7ea779d9db55",
+    "result": {
+      "dialogOpen": false,
+      "disabled": false,
+      "focused": "Review or correct"
+    },
+    "boundary": "Actual original source in native Chromium; synthetic identity/RPC. Prior captures and sourceHashes remain historical."
+  }
 }

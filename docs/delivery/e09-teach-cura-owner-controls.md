@@ -38,8 +38,8 @@ entitlement remain native exclusions. There is no invented price or promotion.
 
 ## Verification and review
 
-Eight focused suites /303 tests PASS: service45, hook18, panel13, original real
-AddKnowledgeFlow integration4, existing dashboard/resources/extraction regressions.
+Eight focused suites /304 tests PASS: service45, hook18, panel13, original real
+AddKnowledgeFlow integration5, existing dashboard/resources/extraction regressions.
 An initial parallel run exposed a test's assumption about WebCrypto completion;
 it now waits for observable native submission, preserving the original assertions.
 No production timeout or guard was weakened. Independent source review resolved
@@ -85,3 +85,8 @@ history, real two-business authorization, native browser200% zoom and iOS Safari
 remain UNVERIFIED. Local source renders use synthetic RPC/identity/shell/dock
 boundaries; they are not authenticated provider or complete Experience proof.
 Founder walkthrough is prepared once the integrated EXP09 Experience is ready.
+
+Late review4339108225 corrected original draft-dialog focus restoration: the
+actual enabled Review or correct opener replaces disabled Review sharing as
+the return target. Native Chromium and a real original-flow regression pass;
+304 tests cover the candidate. Required CI/review now apply to the repaired head.

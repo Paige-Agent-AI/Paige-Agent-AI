@@ -1,0 +1,113 @@
+Browser tab: 170270628, Title: "Offline Operations findings flow prototype", URL: "http://127.0.0.1:63673/solo/1702/command-center".
+0 AXWebArea Offline Operations findings flow prototype, URL: 127.0.0.1:63673/solo/1702/command-center
+	1 container root
+		293 button (collapsed) Native integration controls · offline, Secondary Actions: Expand
+			294 text Native integration controls · offline
+		4 container
+			5 text PAIGE folded; your conversation is preserved
+			6 link Description: Skip to content, Value: 127.0.0.1:63673/solo/1702/command-center#tenant-shell-main
+			7 container Tenant workspace
+				8 link Description: PAIGE Solo home, Value: 127.0.0.1:63673/solo/1702/command-center
+				9 button Expand navigation
+					10 image
+				11 link Description: Command Center, Value: 127.0.0.1:63673/solo/1702/command-center
+				12 link Description: Operations, Value: 127.0.0.1:63673/solo/1702/operations
+				13 link Description: Clients, Value: 127.0.0.1:63673/solo/1702/clients
+				14 link Description: Marketing, Value: 127.0.0.1:63673/solo/1702/growth
+				15 link Description: Ads, Value: 127.0.0.1:63673/solo/1702/ads
+				16 link Description: Sales, Value: 127.0.0.1:63673/solo/1702/sales
+				17 link Description: Finance, Value: 127.0.0.1:63673/solo/1702/finance
+				18 link Description: Marketplace, Value: 127.0.0.1:63673/solo/1702/marketplace
+				19 link Description: Settings, Value: 127.0.0.1:63673/solo/1702/settings
+				20 button Description: Use Obsidian theme, Help: Obsidian theme
+				21 button Sign out
+				22 text TE
+			23 container
+				24 text TEST STUDIO B Command Center Solo
+				25 button (collapsed) Description: Direct PAIGE, Secondary Actions: Expand
+					26 image PAIGE
+					27 text Direct PAIGE, or press ⌘\
+					28 text ⌘\
+			212 container Solo Systems Check
+				213 container
+					214 heading Systems Check, Value: 1
+						215 text Systems Check
+					216 text What your business systems can actually do right now, and what is stopping the rest.
+					217 text Test studio B ,  Solo ,  20 October 2026 .  Good afternoon :  Recorded source findings for this workspace. STALE EVIDENCE PARTIAL COVERAGE Nothing from the last check needs you right now. Last checked 10/19/2026, 5:02:00 AM
+					218 text 0
+					219 text check s  ·
+					220 text 0
+					221 text  passed ·
+					222 text 0
+					223 text  need  attention
+					224 button Description: Refresh current data, Help: Re-reads the last recorded check. It does not run the checks again.
+					225 text This re-reads the last recorded check.
+					226 text  Running the checks again on demand is not wired to this surface yet. Refresh does not start a check.
+					227 text The picture is incomplete.
+					228 text The last run left no readable results at all. Overall health cannot be inferred from what came back, so nothing below is being reported as a complete answer.
+					229 container What needs you now
+						230 heading What needs you now, Value: 2, ID: sc-attention-title
+							231 text What needs you now
+						232 text Most serious first
+						233 container
+							234 text Nothing from the last check needs you. That covers the  0  thing s  it looked at, not your whole business.
+					235 container Your operating areas
+						236 heading Your operating areas, Value: 2, ID: sc-areas-title
+							237 text Your operating areas
+						238 text 9 Each carries its own status. There is deliberately no total.
+						239 button (collapsed) Secondary Actions: Expand, Business setup and identity UNAVAILABLE Who your business is, and the details Paige is allowed to state as fact.
+							240 text Business setup and identity
+							241 text UNAVAILABLE
+							242 text Who your business is, and the details Paige is allowed to state as fact.
+						243 button (collapsed) People and CRM UNAVAILABLE The people on your books and whether anything can reach them., Secondary Actions: Expand
+							244 text People and CRM
+							245 text UNAVAILABLE
+							246 text The people on your books and whether anything can reach them.
+						247 button (collapsed) Secondary Actions: Expand, Sales and commercial operations UNAVAILABLE What you sell, how work is tracked, and how you get paid.
+							248 text Sales and commercial operations
+							249 text UNAVAILABLE
+							250 text What you sell, how work is tracked, and how you get paid.
+						251 button (collapsed) Secondary Actions: Expand, Email, phone and SMS readiness UNAVAILABLE Whether a message you send actually leaves this workspace.
+							252 text Email, phone and SMS readiness
+							253 text UNAVAILABLE
+							254 text Whether a message you send actually leaves this workspace.
+						255 button (collapsed) Marketing, social and advertising UNAVAILABLE What you have live, and where new enquiries come from., Secondary Actions: Expand
+							256 text Marketing, social and advertising
+							257 text UNAVAILABLE
+							258 text What you have live, and where new enquiries come from.
+						259 button (collapsed) Secondary Actions: Expand, Integrations and automations UNAVAILABLE The outside tools connected here, and what Paige may run in them.
+							260 text Integrations and automations
+							261 text UNAVAILABLE
+							262 text The outside tools connected here, and what Paige may run in them.
+						263 button (collapsed) Secondary Actions: Expand, Paige's team and delegated work NOT CHECKED What Paige is holding for you, and how much she may do on her own.
+							264 text Paige's team and delegated work
+							265 text NOT CHECKED
+							266 text What Paige is holding for you, and how much she may do on her own.
+						267 button (collapsed) Secondary Actions: Expand, Business knowledge — the Mind NOT CHECKED What Paige knows about your business, and what she can search.
+							268 text Business knowledge — the Mind
+							269 text NOT CHECKED
+							270 text What Paige knows about your business, and what she can search.
+						271 button (collapsed) Secondary Actions: Expand, Security, permissions and governance NOT CHECKED Who can get in here, and what Paige is allowed to do on her own.
+							272 text Security, permissions and governance
+							273 text NOT CHECKED
+							274 text Who can get in here, and what Paige is allowed to do on her own.
+					275 text WORKSPACE RAIL
+					276 heading Recent activity, Value: 2
+						277 text Recent activity
+					278 container Who does what next
+						279 heading Who does what next, Value: 2, ID: sc-next-title
+							280 text Who does what next
+						281 heading ONLY YOU CAN DO THESE, Value: 3
+							282 text ONLY YOU CAN DO THESE
+						283 content list
+							284 text Nothing in the returned findings is waiting on you
+						285 heading PAIGE IS HOLDING THESE FOR YOU, Value: 3
+							286 text PAIGE IS HOLDING THESE FOR YOU
+						287 content list
+							288 text Nothing she can take on right now
+						289 heading COULD NOT BE CHECKED, Value: 3
+							290 text COULD NOT BE CHECKED
+						291 content list
+							292 text No skipped or unavailable results were returned
+
+The focused UI element is 293 button (collapsed) Native integration controls · offline, Secondary Actions: Expand

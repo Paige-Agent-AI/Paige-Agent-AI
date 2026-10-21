@@ -599,7 +599,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
    * missing count is omitted rather than rendered as zero, because zero is a claim.
    */
   const businessAttention = useMemo<Array<[string, number]>>(() => ([
-    ["Clients at risk", command.attention?.at_risk_clients],
+    ["Contacts without recent follow-up", command.attention?.at_risk_clients],
     ["Follow-ups due", command.attention?.follow_ups_due],
     ["Tasks due", command.attention?.tasks_due],
   ] as Array<[string, number | undefined | null]>)
@@ -771,7 +771,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
                     <span key={name}>{i > 0 ? " · " : ""}{value} {name.toLowerCase()}</span>
                   ))}
                   {". "}
-                  These come from your live client records, not from the setup check.
+                  These come from existing business records, separate from the last setup check.
                 </div>
               )}
               {attentionFindings.length === 0 ? (

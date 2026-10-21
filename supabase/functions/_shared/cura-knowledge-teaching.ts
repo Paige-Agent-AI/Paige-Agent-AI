@@ -9,7 +9,7 @@ export const CURA_TEACH_PURPOSE='cura_customer_knowledge';
 export type CuraTeachingScope={actorId:string;tenantId:string;threadId:string;requestIntentId:string;approvedAct?:string};
 type Ports={caller:KnowledgeScopeCaller};
 const object=(v:unknown):v is Record<string,unknown>=>!!v&&typeof v==='object'&&!Array.isArray(v);
-const refused=()=>({success:false,ok:false,not_applied:true,refused_before_run:true,
+const refused=()=>({success:false,ok:false,not_applied:true,
  error:'This preparation request was not accepted. Check the current business and Knowledge publishing permission. Earlier saved work is unchanged.'});
 const uncertain=()=>({success:false,ok:false,outcome_unknown:true,
  note:'The private Knowledge preparation could not be confirmed. Check the existing Knowledge records before another attempt. Nothing has been published or shared with customers by this action.'});

@@ -66,6 +66,47 @@ export function businessReviewRecordLinks(snapshot: BusinessOperatingSnapshot): 
 export type BusinessSnapshotChatDeps = { caller: MetricCaller };
 export type BusinessSnapshotChatContext = { who: BusinessReviewWho; timezone: string };
 
+type ReviewTransportCaller = MetricCaller & { functions: {
+  invoke(name: string, options: { body: Record<string, unknown>; headers: Record<string, string>; signal: AbortSignal }): PromiseLike<{ data: unknown; error: unknown }>;
+} };
+
+/** Reuse the Executive endpoint's worker, not a second composition in Chat's
+ * long-lived model loop. No replay/local fallback after an uncertain transport.
+ * The endpoint also binds scope before reading; re-check here before publication. */
+export async function readBusinessSnapshotTransport(
+  ctx: BusinessSnapshotChatContext, deps: { caller: ReviewTransportCaller }, args: unknown,
+): Promise<BusinessSnapshotChatResult> {
+  const parsed = parseSnapshotArgs(args);
+  if ('fix' in parsed) return { status: 'needs_input', message: `${parsed.fix} Nothing was read.` };
+  const refused = (): BusinessSnapshotChatResult => ({ status: 'refused', message: 'The original business workspace could not be verified. No review evidence is returned.' });
+  const unavailable = (): BusinessSnapshotChatResult => ({ status: 'unavailable', message: 'The business review could not be read right now. No financial figures or completed actions are inferred.' });
+  const tenant = ctx.who.tenantId;
+  if (!tenant) return refused();
+  const current = async () => {
+    const scope = await deps.caller.rpc('current_user_tenant_id');
+    return !scope.error && scope.data === tenant;
+  };
+  try {
+    if (!await current()) return refused();
+    const { period, customStart, customEnd, focus } = parsed.request;
+    const { data, error } = await deps.caller.functions.invoke('paige-business-review?chat=1&finance_sources=1', {
+      body: { ...(period === undefined ? {} : { period }), ...(customStart === undefined ? {} : { custom_start: customStart }),
+        ...(customEnd === undefined ? {} : { custom_end: customEnd }), ...(focus === undefined ? {} : { focus }), timezone: ctx.timezone },
+      headers: { 'x-paige-review-scope': tenant }, signal: AbortSignal.timeout(15_000),
+    });
+    if (!await current()) return refused();
+    const envelope = object(data), result = object(envelope?.result);
+    if (error || envelope?.version !== 1 || envelope.actor_id !== ctx.who.actorId
+      || envelope.tenant_id !== tenant || envelope.timezone !== ctx.timezone || !result
+      || !['available', 'needs_input', 'refused', 'unavailable'].includes(String(result.status))
+      || typeof result.message !== 'string' || !result.message.trim() || result.message.length > 12_000) return unavailable();
+    const status = result.status as BusinessSnapshotStatus;
+    if (status !== 'available') return { status, message: result.message };
+    if (typeof result.projection !== 'string' || !result.projection.trim() || result.projection.length > 12_000) return unavailable();
+    return { status, message: result.message, projection: result.projection, record_links: readRecordLinks(result.record_links) };
+  } catch { return unavailable(); }
+}
+
 const FINANCE_NOTE = ' Finance source snapshots retain their own observation times, company, currency and coverage. State the company, currency and observed time alongside each financial amount; never describe an older source snapshot as a live balance or reporting-period activity. These exact decimal major amounts are not Sales minor-unit receipts. Never combine account balances, available cash or credit, and never infer bank-wide cash, profit, a forecast or an executed action. Test and unverified financial sources are excluded.';
 
 const object = (v: unknown): Record<string, unknown> | null => v && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, unknown> : null;

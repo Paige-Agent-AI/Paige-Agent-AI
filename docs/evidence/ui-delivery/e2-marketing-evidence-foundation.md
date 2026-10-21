@@ -33,7 +33,7 @@ MUST_PRESERVE: original33-key public tool/admission; caller JWT, original issuer
 ACCEPTANCE_CRITERIA: existing11 source contracts work through the sole internal evidence cycle, public requests remain bounded, matched target actuals use the original evaluator, and separate CI/source/customer readback establishes each claim at its proper level.
 MOTION_PURPOSE: NONE: no UI animation or timing change.
 PROTECTED_SEAMS: no Chat handler,29 dispatch pins, extractor, capability metadata, target writer/storage, provider, permission, approval or execution activation changes. Only the two inspected Metric dependency hashes are renewed.
-INTERNAL_BUILD_IDENTITY: development atop verified main46c6514f917ec00d423fd83e36e6bd9714ba915b; final head/review/CI in PR; environment=development; deployment=PROOF_OWED; migrations=NOT_APPLICABLE; edge=PROOF_OWED(normal affected-source deployment and strict deployed source/configuration readback); evidence=owning reader/Target/Fabric and immutable-binding regressions.
+INTERNAL_BUILD_IDENTITY: development atop verified main 46c6514f917ec00d423fd83e36e6bd9714ba915b; final head/review/CI in PR; environment=development; deployment=PROOF_OWED; migrations=NOT_APPLICABLE; edge=PROOF_OWED(normal affected-source deployment and strict deployed source/configuration readback); evidence=owning reader/Target/Fabric and immutable-binding regressions.
 RELEASE_CHANNEL: development: local foundation; existing lifecycle/docs/Conversations release order remains first.
 RELEASE_CLASSIFICATION: internal-only: existing source evidence integration, no provider or public tool activation.
 CUSTOMER_RELEASE_IDENTITY: none: complete founder evaluation remains required.

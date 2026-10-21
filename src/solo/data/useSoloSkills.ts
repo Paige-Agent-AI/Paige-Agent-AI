@@ -70,6 +70,8 @@ export interface SoloSkill {
   d: string;
   /** Trigger phrases (REAL, [] when null). */
   trig: string[];
+  /** Public declared release coverage only; not runtime permission or connection state. */
+  catalogueCoverage?: unknown;
 }
 
 /** Header stat tiles — total/active are REAL-derivable; the other two are PREVIEW. */
@@ -107,6 +109,7 @@ interface SkillRow {
   success_count: number | null;
   trigger_phrases: string[] | null;
   tier_availability: Record<string, string> | null;
+  catalogue_coverage?: unknown;
 }
 
 /** Self-use entitlement for a tier: the §61 doc value contains 'yes' ('yes'/'yes+resell'). */
@@ -146,7 +149,7 @@ export function useSoloSkills(): SoloSkillsData {
       const { data, error: qErr } = await supabase
         .from("paige_skills")
         .select(
-          "slug,name,description,category,risk_level,status,run_count,success_count,trigger_phrases,tier_availability",
+          "slug,name,description,category,risk_level,status,run_count,success_count,trigger_phrases,tier_availability,catalogue_coverage:metadata->catalogue_coverage",
         )
         .eq("status", "active") // only callable skills surface to a tenant
         .order("category", { ascending: true })
@@ -182,6 +185,7 @@ export function useSoloSkills(): SoloSkillsData {
         ok: usd0(r.success_count ?? 0),
         d: r.description ?? "",
         trig: Array.isArray(r.trigger_phrases) ? r.trigger_phrases : [],
+        catalogueCoverage: r.catalogue_coverage,
       }));
   }, [rows, skillsEntitled, tierKey]);
 

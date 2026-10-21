@@ -9,6 +9,7 @@ import { useTierFeatures } from "@/hooks/useTierFeatures";
 import { useSubtabRoute } from "@/lib/routing/useSubtabRoute";
 import { useSoloKnowledge } from "./data/useSoloKnowledge";
 import { useSoloSkills } from "./data/useSoloSkills";
+import { presentCatalogueCoverage } from "./catalogue-coverage";
 import { clearPaigeSurfaceScope, getPaigeBusinessPlanScope, getPaigeClientScope, subscribePaigeClientScope } from "./paigeClientScope";
 import { clearPaigePublicPresenceScope, getPaigePublicPresenceScope, subscribePaigePublicPresenceScope } from "./paigePublicPresenceScope";
 import "./solo-paige-workspace.css";
@@ -243,22 +244,25 @@ function CapabilitiesView() {
       <PanelHeader
         eyebrow="Skill catalogue"
         title="Workspace capabilities"
-        description="Listed skills may still need permissions or connections. PAIGE checks current availability when you ask to use them."
+        description="Coverage shows released functionality. PAIGE checks permissions and connections when you ask."
         state={<TruthPill>Catalogue</TruthPill>}
       />
       <div className="spw-scroll">
         <section className="spw-capabilities" aria-label="Capabilities">
-          <div className="spw-cap-head"><span>Capability</span><span>Status</span><span>Access</span></div>
+          <div className="spw-cap-head"><span>Capability</span><span>Coverage</span><span>Access</span></div>
           {capability.loading && <div className="spw-state" role="status">Loading this workspace’s skill catalogue…</div>}
           {capability.error && <div className="spw-state spw-state-error" role="alert"><strong>Capabilities could not be loaded.</strong><span>{capability.error}</span><button type="button" onClick={capability.refresh}><RotateCw aria-hidden size={14} /> Retry</button></div>}
           {capability.empty && <div className="spw-state"><Wrench aria-hidden size={24} /><strong>No skills are listed</strong><span>This workspace’s skill catalogue is empty.</span></div>}
-          {rows.map((skill) => (
+          {rows.map((skill) => {
+            const coverage = presentCatalogueCoverage(skill);
+            return (
             <div className="spw-cap-row" key={skill.slug}>
               <div><strong>{skill.n}</strong><small>{skill.d || skill.cat || "Registry description unavailable"}</small></div>
-              <TruthPill>{skill.on ? "Listed" : "Inactive"}</TruthPill>
+              <TruthPill tone={coverage?.tone}>{coverage?.label ?? (skill.on ? "Listed" : "Inactive")}</TruthPill>
               <span>Unverified</span>
             </div>
-          ))}
+            );
+          })}
           {/* §13 — THIS ROW CONTRADICTED THE SURFACE IT DESCRIBES. It read "Partial / Not
               activated" while the hold-to-dictate mic sits live in the composer one tab away, in
               this same workspace, wired to `paige-dictate`. A capability panel that tells a person
@@ -287,7 +291,7 @@ export function SoloPaigeWorkspace({
   onboarding?: boolean;
   visible?: boolean;
 } = {}) {
-  const { activeTenantId, isPlatformStaff } = useTenantContext();
+  const { activeTenantId, activeUserId, isPlatformStaff } = useTenantContext();
   // §60 — does this account type carry Live Conversation? Answered in the one home
   // (src/lib/tier/tierFeatures.ts), never by an inline account_type compare. While the tenant is
   // still resolving the classification defaults to the permissive solo tier, so stay optimistic
@@ -475,7 +479,7 @@ export function SoloPaigeWorkspace({
       <section id="spw-panel-knowledge" role="tabpanel" aria-labelledby="spw-tab-knowledge" hidden={tab !== "knowledge"} className="spw-panel">{tab === "knowledge" && <KnowledgeView />}</section>
       <section id="spw-panel-research" role="tabpanel" aria-labelledby="spw-tab-research" hidden={tab !== "research"} className="spw-panel">{tab === "research" && <ResearchView activeTenantId={activeTenantId} />}</section>
       <section id="spw-panel-helpers" role="tabpanel" aria-labelledby="spw-tab-helpers" hidden={tab !== "helpers"} className="spw-panel">{tab === "helpers" && <HelpersView />}</section>
-      <section id="spw-panel-capabilities" role="tabpanel" aria-labelledby="spw-tab-capabilities" hidden={tab !== "capabilities"} className="spw-panel">{tab === "capabilities" && <CapabilitiesView />}</section>
+      <section id="spw-panel-capabilities" role="tabpanel" aria-labelledby="spw-tab-capabilities" hidden={tab !== "capabilities"} className="spw-panel">{tab === "capabilities" && <CapabilitiesView key={`${activeUserId ?? "resolving"}:${activeTenantId ?? "resolving"}`} />}</section>
       <span className="spw-sr" aria-live="polite">{TABS.find((item) => item.id === tab)?.label} view open</span>
     </div>
   );

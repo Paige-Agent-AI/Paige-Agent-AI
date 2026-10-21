@@ -6,6 +6,17 @@ The SOLO owner opens Finance → Banking & Cash from the executive review and
 inspects the same permitted company/account/source facts, rather than a fixed
 readiness placeholder. Required outcomes O04/O14; existing #2402 is the prerequisite.
 
+**October21 viewport review clarification.** The earlier exact-raster release hold
+was broader than the canonical Solo requirement: verify the actual1536x770
+viewport and behavior. Both original native frames measured that exact CSS
+viewport, document1536/1536 and panel1310/1310 (closed) or787/787 (open), loaded
+product font and correct light/dark context. Original pixels were re-inspected
+and show the real content with its existing scroll owner. This verifies that
+viewport's supporting layout; encoded JPEG width remains1535 and exact-raster
+proof remains UNVERIFIED. No bytes were transformed and no customer acceptance
+is inferred. Existing320px native reflow proves the tested reflow path; actual
+browser zoom, providers, permission/cohort/Live and full acceptance remain owed.
+
 ## Routing and protected behavior
 
 REUSE `useBusinessReview` → existing `paige-business-review` →
@@ -79,7 +90,7 @@ PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: ordinary permitted SOLO owner inspects so
 VISUAL_DIRECTION: PASS: incumbent Finance/Mineral/Obsidian, product fonts, quiet inline evidence and native disclosure; no new visual world.
 AUTOMATED_EVIDENCE: PASS: 49 cases across actual Finance workspace, shared useBusinessReview and source presenter; original pre-change causal regression retained. An initial sandbox temp rename refused before tests ran; owned workspace TEMP rerun passed.
 STATIC_EVIDENCE: PASS: scoped source/test/harness lint exits zero errors with one fixture fast-refresh advisory; actual project type ratchet has zero new diagnostics, baseline10/current6; owning whitespace verification passes.
-RENDERED_EVIDENCE: UNVERIFIED: 14 native JPEG state/view frames and separate keyboard frame have exact raster dimensions; two nominal1536 captures returned1535x770 and do not pass that viewport. Correct themes, loaded Schibsted font, contrast and narrow behavior are supporting only; complete required native proof is held.
+RENDERED_EVIDENCE: PASS: original17 native JPEG frames support actual Finance source states, all four prescribed CSS viewports open/closed and320px, loaded Schibsted font, correct themes, contrast and narrow behavior. Both1536 CSS viewport/overflow measurements and original pixels were inspected against the canonical viewport requirement; see the dated clarification and native index for the separate encoded-raster limitation.
 BEHAVIORAL_EVIDENCE: PASS: native synthetic summary Tab/Enter, visible focus, 61px connection button reachability at320px, refresh changes the fixture source label, existing integrations exit and Banking return. Provider/model/backend actions are unavailable in the fixture.
 AUTHENTICATED_RUNTIME: UNVERIFIED: this receiver is not yet released; prior Executive Finance and ordinary read-only weekly Chat proof does not accept its populated/provider/permission/reload outcome.
 KEYBOARD_FOCUS: PASS: actual native Tab from Refresh reaches summary, Enter discloses facts, Tab reaches the visible source-connections button with focus outline; assistive-technology proof remains unverified.
@@ -96,8 +107,8 @@ CUSTOMER_RELEASE_IDENTITY: none: no released or accepted customer outcome claime
 RELEASE_NOTE_REQUIRED: NO: source integration alone earns no customer announcement.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: scope=receiver-source-and-ui; authenticated receiver/provider/cohort/Live and final hosted CI/release readback remain unproven; no Live or complete Finance claim.
 RELEASE_RECOVERY: position=bounded reviewed receiver correction or revert without changing originating Finance/Sales records; reference=docs/delivery/finance-approved-build.md.
-SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: actual browser wrapper returned1535x770 for1536 CSS; retain bytes, do not count as passing exact-raster evidence.
-SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: actual browser wrapper returned1535x770 for1536 CSS; retain bytes, do not count as passing exact-raster evidence.
+SOLO_1536X770_PAIGE_CLOSED: PASS: native synthetic Finance at measured1536x770 CSS, document1536/1536 and panel1310/1310, loaded font/light theme; original pixels inspected. Encoded-raster limitation is separate in the dated clarification.
+SOLO_1536X770_PAIGE_OPEN: PASS: native synthetic Finance at measured1536x770 CSS, document1536/1536 and panel787/787, loaded font/dark theme; original pixels inspected. Encoded-raster limitation is separate in the dated clarification.
 SOLO_1366X768_PAIGE_CLOSED: PASS: actual native synthetic Finance receiver; source/geometry only, no authenticated runtime inference.
 SOLO_1366X768_PAIGE_OPEN: PASS: actual native synthetic Finance receiver; source/geometry only, no authenticated runtime inference.
 SOLO_1024X768_PAIGE_CLOSED: PASS: actual native synthetic Finance receiver; source/geometry only, no authenticated runtime inference.

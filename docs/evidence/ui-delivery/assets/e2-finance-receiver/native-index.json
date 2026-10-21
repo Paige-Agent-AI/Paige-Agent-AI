@@ -1,5 +1,12 @@
 {
   "kind": "synthetic-native-render-not-customer-acceptance",
+  "viewportReview": {
+    "date": "2026-10-21",
+    "standard": "docs/doctrine/paige-ui-delivery-standard.md Solo requirements",
+    "css1536": "PASS: both original captures measure actual1536x770 CSS viewport, document1536/1536 and panel1310/1310 or787/787, loaded font and correct light/dark context; original native pixels independently inspected",
+    "exact1536Raster": "UNVERIFIED: original JPEG remains1535x770, no image transformation",
+    "disposition": "Earlier exact-raster release hold was overbroad: the standard requires viewport/behavior verification, not an exact encoded raster width. Native CSS viewport coverage is proven; exact-image and real-customer/provider/cohort/Live/founder claims remain separate. Native320px reflow is proven; actual browser zoom remains unverified."
+  },
   "captures": [
     {
       "w": 1536,

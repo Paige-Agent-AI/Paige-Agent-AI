@@ -832,3 +832,8 @@ The authenticated-proof framework: **`scripts/live-drive/PROOF-LANE.md`** (the f
 | `docs/evidence/ui-delivery/solo-beta-acquisition.md` | The shipped Solo-only public journey plus live server-owned Stripe offer binding, verified/fenced fulfillment, current Solo handoff, production readback, and separated proof boundaries | Any public CTA/pricing/signup/auth callback/onboarding/checkout/webhook/enrollment-status or new-Solo destination change |
 
 Production binding shipped in PR #1200 (`4ccb8a9a`): live Product/Price, migration, Edge, webhook, Vercel, fail-closed probes, and signed-out public rendering are verified. First authorized customer Checkout/fulfillment/current-shell and lifecycle proof plus live Billing Portal configuration remain `PROOF OWED`; capability stays `PARTIAL`. PR #899 ordering and PR #724 destination remain carried forward; existing authorized non-Solo access is not re-enrolled.
+
+
+## EXP09 Teach CURA owner controls — 2026-10-21 source candidate
+
+[Original Knowledge action/record contract](../delivery/e09-teach-cura-owner-controls.md) and [UI evidence](../evidence/ui-delivery/e09-teach-cura-owner-controls.md) extend the existing Portal Experience. Native inventory2476 is production verified; this owner consumer is release-gated. Original Knowledge publication and K1 prepare/set/receipt remain authoritative, customer private history separate. Dashboard controls are implemented; typed Chat/eligible Live teaching is not mounted by this slice. No new Spine key, model/Knowledge store, entitlement or approval path. Universal native publisher predicates; all signed-in publication→customer answer proof remains UNVERIFIED. Existing ALG-01/12 reconciliation/recovery reused; no verified new ALG-02/04/13 algorithm.

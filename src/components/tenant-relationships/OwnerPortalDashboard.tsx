@@ -45,6 +45,7 @@ import { OwnerCustomerResources } from "./OwnerCustomerResources";
 import "./owner-portal-dashboard.css";
 
 const PortalStudio = lazy(() => import("@/pages/admin/PortalStudio"));
+const CuraKnowledgePanel = lazy(() => import("./CuraKnowledgePanel").then(module => ({default: module.CuraKnowledgePanel})));
 const tabs = ["Overview", "Experience", "Client access", "Activity"] as const;
 type Tab = (typeof tabs)[number];
 type WorkspaceData = ReturnType<typeof useTenantRelationshipsData>;
@@ -164,6 +165,11 @@ export function OwnerPortalDashboard({
   if (resourceBoundary.current.tenantId !== tenantId) resourceBoundary.current = { tenantId };
   const [resourceSelection, setResourceSelection] = useState<{ boundary: { tenantId: string }; id: string } | null>(null);
   const [resourceExitBlocked, setResourceExitBlocked] = useState(false);
+  const [teachingBoundary, setTeachingBoundary] = useState<{tenantId:string}|null>(null);
+  const [teachingExitBlocked, setTeachingExitBlocked] = useState(false);
+  const teaching = teachingBoundary === resourceBoundary.current;
+  const portalExitBlocked = resourceExitBlocked || teachingExitBlocked;
+  const teachTrigger = useRef<HTMLButtonElement>(null);
   const resourcePerson = resourceSelection?.boundary === resourceBoundary.current ? data.people.find(person => person.id === resourceSelection.id) : null;
   const resourceTriggers = useRef(new Map<string, HTMLButtonElement>());
   const resourceReturn = useRef<string | null>(null);
@@ -509,14 +515,14 @@ export function OwnerPortalDashboard({
             role="tab"
             aria-controls={`${id}-panel`}
             aria-selected={tab === label}
-            disabled={resourceExitBlocked && tab !== label}
+            disabled={portalExitBlocked && tab !== label}
             tabIndex={tab === label ? 0 : -1}
             ref={(node) => {
               tabRefs.current[index] = node;
             }}
             onClick={() => setTab(label)}
             onKeyDown={(e) => {
-              if (resourceExitBlocked) return;
+              if (portalExitBlocked) return;
               if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key))
                 return;
               e.preventDefault();
@@ -779,7 +785,10 @@ export function OwnerPortalDashboard({
           </>
         )}
         {tab === "Experience" && (
-          <div hidden={editing}>
+          teaching ? <PortalConfigurationGate tenantId={tenantId}><Suspense fallback={<Status title="Loading CURA Knowledge…"/>}>
+            <CuraKnowledgePanel key={tenantId} tenantId={tenantId} onPendingChange={setTeachingExitBlocked}
+              onBack={()=>{setTeachingBoundary(null);requestAnimationFrame(()=>teachTrigger.current?.focus());}}/>
+          </Suspense></PortalConfigurationGate> : <div hidden={editing}>
             <div className="opd-page-heading">
               <h2>Your brand. Their space.</h2>
               <p>
@@ -832,7 +841,7 @@ export function OwnerPortalDashboard({
                 </section>
                 <section className="opd-experience-row">
                   <div>
-                    <h2>PAIGE for your clients</h2>
+                    <h2>CURA for your clients</h2>
                     <p>
                       Set your customer assistant’s name, guidance and human
                       handoff. Internal business information stays private.
@@ -845,6 +854,11 @@ export function OwnerPortalDashboard({
                   >
                     Configure assistant <ArrowRight />
                   </button>
+                </section>
+                <section className="opd-experience-row">
+                  <div><h2>Teach CURA</h2><p>Review the answers, services and current offers your customers may use.</p></div>
+                  <button ref={teachTrigger} className="opd-text-button" type="button"
+                    onClick={()=>setTeachingBoundary(resourceBoundary.current)}>Manage Knowledge <ArrowRight/></button>
                 </section>
               </section>
               <aside className="opd-experience-card">

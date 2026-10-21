@@ -1,0 +1,106 @@
+{
+  "sealed_source_commit": "74d5eb64c3e8bc4ff71b45a23af31658354c2e84",
+  "composed_commit": "80a25bd82a731fbdfbc40809c03f63f4f7932484",
+  "environment": "native Chrome, synthetic evidence and conversation, no backend",
+  "source_sha256": {
+    "supabase/functions/_shared/paige-context/snapshot.ts": "b84e6d771f7eb214f5341ebe01668e1a97769f17e12c23179aebc9afc936b015",
+    "src/solo/executive-review.ts": "96d0bebb4cf5447087d2c510725dc857f18b507c30a9b2eba190bb1d2b893e18",
+    "scripts/live-drive/harness/executive-mount/main.tsx": "b6c0569960565056cd375a8b6603e0e861f27966bc61ab46a97fd327354bc56d",
+    "scripts/live-drive/harness/executive-mount/stubs.tsx": "c3714890f405d6cdff08a27f739134a424ac0c852fe089af7fe353448fb70573",
+    "scripts/live-drive/harness/executive-mount/vite.config.ts": "5cfc71cf2cc8d60f5496d309ff49a9279b6d20539c2e9d2137dc9f7de3175856"
+  },
+  "source_preservation": "all product/harness Git blobs identical to sealed source",
+  "images": [
+    {
+      "file": "1024x768-closed-light.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "fb263a85a0048b044b0d0cbc0648b311b7f94ef7b5b6f05ad13bb0997353afe8"
+    },
+    {
+      "file": "1024x768-open-light.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "0f2d736cd2111c586eac3434a1a6eca2132650fb4a2a29333212b305270ccd8f"
+    },
+    {
+      "file": "1366x768-closed-dark.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "8578a6c79d5e893df66b48aeccb234c8da50825ca1fce750aa2f114b2d664469"
+    },
+    {
+      "file": "1366x768-open-dark.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "ce3a5639614f53343f7f654672dbc8d1afaf73ff91863fdcabb08640e075836f"
+    },
+    {
+      "file": "1536x770-closed-light.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "0e8c307d33f5561c18f2aae61f5237557fd5977c8763ef3bb2764fa01cfcda10"
+    },
+    {
+      "file": "1536x770-discuss-handoff.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "b0cfd6594ce07a879a1f4fb180a67630826f3679af5a713d470b5f40407be6da"
+    },
+    {
+      "file": "1536x770-open-light.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "c30c5d811dbcb34ab1fdc8676999b26dfbb4fb641b03c7bb08db3775f0ae8ca9"
+    },
+    {
+      "file": "1536x770-priorities.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "3e3a7142defcd640cc7e72f90dbb871de69ad30dd8d820c25149b2a2324b4223"
+    },
+    {
+      "file": "1536x770-priority-scroll-owner.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "30c22c4899c1f1818632258d1ed45132d46e34cb8f1f49acd92753a56d66afee"
+    },
+    {
+      "file": "1536x770-ranked-evidence.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "a57acb3e6f3c94b770ba7602ef68b238fafe449895e54503546fff0391e547c6"
+    },
+    {
+      "file": "1536x770-ranked-list.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "1df637f36df83bca86aadc7336297b892821eef0f49fb6a0f875c3526e56b7c1"
+    },
+    {
+      "file": "320x740-executive.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "67bcd9d4392f5f8e8cd430586d67bfef0a8b5cd1f139fd6de5547bb7eacb2206"
+    },
+    {
+      "file": "900x1000-closed-dark.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "e049dd2584f21b84fc1fc88cb5fdae3aef3c6ad15a42158cfa0eeb85997b13ed"
+    },
+    {
+      "file": "900x1000-open-dark.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "e4f57055342a3d52416ea0297f5b9f0c04035725e864b76267b6ce9edd747251"
+    }
+  ],
+  "claims_excluded": [
+    "authenticated customer Chat",
+    "actual business execution",
+    "durable action receipt",
+    "actual browser zoom",
+    "measured ALG03/13 helpfulness"
+  ]
+}

@@ -337,6 +337,8 @@ function selfTest() {
     'GRANT SELECT("email") ON TABLE "public"."profiles" TO "anon";',
     'REVOKE ALL ON FUNCTION "public"."is_tenant_admin"("_tenant" "uuid") FROM PUBLIC;',
     'GRANT ALL ON FUNCTION "public"."is_tenant_admin"("_tenant" "uuid") TO "authenticated";',
+    'REVOKE ALL ON FUNCTION "public"."vector_probe"("_tenant" "uuid", "_query" "extensions"."vector") FROM PUBLIC;',
+    'GRANT ALL ON FUNCTION "public"."vector_probe"("_tenant" "uuid", "_query" "extensions"."vector") TO "authenticated";',
     'REVOKE ALL ON PROCEDURE "public"."p_proc"() FROM PUBLIC;',
     'GRANT SELECT ON TABLE "public"."v_clients" TO "anon" WITH GRANT OPTION;',
     'GRANT ALL ON TABLE "public"."clients" TO "supabase_auth_admin";',
@@ -348,7 +350,8 @@ function selfTest() {
   ].join("\n");
   const { statements: s, unparsed } = parseProductionAcl(dump);
   assert(unparsed.length === 0, `unexpected unparsed lines: ${unparsed.join(" / ")}`);
-  assert(s.length === 9, `parsed ${s.length} statements, expected 9 (API roles, public only, quoted or not)`);
+  assert(s.length === 11, `parsed ${s.length} statements, expected 11 (API roles, public only, quoted or not)`);
+  assert(s.filter((x) => x.name === "vector_probe").length === 2, "public function ACLs keep extension-qualified argument types, both revoke and grant");
   assert(s.some((x) => x.kind === "PROCEDURE" && x.grantee === "PUBLIC"), "procedure REVOKE FROM PUBLIC is kept");
   assert(s.some((x) => x.name === "v_clients" && x.sql.endsWith("WITH GRANT OPTION;")), "WITH GRANT OPTION is kept");
   assert(!s.some((x) => x.sql.includes("supabase_auth_admin")), "non-API grantee is ignored");

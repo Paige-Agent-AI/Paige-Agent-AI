@@ -826,6 +826,30 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-21 — EXP09 original CURA preparation observation.**
+PR [#2496](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2496), reviewed
+`b6f84d47cff494e10c5708aac03f0137abaf2fa0`, merged
+`5b03e90302e19ee1ef4a8dacbd677329378fa06e`; exact reviewed composition tree
+`ce1ac0a7b93d10cdad19d1f6e5c5b00fe8e9653a`. Original actor/business/intent and
+frozen request resolve only private source/work metadata; no retry, worker wake,
+publication, sharing or interrupted-turn settlement. Original K1 ordered ancestor/
+membership locks, hierarchy recheck and same-snapshot publisher/set fence preserve
+inherited publisher authority. NON-AUTHOR5605534029/5605729120 and documented final
+AUTHOR-REVIEW / LOWER ASSURANCE5606078039 CLEAR. All13 exact-head checks/2statuses
+SUCCESS: database119462208421 ran55 native plus actual multi-session authority,
+late-grant hostile control, cleanup and downstream suites; verify119462659269 PASS.
+Normal deploy-migrations39674100520/job119480072480 SUCCESS: exact migration
+`20271113100000` persisted; direct frontier matches it. BodyMD5
+`98c379ceeb6891273112c087e8c8ce76` matches the merge. Postgres-owned/VOLATILE/
+SECURITY DEFINER/empty search_path; authenticated EXECUTE only, anon/service_role/
+PUBLIC false. All five incumbent bodies/owners and both STABLE helpers unchanged.
+Own web/Edge NOT_APPLICABLE. [Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2496#issuecomment-6326424455).
+Functional: native reader deployed/read back. Visual: N/A. Experiential: owner
+Chat/status/eligible Live consumers not wired by this slice; authenticated joined
+owner/client and complete seven-pillar/founder acceptance remain PROOF OWED. No
+production test write/provider action. Internal production prerequisite, no customer
+version or announcement. Recovery uses reviewed forward correction preserving originals.
+
 **2026-10-21 — EXP04 truthful historical signing economics.**
 PR [#2493](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2493), reviewed
 `ed2964b5024f672492b5db6deac38ff95cb1929b`, merged

@@ -62,3 +62,6 @@ announcement, source activation, INT-346 bypass, external send or payment.
 Recovery is a reviewed compatible forward fix/revert preserving original records.
 
 The identical disposable-race fixture lifecycle correction from reader55 proof is applied here: committed concurrency seeds omit the unused synthetic platform-admin grant and its active staff-workspace assignment, and verify platform-role count unchanged. Native43 rolled-back role tests retain their original operator negative. The original last-admin and workspace guards remain intact. Historical reader core races reached PASS but cleanup failed; only a fresh complete native/race/downstream job can establish final PASS.
+
+
+Final hosted application verification atc01d6bd failed exactly the canonical audit-producer allowlist:18,869 tests passed,1 failed,3 pending (artifact12380334435, run39669672276/job119464344343). The isolated preparation adapter carried an unapproved receipt-suppression marker. Removed that marker rather than broadening the original allowlist; not_applied/refusal prose and unknown-ack handling remain unchanged. Native43/reader55/concurrency and original guard/assertions are unchanged. Fresh focused audit/adapter proof, review and required exact-head CI are owed; the failed run is not waived.

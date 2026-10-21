@@ -1,5 +1,16 @@
 # 🧠 The Second Brain — master index & read-first orientation
 
+## EXP09 original preparation readback — 2026-10-21 production
+
+Native reader2496 merged5b03e90302e19ee1ef4a8dacbd677329378fa06e and normal
+migration39674100520 persisted20271113100000. Exact body98c379ceeb6891273112c087e8c8ce76,
+caller-only ACL and five original authority bodies were read back unchanged.55 native
+assertions, actual authority/late-grant concurrency control, cleanup/downstream suites
+and all13 checks/two statuses pass. Master4.0 holds identities and receipt6326424455.
+This original-intent metadata observation cannot resubmit, wake, publish, share or settle
+an interrupted turn. Owner Chat/status/eligible Live and complete owner/client/founder
+acceptance remain PROOF OWED; no source activation or customer version/announcement.
+
 ## EXP04 restarted — Agreements source continuation, 2026-10-21
 
 Owner resumes the same sole E04 lead and all original twelve outcomes, expanding native

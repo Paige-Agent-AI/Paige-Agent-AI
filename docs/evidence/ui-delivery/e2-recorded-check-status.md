@@ -71,7 +71,7 @@ were captured natively at complete viewport bounds, without editing or rescaling
 Impeccable: https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md
 Applied incumbent/clarify/craft floor, readable type/measure/contrast, state truth
 and sequential finish review. Corrected the existing3px card edge to1px. The pinned
-detector still exits1 with one finding: **FALSE_POSITIVE** on the unchanged
+detector still returns nonzero with one finding: **FALSE_POSITIVE** on the unchanged
 forced-colors navigation button's3px system Highlight selection. It is an intentional
 accessibility affordance, not a decorated rounded card; the owning source contract
 assertion remains intact and passes.29 incumbent CSS type/radius advisories remain.

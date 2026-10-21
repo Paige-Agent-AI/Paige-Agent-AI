@@ -28,16 +28,21 @@ are not permission, provider readiness, execution or analytics acceptance.
 The compatible Business Review transport foundation #2451 is production-source
 verified at `a76bb957beb7d51c536e6bab6ebcf27994a74157`: all exact-head checks,
 normal Edge source/configuration and exact web readback passed (Master §4.0).
-It leaves Chat's previous dispatch unchanged. The separate consumer #2455 is a
-reviewed development candidate with required CI pending; no CPU recovery or
-authenticated completion follows from either local tests or this foundation.
+That foundation leaves the previous Chat dispatch unchanged. Its consumer #2455
+is now source-deployed at `d331534c898d8c032b467902da635c3c9a914613`; all 11 head
+checks, exact web and strict normal Chat source/configuration readback pass.
+Current-main integration includes E05's focused hook and passes 125 focused cases
+plus 124 offline stream controls. Actual fresh weekly recovery is **PROOF OWED**:
+the designated customer session requires sign-in restoration; no new model question
+was sent. Anonymous review POST returns 401/error only, not authenticated isolation
+proof. Master §4.0 and ANT-52/64065542 retain the exact release/access boundary.
 
 Two fresh authorized ordinary weekly Chat reads **FAIL** with correlated CPUTime
 shutdown and no persisted assistant answer; reload retains the question only.
 Historical9/0 remains historical. Production rollout is ACTIVE; do not reuse old
-DRAINING/refusal as the current complete-product limit. Existing92 offline stream
-controls do not close the production failure. Backend-only repair continues through
-the existing canonical review/Chat contracts; no replacement engine, source-domain
+DRAINING/refusal as the current complete-product limit. Offline stream/composition
+controls do not close the production failure. Released repair and remaining continuity
+work use the existing canonical review/Chat contracts; no replacement engine, source-domain
 takeover, provider/limit activation or manual intent reset. ALG03/13 priority order
 is only a partial deterministic baseline; no new verified algorithm/outcome is
 accepted. All19 outcomes,9 analytics entries and one founder evaluation remain

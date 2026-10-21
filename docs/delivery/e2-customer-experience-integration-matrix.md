@@ -1,5 +1,21 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+**October 21 consumer source release; authenticated recovery not accepted:**
+#2451 original-scope transport foundation is deployed at a76bb957; #2455 now binds
+the existing Chat snapshot to that same caller-JWT review worker at
+`d331534c898d8c032b467902da635c3c9a914613` (actual tested union08dfc6ab).
+Spine → `get_business_snapshot` → `readBusinessSnapshotTransport` → existing
+`paige-business-review` → formatter/composer/Metric issuer remains one read path.
+All 11 head checks/Preview, exact web and normal deployed Chat source/configuration
+readback pass. Supporting current-main integration is125 focused/shared-hook cases
+and124 offline stream controls; E05's focused/default hook and feedback are retained.
+Fresh ordinary weekly/settlement/reload QA awaits the designated customer's sign-in;
+no new live model question occurred. The two prior exact-bound CPU failures remain
+open, historical9/0 and12/0/4 stay historical, and all nineteen outcomes remain required.
+Catalogue4 Coming Soon/3 Limited/2 Unverified with Access Unverified is unchanged;
+no provider, permission, action, verified algorithm or founder acceptance is inferred.
+Actual release/access receipts: Master§4.0, #2455/6308425183 and ANT-52/64065542.
+
 **October21 UTC readback checkpoint (supersedes candidate statuses below):**
 Presenter#2444/ec83d109, priority baseline#2409/a5a139e7, coverage#2445/b70738fe
 and CI-only#2449/5dbf6e20 are merged/source/web verified. Priority's normal strict

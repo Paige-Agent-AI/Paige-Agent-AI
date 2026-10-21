@@ -967,6 +967,44 @@ Access Unverified. All 19 outcomes, nine analytics entries and founder evaluatio
 remain required. Recovery is a reviewed forward correction preserving caller scope
 and original records. This factual post-merge closeout is not logged recursively.
 
+**2026-10-21 UTC — EXP02 Chat consumes the canonical Business Review worker.**
+PR [#2455](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2455), reviewed
+`76ecfbb977626df04bae379abb4075e5469aec34`, merged
+`d331534c898d8c032b467902da635c3c9a914613`; actual tree
+`08dfc6ab7bbfc426b5f44b55f8c1e6363b7a35d8` equals the inspected current-main union,
+preserving E05's released focused-hook and weekly-feedback changes. That union
+passes 125 focused/shared-hook cases and 124 actual-Chat/real-review-handler offline
+controls. AUTHOR-REVIEW / LOWER ASSURANCE 6307917121/6308353449; all 11 exact-head
+checks including Preview and both Vercel contexts SUCCESS, zero review threads.
+The existing `get_business_snapshot` now invokes the original-scope caller-JWT
+transport from #2451. Same composer, Metric/Evidence issuer, read authority,
+bounded projection, E4 references and canonical Chat settlement; no local retry
+or fallback. C0b renews only reviewed ancestry scalars, retaining 67 negative
+controls and 228 declarations. The exact Capability Kit read carve-out now proves
+the transport scope at both ends, with eight new negatives; existing debt remains
+288/296, with 40 self-tests and 48 focused cases passing. No guard waiver.
+Normal [Edge 39546490979](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/39546490979)
+/job 119045723620 SUCCESS: `paige-ai-chat` deployed source/configuration PASS,
+independent version 483 ACTIVE and `edge-live` at the exact merge. Existing
+`paige-business-review` version 45 retained. Artifact 12321628380 SHA256
+`89483cfcbd2f98398838ea7a8b2e3046c428013069f2db21fa4f29bc041e336e`.
+Exact web `dpl_Rku3ENn2avVDGDMPGoYxdXEXdQX7` READY; actual customer-origin public
+build `d331534c898d8c032b467902da635c3c9a914613-mvhn04o7` observed, customerUpdate=null.
+Production Finance source proof and Security Audit SUCCESS. Migrations NOT_APPLICABLE;
+no additional configuration, provider/model/limit, permission, action or algorithm activation.
+[Source release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2455#issuecomment-6308425183).
+The deployed review endpoint rejects an anonymous POST with HTTP 401/error only;
+this is anonymous denial, not authenticated role or tenant-isolation proof.
+**Authenticated recovery remains PROOF OWED:** the fresh designated customer tab
+is signed out; no new live model question was sent. Sign-in restoration is requested
+without credentials, alternate account, Operator access or new tenant. Prior two
+canonical-bound CPU shutdown/no-final-answer failures remain open; source/ACTIVE
+and synthetic tests do not close them. CAP-017 stays Limited/Access Unverified.
+ANT-52/64065542 and all 19 outcomes/nine entries/founder evaluation remain owed.
+Channel production; internal reliability repair, no customer version/announcement.
+Recovery is a reviewed forward correction preserving original scope and records.
+This factual post-merge closeout is not logged recursively.
+
 **2026-10-20 UTC — EXP05 retires cancelled or stale weekly owner inspections.**
 PR [#2435](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2435), reviewed
 `727a0ff17e670b387b23e921bdf2c931f0258904`, merged main

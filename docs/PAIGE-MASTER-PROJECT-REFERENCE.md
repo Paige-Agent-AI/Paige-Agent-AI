@@ -826,6 +826,50 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-21 — EXP05 recorded findings in Operations, bounded production release.**
+PR [#2474](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2474), final reviewed
+`f9dff45e6c2214412da05d4fb70153937c254309`, merged
+`d7f55f217f78a1576b21f65d92c06fb5b1e56ac2`; actual tree
+`15733dc2dc3a12462e61b78065ef788b3c67dd6b` matches the pre-merge reviewed union
+with main52d45822/E09#2404. AUTHOR-REVIEW / LOWER ASSURANCE receipts
+6320511260/6320964836 record final source/native input composition. All10
+applicable exact-head checks and both Vercel statuses SUCCESS; schema-free
+Supabase Preview SKIPPED. General verify39631494090/job119330590470 completed
+all167 steps; the original database suite and90-case E09 retrieval controls passed.
+Web `dpl_7TYYU1eGELLCddgCCQRtHp5Djq1k` READY/exact, canonical production aliases
+read back; public HTTP200 build
+`d7f55f217f78a1576b21f65d92c06fb5b1e56ac2-mvic9b9f`, customerUpdate:null.
+No migration, Edge/config, provider, approval or activation change.
+Ordinary owner production reads the actual findings, distinguishes them from
+native Work and opens the correct original Systems Check. Settled source counts
+agree. **Back focus FAIL:** two independent settled probes return focus to BODY;
+Work hydration remounts the findings after consuming its return marker. A focused
+forward correction is under engineering; no complete Back/reload acceptance is
+claimed. A transient source-read failure remained explicitly partial and later
+recovered without running a check. No action, Save, send or new Rail was produced.
+[Bounded native/source evidence](evidence/ui-delivery/exp05-recorded-operations-findings.md).
+Internal patch only, no customer version/publication; recovery is a reviewed
+compatible source forward fix preserving original records and authority.
+
+**2026-10-21 — additive authenticated read and accounting boundary.**
+Later ordinary-owner reads in both designated existing SOLO cohorts prove the
+released2452 weekly-status/proposal-empty feedback and normal reload; one explicit
+saved-proposal reread also succeeds. Private eleven-artifact seal
+`ed387f545d7d98d98baafa540e1cc300a9c694747fedca2e2d14d66316e8e077`, ANT11/5e453156
+and ANT52/3e223078. No proposal creation/decline, recurrence, provider effect or new
+execution receipt was tested; E5-CV1–9 remain open. Second-cohort Capacity opens
+the correct native Task with matching status, responsible person and missing
+date; closing restores its opener, without editing. ANT52/750c11db; private seal
+`315838e933a5eb841f030148cb40dbd0c22cb3e8d9c12188313f2a2dc38866dc`.
+Current EXP05 scope is ten outcomes/E5-CV1–9, eleven primary CAP073–083 and eight
+shared delegation integrations CAP001–008. Both owner catalogues still show all
+eleven Operations entries Listed/Unverified. The platform register has118 named
+skills plus2 runtime rows; an import is not readiness. Original18 actions,
+25 requirements and50 sample observations are preserved and distributed to the
+receiving Experiences. Historical1/18 and2/50 snapshots are not current EXP05 or
+platform-wide acceptance totals; reassignment closes no proof debt. No new
+algorithm, separate Live, ZION/automation or founder acceptance is inferred.
+
 **2026-10-21 — EXP05 weekly-decline authority, production release.**
 PR [#2441](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2441), reviewed
 `bcd16bf483750b59e496df87ec622c3243e957ba`, merged
@@ -914,7 +958,8 @@ CAP073–083 availability is not promoted by these changes. NO VERIFIED ALGORITH
 is added: original ALG01 authority/recovery controls are preserved; PAIGE stays
 principal and ZION remains planned. Full universal SOLO ten-outcome/E5-CV1–9,
 Chat/Live, automation, provider, second-cohort/new-account and historical
-18/25/50 acceptance remains open; strict closure is1/18 and2/50.
+18/25/50 acceptance remains open. The old1/18 and2/50 strict-count snapshots are
+historical; the current Experience-ownership accounting is stated above.
 This mechanical verified-identity closeout is not logged recursively.
 
 **2026-10-21 — EXP09 native relevant Knowledge retrieval prerequisite.**

@@ -86,3 +86,17 @@ are checked. No prototype controls are mounted in production. Templates/import,
 legal revision history, recipient/assigned fields, immutable signing preparation,
 approval/send/reminders and the remaining full-flow rows above stay required work,
 not implemented features claimed by this increment. Final founder acceptance owed.
+
+## Retained-wording inspection adoption
+
+The original isolated prototype's history extensionda94f0b5f passes20 viewport/theme
+cases and11 read-only paths; existing lead selected its design intent under explicit
+Oct21 UX delegation. Production reuses that inline/page architecture and the original
+paper/context panels. A native revision picker accommodates bounded20-record pages
+on narrow screens without a tall repeated-card list. No modal, extra scroll owner,
+new component system, restore action or execution engine. Actual source render20
+cases/25 paths passes, with native page cursor, exact earlier wording, retry/access
+retirement and original entry focus. First rendered focus failure was repaired using
+commit-time restoration and repeated unchanged assertions. Synthetic SDK/identity
+ports remain distinct from73 native SQL assertions and actual customer acceptance.
+All twelve outcomes and correction/signing/financial/delivery completeness stay open.

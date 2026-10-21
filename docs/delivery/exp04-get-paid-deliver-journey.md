@@ -1572,3 +1572,40 @@ This closes the source-only invoice-navigation subset of §15's surface-link gap
 **Responsible dependencies.** Sales owns PRE-1 canonical agreement revisions (#2140, candidate `11f14c866aeffedd78dab3631fd669783ccd5179`) and separately frozen signed economics/effectuation. The owner-appointed Shared Chat runtime replacement grounds INT-304/#1615 and owns only bounded shared schema/dispatch integration; PRE-2 requires Operations' reviewed scoped writers plus canonical operation identity, unknown-outcome handling, readback and receipts before adoption. Sales/Analytics coordinate overdue_current1.1.0 under the Coordinator's exact-key/version ruling; no second date/financial engine. INT-335 proposal pieces are reused without inventing batch/package approval. Mind/Memory/Knowledge applicability remains a Coordinator/shared-runtime question. INT-346 stays DRAINING; no consequential activation is inferred.
 
 **QA and communications.** Central QA owns existing #2119 and reports3 PASS rows/19 BLOCKED/0 recorded FAIL, representing only two distinct passed observations (entry and Chat readiness), with no E4 prompt/zone save and transport infrastructure blocking further drive. Positive record/overdue cases need an existing approved fixture; no fixture, account or provider change is fabricated. Authenticated end-to-end acceptance and owner product acceptance remain UNVERIFIED. Material progress is posted to owner chat and ANT-51/ANT-147, Coordinator comments are checked before integration/release decisions, and writes are read back. EXP03 remains Claude Code-owned. Latest Coordinator provider policy: operator corporate/system Resend; tenant PAIGE Email governed SendGrid; independently authorized Gmail/iCloud retain their own paths, without fallback/crossover.
+
+## October21 — retained-wording owner UI contract
+
+Existing prototype history extensionda94f0b5f selected by this lead under explicit
+owner UX delegation;20 native-shell cases/11 paths before production integration.
+Current read-only page preserves the original agreement and native paper/context
+layout, with a bounded native revision picker and explicit older/latest paging.
+No new modal, scroll runtime or approval. Correction is a later writer integration,
+not a hidden restore button; full O1–O12 remains required.
+
+1. Request: owner inspects exact earlier saved wording under the original agreement.
+2. Entry: Sales Terms & Agreements → original record → Inspect wording history.
+3. Source/Spine: original agreement and native retained revisions; existing agreement
+   declarations remain PARTIAL. Dedicated Chat/Live history is UNAVAILABLE because
+   no registered tool/admitted path is added by this UI increment.
+4. Path: existing author-scoped native history readers, via the original bounded
+   sanitized RPC boundary. Ordinary reads need no Layer C act or new executor.
+5. Authority: original selected tenant/user/author epoch and server role framework;
+   native refusal retires cached current wording, late/unmounted reads are discarded.
+6. Risk: read_only, no MUTATION_VERB or approval/budget grant; no signing/sending,
+   payment, client disclosure, restore or service effect.
+7. Durable identity: original agreement/revision IDs, native body-version/source time,
+   actual retention sequence/time/checksum. No invented Rail/execution receipt.
+8. Readback: strict closed DTOs, exact selected IDs/metadata and bounded decreasing
+   cursor; uploaded reference does not establish document-byte availability.
+9. Recovery: failed/empty/refused states are distinct; explicit re-read, original-record
+   return/focus and scope retirement. No automatic mutation or blind replay.
+10. Visible proof: source20 viewport/theme cases/25 paths, native picker/page cursor,
+    actual earlier wording, normal original-record navigation, failure/retry and
+    corrected focus. Existing sales.department Binding Ledger remains PROOF_OWED.
+
+No provider is used or activated; existing managed-mail/Stripe/Portal paths remain
+unchanged. Native producer#2521/130000 must release and read back before this UI
+release. Real ordinary owner/staff/linked-client/recipient, two eligible SOLO cohorts,
+provider/actual-document/200percent/AT and final integrated founder acceptance remain
+separate. ALG01 has bounded native recovery/deduplication evidence only; official
+ALG01/02/12/13 statuses, Mind/Memory and capability catalogue readiness are unchanged.

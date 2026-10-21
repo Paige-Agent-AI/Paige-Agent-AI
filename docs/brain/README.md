@@ -48,6 +48,17 @@ still requires the one complete integrated Experience.
 
 ## EXP04 current delivery checkpoint — 2026-10-21
 
+Read-only wording inspection source now consumes native producer#2521's retained
+revisions under the same original agreement. Original author scope, strict selected
+ID/metadata, twenty-row native cursor and explicit failed/empty/refused recovery;
+native refusal retires cached current wording. Actual-source20 viewport/theme
+cases/25 paths and focused70 tests PASS. First rendered return-focus defect was
+repaired at DOM commit; full repeat passes. Producer release/readback, final
+review/CI/deployment and actual ordinary roles remain owed. Dedicated Chat/Live
+history is not registered; no capability/algorithm Live promotion. Correction and
+all original professional signing/financial/service outcomes remain mandatory.
+[UI evidence](../evidence/ui-delivery/e04-agreement-wording-history.md).
+
 Latest authoring integration: original Sales New agreement now mounts a genuine
 rich/source wording editor, real client selection, request-bound native save and
 uncertainty recovery, and selected original-record/history/file inspection.

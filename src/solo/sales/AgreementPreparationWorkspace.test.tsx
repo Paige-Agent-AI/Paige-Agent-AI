@@ -2,9 +2,10 @@ import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AgreementPreparation } from './agreementPreparationApi';
-const fixtures = vi.hoisted(() => ({ context: {} as Record<string, unknown>, read: vi.fn(), recover: vi.fn(), create: vi.fn() }));
+const fixtures = vi.hoisted(() => ({ context: {} as Record<string, unknown>, read: vi.fn(), recover: vi.fn(), create: vi.fn(), history: vi.fn() }));
 vi.mock('@/hooks/useTenantContext', () => ({ useTenantContext: () => fixtures.context }));
 vi.mock('./agreementPreparationApi', () => ({ readAgreementPreparation: fixtures.read, recoverAgreementCreation: fixtures.recover, createAgreementDraft: fixtures.create }));
+vi.mock('./agreementRevisionApi', () => ({ readAgreementRevisions: fixtures.history, readAgreementRetainedWording: vi.fn() }));
 // Flow tests exercise real scope/receipt/leave state. The actual rich editor is
 // verified by the separate framework-native browser drive, not this textarea.
 vi.mock('./AgreementBodyEditor', () => ({ AgreementBodyEditor: ({ value, onChange, readOnly }: { value: string; onChange: (value: string) => void; readOnly: boolean }) => <label>Agreement content<textarea value={value} readOnly={readOnly} onChange={event => onChange(event.target.value)} /></label> }));
@@ -82,6 +83,7 @@ beforeEach(() => {
   fixtures.read.mockReset().mockResolvedValue({ ok: true, value: original() });
   fixtures.recover.mockReset().mockResolvedValue({ ok: true, value: { state: 'unconfirmed' } });
   fixtures.create.mockReset().mockResolvedValue({ ok: true, value: receipt() });
+  fixtures.history.mockReset().mockResolvedValue({ ok: true, value: { agreement_id: id, current_source_version: 1, current_updated_at: '2026-10-21T20:00:00Z', revisions: [], truncated: false, next_before_revision_no: null } });
 });
 afterEach(() => { act(() => root?.unmount()); host?.remove(); vi.useRealTimers(); });
 
@@ -191,5 +193,18 @@ describe('native agreement preparation flow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'View signing history' }));
     await screen.findByText('Agreement history could not be read. Try the original record again.');
     expect(p.signings.signingEvents).toHaveBeenCalledWith(id, tenant);
+  });
+  it('returns keyboard focus to the original history entry after its view is mounted', async () => {
+    render(<AgreementPreparationWorkspace {...props()} agreementId={id} requestId={null} freshlyOpened={false} />);
+    await screen.findByText('Original retained wording.');fireEvent.click(screen.getByRole('button',{name:'Inspect wording history'}));
+    await screen.findByText('No retained wording was returned. The current document remains available.');
+    fireEvent.click(screen.getByRole('button',{name:'Return to current agreement'}));
+    expect(document.activeElement).toBe(screen.getByRole('button',{name:'Inspect wording history'}));
+  });
+  it('retires the cached current legal wording when the native history reader refuses access', async () => {
+    const p={...props(),agreementId:id,requestId:null,freshlyOpened:false};fixtures.history.mockResolvedValue({ok:false,reason:'refused',message:'Synthetic refusal'});
+    render(<AgreementPreparationWorkspace {...p}/>);await screen.findByText('Original retained wording.');fireEvent.click(screen.getByRole('button',{name:'Inspect wording history'}));
+    await screen.findByText('Agreement access could not be confirmed. Recheck the original business and record.');
+    expect(screen.queryByText('Original retained wording.')).toBeNull();expect(screen.queryByText('Inspect wording history')).toBeNull();expect(p.onRefresh).toHaveBeenCalledTimes(1);
   });
 });

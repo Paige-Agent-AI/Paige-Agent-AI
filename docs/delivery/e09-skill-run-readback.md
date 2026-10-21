@@ -75,6 +75,26 @@ or new lease/session system is introduced.
 No new algorithm is verified. This is deterministic result reconciliation relevant
 to ALG-01/12; it does not establish ALG-02/04/13, client health or next-best actions.
 
+## Separately reviewed MCP consumer
+
+The existing registration now uses only the actual request AsyncLocalStorage
+context established by bearer validation. Missing context refuses instead of
+inheriting an implicit platform actor. Valid user calls delegate the resolved
+actor and workspace to the native reader. The original explicitly verified
+platform-key path retains its global original read and field-correct aliases.
+The caller cannot supply a different delegated actor, business or platform flag.
+Malformed IDs are rejected. Callback read failures, missing/denied rows,
+unexpected response IDs and database or transport errors return
+`skill_run_unavailable` without private SQL detail. The callback harness stubs
+Zod and does not claim the framework's wire-level malformed-input response.
+
+The separately reviewed consumer requires the native prerequisite's actual
+production body/grants before normal Edge deployment. It does not change
+`run_skill`, admission, provider permissions, paid execution or the catalogue's
+truth labels. Its16 callback cases are transport-isolated proof, not live MCP
+OAuth or signed-in customer acceptance. All original117 MCP registrations still
+pass the single-governed-door and destructive-confirmation guards.
+
 Internal build identity is the exact owning PR head; channel development until
 normal production migration/readback. Migration20271113070000 is NOT_DEPLOYED
 at preparation. This native PR has no Edge/web change (NOT_APPLICABLE), customer
@@ -88,3 +108,20 @@ its original required created_by field was missing (32 earlier assertions passed
 no assertion failed). The fixture now names its existing synthetic actor as
 creator, matching the real schema without creating membership or changing any
 production authority. All45 assertions require execution on the next exact head.
+
+## Native prerequisite production closeout — 2026-10-21
+
+The preparation states above are historical. Native PR2482 is now MERGED at
+main2a799ca84cfb75fa99f13a75a42b2bc21658ba68; all13 exact-a099checks/2statuses
+SUCCESS, native45cases job119384056084 and fullverify119384392339 PASS. Normal
+deploy-migrations39650492654/job119397402430 succeeded. Production records70000
+and bodyMD5 9cabd15f19630ea581a9ccf0b33d2223; INVOKER/STABLE/empty path and
+service-only EXECUTE verified; all five incumbent helpers unchanged.
+The separately reviewed MCP consumer still needs final exact-head gates and
+normal Edge deployment/served-source readback. Company resolver limitation and
+authenticated/full-Experience proof boundaries above remain unchanged.
+
+
+## Consumer CI evidence-format correction — 2026-10-21
+
+Exact e90 CI run39651704415 executed18,769 unit tests:18,765 passed, one failed and three pending. The original mcp-governed-door test correctly rejected the updated read policy evidence because it lacked a file:line reference. The policy now cites the actual original handler index.ts:3731-3762; no classifier, permission, callback, assertion or guard changes. Required exact repaired-head checks remain owed.

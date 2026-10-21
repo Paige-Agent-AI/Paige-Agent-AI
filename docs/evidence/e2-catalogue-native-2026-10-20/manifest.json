@@ -1,0 +1,111 @@
+{
+  "source_commit": "83fcf5e65f642895313365201ee0b95c41c27021",
+  "environment": "local native Chrome, synthetic data, no backend",
+  "source_sha256": {
+    "src/solo/SoloPaigeWorkspace.tsx": "61d864e49f46b0c481e6974dfaf2a4a635174cfbef4d51f121036115e04d3967",
+    "src/solo/data/useSoloSkills.ts": "177d244be61b5ffe180f6239f51801ed3bfb4e3bcc4867b4260510041dad0b88",
+    "src/solo/catalogue-coverage.ts": "de41b8b4a2ceff34043da027308aa46ff2fdc2732cbcd9044573548cef0d3919",
+    "src/solo/solo-paige-workspace.css": "102217d07536ce43e9eec9a258deb541ecb7ccb226f43752c3cc2d06fdd736aa",
+    "scripts/live-drive/harness/executive-mount/main.tsx": "aaa330dd9ff17a906c24172c25c236d818a39454743c4825693f016dfe48a2f9",
+    "scripts/live-drive/harness/executive-mount/stubs.tsx": "dedc64a1f1c526c3c33d594e404401987d1c6ec67c143ab832ce72560666dc0e",
+    "scripts/live-drive/harness/executive-mount/vite.config.ts": "8803319b7ae58e3fa6f21d55a105b8d4e92c3d4a1065555fd6292c71a2ff6d52"
+  },
+  "images": [
+    {
+      "file": "1024x768-closed-light.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "d926cfcb7f3b720172abc52fb3d5e7dabdad0fc51b472ae6b260904250ba8389"
+    },
+    {
+      "file": "1024x768-open-light.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "5e204119038735cab6a710259def6dbe259dd2466e9f4ef6bcbefaf960923c05"
+    },
+    {
+      "file": "1366x768-closed-dark.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "be957eccbbbdac728c28f47897d2da9d8f9739613b98b220296675616ce5d726"
+    },
+    {
+      "file": "1366x768-open-dark.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "6c353d534b4b898811e48a9965bea2b68d1aadc95b63d4233a208a6f6f325b16"
+    },
+    {
+      "file": "1536x770-closed-light.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "0e8c307d33f5561c18f2aae61f5237557fd5977c8763ef3bb2764fa01cfcda10"
+    },
+    {
+      "file": "1536x770-open-light.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "79414e5269199257af81410c79da18e78011ac9a37fa7cf0b1a62f8eb9777e43"
+    },
+    {
+      "file": "320x740-ready-dark.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "482337b53422bc6502fa7298618aed12ade62d09f3d7317a276aef469cda82aa"
+    },
+    {
+      "file": "390x844-ready-light.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "c7d1c1779e350a66ab5123f86583b9f4f1d230d882c7efc8cb0507d170da4768"
+    },
+    {
+      "file": "900x1000-closed-dark.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "7fba6458ed05e5356b6b285560ec9569c125b3988897992502634d7a0cf6b05b"
+    },
+    {
+      "file": "900x1000-empty-light.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "a4a01f5c2feeeaaa39d7c39e9a1763a24c1a199385baf8405d6bd08da5fe5e3d"
+    },
+    {
+      "file": "900x1000-error-light.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "c51cd5c11ee4fbec289e7133cc7baddee4a8e8dad6d5484b069d08eb7db3200c"
+    },
+    {
+      "file": "900x1000-keyboard-return.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "d0be87ddd2d54c1cda09c7f40443ca176794d838b5550e3e5bd7eb7135b5edab"
+    },
+    {
+      "file": "900x1000-loading-dark.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "81990dedbe18af11a425a33d535539a7228da32f908774405c0436d2cc05b443"
+    },
+    {
+      "file": "900x1000-open-dark.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "f71ca9adcf840bd4b89e37f9f7d98e88bfa888ec5d6bf49cc5a9337629832d39"
+    },
+    {
+      "file": "900x1000-workspace-b.png",
+      "width": 65536,
+      "height": 4292542531,
+      "sha256": "7853fa42509398934e4b1095c323e9705ba1de4f00d421ba3f66ae4f73ddf0f2"
+    }
+  ],
+  "claims_excluded": [
+    "authenticated customer acceptance",
+    "provider permission readiness",
+    "actual browser zoom",
+    "complete actor-specific availability"
+  ]
+}

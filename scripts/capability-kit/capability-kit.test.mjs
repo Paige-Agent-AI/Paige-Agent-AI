@@ -17,7 +17,7 @@ import {
 } from "../../supabase/functions/_shared/paige-capability-status/resolver.ts";
 import { classifyAction, mutatingTools } from "../../supabase/functions/_shared/action-risk.ts";
 import { parsePolicy } from "../ci/action-risk-lint.mjs";
-import { scanSource } from "../ci/capability-kit-lint.mjs";
+import { scanSource, businessSnapshotReadDoorBound } from "../ci/capability-kit-lint.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const FIXTURES = join(HERE, "..", "fixtures", "capability-kit");
@@ -521,6 +521,28 @@ test("the shipped canonical example is a declaration the constructor would accep
   // statically, so a sound `valid` means zero findings for the whole file.
   assert.deepEqual(findings.map((f) => f.symbol), [],
     "the repo's canonical capability example does not construct — fix the fixture, not this test");
+});
+
+const reviewPaths={chat:'supabase/functions/paige-ai-chat/index.ts',adapter:'supabase/functions/_shared/paige-context/business-review-chat.ts',endpoint:'supabase/functions/paige-business-review/index.ts'};
+const reviewSources=Object.fromEntries(Object.entries(reviewPaths).map(([key,p])=>[key,readFileSync(join(HERE,'..','..',p),'utf8')]));
+const reviewResolver=sources=>({sourceFile:file=>{
+  const key=Object.entries(reviewPaths).find(([,p])=>file.replaceAll('\\','/').endsWith('/'+p))?.[0];
+  return {text:key?sources[key]:''};
+}});
+const mutateReviewCall=(source,before,after)=>source.replace(/(await readBusinessSnapshotTransport\([\s\S]*?)(JSON\.parse\(tc\.function\.arguments\)\))/,match=>match.replace(before,after));
+test('business snapshot read carve-out follows the original-scope canonical transport',()=>assert.equal(businessSnapshotReadDoorBound(reviewResolver(reviewSources)),true));
+for(const[label,key,mutate]of[
+  ['service client','chat',s=>mutateReviewCall(s,'caller: supabaseClient','caller: supabase')],
+  ['model actor','chat',s=>mutateReviewCall(s,'actorId: user.id','actorId: args.actor_id')],
+  ['model workspace','chat',s=>mutateReviewCall(s,'tenantId: personaCtx?.tenant_id ?? null','tenantId: args.tenant_id')],
+  ['different worker','adapter',s=>s.replace('paige-business-review?chat=1&finance_sources=1','other-worker')],
+  ['missing envelope actor check','adapter',s=>s.replace('envelope.actor_id !== ctx.who.actorId','false')],
+  ['missing worker scope check','endpoint',s=>s.replace("req.headers.get('x-paige-review-scope') !== tenantId",'false')],
+  ['missing worker final scope check','endpoint',s=>s.replace('after.data !== tenantId','false')],
+  ['unmounted tool','chat',s=>s.replace('toolDefs.push(...BUSINESS_SNAPSHOT_TOOLS','toolDefs.push(...OTHER_TOOLS')],
+])test(`business snapshot read carve-out rejects ${label}`,()=>{
+  const changed=mutate(reviewSources[key]);assert.notEqual(changed,reviewSources[key],'control must change the actual binding');
+  assert.equal(businessSnapshotReadDoorBound(reviewResolver({...reviewSources,[key]:changed})),false);
 });
 
 console.log(

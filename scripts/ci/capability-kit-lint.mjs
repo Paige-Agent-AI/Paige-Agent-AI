@@ -95,18 +95,43 @@ function adsFunnelReadDoorBound(resolver) {
 // this file may project its exact input, and only while the adapter composes through the fabric's own
 // composer on the caller's own session and Chat mounts that adapter with the caller-JWT client. Never
 // clears risk debt.
+// The reviewed transport uses that same composer in the existing Executive worker;
+// prove the specific mount and both ends of its scope binding, not any edge read.
 const BUSINESS_SNAPSHOT_DECLARATION_FILE='supabase/functions/_shared/paige-spine/domains/business-review.ts';
 const BUSINESS_SNAPSHOT_ADAPTER_FILE='supabase/functions/_shared/paige-context/business-review-chat.ts';
-function businessSnapshotReadDoorBound(resolver) {
+export function businessSnapshotReadDoorBound(resolver) {
   const read=p=>resolver.sourceFile(path.join(ROOT,p))?.text??'';
   const adapter=read(BUSINESS_SNAPSHOT_ADAPTER_FILE);
   const chat=read('supabase/functions/paige-ai-chat/index.ts');
+  const endpoint=read('supabase/functions/paige-business-review/index.ts');
+  const source=ts.createSourceFile('chat.ts',chat,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
+  const calls=[];
+  const visit=node=>{if(ts.isCallExpression(node)&&ts.isIdentifier(node.expression)&&node.expression.text==='readBusinessSnapshotTransport')calls.push(node);ts.forEachChild(node,visit);};
+  visit(source);
+  if(source.parseDiagnostics.length||calls.length!==1||calls[0].arguments.length!==3)return false;
+  const property=(object,key)=>object&&ts.isObjectLiteralExpression(object)
+    ?object.properties.find(p=>ts.isPropertyAssignment(p)&&p.name.getText()===key)?.initializer:undefined;
+  const compact=node=>node?.getText().replace(/\s+/g,'')??'';
+  const [context,deps]=calls[0].arguments,who=property(context,'who');
+  if(compact(property(deps,'caller'))!=='supabaseClient'
+    ||compact(property(who,'actorId'))!=='user.id'
+    ||compact(property(who,'tenantId'))!=='personaCtx?.tenant_id??null'
+    ||!/^userTimezone\?\?["']UTC["']$/.test(compact(property(context,'timezone'))))return false;
+  const wire=adapter.replace(/\s+/g,''),edge=endpoint.replace(/\s+/g,'');
   return adapter.includes('parameters: BUSINESS_OPERATING_SNAPSHOT_READ_CAPABILITY.input')
     && adapter.includes('composeBusinessReview(deps.caller')
     && chat.includes('toolDefs.push(...BUSINESS_SNAPSHOT_TOOLS')
-    && chat.includes('dispatchBusinessSnapshotChat(')
-    // Pin the caller-JWT client AT the mount, not just the call's existence (the review's P3).
-    && chat.includes('caller: supabaseClient')
+    && chat.includes("from '../_shared/paige-context/business-review-chat.ts'")
+    && wire.includes("deps.caller.functions.invoke('paige-business-review?chat=1&finance_sources=1'")
+    && wire.includes("'x-paige-review-scope':tenant")
+    && wire.includes('envelope.actor_id!==ctx.who.actorId')
+    && wire.includes('envelope.tenant_id!==tenant')
+    && wire.includes('envelope.timezone!==ctx.timezone')
+    && edge.includes("req.headers.get('x-paige-review-scope')!==tenantId")
+    && edge.includes('dispatchBusinessSnapshotChat(')
+    && edge.includes('{caller:supabaseClient},chatArgs')
+    && edge.includes('after.data!==tenantId')
+    && edge.includes('actor_id:user.id,tenant_id:tenantId');
 }
 
 /**

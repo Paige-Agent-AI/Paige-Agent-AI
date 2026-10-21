@@ -8,6 +8,7 @@ FLOW_PROTOTYPE: NOT_REQUIRED: backend repair within the approved briefing flow.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: receive a sourced weekly briefing through the same authenticated review worker as the Executive screen; production CPU recovery remains unverified.
 VISUAL_DIRECTION: PASS: preserve approved immersive Executive and shared Chat presentation.
 AUTOMATED_EVIDENCE: PASS: actual Chat → real review handler → canonical formatter/settlement offline proof124 checks pass; restored-local-composition negative fails2 new transport assertions, exact source restored and124 pass. Foundation8 endpoint and188 canonical review tests remain supporting; no hosted CPU/customer proof.
+SOURCE_GUARD_SUPPORT: PASS: reviewed C0b ancestry renewal retains all67 negative controls and228 declarations; exact Capability Kit transport carve-out passes real lint without expanding its288/296 debt baseline,40 self-tests and48 focused cases including8 caller/actor/workspace/worker/envelope negatives. No extractor or authorization waiver.
 STATIC_EVIDENCE: UNVERIFIED: final exact-head review/CI and both changed Edge source/config readbacks remain required.
 RENDERED_EVIDENCE: UNVERIFIED: no layout change; incumbent synthetic packets remain supporting only, fresh repaired customer briefing/reload remains owed.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: two pre-repair authorized ordinary weekly requests failed with CPUTime shutdown and no settled assistant. No retry after this repair until reviewed release/readback.

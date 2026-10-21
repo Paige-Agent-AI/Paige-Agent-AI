@@ -231,7 +231,7 @@ BEGIN
  IF accepted AND snapshot->'version' IS DISTINCT FROM '2'::jsonb THEN
   -- A v1 (or legacy, knowledgeless) binding replays through the unchanged v1 context.
   replay:=public.client_portal_assistant_context(p_thread,p_intent);
-  RETURN replay||jsonb_build_object('ranking','recency','authorized_count',authorized,
+  RETURN replay||jsonb_build_object('query_embedding_eligible',false,'ranking','recency','authorized_count',authorized,
    'sources_limited',authorized>jsonb_array_length(replay->'sources'));
  END IF;
  IF accepted THEN
@@ -316,7 +316,13 @@ BEGIN
  RETURN jsonb_build_object('frame',frame,'thread_id',t.id,'intent_id',p_intent,'snapshot',snapshot,
   'sources',retrieval,'history',history,'history_limited',limited,
   'ranking',CASE WHEN jsonb_path_exists(retrieval_refs,'$[*].passages') THEN 'relevance' ELSE 'recency' END,
-  'authorized_count',authorized,'sources_limited',authorized>jsonb_array_length(retrieval));
+  'authorized_count',authorized,'sources_limited',authorized>jsonb_array_length(retrieval),
+  -- Observe the same canonical/legacy intent and supersedes evidence as native begin.
+  -- This avoids known replay egress; begin still locks and decides admission itself.
+  'query_embedding_eligible',NOT accepted AND t.interactive_latest_intent IS DISTINCT FROM p_intent
+   AND NOT EXISTS(SELECT 1 FROM public.paige_chat_turns x WHERE x.thread_id=t.id AND (
+    x.interactive_intent_id=p_intent OR x.bundle_ref#>>'{interactive,request_intent_id}'=p_intent::text
+    OR x.interactive_supersedes_id=p_intent OR x.bundle_ref#>>'{interactive,supersedes_intent_id}'=p_intent::text)));
 END $$;
 REVOKE ALL ON FUNCTION public.client_portal_assistant_context_v2(uuid,uuid,extensions.vector) FROM PUBLIC,anon,authenticated,service_role;
 GRANT EXECUTE ON FUNCTION public.client_portal_assistant_context_v2(uuid,uuid,extensions.vector) TO authenticated;

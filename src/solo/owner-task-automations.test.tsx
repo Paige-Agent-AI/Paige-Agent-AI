@@ -3,7 +3,8 @@ import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { OwnerTaskReview } from "./data/ownerTaskAutomation";
-const m = vi.hoisted(() => ({ state: {} as Record<string, unknown>, refresh: vi.fn(), control: vi.fn() }));
+const m = vi.hoisted(() => ({ state: {} as Record<string, unknown>, refresh: vi.fn(), control: vi.fn(),
+  openHistory: vi.fn(), inspectOutcome: vi.fn(), closeHistory: vi.fn() }));
 vi.mock("./data/useOwnerTaskAutomations", () => ({ useOwnerTaskAutomations: () => m.state }));
 import { OwnerTaskAutomations } from "./owner-task-automations";
 
@@ -32,7 +33,9 @@ const review = (): OwnerTaskReview => ({ id: "process", updatedAt: "2026-10-16T1
 let row: OwnerTaskReview;
 beforeEach(() => {
   row = review(); m.refresh.mockReset(); m.control.mockReset(); m.control.mockResolvedValue({ status: "saved", state: "live" });
-  m.state = { read: { status: "ready", items: [row], hasMore: false }, busy: false, needsRefresh: false, feedback: null, scopeKey: "scope1", refresh: m.refresh, control: m.control };
+  m.openHistory.mockReset(); m.inspectOutcome.mockReset(); m.closeHistory.mockReset();
+  m.state = { read: { status: "ready", items: [row], hasMore: false }, busy: false, needsRefresh: false, feedback: null, scopeKey: "scope1", refresh: m.refresh, control: m.control,
+    history: { status: "closed" }, openHistory: m.openHistory, inspectOutcome: m.inspectOutcome, closeHistory: m.closeHistory };
 });
 afterEach(cleanup);
 const view = () => render(<MemoryRouter initialEntries={["/solo/123/settings/integrations"]}><OwnerTaskAutomations /></MemoryRouter>);
@@ -123,5 +126,101 @@ describe("internal task process customer controls", () => {
     m.state.busy = true; view(); expect(screen.getByRole("status").textContent).toContain("Saving");
     expect((screen.getByRole("button", { name: "Refresh" }) as HTMLButtonElement).disabled).toBe(true);
     expect((screen.getByRole("button", { name: "Review to enable" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+});
+
+describe("original internal-task history inspection", () => {
+  const taskId = "00000000-0000-4000-8000-000000000111";
+  const locator = { approvalId: "00000000-0000-4000-8000-000000000112", occurrenceId: "00000000-0000-4000-8000-000000000113",
+    updatedAt: "2026-10-18T12:30:00Z", approvalStatus: "approved" };
+  const readyHistory = (outcome: unknown = null, hasMore = false) => ({ status: "ready", processId: row.id,
+    list: { items: [locator], hasMore }, selected: outcome ? locator : null, outcome });
+  const original = (verified = false) => ({ status: "ready", processId: row.id, approvalId: locator.approvalId,
+    occurrenceId: locator.occurrenceId, approvalStatus: "approved", recordedOutcome: "executed", decidedAt: "2026-10-18T12:31:00Z",
+    title: "Review the new contact", originalTask: verified ? { state: "verified", taskId,
+      receiptId: "00000000-0000-4000-8000-000000000114", runId: "00000000-0000-4000-8000-000000000115" } : { state: "unconfirmed" }, currentTask: { state: "not_read" } });
+
+  it("requests history for the exact current process without a control, refresh or replay", () => {
+    view(); fireEvent.click(screen.getByRole("button", { name: "View history", exact: true }));
+    expect(m.openHistory).toHaveBeenCalledExactlyOnceWith(row);
+    expect(m.control).not.toHaveBeenCalled(); expect(m.refresh).not.toHaveBeenCalled(); expect(m.inspectOutcome).not.toHaveBeenCalled();
+  });
+  it("passes only the exact displayed locator to the existing outcome reader", () => {
+    m.state.history = readyHistory(); view(); fireEvent.click(screen.getByRole("button", { name: "Inspect outcome", exact: true }));
+    expect(m.inspectOutcome).toHaveBeenCalledExactlyOnceWith(locator); expect(m.control).not.toHaveBeenCalled();
+  });
+  it.each(["loading", "refused", "unavailable"])("shows %s history without implying an empty history or successful task", status => {
+    m.state.history = { status, processId: row.id }; view();
+    expect(screen.queryByText(/No recorded attempts/)).toBeNull(); expect(screen.queryByRole("link", { name: "Open task" })).toBeNull();
+    expect(document.querySelector('[aria-label="Process history"]')).not.toBeNull(); expect(m.control).not.toHaveBeenCalled();
+  });
+  it.each([false, true])("keeps an empty history honest when the bounded list hasMore=%s", hasMore => {
+    m.state.history = { ...readyHistory(null, hasMore), list: { items: [], hasMore } }; view();
+    expect(screen.getByText(hasMore ? /Older attempts may not be shown/ : /No recorded attempts/)).toBeTruthy();
+    if (hasMore) expect(screen.queryByText(/No recorded attempts/)).toBeNull();
+  });
+  it("never converts recorded executed status into a verified original task", () => {
+    m.state.history = readyHistory(original()); view();
+    expect(screen.getByText(/original task could not be verified/i)).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Open task" })).toBeNull(); expect(m.control).not.toHaveBeenCalled();
+  });
+  it.each([0, 24])("keeps the one selected result directly beside attempt %s of a full bounded list", selectedIndex => {
+    const items = Array.from({ length: 25 }, (_, n) => ({ ...locator, approvalId: `approval-${n}`, occurrenceId: `occurrence-${n}` }));
+    m.state.history = { ...readyHistory(original(true), true), list: { items, hasMore: true }, selected: items[selectedIndex] };
+    view();
+    const rows = document.querySelectorAll(".sa-owner-task-attempts > li"), results = document.querySelectorAll(".sa-owner-task-result");
+    expect(rows).toHaveLength(25); expect(results).toHaveLength(1); expect(rows[selectedIndex].contains(results[0])).toBe(true);
+    expect(results[0].previousElementSibling?.textContent).toBe("Inspect outcome");
+    expect(screen.getByText(/Showing 25 recent attempts/)).toBeTruthy(); expect(m.control).not.toHaveBeenCalled();
+  });
+  it("does not render a result without the exact selected locator from its displayed list", () => {
+    m.state.history = { ...readyHistory(original(true)), selected: { ...locator } }; view();
+    expect(screen.queryByRole("link", { name: "Open task" })).toBeNull(); expect(document.querySelector(".sa-owner-task-result")).toBeNull();
+  });
+  it("rereads unavailable history through its existing reader without execution or refresh", () => {
+    m.state.history = { status: "unavailable", processId: row.id }; view();
+    fireEvent.click(screen.getByRole("button", { name: "Read history again" }));
+    expect(m.openHistory).toHaveBeenCalledExactlyOnceWith(row); expect(m.control).not.toHaveBeenCalled(); expect(m.refresh).not.toHaveBeenCalled();
+  });
+  it("does not offer a Task destination outside a current SOLO route", () => {
+    m.state.history = readyHistory(original(true)); render(<MemoryRouter initialEntries={["/settings"]}><OwnerTaskAutomations /></MemoryRouter>);
+    expect(screen.queryByRole("link", { name: "Open task" })).toBeNull();
+  });
+  it("renders a saved title as text without executing markup", () => {
+    m.state.history = readyHistory({ ...original(true), title: '<img src=x onerror="throw 1">' }); view();
+    expect(document.querySelector(".sa-owner-task-result h4")?.textContent).toBe('<img src=x onerror="throw 1">');
+    expect(document.querySelector(".sa-owner-task-result img")).toBeNull(); expect(m.control).not.toHaveBeenCalled();
+  });
+  it("closes history when entering the existing enable review without changing its saved action", () => {
+    m.state.history = readyHistory(original(true)); view(); fireEvent.click(screen.getByRole("button", { name: "Review to enable" }));
+    expect(m.closeHistory).toHaveBeenCalledTimes(1); expect(screen.getByRole("button", { name: "Enable future contacts" })).toBeTruthy();
+    expect(m.control).not.toHaveBeenCalled();
+  });
+  it("opens the exact verified original Task through the current canonical SOLO route", () => {
+    m.state.history = readyHistory(original(true)); view();
+    expect(screen.getByRole("link", { name: "Open task", exact: true }).getAttribute("href")).toBe(`/solo/123/operations/work?task=${taskId}`);
+    expect(screen.getByText(/Open the task to read its current state/)).toBeTruthy(); expect(m.control).not.toHaveBeenCalled();
+  });
+  it.each(["loading", "refused", "unavailable"])("does not retain a previous Task link while the selected outcome becomes %s", status => {
+    m.state.history = readyHistory(original(true)); const h = view(); expect(screen.getByRole("link", { name: "Open task" })).toBeTruthy();
+    m.state.history = readyHistory({ status }); h.rerender(<MemoryRouter initialEntries={["/solo/123/settings/integrations"]}><OwnerTaskAutomations /></MemoryRouter>);
+    expect(screen.queryByRole("link", { name: "Open task" })).toBeNull(); expect(m.control).not.toHaveBeenCalled();
+  });
+  it("does not expose another process's selected outcome beside this process", () => {
+    m.state.history = { ...readyHistory(original(true)), processId: "another-process" }; view();
+    expect(screen.queryByRole("link", { name: "Open task" })).toBeNull();
+    expect(document.querySelector('[aria-label="Process history"]')).toBeNull();
+  });
+  it.each(["busy", "needsRefresh"])("withholds private history and disables its opener while %s", state => {
+    m.state.history = readyHistory(original(true)); m.state[state] = true; view();
+    expect(screen.queryByRole("link", { name: "Open task" })).toBeNull();
+    expect((screen.getByRole("button", { name: "View history" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+  it.each(["Close history", "Escape"])("%s closes only inspection and restores the invoking control", choice => {
+    m.state.history = readyHistory(); view(); const opener = screen.getByRole("button", { name: "View history" });
+    fireEvent.click(opener);
+    const close = screen.getByRole("button", { name: "Close history", exact: true });
+    if (choice === "Escape") fireEvent.keyDown(close, { key: "Escape" }); else fireEvent.click(close);
+    expect(m.closeHistory).toHaveBeenCalledTimes(1); expect(document.activeElement).toBe(opener); expect(m.control).not.toHaveBeenCalled();
   });
 });

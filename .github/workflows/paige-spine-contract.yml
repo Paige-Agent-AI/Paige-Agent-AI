@@ -75,6 +75,8 @@ on:
       - "supabase/tests/business_mission_foundation.sql"
       - "supabase/tests/business_mission_numeric_targets.sql"
       - "supabase/tests/business_mission_target_attribution.sql"
+      - "supabase/tests/e2_read_receipt_labels.sql"
+      - "supabase/tests/vera_role_remap.sql"
       - "supabase/tests/social_foundation.sql"
       - "supabase/tests/social_foundation_rls.sql"
       - "scripts/sql/social-foundation-legacy-shape-proof.sql"
@@ -180,7 +182,7 @@ jobs:
 
   database-contract:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
@@ -318,6 +320,10 @@ jobs:
       - name: MENTOR role remap contract (display metadata only)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/mentor_role_remap.sql
+
+      - name: VERA role remap — existing identity and protected configuration (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/vera_role_remap.sql
 
       - name: Operations priority and bounded activity authority (rolled back)
         if: ${{ !cancelled() }}
@@ -681,6 +687,7 @@ jobs:
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/business_mission_numeric_targets.sql
       - run: supabase test db supabase/tests/business_mission_target_attribution.sql
+      - run: supabase test db supabase/tests/e2_read_receipt_labels.sql
       - run: supabase test db supabase/tests/social_foundation.sql
       - run: supabase test db supabase/tests/social_foundation_rls.sql
       - run: supabase test db supabase/tests/social_connection_lifecycle.sql

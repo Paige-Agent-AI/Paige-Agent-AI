@@ -1,0 +1,11 @@
+{
+  "boundary": "synthetic actual source, late real SOLO reset reproduces observed production order; original flattened fixture instead had32/24",
+  "observed": {
+    "expectedPadding": "32px 24px",
+    "found": true,
+    "padding": "0px",
+    "paddingLeft": "0px",
+    "paddingTop": "0px",
+    "pass": false
+  }
+}

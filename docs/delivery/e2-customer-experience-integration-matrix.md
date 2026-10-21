@@ -1,5 +1,189 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+**October21 Chat lifecycle source correction:** #2469 revieweda7d847f9,
+merged `4aaa84e218121c33a3f510a99a2d1dd9038a1795`, exact treef0b804ac.
+Required CI, normal production web/public and actual served request-ticket gate
+condition verify (Master§4.0). The existing disposed-request fence now also guards
+the 400ms status callback. 128 owning source cases pass; original CI failure is
+preserved. This does not close the two separate backend CPU/no-final-settlement
+failures or actual Chat/Live/reload acceptance. No provider, permission, catalogue,
+approval or action activation; all19/nine analytics/founder obligations remain.
+
+**October21 O17 reference foundation source release:** #2467 reviewed95d61084,
+merged `268ff690df500345cc3c81eec7ca2a2baa60b13e`, exact treeb305fba3.
+Required CI, normal production web/public/served destination and label verify;
+existing guarded Edge recovery39583487762 verifies all17 selected source/JWT
+configurations and advances certified edge-live to the exact merge. No workflow,
+tag or security bypass. The E4 extension is surface-only/current-SOLO-account;
+no new read emitter, message focus, provider/permission/admission or catalogue
+activation. Separate consumer, real permitted read/navigation/reload/privacy and
+full19/nine analytics/founder acceptance remain owed (Master§4.0/ANT-161).
+
+**October21 recorded-check source release:** #2466 reviewed e7600799, merged
+`4d667a52adde822221c96f10d884ba95e8ccfdd9`, actual/expected tree81f98c76.
+Required CI, normal production web/public and actual served status/font/outline
+readback verified (Master§4.0). O06 separates completed findings from the last-read
+unfinished timestamp; age-only and empty states withhold unsupported run/health
+claims. Refresh remains read-only. Initial design CI failure was repaired, not
+waived.115 source cases/11 native synthetic frames support source only; actual
+customer unfinished/completed/reload/permissions proof remains owed. Mind context
+and O07/O19 execution remain held; no provider/permission/catalogue/algorithm activation.
+
+**October21 Executive source-disclosure repair:** #2464 reviewed79d39462, merged
+`720485f3955ae1b591fca2dfc6125ad0bbde2ccf`, exact composition tree91b3de9e.
+Required checks, normal production web/public build and actual served explanation
+and canonical-font CSS readback verified (Master§4.0). O01/O02 now explain the
+composer's domain-qualified missing-adapter state without changing zero, source
+coverage, links, permissions or catalogue availability. Ten native synthetic frames
+and bounded regressions are supporting source proof, not authenticated acceptance.
+No verified algorithm/provider/action activation; all19/nine analytics remain owed.
+
+**October21 scoped continuity source releases:** #2462 reviewed18a560d5 merged
+`87ccff84221497f298041fb33a0e16ee85d8c719`, exact treef728d532; required checks,
+production web/provider metadata and public build readback verified (Master§4.0).
+That foundation tree has an inactive optional cache in the sole composer store.
+Its separate consumer#2463 reviewedb7577fc9 merged
+`73d8a03db8df273fe45dfb122854c05b24886e6b`, exact treee3d3c17a; required checks,
+production web/public and actual served binding/cache/guidance source verified.
+Eligible binding, unavailable-reload feedback and restored-text sizing are source
+released;161 affected cases/native10 exact synthetic JPEGs/284 bounded E05 frontend
+cases are supporting evidence, not ordinary customer continuity acceptance.
+No automatic send/replay, attachment retention, business Memory, permission,
+provider, action, verified algorithm or catalogue promotion. Actual authenticated
+reload/owning-context return, current Chat recovery, Live and all19/9 remain owed.
+The table below now reflects the already released#2181/#2174 source subsets;
+their original customer definitions and unproven acceptance are unchanged.
+
+**October21 required-CI repair:** #2461 merged/source-web verified at
+`20ac409589f0692a0db8b8d3cd24cad0fd11c82c`, exact verified union8e6b209c.
+All11 exact-head checks/Preview plus both statuses PASS; existing real-PDF hash
+assertions are preserved under a deterministic clock. No product, registry,
+algorithm, authorization or acceptance change. Original docs#2458 timing failure
+is retained; fresh current-main CI is required, without waiver (Master§4.0).
+
+**October21 explicit read-receipt source release:** O13 presentation#2459 merged
+`7922abf874db30682bf45ccc5894e7ebedbb8901`, actual/expected treed4ad684f.
+Required head checks, applied13040000, original display identity/private ACLs,
+pure production labels/delegation, exact provider web metadata and public build
+readback verified (Master§4.0). Successful collection/commercial lookups say read,
+not business changed; canonical records/history/authority and CAP012/016/017
+Limited/account-access-Unverified are unchanged. No final-answer/CPU recovery or
+authenticated read-row/reload acceptance is inferred. All19/9 remain required.
+
+**October21 contact-follow-up clarity source release:** O05/O08 repair#2460,
+reviewed0042e90d → mergedc5b40526b10ecfb7935b832045e18990f420c138,
+exact tree5e6ed6f5, required head checks/web/public identity verified (Master§4.0).
+The legacy21day inactivity count can include leads; customer copy now describes
+recorded contact follow-up, not predicted client lapsing/custom thresholds or an
+unconditional draft/send. Count/key/order/records/navigation/authority unchanged;
+CAP010 stays Coming Soon.77 source cases and bounded synthetic1536/320 component
+proof are not customer navigation/reload, full health intelligence or acceptance.
+All19/9 and the single founder evaluation remain required; sign-in is held.
+
+**October 21 consumer source release; authenticated recovery not accepted:**
+#2451 original-scope transport foundation is deployed at a76bb957; #2455 now binds
+the existing Chat snapshot to that same caller-JWT review worker at
+`d331534c898d8c032b467902da635c3c9a914613` (actual tested union08dfc6ab).
+Spine → `get_business_snapshot` → `readBusinessSnapshotTransport` → existing
+`paige-business-review` → formatter/composer/Metric issuer remains one read path.
+All 11 head checks/Preview, exact web and normal deployed Chat source/configuration
+readback pass. Supporting current-main integration is125 focused/shared-hook cases
+and124 offline stream controls; E05's focused/default hook and feedback are retained.
+Fresh ordinary weekly/settlement/reload QA awaits the designated customer's sign-in;
+no new live model question occurred. The two prior exact-bound CPU failures remain
+open, historical9/0 and12/0/4 stay historical, and all nineteen outcomes remain required.
+Catalogue4 Coming Soon/3 Limited/2 Unverified with Access Unverified is unchanged;
+no provider, permission, action, verified algorithm or founder acceptance is inferred.
+Actual release/access receipts: Master§4.0, #2455/6308425183 and ANT-52/64065542.
+
+**October21 UTC readback checkpoint (supersedes candidate statuses below):**
+Presenter#2444/ec83d109, priority baseline#2409/a5a139e7, coverage#2445/b70738fe
+and CI-only#2449/5dbf6e20 are merged/source/web verified. Priority's normal strict
+Edge5-source/config readback PASS; catalogue13030000 is applied and all9 public
+fields match. Ordinary authorized SOLO read/reload and320px coverage reflow PASS:
+4 Coming Soon,3 Limited,2 Unverified, every Access Unverified. Reload defaults to
+Chat; explicit Capabilities return re-reads the same states. Full effective actor/
+provider availability is still owed; no Live/activation or algorithm acceptance.
+Two fresh weekly Chat requests, including released priority source, **FAIL** with
+correlated worker CPUTime shutdown and no assistant settlement; reload keeps the
+question only. Current rollout is ACTIVE, not historical DRAINING. The original9/0
+is unchanged and cannot accept current full-loop behavior. ALG03/13 is only a
+partial shared ordering policy. Actual release/evidence identities are in
+Master§4.0 and the Second Brain; ANT52/0c6dfd90/dc01d1b6. Backend repair remains
+inside canonical Chat/Business Review; all19/9 definitions and founder acceptance
+obligations below remain required, with no originating-domain takeover.
+
+**October20 verified release checkpoint (supersedes older candidate statuses):**
+VERA#2400/61b32a37, Finance#2402/ddf12b6b, audit prerequisite#2434/25d01c84,
+and catalogue descriptions#2440/a0389c3f are merged and production-source verified.
+Catalogue migration13010000 is applied; all9 corrected descriptions were read in
+the ordinary authorized SOLO panel, then re-read after full reload and explicit
+return (ANT52/053be67a). Reload defaults to Chat; auto-restoring Capabilities is
+not claimed. Finance no-source/provenance/navigation/reload evidence remains
+bounded, not populated financial acceptance. Master/Brain factual closeout#2442
+is merged8edf4308 with actual production web readback. Historical candidate
+paragraphs below retain their dated meaning. Shared presenter#2444 and priority
+baseline#2409 remain unreleased candidates; no metadata or algorithm is Live by
+registration. Full19/9 and founder acceptance remain owed.
+
+**October20 small-PR continuation:** all nineteen definitions below remain required.
+The owner's current release sequence is published in ANT-138 comment
+`3276f0e0-05de-48c2-a2ff-764bbb292337` and existing #2402. Each new increment
+has one outcome, normally1–5 related source files/100–400net lines; source owners
+in EXP03/04/05/09/11 retain their records, calculations and departmental interfaces.
+Finish the isolated required-audit repair #2434, then existing cohesive Finance
+#2402; do not add statements, liabilities, budgets or another department to it.
+VERA #2400 is now merged61b32a37, its original identity/121400 migration and
+strict production Chat source recovery39503591507 verified. Bounded genuine
+invitation/read/reload evidence is ANT-52 `ad6487c1-5a79-428c-a004-51809931cd0e`;
+it is not dedicated-runtime activation, Live or full-Experience acceptance.
+Finance remains unreleased. Review, exact-head CI, production source, authenticated
+behavior, actual effects/receipts and the single founder evaluation stay distinct.
+
+**October19 Finance continuation — implemented locally, not released or accepted.**
+REUSE the existing Finance caller-JWT catalogue/account-source contracts and their
+company/binding/owner/admin authority; EXTEND the incumbent
+`business.operating_snapshot` / `get_business_snapshot` / `paige-business-review`
+composition and existing Executive source disclosure. Original authoritative records
+remain `finance_company_entities`, `finance_source_bindings` and
+`finance_account_source_snapshots`. Up to four verified production sources, twelve
+displayed accounts per source, exact decimal major values, explicit source/account
+sampling, company/currency separation and observed/sync provenance are the bounded
+projection. Missing amounts stay unavailable; recorded Sales receipts remain distinct.
+Canonical Finance department navigation is reused. No new provider call/activation,
+metric issuer, total/calculation engine, financial ledger, model/runtime or effectful
+tool is admitted. Dormant direct Finance capabilities remain unregistered. Missing
+bank-wide cash/profit/forecast/debt/budget integration is still mandatory remaining
+work, not optional scope. Existing Finance algorithms and originating records must
+be reused for later slices. Native viewport/accessibility, actual production source,
+authorized SOLO/tenant/permission/reload/Live and final whole-Experience acceptance
+remain owed. [Pre-edit routing and proof boundaries](../evidence/ui-delivery/e2-finance-business-review.md).
+
+**October19 reactivation — current-source reconciliation, not full acceptance.**
+Existing EXP02 Codex lead resumes the entire19-outcome contract under ANT-161's
+EXP-only ownership direction. Main/public web baseline is
+`d676e3301aac7d284451187fd3370ea87ed4b855`; historical paragraphs below retain their
+dated meaning. #2128, #2167 and native target UI #2174 are merged; target Executive/
+briefing integration #2181 and native mechanical closeout #2185 remain unmerged at
+this checkpoint. #2181 composes that main and preserves incoming exact Deal/Task
+links alongside Play focus. Only its production-unapplied migration moves byte-identically
+from20271104102000 to20271112100000. Fresh364 local assertions,64 incumbent controls
+and61 isolated PostgreSQL assertions pass; current-head hosted review/CI/release and
+customer acceptance remain owed.
+
+The original9 PASS/0 FAIL and E2-6 supplement12 PASS/0 FAIL/4 BLOCKED remain preserved;
+the historical action refusal is not a permanent limit on full EXP02. All19 outcomes,
+VERA intelligence/finance/risk integration, applicable ALG03/06/11/12/13, existing
+cross-Experience consumers, real follow-through, Chat/Live, responsive/accessibility,
+authorized SOLO/reload/isolation proof and one final founder evaluation remain
+required. VERA exists once in the production registry but still has the older Trust
+role; the same identity, addressing and department mappings need correction without
+permission/provider/model activation. Existing EXP03/04 are inactive; EXP05 execution
+and EXP09 customer sources retain ownership. No retired specialist coding agent or
+replacement domain engine is introduced. Full first reconciliation: ANT-138 comment
+ba1eb1e0-337b-47bf-a097-038715076f20; shared summary ANT-147 comment
+72358666-a747-4365-ad3a-44d51bb14cc6.
+
 **Directive:** the owner's Mandatory Customer-Visible Outcome Standard (2026-10-13). Every
 customer outcome must be documented and verified along
 **Conversation → Spine capability → Backend record → UI component → Visible state → Verified receipt**,
@@ -140,22 +324,22 @@ PENDING. Each available subset must be tested independently of its remaining req
 | ID and required customer outcome | Canonical capability / technical owner / records | Product and conversation home | Current evidence and required completion |
 |---|---|---|---|
 | O01 Fresh conversational business briefing: actual figures, risks, grounded steps and named unknowns | S11–13; `business.operating_snapshot`, Fabric/Analytics and shared Chat; departmental books, issuer references, `paige_chat_threads/turns` | Existing SOLO Chat, `get_business_snapshot` → composer/issuer; #2075/#2082/#2092/#2110 | D bounded briefing; historical 9/0. Complete cross-domain briefing and released E2 integration/reload/owner acceptance owed |
-| O02 Visual Executive and Chat agree on scope, source, period and currency | Same Fabric composer; caller-JWT `paige-business-review`; no second metric reader | #2123 transport; #2128 `ExecutiveOverview/useBusinessReview`; PAIGE draft handoff | L. Finish #2128 release and sixteen-case protected supplement |
-| O03 Sales pipeline/performance with valid period comparisons and separate currencies | S39/S13; registered Sales metrics; Sales/Analytics; `deals/pipelines/pipeline_stages` | Executive, Chat and owning Sales board | D bounded reads / L visual. Authenticate actual figures, comparison limits, navigation and later readback |
-| O04 Full financial and commercial intelligence: actual cash, collections, income, expense and profit source coverage | S39/S41/S13; Sales receipts/receivables in `paige_invoices/paige_invoice_payments`, business calendar; Finance-owned financial books and Analytics producer | Executive/Chat plus Finance and Sales collections | B full Finance output. Current receipt figures are not bank balance or profit. Obtain Finance domain contract, integrate and prove provider/source readiness separately |
+| O02 Visual Executive and Chat agree on scope, source, period and currency | Same Fabric composer; caller-JWT `paige-business-review`; no second metric reader | #2123 transport; #2128 `ExecutiveOverview/useBusinessReview`; PAIGE draft handoff | D: #2128 releasedbf0a8b60, exact web/Edge source verified. Supplement12 PASS/0 FAIL/4 BLOCKED; protected auth/negative/native variants and final full-product acceptance remain owed |
+| O03 Sales pipeline/performance with valid period comparisons and separate currencies | S39/S13; registered Sales metrics; Sales/Analytics; `deals/pipelines/pipeline_stages` | Executive, Chat and owning Sales board | D bounded reads and visual source. Existing SOLO read/navigation/reload supplement passed; populated comparisons, protected negatives and complete commercial acceptance remain owed |
+| O04 Full financial and commercial intelligence: actual cash, collections, income, expense and profit source coverage | S39/S41/S13; Sales receipts/receivables in `paige_invoices/paige_invoice_payments`, business calendar; Finance-owned financial books and Analytics producer | Executive/Chat plus Finance and Sales collections | D bounded Finance evidence#2402/ddf12b6b and authorized no-source/provenance/navigation/reload proof. B complete financial coverage. Current receipts are not bank balance or profit; populated company/source/currency evidence, permissions/isolation, profit/cash/forecast/budget/provider readiness and full acceptance remain owed |
 | O05 Client health, lifecycle/onboarding and unified service-delivery progress/history | Client/CRM, Operations/Planning, Fabric/Analytics; `clients`, canonical work/task/delivery/acceptance records | Executive/Chat, Clients and Operations Work | D bounded client counts / B full health. Operations owns missing permission-filtered delivery projection; lifecycle/health producers and exact accepted-version evidence owed |
-| O06 Inspect actual Systems Check findings, timestamps, coverage and severity | Existing Systems Check/Operations reader; `systems_check_snapshot`; `paige_systems_check_run/finding`, `paige_workflow_runs` | Systems Check drawer/page, Executive risks and Chat | D recorded checks / L Executive. Authenticate source freshness, finding navigation, negatives and reload |
+| O06 Inspect actual Systems Check findings, timestamps, coverage and severity | Existing Systems Check/Operations reader; `systems_check_snapshot`; `paige_systems_check_run/finding`, `paige_workflow_runs` | Systems Check drawer/page, Executive risks and Chat | D recorded checks/Executive and last-read unfinished/empty-state repair#2466/4d667a52 with web/served-source readback. Existing SOLO recorded findings/navigation proof is historical; new unfinished/completed/reload/permission/full-shell/cohort acceptance remains owed. Refresh starts no check; new-run execution is O07 |
 | O07 Run real Systems checks and authorized corrective workflows with new result and receipt | Existing Systems Check runner, remediation domain writer, Spine/Harness/Trust/Rail; existing run/finding/action records | Systems Check → PAIGE/approval → canonical result | B on-demand consumer and verified runner owner. Current Refresh only rereads; Ask First only opens PAIGE. Bind actual run lifecycle and correction after authority, prove persisted outcome/reload |
-| O08 Evidence-backed priorities, recommendations and useful next steps | Fabric/Analytics adapter evidence and severity; no priority store | Executive priorities and sourced Chat question | L visual / D bounded narration. Integrate full domain evidence and prove recommendation provenance; a recommendation is not execution |
-| O09 Save direction and create/revise/transition the same Strategic Play truthfully | Existing Setup get/save RPCs; `tenants.brand.business_brief/tenant_setup_private_context`; `business_mission.create/revise/transition`, mission-system owner; missions/versions/mutation receipts | Business Game Plan forms, Plan in Motion, Chat and Executive projection | D manual records / L projection / G consequential Chat mutation. Prove stale revision, idempotency, unknown reconciliation, readback and continuity. Lifecycle Complete is not actual business work |
-| O10 Numeric goals/KPI targets, matched actuals, periods and variance | F7 shared Game Plan/Fabric/Analytics contract; owner approved Play-linked targets in ANT-138 `41a29a57-2ded-4e4c-bf15-ae34116147ef` | Existing Strategic Play detail now has LOCAL target editing, actual/variance, lifecycle, history/receipt and original-request recovery controls; Executive and governed Chat/Live integration remain owed | L: #2167 foundation and separate local native consumer reuse canonical targets/immutable revisions, owner RPCs, incumbent receipts/Rail and issued actuals. Native source has62 focused tests and50 rollback-only target SQL assertions plus8 display assertions; no authenticated target write or accepted outcome. Review, exact-head CI, source release, rendered/native and customer proof remain required. No separate actuals store |
+| O08 Evidence-backed priorities, recommendations and useful next steps | Fabric/Analytics adapter evidence and severity; no priority store | Executive priorities and sourced Chat question | D visual and bounded narration. Full Finance/client/goal evidence integration and populated recommendation provenance remain owed; a recommendation is not execution |
+| O09 Save direction and create/revise/transition the same Strategic Play truthfully | Existing Setup get/save RPCs; `tenants.brand.business_brief/tenant_setup_private_context`; `business_mission.create/revise/transition`, mission-system owner; missions/versions/mutation receipts | Business Game Plan forms, Plan in Motion, Chat and Executive projection | D manual records and released Executive projection#2181/2d93594b / G consequential Chat mutation. Prove stale revision, idempotency, unknown reconciliation, readback and continuity. Lifecycle Complete is not actual business work |
+| O10 Numeric goals/KPI targets, matched actuals, periods and variance | F7 shared Game Plan/Fabric/Analytics contract; owner approved Play-linked targets in ANT-138 `41a29a57-2ded-4e4c-bf15-ae34116147ef` | Existing Strategic Play detail target editing, actual/variance, lifecycle, history/receipt and original-request recovery controls; Executive/read-only briefing and owning-Play links. Governed mutation/Live integration remains owed | D foundation#2167, native#2174/3fa8b5016 and Fabric/Executive/read-only briefing/navigation#2181/2d93594b. Exact-head CI and production web/database/source readback verified; owner-only review migration20271112100000 applied. Original source/SQL evidence remains historical; no separate actuals store. Authenticated target create/revise/transition, matched actuals/variance, stale/idempotent/unknown recovery, native viewport, Live and final O10 acceptance remain owed |
 | O11 Actual Trust Compass tool policy controls constrained by platform restrictions | S05 Trust/Spine; list/resolve/set tool autonomy; `tenant_tool_autonomy` and platform policy | Trust Compass control/save/error/retry; Chat explanations | D controls. Authenticate role/scope restrictions, save/readback/reload and truthful executor availability; policy choice does not enable an excluded executor |
 | O12 Actual held approval → authorized action → observed outcome/receipt | Existing approval/framework/domain owners; `paige_pending_approvals/paige_approval_queue_v`, Chat confirmations, stored command and canonical domain/Rail receipt | Game Plan/shared Chat approval cards; Executive held preview | D manual subsets / G complete action. Preserve stored-argument redemption, consent, replay and unknown handling; prove real outcome after legitimate activation. Filed `paige_actions` is not an approval grant |
-| O13 Actor-attributed accountable activity and receipts | S06 Rail/INT-179; caller-scoped `get_solo_rail_activity`, `paige_client_events`, existing capability/domain receipts | Executive activity, Compass/System detail and owning records | D existing feed / L Executive. Integrate actual producers, prove human/PAIGE attribution and receipt readback. Viewing/refresh creates no action receipt |
-| O14 Direct departmental records, current-account navigation and later return | E4 semantic reference/resolver/frame; `bundle_ref.paige_record_links` in canonical turns; destination reauthorization | Chat links; Executive → Finance/Sales/Clients/Work/System/Game Plan | L E2 extension. Authenticate destination focus, account switches, reload/later session and denied reads. Aggregate snapshots remain surface references; exact UUID links only where supported |
+| O13 Actor-attributed accountable activity and receipts | S06 Rail/INT-179; caller-scoped `get_solo_rail_activity`, `paige_client_events`, existing capability/domain receipts | Executive activity, Compass/System detail and owning records | D existing feed/Executive, released native target receipt source#2174 and truthful successful read labels#2459/7922abf8. Actual human/PAIGE populated receipt readback/reload and final acceptance remain owed. Viewing/refresh creates no action receipt |
+| O14 Direct departmental records, current-account navigation and later return | E4 semantic reference/resolver/frame; `bundle_ref.paige_record_links` in canonical turns; destination reauthorization | Chat links; Executive → Finance/Sales/Clients/Work/System/Game Plan | D E2 semantic department links with historical SOLO reload/fresh-tab proof; UUID owning-Play extension released#2181/2d93594b over the same resolver/frame. Current protected scope/denial, correct Play context and later-session/native variants remain owed; aggregate sources remain surface references |
 | O15 Mind/Knowledge/Memory context, provenance and appropriate privacy/correction/publication boundaries | S16–19; existing Mind/Memory/Knowledge owners; `read_tenant_knowledge`, knowledge docs/chunks and canonical memory contracts | Mind orb/drawer, Knowledge and Chat context | D bounded projections / B full integration. Identity/people readers and offer/full-memory bindings missing; no private memory or numeric-goal inference from operating decisions |
-| O16 Chat/Live same evidence, interruption/recovery/continuity and usable responsive mobile parity | S10/S36 shared Chat/Voice INT-104; existing Live/thread/ticket/relay/settlement; canonical turns | Existing PAIGE fold/Chat/Talk live; Executive and all Command Center tabs | L responsive Executive / U E2 authenticated Live. Complete provider-authorized Live and phone/reflow/keyboard/reload proof; synthetic UI proof is separate |
-| O17 Contextual canonical Conversations with real message/thread/approval/provider state and privacy | S29–33 E03/Communications; existing canonical message/thread/provider/approval records | Conversations owning home, permission-filtered E2/Chat projection | P E2 consumer integration. Agree E03 exact read port, integrate status and deep links, prove reload/privacy. No replacement inbox, send engine or personal-mail sharing |
+| O16 Chat/Live same evidence, interruption/recovery/continuity and usable responsive mobile parity | S10/S36 shared Chat/Voice INT-104; existing Live/thread/ticket/relay/settlement; canonical turns | Existing PAIGE fold/Chat/Talk live; Executive and all Command Center tabs | D Executive responsive source, original-scope review transport#2455, same-store cache#2462/87ccff84 and eligible binding/status/mobile-sizing consumer#2463/73d8a03d and disposal guard#2469/4aaa84e2 with actual served-source readback. U current authenticated Chat recovery and Live; two prior CPU failures remain open. Synthetic native component proof does not accept full shell/cohorts, original thread/focus return, phone/keyboard/zoom or complete conversational continuity |
+| O17 Contextual canonical Conversations with real message/thread/approval/provider state and privacy | S29–33 E03/Communications; existing canonical message/thread/provider/approval records | Conversations owning home, permission-filtered E2/Chat projection | D canonical surface-reference foundation#2467/268ff690; P E2 read consumer and actual conversation/thread/provider/approval integration. Existing caller-scoped envelope port identified; integrate truthful status and existing links, prove reload/privacy. No replacement inbox, send engine or personal-mail sharing |
 | O18 Shared Deep Research with citations, persistence and later retrieval | S21–23; `research_knowledge.deep_research`, incumbent Research/Model Fabric/Knowledge owners; `research_runs/research_sources`, existing research read contracts | PAIGE question → existing Research card/library; separately approved Knowledge publication | G authorized run / P E2 context. Existing engine is not global unavailability; dormant R6B is not activation authority. Complete shared consumer after exact provider/cohort/spend/consent scope; prove cited persistence/retrieval |
 | O19 Actual conversational follow-up/action execution and verification after legitimate activation, plus honest interim refusal | S02–06/S10 shared Spine/Harness/Trust/Kit/Rail/Chat and owning domain; confirmations, canonical records and receipts | Chat/Live proposal/approval/result, department and activity | D historical refusal / G positive execution. INT-346 restriction remains. Refusal cannot close the required positive outcome; activate only authorized pathway, prove action/readback/replay/continuity |
 
@@ -217,3 +401,150 @@ isolated synthetic state/role/scope walkthroughs do not establish authenticated 
 Exact-head independent review/CI, deployment identity/readback, authenticated behavior and owner
 acceptance are separate evidence legs. No candidate result is marked PASS here before its own
 evidence exists.
+
+### October20 financial completion — inherited source reconciliation
+
+All nineteen outcome definitions remain required. O04 is not limited to bank
+account cards. The following recovered source is reused before new domain work:
+
+- Original #2021 reviewed `ab3f8243ce0795127eb274e2eb0e3995fd6adc5c` is now
+  MERGED `ed305fb25cba16877684955092fb1d0f58976dd3` with exact reviewed composition,
+  required CI and production web/source readback. It owns
+  native QuickBooks statement semantics and exact historical profit/margin math.
+  These helpers are UNMOUNTED; source tests are not authoritative ingestion,
+  persisted evidence, a live financial statement or customer acceptance.
+- Original #2032 (`7bba113fda01a7480c4530f282682319f83fd442`, OPEN) owns
+  sparse canonical liability compatibility and native obligation normalizers.
+  Reconcile its existing reader correction before interpreting these records;
+  do not invent a second liability/expense engine or infer settled bank cash.
+  Fresh172 controlled cases and actual PostgreSQL-to-reader proof PASS; required
+  native CI retained an18/19 crash-recovery failure and has one bounded same-head
+  reproducibility rerun. Source release/customer acceptance is not inferred.
+- #2047 is MERGED (`210ebbc3d2b750ae67a0dbe2b94a77a365f9888f`); its
+  company/version-authorized `read_finance_plan_catalog` is deployed, while
+  Finance/Spine/Fabric/UI consumer integration remains owed. Budgets/scenarios
+  already have canonical stores/readers; no replacement goal or plan store.
+
+Current Finance/Executive source compositionbaceaaa8 preserves VERA1b and mained305.
+Fresh262/262 owning/incumbent cases, type ratchet10/6 and productionbuild5603modules
+PASS. The preserved native packet has nineteen synthetic PNGs, exact product
+fonts, repaired contrast, keyboard/state/navigation and320/390px reflow proof.
+Actual browser zoom and authenticated Finance/Live/tenant/reload proof remain
+UNVERIFIED. VERA's recreated PR-only Preview passes correct121100/121300/121400
+history; required final source CI/release still gates its integration. These are
+prerequisite receipts, not additional accepted customer outcomes.
+
+Completion sequence after the current VERA/Finance source release: finish actual
+Banking consumer/native proof; integrate existing permitted liability/obligation
+reads with truthful sparse/partial/source-period states; bind statement helpers
+to canonical company/request/period/basis/source observations before any profit
+claim; integrate existing plan discovery/read/recovery, labeling assumptions
+separately and withholding unmatched actual variance. Then exact-head review/CI,
+production source/readback, ordinary SOLO permissions/isolation/reload and final
+owner evaluation. Provider activation, consequential actions and protected real
+fixtures keep their existing gates. No dormant tool/provider is activated by
+this inventory; originating records, issuer and authority remain canonical.
+
+## October 20: nine analytics catalogue entries and the required outcomes
+
+This is a reconciliation within the existing matrix, not another registry or a
+reduction of O01–O19. Official ownership is CAP-009–CAP-017 in the
+[Capabilities Ownership Register](https://docs.google.com/spreadsheets/d/1qMN3h4fU4zVftWY-KPheBL95SxrbyI7ykn7kIcWb_J4/edit#gid=1786286225).
+The original nine platform-authored `paige_skills` rows are present and active in
+production. Active/default-auto describes a recipe, not its caller's effective
+permission, Chat admission, source readiness or customer acceptance.
+
+| ID / existing slug | Existing outcomes | Supported customer subset and missing requirement | Canonical originating dependency / proposed panel ceiling |
+|---|---|---|---|
+| CAP-009 `ad_spend_efficiency` | O03–04/O08 | No canonical Business Review ad-efficiency producer. Do not reconstruct ROAS, CPL or attributed revenue. | EXP03 campaign/attribution evidence → existing Metric issuer; Coming Soon for this integration |
+| CAP-010 `churn_signal_detection` | O05/O08/O15 | Current client/lifecycle counts work; they do not prove a named client's churn risk. | EXP09 authorized health/service signals, EXP05 delivery → Fabric; Coming Soon for churn detection |
+| CAP-011 `cohort_analysis` | O03–05/O08 | Current snapshots cannot reconstruct historical acquisition-cohort retention/expansion. The issuer explicitly withholds unsupported retention. | EXP03 acquisition + EXP09 lifecycle + EXP04/11 financial evidence; Coming Soon |
+| CAP-012 `conversion_funnel_diagnosis` | O03/O08 | Permitted pipeline counts/current evidence work. Historical stage conversion, drop-off and causal diagnosis are absent. | EXP03/04 canonical pipeline/attribution → Metric issuer; Limited to current evidence |
+| CAP-013 `engagement_read` | O05/O08/O17 | Business Review has no channel engagement producer; contact totals or a listed provider are not engagement. | EXP03/09 authorized email/content/customer signals; Coming Soon for this integration |
+| CAP-014 `monthly_qbr_draft` | O01–02/O08/O13/O16 | The existing review supports last_30_days. A filed monthly document, exact approval and later artifact retrieval need proof. | Existing document/approval/Rail contracts, no new report store; Unverified for the filed deliverable |
+| CAP-015 `quarterly_narrative` | O01–02/O08/O13/O16 | The existing review supports current_quarter. A filed quarterly narrative with source/period continuity and recovery needs proof. | Same canonical document/approval/Rail contracts; Unverified for the filed deliverable |
+| CAP-016 `revenue_trend_read` | O03–04/O08 | The issuer-backed payments adapter compares compatible, complete recorded-receipt windows by currency. This is not recognized revenue, MRR/ARR, bank cash, profit or a forecast. | EXP04 receipts, EXP11 authoritative revenue series; Limited to the recorded-receipt subset |
+| CAP-017 `weekly_business_review` | O01–06/O08/O10/O14–16 | The same governed operating snapshot supports sourced weekly Chat and Executive reviews, named gaps, priorities, targets and departmental links. Full financial/client/marketing depth and Live/effects remain separate. | Existing business.operating_snapshot + owning domain adapters; Limited to available permitted evidence |
+
+These are ceilings for the bounded stated subsets, not unconditional badges.
+The shared panel must resolve the current shell, actor, tenant, entitlement and
+runtime/source evidence before claiming availability. A denied or failed read
+cannot inherit another account's Limited/Live state; an absent adapter does not
+prove that a specific external provider is disconnected. No nine-entry Live
+promotion follows from the recipe seed or a successful CI run.
+
+The current deployed panel was observed showing all nine as Listed/Unverified.
+ANT-161 coordinates the shared source writer and presentation contract; no parallel
+status engine or same-file panel edit is introduced here. The first small follow-up
+corrects only the canonical descriptions, with original-name/description/category/
+platform/system guards. It preserves slugs, tools, steps, tiers, lanes, activation,
+custom rows and every permission. Rollback-only PostgreSQL proof covers all nine
+updates, replay, custom/tenant/renamed/reclassified/unrelated negatives, inactive
+preservation and read-only update denial before/after. Actual badges and improved
+descriptions require the shared consumer's release and deployed panel verification.
+
+Source anchors: `20260903000000_skills_s2_cat6_analytics_interpretation.sql`;
+`_shared/skill-interpreter.ts` (generic context is not a Metric issuer read);
+`_shared/paige-skill/governed-adapter.ts`; `_shared/analytics-metrics/keys.ts`
+and `read.ts`; `_shared/paige-context/business-review.ts`, adapters and snapshot;
+`_shared/paige-spine/domains/business-review.ts`; `SoloPaigeWorkspace.tsx`
+and `useSoloSkills.ts`. Generic recipe execution and its confirmations must not
+be confused with already-admitted read-only Chat/domain tools.
+
+VERA #2400 and Finance #2402 are merged and source-verified; VERA remains the same
+addressable Intelligence/Finance/Risk specialist, with PAIGE principal COO and no
+new delegated runtime. Targets #2181 is merged; all actuals still use the issuer.
+Finance's bounded no-source read/navigation/reload was observed in the authorized
+SOLO workspace; populated Finance, provider readiness and full acceptance remain
+owed. Original 9/0 and 12/0/4 evidence remains historical. All nineteen outcomes,
+all nine owned capabilities and the single full-Experience founder evaluation
+remain required.
+
+Algorithm support for this catalogue correction: **NO VERIFIED ALGORITHM is added
+or activated.** ALG-03 COO business-health prioritization uses permitted source
+risks and freshness; ALG-13 Useful next-best-action recommendations needs a useful
+step and durable outcome. Their deterministic severity-order candidate is #2409,
+not full algorithm acceptance. ALG-06 Cash-flow forecasting is not established by
+receipt comparisons or stored Finance facts; ALG-04 Retention and customer-success
+signals still needs real cohort/activity evidence. ALG-11 Model quality and cost
+evaluation stays with the canonical Model Fabric/Intelligence contract; ALG-12
+Anomaly and incident detection stays with originating Operations evidence. These
+contracts are partial/unverified at their required acceptance level (official EXP
+Algorithms), not new implementations here. PAIGE/VERA consume NEXUS acquisition,
+MERIT commercial, CURA client, ZION operations and MENTOR knowledge/strategy outputs
+through the existing scoped Spine/Fabric/Rail contracts; historical coding lanes
+are not restarted.
+
+### Pre-edit routing: canonical nine-entry coverage metadata
+
+1. Outcome: understand the released subset and missing requirement before asking
+   PAIGE; preserve the9 original capability definitions and all19 outcomes.
+2. Domain: EXP02 analytics catalogue consumer; originating EXP03/04/05/09/11
+   measurements remain theirs. ANT161 reserves13030000 after EXP05/13020000.
+3. Harness/Gateway: presentation only, no new read or shared layer. Runtime
+   on-use Spine/Harness/Trust/provider authorization remains mandatory.
+4. Spine: existing business.operating_snapshot supports the named review subset;
+   generic skills.run is not claimed admitted or wired into ordinary Chat here.
+5. Providers: none called/activated. Missing Review producers do not establish an
+   external provider's connection state. Existing integration registry unchanged.
+6. Authority: canonical platform recipe metadata migration, no business action,
+   mutation verb, approval, autonomy lane, tier or permission change. Never Live.
+7. Durable work: no scheduler/job/event or executed customer work is introduced.
+8. Readback: applied migration plus exact9 public fields and ordinary panel/reload;
+   coverage labels are not business execution or Rail receipts.
+9. Surface: existing Chat Capabilities using acknowledged#2444 TruthPill consumer;
+   command-center.executive stays PARTIAL. No new surface/registry/availability engine.
+10. Proof: native PostgreSQL nine updates, unchanged identity/execution/unrelated
+    metadata, replay, custom/tenant/name/category/malformed/existing-field guards,
+    disabled preservation and reader denial. Exact-head review/CI/Preview and
+    production/account readback gate delivery; full actor/provider availability,
+    Live/effects and founder acceptance remain owed.
+
+REUSE existing paige_skills.metadata; EXTEND only its public catalogue_coverage
+field under exact-name/corrected-description/category/platform/system guards.
+Known/custom coverage is not overwritten; non-object metadata is preserved.
+Compatible#2444 presenter must release before this producer. Four unsupported
+integration areas use Coming Soon, three sourced subsets use Limited and the two
+filed-document deliverables remain Unverified, matching the table above. No
+coverage label asserts per-account access. NO VERIFIED ALGORITHM is added; the
+canonical ALG03/04/06/11/12/13 and PAIGE/VERA/originating specialist boundaries remain.

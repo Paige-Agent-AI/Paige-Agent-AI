@@ -366,9 +366,9 @@
       "group": "command-center",
       "tier_scope": ["solo standalone"],
       "owner_component": "src/solo/ExecutiveOverview.tsx via src/solo/CommandCenter.tsx",
-      "canonical_source": "business.operating_snapshot -> get_business_snapshot -> dispatchBusinessSnapshotChat -> composeBusinessReview; UI src/solo/data/useBusinessReview.ts invokes caller-JWT paige-business-review; list_business_missions, tenant-scoped paige_actions and get_solo_rail_activity remain their canonical owners",
+      "canonical_source": "business.operating_snapshot -> get_business_snapshot -> readBusinessSnapshotTransport -> caller-JWT paige-business-review -> dispatchBusinessSnapshotChat -> composeBusinessReview; UI src/solo/data/useBusinessReview.ts uses the same endpoint/composer; list_business_missions, tenant-scoped paige_actions and get_solo_rail_activity remain their canonical owners",
       "chain": {
-        "canonical_source": {"status": "partial", "note": "UI and Chat use the same Fabric composer and INT-340 issuer/resolver. Available Sales receipts/pipeline, Operations and Clients evidence is presented with its source semantics; absent producers and numeric goal KPIs remain explicitly unavailable."},
+        "canonical_source": {"status": "partial", "note": "UI and Chat reuse the same caller-JWT review worker, Fabric composer and INT-340 issuer/resolver. Sales receipts/pipeline, Operations, Clients, Game Plan and verified Finance source records retain their source semantics. Saved targets keep their own periods and compatible actuals; absent producers remain explicit. Full Chat completion/reload, Live and governed follow-through acceptance remain owed."},
         "tenant_scope": {"status": "server_resolved", "note": "The edge resolves caller/workspace on the caller JWT, and the issuer re-proves owner/admin authority. The UI rejects malformed/foreign-scope snapshots and hides prior workspace results; filed-work reads retain an explicit viewed-tenant filter. Integrated authenticated isolation proof remains owed."},
         "safe_context": {"status": "partial", "note": "Existing prompt handoff prefills the sole PAIGE composer without sending. Chat receives only the bounded review projection; E4 semantic record references are presentation metadata, resolved against the current account and re-authorized by the destination."},
         "authority": {"status": "inherited", "note": "business.operating_snapshot is read/read_only, approval none, workspace-admin seat. Existing consequential-action restrictions, Trust authority and the one Chat approval gate remain unchanged."},
@@ -448,11 +448,11 @@
       },
       "prohibited_context": ["finding text", "check/run ids", "registry internals", "scan flavour", "triggering actor"],
       "state": "UNAVAILABLE",
-      "state_reason": "A caller-scoped safe lens exists (systems_check_snapshot) but no Paige binding is built; blocked on SCR-2 (workspace subject) and SCR-3 (enumerate the counts). Isolation of C1/C2 is deliberate, not an oversight.",
+      "state_reason": "The Mind-shaped context lens remains unavailable pending SCR-2 (workspace subject) and SCR-3 (enumerated counts); C1/C2 isolation is deliberate. The existing native recorded-check UI separately reads systems_check_snapshot; its timestamp/status presentation does not grant Mind eligibility or prove on-demand scans, remediation, worker liveness or complete customer acceptance.",
       "evidence_class": ["source_read", "production_catalog"],
       "linked": [],
       "next_slice": "Phase 4.4: bind Systems Check as read-only Paige context AFTER SCR-2+SCR-3 land. A setup save must not auto-become Memory.",
-      "sources": ["docs/architecture/paige-mind-integration-matrix.md#systems-check", "docs/product/systems-check-operating-readiness-spec.md"]
+      "sources": ["docs/architecture/paige-mind-integration-matrix.md#systems-check", "docs/product/systems-check-operating-readiness-spec.md", "src/solo/SoloSystemsCheckWorkspace.tsx", "src/hooks/useSystemsCheck.ts"]
     },
     {
       "id": "command-center.mind",

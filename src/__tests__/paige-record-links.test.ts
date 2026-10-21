@@ -17,8 +17,17 @@ describe("readRecordLinks — the defensive reader for live frames and persisted
   it("retains the E4 destinations and admits only the bounded E2 Executive destinations", () => {
     expect([...READ_LINK_DESTINATIONS]).toEqual([
       "contacts", "sales_agreements", "sales_invoices", "sales_collections", "operations_work", "business_time_zone",
-      "executive", "finance", "sales_pipeline", "systems_check", "business_game_plan", "trust_compass", "mind", "calendar", "pipeline",
+      "executive", "finance", "sales_pipeline", "systems_check", "business_game_plan", "trust_compass", "mind", "calendar", "pipeline", "conversations",
     ]);
+  });
+
+  it("persists only a surface reference for Conversations, discarding private or supplied focus", () => {
+    const frame = readRecordLinks([
+      { destination: "conversations", record_id: A, subject: "Private subject", thread_key: "private@example.invalid", path: "/solo/1/clients/conversations", url: "https://foreign.invalid", account: 1 },
+      { destination: "conversations", record_id: B },
+    ]);
+    expect(frame).toEqual([{ destination: "conversations", record_id: null }]);
+    expect(readRecordLinks(JSON.parse(JSON.stringify(frame)))).toEqual(frame);
   });
 
   it("pipeline retains only a canonical deal UUID, without subject, URL or stored route", () => {
@@ -93,5 +102,12 @@ describe("readRecordLinks — the defensive reader for live frames and persisted
       { destination: "contacts", record_id: A, subject: "Acme" },
       { destination: "business_time_zone", record_id: null },
     ]);
+  });
+  it("round-trips an exact Play reference without retaining an old account, address or subject", () => {
+    const persisted = JSON.parse(JSON.stringify({ record_links: [{ destination: "business_game_plan", record_id: A,
+      subject: "Private Play", url: "/solo/old/command-center/business-game-plan", account: "old" }] }));
+    expect(readRecordLinks(persisted.record_links)).toEqual([{ destination: "business_game_plan", record_id: A }]);
+    expect(readRecordLinks([{ destination: "business_game_plan", record_id: "../foreign" }]))
+      .toEqual([{ destination: "business_game_plan", record_id: null }]);
   });
 });

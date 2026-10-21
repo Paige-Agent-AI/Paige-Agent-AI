@@ -75,6 +75,7 @@ vi.mock("@/components/paige/live/PaigeLiveConversation", () => ({
 import { PaigeAIChat } from "./PaigeAIChat";
 import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import { supabase } from "@/integrations/supabase/client";
+import { setComposerDraftSessionScope } from "@/lib/paigeComposerScopeState";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -132,6 +133,7 @@ describe("PaigeAIChat ComposerScopeState integration", () => {
   afterEach(async () => {
     await act(async () => root.unmount());
     host.remove();
+    setComposerDraftSessionScope({ kind: "clear" });
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
@@ -163,6 +165,46 @@ describe("PaigeAIChat ComposerScopeState integration", () => {
     }
     expect(textarea().disabled).toBe(false);
   };
+
+  it("ignores the pending status gate after unmount and browser teardown", async () => {
+    let resolveSession!: (value: Awaited<ReturnType<typeof supabase.auth.getSession>>) => void;
+    const pendingSession = new Promise<Awaited<ReturnType<typeof supabase.auth.getSession>>>(resolve => { resolveSession = resolve; });
+    vi.mocked(supabase.auth.getSession).mockReturnValueOnce(pendingSession);
+    const schedule = vi.spyOn(window, "setTimeout");
+    await render(); await type("Read my business state");
+    await act(async () => { send().click(); await settle(); });
+    const gate = schedule.mock.calls.find(([, delay]) => delay === 400)?.[0];
+    expect(typeof gate).toBe("function");
+    await act(async () => root.unmount());
+    const browserWindow = window;
+    try {
+      vi.stubGlobal("window", undefined);
+      expect(() => (gate as () => void)()).not.toThrow();
+    } finally {
+      vi.stubGlobal("window", browserWindow);
+      resolveSession({ data: { session: null }, error: null });
+      await act(async () => settle());
+    }
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("uses the incumbent composer guidance for failed reload retention without sending", async () => {
+    setComposerDraftSessionScope({ kind: "ready", tenantId: harness.tenantId!, userId: harness.userId! });
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("Quota"); });
+    await render(); await waitForWritable();
+    await type("Keep this unsent review question");
+    const guidance = host.querySelector('[data-solo-composer-guidance]');
+    expect(guidance?.getAttribute("role")).toBe("status");
+    expect(guidance?.textContent).toContain("Your draft isn't saved for reload");
+    expect(textarea().value).toBe("Keep this unsent review question");
+    expect(fetch).not.toHaveBeenCalled();
+    const clear = host.querySelector<HTMLButtonElement>('button[aria-label="Clear message"]')
+      ?? Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find(button => button.getAttribute("aria-label")?.startsWith("Clear"));
+    expect(clear).toBeDefined();
+    await act(async () => clear!.click());
+    expect(guidance?.textContent).toBe("");
+    expect(textarea().value).toBe("");
+  });
 
   // Ask PAIGE from a surface (src/lib/paigePromptHandoff.ts): the question lands in the composer and
   it("keeps Live guarded after Stop until canonical settlement, while text remains writable", async () => {
@@ -891,6 +933,30 @@ data: [DONE]
     expect(textarea().value).toBe("");
   });
 
+  it("explains a known recovery refusal without claiming a lost connection or replaying the request", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({code:"INTERACTIVE_RECOVERY_READ_ONLY",message_accepted:true},{status:409})));
+    await render(); await type("Review the existing work");
+    await act(async () => { send().click(); await settle(); });
+    expect(host.textContent).toContain("Your message was recorded, but new actions and attachments are on hold");
+    expect(host.textContent).not.toContain("The connection ended before PAIGE confirmed");
+    expect(Array.from(host.querySelectorAll("button")).some(b=>b.textContent==="Retry")).toBe(false);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(host.textContent?.match(/Review the existing work/g)).toHaveLength(1);
+  });
+
+  it.each([
+    {status:502,body:{code:"INTERACTIVE_RECOVERY_READ_ONLY",message_accepted:true}},
+    {status:409,body:{code:"OTHER_REFUSAL",message_accepted:true}},
+    {status:409,body:{code:"INTERACTIVE_RECOVERY_READ_ONLY"}},
+    {status:409,body:{code:"INTERACTIVE_RECOVERY_READ_ONLY",message_accepted:false}},
+  ])("does not infer accepted recovery feedback from $status or contradictory metadata", async ({status,body}) => {
+    vi.stubGlobal("fetch",vi.fn(async()=>Response.json(body,{status})));
+    await render(); await type("Keep refusal truthful");
+    await act(async()=>{send().click();await settle();});
+    expect(host.textContent).not.toContain("Your message was recorded, but new actions and attachments are on hold");
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
   it("Stop during lazy thread creation releases submission readiness for a fresh Send", async () => {
     let resolveThread!: (id: string) => void;
     harness.ensureThread.mockImplementationOnce(() => new Promise<string>((resolve) => { resolveThread = resolve; }));
@@ -907,18 +973,31 @@ data: [DONE]
     expect(textarea().disabled).toBe(false);
   });
 
-  it("a superseded HTTP error body cannot overwrite the newer turn", async () => {
+  it.each([502,409])("a superseded HTTP %s error body cannot overwrite the newer turn", async status => {
     let resolveBody!: (body: unknown) => void;
-    const slowError = { ok: false, status: 502, clone: () => ({ json: () => new Promise((resolve) => { resolveBody = resolve; }) }) };
+    const slowError = { ok: false, status, clone: () => ({ json: () => new Promise((resolve) => { resolveBody = resolve; }) }) };
     const fetchMock = vi.fn().mockResolvedValueOnce(slowError).mockResolvedValueOnce(streamed("current answer"));
     vi.stubGlobal("fetch", fetchMock);
     await render(); await type("old instruction");
     await act(async () => { send().click(); await settle(); });
     await type("new instruction");
     await act(async () => { send().click(); await settle(); });
-    await act(async () => { resolveBody({ message_accepted: true }); await settle(); });
+    await act(async () => { resolveBody({ code:"INTERACTIVE_RECOVERY_READ_ONLY",message_accepted: true }); await settle(); });
     expect(host.textContent).toContain("current answer");
     expect(host.textContent).not.toContain("Check what finished before repeating any action");
+    expect(host.textContent).not.toContain("Your message was recorded, but new actions and attachments are on hold");
+  });
+
+  it("clears refusal wording only for the owner's next deliberate question without replaying the first",async()=>{
+    vi.stubGlobal("fetch",vi.fn().mockResolvedValueOnce(Response.json({code:"INTERACTIVE_RECOVERY_READ_ONLY",message_accepted:true},{status:409})).mockResolvedValueOnce(streamed("existing records answer")));
+    await render();await type("review the first request");
+    await act(async()=>{send().click();await settle();});
+    expect(fetch).toHaveBeenCalledTimes(1);
+    await type("what is already recorded?");
+    await act(async()=>{send().click();await settle();});
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(host.textContent).toContain("existing records answer");
+    expect(host.textContent).not.toContain("Your message was recorded, but new actions and attachments are on hold");
   });
 
   it("Stop preserves the canonical optimistic turn and a next draft without resending work", async () => {

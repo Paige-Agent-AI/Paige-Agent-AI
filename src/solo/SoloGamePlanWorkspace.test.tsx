@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 import { createRoot, type Root } from "react-dom/client";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import type { StrategicPlay } from "./data/useBusinessGamePlanMissions";
 
 const harness = vi.hoisted(() => ({
@@ -45,6 +45,9 @@ vi.mock("./data/useSoloGamePlan", () => ({
     decisions: [], decisionsStatus: "ready",
   }),
 }));
+vi.mock("@/hooks/useTenantContext", () => ({ useOptionalTenantContext: () => ({ activeUserId: "test-owner",
+  activeTenantId: "11111111-1111-4111-8111-111111111111", accountContextStatus: "ready", loading: false }) }));
+vi.mock("./MissionTargetsPanel", () => ({ MissionTargetsPanel: () => <div>Canonical measured targets</div> }));
 vi.mock("./data/useBusinessGamePlanMissions", async () => {
   const actual = await vi.importActual<typeof import("./data/useBusinessGamePlanMissions")>("./data/useBusinessGamePlanMissions");
   return { ...actual, useBusinessGamePlanMissions: () => harness.mission };
@@ -72,8 +75,9 @@ beforeEach(() => {
 });
 afterEach(() => { act(() => root.unmount()); host.remove(); });
 
-function render() {
-  act(() => { root.render(<MemoryRouter initialEntries={["/solo/42/command-center/business-game-plan"]}><Routes><Route path="/solo/:account/*" element={<SoloGamePlanWorkspace workspaceId="11111111-1111-4111-8111-111111111111" accountContext={{ accountName: "Clearpath", accountType: "standalone", parentTenantId: null }} openPaige={harness.openPaige} />} /></Routes></MemoryRouter>); });
+function LocationProbe() { const location = useLocation(); return <output data-location={location.pathname + location.search + location.hash} />; }
+function render(entry = "/solo/42/command-center/business-game-plan") {
+  act(() => { root.render(<MemoryRouter initialEntries={[entry]}><LocationProbe /><Routes><Route path="/solo/:account/*" element={<SoloGamePlanWorkspace workspaceId="11111111-1111-4111-8111-111111111111" accountContext={{ accountName: "Clearpath", accountType: "standalone", parentTenantId: null }} openPaige={harness.openPaige} />} /></Routes></MemoryRouter>); });
 }
 function click(label: string) {
   const buttons = [...host.querySelectorAll("button")];
@@ -173,6 +177,24 @@ describe("Business Game Plan owner-complete vertical", () => {
     render();
     await act(async () => { click("Protect renewal quality"); await Promise.resolve(); });
   };
+  it("rehydrates an exact Play locator after a fresh mount and clears only that locator on close", async () => {
+    const entry = `/solo/42/command-center/business-game-plan?view=quarter&play=${missionId}#direction`;
+    harness.mission.getDetail.mockResolvedValue(detail());
+    await act(async () => render(entry));
+    expect(harness.mission.getDetail).toHaveBeenLastCalledWith(missionId);
+    expect(host.querySelector('[role="dialog"]')?.textContent).toContain("Protect renewal quality");
+    act(() => root.unmount()); root = createRoot(host);
+    await act(async () => render(entry));
+    expect(harness.mission.getDetail).toHaveBeenCalledTimes(2);
+    await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="Close"]')!.click());
+    expect(host.querySelector('[role="dialog"]')).toBeNull();
+    expect(host.querySelector('output')?.getAttribute('data-location')).toBe('/solo/42/command-center/business-game-plan?view=quarter#direction');
+    expect(harness.mission.mutate).not.toHaveBeenCalled();
+  });
+  it("does not pass a malformed URL locator to the record reader", async () => {
+    await act(async () => render('/solo/42/command-center/business-game-plan?play=..%2Fforeign'));
+    expect(harness.mission.getDetail).not.toHaveBeenCalled(); expect(host.querySelector('[role="dialog"]')).toBeNull();
+  });
   const setField = (label: string, value: string) => {
     const field = [...host.querySelectorAll("label")].find((node) => node.textContent?.includes(label))?.querySelector("input,textarea,select") as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null;
     expect(field, label).toBeTruthy();

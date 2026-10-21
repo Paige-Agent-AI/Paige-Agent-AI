@@ -170,7 +170,7 @@ export function SoloBusinessInterview({ threadId, busy, refreshEpoch, onPause, o
     setCheckpointBusy(false);
     if (!recorded) { setError("Progress could not be recorded. Keep this conversation open and retry."); return; }
     setNextField(field); setPaused(phase === "paused");
-    setMessage(phase === "paused" ? "Interview paused in this conversation." : "Continue with PAIGE in this conversation. Use the Continue interview prompt below, then press Send.");
+    setMessage(phase === "paused" ? "Interview paused in this conversation." : "Continue with PAIGE in this conversation — just tell her to keep going in the message box, then press Send.");
     if (phase === "paused") onPause();
   }
   const proposal = context.pendingProposal;

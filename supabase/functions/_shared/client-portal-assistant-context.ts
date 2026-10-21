@@ -16,6 +16,8 @@ export type CustomerAssistantContext=Readonly<{persona:ClientPortalPersonaInput;
  history:Array<{role:"user"|"assistant";content:string;source_refs:CustomerSourceRef[]}>;historyLimited:boolean;
  ranking:"relevance"|"recency";sourcesLimited:boolean}>;
 type Caller={rpc(name:string,args:Record<string,unknown>):PromiseLike<{data:unknown;error:unknown}>};
+// An observation, never native admission or stable model/source data: acceptance changes it.
+type CustomerContextRead=ContextSourceResult<CustomerAssistantContext|null>&Readonly<{queryEmbeddingEligible?:boolean}>;
 const uuid=(v:unknown):v is string=>typeof v==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(v);
 const requestUuid=(value:unknown):string|null=>{
  const normalized=typeof value==="string"?value.toLowerCase():null;return uuid(normalized)?normalized:null;
@@ -71,17 +73,17 @@ const SOURCE_V2=[...SOURCE_V1,"passages","customer_kind","valid_until"];
  * service client, staff Knowledge read or fallback presentation source.
  * The query embedding only orders already-authorized material (E09 K2); NULL means recency.
  */
-export async function readCustomerAssistantContext(caller:Caller,actorInput:string,threadInput:unknown,intentInput:unknown,queryEmbedding:number[]|null=null):Promise<ContextSourceResult<CustomerAssistantContext|null>>{
+export async function readCustomerAssistantContext(caller:Caller,actorInput:string,threadInput:unknown,intentInput:unknown,queryEmbedding:number[]|null=null):Promise<CustomerContextRead>{
  const actorId=requestUuid(actorInput),threadId=requestUuid(threadInput),intentId=requestUuid(intentInput);
  if(!actorId||!threadId||!intentId)return contextDegraded("customer_context_scope_invalid");
  if(queryEmbedding!==null&&!validQueryEmbedding(queryEmbedding))return contextDegraded("customer_context_scope_invalid");
  try{
   const {data,error}=await caller.rpc("client_portal_assistant_context_v2",{p_thread:threadId,p_intent:intentId,p_query_embedding:queryEmbedding});
   if(error)return obj(error)?.code==="42501"?contextUnavailable("customer_context_withdrawn"):contextDegraded("customer_context_read_failed");
-  const row=closed(data,["frame","thread_id","intent_id","snapshot","sources","history","history_limited","ranking","sources_limited","authorized_count"]);
+  const row=closed(data,["frame","thread_id","intent_id","snapshot","sources","history","history_limited","ranking","sources_limited","authorized_count","query_embedding_eligible"]);
   if(!row||row.thread_id!==threadId||row.intent_id!==intentId||typeof row.history_limited!=="boolean"||
    (row.ranking!=="relevance"&&row.ranking!=="recency")||typeof row.sources_limited!=="boolean"||
-   !Number.isSafeInteger(row.authorized_count)||Number(row.authorized_count)<0)return contextDegraded("customer_context_invalid");
+   !Number.isSafeInteger(row.authorized_count)||Number(row.authorized_count)<0||typeof row.query_embedding_eligible!=="boolean")return contextDegraded("customer_context_invalid");
   const presentation=await readClientPortalPersonaSource({rpc:async()=>({data:row.frame,error:null})},actorId);
   if(presentation.status!=="available"||!presentation.data)return contextUnavailable("customer_context_withdrawn");
   let snapshot:CustomerSourceSnapshot|null=null;
@@ -131,15 +133,15 @@ export async function readCustomerAssistantContext(caller:Caller,actorInput:stri
    history.push({role:turn.role,content:turn.content,source_refs:turnRefs});
   }
   if(history.length&&history[0].role!=="user")return contextDegraded("customer_context_invalid");
-  return contextAvailable({persona:presentation.data,threadId,intentId,snapshot,sources,history,historyLimited:row.history_limited,
-   ranking:row.ranking,sourcesLimited:row.sources_limited});
+  return {...contextAvailable({persona:presentation.data,threadId,intentId,snapshot,sources,history,historyLimited:row.history_limited,
+   ranking:row.ranking,sourcesLimited:row.sources_limited}),queryEmbeddingEligible:row.query_embedding_eligible};
  }catch{return contextDegraded("customer_context_read_failed");}
 }
 
 /** Stop/status never send model context. Preserve their native thread and
  * publication checks even when an accepted turn's Knowledge was withdrawn.
  */
-export async function readCustomerAssistantControlContext(caller:Caller,actorInput:string,threadInput:unknown,intentInput:unknown):Promise<ContextSourceResult<CustomerAssistantContext|null>>{
+export async function readCustomerAssistantControlContext(caller:Caller,actorInput:string,threadInput:unknown,intentInput:unknown):Promise<CustomerContextRead>{
  const actorId=requestUuid(actorInput),threadId=requestUuid(threadInput),intentId=requestUuid(intentInput);
  if(!actorId||!threadId||!intentId)return contextDegraded("customer_context_scope_invalid");
  const source=await readClientPortalPersonaSource({rpc:name=>caller.rpc(name,{})},actorId);

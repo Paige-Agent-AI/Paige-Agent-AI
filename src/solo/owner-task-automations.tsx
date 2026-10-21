@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useOwnerTaskAutomations } from "./data/useOwnerTaskAutomations";
+import { OwnerTaskProcessHistory } from "./owner-task-process-history";
 import type { OwnerTaskReview } from "./data/ownerTaskAutomation";
 
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
@@ -35,10 +36,15 @@ const feedbackWords = (feedback: NonNullable<ReturnType<typeof useOwnerTaskAutom
   }
 };
 
-export function OwnerTaskAutomations() {
+export function OwnerTaskAutomations({ navigationHeld = false }: { navigationHeld?: boolean }) {
   const a = useOwnerTaskAutomations(), id = useId(), { pathname } = useLocation();
   const base = pathname.match(/^(\/solo\/[^/]+)(?:\/|$)/)?.[1];
   const [review, setReview] = useState<{ item: OwnerTaskReview; scope: string } | null>(null);
+  const historySourceRef = useRef<HTMLButtonElement | null>(null);
+  const closeHistory = () => {
+    a.closeHistory();
+    if (historySourceRef.current?.isConnected) historySourceRef.current.focus();
+  };
   const cancelRef = useRef<HTMLButtonElement>(null), refreshRef = useRef<HTMLButtonElement>(null);
   const sourceRef = useRef<HTMLButtonElement | null>(null), scopeRef = useRef(a.scopeKey);
   scopeRef.current = a.scopeKey;
@@ -82,11 +88,18 @@ export function OwnerTaskAutomations() {
               {canEnable && <button type="button" className="sa-ctl" disabled={a.busy || a.needsRefresh} aria-expanded={selected === r}
                 aria-describedby={`${id}-${r.id}-name`}
                 aria-controls={selected === r ? `${id}-${r.id}-review` : undefined}
-                onClick={e => { sourceRef.current = e.currentTarget; setReview({ item: r, scope: a.scopeKey }); }}>Review to enable</button>}
+                onClick={e => { a.closeHistory(); sourceRef.current = e.currentTarget; setReview({ item: r, scope: a.scopeKey }); }}>Review to enable</button>}
               {r.process.state !== "paused" && (r.process.state === "live" || !supported) && <button type="button" className="sa-ctl"
                 aria-describedby={`${id}-${r.id}-name`}
                 disabled={a.busy || a.needsRefresh} onClick={() => void submit(r, "pause")}>Pause future contacts</button>}
             </div>
+            <div className="sa-rule-controls"><button type="button" className="sa-ctl sa-owner-task-history-open" disabled={a.busy || a.needsRefresh}
+              aria-expanded={a.history.status !== "closed" && a.history.processId === r.id}
+              aria-controls={a.history.status !== "closed" && a.history.processId === r.id ? `${id}-${r.id}-history` : undefined}
+              aria-describedby={`${id}-${r.id}-name`}
+              onClick={event => { historySourceRef.current = event.currentTarget; setReview(null); void a.openHistory(r); }}>View history</button></div>
+            <OwnerTaskProcessHistory source={a} review={r} account={base?.split("/")[2] ?? null}
+              id={`${id}-${r.id}-history`} close={closeHistory} navigationHeld={navigationHeld} />
             {selected === r && <div id={`${id}-${r.id}-review`} className="sa-editor" onKeyDown={e => { if (e.key === "Escape" && !a.busy) { e.preventDefault(); cancel(); } }}>
               <div className="sa-field"><p className="sa-note">Enable this exact task for contacts created after you enable it. Each occurrence waits for your approval. No task is created by enabling.</p></div>
               <div className="sa-editor-foot"><button type="button" className="sa-action" data-primary disabled={a.busy}

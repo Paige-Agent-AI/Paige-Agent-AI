@@ -9,6 +9,7 @@ import { useTierFeatures } from "@/hooks/useTierFeatures";
 import { useSubtabRoute } from "@/lib/routing/useSubtabRoute";
 import { useSoloKnowledge } from "./data/useSoloKnowledge";
 import { useSoloSkills } from "./data/useSoloSkills";
+import { presentCatalogueCoverage } from "./catalogue-coverage";
 import { clearPaigeSurfaceScope, getPaigeBusinessPlanScope, getPaigeClientScope, subscribePaigeClientScope } from "./paigeClientScope";
 import { clearPaigePublicPresenceScope, getPaigePublicPresenceScope, subscribePaigePublicPresenceScope } from "./paigePublicPresenceScope";
 import "./solo-paige-workspace.css";
@@ -243,22 +244,25 @@ function CapabilitiesView() {
       <PanelHeader
         eyebrow="Skill catalogue"
         title="Workspace capabilities"
-        description="Listed skills may still need permissions or connections. PAIGE checks current availability when you ask to use them."
+        description="Coverage shows released functionality. PAIGE checks permissions and connections when you ask."
         state={<TruthPill>Catalogue</TruthPill>}
       />
       <div className="spw-scroll">
         <section className="spw-capabilities" aria-label="Capabilities">
-          <div className="spw-cap-head"><span>Capability</span><span>Status</span><span>Access</span></div>
+          <div className="spw-cap-head"><span>Capability</span><span>Coverage</span><span>Access</span></div>
           {capability.loading && <div className="spw-state" role="status">Loading this workspace’s skill catalogue…</div>}
           {capability.error && <div className="spw-state spw-state-error" role="alert"><strong>Capabilities could not be loaded.</strong><span>{capability.error}</span><button type="button" onClick={capability.refresh}><RotateCw aria-hidden size={14} /> Retry</button></div>}
           {capability.empty && <div className="spw-state"><Wrench aria-hidden size={24} /><strong>No skills are listed</strong><span>This workspace’s skill catalogue is empty.</span></div>}
-          {rows.map((skill) => (
+          {rows.map((skill) => {
+            const coverage = presentCatalogueCoverage(skill);
+            return (
             <div className="spw-cap-row" key={skill.slug}>
               <div><strong>{skill.n}</strong><small>{skill.d || skill.cat || "Registry description unavailable"}</small></div>
-              <TruthPill>{skill.on ? "Listed" : "Inactive"}</TruthPill>
+              <TruthPill tone={coverage?.tone}>{coverage?.label ?? (skill.on ? "Listed" : "Inactive")}</TruthPill>
               <span>Unverified</span>
             </div>
-          ))}
+            );
+          })}
           {/* §13 — THIS ROW CONTRADICTED THE SURFACE IT DESCRIBES. It read "Partial / Not
               activated" while the hold-to-dictate mic sits live in the composer one tab away, in
               this same workspace, wired to `paige-dictate`. A capability panel that tells a person
@@ -287,7 +291,7 @@ export function SoloPaigeWorkspace({
   onboarding?: boolean;
   visible?: boolean;
 } = {}) {
-  const { activeTenantId, isPlatformStaff } = useTenantContext();
+  const { activeTenantId, activeUserId, isPlatformStaff } = useTenantContext();
   // §60 — does this account type carry Live Conversation? Answered in the one home
   // (src/lib/tier/tierFeatures.ts), never by an inline account_type compare. While the tenant is
   // still resolving the classification defaults to the permissive solo tier, so stay optimistic
@@ -444,9 +448,8 @@ export function SoloPaigeWorkspace({
           activeThreadId={resumedThread}
           onTrace={observeChat}
           greeting={interviewFocused && firstRun ? "I'm PAIGE. What does your business do, and what would you most like to improve?" : interviewFocused ? "I'm PAIGE. Tell me what your business does and what you'd most like to improve. We'll take it one question at a time; you can review, skip or correct each detail." : "What are we moving? Tell me the outcome, and I’ll show what I can read, draft, or ask you to approve."}
-          chips={interviewFocused ? profileStatus?.tenantId === activeTenantId && profileStatus.state === "ready" && profileStatus.hasConfirmedPriority
-            ? [...INTERVIEW_NEXT_PROMPTS, { label: "Continue interview", prompt: "Continue our business interview using my current Setup records. Ask the next useful question, and respect any topics I skipped." }]
-            : [{ label: "Start interview", prompt: "Help me introduce my business and build my Setup profile. Ask one useful question at a time." }, { label: "Continue interview", prompt: "Continue our business interview using my current Setup records. Ask the next useful question, and respect any topics I skipped." }] : undefined}
+          chips={interviewFocused && profileStatus?.tenantId === activeTenantId && profileStatus.state === "ready" && profileStatus.hasConfirmedPriority
+            ? [...INTERVIEW_NEXT_PROMPTS] : undefined}
           clientId={clientScope?.clientId ?? null}
           surfaceContext={interviewFocused ? { kind: "solo_business_interview" } : !clientScope && !planScope && presenceScope ? { kind: presenceScope.kind, step: presenceScope.step, intendedAction: presenceScope.intendedAction } : undefined}
           businessMissionId={!clientScope ? planScope?.businessMissionId ?? null : null}
@@ -470,13 +473,13 @@ export function SoloPaigeWorkspace({
               <button type="button" className="spw-link-button spw-authority" onClick={releaseScope}>Clear</button>
             </div>
           ) : undefined}
-          conversationHeader={<div className={firstRun ? "spw-onboarding-header" : undefined}>{visible && tab === "chat" && firstRun && interviewFocused && <SoloOnboardingStage thinking={chatBusy} profile={profileStatus?.tenantId === activeTenantId ? profileStatus : null} />}{resumeEligible && verifiedResume?.scope === resumeScope && verifiedResume.state === "failed" && <div className="spw-state"><p role="alert">That interview could not be verified for this workspace. Try again or choose a conversation from history.</p><button type="button" onClick={() => { setVerifiedResume(null); setResumeAttempt(attempt => attempt + 1); }}>Retry interview verification</button><button type="button" onClick={leaveReturnVerification}>Back to conversation history</button></div>}<div className={`spw-chat-head${firstRun && interviewFocused ? " spw-chat-head--onboarding-open" : ""}`}><div><strong>PAIGE</strong><span>{firstRun ? "Your business interview" : "Active Solo account · tenant-scoped"}</span></div>{!clientScope && !planScope && !presenceScope && <WeeklyResponsibilityEntry hideEmpty={firstRun} />}{!clientScope && !planScope && !presenceScope && <button type="button" className="spw-link-button" aria-expanded={interviewOpen} onClick={() => setInterviewOpen(open => !open)}>{interviewOpen ? "Close profile" : "Business interview"}</button>}</div>{interviewFocused && <SoloBusinessInterview key={activeTenantId ?? "unresolved"} threadId={interviewThreadId} busy={chatBusy} refreshEpoch={interviewRefresh} onPause={() => setInterviewOpen(false)} onboarding={firstRun} onProfileStatus={observeProfile} />}</div>}
+          conversationHeader={<div className={firstRun ? "spw-onboarding-header" : undefined}>{visible && tab === "chat" && firstRun && !clientScope && !planScope && !presenceScope && <SoloOnboardingStage thinking={chatBusy} profile={profileStatus?.tenantId === activeTenantId ? profileStatus : null} onResumeProfile={() => setInterviewOpen(true)} profileOpen={interviewOpen} />}{resumeEligible && verifiedResume?.scope === resumeScope && verifiedResume.state === "failed" && <div className="spw-state"><p role="alert">That interview could not be verified for this workspace. Try again or choose a conversation from history.</p><button type="button" onClick={() => { setVerifiedResume(null); setResumeAttempt(attempt => attempt + 1); }}>Retry interview verification</button><button type="button" onClick={leaveReturnVerification}>Back to conversation history</button></div>}<div className={`spw-chat-head${firstRun && interviewFocused ? " spw-chat-head--onboarding-open" : ""}`}><div><strong>PAIGE</strong><span>{firstRun ? "Your business interview" : "Active Solo account · tenant-scoped"}</span></div>{!clientScope && !planScope && !presenceScope && <WeeklyResponsibilityEntry hideEmpty={firstRun} />}</div>{interviewFocused && <SoloBusinessInterview key={activeTenantId ?? "unresolved"} threadId={interviewThreadId} busy={chatBusy} refreshEpoch={interviewRefresh} onPause={() => setInterviewOpen(false)} onboarding={firstRun} onProfileStatus={observeProfile} />}</div>}
         />}
       </section>
       <section id="spw-panel-knowledge" role="tabpanel" aria-labelledby="spw-tab-knowledge" hidden={tab !== "knowledge"} className="spw-panel">{tab === "knowledge" && <KnowledgeView />}</section>
       <section id="spw-panel-research" role="tabpanel" aria-labelledby="spw-tab-research" hidden={tab !== "research"} className="spw-panel">{tab === "research" && <ResearchView activeTenantId={activeTenantId} />}</section>
       <section id="spw-panel-helpers" role="tabpanel" aria-labelledby="spw-tab-helpers" hidden={tab !== "helpers"} className="spw-panel">{tab === "helpers" && <HelpersView />}</section>
-      <section id="spw-panel-capabilities" role="tabpanel" aria-labelledby="spw-tab-capabilities" hidden={tab !== "capabilities"} className="spw-panel">{tab === "capabilities" && <CapabilitiesView />}</section>
+      <section id="spw-panel-capabilities" role="tabpanel" aria-labelledby="spw-tab-capabilities" hidden={tab !== "capabilities"} className="spw-panel">{tab === "capabilities" && <CapabilitiesView key={`${activeUserId ?? "resolving"}:${activeTenantId ?? "resolving"}`} />}</section>
       <span className="spw-sr" aria-live="polite">{TABS.find((item) => item.id === tab)?.label} view open</span>
     </div>
   );

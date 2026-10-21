@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { CalendarDays, RefreshCw, ArrowUpRight } from "lucide-react";
 import { tenantRoutePrefixForPath } from "@/components/tenant-shell/tenantShellRoutes";
@@ -7,8 +7,8 @@ import { planningItemHref, reviewWeeklyProposal, WEEKDAYS, weeklyInstantLabel, w
 import type { WeeklyOwnerRead } from "./weekly-owner-read";
 import "./weekly-responsibility.css";
 
-export function WeeklyResponsibilityPanel({ read, refresh, pathname, onRequestPrepared }: {
-  read: WeeklyOwnerRead; refresh: () => void; pathname: string; onRequestPrepared?: () => void;
+export function WeeklyResponsibilityPanel({ read, refresh, pathname, onRequestPrepared, draftComposer }: {
+  read: WeeklyOwnerRead; refresh: () => void; pathname: string; onRequestPrepared?: () => void; draftComposer?: ReactNode;
 }) {
   const snapshot = read.status === "ready" ? read.snapshot : null;
   const businessZone = snapshot?.business_time_zone.state === "configured" ? snapshot.business_time_zone.zone : null;
@@ -51,12 +51,14 @@ export function WeeklyResponsibilityPanel({ read, refresh, pathname, onRequestPr
             {check.last_run.status === "unknown" && <p>The result is unknown. It must be reconciled before any replay; an older verified check does not resolve this attempt.</p>}
             {check.last_run.status === "failed" && <p>This attempt did not produce a verified completed check. Review the failure before another execution.</p>}</div>}
           {last ? <div className="e5-weekly-result"><h4>Last verified check</h4><p>Completed check · {weeklyInstantLabel(last.observed_at, businessZone)}</p>
-            <p><strong>{last.counts.open} outstanding</strong> · {last.counts.blocked} blocked · {last.counts.overdue} overdue · {last.counts.due_next_week} due in the following week · {last.counts.undated} undated.</p>
+            {last.observation_version === 2 ? <p><strong>{last.counts.open} outstanding</strong> · {last.counts.blocked} blocked. Work deadlines: {last.counts.overdue} overdue · {last.counts.due_next_week} due in the following week · {last.counts.undated} without a deadline.</p>
+              : <><p><strong>{last.counts.open} outstanding</strong> · {last.counts.blocked} blocked · Historical totals: {last.counts.overdue} overdue · {last.counts.due_next_week} due in the following week · {last.counts.undated} undated.</p><p>These historical date totals may include reminder dates. Inspect the original work to verify its current deadline.</p></>}
             <p>The check reviewed this work. It did not complete or change the underlying tasks.</p>
             {last.truncated && <p>Results show up to 50 source items. Counts cover the full eligible observation.</p>}
             {last.source_items ? <ul className="e5-weekly-sources">{last.source_items.map(item => {
               const href = planningItemHref(pathname, { kind: "planning_item", id: item.id });
-              return <li key={item.id}>{href ? <Link to={href}>{item.title}<ArrowUpRight size={14} aria-hidden /></Link> : <span>{item.title}</span>}<small>{item.status.replace(/_/g, " ")} at the check</small></li>;
+              return <li key={item.id}>{href ? <Link to={href}>{item.title}<ArrowUpRight size={14} aria-hidden /></Link> : <span>{item.title}</span>}<small>{item.status.replace(/_/g, " ")} at the check</small>
+                {item.kind === "reminder" && <small>{item.remind_at ? `Reminder at the check: ${weeklyInstantLabel(item.remind_at, businessZone)}` : "Reminder time was not recorded in this historical check."}</small>}</li>;
             })}</ul> : <p>Source links are unavailable for this receipt. Open Operations to inspect current work.</p>}
             <details><summary>Verified receipt</summary><dl className="e5-weekly-facts e5-weekly-receipt">
               <div><dt>Receipt</dt><dd>{last.receipt_id}</dd></div><div><dt>Occurrence</dt><dd>{last.event_id}</dd></div><div><dt>Act</dt><dd>{last.act_id}</dd></div>
@@ -69,7 +71,7 @@ export function WeeklyResponsibilityPanel({ read, refresh, pathname, onRequestPr
         </article>;
       })}
       {snapshot.has_more && <p>This bounded read shows up to 50 responsibilities; more records may exist.</p>}
-      {!planning ? <button type="button" className="e5-weekly-primary" onClick={() => setPlanning(true)}>Prepare a weekly responsibility</button> : <form className="e5-weekly-planning" onSubmit={event => { event.preventDefault(); if (!proposal) setFeedback("Choose a valid schedule and time zone."); else { setReviewing(true); setFeedback(""); } }}>
+      {!draftComposer && (!planning ? <button type="button" className="e5-weekly-primary" onClick={() => setPlanning(true)}>Prepare a weekly responsibility</button> : <form className="e5-weekly-planning" onSubmit={event => { event.preventDefault(); if (!proposal) setFeedback("Choose a valid schedule and time zone."); else { setReviewing(true); setFeedback(""); } }}>
         <h3>{reviewing ? "Review your proposal" : "Prepare the schedule"}</h3>
         <p>Local proposal only. Nothing is scheduled or approved.</p>
         {!reviewing ? <div className="e5-weekly-fields"><label>Day<select value={weekday} onChange={event => setWeekday(Number(event.target.value))}>{WEEKDAYS.map((day, i) => <option value={i + 1} key={day}>{day}</option>)}</select></label>
@@ -78,9 +80,10 @@ export function WeeklyResponsibilityPanel({ read, refresh, pathname, onRequestPr
           : <><p className="e5-weekly-schedule">Every {WEEKDAYS[weekday - 1]} at {time}<br />{proposal?.timezone}</p><p>Read your personal outstanding Planning work, report attention and preserve an internal result. No task changes, customer contact or provider sends.</p><p>Recurring scheduling and authorization are unavailable here. Preparing this request gives PAIGE no execution permission.</p></>}
         <div className="e5-weekly-actions">{!reviewing ? <button className="e5-weekly-primary" type="submit">Review proposal</button> : <><button type="button" disabled>Authorize schedule unavailable</button><button type="button" className="e5-weekly-primary" onClick={prepare}>Put request in Chat</button><button type="button" onClick={() => setReviewing(false)}>Change proposal</button></>}
           <button type="button" onClick={() => { setPlanning(false); setReviewing(false); setFeedback(""); }}>Discard proposal</button></div>
-      </form>}
+      </form>)}
       {feedback && <p role="status">{feedback}</p>}
     </>}
+    {draftComposer}
     {root && <nav className="e5-weekly-navigation" aria-label="Weekly responsibility records"><Link to={`${root}/clients/calendar`}>Clients → Calendar</Link><Link to={`${root}/operations/work`}>Operations → Work</Link></nav>}
   </div>;
 }

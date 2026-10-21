@@ -1,4 +1,5 @@
 import { KNOWLEDGE_TOOLS } from "../_shared/paige-spine/domains/knowledge.ts";
+import { PLATFORM_OPERATOR_READ_TOOLS } from "../_shared/paige-spine/domains/platform_operator_reads.ts";
 import { parseResearchSourcePolicy, researchResultHonorsSourcePolicy } from "../_shared/research-source-policy.ts";
 import { executeKnowledgeTool, normalizeKnowledgeArgs, type KnowledgeTool } from "../_shared/knowledge-tenant-brain.ts";
 import { BUSINESS_MISSION_TOOLS } from '../_shared/paige-spine/domains/business_mission.ts';
@@ -17,7 +18,7 @@ import { adoptApprovedReminder, executeApprovedReminder, type ReminderExecutionB
 import { readOriginalReminderApprovalHistory } from "../_shared/paige-turn/interactive-reminder-history.ts";
 import type { ContextIdentity } from "../_shared/paige-context/mod.ts";
 import { BUSINESS_METRIC_TOOLS, metricReadContext, readBusinessMetric, type MetricReadOutcome } from '../_shared/analytics-metrics/read.ts';
-import { BUSINESS_SNAPSHOT_TOOLS, dispatchBusinessSnapshotChat } from '../_shared/paige-context/business-review-chat.ts';
+import { BUSINESS_SNAPSHOT_TOOLS, readBusinessSnapshotTransport } from '../_shared/paige-context/business-review-chat.ts';
 import { CLIENT_ENGAGEMENT_TOOLS, dispatchBusinessTimeZoneChat, dispatchClientStandingChat } from '../_shared/client-engagement/chat.ts';
 // INT-328 — one business email to one existing contact, through its canonical door (comms-email-command).
 import { COMMS_EMAIL_TOOLS, COMMS_EMAIL_TOOL_NAMES, dispatchCommsEmailChat, type CommsEmailApprovalQuery, type CommsEmailFollowupOrigin } from '../_shared/comms-email/chat.ts';
@@ -171,6 +172,12 @@ const CRM_SERVICE_TOOLS: ReadonlySet<string> = new Set([
 // The retired social tools. Absent from the model's tool definitions and refused at dispatch every
 // time, so the step START never announces them either. One set for both (§18).
 const UNAVAILABLE_SOCIAL_TOOLS: ReadonlySet<string> = new Set(["social_post", "social_analytics", "social_accounts"]);
+// EXP00 O-3: the operator console's company read tools. Admitted on the VERIFIED operator
+// persona (is_platform_operator from the JWT), never a workspace seat — the workspace
+// authority gate below is bypassed for these two names when the operator persona is active.
+// A SET (not tc.function.name === near the gate) so the declaration lint's window heuristic
+// doesn't misread them as ungated workspace tools.
+const PLATFORM_READ_TOOL_NAMES: ReadonlySet<string> = new Set(["platform_customer_overview", "platform_commercial_summary"]);
 // propose_action's draft, read from its arguments: what is filed, and the two shapes that are refused
 // before anything is written — no message body, and no recipient (no linked contact and no address).
 // Pure. The dispatch branch files from it, and the step START asks the same reading so a draft the
@@ -883,6 +890,11 @@ const messageSchema = z.object({
    *  longer opens it, because that flag says only that SOMETHING was approved, not what. Bounded
    *  and shaped so a body cannot smuggle anything else through this field. */
   approvedConfirmations: z.array(z.string().regex(/^[0-9a-f]{16}(?::[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})?$/)).max(16).optional(),
+  // EXP00 O-3 (owner defect 2026-10-19): the OPERATOR CONSOLE's chat identifies its surface.
+  // HINT-ONLY by construction: the exact literal is the only accepted value, and the server
+  // hard-gates the operator persona on is_platform_operator() from the VERIFIED JWT — a
+  // non-operator sending it is ignored outright (no client flag can elevate, per 588).
+  surface: z.literal("operator-console").optional(),
   /** Fingerprints the person DECLINED on the confirm card. A refusal that lives only in the prose
    *  of the next message is a refusal the model has to interpret correctly — and the proposal it
    *  describes stays redeemable for its whole window. These are cancelled outright instead. */
@@ -1329,27 +1341,11 @@ serve(async (req) => {
         code:"CUSTOMER_CHAT_SCOPE_CHANGED",message_accepted:false,
         reason:"Your customer access changed.",recommendation:"Reopen the portal to check your access."}),
         {status:409,headers:{...corsHeaders,"Content-Type":"application/json"}});
-      // E09 K2 (§9/§67): only an authorized customer of this thread pays for an embedding, and only when
-      // authorized material exists to rank. The question is embedded once (voyage-3 only, 4s, guarded);
-      // that one vector re-reads the context and binds the begin, so the model, the begin and the
-      // terminal see the same snapshot. Any failure keeps the recency read and binds NULL.
-      if (!customerControl && customerAssistant && (customerAssistant.sources.length > 0 || customerAssistant.sourcesLimited)) {
-        customerQuery = await embedCustomerQuery([...validatedData.messages].reverse().find((m: any) => m.role === "user")?.content,
-          voyageEmbedOne, VOYAGE_MODEL);
-        if (customerQuery.embedding) {
-          const ranked = await readCustomerAssistantContext(supabaseClient, user.id, validatedData.threadId,
-            validatedData.requestIntentId, customerQuery.embedding);
-          if (ranked.status === "available" && ranked.data && JSON.stringify(ranked.data.persona) === JSON.stringify(customerPersona))
-            customerAssistant = ranked.data;
-          else customerQuery = { embedding: null, degraded: true };
-        }
-      }
       // Browser system blocks and prior messages are never customer prompt authority.
       // The interactive contract below hydrates canonical, issued private history.
       validatedData.clientContext = undefined;
       traceCtx.content_policy = "metadata_only";
     }
-    customerSourceSnapshot = customerAssistant?.snapshot ?? null;
     // Every work-capable workspace-thread entry, including legacy/summary callers,
     // reads the SAME server-owned hold under the original JWT and native thread RLS.
     // No invented intent is needed to observe it. Only bound native acquisition may
@@ -1412,6 +1408,24 @@ serve(async (req) => {
       if ((thread.audience === "customer_private") !== customerPortal)
         return new Response(JSON.stringify({code:"CHAT_AUDIENCE_MISMATCH",message_accepted:false}),
           {status:403,headers:{...corsHeaders,"Content-Type":"application/json"}});
+      // E09 K2 (§9/§67): protocol and audience are already valid. Observed replay/supersedes
+      // evidence never incurs a query embedding; native begin remains the sole admission authority.
+      // Only an authorized customer of this thread pays for an embedding, and only when
+      // authorized material exists to rank. The question is embedded once (voyage-3 only, 4s, guarded);
+      // that one vector re-reads the context and binds the begin, so the model, the begin and the
+      // terminal see the same snapshot. Any failure keeps the recency read and binds NULL.
+      if (customerPortal && !customerControl && customerPersonaSource?.queryEmbeddingEligible === true && customerAssistant && (customerAssistant.sources.length > 0 || customerAssistant.sourcesLimited)) {
+        customerQuery = await embedCustomerQuery([...validatedData.messages].reverse().find((m: any) => m.role === "user")?.content,
+          voyageEmbedOne, VOYAGE_MODEL);
+        if (customerQuery.embedding) {
+          const ranked = await readCustomerAssistantContext(supabaseClient, user.id, validatedData.threadId,
+            validatedData.requestIntentId, customerQuery.embedding);
+          if (ranked.status === "available" && ranked.data && JSON.stringify(ranked.data.persona) === JSON.stringify(customerPersona))
+            customerAssistant = ranked.data;
+          else customerQuery = { embedding: null, degraded: true };
+        }
+      }
+      customerSourceSnapshot = customerAssistant?.snapshot ?? null;
       // Dedicated status/Stop return through their existing native control paths.
       // They cannot reach model/pre-tool work and must retain their error ordering.
       if (interactiveInput.kind === "message") await refreshRecoveryHold();
@@ -3094,6 +3108,10 @@ JSON:`;
         ? { tenantId: id as string | null } : null;
     };
     let proposalScopeResolved = false;
+    // EXP00 O-3: TRUE only when the operator-console surface hint was presented AND the
+    // verified caller IS a platform operator (the RPC gate). Drives the platform persona,
+    // the company read tools, and the steering line — nothing else trusts the hint.
+    let operatorConsolePersona = false;
 
     let personaCtx: { tenant_id: string | null; tenant_name: string | null; playbook_config: any; playbook_slug: string | null; funding_enabled: boolean; brand: Record<string, any> | null } =
       { tenant_id: null, tenant_name: null, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null };
@@ -3124,7 +3142,28 @@ JSON:`;
     if (customerPersona) {
       personaCtx = {tenant_id:customerPersona.binding.tenantId,tenant_name:customerPersona.businessName,
         playbook_config:null,playbook_slug:null,funding_enabled:false,brand:null};
+
       proposalScopeResolved = true;
+    }
+
+    // ── EXP00 O-3 (owner defect 2026-10-19): the OPERATOR CONSOLE asks as PAIGE Inc. ──
+    // Reproduced live: without this, an operator with any tenant membership resolves into that
+    // tenant's persona (their oldest workspace), so company questions get tenant-CRM answers
+    // or "tenant not resolved"; the 52 briefing branch never opens. The hint is caller-
+    // supplied but can only SELECT the platform persona — the gate is is_platform_operator on
+    // the verified JWT, and a non-operator's hint is ignored with the persona left as
+    // resolved. No tenant is assigned or bypassed: platform operators have none by design.
+    if (validatedData.surface === "operator-console") {
+      try {
+        const { data: hintOperator } = await supabaseClient.rpc("is_platform_operator");
+        if (hintOperator === true) {
+          personaCtx = { tenant_id: null, tenant_name: null, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null };
+          proposalScopeResolved = true;
+          operatorConsolePersona = true;
+        }
+      } catch (e) {
+        console.warn("[paige-ai-chat] operator-console hint gate failed (ignoring hint):", (e as Error)?.message);
+      }
     }
     // E09 F2: a client-tier caller is never offered funding/credit, inside the native customer frame (above) or
     // outside it (a client of the business with no portal frame). get_paige_persona_context resolves their
@@ -3917,6 +3956,13 @@ JSON:`;
             typeof declaredProfile?.active_tenant_id === "string" &&
             declaredProfile.active_tenant_id === turnScopeTenantId;
         }
+        // EXP00 O-3: an operator-console turn's scope is PINNED tenant-less by the verified
+        // is_platform_operator gate. The persona resolver's membership fallback (an operator's
+        // oldest workspace) is irrelevant to a platform-scoped turn and must not read as a
+        // scope change mid-turn — the only failure that matters here is a resolution error,
+        // which `resolved` already carries fail-closed.
+        if (operatorConsolePersona && resolved && turnScopeTenantId === null &&
+            (summaryMaintenance || !revalidateSummaryBinding || await revalidateSummaryBinding())) return true;
         if (resolved && currentTenantId === turnScopeTenantId && declaredScopeMatches &&
             (summaryMaintenance || !revalidateSummaryBinding || await revalidateSummaryBinding())) return true;
         console.error(
@@ -6183,6 +6229,13 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       } catch (e) {
         console.warn("[paige-ai-chat] §52 operator-context injection skipped:", (e as Error)?.message);
       }
+    }
+
+    // EXP00 O-3 steering: even when no owner-memory rows exist (briefing NO-OP), an operator
+    // turn MUST know which data sources answer company questions — and MUST NOT read a tenant
+    // tool's refusal as absence. This line rides every operator-console turn.
+    if (operatorConsolePersona) {
+      aiMessages.splice(2, 0, { role: "system", content: "PLATFORM COMPANY DATA SOURCES — you are answering for PAIGE Agent AI Inc itself. Company-level questions (who has joined, customers on trials, provisioned workspaces, onboarding progress, welcome emails sent, collected cash, who needs attention) are answered with platform_customer_overview and platform_commercial_summary — they read the company's real customer records live. Tenant CRM tools read a CUSTOMER BUSINESS's workspace; on this account no tenant is selected, so their refusal or empty result is EXPECTED and proves nothing — never report a customer as lacking a subscription, workspace, welcome email or any record because a tenant tool refused or returned nothing. State figures from these platform tools or your briefing; when a source is unavailable, say exactly that." });
     }
 
     // ── OWNER MULTI-CHAT PERSISTENCE + RECALL (#94) ──────────────────────────
@@ -8682,6 +8735,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     toolDefs.push(...SALES_COLLECTIONS_TOOLS);
     // Canonical actor-tier resolver, not a client-selected lens. Operator/Agency stay separate.
     if (callerTier === "tenant") toolDefs.push(...BUSINESS_METRIC_TOOLS);
+    // EXP00 O-3: the operator console's company read tools — declared in the spine domain
+    // (defineCapability + public.* SQL executors); mounted ONLY on verified operator turns.
+    if (operatorConsolePersona) toolDefs.push(...PLATFORM_OPERATOR_READ_TOOLS);
     // E2-1 business snapshot: same Solo-workspace lens as the metric read. Under INT-346's staged
     // rollout a conversational turn is offered ZERO tools, so this stays dark until the read-only
     // admission class admits it.
@@ -12415,13 +12471,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         } else if (tc.function.name === "get_business_snapshot") {
           // E2-1 business snapshot — same finished-round, scope, cancellation and read-only Harness
           // gates as every tool above, and the caller-JWT client is mandatory for the same reason:
-          // the composer reads every domain through the INT-340 issuer, which re-proves workspace,
+          // the existing Business Review worker reads domains through the INT-340 issuer, which re-proves workspace,
           // membership and the owner/admin seat in its own body. The corridor executes calls one at
           // a time, so this read is sequential with any read_business_metric call in the same turn,
           // as the issuer's evidence-reference revocation requires. No Rail receipt is written
           // (no recorder is registered). Only the bounded projection reaches the model.
           const result = callerTier === "tenant"
-            ? await dispatchBusinessSnapshotChat(
+            ? await readBusinessSnapshotTransport(
                 { who: { actorId: user.id, tenantId: personaCtx?.tenant_id ?? null, role: null, accountShape: null }, timezone: userTimezone ?? "UTC" },
                 { caller: supabaseClient },
                 JSON.parse(tc.function.arguments))
@@ -13404,6 +13460,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(payload) });
         } else if (
           OWNER_OPS_BRANCH_TOOLS.has(tc.function.name) ||
+          // EXP00 O-3: the operator console's company reads ride this dispatch block but are NOT
+          // workspace tools — they are deliberately absent from OWNER_OPS_BRANCH_TOOLS (that set
+          // drives requiresWorkspaceAdmin; these admit on the platform-admin RPC gate instead).
+          // Mounted only on operator turns; the branch body re-checks and refuses otherwise.
+          (operatorConsolePersona && PLATFORM_READ_TOOL_NAMES.has(tc.function.name)) ||
           // V0 — the funnel tools were advertised and handled below but missing from this list, so
           // every call fell through to "Unknown tool" (0 funnels ever built in production). They are
           // reachable now that a partial build can only report itself as partial.
@@ -13430,7 +13491,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // agency; the operator does not build in a customer workspace from chat) — unchanged.
           // `capability_status` needs no role: a person may always ask what PAIGE can do for them.
           const workspaceAuthorityTool = WORKSPACE_BUILD_TOOLS.has(tc.function.name);
-          const allowed = N8N_MANAGEMENT_TOOL_NAMES.has(tc.function.name)
+          // EXP00 O-3: the operator console's platform reads admit on the VERIFIED operator
+          // persona — never a workspace seat. The RPC's own is_platform_admin gate is the
+          // authority on every call; this admission only decides whether the dispatch runs.
+          const platformOperatorRead = operatorConsolePersona
+            && PLATFORM_READ_TOOL_NAMES.has(tc.function.name);
+          const allowed = platformOperatorRead
+            || N8N_MANAGEMENT_TOOL_NAMES.has(tc.function.name)
             || ROLE_FREE_BRANCH_TOOLS.has(tc.function.name)
             || authorityAdmits(tc.function.name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS);
           if (!allowed) {
@@ -15902,12 +15969,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             } else if (tc.function.name === "inbox_list") {
               // #1104 — the comms read verb (spine: comms.messages_read). Caller-scoped:
               // the RPC derives the tenant from the JWT (§59) — no tenant param exists.
-              const { data, error } = await supabaseClient.rpc("list_inbox_messages", {
-                p_limit: args.limit ?? 20,
-                p_direction: args.direction ?? null,
+              result = await dispatchInboxIntelligenceChat(tc.function.name, args, {
+                caller: { rpc: async (name, readArgs) => await supabaseClient.rpc(name, readArgs) },
               });
-              if (error) throw error;
-              result = { success: true, count: (data as any[])?.length ?? 0, messages: data ?? [] };
+              if (result.status === "available") readRecordLinkSource.set(tc, [{ destination: "conversations", record_id: null }]);
             } else if (tc.function.name === "improvement_propose" || tc.function.name === "improvement_list" || tc.function.name === "improvement_decide") {
               // Runway 4 — the evaluation loop's chat surface. Role-gated like delegation;
               // deciding is admin-only (the doctrine's owner gate).
@@ -16027,6 +16092,23 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 .single();
               if (error) throw error;
               result = { success: true, log_id: row?.id };
+            } else if (tc.function.name === "platform_customer_overview" || tc.function.name === "platform_commercial_summary") {
+              // EXP00 O-3: company read tools. The DB gate (is_platform_admin on auth.uid()) is
+              // authoritative — the call goes through the CALLER-JWT client, so admission here
+              // only shapes the refusal; a non-operator can never read company rows.
+              if (!operatorConsolePersona) {
+                result = { success: false, error: "platform_operator_only", detail: "This tool answers company-level questions for the Platform Operator account only." };
+              } else if (tc.function.name === "platform_customer_overview") {
+                const { data: overview, error: overviewErr } = await supabaseClient.rpc("operator_commercial_customers");
+                result = overviewErr
+                  ? { success: false, error: "company_read_failed", detail: overviewErr.message }
+                  : { success: true, overview };
+              } else {
+                const { data: summary, error: summaryErr } = await supabaseClient.rpc("operator_billing_overview");
+                result = summaryErr
+                  ? { success: false, error: "company_read_failed", detail: summaryErr.message }
+                  : { success: true, summary };
+              }
             } else if (tc.function.name === "crm_search_contacts") {
               const limit = Math.min(Math.max(Number(args.limit) || 25, 1), 100);
               let q = admin.from("clients").select(
@@ -17947,6 +18029,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         client_portal_access_set: "clients",
         author_event_kind: "paige_event_kinds",
         automation_draft: "paige_automations",
+        weekly_commitment_draft: "paige_automations",
         marketplace_install: "marketplace", marketplace_uninstall: "marketplace",
         // Merged from main 2026-09-01. Read off each tool's ACTUAL execution path, not its name:
         // `comms_buy_number` invokes `comms-purchase-number`, and rename/set-primary call the
@@ -18976,8 +19059,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                       ...(typeof parsed.external_effect === "boolean" ? { external_effect: parsed.external_effect } : {}),
                     });
                   }
-                  // E4-S3 — an available admitted read's record links (held beside its result, never in it).
-                  if (CONVERSATIONAL_ADMITTED_READ_TOOLS.has(String(tc.function?.name ?? "")) && parsed?.status === "available") {
+                  // E4-S3 — only references held by an executed read, never model/result-supplied links.
+                  // Tool admission remains enforced separately before dispatch, including degraded turns.
+                  if (parsed?.status === "available" && readRecordLinkSource.has(tc)) {
                     const links = readRecordLinkSource.get(tc);
                     if (links?.length) readLinkTrace.splice(0, readLinkTrace.length, ...mergeRecordLinks(readLinkTrace, links));
                     // Describe the actual bounded outgoing selection, never a candidate

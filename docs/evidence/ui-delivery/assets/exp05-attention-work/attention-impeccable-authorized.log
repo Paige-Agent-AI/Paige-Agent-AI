@@ -1,0 +1,16 @@
+
+0 anti-patterns found.
+
+── Advisory (not counted as failures) ──
+
+C:\Users\tonig\Documents\Codex\2026-10-14\paige-engineering-2-0-solo-to\work\weekly-solo-eligibility\src\solo\operations\operations-workspace.css
+  line 10: [design-system-font-size] font-size: 25px is off the DESIGN.md type ramp
+    → A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.
+  line 20: [design-system-font-size] font-size: 22px is off the DESIGN.md type ramp
+    → A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.
+  line 32: [design-system-font-size] font-size: 17px is off the DESIGN.md type ramp
+    → A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.
+  line 41: [design-system-font-size] font-size: 17px is off the DESIGN.md type ramp
+    → A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.
+
+4 advisory notes. Suppress with --no-advisory.

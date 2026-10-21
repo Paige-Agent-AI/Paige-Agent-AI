@@ -17,7 +17,7 @@ const snapshot={version:1 as const,retrieval_refs:[ref],source_refs:[ref]};
 const source={...ref,document_id:"77777777-7777-4777-8777-777777777777",document_revision:1,generation_id:null,title:"Shared program",content:"Your approved next step",content_truncated:false};
 const fixture=():Row=>({frame:frame(),thread_id:thread,intent_id:intent,snapshot,sources:[source],
  history:[{role:"user",content:"My previous question",source_refs:[ref]}],history_limited:false,
- ranking:"recency",sources_limited:false,authorized_count:1});
+ ranking:"recency",sources_limited:false,authorized_count:1,query_embedding_eligible:true});
 // A v2 binding: a ranked source with its exact passages, history refs with their kind and no passages.
 const ref2={kind:"knowledge_share",...ref,passages:[0,2]};
 const histRef2={kind:"knowledge_share",...ref};
@@ -27,9 +27,20 @@ const source2={...ref,passages:[0,2],document_id:"77777777-7777-4777-8777-777777
 const fixture2=():Row=>({frame:frame(),thread_id:thread,intent_id:intent,
  snapshot:{version:2,retrieval_refs:[ref2],source_refs:[ref2]},sources:[source2],
  history:[{role:"user",content:"My previous question",source_refs:[histRef2]}],history_limited:false,
- ranking:"relevance",sources_limited:false,authorized_count:1});
+ ranking:"relevance",sources_limited:false,authorized_count:1,query_embedding_eligible:true});
 const read=(data:unknown,error:unknown=null)=>readCustomerAssistantContext({rpc:async()=>({data,error})},actor,thread,intent);
 const vector=()=>Array.from({length:1024},(_,i)=>(i%7)/10);
+
+test("embedding eligibility is a strict native observation outside the stable model/source context",async()=>{
+ const fresh=await read(fixture2());
+ const replay=await read({...fixture2(),query_embedding_eligible:false});
+ assert.equal(fresh.status,"available");assert.equal(fresh.queryEmbeddingEligible,true);
+ assert.equal(replay.status,"available");assert.equal(replay.queryEmbeddingEligible,false);
+ assert.deepEqual(fresh.data,replay.data);
+ for(const value of [undefined,null,"true",1]){
+  assert.equal((await read({...fixture2(),query_embedding_eligible:value})).status,"degraded");
+ }
+});
 
 test("one native caller-bound v2 context supplies the closed business role, current program and private history",async()=>{
  const calls:unknown[]=[];const caller={rpc:async function(name:string,args:Record<string,unknown>){assert.equal(this,caller);calls.push([name,args]);return{data:fixture(),error:null}}};

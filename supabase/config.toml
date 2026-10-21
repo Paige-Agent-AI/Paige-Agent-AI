@@ -723,7 +723,15 @@ verify_jwt = true
 verify_jwt = false # Internal service bearer / canonical cron token is checked in the function.
 [functions.paige-pipeline-outcome]
 verify_jwt = true
+
+# Original-JWT exact owner.task history; no mutation or approval/retry authority.
+[functions.paige-owner-task-history]
+verify_jwt = true
 [functions.operator-account-retirement]
+verify_jwt = true
+
+[functions.weekly-commitment-command]
+# Canonical owner draft/confirmation adapter only; recurrence and Chat/Live remain unadmitted.
 verify_jwt = true
 
 # Preserve deployed reminder worker68: pg_cron sends the Vault-held x-cron-token.

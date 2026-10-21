@@ -1,0 +1,74 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - `__dirname` (vitest.config.ts:10:25). Use `import.meta.dirname` instead
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+12:18:56 PM [vite] warning: `optimizeDeps.esbuildOptions` option was specified by "vite:react-swc" plugin. This option is deprecated, please use `optimizeDeps.rolldownOptions` instead.
+
+ RUN  v4.1.11 C:/Users/tonig/Documents/Codex/2026-10-14/paige-engineering-2-0-solo-to/work/weekly-solo-eligibility
+
+ × src/solo/operations/OperationsWork.test.tsx > opens a requested List entry and retains the exact native focus key 95ms
+   → expected null to be truthy
+ ✓ src/solo/operations/OperationsOverview.test.tsx > surfaces undated active native work without a project and opens the original inspector 68ms
+ ✓ src/solo/operations/OperationsOverview.test.tsx > keeps recorded reminders inspectable without presenting their scheduled time as delivery proof 51ms
+ ✓ src/solo/operations/OperationsOverview.test.tsx > offers an honest first-use state without fabricated commitments, automation or specialist activity 5ms
+ × src/solo/operations/OperationsOverview.test.tsx > routes each attention group to Work while preserving the original record inspector 52ms
+   → View attention in Work: expected undefined to be truthy
+ ✓ src/solo/operations/OperationsWork.test.tsx > proposes a move from current work without changing the saved card or accepting external payloads 52ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > does not offer dragging without a source version, retaining keyboard inspection 16ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > keeps equal native IDs distinct and routes inspection to the original CRM record 18ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > refuses an unsupported CRM blocked move and proposes completion without browser mutation 22ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > orders the shared deadline timeline chronologically across ISO offsets 49ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > proposes pending CRM progress without moving the saved card and refuses terminal progress 36ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > shows a reminder's saved local time rather than a task due date 9ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > does not substitute due_at for an absent or unavailable reminder time (null) 8ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > does not substitute due_at for an absent or unavailable reminder time (invalid-date) 7ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > does not substitute due_at for an absent or unavailable reminder time (undefined) 7ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > does not substitute due_at for an absent or unavailable reminder time () 6ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > retains the native due_at date for task even when remind_at is present 8ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > retains the native due_at date for milestone even when remind_at is present 7ms
+ ✓ src/solo/operations/OperationsWork.test.tsx > keeps a saved reminder time visible in List and outside the deadline/overdue views 25ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/solo/operations/OperationsOverview.test.tsx > routes each attention group to Work while preserving the original record inspector
+AssertionError: View attention in Work: expected undefined to be truthy
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ src/solo/operations/OperationsOverview.test.tsx:53:32
+     51|   for(const [label,group] of [["View attention in Work","attention"],[…
+     52|    ["Review all missing dates","timing"],["View reminders in Work","re…
+     53|    expect(button(label),label).toBeTruthy();
+       |                                ^
+     54|    await act(async()=>button(label)!.click());expect(openSet).toHaveBe…
+     55|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/solo/operations/OperationsWork.test.tsx > opens a requested List entry and retains the exact native focus key
+AssertionError: expected null to be truthy
+
+- Expected:
+true
+
++ Received:
+null
+
+ ❯ src/solo/operations/OperationsWork.test.tsx:16:62
+     14|  await act(async()=>root.render(<OperationsWork plans={[]} items={[ite…
+     15|  const row=container.querySelector<HTMLButtonElement>(`[data-work-key=…
+     16|  expect(container.querySelector('[aria-label="Work list"]')).toBeTruth…
+       |                                                              ^
+     17|  await act(async()=>row!.click());expect(inspect).toHaveBeenCalledExac…
+     18| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 17 passed (19)
+   Start at  12:19:00
+   Duration  9.24s (transform 2.63s, setup 433ms, import 3.67s, tests 550ms, environment 12.24s)

@@ -1,0 +1,166 @@
+[
+  {
+    "name": "feedback-light-1536-closed.jpg",
+    "width": 1536,
+    "height": 770,
+    "theme": "light",
+    "paige": "closed",
+    "textVerified": true
+  },
+  {
+    "name": "feedback-light-1366-closed.jpg",
+    "width": 1366,
+    "height": 768,
+    "theme": "light",
+    "paige": "closed",
+    "geometry": {
+      "dialog": true,
+      "empty": true,
+      "overflow": false,
+      "viewport": [
+        1366,
+        768
+      ]
+    }
+  },
+  {
+    "name": "feedback-light-1024-closed.jpg",
+    "width": 1024,
+    "height": 768,
+    "theme": "light",
+    "paige": "closed",
+    "geometry": {
+      "dialog": true,
+      "empty": true,
+      "overflow": false,
+      "viewport": [
+        1024,
+        768
+      ]
+    }
+  },
+  {
+    "name": "feedback-light-900-closed.jpg",
+    "width": 900,
+    "height": 1000,
+    "theme": "light",
+    "paige": "closed",
+    "geometry": {
+      "dialog": true,
+      "empty": true,
+      "overflow": false,
+      "viewport": [
+        900,
+        1000
+      ]
+    }
+  },
+  {
+    "name": "feedback-dark-1536-open.jpg",
+    "width": 1536,
+    "height": 770,
+    "theme": "dark",
+    "paige": "open",
+    "geometry": {
+      "dialog": true,
+      "empty": true,
+      "overflow": false,
+      "viewport": [
+        1536,
+        770
+      ]
+    }
+  },
+  {
+    "name": "feedback-dark-1366-open.jpg",
+    "width": 1366,
+    "height": 768,
+    "theme": "dark",
+    "paige": "open",
+    "geometry": {
+      "dialog": true,
+      "empty": true,
+      "overflow": false,
+      "viewport": [
+        1366,
+        768
+      ]
+    }
+  },
+  {
+    "name": "feedback-dark-1024-open.jpg",
+    "width": 1024,
+    "height": 768,
+    "theme": "dark",
+    "paige": "open",
+    "geometry": {
+      "dialog": true,
+      "empty": true,
+      "overflow": false,
+      "viewport": [
+        1024,
+        768
+      ]
+    }
+  },
+  {
+    "name": "feedback-dark-900-open.jpg",
+    "width": 900,
+    "height": 1000,
+    "theme": "dark",
+    "paige": "open",
+    "geometry": {
+      "dialog": true,
+      "empty": true,
+      "overflow": false,
+      "viewport": [
+        900,
+        1000
+      ]
+    }
+  },
+  {
+    "name": "feedback-dark-390-open.jpg",
+    "width": 390,
+    "height": 780,
+    "theme": "dark",
+    "paige": "open",
+    "geometry": {
+      "dialog": [
+        {
+          "client": 780,
+          "scroll": 780,
+          "width": 390.3999938964844
+        }
+      ],
+      "empty": true,
+      "overflow": false,
+      "viewport": [
+        390,
+        780
+      ]
+    }
+  },
+  {
+    "name": "feedback-dark-320-open.jpg",
+    "width": 320,
+    "height": 780,
+    "theme": "dark",
+    "paige": "open",
+    "geometry": {
+      "dialog": [
+        {
+          "client": 780,
+          "scroll": 780,
+          "width": 320
+        }
+      ],
+      "empty": true,
+      "overflow": false,
+      "viewport": [
+        320,
+        780
+      ]
+    }
+  }
+]

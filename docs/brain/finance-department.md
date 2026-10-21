@@ -1,5 +1,65 @@
 # Finance department — current source and full operating target
 
+## October 20 observed EXP02 Finance consumer release
+
+Original #2402 reviewed d0aafc53ed81273868b4160684677ed02175454b merged
+ddf12b6bbda085cdb9f66587f9e803e11fc3cc18 with exact reviewed union tree 1472c481.
+All 11 checks/Preview and two Vercel contexts passed; AUTHOR-REVIEW / LOWER
+ASSURANCE 6303545504. Web dpl_6qkA2AUtNSxr9ntZt9EMn21Gpcrm READY/exact and
+public ddf12b6…mvha1pjq observed. Normal guarded recovery 39511759880 verified
+five of five importers' complete source/configuration; actual edge-live ddf12b6
+independently confirmed. Artifact 12306466169 SHA256
+c4d9267ee8bbb068337ade9efdaefff5d8d7f9a0cb7f4f6a0970147215e7eb74.
+No own migration or new provider/permission/action activation.
+
+The same caller-JWT Finance contracts now feed the canonical Business Review
+composer, Executive and admitted read-only briefing. Decimal source facts retain
+currency, basis, period, company/source scope, revocation and null-versus-zero
+boundaries. Provenance remains separate from execution receipts. Original #2021
+statement helpers still remain UNMOUNTED; this release does not activate ingestion.
+
+Actual authorized SOLO no-source/provenance/navigation/return/reload passed.
+Populated amounts, connected-provider readiness, tenant/permission negatives,
+new Chat/Live behavior and full financial acceptance remain owed. Stored facts
+are not an ALG-06 cash-flow forecast or a backtest. Master §4.0 and ANT-52
+hold sanitized release/customer receipts; private captures remain local.
+This observed release supersedes the dated candidate checkpoint below.
+
+
+## October20 EXP02 integration checkpoint
+
+Original statement helper#2021 is source-released at mained305fb25 with exact
+reviewed tree737b577a, required CI and productionweb readback; it stays UNMOUNTED.
+Paired actual release closeout is in#2430, whose required CI remains pending.
+The Finance/Executive consumer candidate composes currentmain/VERA atbaceaaa8:
+262/262 focused cases, type ratchet10/6, productionbuild5603modules and scoped
+lint0errors PASS. Nineteen source-bound native synthetic PNGs preserve product
+fonts, corrected contrast, desktop/phone states, keyboard disclosure and truthful
+source/zero/unavailable/provenance labels. See the existing UI delivery record
+and e2-finance-native-2026-10-20 manifest. A development-only hook helper was
+renamed without changing expressions/fixtures/rendering; exact equivalence is
+recorded separately from the frozen captures. Actual zoom, deployed Finance
+behavior/provider readiness, Chat/Live, account isolation/reload and full19/founder
+acceptance remain owed. No new issuer, ledger, provider, approval or action activation.
+
+## October 20 observed statement-source release — #2021
+
+Original #2021 reviewedab3f8243ce0795127eb274e2eb0e3995fd6adc5c merged
+`ed305fb25cba16877684955092fb1d0f58976dd3`, exact reviewed composition
+tree737b577af762f5ab71ebaa95edf7e0e3981c6f64. Documented AUTHOR-REVIEW / LOWER
+ASSURANCE6296540246/6297250084, all11 applicable exact-head checks/Preview and both
+Vercel contexts SUCCESS. Four original statement/test leaves unchanged;
+108 controlled cases/strict ES2020/lint/Registry PASS. Production
+webdpl_3viZpseuJYT4Fh9cRESQnRW4LpiH READY/exact; public HTTP200 build
+`ed305fb25cba16877684955092fb1d0f58976dd3-mvgz1u7z` verified.
+Edge39468474106/job118785988601 succeeded with deployment/readback/tag SKIPPED:
+no production function imports these helpers. This supersedes candidate-only
+source status below, without changing **UNMOUNTED / customer proof owed**.
+Preserve canonical company/unfiltered request, currency, basis, period, source
+observation and Metric/Evidence authority before consumption. No provider call,
+new ledger, financial effect, customer announcement or authenticated acceptance.
+Full financial intelligence and all19 EXP02 outcomes remain incomplete.
+
 Grounded on 2026-10-09 against main `794a38263e2d1d565ccab20253751593ed9c8f5b`.
 Owner-approved design and subsequent “live merge on green” authorize normal delivery. They do not authorize a real provider connection or financial effects.
 
@@ -233,3 +293,24 @@ Legacy OAuth initiation/callback, refresh and disconnect lack the adopted compan
 Finance-owned `domains/finance_reads.ts` consumes the released company/source, account, liability, Bill/Purchase, budget and scenario RPCs through the existing caller-JWT client. Six read declarations remain **unregistered**, with Chat/Mind/maturity **UNAVAILABLE** and self-description disabled. Original labels, nullable exact values, currencies, source snapshots and owner-entered assumptions retain their meaning; no company-wide debt, bank settlement or actual opening cash is invented. Current actor/workspace are resolved on the server, selectors are frozen before awaits, and current owner/admin, company and binding revision/lifecycle are revalidated after the read. Final actor/workspace changes discard facts. Permission refusal stays distinct from transport failure; private error details and unknown raw fields are withheld.
 
 Controlled source tests: **54 PASS**, including eleven failing-first authority/refusal controls. Strict ES2020 compilation and focused lint also PASS. Underlying released PostgreSQL contracts retain tenant/company/role, optimistic revisions and canonical receipt rules. This source slice changes no shared registry, protected Chat/Live executor, composer, model router, provider transport, mutation or UI. Registration ownership overlaps #1615; the Finance contribution is coordinated without competing edits. Operating Fabric F2a #2022 preserves Sales-owned receipt/AR adapters; a distinct Finance domain contribution remains to be reconciled with its standing owner. Canonical Metric/Evidence issuance/freshness and actual UI/Spine/Fabric/Chat/Live/authenticated/provider acceptance remain PROOF OWED. Dynamic financial facts never become durable Memory. Full Finance stays PARTIAL.
+
+### Historical statement measures — controlled source candidate
+
+Finance derives exact gross/operating/net profit and rounded margins only from supported native statement components/subtotals with company, source version, classification version, currency, reporting basis and period metadata. Conflicting subtotals refuse the statement; partial coverage withholds conclusions and missing detail remains unknown. Native report group/column keys carry semantics, while localized labels remain unchanged. Recognized filter dimensions are refused for company-wide summary interpretation; an unfiltered request and legitimate company-source scope still require canonical producer evidence. No bank cash, financial effect, provider call, ledger, model route or UI/Spine/Fabric binding is introduced. This source candidate remains unmounted and owes independent review, CI and release proof.
+
+### QuickBooks lifecycle production safety closeout — #2016
+
+**2026-10-11 — Finance QuickBooks lifecycle safety source — PR [#2016](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2016) → main `de699f0984194391c5c5fd10bea36491c4c8ecbc`; reviewed head `962a278ab0cfd6dc93a0f729de5d468aa5c97bb6`.** Independent non-author review COMPLETE/SHIP with limitations dispositioned; all latest required exact-head CI PASS. 57 controlled actual-handler/helper tests and focused ESLint/strict TypeScript/registry lint PASS. Normal Edge workflow `38195625528` and both Vercel production statuses SUCCESS; migration NOT_APPLICABLE. Production four ACTIVE v1/JWT-enabled endpoint bodies and shared refusal helper match merged source; four anonymous GETs returned gateway401. These are deployed-source and anonymous-refusal proofs, not authenticated or native provider acceptance. Stored connections/tokens untouched; unavailable disconnect is not revocation. Working company-bound consent/token lifecycle, ingestion and source-backed UI/Spine/Fabric/Chat/Live acceptance remain PROOF OWED; full Finance PARTIAL. Own preview absent; foreign previews preserved. No real OAuth, provider calls, customer financial effects or customer announcement. Recovery uses a reviewed company-authorized forward replacement. [Observed closeout](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2016#issuecomment-6116707364).
+
+### October20 EXP02 statement-source reuse checkpoint
+
+Existing #2021 sourcee1e1a9f2 is composed with main519da233 at supporting
+source freeze1acc3bc5fca988d3efff74fce3b8fcb6c6c66060. Four statement/test
+leaves are unchanged. Fresh108/108 statement/provider tests, strict ES2020 and
+scoped lint pass; the existing registry validates33 providers/120 anchors.
+No statement ingestion, persistence, mounted UI/Spine/Chat/Live or provider
+activation follows from these checks. EXP02 O04 must bind the canonical company,
+unfiltered source request, basis/period and immutable evidence before consuming
+these exact helpers. Missing/filtered/partial facts stay unknown; cash-basis
+statement income is not bank cash. See the existing statement delivery contract
+and E02 nineteen-outcome matrix; do not build a duplicate calculation engine.

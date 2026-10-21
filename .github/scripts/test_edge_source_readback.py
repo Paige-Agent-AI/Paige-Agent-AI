@@ -135,6 +135,8 @@ class ReleaseFixtures(unittest.TestCase):
                  (name == 'paige-ai-chat' and p.startswith('supabase/functions/_shared/'))}
         if self.mode == 'missing-dependency':
             files.pop('supabase/functions/_shared/authority.ts', None)
+        if self.mode == 'missing-configured-import-map':
+            files.pop('supabase/functions/paige-ai-chat/deno.json', None)
         if self.mode == 'pruned-type-only':
             for path in ['supabase/functions/_shared/types-only.ts', 'supabase/functions/_shared/types-child.ts']:
                 files.pop(path, None)
@@ -323,6 +325,22 @@ class ReleaseFixtures(unittest.TestCase):
         self.names.append(name)
         row = self.row(name)
         self.rows.append(row)
+        self.assertTrue(self.verify()['all_pass'])
+
+    def test_upload_success_and_matching_metadata_cannot_hide_missing_compiler_file(self):
+        self.files['supabase/config.toml'] += (
+            '[functions.paige-ai-chat]\n'
+            'import_map = "./functions/paige-ai-chat/deno.json"\n')
+        self.files['supabase/functions/paige-ai-chat/deno.json'] = (
+            '{"compilerOptions":{"strict":true},"imports":{}}\n')
+        self.rows[0]['import_map_path'] = 'file:///app/supabase/functions/paige-ai-chat/deno.json'
+        self.recommit()
+        self.assertTrue(self.verify()['all_pass'])
+        self.mode = 'missing-configured-import-map'
+        report = self.verify()
+        self.assert_failed(report, 'download_missing_dependency')
+        self.assertEqual(report['functions'][1]['status'], 'PASS')
+        self.mode = 'good'
         self.assertTrue(self.verify()['all_pass'])
 
     def test_automatic_deno_config_is_included_in_verified_source(self):

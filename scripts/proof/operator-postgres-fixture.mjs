@@ -60,12 +60,21 @@ export class OperatorPostgresFixture {
   const start=out.indexOf('[');if(start<0)throw new Error('Fixture JSON readback missing');return {rows:JSON.parse(out.slice(start))};
  }
  // A second actual PostgreSQL connection holds the completed archive transaction open.
- async holdArchive(sql,params=[]){
+ async holdArchive(sql,params=[],{manualRelease=false}={}){
   const child=spawn(this.psql,this.args(),{stdio:['pipe','pipe','pipe'],windowsHide:true});let err='';child.stderr.on('data',d=>{err+=d;});
   const completed=new Promise((resolve,reject)=>{child.on('error',reject);child.on('close',code=>code===0?resolve():reject(new Error(err)));});
   const held=new Promise((resolve,reject)=>{child.stdout.on('data',d=>{if(String(d).includes('fixture_archive_held'))resolve();});child.on('error',reject);child.on('close',code=>{if(code)reject(new Error(err));});});
-  child.stdin.end(`\\set VERBOSITY verbose\nBEGIN;${this.prefix()}${this.sql(sql,params)};SELECT 'fixture_archive_held';SELECT pg_sleep(1);COMMIT;`);
-  await held;return {completed};
+  // Keep existing timed callers unchanged. Short-lock-timeout proofs release only
+  // after observing the second native connection waiting, not after a racing sleep.
+  const begin=`\\set VERBOSITY verbose\nBEGIN;${this.prefix()}${this.sql(sql,params)};SELECT 'fixture_archive_held';`;
+  if(manualRelease)child.stdin.write(begin+'\n');
+  else child.stdin.end(begin+'SELECT pg_sleep(1);COMMIT;');
+  completed.catch(()=>{}); // still awaited by the caller; contain early setup rejection
+  await held;
+  let released=false;
+  return {completed,release:(commit=true)=>{
+   if(manualRelease&&!released){released=true;child.stdin.end(commit?'COMMIT;':'ROLLBACK;');}
+  }};
  }
  async close(){} // CI container/local fixture cluster owns disposal; no remote reset path.
 }

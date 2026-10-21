@@ -49,6 +49,7 @@ export const DESTINATION_LABEL: Readonly<Record<ReadLinkDestination, string>> = 
   mind: "Open Mind",
   calendar: "Open Calendar",
   pipeline: "Open pipeline",
+  conversations: "Open Conversations",
 });
 
 export type WorkspaceLinkTarget = { label: string; to: string; status: "exact" | "surface_only" };
@@ -82,7 +83,9 @@ export function routeLinkTarget(link: ReadRecordLink, tier: WorkspaceLinkTier, a
         ? "Open deal"
         : resolved.status === "exact" && link.destination === "operations_work"
           ? "Open task"
-        : DESTINATION_LABEL[link.destination];
+          : resolved.status === "exact" && link.destination === "business_game_plan"
+            ? "Open Strategic Play"
+            : DESTINATION_LABEL[link.destination];
   return { label, to: resolved.path, status: resolved.status };
 }
 

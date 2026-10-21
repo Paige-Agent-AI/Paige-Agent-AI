@@ -1,0 +1,42 @@
+{
+  "source": "ef4c5c52e3218d77b0112766c4548c4626a71400",
+  "method": "WCAG relative luminance over native computed ancestor background stack",
+  "results": [
+    {
+      "theme": "light",
+      "selector": ".exec-finance-source .exec-figures dd",
+      "contrast": 15.707662060241383,
+      "pass_4_5": true
+    },
+    {
+      "theme": "light",
+      "selector": ".exec-finance-evidence .exec-note",
+      "contrast": 10.736889704216749,
+      "pass_4_5": true
+    },
+    {
+      "theme": "light",
+      "selector": ".exec-finance-source > summary",
+      "contrast": 10.736889704216749,
+      "pass_4_5": true
+    },
+    {
+      "theme": "dark",
+      "selector": ".exec-finance-source .exec-figures dd",
+      "contrast": 17.176628146214266,
+      "pass_4_5": true
+    },
+    {
+      "theme": "dark",
+      "selector": ".exec-finance-evidence .exec-note",
+      "contrast": 12.534826312657467,
+      "pass_4_5": true
+    },
+    {
+      "theme": "dark",
+      "selector": ".exec-finance-source > summary",
+      "contrast": 12.534826312657467,
+      "pass_4_5": true
+    }
+  ]
+}

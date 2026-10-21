@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 import { DESTINATION_LABEL, routeLinkTarget, workspaceLinkTarget, workspaceLinkTier } from "./workspaceLinks";
+import { readRecordLinks } from "../../../supabase/functions/_shared/paige-turn/record-links";
 
 // Experience 04 E4-S3 — the one client-side home that turns a read reference into an in-app address
 // and the frozen label the owner reads (chat and, later, the client record).
@@ -42,11 +43,45 @@ describe("DESTINATION_LABEL — the frozen words", () => {
       mind: "Open Mind",
       calendar: "Open Calendar",
       pipeline: "Open pipeline",
+      conversations: "Open Conversations",
     });
   });
 });
 
 describe("workspaceLinkTarget", () => {
+  it("reopens a saved Conversations reference only as the current SOLO inbox", () => {
+    const [reference] = readRecordLinks(JSON.parse(JSON.stringify([
+      { destination: "conversations", record_id: UUID, subject: "Private subject", thread_key: "private@example.invalid", account: 1, path: "/solo/1/clients/conversations" },
+    ])));
+    for (const account_number of [3855, 9999]) {
+      expect(workspaceLinkTarget(reference, { ...soloTenant, account_number })).toEqual({
+        label: "Open Conversations", to: `/solo/${account_number}/clients/conversations`, status: "surface_only",
+      });
+    }
+    for (const tenant of [subTenant, { ...soloTenant, parent_tenant_id: "parent" },
+      { ...soloTenant, account_type: "agency" }, { ...soloTenant, account_type: "enterprise" },
+      { ...soloTenant, account_type: "operator" }, { ...soloTenant, account_type: null },
+      { ...soloTenant, account_number: null }, { ...soloTenant, account_number: "bad/account" }, null]) {
+      expect(workspaceLinkTarget(reference, tenant)).toBeNull();
+    }
+  });
+  it("reopens persisted Play, Deal, Task and invoice references together in the current account", () => {
+    const destinations = ["business_game_plan", "pipeline", "operations_work", "sales_invoices"] as const;
+    const persisted = JSON.parse(JSON.stringify(destinations.map(destination => ({
+      destination, record_id: UUID.toUpperCase(), subject: "discard", url: "https://foreign.invalid", account: 3855,
+    }))));
+    const links = readRecordLinks(persisted);
+    expect(links).toEqual(destinations.map(destination => ({ destination, record_id: UUID })));
+    expect(links.map(link => workspaceLinkTarget(link, { ...soloTenant, account_number: 9999 }))).toEqual([
+      { label: "Open Strategic Play", to: `/solo/9999/command-center/business-game-plan?play=${UUID}`, status: "exact" },
+      { label: "Open deal", to: `/solo/9999/growth/pipeline?deal=${UUID}`, status: "exact" },
+      { label: "Open task", to: `/solo/9999/operations/work?task=${UUID}`, status: "exact" },
+      { label: "Open invoice", to: `/solo/9999/sales/payments?view=invoices&invoice=${UUID}`, status: "exact" },
+    ]);
+    // The incumbent sub-account pipeline list remains reachable, without exact focus.
+    expect(links.map(link => workspaceLinkTarget(link, subTenant))).toEqual([null,
+      { label: "Open pipeline", to: "/business/3856/clients/pipelines", status: "surface_only" }, null, null]);
+  });
   it("canonical pipeline deal references re-resolve exact focus to the current SOLO workspace", () => {
     const reference = { destination: "pipeline" as const, record_id: UUID };
     expect(workspaceLinkTarget(reference, soloTenant)).toEqual({ label: "Open deal", to: "/solo/3855/growth/pipeline?deal=" + UUID, status: "exact" });
@@ -76,6 +111,15 @@ describe("workspaceLinkTarget", () => {
       .toEqual({ label: "Open Acme Ltd", to: `/solo/3855/clients/people?person=${UUID}`, status: "exact" });
     expect(workspaceLinkTarget({ destination: "contacts", record_id: UUID }, soloTenant))
       .toEqual({ label: "Open client record", to: `/solo/3855/clients/people?person=${UUID}`, status: "exact" });
+  });
+  it("opens a persisted Play in the current account and withholds it outside Solo", () => {
+    const reference = { destination: "business_game_plan" as const, record_id: UUID };
+    expect(workspaceLinkTarget(reference, soloTenant)).toEqual({ label: "Open Strategic Play",
+      to: `/solo/3855/command-center/business-game-plan?play=${UUID}`, status: "exact" });
+    expect(workspaceLinkTarget(reference, { ...soloTenant, account_number: 9999 })?.to)
+      .toBe(`/solo/9999/command-center/business-game-plan?play=${UUID}`);
+    expect(workspaceLinkTarget(reference, subTenant)).toBeNull();
+    expect(routeLinkTarget(reference, "solo", "not/an/account")).toBeNull();
   });
 
   it("names a list as a list, never as the exact record", () => {

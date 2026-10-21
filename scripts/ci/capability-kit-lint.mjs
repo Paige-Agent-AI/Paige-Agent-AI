@@ -95,18 +95,43 @@ function adsFunnelReadDoorBound(resolver) {
 // this file may project its exact input, and only while the adapter composes through the fabric's own
 // composer on the caller's own session and Chat mounts that adapter with the caller-JWT client. Never
 // clears risk debt.
+// The reviewed transport uses that same composer in the existing Executive worker;
+// prove the specific mount and both ends of its scope binding, not any edge read.
 const BUSINESS_SNAPSHOT_DECLARATION_FILE='supabase/functions/_shared/paige-spine/domains/business-review.ts';
 const BUSINESS_SNAPSHOT_ADAPTER_FILE='supabase/functions/_shared/paige-context/business-review-chat.ts';
-function businessSnapshotReadDoorBound(resolver) {
+export function businessSnapshotReadDoorBound(resolver) {
   const read=p=>resolver.sourceFile(path.join(ROOT,p))?.text??'';
   const adapter=read(BUSINESS_SNAPSHOT_ADAPTER_FILE);
   const chat=read('supabase/functions/paige-ai-chat/index.ts');
+  const endpoint=read('supabase/functions/paige-business-review/index.ts');
+  const source=ts.createSourceFile('chat.ts',chat,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
+  const calls=[];
+  const visit=node=>{if(ts.isCallExpression(node)&&ts.isIdentifier(node.expression)&&node.expression.text==='readBusinessSnapshotTransport')calls.push(node);ts.forEachChild(node,visit);};
+  visit(source);
+  if(source.parseDiagnostics.length||calls.length!==1||calls[0].arguments.length!==3)return false;
+  const property=(object,key)=>object&&ts.isObjectLiteralExpression(object)
+    ?object.properties.find(p=>ts.isPropertyAssignment(p)&&p.name.getText()===key)?.initializer:undefined;
+  const compact=node=>node?.getText().replace(/\s+/g,'')??'';
+  const [context,deps]=calls[0].arguments,who=property(context,'who');
+  if(compact(property(deps,'caller'))!=='supabaseClient'
+    ||compact(property(who,'actorId'))!=='user.id'
+    ||compact(property(who,'tenantId'))!=='personaCtx?.tenant_id??null'
+    ||!/^userTimezone\?\?["']UTC["']$/.test(compact(property(context,'timezone'))))return false;
+  const wire=adapter.replace(/\s+/g,''),edge=endpoint.replace(/\s+/g,'');
   return adapter.includes('parameters: BUSINESS_OPERATING_SNAPSHOT_READ_CAPABILITY.input')
     && adapter.includes('composeBusinessReview(deps.caller')
     && chat.includes('toolDefs.push(...BUSINESS_SNAPSHOT_TOOLS')
-    && chat.includes('dispatchBusinessSnapshotChat(')
-    // Pin the caller-JWT client AT the mount, not just the call's existence (the review's P3).
-    && chat.includes('caller: supabaseClient')
+    && chat.includes("from '../_shared/paige-context/business-review-chat.ts'")
+    && wire.includes("deps.caller.functions.invoke('paige-business-review?chat=1&finance_sources=1'")
+    && wire.includes("'x-paige-review-scope':tenant")
+    && wire.includes('envelope.actor_id!==ctx.who.actorId')
+    && wire.includes('envelope.tenant_id!==tenant')
+    && wire.includes('envelope.timezone!==ctx.timezone')
+    && edge.includes("req.headers.get('x-paige-review-scope')!==tenantId")
+    && edge.includes('dispatchBusinessSnapshotChat(')
+    && edge.includes('{caller:supabaseClient},chatArgs')
+    && edge.includes('after.data!==tenantId')
+    && edge.includes('actor_id:user.id,tenant_id:tenantId');
 }
 
 /**
@@ -149,6 +174,28 @@ function calendarBookingReadDoorBound(resolver) {
 // Only this exact Task selector/schema, original-JWT mount and reviewed native
 // read closure qualify. This never clears a classified mutation or list debt.
 const CRM_TASK_DECLARATION_FILE = "supabase/functions/_shared/paige-spine/domains/crm_task.ts";
+// EXP00 O-3: the Platform Operator's company reads. Exact platform.* SQL executors, empty
+// exact inputs, and a chat mount that only a verified operator turn reaches. The RPC gate
+// (is_platform_admin on auth.uid()) is the authority; this pin only names the reviewed
+// construction. Never clears risk debt or any list/effect tool.
+const PLATFORM_OPERATOR_READ_DECLARATION_FILE = "supabase/functions/_shared/paige-spine/domains/platform_operator_reads.ts";
+function platformOperatorReadDoorBound(resolver) {
+  const read = file => resolver.sourceFile(path.join(ROOT, file))?.text ?? "";
+  const chat = read("supabase/functions/paige-ai-chat/index.ts");
+  const declaration = read(PLATFORM_OPERATOR_READ_DECLARATION_FILE);
+  const compact = value => value.replace(/\s+/g, "");
+  return chat.includes('from "../_shared/paige-spine/domains/platform_operator_reads.ts"')
+    && compact(chat).includes('if(operatorConsolePersona)toolDefs.push(...PLATFORM_OPERATOR_READ_TOOLS);')
+    && chat.includes('surface: z.literal("operator-console").optional()')
+    && chat.includes('await supabaseClient.rpc("is_platform_operator")')
+    && chat.includes('if (!operatorConsolePersona) {')
+    && chat.includes('await supabaseClient.rpc("operator_commercial_customers")')
+    && chat.includes('await supabaseClient.rpc("operator_billing_overview")')
+    && compact(declaration).includes('providerBinding:{kind:"internal",operation:"public.operator_commercial_customers",connectionResolver:null}')
+    && compact(declaration).includes('providerBinding:{kind:"internal",operation:"public.operator_billing_overview",connectionResolver:null}')
+    && compact(declaration).includes('parameters:PLATFORM_CUSTOMER_OVERVIEW_CAPABILITY.input,')
+    && compact(declaration).includes('parameters:PLATFORM_COMMERCIAL_SUMMARY_CAPABILITY.input,');
+}
 const CRM_TASK_ADAPTER_FILE = "supabase/functions/_shared/operations-task-read.ts";
 function crmTaskReadDoorBound(resolver) {
   const read = file => resolver.sourceFile(path.join(ROOT, file))?.text ?? "";
@@ -241,6 +288,16 @@ function collectDeclaredCapabilityNames(files, resolver) {
                 const identity=nestedProperties(sections,'identity',sourceFile);
                 if(identity&&literalProperty(identity,'id')==='crm_clients.task_read'&&owner.name.text==='CRM_TASK_READ_CAPABILITY'
                   && crmTaskReadDoorBound(resolver))readTools.set('crm_get_task',owner.name.text);
+              }
+              else if(operation==='public.operator_commercial_customers'&&relative(file)===PLATFORM_OPERATOR_READ_DECLARATION_FILE){
+                const identity=nestedProperties(sections,'identity',sourceFile);
+                if(identity&&literalProperty(identity,'id')==='platform.customers_overview'&&owner.name.text==='PLATFORM_CUSTOMER_OVERVIEW_CAPABILITY'
+                  && platformOperatorReadDoorBound(resolver))readTools.set('platform_customer_overview',owner.name.text);
+              }
+              else if(operation==='public.operator_billing_overview'&&relative(file)===PLATFORM_OPERATOR_READ_DECLARATION_FILE){
+                const identity=nestedProperties(sections,'identity',sourceFile);
+                if(identity&&literalProperty(identity,'id')==='platform.commercial_summary'&&owner.name.text==='PLATFORM_COMMERCIAL_SUMMARY_CAPABILITY'
+                  && platformOperatorReadDoorBound(resolver))readTools.set('platform_commercial_summary',owner.name.text);
               }
               else if(operation==='edge.tenant-stripe-connect'&&relative(file)==='supabase/functions/_shared/sales-payments/merchant-capability.ts'){
                 const identity=nestedProperties(sections,'identity',sourceFile);

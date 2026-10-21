@@ -1,4 +1,4 @@
--- E09 K2: relevant retrieval of customer Knowledge (20271112020000). Full replayed schema, real caller
+-- E09 K2: relevant retrieval of customer Knowledge (20271113050000). Full replayed schema, real caller
 -- roles, synthetic data only (§63: Northwind Studio, Harbor Lane Advisors, Jordan Rivera and friends);
 -- every row rolls back.
 --
@@ -28,7 +28,7 @@
 --  10. A turn begun through the original 7-argument begin (a v1 binding) replays through the unchanged
 --      v1 context.
 BEGIN;
-SELECT plan(81);
+SELECT plan(90);
 
 -- ── Seed ────────────────────────────────────────────────────────────────────────────────────────
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
@@ -204,7 +204,7 @@ SELECT is((SELECT array_agg(k ORDER BY k) FROM k2_q,jsonb_object_keys(r->'source
  ARRAY['content','content_truncated','customer_kind','document_id','document_revision','generation_id','passages','share_id','share_revision',
   'source_fingerprint','title','valid_until'],'each v2 source carries exactly twelve keys');
 SELECT is((SELECT array_agg(k ORDER BY k) FROM k2_q,jsonb_object_keys(r) k),
- ARRAY['authorized_count','frame','history','history_limited','intent_id','ranking','snapshot','sources','sources_limited','thread_id'],
+ ARRAY['authorized_count','frame','history','history_limited','intent_id','query_embedding_eligible','ranking','snapshot','sources','sources_limited','thread_id'],
  'the v2 context returns exactly ten top-level keys');
 SELECT is((SELECT r#>'{snapshot,version}' FROM k2_q),'2'::jsonb,'a fresh read binds a version 2 snapshot');
 SELECT ok((SELECT public._client_knowledge_snapshot_valid(r->'snapshot') FROM k2_q),'and the snapshot is valid');
@@ -288,6 +288,7 @@ CREATE TEMP TABLE k2_turn AS SELECT jordan th,'e0b20600-0000-4000-8000-000000000
  pg_temp.vec(ARRAY[pg_temp.dim(1,0)]) q FROM k2_t;
 ALTER TABLE k2_turn ADD COLUMN pre jsonb;
 UPDATE k2_turn SET pre=pg_temp.ctx('a2',th,intent,q);
+SELECT is((SELECT pre->'query_embedding_eligible' FROM k2_turn),'true'::jsonb,'a fresh authorized question may be ranked');
 CREATE EXTENSION IF NOT EXISTS pgrowlocks;
 CREATE FUNCTION pg_temp.locked(_doc int) RETURNS boolean LANGUAGE sql AS $$
  SELECT EXISTS(SELECT 1 FROM pgrowlocks('public.tenant_knowledge_client_shares') l
@@ -295,13 +296,14 @@ CREATE FUNCTION pg_temp.locked(_doc int) RETURNS boolean LANGUAGE sql AS $$
 SELECT ok(NOT pg_temp.locked(1),'(before begin, the program guide''s share row is not locked)');
 SELECT is((SELECT (pg_temp.as_user(pg_temp.u('a2'),format('SELECT public.client_portal_assistant_begin(%L,%L,NULL,%L,false,false,false,%L)',
  th,intent,'How does the program start?',q)))->>'status' FROM k2_turn),'accepted','the begin overload accepts the customer''s turn');
+SELECT is((SELECT pg_temp.ctx('a2',th,intent,NULL)->'query_embedding_eligible' FROM k2_turn),'false'::jsonb,'an accepted pending intent must not pay for another embedding');
 SELECT ok(pg_temp.locked(1),'begin holds the bound share row locked, so a concurrent withdraw waits for it');
 SELECT is((SELECT bundle_ref->'customer_knowledge' FROM public.paige_chat_turns t,k2_turn k WHERE t.thread_id=k.th
   AND t.interactive_intent_id=k.intent AND t.role='user'),(SELECT pre->'snapshot' FROM k2_turn),
  'it stores exactly the snapshot the customer''s own read produced');
-SELECT is((SELECT pg_temp.ctx('a2',th,intent,NULL) FROM k2_turn),(SELECT pre FROM k2_turn),
+SELECT is((SELECT pg_temp.ctx('a2',th,intent,NULL)-'query_embedding_eligible' FROM k2_turn),(SELECT pre-'query_embedding_eligible' FROM k2_turn),
  'the accepted replay without an embedding is byte-identical to the turn''s read');
-SELECT is((SELECT pg_temp.ctx('a2',th,intent,pg_temp.vec(ARRAY[pg_temp.dim(6,0)])) FROM k2_turn),(SELECT pre FROM k2_turn),
+SELECT is((SELECT pg_temp.ctx('a2',th,intent,pg_temp.vec(ARRAY[pg_temp.dim(6,0)]))-'query_embedding_eligible' FROM k2_turn),(SELECT pre-'query_embedding_eligible' FROM k2_turn),
  'a replay given another embedding ignores it (it never re-embeds)');
 SELECT is((SELECT (pg_temp.docs(pre))[1] FROM k2_turn),1,'(the bound turn ranked the program guide first)');
 -- A passage rewritten after begin fails its hash at replay.
@@ -312,7 +314,7 @@ SELECT is((SELECT pg_temp.ctx('a2',th,intent,NULL) FROM k2_turn),'{"error":"CUST
 SELECT ok((SELECT NOT public._client_knowledge_refs_lock(pg_temp.u('a2'),pg_temp.t('a'),pg_temp.c('a2'),pre#>'{snapshot,source_refs}') FROM k2_turn),
  'and the settle lock withholds the answer');
 UPDATE public.tenant_knowledge_chunks c SET content=k.content FROM k2_chunk1 k WHERE c.id=k.id;
-SELECT is((SELECT pg_temp.ctx('a2',th,intent,NULL) FROM k2_turn),(SELECT pre FROM k2_turn),'(restored, the replay is identical again)');
+SELECT is((SELECT pg_temp.ctx('a2',th,intent,NULL)-'query_embedding_eligible' FROM k2_turn),(SELECT pre-'query_embedding_eligible' FROM k2_turn),'(restored, the replay is identical again)');
 
 -- ── 9. Settle and history ───────────────────────────────────────────────────────────────────────
 SELECT is(pg_temp.as_user(pg_temp.u('a2'),format('SELECT to_jsonb(public.paige_chat_interactive_settle(%L,%L,%L,%L,%L,NULL,NULL,%L::jsonb,NULL))',
@@ -323,6 +325,7 @@ SELECT ok((pg_temp.as_user(pg_temp.u('a2'),format('SELECT to_jsonb(public.paige_
  th,pg_temp.u('a2'),pg_temp.t('a'),intent,'The program opens with a kickoff call.',jsonb_build_object('interactive',jsonb_build_object('request_intent_id',intent),
  'turn_state',jsonb_build_object('v',1,'state','FINAL'),'customer_knowledge',pre->'snapshot')::text),'service_role')) ? 'sqlstate' IS NOT TRUE,
  'settle accepts the exact v2 snapshot') FROM k2_turn;
+SELECT is((SELECT pg_temp.ctx('a2',th,intent,NULL)->'query_embedding_eligible' FROM k2_turn),'false'::jsonb,'a completed intent must not pay for another embedding');
 CREATE TEMP TABLE k2_next AS SELECT pg_temp.ctx('a2',th,'e0b20600-0000-4000-8000-000000000002',pg_temp.vec(ARRAY[pg_temp.dim(2,0)])) r FROM k2_turn;
 SELECT ok((SELECT jsonb_path_exists(r,'$.history[*] ? (@.content == "The program opens with a kickoff call.")') FROM k2_next),
  'the settled answer comes back as history for the next turn');
@@ -349,10 +352,40 @@ SELECT is((SELECT (pg_temp.as_user(pg_temp.u('a3'),format('SELECT public.client_
  th,intent,'Hello')))->>'status' FROM k2_v1),'accepted','a turn begun through the original 7-argument begin');
 SELECT is((SELECT pg_temp.ctx('a3',th,intent,pg_temp.vec(ARRAY[pg_temp.dim(3,0)]))#>'{snapshot,version}' FROM k2_v1),'1'::jsonb,
  'is replayed with its version 1 snapshot');
-SELECT is((SELECT pg_temp.ctx('a3',th,intent,NULL)-ARRAY['ranking','authorized_count','sources_limited'] FROM k2_v1),
+SELECT is((SELECT pg_temp.ctx('a3',th,intent,NULL)-ARRAY['ranking','authorized_count','sources_limited','query_embedding_eligible'] FROM k2_v1),
  (SELECT pg_temp.as_user(pg_temp.u('a3'),format('SELECT public.client_portal_assistant_context(%L,%L)',th,intent)) FROM k2_v1),
- 'exactly as the v1 context reads it, plus the three report keys');
+ 'exactly as the v1 context reads it, plus the report keys and eligibility observation');
 SELECT is((SELECT pg_temp.ctx('a3',th,intent,NULL)->>'ranking' FROM k2_v1),'recency','and it reports recency');
+
+
+-- The observation is outside source/history data and follows canonical and legacy native evidence.
+SELECT is((SELECT pg_temp.ctx('a3',th,intent,NULL)->'query_embedding_eligible' FROM k2_v1),'false'::jsonb,
+ 'a legacy v1 accepted binding must not re-embed');
+CREATE TEMP TABLE k2_eligibility_evidence AS
+ SELECT t.id turn_id,t.bundle_ref,t.interactive_supersedes_id,p.interactive_latest_intent latest_intent,k.th,
+ 'e0b20700-0000-4000-8000-000000000099'::uuid unused_intent
+ FROM public.paige_chat_turns t JOIN k2_v1 k ON k.th=t.thread_id AND k.intent=t.interactive_intent_id
+ JOIN public.paige_chat_threads p ON p.id=k.th WHERE t.role='user';
+SELECT is((SELECT pg_temp.ctx('a3',th,unused_intent,NULL)->'query_embedding_eligible' FROM k2_eligibility_evidence),
+ 'true'::jsonb,'an unseen authorized intent remains eligible');
+UPDATE public.paige_chat_threads p SET interactive_latest_intent=e.unused_intent FROM k2_eligibility_evidence e WHERE p.id=e.th;
+SELECT is((SELECT pg_temp.ctx('a3',th,unused_intent,NULL)->'query_embedding_eligible' FROM k2_eligibility_evidence),
+ 'false'::jsonb,'latest native intent evidence prevents embedding without a source binding');
+UPDATE public.paige_chat_threads p SET interactive_latest_intent=e.latest_intent FROM k2_eligibility_evidence e WHERE p.id=e.th;
+UPDATE public.paige_chat_turns t SET interactive_supersedes_id=e.unused_intent FROM k2_eligibility_evidence e WHERE t.id=e.turn_id;
+SELECT is((SELECT pg_temp.ctx('a3',th,unused_intent,NULL)->'query_embedding_eligible' FROM k2_eligibility_evidence),
+ 'false'::jsonb,'canonical supersedes evidence prevents embedding an unaccepted target');
+UPDATE public.paige_chat_turns t SET interactive_supersedes_id=e.interactive_supersedes_id,
+ bundle_ref=jsonb_set(coalesce(e.bundle_ref,'{}'),'{interactive}',coalesce(e.bundle_ref->'interactive','{}')||
+  jsonb_build_object('supersedes_intent_id',e.unused_intent)) FROM k2_eligibility_evidence e WHERE t.id=e.turn_id;
+SELECT is((SELECT pg_temp.ctx('a3',th,unused_intent,NULL)->'query_embedding_eligible' FROM k2_eligibility_evidence),
+ 'false'::jsonb,'legacy supersedes evidence prevents embedding an unaccepted target');
+UPDATE public.paige_chat_turns t SET bundle_ref=jsonb_set(coalesce(e.bundle_ref,'{}'),'{interactive}',
+ coalesce(e.bundle_ref->'interactive','{}')||jsonb_build_object('request_intent_id',e.unused_intent))
+ FROM k2_eligibility_evidence e WHERE t.id=e.turn_id;
+SELECT is((SELECT pg_temp.ctx('a3',th,unused_intent,NULL)->'query_embedding_eligible' FROM k2_eligibility_evidence),
+ 'false'::jsonb,'legacy request evidence prevents replay embedding');
+UPDATE public.paige_chat_turns t SET bundle_ref=e.bundle_ref FROM k2_eligibility_evidence e WHERE t.id=e.turn_id;
 
 SELECT * FROM finish();
 ROLLBACK;

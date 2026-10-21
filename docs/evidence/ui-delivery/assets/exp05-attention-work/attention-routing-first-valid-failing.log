@@ -1,0 +1,72 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - `__dirname` (vitest.config.ts:10:25). Use `import.meta.dirname` instead
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+12:11:12 PM [vite] warning: `optimizeDeps.esbuildOptions` option was specified by "vite:react-swc" plugin. This option is deprecated, please use `optimizeDeps.rolldownOptions` instead.
+
+ RUN  v4.1.11 C:/Users/tonig/Documents/Codex/2026-10-14/paige-engineering-2-0-solo-to/work/weekly-solo-eligibility
+
+ × src/solo/operations/operations-attention-routing.test.ts > opens every loaded upcoming deadline rather than only the five-row summary 40ms
+   → operationsWorkSetRows is not a function
+ × src/solo/operations/operations-attention-routing.test.ts > preserves original source identities across blocked and overdue work 1ms
+   → operationsWorkSetRows is not a function
+ × src/solo/operations/operations-attention-routing.test.ts > separates undated active work and saved reminders without substituting a legacy due date 871ms
+   → operationsWorkSetRows is not a function
+ × src/solo/operations/operations-attention-routing.test.ts > does not turn an empty loaded set into business-wide completion 1ms
+   → operationsWorkSetRows is not a function
+ ✓ src/solo/operations/operations-attention-routing.test.ts > keeps the existing mixed-tenant refusal before any group can be presented 11ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/solo/operations/operations-attention-routing.test.ts > opens every loaded upcoming deadline rather than only the five-row summary
+TypeError: operationsWorkSetRows is not a function
+ ❯ src/solo/operations/operations-attention-routing.test.ts:21:15
+     19|   const work = overviewNativeWork(tenant, items, [], now);
+     20|   expect(work.upcoming).toHaveLength(5);
+     21|   const all = operationsWorkSetRows(work, "deadlines");
+       |               ^
+     22|   expect(all).toHaveLength(8);
+     23|   expect(all.map(row => row.native.record)).toEqual(items);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/solo/operations/operations-attention-routing.test.ts > preserves original source identities across blocked and overdue work
+TypeError: operationsWorkSetRows is not a function
+ ❯ src/solo/operations/operations-attention-routing.test.ts:33:21
+     31|   const work = overviewNativeWork(tenant, [blocker], [late, later,
+     32|     crm("finished", { status: "completed", due_date: late.due_date })]…
+     33|   const attention = operationsWorkSetRows(work, "attention");
+       |                     ^
+     34|   expect(new Set(attention.map(row => row.id))).toEqual(new Set(["plan…
+     35|   expect(attention.find(row => row.id === "planning:same")?.native.rec…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/solo/operations/operations-attention-routing.test.ts > separates undated active work and saved reminders without substituting a legacy due date
+TypeError: operationsWorkSetRows is not a function
+ ❯ src/solo/operations/operations-attention-routing.test.ts:46:10
+     44|     remind_at: "2099-01-01T13:00:00Z" });
+     45|   const work = overviewNativeWork(tenant, [malformed, reminder, planni…
+     46|   expect(operationsWorkSetRows(work, "timing").map(row => row.native.r…
+       |          ^
+     47|   expect(operationsWorkSetRows(work, "timing")).toHaveLength(2);
+     48|   expect(operationsWorkSetRows(work, "reminders").map(row => row.nativ…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/solo/operations/operations-attention-routing.test.ts > does not turn an empty loaded set into business-wide completion
+TypeError: operationsWorkSetRows is not a function
+ ❯ src/solo/operations/operations-attention-routing.test.ts:56:12
+     54|   const work = overviewNativeWork(tenant, [], [], now);
+     55|   for (const group of ["attention", "deadlines", "timing", "reminders"…
+     56|     expect(operationsWorkSetRows(work, group)).toEqual([]);
+       |            ^
+     57|   }
+     58| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  12:11:13
+   Duration  5.04s (transform 744ms, setup 320ms, import 678ms, tests 928ms, environment 2.72s)

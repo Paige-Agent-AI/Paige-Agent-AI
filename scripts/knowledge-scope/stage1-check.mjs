@@ -4241,7 +4241,7 @@ group("32 Explicit customer audience uses native private history and customer pr
       content:"NATIVE_CUSTOMER_PROGRAM",content_truncated:false}],
     history:[{role:"user",content:"NATIVE_PRIVATE_CUSTOMER_HISTORY",source_refs:[sourceRef]}],history_limited:false,
     // E09 K2: the v2 context reports how it chose (a v1 binding replays by recency) and what it left out.
-    ranking:"recency",sources_limited:false,authorized_count:1});
+    ranking:"recency",sources_limited:false,authorized_count:1,query_embedding_eligible:true});
   let terminal=false;
   const scenario={personaTenant:CHILD,memberships:[],activeTenantId:null,
     bodyExtras:{surfaceContext:{kind:"customer_portal"},threadId:thread,requestIntentId:intent,

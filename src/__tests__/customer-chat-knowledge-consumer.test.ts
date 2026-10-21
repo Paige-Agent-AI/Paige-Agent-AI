@@ -22,7 +22,7 @@ const share={share_id:"66666666-6666-4666-8666-666666666666",share_revision:1,so
 const ref={kind:"knowledge_share",...share,passages:[0]},historyRef={kind:"knowledge_share",...share};
 function fixture(){return{frame:{actor_id:actor,profile:{id:client,tenant_id:tenant,linked_user_id:actor},brand:{tenant_id:tenant,tenant_name:"Coaching business"},config:{assistant:{enabled:true,tone:"Warm"}}},thread_id:thread,intent_id:intent,
  snapshot:{version:2,retrieval_refs:[ref],source_refs:[ref]},sources:[{...share,passages:[0],document_id:client,document_revision:1,generation_id:client,title:"Approved guide",content:"Approved program guidance",content_truncated:false,customer_kind:"information",valid_until:null}],
- history:[{role:"user",content:"Private earlier question",source_refs:[historyRef]}],history_limited:false,ranking:"relevance",sources_limited:false,authorized_count:1}}
+ history:[{role:"user",content:"Private earlier question",source_refs:[historyRef]}],history_limited:false,ranking:"relevance",sources_limited:false,authorized_count:1,query_embedding_eligible:true}}
 type ContextFixture=ReturnType<typeof fixture>;
 async function guard(){
  let current:ContextFixture=fixture(),error:{code:string;message:string}|null=null,authorized=true;const calls:string[]=[];
@@ -135,36 +135,46 @@ describe("E09 K2: the customer question is embedded once, only for an authorized
  // Located by what it does (the one guarded step that embeds), not by its condition text, so a
  // changed condition is judged by behaviour below rather than failing to be found.
  const EMBED="embedCustomerQuery(";
- const rankStep=()=>node((n):n is ts.IfStatement=>ts.isIfStatement(n)&&n.expression.getText(ast)!=="customerPortal"&&n.thenStatement.getText(ast).includes(EMBED));
+ const rankStep=()=>node((n):n is ts.IfStatement=>ts.isIfStatement(n)&&ts.isBlock(n.thenStatement)&&
+  n.thenStatement.statements.some(s=>ts.isExpressionStatement(s)&&s.getText(ast).includes(EMBED)));
  it("embeds through the shared voyage embedder only, after the unavailable gate and the thread authorization",()=>{
   const step=rankStep();const text=step.getText(ast);
   expect(text).toContain("embedCustomerQuery(");expect(text).toContain("voyageEmbedOne, VOYAGE_MODEL");expect(text).not.toMatch(/callModel|router/i);
   // The only embedding of the customer's question is this one.
   expect(source.split("embedCustomerQuery(").length-1).toBe(1);
-  // It sits inside the customer block, after the refusal and the authorization of this thread.
-  const block=node((n):n is ts.IfStatement=>ts.isIfStatement(n)&&n.expression.getText(ast)==="customerPortal"&&n.getText(ast).includes(EMBED));
-  const body=block.getText(ast),at=body.indexOf(EMBED);
-  expect(body.indexOf('code:"CUSTOMER_CHAT_UNAVAILABLE"')).toBeGreaterThan(-1);expect(body.indexOf('code:"CUSTOMER_CHAT_UNAVAILABLE"')).toBeLessThan(at);
-  expect(body.indexOf('"paige_chat_customer_thread_authorized"')).toBeGreaterThan(-1);expect(body.indexOf('"paige_chat_customer_thread_authorized"')).toBeLessThan(at);
-  expect(body.indexOf("customerPersona.enabled")).toBeLessThan(at);
+  // Native customer checks still dominate it; invalid protocol/audience now refuses before egress too.
+  const at=step.getStart(ast);
+  for(const gate of ['code:"CUSTOMER_CHAT_UNAVAILABLE"','"paige_chat_customer_thread_authorized"',
+   'code: "INTERACTIVE_PROTOCOL_NOT_READY"','code:"CHAT_AUDIENCE_MISMATCH"']){
+   expect(source.indexOf(gate)).toBeGreaterThan(-1);expect(source.indexOf(gate)).toBeLessThan(at);
+  }
+  expect(step.parent.parent.getText(ast)).toMatch(/^if \(validatedData\.interactive\)/);
   // The first read (what the gate uses) carries no vector; the snapshot is taken after ranking.
   expect(declaration("customerPersonaSource").getText(ast)).not.toContain("customerQuery");
-  expect(source.indexOf("customerSourceSnapshot = customerAssistant?.snapshot ?? null;")).toBeGreaterThan(block.getEnd()-1);
+  expect(source.indexOf("customerSourceSnapshot = customerAssistant?.snapshot ?? null;")).toBeGreaterThan(step.getEnd()-1);
  });
- async function step(env:{customerControl?:boolean;assistant:unknown;embed:(text:string)=>Promise<unknown>;ranked?:unknown}){
+ async function step(env:{customerControl?:boolean;eligible?:boolean|null;assistant:unknown;embed:(text:string)=>Promise<unknown>;ranked?:unknown}){
   const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor as FunctionConstructor;
   const reads:unknown[][]=[],embeds:string[]=[];
   const supabaseClient={rpc:vi.fn(async(name:string,args:Record<string,unknown>)=>{reads.push([name,args.p_query_embedding]);return env.ranked as {data:unknown;error:unknown};})};
   const run=new AsyncFunction("env",compile(`let customerQuery=null;let customerAssistant=env.customerAssistant;
-   const {customerControl,customerPersona,validatedData,embedCustomerQuery,voyageEmbedOne,VOYAGE_MODEL,readCustomerAssistantContext,supabaseClient,user}=env;
+   const {customerPortal,customerControl,customerPersona,customerPersonaSource,validatedData,embedCustomerQuery,voyageEmbedOne,VOYAGE_MODEL,readCustomerAssistantContext,supabaseClient,user}=env;
    ${rankStep().getText(ast)}
    return {customerQuery,customerAssistant};`));
-  const out=await run({customerControl:env.customerControl??false,customerAssistant:env.assistant,customerPersona:(env.assistant as {persona?:unknown}|null)?.persona??null,
+  const out=await run({customerPortal:true,customerControl:env.customerControl??false,customerPersonaSource:{queryEmbeddingEligible:env.eligible===null?undefined:env.eligible??true},customerAssistant:env.assistant,customerPersona:(env.assistant as {persona?:unknown}|null)?.persona??null,
    validatedData:{threadId:thread,requestIntentId:intent,messages:[{role:"user",content:"Latest question"}]},embedCustomerQuery,
    voyageEmbedOne:async(text:string)=>{embeds.push(text);return env.embed(text);},VOYAGE_MODEL:"voyage-3",readCustomerAssistantContext,supabaseClient,user:{id:actor}});
   return{...out,reads,embeds};
  }
  const v=Array.from({length:1024},()=>0.25);
+ it("does not call the embedding provider for an observed accepted or superseded intent",async()=>{
+  const prior=(await readCustomerAssistantContext({rpc:async()=>({data:fixture(),error:null})},actor,thread,intent)).data!;
+  const replay=await step({eligible:false,assistant:prior,embed:async()=>v,ranked:{data:fixture(),error:null}});
+  expect(replay.embeds).toEqual([]);expect(replay.reads).toEqual([]);
+  expect(replay.customerQuery).toBeNull();expect(replay.customerAssistant).toBe(prior);
+  const unknown=await step({eligible:null,assistant:prior,embed:async()=>v,ranked:{data:fixture(),error:null}});
+  expect(unknown.embeds).toEqual([]);expect(unknown.reads).toEqual([]);
+ });
  it("embeds nothing when there is no authorized material to rank, or for stop/status",async()=>{
   const empty={...fixture(),snapshot:null,sources:[],authorized_count:0,history:[],ranking:"recency"};
   const first=(await readCustomerAssistantContext({rpc:async()=>({data:empty,error:null})},actor,thread,intent)).data!;

@@ -34,8 +34,8 @@ import { PaigeCommandMark } from "@/components/brand/PaigeCommandMark";
  * match the action (§36 — instantly legible in ~5 seconds: "By your Paige team:
  * Merit + Vera", or leadIn="Drafted by your Paige team" on a drafted email).
  *
- * §2/§9-clean: roster remits are coaching-generic — no finance/credit/vertical
- * wording, no operator-only content — like every other primitive in this layer.
+ * Universal business remits include the owner's ordinary Finance direction.
+ * Funding/credit remains opt-in; a remit grants no data or execution authority.
  */
 
 /** The canonical VP identifiers. PAIGE is the orchestrator; the six VPs are her team. */
@@ -45,11 +45,11 @@ export type VP = "PAIGE" | "VERA" | "NEXUS" | "CURA" | "MENTOR" | "MERIT" | "ZIO
  * The single source of truth for VP display names + remits. Callers never
  * hardcode a name — they pass a `VP` id and the byline resolves it here, so the
  * component can never render a VP that isn't in the roster (§13). Remits are
- * coaching-generic and §2-clean, mapped to the §16 10-department model.
+ * business-wide, mapped to the existing §16 10-department model.
  */
 export const VP_ROSTER: Record<VP, { name: string; remit: string }> = {
   PAIGE: { name: "Paige", remit: "Orchestrator" },
-  VERA: { name: "Vera", remit: "Quality & standards" },
+  VERA: { name: "Vera", remit: "Intelligence, finance & risk" },
   NEXUS: { name: "Nexus", remit: "Marketing & growth" },
   CURA: { name: "Cura", remit: "Client success" },
   MENTOR: { name: "Mentor", remit: "Discovery, education & strategy" },
@@ -154,7 +154,7 @@ export function PaigeAttribution({
 
   const names = joinNames(resolved.map(nameLabel));
   // Remits use a middot list to read distinctly from the "+" name list (§36 clarity):
-  // e.g. names "Merit + Vera" over remits "Sales & revenue · Quality & standards".
+  // e.g. names "Merit + Vera" over their current business remits.
   const remits = resolved.map((c) => VP_ROSTER[c.vp].remit).join(" · ");
 
   return (

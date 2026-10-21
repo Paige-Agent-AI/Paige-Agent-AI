@@ -1,0 +1,27 @@
+{
+  "dialog": null,
+  "document": {
+    "clientWidth": 900,
+    "scrollWidth": 900
+  },
+  "entry": {
+    "rect": {
+      "bottom": 168.0500030517578,
+      "height": 40,
+      "left": 603.1749877929688,
+      "right": 789.5374908447266,
+      "top": 128.0500030517578,
+      "width": 186.3625030517578,
+      "x": 603.1749877929688,
+      "y": 128.0500030517578
+    },
+    "visible": true
+  },
+  "focus": {
+    "name": null,
+    "text": "Review with PAIGE"
+  },
+  "height": 1000,
+  "reducedMotion": true,
+  "width": 900
+}

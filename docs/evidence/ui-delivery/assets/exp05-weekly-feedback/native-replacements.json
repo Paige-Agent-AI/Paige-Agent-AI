@@ -1,0 +1,13 @@
+{
+  "boundary": "ADDITIVE_CAPTURE_CORRECTIONS_ORIGINAL_BYTES_RETAINED",
+  "rejected": [
+    {"name":"feedback-dark-1536-open.jpg","reason":"Independent review found a narrower Sheet layout in the declared desktop raster; replaced after separately settled layout. No CSS defect inferred."},
+    {"name":"feedback-loading-390.jpg","reason":"Independent review found Overview only, without the Sheet/loading text; not loading proof."},
+    {"name":"feedback-loading-390-settled.jpg","reason":"Browser-scoped override targeted the other selected preview tab. Actual feedback tab remained1536x770, so this is invalid mobile evidence despite visible loading copy."}
+  ],
+  "accepted_replacements": [
+    {"name":"feedback-dark-1536-open-settled.jpg","replaces":"feedback-dark-1536-open.jpg","dom":{"width":1536,"height":770,"document_overflow":false,"dialog":{"x":936,"width":600,"right":1536},"empty_text":true},"capture":"Separate native getScreenshot call; original unedited JPEG."},
+    {"name":"feedback-loading-390-targeted.jpg","replaces":"feedback-loading-390.jpg","dom":{"width":390,"height":780,"text":"Reading saved weekly proposals…","read_disabled":true,"prepare_disabled":true},"capture":"Documented tab-specific CDP Emulation override verified by read-only DOM; native screenshot follows fresh AX state. Original unedited JPEG. Override cleared after capture."}
+  ],
+  "tooling":"Browser selected tab was a different private prototype. Browser override reset; no product CSS or runtime changed. Tab-targeted override applies only to this isolated local fixture. A long browser-tool response is tooling latency, not action execution evidence."
+}

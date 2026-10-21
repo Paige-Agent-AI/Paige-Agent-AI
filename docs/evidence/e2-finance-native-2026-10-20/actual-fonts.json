@@ -1,0 +1,35 @@
+[
+  {
+    "selector": "#exec-domain-finance",
+    "fonts": [
+      {
+        "familyName": "Schibsted Grotesk",
+        "glyphCount": 25,
+        "isCustomFont": true,
+        "postScriptName": "Schibsted-Grotesk-SemiBold"
+      }
+    ]
+  },
+  {
+    "selector": ".exec-finance-source > summary",
+    "fonts": [
+      {
+        "familyName": "Geist",
+        "glyphCount": 78,
+        "isCustomFont": true,
+        "postScriptName": "Geist"
+      }
+    ]
+  },
+  {
+    "selector": ".exec-finance-source .exec-figures dd",
+    "fonts": [
+      {
+        "familyName": "Geist",
+        "glyphCount": 31,
+        "isCustomFont": true,
+        "postScriptName": "Geist-SemiBold"
+      }
+    ]
+  }
+]

@@ -37,6 +37,30 @@ const button = (name: string) => [...host.querySelectorAll("button")].find((b) =
 const link = (path: string) => host.querySelector("a[href='" + path + "']");
 
 describe("Executive — integrated customer flow", () => {
+  it("shows the canonical review-integration gap beside real zero and unchanged owning links", async () => {
+    const snapshot = structuredClone(SNAPSHOT);
+    snapshot.domains.campaigns = { status: "unavailable", data: null, reason: "no_adapter: campaigns" };
+    mocks.review.mockReturnValue({ state: "ready", snapshot, refresh: vi.fn() });
+    await mount();
+    expect(text()).toContain("This area is not included in this business review yet.");
+    expect(text()).not.toContain("no adapter");
+    expect(host.querySelector("[aria-labelledby='exec-domain-clients'] dd")?.textContent).toBe("0");
+    expect(link("/solo/1234567/sales/opportunities?view=board")).not.toBeNull();
+    expect(mocks.prefill).not.toHaveBeenCalled();
+  });
+  it("offers VERA's analysis through the existing unsent Chat draft and preserves PAIGE's primary briefing", async () => {
+    const open = vi.fn(); await mount(open);
+    expect(button("How's my business doing?")).toBeDefined();
+    act(() => button("Ask VERA to review the evidence").click());
+    expect(open).toHaveBeenCalledOnce();
+    expect(mocks.prefill).toHaveBeenCalledWith(expect.stringMatching(/^VERA, /));
+    expect(mocks.prefill).toHaveBeenCalledWith(expect.stringContaining("Last 7 days"));
+    expect(mocks.prefill).toHaveBeenCalledWith(expect.stringContaining("Do not take an action"));
+    mocks.prefill.mockClear();
+    await mount();
+    expect(button("Ask VERA to review the evidence").disabled).toBe(true);
+    expect(mocks.prefill).not.toHaveBeenCalled();
+  });
   it("prefills the one existing Chat and opens it without sending a model request", async () => {
     const open = vi.fn(); await mount(open);
     act(() => button("How's my business doing?").click());

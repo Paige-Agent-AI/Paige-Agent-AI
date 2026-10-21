@@ -1,9 +1,10 @@
 import { ArrowRight, ArrowUpRight, CalendarClock, CirclePause, Sparkles } from "lucide-react";
+import { WeeklyResponsibilityEntry } from "../weekly/WeeklyResponsibilityEntry";
 import type { Plan, PlanItem } from "@/hooks/usePlanList";
 import type { TeamMemberRecord } from "../team-workspace-contract";
 import { OperationsAssignee } from "./OperationsAssignee";
 import { workDateLabel, workStatusLabel } from "./operations-presentation";
-import { overviewNativeWork } from "./operations-overview-work";
+import { overviewNativeWork, type OperationsWorkSet } from "./operations-overview-work";
 import type { CrmWorkRecord, NativeOperationsWork } from "./operations-native-work";
 import "./operations-views.css";
 import "./operations-overview.css";
@@ -14,12 +15,13 @@ export interface OperationsOverviewProps {
   crmTasks?: CrmWorkRecord[]; onInspectCrmTask?: (task: CrmWorkRecord) => void;
   onInspectItem: (item: PlanItem) => void; onInspectPlan: (plan: Plan) => void;
   onNavigate?: (destination: Destination) => void;
+  onInspectWorkSet?: (group: OperationsWorkSet) => void;
   onReviewWithPaige?: () => void;
   onReviewWorkWithPaige?: (work: NativeOperationsWork) => void;
 }
 
 export function OperationsOverview({ tenantId, plans, items, members, crmTasks = [], onInspectCrmTask,
-  onInspectItem, onInspectPlan, onNavigate, onReviewWithPaige, onReviewWorkWithPaige }: OperationsOverviewProps) {
+  onInspectItem, onInspectPlan, onNavigate, onInspectWorkSet, onReviewWithPaige, onReviewWorkWithPaige }: OperationsOverviewProps) {
   const people = new Map(members.map(member => [member.user_id, member]));
   const projects = new Map(plans.map(plan => [plan.id, plan]));
   const work = overviewNativeWork(tenantId, items, crmTasks);
@@ -42,10 +44,14 @@ export function OperationsOverview({ tenantId, plans, items, members, crmTasks =
     <span className="ops-view-status" data-status={item.status}>{workStatusLabel(item.status)}</span>
   </li>)}</ul>;
   const navigate = (label: string, destination: Destination) => onNavigate && <button type="button" className="ops-view-text-action" onClick={() => onNavigate(destination)}>{label}<ArrowRight size={15} aria-hidden="true" /></button>;
+  const inspectGroup = (label: string, group: OperationsWorkSet, count: number) => count > 0 && onInspectWorkSet &&
+    <button type="button" className="ops-desk-inspect" data-ops-work-set={group} onClick={() => onInspectWorkSet(group)}>{label}<ArrowRight size={15} aria-hidden="true" /></button>;
 
   return <section className="ops-views ops-operating-desk" aria-label="Overview">
-    <header className="ops-desk-heading"><div><h1>Your operating week</h1><p>Current commitments, responsible people and the next decisions.</p></div>
-      {onReviewWithPaige && <button type="button" className="ops-desk-primary" onClick={onReviewWithPaige}><Sparkles size={16} aria-hidden="true" />Plan with PAIGE</button>}
+    <header className="ops-desk-heading"><div><h1 tabIndex={-1}>Your operating week</h1><p>Current commitments, responsible people and the next decisions.</p></div>
+      <div className="ops-desk-actions"><WeeklyResponsibilityEntry />
+        {onReviewWithPaige && <button type="button" className="ops-desk-primary" onClick={onReviewWithPaige}><Sparkles size={16} aria-hidden="true" />Plan with PAIGE</button>}
+      </div>
     </header>
     {work.active.length > 0 && <p className="ops-desk-read-scope">{work.active.length} active {work.active.length === 1 ? "commitment" : "commitments"} · {work.inProgress.length} in progress · {work.reminders.length} {work.reminders.length === 1 ? "reminder" : "reminders"} in the sources shown</p>}
     {!work.active.length && !plans.length ? <section className="ops-desk-first-use"><h2>Start with one real commitment</h2>
@@ -61,6 +67,7 @@ export function OperationsOverview({ tenantId, plans, items, members, crmTasks =
         <div className="ops-desk-work-owner">{owner(spotlight)}</div>
         <button type="button" className="ops-desk-inspect" disabled={!canInspect(spotlight)} onClick={() => inspect(spotlight)}>Inspect the original work<ArrowUpRight size={16} aria-hidden="true" /></button>
         {work.attention.length > 1 && <p className="ops-view-muted">{work.attention.length - 1} other blocked or overdue {work.attention.length === 2 ? "commitment" : "commitments"} in the work shown.</p>}
+        {inspectGroup("View attention in Work", "attention", work.attention.length)}
       </section> : <p className="ops-desk-attention-clear">No blocked or overdue work in the sources shown. Undated work and recorded reminders are included below.</p>}
       <section><div className="ops-desk-section-heading"><h2>Work in motion</h2>{navigate("All work", "Work")}</div>
         {operating.length ? rows(operating.slice(0, 6)) : <p className="ops-view-muted">{spotlight ? "The priority commitment is shown above." : "No other active tasks or milestones in the sources shown."}</p>}
@@ -72,14 +79,17 @@ export function OperationsOverview({ tenantId, plans, items, members, crmTasks =
       </section>}
       {onNavigate && <nav className="ops-desk-connections" aria-label="Connected Operations work">{navigate("Client promises", "Delivery")}{navigate("People and workload", "Capacity")}{navigate("Procedures", "Playbooks")}</nav>}
     </div><aside className="ops-desk-next-column">
-      <section className="ops-desk-commitments"><h2>Next deadlines</h2>{work.upcoming.length ? rows(work.upcoming) : <p className="ops-view-muted">No upcoming task deadlines in the work shown.</p>}</section>
-      {work.reminders.length > 0 && <section className="ops-desk-reminders"><div className="ops-desk-section-heading"><h2>Recorded reminders</h2>{navigate("Inspect in Work", "Work")}</div>{rows(work.reminders.slice(0, 4))}
+      <section className="ops-desk-commitments"><h2>Next deadlines</h2>{work.upcoming.length ? rows(work.upcoming) : <p className="ops-view-muted">No upcoming task deadlines in the work shown.</p>}
+        {inspectGroup("View deadlines in Work", "deadlines", work.deadlines.length)}</section>
+      {work.reminders.length > 0 && <section className="ops-desk-reminders"><div className="ops-desk-section-heading"><h2>Recorded reminders</h2>{!onInspectWorkSet && navigate("Inspect in Work", "Work")}</div>{rows(work.reminders.slice(0, 4))}
+        {inspectGroup("View reminders in Work", "reminders", work.reminders.length)}
         <p className="ops-desk-note">These are saved reminder times. Open the original record to review its current state; a scheduled time does not prove delivery.</p>
         {work.reminders.length > 4 && <p className="ops-view-muted">Showing 4 of {work.reminders.length} recorded reminders.</p>}
       </section>}
       <section className="ops-desk-next-action"><h2>What to do next</h2>{timing ? <>
         <p>{work.timingToConfirm.length} active {work.timingToConfirm.length === 1 ? "commitment needs" : "commitments need"} a confirmed due date. Start with the original work before choosing when it belongs.</p>
         <button type="button" className="ops-desk-inspect" disabled={!canInspect(timing)} onClick={() => inspect(timing)}>Review timing: {timing.title}<ArrowUpRight size={15} aria-hidden="true" /></button>
+        {inspectGroup("Review all missing dates", "timing", work.timingToConfirm.length)}
         {onReviewWorkWithPaige && <button type="button" className="ops-view-text-action" onClick={() => onReviewWorkWithPaige(timing.native)}>Prepare a review with PAIGE</button>}
       </> : <p className="ops-view-muted">Review the current commitments with PAIGE before preparing changes. Missing business context and unavailable sources still need checking.</p>}</section>
     </aside></div>}

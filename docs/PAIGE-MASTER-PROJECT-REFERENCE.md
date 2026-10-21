@@ -826,6 +826,35 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-21 — EXP04 truthful historical signing economics.**
+PR [#2493](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2493), reviewed
+`ed2964b5024f672492b5db6deac38ff95cb1929b`, merged
+`ec8d882d9d7b6044197c82def22ffdc221924bcd`; actual tree
+`d3f1536d0bc6989995995f384e1459eadf5688e6` exactly reproduces current-main
+composition, preserving E09 and EXP05 migrations. Native legacy signing context
+leaves amount/currency/summary SQL NULL without an immutable accepted snapshot,
+instead of attributing a mutable current commercial header to a frozen document.
+Original document, token/view lifecycle,12-column result, pgcrypto qualification,
+search_path and caller ACL are preserved; no backfill or agreement rewrite.
+AUTHOR-REVIEW / LOWER ASSURANCE6323356401/6323913840. All13 exact-head checks,
+including actual Supabase Preview, and both Vercel statuses SUCCESS. Native27-case
+PostgreSQL16 source proof/replay2 remains separate from customer acceptance.
+Normal deploy-migrations39656361224/job119417939240 SUCCESS:13090000 persisted;
+normal db-live certification advanced to ec8d at18:52UTC. Direct production
+function body MD5 `b8a2a6c1d9b93153a5796b54fd67a92c` exactly matches the
+migration; original result/config/ACL confirmed. Web
+`dpl_3egWw8xExRRVE2U2XRARNMCgotNN` READY at exact ec8d/main. Edge changes
+NOT_APPLICABLE. [Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2493#issuecomment-6324039048),
+[source evidence](evidence/ui-delivery/e04-historical-signing-context-reconcile.md).
+Functional: bounded correction released/read back. Visual: no frontend change.
+Experiential: full agreement/signing/payment/delivery integration remains incomplete.
+Acceptance: actual recipient/owner/client signing recovery, accepted/effective
+economics, legal/provider review, ALG01/02/12/13 and all O1–O12/founder evaluation
+remain PROOF OWED. No real signing, send, payment or activation used for this proof.
+Production/internal integrity patch; no customer version or announcement. Recovery
+is a reviewed forward correction preserving originals. This factual post-merge
+closeout does not require recursive logging.
+
 **2026-10-21 — EXP04 retained agreement completion verification.**
 PR [#2487](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2487), reviewed
 `82e33f96c9fbac525db0f7b95151cc63b46095de`, merged

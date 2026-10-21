@@ -116,5 +116,24 @@ SELECT ok((pg_temp.observe()->>'current_document_revision')::integer>1,'current 
 SELECT is(pg_temp.observe('a1','a','e0c10500-0000-4000-8000-000000000002')->'source_document_id','null'::jsonb,'inconsistent foreign source pointer reveals no document');
 SELECT is(pg_temp.observe('a1','a','e0c10500-0000-4000-8000-000000000003')->>'preparation_recorded','true','retired source does not erase recorded original acceptance');
 SELECT is(pg_temp.observe('a1','a','e0c10500-0000-4000-8000-000000000003')->'source_document_id','null'::jsonb,'missing source remains explicitly unavailable');
+-- The same original publisher predicate supports direct admin and inherited agency authority.
+UPDATE public.tenant_members SET is_owner=false,role='admin' WHERE user_id=pg_temp.u('a1') AND tenant_id=pg_temp.t('a');
+SELECT is(pg_temp.observe()->>'availability','available','original direct admin remains permitted');
+UPDATE public.tenant_members SET role='member' WHERE user_id=pg_temp.u('a1') AND tenant_id=pg_temp.t('a');
+UPDATE public.tenants SET parent_tenant_id=pg_temp.t('b') WHERE id=pg_temp.t('a');
+SELECT is(pg_temp.observe()->>'availability','available','original inherited owner remains permitted');
+UPDATE public.tenant_members SET is_owner=false,role='admin' WHERE user_id=pg_temp.u('a1') AND tenant_id=pg_temp.t('b');
+SELECT is(pg_temp.observe()->>'availability','available','original inherited admin remains permitted');
+UPDATE public.tenant_members SET role='member' WHERE user_id=pg_temp.u('a1') AND tenant_id=pg_temp.t('b');
+SELECT is(pg_temp.observe()->>'sqlstate','42501','ancestor downgrade removes recovery access');
+UPDATE public.tenant_members SET role='admin',status='inactive' WHERE user_id=pg_temp.u('a1') AND tenant_id=pg_temp.t('b');
+SELECT is(pg_temp.observe()->>'sqlstate','42501','inactive ancestor removes recovery access');
+UPDATE public.tenant_members SET status='active' WHERE user_id=pg_temp.u('a1') AND tenant_id=pg_temp.t('b');
+DELETE FROM public.tenant_members WHERE user_id=pg_temp.u('a1') AND tenant_id=pg_temp.t('b');
+SELECT is(pg_temp.observe()->>'sqlstate','42501','removed ancestor membership removes recovery access');
+INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner,joined_at) VALUES(pg_temp.t('b'),pg_temp.u('a1'),'admin','active',false,now());
+SELECT is(pg_temp.observe()->>'availability','available','restored original inherited publisher can return');
+UPDATE public.tenants SET parent_tenant_id=NULL WHERE id=pg_temp.t('a');
+SELECT is(pg_temp.observe()->>'sqlstate','42501','reparented business cannot retain former inherited access');
 SELECT * FROM finish();
 ROLLBACK;

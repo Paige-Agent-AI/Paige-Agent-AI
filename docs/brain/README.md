@@ -6,9 +6,13 @@ Original findings return-focus #2485 is deployed and ordinary-owner source/Back,
 settled hydration and reload/repeat Back pass; earlier #2474 FAIL remains dated.
 Existing ZION remit #2490 is merged/deployed in web, original registry and the
 addressing source. His soft runtime/prompt/permissions remain unchanged.
-Actual addressed introduction QA still fails: the original continuation heuristic
-misreads a forbidden action list and exhausts4rounds/0tools. Correction is under
-engineering, not a completed or delegated Operations outcome. Exact release and
+Initial addressed introduction QA failed: the original continuation heuristic
+misread a forbidden action list and exhausted4rounds/0tools. Correction#2498 is
+now deployed; ordinary-owner exact no-action introduction FINAL/1round/0tools,
+normal reload and original2-turn persistence PASS. This restores the prose
+reply, not delegated execution or a complete Operations outcome. Explicit
+Overview entry#2488 also passes ordinary-owner click/reload/legacy-entry proof.
+Exact release and
 proof boundaries are in [Master§4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log),
 ANT-11 and ANT-161. Contextual ZION UI and the approved full immersive Operations
 Experience remain separate unfinished increments; no catalogue Live promotion.

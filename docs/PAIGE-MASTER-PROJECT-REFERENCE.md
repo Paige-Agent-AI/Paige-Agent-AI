@@ -826,6 +826,45 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-21 — EXP05 completed read-only ZION reply and reload.**
+PR [#2498](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2498), reviewed
+`fc30dcfc5d05c1f68cff164cda2e47feaa4fdfc4`, merged
+`18d442548c88a699045bf8cfaca970887b514b47`; actual tree
+`ddad782f4a119d92739c537ad5bcb9911096d1ee` equals the reviewed current-main union.
+AUTHOR-REVIEW / LOWER ASSURANCE6325117594; all11 exact-head checks and both
+Vercel statuses SUCCESS, no unresolved thread. The existing continuation heuristic
+now excludes explicitly forbidden action lists without changing admission,
+approvals, execution, replay, receipts or provider routing. All29 reviewed
+enclosing-handler fingerprints renewed; extractor/metadata/116 dependencies and
+original authority controls unchanged.86 focused and216 binding/negative tests
+pass; actual hosted verify39660029112 and database-contract39660029108 SUCCESS.
+Normal Edge39665329566/job119448739806 SUCCESS, including actual deployed-source
+verification/certification. `paige-ai-chat`494 ACTIVE/verify_jwt=true;
+256-file package EZBR SHA256
+`c4b7e328d7c8723041a365fea1ef170dfc287d531623fdb5cea34f19ab98f3cb`.
+Manual changed-fragment comparison exactly matches reviewed main, SHA256
+`cf5ffd0c08ec997859d33d6ab634f41a060df31075dd9c8385a790f513abcc0c`;
+full-package verification is the original pipeline's separate evidence.
+Web `dpl_C9dFcqz38LiiDkwbqufnszT8tQHZ` READY/exact/canonical aliases, public
+`18d442548c88a699045bf8cfaca970887b514b47-mvij3pzm`, customerUpdate:null.
+Ordinary authenticated SOLO owner, same server-correlated actor/tenant as the
+historical failure: exact protected no-action request19:56:29Z → original
+assistant19:56:42Z FINAL/fast_answer,1round/0tools. Correct Operations/Automation
+remit under PAIGE displayed; normal reload retains the same answer, empty draft
+and no limit banner. Authoritative reload read still exactly1user+1assistant turn
+for that original intent. No business action, new delegated job or action Rail
+receipt claimed. Original4round/0tool LIMIT_REACHED failure remains dated below.
+Private passing reload JPEG SHA256
+`a8e41a282c56e061007388bfa212980187e52ea83bbe2d46f19b1298b457fc35`;
+[production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2498#issuecomment-6325253684),
+ANT11/a9e34d28, ANT52/c50be8b9 and
+[source evidence](evidence/ui-delivery/exp05-readonly-continuation.md).
+Channel production/internal reliability patch; no customer version/announcement,
+migration, role/provider/effect activation or catalogue Live promotion. Source
+applies to every legitimately admitted actor; full cohort/automation/delegation,
+Live, ten EXP05 outcomes/E5-CV1–9 and owner acceptance remain open. Recovery is a
+reviewed compatible source correction, never replay of an uncertain business act.
+
 **2026-10-21 — EXP05 explicit Operations Overview entry, bounded authenticated release.**
 PR [#2488](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2488), reviewed
 `638f467cc4cca0a65942fec3e2ca40a67ed2fe83`, merged

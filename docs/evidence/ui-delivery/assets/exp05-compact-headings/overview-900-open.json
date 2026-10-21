@@ -1,0 +1,31 @@
+{
+  "actions": [
+    {
+      "height": 44,
+      "text": "Weekly responsibility"
+    },
+    {
+      "height": 44,
+      "text": "Plan with PAIGE"
+    }
+  ],
+  "fixtureError": "",
+  "focus": "Direct PAIGE",
+  "fontSize": "16px",
+  "h1Count": 1,
+  "headerIntroCount": 0,
+  "headerRect": {
+    "height": 44,
+    "width": 770.4000244140625,
+    "x": 96,
+    "y": 151.40000915527344
+  },
+  "heading": "Your operating week",
+  "headingColor": "rgb(23, 19, 49)",
+  "height": 1000,
+  "lineHeight": "22.4px",
+  "pageWidth": 900,
+  "url": "/solo/1701/operations/overview",
+  "weight": "600",
+  "width": 900
+}

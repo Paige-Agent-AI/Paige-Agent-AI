@@ -1,0 +1,22 @@
+{
+  "actions": [],
+  "fixtureError": "",
+  "focus": "Work",
+  "fontSize": "25px",
+  "h1Count": 1,
+  "headerIntroCount": 0,
+  "headerRect": {
+    "height": 35,
+    "width": 280.8000183105469,
+    "x": 86,
+    "y": 214.40000915527344
+  },
+  "heading": "Move the work forward",
+  "headingColor": "rgb(23, 19, 49)",
+  "height": 844,
+  "lineHeight": "35px",
+  "pageWidth": 390,
+  "url": "/solo/1701/operations/work",
+  "weight": "600",
+  "width": 390
+}

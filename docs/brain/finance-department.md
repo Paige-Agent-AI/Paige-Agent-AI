@@ -1,5 +1,10 @@
 # Finance department — current source and full operating target
 
+## EXP02 receiver checkpoint — October21, development only
+
+Original #2414 Banking & Cash consumer is recovered on current main; no replacement Finance read or originating records.49 actual workspace/shared-hook/presenter cases support its existing canonical Finance contract, correct product fonts, source disclosure, loading/refusal/empty states, keyboard, refresh and integrations return. Native raster audit leaves two1536 frames unverified (actual1535x770);14 other view/state frames plus keyboard match their dimensions. Full native finish, final review/required CI, safe release/readback and actual authorized receiver/provider/permission/reload proof remain owed. Source observations are not bank-wide totals or action receipts. Existing nine analytics catalogue states remain bounded; no Live promotion or capability/provider/algorithm activation. See [receiver evidence](../evidence/ui-delivery/e2-finance-department-sources.md). Historical source checkpoints below remain dated evidence.
+
+
 ## October 20 observed EXP02 Finance consumer release
 
 Original #2402 reviewed d0aafc53ed81273868b4160684677ed02175454b merged
@@ -42,6 +47,27 @@ recorded separately from the frozen captures. Actual zoom, deployed Finance
 behavior/provider readiness, Chat/Live, account isolation/reload and full19/founder
 acceptance remain owed. No new issuer, ledger, provider, approval or action activation.
 
+## EXP02 consumer continuation v2026-10-20.1 — local, not released
+
+EXP02 extends the approved Banking & Cash destination using the same
+`useBusinessReview`/`paige-business-review`/Operating Fabric Finance source contract
+as Executive and the same `ExecutiveFinanceEvidence` presenter. #2402 remains the
+source prerequisite; branch `codex/e2-finance-department-sources` adds no metric,
+provider, store, calculation or capability registration. Read only while Banking
+is selected and department access is not refused; existing toolbar refresh reuses
+that reader, while tab/workspace changes discard the prior display. Preserve exact
+company/account/currency amounts, null versus zero, source observations and existing
+Reconciliation limitations. Do not describe a source receipt as executed work.
+
+Thirty component/shared-hook/parser assertions pass, including refresh/refusal and
+workspace change; the pre-change100a component fails the new consumer regression.
+This is source proof only. Native Finance/keyboard/zoom, final review/CI, production
+and authorized SOLO/reload/provider/full19/founder acceptance remain owed. Existing
+native target/VERA packets prove their own synthetic surfaces only. See
+[consumer contract and evidence](../evidence/ui-delivery/e2-finance-department-sources.md).
+EXP01/05/09/11 may reuse the canonical domain contract; do not create another reader
+or infer company-wide cash, profit or forecast from recorded account observations.
+
 ## October 20 observed statement-source release — #2021
 
 Original #2021 reviewedab3f8243ce0795127eb274e2eb0e3995fd6adc5c merged
@@ -59,6 +85,7 @@ Preserve canonical company/unfiltered request, currency, basis, period, source
 observation and Metric/Evidence authority before consumption. No provider call,
 new ledger, financial effect, customer announcement or authenticated acceptance.
 Full financial intelligence and all19 EXP02 outcomes remain incomplete.
+
 
 Grounded on 2026-10-09 against main `794a38263e2d1d565ccab20253751593ed9c8f5b`.
 Owner-approved design and subsequent “live merge on green” authorize normal delivery. They do not authorize a real provider connection or financial effects.

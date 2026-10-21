@@ -25,3 +25,48 @@ it("a later session displays the canonical saved draft rather than reporting a w
 it("unknown state offers readback, never another approval or a replay",async()=>{f.request.mockResolvedValue({kind:"pending",requests:[state('unknown')],hasMore:false});await render();expect(container.textContent).toContain("before any retry");expect(button('Approve')).toBeUndefined();expect(button('Prepare another responsibility')?.disabled).toBe(true);});
 it("scope loss drops private proposals and all callbacks without issuing another request",async()=>{f.request.mockResolvedValue({kind:"pending",requests:[state('saved')],hasMore:false});await render();f.eligible=false;await render();expect(container.textContent).toBe("");expect(f.request).toHaveBeenCalledTimes(1);});
 it("a session change clears private state and disables actions until a fresh scope entry",async()=>{f.request.mockResolvedValue({kind:"pending",requests:[state('saved')],hasMore:false});await render();await act(async()=>f.auth?.('SIGNED_OUT'));expect(container.textContent).not.toContain('canonical-receipt');expect(button('Read saved proposals')?.disabled).toBe(true);expect(button('Prepare a weekly responsibility')?.disabled).toBe(true);expect(f.request).toHaveBeenCalledTimes(1);});
+
+const emptyRead = "No weekly proposals were returned for this owner.";
+it("announces a verified empty proposal read without claiming work was saved",async()=>{
+  await render();
+  expect(container.querySelector('[role="status"]')?.textContent).toBe(emptyRead);
+  expect(button('Prepare a weekly responsibility')?.disabled).toBe(false);
+  expect(button('Approve')).toBeUndefined();
+  expect(saved).not.toHaveBeenCalled();
+});
+it("shows explicit refresh progress, retires the empty message and then opens the actual returned proposal",async()=>{
+  let resolve!:(value:WeeklyDraftResult)=>void;
+  await render();
+  f.request.mockImplementationOnce(()=>new Promise(value=>{resolve=value;}));
+  button('Read saved proposals')!.focus();
+  await click('Read saved proposals');
+  expect(container.querySelector('[role="status"]')?.textContent).toBe('Reading saved weekly proposals…');
+  expect(container.textContent).not.toContain(emptyRead);
+  expect(document.activeElement).toBe(button('Read saved proposals'));
+  expect(button('Read saved proposals')?.disabled).toBe(true);
+  expect(button('Prepare a weekly responsibility')?.disabled).toBe(true);
+  expect(f.request.mock.calls[1][3]).toEqual({action:'pending'});
+  await act(async()=>resolve({kind:'pending',requests:[state('saved')],hasMore:false}));
+  expect(container.textContent).toContain('canonical-receipt');
+  expect(container.textContent).not.toContain(emptyRead);
+  expect(saved).not.toHaveBeenCalled();
+});
+it.each(['unavailable','refused'] as const)("does not present a %s refresh as an empty successful read",async(kind)=>{
+  await render();
+  f.request.mockResolvedValueOnce({kind});
+  await click('Read saved proposals');
+  expect(container.querySelector('[role="alert"]')).not.toBeNull();
+  expect(container.textContent).not.toContain(emptyRead);
+  expect(button('Approve')).toBeUndefined();
+  expect(saved).not.toHaveBeenCalled();
+});
+it("does not restore an empty result from a retired session's late response",async()=>{
+  let resolve!:(value:WeeklyDraftResult)=>void;
+  f.request.mockImplementationOnce(()=>new Promise(value=>{resolve=value;}));
+  await render();
+  await act(async()=>f.auth?.('SIGNED_OUT'));
+  await act(async()=>resolve({kind:'pending',requests:[],hasMore:false}));
+  expect(container.textContent).not.toContain(emptyRead);
+  expect(button('Prepare a weekly responsibility')?.disabled).toBe(true);
+  expect(f.request).toHaveBeenCalledTimes(1);
+});

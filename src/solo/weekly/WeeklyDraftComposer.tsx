@@ -21,11 +21,12 @@ function ScopedComposer({ actor, tenant, businessZone, onSaved }: {
   const [message, setMessage] = useState(""), [unconfirmed, setUnconfirmed] = useState(false), [unavailable, setUnavailable] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [blocked, setBlocked] = useState(false);
+  const [proposalRead, setProposalRead] = useState<"unread" | "reading" | "empty">("unread");
   const scope = useRef<WeeklyBrowserScope | null>({ actorId: actor, tenantId: tenant, epoch: 0 });
   const ticket = useRef(0), flight = useRef(false);
   const current = () => getScopedUserId() === null ? scope.current : null;
   const adopt = (result: WeeklyDraftResult) => {
-    setLoading(false); setBusy(false); setUnavailable(false);
+    setLoading(false); setBusy(false); setUnavailable(false); setProposalRead("unread");
     if (result.kind === "refused") { setBlocked(true); setRequests([]); setSelected(null); setPlanning(false); setMessage("Current owner access could not be verified. Reopen this view after checking your workspace."); return; }
     if (result.kind === "invalid" || result.kind === "held") {
       setMessage(result.kind === "invalid" ? "Check the responsibility name, day, time and business time zone. Your proposal is still editable; no save was verified." : "Saving weekly drafts is currently held by your workspace permissions. No responsibility has been registered."); return;
@@ -35,7 +36,11 @@ function ScopedComposer({ actor, tenant, businessZone, onSaved }: {
       setMessage(result.kind === "unconfirmed" ? "The response could not be verified. Read the original saved status before trying any action again." : "Draft status is unavailable. Your proposal has not been reported as saved."); return;
     }
     setMessage(""); setUnconfirmed(false);
-    if (result.kind === "pending") { setRequests(result.requests); setHasMore(result.hasMore); setSelected(result.requests[0] ?? null); return; }
+    if (result.kind === "pending") {
+      setRequests(result.requests); setHasMore(result.hasMore); setSelected(result.requests[0] ?? null);
+      if (!result.requests.length) setProposalRead("empty");
+      return;
+    }
     if (result.kind !== "state") return;
     setSelected(result.state); setPlanning(false);
     setRequests(previous => [result.state, ...previous.filter(r => r.confirmationId !== result.state.confirmationId)]);
@@ -45,6 +50,7 @@ function ScopedComposer({ actor, tenant, businessZone, onSaved }: {
     if (flight.current || !scope.current) return;
     flight.current = true; const captured = scope.current, ownTicket = ++ticket.current;
     setBusy(true); setMessage("");
+    if (request.action === "pending") setProposalRead("reading");
     const result = await requestWeeklyDraft(captured, supabase as unknown as Parameters<typeof requestWeeklyDraft>[1], current, request);
     if (ownTicket !== ticket.current || !current()) return;
     flight.current = false; adopt(result);
@@ -56,6 +62,7 @@ function ScopedComposer({ actor, tenant, businessZone, onSaved }: {
       if (["SIGNED_IN", "SIGNED_OUT", "USER_UPDATED"].includes(event)) {
         ticket.current++; flight.current = false; scope.current = null;
         setBlocked(true); setRequests([]); setSelected(null); setPlanning(false); setBusy(false); setLoading(false);
+        setProposalRead("unread");
         setMessage("Your session changed. Reopen this view to verify current owner access.");
       }
     });
@@ -66,7 +73,8 @@ function ScopedComposer({ actor, tenant, businessZone, onSaved }: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [actor, tenant]);
   return <section className="e5-weekly-draft-composer" aria-label="Prepare and retrieve weekly drafts">
-    {loading && <p role="status">Reading saved weekly proposals…</p>}
+    {(loading || proposalRead === "reading") && <p role="status">Reading saved weekly proposals…</p>}
+    {proposalRead === "empty" && !planning && !busy && <p role="status">No weekly proposals were returned for this owner.</p>}
     {message && <p role="alert">{message}</p>}
     {!loading && !selected && <button type="button" onClick={() => void command({ action: "pending" })} disabled={busy || blocked}>Read saved proposals</button>}
     {requests.length > 1 && <label className="e5-weekly-draft-selector">Saved proposal<select disabled={busy} value={selected?.confirmationId ?? ""} onChange={e => {

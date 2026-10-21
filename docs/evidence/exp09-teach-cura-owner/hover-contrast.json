@@ -1,0 +1,146 @@
+[
+  {
+    "theme": "Mineral",
+    "text": "Back to experience",
+    "background": "rgb(255, 253, 248)",
+    "color": "rgb(32, 30, 35)"
+  },
+  {
+    "theme": "Mineral",
+    "text": "Search",
+    "background": "rgb(255, 253, 248)",
+    "color": "rgb(32, 30, 35)"
+  },
+  {
+    "theme": "Mineral",
+    "text": "Refresh",
+    "background": "rgb(255, 253, 248)",
+    "color": "rgb(32, 30, 35)"
+  },
+  {
+    "theme": "Mineral",
+    "text": "Review sharing",
+    "background": "rgb(255, 253, 248)",
+    "color": "rgb(32, 30, 35)"
+  },
+  {
+    "theme": "Mineral",
+    "text": "Review or correct",
+    "background": "rgb(255, 253, 248)",
+    "color": "rgb(32, 30, 35)"
+  },
+  {
+    "theme": "Mineral",
+    "text": "Review sharing",
+    "background": "rgb(255, 253, 248)",
+    "color": "rgb(32, 30, 35)"
+  },
+  {
+    "theme": "Mineral",
+    "text": "Review or correct",
+    "background": "rgb(255, 253, 248)",
+    "color": "rgb(32, 30, 35)"
+  },
+  {
+    "theme": "Mineral",
+    "text": "Withdraw",
+    "background": "rgb(255, 253, 248)",
+    "color": "rgb(32, 30, 35)"
+  },
+  {
+    "theme": "Mineral",
+    "text": "Review or correct",
+    "background": "rgb(255, 253, 248)",
+    "color": "rgb(32, 30, 35)"
+  },
+  {
+    "theme": "Mineral-review",
+    "text": "Back to experience",
+    "background": "rgb(255, 253, 248)",
+    "color": "rgb(32, 30, 35)"
+  },
+  {
+    "theme": "Mineral-review",
+    "text": "Cancel",
+    "background": "rgb(255, 253, 248)",
+    "color": "rgb(32, 30, 35)"
+  },
+  {
+    "theme": "Obsidian",
+    "text": "Back to experience",
+    "background": "rgb(33, 29, 39)",
+    "color": "rgb(246, 242, 234)"
+  },
+  {
+    "theme": "Obsidian",
+    "text": "Search",
+    "background": "rgb(33, 29, 39)",
+    "color": "rgb(246, 242, 234)"
+  },
+  {
+    "theme": "Obsidian",
+    "text": "Refresh",
+    "background": "rgb(33, 29, 39)",
+    "color": "rgb(246, 242, 234)"
+  },
+  {
+    "theme": "Obsidian",
+    "text": "Review sharing",
+    "background": "rgb(33, 29, 39)",
+    "color": "rgb(246, 242, 234)"
+  },
+  {
+    "theme": "Obsidian",
+    "text": "Review or correct",
+    "background": "rgb(33, 29, 39)",
+    "color": "rgb(246, 242, 234)"
+  },
+  {
+    "theme": "Obsidian",
+    "text": "Review sharing",
+    "background": "rgb(33, 29, 39)",
+    "color": "rgb(246, 242, 234)"
+  },
+  {
+    "theme": "Obsidian",
+    "text": "Review or correct",
+    "background": "rgb(33, 29, 39)",
+    "color": "rgb(246, 242, 234)"
+  },
+  {
+    "theme": "Obsidian",
+    "text": "Withdraw",
+    "background": "rgb(33, 29, 39)",
+    "color": "rgb(246, 242, 234)"
+  },
+  {
+    "theme": "Obsidian",
+    "text": "Review or correct",
+    "background": "rgb(33, 29, 39)",
+    "color": "rgb(246, 242, 234)"
+  },
+  {
+    "theme": "Obsidian-review",
+    "text": "Back to experience",
+    "background": "rgb(33, 29, 39)",
+    "color": "rgb(246, 242, 234)"
+  },
+  {
+    "theme": "Obsidian-review",
+    "text": "Cancel",
+    "background": "rgb(33, 29, 39)",
+    "color": "rgb(246, 242, 234)"
+  },
+  {
+    "theme": "Mineral-receipt",
+    "text": "Check saved status",
+    "background": "rgb(255, 253, 248)",
+    "color": "rgb(32, 30, 35)"
+  },
+  {
+    "theme": "Mineral-receipt",
+    "text": "Leave this check",
+    "background": "rgb(255, 253, 248)",
+    "color": "rgb(32, 30, 35)"
+  }
+]

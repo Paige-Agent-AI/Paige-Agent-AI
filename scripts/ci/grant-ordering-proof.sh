@@ -64,7 +64,7 @@ expect "the out-of-order migration's REVOKE survives" \
 
 # The change under review is applied by now, so an object it drops still has production grants and
 # is missing by design: report it, don't fail. Only the probes are asserted below.
-node "$tool" --dump "$prod/baseline_schema.sql" --db "$db" --report-missing > /dev/null
+node "$tool" --dump "$prod/baseline_public_acl.sql" --db "$db" --report-missing > /dev/null
 expect "negative control: the reconcile alone erases the newer migration's GRANT" \
   "select has_table_privilege('authenticated','public._ci_grant_ordering_probe','SELECT')" f
 expect "negative control: production grants what the newer migration REVOKEd" \

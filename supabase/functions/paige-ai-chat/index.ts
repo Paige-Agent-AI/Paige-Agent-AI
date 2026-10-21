@@ -18,7 +18,7 @@ import { adoptApprovedReminder, executeApprovedReminder, type ReminderExecutionB
 import { readOriginalReminderApprovalHistory } from "../_shared/paige-turn/interactive-reminder-history.ts";
 import type { ContextIdentity } from "../_shared/paige-context/mod.ts";
 import { BUSINESS_METRIC_TOOLS, metricReadContext, readBusinessMetric, type MetricReadOutcome } from '../_shared/analytics-metrics/read.ts';
-import { BUSINESS_SNAPSHOT_TOOLS, dispatchBusinessSnapshotChat } from '../_shared/paige-context/business-review-chat.ts';
+import { BUSINESS_SNAPSHOT_TOOLS, readBusinessSnapshotTransport } from '../_shared/paige-context/business-review-chat.ts';
 import { CLIENT_ENGAGEMENT_TOOLS, dispatchBusinessTimeZoneChat, dispatchClientStandingChat } from '../_shared/client-engagement/chat.ts';
 // INT-328 — one business email to one existing contact, through its canonical door (comms-email-command).
 import { COMMS_EMAIL_TOOLS, COMMS_EMAIL_TOOL_NAMES, dispatchCommsEmailChat, type CommsEmailApprovalQuery, type CommsEmailFollowupOrigin } from '../_shared/comms-email/chat.ts';
@@ -12450,13 +12450,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         } else if (tc.function.name === "get_business_snapshot") {
           // E2-1 business snapshot — same finished-round, scope, cancellation and read-only Harness
           // gates as every tool above, and the caller-JWT client is mandatory for the same reason:
-          // the composer reads every domain through the INT-340 issuer, which re-proves workspace,
+          // the existing Business Review worker reads domains through the INT-340 issuer, which re-proves workspace,
           // membership and the owner/admin seat in its own body. The corridor executes calls one at
           // a time, so this read is sequential with any read_business_metric call in the same turn,
           // as the issuer's evidence-reference revocation requires. No Rail receipt is written
           // (no recorder is registered). Only the bounded projection reaches the model.
           const result = callerTier === "tenant"
-            ? await dispatchBusinessSnapshotChat(
+            ? await readBusinessSnapshotTransport(
                 { who: { actorId: user.id, tenantId: personaCtx?.tenant_id ?? null, role: null, accountShape: null }, timezone: userTimezone ?? "UTC" },
                 { caller: supabaseClient },
                 JSON.parse(tc.function.arguments))

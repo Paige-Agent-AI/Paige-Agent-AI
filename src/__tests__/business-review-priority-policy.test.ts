@@ -55,7 +55,7 @@ it('preserves the fixed-lines-only budget without leaking omitted risk evidence'
 
 it('retains complete act evidence before healthy count sections consume the summary budget', () => {
   const clients = TEST_BUSINESS_REVIEW.domains.clients.data!;
-  const snapshot = { ...structuredClone(TEST_BUSINESS_REVIEW), requested: ['clients', 'operations'] as const,
+  const snapshot: typeof TEST_BUSINESS_REVIEW = { ...structuredClone(TEST_BUSINESS_REVIEW), requested: ['clients', 'operations'],
     domains: { ...TEST_BUSINESS_REVIEW.domains, clients: { status: 'available' as const,
       data: { ...clients, headline: Array.from({ length: 8 }, (_, i) => ({ ...clients.headline[0], key: `clients.count_${i}`, label: `Supported current client count ${i}` })) } } } };
   const actOnly = projectOperatingSnapshot({ ...snapshot, requested: ['operations'] }, { maxChars: 100000 });

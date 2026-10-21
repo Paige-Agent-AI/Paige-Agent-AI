@@ -23,8 +23,14 @@ assert.ok(contactStart>0&&contactEnd>contactStart,'Bounded original contact fixt
 // Publisher races need no CRM client or contact-created event.
 seed=seed.slice(0,contactStart)+seed.slice(contactEnd);
 const operatorSeed=/INSERT INTO public\.user_roles\(user_id,role\) VALUES\('[^']+','super_admin'\);/g;
-assert.equal([...seed.matchAll(operatorSeed)].length,1,'Exactly one unneeded operator fixture must be omitted');
+const operatorSeeds=[...seed.matchAll(operatorSeed)];
+assert.equal(operatorSeeds.length,1,'Exactly one unneeded operator fixture must be omitted');
+const operatorUser=/VALUES\('([^']+)'/.exec(operatorSeeds[0][0])?.[1];
+assert.ok(operatorUser,'Original isolated operator identity required');
 seed=seed.replace(operatorSeed,'');
+let omittedWorkspace=0;
+seed=seed.replace(/UPDATE public\.profiles SET active_tenant_id=[^;]+;/g,sql=>sql.replace(",'"+operatorUser+"'",()=>{omittedWorkspace++;return '';}));
+assert.equal(omittedWorkspace,1,'Unneeded operator keeps no staff workspace assignment');
 const u=s=>`e0c10100-0000-4000-8000-0000000000${s}`;
 const t=s=>`e0c10200-0000-4000-8000-00000000000${s}`;
 const actor=u('a1'),a=t('a'),b=t('b'),c=t('c'),intent='e0c10500-0000-4000-8000-000000000001';

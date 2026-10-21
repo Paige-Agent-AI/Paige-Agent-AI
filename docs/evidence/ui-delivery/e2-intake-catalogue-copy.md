@@ -45,12 +45,14 @@ RELEASE_RECOVERY: position=forward correction of only eligible canonical descrip
 
 REPAIR: one canonical registry data correction. REUSE: original CapabilitiesView,
 presentCatalogueCoverage, existing reader/tier gates and PG16 proof/CI. No EXTEND or
-NEW runtime infrastructure. Source reservation is ANT-161 595ea919: original
-never-applied103000 was renumbered113000 after verified production110000, ahead of
-pending120000. Recheck actual main/frontier before release; never rewrite history.
+NEW runtime infrastructure. Source reservation is ANT-161 595ea919, renewed906f3cdc:
+the never-applied103000/113000 candidate was renumbered140000 after verified
+production120000, preserving E04's provisional130000. Current-main e7396e59e
+composition preserves the original SQL bytes and rendered component source.
+Recheck actual main/frontier before release; never rewrite history.
 
 Migration SHA256 bab34dce11a379901ac632b7f96f3ff6c98e3e02f10279058831e8f707b9134d;
-owning SQL proof SHA256 2b9ff1970fb687de26376c1cdff8d8534baf95fd0f890c513946141c9a210f9e.
+owning SQL proof SHA256 668e014eb2838ffbac4bf9367caf649c34c2442bad45d2befb377eb4ce29bb5b.
 Initial Windows runner/service setup failures and interrupted initialization remain
 local diagnostic evidence and are not counted as successful test runs.
 

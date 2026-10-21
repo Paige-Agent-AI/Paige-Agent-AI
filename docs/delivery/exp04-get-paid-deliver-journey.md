@@ -1,5 +1,147 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
+## October 21 restart — professional native Agreements, original twelve outcomes retained
+
+**Authority:** owner EXP04 resume / Reimagine Terms & Agreements, October 21, 2026;
+ANT-161 `ecd81854-6a4d-49fc-95e7-9c870cb23ff1` and ANT-163
+`2d4adabf-f4b8-4409-8b96-320de7de3e29`. Same sole existing E04 Codex lead.
+The dated Claude ownership and October 15 hold below are historical. No old agent
+is restarted. EXP09 Codex owns the Portal; this lane owns originating Sales and signing.
+All original O1–O12 remain mandatory. One complete founder evaluation follows integration.
+
+### Grounded source and release, not customer acceptance
+
+- Main `d7f55f217f78a1576b21f65d92c06fb5b1e56ac2`; production web provider metadata
+  `dpl_7TYYU1eGELLCddgCCQRtHp5Djq1k` READY at this SHA. New branch
+  `codex/e04-agreements-workspace` starts there and preserves all previous branches.
+- **REUSE:** native engine #1352 / `d08769bf498573748328709f66d693c9b8f0f233`;
+  Portal Agreements #2367 / `3bebf3cb315fe691a8a0e70426e0e8f36cd54100`.
+  Read-only production catalog inspection confirms native agreement/signing RPCs,
+  original migration history and `20271110225000` / `20271110230000`.
+  Edge metadata: agreement-send v14/JWT true, sign-agreement v24, agreement-document v32.
+  ACTIVE and READY are deployment facts, **not authenticated signing or delivery proof**.
+- **REPAIR / EXTEND:** mounted `sales-ops.tsx` / `useSoloAgreementSignings.ts`:
+  terms and signing remain separate, upload requires separately entered text,
+  drafting is unavailable, one client counterparty is automatically added,
+  multi-signer preparation/field placement is inaccessible, search matches only clients,
+  and linked signing history is collapsed to its latest loaded document.
+- **RECONCILE:** #2158 `26e87cd43b80bf42b89cdc025470cfa208cc57d5`, #2175
+  `03a43d695dbcd059c48034cd84c065a1fa4a7f2e`, #2186
+  `e01cc2c5a639bab4032908aa7a9be5cea8f78f34`, #2192
+  `179e52ea81eb936cb84395ab4de8609e3c79a155` and their C3/C5/C6 prerequisites
+  remain OPEN DRAFT. #2192 has twelve successful recorded check-runs; its reviews
+  endpoint is empty. Retain earlier evidence, then review compatibility on the actual
+  composed head; do not treat the old stack as reviewed for today's main.
+- **SUPERSEDED PORTAL IMPLEMENTATION:** #2170/#2184 remain open but current E09
+  source explicitly supersedes their client billing UI with existing deployed invoice,
+  payment-request and document readers. Preserve any still-required correctness fix;
+  do not merge a competing `/app` screen or resurrect a deprecated relationship reader.
+- **NEW only where absent:** governed template preparation, usable document editing,
+  assigned signature/initial/date/text/checkbox fields and their versioned contracts.
+  Reuse existing agreement, document, signer, event, consent and completion stores.
+
+### Dependency-ordered delivery and UX architecture
+
+Sales → Terms & Agreements remains the home. The register leads to a resumable
+Document / Signers / Fields / Review workspace and an agreement detail with actual
+progress, original events, recovery and completed download. Use a full workspace for
+document preparation; dialogs are for short consequential confirmations, not the editor.
+Mobile stages reflow into one column; field placement has a keyboard/non-drag equivalent.
+Never conflate provider acceptance, delivery, opening, document viewing and signing.
+
+1. Register, navigation and accurate status: repair current search/state discovery;
+   expose actual retained history without presenting mutable current economics as signed terms.
+2. Create/import/template foundations: canonical customer/offer/opportunity references,
+   supported-file validation, reusable approved template revision and draft recovery.
+3. Document editor and exact preview: original version retained, deterministic rendered bytes,
+   server version fence, immutable approved signing version and explicit correction rules.
+4. Signers/order/assigned fields: existing signer writer, multiple roles, bounds and ownership,
+   required-field validation and safe keyboard/mobile placement.
+5. Consent/signing/recovery: reconcile earlier exact-record/completion-retry fixes,
+   frozen document fidelity, original consent/identity evidence and interrupted sessions.
+6. Approved sending/reminders/tracking: canonical Communications, exact revision and signer
+   approval, SendGrid policy, consent/suppression/rate limits, uncertain-outcome reconciliation,
+   Conversations history and distinct transport states. No new sender or scheduler.
+7. Completed document/audit/management: verified sealed download, event receipt,
+   decline/expiration/void/correction/reissue and recoverable incomplete completion.
+8. Sales/Portal integration: approved effective terms → accurate obligations/invoices →
+   verified payment → qualified onboarding → assigned work → client acceptance/completion.
+
+Approximately eight agreement increments precede the commercial, delivery and joined
+owner/staff/client verification milestones. This is a dependency estimate, not a calendar
+promise. Re-estimate after first current-main composition and legal/provider dependencies.
+Safe reviewed, CI-green releases proceed under standing delivery authority; no routine
+component approval is requested. Restricted production effects retain their gates.
+
+### Pre-edit capability routing — register repair
+
+1. **Outcome:** owner finds the actual loaded agreement by customer, document or signer,
+   including terms without a document and records with an unreadable signature state.
+2. **Owner:** E04 / portfolio family 4 CRM–Sales–Clients. E09 owns Portal family 8;
+   EXP02/05 source and shared Chat work are preserved. No agent is reassigned.
+3. **Harness:** reuse existing scope/read adapters (A), capability truth (B), receipt/readback
+   (F/G where applicable). The September completion map is dated/partial; this read-only
+   repair creates no event executor or claim that all layers operate.
+4. **Spine:** existing `agreement.list`, `agreement.status`, `agreement.draft`, `agreement.send`;
+   all registered PARTIAL. No registry edit or Chat/Live admission activation in this slice.
+5. **Provider:** none for local filtering. Later sends must reconcile the integration registry
+   and canonical Communications SendGrid-only policy. Current agreement-send still gates on
+   RESEND_API_KEY; a listed provider/working upload is not sender readiness.
+6. **Authority:** no MUTATION_VERB, budget, send or autonomy change. Reuse existing read scope;
+   all future mutations use canonical action-risk/Kit/Trust and the one approval gate.
+7. **Events/jobs:** none for filtering; future reminders extend canonical jobs/events.
+8. **Readback:** actual tenant-scoped loaded records, unchanged native details/downloads;
+   no new Rail or durable-effect receipt is fabricated for a local filter operation.
+9. **Surface:** existing Sales/CRM binding-ledger surface remains PARTIAL / proof owed;
+   this bounded discovery repair does not promote the whole surface to LIVE.
+10. **Proof:** original Sales mounted component/adapter suites, focused negative and empty
+    discovery cases, source/build checks, rendered behavior. Fresh signed-in owner/client,
+    provider and complete Experience acceptance remain UNVERIFIED until actually exercised.
+
+### EXP09 compatibility and Algorithms / Capabilities
+
+Keep E09-owned `/app/agreements` and originating `/sign/:token`. Existing contracts are
+`client_portal_agreements(p_tenant_id,p_limit)`,
+`client_portal_open_agreement_signing(p_agreement_id,p_tenant_id)`,
+`client_portal_agreement_document_scope(p_agreement_id,p_tenant_id)`.
+Preserve confirmed relationship, counterparty address/role, business narrowing, access
+pause/revocation, expiry/order and sealed-document checks. Changes require old/new consumer
+proof and ANT-161/ANT-163 coordination. No automatic exposure of all tenant agreements.
+
+Official Delivery Evidence Register → **EXP Algorithms**, read October 21:
+
+| ID | Original register status | Existing signal / computation | E04 proof still owed / customer benefit |
+|---|---|---|---|
+| ALG-01 | P1 production issue; acceptance owed | Original agreement/signers/events, document hash, guarded transition/token/retry; open #2186 retained-completion verification | Duplicate/concurrent/interrupted/reordered event and original receipt reconciliation on released source; prevents duplicate or false completion |
+| ALG-02 | Unverified | First-value/onboarding contracts; signed/effective/payment facts remain distinct | Verified qualification and approved onboarding/continuation; signature alone is not deposit or service completion |
+| ALG-12 | Partial | Genuine send refusals, expiry/revocation, decline, hash/readback and incomplete completion errors | Durable stuck-event detection, actionable recovery and bounded false alerts with original record; owner sees what needs repair |
+| ALG-13 | Unverified | Explainable state/precondition-based next actions over original records | Safe missing-details/review/signature/follow-up recommendations and measured usefulness; no invented prediction or unapproved send |
+
+No algorithm newly verified or capability promoted by this reconciliation. The official 118
+ownership import remains LISTED/UNVERIFIED, not an executed-capability total. MERIT is the
+primary Sales specialist, CURA the client lifecycle, VERA authorized financial interpretation,
+ZION approved delivery, PAIGE conversational coordination through the same governed path.
+
+### Remaining whole-Experience and legal acceptance
+
+O1–O12 remain incomplete: exact accepted economics/effective terms; duplicate-free deposits,
+installments and allocation; invoice lifecycle; Stripe TEST/live settlement and uncertain
+outcomes/refunds/reversals/disputes; qualified onboarding; canonical Operations/assignments;
+deliverable versions and client decisions; consented Collections; financial **and** accepted
+service completion; scoped self-service; unified owner standing and later-session retrieval.
+Retain the canonical O1–O12 matrix in ANT-51 rather than creating another registry.
+
+Qualified legal review must establish jurisdiction/template applicability, required
+electronic-record disclosures/consent, evidence and retention rules before any legal-sufficiency
+claim. A template control, text checkbox or generated draft is not that review. Product
+research: [DocuSign workflow](https://www.docusign.com/en-ca/products/electronic-signature/how-docusign-works),
+[RocketSign workflow](https://www.rocketlawyer.com/rocketsign-digital-signatures).
+Neither comparison authorizes copying templates, provider integration or a compliance claim.
+
+Source/review/CI/merge/deployment/activation/authenticated QA/founder acceptance remain
+separate. Production metadata above is read-only; no new signature, customer send, payment,
+Auth/tenant/role change, provider activation or production mutation occurred at restart.
+
 Date: 2026-10-12 · Journey Lead: Claude Code (one accountable lead) · Records: ANT-51 / ANT-147 · Shell: SOLO
 
 **Status: CHECKPOINT 1 (inventory and plan) + E4-S1 shipped (§11, PR #2074, main `c0a20243`) + E4-S1b time zones shipped (§13, PR #2085, main `4fa99047`) + documented contracts (§12).** Branch `claude/clever-lovelace-r111ru`.

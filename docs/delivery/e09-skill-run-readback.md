@@ -65,8 +65,10 @@ inheriting an implicit platform actor. Valid user calls delegate the resolved
 actor and workspace to the native reader. The original explicitly verified
 platform-key path retains its global original read and field-correct aliases.
 The caller cannot supply a different delegated actor, business or platform flag.
-Malformed IDs, missing/denied rows, unexpected response IDs and database or
-transport errors all fail with `skill_run_unavailable` without private SQL detail.
+Malformed IDs are rejected. Callback read failures, missing/denied rows,
+unexpected response IDs and database or transport errors return
+`skill_run_unavailable` without private SQL detail. The callback harness stubs
+Zod and does not claim the framework's wire-level malformed-input response.
 
 The separately reviewed consumer requires the native prerequisite's actual
 production body/grants before normal Edge deployment. It does not change

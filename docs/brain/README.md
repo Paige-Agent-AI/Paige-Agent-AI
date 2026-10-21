@@ -25,6 +25,13 @@ applied after13010000/13020000. Ordinary SOLO panel reads/reloads4 Coming Soon,
 3 Limited,2 Unverified with all Access Unverified;320px rows fit. Those labels
 are not permission, provider readiness, execution or analytics acceptance.
 
+The compatible Business Review transport foundation #2451 is production-source
+verified at `a76bb957beb7d51c536e6bab6ebcf27994a74157`: all exact-head checks,
+normal Edge source/configuration and exact web readback passed (Master §4.0).
+It leaves Chat's previous dispatch unchanged. The separate consumer #2455 is a
+reviewed development candidate with required CI pending; no CPU recovery or
+authenticated completion follows from either local tests or this foundation.
+
 Two fresh authorized ordinary weekly Chat reads **FAIL** with correlated CPUTime
 shutdown and no persisted assistant answer; reload retains the question only.
 Historical9/0 remains historical. Production rollout is ACTIVE; do not reuse old

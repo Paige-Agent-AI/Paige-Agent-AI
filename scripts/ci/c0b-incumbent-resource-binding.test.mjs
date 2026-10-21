@@ -187,6 +187,8 @@ test('canonical CURA source reference cannot escape the current SOLO Portal',()=
 });
 
 for(const [label,path,from,to] of [
+ ['CURA original extraction acknowledgment guard removed','supabase/functions/_shared/knowledge-extraction.ts','if(acknowledgement?.error){','if(false){'],
+ ['CURA source reference UUID guard removed','supabase/functions/_shared/paige-turn/record-links.ts','UUID.test(v.record_id)','true'],
  ['original CURA approval fingerprint removed','supabase/functions/_shared/paige-turn/interactive-cura-history.ts','fingerprint!==parsed.fingerprint','false'],
  ['CURA status replaced by writer','supabase/functions/_shared/cura-knowledge-teaching.ts',"caller.rpc('read_cura_knowledge_preparation'","caller.rpc('submit_cura_knowledge_preparation'"],
  ['CURA status selector loses original approval requirement','supabase/functions/_shared/paige-turn/control-transport.ts','typeof control.approvalTurnId !== "string"','false'],

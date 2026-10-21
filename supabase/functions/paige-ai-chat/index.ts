@@ -16,6 +16,7 @@ import { readOperationsTask, type OperationsTaskReadCaller } from "../_shared/op
 import { CRM_TASK_READ_TOOLS } from "../_shared/paige-spine/domains/crm_task.ts";
 import { adoptApprovedReminder, executeApprovedReminder, type ReminderExecutionBinding } from "../_shared/planning/approved-reminder.ts";
 import { readOriginalReminderApprovalHistory } from "../_shared/paige-turn/interactive-reminder-history.ts";
+import { stageCuraKnowledge, CURA_TEACH_PURPOSE } from '../_shared/cura-knowledge-teaching.ts';
 import { readOriginalCuraPreparationHistory } from "../_shared/paige-turn/interactive-cura-history.ts";
 import type { ContextIdentity } from "../_shared/paige-context/mod.ts";
 import { BUSINESS_METRIC_TOOLS, metricReadContext, readBusinessMetric, type MetricReadOutcome } from '../_shared/analytics-metrics/read.ts';
@@ -1763,12 +1764,15 @@ serve(async (req) => {
     // at the end of the turn: which call spent each approval, why a tool's approvals were refused,
     // which tool an approval belongs to (where a lookup saw it), and what each call returned.
     const approvalSpend = new Map<string, string>();
+    // Only an actually claimed, frozen owner card can supply this original act.
+    // Key by call object, never a model-provided call id or fresh request nonce.
+    const curaApprovedAct = new Map<object, string>();
     const approvalRefusals = new Map<string, ApprovalRefusalReason>();
     const approvalTokenTool = new Map<string, string>();
     const toolResultContent = new Map<string, string>();
     // E4-S3 — the record links an ADMITTED read returned, held beside (never inside) its tool result so
     // they never enter model context. Keyed by the call OBJECT, as `finishedSteps` is: a provider may
-    // omit `tc.id`. Read once per round, only for a read whose result is `available`.
+    // omit `tc.id`. Read once per round, only for an available read or acknowledged CURA source.
     const readRecordLinkSource = new Map<object, ReadRecordLink[]>();
     // Before anything in this request can use an approval: one used before this moment was used by
     // an earlier request, and whatever that was may have done the work.
@@ -8452,7 +8456,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "save_to_knowledge_base",
-              description: "Save a piece of reusable knowledge into THIS tenant's private knowledge base so the practice compounds and Paige can draw on it later. Use when you (or an agent) learn something worth keeping — a repeatable play, a domain fact, an answer to a recurring question, a process. ALWAYS offer it as a suggestion first ('want me to save this to your knowledge base?') and only save on the human's yes, unless the workspace set this to auto. It is embedded and searchable, tenant-scoped (never shared across tenants or to the platform default). Keep it coaching-generic unless this tenant's offer includes the topic.",
+              description: "Save a piece of reusable knowledge into THIS tenant's private knowledge base so the practice compounds and Paige can draw on it later. For an owner request to teach CURA an approved FAQ, product, offer or promotion, set purpose=cura_customer_knowledge and preserve the owner-provided source text, conditions and dates. That purpose prepares private material for review; never claim it is already published, searchable or shared. Use when you (or an agent) learn something worth keeping — a repeatable play, a domain fact, an answer to a recurring question, a process. ALWAYS offer it as a suggestion first ('want me to save this to your knowledge base?') and only save on the human's yes, unless the workspace set this to auto. The ordinary save without a purpose is embedded and searchable, tenant-scoped (never shared across tenants or to the platform default). CURA preparation remains private until its existing review and sharing steps. Keep it coaching-generic unless this tenant's offer includes the topic.",
               parameters: {
                 type: "object",
                 properties: {
@@ -8460,7 +8464,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   content: { type: "string", description: "The full knowledge text to store (the play, fact, process, or answer)." },
                   summary: { type: "string", description: "Optional one-line summary." },
                   category: { type: "string", description: "Optional category, e.g. 'onboarding', 'objection-handling', 'process'." },
-                  tags: { type: "array", items: { type: "string" }, description: "Optional tags." }
+                  tags: { type: "array", items: { type: "string" }, description: "Optional tags." },
+                  purpose: { type: "string", enum: ["cura_customer_knowledge"], description: "For an explicit owner request to teach customer-facing CURA: prepare a PRIVATE original Knowledge source. This does not publish, index, share or make the information available to customers. Publication, audience and availability dates require the existing review controls. Omit for ordinary private business Knowledge saves." }
                 },
                 required: ["title", "content"]
               }
@@ -9926,7 +9931,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         case "forge_subagent":
           return `${a?.runtime === "hard" ? "Propose a new (code-backed) specialist" : "Spin up a new specialist"} — "${a?.name || a?.slug || "agent"}" (${a?.domain || "general"}): ${String(a?.description || "").slice(0, 80)}.${a?.runtime === "hard" ? " Goes to an admin for sign-off." : " Joins the team right away."}`;
         case "save_to_knowledge_base":
-          return `Save "${a?.title || "this"}" to your knowledge base so Paige can draw on it later.`;
+          return a?.purpose === "cura_customer_knowledge"
+            ? `Prepare "${a?.title || "this source"}" for CURA review. This preparation does not publish or share it with customers.`
+            : `Save "${a?.title || "this"}" to your knowledge base so Paige can draw on it later.`;
         case "update_client_data": {
           // Names the FIELDS, never their values: a confirm card is shown in a transcript, and a
           // summary that echoed an SSN or a date of birth back onto the screen would put the very
@@ -12465,6 +12472,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             tc.function.arguments = JSON.stringify(approvedArgs);
             approvalChannel.set(tc.id, "operator_card");
             approvalSpend.set(approvedFingerprint as string, tc.id);
+            if (tc.function.name === "save_to_knowledge_base" && approvedArgs.purpose === CURA_TEACH_PURPOSE
+                && typeof approvedFingerprint === "string") curaApprovedAct.set(tc, approvedFingerprint);
             const reminderClaim = approvedFingerprint ? approvedReminderClaims.get(approvedFingerprint) : null;
             if (tc.function.name === "plan_set_reminder" && reminderClaim) reminderClaim.owner = tc;
           } else {
@@ -16624,6 +16633,49 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: e instanceof Error ? e.message : "forge_error" }) });
           }
         } else if (tc.function.name === "save_to_knowledge_base") {
+          let preparationArgs: Record<string, unknown> | null = null;
+          try {
+            const parsed = JSON.parse(tc.function.arguments || "{}");
+            if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) preparationArgs = parsed;
+          } catch { /* The unchanged legacy branch retains its own malformed-input refusal. */ }
+          if (preparationArgs && Object.prototype.hasOwnProperty.call(preparationArgs, "purpose")) {
+            // Reuse the original admission/approval/INT-346 gates above. The
+            // native wrapper revalidates actual publisher authority atomically.
+            // A malformed purpose never falls through to legacy indexing.
+            const result = callerTier === "tenant" && preparationArgs.purpose === CURA_TEACH_PURPOSE
+                && payloadThreadId && payloadRequestIntentId && personaCtx?.tenant_id
+                && interactiveReceiptScope?.thread === payloadThreadId
+                && interactiveReceiptScope.intent === payloadRequestIntentId
+                && interactiveReceiptScope.tenant === personaCtx.tenant_id
+                && (approvalChannel.get(tc.id) !== "operator_card" || curaApprovedAct.has(tc))
+              ? await stageCuraKnowledge({ actorId: user.id, tenantId: personaCtx.tenant_id,
+                  threadId: payloadThreadId, requestIntentId: payloadRequestIntentId,
+                  ...(curaApprovedAct.has(tc) ? { approvedAct: curaApprovedAct.get(tc) } : {}),
+                }, preparationArgs, { caller: {
+                  auth: supabaseClient.auth,
+                  rpc: async (name: string, args?: Record<string, unknown>) => {
+                    if (name === "submit_cura_knowledge_preparation") {
+                      // Permission reads may outlast Stop/supersession. Reuse the
+                      // original execution check at the actual native dispatch.
+                      if (!interactive || req.signal.aborted) throw new Error("interactive_scope_unavailable");
+                      await interactive.check();
+                      if (req.signal.aborted) throw new Error("interactive_request_withdrawn");
+                    }
+                    return supabaseClient.rpc(name, args);
+                  },
+                  readActiveTenant: (actorId: string) => supabaseClient.from("profiles")
+                    .select("active_tenant_id").eq("user_id", actorId).maybeSingle(),
+                } as unknown as Parameters<typeof stageCuraKnowledge>[2]["caller"] })
+              : { success: false, ok: false, not_applied: true,
+                  error: "This CURA preparation needs the authorized business conversation and Knowledge publisher. Nothing was submitted." };
+            if (result.outcome_unknown === true) requestExecutionState.needsReview = true;
+            if (result.accepted === true && result.prepared_for_cura === true && result.success === true
+                && typeof result.knowledge_doc_id === "string") {
+              // Original native acknowledgment, not a model/result-supplied URL.
+              readRecordLinkSource.set(tc, readRecordLinks([{ destination: "portal_knowledge", record_id: result.knowledge_doc_id }]));
+            }
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result) });
+          } else {
           // Grow the tenant's brain (§15). Calls kb-ingest-doc with the CALLER's JWT
           // so the entry is embedded + tenant-scoped via RLS (never cross-tenant).
           let knowledgeRequestStarted = false;
@@ -16687,6 +16739,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           } catch {
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(knowledgeRequestStarted ? knowledgeUnknown()
               : { success: false, ok: false, not_applied: true, error: "The current workspace or request could not be verified. Nothing was saved." }) });
+          }
           }
         } else if (tc.function.name === "propose_action") {
           // Propose→confirm: draft a consequential outbound action and FILE it as a
@@ -19091,9 +19144,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                       ...(typeof parsed.external_effect === "boolean" ? { external_effect: parsed.external_effect } : {}),
                     });
                   }
-                  // E4-S3 — only references held by an executed read, never model/result-supplied links.
+                  // E4-S3 — only references held by an admitted read or original native CURA acknowledgment; never model/result-supplied links.
                   // Tool admission remains enforced separately before dispatch, including degraded turns.
-                  if (parsed?.status === "available" && readRecordLinkSource.has(tc)) {
+                  if ((parsed?.status === "available" || tc.function?.name === "save_to_knowledge_base"
+                      && parsed?.accepted === true && parsed?.prepared_for_cura === true && parsed?.success === true)
+                      && readRecordLinkSource.has(tc)) {
                     const links = readRecordLinkSource.get(tc);
                     if (links?.length) readLinkTrace.splice(0, readLinkTrace.length, ...mergeRecordLinks(readLinkTrace, links));
                     // Describe the actual bounded outgoing selection, never a candidate

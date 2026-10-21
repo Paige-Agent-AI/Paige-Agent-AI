@@ -38,6 +38,22 @@ owner Chat/eligible Live teaching and seven-pillar/founder acceptance remain PRO
 No customer version, announcement, activation or complete premium-Experience claim.
 
 
+## EXP09 owner Chat preparation — 2026-10-21 development
+
+The existing research_knowledge.save_to_knowledge_base gains only the explicit
+cura_customer_knowledge purpose. Original Trust/approval/standing autonomy and
+Chat admission remain; the actual publisher-bound native wrapper submits the
+original private extraction intent. An acknowledged source returns through the
+existing URL-free record-reference control and current-account Portal destination.
+Preparation does not publish, index or share. Unknown acknowledgment retains the
+original review hold and cannot authorize a later mutation or blind retry.
+Original ordinary-save behavior, model runtime, sender and domain writers stay intact.
+Scope is every equally eligible SOLO publisher, without account-specific branches.
+Typed Chat integration is BUILT/NOT_DEPLOYED; eligible Live and visible original-result
+recovery remain NOT_CONNECTED. Current publication/audience/availability uses original
+Knowledge review controls. Full signed-in owner/client journey and final founder
+acceptance are PROOF OWED. [Source and orchestration contract](../delivery/e09-cura-owner-chat-preparation.md).
+
 # 🧠 The Second Brain — master index & read-first orientation
 
 ## EXP05 Operations/ZION checkpoint — 2026-10-21

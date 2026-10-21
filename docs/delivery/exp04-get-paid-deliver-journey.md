@@ -212,13 +212,21 @@ Reserved forward migration20271113120000 follows EXP09's pending100000/110000;
 release must reconcile the actual frontier rather than leapfrogging their work.
 
 Local native checkpoint: original-call baseline produced two agreements and two
-counterparties; repaired native PostgreSQL16 proof73 assertions PASS, including two
+counterparties; repaired native PostgreSQL16 proof92 assertions PASS, including four
 real concurrent sessions, exact current SAVE body, original CAS, metadata constraints,
 closed human DTO/ACL, templates/upload references/missing-email and tier refusals.
 Migration replay twice, no production/authenticated claim. Existing integrity runner
 now calls this proof in the same cluster. Source is unmounted; actual UI integration,
 hosted full-schema CI, review, safe release and readback remain owed. See
 [bounded foundation evidence](../evidence/ui-delivery/e04-draft-request-identity.md).
+
+Reload integration adds an original-author-scoped request receipt read, using only
+the opaque request ID rather than caching private legal input in browser storage.
+It shares the creation lock and deliberately reads a fresh snapshot after waiting;
+native proof starts the recovery statement before the creator's commit fence and
+observes the committed original. An absent correlation remains `unconfirmed`, never
+a claim of rollback or instruction to create a replacement. This is the third thin
+native routine on the same agreement/receipt, not another operation store.
 
 ## October21 current-main recipient result reconciliation — pre-edit contract
 

@@ -1,7 +1,6 @@
 .ops-operating-desk { min-width: 0; container-type: inline-size; }
-.ops-desk-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 16px; }
-.ops-desk-heading h1 { margin: 0 0 8px; font-size: var(--pg-t-title,21px); font-weight: 600; letter-spacing: -.025em; line-height: 1.3; }
-.ops-desk-heading p { margin: 0; color: var(--pg-muted); line-height: 1.6; }
+.ops-desk-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.ops-desk-heading h1 { margin: 0; font-size: var(--pg-t-lead,16px); font-weight: 600; letter-spacing: -.015em; line-height: 1.4; }
 .ops-operating-desk button { font: inherit; cursor: pointer; }
 .ops-operating-desk button:disabled { cursor: default; color: var(--pg-muted); }
 .ops-operating-desk button:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 3px; }
@@ -15,6 +14,11 @@
   .ops-desk-actions > * { flex: 1 1 0; min-width: 0; }
   .ops-desk-actions .e5-weekly-open, .ops-desk-actions .ops-desk-primary { width: 100%; height: 100%; min-height: 44px; white-space: normal; line-height: 1.4; justify-content: center; padding: 8px; }
   .ops-desk-actions .e5-weekly-open-label { min-width: 0; overflow-wrap: anywhere; }
+}
+@container (max-width: 260px) {
+  .ops-desk-actions { flex-wrap: wrap; }
+  .ops-desk-actions > * { flex-basis: 100%; }
+  .ops-desk-actions svg { flex-shrink: 0; }
 }
 .ops-desk-read-scope { margin: 0 0 24px; color: var(--pg-muted); font-size: 12px; line-height: 1.6; }
 .ops-desk-columns { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(250px, 1fr); gap: 30px; }

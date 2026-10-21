@@ -54,7 +54,10 @@ export function createMarketingIntakeSnapshotAdapter(
           range_key: window.range_key, range_start: window.range_start, range_end: window.range_end,
         }, clock);
         if (ctx.signal?.aborted) return contextDegraded(ISSUER_METRIC_REASON.aborted);
-        if (outcome.status === 'refused') return contextUnavailable(ISSUER_METRIC_REASON.refused);
+        if (outcome.status === 'refused') {
+          const result = contextUnavailable(ISSUER_METRIC_REASON.refused);
+          return { status: result.status, reason: result.reason, data: null };
+        }
         // The shared interpreter consumes status/metric; the internal evidence result
         // omits the public tool's message. This compatibility text is never projected.
         const result = interpretIssuerMetric({ ...outcome, message: outcome.status === 'available' ? 'Verified source evidence.' : outcome.message },

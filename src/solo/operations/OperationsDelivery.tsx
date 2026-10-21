@@ -98,7 +98,7 @@ export default function OperationsDelivery({ openPaige, plans = [], items = [], 
     if(epoch.current === opened) setInspectedEpoch(null);
   };
   return <section ref={contentRef} className="op-delivery" aria-label="Client commitments">
-    <header className="op-delivery-heading"><div><h1>Keep the promise.</h1><p>See the agreement behind the work—and the evidence still needed to close it.</p></div><button onClick={retry}><RefreshCw size={16} /> Refresh</button></header>
+    <header className="op-delivery-heading"><h1>Keep the promise.</h1><button onClick={retry}><RefreshCw size={16} /> Refresh</button></header>
     {!ready ? <div className="op-delivery-state" role="status"><FileText size={32} /><h2>{terms.phase === "error" ? "Commitments could not be loaded" : terms.phase === "unavailable" ? "Choose a workspace to see its commitments" : "Loading client commitments…"}</h2>{terms.phase === "error" && <p>Refresh to read the current Sales records again.</p>}</div>
       : terms.authorityUnknown || !terms.agreementsReadable ? <div className="op-delivery-state"><FileText size={32} /><h2>{terms.authorityUnknown ? "Your access could not be confirmed" : "Commercial agreements are outside your current access"}</h2><p>{terms.authorityUnknown ? "Refresh before viewing client commitments." : "Ask your workspace owner for the appropriate Sales access."}</p></div>
       : !engagement ? <div className="op-delivery-state"><FileText size={32} /><h2>Your next client promise starts in Sales</h2><p>Record an engagement in Sales. Its terms and signing evidence will appear here for review.</p></div>

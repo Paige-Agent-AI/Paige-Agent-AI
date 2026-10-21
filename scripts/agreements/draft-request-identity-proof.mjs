@@ -38,11 +38,11 @@ const refused=(statement,code='42501',who={})=>{
   checks++;
 };
 const children=new Set();
-const concurrent=input=>new Promise((resolve,reject)=>{
+const concurrent=(input,onOutput=()=>{})=>new Promise((resolve,reject)=>{
   const child=spawn(binary,args(),{windowsHide:true,stdio:['pipe','pipe','pipe']});children.add(child);
   let output='',error='';
   const timer=setTimeout(()=>{child.kill();reject(new Error('Concurrent native request exceeded 30 seconds'));},30000);
-  child.stdout.on('data',b=>output+=b);child.stderr.on('data',b=>error+=b);
+  child.stdout.on('data',b=>{output+=b;onOutput(output);});child.stderr.on('data',b=>error+=b);
   child.on('error',e=>{clearTimeout(timer);children.delete(child);reject(e);});
   child.on('close',code=>{clearTimeout(timer);children.delete(child);code===0?resolve(output.trim()):reject(new Error(error));});
   child.stdin.end(input);
@@ -71,6 +71,7 @@ try {
     sql(migration);sql(migration);
     const a=JSON.parse(sql(context()+`SELECT ${create()};`));
     const b=JSON.parse(sql(context()+`SELECT ${create()};`));
+    const recover=(key=request,expected=tenant)=>`recover_paige_agreement_draft_creation('${expected}',${key?`'${key}'`:'NULL'})`;
     check(a.state==='created'&&b.state==='recovered'&&a.signing_id===b.signing_id,'Same request recovers original identity');
     check(a.creation_event_id===b.creation_event_id&&Object.keys(a).length===6,'Same original native event and explicit six-field receipt');
     check(sql('SELECT count(*) FROM paige_agreements;')==='1','One original agreement');
@@ -81,9 +82,18 @@ try {
     const dto=JSON.parse(sql(context()+`SELECT ${readOne()};`));
     check(dto.agreement.id===id&&dto.agreement.body_markdown==='Original synthetic scope'&&dto.agreement.can_edit===true,'Human reader returns real editable original record');
     check(dto.signers.length===1&&dto.signers[0].email==='a-client@example.com','Actual original signer, not input echo');
-    check(Object.keys(dto).sort().join(',')==='agreement,signers'&&Object.keys(dto.agreement).sort().join(',')==='body_markdown,body_source,can_edit,commercial_terms_id,contact_id,content_sha256,has_source_document,id,offer_id,sealed_sha256,source_version_id,status,title,updated_at,version'&&Object.keys(dto.signers[0]).sort().join(',')==='declined_at,email,full_name,id,signed_at,signer_role,signing_order,status','Reader has exact closed human DTO shape');
+    check(Object.keys(dto).sort().join(',')==='agreement,signers'&&Object.keys(dto.agreement).sort().join(',')==='body_markdown,body_source,can_edit,commercial_terms_id,contact_id,content_sha256,expires_at,has_source_document,id,offer_id,sealed_sha256,source_version_id,status,title,updated_at,version'&&Object.keys(dto.signers[0]).sort().join(',')==='declined_at,email,full_name,id,signed_at,signer_role,signing_order,status','Reader has exact closed human DTO shape');
+    check(dto.agreement.expires_at===null,'Unissued draft does not invent a signing deadline');
     check(!/token|storage_key|ip_address|document_path|request_sha256/.test(JSON.stringify(dto)),'Reader excludes credentials, private object locators and request digests');
     check(sql('SELECT count(*) FROM paige_agreement_events;')==='1','Preparation read is not an activity write');
+    const keyRecovery=JSON.parse(sql(context()+`SELECT ${recover()};`));
+    check(keyRecovery.state==='recovered'&&keyRecovery.signing_id===id&&keyRecovery.creation_event_id===a.creation_event_id,'A fresh page recovers the original receipt using only its opaque request ID');
+    const unknown=JSON.parse(sql(context()+`SELECT ${recover(randomUUID())};`));
+    check(Object.keys(unknown).length===1&&unknown.state==='unconfirmed','Absent correlation is unconfirmed, never a rollback/new-create claim');
+    check(JSON.parse(sql(context({actor:'22222222-0000-4000-8000-000000000002'})+`SELECT ${recover()};`)).state==='unconfirmed','Request read never exposes another author original');
+    for(const who of [{tenant:other},{tenant:null},{actor:null},{admin:false}]) refused(`PERFORM ${recover()}`,'42501',who);
+    refused(`PERFORM ${recover(request,other)}`);refused(`PERFORM ${recover(null)}`,'22023');
+    check(sql('SELECT count(*) FROM paige_agreement_events;')==='1','Opaque request recovery writes no new event');
 
     // Every original creation input participates in the fingerprint; changed intent
     // cannot be hidden by an already-existing request key.
@@ -123,7 +133,11 @@ try {
     sql(`UPDATE paige_agreements SET status='sent',content_sha256=repeat('a',64),content_storage_key='synthetic-only/approved.pdf',sent_at=now() WHERE id='${id}';`);
     const sent=JSON.parse(sql(context()+`SELECT ${create()};`));
     check(sent.signature_state==='sent'&&sent.signing_id===id,'Lost response can recover an already-sent original without returning to draft');
+    const lateRecovery=JSON.parse(sql(context()+`SELECT ${recover()};`));
+    check(lateRecovery.signature_state==='sent'&&lateRecovery.version===2&&lateRecovery.signing_id===id,'Later-page request read returns actual current sent revision');
     check(JSON.parse(sql(context()+`SELECT ${readOne()};`)).agreement.can_edit===false,'Frozen record is read-only');
+    sql(`UPDATE paige_agreements SET expires_at=now()-interval '1 day' WHERE id='${id}';`);
+    check(JSON.parse(sql(context()+`SELECT ${readOne()};`)).agreement.expires_at!==null&&sql(`SELECT expires_at<now() FROM paige_agreements WHERE id='${id}';`)==='t','Selected reader exposes the actual expired instant for the existing display-state rule');
     refused(`PERFORM save_paige_agreement('${tenant}','${id}','${client}','Rewrite sent','Unauthorized rewrite')`,'23514');
     check(sql(`SELECT count(*) FROM paige_agreement_events WHERE agreement_id='${id}';`)==='2','Only native created+edited activity, no recovery or mock sending event');
 
@@ -138,6 +152,21 @@ try {
     const receipts=outputs.map(out=>JSON.parse(out.value));
     check(receipts[0].signing_id===receipts[1].signing_id&&receipts.map(r=>r.state).sort().join(',')==='created,recovered','Concurrent sessions produce one creator and one recovered identity');
     check(sql(`SELECT count(*) FROM paige_agreement_events WHERE agreement_id='${receipts[0].signing_id}';`)==='1'&&sql(`SELECT count(*) FROM paige_agreement_signers WHERE agreement_id='${receipts[0].signing_id}';`)==='1','Concurrent requests retain one native event/signer');
+    // Start a recovery statement WHILE its creator holds the native request lock.
+    // After waiting it must read a fresh snapshot, not falsely report unconfirmed.
+    const reconciliationKey=randomUUID();let markReady;
+    const ready=new Promise(resolve=>markReady=resolve);
+    const creator=concurrent(context()+`BEGIN; SELECT ${create(reconciliationKey)};\n\\echo E04_CREATOR_LOCK_HELD\nSELECT pg_sleep(4); SELECT 'COMMITTING='||clock_timestamp()::text; COMMIT;`,out=>{if(out.includes('E04_CREATOR_LOCK_HELD'))markReady();});
+    await Promise.race([ready,creator.then(()=>{throw new Error('Creator exited before its lock fence');})]);
+    const readWhileCreating=concurrent(context()+`SELECT jsonb_build_object('started_at',statement_timestamp(),'receipt',${recover(reconciliationKey)});`);
+    const reconciliation=await Promise.allSettled([creator,readWhileCreating]);
+    for(const out of reconciliation) if(out.status==='rejected')throw out.reason;
+    const createdLine=reconciliation[0].value.split(/\r?\n/).find(line=>line.startsWith('{'));
+    const committing=reconciliation[0].value.split(/\r?\n/).find(line=>line.startsWith('COMMITTING='))?.slice('COMMITTING='.length);
+    const reading=JSON.parse(reconciliation[1].value),originalReceipt=JSON.parse(createdLine);
+    check(Date.parse(reading.started_at)<Date.parse(committing),'Recovery statement truly began before original commit');
+    check(reading.receipt.state==='recovered'&&reading.receipt.signing_id===originalReceipt.signing_id&&reading.receipt.creation_event_id===originalReceipt.creation_event_id,'Waiting recovery sees committed original receipt with a fresh snapshot');
+    check(sql(`SELECT count(*) FROM paige_agreement_events WHERE agreement_id='${originalReceipt.signing_id}';`)==='1','Concurrent reconciliation remains read-only');
     const intentional=JSON.parse(sql(context()+`SELECT ${create(randomUUID())};`));
     check(intentional.state==='created'&&intentional.signing_id!==id,'Deliberate separate request may create a separate agreement');
     // Existing caller and old NULL metadata stay compatible; NULL pairing is enforced
@@ -163,13 +192,14 @@ try {
     const noAddress=JSON.parse(sql(context()+`SELECT ${create(randomUUID(),{client:`'${noAddressClient}'`})};`));
     check(JSON.parse(sql(context()+`SELECT ${readOne(noAddress.signing_id)};`)).signers.length===0,'Missing email creates a draft without inventing a signer');
     refused(`PERFORM ${create(randomUUID(),{tenant:"'dddddddd-0000-4000-8000-000000000004'",client:"'c4444444-0000-4000-8000-000000000004'"})}`,'42501',{tenant:'dddddddd-0000-4000-8000-000000000004'});
-    for(const signature of ['create_paige_agreement_draft_once(uuid,uuid,uuid,text,text,uuid,uuid,text,uuid,text)','read_paige_agreement_preparation(uuid,uuid)']) {
+    for(const signature of ['create_paige_agreement_draft_once(uuid,uuid,uuid,text,text,uuid,uuid,text,uuid,text)','read_paige_agreement_preparation(uuid,uuid)','recover_paige_agreement_draft_creation(uuid,uuid)']) {
       check(sql(`SELECT has_function_privilege('authenticated','public.${signature}','EXECUTE') AND NOT has_function_privilege('anon','public.${signature}','EXECUTE') AND NOT has_function_privilege('service_role','public.${signature}','EXECUTE');`)==='t','Exact authenticated-only callable ACL');
       check(sql(`SELECT NOT EXISTS(SELECT 1 FROM pg_proc p CROSS JOIN LATERAL aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a WHERE p.oid='public.${signature}'::regprocedure AND a.grantee=0 AND a.privilege_type='EXECUTE');`)==='t','No PUBLIC execution grant');
     }
     refused(`PERFORM ${create()}`,'42501',{role:'anon'});refused(`PERFORM ${readOne()}`,'42501',{role:'anon'});
+    refused(`PERFORM ${recover()}`,'42501',{role:'anon'});
     check(sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='public.save_paige_agreement(uuid,uuid,uuid,text,text,uuid,uuid,text,uuid,text,timestamptz)'::regprocedure;`)==='1bd28e75afa0f50bb07b717795a5be0e','Canonical SAVE unchanged after additive migration and calls');
-    console.log(JSON.stringify({result:'PASS',checks,migrationReplay:2,concurrentSessions:2,scope:'Native synthetic original engine/trigger/roles; fixture auth helpers; no production/JWT/customer/provider acceptance'}));
+    console.log(JSON.stringify({result:'PASS',checks,migrationReplay:2,concurrentSessions:4,scope:'Native synthetic original engine/trigger/roles; fixture auth helpers; no production/JWT/customer/provider acceptance'}));
   }
 } finally {
   // Promise.allSettled above accounts for both native sessions before dropping.

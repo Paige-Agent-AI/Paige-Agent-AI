@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TEST_BUSINESS_REVIEW as SNAPSHOT } from "@/test/fixtures/business-review";
 import { ExecutiveOverview } from "./ExecutiveOverview";
@@ -27,6 +27,7 @@ beforeEach(() => {
   mocks.calendar.mockReturnValue({ day: { kind: "withheld", reason: "missing", canSet: true }, refresh: vi.fn() });
   host = document.createElement("div"); document.body.appendChild(host); root = createRoot(host);
 });
+
 afterEach(() => { act(() => root?.unmount()); host.remove(); root = null; });
 async function mount(openPaige?: () => void, accountEpoch: string | null = "test-tenant-1") {
   await act(async () => root!.render(<MemoryRouter><ExecutiveOverview account="1234567" accountEpoch={accountEpoch} openPaige={openPaige} /></MemoryRouter>));
@@ -36,7 +37,81 @@ const text = () => host.textContent ?? "";
 const button = (name: string) => [...host.querySelectorAll("button")].find((b) => b.textContent?.includes(name))!;
 const link = (path: string) => host.querySelector("a[href='" + path + "']");
 
+function PeriodRouteProbe() {
+  const location = useLocation(), navigate = useNavigate();
+  return <><output data-testid="route-address">{location.pathname + location.search + location.hash}</output>
+    <button onClick={() => navigate(-1)}>Test browser Back</button></>;
+}
+const EXECUTIVE = '/solo/1234567/command-center/executive';
+const selectedPeriod = () => (host.querySelector('.exec-period select') as HTMLSelectElement).value;
+const routeAddress = () => host.querySelector('[data-testid="route-address"]')!.textContent!;
+async function mountPeriodRoute(entry: string, key = 'first-page', epoch = 'test-tenant-1') {
+  await act(async () => root!.render(<MemoryRouter key={key} initialEntries={[entry]}><Routes>
+    <Route path="/solo/:account/command-center/executive" element={<ExecutiveOverview account="1234567" accountEpoch={epoch} />} />
+    <Route path="/solo/:account/finance" element={<h1>Original Finance destination</h1>} />
+  </Routes><PeriodRouteProbe /></MemoryRouter>));
+}
+function choosePeriod(value: string) {
+  act(() => { const select = host.querySelector('.exec-period select') as HTMLSelectElement;
+    select.value = value; select.dispatchEvent(new Event('change', { bubbles: true })); });
+}
+
+describe('Executive period continuity through the existing route', () => {
+  it('opens and reloads the selected period from the exact address', async () => {
+    const entry = EXECUTIVE + '?review_period=last_30_days';
+    await mountPeriodRoute(entry);
+    expect(selectedPeriod()).toBe('last_30_days');
+    expect(mocks.review).toHaveBeenLastCalledWith('test-tenant-1', 'last_30_days');
+    await mountPeriodRoute(entry, 'fresh-page');
+    expect(selectedPeriod()).toBe('last_30_days');
+    expect(mocks.review).toHaveBeenLastCalledWith('test-tenant-1', 'last_30_days');
+  });
+  it('keeps a changed period on browser Back from an original departmental link', async () => {
+    await mountPeriodRoute(EXECUTIVE);
+    choosePeriod('current_quarter');
+    act(() => (link('/solo/1234567/finance') as HTMLAnchorElement).click());
+    expect(text()).toContain('Original Finance destination');
+    act(() => button('Test browser Back').click());
+    expect(selectedPeriod()).toBe('current_quarter');
+    expect(mocks.review).toHaveBeenLastCalledWith('test-tenant-1', 'current_quarter');
+  });
+  it('preserves unrelated route context and removes only its own default query', async () => {
+    await mountPeriodRoute(EXECUTIVE + '?source=review&review_period=current_quarter#evidence');
+    choosePeriod('last_30_days');
+    expect(routeAddress()).toBe(EXECUTIVE + '?source=review&review_period=last_30_days#evidence');
+    choosePeriod('last_7_days');
+    expect(routeAddress()).toBe(EXECUTIVE + '?source=review#evidence');
+  });
+  it.each(['', 'all_time', 'foreign-account', '2026-10-01'])('defaults unsupported period %j without widening the read', async value => {
+    await mountPeriodRoute(EXECUTIVE + '?review_period=' + value);
+    expect(selectedPeriod()).toBe('last_7_days');
+    expect(mocks.review).toHaveBeenLastCalledWith('test-tenant-1', 'last_7_days');
+  });
+  it('carries only display choice while re-binding the existing read to a new workspace epoch', async () => {
+    const entry = EXECUTIVE + '?review_period=last_30_days';
+    await mountPeriodRoute(entry);
+    await mountPeriodRoute(entry, 'first-page', 'test-tenant-2');
+    expect(mocks.review).toHaveBeenLastCalledWith('test-tenant-2', 'last_30_days');
+    expect(mocks.prefill).not.toHaveBeenCalled();
+  });
+});
+
 describe("Executive — integrated customer flow", () => {
+  it('presents recorded Marketing intake, its limits and the current-account originating destination', async () => {
+    const snapshot = structuredClone(SNAPSHOT);
+    snapshot.domains.campaigns = { status: 'available', data: { ...snapshot.domains.clients!.data!, domain: 'campaigns', owner: 'marketing',
+      coverage_note: 'Recorded intake only: no visits, ad spend, revenue, full funnel or causal attribution',
+      headline: [{ key: 'campaigns.received', label: 'Leads received (form submissions)', value: 0, unit: 'count', basis: 'in_period' }] } };
+    mocks.review.mockReturnValue({ state: 'ready', snapshot, refresh: vi.fn() });
+    await mount();
+    const section = host.querySelector("[aria-labelledby='exec-domain-campaigns']")!;
+    expect(section.textContent).toContain('Marketing intake');
+    expect(section.textContent).toContain('no visits, ad spend, revenue, full funnel or causal attribution');
+    expect(section.querySelector('.exec-figures dd')?.textContent).toBe('0');
+    expect(section.querySelector('a')?.getAttribute('href')).toBe('/solo/1234567/growth/overview');
+    expect(section.querySelector('summary')?.textContent).toBe('Source & freshness');
+    expect(mocks.prefill).not.toHaveBeenCalled();
+  });
   it("shows the canonical review-integration gap beside real zero and unchanged owning links", async () => {
     const snapshot = structuredClone(SNAPSHOT);
     snapshot.domains.campaigns = { status: "unavailable", data: null, reason: "no_adapter: campaigns" };
@@ -96,7 +171,7 @@ describe("Executive — integrated customer flow", () => {
     const clients = host.querySelector("[aria-labelledby='exec-domain-clients']")!;
     expect(clients.textContent).toContain("Active clients"); expect(clients.textContent).toContain("0");
     const gaps = host.querySelector(".exec-gaps")!;
-    expect(gaps.textContent).toContain("Marketing campaigns"); expect(gaps.textContent).toContain("Not connected");
+    expect(gaps.textContent).toContain("Marketing intake"); expect(gaps.textContent).toContain("Not connected");
     expect(gaps.textContent).not.toMatch(/\b0\b/);
   });
   it.each([
@@ -118,7 +193,7 @@ describe("Executive — integrated customer flow", () => {
   it("names returned unavailable and missing requested domain results", async () => {
     const snapshot = structuredClone(SNAPSHOT); snapshot.requested.push("game_plan");
     mocks.review.mockReturnValue({ state: "ready", snapshot, refresh: vi.fn() }); await mount();
-    expect(text()).toContain("Marketing campaigns"); expect(text()).toContain("Game Plan performance");
+    expect(text()).toContain("Marketing intake"); expect(text()).toContain("Game Plan performance");
     expect(text()).toContain("missing result");
   });
   it("ranks act risks before watch across the company and labels the recommendation", async () => {

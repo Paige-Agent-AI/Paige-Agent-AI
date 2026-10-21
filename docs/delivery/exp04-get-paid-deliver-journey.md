@@ -52,6 +52,45 @@ now calls this proof in the same cluster. Source is unmounted; actual UI integra
 hosted full-schema CI, review, safe release and readback remain owed. See
 [bounded foundation evidence](../evidence/ui-delivery/e04-draft-request-identity.md).
 
+## October21 current-main recipient result reconciliation — pre-edit contract
+
+REUSE / REPAIR #2175 / `5ec67ac4be376d34411d930ac1febc2f849fdc5b`.
+Current signing-page blob `9667b496f109b1c5a9185def6310df6115990035`
+exactly matches that correction's parent. Adopt only the owning component,
+preserved component tests and isolated existing source-mount proof; no old SQL,
+parent stack, Portal UI, shared sender, action policy or fingerprint renewal.
+
+1. Outcome: recipient sees only explicitly acknowledged signing/decline results;
+   partial signature is not completed agreement, and uncertain transport is not non-execution.
+2. Domain: E04 / CRM–Sales native agreements; E09 Portal ownership and EXP05/02 leases preserved.
+3. Harness/Gateway: existing native token door, authority and receipt/readback are reused;
+   no admission, executor or activation change. Partial platform readiness remains partial.
+4. Spine: existing `agreement.list/status/draft/send` registered PARTIAL. Public recipient
+   ceremony is the native signing seam; no new callable key or Chat/Live availability claim.
+5. Provider: no new integration. Canonical signing/decline/retained-document reads only;
+   source proof mocks all effects. Actual notifications require canonical Communications.
+6. Approval: original recipient consent/token authority and owner-issued exact agreement
+   remain required. No new MUTATION_VERB, risk class, Trust lane, budget or approval gate.
+7. Events/jobs: existing native signature/decline/events; no second scheduler or history.
+8. Receipt: strict `ok === true`; completed only from explicit completed evidence, decline
+   only from positive native JSON acknowledgment. No delivery/payment/service claim.
+9. Surface: existing `/sign/:token` and Sales/Portal handoff remain in place; existing
+   Binding Ledger state is not promoted by component rendering or tests.
+10. Proof owed: actual scoped owner/staff/linked-client/token interruption/recovery,
+    real signing/retained-copy/notification and full O1–O12 acceptance remain UNVERIFIED.
+
+Expected states reuse loading/read error/uniform refusal, actual document-load lock,
+required consent, recorded partial signature, confirmed completion, acknowledged
+decline and explicit uncertain response. Token changes retire document URLs, form
+values and late replies; Cancel on decline writes nothing. Existing prototype and
+historical C5 source model this bounded truth correction; current actual-component
+render/keyboard/narrow proof is required. No stylistic redesign or frozen-brand change.
+Newly grounded correctness gap: current `decline_agreement_signing` returns JSON
+`ok:false` for refusal, while the page originally checked only transport error.
+Also require an explicitly valid peek response rather than accepting malformed metadata.
+Full signed-token recovery and prospective accepted/effective terms are separate,
+mandatory native integration; no PRE1 or whole O2 closure from this UI repair.
+
 ## October 21 restart — professional native Agreements, original twelve outcomes retained
 
 **Authority:** owner EXP04 resume / Reimagine Terms & Agreements, October 21, 2026;

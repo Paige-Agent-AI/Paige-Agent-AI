@@ -10,7 +10,7 @@ VISUAL_DIRECTION: NOT_APPLICABLE: no rendered design change; existing shared Cha
 AUTOMATED_EVIDENCE: PASS: actual mounted teardown regression fails before the correction; after it,128 cases/five owning composer, attachment, turn-state, timeout-contract and approval-recovery suites pass without skips or uncaught errors. Scoped lint exits0. Pinned Impeccable4.1.0 detector exits0 with zero anti-patterns and six incumbent typography advisories.
 STATIC_EVIDENCE: PASS: original failed job119152703724 identifies the400ms gate, React update and window teardown; unmount already invalidates the sole request fence. The callback now checks that same fence, as the existing six-minute callback does.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no render tree, visual condition for a valid request, style, icon, text or user control changes; disposed-request callback hardening only.
-BEHAVIORAL_EVIDENCE: PASS: actual mounted pending-session disposal and late gate no longer call React after browser teardown; no fetch occurs. Existing current-turn gate, timeout, scope, attachment and approval-recovery suites pass.
+BEHAVIORAL_EVIDENCE: PASS: actual mounted delayed-session disposal and late gate no longer call React after browser teardown; no fetch occurs. Existing current-turn gate, timeout, scope, attachment and approval-recovery suites pass.
 AUTHENTICATED_RUNTIME: UNVERIFIED: current authorized customer session/control and prior Chat CPU recovery remain open; no authenticated pass inferred from the synthetic mounted regression.
 KEYBOARD_FOCUS: NOT_APPLICABLE: no focus, key, interaction or control change.
 ZOOM_REFLOW: NOT_APPLICABLE: no markup, layout or sizing change.
@@ -30,7 +30,7 @@ RELEASE_CHANNEL: development: separate bounded lifecycle correction, no release 
 RELEASE_CLASSIFICATION: internal-only: disposed-request guard, no capability activation or customer announcement.
 CUSTOMER_RELEASE_IDENTITY: none: one complete founder evaluation remains required.
 RELEASE_NOTE_REQUIRED: no: internal lifecycle repair, customer completion remains unverified.
-RELEASE_TRUTH_BOUNDARY: UNVERIFIED: exact-head required CI, production source and authenticated behavior are separate; no Live promotion.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: local source regression is proven; exact-head hosted CI, production source and authenticated behavior remain separate and unverified.
 RELEASE_RECOVERY: position=bounded source revert/correction; reference=ANT-138 and exact PR evidence; existing admission, approvals and canonical records retained.
 
 Impeccable: https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md

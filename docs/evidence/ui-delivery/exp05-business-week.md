@@ -7,25 +7,25 @@ MATERIAL_FLOW_CHANGE: YES: adds actual business-calendar grouping and week brows
 FLOW_PROTOTYPE: PASS: this is an incremental implementation of the existing owner-approved week-canvas study and its original-record transitions. The private study's device-zone fallback is explicitly excluded. This record does not claim the entire approved multi-lane canvas is implemented.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an eligible SOLO user sees the recorded work dates in the confirmed business time zone and opens the same canonical Work record.
 VISUAL_DIRECTION: PASS: compact working hierarchy, existing Mineral/Obsidian tokens, meaningful source/calendar holds and44px controls. Full native visual confirmation is UNVERIFIED.
-AUTOMATED_EVIDENCE: PASS:89 assertions/5 actual projection, component, Overview, weekly-entry and Workspace suites pass in66.08s. Cases include business midnight, Sunday/year boundary, DST, separate reminder times, missing/malformed dates, no-op week navigation, original object identity, tenant retirement/refusal and original Work/approval/exit regressions. First new projection worker timed out before any test and is INVALID. The first combined run45PASS/44FAIL caught missing calendar data doubles; the two owning fixtures now supply the reader port without changing the network guard or assertions. The corrected89/5 pass supersedes that failed fixture run.
+AUTOMATED_EVIDENCE: PASS: final composed source commit d0c14fe51f7e974bef386f65d596df9157c7a0d6 passes127 tests/8 suites in59.48s, including native projection/component, Overview, weekly entry, findings focus, Workspace, route and task focus. Covers midnight, Sunday/year boundary, DST, reminder truth, malformed dates, original identity, tenant retirement and existing Work/approval/recovery. Earlier89/5 was pre-composition only. Initial fixture failure45PASS/44FAIL was corrected by explicit calendar reader ports without weakening assertions/network isolation. Host-terminated attempts without results are INVALID.
 STATIC_EVIDENCE: PARTIAL: scoped ESLint on the four new files plus touched Overview/owning fixtures and diff checks passed before final composition. Full app type attempts stalled or ended with the Windows host interruption before diagnostics; these attempts are INVALID, not green. No shared reader, schema, writer, provider or permission changes.
-RENDERED_EVIDENCE: UNVERIFIED: actual React DOM is tested, but final native shell screenshots, both themes and supported viewport/panel states remain owed after repeated extension/webview timeouts. No source-only or synthetic mount is relabeled as rendered browser acceptance.
+RENDERED_EVIDENCE: PASS: actual candidate shell/components rendered with explicit synthetic identity/read ports and zero product-source transforms.307 product inputs match commit d0c14fe51f7e974bef386f65d596df9157c7a0d6;173 boundary ports. Native screenshots cover eight required desktop/panel states,390px Mineral/Obsidian,320px Obsidian and desktop Obsidian. Original week inspector and calendar missing/refused/loading states inspected. No browser/customer authentication or business effects are claimed from this offline fixture.
 BEHAVIORAL_EVIDENCE: PASS: native callback identity, next-week/current-week return, weekend work, reminder truth, read-only retry and tenant-selection retirement tested in the mounted component. Genuine customer/reload and final shell interaction remain owed.
 AUTHENTICATED_RUNTIME: UNVERIFIED: source is not released. No test tenant, real task, provider effect, receipt or new obligation created.
-KEYBOARD_FOCUS: UNVERIFIED: native buttons and existing inspectors reused; actual keyboard/focus/return drive remains owed before UI release.
-ZOOM_REFLOW: UNVERIFIED: final actual responsive and browser-zoom verification remains owed.
+KEYBOARD_FOCUS: PASS: native Enter advances to Oct26–Nov1 and returns to current week; original milestone opens in existing dialog with Save disabled. Escape closes it and returns focus to the same original week button. No mutation or approval was performed. Native activity read remains unavailable in the synthetic inspector port.
+ZOOM_REFLOW: PARTIAL: actual1536/1366/1024/900/390/320px layouts have no page overflow and preserve16px H1. Actual browser zoom remains UNVERIFIED; responsive reflow is not relabeled as zoom testing.
 REDUCED_MOTION: NOT_APPLICABLE: no animation or new scrolling mechanism; existing Operations scroll owner retained.
 STATE_COVERAGE: PASS: configured/empty/undated/malformed/outside-week, loading/missing/invalid/refused/unreadable/no-workspace, source identity and tenant retirement covered. Completed/cancelled work is excluded from active commitments. Missing calendar never becomes a zero-work claim.
 TRUTHFUL_STATE_LABELS: PASS: recorded dates do not reserve time, authorize work, prove reminder delivery or represent available capacity. Original provider readiness and Capabilities status are unchanged.
 SOLO_UI: YES: one tenant-neutral view over canonical Planning/CRM data. No account identifiers, alternate provisioning or privileged impersonation.
-SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: final native render owed.
-SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: final native render owed.
-SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: final native render owed.
-SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: final native render owed.
-SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: final native render owed.
-SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: final native render owed.
-SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: final native render owed.
-SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: final native render owed.
+SOLO_1536X770_PAIGE_CLOSED: PASS: actual CSS1536x770; raw1535x770 capture; native five-day grid and compact hierarchy, no resampling.
+SOLO_1536X770_PAIGE_OPEN: PASS: actual CSS1536x770; raw1535x770; original shell side panel and narrower five-day grid.
+SOLO_1366X768_PAIGE_CLOSED: PASS: raw1366x768, original native week grid and source record links.
+SOLO_1366X768_PAIGE_OPEN: PASS: raw1366x768, content-aware row layout with original context panel.
+SOLO_1024X768_PAIGE_CLOSED: PASS: raw1024x768, folded navigation and native week grid.
+SOLO_1024X768_PAIGE_OPEN: PASS: raw1024x768; existing shell overlays/holds background while PAIGE is open, not simultaneous Work interaction.
+SOLO_900X1000_PAIGE_CLOSED: PASS: raw900x1000, date grid and original workflow remain legible.
+SOLO_900X1000_PAIGE_OPEN: PASS: raw900x1000; existing contextual overlay preserves the week in background.
 OWNER_INTENT: Deliver the approved immersive Operations week with real data, meaningful next steps and ZION through PAIGE, preserving the smaller-banner refinement.
 MUST_NOT_HAPPEN: Device-zone guesses, foreign records, fake schedules/capacity/receipts, provider activation, abandoned Work guards, a duplicate scheduler or a source-only Experience completion claim.
 MUST_PRESERVE: The existing actor/tenant-keyed ScopedOperations boundary, projectNativeOperationsWork fail-closed scope check, native records/inspectors, original business-zone reader, localDateInZone, Settings ownership, source failures and all canonical writers.
@@ -36,9 +36,9 @@ RELEASE_CHANNEL: development: unfinished source slice, not a customer release.
 RELEASE_CLASSIFICATION: internal-only: no release before the required rendered/review/CI gates.
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement, launch or owner acceptance.
 RELEASE_NOTE_REQUIRED: NO: internal ongoing EXP05 development.
-RELEASE_TRUTH_BOUNDARY: PROOF OWED: full app typecheck, final actual-source native rendering, keyboard/reload/source-state drives, final review, exact-head CI, deployment and authenticated behavior. This is not the completed week canvas, ALG08 optimizer, automation builder, ZION delegation, Chat/Live execution or entire Experience.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: full app typecheck, final review, exact-head CI, deployment and authenticated behavior. Actual-source native responsive, keyboard, reload and calendar hold drives are recorded with synthetic data. This is not the completed week canvas, ALG08 optimizer, automation builder, ZION delegation, Chat/Live execution or entire Experience.
 RELEASE_RECOVERY: position=withhold this unreleased view or use a reviewed presentation correction retaining every native record; reference=OperationsOverview, OperationsWeek, operations-week and existing native inspectors.
-UNVERIFIED: All final native visual, combined source review, exact-head hosted CI, production/authenticated and owner acceptance obligations remain open. No PR or Live promotion is claimed by this checkpoint.
+UNVERIFIED: full app typecheck, hosted exact-head CI, production/authenticated and owner acceptance remain open at this evidence checkpoint. Actual browser zoom is untested. No Live promotion or actual recurring/specialist execution is claimed.
 
 ## Routing, source and collision boundary
 
@@ -104,7 +104,16 @@ date presentation only, not capacity/dependency optimization. ALG-12 REUSE exist
 source/calendar unavailable states, not a new anomaly detector. ALG-13 REUSE current
 source-backed Operations recommendations, not a new recommendation engine.
 
-Functional: local proof is qualified above; final composed verification is owed.
-Visual: actual-source responsive and finish review remain UNVERIFIED.
-Experiential: original-record callback tests pass; native keyboard/reload remain owed.
+Functional:127 final composed tests pass; release/authenticated proof remains owed.
+Visual: actual-source desktop/narrow/both-theme finish review passes for this increment, using existing Impeccable Operate/craft-floor and compact PAIGE tokens. Full approved immersive canvas remains incomplete.
+Experiential: native week browsing, original inspector, Escape focus return and reload-to-current-week verified offline; missing/refused/loading calendar and low-data no-week states are truthful. Fixture reload reboots its original source data; no durable business write or selected-week persistence is claimed.
 Founder Acceptance: not requested and not claimed; full EXP05 evaluation comes later.
+
+Native evidence index: assets/exp05-business-week/review-manifest.json and
+viewport-state-index.json. JPEGs are untouched native captures.1536px captures
+are one pixel narrower;390px captures are one pixel shorter, explicitly recorded.
+The first390px dark capture was before dark repaint and an initial320px frame
+was truncated to692px; both remain private INVALID and are excluded. Confirmed
+390px dark and320x844 frames replace them. No screenshot resampling or source
+overlay was used. Fixture-only calendar RPC returns synthetic configured/missing/
+refused/loading responses through the real business-calendar hook.

@@ -19,6 +19,23 @@ Experience remain separate unfinished increments; no catalogue Live promotion.
 Assess functional, visual and experiential quality independently; owner acceptance
 still requires the one complete integrated Experience.
 
+## EXP04 current delivery checkpoint — 2026-10-21
+
+Released bounded prerequisites #2486 register discovery, #2487 actual retained-copy
+completion readback, and #2493 truthful historical signing economics are recorded
+with exact source/CI/production identities in Master§4.0. They do not accept O1–O12.
+Current #2499 / product44c3d8e20142e6753706f0635a3b8648921dbd86 selectively reuses
+#2175 recipient UI: strict native acknowledgment, partial/completed distinction,
+no-effect cancellation, token retirement, keyboard/document lock, result focus,
+contrast and canvas correction.28 source cases/12 native PDF viewport-theme cases
+plus five synthetic result modes pass; hosted CI/release and real signing acceptance
+remain separate. [Source evidence](../evidence/ui-delivery/e04-signing-result-reconcile.md).
+Isolated workspace prototype062d9ed34 models the full preparation flow using the
+shared system; it is not production rich editing, assigned PDF fields or acceptance.
+Functional/Visual/Experiential/Acceptance are reported independently. All twelve
+outcomes, effective terms, financial/provider, service-delivery and role QA remain open.
+The older restart observations below are retained historical source checkpoints.
+
 ## EXP04 restarted — Agreements source continuation, 2026-10-21
 
 Owner resumes the same sole E04 lead and all original twelve outcomes, expanding native

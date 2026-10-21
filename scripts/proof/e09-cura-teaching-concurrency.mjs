@@ -16,7 +16,12 @@ const run=sql=>execFileSync(psql,args,{input:sql,encoding:'utf8',windowsHide:tru
 const fixture=readFileSync(new URL('../../supabase/tests/e09_cura_teaching_authority.sql',import.meta.url),'utf8');
 const start=fixture.indexOf('INSERT INTO auth.users'),end=fixture.indexOf('CREATE FUNCTION pg_temp.prepare(');
 assert.ok(start>0&&end>start&&fixture.includes('cura-teaching-writer-a'),'Original synthetic fixture required');
-const seed=fixture.slice(start,end);
+let seed=fixture.slice(start,end);
+const contactStart=seed.indexOf('-- A real external-client relationship');
+const contactEnd=seed.indexOf('UPDATE public.profiles',contactStart);
+assert.ok(contactStart>0&&contactEnd>contactStart,'Bounded original contact fixture boundary required');
+// Publisher races need no CRM client or contact-created event.
+seed=seed.slice(0,contactStart)+seed.slice(contactEnd);
 const u=s=>`e0c20100-0000-4000-8000-0000000000${s}`;
 const t=s=>`e0c20200-0000-4000-8000-00000000000${s}`;
 const actor=u('a1'),a=t('a'),b=t('b'),c=t('c'),intent='e0c20500-0000-4000-8000-000000000001';
@@ -72,6 +77,7 @@ try{
   WHERE work.tenant_id IN ('${a}','${b}'); COMMIT;`);
  seeded=true;
  assert.equal(count(),'5','Only original synthetic accepted work is seeded');
+ assert.equal(run(`SELECT count(*) FROM public.paige_durable_work WHERE tenant_id IN ('${a}','${b}') AND status='cancelled' AND jsonb_typeof(terminal_outcome)='object' AND settled_at IS NOT NULL`),'5','Canonical cancellation terminal fields verified');
  const cases=[
   {name:'direct-downgrade',setup:()=>{},revoke:`UPDATE public.tenant_members SET role='member',is_owner=false WHERE user_id='${actor}' AND tenant_id='${a}'`},
   {name:'ancestor-downgrade',setup:inherited,revoke:`UPDATE public.tenant_members SET role='member',is_owner=false WHERE user_id='${actor}' AND tenant_id='${b}'`},

@@ -1,5 +1,27 @@
 # 🧠 The Second Brain — master index & read-first orientation
 
+## EXP02 released coverage and current weekly-review failure — 2026-10-21 UTC
+
+Shared presenter#2444/ec83d109, priority policy#2409/a5a139e7, nine coverage
+fields#2445/b70738fe and CI-only serialization proof#2449/5dbf6e20 are merged.
+Actual merge trees, reviewed heads, exact-head CI, web/Edge/migration and bounded
+customer readbacks are in Master§4.0. Coverage producer13030000 is independently
+applied after13010000/13020000. Ordinary SOLO panel reads/reloads4 Coming Soon,
+3 Limited,2 Unverified with all Access Unverified;320px rows fit. Those labels
+are not permission, provider readiness, execution or analytics acceptance.
+
+Two fresh authorized ordinary weekly Chat reads **FAIL** with correlated CPUTime
+shutdown and no persisted assistant answer; reload retains the question only.
+Historical9/0 remains historical. Production rollout is ACTIVE; do not reuse old
+DRAINING/refusal as the current complete-product limit. Existing92 offline stream
+controls do not close the production failure. Backend-only repair continues through
+the existing canonical review/Chat contracts; no replacement engine, source-domain
+takeover, provider/limit activation or manual intent reset. ALG03/13 priority order
+is only a partial deterministic baseline; no new verified algorithm/outcome is
+accepted. All19 outcomes,9 analytics entries and one founder evaluation remain
+required. See [existing integration matrix](../delivery/e2-customer-experience-integration-matrix.md),
+ANT138/147/161 and ANT52/0c6dfd90/dc01d1b6. Raw customer QA stays private.
+
 ## EXP02 current release checkpoint — 2026-10-20
 
 Finance #2402 merged `ddf12b6bbda085cdb9f66587f9e803e11fc3cc18`, exact reviewed

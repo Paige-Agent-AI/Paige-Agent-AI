@@ -826,6 +826,87 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-21 UTC — EXP02 shared catalogue coverage presentation.**
+PR [#2444](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2444), reviewed
+`5a847b53e8092fa94c3c9d02cd0aaa374312d68c`, merged
+`ec83d109a10df74004d26e79b83f083d3df2e15e`; actual tree
+`8030bdb15a6ef2e1233803dd0c1d6bfd3e3079c8` matches the reviewed current-main union.
+AUTHOR-REVIEW / LOWER ASSURANCE6305001738/6305488707;10 applicable exact-head
+checks and2 Vercel PASS, schema-free Preview SKIP. Exact production web
+`dpl_8ohsrncpU3rXKSEMx92Vf63YvFai` READY. Existing registry's public version1
+coverage field uses shared TruthPill; Access stays Unverified. Native15-image
+synthetic packet and79 regressions support source/layout, not customer acceptance.
+Ordinary authorized SOLO initially read the correct unannotated Listed/Unverified
+fallback; subsequent producer/readback is recorded below. No Edge/migration,
+metric read, permission/provider activation or verified algorithm is added.
+[Readback](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2444#issuecomment-6305581578),
+ANT52/9e79249d. Internal production increment; full19/9/founder evaluation remains
+owed. Recovery is a reviewed forward presentation correction preserving registry
+authority and custom values; no customer announcement/version.
+
+**2026-10-21 UTC — EXP02 shared source-backed priority order.**
+PR [#2409](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2409), reviewed
+`45e8ae0727a96fc5c4fe47e223210d2799ec2cf4`, merged
+`a5a139e726e63762f1b730307c2ffe416e3cf571`; actual tree
+`49429dd4e5aaf779c85e0018466723ee6a1c8de4` matches the reviewed union.
+AUTHOR-REVIEW / LOWER ASSURANCE6305061071/6305549003;11 exact-head checks/Preview
+and2 Vercel PASS. Exact web `dpl_B3VhCeWFv68jsTqQtTf8VsUiNvLE` READY. Normal
+[Edge39526211890](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/39526211890)
+SUCCESS: all5 selected functions' source/configuration PASS, edge-live exacta5a139e7;
+artifact12313612260 SHA256
+`82ba5a018dccd906d2f6972843602c62e287d9cbaa4bccaab8a1e44c43d48cd6`.
+Chat projection and Executive reuse one stable act-before-watch ranking over
+authorized evidence; complete source evidence wins when added interpretation will
+not fit. Nine policy tests/native14-image packet are supporting evidence. ALG03/13
+is a partial deterministic baseline, not accepted full intelligence. Two fresh
+ordinary read-only weekly Chat requests, including post-release, **FAIL**: correlated
+CPUTime worker shutdown and no persisted assistant settlement; reload retains the
+question only. This release is not a CPU repair. Historical9/0 is preserved;
+current rollout is ACTIVE, so old DRAINING/refusal is not today's product boundary.
+ANT52/dc01d1b6 and ANT161/a420af9f; [source release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2409#issuecomment-6305605827).
+Internal production increment; full19/9/founder acceptance remains owed. No metric
+store/issuer, authority, action or provider change. Recovery preserves original
+evidence and uses reviewed forward source correction; no customer announcement.
+
+**2026-10-21 UTC — EXP02 nine analytics coverage fields and customer readback.**
+PR [#2445](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2445), reviewed
+`ec6ff9beec4981bcf0e71aec6dcdf8400d721cd7`, merged
+`b70738fef89c85ac5cf658a9e56ba01bfd7822a9`; actual tree
+`f3cff6a67a74480ed4151594a0b018ccb2c76e79` equals reviewed union. AUTHOR-REVIEW /
+LOWER ASSURANCE6305295692/6305759478;13 exact-head checks/fresh full-history Preview
+and2 Vercel PASS. Exact web `dpl_DhqmBQVtStpAmg9n8JyoiGDEbmy8` READY; normal
+[migration39527695415](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/39527695415)
+SUCCESS. Independent production history13010000/13020000/13030000 and all9 version1
+fields match. Guarded metadata-only update preserves original custom values,
+identity, tools, status, tiers, lanes and permissions; native PostgreSQL replay,
+malformed/custom/existing-field/disabled/reader controls PASS. Ordinary authorized
+SOLO reads4 Coming Soon,3 Limited,2 Unverified, all Access Unverified. Full reload
+returns to Chat; explicit Capabilities return re-reads those9 states. At320px the
+document is320 and all9 rows212/212; viewport reset. Raw customer evidence remains
+private. [Readback](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2445#issuecomment-6305813820),
+ANT52/0c6dfd90. No Edge/Live/provider activation or verified algorithm; weekly Chat
+FAIL above remains open. Internal production correction, not full19/9/founder
+acceptance. Recovery is a reviewed forward metadata correction preserving every
+other field; no customer announcement/version.
+
+**2026-10-21 UTC — EXP02 bounded CI reminder serialization proof repair.**
+PR [#2449](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2449), reviewed
+`4ce852459d1d3ddf14e738405538395ed8c8cb7c`, merged
+`5dbf6e2080137db4644880d31b93f68bd6e6daae`; actual tree
+`5eb1076acf003b248df1a78679103fb0010915c4` matches reviewed union. AUTHOR-REVIEW /
+LOWER ASSURANCE6305317740/6305773132;10 applicable exact-head checks and2 Vercel
+PASS, schema-free Preview SKIP. Exact production web
+`dpl_8xPdBNfb4xydFwXcM7sqCrTCaero` READY; public released descendant
+`0cb76386e769de810648408b2044a6d5e269e221-mvhfu3f1` observed, customerUpdate=null.
+Only2 proof files change: explicit first-session release follows observed second
+native connection lock waiting, instead of a racing sleep. Default timed callers
+and all296 native authority/expiry/ACK-loss/retained-audit controls PASS; owned
+database/server cleaned. Production SQL, timeout, permissions, Chat/UI and workflows
+are unchanged. [Readback](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2449#issuecomment-6305836345).
+No Edge/migration, algorithm or customer acceptance. Internal test correction;
+recovery preserves existing assertions and production authority. No customer
+announcement/version. This factual post-merge closeout is not logged recursively.
+
 **2026-10-20 UTC — EXP05 retires cancelled or stale weekly owner inspections.**
 PR [#2435](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2435), reviewed
 `727a0ff17e670b387b23e921bdf2c931f0258904`, merged main

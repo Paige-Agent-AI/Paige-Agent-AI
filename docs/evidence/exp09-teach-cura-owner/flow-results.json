@@ -1,0 +1,71 @@
+[
+  {
+    "case": "mobile-source-review",
+    "expiry": false,
+    "focused": "Review customer sharing",
+    "heading": "Review customer sharing",
+    "mainScrollWidth": 309,
+    "mainWidth": 309,
+    "preview": true
+  },
+  {
+    "case": "cancel-before-sharing",
+    "focus": "Review sharing Getting started: coaching FAQ",
+    "shared": false
+  },
+  {
+    "case": "trusted-native-date-adjustment",
+    "result": "PASS",
+    "review": "Nov 16, 2026, 5:00 PM UTC",
+    "note": "Automation fill alone changed DOM without React event; trusted arrow-key adjustment committed the controlled value."
+  },
+  {
+    "case": "business-switch-source-render",
+    "newSourcePresent": true,
+    "oldSourcePresent": false
+  },
+  {
+    "case": "empty",
+    "text": "Back to experience\nTeach CURA\n\nApproved answers for your customers. Your other business Knowledge stays private.\n\nBusiness Knowledge\nAdd a source\nFind a source\nSearch\nRefresh\n\nStart with an answer your customers need.\n\nAdd an FAQ, service guide or current offer. Review and publish it privately first, then choose what CURA may share.\n\nSharing status describes permission and source currency. It does not mean a customer opened, read or acted on the material."
+  },
+  {
+    "case": "offline",
+    "text": "Back to experience\nTeach CURA\n\nApproved answers for your customers. Your other business Knowledge stays private.\n\nKnowledge sharing could not be checked. Check your account and connection, then reload.\n\nReload Knowledge"
+  },
+  {
+    "case": "conflict",
+    "text": "Back to experience\nTeach CURA\n\nApproved answers for your customers. Your other business Knowledge stays private.\n\nThe change was not accepted. Reload and review current Knowledge before trying again.\n\nReload Knowledge\nBusiness Knowledge\nAdd a source\nFind a source\nSearch\nRefresh\nGetting started: coaching FAQ\n\nVersion 3 · Private Knowledge\n\nReady for sharing review\n\nReview sharing\nReview or correct\nNew-client offer\n\nVersion 1 · Expired\n\nPromotion\n\nSharing details\nReview sharing\nReview or correct\nWithdraw\nHow to submit your work\n\nVersion 1 · Private Knowledge\n\nPublication needed\n\nReview sharing\nReview or correct\n\nSharing status describes permission and source currency. It does not mean a customer opened, read or acted on the material."
+  },
+  {
+    "case": "unknown",
+    "text": "Back to experience\nTeach CURA\n\nApproved answers for your customers. Your other business Knowledge stays private.\n\nThe response was interrupted. This change may already be saved. Check its original receipt; no retry has been sent.\n\nCheck saved status\nLeave this check\n\nLeaving sends no retry. Review recorded sharing when you return.\n\nBusiness Knowledge\nAdd a source\nFind a source\nSearch\nRefresh\nGetting started: coaching FAQ\n\nVersion 3 · Private Knowledge\n\nReady for sharing review\n\nReview sharing\nReview or correct\nNew-client offer\n\nVersion 1 · Expired\n\nPromotion\n\nSharing details\nReview sharing\nReview or correct\nWithdraw\nHow to submit your work\n\nVersion 1 · Private Knowledge\n\nPublication needed\n\nReview sharing\nReview or correct\n\nSharing status describes permission and source currency. It does not mean a customer opened, read or acted on the material."
+  },
+  {
+    "case": "reduced-motion",
+    "requested": true,
+    "observed": "Teach CURA controls/text animation:none; computed durations0.00001s under reduce preference"
+  },
+  {
+    "case": "recover-original-receipt",
+    "text": "Back to experience\nTeach CURA\n\nApproved answers for your customers. Your other business Knowledge stays private.\n\nCURA can use this approved source for authorized customers.\n\nReload Knowledge\nBusiness Knowledge\nAdd a source\nFind a source\nSearch\nRefresh\nGetting started: coaching FAQ\n\nVersion 3 · Shared with customers\n\nProgram or service information\n\nSharing details\nReview sharing\nReview or correct\nWithdraw\nNew-client offer\n\nVersion 1 · Expired\n\nPromotion\n\nSharing details\nReview sharing\nReview or correct\nWithdraw\nHow to submit your work\n\nVersion 1 · Private Knowledge\n\nPublication needed\n\nReview sharing\nReview or correct\n\nSharing status describes permission and source currency. It does not mean a customer opened, read or acted on the material."
+  },
+  {
+    "case": "narrow-reflow-450",
+    "documentWidth": 450,
+    "main": {
+      "sw": 369,
+      "w": 369
+    },
+    "viewport": [
+      450,
+      1000
+    ],
+    "limitation": "Narrow layout reflow; native browser200percent zoom not exercised."
+  },
+  {
+    "case": "publisher-denied-native-read",
+    "visible": "Configuration access required",
+    "detail": "This account does not have permission to change this portal’s appearance or content.",
+    "sourceListVisible": false
+  }
+]

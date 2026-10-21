@@ -17,6 +17,51 @@ or full19/9/founder outcomes. NO VERIFIED ALGORITHM added. See Master§4.0 and
 
 ## EXP02 current release checkpoint — 2026-10-21 UTC
 
+Chat disposal correction#2469 revieweda7d847f9, merged
+`4aaa84e218121c33a3f510a99a2d1dd9038a1795`, exact treef0b804ac. Required checks,
+normal production web/public and actual served callback condition verify; the old
+400ms gate now reuses request-fence invalidation. 128 owning cases pass; original
+CI failure is retained. Migrations/Edge N/A; no provider/permission/registry/action
+activation. Prior backend CPU/no-settlement findings and real customer/Live/full19/
+nine analytics/founder acceptance remain open. See Master§4.0 and
+[#2469 source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2469#issuecomment-6315061088).
+
+Canonical Conversations foundation#2467 reviewed95d61084, merged
+`268ff690df500345cc3c81eec7ca2a2baa60b13e`, exact treeb305fba3. Eleven exact-head
+checks/two statuses, normal production web/public and actual served destination/label
+verify. Existing guarded Edge recovery39583487762 succeeds for all17 selected
+sources/JWT; certified edge-live matches268ff690, no workflow/tag/security bypass.
+This is the existing E4 surface-reference extension only: no new read emitter,
+provider/permission/admission or catalogue activation. O17 consumer/customer/privacy/
+reload and full19/nine analytics/founder acceptance remain owed. Native-read catalogue
+gap stays ANT-161; see Master§4.0 and
+[#2467 source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2467#issuecomment-6313888651).
+
+Recorded Systems Check status#2466 reviewed e7600799, merged
+`4d667a52adde822221c96f10d884ba95e8ccfdd9`, exact tree81f98c76.
+Ten required applicable checks/two statuses passed after repairing the initial
+design failure. Normal production web `dpl_9AatUsPhvzvsCKdrePWTi4Rn5AF1` READY/exact
+metadata; public4d667a52…-mvhx4at9 and actual served status/font/outline readback
+verified. Completed results remain separate from a bounded unfinished-at-last-read
+timestamp; age is no run and Refresh starts no check. Migrations/Edge N/A; Mind
+context remains UNAVAILABLE, no worker/scan/remediation/provider/permission or
+catalogue/algorithm activation.115 source cases/11 native synthetic frames are
+supporting only. Real customer reads/reload, O07/O19, full19/nine analytics and
+founder acceptance remain owed. See Master§4.0 and
+[#2466 source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2466#issuecomment-6312891491).
+
+Executive explanation/font repair#2464 reviewed79d39462, merged
+`720485f3955ae1b591fca2dfc6125ad0bbde2ccf`, exact composition tree91b3de9e.
+Required ten checks/two statuses passed; normal production web
+`dpl_A1RKsoqgU4o9dVUyLTofc9c12pdA` READY/exact metadata, public build720485f3…-mvhv4qzd
+and actual served explanation/font independently verified. The existing
+domain-qualified no-adapter state now explains the missing area; zero and owning
+links retain their semantics. Canonical self-hosted font is bound through the real
+SOLO wrapper. Migrations/Edge N/A; no permission/provider/status/algorithm activation.
+Native synthetic ten frames and source regressions are supporting proof only;
+customer/full19/nine analytics/founder acceptance remains owed. See Master§4.0 and
+[#2464 source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2464#issuecomment-6311881627).
+
 Scoped unsent-question foundation#2462 merged
 `87ccff84221497f298041fb33a0e16ee85d8c719`, reviewed
 `18a560d5ee80a9294b7a23d0b26a08cecca5d30f`, exact treef728d532.

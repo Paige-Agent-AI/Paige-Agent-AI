@@ -1,0 +1,22 @@
+{
+  "acceptedMain": "950d1dac0f355050eb46e6ce5f39850eefc59620",
+  "worktreeHead": "950d1dac0f355050eb46e6ce5f39850eefc59620",
+  "productInputCount": 296,
+  "syntheticPortCount": 169,
+  "productTransforms": [],
+  "fixtureManifestSha256": "accfb1a09e66dbd245a790db713eac450daa695f6895a8446bcf968fde817c51",
+  "candidateHelperGitBlob": "a2b3197bccfe608c301d457d0b816b0e2353ee65",
+  "capture": {
+    "viewport": [
+      1536,
+      770
+    ],
+    "original": true,
+    "resized": false
+  },
+  "proof": "ISOLATED ACTUAL SOURCE WITH SYNTHETIC IDENTITY/DOMAIN PORTS; NOT AUTHENTICATED OR PRODUCTION",
+  "hashes": {
+    "overview-entry-1536.png": "4e0a97717ab017316ca8837139ea0fc87fa5ed98d55e88da3546551eecb438a5",
+    "entry-b.json": "d9c5a97af0024a16fe466052388da9f7de5297a1360c84a2a59f581e64bbedf1"
+  }
+}

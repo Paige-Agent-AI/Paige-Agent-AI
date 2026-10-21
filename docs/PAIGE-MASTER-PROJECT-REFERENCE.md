@@ -826,6 +826,31 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-21 — EXP02 canonical Conversations reference foundation.**
+PR [#2467](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2467), reviewed
+`95d6108497676bfa86b1d08da2eb015d5fa63407`, merged
+`268ff690df500345cc3c81eec7ca2a2baa60b13e`, exact prospective/actual composition tree
+`b305fba3c6dbe66a5b5a2184d6e68d2122ccf6bf`. The existing E4 resolver/reference
+and frozen renderer label now accept only a surface-level Conversations destination
+in the current eligible SOLO workspace; no private message/thread locator is persisted.
+This foundation adds no emitter or read/provider/permission/tool-admission activation.
+107 source cases and188 composed cases pass; existing restrictive authority guards
+remain intact. AUTHOR-REVIEW / LOWER ASSURANCE6312575850/6313255514; eleven head
+checks plus two Vercel statuses SUCCESS. Normal web
+`dpl_AWWGRq7pJD1ucXVZGzG2BWbJ2EnJ` READY/exact; public268ff690…-mvhxzi7g
+and actual served destination/label verified. Original Edge push retains its
+concurrent409 and subsequent baseline-guard failure. Existing guarded recovery
+[39583487762](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/39583487762)
+SUCCESS: all17 selected sources/JWT configurations verify; artifact12339510799
+SHA256f067d625e2db99300034d7a8d3a8f4010ddfdf2b892f0ec2beb5cc6f131c1b10,
+all_pass=true and certified edge-live exact268ff690. No workflow/tag/security bypass
+or retired function. Migrations NOT_APPLICABLE. O17's separate consumer, actual
+permitted customer read/navigation/reload/privacy and full19/nine analytics/founder
+acceptance remain owed. Catalogue labels stay unchanged; native inbox-read catalogue
+representation remains an explicit ANT-161 gap. Internal foundation, no announcement.
+Recovery: bounded source correction/revert preserving originating records and action holds.
+[Released source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2467#issuecomment-6313888651).
+
 **2026-10-21 — EXP02 recorded Systems Check state and readability.**
 PR [#2466](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2466), reviewed
 `e7600799759fc6a8ca79dfee0986e33cef58bca3`, merged

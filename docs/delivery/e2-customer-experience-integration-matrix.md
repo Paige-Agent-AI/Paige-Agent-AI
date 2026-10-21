@@ -1,5 +1,15 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+**October21 O17 reference foundation source release:** #2467 reviewed95d61084,
+merged `268ff690df500345cc3c81eec7ca2a2baa60b13e`, exact treeb305fba3.
+Required CI, normal production web/public/served destination and label verify;
+existing guarded Edge recovery39583487762 verifies all17 selected source/JWT
+configurations and advances certified edge-live to the exact merge. No workflow,
+tag or security bypass. The E4 extension is surface-only/current-SOLO-account;
+no new read emitter, message focus, provider/permission/admission or catalogue
+activation. Separate consumer, real permitted read/navigation/reload/privacy and
+full19/nine analytics/founder acceptance remain owed (Master§4.0/ANT-161).
+
 **October21 recorded-check source release:** #2466 reviewed e7600799, merged
 `4d667a52adde822221c96f10d884ba95e8ccfdd9`, actual/expected tree81f98c76.
 Required CI, normal production web/public and actual served status/font/outline
@@ -320,7 +330,7 @@ PENDING. Each available subset must be tested independently of its remaining req
 | O14 Direct departmental records, current-account navigation and later return | E4 semantic reference/resolver/frame; `bundle_ref.paige_record_links` in canonical turns; destination reauthorization | Chat links; Executive → Finance/Sales/Clients/Work/System/Game Plan | D E2 semantic department links with historical SOLO reload/fresh-tab proof; UUID owning-Play extension released#2181/2d93594b over the same resolver/frame. Current protected scope/denial, correct Play context and later-session/native variants remain owed; aggregate sources remain surface references |
 | O15 Mind/Knowledge/Memory context, provenance and appropriate privacy/correction/publication boundaries | S16–19; existing Mind/Memory/Knowledge owners; `read_tenant_knowledge`, knowledge docs/chunks and canonical memory contracts | Mind orb/drawer, Knowledge and Chat context | D bounded projections / B full integration. Identity/people readers and offer/full-memory bindings missing; no private memory or numeric-goal inference from operating decisions |
 | O16 Chat/Live same evidence, interruption/recovery/continuity and usable responsive mobile parity | S10/S36 shared Chat/Voice INT-104; existing Live/thread/ticket/relay/settlement; canonical turns | Existing PAIGE fold/Chat/Talk live; Executive and all Command Center tabs | D Executive responsive source, original-scope review transport#2455, same-store cache#2462/87ccff84 and eligible binding/status/mobile-sizing consumer#2463/73d8a03d with actual served-source readback. U current authenticated Chat recovery and Live; two prior CPU failures remain open. Synthetic native component proof does not accept full shell/cohorts, original thread/focus return, phone/keyboard/zoom or complete conversational continuity |
-| O17 Contextual canonical Conversations with real message/thread/approval/provider state and privacy | S29–33 E03/Communications; existing canonical message/thread/provider/approval records | Conversations owning home, permission-filtered E2/Chat projection | P E2 consumer integration. Agree E03 exact read port, integrate status and deep links, prove reload/privacy. No replacement inbox, send engine or personal-mail sharing |
+| O17 Contextual canonical Conversations with real message/thread/approval/provider state and privacy | S29–33 E03/Communications; existing canonical message/thread/provider/approval records | Conversations owning home, permission-filtered E2/Chat projection | D canonical surface-reference foundation#2467/268ff690; P E2 read consumer and actual conversation/thread/provider/approval integration. Existing caller-scoped envelope port identified; integrate truthful status and existing links, prove reload/privacy. No replacement inbox, send engine or personal-mail sharing |
 | O18 Shared Deep Research with citations, persistence and later retrieval | S21–23; `research_knowledge.deep_research`, incumbent Research/Model Fabric/Knowledge owners; `research_runs/research_sources`, existing research read contracts | PAIGE question → existing Research card/library; separately approved Knowledge publication | G authorized run / P E2 context. Existing engine is not global unavailability; dormant R6B is not activation authority. Complete shared consumer after exact provider/cohort/spend/consent scope; prove cited persistence/retrieval |
 | O19 Actual conversational follow-up/action execution and verification after legitimate activation, plus honest interim refusal | S02–06/S10 shared Spine/Harness/Trust/Kit/Rail/Chat and owning domain; confirmations, canonical records and receipts | Chat/Live proposal/approval/result, department and activity | D historical refusal / G positive execution. INT-346 restriction remains. Refusal cannot close the required positive outcome; activate only authorized pathway, prove action/readback/replay/continuity |
 

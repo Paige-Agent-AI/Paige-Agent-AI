@@ -17,6 +17,17 @@ or full19/9/founder outcomes. NO VERIFIED ALGORITHM added. See Master§4.0 and
 
 ## EXP02 current release checkpoint — 2026-10-21 UTC
 
+Canonical Conversations foundation#2467 reviewed95d61084, merged
+`268ff690df500345cc3c81eec7ca2a2baa60b13e`, exact treeb305fba3. Eleven exact-head
+checks/two statuses, normal production web/public and actual served destination/label
+verify. Existing guarded Edge recovery39583487762 succeeds for all17 selected
+sources/JWT; certified edge-live matches268ff690, no workflow/tag/security bypass.
+This is the existing E4 surface-reference extension only: no new read emitter,
+provider/permission/admission or catalogue activation. O17 consumer/customer/privacy/
+reload and full19/nine analytics/founder acceptance remain owed. Native-read catalogue
+gap stays ANT-161; see Master§4.0 and
+[#2467 source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2467#issuecomment-6313888651).
+
 Recorded Systems Check status#2466 reviewed e7600799, merged
 `4d667a52adde822221c96f10d884ba95e8ccfdd9`, exact tree81f98c76.
 Ten required applicable checks/two statuses passed after repairing the initial

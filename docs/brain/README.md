@@ -1,5 +1,14 @@
 # 🧠 The Second Brain — master index & read-first orientation
 
+## EXP02 source and actual customer evidence — October21 UTC
+
+#2471 original Marketing evidence is released6f07299a, web/public and normal strict Edge39610734384/direct reader parity verified; actual Marketing-target acceptance remains owed. #2477 scoped Chat links is releasedfa7ff6cf with exact reviewed composition75578718 and required CI; production webdpl_FTe9T4Qy7XEST45o3xvXcArBde18 and containing public2b2a0b61-mvi8obs6 verify. No new issuer, provider, registry, algorithm or consequential activation. Master§4.0 holds exact identities and receipt links.
+
+Actual authorized ordinary unheld read-only weekly Chat completed FINAL with six persisted canonical department references and reload continuity (ANT-52c770056a). This is distinct from the earlier recovered thread, whose original runtime shutdown was attested and interrupted/outcome-unknown receipt replayed through existing native contracts; that thread retains its read-only hold and no business operation was retried. Inbox sample/native owning navigation and reload were bounded PASS, while obsolete model-prose destination repair #2477 still needs the exact original saved-reply post-release check. The authorized customer workspace is no longer in current Edge custody; another workspace is not a QA substitute.
+
+All nine actual catalogue descriptions/statuses were read and reloaded: CAP009/010/011/013 Coming Soon;012/016/017 Limited;014/015 Unverified; Access Unverified for all. No Live promotion. Native-read catalogue representation remains ANT-161. The supporting Chat/Finance capture wrapper returns JPEG bytes and1535px for nominal1536; exact1536 proof is UNVERIFIED, not accepted native evidence. #2414 original Banking receiver remains draft/in fresh CI with this hold; synthetic/source tests never become authenticated acceptance. Earlier CPU failures, provider/permission/isolation, actual effects and Rail readback, Research/Memory/Knowledge completion, mobile/Live/cohorts and all19/founder acceptance remain open as applicable. Historical9/0 and12/0/4 remain unchanged.
+
+
 ## EXP02 catalogue copy/readback checkpoint — 2026-10-20
 
 Nine canonical analytics descriptions#2440 merged

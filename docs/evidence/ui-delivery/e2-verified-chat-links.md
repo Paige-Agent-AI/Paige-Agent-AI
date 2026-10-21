@@ -1,5 +1,7 @@
 # Verified workspace navigation in SOLO Chat prose
 
+**October21 raster audit correction.** The nine native images contain original JPEG bytes; extensions and index now match. The nominal1536x770 component frame is1535x770 and exact1536 proof is UNVERIFIED. Remaining state/keyboard sizes and original hashes are retained; no pixels were resized or recreated. Production source is released#2477/fa7ff6cf, while exact saved-reply customer QA remains held for authorized account custody. This correction does not grant customer or complete-native acceptance.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: O14/O16/O17 repair, intended customer job and bounded sequence ANT-138/ac99cdff; reuse the incumbent reference, resolver, Markdown and link renderer.
 PAIGE_UI_DESIGN: PASS: existing Obsidian/Mineral renderer, product font and native reference row retained; no shell, form, route, approval or layout redesign.
@@ -9,7 +11,7 @@ PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an eligible SOLO owner checks a PAIGE ans
 VISUAL_DIRECTION: PASS: existing Operate/Read surface; restrained underlined native links and existing visible focus. No new component or visual world.
 AUTOMATED_EVIDENCE: PASS: the actual mounted Chat reproduces the obsolete clickable app link before the repair (one selected causal failure, seven unselected cases);200 owning Markdown/Chat/reference/resolver/host-routing cases across six suites and178 adjacent Chat stream/approval/research recovery/composer cases across five suites pass afterward, no skips. Shared Markdown cases overlap; totals are not added. Final hosted results remain required.
 STATIC_EVIDENCE: PASS: scoped product/test lint exits0; actual project type ratchet0 new diagnostics (baseline10/current6). No baseline, source guard, route registry, provider or permission changes.
-RENDERED_EVIDENCE: PASS: nine unmodified native PNGs and source-bound index at assets/e2-verified-chat-links/native-index.json; four prescribed desktop sizes,320px light/dark, missing-reference and unsupported parented context plus keyboard. Actual product font loaded; no horizontal overflow. These are synthetic component renders, not an authenticated shell or customer acceptance.
+RENDERED_EVIDENCE: UNVERIFIED: supporting actual component JPEG states use loaded product fonts and correct contrast; nominal1536 frame is1535px, so exact1536 native proof is not accepted. See corrected native index; full shell and customer QA remain separate.
 BEHAVIORAL_EVIDENCE: PASS: streamed prose cannot promote an app target before its native reference arrives; persisted obsolete/prior-account paths remain text while the native row resolves current context. Existing external citations/public-site links/table rendering and the non-workspace default remain intact. Native keyboard reaches the actual canonical link with visible focus.
 AUTHENTICATED_RUNTIME: UNVERIFIED: actual production repro and successful permitted inbox/native-reference read are retained privately and ANT-52. Repair deployment and the same saved-reply/reload/navigation regression remain owed; no production finding is closed by a synthetic render.
 KEYBOARD_FOCUS: PASS: native320px light capture; canonical link reached after the external citation, visible1.6px native violet outline with2.4px offset. Obsolete prose contributes no tab stop.

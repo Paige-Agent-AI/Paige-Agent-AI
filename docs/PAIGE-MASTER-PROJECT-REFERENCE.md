@@ -826,6 +826,18 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-21 — EXP02 original Marketing metric evidence and verified Chat destinations.**
+
+| Delivery | Verified source/release | Proof boundary and recovery |
+| --- | --- | --- |
+| [#2471](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2471): original Marketing1.0.0 metric evidence consumer for Strategic Targets | Reviewed2703bc0c626e54dd8a66ad21dc10f23d59a337a1, merged`6f07299a6c2f4878c42f61fe377067f253de8f0a`; exact tree1ce3614bfdec88eae8951fce6222e21ba120bf07. All11 checks/fresh Preview and2statuses SUCCESS; AUTHOR-REVIEW / LOWER ASSURANCE6317629126. Webdpl_3t9YBYBt1QUjiv8q452XDb5Tasuk READY/exact and public6f07299a-mvi5zxbg verified. Normal strict Edge39610734384/job119258593743 selected4 source/JWT configurations PASS; certified edge-live6f. Direct source reader/key comparison byte-exact. | Sole issuer/Finance/Marketing records and original33-key public contract preserved.202 owning cases and70 authority controls, source type/lint PASS. Migration N/A. Artifact12348709529/SHA256b0b9d088cac6d376b5f268558459a1de511729f92ff77f5fc25573645d1c2b05 metadata retained, not independently downloaded. Actual Marketing targets/issuer-to-Executive/reload/role/isolation/Live proof remains owed. No provider, metric producer, algorithm or capability activation. [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2471#issuecomment-6317755542). |
+| [#2477](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2477): verified workspace destinations in existing Chat Markdown | Reviewed`7da6827ded26fe09161b657cfe9ff0210cb1a7fa`, merged`fa7ff6cfea0121597db3b6bc1e15675d0ba0d990`; final tree755787185d697c14ebaf451672daa5320b395328 matches reviewed current-main composition. AUTHOR-REVIEW / LOWER ASSURANCE5601601873, six exact-head workflows/10 applicable checks and2statuses SUCCESS; Preview N/A. Webdpl_FTe9T4Qy7XEST45o3xvXcArBde18 READY/exact; current public containing successor`2b2a0b61b3043f77fafa062629da4661691d6d4e-mvi8obs6` verified. | Existing semantic-reference resolver/host policy is sole app-destination authority; obsolete model app links become text, external citations retain policy.200 owning/178 adjacent cases overlap and are not summed; type0new, lint PASS. Actual saved-customer-reply post-release check is UNVERIFIED because the authorized customer workspace is no longer in current Edge custody; the production finding remains OPEN. Nine supporting images are JPEG bytes despite former .png names; the nominal1536 frame is1535px and exact native proof is UNVERIFIED. No image resampling or customer acceptance inference. Edge/migrations N/A; no action, registry, provider or algorithm activation. [Merge receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2477#issuecomment-6318993543). |
+
+Both are internal-only production prerequisites, with no customer version or announcement.
+A bounded reviewed correction/revert preserves canonical records and protected action holds.
+All19 outcomes/nine analytics/Live/cohort and single founder acceptance remain required.
+
+
 **2026-10-21 — EXP02 canonical Conversations read-reference consumer.**
 
 PR [#2470](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2470), reviewed

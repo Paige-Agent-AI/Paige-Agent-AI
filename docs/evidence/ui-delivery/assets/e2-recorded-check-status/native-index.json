@@ -1,0 +1,315 @@
+{
+  "cases": [
+    {
+      "contrast": 11.68237298199797,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "fontSize": "13px",
+      "heading": "Last checked 8/29/2026, 8:01:00 AM",
+      "invalidDate": false,
+      "notice": "An unfinished check was reported at the last read. Started 10/21/2026, 4:15:40 AM. Results below still come from the last completed check. Refresh current data to check for a completed result.",
+      "noticeFits": true,
+      "pageFits": true,
+      "refreshReachable": true,
+      "spinners": 0,
+      "summary": "1 check · 0 passed · 1 needs attention",
+      "viewport": [
+        1536,
+        770
+      ],
+      "filename": "check-running-1536-dark.jpg",
+      "native": {
+        "width": 1536,
+        "height": 770
+      },
+      "scenario": "running",
+      "theme": "dark",
+      "sha256": "7c8986eb02e3f6e283f5a4a21d45138355d4828728ed8fe20b20f6933bb07bfa"
+    },
+    {
+      "contrast": 10.104600194269164,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "fontSize": "13px",
+      "heading": "Last checked 8/29/2026, 8:01:00 AM",
+      "invalidDate": false,
+      "notice": "An unfinished check was reported at the last read. Started 10/21/2026, 4:15:42 AM. Results below still come from the last completed check. Refresh current data to check for a completed result.",
+      "noticeFits": true,
+      "pageFits": true,
+      "refreshReachable": true,
+      "spinners": 0,
+      "summary": "1 check · 0 passed · 1 needs attention",
+      "viewport": [
+        1366,
+        768
+      ],
+      "filename": "check-running-1366-light.jpg",
+      "native": {
+        "width": 1366,
+        "height": 768
+      },
+      "scenario": "running",
+      "theme": "light",
+      "sha256": "604c06ca60bbd4be6ebe9e6b87dbe4f4a8759918bcb675bbad55f465f769a2e4"
+    },
+    {
+      "contrast": 11.68237298199797,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "fontSize": "13px",
+      "heading": "Last checked 8/29/2026, 8:01:00 AM",
+      "invalidDate": false,
+      "notice": "An unfinished check was reported at the last read. Started 10/21/2026, 4:15:43 AM. Results below still come from the last completed check. Refresh current data to check for a completed result.",
+      "noticeFits": true,
+      "pageFits": true,
+      "refreshReachable": true,
+      "spinners": 0,
+      "summary": "1 check · 0 passed · 1 needs attention",
+      "viewport": [
+        1024,
+        768
+      ],
+      "filename": "check-running-1024-dark.jpg",
+      "native": {
+        "width": 1024,
+        "height": 768
+      },
+      "scenario": "running",
+      "theme": "dark",
+      "sha256": "e9c97ab25c86deb767da21d7c44a548f740ba39d7ceabf308968a7e9cdb62f02"
+    },
+    {
+      "contrast": 10.104600194269164,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "fontSize": "13px",
+      "heading": "Last checked 8/29/2026, 8:01:00 AM",
+      "invalidDate": false,
+      "notice": "An unfinished check was reported at the last read. Started 10/21/2026, 4:15:44 AM. Results below still come from the last completed check. Refresh current data to check for a completed result.",
+      "noticeFits": true,
+      "pageFits": true,
+      "refreshReachable": true,
+      "spinners": 0,
+      "summary": "1 check · 0 passed · 1 needs attention",
+      "viewport": [
+        900,
+        1000
+      ],
+      "filename": "check-running-900-light.jpg",
+      "native": {
+        "width": 900,
+        "height": 1000
+      },
+      "scenario": "running",
+      "theme": "light",
+      "sha256": "025c96e7cc869f6ead037bf1c19e01e1431d69542e0678b18aa4b761ea4258d7"
+    },
+    {
+      "contrast": 10.104600194269164,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "fontSize": "13px",
+      "heading": "No check has finished yet",
+      "invalidDate": false,
+      "notice": "An unfinished check was reported at the last read. Started 10/21/2026, 4:15:58 AM. No completed results are available yet. Refresh current data to check for a completed result.",
+      "noticeFits": true,
+      "pageFits": true,
+      "refreshReachable": true,
+      "spinners": 0,
+      "summary": "No completed check has been recorded for this workspace.",
+      "viewport": [
+        320,
+        760
+      ],
+      "filename": "check-only-320-light.jpg",
+      "native": {
+        "width": 320,
+        "height": 760
+      },
+      "scenario": "only",
+      "theme": "light",
+      "sha256": "7316617385e9331ca3c6f481c376da967f455c33c4848f9dd964ad4be38b55d9"
+    },
+    {
+      "contrast": null,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "fontSize": null,
+      "heading": "Awaiting the first completed check",
+      "invalidDate": false,
+      "notice": null,
+      "noticeFits": true,
+      "pageFits": true,
+      "refreshReachable": true,
+      "spinners": 0,
+      "summary": "No completed check has been recorded for this workspace.",
+      "viewport": [
+        320,
+        760
+      ],
+      "filename": "check-age-320-dark.jpg",
+      "native": {
+        "width": 320,
+        "height": 760
+      },
+      "scenario": "age",
+      "theme": "dark",
+      "sha256": "50c8164316e40bd7f4ab47b711e63d65955d1534a6e2f3b089b2ff07f7823602"
+    },
+    {
+      "contrast": null,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "fontSize": null,
+      "heading": "Last checked 8/29/2026, 8:01:00 AM",
+      "invalidDate": false,
+      "notice": null,
+      "noticeFits": true,
+      "pageFits": true,
+      "refreshReachable": true,
+      "spinners": 0,
+      "summary": "1 check · 0 passed · 1 needs attention",
+      "viewport": [
+        1536,
+        770
+      ],
+      "filename": "check-invalid-1536-light.jpg",
+      "native": {
+        "width": 1536,
+        "height": 770
+      },
+      "scenario": "invalid",
+      "theme": "light",
+      "sha256": "9d61cf8bf02f4eb9ba14862633d35155514eeac87c04db4cadbd64b200c5b512"
+    },
+    {
+      "contrast": null,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "fontSize": null,
+      "heading": "The last check could not be read",
+      "invalidDate": false,
+      "notice": null,
+      "noticeFits": true,
+      "pageFits": true,
+      "refreshReachable": true,
+      "spinners": 0,
+      "summary": "1 check · 0 passed · 1 needs attention",
+      "viewport": [
+        1536,
+        770
+      ],
+      "filename": "check-error-1536-dark.jpg",
+      "native": {
+        "width": 1536,
+        "height": 770
+      },
+      "scenario": "error",
+      "theme": "dark",
+      "sha256": "df1f8e2915c7e6d287d06f89cc49aacd89d850c512c0d9e1dc0461bdccc7d4d3"
+    },
+    {
+      "contrast": null,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "fontSize": null,
+      "heading": "Last checked 8/29/2026, 8:01:00 AM",
+      "invalidDate": false,
+      "notice": null,
+      "noticeFits": true,
+      "pageFits": true,
+      "refreshReachable": true,
+      "spinners": 1,
+      "summary": "1 check · 0 passed · 1 needs attention",
+      "viewport": [
+        1536,
+        770
+      ],
+      "filename": "check-loading-1536-light.jpg",
+      "native": {
+        "width": 1536,
+        "height": 770
+      },
+      "scenario": "loading",
+      "theme": "light",
+      "sha256": "68006cf4700fc765d8e0b0cc26d97c71ba40c068edbaa6bbce7e8a8b1e4e558b"
+    },
+    {
+      "contrast": 11.68237298199797,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "fontSize": "13px",
+      "heading": "Last checked 8/29/2026, 8:01:00 AM",
+      "invalidDate": false,
+      "notice": "An unfinished check was reported at the last read. Started 10/21/2026, 4:16:06 AM. Results below still come from the last completed check. Refresh current data to check for a completed result.",
+      "noticeFits": true,
+      "pageFits": true,
+      "refreshReachable": true,
+      "spinners": 0,
+      "summary": "1 check · 0 passed · 1 needs attention",
+      "viewport": [
+        320,
+        760
+      ],
+      "filename": "check-running-320-dark.jpg",
+      "native": {
+        "width": 320,
+        "height": 760
+      },
+      "scenario": "running",
+      "theme": "dark",
+      "sha256": "c006202069fa5769a611579a1ee73ff522ff8d8cb5c97b037a5a94c9da0e0acc"
+    }
+  ],
+  "refresh": {
+    "before": {
+      "contrast": 11.68237298199797,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "fontSize": "13px",
+      "heading": "Last checked 8/29/2026, 8:01:00 AM",
+      "invalidDate": false,
+      "notice": "An unfinished check was reported at the last read. Started 10/21/2026, 4:16:06 AM. Results below still come from the last completed check. Refresh current data to check for a completed result.",
+      "noticeFits": true,
+      "pageFits": true,
+      "refreshReachable": true,
+      "spinners": 0,
+      "summary": "1 check · 0 passed · 1 needs attention",
+      "viewport": [
+        320,
+        760
+      ],
+      "filename": "check-running-320-dark.jpg",
+      "native": {
+        "width": 320,
+        "height": 760
+      },
+      "scenario": "running",
+      "theme": "dark"
+    },
+    "after": {
+      "heading": "Last checked 8/29/2026, 8:01:00 AM",
+      "noScanPromise": true,
+      "notice": null,
+      "spinners": 0,
+      "summary": "1 check · 0 passed · 1 needs attention"
+    },
+    "filename": "check-refresh-320-dark.jpg",
+    "native": {
+      "width": 320,
+      "height": 760
+    },
+    "sha256": "79ac5e473c1159cd8305f075433362a3b1fe4f96cba6b7376968b1522270814a"
+  },
+  "sourceSha256": {
+    "src/solo/SoloSystemsCheckWorkspace.tsx": "8cb6352fed0f3aa77ea53d9de9cadfd3b3be70d59a15859d170d8d4d91357c0b",
+    "src/solo/solo-systems-check-workspace.css": "2aa76d969e005224f70abaa8cd4414ac32f746c2570366974730a8d4de066fe5",
+    "src/hooks/useSystemsCheck.ts": "8208a5be4da97b51a37ebfdeaa05a741ab5d195292e5f0a618e9099e19a27a57",
+    "scripts/live-drive/harness/systems-check-mount/main.tsx": "ec6e080cbef6033807a82d33e449666b15697426cddcce41e178d4ae50030822",
+    "scripts/live-drive/harness/systems-check-mount/useSystemsCheck-stub.ts": "b409688599fe2d421731c5b8077300fd7e39e5be4d43a8ae35980dfef5019209",
+    "scripts/live-drive/harness/systems-check-mount/useSoloActivityFeed-stub.ts": "de194b9b75f913e342e557e3aaa05e278aea56f92ee1530e98325ce1e2483e9a",
+    "scripts/live-drive/harness/systems-check-mount/vite.config.ts": "0ae755ec5ee4178923ee62dc015d1f41a5af674ee32dafcad6685ca5f9b26f93"
+  },
+  "boundary": "Native synthetic actual Systems Check component, existing harness, explicit reader/command/Rail doubles and canonical product theme wrapper. No actual scan, backend/provider/business action or authenticated customer proof. Full native JPEG viewport capture, no edited/rescaled pixels; initial11px/prior-edge previews and incomplete-wrapper observation remain local/excluded.",
+  "baseline": "73d8a03db8df273fe45dfb122854c05b24886e6b"
+}

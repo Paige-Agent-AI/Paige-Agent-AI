@@ -30,6 +30,7 @@
 .sc-strip-l{flex:1 1 300px;min-width:0}
 .sc-strip-h{font-size:12px;font-weight:750}
 .sc-strip-s{margin-top:3px;font-size:11px;color:var(--pg-muted)}
+.sc-run-state{margin-top:8px;max-width:72ch;font-size:13px;line-height:1.5;color:var(--pg-ink-2)}
 .sc-strip-s strong{color:var(--pg-ink-2);font-weight:750;font-variant-numeric:tabular-nums}
 .sc-strip-err{margin-top:5px;font-size:11px;color:var(--sc-critical)}
 .sc-strip-a{display:flex;gap:7px;flex-wrap:wrap}
@@ -70,7 +71,7 @@
 
 /* what needs you now */
 .sc-items{display:flex;flex-direction:column;gap:8px}
-.sc-item{border:1px solid var(--pg-line);border-left:3px solid var(--pg-line-strong);background:var(--pg-raised);border-radius:10px;padding:11px 13px;box-shadow:var(--pg-e1)}
+.sc-item{border:1px solid var(--pg-line);border-left:1px solid var(--pg-line-strong);background:var(--pg-raised);border-radius:10px;padding:11px 13px;box-shadow:var(--pg-e1)}
 .sc-item--blocking{border-left-color:var(--sc-critical)}
 .sc-item--high{border-left-color:var(--sc-attention)}
 .sc-item--medium,.sc-item--low{border-left-color:var(--sc-paige)}

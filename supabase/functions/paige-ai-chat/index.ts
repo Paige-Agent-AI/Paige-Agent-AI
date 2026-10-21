@@ -871,7 +871,14 @@ const messageSchema = z.object({
   // submission uses this as its cross-request identity; a server-generated per-request UUID would
   // recreate INT-180 by dispatching the same document again after a lost response.
   requestIntentId: z.string().uuid().optional(),
-  interactive: z.object({ kind: z.enum(["message", "stop", "status"]), supersedesIntentId: z.string().uuid().optional(), pipelineEffectId: z.string().uuid().optional(), workId: z.string().uuid().optional(), approvalTurnId: z.string().uuid().optional() }).optional(),
+  interactive: z.object({ kind: z.enum(["message", "stop", "status"]), supersedesIntentId: z.string().uuid().optional(), pipelineEffectId: z.string().uuid().optional(), workId: z.string().uuid().optional(), approvalTurnId: z.string().uuid().optional(),
+    includeCuraPreparationHistory: z.literal(true).optional(),
+  }).superRefine((control, context) => {
+    // A projection selector, never actor, permission, approval or execution authority.
+    if (control.includeCuraPreparationHistory && (control.kind !== "status" || !control.approvalTurnId)) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ["includeCuraPreparationHistory"], message: "Preparation history requires the original approval status request." });
+    }
+  }).optional(),
   clientContext: z.string().max(100000).optional().transform((v) => (v && v.length > 50000 ? v.slice(0, 50000) : v)),
   // #292 — what's currently on the Studio canvas. Lets the model UPDATE that artifact in place
   // (stacking its version history) when a turn refines it, instead of minting a fresh sibling. The
@@ -1469,7 +1476,8 @@ serve(async (req) => {
               caller: supabaseClient as unknown as Parameters<typeof readOriginalReminderApprovalHistory>[0]["caller"],
               service: supabase as unknown as ApprovalRecoveryDb, current: () => !req.signal.aborted,
             }) : null;
-          const cura_preparation_history = protocolActive && thread.audience === "workspace"
+          const cura_preparation_history = validatedData.interactive.includeCuraPreparationHistory === true
+            && protocolActive && thread.audience === "workspace"
             && approval_recovery.status !== "available"
             ? await readOriginalCuraPreparationHistory({
               actorId: user.id, tenantId: thread.tenant_id, threadId: validatedData.threadId,

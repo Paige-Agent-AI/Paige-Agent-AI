@@ -32,7 +32,7 @@ function table(rows){return filters=>{
 };}
 async function drive(options={}){
  network=[];const abort=new AbortController();let profileTenant=options.workspaceChanged?id(99):tenant;
- const threadRow={id:thread,tenant_id:tenant,caller_user_id:actor,audience:'workspace',is_archived:false,
+ const threadRow={id:thread,tenant_id:tenant,caller_user_id:actor,audience:options.customerAudience?'customer':'workspace',is_archived:false,
   interactive_latest_intent:id(90),interactive_executor_intent:id(91),interactive_recovery_hold:id(92)};
  const original={id:turn,thread_id:thread,role:'assistant',created_at:'2026-10-21T12:00:01.000001Z',
   interactive_intent_id:intent,interactive_actor_id:options.foreignActor?id(99):actor,interactive_tenant_id:tenant,interactive_terminal_state:'WAIT_APPROVAL',
@@ -58,7 +58,10 @@ async function drive(options={}){
   },
  }});
  const request={messages:[{role:'user',content:'Read pending approval status.'}],threadId:thread,requestIntentId:intent,
-  interactive:{kind:'status',approvalTurnId:options.wrongTurn?id(99):turn},...(options.mutative?{approvedConfirmations:[token]}:{})};
+  interactive:{kind:options.messageProjection?'message':'status',
+   ...(options.missingOrigin?{}:{approvalTurnId:options.wrongTurn?id(99):turn}),
+   ...(options.noProjection?{}:{includeCuraPreparationHistory:options.falseProjection?false:true})},
+  ...(options.mutative?{approvedConfirmations:[token]}:{})};
  const response=await capturedHandler()(new Request('https://test.supabase.co/functions/v1/paige-ai-chat',{
   method:'POST',headers:{Authorization:'Bearer synthetic-original-caller','Content-Type':'application/json',[CHAT_CONTROL_HEADER]:'status'},
   body:JSON.stringify(request),signal:abort.signal}));
@@ -83,13 +86,17 @@ for(const state of ['outcome_unknown','succeeded','cancelled'])await check('orig
  assert.equal(h.confirmations_restored,false);assert.equal(h.new_effect_possible,false);assert.equal(r.reads.length,1);
  assert.equal(JSON.stringify(h).includes(args.content),false);assert.equal(JSON.stringify(h).includes(token),false);assert.equal(JSON.stringify(h).includes(args.title),false);
 });
-for(const [name,options] of [['inactive protocol',{inactive:true}],['foreign proposal business',{foreignProposal:true}],['wrong original turn',{wrongTurn:true}],
+for(const [name,options] of [['inactive protocol',{inactive:true}],['customer audience',{customerAudience:true}],['foreign proposal business',{foreignProposal:true}],['wrong original turn',{wrongTurn:true}],
  ['foreign original actor',{foreignActor:true}],['tampered frozen source',{tampered:true}],['unconsumed confirmation',{unconsumed:true}],
  ['changed selected business',{workspaceChanged:true}],['native publisher refusal',{denied:true}],['abort after native read',{abortAfterNative:true}],
  ['late selected-business change',{changedAfterNative:true}]])await check(name+' withholds private preparation',async()=>{
  const r=await drive(options);assert.equal(r.body.cura_preparation_history,undefined);
 });
 await check('mutative payload is rejected before preparation observation',async()=>{const r=await drive({mutative:true});assert.equal(r.response.status,400);assert.equal(r.reads.length,0);});
+await check('ordinary status does not enter the CURA observer',async()=>{const r=await drive({noProjection:true});assert.equal(r.response.status,200);assert.equal(r.body.cura_preparation_history,undefined);assert.equal(r.reads.length,0);});
+for(const [name,options] of [['false selector',{falseProjection:true}],['missing origin',{missingOrigin:true}],['selector on message',{messageProjection:true}]])await check(name+' refuses before observation',async()=>{
+ const r=await drive(options);assert.equal(r.response.status,400);assert.equal(r.reads.length,0);assert.equal(r.body.cura_preparation_history,undefined);
+});
 await check('repeated explicit status uses the same original native intent and never submits',async()=>{
  for(let i=0;i<2;i++){const r=await drive();assert.equal(r.body.cura_preparation_history.status,'recorded_preparation');assert.equal(r.reads.length,1);}
 });

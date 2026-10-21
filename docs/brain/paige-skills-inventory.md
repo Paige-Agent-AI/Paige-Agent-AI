@@ -225,6 +225,17 @@ identity. A specialist job pins an approved skill version and registered tools;
 the Spine separately resolves every action. Tool or provider unavailability
 must remain visible rather than being substituted or fabricated.
 
+EXP09's bounded result-read prerequisite reuses original `paige_skill_runs`,
+contact relationships and native actor/staff authority. Its service-only read
+does not execute or activate CAP018–024. Ordinary contactless historical results
+lack business provenance and stay unavailable; an invoker UUID is not authority.
+The original assigned company-operator permission stays scoped to the exact
+selected company/contact; it grants no ordinary-business global read. The legacy
+MCP door cannot resolve seatless company operators and remains UNAVAILABLE for
+that upstream path; this native repair does not change Platform Operator routing.
+MCP consumer deployment and actual authenticated skill/customer results remain
+PROOF OWED. See [original readback contract](../delivery/e09-skill-run-readback.md).
+
 ### Vibe Studio Creative Production Team skill families
 
 These seven future skill families are assembled as temporary job roles by Paige,

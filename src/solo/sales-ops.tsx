@@ -1802,6 +1802,7 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
   // a re-issued or replaced one is the later row and wins, which is what somebody reading the
   // Signature column expects to see.
   const signingsReadable = signings.phase === "ready" && signings.readable;
+  const visibleTermStatus = termStatus === "none" && !signingsReadable ? "unrecognised" : termStatus;
   const signingFor = (agreementId) =>
     signings.signings.find((row) => row.agreementId === agreementId) || null;
 
@@ -1819,12 +1820,13 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
   ];
   const matchingTerms = termRows.filter((row) => {
     const client = agreements.clients.find((c) => c.id === row.contactId);
-    // The filter names the ENGAGEMENT's state, so a document with no engagement matches only
-    // "All". Sweeping it into "Draft" would put it under a word its record does not hold.
-    // Signature, per the approved filter — `row.signing.displayState` rather than the engagement's
-    // own `agreement.status`. A row with no document at all answers only "any".
-    return (termStatus === "all" || row.signing?.displayState === termStatus)
-      && (client?.name || "").toLowerCase().includes(termSearch.trim().toLowerCase());
+    // Use the same truthful reading as the Signature cell. A failed document read is unknown,
+    // while a successful read with no document is "none"; neither is an engagement state.
+    const signatureState = row.signing?.displayState || (signingsReadable ? "none" : "unrecognised");
+    const query = termSearch.trim().toLowerCase();
+    const matchesText = [client?.name, row.signing?.documentTitle, row.signing?.signerName]
+      .some((value) => (value || "").toLowerCase().includes(query));
+    return (visibleTermStatus === "all" || signatureState === visibleTermStatus) && matchesText;
   });
   const shownTerms = matchingTerms.slice(termPage * 5, termPage * 5 + 5);
   const processorState = sales.processorUnrecognised ? "unknown" : sales.processor === null ? "none" : sales.processor === "not_yet" ? "warn" : "ok";
@@ -2260,9 +2262,9 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
         </div>
 
         {agreements.agreementsReadable && termRows.length > 0 && <div className="so-filters">
-          <label className="so-search"><span>Find a client</span><input type="search" value={termSearch} placeholder="Search client name…" onChange={(e) => { setTermSearch(e.target.value); setTermPage(0); }} /></label>
-          <label className="so-search"><span>Signature</span><select aria-label="Signature state" value={termStatus} onChange={(e) => { setTermStatus(e.target.value); setTermPage(0); }}><option value="all">Any signature state</option>{Object.entries(SIGNATURE_STATE).filter(([key]) => key !== "none" && key !== "unrecognised").map(([key, value]) => <option key={key} value={key}>{value.label}</option>)}</select></label>
-          <small className="so-filters-note">Searches the latest {termRows.length} loaded records (up to 200).</small>
+          <label className="so-search"><span>Find an agreement</span><input type="search" value={termSearch} placeholder="Client, document or signer…" onChange={(e) => { setTermSearch(e.target.value); setTermPage(0); }} /></label>
+          <label className="so-search"><span>Signature</span><select aria-label="Signature state" value={visibleTermStatus} onChange={(e) => { setTermStatus(e.target.value); setTermPage(0); }}><option value="all">Any signature state</option>{Object.entries(SIGNATURE_STATE).filter(([key]) => key !== "none" || signingsReadable).map(([key, value]) => <option key={key} value={key}>{value.label}</option>)}</select></label>
+          <small className="so-filters-note">Searches {termRows.length} loaded records only. Each source loads up to 200 records.</small>
         </div>}
         {["loading", "resolving"].includes(agreements.phase) ? <p role="status">Loading commercial terms…</p> : agreements.phase === "error" ? (
           <p className="so-absent">
@@ -2315,6 +2317,8 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
                 </div>
               ) : null}
           </div>
+        ) : matchingTerms.length === 0 ? (
+          <p className="so-absent" role="status">No agreements match these filters in the loaded records. Change the search or signature state to see them.</p>
         ) : (
           <div className="so-table" role="table" aria-label="Agreements and terms">
             <div className="so-tr so-th so-tr-5" role="row">

@@ -1,5 +1,27 @@
 # 🧠 The Second Brain — master index & read-first orientation
 
+## EXP04 restarted — Agreements source continuation, 2026-10-21
+
+Owner resumes the same sole E04 lead and all original twelve outcomes, expanding native
+Sales Terms & Agreements to professional creation/preparation/signing/management.
+Main d7f55f217f78a1576b21f65d92c06fb5b1e56ac2 and production metadata grounded;
+#1352/#2367 reused, old E04 agreement drafts preserved for selective current-main
+reconciliation. Current Portal billing explicitly supersedes #2170/#2184 UI; no duplicate
+Portal source. First local discovery repair adds title/signer search and explicit missing/
+unreadable states; final131 source tests and20 source-render frames/9 paths pass.
+Exact-head type/CI, merge/release/readback and authenticated acceptance remain owed.
+No new signing, send, payment, provider activation, legal or algorithm availability claim.
+Full architecture/sequence, EXP09 source contract and ALG01/02/12/13 original-register
+status are in [the existing E04 journey](../delivery/exp04-get-paid-deliver-journey.md)
+and [bounded source evidence](../evidence/ui-delivery/e04-agreement-register-discovery.md).
+Master4.0 shipped row N/A until merge; this is not whole-Experience completion.
+
+Current-main retained-completion continuation selectively reuses #2186/558e65a2a
+and #2175's byte verifier: existing completed/replayed seal must match its actual
+private PDF. Native106 plus5 Portal-wiring tests and three Edge type checks pass;
+release, authenticated recovery and full ALG01/12 acceptance remain proof owed.
+[Exact scope and limitations](../evidence/ui-delivery/e04-retained-completion-reconcile.md).
+
 ## EXP02 catalogue copy/readback checkpoint — 2026-10-20
 
 Nine canonical analytics descriptions#2440 merged

@@ -1,0 +1,437 @@
+{
+  "kind": "SYNTHETIC_ACTUAL_SHARED_RENDERER",
+  "sourceProductCommit": "f7ebd92567ace20b41528db798aa3542b62d40b4",
+  "frames": [
+    {
+      "frame": "1536-closed.jpg",
+      "docWidth": 1536,
+      "execScrollWidth": 1449,
+      "execWidth": 1464,
+      "expanded": "false",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "height": 770,
+      "links": [
+        {
+          "href": "/solo/1234567/command-center/executive",
+          "label": "Open Executive"
+        },
+        {
+          "href": "/solo/1234567/command-center/systems-check",
+          "label": "Open Systems Check"
+        },
+        {
+          "href": "/solo/1234567/command-center/business-game-plan?play=55555555-5555-4555-8555-555555555555",
+          "label": "Open Strategic Play"
+        },
+        {
+          "href": "/solo/1234567/command-center/business-game-plan?play=33333333-3333-4333-8333-333333333333",
+          "label": "Open Strategic Play"
+        },
+        {
+          "href": "/solo/1234567/finance",
+          "label": "Open Finance"
+        },
+        {
+          "href": "/solo/1234567/sales/payments?view=collections",
+          "label": "Open collections"
+        }
+      ],
+      "width": 1536,
+      "sha256": "970216c48e6f2dc11c24901b15752405e6ec3e6952f57fb48d002cf82c228edf",
+      "encodedRaster": {
+        "width": 1535,
+        "height": 770
+      }
+    },
+    {
+      "frame": "1536-open.jpg",
+      "docWidth": 1536,
+      "execScrollWidth": 927,
+      "execWidth": 941.7625122070312,
+      "expanded": "true",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "height": 770,
+      "links": [
+        {
+          "href": "/solo/1234567/command-center/executive",
+          "label": "Open Executive"
+        },
+        {
+          "href": "/solo/1234567/command-center/systems-check",
+          "label": "Open Systems Check"
+        },
+        {
+          "href": "/solo/1234567/command-center/business-game-plan?play=55555555-5555-4555-8555-555555555555",
+          "label": "Open Strategic Play"
+        },
+        {
+          "href": "/solo/1234567/command-center/business-game-plan?play=33333333-3333-4333-8333-333333333333",
+          "label": "Open Strategic Play"
+        },
+        {
+          "href": "/solo/1234567/finance",
+          "label": "Open Finance"
+        },
+        {
+          "href": "/solo/1234567/sales/payments?view=collections",
+          "label": "Open collections"
+        }
+      ],
+      "width": 1536,
+      "sha256": "e7c959c284727260aeb496edf037e19469f8c34938626d583589c79cd117ea73",
+      "encodedRaster": {
+        "width": 1535,
+        "height": 770
+      }
+    },
+    {
+      "frame": "1366-closed.jpg",
+      "docWidth": 1366,
+      "execScrollWidth": 1279,
+      "execWidth": 1294.4000244140625,
+      "expanded": "false",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "height": 768,
+      "links": [
+        {
+          "href": "/solo/1234567/command-center/executive",
+          "label": "Open Executive"
+        },
+        {
+          "href": "/solo/1234567/command-center/systems-check",
+          "label": "Open Systems Check"
+        },
+        {
+          "href": "/solo/1234567/command-center/business-game-plan?play=55555555-5555-4555-8555-555555555555",
+          "label": "Open Strategic Play"
+        },
+        {
+          "href": "/solo/1234567/command-center/business-game-plan?play=33333333-3333-4333-8333-333333333333",
+          "label": "Open Strategic Play"
+        },
+        {
+          "href": "/solo/1234567/finance",
+          "label": "Open Finance"
+        },
+        {
+          "href": "/solo/1234567/sales/payments?view=collections",
+          "label": "Open collections"
+        }
+      ],
+      "width": 1366,
+      "sha256": "e5f990758badd374329168fdd3c33fccac872dd9a369b8e08468d75954e66dc7",
+      "encodedRaster": {
+        "width": 1366,
+        "height": 768
+      }
+    },
+    {
+      "frame": "1366-open.jpg",
+      "docWidth": 1366,
+      "execScrollWidth": 815,
+      "execWidth": 829.8250122070312,
+      "expanded": "true",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "height": 768,
+      "links": [
+        {
+          "href": "/solo/1234567/command-center/executive",
+          "label": "Open Executive"
+        },
+        {
+          "href": "/solo/1234567/command-center/systems-check",
+          "label": "Open Systems Check"
+        },
+        {
+          "href": "/solo/1234567/command-center/business-game-plan?play=55555555-5555-4555-8555-555555555555",
+          "label": "Open Strategic Play"
+        },
+        {
+          "href": "/solo/1234567/command-center/business-game-plan?play=33333333-3333-4333-8333-333333333333",
+          "label": "Open Strategic Play"
+        },
+        {
+          "href": "/solo/1234567/finance",
+          "label": "Open Finance"
+        },
+        {
+          "href": "/solo/1234567/sales/payments?view=collections",
+          "label": "Open collections"
+        }
+      ],
+      "width": 1366,
+      "sha256": "940de41367d14e51994d178d2552ea6d2f25b05bcff9712b80ba42a54df37b47",
+      "encodedRaster": {
+        "width": 1366,
+        "height": 768
+      }
+    },
+    {
+      "frame": "1024-closed.jpg",
+      "docWidth": 1024,
+      "execScrollWidth": 937,
+      "execWidth": 952,
+      "expanded": "false",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "height": 768,
+      "links": [
+        {
+          "href": "/solo/1234567/command-center/executive",
+          "label": "Open Executive"
+        },
+        {
+          "href": "/solo/1234567/command-center/systems-check",
+          "label": "Open Systems Check"
+        },
+        {
+          "href": "/solo/1234567/command-center/business-game-plan?play=55555555-5555-4555-8555-555555555555",
+          "label": "Open Strategic Play"
+        },
+        {
+          "href": "/solo/1234567/command-center/business-game-plan?play=33333333-3333-4333-8333-333333333333",
+          "label": "Open Strategic Play"
+        },
+        {
+          "href": "/solo/1234567/finance",
+          "label": "Open Finance"
+        },
+        {
+          "href": "/solo/1234567/sales/payments?view=collections",
+          "label": "Open collections"
+        }
+      ],
+      "width": 1024,
+      "sha256": "eaafef1c31a4b2d8eefc598659e79494fb24f50b684244bb0a9bad34248fa2d1",
+      "encodedRaster": {
+        "width": 1024,
+        "height": 768
+      }
+    },
+    {
+      "frame": "1024-open.jpg",
+      "docWidth": 1024,
+      "execScrollWidth": 937,
+      "execWidth": 952,
+      "expanded": "true",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "height": 768,
+      "links": [
+        {
+          "href": "/solo/1234567/command-center/executive",
+          "label": "Open Executive"
+        },
+        {
+          "href": "/solo/1234567/command-center/systems-check",
+          "label": "Open Systems Check"
+        },
+        {
+          "href": "/solo/1234567/command-center/business-game-plan?play=55555555-5555-4555-8555-555555555555",
+          "label": "Open Strategic Play"
+        },
+        {
+          "href": "/solo/1234567/command-center/business-game-plan?play=33333333-3333-4333-8333-333333333333",
+          "label": "Open Strategic Play"
+        },
+        {
+          "href": "/solo/1234567/finance",
+          "label": "Open Finance"
+        },
+        {
+          "href": "/solo/1234567/sales/payments?view=collections",
+          "label": "Open collections"
+        }
+      ],
+      "width": 1024,
+      "sha256": "7ec3d12bae3936c920bd5fb0b4b4013bfd2868633bcd5f74156fc9d87b4cca9c",
+      "encodedRaster": {
+        "width": 1024,
+        "height": 768
+      }
+    },
+    {
+      "frame": "900-closed.jpg",
+      "docWidth": 900,
+      "execScrollWidth": 813,
+      "execWidth": 828,
+      "expanded": "false",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "height": 1000,
+      "links": [
+        {
+          "href": "/solo/1234567/command-center/executive",
+          "label": "Open Executive"
+        },
+        {
+          "href": "/solo/1234567/command-center/systems-check",
+          "label": "Open Systems Check"
+        },
+        {
+          "href": "/solo/1234567/command-center/business-game-plan?play=55555555-5555-4555-8555-555555555555",
+          "label": "Open Strategic Play"
+        },
+        {
+          "href": "/solo/1234567/command-center/business-game-plan?play=33333333-3333-4333-8333-333333333333",
+          "label": "Open Strategic Play"
+        },
+        {
+          "href": "/solo/1234567/finance",
+          "label": "Open Finance"
+        },
+        {
+          "href": "/solo/1234567/sales/payments?view=collections",
+          "label": "Open collections"
+        }
+      ],
+      "width": 900,
+      "sha256": "8dac595cabd769fb466023eb06f0a7b38dd1735d4ba332b1a976b833777d5c2d",
+      "encodedRaster": {
+        "width": 900,
+        "height": 1000
+      }
+    },
+    {
+      "frame": "900-open.jpg",
+      "docWidth": 900,
+      "execScrollWidth": 813,
+      "execWidth": 828,
+      "expanded": "true",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "height": 1000,
+      "links": [
+        {
+          "href": "/solo/1234567/command-center/executive",
+          "label": "Open Executive"
+        },
+        {
+          "href": "/solo/1234567/command-center/systems-check",
+          "label": "Open Systems Check"
+        },
+        {
+          "href": "/solo/1234567/command-center/business-game-plan?play=55555555-5555-4555-8555-555555555555",
+          "label": "Open Strategic Play"
+        },
+        {
+          "href": "/solo/1234567/command-center/business-game-plan?play=33333333-3333-4333-8333-333333333333",
+          "label": "Open Strategic Play"
+        },
+        {
+          "href": "/solo/1234567/finance",
+          "label": "Open Finance"
+        },
+        {
+          "href": "/solo/1234567/sales/payments?view=collections",
+          "label": "Open collections"
+        }
+      ],
+      "width": 900,
+      "sha256": "4f37dd361e69c5762668fd5b26fe2c7ddcd61e5a16a07a4f3c5580fa3050470c",
+      "encodedRaster": {
+        "width": 900,
+        "height": 1000
+      }
+    },
+    {
+      "frame": "320-open.jpg",
+      "docWidth": 305,
+      "execScrollWidth": 218,
+      "execWidth": 232.8000030517578,
+      "expanded": "true",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "height": 740,
+      "links": [
+        {
+          "href": "/solo/1234567/command-center/executive",
+          "label": "Open Executive"
+        },
+        {
+          "href": "/solo/1234567/command-center/systems-check",
+          "label": "Open Systems Check"
+        },
+        {
+          "href": "/solo/1234567/command-center/business-game-plan?play=55555555-5555-4555-8555-555555555555",
+          "label": "Open Strategic Play"
+        },
+        {
+          "href": "/solo/1234567/command-center/business-game-plan?play=33333333-3333-4333-8333-333333333333",
+          "label": "Open Strategic Play"
+        },
+        {
+          "href": "/solo/1234567/finance",
+          "label": "Open Finance"
+        },
+        {
+          "href": "/solo/1234567/sales/payments?view=collections",
+          "label": "Open collections"
+        }
+      ],
+      "width": 320,
+      "sha256": "23c4c97ad40038bf2f042b9af6ab0204dde2179edd94b13e7e86a7264f21d1aa",
+      "encodedRaster": {
+        "width": 305,
+        "height": 705
+      }
+    },
+    {
+      "frame": "320-play-focus.jpg",
+      "docWidth": 305,
+      "execScrollWidth": 218,
+      "execWidth": 232.8000030517578,
+      "expanded": "true",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "height": 740,
+      "links": [
+        {
+          "href": "/solo/1234567/command-center/executive",
+          "label": "Open Executive"
+        },
+        {
+          "href": "/solo/1234567/command-center/systems-check",
+          "label": "Open Systems Check"
+        },
+        {
+          "href": "/solo/1234567/command-center/business-game-plan?play=55555555-5555-4555-8555-555555555555",
+          "label": "Open Strategic Play"
+        },
+        {
+          "href": "/solo/1234567/command-center/business-game-plan?play=33333333-3333-4333-8333-333333333333",
+          "label": "Open Strategic Play"
+        },
+        {
+          "href": "/solo/1234567/finance",
+          "label": "Open Finance"
+        },
+        {
+          "href": "/solo/1234567/sales/payments?view=collections",
+          "label": "Open collections"
+        }
+      ],
+      "width": 320,
+      "focusedHref": "/solo/1234567/command-center/business-game-plan?play=55555555-5555-4555-8555-555555555555",
+      "sha256": "506d4eea9212db9719648c010c9e9061b90773a66e6b2121f331883f716c444e",
+      "encodedRaster": {
+        "width": 305,
+        "height": 705
+      }
+    }
+  ],
+  "interaction": {
+    "keyboardRiskPlay": "PASS: original resolver opens the risk-bearing synthetic Play route",
+    "nativeBack": "PASS: original reference order retained",
+    "reload": "PASS: original fold on reload; reopen displays same source-reference JSON, not canonical Chat turn persistence",
+    "operator": "PASS: null account produces zero links; synthetic, not authenticated role proof"
+  },
+  "limits": [
+    "Display-only source reference port; full canonical target validation covered separately by adapter tests.",
+    "No backend/model/provider/authorization/action calls.",
+    "Original shared labels are generic and duplicate for two Plays; contextual refinement remains separate.",
+    "Native CSS viewport is not exact encoded-raster proof.",
+    "Initial restricted-shell connection, CSS-root and server-only-import errors retained locally; final renderer uses original PostCSS config and offline actual pure-consumer reference JSON.",
+    "Initial post-reload hidden-link focus attempt found no visible match; reopening original Chat resolves it."
+  ],
+  "viewportReset": true,
+  "notes": [
+    "Closed panels retain their hidden DOM references; expanded is explicitly measured separately.",
+    "Document width may exclude the native scrollbar; no horizontal overflow was observed.",
+    "Original shared link labels and navigation are unchanged; no new product layout is claimed."
+  ]
+}

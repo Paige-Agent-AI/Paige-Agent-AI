@@ -844,7 +844,7 @@ Ordinary authorized SOLO Chat→Capabilities visibly read all9 corrected entries
 full reload returned to Chat, and explicit Capabilities return re-read the same9
 descriptions/Listed/Unverified access. No auto-restoring-tab claim. Public released
 descendant `8edf43080c767bb4c2334b4864de0214608262ac-mvhddu3e` observed.
-Only copy/read/reload is accepted; runtime availability, analytics algorithms,
+Only copy/read/reload is verified; runtime availability, analytics algorithms,
 filed reviews, Live/actions and full19/9/founder acceptance remain owed.
 [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2440#issuecomment-6304916876),
 [bounded customer QA](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2440#issuecomment-6305054269);

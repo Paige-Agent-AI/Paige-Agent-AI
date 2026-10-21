@@ -54,7 +54,7 @@ export function OperationsOverview({ tenantId, plans, items, members, crmTasks =
   return <section className="ops-views ops-operating-desk" aria-label="Overview">
     <header className="ops-desk-heading"><div><h1 tabIndex={-1}>Your operating week</h1><p>Current commitments, responsible people and the next decisions.</p></div>
       <div className="ops-desk-actions"><WeeklyResponsibilityEntry />
-        {onReviewWithPaige && <button type="button" className="ops-desk-primary" onClick={onReviewWithPaige}><Sparkles size={16} aria-hidden="true" />Plan with PAIGE</button>}
+        {onReviewWithPaige && <button type="button" className="ops-desk-primary" onClick={onReviewWithPaige}><Sparkles size={16} aria-hidden="true" />Plan with ZION</button>}
       </div>
     </header>
     {work.active.length > 0 && <p className="ops-desk-read-scope">{work.active.length} active {work.active.length === 1 ? "commitment" : "commitments"} · {work.inProgress.length} in progress · {work.reminders.length} {work.reminders.length === 1 ? "reminder" : "reminders"} in the sources shown</p>}
@@ -75,7 +75,7 @@ export function OperationsOverview({ tenantId, plans, items, members, crmTasks =
         ? 'Native Work is still being read. Recorded findings are a separate source.'
         : 'Current Work could not be read. Retry a source above to inspect its records.'}</p>
         : !hasNativeWork ? <section className="ops-desk-first-use"><h2>Start with one real commitment</h2>
-          <p>What needs to happen next, who should own it, and when does it matter? Prepare it with PAIGE or open Work to record the next step.</p>
+          <p>What needs to happen next, who should own it, and when does it matter? Prepare it with ZION or open Work to record the next step.</p>
           <div>{navigate("Open Work", "Work")}{navigate("Plan a project", "Projects")}</div>
           <p className="ops-view-muted">Only work available in the current sources appears here.</p>
         </section> : <><section><div className="ops-desk-section-heading"><h2>Work in motion</h2>{navigate("All work", "Work")}</div>
@@ -99,8 +99,8 @@ export function OperationsOverview({ tenantId, plans, items, members, crmTasks =
         <p>{work.timingToConfirm.length} active {work.timingToConfirm.length === 1 ? "commitment needs" : "commitments need"} a confirmed due date. Start with the original work before choosing when it belongs.</p>
         <button type="button" className="ops-desk-inspect" disabled={!canInspect(timing)} onClick={() => inspect(timing)}>Review timing: {timing.title}<ArrowUpRight size={15} aria-hidden="true" /></button>
         {inspectGroup("Review all missing dates", "timing", work.timingToConfirm.length)}
-        {onReviewWorkWithPaige && <button type="button" className="ops-view-text-action" onClick={() => onReviewWorkWithPaige(timing.native)}>Prepare a review with PAIGE</button>}
-      </> : <p className="ops-view-muted">Review the current commitments with PAIGE before preparing changes. Missing business context and unavailable sources still need checking.</p>}</section>
+        {onReviewWorkWithPaige && <button type="button" className="ops-view-text-action" onClick={() => onReviewWorkWithPaige(timing.native)}>Prepare a review with ZION</button>}
+      </> : <p className="ops-view-muted">Review the current commitments with ZION before preparing changes. Missing business context and unavailable sources still need checking.</p>}</section>
     </aside>}</div>
   </section>;
 }

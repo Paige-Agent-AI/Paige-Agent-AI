@@ -7,10 +7,13 @@
 // WHAT IT DOES, AND DOES NOT. It PREFILLS the composer; it never sends. The owner reads the question
 // and presses send, so authority stays with the person (§16 confirm lane) and anything a surface
 // built into the text is visible before it reaches the model. A draft the person already typed is
-// kept: the handed-off question is appended after it.
+// kept: ordinary questions append; an explicit specialist invitation can retain
+// its leading addressee without dropping any typed work.
 //
 // THE PANEL MAY NOT BE MOUNTED YET. Opening PAIGE can mount the chat after the event fires, so the
 // question waits here until a composer takes it; a mounted composer is also told immediately.
+
+import { detectVpAddress } from "../../supabase/functions/_shared/paige-context/vp-address";
 
 const EVENT = "paige:prefill";
 const MAX = 4000;
@@ -40,9 +43,18 @@ export function takePendingPaigePrompt(): string | null {
   return text;
 }
 
-/** How a handed-off question joins whatever is already in the composer. */
-export function mergeIntoDraft(current: string, prompt: string): string {
-  return current.trim() ? `${current.replace(/\s+$/, "")}\n\n${prompt}` : prompt;
+/** Default/recovery merges remain append-only. An explicit surface invitation may
+ * keep its canonical specialist address leading, without discarding typed work.
+ * Naming a specialist changes presentation, never tools or execution authority. */
+export function mergeIntoDraft(current: string, prompt: string, options?: { preserveAddressee?: boolean }): string {
+  if (!current.trim()) return prompt;
+  const addressed = options?.preserveAddressee ? detectVpAddress(prompt) : null;
+  if (!addressed) return `${current.replace(/\s+$/, "")}\n\n${prompt}`;
+  const currentAddress = detectVpAddress(current);
+  const same = currentAddress?.vp.slug === addressed.vp.slug;
+  const original = current.replace(/\s+$/, "");
+  if (same && addressed.rest && (currentAddress?.rest === addressed.rest || original.endsWith(`\n\n${addressed.rest}`))) return original;
+  return `${same ? original : `${addressed.vp.name}, ${original}`}${addressed.rest ? `\n\n${addressed.rest}` : ""}`;
 }
 
 /**

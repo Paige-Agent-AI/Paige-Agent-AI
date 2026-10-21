@@ -166,6 +166,15 @@ describe("PaigeAIChat ComposerScopeState integration", () => {
     expect(textarea().disabled).toBe(false);
   };
 
+  it("keeps a contextual ZION invitation leading in the real composer without sending or losing typed work", async () => {
+    await render(); await waitForWritable(); await type("Keep my delivery note.");
+    await act(async () => { handOffPaigePrompt("ZION, review this week's work."); await settle(); });
+    expect(textarea().value).toBe("ZION, Keep my delivery note.\n\nreview this week's work.");
+    expect(host.querySelectorAll("textarea")).toHaveLength(1);
+    expect(harness.ensureThread).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
   it("ignores the pending status gate after unmount and browser teardown", async () => {
     let resolveSession!: (value: Awaited<ReturnType<typeof supabase.auth.getSession>>) => void;
     const pendingSession = new Promise<Awaited<ReturnType<typeof supabase.auth.getSession>>>(resolve => { resolveSession = resolve; });

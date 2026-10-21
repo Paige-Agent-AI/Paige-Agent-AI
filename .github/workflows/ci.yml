@@ -866,6 +866,8 @@ jobs:
           deno test --allow-import --node-modules-dir=none --deny-net --deny-env --deny-run --deny-ffi --deny-sys \
             supabase/functions/_shared/agreements/token.test.ts \
             supabase/functions/_shared/agreements/document.test.ts \
+            supabase/functions/_shared/agreements/retained-document.test.ts \
+            supabase/functions/_shared/agreements/seal-readback.test.ts \
             supabase/functions/_shared/agreements/signing-guard.test.ts \
             supabase/functions/_shared/agreements/portal-door.test.ts
           # E09 Slice A: agreement-document's third (customer portal) door is mounted before the other

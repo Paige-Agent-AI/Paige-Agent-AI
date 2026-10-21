@@ -637,6 +637,8 @@ jobs:
       # staff predicates, service-only delegation and no contactless self grant.
       - run: supabase test db supabase/tests/e09_skill_run_readback.sql
         if: ${{ !cancelled() }}
+      - run: node --test scripts/proof/mcp-skill-run-read.mjs
+        if: ${{ !cancelled() }}
       # E09 C1: announcements through the one campaign system — the `portal` audience (open access only,
       # the same predicate as the customer's own resolver), rule keys checked on every draft write and at
       # approval, and Updates consent for promotions/announcements to portal-linked contacts at plan AND send.

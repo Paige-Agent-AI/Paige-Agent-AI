@@ -826,6 +826,35 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-21 — EXP04 truthful historical signing economics.**
+PR [#2493](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2493), reviewed
+`ed2964b5024f672492b5db6deac38ff95cb1929b`, merged
+`ec8d882d9d7b6044197c82def22ffdc221924bcd`; actual tree
+`d3f1536d0bc6989995995f384e1459eadf5688e6` exactly reproduces current-main
+composition, preserving E09 and EXP05 migrations. Native legacy signing context
+leaves amount/currency/summary SQL NULL without an immutable accepted snapshot,
+instead of attributing a mutable current commercial header to a frozen document.
+Original document, token/view lifecycle,12-column result, pgcrypto qualification,
+search_path and caller ACL are preserved; no backfill or agreement rewrite.
+AUTHOR-REVIEW / LOWER ASSURANCE6323356401/6323913840. All13 exact-head checks,
+including actual Supabase Preview, and both Vercel statuses SUCCESS. Native27-case
+PostgreSQL16 source proof/replay2 remains separate from customer acceptance.
+Normal deploy-migrations39656361224/job119417939240 SUCCESS:13090000 persisted;
+normal db-live certification advanced to ec8d at18:52UTC. Direct production
+function body MD5 `b8a2a6c1d9b93153a5796b54fd67a92c` exactly matches the
+migration; original result/config/ACL confirmed. Web
+`dpl_3egWw8xExRRVE2U2XRARNMCgotNN` READY at exact ec8d/main. Edge changes
+NOT_APPLICABLE. [Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2493#issuecomment-6324039048),
+[source evidence](evidence/ui-delivery/e04-historical-signing-context-reconcile.md).
+Functional: bounded correction released/read back. Visual: no frontend change.
+Experiential: full agreement/signing/payment/delivery integration remains incomplete.
+Acceptance: actual recipient/owner/client signing recovery, accepted/effective
+economics, legal/provider review, ALG01/02/12/13 and all O1–O12/founder evaluation
+remain PROOF OWED. No real signing, send, payment or activation used for this proof.
+Production/internal integrity patch; no customer version or announcement. Recovery
+is a reviewed forward correction preserving originals. This factual post-merge
+closeout does not require recursive logging.
+
 **2026-10-21 — EXP04 retained agreement completion verification.**
 PR [#2487](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2487), reviewed
 `82e33f96c9fbac525db0f7b95151cc63b46095de`, merged
@@ -1039,6 +1068,29 @@ or verified algorithm claim. Recovery is a reviewed forward correction retaining
 v1 compatibility and durable records. [Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2475#issuecomment-6318637474),
 [native contract](delivery/e09-customer-knowledge-retrieval.md).
 
+**2026-10-21 17:35 UTC — EXP02 Banking receiver, trusted Marketing destination and visible Chat handoff.**
+
+| Delivery | Verified source/release | Customer proof boundary and recovery |
+| --- | --- | --- |
+| [#2483](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2483): reveal the existing unsent Executive question in Chat | Reviewed `a8776a8122e3f3f4e32164f1bbd3eab22cd4ba8a`; merged `a5a30f5d7c1bba238657001fa2fbadcdb39b72a4`, exact tree `6c43f083d1c80338625cbeb3fee3e4e2513d28f2`. AUTHOR-REVIEW / LOWER ASSURANCE5603150345; six workflows/10 applicable checks and2Vercel contexts PASS, Preview N/A. Exact webdpl_F1LgD67G5iM6xYWRZzuAjmg2irMW READY; containing950d1dac web/public verified below. | Actual authorized ordinary owner: Capabilities → monthly Ask VERA reveals the correct UNSENT draft in the same Chat; all8 saved message identities remain unchanged. Full reload retains draft/messages, then initial empty draft restored through normal UI. Finding212ec981 is bounded PASS/CLOSED in ANT-52 e07a8907-00fc-4c20-b6c2-716c40ca1f91. No Send/model call or business effect. Edge/migrations N/A. [Customer receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2483#issuecomment-6322327455). |
+| [#2481](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2481): closed native Marketing destination foundation | Reviewed `d68944dd0a0135bc49be891e3146162f41f998ae`; merged `b4532809cb2b1c65e1e0a4f7027cf86508e91868`, exact reviewed current-main union `2d6fb8ac7f728e54525fad2f398c3a242bb9325e`. AUTHOR-REVIEW / LOWER ASSURANCE5603161969/5603490334; six workflows/all11 checks including Preview and2statuses PASS. Strict Edge39642473836/job119370631642 verified all17 selected source/configurations; certified edge-live=b453. Direct Business Review v56/JWT=true package:31/31 source files byte-identical. | Earlier39642444165 changed-during-readback failure retained; no hash/JWT waiver or manual retry. Artifact12366086757/digestc93bad0d778cbd41717ef7baedb164430a09204927e9d8a9bddec600179e31ff is recorded metadata, not independently downloaded. No active Marketing evidence producer, reference issuance or catalogue/algorithm activation. Actual future consumer/native/reload/role/cohort proof remains owed. Six-link cap and current-account resolver preserved. Migrations N/A. [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2481#issuecomment-6322265088). |
+| [#2414](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2414): original Banking & Cash canonical source receiver | Reviewed `7796d9347f0e5f4cd422589afe87efe8359aabd3`; merged `950d1dac0f355050eb46e6ce5f39850eefc59620`, exact reviewed union `744715d84f25e4205692c957fc14b2964b7fffae`. AUTHOR-REVIEW / LOWER ASSURANCE5603148879/5603568732; six workflows/10 applicable checks and2statuses PASS, Preview N/A. Exact webdpl_uzk6FuLF3foxBVRubz1ykJu25xAq READY; public `950d1dac0f355050eb46e6ce5f39850eefc59620-mvidsevg`, customerUpdate:null. Actual served SoloEntry-D9Ce-T4B.js carries the source heading/connections/retry and existing controlled Chat bindings. | Actual authorized no-source class PASS: saved Finance link → Banking → unavailable-not-zero disclosure → Refresh loading/finished → existing Settings/Integrations → Back → full reload. Original conversation and empty composer preserved; no provider setup, fixture or business effect. ANT-52 f9b5b986-e844-4e18-ae4c-837f3a299365. Populated company/source/currency/provider, role/isolation/cohort, zoom/Live/full19/founder proof remain owed. Original native synthetic fonts/narrow fixes and exact-raster limits retained. Edge/migrations N/A for this receiver. [Customer receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2414#issuecomment-6322394463). |
+| [#2489](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2489): original Marketing intake adapter foundation, unmounted | Reviewed `f5e50c1c80d2fa3881506a79c795fa80a94b5e86`, merged `51af8283191e2cf913ba35446de90f33185101c0`, actual tree `c64087d6dbc4e8277c15c19f13fda9ea544d241d`. Concurrent Master-only#2473/fc2f4324 adds136 documentation lines to reviewed unionf1ddaddef6376cfe28f781236cf81271ac186b54; runtime/source is exact. AUTHOR-REVIEW / LOWER ASSURANCE5603949418/5604193835/5604318193, six exact-head workflows/all11 checks including Preview/two Vercel contexts SUCCESS. Exact webdpl_3FTZEvwa12mthXeqkrMy5LmWpK7X READY and public51af8283191e2cf913ba35446de90f33185101c0-mvifz54p/customerUpdate:null verified. | Original six Marketing1.0.0 internal issuer keys, count/privacy/zero/partial/abort/scope semantics;10 adapter tests, lint/type PASS. Unmounted source does not activate a customer read, public metric tool, provider, registry or action. Normal Edge39652429685/job119403942681 selects zero functions; deployment/source certification/tag steps are SKIPPED as N/A, not PASS. Migrations N/A. Active consumer#2494, exact-head/release/native/customer/role/cohort/Live/full19 and founder proof remain owed. [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2489#issuecomment-6323545067). |
+
+These are internal production increments, without a customer version/announcement or new
+provider, permissions, execution or financial ledger. Correction/revert preserves canonical
+records. All19 outcomes/nine analytics and the single founder acceptance remain mandatory.
+
+**2026-10-21 — EXP02 original Marketing metric evidence and verified Chat destinations.**
+
+| Delivery | Verified source/release | Proof boundary and recovery |
+| --- | --- | --- |
+| [#2471](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2471): original Marketing1.0.0 metric evidence consumer for Strategic Targets | Reviewed2703bc0c626e54dd8a66ad21dc10f23d59a337a1, merged`6f07299a6c2f4878c42f61fe377067f253de8f0a`; exact tree1ce3614bfdec88eae8951fce6222e21ba120bf07. All11 checks/fresh Preview and2statuses SUCCESS; AUTHOR-REVIEW / LOWER ASSURANCE6317629126. Webdpl_3t9YBYBt1QUjiv8q452XDb5Tasuk READY/exact and public6f07299a-mvi5zxbg verified. Normal strict Edge39610734384/job119258593743 selected4 source/JWT configurations PASS; certified edge-live6f. Direct source reader/key comparison byte-exact. | Sole issuer/Finance/Marketing records and original33-key public contract preserved.202 owning cases and70 authority controls, source type/lint PASS. Migration N/A. Artifact12348709529/SHA256b0b9d088cac6d376b5f268558459a1de511729f92ff77f5fc25573645d1c2b05 metadata retained, not independently downloaded. Actual Marketing targets/issuer-to-Executive/reload/role/isolation/Live proof remains owed. No provider, metric producer, algorithm or capability activation. [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2471#issuecomment-6317755542). |
+| [#2477](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2477): verified workspace destinations in existing Chat Markdown | Reviewed`7da6827ded26fe09161b657cfe9ff0210cb1a7fa`, merged`fa7ff6cfea0121597db3b6bc1e15675d0ba0d990`; final tree755787185d697c14ebaf451672daa5320b395328 matches reviewed current-main composition. AUTHOR-REVIEW / LOWER ASSURANCE5601601873, six exact-head workflows/10 applicable checks and2statuses SUCCESS; Preview N/A. Webdpl_FTe9T4Qy7XEST45o3xvXcArBde18 READY/exact; public containing successor`2b2a0b61b3043f77fafa062629da4661691d6d4e-mvi8obs6` verified. | Existing semantic-reference resolver/host policy is sole app-destination authority; obsolete model app links become text, external citations retain policy.200 owning/178 adjacent cases overlap and are not summed; type0new, lint PASS. At15:49UTC original authorized Owner workspace and exact saved reply reverified: obsolete anchor absent/prose retained, native Conversations opens the same workspace's owning page, reload/Executive return/Chat reopen preserve both answers and references. This bounded production defect regression is PASS, superseding the earlier custody hold (ANT-52 comment57b35961-3800-4d64-985e-ac74ab7feb4a); no new prompt, business effect or transcript rewrite. All nine catalogue labels re-read unchanged. Nine supporting images are original JPEG bytes despite former .png names; nominal1536 frame is1535px, exact native/full-shell/cohort/Live/full-Experience proof remains UNVERIFIED. No resampling or founder-acceptance inference. Edge/migrations N/A; no action, registry, provider or algorithm activation. [Merge receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2477#issuecomment-6318993543). |
+
+Both are internal-only production prerequisites, with no customer version or announcement.
+A bounded reviewed correction/revert preserves canonical records and protected action holds.
+All19 outcomes/nine analytics/Live/cohort and single founder acceptance remain required.
 **2026-10-21 — EXP02 canonical Conversations read-reference consumer.**
 
 PR [#2470](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2470), reviewed
@@ -5770,6 +5822,30 @@ customer version or availability claim. Native releases2475/2476 preserved;
 consumer2404, teaching controls and full EXP09 authenticated acceptance remain
 separately gated. [Original repair evidence](delivery/e09-production-acl-baseline-repair.md).
 
+
+**2026-10-21 — EXP09 CURA relevant authorized Knowledge consumer.**
+PR [#2404](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2404), reviewed
+`a9211fb4de258d0f2891c2748a69eac75a8d9c5c`, merged
+`52d45822a54950c84c8e80fbb1aa06b7748fcf14`. The original customer Chat now selects
+relevant passages only from currently authorized Knowledge after native customer,
+private-thread and protocol admission. Source/manifest/entitlement/withdrawal
+checks and authorized recency fallback remain. Known accepted/replayed intents
+avoid query embedding; no global simultaneous at-most-once reservation is claimed.
+NON-AUTHOR5602292026;11 exact-head checks/Preview and two Vercel statuses passed.
+Consumer19, context73, scope538 and native90/53 tests passed at their stated
+boundaries. Normal production Edge run39633553865/job119337861469 succeeded,
+including selected-source verification. Direct provider read: Chat489 ACTIVE,
+JWTtrue; exact served handler c69403b2cdacd14e76f1966b0b0f087eb1dc8ba61e86e34973070fdc2bc56c20,
+context0aca33229b6d6180c13ea3cf2fff9da8f65edb69a854f43c3229d11049534cd2
+and unchanged persona60da934797c9953c1a8062bc89689139d10f8f3328dc82b45e2ebf1f3df2356b
+match reviewed source. Native50000 was separately verified in2475; no new migration
+or frontend source in this consumer. No new share, identity/privilege, provider
+activation, live query, external send or payment was performed. Internal production
+increment, no customer version/announcement; original query-metering gap remains.
+Actual ordinary customer answer quality, isolation/private reload, all seven
+pillars/algorithm/capability proof and founder acceptance remain PROOF OWED.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2404#issuecomment-6320887890).
+
 **2026-10-21 — EXP09 original CURA Knowledge publishing inventory.**
 PR [#2476](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2476), reviewed
 `d40bbfa1352a22e7ac860c47173837c1d034ed97` → main
@@ -5787,6 +5863,24 @@ customer release name/announcement or verified algorithm. No effectful provider,
 Chat/Live or payment activation. Recovery: reviewed forward correction preserving
 original records/native compatibility. [Readback receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2476#issuecomment-6319079327);
 [native contract](delivery/e09-cura-knowledge-inventory.md).
+
+
+**2026-10-21 — EXP09 original skill-result native authority.**
+PR [#2482](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2482), reviewed
+`a099e3334018b627efb52bbc95d210725221f59a` → main
+`2a799ca84cfb75fa99f13a75a42b2bc21658ba68`. Distinct final source/integration
+5603897793 and current-main compatibility5604151389 CLEAR; all13 exact-head
+checks and both Vercel statuses SUCCESS. Hosted native45 actual-role assertions
+PASS job119384056084; fullverify119384392339 PASS. Normal migration deployment
+run39650492654/job119397402430 SUCCESS; production records20271113070000 and
+exact reader bodyMD5 9cabd15f19630ea581a9ccf0b33d2223. INVOKER/STABLE/empty
+search_path; postgres/service_role execute only, anon/authenticated denied. All
+five original authority-helper fingerprints unchanged. No RLS/table/writer or
+execution/activation change. Internal production/native prerequisite; web/Edge
+NOT_APPLICABLE, no customer version/announcement or verified new algorithm.
+Separately gated MCP consumer2484 and authenticated capability/customer/full
+Experience proof remain PROOF OWED; native source cannot establish those claims.
+Recovery: reviewed additive forward correction preserving original records.
 
 ## 5. Current focus + known gaps
 

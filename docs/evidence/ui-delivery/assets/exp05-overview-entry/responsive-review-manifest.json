@@ -1,0 +1,139 @@
+{
+  "schema": 1,
+  "sourceHead": "74d475cd4255e66e1c2cb76e087eb341b6a1c87f",
+  "productInputs": 296,
+  "sourceTransforms": 0,
+  "bundleSha256": "106994cf09e13ffb0f2e631f93a3ba6147508383712ceb7ee8d6daae22a73f10",
+  "boundary": "Offline actual source; synthetic data/Auth/composer ports; no authenticated, provider or production proof.",
+  "captureMode": "Original viewport captures, unchanged bytes; native internally scrolling content. Initial unsettled captures and screenshot/mouse transport timeouts excluded from final matrix. Route and both aria-current selections checked at every measured CSS size via native keyboard transition.",
+  "captures": [
+    {
+      "name": "overview-entry-1024-closed.jpg",
+      "format": "JPEG",
+      "cssViewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "raster": {
+        "width": 1024,
+        "height": 768
+      },
+      "rasterNote": "Exact dimensions",
+      "sha256": "39c771547c831b08b081f94ffab1acb8abad7a6547ae39bb9ec52b8408f09472",
+      "dom": "overview-entry-1024-closed.json",
+      "unmodified": true
+    },
+    {
+      "name": "overview-entry-1024-open.jpg",
+      "format": "JPEG",
+      "cssViewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "raster": {
+        "width": 1024,
+        "height": 768
+      },
+      "rasterNote": "Exact dimensions",
+      "sha256": "7da0e2a2966a516a6936ce70a24a33812f0b314ad91a81089e1f97ef939de11c",
+      "dom": "overview-entry-1024-open.json",
+      "unmodified": true
+    },
+    {
+      "name": "overview-entry-1366-closed.jpg",
+      "format": "JPEG",
+      "cssViewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "raster": {
+        "width": 1366,
+        "height": 768
+      },
+      "rasterNote": "Exact dimensions",
+      "sha256": "2294c2f967ac13f7b2476b331d9c84a6ddced321d3e901cb65ae95bd988e70fa",
+      "dom": "overview-entry-1366-closed.json",
+      "unmodified": true
+    },
+    {
+      "name": "overview-entry-1366-open.jpg",
+      "format": "JPEG",
+      "cssViewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "raster": {
+        "width": 1366,
+        "height": 768
+      },
+      "rasterNote": "Exact dimensions",
+      "sha256": "a9d56b63bd63189d2f78fdfe6d76d9a779f07225ded3b3591ac0534e010195bc",
+      "dom": "overview-entry-1366-open.json",
+      "unmodified": true
+    },
+    {
+      "name": "overview-entry-1536-closed.jpg",
+      "format": "JPEG",
+      "cssViewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "raster": {
+        "width": 1535,
+        "height": 770
+      },
+      "rasterNote": "Browser capture is one raster pixel narrower than measured CSS viewport; original bytes preserved, no resizing or padding",
+      "sha256": "2bbd68c89180ba209809bd115c01a66b45f6ff98b78ba6445fedf4326a8908e6",
+      "dom": "overview-entry-1536-closed.json",
+      "unmodified": true
+    },
+    {
+      "name": "overview-entry-1536-open.jpg",
+      "format": "JPEG",
+      "cssViewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "raster": {
+        "width": 1535,
+        "height": 770
+      },
+      "rasterNote": "Browser capture is one raster pixel narrower than measured CSS viewport; original bytes preserved, no resizing or padding",
+      "sha256": "f04ef79c17a17ccfc10f354a6657cfd6a32d109fb44c0000ab0f60f47a004684",
+      "dom": "overview-entry-1536-open.json",
+      "unmodified": true
+    },
+    {
+      "name": "overview-entry-900-closed.jpg",
+      "format": "JPEG",
+      "cssViewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "raster": {
+        "width": 900,
+        "height": 1000
+      },
+      "rasterNote": "Exact dimensions",
+      "sha256": "d5dfb851dc0d23b16a723c4b9e3fe01ff5048b7a142fbeba4d25c1bd850f886f",
+      "dom": "overview-entry-900-closed.json",
+      "unmodified": true
+    },
+    {
+      "name": "overview-entry-900-open.jpg",
+      "format": "JPEG",
+      "cssViewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "raster": {
+        "width": 900,
+        "height": 1000
+      },
+      "rasterNote": "Exact dimensions",
+      "sha256": "15541d5ef0d3a8a493542a5e2d9f6b65b1fe386f07c0e117a089924a94e46cc8",
+      "dom": "overview-entry-900-open.json",
+      "unmodified": true
+    }
+  ]
+}

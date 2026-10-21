@@ -12,3 +12,11 @@ export const BUSINESS_METRIC_KEYS = [
   'sales.invoices.issued_amount', 'sales.receivables.outstanding_current', 'sales.receivables.overdue_current',
   'sales.cash.recorded_received', 'sales.payments.posted_net_allocations',
 ] as const;
+
+/** Existing originating Marketing1.0.0 producer vocabulary; internal evidence only. */
+export const MARKETING_METRIC_KEYS = [
+  'marketing.leads.received', 'marketing.leads.daily', 'marketing.leads.by_utm_source',
+  'marketing.leads.by_campaign_tag', 'marketing.leads.converted_to_opportunity',
+  'marketing.capture_points.published_current', 'marketing.forms.unrouted_current',
+  'marketing.submissions.failed_current', 'marketing.email.sent', 'marketing.email.opened', 'marketing.email.clicked',
+] as const;

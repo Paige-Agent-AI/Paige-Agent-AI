@@ -78,6 +78,30 @@ describe('one shared Game Plan review', () => {
     expect(projection).not.toContain(tenant); expect(projection).not.toContain('aneb_v1_');
     expect(projection).toContain('not execution proof');
   });
+  it('uses the existing Marketing issuer for Play actuals without widening public Chat admission', async () => {
+    const h = harness(), key = 'marketing.leads.received';
+    for (const row of h.review.targets) row.target.metric = { ...row.target.metric, key, semantics: 'event_timestamp_cohort' };
+    const original = h.caller.rpc;
+    h.caller.rpc = async (name, input) => {
+      const reply = await original(name, input);
+      if (/^(issue_analytics_evidence_bundle|resolve_analytics_evidence_reference)$/.test(name) && reply.data) {
+        const value = reply.data as MetricResult;
+        return { ...reply, data: { ...value, owner_department: 'marketing', source_refs: ['public.growth_form_submissions'],
+          range: { ...value.range, semantics: 'event_timestamp_cohort' } } };
+      }
+      return reply;
+    };
+    const snapshot = await h.compose(), projection = projectOperatingSnapshot(snapshot);
+    expect(snapshot.domains.game_plan.data?.mission_targets?.map(row => row.observation)).toEqual([
+      expect.objectContaining({ state: 'available', actual: '12', variance: '2', attainment: 'met' }),
+      expect.objectContaining({ state: 'available', actual: '12', variance: '2', attainment: 'met' }),
+    ]);
+    expect(projection).toContain('Actual "12"; variance "2"');
+    expect(projection).not.toContain(tenant); expect(projection).not.toContain('aneb_v1_');
+    const beforePublicRead = h.calls.length;
+    expect((await readBusinessMetric(h.caller, { tenantId: tenant }, { metric_key: key }, () => now)).status).toBe('needs_input');
+    expect(h.calls).toHaveLength(beforePublicRead);
+  });
   it('retains a partial actual while withholding variance and attainment', async () => {
     const h = harness(); h.partial();
     const snapshot = await h.compose();

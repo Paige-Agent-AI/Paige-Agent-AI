@@ -13,7 +13,7 @@ RENDERED_EVIDENCE: PASS: native Chrome packet docs/evidence/e2-catalogue-native-
 BEHAVIORAL_EVIDENCE: PASS: native arrow-key Helpers/Capabilities return and visible focus; actual adapter projection/tier-denial and subject/workspace remount controls. Retry callback is covered by the existing rendered test; synthetic transport cannot establish real server recovery.
 AUTHENTICATED_RUNTIME: UNVERIFIED: authorized ordinary SOLO session exists; candidate is unreleased and needs deployed panel readback.
 KEYBOARD_FOCUS: PASS: native ArrowLeft/ArrowRight returns to Capabilities; focused tab has visible ring;47px tab height retained. Real loading/error recovery remains separate from synthetic inputs.
-ZOOM_REFLOW: PARTIAL:320/390 and narrow desktop-panel native reflow has no row/document overflow; actual browser zoom remains UNVERIFIED.
+ZOOM_REFLOW: UNVERIFIED:320/390 and narrow desktop-panel native reflow has no row/document overflow; actual browser zoom remains owed and is not inferred from viewport emulation.
 REDUCED_MOTION: PASS: actual native reduced-motion preference true in all required cells; no animation added and incumbent reduction rules retained.
 STATE_COVERAGE: PASS: declared Limited/Coming Soon/Unverified; malformed/inactive fallback; native loading/error/empty and two synthetic scopes. Full account-specific permission/provider availability remains owed.
 TRUTHFUL_STATE_LABELS: PASS: coverage is not permission; metadata cannot promote Live or invent a provider connection.

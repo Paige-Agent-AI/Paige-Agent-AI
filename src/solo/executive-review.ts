@@ -51,7 +51,7 @@ export function formatReviewInstant(instant: string, timezone: string, withTime 
 
 export function reviewGapNote(reason?: string): string {
   if (reason?.replace(/^adapter:/, '').startsWith('finance_')) return 'Financial evidence could not be verified for this review. Inspect its sources in Finance, then refresh.';
-  if (reason === "no_adapter") return "This source is not connected to the business review yet.";
+  if (reason === "no_adapter" || reason?.startsWith("no_adapter:")) return "This area is not included in this business review yet.";
   if (reason === "not_connected") return "Not connected. No figures are available from this source.";
   if (reason === "scope_changed") return "The workspace changed during the read. Refresh to read the active workspace.";
   if (reason === "forbidden" || reason === "authorization_denied") return "This read was not authorized for the current workspace.";

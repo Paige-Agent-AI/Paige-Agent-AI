@@ -101,4 +101,84 @@ DO $$ BEGIN
 END $$;
 RESET ROLE;
 \echo 'PASS: read-only catalogue permission unchanged before and after migration'
+-- The separate compatible public-coverage producer preserves registry authority.
+TRUNCATE public.paige_skills;
+INSERT INTO public.paige_skills SELECT * FROM catalogue_after;
+UPDATE public.paige_skills SET metadata = '{"unrelated":"preserve","providerReady":false}';
+CREATE TEMP TABLE coverage_before AS SELECT * FROM public.paige_skills;
+\ir ../migrations/20271113030000_e2_analytics_catalogue_coverage.sql
+DO $$ BEGIN
+  IF (SELECT count(*) FROM public.paige_skills WHERE metadata->'catalogue_coverage' =
+      jsonb_build_object('version',1,'state', CASE
+        WHEN slug IN ('ad_spend_efficiency','churn_signal_detection','cohort_analysis','engagement_read') THEN 'coming_soon'
+        WHEN slug IN ('conversion_funnel_diagnosis','revenue_trend_read','weekly_business_review') THEN 'limited'
+        ELSE 'unverified' END)) <> 9 THEN
+    RAISE EXCEPTION 'Expected all nine exact declared-coverage states';
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.paige_skills s JOIN coverage_before b USING (slug)
+      WHERE (to_jsonb(s) - 'metadata' - 'updated_at') IS DISTINCT FROM (to_jsonb(b) - 'metadata' - 'updated_at')
+         OR s.metadata - 'catalogue_coverage' IS DISTINCT FROM b.metadata) THEN
+    RAISE EXCEPTION 'Coverage changed identity, execution, description or unrelated metadata';
+  END IF;
+END $$;
+\echo 'PASS: nine exact public coverage states; unrelated metadata and authority fields preserved'
+CREATE TEMP TABLE coverage_after AS SELECT * FROM public.paige_skills;
+\ir ../migrations/20271113030000_e2_analytics_catalogue_coverage.sql
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM public.paige_skills s JOIN coverage_after b USING (slug)
+      WHERE to_jsonb(s) IS DISTINCT FROM to_jsonb(b)) THEN
+    RAISE EXCEPTION 'Coverage replay changed a declared state or touched its timestamp';
+  END IF;
+END $$;
+\echo 'PASS: coverage replay changes zero rows'
+TRUNCATE public.paige_skills;
+INSERT INTO public.paige_skills SELECT * FROM catalogue_after;
+UPDATE public.paige_skills SET scoping='tenant' WHERE slug='ad_spend_efficiency';
+UPDATE public.paige_skills SET created_by='admin' WHERE slug='churn_signal_detection';
+UPDATE public.paige_skills SET description='Custom review' WHERE slug='cohort_analysis';
+UPDATE public.paige_skills SET category='marketing_content' WHERE slug='conversion_funnel_diagnosis';
+UPDATE public.paige_skills SET name='Custom name' WHERE slug='engagement_read';
+UPDATE public.paige_skills SET metadata='{"catalogue_coverage":null}' WHERE slug='monthly_qbr_draft';
+UPDATE public.paige_skills SET metadata='[]' WHERE slug='quarterly_narrative';
+UPDATE public.paige_skills SET metadata=NULL WHERE slug='revenue_trend_read';
+UPDATE public.paige_skills SET status='disabled' WHERE slug='weekly_business_review';
+INSERT INTO public.paige_skills (slug,name,description,category,trigger_phrases,steps,
+  allowed_tools,risk_level,autonomy_lane,methodology_anchor,tier_availability,
+  scoping,created_by,status,require_admin_confirm_first_n)
+SELECT 'test-unrelated-coverage',name,description,category,trigger_phrases,steps,
+  allowed_tools,risk_level,autonomy_lane,methodology_anchor,tier_availability,
+  scoping,created_by,status,require_admin_confirm_first_n
+  FROM catalogue_after WHERE slug='weekly_business_review';
+CREATE TEMP TABLE coverage_guarded_before AS SELECT * FROM public.paige_skills;
+\ir ../migrations/20271113030000_e2_analytics_catalogue_coverage.sql
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM public.paige_skills s JOIN coverage_guarded_before b USING (slug)
+      WHERE s.slug NOT IN ('revenue_trend_read','weekly_business_review')
+        AND to_jsonb(s) IS DISTINCT FROM to_jsonb(b)) THEN
+    RAISE EXCEPTION 'Coverage overwrote custom/scoped/renamed/reclassified/existing/malformed/unrelated data';
+  END IF;
+  IF (SELECT metadata->'catalogue_coverage' FROM public.paige_skills WHERE slug='revenue_trend_read')
+      IS DISTINCT FROM '{"version":1,"state":"limited"}'::jsonb THEN
+    RAISE EXCEPTION 'Null metadata did not receive its guarded public field';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.paige_skills WHERE slug='weekly_business_review'
+      AND status='disabled' AND metadata->'catalogue_coverage'='{"version":1,"state":"limited"}'::jsonb) THEN
+    RAISE EXCEPTION 'Coverage changed disabled authority or lost declared coverage';
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.paige_skills s JOIN coverage_guarded_before b USING (slug)
+      WHERE (to_jsonb(s) - 'metadata' - 'updated_at') IS DISTINCT FROM (to_jsonb(b) - 'metadata' - 'updated_at')) THEN
+    RAISE EXCEPTION 'Coverage changed non-metadata fields';
+  END IF;
+END $$;
+\echo 'PASS: all custom/scoped/malformed/existing-field guards, null metadata and disabled authority'
+SET LOCAL ROLE test_e2_catalogue_reader;
+DO $$ BEGIN
+  BEGIN
+    UPDATE public.paige_skills SET metadata='{}';
+    RAISE EXCEPTION 'Reader gained metadata write authority';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+END $$;
+RESET ROLE;
+\echo 'PASS: coverage added no reader write authority'
 ROLLBACK;

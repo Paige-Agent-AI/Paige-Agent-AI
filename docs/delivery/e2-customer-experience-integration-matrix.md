@@ -1,5 +1,18 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+**October20 verified release checkpoint (supersedes older candidate statuses):**
+VERA#2400/61b32a37, Finance#2402/ddf12b6b, audit prerequisite#2434/25d01c84,
+and catalogue descriptions#2440/a0389c3f are merged and production-source verified.
+Catalogue migration13010000 is applied; all9 corrected descriptions were read in
+the ordinary authorized SOLO panel, then re-read after full reload and explicit
+return (ANT52/053be67a). Reload defaults to Chat; auto-restoring Capabilities is
+not claimed. Finance no-source/provenance/navigation/reload evidence remains
+bounded, not populated financial acceptance. Master/Brain factual closeout#2442
+is merged8edf4308 with actual production web readback. Historical candidate
+paragraphs below retain their dated meaning. Shared presenter#2444 and priority
+baseline#2409 remain unreleased candidates; no metadata or algorithm is Live by
+registration. Full19/9 and founder acceptance remain owed.
+
 **October20 small-PR continuation:** all nineteen definitions below remain required.
 The owner's current release sequence is published in ANT-138 comment
 `3276f0e0-05de-48c2-a2ff-764bbb292337` and existing #2402. Each new increment
@@ -388,3 +401,37 @@ Algorithms), not new implementations here. PAIGE/VERA consume NEXUS acquisition,
 MERIT commercial, CURA client, ZION operations and MENTOR knowledge/strategy outputs
 through the existing scoped Spine/Fabric/Rail contracts; historical coding lanes
 are not restarted.
+
+### Pre-edit routing: canonical nine-entry coverage metadata
+
+1. Outcome: understand the released subset and missing requirement before asking
+   PAIGE; preserve the9 original capability definitions and all19 outcomes.
+2. Domain: EXP02 analytics catalogue consumer; originating EXP03/04/05/09/11
+   measurements remain theirs. ANT161 reserves13030000 after EXP05/13020000.
+3. Harness/Gateway: presentation only, no new read or shared layer. Runtime
+   on-use Spine/Harness/Trust/provider authorization remains mandatory.
+4. Spine: existing business.operating_snapshot supports the named review subset;
+   generic skills.run is not claimed admitted or wired into ordinary Chat here.
+5. Providers: none called/activated. Missing Review producers do not establish an
+   external provider's connection state. Existing integration registry unchanged.
+6. Authority: canonical platform recipe metadata migration, no business action,
+   mutation verb, approval, autonomy lane, tier or permission change. Never Live.
+7. Durable work: no scheduler/job/event or executed customer work is introduced.
+8. Readback: applied migration plus exact9 public fields and ordinary panel/reload;
+   coverage labels are not business execution or Rail receipts.
+9. Surface: existing Chat Capabilities using acknowledged#2444 TruthPill consumer;
+   command-center.executive stays PARTIAL. No new surface/registry/availability engine.
+10. Proof: native PostgreSQL nine updates, unchanged identity/execution/unrelated
+    metadata, replay, custom/tenant/name/category/malformed/existing-field guards,
+    disabled preservation and reader denial. Exact-head review/CI/Preview and
+    production/account readback gate delivery; full actor/provider availability,
+    Live/effects and founder acceptance remain owed.
+
+REUSE existing paige_skills.metadata; EXTEND only its public catalogue_coverage
+field under exact-name/corrected-description/category/platform/system guards.
+Known/custom coverage is not overwritten; non-object metadata is preserved.
+Compatible#2444 presenter must release before this producer. Four unsupported
+integration areas use Coming Soon, three sourced subsets use Limited and the two
+filed-document deliverables remain Unverified, matching the table above. No
+coverage label asserts per-account access. NO VERIFIED ALGORITHM is added; the
+canonical ALG03/04/06/11/12/13 and PAIGE/VERA/originating specialist boundaries remain.

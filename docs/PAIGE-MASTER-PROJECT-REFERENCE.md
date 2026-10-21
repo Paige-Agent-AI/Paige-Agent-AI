@@ -826,6 +826,35 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-21 — EXP02 canonical Conversations read-reference consumer.**
+
+PR [#2470](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2470), reviewed
+`e0c51511fe8db32f94f0596e14f40ba14b2a57d4`, merged
+`46c6514f917ec00d423fd83e36e6bd9714ba915b`; actual composition tree
+`6325bae4e42b26ae5482e7511f9437723a560b5e`. The existing permitted caller-JWT
+envelope read now fails unavailable for bad/error rows instead of inventing an
+empty inbox, and emits the shared persisted Conversations reference only after
+success. No message body, sender, provider, registry, permission or protected-read
+admission is added. Normal ACTIVE and degraded/recovery restrictions are retained.
+204 owning cases/13 suites and70 authority/mutation controls pass; nine native
+synthetic renderer images/eight captured source hashes are preserved. Separate
+AUTHOR-REVIEW / LOWER ASSURANCE6315834365/6316090475; final6316429845, all11
+exact-head checks plus two Vercel statuses SUCCESS, fresh Preview/zero threads.
+The earlier pinned SDK timeout and one identical-source retry remain recorded.
+Production web `dpl_EJ7ED6bFSPNm2BTBYtG8t3EvF7RX` READY/exact/canonical aliases;
+actual public build46c6514f…-mvi42w7n, customerUpdate present/null. Normal Edge
+39602968655/job119231868223 SUCCESS: selected paige-ai-chat source/configuration
+PASS; certified edge-live matches46c6514f. Direct provider v487/ACTIVE/JWTtrue,
+exact helper and branch/collector source independently compared. Retained artifact
+12346931542 has SHA256 a673a76ce938e8d9fecc32c8df58b80898a005a9b88474d6ec1c80679d3cf6d9
+(not independently downloaded). Migrations NOT_APPLICABLE. Internal-only increment,
+no customer version/announcement; bounded reviewed correction/revert preserves
+canonical records and action holds. Actual authorized customer read/link/reload/
+privacy, current Chat CPU recovery, Live/cohorts, native-read catalogue representation
+and full19/nine analytics/founder acceptance remain owed. No algorithm or Live
+promotion; synthetic/source evidence is not customer acceptance.
+[Production source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2470#issuecomment-6316598288).
+
 **2026-10-21 — EXP02 disposed Chat status callback correction.**
 PR [#2469](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2469), reviewed
 `a7d847f9636e7aedde173f8d935fd46701fa64c8`, merged

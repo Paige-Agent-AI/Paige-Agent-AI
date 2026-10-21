@@ -1173,6 +1173,79 @@ describe("Agreement documents — signature state, separate from commercial stat
     createdAt: "2026-09-22T12:00:00Z", updatedAt: "2026-09-22T12:00:00Z",
   };
 
+  describe("existing agreement register discovery", () => {
+    const searchFor = (value: string) => {
+      const input = host.querySelector('.so-terms input[type="search"]') as HTMLInputElement;
+      act(() => {
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, value);
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    };
+    const rows = () => host.querySelectorAll('[aria-label="Agreements and terms"] .so-row');
+    const prepare = () => {
+      harness.agreements.clients = [{ id: "c1", name: "Acme" }];
+      harness.agreements.agreements = [AGREEMENT];
+      harness.signings.signings = [{ ...SIGNING, signerName: "Morgan Reed" }];
+      render("terms");
+    };
+
+    it.each(["  COACHING AGREEMENT  ", "morgan reed", "acme"])("finds loaded document metadata: %s", (query) => {
+      prepare();
+      searchFor(query);
+      expect(rows()).toHaveLength(1);
+      expect(rows()[0].textContent).toContain("Coaching agreement");
+      expect(harness.signings.createSigning).not.toHaveBeenCalled();
+      expect(harness.signings.sendForSignature).not.toHaveBeenCalled();
+      expect(harness.signings.issueLink).not.toHaveBeenCalled();
+      expect(harness.agreements.saveAgreement).not.toHaveBeenCalled();
+    });
+
+    it("treats a query literally, announces no match and recovers by clearing", () => {
+      prepare();
+      searchFor(".*");
+      expect(rows()).toHaveLength(0);
+      expect(host.querySelector('.so-terms [role="status"]')?.textContent).toContain("No agreements match");
+      searchFor("");
+      expect(rows()).toHaveLength(1);
+      expect(harness.signings.sendForSignature).not.toHaveBeenCalled();
+    });
+
+    it.each(["none", "unrecognised"])("can find the actual %s signature reading", (state) => {
+      prepare();
+      if (state === "none") harness.signings.signings = [];
+      else harness.signings.signings = [{ ...SIGNING, signatureState: state, displayState: state }];
+      render("terms");
+      const select = host.querySelector('select[aria-label="Signature state"]') as HTMLSelectElement;
+      expect([...select.options].some(option => option.value === state)).toBe(true);
+      act(() => {
+        select.value = state;
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+      expect(rows()).toHaveLength(1);
+      expect(rows()[0].textContent).toContain(state === "none" ? "No document" : "Not readable");
+      expect(harness.signings.issueLink).not.toHaveBeenCalled();
+    });
+
+    it("retires a no-document reading if the document read becomes unavailable", () => {
+      prepare();
+      harness.signings.signings = [];
+      render("terms");
+      const select = host.querySelector('select[aria-label="Signature state"]') as HTMLSelectElement;
+      act(() => {
+        select.value = "none";
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+      harness.signings.phase = "error";
+      harness.signings.readable = false;
+      act(() => root!.render(appAt(salesPath("terms"))));
+      expect((host.querySelector('select[aria-label="Signature state"]') as HTMLSelectElement).value).toBe("unrecognised");
+      expect(rows()).toHaveLength(1);
+      expect(rows()[0].textContent).toContain("Not readable");
+      expect(host.textContent).not.toContain("No document");
+      expect(harness.signings.sendForSignature).not.toHaveBeenCalled();
+    });
+  });
+
   /* ── retrieving the signed copy (§70) ────────────────────────────────────────────────────
    * An owner who can see that a client signed and cannot obtain the thing they signed has not
    * finished the job, which is the whole §70 test. These guard the act and its honest failures. */

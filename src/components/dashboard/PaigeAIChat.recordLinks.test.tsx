@@ -173,6 +173,37 @@ const nav = (host: HTMLElement) => host.querySelector<HTMLElement>("[data-paige-
 const anchors = (host: HTMLElement) => Array.from(nav(host)?.querySelectorAll("a") ?? []).map((a) => [a.textContent, a.getAttribute("href")]);
 
 describe("E4-S3 — read links beside a live answer", () => {
+  it("does not promote an obsolete model app link alongside a verified Conversations reference", async () => {
+    server(body([say("The inbox read is available. [Open Conversations](/app/conversations). [Source](https://example.org/evidence)."),
+      frame({ paige_record_links: [{ destination: "conversations", record_id: null }] }), DONE]));
+    const host = await mount();
+    await ask(host, "Read the permitted inbox sample; change nothing.");
+    expect(host.querySelector('a[href="/app/conversations"]')).toBeNull();
+    expect(host.textContent).toContain("Open Conversations");
+    expect(anchors(host)).toEqual([["Open Conversations", "/solo/3855/clients/conversations"]]);
+    expect(host.querySelector('a[href="https://example.org/evidence"]')).not.toBeNull();
+  });
+
+  it("waits for the native reference before promoting even a correct-looking streamed app path", async () => {
+    const gate = deferred();
+    server(body([say("[Open Conversations](/solo/3855/clients/conversations)"), gate.promise,
+      frame({ paige_record_links: [{ destination: "conversations", record_id: null }] }), DONE]));
+    const host = await mount();
+    await ask(host, "Read the permitted inbox sample; change nothing.");
+    expect(host.querySelector('a[href="/solo/3855/clients/conversations"]')).toBeNull();
+    await act(async () => { gate.resolve(); await flush(); });
+    expect(host.querySelectorAll('a[href="/solo/3855/clients/conversations"]')).toHaveLength(2);
+  });
+
+  it.each(["standalone", "agency"])("does not infer app navigation without a native target for %s", async account_type => {
+    harness.activeTenant = { account_number: 3855, account_type, parent_tenant_id: null };
+    server(body([say("[Open Conversations](/solo/3855/clients/conversations)"), DONE]));
+    const host = await mount();
+    await ask(host);
+    expect(host.querySelector('a[href="/solo/3855/clients/conversations"]')).toBeNull();
+    expect(nav(host)).toBeNull();
+  });
+
   it("renders the links from the frame, addressed from the current Solo account", async () => {
     server(body([say("Acme is signed; one payment is overdue."), frame({ paige_record_links: LINKS }), DONE]));
     const host = await mount();
@@ -227,6 +258,27 @@ describe("E4-S3 — read links beside a live answer", () => {
 });
 
 describe("E4-S3 — the same links after a reload", () => {
+  it("rebuilds verified destinations from current context while retaining obsolete persisted prose as text", async () => {
+    harness.threads = [{ id: "thread-inbox", title: "Message review", updated_at: "2026-10-14T10:00:00Z" }];
+    harness.activeTenant = { account_number: 3856, account_type: "standalone", parent_tenant_id: null };
+    harness.turns = [
+      { id: "u1", role: "user", content: "Read the inbox sample.", created_at: "2026-10-14T09:00:00Z" },
+      { id: "a1", role: "assistant", content: "Available. [Old path](/app/conversations) [Prior context](/solo/3855/clients/conversations) [Source](https://example.org/evidence)",
+        created_at: "2026-10-14T09:00:09Z", bundle_ref: {
+          turn_state: { v: 1, state: "FINAL", mode: "answer", rounds: 1, tools: 1 },
+          paige_record_links: [{ destination: "conversations", record_id: null }],
+        } },
+    ];
+    server();
+    const host = await mount();
+    await act(async () => { await flush(); });
+    expect(anchors(host)).toEqual([["Open Conversations", "/solo/3856/clients/conversations"]]);
+    expect(host.querySelector('a[href="/app/conversations"]')).toBeNull();
+    expect(host.querySelector('a[href="/solo/3855/clients/conversations"]')).toBeNull();
+    expect(host.textContent).toContain("Prior context");
+    expect(host.querySelector('a[href="https://example.org/evidence"]')).not.toBeNull();
+  });
+
   it("rebuilds the links from bundle_ref.paige_record_links", async () => {
     harness.threads = [{ id: "thread-l", title: "Acme", updated_at: "2026-10-14T10:00:00Z" }];
     harness.turns = [

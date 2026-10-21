@@ -53,6 +53,20 @@ it('preserves the fixed-lines-only budget without leaking omitted risk evidence'
   expect(text).toContain('Left out for length');
 });
 
+it('retains complete act evidence before healthy count sections consume the summary budget', () => {
+  const clients = TEST_BUSINESS_REVIEW.domains.clients.data!;
+  const snapshot = { ...structuredClone(TEST_BUSINESS_REVIEW), requested: ['clients', 'operations'] as const,
+    domains: { ...TEST_BUSINESS_REVIEW.domains, clients: { status: 'available' as const,
+      data: { ...clients, headline: Array.from({ length: 8 }, (_, i) => ({ ...clients.headline[0], key: `clients.count_${i}`, label: `Supported current client count ${i}` })) } } } };
+  const actOnly = projectOperatingSnapshot({ ...snapshot, requested: ['operations'] }, { maxChars: 100000 });
+  const text = projectOperatingSnapshot(snapshot, { maxChars: actOnly.length + 250 });
+  expect(text).toContain('2 blocking operating findings');
+  expect(text).toContain('[Operations] read at');
+  expect(text).toContain('Left out for length (not read into this summary; ask about them separately): Clients.');
+  expect(text).not.toContain('Supported current client count');
+  expect(text.length).toBeLessThanOrEqual(actOnly.length + 250);
+});
+
 it('shares the same ordering with Executive without mutating source risks or inventing amounts', () => {
   const original = JSON.stringify(TEST_BUSINESS_REVIEW);
   const ranked = rankOperatingSnapshotRisks(TEST_BUSINESS_REVIEW);

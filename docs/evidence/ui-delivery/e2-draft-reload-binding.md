@@ -34,12 +34,12 @@ MUST_PRESERVE: existing five-axis canonical store/resolver/request fences, revis
 ACCEPTANCE_CRITERIA: appropriate ordinary owner restores only the original identified draft; wrong scope stays separate; Clear/submission cannot revive after reload; failure remains visible/editable; actual backend/history/action acceptance is separately proven.
 MOTION_PURPOSE: NONE: no animation; textarea uses its existing160px cap and resizes restored/handoff text and width changes.
 PROTECTED_SEAMS: canonical actual subject/ready account and strict tier helper; existing persona scope; five-axis composer and no-replay revisions; unchanged backend, Trust, provider, registry and receipts.
-INTERNAL_BUILD_IDENTITY: development atop18a560d5ee80a9294b7a23d0b26a08cecca5d30f; final exact consumer head/review in PR; deployment=PROOF_OWED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e2-draft-reload/native-index.json
+INTERNAL_BUILD_IDENTITY: development atop 18a560d5ee80a9294b7a23d0b26a08cecca5d30f; final exact consumer head/review in PR; deployment=PROOF_OWED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e2-draft-reload/native-index.json
 RELEASE_CHANNEL: development: inactive foundation#2462 must merge first; consumer requires separate exact-head review/CI/guarded web release/readback.
-RELEASE_CLASSIFICATION: internal-only bounded continuity repair, not a complete Experience or analytics release.
+RELEASE_CLASSIFICATION: internal-only: bounded continuity repair, not a complete Experience or analytics release.
 CUSTOMER_RELEASE_IDENTITY: none: full outcome/customer proof and owner publication decision remain owed.
 RELEASE_NOTE_REQUIRED: no: routine internal increment, no customer announcement.
-RELEASE_TRUTH_BOUNDARY: PARTIAL source/native-synthetic continuity; PROOF OWED released/authenticated/Live/full19/9; no new LIVE capability.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: source/native-synthetic continuity; PROOF OWED released/authenticated/Live/full19/9; no new LIVE capability.
 RELEASE_RECOVERY: position=reviewed forward correction/revert preserving canonical submitted history and pending-operation identity; reference=docs/doctrine/release-governance-and-customer-update-policy.md
 
 ## Scope and evidence

@@ -15,7 +15,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: candidate not deployed. Ordinary-owner Plan/R
 KEYBOARD_FOCUS: PASS: keyboard activation of original contextual controls and Direct PAIGE, original fold/return controls and visible focus rings inspected. Actual mounted composer tests retain scope/writable-handle protection and one subscription.
 ZOOM_REFLOW: PASS: fresh four required CSS widths plus390x844 phone, open/closed; no page overflow, labels wrap and existing internal scroll remains reachable. No browser zoom-level or screen-reader claim.
 REDUCED_MOTION: NOT_APPLICABLE: no CSS, animation, transition or motion preference changed.
-STATE_COVERAGE: PASS: empty/typed draft, repeated invitation, different question, same specialist, unknown/mid-sentence name, bare summons, scope retirement/unwritable composer, original recovery/default append semantics and native source refusal. Existing record loading/empty/error and approval controls remain unchanged.
+STATE_COVERAGE: PASS: owning helper/composer tests cover empty/typed draft, repeated invitation, different question, same specialist, unregistered/mid-sentence name, bare summons, scope retirement/unwritable composer, original recovery/default append semantics and native source refusal. Existing record loading/empty/error and approval controls remain unchanged.
 TRUTHFUL_STATE_LABELS: PASS: names identify an addressed review request only. No new business capability, provider readiness, approval or delegated-run completion claimed; all eleven catalogue skills retain their actual existing states.
 SOLO_UI: YES: shared Operations actions and original handoff for every equivalently eligible existing/future SOLO account; no tenant name, identifier, allowlist or provisioning exception.
 SOLO_1536X770_PAIGE_CLOSED: PASS: assets/exp05-zion-handoff/final-zion-1536-closed.jpg/.json;1536CSS/1535raster, disclosed original capture discrepancy, never resized/padded.
@@ -32,7 +32,7 @@ MUST_PRESERVE: original writable composer scope/functional setter/cleanup, defau
 ACCEPTANCE_CRITERIA: contextual action prepares an editable ZION-addressed question retaining typed notes exactly; repeat click adds no duplicate; original record and canonical PAIGE interface remain; actual backend reply and production readback are separate required evidence.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: original handoff opt-in only at surface subscription; existing detectVpAddress reused, no new registry/router. Default recovery merges and security/tenant scope remain tested. Native inspector/Spine/Harness/Trust/Rail/providers/writers untouched.
-INTERNAL_BUILD_IDENTITY: source parent3df7f44f431d04718b5549df4ea5f1ff59dd2d4d; final immutable head in PR review; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp05-zion-contextual-review.md
+INTERNAL_BUILD_IDENTITY: source parent 3df7f44f431d04718b5549df4ea5f1ff59dd2d4d; final immutable head in PR review; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp05-zion-contextual-review.md
 RELEASE_CHANNEL: development: bounded contextual handoff, not authenticated production proof.
 RELEASE_CLASSIFICATION: patch: accurate Operations specialist and reliable existing composer handoff.
 CUSTOMER_RELEASE_IDENTITY: none: no full-Experience version or announcement.

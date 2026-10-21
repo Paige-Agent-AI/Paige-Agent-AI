@@ -44,7 +44,8 @@ async function drive(options={}){
   server_issued_at:'2026-10-21T12:00:00Z',created_at:'2026-10-21T12:00:00Z',consumed_at:options.unconsumed?null:'2026-10-21T12:00:02Z',expires_at:'2026-10-21T12:15:00Z'};
  const recorder=fake.setScenario({authUser:{id:actor,email:'owner@example.test'},tables:{
   paige_chat_threads:table([threadRow]),paige_chat_turns:table([original]),paige_pending_confirmations:table([row]),
-  profiles:()=>[{id:actor,active_tenant_id:profileTenant}],
+  profiles:filters=>table([{id:id(100),user_id:actor,active_tenant_id:profileTenant},
+   {id:actor,user_id:id(99),active_tenant_id:id(99)}])(filters),
  },rpcs:{
   paige_chat_interactive_protocol:{data:{version:2,active:options.inactive!==true},error:null},
   check_rate_limit:{data:true,error:null},current_user_tenant_id:{data:tenant,error:null},
@@ -68,6 +69,7 @@ async function drive(options={}){
  const reads=recorder.rpc.filter(call=>call.name==='read_cura_knowledge_preparation');
  for(const call of reads){assert.equal(call.client,'jwt');assert.deepEqual(call.args,{p_tenant_id:tenant,p_intent_id:nativeIntent,p_title:args.title,p_input:args.content});}
  assert.equal(threadRow.interactive_recovery_hold,id(92));assert.equal(threadRow.interactive_executor_intent,id(91));
+ for(const query of recorder.from.filter(q=>q.table==='profiles'))assert.ok(query.filters.some(f=>f[0]==='eq'&&f[1]==='user_id'&&f[2]===actor),'profile scope uses canonical user_id, not unrelated profile id');
  assert.equal(body.approval_history,undefined);return {response,body,reads,recorder};
 }
 const cases=[];

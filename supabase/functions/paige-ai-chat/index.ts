@@ -1479,7 +1479,7 @@ serve(async (req) => {
                 from: supabaseClient.from.bind(supabaseClient),
                 rpc: supabaseClient.rpc.bind(supabaseClient),
                 readActiveTenant: (actorId: string) => supabaseClient.from("profiles")
-                  .select("active_tenant_id").eq("id", actorId).maybeSingle(),
+                  .select("active_tenant_id").eq("user_id", actorId).maybeSingle(),
               } as unknown as Parameters<typeof readOriginalCuraPreparationHistory>[0]["caller"],
               service: supabase as unknown as ApprovalRecoveryDb, current: () => !req.signal.aborted,
             }) : null;

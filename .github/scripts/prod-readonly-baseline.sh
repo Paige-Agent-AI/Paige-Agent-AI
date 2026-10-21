@@ -14,7 +14,7 @@
 # Usage: prod-readonly-baseline.sh <out-dir>
 #   env: SUPABASE_ACCESS_TOKEN, SUPABASE_DB_PASSWORD (required), SUPABASE_PROJECT_ID (optional;
 #        falls back to supabase/config.toml)
-# Writes: <out-dir>/baseline_roles.sql, baseline_schema.sql, migration_list.txt,
+# Writes: <out-dir>/baseline_roles.sql, baseline_schema.sql, baseline_public_acl.sql, migration_list.txt,
 #         recorded_versions.txt
 set -euo pipefail
 out="${1:?usage: prod-readonly-baseline.sh <out-dir>}"
@@ -53,6 +53,12 @@ for attempt in 1 2; do
   # --role-only excludes Supabase-managed roles by design, so it restores onto stock roles.
   supabase db dump --linked --role-only -f "$out/baseline_roles.sql"
   supabase db dump --linked -f "$out/baseline_schema.sql"
+  # CLI 2.109.1's excluded-schema ACL filter also matches argument types, so the
+  # full dump drops a public function's grants when its signature uses extensions.vector.
+  # Explicit schema mode disables that filter. Use this public-only dump for the
+  # reconciler's public OBJECT scope; keep the full dump above for schema-less
+  # default privileges, which pg_dump omits when --schema is specified.
+  supabase db dump --linked --schema public -f "$out/baseline_public_acl.sql"
   if read_ledger "$out/migration_list_after.txt" | cmp -s - "$out/recorded_versions.txt"; then break; fi
   if [ "$attempt" = 2 ]; then
     echo "::error::production's migration ledger changed while the baseline was being read, twice (a deploy is in progress). Re-run once it finishes."

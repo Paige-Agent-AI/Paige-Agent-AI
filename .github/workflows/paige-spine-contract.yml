@@ -126,6 +126,7 @@ on:
       - ".github/scripts/prod-readonly-baseline.sh"
       - "scripts/ci/reproduce-production-grants.*"
       - "scripts/ci/grant-ordering-proof.sh"
+      - "scripts/ci/__tests__/production-baseline.test.mjs"
       - "scripts/proof/mcp-gateway-tools-action.mjs"
       # Experience 04 E4-S1 — where this client stands (source read + composer parity).
       - "supabase/tests/exp04_client_engagement_status.sql"
@@ -208,6 +209,8 @@ jobs:
             exit 1
           fi
           echo "Pull request branch is in $BASE_REPO; the production baseline can be read."
+      - name: Verify baseline dump routing and failure handling (synthetic, no production access)
+        run: node --test scripts/ci/__tests__/production-baseline.test.mjs
       - name: Read production's baseline (read-only)
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -617,6 +620,11 @@ jobs:
       # Knowledge only for an entitled business, re-checked at read; paused/merged/suspended cut off; exact
       # chunks only; kind-aware snapshot refs; the settle lock covers business rows (withdraw → withheld).
       - run: supabase test db supabase/tests/e09_customer_knowledge_v2.sql
+      # Teach CURA: the business publisher's bounded inventory reads the original
+      # Knowledge/share/window/receipt records. It publishes nothing and refuses
+      # customers, ordinary members, bare operators and another active workspace.
+      - run: supabase test db supabase/tests/e09_cura_knowledge_inventory.sql
+        if: ${{ !cancelled() }}
       # E09 C1: announcements through the one campaign system — the `portal` audience (open access only,
       # the same predicate as the customer's own resolver), rule keys checked on every draft write and at
       # approval, and Updates consent for promotions/announcements to portal-linked contacts at plan AND send.

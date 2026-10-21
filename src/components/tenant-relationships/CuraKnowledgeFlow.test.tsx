@@ -22,6 +22,7 @@ vi.mock('./PortalConfigurationGate',()=>({PortalConfigurationGate:({children}:{c
 // Only transport/identity are synthetic. This is not authenticated/provider proof.
 const f=vi.hoisted(()=>({rpc:vi.fn(),invoke:vi.fn()}));
 const actor='b3b50100-0000-4000-8000-000000000001',tenant='b3b50200-0000-4000-8000-000000000001';
+const secondDoc='b3b50300-0000-4000-8000-000000000002';
 const doc='b3b50300-0000-4000-8000-000000000001',extract='b3b50400-0000-4000-8000-000000000001',publication='b3b50500-0000-4000-8000-000000000001',run='b3b50600-0000-4000-8000-000000000001';
 const now='2026-10-21T12:00:00Z';
 vi.mock('@/hooks/useTenantContext',()=>({useTenantContext:()=>({activeTenantId:tenant,activeUserId:actor,accountContextStatus:'ready',accountContextLoading:false,loading:false})}));
@@ -67,7 +68,7 @@ beforeEach(()=>{
  f.rpc.mockImplementation(async(name:string,args:Record<string,unknown>)=>{
   if(name==='read_client_portal_business_knowledge'){
    if(inventoryHold)return inventoryHold.promise;const value=inventory();
-   if(args.p_document_id==='b3b50300-0000-4000-8000-000000000002')value.documents=value.documents.map(row=>({...row,document_id:String(args.p_document_id),title:'Second approved source'}));
+   if(args.p_document_id===secondDoc)value.documents=value.documents.map(row=>({...row,document_id:String(args.p_document_id),title:'Second approved source'}));
    return{data:value,error:null};
   }
   // Native canonical reader deliberately excludes the original draft.
@@ -140,7 +141,7 @@ it('settles publication refresh even when Done closes the real original flow fir
 });
 
 it('preserves source A terms when B is queued across a real deferred window-focus refresh',async()=>{
- published=true;const second='b3b50300-0000-4000-8000-000000000002';
+ published=true;const second=secondDoc;
  const data={people:[],peopleLoading:false,peopleError:false,retryPeople:()=>{},portalLoading:false,portalError:false,portalConfig:{welcome:{headline:'Welcome'},modules:[]},retryPortal:()=>{}} as unknown as React.ComponentProps<typeof OwnerPortalDashboard>['data'];
  const show=async(documentId:string)=>{await act(async()=>root.render(<MemoryRouter><OwnerPortalDashboard tenantId={tenant} tenantName="Test Service" data={data} openClient={()=>{}} openPaige={()=>{}} knowledgeReference={{documentId,invalid:false}}/></MemoryRouter>));await flush();};
  await show(doc);await click('Review sharing');const kind=host.querySelector('select[id$="-kind"]') as HTMLSelectElement;

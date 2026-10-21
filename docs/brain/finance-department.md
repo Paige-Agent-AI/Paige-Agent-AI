@@ -1,5 +1,31 @@
 # Finance department — current source and full operating target
 
+## October 20 observed EXP02 Finance consumer release
+
+Original #2402 reviewed d0aafc53ed81273868b4160684677ed02175454b merged
+ddf12b6bbda085cdb9f66587f9e803e11fc3cc18 with exact reviewed union tree 1472c481.
+All 11 checks/Preview and two Vercel contexts passed; AUTHOR-REVIEW / LOWER
+ASSURANCE 6303545504. Web dpl_6qkA2AUtNSxr9ntZt9EMn21Gpcrm READY/exact and
+public ddf12b6…mvha1pjq observed. Normal guarded recovery 39511759880 verified
+five of five importers' complete source/configuration; actual edge-live ddf12b6
+independently confirmed. Artifact 12306466169 SHA256
+c4d9267ee8bbb068337ade9efdaefff5d8d7f9a0cb7f4f6a0970147215e7eb74.
+No own migration or new provider/permission/action activation.
+
+The same caller-JWT Finance contracts now feed the canonical Business Review
+composer, Executive and admitted read-only briefing. Decimal source facts retain
+currency, basis, period, company/source scope, revocation and null-versus-zero
+boundaries. Provenance remains separate from execution receipts. Original #2021
+statement helpers still remain UNMOUNTED; this release does not activate ingestion.
+
+Actual authorized SOLO no-source/provenance/navigation/return/reload passed.
+Populated amounts, connected-provider readiness, tenant/permission negatives,
+new Chat/Live behavior and full financial acceptance remain owed. Stored facts
+are not an ALG-06 cash-flow forecast or a backtest. Master §4.0 and ANT-52
+hold sanitized release/customer receipts; private captures remain local.
+This observed release supersedes the dated candidate checkpoint below.
+
+
 ## October20 EXP02 integration checkpoint
 
 Original statement helper#2021 is source-released at mained305fb25 with exact

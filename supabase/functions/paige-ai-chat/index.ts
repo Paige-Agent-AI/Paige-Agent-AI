@@ -77,7 +77,7 @@ import { buildApprovalOutcome, classifySpentApproval, classifyUnspentApproval, d
 import { resolveSourceThreadLink } from "../_shared/source-thread-link.ts";
 import { buildCreditProposal, buildCreditSyncPayload } from "../_shared/credit-extraction-payload.ts";
 import { projectOutcomeForModel } from "../_shared/mcp-outcome.ts";
-import { embeddingsCompat } from "../_shared/voyage.ts";
+import { embeddingsCompat, voyageEmbedOne, VOYAGE_MODEL } from "../_shared/voyage.ts";
 import { applyContactSearchFilter, CONTACT_NAME_SEARCH_COLUMNS, contactIdsByAddressToken } from "../_shared/contact-search.ts";
 import { resolveClientRef } from "../_shared/client-ref.ts";
 import { orderedContactMethods, primaryContactMethod } from "../_shared/contact-methods.ts";
@@ -264,7 +264,7 @@ import { getActorTier, clientSeatToolAllowed, type Tier } from "../_shared/actor
 import { readClientPortalChatBinding, sameClientPortalChatBinding } from "../_shared/client-portal-chat-scope.ts";
 import { buildClientPortalPersonaMessages, readClientPortalPersonaInput } from "../_shared/client-portal-persona.ts";
 import { customerAgentName, customerSeatIdentity } from "../_shared/client-portal-identity.ts";
-import { readCustomerAssistantContext, readCustomerAssistantControlContext, customerProgramMessages, customerTerminalSource, type CustomerSourceSnapshot } from "../_shared/client-portal-assistant-context.ts";
+import { readCustomerAssistantContext, readCustomerAssistantControlContext, customerProgramMessages, customerTerminalSource, embedCustomerQuery, type CustomerSourceSnapshot, type CustomerQueryEmbedding } from "../_shared/client-portal-assistant-context.ts";
 // R3 — what a client seat reads is read for internal text first.
 import { decodeChunks, internalTextForClient, leakKindCounts, readableFromFrames, syncStatusForClient, resultSavedSomething, WITHHELD_FRAME, withheldReplyForClient } from "../_shared/client-seat-reply.ts";
 // R2 — what PAIGE drafts for a customer is read for internal text before it is filed, carded or sent.
@@ -1316,12 +1316,14 @@ serve(async (req) => {
         validatedData.interactive.supersedesIntentId = validatedData.interactive.supersedesIntentId.toLowerCase();
     }
     const customerControl = validatedData.interactive?.kind === "stop" || validatedData.interactive?.kind === "status";
+    // E09 K2: the first customer read carries no question vector (recency); the gate below needs only
+    // its persona. The question is embedded after the caller is proven to be this thread's customer.
     const customerPersonaSource = customerPortal
-      ? await (customerControl ? readCustomerAssistantControlContext : readCustomerAssistantContext)(
-        supabaseClient, user.id, validatedData.threadId, validatedData.requestIntentId) : null;
-    const customerAssistant = customerPersonaSource?.status === "available" ? customerPersonaSource.data : null;
+      ? await (customerControl ? readCustomerAssistantControlContext(supabaseClient, user.id, validatedData.threadId, validatedData.requestIntentId)
+        : readCustomerAssistantContext(supabaseClient, user.id, validatedData.threadId, validatedData.requestIntentId)) : null;
+    let customerAssistant = customerPersonaSource?.status === "available" ? customerPersonaSource.data : null;
     const customerPersona = customerAssistant?.persona ?? null;
-    customerSourceSnapshot = customerAssistant?.snapshot ?? null;
+    let customerQuery: CustomerQueryEmbedding | null = null;
     if (customerPortal) {
       if (!customerPersona || (!customerPersona.enabled && !customerControl) || !validatedData.threadId || !validatedData.interactive ||
         validatedData.clientId || validatedData.document || validatedData.attachments?.length ||
@@ -1406,6 +1408,24 @@ serve(async (req) => {
       if ((thread.audience === "customer_private") !== customerPortal)
         return new Response(JSON.stringify({code:"CHAT_AUDIENCE_MISMATCH",message_accepted:false}),
           {status:403,headers:{...corsHeaders,"Content-Type":"application/json"}});
+      // E09 K2 (§9/§67): protocol and audience are already valid. Observed replay/supersedes
+      // evidence never incurs a query embedding; native begin remains the sole admission authority.
+      // Only an authorized customer of this thread pays for an embedding, and only when
+      // authorized material exists to rank. The question is embedded once (voyage-3 only, 4s, guarded);
+      // that one vector re-reads the context and binds the begin, so the model, the begin and the
+      // terminal see the same snapshot. Any failure keeps the recency read and binds NULL.
+      if (customerPortal && !customerControl && customerPersonaSource?.queryEmbeddingEligible === true && customerAssistant && (customerAssistant.sources.length > 0 || customerAssistant.sourcesLimited)) {
+        customerQuery = await embedCustomerQuery([...validatedData.messages].reverse().find((m: any) => m.role === "user")?.content,
+          voyageEmbedOne, VOYAGE_MODEL);
+        if (customerQuery.embedding) {
+          const ranked = await readCustomerAssistantContext(supabaseClient, user.id, validatedData.threadId,
+            validatedData.requestIntentId, customerQuery.embedding);
+          if (ranked.status === "available" && ranked.data && JSON.stringify(ranked.data.persona) === JSON.stringify(customerPersona))
+            customerAssistant = ranked.data;
+          else customerQuery = { embedding: null, degraded: true };
+        }
+      }
+      customerSourceSnapshot = customerAssistant?.snapshot ?? null;
       // Dedicated status/Stop return through their existing native control paths.
       // They cannot reach model/pre-tool work and must retain their error ordering.
       if (interactiveInput.kind === "message") await refreshRecoveryHold();
@@ -1533,7 +1553,8 @@ serve(async (req) => {
         p_thread: validatedData.threadId, p_intent: validatedData.requestIntentId,
         p_supersedes: interactiveInput.supersedesIntentId ?? null,
         p_content: userText ?? "", p_bound_answer: validatedData.resume?.kind === "answer",
-        p_stop: interactiveInput.kind === "stop", ...(effectful ? {} : { p_effectful: false }),
+        p_stop: interactiveInput.kind === "stop",
+        ...(customerPortal ? { p_effectful: effectful, p_query_embedding: customerQuery?.embedding ?? null } : effectful ? {} : { p_effectful: false }),
       });
       if (interactiveInput.kind === "stop") {
         const stopped = await beginTurn(true);

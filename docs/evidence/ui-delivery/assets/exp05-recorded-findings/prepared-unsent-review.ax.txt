@@ -1,0 +1,6 @@
+Browser tab: 170270628, Title: "Offline Operations findings flow prototype", URL: "http://127.0.0.1:63673/solo/1701/operations/overview".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+~					274 text entry area (settable) Message PAIGE, ID: prototype-paige-draft, Value: Keep this existing note.
+
+Review the current recorded Operations findings in this workspace. Read the authorized Operations business snapshot again. Distinguish Systems Check findings from recorded automation-run outcomes and native blocked or overdue Work. Keep missing evidence unknown, explain source time and coverage, and prepare bounded next steps for my review. Do not run checks, create work, change settings or execute an action.
+The focused UI element is 216 button Prepare a read-only PAIGE review

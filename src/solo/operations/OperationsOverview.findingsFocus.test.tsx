@@ -8,6 +8,8 @@ import { OperationsOverview } from './OperationsOverview';
 import { OperationsRecordedFindings } from './OperationsRecordedFindings';
 
 vi.mock('../weekly/WeeklyResponsibilityEntry', () => ({ WeeklyResponsibilityEntry: () => null }));
+vi.mock('../data/useBusinessTimeZone', async original => ({ ...await original<typeof import('../data/useBusinessTimeZone')>(),
+  useBusinessCalendarDay: () => ({ day: { kind: 'configured', zone: 'America/New_York', date: '2026-10-21' }, refresh: vi.fn() }) }));
 vi.mock('../data/useBusinessReview', () => ({ useBusinessReview: () => ({ state: 'ready',
   snapshot: TEST_BUSINESS_REVIEW, refresh: vi.fn() }) }));
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;

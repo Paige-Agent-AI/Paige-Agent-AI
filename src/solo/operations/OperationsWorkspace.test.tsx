@@ -9,6 +9,9 @@ const harness = vi.hoisted(() => ({ tenant: "test-tenant-a", user: "test-user", 
   crmTasks:[] as CrmWorkRecord[], crmError:null as string|null, planningError:null as string|null, members:[] as TeamMemberRecord[], guard:null as string|null, planningOptions: [] as unknown[], planningOverrides:{} as Record<string,unknown>,
   planningLoading:false, crmLoading:false, crmHasMore:false, peoplePartial:false }));
 const weekly = vi.hoisted(() => ({ read: vi.fn(), refresh: vi.fn(), taskRead: vi.fn() }));
+// Supply the calendar read port; do not let this integration suite escape to RPC.
+vi.mock("../data/useBusinessTimeZone", async original => ({ ...await original<typeof import("../data/useBusinessTimeZone")>(),
+  useBusinessCalendarDay: () => ({ day: { kind: "configured", zone: "America/New_York", date: "2026-10-21" }, refresh: vi.fn() }) }));
 vi.mock("./operations-weekly-source", async importOriginal => ({ ...await importOriginal<typeof import("./operations-weekly-source")>(), readWeeklyPlanningSource: weekly.read }));
 const paige = vi.hoisted(() => ({ handoff: vi.fn(), clearClient: vi.fn(), clearPublic: vi.fn() }));
 vi.mock("@/lib/paigePromptHandoff", () => ({ handOffPaigePrompt: paige.handoff }));

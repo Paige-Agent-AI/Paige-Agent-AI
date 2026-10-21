@@ -9,7 +9,7 @@ PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: authorized SOLO agreement author selects 
 VISUAL_DIRECTION: PASS: code-led incumbent Operate extension, document paper beside contextual review/save decisions, rich/source views, native editorial/UI font roles and short hierarchy. Redundant introductory banner copy removed; no ornamental metrics, new component system or approval engine.
 AUTOMATED_EVIDENCE: PASS: final five-suite composition145/145 tests. Type ratchet no new errors, unchanged baseline10/current6; all new result-union narrowing errors corrected with explicit boolean checks, no casts/baseline waiver. Changed-source ESLint0 errors/two incumbent warnings (existing Sales effect and mixed-export hook). Binding Ledger35 surfaces pass. Earlier run144 passed/one existing signed-copy test timed out at unchanged5000ms; unchanged complete Sales repeat102/102 and final145/145 pass. Original failed logs retained; no timeout/assertion/baseline weakened. Hosted exact-head CI remains required.
 STATIC_EVIDENCE: PASS: three closed native RPC DTOs, actual selected-ID validation, captured actor/business/request/authority epochs, same-request uncertainty recovery, no body browser cache, no raw provider/legal/error logging. Existing native SAVE/auth/Portal/Spine and shared approval/execution paths preserved. Original URL conventions and per-instance leave guard are extended, with other active editors still independently protected.
-RENDERED_EVIDENCE: PASS: actual SalesWorkspace/SalesOps/TenantCommandCenterShell/MDX editor/SDK passed20 viewport/theme cases and21 interaction paths on final pinned source. Required1536x770/1366x768/1024x768/900x1000 closed/open in both themes, plus390x844/320x740 in both themes. Native overlay return, narrow reachable-action, record/recovery/error/source-fallback captures supplement the matrix. assets/e04-agreement-authoring/result.json contains exact normalized-LF hashes and shared font SHA256; synthetic identity/network only.
+RENDERED_EVIDENCE: PASS: actual SalesWorkspace/SalesOps/TenantCommandCenterShell/MDX editor/SDK passed20 viewport/theme cases and22 interaction paths on final pinned source. Required1536x770/1366x768/1024x768/900x1000 closed/open in both themes, plus390x844/320x740 in both themes. Native overlay return, narrow reachable-action, record/recovery/error/source-fallback captures supplement the matrix. assets/e04-agreement-authoring/result.json contains exact normalized-LF hashes and shared font SHA256; synthetic identity/network only.
 BEHAVIORAL_EVIDENCE: PASS: scripts/live-drive/agreement-authoring-drive.mjs exercises actual paste → source, rich keyboard/source round trip, missing-field focus, six-field native acknowledgment → original ID, normal selected-record reload, scoped history, committed lost-response recovery, explicit wording-leave decision/focus trap, opaque request reload without second create, failed-read retry, access-recheck hide/restore, definite revocation erasure, original-business fence and unsupported-format source recovery. Zero page errors. No provider or production authentication exercised.
 AUTHENTICATED_RUNTIME: UNVERIFIED: ordinary owner/staff/linked-client/recipient live operation, real native persistence, scope/role negatives and complete customer acceptance remain owed. Synthetic SDK responses do not establish native server execution.
 KEYBOARD_FOCUS: PASS: required-field focus, real rich-editor keyboard input, source controls, explicit leave dialog initial focus/Tab trap and access-state heading focus exercised. Full toolbar/assistive technology and external signing keyboard acceptance remain unverified.
@@ -75,11 +75,20 @@ The pinned Impeccable4.1 detector initially found two side-border patterns and
 eight design-scale advisories in the new CSS. Semantic quotations now use a thin
 inline rule; signer/history records use ordinary separators. New heading sizes
 and control/card radii follow the existing documented scale. Detector repeat is
-clean without suppression or design-system edits. The final20-case/21-path render
+clean without suppression or design-system edits. The final20-case/22-path render
 was repeated after these corrections and retains all eighteen source hashes.
 Representative desktop/docked, native-overlay-return, narrow reachable-action,
 retained-record and recovery views were inspected. Full Toolbar/AT/zoom and final
 whole-Experience visual acceptance remain separate.
+
+The subsequent proof-only signer check uses the actual native pending-counterparty
+shape. Long synthetic name/email, original role/order and canonical Awaiting
+signature label survive normal record reload. Four additional320/390 light/dark
+captures show wrapped identity and reachable signing history without horizontal
+overflow or outer-page scrolling. All20 viewport cases/22 paths pass with zero
+page errors; all eighteen source hashes are current. The initial assertion used
+the database word Pending rather than the original display vocabulary; that
+test expectation was corrected without changing product copy or behavior.
 
 ## Orchestration, algorithms and capabilities
 

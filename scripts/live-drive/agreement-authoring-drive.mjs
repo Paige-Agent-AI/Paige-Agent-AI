@@ -42,6 +42,8 @@ await context.addInitScript(({encoded})=>{
 },{encoded:font.toString('base64')});
 const tenant = 'aaaaaaaa-0000-4000-8000-000000000001';
 const client = 'cccccccc-0000-4000-8000-000000000001';
+const signerName = 'Alexandra Montgomery — Advisory Services Client';
+const signerEmail = 'alexandra.montgomery.advisory.engagements@example.test';
 const records = new Map(), requests = new Map(), calls = [], frames = [], behavior = [], errors = [], blocked = [];
 let mode = 'normal';
 const receipt = (row,state='created') => ({state,signing_id:row.agreement.id,signature_state:row.agreement.status,version:row.agreement.version,updated_at:row.agreement.updated_at,creation_event_id:row.eventId});
@@ -69,7 +71,7 @@ await context.route('**/__e04_rpc__/**',async route=>{
       if(previous.fingerprint!==fingerprint) return route.fulfill({status:409,contentType:'application/json',body:JSON.stringify({code:'40001',message:'Synthetic conflict'})});
       return answer(receipt(records.get(previous.id),'recovered'));
     }
-    const id=randomUUID(),row={agreement:{id,contact_id:client,offer_id:null,commercial_terms_id:null,title:args._title,body_source:'paige_draft',source_version_id:null,body_markdown:args._body_markdown,has_source_document:false,status:'draft',version:1,updated_at:'2026-10-21T20:00:00Z',expires_at:null,can_edit:true,content_sha256:null,sealed_sha256:null},signers:[],eventId:randomUUID()};
+    const id=randomUUID(),row={agreement:{id,contact_id:client,offer_id:null,commercial_terms_id:null,title:args._title,body_source:'paige_draft',source_version_id:null,body_markdown:args._body_markdown,has_source_document:false,status:'draft',version:1,updated_at:'2026-10-21T20:00:00Z',expires_at:null,can_edit:true,content_sha256:null,sealed_sha256:null},signers:[{id:randomUUID(),full_name:signerName,email:signerEmail,signer_role:'counterparty',signing_order:1,status:'pending',signed_at:null,declined_at:null}],eventId:randomUUID()};
     records.set(id,row);requests.set(args._request_id,{id,fingerprint});
     if(mode==='uncertain-committed')return route.abort('failed');
     return answer(receipt(row));
@@ -150,6 +152,20 @@ try{
   assert.match(await page.locator('.e04-preparation').innerText(),/does not establish payment or completion/);
   await page.getByRole('button',{name:'View signing history',exact:true}).click();await page.getByText('Draft recorded',{exact:true}).waitFor();
   await page.reload();await page.getByText('Recorded wording · revision 1',{exact:true}).waitFor();assert.equal(page.url(),originalUrl);await capture('retained-record-reload');
+  assert.match(await page.locator('.e04-preparation-signers').innerText(),/Client signer · Order 1 · Awaiting signature/);
+  for(const theme of ['light','dark'])for(const [width,height]of [[390,844],[320,740]]){
+    await page.setViewportSize({width,height});
+    const retainedUrl=new URL(originalUrl);retainedUrl.searchParams.set('theme',theme);
+    await page.goto(retainedUrl.toString(),{waitUntil:'domcontentloaded'});
+    const signer=page.getByText(signerEmail,{exact:true});await signer.waitFor();await signer.scrollIntoViewIfNeeded();
+    assert.equal(await page.getByText(signerName,{exact:true}).count(),1);
+    const fit=await page.evaluate(()=>({viewport:innerWidth,document:document.documentElement.scrollWidth,pageScroll:scrollY,signer:document.querySelector('.e04-preparation-signers')?.getBoundingClientRect().toJSON()}));
+    assert.ok(fit.document<=width+1,JSON.stringify(fit));assert.equal(fit.pageScroll,0,JSON.stringify(fit));
+    assert.ok(fit.signer.left>=0&&fit.signer.right<=width+1&&fit.signer.bottom<=height+1,JSON.stringify(fit));
+    await capture(`${width}-${height}-${theme}-retained-signer`);
+  }
+  await page.setViewportSize({width:1366,height:850});await page.goto(originalUrl,{waitUntil:'domcontentloaded'});await page.getByText('Recorded wording · revision 1',{exact:true}).waitFor();
+  behavior.push('pending native counterparty with long identity remains readable after reload at 320/390 in both themes');
   behavior.push('required-field focus','actual rich keyboard/source round trip','single original native receipt navigation','same-record normal reload','canonical history port','signature/payment/service distinction');
   await page.getByRole('button',{name:'Agreements and terms',exact:true}).click();await newDraft();await fill('Uncertain response recovery');
   mode='uncertain-committed';const uncertainUrl=page.url(),uncertainRequest=new URL(uncertainUrl).searchParams.get('agreement_request');

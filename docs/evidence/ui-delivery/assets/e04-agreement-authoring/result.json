@@ -19,7 +19,7 @@
     "scripts/live-drive/harness/sales-mount/agreement-authoring-client.ts": "e6c5e93b93604e7534dde08ee5473c6671d86105b8333d8daf0b2f216acf0dd3",
     "scripts/live-drive/harness/sales-mount/vite.agreement-authoring.config.ts": "ae93d7029cd44a8fa590ea294394926d6535e5e4b4d0e02dee625877b356a7dd",
     "scripts/live-drive/harness/sales-mount/agreement-authoring.html": "c66db7a6acdd821c8aa0051561d06d650522dad1151905733e40ee38bbc25be7",
-    "scripts/live-drive/agreement-authoring-drive.mjs": "64d182d5ff12b11fdc8f43ec9518e6f598af4b010b7bdb2b3d57eb48b2d96f31"
+    "scripts/live-drive/agreement-authoring-drive.mjs": "a9f6048c0fad6496ba48597d6d9060327a494149b5b4cbdc7638ed010b6d8a1f"
   },
   "sharedUIFontSHA256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05",
   "frames": [
@@ -669,6 +669,7 @@
     "light tablet PAIGE overlay fold/reopen retains draft",
     "dark tablet PAIGE overlay fold/reopen retains draft",
     "dark tablet PAIGE overlay fold/reopen retains draft",
+    "pending native counterparty with long identity remains readable after reload at 320/390 in both themes",
     "required-field focus",
     "actual rich keyboard/source round trip",
     "single original native receipt navigation",
@@ -689,6 +690,11 @@
   ],
   "errors": [],
   "blocked": [
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
     "https://fonts.googleapis.com",
     "https://fonts.googleapis.com",
     "https://fonts.googleapis.com",

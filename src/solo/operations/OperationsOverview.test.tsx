@@ -6,6 +6,9 @@ import type { CrmWorkRecord } from "./operations-native-work";
 import { OperationsOverview } from "./OperationsOverview";
 // This pure work-ordering suite isolates the separately tested weekly entry.
 vi.mock("../weekly/WeeklyResponsibilityEntry", () => ({ WeeklyResponsibilityEntry: () => null }));
+// The original calendar reader has its own authority suite; this mount owns work routing.
+vi.mock("../data/useBusinessTimeZone", async original => ({ ...await original<typeof import("../data/useBusinessTimeZone")>(),
+  useBusinessCalendarDay: () => ({ day: { kind: "configured", zone: "America/New_York", date: "2026-10-21" }, refresh: vi.fn() }) }));
 
 let container: HTMLDivElement, root: Root;
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;

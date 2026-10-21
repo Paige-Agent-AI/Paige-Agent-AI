@@ -1,0 +1,24 @@
+.ops-week { container-type:inline-size; margin:0 0 26px; min-width:0; border:1px solid var(--pg-line); border-radius:12px; background:var(--pg-surface); padding:18px; }
+.ops-week>header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px 16px; }
+.ops-week h2 { font-size:16px; margin:0; line-height:1.4; font-weight:600; }
+.ops-week nav { display:flex; align-items:center; gap:4px; }
+.ops-week button { min-height:44px; border:1px solid var(--pg-line); border-radius:7px; padding:8px; color:var(--pg-ink); background:transparent; }
+.ops-week nav button { min-width:44px; }
+.ops-week button:focus-visible { outline:2px solid var(--pg-violet); outline-offset:3px; }
+.ops-week button:hover:enabled { background:var(--pg-raised); }
+.ops-week button:disabled { cursor:default; color:var(--pg-muted); }
+.ops-week-zone,.ops-week footer,.ops-week-held p { color:var(--pg-muted); font-size:12px; line-height:1.6; }
+.ops-week-zone { margin:8px 0 16px; }
+.ops-week-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); border-block:1px solid var(--pg-line); }
+.ops-week-day { min-width:0; padding:12px 8px; border-right:1px solid var(--pg-line); }
+.ops-week-day:last-child { border-right:0; }
+.ops-week-day h3 { display:flex; flex-wrap:wrap; align-items:center; gap:6px; font-size:12px; font-weight:550; margin:0 0 12px; }
+.ops-week-day h3>span { font-size:10px; color:var(--pg-violet); }
+.ops-week-day[data-today=true] { background:var(--pg-workspace); }
+.ops-week-work { display:flex; flex-direction:column; text-align:left; gap:6px; width:100%; margin:0 0 8px; font-size:13px!important; line-height:1.5; overflow-wrap:anywhere; }
+.ops-week-work small,.ops-week-no-date { color:var(--pg-muted); font-size:11px; line-height:1.5; }
+.ops-week-no-date { margin:0; }
+.ops-week-weekend { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); border-bottom:1px solid var(--pg-line); }
+.ops-week footer { display:flex; flex-wrap:wrap; gap:4px 16px; padding-top:12px; }
+@container(max-width:600px) { .ops-week-grid { grid-template-columns:1fr; } .ops-week-day { display:grid; grid-template-columns:110px minmax(0,1fr); gap:4px 12px; padding:12px 0; border-right:0; border-bottom:1px solid var(--pg-line); } .ops-week-day:last-child { border-bottom:0; } .ops-week-day h3 { align-content:start; margin:8px 0 0; } .ops-week-day>:not(h3) { grid-column:2; } .ops-week-weekend { grid-template-columns:1fr; } }
+@container(max-width:280px) { .ops-week-day { display:block; } .ops-week-day h3 { margin:0 0 10px; } }

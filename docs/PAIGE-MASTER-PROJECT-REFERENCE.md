@@ -1093,6 +1093,74 @@ authenticated acceptance. All19/9 and founder evaluation remain owed. Recovery
 is a reviewed bounded test correction/revert preserving the render-once contract.
 This factual post-merge closeout is not logged recursively.
 
+**2026-10-21 UTC — EXP02 scoped unsent-question recovery foundation, inactive.**
+PR [#2462](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2462), reviewed
+`18a560d5ee80a9294b7a23d0b26a08cecca5d30f`, merged main
+`87ccff84221497f298041fb33a0e16ee85d8c719`, actual/expected tree
+`f728d532634b04bc39b724ec3bb4926b1b285bf4`. One optional bounded tab-session
+cache in the existing sole five-axis composer store, disabled until an eligible
+canonical account binding is supplied. This released tree has no product caller.
+Ready/unresolved/clear, newer revisions/tombstones, take/restore/move/refusal,
+actor/tenant/thread/client/Play isolation and same-actor workspace memory remain
+in the existing store. TTL24h/max8slots/20ktext/200kserialized bounds never truncate
+current editable input. Precommit hydration-order, same-actor draft preservation
+and serialization-bound findings were reproduced, fixed and retained as tests.
+Source126 cases/3 suites, scoped lint/diff, SOLO parity and mutation controls PASS.
+Separate AUTHOR-REVIEW / LOWER ASSURANCE6309631108, final6310044126; all10
+applicable exact-head checks plus both Vercel statuses SUCCESS, no-schema Preview
+SKIPPED and zero review threads. Actual merge tree equals reviewed composition.
+Production web `dpl_EaZdH8W1nJEu2iswf7X9DcNqkBRx` READY/exact provider metadata;
+public HTTP200 build
+`87ccff84221497f298041fb33a0e16ee85d8c719-mvhrft4w`, customerUpdate=null.
+Migrations/Edge NOT_APPLICABLE. Channel production/internal-only foundation,
+no customer release identity or announcement. Consumer#2463 is a separately
+released increment recorded next. No automatic send/replay, attachment,
+business Memory, job, permission/provider/action activation or verified algorithm.
+Catalogue states remain unchanged; authenticated ordinary reload, full-shell/
+cohort/Live/current Chat recovery, all19/9 and one founder evaluation are PROOF OWED.
+Recovery is a reviewed bounded forward correction/revert preserving current input,
+canonical submitted history and uncertain-action holds; browser-denied physical
+cache erasure is not guaranteed. [Observed production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2462#issuecomment-6310134039).
+This factual post-merge closeout is not logged recursively.
+
+**2026-10-21 UTC — EXP02 scoped unsent-question reload consumer, source release.**
+PR [#2463](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2463), reviewed
+`b7577fc9f950048120d411a59f4a4cbc38eeac7d`, merged main
+`73d8a03db8df273fe45dfb122854c05b24886e6b`, actual/expected tree
+`e3d3c17a446fdbad5554cd6cc1edd1e5fbb73225`. The existing sole composer now binds
+its optional tab cache to canonical ready actual-subject/strict-SOLO/non-Operator/
+non-impersonated scope, displays persistent unavailable-reload guidance and sizes
+restored/handoff text with the existing capped typing rule. Original five-axis
+resolver/revision/take/clear/refusal/no-replay controls retained. No new Auth
+subscription, permission, business Memory, queue, history or attachment store.
+Four production files; remaining source is owning tests/reused harness and evidence.
+Final separate AUTHOR-REVIEW / LOWER ASSURANCE6310564689/6310977995; ten applicable
+exact-head checks plus both Vercel statuses SUCCESS, no-schema Preview SKIPPED,
+zero review threads. Actual merge equals reviewed tree with no production delta.
+Affected161 cases/6suites PASS/0skip; TypeScript ratchet10baseline/6current/no new
+errors; native10 exact JPEG component captures/5flows/loaded Schibsted/contrast
+5.32 and7.52/no horizontal overflow support the repair. Initial phone clipping and
+evidence grammar/format findings were corrected; all image bytes are preserved,
+dimensions/format/SHA256 independently indexed. E05#2401 bounded prospective frontend
+composition284 cases/9suites PASS; its distinct C0b conflict is excluded, not waived.
+Normal web `dpl_FrDoJrgNRtUfrS7NwrbCL3xkgpCu` READY/production/exact provider metadata
+and canonical aliases; actual public HTTP200 build
+`73d8a03db8df273fe45dfb122854c05b24886e6b-mvhthuqm`, customerUpdate=null.
+Served bootstrapmain-f3Oi3v2R → main-Bk7uK8H8 verifies cache key/validation;
+its actual PaigeAIChat-DBK0_GIe chunk serves the reviewed failure guidance and
+width observer. No authenticated data was read for this public source check.
+Migrations/Edge NOT_APPLICABLE. Channel production/internal-only; no customer
+release identity/announcement. All nine catalogue/access states stay unchanged;
+NO VERIFIED ALGORITHM or provider/permission/business-action activation added.
+Ordinary customer reload/original thread-focus return, current Chat CPU recovery,
+full shell/cohorts/Live/all19/9/founder acceptance remain PROOF OWED. Native and
+source tests are not customer acceptance. Browser-denied physical cache removal
+is not guaranteed. Recovery is a reviewed bounded frontend correction/revert,
+preserving current input, canonical submitted history, pending-operation identity
+and no automatic replay. [Production source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2463#issuecomment-6311081808),
+[UI proof boundary](evidence/ui-delivery/e2-draft-reload-binding.md).
+This factual post-merge closeout is not logged recursively.
+
 **2026-10-20 UTC — EXP05 retires cancelled or stale weekly owner inspections.**
 PR [#2435](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2435), reviewed
 `727a0ff17e670b387b23e921bdf2c931f0258904`, merged main

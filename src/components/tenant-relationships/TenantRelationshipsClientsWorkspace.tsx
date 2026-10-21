@@ -46,6 +46,7 @@ import { ClientPortalAccess } from "./ClientPortalAccess";
 import type { PortalAccessStateName } from "@/lib/client-portal-access";
 import { PortalConfigurationGate } from "./PortalConfigurationGate";
 import { OwnerPortalDashboard } from "./OwnerPortalDashboard";
+import { readCuraKnowledgeReference } from "@/lib/cura-knowledge-reference";
 import "./tenant-relationships-clients-workspace.css";
 
 const CanonicalConversations = lazy(() => import("@/pages/admin/ClientsConversations"));
@@ -124,6 +125,8 @@ export function TenantRelationshipsClientsWorkspace({
   const previousTenantId = useRef(activeTenantId);
   const accountIsChanging = previousTenantId.current !== activeTenantId;
   const deepLinkedContactId = routeTier === "solo" && !accountIsChanging ? searchParams.get("person") : null;
+  const knowledgeReference = useMemo(() => routeTier === "solo" && !accountIsChanging
+    ? readCuraKnowledgeReference(searchParams) : null, [routeTier, accountIsChanging, searchParams]);
   const data = useTenantRelationshipsData({
     activeTenantId,
     variant,
@@ -137,9 +140,10 @@ export function TenantRelationshipsClientsWorkspace({
     const clearSalesOrigin = routeTier === "solo" && !!previousTenantId.current && searchParams.get("origin") === "sales";
     previousTenantId.current = activeTenantId;
     setSelectedContactId(null);
-    if (!searchParams.has("person") && !clearSalesOrigin) return;
+    if (!searchParams.has("person") && !clearSalesOrigin && !readCuraKnowledgeReference(searchParams)) return;
     const next = new URLSearchParams(searchParams);
     next.delete("person");
+    if (readCuraKnowledgeReference(searchParams)) { next.delete("view"); next.delete("source"); }
     if (clearSalesOrigin) { next.delete("origin"); next.delete("salesReturn"); }
     setSearchParams(next, { replace: true });
   }, [activeTenantId, searchParams, setSearchParams, routeTier]);
@@ -268,7 +272,8 @@ export function TenantRelationshipsClientsWorkspace({
         {activeTab === "calendar" && <CalendarLens key={activeTenantId} routeTier={routeTier} activeTenantId={activeTenantId} returnAddress={calendarReturnAddress} openPaige={openPaige} />}
         {activeTab === "segments" && <SegmentsView />}
         {activeTab === "portal" && (soloPortal
-          ? <OwnerPortalDashboard key={`${activeUserId}:${activeTenantId}`} tenantId={activeTenantId} tenantName={activeTenant.name} data={data} openPaige={openPaige} openClient={(contactId) => {
+          ? <OwnerPortalDashboard key={`${activeUserId}:${activeTenantId}`} tenantId={activeTenantId} tenantName={activeTenant.name} data={data} openPaige={openPaige} knowledgeReference={knowledgeReference}
+            onKnowledgeReferenceExit={() => { const next = new URLSearchParams(searchParams); next.delete("view"); next.delete("source"); setSearchParams(next, {replace:true}); }} openClient={(contactId) => {
               setSelectedContactId(contactId ?? null);
               if (!soloClientRoute) { setRouteTab("people"); return; }
               const next = new URLSearchParams(searchParams);

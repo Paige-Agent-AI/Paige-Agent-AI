@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: Only requested available-domain act/watch risks are ranked,
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: Caller authorization, canonical adapters/metric issuer, Chat admission, Harness/Trust/Rails, provider and algorithm engines stay unchanged; no new source fingerprint is accepted.
 
-INTERNAL_BUILD_IDENTITY: c6a4865f4570068f394aa6ef29e9473927d9b2e0; deployment=none; environment=local; migrations=NOT_APPLICABLE; edge=PROOF_OWED(business-mission-action, execute-approval, paige-ai-chat, paige-business-review and paige-native-event-dispatch strict source/config readback); evidence=ANT-138; identity-role=supporting current-main composition, final candidate identified by Git/PR receipt.
+INTERNAL_BUILD_IDENTITY: 80a25bd82a731fbdfbc40809c03f63f4f7932484; deployment=none; environment=local; migrations=NOT_APPLICABLE; edge=PROOF_OWED(business-mission-action, execute-approval, paige-ai-chat, paige-business-review and paige-native-event-dispatch strict source/config readback); evidence=ANT-138; identity-role=supporting current-main composition, final candidate identified by Git/PR receipt.
 RELEASE_CHANNEL: development: source-only shared interpretation prerequisite.
 RELEASE_CLASSIFICATION: internal-only: no complete Experience or validated algorithm claim.
 CUSTOMER_RELEASE_IDENTITY: none: full integrated acceptance remains pending.
@@ -46,3 +46,5 @@ SOLO_900X1000_PAIGE_CLOSED: PASS: corresponding native PNG in e2-priority-native
 SOLO_900X1000_PAIGE_OPEN: PASS: corresponding native PNG in e2-priority-native-2026-10-20; synthetic data and no backend.
 
 Native finish review: real Schibsted Grotesk headings and Geist token family loaded; existing Executive scroll owner is overflow:auto while shell main remains hidden. Ranked3 findings keep canonical Systems Check/Finance/Sales links. Discuss passes an unsent, read-only reread request to the synthetic composer; it is not an ordinary authenticated Chat exchange, actual action or durable receipt. Original source wording/amounts remain unchanged. No new UI system or source metric read.
+
+Release reconciliation: original stacked PR2409 still targeted former Finance head d0aafc53. Hosted UI39522234756 failed on an already-merged foreign Operator Sales attestation, not this priority evidence. Same PR retargeted to main8edf4308; no foreign evidence/source altered, no failing check waived. Fresh exact-head required CI on the corrected base gates release.

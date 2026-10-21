@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createMarketingIntakeSnapshotAdapter, MARKETING_INTAKE_METRICS } from '../../supabase/functions/_shared/paige-context/adapters/marketing-intake.ts';
 import { resolveSnapshotPeriod, validateDomainSnapshot } from '../../supabase/functions/_shared/paige-context/snapshot.ts';
 import type { ContextIdentity } from '../../supabase/functions/_shared/paige-context/mod.ts';
+import { composeBusinessReview } from '../../supabase/functions/_shared/paige-context/business-review.ts';
 
 const TENANT = 'a3400000-0000-4000-8000-0000000000f4';
 const NOW = new Date('2026-10-12T12:00:00.000Z');
@@ -56,11 +57,31 @@ function harness(opts: { edit?: (row: Fixture, key: string) => void; denied?: bo
   } };
   const scope = opts.scope ?? { tenantId: TENANT };
   const adapter = createMarketingIntakeSnapshotAdapter(caller, scope, () => NOW.getTime());
-  return { calls, adapter, read: (signal?: AbortSignal) => adapter.read(ctx(signal)), maxActive: () => maxActive };
+  return { caller, calls, adapter, read: (signal?: AbortSignal) => adapter.read(ctx(signal)), maxActive: () => maxActive };
 }
 const headlines = (result: Awaited<ReturnType<ReturnType<typeof harness>['read']>>) => Object.fromEntries(result.data?.headline.map(row => [row.key, row.value]) ?? []);
 
 describe('Marketing intake over the canonical Metric/Evidence cycle', () => {
+  const review = (h: ReturnType<typeof harness>) => composeBusinessReview(h.caller,
+    { actorId: identity.actorId, tenantId: TENANT, role: 'owner', accountShape: 'solo' },
+    { period: 'last_7_days', timezone: period.timezone, focus: ['campaigns'] }, { now: NOW });
+  it('mounts the original Marketing reader in the same Business Review used by Chat and Executive', async () => {
+    const h = harness(), result = await review(h);
+    expect(result.ok).toBe(true); if (!result.ok) return;
+    expect(result.snapshot.requested).toEqual(['campaigns']);
+    expect(result.snapshot.domains.campaigns?.data?.headline).toHaveLength(7);
+    expect(result.projection).toContain('Recorded intake only');
+    expect(result.projection).not.toMatch(/PRIVATE_CUSTOMER|aneb_v1_|ae_v1_|UNTRUSTED_TAG_LABEL/);
+    expect(h.calls.filter(row => row.name === 'issue_analytics_evidence_bundle').map(row => row.input?.p_metric_key))
+      .toEqual(Object.values(MARKETING_INTAKE_METRICS));
+  });
+  it('withholds the mounted domain on authorization denial and final workspace change', async () => {
+    for (const h of [harness({ denied: true }), harness({ switchAt: 14 })]) {
+      const result = await review(h); expect(result.ok).toBe(true); if (!result.ok) continue;
+      expect(result.snapshot.domains.campaigns?.data).toBeNull();
+      expect(result.projection).not.toContain('Leads received (form submissions): 6');
+    }
+  });
   it('projects only original counts, source provenance and real processing risks in a valid domain snapshot', async () => {
     const h = harness(), result = await h.read();
     expect(result.status).toBe('available'); expect(result.data?.coverage).toBe('partial');

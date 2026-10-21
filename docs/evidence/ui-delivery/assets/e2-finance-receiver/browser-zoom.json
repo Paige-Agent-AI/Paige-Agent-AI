@@ -1,0 +1,14 @@
+{
+  "kind": "synthetic-native",
+  "before": {
+    "ratio": 1.0000000149011612,
+    "width": 900
+  },
+  "after": {
+    "overflow": false,
+    "ratio": 1.0000000149011612,
+    "width": 900
+  },
+  "result": "UNVERIFIED: keyboard delivery did not change browser scale; only explicit narrow viewport reflow is proven",
+  "restored": true
+}

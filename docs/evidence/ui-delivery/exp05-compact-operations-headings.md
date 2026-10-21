@@ -31,13 +31,13 @@ MUST_NOT_HAPPEN: clipping or hiding errors/source coverage; smaller touch target
 MUST_PRESERVE: all six native views, original headings and focus hooks, counts, controls, source caveats, empty/loading/error/denied states, tenant/role contracts, domain writers, canonical records and Rails.
 ACCEPTANCE_CRITERIA: all six headings visibly compact at supported widths and themes; no redundant header paragraphs; original controls reachable; no overflow or workflow regression; final source reviewed, CI green, deployed and ordinary-owner appearance verified.
 PROTECTED_SEAMS: all state/hooks/data/permissions/approval/action/provider/receipt code unchanged. Nine runtime files consist solely of six header JSX fragments and three owning CSS files. No shared Chat, Spine, Registry, Calendar, Team, Sales, Knowledge or E02/E09 source edits.
-INTERNAL_BUILD_IDENTITY: product commit b29548cb265df08c52727ad6d5d9aa00c609c460; base3ff77d368d2bf5a4261d6ee1e3ce7ab314516892. Evidence-only successor identity is recorded in the PR. Production identity does not exist for this correction yet.
-RELEASE_CHANNEL: development; hosted preview and production remain separate future proof.
-RELEASE_CLASSIFICATION: internal patch; no named customer release or announcement.
-CUSTOMER_RELEASE_IDENTITY: none; no product launch or whole-Experience acceptance.
-RELEASE_NOTE_REQUIRED: no; internal bounded visual refinement under the existing EXP05 program.
-RELEASE_TRUTH_BOUNDARY: source implemented and existing tests pass. Final rendered phone/keyboard confirmation, exact-head review/CI, merge/deploy/readback and authenticated production appearance remain owed. Full ten-outcome EXP05, algorithms, ZION delegation, automations, Live and owner acceptance remain incomplete.
-RELEASE_RECOVERY: reviewed presentation-only forward correction or revert; no migration, domain record, provider activation or irreversible effect.
+INTERNAL_BUILD_IDENTITY: product commit b29548cb265df08c52727ad6d5d9aa00c609c460; final evidence successor in immutable PR review; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp05-compact-operations-headings.md
+RELEASE_CHANNEL: development: hosted preview and production remain separate future proof.
+RELEASE_CLASSIFICATION: patch: compact existing headings and remove redundant introductory copy; no new capability.
+CUSTOMER_RELEASE_IDENTITY: none: no customer announcement, product launch or whole-Experience acceptance.
+RELEASE_NOTE_REQUIRED: NO: internal bounded visual refinement under the existing EXP05 program.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: final rendered phone/keyboard confirmation, exact-head review/CI, merge/deploy/readback and authenticated production appearance. Source is implemented and existing tests pass; full ten-outcome EXP05, algorithms, ZION delegation, automations, Live and owner acceptance remain incomplete.
+RELEASE_RECOVERY: position=reviewed presentation-only forward correction or bounded revert preserving every domain record and authority contract; reference=the nine owning Operations component/CSS paths and the existing eight Operations regression suites.
 UNVERIFIED: final mobile override correction was not browser-confirmed because the existing Chrome connection disappeared. Final visual/keyboard/zoom checks and production proof remain required; no waiver or completed Experience claim.
 
 ## Capability routing and collision check

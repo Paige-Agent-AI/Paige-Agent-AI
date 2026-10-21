@@ -103,3 +103,23 @@ Delegated lead accepts the page/step architecture as implementation direction, w
 the material production work above open. This is not final owner acceptance, a
 personally reviewed founder mock, or production readiness. No capability/algorithm
 catalogue entry is promoted to LIVE. All twelve original outcomes remain incomplete.
+
+## October21 — retained-wording inspection extension
+
+Existing isolated native-shell prototype now includes original detail → Wording
+history → older-page selection → return to current agreement. Twenty prescribed
+viewport/theme combinations and eleven paths PASS, zero page errors. Read-only
+loading/empty/error/denied/offline/uncertain/stale states hide wording and expose
+explicit retry/return; keyboard selection and business retirement pass. Source
+hashes and captures are task-local outputs/e04-history-flow-prototype/result.json.
+Representative desktop/narrow retained-wording views were inspected. All effects,
+records, dates and authority remain synthetic; no production/customer evidence.
+
+Existing E04 lead selected this inline/page design intent using the owner's
+October21 delegated UX authority. No individual founder signoff is claimed or
+requested; one complete live founder evaluation remains owed. Native retained
+revision and engine body-version are visibly distinct, no restore mutation exists,
+and failed/missing history never becomes an invented earlier document. The first
+compile used the wrong working directory and the next browser route used an
+incorrect emitted HTML path; corrected same-source render passes. Neither setup
+failure establishes a product/customer defect. No production prototype controls.

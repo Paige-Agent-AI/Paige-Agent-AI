@@ -6,6 +6,18 @@ mock. Complete live Experience evaluation remains pending. No other agent is use
 
 ## Compact flow brief
 
+October21 history extension, before production editing: original detail → read-only
+wording history beside retained document → select earlier occurrence/read older page
+→ return to current agreement. Native page/inline tools preserve context; no long
+modal, restore or financial effect. Goal is inspect exact earlier wording, not infer
+what was signed. Existing source/retention times and content/occurrence versions
+remain distinct. Loading/empty/error/refused/offline/unconfirmed reads expose retry
+and return; changing business retires selection. Read-only navigation has no dirty
+work, signature consent, expiry mutation or destructive confirmation. Immediate
+state feedback/reduced motion; no haptic. Existing lead may select routine design
+intent under explicit Oct21 owner UX delegation; one complete founder evaluation
+remains pending. Shared shell/tokens and prior prototype remain the only host.
+
 Goal: prepare, review, request and later inspect the same client agreement.
 Human and feel: a service-business owner; composed, legible, in control of consequences.
 Entry and exit: existing Sales → Terms & Agreements; return to the same register and draft.

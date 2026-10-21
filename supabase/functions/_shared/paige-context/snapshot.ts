@@ -1452,6 +1452,23 @@ export const SNAPSHOT_PROJECTION_INSTRUCTION =
 
 const SNAPSHOT_DEFAULT_MAX_CHARS = 6000;
 
+/** Deterministic ALG-03/13 baseline over already-authorized domain evidence. */
+export const SNAPSHOT_PRIORITY_POLICY = 'severity_order.v1';
+export type SnapshotPriority = DomainSnapshot['risks'][number] & {
+  readonly domain: SnapshotDomain;
+};
+
+/** No score, new evidence, source mutation or action authority. Stable ties retain source order. */
+export function rankOperatingSnapshotRisks(s: Pick<BusinessOperatingSnapshot, 'requested' | 'domains'>): SnapshotPriority[] {
+  const order = { act: 0, watch: 1, info: 2 };
+  return s.requested.flatMap(domain => {
+    const entry = s.domains[domain];
+    if (entry?.status !== 'available' || !entry.data) return [];
+    return entry.data.risks.filter(risk => risk.severity === 'act' || risk.severity === 'watch')
+      .map(risk => ({ ...risk, domain }));
+  }).sort((a, b) => order[a.severity] - order[b.severity]);
+}
+
 /**
  * Plain-text projection for the model, built from the structured snapshot. `maxChars` (default 6000) is
  * the budget for DOMAIN SECTIONS: when over, whole sections are dropped from the end and a line names
@@ -1484,7 +1501,15 @@ export function projectOperatingSnapshot(
       );
     }
     parts.push(SNAPSHOT_PROJECTION_INSTRUCTION);
-    return parts.join("\n");
+    const plain = parts.join("\n");
+    // Never recover a priority from a domain excluded by this summary's budget.
+    const priorities = rankOperatingSnapshotRisks({ requested: s.requested.slice(0, kept), domains: s.domains }).slice(0, 3);
+    if (!priorities.length) return plain;
+    const order = ['Priority order: Only source-reported risks are ranked; act before watch, source order breaks ties; unreadable areas remain unknown.',
+      ...priorities.map((risk, index) => `- Priority ${index + 1} (${risk.severity}) from ${SNAPSHOT_DOMAIN_LABELS[risk.domain]}: ${quoted(risk.summary)}`)];
+    const prioritized = [header, ...order, ...parts.slice(1)].join('\n');
+    // Prefer complete original evidence to an extra interpretation when space is tight.
+    return prioritized.length <= maxChars ? prioritized : plain;
   };
 
   for (let kept = sections.length; kept > 0; kept -= 1) {

@@ -826,6 +826,199 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-21 — EXP04 retained agreement completion verification.**
+PR [#2487](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2487), reviewed
+`82e33f96c9fbac525db0f7b95151cc63b46095de`, merged
+`4fa7ea57abf8bb643b4ab7ec191e9b2e3488d837`; actual composition tree
+`a2d32ebc3edbfc2f78d4fcd35b3ace7e56bbe2e8` independently reproduced against
+actual parent8f12cc73, retaining concurrent E09/EXP05 work and the reviewed native
+agreement source. Selectively reuses #2186 and #2175's retained-byte verifier.
+Completed helper retries and losing writes require the original completed row and
+its actual matching private PDF; unavailable evidence withholds confirmation without
+rewriting completion, re-sealing or replaying notices/tokens. No new signing engine.
+AUTHOR-REVIEW / LOWER ASSURANCE6322702330/6323215493; all10 exact-head checks,
+including actual Supabase Preview, and both Vercel statuses SUCCESS. Native106 plus5
+original Portal wiring cases and three Edge type checks pass; these are source proof.
+Normal Edge push39651063122/job119399192802 SUCCESS: affected sign-agreement source
+and JWT configuration PASS, ordinary certified tag advancement recorded. Artifact
+12369491053 SHA2563b87d89bc0215baaefed2174595ac14c4d76a8096af94f1f60ba39366b9e3d6a.
+Direct production package firstv25, subsequentlyv27 ACTIVE/verify_jwt=false: all11
+source files exactly match merged4fa7ea57; later metadata reads retainv27/update time.
+Current EZBR SHA25640cdcda53edcd960013a548b09cb2f991b374c0206e68772a4f56f4d9344195c.
+Web dpl_FqUiGdmgxjzhZBrhZGAj4nAJ8uQi READY on exact merge. Later public
+fc2f4324…-mvifvof7 observed; compare confirms a docs-only descendant. This increment's
+migrations NOT_APPLICABLE. No manual deployment, tag, JWT or source-verification waiver.
+Actual signer/owner/client completed-copy recovery, real concurrency, full ALG01/12,
+accepted/effective terms and all O1–O12/founder acceptance remain PROOF OWED. No real
+signature, send, payment or provider activation was executed for this proof.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2487#issuecomment-6323403903),
+[source evidence](evidence/ui-delivery/e04-retained-completion-reconcile.md).
+Channel production; internal integrity prerequisite, no customer version/announcement.
+Recovery is reviewed forward correction preserving immutable records. This factual
+post-merge identity closeout is not logged recursively.
+
+**2026-10-21 — EXP04 existing Agreements register discovery repair.**
+PR [#2486](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2486), reviewed
+`f854bcf150961caaeeb1548d70a33c72567f34aa`, merged
+`719a39437f1553eb280e820fbe84686fa4afc965`. Existing loaded records can be found by
+client, document or recorded signer; missing and unreadable signature states remain
+distinct, a failed read retires the missing-document filter, and each source's
+200-record limit is disclosed accurately. Canonical records, authority, original
+details, signature/commercial separation and all prior source work are retained.
+AUTHOR-REVIEW / LOWER ASSURANCE6322377043/6322812270; ten applicable exact-head
+checks and two Vercel statuses SUCCESS, schema-free Supabase Preview SKIPPED.
+Web `dpl_GgavqzeUH1HqS1Pkr1UKRZyU4vU6` READY on exact merge; stable public
+`719a39437f1553eb280e820fbe84686fa4afc965-mviexe9v` and actual imported SOLO
+bundle's three changed discovery strings verified. Migrations/Edge NOT_APPLICABLE.
+Local composed202 cases and20 native synthetic frames/nine paths are source proof.
+Actual ordinary owner Sales/Agreements navigation, genuine empty source, original
+create-form opening/cancellation and full reload passed. Populated lookup/filter,
+staff/client/signing/provider outcomes and whole O1–O12/founder acceptance remain
+UNVERIFIED; no record was created to manufacture proof. Protected bounded smoke
+ANT52/e96d6e3f is not independent Central QA or full Experience acceptance.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2486#issuecomment-6322994905),
+[source evidence](evidence/ui-delivery/e04-agreement-register-discovery.md).
+Channel production; internal correctness increment, no customer release/version or
+announcement. Recovery is a reviewed source correction/revert preserving all records.
+This identity-only post-merge closeout is not logged recursively.
+
+
+**2026-10-21 — EXP05 recorded findings in Operations, bounded production release.**
+PR [#2474](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2474), final reviewed
+`f9dff45e6c2214412da05d4fb70153937c254309`, merged
+`d7f55f217f78a1576b21f65d92c06fb5b1e56ac2`; actual tree
+`15733dc2dc3a12462e61b78065ef788b3c67dd6b` matches the pre-merge reviewed union
+with main52d45822/E09#2404. AUTHOR-REVIEW / LOWER ASSURANCE receipts
+6320511260/6320964836 record final source/native input composition. All10
+applicable exact-head checks and both Vercel statuses SUCCESS; schema-free
+Supabase Preview SKIPPED. General verify39631494090/job119330590470 completed
+all167 steps; the original database suite and90-case E09 retrieval controls passed.
+Web `dpl_7TYYU1eGELLCddgCCQRtHp5Djq1k` READY/exact, canonical production aliases
+read back; public HTTP200 build
+`d7f55f217f78a1576b21f65d92c06fb5b1e56ac2-mvic9b9f`, customerUpdate:null.
+No migration, Edge/config, provider, approval or activation change.
+Ordinary owner production reads the actual findings, distinguishes them from
+native Work and opens the correct original Systems Check. Settled source counts
+agree. **Back focus FAIL:** two independent settled probes return focus to BODY;
+Work hydration remounts the findings after consuming its return marker. A focused
+forward correction is under engineering; no complete Back/reload acceptance is
+claimed. A transient source-read failure remained explicitly partial and later
+recovered without running a check. No action, Save, send or new Rail was produced.
+[Bounded native/source evidence](evidence/ui-delivery/exp05-recorded-operations-findings.md).
+Internal patch only, no customer version/publication; recovery is a reviewed
+compatible source forward fix preserving original records and authority.
+
+**2026-10-21 — additive authenticated read and accounting boundary.**
+Later ordinary-owner reads in both designated existing SOLO cohorts prove the
+released2452 weekly-status/proposal-empty feedback and normal reload; one explicit
+saved-proposal reread also succeeds. Private eleven-artifact seal
+`ed387f545d7d98d98baafa540e1cc300a9c694747fedca2e2d14d66316e8e077`, ANT11/5e453156
+and ANT52/3e223078. No proposal creation/decline, recurrence, provider effect or new
+execution receipt was tested; E5-CV1–9 remain open. Second-cohort Capacity opens
+the correct native Task with matching status, responsible person and missing
+date; closing restores its opener, without editing. ANT52/750c11db; private seal
+`315838e933a5eb841f030148cb40dbd0c22cb3e8d9c12188313f2a2dc38866dc`.
+Current EXP05 scope is ten outcomes/E5-CV1–9, eleven primary CAP073–083 and eight
+shared delegation integrations CAP001–008. Both owner catalogues still show all
+eleven Operations entries Listed/Unverified. The platform register has118 named
+skills plus2 runtime rows; an import is not readiness. Original18 actions,
+25 requirements and50 sample observations are preserved and distributed to the
+receiving Experiences. Historical1/18 and2/50 snapshots are not current EXP05 or
+platform-wide acceptance totals; reassignment closes no proof debt. No new
+algorithm, separate Live, ZION/automation or founder acceptance is inferred.
+
+**2026-10-21 — EXP05 weekly-decline authority, production release.**
+PR [#2441](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2441), reviewed
+`bcd16bf483750b59e496df87ec622c3243e957ba`, merged
+`5b53390569b4aecb02491fe22ec832254ec8dab7`; actual tree
+`8afb70f03ba088b7b91bfbacaed860125f13900f` equals the independently reviewed union.
+Original owner-scope locking now precedes the existing confirmation/proposal
+locks; token, audit, reconciliation and tenant/role controls remain intact.
+NON-AUTHOR source/composition review and actual-parent applicability
+`b01a739bbaf89d9102de0e8475647545b736f8c5d962a77574b848773da37b93` PASS;
+all13 applicable exact-head checks and2 Vercel statuses SUCCESS.
+Normal migration run39523505064 SUCCESS applied
+`20271113020000_experience05_weekly_decline_scope.sql`; production catalog/name,
+function MD5 `80ea9c53c41720c830b38c6ff800d43f`, empty search_path/DEFINER and
+postgres/authenticated-only ACL read back; anon/service execute FALSE.
+Production web `dpl_G9H9GUNwuYwLv5yadbFRRpmHmKXP` READY at exact merge;
+public HTTP200 build `5b53390569b4aecb02491fe22ec832254ec8dab7-mvhe8tu8`.
+No Edge/config/provider or recurring activation changed. Exact authenticated
+proposal-decline/reload and dynamic decline-versus-revocation timing remain
+`PROOF OWED`; ordinary owner read/reload is a separate bounded observation.
+Reviewed forward correction through the original function is the recovery path;
+production migration history is never reset. [Release evidence](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2441#issuecomment-6305236155).
+
+**2026-10-21 — EXP05/E09 release-test clock reconciliation.**
+PR [#2443](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2443), reviewed
+`76ae88e12a5371d1a4d8a2ce9c4fc4d187ca5b85`, merged
+`d545ef2c90d1d941ce656673868e394bb8a6a714`; actual tree
+`93b7a9de6e22a03e4775cf0a1a6ec969e37b10d0` matches the reviewed composition.
+The original invitation-handler tests use a deterministic noon clock and four
+quiet-hours boundaries; production sending policy is unchanged. NON-AUTHOR
+review `7c62563721c0d1ccc726cec88199423e005babe52910fc59fe9f3a9202510ead`
+PASS; all11 applicable checks and2 Vercel statuses SUCCESS. Existing-handler
+302-case verification includes40 normal/forced23:59 clock cases.
+Web `dpl_663jYJ3jZDcQzLrFrPFtH2GgD15K` READY/exact; public HTTP200 build
+`d545ef2c90d1d941ce656673868e394bb8a6a714-mvhdwxsm`.
+The test path automatically redeployed the unchanged `send-portal-invite`.
+Initial run39522583928 passed deploy/source/config and then failed its prior-tag
+recording guard; that FAIL is retained. Existing recovery run39522947602/job118970879713
+SUCCESS verified source/config and recorded edge-live=d545; observed invitation
+functionv1934 ACTIVE with its incumbent verify_jwt=false. No send, credential,
+provider activation or business record was produced; migrations NOT_APPLICABLE.
+This closes a CI fixture dependency, not an authenticated invitation outcome.
+[Additive recovery evidence](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2443#issuecomment-6305141260).
+
+**2026-10-21 — EXP05 weekly-proposal read feedback.**
+PR [#2452](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2452), reviewed
+`1a6beb55830e25d1cd04218968e98f0bacc89a9a`, merged
+`7b462fe01ae5ff8efa96eafb8557a2ea3527cadf`; actual tree
+`d7a3740262d3008811ea224836b94f21580fcc9a` equals the independently sealed union.
+Verified empty replies, active reads and failures have distinct feedback;
+the original reread control, authority fences, approval and save paths remain.
+NON-AUTHOR final binding `a6afa8929aa920550cbca51f3e1cdd2fc6863f47f302964e8a69d6b7dfc89a8d`
+and current-main supplement61d0a17d PASS; all10 applicable exact-head checks
+and2 Vercel statuses SUCCESS, schema-free Preview SKIPPED.56 owning assertions,
+native isolated frames and preserved/dispositioned invalid captures support the
+[bounded evidence](evidence/ui-delivery/exp05-weekly-proposal-feedback.md).
+Web `dpl_8TM5RNxe3RdL9EgDGsVsZBoQwAXU` READY/exact; public HTTP200 build
+`7b462fe01ae5ff8efa96eafb8557a2ea3527cadf-mvhm4pdg`.
+Migrations/Edge/config/activation NOT_APPLICABLE. The restored ordinary-owner
+session returned the corrected empty text on October21, but browser viewport,
+capture/input failures leave full corrected native reread/reload proof
+`PROOF OWED`; that DOM observation is not complete customer acceptance.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2452#issuecomment-6308138624).
+
+**2026-10-21 — EXP05 scoped canonical-review prerequisite.**
+PR [#2456](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2456), reviewed
+`fdde5fc2cdc0a368446bdbb3b0f0fd29f7b71c3a`, merged
+`255ff320cc45d707618901e052abd8cc7e228d67`; actual tree
+`47f7d1deab911a1ce3df3d3908089e0232ae3078` equals independently reviewed union.
+Existing Business Review accepts optional actor/tenant/focus/period assertions,
+a15-second focused-read deadline and late-response rejection. A reproduced
+A-to-B-to-A stale-state defect is retired before child paint for focused and
+default callers; default endpoint/body/parser contracts are preserved.
+25 root/32 independent controls PASS; original failing controls remain recorded.
+NON-AUTHOR corrective seal5dbd3082 and current-main supplement3a261a91 PASS;
+all10 applicable exact-head checks and2 statuses SUCCESS, no-SQL Preview SKIP.
+Web `dpl_2qkgsSXL9AghfwPZFyibwXFvBkHp` READY/exact; public HTTP200 build
+`255ff320cc45d707618901e052abd8cc7e228d67-mvhmhpbo`.
+Migrations/Edge/config/activation NOT_APPLICABLE. No focused Operations UI caller
+was released in this PR; its dependent consumer and authenticated read/reload
+remain `PROOF OWED`. [Source/release evidence](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2456#issuecomment-6308214507).
+
+All four are internal production repairs/prerequisites, without a customer
+release name, publication or founder acceptance. Source-only feedback/reader
+rollback uses a reviewed prior implementation; no business records are erased.
+CAP073–083 availability is not promoted by these changes. NO VERIFIED ALGORITHM
+is added: original ALG01 authority/recovery controls are preserved; PAIGE stays
+principal and ZION remains planned. Full universal SOLO ten-outcome/E5-CV1–9,
+Chat/Live, automation, provider, second-cohort/new-account and historical
+18/25/50 acceptance remains open. The old1/18 and2/50 strict-count snapshots are
+historical; the current Experience-ownership accounting is stated above.
+This mechanical verified-identity closeout is not logged recursively.
+
 **2026-10-21 — EXP09 native relevant Knowledge retrieval prerequisite.**
 PR [#2475](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2475), reviewed
 `0764d6e16565042f1124652fa20cd1ddec81688f`, merged
@@ -5577,6 +5770,30 @@ customer version or availability claim. Native releases2475/2476 preserved;
 consumer2404, teaching controls and full EXP09 authenticated acceptance remain
 separately gated. [Original repair evidence](delivery/e09-production-acl-baseline-repair.md).
 
+
+**2026-10-21 — EXP09 CURA relevant authorized Knowledge consumer.**
+PR [#2404](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2404), reviewed
+`a9211fb4de258d0f2891c2748a69eac75a8d9c5c`, merged
+`52d45822a54950c84c8e80fbb1aa06b7748fcf14`. The original customer Chat now selects
+relevant passages only from currently authorized Knowledge after native customer,
+private-thread and protocol admission. Source/manifest/entitlement/withdrawal
+checks and authorized recency fallback remain. Known accepted/replayed intents
+avoid query embedding; no global simultaneous at-most-once reservation is claimed.
+NON-AUTHOR5602292026;11 exact-head checks/Preview and two Vercel statuses passed.
+Consumer19, context73, scope538 and native90/53 tests passed at their stated
+boundaries. Normal production Edge run39633553865/job119337861469 succeeded,
+including selected-source verification. Direct provider read: Chat489 ACTIVE,
+JWTtrue; exact served handler c69403b2cdacd14e76f1966b0b0f087eb1dc8ba61e86e34973070fdc2bc56c20,
+context0aca33229b6d6180c13ea3cf2fff9da8f65edb69a854f43c3229d11049534cd2
+and unchanged persona60da934797c9953c1a8062bc89689139d10f8f3328dc82b45e2ebf1f3df2356b
+match reviewed source. Native50000 was separately verified in2475; no new migration
+or frontend source in this consumer. No new share, identity/privilege, provider
+activation, live query, external send or payment was performed. Internal production
+increment, no customer version/announcement; original query-metering gap remains.
+Actual ordinary customer answer quality, isolation/private reload, all seven
+pillars/algorithm/capability proof and founder acceptance remain PROOF OWED.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2404#issuecomment-6320887890).
+
 **2026-10-21 — EXP09 original CURA Knowledge publishing inventory.**
 PR [#2476](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2476), reviewed
 `d40bbfa1352a22e7ac860c47173837c1d034ed97` → main
@@ -5594,6 +5811,24 @@ customer release name/announcement or verified algorithm. No effectful provider,
 Chat/Live or payment activation. Recovery: reviewed forward correction preserving
 original records/native compatibility. [Readback receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2476#issuecomment-6319079327);
 [native contract](delivery/e09-cura-knowledge-inventory.md).
+
+
+**2026-10-21 — EXP09 original skill-result native authority.**
+PR [#2482](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2482), reviewed
+`a099e3334018b627efb52bbc95d210725221f59a` → main
+`2a799ca84cfb75fa99f13a75a42b2bc21658ba68`. Distinct final source/integration
+5603897793 and current-main compatibility5604151389 CLEAR; all13 exact-head
+checks and both Vercel statuses SUCCESS. Hosted native45 actual-role assertions
+PASS job119384056084; fullverify119384392339 PASS. Normal migration deployment
+run39650492654/job119397402430 SUCCESS; production records20271113070000 and
+exact reader bodyMD5 9cabd15f19630ea581a9ccf0b33d2223. INVOKER/STABLE/empty
+search_path; postgres/service_role execute only, anon/authenticated denied. All
+five original authority-helper fingerprints unchanged. No RLS/table/writer or
+execution/activation change. Internal production/native prerequisite; web/Edge
+NOT_APPLICABLE, no customer version/announcement or verified new algorithm.
+Separately gated MCP consumer2484 and authenticated capability/customer/full
+Experience proof remain PROOF OWED; native source cannot establish those claims.
+Recovery: reviewed additive forward correction preserving original records.
 
 ## 5. Current focus + known gaps
 

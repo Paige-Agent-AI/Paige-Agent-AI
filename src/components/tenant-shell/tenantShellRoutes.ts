@@ -232,10 +232,13 @@ export function tenantShellDestinationsForPath(
     const branch = destination.id === "settings" && root.startsWith("/solo/")
       ? SOLO_SETTINGS_BRANCH
       : TENANT_BRANCHES[destination.id];
+    const branchHref = `${root}/${branch.slug}`;
+    const operationsOverview = isAuthenticatedSolo && destination.id === "operations";
     return {
       ...destination,
-      href: `${root}/${branch.slug}`,
-      aliases: branch.aliases.map((slug) => `${root}/${slug}`),
+      href: operationsOverview ? `${branchHref}/overview` : branchHref,
+      // Retain section selection for old entry links and every Operations subtab.
+      aliases: [...branch.aliases.map((slug) => `${root}/${slug}`), ...(operationsOverview ? [branchHref] : [])],
     };
   });
 }

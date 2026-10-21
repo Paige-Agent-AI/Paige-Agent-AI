@@ -875,6 +875,9 @@ const ANCESTRY_SOURCES = {
  "supabase/functions/_shared/planning/approved-reminder.ts": "2aa731c9f9c116955fb6a7a99a8c814ca0676464ee1fcfbe1b7780b373b68196",
  "supabase/functions/_shared/planning/original-reminder-outcome.ts": "f7ba277de16f284d0699fc4f9ab103f48bf8ea42cddf6f10c67102c2e9ffd0ce",
  "supabase/functions/_shared/paige-turn/interactive-reminder-history.ts": "84e35fd73307cf8172951fc1dcbf0b1064dd988cfb596ea95bc3ea7e244b4415",
+ // Reviewed original CURA history and caller-JWT observer; no dispatch authority.
+ "supabase/functions/_shared/paige-turn/interactive-cura-history.ts": "46578149462437bb3e1e5243277af11b5f7d251a345e75aece2efb020bf7ef88",
+ "supabase/functions/_shared/cura-knowledge-teaching.ts": "b421c4302a7772d7b376a7ff99cd96691991593eb3ab1db31d1ac82a9825df87",
  // Exact non-author-reviewed generic-email C4b ancestry at a9de011b6;
  // proposal b4ebdf9d / review 8b83d5c5. Existing114 pins and verifier unchanged.
  "supabase/functions/_shared/paige-turn/resume.ts": "dbcdf4de1ca3d1e36d4841650fcb42a43d3d747ddc0c88488e80bb3859cbaff6",

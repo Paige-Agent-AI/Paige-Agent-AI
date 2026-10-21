@@ -16,23 +16,25 @@ const LABEL: Record<OnboardingRecordState, string> = {
 
 /** Presentation of existing request/readback events. No microphone, model,
  * save, timer-driven completion or second progress store is started here. */
-export function SoloOnboardingStage({ thinking, profile }: { thinking: boolean; profile: OnboardingProfileStatus | null }) {
+export function SoloOnboardingStage({ thinking, profile, onResumeProfile, profileOpen }: { thinking: boolean; profile: OnboardingProfileStatus | null; onResumeProfile?: () => void; profileOpen?: boolean }) {
   const state = profile?.state ?? "reading";
   const checking = state === "saving" || state === "reconciling" || state === "reading";
   const held = state === "unknown" || state === "unavailable";
   const presence = held ? "held" : checking ? "working" : thinking ? "thinking" : "ready";
-  return <section className="sos" aria-label="Meet PAIGE" data-onboarding-state={presence}>
+  return <section className="sos" aria-label="PAIGE onboarding progress" data-onboarding-state={presence}>
     <div className="sos-presence">
       <PaigePresence state={presence} />
       <div className="sos-mark" aria-hidden="true"><PaigeCommandMark plated={false} label={null} /></div>
     </div>
     <div className="sos-introduction">
-      <h1>Meet PAIGE.</h1>
-      <p>A conversation about your business.<br />A profile you can see and shape.</p>
       <div className="sos-state" role="status"><span aria-hidden="true" />{thinking && !checking && !held ? "PAIGE is preparing your response" : LABEL[state]}</div>
-      <p className="sos-progress" data-empty={profile?.confirmedCount ? undefined : "true"}>{profile && profile.confirmedCount > 0
-        ? `${held ? "Last verified: " : ""}${profile.confirmedCount} confirmed business ${profile.confirmedCount === 1 ? "detail" : "details"} in Setup`
-        : "Your business profile takes shape as you confirm details."}</p>
+      {onResumeProfile
+        ? <button type="button" className="sos-progress sos-progress--link" data-empty={profile?.confirmedCount ? undefined : "true"} aria-expanded={profileOpen} onClick={onResumeProfile}>{profile && profile.confirmedCount > 0
+            ? `${held ? "Last verified: " : ""}${profile.confirmedCount} confirmed business ${profile.confirmedCount === 1 ? "detail" : "details"} in Setup`
+            : "Your business profile takes shape as you confirm details."}</button>
+        : <p className="sos-progress" data-empty={profile?.confirmedCount ? undefined : "true"}>{profile && profile.confirmedCount > 0
+            ? `${held ? "Last verified: " : ""}${profile.confirmedCount} confirmed business ${profile.confirmedCount === 1 ? "detail" : "details"} in Setup`
+            : "Your business profile takes shape as you confirm details."}</p>}
     </div>
   </section>;
 }

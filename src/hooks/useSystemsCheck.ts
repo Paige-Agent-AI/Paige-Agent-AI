@@ -59,9 +59,9 @@ export interface SystemsCheckSnapshot {
   findings: SystemsCheckFinding[];
   loading: boolean;
   isError: boolean;
-  /** True when a tenant has NO run row at all but was created very recently — the first onboarding
-   *  scan has been enqueued and has not yet written its row. §13: an HONEST "in progress" signal,
-   *  never a claim that a scan finished. Tenant scope only.
+  /** True when a tenant has NO run row at all but was created very recently. This is a setup-age
+   *  hint, not proof that enqueue succeeded or a check started. Tenant scope only; the E02 console
+   *  distinguishes it from the recorded unfinished-run timestamp below.
    *
    *  CORRECTED 2026-09-05. This comment used to justify itself with "the scan writes its run only on
    *  completion", which is FALSE and was load-bearing in the wrong direction — it told the next reader
@@ -99,11 +99,9 @@ export interface SystemsCheckSnapshot {
    *  Time-bounded server-side (15 minutes): production carries five run rows from scans that
    *  crashed and will never complete, so an unbounded test would report "running" forever on those.
    *
-   *  NOT WIRED TO ANY SURFACE HERE. The four branches that used to detect an in-flight run read it
-   *  from `run.completed_at`, which the resolvers can no longer return; repointing them changes
-   *  what the console SAYS during a scan, and that is Claude Design's call (§00). Flagged on the PR
-   *  rather than decided here. Distinct from `scanPending`, which is only ever about a brand-new
-   *  tenant's FIRST scan and is false as soon as any run row exists. */
+   *  The E02 native console reads this timestamp separately from the completed result. It says
+   *  what the latest read reported, not that a worker is continuously alive or a scan completed.
+   *  Distinct from `scanPending`, which is only a recent-workspace hint before any row exists. */
   scanInProgressSince: string | null;
   refresh: () => void;
 }

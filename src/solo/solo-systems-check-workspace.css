@@ -1,4 +1,4 @@
-.sc-workspace{--sc-healthy:var(--pg-positive);--sc-attention:var(--pg-warning);--sc-critical:var(--pg-negative);--sc-paige:var(--pg-violet);position:relative;height:100%;min-height:0;min-width:0;overflow:hidden;container:solo-systems-check / inline-size;background:var(--pg-canvas);color:var(--pg-ink)}
+.sc-workspace{--sc-healthy:var(--pg-positive);--sc-attention:var(--pg-warning);--sc-critical:var(--pg-negative);--sc-paige:var(--pg-violet);position:relative;height:100%;min-height:0;min-width:0;overflow:hidden;container:solo-systems-check / inline-size;background:var(--pg-canvas);color:var(--pg-ink);font-family:var(--pg-font-ui)}
 .sc-scroll-owner{height:100%;overflow:auto;overscroll-behavior:contain;padding:14px clamp(14px,2.2vw,30px) 28px;scrollbar-gutter:stable}
 .sc-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .sc-heading{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:0 auto 12px;max-width:1220px;min-height:38px}.sc-heading h1{font:700 19px/1.2 sans-serif;font-family:var(--pg-font-sans,inherit);letter-spacing:-.025em;margin:0}.sc-heading h1.sc-sr-only{margin:-1px}.sc-heading p{margin:3px 0 0;color:var(--pg-muted);font-size:11px}.sc-heading-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px}
@@ -18,7 +18,7 @@
 @media(min-width:761px) and (max-width:1080px){[data-tenant-shell][data-paige="open"] #tenant-shell-main .sc-workspace,[data-tenant-shell][data-paige="open"] #tenant-shell-main nav[aria-label="Command Center sections"]{width:calc(100% - min(410px,calc(100vw - var(--tcs-rail))))}[data-tenant-shell][data-paige="open"] #tenant-shell-main nav[aria-label="Command Center sections"]{box-sizing:border-box}}
 @media(min-width:761px) and (max-width:940px){[data-tenant-shell][data-nav="expanded"][data-paige="open"] #tenant-shell-main nav[aria-label="Command Center sections"]{gap:2px!important;padding-inline:4px!important}[data-tenant-shell][data-nav="expanded"][data-paige="open"] #tenant-shell-main nav[aria-label="Command Center sections"] button{gap:0!important;padding-inline:6px!important;font-size:0!important;border-radius:6px}[data-tenant-shell][data-nav="expanded"][data-paige="open"] #tenant-shell-main nav[aria-label="Command Center sections"] button:hover{background:var(--pg-canvas)!important;color:var(--pg-ink)!important;box-shadow:inset 0 0 0 1px var(--pg-line)}}
 @media(prefers-reduced-motion:reduce){.sc-read-activity span,.sc-scan-arm,.sc-signal-path,.sc-drawer{animation:none!important}.sc-read-activity span{display:none}.sc-finding:hover{transform:none}}
-@media(forced-colors:active){.sc-proof,.sc-signal,.sc-map-panel,.sc-side-panel,.sc-finding,.sc-button,.sc-icon-button,.sc-next-signal{forced-color-adjust:auto}.sc-finding-mark,.sc-department i,.sc-signal-node{outline:1px solid CanvasText}.sc-filters button[aria-pressed="true"]{outline:2px solid Highlight}[data-tenant-shell][data-paige="open"] #tenant-shell-main nav[aria-label="Command Center sections"] button[aria-current="page"]{border-bottom:3px solid Highlight!important}}
+@media(forced-colors:active){.sc-proof,.sc-signal,.sc-map-panel,.sc-side-panel,.sc-finding,.sc-button,.sc-icon-button,.sc-next-signal{forced-color-adjust:auto}.sc-finding-mark,.sc-department i,.sc-signal-node{outline:1px solid CanvasText}.sc-filters button[aria-pressed="true"]{outline:2px solid Highlight}[data-tenant-shell][data-paige="open"] #tenant-shell-main nav[aria-label="Command Center sections"] button[aria-current="page"]{outline:2px solid Highlight!important;outline-offset:-2px}}
 .sc-proof--resolved{color:var(--pg-muted);border-color:var(--pg-line)}.sc-signal-source--resolved .sc-signal-path,.sc-signal-source--resolved .sc-signal-node{stroke:var(--pg-muted)}.sc-core--resolved circle{stroke:var(--pg-muted);filter:none}.sc-finding--resolved .sc-finding-mark{background:var(--pg-muted);box-shadow:none}
 
 /* ---- operating-readiness console (replaces the radial signal stage) ---------------------------
@@ -30,6 +30,7 @@
 .sc-strip-l{flex:1 1 300px;min-width:0}
 .sc-strip-h{font-size:12px;font-weight:750}
 .sc-strip-s{margin-top:3px;font-size:11px;color:var(--pg-muted)}
+.sc-run-state{margin-top:8px;max-width:72ch;font-size:13px;line-height:1.5;color:var(--pg-ink-2)}
 .sc-strip-s strong{color:var(--pg-ink-2);font-weight:750;font-variant-numeric:tabular-nums}
 .sc-strip-err{margin-top:5px;font-size:11px;color:var(--sc-critical)}
 .sc-strip-a{display:flex;gap:7px;flex-wrap:wrap}
@@ -70,7 +71,7 @@
 
 /* what needs you now */
 .sc-items{display:flex;flex-direction:column;gap:8px}
-.sc-item{border:1px solid var(--pg-line);border-left:3px solid var(--pg-line-strong);background:var(--pg-raised);border-radius:10px;padding:11px 13px;box-shadow:var(--pg-e1)}
+.sc-item{border:1px solid var(--pg-line);border-left:1px solid var(--pg-line-strong);background:var(--pg-raised);border-radius:10px;padding:11px 13px;box-shadow:var(--pg-e1)}
 .sc-item--blocking{border-left-color:var(--sc-critical)}
 .sc-item--high{border-left-color:var(--sc-attention)}
 .sc-item--medium,.sc-item--low{border-left-color:var(--sc-paige)}

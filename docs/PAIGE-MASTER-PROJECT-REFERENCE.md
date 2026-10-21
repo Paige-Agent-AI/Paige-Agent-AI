@@ -826,7 +826,6 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
-<<<<<<< HEAD
 **2026-10-21 — EXP04 existing Agreements register discovery repair.**
 PR [#2486](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2486), reviewed
 `f854bcf150961caaeeb1548d70a33c72567f34aa`, merged
@@ -851,7 +850,8 @@ ANT52/e96d6e3f is not independent Central QA or full Experience acceptance.
 Channel production; internal correctness increment, no customer release/version or
 announcement. Recovery is a reviewed source correction/revert preserving all records.
 This identity-only post-merge closeout is not logged recursively.
-=======
+
+
 **2026-10-21 — EXP05 recorded findings in Operations, bounded production release.**
 PR [#2474](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2474), final reviewed
 `f9dff45e6c2214412da05d4fb70153937c254309`, merged
@@ -987,7 +987,6 @@ Chat/Live, automation, provider, second-cohort/new-account and historical
 18/25/50 acceptance remains open. The old1/18 and2/50 strict-count snapshots are
 historical; the current Experience-ownership accounting is stated above.
 This mechanical verified-identity closeout is not logged recursively.
->>>>>>> origin/main
 
 **2026-10-21 — EXP09 native relevant Knowledge retrieval prerequisite.**
 PR [#2475](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2475), reviewed

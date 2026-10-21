@@ -51,12 +51,14 @@ still requires the one complete integrated Experience.
 Released bounded prerequisites #2486 register discovery, #2487 actual retained-copy
 completion readback, and #2493 truthful historical signing economics are recorded
 with exact source/CI/production identities in Master§4.0. They do not accept O1–O12.
-Current #2499 / product44c3d8e20142e6753706f0635a3b8648921dbd86 selectively reuses
+Released #2499 / merge3ff77d368d2bf5a4261d6ee1e3ce7ab314516892 selectively reuses
 #2175 recipient UI: strict native acknowledgment, partial/completed distinction,
 no-effect cancellation, token retirement, keyboard/document lock, result focus,
 contrast and canvas correction.28 source cases/12 native PDF viewport-theme cases
-plus five synthetic result modes pass; hosted CI/release and real signing acceptance
-remain separate. [Source evidence](../evidence/ui-delivery/e04-signing-result-reconcile.md).
+plus five synthetic result modes pass. All10 applicable checks/two statuses and exact
+production web/static readback pass; actual signing acceptance remains separate.
+Master§4.0/#2505 retains the exact release receipt and lower-assurance author review.
+[Source evidence](../evidence/ui-delivery/e04-signing-result-reconcile.md).
 Isolated workspace prototype062d9ed34 models the full preparation flow using the
 shared system; it is not production rich editing, assigned PDF fields or acceptance.
 Functional/Visual/Experiential/Acceptance are reported independently. All twelve
@@ -74,15 +76,22 @@ Exact reviewed CI, normal web/Edge/migration readback and factual Master closeou
 Bounded ordinary owner navigation/empty register/form cancel/reload is verified;
 actual signature/provider/staff/client/full Experience acceptance remains owed.
 
-New local native draft foundation reuses unchanged SAVE/agreements/signers/events
-and canonical author authority. Nullable immutable creation correlation, a thin
-create/recover wrapper and selected human DTO are UNMOUNTED, NOT_DEPLOYED.
+Native draft foundation#2504 reviewed8a883a39d337f552dda06d8f829038dc61e7d499,
+merged e7396e59e7409ec3a66599edd3c8dfcd9459f1db, reuses unchanged SAVE/agreements/
+signers/events and canonical author authority. Nullable immutable creation
+correlation, native create/read/recovery are deployed; the UI consumer is separate.
 Original-call baseline creates two drafts/two signers; native PostgreSQL16 repaired
 proof92 assertions, four concurrent sessions and migration replay twice PASS.
 Original-author request recovery supports later-page reconciliation using only an
 opaque UUID, preserving private legal input off browser storage; absent is unconfirmed.
-Existing integrity runner is extended, not replaced. Reserved20271113120000
-follows EXP09 pending100000/110000; reconcile before release.
+Existing integrity runner is extended, not replaced. All13 exact-head checks/two
+statuses pass. Normal39690945568/job119536945958 persisted20271113120000 after
+applied110000; exact four function bodies, original SAVE, caller-only ACL, validated
+constraint/index/enabled trigger read back. Webdpl_H2MRxR55zLme4E8sYUDTZwB79SBX
+READY/exact/publice7396e59e-mvipyzk2. Master§4.0 and receipt6328560544 hold details.
+Sequential AUTHOR-REVIEW / LOWER ASSURANCE; actual JWT/customer acceptance owed.
+Authoring consumer#2515/642994616 is unmerged/in fresh exact-head CI; native
+composed-source20 viewport/theme cases/21 interaction paths pass with synthetic ports.
 No Chat/Spine activation, Portal UI, send/sign/payment, new role or provider change.
 [Foundation evidence](../evidence/ui-delivery/e04-draft-request-identity.md).
 Functional bounded prerequisites differ from Visual professional prototype/render

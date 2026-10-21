@@ -28,6 +28,8 @@ vi.mock("@/hooks/useTierFeatures", () => ({ useTierFeatures: () => ({ has: () =>
 vi.mock("./OperationsItemRelease", () => ({
   OperationsItemRelease: ({ item }: { item: { id: string } }) => <div data-testid="release-flow">Release flow for {item.id}</div> }));
 vi.mock("./OperationsPlaybooks", () => ({ OperationsPlaybooks: () => <div>Playbook test seam</div> }));
+// Work authority/recovery stays isolated from the separately tested focused-reader/router leaf.
+vi.mock('./OperationsRecordedFindings', () => ({ OperationsRecordedFindings: () => <div>Recorded findings test seam</div> }));
 vi.mock("./OperationsWorkEditor", () => ({ OperationsWorkEditor: ({ refresh, onNavigationGuardChange }: {
   refresh: () => Promise<void>; onNavigationGuardChange?: (guard: (() => string | null) | null) => void;
 }) => {

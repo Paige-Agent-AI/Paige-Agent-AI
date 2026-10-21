@@ -1,0 +1,121 @@
+Browser tab: 170270628, Title: "Offline Operations findings flow prototype", URL: "http://127.0.0.1:63673/solo/1701/operations/overview".
+0 AXWebArea Offline Operations findings flow prototype, URL: 127.0.0.1:63673/solo/1701/operations/overview
+	1 container root
+		2 button (collapsed) Native integration controls · offline, Secondary Actions: Expand
+			3 text Native integration controls · offline
+		4 container
+			5 text PAIGE folded; your conversation is preserved
+			6 link Description: Skip to content, Value: 127.0.0.1:63673/solo/1701/operations/overview#tenant-shell-main
+			7 container Tenant workspace
+				8 link Description: PAIGE Solo home, Value: 127.0.0.1:63673/solo/1701/command-center
+				9 button Expand navigation
+					159 image
+				11 link Description: Command Center, Value: 127.0.0.1:63673/solo/1701/command-center
+				12 link Description: Operations, Value: 127.0.0.1:63673/solo/1701/operations
+				13 link Description: Clients, Value: 127.0.0.1:63673/solo/1701/clients
+				14 link Description: Marketing, Value: 127.0.0.1:63673/solo/1701/growth
+				15 link Description: Ads, Value: 127.0.0.1:63673/solo/1701/ads
+				16 link Description: Sales, Value: 127.0.0.1:63673/solo/1701/sales
+				17 link Description: Finance, Value: 127.0.0.1:63673/solo/1701/finance
+				18 link Description: Marketplace, Value: 127.0.0.1:63673/solo/1701/marketplace
+				19 link Description: Settings, Value: 127.0.0.1:63673/solo/1701/settings
+				20 button Description: Use Obsidian theme, Help: Obsidian theme
+				21 button Sign out
+				22 text TE
+			160 container
+				161 text TEST STUDIO A Operations Solo
+				162 button (collapsed) Description: Direct PAIGE, Secondary Actions: Expand
+					163 image PAIGE
+					164 text Direct PAIGE, or press ⌘\
+					165 text ⌘\
+			166 container Operations department
+				167 container
+					168 container Department views
+						169 button Overview
+						170 button Work
+						171 button Projects
+						172 button Delivery
+						173 button Playbooks
+						174 button Capacity
+					175 button Refresh work and team profiles
+						176 image
+				177 container
+					178 container Overview
+						179 container
+							180 heading Your operating week, Value: 1
+								181 text Your operating week
+							182 text Current commitments, responsible people and the next decisions.
+							183 button Weekly responsibility
+							184 button Plan with PAIGE
+						185 container
+							186 text 3  active  commitments  ·  0  in progress ·  1 reminder  in the sources shown
+						187 container Priority work to inspect
+							188 container
+								189 heading Needs your attention, Value: 2
+									190 text Needs your attention
+								191 text Blocked
+							192 heading Confirm the project handoff, Value: 3
+								193 text Confirm the project handoff
+							194 text The next step needs an owner decision before delivery can continue.
+							195 text Planning work No due date
+							196 text Jordan Ellis
+							197 button Inspect the original work
+							198 button View attention in Work
+						199 container Recorded Operations findings
+							200 container
+								201 heading Recorded Operations findings, Value: 2, ID: recorded-findings-heading
+									202 text Recorded Operations findings
+								203 text Separate from blocked or overdue Work.
+								204 button Refresh recorded Operations findings
+							205 text Read  Oct 20, 2026, 8:00 AM  ·  America/New_York Partial source coverage
+							206 container Original source windows
+								207 text Recorded runs in the selected reporting window.
+								208 text From the latest Systems Check, as of 2026-10-19 09:02 UTC
+							209 content list
+								210 container
+									211 text Recorded automation runs Needs review One automation run failed in the last 7 days. Recorded run totals ·  the last 7 days . Individual runs aren’t available here.
+								212 container
+									213 text Systems Check Needs review Business setup needs attention, recorded 2026-10-19 09:00 UTC.
+							214 text Some checks could not be evaluated. Missing evidence has not been treated as a pass.
+							215 button Open Systems Check
+							216 button Prepare a read-only PAIGE review
+						217 container
+							218 heading Work in motion, Value: 2
+								219 text Work in motion
+							220 button All work
+							221 content list
+								222 container
+									223 button Share the agreed next steps
+									224 text Planning work Oct 21 Jordan Ellis Ready
+						225 container Connected Operations work
+							226 button Client promises
+							227 button People and workload
+							228 button Procedures
+						229 container
+							230 heading Next deadlines, Value: 2
+								231 text Next deadlines
+							232 content list
+								233 container
+									234 button Share the agreed next steps
+									235 text Planning work Oct 21 Jordan Ellis Ready
+							236 button View deadlines in Work
+							237 heading Recorded reminders, Value: 2
+								238 text Recorded reminders
+							239 content list
+								240 container
+									241 button Review unfinished commitments
+									242 text Planning reminder Oct 22, 10:00 AM Jordan Ellis Ready
+							243 button View reminders in Work
+							244 text These are saved reminder times. Open the original record to review its current state; a scheduled time does not prove delivery.
+							245 heading What to do next, Value: 2
+								246 text What to do next
+							247 container
+								248 text 1  active  commitment needs  a confirmed due date. Start with the original work before choosing when it belongs.
+							249 button Review timing: Confirm the project handoff
+								250 text Review timing: 
+								251 text Confirm the project handoff
+							252 button Review all missing dates
+							253 button Prepare a review with PAIGE
+					254 text Attention and deadlines reflect loaded Planning work and up to 200 CRM tasks. Unavailable sources are excluded.
+
+The focused UI element is 201 heading Recorded Operations findings, Value: 2, ID: recorded-findings-heading

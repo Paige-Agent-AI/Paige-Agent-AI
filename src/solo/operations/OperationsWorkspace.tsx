@@ -27,6 +27,7 @@ import { OperationsCrmWorkEditor } from "./OperationsCrmWorkEditor";
 import { workDateLabel, workStatusLabel } from "./operations-presentation";
 import { OperationsProjects } from "./OperationsProjects";
 import { OperationsOverview } from "./OperationsOverview";
+import { OperationsRecordedFindings } from './OperationsRecordedFindings';
 import { overviewNativeWork, operationsWorkSetRows, type OperationsWorkSet } from "./operations-overview-work";
 import { OperationsCapacity } from "./OperationsCapacity";
 import OperationsDelivery from "./OperationsDelivery";
@@ -315,10 +316,11 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
     {source.loading && <p role="status">Reading project work…</p>}
     {crm.loading && <p role="status">Reading CRM tasks…</p>}
     {!crmAvailable && !crm.loading && <div className="ops-inline-notice" role="status">CRM tasks couldn’t be verified for this workspace. <button type="button" onClick={()=>void crm.refresh()}>Retry CRM tasks</button></div>}
-    {workReadable ? <OperationsOverview {...props} tenantId={tenantId} crmTasks={crmTasks} onInspectCrmTask={inspectCrm}
+    <OperationsOverview {...props} tenantId={tenantId} crmTasks={crmTasks} onInspectCrmTask={inspectCrm}
+      nativeWorkState={workReadable ? 'ready' : source.loading || crm.loading ? 'loading' : 'unavailable'}
+      recordedFindings={<OperationsRecordedFindings tenantId={tenantId} userId={userId} openPaige={openPaige} canLeave={() => !checkNavigation()} />}
       onNavigate={setDestination} onInspectWorkSet={group => setDestination("Work", group)} onReviewWithPaige={openPaige ? reviewWithPaige : undefined}
       onReviewWorkWithPaige={openPaige ? reviewWorkWithPaige : undefined} />
-      : source.loading || crm.loading ? <OperationsLoading /> : <div className="ops-state" role="alert"><h1>Current work isn’t available</h1><p>Retry a source above or ask your workspace owner to review access.</p></div>}
     <p className="ops-source-limit">Attention and deadlines reflect loaded Planning work and up to 200 CRM tasks. Unavailable sources are excluded.{crm.hasMore && " More CRM tasks exist beyond this read."}{people.partial && " Some team profiles are outside the current read."}</p>
   </>;
   const capacityView = <>

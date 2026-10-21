@@ -221,5 +221,8 @@ fi
 # signing-context contract. The proof fences the exact data directory before
 # creating its own synthetic database and always drops that database afterward.
 node "$HERE/signing-context-economics-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired
+# Same original cluster/engine, distinct disposable synthetic database. Includes
+# two real concurrent sessions and refusal controls, not another acceptance engine.
+node "$HERE/draft-request-identity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired
 
 echo "OK — every negative refused with its expected SQLSTATE; positive controls succeeded."

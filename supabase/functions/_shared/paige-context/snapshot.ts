@@ -1471,7 +1471,8 @@ export function rankOperatingSnapshotRisks(s: Pick<BusinessOperatingSnapshot, 'r
 
 /**
  * Plain-text projection for the model, built from the structured snapshot. `maxChars` (default 6000) is
- * the budget for DOMAIN SECTIONS: when over, whole sections are dropped from the end and a line names
+ * the budget for DOMAIN SECTIONS: source act/watch domains use the existing priority order before
+ * the remaining requested domains. When over, whole sections drop from the end and a line names
  * every dropped area — never a mid-line cut, never a silent omission. The header, that "left out" line and
  * the closing instruction are never dropped, so a `maxChars` smaller than those three returns them anyway
  * (the honesty lines outrank the budget). A finite `maxChars` below 1 therefore means "fixed lines only"
@@ -1490,7 +1491,9 @@ export function projectOperatingSnapshot(
   const header = oneLine(
     `Business read for ${p.label} (${p.start} to ${p.end}, ${p.timezone}; composed ${s.composed_at}).`,
   );
-  const sections = s.requested.map((d) => ({ domain: d, text: domainSection(d, s.domains[d]).join("\n") }));
+  const ranked = rankOperatingSnapshotRisks(s);
+  const ordered = new Set([...ranked.map(risk => risk.domain), ...s.requested]);
+  const sections = [...ordered].map((d) => ({ domain: d, text: domainSection(d, s.domains[d]).join("\n") }));
 
   const render = (kept: number): string => {
     const parts = [header, ...sections.slice(0, kept).map((x) => x.text)];
@@ -1503,7 +1506,8 @@ export function projectOperatingSnapshot(
     parts.push(SNAPSHOT_PROJECTION_INSTRUCTION);
     const plain = parts.join("\n");
     // Never recover a priority from a domain excluded by this summary's budget.
-    const priorities = rankOperatingSnapshotRisks({ requested: s.requested.slice(0, kept), domains: s.domains }).slice(0, 3);
+    const keptDomains = new Set(sections.slice(0, kept).map(section => section.domain));
+    const priorities = ranked.filter(risk => keptDomains.has(risk.domain)).slice(0, 3);
     if (!priorities.length) return plain;
     const order = ['Priority order: Only source-reported risks are ranked; act before watch, source order breaks ties; unreadable areas remain unknown.',
       ...priorities.map((risk, index) => `- Priority ${index + 1} (${risk.severity}) from ${SNAPSHOT_DOMAIN_LABELS[risk.domain]}: ${quoted(risk.summary)}`)];

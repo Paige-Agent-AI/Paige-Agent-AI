@@ -20,7 +20,7 @@ export function OperationsPlaybooks({ tenantId }: { tenantId: string }) {
   const procedures = source.docs.filter(isProcedure);
   const shown = procedures.filter((doc) => `${doc.title} ${doc.summary ?? ""}`.toLowerCase().includes(query.toLowerCase()));
   return <section ref={contentRef} className="ops-views ops-procedures" aria-label="Playbooks">
-    <header className="ops-view-heading"><div><h1>Make good work repeatable</h1><p>The procedures your team can turn to when the next step matters.</p></div></header>
+    <header className="ops-view-heading"><h1>Make good work repeatable</h1></header>
     <label className="ops-view-search"><Search size={16} aria-hidden="true" /><span className="sr-only">Find a procedure</span>
       <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find a procedure" /></label>
     {source.loading && !source.docs.length ? <p role="status">Loading procedure sources…</p>

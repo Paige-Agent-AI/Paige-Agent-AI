@@ -1048,6 +1048,41 @@ revert preserving native authority and records. This factual closeout is not
 logged recursively.
 
 
+**2026-10-21 — EXP04 truthful recipient signing results and accessible feedback.**
+PR [#2499](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2499), reviewed
+`6c52856dac9aede3ada2bf7c2c8713438ab0e641`, merged
+`3ff77d368d2bf5a4261d6ee1e3ce7ab314516892`; actual parents18d442548 and6c52856,
+combined tree`e187a7140e4a957a76ef069ca79c6669be34cf70` exactly matches the
+precomputed integration tree, preserving EXP02/EXP05 shared work. Selective reuse
+of original#2175 UI/tests: strict native acknowledgment, recorded-versus-completed
+signature, truthful declined/refused result, no-effect cancellation, token reset,
+real keyboard PDF fieldset, result focus/error announcement and scoped contrast/
+canvas fixes. Native consent, engine, Portal permissions and external effects unchanged.
+Sequential AUTHOR-REVIEW / LOWER ASSURANCE6324793518/6325354064, no independent
+non-author claim. All10 applicable exact-head checks and both Vercel statuses
+SUCCESS; schema-free Supabase Preview SKIPPED. Source28 tests and native12 viewport/
+theme cases plus5 synthetic result modes pass; actual PDF viewer/source-hash fence
+retained. Web`dpl_6ckWCMdrgyQxE5XJLnXCMNdunoWN` READY/production/main;
+canonical public version`3ff77d368d2bf5a4261d6ee1e3ce7ab314516892-mvijj2va`.
+Served main-Bl26e46b → main-BWv7M3uc → AgreementSigning-B2rWC9PP contains all
+three corrected result/progress strings; final chunk SHA256
+`3aa408f132bd87b841585f68cef421e69f8662115684f0b8935d93ea08cd0d15`.
+Schema/Edge/provider/activation changes NOT_APPLICABLE.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2499#issuecomment-6325421847),
+[source/render evidence](evidence/ui-delivery/e04-signing-result-reconcile.md).
+Functional: bounded correction released/read back. Visual: responsive actual-source
+renders and contrast/focus/canvas repaired; legacy visual advisories and professional
+modernization remain open. Experiential: bounded recovery/result semantics verified
+with synthetic ports; full original O1–O12 integrated customer journey incomplete.
+Acceptance: actual recipient/owner/staff/client signing, legal/provider evidence and
+one complete founder evaluation remain owed. A fresh tab in the same Edge browser
+verified only public invalid-link refusal, normal reload and true320 no-overflow;
+no signing controls, credentials, account change or actual effect used. Initial
+connection loss is historical; no authenticated recipient acceptance inferred.
+Source/release proof does not establish customer acceptance. No customer version/announcement;
+recovery is a reviewed forward correction preserving originals. This factual
+post-merge closeout does not require recursive logging.
+
 **2026-10-21 — EXP04 truthful historical signing economics.**
 PR [#2493](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2493), reviewed
 `ed2964b5024f672492b5db6deac38ff95cb1929b`, merged
@@ -1317,6 +1352,16 @@ All19 outcomes/nine analytics/Live/cohort and single founder acceptance remain r
 | Delivery | Exact source and release evidence | Proof boundary / customer release |
 | --- | --- | --- |
 | [#2494](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2494): existing Marketing evidence in Executive/Chat | Reviewed `f791480428c42894ec6833c3304d5a2642add1f2`, merged `dd58164de75479212428f7e26581eeec3a333951`; actual tree `ad78adf3ff42dc7dc8f97bfe869540ad5aab6089` equals reviewed current-main union. Sequential AUTHOR-REVIEW / LOWER ASSURANCE5605269345/5605649901; six exact-head workflows/all11 checks including actual Preview and two Vercel statuses SUCCESS. Initial Deno TS2322 retained and corrected with incumbent status/reason/null reconstruction; no cast, baseline or authority change. Webdpl_BJ7Xrdk4z4ABh1FYcWC6yh763i8U READY/exact; actual public `dd58164de75479212428f7e26581eeec3a333951-mvijxzap`, customerUpdate:null. Strict Edge39668706898/job119460503988 SUCCESS including selected source/configuration verification; edge-live exact merge. Direct Business Reviewv59 ACTIVE/JWT=true,32/32 source files match; Chatv495 ACTIVE/JWT=true,three changed modules match, with whole selected-package identity verified by the original pipeline. Own migrations N/A. | Canonical Marketing1.0.0/Metric/Evidence issuer, existing risk order/six-reference cap and E4 destination reused; no producer, provider, ledger, registry, permission, approval or action activation.182 owning cases and71 unchanged authority controls overlap additional regression checks; native original-font desktop/tablet/320 synthetic proof supports source only. Restored browser remains unable to dispatch page control; released customer Marketing/Chat/navigation/reload and role/isolation/cohort/Live proof are UNVERIFIED, not product FAIL. Historical9/0 and12/0/4, all19/nine analytics, filed documents and one complete founder evaluation remain required. Internal-only/no customer version or announcement. [Production/source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2494#issuecomment-6325768347). |
+
+**2026-10-21 — EXP02 period and factual-record shipped identities (mechanical closeout).**
+
+| Delivery | Exact source and release evidence | Proof boundary / customer release |
+| --- | --- | --- |
+| [#2507](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2507): retain the existing review period through exact URL/reload/browser Back and withhold mismatched-period replies | Reviewed `433424e6340ef067dd250ada5b3ce795d2740c01`; merged `3727d71dc0bc9da8bfc8b7f241a356a03c967705`, actual tree `50695f15921fa0afcde9651691b4203de924ae88` equals separately reviewed union with main23bdf2b21. Sequential AUTHOR-REVIEW / LOWER ASSURANCE5605904152/5606298164; six required exact-head workflows/all10 applicable checks/two statuses SUCCESS; schema-free Preview SKIPPED/N/A. Webdpl_FsjQp13rH61MQCGmkiWC1Vp8Mbbz READY/exact; actual public `3727d71dc0bc9da8bfc8b7f241a356a03c967705-mvim06mo`, customerUpdate:null, and served SOLO lazy-chunk period get/set/delete/response guard verified. Own Edge/migrations N/A. | Original Router/source reader/three choices reused; no new store, provider, authority, registry, metric or action.93 related cases/type0new/native synthetic desktop/tablet/320 and unsent VERA recovery support source, not ordinary customer acceptance. Restored Edge cannot complete page control; customer period/Marketing/navigation/reload, role/cohort/Live and full19/nine/founder proof remain UNVERIFIED. Historical9/0 and12/0/4 unchanged. Internal-only/no customer version or announcement. [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2507#issuecomment-6326833406). |
+| [#2508](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2508): original Second Brain/Master/19 matrix/Marketing UI release reconciliation | Reviewed `8588a3365e44acda23f453197abae1d7a2d52ebe`; merged `18a16f8035c11bc3599cdf6671e21d4a1114d9ce`, actual tree `9b51f888554b64f2d5f93fbe0490235db43085b2` equals reviewed union with mainf95e25355. AUTHOR-REVIEW / LOWER ASSURANCE5605919220/5606138971; six required exact-head workflows/all10 applicable checks/two statuses SUCCESS; schema-free Preview SKIPPED/N/A. Webdpl_7J5KR21fH4imAW8TXZeqiHKkWSZ7 READY/exact; actual public `18a16f8035c11bc3599cdf6671e21d4a1114d9ce-mviminy1`, customerUpdate:null. | Four existing factual records only; applied-function field corrected to canonical version grammar, old failure retained. Own Edge/migrations N/A; no capability, provider, permission, policy, action or customer-acceptance promotion. Dated evidence remains historical; all19/nine and single complete founder evaluation remain required. [Final gates](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2508#issuecomment-6326934718). |
+
+This one-file identity closeout changes no product or release policy and is not
+logged recursively under the mechanical-only exception. Existing customer gates remain.
 
 **2026-10-21 — EXP02 factual closeout identity (mechanical post-merge row).**
 

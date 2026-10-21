@@ -51,22 +51,27 @@ export function businessReviewRecordLinks(snapshot: BusinessOperatingSnapshot): 
     clients: ['contacts'],
     campaigns: ['marketing'],
   } as const;
-  const links: ReadRecordLink[] = [], goalLinks: ReadRecordLink[] = [];
+  const links: ReadRecordLink[] = [];
   // Use the SAME Fabric priority policy as the visible review. Within the
   // existing six-link budget, a reported act risk must not lose its department
   // behind earlier, lower-priority sources. Executive remains the complete hub.
-  const ordered = new Set([...rankOperatingSnapshotRisks(snapshot).map(row => row.domain), ...snapshot.requested]);
+  const priorities = rankOperatingSnapshotRisks(snapshot);
+  const ordered = new Set([...priorities.map(row => row.domain), ...snapshot.requested]);
   for (const key of ordered) {
     const entry = snapshot.domains[key];
     if (entry?.status !== 'available' || !entry.data) continue;
     if (key === 'game_plan') {
       const targets = entry.data.mission_targets ?? [];
-      if (targets.length) for (const row of targets) goalLinks.push({ destination: 'business_game_plan', record_id: row.target.mission_id });
-      else goalLinks.push({ destination: 'business_game_plan', record_id: null });
+      // Prefer the same source-risk Plays, only among already-authorized sampled
+      // targets. A stray risk reference must never introduce another record.
+      const orderedTargets = [...priorities.filter(row => row.domain === 'game_plan')
+        .flatMap(risk => targets.filter(row => row.target.mission_id === risk.reference)), ...targets];
+      if (orderedTargets.length) for (const row of orderedTargets) links.push({ destination: 'business_game_plan', record_id: row.target.mission_id });
+      else links.push({ destination: 'business_game_plan', record_id: null });
     }
     for (const destination of destinations[key as keyof typeof destinations] ?? []) links.push({ destination, record_id: null });
   }
-  return links.length || goalLinks.length ? readRecordLinks([{ destination: 'executive', record_id: null }, ...links, ...goalLinks]) : [];
+  return links.length ? readRecordLinks([{ destination: 'executive', record_id: null }, ...links]) : [];
 }
 
 export type BusinessSnapshotChatDeps = { caller: MetricCaller };

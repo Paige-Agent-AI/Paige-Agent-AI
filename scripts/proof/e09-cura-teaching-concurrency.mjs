@@ -60,15 +60,17 @@ const inherited=()=>run(`BEGIN;
  UPDATE public.tenant_members SET role='member',is_owner=false WHERE user_id='${actor}' AND tenant_id='${a}';
  UPDATE public.tenants SET parent_tenant_id='${b}' WHERE id='${a}'; COMMIT;`);
 const count=()=>run(`SELECT count(*) FROM public.paige_durable_work WHERE tenant_id IN ('${a}','${b}','${c}')`);
-let originalDefinition;
+let originalDefinition,seeded=false;
 try{
  originalDefinition=run("SELECT pg_get_functiondef('public.submit_cura_knowledge_preparation(uuid,uuid,text,text)'::regprocedure)");
+ assert.equal(run(`SELECT (SELECT count(*) FROM public.tenants WHERE id IN ('${a}','${b}','${c}'))+(SELECT count(*) FROM auth.users WHERE id IN ('${u('a1')}','${u('a2')}','${u('a5')}','${u('b1')}','${u('f1')}'))`),'0','Fixture IDs must be absent before seeding');
  run(`BEGIN; ${seed}
   INSERT INTO public.tenants(id,slug,name,status,account_type) VALUES('${c}','test-tenant-cura-concurrency-c','Authority test C','active','standalone');
   SELECT transition.work_status FROM public.paige_durable_work work
   CROSS JOIN LATERAL public.transition_paige_durable_work(work.id,work.idempotency_key,'cancelled',
    '{"fixture_cancelled":true}'::jsonb,'Synthetic concurrency fixture: no worker dispatch') transition
   WHERE work.tenant_id IN ('${a}','${b}'); COMMIT;`);
+ seeded=true;
  assert.equal(count(),'5','Only original synthetic accepted work is seeded');
  const cases=[
   {name:'direct-downgrade',setup:()=>{},revoke:`UPDATE public.tenant_members SET role='member',is_owner=false WHERE user_id='${actor}' AND tenant_id='${a}'`},
@@ -119,6 +121,7 @@ try{
 }finally{
  for(const child of processes)child.kill('SIGKILL');
  if(originalDefinition)run(originalDefinition);
+ if(seeded){
  run(`BEGIN; SET LOCAL statement_timeout='15s'; SET LOCAL lock_timeout='5s';
   DELETE FROM public.tenant_knowledge_docs WHERE tenant_id IN ('${a}','${b}','${c}');
   DELETE FROM public.paige_durable_work WHERE tenant_id IN ('${a}','${b}','${c}');
@@ -131,4 +134,5 @@ try{
   DELETE FROM public.user_roles WHERE user_id IN ('${u('a1')}','${u('a2')}','${u('a5')}','${u('b1')}','${u('f1')}');
   DELETE FROM auth.users WHERE id IN ('${u('a1')}','${u('a2')}','${u('a5')}','${u('b1')}','${u('f1')}'); COMMIT;`);
  assert.equal(run(`SELECT count(*) FROM public.tenants WHERE id IN ('${a}','${b}','${c}')`),'0','Synthetic fixture cleanup verified');
+ }
 }

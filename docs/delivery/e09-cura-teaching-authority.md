@@ -44,10 +44,10 @@ prepared for the existing full-schema CI job, execution UNVERIFIED at creation.
 They cover exact original replay, real private creation, hash drift, actual caller,
 direct/inherited role, customer/operator/service refusals, workspace change,
 downgrade, ancestor deletion/reparenting and no publication/sharing.
-All SQL fixtures and new submissions stay inside ROLLBACK. The original pg_net
+The43-case SQL fixture and new submissions stay inside ROLLBACK. The original pg_net
 wake cannot dispatch before transaction commit per the
 [official contract](https://supabase.com/docs/guides/database/extensions/pg_net#http_post).
-No production writer call or provider effect is used for QA.
+No production writer call or provider effect is used for QA. The separate concurrency proof commits only existing cancelled-envelope fixtures through the original transition writer, never submits/wakes work, verifies empty fixture IDs before seed and cleans up only its successful seed through existing lifecycle controls. Its fixed CI-loopback target rejects URI overrides/other credentials and strips inherited PG transport variables;8 actual no-spawn hostile entrypoint tests PASS.
 The existing K1 locks are strengthened with an exact locked-membership set comparison in the SAME statement as the leased STABLE publisher predicate, preventing a new unlocked grant from supplying authority. A focused CI-only native concurrency proof is prepared for direct/ancestor downgrade/delete, hierarchy changes, and a grant inserted while membership capture waits. The native negative control removes only this set comparison in the disposable database to reproduce the bad admission, then restores the original function. Execution remains UNVERIFIED until the exact hosted job passes; no global concurrency claim or post-snapshot provider cancellation is made.
 
 Functional: new native admission/isolated adapter, NOT_DEPLOYED/UNWIRED.

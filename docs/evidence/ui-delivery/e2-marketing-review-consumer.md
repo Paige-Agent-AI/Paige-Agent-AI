@@ -7,26 +7,26 @@ MATERIAL_FLOW_CHANGE: YES: the existing campaigns gap can now present permitted 
 FLOW_PROTOTYPE: PASS: isolated existing-renderer flow at outputs/e2-marketing-flow; eight mock states, disclosure, home/return, period and mock workspace changes, unsent/fold/reopen. Separate AUTHOR-REVIEW / LOWER ASSURANCE direction decision under owner's standing EXP02 design delegation; no human approval claimed. Actual-source verification is separate below.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an eligible ordinary SOLO owner inspects recorded intake and processing risks, understands missing evidence and opens Marketing to investigate.
 VISUAL_DIRECTION: PASS: incumbent premium Operate surface; original Schibsted Grotesk and shared tokens, no new chart, card system, animation or navigation frame.
-AUTOMATED_EVIDENCE: PASS: 182 focused cases across seven actual adapter/composer/Chat transport/reference/Executive suites. Before mount, one integration and three UI/reference cases fail. Existing71 authority mutation/refusal controls and capability-kit guard PASS with no fingerprint change. Type fixture correction receives a separate recheck.
-STATIC_EVIDENCE: UNVERIFIED: scoped lint passed before two readonly test-fixture assignments were corrected; final corrected lint/type and exact-head hosted checks remain required. No baseline or guard weakening.
-RENDERED_EVIDENCE: UNVERIFIED: eight actual-source desktop/tablet DOM measurements show no document/Executive horizontal overflow and correct font. Native originals are retained, but inspected900-closed.jpg contains an outgoing overlay despite settled DOM state; screenshot-state correspondence requires recapture. No resampling or full native PASS inferred.
+AUTOMATED_EVIDENCE: PASS: 182 focused cases across seven actual adapter/composer/Chat transport/reference/Executive suites. Before mount, one integration and three UI/reference cases fail. Existing71 authority mutation/refusal controls and capability-kit guard PASS with no fingerprint change. Corrected typed fixtures receive21 overlapping Chat cases; the subsequent no-runtime-change unavailable-result correction receives12 original Marketing cases PASS. Initial temp-directory EPERM ran no tests; own-temp retry passes.
+STATIC_EVIDENCE: PASS: scoped lint and final frontend type ratchet baseline10/current6/zero new pass. Required hosted Deno caught TS2322 when this previously unmounted adapter entered the runtime graph; the refusal now reconstructs the unchanged status/reason/null result like the original Sales adapter. No cast, shared contract, baseline or guard change. Fresh exact-head hosted Deno and full CI remain required.
+RENDERED_EVIDENCE: PASS: eight settled actual-source desktop/tablet originals are individually inspected and correspond to closed/open DOM state. Correct font and no document/Executive horizontal overflow. Corrected320 dark/light native captures are separate. Original outgoing-overlay900 capture and mislabeled320-as900 remain local INVALID evidence; neither is committed as a valid frame. See assets/e2-marketing-review-consumer/viewport-state-index.json. Native JPEG bytes are unedited; measured CSS viewport is not exact encoded-raster proof.
 BEHAVIORAL_EVIDENCE: PASS: actual renderer with explicit synthetic ports shows seven genuine zeros, partial omission, unavailable/denied/error/offline/loading without figures and ready counts. Original prototype disclosure/home/return/unsent recovery is separate; no backend/customer effect claimed.
 AUTHENTICATED_RUNTIME: UNVERIFIED: active consumer is unreleased. Actual authorized ordinary SOLO Marketing evidence, current-account destination, same-conversation persistence/reload, role/isolation, provider/second-cohort and Live proof remain owed. No other customer account is substituted.
-KEYBOARD_FOCUS: UNVERIFIED: actual-source Enter command timed out before a verified result; original semantic disclosure/anchor source retained, no keyboard PASS claimed.
-ZOOM_REFLOW: UNVERIFIED: measured desktop/tablet widths and prototype320 reflow do not prove native zoom or the final consumer phone path.
+KEYBOARD_FOCUS: PASS: subsequent actual-source Enter expands the existing source summary with a visible focus ring in both themes; Enter opens the original Marketing route and its explicit simulated return. Contextual Marketing discussion fills the correct UNSENT mock draft; fold/reopen preserves it. Native return focuses Direct PAIGE, not the previous record. Original timeout is retained; record-level focus/period continuity and actual customer behavior remain owed.
+ZOOM_REFLOW: PASS: true320x740 CSS viewport, document320 and Executive233/233 measured in light theme; source text, figures, source disclosure and originating link remain reachable. Dark closed/open also measured320; existing Chat fits its248px remainder. Native browser zoom remains UNVERIFIED and is not inferred from reflow. Temporary browser/device overrides are cleared.
 REDUCED_MOTION: NOT_APPLICABLE: no motion introduced or changed; existing preference was observed, execution is not newly claimed.
 STATE_COVERAGE: PASS: source tests cover original issuer keys, exact event/current windows, privacy, true zero/partial/unknown, denial, scope switch and abort. Actual mounted review checks final scope after all20 metric reads; native synthetic states remain separate from actual permissions.
 TRUTHFUL_STATE_LABELS: PASS: counts are form submissions, opportunity links, absent recorded tags and current routing/processing. No ad spend, ROAS, visits, won clients, revenue, funnel causality, correction or ACT receipt. Nine canonical catalogue states unchanged; released copy follows ANT-161 after actual coverage proof.
 SOLO_UI: YES: command-center.executive PARTIAL, common existing/future eligible SOLO implementation; no account-specific branch or provider grant.
-SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: measured CSS geometry is sound; final settled screenshot-state correspondence remains required.
-SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: measured CSS geometry and original image retained; final full flow is not accepted.
-SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: measured CSS geometry is sound; settled screenshot-state correspondence remains required.
-SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: measured CSS geometry is sound; settled screenshot-state correspondence remains required.
-SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: measured CSS geometry is sound; settled screenshot-state correspondence remains required.
-SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: existing overlay measured; full native verification remains required.
-SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: inspected original image caught outgoing overlay; recapture required, no image edit.
-SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: existing overlay measured; full native verification remains required.
-UNVERIFIED: native recapture/keyboard/phone/zoom, corrected final static checks, exact-head CI/review, production source/configuration readback, ordinary customer Marketing/reload/permission/cohort/Live and complete19/founder acceptance. Native visual mismatch is a release hold until resolved.
+SOLO_1536X770_PAIGE_CLOSED: PASS: synthetic actual-source settled native frame and CSS geometry; source counts visible, closed state verified.
+SOLO_1536X770_PAIGE_OPEN: PASS: synthetic actual-source settled native frame and CSS geometry; same source and existing Chat side by side.
+SOLO_1366X768_PAIGE_CLOSED: PASS: synthetic actual-source settled native frame and CSS geometry; no horizontal product overflow.
+SOLO_1366X768_PAIGE_OPEN: PASS: synthetic actual-source settled native frame and CSS geometry; existing conversation visible.
+SOLO_1024X768_PAIGE_CLOSED: PASS: synthetic actual-source settled native frame and CSS geometry; existing department evidence remains reachable.
+SOLO_1024X768_PAIGE_OPEN: PASS: synthetic actual-source settled native frame; original tablet Chat overlay and fold behavior retained.
+SOLO_900X1000_PAIGE_CLOSED: PASS: corrected synthetic actual-source settled frame shows Marketing evidence with no outgoing overlay; no image edit.
+SOLO_900X1000_PAIGE_OPEN: PASS: synthetic actual-source settled native frame and original overlay; source/Chat state corresponds.
+UNVERIFIED: native browser zoom, record-level period/focus/typed-Play continuity, corrected exact-head Deno/full CI and final review, production source/configuration readback, ordinary customer Marketing/reload/permission/cohort/Live and complete19/founder acceptance. Original native frame mismatch is resolved by fresh originals; failed required Deno remains a release hold until corrected-head green.
 OWNER_INTENT: PAIGE and VERA explain actual business evidence and priorities and reach canonical originating records through the one governed platform.
 MUST_NOT_HAPPEN: no fabricated unavailable zeros, attribution/financial claims, provider call/spend, originating domain write, second metric reader, widened public tool, approval bypass, automatic send, action or memory promotion.
 MUST_PRESERVE: canonical six original Marketing1.0.0 issuer keys, public33-key metric contract, Finance/Sales/Clients/Operations/Targets semantics, scope/permission checks, existing risk policy, six-reference cap, original fonts/narrow fixes, INT-346 and historical9/0 plus12/0/4.
@@ -52,5 +52,15 @@ unchanged six-link budget; focused Marketing gets Executive and Marketing only.
 
 Impeccable: https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md
 Applied source/state clarity, existing hierarchy, density, typography, reflow,
-privacy and recommendation truth. Separate finish review must resolve native
-frame correspondence; no non-author review or complete visual acceptance claimed.
+privacy and recommendation truth. Sequential AUTHOR-REVIEW / LOWER ASSURANCE
+finish inspection resolves native frame correspondence and finds no material new
+visual defect. Existing tall phone hero, cramped narrow Chat heading and exact
+record/period return need focused subsequent refinement; this increment is not a
+finished premium whole Experience. No non-author or founder acceptance claimed.
+
+The44px white synthetic review-controls footer is outside the product shell; its
+own horizontal controls are not product overflow. Source/composer/identity/data
+ports have no backend/model/Send/voice/provider/approval/action implementation.
+The four reviewed renderer/composer/Chat runtime files remain byte-identical from
+212a4cdd through composed130f1800; the later adapter typing change has no visible
+or runtime behavior change. Native source proof never establishes authentication.

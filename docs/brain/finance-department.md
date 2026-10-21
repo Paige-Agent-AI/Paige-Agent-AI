@@ -1,5 +1,10 @@
 # Finance department — current source and full operating target
 
+## EXP02 receiver checkpoint — October21, development only
+
+Original #2414 Banking & Cash consumer is recovered on current main; no replacement Finance read or originating records.49 actual workspace/shared-hook/presenter cases and17 native synthetic frames support its existing canonical Finance contract, correct product fonts, source disclosure, loading/refusal/empty states, keyboard, refresh and integrations return. Final type/review/required CI, safe release/readback and actual authorized receiver/provider/permission/reload proof remain owed. Source observations are not bank-wide totals or action receipts. Existing nine analytics catalogue states remain bounded; no Live promotion or capability/provider/algorithm activation. See [receiver evidence](../evidence/ui-delivery/e2-finance-department-sources.md). Historical source checkpoints below remain dated evidence.
+
+
 ## October 20 observed EXP02 Finance consumer release
 
 Original #2402 reviewed d0aafc53ed81273868b4160684677ed02175454b merged

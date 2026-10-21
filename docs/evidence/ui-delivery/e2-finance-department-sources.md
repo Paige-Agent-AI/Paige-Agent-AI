@@ -1,5 +1,7 @@
 # EXP02 Finance departmental source continuity — pre-edit contract
 
+**October21 continuation — existing receiver retained, not released.** Current-main composition preserves the original five product/test leaves and canonical Finance contracts. Forty-nine owning cases pass. Native Edge data-boundary proof now covers16 viewport/state frames plus keyboard disclosure; first-pass theme mismatch and stale-tab transport failure remain local historical evidence. [Native index](assets/e2-finance-receiver/native-index.json), [behavior](assets/e2-finance-receiver/behavior.json) and [zoom limitation](assets/e2-finance-receiver/browser-zoom.json) distinguish supporting proof from customer acceptance. No new ledger, provider, capability engine or financial effect. Final exact-head review/CI/release and actual receiver acceptance remain due.
+
 The SOLO owner opens Finance → Banking & Cash from the executive review and
 inspects the same permitted company/account/source facts, rather than a fixed
 readiness placeholder. Required outcomes O04/O14; existing #2402 is the prerequisite.
@@ -75,30 +77,30 @@ MATERIAL_FLOW_CHANGE: NO: populate the already-approved Banking read/details/ref
 FLOW_PROTOTYPE: NOT_REQUIRED: existing owner-approved seven-view Finance flow and Executive native source disclosure are reused under standing full-Experience UI integration authority.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: ordinary permitted SOLO owner inspects source-backed accounts in the owning department and can refresh or review integrations.
 VISUAL_DIRECTION: PASS: incumbent Finance/Mineral/Obsidian, product fonts, quiet inline evidence and native disclosure; no new visual world.
-AUTOMATED_EVIDENCE: PASS: thirty actual-component/shared-hook/parser assertions and exact pre-change negative control described above; no customer acceptance claim.
-STATIC_EVIDENCE: UNVERIFIED: scoped lint/diff checks pass; final exact-head type/build/hosted gates remain required.
-RENDERED_EVIDENCE: UNVERIFIED: browser transport times out; no new Finance native frames obtained.
-BEHAVIORAL_EVIDENCE: UNVERIFIED: real browser disclosure, toolbar refresh, integrations exit and return require native proof; component tests are supporting only.
-AUTHENTICATED_RUNTIME: UNVERIFIED: authorized ordinary customer sign-in and Finance source/reload/permission proof are unavailable in the current browser session.
-KEYBOARD_FOCUS: UNVERIFIED: native summary/button semantics and source focus style are implemented; actual keyboard/assistive-technology proof remains due.
-ZOOM_REFLOW: UNVERIFIED: scoped wrapping and narrow stacking are implemented; actual native reflow/zoom remains due.
+AUTOMATED_EVIDENCE: PASS: 49 cases across actual Finance workspace, shared useBusinessReview and source presenter; original pre-change causal regression retained. An initial sandbox temp rename refused before tests ran; owned workspace TEMP rerun passed.
+STATIC_EVIDENCE: UNVERIFIED: scoped source/test/harness lint has zero errors and one fixture fast-refresh advisory; final project type ratchet and exact-head hosted gates are pending.
+RENDERED_EVIDENCE: PASS: 16 native Edge synthetic viewport/state frames plus keyboard disclosure frame, actual self-hosted Schibsted Grotesk loaded; correct Mineral/Obsidian contexts, normal text contrast minimum 5.70:1, no document or panel horizontal overflow. Synthetic data is not customer acceptance.
+BEHAVIORAL_EVIDENCE: PASS: native synthetic summary Tab/Enter, visible focus, 61px connection button reachability at320px, refresh changes the fixture source label, existing integrations exit and Banking return. Provider/model/backend actions are unavailable in the fixture.
+AUTHENTICATED_RUNTIME: UNVERIFIED: this receiver is not yet released; prior Executive Finance and ordinary read-only weekly Chat proof does not accept its populated/provider/permission/reload outcome.
+KEYBOARD_FOCUS: PASS: actual native Tab from Refresh reaches summary, Enter discloses facts, Tab reaches the visible source-connections button with focus outline; assistive-technology proof remains unverified.
+ZOOM_REFLOW: PASS: native320px reflow has no document/panel horizontal overflow, with source fields wrapping. Actual browser zoom remains UNVERIFIED: the attempted keyboard shortcut did not change scale; no zoom success inferred.
 REDUCED_MOTION: NOT_APPLICABLE: no motion or transition introduced; preserve incumbent reduced-motion behavior.
-STATE_COVERAGE: PASS: bounded synthetic loading, unavailable/old-release, error/retry, populated, access refusal, tab exit and workspace-switch tests; actual browser coverage is unverified.
+STATE_COVERAGE: PASS: actual synthetic ready, loading, error, unavailable, empty, refused-member and workspace-B renders; source tests cover shared-hook refusal, refresh and scope changes. Actual customer scope/provider acceptance remains owed.
 TRUTHFUL_STATE_LABELS: PASS: same source presenter retains exact amounts, zero/unknown, company/currency separation, observation provenance and explicit no-aggregate/no-execution claims.
 SOLO_UI: YES: originating department receiver, shared for every eligible SOLO account.
-UNVERIFIED: native Finance viewports/finish, actual zoom/keyboard, hosted exact-head CI, production source and authenticated/full19/founder acceptance remain release/acceptance obligations.
+UNVERIFIED: Actual receiver release/readback, real browser zoom, assistive technology, authenticated provider/permission/reload, Live and second legitimate customer cohort, full19 and final founder acceptance remain due.
 INTERNAL_BUILD_IDENTITY: f602c3a0790be8461b7dc3570b830c3b74dfc610; role=supporting-source-freeze; branch=codex/e2-finance-department-sources; environment=local; deployment=none-local-receiver; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e2-finance-department-sources.md; final-head=PR-review-receipt.
 RELEASE_CHANNEL: development: bounded consumer of the existing Finance review source.
 RELEASE_CLASSIFICATION: internal-only: full EXP02 prerequisite; no customer announcement.
 CUSTOMER_RELEASE_IDENTITY: none: no released or accepted customer outcome claimed.
 RELEASE_NOTE_REQUIRED: NO: source integration alone earns no customer announcement.
-RELEASE_TRUTH_BOUNDARY: PROOF OWED: UI native/browser transport and authorized authenticated customer access are unavailable; production readback and complete financial outcomes remain unverified.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: scope=receiver-source-and-ui; authenticated receiver/provider/cohort/Live and final hosted CI/release readback remain unproven; no Live or complete Finance claim.
 RELEASE_RECOVERY: position=bounded reviewed receiver correction or revert without changing originating Finance/Sales records; reference=docs/delivery/finance-approved-build.md.
-SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: browser native Finance proof unavailable.
-SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: browser native Finance proof unavailable.
-SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: browser native Finance proof unavailable.
-SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: browser native Finance proof unavailable.
-SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: browser native Finance proof unavailable.
-SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: browser native Finance proof unavailable.
-SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: browser native Finance proof unavailable.
-SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: browser native Finance proof unavailable.
+SOLO_1536X770_PAIGE_CLOSED: PASS: actual native synthetic Finance receiver; source/geometry only, no authenticated runtime inference.
+SOLO_1536X770_PAIGE_OPEN: PASS: actual native synthetic Finance receiver; source/geometry only, no authenticated runtime inference.
+SOLO_1366X768_PAIGE_CLOSED: PASS: actual native synthetic Finance receiver; source/geometry only, no authenticated runtime inference.
+SOLO_1366X768_PAIGE_OPEN: PASS: actual native synthetic Finance receiver; source/geometry only, no authenticated runtime inference.
+SOLO_1024X768_PAIGE_CLOSED: PASS: actual native synthetic Finance receiver; source/geometry only, no authenticated runtime inference.
+SOLO_1024X768_PAIGE_OPEN: PASS: actual native synthetic Finance receiver; source/geometry only, no authenticated runtime inference.
+SOLO_900X1000_PAIGE_CLOSED: PASS: actual native synthetic Finance receiver; source/geometry only, no authenticated runtime inference.
+SOLO_900X1000_PAIGE_OPEN: PASS: actual native synthetic Finance receiver; source/geometry only, no authenticated runtime inference.

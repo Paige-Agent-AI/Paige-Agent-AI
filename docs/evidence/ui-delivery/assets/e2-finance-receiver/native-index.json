@@ -6,7 +6,7 @@
       "h": 770,
       "theme": "light",
       "open": false,
-      "file": "banking-1536-light-closed-ready.png",
+      "file": "banking-1536-light-closed-ready.jpg",
       "sha256": "9cebd832471c5ddc0897b1100b3e1425eeafe6691fb2c7c4241701086dedd94f",
       "metric": {
         "colors": [
@@ -37,14 +37,21 @@
           1536,
           770
         ]
-      }
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 770,
+        "width": 1535
+      },
+      "exactDimensions": false,
+      "dimensionStatus": "UNVERIFIED"
     },
     {
       "w": 1536,
       "h": 770,
       "theme": "dark",
       "open": true,
-      "file": "banking-1536-dark-open-ready.png",
+      "file": "banking-1536-dark-open-ready.jpg",
       "sha256": "80c021c3e65acb15c0f100ba0119855a4616b3126c54ff1999cf8579e6afb07a",
       "metric": {
         "colors": [
@@ -75,14 +82,21 @@
           1536,
           770
         ]
-      }
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 770,
+        "width": 1535
+      },
+      "exactDimensions": false,
+      "dimensionStatus": "UNVERIFIED"
     },
     {
       "w": 1366,
       "h": 768,
       "theme": "light",
       "open": false,
-      "file": "banking-1366-light-closed-ready.png",
+      "file": "banking-1366-light-closed-ready.jpg",
       "sha256": "bb237893bea4b8e71713282b8b70b424910f3160e0bc5dfad864f8225aab5fc8",
       "metric": {
         "colors": [
@@ -113,14 +127,21 @@
           1366,
           768
         ]
-      }
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 768,
+        "width": 1366
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
     },
     {
       "w": 1366,
       "h": 768,
       "theme": "dark",
       "open": true,
-      "file": "banking-1366-dark-open-ready.png",
+      "file": "banking-1366-dark-open-ready.jpg",
       "sha256": "6d662428c1f2b24369259ff5b6a105e6d934a6f91bdc3543eaf4972b3f6d3b23",
       "metric": {
         "colors": [
@@ -151,14 +172,21 @@
           1366,
           768
         ]
-      }
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 768,
+        "width": 1366
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
     },
     {
       "w": 1024,
       "h": 768,
       "theme": "light",
       "open": false,
-      "file": "banking-1024-light-closed-ready.png",
+      "file": "banking-1024-light-closed-ready.jpg",
       "sha256": "cd2a6a93b049d870e2d11c7a04d8f4b9feba5e96ba97707d4c7779598affd933",
       "metric": {
         "colors": [
@@ -189,14 +217,21 @@
           1024,
           768
         ]
-      }
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 768,
+        "width": 1024
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
     },
     {
       "w": 1024,
       "h": 768,
       "theme": "dark",
       "open": true,
-      "file": "banking-1024-dark-open-ready.png",
+      "file": "banking-1024-dark-open-ready.jpg",
       "sha256": "bc34355ef283a582fe9cf795a143a17f0b315fbafcd5835b12aa7c5987b9163f",
       "metric": {
         "colors": [
@@ -227,14 +262,21 @@
           1024,
           768
         ]
-      }
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 768,
+        "width": 1024
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
     },
     {
       "w": 900,
       "h": 1000,
       "theme": "light",
       "open": false,
-      "file": "banking-900-light-closed-ready.png",
+      "file": "banking-900-light-closed-ready.jpg",
       "sha256": "69c44557af6423f0a5207d25bb1ceb87525027bf49b2f0d943b410fbbec33f4b",
       "metric": {
         "colors": [
@@ -265,14 +307,21 @@
           900,
           1000
         ]
-      }
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 1000,
+        "width": 900
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
     },
     {
       "w": 900,
       "h": 1000,
       "theme": "dark",
       "open": true,
-      "file": "banking-900-dark-open-ready.png",
+      "file": "banking-900-dark-open-ready.jpg",
       "sha256": "aa4764fcfd0aa54387dc0574c468356c136aa58d1d452cfa1a71f32412cb9a5d",
       "metric": {
         "colors": [
@@ -303,14 +352,21 @@
           900,
           1000
         ]
-      }
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 1000,
+        "width": 900
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
     },
     {
       "w": 320,
       "h": 740,
       "theme": "light",
       "open": false,
-      "file": "banking-320-light-closed-ready.png",
+      "file": "banking-320-light-closed-ready.jpg",
       "sha256": "92bb362ddb1818b61c17ccf46c3b8eba578c66d1c2c394efe469e9b18abb873e",
       "metric": {
         "colors": [
@@ -341,14 +397,21 @@
           320,
           740
         ]
-      }
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 740,
+        "width": 320
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
     },
     {
       "w": 320,
       "h": 740,
       "theme": "dark",
       "open": false,
-      "file": "banking-320-dark-closed-ready.png",
+      "file": "banking-320-dark-closed-ready.jpg",
       "sha256": "5d5c6191d075bbd02adbc206ae9e0a0c8dad62bff03f5a1681ece579fb8a6a84",
       "metric": {
         "colors": [
@@ -379,7 +442,14 @@
           320,
           740
         ]
-      }
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 740,
+        "width": 320
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
     },
     {
       "w": 900,
@@ -387,7 +457,7 @@
       "theme": "light",
       "open": false,
       "state": "empty",
-      "file": "banking-900-light-closed-empty.png",
+      "file": "banking-900-light-closed-empty.jpg",
       "sha256": "c93528f57df70498a348f4391a7f0a1881381c227177c00bf0955e4d5860988b",
       "metric": {
         "colors": [
@@ -414,7 +484,14 @@
           900,
           1000
         ]
-      }
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 1000,
+        "width": 900
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
     },
     {
       "w": 900,
@@ -422,7 +499,7 @@
       "theme": "dark",
       "open": false,
       "state": "loading",
-      "file": "banking-900-dark-closed-loading.png",
+      "file": "banking-900-dark-closed-loading.jpg",
       "sha256": "45a9f0a2575845ad410e882471e9d98559c4452c1eb44eeb0ba71968b4dbdd18",
       "metric": {
         "colors": [
@@ -449,7 +526,14 @@
           900,
           1000
         ]
-      }
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 1000,
+        "width": 900
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
     },
     {
       "w": 900,
@@ -457,7 +541,7 @@
       "theme": "light",
       "open": false,
       "state": "error",
-      "file": "banking-900-light-closed-error.png",
+      "file": "banking-900-light-closed-error.jpg",
       "sha256": "8c616cff038273bb73a21e410e17fe6109adb743384f058bf81914222e017cc7",
       "metric": {
         "colors": [
@@ -484,7 +568,14 @@
           900,
           1000
         ]
-      }
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 1000,
+        "width": 900
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
     },
     {
       "w": 900,
@@ -492,7 +583,7 @@
       "theme": "dark",
       "open": false,
       "state": "unavailable",
-      "file": "banking-900-dark-closed-unavailable.png",
+      "file": "banking-900-dark-closed-unavailable.jpg",
       "sha256": "5ea71e22b4c4f2ae4ac566cd2ea24b4f3edf2c773750dfb38dd36bcc8de97740",
       "metric": {
         "colors": [
@@ -519,7 +610,14 @@
           900,
           1000
         ]
-      }
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 1000,
+        "width": 900
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
     },
     {
       "w": 900,
@@ -527,7 +625,7 @@
       "theme": "light",
       "open": false,
       "state": "member",
-      "file": "banking-900-light-closed-member.png",
+      "file": "banking-900-light-closed-member.jpg",
       "sha256": "7f6e2d1a20d4022bb86979b8d7f205afbccf6b81fc0fadcf3f4a333e720372b6",
       "metric": {
         "colors": [],
@@ -549,7 +647,14 @@
           900,
           1000
         ]
-      }
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 1000,
+        "width": 900
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
     },
     {
       "w": 900,
@@ -558,7 +663,7 @@
       "open": false,
       "state": "ready",
       "workspace": true,
-      "file": "banking-900-dark-closed-ready-workspace-b.png",
+      "file": "banking-900-dark-closed-ready-workspace-b.jpg",
       "sha256": "e96a2f82c08100f146101499454ebda0b7e5d3402db6b14d90a3bc8cd69c009d",
       "metric": {
         "colors": [
@@ -589,7 +694,14 @@
           900,
           1000
         ]
-      }
+      },
+      "nativeRaster": {
+        "format": "JPEG",
+        "height": 1000,
+        "width": 900
+      },
+      "exactDimensions": true,
+      "dimensionStatus": "PASS"
     }
   ],
   "sources": [
@@ -640,21 +752,28 @@
     "browser": "native Edge through CUA",
     "data": "synthetic; all backend calls refused",
     "capturedSource": "main-compatible local receiver plus development-only data boundaries",
-    "scope": "16 viewport/state frames plus separate keyboard disclosure frame",
+    "scope": "14 state/view captures and separate keyboard frame match exact raster; two1536 CSS captures are retained as1535x770 support only",
     "unverified": [
       "authenticated receiver/provider proof",
       "actual browser zoom",
       "assistive technology",
       "Live",
       "second legitimate customer cohort",
-      "full19 and founder acceptance"
+      "full19 and founder acceptance",
+      "exact1536x770 raster: browser wrapper returned1535x770"
     ],
     "preliminaryPass": "retained locally; requested dark context remained light, then a stale proof tab timed out; no preliminary dark proof promoted",
-    "metricTiming": "UI properties read immediately before each screenshot; actual screenshots remain authoritative, not the detail-open boolean alone"
+    "metricTiming": "UI properties read immediately before each screenshot; actual screenshots remain authoritative, not the detail-open boolean alone",
+    "format": "JPEG native bytes; corrected extensions preserve original bytes"
   },
   "normalTextMinimumContrast": 5.707692331559825,
   "keyboard": {
-    "file": "banking-320-light-keyboard.png",
-    "sha256": "9d098392b6e6ed9f02ab33a9178ecdc8d11c52194386517dcc5cd7de605a16ad"
+    "file": "banking-320-light-keyboard.jpg",
+    "sha256": "9d098392b6e6ed9f02ab33a9178ecdc8d11c52194386517dcc5cd7de605a16ad",
+    "nativeRaster": {
+      "format": "JPEG",
+      "height": 740,
+      "width": 320
+    }
   }
 }

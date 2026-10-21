@@ -165,14 +165,31 @@
       "w": 1366,
       "h": 768,
       "origin": "Native CUA Chromium screenshot; bytes retained without image editing. Production components with synthetic identity/RPC/navigation/dock."
+    },
+    {
+      "file": "source-refresh-error-held.jpg",
+      "sha256": "db8602795ac1338c867f1e26b7e7a50443e2c61d827e954929795121c5a2953a",
+      "format": "JPEG",
+      "w": 1280,
+      "h": 720,
+      "origin": "Native CUA Chromium screenshot; unedited bytes. Final corrected production Panel + original hook/parent; isolated synthetic focus/error/permission transport, no live effects."
+    },
+    {
+      "file": "source-permission-loss-released.jpg",
+      "sha256": "5dc518abff7ebeb04a3d54ad9fb298c6f491f2d6522e439c4ac53c1f99470679",
+      "format": "JPEG",
+      "w": 1280,
+      "h": 720,
+      "origin": "Native CUA Chromium screenshot; unedited bytes. Final corrected production Panel + original hook/parent; isolated synthetic focus/error/permission transport, no live effects."
     }
   ],
   "boundary": "Eight layout captures refreshed after950d main integration; earlier state captures show the same final Panel review/focus controls. Media and viewport overrides cleared. Native200percent zoom/iOS/AT, authenticated shell/publication/provider and Chat teaching not proven.",
   "permissionLossCorrection": {
-    "date": "2026-10-21T17:47:58.015Z",
-    "panelSha256": "f5976d2496fd5b52b144f6721ed63a498a9ed724e127b7f57521c91cab7028cc",
-    "reason": "Only a ready selected-source form holds navigation. Native loss releases Back and parent pending state; original unknown-result hold remains protected.",
-    "tests": "Final13 related suites405 PASS; targetedPanel+Hook41 PASS.",
-    "priorSourceHashes": "Historical source hashes above remain tied to their captures; this correction does not relabel earlier snapshots."
+    "date": "2026-10-21T18:04:47.144Z",
+    "panelSha256": "6f561a0f3ac084f5d1143a83fcc0927f778789a9d43aa48c634ae90c74c5bde0",
+    "reason": "Selected terms hold the real parent through loading and temporary read errors, with explicit Cancel source review. Native permission loss releases the hold and clears private form. Original saving/unknown-result protection remains intact.",
+    "tests": "Final13 related suites407 PASS; Panel+real-parent flow26 PASS; native-loss Panel+Hook41 PASS. A real parent/panel/hook deferred window-focus regression preserves A terms while B is queued; deliberate old-guard mutation failed that assertion and exact original bytes were restored.",
+    "priorSourceHashes": "Historical source hashes above remain tied to their captures; this correction does not relabel earlier snapshots.",
+    "nativeEvidence": "recovery-observations.json; temporary error retains parent hold and a visible enabled44px Cancel; restored read retains original FAQ terms; native refusal clears title/terms and enables44px Back."
   }
 }

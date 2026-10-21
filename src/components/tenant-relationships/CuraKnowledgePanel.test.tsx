@@ -106,3 +106,8 @@ it("releases a selected-source hold after access is lost without restoring its p
  expect(host.textContent).not.toContain("Test welcome FAQ");expect(host.querySelector("select")).toBeNull();expect(pending).toHaveBeenLastCalledWith(false);expect(button("Back to experience").disabled).toBe(false);
  await click("Back to experience");expect(back).toHaveBeenCalledTimes(1);expect(model.confirm).not.toHaveBeenCalled();expect(model.recover).not.toHaveBeenCalled();expect(model.load).not.toHaveBeenCalled();
 });
+
+it("keeps selected terms held through loading and transient errors, with an explicit cancel",async()=>{
+ await render();await click("Review sharing");model.phase="loading";model.rows=[];await render();expect(pending).toHaveBeenLastCalledWith(true);expect(button("Back to experience").disabled).toBe(true);expect(button("Cancel source review").disabled).toBe(false);
+ model.phase="error";model.notice="Knowledge sharing could not be checked.";await render();expect(pending).toHaveBeenLastCalledWith(true);await click("Cancel source review");expect(pending).toHaveBeenLastCalledWith(false);expect(button("Back to experience").disabled).toBe(false);expect(model.confirm).not.toHaveBeenCalled();
+});

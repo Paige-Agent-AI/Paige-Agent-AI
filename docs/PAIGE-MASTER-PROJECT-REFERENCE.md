@@ -5578,6 +5578,30 @@ Chat/Live or payment activation. Recovery: reviewed forward correction preservin
 original records/native compatibility. [Readback receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2476#issuecomment-6319079327);
 [native contract](delivery/e09-cura-knowledge-inventory.md).
 
+**2026-10-21 — EXP09 Teach CURA owner dashboard.**
+PR [#2480](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2480), reviewed
+`b8dce725ad96fb39c04a9b948aee1fa33f7ffd42` → main
+`1edf3e1f06eb9b372ed347e006bd6d932df1ef26`. Authorized publishers inspect
+original Knowledge and resume its original private review/publication before a
+separate exact native K1 customer audience/source/version/date decision. Original
+receipt recovery and unknown-result no-retry behavior retained. Final NON-AUTHOR
+source/focus review5603393242; all11 exact-head checks/two Vercel statuses pass,
+including177-step database proof and legitimate no-SQL Preview skip. Local304
+tests, build/type/lint and fresh incumbent Impeccable finish passed. Production
+web `dpl_GV6NSfKJvY35FHHV5JzuYCyZFDTB` READY at this main SHA, aliases
+paigeagent.ai/app.paigeagent.ai; four reviewed primary source bodies match main.
+Actual existing authorized owner session opens Experience→Manage Knowledge and
+reads native private/unpublished inventory with sharing correctly disabled. This
+is read-only owner-entry/inventory proof, not publication or customer retrieval.
+Migration/Edge NOT_APPLICABLE here; prior native inventory2476 remains applied.
+No publication, external send, provider/action activation or customer identity
+change performed. Production/internal prerequisite; no customer version or
+announcement. Exact-source recovery, owner Chat/Live teaching, ordinary client
+publication→CURA answer/private reload and complete seven-pillar/founder
+acceptance remain PROOF OWED. Recovery: reviewed consumer forward fix/bounded
+revert preserving original Knowledge/share/receipt contracts. No new verified
+algorithm. [Original action/record contract](delivery/e09-teach-cura-owner-controls.md).
+
 ## 5. Current focus + known gaps
 
 **E09 CURA identity — tracked follow-ups (2026-10-19; CURA merged #2378 and live; recorded, not fixed there).** (a) **Action-item kind mapping.** `advance_action` (`20271110220000`) builds the portal action item with `action_type` = the action kind (`client.portal_recommendation`, `client.portal_welcome`, `owner.onboarding_nudge`, `owner.schedule_meeting`), but `paige_customer_actions_action_type_check` allows only `task`, `message`, `recommendation`, `nudge`. Every action item the owner's PAIGE chat files through `action_file` / `action_advance` therefore ends `blocked` with `client_surface_failed: … action_type_check` (proved in a rolled-back transaction on the round-4 pgTAP fixtures with the synthetic customer Jordan Rivera). Consequence today: the customer's data-sharing switch (CURA-D1) has no practical effect, because neither route that it gates delivers anything (the staff `ContactPaigePanel` is unmounted). (b) **PAIGE in AI-drafted action-item text.** The chat's model-written title and draft reach `paige_customer_actions` unfiltered, so nothing stops one that names PAIGE; the owner ruled PAIGE is never in the Customer Portal. **(b) must be fixed before (a)**, or fixing the mapping starts delivering PAIGE-named items to customers. Neither is changed on this branch.

@@ -43,7 +43,8 @@ function CuraKnowledgeSession({tenantId,actor,onBack,onPendingChange,reference}:
  const busy=model.outcome==='saving',unknown=model.outcome==='unknown',preparing=model.outcome==='preparing';
  const correction=model.outcome==='correction'?model.correction:undefined;
  const reviewing=model.outcome==='review'&&!!model.proposal,showForm=model.phase==='ready'&&!!selected&&!reviewing&&!preparing&&!busy&&!unknown&&!['saved','conflict','refused'].includes(model.outcome);
- const dialogOpen=adding||!!correction,exitBlocked=busy||unknown||dialogOpen||showForm||preparing||reviewing;
+ const selectedHold=!!selected&&model.phase!=='unavailable'&&!['saved','conflict','refused'].includes(model.outcome);
+ const dialogOpen=adding||!!correction,exitBlocked=busy||unknown||dialogOpen||selectedHold||preparing||reviewing;
  useBeforeUnloadGuard(exitBlocked);useClientAccountExit(exitBlocked,exitBlocked);
  useLayoutEffect(()=>{onPendingChange?.(exitBlocked);return()=>onPendingChange?.(false);},[exitBlocked,onPendingChange]);
  useEffect(()=>{
@@ -101,6 +102,7 @@ function CuraKnowledgeSession({tenantId,actor,onBack,onPendingChange,reference}:
      <p className="max-w-prose text-sm leading-6 text-muted-foreground">Sharing status describes permission and source currency. It does not mean a customer opened, read or acted on the material.</p>
     </section>}
    </>}
+  {selectedHold&&model.phase!=='ready'&&<Button variant="outline" className={quietButton} onClick={cancel}>Cancel source review</Button>}
   <Dialog open={dialogOpen} onOpenChange={open=>{if(!open)closeDialog();}}>
    {dialogOpen&&<AddKnowledgeFlow tenantId={tenantId} replacementTarget={correction??undefined} onPublished={()=>{setSelected(null);setPublicationNotice('Published to your private Knowledge. Review sharing below before CURA uses it with customers.');void model.load();}} onClose={closeDialog} returnFocus={publicationTarget}/>}
   </Dialog>

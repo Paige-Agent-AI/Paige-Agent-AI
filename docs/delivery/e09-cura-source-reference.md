@@ -64,8 +64,14 @@ Chat/Live teaching and seven assigned capabilities remain active EXP09 work.
 
 Distinct source review of4e07cd41 found a permission-loss exit trap: a locally
 selected form kept the parent locked after the native hook cleared unavailable.
-The form hold now requires a ready phase; an added panel regression requires
+Native permission loss now releases the hold; an added panel regression requires
 enabled Back, released pending state, no private form and no retry/write.
-Unknown-result protection stays intact. Fresh source recheck remains required.
+A second distinct review caught premature release during a temporary loading
+phase. Selected terms now hold the real parent through refresh/errors, with an
+explicit Cancel source review exit; the real parent/panel/hook regression proves
+queued source B cannot replace A during deferred window focus. A deliberate old-
+guard negative control failed the regression; exact original source was restored.
+Final13 related suites407 tests PASS. Unknown-result protection stays intact.
+Fresh immutable-head source recheck remains required.
 The closed destination regression was extended explicitly for portal_knowledge,
 retaining all released Marketing/Finance destinations and unknown-input limits.

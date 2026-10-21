@@ -17,6 +17,38 @@ or full19/9/founder outcomes. NO VERIFIED ALGORITHM added. See Master§4.0 and
 
 ## EXP02 current release checkpoint — 2026-10-21 UTC
 
+Scoped unsent-question foundation#2462 merged
+`87ccff84221497f298041fb33a0e16ee85d8c719`, reviewed
+`18a560d5ee80a9294b7a23d0b26a08cecca5d30f`, exact treef728d532.
+All10 applicable head checks and two Vercel statuses SUCCESS; no-schema Preview
+SKIPPED. Production web `dpl_EaZdH8W1nJEu2iswf7X9DcNqkBRx` READY/exact provider
+metadata; public HTTP200 build87ccff84…-mvhrft4w, customerUpdate=null verified.
+The optional bounded tab-session cache extends the sole existing five-axis
+composer store; it has no product caller in that released tree. No automatic
+send/replay, attachments, business Memory, job, permission or provider activation.
+Source126 cases/3 suites pass, including expiry/size/actor/revision/refusal
+negatives; those tests are not authenticated reload acceptance. Its separate
+consumer#2463 is source-released as recorded next. Migrations/Edge NOT_APPLICABLE; catalogue
+states and all19/9/founder obligations remain unchanged. Master§4.0 and
+[#2462 production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2462#issuecomment-6310134039)
+retain exact proof and recovery boundaries. NO VERIFIED ALGORITHM added.
+
+Scoped composer consumer#2463 reviewed
+`b7577fc9f950048120d411a59f4a4cbc38eeac7d`, merged
+`73d8a03db8df273fe45dfb122854c05b24886e6b`, exact treee3d3c17a.
+The released source mounts the existing actual-subject/ready-SOLO/persona binding,
+shows unavailable-reload guidance and sizes restored text with the same capped
+rule as typing. Ten applicable checks plus two statuses SUCCESS; no-schema Preview
+SKIPPED, zero review threads, documented AUTHOR-REVIEW / LOWER ASSURANCE.
+Normal web `dpl_FrDoJrgNRtUfrS7NwrbCL3xkgpCu` READY/exact provider metadata;
+public HTTP200 build73d8a03d…-mvhthuqm and actual served cache validation/Chat
+guidance/resize code independently read back. No schema/Edge effect or business
+capability/algorithm/permission/provider activation. Native10 exact JPEGs and161
+affected cases/284 bounded E05 frontend cases are supporting proof, not customer
+acceptance. Actual original thread/focus return, ordinary customer reload/current
+CPU recovery, full shell/cohorts/Live/full19/9/founder proof remain owed.
+[Production source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2463#issuecomment-6311081808).
+
 Shared presenter#2444/ec83d109, priority policy#2409/a5a139e7, nine coverage
 fields#2445/b70738fe and CI-only serialization proof#2449/5dbf6e20 are merged.
 Actual merge trees, reviewed heads, exact-head CI, web/Edge/migration and bounded

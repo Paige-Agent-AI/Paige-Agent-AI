@@ -43,7 +43,7 @@ UNVERIFIED: final hosted CI, deployment/readback, ordinary-owner handoff/reply/r
 
 ## Interaction and source review
 
-Five runtime files and four owning tests form one bounded handoff slice. Shared
+Five runtime files and five owning tests form one bounded handoff slice. Shared
 source ownership is recorded in ANT-161/2bff6393. EXP02 business-review consumers,
 EXP09 Portal/skill work and canonical composer recovery remain protected. Backend
 continuation#2498 is a separate reviewed dependency, not permission to alter
@@ -80,3 +80,11 @@ Impeccable finish pass, sequential AUTHOR-REVIEW / LOWER ASSURANCE:
 Disposition: bounded source ready for exact-head review/CI; release depends on
 the actual continuation correction and production verification. This is not the
 full approved comp-led redesign; its separate Impeccable HERO phase remains open.
+
+Adjacent weekly-entry inspection found two assertions still selecting the former
+Plan with PAIGE label. The first restricted-runner attempt failed its temporary
+cache rename before test collection and is INVALID setup evidence. The actual
+retry ran4 cases:2 stale-label failures/2 passes. Only the three control-name
+strings changed to the approved ZION label; all lazy-read, noneligible-role,
+refusal, no-scheduling, native destination and no-write assertions remain. The
+same4 cases then passed. This is test-contract reconciliation, not a relaxed gate.

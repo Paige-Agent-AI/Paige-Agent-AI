@@ -724,7 +724,10 @@ const SOURCES = {
   // E04 exact invoice navigation: independently compared incumbent route outputs; authority unchanged.
   // E02 AUTHOR-REVIEW / LOWER ASSURANCE: add UUID-only Play focus beside current
   // invoice/Deal/Task routes; all existing route entries and authority remain unchanged.
-  "supabase/functions/_shared/canonical-app-url.ts": "70e41acce172347f3364cbd0478d69a2b73871a82a0e2a6821fc828ff1ce6403",
+ // E02 #2467 AUTHOR-REVIEW / LOWER ASSURANCE: only an additive SOLO Conversations
+ // destination/type entry; resolver, account/actor gates and exact-focus map unchanged.
+ // Renew this helper alone; keep all dispatch pins and the route-mutation refusal.
+ "supabase/functions/_shared/canonical-app-url.ts": "492e6c96e3e26109277e659fe0ca1797116191e856044854a3c3964edb6abdcf",
   "supabase/functions/_shared/gmail.ts": "78f697e312d18eb9d73ff2a3802142003a843b109f5e2a956182befb5d6160ff",
   "supabase/functions/_shared/smtp.ts": "0e3ea569f3728dde3329bb5281ef0afb9d592a4f080b3535b2bb7da62799f5ff",
   "supabase/functions/_shared/sales-invoice-delivery/binding.ts": "4e95a90d3a145278d3cb27f64865d26dc968d1c8cf7937dea2feac584e307b77",

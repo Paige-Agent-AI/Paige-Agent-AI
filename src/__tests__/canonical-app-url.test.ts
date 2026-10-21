@@ -116,6 +116,7 @@ describe("resolveCanonicalRecordLink", () => {
     ["sales_collections", "/solo/1971670/sales/payments?view=collections"],
     ["operations_work", "/solo/1971670/operations/work"],
     ["business_time_zone", "/solo/1971670/settings/setup/business-profile#business-time-zone"],
+    ["conversations", "/solo/1971670/clients/conversations"],
   ] as const)("maps %s to its Solo surface, surface-only", (destination, path) => {
     expect(resolveCanonicalRecordLink({ ...solo, destination })).toEqual({ path, status: "surface_only" });
     // Only the mounted invoice and Task consumers support exact UUID focus.
@@ -129,6 +130,17 @@ describe("resolveCanonicalRecordLink", () => {
     for (const recordId of ['x" onload="alert(1)', "../../admin", "", null, undefined, `${UUID}#x`]) {
       expect(resolveCanonicalRecordLink({ ...solo, destination: "contacts", recordId }))
         .toEqual({ path: "/solo/1971670/clients/people", status: "surface_only" });
+    }
+  });
+
+  it("never mints a Conversations address outside the mounted SOLO owner surface", () => {
+    for (const tier of ["sub_account", "agency", "enterprise"] as const) {
+      expect(resolveCanonicalRecordLink({ ...solo, tier, destination: "conversations", recordId: UUID })).toBeNull();
+    }
+    expect(resolveCanonicalRecordLink({ actor: "operator", tier: "operator", destination: "conversations", recordId: UUID })).toBeNull();
+    expect(resolveCanonicalRecordLink({ ...solo, actor: "operator", destination: "conversations" })).toBeNull();
+    for (const account of [null, "", "../1", "https://foreign.invalid"]) {
+      expect(resolveCanonicalRecordLink({ ...solo, account, destination: "conversations" })).toBeNull();
     }
   });
 
@@ -151,7 +163,7 @@ describe("resolveCanonicalRecordLink", () => {
     const sub = { actor: "account", tier: "sub_account", account: "1971670" } as const;
     expect(resolveCanonicalRecordLink({ ...sub, destination: "contacts", recordId: UUID }))
       .toEqual({ path: "/business/1971670/clients/people", status: "surface_only" });
-    for (const destination of ["sales_agreements", "sales_invoices", "sales_collections", "operations_work", "business_time_zone"] as const) {
+    for (const destination of ["sales_agreements", "sales_invoices", "sales_collections", "operations_work", "business_time_zone", "conversations"] as const) {
       expect(resolveCanonicalRecordLink({ ...sub, destination })).toBeNull();
     }
   });
@@ -170,6 +182,7 @@ describe("resolveCanonicalRecordLink", () => {
     expect(hasSub("sales", "payments")).toBe(true);
     expect(hasSub("operations", "work")).toBe(true);
     expect(hasSub("clients", "people")).toBe(true);
+    expect(hasSub("clients", "conversations")).toBe(true);
     expect(SOLO_SETUP_TABS).toContain("business-profile");
   });
 

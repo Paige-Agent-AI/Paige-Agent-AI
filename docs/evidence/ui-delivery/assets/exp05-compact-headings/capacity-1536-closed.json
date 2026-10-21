@@ -1,0 +1,22 @@
+{
+  "actions": [],
+  "fixtureError": "",
+  "focus": "Capacity",
+  "fontSize": "16px",
+  "h1Count": 1,
+  "headerIntroCount": 0,
+  "headerRect": {
+    "height": 22.399999618530273,
+    "width": 1262.4000244140625,
+    "x": 240,
+    "y": 151.40000915527344
+  },
+  "heading": "The people behind the progress",
+  "headingColor": "rgb(23, 19, 49)",
+  "height": 770,
+  "lineHeight": "22.4px",
+  "pageWidth": 1536,
+  "url": "/solo/1701/operations/capacity",
+  "weight": "600",
+  "width": 1536
+}

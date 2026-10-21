@@ -82,7 +82,7 @@ export function OperationsWork({ plans, items: planningItems, crmTasks = [], mem
   </div>;
 
   return <section className="ops-views" aria-label="Work">
-    <header className="ops-view-heading"><div><h1 tabIndex={-1} data-operations-work-heading>Move the work forward</h1><p>See the next step and the person responsible.</p></div></header>
+    <header className="ops-view-heading"><h1 tabIndex={-1} data-operations-work-heading>Move the work forward</h1></header>
     <div className="ops-view-toolbar">
       <div className="ops-view-segments" aria-label="Work view">{WORK_VIEWS.map(name => <button key={name} type="button" aria-pressed={view === name} onClick={() => setView(name)}>{name}</button>)}</div>
       <label className="ops-view-search"><Search size={16} aria-hidden="true" /><span className="sr-only">Search work, people and projects</span><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Find work, people, projects" /></label>

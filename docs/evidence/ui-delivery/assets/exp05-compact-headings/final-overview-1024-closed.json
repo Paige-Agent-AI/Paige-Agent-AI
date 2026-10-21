@@ -1,0 +1,49 @@
+{
+  "actions": [
+    {
+      "rect": {
+        "height": 44,
+        "width": 167.0124969482422,
+        "x": 670.7875366210938,
+        "y": 151.40000915527344
+      },
+      "text": "Weekly responsibility"
+    },
+    {
+      "rect": {
+        "height": 44,
+        "width": 144.60000610351562,
+        "x": 845.7999877929688,
+        "y": 151.40000915527344
+      },
+      "text": "Plan with PAIGE"
+    }
+  ],
+  "fixtureError": "",
+  "focus": {
+    "label": "Direct PAIGE",
+    "outline": "rgb(101, 90, 150) solid 1.6px",
+    "text": "Direct PAIGE, or press ⌘\\⌘\\"
+  },
+  "fontSize": "16px",
+  "h1Count": 1,
+  "headerIntroCount": 0,
+  "headerRect": {
+    "height": 44,
+    "width": 894.4000244140625,
+    "x": 96,
+    "y": 151.40000915527344
+  },
+  "heading": "Your operating week",
+  "headingColor": "rgb(23, 19, 49)",
+  "lineHeight": "22.4px",
+  "pageWidth": 1024,
+  "theme": "light",
+  "url": "/solo/1701/operations/overview",
+  "viewport": {
+    "dpr": 1.0000000149011612,
+    "height": 768,
+    "width": 1024
+  },
+  "weight": "600"
+}

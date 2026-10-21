@@ -27,7 +27,7 @@ export function OperationsCapacity({ items, members, onInspectItem, tenantId, cr
     if (overdue.has(item.key)) return `Overdue · ${date}`;
     return undated.has(item.key) ? date : `Due ${date}`;
   };
-  return <section className="ops-views" aria-label="Capacity"><header className="ops-view-heading"><div><h1>The people behind the progress</h1><p>See overdue commitments, missing deadlines and the people responsible before assigning more work.</p></div></header>
+  return <section className="ops-views" aria-label="Capacity"><header className="ops-view-heading"><h1>The people behind the progress</h1></header>
     <div className="ops-capacity-key"><span><i data-status="in_progress" />In progress</span><span><i data-status="open" />Ready</span><span><i data-status="blocked" />Blocked</span><span className="ops-view-muted">Each block is one shown assignment; size does not represent effort.</span></div>
     {members.length ? <div className="ops-capacity-landscape">{members.map(member => {
       const {assignments,blockedCount,recordedMinutes,unknownEffortCount} = summarizeNativeWorkload(work,member.user_id);

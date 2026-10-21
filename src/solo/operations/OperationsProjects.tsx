@@ -16,7 +16,7 @@ const projectDate = (value: string | null) => value && !Number.isNaN(new Date(va
 
 export function OperationsProjects({ plans, members, onInspectItem, onInspectPlan }: OperationsProjectsProps) {
   const people = new Map(members.map(member => [member.user_id, member]));
-  return <section className="ops-views" aria-label="Projects"><header className="ops-view-heading"><div><h1>Every project, a clear next step</h1><p>Follow the milestones, the owners and the work still ahead.</p></div><span className="ops-view-muted">{plans.length} plans shown</span></header>
+  return <section className="ops-views" aria-label="Projects"><header className="ops-view-heading"><h1>Every project, a clear next step</h1><span className="ops-view-muted">{plans.length} plans shown</span></header>
     {!plans.length ? <div className="ops-view-empty"><Flag size={32} aria-hidden="true" /><h2>A shared path from start to finish</h2><p>Your plans will appear here with their milestones and assigned work.</p></div> : <div className="ops-project-landscape">{plans.map(plan => {
       const eligible = plan.items.filter(item => item.status !== "cancelled");
       const completed = eligible.filter(item => item.status === "done").length;

@@ -1,5 +1,31 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+**October21 required-CI repair:** #2461 merged/source-web verified at
+`20ac409589f0692a0db8b8d3cd24cad0fd11c82c`, exact verified union8e6b209c.
+All11 exact-head checks/Preview plus both statuses PASS; existing real-PDF hash
+assertions are preserved under a deterministic clock. No product, registry,
+algorithm, authorization or acceptance change. Original docs#2458 timing failure
+is retained; fresh current-main CI is required, without waiver (Master§4.0).
+
+**October21 explicit read-receipt source release:** O13 presentation#2459 merged
+`7922abf874db30682bf45ccc5894e7ebedbb8901`, actual/expected treed4ad684f.
+Required head checks, applied13040000, original display identity/private ACLs,
+pure production labels/delegation, exact provider web metadata and public build
+readback verified (Master§4.0). Successful collection/commercial lookups say read,
+not business changed; canonical records/history/authority and CAP012/016/017
+Limited/account-access-Unverified are unchanged. No final-answer/CPU recovery or
+authenticated read-row/reload acceptance is inferred. All19/9 remain required.
+
+**October21 contact-follow-up clarity source release:** O05/O08 repair#2460,
+reviewed0042e90d → mergedc5b40526b10ecfb7935b832045e18990f420c138,
+exact tree5e6ed6f5, required head checks/web/public identity verified (Master§4.0).
+The legacy21day inactivity count can include leads; customer copy now describes
+recorded contact follow-up, not predicted client lapsing/custom thresholds or an
+unconditional draft/send. Count/key/order/records/navigation/authority unchanged;
+CAP010 stays Coming Soon.77 source cases and bounded synthetic1536/320 component
+proof are not customer navigation/reload, full health intelligence or acceptance.
+All19/9 and the single founder evaluation remain required; sign-in is held.
+
 **October 21 consumer source release; authenticated recovery not accepted:**
 #2451 original-scope transport foundation is deployed at a76bb957; #2455 now binds
 the existing Chat snapshot to that same caller-JWT review worker at

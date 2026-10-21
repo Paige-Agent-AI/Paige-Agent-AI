@@ -1,5 +1,57 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
+## October21 professional draft save/recovery — native foundation pre-edit contract
+
+REUSE native `save_paige_agreement`, canonical agreement/signers/events/template
+records and auth helpers. EXTEND selected-record human preparation read. REPAIR
+uncertain-create retries through immutable correlation on the existing agreement
+row; NEW only the missing request-identity columns and thin create/recover/read seams.
+Production catalog confirms no existing draft request identity/reader, save body
+MD5 `1bd28e75afa0f50bb07b717795a5be0e`, and unchanged authenticated-only SAVE ACL.
+Existing Spine `agreement.draft` explicitly documents non-idempotent creation.
+
+1. Outcome: owner can retain and recover the same draft rather than blindly creating
+   another agreement and counterparty after a lost response.
+2. Domain: E04 / native CRM–Sales agreements. E09 Portal/Knowledge and EXP05/02 source
+   leases remain intact; no other agent is assigned.
+3. Harness/Gateway: reuse canonical native authority/records/readback; no approval,
+   executor or admission engine. This foundation does not activate Chat or Live.
+4. Spine: existing `agreement.draft` and `agreement.list/status/send` remain PARTIAL.
+   The current Chat executor/fingerprint is unchanged; new native seams are initially
+   unmounted source, not an executed capability or customer outcome.
+5. Provider: none; no upload/download/send/sign/payment/provider configuration here.
+6. Authority: unchanged auth.uid/current_user_tenant_id/is_tenant_admin checks and
+   original SAVE writer, including canonical company-operator behavior. No new role,
+   MUTATION_VERB, action-risk class, Trust lane, budget or approval channel.
+7. Jobs/events: no job/scheduler. First creation reuses native created event and
+   counterparty trigger; recovery must add neither a duplicate record nor event.
+8. Receipt: original canonical ID/current status/version/time and actual original
+   creation event. Lost responses never establish rollback. No body/input echo as proof.
+9. Surface: eventual original Sales preparation page, following isolated prototype
+   062d9ed34. Existing UI/Binding Ledger remains unchanged in this native increment.
+10. Proof owed: native old/new caller/replay/concurrency/scope/ACL tests, exact-head CI,
+    forward migration readback and later actual owner/staff/client/UI/role acceptance.
+
+Keep all existing rows and signed versions unchanged, no backfill or legal rewrite.
+Correlation is metadata on the same native row, not a second operation/agreement store.
+Different deliberate requests may create separate agreements; one request must recover
+one identity even after subsequent editing/signing. A missing edit ID must never be
+reinterpreted as create. Exact source/template provenance, rich editing, immutable
+version history, generic PDF preparation, C4–C7 accepted/effective terms and the full
+O1–O12 journey remain mandatory subsequent integration, not completion claims here.
+
+Reserved forward migration20271113120000 follows EXP09's pending100000/110000;
+release must reconcile the actual frontier rather than leapfrogging their work.
+
+Local native checkpoint: original-call baseline produced two agreements and two
+counterparties; repaired native PostgreSQL16 proof73 assertions PASS, including two
+real concurrent sessions, exact current SAVE body, original CAS, metadata constraints,
+closed human DTO/ACL, templates/upload references/missing-email and tier refusals.
+Migration replay twice, no production/authenticated claim. Existing integrity runner
+now calls this proof in the same cluster. Source is unmounted; actual UI integration,
+hosted full-schema CI, review, safe release and readback remain owed. See
+[bounded foundation evidence](../evidence/ui-delivery/e04-draft-request-identity.md).
+
 ## October 21 restart — professional native Agreements, original twelve outcomes retained
 
 **Authority:** owner EXP04 resume / Reimagine Terms & Agreements, October 21, 2026;

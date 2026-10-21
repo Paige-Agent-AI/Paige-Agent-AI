@@ -135,7 +135,7 @@ export function useCuraKnowledge(scope:CuraKnowledgeScope|null,initialDocumentId
   const focus=()=>{if(alive&&!retired&&!working&&!pending&&!['review','preparing','correction'].includes(model.outcome))void load();};
   window.addEventListener('focus',focus);void load('',false,initialDocumentId);
   return()=>{alive=false;++request;pending=null;subscription.unsubscribe();window.removeEventListener('focus',focus);};
- },[incarnation]);
+ },[incarnation,initialDocumentId]);
  const load=useCallback(()=>actions.current?.load()??Promise.resolve(),[]),search=useCallback((query:string)=>actions.current?.load(query,false,null)??Promise.resolve(),[]);
  const loadMore=useCallback(()=>actions.current?.load(undefined,true)??Promise.resolve(),[]);
  const review=useCallback((id:string,available:boolean,terms:CuraShareTerms)=>actions.current?.review(id,available,terms)??Promise.resolve(),[]);

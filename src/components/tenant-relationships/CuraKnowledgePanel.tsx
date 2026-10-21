@@ -36,13 +36,14 @@ function CuraKnowledgeSession({tenantId,actor,onBack,onPendingChange,reference}:
  const [terms,setTerms]=useState<CuraShareTerms>({kind:'information',validFrom:null,validUntil:null});
  const [publicationNotice,setPublicationNotice]=useState('');
  const title=useRef<HTMLHeadingElement>(null),status=useRef<HTMLDivElement>(null),addTrigger=useRef<HTMLButtonElement>(null);
- const entries=useRef(new Map<string,HTMLButtonElement>()),restore=useRef<string|null>(null),focus=useRef<'review'|'status'|string|null>(null);
+ const entries=useRef(new Map<string,HTMLButtonElement>()),restore=useRef<string|null>(null),focus=useRef<'review'|'status'|string|null>(reference?.documentId?'review':null);
  const correctionEntries=useRef(new Map<string,HTMLButtonElement>()),publicationSource=useRef<string|null>(null);
  const publicationTarget=useCallback(()=>[publicationSource.current?correctionEntries.current.get(publicationSource.current):addTrigger.current,addTrigger.current,title.current]
   .find(node=>node?.isConnected&&!node.matches(':disabled')&&!node.closest('[hidden], [inert]'))??null,[]);
  const busy=model.outcome==='saving',unknown=model.outcome==='unknown',preparing=model.outcome==='preparing';
  const correction=model.outcome==='correction'?model.correction:undefined;
- const dialogOpen=adding||!!correction,exitBlocked=busy||unknown||dialogOpen;
+ const reviewing=model.outcome==='review'&&!!model.proposal,showForm=!!selected&&!reviewing&&!preparing&&!busy&&!unknown&&!['saved','conflict','refused'].includes(model.outcome);
+ const dialogOpen=adding||!!correction,exitBlocked=busy||unknown||dialogOpen||showForm||preparing||reviewing;
  useBeforeUnloadGuard(exitBlocked);useClientAccountExit(exitBlocked,exitBlocked);
  useLayoutEffect(()=>{onPendingChange?.(exitBlocked);return()=>onPendingChange?.(false);},[exitBlocked,onPendingChange]);
  useEffect(()=>{
@@ -56,7 +57,6 @@ function CuraKnowledgeSession({tenantId,actor,onBack,onPendingChange,reference}:
  const review=()=>{if(!selected)return;focus.current='review';void model.review(selected.document_id,true,terms);};
  const withdraw=(row:CuraKnowledgeSource)=>{setSelected(null);restore.current=row.document_id;focus.current='review';void model.review(row.document_id,false,{kind:row.share!.customer_kind,validFrom:row.share!.valid_from,validUntil:row.share!.valid_until});};
  const closeDialog=()=>{setAdding(false);focus.current='publication';model.cancel();};
- const reviewing=model.outcome==='review'&&!!model.proposal,showForm=selected&&!reviewing&&!preparing&&!busy&&!unknown&&!['saved','conflict','refused'].includes(model.outcome);
  const p=model.proposal;
  return <section aria-labelledby={`${id}-title`} className="min-w-0 space-y-6 [&_button]:min-h-[44px]">
   <Button variant="ghost" className={quietButton} disabled={exitBlocked} onClick={onBack}><ArrowLeft aria-hidden className="mr-2 h-4 w-4"/>Back to experience</Button>

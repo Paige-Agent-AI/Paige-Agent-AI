@@ -798,3 +798,10 @@ Production binding shipped in PR #1200 (`4ccb8a9a`): live Product/Price, migrati
 ## EXP09 Teach CURA owner controls — 2026-10-21 source candidate
 
 [Original Knowledge action/record contract](../delivery/e09-teach-cura-owner-controls.md) and [UI evidence](../evidence/ui-delivery/e09-teach-cura-owner-controls.md) extend the existing Portal Experience. Native inventory2476 is production verified; this owner consumer is release-gated. Original Knowledge publication and K1 prepare/set/receipt remain authoritative, customer private history separate. Dashboard controls are implemented; typed Chat/eligible Live teaching is not mounted by this slice. No new Spine key, model/Knowledge store, entitlement or approval path. Universal native publisher predicates; all signed-in publication→customer answer proof remains UNVERIFIED. Existing ALG-01/12 reconciliation/recovery reused; no verified new ALG-02/04/13 algorithm.
+
+Exact-source recovery extends the same Teach CURA view through the canonical
+portal_knowledge reference and native document filter, not a new permission or
+publication path. Missing/foreign records never substitute another source;
+incoming references wait behind original terms/review/dialog/unknown-save state.
+Owner Chat/eligible Live teaching dispatch remains UNAVAILABLE in this bounded
+navigation prerequisite. [Source contract](../delivery/e09-cura-source-reference.md).

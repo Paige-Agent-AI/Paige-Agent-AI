@@ -78,7 +78,7 @@ it('returns focus to the original source control when a sharing form is canceled
 });
 it('loads a valid exact source through the same authenticated hook and offers the full inventory',async()=>{
  model.focusedId=doc;await act(async()=>root.render(<CuraKnowledgePanel tenantId={tenant} reference={{documentId:doc,invalid:false}} onBack={back}/>));
- expect(f.hook).toHaveBeenLastCalledWith({tenant,actor:f.context.activeUserId},doc);expect(host.textContent).toContain('Showing the linked source');
+ expect(f.hook).toHaveBeenLastCalledWith({tenant,actor:f.context.activeUserId},doc);expect(host.textContent).toContain('Showing the linked source');expect(document.activeElement).toBe(host.querySelector('h2'));
  await click('Show all sources');expect(model.search).toHaveBeenCalledExactlyOnceWith('');expect(model.confirm).not.toHaveBeenCalled();
 });
 it('reports a missing linked record without replacing it or presenting a true-empty first use',async()=>{
@@ -87,4 +87,16 @@ it('reports a missing linked record without replacing it or presenting a true-em
 it('refuses malformed references before loading private inventory',async()=>{
  await act(async()=>root.render(<CuraKnowledgePanel tenantId={tenant} reference={{documentId:null,invalid:true}} onBack={back}/>));
  expect(f.hook).not.toHaveBeenCalled();expect(host.textContent).not.toContain('Test welcome FAQ');expect(host.querySelector('[role="alert"]')?.textContent).toContain('address could not be read');await click('Back to experience');expect(back).toHaveBeenCalledTimes(1);
+});
+
+it('waits for the exact linked read before moving focus from loading to its heading',async()=>{
+ model.phase='loading';model.rows=[];model.focusedId=doc;await act(async()=>root.render(<CuraKnowledgePanel tenantId={tenant} reference={{documentId:doc,invalid:false}} onBack={back}/>));
+ expect(document.activeElement).not.toBe(host.querySelector('h2'));model.phase='ready';model.rows=[row()];await act(async()=>root.render(<CuraKnowledgePanel tenantId={tenant} reference={{documentId:doc,invalid:false}} onBack={back}/>));
+ expect(document.activeElement).toBe(host.querySelector('h2'));expect(model.confirm).not.toHaveBeenCalled();
+});
+
+it('holds an incoming reference through source terms and exact review, releasing it on cancel or a settled receipt',async()=>{
+ await render();await click('Review sharing');expect(pending).toHaveBeenLastCalledWith(true);await click('Cancel');expect(pending).toHaveBeenLastCalledWith(false);
+ model.outcome='preparing';await render();expect(pending).toHaveBeenLastCalledWith(true);model.outcome='review';model.proposal=proposal();await render();expect(pending).toHaveBeenLastCalledWith(true);
+ model.outcome='saved';model.proposal=null;await render();expect(pending).toHaveBeenLastCalledWith(false);expect(button('Back to experience').disabled).toBe(false);
 });

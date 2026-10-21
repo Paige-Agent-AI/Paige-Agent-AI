@@ -1,0 +1,14 @@
+{
+  "capturedSourceParent": "3df7f44f431d04718b5549df4ea5f1ff59dd2d4d",
+  "currentHead": "0f8954c49a4430eba390115ca6bb5042eb629515",
+  "sameProductInputs": 302,
+  "changedProductInputs": [
+    {
+      "path": "src/components/tenant-shell/tenantShellRoutes.ts",
+      "capturedSha256": "7efe0044151935edd51fd0754201cd7cebcf938f7fb5ee24c85b5cc87da8d1c5",
+      "currentSha256": "2cd9261dd3b3f9434ba1a5d3d548eb1b322e0fc381ff4a324135713ec5fdd536"
+    }
+  ],
+  "bundleSha256": "5cb2939bf7c717cc983f356ff5c5b009d248a438204ffb98a912d1d820489346",
+  "boundary": "Original captures remain bound to their stated source; incoming rendered dependency deltas require independent composition review, not a retroactive capture claim."
+}

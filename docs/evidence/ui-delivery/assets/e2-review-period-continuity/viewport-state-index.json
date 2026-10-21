@@ -1,0 +1,190 @@
+{
+  "kind": "SYNTHETIC_ACTUAL_SOURCE",
+  "sourceComposedCommit": "2219e2e3271b8bda035d80e388a071c225cd3028",
+  "sourceContinuityCommit": "87d2fd86d2e0cae82e13ef9237789ee1b6beb106",
+  "observationProvenance": "DOM geometry and native interaction results recorded during capture; this index reconstructs those observations after the browser kernel reset. Hashes and encoded raster dimensions are independently read from the original files. No remeasurement claim.",
+  "renderer": "Actual ExecutiveOverview and original product CSS/font with explicit synthetic data, identity and composer ports. Product rendering leaves are byte-identical across the two commits; no backend/model/provider/action execution.",
+  "font": "Schibsted Grotesk",
+  "frames": [
+    {
+      "frame": "1536-closed.jpg",
+      "sha256": "6363e5ca7cff9ba0d264900e2169d3a09cbc8bb834f759c3d46264124019f641",
+      "bytes": 122035,
+      "encodedRaster": {
+        "width": 1535,
+        "height": 770
+      },
+      "observedCssViewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "documentWidth": 1536,
+      "execWidth": 1305,
+      "execScrollWidth": 1305,
+      "expanded": false,
+      "period": "current_quarter"
+    },
+    {
+      "frame": "1536-open.jpg",
+      "sha256": "a5c1916cd5dfca974ccc6e1de372b8a14c797d2372d09d71dc5d7ed01607bd27",
+      "bytes": 105518,
+      "encodedRaster": {
+        "width": 1535,
+        "height": 770
+      },
+      "observedCssViewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "documentWidth": 1536,
+      "execWidth": 783,
+      "execScrollWidth": 783,
+      "expanded": true,
+      "period": "current_quarter"
+    },
+    {
+      "frame": "1366-closed.jpg",
+      "sha256": "d6f3e06972b160d5b033be61845bd775cee941b3fa29ef2f6f4ef1a2217af3be",
+      "bytes": 111924,
+      "encodedRaster": {
+        "width": 1366,
+        "height": 768
+      },
+      "observedCssViewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "documentWidth": 1366,
+      "execWidth": 1135,
+      "execScrollWidth": 1135,
+      "expanded": false,
+      "period": "current_quarter"
+    },
+    {
+      "frame": "1366-open.jpg",
+      "sha256": "5a4f129ba87f49080e74ae71b394a078f4f53e971ab8a579251ea7be920dcc18",
+      "bytes": 97243,
+      "encodedRaster": {
+        "width": 1366,
+        "height": 768
+      },
+      "observedCssViewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "documentWidth": 1366,
+      "execWidth": 671,
+      "execScrollWidth": 671,
+      "expanded": true,
+      "period": "current_quarter"
+    },
+    {
+      "frame": "1024-closed.jpg",
+      "sha256": "3007572280934549ad20b85ed387a717dd44946bf229aa286c063f099459a580",
+      "bytes": 94807,
+      "encodedRaster": {
+        "width": 1024,
+        "height": 768
+      },
+      "observedCssViewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "documentWidth": 1024,
+      "execWidth": 937,
+      "execScrollWidth": 937,
+      "expanded": false,
+      "period": "current_quarter"
+    },
+    {
+      "frame": "1024-open.jpg",
+      "sha256": "16e6e3dedceadb0e339a54773a8f95b29d22f3114d86bb4d6d6bfc67aa4dc7a8",
+      "bytes": 45655,
+      "encodedRaster": {
+        "width": 1024,
+        "height": 768
+      },
+      "observedCssViewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "documentWidth": 1024,
+      "execWidth": 937,
+      "execScrollWidth": 937,
+      "expanded": true,
+      "period": "current_quarter"
+    },
+    {
+      "frame": "900-closed-corrected.jpg",
+      "sha256": "10ff180964c8b9b9964be46eba960290db019dc0aae8877a8938f693368bda87",
+      "bytes": 83215,
+      "encodedRaster": {
+        "width": 900,
+        "height": 1000
+      },
+      "observedCssViewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "documentWidth": 900,
+      "execWidth": 813,
+      "execScrollWidth": 813,
+      "expanded": false,
+      "period": "current_quarter"
+    },
+    {
+      "frame": "900-open-corrected.jpg",
+      "sha256": "e36d08d25c94ebcfef3c75f8c3e494375d29b4d2db732a77e86d65eccc97747c",
+      "bytes": 44987,
+      "encodedRaster": {
+        "width": 900,
+        "height": 1000
+      },
+      "observedCssViewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "documentWidth": 900,
+      "execWidth": 813,
+      "execScrollWidth": 813,
+      "expanded": true,
+      "period": "current_quarter"
+    },
+    {
+      "frame": "320-last30-keyboard.jpg",
+      "sha256": "4d21294bccd1e39cb404c8b0ed68b96f0f71946b5c6bcc410ae83d67af7c03bd",
+      "bytes": 34579,
+      "encodedRaster": {
+        "width": 320,
+        "height": 740
+      },
+      "observedCssViewport": {
+        "width": 320,
+        "height": 740
+      },
+      "documentWidth": 320,
+      "execWidth": 233,
+      "execScrollWidth": 233,
+      "expanded": false,
+      "period": "last_30_days"
+    }
+  ],
+  "interactions": {
+    "nativeSelectorKeyboard": "PASS: 320 last30 selector retains visible focus; period window/control/query agree",
+    "exactReload": "PASS: last30 query/control/window retained",
+    "nativeMarketingAndBack": "PASS: original link to explicit simulated Marketing home and native browser Back retain last30; originating record is simulated",
+    "veraUnsent": "UNVERIFIED: interrupted before this final-source check",
+    "nativeBrowserZoom": "UNVERIFIED",
+    "authenticatedCustomer": "UNVERIFIED"
+  },
+  "exclusions": [
+    "invalid-900-closed-at-1528.jpg: actual viewport1528x782, not a900 capture; retained locally only",
+    "Prototype phone top-only capture is not final-source selector proof"
+  ],
+  "limits": [
+    "Original JPEG bytes are unedited; measured CSS viewport is not exact encoded-raster proof.",
+    "The44px white synthetic review-controls footer is outside the product.",
+    "Synthetic example figures and fixture comparison text do not prove backend period arithmetic or customer acceptance.",
+    "Original tablet/narrow Chat overlay is intentionally preserved."
+  ]
+}

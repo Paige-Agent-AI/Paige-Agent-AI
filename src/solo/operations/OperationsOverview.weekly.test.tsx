@@ -21,9 +21,9 @@ async function mount(review=vi.fn()){
   await act(async()=>root.render(<MemoryRouter initialEntries={["/solo/123/operations/overview"]}><div data-pg="light"><OperationsOverview tenantId="test-tenant" plans={[]} items={[]} members={[]} onInspectItem={vi.fn()} onInspectPlan={vi.fn()} onReviewWithPaige={review}/></div></MemoryRouter>));
   cleanup=()=>act(()=>{root.unmount();host.remove();});return{host,review};
 }
-it("opens the original weekly inspection from Overview without reading until requested or replacing Plan with PAIGE",async()=>{
+it("opens the original weekly inspection from Overview without reading until requested or replacing Plan with ZION",async()=>{
   const {review}=await mount();expect(button("Weekly responsibility")).toBeTruthy();expect(h.enabled).toEqual([false]);expect(h.draft).not.toHaveBeenCalled();
-  await act(async()=>button("Plan with PAIGE")!.click());expect(review).toHaveBeenCalledTimes(1);expect(h.enabled).not.toContain(true);
+  await act(async()=>button("Plan with ZION")!.click());expect(review).toHaveBeenCalledTimes(1);expect(h.enabled).not.toContain(true);
   await act(async()=>button("Weekly responsibility")!.click());expect(h.enabled).toContain(true);
   expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Current status couldn’t be verified");
   expect(document.querySelector('[role="dialog"]')?.textContent).not.toContain("No weekly responsibility is registered");
@@ -32,7 +32,7 @@ it("opens the original weekly inspection from Overview without reading until req
 });
 it("keeps a noneligible audience out of the weekly reader while retaining the original operating work",async()=>{
   h.eligible=false;await mount();expect(button("Weekly responsibility")).toBeUndefined();expect(h.enabled).toEqual([]);
-  expect(document.body.textContent).toContain("Start with one real commitment");expect(button("Plan with PAIGE")).toBeTruthy();
+  expect(document.body.textContent).toContain("Start with one real commitment");expect(button("Plan with ZION")).toBeTruthy();
   expect(h.draft).not.toHaveBeenCalled();
 });
 it("shows an original server refusal without planning or exposing another owner's records",async()=>{

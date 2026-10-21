@@ -3730,16 +3730,34 @@ mcp.tool("run_skill", {
 
 mcp.tool("get_skill_run", {
   description: "Fetch a single skill run by id, including status, inputs, outputs, steps log, and any error. Use this to poll runs returned by `run_skill`.",
-  inputSchema: z.object({ run_id: z.string() }),
+  inputSchema: z.object({ run_id: z.string().uuid() }),
   handler: async ({ run_id }) => {
-    const { data, error } = await admin
-      .from("paige_skill_runs")
-      .select("id, skill_id, skill_slug, contact_id, invoker_kind, invoker_user_id, inputs, outputs, status, error, steps, latency_ms, created_at, completed_at")
-      .eq("id", run_id)
-      .maybeSingle();
-    if (error) return err(error.message);
-    if (!data) return err("run not found");
-    return ok(data);
+    // Only the request context set by verified bearer resolution is authority. Do not
+    // inherit currentActor()'s platform default when a context is missing.
+    const actor = actorStore.getStore();
+    if (!actor || !AUDIT_UUID.test(run_id)) return err("skill_run_unavailable");
+    const id = run_id.toLowerCase();
+    try {
+      if (actor.kind === "platform") {
+        // Preserve the existing explicit platform-key read, including platform runs
+        // with no contact. Native field aliases retain the incumbent response DTO.
+        const { data, error } = await admin.from("paige_skill_runs")
+          .select("id, skill_id, skill_slug, contact_id, invoker_kind, invoker_user_id, inputs, outputs, status, error, steps:steps_log, latency_ms:duration_ms, created_at, completed_at")
+          .eq("id", id).maybeSingle();
+        return !error && data?.id === id ? ok(data) : err("skill_run_unavailable");
+      }
+      if (actor.kind !== "user" || !actor.user_id) return err("skill_run_unavailable");
+      const tenant = await actorTenantId();
+      if (!tenant) return err("skill_run_unavailable");
+      // Opaque MCP OAuth is not a GoTrue JWT. The service-only reader re-resolves
+      // original actor/workspace and run RLS predicates atomically before payload.
+      const { data, error } = await admin.rpc("read_mcp_skill_run", {
+        _actor: actor.user_id, _expected_tenant: tenant, _run_id: id,
+      });
+      return !error && data?.id === id ? ok(data) : err("skill_run_unavailable");
+    } catch {
+      return err("skill_run_unavailable");
+    }
   },
 });
 

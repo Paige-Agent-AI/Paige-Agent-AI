@@ -57,6 +57,24 @@ or new lease/session system is introduced.
 No new algorithm is verified. This is deterministic result reconciliation relevant
 to ALG-01/12; it does not establish ALG-02/04/13, client health or next-best actions.
 
+## Separately reviewed MCP consumer
+
+The existing registration now uses only the actual request AsyncLocalStorage
+context established by bearer validation. Missing context refuses instead of
+inheriting an implicit platform actor. Valid user calls delegate the resolved
+actor and workspace to the native reader. The original explicitly verified
+platform-key path retains its global original read and field-correct aliases.
+The caller cannot supply a different delegated actor, business or platform flag.
+Malformed IDs, missing/denied rows, unexpected response IDs and database or
+transport errors all fail with `skill_run_unavailable` without private SQL detail.
+
+The separately reviewed consumer requires the native prerequisite's actual
+production body/grants before normal Edge deployment. It does not change
+`run_skill`, admission, provider permissions, paid execution or the catalogue's
+truth labels. Its16 callback cases are transport-isolated proof, not live MCP
+OAuth or signed-in customer acceptance. All original117 MCP registrations still
+pass the single-governed-door and destructive-confirmation guards.
+
 Internal build identity is the exact owning PR head; channel development until
 normal production migration/readback. Migration20271113070000 is NOT_DEPLOYED
 at preparation. This native PR has no Edge/web change (NOT_APPLICABLE), customer

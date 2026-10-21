@@ -128,7 +128,7 @@ export const MCP_CAPABILITY_POLICY: Readonly<Record<string, McpCapability>> = {
     canonical: "skill_execution_record",
     effect: "read",
     category: "read",
-    evidence: "index.ts:3541-3549: one .select() on paige_skill_runs .eq('id', run_id).maybeSingle(). No insert/update/delete, no rpc, no fetch, no audit().",
+    evidence: "paige-mcp get_skill_run uses the service-only STABLE INVOKER read_mcp_skill_run for validated user actors: original get_actor_access plus contact tenant and run-RLS staff/assignment predicates. Explicit verified platform-key context retains the original read. Closed DTO aliases steps_log/duration_ms; no writer, provider, retry or audit mutation. Migration20271113070000 and e09_skill_run_readback.sql prove the native boundary.",
     paigeHome: false,
   },
   get_social_accounts: {

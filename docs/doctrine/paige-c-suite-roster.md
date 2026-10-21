@@ -1,5 +1,23 @@
 # The Paige C-Suite — Named-Agent Roster
 
+> **Owner remap — October18–21, ZION:** ZION is the existing **Operations and
+> Automation** specialist leading EXP05 — Keep My Business Running / Run My Week.
+> He coordinates weekly commitments, tasks, reminders, Calendar responsibilities,
+> governed workflow preparation, monitoring and recovery through PAIGE's existing
+> runtime. This supersedes his Strategy & Vision remit in the historical draft
+> below. PAIGE remains principal COO; MENTOR and VERA keep their current remaps.
+> Approved Operations UI uses contextual **Plan with ZION / Review with ZION** actions into
+> the original editable conversation, never another assistant or planning subtab.
+> Remit metadata does not authorize a delegated run, expand tools/tenant data,
+> change approval or budget policy, or activate the legacy soft executor. An
+> addressed reply, registered identity, enabled row and completed assignment are
+> different states. Original Work/domain records and Rail receipts prove results.
+> Source: owner Oct18 EXP05/ZION assignments and Oct21 design approval, ANT-11.
+> Forward seed correction: `20271113080000_exp05_zion_operations_role.sql`;
+> preserve custom/tenant rows, original identity and all runtime/authority fields.
+> Actual deployed identity, contextual UI and authenticated specialist outcomes
+> require their own release evidence; this remit ruling does not assert them.
+
 > **Owner remap — October19, VERA:** VERA is the existing **Intelligence, Finance
 > and Risk** specialist for EXP02/11/12. This supersedes her Trust-only remit below;
 > PAIGE remains principal COO. Existing Chat addressing uses the same scoped

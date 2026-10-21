@@ -8,6 +8,25 @@ import {
 import { looksLikeFinanceAgent } from '../../supabase/functions/_shared/finance-gate.ts';
 
 describe('detectVpAddress — the roster\'s addressing rule', () => {
+  it('uses the existing ZION identity for Operations without inventing a delegated run', () => {
+    const addressed = detectVpAddress('ZION, help me organize this week.')!;
+    expect(VP_ROSTER.filter(v => v.slug === 'zion')).toHaveLength(1);
+    expect(addressed.vp.role).toBe('VP Operations & Automation');
+    expect(addressed.vp.scope).toContain('weekly planning');
+    expect(addressed.vp.scope).toContain('original receipts');
+    const block = buildVpAddressBlock(addressed, 'Test studio');
+    expect(block).toContain('PAIGE remains the principal owner-facing COO');
+    expect(block).toContain('not proof of a separately delegated run');
+    expect(block).toContain('missing capacity, provider readiness and execution state unknown');
+    expect(block).toContain("no action's authority changes because a name was said");
+  });
+
+  it('keeps ZION operational evidence instructions out of other addressed identities', () => {
+    const block = buildVpAddressBlock(detectVpAddress('NEXUS, review this campaign.')!, 'Test studio');
+    expect(block).not.toContain('ZION operations:');
+    expect(block).toContain("no action's authority changes because a name was said");
+  });
+
   it('uses the existing VERA identity for source-backed intelligence without granting action authority', () => {
     const addressed = detectVpAddress('VERA, how is my business doing?')!;
     expect(addressed.vp.slug).toBe('vera');
@@ -75,9 +94,9 @@ describe('buildVpAddressBlock — identity firm, authority stated once', () => {
   it('carries the VP identity, scope, voice, and the tenant name', () => {
     const block = buildVpAddressBlock(a, 'Mogul Coaching');
     expect(block).toContain('YOU ARE ZION FOR THIS REPLY');
-    expect(block).toContain('VP Strategy & Vision');
+    expect(block).toContain('VP Operations & Automation');
     expect(block).toContain('Mogul Coaching');
-    expect(block).toContain('elevated and directional');
+    expect(block).toContain('practical and precise');
   });
 
   it('tells the model to speak as the VP first-person and not deflect to Paige', () => {

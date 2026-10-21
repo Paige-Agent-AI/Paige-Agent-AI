@@ -32,7 +32,7 @@ MUST_PRESERVE: native Work/Planning/CRM authority, original guards/inspectors, c
 ACCEPTANCE_CRITERIA: one focused canonical read on Overview; independent honest source states; original source and guarded Back; unsent editable review; proper actor/scope retirement; required native finish, Independent Review, exact-head CI, production source/readback and ordinary authenticated read/reload before availability promotion.
 MOTION_PURPOSE: NONE: no new motion.
 PROTECTED_SEAMS: existing Business Review issuer and producer, Spine business.operating_snapshot/read_only, Harness/Trust/Rails, native Work/domain writers and original Team/Calendar/Automation contracts. Read-only findings add no approval, job or provider operation.
-INTERNAL_BUILD_IDENTITY: base=46c6514f917ec00d423fd83e36e6bd9714ba915b; deployment=NOT_DEPLOYED; environment=isolated local candidate with declared synthetic transport/identity/domain ports; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE. Final immutable head and source-input/native bindings remain required.
+INTERNAL_BUILD_IDENTITY: base=46c6514f917ec00d423fd83e36e6bd9714ba915b; deployment=NOT_DEPLOYED; environment=local actual SOLO candidate with synthetic transport/identity/domain ports; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=src/solo/operations/OperationsRecordedFindings.test.tsx.
 RELEASE_CHANNEL: development: incomplete native finish; no production consumer claim.
 RELEASE_CLASSIFICATION: patch: bounded source-awareness and original-source reentry within existing Operations.
 CUSTOMER_RELEASE_IDENTITY: none: no publication or customer version.

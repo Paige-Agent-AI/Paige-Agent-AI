@@ -103,9 +103,9 @@ SELECT is(pg_temp.read_run(9,4,4)->>'id',pg_temp.ident(5,4)::text,'native canoni
 INSERT INTO public.tenants(id,slug,name,status,account_type,features)
  SELECT pg_temp.ident(2,n),'test-tenant-run-reader-'||n,'Test company workspace '||n,
  'active','standalone','{"system_workspace":true}'::jsonb FROM generate_series(5,6) n;
-INSERT INTO public.clients(id,tenant_id,assigned_coach_user_id,first_name,last_name,status) VALUES
- (pg_temp.ident(3,5),pg_temp.ident(2,5),pg_temp.ident(1,6),'Test','Company A','active'),
- (pg_temp.ident(3,6),pg_temp.ident(2,6),pg_temp.ident(1,6),'Test','Company B','active');
+INSERT INTO public.clients(id,tenant_id,assigned_coach_user_id,created_by,first_name,last_name,status) VALUES
+ (pg_temp.ident(3,5),pg_temp.ident(2,5),pg_temp.ident(1,6),pg_temp.ident(1,6),'Test','Company A','active'),
+ (pg_temp.ident(3,6),pg_temp.ident(2,6),pg_temp.ident(1,6),pg_temp.ident(1,6),'Test','Company B','active');
 INSERT INTO public.paige_skill_runs(id,skill_id,skill_slug,contact_id,invoker_kind,inputs,outputs,status)
  SELECT pg_temp.ident(5,n),pg_temp.ident(4,1),'test_exp09_run_read',pg_temp.ident(3,n),'mcp',
  '{}'::jsonb,'{"draft":"Test company draft"}'::jsonb,'succeeded' FROM generate_series(5,6) n;

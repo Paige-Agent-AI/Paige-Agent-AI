@@ -82,3 +82,9 @@ version, release note or announcement. Required exact-head CI/Preview and
 NON-AUTHOR review remain release gates. Recovery is an additive compatible
 forward fix retaining the original table and permissions. Actual authenticated
 owner/customer seven-pillar acceptance remains PROOF OWED.
+
+Hosted repaired-head execution stopped at the new synthetic client seed because
+its original required created_by field was missing (32 earlier assertions passed;
+no assertion failed). The fixture now names its existing synthetic actor as
+creator, matching the real schema without creating membership or changing any
+production authority. All45 assertions require execution on the next exact head.

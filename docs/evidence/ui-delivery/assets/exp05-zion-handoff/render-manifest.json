@@ -1,0 +1,208 @@
+{
+  "schema": 1,
+  "capturedAt": "2026-10-21",
+  "sourceParent": "3df7f44f431d04718b5549df4ea5f1ff59dd2d4d",
+  "bundleSha256": "5cb2939bf7c717cc983f356ff5c5b009d248a438204ffb98a912d1d820489346",
+  "htmlSha256": "27308c2044d615d960a489a956f26067d7774a7ef5d3aaa89fcdf50c86310da5",
+  "productInputCount": 303,
+  "syntheticPortCount": 173,
+  "productSourceTransforms": 0,
+  "ownedSources": [
+    {
+      "path": "src/lib/paigePromptHandoff.ts",
+      "sha256": "79642121b85dd49bfb6f9cd46f5c8f4ec8f750474716e3a75f724a87bf0dec2f",
+      "gitBlob": "3a67592b41ceb0c6740523df5f866dde3dd9ca81",
+      "acceptedBlob": "62823b628939714d7de5b268407e180ea6a8e60a",
+      "normalization": "CRLF-to-LF only",
+      "role": "explicit candidate product source"
+    },
+    {
+      "path": "src/solo/operations/OperationsOverview.tsx",
+      "sha256": "21dac9e863b58d42f179b31d4000c59c8072c890d6a97a2727ebdd014707bae2",
+      "gitBlob": "f04da3a58e4c1db05c004c29646dbfa531df8b20",
+      "acceptedBlob": "3d377f354bb394d6e907087c95bef5f146cf01f6",
+      "normalization": "CRLF-to-LF only",
+      "role": "explicit candidate product source"
+    },
+    {
+      "path": "src/solo/operations/OperationsRecordedFindings.tsx",
+      "sha256": "e7e522707342193778d3959a7478a50eb361183842663eaed6023607c40a78cd",
+      "gitBlob": "7e57a5443c628e0381f37da6229b39727b80df8e",
+      "acceptedBlob": "7b6c5f3b8e0c25e97ee905fc1c55d6d2a85d6bea",
+      "normalization": "CRLF-to-LF only",
+      "role": "explicit candidate product source"
+    },
+    {
+      "path": "src/solo/operations/OperationsWorkspace.tsx",
+      "sha256": "b708add51d62bfa9d92830303acff708506802ee492a84da28e7e9189e44df1f",
+      "gitBlob": "94722b40bb3227b8e98e0c9dab6b3409945195e9",
+      "acceptedBlob": "8ffb259888e530c89c4c3eab6781676180b5d117",
+      "normalization": "CRLF-to-LF only",
+      "role": "explicit candidate product source"
+    }
+  ],
+  "captures": [
+    {
+      "image": "final-zion-1536-closed.jpg",
+      "observation": "final-zion-1536-closed.json",
+      "sha256": "e04dc9639c645867cbffd0e92931bdf3c68f8b1bc8b052a318768eaa481cf626",
+      "css": {
+        "width": 1536,
+        "height": 770
+      },
+      "raster": {
+        "width": 1535,
+        "height": 770
+      },
+      "panel": "closed",
+      "theme": "light",
+      "discrepancy": "Original browser raster is one pixel narrower than measured CSS viewport; never resized or padded."
+    },
+    {
+      "image": "final-zion-1536-open.jpg",
+      "observation": "final-zion-1536-open.json",
+      "sha256": "6c852b03f446c690787841dbda380e67581c23c3a01f216f5a4da03c7cb4b09f",
+      "css": {
+        "width": 1536,
+        "height": 770
+      },
+      "raster": {
+        "width": 1535,
+        "height": 770
+      },
+      "panel": "open",
+      "theme": "light",
+      "discrepancy": "Original browser raster is one pixel narrower than measured CSS viewport; never resized or padded."
+    },
+    {
+      "image": "final-zion-1366-closed.jpg",
+      "observation": "final-zion-1366-closed.json",
+      "sha256": "75fe78258485cefaf3cd8b6d3077d57d446189fdb5c5ab38da7c5ba4eb913733",
+      "css": {
+        "width": 1366,
+        "height": 768
+      },
+      "raster": {
+        "width": 1366,
+        "height": 768
+      },
+      "panel": "closed",
+      "theme": "light",
+      "discrepancy": null
+    },
+    {
+      "image": "final-zion-1366-open.jpg",
+      "observation": "final-zion-1366-open.json",
+      "sha256": "9d88133150474e82c579b4f8f6a21e78757c6962c44e4a7a25f9c9cace1f4a9d",
+      "css": {
+        "width": 1366,
+        "height": 768
+      },
+      "raster": {
+        "width": 1366,
+        "height": 768
+      },
+      "panel": "open",
+      "theme": "dark",
+      "discrepancy": null
+    },
+    {
+      "image": "final-zion-1024-closed.jpg",
+      "observation": "final-zion-1024-closed.json",
+      "sha256": "39c74fd7a168e7811e0abd6e7d4c82a52a58b759c6c923fbc39b42fa8d5f39ad",
+      "css": {
+        "width": 1024,
+        "height": 768
+      },
+      "raster": {
+        "width": 1024,
+        "height": 768
+      },
+      "panel": "closed",
+      "theme": "light",
+      "discrepancy": null
+    },
+    {
+      "image": "final-zion-1024-open.jpg",
+      "observation": "final-zion-1024-open.json",
+      "sha256": "de2e5320d5adaf0b0dedc693831849488f79a29338575419c165b8863b325285",
+      "css": {
+        "width": 1024,
+        "height": 768
+      },
+      "raster": {
+        "width": 1024,
+        "height": 768
+      },
+      "panel": "open",
+      "theme": "dark",
+      "discrepancy": null
+    },
+    {
+      "image": "final-zion-900-closed.jpg",
+      "observation": "final-zion-900-closed.json",
+      "sha256": "5a7ebc696b31adbaad04d9d631daf84bc156428a858a635cc0086c6fa65516e3",
+      "css": {
+        "width": 900,
+        "height": 1000
+      },
+      "raster": {
+        "width": 900,
+        "height": 1000
+      },
+      "panel": "closed",
+      "theme": "light",
+      "discrepancy": null
+    },
+    {
+      "image": "final-zion-900-open.jpg",
+      "observation": "final-zion-900-open.json",
+      "sha256": "b1ffa9b25fdc5545b9031e0cc14bd9d2a19bc4d5eba1830a2d387feb6896eb92",
+      "css": {
+        "width": 900,
+        "height": 1000
+      },
+      "raster": {
+        "width": 900,
+        "height": 1000
+      },
+      "panel": "open",
+      "theme": "light",
+      "discrepancy": null
+    },
+    {
+      "image": "final-zion-390-closed.jpg",
+      "observation": "final-zion-390-closed.json",
+      "sha256": "2adad2f3a8d574df77765935a2ace190d729e68b55d17296431d7cb5d049d858",
+      "css": {
+        "width": 390,
+        "height": 844
+      },
+      "raster": {
+        "width": 390,
+        "height": 843
+      },
+      "panel": "closed",
+      "theme": "light",
+      "discrepancy": null
+    },
+    {
+      "image": "final-zion-390-open.jpg",
+      "observation": "final-zion-390-open.json",
+      "sha256": "3a8d7a08f6bf796a89061949dd3141cd483b6909ad3295bf34e7bf4642d1bed0",
+      "css": {
+        "width": 390,
+        "height": 844
+      },
+      "raster": {
+        "width": 390,
+        "height": 843
+      },
+      "panel": "open",
+      "theme": "light",
+      "discrepancy": null
+    }
+  ],
+  "boundary": "ACTUAL CANDIDATE COMPONENTS AND FOCUSED READER; SYNTHETIC TRANSPORT/AUTH/DOMAIN PORTS; NO NETWORK/PROVIDER/WRITE; NOT AUTHENTICATED OR PRODUCTION PROOF",
+  "actualComposerProof": "Actual PaigeAIChat mounting/scope tests are separate; the rendered offline composer uses the original merge helper and disables Send. No authenticated, provider, business-record or delegated-execution proof inferred."
+}

@@ -97,6 +97,21 @@ describe('Executive period continuity through the existing route', () => {
 });
 
 describe("Executive — integrated customer flow", () => {
+  it('presents recorded Marketing intake, its limits and the current-account originating destination', async () => {
+    const snapshot = structuredClone(SNAPSHOT);
+    snapshot.domains.campaigns = { status: 'available', data: { ...snapshot.domains.clients!.data!, domain: 'campaigns', owner: 'marketing',
+      coverage_note: 'Recorded intake only: no visits, ad spend, revenue, full funnel or causal attribution',
+      headline: [{ key: 'campaigns.received', label: 'Leads received (form submissions)', value: 0, unit: 'count', basis: 'in_period' }] } };
+    mocks.review.mockReturnValue({ state: 'ready', snapshot, refresh: vi.fn() });
+    await mount();
+    const section = host.querySelector("[aria-labelledby='exec-domain-campaigns']")!;
+    expect(section.textContent).toContain('Marketing intake');
+    expect(section.textContent).toContain('no visits, ad spend, revenue, full funnel or causal attribution');
+    expect(section.querySelector('.exec-figures dd')?.textContent).toBe('0');
+    expect(section.querySelector('a')?.getAttribute('href')).toBe('/solo/1234567/growth/overview');
+    expect(section.querySelector('summary')?.textContent).toBe('Source & freshness');
+    expect(mocks.prefill).not.toHaveBeenCalled();
+  });
   it("shows the canonical review-integration gap beside real zero and unchanged owning links", async () => {
     const snapshot = structuredClone(SNAPSHOT);
     snapshot.domains.campaigns = { status: "unavailable", data: null, reason: "no_adapter: campaigns" };
@@ -156,7 +171,7 @@ describe("Executive — integrated customer flow", () => {
     const clients = host.querySelector("[aria-labelledby='exec-domain-clients']")!;
     expect(clients.textContent).toContain("Active clients"); expect(clients.textContent).toContain("0");
     const gaps = host.querySelector(".exec-gaps")!;
-    expect(gaps.textContent).toContain("Marketing campaigns"); expect(gaps.textContent).toContain("Not connected");
+    expect(gaps.textContent).toContain("Marketing intake"); expect(gaps.textContent).toContain("Not connected");
     expect(gaps.textContent).not.toMatch(/\b0\b/);
   });
   it.each([
@@ -178,7 +193,7 @@ describe("Executive — integrated customer flow", () => {
   it("names returned unavailable and missing requested domain results", async () => {
     const snapshot = structuredClone(SNAPSHOT); snapshot.requested.push("game_plan");
     mocks.review.mockReturnValue({ state: "ready", snapshot, refresh: vi.fn() }); await mount();
-    expect(text()).toContain("Marketing campaigns"); expect(text()).toContain("Game Plan performance");
+    expect(text()).toContain("Marketing intake"); expect(text()).toContain("Game Plan performance");
     expect(text()).toContain("missing result");
   });
   it("ranks act risks before watch across the company and labels the recommendation", async () => {

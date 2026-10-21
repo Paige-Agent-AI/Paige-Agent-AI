@@ -1,0 +1,7 @@
+Browser tab: 170270628, Title: "Offline Operations findings flow prototype", URL: "http://127.0.0.1:63673/solo/1701/operations/overview".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 170-173
++						178 container
++							179 text Recorded Operations findings could not be read for this workspace.
++							180 button Try reading again
+The focused UI element is 169 button Refresh recorded Operations findings

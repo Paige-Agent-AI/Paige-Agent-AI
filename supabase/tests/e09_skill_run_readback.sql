@@ -97,6 +97,46 @@ SELECT is(pg_temp.read_run(8,1,1),NULL::jsonb,'inactive owner is not authorized'
 SELECT is(public.get_actor_access(pg_temp.ident(1,9))->>'account_id',pg_temp.ident(2,4)::text,'canonical authority resolves actual agency child selection');
 SELECT is(pg_temp.read_run(9,3,4),NULL::jsonb,'legacy parent workspace disagreement refuses rather than choosing another authority');
 SELECT is(pg_temp.read_run(9,4,4)->>'id',pg_temp.ident(5,4)::text,'native canonical child authority and original agency staff predicate agree');
-SELECT is((SELECT count(*) FROM public.paige_skill_runs WHERE skill_id=pg_temp.ident(4,1)),4::bigint,'reads created or retried no skill run');
+
+-- Original company membership comes from operator standing, never an invented
+-- tenant seat. These unlinked contacts do not trigger customer/staff onboarding.
+INSERT INTO public.tenants(id,slug,name,status,account_type,features)
+ SELECT pg_temp.ident(2,n),'test-tenant-run-reader-'||n,'Test company workspace '||n,
+ 'active','standalone','{"system_workspace":true}'::jsonb FROM generate_series(5,6) n;
+INSERT INTO public.clients(id,tenant_id,assigned_coach_user_id,created_by,first_name,last_name,status) VALUES
+ (pg_temp.ident(3,5),pg_temp.ident(2,5),pg_temp.ident(1,6),pg_temp.ident(1,6),'Test','Company A','active'),
+ (pg_temp.ident(3,6),pg_temp.ident(2,6),pg_temp.ident(1,6),pg_temp.ident(1,6),'Test','Company B','active');
+INSERT INTO public.paige_skill_runs(id,skill_id,skill_slug,contact_id,invoker_kind,inputs,outputs,status)
+ SELECT pg_temp.ident(5,n),pg_temp.ident(4,1),'test_exp09_run_read',pg_temp.ident(3,n),'mcp',
+ '{}'::jsonb,'{"draft":"Test company draft"}'::jsonb,'succeeded' FROM generate_series(5,6) n;
+CREATE FUNCTION pg_temp.rls_run_count(_actor int,_run int) RETURNS bigint LANGUAGE plpgsql AS $$
+DECLARE result bigint;
+BEGIN
+ PERFORM set_config('request.jwt.claims',jsonb_build_object('role','authenticated','sub',pg_temp.ident(1,_actor))::text,true);
+ SET LOCAL ROLE authenticated;
+ SELECT count(*) INTO result FROM public.paige_skill_runs WHERE id=pg_temp.ident(5,_run);
+ RESET ROLE;PERFORM set_config('request.jwt.claims','{}',true);RETURN result;
+END $$;
+SELECT is(pg_temp.read_run(6,5,5),NULL::jsonb,'company role alone cannot select a company over the actual active workspace');
+UPDATE public.profiles SET active_tenant_id=pg_temp.ident(2,5) WHERE user_id=pg_temp.ident(1,6);
+SELECT is(pg_temp.rls_run_count(6,5),1::bigint,'original authenticated run RLS admits seatless assigned company operator');
+SELECT is(pg_temp.read_run(6,5,5)->>'id',pg_temp.ident(5,5)::text,'native read preserves original assigned company-operator permission');
+SELECT is((SELECT count(*) FROM public.tenant_members WHERE tenant_id=pg_temp.ident(2,5) AND user_id=pg_temp.ident(1,6)),0::bigint,'company authority creates no tenant seat');
+SELECT is(pg_temp.read_run(6,6,6),NULL::jsonb,'another company is not the selected workspace');
+SELECT is(pg_temp.read_run(6,1,1),NULL::jsonb,'company operator receives no ordinary customer-business global read');
+SELECT is(pg_temp.read_run(6,5,3),NULL::jsonb,'company operator receives no contactless result');
+SELECT is(pg_temp.read_run(4,5,5),NULL::jsonb,'nonoperator invoker or member elsewhere is not a company operator');
+UPDATE public.profiles SET active_tenant_id=NULL WHERE user_id=pg_temp.ident(1,6);
+SELECT is(pg_temp.read_run(6,5,5),NULL::jsonb,'NULL selected company cannot inherit a company from run or first membership');
+UPDATE public.profiles SET active_tenant_id=pg_temp.ident(2,5) WHERE user_id=pg_temp.ident(1,6);
+UPDATE public.clients SET assigned_coach_user_id=NULL WHERE id=pg_temp.ident(3,5);
+SELECT is(pg_temp.read_run(6,5,5),NULL::jsonb,'assignment loss retires company operator result read');
+UPDATE public.clients SET assigned_coach_user_id=pg_temp.ident(1,6) WHERE id=pg_temp.ident(3,5);
+DELETE FROM public.user_roles WHERE user_id=pg_temp.ident(1,6) AND role='platform_admin';
+SELECT is(pg_temp.read_run(6,5,5),NULL::jsonb,'operator-role loss retires seatless company read');
+INSERT INTO public.user_roles(user_id,role) VALUES(pg_temp.ident(1,6),'platform_admin');
+UPDATE public.tenants SET features='{}'::jsonb WHERE id=pg_temp.ident(2,5);
+SELECT is(pg_temp.read_run(6,5,5),NULL::jsonb,'retired company classification cannot leave operator result access');
+SELECT is((SELECT count(*) FROM public.paige_skill_runs WHERE skill_id=pg_temp.ident(4,1)),6::bigint,'reads created or retried no skill run');
 SELECT * FROM finish();
 ROLLBACK;

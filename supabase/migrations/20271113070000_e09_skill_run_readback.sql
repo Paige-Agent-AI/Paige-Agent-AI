@@ -12,7 +12,11 @@ BEGIN
      OR (SELECT md5(prosrc) FROM pg_proc WHERE oid='public.tenant_staff_owns_contact(uuid,uuid)'::regprocedure)
        IS DISTINCT FROM '53c6729219f292f9ce1f6688cb0d1376'
      OR (SELECT md5(prosrc) FROM pg_proc WHERE oid='public.is_platform_owner(uuid)'::regprocedure)
-       IS DISTINCT FROM 'dc789c98cf26f96d52c5138754c0f131' THEN
+       IS DISTINCT FROM 'dc789c98cf26f96d52c5138754c0f131'
+     OR (SELECT md5(prosrc) FROM pg_proc WHERE oid='public.is_company_workspace(uuid)'::regprocedure)
+       IS DISTINCT FROM '7944c5bde7171fbe4e6b2f03f090fe28'
+     OR (SELECT md5(prosrc) FROM pg_proc WHERE oid='public.is_tenant_admin_as(uuid,uuid)'::regprocedure)
+       IS DISTINCT FROM '6eca8d0f12bfefbc450dbc8cb2615773' THEN
     RAISE EXCEPTION 'Original skill-result authority changed; reconcile before applying' USING ERRCODE='55000';
   END IF;
 END;
@@ -42,11 +46,22 @@ AS $function$
              AND m.tenant_id=c.tenant_id AND m.status='active'))
        )
      )
+     -- The incumbent assigned-run policy also admits an operator acting in a
+     -- company workspace without a tenant seat. Keep that existing exception
+     -- scoped to the exact selected company and assigned contact, never globally.
+     OR (
+       c.tenant_id=_expected_tenant
+       AND c.assigned_coach_user_id=_actor
+       AND public.is_company_workspace(_expected_tenant)
+       AND public.is_tenant_admin_as(_actor,_expected_tenant)
+       AND EXISTS (SELECT 1 FROM public.profiles p WHERE p.user_id=_actor
+         AND p.active_tenant_id=_expected_tenant)
+     )
    );
 $function$;
 ALTER FUNCTION public.read_mcp_skill_run(uuid,uuid,uuid) OWNER TO postgres;
 REVOKE ALL ON FUNCTION public.read_mcp_skill_run(uuid,uuid,uuid) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.read_mcp_skill_run(uuid,uuid,uuid) TO service_role;
 COMMENT ON FUNCTION public.read_mcp_skill_run(uuid,uuid,uuid) IS
- 'Service-only original MCP run projection. Validated actor plus current native workspace and original run staff authority; no own-invoker/contactless ordinary grant. Missing and denied return NULL.';
+ 'Service-only original MCP run projection. Validated actor plus current native workspace and original run staff authority; assigned company operators retain the original exact selected-company exception. No own-invoker/contactless ordinary grant. Missing and denied return NULL.';
 COMMIT;

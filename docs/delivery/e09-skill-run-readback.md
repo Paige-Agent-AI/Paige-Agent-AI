@@ -25,6 +25,19 @@ workspace resolver and canonical native agency context refuses; it never retries
 another business. The existing exact platform-owner exception remains outside
 ordinary contact conditions. A broader `tier=god` label is not that exception.
 
+The original assigned company-operator permission is preserved separately:
+the contact must be assigned to the actor in the exact expected company,
+`profiles.active_tenant_id` must select that company, and the existing
+`is_company_workspace`/`is_tenant_admin_as` predicates must agree. No seat is
+created and no unassigned, contactless or ordinary-business global access is
+granted. Both incumbent helper bodies are leased with the original three.
+
+The inbound MCP governed door and its legacy workspace resolver are unchanged.
+They already cannot resolve a seatless company operator (or may select an
+unrelated first ordinary membership). That upstream company MCP path remains
+UNAVAILABLE; the native permission repair does not claim to make it reachable.
+EXP09 does not take ownership of Platform Operator company-workspace routing.
+
 The function is `STABLE SECURITY INVOKER`, empty search path, postgres-owned,
 with EXECUTE only for service_role. That caller already owns the required reads
 and helper execution; no new definer privilege, raw table grant or RLS policy is
@@ -43,6 +56,11 @@ roles. It covers owner and assigned-staff reads, exact aliases, dual membership,
 selected workspace, membership/assignment/owner revocation, invoker non-authority,
 foreign/client/ordinary-member/contactless refusals, native agency agreement,
 platform-owner versus platform-admin and exact service-only execution.
+The45 source assertions retain the prior cases and add original authenticated
+RLS/native parity for an assigned seatless company operator, exact selected
+company, no manufactured seat, foreign/company/customer/contactless/nonoperator
+refusals and loss of selection, assignment, operator role or company status.
+These added cases require hosted execution on the repaired exact head.
 
 The callback regression executes the original registered handler with only its
 identity/database transports replaced. Its first run against unchanged main
@@ -84,3 +102,9 @@ version, release note or announcement. Required exact-head CI/Preview and
 NON-AUTHOR review remain release gates. Recovery is an additive compatible
 forward fix retaining the original table and permissions. Actual authenticated
 owner/customer seven-pillar acceptance remains PROOF OWED.
+
+Hosted repaired-head execution stopped at the new synthetic client seed because
+its original required created_by field was missing (32 earlier assertions passed;
+no assertion failed). The fixture now names its existing synthetic actor as
+creator, matching the real schema without creating membership or changing any
+production authority. All45 assertions require execution on the next exact head.

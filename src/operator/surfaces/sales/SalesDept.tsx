@@ -19,7 +19,7 @@ const money = (cents: number) =>
 const dateShort = (d: string | null) =>
   d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—";
 
-export function SalesDept({ view = 'pipeline' }: { view?: string } = {}) {
+export function SalesDept({ view: viewName = 'pipeline' }: { view?: string } = {}) {
   const { data, error, loading, createDeal, moveDeal } = useSalesWorkspace();
   const [view, setView] = useState<"board" | "list">("board");
   const [pipelineFilter, setPipelineFilter] = useState<string>("all");
@@ -38,10 +38,10 @@ export function SalesDept({ view = 'pipeline' }: { view?: string } = {}) {
     const q = search.toLowerCase();
     let base = data?.deals ?? [];
     // View differentiation: Leads shows early-stage open deals; Activity shows recently updated
-    if (view === 'leads') {
+    if (viewName === 'leads') {
       const leadStages = new Set(stages.filter(s => s.stage_type === 'open' && s.order_index <= 2).map(s => s.id));
       base = base.filter(d => leadStages.has(d.stage_id) && d.status === 'open');
-    } else if (view === 'activity') {
+    } else if (viewName === 'activity') {
       base = [...base].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()).slice(0, 20);
     }
     return base.filter(d =>

@@ -826,6 +826,62 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-21 — EXP09 original CURA preparation observation.**
+PR [#2496](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2496), reviewed
+`b6f84d47cff494e10c5708aac03f0137abaf2fa0`, merged
+`5b03e90302e19ee1ef4a8dacbd677329378fa06e`; exact reviewed composition tree
+`ce1ac0a7b93d10cdad19d1f6e5c5b00fe8e9653a`. Original actor/business/intent and
+frozen request resolve only private source/work metadata; no retry, worker wake,
+publication, sharing or interrupted-turn settlement. Original K1 ordered ancestor/
+membership locks, hierarchy recheck and same-snapshot publisher/set fence preserve
+inherited publisher authority. NON-AUTHOR5605534029/5605729120 and documented final
+AUTHOR-REVIEW / LOWER ASSURANCE5606078039 CLEAR. All13 exact-head checks/2statuses
+SUCCESS: database119462208421 ran55 native plus actual multi-session authority,
+late-grant hostile control, cleanup and downstream suites; verify119462659269 PASS.
+Normal deploy-migrations39674100520/job119480072480 SUCCESS: exact migration
+`20271113100000` persisted; direct frontier matches it. BodyMD5
+`98c379ceeb6891273112c087e8c8ce76` matches the merge. Postgres-owned/VOLATILE/
+SECURITY DEFINER/empty search_path; authenticated EXECUTE only, anon/service_role/
+PUBLIC false. All five incumbent bodies/owners and both STABLE helpers unchanged.
+Own web/Edge NOT_APPLICABLE. [Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2496#issuecomment-6326424455).
+Functional: native reader deployed/read back. Visual: N/A. Experiential: owner
+Chat/status/eligible Live consumers not wired by this slice; authenticated joined
+owner/client and complete seven-pillar/founder acceptance remain PROOF OWED. No
+production test write/provider action. Internal production prerequisite, no customer
+version or announcement. Recovery uses reviewed forward correction preserving originals.
+
+
+**2026-10-21 — EXP09 exact CURA Knowledge source recovery.**
+PR [#2492](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2492), reviewed
+`530809fb0ae05d642251f9ddba6b362ae44929f3`, merged
+`a156c48eb97b0e18cfdd55008e18176f6d174125`; actual tree
+`499ca45fd47ac53bc85b9dfa6b837401cf0248aa` matches reviewed main composition,
+retaining EXP05 continuation bindings and E04/Marketing releases. Existing Portal
+Experience recovers the exact authorized Knowledge source through the canonical
+reference, preserves active reviews/unknown saves, retires removed references and
+returns visible keyboard focus. No new permission, Knowledge store or publishing path.
+NON-AUTHOR5604730190/5605791523 and final AUTHOR-REVIEW / LOWER ASSURANCE5605912971;
+all11 exact-head checks/2statuses SUCCESS, including verify119454881304,
+database119454664921 and actual Preview119456575096. Production web
+`dpl_EryJfr5vSCdRPW7eiSZQTTPSoG15` READY/exact SHA on paigeagent.ai; public
+`a156c48eb97b0e18cfdd55008e18176f6d174125-mvikr6to` confirmed. Normal Edge
+39672020072/job119472068854 SUCCESS:17 affected source/configuration packages
+verified, artifact12379458465 retained, edge-live certified at the exact merge.
+Direct served Chatv496/JWTtrue257 files and MCPv758/JWTfalse19 files match the
+merge. Migration NOT_APPLICABLE. [Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2492#issuecomment-6326192412),
+[scope](delivery/e09-cura-source-reference.md), [UI evidence](evidence/ui-delivery/e09-cura-source-reference.md).
+Functional: bounded recovery released/read back. Visual:24 native desktop/dock/
+narrow component captures and distinct finish review; live owner rendering inspected.
+Experiential: designated signed-in owner reload/inventory, malformed-reference
+refusal, recovery focus and Enter re-entry PASS; no write/publication/share/effect.
+Acceptance: authenticated valid/foreign exact-reference, ordinary nonoperator cohort,
+external-client answer/reload, native iOS/200percent zoom/AT and complete seven-pillar
+founder evaluation remain PROOF OWED. Typed Chat/eligible Live teaching execution
+is not activated by this navigation increment. Production/internal patch; no customer
+version or announcement. Recovery is an ordinary reviewed revert/forward correction;
+no schema/data change. This factual post-merge closeout is not recursively logged.
+
+
 **2026-10-21 — EXP05 completed read-only ZION reply and reload.**
 PR [#2498](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2498), reviewed
 `fc30dcfc5d05c1f68cff164cda2e47feaa4fdfc4`, merged

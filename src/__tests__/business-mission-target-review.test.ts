@@ -9,6 +9,7 @@ import { resolveCanonicalRecordLink } from '../../supabase/functions/_shared/can
 import { formatMissionTargetValue, missionTargetCurrencyDigits, validateMissionTargetSnapshot, type MissionTargetSnapshot } from '../../supabase/functions/_shared/business-mission-targets/presentation';
 import type { MissionTarget } from '../../supabase/functions/_shared/business-mission-targets/contract';
 import type { MetricResult } from '../../supabase/functions/_shared/analytics-metrics/metric-contract';
+import { TEST_BUSINESS_REVIEW } from '../test/fixtures/business-review';
 const tenant = '11111111-1111-4111-8111-111111111111', mission = '33333333-3333-4333-8333-333333333333';
 const now = Date.parse('2026-10-14T12:00:00Z');
 const identity = { actorId: 'test-owner', tenantId: tenant, workspaceId: tenant, role: 'owner', actAsClientId: null, accountShape: 'solo' as const, scopeEpoch: tenant };
@@ -117,6 +118,39 @@ describe('one shared Game Plan review', () => {
       .toEqual({ path: `/solo/42/command-center/business-game-plan?play=${mission}`, status: 'exact' });
     expect(resolveCanonicalRecordLink({ actor: 'account', tier: 'solo', account: '43', destination: reloaded[1].destination, recordId: reloaded[1].record_id })?.path)
       .toBe(`/solo/43/command-center/business-game-plan?play=${mission}`);
+  });
+  it('retains the source-risk Play before a met target and lower-priority departments fill six links', async () => {
+    const h = harness(), atRisk = '55555555-5555-4555-8555-555555555555';
+    h.review.targets = h.review.targets.map((row, i) => ({ ...row,
+      mission: { ...row.mission, id: i ? atRisk : mission },
+      target: { ...row.target, mission_id: i ? atRisk : mission, desired_value: i ? '20' : '10' } }));
+    h.review.mission_counts.total = 2; h.review.mission_counts.active = 2;
+    const goals = await h.compose();
+    expect(goals.domains.game_plan.data?.risks).toEqual([expect.objectContaining({ reference: atRisk, severity: 'watch' })]);
+    expect(businessReviewRecordLinks(goals).slice(0, 2)).toEqual([
+      { destination: 'executive', record_id: null }, { destination: 'business_game_plan', record_id: atRisk },
+    ]);
+    const snapshot = { ...TEST_BUSINESS_REVIEW, requested: [...TEST_BUSINESS_REVIEW.requested.filter(d => d !== 'game_plan'), 'game_plan' as const],
+      domains: { ...TEST_BUSINESS_REVIEW.domains, game_plan: goals.domains.game_plan,
+        payments: { status: 'available' as const, data: { ...TEST_BUSINESS_REVIEW.domains.payments.data!, risks: [] } },
+        sales_pipeline: { status: 'available' as const, data: { ...TEST_BUSINESS_REVIEW.domains.sales_pipeline.data!, risks: [] } } } };
+    const links = businessReviewRecordLinks(snapshot);
+    expect(links.slice(0, 3)).toEqual([{ destination: 'executive', record_id: null },
+      { destination: 'systems_check', record_id: null }, { destination: 'business_game_plan', record_id: atRisk }]);
+    expect(links).toHaveLength(6);
+    const reloaded = readRecordLinks(JSON.parse(JSON.stringify(links)));
+    expect(resolveCanonicalRecordLink({ actor: 'account', tier: 'solo', account: '43', destination: reloaded[2].destination, recordId: reloaded[2].record_id })?.path)
+      .toBe(`/solo/43/command-center/business-game-plan?play=${atRisk}`);
+    expect(JSON.stringify(reloaded)).not.toMatch(/tenant_id|created_by|aneb_v1_|\/solo\//);
+  });
+  it('does not turn an unrelated risk reference into a Play reference or recover an unrequested/denied Play', async () => {
+    const h = harness(), goals = await h.compose(), data = goals.domains.game_plan.data!;
+    const snapshot = { ...goals, domains: { ...goals.domains, game_plan: { status: 'available' as const, data: { ...data,
+      risks: [{ kind: 'target_variance', severity: 'watch' as const, summary: 'Untrusted reference', reference: '55555555-5555-4555-8555-555555555555' }] } } } };
+    expect(businessReviewRecordLinks(snapshot)).toEqual([{ destination: 'executive', record_id: null }, { destination: 'business_game_plan', record_id: mission }]);
+    expect(businessReviewRecordLinks({ ...snapshot, requested: [] })).toEqual([]);
+    h.deny();
+    expect(businessReviewRecordLinks(await h.compose())).toEqual([]);
   });
   it('keeps empty numeric targets separate from saved nonnumeric direction', async () => {
     const h = harness(); h.review.targets = []; h.review.target_counts = { total: 0, active: 0, paused: 0, retired: 0 }; h.review.mission_counts.without_targets = 1;

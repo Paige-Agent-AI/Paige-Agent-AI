@@ -448,11 +448,11 @@
       },
       "prohibited_context": ["finding text", "check/run ids", "registry internals", "scan flavour", "triggering actor"],
       "state": "UNAVAILABLE",
-      "state_reason": "A caller-scoped safe lens exists (systems_check_snapshot) but no Paige binding is built; blocked on SCR-2 (workspace subject) and SCR-3 (enumerate the counts). Isolation of C1/C2 is deliberate, not an oversight.",
+      "state_reason": "The Mind-shaped context lens remains unavailable pending SCR-2 (workspace subject) and SCR-3 (enumerated counts); C1/C2 isolation is deliberate. The existing native recorded-check UI separately reads systems_check_snapshot; its timestamp/status presentation does not grant Mind eligibility or prove on-demand scans, remediation, worker liveness or complete customer acceptance.",
       "evidence_class": ["source_read", "production_catalog"],
       "linked": [],
       "next_slice": "Phase 4.4: bind Systems Check as read-only Paige context AFTER SCR-2+SCR-3 land. A setup save must not auto-become Memory.",
-      "sources": ["docs/architecture/paige-mind-integration-matrix.md#systems-check", "docs/product/systems-check-operating-readiness-spec.md"]
+      "sources": ["docs/architecture/paige-mind-integration-matrix.md#systems-check", "docs/product/systems-check-operating-readiness-spec.md", "src/solo/SoloSystemsCheckWorkspace.tsx", "src/hooks/useSystemsCheck.ts"]
     },
     {
       "id": "command-center.mind",

@@ -500,17 +500,15 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
     [orderedAttention],
   );
 
-  /**
-   * The freshness line. Counts come from the RUN's own summary where it has one — never from a
-   * tally this component computed and then presented as the check's result. When the run carries
-   * no counts the finding set is counted instead, and the wording says which is being shown.
-   */
+  // This is a recorded, server-bounded unfinished run, not a heartbeat or a new result.
+  const scanStart = typeof systems.scanInProgressSince === "string" ? new Date(systems.scanInProgressSince) : null;
+  const unfinishedAtRead = !systems.loading && !systems.isError && scanStart && Number.isFinite(scanStart.getTime()) ? scanStart : null;
+
+  /** The completed result keeps its own timestamp and finding-derived tallies. */
   const freshHeading = systems.isError
     ? "The last check could not be read"
-    : systems.scanPending
-      ? "Your first check is running"
-      : !systems.run
-        ? "No check has finished yet"
+    : !systems.run
+      ? systems.scanPending ? "Awaiting the first completed check" : "No check has finished yet"
         : hasCompletedRun
         ? `Last checked ${completedAt.toLocaleString()}`
         : `A check started ${new Date(systems.run.started_at).toLocaleString()} and has not finished`;
@@ -533,9 +531,8 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
    * They stay anyway. They are correct, they cost nothing, and they are the thing that holds if a
    * future change re-widens either predicate — which is exactly how the hole they defend against
    * was opened in the first place. What they no longer do is TELL THE READER a scan is running:
-   * that signal moved to `scanInProgressSince` on the hook and is deliberately not wired to any
-   * sentence here, because repointing these words changes what the console says during a scan and
-   * that is Claude Design's call (§00). Flagged on the PR, not decided here.
+   * that signal moved to `scanInProgressSince` on the hook. The separate as-of-read notice now
+   * names that unfinished check without substituting its incomplete counts for the last result.
    *
    * Reading the row regardless would print "0 passed · 0 need attention" directly above a list of
    * things needing attention. So the verdict tallies are ALWAYS derived from the findings actually
@@ -561,7 +558,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
    * treats this number as the size of the full sweep is wrong for that flavour.
    */
   const freshDetail = !systems.run
-    ? "Nothing has been recorded for this workspace."
+    ? "No completed check has been recorded for this workspace."
     : (() => {
         const trustRun = hasCompletedRun;
         const total = trustRun ? (systems.run.check_count ?? currentFindings.length) : currentFindings.length;
@@ -645,7 +642,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
   const topTodoDest = topTodo ? destinationForCheck(topTodo.check_id) : null;
   const showBrief = Boolean(systems.run) && !systems.isError;
 
-  const isReading = systems.loading || command.loading || systems.scanPending;
+  const isReading = systems.loading || command.loading;
   return (
     <main className="sc-workspace" aria-label="Solo Systems Check">
       <div ref={scrollOwnerRef} className="sc-scroll-owner" aria-hidden={Boolean(selected || proposal || decision) || undefined}>
@@ -702,6 +699,16 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
               )}
               <div className="sc-strip-h">{freshHeading}</div>
               <div className="sc-strip-s">{freshDetail}</div>
+              {unfinishedAtRead && (
+                <div className="sc-strip-s sc-run-state" role="status" aria-label="Unfinished check at last read">
+                  An unfinished check was reported at the last read. Started{" "}
+                  <time dateTime={unfinishedAtRead.toISOString()}>{unfinishedAtRead.toLocaleString()}</time>.{" "}
+                  {hasCompletedRun
+                    ? "Results below still come from the last completed check."
+                    : "No completed results are available yet."}{" "}
+                  Refresh current data to check for a completed result.
+                </div>
+              )}
               {systems.isError && (
                 <div className="sc-strip-err" role="alert">
                   The last read failed. Nothing below is being reported as healthy.
@@ -727,7 +734,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
               re-reading a stale run under a label that implies a re-check. */}
           <p className="sc-note">
             <strong>This re-reads the last recorded check.</strong> Running the checks again on demand is
-            not wired to this surface yet, so nothing here is newer than the time above.
+            not wired to this surface yet. Refresh does not start a check.
           </p>
 
           {/* Three separate things can make this reading incomplete: the run never finished, it
@@ -745,12 +752,12 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
             </div>
           )}
 
-          {!systems.run && !systems.loading && !systems.isError && (
+          {!systems.run && !systems.loading && !systems.isError && !unfinishedAtRead && (
             <div className="sc-first">
-              <h3>{systems.scanPending ? "Your first check is running" : "Nothing has been checked yet"}</h3>
+              <h3>{systems.scanPending ? "Awaiting the first completed check" : "Nothing has been checked yet"}</h3>
               <p>
                 {systems.scanPending
-                  ? "It started when this workspace was created. Nothing is shown until it finishes, because a partial answer would read as a whole one."
+                  ? "No completed check is recorded yet. Refresh current data to see the latest available result."
                   : "Systems Check reads what your business systems actually report. None of them has answered for this workspace yet — and that is not a claim that anything is wrong."}
               </p>
             </div>
@@ -917,7 +924,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
                 <ul>
                   {ownerTodo.length
                     ? ownerTodo.map((f) => <li key={f.id}>{findingTitle(f)}</li>)
-                    : <li className="sc-none">Nothing from the last check is waiting on you</li>}
+                    : <li className="sc-none">{hasCompletedRun ? "Nothing in the returned findings is waiting on you" : "No completed check is available to identify required repairs"}</li>}
                 </ul>
               </div>
               {/* Approving and dismissing has to stay REACHABLE here. The panel it used to live in
@@ -958,7 +965,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
                 <ul>
                   {unavailableFindings.length
                     ? unavailableFindings.map((f) => <li key={f.id}>{findingTitle(f)}</li>)
-                    : <li className="sc-none">Everything the check looked at returned an answer</li>}
+                    : <li className="sc-none">{hasCompletedRun ? "No skipped or unavailable results were returned" : "No completed results are available yet"}</li>}
                 </ul>
               </div>
             </div>

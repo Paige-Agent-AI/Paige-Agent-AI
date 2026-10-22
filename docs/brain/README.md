@@ -1,3 +1,18 @@
+## EXP04 October22 editor current source composition
+
+Source2fa4702fb composes reviewed2604/0010067d3 plus released2607's two install
+pins. All8 owning UI/guard/test/drive files are identical to reviewedd555. Fresh
+169 selected cases/eight suites PASS; editor20/19/26,mounted20/14/34,fields20/11/31,
+intake20/10/22 PASS/zero errors/all113 exact source pins.320 dark native template
+view inspected. Earlier173 and full1027 coverage are historical/separate, not
+summed. Final exact-head review/CI, ordered parent/own web release and real role/
+provider/full twelve-outcome/founder acceptance remain owed. Current API/native
+parity is verified via original2599/normal39839940779; initial apply provenance
+unknown, six failures preserved,2610 superseded unmerged. Subsequent accepted
+main2616 Mammoth/orphan lock delta and2614 provider docs need final composition
+readback; do not relabel these source-head render pins as covering another lock.
+No new words, signer/send/payment effect, privilege or Chat/algorithm activation.
+
 ## EXP04 October22 current release reconciliation
 
 Mounted preparation consumes reviewed main13d267 and the released2607 manifest

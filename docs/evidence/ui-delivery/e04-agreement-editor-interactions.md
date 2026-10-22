@@ -1,20 +1,24 @@
 # EXP04 original editor labels, menu dismissal and template viewport
 
-October22 compositioncc29636df0168e0a97f948cfc919e3bd16ef204d preserves the
-actual incoming main429 and parent2604/4b9376a16cd270ab9b7efe80d75764bcb1faed76.
-All owning UI/guard/driver bytes remain identical to reviewedd555. All113 source
-pins reverified, current173 integration cases/seven suites and original6UI/one
-evidence guard PASS. The full1027-case proof below precedes incoming shared
-Chat/Operations composition; no new full-suite or hosted acceptance is claimed.
-Parent native300004 remains held after five unchanged5s55P03 rollbacks. No
-session termination, timeout/history repair, new legal wording or activation.
+October22 current source checkpoint2fa4702fb86964ef5a165a988338bbfb31d0e899
+composes reviewed parent2604/0010067d3ba9dd97302630a24724494acc6d94db and
+released2607's BOTH manifest install pins. All8 owning UI/guard/test/drive files
+remain byte-identical to reviewedd555; no product change in this composition.
+Fresh169 selected cases/eight suites PASS, separate from prior173 composed cases
+and earlier1027 full cases/66 suites. Fresh actual-source editor20/19/26,
+mounted20/14/34,fields20/11/31,intake20/10/22 PASS/zero errors; all113 pins
+independently recomputed. Actual320 dark template view inspected. Source fixtures
+use synthetic Auth/API/RPC; not hosted persistence, role or customer acceptance.
 
-Source checkpoint: original draft#2605 exact5e4fda01e1b9b3067ec712ed9651a73a4193275f,
-tree d8baa9a10cb299d06ae059b49530b3034dbd85b3. Owning6UI/one evidence record
-guard PASS after correcting this record's exact-source identity and state wording;
-no guard, source assertion or runtime changed. The earlier record-only failure is
-retained as such. Separate author review is LOWER ASSURANCE, not independent or
-customer acceptance. Final required exact-head CI and ordered release stay gates.
+API2599/429 Edge37/source parity and original native300004 metadata parity are
+verified; canonical normal39839940779/deploy120038195038 SUCCESS/up-to-date/
+persistence/db-live7a874. Initial apply path unknown; all six failures remain
+FAILED.2610 is CLOSED SUPERSEDED UNMERGED, no historical migration rewrite.
+Parent2604 has separate final lower-assurance review5619881209 and its own exact
+CI/release steps; this editor still needs final exact-head review/required CI and
+ordered parent/own release/readback. Later accepted main2616 Mammoth/orphan lock
+change and2614 provider docs are separate composition evidence, not covered by
+these113 exact source-head pins. No legal words, provider or restricted activation.
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: original twelve-outcome journey contains the pre-edit correction and source-backed labels/menu/narrow-navigation findings; same original owner lead.
@@ -23,7 +27,7 @@ MATERIAL_FLOW_CHANGE: YES: native heading-menu Escape preserves the template edi
 FLOW_PROTOTYPE: PASS: original complete Agreements prototype275be12415239d4ecdb66bec0894146ec9fe5c64 and October21 owner design delegation; correction follows actual existing rendered interaction defects.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: existing authorized agreement authors can compose supplied wording, inspect correct editor actions and dismiss a child menu without leaving or discarding their work.
 VISUAL_DIRECTION: PASS: existing Sales Operate and paper/editor/sidebar hierarchy, unchanged native tokens and six routes; mobile document receives its viewport through the original compact row, no new shell or decorative system.
-AUTOMATED_EVIDENCE: PASS: four actual guard REDs then69 focused cases; final1027 current regression cases/66 suites PASS, including original Sales/opportunity/native adapters and all60 Sales suites. One unchanged5s signed-copy refusal case timed out in the first broader run, then passed isolated98ms and in the complete unchanged1027-case quiet rerun. No test, assertion, timeout or type baseline weakened.
+AUTOMATED_EVIDENCE: PASS: fresh169 selected cases/eight suites on current source; earlier full and composed coverage below are separate invocations.  four actual guard REDs then69 focused cases; final1027 current regression cases/66 suites PASS, including original Sales/opportunity/native adapters and all60 Sales suites. One unchanged5s signed-copy refusal case timed out in the first broader run, then passed isolated98ms and in the complete unchanged1027-case quiet rerun. No test, assertion, timeout or type baseline weakened.
 STATIC_EVIDENCE: PASS: current type ratchet baseline10/current6/no new errors; owning lint0/one incumbent Fast Refresh warning, gold0, six-file pinned design0 blockers/18 incumbent advisories. Initial replaceAll incompatibility repaired with existing-target split/join semantics, no baseline/target change. Final exact-head evidence guard/review/CI remains required.
 RENDERED_EVIDENCE: PASS: actual-source editor/template20 viewport/theme/PAIGE cases/19 paths/26 pins; mounted preparation20/14/34, original field20/11/31 and intake20/10/22. Zero page errors/all113 source pins exact. Actual native editor menu and320 dark compact template view inspected. Synthetic Auth/API/RPC only.
 BEHAVIORAL_EVIDENCE: PASS: expanded native Undo/Redo shortcuts and all three heading levels; actual menu Escape retains editor; exact wording/options/version/recovery/original-client handoff and reload; bounded narrow row/current destination/six routes; neighboring original PDF/save/history/unknown/keyboard/intake paths retained.

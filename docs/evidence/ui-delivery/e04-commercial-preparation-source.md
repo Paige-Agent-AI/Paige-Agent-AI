@@ -1,5 +1,15 @@
 # EXP04 original commercial source preparation — dormant read/proposal port
 
+October22 current composition7633ea55fccedddf1e7ab257d5672799e6c11fa3 preserves
+parent2599/ae444dade5b9d1dd3edd849e29150d1ed84dece2 and currentmaincdeedfe24.
+Original reader and209-line test source are BYTE IDENTICAL3180045d336ea73b683e426b9808168ddfa0b2e6.
+Fresh strict Deno13 tests/63 steps PASS with all original runtime effect denials;
+37 reader cases include18 original plus19 added, not55 separate cases. No current
+consumer/runtime imports it, no actual caller-RLS/provider/customer acceptance.
+This remains the SAME original draft#2564, with fresh own exact-head review/CI/
+normal Preview and parent native/API release/readback required; old failed
+Preview config-update status is not overwritten or represented as PASS.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: reuse the historical commercial source reader for original O1/O2 preparation; no existing consumer is redirected and all twelve outcomes remain mandatory.
 PAIGE_UI_DESIGN: PASS: original Sales editor, retained template and selected native prototype remain controlling; no mounted interface or renderer is changed.

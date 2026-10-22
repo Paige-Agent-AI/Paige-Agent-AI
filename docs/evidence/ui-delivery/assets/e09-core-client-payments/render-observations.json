@@ -1,0 +1,119 @@
+{
+  "scope": "Actual AppNav, original Billing/BillingInvoice and ClientHomeTiles; synthetic transport and placeholder CURA area; no paid link opened",
+  "observations": [
+    {
+      "focus": "DocumentsFiles shared with youAgreementsSign and downloadPaymentsInvoices and receipts",
+      "height": 770,
+      "overflow": false,
+      "payments": [
+        {
+          "height": 52,
+          "inView": true,
+          "text": "PaymentsInvoices and receipts",
+          "width": 242.40000915527344,
+          "x": 531.6000366210938,
+          "y": 169.1999969482422
+        }
+      ],
+      "width": 1536
+    },
+    {
+      "focus": "DocumentsFiles shared with youAgreementsSign and downloadPaymentsInvoices and receipts",
+      "height": 768,
+      "overflow": false,
+      "payments": [
+        {
+          "height": 52,
+          "inView": true,
+          "text": "PaymentsInvoices and receipts",
+          "width": 242.40000915527344,
+          "x": 531.6000366210938,
+          "y": 169.1999969482422
+        }
+      ],
+      "width": 1366
+    },
+    {
+      "focus": "DocumentsFiles shared with youAgreementsSign and downloadPaymentsInvoices and receipts",
+      "height": 768,
+      "overflow": false,
+      "payments": [
+        {
+          "height": 52,
+          "inView": true,
+          "text": "PaymentsInvoices and receipts",
+          "width": 242.40000915527344,
+          "x": 531.6000366210938,
+          "y": 169.1999969482422
+        }
+      ],
+      "width": 1024
+    },
+    {
+      "focus": "DocumentsFiles shared with youAgreementsSign and downloadPaymentsInvoices and receipts",
+      "height": 1000,
+      "overflow": false,
+      "payments": [
+        {
+          "height": 52,
+          "inView": true,
+          "text": "PaymentsInvoices and receipts",
+          "width": 242.40000915527344,
+          "x": 531.6000366210938,
+          "y": 169.1999969482422
+        }
+      ],
+      "width": 900
+    },
+    {
+      "height": 844,
+      "overflow": false,
+      "payments": [
+        {
+          "height": 44,
+          "inView": true,
+          "x": 8,
+          "y": 492.8000183105469
+        }
+      ],
+      "state": "drawer",
+      "width": 390
+    },
+    {
+      "height": 740,
+      "overflow": false,
+      "payments": [
+        {
+          "height": 44,
+          "inView": true,
+          "x": 8,
+          "y": 492.8000183105469
+        }
+      ],
+      "state": "drawer",
+      "width": 320
+    },
+    {
+      "overflow": false,
+      "reduced": true,
+      "scrollOwner": "h-full overflow-y-auto scroll-touch p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] md:p-6",
+      "state": "empty-dark-reduced",
+      "width": 320
+    },
+    {
+      "state": "owner-hidden",
+      "paymentsVisible": false,
+      "fundingVisible": false
+    },
+    {
+      "state": "relationship-refusal",
+      "dom": "- button \"Open navigation\":\n- generic: Client Portal\n- button \"Notifications\":\n- region \"Payments\":\n  - heading \"Payments\" [level=1]\n  - heading \"Payments for more than one business isn't available yet\" [level=3]\n  - paragraph:\n    - text: Your account is connected to more than one business. Payments here works with one business at a time for now. For help in the meantime, use\n    - link \"Support\":\n      - /url: /app/support\n    - text: .\n  - link \"Back to Home\":\n    - /url: /app\n    - text: Back to Home\n- generic: HARNESS RENDER · SYNTHETIC DATA · NOT LIVE"
+    },
+    {
+      "state": "loading",
+      "dom": "- button \"Open navigation\":\n- generic: Northwind Studio\n- button \"Notifications\":\n- region \"Payments\":\n  - heading \"Payments\" [level=1]\n  - paragraph: Invoices Northwind Studio has sent you.\n  - status:\n    - generic: Loading your invoices…\n- generic: HARNESS RENDER · SYNTHETIC DATA · NOT LIVE"
+    }
+  ],
+  "keyboard": "Desktop Payments menu Enter -> original invoice -> Payments; narrow drawer Payments Enter closes and restores Open navigation focus; Home View payments Enter -> Payments",
+  "limits": "No actual external-client authentication, full AppShell, 200% browser zoom, assistive technology or merchant transaction proof"
+}

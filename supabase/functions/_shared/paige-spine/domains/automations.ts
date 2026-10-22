@@ -30,8 +30,8 @@ export const WEEKLY_COMMITMENT_DRAFT = {
   chatBinding: "UNAVAILABLE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "NONE", maturity: "PARTIAL",
 } as const satisfies SpineCapability;
 
-// Declaration for the prepared owner-only reader, not a conversational tool grant.
-// Chat/Live offer/dispatch and source-bound lint adoption remain with their admission owners.
+// Original owner-only read contract. Chat consumes this below through its current
+// server offer/admission; registration does not grant Live or recurring authority.
 export const WEEKLY_COMMITMENT_STATUS_READ_CAPABILITY = defineCapability({
   identity: { id: "automations.weekly_commitment_status", version: 1, domain: "automations", owner: "experience-05",
     humanSurface: "PAIGE workspace / existing Calendar", description: "Inspect canonical owner-private weekly process status and receipt-verified history; no scheduling or booking authority." },
@@ -61,16 +61,31 @@ export const AUTOMATION_READ_CAPABILITIES = [
   chatBinding: "LIVE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "NONE", maturity: "PARTIAL",
 } as const satisfies SpineCapability));
 
-// Experience 05 backend readback. Kept out of self-description until the incumbent
-// Chat/Live owners bind this owner-only RPC and authenticated acceptance succeeds.
+// Existing owner-private read, consumed by Chat through the same native reader.
+// Keep self-description and wider Experience acceptance separate from binding.
 export const WEEKLY_COMMITMENT_STATUS = {
   key: "automations.weekly_commitment_status", domain: "automations", owner: "experience-05",
   humanSurface: "PAIGE workspace", readiness: "none", selfDescribe: false,
-  action: { classification: "read", executor: "public.get_weekly_commitment_checks",
+  action: { classification: "read", executor: "public.get_weekly_commitment_checks", chatTool: "read_weekly_commitment_status", seatAuthority: "door-seat",
     idempotency: "canonical process and act receipt read; conversation-independent; no writes",
     riskPolicyKey: "read_only", approvalAuthority: "none" },
-  chatBinding: "UNAVAILABLE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "NONE", maturity: "PARTIAL",
+  outcome: { kinds: ["available", "needs_input", "unavailable"], projector: "public.get_weekly_commitment_checks",
+    railVisibility: "The Chat read receipt is not a weekly execution receipt; original process/act observations remain authoritative." },
+  chatBinding: "LIVE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "NONE", maturity: "PARTIAL",
 } as const satisfies SpineCapability;
+
+export const WEEKLY_COMMITMENT_STATUS_TOOLS = [{ type: "function" as const, function: {
+  name: "read_weekly_commitment_status",
+  description: `${WEEKLY_COMMITMENT_STATUS_READ_CAPABILITY.identity.description} Use for the owner's saved weekly responsibility and its original check history, not an ordinary task-prioritization review. Empty, held and unknown states are not successful execution.`,
+  parameters: WEEKLY_COMMITMENT_STATUS_READ_CAPABILITY.input,
+} }];
+export const WEEKLY_COMMITMENT_STATUS_TOOL_NAME = WEEKLY_COMMITMENT_STATUS_TOOLS[0].function.name;
+/** Offer filtering uses canonical server facts; native owner/scope checks remain mandatory. */
+export function weeklyCommitmentStatusToolsForContext(context: { callerTier: string; accountShape: string | null;
+  role: string | null; scopedClientId: string | null; customerPortal: boolean }) {
+  return context.callerTier === "tenant" && context.accountShape === "solo" && context.role === "owner"
+    && context.scopedClientId === null && context.customerPortal === false ? WEEKLY_COMMITMENT_STATUS_TOOLS : [];
+}
 
 // Prepared original-outcome reader, not an action or conversational offer. The
 // server transport reauthorizes the exact companion under its original caller

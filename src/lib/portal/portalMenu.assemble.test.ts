@@ -31,13 +31,36 @@ const set = (items: { href: string | null; label: string }[]) => items.map((i) =
 //   - ADDITION (Slice A, owner decision D-A1): Agreements is core for customers too — the customer's own Sales
 //     Agreements — on every Playbook. Every other viewer keeps the catalog rule, as before Slice M (Slice M had held
 //     it from every viewer who is not staff while its route was still the platform-terms page).
-//   - ADDITION (E09 Slice 5): Payments is live. A customer of one business whose Playbook catalog lists `billing`
-//     (every generic preset; not the funding preset) gains it, named Payments. Catalog-placed, never injected.
+//   - ADDITION (complete seven-pillar scope): Payments is core for customers on every catalogue, including funding
+//     and legacy catalogues. Only the owner's overlay hides it; optional funding entitlements remain independent.
 const AGREEMENTS = "/app/agreements";
 const RESOURCES = { href: "/app/learn", label: "Resources" };
 const AGREEMENTS_ITEM = { href: AGREEMENTS, label: "Agreements" };
 const PAYMENTS = { href: "/app/billing", label: "Payments" };
 const ENTITLED = { finance: true } as const;
+
+describe("core client Payments across eligible business catalogues",()=>{
+  it("offers the same Payments destination and owner control with legacy, empty and funding catalogues, independent of funding entitlement",()=>{
+    for(const catalog of [[],[{key:"home",label:"Home"}],funding.portal.modules]){
+      for(const entitlements of [undefined,{finance:false},{finance:true}]){
+        const items=flattenPortalNav(assemblePortalNav({catalog,viewer:CUSTOMER,entitlements}));
+        expect(items.filter(item=>item.href==='/app/billing')).toHaveLength(1);
+        expect(portalMenuEditorEntries(catalog,entitlements).some(entry=>entry.key==='billing')).toBe(true);
+        const hidden=flattenPortalNav(assemblePortalNav({catalog,viewer:CUSTOMER,entitlements,overlay:[{key:'billing',visible:false}]}));
+        expect(hidden.some(item=>item.href==='/app/billing')).toBe(false);
+      }
+    }
+  });
+  it("retains the customer floor and excludes optional funding when the core payment entry is restored",()=>{
+    for(const viewer of [STAFF,viewers.multiBusiness,viewers.noBrand,viewers.loading]){
+      const items=flattenPortalNav(assemblePortalNav({catalog:[],viewer,overlay:[{key:'billing',visible:true}]}));
+      expect(items.some(item=>item.href==='/app/billing')).toBe(false);
+    }
+    const items=flattenPortalNav(assemblePortalNav({catalog:funding.portal.modules,viewer:CUSTOMER,entitlements:{finance:false}}));
+    expect(items.some(item=>item.href==='/app/billing')).toBe(true);
+    expect(items.some(item=>['/app/credit','/app/funding','/app/financial-profile','/app/funding-journey','/app/business'].includes(item.href))).toBe(false);
+  });
+});
 
 describe("no overlay: the same destinations main renders today, per viewer kind (§58)", () => {
   for (const [cname, pb] of Object.entries(catalogs)) {
@@ -48,7 +71,7 @@ describe("no overlay: the same destinations main renders today, per viewer kind 
         const gained = viewer.isCustomer
           ? [RESOURCES, AGREEMENTS_ITEM].filter((g) => !before.some((i) => i.href === g.href))
           : [];
-        if (viewer.isCustomer && pb.portal.modules.some((m) => m.key === "billing")) gained.push(PAYMENTS);
+        if (viewer.isCustomer) gained.push(PAYMENTS);
         // The §58 equivalence is for a finance-ENTITLED business (the one that chose funding); the removal for every
         // other business is the E09 F2 block below.
         const now = flattenPortalNav(assemblePortalNav({ catalog: pb.portal.modules, viewer, entitlements: ENTITLED }));
@@ -82,7 +105,7 @@ describe("no overlay: the same destinations main renders today, per viewer kind 
     expect(shape(assemblePortalNav({ catalog: funding.portal.modules, viewer: CUSTOMER, entitlements: ENTITLED }))).toEqual([
       "top: Home, Messages",
       "Your work: Progress, Action items, Sessions, Funding Journey, Credit, Funding, Financial Profile, Business",
-      "Paperwork: Documents, Agreements",
+      "Paperwork: Documents, Agreements, Payments",
       "Learn: Resources",
     ]);
   });
@@ -233,7 +256,7 @@ describe("the registry", () => {
   it("offers the owner one row per configurable live entry the catalog can show, never a funding key it does not list", () => {
     expect(portalMenuEditorEntries(generic).map((e) => e.key)).toEqual(["progress", "actions", "sessions", "documents", "agreements", "billing", "resources"]);
     expect(portalMenuEditorEntries(funding.portal.modules, ENTITLED).map((e) => e.key)).toEqual([
-      "progress", "actions", "sessions", "funding-journey", "credit", "funding", "financial-profile", "business", "documents", "agreements", "resources",
+      "progress", "actions", "sessions", "funding-journey", "credit", "funding", "financial-profile", "business", "documents", "agreements", "billing", "resources",
     ]);
     expect(portalMenuEditorEntries(businessConsultant.portal.modules).map((e) => e.key)).toEqual(["progress", "actions", "sessions", "documents", "agreements", "billing", "resources"]);
   });
@@ -255,7 +278,7 @@ describe("E09 F2 — funding/credit entries exist only for a finance-entitled bu
       }
     }
     expect(shape(assemblePortalNav({ catalog: funding.portal.modules, viewer: CUSTOMER }))).toEqual([
-      "top: Home, Messages", "Your work: Progress, Action items, Sessions", "Paperwork: Documents, Agreements", "Learn: Resources",
+      "top: Home, Messages", "Your work: Progress, Action items, Sessions", "Paperwork: Documents, Agreements, Payments", "Learn: Resources",
     ]);
   });
 
@@ -267,7 +290,7 @@ describe("E09 F2 — funding/credit entries exist only for a finance-entitled bu
 
   it("the owner's editor never offers a funding row without the entitlement", () => {
     expect(portalMenuEditorEntries(funding.portal.modules).map((e) => e.key)).toEqual(
-      ["progress", "actions", "sessions", "documents", "agreements", "resources"]);
+      ["progress", "actions", "sessions", "documents", "agreements", "billing", "resources"]);
     expect(portalMenuEditorEntries(funding.portal.modules, { finance: false }).some((e) => e.key === "credit")).toBe(false);
   });
 

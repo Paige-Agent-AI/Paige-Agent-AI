@@ -37,6 +37,8 @@ const STATUS_LABEL: Record<CustomerAction["status"], string> = {
   customer_declined: "Declined",
   expired: "Expired",
 };
+// Match the existing customer Progress/Sessions quiet controls in both themes.
+const QUIET_HOVER = "hover:bg-muted hover:text-foreground";
 
 // expires_at is a ~30-day housekeeping TTL, not a coach-set deadline — only
 // surface it as the item genuinely nears expiry, and frame it as expiry (never a
@@ -137,7 +139,7 @@ function ActionCard({
         {action.body && <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">{action.body}</p>}
         {uncertain && <div role="status" className="space-y-3 text-sm">
           <p>We couldn’t confirm your response. Check the saved result before trying again.</p>
-          <Button ref={checkButton} variant="outline" disabled={blocked} onClick={onCheck}>Check saved response</Button>
+          <Button ref={checkButton} variant="outline" className={QUIET_HOVER} disabled={blocked} onClick={onCheck}>Check saved response</Button>
         </div>}
 
         {responses.length > 0 && (
@@ -173,7 +175,7 @@ function ActionCard({
                   <Button size="sm" onClick={() => submit("question", question)} disabled={disabled || !question.trim()} style={accentStyle}>
                     {busy === "question" ? <Loader2 aria-hidden="true" className="w-4 h-4 mr-1 animate-spin motion-reduce:animate-none" /> : null} Send question
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => { restoreAskFocus.current = true; setAsking(false); onQuestionChange(""); }} disabled={busy !== null}>Cancel</Button>
+                  <Button size="sm" variant="ghost" className={QUIET_HOVER} onClick={() => { restoreAskFocus.current = true; setAsking(false); onQuestionChange(""); }} disabled={busy !== null}>Cancel</Button>
                 </div>
               </div>
             ) : (
@@ -182,10 +184,10 @@ function ActionCard({
                   {busy === primaryType ? <Loader2 aria-hidden="true" className="w-4 h-4 mr-1 animate-spin motion-reduce:animate-none" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
                   {primaryLabel}
                 </Button>
-                <Button ref={askButton} size="sm" variant="outline" onClick={() => setAsking(true)} disabled={disabled}>
+                <Button ref={askButton} size="sm" variant="outline" className={QUIET_HOVER} onClick={() => setAsking(true)} disabled={disabled}>
                   <MessageCircleQuestion className="w-4 h-4 mr-1" /> Ask a question
                 </Button>
-                <Button size="sm" variant="ghost" className="text-muted-foreground" onClick={() => submit("declined")} disabled={disabled}>
+                <Button size="sm" variant="ghost" className={`text-muted-foreground ${QUIET_HOVER}`} onClick={() => submit("declined")} disabled={disabled}>
                   {busy === "declined" ? <Loader2 aria-hidden="true" className="w-4 h-4 mr-1 animate-spin motion-reduce:animate-none" /> : <XCircle className="w-4 h-4 mr-1" />}
                   Not now
                 </Button>
@@ -241,7 +243,7 @@ export default function ActionItems() {
 
       <ClientActivityFeed contactId={contactId} />
 
-      {error && <div role="alert" className="space-y-3 text-sm"><p>{error}</p><Button variant="outline" disabled={loading} onClick={() => void refresh()}>Try again</Button></div>}
+      {error && <div role="alert" className="space-y-3 text-sm"><p>{error}</p><Button variant="outline" className={QUIET_HOVER} disabled={loading} onClick={() => void refresh()}>Try again</Button></div>}
       {loading && actions.length === 0 ? (
         <div role="status" className="flex justify-center py-10"><Loader2 aria-hidden="true" className="w-6 h-6 animate-spin motion-reduce:animate-none text-muted-foreground" /><span className="sr-only">Loading your action items…</span></div>
       ) : !error && open.length === 0 && past.length === 0 ? (

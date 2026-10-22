@@ -826,6 +826,250 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-22 — EXP09 original released-work reviews and Files production closeout.**
+
+| Increment | Exact reviewed/deployed identity and bounded proof | Completion boundary |
+| --- | --- | --- |
+| [#2571](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2571): Original released-work review, selected customer and exact decision | Reviewed `9aa23c94895b0b24bfeeabdce67409ecd54bddaa`; main `268b12b516121136cc6748c8492c1676443b0a9f`; actual tree `f10be2e392e7813280b71f44f32c8646d2ace8b2` matches inspected composition.10 applicable checks and2 statuses SUCCESS; schema-free Preview SKIPPED as designed. Reviews5611609878/5612059369 AUTHOR-REVIEW / LOWER ASSURANCE.213 focused checks/13 suites; database119731693836 original review/discovery/concurrency41/42/44, Sessions88, selected request99 and Layer C161 independently SUCCESS; verify119731693629 guard/type/build/test/parity26/93/94/112/148 SUCCESS. Original Operations discovery/read/decision prosrc f16ed4fcfa41d52bf89b3577c84814e7 /9a33480e30275a40b939ecc857d43d53 /99d20f30ffaa99bf66a631da7e63b7ad and postgres/definer/empty search path/ACL5fc13192159b7c60c3a808895ae2c2c8 read back unchanged. Web `dpl_7qAbJkx78NBpZkTwk8dLq8VuBHmY` READY; public `268b12b516121136cc6748c8492c1676443b0a9f-mvjca68f`, customerUpdate:null. Served reader84zOlT02 SHA2566b3a96c54e71e80ac5b6aedfd374af54b55ebb4d819a5c86aaab7e8d00170beb; DocumentsTMzhcuFM c29e77e08210b6d96d995ad207702107e0fef9b92ba0e5b04ae767a4387dfe15; AppShell3u9kSW5t6e8cb5afc3a29d30067a045120bc29d22dd6404f266753231067146670571e8e. Own migration/Edge NOT_APPLICABLE. | Original native artifact/version/digest/note and decision/readback remain authoritative. Captured actual Auth/business/client, root recheck, A-B-A retirement and bounded uncertainty; nine local original-component responsive/focus images. No actual customer approval or CURA Layer C activation; multiple-business identity/recipient and joined owner/client/provider/return/revocation/full Experience acceptance PROOF OWED. Seven catalogue entries remain Limited. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2571#issuecomment-6337525786). |
+| [#2575](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2575): Original customer Files, Home and Storage scope/recovery | Reviewed `dd321535d170c4c617df0f93c429932a5a9b0f00`; main `7f11a5703baad97c14f555cff80fa7a2d50a09d9`; actual tree `41e8898debf8204999370334fc0c08a1eac691c2` matches inspected composition.10 applicable checks and2 statuses SUCCESS; schema-free Preview SKIPPED. Reviews5611955484/5612085473/5612473518 AUTHOR-REVIEW / LOWER ASSURANCE.198 tests/11 suites including30 scope/lifetime controls and actual installed SDK/Auth. Database119747736131 original Documents244/selected111 independently PASS (steps91/99), review41 and Layer C161 SUCCESS; verify119747975276 guard/type/build/test/parity26/93/94/112/148 SUCCESS. Original five file native definitions, signatures/owner/search paths/ACL match before/after; client-files remains private with original20MiB/MIME policy. Web `dpl_9EKLkpEMZDexRa4yaPwNdN25w7a5` READY; public `7f11a5703baad97c14f555cff80fa7a2d50a09d9-mvjdi5o5`, customerUpdate:null. Served DocumentsAMfqAv8u SHA2566eed36f3f63bebe1b0eb5c8346bcc06cbd51aaa6a7b38d2a87525c40a1228f13; AppShellD6v2SIod3d4b624ea321cf0f352480f4da24d0f63e1c8ceb9d21ef330118356d3a1d78c9; readerFNckhai9e63eda65776dfcb8894a43e42b4c2dd49b6623cc752fc31a964dc399ecb99721. Own migration/Edge NOT_APPLICABLE. | Original reserve/status/Storage-no-overwrite/finish/object plus independent metadata flow, exact reservation identity and60-second link policy retained. Unknown/held uploads cannot replay automatically; transient holds retain local selection, real retirement conceals it. Original Home treats indeterminate reads as errors; only native not-offered permits zero.11 local900/390/320/light/dark component images and recovery focus; no actual upload/link/provider/customer proof or instant revocation of already minted links claimed. Account/Consent/shared Edge/commercial/guarded identity/approved Knowledge and whole owner/client journey remain incomplete. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2575#issuecomment-6338147392). |
+
+
+**2026-10-22 — EXP09 original Sessions production closeout.**
+
+| Increment | Exact reviewed/deployed identity and bounded proof | Completion boundary |
+| --- | --- | --- |
+| [#2567](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2567): Original customer Sessions, selected business and same-request recovery | Reviewed `8529bfb2c0a444fe4e5e936f78acb3b260695dbe`; main `eba561cda65f90a8e0d54cc72b5922841bae2349`; actual tree `6a369483a920413b2f0e8cc36ce92ba10d424ecf` matches inspected composition preserving concurrent EXP04 releases.11 applicable exact-head checks/full Preview and2 statuses SUCCESS; reviews5610358663/5610724026/5610739139/5611143822 AUTHOR-REVIEW / LOWER ASSURANCE.139 focused checks/five suites, including25 selected-business/Auth/SDK/deadline controls; original native111 selected-request checks PASS in job119700749361, with step99 independently SUCCESS. Original Sessions step88, Operations review/discovery/competing-decision steps41/42/44 and Layer C native step161 also independently SUCCESS; no CURA adapter claim. Production read prosrc1bbb4e8f7361b6396bb8131b71246ee3/admission6fde1e99b3c20c89e4ae5038af50a456 and original owner/ACL/search paths read back unchanged. Web `dpl_EjHhmkCSCycpCiQK1JsNqwfuZtyo` READY at exactmain; public `eba561cda65f90a8e0d54cc72b5922841bae2349-mvj9mhs0`, customerUpdate:null. Served useClientPortalSessions-3T3_foTC.js SHA2560630715427470e8499f44ecf8172aeda669f50d9301bbda96355b011d38c2c33 and Sessions-CItR1EdZ.js SHA256ed88b6c99a86126edf3875cd17bf3833950cbca906d2b8989bb08c7b446356b9. Own migration/Edge NOT_APPLICABLE. | Original native booking admission, booking-manage/public-booking, notice/slot/CRM checks and original request/audit identity retained; captured actual actor/business and bounded preflight/read/recovery. Seven original-component local/synthetic desktop/narrow/dark/focus images; no actual cancellation/reschedule/provider notice. Joined owner/client, returning/revoked/multiple-business and whole-Experience acceptance remain PROOF OWED. Original global identity guard remains. No customer announcement/version. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2567#issuecomment-6336153344). |
+
+**2026-10-22 — EXP09 original Progress and Action Items production closeout.**
+
+| Increment | Exact reviewed/deployed identity and bounded proof | Completion boundary |
+| --- | --- | --- |
+| [#2562](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2562): Original shared Progress and Home business scope | Reviewed `2d3ae47dc6062426cf4867d30b6fbdd75eb1751c`; main `622c9bd480593abcbe084098d06a11f1e4fd1b9d`; actual tree `64f175665a7ec5fa14d8002c5de5e8213f0fa701` matches composition.11 applicable exact-head checks/full Preview and2 statuses SUCCESS; review5609883906 AUTHOR-REVIEW / LOWER ASSURANCE.99 focused checks/five suites and native82 original request/access controls PASS in119667427492. Original Progress prosrc9f092578c9401c6fd2f771988edba7e7/Planning writer5b54266d88194b3ec93243d58ded1f9a and original metadata/ACL read back unchanged. Web `dpl_4g1WugFPhZVWdcVgHoJQvWKveYiP` READY at exact622c. Public sampled reviewed docs-only descendant `f149ebb5328eb5d2662d8e033170c2fb1e408750-mvj625ii`; exact622c manifest not separately sampled. Served useClientPortalProgress-Vr8e89tH.js SHA25683234f7ad0752c5c25e024061222e9045d4ee51b92c066a7d146b89a76b75061 includes original native API; Progress-Ck_1-Klq.js SHA256fc809d9ace0fb334e28aea594eadb08d97f319dcd5a5e97b13b9ad3ff451c103. Own migration/Edge NOT_APPLICABLE. | Captured verified actor/business, original business-approved Planning projection, bounded read/retry and retired/foreign-result refusal. Five original-component local/synthetic responsive images; no actual customer progress/provider effect. Joined owner/client/returning/revoked/multiple-business acceptance remains PROOF OWED. No customer announcement/version. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2562#issuecomment-6334479804). |
+| [#2565](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2565): Original assigned Action Items and exact-version customer response scope | Reviewed `b4c7c39f10266d3a1558372c8d887319b5b9fa9b`; main `a6e0bbce8f62661e86e7a1b69247a349646b21e7`; actual tree `7a25d09acc7705c8a2ecb6a7cae5fb464839dcff` matches clean composition preserving independent EXP04 releases.11 applicable exact-head checks/full Preview and2 statuses SUCCESS; reviews5610076237/5610205850/5610328915/5610653364 AUTHOR-REVIEW / LOWER ASSURANCE.150 focused checks/eight suites and native94 original request controls PASS in job119684135959; its original selected-request/access step99 independently reports SUCCESS. Production self-profile090fd2f8ef6f29ddf8091be7cbd6db7d/response writere1095a18ee344a3b1528e7320d33fdd9/compatibility wrapper880d5b593b1bb377a70b36031ce6e54e, original metadata/ACL and INVOKER wrapper read back unchanged. Web `dpl_CZZBP2gW216jjaVecBZmQBHmJszN` READY at exactmain; public `a6e0bbce8f62661e86e7a1b69247a349646b21e7-mvj81l9l`, customerUpdate:null. Served useMyActions-CTVgeh6U.js SHA256eb50a32f11a4384aa5d989e53ca8e3e7ef406974af92a33da9e92dcbce3e5b15/original response API and ActionItems-CFE2DCHP.js SHA256f8076983c9cef602c2ccd14d39aed764eeaee9203ebf3102ce051948008af1ea. Own migration/Edge NOT_APPLICABLE. | Actual captured actor/business per original SDK request; exact native version/response/history and uncertainty reconciliation retained. Five original-component local/synthetic desktop/narrow/dark/focus/hover images. No actual customer response/send/provider effect; actual protected owner/client, joined records and returning/revoked/multiple-business outcome remain PROOF OWED. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2565#issuecomment-6335429025). |
+
+These are two additional bounded internal source/readback releases, not seven-pillar or multi-business acceptance. The original global linked-user/recipient restrictions remain; no identity, sender, model runtime, financial writer, approval/receipt store or Layer C replacement was created. Original governed domain execution remains authoritative. Clients Portal stays PARTIAL; the seven client-success entries remain Limited and no algorithm is promoted. Sessions2567 and original customer review/file/other selected-domain/shared-Edge/global-identity integration continue separately.
+
+Functional: merged/deployed and public/native source read back as above. Visual: bounded actual-component local/synthetic evidence with device/full-shell/AT limits. Experiential: scoped read/response, uncertainty, note/exit and recovery controls; actual joined signed-in journey owed. Founder Acceptance: NOT_REQUESTED, one completed integrated Experience. Internal release channel production; no customer publication or new release identity. Forward correction/revert preserves original business records and unknown-outcome holds. This factual two-file closeout is not logged recursively.
+
+
+**2026-10-22 — EXP04 retained-copy integrity, checked signer and editability released.**
+
+These are three bounded native increments, not completed professional Agreements or
+customer acceptance. Original agreement identity, documents, signatures, commercial
+and Operations records remain authoritative. All reviews below are explicitly
+**AUTHOR-REVIEW / LOWER ASSURANCE**, not independent non-author review.
+
+| Increment | Exact reviewed / merged / production evidence | Completion boundary |
+| --- | --- | --- |
+| [#2568](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2568), retained PDF integrity | Reviewed `75386c6edc99c4ea267e0dae6caf1c8d6d3d1f4a`, review5610619507; merge `fb8bc6b92832239241ed2fb074ba3e8fae476027`, parents `3bf7051864556e4bc51500f8ee52a1bf800ccfeb` + reviewed head; exact preflight/actual tree `d9f51aa3821de5d7fabd0f7587855dcbdf9a601d`.10 successful checks plus applicable Preview SKIP, two successful statuses, zero threads. Actual Edge `agreement-document` ACTIVE35/JWTfalse and SIX exact reviewed source files; indexSHA256 `e06dc4523f46a802e9f57fa458896f83d82f991196278b367b85da888e4a6648`. Existing recovery39745835436/deploy119713934300 SUCCESS and actual `edge-live` fb8 verified. Web `dpl_6Peprm3NCfW2VDmiRB38xGkVrBiv` READY, protected build `fb8bc6b92832239241ed2fb074ba3e8fae476027-mvj92v5o`, customerUpdate:null. [Receipt6336226483](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2568#issuecomment-6336226483). | The original authorized record's retained checksum is verified before serving bytes. Corruption, missing/malformed bytes and unknown read outcomes refuse truthfully; original owner/token/Portal scope, events and PDF renderer preserved.45 actual-handler cases and56 strict Deno cases are source proof. No actual altered customer document or ordinary-role download acceptance claimed. |
+| [#2557](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2557), original checked signer preparation | Reviewed `9ea53119834d84c2efd566d78f4da8210fed78a0`, review5610636235; merge `5cca59a2c801c95811e31fbe65d75c12e7478ad5`, parents `fb8bc6b92832239241ed2fb074ba3e8fae476027` + reviewed head; tree `529d29532e68a2caac4cdbb39eb81e83a8fffaed`.12 successful exact-head checks including Preview, two statuses, zero threads. Normal native39745878088/lint119714066930/deploy119714256137 SUCCESS;250004 APPLIED. Actual five function identities/definitions/owners/ACL/search_path/volatility match. Web `dpl_BMhtkdpjP6YrnEhRheWDSqQeHUzg` READY, protected build `5cca59a2c801c95811e31fbe65d75c12e7478ad5-mvj9iglb`, customerUpdate:null. [Receipt6336227514](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2557#issuecomment-6336227514). | Same original signer primary key/event receipt, exact client/version/CAS and same-request recovery; no second operation store or permission system. Native119 assertions/replay2 plus separate original five-session/three-wait and checked eight-session/four-wait proofs. Mounted recipient UI, actual owner/staff/client signing and provider acceptance remain separate. |
+| [#2561](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2561), original preparation editability | Reviewed `fcd1ef0ea3340a2f8ba13a1a4a403b95eb137a1d`, final main-target review5611182577; merge `172013d896d78178473eaa1e2946e3f27558944b`, parents `eba561cda65f90a8e0d54cc72b5922841bae2349` + reviewed head; tree `09dc194d9c7807e04cbf2c30cfe63f566f471ad4`.12 successful exact-head checks including Preview, two statuses, zero threads; no invented additional post-retarget CI run. Normal native39746628315/lint119716581524/deploy119716745904 SUCCESS;260004 APPLIED. Original reader body `c53a216268b2526682c5c82175bbb816`, postgres/STABLE/DEFINER/empty search_path/authenticated-only ACL/two UUID arguments verified. Web `dpl_FJ2YtEz3kSR1PgoH61ULxWp7s7hL` READY, protected build `172013d896d78178473eaa1e2946e3f27558944b-mvj9qd69`, customerUpdate:null. [Receipt6336228732](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2561#issuecomment-6336228732). | Same original16-field reader/authority/history; can_edit now respects all retained references. Native142 assertions/replay2 (44+75+23) are source proof. Actual ordinary-role editability and reload acceptance remain owed. |
+
+The first2568 push deployed/verified its selected function, then correctly refused
+to advance the certified frontier because earlier dormant commercial files were
+ahead of its tag. The unchanged governed recovery selected agreement-document ONLY,
+with no config drift, protected Chat/provider change or manual tag write. An initial
+local source snapshot had invalid Unicode transport; ASCII-safe serialization plus
+the canonical normalizer and direct GitHub source verified all six actual files.
+This was not production drift and no checksum guard was weakened.
+
+Functional release/source proof above is separate from visual/experiential completion.
+No layout change in these increments. Exact PDF preview/assigned fields, mounted
+professional template/recipient work, effective terms/obligations, finance/Stripe TEST,
+Communications, onboarding/delivery/client acceptance and full O1-O12 remain incomplete.
+Original E09 Actions/Sessions main work is preserved. No actual signer impersonation,
+consent, customer send, charge, provider activation, new QA identity or INT346 activation.
+Actual owner/staff/linked-client/two-cohort/provider/founder acceptance UNVERIFIED.
+Jurisdiction/reviewer/wording-review options are configuration; no legal-sufficiency
+claim or infrastructure-wide counsel gate. No customer release name/announcement.
+Forward corrections preserve original evidence; this factual closeout is not logged recursively.
+
+**2026-10-22 — EXP04 original signer-preparation integrity prerequisite.**
+
+PR [#2554](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2554), reviewed
+`de275622f4d993b75da7a826193f25bcff80ee82`, merged
+`605a8c4bcdfb63c016689717947caf09f3296f83`. Actual parents
+`1e1073133f960a394d41f7f27b0c84560d33f3aa` + reviewed head; actual/preflight
+tree `d283f0221b6276a2b08a89feb2d9412a13b60f47` matches. All12 applicable
+exact-head checks and two statuses SUCCESS, inline threads0; review5610217639
+is **AUTHOR-REVIEW / LOWER ASSURANCE**. Normal production migration39739847779,
+lint119694151590/deploy119694340814 SUCCESS. Native240004 APPLIED; original
+six-argument add_agreement_signer body `f380cfa97f14e29c8b88721a76b9db4e`,
+postgres owner, VOLATILE/DEFINER, search_path public,pg_temp and original
+authenticated-only execute ACL independently verified. No history repair/backfill.
+Exact web `dpl_HMxLuMYHqkv8KYQVWYJBEm2K3UW7` READY/production/main;
+protected AND canonical version.json200 build
+`605a8c4bcdfb63c016689717947caf09f3296f83-mvj7pldd`, customerUpdate:null.
+Own Edge change NOT_APPLICABLE.
+[Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2554#issuecomment-6335238273).
+
+Functional: original parent is serialized before assigning default signer order;
+retained source cannot acquire a new party, and a real party addition advances the
+original reviewed version. Original normalized-email uniqueness, signature/defaults,
+authority, DTO, audit event and canonical agreement/signer records remain. Native44
+assertions/replay2/five participating sessions/three observed waits are source proof.
+Visual: no UI/layout/renderer change. Experiential: checked request recovery250004,
+reader260004, mounted professional recipient/field preparation and actual ordinary
+owner/staff/client/signing/provider acceptance remain separately owed. All O1-O12
+and one complete founder evaluation remain mandatory/incomplete. No real signer,
+token, consent, external send, charge, Chat admission or legal-sufficiency claim.
+Internal increment/no customer name or announcement. Forward correction preserves
+original documents and signed history; this factual closeout is not logged recursively.
+**2026-10-22 — EXP04 original commercial-presentation foundation released.**
+
+PR [#2550](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2550), reviewed
+`0b4092a9df0872171bb1923b569d92382cb32e90`, merged
+`1e1073133f960a394d41f7f27b0c84560d33f3aa`. Actual parents
+`f149ebb5328eb5d2662d8e033170c2fb1e408750` + reviewed head; actual/preflight
+union `a5d537bd51155622dac749e0463d616e88473f6f` matches. All13 applicable
+exact-head checks and two deployment statuses SUCCESS; review5609923926 is
+**AUTHOR-REVIEW / LOWER ASSURANCE**, inline threads0. Normal migration39735665747
+attempt2/deploy119688925032/lint119688927231 SUCCESS;230004 recorded after220004.
+First attempt119680772066 failed55P03 at the original5s limit and fully rolled
+back. An initial retry approval was rejected on a lock concern; separate timestamped
+production read07:06:11 verified0relation locks/full rollback before the SAME
+unchanged retry was approved. No session killed, timeout widened, control bypassed,
+source/test gate waived or migration history repaired.
+
+Production native hashes match: canonical JSONbbfeef876dc866c6d276d2be2662ae74,
+immutable guardff2fcc8d622aee366dd2e95e01222e4e,
+freeze4116200a24628e9149187e55eea2fb02. Original postgres owner, empty search_path,
+private INVOKER helpers and service-only DEFINER freeze match source; two nullable,
+no-default columns and one enabled original protection trigger. Original11-argument
+SAVE body1bd28e75afa0f50bb07b717795a5be0e is unchanged. No backfill or new ledger.
+Exact web `dpl_DDYF5646SrPkWswGQD7ZvdsBKzPi` READY/production/main;
+protected AND canonical public build
+`1e1073133f960a394d41f7f27b0c84560d33f3aa-mvj6cqfk`, customerUpdate:null.
+Own invoked Edge change NOT_APPLICABLE; no existing consumer redirected.
+[Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2550#issuecomment-6334959569).
+
+Functional: original immutable agreement/terms/invoice presentation, finite USD
+principal/schedule and explicit v2 service facts, with original Collections and PDF
+renderer. Native54 assertions/replay2/two actual sessions/one observed wait and
+Deno11 tests/26 steps are source proof, not hosted document or customer acceptance.
+Visual: no renderer/layout replaced. Experiential: original high confirmation,
+operation/Rail, hosted artifact/signing/accepted/effective terms and owner/staff/client
+integration remain owed; the producer is initially dormant. All O1-O12 and one
+complete founder evaluation remain mandatory/incomplete. No Chat/Live/provider,
+signing/send/payment or legal-sufficiency activation. Internal increment/no customer
+release name or announcement. Recovery is reviewed forward correction preserving
+original records and signed history. This factual closeout is not logged recursively.
+
+
+**2026-10-22 — EXP04 native supplied-wording template foundation.**
+
+PR [#2545](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2545), reviewed
+`3e33160023666d33da751344dfe021d3520cd60b`, merged
+`5a9c8fe0b38474c04c29e2d680bf195b41b0b42b`. Actual parents
+`c4bec1df71a0e0d4f183f7d1d1b1becee120a210` + reviewed head; actual,
+preflight and recomputed tree `a661995e51283bcaa30c0588d5c8fa4eafb32014`
+match. All13 applicable exact-head checks and both deployment statuses SUCCESS;
+review5609615107 is **AUTHOR-REVIEW / LOWER ASSURANCE**, inline threads0.
+Normal migration39730423040 attempt2/deploy119666985657 SUCCESS;
+`20271113220004` is recorded. First attempt119664093836 failed on the original5s
+lock timeout55P03; full rollback verified (0new columns/validator absent). Other
+reader locks cleared before the unchanged failed-job retry. No worker terminated,
+lock limit changed, failed test waived or migration history repaired.
+
+Production metadata verifies all six exact native source-body hashes, postgres
+owner, empty search_path and original intended ACL/definer/volatility; four
+nullable/no-default columns and one original template-protection trigger. Four
+Auth-only owner/admin RPCs, private trigger and pure Auth/service validator reuse
+original tenant_agreement_versions, immutable prepared versions and original
+agreement source IDs; no alternate agreement, authorization or execution store.
+Web `dpl_Fu7P9Z3T6wjcLKv3Stnmr1XT9VMw` READY/production/main/exact;
+protected build `5a9c8fe0b38474c04c29e2d680bf195b41b0b42b-mvj4irg0`,
+customerUpdate:null. Canonical public later descendant
+`62d615ac6deb10bacd80aa1129a23e4cc7e1bde8-mvj4vrdg` and Git ancestry verified;
+not substituted for the exact deployment. Own Edge NOT_APPLICABLE.
+[Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2545#issuecomment-6334034846).
+
+Functional: native version/list/read/same-UUID actor-bound recovery and optional
+jurisdiction/requested wording-review metadata. These options are not completed
+legal review or legal sufficiency. Local68 assertions/replay2/five participating
+sessions/three observed waits are bounded source evidence, not customer QA.
+Visual/Experiential: this foundation mounts no new UI; consumer#2549 enters its
+own actual-main review/CI/deployment gates. Actual ordinary owner/staff/client,
+two-cohort use, signature/provider/payment/service and complete O1–O12/founder
+acceptance remain owed. No Chat/Live/provider activation or automatic send/charge.
+Internal production foundation; no customer release name/announcement. Recovery
+is reviewed forward correction preserving original versions and signed history.
+This factual closeout is not logged recursively and changes no product/authority.
+
+**2026-10-22 — EXP09 scoped relationship, private history and recovery production closeout.**
+
+| Increment | Exact reviewed/deployed identity and bounded proof | Completion boundary |
+| --- | --- | --- |
+| [#2542](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2542): Original native business request scope and exact notice binding | Reviewed `5d20492148ccc6eef77f3ea1413a13217776e84f`, main `503e41d316229904f7fe989ccc6b0538ff335478`, tree `6df833db0cc9a951153aead1133e9baca79937bc`. 13 applicable exact-head checks and2 deployment statuses SUCCESS; 5609145780 AUTHOR-REVIEW / LOWER ASSURANCE. Normal migration39723944701 SUCCESS;210009/210109/210209 persisted. Parser72efd408dc26f9672088f10eea9ebea1, resolverff84ba24689e5043d7d15ed3d9150268, access3be0d887895d6ebefa34fbd6b29f431a, frameb3826e6b52ba34cd40348112b8145883 and choices3fe81a22912dd6292462b69a155a25f0 match reviewed bodies/metadata.46 focused and215 original access checks PASS. No grant/global identity change. Web `dpl_CDPkSrXYHWZ6x4Rjm7VZ5YMojfAE` READY/production; public 503e41d316229904f7fe989ccc6b0538ff335478-mvj232n5. Own Edge NOT_APPLICABLE. | Bounded deployed source/readback. Remaining domain/Edge/global-identity integration, original signed-in owner/client journey and full seven-pillar/founder acceptance UNVERIFIED. Internal increment/customerUpdate null; no announcement. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2542#issuecomment-6332943907). |
+| [#2547](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2547): Original actor-bound browser customer frame | Reviewed `8c6197d4393374af9fcf885b1b6552e0e400c96a`, main `6fc48081ed0cdadafb4a21f8052f5c1aca52ad15`, tree `e54db1eb0ef7bd5c777ce9c3ce61e8ac683071c7`. 9 applicable exact-head checks SUCCESS; schema-free Preview SKIPPED;2 deployment statuses SUCCESS; 5609149471 AUTHOR-REVIEW / LOWER ASSURANCE. 88 focused browser/frame/access tests PASS. Original per-builder business header and actual Auth/frame readback preserve one canonical frame; stale callbacks retire. SQL N/A; parent2542 native readback retained. Web `dpl_Be7nmxoczvE7ENYAQVQ9uNnYo2xw` READY/production; observed public reviewed descendant502b802281cc256ee3f263566c731a9a39b48418-mvj2dfi4; exact6fc public manifest not separately sampled. Own Edge NOT_APPLICABLE. | Bounded deployed source/readback. Remaining domain/Edge/global-identity integration, original signed-in owner/client journey and full seven-pillar/founder acceptance UNVERIFIED. Internal increment/customerUpdate null; no announcement. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2547#issuecomment-6333043227). |
+| [#2551](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2551): Original customer-shell verified business choice and recovery | Reviewed `28ae0d8e99e2901749e5372dcce13375fc202eb0`, main `502b802281cc256ee3f263566c731a9a39b48418`, tree `5af58452b47a43119afb3d5c46648ad0d8bf7f51`. 9 applicable exact-head checks SUCCESS; schema-free Preview SKIPPED;2 deployment statuses SUCCESS; 5609159322 AUTHOR-REVIEW / LOWER ASSURANCE. 182 tests/20 suites PASS. Existing shell, optional verified choice, opaque actor-bound tab preference and recheck/cancellation reuse original native choices/frame. Original-component desktop/narrow light/dark/focus/touch evidence has documented iframe/synthetic limits; no full-shell or actual two-business certification. SQL N/A. Web `dpl_GAtMAcNZEgEgoRMapHSwoHMn8Y7g` READY/production; public 502b802281cc256ee3f263566c731a9a39b48418-mvj2dfi4. Own Edge NOT_APPLICABLE. | Bounded deployed source/readback. Remaining domain/Edge/global-identity integration, original signed-in owner/client journey and full seven-pillar/founder acceptance UNVERIFIED. Internal increment/customerUpdate null; no announcement. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2551#issuecomment-6333044066). |
+| [#2555](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2555): Canonical private CURA history request binding | Reviewed `7147467a641b02e6467e5c0b750b20020d3431d1`, main `c79339415c0c27291119466a55e7d41737903537`, tree `3809fe32b5319d25050724057cc16cc21f4e80a3`. 10 exact-head applicable checks and2 statuses SUCCESS; 5609309424 AUTHOR-REVIEW / LOWER ASSURANCE. 62-case native isolation suite PASS in119639776010;83 browser/frame tests PASS. Five original SDK requests bind the verified business and actual actor; canonical private thread/turn identity and staff-private boundary preserved. Fixture rolled back/restored original global link index. SQL N/A. Web `dpl_GtcGWTuNr7PYSNZoW6gBPmjnj1nY` READY/production; public c79339415c0c27291119466a55e7d41737903537-mvj2kku6. Own Edge NOT_APPLICABLE. | Bounded deployed source/readback. Remaining domain/Edge/global-identity integration, original signed-in owner/client journey and full seven-pillar/founder acceptance UNVERIFIED. Internal increment/customerUpdate null; no announcement. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2555#issuecomment-6333245798). |
+| [#2548](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2548): Owner context follows original staff-workspace authority | Reviewed `a39a14d082a94b32a1c528c58ee8d181c34f703b`, main `acc8d6423d34bf350210c2a48f835046c0807dd3`, tree `8eb74b2271248594fa9aaf867d40f20a0567686b`. 13 exact-head applicable checks and2 statuses SUCCESS; 5609394025 AUTHOR-REVIEW / LOWER ASSURANCE. 22 original authority assertions PASS. Normal migration39728035946 SUCCESS;210309 persisted. Persona39cb7d0fc5b50f669c3cc049e98971f9/original staff resolverf16384fd81d48901441185bec66f939f and original ACL/search_path/STABLE/postgres metadata independently read back; global/per-business linkage guards retained. No renderer/role/grant changed. Web `dpl_4AGMQsiUQTwy3eFoEqKNkZs7B7ZD` READY/production; public Verified reviewed descendant c4bec1df71a0e0d4f183f7d1d1b1becee120a210-mvj3mw8p; exact acc8 public manifest not separately sampled. Own Edge NOT_APPLICABLE. | Bounded deployed source/readback. Remaining domain/Edge/global-identity integration, original signed-in owner/client journey and full seven-pillar/founder acceptance UNVERIFIED. Internal increment/customerUpdate null; no announcement. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2548#issuecomment-6333534220). |
+| [#2556](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2556): Original customer history interruption and retry recovery | Reviewed `d4a10cec0707789c55d77a9eba1e2b2af3016507`, main `c4bec1df71a0e0d4f183f7d1d1b1becee120a210`, tree `04e090f815cd90af70f010fc8b284190fd2536e1`. 9 applicable exact-head checks and2 statuses SUCCESS; schema-free Preview SKIP; 5609414850 AUTHOR-REVIEW / LOWER ASSURANCE. 180 tests/10 suites PASS; final53 history/component and38 component/scroll confirmations PASS. Cancellation/20-second read deadline/explicit Retry preserve same-business drafts and withhold unavailable transcript/ready claims. Four original-component desktop900x560/narrow390x560/small-dark320x560/recovered-draft images and keyboard focus inspected; synthetic Auth/transport, no Safari/device/400-percent/screen-reader certification. SQL N/A. Web `dpl_59fwhg23fC9RAT1iuc1XTp98RRxf` READY/production; public c4bec1df71a0e0d4f183f7d1d1b1becee120a210-mvj3mw8p. Own Edge NOT_APPLICABLE. | Bounded deployed source/readback. Remaining domain/Edge/global-identity integration, original signed-in owner/client journey and full seven-pillar/founder acceptance UNVERIFIED. Internal increment/customerUpdate null; no announcement. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2556#issuecomment-6333534905). |
+| [#2558](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2558): Original business Messages/Support request binding and recovery | Reviewed `1d09bf0137a1410bd3d04a299c752856d059d8ce`, main `62d615ac6deb10bacd80aa1129a23e4cc7e1bde8`, actual tree `31c2a0fa2069ab940075015967b2a4df69983c11` matches clean composition preserving EXP04 #2545.11 applicable exact-head checks/two statuses and full Preview SUCCESS; AUTHOR-REVIEW / LOWER ASSURANCE5609645668/5609869735.95 focused browser/real-SDK/page checks and native72/original portal suites PASS in119656837547. Original conversationeed501929d60ad5999770191795905bb/send0a0c835abd6fca8973068ea5c2640f83 and original ACL/owner/definer/path/grants independently read back unchanged. Web `dpl_2kgQKKRo91bi212ZFeapwAxFizBX` READY/public `62d615ac6deb10bacd80aa1129a23e4cc7e1bde8-mvj4vrdg`. Observed Messages-bLr0wTCm.js SHA256ba246633345cd042923a2bf08a369fdeeb0c5b01d26b639b9000bd6976b8d547 includes original conversation/send and new unsent preflight paths. Own SQL/Edge NOT_APPLICABLE. | Per-builder captured actor/business, foreign-result refusal, old callback retirement, original explicit Auth Retry and canonical unknown-send reconciliation deployed. No actual customer/provider send exercised; full joined customer/domain/Edge/global identity acceptance UNVERIFIED. Internal/customerUpdate null/no announcement. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2558#issuecomment-6334013110). |
+
+These seven are internal increments, not a new customer release or completed multi-business Portal. The original global linked-user uniqueness and recipient-bound acceptance still refuse a second business; future-shape database fixtures restore the index and roll back. No account, sender, provider effect, Knowledge publication, financial writer, runtime, approval system or Layer C replacement is created. Original Messages/Support2558 is the seventh bounded deployed increment above; selected Progress2562 and other domain/Edge/global identity integration remain unfinished.
+
+Functional: bounded source/native/browser checks and production readback as above. Visual: original design retained with actual-component evidence where affected; synthetic/iframe and untested accessibility/device boundaries remain explicit. Experiential: interruption, retry, draft/focus and stale-return controls are tested locally; actual joined owner/client returning/revoked/two-business acceptance remains owed. Founder Acceptance: NOT REQUESTED/NOT ACCEPTED, once the complete integrated Experience is ready.
+
+Original governed Communications invitations, approved Knowledge/Teach CURA, private CURA/business Conversations and canonical domain services remain authoritative. No CURA-specific Layer C adapter is production-proven; valid existing domain execution is retained. Seven client-success catalogue entries remain Limited. ALG01/12 bounded PARTIAL; ALG02/04/13 actual runtime UNVERIFIED. Forward corrections preserve original records, authority and unknown-outcome duplicate-effect holds. This factual closeout is not logged recursively.
+
+**2026-10-22 — EXP04 correct the original unsigned agreement.**
+
+PR [#2532](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2532), reviewed
+`ee745f014a3d35c720ee2a502502389b641290b9`, merged
+`4580db2e45cb66674cf82dabb8a086bfe61a8fa0`. Actual parents
+`6e9380cd5d717bf2c05ae8b8aa1f4a0f7f6ed028` + reviewed head; tree
+`ba8344eb459e07972fb9a7319044f923f99572c5` equals the recomputed union.
+All11 applicable exact-head checks:10 SUCCESS/schema-free Preview SKIPPED;
+both Vercel statuses SUCCESS. Final review5608960420 is **AUTHOR-REVIEW /
+LOWER ASSURANCE**. Historical audit503/browser failures retained, no weaker test.
+Web `dpl_4UgdTb3CJsdggWdvzknSRhBvPskx` READY/production/main/exact;
+protected and canonical public build
+`4580db2e45cb66674cf82dabb8a086bfe61a8fa0-mvj0ukdd`, customerUpdate:null.
+Actual served AgreementPreparationWorkspace-BdC3QrzB.js SHA256
+`e86f92614b8236e28e1f5c77d15b6ea37d3dfa0f0d0c8893784c7f48b7f84c91`
+contains original correction/history controls. Own migrations/Edge NOT_APPLICABLE;
+original160000 native guard is separately released. [Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2532#issuecomment-6332510916).
+
+Functional: same native SAVE/CAS with client/offer/terms/template identity,
+retained history, strict acknowledgment and separate unknown/current recovery.
+Visual/Experiential:216 focused cases plus3 vocabulary, actual20 responsive/theme
+frames/16 paths/zero errors/22 exact source pins; synthetic Auth is not customer QA.
+Actual ordinary owner/staff/linked-client, signing/provider/payment/service,
+complete O1–O12 and founder acceptance remain owed. No new sender/approval/ledger,
+Chat admission or provider effect. Internal production increment; no customer
+release name/announcement. Recovery is reviewed forward correction preserving
+original saved work/unknown proposals, never automatic resubmission or unfreezing.
+This factual closeout is not logged recursively and changes no product/authority.
+
+**2026-10-21 — EXP04 retained source stays immutable before delivery advances.**
+
+PR [#2526](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2526), reviewed
+`fdae5a69c3b02956683d6f2fe8e2fe639e53dda5`, merged
+`31bb0a91e0e2163fda0aab8a385636297b356d96`. Actual parents90700534acac4e5a441d2683e7a1e6e8f24a25d4
++fdae; tree`7f7d05f4dbb5b805d0cd78cd8c8165179c9321d4` equals recomputed union,
+preserving E09/E02 source. All13 exact-head checks/two Vercel statuses SUCCESS,
+including final full-schema Preview. **AUTHOR-REVIEW / LOWER ASSURANCE**5608454864.
+Normal deploy-migrations39709577134/deploy119597546705 SUCCESS;160000 APPLIED.
+Catalog parity: guard`457b2abd652581a75cf073cd766eefad`, original
+SAVE`1bd28e75afa0f50bb07b717795a5be0e`, postgres owner/ACL and single enabled
+original trigger preserved; empty search_path. No data/history rewrite or new grant.
+Web`dpl_6UmnBWqeYBu61QYZFGTEGRPpH5VQ` READY/main/exact; protected/public
+`31bb0a91e0e2163fda0aab8a385636297b356d96-mviwhywx`, customerUpdate:null.
+Own Edge NOT_APPLICABLE; internal prerequisite, no customer release identity.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2526#issuecomment-6331039476).
+
+Functional: original retained-but-Draft source/customer/commercial references are
+protected at the existing writer trigger. Native43/replay2/two observed overlapping
+sessions, original baseline four positive controls then expected refusal failure.
+Visual: no renderer changed. Experiential: original link/void/metadata recovery
+preserved; correction UI is separate. Pre-freeze C7/exact effective signed terms,
+actual owner/staff/client/provider/document/signature/payment/service acceptance,
+full O1–O12 and founder evaluation remain owed. Forward fixes preserve originals;
+no new agreement/payment ledger, sender, executor, admission or algorithm activation.
+
+
 **2026-10-22 — EXP05 bounded read-only weekly review.**
 PR [#2533](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2533), reviewed
 `d88549b0a84b340a985b3e161f40a7f1923d7678`, merged
@@ -873,8 +1117,11 @@ This one-file factual closeout is not logged recursively.
 | [#2522](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2522): inspect original preparation from saved owner Chat | Head `78faa270bf5f8fd19311d20cf311964e950e8e96`, main `a6b550b768982cf3b63cb36e0f21f63363379779`, composed tree `34bd0d497464fa510931736f0422898c16a395cb`.10 applicable exact-head checks/two statuses SUCCESS; schema-free Preview SKIPPED; review5607996155 AUTHOR-REVIEW / LOWER ASSURANCE. Web `dpl_aHyMG3NDLdCwnZaZDEEX9txCxdfM` READY, public `a6b550b768982cf3b63cb36e0f21f63363379779-mviv1mnc`. Own SQL/Edge NOT_APPLICABLE. |284 original component regressions and37 deterministic Home tests; actual component state/viewport/focus/dock evidence. Protected owner saved approval history survives reload without restoring approval controls; original read returned completed with the same source. Independent native read retained one private draft/revision3, succeeded extraction, zero chunks/shares/other work. No resubmission. Published customer retrieval, eligible Live and complete client journey remain UNVERIFIED. [Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2522#issuecomment-6330596414). |
 | [#2529](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2529): truthful coverage for seven original client-success catalogue entries | Head `6f84d77eff0b92e9a6edfdc57204a84bd12d5d6f`, main `1d291ab48898366b57daf958219f490fe2679bc8`, composed tree `6b1e1463b6759bfd61b8d3be0b1522081a0e4b66`.12 exact-head checks/two statuses SUCCESS; review5608035119 AUTHOR-REVIEW / LOWER ASSURANCE. Normal migration39706420743/deploy119587520255 SUCCESS;20271113150000 persisted. Direct native readback finds all seven original names/slugs, coverage version1/state limited and original risk/lanes. Web `dpl_2sytQ1CRd5ZMXzDEHgzrQ4vjNQkb` READY/production; later public `2d554406f9e4019935a8b38a5b30e4643a88da1a-mvivca62` is verified descendant containing this merge. Own Edge NOT_APPLICABLE. | Eight native replay/customization assertions,59 original catalogue contracts and six actual component viewport captures; metadata grants no runtime access. Limited denotes the separately proven original owner status read/private text proposals. Full recipe, filed document, approved send/client handoff and Live remain UNVERIFIED. [Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2529#issuecomment-6330596903). |
 | [#2531](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2531): refresh original private source after Finish later | Head `a9612e60ca48f6e36649f6a8521f4b7203329846`, main `90700534acac4e5a441d2683e7a1e6e8f24a25d4`, composed tree `0b0a61eef246085f2dcb412c020f588b29dec58e`.10 applicable checks/two statuses SUCCESS; schema-free Preview SKIPPED; review5608149474 AUTHOR-REVIEW / LOWER ASSURANCE. Web `dpl_5tRR6iFbWbck43A6XJ91FMLYBSj2` READY, public `90700534acac4e5a441d2683e7a1e6e8f24a25d4-mvivvdso`. SQL/Edge NOT_APPLICABLE. |96 original-flow tests, including two inherited-source failing regressions, and actual component desktop/narrow evidence. Protected owner Finish later visibly refreshes inventory and immediately reopens the original saved review without manual refresh. Native source remains draft/revision3 with zero chunks/shares/other work; no extra save or publication. The revision-advance race is automated proof, not another production write claim. Client publication/retrieval and complete acceptance remain owed. [Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2531#issuecomment-6330762841). |
+| [#2538](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2538): original authorized customer relationship choices | Reviewed `a600917e416a70ef864537024ae5e944dfa381f2`, main `5df82581f98d84328729d0e8ec26cbe844781d98`, tree `ac952f852ba7702ae96721d4d00d1dd5368a2d11`.13 exact-head checks/two statuses SUCCESS; review5608776578 AUTHOR-REVIEW / LOWER ASSURANCE;28 native assertions PASS. Normal migration39718645740 SUCCESS/20271113210009 recorded. Production function body3fe81a22912dd6292462b69a155a25f0/postgres/STABLE/definer/empty search path, authenticated EXEC true/anon-service false; original resolver/brand hashes unchanged. Web `dpl_Dnf9M2Ab5Tc5srdc7kMT6ijReJ5J` READY/public `5df82581f98d84328729d0e8ec26cbe844781d98-mvj01e3o`. Own Edge NOT_APPLICABLE. | Bounded original-native presentation read deployed; no identity grant or selection. Original global linkage/acceptance still refuses a second business; future-shape CI fixtures rolled back. Full scoped UI/domain/Edge/private-history/returning journey and founder acceptance UNVERIFIED. Internal prerequisite, customerUpdate null/no announcement. [Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2538#issuecomment-6332541466). |
+| [#2539](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2539): closed actor-bound browser relationship reader | Reviewed `0f65b33b8a6a84d4f0e6c91af64ced5572b4650d`, main `7317d30ea7c4f758283e955ce7498576d1122d66`, tree `50254fda1bc2cbf53102988345c4b93eabae14e7`.9 applicable exact-head checks/two statuses SUCCESS; schema-free Preview SKIP; review5608792745 AUTHOR-REVIEW / LOWER ASSURANCE;77 combined native-reader/frame/access tests PASS. Web `dpl_FneZuRumVrBaEgQr6YXTnj8sWdLK` READY/public `7317d30ea7c4f758283e955ce7498576d1122d66-mvj0c381`. Own SQL/Edge NOT_APPLICABLE; parent210009/source verified. | Original SDK read validates closed public facts/keyset/actor and rechecks actual Auth after cancellation-aware RPC; no authority argument/cache/store/executor. Not mounted alone. Business choice, original global identity and all selected-domain/private-history acceptance remain unfinished. Internal prerequisite/customerUpdate null/no announcement. [Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2539#issuecomment-6332542068). |
+| [#2536](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2536): core customer Payments reachability | Reviewed `028bc152a5b9e27569ab0e808154ee483db61a84`, main `6e9380cd5d717bf2c05ae8b8aa1f4a0f7f6ed028`, tree `43b2abe66af469e9a53771267846e34f9083e725`.10 applicable exact-head checks/two statuses SUCCESS, including recovered required audit119629617101; no waiver/dependency rewrite. Review5608548568 AUTHOR-REVIEW / LOWER ASSURANCE; bounded unchanged-frontend finish/preservation6330821329. Normal Edge39719731881/deploy119630179830 SUCCESS; execute-approval167/JWTtrue117 files, paige-ai-chat504/JWTtrue261, native-event-dispatch239/incumbentJWTfalse114 and send-portal-invite2034/incumbentJWTfalse21: all513 served source hashes match exact merge. Web `dpl_4X52ABnjTYyj1GWH1JKDa4Z7xNdJ` READY/public `6e9380cd5d717bf2c05ae8b8aa1f4a0f7f6ed028-mvj0gx35`. SQL NOT_APPLICABLE. | Original owner-hideable Payments menu and server mirror agree across eligible catalogues; funding floors/EXP04 invoice/merchant permissions unchanged.155 UI+39 original server tests and bounded responsive/keyboard/return proof PASS. No financial/provider effect sent; authenticated customer/merchant journey and complete Experience/founder acceptance UNVERIFIED. Internal repair/customerUpdate null/no announcement. [Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2536#issuecomment-6332542652). |
 
-All four are internal production increments, with customerUpdate=null where
+The preceding four2522/2525/2529/2531 and three2538/2539/2536 are internal production increments, with customerUpdate=null where
 public manifests were observed; no named customer release or announcement.
 Original CRM, Knowledge, private CURA/business Conversations, domain services,
 Trust/Harness/Gateway/Layer C and durable work remain authoritative. Recovery
@@ -933,6 +1180,44 @@ Experiential: visible consumer/typed producer and joined ordinary owner/external
 client proof remain separate; complete seven-pillar/eligible Live/founder acceptance
 PROOF OWED. Internal production increment; no customer version or announcement.
 Recovery: compatible reviewed forward fix preserving all original work and sources.
+
+**2026-10-21 — EXP04 inspect original retained agreement wording.**
+
+PR [#2524](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2524), reviewed
+`557aea9e9ee05169954ca29ecaff216662e39e74`, merged
+`ad51a060c7da4106a294a5b6e0c0245c303837fd`. Actual parents
+`a6b550b768982cf3b63cb36e0f21f63363379779` + reviewed557; tree
+`b52601a8dc0903671a9cabcd08897f80442e95e8` equals independently recomputed
+actual-parent union, preserving E09 CURA/game-plan source. Pre-merge97cef was an
+older main snapshot, never the actual released tree. All11 exact-head checks
+completed (10SUCCESS/schema-free Supabase Preview SKIPPED) and both Vercel statuses
+SUCCESS. Sequential **AUTHOR-REVIEW / LOWER ASSURANCE**5608222311; no non-author
+assurance or customer acceptance inferred.
+
+Production `dpl_5T5ZH314C5k28jZX1RbeH7Q7GpDz` READY/main/exact. Protected exact
+and canonical public version both
+`ad51a060c7da4106a294a5b6e0c0245c303837fd-mviv4gjz`, customerUpdate:null.
+Actual served `/assets/AgreementPreparationWorkspace-CmHBkkPy.js` SHA256
+`79f699a1ac3db8e296e84d46b06a9b95130b95d559106e29d6dd1837378baf04`
+contains original wording-history navigation/native reader. Own migration/Edge
+NOT_APPLICABLE; original native draft-history130000 already applied/read back.
+Internal production prerequisite; no customer release identity or announcement.
+Subsequent public build`2d554406f9e4019935a8b38a5b30e4643a88da1a-mvivca62` serves history/native reader
+from`/assets/AgreementPreparationWorkspace-CeBH7MP_.js`, SHA256
+`a257ce401d0b4f9b576481a2e093eb877cedde0e3bf68bc94943576a679e961b`. Those four owning source blobs remain identical;
+compiled bundle identity belongs to its own build, not the original79f699 asset.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2524#issuecomment-6330515475).
+
+Functional: owner-scoped immutable wording list/selected revision, original cursor,
+closed metadata/digest validation and fresh current-record return. Visual: actual
+20 viewport/theme cases/26 paths/zero page errors; unchanged20 runtime pins and
+178 source assertions, type baseline10/current6. Experiential: explicit read error,
+refusal retiring cached original, retained-version inspection and keyboard return.
+Actual owner/staff/linked-client authenticated operation, genuine document bytes,
+full professional templates/import/field/signing/communications/payment/delivery,
+all O1–O12 and complete founder acceptance remain owed. Correction#2532 remains
+a separate release; native integrity#2526 is now released/read back6331039476. No restore/edit/sign/send/pay,
+provider/admission change, algorithm or Chat/Live/Capabilities promotion.
 
 
 **2026-10-21 — EXP05 compact Operations banners and original Work week.**

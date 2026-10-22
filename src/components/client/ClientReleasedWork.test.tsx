@@ -2,18 +2,20 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { ClientReleasedWork } from "./ClientReleasedWork";
+import {ClientPortalFrameProvider} from "@/hooks/useClientPortalFrame";
+import {CustomerIdentityProvider,type CustomerIdentityState} from "@/lib/portal/customerIdentity";
 
 const actor = "e0914000-0000-4000-8000-000000000001", tenant = "e0924000-0000-4000-8000-000000000001", contact = "e0934000-0000-4000-8000-000000000001";
 const releaseId = "e0954000-0000-4000-8000-000000000001", submissionId = "e0964000-0000-4000-8000-000000000001";
-const f = vi.hoisted(() => ({ rpc: vi.fn(), from: vi.fn(), state: "awaiting_client" as string, decision: null as null | { state: string; note: string | null } }));
+const f = vi.hoisted(() => ({ rpc: vi.fn(), from: vi.fn(), actualActor: "", state: "awaiting_client" as string, decision: null as null | { state: string; note: string | null } }));
 vi.mock("next-themes", () => ({ useTheme: () => ({ resolvedTheme: "light", forcedTheme: undefined }) }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {
   auth: {
-    getUser: async () => ({ data: { user: { id: actor } }, error: null }),
-    getSession: async () => ({ data: { session: { user: { id: actor } } }, error: null }),
+    getUser: async () => ({ data: { user: { id: f.actualActor } }, error: null }),
+    getSession: async () => ({ data: { session: { user: { id: actor }, access_token: "synthetic-portal-review" } }, error: null }),
     onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }),
   },
-  rpc: (...a: unknown[]) => f.rpc(...a), from: (...a: unknown[]) => f.from(...a),
+  rpc: (...a: unknown[]) => {const q=Promise.resolve(f.rpc(...a));return Object.assign(q,{setHeader:()=>q,abortSignal:()=>q});}, from: (...a: unknown[]) => f.from(...a),
 } }));
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -24,7 +26,7 @@ const artifact = () => ({ actor_id: actor, tenant_id: tenant, release_id: releas
 let releases: unknown[] = [];
 let host: HTMLDivElement, root: Root;
 beforeEach(() => {
-  vi.clearAllMocks(); f.decision = null;
+  vi.clearAllMocks(); f.decision = null; f.actualActor = actor;
   releases = [{ release_id: releaseId, submission_id: submissionId, state: "awaiting_client", revision_no: 1, artifact_digest: "b".repeat(64), title: "Brand launch plan", updated_at: "2026-01-02T00:00:00Z" }];
   f.rpc.mockImplementation(async (name: string, args: Record<string, unknown>) => {
     if (name === "client_portal_self_profile") return { data: profile, error: null };
@@ -102,4 +104,78 @@ it("keeps the review open while an unsaved note would be lost", async () => {
   await act(async () => document.querySelector<HTMLElement>('[role="dialog"]')?.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
   expect(document.querySelector('[role="dialog"]')).not.toBeNull();
   expect(document.querySelector('[role="dialog"]')!.textContent).toContain("Finish or clear your review note before closing.");
+});
+
+const scopedRender=async(phase:CustomerIdentityState["phase"]="ready",business=tenant)=>{
+ const scopedProfile={...profile,tenant_id:business,id:business===tenant?contact:"e0934000-0000-4000-8000-000000000002"};
+ await act(async()=>root.render(<CustomerIdentityProvider state={{phase,frame:{actorId:actor,profile:scopedProfile,brand:{tenant_name:"Northwind Practice"},config:{}} as never}}><ClientReleasedWork businessName="Northwind Practice"/></CustomerIdentityProvider>));await flush();
+};
+it("a transient same-business access check masks the review but retains its private draft",async()=>{
+ await scopedRender();await act(async()=>button("Review").click());await flush();await type("My private version-specific draft");
+ const reads=f.rpc.mock.calls.length;
+ await scopedRender("error");
+ const checking=document.querySelector('[role="dialog"]')!;
+ expect(checking).not.toBeNull();expect(checking.textContent).not.toContain("Brand launch plan");expect(checking.textContent).not.toContain("Week one:");expect(checking.textContent).not.toContain("My private version-specific draft");
+ expect(checking.textContent).toContain("Your review note is kept");expect(f.rpc.mock.calls).toHaveLength(reads);
+ await scopedRender();expect(document.querySelector<HTMLTextAreaElement>('[role="dialog"] textarea')!.value).toBe("My private version-specific draft");
+ expect(f.rpc.mock.calls.filter(c=>c[0]==="operations_delivery_client_decide_scoped")).toHaveLength(0);
+ await act(async()=>document.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true})));
+ expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+});
+it("a same-business recheck preserves an uncertain original decision and requires recorded-state recovery",async()=>{
+ await scopedRender();await act(async()=>button("Review").click());await flush();
+ await act(async()=>button("Accept this version").click());f.rpc.mockResolvedValueOnce({data:null,error:{code:"08006"}});
+ await act(async()=>button("Confirm acceptance").click());expect(button("Accept this version").disabled).toBe(true);
+ await scopedRender("error");expect(document.querySelector('[role="dialog"]')!.textContent).not.toContain("Week one:");
+ await scopedRender();expect(document.querySelector('[role="dialog"]')!.textContent).toContain("Your decision could not be confirmed");expect(button("Accept this version").disabled).toBe(true);
+ f.decision={state:"accepted",note:null};await act(async()=>button("Check recorded review").click());await flush();
+ expect(document.querySelector('[role="dialog"]')!.textContent).toContain("Your acceptance is recorded for version 1.");
+ expect(f.rpc.mock.calls.filter(c=>c[0]==="operations_delivery_client_decide_scoped")).toHaveLength(1);
+});
+it("switching business closes the earlier review and never publishes its pending result into the new business",async()=>{
+ const selectedBusiness="e0924000-0000-4000-8000-000000000002";
+ await scopedRender();await act(async()=>button("Review").click());await flush();
+ let resolve!:(value:unknown)=>void;const original=f.rpc.getMockImplementation()!;
+ f.rpc.mockImplementation((name:string,args:Record<string,unknown>)=>{
+  if(name==="operations_delivery_client_decide_scoped")return new Promise(r=>{resolve=r;});
+  if(args.p_tenant_id===selectedBusiness)return {data:{...profile,id:"e0934000-0000-4000-8000-000000000002",tenant_id:args.p_tenant_id},error:null};
+  if(args.p_expected_tenant_id===selectedBusiness)return {data:{actor_id:actor,tenant_id:args.p_expected_tenant_id,releases:[],unavailable_count:0,has_more:false},error:null};
+  return original(name,args);
+ });
+ await act(async()=>button("Accept this version").click());await act(async()=>button("Confirm acceptance").click());
+ await scopedRender("ready",selectedBusiness);expect(document.querySelector('[role="dialog"]')).toBeNull();expect(host.textContent).not.toContain("Brand launch plan");
+ await act(async()=>resolve({data:{...artifact(),state:"accepted"},error:null}));await flush();
+ expect(host.textContent).not.toContain("Brand launch plan");expect(host.textContent).not.toContain("Your acceptance is recorded");expect(f.rpc.mock.calls.filter(c=>c[0]==="operations_delivery_client_decide_scoped")).toHaveLength(1);
+});
+
+it("the real shared gate masks a portalled draft and retries through that same original reader",async()=>{
+ const currentFrame={actorId:actor,profile,brand:{tenant_name:"Northwind Practice"},config:{}} as never;
+ const retry:ReturnType<typeof vi.fn>=vi.fn(()=>root.render(tree(false)));
+ const tree=(checking:boolean)=><ClientPortalFrameProvider value={{actorId:actor,value:{frame:currentFrame,phase:"ready",checking,reload:retry}} as never}><CustomerIdentityProvider state={{frame:currentFrame,phase:"ready"}}><ClientReleasedWork businessName="Northwind Practice"/></CustomerIdentityProvider></ClientPortalFrameProvider>;
+ await act(async()=>root.render(tree(false)));await flush();await act(async()=>button("Review").click());await flush();await type("Preserved original review draft");
+ await act(async()=>root.render(tree(true)));await flush();
+ const modal=document.querySelector('[role="dialog"]')!;
+ expect(modal.textContent).toContain("Checking review access");expect(modal.textContent).not.toContain("Brand launch plan");expect(modal.textContent).not.toContain("Week one:");expect(modal.textContent).not.toContain("Preserved original review draft");
+ expect(button("Check portal access")).toBeDefined();await act(async()=>button("Check portal access").click());await flush();
+ expect(retry).toHaveBeenCalledOnce();expect(document.querySelector<HTMLTextAreaElement>('[role="dialog"] textarea')!.value).toBe("Preserved original review draft");expect(document.activeElement).toBe(document.querySelector('[role="dialog"] textarea'));
+ expect(f.rpc.mock.calls.some(c=>c[0]==="client_portal_frame")).toBe(false);
+ expect(f.rpc.mock.calls.some(c=>c[0]==="operations_delivery_client_decide_scoped")).toBe(false);
+});
+
+it("clean close after an uncertain decision recovery refreshes only the original list's recorded status",async()=>{
+ await scopedRender();await act(async()=>button("Review").click());await flush();await act(async()=>button("Accept this version").click());
+ f.rpc.mockResolvedValueOnce({data:null,error:{code:"08006"}});await act(async()=>button("Confirm acceptance").click());
+ f.decision={state:"accepted",note:null};releases=[{...(releases[0] as object),state:"accepted",updated_at:"2026-01-03T00:00:00Z"}];
+ await act(async()=>button("Check recorded review").click());await flush();
+ await act(async()=>document.querySelector<HTMLButtonElement>('[role="dialog"] button>span.sr-only')?.parentElement?.click());await flush();
+ expect(document.querySelector('[role="dialog"]')).toBeNull();expect(host.textContent).toContain("Accepted");expect(host.textContent).not.toContain("Waiting for you");
+ expect(f.rpc.mock.calls.filter(c=>c[0]==="operations_delivery_client_decide_scoped")).toHaveLength(1);
+});
+
+it("the Portal dialog exposes no stale release title when actual Auth is refused before dispatch",async()=>{
+ await scopedRender();await act(async()=>button("Review").click());await flush();await act(async()=>button("Accept this version").click());
+ f.actualActor="other-actual-user";await act(async()=>button("Confirm acceptance").click());await flush();
+ const dialog=document.querySelector('[role="dialog"]')!;
+ expect(dialog.textContent).toContain("Your decision wasn't sent");expect(dialog.textContent).not.toContain("Brand launch plan");expect(dialog.textContent).not.toContain("Week one:");
+ expect(f.rpc.mock.calls.filter(c=>c[0]==="operations_delivery_client_decide_scoped")).toHaveLength(0);
 });

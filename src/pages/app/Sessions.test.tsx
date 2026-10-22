@@ -461,11 +461,12 @@ it("explains an unavailable account with a way back home", async () => {
   expect(host.querySelector('a[href="/app"]')?.textContent).toContain("Back to Home");
 });
 
-it("explains more than one business with a way back home", async () => {
+it("routes native business ambiguity to the original verified chooser", async () => {
   f.state.multipleBusinesses = true; f.state.upcoming = [];
   await render();
   expect(host.textContent).toContain("more than one business");
-  expect(host.querySelector('a[href="/app"]')?.textContent).toContain("Back to Home");
+  expect(host.querySelector('a[href="/app?chooseBusiness=1"]')?.textContent).toBe("Choose business");
+  expect(host.querySelector('a[href="/app/support"]')).toBeNull();
   expect(button("Reschedule", host)).toBeUndefined();
 });
 
@@ -649,4 +650,30 @@ it("says a session moved elsewhere in plain words, and keeps its own actions", a
   expect(host.querySelector('[data-testid="orphan-change"]')).toBeNull();
   expect(button("Reschedule", host)).toBeDefined();
   expect(button("Cancel", host)).toBeDefined();
+});
+
+it('successful explicit read recovery restores keyboard focus to Sessions',async()=>{
+ f.state={...f.state,upcoming:[],error:"We couldn't load your sessions."};
+ (f.state.refresh as ReturnType<typeof vi.fn>).mockImplementation(async()=>{f.state={...f.state,error:null,upcoming:[session('recovered',Date.now()+26*HOUR)]};});
+ await render();await click(button('Try again',host)!);await render();expect(document.activeElement).toBe(host.querySelector('h1'));
+});
+it('a read retry from a retired business does not move focus into the new result',async()=>{
+ f.state={...f.state,upcoming:[],error:"We couldn't load your sessions."};
+ (f.state.refresh as ReturnType<typeof vi.fn>).mockImplementation(async()=>{f.state={...f.state,error:null,scopeEpoch:1,upcoming:[session('new-scope',Date.now()+26*HOUR)]};});
+ await render();await click(button('Try again',host)!);await render();expect(document.activeElement).not.toBe(host.querySelector('h1'));
+});
+it('background session refreshes do not steal focus',async()=>{
+ await render();const join=host.querySelector('a[target="_blank"]') as HTMLAnchorElement;join.focus();f.state={...f.state,upcoming:[...f.state.upcoming]};await render();expect(document.activeElement).toBe(join);
+});
+
+it('an explicit original-request replay shows confirmation and restores focus',async()=>{
+ f.state={...f.state,upcoming:[],changes:{s1:{sessionId:'s1',action:'cancel',start:null,requestId:'synthetic-original-request',status:'unconfirmed',error:null}}};
+ (f.state.retryChange as ReturnType<typeof vi.fn>).mockImplementation(async()=>{f.state={...f.state,changes:{}};return true;});
+ await render();await click(button('Retry',host)!);await render();expect(host.textContent).toContain('Cancellation confirmed.');expect(document.activeElement).toBe(host.querySelector('h1'));
+});
+it('a retired replay cannot confirm or move focus in the next business',async()=>{
+ f.state={...f.state,upcoming:[],changes:{s1:{sessionId:'s1',action:'cancel',start:null,requestId:'synthetic-original-request',status:'unconfirmed',error:null}}};
+ let resolve!:(ok:boolean)=>void;(f.state.retryChange as ReturnType<typeof vi.fn>).mockImplementation(()=>new Promise<boolean>(r=>{resolve=r;}));
+ await render();await click(button('Retry',host)!);f.state={...f.state,scopeEpoch:1,changes:{}};await render();await act(async()=>{resolve(true);});await render();
+ expect(host.textContent).not.toContain('Cancellation confirmed.');expect(document.activeElement).not.toBe(host.querySelector('h1'));
 });

@@ -105,9 +105,8 @@ describe("desktop bar", () => {
   it("reads the customer's catalog from the portal config, not the RLS-denied tenant read (§57)", async () => {
     f.config = { catalog: { slug: null, authoredUsable: true, modules: [{ key: "home", label: "Home" }, { key: "agreements", label: "Agreements" }, { key: "approvals", label: "Approvals" }] } };
     await render();
-    // Agreements is the customer's own agreements since Slice A. Resources is core for customers (§58): present
-    // though this catalog does not list it.
-    expect(await desktopNavHrefs(host)).toEqual(["/app", "/app/messages", "/app/progress", "/app/actions", "/app/sessions", "/app/approvals", "/app/documents", "/app/agreements", "/app/learn"]);
+    // Agreements, core Payments and Resources remain available even when this catalog omits them.
+    expect(await desktopNavHrefs(host)).toEqual(["/app", "/app/messages", "/app/progress", "/app/actions", "/app/sessions", "/app/approvals", "/app/documents", "/app/agreements", "/app/billing", "/app/learn"]);
   });
 
   it("keeps Agreements for staff whose Playbook lists it, exactly as before Slice M", async () => {

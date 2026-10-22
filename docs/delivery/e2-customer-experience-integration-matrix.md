@@ -1,5 +1,31 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October22 — Business Review elapsed-budget repair candidate
+
+All19 definitions below and all nine analytics remain required. Current-main
+grounding8bf6f15a preserves released contextual suggestion/Decision Desk#2544,
+#2583/#2596 and factual closeout#2602; exact identities and bounded ordinary
+customer evidence remain in Master§4.0/ANT52aa8d6fc7. Subsequent main429388f2 is
+composed intact, including the original EXP04 prerequisite. No release is redone.
+
+O01/O02/O16 and CAP017: controlled pending-dependency tests reproduced an unbounded
+initial/final scope read in the existing transport. The candidate enforces one
+existing15-second elapsed budget across scope→same endpoint→scope, rejecting late
+work without retry, fabricated values or completion.193 tests/six suites and
+scoped ESLint pass; review, exact-head CI, affected-Edge release/readback and fresh
+ordinary customer proof are still owed. This does not prove the cause or universal
+recovery of historical CPU failures. CAP017 remains Limited/Access Unverified;
+the nine catalogue labels are not promoted by source tests.
+
+Next: release this correction, then reconcile canonical document production and
+evidence-preserving monthly/quarterly report semantics before their consumer;
+continue original-domain intelligence, targets, permitted preparation/approval,
+receipts, Research/Knowledge and eligible Chat/Live return through small PRs.
+No replacement report store, orchestration or originating-domain takeover.
+Functional source proof, unchanged Visual presentation, incomplete Experiential
+acceptance and pending complete Founder Acceptance are separate. Algorithms gain
+no prediction claim; LayerC remains inapplicable to this read-only correction.
+Historical9/0 and12/0/4 and all security/provider/consequential holds remain.
 ## October22 — O06 recorded-coverage repair in development
 
 Original19 definitions/nine analytics remain mandatory. The original Systems Check

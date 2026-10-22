@@ -1676,3 +1676,28 @@ no supplied legal words/completed review or infrastructure counsel gate. Own int
 review/CI/release/readback and actual customer/provider/full12/founder acceptance
 remain owed. Stable upload recovery, real PDF preview/fields and canonical approved
 Communications/provider integration remain unfinished; no Chat/Live activation.
+
+## EXP02 — bounded Business Review deadline repair candidate, 2026-10-22
+
+The existing Chat review transport applied its15-second abort only to the remote
+invoke; both original tenant-scope RPCs could remain unsettled. Controlled pending
+dependencies reproduced four failures before correction. The candidate now shares
+one monotonic15-second budget across preflight, the same review endpoint and final
+scope; late work cannot start another stage or publish evidence.193 focused tests
+in six suites and scoped ESLint pass. This is a source-level defect and correction,
+not a proven explanation for the two historical hosted CPU failures or an SLO.
+
+Only the original read transport and its tests change; no new reader, runtime,
+retry, job, model, provider, permission, approval or originating-domain writer.
+Exact-head author review/required CI, normal affected-Edge deployment/source parity
+and ordinary customer read/reload proof remain owed. The existing nine catalogue
+states are not promoted. The restored authorized ordinary SOLO session was read
+successfully; that access check is not acceptance of this unreleased repair.
+
+Functional: local correction verified; Visual: no layout, focus or motion change;
+Experiential: bounded source settlement, whole journey still incomplete; Founder
+Acceptance: pending one complete live evaluation. ALG03/06/11/12/13 gain no new
+verified implementation; LayerC does not apply to this pure read. All19 outcomes,
+nine analytics, historical9/0 and12/0/4, shared ownership and consequential holds
+remain. See the existing integration matrix and transport UI evidence; ANT138
+eca1796a and ANT1613217e341 record the dependency-ordered continuation plan.

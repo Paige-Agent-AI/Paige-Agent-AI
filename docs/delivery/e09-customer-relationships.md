@@ -26,3 +26,5 @@ Original caller: authenticated customer entering/returning to their Portal. Even
 ## Release and acceptance boundary
 
 Internal bounded native read, no customer release name or announcement. No existing resolver, RLS policy, original function body, identity link, staff context, sender, private history or service writer changes. A source lease guards the original resolver/brand definition and ownership. Compatible replay/forward correction preserves original records. Functional source/native proof, UI quality, joined workflow and final founder acceptance remain distinct. The complete seven-pillar mission continues after this increment.
+
+Current-main composition: agreement integrity #2526 uses migration20271113160000. The unapplied Portal migration is therefore numbered20271113170000, preserving both SQL bodies and the original24 role/isolation assertions. The native prerequisite must be verified on this composed head; an earlier data-free Preview or CI result is not exact-head release proof. No production ledger rewrite or historical migration edit is permitted.

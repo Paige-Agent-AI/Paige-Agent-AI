@@ -110,7 +110,7 @@ it("renders nothing when nothing is owed, on a failed read, or for someone who i
 
 // ── Round 2 ──────────────────────────────────────────────────────────────────────────────────────────
 
-it("shows only when Payments is a menu entry for this customer: the same catalog and overlay decision the nav makes", async () => {
+it("honors the owner's hidden Payments choice and restores the same core balance link for a legacy catalogue", async () => {
   f.invoices.mockResolvedValue(page([inv(1)], 1, "125000"));
   f.overlay = [{ key: "billing", visible: false }];
   await render();
@@ -120,8 +120,8 @@ it("shows only when Payments is a menu entry for this customer: the same catalog
   f.overlay = undefined;
   f.modules = [{ key: "home", label: "Home" }];
   await render();
-  expect(line()).toBeNull();
-  expect(f.invoices).not.toHaveBeenCalled();
+  expect(line()?.getAttribute("href")).toBe("/app/billing");
+  expect(f.invoices).toHaveBeenCalledTimes(1);
 });
 
 it("on a phone the amount leads, the past-due count never splits, and the link sits under the words", async () => {

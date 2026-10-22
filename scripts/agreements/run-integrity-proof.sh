@@ -249,4 +249,11 @@ deno run --allow-import --node-modules-dir=none --allow-read --allow-run="$PGBIN
 # Original signer preparation is serialized before native party/order changes.
 node "$HERE/signer-preparation-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired --checked --editability
 
+# Same native cluster and original signer proof, with its additional immutable
+# document/map cases. Deno imports the ONE source TypeScript validator; Node's
+# original gate above remains intact. No hosted Storage or customer proof.
+deno run --allow-import --node-modules-dir=none --allow-read --allow-run="$PGBIN/psql" --allow-env \
+  --deny-net --deny-write --deny-ffi --deny-sys \
+  "$HERE/signer-preparation-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired --checked --editability --document-preparations
+
 echo "OK — every negative refused with its expected SQLSTATE; positive controls succeeded."

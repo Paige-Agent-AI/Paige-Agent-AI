@@ -18,6 +18,8 @@ import {
   validateCommercialConditionLines,
 } from "../sales-commercial/conditions.ts";
 import { sha256Hex } from "./token.ts";
+import { canonicalPresentationJson } from './preparation-json.ts';
+export { canonicalPresentationJson } from './preparation-json.ts';
 import {parseCommercialEngagement,type CommercialEngagement} from "./commercial-engagement.ts";
 export {parseCommercialEngagement,type CommercialEngagement} from "./commercial-engagement.ts";
 export type PresentationSource = {
@@ -91,22 +93,6 @@ const keys = [
   "invoice_draft_version",
   "invoice_updated_at",
 ];
-/** Stable source binding only; this digest is not approval, signature or authority. */
-export function canonicalPresentationJson(value: unknown): string {
-  if (Array.isArray(value)) {
-    return "[" + value.map(canonicalPresentationJson).join(",") + "]";
-  }
-  if (object(value)) {
-    return "{" + Object.keys(value).sort().map((key) =>
-      JSON.stringify(key) + ":" + canonicalPresentationJson(value[key])
-    ).join(",") + "}";
-  }
-  if (
-    value === null || typeof value === "string" || typeof value === "boolean" ||
-    typeof value === "number" && Number.isFinite(value)
-  ) return JSON.stringify(value);
-  return refuse();
-}
 function freeze<T>(value: T): T {
   if (value && typeof value === "object") {
     for (const child of Object.values(value)) freeze(child);

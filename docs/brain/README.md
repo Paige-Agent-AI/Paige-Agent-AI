@@ -1687,3 +1687,49 @@ no supplied legal words/completed review or infrastructure counsel gate. Own int
 review/CI/release/readback and actual customer/provider/full12/founder acceptance
 remain owed. Stable upload recovery, real PDF preview/fields and canonical approved
 Communications/provider integration remain unfinished; no Chat/Live activation.
+
+## EXP02 — bounded Business Review deadline repair candidate, 2026-10-22
+
+The existing Chat review transport applied its15-second abort only to the remote
+invoke; both original tenant-scope RPCs could remain unsettled. Controlled pending
+dependencies reproduced four failures before correction. The candidate now shares
+one monotonic15-second budget across preflight, the same review endpoint and final
+scope; late work cannot start another stage or publish evidence.193 focused tests
+in six suites and scoped ESLint pass. This is a source-level defect and correction,
+not a proven explanation for the two historical hosted CPU failures or an SLO.
+
+Only the original read transport and its tests change; no new reader, runtime,
+retry, job, model, provider, permission, approval or originating-domain writer.
+Exact-head author review/required CI, normal affected-Edge deployment/source parity
+and ordinary customer read/reload proof remain owed. The existing nine catalogue
+states are not promoted. The restored authorized ordinary SOLO session was read
+successfully; that access check is not acceptance of this unreleased repair.
+
+Functional: local correction verified; Visual: no layout, focus or motion change;
+Experiential: bounded source settlement, whole journey still incomplete; Founder
+Acceptance: pending one complete live evaluation. ALG03/06/11/12/13 gain no new
+verified implementation; LayerC does not apply to this pure read. All19 outcomes,
+nine analytics, historical9/0 and12/0/4, shared ownership and consequential holds
+remain. See the existing integration matrix and transport UI evidence; ANT138
+eca1796a and ANT1613217e341 record the dependency-ordered continuation plan.
+
+## EXP02 October22 — verified Business Review reliability source release
+
+PR2608 reviewed c6b93ce0821c707ca2294130da1b11690972ea05, separate
+AUTHOR-REVIEW / LOWER ASSURANCE5620278242, all11 exact-head checks/two web
+statuses SUCCESS and zero threads, merged27c7c822528de533a0cadeabb79c3a5b1228d55f.
+Actual parents9e194dd4bb82c12ab313eef0c5f8c02a4f976b27+c6 and tree
+790307bcced28f74b10dcb02b88ae0d5fde38e80 match the clean inspected union.
+Normal Edge39852405952/120081762965 strictly verified original source/config
+for paige-ai-chat509 and paige-business-review70; both ACTIVE/verify_jwt=true,
+edge-live exactmerge. Production dpl_5umtRSvBeMEjmHQx94FzyLGxa2h8 READY;
+public build27c7c822528de533a0cadeabb79c3a5b1228d55f-mvk0nvdb/customerUpdate:null.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2608#issuecomment-6351119623).
+
+Functional source release verified;193 source cases supporting. Visual layout
+unchanged. Experiential corrected ordinary weekly response/original turn/reload
+and whole Founder Acceptance remain UNVERIFIED; no universal historical CPU
+recovery claim. Original read-only Spine/Metric contract, CAP017 Limited/Access
+Unverified, applicable algorithms, Trust/LayerC/Rail and all19/nine obligations
+remain unchanged. No own schema, provider, role or consequential activation.
+This supersedes earlier candidate release statements without rewriting history.

@@ -12,6 +12,32 @@ immutable permitted evidence, governed submission/status/unknown recovery and
 original artifact retrieval remain separate implementation duties. Review/CI,
 original2607 security dependency, normal Edge/readback and ordinary customer proof
 remain owed. All19 definitions/nine outcomes are unchanged. [Evidence](../evidence/ui-delivery/e2-document-finite-facts.md).
+## October22 — Business Review elapsed-budget repair candidate
+
+All19 definitions below and all nine analytics remain required. Current-main
+grounding8bf6f15a preserves released contextual suggestion/Decision Desk#2544,
+#2583/#2596 and factual closeout#2602; exact identities and bounded ordinary
+customer evidence remain in Master§4.0/ANT52aa8d6fc7. Subsequent main429388f2 is
+composed intact, including the original EXP04 prerequisite. No release is redone.
+
+O01/O02/O16 and CAP017: controlled pending-dependency tests reproduced an unbounded
+initial/final scope read in the existing transport. The candidate enforces one
+existing15-second elapsed budget across scope→same endpoint→scope, rejecting late
+work without retry, fabricated values or completion.193 tests/six suites and
+scoped ESLint pass; review, exact-head CI, affected-Edge release/readback and fresh
+ordinary customer proof are still owed. This does not prove the cause or universal
+recovery of historical CPU failures. CAP017 remains Limited/Access Unverified;
+the nine catalogue labels are not promoted by source tests.
+
+Next: release this correction, then reconcile canonical document production and
+evidence-preserving monthly/quarterly report semantics before their consumer;
+continue original-domain intelligence, targets, permitted preparation/approval,
+receipts, Research/Knowledge and eligible Chat/Live return through small PRs.
+No replacement report store, orchestration or originating-domain takeover.
+Functional source proof, unchanged Visual presentation, incomplete Experiential
+acceptance and pending complete Founder Acceptance are separate. Algorithms gain
+no prediction claim; LayerC remains inapplicable to this read-only correction.
+Historical9/0 and12/0/4 and all security/provider/consequential holds remain.
 ## October22 — O06 recorded-coverage repair in development
 
 Original19 definitions/nine analytics remain mandatory. The original Systems Check
@@ -710,3 +736,24 @@ integration areas use Coming Soon, three sourced subsets use Limited and the two
 filed-document deliverables remain Unverified, matching the table above. No
 coverage label asserts per-account access. NO VERIFIED ALGORITHM is added; the
 canonical ALG03/04/06/11/12/13 and PAIGE/VERA/originating specialist boundaries remain.
+
+## EXP02 October22 — verified Business Review reliability source release
+
+PR2608 reviewed c6b93ce0821c707ca2294130da1b11690972ea05, separate
+AUTHOR-REVIEW / LOWER ASSURANCE5620278242, all11 exact-head checks/two web
+statuses SUCCESS and zero threads, merged27c7c822528de533a0cadeabb79c3a5b1228d55f.
+Actual parents9e194dd4bb82c12ab313eef0c5f8c02a4f976b27+c6 and tree
+790307bcced28f74b10dcb02b88ae0d5fde38e80 match the clean inspected union.
+Normal Edge39852405952/120081762965 strictly verified original source/config
+for paige-ai-chat509 and paige-business-review70; both ACTIVE/verify_jwt=true,
+edge-live exactmerge. Production dpl_5umtRSvBeMEjmHQx94FzyLGxa2h8 READY;
+public build27c7c822528de533a0cadeabb79c3a5b1228d55f-mvk0nvdb/customerUpdate:null.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2608#issuecomment-6351119623).
+
+Functional source release verified;193 source cases supporting. Visual layout
+unchanged. Experiential corrected ordinary weekly response/original turn/reload
+and whole Founder Acceptance remain UNVERIFIED; no universal historical CPU
+recovery claim. Original read-only Spine/Metric contract, CAP017 Limited/Access
+Unverified, applicable algorithms, Trust/LayerC/Rail and all19/nine obligations
+remain unchanged. No own schema, provider, role or consequential activation.
+This supersedes earlier candidate release statements without rewriting history.

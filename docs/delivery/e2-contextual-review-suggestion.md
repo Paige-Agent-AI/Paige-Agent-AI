@@ -49,6 +49,14 @@ offers retry. No work means no suggestion. Explicitly selected planning context
 retains a small clear-context control so removing the banner never hides active
 scope or silently changes businessMissionId/server context.
 
+The active context and its Clear action live inside the overview while actual
+work is suggested. Otherwise a small clearable scope token remains, including
+after dismissal. Count and dismiss fit one44px row even at320px; no second
+permanent review banner. Clearing returns through the original composer ref on
+the next frame, after the retiring source portal releases its focus trap. A real
+parent-integration counterfactual reproduced lost focus before this correction.
+Canonical thread adoption does not reset dismissal for the same planning scope.
+
 Dismissal hides unchanged source identities for this mounted actor/workspace
 context; an actually new ID/content or changed relevant explicit context may
 resurface. A full reload reassesses current authorized work, without a new browser

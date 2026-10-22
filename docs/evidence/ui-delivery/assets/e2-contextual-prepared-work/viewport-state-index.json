@@ -1,0 +1,1096 @@
+{
+  "effects": "No backend, provider, model, send, approval or execution",
+  "sourceQuery": "Synthetic original-contract port; actual RLS follows released ordinary QA",
+  "authenticatedRuntime": "UNVERIFIED",
+  "frames": [
+    {
+      "name": "1536-closed",
+      "composer": {
+        "bottom": 0,
+        "height": 0,
+        "left": 0,
+        "right": 0,
+        "top": 0,
+        "width": 0,
+        "x": 0,
+        "y": 0
+      },
+      "css": [
+        1536,
+        770
+      ],
+      "dialog": null,
+      "draft": "",
+      "focus": "!function(){try{var d=document.documentElement,c=d.classList",
+      "fontLoaded": true,
+      "scrollWidth": 1536,
+      "top": 0,
+      "raster": {
+        "height": 770,
+        "width": 1536
+      },
+      "sha256": "a7e0f3410c3cdf2a161fe61ec4bd5e3ec43f1f1e52976c6bd0820b490d1fe3c0"
+    },
+    {
+      "name": "1536-open",
+      "chip": {
+        "bottom": 571.2000122070312,
+        "height": 44,
+        "left": 1047.362548828125,
+        "right": 1236.362548828125,
+        "top": 527.2000122070312,
+        "width": 189,
+        "x": 1047.362548828125,
+        "y": 527.2000122070312
+      },
+      "composer": {
+        "bottom": 713.6000213623047,
+        "height": 134.40000915527344,
+        "left": 1047.362548828125,
+        "right": 1503.2000427246094,
+        "top": 579.2000122070312,
+        "width": 455.8374938964844,
+        "x": 1047.362548828125,
+        "y": 579.2000122070312
+      },
+      "css": [
+        1536,
+        770
+      ],
+      "dialog": {
+        "background": "rgb(255, 253, 248)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 570.7999877929688,
+          "height": 538.7999877929688,
+          "left": 639,
+          "right": 1035,
+          "top": 32,
+          "width": 396,
+          "x": 639,
+          "y": 32
+        }
+      },
+      "dismiss": {
+        "bottom": 571.2000122070312,
+        "height": 44,
+        "left": 1240.362548828125,
+        "right": 1284.362548828125,
+        "top": 527.2000122070312,
+        "width": 44,
+        "x": 1240.362548828125,
+        "y": 527.2000122070312
+      },
+      "draft": "Keep this UNSENT Game Plan review question.",
+      "focus": "Close suggestions",
+      "fontLoaded": true,
+      "scrollWidth": 1536,
+      "top": 1488,
+      "raster": {
+        "height": 770,
+        "width": 1536
+      },
+      "sha256": "289850c78fec9c81de68f5f3045228324edd34789cd7b4a6f3c97224934d61b9"
+    },
+    {
+      "name": "1536-desk",
+      "chip": {
+        "bottom": 571.2000122070312,
+        "height": 44,
+        "left": 1047.362548828125,
+        "right": 1236.362548828125,
+        "top": 527.2000122070312,
+        "width": 189,
+        "x": 1047.362548828125,
+        "y": 527.2000122070312
+      },
+      "composer": {
+        "bottom": 713.6000213623047,
+        "height": 134.40000915527344,
+        "left": 1047.362548828125,
+        "right": 1503.2000427246094,
+        "top": 579.2000122070312,
+        "width": 455.8374938964844,
+        "x": 1047.362548828125,
+        "y": 579.2000122070312
+      },
+      "css": [
+        1536,
+        770
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 754.4000244140625,
+          "height": 738.4000244140625,
+          "left": 248,
+          "right": 1288,
+          "top": 16,
+          "width": 1040,
+          "x": 248,
+          "y": 16
+        }
+      },
+      "dismiss": {
+        "bottom": 571.2000122070312,
+        "height": 44,
+        "left": 1240.362548828125,
+        "right": 1284.362548828125,
+        "top": 527.2000122070312,
+        "width": 44,
+        "x": 1240.362548828125,
+        "y": 527.2000122070312
+      },
+      "draft": "Keep this UNSENT Game Plan review question.",
+      "focus": " Refresh",
+      "fontLoaded": true,
+      "scrollWidth": 1536,
+      "top": 1488,
+      "raster": {
+        "height": 770,
+        "width": 1536
+      },
+      "sha256": "c7dbe39659bff94976e5fea7e4e2665c2fa33ba8ba81e8fd46ef70b410a58d4c"
+    },
+    {
+      "name": "1366-closed",
+      "composer": {
+        "bottom": 0,
+        "height": 0,
+        "left": 0,
+        "right": 0,
+        "top": 0,
+        "width": 0,
+        "x": 0,
+        "y": 0
+      },
+      "css": [
+        1366,
+        768
+      ],
+      "dialog": null,
+      "draft": "Keep this UNSENT Game Plan review question.",
+      "focus": "Direct PAIGE",
+      "fontLoaded": true,
+      "scrollWidth": 1366,
+      "top": 0,
+      "raster": {
+        "height": 768,
+        "width": 1366
+      },
+      "sha256": "d6f9fa872aa521ad5f0246caf48f3efb95c8201c6fc66ac45884a450b7dc24d6"
+    },
+    {
+      "name": "1366-open",
+      "chip": {
+        "bottom": 568.7999877929688,
+        "height": 44,
+        "left": 935.4249877929688,
+        "right": 1124.4249877929688,
+        "top": 524.7999877929688,
+        "width": 189,
+        "x": 935.4249877929688,
+        "y": 524.7999877929688
+      },
+      "composer": {
+        "bottom": 711.1999969482422,
+        "height": 134.40000915527344,
+        "left": 935.4249877929688,
+        "right": 1333.6000061035156,
+        "top": 576.7999877929688,
+        "width": 398.1750183105469,
+        "x": 935.4249877929688,
+        "y": 576.7999877929688
+      },
+      "css": [
+        1366,
+        768
+      ],
+      "dialog": {
+        "background": "rgb(255, 253, 248)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 568.7999877929688,
+          "height": 538.7999877929688,
+          "left": 527,
+          "right": 923,
+          "top": 30,
+          "width": 396,
+          "x": 527,
+          "y": 30
+        }
+      },
+      "dismiss": {
+        "bottom": 568.7999877929688,
+        "height": 44,
+        "left": 1128.425048828125,
+        "right": 1172.425048828125,
+        "top": 524.7999877929688,
+        "width": 44,
+        "x": 1128.425048828125,
+        "y": 524.7999877929688
+      },
+      "draft": "Keep this UNSENT Game Plan review question.",
+      "focus": "Close suggestions",
+      "fontLoaded": true,
+      "scrollWidth": 1366,
+      "top": 1488,
+      "raster": {
+        "height": 768,
+        "width": 1366
+      },
+      "sha256": "55b2246a117e6e3f6e5a98f09e452aab6e359e884f15f13c6e6a6549184ac29a"
+    },
+    {
+      "name": "1024-open",
+      "chip": {
+        "bottom": 522.8000183105469,
+        "height": 44,
+        "left": 647.6000366210938,
+        "right": 836.6000366210938,
+        "top": 478.8000183105469,
+        "width": 189,
+        "x": 647.6000366210938,
+        "y": 478.8000183105469
+      },
+      "composer": {
+        "bottom": 711.1999969482422,
+        "height": 180.40000915527344,
+        "left": 647.6000366210938,
+        "right": 991.2000427246094,
+        "top": 530.7999877929688,
+        "width": 343.6000061035156,
+        "x": 647.6000366210938,
+        "y": 530.7999877929688
+      },
+      "css": [
+        1024,
+        768
+      ],
+      "dialog": {
+        "background": "rgb(255, 253, 248)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 653.3999862670898,
+          "height": 538.7999877929688,
+          "left": 314,
+          "right": 710,
+          "top": 114.5999984741211,
+          "width": 396,
+          "x": 314,
+          "y": 114.5999984741211
+        }
+      },
+      "dismiss": {
+        "bottom": 522.8000183105469,
+        "height": 44,
+        "left": 840.6000366210938,
+        "right": 884.6000366210938,
+        "top": 478.8000183105469,
+        "width": 44,
+        "x": 840.6000366210938,
+        "y": 478.8000183105469
+      },
+      "draft": "Keep this UNSENT Game Plan review question.",
+      "focus": "Clear planning context: Business Game Plan",
+      "fontLoaded": true,
+      "scrollWidth": 1024,
+      "top": 1488,
+      "raster": {
+        "height": 768,
+        "width": 1024
+      },
+      "sha256": "9c7ba473dbbcff7ec76d8ae9c1805644fe5f0acfaa8b594a39332baa2caf5839"
+    },
+    {
+      "name": "1024-closed",
+      "composer": {
+        "bottom": 0,
+        "height": 0,
+        "left": 0,
+        "right": 0,
+        "top": 0,
+        "width": 0,
+        "x": 0,
+        "y": 0
+      },
+      "css": [
+        1024,
+        768
+      ],
+      "dialog": null,
+      "draft": "Keep this UNSENT Game Plan review question.",
+      "focus": "Direct PAIGE",
+      "fontLoaded": true,
+      "scrollWidth": 1024,
+      "top": 0,
+      "raster": {
+        "height": 768,
+        "width": 1024
+      },
+      "sha256": "877b01d01628031b45b0e8e15e317e273d39b45359c8a5a485f495c6c1757c81"
+    },
+    {
+      "name": "900-closed",
+      "composer": {
+        "bottom": 0,
+        "height": 0,
+        "left": 0,
+        "right": 0,
+        "top": 0,
+        "width": 0,
+        "x": 0,
+        "y": 0
+      },
+      "css": [
+        900,
+        1000
+      ],
+      "dialog": null,
+      "draft": "Keep this UNSENT Game Plan review question.",
+      "focus": "Direct PAIGE",
+      "fontLoaded": true,
+      "scrollWidth": 900,
+      "top": 0,
+      "raster": {
+        "height": 1000,
+        "width": 900
+      },
+      "sha256": "734416070d20fcab992ecf9edf51808988f5149446184ed4dc8984123836f839"
+    },
+    {
+      "name": "900-open",
+      "chip": {
+        "bottom": 754.7999877929688,
+        "height": 44,
+        "left": 523.6000366210938,
+        "right": 712.6000366210938,
+        "top": 710.7999877929688,
+        "width": 189,
+        "x": 523.6000366210938,
+        "y": 710.7999877929688
+      },
+      "composer": {
+        "bottom": 943.1999969482422,
+        "height": 180.40000915527344,
+        "left": 523.6000366210938,
+        "right": 867.2000427246094,
+        "top": 762.7999877929688,
+        "width": 343.6000061035156,
+        "x": 523.6000366210938,
+        "y": 762.7999877929688
+      },
+      "css": [
+        900,
+        1000
+      ],
+      "dialog": {
+        "background": "rgb(255, 253, 248)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 769.3999938964844,
+          "height": 538.7999877929688,
+          "left": 252,
+          "right": 648,
+          "top": 230.6000061035156,
+          "width": 396,
+          "x": 252,
+          "y": 230.6000061035156
+        }
+      },
+      "dismiss": {
+        "bottom": 754.7999877929688,
+        "height": 44,
+        "left": 716.6000366210938,
+        "right": 760.6000366210938,
+        "top": 710.7999877929688,
+        "width": 44,
+        "x": 716.6000366210938,
+        "y": 710.7999877929688
+      },
+      "draft": "Keep this UNSENT Game Plan review question.",
+      "focus": "Clear planning context: Business Game Plan",
+      "fontLoaded": true,
+      "scrollWidth": 900,
+      "top": 1488,
+      "raster": {
+        "height": 1000,
+        "width": 900
+      },
+      "sha256": "023e4d9f58727c43b4aaefde54165d698e602dca2ceeb3aaa009840e2b8e769e"
+    },
+    {
+      "name": "320-overview",
+      "chip": {
+        "bottom": 534.8000183105469,
+        "height": 44,
+        "left": 101.5999984741211,
+        "right": 238.5999984741211,
+        "top": 490.8000183105469,
+        "width": 137,
+        "x": 101.5999984741211,
+        "y": 490.8000183105469
+      },
+      "composer": {
+        "bottom": 787.1999969482422,
+        "height": 244.40000915527344,
+        "left": 101.5999984741211,
+        "right": 291.2000045776367,
+        "top": 542.7999877929688,
+        "width": 189.6000061035156,
+        "x": 101.5999984741211,
+        "y": 542.7999877929688
+      },
+      "css": [
+        320,
+        844
+      ],
+      "dialog": {
+        "background": "rgb(255, 253, 248)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 697,
+          "height": 550,
+          "left": 12,
+          "right": 308,
+          "top": 147,
+          "width": 296,
+          "x": 12,
+          "y": 147
+        }
+      },
+      "dismiss": {
+        "bottom": 534.8000183105469,
+        "height": 44,
+        "left": 242.6000061035156,
+        "right": 286.6000061035156,
+        "top": 490.8000183105469,
+        "width": 44,
+        "x": 242.6000061035156,
+        "y": 490.8000183105469
+      },
+      "draft": "Keep this UNSENT Game Plan review question.",
+      "focus": "Clear planning context: Business Game Plan",
+      "fontLoaded": true,
+      "scrollWidth": 320,
+      "top": 1488,
+      "raster": {
+        "height": 844,
+        "width": 320
+      },
+      "sha256": "1daad3d7bc5f3a1b64c6030a37746dd1ef20568093e0c01620302bcee748e1db"
+    },
+    {
+      "name": "320-keyboard-desk",
+      "chip": {
+        "bottom": 534.8000183105469,
+        "height": 44,
+        "left": 101.5999984741211,
+        "right": 238.5999984741211,
+        "top": 490.8000183105469,
+        "width": 137,
+        "x": 101.5999984741211,
+        "y": 490.8000183105469
+      },
+      "composer": {
+        "bottom": 787.1999969482422,
+        "height": 244.40000915527344,
+        "left": 101.5999984741211,
+        "right": 291.2000045776367,
+        "top": 542.7999877929688,
+        "width": 189.6000061035156,
+        "x": 101.5999984741211,
+        "y": 542.7999877929688
+      },
+      "css": [
+        320,
+        844
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 836,
+          "height": 828,
+          "left": 8,
+          "right": 312,
+          "top": 8,
+          "width": 304,
+          "x": 8,
+          "y": 8
+        }
+      },
+      "dismiss": {
+        "bottom": 534.8000183105469,
+        "height": 44,
+        "left": 242.6000061035156,
+        "right": 286.6000061035156,
+        "top": 490.8000183105469,
+        "width": 44,
+        "x": 242.6000061035156,
+        "y": 490.8000183105469
+      },
+      "draft": "Keep this UNSENT Game Plan review question.",
+      "focus": " Refresh",
+      "fontLoaded": true,
+      "scrollWidth": 320,
+      "top": 1488,
+      "raster": {
+        "height": 844,
+        "width": 320
+      },
+      "sha256": "dc92fbb1309659c1bcf111574131ae59f8d9039c272b4cfffa539f79f4439f1a"
+    },
+    {
+      "name": "320-chip",
+      "chip": {
+        "bottom": 534.8000183105469,
+        "height": 44,
+        "left": 101.5999984741211,
+        "right": 238.5999984741211,
+        "top": 490.8000183105469,
+        "width": 137,
+        "x": 101.5999984741211,
+        "y": 490.8000183105469
+      },
+      "composer": {
+        "bottom": 787.1999969482422,
+        "height": 244.40000915527344,
+        "left": 101.5999984741211,
+        "right": 291.2000045776367,
+        "top": 542.7999877929688,
+        "width": 189.6000061035156,
+        "x": 101.5999984741211,
+        "y": 542.7999877929688
+      },
+      "css": [
+        320,
+        844
+      ],
+      "dialog": null,
+      "dismiss": {
+        "bottom": 534.8000183105469,
+        "height": 44,
+        "left": 242.6000061035156,
+        "right": 286.6000061035156,
+        "top": 490.8000183105469,
+        "width": 44,
+        "x": 242.6000061035156,
+        "y": 490.8000183105469
+      },
+      "draft": "Keep this UNSENT Game Plan review question.",
+      "focus": "37 items to review",
+      "fontLoaded": true,
+      "scrollWidth": 320,
+      "top": 1488,
+      "raster": {
+        "height": 844,
+        "width": 320
+      },
+      "sha256": "92a3433596c87d50dc8ec778fb1d6b33c9883487ce9748997afa8d1cdd4a43de"
+    },
+    {
+      "name": "320-dismissed-context",
+      "composer": {
+        "bottom": 787.1999969482422,
+        "height": 244.40000915527344,
+        "left": 101.5999984741211,
+        "right": 291.2000045776367,
+        "top": 542.7999877929688,
+        "width": 189.6000061035156,
+        "x": 101.5999984741211,
+        "y": 542.7999877929688
+      },
+      "css": [
+        320,
+        844
+      ],
+      "dialog": null,
+      "draft": "Keep this UNSENT Game Plan review question.",
+      "focus": "Message PAIGE",
+      "fontLoaded": true,
+      "scrollWidth": 320,
+      "top": 1488,
+      "raster": {
+        "height": 844,
+        "width": 320
+      },
+      "sha256": "7ff1a75d5525f27f2b834af58ab7d0e37f82a62bc73b5d535b8f0cd728721f23"
+    },
+    {
+      "name": "1366-new-work",
+      "chip": {
+        "bottom": 568.7999877929688,
+        "height": 44,
+        "left": 935.4249877929688,
+        "right": 1124.4249877929688,
+        "top": 524.7999877929688,
+        "width": 189,
+        "x": 935.4249877929688,
+        "y": 524.7999877929688
+      },
+      "composer": {
+        "bottom": 711.1999969482422,
+        "height": 134.40000915527344,
+        "left": 935.4249877929688,
+        "right": 1333.6000061035156,
+        "top": 576.7999877929688,
+        "width": 398.1750183105469,
+        "x": 935.4249877929688,
+        "y": 576.7999877929688
+      },
+      "css": [
+        1366,
+        768
+      ],
+      "dialog": null,
+      "dismiss": {
+        "bottom": 568.7999877929688,
+        "height": 44,
+        "left": 1128.425048828125,
+        "right": 1172.425048828125,
+        "top": 524.7999877929688,
+        "width": 44,
+        "x": 1128.425048828125,
+        "y": 524.7999877929688
+      },
+      "draft": "Keep this UNSENT Game Plan review question.",
+      "focus": "new",
+      "fontLoaded": true,
+      "scrollWidth": 1366,
+      "top": 1488,
+      "raster": {
+        "height": 768,
+        "width": 1366
+      },
+      "sha256": "0952aa5f4974a9b52986819c06a3e801316d57490551ffd7c4784942ab8f147d"
+    },
+    {
+      "name": "1366-error",
+      "chip": {
+        "bottom": 568.7999877929688,
+        "height": 44,
+        "left": 935.4249877929688,
+        "right": 1100.4749908447266,
+        "top": 524.7999877929688,
+        "width": 165.0500030517578,
+        "x": 935.4249877929688,
+        "y": 524.7999877929688
+      },
+      "composer": {
+        "bottom": 711.1999969482422,
+        "height": 134.40000915527344,
+        "left": 935.4249877929688,
+        "right": 1333.6000061035156,
+        "top": 576.7999877929688,
+        "width": 398.1750183105469,
+        "x": 935.4249877929688,
+        "y": 576.7999877929688
+      },
+      "css": [
+        1366,
+        768
+      ],
+      "dialog": {
+        "background": "rgb(255, 253, 248)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 568.8000183105469,
+          "height": 306.8000183105469,
+          "left": 527,
+          "right": 923,
+          "top": 262,
+          "width": 396,
+          "x": 527,
+          "y": 262
+        }
+      },
+      "dismiss": {
+        "bottom": 568.7999877929688,
+        "height": 44,
+        "left": 1104.4749755859375,
+        "right": 1148.4749755859375,
+        "top": 524.7999877929688,
+        "width": 44,
+        "x": 1104.4749755859375,
+        "y": 524.7999877929688
+      },
+      "draft": "Keep this UNSENT Game Plan review question.",
+      "focus": "Close suggestions",
+      "fontLoaded": true,
+      "scrollWidth": 1366,
+      "top": 1488,
+      "raster": {
+        "height": 768,
+        "width": 1366
+      },
+      "sha256": "42e1419974af9d1a96eff937f4993a6dee034cbb4806ea33ef1187364df94e01"
+    },
+    {
+      "name": "1366-loading",
+      "chip": {
+        "bottom": 568.7999877929688,
+        "height": 44,
+        "left": 935.4249877929688,
+        "right": 1100.4749908447266,
+        "top": 524.7999877929688,
+        "width": 165.0500030517578,
+        "x": 935.4249877929688,
+        "y": 524.7999877929688
+      },
+      "composer": {
+        "bottom": 711.1999969482422,
+        "height": 134.40000915527344,
+        "left": 935.4249877929688,
+        "right": 1333.6000061035156,
+        "top": 576.7999877929688,
+        "width": 398.1750183105469,
+        "x": 935.4249877929688,
+        "y": 576.7999877929688
+      },
+      "css": [
+        1366,
+        768
+      ],
+      "dialog": {
+        "background": "rgb(255, 253, 248)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 568.4000091552734,
+          "height": 240.40000915527344,
+          "left": 527,
+          "right": 923,
+          "top": 328,
+          "width": 396,
+          "x": 527,
+          "y": 328
+        }
+      },
+      "dismiss": {
+        "bottom": 568.7999877929688,
+        "height": 44,
+        "left": 1104.4749755859375,
+        "right": 1148.4749755859375,
+        "top": 524.7999877929688,
+        "width": 44,
+        "x": 1104.4749755859375,
+        "y": 524.7999877929688
+      },
+      "draft": "Keep this UNSENT Game Plan review question.",
+      "focus": "Close suggestions",
+      "fontLoaded": true,
+      "scrollWidth": 1366,
+      "top": 1488,
+      "raster": {
+        "height": 768,
+        "width": 1366
+      },
+      "sha256": "0f968f320d391c80e2609e0b2bdeebdad04d017667d88e9b0666e95895c035e3"
+    },
+    {
+      "name": "1366-empty",
+      "composer": {
+        "bottom": 711.1999969482422,
+        "height": 134.40000915527344,
+        "left": 935.4249877929688,
+        "right": 1333.6000061035156,
+        "top": 576.7999877929688,
+        "width": 398.1750183105469,
+        "x": 935.4249877929688,
+        "y": 576.7999877929688
+      },
+      "css": [
+        1366,
+        768
+      ],
+      "dialog": null,
+      "draft": "Keep this UNSENT Game Plan review question.",
+      "focus": "empty",
+      "fontLoaded": true,
+      "scrollWidth": 1366,
+      "top": 1488,
+      "raster": {
+        "height": 768,
+        "width": 1366
+      },
+      "sha256": "9f20d5a3bfb894841e18a3c10bf9b6317dd6ed343ecfada4e5d3e14de4c04495"
+    },
+    {
+      "name": "1366-unknown-total",
+      "chip": {
+        "bottom": 568.7999877929688,
+        "height": 44,
+        "left": 935.4249877929688,
+        "right": 1100.4749908447266,
+        "top": 524.7999877929688,
+        "width": 165.0500030517578,
+        "x": 935.4249877929688,
+        "y": 524.7999877929688
+      },
+      "composer": {
+        "bottom": 711.1999969482422,
+        "height": 134.40000915527344,
+        "left": 935.4249877929688,
+        "right": 1333.6000061035156,
+        "top": 576.7999877929688,
+        "width": 398.1750183105469,
+        "x": 935.4249877929688,
+        "y": 576.7999877929688
+      },
+      "css": [
+        1366,
+        768
+      ],
+      "dialog": {
+        "background": "rgb(255, 253, 248)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 568.7999877929688,
+          "height": 538.7999877929688,
+          "left": 527,
+          "right": 923,
+          "top": 30,
+          "width": 396,
+          "x": 527,
+          "y": 30
+        }
+      },
+      "dismiss": {
+        "bottom": 568.7999877929688,
+        "height": 44,
+        "left": 1104.4749755859375,
+        "right": 1148.4749755859375,
+        "top": 524.7999877929688,
+        "width": 44,
+        "x": 1104.4749755859375,
+        "y": 524.7999877929688
+      },
+      "draft": "Keep this UNSENT Game Plan review question.",
+      "focus": "Close suggestions",
+      "fontLoaded": true,
+      "scrollWidth": 1366,
+      "top": 1488,
+      "raster": {
+        "height": 768,
+        "width": 1366
+      },
+      "sha256": "3996b619cb0a7543a712e431e8d25fd835e7cb18df55768bdee388a574135adf"
+    },
+    {
+      "name": "1366-obsidian",
+      "chip": {
+        "bottom": 568.7999877929688,
+        "height": 44,
+        "left": 935.4249877929688,
+        "right": 1124.4249877929688,
+        "top": 524.7999877929688,
+        "width": 189,
+        "x": 935.4249877929688,
+        "y": 524.7999877929688
+      },
+      "composer": {
+        "bottom": 711.1999969482422,
+        "height": 134.40000915527344,
+        "left": 935.4249877929688,
+        "right": 1333.6000061035156,
+        "top": 576.7999877929688,
+        "width": 398.1750183105469,
+        "x": 935.4249877929688,
+        "y": 576.7999877929688
+      },
+      "css": [
+        1366,
+        768
+      ],
+      "dialog": {
+        "background": "rgb(33, 29, 39)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 568.7999877929688,
+          "height": 538.7999877929688,
+          "left": 527,
+          "right": 923,
+          "top": 30,
+          "width": 396,
+          "x": 527,
+          "y": 30
+        }
+      },
+      "dismiss": {
+        "bottom": 568.7999877929688,
+        "height": 44,
+        "left": 1128.425048828125,
+        "right": 1172.425048828125,
+        "top": 524.7999877929688,
+        "width": 44,
+        "x": 1128.425048828125,
+        "y": 524.7999877929688
+      },
+      "draft": "Keep this UNSENT Game Plan review question.",
+      "focus": "Close suggestions",
+      "fontLoaded": true,
+      "scrollWidth": 1366,
+      "top": 1488,
+      "raster": {
+        "height": 768,
+        "width": 1366
+      },
+      "sha256": "92403a1676f146268825ed7655ab540ef8a1c7accfb6be54bcb027284eaf9b9b"
+    },
+    {
+      "name": "1366-reduced-motion",
+      "chip": {
+        "bottom": 568.7999877929688,
+        "height": 44,
+        "left": 935.4249877929688,
+        "right": 1124.4249877929688,
+        "top": 524.7999877929688,
+        "width": 189,
+        "x": 935.4249877929688,
+        "y": 524.7999877929688
+      },
+      "composer": {
+        "bottom": 711.1999969482422,
+        "height": 134.40000915527344,
+        "left": 935.4249877929688,
+        "right": 1333.6000061035156,
+        "top": 576.7999877929688,
+        "width": 398.1750183105469,
+        "x": 935.4249877929688,
+        "y": 576.7999877929688
+      },
+      "css": [
+        1366,
+        768
+      ],
+      "dialog": {
+        "background": "rgb(33, 29, 39)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 568.7999877929688,
+          "height": 538.7999877929688,
+          "left": 527,
+          "right": 923,
+          "top": 30,
+          "width": 396,
+          "x": 527,
+          "y": 30
+        }
+      },
+      "dismiss": {
+        "bottom": 568.7999877929688,
+        "height": 44,
+        "left": 1128.425048828125,
+        "right": 1172.425048828125,
+        "top": 524.7999877929688,
+        "width": 44,
+        "x": 1128.425048828125,
+        "y": 524.7999877929688
+      },
+      "draft": "Keep this UNSENT Game Plan review question.",
+      "focus": "Close suggestions",
+      "fontLoaded": true,
+      "scrollWidth": 1366,
+      "top": 1488,
+      "raster": {
+        "height": 768,
+        "width": 1366
+      },
+      "sha256": "93bd4c4db0371d0f5a851488c09dfd2843df491890bbea896086fac8407eb174"
+    },
+    {
+      "name": "1366-cleared-context",
+      "chip": {
+        "bottom": 568.7999877929688,
+        "height": 44,
+        "left": 935.4249877929688,
+        "right": 1124.4249877929688,
+        "top": 524.7999877929688,
+        "width": 189,
+        "x": 935.4249877929688,
+        "y": 524.7999877929688
+      },
+      "composer": {
+        "bottom": 711.1999969482422,
+        "height": 134.40000915527344,
+        "left": 935.4249877929688,
+        "right": 1333.6000061035156,
+        "top": 576.7999877929688,
+        "width": 398.1750183105469,
+        "x": 935.4249877929688,
+        "y": 576.7999877929688
+      },
+      "css": [
+        1366,
+        768
+      ],
+      "dialog": null,
+      "dismiss": {
+        "bottom": 568.7999877929688,
+        "height": 44,
+        "left": 1128.425048828125,
+        "right": 1172.425048828125,
+        "top": 524.7999877929688,
+        "width": 44,
+        "x": 1128.425048828125,
+        "y": 524.7999877929688
+      },
+      "draft": "Keep this UNSENT Game Plan review question.",
+      "focus": "Message PAIGE",
+      "fontLoaded": true,
+      "scrollWidth": 1366,
+      "top": 1488,
+      "raster": {
+        "height": 768,
+        "width": 1366
+      },
+      "sha256": "709dfbd4491911353211e2d6fa815c1c98bd9e9ab90003b63031ba0b489e436c"
+    }
+  ],
+  "kind": "NATIVE_CHAT_CONSUMER_SYNTHETIC_PORTS",
+  "policies": [
+    {
+      "sha256": "235e4a2f2574b7c8cbc6eae236e21fecfd0c0b0a856efe05820c0d35a2392dd3",
+      "path": "src/solo/SoloPaigeWorkspace.tsx",
+      "proof": "Actual parent/policy unit integration; not mounted by the native pixel harness"
+    },
+    {
+      "sha256": "0b91140d74f04152764a56ab50a53fa1e6631d184c84fd29a1d03a6f3c3b6f8d",
+      "path": "src/solo/planning-suggestion-context.ts",
+      "proof": "Actual parent/policy unit integration; not mounted by the native pixel harness"
+    }
+  ],
+  "sources": [
+    {
+      "path": "src/components/dashboard/PaigeAIChat.tsx",
+      "sha256": "a725d172dd9857b0795034742ee7e5dc5482a6de7e9ae8e3baeb3d0e706a8161"
+    },
+    {
+      "path": "src/components/chat/ContextualSuggestion.tsx",
+      "sha256": "6309fced0e68d759e9989ee74b494029e97d68ce8e4751d88086d80398805318"
+    },
+    {
+      "path": "src/components/chat/contextual-suggestion.css",
+      "sha256": "a3768c2ccea13465c7bd794e51316737deb57bae6fb0c02adc7a96eebf9c5fc1"
+    },
+    {
+      "path": "src/solo/SoloPlanningSuggestion.tsx",
+      "sha256": "2e19930727db5f098d4ad71f66536f13a37d0486a0b02d04013b3bf1db453b8b"
+    },
+    {
+      "path": "src/solo/solo-planning-suggestion.css",
+      "sha256": "ed02b3eb71206e1bf21c977eaa4463873b093839fc9721eb4a600848597d5ee0"
+    },
+    {
+      "path": "src/solo/PreparedWorkReview.tsx",
+      "sha256": "68502b6b16d5614fba8894e92fbecb76bca2e724159fb9196697318a98fc175c"
+    },
+    {
+      "path": "src/solo/prepared-work-review.css",
+      "sha256": "310d1f29deeb57a60e283fd98b30dbe3f34d588c844bb1b6c0f1b8d1f3893c4b"
+    }
+  ],
+  "diagnostics": "Earlier cold-server, hot-reload orphan and stale collector frames are excluded. Clean explicit-scope page and explicit parameterized collector only.",
+  "nativeZoom": "UNVERIFIED"
+}

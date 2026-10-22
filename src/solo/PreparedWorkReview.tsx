@@ -13,14 +13,22 @@ function preparedWorkCountLabel(data: SoloPendingActionsData): string {
 }
 
 /** Source-fed presentation only. Original domains retain all editing/approval authority. */
-export function PreparedWorkReview({ data, children }: { data: SoloPendingActionsData; children: React.ReactElement }) {
+export function PreparedWorkReview({ data, children, open, onOpenChange, selectedItemId, onSelectedItemChange, onCloseAutoFocus }: {
+  data: SoloPendingActionsData;
+  children?: React.ReactElement;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  selectedItemId?: string | null;
+  onSelectedItemChange?: (id: string) => void;
+  onCloseAutoFocus?: (event: Event) => void;
+}) {
   const { resolvedTheme } = useTheme();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selected = data.items.find((item) => item.id === selectedId) ?? data.items[0];
+  const selected = data.items.find((item) => item.id === (selectedItemId ?? selectedId)) ?? data.items[0];
   const available = !data.loading && !data.error;
-  return <Dialog>
-    <DialogTrigger asChild>{children}</DialogTrigger>
-    <DialogContent data-pg={resolvedTheme === "dark" ? "dark" : "light"} className="pwr" overlayClassName="pwr-scrim">
+  return <Dialog open={open} onOpenChange={onOpenChange}>
+    {children && <DialogTrigger asChild>{children}</DialogTrigger>}
+    <DialogContent data-pg={resolvedTheme === "dark" ? "dark" : "light"} className="pwr" overlayClassName="pwr-scrim" onCloseAutoFocus={onCloseAutoFocus}>
       <header className="pwr-heading">
         <span className="pwr-eyebrow"><Scale size={16} aria-hidden /> Decision &amp; opportunity desk</span>
         <DialogTitle>Work prepared for your review</DialogTitle>
@@ -33,7 +41,7 @@ export function PreparedWorkReview({ data, children }: { data: SoloPendingAction
               <div className="pwr-summary"><strong>{preparedWorkCountLabel(data)}</strong><span>{data.items.length} shown · {data.total == null ? "total unavailable" : "latest first"}</span><button type="button" onClick={data.refresh}><RefreshCw size={16} aria-hidden /> Refresh</button></div>
               <div className="pwr-workspace">
                 <nav className="pwr-list" aria-label="Prepared items">
-                  {data.items.map((item) => <button type="button" key={item.id} aria-pressed={selected.id === item.id} onClick={() => setSelectedId(item.id)}><span>{item.department}</span><strong>{item.title}</strong><small>{item.draftContent ? "Draft text available" : "Recorded summary"}</small></button>)}
+                  {data.items.map((item) => <button type="button" key={item.id} aria-pressed={selected.id === item.id} onClick={() => { setSelectedId(item.id); onSelectedItemChange?.(item.id); }}><span>{item.department}</span><strong>{item.title}</strong><small>{item.draftContent ? "Draft text available" : "Recorded summary"}</small></button>)}
                 </nav>
                 <article className="pwr-document" aria-label="Selected prepared work">
                   <div className="pwr-source"><FileText size={16} aria-hidden /> Prepared work · {selected.department}</div>

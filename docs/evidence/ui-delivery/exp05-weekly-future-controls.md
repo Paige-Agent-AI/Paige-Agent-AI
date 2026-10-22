@@ -31,7 +31,7 @@ MUST_NOT_HAPPEN: Enable or authorize recurrence, replay unknown work, terminate 
 MUST_PRESERVE: Current actor/tenant/epoch, original native owner checks, exact schedule/revision, single-flight, original SQL/audit/source records, existing sheet/navigation/draft save, strict tenant isolation and Layer C occurrences.
 ACCEPTANCE_CRITERIA: Human owner reviews one exact current responsibility, can keep it unchanged or explicitly pause/cancel future checks, sees original canonical state only after readback, can inspect after unknown/reload, and cannot use stale/foreign/expired scope or duplicate clicks. Running acts and original receipts remain intact.
 PROTECTED_SEAMS: Owner-human configuration and original native readback are affected; no model input, Chat/Live mutation, action-risk, native SQL/ACL, process trigger, provider, recurring dispatch or Rail engine changes. No another-Experience source is edited.
-INTERNAL_BUILD_IDENTITY: source=b775bc01606c5d4fb85665b0d9b3b57b03b82794; main=f18017e6e351b49576722e9e1e9f27a3f7c66db5; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp05-weekly-future-controls.md
+INTERNAL_BUILD_IDENTITY: source=b775bc01606c5d4fb85665b0d9b3b57b03b82794; composition=baddafa258081e5bfef20f29737dc4e7dbea5a4e; main=0bcb088184b59f1badaef34be3aaa45df916ff28; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp05-weekly-future-controls.md
 RELEASE_CHANNEL: development: connected candidate, not a live customer capability.
 RELEASE_CLASSIFICATION: internal-only: bounded Operations control integration pending source/review/CI/rendered gates.
 CUSTOMER_RELEASE_IDENTITY: none: complete Experience/founder evaluation remains separate.
@@ -138,3 +138,13 @@ Viewport overrides were reset successfully. Actual browser zoom was not proven
 by the tool's hotkeys and remains explicitly UNVERIFIED. The images prove local
 layout and interaction only. Hosted exact-head checks, deployed source, genuine
 owner control/audit and subsequent customer reload still require their own evidence.
+
+Final source compositionbaddafa258081e5bfef20f29737dc4e7dbea5a4e preserves
+main0bcb088184b59f1badaef34be3aaa45df916ff28, including EXP09's original
+Payments adapter migration20271113280009 and the2546 factual closeout. Those
+incoming paths do not overlap the six weekly production sources; no migration
+is added or renumbered by this change. The later evidence-only edits do not alter
+the measured panel. Sequential author Independent Review is LOWER ASSURANCE;
+original scope/CAS/native SQL/audit, refusal, timeout/no-replay, current-snapshot,
+single-flight, review retirement, nested Escape and truthful feedback were
+examined separately from implementation. No material source finding remains.

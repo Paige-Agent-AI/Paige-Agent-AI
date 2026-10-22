@@ -6,7 +6,7 @@ import {randomUUID,createHash} from 'node:crypto';
 import {prepareCommercialPresentation,canonicalPresentationJson} from '../../supabase/functions/_shared/agreements/commercial-presentation.ts';
 import {assembleFixedRepaymentSchedule} from '../../supabase/functions/_shared/sales-collections/model.ts';
 const [psql,port,user,directory,mode]=process.argv.slice(2);
-assert(psql&&/^\d+$/.test(port??'')&&user&&directory&&['baseline','repaired'].includes(mode));
+assert(psql&&/^\d+$/.test(port??'')&&user&&directory&&mode==='repaired');
 let database='postgres',checks=0,contextChecks=0;
 const sql=(input)=>{const r=spawnSync(psql,['-h','127.0.0.1','-p',port,'-U',user,'-d',database,'-qAt','-v','ON_ERROR_STOP=1','-v','VERBOSITY=verbose'],{input,encoding:'utf8',windowsHide:true,maxBuffer:8e6});if(r.status!==0)throw Error(r.stderr);return r.stdout.trim();};
 const read=p=>readFileSync(new URL(`../../${p}`,import.meta.url),'utf8');
@@ -60,7 +60,7 @@ try{
   const prepared=await prepareCommercialPresentation(input);
   const presented=input.body_markdown+'\n\n'+prepared.appendix;
   const key=`${tenant}/${agreementId}/presented-commercial-fixture.pdf`,pdfHash='a'.repeat(64);
-  if(mode==='repaired'){const migration=read('supabase/migrations/20271113230004_agreement_commercial_presentation.sql');sql(migration);sql(migration);}
+  const migration=read('supabase/migrations/20271113230004_agreement_commercial_presentation.sql');sql(migration);sql(migration);
   const call=(payload=prepared.payload,payloadDigest=prepared.payload_digest,who=actor,role='service_role')=>`SET ROLE ${role}; SELECT _freeze_paige_commercial_presentation('${who}','${tenant}',${literal(payload)},${text(payloadDigest)},${text(presented)},${text(digest(presented))},${text(key)},${text(pdfHash)});`;
   // Recomputed adversarial digests must fail source/semantic validation,
   // rather than merely failing the transport checksum.

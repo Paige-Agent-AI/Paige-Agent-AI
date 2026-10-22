@@ -1,5 +1,12 @@
 # EXP04 original editor labels, menu dismissal and template viewport
 
+Source checkpoint: original draft#2605 exact5e4fda01e1b9b3067ec712ed9651a73a4193275f,
+tree d8baa9a10cb299d06ae059b49530b3034dbd85b3. Owning6UI/one evidence record
+guard PASS after correcting this record's exact-source identity and state wording;
+no guard, source assertion or runtime changed. The earlier record-only failure is
+retained as such. Separate author review is LOWER ASSURANCE, not independent or
+customer acceptance. Final required exact-head CI and ordered release stay gates.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: original twelve-outcome journey contains the pre-edit correction and source-backed labels/menu/narrow-navigation findings; same original owner lead.
 PAIGE_UI_DESIGN: PASS: original SOLO Sales components, native editor/paper/typography, one leave guard and original six destinations; existing bounded row moved into its owning Sales stylesheet.

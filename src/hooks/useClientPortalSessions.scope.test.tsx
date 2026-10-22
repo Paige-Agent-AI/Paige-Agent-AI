@@ -169,3 +169,10 @@ it('a newly verified frame actor rechecks actual Auth instead of remaining pinne
  await act(async()=>{root.render(<CustomerIdentityProvider state={{frame:nextFrame,phase:'ready'}}><Probe business={b}/></CustomerIdentityProvider>);await flush();});
  expect(state.tenantId).toBe(b);expect(state.upcoming[0].id).toBe('session-'+b);expect(f.native.at(-1)?.headers.Authorization).toBe('Bearer synthetic-next-actor');expect(consoleError).not.toHaveBeenCalled();consoleError.mockRestore();
 });
+
+it('failed retry preflight preserves a previous uncertain request instead of calling it unsent',async()=>{
+ await render();f.invoke.mockRejectedValueOnce(Error('Synthetic lost acknowledgment'));await act(async()=>{await state.cancel('session-'+a);await flush();});const id=state.changes['session-'+a].requestId;
+ f.getSession.mockRejectedValueOnce(Error('Synthetic retry Auth interruption'));await act(async()=>{await state.retryChange('session-'+a);await flush();});
+ expect(f.invoke).toHaveBeenCalledTimes(1);expect(state.changes['session-'+a]).toMatchObject({status:'unconfirmed',requestId:id,error:null});
+ await act(async()=>{await state.retryChange('session-'+a);await flush();});expect(f.invoke.mock.calls[1][1].body.request_id).toBe(id);
+});

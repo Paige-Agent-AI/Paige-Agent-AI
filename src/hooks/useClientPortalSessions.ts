@@ -665,6 +665,9 @@ export function useClientPortalSessions({enabled: requested = true, limit = PORT
     const myEpoch = epoch.current;
     const current = () => alive.current && scopeAlive() && !signedOut.current && myEpoch === epoch.current;
     if (!current() || halted.current) return false;
+    const prior = changesRef.current[entry.sessionId];
+    const previouslyUnconfirmed = entry.status === 'unconfirmed'
+      || prior?.requestId === entry.requestId && prior.status === 'unconfirmed';
     patchChange(entry.sessionId, { status: "sending", error: null, actionsHeld: false }, entry);
     let data: unknown = null, invokeError: unknown = null;
     let dispatched = false, expired = false, verified = !requestedActor;
@@ -700,6 +703,11 @@ export function useClientPortalSessions({enabled: requested = true, limit = PORT
     if (!current()) return false;
     if (!dispatched) {
       clearProtected();
+      if (previouslyUnconfirmed) {
+        setError("We couldn't verify the previous change. Try again.");
+        patchChange(entry.sessionId, {status: 'unconfirmed', error: null});
+        return false;
+      }
       setError("We couldn't check your sign-in. Try again before changing this session.");
       patchChange(entry.sessionId, {status: 'failed', error: 'CUSTOMER_SESSION_UNVERIFIED', actionsHeld: false});
       return false;

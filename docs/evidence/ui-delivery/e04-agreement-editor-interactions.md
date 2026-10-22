@@ -1,5 +1,14 @@
 # EXP04 original editor labels, menu dismissal and template viewport
 
+October22 compositioncc29636df0168e0a97f948cfc919e3bd16ef204d preserves the
+actual incoming main429 and parent2604/4b9376a16cd270ab9b7efe80d75764bcb1faed76.
+All owning UI/guard/driver bytes remain identical to reviewedd555. All113 source
+pins reverified, current173 integration cases/seven suites and original6UI/one
+evidence guard PASS. The full1027-case proof below precedes incoming shared
+Chat/Operations composition; no new full-suite or hosted acceptance is claimed.
+Parent native300004 remains held after five unchanged5s55P03 rollbacks. No
+session termination, timeout/history repair, new legal wording or activation.
+
 Source checkpoint: original draft#2605 exact5e4fda01e1b9b3067ec712ed9651a73a4193275f,
 tree d8baa9a10cb299d06ae059b49530b3034dbd85b3. Owning6UI/one evidence record
 guard PASS after correcting this record's exact-source identity and state wording;

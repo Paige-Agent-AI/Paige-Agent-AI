@@ -1,7 +1,7 @@
 {
   "doc": "Integration Capability Registry",
   "schema_version": "1.2.0",
-  "grounded_against": "origin/main fead7dfd03cd0ec1ee5c0c9f7854f067de484239 + Public Presence provider-MVP production closeout (2026-09-06); v1.2 adds the code_anchors accountability field + dead-anchor resolve check, grounded against origin/main 91c815f (2026-09-13) — every runtime-claiming provider's anchors verified to exist on disk at that commit.",
+  "grounded_against": "origin/main fead7dfd03cd0ec1ee5c0c9f7854f067de484239 + Public Presence provider-MVP production closeout (2026-09-06); v1.2 adds the code_anchors accountability field + dead-anchor resolve check, grounded against origin/main 91c815f (2026-09-13) — every runtime-claiming provider's anchors verified to exist on disk at that commit. EXP10 activation pass (2026-10-22, origin/main 7a8b066942098a7917b2655fe75d8ebad677fb09): added slack / make-com / icloud-mail entries (all PROPOSED, no runtime claims), recorded EXP10 ownership of the microsoft-365 Teams lane, grounded by docs/delivery/exp10-connect-my-business/EXP10-SOURCE-RECONCILIATION-REGISTER.md.",
   "purpose": "One authoritative, living catalogue and taxonomy of every third-party provider, API, connector, Marketplace service, and external-execution platform Paige may use. This is a product-governance and delivery record. It does NOT install providers, hold credentials, call external APIs, create OAuth clients, create billing commitments, or ship provider functionality. v1.1 adds the API Expense & Operations Layer (per-provider operating cost + ownership visibility) — see expense_and_operations_schema and cost_tracks.",
   "cardinal_rule": "Listing a provider here NEVER means it is connected, available, or autonomous. A registry entry is a governance declaration, not a live capability. Connection is a per-tenant authorization fact; availability is a getTierFeatureSet()/RLS fact; autonomy is a resolve_tool_autonomy()/Trust-Compass fact. This document decides none of them (see rules R1 and R8).",
   "how_it_relates_to_siblings": {
@@ -412,8 +412,8 @@
       "rail_mind_memory": "Rail/Mind/Memory: none until wired.",
       "status": "DEFERRED",
       "owner": "Integrations workstream",
-      "dependency": "Deliberately sequenced after Google Workspace parity.",
-      "next_slice": "OAuth app + scope decision when Microsoft-first tenants are prioritized.",
+      "dependency": "Deliberately sequenced after Google Workspace parity. EXP10 (Connect My Business, activated 2026-10-22) now owns the Teams connection lane: native Teams requires an Azure AD app registration + admin consent (an owner/provider action, not codeable alone); until then the honest customer state is Coming Soon and the gateway panel's bridge-via-Zapier note remains the only path. Deliberately sequenced after Google Workspace parity.",
+      "next_slice": "Owner decision on Azure AD app registration; then Teams graph-adapter slices (workspace/team discovery, channel access, permitted collaboration actions) through the canonical gateway/orchestration seams.",
       "tier_eligibility": {
         "platform": "deferred",
         "solo": "deferred",
@@ -760,11 +760,11 @@
           "role": "fail_closed_containment",
           "note": "Authenticate first; authorized requests return FINANCE_SOURCE_UNAVAILABLE without privileged data or provider traffic until the company-bound read adapter is proven."
         },
-          {
-            "path": "supabase/migrations/20270602000423_finance_account_source_projections.sql",
-            "role": "provider_adapter",
-            "note": "Controlled company-bound account projection cache only: exact observation identity, nullable source values and revocation. No provider activation, fresh institution balance proof or live ingestion."
-          },
+        {
+          "path": "supabase/migrations/20270602000423_finance_account_source_projections.sql",
+          "role": "provider_adapter",
+          "note": "Controlled company-bound account projection cache only: exact observation identity, nullable source values and revocation. No provider activation, fresh institution balance proof or live ingestion."
+        },
         {
           "path": "supabase/functions/quickbooks-update-transaction-category/index.ts",
           "role": "fail_closed_containment",
@@ -1756,6 +1756,70 @@
         "docs/brain/decision-log.md (Experience 03 S3, 2026-10-13)",
         "docs/brain/config-registry.md (PAIGE Email — SendGrid)",
         "docs/delivery/exp03-launch-email-providers-plan.md"
+      ]
+    },
+    {
+      "id": "icloud-mail",
+      "name": "iCloud Mail (owner launch email provider)",
+      "taxonomy": "crm_calendar_communications",
+      "business_reason": "Owner launch requirement (ANT-51, 2026-10-13): PAIGE must support iCloud Mail connect/send/receive for launch where feasible, via properly secured IMAP/SMTP or a provider-supported higher-security authorization path (Apple mail is a client, not a provider).",
+      "paige_use_cases": [
+        "(planned) connect the owner's iCloud Mail identity for business send/receive",
+        "(planned) receive inbound customer replies into the governed inbox",
+        "(planned) send from the iCloud identity behind governed Communications approval paths"
+      ],
+      "connection_prerequisite": "Apple ID with app-specific password (IMAP/SMTP) or a provider-supported OAuth path if Apple ships one; credential custody through the encrypted connector store; Apple account security requirements (2FA) apply.",
+      "required_scopes": [
+        "Apple app-specific password for IMAP/SMTP (or future Apple OAuth mail scopes if provided)"
+      ],
+      "safe_readable_context": "Connection status, mailbox sync state, message metadata the connected account authorizes; never the app-specific password, never raw message bodies outside governed surfaces, provider content fenced as untrusted data.",
+      "allowed_writes_external_effects": "None implemented. Planned: outbound send through the governed Communications send path (the same approval seams as Gmail/PAIGE Email); inbound receive writes governed inbox records.",
+      "authority_lane": [
+        "prohibited"
+      ],
+      "m1_dependency": "none",
+      "canonical_provider_receipt": "None; future SMTP delivery receipts / IMAP append ids as applicable via the governed send path.",
+      "rail_mind_memory": "Rail: governed send/receive outcomes. Mind: only safe message facts. Memory: none of message bodies or credentials.",
+      "status": "PROPOSED",
+      "owner": "EXP10 Connect My Business (zCod) coordinating with the Mail lane (single engineering owner of ALL PAIGE Email)",
+      "dependency": "IMAP/SMTP client adapter inside the existing Communications channel-connector architecture (no second mail stack); Apple app-specific-password flow UX; coordinate with Mail lane roadmap (SendGrid/Resend lanes stay untouched).",
+      "next_slice": "Coordinate with the Mail lane: design the iCloud IMAP/SMTP connector as a channel_connectors provider using the encrypted credential store, gated behind owner review of the UX.",
+      "tier_eligibility": {
+        "platform": "eligible",
+        "solo": "eligible",
+        "agency_future": "resell",
+        "enterprise_future": "eligible"
+      },
+      "expense_and_operations": {
+        "cost_responsibility": "platform_paid",
+        "billing_owner": "platform (edge runtime for IMAP/SMTP polling; Apple charges nothing for iCloud Mail with an Apple ID)",
+        "operational_owner": "EXP10 Connect My Business + Mail lane",
+        "pricing_model": "free_quota",
+        "pricing_source_url": "https://support.apple.com/en-us/HT202304",
+        "pricing_checked_as_of": null,
+        "pricing_note": "iCloud Mail itself is free with an Apple ID (subject to Apple's storage limits for mail); operating cost is PAIGE edge runtime for sync. Apple source not re-verified this slice.",
+        "access_prerequisite": "Owner creates an Apple app-specific password after enabling 2FA; Apple may throttle abnormal IMAP clients",
+        "expected_cost_driver": [
+          "messages",
+          "api_calls"
+        ],
+        "rate_limits_quotas": "Apple IMAP connection/fetch limits per account; verify against Apple support guidance when built",
+        "usage_review_cadence": "monthly during early launch",
+        "renewal_deprecation_review": "review if Apple ships OAuth for mail",
+        "data_privacy_retention": "Mail content is tenant data; Paige retains governed outcome facts, never a shadow mailbox archive",
+        "money_movement": {
+          "can_move_real_money": false,
+          "m1_dependency_track": "none",
+          "detail": "Email send/receive cannot itself move real money"
+        },
+        "receipt_reconciliation": "SMTP/IMAP message ids through the governed send path",
+        "rail_outcome": "Governed send/receive outcome on Rail (future)",
+        "pause_revoke_path": "Delete the connector (clears stored credential); revoke the app-specific password in Apple ID settings",
+        "next_owner": "Mail lane",
+        "next_slice": "Connector design coordinated with Mail lane"
+      },
+      "sources": [
+        "docs/delivery/exp10-connect-my-business/EXP10-SOURCE-RECONCILIATION-REGISTER.md"
       ]
     },
     {
@@ -2780,6 +2844,134 @@
         "src/solo/settings-integrations-gateway.tsx (the catalogue row naming services.leadconnectorhq.com/mcp/anthropic/v2)",
         "docs/mcp-gateway/m4-ghl-connection-verification.md (the connect/verify/discover/execute runbook)",
         "docs/mcp-gateway/m1-execute-verification.md (the provider-agnostic governed path)"
+      ]
+    },
+    {
+      "id": "slack",
+      "name": "Slack (collaboration via hosted remote MCP)",
+      "taxonomy": "crm_calendar_communications",
+      "business_reason": "Owner-named EXP10 launch provider (directive 2026-10-22: help me connect Slack to our Operations) and the EXP08 Team Hub dependency; Slack operates a hosted remote MCP server the canonical gateway can drive without new per-provider transport code.",
+      "paige_use_cases": [
+        "(planned, governed) list and read permitted channels/conversations the workspace authorizes",
+        "(planned, governed) send messages to permitted channels behind per-tool durable approval",
+        "(planned, governed) answer business questions from workspace-authorized channel content"
+      ],
+      "connection_prerequisite": "Tenant-scoped Slack connection through the canonical MCP gateway (mcp_connections): Slack workspace admin installs/authorizes; least-privilege scopes; provider OAuth facts must be verified at build time (PR2) before any connect UI ships.",
+      "required_scopes": [
+        "Slack MCP connection scopes verified against Slack's official MCP documentation at build time (read channels/history and chat:write candidates; never admin-sensitive scopes by default)"
+      ],
+      "safe_readable_context": "Connection status, per-tool approval state, channel/conversation metadata the connected workspace authorizes; never credentials, never private-message content outside the connected authorization, provider payloads fenced as untrusted data.",
+      "allowed_writes_external_effects": "None implemented. Planned: Slack message sends and other consequential Slack actions only through the gateway's governed execute (per-tool durable approval + prepare + owner go flag + Rail receipt); no chat shortcut around the gate.",
+      "authority_lane": [
+        "prohibited"
+      ],
+      "m1_dependency": "none",
+      "canonical_provider_receipt": "None; future Slack MCP tool-call responses carried in the gateway's closed outcome vocabulary + Rail receipt.",
+      "rail_mind_memory": "Rail: governed Slack action outcomes. Mind: only safe channel/action facts. Memory: none of message payloads or credentials.",
+      "status": "PROPOSED",
+      "owner": "EXP10 Connect My Business (zCod)",
+      "dependency": "Provider OAuth facts verification (hosted MCP endpoint, token/scopes shape) before PR2; mcp_providers descriptor row; gateway-panel connect flow; governed approvals before any write lane opens.",
+      "next_slice": "EXP10 PR2: verify Slack's hosted MCP auth contract, add the mcp_providers descriptor, connect through the existing gateway, prove verify + tools/list read-only against a real authorized workspace.",
+      "tier_eligibility": {
+        "platform": "eligible",
+        "solo": "eligible",
+        "agency_future": "resell",
+        "enterprise_future": "eligible"
+      },
+      "expense_and_operations": {
+        "cost_responsibility": "tenant_direct",
+        "billing_owner": "tenant (their Slack workspace plan); platform pays nothing",
+        "operational_owner": "EXP10 Connect My Business",
+        "pricing_model": "unknown",
+        "pricing_source_url": "https://slack.com/pricing",
+        "pricing_checked_as_of": null,
+        "pricing_note": "Slack billing stays between the tenant and Slack; Paige operating cost is the MCP API calls only. Pricing not verified this slice.",
+        "access_prerequisite": "Slack workspace admin consent; app approval policies of the connected workspace apply",
+        "expected_cost_driver": [
+          "api_calls",
+          "messages"
+        ],
+        "rate_limits_quotas": "Slack Web API rate tiers apply per workspace; verify at Slack docs when the connect flow ships",
+        "usage_review_cadence": "monthly during early launch",
+        "renewal_deprecation_review": "review on Slack API deprecation announcements",
+        "data_privacy_retention": "Channel content is tenant data; Paige retains only governed outcome facts, never message archives",
+        "money_movement": {
+          "can_move_real_money": false,
+          "m1_dependency_track": "none",
+          "detail": "Slack messaging cannot move real money; no spend control track applies to reads/sends"
+        },
+        "receipt_reconciliation": "Slack MCP tool-call response ids via gateway receipts once execution is enabled",
+        "rail_outcome": "Governed Slack action outcome on Rail (future)",
+        "pause_revoke_path": "Disconnect through the gateway clears the stored credential; Slack workspace admins may additionally revoke the app in Slack settings",
+        "next_owner": "EXP10 Connect My Business",
+        "next_slice": "Verify provider facts and ship read-only connect+verify"
+      },
+      "sources": [
+        "docs/delivery/exp10-connect-my-business/EXP10-SOURCE-RECONCILIATION-REGISTER.md",
+        "supabase/functions/mcp-gateway/index.ts"
+      ]
+    },
+    {
+      "id": "make-com",
+      "name": "Make.com (external automation)",
+      "taxonomy": "marketplace_mcp_automation",
+      "business_reason": "Owner-named EXP10 automation provider (directive 2026-10-22). Make exposes a REST API with OAuth, NOT an MCP server, so unlike Slack it requires a Layer C ActionAdapter rather than only a gateway descriptor.",
+      "paige_use_cases": [
+        "(planned, governed) discover scenarios the tenant authorizes",
+        "(planned, governed) inspect scenario executions and outcomes",
+        "(planned, governed) run a scenario behind governed approval + idempotency + original execution id readback"
+      ],
+      "connection_prerequisite": "Make.com platform app OAuth authorization (tenant-owned); API access level permitting scenario/execution operations; provider API terms verified at build time.",
+      "required_scopes": [
+        "Make API OAuth scopes for scenarios:read, scenarios:run, logs:read (exact scope names verified against Make developer docs at build time)"
+      ],
+      "safe_readable_context": "Connection status, scenario inventory and execution outcome states the tenant authorizes; never credentials or raw payload bodies, provider content fenced as untrusted data.",
+      "allowed_writes_external_effects": "None implemented. Planned: scenario runs via a Layer C ActionAdapter with single-effect idempotency, governed approval and Make's original execution id as the canonical readback; never blind retries of uncertain outcomes.",
+      "authority_lane": [
+        "prohibited"
+      ],
+      "m1_dependency": "M1 real-money spend control (see cost_tracks): a Make scenario can trigger arbitrary downstream real spend — the executed act binds reserve/confirm/reconcile + receipt + Rail; NEVER satisfied by LLM-token metering.",
+      "canonical_provider_receipt": "None; future Make execution id readback (Make API returns execution ids) as canonical provider receipt.",
+      "rail_mind_memory": "Rail: governed automation-run outcome with original execution id. Mind: only safe scenario facts. Memory: none of payloads or credentials.",
+      "status": "PROPOSED",
+      "owner": "EXP10 Connect My Business (zCod)",
+      "dependency": "Layer C ActionAdapter (the n8n adapter is the precedent); Make developer API terms + rate limits verification; mcp_providers is NOT the path (REST, not MCP) — a provider adapter in the orchestration layer is.",
+      "next_slice": "Verify Make API v2 scenario/execution operations + OAuth shape; then design the ActionAdapter slice against the n8n-adapter precedent.",
+      "tier_eligibility": {
+        "platform": "eligible",
+        "solo": "eligible",
+        "agency_future": "resell",
+        "enterprise_future": "eligible"
+      },
+      "expense_and_operations": {
+        "cost_responsibility": "tenant_direct",
+        "billing_owner": "tenant (their Make subscription); platform pays nothing",
+        "operational_owner": "EXP10 Connect My Business",
+        "pricing_model": "fixed_subscription",
+        "pricing_source_url": "https://www.make.com/en/pricing",
+        "pricing_checked_as_of": null,
+        "pricing_note": "Make pricing is tiered by operations/month on the tenant's own subscription; Paige's operating cost is API calls only. Pricing not verified this slice.",
+        "access_prerequisite": "Make OAuth authorization by the tenant; API availability depends on the tenant's Make plan",
+        "expected_cost_driver": [
+          "api_calls"
+        ],
+        "rate_limits_quotas": "Make API rate limits per plan; verify at Make developer docs when the adapter is built",
+        "usage_review_cadence": "monthly during early launch",
+        "renewal_deprecation_review": "review on Make API changelog",
+        "data_privacy_retention": "Scenario configurations are tenant data; Paige retains governed outcome facts only",
+        "money_movement": {
+          "can_move_real_money": false,
+          "m1_dependency_track": "none",
+          "detail": "Make API calls cannot themselves move money; downstream scenario effects belong to the tenant's connected apps"
+        },
+        "receipt_reconciliation": "Make execution id from the API response, reconciled against the governed run record",
+        "rail_outcome": "Governed automation-run outcome on Rail (future)",
+        "pause_revoke_path": "OAuth token revoked on disconnect; tenant may also remove authorization in Make settings",
+        "next_owner": "EXP10 Connect My Business",
+        "next_slice": "Provider API facts verification"
+      },
+      "sources": [
+        "docs/delivery/exp10-connect-my-business/EXP10-SOURCE-RECONCILIATION-REGISTER.md"
       ]
     },
     {

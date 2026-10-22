@@ -1,3 +1,23 @@
+## EXP09 original status and owner Chat preparation — verified releases,2026-10-22
+
+PR2511 merged f7cc0cb6a0c92350680578336bcc08d95cbbd26d after exact-head
+checks; normal Edge39692766955 and direct Chat@500/all261 digests/JWTtrue matched
+that release. Literal-true original consumed-preparation observation changes no
+original action or default CRM/reminder transport. Receipt6328805431.
+
+PR2519 merged d53fe8333b0cb1fe2134fb94c9f85bbb2d411b28 after11 applicable
+checks/two statuses and accurately labelled lower-assurance review. Normal Edge
+39696707197 and direct Chat@501/all261 served-source hashes/JWTtrue match actual
+merge including EXP04 revision130000. READY production web/public build and
+receipt6329286905 retain exact identities in Master4.0. Native original Knowledge
+preparation is not publication/indexing/sharing. No new runtime, sender, approval
+system, authority or Memory store is introduced.
+
+The original saved-card consumer2522 remains unmerged; complete signed-in
+owner/client Knowledge publication/retrieval, eligible Live and the seven-pillar
+Experience/capabilities/official algorithms remain owed. This factual closeout
+promotes no customer release or complete Experience acceptance.
+
 ## EXP09 original preparation readback — 2026-10-21 production
 
 Native reader2496 merged5b03e90302e19ee1ef4a8dacbd677329378fa06e and normal
@@ -88,6 +108,20 @@ plus original vocabulary3 PASS; unchanged original102 included. Native history
 ordinary-role/provider/legal/full O1–O12/founder acceptance gates remain owed.
 No new writer/ledger/approval/runtime, Chat/Live or algorithm promotion.
 [Journey](../delivery/exp04-get-paid-deliver-journey.md).
+## EXP04 retained-document correction guard — 2026-10-21 local
+
+Original native reader/writer frozen-draft integrity mismatch reproduced in a
+disposable fixture; four positive setup controls precede genuine baseline RED.
+Bounded forward160000 repairs the existing seal trigger only; original SAVE/link,
+author framework, native record/audit/history preserved. Native43 assertions,
+replay2/two overlapping sessions PASS, including normal draft/link/void recovery.
+New source is UNRELEASED; only own unapplied150000 renumbered after confirmed
+E09 collision, exact SQL unchanged. Other reservations untouched. E09#2525/140000 is now released; E02
+resolved its duplicate by reserving170000, after E09 pending150000/E04 pending160000. No actual provider/JWT/
+customer acceptance, data repair, new writer/store/runtime or Chat activation.
+Pre-freeze source CAS/exact commercial presentation remains C7 integration work;
+correction mounting and all original O1–O12 remain open.
+[Evidence](../evidence/ui-delivery/e04-frozen-draft-integrity.md).
 ## EXP04 authoring release — 2026-10-21
 
 Native document authoring#2515 reviewed6ef6cd9bcf9dbb97b53153edffba0243a5a060bd →
@@ -228,6 +262,19 @@ and #2175's byte verifier: existing completed/replayed seal must match its actua
 private PDF. Native106 plus5 Portal-wiring tests and three Edge type checks pass;
 release, authenticated recovery and full ALG01/12 acceptance remain proof owed.
 [Exact scope and limitations](../evidence/ui-delivery/e04-retained-completion-reconcile.md).
+
+## EXP02 Systems Check source-accuracy repair — development
+
+The original recorded-check consumer now has a bounded, unreleased correction:
+retire its misleading legacy business KPI strip in favor of the existing canonical
+Executive destination; loading/failed reads no longer assert an empty check history.
+Original findings, runner, refresh, approvals and activity remain unchanged. Source
+counterfactuals fail before repair; final66 cases/three suites and15 native synthetic
+component renders pass, including narrow keyboard/44px control and Back/reload.
+Review, exact-head CI, release/readback and corrected ordinary SOLO QA remain owed.
+No new metric reader, provider, scan or action is activated. Catalogue coverage and
+canonical algorithm maturity are unchanged; all19/nine and founder acceptance stay
+open. [Owning evidence and pre-edit routing](../evidence/ui-delivery/e2-systems-summary-truth.md).
 
 ## EXP02 Business Review and orchestration — October21 22:50 UTC
 

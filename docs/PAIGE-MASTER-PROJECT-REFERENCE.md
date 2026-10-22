@@ -826,6 +826,52 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-21 — EXP09 owner Chat CURA private preparation.**
+PR [#2519](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2519), reviewed
+`8b4f4d6de0ec5b529572eff1989b32cfce242609`, merged
+`d53fe8333b0cb1fe2134fb94c9f85bbb2d411b28` after11 applicable exact-head checks
+and both deployment statuses SUCCESS. Final review5607662537 is AUTHOR-REVIEW /
+LOWER ASSURANCE; no distinct review is implied. Original Knowledge tool purpose,
+frozen original approval and native atomic preparation writer are reused; private
+preparation is not publication, indexing, customer sharing or a second runtime.
+Normal Edge39696707197/job119555730599 deployed and source/config verification
+succeeded. Direct paige-ai-chat@501 ACTIVE/verify_jwt=true; all261 served-file
+SHA256 digests match the actual merge. Entry digest
+`3068f564e2633614f1ffec914de96cc2c5c2b06c3c4f11c7f3579972c05568c2`.
+Actual merge parents include concurrent EXP04 revision130000; their composed tree
+`79cc442cfd1d929628caa9e05fe3ed5257e6ab72` was reproduced, not inferred from an
+older predicted tree. Web dpl_5o1wWVgcVVXP3UNEwuqpViANmqsQ READY; public build
+`d53fe8333b0cb1fe2134fb94c9f85bbb2d411b28-mvirvpne`. Own SQL NOT_APPLICABLE.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2519#issuecomment-6329286905).
+Functional: bounded producer deployed/source verified. Visual:66 synthetic
+component state/viewport cases plus4 dark cases; no full signed-in shell claim.
+Experiential: original saved-status browser consumer, source publication and real
+customer retrieval, eligible Live, seven-pillar journey/capabilities/algorithms and
+founder acceptance remain separate PROOF OWED. Production internal increment;
+no customer release name/version or announcement. Recovery preserves original
+work/approval/source identities and unknown-outcome review holds.
+
+**2026-10-21 — EXP09 original preparation status transport.**
+PR [#2511](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2511), reviewed
+`0c6a7cff4904da4c343c1b0066aa023a93ba56d7`, merged
+`f7cc0cb6a0c92350680578336bcc08d95cbbd26d` after11 exact-head checks and both
+statuses SUCCESS. Final AUTHOR-REVIEW / LOWER ASSURANCE5607138234; earlier
+NON-AUTHOR5606641670 is scoped only to9088. Current-main concurrent Operations/
+Agreements changes composed cleanly. The literal-true status selector reads only
+native-proved original consumed-preparation metadata. Default CRM/reminder traces
+remain unchanged; no dispatch/retry/approval restoration/publication/hold clearance.
+Normal Edge39692766955/job119542723656 source/configuration verification SUCCESS;
+direct paige-ai-chat@500 ACTIVE/JWTtrue/all261 served SHA256 digests match the actual
+merge. Web dpl_EjCsDyDW2TqHPdjv3VbJHDUF1eCu READY, public build
+`f7cc0cb6a0c92350680578336bcc08d95cbbd26d-mviqjr22`. SQL NOT_APPLICABLE.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2511#issuecomment-6328805431).
+Functional: bounded observer deployed/read back. Visual: no renderer change in2511.
+Experiential: visible consumer/typed producer and joined ordinary owner/external
+client proof remain separate; complete seven-pillar/eligible Live/founder acceptance
+PROOF OWED. Internal production increment; no customer version or announcement.
+Recovery: compatible reviewed forward fix preserving all original work and sources.
+
+
 **2026-10-21 — EXP05 compact Operations banners and original Work week.**
 
 | Released increment | Exact engineering and production identity | Verified boundary and remaining proof |

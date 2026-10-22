@@ -1442,3 +1442,30 @@ review/CI/Preview, ordered release/readback and whole Experience acceptance rema
 owed. See [bounded native evidence](../evidence/ui-delivery/e04-preparation-editability.md).
 
 October22 checked-signer main-target continuation: original prerequisite#2554 is RELEASED SOURCE VERIFIED, merge605a8c4bcdfb63c016689717947caf09f3296f83/native240004/bodyf380cfa97f14e29c8b88721a76b9db4e/unchanged owner/search_path/ACL and exact webdpl_HMxLuMYHqkv8KYQVWYJBEm2K3UW7/build605a8c4…-mvj7pldd (receipt6335238273). Actual main and all E09 source retained through a clean composition; own native250004 and checked proof are unchanged. Earlier pending-prerequisite notes are historical. This own250004 still requires fresh exact-head CI/review/normal migration/readback; source119/replay2 is not customer/provider/signing acceptance. All12 outcomes remain mandatory/incomplete.
+
+## EXP04 uploaded-PDF source correction — October22, development
+
+Original native SAVE11-argument body1bd28e75afa0f50bb07b717795a5be0e verified read-only:
+uploaded source retains its file path and NULL body. Original form's required second
+pasted contract was ignored; native PDF preparation, link refusal and send/parse/hash
+contracts are authoritative. Same original form/hook now share bounded supported-PDF/
+media/25MB selection, correctable before any terms/upload write; no second wording or
+false explanation. Original DTO/path/bucket/RLS/SDK/cache/no-overwrite/leave/authority
+epochs and unconfirmed-outcome messages remain. No converter or signing engine added.
+
+Source baseline six intended RED plus original timeout; corrected120 focused and
+actual composed293/11 suites PASS without timeout/assertion waiver. Whole-app type
+ratchet10/current6, lint0/one incumbent, Binding35/controls and SOLO parity/controls
+PASS. Actual final native source render20cases/nine paths/20pins/zero page errors,
+including keyboard file-to-title and correctable invalid selection, only synthetic
+ports. Exact main/current Impeccable BOTH12 incumbent anti-patterns/1066 advisories;
+not a clean whole-platform design scan or finished premium claim. Evidence:
+[native PDF intake](../evidence/ui-delivery/e04-agreement-pdf-intake.md).
+
+Template consumer2549 actually released asd0741babff894cba40dc7566b5ea94390ac16b5c;
+READY exact protected version and served native UI/API verified, receipt6337776679.
+Jurisdiction/requested-wording-review/reviewer options are optional configuration,
+no supplied legal words/completed review or infrastructure counsel gate. Own intake
+review/CI/release/readback and actual customer/provider/full12/founder acceptance
+remain owed. Stable upload recovery, real PDF preview/fields and canonical approved
+Communications/provider integration remain unfinished; no Chat/Live activation.

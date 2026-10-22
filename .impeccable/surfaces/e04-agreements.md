@@ -1,5 +1,15 @@
 # Agreements preparation — Operate
 
+October22 bounded intake correction preserves this native direction: original
+modal/fields/primary action, PDF guidance associated by useId, correctable inline
+refusal, no second unretained wording input. No token/CSS/layout system change.
+Actual final source20 responsive cases/nine paths/20 pins, keyboard file-to-title
+and zero page errors; native backdrop Fold respected. Exact-main and current SOLO
+detector both12 incumbent anti-patterns/1066 advisories, not a whole-surface clean
+certificate. New form/source introduces no detector finding or material observed
+interaction defect. Full professional exact-document workspace/ordinary-role and
+founder acceptance remain incomplete; no new design/owner acceptance is claimed.
+
 Owner authority: October21 EXP04 resume and premium Experience standard. Routine
 UX decisions are delegated to the existing lead; this is not a founder-reviewed
 mock. Complete live Experience evaluation remains pending. No other agent is used.

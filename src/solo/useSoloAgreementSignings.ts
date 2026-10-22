@@ -452,6 +452,9 @@ export function useSoloAgreementSignings(): SigningsState {
     if (openedIdentity.resolving || !openedIdentity.tenantId) {
       return { ok: false, message: "Wait for your workspace to finish loading, then try again." };
     }
+    if (openedIdentity.tenantId !== expected) {
+      return { ok: false, message: "Your business context changed. Reopen this form in the intended business before uploading." };
+    }
     const safe = (file.name || "document")
       .replace(/[^\w.-]+/g, "-")
       .replace(/^[.-]+/, "")
@@ -462,15 +465,15 @@ export function useSoloAgreementSignings(): SigningsState {
         .from("tenant-agreements")
         .upload(path, file, { cacheControl: "3600", upsert: false });
       if (identity.current !== openedIdentity) {
-        return { ok: false, message: "Your workspace changed. Reopen this form in the intended workspace." };
+        return { ok: false, message: "The upload result is unconfirmed because your business context changed. The file may already be stored in the original business. Return to that business before continuing." };
       }
       if (error) {
-        console.error("[signings] document upload failed", error);
-        return { ok: false, message: "That file could not be uploaded, so no document was recorded. Nothing else was changed." };
+        console.error("[signings] document upload was not confirmed");
+        return { ok: false, message: "The upload result could not be confirmed. The file may already be stored. This response does not confirm an agreement or a signing request." };
       }
       return { ok: true, path };
     } catch {
-      return { ok: false, message: "That file could not be uploaded, so no document was recorded. Nothing else was changed." };
+      return { ok: false, message: "The upload result could not be confirmed. The file may already be stored. This response does not confirm an agreement or a signing request." };
     }
   }, [activeTenantId]);
 

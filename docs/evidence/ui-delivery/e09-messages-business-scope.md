@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: bind the existing native business argument and Auth se
 FLOW_PROTOTYPE: NOT_REQUIRED: bounded existing-contract repair; actual original-component renders and controlled actions below verify existing states, not a newly invented flow.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: external customers message or request help from the business whose authorized portal they selected.
 VISUAL_DIRECTION: PASS: original PAIGE customer design system and tenant branding; no new layout, navigation, model runtime or shared component.
-AUTOMATED_EVIDENCE: PASS:94 tests/6 focused original Messages, draft/page, scope, actor-capture and real-SDK transport suites; final ESLint0 errors and diff check. Existing native scope suite adds10 original Conversations cases,72 total; hosted execution separately required and no72-case success claimed.
+AUTOMATED_EVIDENCE: PASS:95 tests/6 focused original Messages, draft/page, scope, actor-capture and real-SDK transport suites; final ESLint0 errors and diff check. Existing native scope suite adds10 original Conversations cases,72 total; hosted execution separately required and no72-case success claimed.
 STATIC_EVIDENCE: PASS: selected native p_tenant_id and per-builder business/captured bearer; exact captured JWT is verified by original Auth rather than cached Session.user. Original native functions/schema/ACL/sender/Spine/Edge unchanged. Final exact-head hosted type/build/native CI remains required.
 RENDERED_EVIDENCE: PASS: actual original Messages page plus changed hook with synthetic Auth/transport; desktop preflight refusal,390x560 light own-business Support and320x560 dark wrong-business refusal images under assets/e09-messages-business-scope/. Iframe sizes and synthetic inputs are explicit; no iPhone/Safari or full authenticated shell proof.
 BEHAVIORAL_EVIDENCE: PASS: local original Support form rejects a changed-login preflight, shows the existing unsent card and retains the request for recovery. Wrong-business response reveals no foreign history and leaves composer disabled. These are local controlled transports, not actual native customer actions.
@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: Selected business narrows original native reads/sends/retri
 MOTION_PURPOSE: None added.
 PROTECTED_SEAMS: EXP09 hook/request helper/test/doc lease in ANT-161; E03 original writer/provider/inbox untouched. No shared Edge/Spine/c0b change, Layer C adapter or activation.
 
-INTERNAL_BUILD_IDENTITY: implementation=763b30e92c6347f2ad9992ae4653aa493a4c3c19; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e09-messages-business-scope.md
+INTERNAL_BUILD_IDENTITY: implementation=368567018bc6e075c812a93312562eed17fc56c1; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e09-messages-business-scope.md
 RELEASE_CHANNEL: development: original source/SDK and isolated rendered synthetic transport.
 RELEASE_CLASSIFICATION: internal-only: bounded domain-request binding, not full multi-business admission or complete Experience.
 CUSTOMER_RELEASE_IDENTITY: none: no announcement or customer version.
@@ -43,4 +43,8 @@ Applied responsive hierarchy, truthful-state, control reachability and input/foc
 ![Original390px own-business Support](assets/e09-messages-business-scope/narrow-business-support.png)
 ![Original320px wrong-business refusal](assets/e09-messages-business-scope/small-dark-wrong-business.png)
 
-Functional:94 focused browser/source tests; native/production gates owed. Visual: original design-system interface preserved, bounded actual renders inspected. Experiential: same-business recovery and cross-scope retirement source-verified, whole customer/domain/identity journey unfinished. Founder Acceptance: pending one complete integrated live Experience evaluation.
+Functional:95 focused browser/source tests; native/production gates owed. Visual: original design-system interface preserved, bounded actual renders inspected. Experiential: same-business recovery and cross-scope retirement source-verified, whole customer/domain/identity journey unfinished. Founder Acceptance: pending one complete integrated live Experience evaluation.
+
+Initial Auth interruption was reproduced RED (loading stranded/unhandled rejection), corrected through the original error/retry path, and confirmed GREEN in95 focused tests. Actual original-page keyboard Return on Try again recovered the selected business history and focused the composer under synthetic Auth/transport; no message was sent.
+
+![Original initial-Auth keyboard retry recovered](assets/e09-messages-business-scope/desktop-auth-retry-recovered.png)

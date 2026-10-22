@@ -4,12 +4,18 @@ import react from "@vitejs/plugin-react-swc";
 const root = import.meta.dirname;
 const harnessRepo = path.resolve(root, "../../../..");
 const slice = process.env.E2_HARNESS_SLICE ?? "finance";
-if (!["targets", "vera", "finance", "catalogue"].includes(slice)) throw Error("Unknown E02 harness slice");
-const repo = slice === "finance" || slice === "catalogue" ? harnessRepo : path.resolve(harnessRepo, "../e2-" + slice);
+if (!["targets", "vera", "finance", "catalogue", "systems"].includes(slice)) throw Error("Unknown E02 harness slice");
+const repo = ["finance", "catalogue", "systems"].includes(slice) ? harnessRepo : path.resolve(harnessRepo, "../e2-" + slice);
 const stubs = path.join(root, "stubs.tsx");
 export default defineConfig({
   root, publicDir: path.join(repo, "public"), cacheDir: path.join(harnessRepo, "node_modules/.vite/harness-executive-" + slice), css: { postcss: repo }, plugins: [react()],
   resolve: { alias: [
+    ...(slice === "systems" ? [
+      { find: /^\.\/SoloSystemsCheckWorkspace$/, replacement: path.join(repo, "src/solo/SoloSystemsCheckWorkspace.tsx") },
+      { find: /^@\/hooks\/useSystemsCheck$/, replacement: path.join(root, "systems-check-fixtures.ts") },
+      { find: /^\.\/data\/useCommandCenter$/, replacement: path.join(root, "../systems-check-mount/useCommandCenter-stub.ts") },
+      { find: /^\.\/data\/useSoloActivityFeed$/, replacement: path.join(root, "../systems-check-mount/useSoloActivityFeed-stub.ts") },
+    ] : []),
     { find: /^@\/integrations\/supabase\/client$/, replacement: stubs },
     { find: /^@\/hooks\/useTenantContext$/, replacement: stubs },
     { find: /^@\/hooks\/useTierFeatures$/, replacement: stubs },

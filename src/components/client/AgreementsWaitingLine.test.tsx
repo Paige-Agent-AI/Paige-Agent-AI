@@ -13,7 +13,7 @@ const f = vi.hoisted(() => ({
   sections: [] as PortalNavSection[],
   ready: true,
 }));
-vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: (...a: unknown[]) => f.rpc(...a) } }));
+vi.mock("@/integrations/supabase/client", () => ({ supabase: {rpc:(...a:unknown[])=>f.rpc(...a),auth:{getUser:async()=>({data:{user:{id:"e0912300-0000-4000-8000-000000000001"}},error:null}),onAuthStateChange:()=>({data:{subscription:{unsubscribe:vi.fn()}}})}} }));
 vi.mock("@/hooks/useCustomerPortalNav", () => ({ useCustomerPortalNav: () => ({ sections: f.sections, ready: f.ready }) }));
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 

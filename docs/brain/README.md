@@ -1330,3 +1330,31 @@ All163 integrated tests pass; actual SDK held-response completion plus render-fr
 barrier proves stale recovery cannot publish before a new explicit read. Final
 20-frame/17-path proof pins all25 owning files exactly. This is a functional
 recovery repair, not further visual polishing or a provider/acceptance claim.
+
+
+## EXP04 original signer preparation and recovery — October22
+
+The existing E04 lead extends the original Sales preparation workspace with an
+owner-authorized signer form, role/order and original checked native receipt.
+REUSE original agreement/client/source versions, signer PK, immutable edited event,
+scoped writer and one Sales leave guard; EXTEND closed SDK consumer and opaque
+business/request navigation. The internal act sends/signs/charges nothing, and its
+historical preparation receipt is distinct from freshly read current signer state.
+Native producer#2557 and earlier template/signer contracts require actual ordered
+release/readback before this consumer. Chat/Live execution remains UNAVAILABLE;
+no LayerC, approval, Rail or agreement store is replaced.
+
+Final237 tests/nine integrated suites, original compiled Sales20 viewport/theme
+cases/16 paths/zero page errors/28 source pins and uncovered entry focus pass.
+Canonical type ratchet10/current6 and scoped lint0errors/two incumbent warnings
+pass; Impeccable detector exits0 after correcting one new radius advisory. Actual
+Navigation API blocked the initial recovery checkpoint, and a later native refusal
+left no visible recovery action; both genuine rendered findings were repaired in
+the original single guard/controller, with invalid-location/distinct-editor and
+interruption negatives. Original leave dialog now fits desktop/320px.
+
+This is local source/render proof, not customer authentication or full premium
+Experience acceptance. Native releases, consumer exact-head review/CI/web readback,
+owner/staff/linked-client/two-cohort QA, document fields/signing/effective economics,
+all O1–O12 and complete founder evaluation remain owed. See [bounded evidence](../evidence/ui-delivery/e04-agreement-recipients.md)
+and [original journey](../delivery/exp04-get-paid-deliver-journey.md).

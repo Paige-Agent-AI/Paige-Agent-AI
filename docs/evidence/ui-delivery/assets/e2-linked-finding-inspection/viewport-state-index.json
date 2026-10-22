@@ -1,12 +1,12 @@
 {
   "kind": "Local native synthetic evidence; not authenticated or production proof",
-  "base": "13d26748311a35a6d2ae4b65c7d67116fa2aa6fa",
-  "parent": "0e18a294c7956792c92197f0eb9cfdb5aa8ca224",
+  "base": "8e97c949d7a7234a842a9ba44d8bc8646caf2cc6",
+  "parent": "9421dba5b4a6aa1df333a0d8337e711a8fe4b53f",
   "capture": "cua_repl Page.captureScreenshot; JPEG quality80; exact viewport clip; no image processing",
   "sourcePins": [
     {
       "path": "src/solo/SoloSystemsCheckWorkspace.tsx",
-      "sha256": "9cef82df5035e7b907a9e316a34e6a3b1298ecd6c1fedab943490a239eced64c"
+      "sha256": "5586b2689982284acf15daabaa6102d636516c2198dcf7812190a2566e935467"
     },
     {
       "path": "src/solo/systems-check-areas.ts",
@@ -218,6 +218,19 @@
       "sha256": "5ae888c43aeeab7919507272cefe1cefc4dd665a65212fa5ab2c7baad1c0e2ec"
     },
     {
+      "file": "900-interruption-recovery.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "bytes": 87752,
+      "sha256": "d43436be96e85961c59c6a15932866049ab270bd79e0d82d43dad65172d9efbe"
+    },
+    {
       "file": "900-obsidian-reduced.jpg",
       "viewport": [
         900,
@@ -227,8 +240,8 @@
         900,
         1000
       ],
-      "bytes": 79838,
-      "sha256": "7fb2cbcb1f4475ba36aee5213497d4790060e14f5d801a27cedba8e553c328a6"
+      "bytes": 97075,
+      "sha256": "0251c41c7d04790e9d9b9aaf74d0583453c129245f5b0d213e63b7a4025cddb0"
     },
     {
       "file": "900-obsidian-drawer.jpg",

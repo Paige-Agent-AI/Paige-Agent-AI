@@ -166,6 +166,22 @@ describe("Solo Systems Check workspace", () => {
     expect(baseCommand.approve).not.toHaveBeenCalled();
   });
 
+  it("retires the original Ask First presentation when a linked source becomes unreadable", () => {
+    harness.systems.mockReturnValue({ ...baseSystems, findings: [{ ...finding, id: sourceId }] });
+    render(sourceEntry);
+    act(() => button("Inspect linked evidence")!.click());
+    act(() => button("Put PAIGE to work")!.click());
+    expect(host.querySelector('[aria-labelledby="ask-first-title"]')).not.toBeNull();
+    harness.systems.mockReturnValue({ ...baseSystems, isError: true, findings: [{ ...finding, id: sourceId }] });
+    render(sourceEntry);
+    expect(host.querySelector('[aria-labelledby="ask-first-title"]')).toBeNull();
+    expect(host.querySelector('[role="dialog"]')).toBeNull();
+    expect(host.querySelector('.sc-scroll-owner')?.getAttribute("aria-hidden")).toBeNull();
+    expect(document.activeElement).toBe(button("Refresh current data"));
+    expect(openPaige).not.toHaveBeenCalled();
+    expect(baseCommand.approve).not.toHaveBeenCalled();
+  });
+
   it("adds no source section to ordinary navigation", () => {
     render();
     expect(host.querySelector('[aria-labelledby="sc-linked-title"]')).toBeNull();

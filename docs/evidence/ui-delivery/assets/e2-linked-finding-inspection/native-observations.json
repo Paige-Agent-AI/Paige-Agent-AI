@@ -1,5 +1,5 @@
 {
-  "kind": "Local native synthetic evidence; no customer/backend/authentication claim",
+  "kind": "Final-source local native synthetic evidence; no customer/backend/authentication claim",
   "frames": [
     {
       "file": "1536-closed.jpg",
@@ -277,6 +277,19 @@
       ]
     },
     {
+      "file": "900-interruption-recovery.jpg",
+      "drawer": false,
+      "fontLoaded": true,
+      "pageOverflow": false,
+      "paige": "closed",
+      "sourceButtons": [],
+      "sourceOverflow": false,
+      "viewport": [
+        900,
+        1000
+      ]
+    },
+    {
       "file": "900-obsidian-reduced.jpg",
       "drawer": false,
       "fontLoaded": true,
@@ -453,18 +466,29 @@
     }
   ],
   "keyboard": {
-    "before": {
-      "focus": "Inspect linked evidence",
-      "scroll": 59.20000076293945
-    },
+    "before": 59.20000076293945,
     "after": {
       "drawer": false,
       "focus": "Inspect linked evidence",
+      "outline": "rgb(101, 90, 150) solid 1.6px",
       "scroll": 59.20000076293945
     }
   },
+  "clear": {
+    "focus": "Refresh current data",
+    "linked": false
+  },
+  "interruption": {
+    "drawer": false,
+    "focus": "Refresh current data",
+    "proposal": false
+  },
   "chatContinuity": {
-    "draft": "Local continuity check — unsent.",
-    "paige": "open"
+    "draft": "Local continuity check — unsent."
+  },
+  "dark": {
+    "reduced": true,
+    "title": "Payment processor declaration",
+    "transition": "1e-05s"
   }
 }

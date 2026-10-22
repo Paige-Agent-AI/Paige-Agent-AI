@@ -8,7 +8,8 @@ inline original title/status/as-of → explicit existing drawer → focus return
 Invalid/ambiguous, missing/historical, loading/error and unfinished source states
 remain explicit; no broader/historical lookup, scan or click authorization is
 added. Source selection clears independently of other query/hash context.
-Thirteen causal failures then156 cases/five suites pass;19 native synthetic
+Thirteen causal failures plus a separate Ask First interruption review regression,
+then157 cases/five suites pass;20 final-source native synthetic
 frames/17 source pins and actual build pass. Final static/exact-head CI,
 deployment/source readback and ordinary account/cohort proof remain
 owed. Desk/Chat CTA/return is a separate required consumer. Original ALG03/13,

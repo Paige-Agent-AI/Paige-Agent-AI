@@ -8,9 +8,10 @@ not disclose linked evidence or imply resolution. Clearing selection preserves
 other query/hash context and returns focus to the original Refresh control.
 No new reader, scan, action, approval, queue or authority. Original nineteen
 outcomes/nine capabilities remain mandatory; no catalogue or ALG03/13 promotion.
-Thirteen causal failures then156 cases/five original suites pass;19 untouched
+Thirteen causal failures plus a separate stale Ask First review regression,
+then157 cases/five original suites pass;20 untouched final-source
 native synthetic frames verify17 source pins, eight shell sizes,320px keys,
-Obsidian/reduced motion and unavailable/resolved branches. Actual build passes
+Obsidian/reduced motion, interruption/fallback focus and unavailable/resolved branches. Actual build passes
 with incumbent warnings. Final static/hosted CI, actual release/readback and
 ordinary authorized account/cohort proof remain separately required. Spacious
 Desk/Chat source CTA and return continuity are a subsequent small consumer.

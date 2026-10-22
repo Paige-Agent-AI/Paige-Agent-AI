@@ -393,10 +393,14 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
     sourceWasRequested.current = sourceRequested;
     if (!sourceRequested && !wasRequested) return;
     // Back, a new source, a new run or a failed/pending reread must retire old inspection.
+    const hadInspectionFocus = Boolean(drawerRef.current?.contains(document.activeElement)
+      || proposalRef.current?.contains(document.activeElement));
     setSelected(null);
     setExpanded(false);
-    restoreFindingFocus.current = false;
-    returnFocus.current = null;
+    setProposal(false);
+    proposalReturnFocus.current = null;
+    restoreFindingFocus.current = hadInspectionFocus;
+    returnFocus.current = hadInspectionFocus ? refreshTrigger.current : null;
   }, [location.key, sourceRequested, systems.loading, systems.isError, systems.run?.id]);
 
   useEffect(() => {

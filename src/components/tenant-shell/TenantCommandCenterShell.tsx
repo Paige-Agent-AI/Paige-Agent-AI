@@ -197,6 +197,13 @@ export function TenantCommandCenterShell({
     const child = paigePopoutRef.current;
     if (child && !child.closed) {
       child.focus();
+      window.requestAnimationFrame(() => {
+        if (paigePopoutRef.current !== child || child.closed) return;
+        try {
+          const composer = child.document.querySelector<HTMLTextAreaElement>('#tenant-paige-workspace textarea[aria-label="Message PAIGE"]');
+          if (composer && !composer.disabled && composer.getClientRects().length && !composer.closest('[hidden],[aria-hidden="true"],[inert]')) composer.focus({ preventScroll: true });
+        } catch { /* A navigated child is no longer an accessible composer. */ }
+      });
       setAnnouncement("PAIGE separate window focused; the main workspace remains available");
       return;
     }

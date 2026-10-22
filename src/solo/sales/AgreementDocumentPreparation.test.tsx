@@ -4,15 +4,16 @@ import {webcrypto} from 'node:crypto';
 import {beforeEach,afterEach,expect,it,vi} from 'vitest';
 import fixture from './fixtures/agreement-document-source.json';
 import {prepareAgreementFields} from '../../../supabase/functions/_shared/agreements/field-preparation';
-import type {AgreementDocumentView} from './agreementDocumentApi';
+import type {AgreementDocumentView,AgreementDocumentCommand} from './agreementDocumentApi';
+import {sha256Hex} from '../../../supabase/functions/_shared/agreements/token';
 import type {AssignedField} from './agreementDocumentModel';
 import {useSalesDraftExit} from '../sales-dialog';
-const ports=vi.hoisted(()=>({read:vi.fn(),pdf:vi.fn(),save:vi.fn(),history:vi.fn(),retained:vi.fn(),return:vi.fn(),refused:vi.fn(),checkpoints:[] as string[]}));
+const ports=vi.hoisted(()=>({read:vi.fn(),pdf:vi.fn(),save:vi.fn(),history:vi.fn(),retained:vi.fn(),return:vi.fn(),refused:vi.fn(),checkpoints:[] as string[],fieldWork:null as Promise<unknown>|null}));
 vi.mock('@/integrations/supabase/client',()=>({supabase:{}}));
 vi.mock('./agreementDocumentApi',async original=>({...await original<typeof import('./agreementDocumentApi')>(),readAgreementDocument:ports.read,readAgreementDocumentPdf:ports.pdf,saveAgreementDocument:ports.save,listAgreementDocumentHistory:ports.history}));
-vi.mock('./AgreementDocumentFields',()=>({AgreementDocumentFields:(props:{canEdit:boolean;source:unknown;document:unknown;fields:AssignedField[];onChange:(fields:AssignedField[])=>void;onSave:(value:Awaited<ReturnType<typeof prepareAgreementFields>>)=>void})=><div data-field-inspector data-editable={props.canEdit}>
-  <span>{props.fields.length} proposed fields</span><button disabled={!props.canEdit} onClick={()=>props.onChange([...props.fields,{id:'f1111111-0000-4000-8000-000000000001',signer_id:fixture.signers[0].id,kind:'signature',page:1,x:20,y:20,width:120,height:40,required:true,label:'Signature'}])}>Place controlled field</button>
-  <button disabled={!props.canEdit} onClick={()=>{void prepareAgreementFields(props.source,props.document,props.fields).then(props.onSave);}}>Save controlled fields</button></div>}));
+vi.mock('./AgreementDocumentFields',()=>({AgreementDocumentFields:(props:{canEdit:boolean;source:unknown;document:unknown;bytes:Uint8Array;fields:AssignedField[];onChange:(fields:AssignedField[])=>void;onSave:(value:Awaited<ReturnType<typeof prepareAgreementFields>>)=>void})=><div data-field-inspector data-editable={props.canEdit}>
+  <span data-displayed-byte-length>{props.bytes.length}</span><span>{props.fields.length} proposed fields</span><button disabled={!props.canEdit} onClick={()=>props.onChange([...props.fields,{id:'f1111111-0000-4000-8000-000000000001',signer_id:fixture.signers[0].id,kind:'signature',page:1,x:20,y:20,width:120,height:40,required:true,label:'Signature'}])}>Place controlled field</button>
+  <button disabled={!props.canEdit} onClick={()=>{ports.fieldWork=prepareAgreementFields(props.source,props.document,props.fields).then(props.onSave);}}>Save controlled fields</button></div>}));
 import {AgreementDocumentPreparation,type DocumentGuard} from './AgreementDocumentPreparation';
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 const actor='b1111111-0000-4000-8000-000000000001',request='b2222222-0000-4000-8000-000000000002',event='f2222222-0000-4000-8000-000000000002';
@@ -20,6 +21,11 @@ let root:Root,host:HTMLDivElement,current=true,record:Extract<AgreementDocumentV
 const empty=():AgreementDocumentView=>({state:'none',title:'Controlled agreement',source:structuredClone(fixture.source) as AgreementDocumentView['source'],can_prepare:true,preparation_hold:null,document_signers:[]});
 const good=(view:AgreementDocumentView)=>({ok:true,value:view});
 const absent=()=>({ok:false,reason:'unconfirmed',message:'Original request is not confirmed.'});
+async function writeReply(command:AgreementDocumentCommand,source=record.source,document=record.preparation.manifest.document){
+  const prepared=await prepareAgreementFields(source,document,command.action==='retain_fields'?command.fields:[]),next=structuredClone(record);
+  next.source=structuredClone(source);next.preparation={...next.preparation,id:command.request_id,revision_no:2,event_id:crypto.randomUUID(),source_version:source.version,source_updated_at:source.updated_at,manifest:prepared.manifest,preparation_sha256:prepared.preparation_sha256,document_sha256:document.sha256,document_byte_length:document.byte_length};
+  return {ok:true,value:{view:next,receipt:{state:'recorded',historical_receipt:true,id:next.preparation.id,event_id:next.preparation.event_id,revision_no:2,document_sha256:document.sha256,preparation_sha256:prepared.preparation_sha256,is_selected:true}}};
+}
 function Harness({requestId=null,resume={draft:[],busy:false,uncertain:false}}:{requestId?:string|null;resume?:DocumentGuard}){
   const [guard,setGuard]=React.useState<DocumentGuard>(resume);const exit=useSalesDraftExit(guard.draft,guard.busy,ports.return,{uncertain:guard.uncertain});
   const adoptBaseline=exit.adoptBaseline;
@@ -32,7 +38,7 @@ function Harness({requestId=null,resume={draft:[],busy:false,uncertain:false}}:{
 async function mount(requestId:string|null=null,resume?:DocumentGuard){host=document.createElement('div');document.body.append(host);root=createRoot(host);await act(async()=>root.render(<Harness requestId={requestId} resume={resume}/>));}
 function button(name:string){const found=[...host.querySelectorAll<HTMLButtonElement>('button')].find(b=>b.textContent?.trim()===name);if(!found)throw Error('Expected '+name);return found;}
 async function click(name:string){await act(async()=>button(name).click());}
-beforeEach(async()=>{vi.stubGlobal('crypto',webcrypto);vi.clearAllMocks();ports.checkpoints.length=0;current=true;ports.retained.mockReturnValue(true);ports.pdf.mockResolvedValue({ok:true,value:Uint8Array.from(Buffer.from(fixture.bytes,'base64'))});
+beforeEach(async()=>{vi.stubGlobal('crypto',webcrypto);vi.clearAllMocks();ports.checkpoints.length=0;ports.fieldWork=null;current=true;ports.retained.mockReturnValue(true);ports.pdf.mockResolvedValue({ok:true,value:Uint8Array.from(Buffer.from(fixture.bytes,'base64'))});
   const prepared=await prepareAgreementFields(fixture.source,fixture.document,[]);record={...empty(),state:'retained',can_edit:true,document_signers:structuredClone(fixture.signers) as AgreementDocumentView['document_signers'],preparation:{id:request,agreement_id:fixture.source.agreement_id,client_id:fixture.source.client_id,revision_no:1,source_version:1,source_updated_at:fixture.source.updated_at,actor_user_id:actor,document_sha256:fixture.document.sha256,document_byte_length:fixture.document.byte_length,manifest:structuredClone(prepared.manifest),preparation_sha256:prepared.preparation_sha256,event_id:event,is_selected:true,created_at:fixture.source.updated_at,source_scope:'agreement_and_parties',source_matches:true,commercial_verification:'not_applicable'}};
 });
 afterEach(()=>{act(()=>root?.unmount());host?.remove();vi.unstubAllGlobals();});
@@ -79,4 +85,16 @@ it('retires held metadata after authority changes and cannot publish it later',a
 });
 it('an explicit native authorization refusal clears the document and returns to the parent access state',async()=>{
   ports.read.mockResolvedValue({ok:false,reason:'access_unverified',message:'Access changed.'});await mount();expect(ports.refused).toHaveBeenCalledOnce();expect(host.querySelector('[data-field-inspector]')).toBeNull();expect(ports.pdf).not.toHaveBeenCalled();
+});
+it('a late earlier-PDF retry cannot overwrite the newly retained document bytes',async()=>{
+  const old=structuredClone(record);old.source.version=2;old.source.updated_at='2026-10-22T14:01:00.123456+00:00';old.preparation.source_matches=false;old.can_edit=false;old.document_signers=[];
+  const originalBytes=Uint8Array.from(Buffer.from(fixture.bytes,'base64')),newBytes=new Uint8Array([...originalBytes,10]);const document={...fixture.document,byte_length:newBytes.length,sha256:await sha256Hex(newBytes)} as typeof record.preparation.manifest.document;
+  let release!:(value:unknown)=>void;ports.read.mockResolvedValue(good(old));ports.pdf.mockResolvedValueOnce(absent()).mockReturnValueOnce(new Promise(done=>{release=done;})).mockResolvedValueOnce({ok:true,value:newBytes});ports.save.mockImplementation((_ctx,command)=>writeReply(command,old.source,document));
+  await mount();await click('Retry retained PDF');await act(async()=>{button('Prepare current agreement version').click();expect(ports.save).toHaveBeenCalledOnce();await ports.save.mock.results[0].value;});expect(host.querySelector('[data-displayed-byte-length]')?.textContent).toBe(String(newBytes.length));
+  await act(async()=>release({ok:true,value:originalBytes}));expect(host.querySelector('[data-displayed-byte-length]')?.textContent).toBe(String(newBytes.length));
+});
+it('an earlier history read cannot republish stale selection after a new preparation is retained',async()=>{
+  let release!:(value:unknown)=>void;ports.read.mockResolvedValue(good(record));ports.history.mockReturnValue(new Promise(done=>{release=done;}));ports.save.mockImplementation((_ctx,command)=>writeReply(command));await mount();await click('Place controlled field');await click('Inspect preparation history');await act(async()=>{button('Save controlled fields').click();await ports.fieldWork;expect(ports.save).toHaveBeenCalledOnce();await ports.save.mock.results[0].value;});expect(host.textContent).toContain('Preparation 2');
+  const p=record.preparation;await act(async()=>release({ok:true,value:{items:[{id:p.id,revision_no:p.revision_no,source_version:p.source_version,created_at:p.created_at,is_selected:true,document_sha256:p.document_sha256,preparation_sha256:p.preparation_sha256,event_id:p.event_id,actor_user_id:p.actor_user_id}],has_more:false}}));
+  expect(host.querySelector('select[aria-label="Retained document version"]')).toBeNull();
 });

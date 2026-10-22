@@ -1984,7 +1984,12 @@ does not authorize a replacement; new writes use original native current CAS.
 Source/component/transport fixtures cannot close authenticated acceptance.
 
 Current owning consumer source composes API566/current main2d;995 cases/65 suites
-PASS. Actual mounted20/14/33, original field20/11/30 and neighboring intake20/10/21
+PASS before two final response-race repairs; current136/six integration cases,
+including15 controller cases, PASS. Author review5617064903 identified an older
+PDF retry replacing newly retained bytes and an older history response restoring
+stale selection. Both actual failures reproduced before the per-file/preparation
+fence and save-time history retirement; earlier test-setup failures are excluded.
+Fresh unchanged mounted20/14/33, original field20/11/30 and neighboring intake20/10/21
 PASS/zero page errors; all84 owning pin checks exact. Actual desktop paper,320
 dark bounded100% pan and unknown recovery inspected. Save now focuses its verified
 native result. Existing six mobile destinations fit a56px row; the SAME Sales

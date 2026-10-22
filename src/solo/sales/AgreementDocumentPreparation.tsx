@@ -27,7 +27,7 @@ export function AgreementDocumentPreparation(props:Props){
   const [historyState,setHistoryState]=React.useState<'idle'|'loading'|'ready'|'error'>('idle');
   const [cursor,setCursor]=React.useState<number|null>(null),[historyMessage,setHistoryMessage]=React.useState('');
   const state=React.useRef(session),callbacks=React.useRef(props);callbacks.current=props;
-  const alive=React.useRef(false),epoch=React.useRef(0),work=React.useRef(false),historyEpoch=React.useRef(0);
+  const alive=React.useRef(false),epoch=React.useRef(0),work=React.useRef(false),historyEpoch=React.useRef(0),fileEpoch=React.useRef(0);
   const reference=React.useRef(props.requestId),observedReference=React.useRef<string|null|undefined>(undefined);
   const resume=React.useRef(props.resume);
   const heading=React.useRef<HTMLHeadingElement>(null);
@@ -45,7 +45,9 @@ export function AgreementDocumentPreparation(props:Props){
   };
   const loadBytes=async(ctx:AgreementDocumentContext,view:AgreementDocumentView)=>{
     if(view.state!=='retained')return;
-    const result=await readAgreementDocumentPdf(ctx,view);if(!ctx.isCurrent())return;
+    const request=++fileEpoch.current,preparationId=view.preparation.id;
+    const result=await readAgreementDocumentPdf(ctx,view);
+    if(!ctx.isCurrent()||request!==fileEpoch.current||state.current.view?.state!=='retained'||state.current.view.preparation.id!==preparationId)return;
     if(result.ok===true)publish({...state.current,bytes:result.value,pdfError:false});
     else if(result.reason==='access_unverified')refuse();
     else publish({...state.current,bytes:null,pdfError:true,message:'The exact retained PDF could not be verified. Its preparation remains recorded; retry the file read.'});
@@ -94,7 +96,7 @@ export function AgreementDocumentPreparation(props:Props){
     if(!command){publish({...previous,message:'Inspect the current agreement and document before saving a new preparation.'});return;}
     // Checkpoint precedes EVERY first dispatch. A retry retains the SAME command.
     if(!retain(command.request_id)){publish({...previous,message:'The recovery reference could not be retained. No preparation request was sent.'});return;}
-    work.current=true;publish({...previous,phase:'saving',command,message:'',receipt:null});
+    work.current=true;historyEpoch.current++;publish({...previous,phase:'saving',command,message:'',receipt:null});
     const result=await saveAgreementDocument(ctx,command);if(!ctx.isCurrent())return;work.current=false;
     if(result.ok===false){if(result.reason==='access_unverified'){refuse();return;}
       publish({...previous,phase:'unconfirmed',command,receipt:null,message:result.message});return;}

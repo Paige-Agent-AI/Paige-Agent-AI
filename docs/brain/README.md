@@ -7,7 +7,12 @@ original pre-router navigation. Same opaque request survives reload/retry; sourc
 actor/permission, actual bytes and signer labels remain fenced. No private words,
 field plan, PDF or credential in URL/cache/logs. No new agreement/approval/runtime.
 
-995 regression cases/65 suites PASS; final actual mounted20 cases/14 paths/33 pins,
+995 regression cases/65 suites PASS before the final two response-race repairs;
+current136 integration cases/six suites, including15 controller cases, PASS.
+Review5617064903 reproduced old PDF/history responses overwriting newer bytes
+or selection. Per-file/preparation identity and save-time history retirement fix
+both; actual causal REDs precede repair, test-setup failures excluded. Fresh
+actual mounted20 cases/14 paths/33 pins,
 original field20/11/30 and intake20/10/21 PASS/zero page errors/all84 pins exact.
 Desktop paper,320 dark bounded100% pan and unknown recovery inspected. Native
 six-destination mobile row, guarded keyboard navigation and verified-result focus

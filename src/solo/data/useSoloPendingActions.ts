@@ -142,7 +142,9 @@ export function useSoloPendingActions(tenantId: string | null, actorId?: string 
       try {
         const { data, error: readError, count } = await supabase
           .from("paige_actions")
-          .select("id,title,summary,draft_content,decision_rationale,from_department,created_at,action_kind,source_finding_id:payload->>finding_id", { count: "exact" })
+          // Rows cross the existing unknown→toPendingAction boundary. Avoid recursively
+          // instantiating the SDK's JSON-path parser; the actual projection is unchanged.
+          .select<string>("id,title,summary,draft_content,decision_rationale,from_department,created_at,action_kind,source_finding_id:payload->>finding_id", { count: "exact" })
           .eq("tenant_id", scope) // §9 — bind to the VIEWED workspace, not the operator's whole book
           .eq("status", "filed")
           .eq("autonomy_lane", "confirm")

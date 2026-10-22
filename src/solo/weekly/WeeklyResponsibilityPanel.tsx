@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { CalendarDays, RefreshCw, ArrowUpRight } from "lucide-react";
 import { tenantRoutePrefixForPath } from "@/components/tenant-shell/tenantShellRoutes";
@@ -22,10 +22,23 @@ export function WeeklyResponsibilityPanel({ read, refresh, pathname, onRequestPr
   const [reviewing, setReviewing] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [stopReview, setStopReview] = useState<{ check: WeeklyCheck; action: "pause" | "cancel" } | null>(null);
-  const stop = stopReview && snapshot?.checks.includes(stopReview.check) ? stopReview : null;
+  const stop = useMemo(() => {
+    if (!stopReview || !snapshot) return null;
+    const original = stopReview.check;
+    const current = snapshot.checks.find(check => check.automation_id === original.automation_id && check.revision === original.revision
+      && check.name === original.name && check.schedule_status === original.schedule_status
+      && check.schedule.weekday === original.schedule.weekday && check.schedule.local_time === original.schedule.local_time
+      && check.schedule.timezone === original.schedule.timezone);
+    // Preserve an unchanged review across inspection, but pass ONLY the latest
+    // original native object to the hook's stricter current-snapshot gate.
+    return current ? { check: current, action: stopReview.action } : null;
+  }, [snapshot, stopReview]);
   const back = useRef<HTMLButtonElement>(null), opener = useRef<HTMLButtonElement | null>(null), submitting = useRef(false);
   const refreshButton = useRef<HTMLButtonElement>(null);
   const [stopFinished, setStopFinished] = useState(0);
+  useEffect(() => {
+    if (stopReview && (read.status === "refused" || read.status === "unavailable" || read.status === "ready" && !stop)) setStopReview(null);
+  }, [read.status, stop, stopReview]);
   useEffect(() => { if (stopFinished) refreshButton.current?.focus(); }, [stopFinished]);
   useEffect(() => { if (stop) back.current?.focus(); }, [stop]);
   const dismissStop = () => { setStopReview(null); opener.current?.focus(); };

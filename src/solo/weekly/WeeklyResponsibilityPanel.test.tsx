@@ -88,12 +88,39 @@ it("keeps unknown feedback visible when the controller withholds the unconfirmed
   expect(control).toHaveBeenCalledTimes(1);
 });
 
-it("a replaced read retires the old control review", async () => {
+it.each(["revision", "schedule", "status", "name"])("a changed %s retires the old control review", async change => {
   const data = recordedSnapshot(); data.checks[0].schedule_status = "scheduled";
   const control = vi.fn<WeeklyFutureControl>();
   await render({ status: "ready", snapshot: data }, control); await click("Cancel responsibility");
-  const changed = structuredClone(data); changed.checks[0].revision++;
+  const changed = structuredClone(data);
+  if (change === "revision") changed.checks[0].revision++;
+  if (change === "schedule") changed.checks[0].schedule.timezone = "Europe/London";
+  if (change === "status") changed.checks[0].schedule_status = "paused";
+  if (change === "name") changed.checks[0].name = "Changed responsibility";
   await render({ status: "ready", snapshot: changed }, control);
+  expect(Array.from(container.querySelectorAll("button")).some(button => button.textContent === "Confirm cancellation")).toBe(false);
+  await render({ status: "ready", snapshot: data }, control);
+  expect(Array.from(container.querySelectorAll("button")).some(button => button.textContent === "Confirm cancellation")).toBe(false);
+  expect(control).not.toHaveBeenCalled();
+});
+it("an unchanged fresh read retains the reviewed intent but confirms only its current native object", async () => {
+  const data = recordedSnapshot(); data.checks[0].schedule_status = "scheduled";
+  const control = vi.fn<WeeklyFutureControl>().mockResolvedValue({ status: "unknown" });
+  await render({ status: "ready", snapshot: data }, control); await click("Cancel responsibility");
+  await render({ status: "loading" }, control);
+  const current = structuredClone(data);
+  await render({ status: "ready", snapshot: current }, control);
+  await click("Confirm cancellation");
+  expect(control.mock.calls[0][0]).toBe(current.checks[0]);
+  expect(control.mock.calls[0][0]).not.toBe(data.checks[0]);
+  expect(control).toHaveBeenCalledTimes(1);
+});
+it("a refused read permanently retires the old review even if the same record later returns", async () => {
+  const data = recordedSnapshot(); data.checks[0].schedule_status = "scheduled";
+  const control = vi.fn<WeeklyFutureControl>();
+  await render({ status: "ready", snapshot: data }, control); await click("Cancel responsibility");
+  await render({ status: "refused" }, control);
+  await render({ status: "ready", snapshot: data }, control);
   expect(Array.from(container.querySelectorAll("button")).some(button => button.textContent === "Confirm cancellation")).toBe(false);
   expect(control).not.toHaveBeenCalled();
 });

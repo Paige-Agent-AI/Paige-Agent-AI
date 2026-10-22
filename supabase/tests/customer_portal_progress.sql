@@ -10,7 +10,7 @@
 -- longer exposes its proposer or raw payload to API roles while its customer and INVOKER readers
 -- keep working.
 BEGIN;
-SELECT plan(112);
+SELECT plan(129);
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0981000-0000-4000-8000-000000000001','authenticated','authenticated','progress-owner-a@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
  ('e0981000-0000-4000-8000-000000000002','authenticated','authenticated','progress-owner-b@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -141,6 +141,32 @@ SELECT ok(has_function_privilege('authenticated','public.client_portal_progress(
   AND has_function_privilege('service_role','public.client_portal_progress(uuid,integer)','EXECUTE'),'signed-in callers and the service role can execute the customer read');
 SELECT ok(NOT has_function_privilege('authenticated','public._plan_items_client_share_guard()','EXECUTE'),'the share guard trigger function is not client-callable');
 
+-- CURA source reuse: the shared projection never becomes a caller authorization path.
+SELECT ok(to_regprocedure('public._client_portal_progress_projection(uuid,uuid,integer)') IS NOT NULL,'the original customer projection has one internal reusable function');
+SELECT ok(NOT has_function_privilege('public','public._client_portal_progress_projection(uuid,uuid,integer)','EXECUTE'),'PUBLIC cannot call the internal projection');
+SELECT ok(NOT has_function_privilege('anon','public._client_portal_progress_projection(uuid,uuid,integer)','EXECUTE'),'anon cannot call the internal projection');
+SELECT ok(NOT has_function_privilege('authenticated','public._client_portal_progress_projection(uuid,uuid,integer)','EXECUTE'),'customer sessions cannot call the internal projection');
+SELECT ok(NOT has_function_privilege('service_role','public._client_portal_progress_projection(uuid,uuid,integer)','EXECUTE'),'the service Data API cannot call the internal projection');
+SELECT ok((SELECT prosecdef AND provolatile='s' AND proconfig=ARRAY['search_path=""']::text[]
+ AND pg_get_userbyid(proowner)='postgres' FROM pg_proc WHERE oid=to_regprocedure('public._client_portal_progress_projection(uuid,uuid,integer)')),
+ 'the internal projection is STABLE postgres definer with an empty search path');
+SELECT is((SELECT md5(substr(prosrc,strpos(prosrc,'  -- Explicit allowlist.')))
+ FROM pg_proc WHERE oid=to_regprocedure('public._client_portal_progress_projection(uuid,uuid,integer)')),'42aff4b731d94b355af4748dc43e8e4b',
+ 'the complete client-safe projection query is byte-identical to the reviewed original');
+SELECT is((SELECT md5(substr(prosrc,1,strpos(prosrc,'  RETURN public._client_portal_progress_projection(')-1))
+ FROM pg_proc WHERE oid=to_regprocedure('public.client_portal_progress(uuid,integer)')),'484c13cbc0fdffaef576bda3dae642ab',
+ 'the original actual Auth, relationship and scope prelude is byte-preserved');
+SELECT is(pg_temp.jordan($q$SELECT public._client_portal_progress_projection('e0982000-0000-4000-8000-000000000001',
+ 'e0983000-0000-4000-8000-000000000001',100)$q$)->>'sqlstate','42501',
+ 'an actual customer-role attempt cannot bypass the public scope gate');
+SELECT is(pg_temp.as_user(NULL,$q$SELECT public._client_portal_progress_projection('e0982000-0000-4000-8000-000000000001',
+ 'e0983000-0000-4000-8000-000000000001',100)$q$,'service_role')->>'sqlstate','42501',
+ 'an actual service-role Data API attempt cannot bypass the public scope gate');
+SELECT ok((SELECT prosecdef AND provolatile='s' AND proconfig=ARRAY['search_path=public, pg_temp']::text[]
+ AND pg_get_userbyid(proowner)='postgres' AND pronargdefaults=2 AND prorettype='jsonb'::regtype
+ AND proargnames=ARRAY['p_tenant_id','p_limit']::text[] FROM pg_proc WHERE oid=to_regprocedure('public.client_portal_progress(uuid,integer)')),
+ 'the public reader retains its original signature, defaults, return type, owner, path and stability');
+
 -- 3. Authority: business admin of the current workspace only.
 SELECT is(pg_temp.share('e0981000-0000-4000-8000-000000000005','e0982000-0000-4000-8000-000000000001','e0985000-0000-4000-8000-000000000001',true,'2027-01-01T00:00:00Z')->>'sqlstate','42501','a non-admin member is refused');
 SELECT is(pg_temp.share('e0981000-0000-4000-8000-000000000003','e0982000-0000-4000-8000-000000000001','e0985000-0000-4000-8000-000000000001',true,'2027-01-01T00:00:00Z')->>'sqlstate','42501','a customer is refused');
@@ -197,6 +223,27 @@ SELECT is((SELECT string_agg(action, ',') FROM public.audit_logs WHERE entity='p
 
 -- 9. Customer read: who gets nothing.
 CREATE TEMP TABLE jr AS SELECT pg_temp.jordan($q$SELECT public.client_portal_progress()$q$) AS r;
+-- The same fully populated DTO is used by the existing customer and later trusted native callers.
+SELECT is((SELECT r FROM jr),public._client_portal_progress_projection('e0982000-0000-4000-8000-000000000001','e0983000-0000-4000-8000-000000000001',100),
+ 'the internal projection exactly matches the original customer DTO, summary and server time');
+SELECT is(pg_temp.jordan($q$SELECT public.client_portal_progress(p_limit=>2)$q$),
+ public._client_portal_progress_projection('e0982000-0000-4000-8000-000000000001','e0983000-0000-4000-8000-000000000001',2),
+ 'the original bounded limit result is byte-equivalent through both authorized paths');
+SELECT is(pg_temp.jordan($q$SELECT public.client_portal_progress(p_limit=>NULL)$q$),
+ public._client_portal_progress_projection('e0982000-0000-4000-8000-000000000001','e0983000-0000-4000-8000-000000000001',NULL),
+ 'the original default limit result is byte-equivalent through both authorized paths');
+SELECT is(pg_temp.jordan($q$SELECT public.client_portal_progress(p_limit=>0)$q$),
+ public._client_portal_progress_projection('e0982000-0000-4000-8000-000000000001','e0983000-0000-4000-8000-000000000001',0),
+ 'the original minimum limit result is byte-equivalent through both authorized paths');
+SELECT is(pg_temp.jordan($q$SELECT public.client_portal_progress(p_limit=>1000)$q$),
+ public._client_portal_progress_projection('e0982000-0000-4000-8000-000000000001','e0983000-0000-4000-8000-000000000001',1000),
+ 'the original maximum limit result is byte-equivalent through both authorized paths');
+SELECT ok(public._client_portal_progress_projection(NULL,'e0983000-0000-4000-8000-000000000001',100) IS NULL
+ AND public._client_portal_progress_projection('e0982000-0000-4000-8000-000000000001',NULL,100) IS NULL
+ AND public._client_portal_progress_projection('e0982000-0000-4000-8000-000000000001','e0983000-0000-4000-8000-000000000006',100) IS NULL,
+ 'an absent or mismatched internal scope produces no projection');
+
+
 SELECT is(pg_temp.as_user(NULL,$q$SELECT public.client_portal_progress()$q$,'anon')->>'sqlstate','42501','anonymous read refused');
 SELECT is(pg_temp.as_user(NULL,$q$SELECT public.client_portal_progress()$q$)->>'error','customer authentication required','signed-out read refused with the exact message');
 SELECT ok(pg_temp.as_user('e0981000-0000-4000-8000-000000000005',$q$SELECT public.client_portal_progress()$q$) IS NULL,'staff with no relationship gets NULL');

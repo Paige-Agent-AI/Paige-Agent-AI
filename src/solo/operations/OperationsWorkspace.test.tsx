@@ -259,6 +259,21 @@ it("hands a bounded review draft to existing PAIGE after clearing old customer s
   expect(open).toHaveBeenCalledOnce();
 });
 
+it("keeps Projects actions native while preserving ZION review in Overview", async () => {
+  const open = vi.fn();
+  await act(async () => root.render(<OperationsWorkspace view="projects" openPaige={open} onViewChange={vi.fn()} />));
+  const actions = container.querySelector(".ops-department-actions")!;
+  expect(actions.textContent).not.toContain("Review with ZION");
+  expect(actions.querySelector('[aria-label="Refresh work and team profiles"]')).toBeTruthy();
+  expect(open).not.toHaveBeenCalled(); expect(paige.handoff).not.toHaveBeenCalled();
+  await click("New project");
+  expect(container.querySelector('[data-testid="project-creator"]')).not.toBeNull();
+  await act(async () => root.render(<OperationsWorkspace view="overview" openPaige={open} onViewChange={vi.fn()} />));
+  await click("Plan with ZION");
+  expect(open).toHaveBeenCalledOnce();
+  expect(paige.handoff).toHaveBeenCalledWith(expect.stringMatching(/^ZION, /));
+});
+
 it("retains uncertain project creation after refresh without an identity", async () => {
   await act(async () => root.render(<OperationsWorkspace view="projects" onViewChange={vi.fn()} />));
   await click("New project");

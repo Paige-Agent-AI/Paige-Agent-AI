@@ -1,7 +1,9 @@
+import {useEffect,useRef} from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useShellCustomerIdentity } from "@/lib/portal/customerIdentity";
 import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
 import { CLIENT_ACCOUNT_MAX, useClientAccount } from "./useClientAccount";
 import { ClientPreferences } from "./ClientPreferences";
@@ -9,8 +11,22 @@ import { useClientAccountExit } from "./useClientAccountExit";
 
 export function ClientAccount() {
   const account = useClientAccount();
+  const identity = useShellCustomerIdentity();
+  // Keep the original preference request lifetime mounted during the same root access check.
+  // Its own native reader still proves authority; this tuple grants none.
+  const preferencesFor = account.profile ?? (identity?.viewer === "customer" ? identity.frame?.profile : null);
   const waiting = account.outcome === "saving";
   const unresolved = account.outcome === "unknown" || account.outcome === "conflict";
+  const recovery = useRef<HTMLButtonElement>(null), result = useRef<HTMLDivElement>(null);
+  const previousResult = useRef({phase:account.phase,outcome:account.outcome});
+  useEffect(() => {
+    const before = previousResult.current;
+    if (account.phase === "ready" && (before.phase !== "ready" || before.outcome !== account.outcome)) {
+      if (unresolved) recovery.current?.focus();
+      else if (["saved","reconciled","invalid"].includes(account.outcome)) result.current?.focus();
+    }
+    previousResult.current = {phase:account.phase,outcome:account.outcome};
+  },[account.phase,account.outcome,unresolved]);
   useBeforeUnloadGuard(account.dirty || waiting || unresolved);
   useClientAccountExit(account.dirty || waiting || unresolved, waiting);
   return (
@@ -28,8 +44,9 @@ export function ClientAccount() {
         <div className="space-y-4 py-3"><p role="alert" className="max-w-prose text-sm">{account.phase === "signed_out"
           ? "Sign in with your invited account to open your information."
           : account.phase === "unavailable" ? "Your information is unavailable for this business. Contact the business if you need access."
-          : account.phase === "multiple_businesses" ? "You're a client of more than one business, so your account settings can't be shown here yet."
+          : account.phase === "multiple_businesses" ? "Choose the business whose account details you want to open."
           : "Your information could not be loaded. Check your connection and try again."}</p>
+          {account.phase === "multiple_businesses" && <Link to="/app?chooseBusiness=1" className="inline-flex min-h-[44px] items-center rounded-md text-sm underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Choose a business</Link>}
           {account.phase !== "signed_out" && account.phase !== "multiple_businesses" && <Button className="min-h-[44px]" variant="outline" onClick={() => void account.reload()}>Try again</Button>}
         </div>
       ) : (
@@ -66,18 +83,18 @@ export function ClientAccount() {
                   className="min-h-[44px] text-[16px] md:text-[16px]" onChange={event => account.edit("zip_code", event.target.value)} /></div>
             </div>
           </fieldset>
-          <div role={account.outcome === "invalid" ? "alert" : "status"} aria-live="polite" className="min-h-6 text-sm">{account.notice}</div>
+          <div ref={result} tabIndex={-1} role={account.outcome === "invalid" ? "alert" : "status"} aria-live="polite" className="min-h-6 text-sm">{account.notice}</div>
           <div className="flex flex-wrap items-center gap-3">
             <Button type="submit" className="min-h-[44px]" disabled={waiting || unresolved || !account.dirty}>{waiting ? "Saving…" : "Save information"}</Button>
-            {account.outcome === "unknown" && <Button className="min-h-[44px]" type="button" variant="outline" onClick={() => void account.reload(true)}>Check saved information</Button>}
-            {(unresolved || account.dirty) && !waiting && <Button className="min-h-[44px]" type="button" variant="ghost" onClick={() => void account.reload()}>Discard edits and reload</Button>}
+            {account.outcome === "unknown" && <Button ref={recovery} className="min-h-[44px]" type="button" variant="outline" onClick={() => void account.reload(true)}>Check saved information</Button>}
+            {(unresolved || account.dirty) && !waiting && <Button ref={account.outcome === "conflict" ? recovery : undefined} className="min-h-[44px]" type="button" variant="ghost" onClick={() => void account.reload()}>Discard edits and reload</Button>}
           </div>
           {account.dirty && <p className="text-sm text-muted-foreground">Save before leaving this page.</p>}
         </form>
       )}
       {/* E09 Slice 6: messaging preferences and data sharing, read and written through their own seam.
           Shown once this account's relationship has resolved, and gone with it on sign-out. */}
-      {account.profile && <ClientPreferences key={account.profile.linked_user_id} actorId={account.profile.linked_user_id} onCommitted={() => account.revalidate()} />}
+      {preferencesFor && <ClientPreferences key={[preferencesFor.linked_user_id,preferencesFor.tenant_id,preferencesFor.id].join(":")} actorId={preferencesFor.linked_user_id} tenantId={preferencesFor.tenant_id} clientId={preferencesFor.id} onCommitted={() => account.revalidate()} />}
     </section>
   );
 }

@@ -1,3 +1,30 @@
+## EXP04 original mounted document preparation — October22 local source
+
+Original Sales agreement now mounts the actual captured-session owner SDK, exact
+unsigned PDF/assigned fields, native selected/earlier versions and original event
+receipt. ONE Sales leave guard covers pending reads, writes, unknown requests and
+original pre-router navigation. Same opaque request survives reload/retry; source,
+actor/permission, actual bytes and signer labels remain fenced. No private words,
+field plan, PDF or credential in URL/cache/logs. No new agreement/approval/runtime.
+
+995 regression cases/65 suites PASS; final actual mounted20 cases/14 paths/33 pins,
+original field20/11/30 and intake20/10/21 PASS/zero page errors/all84 pins exact.
+Desktop paper,320 dark bounded100% pan and unknown recovery inspected. Native
+six-destination mobile row, guarded keyboard navigation and verified-result focus
+remain in existing Sales. Seven-file detector0 blocking/four intentional overlay
+advisories; type baseline10/current6, ESLint0/two incumbent warnings. One unchanged
+5s completion fixture timed out under simultaneous builds, passed isolated and in
+the full unchanged995-case rerun. False optional-SHA saved label was caught by
+the incumbent readonly field assertion and fixed without changing that assertion.
+
+Original source/API prerequisite2599/native300004/Edge needs its own exact-head
+green release/readback before this consumer; own UI source is NOT_DEPLOYED and
+actual hosted role/Storage/provider acceptance UNVERIFIED. Commercial-linked
+documents stay held for canonical economics/approval integration. All12 outcomes,
+signed/effective terms, invoice/Stripe/collections/onboarding/delivery/Portal/
+standing and one whole founder evaluation remain required. No new agent, legal
+wording, counsel gate, provider/send/signature/payment or INT346 activation.
+
 ## EXP04 original owner document API — October22 local dependent source
 
 Original agreement-document owner door now has bounded draft preparation,

@@ -22,7 +22,8 @@ const good=(view:AgreementDocumentView)=>({ok:true,value:view});
 const absent=()=>({ok:false,reason:'unconfirmed',message:'Original request is not confirmed.'});
 function Harness({requestId=null,resume={draft:[],busy:false,uncertain:false}}:{requestId?:string|null;resume?:DocumentGuard}){
   const [guard,setGuard]=React.useState<DocumentGuard>(resume);const exit=useSalesDraftExit(guard.draft,guard.busy,ports.return,{uncertain:guard.uncertain});
-  React.useLayoutEffect(()=>{exit.adoptBaseline([]);},[exit.adoptBaseline]);
+  const adoptBaseline=exit.adoptBaseline;
+  React.useLayoutEffect(()=>{adoptBaseline([]);},[adoptBaseline]);
   return <><AgreementDocumentPreparation tenantId={fixture.source.tenant_id} actorId={actor} agreementId={fixture.source.agreement_id} requestId={requestId} authorityKey="controlled" isCurrent={()=>current&&exit.alive.current}
     resume={guard} onGuard={(next,baseline)=>{setGuard(next);if(baseline)exit.adoptBaseline(baseline);}}
     onRetainRequest={id=>{if(!ports.retained(id))return false;ports.checkpoints.push(id??'');return true;}}
@@ -40,6 +41,12 @@ it('does no write on entry and retains a recovery reference before the first rea
 });
 it('refuses dispatch when the original navigation checkpoint cannot be retained',async()=>{
   ports.read.mockResolvedValue(good(empty()));ports.retained.mockReturnValue(false);await mount();await click('Prepare exact PDF');expect(ports.save).not.toHaveBeenCalled();expect(host.textContent).toContain('No preparation request was sent.');
+});
+it('moves keyboard focus to the verified document result after the old save control is replaced',async()=>{
+  ports.read.mockResolvedValue(good(empty()));ports.save.mockImplementation(async(_ctx,command)=>{
+    const next=structuredClone(record);next.preparation.id=command.request_id;
+    return {ok:true,value:{view:next,receipt:{state:'recorded',historical_receipt:true,id:command.request_id,event_id:event,revision_no:1,document_sha256:fixture.document.sha256,preparation_sha256:next.preparation.preparation_sha256,is_selected:true}}};
+  });await mount();act(()=>button('Prepare exact PDF').focus());await click('Prepare exact PDF');expect(document.activeElement).toBe(host.querySelector('.e04-native-preparation-heading h3'));expect(host.textContent).toContain('Document preparation recorded.');
 });
 it('an interrupted request retries the identical frozen command and cannot start a fresh identity',async()=>{
   ports.read.mockResolvedValue(good(empty()));ports.save.mockResolvedValue(absent());await mount();await click('Prepare exact PDF');const first=ports.save.mock.calls[0][1];expect(Object.isFrozen(first)).toBe(true);await click('Retry same request');expect(ports.save.mock.calls[1][1]).toBe(first);expect(ports.checkpoints).toEqual([first.request_id,first.request_id]);expect(host.textContent).not.toContain('Prepare exact PDF');

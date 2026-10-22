@@ -1983,6 +1983,21 @@ commercial-hold/loading/saved/recoverable states are explicit. A historical read
 does not authorize a replacement; new writes use original native current CAS.
 Source/component/transport fixtures cannot close authenticated acceptance.
 
+Current owning consumer source composes API566/current main2d;995 cases/65 suites
+PASS. Actual mounted20/14/33, original field20/11/30 and neighboring intake20/10/21
+PASS/zero page errors; all84 owning pin checks exact. Actual desktop paper,320
+dark bounded100% pan and unknown recovery inspected. Save now focuses its verified
+native result. Existing six mobile destinations fit a56px row; the SAME Sales
+leave guard intercepts the original pre-router request, preserving focus when
+navigation is canceled. Source/tenant/signer/byte/receipt/unknown safeguards stay.
+An unchanged5s completed-agreement fixture timed out under concurrent builds, then
+passed isolated and in the complete995 rerun; no test/timeout weakened. Incumbent
+field readonly proof caught a false saved label with two absent optional values;
+only an actual saved reference now enables that label. Seven-file detector0/four
+intentional paper/overlay advisories, no global-clean claim. Source/review/CI,
+native/Edge/web readback, actual hosted owner/staff/client/provider and whole12/
+founder acceptance remain separate; see the mounted-consumer evidence record.
+
 Mounted-source review additionally REPAIRS original native Sales navigation:
 six wrapped mobile destination rows obscured the real document, and native arrow
 navigation moved focus after a browser-level refusal. Preserve the SAME six

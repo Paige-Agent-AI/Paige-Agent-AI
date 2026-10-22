@@ -30,6 +30,7 @@ export async function exerciseDocumentPreparationPaths({page,url,capture,frames,
    }
    const top=100+(index%10)*40;await page.getByRole('spinbutton',{name:'Top position in points',exact:true}).fill(String(top));
    await save().click();await page.getByText('Document preparation recorded. Nothing has been sent for signature.',{exact:true}).waitFor();await ready();
+   assert.equal(await page.locator('.e04-native-preparation-heading h3').evaluate(element=>element===document.activeElement),true,'Verified save must leave keyboard focus on its original document result');
    await navTrace('saved');
    assert.equal(postCount(),before+1);assert.equal(ports.preparations.size,count+1);
    const retained=ports.preparations.get(ports.selected());assert.ok(retained.manifest.fields.some(field=>field.y===top));

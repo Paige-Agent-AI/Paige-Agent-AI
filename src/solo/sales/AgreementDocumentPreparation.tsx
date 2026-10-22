@@ -76,6 +76,11 @@ export function AgreementDocumentPreparation(props:Props){
     heading.current?.closest('.sales-department')?.querySelector<HTMLElement>('.sales-tabs [aria-selected=true]')?.scrollIntoView?.({block:'nearest',inline:'nearest'});
     heading.current?.focus();return()=>{alive.current=false;workEpoch.current++;historyWorkEpoch.current++;};
   },[]);
+  React.useLayoutEffect(()=>{
+    // Saving replaces the old field controls with the verified native version.
+    // Return keyboard focus to that result rather than leaving it on <body>.
+    if(session.phase==='ready'&&session.receipt)heading.current?.focus();
+  },[session.phase,session.receipt]);
   React.useEffect(()=>{
     if(observedReference.current===props.requestId)return;
     observedReference.current=props.requestId;reference.current=props.requestId;

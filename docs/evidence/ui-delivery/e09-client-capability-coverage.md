@@ -7,8 +7,8 @@ MATERIAL_FLOW_CHANGE: NO: correct existing catalogue descriptions/coverage only;
 FLOW_PROTOTYPE: NOT_REQUIRED: compatible public copy and existing state presenter, no new material user flow or UI architecture.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: business user identifies the seven existing client-success entries and asks the original PAIGE conversation for the bounded source-backed read/private text subset.
 VISUAL_DIRECTION: PASS: preserve shared catalogue hierarchy, two distinct Coverage/Access concepts and concise next-action wording; no new shell or design system.
-AUTOMATED_EVIDENCE: UNVERIFIED: existing presenter/Solo contract tests and8 native metadata/replay/custom-copy preservation assertions are required; native CI/Preview remains owed.
-STATIC_EVIDENCE: UNVERIFIED: final committed diff, migration collision/evidence guard and exact-head required CI remain gates.
+AUTOMATED_EVIDENCE: PASS: 59 existing catalogue/presenter/Solo contract regressions pass, including malformed metadata, inactive-row, scope and original navigation controls. Eight native metadata/replay/custom-copy preservation assertions and hosted CI/Preview remain separately owed.
+STATIC_EVIDENCE: PASS: committed source inspected; 1,383 migration versions have no collision, UI evidence guard and git diff check pass. Both actual workflow composition blocks reproduce exact original migrations with all eight assertions retained. Hosted exact-head CI remains a separate gate.
 RENDERED_EVIDENCE: PASS: actual canonical component with synthetic inventory at1536x770,1366x768,1024x768,900x1000,390x844,320x740; six captures and render-observations.json under assets/e09-client-capability-coverage. No horizontal overflow in body or any of the seven rows; Limited coverage remains distinct from Unverified access.
 BEHAVIORAL_EVIDENCE: PASS: rendered existing tab keyboard End selects/focuses/reveals Capabilities at320px; original .spw-scroll owns vertical scrolling. Separate real tenant-tier owner/admin Chat read and six private proposals persist after reload; this is not recipe execution, a filed document or client delivery.
 AUTHENTICATED_RUNTIME: UNVERIFIED: original native client.engagement_status read and ordinary private text drafting are verified for the designated owner session; this metadata is not deployed, and ordinary external-client, second business cohort, full recipe/document/send handoffs and eligible Live remain owed.
@@ -33,7 +33,7 @@ MUST_PRESERVE: canonical names/slugs/categories/steps/versions/risk/lanes/tools/
 ACCEPTANCE_CRITERIA: correct existing seven rows show their real bounded coverage and original next action; no false full workflow or customer completion claim; native replay/customization exclusions preserve all other state.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: no shared UI, Chat, Spine, Harness, Trust, Layer C, provider, sender, Memory or commercial source edit. Only original catalogue public copy/metadata and existing native CI test composition.
-INTERNAL_BUILD_IDENTITY: 48bc52b9f3b635e6deac96e5b0ef99ca22e1c435; supporting dependency; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113150000); edge=NOT_APPLICABLE; evidence=docs/delivery/e09-client-capability-coverage.md
+INTERNAL_BUILD_IDENTITY: cb82db923e880cb65ac632302d24ab7fb47caa5a; supporting implementation; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113150000); edge=NOT_APPLICABLE; evidence=docs/delivery/e09-client-capability-coverage.md
 RELEASE_CHANNEL: development: required final-head review/CI/Preview and native metadata readback precede production claims.
 RELEASE_CLASSIFICATION: internal-only: factual catalogue coverage increment, not a complete Experience announcement.
 CUSTOMER_RELEASE_IDENTITY: none: founder evaluates the whole integrated Experience once.

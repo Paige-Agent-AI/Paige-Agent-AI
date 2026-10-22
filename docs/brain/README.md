@@ -1472,6 +1472,10 @@ Template workspace now composes actual main1e1073133, retaining both template an
 ### EXP04 C7 source preparation — October22 dormant read port
 Selective original #2192/179e52 source-reader reuse now has37 cases, including all18 original cases; unchanged formatter plus read port pass Deno13 tests/63 steps. Exact original actor/workspace/role, four retained references, same-client agreement/invoice/terms/source revisions, raw wording/microsecond timestamp and private-field omission are checked. No write, service client, provider, approval/execution or new model registration. Not mounted: original Collections/Kit operation/Rail and actual retained-document/signing/effective integration and ordinary-role/customer acceptance remain owed. All twelve outcomes continue; no whole-Experience or algorithm status promotion. See [source evidence](../evidence/ui-delivery/e04-commercial-preparation-source.md).
 
+
+### EXP04 C7 retained artifact recovery — October22 dormant adapter
+Original #2192 helper's real native first-PDF control passed, then same-operation retry after timestamp change genuinely failed. Reconciled helper now reads the original private Storage object before rendering, binds original source/actor/operation/digests on that same immutable object's metadata, verifies actual bytes/native seal parser and stable object ID/version, and rechecks canonical authority. No overwrite, new key, receipt/job/ledger/approval engine or endpoint/UI/model activation.30 artifact cases +four original command cases; composed47 Deno tests/63 steps PASS. Actual hosted API, original high/confirm consumer/native freeze/operation/Rail and customer signing/effective acceptance remain owed. See [bounded evidence](../evidence/ui-delivery/e04-retained-commercial-artifact.md); all twelve outcomes remain incomplete.
+
 Current source reconciliation: main172013d89/native25/26 retained; original caller projection SELECT grants independently verified, no grant change. Existing own empty Preview is FUNCTIONS_DEPLOYED while its GitHub check is pending; fresh exact-head checks remain mandatory, no reset or waiver.
 
 ### EXP04 original upload intent — development

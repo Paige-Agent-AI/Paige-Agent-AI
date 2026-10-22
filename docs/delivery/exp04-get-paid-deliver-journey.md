@@ -1,5 +1,18 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
+## October22 template foundation and consumer checkpoint
+
+LOCAL native original-library version/list/read/actor-bound recovery now passes
+68 assertions, replay2, five concurrent sessions and three observed lock waits.
+Fresh review fixed legacy-row preparation-metadata/purpose adoption before PR;
+original unconfigured legacy maintenance remains. Production remains UNAPPLIED.
+Full-library native-shell prototype275be12415239d4ecdb66bec0894146ec9fe5c64 passes
+20 responsive/theme frames/13 behavioral paths/zero page errors; cached Impeccable
+exit0. Routine intent selected by existing lead under October21 delegation, not
+founder acceptance. Existing closed template API71 regression assertions PASS;
+actual mounted consumer, release and authenticated use remain work in progress.
+No completed wording review or legal sufficiency, send/sign/charge or new authority.
+
 ## October21 configurable template wording options — pre-edit native contract
 
 Owner clarification: build jurisdiction/requested-wording-review/reviewer options;

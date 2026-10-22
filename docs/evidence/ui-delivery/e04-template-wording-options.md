@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: additive original-library native foundation and retain
 FLOW_PROTOTYPE: NOT_REQUIRED: no renderer/interaction changed in this increment. The separately selected document-options prototype2f0b3356 and full-library20-frame/13-path mock guide the following consumer, not proof that this native foundation is owner-usable.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: original business owner/admin retains reusable supplied wording and optional jurisdiction/requested-review/reviewer with the exact template version.
 VISUAL_DIRECTION: NOT_APPLICABLE: no layout, typography or visual component changes.
-AUTOMATED_EVIDENCE: PASS: native PostgreSQL16 original-library proof65 assertions, migration replay2, five actually overlapping sessions and three observed lock waits. Genuine original baseline passes five authority/source/consumer controls then fails the required consumed-source refusal. Full-schema CI/Preview remains separately required.
+AUTOMATED_EVIDENCE: PASS: native PostgreSQL16 original-library proof68 assertions, migration replay2, five actually overlapping sessions and three observed lock waits. Genuine original baseline passes five authority/source/consumer controls then fails the required consumed-source refusal. Full-schema CI/Preview remains separately required.
 STATIC_EVIDENCE: PASS: same original table and owner/admin framework, exact-signature ACL ratchet, explicit anon/PUBLIC definer and migration collision guards; no new table, ledger, role, sender, scheduler or payment path.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no rendered source changes; isolated mock screenshots do not prove mounted production integration.
 BEHAVIORAL_EVIDENCE: PASS: exact source/time/UUID retries, real duplicate creator/recovery and competing revision sessions, stale refusal, legacy active/edit/delete compatibility before consumption, consumed-source retention, scoped metadata-only paging, raw-locator withholding, actor-bound recovery and own/foreign/anonymous/service refusals.
@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: authorized owner prepares supplied wording, inspects exact 
 MOTION_PURPOSE: NONE: no motion source changes.
 PROTECTED_SEAMS: tested original auth.uid/current_user_tenant_id/is_tenant_admin and original table RLS/consumer references; original signing, billing, Communications, Portal, Chat admission and LayerC dispatch remain unchanged.
 
-INTERNAL_BUILD_IDENTITY: branch=codex/e04-template-wording-options; product_sha=58b9572229c7816c4b7b875036be464a85213c50; composition=f06e157b796787e63caf6bf480a7980d115fe2af; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113190000_agreement_template_wording_options); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-template-wording-options.md
+INTERNAL_BUILD_IDENTITY: branch=codex/e04-template-wording-options; product_sha=58b9572229c7816c4b7b875036be464a85213c50; composition=f06e157b796787e63caf6bf480a7980d115fe2af; source_review_fix=0fa7d9594d781a8881bd167e95877a68047a62ef; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113190000_agreement_template_wording_options); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-template-wording-options.md
 RELEASE_CHANNEL: development: local native source proof; hosted CI/Preview and production deployment/readback remain separate.
 RELEASE_CLASSIFICATION: internal-only: original-library native prerequisite for complete professional Agreements, not a finished Experience.
 CUSTOMER_RELEASE_IDENTITY: none: no coherent complete Experience or founder acceptance claim.
@@ -63,7 +63,7 @@ created by configuration. ALG01/02/12/13 end-to-end verification is unchanged.
 Reproduction: existing `scripts/agreements/run-integrity-proof.sh` invokes
 `template-wording-options-proof.mjs` on its own checked disposable PostgreSQL
 cluster/database. No permanent QA account/business. Final local renamed-source
-log: `e04-template-options-renumbered-native.log`65/replay2/sessions5/waits3.
+log: `e04-template-options-review-fix-native.log`68/replay2/sessions5/waits3.
 `e04-template-options-current-baseline.log` retains five genuine original positive
 controls then the missing expected23514 refusal. Earlier sandbox loopback denial
 was setup INVALID, not baseline defect proof; no policy/test assertion weakened.
@@ -79,3 +79,11 @@ one per-instance Sales leave guard, original current actor/business and exact
 template-to-client agreement identity. Actual rendered desktop/narrow, keyboard,
 recovery, role/scope and ordinary signed-in acceptance remain owed. All O1–O12
 and final whole Experience founder evaluation remain open.
+
+Fresh review finding resolved before PR: new preparation metadata/source lineage
+initially remained writable on an unconfigured legacy row, and a raw update could
+reclassify it as a prepared creation. Final constraints require all preparation
+metadata null on legacy rows; the trigger refuses purpose adoption through UPDATE.
+Original unconfigured legacy maintenance still passes. Three actual native negative
+regressions added; final proof68/replay2/five sessions/three observed waits PASS.
+No non-author/security acceptance is inferred from this author review.

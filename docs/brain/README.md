@@ -1256,7 +1256,7 @@ wording-review route and reviewer do not imply completed legal review or block
 infrastructure engineering. Product58b9572229c7816c4b7b875036be464a85213c50,
 compositionf06e157b796787e63caf6bf480a7980d115fe2af: scoped native version/list/read/
 actor-bound same-UUID recovery, retained supplied words/source time, original
-legacy maintenance compatibility. Native65/replay2/five concurrent sessions/three
+legacy maintenance compatibility. Native68/replay2/five concurrent sessions/three
 observed lock waits; original baseline five positive controls then required refusal
 RED. These are source/fixture proofs, not customer JWT/provider/acceptance evidence.
 No new ledger/approval/sender/executor, legal wording, Chat/Live capability or

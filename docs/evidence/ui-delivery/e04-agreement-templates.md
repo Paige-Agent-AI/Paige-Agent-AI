@@ -1,5 +1,17 @@
 # EXP04 native business templates and original client-agreement handoff
 
+Current October22 composition: actual released main2f4b6dee7a049fededd339f3879d13ebf7e6a582
+and native220004 through260004 are retained; older pending/unapplied paragraphs
+below are historical. Product source is unchanged. Original driver now preserves
+BOTH template and upload modes after a genuine test-driver insertion collision.
+Both modes were rebuilt and driven against actual owning source: template20 cases,
+17 paths/25 exact pins; upload20 cases/five paths/19 exact pins; zero page errors.
+Actual desktop library and narrow review-options/action frames inspected again.
+Existing163 integrated tests apply to unchanged product/test bytes; this is not
+an invented new unit run or authenticated customer acceptance. New screenshots
+and reports reflect this combined driver, not the earlier25-pin snapshot. Fresh
+final-head review/CI/production readback remain mandatory.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: original EXP04 journey records owner/domain/capability/authorization/native receipt/state/exit and ten-part integration contract; all twelve outcomes remain mandatory.
 PAIGE_UI_DESIGN: PASS: original project five-module router and native SOLO Sales Operate components/tokens/paper/rich editor/one per-instance leave guard; no new design system or Portal interface.

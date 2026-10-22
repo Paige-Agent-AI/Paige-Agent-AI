@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useShellCustomerIdentity } from "@/lib/portal/customerIdentity";
+import { captureClientPortalAuthorization, withClientPortalBusiness } from "@/lib/client-portal-scope";
 
 /**
  * The work a business has explicitly shared with the signed-in customer (E09 Slice 3).
@@ -16,9 +18,9 @@ import { supabase } from "@/integrations/supabase/client";
  * Every row is checked against the exact key allowlist the server promises. A row carrying any
  * other key is refused, so a widened projection fails closed instead of being shown.
  *
- * An account linked to more than one business is refused by the relationship resolver (42501)
- * until multi-business membership ships. That is reported as its own state and polling stops,
- * because asking again cannot change the answer.
+ * The existing verified shell frame narrows the original native read to one business. The native
+ * relationship/access/share rules remain the authority. Unselected ambiguity is its own state;
+ * full multi-business identity admission remains a separate guarded integration.
  */
 
 export type PortalProgressKind = "milestone" | "task";
@@ -133,9 +135,13 @@ const ITEM_KEYS = ["id", "kind", "title", "state", "due_at", "completed_at", "sh
 const STATES = new Set<PortalProgressState>(["not_started", "in_progress", "done"]);
 
 type RpcResult = { data: unknown; error: unknown };
+type ProgressRequest = PromiseLike<RpcResult> & {
+  setHeader(name: string, value: string): ProgressRequest;
+  abortSignal(signal: AbortSignal): ProgressRequest;
+};
 /** The E09 RPCs are newer than the generated Database types; keep the call shape typed locally. */
 function portalRpc(name: "client_portal_progress", args: Record<string, unknown>) {
-  return supabase.rpc(name as never, args as never) as unknown as PromiseLike<RpcResult>;
+  return supabase.rpc(name as never, args as never) as unknown as ProgressRequest;
 }
 
 /**
@@ -147,7 +153,7 @@ export function isMultipleRelationships(err: unknown): boolean {
   if (!err || typeof err !== "object") return false;
   const e = err as { code?: unknown; message?: unknown };
   if (e.code !== "42501") return false;
-  return !(typeof e.message === "string" && /authentication required/i.test(e.message));
+  return typeof e.message === "string" && /select an authorized customer relationship/i.test(e.message);
 }
 
 const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
@@ -192,14 +198,37 @@ export function parseProgressPage(data: unknown): PortalProgressPage | null {
   };
 }
 
-/** One read of the caller's shared progress. Null = no customer relationship. Throws on a failed read. */
-export async function readPortalProgress(args: { tenantId?: string | null; limit?: number } = {}): Promise<PortalProgressPage | null> {
-  const { data, error } = await portalRpc("client_portal_progress", {
+class PortalProgressAuthorityError extends Error {}
+type ProgressScope = { actorId: string; businessId: string; current: () => boolean };
+
+/** Original native read. The optional verified frame narrows, never grants, the relationship. */
+export async function readPortalProgress(args: {
+  tenantId?: string | null; limit?: number; scope?: ProgressScope; signal?: AbortSignal;
+} = {}): Promise<PortalProgressPage | null> {
+  const scope = args.scope;
+  let authorization: string | null = null;
+  if (scope) {
+    try { authorization = await captureClientPortalAuthorization(supabase.auth, scope.actorId, scope.current); }
+    catch { throw new PortalProgressAuthorityError("Customer session could not be checked"); }
+  }
+  let request = portalRpc("client_portal_progress", {
     p_tenant_id: args.tenantId ?? null,
     p_limit: args.limit ?? PORTAL_PROGRESS_LIMIT,
   });
+  if (scope && authorization) request = withClientPortalBusiness(request, scope.businessId).setHeader("Authorization", authorization);
+  if (args.signal && typeof request.abortSignal === "function") request = request.abortSignal(args.signal);
+  const { data, error } = await request;
+  if (scope) {
+    try {
+      if (!scope.current()) throw new Error("Customer request changed");
+      const actual = await supabase.auth.getUser();
+      if (actual.error || actual.data.user?.id !== scope.actorId || !scope.current()) throw new Error("Customer request changed");
+    } catch { throw new PortalProgressAuthorityError("Customer request changed"); }
+  }
   if (error) throw error;
-  return parseProgressPage(data);
+  const page = parseProgressPage(data);
+  if (scope && page && page.tenant_id !== scope.businessId) throw new PortalProgressAuthorityError("Progress business changed");
+  return page;
 }
 
 export interface ClientPortalProgressState {
@@ -216,11 +245,11 @@ export interface ClientPortalProgressState {
   error: string | null;
   /** Resolved: the caller has no customer relationship (the read returned null). */
   unavailable: boolean;
-  /** Resolved: the account is linked to more than one business, which progress doesn't support yet. */
+  /** The native resolver requires selection of an authorized customer relationship. */
   multipleBusinesses: boolean;
   /** Tenant of the loaded progress (server-resolved), or null before the first read. */
   tenantId: string | null;
-  /** Bumped whenever the signed-in identity changes. */
+  /** Bumped whenever the business or signed-in identity changes. */
   scopeEpoch: number;
   refresh: () => Promise<void>;
 }
@@ -229,7 +258,16 @@ export const PORTAL_PROGRESS_LOAD_ERROR = "We couldn't load your progress. Check
 /** A failed re-read while the last list is still on screen: the list is there, it may just be behind. */
 export const PORTAL_PROGRESS_REFRESH_ERROR = "We couldn't refresh this list, so it may be out of date.";
 
-export function useClientPortalProgress(): ClientPortalProgressState {
+export const PORTAL_PROGRESS_READ_TIMEOUT_MS = 20_000;
+export function useClientPortalProgress({ enabled: requested = true, limit = PORTAL_PROGRESS_LIMIT }: {
+  enabled?: boolean; limit?: number;
+} = {}): ClientPortalProgressState {
+  const identity = useShellCustomerIdentity();
+  const frame = identity?.viewer === "customer" ? identity.frame : null;
+  const requestedActor = frame?.actorId ?? null;
+  const requestedBusiness = frame?.profile.tenant_id ?? null;
+  const requestedScope = identity ? JSON.stringify([identity.viewer, requestedActor, frame?.profile.id, requestedBusiness]) : "legacy";
+  const enabled = requested && (!identity || identity.viewer === "staff" || !!frame && identity.phase === "ready");
   const [items, setItems] = useState<PortalProgressItem[]>([]);
   const [summary, setSummary] = useState<PortalProgressSummary | null>(null);
   const [hasMore, setHasMore] = useState(false);
@@ -241,113 +279,137 @@ export function useClientPortalProgress(): ClientPortalProgressState {
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [scopeEpoch, setScopeEpoch] = useState(0);
 
-  // Mirrors for async callbacks; each async result is applied only if its epoch is current.
   const epoch = useRef(0);
   const actor = useRef<string | null>(null);
-  const tenantRef = useRef<string | null>(null);
+  const signedOut = useRef(false);
+  const tenantRef = useRef<string | null>(requestedBusiness);
   const readSeq = useRef(0);
   const alive = useRef(true);
-  /** Set once the server refused for multiple relationships: no further polling for this identity. */
   const halted = useRef(false);
-  /** A list for this identity is on screen, so a failed read is a failed refresh, not a failed load. */
   const shown = useRef(false);
+  const pending = useRef<AbortController | null>(null);
+  const origin = useRef({ key: requestedScope, generation: 0, enabled });
+  const appliedScope = useRef(requestedScope);
+  // Retire results before effect cleanup, including business A→B→A.
+  if (origin.current.key !== requestedScope) {
+    origin.current = { key: requestedScope, generation: origin.current.generation + 1, enabled };
+    ++epoch.current; ++readSeq.current;
+  }
+  origin.current.enabled = enabled;
+  const generation = origin.current.generation;
+  const scopeAlive = useCallback(() => origin.current.generation === generation
+    && origin.current.enabled && appliedScope.current === requestedScope, [generation, requestedScope]);
 
   const clearData = useCallback(() => {
     shown.current = false;
-    setItems([]);
-    setSummary(null);
-    setHasMore(false);
-    setServerNow(null);
+    setItems([]); setSummary(null); setHasMore(false); setServerNow(null); setTenantId(null);
   }, []);
 
   const resetScope = useCallback(() => {
-    epoch.current += 1;
-    readSeq.current += 1;
-    tenantRef.current = null;
+    ++origin.current.generation; ++epoch.current; ++readSeq.current;
+    pending.current?.abort();
+    appliedScope.current = requestedScope;
+    tenantRef.current = requestedBusiness;
     halted.current = false;
-    clearData();
-    setError(null);
-    setUnavailable(false);
-    setMultipleBusinesses(false);
-    setLoading(true);
-    setTenantId(null);
-    setScopeEpoch(epoch.current);
-  }, [clearData]);
+    clearData(); setError(null); setUnavailable(false); setMultipleBusinesses(false);
+    setLoading(true); setScopeEpoch(epoch.current);
+  }, [requestedScope, requestedBusiness, clearData]);
 
   const refresh = useCallback(async () => {
-    if (halted.current) return;
-    const myEpoch = epoch.current;
-    const seq = ++readSeq.current;
-    const current = () => alive.current && myEpoch === epoch.current && seq === readSeq.current;
+    if (!alive.current || !scopeAlive() || halted.current || signedOut.current) return;
+    pending.current?.abort();
+    const controller = new AbortController();
+    pending.current = controller;
+    const myEpoch = epoch.current, seq = ++readSeq.current;
+    const current = () => alive.current && scopeAlive() && myEpoch === epoch.current
+      && seq === readSeq.current && !controller.signal.aborted;
+    if (!shown.current) setLoading(true);
+    setUnavailable(false);
     const pinned = tenantRef.current;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     try {
-      const page = await readPortalProgress({ tenantId: pinned });
-      if (!current()) return;
-      if (!page) {
-        clearData();
-        setUnavailable(true);
-      } else {
-        // The first read pins the business; a later answer for another one is never shown.
-        if (pinned && page.tenant_id !== pinned) throw new Error("Progress business changed");
-        tenantRef.current = page.tenant_id;
-        setTenantId(page.tenant_id);
-        setUnavailable(false);
-        setItems(page.items);
-        setSummary(page.summary);
-        setHasMore(page.has_more);
-        setServerNow(page.server_now);
-        shown.current = true;
-      }
-      setError(null);
+      // The deadline covers initial Auth as well as native transport; Auth itself is never bypassed.
+      const work = async () => {
+        if (!actor.current) {
+          const actual = await supabase.auth.getUser();
+          if (!current()) return;
+          if (actual.error) throw new PortalProgressAuthorityError("Customer session could not be checked");
+          actor.current = actual.data.user?.id ?? null;
+        }
+        const intendedActor = actor.current;
+        if (!intendedActor || requestedActor && intendedActor !== requestedActor) {
+          if (current()) { clearData(); setUnavailable(true); setError(null); }
+          return;
+        }
+        const page = await readPortalProgress({
+          tenantId: pinned, limit, signal: controller.signal,
+          scope: requestedActor && requestedBusiness
+            ? { actorId: requestedActor, businessId: requestedBusiness, current } : undefined,
+        });
+        if (!requestedActor) {
+          // Existing standalone/staff preview callers still prove actual Auth after the original read.
+          const actual = await supabase.auth.getUser();
+          if (actual.error || actual.data.user?.id !== intendedActor) throw new PortalProgressAuthorityError("Customer session changed");
+        }
+        if (!current()) return;
+        if (!page) {
+          clearData(); setUnavailable(true);
+        } else {
+          if (pinned && page.tenant_id !== pinned) throw new Error("Progress business changed");
+          tenantRef.current = page.tenant_id; setTenantId(page.tenant_id);
+          setUnavailable(false); setItems(page.items); setSummary(page.summary);
+          setHasMore(page.has_more); setServerNow(page.server_now); shown.current = true;
+        }
+        setError(null);
+      };
+      await Promise.race([work(), new Promise<never>((_resolve, reject) => {
+        timer = setTimeout(() => reject(new Error("Progress read interrupted")), PORTAL_PROGRESS_READ_TIMEOUT_MS);
+      })]);
     } catch (err) {
       if (!current()) return;
       if (isMultipleRelationships(err)) {
-        halted.current = true;
-        clearData();
-        setError(null);
-        setMultipleBusinesses(true);
+        halted.current = true; clearData(); setError(null); setMultipleBusinesses(true);
       } else {
+        if (requestedActor || err instanceof PortalProgressAuthorityError
+          || typeof err === "object" && err !== null && "code" in err && err.code === "42501") clearData();
         setError(shown.current ? PORTAL_PROGRESS_REFRESH_ERROR : PORTAL_PROGRESS_LOAD_ERROR);
       }
     } finally {
+      if (timer !== undefined) clearTimeout(timer);
       if (current()) setLoading(false);
+      controller.abort();
+      if (pending.current === controller) pending.current = null;
     }
-  }, [clearData]);
+  }, [scopeAlive, requestedActor, requestedBusiness, clearData, limit]);
 
-  // Identity scope + initial read.
   useEffect(() => {
     alive.current = true;
+    if (appliedScope.current !== requestedScope) resetScope();
+    if (!enabled) {
+      pending.current?.abort();
+      return () => { alive.current = false; pending.current?.abort(); };
+    }
     let cancelled = false;
-    const start = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (cancelled) return;
-      actor.current = user?.id ?? null;
-      if (!user) { setLoading(false); setUnavailable(true); return; }
-      await refresh();
-    };
-    void start();
+    void refresh();
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (cancelled) return;
       const next = session?.user.id ?? null;
       if (event === "INITIAL_SESSION" && next === actor.current) return;
       if (next === actor.current && event !== "SIGNED_OUT") return;
-      actor.current = next;
-      resetScope();
+      signedOut.current = event === "SIGNED_OUT" || !next;
+      actor.current = next; resetScope();
       if (!next || event === "SIGNED_OUT") { setLoading(false); setUnavailable(true); return; }
-      // Do not call SDK Auth/RPC methods while its Auth callback holds the lock.
+      // Original SDK callback holds the Auth lock; defer its next native/Auth request.
       queueMicrotask(() => { if (!cancelled) void refresh(); });
     });
     return () => {
-      cancelled = true;
-      alive.current = false;
-      subscription.unsubscribe();
+      cancelled = true; alive.current = false; pending.current?.abort(); subscription.unsubscribe();
     };
-  }, [refresh, resetScope]);
+  }, [requestedScope, enabled, refresh, resetScope]);
 
-  // Freshness without realtime: focus, becoming visible, and a modest interval while visible.
   useEffect(() => {
     const visible = () => typeof document === "undefined" || document.visibilityState !== "hidden";
-    const live = () => !!actor.current && !halted.current;
+    const live = () => !!actor.current && !halted.current && scopeAlive();
     const onFocus = () => { if (live()) void refresh(); };
     const onVisibility = () => { if (visible() && live()) void refresh(); };
     window.addEventListener("focus", onFocus);
@@ -358,9 +420,15 @@ export function useClientPortalProgress(): ClientPortalProgressState {
       document.removeEventListener("visibilitychange", onVisibility);
       window.clearInterval(timer);
     };
-  }, [refresh]);
+  }, [refresh, scopeAlive]);
 
-  return { items, summary, hasMore, serverNow, loading, error, unavailable, multipleBusinesses, tenantId, scopeEpoch, refresh };
+  const hidden = appliedScope.current !== requestedScope || !enabled;
+  return {
+    items: hidden ? [] : items, summary: hidden ? null : summary, hasMore: hidden ? false : hasMore,
+    serverNow: hidden ? null : serverNow, loading: hidden ? requested : loading, error: hidden ? null : error,
+    unavailable: hidden ? !requested : unavailable, multipleBusinesses: hidden ? false : multipleBusinesses,
+    tenantId: hidden ? null : tenantId, scopeEpoch: hidden ? epoch.current : scopeEpoch, refresh,
+  };
 }
 
 export type PortalProgressGlance =
@@ -375,23 +443,11 @@ export type PortalProgressGlance =
  * next dated piece of open work. The counts cover every shared item regardless of the limit.
  */
 export function usePortalProgressGlance(enabled = true): PortalProgressGlance {
-  const [glance, setGlance] = useState<PortalProgressGlance>({ state: "loading" });
-  useEffect(() => {
-    if (!enabled) { setGlance({ state: "unavailable" }); return; }
-    let cancelled = false;
-    setGlance({ state: "loading" });
-    readPortalProgress({ limit: 1 })
-      .then((page) => {
-        if (cancelled) return;
-        if (!page) { setGlance({ state: "unavailable" }); return; }
-        const first = page.items[0];
-        setGlance({ state: "ready", summary: page.summary, next: first && first.state !== "done" && first.due_at ? first : null });
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        setGlance(isMultipleRelationships(err) ? { state: "unavailable" } : { state: "error" });
-      });
-    return () => { cancelled = true; };
-  }, [enabled]);
-  return glance;
+  const progress = useClientPortalProgress({ enabled, limit: 1 });
+  if (!enabled || progress.unavailable || progress.multipleBusinesses) return { state: "unavailable" };
+  if (progress.loading) return { state: "loading" };
+  if (progress.error || !progress.summary) return { state: "error" };
+  const first = progress.items[0];
+  return { state: "ready", summary: progress.summary,
+    next: first && first.state !== "done" && first.due_at ? first : null };
 }

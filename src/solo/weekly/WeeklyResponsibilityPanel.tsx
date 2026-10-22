@@ -38,7 +38,7 @@ export function WeeklyResponsibilityPanel({ read, refresh, pathname, onRequestPr
         ? "Future checks are paused. An existing run may still finish; its history is preserved."
         : "This responsibility is cancelled for future checks. Its history is preserved."
         : result.status === "stale" ? "Your reviewed version could not be confirmed. Refresh and review the current responsibility."
-          : result.status === "refused" ? "Your workspace or permissions changed. Refresh in your current workspace."
+          : result.status === "refused" ? "Current workspace or authorization could not be verified. Inspect the original responsibility in its owning workspace before repeating the change."
             : result.status === "unsupported" ? "This control is not available for the current responsibility. Refresh to inspect it."
               : result.status === "unavailable" ? "The request could not start. Refresh before reviewing it again."
                 : "The result is unknown; the responsibility may have changed. Refresh to inspect it. Nothing will be repeated automatically.");

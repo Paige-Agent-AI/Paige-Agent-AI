@@ -84,3 +84,33 @@ occurrence/provider activation. Lost acknowledgment returns unknown; a later
 original read proves cancelled without a second control/audit. This is29 selected
 native assertions, not the complete engine/production/authenticated campaign.
 Original fixture service_role posture was restored and verified; runner stopped.
+
+## Full native continuation and finish findings
+
+The original full native command also passes97 selected PostgreSQL/engine cases,
+including the unchanged draft/approval/Rail, six-session claim/commit, DST,
+revocation, unknown/no-replay and original-engine/Gateway/adapter redrain paths.
+The real adapter/native future-stop cases are included in that same original
+runner. Packet assets/exp05-weekly-future-controls/full-native-proof.json,
+SHA256aead3286fa5bdbfea5908ac60829a410b8b1b72bc2ea6dff88f6b8dac7455fcb.
+Original fixture role restoration is verified in the final artifact and the
+disposable cluster stopped with exit0. Explicit Auth/context/Trust/cron/network
+fixture boundaries remain; this is not full-schema/ordinary Auth/customer proof.
+The10k/100k local history medians757.292/358.173ms remain below the unchanged
+1000ms margin. They are local selected-query observations, not production latency.
+
+Fresh66 adapter/controller/Panel/Calendar assertions pass. A further causal
+Panel regression initially fails: scope refusal must not assert a permission
+change or that an uncertain effect did not happen. Corrected guidance asks the
+owner to inspect the original responsibility in its owning workspace before
+repeating the change; all10 Panel cases pass (67 owning assertions including the
+previous unchanged sets). New future-control buttons/disclosure now use44px
+minimum targets within the incumbent styles. This does not increase banners.
+Final rendered target/focus/reflow checks remain owed, not replaced by CSS.
+
+The selected Edge connection now lists a restored local tab, but binding it
+times out before the debugger can read it. One fresh tab in the same browser
+also times out. No profile/browser switch or alternate automation was used;
+the host-only local listener was stopped. The existing reconnection question
+remains pending, and the prior temporary viewport reset is still unconfirmed.
+These finish findings are local source fixes, not a release or founder evaluation.

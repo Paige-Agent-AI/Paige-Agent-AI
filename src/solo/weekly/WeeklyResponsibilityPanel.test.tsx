@@ -97,6 +97,16 @@ it("a replaced read retires the old control review", async () => {
   expect(Array.from(container.querySelectorAll("button")).some(button => button.textContent === "Confirm cancellation")).toBe(false);
   expect(control).not.toHaveBeenCalled();
 });
+it("a scope refusal does not claim a failed write or a permission change", async () => {
+  const data = recordedSnapshot(); data.checks[0].schedule_status = "scheduled";
+  const control = vi.fn<WeeklyFutureControl>().mockResolvedValue({ status: "refused" });
+  await render({ status: "ready", snapshot: data }, control); await click("Cancel responsibility"); await click("Confirm cancellation");
+  expect(container.textContent).toContain("Current workspace or authorization could not be verified");
+  expect(container.textContent).toContain("before repeating the change");
+  expect(container.textContent).not.toContain("permissions changed");
+  expect(container.textContent).not.toContain("Nothing was changed");
+  expect(control).toHaveBeenCalledTimes(1);
+});
 it("permission and failed read clear all private result content and never claim an empty schedule", async () => {
   for (const status of ["refused", "unavailable", "loading"] as const) {
     await render({ status });

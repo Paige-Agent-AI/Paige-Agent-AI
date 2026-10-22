@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { isClientPortalBusinessId, withClientPortalBusiness } from "./client-portal-scope";
 import { PORTAL_ACCESS_REASON_LABEL } from "../../supabase/functions/_shared/client-portal-access";
 
 /**
@@ -296,11 +297,14 @@ export type CustomerPortalAccess =
   | { state: "open" | "multiple" | "none" }
   | { state: "paused" | "ended"; businessName: string; logoUrl: string | null; logoDarkUrl: string | null; since: string | null };
 
-export function readCustomerPortalAccess(value: unknown): CustomerPortalAccess | null {
+export function readCustomerPortalAccess(value: unknown, businessId: string | null = null): CustomerPortalAccess | null {
+  if (businessId !== null && !isClientPortalBusinessId(businessId)) return null;
   const row = Array.isArray(value) ? value[0] : value;
   if (!isObject(row) || typeof row.state !== "string") return null;
   if (row.state === "open" || row.state === "multiple" || row.state === "none") return { state: row.state };
   if (row.state !== "paused" && row.state !== "ended") return null;
+  // A pre-scope backend may ignore the header. Never name its unrelated latest business notice.
+  if (businessId !== null && row.request_business_id !== businessId) return null;
   const business = row.business;
   if (!isObject(business) || typeof business.name !== "string" || !business.name.trim()) return null;
   if (!optionalText(business.logo_url) || !optionalText(business.logo_dark_url) || !timestamp(row.since)) return null;
@@ -322,9 +326,9 @@ export function readCustomerPortalAccess(value: unknown): CustomerPortalAccess |
  * 20271111010000 is applied nothing can be paused, so that answer is "nothing withheld", which is
  * exactly today's behaviour.
  */
-export async function fetchWithheldCustomerAccess(): Promise<Extract<CustomerPortalAccess, { state: "paused" | "ended" }> | null> {
+export async function fetchWithheldCustomerAccess(businessId: string | null = null): Promise<Extract<CustomerPortalAccess, { state: "paused" | "ended" }> | null> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC from 20271111010000 is not in the generated types yet
-  const result = await (supabase as any).rpc("client_portal_access_state");
+  const result = await withClientPortalBusiness((supabase as any).rpc("client_portal_access_state"), businessId);
   const error = result?.error as { code?: string } | null | undefined;
   if (error) {
     if (error.code === "PGRST202" || error.code === "42883") return null;
@@ -332,7 +336,7 @@ export async function fetchWithheldCustomerAccess(): Promise<Extract<CustomerPor
   }
   // No row at all is "nothing recorded about this person", the same as { state: 'none' }.
   if (result?.data === null || result?.data === undefined) return null;
-  const access = readCustomerPortalAccess(result.data);
+  const access = readCustomerPortalAccess(result.data, businessId);
   if (!access) throw new Error("Customer access state unreadable");
   return access.state === "paused" || access.state === "ended" ? access : null;
 }

@@ -16,6 +16,7 @@ vi.mock("@/hooks/useClientPortalFrame", () => ({
   ClientPortalFrameProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 vi.mock("@/lib/auth/signOut", () => ({ performSignOut: (...a: unknown[]) => f.signOut(...a), customerSignOutTarget: (...a: unknown[]) => f.target(...a) }));
+vi.mock("./CustomerBusinessChoice", () => ({CustomerBusinessChoice: ({actor}: {actor: string}) => <main data-choice={actor}/>, CustomerPortalSignOut: () => <button>Sign out</button>}));
 import { CustomerAccessGate } from "./CustomerAccessGate";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
@@ -26,6 +27,7 @@ const show = async (enabled = true) => {
 };
 const withheld = (phase: "paused" | "ended") => ({ ...f.frame, phase, access: { businessName: "Test Studio", logoUrl: null, logoDarkUrl: null, since: "2026-10-18T12:00:00Z" } });
 beforeEach(() => {
+  sessionStorage.clear();
   vi.clearAllMocks(); f.calls = [];
   f.frame = { phase: "ready", frame: null, access: null, checking: false, epoch: 0, actorId: "test-customer-a", reload: vi.fn() };
   f.target.mockResolvedValue("/portal/test-studio"); f.signOut.mockResolvedValue(undefined);
@@ -93,6 +95,32 @@ it("holds the shell until the first answer, so the platform desk never flashes f
 it("is not consulted while staff view as a client", async () => {
   f.frame = withheld("paused");
   await show(false);
-  expect(f.calls[0]).toEqual(["test-customer-a", false]);
+  expect(f.calls[0]).toEqual(["test-customer-a", false, false, null]);
   expect(host.querySelector("[data-platform-shell]")).not.toBeNull();
+});
+it("native ambiguity replaces the shell with the actual actor's choice flow", async () => {
+  f.frame.phase = "choose-business"; await show();
+  expect(host.querySelector("[data-platform-shell]")).toBeNull(); expect(host.querySelector("[data-choice]")?.getAttribute("data-choice")).toBe("test-customer-a");
+});
+it("explicit choice disables the frame reader and keeps the shell withheld", async () => {
+  await act(async () => root.render(<CustomerAccessGate userId="test-customer-a" enabled search="?chooseBusiness=1"><Shell/></CustomerAccessGate>));
+  expect(f.calls.at(-1)).toEqual(["test-customer-a", false, true, null]); expect(host.querySelector("[data-platform-shell]")).toBeNull();
+});
+it.each(["?business=invalid", "?business=", "?business=a&business=b"])("malformed intent %s never opens the incumbent shell", async search => {
+  await act(async () => root.render(<CustomerAccessGate userId="test-customer-a" enabled search={search}><Shell/></CustomerAccessGate>));
+  expect(host.querySelector("[data-platform-shell]")).toBeNull(); expect(host.querySelector('a[href="/app?chooseBusiness=1"]')).not.toBeNull();
+});
+it.each(["error", "unavailable", "not-client"])("selected business %s cannot fall back to staff/noncustomer", async phase => {
+  f.frame.phase = phase;
+  await act(async () => root.render(<CustomerAccessGate userId="test-customer-a" enabled search="?business=e0925000-0000-0000-0000-000000000001"><Shell/></CustomerAccessGate>));
+  expect(host.querySelector("[data-platform-shell]")).toBeNull(); expect(host.querySelector("h1")?.textContent).toContain("couldn’t be opened");
+});
+it("same-scope checking and transient errors conceal/inert the original shell while retaining unfinished work", async () => {
+  f.frame.frame = {actorId: "test-customer-a", profile: {tenant_id: "e0925000-0000-0000-0000-000000000001"}};
+  const render = () => act(async () => root.render(<CustomerAccessGate userId="test-customer-a" enabled><input aria-label="Unfinished message" defaultValue="Keep this"/></CustomerAccessGate>));
+  await render(); const input = host.querySelector("input")!;
+  f.frame.checking = true; await render(); expect(host.querySelector("input")).toBe(input); expect(input.closest("[hidden][inert]")).not.toBeNull(); expect(host.textContent).toContain("Checking your portal access");
+  f.frame.checking = false; f.frame.phase = "error"; await render(); expect(input.closest("[hidden][inert]")).not.toBeNull();
+  const retry = [...host.querySelectorAll("button")].find(b => b.textContent === "Try again")!; await act(async () => retry.click()); expect(f.frame.reload).toHaveBeenCalledOnce();
+  f.frame.phase = "ready"; await render(); expect(host.querySelector("input")).toBe(input); expect(input.closest("[hidden]")).toBeNull(); expect(input.value).toBe("Keep this");
 });

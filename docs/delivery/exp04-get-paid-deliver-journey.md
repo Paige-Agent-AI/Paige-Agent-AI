@@ -1,5 +1,24 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
+## October22 required sanitizer gate — reuse the existing security patch
+
+Exact2610/c5 audit failed on DOMPurify3.4.16. Reuse original Dependabot2607 commit
+d1c0a15b4e40b01ea805f07fbe5427cc088f431b within the same original release; no
+duplicate dependency PR or broad npm fix. Only one lockfile package record's
+version/resolved/integrity changes to3.4.17; all940 other records compare equal,
+package.json and actual application sanitizer modes remain unchanged. Original
+bot database failure119979448009 had withheld credentials, not native proof;
+the ordinary author PR must pass its own original gates without copying secrets.
+
+Benign upstream shadow-root regression fails on3.4.16, then both it and the actual
+Communications HTML email-signature preview pass on installed3.4.17. This is not
+an electronic-agreement signing test or a claim of exploitation in PAIGE. The
+unchanged production npm audit high+ gate passes with8 moderate advisories still
+reported. An isolated normal install preserves the old shared workspace modules;
+no install-policy, provider, sender, approval, role or native function is changed.
+Existing type baseline and all fresh exact-head gates remain required. Local
+Windows npm-shim stalls are setup failures, never successful type evidence.
+
 ## October22 pending preparation installation — bounded pre-edit repair
 
 Six normal production attempts failed at the same DROP TRIGGER statement with

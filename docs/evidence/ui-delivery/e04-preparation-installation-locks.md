@@ -1,14 +1,14 @@
 # EXP04 pending preparation installation under ordinary readers
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
-FLOW_BY_FLOW: PASS: original twelve-outcome journey records the bounded pre-edit installation repair and original owner API dependency; no new commercial workflow or authority.
+FLOW_BY_FLOW: PASS: original twelve-outcome journey records bounded installation repair and actual required sanitizer-gate correction through existing2607 source; no new commercial workflow or authority.
 PAIGE_UI_DESIGN: PASS: existing five-module/native Agreements direction and approved source remain unchanged; this repair adds no component, layout, styling or navigation.
 MATERIAL_FLOW_CHANGE: NO: original actor, private preparation inputs/results, UI flow and signing holds are unchanged; only the prerequisite installation statements change.
 FLOW_PROTOTYPE: NOT_REQUIRED: original approved Agreements flow is preserved; only two pending native trigger installation statements change.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: the existing owner can eventually retain exact unsigned document preparations through the original API after its native prerequisite deploys; this source is not customer acceptance.
 VISUAL_DIRECTION: NOT_APPLICABLE: no renderer, stylesheet, typography, shell or customer screen changes in this repair.
-AUTOMATED_EVIDENCE: PASS: final existing fenced PostgreSQL16 runner reproduces old-source lock timeout, then221 native controls pass with the two-statement SQL correction and explicitly held reader; 44 signer/75 checked/23 editability/79 document cases, zero leftover fixture databases.
-STATIC_EVIDENCE: PASS: migration lint0 warnings, original script syntax/whitespace checks, exact source comparison and all8 source function-body hashes match original429; fixed5s timeout and all grants/ABIs unchanged.
+AUTOMATED_EVIDENCE: PASS: final existing fenced PostgreSQL16 runner gives controlled RED then221 native controls/zero leftover fixtures before lock-only security adoption; unchanged native code. Separately actual3.4.16 sanitizer RED then2 unchanged regressions PASS on3.4.17, including existing HTML email-signature preview; no signing/provider acceptance.
+STATIC_EVIDENCE: PASS: migration lint0 warnings, script syntax/whitespace, exact two-statement mask/all8 source bodies/grants/ABIs/fixed5s unchanged. Only DOMPurify lock record changes,940 others equal; exact installed3.4.17, scoped lint0 and original production high+ audit PASS with8 moderate advisories remaining. Type/CI baseline unmodified, new exact gates required.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no visible source changed; original API/field rendering evidence remains separate and does not prove deployment or customer persistence.
 BEHAVIORAL_EVIDENCE: PASS: explicit reader remains held through actual before/fresh/replay pg_locks checkpoints on both original tables; fresh table absence/presence and exact hold definitions verified. Original5s native/20s test session caps and refusal/CAS/receipt controls unchanged.
 AUTHENTICATED_RUNTIME: UNVERIFIED: local synthetic native authority is not genuine owner/staff/client JWT, hosted Storage, signing, provider or customer acceptance.
@@ -17,17 +17,17 @@ ZOOM_REFLOW: NOT_APPLICABLE: no viewport, layout, document canvas or responsive 
 REDUCED_MOTION: NOT_APPLICABLE: no animation, transition or loading interaction changes.
 STATE_COVERAGE: PASS: real native first-use, retained, source mismatch, permission refusal, uncertain recovery and immutable replay cases pass in221 controls. Existing signature approval holds are asserted; preparation conveys no signing authority.
 TRUTHFUL_STATE_LABELS: PASS: source proof does not mean deployed, approved, sent, signed, legally reviewed, effective obligation, paid or completed service.
-SOLO_UI: NO: only pending native SQL, existing native proof and evidence change; no recognized Solo UI source or customer-specific branch.
+SOLO_UI: NO: pending native SQL/proof, existing sanitizer lock patch and benign tests only; no recognized Solo component, actual sanitizer configuration or customer-specific implementation changes.
 UNVERIFIED: fresh exact-head review/all CI/normal Preview, native production8-function/ABI/ACL/table/trigger/index readback, genuine role/persistence/provider and full O1–O12/founder acceptance.
 
 OWNER_INTENT: complete the original professional agreement-to-payment-to-delivery Experience; remove a genuine native installation blocker without weakening safety holds or timeout controls.
 MUST_NOT_HAPPEN: rewrite production migration history, terminate sessions, weaken the5s timeout, change original function bodies/grants, authorize legacy signing or infer customer acceptance.
-MUST_PRESERVE: original agreement/customer/signature/audit records, native version300004, all other migrations, fixed timeout, private RLS/authority and both legacy signing holds.
+MUST_PRESERVE: original agreement/customer/signature/audit records, native300004/all other migrations, fixed timeouts/private authority/signing holds, all940 other lock records, application sanitizer modes and original high+ audit/type baselines.
 ACCEPTANCE_CRITERIA: exact native installation/replay succeeds during ordinary original-table reads; all original native safety controls pass; production readback and actual authorized customer use remain independent gates.
 MOTION_PURPOSE: NONE: no visible interaction or animation is introduced.
 PROTECTED_SEAMS: unchanged source/function/ABI/grant comparison, original pending migration ledger, fixed timeout, native immutable preparations and original signing-hold trigger definitions.
 
-INTERNAL_BUILD_IDENTITY: branch=codex/e04-preparation-trigger-installation; source_base=7a8b066942098a7917b2655fe75d8ebad677fb09; source_head=5bad30d29fc04e7b7bff5d6a456240f1e15a6919; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113300004 reviewed native release and source readback after six rollbacks); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-preparation-installation-locks.md
+INTERNAL_BUILD_IDENTITY: branch=codex/e04-preparation-trigger-installation; source_base=7a8b066942098a7917b2655fe75d8ebad677fb09; source_head=796b775c55ed426e2859c8b266496055d08d1264; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113300004 reviewed native release and source readback after six rollbacks); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-preparation-installation-locks.md
 RELEASE_CHANNEL: development: local native proof and source correction only; actual native production deployment remains held.
 RELEASE_CLASSIFICATION: internal-only: original preparation prerequisite correction, not a complete professional Agreements or twelve-outcome customer release.
 CUSTOMER_RELEASE_IDENTITY: none: no customer version, announcement or founder acceptance from this repair.
@@ -66,3 +66,16 @@ Master closeout preserved verbatim; no owning product source changed by it.
 Native logs/source comparison remain task-local: e04-trigger-installation-red-controlled.log,
 e04-trigger-installation-green-controlled.log and e04-trigger-installation-source-contract.json.
 No protected customer data or source-test acceptance evidence was posted to ANT52.
+
+Current security prerequisite reuses bot2607/d1c0a15b4e40b01ea805f07fbe5427cc088f431b,
+not a new updater. Its failed119979448009 check had withheld baseline credentials;
+normal author-PR execution retains original secret/fork boundaries. Critical npm
+advisory and primary maintainer3.4.17 release were inspected. New two-case test
+uses benign, unevaluated markers and the real existing email-signature preview;
+actual PAIGE exploitation or electronic-agreement signing is not established.
+The source record's initial8s/process-only and timed physical failures remain
+historical; final native proof uses explicit held readers. Original npx paths
+stalled before compiler launch locally and were stopped as INVALID setup; no
+type PASS is inferred. Direct installed compiler and hosted original gate retain
+the same options/baseline. Dependency graph installed separately; original shared
+modules preserved, no broad script approval or audit threshold change.

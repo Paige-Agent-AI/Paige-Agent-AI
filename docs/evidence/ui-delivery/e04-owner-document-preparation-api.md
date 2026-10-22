@@ -1,5 +1,17 @@
 # EXP04 original owner document API — bounded dependent source
 
+Required security follow-through: original2610/c5 npm production audit failed on
+DOMPurify3.4.16. The same branch adopts original Dependabot2607/d1c0a15b4e40b01ea805f07fbe5427cc088f431b;
+only that lockfile record's version/resolved/integrity changes to3.4.17, all940
+other records equal, no package.json/app-mode change. Benign sanitizer regression
+RED on3.4.16, both tests GREEN on actual3.4.17, including the existing HTML email-
+signature preview helper. No electronic-agreement signing or live exploit claim.
+Exact unchanged production high+ audit passes,8 moderate advisories remain. Bot
+native check failed with withheld secrets; normal author-PR gates remain required,
+no secret copy or bypass. Actual hosted Previewmuqqatrhpdcdsvxphwxo source has
+all8 expected bodies, four triggers, five indexes, private postgres-only table ACL/
+RLS and unchanged SAVE. Preview parity is not production/customer acceptance.
+
 ## October22 pending native installation correction
 
 Six normal production attempts failed at statement16/original5s55P03. Actual

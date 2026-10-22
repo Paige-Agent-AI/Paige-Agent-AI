@@ -1,0 +1,182 @@
+{
+  "source": "9558822d71fd7b0f7cafa519bb80b73d5a3d45dc",
+  "boundary": "Actual native fixture; synthetic Auth/domain/PAIGE ports, no production or persistence proof",
+  "results": [
+    {
+      "theme": "light",
+      "requestedWidth": 1536,
+      "open": false,
+      "actions": "New project",
+      "heading": "16px",
+      "scroll": 1536,
+      "width": 1536,
+      "workRight": 1536,
+      "file": "light-1536-closed.png"
+    },
+    {
+      "theme": "light",
+      "requestedWidth": 1536,
+      "open": true,
+      "actions": "New project",
+      "heading": "16px",
+      "scroll": 1536,
+      "width": 1536,
+      "workRight": 1013.7625122070312,
+      "file": "light-1536-open.png"
+    },
+    {
+      "theme": "light",
+      "requestedWidth": 1366,
+      "open": false,
+      "actions": "New project",
+      "heading": "16px",
+      "scroll": 1366,
+      "width": 1366,
+      "workRight": 1366.4000244140625,
+      "file": "light-1366-closed.png"
+    },
+    {
+      "theme": "light",
+      "requestedWidth": 1366,
+      "open": true,
+      "actions": "New project",
+      "heading": "16px",
+      "scroll": 1366,
+      "width": 1366,
+      "workRight": 901.8250122070312,
+      "file": "light-1366-open.png"
+    },
+    {
+      "theme": "light",
+      "requestedWidth": 1024,
+      "open": false,
+      "actions": "New project",
+      "heading": "16px",
+      "scroll": 1024,
+      "width": 1024,
+      "workRight": 1024,
+      "file": "light-1024-closed.png"
+    },
+    {
+      "theme": "light",
+      "requestedWidth": 1024,
+      "open": true,
+      "actions": "New project",
+      "heading": "16px",
+      "scroll": 1024,
+      "width": 1024,
+      "workRight": 1024,
+      "file": "light-1024-open.png"
+    },
+    {
+      "theme": "light",
+      "requestedWidth": 900,
+      "open": false,
+      "actions": "New project",
+      "heading": "16px",
+      "scroll": 900,
+      "width": 900,
+      "workRight": 900,
+      "file": "light-900-closed.png"
+    },
+    {
+      "theme": "light",
+      "requestedWidth": 900,
+      "open": true,
+      "actions": "New project",
+      "heading": "16px",
+      "scroll": 900,
+      "width": 900,
+      "workRight": 900,
+      "file": "light-900-open.png"
+    },
+    {
+      "theme": "dark",
+      "requestedWidth": 1536,
+      "open": false,
+      "actions": "New project",
+      "heading": "16px",
+      "scroll": 1536,
+      "width": 1536,
+      "workRight": 1536,
+      "file": "dark-1536-closed.png"
+    },
+    {
+      "theme": "dark",
+      "requestedWidth": 1536,
+      "open": true,
+      "actions": "New project",
+      "heading": "16px",
+      "scroll": 1536,
+      "width": 1536,
+      "workRight": 1013.7625122070312,
+      "file": "dark-1536-open.png"
+    },
+    {
+      "theme": "dark",
+      "requestedWidth": 1366,
+      "open": false,
+      "actions": "New project",
+      "heading": "16px",
+      "scroll": 1366,
+      "width": 1366,
+      "workRight": 1366.4000244140625,
+      "file": "dark-1366-closed.png"
+    },
+    {
+      "theme": "dark",
+      "requestedWidth": 1366,
+      "open": true,
+      "actions": "New project",
+      "heading": "16px",
+      "scroll": 1366,
+      "width": 1366,
+      "workRight": 901.8250122070312,
+      "file": "dark-1366-open.png"
+    },
+    {
+      "theme": "dark",
+      "requestedWidth": 1024,
+      "open": false,
+      "actions": "New project",
+      "heading": "16px",
+      "scroll": 1024,
+      "width": 1024,
+      "workRight": 1024,
+      "file": "dark-1024-closed.png"
+    },
+    {
+      "theme": "dark",
+      "requestedWidth": 1024,
+      "open": true,
+      "actions": "New project",
+      "heading": "16px",
+      "scroll": 1024,
+      "width": 1024,
+      "workRight": 1024,
+      "file": "dark-1024-open.png"
+    },
+    {
+      "theme": "dark",
+      "requestedWidth": 900,
+      "open": false,
+      "actions": "New project",
+      "heading": "16px",
+      "scroll": 900,
+      "width": 900,
+      "workRight": 900,
+      "file": "dark-900-closed.png"
+    },
+    {
+      "theme": "dark",
+      "requestedWidth": 900,
+      "open": true,
+      "actions": "New project",
+      "heading": "16px",
+      "scroll": 900,
+      "width": 900,
+      "workRight": 900,
+      "file": "dark-900-open.png"
+    }
+  ]
+}

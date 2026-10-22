@@ -1,7 +1,7 @@
 import {supabase} from "@/integrations/supabase/client";
 import {readClientPortalFrame,sameClientPortalFrame,type ClientPortalFrame} from "./client-portal-frame";
 import {captureClientPortalAuthorization,withClientPortalBusiness} from "./client-portal-scope";
-type CustomerThreadProjection={id:unknown;caller_user_id:unknown;contact_id:unknown;tenant_id:unknown;lens:unknown;interactive_latest_intent?:unknown};
+type CustomerThreadProjection={id:unknown;caller_user_id:unknown;contact_id:unknown;tenant_id:unknown;lens:unknown;interactive_latest_intent:unknown};
 export type CustomerChatMessage={id:string;role:"user"|"assistant";content:string};
 const uuid=(v:unknown):v is string=>typeof v==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 
@@ -34,6 +34,7 @@ async function customerChatScope(frame:ClientPortalFrame,signal?:AbortSignal){
 /** Original native customer thread and its private RLS projection, never browser role authority. */
 async function readCustomerThread(scope:Awaited<ReturnType<typeof customerChatScope>>,threadId:string){
  const {captured,business,current,request}=scope;
+ current();
  const thread=await request(supabase.from("paige_chat_threads").select("id,caller_user_id,contact_id,tenant_id,lens,interactive_latest_intent")
   // audience is supplied by the reviewed forward migration; retain the same
   // server predicate through the SDK's explicit-column overload until generated types catch up.
@@ -42,6 +43,8 @@ async function readCustomerThread(scope:Awaited<ReturnType<typeof customerChatSc
  current();
  if(thread.error||!thread.data||thread.data.id!==threadId||thread.data.caller_user_id!==captured.actorId||thread.data.contact_id!==captured.profile.id||
   thread.data.tenant_id!==business||thread.data.lens!=="client")throw Error("Customer conversation changed");
+ if(!Object.prototype.hasOwnProperty.call(thread.data,"interactive_latest_intent")||
+  (thread.data.interactive_latest_intent!==null&&!uuid(thread.data.interactive_latest_intent)))throw Error("Customer conversation changed");
  return thread.data;
 }
 
@@ -54,7 +57,7 @@ export async function readCustomerChat(frame:ClientPortalFrame,signal?:AbortSign
  current();
  if(made.error||!uuid(made.data))throw Error("Conversation could not be opened");
  const threadId=made.data;
- const thread=await readCustomerThread(scope,threadId);
+ await readCustomerThread(scope,threadId);
  const turns=await request(supabase.from("paige_chat_turns").select("id,role,content")
   .eq("thread_id",threadId).order("seq",{ascending:false})).limit(100);
  current();
@@ -64,8 +67,9 @@ export async function readCustomerChat(frame:ClientPortalFrame,signal?:AbortSign
   if((row.role==="user"||row.role==="assistant")&&uuid(row.id)&&typeof row.content==="string")
    messages.push({id:row.id,role:row.role,content:row.content});
  }
+ const latestThread=await readCustomerThread(scope,threadId);
  await check();
- const latest=thread.interactive_latest_intent;
+ const latest=latestThread.interactive_latest_intent;
  if(latest!=null&&!uuid(latest))throw Error("Customer conversation changed");
  return {threadId,messages,...(uuid(latest)?{latestRequestIntentId:latest}:{})};
 }

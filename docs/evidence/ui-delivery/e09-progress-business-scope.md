@@ -31,7 +31,7 @@ RELEASE_CHANNEL: development: original-component rendering and isolated syntheti
 RELEASE_CLASSIFICATION: internal-only: selected Progress read/recovery prerequisite; not completed multi-business Portal or customer release.
 CUSTOMER_RELEASE_IDENTITY: none: no owner-approved customer publication or version.
 RELEASE_NOTE_REQUIRED: no: bounded internal repair; canonical release closeout follows verified production.
-RELEASE_TRUTH_BOUNDARY: PARTIAL existing Portal; local source/browser proof only. Native82, exact-head CI/production and authenticated customer journey PROOF OWED; no LIVE customer or algorithm promotion.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: existing Portal with bounded local source/browser proof only. PROOF OWED: native82, exact-head CI/production and authenticated customer journey; no LIVE customer or algorithm promotion.
 RELEASE_RECOVERY: position=compatible original-consumer forward correction/revert, preserving native data/permissions; reference=docs/delivery/e09-customer-progress-business-scope.md
 
 ## Rendered review and final confirmation

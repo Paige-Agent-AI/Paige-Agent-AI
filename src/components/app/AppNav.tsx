@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, LogOut, User as UserIcon, Menu, ArrowLeft, Eye, LifeBuoy, CircleHelp, ChevronDown } from "lucide-react";
+import { Settings, LogOut, User as UserIcon, Menu, ArrowLeft, Eye, LifeBuoy, CircleHelp, ChevronDown, ArrowRightLeft } from "lucide-react";
 import type { PortalNavItem, PortalNavSection } from "@/lib/portal/portalMenu";
 import { useCustomerPortalNav } from "@/hooks/useCustomerPortalNav";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,7 @@ import { performSignOut, customerSignOutTarget, cachePortalSlug } from "@/lib/au
 import { useUnreadSupportCount } from "@/hooks/useUnreadSupportCount";
 import { isAvatarBucketUrl } from "@/components/ui/avatar-uploader";
 import type { ClientPortalBrand } from "@/hooks/useClientPortalBrand";
+import {CLIENT_PORTAL_CHOOSE_HREF} from "@/lib/client-portal-entry";
 import { readableTextOn } from "@/lib/brand/contrast";
 import { PaigeCommandMark } from "@/components/brand/PaigeCommandMark";
 import { useCustomerIdentity } from "@/lib/portal/customerIdentity";
@@ -162,7 +163,9 @@ export function AppNav({ user }: AppNavProps) {
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const { isAdmin, mode, setMode } = useDashboardMode();
+  const identity = useCustomerIdentity();
+  const { isAdmin: dashboardAdmin, mode, setMode } = useDashboardMode();
+  const isAdmin = dashboardAdmin && identity.viewer !== "customer";
   // Resolve the TENANT's brand for the chrome (same resolver onboarding uses —
   // get_client_portal_brand()). `loading` gates a skeleton so the platform logo
   // never flashes before the tenant's resolves (§6/§11).
@@ -170,17 +173,11 @@ export function AppNav({ user }: AppNavProps) {
   // asks "is Resources in my menu?" reads the same answer (§18/§57).
   const { sections, ready: menuReady, brandState } = useCustomerPortalNav();
   const { brand, loading: brandLoading, error: brandError, multipleBusinesses } = brandState;
-  // A customer of ONE business (an actual relationship resolved server-side) gets
-  // help from THAT business ("Get help" → their own inbox), never Paige's platform
-  // support desk. Everyone else whose relationship has resolved keeps platform
-  // Support — staff/owners, and a customer of MORE than one business, who has no
-  // thread that can send until choosing a business exists (Slice 8). Neither renders
-  // until the relationship resolves, so a customer never sees the platform desk flash
-  // in (E09 owner decision). A FAILED resolve is not "not a customer": it shows
-  // neither, rather than a destination that may be wrong.
+  // A verified customer contacts their business. Only verified staff receive the
+  // platform desk; absent/ambiguous customer branding cannot establish staff standing.
   const relationshipKnown = !brandLoading && !brandError;
   const isCustomer = relationshipKnown && !!brand?.tenant_id && !multipleBusinesses;
-  const showPlatformSupport = relationshipKnown && !isCustomer;
+  const showPlatformSupport = relationshipKnown && identity.viewer === "staff";
   const showGetHelp = isCustomer;
   // Moving between the thread and its help mode is one page: replace, so the page's
   // discard guard (which only intercepts push) never asks to leave a page it stays on.
@@ -190,7 +187,6 @@ export function AppNav({ user }: AppNavProps) {
   const { count: unreadSupport } = useUnreadSupportCount(showPlatformSupport ? user.id : null);
   // A customer is greeted by their own name on their record at this business, not their login email
   // (D-QA5, live QA 2026-10-19). Staff, and anyone without a customer frame, keep the email.
-  const identity = useCustomerIdentity();
   const customerName = identity.viewer === "customer" ? identity.customerName : null;
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   useEffect(() => {
@@ -283,6 +279,7 @@ export function AppNav({ user }: AppNavProps) {
                 );
               })}
               <div className="border-t border-sidebar-border !my-3" />
+              {identity.viewer === "customer" && <a href={CLIENT_PORTAL_CHOOSE_HREF} className={cn(DRAWER_ITEM, DRAWER_REST)}><ArrowRightLeft aria-hidden className="w-4 h-4"/>Choose business</a>}
               {showGetHelp && (
                 <button
                   onClick={() => { go("/app/messages?topic=help"); setMobileMenuOpen(false); }}
@@ -409,12 +406,8 @@ export function AppNav({ user }: AppNavProps) {
           </Button>
         )}
 
-        {/* A customer reaches their business through the Messages nav item; a second
-            top-bar entry to the same page only crowded the bar. Everyone else who sees this (a customer of more
-            than one business, a person whose access ended, staff without the admin role) has no business thread
-            that can send, so the button says what it opens: platform Support, the same place as the menu's
-            Support entry. It used to read "Contact Advisor" and open the chat (round 2, verifier #6). */}
-        {!isCustomer && !isAdmin && relationshipKnown && (
+        {/* The same verified staff-only destination as the account menu. */}
+        {showPlatformSupport && !isAdmin && (
           <Button
             variant="ghost"
             size="sm"
@@ -443,6 +436,7 @@ export function AppNav({ user }: AppNavProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
+            {identity.viewer === "customer" && <DropdownMenuItem asChild className="min-h-11"><a href={CLIENT_PORTAL_CHOOSE_HREF}><ArrowRightLeft aria-hidden className="mr-2 h-4 w-4"/>Choose business</a></DropdownMenuItem>}
             <div className="px-2 py-1.5 text-xs text-muted-foreground">
               {customerName && <p className="truncate text-sm font-medium text-foreground">{customerName}</p>}
               <p className="truncate">{user.email}</p>

@@ -446,4 +446,28 @@ Development evidence:114 protected tests across the new receiver and unchanged p
 
 Source remains unmounted development work dependent on the reviewed backend. Independent final source review, exact-head required CI, parent release/production source readback and the connected native inspector/history UI/Chat/Live flows remain owed. Browser full-flow proof stays held under the owner's decision to continue engineering. No additional historical action or parity requirement is closed; strict1/18 and2/50 remain unchanged.
 
+### October 22 — existing weekly status Chat consumer, development
+
+This extends the original owner-private status contract for outcomes01/07/08/10;
+it is not a new historical capability closure or permission to run a responsibility.
+Pre-edit routing:
+
+1. Outcome: a returning owner asks for the saved weekly responsibility and its actual original history; missing or unknown evidence remains explicit.
+2. Owner: EXP05. Preserve EXP02 Desk/context, EXP04 work/commercial writers and EXP09 private client source/relationship contracts.
+3. Harness/Gateway: consume existing Chat read offer/exposure and caller-native scope; original Layer C remains the source of any real occurrence.
+4. Spine: reuse `automations.weekly_commitment_status`, currently PARTIAL with Chat binding UNAVAILABLE, and its existing `get_weekly_commitment_checks` reader. No new registry.
+5. Provider: internal native records only. Integration Registry's native/provider distinction remains; no connection, credential or provider activation.
+6. Authority: read_only/no mutation verb/no approval issuance. Active native owner, server SOLO classification and unscoped business context are mandatory. `automation_set_state` remains owner_only; no schedule control is admitted by this read.
+7. Durable work: none added. Read original process, events, acts and verified Rail observations; never retry an unknown occurrence.
+8. Proof: original owner RPC, bounded validated projection, saved Chat turn and canonical read receipt, distinguished from a weekly execution receipt.
+9. Surface: existing PAIGE workspace PARTIAL and Operations PROOF_OWED remain. This connects an approved existing read flow without a new screen, control, approval step or state model.
+10. Acceptance: malformed/model scope inputs, role/client/foreign tenant, revocation, stale scope, timeout, partial/history/unknown fixtures; exact-head review/CI and actual served source, ordinary-owner current status and reload. Live, actual recurrence, delegation, other cohort and full Experience remain separate proof.
+
+Reuse the existing weekly prototype/native panel contract; no frontend layout or
+new UI workflow is introduced by the backend consumer. CAP073–083 generic recipes
+are not this owner-private status read and are not promoted by its source. Future
+owner controls and the complete workflow builder remain required separate slices.
+Current shared main/source leases were checked before editing; no migration or
+competing data, approval, scheduler, memory or execution system is introduced.
+
 October19 continuation: real handler→installed public SDK→receiver review atd434 reproduced a second P2. HTTP401/403 produces FunctionsHttpError/data:null, while the receiver previously reported unavailable after successfully rechecking the current workspace. Preserve the sealed REVISE receipt SHA256279611bac3ab4ff507b1e7fc29acaa093d724bf0c13fbf6d773b8c9927d57a07. A narrow correction recognizes only that canonical SDK error class with an original native Response401/403, after unchanged post-response authority/deadline checks, and returns refused. HTTP400/404/409/500, relay/network failure, name-only errors and non-Response contexts remain unavailable. No error body is consumed, copied or treated as authorization; there is no retry, writer or permission change. Actual handler/SDK causal regressions fail401/403 before correction and pass afterward; the complete126 protected tests across3owning suites pass with the existing network-denial guard unchanged. Existing native43-case evidence predates this correction and is not relabeled a new run. Final correction review, exact-head CI, deployment and authentic customer behavior remain separate obligations.

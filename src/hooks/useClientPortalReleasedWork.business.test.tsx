@@ -92,3 +92,17 @@ it('an actual Auth change during discovery withholds its original records',async
 it('generic permission denial is unavailable, not absent client work',async()=>{
  f.reply.mockResolvedValue({data:null,error:{code:'42501',message:'permission denied'}});await render();expect(state.work?.kind).toBe('unavailable');
 });
+
+it('a fresh sign-in during a frame hold can recover only after the same original frame is ready',async()=>{
+ await render();const count=f.native.length,old=state.isCurrent,epoch=state.epoch;
+ await act(async()=>{for(const l of [...f.listeners])l('SIGNED_OUT',null);await flush();});await render(a,'error');
+ await act(async()=>{for(const l of [...f.listeners])l('SIGNED_IN',{user:{id:actor}});await flush();});
+ expect(f.native).toHaveLength(count);expect(state.work).toBeNull();expect(old(epoch)).toBe(false);
+ await render();expect(state.work).toMatchObject({kind:'ready',scope:{tenantId:a,actorId:actor}});expect(state.isCurrent(state.epoch)).toBe(true);
+});
+it('cached initial or refresh callbacks during a hold cannot undo an observed sign-out',async()=>{
+ await render();const count=f.native.length;await act(async()=>{for(const l of [...f.listeners])l('SIGNED_OUT',null);await flush();});await render(a,'error');
+ await act(async()=>{for(const event of ['INITIAL_SESSION','TOKEN_REFRESHED'])for(const l of [...f.listeners])l(event,{user:{id:actor}});await flush();});
+ await render();await act(async()=>{await state.refresh();window.dispatchEvent(new Event('focus'));await flush();});
+ expect(f.native).toHaveLength(count);expect(state.work).toBeNull();
+});

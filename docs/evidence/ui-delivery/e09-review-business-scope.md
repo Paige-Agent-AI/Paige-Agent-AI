@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: YES: selected business/actual actor request capture, maske
 FLOW_PROTOTYPE: PASS: original component flow exercised at .cache/review-scope-prototype/index.html and responsive.html before the final interaction fixes; owner-approved existing Portal direction and standing safe-release mandate retained.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an authorized external customer reads work released by the selected business, then explicitly accepts that exact version or requests changes with a note.
 VISUAL_DIRECTION: PASS: established Portal light/dark tokens and original domain review composition; local44px touch minima and recovery-close spacing correct observed defects.
-AUTOMATED_EVIDENCE: PASS: 210 original review/discovery/real-SDK/frame/gate/Home/identity controls in13 suites succeeded; earlier overlapping runs are not summed.
+AUTOMATED_EVIDENCE: PASS: 213 final original review/discovery/real-SDK/frame/gate/Home/identity controls in13 suites succeeded; earlier overlapping runs are not summed.
 STATIC_EVIDENCE: PASS: unchanged original native Operations/CRM/receipt contracts inspected; changed-source ESLint has0 errors and4 pre-existing identity mixed-export Fast Refresh warnings; no guard/baseline weakened.
 RENDERED_EVIDENCE: PASS: nine actual-component PNGs in assets/e09-review-business-scope at900/390/320x560 light/dark; synthetic Auth/transport and local iframe, with original production components/hooks/styles.
 BEHAVIORAL_EVIDENCE: PASS: explicit confirmation/cancel, unknown-write duplicate hold and exact recorded-state recovery; original shared-gate recheck masks artifact/title/note and restores the full draft through original Retry; actual-Auth refusal shows unsent and hides artifact.

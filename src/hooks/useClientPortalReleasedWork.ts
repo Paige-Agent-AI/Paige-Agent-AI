@@ -175,13 +175,15 @@ export function useClientPortalReleasedWork(): ClientPortalReleasedWorkState {
     const l = life.current;
     l.alive = true;
     if (applied.current !== requestedKey) {applied.current = requestedKey; setWork(null); setReading(false); setEpoch(reviewEpoch.current);}
-    if (!enabled) return () => {l.alive = false; ++l.epoch; ++l.read;};
     void refresh();
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!l.alive) return;
       const next = session?.user.id ?? null;
+      // Keep the real Auth subscription during a frame hold. Cached initial/refresh
+      // callbacks cannot undo an observed sign-out; a fresh sign-in still reproves Auth.
+      if (l.signedOut && event !== "SIGNED_IN") return;
       if (event === "INITIAL_SESSION" && (l.actor === undefined || l.actor === next)) { l.actor = next; return; }
-      if (next === l.actor && event !== "SIGNED_OUT") return;
+      if (next === l.actor && event !== "SIGNED_OUT" && !l.signedOut) return;
       l.actor = next; l.signedOut = event === "SIGNED_OUT" || !next; ++origin.current.generation; ++reviewEpoch.current; ++l.epoch; ++l.read;
       setEpoch(reviewEpoch.current); setWork(null); setReading(false);
       // Never call the SDK while its auth callback holds the lock.

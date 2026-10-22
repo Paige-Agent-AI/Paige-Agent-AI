@@ -5,7 +5,7 @@
 -- the notices that stop, end + re-invite + a different person, the merge rules, the honest customer
 -- read, and that a pause at one business never touches another.
 BEGIN;
-SELECT plan(214);
+SELECT plan(215);
 
 -- Supabase's default table grants (RLS is the boundary) are reproduced, so every refusal below is the
 -- policy's or the guard's, never a missing grant.
@@ -131,9 +131,25 @@ SELECT ok(NOT has_function_privilege('anon','public.is_program_client_owner(uuid
   'the three former anon-callable customer readers are no longer anonymous');
 SELECT ok(has_function_privilege('authenticated','public.is_program_client_owner(uuid)','EXECUTE')
   AND has_function_privilege('authenticated','public.load_self_context()','EXECUTE'),'authenticated callers keep them');
-SELECT is(md5(replace((SELECT prosrc FROM pg_proc WHERE oid='public.client_portal_relationship_id(uuid)'::regprocedure),
-  E'\n    AND c.portal_access_state = ''open''','')),'f79189022b4dc36760b618a086a80e28',
-  'the resolver is the production body byte-for-byte plus exactly one predicate');
+-- Preserve the original authorization body after removing ONLY the declared
+-- request-input additions; every other byte still has the original fingerprint.
+CREATE TEMP TABLE resolver_preservation_source AS SELECT replace(replace(replace(replace(prosrc,$from0$  _business uuid;
+$from0$,$to0$$to0$),$from1$  _business := public._client_portal_request_business();
+  IF _business IS NOT NULL AND p_tenant_id IS NOT NULL AND _business <> p_tenant_id THEN RETURN NULL; END IF;
+$from1$,$to1$$to1$),$from2$    AND (p_tenant_id IS NULL OR c.tenant_id = p_tenant_id)
+    AND (_business IS NULL OR c.tenant_id = _business);$from2$,$to2$    AND (p_tenant_id IS NULL OR c.tenant_id = p_tenant_id);$to2$),$from3$    -- A request hint or argument narrows existing authority; neither supplies it.
+$from3$,$to3$    -- Future multi-business support must select a legitimate relationship explicitly.
+    -- A tenant argument narrows existing authority; it never supplies authority.
+$to3$) AS body
+ FROM pg_proc WHERE oid='public.client_portal_relationship_id(uuid)'::regprocedure;
+SELECT is(md5(replace((SELECT body FROM resolver_preservation_source),
+  $access$
+    AND c.portal_access_state = 'open'$access$,'')),'f79189022b4dc36760b618a086a80e28',
+  'the resolver retains the original body plus access and declared request narrowing');
+SELECT isnt(md5(replace(replace((SELECT body FROM resolver_preservation_source),
+  $access$
+    AND c.portal_access_state = 'open'$access$,''),$predicate$c.status = 'active'$predicate$,'true')),
+  'f79189022b4dc36760b618a086a80e28','negative control: unrelated authority predicate drift is still detected');
 SELECT is(md5((SELECT prosrc FROM pg_proc WHERE oid='public.execute_crm_command(uuid,uuid,jsonb,text)'::regprocedure)),
   '33048f303543dc8572ddcc3d4c0a323b','the CRM merge executor the guard models is the production body, unchanged');
 

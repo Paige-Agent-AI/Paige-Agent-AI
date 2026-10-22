@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { User } from "@supabase/supabase-js";
 import { AppNav } from "./AppNav";
 import { desktopNavHrefs } from "./appNavTestUtils";
+import {CustomerIdentityProvider, type CustomerIdentityState} from "@/lib/portal/customerIdentity";
 
 const f = vi.hoisted(() => ({
   mobile: false,
@@ -33,6 +34,7 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const user = { id: "u1", email: "customer@example.test" } as User;
 let root: Root, host: HTMLDivElement;
+let identity: CustomerIdentityState | null = null;
 function Where() {
   const l = useLocation();
   const how = useNavigationType();
@@ -40,7 +42,7 @@ function Where() {
 }
 const render = async (path = "/app") => {
   await act(async () => root.render(
-    <MemoryRouter initialEntries={["/app", path]} initialIndex={1}><AppNav user={user} /><Where /></MemoryRouter>,
+    <MemoryRouter initialEntries={["/app", path]} initialIndex={1}>{identity ? <CustomerIdentityProvider state={identity}><AppNav user={user}/></CustomerIdentityProvider> : <AppNav user={user}/>}<Where /></MemoryRouter>,
   ));
 };
 const where = () => host.querySelector('[data-testid="where"]')?.textContent;
@@ -53,6 +55,7 @@ const openMobileMenu = async () => {
 const menuLabels = () => Array.from(document.querySelectorAll('nav[aria-label="Customer navigation"] button')).map(b => b.textContent?.trim());
 
 beforeEach(() => {
+  identity = null;
   f.mobile = false; f.isAdmin = false; f.brandLoading = false; f.brandError = false; f.multiple = false; f.unreadArg = [];
   f.brand = { tenant_id: "e0923000-0000-0000-0000-000000000001", tenant_name: "Northwind Studio", logo_url: null, primary_color: null };
   host = document.createElement("div"); document.body.append(host); root = createRoot(host);
@@ -81,6 +84,7 @@ it("replaces platform Support with Get help in the customer's mobile menu", asyn
 
 it("keeps platform Support (with its unread badge) for staff without a customer relationship", async () => {
   f.mobile = true; f.brand = null; f.isAdmin = true;
+  identity = {frame: null, phase: "not-client", staff: true};
   await render();
   await openMobileMenu();
   const labels = menuLabels();
@@ -113,8 +117,9 @@ it("gives a nameless business's customer no top-bar message button either", asyn
   expect(topBarButton("Message your team")).toBeUndefined();
 });
 
-it("gives a signed-in non-customer a top-bar Support button that opens platform Support, and no Messages link", async () => {
+it("gives verified non-admin staff a top-bar Support button and no customer Messages link", async () => {
   f.brand = null;
+  identity = {frame: null, phase: "not-client", staff: true};
   await render();
   const button = topBarButton("Contact support");
   expect(button).toBeDefined();
@@ -150,28 +155,27 @@ it("on a failed brand read the desktop bar offers no contact destination that co
   expect(host.querySelector('a[href="/app/messages"]')).toBeNull();
 });
 
-it("keeps platform Support for a customer of more than one business, and no entry to a thread that cannot send", async () => {
+it("ambiguous customer branding grants neither platform Support nor an unbound business thread", async () => {
   f.mobile = true; f.brand = null; f.multiple = true;
   await render();
   await openMobileMenu();
   const labels = menuLabels();
-  expect(labels.some(l => l?.startsWith("Support"))).toBe(true);
+  expect(labels.some(l => l?.startsWith("Support"))).toBe(false);
   expect(labels).not.toContain("Get help");
   expect(labels).not.toContain("Messages");
-  expect(f.unreadArg).toContain("u1");
-  const support = Array.from(document.querySelectorAll('nav[aria-label="Customer navigation"] button'))
-    .find(b => b.textContent?.trim().startsWith("Support")) as HTMLButtonElement;
-  await act(async () => support.click());
-  expect(where()).toBe("/app/support");
+  expect(f.unreadArg.every(a => a === null)).toBe(true);
 });
 
-it("gives a customer of more than one business no Messages dead end, and keeps its top-bar Support button", async () => {
+it("gives an ambiguous customer neither a Messages dead end nor a platform contact button", async () => {
   f.brand = null; f.multiple = true;
   await render();
   expect(host.querySelector('a[href="/app/messages"]')).toBeNull();
   expect(topBarButton("Message your team")).toBeUndefined();
-  // Their top-bar route is unchanged from before E09 (§58): Messages can't serve them yet.
-  expect(topBarButton("Contact support")).toBeDefined();
+  expect(topBarButton("Contact support")).toBeUndefined();
+});
+it("an inactive customer never receives a platform Support destination", async () => {
+  f.brand = null; identity = {frame: null, phase: "unavailable", staff: false};
+  await render(); expect(topBarButton("Contact support")).toBeUndefined(); expect(f.unreadArg.every(a => a === null)).toBe(true);
 });
 
 it("switches from the thread to Get help in place, so the page's discard guard is not asked", async () => {

@@ -47,11 +47,11 @@ beforeEach(() => {
 afterEach(async () => { await closeMenus(); act(() => root.unmount()); host.remove(); document.body.innerHTML = ""; });
 
 describe("menu for a person whose access is not active", () => {
-  it("offers Home only, and keeps the Support button", async () => {
+  it("offers Home only without the staff platform Support button", async () => {
     await render({ frame: null, phase: "not-client", staff: false });
     expect(await desktopNavHrefs(host)).toEqual(["/app"]);
     expect(navEl().textContent).not.toMatch(/Action items|Resources|Messages/);
-    expect(host.querySelector('button[aria-label="Contact support"]')).not.toBeNull();
+    expect(host.querySelector('button[aria-label="Contact support"]')).toBeNull();
   });
 
   // Round 4 (compliance 7): the access-ended header still called them "Client".

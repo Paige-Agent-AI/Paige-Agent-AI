@@ -57,6 +57,20 @@ it("does not use a brand or invented role as proof of a client relationship", as
 it.each(["42501"])("refuses canonical denied or ambiguous relationship %s without fallback", async code => {
   f.rpc.mockResolvedValue({data: null, error: {code}}); await mount(); expect(state.phase).toBe("unavailable");
 });
+it("only the native unscoped ambiguity asks for a business, after actual Auth recheck", async () => {
+  f.rpc.mockResolvedValue({data: null, error: {code: "42501", message: "select an authorized customer relationship"}});
+  await mount(); expect(state.phase).toBe("choose-business"); expect(state.frame).toBeNull(); expect(f.getUser).toHaveBeenCalledTimes(2);
+});
+it("a scoped refusal never invents another relationship or staff fallback", async () => {
+  const builder = {setHeader: vi.fn(), then: (resolve: (v: unknown) => unknown) => Promise.resolve({data: null, error: {code: "42501", message: "select an authorized customer relationship"}}).then(resolve)};
+  builder.setHeader.mockReturnValue(builder); f.rpc.mockReturnValue(builder);
+  await mount({business: tenant}); expect(state.phase).toBe("unavailable"); expect(state.frame).toBeNull();
+});
+it("a changed Auth subject cannot publish the choice prompt", async () => {
+  f.rpc.mockResolvedValue({data: null, error: {code: "42501", message: "select an authorized customer relationship"}});
+  f.getUser.mockResolvedValueOnce({data: {user: {id: actor}}, error: null}).mockResolvedValue({data: {user: {id: other}}, error: null});
+  await mount(); expect(state.phase).toBe("unavailable");
+});
 it.each(["actor", "profile", "brand", "widened", "config"])("rejects a foreign or invalid %s envelope", async kind => {
   const value: Record<string, unknown> = snapshot();
   if (kind === "actor") value.actor_id = other;
@@ -263,4 +277,9 @@ it("keeps the existing bounded access retry usable after its first deadline", as
     : ++reads === 1 ? new Promise(() => {}) : Promise.resolve({data:{state:"none"},error:null}));
   await mount(); await act(async () => vi.advanceTimersByTimeAsync(20_001));
   expect(state.phase).toBe("not-client"); expect(reads).toBe(2);
+});
+it("a cached-page return and visible-session return recheck the original frame", async () => {
+  await mount(); const first = f.rpc.mock.calls.length;
+  await act(async () => window.dispatchEvent(new PageTransitionEvent("pageshow", {persisted: true}))); await flush(); expect(f.rpc).toHaveBeenCalledTimes(first + 1);
+  await act(async () => document.dispatchEvent(new Event("visibilitychange"))); await flush(); expect(f.rpc).toHaveBeenCalledTimes(first + 2);
 });

@@ -826,6 +826,15 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-22 — EXP09 original Account/Consent and financial-read production closeout.**
+
+| Increment | Exact reviewed/deployed identity and bounded proof | Completion boundary |
+| --- | --- | --- |
+| [#2576](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2576): Native exact-customer Account and Consent | Reviewed04c9a2ec16a2c2bc58388a8c6e25ac33e318ba9e; main6df040cac5191cc4711e61dbcb459bdb1dfddca9/tree83fdc6fd184ceec6526785e39f84bb346aceaa39 matches composition.13 checks/two statuses/full Preview SUCCESS; original-plus-additive165 native controls PASS, final review5613177904 AUTHOR-REVIEW / LOWER ASSURANCE. Production migration20271113270009 recorded; five reviewed bodies/ABIs/postgres definer/public,pg_temp/ACL match, internal helper owner-only and four adapters Auth-only; four original bodies/grants unchanged. Exact webdpl_51NAqDH5p2dXikUb2VBSXjJxewiJ READY; public sampled containingf18017e6e351b49576722e9e1e9f27a3f7c66db5-mvjfvfyk, exact6df manifest not separately sampled. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2576#issuecomment-6339278471). | Native compatible prerequisite only; original CAS/suppressions/consent authority and advisory-before-client lock order retained. No new permission registry or actual customer mutation; true two-session concurrency and complete customer acceptance UNVERIFIED. Edge unchanged; no customer release identity/publication. |
+| [#2579](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2579): Original customer Account and Consent consumers | Reviewed4c4d9a6b3daf4ffaa7742892022c4d7350d52543; mainf313277f828eaa27210a9c465f38f89187c3b250/treefb383053ded4f7866e1018c544de9a6fd6ebeec5 matches inspected union, preserving independent E2/EXP04/EXP05 changes.11 checks/two statuses/full Preview SUCCESS;209 focused controls/seven suites PASS; final review5613934814 AUTHOR-REVIEW / LOWER ASSURANCE. Exact webdpl_3Ydv3oqUd6iPmiLtc7sprB5Smznt READY/public12:16:21.916Zf313277f828eaa27210a9c465f38f89187c3b250-mvji5y46, customerUpdate:null. Served ProfileSettings-C5T47NN0.js SHA256ccfc4feb8480fe87eceba308e1be7f9cad62d1aec8f13a9327677a56cc54d355 includes all four exact-intent native calls. All nine original/scoped Account native definitions/owner/ABI/path/ACL independently unchanged. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2579#issuecomment-6340522894). | Original profile, CAS/conflict, communication suppressions/STOP-START, consent and independent saved-state readback retained; captured/current Auth and actual selected business/client retirement. Nine original-component local900/390/320 light/dark/focus renders; full signed-in shell/device/AT/customer mutation/return/revocation UNVERIFIED. Own migration/Edge N/A; no full Portal or multi-business identity activation/customer announcement. |
+| [#2580](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2580): Exact-intent original EXP04 Billing reads | Reviewed3e1481780925e4f8a0ac862a3f33e32497788276; main0bcb088184b59f1badaef34be3aaa45df916ff28/tree888531233a228bb49cffa5737da8853488858f9e matches composition.13 checks/two statuses/full Preview SUCCESS;171 native Payments controls PASS; final review5613820389 AUTHOR-REVIEW / LOWER ASSURANCE. Production migration20271113280009 recorded; all three reviewed Auth-only adapter bodies/ABIs/owner/search path/ACL match, all four original financial helper/reader definitions and grants unchanged. Exact webdpl_EnozNpNi6BeLHGob55rr5aNyF2tj READY/public12:06:34.833Z0bcb088184b59f1badaef34be3aaa45df916ff28-mvjht6aa, customerUpdate:null. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2580#issuecomment-6340324317). | Thin native read prerequisite; original Auth-user then customer/tenant SHARE lock order and original invoice/ledger/request DTOs preserved. No financial writer/charge/provider request, owner grant or second ledger. Payments consumer2584 independently pending; true two-session lock concurrency, actual customer/provider/payment and whole Experience acceptance UNVERIFIED. Edge unchanged; no customer release identity/publication. |
+
+
 **2026-10-22 — EXP05 original weekly-status Chat source release.**
 
 | Increment | Exact reviewed/deployed identity and bounded proof | Completion boundary |
@@ -964,6 +973,26 @@ original records and signed history. This factual closeout is not logged recursi
 
 
 **2026-10-22 — EXP04 native supplied-wording template foundation.**
+
+**Consumer release #2549 — original business templates, October22.** Reviewed
+`cc900b6edb9d27423320754148a86d65b3e9430e`, AUTHOR-REVIEW / LOWER ASSURANCE5611769982;
+10 successful exact-head checks plus applicable Preview SKIP/two successful statuses,
+zero threads. Merge `d0741babff894cba40dc7566b5ea94390ac16b5c`, actual parents
+`268b12b516121136cc6748c8492c1676443b0a9f` + reviewed head; actual/preflight tree
+`482baf5858bcbb28ac28db34483608ff41b86156`. Web `dpl_5LpzVYd9uHJmtN7VvF6uCnQqsuTj`
+READY/production/main, protected200/build `d0741babff894cba40dc7566b5ea94390ac16b5c-mvjclmwn`,
+customerUpdate:null. Actual served template B23ZRkr9 and its imported native API
+_vjkuDVA are200 and contain all three jurisdiction/requested-wording-review/reviewer
+labels and canonical create/read/recovery calls. Own SQL/Edge N/A; foundation220004
+already applied/verified. [Receipt6337776679](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2549#issuecomment-6337776679).
+Original retained version/library/editor/client-source handoff and same-UUID recovery
+are mounted; fresh compiled template20cases/17paths/25pins and preserved upload20/five/19
+have zero page errors. Existing163 cases/seven suites are unchanged-product source proof.
+No legal words, completed review, legal sufficiency or infrastructure counsel gate;
+configuration is optional. Functional source/web release is distinct from bounded
+visual evidence, full professional experience and actual ordinary owner/staff/client/
+provider/all O1-O12/founder acceptance, which remain UNVERIFIED. No actual send/signature/
+charge/provider/new QA identity/INT346 activation or customer announcement.
 
 PR [#2545](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2545), reviewed
 `3e33160023666d33da751344dfe021d3520cd60b`, merged

@@ -69,7 +69,7 @@ export const WEEKLY_COMMITMENT_STATUS = {
   action: { classification: "read", executor: "public.get_weekly_commitment_checks", chatTool: "read_weekly_commitment_status", seatAuthority: "door-seat",
     idempotency: "canonical process and act receipt read; conversation-independent; no writes",
     riskPolicyKey: "read_only", approvalAuthority: "none" },
-  outcome: { kinds: ["available", "needs_input", "unavailable"], projector: "public.get_weekly_commitment_checks",
+  outcome: { kinds: ["available", "needs_input", "refused", "unavailable"], projector: "public.get_weekly_commitment_checks",
     railVisibility: "The Chat read receipt is not a weekly execution receipt; original process/act observations remain authoritative." },
   chatBinding: "LIVE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "NONE", maturity: "PARTIAL",
 } as const satisfies SpineCapability;

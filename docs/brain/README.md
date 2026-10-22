@@ -1,3 +1,11 @@
+## EXP09 — Account/Consent and original Billing native release readback,2026-10-22
+
+Original native Account2576/6df040cac5191cc4711e61dbcb459bdb1dfddca9, customer Account2579/f313277f828eaa27210a9c465f38f89187c3b250 and original financial-read intent2580/0bcb088184b59f1badaef34be3aaa45df916ff28 are merged/deployed/source read back. Exact trees, required checks/full Preview, accurately lower-assurance author reviews, native fingerprints/grants and exact web/public evidence are in the sole Master4.0 rows and production receipts6339278471/6340522894/6340324317. Native165/171 and focused209 controls support bounded behavior; source/CI do not constitute actual customer acceptance. This dated factual closeout supersedes the earlier Account2576/consumer pending wording.
+
+Original profile CAS, suppression/STOP-START/consent, actual actor/business/customer and independent saved-state readback remain; nine local original-component responsive/focus renders are not full shell/device/AT or actual customer mutation/return proof. All nine native Account and seven original/scoped financial function bodies/ABI/owner/search paths/ACL match their reviewed boundaries. No duplicate CRM, permissions store, financial ledger, sender, scheduler, approval inbox or CURA runtime. Original native self-service/read paths remain legitimate; no CURA Layer C adapter is certified.
+
+Payments UI2584 and Agreements native2586/consumer continuation remain independently gated. Native Agreements249 are unverified at this checkpoint: a required database assertion failed and must be diagnosed/repaired, not waived. Original E04 legal/financial engines and active document/PDF work remain protected. Original global identity/recipient/new-account restrictions, selected shared Edge/CURA/Knowledge and the joined protected owner/client returning/revoked/wrong-client journey remain unfinished. Seven Capabilities stay Limited; ALG01/12 bounded PARTIAL and ALG02/04/13 runtime UNVERIFIED. Functional source/release, Visual local evidence, Experiential actual journey and Founder Acceptance are separate; one founder evaluation only when the integrated Experience is ready. No actual send/signature/payment/publication or identity activation, no customer release identity/announcement.
+
 ## EXP09 — original reviews and Files verified releases,2026-10-22
 
 Reviews2571/268b12b516121136cc6748c8492c1676443b0a9f and Files2575/7f11a5703baad97c14f555cff80fa7a2d50a09d9 are MERGED/DEPLOYED/SOURCE READ BACK, with exact trees,10 applicable checks/two statuses, accurately AUTHOR-REVIEW / LOWER ASSURANCE, served source and unchanged native authority in the sole Master4.0 rows.213 review and198 Files focused tests plus original native review/discovery/concurrency/Documents244/selected111 checks are bounded engineering evidence. Production receipts6337525786/6338147392 record exact web/public identities and hashes. This dated closeout supersedes earlier notes listing2571/2575 as pending; it does not turn source proof into customer acceptance.
@@ -1532,3 +1540,36 @@ review/CI/Preview, ordered release/readback and whole Experience acceptance rema
 owed. See [bounded native evidence](../evidence/ui-delivery/e04-preparation-editability.md).
 
 October22 checked-signer main-target continuation: original prerequisite#2554 is RELEASED SOURCE VERIFIED, merge605a8c4bcdfb63c016689717947caf09f3296f83/native240004/bodyf380cfa97f14e29c8b88721a76b9db4e/unchanged owner/search_path/ACL and exact webdpl_HMxLuMYHqkv8KYQVWYJBEm2K3UW7/build605a8c4…-mvj7pldd (receipt6335238273). Actual main and all E09 source retained through a clean composition; own native250004 and checked proof are unchanged. Earlier pending-prerequisite notes are historical. This own250004 still requires fresh exact-head CI/review/normal migration/readback; source119/replay2 is not customer/provider/signing acceptance. All12 outcomes remain mandatory/incomplete.
+
+## EXP04 uploaded-PDF source correction — October22, development
+
+Original native SAVE11-argument body1bd28e75afa0f50bb07b717795a5be0e verified read-only:
+uploaded source retains its file path and NULL body. Original form's required second
+pasted contract was ignored; native PDF preparation, link refusal and send/parse/hash
+contracts are authoritative. Same original form/hook now share bounded supported-PDF/
+media/25MB selection, correctable before any terms/upload write; no second wording or
+false explanation. Original DTO/path/bucket/RLS/SDK/cache/no-overwrite/leave/authority
+epochs and unconfirmed-outcome messages remain. No converter or signing engine added.
+
+Source baseline six intended RED plus original timeout; corrected120 focused and
+actual composed360/12 suites PASS without timeout/assertion waiver. Whole-app type
+ratchet10/current6, lint0/one incumbent, Binding35/controls and SOLO parity/controls
+PASS. Actual final native source render20cases/ten paths/21pins/zero page errors,
+including keyboard file-to-title, correctable invalid selection and the genuine
+clipped source-choice regression repaired by separating the original provenance
+label selector from the actual document choices. Only synthetic
+ports. Hosted ca1 design gate failed two inherited original stylesheet findings;
+bounce/stripe repaired without any exclusion or weakened check. Exact FOUR-file
+gate now0 failures/40 advisories; full baseline12/1066 versus current10/1065 remains
+not a clean whole-platform scan or finished premium claim. Final stable render
+passed after one mid-edit run was correctly invalidated by its source-pin guard.
+Evidence:
+[native PDF intake](../evidence/ui-delivery/e04-agreement-pdf-intake.md).
+
+Template consumer2549 actually released asd0741babff894cba40dc7566b5ea94390ac16b5c;
+READY exact protected version and served native UI/API verified, receipt6337776679.
+Jurisdiction/requested-wording-review/reviewer options are optional configuration,
+no supplied legal words/completed review or infrastructure counsel gate. Own intake
+review/CI/release/readback and actual customer/provider/full12/founder acceptance
+remain owed. Stable upload recovery, real PDF preview/fields and canonical approved
+Communications/provider integration remain unfinished; no Chat/Live activation.

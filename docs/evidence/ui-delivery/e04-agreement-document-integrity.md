@@ -20,7 +20,7 @@ TRUTHFUL_STATE_LABELS: PASS: verified download does not create or claim signing,
 SOLO_UI: NO: original shared document endpoint only; no customer component or department change.
 UNVERIFIED: exact-head review/CI, normal Edge deployment/source/JWT readback, ordinary owner/signer/Portal/two-cohort and full O1-O12/founder acceptance.
 
-INTERNAL_BUILD_IDENTITY: branch=codex/e04-agreement-document-integrity; source_base_sha=1e1073133f960a394d41f7f27b0c84560d33f3aa; product_sha=PR product receipt; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(agreement-document); evidence=docs/evidence/ui-delivery/e04-agreement-document-integrity.md
+INTERNAL_BUILD_IDENTITY: branch=codex/e04-agreement-document-integrity; source_base_sha=1e1073133f960a394d41f7f27b0c84560d33f3aa; product_sha=1354297f3b4805b4dc52660b0face6fd6a7e08c3; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(agreement-document); evidence=docs/evidence/ui-delivery/e04-agreement-document-integrity.md
 RELEASE_CHANNEL: development: actual-source correctness proof only.
 RELEASE_CLASSIFICATION: internal-only: original retained-copy reliability repair, no activation or announcement.
 CUSTOMER_RELEASE_IDENTITY: none: no finished premium or founder-accepted Experience.
@@ -52,3 +52,5 @@ Actual-handler test reuses the existing Collections transpileModule/injected-por
 10. Visible result: original PDF or recoverable unavailable state in existing authorized surfaces; no Binding Ledger promotion. sales.department and full role/provider/whole Experience acceptance remain PROOF_OWED.
 
 ALG01/12 gain bounded checksum/exception source evidence only; official verification and ALG02/13 statuses are unchanged. EXP09 consumes the same original request/native relationship/binary-copy contract. No actual signed agreement, consent, notification, payment, service completion, provider call, QA account/business, privileged execution or INT346 activation occurred. Qualified wording review options remain business configuration, not an infrastructure gate or legal-sufficiency claim. All twelve outcomes and final complete founder evaluation remain mandatory/incomplete.
+
+Current-main composition retains released signer prerequisite605a8c4/240004 without conflicts or handler/test changes. Product source1354297f3 remains the exact tested repair. Original agreement-document private bucket/client/request contract and BindingLedger35 semantics stay unchanged; no capability or provider promotion. Master shipped-log closeout is N/A while unmerged.

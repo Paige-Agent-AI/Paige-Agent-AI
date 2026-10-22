@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: authorized owner prepares supplied wording, inspects exact 
 MOTION_PURPOSE: NONE: no motion source changes.
 PROTECTED_SEAMS: tested original auth.uid/current_user_tenant_id/is_tenant_admin and original table RLS/consumer references; original signing, billing, Communications, Portal, Chat admission and LayerC dispatch remain unchanged.
 
-INTERNAL_BUILD_IDENTITY: branch=codex/e04-template-wording-options; product_sha=58b9572229c7816c4b7b875036be464a85213c50; composition=f06e157b796787e63caf6bf480a7980d115fe2af; source_review_fix=0fa7d9594d781a8881bd167e95877a68047a62ef; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113190000_agreement_template_wording_options); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-template-wording-options.md
+INTERNAL_BUILD_IDENTITY: branch=codex/e04-template-wording-options; product_sha=58b9572229c7816c4b7b875036be464a85213c50; composition=f06e157b796787e63caf6bf480a7980d115fe2af; source_review_fix=0fa7d9594d781a8881bd167e95877a68047a62ef; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113220004_agreement_template_wording_options); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-template-wording-options.md
 RELEASE_CHANNEL: development: local native source proof; hosted CI/Preview and production deployment/readback remain separate.
 RELEASE_CLASSIFICATION: internal-only: original-library native prerequisite for complete professional Agreements, not a finished Experience.
 CUSTOMER_RELEASE_IDENTITY: none: no coherent complete Experience or founder acceptance claim.
@@ -73,7 +73,7 @@ was setup INVALID, not baseline defect proof; no policy/test assertion weakened.
 Exact-head sequential review and hosted CI are recorded in the PR before merge;
 AUTHOR-REVIEW / LOWER ASSURANCE is never described as non-author review. Migration
 frontier/source leases are checked again before release. The current proposed
-190000 successor is unapplied and forward-only. Following consumer must reuse
+220004 successor is unapplied and forward-only. Following consumer must reuse
 the selected native-shell template-library flow, existing rich document editor,
 one per-instance Sales leave guard, original current actor/business and exact
 template-to-client agreement identity. Actual rendered desktop/narrow, keyboard,
@@ -87,3 +87,5 @@ metadata null on legacy rows; the trigger refuses purpose adoption through UPDAT
 Original unconfigured legacy maintenance still passes. Three actual native negative
 regressions added; final proof68/replay2/five sessions/three observed waits PASS.
 No non-author/security acceptance is inferred from this author review.
+
+2026-10-22 forward-frontier reconciliation: production now records Portal210009. The still-unapplied EXP04 migration was renamed from190000 to220004 above reserved Portal210109/210209/210309; its full SQL SHA256 remains 02516c0c170aea37ca4f611ef3104e32226ced7b9ba4621e0a60357b72b2aaa0. Current main5df82581f98d84328729d0e8ec26cbe844781d98 is composed. No applied production history, Portal source or test assertion is rewritten. Prior Preview190000 proof is historical; fresh source/Preview and exact-head CI are separately required.

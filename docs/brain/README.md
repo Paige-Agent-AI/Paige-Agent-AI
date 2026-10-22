@@ -1292,7 +1292,7 @@ legacy maintenance compatibility. Native68/replay2/five concurrent sessions/thre
 observed lock waits; original baseline five positive controls then required refusal
 RED. These are source/fixture proofs, not customer JWT/provider/acceptance evidence.
 No new ledger/approval/sender/executor, legal wording, Chat/Live capability or
-algorithm activation. Own190000 successor remains unapplied; hosted review/CI/
+algorithm activation. Own220004 successor remains unapplied; hosted review/CI/
 Preview, migration/catalog readback and actual mounted template consumer are owed.
 See [native evidence](../evidence/ui-delivery/e04-template-wording-options.md) and
 [original twelve-outcome journey](../delivery/exp04-get-paid-deliver-journey.md).

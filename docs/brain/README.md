@@ -201,6 +201,40 @@ private PDF. Native106 plus5 Portal-wiring tests and three Edge type checks pass
 release, authenticated recovery and full ALG01/12 acceptance remain proof owed.
 [Exact scope and limitations](../evidence/ui-delivery/e04-retained-completion-reconcile.md).
 
+## EXP02 Business Review and orchestration — October21 22:50 UTC
+
+The existing sole EXP02 lead continues all19 original outcomes and CAP009–017.
+This checkpoint supersedes earlier current-state statements below, preserving their
+dated evidence, source owners, historical9/0 and12/0/4 and single founder evaluation.
+
+Period continuity#2507 and important-evidence/owning-Play context#2510 are source
+released. #2510 merged38b6a9d after exact21ce8e31 author review and six required
+workflows/all11 checks. Full-baseline recovery39687510436 succeeds on containing
+mainc33dac69e; actual certified tag/public build and all five selected Edge packages/
+configurations match. Earlier failures remain in Master§4.0, not waived.
+
+Actual ordinary customer Marketing read→original department→Back→Last30days
+reload→correct UNSENT VERA draft→reload preserved8 existing messages; only the
+test's own draft was cleared. Existing nine catalogue entries retain4ComingSoon,
+3Limited/2Unverified, all AccessUnverified. Intake-copy#2516 remains separate
+development/review/CI. Synthetic evidence does not establish customer acceptance.
+One fresh weekly request also completed by the44s observation (interface: one read
+step/22s); original request/narrative/six links persisted through canonical reload
+and a second stable reload, without a duplicate. Earlier CPU failures and broad
+reliability/Live/cohort/action/report proof remain separate.
+
+Business Review uses original permitted Metric/Evidence and Operating Fabric reads.
+VERA interprets under PAIGE without independent domain-write authority. Governed
+follow-through reuses LayerC/INT179, Spine/Trust/Harness, original domain writers and
+Rail. An authenticated EXP02 recommendation→action→verified-receipt loop is still
+owed. Durable observations/terminal-context eligibility do not authorize execution.
+
+The [original19 matrix](../delivery/e2-customer-experience-integration-matrix.md)
+records current orchestration/algorithm applicability and remaining release and
+acceptance work. Existing Assignment Lock EXP02 and DEL131 current notes were
+updated/read back. No new registry, scheduler, specialist runtime, provider
+activation or coding lane. Full premium finish and founder acceptance remain open.
+
 ## EXP02 Marketing consumer released — October21 20:35 UTC
 
 This checkpoint supersedes the earlier dated unmounted/DRAFT statements below.

@@ -760,6 +760,33 @@ coverage label asserts per-account access. NO VERIFIED ALGORITHM is added; the
 canonical ALG03/04/06/11/12/13 and PAIGE/VERA/originating specialist boundaries remain.
 
 
+## EXP02 report evidence foundation — October22 development, not activated
+
+D1 adds only private `_paige_document_capture_metric_evidence(jsonb)` under proposed
+20271113330002. The original issuer/resolver and owner/admin/current-workspace guard
+remain authoritative. Only1–12 unique original reference tokens are accepted; no
+caller/model figures or tenant input. Original definitions, values/null, period,
+semantics, coverage, exclusions, caveats, as-of and source revision are retained;
+workspace identity fields are removed from the returned document projection.
+Malformed/duplicate/oversize, foreign/denied, superseded, expired or changed-source
+references fail closed. Final actor/tenant/authority/expiry revalidation applies.
+
+Original composed native PostgreSQL16.14 proof passes195 checks. A missing-helper
+original-source control fails42883. Initial source-change fixture was outside the
+issued live period; placing only that disposable receipt inside the period makes
+the unchanged denial assertion meaningful. Sandboxed initdb/startup attempts and
+private launcher diagnosis are excluded from passing proof. Existing full-schema
+shared_metric_evidence rollback proof now covers exact unavailable/null/provenance,
+private ACL and foreign/expired/forged/duplicate inputs; hosted execution is owed.
+
+The function is SECURITY INVOKER with all application-role grants revoked. No table,
+public RPC, report type, model/provider, worker, Chat binding or action is activated;
+no capture is persisted yet. Original submit/worker/immutable marketing_content,
+turn/reconnect/Rail consumer and formal monthly/quarterly customer deliverable remain
+required. Functional private local foundation only; Visual N/A/unmounted; Experiential
+and Founder Acceptance UNVERIFIED. CAP014/015 stay Unverified, other nine states and
+ALG03/06/11/12/13 unchanged. Section4.0 N/A until merge. All19/nine remain mandatory.
+
 ## EXP02 October22 — verified Business Review reliability source release
 
 PR2608 reviewed c6b93ce0821c707ca2294130da1b11690972ea05, separate
@@ -793,30 +820,3 @@ immutable permitted evidence, governed submission/status/unknown recovery and
 original artifact retrieval remain separate implementation duties. Review/CI,
 original2607 security dependency, normal Edge/readback and ordinary customer proof
 remain owed. All19 definitions/nine outcomes are unchanged. [Evidence](../evidence/ui-delivery/e2-document-finite-facts.md).
-
-## EXP02 report evidence foundation — October22 development, not activated
-
-D1 adds only private `_paige_document_capture_metric_evidence(jsonb)` under proposed
-20271113330002. The original issuer/resolver and owner/admin/current-workspace guard
-remain authoritative. Only1–12 unique original reference tokens are accepted; no
-caller/model figures or tenant input. Original definitions, values/null, period,
-semantics, coverage, exclusions, caveats, as-of and source revision are retained;
-workspace identity fields are removed from the returned document projection.
-Malformed/duplicate/oversize, foreign/denied, superseded, expired or changed-source
-references fail closed. Final actor/tenant/authority/expiry revalidation applies.
-
-Original composed native PostgreSQL16.14 proof passes195 checks. A missing-helper
-original-source control fails42883. Initial source-change fixture was outside the
-issued live period; placing only that disposable receipt inside the period makes
-the unchanged denial assertion meaningful. Sandboxed initdb/startup attempts and
-private launcher diagnosis are excluded from passing proof. Existing full-schema
-shared_metric_evidence rollback proof now covers exact unavailable/null/provenance,
-private ACL and foreign/expired/forged/duplicate inputs; hosted execution is owed.
-
-The function is SECURITY INVOKER with all application-role grants revoked. No table,
-public RPC, report type, model/provider, worker, Chat binding or action is activated;
-no capture is persisted yet. Original submit/worker/immutable marketing_content,
-turn/reconnect/Rail consumer and formal monthly/quarterly customer deliverable remain
-required. Functional private local foundation only; Visual N/A/unmounted; Experiential
-and Founder Acceptance UNVERIFIED. CAP014/015 stay Unverified, other nine states and
-ALG03/06/11/12/13 unchanged. Section4.0 N/A until merge. All19/nine remain mandatory.

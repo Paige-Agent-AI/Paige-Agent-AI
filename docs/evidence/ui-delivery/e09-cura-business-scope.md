@@ -17,7 +17,7 @@ ZOOM_REFLOW: UNVERIFIED: actual390/320 reflow/no horizontal overflow verified; p
 REDUCED_MOTION: NOT_APPLICABLE: no motion/style change. Existing thinking/status feedback retained; physical reduced-motion acceptance not claimed.
 STATE_COVERAGE: PASS: ready/populated/empty/history-error/retry focus/reply/Auth-loss UI plus timeout/held/disabled/retirement/concurrent A-B/foreign identity/source withdrawal controls; an in-flight reply is not completion.
 TRUTHFUL_STATE_LABELS: PASS: local fixture views are not authenticated production evidence; source tests are not native/Chat activation or business membership grants.
-SOLO_UI: YES: every eligible actual customer relationship uses the same original code; no account allowlist or new tenant/customer. Production global linkage/recipient/new-account guards remain intact.
+SOLO_UI: NO: this changes the existing external-customer /app Chat, not owner src/solo or dashboard PaigeAIChat geometry. Universal eligible customer scope remains native; no account allowlist/new tenant or linkage/recipient/new-account grant.
 UNVERIFIED: production deployment/Edge/source readback, actual customer/provider/return/isolation/revocation, full signed-in shell/device/AT, membership activation and complete founder acceptance.
 
 OWNER_INTENT: original CURA represents the selected business using authorized customer Knowledge and private history; PAIGE remains the owner's COO.

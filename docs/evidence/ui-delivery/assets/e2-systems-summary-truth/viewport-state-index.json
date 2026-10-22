@@ -1,0 +1,164 @@
+{
+  "kind": "SYNTHETIC_ACTUAL_COMPONENT",
+  "source": "untransformed original SoloSystemsCheckWorkspace/ExecutiveOverview/TenantCommandCenterShell; data and action ports replaced",
+  "capture": "Cua browser CDP native surface with full CSS viewport clip; no postprocessing",
+  "font": "Schibsted Grotesk loaded",
+  "diagnostics": "Normal screenshot API cropped emulated surfaces; diagnostic-cropped frames excluded. Immediate destination observation was unsettled; visible destination and Back/reload verified before capture. Final loading/error branch correction recaptured.",
+  "frames": [
+    {
+      "file": "1536-closed.jpg",
+      "css_viewport": [
+        1536,
+        770
+      ],
+      "encoded_width": 1536,
+      "encoded_height": 770,
+      "sha256": "10aef1a58d1de85e219326e250ec4577bb2b6d4129d56936b830d56b3a4c7dd8"
+    },
+    {
+      "file": "1536-open.jpg",
+      "css_viewport": [
+        1536,
+        770
+      ],
+      "encoded_width": 1536,
+      "encoded_height": 770,
+      "sha256": "5445335c583eade843bb18612a3cb47b1e3c65e3a4ef0998f8d7a51b058a230c"
+    },
+    {
+      "file": "1366-closed.jpg",
+      "css_viewport": [
+        1366,
+        768
+      ],
+      "encoded_width": 1366,
+      "encoded_height": 768,
+      "sha256": "2a6bfe3c7cab106ff4fe1b156e15eb4b887a31d157aa12fd061bad20af4dca2e"
+    },
+    {
+      "file": "1366-open.jpg",
+      "css_viewport": [
+        1366,
+        768
+      ],
+      "encoded_width": 1366,
+      "encoded_height": 768,
+      "sha256": "5dfb8450e284f8368cae95a0058fbfc92edd41e2597f69f4e3dbf50c07361653"
+    },
+    {
+      "file": "1024-closed.jpg",
+      "css_viewport": [
+        1024,
+        768
+      ],
+      "encoded_width": 1024,
+      "encoded_height": 768,
+      "sha256": "0c2be20c7fe6fa5a71bfb50c129520614547d01c1996112697efa80b2eaee9a1"
+    },
+    {
+      "file": "1024-open.jpg",
+      "css_viewport": [
+        1024,
+        768
+      ],
+      "encoded_width": 1024,
+      "encoded_height": 768,
+      "sha256": "dd8c9091e27af4a1f858f2c543cba08a7b99532a46969d4da9a853b738194e31"
+    },
+    {
+      "file": "900-closed.jpg",
+      "css_viewport": [
+        900,
+        1000
+      ],
+      "encoded_width": 900,
+      "encoded_height": 1000,
+      "sha256": "07ac3f78abddae9f76030e2184559c3dc018e8b68c6f98487e39058e92114a7b"
+    },
+    {
+      "file": "900-open.jpg",
+      "css_viewport": [
+        900,
+        1000
+      ],
+      "encoded_width": 900,
+      "encoded_height": 1000,
+      "sha256": "9c6f58f63464fee63d0dd45f28b79c6c3591c09343bc787dd164a4d846a839a3"
+    },
+    {
+      "file": "900-loading.jpg",
+      "css_viewport": [
+        900,
+        1000
+      ],
+      "encoded_width": 900,
+      "encoded_height": 1000,
+      "sha256": "b19b6cfc4c80507191409436e65f928c1c8658b63bb589db01d9c050c66baf94"
+    },
+    {
+      "file": "900-empty.jpg",
+      "css_viewport": [
+        900,
+        1000
+      ],
+      "encoded_width": 900,
+      "encoded_height": 1000,
+      "sha256": "c7a700cf38070a4a67c3294a118bf4d83b6a15d30fd75211f417834fc0086dc0"
+    },
+    {
+      "file": "900-error.jpg",
+      "css_viewport": [
+        900,
+        1000
+      ],
+      "encoded_width": 900,
+      "encoded_height": 1000,
+      "sha256": "73fec73401230a6695a2f80991e7a09064afb279930f0edd0438d24de1a6fc1b"
+    },
+    {
+      "file": "320-closed.jpg",
+      "css_viewport": [
+        320,
+        740
+      ],
+      "encoded_width": 320,
+      "encoded_height": 740,
+      "sha256": "8b75c7b791fdadce45879ce232f08be5d8a1b415b0e1dd7d720befeef471a0fb"
+    },
+    {
+      "file": "320-keyboard.jpg",
+      "css_viewport": [
+        320,
+        740
+      ],
+      "encoded_width": 320,
+      "encoded_height": 740,
+      "sha256": "b34f34f43a7e84492f56bd5e53f088a6195fab7f553185205c0608350bb413de"
+    },
+    {
+      "file": "320-executive-destination.jpg",
+      "css_viewport": [
+        320,
+        740
+      ],
+      "encoded_width": 320,
+      "encoded_height": 740,
+      "sha256": "7249768539b6bba8a702e242a81e39a3ece3ee9a00363c3adf835e122b562540"
+    },
+    {
+      "file": "1366-obsidian-reduced-motion.jpg",
+      "css_viewport": [
+        1366,
+        768
+      ],
+      "encoded_width": 1366,
+      "encoded_height": 768,
+      "sha256": "9786aac4d81f86186d4e44140b34173c136b3bf6a412b55ad26856ef1f9efb4a"
+    }
+  ],
+  "source_hashes": {
+    "src/solo/SoloSystemsCheckWorkspace.tsx": "82e8fafdb52f127d399195d4ce84220175705941b3713324671aa06b113ccad1",
+    "src/solo/solo-systems-check-workspace.css": "9d9f1f2801233758ca9595760e2186e016b47757475092cf7c5e999fb4ba39fd",
+    "src/solo/SoloSystemsCheckWorkspace.test.tsx": "5f17764420e0e7aaaf140852e51d9f8573307818d7b615ad955c457b20960914"
+  }
+}

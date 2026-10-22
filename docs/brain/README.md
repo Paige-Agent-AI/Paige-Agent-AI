@@ -236,6 +236,19 @@ private PDF. Native106 plus5 Portal-wiring tests and three Edge type checks pass
 release, authenticated recovery and full ALG01/12 acceptance remain proof owed.
 [Exact scope and limitations](../evidence/ui-delivery/e04-retained-completion-reconcile.md).
 
+## EXP02 Systems Check source-accuracy repair — development
+
+The original recorded-check consumer now has a bounded, unreleased correction:
+retire its misleading legacy business KPI strip in favor of the existing canonical
+Executive destination; loading/failed reads no longer assert an empty check history.
+Original findings, runner, refresh, approvals and activity remain unchanged. Source
+counterfactuals fail before repair; final66 cases/three suites and15 native synthetic
+component renders pass, including narrow keyboard/44px control and Back/reload.
+Review, exact-head CI, release/readback and corrected ordinary SOLO QA remain owed.
+No new metric reader, provider, scan or action is activated. Catalogue coverage and
+canonical algorithm maturity are unchanged; all19/nine and founder acceptance stay
+open. [Owning evidence and pre-edit routing](../evidence/ui-delivery/e2-systems-summary-truth.md).
+
 ## EXP02 Business Review and orchestration — October21 22:50 UTC
 
 The existing sole EXP02 lead continues all19 original outcomes and CAP009–017.

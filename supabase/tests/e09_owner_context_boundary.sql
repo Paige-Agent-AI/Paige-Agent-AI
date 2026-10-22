@@ -1,7 +1,7 @@
 -- Original owner read, real Auth roles, synthetic records and outer rollback only.
 -- No customer login, provider, publication, send, role activation or production fixture.
 BEGIN;
-SELECT plan(20);
+SELECT plan(22);
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data,raw_user_meta_data) VALUES
  ('e0980100-0000-4000-8000-000000000001','authenticated','authenticated','context-owner@tests.invalid',now(),'{"comms_provider_execution":"disabled"}','{}'),
  ('e0980100-0000-4000-8000-000000000002','authenticated','authenticated','context-staff@tests.invalid',now(),'{"comms_provider_execution":"disabled"}','{}'),
@@ -18,7 +18,7 @@ INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,las
  ('e0980300-0000-4000-8000-000000000002','e0980200-0000-4000-8000-000000000001','e0980100-0000-4000-8000-000000000002','e0980100-0000-4000-8000-000000000001','Casey','Morgan','active'),
  ('e0980300-0000-4000-8000-000000000003','e0980200-0000-4000-8000-000000000001','e0980100-0000-4000-8000-000000000003','e0980100-0000-4000-8000-000000000001','Jordan','Rivera','active');
 UPDATE public.profiles SET active_tenant_id='e0980200-0000-4000-8000-000000000001'
- WHERE user_id IN ('e0980100-0000-4000-8000-000000000001','e0980100-0000-4000-8000-000000000003','e0980100-0000-4000-8000-000000000004');
+ WHERE user_id='e0980100-0000-4000-8000-000000000001';
 UPDATE public.profiles SET active_tenant_id='e0980200-0000-4000-8000-000000000002'
  WHERE user_id='e0980100-0000-4000-8000-000000000002';
 CREATE FUNCTION pg_temp.context_as(actor uuid,statement text,hint uuid DEFAULT NULL) RETURNS jsonb LANGUAGE plpgsql AS $test$
@@ -34,7 +34,11 @@ CREATE FUNCTION pg_temp.owner_context(actor uuid,hint uuid DEFAULT NULL) RETURNS
  SELECT pg_temp.context_as(actor,'SELECT to_jsonb(p) FROM public.get_paige_persona_context() p',hint) $test$;
 
 SELECT ok(pg_temp.owner_context('e0980100-0000-4000-8000-000000000003') IS NULL,'a customer relationship does not supply owner context');
-SELECT ok(pg_temp.owner_context('e0980100-0000-4000-8000-000000000004') IS NULL,'untrusted role metadata and profile pointer supply no owner standing');
+SELECT ok(pg_temp.owner_context('e0980100-0000-4000-8000-000000000004') IS NULL,'untrusted role metadata supplies no owner standing');
+SELECT throws_ok($attempt$UPDATE public.profiles SET active_tenant_id='e0980200-0000-4000-8000-000000000001' WHERE user_id='e0980100-0000-4000-8000-000000000003'$attempt$,
+ 'P0001','active_tenant_id must be a tenant you belong to or manage','original profile guard refuses a customer-only staff-workspace pointer');
+SELECT throws_ok($attempt$UPDATE public.profiles SET active_tenant_id='e0980200-0000-4000-8000-000000000001' WHERE user_id='e0980100-0000-4000-8000-000000000004'$attempt$,
+ 'P0001','active_tenant_id must be a tenant you belong to or manage','a forged owner label cannot bypass the original profile guard');
 SELECT is(pg_temp.owner_context('e0980100-0000-4000-8000-000000000001')->>'tenant_id','e0980200-0000-4000-8000-000000000001','owner reads original active workspace A');
 SELECT is(pg_temp.owner_context('e0980100-0000-4000-8000-000000000001')#>>'{playbook_config,persona,domain}','internal A','owner retains its authorized private Playbook');
 SELECT is(pg_temp.owner_context('e0980100-0000-4000-8000-000000000002')->>'tenant_id','e0980200-0000-4000-8000-000000000002','staff workspace B wins over a separate customer relationship A');

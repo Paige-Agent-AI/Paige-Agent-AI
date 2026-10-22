@@ -1,0 +1,310 @@
+{
+  "source": "ab6fa9e22b908a18040a928f2f8486028d7059c5",
+  "boundary": "Actual native fixture; synthetic Auth/transport, no production or persistence proof. The later Escape correction changes only dialog event handling; layout source is unchanged.",
+  "results": [
+    {
+      "theme": "light",
+      "requestedWidth": 1536,
+      "open": false,
+      "dock": null,
+      "heading": "20px",
+      "panelRight": 1264.2000122070312,
+      "panelWidth": 786,
+      "review": true,
+      "scroll": 1536,
+      "targets": [
+        44,
+        44
+      ],
+      "width": 1536,
+      "file": "final-light-1536-closed.png"
+    },
+    {
+      "theme": "light",
+      "requestedWidth": 1536,
+      "open": true,
+      "dock": {
+        "left": 1013.7625122070312,
+        "right": 1536,
+        "width": 522.2374877929688
+      },
+      "heading": "20px",
+      "panelRight": 972.1625366210938,
+      "panelWidth": 724.1625366210938,
+      "review": true,
+      "scroll": 1536,
+      "targets": [
+        44,
+        44
+      ],
+      "width": 1536,
+      "file": "final-light-1536-open.png"
+    },
+    {
+      "theme": "light",
+      "requestedWidth": 1366,
+      "open": false,
+      "dock": null,
+      "heading": "20px",
+      "panelRight": 1107.3999938964844,
+      "panelWidth": 786,
+      "review": true,
+      "scroll": 1366,
+      "targets": [
+        44,
+        44
+      ],
+      "width": 1366,
+      "file": "final-light-1366-closed.png"
+    },
+    {
+      "theme": "light",
+      "requestedWidth": 1366,
+      "open": true,
+      "dock": {
+        "left": 901.8250122070312,
+        "right": 1366.4000244140625,
+        "width": 464.5750122070313
+      },
+      "heading": "20px",
+      "panelRight": 860.2250366210938,
+      "panelWidth": 756.2250366210938,
+      "review": true,
+      "scroll": 1366,
+      "targets": [
+        44,
+        44
+      ],
+      "width": 1366,
+      "file": "final-light-1366-open.png"
+    },
+    {
+      "theme": "light",
+      "requestedWidth": 1024,
+      "open": false,
+      "dock": null,
+      "heading": "20px",
+      "panelRight": 936.1999969482422,
+      "panelWidth": 786,
+      "review": true,
+      "scroll": 1024,
+      "targets": [
+        44,
+        44
+      ],
+      "width": 1024,
+      "file": "final-light-1024-closed.png"
+    },
+    {
+      "theme": "light",
+      "requestedWidth": 1024,
+      "open": true,
+      "dock": {
+        "left": 614,
+        "right": 1024,
+        "width": 410
+      },
+      "heading": "20px",
+      "panelRight": 936.1999969482422,
+      "panelWidth": 786,
+      "review": true,
+      "scroll": 1024,
+      "targets": [
+        44,
+        44
+      ],
+      "width": 1024,
+      "file": "final-light-1024-open.png"
+    },
+    {
+      "theme": "light",
+      "requestedWidth": 900,
+      "open": false,
+      "dock": null,
+      "heading": "20px",
+      "panelRight": 858.4000244140625,
+      "panelWidth": 754.4000244140625,
+      "review": true,
+      "scroll": 900,
+      "targets": [
+        44,
+        44
+      ],
+      "width": 900,
+      "file": "final-light-900-closed.png"
+    },
+    {
+      "theme": "light",
+      "requestedWidth": 900,
+      "open": true,
+      "dock": {
+        "left": 490,
+        "right": 900,
+        "width": 410
+      },
+      "heading": "20px",
+      "panelRight": 858.4000244140625,
+      "panelWidth": 754.4000244140625,
+      "review": true,
+      "scroll": 900,
+      "targets": [
+        44,
+        44
+      ],
+      "width": 900,
+      "file": "final-light-900-open.png"
+    },
+    {
+      "theme": "dark",
+      "requestedWidth": 1536,
+      "open": false,
+      "dock": null,
+      "heading": "20px",
+      "panelRight": 1264.2000122070312,
+      "panelWidth": 786,
+      "review": true,
+      "scroll": 1536,
+      "targets": [
+        44,
+        44
+      ],
+      "width": 1536,
+      "file": "final-dark-1536-closed.png"
+    },
+    {
+      "theme": "dark",
+      "requestedWidth": 1536,
+      "open": true,
+      "dock": {
+        "left": 1013.7625122070312,
+        "right": 1536,
+        "width": 522.2374877929688
+      },
+      "heading": "20px",
+      "panelRight": 972.1625366210938,
+      "panelWidth": 724.1625366210938,
+      "review": true,
+      "scroll": 1536,
+      "targets": [
+        44,
+        44
+      ],
+      "width": 1536,
+      "file": "final-dark-1536-open.png"
+    },
+    {
+      "theme": "dark",
+      "requestedWidth": 1366,
+      "open": false,
+      "dock": null,
+      "heading": "20px",
+      "panelRight": 1107.3999938964844,
+      "panelWidth": 786,
+      "review": true,
+      "scroll": 1366,
+      "targets": [
+        44,
+        44
+      ],
+      "width": 1366,
+      "file": "final-dark-1366-closed.png"
+    },
+    {
+      "theme": "dark",
+      "requestedWidth": 1366,
+      "open": true,
+      "dock": {
+        "left": 901.8250122070312,
+        "right": 1366.4000244140625,
+        "width": 464.5750122070313
+      },
+      "heading": "20px",
+      "panelRight": 860.2250366210938,
+      "panelWidth": 756.2250366210938,
+      "review": true,
+      "scroll": 1366,
+      "targets": [
+        44,
+        44
+      ],
+      "width": 1366,
+      "file": "final-dark-1366-open.png"
+    },
+    {
+      "theme": "dark",
+      "requestedWidth": 1024,
+      "open": false,
+      "dock": null,
+      "heading": "20px",
+      "panelRight": 936.1999969482422,
+      "panelWidth": 786,
+      "review": true,
+      "scroll": 1024,
+      "targets": [
+        44,
+        44
+      ],
+      "width": 1024,
+      "file": "final-dark-1024-closed.png"
+    },
+    {
+      "theme": "dark",
+      "requestedWidth": 1024,
+      "open": true,
+      "dock": {
+        "left": 614,
+        "right": 1024,
+        "width": 410
+      },
+      "heading": "20px",
+      "panelRight": 936.1999969482422,
+      "panelWidth": 786,
+      "review": true,
+      "scroll": 1024,
+      "targets": [
+        44,
+        44
+      ],
+      "width": 1024,
+      "file": "final-dark-1024-open.png"
+    },
+    {
+      "theme": "dark",
+      "requestedWidth": 900,
+      "open": false,
+      "dock": null,
+      "heading": "20px",
+      "panelRight": 858.4000244140625,
+      "panelWidth": 754.4000244140625,
+      "review": true,
+      "scroll": 900,
+      "targets": [
+        44,
+        44
+      ],
+      "width": 900,
+      "file": "final-dark-900-closed.png"
+    },
+    {
+      "theme": "dark",
+      "requestedWidth": 900,
+      "open": true,
+      "dock": {
+        "left": 490,
+        "right": 900,
+        "width": 410
+      },
+      "heading": "20px",
+      "panelRight": 858.4000244140625,
+      "panelWidth": 754.4000244140625,
+      "review": true,
+      "scroll": 900,
+      "targets": [
+        44,
+        44
+      ],
+      "width": 900,
+      "file": "final-dark-900-open.png"
+    }
+  ]
+}

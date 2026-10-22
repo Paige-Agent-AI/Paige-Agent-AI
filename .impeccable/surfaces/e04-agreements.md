@@ -1,5 +1,26 @@
 # Agreements preparation — Operate
 
+## October21 configurable wording options — pre-edit brief
+
+Owner clarified that infrastructure must expose jurisdiction and wording-review
+options; counsel selection does not block engineering. Business-supplied words and
+actual review evidence remain separate. This isolated mock extends the existing
+document step, same source/client/draft/leave flow and native system. Optional
+jurisdiction, requested review route and reviewer label are configuration, never
+completed legal review or legal sufficiency. No legal clauses, signing permission,
+automatic send/charge or new approval engine are introduced. Existing authoring,
+source selection, local save/reload, scope retirement and narrow preview controls
+must survive. Reuse the original template/version stores in production; no new
+library or agreement ledger. Full template create/import/source preservation and
+governed send remain later native integrations, not made real by this mock.
+
+Entry: existing draft Document → optional wording settings → same local save →
+original draft detail/reload. Unspecified values must not block drafting. Requested
+qualified review is not completed review; changing a route never creates evidence.
+Actual viewport/keyboard/reload/leave/source-switch checks are required before
+lead selection under October21 delegated routine UX authority. Founder acceptance
+and all O1–O12 remain owed. No other agent is involved.
+
 Owner authority: October21 EXP04 resume and premium Experience standard. Routine
 UX decisions are delegated to the existing lead; this is not a founder-reviewed
 mock. Complete live Experience evaluation remains pending. No other agent is used.

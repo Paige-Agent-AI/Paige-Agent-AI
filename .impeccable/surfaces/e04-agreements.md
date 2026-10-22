@@ -120,3 +120,37 @@ retirement and original entry focus. First rendered focus failure was repaired u
 commit-time restoration and repeated unchanged assertions. Synthetic SDK/identity
 ports remain distinct from73 native SQL assertions and actual customer acceptance.
 All twelve outcomes and correction/signing/financial/delivery completeness stay open.
+
+
+## October22 original native template consumer — bounded finish
+
+Prototype275be12415239d4ecdb66bec0894146ec9fe5c64 preserves the selected native
+Sales library → supplied-wording editor/options → original retained version →
+real-client draft flow. Lead routine intent selected under October21 delegation,
+not founder acceptance. Actual implementation reuses original template/RPC/auth,
+rich editor, native paper/tokens, query navigation and one Sales leave guard;
+no new library, execution, approval, sender or Portal interface. Optional review
+configuration never indicates completed review.
+
+Actual final owning Sales/editor/SDK source20 viewport/theme frames/16 paths/zero
+page errors,25 owning source pins and27 images. Desktop and320 dark action/source
+views inspected. Native overlay folds/reopens without losing work. Required-field
+focus, actual source/record/client/reload, immutable version/earlier source, readonly
+unknown same-request retry/recovery, stale source, leave cancellation and scope/
+authority retirement pass. Finish found/repaired refusal save-lock exit and document
+heading hierarchy; bounded confirmation passed. Subsequent API parameter annotation
+fixes two real TypeScript errors with byte-identical emitted JavaScript; source
+compatibility evidence is separate, never a rewritten screenshot/pin. Final type
+baseline10/current6, ESLint0errors/two incumbent warnings;161 tests/seven suites,
+then25-template refusal-exit subset PASS. No baseline/timeout/assertion weakening.
+
+Cached Impeccable4.1.0 detect exit0 with57 non-failing advisories across incumbent
+Sales. One new15px template-row type advisory follows the selected native Sales
+row pattern; remaining legacy advisories remain explicit. No material visual or
+interaction defect remains in this increment. React checks cover unconditional
+hooks, lazy workspace mount, bounded metadata reads and epoch-fenced async results.
+Original shell controls scroll; business-private words have no browser cache.
+
+Production prerequisites#2532/#2545, own review/CI/release/readback, actual ordinary
+owner/staff/linked-client/provider behavior, complete professional Agreements and
+all O1–O12/founder acceptance remain owed. No other agent is involved.

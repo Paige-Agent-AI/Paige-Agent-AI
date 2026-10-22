@@ -1296,3 +1296,29 @@ algorithm activation. Own190000 successor remains unapplied; hosted review/CI/
 Preview, migration/catalog readback and actual mounted template consumer are owed.
 See [native evidence](../evidence/ui-delivery/e04-template-wording-options.md) and
 [original twelve-outcome journey](../delivery/exp04-get-paid-deliver-journey.md).
+
+
+## EXP04 original template workspace — implemented locally
+
+Original Sales Terms & Agreements now mounts native business templates, supplied
+wording/rich source editor, optional jurisdiction/requested-review/reviewer, exact
+retained version/earlier source, same-UUID recovery and original actual-client
+agreement source handoff. Product68ee6aaa0e798f5257b52118bdac6a9eccd12526 /
+composition97c02ec849edd3847643797d3a8263b7a2f8ee35. Existing correction#2532
+exact1509 is preserved by ancestry; native producer#2545/190000 is separate and
+production-unapplied. No template-specific Chat/Live execution or algorithm
+readiness promotion, no completed legal review inferred.
+
+Source161 selected tests/seven suites, final25-template refusal-exit subset, actual
+Sales/editor/SDK20 responsive frames/16 paths/zero errors and25 owning pins PASS.
+One API predicate parameter annotation fixes real new type errors with identical
+emitted JS; final type baseline10/current6, scoped lint0errors/two incumbent warnings
+and BindingLedger35/Gold PASS. Impeccable exit0/57 advisory notes, including the
+documented incumbent-style15px template-row note, not zero findings. Native68
+checks/replay2/five concurrent sessions/three observed waits belongs to producer
+proof, not customer acceptance. No runtime word cache or new sender/approval/ledger.
+
+Review/exact-head CI/normal releases/actual production source readback, ordinary
+owner/staff/linked-client roles and full commercial/signature/payment/delivery/
+founder evaluation remain separately owed. See [bounded UI evidence](../evidence/ui-delivery/e04-agreement-templates.md)
+and [the original twelve-outcome journey](../delivery/exp04-get-paid-deliver-journey.md).

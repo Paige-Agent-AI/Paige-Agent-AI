@@ -20,13 +20,14 @@ const m = vi.hoisted(() => ({
   cc: {} as Loose, setup: {} as Loose, catalog: {} as Loose, knowledge: {} as Loose,
   pending: {} as Loose, checks: {} as Loose, activity: {} as Loose, tenant: {} as Loose,
   campaigns: {} as Loose,
+  pendingArgs: [] as unknown[],
 }));
 
 vi.mock("./useCommandCenter", () => ({ useCommandCenter: () => m.cc }));
 vi.mock("./useSoloSetupBrief", () => ({ useSoloSetupBrief: () => m.setup }));
 vi.mock("../useCatalogOffers", () => ({ useCatalogOffers: () => m.catalog }));
 vi.mock("./useSoloKnowledge", () => ({ useSoloKnowledge: () => m.knowledge }));
-vi.mock("./useSoloPendingActions", () => ({ useSoloPendingActions: () => m.pending }));
+vi.mock("./useSoloPendingActions", () => ({ useSoloPendingActions: (...args: unknown[]) => { m.pendingArgs = args; return m.pending; } }));
 vi.mock("@/hooks/useSystemsCheck", () => ({ useSystemsCheck: () => m.checks }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => m.tenant }));
 vi.mock("../useSoloCampaignBriefs", () => ({ useSoloCampaignBriefs: () => m.campaigns }));
@@ -50,6 +51,26 @@ function render() {
   act(() => { root.render(React.createElement(Probe)); });
 }
 
+it("reuses the original prepared read with actor binding and keeps exact total separate from preview", () => {
+  m.pending = { ...m.pending, total: 37, items: [{ id: "test-work", title: "Review scope", rationale: null }] };
+  render();
+  expect(m.pendingArgs).toEqual(["42", "test-actor"]);
+  expect(view.preparedReview).toBe(m.pending);
+  expect(view.decisions.find(item => item.id === "decision:drafts")?.title).toBe("Review 37 prepared items");
+  expect(view.decisions.find(item => item.id === "decision:drafts")?.evidence).toContain("1 loaded for preview");
+  m.pending.items = []; render();
+  expect(view.decisions.find(item => item.id === "decision:drafts")?.detail).toContain("count without readable items");
+  m.pending.total = null; m.pending.items = [{ id: "test-work", title: "Review scope", rationale: null }]; render();
+  expect(view.decisions.find(item => item.id === "decision:drafts")?.title).toBe("Review prepared work");
+});
+
+it("does not enable the prepared read when the actor or viewed workspace has not resolved", () => {
+  m.tenant.activeUserId = null; render();
+  expect(m.pendingArgs).toEqual([null, null]); expect(view.reviewScope).toBeNull();
+  m.tenant.activeUserId = "test-actor"; m.tenant.activeTenantId = "other-workspace"; render();
+  expect(m.pendingArgs).toEqual([null, "test-actor"]); expect(view.reviewScope).toBeNull();
+});
+
 /** Baseline: everything loaded, nothing set up (a fresh workspace). */
 function resetEmpty() {
   m.cc = { loading: false, isError: false, empty: true, greeting: { name: "Jordan" }, attention: {}, counts: { approvals: 0 }, refresh: vi.fn() };
@@ -63,7 +84,7 @@ function resetEmpty() {
   // Default: the signed-in user OWNS the active workspace — a NON-staff viewer with an active tenant
   // is, by RLS scoping, in their own workspace (the normal Solo case). `activeTenant.name` is the
   // business name, distinct from any personal greeting name.
-  m.tenant = { isPlatformStaff: false, activeTenantId: "42", activeTenant: { name: "Clearpath Advisory" } };
+  m.tenant = { isPlatformStaff: false, activeTenantId: "42", activeUserId: "test-actor", activeTenant: { name: "Clearpath Advisory" } };
 }
 
 beforeEach(() => {

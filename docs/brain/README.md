@@ -287,6 +287,17 @@ release, authenticated recovery and full ALG01/12 acceptance remain proof owed.
 
 ## EXP02 contextual review identity prerequisite — development
 
+Dependent Decision Desk consumer now has source-only proof: original prepared
+rows/count feed a spacious shared Dialog, showing department, rationale and actual
+draft text where returned. Exact total stays separate from the capped preview;
+items without prose are not called drafts. Source errors/loading withhold details.
+Original approval rail and Mission writers remain intact; this generic reader has
+no editing/approval/execution authority.67 owning cases/four suites and16 original
+native synthetic frames pass. Required exact-head review/CI, release and ordinary
+customer source/reload proof remain owed. The lower-composer contextual affordance
+and actual Chat/Live continuity are separate next slices. ALG03/13 prediction and
+catalogue Live promotion are not claimed. [Owning source/UX packet](../delivery/e2-prepared-review-desk.md).
+
 Owner October21 Game Plan refinement retains contextual Chat suggestions, with
 substantial work in the original Decision & Opportunity Desk. The first small
 prerequisite adds optional actor-bound UI read epochs to the original native

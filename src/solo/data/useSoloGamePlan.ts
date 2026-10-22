@@ -31,7 +31,7 @@ import { useCommandCenter } from "./useCommandCenter";
 import { useSoloSetupBrief, type SoloSetupSaveResult } from "./useSoloSetupBrief";
 import { useCatalogOffers } from "../useCatalogOffers";
 import { useSoloKnowledge } from "./useSoloKnowledge";
-import { useSoloPendingActions } from "./useSoloPendingActions";
+import { useSoloPendingActions, type SoloPendingActionsData } from "./useSoloPendingActions";
 import { useSoloActivityFeed, elapsedLabel, departmentLabel, type SoloActivityStatus } from "./useSoloActivityFeed";
 import { useSystemsCheck } from "@/hooks/useSystemsCheck";
 import { useTenantContext } from "@/hooks/useTenantContext";
@@ -224,6 +224,9 @@ export interface SoloGamePlanView {
   playsStatus: PlaysStatus;
   /** Decision & opportunity desk items, each source-labelled. */
   decisions: DecisionItem[];
+  /** Original prepared rows/count for the spacious Desk; no second query. */
+  preparedReview: SoloPendingActionsData;
+  reviewScope: string | null;
   /** Whether the drafts read behind `decisions` resolved. On an OUTAGE (`pending.error`) this is
    *  "unavailable" so the deck never announces "All caught up" over a queue it couldn't check (§13). */
   decisionsStatus: "ready" | "unavailable";
@@ -273,15 +276,16 @@ function checkStateTitle(interp: string | null | undefined): string {
 }
 
 export function useSoloGamePlan(account: string, workspaceId?: string | null): SoloGamePlanView {
+  const { activeTenant, activeTenantId, activeUserId, isPlatformStaff } = useTenantContext();
+  const reviewScope = activeUserId && workspaceId && activeTenantId === workspaceId ? JSON.stringify([workspaceId, activeUserId]) : null;
   const cc = useCommandCenter();
   const setup = useSoloSetupBrief();
   const catalog = useCatalogOffers();
   const knowledge = useSoloKnowledge();
-  const pending = useSoloPendingActions(workspaceId ?? null); // §9 — scope to the viewed workspace, like the activity feed
+  const pending = useSoloPendingActions(reviewScope ? workspaceId ?? null : null, activeUserId ?? null);
   const checks = useSystemsCheck("tenant");
   const activity = useSoloActivityFeed(workspaceId);
   const campaigns = useSoloCampaignBriefs();
-  const { activeTenant, activeTenantId, isPlatformStaff } = useTenantContext();
 
   // §57 identity: the personal greeting belongs to the person WHOSE workspace this is. The
   // signed-in user's name is only theirs to show when the active workspace is genuinely their own —
@@ -876,11 +880,11 @@ export function useSoloGamePlan(account: string, workspaceId?: string | null): S
   const decisions = useMemo<DecisionItem[]>(() => {
     const out: DecisionItem[] = [];
     const drafts = Array.isArray(pending.items) ? pending.items : [];
-    if (drafts.length > 0) {
+    if (drafts.length > 0 || (pending.total ?? 0) > 0) {
       out.push({
         id: "decision:drafts",
-        title: `Review ${pending.total ?? "up to " + drafts.length} draft${pending.total === 1 ? "" : "s"} Paige is holding`,
-        detail: drafts[0]?.rationale || "Paige prepared these and stopped for your approval.",
+        title: pending.total == null ? "Review prepared work" : `Review ${pending.total} prepared item${pending.total === 1 ? "" : "s"}`,
+        detail: drafts.length ? "Inspect original drafts, summaries and sources. Prepared work is separate from approvals." : "The source returned a count without readable items. Check the original work again.",
         source: "recommendation", waiting: true, destination: "paige",
         evidence: `${pending.total ?? "up to " + drafts.length} filed items; ${drafts.length} loaded for preview.`,
       });
@@ -931,6 +935,8 @@ export function useSoloGamePlan(account: string, workspaceId?: string | null): S
     plays,
     playsStatus,
     decisions,
+    preparedReview: pending,
+    reviewScope,
     decisionsStatus,
     dependencies,
     dependenciesStatus,

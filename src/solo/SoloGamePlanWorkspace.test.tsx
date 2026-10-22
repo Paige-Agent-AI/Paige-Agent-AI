@@ -10,6 +10,7 @@ const harness = vi.hoisted(() => ({
   openPaige: vi.fn(),
   save: vi.fn(async () => ({ ok: true })),
   refresh: vi.fn(),
+  prepared: false,
   mission: {
     items: [] as StrategicPlay[],
     status: "ready" as "loading" | "ready" | "forbidden" | "error",
@@ -42,7 +43,9 @@ vi.mock("./data/useSoloGamePlan", () => ({
       provenance: {}, pendingProposal: null, proposalPlanOnly: true,
       save: harness.save, applyProposal: vi.fn(), dismissProposal: vi.fn(),
     },
-    decisions: [], decisionsStatus: "ready",
+    decisions: harness.prepared ? [{ id: "decision:drafts", title: "Review 37 prepared items", detail: "Original prepared work", destination: "paige" }] : [], decisionsStatus: "ready",
+    reviewScope: "test-review-scope",
+    preparedReview: { total: 37, loading: false, error: null, refresh: harness.refresh, items: [{ id: "test-work", title: "Inspect original scope", department: "Operations", draftContent: "Recorded draft text", summary: null, rationale: null, createdAt: "" }] },
   }),
 }));
 vi.mock("@/hooks/useTenantContext", () => ({ useOptionalTenantContext: () => ({ activeUserId: "test-owner",
@@ -87,6 +90,14 @@ function click(label: string) {
 }
 
 describe("Business Game Plan owner-complete vertical", () => {
+  it("opens original prepared work in the spacious Decision Desk without opening or sending Chat", () => {
+    harness.prepared = true; render(); click("Review 37 prepared items");
+    expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Recorded draft text");
+    expect(harness.openPaige).not.toHaveBeenCalled();
+    expect(harness.save).not.toHaveBeenCalled();
+    expect(harness.mission.mutate).not.toHaveBeenCalled();
+    harness.prepared = false;
+  });
   it("preserves Set your plan and replaces generic system/activity material with Plan in Motion", () => {
     render();
     expect(host.querySelector('.sd-rail [data-testid="game-plan-approvals"]')).toBeTruthy();

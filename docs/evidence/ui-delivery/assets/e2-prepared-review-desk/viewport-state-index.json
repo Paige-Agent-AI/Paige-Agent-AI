@@ -1,0 +1,403 @@
+{
+  "authenticatedRuntime": "UNVERIFIED",
+  "setupDiagnostics": "Local watcher EBUSY and stale capture-closure errors retained privately; fresh tab9 used only for corrected empty recapture",
+  "noAuthority": "Every backend, model and action port refuses; Chat port is synthetic",
+  "kind": "NATIVE_COMPONENTS_SYNTHETIC_PORTS",
+  "frames": [
+    {
+      "name": "1536-closed",
+      "css": [
+        1536,
+        770
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "height": 738.4000244140625,
+          "width": 1040,
+          "x": 248,
+          "y": 16
+        }
+      },
+      "fontLoaded": true,
+      "scrollWidth": 1536,
+      "raster": {
+        "height": 770,
+        "width": 1536
+      },
+      "sha256": "3e4cff7a47d5934f6f48caa4365df3c4ad20408a16c9b22a3aba8b25d30e91de"
+    },
+    {
+      "name": "1536-open",
+      "css": [
+        1536,
+        770
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "height": 738.4000244140625,
+          "width": 1040,
+          "x": 248,
+          "y": 16
+        }
+      },
+      "fontLoaded": true,
+      "scrollWidth": 1536,
+      "raster": {
+        "height": 770,
+        "width": 1536
+      },
+      "sha256": "1e67b66dc9c7c3d939fc07e352a0ce5524830dd295392526cff0ef20f4155868"
+    },
+    {
+      "name": "1366-closed",
+      "css": [
+        1366,
+        768
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "height": 736,
+          "width": 1040,
+          "x": 163.1999969482422,
+          "y": 16
+        }
+      },
+      "fontLoaded": true,
+      "scrollWidth": 1366,
+      "raster": {
+        "height": 768,
+        "width": 1366
+      },
+      "sha256": "987176fcffee5b4a3bddd2b7b91e0f3a28a15f895d1348e9d4e6cea151379fbf"
+    },
+    {
+      "name": "1366-open",
+      "css": [
+        1366,
+        768
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "height": 736,
+          "width": 1040,
+          "x": 163.1999969482422,
+          "y": 16
+        }
+      },
+      "fontLoaded": true,
+      "scrollWidth": 1366,
+      "raster": {
+        "height": 768,
+        "width": 1366
+      },
+      "sha256": "23702566ccbb380974527b983584958a02e927fea1a3d5d5b624fdb2e51a1194"
+    },
+    {
+      "name": "1024-closed",
+      "css": [
+        1024,
+        768
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "height": 736,
+          "width": 992,
+          "x": 16,
+          "y": 16
+        }
+      },
+      "fontLoaded": true,
+      "scrollWidth": 1024,
+      "raster": {
+        "height": 768,
+        "width": 1024
+      },
+      "sha256": "14a1459ef31f84d2cd7d4855d67fdb6d448e2ae267d098db78f523a31a1ac90c"
+    },
+    {
+      "name": "1024-open",
+      "css": [
+        1024,
+        768
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "height": 736,
+          "width": 992,
+          "x": 16,
+          "y": 16
+        }
+      },
+      "fontLoaded": true,
+      "scrollWidth": 1024,
+      "raster": {
+        "height": 768,
+        "width": 1024
+      },
+      "sha256": "50ad0ffc2f99b1fdcce510d6e4f5f571a1285fb4f42a27033afe66bb2515beda"
+    },
+    {
+      "name": "900-closed",
+      "css": [
+        900,
+        1000
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "height": 968,
+          "width": 868,
+          "x": 16,
+          "y": 16
+        }
+      },
+      "fontLoaded": true,
+      "scrollWidth": 900,
+      "raster": {
+        "height": 1000,
+        "width": 900
+      },
+      "sha256": "0629a36e25c332e1613d88727a598cda079b10b498a00f8c90f3db7105902669"
+    },
+    {
+      "name": "900-open",
+      "css": [
+        900,
+        1000
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "height": 968,
+          "width": 868,
+          "x": 16,
+          "y": 16
+        }
+      },
+      "fontLoaded": true,
+      "scrollWidth": 900,
+      "raster": {
+        "height": 1000,
+        "width": 900
+      },
+      "sha256": "fb2cadfbe7b38f9f034615eae26e19436b8f0b80d22c7d00ad96402daa725c85"
+    },
+    {
+      "name": "320-review",
+      "css": [
+        320,
+        900
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "height": 884,
+          "width": 304,
+          "x": 8,
+          "y": 8
+        }
+      },
+      "fontLoaded": true,
+      "scrollWidth": 320,
+      "raster": {
+        "height": 900,
+        "width": 320
+      },
+      "sha256": "3aa9a78fccc3f2b2a6adab939eaf551486434d326aab1840aa8ecbeacb630119"
+    },
+    {
+      "name": "320-keyboard-source",
+      "css": [
+        320,
+        900
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "height": 884,
+          "width": 304,
+          "x": 8,
+          "y": 8
+        }
+      },
+      "fontLoaded": true,
+      "scrollWidth": 320,
+      "raster": {
+        "height": 900,
+        "width": 320
+      },
+      "sha256": "875a27f33ad90b11407cf9e097cc583673f8a78ee50fa62b5445dad2c835d8c7"
+    },
+    {
+      "name": "900-failed-read",
+      "css": [
+        900,
+        1000
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "height": 302.5625,
+          "width": 868,
+          "x": 16,
+          "y": 348.71875
+        }
+      },
+      "fontLoaded": true,
+      "scrollWidth": 900,
+      "raster": {
+        "height": 1000,
+        "width": 900
+      },
+      "sha256": "d248ad237d3cde120fe4fc7f877e5300e610cdd7ae200fd9caacc9eaf10ff08e"
+    },
+    {
+      "name": "900-loading",
+      "css": [
+        900,
+        1000
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "height": 246.5625,
+          "width": 868,
+          "x": 16,
+          "y": 376.71875
+        }
+      },
+      "fontLoaded": true,
+      "scrollWidth": 900,
+      "raster": {
+        "height": 1000,
+        "width": 900
+      },
+      "sha256": "a9a28639a61d267a2952f96a4d98fca51b8a2b47fad216d46bcd9c679c0e1643"
+    },
+    {
+      "css": [
+        900,
+        1000
+      ],
+      "dialog": null,
+      "emptyText": "No prepared work or follow-up returned.",
+      "fontLoaded": true,
+      "name": "900-empty-desk",
+      "scrollWidth": 900,
+      "raster": {
+        "height": 1000,
+        "width": 900
+      },
+      "sha256": "e8aa4e82ee0acb3eee8a45e75148a78a0143bd57fbaf63b9713f9f8f5ea8f25a"
+    },
+    {
+      "name": "900-unknown-total",
+      "css": [
+        900,
+        1000
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "height": 968,
+          "width": 868,
+          "x": 16,
+          "y": 16
+        }
+      },
+      "fontLoaded": true,
+      "scrollWidth": 900,
+      "raster": {
+        "height": 1000,
+        "width": 900
+      },
+      "sha256": "f6835ab556745f1b63b6e78253e8a6f687d86c8970bcdbe94e836dbfad618cbe"
+    },
+    {
+      "name": "1366-obsidian",
+      "css": [
+        1366,
+        768
+      ],
+      "dialog": {
+        "background": "rgb(25, 22, 30)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "height": 736,
+          "width": 1040,
+          "x": 163.1999969482422,
+          "y": 16
+        }
+      },
+      "fontLoaded": true,
+      "scrollWidth": 1366,
+      "raster": {
+        "height": 768,
+        "width": 1366
+      },
+      "sha256": "ac6391c9e72072920f04fb3c2ed1e41ebdfe9af2ed8576d869ab9504a6cae258"
+    },
+    {
+      "name": "1366-reduced-motion",
+      "css": [
+        1366,
+        768
+      ],
+      "dialog": {
+        "background": "rgb(25, 22, 30)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "height": 736,
+          "width": 1040,
+          "x": 163.1999969482422,
+          "y": 16
+        }
+      },
+      "fontLoaded": true,
+      "scrollWidth": 1366,
+      "raster": {
+        "height": 768,
+        "width": 1366
+      },
+      "sha256": "ac6391c9e72072920f04fb3c2ed1e41ebdfe9af2ed8576d869ab9504a6cae258"
+    }
+  ],
+  "nativeZoom": "UNVERIFIED",
+  "sources": [
+    {
+      "path": "src/solo/PreparedWorkReview.tsx",
+      "sha256": "30c4483f4dabde6a0819a2e28ab5fc188340a702b5adc51735ab6371adda1982"
+    },
+    {
+      "path": "src/solo/prepared-work-review.css",
+      "sha256": "d30db332d431c9af7cadb62fcb58b5eaadb3122e42782e47159273b7fff0f9c4"
+    },
+    {
+      "path": "src/solo/SoloGamePlanWorkspace.tsx",
+      "sha256": "3a0abd33df299abed0913223c67e13cb8f8f3fed7802fb56461e2e98b055cc5f"
+    },
+    {
+      "path": "src/solo/data/useSoloGamePlan.ts",
+      "sha256": "744d4203e3cfa1bb27867b54fcdc7a434dc88039d2f6318cedf01b5986e21f1c"
+    }
+  ]
+}

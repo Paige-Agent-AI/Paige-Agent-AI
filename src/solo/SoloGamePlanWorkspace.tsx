@@ -13,6 +13,7 @@ import { setPaigeBusinessPlanScope } from "./paigeClientScope";
 import { clearPaigePublicPresenceScope } from "./paigePublicPresenceScope";
 import { PlanInMotion } from "./PlanInMotion";
 import { GamePlanApprovals } from "./GamePlanApprovals";
+import { PreparedWorkReview } from "./PreparedWorkReview";
 import "./solo-game-plan-workspace.css";
 
 const SR_ONLY: React.CSSProperties = { position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)" };
@@ -104,7 +105,15 @@ export function SoloGamePlanWorkspace({ accountContext, openPaige, workspaceId }
           <div className="sd-detail-cta"><button className="sd-btn sd-btn-sm" disabled={!brief.canEdit} onClick={openEdit}><Pencil />{brief.hasPlan ? "Edit plan" : "Set your plan"}</button><button className="sd-btn sd-btn-sm sd-btn-quiet" onClick={() => setOverlay("legend")}><Info /> How this works</button></div>
           {brief.pendingProposal && <div className="sd-banner sd-banner-prop"><Sparkles /><span><b>Paige proposed a plan-brief change.</b> Review it before it becomes your direction.</span><button className="sd-btn sd-btn-sm" onClick={() => go("setup")}>Review <ArrowRight /></button></div>}
         </div></section>
-        <section className="sd-card"><div className="sd-card-hd"><span className="sd-eyebrow"><Scale /> Decision &amp; opportunity desk</span></div>{plan.decisions.length === 0 ? <div className="sd-todo"><Info /><span>No owner decision is waiting right now.</span></div> : <div className="sd-list">{plan.decisions.slice(0, 4).map((item) => <button className="sd-row" key={item.id} onClick={() => go(item.destination)}><span className="sd-ic v"><Scale /></span><span className="sd-main"><span className="sd-title">{item.title}</span><span className="sd-note">{item.detail}</span></span><ArrowRight /></button>)}</div>}</section>
+        <section className="sd-card"><div className="sd-card-hd"><span className="sd-eyebrow"><Scale /> Decision &amp; opportunity desk</span></div>
+          {plan.decisionsStatus === "unavailable" && <div className="sd-todo" role="alert"><Info /><span>Prepared work could not be checked.</span><button className="sd-btn sd-btn-sm" onClick={plan.refresh}>Retry</button></div>}
+          {plan.decisions.length === 0 ? plan.decisionsStatus !== "unavailable" && <div className="sd-todo"><Info /><span>No prepared work or follow-up returned.</span></div> : <div className="sd-list">{plan.decisions.slice(0, 4).map((item) => {
+            const content = <><span className="sd-ic v"><Scale /></span><span className="sd-main"><span className="sd-title">{item.title}</span><span className="sd-note">{item.detail}</span></span><ArrowRight /></>;
+            return item.id === "decision:drafts" && plan.preparedReview && plan.reviewScope
+              ? <PreparedWorkReview key={plan.reviewScope} data={plan.preparedReview}><button type="button" className="sd-row">{content}</button></PreparedWorkReview>
+              : <button type="button" className="sd-row" key={item.id} onClick={() => go(item.destination)}>{content}</button>;
+          })}</div>}
+        </section>
       </div>
       <div className="sd-rail"><GamePlanApprovals /><PlanInMotion workspaceId={workspaceId} openPaige={openPaige} onNotice={flash} selectedPlayId={selectedPlayId} onSelectPlay={selectPlay} onClosePlay={closePlay} /></div>
     </div>

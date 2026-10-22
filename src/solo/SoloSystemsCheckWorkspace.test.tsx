@@ -1,6 +1,7 @@
 import React from "react";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -314,8 +315,9 @@ describe("Solo Systems Check workspace", () => {
     expect(host.textContent).toContain("Systems Check");
     expect(host.querySelector("[data-tenant-account-name]")?.textContent).toBe("First Sterling Capital");
     expect(host.querySelector("[data-tenant-account-tier]")?.textContent).toBe("Solo");
-    expect(host.textContent).toContain("Active clients");
-    expect(host.textContent).toContain("Live read from your own records");
+    expect(host.textContent).not.toContain("Active clients");
+    expect(host.textContent).not.toContain("Pipeline value");
+    expect(host.textContent).not.toContain("Live read from your own records");
     expect(host.textContent).toContain("Payment connection needs attention");
     // The Departments panel went with the radial: it listed names beside the words
     // "Status totals unavailable here", which is not information the owner can act on.
@@ -369,8 +371,16 @@ describe("Solo Systems Check workspace", () => {
     render();
     expect(host.textContent).toContain("The last check could not be read");
     expect(host.textContent).toContain("Nothing below is being reported as healthy");
+    expect(host.textContent).not.toContain("No completed check has been recorded");
     act(() => button("Refresh current data")?.click());
     expect(refreshSystems).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not claim an empty history while the recorded check is still loading", () => {
+    harness.systems.mockReturnValue({ ...baseSystems, run: null, findings: [], loading: true });
+    render();
+    expect(host.textContent).not.toContain("No completed check has been recorded");
+    expect(host.textContent).toContain("Reading");
   });
 
   it("uses no-run wording when no persisted Systems Check exists", () => {
@@ -606,12 +616,38 @@ describe("Solo Systems Check workspace", () => {
     expect(refreshCommand).toHaveBeenCalledTimes(1);
   });
 
-  it("labels retained metrics as last available when the current operating read fails", () => {
+  it("does not revive legacy business figures when the operating read fails", () => {
     harness.command.mockReturnValue({ ...baseCommand, isError: true });
     render();
-    expect(host.textContent).toContain("Active clients");
-    expect(host.textContent).toContain("this may not be today's number");
+    expect(host.textContent).not.toContain("Active clients");
+    expect(host.textContent).not.toContain("Pipeline value");
+    expect(host.textContent).not.toContain("this may not be today's number");
     expect(host.textContent).not.toContain("Live read from your own records");
+    expect(host.textContent).toContain("Some business operating sources could not be read");
+  });
+
+  it("opens the canonical Executive for the current account independently of check completion", () => {
+    harness.systems.mockReturnValue({ ...baseSystems, run: null, findings: [] });
+    act(() => root.render(<MemoryRouter initialEntries={["/solo/7100001/command-center/systems-check"]}>
+      <Routes><Route path="/solo/:account/command-center/systems-check" element={
+        <SoloSystemsCheckWorkspace accountContext={{ accountName: "Test tenant operations", accountType: "standalone" }} openPaige={openPaige} />
+      } /><Route path="/solo/:account/command-center/executive" element={<p role="status">Canonical Executive destination</p>} /></Routes>
+    </MemoryRouter>));
+    const link = [...host.querySelectorAll("a")].find(a => a.textContent?.includes("Review business performance"));
+    expect(link?.getAttribute("href")).toBe("/solo/7100001/command-center/executive");
+    expect(host.textContent).not.toContain("Active clients");
+    expect(host.textContent).not.toContain("$48,000");
+    expect(baseCommand.approve).not.toHaveBeenCalled();
+    expect(baseCommand.decline).not.toHaveBeenCalled();
+    expect(openPaige).not.toHaveBeenCalled();
+    act(() => link?.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, button: 0 })));
+    expect(host.querySelector('[role="status"]')?.textContent).toBe("Canonical Executive destination");
+  });
+
+  it("withholds the business-review link until the route account resolves", () => {
+    render();
+    expect([...host.querySelectorAll("a")].filter(a => a.textContent?.includes("Review business performance"))).toHaveLength(0);
+    expect(host.textContent).toContain("Business figures are available in Executive once this workspace resolves.");
   });
 
   it("reviews a governed approval once, disables repeat activation, and announces success", async () => {

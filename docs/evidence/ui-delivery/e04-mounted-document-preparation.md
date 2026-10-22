@@ -1,5 +1,17 @@
 # EXP04 original Sales document-preparation consumer
 
+October22 main composition57f4b6f8502abd001560249acfa56072cd623281 preserves
+all owning UI/controller/SDK/harness bytes and incoming E09/E05 source verbatim.
+Fresh142 integration cases/six suites and current8UI/one-record evidence guard
+PASS. The first hosted composition check used the prior API baseae444, including
+already merged E09/Operations UI, and failed its Solo-record attestation check;
+it is retained as FAILED, not waived. This factual follow-up is evaluated against
+the actual main429 base; no shared guard or unrelated E09 evidence is modified.
+API2599 is merged429 with all13 required checks and normal Preview SUCCESS,
+actual Edge37/16-file source parity and public429...-mvjte1ly web readback.
+Native300004 remains a release hold after four original5s55P03 lock rollbacks;
+no table/session/timeout/history mutation or hosted acceptance is inferred.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: original exp04-get-paid-deliver-journey.md owner API/consumer pre-edit contract; all twelve outcomes remain mandatory.
 PAIGE_UI_DESIGN: PASS: original five-module route, existing native Sales Operate/paper/inspector tokens and bounded finish review; no replacement design system.

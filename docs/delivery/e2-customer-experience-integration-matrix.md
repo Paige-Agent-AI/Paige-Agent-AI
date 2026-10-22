@@ -24,10 +24,28 @@ not full payload or guessed department routes. Shared E4 frame retains the UUID,
 not account/address/approval text. Missing source date remains absent. Four causal
 failures then70 cases/five original suites pass. This does not mount a focused URL
 or a Desk action: those remain separate required consumers; existing resolution
-is surface_only. Review/CI, parent2612 and original2607 security prerequisite,
-actual readback/permissions/reload/Chat/Live and one founder evaluation remain owed.
+is surface_only. Original type ratchet10/6/zero new and70 owning cases pass after
+the SDK inference correction; runtime projection/guards unchanged. Parent2612 and
+original2607 source prerequisites are released. Own review/CI, actual source-query
+readback/permissions/reload/Chat/Live and one founder evaluation remain owed.
 No approval/execution/Rail, provider, catalogue or ALG03/13 promotion; all19/nine
 definitions remain required. [Evidence](../evidence/ui-delivery/e2-prepared-source-reference.md).
+
+## October22 — O06 source release verified; customer acceptance open
+
+2612/c033ded75c8593c8f1fa3a18b0530cb8f725257f merged
+8e97c949d7a7234a842a9ba44d8bc8646caf2cc6 with exact preflight union
+62a6bd5c330ed2b5cc62a315e3507b434a0d916e, all10 applicable exact-head
+checks/two statuses, normal schema-free Preview skip and accurately labeled
+author review5619760376. Actual productiondpl_EKYTdUDpjDWd6Z6NX6agpGPqA3Kx
+READY/public build8e97c949-mvjz6m2z; original emitted SOLO chunk contains all four
+coverage markers and excludes the obsolete readiness title.
+[Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2612#issuecomment-6350335218).
+Functional source release verified; Visual synthetic native proof retained;
+Experiential corrected ordinary/cohort/permission/Live and complete Founder
+Acceptance remain UNVERIFIED. No O07/O19 completion or action/provider/catalogue/
+algorithm promotion. All19/nine required; earlier dated development claims below
+are superseded only at this bounded source-release level.
 
 ## October22 — O06 recorded-coverage repair in development
 

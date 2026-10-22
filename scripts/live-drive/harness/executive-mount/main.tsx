@@ -46,7 +46,7 @@ function App() {
         </div>
       </TenantCommandCenterShell>
     </div>
-    <nav aria-label="Development-only scenario controls" style={{ position: "fixed", bottom: 0, insetInline: 0, height: 32, overflow: "auto", display: "flex", alignItems: "center", gap: 12, padding: "0 12px", fontSize: 11, background: "var(--pg-raised)", color: "var(--pg-ink)", whiteSpace: "nowrap" }}><strong>SYNTHETIC WALKTHROUGH · NO BACKEND</strong>{["ready", "loading", "error", "unavailable", "empty", "member"].map((state) => <Link key={state} to={"/solo/1234567/command-center/executive?state=" + state + "&theme=" + theme}>{state}</Link>)}<Link to="/solo/1234567/command-center/executive?workspace=b">workspace B</Link></nav>
+    <nav aria-label="Development-only scenario controls" style={{ position: "fixed", bottom: 0, insetInline: 0, height: 32, overflow: "auto", display: "flex", alignItems: "center", gap: 12, padding: "0 12px", fontSize: 11, background: "var(--pg-raised)", color: "var(--pg-ink)", whiteSpace: "nowrap" }}><strong>SYNTHETIC WALKTHROUGH · NO BACKEND</strong>{import.meta.env.E2_HARNESS_SLICE === "desk" && <span>Alt+R: hold/release synthetic reread</span>}{["ready", "loading", "error", "unavailable", "empty", "member"].map((state) => <Link key={state} to={"/solo/1234567/command-center/executive?state=" + state + "&theme=" + theme}>{state}</Link>)}<Link to="/solo/1234567/command-center/executive?workspace=b">workspace B</Link></nav>
   </>;
 }
 const theme = new URLSearchParams(location.search).get("theme") === "light" ? "light" : "dark";

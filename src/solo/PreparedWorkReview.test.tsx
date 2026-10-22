@@ -105,3 +105,50 @@ it("does not present a missing summary as an empty original document", () => {
   expect(article.querySelector('section')).toBeNull();
   expect(dialog().querySelector('nav small')?.textContent).toBe('Details unavailable');
 });
+
+it("retains inspected source scroll and focus across the original return reread without showing stale details", () => {
+  data.items[0].sourceLink = { destination: "systems_check", record_id: "e2000000-0000-4000-8000-000000000006" };
+  render("test-scope-a", "1234567"); open();
+  const link = dialog().querySelector<HTMLAnchorElement>('a')!;
+  (dialog().querySelector('.pwr-document') as HTMLElement).scrollTop = 321;
+  (dialog().querySelector('.pwr-workspace') as HTMLElement).scrollTop = 88;
+  (dialog().querySelector('.pwr-list') as HTMLElement).scrollTop = 66;
+  (dialog().querySelector('.pwr-list') as HTMLElement).scrollLeft = 220;
+  link.focus(); act(() => link.click());
+  data = { ...data, loading: true }; render("test-scope-a", "1234567");
+  expect(dialog().querySelector('a')).toBeNull();
+  expect(dialog().textContent).not.toContain('First original paragraph');
+  data = { ...data, loading: false }; render("test-scope-a", "1234567");
+  expect((dialog().querySelector('.pwr-document') as HTMLElement).scrollTop).toBe(321);
+  expect((dialog().querySelector('.pwr-workspace') as HTMLElement).scrollTop).toBe(88);
+  expect((dialog().querySelector('.pwr-list') as HTMLElement).scrollTop).toBe(66);
+  expect((dialog().querySelector('.pwr-list') as HTMLElement).scrollLeft).toBe(220);
+  expect(document.activeElement).toBe(dialog().querySelector('a'));
+});
+
+it("does not restore an old source position or focus into a changed reference after reread", () => {
+  data.items[0].sourceLink = { destination: "systems_check", record_id: "e2000000-0000-4000-8000-000000000006" };
+  render("test-scope-a", "1234567"); open();
+  const link = dialog().querySelector<HTMLAnchorElement>('a')!;
+  (dialog().querySelector('.pwr-document') as HTMLElement).scrollTop = 321;
+  link.focus(); act(() => link.click()); data = { ...data, loading: true }; render("test-scope-a", "1234567");
+  data = { ...data, loading: false, items: [{ ...data.items[0], sourceLink: { destination: "systems_check", record_id: "e2000000-0000-4000-8000-000000000007" } }] }; render("test-scope-a", "1234567");
+  expect((dialog().querySelector('.pwr-document') as HTMLElement).scrollTop).toBe(0);
+  expect(document.activeElement).not.toBe(dialog().querySelector('a'));
+});
+
+it("withholds a refused source and lets an explicit retry supersede inspected-source focus", () => {
+  data.items[0].sourceLink = { destination: "systems_check", record_id: "e2000000-0000-4000-8000-000000000006" };
+  render("test-scope-a", "1234567"); open();
+  const link = dialog().querySelector<HTMLAnchorElement>('a')!;
+  (dialog().querySelector('.pwr-document') as HTMLElement).scrollTop = 321;
+  link.focus(); act(() => link.click());
+  data = { ...data, error: "read refused" }; render("test-scope-a", "1234567");
+  expect(dialog().querySelector('a')).toBeNull(); expect(dialog().textContent).not.toContain('37 prepared items');
+  expect(dialog().textContent).not.toContain('First original paragraph');
+  act(() => (dialog().querySelector('.pwr-state button') as HTMLButtonElement).click());
+  expect(data.refresh).toHaveBeenCalledOnce();
+  data = { ...data, error: null }; render("test-scope-a", "1234567");
+  expect((dialog().querySelector('.pwr-document') as HTMLElement).scrollTop).toBe(0);
+  expect(document.activeElement).not.toBe(dialog().querySelector('a'));
+});

@@ -4,20 +4,46 @@
   "captureMethod": "Page.captureScreenshot; untouched JPEG80/exact CSS clip/scale1",
   "fullBusinessGamePlan": "NOT_CLAIMED; original leaf mounted in existing shell with labeled synthetic entry",
   "ordinaryCustomerAcceptance": "UNVERIFIED",
-  "beforeSource": {
-    "draft": "What should we address first? — unsent.",
-    "focus": "Open recorded findingnew tab",
-    "href": "/solo/1234567/command-center/systems-check?finding=e2000000-0000-4000-8000-000000000006",
-    "outline": "rgb(101, 90, 150) solid 1.6px",
-    "scroll": 284.79998779296875,
-    "selected": "OperationsReview the payment processor setupRecorded summary"
+  "sourceReturn": {
+    "before": {
+      "documentTop": 0,
+      "draft": "What should we address first? — unsent.",
+      "focus": "Open recorded findingnew tab",
+      "listLeft": 0,
+      "listTop": 0,
+      "outline": "rgb(101, 90, 150) solid 1.6px",
+      "selected": "OperationsReview the payment processor setupRecorded summary",
+      "workspaceTop": 284.79998779296875
+    },
+    "afterNativeClose": {
+      "documentTop": 0,
+      "draft": "What should we address first? — unsent.",
+      "focus": "Open recorded findingnew tab",
+      "listLeft": 0,
+      "listTop": 0,
+      "open": true,
+      "selected": "OperationsReview the payment processor setupRecorded summary",
+      "workspaceTop": 284.79998779296875
+    }
   },
-  "afterSource": {
-    "draft": "What should we address first? — unsent.",
-    "focus": "Open recorded findingnew tab",
-    "open": true,
-    "scroll": 284.79998779296875,
-    "selected": "OperationsReview the payment processor setupRecorded summary"
+  "rereadRecovery": {
+    "method": "Native Alt+R operates the explicitly disclosed synthetic hold/release read port; not an authenticated backend or a claim that natural browser return revalidated production",
+    "held": {
+      "focus": "dialog",
+      "staleCount": false,
+      "staleSource": false,
+      "status": "Checking this workspace’s prepared work…"
+    },
+    "after": {
+      "documentTop": 0,
+      "draft": "What should we address first? — unsent.",
+      "focus": "Open recorded findingnew tab",
+      "listLeft": 0,
+      "listTop": 0,
+      "open": true,
+      "selected": "OperationsReview the payment processor setupRecorded summary",
+      "workspaceTop": 284.79998779296875
+    }
   },
   "sourceDestination": "Original current-snapshot Systems Check/findings drawer with synthetic input ports",
   "dark": {
@@ -26,10 +52,10 @@
     "theme": "dark",
     "transition": "0s"
   },
+  "earlierEvidence": "d31 first-pass fixtures retained in Git history/private outputs; no-op reread did not prove refreshed-return continuity. A causal19-case run then reproduced one scroll-loss failure; corrected source has131 owning cases and this single final confirmation round.",
   "excludedAttempts": [
-    "Generic browser viewport remained1366; excluded from narrow proof",
-    "One1024 center-entry attempt hit the incumbent open rail backdrop; absent-dialog capture retained privately and replaced by actual visible Chat entry",
-    "Cold listener navigation timeout; settled verified page used"
+    "Cold listener navigation timeout; settled verified page used",
+    "Earlier generic viewport/absent-dialog captures retained privately and excluded from final22"
   ],
   "frames": [
     {
@@ -87,33 +113,6 @@
       "width": 1536
     },
     {
-      "name": "1366-closed.jpg",
-      "dialog": {
-        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
-        "fontLoaded": true,
-        "height": 696.5499877929688,
-        "overflow": false,
-        "width": 1040,
-        "x": 163.1999969482422,
-        "y": 35.72500228881836
-      },
-      "draft": "What should we address first? — unsent.",
-      "focus": "Refresh",
-      "height": 768,
-      "pageOverflow": false,
-      "selected": "OperationsReview the payment processor setupRecorded summary",
-      "source": {
-        "height": 44,
-        "rel": "noopener noreferrer",
-        "target": "_blank",
-        "text": "Open recorded findingnew tab",
-        "to": "/solo/1234567/command-center/systems-check?finding=e2000000-0000-4000-8000-000000000006",
-        "width": 237.1000061035156
-      },
-      "summary": " Prepared work · OperationsPrepared Oct 22, 2026, 9:30 AM UTCReview the payment processor setupRecorded summaryNo payment processor connection was recorded. Settlement has not been tested.Available next stepOpen the recorded source in a new tab to keep this review and conversation in place.Open recorded findingnew tabThis prepared item cannot be edited, approved or executed here.",
-      "width": 1366
-    },
-    {
       "name": "1366-open.jpg",
       "dialog": {
         "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
@@ -141,14 +140,14 @@
       "width": 1366
     },
     {
-      "name": "1024-closed.jpg",
+      "name": "1366-closed.jpg",
       "dialog": {
         "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
         "fontLoaded": true,
         "height": 696.5499877929688,
         "overflow": false,
-        "width": 992,
-        "x": 16,
+        "width": 1040,
+        "x": 163.1999969482422,
         "y": 35.72500228881836
       },
       "draft": "What should we address first? — unsent.",
@@ -165,7 +164,7 @@
         "width": 237.1000061035156
       },
       "summary": " Prepared work · OperationsPrepared Oct 22, 2026, 9:30 AM UTCReview the payment processor setupRecorded summaryNo payment processor connection was recorded. Settlement has not been tested.Available next stepOpen the recorded source in a new tab to keep this review and conversation in place.Open recorded findingnew tabThis prepared item cannot be edited, approved or executed here.",
-      "width": 1024
+      "width": 1366
     },
     {
       "name": "1024-open.jpg",
@@ -195,7 +194,34 @@
       "width": 1024
     },
     {
-      "name": "900-closed.jpg",
+      "name": "1024-closed.jpg",
+      "dialog": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true,
+        "height": 696.5499877929688,
+        "overflow": false,
+        "width": 992,
+        "x": 16,
+        "y": 35.72500228881836
+      },
+      "draft": "What should we address first? — unsent.",
+      "focus": "Refresh",
+      "height": 768,
+      "pageOverflow": false,
+      "selected": "OperationsReview the payment processor setupRecorded summary",
+      "source": {
+        "height": 44,
+        "rel": "noopener noreferrer",
+        "target": "_blank",
+        "text": "Open recorded findingnew tab",
+        "to": "/solo/1234567/command-center/systems-check?finding=e2000000-0000-4000-8000-000000000006",
+        "width": 237.1000061035156
+      },
+      "summary": " Prepared work · OperationsPrepared Oct 22, 2026, 9:30 AM UTCReview the payment processor setupRecorded summaryNo payment processor connection was recorded. Settlement has not been tested.Available next stepOpen the recorded source in a new tab to keep this review and conversation in place.Open recorded findingnew tabThis prepared item cannot be edited, approved or executed here.",
+      "width": 1024
+    },
+    {
+      "name": "900-open.jpg",
       "dialog": {
         "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
         "fontLoaded": true,
@@ -222,7 +248,7 @@
       "width": 900
     },
     {
-      "name": "900-open.jpg",
+      "name": "900-closed.jpg",
       "dialog": {
         "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
         "fontLoaded": true,
@@ -287,6 +313,51 @@
     },
     {
       "name": "320-source-return.jpg",
+      "dialog": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true,
+        "height": 764,
+        "overflow": false,
+        "width": 304,
+        "x": 8,
+        "y": 8
+      },
+      "draft": "What should we address first? — unsent.",
+      "focus": "Open recorded findingnew tab",
+      "height": 780,
+      "pageOverflow": false,
+      "selected": "OperationsReview the payment processor setupRecorded summary",
+      "source": {
+        "height": 44,
+        "rel": "noopener noreferrer",
+        "target": "_blank",
+        "text": "Open recorded findingnew tab",
+        "to": "/solo/1234567/command-center/systems-check?finding=e2000000-0000-4000-8000-000000000006",
+        "width": 237.1000061035156
+      },
+      "summary": " Prepared work · OperationsPrepared Oct 22, 2026, 9:30 AM UTCReview the payment processor setupRecorded summaryNo payment processor connection was recorded. Settlement has not been tested.Available next stepOpen the recorded source in a new tab to keep this review and conversation in place.Open recorded findingnew tabThis prepared item cannot be edited, approved or executed here.",
+      "width": 320
+    },
+    {
+      "name": "320-return-rereading.jpg",
+      "dialog": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true,
+        "height": 320.5,
+        "overflow": false,
+        "width": 304,
+        "x": 8,
+        "y": 229.75
+      },
+      "draft": "What should we address first? — unsent.",
+      "focus": "Decision & opportunity deskWork prepared for your reviewRead the original work and its sou",
+      "height": 780,
+      "pageOverflow": false,
+      "source": null,
+      "width": 320
+    },
+    {
+      "name": "320-restored-after-reread.jpg",
       "dialog": {
         "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
         "fontLoaded": true,

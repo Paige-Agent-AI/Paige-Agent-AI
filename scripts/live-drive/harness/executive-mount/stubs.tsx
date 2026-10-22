@@ -1,5 +1,5 @@
 // DEVELOPMENT ONLY. Every data boundary is synthetic and the backend transport refuses all calls.
-import { createContext, useCallback, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { TEST_BUSINESS_REVIEW, TEST_REVIEW_TENANT } from "@/test/fixtures/business-review";
 import { SECOND_REVIEW_TENANT, withTargetAndFinanceFixtures } from "./slice-fixtures";
@@ -30,12 +30,27 @@ export function useBusinessReview() {
 }
 export function useSoloPendingActions() {
   const state = useHarnessParams().get("state");
+  const [rereading, setRereading] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reread = useCallback(() => {
+    if (import.meta.env.E2_HARNESS_SLICE !== "desk") return;
+    if (timer.current) clearTimeout(timer.current);
+    setRereading(true); timer.current = setTimeout(() => setRereading(false), 200);
+  }, []);
+  useEffect(() => {
+    if (import.meta.env.E2_HARNESS_SLICE !== "desk") return;
+    // A disclosed synthetic input port. Native keys hold/release a reread while
+    // the original modal is open; no test controls enter product components.
+    const key = (event: KeyboardEvent) => { if (event.altKey && event.key.toLowerCase() === "r") { event.preventDefault(); if (timer.current) clearTimeout(timer.current); setRereading(value => !value); } };
+    window.addEventListener("keydown", key);
+    return () => { window.removeEventListener("keydown", key); if (timer.current) clearTimeout(timer.current); };
+  }, []);
   if (import.meta.env.E2_HARNESS_SLICE === "desk") return {
     items: state === "empty" ? [] : [
       { id: "test-work-finding", title: "Review the payment processor setup", department: "Operations", summary: "No payment processor connection was recorded. Settlement has not been tested.", draftContent: null, rationale: null, createdAt: state === "missing-date" ? "" : "2026-10-22T09:30:00Z", ...(state === "missing-source" ? {} : { sourceLink: { destination: "systems_check" as const, record_id: "e2000000-0000-4000-8000-000000000006" } }) },
       { id: "test-work-draft", title: "Review the service priorities", department: "Executive", summary: "Confirm the priorities with PAIGE before authorizing work.", draftContent: Array.from({length:12}, (_, i) => `Review point ${i + 1}: inspect the original delivery commitments and confirm the next useful step with the owner.`).join("\n\n"), rationale: "The original draft requires owner review.", createdAt: "2026-10-21T14:00:00Z" },
       { id: "test-work-empty", title: "Inspect the original follow-up", department: "Client Success", summary: null, draftContent: null, rationale: null, createdAt: "" },
-    ], total: state === "empty" ? 0 : 37, loading: state === "loading", error: state === "error" ? "Synthetic read refused" : null, refresh: noop,
+    ], total: state === "empty" ? 0 : 37, loading: rereading || state === "loading", error: state === "error" ? "Synthetic read refused" : null, refresh: reread,
   };
   return { items: state === "empty" || state === "error" ? [] : Array.from({ length: 10 }, (_, i) => ({ id: "test-action-" + i, title: ["Review a service proposal", "Prepare a client check-in", "Revisit a recorded deadline"][i % 3], department: ["Sales", "Client Success", "Operations"][i % 3], summary:null, draftContent:null, rationale:null, createdAt:"" })), total: state === "empty" ? 0 : 37, loading: state === "loading", error: state === "error" ? "unavailable" : null, refresh: noop };
 }

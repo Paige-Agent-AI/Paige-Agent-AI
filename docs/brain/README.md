@@ -1749,10 +1749,15 @@ withhold the source link; the original destination reauthorizes its own read.
 No click authorizes, approves, sends or executes work. Existing dismissal state
 recognizes a changed original source identity, with no new suggestions registry.
 
-Ten causal failures preceded correction, then128 cases/five original suites pass;
-type ratchet10/6/zero new and actual build pass; hosted gates remain required.20 native synthetic frames
-and22 exact source pins verify the original leaf/shared shell,320px keyboard,
-actual source tab/drawer/return and284.8→284.8 retained scroll/draft/focus.
+Ten initial causal failures and a later genuine return-reread scroll failure
+preceded correction; final131 cases/five original suites, type ratchet10/6/zero new,
+scoped lint and actual recovery build pass. Hosted gates remain required.22 native
+synthetic frames and22 exact source pins verify the original leaf/shared shell,
+320px keyboard, actual source tab/drawer/close and284.8→284.8 scroll/draft/focus.
+A separate disclosed synthetic hold/release reread withholds stale source/count
+and restores the same presentation on settlement; production return revalidation
+is not inferred. Changed source, account retirement, close and explicit Retry
+supersede recovery. No new product listener, data store or action authority.
 No whole-page or authenticated acceptance is inferred from this bounded mount.
 Functional candidate, Visual native synthetic proof, Experiential ordinary/cohort/
 role/Live release proof and Founder Acceptance remain separate. ALG03/13 and nine

@@ -1,5 +1,32 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
+## October22 required database proof — pre-edit runner correction
+
+Actual exact-head database jobs fail before native tests when the existing GHCR
+Supabase postgres image is rate-limited; ordinary unchanged retries and backoff
+retain the failure. REPAIR the original database job's anonymous pull using its
+existing ephemeral GitHub workflow identity with job-scoped package READ only.
+Keep the same official registry/image/version, original fork refusal before login,
+stdin-only credential use and always logout. No permanent secret, schema/baseline
+permission, product runtime, grant, test, assertion or timeout is changed. This is
+the existing required proof infrastructure, not a new proof/authorization engine.
+Review the exact setup diff, parse the native workflow and preserve all original
+test steps. Actual new exact-head database/full required CI must prove recovery;
+documentation or source checks cannot convert the failed jobs into PASS. Parent
+native30/API and mounted UI release remain held until all original gates pass.
+
+Actual5b hosted job119950403627 reports successful GHCR login, then the SAME
+image-config rate limit before baseline/native setup. That attempt is FAILED,
+not evidence of recovery. Remove its added package-read scope/login/logout and
+restore original workflow permissions/steps. Both official public registries were
+directly read: Docker Hub tag17.6.1.021 linux/amd64 is active with digest759be34d849bf3eb5a59056b71b9e365ca89bfa83665bd0103343ef5598e7b78,
+and GHCR returns200 for that exact manifest/digest. Reuse the existing CLI registry
+setting with docker.io, retaining exact images/versions, existing hosted-runner
+credentials and ALL original proof gates. Parsed native workflow compared against
+80 differs ONLY in this host value. Source/native/API/CI test bodies unchanged;
+original7 boundary fixtures remain applicable. Actual full hosted recovery is
+still owed, and any mirror/setup/test failure remains a release hold.
+
 ## October22 native uploaded-PDF intake — pre-edit customer correction
 
 Read-only production native SAVE body1bd28e75afa0f50bb07b717795a5be0e confirms
@@ -1964,6 +1991,82 @@ October22 current native prerequisites: template220004, commercial230004, signer
 
 ## October22 exact PDF and assigned-field preparation — pre-edit contract
 
+### Actual owner document/field surface — dependent implementation contract
+
+#### Original agreement-document owner API — pre-edit integration contract
+
+1. Outcome: prepare the original actual PDF, retain assigned fields as immutable
+   native versions, retrieve exact bytes/history and recover the same interrupted
+   request. Ordinary internal preparation never signs, sends or charges.
+2. Domain: same sole EXP04 lead; original agreement-document owner door, agreement/
+   party/event/version and canonical private Storage. EXP09/token GET doors and
+   client/global identity/Operations/Communications source remain protected.
+3. Execution: existing authenticated native domain path; no new LayerC adapter,
+   approval/executor/job/receipt store. Consequential exact-map send stays held.
+4. Spine: exact document preparation Chat/Live UNAVAILABLE until actually wired,
+   governed and accepted. This original manual API does not promote a catalogue.
+5. Source/provider: original renderer/planPresentedDocument/native parser/hash and
+   private paige-agreements bucket. Actual production28 policy inspection confirms
+   server-only writes; source uploads stay in original tenant-agreements. Original
+   immutable object metadata/version/bytes are checked before adoption. No browser
+   path/actor/manifest authority, overwrite/delete/signed URL or new provider.
+6. Authority: original Auth getUser/current_user_tenant_id plus authenticated
+   read_paige_agreement_preparation and existing active owner/admin native floor.
+   Repeat current actor/business/source checks around asynchronous work; trusted
+   service writer rechecks original actor and parent/CAS/party locks atomically.
+7. Identity: explicit preparation UUID, original tenant/agreement/client/source
+   version/microsecond timestamp, immutable actual PDF object/digest, assigned
+   manifest and original edited event. Same intent retries use the SAME UUID.
+8. Readback: original native retained row and actual private bytes/metadata/version.
+   Rendering/prepared field readiness, historical receipt, current selection/source
+   match, approval and signature are distinct. Unknown never means rolled back.
+9. Safety: stale/foreign/revoked/changed intent/unknown metadata refuses; private
+   bodies never logged/cached/put in URLs. Old native GET doors are byte-pinned.
+   Commercial-linked drafts must use exact original commercial presentation before
+   claiming review readiness; absent integration is explicit, never omitted terms.
+10. Surface/proof: mount in original Sales preparation using its ONE leave guard,
+    opaque request identity and actual scoped API/native reads. Original tests,
+    real PDF source/browser/native negative/retry/reload, exact-head review/CI/
+    migration+Edge+web readback and actual roles remain separate evidence gates.
+
+Native version+field source is consolidated in main-target#2593; original#2582 is
+closed SUPERSEDED SOURCE, branch/review/native bytes retained, NOT released by that
+closure. No original signed history or existing agreement is backfilled/activated.
+
+1. Outcome: inspect exact native retained PDF pages, assign five supported field
+   kinds to actual original signers, correct positions with pointer/keyboard/form,
+   retain/reload the exact native preparation and inspect earlier versions.
+2. Domain: same EXP04 lead, original Sales agreement/client/party/event records.
+   No Portal, global identity, Operations writer or shared component ownership.
+3. Path: ordinary private preparation reuses original agreement-document owner
+   door and new scoped native version functions; no forced LayerC execution.
+4. Spine: no field-placement Chat/Live registration or Live claim. Consequential
+   send must later consume original Kit/Trust/operation/Rail/exact-map approval.
+5. Provider: local Mozilla core PDF renderer only, exact5.5.207/Node20-compatible,
+   bundled worker/font/CMap assets. No scripting manager, external viewer service,
+   new signing engine, sender or provider expense. Unreleased5.6.205 advisory
+   candidate rejected; original18 audit findings/locked packages unchanged.
+6. Authority: current original owner/business/actor readiness gates and native
+   server revalidation. Private bytes/maps stay in current RAM only; no cache,
+   cross-business fallback or caller-authored file path/actor adoption.
+7. Identity: original agreement/customer/source CAS, actual PDF hash/length/page
+   crop/rotation, native points and signer UUID/role/order. Server's ONE field/PDF
+   constructor remains authoritative; UI geometry is a proposal, never permission.
+8. Result: exact retained version/event or explicit unconfirmed/stale/refused
+   state, separate from file rendering, current source, approval or signature.
+9. Experience: existing preparation workspace/context/one leave guard; paper
+   preview, real pages, assigned field list and accessible numeric controls.
+   Loading/empty/denied/stale/error/unknown/saved/recoverable states are explicit.
+10. Proof: actual bytes/hash/page/rotation/worker and source-retirement controls,
+    rendered desktop/narrow/focus/keyboard and original workflow regression,
+    exact-head review/CI/Preview/release/readback and actual roles independently.
+
+Native prerequisite forward290004 is DRAFT2582; latest Preview is SKIPPED/no
+associated branch, not a successful hosted proof. No UI or future handler
+may bypass that gate or silently fall back to an old send/token path. This is a
+dependent integration, not an implemented complete professional Experience or
+owner/client/provider/founder acceptance. ALL original O1–O12 remain mandatory.
+
 This is the next original-engine foundation, not a second signing implementation.
 Studio versions require marketing/session lineage; marketing draft history is
 truncated prose, and agreement draft revisions retain wording/source only. None
@@ -2007,6 +2110,62 @@ callers. This narrows the proposed lease and avoids an unnecessary shared Edge
 deployment. Jurisdiction/requested-wording-review/reviewer options stay optional
 business configuration; the infrastructure supplies no clauses or completed review.
 ## October22 C7 original commercial-presentation reconciliation
+
+### Native document-preparation versions — pre-edit forward290004 contract
+
+The original parent has an automatic updated_at trigger. Retaining/selecting a
+prepared PDF must not mutate that source CAS. EXTEND the original agreement with
+subordinate immutable PDF/layout versions and one current selection, as existing
+native version lineage does; this is not an agreement, approval, job or ledger.
+Canonical words, parties, economic sources and signatures remain in their originals.
+Read-only production frontier280009 is actually applied; original SAVE body remains
+1bd28e75afa0f50bb07b717795a5be0e and this new table is absent. The never-applied
+proposals270004/280004 are renumbered forward290004, preserving E09 and all prior histories.
+Final existing native runner218 assertions PASS (44 original/75 checked/23 read/
+76 new), relevant migrations replay2. New document cases use six actual sessions/
+four observed waits for same-request and competing-current convergence. These
+metadata/source cases do not prove hosted files or actual customer acceptance.
+[Bounded source evidence](../evidence/ui-delivery/e04-native-document-preparations.md).
+
+1. Outcome: retain/reload the exact verified PDF and signer-field map, inspect
+   earlier preparations, and distinguish selected from source-current/approved.
+2. Owner: existing sole EXP04 lead. Original agreement/signer/event records and
+   actor floor REUSED; native version metadata/selection EXTENDED. No Portal,
+   Files, global identity, Operations writer or shared Chat source edited.
+3. Execution: internal draft preparation keeps the legitimate native domain path.
+   Actual external signing request must later use original Kit/Trust/approval,
+   bounded execution and receipt, not a new confirmation/runtime.
+4. Spine: exact-document preparation Chat/Live is UNAVAILABLE; original agreement.*
+   PARTIAL remains. No new registered or activated consequential action here.
+5. Provider: original private paige-agreements storage/native PDF/hash/field helper.
+   Trusted server must verify actual bytes/object metadata before retaining a
+   version. SQL cannot prove hosted bytes; no provider or storage client added.
+6. Authorization: private service-only retention repeats original
+   _sales_invoice_actor active user/business/profile/membership locks and exact
+   original agreement/client/source/party checks. Human reads use current JWT/
+   business and the same owner/admin floor. No privileged/platform bypass.
+7. Identity: one original agreement, immutable native preparation UUID/revision,
+   actual source CAS, document/map digests, optional commercial-payload digest,
+   and original edited event. No execution/job/scheduler/financial store.
+8. Receipt: same UUID/canonical bytes retry returns the SAME historical record and
+   event without reselecting it. Selection/source match are separate; no claim
+   that bytes still exist, signatures happened or financial terms took effect.
+9. Safety: previous selection only retires, never rewrites its artifact/map. Parent
+   source changes make the selection stale. Legacy send/token/seal effects refuse
+   for selected preparations until exact document/map approval/send is connected;
+   existing agreements have no new versions/backfill and retain their old path.
+10. Proof: actual native actor/RLS/grants/immutability/source/replay/concurrency and
+    untouched legacy DTO/timestamp negatives; original harness/disposable cluster,
+    exact-head review/CI/Preview and normal production readback. No actual customer
+    record, Storage/signature/provider effect or acceptance is established locally.
+
+The same existing canonical JSON serializer produces the manifest on the trusted
+server. SQL hashes those exact UTF-8 bytes and parses them for source/party checks;
+it does not invent a second numeric/geometry/financial serialization engine.
+Full actual viewer/keyboard placement, approval, effective economics, all O1-O12
+and authenticated owner/staff/client/provider/founder acceptance remain incomplete.
+Jurisdiction/requested-wording-review/reviewer options impose no infrastructure
+counsel gate and supply no legal clauses or completed review.
 
 This same EXP04 lead selectively reuses#2192 exact179e52; no retired agent or whole historical stack is activated. REUSE original agreement/terms/invoice, actor floor, immutable native presentation and Collections schedule/conditions; EXTEND original v2 explicit service facts; REPAIR native type coercion; NEW current-main dormant integration only. Template options remain business configuration, not legal-review evidence. Original signed history is never backfilled.
 

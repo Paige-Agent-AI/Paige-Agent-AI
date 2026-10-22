@@ -1,5 +1,5 @@
 import { UUID, object } from '../sales-collections/primitives.ts';
-import { canonicalPresentationJson } from './commercial-presentation.ts';
+import { canonicalPresentationJson } from './preparation-json.ts';
 import { sha256Hex } from './token.ts';
 
 /** Internal native preparation data, not authority, approval or signing evidence.

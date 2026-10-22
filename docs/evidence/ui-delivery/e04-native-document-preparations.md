@@ -8,6 +8,12 @@ native PDF/field validators; EXTEND immutable subordinate preparation versions.
 This is not another agreement ledger, approval/execution system or document store.
 Original words, parties, economics and signing history remain authoritative.
 
+The original canonicalPresentationJson is extracted into one pure module, with
+its old export retained. Field preparation now imports that same serializer
+without dragging the server PDF/financial formatter graph into a browser. Exact
+serialization/refusal semantics stay unchanged; no second field/digest engine,
+browser component, dependency or endpoint is introduced by this foundation.
+
 Read-only production metadata: frontier20271113270009, new preparation table absent,
 original SAVE11 body1bd28e75afa0f50bb07b717795a5be0e unchanged. Never-applied270004
 proposal is renumbered forward280004; no migration-history change or backfill.

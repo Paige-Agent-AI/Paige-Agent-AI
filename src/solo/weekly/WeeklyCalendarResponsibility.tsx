@@ -12,7 +12,7 @@ export function WeeklyCalendarResponsibility({ children }: { children: (slot: We
 }
 function ScopedCalendar({ children }: { children: (slot: WeeklyCalendarSlot) => ReactNode }) {
   const location = useLocation();
-  const { read, refresh } = useWeeklyResponsibility();
+  const { read, refresh, control, controlBusy } = useWeeklyResponsibility();
   const [open, setOpen] = useState(false);
   const [theme, setTheme] = useState("dark");
   const returnFocus = useRef<() => void>(() => {});
@@ -26,5 +26,5 @@ function ScopedCalendar({ children }: { children: (slot: WeeklyCalendarSlot) => 
       setOpen(true);
     }} />;
   return <>{children(slot)}<WeeklyResponsibilityDialog open={open} onOpenChange={setOpen} theme={theme} read={read}
-    refresh={() => void refresh()} pathname={location.pathname} onReturnFocus={() => returnFocus.current()} /></>;
+    refresh={() => void refresh()} control={control} controlBusy={controlBusy} pathname={location.pathname} onReturnFocus={() => returnFocus.current()} /></>;
 }

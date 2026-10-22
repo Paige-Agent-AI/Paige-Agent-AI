@@ -1,5 +1,39 @@
 # Experience 05 Weekly Internal Commitment Check
 
+### October22 bounded continuation — native future-only stop controls
+
+Pre-edit routing: EXP05 outcomes04/06/08/10 consume the original owner-human
+`control_weekly_commitment_check` for pause/cancel only. Original process ID,
+schedule/revision and current owner/tenant are re-read before one deliberate
+native call; original result is read afterward. A lost response is unknown and
+must be inspected, never automatically replayed. Running acts/history remain
+untouched. No Chat/Live mutation admission, authorize/resume/configure, trigger,
+provider, new approval store or execution engine. Native human-owner authority
+and original audit logs remain canonical; a stopped schedule is not a completed
+weekly occurrence or Rail execution receipt. Existing native weekly panel and
+review/correction/return flow will be extended with explicit future-only review,
+busy/refused/stale/unknown states and scope retirement. Prototype/rendered,
+negative/recovery, independent review, exact-head CI, deployed source and actual
+authorized proof remain owed. Current mainc5b5061ca/ANT11/52/147/161 and adjacent
+Experience leases checked; #2546 is a separate read-only pending release. No
+customer/account-specific implementation or migration is planned.
+
+Development checkpoint: five production sources now connect this original native
+human-only stop path through the existing weekly panel/hook and Chat/Calendar
+entries.17 baseline failures preceded implementation;66 protected tests and a
+strict native-adapter compile PASS. Original disposable PostgreSQL proof29PASS
+retains26 cases and adds actual browser adapter -> fixture Auth -> native owner
+SQL/process/audit -> actual readback, stale-review refusal and committed-cancel
+lost-ack recovery without replay. Native trigger/events and original role posture
+stay unchanged; no customer/production action. Actual desktop inline review was
+observed with safe initial focus; full final narrow/two-theme/control/reload
+browser proof remains held after debugger detachment. Temporary viewport reset
+was attempted but not confirmed; both own dev listeners stopped. The existing
+evidence record preserves these limits. Local full-app checks are not reported
+green; required exact-head hosted checks and final rendered review remain gates.
+This is a local development checkpoint, not released controls, recurring
+activation, a new catalogue Live claim, or founder acceptance.
+
 ## October20 — native deadline presentation verified locally; final release pending
 
 The deadline-semantics candidate now has source146/final-composition170 NON-AUTHOR review checks,92 native cases,220 assertions/12 suites and exacta07413 green check runs. The recovered same Chrome connection produced16 selected native responsive result frames in two neutral contexts, narrow/mobile, historical/corrected/refused/unavailable/empty/malformed/unsupported/loading-timeout states, settled keyboard return and original reminder Work inspection.308 captured project inputs remain exact through compositiondf048/currentmain26418b. The hashed UI artifact record explicitly preserves invalid attempts, offline font fallback and actual zoom/authentication limits. Final evidence-bearing-head Independent Review/CI, migration/Edge/web release and genuine authenticated results remain owed. No recurring authority, Chat/Live activation, new receipt or strict1/18 and2/50 closure is claimed. Earlier dated development/browser checkpoints below remain historical.
@@ -445,5 +479,29 @@ The locator query explicitly binds tenant, process, source and native task categ
 Development evidence:114 protected tests across the new receiver and unchanged process/control/scaling suites PASS; scoped ESLint0errors/0warnings. Independent review of543526 identified one P2 closed-parser defect: coercing approval status or recorded outcome through `String` could publish a one-element JSON array under a string field. Successor source requires primitive strings before membership/copy and adds three actual receiver/list negatives; no action or private authority was granted by the old parser. Correction review remains separate. The scoped strict compiler comparison finds exactly the same inherited TS18046 on the incumbent control closure in base and candidate, no new diagnostics; this is not a clean full strict build or a substitute for required exact-head application CI. Extended existing native proof43PASS0FAIL, preserving41 cases and adding actual caller queue filtering plus client→actual HTTP handler→original native Task/result/Rail retrieval. Auth identity and client membership display are explicit fixture ports; actual native companion authority, queue RLS, records and receipts are real selected SQL. Repeated reads preserve all Task/result/Rail/approval/ledger rows. Full-schema Supabase Auth, live HTTP and ordinary customer/browser acceptance are not proven. The first integration attempt exposed an extensionless native Node import; corrected to `.ts` with the existing compiler option, without a loader or gate change. Initial sandbox rename EPERM ran0tests and is INVALID; unchanged host tests passed.
 
 Source remains unmounted development work dependent on the reviewed backend. Independent final source review, exact-head required CI, parent release/production source readback and the connected native inspector/history UI/Chat/Live flows remain owed. Browser full-flow proof stays held under the owner's decision to continue engineering. No additional historical action or parity requirement is closed; strict1/18 and2/50 remain unchanged.
+
+### October 22 — existing weekly status Chat consumer, development
+
+This extends the original owner-private status contract for outcomes01/07/08/10;
+it is not a new historical capability closure or permission to run a responsibility.
+Pre-edit routing:
+
+1. Outcome: a returning owner asks for the saved weekly responsibility and its actual original history; missing or unknown evidence remains explicit.
+2. Owner: EXP05. Preserve EXP02 Desk/context, EXP04 work/commercial writers and EXP09 private client source/relationship contracts.
+3. Harness/Gateway: consume existing Chat read offer/exposure and caller-native scope; original Layer C remains the source of any real occurrence.
+4. Spine: reuse `automations.weekly_commitment_status`, currently PARTIAL with Chat binding UNAVAILABLE, and its existing `get_weekly_commitment_checks` reader. No new registry.
+5. Provider: internal native records only. Integration Registry's native/provider distinction remains; no connection, credential or provider activation.
+6. Authority: read_only/no mutation verb/no approval issuance. Active native owner, server SOLO classification and unscoped business context are mandatory. `automation_set_state` remains owner_only; no schedule control is admitted by this read.
+7. Durable work: none added. Read original process, events, acts and verified Rail observations; never retry an unknown occurrence.
+8. Proof: original owner RPC, bounded validated projection, saved Chat turn and canonical read receipt, distinguished from a weekly execution receipt.
+9. Surface: existing PAIGE workspace PARTIAL and Operations PROOF_OWED remain. This connects an approved existing read flow without a new screen, control, approval step or state model.
+10. Acceptance: malformed/model scope inputs, role/client/foreign tenant, revocation, stale scope, timeout, partial/history/unknown fixtures; exact-head review/CI and actual served source, ordinary-owner current status and reload. Live, actual recurrence, delegation, other cohort and full Experience remain separate proof.
+
+Reuse the existing weekly prototype/native panel contract; no frontend layout or
+new UI workflow is introduced by the backend consumer. CAP073–083 generic recipes
+are not this owner-private status read and are not promoted by its source. Future
+owner controls and the complete workflow builder remain required separate slices.
+Current shared main/source leases were checked before editing; no migration or
+competing data, approval, scheduler, memory or execution system is introduced.
 
 October19 continuation: real handler→installed public SDK→receiver review atd434 reproduced a second P2. HTTP401/403 produces FunctionsHttpError/data:null, while the receiver previously reported unavailable after successfully rechecking the current workspace. Preserve the sealed REVISE receipt SHA256279611bac3ab4ff507b1e7fc29acaa093d724bf0c13fbf6d773b8c9927d57a07. A narrow correction recognizes only that canonical SDK error class with an original native Response401/403, after unchanged post-response authority/deadline checks, and returns refused. HTTP400/404/409/500, relay/network failure, name-only errors and non-Response contexts remain unavailable. No error body is consumed, copied or treated as authorization; there is no retry, writer or permission change. Actual handler/SDK causal regressions fail401/403 before correction and pass afterward; the complete126 protected tests across3owning suites pass with the existing network-denial guard unchanged. Existing native43-case evidence predates this correction and is not relabeled a new run. Final correction review, exact-head CI, deployment and authentic customer behavior remain separate obligations.

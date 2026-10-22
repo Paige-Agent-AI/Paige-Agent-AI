@@ -16,6 +16,7 @@
  * transpiled on its own, the same way paige-step-start.test.ts does.
  */
 import { specialistStepLabel } from "../../supabase/functions/_shared/paige-turn/specialist-step-label";
+import { WEEKLY_COMMITMENT_STATUS_TOOL_NAME } from "../../supabase/functions/_shared/paige-spine/domains/automations";
 import { readEnvelopeStatus } from "../../supabase/functions/_shared/paige-turn/interactive";
 import { readFileSync } from "node:fs";
 import ts from "typescript";
@@ -34,7 +35,7 @@ const { describeStep, toolResultReportsFailure } = (() => {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText;
   const out: { describeStep?: (tc: unknown, res: unknown) => Step; toolResultReportsFailure?: (o: unknown) => boolean } = {};
-  new Function("exports", "specialistStepLabel", "readEnvelopeStatus", js)(out, specialistStepLabel, readEnvelopeStatus);
+  new Function("exports", "specialistStepLabel", "readEnvelopeStatus", "WEEKLY_COMMITMENT_STATUS_TOOL_NAME", js)(out, specialistStepLabel, readEnvelopeStatus, WEEKLY_COMMITMENT_STATUS_TOOL_NAME);
   return out as { describeStep: (tc: unknown, res: unknown) => Step; toolResultReportsFailure: (o: unknown) => boolean };
 })();
 

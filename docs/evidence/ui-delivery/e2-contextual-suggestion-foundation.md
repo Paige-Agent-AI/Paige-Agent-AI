@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: YES: optional source-owner presentation can open beside th
 FLOW_PROTOTYPE: PASS: docs/delivery/e2-context-review-prototype.md retains the owner-delegated selected direction; no intermediate founder acceptance asserted.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible source owners can supply readable contextual inspection while the owner keeps the same conversation; no product caller yet.
 VISUAL_DIRECTION: PASS: quiet normal-flow affordance; adjacent wide popover and readable narrow/page Dialog in the canonical PAIGE world.
-AUTOMATED_EVIDENCE: PASS: five presentation cases and original Chat contract/onboarding/multi-turn regressions cover optional/non-SOLO behavior, responsive handoff, no automatic send and native composer focus/draft retention. Final exact counts follow in the PR receipt.
+AUTOMATED_EVIDENCE: PASS: six presentation cases and original Chat contract/onboarding/multi-turn regressions cover optional/non-SOLO behavior, responsive handoff, no automatic send and native composer focus/draft retention. Final exact counts follow in the PR receipt.
 STATIC_EVIDENCE: PASS: unchanged source writers, admission and model contracts inspected; pinned Impeccable4.1.0 reports zero blocking findings, with six pre-existing small-type advisories in PaigeAIChat. Required hosted checks remain pending.
 RENDERED_EVIDENCE: PASS: assets/e2-contextual-suggestion-foundation/viewport-state-index.json pins12 untouched native Chat/shell/presentation JPEGs, actual loaded font, exact viewport/raster and changed source hashes. Data/auth ports are synthetic and real I/O refuses.
 BEHAVIORAL_EVIDENCE: PASS: original transcript1472.800048828125 remains identical after open/Escape and dismissal; actual unsent draft remains; Escape returns to trigger and dismissal to original textarea. Native Popover transitions to one Dialog at the responsive boundary.
@@ -49,3 +49,10 @@ original#2401 attachment recovery hunks remain owned by EXP05.
 finish pass inspected actual wide/320px/dark native pixels, hierarchy, click targets,
 focus return, responsive handoff and motion. Earlier mock prototype evidence is
 separate. Native interface tests never establish authenticated customer acceptance.
+
+
+## Retirement callback correction,2026-10-22
+
+The isolated sixth case reproduces the original missing callback when an open presentation retires. An earlier unisolated probe accidentally counted a responsive handoff callback and is not a passing negative. A mounted-lifetime ref now suppresses focus return only during a still-mounted responsive presentation handoff. Full retirement invokes the original caller fallback. All six presentation cases pass; original Chat/controller/protocol/source/authority remain unchanged.
+
+The12 baseline native frames retain their original source pins. Five composed source frames in assets/e2-contextual-suggestion-foundation/focus-20261022/viewport-state-index.json supplement focus behavior using the actual Chat and next EXP02 consumer with refusing synthetic data/authority ports. Manifest pins both the shared runtime and the unreleased consumer: it is not a claim that the consumer ships in this foundation. Native failed-source retirement focuses the original composer; keyboard return and outside-click control focus are preserved; exact6030.39990234375 narrow scroll and unsent draft are retained. Earlier failed diagnostics are excluded. Required final hosted checks and ordinary SOLO/Live/permission proof remain owed.

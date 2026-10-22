@@ -1,5 +1,63 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
+## October22 native uploaded-PDF intake — pre-edit customer correction
+
+Read-only production native SAVE body1bd28e75afa0f50bb07b717795a5be0e confirms
+tenant_upload stores document_path and NULL body_markdown. Original create-signing
+delegates to that writer; original link issuance refuses an unprepared uploaded
+file, and native agreement-send reads/parses/hashes the PDF. The current form's
+required pasted words and claim that those words are signed are therefore false.
+No customer document or signing/provider action was executed to establish this.
+
+Final rendered composition on released recipient/source07cb found the incumbent
+single-line provenance selector also applied to the document source group. This
+clipped the actual choices. Genuine browser RED precedes a scoped class correction;
+all three original choices now wrap and retain touch targets. The existing dialog
+keeps its scroll/focus/leave behavior; no new navigation or shared design system.
+Final source integration360/12 PASS and actual rendered20cases/ten paths/21 owning
+source pins/zero errors. An unchanged original5s link control timed out under a
+combined run, then passed focused and in the complete unchanged360-case rerun;
+no timeout/assertion/test gate was weakened. Hosted ca1 design gate then correctly
+failed two inherited stylesheet findings, repaired in the owning source: smooth
+completion easing and removal of the redundant readiness edge stripe, retaining
+its actual status pill. Exact FOUR-file design gate now0 failures/40 advisories;
+full baseline12/1066 versus current10/1065 remains not globally clean. One browser
+run rejected a mid-edit source change; only final stable20/ten/21/zero is evidence.
+
+1. Outcome: choose a supported original PDF, correct invalid selection and retain
+   it on the actual client agreement without pasting a second ignored contract.
+2. Owner: same EXP04 original Sales form/hook. REUSE original native source writer,
+   private Storage, canonical document parser, request result and Sales dialog;
+   REPAIR misleading wording/requirement and unsupported advertised file types.
+3. Harness/Gateway: manual internal preparation retains the legitimate native
+   path, no forced LayerC act or replacement executor/confirmation.
+4. Spine: agreement.draft remains PARTIAL; no new upload/document Chat or Live act,
+   capability registration or readiness promotion.
+5. Provider: native source and retained buckets,25MB/PDF-native signing pipeline;
+   no office conversion, new parser/dependency/storage client/provider or spend.
+6. Authority/risk: same original actor/business epoch, expected loaded business
+   and Storage RLS. Bounded filename/media/size preflight is not content/sealing
+   proof; native PDF parsing and consequential send approval remain authoritative.
+7. Identity: original private source path, agreement/client/source and native DTO;
+   no second agreement, approval, scheduler, job, audit or financial ledger.
+8. Receipt: original upload result/path and original signing writer readback.
+   Preparation is not sent, signed, paid or completed service; unknown upload is
+   still reported unconfirmed, never claimed rolled back.
+9. UI/Binding35: existing Sales Record terms or upload dialog, native fields,
+   same leave guard; unsupported/empty/oversize selection is correctable before
+   any upload/terms write. No second pasted-wording field for tenant_upload.
+10. Proof: genuine baseline form/hook negatives plus existing positive, tenant,
+    partial-write, source/role/dialog cases; lint/types, actual desktop/narrow
+    native render, final review/CI, ordinary production/source readback and actual
+    owner/staff/client acceptance remain separate. This is not the complete
+    professional import/preview/field workflow or full O1-O12 completion.
+
+Existing selected native Agreements prototype controls routine intent; no new
+navigation or design system. Native exact-document/field foundation2574 is a
+separate dormant prerequisite, not imported by this correction. Optional template
+jurisdiction/wording-review/reviewer routing supplies no agreement words or legal
+sufficiency and does not impose an infrastructure counsel gate.
+
 ## October22 actual template consumer — bounded integration contract
 
 Before mounting: preserve selected native-shell prototype275be1241 and native
@@ -1903,6 +1961,51 @@ October22 release-state reconciliation: commercial#2550/230004 is now production
 
 October22 current native prerequisites: template220004, commercial230004, signer240004, checked250004 and reader260004 are production-source verified. Actual main172013d896d78178473eaa1e2946e3f27558944b and all E09 Actions/Sessions source are retained; receipts6336226483/6336227514/6336228732 distinguish actual document35/six-file/JWT readback, five checked writer definitions and original readerc53a216. Earlier pending notes are dated history. This own template UI source is unchanged; its new composed head requires fresh exact-head CI/review/web readback and actual ordinary-role/customer acceptance. All12/full founder evaluation remain incomplete.
 
+
+## October22 exact PDF and assigned-field preparation — pre-edit contract
+
+This is the next original-engine foundation, not a second signing implementation.
+Studio versions require marketing/session lineage; marketing draft history is
+truncated prose, and agreement draft revisions retain wording/source only. None
+binds the exact retained PDF to assigned signer fields. Existing C7 source command
+does not yet establish approval of that PDF/map. It remains unactivated.
+
+1. Outcome: prepare the exact document and signature/initial/date/text/checkbox
+   placements for original authorized parties; identify missing or overlapping
+   fields before a later governed signing request.
+2. Owner: EXP04 original Sales/Agreements. REUSE native document/parser/checksum,
+   original agreement/customer/signer versions; EXTEND pure preparation validation.
+   No Portal/Files/Storage/Operations review source is edited.
+3. Harness/Gateway: ordinary internal preparation is a legitimate native domain
+   path. Later external send uses the existing governed approval/receipt path;
+   this helper neither executes nor creates another confirmation channel.
+4. Spine: existing agreement.* remains PARTIAL. Exact-document field preparation
+   Chat/Live execution is UNAVAILABLE; this source registers/activates no action.
+5. Provider: existing pdf-lib1.17.1 and native private document checksum/parser.
+   No new dependency, renderer, storage client, connection, provider or spend.
+6. Authority/risk: trusted original record must be resolved by the eventual
+   authenticated domain boundary. A pure parser/digest is not authorization,
+   signature, consent, high/confirm approval or legal sufficiency.
+7. Identity: exact original agreement/tenant/customer/body version/source timestamp,
+   original signer IDs/roles/order, retained PDF digest/length/actual page geometry
+   and assigned map. No new table, job, scheduler, ledger or event store here.
+8. Readback: inspect actual immutable bytes with the native parser/checksum before
+   deriving geometry; bind the complete map/source in a deterministic digest.
+   That digest is preparation identity, never an action or acceptance receipt.
+9. Visible state/Binding35: no mounted change or readiness promotion. Draft maps
+   may expose actionable missing-signature/overlap issues; no signing-ready claim
+   from unsupported input, absent fields or a stale source/document/signer map.
+10. Proof owed: actual PDF geometry/rotation/crop/byte-mutation and strict source,
+    signer/field/bounds/order negatives; exact-head review/CI. Native persistence,
+    actual preview/keyboard placement, exact document approval, signing/sealing,
+    Portal consumption and owner/staff/client/provider/founder acceptance follow
+    in bounded releases. All O1-O12 remain mandatory and incomplete.
+
+The initial slice adds dormant modules beside the original document engine; it
+does not edit the deployed document.ts or redirect existing inspector/send/seal
+callers. This narrows the proposed lease and avoids an unnecessary shared Edge
+deployment. Jurisdiction/requested-wording-review/reviewer options stay optional
+business configuration; the infrastructure supplies no clauses or completed review.
 ## October22 C7 original commercial-presentation reconciliation
 
 This same EXP04 lead selectively reuses#2192 exact179e52; no retired agent or whole historical stack is activated. REUSE original agreement/terms/invoice, actor floor, immutable native presentation and Collections schedule/conditions; EXTEND original v2 explicit service facts; REPAIR native type coercion; NEW current-main dormant integration only. Template options remain business configuration, not legal-review evidence. Original signed history is never backfilled.

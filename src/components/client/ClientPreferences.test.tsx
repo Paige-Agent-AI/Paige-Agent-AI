@@ -3,7 +3,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  PREF_ACTOR, PREF_OTHER_TENANT, PREF_TENANT, prefCard, prefUpdates, prefsPayload,
+  PREF_ACTOR, PREF_OTHER_TENANT, PREF_TENANT, PREF_CONTACT, prefCard, prefUpdates, prefsPayload,
 } from "@/test/fixtures/clientPortalPreferences";
 import { PORTAL_PREFERENCE_DISCLOSURES, disclosureText, preferenceRefusal, type PortalDisclosureId } from "@/lib/client-portal-preferences";
 import { refusalText } from "./clientPreferencesCopy";
@@ -21,6 +21,7 @@ vi.mock("@/integrations/supabase/client", () => ({ supabase: {
   },
   from: () => raw(),
   auth: {
+    onAuthStateChange: () => ({data:{subscription:{unsubscribe:()=>{}}}}),
     getUser: async () => ({ data: { user: signedIn ? { id: signedIn } : null }, error: null }),
     getSession: async () => ({ data: { session: signedIn ? { user: { id: signedIn }, access_token: `token-${signedIn}` } : null }, error: null }),
   },
@@ -33,14 +34,14 @@ const committed = vi.fn();
 async function flush() { await act(async () => { for (let i = 0; i < 30; i++) await Promise.resolve(); }); }
 async function mount(payload: Record<string, unknown> | null = prefsPayload()) {
   current = payload;
-  act(() => root.render(<MemoryRouter><ClientPreferences actorId={PREF_ACTOR} onCommitted={committed} /></MemoryRouter>));
+  act(() => root.render(<MemoryRouter><ClientPreferences actorId={PREF_ACTOR} tenantId={PREF_TENANT} clientId={PREF_CONTACT} onCommitted={committed} /></MemoryRouter>));
   await flush();
 }
 const row = (key: string) => host.querySelector<HTMLElement>(`[data-testid="pref-${key}"]`)!;
 const stateOf = (key: string) => row(key).querySelector('[data-testid="pref-state"]')!.textContent;
 const switchOf = (key: string) => row(key).querySelector<HTMLButtonElement>('[role="switch"]');
-const writes = () => rpc.mock.calls.filter(c => c[0] !== "client_portal_communication_preferences");
-const reads = () => rpc.mock.calls.filter(c => c[0] === "client_portal_communication_preferences");
+const writes = () => rpc.mock.calls.filter(c => c[0] !== "client_portal_communication_preferences_scoped");
+const reads = () => rpc.mock.calls.filter(c => c[0] === "client_portal_communication_preferences_scoped");
 const button = (label: string) => Array.from(host.querySelectorAll("button")).find(b => b.textContent?.trim() === label);
 function deferred<T>() { let resolve!: (v: T) => void; const promise = new Promise<T>(r => { resolve = r; }); return { promise, resolve }; }
 
@@ -48,8 +49,8 @@ beforeEach(() => {
   readQueue = []; signedIn = PREF_ACTOR; headers.length = 0; rpc.mockReset(); raw.mockClear(); committed.mockReset();
   writeAnswer = () => ({ data: { ok: true, replayed: false, preferences: current }, error: null });
   rpc.mockImplementation((name: string, args: Record<string, unknown>) => {
-    if (name === "client_portal_communication_preferences") return readQueue.length ? readQueue.shift() : { data: current, error: null };
-    if (name === "client_portal_set_communication_preference" || name === "client_portal_set_shared_context_consent") return writeAnswer(args);
+    if (name === "client_portal_communication_preferences_scoped") return readQueue.length ? readQueue.shift() : { data: current, error: null };
+    if (name === "client_portal_set_communication_preference_scoped" || name === "client_portal_set_shared_context_consent_scoped") return writeAnswer(args);
     throw new Error(`unexpected contract ${name}`);
   });
   host = document.createElement("div"); document.body.append(host); root = createRoot(host);
@@ -233,10 +234,10 @@ describe("changing a preference", () => {
     writeAnswer = () => { current = off; return { data: { ok: true, replayed: false, preferences: off }, error: null }; };
     const before = reads().length;
     act(() => switchOf("email")!.click()); await flush();
-    expect(writes()).toEqual([["client_portal_set_communication_preference", { p_channel: "email", p_topic: null, p_enabled: false, p_tenant_id: PREF_TENANT }]]);
-    expect(headers).toContainEqual(["client_portal_set_communication_preference", "Authorization", `Bearer token-${PREF_ACTOR}`]);
+    expect(writes()).toEqual([["client_portal_set_communication_preference_scoped", { p_channel: "email", p_topic: null, p_enabled: false, p_tenant_id: PREF_TENANT, p_expected_client_id: PREF_CONTACT }]]);
+    expect(headers).toContainEqual(["client_portal_set_communication_preference_scoped", "Authorization", `Bearer token-${PREF_ACTOR}`]);
     expect(reads().length).toBe(before + 1);
-    expect(reads().at(-1)![1]).toEqual({ p_tenant_id: PREF_TENANT });
+    expect(reads().at(-1)![1]).toEqual({ p_tenant_id: PREF_TENANT, p_expected_client_id: PREF_CONTACT });
     expect(stateOf("email")).toBe("Off · you turned email off on Oct 18, 2026");
     expect(row("email").querySelector('[data-testid="pref-notice"]')?.textContent).toBe("Email is off.");
     expect(committed).toHaveBeenCalledWith("email");
@@ -256,7 +257,7 @@ describe("changing a preference", () => {
     const sub = prefsPayload({ updates: prefUpdates("subscribed", { set_by: "you", set_at: "2026-10-18T12:01:00Z" }) });
     writeAnswer = () => { current = sub; return { data: { ok: true, replayed: false, preferences: sub }, error: null }; };
     act(() => switchOf("updates")!.click()); await flush();
-    expect(writes()[0]).toEqual(["client_portal_set_communication_preference", { p_channel: "email", p_topic: "newsletter", p_enabled: true, p_tenant_id: PREF_TENANT }]);
+    expect(writes()[0]).toEqual(["client_portal_set_communication_preference_scoped", { p_channel: "email", p_topic: "newsletter", p_enabled: true, p_tenant_id: PREF_TENANT, p_expected_client_id: PREF_CONTACT }]);
     expect(stateOf("updates")).toBe("Subscribed on Oct 18, 2026");
   });
 
@@ -265,7 +266,7 @@ describe("changing a preference", () => {
     const off = prefsPayload({ sms: prefCard("off", { set_by: "you", set_at: "2026-10-18T12:01:00Z", can_turn_off: false }) });
     writeAnswer = () => { current = off; return { data: { ok: true, replayed: false, preferences: off }, error: null }; };
     act(() => button("Don't text me")!.click()); await flush();
-    expect(writes()[0]).toEqual(["client_portal_set_communication_preference", { p_channel: "sms", p_topic: null, p_enabled: false, p_tenant_id: PREF_TENANT }]);
+    expect(writes()[0]).toEqual(["client_portal_set_communication_preference_scoped", { p_channel: "sms", p_topic: null, p_enabled: false, p_tenant_id: PREF_TENANT, p_expected_client_id: PREF_CONTACT }]);
     expect(stateOf("sms")).toBe("Off · you turned texts off on Oct 18, 2026");
   });
 
@@ -300,7 +301,7 @@ describe("changing a preference", () => {
     const on = prefsPayload({ data_sharing: { allowed: true, updated_at: "2026-10-18T12:01:00Z" } });
     writeAnswer = () => { current = on; return { data: { ok: true, replayed: false, preferences: on }, error: null }; };
     act(() => switchOf("sharing")!.click()); await flush();
-    expect(writes()).toEqual([["client_portal_set_shared_context_consent", { p_allow: true, p_tenant_id: PREF_TENANT }]]);
+    expect(writes()).toEqual([["client_portal_set_shared_context_consent_scoped", { p_allow: true, p_tenant_id: PREF_TENANT, p_expected_client_id: PREF_CONTACT }]]);
     expect(stateOf("sharing")).toBe("Allowed on Oct 18, 2026");
     expect(committed).toHaveBeenCalledWith("sharing");
   });
@@ -357,10 +358,10 @@ describe("reading", () => {
 
   it("re-reads on focus, pinned to the first business, and keeps the cards with a notice when the refresh fails", async () => {
     await mount();
-    expect(reads()[0][1]).toEqual({});
+    expect(reads()[0][1]).toEqual({ p_tenant_id: PREF_TENANT, p_expected_client_id: PREF_CONTACT });
     readQueue = [{ data: null, error: { code: "PGRST000", message: "network" } }];
     act(() => { window.dispatchEvent(new Event("focus")); }); await flush();
-    expect(reads().at(-1)![1]).toEqual({ p_tenant_id: PREF_TENANT });
+    expect(reads().at(-1)![1]).toEqual({ p_tenant_id: PREF_TENANT, p_expected_client_id: PREF_CONTACT });
     expect(host.textContent).toContain("We couldn't refresh your preferences, so they may be out of date.");
     expect(stateOf("email")).toBe("On");
   });

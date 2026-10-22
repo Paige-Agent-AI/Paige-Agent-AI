@@ -212,6 +212,45 @@ export async function weeklyDraftCommandProof({run,json,literal,source,check,ref
     assert.equal(run('SELECT count(*) FROM audit_logs;'),before);
     proposalHistory={rows:10000,list: listPlan,point:pointPlan,actual_owner_rpc:true,read_writes:0};
   });
+  // Same disposable native DB and original loader; Auth/session is explicitly a
+  // fixture port. The browser adapter and SQL/RLS/readback run unmodified.
+  await import('../client-memory-authz/register.mjs');
+  const {controlWeeklyOwner,readWeeklyOwner}=await import('../../src/solo/weekly/weekly-owner-read.ts');
+  const nativeStopId=json(`SELECT draft_weekly_commitment_check(${literal(randomUUID())},'Synthetic future-stop control',1,'09:00','UTC');`,ctx).automation_id;
+  const scope={actorId:owner,tenantId:tenant,epoch:1};
+  let controlCalls=0,dropAck=false;
+  const caller={auth:{getSession:async()=>({data:{session:{user:{id:owner}}},error:null})},rpc:async(name,args={})=>{
+    const calls={current_user_tenant_id:()=>`to_jsonb(current_user_tenant_id())`,
+      weekly_commitment_owner:()=>`to_jsonb(weekly_commitment_owner(${literal(args._tenant)},${literal(args._actor)}))`,
+      get_weekly_commitment_checks:()=>`get_weekly_commitment_checks()`,
+      control_weekly_commitment_check:()=>`control_weekly_commitment_check(${literal(args._automation_id)},${literal(args._action)},${literal(args._expected_revision)})`};
+    assert(Object.hasOwn(calls,name),'closed native fixture RPC port');
+    try{const data=json(`SELECT ${calls[name]()};`,ctx);
+      if(name==='control_weekly_commitment_check'){controlCalls++;if(dropAck)return{data:null,error:{message:'synthetic lost acknowledgment'}};}
+      return{data,error:null};
+    }catch(error){return{data:null,error:{code:/\b(40001|42501|22023)\b/.exec(String(error))?.[1]??'native_read_failed'}};}
+  }};
+  const nativeRead=await readWeeklyOwner(scope,caller,()=>scope);
+  assert.equal(nativeRead.status,'ready');
+  const reviewed=nativeRead.snapshot.checks.find(c=>c.automation_id===nativeStopId);assert(reviewed);
+  const stopped=await controlWeeklyOwner(scope,reviewed,'pause',caller,()=>scope);
+  check('actual weekly browser adapter pauses only its exact native owner definition and rereads it',()=>{
+    assert.equal(stopped.status,'saved');assert.equal(controlCalls,1);
+    assert.equal(stopped.snapshot.checks.find(c=>c.automation_id===nativeStopId).schedule_status,'paused');
+    assert.equal(json(`SELECT count(*) FROM audit_logs WHERE entity_id=${literal(nativeStopId)} AND action='weekly_check.pause';`),1);
+  });
+  const refused=await controlWeeklyOwner(scope,{...reviewed,revision:reviewed.revision+1},'cancel',caller,()=>scope);
+  check('actual weekly adapter rejects a stale native review before another control',()=>{assert.equal(refused.status,'stale');assert.equal(controlCalls,1);});
+  dropAck=true;
+  const cancelled=await controlWeeklyOwner(scope,stopped.snapshot.checks.find(c=>c.automation_id===nativeStopId),'cancel',caller,()=>scope);
+  const recovered=await readWeeklyOwner(scope,caller,()=>scope);
+  check('lost native control acknowledgment stays unknown and original inspection recovers without replay',()=>{
+    assert.equal(cancelled.status,'unknown');assert.equal(controlCalls,2);assert.equal(recovered.status,'ready');
+    assert.equal(recovered.snapshot.checks.find(c=>c.automation_id===nativeStopId).schedule_status,'cancelled');
+    assert.equal(json(`SELECT count(*) FROM audit_logs WHERE entity_id=${literal(nativeStopId)} AND action='weekly_check.cancel';`),1);
+    assert.equal(run('SELECT count(*) FROM paige_native_events;'),eventsBefore);
+    assert.equal(run("SELECT is_live FROM paige_automation_triggers WHERE key='schedule.weekly_commitment_check';"),flagBefore);
+  });
   return {status:'PASS',source:migration,migration_sha256:createHash('sha256').update(source(migration)).digest('hex'),
     decline_scope:{source:declineScopeMigration,migration_sha256:createHash('sha256').update(source(declineScopeMigration)).digest('hex'),
       same_claim_commit_authority_prefix:true,current_owner_denials:true},

@@ -247,15 +247,9 @@ export default function Billing() {
       {invoices.multipleBusinesses ? (
         <PaymentsEmpty
           icon={ReceiptText}
-          title="Payments for more than one business isn't available yet"
-          description={(
-            <>
-              Your account is connected to more than one business. Payments here works with one business at a time for
-              now. For help in the meantime, use{" "}
-              <Link to="/app/support" className={`font-medium text-foreground underline underline-offset-4 ${FOCUS}`}>Support</Link>.
-            </>
-          )}
-          action={<BackHome />}
+          title="Choose a business to view Payments"
+          description="Choose one of your authorized businesses to see only the invoices it sent you."
+          action={<Link to="/app?chooseBusiness=1" className={LINK_BUTTON}>Choose business</Link>}
         />
       ) : invoices.unavailable ? (
         <PaymentsEmpty

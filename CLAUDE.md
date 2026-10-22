@@ -1,5 +1,20 @@
 # Paige Agent AI — Working Doctrine
 
+## 00.c OWNER — PUBLIC WEB / VIBE / PORTAL AND HOSTING EXPERIENCE COVERAGE (2026-10-18)
+
+All current/future agents must ground Vibe Studio's existing creative/publishing source, Marketing/Ads campaigns, genuine lead capture, Sales and Tenant Customer Portal when those seams apply to a SOLO/Operator journey, and follow `docs/product/PRELAUNCH-VIBE-WEBSITE-PORTAL-DOMAINS-INTEGRATION-2026-10-18.md`. Apply relevant WEB-01–WEB-14: reusable Studio authority, explicit public publish, existing externally hosted sites and portable website deployment, five-provider domain guidance/DNS ownership/TLS validation, site/Portal audience isolation, lawful opt-in capture/attribution, authorized client access, operational monitoring and rollback. No duplicate editor, portal, provider/credential store, CRM, sender, Domain Registry, Rails or new agency work. Original E06/E07/E08/E10–E15 are named in owner 15-Experience charter (older 26-slot tracker 'unknown' statements superseded). NO automatic staffing or activation from a charter, and no implicit domain registration/Cloudflare deploy/spend. Customer's existing websites may stay external; do not migrate to PAIGE. This adds to §00 Flow-by-Flow then Impeccable and the complete customer job standard.
+
+
+## 00.b MANDATORY CURRENT/FUTURE AGENT EXPERIENCE ASSIGNMENT STANDARD (2026-10-18)
+
+Before directing implementation or beginning any Experience, EVERY coordinator and Codex/zCod/Claude agent must use `docs/product/EXPERIENCE-AGENT-ASSIGNMENT-STANDARD-2026-10-18.md`: one complete customer/company job, original canonical source ownership, reused Spine/Harness/Trust/Rails, SAAS/ALG controls, complete acceptance, safe reviewed exact-head CI/release/readback, and ONE owner evaluation after the whole Experience is assembled. No PR-per-approval or owner prototype checklist. EXP00's fresh live Stripe fulfillment is source-confirmed as recovered on Oct 18; continue to fix welcome delivery and build PAIGE Inc Operator L1 Customers, money and COO actions under `docs/delivery/EXP00-OWNER-COMPLETE-CUSTOMER-OPERATOR-ASSIGNMENT-2026-10-18.md`. EXP00 integrates existing EXP01, does not rebuild it. No Agency/Sub-Account start without owner's later direction. This adds to, not overrides, §00 Flow-by-Flow then Impeccable UI precedence or material security/financial approval controls.
+
+
+## 00.a OWNER 2026-10-18 — SAAS ACCOUNT-SCOPE POLICY, ALL COORDINATORS AND AGENTS
+
+The owner permits coordinator **build directives only for exactly four PAIGE account experiences**: SOLO, Platform Operator, Agency, Agency Sub-Accounts. **SOLO AND PLATFORM OPERATOR ARE CURRENTLY AUTHORIZED ACTIVE BUILD; AGENCY AND AGENCY SUB-ACCOUNTS ARE OWNER-HOLD pending explicit future authorization.** Do not allocate new Agency/Sub-Account features or launch them from old BRD/pack references. Existing safe shared foundations remain maintained for the active shells. Personas/tenant-client portals/enterprise placeholders do not create a fifth authorized account shell. Universal SOLO for all eligible existing/future customers; Platform Operator for PAIGE Inc's own company operations. Follow owner charter `docs/product/SAAS-PLATFORM-FOUNDATION-AND-COORDINATOR-CHARTER-2026-10-18.md`, amended `docs/product/BRD-MVP-2026-08-08.md`, AGENTS and owner North Star. Owner 2026-10-18 staging supersedes August simultaneous-launch language. This section does not replace the UI precedence rule §00 or prelaunch risk-proportionate safe release policy.
+
+
 Standing rules for how work gets done in this repo. These persist across sessions.
 
 ## 00. UI AUTHORITY — THE FIRST RULE. IT OVERRIDES EVERY SECTION BELOW IT.
@@ -2751,3 +2766,7 @@ of this section; treat this text as the interim.**
 · §32 (compiled ≠ ran) · §70/§70.1 (a human finishing the job) · §39 (the peer-gate §71.4 does not
 replace) · §BRAIN.1 (read the record first — §71 is what to do when the record is silent) · §24
 (automate the repeat — the note above).
+## 00.d OWNER OFFICIAL LAUNCH CONDITION — EXP00 + TEN CUSTOMER EXPERIENCES E01–E10 (2026-10-18)
+
+Read the current owner [first ten contract](docs/product/PRELAUNCH-FIRST-TEN-EXP-AND-EXP00-LAUNCH-REQUIREMENTS-2026-10-18.md) and [existing E09 complete Portal assignment](docs/delivery/E09-OWNER-LAUNCH-INTEGRATION-ASSIGNMENT-2026-10-18.md). NO general outside-customer invitations before **all EXP01–EXP10 jobs and EXP00 real signup/Platform Operator** have safe true production success and one integrated owner acceptance. This gate does not postpone unrelated safe merges/deploys or launch E06/E07/E08/E10 agents automatically. The new tenant's temporary PAIGE web/email addresses are reserved but only **web_live / outbound_ready / inbound_ready** after actual verified provider/site/transport results, and Chat or safe Live must guide the customer to useful launch readiness. Six DNS guidance profiles now include Wix alongside Cloudflare/Namecheap/GoDaddy/Squarespace/Porkbun, but universal authority/validation and exact approval mean no registrar login, nameserver/cost or arbitrary DNS write. E09 protected client Portal, Vibe/Marketing/Ads/Sales and L1 Operator must connect correctly. Existing first-value and supported role/tenant/provider boundaries preserved.
+

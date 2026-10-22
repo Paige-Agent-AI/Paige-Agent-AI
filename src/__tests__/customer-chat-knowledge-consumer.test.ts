@@ -35,10 +35,10 @@ async function guard(){
   guardDeclaration=guardDeclaration.replace(binding,"JSON.stringify(source.data?.persona) === JSON.stringify(customerAssistant?.persona)");
  }
  const create=new Function("env",compile(`let tenantKnowledgeScopeRevoked=false;const customerPortal=true;
-  const {supabaseClient,user,payloadThreadId,validatedData,customerAssistant,readCustomerAssistantContext}=env;
+  const {supabaseClient,customerCaller,user,payloadThreadId,validatedData,customerAssistant,readCustomerAssistantContext}=env;
   const ${guardDeclaration};
   return {check:revalidateTenantKnowledgeScope,retired:()=>tenantKnowledgeScopeRevoked};`));
- const actual=create({supabaseClient,user:{id:actor},payloadThreadId:thread,validatedData:{requestIntentId:intent},customerAssistant:captured.data,readCustomerAssistantContext});
+ const actual=create({supabaseClient,customerCaller:supabaseClient,user:{id:actor},payloadThreadId:thread,validatedData:{requestIntentId:intent},customerAssistant:captured.data,readCustomerAssistantContext});
  return{...actual,calls,change:(fn:(r:ContextFixture)=>void)=>fn(current),fail:()=>{error={code:"42501",message:"PRIVATE DIAGNOSTIC"};},restore:()=>{current=fixture();error=null;authorized=true},deny:()=>{authorized=false;}};
 }
 describe("actual customer provider/output lifetime source fence",()=>{
@@ -66,12 +66,18 @@ describe("actual customer provider/output lifetime source fence",()=>{
  });
 });
 describe("actual customer handler integration",()=>{
+ it("the actual customer begin cannot borrow the original owner caller",async()=>{
+  const ownerRpc=vi.fn(async(..._args:unknown[])=>({data:{status:"accepted"},error:null})),customerRpc=vi.fn(async(..._args:unknown[])=>({data:{status:"accepted"},error:null}));
+  const make=new Function("supabaseClient","customerCaller","customerPortal","validatedData","interactiveInput","userText","customerQuery",compile(`const ${declaration("beginTurn").getText(ast)};return beginTurn;`));
+  const begin=make({rpc:ownerRpc},{rpc:customerRpc},true,{threadId:thread,requestIntentId:intent},{kind:"message"},"Question",null);
+  await begin(false);expect(ownerRpc).not.toHaveBeenCalled();expect(customerRpc).toHaveBeenCalledTimes(1);expect(customerRpc.mock.calls[0][0]).toBe("client_portal_assistant_begin");
+ });
  it("uses the customer-only native admission adapter while preserving workspace begin arguments",async()=>{
   const rpc=vi.fn(async(..._args:unknown[])=>({data:{status:"accepted"},error:null}));
-  const make=new Function("supabaseClient","customerPortal","validatedData","interactiveInput","userText","customerQuery",compile(`const ${declaration("beginTurn").getText(ast)};return beginTurn;`));
+  const make=new Function("supabaseClient","customerCaller","customerPortal","validatedData","interactiveInput","userText","customerQuery",compile(`const ${declaration("beginTurn").getText(ast)};return beginTurn;`));
   const vector=Array.from({length:1024},()=>0.5);
   for(const customerPortal of [false,true]){
-   const begin=make({rpc},customerPortal,{threadId:thread,requestIntentId:intent},{kind:"message"},"Question",customerPortal?{embedding:vector,degraded:false}:null);
+   const begin=make({rpc},{rpc},customerPortal,{threadId:thread,requestIntentId:intent},{kind:"message"},"Question",customerPortal?{embedding:vector,degraded:false}:null);
    await begin(false);expect(rpc.mock.lastCall?.[0]).toBe(customerPortal?"client_portal_assistant_begin":"paige_chat_interactive_begin_v2");
    expect(rpc.mock.lastCall?.[1]).toMatchObject({p_thread:thread,p_intent:intent,p_content:"Question",p_stop:false,p_effectful:false});
    // The workspace begin is unchanged; the customer begin binds the same vector the read used.
@@ -82,7 +88,7 @@ describe("actual customer handler integration",()=>{
    else expect(rpc.mock.lastCall?.[1]).not.toHaveProperty("p_effectful");
   }
   // A failed embedding is NULL at begin: the customer begin overload is still the one called (recency).
-  const degraded=make({rpc},true,{threadId:thread,requestIntentId:intent},{kind:"message"},"Question",{embedding:null,degraded:true});
+  const degraded=make({rpc},{rpc},true,{threadId:thread,requestIntentId:intent},{kind:"message"},"Question",{embedding:null,degraded:true});
   await degraded(false);expect(rpc.mock.lastCall?.[1]).toMatchObject({p_query_embedding:null,p_effectful:false});
  });
  it("clears owner prompts/tools and supplies only the customer role, current program and admitted private messages",async()=>{
@@ -158,12 +164,12 @@ describe("E09 K2: the customer question is embedded once, only for an authorized
   const reads:unknown[][]=[],embeds:string[]=[];
   const supabaseClient={rpc:vi.fn(async(name:string,args:Record<string,unknown>)=>{reads.push([name,args.p_query_embedding]);return env.ranked as {data:unknown;error:unknown};})};
   const run=new AsyncFunction("env",compile(`let customerQuery=null;let customerAssistant=env.customerAssistant;
-   const {customerPortal,customerControl,customerPersona,customerPersonaSource,validatedData,embedCustomerQuery,voyageEmbedOne,VOYAGE_MODEL,readCustomerAssistantContext,supabaseClient,user}=env;
+   const {customerPortal,customerControl,customerPersona,customerPersonaSource,validatedData,embedCustomerQuery,voyageEmbedOne,VOYAGE_MODEL,readCustomerAssistantContext,supabaseClient,customerCaller,user}=env;
    ${rankStep().getText(ast)}
    return {customerQuery,customerAssistant};`));
   const out=await run({customerPortal:true,customerControl:env.customerControl??false,customerPersonaSource:{queryEmbeddingEligible:env.eligible===null?undefined:env.eligible??true},customerAssistant:env.assistant,customerPersona:(env.assistant as {persona?:unknown}|null)?.persona??null,
    validatedData:{threadId:thread,requestIntentId:intent,messages:[{role:"user",content:"Latest question"}]},embedCustomerQuery,
-   voyageEmbedOne:async(text:string)=>{embeds.push(text);return env.embed(text);},VOYAGE_MODEL:"voyage-3",readCustomerAssistantContext,supabaseClient,user:{id:actor}});
+   voyageEmbedOne:async(text:string)=>{embeds.push(text);return env.embed(text);},VOYAGE_MODEL:"voyage-3",readCustomerAssistantContext,supabaseClient,customerCaller:supabaseClient,user:{id:actor}});
   return{...out,reads,embeds};
  }
  const v=Array.from({length:1024},()=>0.25);

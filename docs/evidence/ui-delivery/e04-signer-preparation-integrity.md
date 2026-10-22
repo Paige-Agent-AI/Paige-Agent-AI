@@ -20,7 +20,7 @@ TRUTHFUL_STATE_LABELS: PASS: adding a party is preparation, never notification, 
 SOLO_UI: NO: same original domain writer prerequisite, no mounted component change.
 UNVERIFIED: exact-head CI/Preview/review, actual production migration/catalog parity, mounted owner/staff/client signer/field journey, original signing/provider and whole Experience/founder acceptance.
 
-INTERNAL_BUILD_IDENTITY: branch=codex/e04-signer-preparation-integrity; product_sha=PR/source receipt; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113240004_agreement_signer_preparation_integrity); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-signer-preparation-integrity.md
+INTERNAL_BUILD_IDENTITY: branch=codex/e04-signer-preparation-integrity; product_sha=4c5a2fff28b47f8632ee3f4076f79fa991caa05a; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113240004_agreement_signer_preparation_integrity); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-signer-preparation-integrity.md
 RELEASE_CHANNEL: development: local native proof, not authenticated customer acceptance.
 RELEASE_CLASSIFICATION: internal-only: bounded original writer correction, not a finished signing experience.
 CUSTOMER_RELEASE_IDENTITY: none: no complete Experience or founder acceptance.

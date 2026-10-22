@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useState } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
 import { useTheme } from "next-themes";
 import { X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -21,6 +21,8 @@ type Props = {
 export function ContextualSuggestion({ open, onOpenChange, trigger, title, description, children, sidePanel = true, onCloseAutoFocus }: Props) {
   const { resolvedTheme } = useTheme();
   const titleId = useId(), descriptionId = useId();
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const [wide, setWide] = useState(false);
   useEffect(() => {
     if (typeof window.matchMedia !== "function") return;
@@ -32,7 +34,7 @@ export function ContextualSuggestion({ open, onOpenChange, trigger, title, descr
   const theme = resolvedTheme === "dark" ? "dark" : "light";
   const closeFocus = (event: Event) => {
     // A responsive presentation handoff is not a request to return focus outside it.
-    if (open) event.preventDefault(); else onCloseAutoFocus?.(event);
+    if (open && mounted.current) event.preventDefault(); else onCloseAutoFocus?.(event);
   };
   if (wide) return <Popover open={open} onOpenChange={onOpenChange}>
     <PopoverTrigger asChild>{trigger}</PopoverTrigger>

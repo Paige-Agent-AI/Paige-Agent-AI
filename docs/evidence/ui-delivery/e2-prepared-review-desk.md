@@ -7,9 +7,9 @@ MATERIAL_FLOW_CHANGE: YES: existing prepared-work Desk entry now opens a spaciou
 FLOW_PROTOTYPE: PASS: docs/delivery/e2-context-review-prototype.md and assets/e2-prepared-review-desk/prototype-interactions.json retain the lead-selected contextual flow under the owner's October21 delegated UX authority. Fourteen mock interaction cases are not authenticated Chat/approval acceptance. The spacious source reader is this slice; composer integration follows separately.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible current-workspace actors inspect actual prepared draft text, recorded summary, source and rationale, then return. Prepared work remains distinct from original approvals and Strategic Plays.
 VISUAL_DIRECTION: PASS: restrained source list and roomy document pane, canonical Mineral/Obsidian tokens/elevation/font, explicit portal theme,44px controls and responsive reading layout. Impeccable checks: hierarchy, source truth, useful reading space, restrained copy, portal opacity, touch/focus, narrow reflow and reduced motion.
-AUTOMATED_EVIDENCE: PASS: latest62 cases/four original owning suites cover source count versus preview, missing prose, failed/loading/empty/inconsistent reads, identity retirement, native reader actor opt-in and no Chat/send/approval invocation. Original Game Plan/Mission and approvals embedding regressions retained. Synthetic source proof only.
+AUTOMATED_EVIDENCE: PASS: latest65 cases/four original owning suites cover source count versus preview, missing prose, failed/loading/empty/inconsistent reads, identity retirement, native reader actor opt-in and no Chat/send/approval invocation. Original Game Plan/Mission and approvals embedding regressions retained. Synthetic source proof only.
 STATIC_EVIDENCE: PASS: targeted ESLint and whitespace pass. Same original prepared hook/query/RLS; no schema, provider, permission, registry, executor or domain writer change. Required exact-head hosted review/CI remains a gate.
-RENDERED_EVIDENCE: PASS: assets/e2-prepared-review-desk/viewport-state-index.json pins16 original JPEGs, exact CSS/raster dimensions, actual loaded product font and changed source hashes. Native untransformed reader/Game Plan/shell; only data/authority/Chat ports are synthetic and refuse real effects.
+RENDERED_EVIDENCE: PASS: assets/e2-prepared-review-desk/lifecycle-20261022/viewport-state-index.json pins19 current original JPEGs; prior16 frames remain historical at their original source pins. The current supplement records exact CSS/raster dimensions, actual loaded product font and changed source hashes. Native untransformed reader/Game Plan/shell; only data/authority/Chat ports are synthetic and refuse real effects.
 BEHAVIORAL_EVIDENCE: PASS: native Desk entry, original source selection, Tab/Enter/Escape and opener return, missing draft, failed read, loading, empty and unavailable total inspected. Native shell port retains a distinct unsent draft through open/close; actual Chat acceptance is separately labelled below.
 AUTHENTICATED_RUNTIME: UNVERIFIED: source is not released. Ordinary SOLO original-row/count/content/reload, real-role isolation, actual Chat/Live continuity and eventual governed action acceptance remain owed.
 KEYBOARD_FOCUS: PASS: shared Dialog traps focus, native Tab reaches source buttons with solid violet outline, Enter selects the second original source and Escape restores the opener. Original actual Chat anchored controller is not changed or replaced by this slice.
@@ -18,14 +18,14 @@ REDUCED_MOTION: PASS: native reduced-motion preference observed; Dialog animatio
 STATE_COVERAGE: PASS: ready, source without prose, unavailable total, loading, failed read, empty and positive count without readable preview have owning controls. Original RLS denial remains a withheld read, never invented empty work; actual denied-role acceptance is unverified.
 TRUTHFUL_STATE_LABELS: PASS: exact native count is separate from capped rows shown; filed items are not all called drafts or approvals. Generic edit/approve/execute is explicitly unavailable here; refreshing only rereads. Empty wording does not announce that every approval is clear.
 SOLO_UI: YES: original Business Game Plan Decision Desk for every eligible existing/future SOLO account; identical shared source and actor/workspace guard, no account allowlist.
-SOLO_1536X770_PAIGE_CLOSED: PASS:1536-closed.jpg, native review/source layout and shell.
-SOLO_1536X770_PAIGE_OPEN: PASS:1536-open.jpg, native shell open with synthetic Chat port; no composer-runtime claim.
-SOLO_1366X768_PAIGE_CLOSED: PASS:1366-closed.jpg, native review/source layout.
-SOLO_1366X768_PAIGE_OPEN: PASS:1366-open.jpg, original open shell beneath the shared Dialog.
-SOLO_1024X768_PAIGE_CLOSED: PASS:1024-closed.jpg, native Dialog inside viewport.
-SOLO_1024X768_PAIGE_OPEN: PASS:1024-open.jpg, original open shell after responsive resize beneath the Dialog.
-SOLO_900X1000_PAIGE_CLOSED: PASS:900-closed.jpg, readable bounded native source/document scroll.
-SOLO_900X1000_PAIGE_OPEN: PASS:900-open.jpg, original open shell after responsive resize beneath the Dialog.
+SOLO_1536X770_PAIGE_CLOSED: PASS:assets/e2-prepared-review-desk/lifecycle-20261022/1536-closed.jpg, native review/source layout and shell.
+SOLO_1536X770_PAIGE_OPEN: PASS:assets/e2-prepared-review-desk/lifecycle-20261022/1536-open.jpg, native shell open with synthetic Chat port; no composer-runtime claim.
+SOLO_1366X768_PAIGE_CLOSED: PASS:assets/e2-prepared-review-desk/lifecycle-20261022/1366-closed.jpg, native review/source layout.
+SOLO_1366X768_PAIGE_OPEN: PASS:assets/e2-prepared-review-desk/lifecycle-20261022/1366-open.jpg, original open shell beneath the shared Dialog.
+SOLO_1024X768_PAIGE_CLOSED: PASS:assets/e2-prepared-review-desk/lifecycle-20261022/1024-closed.jpg, native Dialog inside viewport.
+SOLO_1024X768_PAIGE_OPEN: PASS:assets/e2-prepared-review-desk/lifecycle-20261022/1024-open.jpg, original open shell after responsive resize beneath the Dialog.
+SOLO_900X1000_PAIGE_CLOSED: PASS:assets/e2-prepared-review-desk/lifecycle-20261022/900-closed.jpg, readable bounded native source/document scroll.
+SOLO_900X1000_PAIGE_OPEN: PASS:assets/e2-prepared-review-desk/lifecycle-20261022/900-open.jpg, original open shell after responsive resize beneath the Dialog.
 UNVERIFIED: production ordinary actor/count/source/reload; real denied-role/workspace isolation; actual Chat draft/nonzero scroll/focus/Live recovery; generic prepared-item editing/execution and whole19/nine/founder acceptance remain separate obligations.
 INTERNAL_BUILD_IDENTITY: 912c54a258b4e6f4752451ec134a14e0496687e0; role=supporting-source-base; deployment=PROOF_OWED(not-released); environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e2-prepared-review-desk.md. Manifest pins exact rendered leaves; final composed head follows in the PR review.
 RELEASE_CHANNEL: development: native component/source proof, not authenticated customer acceptance.
@@ -54,13 +54,35 @@ excluded; a fresh native tab directly recaptured the corrected empty state. The
 none is resized, composited or altered. Earlier prototype/diagnostic frames remain
 local and are not silently recounted as current source proof.
 
-Functional: latest exact-source62 cases across four owning suites pass; the earlier67-case checkpoint is historical, not the count of this rerun. Visual: bounded native rendered proof.
+Functional: latest exact-source65 cases across four owning suites pass; the earlier67-case checkpoint is historical, not the count of this rerun. Visual: bounded native rendered proof.
 Experiential: Desk/source return only; shared composer and actual Chat continuity
 follow separately. Founder Acceptance: complete Experience pending. Algorithm
 Support: deterministic source/context display, no predictive ALG03/13 claim or
 canonical algorithm implementation change. Orchestration Contract: read-only
 analysis; original Spine/Harness/Trust/LayerC/domain/Rail gates remain authoritative.
 Capabilities readiness: no entry activated or promoted by this reader.
+
+## Lifecycle correction,2026-10-22
+
+Separate exact-source review found that refreshing removed the conditional Desk
+row and unmounted its reader. The original source reproduces this failure. The
+reader now belongs to the original workspace, outside the conditional row, and
+is controlled by the current actor/workspace scope. It stays open across loading,
+failure and an empty result; counts and previous content are withheld while the
+read is unresolved. Scope A-B-A cannot reopen old review work. When the opener
+retires, Escape focuses the named Decision Desk region. No new store or writer.
+
+All65 cases across four suites pass. The19-frame lifecycle supplement pins the
+current source and original raster hashes, including native refresh transitions,
+all four prescribed sizes with Chat open/closed,320px keyboard/source selection,
+unavailable total, Obsidian and reduced motion. Every frame loads the product font
+and matches CSS/raster dimensions without horizontal product overflow. Prior16
+frames retain their historical source pins. Native Chat here is a refusing port;
+actual Chat continuity is covered separately by the composer consumer and remains
+unverified for this release. Pinned Impeccable4.1.0:0 blocking,2 advisory24px type
+steps, no suppression. Authenticated role/workspace/reload and production proof
+remain owed. Final exact head is recorded in the new PR review; prior2d6e0fee
+green CI cannot release this correction.
 
 ## Required-check correction,2026-10-22
 

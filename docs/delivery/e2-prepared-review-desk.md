@@ -39,7 +39,7 @@ wide-screen overview/readable narrow sheet and spacious Desk under delegated lea
 UX authority. This slice absorbs only the spacious source-fed review. Synthetic
 mocked action/scroll cases do not establish production Chat/approval acceptance.
 
-Functional: latest62 cases/four owning suites pass; earlier67-case checkpoint and targeted ESLint are historical. Visual:16 current native
+Functional: latest65 cases/four owning suites pass; earlier67-case checkpoint and targeted ESLint are historical. Visual:19 current lifecycle supplement frames;16 prior historical native
 component/shell frames, exact CSS/raster dimensions, font, keyboard, source-state,
 Obsidian and reduced-motion proof in the owning UI evidence record.
 Experiential: source inspection/return only in this slice; lower-composer affordance

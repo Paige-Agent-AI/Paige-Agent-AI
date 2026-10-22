@@ -466,7 +466,22 @@ private PDF. Native106 plus5 Portal-wiring tests and three Edge type checks pass
 release, authenticated recovery and full ALG01/12 acceptance remain proof owed.
 [Exact scope and limitations](../evidence/ui-delivery/e04-retained-completion-reconcile.md).
 
+## EXP02 — Decision Desk required-style correction,2026-10-22
+
+Prepared-work reader#2544 remains unreleased. The original required verify job119609071921 failed Impeccable on a colored rationale edge; the decoration is removed and canonical radius tokens/readable prose retained. Pinned4.1.0 now reports zero blocking findings/two advisory type notes. All16 native component/shell frames were directly recaptured with current source hashes;62 checks across four selected owning suites and targeted ESLint pass. Original actor-reader#2541 at06c98060f7a59e2d223aa3c0914a450e40fe395a has fresh required CI in progress after clean current-main composition. No new schema, queue, approval writer, execution or capability activation. See the original `docs/evidence/ui-delivery/e2-prepared-review-desk.md`; native fixtures are not ordinary authenticated acceptance. Shared composer foundation/actual prepared-work consumer follow in separate small PRs. Full19/nine, actual Chat/Live and founder acceptance remain open.
+
 ## EXP02 contextual review identity prerequisite — development
+
+Dependent Decision Desk consumer now has source-only proof: original prepared
+rows/count feed a spacious shared Dialog, showing department, rationale and actual
+draft text where returned. Exact total stays separate from the capped preview;
+items without prose are not called drafts. Source errors/loading withhold details.
+Original approval rail and Mission writers remain intact; this generic reader has
+no editing/approval/execution authority.67 owning cases/four suites and16 original
+native synthetic frames pass. Required exact-head review/CI, release and ordinary
+customer source/reload proof remain owed. The lower-composer contextual affordance
+and actual Chat/Live continuity are separate next slices. ALG03/13 prediction and
+catalogue Live promotion are not claimed. [Owning source/UX packet](../delivery/e2-prepared-review-desk.md).
 
 Owner October21 Game Plan refinement retains contextual Chat suggestions, with
 substantial work in the original Decision & Opportunity Desk. The first small
@@ -483,6 +498,12 @@ exact-head CI, release and genuine actor/RLS/customer proof remain owed. Source
 and routing: [owning packet](../delivery/e2-review-actor-scope.md). ALG03/13
 prediction is not claimed. Original19 outcomes/nine capabilities and final
 complete founder evaluation remain required.
+
+## EXP02 verified source and bounded customer readback —2026-10-22
+
+Catalogue2516, declaration evidence2535 and optional actor-reader2541 are MERGED/DEPLOYED/READ BACK, with exact reviewed/main/tree, CI/review, production and proof boundaries in the sole Master4.0 EXP02 rows. This dated evidence supersedes the earlier source-candidate/development wording for those slices. Reviews are accurately AUTHOR-REVIEW / LOWER ASSURANCE. Catalogue production hashes restrict the change to two descriptions; ordinary panel reload/reopen returned both copies, without promoting the nine entries. One ordinary Business Review settled in52s, corrected the unsupported declaration/provider interpretation and retained the original question/answer/source links through reload; trace timing itself was transient. That one pass does not establish general reliability, provider readiness or causal business improvement.
+
+Actor2541 is deployed atd3ca6a3a5561caef14558444474925566744de17 with no product caller in that PR; actual role/RLS/source acceptance follows its consumer. Original domains, Metric/Evidence, Spine/Harness/Trust/LayerC/Rail and conversations remain authoritative. Desk2544/shared presentation2583/separate contextual consumer continue through their own review, exact-head gates, release and ordinary customer proof. No generic prepared-item editing or execution, provider/permission activation, new queue, registry or approval engine is introduced. Historical9/0 and12/0/4 remain; all19/nine, Chat/Live/departments/governed follow-through, algorithms and full founder acceptance remain open. Customer version/announcement none.
 
 ## EXP02 payment declaration evidence — October22 source candidate
 

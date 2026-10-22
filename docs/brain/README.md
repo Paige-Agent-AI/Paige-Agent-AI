@@ -1347,3 +1347,21 @@ Two real native baselines pass six positive controls then fail frozen-source ref
 
 ### EXP04 checked recipient preparation — October22 native development, not released
 Legacy and new checked callers use one original private signer business body. Exact customer/version/time CAS, original signer PK creation identity and immutable edited-event receipt support same-intent retry/reload; post-wait original authority is revalidated. No new request table/ledger/approval/runtime or external/Chat/Portal effect. Native44 base plus75 new assertions/replay2 and genuine duplicate/source/recovery/revocation waits PASS; guarded250004 UNAPPLIED after220004/230004/240004. Mounted professional recipient/fields, actual JWT/provider/signature/all12/founder acceptance remain owed; [native evidence](../evidence/ui-delivery/e04-checked-signer-preparation.md).
+
+
+## EXP04 original preparation editability — October22
+
+Same E04 lead repairs the original closed preparation reader's editability to
+match existing content and sealed-reference writer freezes. Exact production
+routine metadata/source MD5a3950836 is reproduced in the disposable native proof;
+five new positive controls precede a genuine failing sealed-reference read.
+New260004 changes only that original boolean, preserving author/business floor,
+closed DTO, owner/ACL/STABLE/DEFINER/search_path and every stored record. Original
+unknown-source guard and both replays remain; no permission/table/event rewrite.
+
+Final142 native assertions pass:44 original signer +75 checked preparation +23
+read-state cases. Initial invalid Sent fixture omitted the original mandatory
+content digest; fixture corrected, original constraint preserved. New read proof
+adds no concurrency or real JWT/provider/customer acceptance claim. Exact-head
+review/CI/Preview, ordered release/readback and whole Experience acceptance remain
+owed. See [bounded native evidence](../evidence/ui-delivery/e04-preparation-editability.md).

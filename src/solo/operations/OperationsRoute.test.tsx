@@ -7,14 +7,16 @@ vi.mock("@/lib/routing/useSubtabRoute", () => ({ useSubtabRoute: () => {
   const location = useLocation(); const navigate = useNavigate();
   return [location.pathname.endsWith("/capacity") ? "capacity" : "work", (view: string) => navigate(`/solo/123/operations/${view}`)];
 } }));
-vi.mock("./OperationsWorkspace", () => ({ OperationsWorkspace: ({ view, weeklySourceSearch, onNavigationGuardChange, onViewChange, onWeeklySourceDismiss, onTaskFocusDismiss, onOpenAgreements }: {
+vi.mock("./OperationsWorkspace", () => ({ OperationsWorkspace: ({ view, weeklySourceSearch, onNavigationGuardChange, onViewChange, onWeeklySourceDismiss, onTaskFocusDismiss, onOpenAgreements, onPlaybooksViewChange }: {
   view: string; weeklySourceSearch: string; onViewChange: (view: string) => void; onWeeklySourceDismiss: () => void;
   onNavigationGuardChange: (guard: (() => string | null) | null) => void;
-  onTaskFocusDismiss: () => void; onOpenAgreements?: () => void;
+  onTaskFocusDismiss: () => void; onOpenAgreements?: () => void; onPlaybooksViewChange?: (view: "procedures" | "automations") => void;
 }) => {
   React.useLayoutEffect(() => { onNavigationGuardChange(() => harness.reason); return () => onNavigationGuardChange(null); }, [onNavigationGuardChange]);
   return <div data-view={view} data-query={weeklySourceSearch}><button onClick={() => onViewChange("capacity")}>Capacity</button>
     <button onClick={onWeeklySourceDismiss}>Dismiss source</button><button onClick={onTaskFocusDismiss}>Dismiss Task focus</button>
+    <button onClick={() => onPlaybooksViewChange?.("automations")}>Automations</button>
+    <button onClick={() => onPlaybooksViewChange?.("procedures")}>Procedures</button>
     <button disabled={!onOpenAgreements} onClick={onOpenAgreements}>Original agreements</button></div>;
 } }));
 import { OperationsRoute } from "./OperationsRoute";
@@ -108,4 +110,19 @@ it.each([NavigationType.Pop,NavigationType.Push])("makes an unindexed %s address
   expect(container.querySelector("[data-view]")?.getAttribute("data-view")).toBe("work");expect(container.textContent).toContain("address changed");expect(container.textContent).toContain("Close it, then open the page again");expect(navigator.go).not.toHaveBeenCalled();expect(navigator.replace).not.toHaveBeenCalled();
   harness.reason=null;await mount("/solo/123/operations/capacity","clean");expect(container.querySelector("[data-view]")?.getAttribute("data-view")).toBe("capacity");expect(container.textContent).not.toContain("address changed");
  }finally{window.history.replaceState(originalState,"");}
+});
+
+it("keeps the selected process view in accepted URL/history without losing original query or hash", async () => {
+  await render(["/solo/123/operations/playbooks?filter=mine#source"], 0);
+  await click("Automations");
+  const selected = "/solo/123/operations/playbooks?filter=mine&playbooks=automations#source";
+  expect(container.querySelector("output")?.textContent).toBe(selected);
+  harness.reason = "Exact process review";
+  await click("Procedures"); await click("Back");
+  expect(container.querySelector("output")?.textContent).toBe(selected);
+  expect(container.querySelector("[data-query]")?.getAttribute("data-query")).toBe("?filter=mine&playbooks=automations");
+  harness.reason = null; await click("Back");
+  expect(container.querySelector("output")?.textContent).toBe("/solo/123/operations/playbooks?filter=mine#source");
+  await click("Forward"); expect(container.querySelector("output")?.textContent).toBe(selected);
+  await click("Procedures"); expect(container.querySelector("output")?.textContent).toBe("/solo/123/operations/playbooks?filter=mine#source");
 });

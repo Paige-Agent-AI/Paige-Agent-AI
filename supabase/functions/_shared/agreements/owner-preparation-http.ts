@@ -51,6 +51,7 @@ export async function handleOwnerPreparation(
       if(error.code==='COMMERCIAL_REVIEW_REQUIRED')return json({ok:false,code:'commercial_review_required',error:'This agreement needs its original commercial terms review before the exact signing document can be prepared.'},409);
     }
     if(error instanceof PreparationArtifactUnavailable&&error.code==='CONTEXT_RETIRED')return json({ok:false,code:'source_changed',error:'Agreement access or source changed. Reopen the original preparation in its business.'},409);
+    if(error instanceof PreparationArtifactUnavailable&&error.code==='DOCUMENT_UNAVAILABLE')return json({ok:false,code:'document_unavailable',error:'The original document could not be prepared as a supported PDF. Review its formatting or supply a PDF, then check the same request.'},422);
     // No raw provider exception, private path, legal words or signer data in
     // logs or errors. An unconfirmed response NEVER proves server rollback.
     return json({ok:false,code:'unconfirmed',error:'The preparation result could not be confirmed. Check this same request; it may already be recorded.'},503);

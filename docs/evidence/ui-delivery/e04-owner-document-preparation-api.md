@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: YES: existing owner endpoint can prepare an original unsig
 FLOW_PROTOTYPE: PASS: original complete Agreements prototype275be12415239d4ecdb66bec0894146ec9fe5c64 and October21 owner preparation direction; normal UI adoption delegated, no founder acceptance inferred.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: original authorized business owner prepares the exact source PDF, retains assigned fields, retrieves verified bytes and recovers the SAME request/event after interruption.
 VISUAL_DIRECTION: PASS: no interface replacement; actual PDF/field consumer in2593 remains the intended original Sales surface.
-AUTOMATED_EVIDENCE: PASS:167 strict Deno cases/102 steps across all twelve original/new suites. Actual native renderer/parser/PDF bytes, shared field constructor, original retention/sealing/signing/token and Portal controls; identity/RPC/Storage transport fixtures are synthetic. New32 cases/29 steps do not replace actual parent218 native SQL proofs.
+AUTOMATED_EVIDENCE: PASS:170 strict Deno cases/102 steps across all twelve original/new suites. Actual native renderer/parser/PDF bytes, shared field constructor, original retention/sealing/signing/token and Portal controls; identity/RPC/Storage transport fixtures are synthetic. New35 cases/29 steps do not replace actual parent218 native SQL proofs.
 STATIC_EVIDENCE: PASS: actual agreement-document entrypoint strict Deno check; existing token/owner GET byte pins and Portal door order remain unchanged. Original CI step adds three new suites, no existing test/timeout/permission removed or broadened.
 RENDERED_EVIDENCE: UNVERIFIED: this backend route is not yet consumed by the customer component/controller. Prior2593 actual20-frame/11-path rendering is separate component evidence and proves no API persistence.
 BEHAVIORAL_EVIDENCE: PASS: actual HTTP Request/Response and native-rendered PDF with local transport ports verifies prepare→empty version→fields→same PDF, historical receipt recovery, exact native writer arguments, original uploaded bytes, no overwrite, actor/business/profile/source conflict, raw error privacy, bounded JSON, token/Portal query refusal and uncertainty. No authenticated/hosted behavior inferred.
@@ -17,7 +17,15 @@ ZOOM_REFLOW: UNVERIFIED: no changed layout; actual joined source/API consumer re
 REDUCED_MOTION: PASS: no visual/motion source changed; original reduced-motion behavior retained.
 STATE_COVERAGE: PASS: none/retained/selected/historical/source-current/refused/commercial-hold/invalid/unknown and verified PDF responses; unknown response does not prove rollback, existing receipt does not imply current file availability/signing.
 TRUTHFUL_STATE_LABELS: PASS: draft preparation is not legal review, approval, external send, consent, signature, effective obligation, payment or completed service. Original commercial-linked drafts are explicitly held until canonical commercial presentation is connected.
-SOLO_UI: NO: backend extension of original authenticated agreement-document owner door, no customer UI file or account-specific implementation. Actual shared SOLO consumer mounting remains owed for every eligible current/future account.
+SOLO_UI: YES: combined native/field/API source candidate retains the original shared SOLO consumer for every eligible current/future account. This API increment adds no component; actual customer mounting remains owed, no account-specific implementation.
+SOLO_1536X770_PAIGE_CLOSED: PASS: unchanged source consumer assets/e04-agreement-document-fields/1536-770-light-closed.png and dark equivalent; component-only, no API persistence claim.
+SOLO_1536X770_PAIGE_OPEN: PASS:1536-770-light-open.png and dark equivalent, original PAIGE panel; no authenticated API claim.
+SOLO_1366X768_PAIGE_CLOSED: PASS:1366-768-light-closed.png and dark equivalent, actual source paper/inspector only.
+SOLO_1366X768_PAIGE_OPEN: PASS:1366-768-light-open.png and dark equivalent; original side panel preserved.
+SOLO_1024X768_PAIGE_CLOSED: PASS:1024-768-light-closed.png and dark equivalent, bounded existing source consumer.
+SOLO_1024X768_PAIGE_OPEN: PASS:1024-768-light-open.png/dark equivalent, original overlay explicitly Folded before source operation, not click-through or API proof.
+SOLO_900X1000_PAIGE_CLOSED: PASS:900-1000-light-closed.png and dark equivalent, actual unchanged component only.
+SOLO_900X1000_PAIGE_OPEN: PASS:900-1000-light-open.png/dark equivalent, actual original Fold before fields, no signed-in/persistence claim.
 UNVERIFIED: customer router/controller/one leave guard/reload navigation, actual hosted/native JWT/Storage/retry and tenant cohorts, exact-head review/CI/ordered native+Edge+web release/readback, commercial presentation/approval/send/signing/remaining O1–O12 and founder acceptance.
 
 OWNER_INTENT: owner infrastructure/actual-wording clarification and October21 complete professional Agreements/orchestration mandate; no global counsel engineering gate, no reduction of all twelve outcomes.
@@ -27,7 +35,7 @@ ACCEPTANCE_CRITERIA: actual authorized owner uses existing Sales workspace to pr
 MOTION_PURPOSE: NONE: no new animation or visual component.
 PROTECTED_SEAMS: original Auth/current business/human preparation read plus original private native active user/business/profile/member floor around each privileged phase; exact source/party/PDF/map and atomic writer CAS; existing private buckets/no overwrite; original source/signing/token/Portal/shared Chat/Operations/Comms/Stripe unchanged.
 
-INTERNAL_BUILD_IDENTITY: branch=codex/e04-document-preparation-api; source_base=16079fb724616c0af295586c35e98cb559d5c585; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(agreement-document ordered source release and readback); evidence=docs/evidence/ui-delivery/e04-owner-document-preparation-api.md
+INTERNAL_BUILD_IDENTITY: branch=codex/e04-document-preparation-api; source_base=97bb6c4ec6adb2805ac6feaed75147843cbd0852; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113300004 production apply and readback); edge=PROOF_OWED(agreement-document ordered source release and readback); evidence=docs/evidence/ui-delivery/e04-owner-document-preparation-api.md
 RELEASE_CHANNEL: development: strict local actual-native-PDF/HTTP contract tests only, not hosted/customer acceptance.
 RELEASE_CLASSIFICATION: internal-only: bounded original owner-door integration, not the completed professional Agreements Experience.
 CUSTOMER_RELEASE_IDENTITY: none: full Experience and owner acceptance are incomplete.
@@ -83,8 +91,8 @@ outcome. Exact-map approval/send/Comms/consent/seal/effective economics still ow
 
 ## Verification, review and remaining destination
 
-Final all-original run167 tests/102 steps PASS; actual handler strict type check
-PASS. New9 artifact/16 owner/7 HTTP cases exercise actual PDF bytes; synthetic
+Final all-original run170 tests/102 steps PASS; actual handler strict type check
+PASS. New9 artifact/18 owner/8 HTTP cases exercise actual PDF bytes; synthetic
 transport event IDs/RPC results are NOT real customer/native execution evidence.
 Original6 wiring/14 Portal tests remain, including unchanged owner/token block
 hash and meaningful mutated-gate negatives. First test union narrowing and missing
@@ -101,3 +109,23 @@ specialist/LayerC activation, external send, signature, charge, provider spend,
 new QA business or INT346 change. EXP09 continues to consume its original approved
 client projection, never this owner-only route or raw Storage path. One complete
 founder evaluation follows the finished integrated Experience, not this API slice.
+
+Final separate review found two genuine response-lifetime defects: an earlier
+target row could appear source-current/selected after the FINAL native read had
+observed a source revision or another selection. Both causal regressions FAIL
+first (true versus false), then PASS with the final native state and the original
+field constructor's exact source/party hash. Historical receipts remain separate.
+Only source-matching signer labels are returned for document fields; stale fields
+cannot borrow changed names. Unsupported generated text returns a correctable422
+without leaking words or writing a version; source/authority refusals retain their
+original classification. No native validator or approval framework was replaced.
+
+Release sequencing: the substantive planned owner API includes preserved field
+source97bb6c4ec/native300004 after actual production290009. Earlier2593 Preview
+holds an already-applied/unreleased290004 proposal (actual users/memberships/
+objects/agreements all0) and fails remote-history reconciliation after the required
+forward rename. No reset, delete, history repair, --include-all, manual project
+allocation or required-check waiver is used. This integration candidate must pass
+its OWN full exact-head checks/normal Preview; an earlier failed check is not
+called successful. Parent source/history/reviews remain preserved, superseded
+only as an unmerged source candidate. No actual customer/QA record was created.

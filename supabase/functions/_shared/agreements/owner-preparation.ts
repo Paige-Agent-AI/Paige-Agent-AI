@@ -3,7 +3,7 @@ import {canonicalPresentationJson} from './preparation-json.ts';
 import {prepareAgreementFields,readAgreementPdfDocument,type AgreementFieldPreparation} from './field-preparation.ts';
 import {renderPresentedPdf,planPresentedDocument,isOwnedByTenant} from './document.ts';
 import {sha256Hex} from './token.ts';
-import {readPreparationArtifact,retainPreparationArtifact,type PreparationStorage} from './preparation-artifact.ts';
+import {readPreparationArtifact,retainPreparationArtifact,PreparationArtifactUnavailable,type PreparationStorage} from './preparation-artifact.ts';
 
 type RpcResult={data:unknown;error:{code?:string}|null};
 export type OwnerPreparationCaller={
@@ -50,7 +50,7 @@ export function parseOwnerPreparationCommand(value:unknown):OwnerPreparationComm
   const parent=uuid(v.source_preparation_id);if(parent===common.request_id)return fail('INVALID_REQUEST');
   return {...common,action:'retain_fields',source_preparation_id:parent,fields};
 }
-type Scope={actorId:string;agreement:Record<string,unknown>;source:Record<string,unknown>};
+type Scope={actorId:string;agreement:Record<string,unknown>;source:Record<string,unknown>;current?:Record<string,unknown>|null};
 async function scope(caller:OwnerPreparationCaller,tenant:string,agreement:string,actorId?:string):Promise<Scope>{
   const user=await caller.auth.getUser();
   if(user.error||!user.data.user||user.data.user.is_anonymous||!UUID.test(user.data.user.id)||actorId&&actorId!==user.data.user.id)return fail('ACCESS_UNVERIFIED');
@@ -89,15 +89,27 @@ async function retained(service:OwnerPreparationService,s:Scope,tenant:string,ag
 function receipt(p:Record<string,unknown>,state:'recorded'|'recovered'){
   return {state,historical_receipt:true,id:p.id,event_id:p.event_id,revision_no:p.revision_no,document_sha256:p.document_sha256,preparation_sha256:p.preparation_sha256,is_selected:p.is_selected};
 }
-function publicView(p:Record<string,unknown>|null,s:Scope){
+async function publicView(p:Record<string,unknown>|null,s:Scope){
   const commercial=s.agreement.offer_id!==null||s.agreement.commercial_terms_id!==null;
   const canPrepare=s.agreement.can_edit===true&&s.agreement.status==='draft'&&!commercial;
   const common={title:s.agreement.title,source:s.source,can_prepare:canPrepare,preparation_hold:commercial?'commercial_review_required':canPrepare?null:'source_not_editable'};
-  if(!p)return {state:'none' as const,...common};
+  if(!p)return {state:'none' as const,...common,document_signers:[]};
+  const selected=p.is_selected===true&&s.current?.id===p.id;
+  let sourceMatches=false;
+  // Use the final native source/selection read, never an earlier target-row
+  // flag. The ONE existing constructor also verifies that fresh source/party
+  // names agree with the immutable original manifest before they label fields.
+  if(p.source_matches===true&&s.current?.source_matches===true&&s.agreement.status==='draft'){
+    try{const manifest=p.manifest as AgreementFieldPreparation['manifest'];
+      const checked=await prepareAgreementFields(s.source,manifest.document,manifest.fields);
+      sourceMatches=checked.preparation_sha256===p.preparation_sha256;
+    }catch{/* Retained history is readable; changed source is never editable. */}
+  }
   return {state:'retained' as const,...common,preparation:Object.fromEntries([
     'id','agreement_id','client_id','revision_no','source_version','source_updated_at','actor_user_id','document_sha256','document_byte_length',
     'manifest','preparation_sha256','event_id','is_selected','created_at','source_scope','source_matches','commercial_verification',
-  ].map(k=>[k,p[k]])),can_edit:canPrepare&&p.is_selected===true&&p.source_matches===true};
+  ].map(k=>[k,k==='is_selected'?selected:k==='source_matches'?sourceMatches:p[k]])),
+    document_signers:sourceMatches?s.source.signers:[],can_edit:canPrepare&&selected&&sourceMatches};
 }
 
 /** Existing owner door only. Inputs can REFUSE but never select actor authority.
@@ -106,7 +118,7 @@ function publicView(p:Record<string,unknown>|null,s:Scope){
 export async function executeOwnerPreparation(value:unknown,caller:OwnerPreparationCaller,service:OwnerPreparationService){
   const c=parseOwnerPreparationCommand(value);let original=await scope(caller,c.tenant_id,c.agreement_id);
   const actor=original.actorId;
-  const fresh=async()=>{const next=await scope(caller,c.tenant_id,c.agreement_id,actor);await retained(service,next,c.tenant_id,c.agreement_id,null);return next;};
+  const fresh=async()=>{const next=await scope(caller,c.tenant_id,c.agreement_id,actor);return {...next,current:await retained(service,next,c.tenant_id,c.agreement_id,null)};};
   // Missing and revoked are deliberately indistinguishable in the native read.
   // A null here NEVER proves rollback; fresh original authority must pass again
   // before this SAME UUID may continue through the atomic canonical writer.
@@ -122,7 +134,7 @@ export async function executeOwnerPreparation(value:unknown,caller:OwnerPreparat
       if(!parent||parent.content_storage_key!==existing.content_storage_key||parent.document_sha256!==existing.document_sha256
         ||parent.source_version!==existing.source_version||parent.source_updated_at!==existing.source_updated_at)return fail('SOURCE_CHANGED');
     }
-    return {receipt:receipt(existing,'recovered'),view:publicView(existing,await fresh())};
+    return {receipt:receipt(existing,'recovered'),view:await publicView(existing,await fresh())};
   }
   if(!matches(original,c.expected_source)||original.agreement.status!=='draft'||original.agreement.can_edit!==true)return fail('SOURCE_CHANGED');
   // Never render a linked offer/deal without its exact original economics. The
@@ -140,7 +152,8 @@ export async function executeOwnerPreparation(value:unknown,caller:OwnerPreparat
       if(plan.kind==='refuse')return fail('SOURCE_CHANGED');
       if(plan.kind==='render'){
         if(typeof latest.agreement.title!=='string'||typeof latest.agreement.body_markdown!=='string')return fail('SOURCE_CHANGED');
-        return renderPresentedPdf({title:latest.agreement.title,bodyMarkdown:latest.agreement.body_markdown});
+        try{return await renderPresentedPdf({title:latest.agreement.title,bodyMarkdown:latest.agreement.body_markdown});}
+        catch{throw new PreparationArtifactUnavailable('DOCUMENT_UNAVAILABLE');}
       }
       if(!isOwnedByTenant(plan.path,c.tenant_id))return fail('SOURCE_CHANGED');
       const file=await service.storage.from('tenant-agreements').download(plan.path);
@@ -163,7 +176,7 @@ export async function executeOwnerPreparation(value:unknown,caller:OwnerPreparat
   if(result.error||!object(result.data)||result.data.id!==c.request_id)return fail('UNCONFIRMED');
   const p=await retained(service,await fresh(),c.tenant_id,c.agreement_id,c.request_id);
   if(!p||p.event_id!==result.data.event_id||p.preparation_sha256!==preparation.preparation_sha256)return fail('UNCONFIRMED');
-  return {receipt:receipt(p,'recorded'),view:publicView(p,await fresh())};
+  return {receipt:receipt(p,'recorded'),view:await publicView(p,await fresh())};
 }
 
 export async function readOwnerPreparation(tenantId:string,agreementId:string,preparationId:string|null,caller:OwnerPreparationCaller,service:OwnerPreparationService){
@@ -174,8 +187,8 @@ export async function readOwnerPreparation(tenantId:string,agreementId:string,pr
   await retained(service,s,tenant,agreement,null);
   const p=await retained(service,s,tenant,agreement,id);
   if(id&&!p)return fail('UNCONFIRMED');
-  const after=await scope(caller,tenant,agreement,s.actorId);await retained(service,after,tenant,agreement,null);
-  return publicView(p,after);
+  const after=await scope(caller,tenant,agreement,s.actorId),current=await retained(service,after,tenant,agreement,null);
+  return publicView(p,{...after,current});
 }
 
 export async function readOwnerPreparationPdf(tenantId:string,agreementId:string,preparationId:string,caller:OwnerPreparationCaller,service:OwnerPreparationService){

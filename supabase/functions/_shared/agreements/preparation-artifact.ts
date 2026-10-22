@@ -68,9 +68,11 @@ export async function retainPreparationArtifact(
   let retained=await info(true);
   if(!retained){
     await current();
-    let bytes:Uint8Array;
-    try{bytes=(await renderOriginal()).slice();}catch{return fail('DOCUMENT_UNAVAILABLE');}
-    if(!(bytes instanceof Uint8Array)||!size(bytes.length))return fail('DOCUMENT_UNAVAILABLE');
+    // Preserve the original domain's authority/source refusals. The HTTP door
+    // sanitizes unknown errors; a source conflict must not become a PDF failure.
+    const rendered=await renderOriginal();
+    if(!(rendered instanceof Uint8Array)||!size(rendered.length))return fail('DOCUMENT_UNAVAILABLE');
+    const bytes=rendered.slice();
     const documentSha256=await sha256Hex(bytes);
     try{await inspectAgreementPreparationPdf(bytes,documentSha256);}catch{return fail('DOCUMENT_UNAVAILABLE');}
     await current();

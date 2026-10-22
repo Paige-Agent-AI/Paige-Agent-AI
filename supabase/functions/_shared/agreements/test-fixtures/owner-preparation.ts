@@ -14,7 +14,7 @@ const prepare=()=>({action:'prepare_document',tenant_id:tenant,agreement_id:agre
 const field=(id='22222222-0000-4000-8000-000000000001')=>({id,signer_id:signer,kind:'signature',page:1,x:40,y:80,width:120,height:30,required:true,label:'Signature'});
 const save=(fields:unknown[]=[field()])=>({action:'retain_fields',tenant_id:tenant,agreement_id:agreement,request_id:next,expected_source:{client_id:client,version:1,updated_at:at},source_preparation_id:request,fields});
 async function fixture(){
-  const state={activeTenant:tenant,actor,admin:true,profile:true,anonymous:false,writeLost:false,corrupt:false,beforeWrite:null as null|(()=>void),onDownload:null as null|(()=>void),uploadPath:null as string|null,uploadBytes:null as Uint8Array|null};
+  const state={activeTenant:tenant,actor,admin:true,profile:true,anonymous:false,writeLost:false,corrupt:false,beforeWrite:null as null|(()=>void),onDownload:null as null|(()=>void),onCurrentRead:null as null|(()=>void),uploadPath:null as string|null,uploadBytes:null as Uint8Array|null};
   const original={id:agreement,contact_id:client,offer_id:null as string|null,commercial_terms_id:null as string|null,title:'Controlled supplied source',body_source:'paige_draft',source_version_id:null,body_markdown:'Neutral source fixture. No legal sufficiency, signature or provider claim.' as string|null,has_source_document:false,status:'draft',version:1,updated_at:at,expires_at:null,can_edit:true,content_sha256:null,sealed_sha256:null};
   const parties=[{id:signer,full_name:'Controlled Counterparty',email:'recipient@example.test',signer_role:'counterparty',signing_order:1,status:'pending',signed_at:null,declined_at:null}];
   const rows=new Map<string,Record<string,unknown>>(),objects=new Map<string,{bytes:Uint8Array;metadata:Record<string,unknown>}>();
@@ -37,6 +37,7 @@ async function fixture(){
     calls.service++;assert.equal(args._actor,state.actor);assert.equal(args._tenant,tenant);assert.equal(args._agreement,agreement);
     if(!state.profile||!state.admin||state.activeTenant!==tenant)return {data:null,error:{code:'42501'}};
     if(name==='_read_agreement_document_preparation'){
+      if(args._preparation===null)state.onCurrentRead?.();
       const id=args._preparation;
       const p=id?rows.get(String(id)):[...rows.values()].find(row=>row.is_selected);
       if(!p)return id?{data:null,error:{code:'42501'}}:{data:{state:'none'},error:null};

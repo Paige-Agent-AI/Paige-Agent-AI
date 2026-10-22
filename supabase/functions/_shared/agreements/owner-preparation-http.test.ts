@@ -41,6 +41,11 @@ Deno.test('original commercial source is explicitly held instead of silently mis
   const f=await fixture();f.original.offer_id='55555555-0000-4000-8000-000000000001';
   const r=await handleOwnerPreparation(post(prepare()),f.caller,f.service,headers,async()=>false);assert.equal(r.status,409);assert.equal((await r.json()).code,'commercial_review_required');assert.equal(f.calls.upload,0);
 });
+Deno.test('unsupported original generated text produces a correctable PDF error without exposing words or writing a version',async()=>{
+  const f=await fixture();f.original.body_markdown='文字';
+  const r=await handleOwnerPreparation(post(prepare()),f.caller,f.service,headers,async()=>false);assert.equal(r.status,422);
+  const body=await r.text();assert.equal(JSON.parse(body).code,'document_unavailable');assert(!body.includes('文字'));assert.equal(f.calls.upload,0);assert.equal(f.calls.write,0);
+});
 Deno.test('provider/native exceptions never expose private path, words, identity or secrets',async()=>{
   const f=await fixture();f.service.rpc=async()=>{throw Error('SECRET raw-private-key SIGNER@example.test private terms');};
   const r=await handleOwnerPreparation(post(prepare()),f.caller,f.service,headers,async()=>false);assert.equal(r.status,503);const body=await r.text();assert(!/SECRET|raw-private|SIGNER|private terms/.test(body));assert.equal(JSON.parse(body).code,'unconfirmed');

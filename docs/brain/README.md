@@ -12,7 +12,7 @@ lost response recovers same historical event. Actual source-upload PDF is copied
 unchanged. Commercial-linked source stays explicitly held until original exact
 commercial-presentation integration, never silently stripped of economics.
 
-All original/new twelve Deno suites167 cases/102 steps PASS and actual Edge strict
+All original/new twelve Deno suites170 cases/102 steps PASS and actual Edge strict
 check PASS; actual native-rendered bytes/HTTP are used, Auth/RPC/Storage transports
 are synthetic, not actual hosted/native customer evidence. Original token/owner
 block hash and Portal scope/ordering negatives preserved. New tests join existing

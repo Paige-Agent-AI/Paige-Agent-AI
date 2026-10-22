@@ -8,6 +8,20 @@ import {PDFDocument} from 'npm:pdf-lib@1.17.1';
 import {fixture,tenant,agreement,request,next,prepare,field,save,actor} from "./test-fixtures/owner-preparation.ts";
 
 const refuses=(code:OwnerPreparationUnavailable['code'])=>(e:unknown)=>e instanceof OwnerPreparationUnavailable&&e.code===code;
+Deno.test('final native source read cannot publish earlier source-current editing status',async()=>{
+  const f=await fixture();await executeOwnerPreparation(prepare(),f.caller,f.service);let reads=0;
+  f.state.onCurrentRead=()=>{if(++reads===2)f.original.version=2;};
+  const view=await readOwnerPreparation(tenant,agreement,request,f.caller,f.service);
+  assert.equal(view.state,'retained');assert.equal(view.state==='retained'&&view.can_edit,false);
+  assert.equal(view.state==='retained'&&view.preparation.source_matches,false);
+});
+Deno.test('final native selection read cannot publish an obsolete selected version as editable',async()=>{
+  const f=await fixture();await executeOwnerPreparation(prepare(),f.caller,f.service);let reads=0;
+  f.state.onCurrentRead=()=>{if(++reads===2){const original=f.rows.get(request)!;original.is_selected=false;f.rows.set(next,{...original,id:next,is_selected:true,event_id:'44444444-0000-4000-8000-000000000002',revision_no:2});}};
+  const view=await readOwnerPreparation(tenant,agreement,request,f.caller,f.service);
+  assert.equal(view.state,'retained');assert.equal(view.state==='retained'&&view.can_edit,false);
+  assert.equal(view.state==='retained'&&view.preparation.is_selected,false);
+});
 Deno.test('actual native words→PDF→empty version→assigned fields→same PDF and original receipts',async()=>{
   const f=await fixture(),first=await executeOwnerPreparation(prepare(),f.caller,f.service);
   assert.equal(first.receipt.state,'recorded');assert.equal(first.receipt.id,request);assert.equal(f.calls.upload,1);assert.equal(f.calls.write,1);

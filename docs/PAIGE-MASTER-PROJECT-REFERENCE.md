@@ -826,6 +826,33 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-21 — EXP05 compact Operations banners and original Work week.**
+
+| Released increment | Exact engineering and production identity | Verified boundary and remaining proof |
+| --- | --- | --- |
+| [#2506](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2506): compact settled banners across all six Operations subtabs | Reviewed `93b4708fb605aa4a3d19d72d3d70177ffed505e7`, merged `7b4596fd32590bbe29383605d0a753aa28ee51b4`. All10 applicable exact-head checks and two Vercel statuses SUCCESS; schema-free Preview SKIPPED. Production `dpl_37d7Rzx6fuqAbynAWTtdtfW3CXYS` READY/exact; public `7b4596fd32590bbe29383605d0a753aa28ee51b4-mvin9p88` and actual lazy SOLO stylesheet verified. | Both existing ordinary SOLO cohorts: all six settled semantic H1s16px/22.4px, original canonical routes and no document overflow; read/reload only. Native20 accepted frames and84 owning tests remain bounded source evidence. Actual browser zoom and complete Experience acceptance remain owed. Shared loading/recovery headings were a separate discovered25px gap, not silently included in this claim. [Authenticated receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2506#issuecomment-6328359868). |
+| [#2513](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2513): recorded Work dates in the confirmed business calendar | Reviewed `470ce69c2988ff4d9659ebe9b24f435dd0ac36d4`, merged `c4181fe342f9274747b0b1d8f972d91e8dadfdea`; actual tree `9abfc6a68f7b0475806b63456ad991044388a121` equals reviewed union. All10 applicable exact-head checks/two statuses SUCCESS; schema-free Preview SKIPPED. Production `dpl_D3QfjnPoEbAg8nCCf1daH8wuaLHA` READY/exact; public `c4181fe342f9274747b0b1d8f972d91e8dadfdea-mviprr8a`. Lazy stylesheet SHA256 `5154eafd8ba84360279874c4b74d5093bfcca674bb76c7f3ffc9b8fce5714a4e`; six public source assertions PASS. | Native127 tests/eight suites and16 accepted render frames cover configured calendars, DST, tenant fences and original inspector reentry. Both ordinary production cohorts truthfully hold because their canonical business time zone is not confirmed. Read/refresh/reload retain original Work and invent no date columns. No setting or business record changed. Configured-grid authenticated positive proof remains UNVERIFIED. [Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2513#issuecomment-6328574028), [bounded UI evidence](evidence/ui-delivery/exp05-business-week.md). |
+| [#2514](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2514): compact shared loading and recovery headings | Reviewed `b937bde03c6271ad486ad8b5951effcbcf68c117`, merged `e336feb3a42aa2ff83265cac0b0717def60020e0`; actual tree `60b1e683a3e5e3e0b104868f30351d78507abd8a` equals reviewed current-main union and preserves E04#2504. All10 applicable exact-head checks/two statuses SUCCESS; schema-free Preview SKIPPED. Production `dpl_2BZAnuW4dt7HR6pDKDPnpE9WPFFt` READY/exact, canonical aliases assigned; public `e336feb3a42aa2ff83265cac0b0717def60020e0-mviqgd6y`. Shared state stylesheet SHA256 `358cff9b53ffeffd78667313be3535fbfc232def8b31564f70edfa863199cadf`; eight public source assertions PASS. | Both ordinary production cohorts: genuine Projects reload observed Loading your work16px/22.4px with original status/busy semantics, then settled Projects16px and native Overview return without page overflow. Combined127 owning cases/eight suites and11 accepted native frames preserve source/visual evidence. Unavailable/refused negatives remain source proof; no production denial manufactured. Initial asset scan missed the shared chunk and FAILED; corrected all17 referenced-CSS inspection passed without product/assertion relaxation. Native zoom remains UNVERIFIED. [Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2514#issuecomment-6328761224), [state evidence](evidence/ui-delivery/exp05-compact-operations-states.md). |
+
+All three increments use documented **AUTHOR-REVIEW / LOWER ASSURANCE**, not a
+non-author review. Channel production/internal repairs, no customer release name
+or announcement; Edge, migrations and feature activation NOT_APPLICABLE.
+One tenant-neutral implementation serves equally eligible existing/future SOLO
+businesses. A missing confirmed business calendar is legitimate configuration,
+never permission to adopt a machine zone or add a tenant-specific exception.
+Original Planning/CRM inspectors, Trust, Harness, Layer C, Rail and native writers
+are preserved. The week display is not scheduling, capacity optimization,
+recurring execution, ZION delegation or a Live acceptance result. The eleven
+Operations catalogue entries remain Listed/Unverified; source presentation does
+not promote their execution availability. Recovery is a reviewed forward fix or
+presentation revert, with no replay or deletion of business records.
+Functional: bounded live presentation/readiness and original-record navigation.
+Visual: native viewport/theme proof and bounded ordinary-owner layout readback;
+actual browser zoom remains unverified. Experiential: original status, reload and
+source limits remain truthful. Founder Acceptance: not requested; full ten
+outcomes/E5-CV1–9 and delegated/automation/recovery acceptance remain owed.
+This mechanical identity closeout is not logged recursively.
+
 **2026-10-21 — EXP09 original CURA preparation observation.**
 PR [#2496](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2496), reviewed
 `b6f84d47cff494e10c5708aac03f0137abaf2fa0`, merged

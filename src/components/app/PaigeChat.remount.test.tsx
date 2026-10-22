@@ -28,7 +28,7 @@ vi.mock("@/lib/playbook", () => ({
   usePlaybook: () => ({ persona: { greeting: "Harness greeting", name: "Paige", role: "AI COO" }, quickActions: [] }),
 }));
 const portalFixture=vi.hoisted(()=>({phase:"not-client",frame:null as unknown,checking:false,
-  read:vi.fn(),reload:vi.fn(),summary:vi.fn()}));
+  read:vi.fn(),outcome:vi.fn(),reload:vi.fn(),summary:vi.fn()}));
 const memoryFixture = vi.hoisted(() => ({
   actor: "d2000000-0000-4000-8000-000000000001", tenant: "d2100000-0000-4000-8000-000000000001" as string | null,
   loading: false, scope: vi.fn(), session: vi.fn(), auth: vi.fn(), unsubscribe:vi.fn(),
@@ -43,7 +43,7 @@ vi.mock("@/contexts/DashboardModeContext", () => ({ useDashboardMode: () => ({ .
 // "admin" role alone. The fixture drives it: isAdmin true = staff, false = not staff.
 vi.mock("@/lib/portal/portalStaffStanding", () => ({ usePortalStaffStanding: (_id: string, enabled: boolean) => enabled ? { loading: staffFixture.loading, staff: staffFixture.loading ? null : staffFixture.isAdmin } : { loading: false, staff: null } }));
 vi.mock("@/hooks/useClientPortalFrame", () => ({useClientPortalFrame: () => portalFixture, useSharedClientPortalFrame: () => portalFixture}));
-vi.mock("@/lib/customer-chat",()=>({readCustomerChat:(...args:unknown[])=>portalFixture.read(...args)}));
+vi.mock("@/lib/customer-chat",()=>({readCustomerChat:(...args:unknown[])=>portalFixture.read(...args),readCustomerChatOutcome:(...args:unknown[])=>portalFixture.outcome(...args)}));
 vi.mock("@/hooks/useClientPortalBrand", () => ({ useClientPortalBrandState: () => ({ brand: null, loading: false }) }));
 vi.mock("@/hooks/useClientChatContext", () => ({
   useClientChatContext: () => ({ contextBlock: memoryFixture.context.block, isLoading: memoryFixture.context.loading, hasCreditData: memoryFixture.context.hasCreditData }),
@@ -117,7 +117,7 @@ describe("normal PaigeChat remount scroll behavior", () => {
     vi.stubGlobal("ResizeObserver", HarnessResizeObserver);
     portalFixture.phase="not-client";portalFixture.frame=null;portalFixture.checking=false;
     staffFixture.isAdmin=true;staffFixture.loading=false;
-    portalFixture.read.mockReset();portalFixture.summary.mockClear();
+    portalFixture.read.mockReset();portalFixture.outcome.mockReset().mockResolvedValue({executor_active:false,settled:true});portalFixture.summary.mockClear();
     memoryFixture.actor = "d2000000-0000-4000-8000-000000000001";
     memoryFixture.tenant = "d2100000-0000-4000-8000-000000000001";
     memoryFixture.loading = false; memoryFixture.scope.mockClear();memoryFixture.authChange=null;memoryFixture.unsubscribe.mockClear();
@@ -590,4 +590,131 @@ describe("normal PaigeChat remount scroll behavior", () => {
     await act(async()=>{root.render(<PaigeChat user={{id:"owner-a",user_metadata:{}} as never} session={null}/>);for(let i=0;i<10;i++)await Promise.resolve();});
     expect(host.querySelector("textarea")).not.toBeNull();
   });
+  const prepareCustomerRecovery=async(response:()=>Promise<Response>)=>{
+    const props=returningCustomer();portalFixture.read.mockResolvedValue({threadId:"e0945000-0000-4000-8000-000000000001",messages:[]});
+    const sent=vi.fn(response);vi.stubGlobal("fetch",sent);
+    await act(async()=>{root.render(<PaigeChat {...props}/>);await memoryFlush();});
+    const input=host.querySelector("textarea")!;
+    await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value")!.set!.call(input,"My original private question");input.dispatchEvent(new Event("input",{bubbles:true}));});
+    await act(async()=>{input.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true}));await memoryFlush();});
+    return {props,input,sent};
+  };
+  for(const [name,response] of [
+    ["transport loss",async()=>{throw Error("Synthetic connection lost");}],
+    ["possibly accepted refusal",async()=>new Response(JSON.stringify({code:"INTERACTIVE_ACCEPTANCE_UNKNOWN",message_accepted:true}),{status:409,headers:{"Content-Type":"application/json"}})],
+    ["premature stream end",async()=>new Response('data: {"choices":[{"delta":{"content":"Partial private reply"}}]}\n\n',{headers:{"Content-Type":"text/event-stream"}})],
+  ] as const)it("customer recovery holds the original question after "+name+" without resending",async()=>{
+    const {input,sent}=await prepareCustomerRecovery(response);
+    expect(host.textContent).toContain("We couldn’t confirm this reply");
+    expect(host.querySelector("button[aria-label='Send message']")?.hasAttribute("disabled")).toBe(true);
+    expect(host.textContent).toContain("My original private question");
+    expect(host.textContent).not.toContain("READY WHEN YOU ARE");
+    await act(async()=>{input.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true}));await memoryFlush();});
+    expect(sent).toHaveBeenCalledTimes(1);expect(portalFixture.outcome).not.toHaveBeenCalled();
+  });
+  it("customer recovery restores only a definitely unaccepted question for explicit correction",async()=>{
+    const {input,sent}=await prepareCustomerRecovery(async()=>new Response(JSON.stringify({code:"INTERACTIVE_SCOPE_UNAVAILABLE",message_accepted:false}),{status:403,headers:{"Content-Type":"application/json"}}));
+    expect(input.value).toBe("My original private question");expect(host.textContent).not.toContain("We couldn’t confirm this reply");
+    expect(sent).toHaveBeenCalledTimes(1);expect(portalFixture.outcome).not.toHaveBeenCalled();
+  });
+  it("customer recovery reads the original intent and restores only settled canonical history",async()=>{
+    const {sent}=await prepareCustomerRecovery(async()=>{throw Error("Synthetic lost acknowledgement");});
+    const payload=JSON.parse(String((sent.mock.calls[0] as unknown[])[1]&&((sent.mock.calls[0] as unknown[])[1] as RequestInit).body));
+    portalFixture.read.mockResolvedValue({threadId:payload.threadId,messages:[{id:"saved-user",role:"user",content:"My original private question"},{id:"saved-reply",role:"assistant",content:"Actually saved customer answer"}]});
+    const check=[...host.querySelectorAll("button")].find(b=>b.textContent==="Check conversation")!;
+    expect(check).toBeDefined();await act(async()=>{check.click();await memoryFlush();});
+    expect(portalFixture.outcome).toHaveBeenCalledWith(portalFixture.frame,payload.threadId,payload.requestIntentId,expect.any(AbortSignal));
+    expect(host.textContent).toContain("Actually saved customer answer");expect(host.textContent).toContain("Your saved conversation is up to date.");
+    expect(document.activeElement).toBe(host.querySelector("textarea"));expect(sent).toHaveBeenCalledTimes(1);
+  });
+  it("customer recovery does not mistake an unconfirmed original status for completion",async()=>{
+    const {sent}=await prepareCustomerRecovery(async()=>{throw Error("Synthetic lost acknowledgement");});
+    portalFixture.outcome.mockResolvedValue({executor_active:false,settled:false});
+    const check=[...host.querySelectorAll("button")].find(b=>b.textContent==="Check conversation")!;expect(check).toBeDefined();
+    await act(async()=>{check.click();await memoryFlush();});
+    expect(host.textContent).toContain("Your reply is still unconfirmed");expect(host.textContent).not.toContain("up to date");
+    expect(host.querySelector("button[aria-label='Send message']")?.hasAttribute("disabled")).toBe(true);expect(sent).toHaveBeenCalledTimes(1);
+  });
+
+  it("customer recovery times out its original read and ignores a late settled result",async()=>{
+    vi.useFakeTimers();const {sent}=await prepareCustomerRecovery(async()=>{throw Error("Synthetic lost acknowledgement");});
+    const pending=pendingMemory<{executor_active:boolean;settled:boolean}>();portalFixture.outcome.mockReturnValueOnce(pending.promise);
+    const check=[...host.querySelectorAll("button")].find(b=>b.textContent==="Check conversation")!;
+    await act(async()=>{check.click();check.click();await memoryFlush();});
+    expect(portalFixture.outcome).toHaveBeenCalledTimes(1);const signal=portalFixture.outcome.mock.calls[0][3] as AbortSignal;
+    await act(async()=>{vi.advanceTimersByTime(20_000);await memoryFlush();});
+    expect(signal.aborted).toBe(true);expect(host.textContent).toContain("Your conversation couldn’t be checked just now.");
+    await act(async()=>{pending.resolve({executor_active:false,settled:true});await memoryFlush();});
+    expect(host.textContent).not.toContain("up to date");expect(portalFixture.read).toHaveBeenCalledTimes(1);expect(sent).toHaveBeenCalledTimes(1);
+  });
+  it("customer recovery retains an interrupted original request at the reply deadline",async()=>{
+    vi.useFakeTimers();const pending=pendingMemory<Response>();const {sent}=await prepareCustomerRecovery(()=>pending.promise);
+    const signal=(sent.mock.calls[0] as unknown[])[1] as RequestInit;
+    await act(async()=>{vi.advanceTimersByTime(360_000);await memoryFlush();});
+    expect(signal.signal?.aborted).toBe(true);expect(host.textContent).toContain("We couldn’t confirm this reply");
+    await act(async()=>{pending.resolve(new Response('data: {"choices":[{"delta":{"content":"LATE_AFTER_REPLY_DEADLINE"}}]}\n\ndata: [DONE]\n\n'));await memoryFlush();});
+    expect(host.textContent).not.toContain("LATE_AFTER_REPLY_DEADLINE");expect(sent).toHaveBeenCalledTimes(1);
+  });
+  it("customer recovery clears private text on an Auth event during its original status read",async()=>{
+    await prepareCustomerRecovery(async()=>{throw Error("Synthetic lost acknowledgement");});
+    const pending=pendingMemory<{executor_active:boolean;settled:boolean}>();portalFixture.outcome.mockReturnValueOnce(pending.promise);
+    const check=[...host.querySelectorAll("button")].find(b=>b.textContent==="Check conversation")!;
+    await act(async()=>{check.click();await memoryFlush();memoryFixture.authChange?.("SIGNED_OUT",null);await memoryFlush();});
+    expect(host.textContent).not.toContain("My original private question");expect((portalFixture.outcome.mock.calls[0][3] as AbortSignal).aborted).toBe(true);
+    await act(async()=>{pending.resolve({executor_active:false,settled:true});await memoryFlush();});
+    expect(portalFixture.read).toHaveBeenCalledTimes(1);expect(host.textContent).not.toContain("up to date");
+  });
+  it("customer recovery refuses an otherwise settled response that reloads a different thread",async()=>{
+    await prepareCustomerRecovery(async()=>{throw Error("Synthetic lost acknowledgement");});
+    portalFixture.read.mockResolvedValue({threadId:"foreign-thread",messages:[{id:"foreign",role:"assistant",content:"FOREIGN_PRIVATE_REPLY"}]});
+    await act(async()=>{[...host.querySelectorAll("button")].find(b=>b.textContent==="Check conversation")!.click();await memoryFlush();});
+    expect(host.textContent).not.toContain("FOREIGN_PRIVATE_REPLY");expect(host.textContent).not.toContain("up to date");expect(host.textContent).toContain("Your conversation couldn’t be checked just now.");
+  });
+  it("customer recovery keeps a newer canonical intent held after reading an older settled one",async()=>{
+    await prepareCustomerRecovery(async()=>{throw Error("Synthetic lost acknowledgement");});
+    portalFixture.read.mockResolvedValue({threadId:"e0945000-0000-4000-8000-000000000001",latestRequestIntentId:"e0965000-0000-4000-8000-000000000002",messages:[{id:"new-original",role:"user",content:"Newer canonical question"}]});
+    await act(async()=>{[...host.querySelectorAll("button")].find(b=>b.textContent==="Check conversation")!.click();await memoryFlush();});
+    expect(host.textContent).toContain("Newer canonical question");expect(host.textContent).not.toContain("up to date");
+    expect(host.querySelector("button[aria-label='Send message']")?.hasAttribute("disabled")).toBe(true);
+  });
+  it("customer recovery checks a returning original native intent before admitting a new question",async()=>{
+    const props=returningCustomer();portalFixture.read.mockResolvedValue({threadId:"e0945000-0000-4000-8000-000000000001",latestRequestIntentId:"e0965000-0000-4000-8000-000000000001",messages:[{id:"saved",role:"user",content:"Previously admitted private question"}]});
+    portalFixture.outcome.mockResolvedValue({executor_active:false,settled:false});const sent=vi.fn();vi.stubGlobal("fetch",sent);
+    await act(async()=>{root.render(<PaigeChat {...props}/>);await memoryFlush();});
+    expect(host.textContent).toContain("Your reply is still unconfirmed");expect(host.textContent).toContain("Previously admitted private question");
+    expect(host.querySelector("button[aria-label='Send message']")?.hasAttribute("disabled")).toBe(true);expect(sent).not.toHaveBeenCalled();
+  });
+
+  it("customer recovery retains the dispatched original intent through an ordinary access recheck",async()=>{
+    const held=pendingMemory<Response>();const {props,sent}=await prepareCustomerRecovery(()=>held.promise);
+    const original=JSON.parse(String(((sent.mock.calls[0] as unknown[])[1] as RequestInit).body));
+    portalFixture.outcome.mockResolvedValue({executor_active:false,settled:false});
+    portalFixture.checking=true;await act(async()=>root.render(<PaigeChat {...props}/>));
+    portalFixture.checking=false;await act(async()=>{root.render(<PaigeChat {...props}/>);await memoryFlush();});
+    expect(portalFixture.outcome).toHaveBeenCalledWith(portalFixture.frame,original.threadId,original.requestIntentId,expect.any(AbortSignal));
+    expect(host.textContent).toContain("Your reply is still unconfirmed");
+    expect(host.querySelector("button[aria-label='Send message']")?.hasAttribute("disabled")).toBe(true);
+    await act(async()=>{held.resolve(new Response('data: {"choices":[{"delta":{"content":"LATE_RECHECK_REPLY"}}]}\n\ndata: [DONE]\n\n'));await memoryFlush();});
+    expect(host.textContent).not.toContain("LATE_RECHECK_REPLY");expect(sent).toHaveBeenCalledTimes(1);
+  });
+  it("customer recovery does not treat an empty DONE stream as a saved answer",async()=>{
+    await prepareCustomerRecovery(async()=>new Response('data: [DONE]\n\n',{headers:{"Content-Type":"text/event-stream"}}));
+    expect(host.textContent).toContain("We couldn’t confirm this reply");expect(host.querySelector("button[aria-label='Send message']")?.hasAttribute("disabled")).toBe(true);
+  });
+
+  it("customer recovery restores keyboard focus to its read action after a failed check",async()=>{
+    await prepareCustomerRecovery(async()=>{throw Error("Synthetic lost acknowledgement");});portalFixture.outcome.mockRejectedValueOnce(Error("Synthetic unavailable status"));
+    const check=[...host.querySelectorAll("button")].find(b=>b.textContent==="Check conversation")!;
+    await act(async()=>{check.click();await memoryFlush();});
+    expect(document.activeElement).toBe(check);expect(host.textContent).toContain("Your conversation couldn’t be checked just now.");
+  });
+  it("customer recovery does not take focus from other work when its settled read finishes",async()=>{
+    await prepareCustomerRecovery(async()=>{throw Error("Synthetic lost acknowledgement");});
+    const pending=pendingMemory<{executor_active:boolean;settled:boolean}>();portalFixture.outcome.mockReturnValueOnce(pending.promise);
+    await act(async()=>{[...host.querySelectorAll("button")].find(b=>b.textContent==="Check conversation")!.click();await memoryFlush();});
+    const other=document.createElement("textarea");document.body.append(other);other.focus();
+    await act(async()=>{pending.resolve({executor_active:false,settled:true});await memoryFlush();});
+    expect(document.activeElement).toBe(other);other.remove();
+  });
+
 });

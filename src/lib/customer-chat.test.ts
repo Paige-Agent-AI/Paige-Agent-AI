@@ -1,5 +1,5 @@
-import {beforeEach,expect,it,vi} from "vitest";
-import {readCustomerChat} from "./customer-chat";
+import {afterEach,beforeEach,expect,it,vi} from "vitest";
+import {readCustomerChat,readCustomerChatOutcome} from "./customer-chat";
 import {readClientPortalFrame} from "./client-portal-frame";
 const f=vi.hoisted(()=>({getUser:vi.fn(),getSession:vi.fn(),rpc:vi.fn(),from:vi.fn(),thread:null as unknown,turns:[] as unknown[],
  error:null as unknown,reads:[] as string[],filters:[] as unknown[][],headers:[] as unknown[][],signals:[] as AbortSignal[]}));
@@ -23,13 +23,13 @@ const request=(data:unknown,error:unknown=null,name="rpc")=>{
 };
 beforeEach(()=>{
  vi.clearAllMocks();f.reads=[];f.filters=[];f.headers=[];f.signals=[];f.error=null;
- f.thread={id:thread,caller_user_id:actor,contact_id:client,tenant_id:tenant,lens:"client"};
+ f.thread={id:thread,caller_user_id:actor,contact_id:client,tenant_id:tenant,lens:"client",interactive_latest_intent:null};
  f.turns=[{id:"e0957000-0000-4000-8000-000000000002",role:"assistant",content:"Saved answer"},
   {id:"e0957000-0000-4000-8000-000000000001",role:"user",content:"Saved question"}];
  f.getUser.mockResolvedValue({data:{user:{id:actor}},error:null});
  f.getSession.mockResolvedValue({data:{session:{user:{id:actor},access_token:"synthetic-captured-history"}},error:null});
  f.rpc.mockImplementation((name:string)=>request(name==="client_portal_frame"?value():thread,null,name));
- f.from.mockImplementation((name:string)=>{const q={select:()=>q,eq:(...args:unknown[])=>{f.filters.push([name,...args]);return q;},is:()=>q,order:()=>q,
+ f.from.mockImplementation((name:string)=>{const q={select:()=>q,returns:()=>q,eq:(...args:unknown[])=>{f.filters.push([name,...args]);return q;},is:()=>q,order:()=>q,
    setHeader:(key:string,business:string)=>{f.headers.push([name,key,business]);return q;},
    abortSignal:(signal:AbortSignal)=>{f.signals.push(signal);return q;},
    filter:(...args:unknown[])=>{f.filters.push(args);return q;},
@@ -40,7 +40,7 @@ it("reuses native creation and reloads only the canonical customer transcript",a
  expect(result.threadId).toBe(thread);expect(result.messages.map(m=>m.content)).toEqual(["Saved question","Saved answer"]);
  expect(f.rpc).toHaveBeenCalledWith("paige_chat_thread_create",{p_contact_id:null,p_lens:"customer",
    p_title:"Customer conversation",p_consent_snapshot:{audience:"customer_private"}});
- expect(f.reads).toEqual(["paige_chat_threads","paige_chat_turns"]);
+ expect(f.reads).toEqual(["paige_chat_threads","paige_chat_turns","paige_chat_threads"]);
  expect(f.filters).toContainEqual(["audience","eq","customer_private"]);
 });
 for(const field of ["caller_user_id","contact_id","tenant_id","lens"])it("refuses a mismatched "+field+" before reading turns",async()=>{
@@ -74,6 +74,7 @@ it("binds every native/private-history request to the same captured business",as
   ["paige_chat_thread_create","x-client-portal-business",tenant],
   ["paige_chat_threads","x-client-portal-business",tenant],
   ["paige_chat_turns","x-client-portal-business",tenant],
+  ["paige_chat_threads","x-client-portal-business",tenant],
   ["client_portal_frame","x-client-portal-business",tenant],
  ]);
  for(const pair of [["caller_user_id",actor],["contact_id",client],["tenant_id",tenant]])expect(f.filters).toContainEqual(["paige_chat_threads",...pair]);
@@ -88,10 +89,10 @@ it("a selected second business cannot fall back to an ignored-hint first busines
  await expect(readCustomerChat(selected)).rejects.toThrow("Customer access changed");
  expect(f.rpc.mock.calls.map(c=>c[0])).toEqual(["client_portal_frame"]);expect(f.reads).toEqual([]);
 });
-it("passes the same cancellation signal to all five original SDK requests",async()=>{
+it("passes the same cancellation signal to all six SDK requests including fresh thread readback",async()=>{
  const controller=new AbortController();
  await readCustomerChat(frame(),controller.signal);
- expect(f.signals).toHaveLength(5);expect(f.signals.every(s=>s===controller.signal)).toBe(true);
+ expect(f.signals).toHaveLength(6);expect(f.signals.every(s=>s===controller.signal)).toBe(true);
 });
 it("canceled-before-start history performs no Auth or native request",async()=>{
  const controller=new AbortController();controller.abort();
@@ -108,7 +109,7 @@ it("late Auth completion after cancellation cannot open a conversation",async()=
 });
 it("cancellation during a saved-turn read withholds history and prevents further native calls",async()=>{
  const controller=new AbortController();
- f.from.mockImplementation(()=>{const q={select:()=>q,eq:()=>q,is:()=>q,filter:()=>q,order:()=>q,
+ f.from.mockImplementation(()=>{const q={select:()=>q,returns:()=>q,eq:()=>q,is:()=>q,filter:()=>q,order:()=>q,
   setHeader:()=>q,abortSignal:()=>q,maybeSingle:async()=>({data:f.thread,error:null}),
   limit:async()=>{controller.abort();return {data:f.turns,error:null};}};return q;});
  await expect(readCustomerChat(frame(),controller.signal)).rejects.toMatchObject({name:"AbortError"});
@@ -117,7 +118,7 @@ it("cancellation during a saved-turn read withholds history and prevents further
 it("final Auth change after loading turns still withholds saved history",async()=>{
  f.getUser.mockImplementation(async(jwt?:string)=>({data:{user:{id:!jwt&&f.reads.includes("paige_chat_turns")?"changed-actor":actor}},error:null}));
  await expect(readCustomerChat(frame())).rejects.toThrow("Customer session changed");
- expect(f.reads).toEqual(["paige_chat_threads","paige_chat_turns"]);
+ expect(f.reads).toEqual(["paige_chat_threads","paige_chat_turns","paige_chat_threads"]);
 });
 it("concurrent authorized A/B history reads keep every request and saved result separate",async()=>{
  const bTenant="e0927000-0000-4000-8000-000000000002",bClient="e0937000-0000-4000-8000-000000000002",bThread="e0947000-0000-4000-8000-000000000002";
@@ -132,9 +133,9 @@ it("concurrent authorized A/B history reads keep every request and saved result 
  });
  f.from.mockImplementation(()=>{
   let scope:string|null=null;
-  const q={select:()=>q,eq:()=>q,is:()=>q,filter:()=>q,order:()=>q,setHeader:(key:string,business:string)=>{if(key==="x-client-portal-business")scope=business;return q;},
+  const q={select:()=>q,returns:()=>q,eq:()=>q,is:()=>q,filter:()=>q,order:()=>q,setHeader:(key:string,business:string)=>{if(key==="x-client-portal-business")scope=business;return q;},
    maybeSingle:async()=>({data:{id:scope===bTenant?bThread:thread,caller_user_id:actor,contact_id:scope===bTenant?bClient:client,
-    tenant_id:scope===bTenant?bTenant:tenant,lens:"client"},error:null}),
+    tenant_id:scope===bTenant?bTenant:tenant,lens:"client",interactive_latest_intent:null},error:null}),
    limit:async()=>({data:[{id:scope===bTenant?"e0957000-0000-4000-8000-000000000003":"e0957000-0000-4000-8000-000000000001",role:"assistant",content:scope===bTenant?"History B":"History A"}],error:null})};
   return q;
  });
@@ -148,7 +149,7 @@ it("pins the independently verified captured bearer on every original history re
  await readCustomerChat(frame());
  expect(f.getUser).toHaveBeenCalledWith("synthetic-captured-history");
  const auth=f.headers.filter(h=>h[1]==="Authorization");
- expect(auth).toHaveLength(5);expect(auth.every(h=>h[2]==="Bearer synthetic-captured-history")).toBe(true);
+ expect(auth).toHaveLength(6);expect(auth.every(h=>h[2]==="Bearer synthetic-captured-history")).toBe(true);
 });
 it("refuses a cached different actor before any native history or thread creation",async()=>{
  f.getSession.mockResolvedValue({data:{session:{user:{id:"other-actor"},access_token:"synthetic-other"}},error:null});
@@ -159,4 +160,53 @@ it("refuses a captured bearer rejected by original Auth before opening any priva
  f.getUser.mockImplementation(async(jwt?:string)=>jwt?{data:{user:null},error:{code:"invalid_token"}}:{data:{user:{id:actor}},error:null});
  await expect(readCustomerChat(frame())).rejects.toThrow("Customer session changed");
  expect(f.rpc).not.toHaveBeenCalled();expect(f.reads).toEqual([]);
+});
+
+afterEach(()=>vi.unstubAllGlobals());
+
+const originalStatus=()=>new Response(JSON.stringify({executor_active:false,settled:true}),{headers:{"Content-Type":"application/json"}});
+const originalIntent="e0967000-0000-4000-8000-000000000001";
+it("reads only original private intent status through the existing control transport",async()=>{
+ const sent=vi.fn(async(..._args:unknown[])=>originalStatus());vi.stubGlobal("fetch",sent);const controller=new AbortController();
+ expect(await readCustomerChatOutcome(frame(),thread,originalIntent,controller.signal)).toEqual({executor_active:false,settled:true});
+ expect(sent).toHaveBeenCalledTimes(1);const init=sent.mock.calls[0][1] as RequestInit,headers=new Headers(init.headers);
+ expect(headers.get("Authorization")).toBe("Bearer synthetic-captured-history");expect(headers.get("x-client-portal-business")).toBe(tenant);expect(headers.get("x-paige-chat-control")).toBe("status");
+ expect(JSON.parse(String(init.body))).toEqual({threadId:thread,requestIntentId:originalIntent,messages:[{role:"user",content:"Status"}],surfaceContext:{kind:"customer_portal"},interactive:{kind:"status"}});
+ expect(init.signal).toBe(controller.signal);expect(f.rpc.mock.calls.every(c=>c[0]==="client_portal_frame")).toBe(true);
+ expect(f.reads.every(name=>name==="paige_chat_threads")).toBe(true);expect(f.filters).toContainEqual(["audience","eq","customer_private"]);
+});
+for(const value of [{}, {executor_active:false,settled:"yes"},{executor_active:true,settled:true}, {executor_active:null,settled:false}])it("refuses malformed or contradictory original status "+JSON.stringify(value),async()=>{
+ vi.stubGlobal("fetch",vi.fn(async()=>new Response(JSON.stringify(value))));await expect(readCustomerChatOutcome(frame(),thread,originalIntent)).rejects.toThrow("Conversation status could not be checked");
+});
+it("refuses a foreign private thread before asking its status",async()=>{
+ const sent=vi.fn();vi.stubGlobal("fetch",sent);f.thread={...(f.thread as object),contact_id:"foreign"};
+ await expect(readCustomerChatOutcome(frame(),thread,originalIntent)).rejects.toThrow("Customer conversation changed");expect(sent).not.toHaveBeenCalled();
+});
+it("withholds status after the current relationship is revoked",async()=>{
+ vi.stubGlobal("fetch",vi.fn(async()=>{f.rpc.mockReturnValue(request(null));return originalStatus();}));
+ await expect(readCustomerChatOutcome(frame(),thread,originalIntent)).rejects.toThrow("Customer access changed");
+});
+it("withholds status after an Auth change during the original transport",async()=>{
+ vi.stubGlobal("fetch",vi.fn(async()=>{f.getUser.mockResolvedValue({data:{user:{id:"other-actor"}},error:null});return originalStatus();}));
+ await expect(readCustomerChatOutcome(frame(),thread,originalIntent)).rejects.toThrow("Customer session changed");
+});
+it("does not publish a late original status after cancellation",async()=>{
+ const controller=new AbortController();vi.stubGlobal("fetch",vi.fn(async()=>{controller.abort();return originalStatus();}));
+ await expect(readCustomerChatOutcome(frame(),thread,originalIntent,controller.signal)).rejects.toMatchObject({name:"AbortError"});
+});
+it("returns the original native latest intent as a recovery reference, never as proof of completion",async()=>{
+ f.thread={...(f.thread as object),interactive_latest_intent:originalIntent};const result=await readCustomerChat(frame());
+ expect(result.latestRequestIntentId).toBe(originalIntent);expect(result).not.toHaveProperty("settled");
+});
+
+it("returns the latest intent observed after the private history read rather than its older snapshot",async()=>{
+ const newer="e0967000-0000-4000-8000-000000000002";
+ f.thread={...(f.thread as object),interactive_latest_intent:originalIntent};
+ const from=f.from.getMockImplementation()!;
+ f.from.mockImplementation((name:string)=>{const q=from(name);if(name==="paige_chat_turns"){const limit=q.limit;q.limit=async(...args:unknown[])=>{const result=await limit(...args);f.thread={...(f.thread as object),interactive_latest_intent:newer};return result;};}return q;});
+ expect((await readCustomerChat(frame())).latestRequestIntentId).toBe(newer);
+});
+it("refuses missing native latest-intent evidence instead of treating it as no original request",async()=>{
+ const projection={...(f.thread as Record<string,unknown>)};delete projection.interactive_latest_intent;f.thread=projection;
+ await expect(readCustomerChat(frame())).rejects.toThrow("Customer conversation changed");
 });

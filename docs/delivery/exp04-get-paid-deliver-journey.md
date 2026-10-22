@@ -1,5 +1,183 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
+## October22 actual preparation release and bounded focus repair
+
+Original2604 is released: reviewed6b8d5db6a8bb47c0f37e12f79a0bea0533a3b301,
+main4dac29197cdfe834b8b5bccb6f7266f28c9468e0, productiondpl_E1YR69zBJb2bjJwyCCRKiwCv3rFV,
+all applicable exact-head gates and source readback verified in Master4.0.
+GitHub recorded2605 as merged into its source parent after2fc was included; it
+is now in main THROUGH2604, not a separate main release or discarded source.
+Bounded actual ordinary-owner PDF/one field/save/reload/history proof is protected
+ANT52. Additional actual native editor Escape retained words but left BODY focus;
+this OPEN recovery finding is being repaired in the SAME editor/native menu.
+Original compiled assertion causally failed before repair. Current8 portal-context
+controls and20 native frames/19 paths/26 exact pins/zero page errors PASS. The
+document observer is focus-only and checks the exact own aria-controls pair;
+ONE original Sales leave guard remains authoritative. No wording save, new
+authority, provider, signing, payment or service-completion claim follows.
+Two complete local Sales runs each have993/994 PASS with one unchanged5s link-test
+timeout; neither is full-suite PASS. The separate restricted103-file also failed
+one different timeout. Original same103 tests then pass103/103 and full994/994
+in66 suites PASS under normal Windows process permissions, all assertions/timeouts/
+network guard unchanged. Type10/current6/no new diagnostics PASS; initial
+restricted compiler produced no result and was stopped, never counted as PASS.
+Fresh required CI and actual post-release
+owner focus recheck remain gates. Other four source-drive records retain their
+dated2604 proof; their source pins are not relabeled current. All12 outcomes and
+one final complete founder evaluation remain mandatory and incomplete.
+
+## Earlier October22 coherent preparation checkpoint — historical
+
+Reuse the existing native signing/document/party engine and API2599. Extend the
+same mounted Sales record with exact unsigned PDF/assigned fields/native version
+history/same-request recovery; repair original editor labels/menu Escape/compact
+six-route row and request-implying pending-party copy. Combine reviewed2604/2605
+and1f254d78c into existing2604, retaining source/review histories; supersede2605
+UNMERGED only after published source retention is verified. No competing store,
+approval/runtime/sender/ledger/Portal, own SQL/Edge/CI/grant or activation.
+
+Current2e804682f composes main ec1c497, preserves all23 owned source bytes and
+current main records. Own shared Brain notes moved from common prefix to own
+appended section; own Master rows placed within end of §4.0, preserving main text.
+Actual dirty Brain conflict withheld normal PR Actions; replay attempts are not
+PASS. Use normal source reconciliation and original required checks, no bypass.
+Fresh canonical npm dependencies3.4.17 sanitizer/1.13.0 Mammoth installed; no
+production Bun Mammoth claim. Fresh986 scoped Sales cases/65 suites PASS after
+original5s upload timeout→unchanged isolated170ms→complete quiet986 PASS; preserve
+failed run, assertions/timeouts. Lint0/two incumbent warnings, gold/UTF8 pass,
+Impeccable4.1.0 zero blocking/18 incumbent notes; strict production audit0 high/
+critical,8 moderate remain. Current five compiled drives20/19/26,20/14/34,20/11/31,
+20/10/22,20/16/29 PASS/zero errors/all142 source-pin comparisons exact; desktop
+paper/Not signed roster/320 template inspected. All Auth/API/RPC fixtures synthetic.
+
+Final current exact-head review/CI, safe web release/readback and actual candidate
+roles remain gates. Original native30 parity/normal39839940779 separate; fresh
+root frontier320009 retains8 original bodies/ABI/ACL/private table/RLS/4triggers/
+5indexes/SAVE, initial apply provenance unknown, six failures kept,2610 unmerged.
+Actual protected existing-live owner draft/reload/history does not establish
+candidate or full O1 acceptance. All12 outcomes, commercial exact-map approval/
+effective signed terms/PRE-1/scoped Planning/PRE-2/stable upload/Stripe/Comms/
+onboarding/client delivery/self-service/unified standing remain mandatory. Native
+manual drafts/reads do not require a new LayerC runtime; consequential transitions
+still require canonical existing authorization/approval/domain writers/receipts.
+No jurisdiction words/legal-sufficiency claim, blanket counsel gate, catalogue/
+algorithm/INT346/provider activation, other-agent assignment or founder acceptance.
+
+## October22 actual-owner pending signer wording — pre-edit repair
+
+REPAIR, not a new signing path. Actual authorized owner saved/reloaded a private
+Not sent draft, while its original pending signer was labeled Awaiting signature.
+Customer outcome: see the actual unsigned state without implying a request was
+issued. Reuse canonical agreementVocabulary SIGNER_STATE in the selected record
+and existing signer roster; pending means Not signed, not sending or delivery.
+Sales is the entry; same native agreement/party records, actual owner/business/
+role and original SDK/Rail/history remain authoritative. UI vocabulary only, no
+Spine/LayerC execution, new adapter, risk/approval/budget/autonomy/provider access,
+identity/store/job/receipt/scheduler or signature/payment/Comms mutation. Preserve
+viewed/signed/declined and genuine agreement-sent states. Existing prepared roster
+flow must causally reject request-implying copy before the one-label repair;
+actual original signer source drive covers desktop/narrow/focus/refusal/recovery.
+Then separate exact source review/CI, ordered parent release, production readback
+and actual same-owner observation; no source or author smoke is independent/full
+O1–O12/founder acceptance. No new legal clauses or infrastructure counsel gate.
+
+## October22 required visual-check repair
+
+Actual verify120044935098 on0010067d3 FAILED only at the original Impeccable
+changed-source gate: the new benign sanitizer fixture had an image without src.
+The full functional Test and other required checks passed; the failed overall
+job is retained as FAILED. Supply the real existing /favicon.png in that SAME
+fixture; preserve every event/script/URL/template assertion and all check rules.
+Fresh unchanged two-case sanitizer suite PASS; exact cached Impeccable4.1.0 on
+all owning changed source now0 anti-patterns/four incumbent advisories. No skip,
+config/threshold/assertion/timeout change, product image or runtime edit. All84
+render pins remain exact because this only changes an unbundled test fixture.
+Fresh exact-head CI/review remain required; candidate NOT_DEPLOYED/NOT_ACCEPTED.
+Actual ordinary-owner draft/reload/history proof is separately protected in ANT52,
+from the existing live foundation, not this candidate or full O1 acceptance.
+
+## October22 editor current source proof
+
+Checkpoint2fa4702fb consumes reviewed2604/0010067d3 and released2607 install pins,
+retaining all8 owning source/guard/test/drive files byte-exact to reviewedd555.
+Fresh169 selected cases/eight suites and four actual source drives20/19/26,
+20/14/34,20/11/31,20/10/22 PASS/zero errors/all113 pins exact.320 dark template
+view inspected; synthetic engineering evidence only. Prior173 composed/full1027
+coverage remains separate. Original API/native parity and normal39839940779
+verified; initial apply provenance unknown, six failures retained,2610 superseded
+unmerged. Final source review/CI/ordered parent and own web release/readback/real
+role/provider/whole twelve-outcome and founder acceptance remain owed. Incoming
+accepted2616 Mammoth lock delta/2614 provider docs will be reconciled separately,
+never silently replacing original rendered-source pin identities. No activation.
+
+## October22 current preparation release and security composition
+
+Original native300004 is now recorded with all8 expected bodies/ABI/ACL, private
+RLS table/four triggers/five indexes and unchanged SAVE. Normal canonical
+39839940779/deploy120038195038 SUCCESS confirms unchanged reviewed main7a874 is
+up to date, original persistence guard passes and db-live7a874. Original apply
+provenance remains UNVERIFIED; all six prior timeout failures remain FAILED.
+Do not rewrite an applied migration:2610 is superseded unmerged, historical proof
+and reviews preserved. Reuse only its benign sanitizer regression in2604, which
+composes reviewed main13d267 including released shared2607's BOTH install pins.
+All owning UI/controller/SDK/harness bytes remain unchanged from reviewed4b;
+fresh84 selected cases/six suites and actual mounted20/14/33,field20/11/30,
+intake20/10/21 PASS/zero errors/all84 pins exact. Final exact-head review/CI and
+own web release/readback precede actual ordinary-role checks; no source fixture
+establishes authenticated acceptance. Editor2605, commercial exact approval,
+PRE-1, stable upload recovery and all12 outcomes remain mandatory. Historical
+runner attempts and earlier source-stage plans below retain their dated limits.
+
+## October22 native heading-menu focus — pre-edit repair
+
+REPAIR the existing AgreementBodyEditor and its SAME source-browser path. Actual ordinary-owner production operation retains the unchanged draft and resolves all toolbar/heading labels, but Escape leaves DOM focus on BODY after the native heading menu closes. Installed MDX SelectContent explicitly prevents close autofocus. Owner outcome: dismiss the menu and continue keyboard work in the same editor without losing context or changing wording. Sales/Agreements is the domain; original editor/menu/fieldset/ONE leave guard, native agreement/template and source epochs remain. This is private interface focus only: no new Spine/Chat/Live registration, LayerC/Harness/approval/permission/budget/provider, durable job or Rail receipt. Original sales.department remains PARTIAL/PROOF_OWED for the complete Experience. Restore only the actual current native trigger after its handled dismissal; unmounted/disabled/retired or separately focused context must not receive delayed focus. Add the original compiled-browser causal assertion first, preserve all prior menu/wording/guard/source/state checks, verify desktop/narrow and exact source, then final review/CI/release/readback/actual owner recheck. All twelve outcomes, proper roles/cohorts/physical device, algorithms/catalogue/INT346 and whole founder acceptance remain separate. No legal words or universal counsel gate is introduced.
+
+## October22 original wording-editor labels — pre-edit correction
+
+Actual authorized ordinary-owner inspection of the deployed template editor found
+unexpanded shortcut and heading-level placeholders in accessible toolbar names.
+REPAIR the original AgreementBodyEditor translation callback to honor the existing
+MDXEditor interpolation contract while retaining its Agreement content label.
+REUSE the same editor, native Markdown, scope remount, normalization/input guard,
+source fallback, plugin allowlist, template/record/one leave guard and permissions.
+No new component library, localization engine, legal wording or Spine capability.
+The business event is ordinary private document editing; no LayerC action or
+approval/send/signature/payment authority follows from a toolbar choice. Original
+records/receipts are unchanged. Extend the existing source-mount template drive
+with real accessible Undo/Redo and three heading choices before correcting the
+callback; verify exact wording/options/reload/leave and desktop/narrow frames.
+Local fixtures are not hosted persistence, legal sufficiency, actual role/provider
+acceptance or full O1–O12/founder acceptance. Separate review/current exact-head CI,
+normal safe release/readback and bounded signed-in label confirmation remain owed.
+
+The unchanged native-browser heading-menu Escape then reproduced the original
+Sales guard closing the whole empty template editor instead of only the menu.
+Four actual guard cases reproduce popup/handled/composition Escape interception
+while15 incumbent cases PASS. Extend the SAME guard to defer to native popup or
+already-handled/composing Escape, retaining subsequent ordinary Escape, dirty,
+busy, unknown, beforeunload, original navigation and explicit discard semantics.
+No second listener, guard or approval path. Verify native menu dismissal before
+continuing the original wording/options journey; do not suppress its Escape test.
+
+The final original-template320 render also shows all six destinations stacked
+above the document. Reuse the existing bounded agreement-row behavior for actual
+template/creation work as well: keep its CSS in the original Sales stylesheet,
+recognize original template/request locations, and let the SAME Sales host reveal
+its selected destination. Preserve six routes/roving keys/guard and44px controls;
+no new navigation or mobile shell. Add actual narrow row-height/selection/route
+checks to this same source drive before correcting the omission, then confirm
+native document preparation still uses that single host behavior.
+
+Final composed-source template/editor20/19/26, mounted20/14/34, original
+fields20/11/31 and intake20/10/22 PASS/zero errors/all113 pins exact. Actual native
+heading menu and320 dark compact template frame inspected. Six-file design0
+blocking/18 incumbent advisories, lint0/one incumbent warning. Final1027 cases/
+66 suites PASS after one unchanged5s signed-copy refusal case passed isolated98ms
+and in the full unchanged quiet rerun. Initial missing local dependency/MSYS and
+selector setup attempts are not causal/product/customer evidence. Type baseline
+remains untouched; final ratchet10/current6/no new errors and gold0 PASS; review/required CI/prerequisite release/readback
+and actual role/cohort/device/provider/whole12/founder acceptance remain separate.
+
 ## October22 required database proof — pre-edit runner correction
 
 Actual exact-head database jobs fail before native tests when the existing GHCR
@@ -1995,6 +2173,61 @@ October22 current native prerequisites: template220004, commercial230004, signer
 
 #### Original agreement-document owner API — pre-edit integration contract
 
+Mounted-consumer continuation: use the SAME original Sales workspace/one leave
+guard, actual native view/PDF/version/history and opaque document request UUID
+plus original business reference. Capture the actual existing Auth session/user
+before dispatch and pin that Authorization on the existing SDK request; retire
+before/after every await on user/business/permission/instance change. No private
+fields/PDF/token in URL/storage/logs. Retain the recovery UUID BEFORE a mutation;
+unknown outcome keeps that SAME immutable command until native recovery. Original
+signer/template/wording/import and E09 source remain, no competing pane/approval.
+Fresh native view/source match is separate from the historical save receipt;
+actual bytes/hash/geometry render before placement, source-matched signer labels
+only. Current versus historical version and missing/changed/forbidden/unknown/
+commercial-hold/loading/saved/recoverable states are explicit. A historical read
+does not authorize a replacement; new writes use original native current CAS.
+Source/component/transport fixtures cannot close authenticated acceptance.
+
+Current owning consumer source composes API566/current main2d;995 cases/65 suites
+PASS before two final response-race repairs; current136/six integration cases,
+including15 controller cases, PASS. Author review5617064903 identified an older
+PDF retry replacing newly retained bytes and an older history response restoring
+stale selection. Both actual failures reproduced before the per-file/preparation
+fence and save-time history retirement; earlier test-setup failures are excluded.
+Fresh unchanged mounted20/14/33, original field20/11/30 and neighboring intake20/10/21
+PASS/zero page errors; all84 owning pin checks exact. Actual desktop paper,320
+dark bounded100% pan and unknown recovery inspected. Save now focuses its verified
+native result. Existing six mobile destinations fit a56px row; the SAME Sales
+leave guard intercepts the original pre-router request, preserving focus when
+navigation is canceled. Source/tenant/signer/byte/receipt/unknown safeguards stay.
+An unchanged5s completed-agreement fixture timed out under concurrent builds, then
+passed isolated and in the complete995 rerun; no test/timeout weakened. Incumbent
+field readonly proof caught a false saved label with two absent optional values;
+only an actual saved reference now enables that label. Seven-file detector0/four
+intentional paper/overlay advisories, no global-clean claim. Source/review/CI,
+native/Edge/web readback, actual hosted owner/staff/client/provider and whole12/
+founder acceptance remain separate; see the mounted-consumer evidence record.
+
+Mounted-source review additionally REPAIRS original native Sales navigation:
+six wrapped mobile destination rows obscured the real document, and native arrow
+navigation moved focus after a browser-level refusal. Preserve the SAME six
+destinations/route registry and show one bounded narrow row only in an agreement
+workspace; reveal the selected destination. The SAME existing Sales leave guard
+now consumes the already-established sales-before-navigation request BEFORE
+router/focus advancement. Other registered guards retain authority. This is no
+new navigation or approval engine. A real narrow geometry/focus failure and
+bounded diagnostic establish the defect; full final confirmation remains owed.
+One unit run overlapped the source repair and is excluded as causal RED evidence;
+its subsequent PASS does not replace the actual failing browser trace.
+
+Other actual source findings: preserve unsaved field guards while native access
+is pending; checkpoint an explicitly opened verified existing document for reload;
+leave an unknown request without automatically reopening it; keep its opaque
+reference for later inspection. Native preparation remains unsigned and separate
+from approval/signing/financial/accepted-service evidence. Compact the repeated
+heading/status content so document controls retain the viewport. Full hosted
+owner/staff/linked-client/provider and all twelve outcomes remain unaccepted.
+
 1. Outcome: prepare the original actual PDF, retain assigned fields as immutable
    native versions, retrieve exact bytes/history and recover the same interrupted
    request. Ordinary internal preparation never signs, sends or charges.
@@ -2185,6 +2418,10 @@ Local54 native checks/replay2/two concurrent sessions/one observed wait and11 De
 
 October22 current template composition: native#2545/220004 is RELEASED SOURCE VERIFIED, not the historical unapplied state. Source main1e1073133 and both exact template/C7 sections preserved; own template source unchanged and25 rendered source hashes rechecked. Dormant commercial#2550 migration230004 rolled back safely at the original5s relation-lock limit and is NOT_APPLIED; template UI uses already-applied220004 and no C7 action. This new head still requires fresh CI/review/release/readback; no earlier green substitutes, no actual customer/full Experience acceptance implied.
 
+## October22 C7 original-source preparation reader — development only
+
+REUSE original2192/179e52/current0a reader and all37 cases; compose original coherent2604/6b8 private PDF/field source without changing either owning reader/test file. Fresh canonical formatter/reader/field Deno25 tests/110 steps PASS with all original runtime denials and type checking. Older13/63 remains historical. No actual endpoint/Spine/Chat/Live/Portal or provider consumer is connected. This one existing-invoice draft path needs exact canonical same-client invoice/terms/source; it is not a requirement that every agreement must already have an issued invoice. Remaining integration must bind exact reviewed PDF AND assigned-map before original Kit/Trust consequential approval, then reuse the native immutable operation/freeze/Rail. No new financial obligation, external send or signature follows from a proposed presentation. Original native2599/300004/Edge37 readback is verified; own and parent final source/CI/merge/web/ordinary-role/full12/founder acceptance remain separate required legs.
+
 ## October22 original upload intent and uncertain result
 
 REPAIR original business upload adapter after actual-hook3 positive/2 genuine RED controls: loaded/current business must match before Storage, and lost/context-retired results never claim rollback or no effect. Original private bucket/RLS/path/cache/no-overwrite/result contract retained. Final9 hook plus102 existing Sales cases (111) and type10/current6/lint0 PASS; initial original audit-history timeout repeated green without changing5s limit/assertions. Actual Sales/modal/hook/SDK20 rendered cases/5 paths/19 exact pins/0page errors, neutral local transports only. Native PAIGE backdrop is respected and actual open/folded states are explicit. Stable same-request upload recovery, native-supported import/wording/preview/fields and owner/staff/client/provider/all12/founder acceptance remain incomplete. No actual upload, signing, send, payment, role, bucket, provider, model or Chat activation. [Bounded evidence](../evidence/ui-delivery/e04-agreement-upload-intent.md).
@@ -2245,3 +2482,196 @@ capability/algorithm activation or authenticated customer outcome. See [full
 orchestration and proof boundary](../evidence/ui-delivery/e04-preparation-editability.md).
 
 October22 checked-signer main-target continuation: original prerequisite#2554 is RELEASED SOURCE VERIFIED, merge605a8c4bcdfb63c016689717947caf09f3296f83/native240004/bodyf380cfa97f14e29c8b88721a76b9db4e/unchanged owner/search_path/ACL and exact webdpl_HMxLuMYHqkv8KYQVWYJBEm2K3UW7/build605a8c4…-mvj7pldd (receipt6335238273). Actual main and all E09 source retained through a clean composition; own native250004 and checked proof are unchanged. Earlier pending-prerequisite notes are historical. This own250004 still requires fresh exact-head CI/review/normal migration/readback; source119/replay2 is not customer/provider/signing acceptance. All12 outcomes remain mandatory/incomplete.
+
+
+## Historical E04 Brain checkpoints — preserved, not current acceptance
+
+## October22 required visual-check repair
+
+Actual verify120044935098 on0010067d3 FAILED only at the original Impeccable
+changed-source gate: the new benign sanitizer fixture had an image without src.
+The full functional Test and other required checks passed; the failed overall
+job is retained as FAILED. Supply the real existing /favicon.png in that SAME
+fixture; preserve every event/script/URL/template assertion and all check rules.
+Fresh unchanged two-case sanitizer suite PASS; exact cached Impeccable4.1.0 on
+all owning changed source now0 anti-patterns/four incumbent advisories. No skip,
+config/threshold/assertion/timeout change, product image or runtime edit. All84
+render pins remain exact because this only changes an unbundled test fixture.
+Fresh exact-head CI/review remain required; candidate NOT_DEPLOYED/NOT_ACCEPTED.
+Actual ordinary-owner draft/reload/history proof is separately protected in ANT52,
+from the existing live foundation, not this candidate or full O1 acceptance.
+
+## EXP04 October22 editor current source composition
+
+Source2fa4702fb composes reviewed2604/0010067d3 plus released2607's two install
+pins. All8 owning UI/guard/test/drive files are identical to reviewedd555. Fresh
+169 selected cases/eight suites PASS; editor20/19/26,mounted20/14/34,fields20/11/31,
+intake20/10/22 PASS/zero errors/all113 exact source pins.320 dark native template
+view inspected. Earlier173 and full1027 coverage are historical/separate, not
+summed. Final exact-head review/CI, ordered parent/own web release and real role/
+provider/full twelve-outcome/founder acceptance remain owed. Current API/native
+parity is verified via original2599/normal39839940779; initial apply provenance
+unknown, six failures preserved,2610 superseded unmerged. Subsequent accepted
+main2616 Mammoth/orphan lock delta and2614 provider docs need final composition
+readback; do not relabel these source-head render pins as covering another lock.
+No new words, signer/send/payment effect, privilege or Chat/algorithm activation.
+
+## EXP04 October22 current release reconciliation
+
+Mounted preparation consumes reviewed main13d267 and the released2607 manifest
+pins for both install lanes. Original owner API2599/429 Edge37/source parity and
+native300004 catalog parity are verified; normal39839940779/120038195038 passes
+unchanged main with remote up to date/persistence and db-live7a874. Initial native
+application provenance remains UNVERIFIED; six prior failures remain failures.
+Superseded2610 is CLOSED UNMERGED; no recorded migration rewrite. Only its benign
+sanitizer regression is reused. Fresh84 selected cases/six suites plus three
+actual-source drives20/14/33,20/11/30,20/10/21 pass; all84 pins reverified after
+current main composition, desktop/320 document views inspected. Older source
+proof below is historical, not added to fresh coverage. Own exact-head gates/web
+and actual ordinary roles/provider/full twelve-outcome/founder acceptance remain
+owed. No legal words/counsel gate, competing architecture or Chat activation.
+
+## EXP04 original editor interactions — October22 local follow-through
+
+Actual ordinary-owner inspection exposed unexpanded native shortcut/heading
+labels. Real browser assertions reproduced them, then the original menu Escape
+closed the whole empty editor. Four causal popup/handled/composition guard REDs
+are repaired in the SAME Sales listener; native later Escape/beforeunload remain.
+The library's actual interpolation values preserve Agreement content and exact
+canonical wording; split/join retains the existing TypeScript target. Native
+template390 geometry also reproduced a129px stacked row. Move the SAME compact
+row to its original Sales stylesheet and let the SAME host reveal its selected
+agreement/template/request destination; document result focus is preserved.
+
+Actual-source template/editor20/19/26, mounted preparation20/14/34, original
+fields20/11/31 and intake20/10/22 PASS/zero page errors/all113 pins exact. Native
+heading choices and320 dark compact template frame inspected. Six-file design0
+blocking/18 existing paper and Sales type/radius advisories, not globally clean.
+Earlier69 controller/SDK/guard cases and final1027 regression/66 suites PASS. One
+unchanged5s signed-copy refusal case timed out, then passed isolated98ms and in
+the complete unchanged quiet1027 rerun. Type baseline10/current6/no new errors,
+lint0/one incumbent warning and gold0 PASS; final review/CI remain in progress.
+No new user/tenant/provider/words/signature/payment act.
+
+LOCAL source only, not deployed or customer accepted. Original2599 native30/API
+and2604 mounted source must first satisfy their own exact-head release/readback.
+This correction changes no native agreement, permission, token/Portal, approval,
+Comms, financial or orchestration engine. Whole O1–O12 and role/cohort/provider/
+founder acceptance remain mandatory. No agent assigned or capability promoted.
+
+## EXP04 original mounted document preparation — October22 local source
+
+Original Sales agreement now mounts the actual captured-session owner SDK, exact
+unsigned PDF/assigned fields, native selected/earlier versions and original event
+receipt. ONE Sales leave guard covers pending reads, writes, unknown requests and
+original pre-router navigation. Same opaque request survives reload/retry; source,
+actor/permission, actual bytes and signer labels remain fenced. No private words,
+field plan, PDF or credential in URL/cache/logs. No new agreement/approval/runtime.
+
+995 regression cases/65 suites PASS before the final two response-race repairs;
+current136 integration cases/six suites, including15 controller cases, PASS.
+Review5617064903 reproduced old PDF/history responses overwriting newer bytes
+or selection. Per-file/preparation identity and save-time history retirement fix
+both; actual causal REDs precede repair, test-setup failures excluded. Fresh
+actual mounted20 cases/14 paths/33 pins,
+original field20/11/30 and intake20/10/21 PASS/zero page errors/all84 pins exact.
+Desktop paper,320 dark bounded100% pan and unknown recovery inspected. Native
+six-destination mobile row, guarded keyboard navigation and verified-result focus
+remain in existing Sales. Seven-file detector0 blocking/four intentional overlay
+advisories; type baseline10/current6, ESLint0/two incumbent warnings. One unchanged
+5s completion fixture timed out under simultaneous builds, passed isolated and in
+the full unchanged995-case rerun. False optional-SHA saved label was caught by
+the incumbent readonly field assertion and fixed without changing that assertion.
+
+Original source/API prerequisite2599/native300004/Edge needs its own exact-head
+green release/readback before this consumer; own UI source is NOT_DEPLOYED and
+actual hosted role/Storage/provider acceptance UNVERIFIED. Commercial-linked
+documents stay held for canonical economics/approval integration. All12 outcomes,
+signed/effective terms, invoice/Stripe/collections/onboarding/delivery/Portal/
+standing and one whole founder evaluation remain required. No new agent, legal
+wording, counsel gate, provider/send/signature/payment or INT346 activation.
+
+
+## Earlier combined checkpoint — historical
+
+
+
+Current source2e804682f/ec1c497 main combines original2604 exact PDF/controller,
+2605 editor/menu/native navigation and pending signer Not signed repair. Existing
+23 owning source files are byte-identical to retained1f254d78c; no own SQL/Edge/
+workflow/grant/provider/admission changes. Main Brain text retained verbatim;
+only own105 prefix lines moved here, own43 Master lines remain in §4.0 away from
+shared insertion point. Verified GitHub dirty/Brain conflict caused missing PR
+Actions; normal reopen and same-tree replay did not cure it and are not PASS.
+Normal conflict resolution is used, no new CI engine. GitHub official workflow
+troubleshooting confirms merge conflicts withhold pull_request workflows.
+
+Fresh canonical install DOMPurify3.4.17/Mammoth1.13.0; source resolution is not a
+production Bun Mammoth claim. Local scoped Sales986/65 PASS after unchanged5s
+upload timeout→isolated170ms→complete unchanged quiet986 PASS; failed run retained.
+Lint0/two incumbent warnings, gold/UTF8 pass, canonical4.1.0 detector0 anti-patterns/
+18 incumbent notes, original production audit0 high/critical/8 moderate. Fresh
+compiled source editor20/19/26,mounted20/14/34,fields20/11/31,intake20/10/22,
+recipients20/16/29 PASS/zero errors/all142 pin comparisons exact. Actual desktop
+paper/Not signed roster/320 dark template inspected; synthetic Auth/API/RPC only.
+Final exact-head review/CI/normal safe release/readback and actual candidate roles
+remain owed. Prior type10/6 is not refreshed current-main proof.
+
+Original preparation native30 still matches all8 bodies/ABI/ACL/private RLS table,
+four triggers/five indexes/SAVE; fresh root frontier320009. Initial apply path
+unknown; normal39839940779 verified, six prior failures preserved,2610 superseded
+UNMERGED. Actual ordinary-owner earlier private draft/reload/history is protected
+ANT52, not candidate/full acceptance. All12, exact map/terms approval, PRE-1/2,
+stable import identity, Stripe/Comms/onboarding/delivery/Portal/Chat and founder
+acceptance remain mandatory. Original agreement capability PARTIAL, exact fields
+Chat/Live UNAVAILABLE; no algorithm/catalogue activation or other-agent assignment.
+
+## Earlier native Brain entries — historical
+
+## EXP04 original owner document API — October22 local dependent source
+
+Original agreement-document owner door now has bounded draft preparation,
+immutable assigned-field version retention/recovery, sanitized native metadata
+and actual checksum-verified PDF responses in LOCAL source. Original Auth/current
+business/human reader and private active user/profile/member floor surround
+artifact work; native writer owns atomic source/CAS/party checks and original
+edited event. Actual native renderer/plan/parser/hash/shared field validator and
+canonical private Storage reused, no new signing/approval/job/financial engine.
+Same request adopts timestamped original bytes, never re-renders/overwrites;
+lost response recovers same historical event. Actual source-upload PDF is copied
+unchanged. Commercial-linked source stays explicitly held until original exact
+commercial-presentation integration, never silently stripped of economics.
+
+All original/new twelve Deno suites170 cases/102 steps PASS and actual Edge strict
+check PASS; actual native-rendered bytes/HTTP are used, Auth/RPC/Storage transports
+are synthetic, not actual hosted/native customer evidence. Original token/owner
+block hash and Portal scope/ordering negatives preserved. New tests join existing
+CI step with all original permissions/assertions retained. Own source review/CI,
+native prerequisite/ordered Edge release/readback, actual UI/controller/one leave
+guard/reload and owner/staff/client/provider/all12/founder acceptance remain owed.
+Exact document Chat/Live UNAVAILABLE; no Algorithm/LayerC/readiness or provider/
+signing/send/payment/INT346 activation. [Evidence](../evidence/ui-delivery/e04-owner-document-preparation-api.md).
+
+
+## EXP04 exact PDF and assigned fields — October22 local dependent consumer
+
+Same sole lead reuses the original agreement/signers/native PDF parser and ONE
+field constructor, portable original canonical serializer and native source CAS.
+Actual core browser renderer displays native-generated bytes/crop/rotation;
+five field kinds, two original parties, pointer/keyboard/numeric correction,
+Undo, mobile zoom, failed hash/geometry and private-scope mask are source-verified.
+Fifteen model cases, original23 strict tests/73 steps and actual20 rendered
+frames/11 paths/30 exact source pins/zero page errors PASS. Two real browser ES
+target errors and previous-page inspector lifetime corrected without baseline,
+timeout or assertion weakening. Native Save/controller/router/history integration
+is NOT connected: fixture captures RAM proposals and explicitly reports no native
+save. No actual authenticated roles, hosted file, provider or founder acceptance.
+
+Exact pdfjs-dist5.5.207 Apache2.0/Node20.19 compatible core renderer only; initial
+unreleased5.6 advisory candidate rejected. All prior locked package records and
+audit baseline18 remain, no global clean claim, scripting manager or provider
+expense. Native forward290004/#2582 remains UNAPPLIED dependency. Original Sales
+one leave guard, exact-map approval/Communications/send/consent/seal/effective
+economics and all twelve outcomes remain mandatory. Chat/Live exact fields
+UNAVAILABLE; no LayerC/algorithm/readiness promotion or new engine/store. See
+[bounded evidence](../evidence/ui-delivery/e04-agreement-document-fields.md).

@@ -1,5 +1,65 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October22 — prepared source-reference foundation
+
+O14/Decision Desk now has a local canonical source-reference prerequisite: original
+scoped filed/confirm rows select only the known remediator's scalar finding UUID,
+not full payload or guessed department routes. Shared E4 frame retains the UUID,
+not account/address/approval text. Missing source date remains absent. Four causal
+failures then70 cases/five original suites pass. This does not mount a focused URL
+or a Desk action: those remain separate required consumers; existing resolution
+is surface_only. Original type ratchet10/6/zero new and70 owning cases pass after
+the SDK inference correction; runtime projection/guards unchanged. Parent2612 and
+original source-binding proof are reconciled: one inspected serializer digest,
+original120-source/29-adapter restoration, Spine self-test and77 hostile/positive
+controls pass; no extractor/metadata/dispatch or other119-pin change. Parent2612 and
+original2607 source prerequisites are released. Own review/CI, actual source-query
+readback/permissions/reload/Chat/Live and one founder evaluation remain owed.
+No approval/execution/Rail, provider, catalogue or ALG03/13 promotion; all19/nine
+definitions remain required. [Evidence](../evidence/ui-delivery/e2-prepared-source-reference.md).
+
+## October22 — O06 source release verified; customer acceptance open
+
+2612/c033ded75c8593c8f1fa3a18b0530cb8f725257f merged
+8e97c949d7a7234a842a9ba44d8bc8646caf2cc6 with exact preflight union
+62a6bd5c330ed2b5cc62a315e3507b434a0d916e, all10 applicable exact-head
+checks/two statuses, normal schema-free Preview skip and accurately labeled
+author review5619760376. Actual productiondpl_EKYTdUDpjDWd6Z6NX6agpGPqA3Kx
+READY/public build8e97c949-mvjz6m2z; original emitted SOLO chunk contains all four
+coverage markers and excludes the obsolete readiness title.
+[Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2612#issuecomment-6350335218).
+Functional source release verified; Visual synthetic native proof retained;
+Experiential corrected ordinary/cohort/permission/Live and complete Founder
+Acceptance remain UNVERIFIED. No O07/O19 completion or action/provider/catalogue/
+algorithm promotion. All19/nine required; earlier dated development claims below
+are superseded only at this bounded source-release level.
+
+## October22 — Business Review elapsed-budget repair candidate
+
+All19 definitions below and all nine analytics remain required. Current-main
+grounding8bf6f15a preserves released contextual suggestion/Decision Desk#2544,
+#2583/#2596 and factual closeout#2602; exact identities and bounded ordinary
+customer evidence remain in Master§4.0/ANT52aa8d6fc7. Subsequent main429388f2 is
+composed intact, including the original EXP04 prerequisite. No release is redone.
+
+O01/O02/O16 and CAP017: controlled pending-dependency tests reproduced an unbounded
+initial/final scope read in the existing transport. The candidate enforces one
+existing15-second elapsed budget across scope→same endpoint→scope, rejecting late
+work without retry, fabricated values or completion.193 tests/six suites and
+scoped ESLint pass; review, exact-head CI, affected-Edge release/readback and fresh
+ordinary customer proof are still owed. This does not prove the cause or universal
+recovery of historical CPU failures. CAP017 remains Limited/Access Unverified;
+the nine catalogue labels are not promoted by source tests.
+
+Next: release this correction, then reconcile canonical document production and
+evidence-preserving monthly/quarterly report semantics before their consumer;
+continue original-domain intelligence, targets, permitted preparation/approval,
+receipts, Research/Knowledge and eligible Chat/Live return through small PRs.
+No replacement report store, orchestration or originating-domain takeover.
+Functional source proof, unchanged Visual presentation, incomplete Experiential
+acceptance and pending complete Founder Acceptance are separate. Algorithms gain
+no prediction claim; LayerC remains inapplicable to this read-only correction.
+Historical9/0 and12/0/4 and all security/provider/consequential holds remain.
 ## October22 — O06 recorded-coverage repair in development
 
 Original19 definitions/nine analytics remain mandatory. The original Systems Check
@@ -698,3 +758,65 @@ integration areas use Coming Soon, three sourced subsets use Limited and the two
 filed-document deliverables remain Unverified, matching the table above. No
 coverage label asserts per-account access. NO VERIFIED ALGORITHM is added; the
 canonical ALG03/04/06/11/12/13 and PAIGE/VERA/originating specialist boundaries remain.
+
+
+## EXP02 report evidence foundation — October22 development, not activated
+
+D1 adds only private `_paige_document_capture_metric_evidence(jsonb)` under proposed
+20271113330002. The original issuer/resolver and owner/admin/current-workspace guard
+remain authoritative. Only1–12 unique original reference tokens are accepted; no
+caller/model figures or tenant input. Original definitions, values/null, period,
+semantics, coverage, exclusions, caveats, as-of and source revision are retained;
+workspace identity fields are removed from the returned document projection.
+Malformed/duplicate/oversize, foreign/denied, superseded, expired or changed-source
+references fail closed. Final actor/tenant/authority/expiry revalidation applies.
+
+Original composed native PostgreSQL16.14 proof passes195 checks. A missing-helper
+original-source control fails42883. Initial source-change fixture was outside the
+issued live period; placing only that disposable receipt inside the period makes
+the unchanged denial assertion meaningful. Sandboxed initdb/startup attempts and
+private launcher diagnosis are excluded from passing proof. Existing full-schema
+shared_metric_evidence rollback proof now covers exact unavailable/null/provenance,
+private ACL and foreign/expired/forged/duplicate inputs; hosted execution is owed.
+
+The function is SECURITY INVOKER with all application-role grants revoked. No table,
+public RPC, report type, model/provider, worker, Chat binding or action is activated;
+no capture is persisted yet. Original submit/worker/immutable marketing_content,
+turn/reconnect/Rail consumer and formal monthly/quarterly customer deliverable remain
+required. Functional private local foundation only; Visual N/A/unmounted; Experiential
+and Founder Acceptance UNVERIFIED. CAP014/015 stay Unverified, other nine states and
+ALG03/06/11/12/13 unchanged. Section4.0 N/A until merge. All19/nine remain mandatory.
+
+## EXP02 October22 — verified Business Review reliability source release
+
+PR2608 reviewed c6b93ce0821c707ca2294130da1b11690972ea05, separate
+AUTHOR-REVIEW / LOWER ASSURANCE5620278242, all11 exact-head checks/two web
+statuses SUCCESS and zero threads, merged27c7c822528de533a0cadeabb79c3a5b1228d55f.
+Actual parents9e194dd4bb82c12ab313eef0c5f8c02a4f976b27+c6 and tree
+790307bcced28f74b10dcb02b88ae0d5fde38e80 match the clean inspected union.
+Normal Edge39852405952/120081762965 strictly verified original source/config
+for paige-ai-chat509 and paige-business-review70; both ACTIVE/verify_jwt=true,
+edge-live exactmerge. Production dpl_5umtRSvBeMEjmHQx94FzyLGxa2h8 READY;
+public build27c7c822528de533a0cadeabb79c3a5b1228d55f-mvk0nvdb/customerUpdate:null.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2608#issuecomment-6351119623).
+
+Functional source release verified;193 source cases supporting. Visual layout
+unchanged. Experiential corrected ordinary weekly response/original turn/reload
+and whole Founder Acceptance remain UNVERIFIED; no universal historical CPU
+recovery claim. Original read-only Spine/Metric contract, CAP017 Limited/Access
+Unverified, applicable algorithms, Trust/LayerC/Rail and all19/nine obligations
+remain unchanged. No own schema, provider, role or consequential activation.
+This supersedes earlier candidate release statements without rewriting history.
+
+## October22 — canonical document input prerequisite in development
+
+CAP014/015 remain required and Unverified for formal filed monthly/quarterly work.
+An existing document-validator defect is corrected locally: NaN/infinity/JSON numeric
+overflow are refused before serialization can silently turn a fact into null. Four
+causal failures then37 passing cases preserve finite zero/negative/fraction and
+boolean values. No supported type, native authority, artifact, worker, approval,
+Rail, provider or registry is added/activated. Actual source-bound report type,
+immutable permitted evidence, governed submission/status/unknown recovery and
+original artifact retrieval remain separate implementation duties. Review/CI,
+original2607 security dependency, normal Edge/readback and ordinary customer proof
+remain owed. All19 definitions/nine outcomes are unchanged. [Evidence](../evidence/ui-delivery/e2-document-finite-facts.md).

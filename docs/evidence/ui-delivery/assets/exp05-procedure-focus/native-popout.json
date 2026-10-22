@@ -1,0 +1,16 @@
+{
+  "draft": "ZION, prepare a reviewable workflow design. Help me design a Weekly review. Ask for the actual procedure and missing business details; do not assume a saved source exists. Clarify the trigger, conditions, steps, people, timing, time zone, limits, connected-provider readiness, approval needs and expected evidence. Explain unsupported actions. Do not save, authorize, enable, schedule, execute or contact anyone. This is preparation for my review.\n\nprepare a reviewable workflow design. Help me design a Quality check. Ask for the actual procedure and missing business details; do not assume a saved source exists. Clarify the trigger, conditions, steps, people, timing, time zone, limits, connected-provider readiness, approval needs and expected evidence. Explain unsupported actions. Do not save, authorize, enable, schedule, execute or contact anyone. This is preparation for my review.",
+  "focus": "Message PAIGE",
+  "height": 735,
+  "overflow": false,
+  "width": 1536,
+  "workspaceCount": 1,
+  "source": "196cf25e88c052974e137494dd36045809ab262f",
+  "result": "PASS: original shell-aware host opener focuses the original owned child editor; no Send",
+  "afterNativeClose": {
+    "draft": "ZION, prepare a reviewable workflow design. Help me design a Weekly review. Ask for the actual procedure and missing business details; do not assume a saved source exists. Clarify the trigger, conditions, steps, people, timing, time zone, limits, connected-provider readiness, approval needs and expected evidence. Explain unsupported actions. Do not save, authorize, enable, schedule, execute or contact anyone. This is preparation for my review.\n\nprepare a reviewable workflow design. Help me design a Quality check. Ask for the actual procedure and missing business details; do not assume a saved source exists. Clarify the trigger, conditions, steps, people, timing, time zone, limits, connected-provider readiness, approval needs and expected evidence. Explain unsupported actions. Do not save, authorize, enable, schedule, execute or contact anyone. This is preparation for my review.",
+    "focus": "Open PAIGE in a new window",
+    "workspaceCount": 1
+  },
+  "imageBoundary": "Earlier child capture timed out; no child screenshot claimed. AX and DOM focus/readback are actual, not an image or authenticated proof."
+}

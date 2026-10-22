@@ -73,3 +73,104 @@ describe('Chat uses the existing authenticated review transport', () => {
     expect(f.invoke).toHaveBeenCalledTimes(1); expect(r.projection).toBeUndefined();
   });
 });
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(done => { resolve = done; });
+  return { promise, resolve };
+}
+
+describe('one elapsed Business Review read budget', () => {
+  it.each(['preflight', 'invoke', 'readback'] as const)('settles a hung %s and never resumes later stages after expiry', async stage => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'performance'] });
+    const f = fixture();
+    const scope = deferred<{ data: string; error: null }>();
+    const remote = deferred<{ data: unknown; error: null }>();
+    if (stage === 'preflight') f.rpc.mockImplementationOnce(() => scope.promise);
+    else if (stage === 'readback') f.rpc.mockResolvedValueOnce({ data: tenant, error: null }).mockImplementationOnce(() => scope.promise);
+    else f.invoke.mockImplementationOnce(() => remote.promise);
+    let result: Awaited<ReturnType<typeof readBusinessSnapshotTransport>> | undefined;
+    const work = readBusinessSnapshotTransport(ctx, { caller: f.caller }, {}).then(value => { result = value; });
+    try {
+      await vi.advanceTimersByTimeAsync(15_000);
+      expect(result?.status).toBe('unavailable');
+      expect(result?.projection).toBeUndefined();
+      expect(result?.record_links).toBeUndefined();
+      scope.resolve({ data: tenant, error: null });
+      remote.resolve({ data: envelope(), error: null });
+      await work;
+      expect(result?.status).toBe('unavailable');
+      expect(f.invoke).toHaveBeenCalledTimes(stage === 'preflight' ? 0 : 1);
+      expect(f.rpc).toHaveBeenCalledTimes(stage === 'readback' ? 2 : 1);
+      if (stage !== 'preflight') expect(f.invoke.mock.calls[0][1].signal.aborted).toBe(true);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      scope.resolve({ data: tenant, error: null });
+      remote.resolve({ data: envelope(), error: null });
+      await work;
+      vi.useRealTimers();
+    }
+  });
+
+  it('shares the same fifteen seconds across scope, transport and final scope', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'performance'] });
+    const f = fixture();
+    const before = deferred<{ data: string; error: null }>();
+    const after = deferred<{ data: string; error: null }>();
+    const remote = deferred<{ data: unknown; error: null }>();
+    f.rpc.mockImplementationOnce(() => before.promise).mockImplementationOnce(() => after.promise);
+    f.invoke.mockImplementationOnce(() => remote.promise);
+    let result: Awaited<ReturnType<typeof readBusinessSnapshotTransport>> | undefined;
+    const work = readBusinessSnapshotTransport(ctx, { caller: f.caller }, {}).then(value => { result = value; });
+    try {
+      await vi.advanceTimersByTimeAsync(10_000);
+      before.resolve({ data: tenant, error: null });
+      await vi.advanceTimersByTimeAsync(4_000);
+      expect(f.invoke).toHaveBeenCalledTimes(1);
+      remote.resolve({ data: envelope(), error: null });
+      await vi.advanceTimersByTimeAsync(999);
+      expect(f.rpc).toHaveBeenCalledTimes(2);
+      expect(result).toBeUndefined();
+      await vi.advanceTimersByTimeAsync(1);
+      expect(result?.status).toBe('unavailable');
+      after.resolve({ data: tenant, error: null });
+      await work;
+      expect(result?.projection).toBeUndefined();
+      expect(f.invoke).toHaveBeenCalledTimes(1);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      before.resolve({ data: tenant, error: null });
+      remote.resolve({ data: envelope(), error: null });
+      after.resolve({ data: tenant, error: null });
+      await work;
+      vi.useRealTimers();
+    }
+  });
+
+  it('still publishes verified evidence when all three delayed stages finish within budget', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'performance'] });
+    try {
+      const f = fixture();
+      f.rpc.mockImplementation(() => new Promise(resolve => setTimeout(() => resolve({ data: tenant, error: null }), 6_000)));
+      f.invoke.mockImplementation(() => new Promise(resolve => setTimeout(() => resolve({ data: envelope(), error: null }), 2_000)));
+      const work = readBusinessSnapshotTransport(ctx, { caller: f.caller }, {});
+      await vi.advanceTimersByTimeAsync(14_000);
+      expect(await work).toMatchObject({ status: 'available', projection: envelope().result.projection,
+        record_links: [{ destination: 'finance', record_id: null }] });
+      expect(vi.getTimerCount()).toBe(0);
+      expect(f.invoke.mock.calls[0][1].signal.aborted).toBe(false);
+    } finally { vi.useRealTimers(); }
+  });
+
+  it('cleans up the budget after a prompt successful scoped read', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'performance'] });
+    try {
+      const f = fixture();
+      expect((await readBusinessSnapshotTransport(ctx, { caller: f.caller }, {})).status).toBe('available');
+      expect(vi.getTimerCount()).toBe(0);
+      await vi.advanceTimersByTimeAsync(15_000);
+      expect(f.invoke).toHaveBeenCalledTimes(1);
+      expect(f.rpc).toHaveBeenCalledTimes(2);
+    } finally { vi.useRealTimers(); }
+  });
+});

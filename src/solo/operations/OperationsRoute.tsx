@@ -57,6 +57,13 @@ export function OperationsRoute({ openPaige, onNavigationGuardChange }: { openPa
   }, [location, view, current.view, navigate, index, navigationType]);
   return <>{historyNotice&&<p className="ops-inline-notice" role="status">{historyNotice}</p>}<OperationsWorkspace openPaige={openPaige} view={current.view}
     onOpenAgreements={account ? () => { if (!notifyGuard.current?.()) navigate(subtabPath("solo", account, "sales", "agreements")); } : undefined}
+    onPlaybooksViewChange={mode => {
+      if (notifyGuard.current?.()) return;
+      const prior = accepted.current;
+      const query = new URLSearchParams(prior.search);
+      if (mode === "automations") query.set("playbooks", "automations"); else query.delete("playbooks");
+      navigate({ pathname: prior.pathname, search: query.toString() ? `?${query}` : "", hash: prior.hash });
+    }}
     weeklySourceSearch={current.search} weeklySourceKey={current.key} onNavigationGuardChange={registerGuard}
     onViewChange={next => { if (!notifyGuard.current?.()) setView(next); }}
     onWeeklySourceDismiss={() => {

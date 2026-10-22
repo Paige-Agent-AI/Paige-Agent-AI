@@ -109,7 +109,8 @@ describe('checked original signer preparation flow',()=>{
   };
   const submitSigner=()=>fireEvent.click(screen.getByRole('button',{name:'Save signer'}));
   it('opens the original ordered roster and focuses the first required field without writing',async()=>{
-    await openSigner();expect(document.activeElement).toBe(screen.getByLabelText('Full name'));expect(fixtures.saveSigner).not.toHaveBeenCalled();expect(fixtures.recoverSigner).not.toHaveBeenCalled();
+    const draft=original();draft.signers=[{id:signerId,full_name:'Sample Recipient',email:'recipient@example.test',signer_role:'counterparty',signing_order:1,status:'pending',signed_at:null,declined_at:null}];fixtures.read.mockResolvedValue({ok:true,value:draft});
+    await openSigner();expect(host.textContent).toContain('Not signed');expect(host.textContent).not.toContain('Awaiting signature');expect(document.activeElement).toBe(screen.getByLabelText('Full name'));expect(fixtures.saveSigner).not.toHaveBeenCalled();expect(fixtures.recoverSigner).not.toHaveBeenCalled();
     const leave=new Event('beforeunload',{cancelable:true});window.dispatchEvent(leave);expect(leave.defaultPrevented).toBe(false);expect(document.querySelectorAll('[aria-label="Agreement history and files"]')).toHaveLength(0);
   });
   it('focuses invalid name/email/position and never sends incomplete details',async()=>{

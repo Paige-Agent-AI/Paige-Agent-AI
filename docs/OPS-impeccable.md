@@ -52,6 +52,19 @@ which is the argument for the detector: it enforces mechanically what doctrine a
 **Both Live Conversation stylesheets scan clean** (`paige-live-conversation.css`,
 `paige-presence.css`), verified at install.
 
+## EXP04 original editor interaction correction — October22 local evidence
+
+Six actual owning UI files scan with0 blocking findings/18 advisories. Four are
+the original native paper/field-overlay conventions; fourteen are existing Sales
+type/radius values. No new palette, font, scale, component or design system was
+introduced. The native compact row now lives in its original Sales stylesheet
+for agreement/template/request work; six routes/roving keys/44px controls and the
+same leave guard remain. Template/editor20/19/26, mounted20/14/34, field20/11/31
+and intake20/10/22 actual-source renders PASS/zero errors/all113 pins exact.
+Desktop native heading menu and320 dark compact view were inspected. This is
+bounded source/design evidence, not a global-clean or real role/device/provider/
+whole-Experience/founder acceptance claim. Current review/release gates remain.
+
 ## Honest limits
 
 - Scopes are `type` and `layout`. It did **not** flag a deliberately awful fixture built from inline

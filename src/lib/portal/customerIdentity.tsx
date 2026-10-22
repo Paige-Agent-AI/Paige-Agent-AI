@@ -1,6 +1,6 @@
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { customerAgentName } from "../../../supabase/functions/_shared/client-portal-identity";
-import type { useClientPortalFrame } from "@/hooks/useClientPortalFrame";
+import {useExistingClientPortalFrame, type useClientPortalFrame} from "@/hooks/useClientPortalFrame";
 
 /**
  * Who a customer is talking to, read once by the /app shell and shared with every customer surface.
@@ -33,9 +33,14 @@ export type CustomerIdentity = {
   viewer: PortalViewer;
   /** True while the shell is still finding out which viewer this is (the frame, then staff standing). */
   checking: boolean;
+  /** Retry the same original gate read; never creates or selects authority. */
+  retryAccess?: () => void | Promise<void>;
 };
 
 export type CustomerIdentityState = Pick<FrameState, "frame" | "phase"> & {
+  /** Original same-scope gate checking/retry, when available. */
+  accessChecking?: boolean;
+  retryAccess?: () => void | Promise<void>;
   /** Staff standing when there is no frame ("not-client" or "unavailable"): true, false, or null while unknown. */
   staff?: boolean | null;
   /** The owner's own assistant name, used only for a staff viewer. */
@@ -66,7 +71,8 @@ export function customerIdentityFrom(state: CustomerIdentityState): CustomerIden
     frame,
     phase: state.phase,
     viewer,
-    checking: state.phase === "loading" || (frameAbsent(state.phase) && state.staffChecking === true),
+    retryAccess: state.retryAccess,
+    checking: state.accessChecking === true || state.phase === "loading" || (frameAbsent(state.phase) && state.staffChecking === true),
   };
 }
 
@@ -78,7 +84,15 @@ function personName(frame: FrameState["frame"]): string | null {
 }
 
 export function CustomerIdentityProvider({ state, children }: { state: CustomerIdentityState; children: ReactNode }) {
-  const value = useMemo(() => customerIdentityFrom(state), [state.frame, state.phase, state.staff, state.staffAssistantName, state.staffChecking]); // eslint-disable-line react-hooks/exhaustive-deps
+  const shared = useExistingClientPortalFrame();
+  const matches = !!shared && !!state.frame && !!state.frame.actorId && !!state.frame.profile.tenant_id && !!state.frame.profile.id
+    && shared.actorId === state.frame.actorId
+    && shared.value.frame?.actorId === state.frame.actorId
+    && shared.value.frame.profile.tenant_id === state.frame.profile.tenant_id
+    && shared.value.frame.profile.id === state.frame.profile.id;
+  const accessChecking = state.accessChecking === true || !!(matches && shared.value.checking);
+  const retryAccess = matches ? shared.value.reload : state.retryAccess;
+  const value = useMemo(() => customerIdentityFrom({...state, accessChecking, retryAccess}), [state.frame, state.phase, state.staff, state.staffAssistantName, state.staffChecking, accessChecking, retryAccess]); // eslint-disable-line react-hooks/exhaustive-deps
   return <CustomerIdentityContext.Provider value={value}>{children}</CustomerIdentityContext.Provider>;
 }
 

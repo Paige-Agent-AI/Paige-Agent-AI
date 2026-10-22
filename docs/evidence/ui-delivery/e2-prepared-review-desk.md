@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: YES: existing prepared-work Desk entry now opens a spaciou
 FLOW_PROTOTYPE: PASS: docs/delivery/e2-context-review-prototype.md and assets/e2-prepared-review-desk/prototype-interactions.json retain the lead-selected contextual flow under the owner's October21 delegated UX authority. Fourteen mock interaction cases are not authenticated Chat/approval acceptance. The spacious source reader is this slice; composer integration follows separately.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible current-workspace actors inspect actual prepared draft text, recorded summary, source and rationale, then return. Prepared work remains distinct from original approvals and Strategic Plays.
 VISUAL_DIRECTION: PASS: restrained source list and roomy document pane, canonical Mineral/Obsidian tokens/elevation/font, explicit portal theme,44px controls and responsive reading layout. Impeccable checks: hierarchy, source truth, useful reading space, restrained copy, portal opacity, touch/focus, narrow reflow and reduced motion.
-AUTOMATED_EVIDENCE: PASS:67 cases/four original owning suites cover source count versus preview, missing prose, failed/loading/empty/inconsistent reads, identity retirement, native reader actor opt-in and no Chat/send/approval invocation. Original Game Plan/Mission and approvals embedding regressions retained. Synthetic source proof only.
+AUTOMATED_EVIDENCE: PASS: latest62 cases/four original owning suites cover source count versus preview, missing prose, failed/loading/empty/inconsistent reads, identity retirement, native reader actor opt-in and no Chat/send/approval invocation. Original Game Plan/Mission and approvals embedding regressions retained. Synthetic source proof only.
 STATIC_EVIDENCE: PASS: targeted ESLint and whitespace pass. Same original prepared hook/query/RLS; no schema, provider, permission, registry, executor or domain writer change. Required exact-head hosted review/CI remains a gate.
 RENDERED_EVIDENCE: PASS: assets/e2-prepared-review-desk/viewport-state-index.json pins16 original JPEGs, exact CSS/raster dimensions, actual loaded product font and changed source hashes. Native untransformed reader/Game Plan/shell; only data/authority/Chat ports are synthetic and refuse real effects.
 BEHAVIORAL_EVIDENCE: PASS: native Desk entry, original source selection, Tab/Enter/Escape and opener return, missing draft, failed read, loading, empty and unavailable total inspected. Native shell port retains a distinct unsent draft through open/close; actual Chat acceptance is separately labelled below.
@@ -54,10 +54,24 @@ excluded; a fresh native tab directly recaptured the corrected empty state. The
 none is resized, composited or altered. Earlier prototype/diagnostic frames remain
 local and are not silently recounted as current source proof.
 
-Functional: source inspection67-case proof. Visual: bounded native rendered proof.
+Functional: latest exact-source62 cases across four owning suites pass; the earlier67-case checkpoint is historical, not the count of this rerun. Visual: bounded native rendered proof.
 Experiential: Desk/source return only; shared composer and actual Chat continuity
 follow separately. Founder Acceptance: complete Experience pending. Algorithm
 Support: deterministic source/context display, no predictive ALG03/13 claim or
 canonical algorithm implementation change. Orchestration Contract: read-only
 analysis; original Spine/Harness/Trust/LayerC/domain/Rail gates remain authoritative.
 Capabilities readiness: no entry activated or promoted by this reader.
+
+## Required-check correction,2026-10-22
+
+The original cb3d9ba8 required verify job119609071921 failed its Impeccable step.
+The pinned4.1.0 scanner reproduced a blocking colored side edge on the rationale.
+That decoration is removed; canonical radius tokens and readable16px prose replace
+the local literal variations. The corrected scanner returns zero blocking findings
+and two advisory24px type-step notes. No suppression, CI waiver or guard change.
+All16 original native frames were recaptured from the corrected component/CSS,
+including four required sizes with Chat open/closed,320px source/keyboard states,
+failed/loading/empty/unknown reads, Obsidian and reduced motion. Their manifest
+pins the actual current source hashes and untouched raster bytes. Tab/Enter select
+the second source; Escape returns to the native Desk opener. Production, actual
+customer-role and full Chat/Live acceptance remain UNVERIFIED.

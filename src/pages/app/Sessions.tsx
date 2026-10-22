@@ -38,6 +38,7 @@ import {
 import { useClientPortalBrand } from "@/hooks/useClientPortalBrand";
 import { readableTextOn } from "@/lib/brand/contrast";
 import { useCustomerIdentity } from "@/lib/portal/customerIdentity";
+import { CLIENT_PORTAL_CHOOSE_HREF } from "@/lib/client-portal-entry";
 
 type Accent = CSSProperties | undefined;
 
@@ -679,6 +680,25 @@ function RescheduleSheet({
 
 export default function Sessions() {
   const sessions = useClientPortalSessions();
+  const heading = useRef<HTMLHeadingElement>(null);
+  const retry = useRef<{ id: number; epoch: number } | null>(null);
+  const retrySequence = useRef(0);
+  const [settledRetry, setSettledRetry] = useState(0);
+  useEffect(() => {
+    const intent = retry.current;
+    if (!intent || intent.id !== settledRetry) return;
+    retry.current = null;
+    if (intent.epoch === sessions.scopeEpoch && !sessions.loading && !sessions.error && sessions.tenantId) {
+      heading.current?.focus({ preventScroll: true });
+    }
+  }, [settledRetry, sessions.scopeEpoch, sessions.loading, sessions.error, sessions.tenantId]);
+  const retryRead = async () => {
+    const intent = { id: ++retrySequence.current, epoch: sessions.scopeEpoch };
+    retry.current = intent;
+    await sessions.refresh();
+    setSettledRetry(intent.id);
+  };
+
   const brand = useClientPortalBrand();
   const businessName = brand?.tenant_name?.trim() || "your team";
   const { agentName } = useCustomerIdentity();
@@ -700,6 +720,29 @@ export default function Sessions() {
   /** What the engine confirmed last, so a session leaving the list never just vanishes. */
   const [done, setDone] = useState<string | null>(null);
   const pastId = useId();
+  const currentEpoch = useRef(sessions.scopeEpoch);
+  currentEpoch.current = sessions.scopeEpoch;
+  const resultEpoch = useRef<number | null>(null);
+  const [settledChange, setSettledChange] = useState(0);
+  useEffect(() => {
+    if (resultEpoch.current === sessions.scopeEpoch && settledChange > 0 && !confirmingCancel && !cancelling) {
+      resultEpoch.current = null;
+      heading.current?.focus({preventScroll: true});
+    }
+  }, [settledChange, sessions.scopeEpoch, confirmingCancel, cancelling]);
+  const focusChangeResult = (epoch: number) => {
+    if (currentEpoch.current !== epoch) return;
+    resultEpoch.current = epoch;
+    setSettledChange(value => value + 1);
+  };
+  const retrySessionChange = async (sessionId: string) => {
+    const epoch = sessions.scopeEpoch, change = sessions.changes[sessionId];
+    if (!change) return;
+    const ok = await sessions.retryChange(sessionId);
+    if (currentEpoch.current !== epoch) return;
+    if (ok) setDone(change.action === 'cancel' ? 'Cancellation confirmed.' : 'New session time confirmed.');
+    focusChangeResult(epoch);
+  };
 
   // Dialogs, the open past list and the last confirmation belong to the signed-in identity.
   useEffect(() => { setMoving(null); setCancelling(null); setPastOpen(false); setDone(null); }, [sessions.scopeEpoch]);
@@ -724,12 +767,15 @@ export default function Sessions() {
   const confirmCancel = async () => {
     if (!cancelSession) return;
     const { title, start_at } = cancelSession;
+    const epoch = sessions.scopeEpoch;
     setConfirmingCancel(true);
     const ok = await sessions.cancel(cancelSession.id);
     setConfirmingCancel(false);
+    if (currentEpoch.current !== epoch) return;
     if (ok) setDone(`Cancelled ${title} on ${whenLabel(start_at, viewerTz)}. It's off ${businessName}'s calendar.`);
     // The outcome — done, refused or unknown — is shown on the session itself.
     setCancelling(null);
+    focusChangeResult(epoch);
   };
 
   const blocked = sessions.unavailable || sessions.multipleBusinesses;
@@ -744,7 +790,7 @@ export default function Sessions() {
     accent: accentStyle,
     onReschedule: () => setMoving(s.id),
     onCancel: () => setCancelling(s.id),
-    onRetry: () => void sessions.retryChange(s.id),
+    onRetry: () => void retrySessionChange(s.id),
     onDismiss: () => sessions.dismissChange(s.id),
   });
 
@@ -755,7 +801,7 @@ export default function Sessions() {
       className="mx-auto max-w-2xl [&_button]:min-h-[44px]"
     >
       <header className="space-y-1 pb-4">
-        <h1 id="sessions-title" className="text-2xl font-semibold tracking-tight">Sessions</h1>
+        <h1 id="sessions-title" ref={heading} tabIndex={-1} className="text-2xl font-semibold tracking-tight">Sessions</h1>
         {!blocked && <p className="text-sm text-muted-foreground">Your sessions with {businessName}.</p>}
       </header>
 
@@ -764,7 +810,7 @@ export default function Sessions() {
           <p className="inline-flex items-center gap-2">
             <AlertCircle aria-hidden="true" className="h-4 w-4 shrink-0 text-destructive" /> {sessions.error}
           </p>
-          <Button size="sm" variant="outline" className={QUIET_HOVER} onClick={() => void sessions.refresh()}>Try again</Button>
+          <Button size="sm" variant="outline" className={QUIET_HOVER} onClick={() => void retryRead()}>Try again</Button>
         </div>
       )}
 
@@ -778,7 +824,7 @@ export default function Sessions() {
           </RefusalText>
           <div className="flex flex-wrap items-center gap-x-4 pl-[22px]">
             {c.status === "unconfirmed" && (
-              <Button size="sm" variant="outline" className={QUIET_HOVER} onClick={() => void sessions.retryChange(c.sessionId)}>
+              <Button size="sm" variant="outline" className={QUIET_HOVER} onClick={() => void retrySessionChange(c.sessionId)}>
                 <RotateCw aria-hidden="true" className="mr-1 h-3.5 w-3.5" /> Retry
               </Button>
             )}
@@ -805,15 +851,13 @@ export default function Sessions() {
       {sessions.multipleBusinesses ? (
         <SessionsEmpty
           icon={CalendarClock}
-          title="Sessions for more than one business aren't available yet"
+          title="Choose a business for your sessions"
           description={(
             <>
-              Your account is connected to more than one business. Sessions here work with one business at a time
-              for now. For help in the meantime, use{" "}
-              <Link to="/app/support" className={`font-medium text-foreground underline underline-offset-4 ${FOCUS}`}>Support</Link>.
+              Your account is connected to more than one business. Choose the business whose sessions you want to see.
             </>
           )}
-          action={<BackHome />}
+          action={<Link to={CLIENT_PORTAL_CHOOSE_HREF} className={LINK_BUTTON}>Choose business</Link>}
         />
       ) : sessions.unavailable ? (
         <SessionsEmpty

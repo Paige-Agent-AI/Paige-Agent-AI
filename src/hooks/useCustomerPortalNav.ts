@@ -30,16 +30,19 @@ export interface CustomerPortalNav {
 }
 
 export function useCustomerPortalNav(): CustomerPortalNav {
-  const { isAdmin } = useDashboardMode();
-  const pb = usePlaybook();
+  const identity = useShellCustomerIdentity();
+  const { isAdmin: dashboardAdmin } = useDashboardMode();
+  const isAdmin = dashboardAdmin && identity?.viewer !== "customer";
+  const pb = usePlaybook(identity === null || identity.viewer === "staff");
   const brandState = useClientPortalBrandState();
   const { config, loading: configLoading } = useClientPortalConfigState();
   const { brand, loading: brandLoading, error: brandError, multipleBusinesses } = brandState;
   const relationshipKnown = !brandLoading && !brandError;
   const isCustomer = relationshipKnown && !!brand?.tenant_id && !multipleBusinesses;
   const viewer: PortalViewer = { isStaff: isAdmin, isCustomer, brandResolved: !!brand };
-  const catalog = config.catalog ? resolvePortalCatalog(config.catalog) : pb.portal.modules;
-  const identity = useShellCustomerIdentity();
+  const catalog = identity?.viewer === "customer"
+    ? resolvePortalCatalog(config.catalog ?? {slug: null, authoredUsable: false, modules: null})
+    : config.catalog ? resolvePortalCatalog(config.catalog) : pb.portal.modules;
   // E09 F2: funding/credit entries need the business's finance entitlement. A customer's comes with their config
   // (server-computed for their own business); anyone else's from useFinancePortal (staff keep theirs, Q5).
   const financePortal = useFinancePortal(!isCustomer);

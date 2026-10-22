@@ -37,6 +37,7 @@ import { useClientViewportHeight } from "@/hooks/useClientViewportHeight";
 import { useSharedClientPortalFrame } from "@/hooks/useClientPortalFrame";
 import { CustomerAccessGate } from "@/components/app/CustomerAccessGate";
 import { CustomerIdentityProvider, useCustomerIdentity } from "@/lib/portal/customerIdentity";
+import {clientPortalEntry} from "@/lib/client-portal-entry";
 import { usePortalStaffStanding } from "@/lib/portal/portalStaffStanding";
 import { usePlaybook } from "@/lib/playbook";
 import { EmptyState } from "@/components/ui/page";
@@ -219,6 +220,8 @@ const AppShell = () => {
     if (!user) return;
     if (location.pathname !== "/app") return;
     if (isImpersonating) return; // staff actively viewing as a client
+    // Navigation intent only: the existing customer gate still checks actual Auth/relationship.
+    if (clientPortalEntry(user.id, location.search).intentional) {setRedirectingStaff(false); return;}
     const params = new URLSearchParams(location.search);
     if (params.get("stay") === "1") return;
     try {
@@ -282,7 +285,7 @@ const AppShell = () => {
   // page in place of the whole shell (no menu, no Support desk, no platform persona). Staff viewing
   // as a client are not customers, so the gate stands aside for them.
   return (
-    <CustomerAccessGate userId={activeUser.id} enabled={!isImpersonating && !DEV_MODE}>
+    <CustomerAccessGate userId={activeUser.id} enabled={!isImpersonating && !DEV_MODE} search={location.search}>
     <CustomerIdentityRoot userId={activeUser.id} enabled={!isImpersonating} viewingAsClient={isImpersonating}>
       <AppShellBody activeUser={activeUser} scopedUser={scopedUser} session={session} effectiveUserId={effectiveUserId ?? null}
         isImpersonating={isImpersonating} impersonationContactId={impersonationTarget?.contactId}

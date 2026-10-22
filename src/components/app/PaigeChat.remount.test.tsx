@@ -435,6 +435,63 @@ describe("normal PaigeChat remount scroll behavior", () => {
     expect(portalFixture.summary).not.toHaveBeenCalled();
   });
 
+  const returningCustomer=()=>{
+    portalFixture.phase="ready";
+    portalFixture.frame={actorId:memoryFixture.actor,profile:{id:"e0935000-0000-4000-8000-000000000001",
+      tenant_id:"e0925000-0000-4000-8000-000000000001"},
+      brand:{tenant_name:"Test practice",logo_url:null,primary_color:null},config:{}};
+    return {user:{id:memoryFixture.actor,user_metadata:{}} as never,session:null};
+  };
+  it("a genuine empty current conversation replaces an older transcript while preserving the draft",async()=>{
+    const props=returningCustomer();
+    portalFixture.read.mockResolvedValueOnce({threadId:"old-thread",messages:[{id:"old-turn",role:"assistant",content:"Older saved answer"}]})
+      .mockResolvedValueOnce({threadId:"new-thread",messages:[]});
+    await act(async()=>{root.render(<PaigeChat {...props}/>);await memoryFlush();});
+    const input=host.querySelector("textarea")!;
+    await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value")!.set!.call(input,"Keep my draft");input.dispatchEvent(new Event("input",{bubbles:true}));});
+    portalFixture.checking=true;await act(async()=>root.render(<PaigeChat {...props}/>));
+    portalFixture.checking=false;await act(async()=>{root.render(<PaigeChat {...props}/>);await memoryFlush();});
+    expect(host.textContent).not.toContain("Older saved answer");
+    expect(host.textContent).toContain("the AI client success agent for Test practice");
+    expect(host.querySelector("textarea")).toBe(input);expect(input.value).toBe("Keep my draft");
+  });
+  it("an interrupted history read times out, ignores its late result and permits an explicit fresh retry",async()=>{
+    vi.useFakeTimers();vi.stubGlobal("fetch",vi.fn());const props=returningCustomer();
+    const pending=pendingMemory<{threadId:string;messages:unknown[]}>();
+    portalFixture.read.mockReturnValueOnce(pending.promise).mockResolvedValueOnce({threadId:"retry-thread",messages:[{id:"retry-answer",role:"assistant",content:"Recovered canonical answer"}]});
+    await act(async()=>{root.render(<PaigeChat {...props}/>);await memoryFlush();});
+    const signal=portalFixture.read.mock.calls[0][1] as AbortSignal;
+    const input=host.querySelector("textarea")!;
+    await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value")!.set!.call(input,"Unsent question");input.dispatchEvent(new Event("input",{bubbles:true}));});
+    await act(async()=>{vi.advanceTimersByTime(20_000);await memoryFlush();});
+    expect(signal.aborted).toBe(true);expect(host.textContent).toContain("Your conversation couldn’t be loaded.");
+    expect(host.textContent).not.toContain("READY WHEN YOU ARE");
+    expect(host.querySelector("button[aria-label='Send message']")?.hasAttribute("disabled")).toBe(true);
+    pending.resolve({threadId:"stale-thread",messages:[{id:"late-turn",role:"assistant",content:"Late old result"}]});await act(memoryFlush);
+    expect(host.textContent).not.toContain("Late old result");
+    await act(async()=>{const retry=[...host.querySelectorAll("button")].find(b=>b.textContent==="Try again")!;retry.focus();retry.click();await memoryFlush();});
+    expect(host.textContent).toContain("Recovered canonical answer");expect(input.value).toBe("Unsent question");
+    expect(document.activeElement).toBe(input);
+    expect(portalFixture.read).toHaveBeenCalledTimes(2);expect(fetch).not.toHaveBeenCalled();
+  });
+  it("a late history reply cannot bypass the absolute deadline before its timer runs",async()=>{
+    vi.useFakeTimers();const props=returningCustomer();const pending=pendingMemory<{threadId:string;messages:unknown[]}>();
+    portalFixture.read.mockReturnValueOnce(pending.promise);
+    await act(async()=>{root.render(<PaigeChat {...props}/>);await memoryFlush();});
+    vi.setSystemTime(Date.now()+20_001);pending.resolve({threadId:"late-thread",messages:[{id:"late",role:"assistant",content:"Beyond deadline"}]});
+    await act(memoryFlush);
+    expect(host.textContent).toContain("Your conversation couldn’t be loaded.");expect(host.textContent).not.toContain("Beyond deadline");
+    expect((portalFixture.read.mock.calls[0][1] as AbortSignal).aborted).toBe(true);
+  });
+  it("unmount retires the original history request and cannot revive its late transcript",async()=>{
+    const props=returningCustomer();const pending=pendingMemory<{threadId:string;messages:unknown[]}>();portalFixture.read.mockReturnValueOnce(pending.promise);
+    await act(async()=>{root.render(<PaigeChat {...props}/>);await memoryFlush();});
+    const signal=portalFixture.read.mock.calls[0][1] as AbortSignal;
+    await act(async()=>root.unmount());root=createRoot(host);
+    expect(signal.aborted).toBe(true);pending.resolve({threadId:"old",messages:[{id:"old",role:"assistant",content:"Retired transcript"}]});await act(memoryFlush);
+    expect(host.textContent).not.toContain("Retired transcript");
+  });
+
   it("retires private customer text when relationship access is lost",async()=>{
     const props={user:{id:"customer-test",user_metadata:{}} as never,session:null};
     portalFixture.phase="ready";

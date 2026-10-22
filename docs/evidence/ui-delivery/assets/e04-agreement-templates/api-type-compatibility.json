@@ -1,0 +1,8 @@
+{
+  "result": "PASS",
+  "typescript": "5.9.3",
+  "reason": "Predicate parameter matches nullable Zod output under the incumbent compiler flags; strict runtime schema and native checks unchanged",
+  "beforeSourceSHA256": "7edcf531261cc87e5f96e2215fd4f9c5c34245940feb372fc820f028a21e7099",
+  "afterSourceSHA256": "09e7f342ee39241fe6437a5466ea4a304e6edf235b51625d26786a345750d4a8",
+  "identicalEmittedJavaScriptSHA256": "ed69374745a42741482d690480e089e2cd11d34efdd03567b30483f28a910f1c"
+}

@@ -2,7 +2,8 @@ import { useRef, useState } from "react";
 import { ArrowRight, BookOpen, Search } from "lucide-react";
 import { useKnowledgeDocuments } from "@/hooks/useKnowledgeDocuments";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import type { KnowledgeDocument } from "@/lib/knowledge-service";
+import { readKnowledge, type KnowledgeDocument } from "@/lib/knowledge-service";
+import { supabase } from "@/integrations/supabase/client";
 
 const procedureLabels = new Set(["sop", "procedure", "procedures", "playbook", "playbooks", "operating procedure"]);
 function isProcedure(document: KnowledgeDocument) {
@@ -55,7 +56,7 @@ export function OperationsPlaybooks({ tenantId, onPrepare }: Props) {
           });
         }
         else if (invoker.current?.isConnected) { event.preventDefault(); invoker.current.focus(); }
-      }}>{selected && <ProcedureDetail tenantId={tenantId} id={selected} onPrepare={onPrepare ? doc => {
+      }}>{selected && <ProcedureDetail key={selected} tenantId={tenantId} id={selected} onPrepare={onPrepare ? doc => {
         handoffClosing.current = true; setSelected(null); onPrepare(doc);
       } : undefined} />}</SheetContent>
     </Sheet>
@@ -64,16 +65,42 @@ export function OperationsPlaybooks({ tenantId, onPrepare }: Props) {
 
 function ProcedureDetail({ tenantId, id, onPrepare }: { tenantId: string; id: string; onPrepare?: (source: ProcedureReference) => void }) {
   const source = useKnowledgeDocuments(tenantId, id);
+  const checking = useRef(false);
+  const [preparing, setPreparing] = useState(false);
+  const [recheckError, setRecheckError] = useState<string | null>(null);
   const document = source.docs.find(doc => doc.id === id && doc.tenant_id === tenantId && isProcedure(doc));
-  const ready = !source.loading && !source.error && document && source.isCurrent();
+  const ready = !source.loading && !source.error && !preparing && !recheckError && document && source.isCurrent();
+  async function prepare() {
+    if (!ready || !onPrepare || checking.current || !source.isCurrent()) return;
+    checking.current = true; setPreparing(true);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      // isCurrent fences the hook's scope, not another author's later revision.
+      const rows = await Promise.race([
+        readKnowledge(supabase, tenantId, { documentId: id, limit: 1 }),
+        new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error("Source check timed out")), 8_000); }),
+      ]);
+      if (!source.isCurrent()) return;
+      const fresh = rows.length === 1 ? rows[0] : null;
+      if (!fresh || fresh.id !== id || fresh.tenant_id !== tenantId || fresh.revision !== document.revision || !isProcedure(fresh)) {
+        setRecheckError("This procedure changed or is no longer available. Reload source before preparing a workflow."); return;
+      }
+      onPrepare({ id: fresh.id, tenant_id: fresh.tenant_id, title: fresh.title, revision: fresh.revision });
+    } catch {
+      if (source.isCurrent()) setRecheckError("The current procedure could not be verified. Reload source before preparing a workflow.");
+    } finally {
+      clearTimeout(timer); checking.current = false;
+      if (source.isCurrent()) setPreparing(false);
+    }
+  }
   return <><SheetHeader><SheetTitle>{document?.title ?? "Procedure source"}</SheetTitle>
     <SheetDescription>{document ? `Revision ${document.revision} · ${document.source}` : "Reading the current procedure source."}</SheetDescription></SheetHeader>
     <div className="ops-detail-content">{source.loading ? <p role="status">Loading source…</p>
       : source.error ? <div role="alert"><p>{source.error}</p><button type="button" onClick={() => void source.reload()}>Try again</button></div>
       : !document ? <p>This procedure is no longer available.</p>
-      : <><div className="ops-procedure-next"><div><strong>Turn the procedure into a workflow</strong><p>Review its trigger, steps, people and approval needs with ZION before anything is saved or enabled.</p></div><button type="button" disabled={!ready || !onPrepare} onClick={() => {
-        if (ready && source.isCurrent()) onPrepare?.({ id: document.id, tenant_id: document.tenant_id, title: document.title, revision: document.revision });
-      }}>Prepare workflow draft <ArrowRight size={16} aria-hidden="true" /></button></div>
+      : <><div className="ops-procedure-next"><div><strong>Turn the procedure into a workflow</strong><p>Review its trigger, steps, people and approval needs with ZION before anything is saved or enabled.</p></div><button type="button" disabled={!ready || !onPrepare} onClick={() => void prepare()}>
+        {preparing ? "Checking source…" : "Prepare workflow draft"} <ArrowRight size={16} aria-hidden="true" /></button></div>
+        {recheckError && <div role="alert"><p>{recheckError}</p><button type="button" onClick={() => { setRecheckError(null); void source.reload(); }}>Reload source</button></div>}
         {document.summary && <p>{document.summary}</p>}<div className="ops-procedure-content">{document.content ?? "The source has no readable body in this view."}</div>
         <p className="ops-source-limit">Reading this source does not start work or record an approval.</p></>}</div></>;
 }

@@ -1,5 +1,31 @@
 # Agreements preparation — Operate
 
+## October22 template-library flow — pre-edit brief
+
+Extend the same native Sales workspace from register/source → business templates
+→ supplied-wording editor and optional jurisdiction/review configuration → exact
+stored version → use that version in the original client agreement draft. This is
+an isolated mock, not a production writer or acceptance claim. Reuse the existing
+paper, tokens, search, page editor, narrow preview and canonical dialog primitives.
+The document is the primary work; metadata and next actions remain secondary.
+No invented templates, review completion, authority or legal clauses are shipped.
+
+State map: loading/empty/search/error/refusal; new version; missing supplied wording;
+dirty return with explicit stay/discard; save acknowledgment; unknown response with
+read-only captured proposal and SAME request retry; recovered original version;
+stale-source conflict without rebasing; scope retirement; later reload. Selecting
+an exact version carries original version identity and options into the same draft;
+client and commercial details remain required. The prior version remains readable.
+Actual native consumer later uses original tenant_agreement_versions plus existing
+RPC/auth/leave framework, no second ledger, approval channel, cache or executor.
+
+Existing E04 owner/domain, agreement.draft PARTIAL, no new provider/job/Layer C act,
+native UUID/version/source timestamp receipts and sales.department PROOF_OWED remain
+the ten-question routing answers above/below. Ordinary owner/staff/client/provider
+and full O1–O12/founder acceptance remain owed. Lead selects routine design intent
+under October21 delegation after actual desktop/narrow, keyboard, focus, recovery,
+scope and visual inspection. No agent assignment or founder per-slice approval.
+
 ## October21 configurable wording options — pre-edit brief
 
 Owner clarified that infrastructure must expose jurisdiction and wording-review
@@ -135,3 +161,26 @@ admin primary-membership/non-atomic writes are evidence to repair, not patterns 
 
 Functional, Visual, Experiential and Acceptance results will be recorded separately in
 the original E04 journey, ANT-51 and UI evidence. Full twelve-outcome acceptance stays open.
+
+
+## October22 template-library prototype selection
+
+Lead routine design-intent selection: APPROVE DESIGN INTENT under the owner’s
+October21 delegation, after separate AUTHOR-REVIEW / LOWER ASSURANCE. No founder
+acceptance is claimed. Actual original native-shell isolated render:20 required
+responsive/theme frames,13 behavioral paths,0 page errors; desktop1366 light and
+320 dark stored-version/option controls inspected. Original token/typography/paper
+and single shell scroll owner preserved. Controls fit and remain keyboard reachable;
+dirty stay/discard, missing-wording focus, exact new version, legacy original
+read, same selected source into draft, explicit authority restoration, scope
+retirement, readonly unknown/same-request recovery and conflict refusal pass.
+Cached Impeccable4.1.0 detector exit0 with no emitted findings. All records, authority
+and effects are mocked. Native actor/RLS/receipt integration and actual rendered
+production consumer proof remain required before release.
+
+Evidence: task outputs/e04-template-library-prototype/result.json and actual frames;
+outputs/e04-template-library-prototype-final.log; source hashes in result.json.
+Initial failure was a mock test attempting access after explicit refusal without
+restoring mock authority; test now restores authority explicitly. Business switch
+does not grant access. Initial failure artifact is retained. No production policy,
+assertion, timeout or threshold was weakened.

@@ -135,6 +135,9 @@ try{
     sql(context()+`UPDATE tenant_agreement_versions SET is_active=false WHERE id='${legacyFork}';`);
     const editableLegacy=randomUUID();sql(context()+`INSERT INTO tenant_agreement_versions(id,tenant_id,template_slug,source_mode,title,body_markdown,created_by,is_active) VALUES('${editableLegacy}','${tenant}','unconsumed-legacy','tenant_fork','Original maintenance','Unconsumed supplied words','${actor}',false);UPDATE tenant_agreement_versions SET body_markdown='Existing legacy maintenance still works' WHERE id='${editableLegacy}';`);
     check(sql(`SELECT body_markdown FROM tenant_agreement_versions WHERE id='${editableLegacy}'`)==='Existing legacy maintenance still works','Unconsumed legacy editor remains governed by its original policy');
+    refused(`UPDATE tenant_agreement_versions SET source_template_version_id='${first}',source_template_updated_at=${quote(a.updated_at)} WHERE id='${editableLegacy}'`,'23514');
+    refused(`UPDATE tenant_agreement_versions SET preparation_options=${quote(JSON.stringify(requested))}::jsonb WHERE id='${editableLegacy}'`,'23514');
+    refused(`UPDATE tenant_agreement_versions SET preparation_purpose='client_engagement',preparation_options=${quote(JSON.stringify(options))}::jsonb,template_slug='service-${editableLegacy}' WHERE id='${editableLegacy}'`,'23514');
     for(let index=0;index<21;index++)sql(context()+`SELECT ${create(randomUUID(),null,{title:'Supplied template '+index})};`);
     const page=JSON.parse(sql(context()+`SELECT list_agreement_template_versions('${tenant}');`));
     check(page.items.length===20&&page.next_cursor,'Actual twenty-row native page and original cursor');

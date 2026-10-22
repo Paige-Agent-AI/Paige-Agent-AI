@@ -40,6 +40,9 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_constraint WHERE
     conrelid='public.tenant_agreement_versions'::regclass AND conname='tav_preparation_lineage_ck') THEN
     ALTER TABLE public.tenant_agreement_versions ADD CONSTRAINT tav_preparation_lineage_ck CHECK (
+      (preparation_purpose IS NOT NULL OR (preparation_options IS NULL
+        AND source_template_version_id IS NULL AND source_template_updated_at IS NULL))
+      AND
       (preparation_purpose IS NULL OR (preparation_purpose='client_engagement' AND preparation_options IS NOT NULL
         AND source_mode='tenant_fork' AND uploaded_file_path IS NULL AND uploaded_file_mime IS NULL
         AND rendered_sha256 IS NULL AND version>0 AND body_markdown IS NOT NULL
@@ -89,6 +92,9 @@ BEGIN
       NEW.created_at:=pg_catalog.transaction_timestamp(); NEW.updated_at:=NEW.created_at;
     END IF;
     RETURN NEW;
+  END IF;
+  IF TG_OP='UPDATE' AND NEW.preparation_purpose IS DISTINCT FROM OLD.preparation_purpose THEN
+    RAISE EXCEPTION 'Create an original prepared version instead of adopting a legacy row' USING ERRCODE='23514';
   END IF;
   _retained:=OLD.preparation_purpose='client_engagement'
     OR EXISTS(SELECT 1 FROM public.paige_agreements WHERE source_version_id=OLD.id)

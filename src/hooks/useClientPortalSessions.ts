@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useShellCustomerIdentity } from "@/lib/portal/customerIdentity";
+import { captureClientPortalAuthorization, withClientPortalBusiness } from "@/lib/client-portal-scope";
 
 /**
  * The signed-in customer's sessions with their business (E09 Slice 2).
@@ -17,7 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
  * its request id, so a retry replays instead of cancelling or moving the session twice.
  *
  * An account linked to more than one business is refused by the relationship resolver (42501)
- * until multi-business membership ships. That is reported as its own state and polling stops,
+ * without an authorized selection. That is reported as its own state and polling stops,
  * because asking again cannot change the answer.
  */
 
@@ -65,10 +67,11 @@ export type SessionChangeErrorCode =
   | "SLOT_UNAVAILABLE" | "COMMS_PROVIDER_EXECUTION_DISABLED" | "RATE_LIMITED" | "AUTH_REQUIRED"
   | "MULTIPLE_RELATIONSHIPS" | "REQUEST_ID_CONFLICT" | "NEW_TIME_REQUIRED"
   /** Client-side: the engine refused because the session is still scheduled but at another time than this page loaded. */
-  | "SESSION_MOVED";
+  | "SESSION_MOVED" | "CUSTOMER_SESSION_UNVERIFIED";
 
 /** Customer-facing copy for a definite refusal. Unknown codes fall back to a plain "not changed". */
 export const PORTAL_SESSION_CHANGE_COPY: Record<SessionChangeErrorCode, string> = {
+  CUSTOMER_SESSION_UNVERIFIED: "We couldn't check your sign-in, so nothing was changed. Try again.",
   SESSION_NOT_FOUND: "This session isn't on your account anymore, so nothing was changed.",
   SESSION_NOT_CHANGEABLE: "This session has already been cancelled or completed, so nothing was changed.",
   SESSION_CHANGE_UNAVAILABLE: "This session can't be changed here. Send a message instead.",
@@ -170,9 +173,17 @@ export interface SessionsPage {
 }
 
 type RpcResult = { data: unknown; error: unknown };
+type SessionsRequest = PromiseLike<RpcResult> & {
+  setHeader(name: string, value: string): SessionsRequest;
+  abortSignal(signal: AbortSignal): SessionsRequest;
+};
+class SessionsAuthorityError extends Error {}
+class NoCustomerError extends Error {}
+type SessionsScope = {actorId: string; businessId: string; current: () => boolean};
+export const PORTAL_SESSIONS_READ_TIMEOUT_MS = 20_000;
 /** The E09 RPCs are newer than the generated Database types; keep the call shape typed locally. */
 function portalRpc(name: "client_portal_sessions", args: Record<string, unknown>) {
-  return supabase.rpc(name as never, args as never) as unknown as PromiseLike<RpcResult>;
+  return supabase.rpc(name as never, args as never) as unknown as SessionsRequest;
 }
 
 /**
@@ -184,7 +195,7 @@ export function isMultipleRelationships(err: unknown): boolean {
   if (!err || typeof err !== "object") return false;
   const e = err as { code?: unknown; message?: unknown };
   if (e.code !== "42501") return false;
-  return !(typeof e.message === "string" && /authentication required/i.test(e.message));
+  return typeof e.message === "string" && /select an authorized customer relationship/i.test(e.message);
 }
 
 function newId(): string {
@@ -258,15 +269,33 @@ export function parseSessionsPage(data: unknown): SessionsPage | null {
 /** One page of the caller's sessions. Null = no customer relationship. Throws on a failed read. */
 export async function readPortalSessions(args: {
   tenantId?: string | null; window?: "upcoming" | "past"; before?: string | null; limit?: number;
+  scope?: SessionsScope; signal?: AbortSignal;
 }): Promise<SessionsPage | null> {
-  const { data, error } = await portalRpc("client_portal_sessions", {
+  let authorization: string | null = null;
+  if (args.scope) {
+    try { authorization = await captureClientPortalAuthorization(supabase.auth, args.scope.actorId, args.scope.current); }
+    catch { throw new SessionsAuthorityError('Customer session could not be checked'); }
+  }
+  let request = portalRpc("client_portal_sessions", {
     p_tenant_id: args.tenantId ?? null,
     p_window: args.window ?? "upcoming",
     p_before: args.before ?? null,
     p_limit: args.limit ?? PORTAL_SESSIONS_PAGE,
   });
+  if (args.scope && authorization) request = withClientPortalBusiness(request, args.scope.businessId).setHeader('Authorization', authorization);
+  if (args.signal && typeof request.abortSignal === 'function') request = request.abortSignal(args.signal);
+  const {data, error} = await request;
+  if (args.scope) {
+    try {
+      if (!args.scope.current()) throw new Error('Customer request changed');
+      const actual = await supabase.auth.getUser();
+      if (actual.error || actual.data.user?.id !== args.scope.actorId || !args.scope.current()) throw new Error('Customer request changed');
+    } catch { throw new SessionsAuthorityError('Customer request changed'); }
+  }
   if (error) throw error;
-  return parseSessionsPage(data);
+  const page = parseSessionsPage(data);
+  if (args.scope && page && page.tenant_id !== args.scope.businessId) throw new SessionsAuthorityError('Session business changed');
+  return page;
 }
 
 const byStart = (dir: 1 | -1) => (a: PortalSession, b: PortalSession) =>
@@ -369,7 +398,15 @@ export interface ClientPortalSessionsState {
   dismissChange: (sessionId: string) => void;
 }
 
-export function useClientPortalSessions(): ClientPortalSessionsState {
+export function useClientPortalSessions({enabled: requested = true, limit = PORTAL_SESSIONS_PAGE, poll = true}: {
+  enabled?: boolean; limit?: number; poll?: boolean;
+} = {}): ClientPortalSessionsState {
+  const identity = useShellCustomerIdentity();
+  const frame = identity?.viewer === 'customer' ? identity.frame : null;
+  const requestedActor = frame?.actorId ?? null;
+  const requestedBusiness = frame?.profile.tenant_id ?? null;
+  const requestedScope = identity ? JSON.stringify([identity.viewer, requestedActor, frame?.profile.id, requestedBusiness]) : 'legacy';
+  const enabled = requested && (!identity || identity.viewer === 'staff' || !!frame && identity.phase === 'ready');
   const [upcoming, setUpcoming] = useState<PortalSession[]>([]);
   const [past, setPast] = useState<PortalSession[]>([]);
   const [pastLoaded, setPastLoaded] = useState(false);
@@ -388,12 +425,25 @@ export function useClientPortalSessions(): ClientPortalSessionsState {
   // Mirrors for async callbacks; each async result is applied only if its epoch is current.
   const epoch = useRef(0);
   const actor = useRef<string | null>(null);
-  const tenantRef = useRef<string | null>(null);
+  const readSeq = useRef(0);
+  const tenantRef = useRef<string | null>(requestedBusiness);
+  const signedOut = useRef(false);
+  const pendingReads = useRef(new Set<AbortController>());
+  const origin = useRef({key: requestedScope, generation: 0, enabled});
+  const appliedScope = useRef(requestedScope);
+  if (origin.current.key !== requestedScope) {
+    origin.current = {key: requestedScope, generation: origin.current.generation + 1, enabled};
+    ++epoch.current; ++readSeq.current;
+  }
+  origin.current.enabled = enabled;
+  const generation = origin.current.generation;
+  const scopeAlive = useCallback(() => origin.current.generation === generation
+    && origin.current.enabled && appliedScope.current === requestedScope, [generation, requestedScope]);
   const upcomingRef = useRef<PortalSession[]>([]);
   const pastRef = useRef<PortalSession[]>([]);
   const pastLoadedRef = useRef(false);
   const changesRef = useRef<Record<string, SessionChange>>({});
-  const readSeq = useRef(0);
+
   /** For a held refusal: the last read started before it. Only a read started later releases it. */
   const heldAfterRead = useRef<Record<string, number>>({});
   const alive = useRef(true);
@@ -415,7 +465,10 @@ export function useClientPortalSessions(): ClientPortalSessionsState {
   const resetScope = useCallback(() => {
     epoch.current += 1;
     readSeq.current += 1;
-    tenantRef.current = null;
+    ++origin.current.generation;
+    for (const controller of pendingReads.current) controller.abort();
+    appliedScope.current = requestedScope;
+    tenantRef.current = requestedBusiness;
     halted.current = false;
     upcomingRef.current = [];
     pastRef.current = [];
@@ -436,7 +489,46 @@ export function useClientPortalSessions(): ClientPortalSessionsState {
     setLoading(true);
     setTenantId(null);
     setScopeEpoch(epoch.current);
-  }, []);
+  }, [requestedScope, requestedBusiness]);
+
+  const clearProtected = useCallback(() => {
+    upcomingRef.current = []; pastRef.current = []; tenantRef.current = requestedBusiness;
+    setUpcoming([]); setPast([]); setNextUpcoming(null); setNextPast(null); setTenantId(null);
+  }, [requestedBusiness]);
+
+  const readPage = useCallback(async (args: {window: 'upcoming' | 'past'; before?: string | null}, stillCurrent: () => boolean) => {
+    const controller = new AbortController(); pendingReads.current.add(controller);
+    const current = () => stillCurrent() && !controller.signal.aborted;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const work = async () => {
+      if (!actor.current || requestedActor && actor.current !== requestedActor) {
+        const actual = await supabase.auth.getUser();
+        if (!current()) throw new SessionsAuthorityError('Customer request changed');
+        if (actual.error) throw new SessionsAuthorityError('Customer session could not be checked');
+        actor.current = actual.data.user?.id ?? null;
+      }
+      const intended = actor.current;
+      if (!intended || requestedActor && intended !== requestedActor) throw new NoCustomerError();
+      const pinned = tenantRef.current;
+      const page = await readPortalSessions({...args, tenantId: pinned, limit, signal: controller.signal,
+        scope: requestedActor && requestedBusiness ? {actorId: requestedActor, businessId: requestedBusiness, current} : undefined});
+      if (!requestedActor) {
+        const actual = await supabase.auth.getUser();
+        if (actual.error || actual.data.user?.id !== intended) throw new SessionsAuthorityError('Customer session changed');
+      }
+      if (!current()) throw new SessionsAuthorityError('Customer request changed');
+      if (pinned && page && page.tenant_id !== pinned) throw new SessionsAuthorityError('Session business changed');
+      return page;
+    };
+    try {
+      return await Promise.race([work(), new Promise<never>((_resolve, reject) => {
+        timer = setTimeout(() => reject(new Error('Session read interrupted')), PORTAL_SESSIONS_READ_TIMEOUT_MS);
+      })]);
+    } finally {
+      if (timer !== undefined) clearTimeout(timer);
+      controller.abort(); pendingReads.current.delete(controller);
+    }
+  }, [requestedActor, requestedBusiness, limit]);
 
   const haltForMultiple = useCallback(() => {
     halted.current = true;
@@ -457,18 +549,20 @@ export function useClientPortalSessions(): ClientPortalSessionsState {
     setPast([]);
     setNextUpcoming(null);
     setNextPast(null);
+    setTenantId(null);
     setUnavailable(true);
   }, []);
 
   const refresh = useCallback(async () => {
+    if (!alive.current || !scopeAlive() || halted.current || signedOut.current) return;
     const myEpoch = epoch.current;
     const seq = ++readSeq.current;
-    const current = () => alive.current && myEpoch === epoch.current && seq === readSeq.current;
+    const current = () => alive.current && scopeAlive() && !signedOut.current && myEpoch === epoch.current && seq === readSeq.current;
     const withPast = pastLoadedRef.current;
     try {
       const [up, pa] = await Promise.all([
-        readPortalSessions({ tenantId: tenantRef.current, window: "upcoming" }),
-        withPast ? readPortalSessions({ tenantId: tenantRef.current, window: "past" }) : Promise.resolve(undefined),
+        readPage({window: "upcoming"}, current),
+        withPast ? readPage({window: "past"}, current) : Promise.resolve(undefined),
       ]);
       if (!current()) return;
       if (!up || pa === null) {
@@ -501,19 +595,23 @@ export function useClientPortalSessions(): ClientPortalSessionsState {
     } catch (err) {
       if (!current()) return;
       if (isMultipleRelationships(err)) haltForMultiple();
-      else setError("We couldn't load your sessions. Check your connection and try again.");
+      else if (err instanceof NoCustomerError) markUnavailable();
+      else {
+        if (requestedActor || err instanceof SessionsAuthorityError) clearProtected();
+        setError("We couldn't load your sessions. Check your connection and try again.");
+      }
     } finally {
       if (current()) setLoading(false);
     }
-  }, [haltForMultiple, markUnavailable, patchChange]);
+  }, [haltForMultiple, markUnavailable, patchChange, readPage, scopeAlive, requestedActor, clearProtected]);
 
   const loadPast = useCallback(async () => {
-    if (pastLoadedRef.current || halted.current) return;
+    if (!alive.current || !scopeAlive() || signedOut.current || pastLoadedRef.current || halted.current) return;
     const myEpoch = epoch.current;
     setPastLoading(true);
     try {
-      const page = await readPortalSessions({ tenantId: tenantRef.current, window: "past" });
-      if (!alive.current || myEpoch !== epoch.current) return;
+      const page = await readPage({window: "past"}, () => alive.current && scopeAlive() && myEpoch === epoch.current && !signedOut.current);
+      if (!alive.current || !scopeAlive() || myEpoch !== epoch.current || signedOut.current) return;
       if (!page) { markUnavailable(); return; }
       pastLoadedRef.current = true;
       setPastLoaded(true);
@@ -523,22 +621,23 @@ export function useClientPortalSessions(): ClientPortalSessionsState {
       setNextPast(page.next_before);
       setError(null);
     } catch (err) {
-      if (!alive.current || myEpoch !== epoch.current) return;
+      if (!alive.current || !scopeAlive() || myEpoch !== epoch.current || signedOut.current) return;
       if (isMultipleRelationships(err)) haltForMultiple();
-      else setError("We couldn't load your past sessions. Try again.");
+      else { if (requestedActor || err instanceof SessionsAuthorityError) clearProtected();
+        setError("We couldn't load your past sessions. Try again."); }
     } finally {
-      if (alive.current && myEpoch === epoch.current) setPastLoading(false);
+      if (alive.current && scopeAlive() && myEpoch === epoch.current && !signedOut.current) setPastLoading(false);
     }
-  }, [haltForMultiple, markUnavailable]);
+  }, [haltForMultiple, markUnavailable, readPage, scopeAlive, requestedActor, clearProtected]);
 
   const loadMore = useCallback(async (which: "upcoming" | "past") => {
     const cursor = which === "upcoming" ? nextUpcoming : nextPast;
-    if (!cursor || loadingMore) return;
+    if (!alive.current || !scopeAlive() || signedOut.current || !cursor || loadingMore || halted.current) return;
     const myEpoch = epoch.current;
     setLoadingMore(true);
     try {
-      const page = await readPortalSessions({ tenantId: tenantRef.current, window: which, before: cursor });
-      if (!alive.current || myEpoch !== epoch.current) return;
+      const page = await readPage({window: which, before: cursor}, () => alive.current && scopeAlive() && myEpoch === epoch.current && !signedOut.current);
+      if (!alive.current || !scopeAlive() || myEpoch !== epoch.current || signedOut.current) return;
       if (!page) { markUnavailable(); return; }
       if (which === "upcoming") {
         const next = merge(1, upcomingRef.current, page.sessions);
@@ -553,28 +652,72 @@ export function useClientPortalSessions(): ClientPortalSessionsState {
       }
       setError(null);
     } catch (err) {
-      if (!alive.current || myEpoch !== epoch.current) return;
+      if (!alive.current || !scopeAlive() || myEpoch !== epoch.current || signedOut.current) return;
       if (isMultipleRelationships(err)) haltForMultiple();
-      else setError("We couldn't load more sessions. Try again.");
+      else { if (requestedActor || err instanceof SessionsAuthorityError) clearProtected();
+        setError("We couldn't load more sessions. Try again."); }
     } finally {
-      if (alive.current && myEpoch === epoch.current) setLoadingMore(false);
+      if (alive.current && scopeAlive() && myEpoch === epoch.current && !signedOut.current) setLoadingMore(false);
     }
-  }, [nextUpcoming, nextPast, loadingMore, haltForMultiple, markUnavailable]);
+  }, [nextUpcoming, nextPast, loadingMore, haltForMultiple, markUnavailable, readPage, scopeAlive, requestedActor, clearProtected]);
 
   const deliver = useCallback(async (entry: SessionChange): Promise<boolean> => {
     const myEpoch = epoch.current;
-    const current = () => alive.current && myEpoch === epoch.current;
+    const current = () => alive.current && scopeAlive() && !signedOut.current && myEpoch === epoch.current;
+    if (!current() || halted.current) return false;
+    const prior = changesRef.current[entry.sessionId];
+    const previouslyUnconfirmed = entry.status === 'unconfirmed'
+      || prior?.requestId === entry.requestId && prior.status === 'unconfirmed';
     patchChange(entry.sessionId, { status: "sending", error: null, actionsHeld: false }, entry);
     let data: unknown = null, invokeError: unknown = null;
-    try {
+    let dispatched = false, expired = false, verified = !requestedActor;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const work = async () => {
+      let authorization: string | undefined;
+      if (requestedActor) authorization = await captureClientPortalAuthorization(supabase.auth, requestedActor, () => current() && !expired);
+      if (!current() || expired) return;
       const body: Record<string, unknown> = {
-        mode: "customer", action: entry.action, booking_id: entry.sessionId, request_id: entry.requestId,
+        mode: 'customer', action: entry.action, booking_id: entry.sessionId, request_id: entry.requestId,
       };
-      if (entry.action === "reschedule") body.start = entry.start;
+      if (entry.action === 'reschedule') body.start = entry.start;
       if (tenantRef.current) body.tenant_id = tenantRef.current;
-      ({ data, error: invokeError } = await supabase.functions.invoke("booking-manage", { body }));
+      dispatched = true;
+      ({data, error: invokeError} = await supabase.functions.invoke('booking-manage', {body,
+        timeout: PORTAL_SESSIONS_READ_TIMEOUT_MS,
+        ...(authorization ? {headers: {Authorization: authorization}} : {})}));
+      if (requestedActor) {
+        const actual = await supabase.auth.getUser();
+        if (actual.error || actual.data.user?.id !== requestedActor) throw new SessionsAuthorityError('Customer session changed');
+        verified = true;
+      }
+    };
+    try {
+      await Promise.race([work(), new Promise<never>((_resolve, reject) => {
+        timer = setTimeout(() => {expired = true; reject(new Error('Session change interrupted'));}, PORTAL_SESSIONS_READ_TIMEOUT_MS);
+      })]);
     } catch (err) {
-      invokeError = err ?? new Error("network");
+      invokeError = err ?? new Error('network');
+    } finally {
+      if (timer !== undefined) clearTimeout(timer);
+    }
+    if (!current()) return false;
+    if (!dispatched) {
+      clearProtected();
+      if (previouslyUnconfirmed) {
+        setError("We couldn't verify the previous change. Try again.");
+        patchChange(entry.sessionId, {status: 'unconfirmed', error: null});
+        return false;
+      }
+      setError("We couldn't check your sign-in. Try again before changing this session.");
+      patchChange(entry.sessionId, {status: 'failed', error: 'CUSTOMER_SESSION_UNVERIFIED', actionsHeld: false});
+      return false;
+    }
+    if (!verified) {
+      // Dispatch may have succeeded. Keep its original request; never claim it was unsent or done.
+      clearProtected();
+      setError("We couldn't check this session's latest state. Try again.");
+      patchChange(entry.sessionId, {status: 'unconfirmed', error: null});
+      return false;
     }
     const outcome = await engineOutcome(data, invokeError);
     if (!current()) return false;
@@ -594,10 +737,10 @@ export function useClientPortalSessions(): ClientPortalSessionsState {
     if (outcome.code === "MULTIPLE_RELATIONSHIPS") haltForMultiple();
     else if (STALE_AFTER.has(outcome.code)) void refresh();
     return false;
-  }, [refresh, haltForMultiple, patchChange]);
+  }, [refresh, haltForMultiple, patchChange, requestedActor, scopeAlive, clearProtected]);
 
   const start = useCallback(async (sessionId: string, action: SessionChangeAction, newStart: string | null) => {
-    if (!tenantRef.current || halted.current) return false;
+    if (!alive.current || !scopeAlive() || signedOut.current || !tenantRef.current || halted.current) return false;
     const existing = changesRef.current[sessionId];
     if (existing?.status === "sending") return false;
     // The same change asked again while its outcome is unknown keeps its request id, so it can only
@@ -607,7 +750,7 @@ export function useClientPortalSessions(): ClientPortalSessionsState {
       sessionId, action, start: newStart, requestId: sameAsked ? existing.requestId : newId(), status: "sending", error: null,
     };
     return deliver(entry);
-  }, [deliver]);
+  }, [deliver, scopeAlive]);
 
   const cancel = useCallback((sessionId: string) => start(sessionId, "cancel", null), [start]);
   const reschedule = useCallback((sessionId: string, newStart: string) => {
@@ -617,50 +760,51 @@ export function useClientPortalSessions(): ClientPortalSessionsState {
 
   const retryChange = useCallback(async (sessionId: string) => {
     const entry = changesRef.current[sessionId];
-    if (!entry || entry.status === "sending" || halted.current) return false;
+    if (!alive.current || !scopeAlive() || signedOut.current || !entry || entry.status === "sending" || halted.current) return false;
     return deliver(entry);
-  }, [deliver]);
+  }, [deliver, scopeAlive]);
 
   const dismissChange = useCallback((sessionId: string) => {
     const entry = changesRef.current[sessionId];
-    if (!entry || entry.status === "sending") return;
+    if (!alive.current || !scopeAlive() || signedOut.current || !entry || entry.status === "sending") return;
     patchChange(sessionId, null);
-  }, [patchChange]);
+  }, [patchChange, scopeAlive]);
 
-  // Identity scope + initial read.
+  // Original identity subscription. Re-entry revalidates the selected frame; no customer identity is created here.
   useEffect(() => {
     alive.current = true;
+    const reads = pendingReads.current;
+    if (appliedScope.current !== requestedScope) resetScope();
+    if (!enabled) {
+      // A same-business frame recheck cannot leave a dispatched change permanently "sending".
+      for (const entry of Object.values(changesRef.current)) {
+        if (entry.status === 'sending') patchChange(entry.sessionId, {status: 'unconfirmed', error: null});
+      }
+      return () => { alive.current = false; for (const c of reads) c.abort(); };
+    }
     let cancelled = false;
-    const begin = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (cancelled) return;
-      actor.current = user?.id ?? null;
-      if (!user) { setLoading(false); setUnavailable(true); return; }
-      await refresh();
-    };
-    void begin();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    void refresh();
+    const {data: {subscription}} = supabase.auth.onAuthStateChange((event, session) => {
       if (cancelled) return;
       const next = session?.user.id ?? null;
-      if (event === "INITIAL_SESSION" && next === actor.current) return;
-      if (next === actor.current && event !== "SIGNED_OUT") return;
-      actor.current = next;
-      resetScope();
-      if (!next || event === "SIGNED_OUT") { setLoading(false); setUnavailable(true); return; }
-      // Do not call SDK Auth/RPC methods while its Auth callback holds the lock.
+      if (event === 'INITIAL_SESSION' && next === actor.current) return;
+      if (next === actor.current && event !== 'SIGNED_OUT') return;
+      signedOut.current = event === 'SIGNED_OUT' || !next;
+      actor.current = next; resetScope();
+      if (!next || event === 'SIGNED_OUT') { setLoading(false); setUnavailable(true); return; }
       queueMicrotask(() => { if (!cancelled) void refresh(); });
     });
     return () => {
-      cancelled = true;
-      alive.current = false;
+      cancelled = true; alive.current = false;
+      for (const c of reads) c.abort();
       subscription.unsubscribe();
     };
-  }, [refresh, resetScope]);
+  }, [requestedScope, enabled, refresh, resetScope, patchChange]);
 
   // Freshness without realtime: focus, becoming visible, and a modest interval while visible.
   useEffect(() => {
     const visible = () => typeof document === "undefined" || document.visibilityState !== "hidden";
-    const live = () => !!actor.current && !halted.current;
+    const live = () => poll && !!actor.current && !halted.current && scopeAlive() && !signedOut.current;
     const onFocus = () => { if (live()) void refresh(); };
     const onVisibility = () => { if (visible() && live()) void refresh(); };
     window.addEventListener("focus", onFocus);
@@ -671,12 +815,16 @@ export function useClientPortalSessions(): ClientPortalSessionsState {
       document.removeEventListener("visibilitychange", onVisibility);
       window.clearInterval(timer);
     };
-  }, [refresh]);
+  }, [refresh, scopeAlive, poll]);
 
+  const hidden = appliedScope.current !== requestedScope || !enabled;
   return {
-    upcoming, past, pastLoaded, pastLoading,
-    hasMoreUpcoming: !!nextUpcoming, hasMorePast: !!nextPast, loadingMore,
-    loading, error, unavailable, multipleBusinesses, tenantId, scopeEpoch, changes,
+    upcoming: hidden ? [] : upcoming, past: hidden ? [] : past, pastLoaded: hidden ? false : pastLoaded,
+    pastLoading: hidden ? false : pastLoading, hasMoreUpcoming: !hidden && !!nextUpcoming,
+    hasMorePast: !hidden && !!nextPast, loadingMore: hidden ? false : loadingMore,
+    loading: hidden ? requested : loading, error: hidden ? null : error, unavailable: hidden ? !requested : unavailable,
+    multipleBusinesses: !hidden && multipleBusinesses, tenantId: hidden ? null : tenantId,
+    scopeEpoch: hidden ? epoch.current : scopeEpoch, changes: hidden ? {} : changes,
     refresh, loadPast, loadMore, cancel, reschedule, retryChange, dismissChange,
   };
 }
@@ -690,20 +838,9 @@ export type NextPortalSession =
 
 /** The soonest upcoming session, for the customer home. One read; no polling. */
 export function useNextPortalSession(enabled = true): NextPortalSession {
-  const [next, setNext] = useState<NextPortalSession>({ state: "loading" });
-  useEffect(() => {
-    if (!enabled) { setNext({ state: "unavailable" }); return; }
-    let cancelled = false;
-    setNext({ state: "loading" });
-    readPortalSessions({ window: "upcoming", limit: 1 })
-      .then((page) => {
-        if (cancelled) return;
-        if (!page) setNext({ state: "unavailable" });
-        else if (page.sessions[0]) setNext({ state: "session", session: page.sessions[0] });
-        else setNext({ state: "none" });
-      })
-      .catch(() => { if (!cancelled) setNext({ state: "unavailable" }); });
-    return () => { cancelled = true; };
-  }, [enabled]);
-  return next;
+  const sessions = useClientPortalSessions({enabled, limit: 1, poll: false});
+  if (!enabled || sessions.unavailable || sessions.multipleBusinesses) return {state: 'unavailable'};
+  if (sessions.loading) return {state: 'loading'};
+  if (sessions.error) return {state: 'unavailable'};
+  return sessions.upcoming[0] ? {state: 'session', session: sessions.upcoming[0]} : {state: 'none'};
 }

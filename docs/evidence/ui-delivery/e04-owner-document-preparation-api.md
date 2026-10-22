@@ -11,17 +11,23 @@ all eight function bodies/ABIs/grants, fixed5s timeout, immutable records and
 signing holds remain unchanged; no migration ledger or other migration is edited.
 Already-applied Preview schemas retain the same final trigger/source definitions.
 
-The existing fenced PostgreSQL16 runner now holds original agreement/signer
-AccessShare reads for8s. Unchanged installation/replay produced an actual lock
-timeout RED; after ONLY the two-statement SQL correction, the identical test and
-all221 native controls PASS (44 signer/75 checked/23 editability/79 document).
-Fresh/replayed installation both complete before the reader releases; replay's
-two hold definitions match. Existing authority/immutability/duplicate/source-CAS/
-legacy-effect/receipt controls stay intact. Original migration lint0 warnings,
-script syntax and whitespace checks PASS. Sandbox denied the initial localhost
+Final source5bad30d29fc04e7b7bff5d6a456240f1e15a6919 extends the SAME fenced
+PostgreSQL16 runner with an explicitly held reader, released in finally. Actual
+pg_locks checkpoints verify both original tables before/fresh/replayed install;
+fresh table absence/presence and both unchanged hold definitions are asserted.
+Fixed5s native and existing20s session limits remain unchanged. Controlled old
+SQL gives causal timeout RED; repaired SQL gives221 native controls PASS (44
+signer/75 checked/23 editability/79 document), eight document sessions/two read
+installations. Original authority/immutability/duplicate/source-CAS/legacy-effect/
+receipt controls stay intact; local fixture database count returns0 afterward.
+LOWER author finding5618869619 rejected process-lifetime evidence. An initial
+physical-lock run lost its timed reader and FAILED; a diagnostic run passed,
+then explicit release replaced that timing race. Final controlled RED/GREEN logs
+are e04-trigger-installation-red-controlled.log and green-controlled.log. The
+earlier timed/diagnostic runs remain historical, not the final proof. Migration
+lint0 warnings, script syntax and whitespace checks PASS. Sandbox denied the initial localhost
 identity read; ordinary permitted local execution succeeded. That setup denial
-is not the causal RED. Logs: outputs/e04-trigger-installation-red.log and
-e04-trigger-installation-green.log (task-local, synthetic only).
+is not the causal RED. All logs remain task-local and synthetic only.
 
 PostgreSQL documents CREATE TRIGGER's reader-compatible lock and native replacement:
 [locking](https://www.postgresql.org/docs/17/explicit-locking.html),

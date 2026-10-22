@@ -7,10 +7,10 @@ MATERIAL_FLOW_CHANGE: NO: original actor, private preparation inputs/results, UI
 FLOW_PROTOTYPE: NOT_REQUIRED: original approved Agreements flow is preserved; only two pending native trigger installation statements change.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: the existing owner can eventually retain exact unsigned document preparations through the original API after its native prerequisite deploys; this source is not customer acceptance.
 VISUAL_DIRECTION: NOT_APPLICABLE: no renderer, stylesheet, typography, shell or customer screen changes in this repair.
-AUTOMATED_EVIDENCE: PASS: identical existing fenced PostgreSQL16 runner reproduces old-source lock timeout, then221 native controls pass after only the two-statement correction; 44 signer/75 checked/23 editability/79 document cases.
+AUTOMATED_EVIDENCE: PASS: final existing fenced PostgreSQL16 runner reproduces old-source lock timeout, then221 native controls pass with the two-statement SQL correction and explicitly held reader; 44 signer/75 checked/23 editability/79 document cases, zero leftover fixture databases.
 STATIC_EVIDENCE: PASS: migration lint0 warnings, original script syntax/whitespace checks, exact source comparison and all8 source function-body hashes match original429; fixed5s timeout and all grants/ABIs unchanged.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no visible source changed; original API/field rendering evidence remains separate and does not prove deployment or customer persistence.
-BEHAVIORAL_EVIDENCE: PASS: an independent8s AccessShare reader spans the unchanged5s lock limit; fresh/replayed installation both complete before release and preserve both exact hold definitions, original refusal/CAS/receipt controls.
+BEHAVIORAL_EVIDENCE: PASS: explicit reader remains held through actual before/fresh/replay pg_locks checkpoints on both original tables; fresh table absence/presence and exact hold definitions verified. Original5s native/20s test session caps and refusal/CAS/receipt controls unchanged.
 AUTHENTICATED_RUNTIME: UNVERIFIED: local synthetic native authority is not genuine owner/staff/client JWT, hosted Storage, signing, provider or customer acceptance.
 KEYBOARD_FOCUS: NOT_APPLICABLE: no interactive component, keyboard handler, focus owner or existing leave guard changes.
 ZOOM_REFLOW: NOT_APPLICABLE: no viewport, layout, document canvas or responsive source changes.
@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: exact native installation/replay succeeds during ordinary o
 MOTION_PURPOSE: NONE: no visible interaction or animation is introduced.
 PROTECTED_SEAMS: unchanged source/function/ABI/grant comparison, original pending migration ledger, fixed timeout, native immutable preparations and original signing-hold trigger definitions.
 
-INTERNAL_BUILD_IDENTITY: branch=codex/e04-preparation-trigger-installation; source_base=429388f2528942275334fd0c916c6fcfecb4f70a; source_head=192467989fd7ce454dc666340858f2e05c0da9a2; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113300004 reviewed native release and source readback after six rollbacks); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-preparation-installation-locks.md
+INTERNAL_BUILD_IDENTITY: branch=codex/e04-preparation-trigger-installation; source_base=7a8b066942098a7917b2655fe75d8ebad677fb09; source_head=5bad30d29fc04e7b7bff5d6a456240f1e15a6919; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113300004 reviewed native release and source readback after six rollbacks); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-preparation-installation-locks.md
 RELEASE_CHANNEL: development: local native proof and source correction only; actual native production deployment remains held.
 RELEASE_CLASSIFICATION: internal-only: original preparation prerequisite correction, not a complete professional Agreements or twelve-outcome customer release.
 CUSTOMER_RELEASE_IDENTITY: none: no customer version, announcement or founder acceptance from this repair.
@@ -54,6 +54,15 @@ no LayerC adapter, approval, job, sender, payment or execution path is added.
 Unknown outcomes keep their original identity. ALG01/12 local proof does not
 promote the official Algorithm Register, ALG02/13, catalogue or whole Experience.
 
-Native logs/source comparison remain task-local: e04-trigger-installation-red.log,
-e04-trigger-installation-green.log and e04-trigger-installation-source-contract.json.
+LOWER author finding5618869619 required actual granted locks rather than reader
+process lifetime. A subsequent timed physical-check run failed; its diagnostic
+counterpart passed, exposing fixture timing risk. Final source uses explicit
+held stdin in the SAME runner, unchanged20s cap, release/rollback in finally and
+one installer connection with three actual database checkpoints. Final controlled
+old-source RED and repaired221 GREEN pass; original-source local bytes restored
+in finally, no published Git or database history rewrite. Actual incoming7a8
+Master closeout preserved verbatim; no owning product source changed by it.
+
+Native logs/source comparison remain task-local: e04-trigger-installation-red-controlled.log,
+e04-trigger-installation-green-controlled.log and e04-trigger-installation-source-contract.json.
 No protected customer data or source-test acceptance evidence was posted to ANT52.

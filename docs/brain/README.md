@@ -1,3 +1,9 @@
+## EXP09 — Progress and Action Items production readback, 2026-10-22
+
+Original Progress/Home2562 is deployed at622c9bd480593abcbe084098d06a11f1e4fd1b9d (public sampled reviewed docs-only descendantf149ebb5328eb5d2662d8e033170c2fb1e408750). Action Items2565 is deployed and independently sampled at exacta6e0bbce8f62661e86e7a1b69247a349646b21e7. Both had11 applicable exact-head checks/full Preview/two statuses SUCCESS and documented AUTHOR-REVIEW / LOWER ASSURANCE. The sole Master4.0 rows record exact tree/deployment/assets, original unchanged native authority, evidence and limitations; receipts6334479804/6335429025.99 Progress and150 Actions focused checks plus original native82/94 controls support the bounded request/response/recovery claims, not ordinary authenticated acceptance.
+
+No new native writer, CRM, inbox, scheduler, ledger, approval gate or CURA runtime. Original legitimate domain paths remain; no CURA Layer C adapter is asserted production-proven. Global identity/recipient acceptance remains restricted; Sessions2567, original reviews/files/other scoped consumers/shared Edge and actual approved Knowledge/owner-client returning/negative journey remain unfinished. Seven catalogue rows stay Limited; ALG01/12 bounded PARTIAL and ALG02/04/13 runtime UNVERIFIED. Functional source/deployment, Visual local/synthetic, Experiential protected automated recovery and Founder Acceptance are separate. The founder is invited once the complete integrated Experience is ready, not per PR.
+
 ## EXP09 scoped relationship and CURA history recovery — production closeout,2026-10-22
 
 Seven bounded increments2542/2547/2551/2555/2548/2556/2558 have exact reviewed head, main/tree, CI/review and verified normal production web/native identities in the sole Master4.0 Shipped Delivery Log, with receipts6332943907/6333043227/6333044066/6333245798/6333534220/6333534905/6334013110. All reviews are accurately AUTHOR-REVIEW / LOWER ASSURANCE.

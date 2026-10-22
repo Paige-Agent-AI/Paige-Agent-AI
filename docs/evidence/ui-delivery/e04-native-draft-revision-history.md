@@ -43,9 +43,10 @@ now with its original source timestamp; this does not invent a historical event.
 All new draft states are retained in the original write transaction. Existing
 native events remain the only writer activity; reads/no-op source states add none.
 
-Original body-version is not a retained occurrence number: a title correction or
-upload-reference change can retain history without advancing the engine's body
-counter, and reverting wording is a new chronological occurrence. Frozen/signed
+Original body-version is not a retained occurrence number: a title correction can
+retain history without advancing the engine's body counter; source-reference
+changes retain their actual original engine version, without a new counter rule.
+Reverting wording is a new chronological occurrence. Frozen/signed
 content and all original signature evidence remain in the original signing engine.
 No legal sufficiency or document-byte retention claim is made.
 

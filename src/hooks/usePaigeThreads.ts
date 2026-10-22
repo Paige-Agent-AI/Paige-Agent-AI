@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { ConfirmItem } from "@/components/chat/confirmPreview";
 import { readOriginalReminderHistory } from "@/components/chat/reminderHistory";
+import { readOriginalCuraPreparationHistory, type OriginalPreparationScope } from "@/components/chat/curaPreparationHistory";
 import { CHAT_CONTROL_HEADER, chatControlRetryDelay } from "../../supabase/functions/_shared/paige-turn/control-transport";
 
 /**
@@ -162,9 +163,11 @@ export function usePaigeThreads(opts: { callerUserId: string | null; tenantId: s
 
   // Same native status transport, separate inert historical result. A caller
   // supplies a physical abort signal and fences its selected conversation/focus.
-  const loadOriginalReminderHistory = useCallback(async (
+  const loadOriginalHistory = useCallback(async <T>(
     threadId: string, turnId: string, intentId: string, signal: AbortSignal,
-  ) => {
+    project: (data: Record<string, unknown> | null, scope: OriginalPreparationScope) => T | null,
+    includeCuraPreparationHistory = false,
+  ): Promise<T | null> => {
     const generation = ++originalReminderReadGeneration.current;
     if (platform || !callerUserId || !tenantId || !signal || signal.aborted) return null;
     const scope = approvalScopeRef.current;
@@ -173,15 +176,28 @@ export function usePaigeThreads(opts: { callerUserId: string | null; tenantId: s
       const { data, error } = await supabase.functions.invoke("paige-ai-chat", {
         signal, headers: { [CHAT_CONTROL_HEADER]: "status" }, body: {
           messages: [{ role: "user", content: "Read pending approval status." }], threadId, requestIntentId: intentId,
-          interactive: { kind: "status", approvalTurnId: turnId },
+          interactive: { kind: "status", approvalTurnId: turnId,
+            ...(includeCuraPreparationHistory ? { includeCuraPreparationHistory: true } : {}) },
         },
       });
       if (signal.aborted || approvalScopeRef.current !== scope || generation !== originalReminderReadGeneration.current) return null;
       const context = (error as { context?: Response } | null)?.context;
       if (context?.status === 429) scope.retryAt = Date.now() + chatControlRetryDelay(context.headers?.get("Retry-After"));
-      return error ? null : readOriginalReminderHistory(data?.approval_history, { threadId, turnId, intentId, tenantId });
+      return error ? null : project(data && typeof data === "object" && !Array.isArray(data)
+        ? data as Record<string, unknown> : null, { threadId, turnId, intentId, tenantId });
     } catch { return null; }
   }, [callerUserId, tenantId, platform, approvalScopeKey]);
+
+  // One original status transport, generation, backoff and physical abort owner.
+  // The ordinary reminder request retains its exact envelope without the selector.
+  const loadOriginalReminderHistory = useCallback((
+    threadId: string, turnId: string, intentId: string, signal: AbortSignal,
+  ) => loadOriginalHistory(threadId, turnId, intentId, signal,
+    (data, scope) => readOriginalReminderHistory(data?.approval_history, scope)), [loadOriginalHistory]);
+  const loadOriginalCuraPreparationHistory = useCallback((
+    threadId: string, turnId: string, intentId: string, signal: AbortSignal,
+  ) => loadOriginalHistory(threadId, turnId, intentId, signal,
+    (data, scope) => readOriginalCuraPreparationHistory(data?.cura_preparation_history, scope), true), [loadOriginalHistory]);
 
   /** Create a thread lazily on first send. Title is a placeholder the server
    *  refines from the first message. */
@@ -261,6 +277,7 @@ export function usePaigeThreads(opts: { callerUserId: string | null; tenantId: s
     loadTurns,
     loadApprovalRecovery,
     loadOriginalReminderHistory,
+    loadOriginalCuraPreparationHistory,
     ensureThread,
     renameThread: (id: string, title: string) => renameThread.mutate({ id, title }),
     archiveThread: (id: string) => archiveThread.mutate(id),

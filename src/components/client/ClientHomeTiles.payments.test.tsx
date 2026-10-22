@@ -23,7 +23,10 @@ vi.mock("@/integrations/supabase/client", () => {
     return chain;
   };
   const rpc = (name: string, args: unknown) => (name === "client_portal_invoices" ? f.invoices(args) : Promise.resolve({ data: null, error: null }));
-  return { supabase: { from: () => counted(), rpc } };
+  return { supabase: { from: () => counted(), rpc, auth: {
+    getUser: async () => ({ data: { user: { id: "synthetic-home-customer" } }, error: null }),
+    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }),
+  } } };
 });
 vi.mock("@/lib/playbook", () => ({ usePlaybook: () => ({ persona: { name: "Paige" }, quickActions: [], portal: { modules: f.modules } }) }));
 vi.mock("@/hooks/useClientPortalConfig", () => ({ useClientPortalConfigState: () => ({ config: { modules: f.overlay }, loading: false }) }));

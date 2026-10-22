@@ -32,8 +32,18 @@ vi.mock("@/integrations/supabase/client", () => {
     return chain;
   };
   // The progress read has its own mock so each test's sessions answer stays the sessions answer.
-  const rpc = (name: string, ...a: unknown[]) => (name === "client_portal_progress" ? f.progressRpc(name, ...a) : f.rpc(name, ...a));
-  return { supabase: { from: (t: string) => counted(t), rpc } };
+  const rpc = (name: string, ...a: unknown[]) => {
+    if (name !== "client_portal_progress") return f.rpc(name, ...a);
+    const response = f.progressRpc(name, ...a);
+    const q = { setHeader: () => q, abortSignal: () => q,
+      then: (resolve: (v: unknown) => unknown, reject?: (e: unknown) => unknown) => Promise.resolve(response).then(resolve, reject) };
+    return q;
+  };
+  return { supabase: { from: (t: string) => counted(t), rpc, auth: {
+    getUser: async () => ({ data: { user: { id: "u1" } }, error: null }),
+    getSession: async () => ({ data: { session: { user: { id: "u1" }, access_token: "synthetic-home-progress" } }, error: null }),
+    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }),
+  } } };
 });
 vi.mock("@/lib/playbook", () => ({ usePlaybook: () => ({ persona: { name: "Paige" }, quickActions: [], portal: { modules: [] } }) }));
 vi.mock("@/hooks/useClientPortalConfig", () => ({ useClientPortalConfigState: () => ({ config: {}, loading: false }) }));
@@ -161,7 +171,8 @@ it("never says 'your coach', and the Ask tile says only what its action does", a
 // under PAIGE; PAIGE is the owner's COO and never appears on the customer's home, even though the
 // owner's Playbook persona (mocked above) is still named Paige.
 it("names the business's own agent, never the owner's PAIGE persona", async () => {
-  const frame = { brand: { tenant_name: "Northwind Studio" }, config: { assistant: { display_name: "Ava" } } } as never;
+  const frame = { actorId: "u1", profile: { id: "synthetic-client", tenant_id: T, linked_user_id: "u1" },
+    brand: { tenant_name: "Northwind Studio" }, config: { assistant: { display_name: "Ava" } } } as never;
   await act(async () => root.render(
     <MemoryRouter initialEntries={["/app"]}>
       <CustomerIdentityProvider state={{ frame, phase: "ready" }}>

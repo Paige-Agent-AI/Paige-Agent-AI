@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: restore the incumbent Finish later/Close return to its
 FLOW_PROTOTYPE: NOT_REQUIRED: existing reviewed Teach CURA source flow is restored; no redesign or new material transition. Actual original components were rendered and exercised.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: authorized business publisher saves a private source review, leaves and returns to the same current source without a manual reload or duplicate write.
 VISUAL_DIRECTION: PASS: incumbent typography, concise source/version/status hierarchy, disclosure, 44px controls, dialog and responsive layout remain unchanged.
-AUTOMATED_EVIDENCE: PASS: 96 service/hook/panel/actual original-flow regressions. Two new tests fail against inherited source and pass after repair; pending publication/focus reads, source scope and unknown-result controls remain protected.
+AUTOMATED_EVIDENCE: PASS: 96 service/hook/panel/actual original-flow regressions. Two new tests fail against inherited source and pass after repair; ongoing publication/focus reads, source scope and interrupted-response controls remain protected.
 STATIC_EVIDENCE: PASS: exact five-line consumer lifecycle repair inspected; changed-source ESLint, gold discipline and diff check pass. Required final-head hosted CI/build remain separate gates.
 RENDERED_EVIDENCE: PASS: actual original components/services with synthetic transport and shell/dock boundaries at four desktop open/closed pairs plus390/320 widths. Twelve native images and render-observations.json under assets/e09-cura-review-return. Images show source review, current returned version and original layout; failed-return state is recorded by DOM observations, not mislabeled as a screenshot.
 BEHAVIORAL_EVIDENCE: PASS: Save review -> Finish later reads Version4, restores original source control and reopens the saved publication review without another extraction/publication. Failed read shows explicit recovery, withholds stale source and does not claim success; synthetic business switch clears old source/error.
@@ -16,7 +16,7 @@ KEYBOARD_FOCUS: PASS: successful narrow return restores enabled Review or correc
 ZOOM_REFLOW: UNVERIFIED:390/320 actual emulated widths fit without horizontal body overflow; native browser200% zoom and assistive technology are not claimed.
 REDUCED_MOTION: PASS: no motion changes; narrow dark failure exercised with reduced-motion preference. Temporary emulation was reset.
 STATE_COVERAGE: PASS: saved private review/current revision, immediate reopen, pending refresh, failed/foreign inventory, explicit recovery and business-boundary clearing. Original publication/sharing uncertainty remains governed by incumbent contracts.
-TRUTHFUL_STATE_LABELS: PASS: private draft and saved review are not published/indexed/customer-shared. Original native checks remain; no unknown result is treated as success and no second write is triggered.
+TRUTHFUL_STATE_LABELS: PASS: private draft and saved review are not published/indexed/customer-shared. Original native checks remain; no unconfirmed response is treated as success and no second write is triggered.
 SOLO_UI: YES: original shared Portal for every eligible publisher/business; no account-specific implementation or new customer identity.
 SOLO_1536X770_PAIGE_CLOSED: PASS:1536-closed.png actual source with synthetic shell boundary; no overflow. Full authenticated two-cohort shell acceptance remains separate.
 SOLO_1536X770_PAIGE_OPEN: PASS:1536-open.png actual source with synthetic dock boundary; no overflow. No actual Chat execution is inferred from the dock.

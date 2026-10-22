@@ -49,3 +49,10 @@ original#2401 attachment recovery hunks remain owned by EXP05.
 finish pass inspected actual wide/320px/dark native pixels, hierarchy, click targets,
 focus return, responsive handoff and motion. Earlier mock prototype evidence is
 separate. Native interface tests never establish authenticated customer acceptance.
+
+
+## Retirement callback correction,2026-10-22
+
+The isolated sixth case reproduces the original missing callback when an open presentation retires. An earlier unisolated probe accidentally counted a responsive handoff callback and is not a passing negative. A mounted-lifetime ref now suppresses focus return only during a still-mounted responsive presentation handoff. Full retirement invokes the original caller fallback. All six presentation cases pass; original Chat/controller/protocol/source/authority remain unchanged.
+
+The12 baseline native frames retain their original source pins. Five composed source frames in assets/e2-contextual-suggestion-foundation/focus-20261022/viewport-state-index.json supplement focus behavior using the actual Chat and next EXP02 consumer with refusing synthetic data/authority ports. Manifest pins both the shared runtime and the unreleased consumer: it is not a claim that the consumer ships in this foundation. Native failed-source retirement focuses the original composer; keyboard return and outside-click control focus are preserved; exact6030.39990234375 narrow scroll and unsent draft are retained. Earlier failed diagnostics are excluded. Required final hosted checks and ordinary SOLO/Live/permission proof remain owed.

@@ -365,10 +365,25 @@ it("never shows a failed progress read as zero, and does not name itself twice",
 });
 
 it("names the next dated item on the Progress tile, from the same one-item read", async () => {
+  // A real-clock +60s fixture crosses the local day at midnight. This assertion
+  // is specifically about an item due today, so hold only Date at local noon.
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date(2026, 9, 21, 12));
   f.progressRpc.mockResolvedValue({ data: progressPage({ shared: 7, done: 3, open: 4, overdue: 0 }, [progressItem({})]), error: null });
   await render();
   expect(progressReads()).toHaveLength(1);
   expect(tile("progress-tile-next")!.textContent).toBe("Next: Review the moodboard · due today");
+});
+
+it("names the actual next day when the next item crosses local midnight", async () => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date(2026, 9, 21, 23, 59, 30));
+  const item = progressItem({});
+  f.progressRpc.mockResolvedValue({ data: progressPage({ shared: 7, done: 3, open: 4, overdue: 0 }, [item]), error: null });
+  await render();
+  const day = new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric" }).format(new Date(item.due_at));
+  expect(tile("progress-tile-next")!.textContent).toBe(`Next: Review the moodboard · due ${day}`);
+  expect(progressReads()).toHaveLength(1);
 });
 
 it("says the next item is past due, and names none when the first item is finished or undated", async () => {

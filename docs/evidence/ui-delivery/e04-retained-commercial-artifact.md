@@ -20,7 +20,7 @@ TRUTHFUL_STATE_LABELS: PASS: returned artifact is neither business completion no
 SOLO_UI: NO: dormant internal server adapter, not a mounted department or Portal experience.
 UNVERIFIED: exact-head CI/review/release, actual hosted Storage API/readback and canonical approval/operation/freeze consumer, ordinary owner/staff/client and full O1-O12/founder acceptance.
 
-INTERNAL_BUILD_IDENTITY: branch=codex/e04-retained-commercial-artifact; source_base_sha=cb8a24e9397db86e671b1194d34ea9300f856d84; product_sha=PR product receipt; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-retained-commercial-artifact.md
+INTERNAL_BUILD_IDENTITY: branch=codex/e04-retained-commercial-artifact; source_base_sha=cb8a24e9397db86e671b1194d34ea9300f856d84; product_sha=8deb988c94756f7a61b370384d227900373e0428; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-retained-commercial-artifact.md
 RELEASE_CHANNEL: development: dormant artifact reconciliation with in-memory transport only.
 RELEASE_CLASSIFICATION: internal-only: native preparation prerequisite, no customer announcement or activation.
 CUSTOMER_RELEASE_IDENTITY: none: no completed Experience or founder acceptance.

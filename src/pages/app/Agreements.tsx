@@ -35,12 +35,15 @@ import {
   useClientPortalAgreements,
   type PortalAgreement,
   type PortalAgreementState,
+  type PortalAgreementContext,
 } from "@/hooks/useClientPortalAgreements";
 import { useClientPortalBrandState, type ClientPortalBrand } from "@/hooks/useClientPortalBrand";
 import {
   ASK_FOR_NEW_LINK_HREF, PLATFORM_TERMS_HREF, openFailureCopy, replacesEmailedLinkHint, signHereNote, signNoteCopy, waitingNote,
   type AgreementCopy,
 } from "@/lib/portal/agreementsCopy";
+
+import {useShellCustomerIdentity} from "@/lib/portal/customerIdentity";
 
 const MyAgreements = lazy(() => import("@/pages/MyAgreements"));
 
@@ -137,7 +140,7 @@ function CopyWithAsk({ copy, business }: { copy: AgreementCopy; business: string
   );
 }
 
-function AgreementRow({ a, business, tz, nowMs, primary, onRefresh, tenantId, signHint }: {
+function AgreementRow({ a, business, tz, nowMs, primary, onRefresh, tenantId, signHint, requestContext }: {
   a: PortalAgreement; business: string; tz: string; nowMs: number;
   /** The first signable row carries the page's one gold act. */
   primary: boolean;
@@ -145,6 +148,7 @@ function AgreementRow({ a, business, tz, nowMs, primary, onRefresh, tenantId, si
   signHint?: string;
   onRefresh: () => void;
   tenantId: string | null;
+  requestContext?: PortalAgreementContext;
 }) {
   const [busy, setBusy] = useState<RowBusy>(null);
   const [problem, setProblem] = useState<AgreementCopy | null>(null);
@@ -153,35 +157,49 @@ function AgreementRow({ a, business, tz, nowMs, primary, onRefresh, tenantId, si
    * inviting another refused press. A fresh read of the list (a new row object) lifts it.
    */
   const [throttled, setThrottled] = useState(false);
+  const [uncertain,setUncertain]=useState(false);
+  const problemRef=useRef<HTMLParagraphElement>(null);
+  const pendingTabs=useRef(new Set<Window>());
+  const inFlight=useRef(false);
+  useEffect(()=>{if(problem)problemRef.current?.focus();},[problem]);
   useEffect(() => { setThrottled(false); }, [a]);
   const alive = useRef(true);
   // Set on every mount, not only the first: StrictMode mounts, unmounts and mounts again, and a flag that only ever
   // goes false would drop every answer after the first remount.
-  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
+  useEffect(() => {alive.current=true;const tabs=pendingTabs.current;return()=>{alive.current=false;tabs.forEach(tab=>tab.close());tabs.clear();};},[]);
+  const current=()=>alive.current&&(!requestContext||requestContext.current());
 
   const signHere = async () => {
+    if(!current()||inFlight.current||uncertain)return;
+    inFlight.current=true;
     setProblem(null);
     setBusy("open");
-    const result = await openAgreementForSigning(a.id, tenantId);
-    if (!alive.current) return;
+    const result = await (requestContext?openAgreementForSigning(a.id,tenantId,requestContext):openAgreementForSigning(a.id,tenantId));
+    if (!current()) return;
     if (result.ok === true) {
       goToSigningPage(result.token);
       return;
     }
+    inFlight.current=false;
     setBusy(null);
+    if(result.code==="OUTCOME_UNKNOWN"){setUncertain(true);setProblem(openFailureCopy(result.code,business));return;}
     setProblem(openFailureCopy(result.code, business, result.note));
     if (result.code === "TRY_AGAIN_LATER") setThrottled(true);
     if (result.code === "NOT_SIGNABLE" || result.code === "CLIENT_AGREEMENT_UNAVAILABLE" || result.code === "NOT_SIGNABLE_HERE") onRefresh();
   };
 
   const copy = async (download: boolean) => {
+    if(!current()||inFlight.current)return;
+    inFlight.current=true;
     setProblem(null);
     setBusy(download ? "download" : "view");
     // A tab opened by the click itself survives the wait for the bytes; one opened afterwards may be blocked.
     const tab = download ? null : window.open("", "_blank");
-    if (tab) tab.opener = null;
-    const result = await fetchSignedCopy(a.id, tenantId, download);
-    if (!alive.current) { tab?.close(); return; }
+    if (tab) {tab.opener=null;pendingTabs.current.add(tab);}
+    const result = await (requestContext?fetchSignedCopy(a.id,tenantId,download,requestContext):fetchSignedCopy(a.id,tenantId,download));
+    if(tab)pendingTabs.current.delete(tab);
+    if (!current()) {tab?.close();return;}
+    inFlight.current=false;
     setBusy(null);
     if (result.ok === false) {
       tab?.close();
@@ -218,7 +236,7 @@ function AgreementRow({ a, business, tz, nowMs, primary, onRefresh, tenantId, si
         size="sm"
         variant={gold ? "gold" : "outline"}
         className={gold ? "" : QUIET_HOVER}
-        disabled={busy !== null}
+        disabled={busy !== null||uncertain}
         aria-busy={busy === "open"}
         onClick={() => void signHere()}
         data-testid="review-and-sign"
@@ -279,12 +297,12 @@ function AgreementRow({ a, business, tz, nowMs, primary, onRefresh, tenantId, si
         {showState && <StatePill state={a.state} business={business} />}
       </div>
       {showProblem && problem && (
-        <p role="alert" data-testid="agreement-problem" className="mt-2 flex items-start gap-2 text-sm text-foreground">
+        <p role="alert" tabIndex={-1} ref={problemRef} data-testid="agreement-problem" className="mt-2 flex items-start gap-2 text-sm text-foreground">
           <AlertCircle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
           <span><CopyWithAsk copy={problem} business={business} /></span>
         </p>
       )}
-      {actions && <div className="mt-3 flex flex-wrap items-center gap-2">{actions}</div>}
+      {actions && <div className="mt-3 flex flex-wrap items-center gap-2">{actions}{uncertain && <Link to={ASK_FOR_NEW_LINK_HREF} className={`${LINK_BUTTON} max-w-full whitespace-normal text-center`} data-testid="agreement-link-recovery"><MessageSquare aria-hidden="true" className="h-4 w-4 shrink-0"/><span className="min-w-0 break-words">{problem?.askLabel??`Contact ${business}`}</span></Link>}</div>}
     </li>
   );
 }
@@ -351,7 +369,7 @@ function CustomerAgreements({ view, brand }: { view: ReturnType<typeof useClient
   const refresh = () => { void view.refresh(); };
   const row = (a: PortalAgreement) => (
     <AgreementRow
-      key={a.id} a={a} business={business} tz={tz} nowMs={nowMs} primary={a.id === firstSignable} onRefresh={refresh} tenantId={view.tenantId}
+      key={`${view.scopeEpoch}:${a.id}`} a={a} business={business} tz={tz} nowMs={nowMs} primary={a.id === firstSignable} onRefresh={refresh} tenantId={view.tenantId} requestContext={view.requestContext}
       signHint={a.can_sign && !allEmailed ? signHereNote(a.link_emailed, business) : undefined}
     />
   );
@@ -384,9 +402,9 @@ function CustomerAgreements({ view, brand }: { view: ReturnType<typeof useClient
       {view.multipleBusinesses ? (
         <AgreementsEmpty
           icon={FileSignature}
-          title="Agreements for more than one business aren't available here yet"
-          description="Your account is connected to more than one business. Each business sends its own signing links; if you can't use one, ask that business for a new link."
-          action={<Link to="/app" className={LINK_BUTTON}><Home aria-hidden="true" className="h-4 w-4" /> Back to Home</Link>}
+          title="Choose a business for your agreements"
+          description="Return to your business choices, then open the agreements shared with you there."
+          action={<Link to="/app?chooseBusiness=1" className={LINK_BUTTON}><Home aria-hidden="true" className="h-4 w-4" /> Choose business</Link>}
         />
       ) : firstLoad ? (
         <AgreementsSkeleton />
@@ -432,9 +450,11 @@ function PlatformTermsPage() {
 }
 
 export default function Agreements() {
+  const identity=useShellCustomerIdentity();
   const view = useClientPortalAgreements();
   const brandState = useClientPortalBrandState();
   // Not a customer of a business (staff, or a login with no relationship): the page this route always was.
+  if(view.unavailable&&identity&&identity.viewer!=="staff")return <section className="mx-auto max-w-2xl"><h1 className="mb-4 text-2xl font-semibold">Agreements</h1><AgreementsEmpty icon={ShieldCheck} title="Your agreements aren’t available" description="We couldn’t confirm your access to this business. Return to your portal to check your access." action={<Link to="/app" className={LINK_BUTTON}>Back to your portal</Link>}/></section>;
   if (view.unavailable) return <PlatformTermsPage />;
   if (!view.customerConfirmed && !view.multipleBusinesses) {
     // Nothing yet says this login is a customer: no customer header or footer, just the shape of a list.

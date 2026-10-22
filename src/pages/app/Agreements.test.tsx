@@ -193,7 +193,8 @@ describe("the list", () => {
   it("says when the account is linked to several businesses, and when the list is still loading", async () => {
     f.state = { ...f.state, multipleBusinesses: true };
     await render();
-    expect(host.textContent).toContain("Agreements for more than one business aren't available here yet");
+    expect(host.textContent).toContain("Choose a business for your agreements");
+    expect(Array.from(host.querySelectorAll("a")).find(a=>a.textContent?.includes("Choose business"))?.getAttribute("href")).toBe("/app?chooseBusiness=1");
     act(() => root.unmount()); root = createRoot(host);
     f.state = { ...f.state, multipleBusinesses: false, loading: true };
     await render();
@@ -542,4 +543,43 @@ describe("other states", () => {
     expect(rowOf("Photo release").querySelector("[data-testid=agreement-note]")?.textContent).toBe("Northwind Studio signs first. You'll be able to sign once they have.");
     expect(host.querySelectorAll("button").length).toBe(0);
   });
+});
+
+
+describe("selected customer intent and interrupted private-link recovery",()=>{
+  const deferred=<T,>()=>{let resolve!:(value:T)=>void;return{promise:new Promise<T>(r=>{resolve=r;}),resolve:(value:T)=>resolve(value)};};
+  it("uncertain open stays blocked, explains the true outcome and focuses its Messages recovery",async()=>{
+    const document=ag({title:"Current customer agreement"});withList([document]);
+    f.open.mockResolvedValue({ok:false,code:"OUTCOME_UNKNOWN"});await render();
+    await click(buttons(host,/Review and sign/)[0]);
+    expect(f.open).toHaveBeenCalledTimes(1);expect(f.goTo).not.toHaveBeenCalled();
+    const problem=host.querySelector<HTMLElement>('[data-testid="agreement-problem"]');
+    expect(problem?.textContent).toContain("A link may have been created");expect(problem?.textContent).toContain("does not sign");
+    expect(globalThis.document.activeElement).toBe(problem);expect(buttons(host,/Review and sign/)[0].disabled).toBe(true);
+    withList([{...document}]);await render();await click(buttons(host,/Review and sign/)[0]);expect(f.open).toHaveBeenCalledTimes(1);
+    const recovery=host.querySelector<HTMLAnchorElement>('[data-testid="agreement-link-recovery"]')!;
+    expect(recovery.getAttribute("href")).toBe("/app/messages");await click(recovery);expect(host.querySelector('[data-testid="where"]')?.textContent).toBe("/app/messages");
+  });
+  it("two immediate presses issue only the one explicit signing request",async()=>{
+    withList([ag()]);const held=deferred<unknown>();f.open.mockReturnValue(held.promise);await render();
+    const button=buttons(host,/Review and sign/)[0];await act(async()=>{button.click();button.click();await Promise.resolve();});
+    expect(f.open).toHaveBeenCalledTimes(1);held.resolve({ok:false,code:"NOT_SIGNABLE"});await act(async()=>{for(let i=0;i<8;i++)await Promise.resolve();});expect(f.goTo).not.toHaveBeenCalled();
+  });
+  it("a late private link cannot navigate after its selected scope is retired",async()=>{
+    let valid=true;const context={scope:{actorId:"e0912300-0000-4000-8000-000000000001",tenantId:T,clientId:"e0932300-0000-4000-8000-000000000001"},current:()=>valid};
+    withList([ag({title:"Original scope"})],{requestContext:context});const held=deferred<unknown>();f.open.mockReturnValue(held.promise);await render();await click(buttons(host,/Review and sign/)[0]);
+    valid=false;withList([ag({title:"Next selected scope"})],{scopeEpoch:1,requestContext:undefined});await render();held.resolve({ok:true,token:"a".repeat(64),expiresAt:"2026-11-01T00:00:00Z"});await act(async()=>{for(let i=0;i<8;i++)await Promise.resolve();});expect(f.goTo).not.toHaveBeenCalled();expect(host.textContent).not.toContain("Original scope");
+  });
+  it("retired context refuses the click before native request or blank document tab",async()=>{
+    const context={scope:{actorId:"e0912300-0000-4000-8000-000000000001",tenantId:T,clientId:"e0932300-0000-4000-8000-000000000001"},current:()=>false};
+    withList([ag(),ag({state:"signed",can_sign:false,can_download:true})],{requestContext:context});await render();const tab=vi.spyOn(window,"open");
+    try{await click(buttons(host,/Review and sign/)[0]);await click(buttons(host,/^Open$/)[0]);expect(f.open).not.toHaveBeenCalled();expect(f.fetchCopy).not.toHaveBeenCalled();expect(tab).not.toHaveBeenCalled();}finally{tab.mockRestore();}
+  });
+  it("a late signed copy closes its pending tab and never creates a document URL",async()=>{
+    let valid=true;const context={scope:{actorId:"e0912300-0000-4000-8000-000000000001",tenantId:T,clientId:"e0932300-0000-4000-8000-000000000001"},current:()=>valid};
+    withList([ag({title:"Signed source",state:"signed",can_sign:false,can_download:true})],{requestContext:context});const held=deferred<unknown>();f.fetchCopy.mockReturnValue(held.promise);
+    const tab={opener:{},location:{href:""},close:vi.fn()},open=vi.spyOn(window,"open").mockReturnValue(tab as unknown as Window);const make=vi.fn(()=>"blob:must-not-create");vi.stubGlobal("URL",Object.assign(URL,{createObjectURL:make,revokeObjectURL:vi.fn()}));
+    try{await render();await click(buttons(host,/^Open$/)[0]);valid=false;withList([],{scopeEpoch:1,requestContext:undefined});await render();held.resolve({ok:true,blob:new Blob(["synthetic PDF"],{type:"application/pdf"})});await act(async()=>{for(let i=0;i<8;i++)await Promise.resolve();});expect(tab.close).toHaveBeenCalled();expect(make).not.toHaveBeenCalled();expect(tab.location.href).toBe("");}finally{open.mockRestore();}
+  });
+  it("business-selection recovery uses the original verified chooser instead of an unsupported-state notice",async()=>{f.state={...f.state,multipleBusinesses:true};await render();const link=Array.from(host.querySelectorAll('a')).find(a=>a.textContent?.includes("Choose business"));expect(link?.getAttribute("href")).toBe("/app?chooseBusiness=1");expect(host.textContent).not.toContain("can't be opened here yet");});
 });

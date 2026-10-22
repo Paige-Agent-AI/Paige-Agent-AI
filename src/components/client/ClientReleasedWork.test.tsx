@@ -133,16 +133,17 @@ it("a same-business recheck preserves an uncertain original decision and require
  expect(f.rpc.mock.calls.filter(c=>c[0]==="operations_delivery_client_decide_scoped")).toHaveLength(1);
 });
 it("switching business closes the earlier review and never publishes its pending result into the new business",async()=>{
+ const selectedBusiness="e0924000-0000-4000-8000-000000000002";
  await scopedRender();await act(async()=>button("Review").click());await flush();
  let resolve!:(value:unknown)=>void;const original=f.rpc.getMockImplementation()!;
  f.rpc.mockImplementation((name:string,args:Record<string,unknown>)=>{
   if(name==="operations_delivery_client_decide_scoped")return new Promise(r=>{resolve=r;});
-  if(args.p_tenant_id==="e0924000-0000-4000-8000-000000000002")return {data:{...profile,id:"e0934000-0000-4000-8000-000000000002",tenant_id:args.p_tenant_id},error:null};
-  if(args.p_expected_tenant_id==="e0924000-0000-4000-8000-000000000002")return {data:{actor_id:actor,tenant_id:args.p_expected_tenant_id,releases:[],unavailable_count:0,has_more:false},error:null};
+  if(args.p_tenant_id===selectedBusiness)return {data:{...profile,id:"e0934000-0000-4000-8000-000000000002",tenant_id:args.p_tenant_id},error:null};
+  if(args.p_expected_tenant_id===selectedBusiness)return {data:{actor_id:actor,tenant_id:args.p_expected_tenant_id,releases:[],unavailable_count:0,has_more:false},error:null};
   return original(name,args);
  });
  await act(async()=>button("Accept this version").click());await act(async()=>button("Confirm acceptance").click());
- await scopedRender("ready","e0924000-0000-4000-8000-000000000002");expect(document.querySelector('[role="dialog"]')).toBeNull();expect(host.textContent).not.toContain("Brand launch plan");
+ await scopedRender("ready",selectedBusiness);expect(document.querySelector('[role="dialog"]')).toBeNull();expect(host.textContent).not.toContain("Brand launch plan");
  await act(async()=>resolve({data:{...artifact(),state:"accepted"},error:null}));await flush();
  expect(host.textContent).not.toContain("Brand launch plan");expect(host.textContent).not.toContain("Your acceptance is recorded");expect(f.rpc.mock.calls.filter(c=>c[0]==="operations_delivery_client_decide_scoped")).toHaveLength(1);
 });

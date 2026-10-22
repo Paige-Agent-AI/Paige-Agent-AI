@@ -173,11 +173,10 @@ function RailActivityPanel({ activity }: { activity: ReturnType<typeof useSoloAc
  *   LIVE · PARTIAL · NOT CONNECTED · NEEDS ATTENTION · PENDING PROVIDER · UNAVAILABLE · PROOF OWED ·
  *   PAUSED · NOT CHECKED
  *
- * Only THREE come from a persisted finding, a structural fact rather than an omission:
- * `paige_systems_check_finding.status` is CHECK-constrained to `pass | fail | skip | error`, which
- * maps to LIVE / NEEDS ATTENTION / UNAVAILABLE. PENDING PROVIDER and PAUSED can never come from
- * this store — they are published by the workstream that owns the provider, through the result
- * contract (docs/product/provider-result-contract.md).
+ * Recorded setup checks are NOT provider-readiness certification. A pass or resolved finding
+ * supports only PARTIAL area coverage; its own result is labelled Pass or Resolved. Preserve
+ * the provider-owned vocabulary without turning handle presence, saved settings or a registered
+ * workflow into LIVE operation. Provider states remain with their original result contract.
  *
  * NOT CHECKED is an AREA-level word, never a finding: it means no check covers that area yet
  * (`coveredBy: []` in systems-check-areas.ts) — a marker of unfinished backend work, and a
@@ -190,25 +189,30 @@ function RailActivityPanel({ activity }: { activity: ReturnType<typeof useSoloAc
  * was set up wrongly; the item's own sentence carries which, because guessing "not connected" from
  * a `has_x: false` would be the surface inventing a status the runner never recorded.
  */
-type FindingStatusWord = "live" | "attention" | "unavailable";
+type FindingStatusWord = "partial" | "attention" | "unavailable";
 type StatusWord = FindingStatusWord | "notchecked";
 
 const STATUS_TEXT: Record<StatusWord, string> = {
-  live: "Live",
+  partial: "Partial",
   attention: "Needs attention",
   unavailable: "Unavailable",
   notchecked: "Not checked",
 };
 
 function statusOf(finding: SystemsCheckFinding): FindingStatusWord {
-  if (isResolved(finding)) return "live";
-  if (finding.status === "pass") return "live";
+  if (isResolved(finding)) return "partial";
+  if (finding.status === "pass") return "partial";
   if (isUnavailable(finding)) return "unavailable";
   return "attention";
 }
 
 function StatusPill({ state }: { state: StatusWord }) {
   return <span className={`sc-status sc-status--${state}`}><i />{STATUS_TEXT[state]}</span>;
+}
+
+function FindingPill({ finding }: { finding: SystemsCheckFinding }) {
+  const state = statusOf(finding);
+  return <span className={`sc-status sc-status--${state}`}><i />{isResolved(finding) ? "Resolved" : finding.status === "pass" ? "Pass" : STATUS_TEXT[state]}</span>;
 }
 
 /** The owner-facing title. Falls back to the registry name so an unmapped check stays visible. */
@@ -242,7 +246,7 @@ function AttentionItem({
     <article className={`sc-item sc-item--${severity}`}>
       <div className="sc-item-t">
         <h3>{findingTitle(finding)}</h3>
-        <StatusPill state={statusOf(finding)} />
+        <FindingPill finding={finding} />
       </div>
       {finding.paige_interpretation && <p className="sc-why" style={{ margin: "3px 0 0" }}>{finding.paige_interpretation}</p>}
       <dl className="sc-meta">
@@ -623,21 +627,22 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
       const worst: StatusWord | null = inArea.some((finding) => statusOf(finding) === "attention")
         ? "attention"
         : inArea.some((finding) => statusOf(finding) === "unavailable")
+          || (inArea.length > 0 && area.coveredBy.some(check => !inArea.some(finding => finding.check_id === check)))
           ? "unavailable"
-          : inArea.length ? "live" : null;
+          : inArea.length ? "partial" : null;
       map[area.id] = worst ?? (area.coveredBy.length === 0 ? "notchecked" : systems.run ? "unavailable" : null);
     }
     return map;
   }, [currentFindings, systems.run]);
 
   /**
-   * The operating brief's plain-English lead — DERIVED from the real area statuses, never a score
-   * or a roll-up. A clause appears only when it is true: the areas that are ready are named, then
+   * The recorded-check brief's plain-English lead — DERIVED from the real area statuses, never a score
+   * or a roll-up. A clause appears only when it is true: areas with no open recorded findings, then
    * the ones that need the owner. "Start here" is the single highest-priority owner action and the
    * exact surface it lives on. These are the same signals the sections below render, said in a
    * sentence — nothing here is a claim a section does not also make.
    */
-  const readyAreas = SYSTEMS_CHECK_AREAS.filter((area) => areaStatus[area.id] === "live");
+  const readyAreas = SYSTEMS_CHECK_AREAS.filter((area) => areaStatus[area.id] === "partial");
   const needAreas = SYSTEMS_CHECK_AREAS.filter((area) => areaStatus[area.id] === "attention");
   const nameAreas = (areas: typeof SYSTEMS_CHECK_AREAS) =>
     areas.length === 0 ? ""
@@ -660,7 +665,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
                 still gets the page heading, and the document keeps its h1. Same rule applies to
                 Mind, and to Game Plan and Trust Compass when they land. */}
             <h1 className="sc-sr-only">Systems Check</h1>
-            <p>What your business systems can actually do right now, and what is stopping the rest.</p>
+            <p>Inspect the last recorded setup check and the issues that need attention.</p>
             <span className="sc-sr-only"><span data-tenant-account-name>{resolvedAccount.accountName}</span>, <span data-tenant-account-tier>{resolvedAccount.accountTypeLabel}</span>, {command.greeting.dateLabel}. {command.greeting.name}: {command.loading ? "operating sources are still loading." : command.isError ? "some operating sources are unavailable." : command.greeting.summary}</span>
           </div>
           <div className="sc-heading-actions">
@@ -680,7 +685,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
               {showBrief && (readyAreas.length > 0 || needAreas.length > 0) && (
                 <p className="sc-brief-say">
                   {readyAreas.length > 0 && (
-                    <span className="sc-w-ready">{nameAreas(readyAreas)} {readyAreas.length === 1 ? "is" : "are"} ready.</span>
+                    <span className="sc-w-ready">{nameAreas(readyAreas)} {readyAreas.length === 1 ? "has" : "have"} no open findings in the recorded checks.</span>
                   )}
                   {readyAreas.length > 0 && needAreas.length > 0 ? " " : null}
                   {needAreas.length > 0 && (
@@ -812,7 +817,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
           {(confirmedFindings.length > 0 || resolvedFindings.length > 0) && (
             <section className="sc-block" aria-labelledby="sc-ready-title">
               <div className="sc-block-head">
-                <h2 id="sc-ready-title">What is ready to operate</h2>
+                <h2 id="sc-ready-title">Passed and resolved checks</h2>
                 <span className="sc-n">{confirmedFindings.length + resolvedFindings.length}</span>
                 <span className="sc-aside">Each one names the check that answered for it</span>
               </div>
@@ -856,7 +861,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
             <div className="sc-block-head">
               <h2 id="sc-areas-title">Your operating areas</h2>
               <span className="sc-n">{SYSTEMS_CHECK_AREAS.length}</span>
-              <span className="sc-aside">Each carries its own status. There is deliberately no total.</span>
+              <span className="sc-aside">Recorded setup coverage, not operational certification.</span>
             </div>
             <div className="sc-areas">
               {SYSTEMS_CHECK_AREAS.map((area) => {
@@ -887,11 +892,13 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
                           </p>
                         ) : (
                           <div className="sc-area-checks">
+                            <p className="sc-why">Recorded setup results do not verify provider readiness or successful work.</p>
+                            {area.coveredBy.some(check => !inArea.some(finding => finding.check_id === check)) && <p className="sc-why">Some expected checks have no result in this recorded run.</p>}
                             {inArea.map((finding) => {
                               const dest = destinationForCheck(finding.check_id);
                               return (
                                 <div className="sc-area-check" key={finding.id}>
-                                  <StatusPill state={statusOf(finding)} />
+                                  <FindingPill finding={finding} />
                                   <strong>{findingTitle(finding)}</strong>
                                   {dest && account && (
                                     <a className="sc-button sc-button--quiet" href={dest.path(account)}>{dest.label}</a>

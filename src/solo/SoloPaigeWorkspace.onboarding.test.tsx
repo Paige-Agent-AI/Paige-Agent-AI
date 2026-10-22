@@ -1,21 +1,22 @@
 import { act, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { MemoryRouter, useLocation } from "react-router-dom";
+import { MemoryRouter, useLocation, useNavigate } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { SoloPaigeWorkspace } from "./SoloPaigeWorkspace";
+import { SoloOnboardingStage } from "./SoloOnboardingStage";
 import { cleanSoloSetupBrief } from "./settings-setup-contract";
 const id = "11111111-1111-4111-8111-111111111111";
-const fixture = vi.hoisted(() => ({ tenant: "test-tenant-a", staff: false, rpc: vi.fn(), context: {} as Record<string, unknown>, renders: [] as (string|null|undefined)[], chips: [] as {label:string;prompt:string;autoSend?:boolean}[] }));
+const fixture = vi.hoisted(() => ({ tenant: "test-tenant-a", staff: false, tierAllows: true, rpc: vi.fn(), context: {} as Record<string, unknown>, renders: [] as (string|null|undefined)[], chips: [] as {label:string;prompt:string;autoSend?:boolean}[] }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: fixture.tenant, isPlatformStaff: fixture.staff, activeTenant: { account_number: "10001" } }) }));
-vi.mock("@/hooks/useTierFeatures", () => ({ useTierFeatures: () => ({ has: () => true, loading: false }) }));
+vi.mock("@/hooks/useTierFeatures", () => ({ useTierFeatures: () => ({ has: () => fixture.tierAllows, loading: false }) }));
 vi.mock("./data/useSoloBusinessContext", () => ({ useSoloBusinessContext: () => fixture.context }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: fixture.rpc } }));
 vi.mock("@/components/paige/live/PaigePresence", () => ({ PaigePresence: ({ state }: {state: string}) => <span data-presence={state} /> }));
 vi.mock("@/components/dashboard/PaigeAIChat", () => ({ PaigeAIChat: ({ conversationHeader, activeThreadId, surfaceContext, liveConversation, chips }: {conversationHeader:ReactNode;activeThreadId?:string|null;surfaceContext?:{kind:string};liveConversation:boolean;chips?:typeof fixture.chips}) => { fixture.renders.push(activeThreadId); fixture.chips=chips??[]; return <div data-chat data-thread={activeThreadId} data-context={surfaceContext?.kind} data-live={String(liveConversation)}>{conversationHeader}</div>; } }));
 let host: HTMLDivElement, root: Root;
-const Probe = () => { const route = useLocation(); return <output data-route>{route.pathname+route.search}</output>; };
+const Probe = () => { const route = useLocation(); const navigate = useNavigate(); return <><output data-route>{route.pathname+route.search}</output><button type="button" data-leave-onboarding onClick={() => navigate("/solo/10001/paige/chat")}>Leave onboarding</button></>; };
 const render = async (search="?onboarding=1") => act(async () => { root.render(<MemoryRouter initialEntries={["/solo/10001/paige/chat"+search]}><SoloPaigeWorkspace full /><Probe /></MemoryRouter>); });
-beforeEach(() => { globalThis.IS_REACT_ACT_ENVIRONMENT = true; fixture.tenant="test-tenant-a"; fixture.staff=false; fixture.rpc.mockReset(); fixture.renders=[]; fixture.context={ loading:false, saving:false, error:null, resolvedTenantId:fixture.tenant, accessScope:"owner_full", contextRevision:1, brief:cleanSoloSetupBrief({ publicName:"Example services", industry:"Consulting", provenance:{ publicName:{source:"owner_confirmed",confidence:"confirmed"}, industry:{source:"connection_sourced",confidence:"observed"} } }), refresh:vi.fn(), pendingProposal:null }; fixture.rpc.mockImplementation(async (name: string) => ({data: name==="get_solo_business_context" ? {tenantId:fixture.tenant,accessScope:"owner_full"} : null,error:null})); host=document.createElement("div"); document.body.append(host); root=createRoot(host); });
+beforeEach(() => { globalThis.IS_REACT_ACT_ENVIRONMENT = true; fixture.tenant="test-tenant-a"; fixture.staff=false; fixture.tierAllows=true; fixture.rpc.mockReset(); fixture.renders=[]; fixture.context={ loading:false, saving:false, error:null, resolvedTenantId:fixture.tenant, accessScope:"owner_full", contextRevision:1, brief:cleanSoloSetupBrief({ publicName:"Example services", industry:"Consulting", provenance:{ publicName:{source:"owner_confirmed",confidence:"confirmed"}, industry:{source:"connection_sourced",confidence:"observed"} } }), refresh:vi.fn(), pendingProposal:null }; fixture.rpc.mockImplementation(async (name: string) => ({data: name==="get_solo_business_context" ? {tenantId:fixture.tenant,accessScope:"owner_full"} : null,error:null})); host=document.createElement("div"); document.body.append(host); root=createRoot(host); });
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.useRealTimers(); });
 it("offers editable next-step prompts only from current confirmed priority and retires them on unknown state or tenant switch",async()=>{
   fixture.context.brief=cleanSoloSetupBrief({currentPriority:"Improve delivery",provenance:{currentPriority:{source:"owner_confirmed",confidence:"confirmed"}}});
@@ -36,6 +37,49 @@ it("keeps an unobtrusive resume control on the onboarding stage",async()=>{
   expect(host.querySelector(".sos-progress--link")?.getAttribute("aria-expanded")).toBe("true");
   expect(host.textContent).not.toContain("Meet PAIGE.");
   expect(host.textContent).not.toContain("Business interview");
+});
+it("offers the voice-first entry on first run and requests the existing Live surface",async()=>{
+  const requests:string[]=[];
+  const hear=(event:Event)=>requests.push(event.type);
+  window.addEventListener("paige-live-open-request",hear);
+  try{
+    await render("?onboarding=1");
+    const talk=host.querySelector<HTMLButtonElement>(".sos-voice");
+    expect(talk).not.toBeNull();
+    expect(talk!.textContent).toContain("Talk with Paige live");
+    // The copy must not promise typing DURING Live — the immersive stage is modal
+    // (focus-trapped, rest inert). It promises the honest path back to typing.
+    expect(host.textContent).toContain("Minimize Live any time to keep typing");
+    expect(host.textContent).not.toContain("typing works the whole time");
+    expect(host.textContent).not.toContain("Meet PAIGE.");
+    await act(async()=>{talk!.click();});
+    expect(requests).toEqual(["paige-live-open-request"]);
+    // The affordance exists only on the first-run stage; once the URL leaves onboarding
+    // (real navigation), the stage — and the voice entry with it — unmounts.
+    await act(async()=>{ host.querySelector<HTMLButtonElement>("[data-leave-onboarding]")!.click(); });
+    expect(host.querySelector(".sos-voice")).toBeNull();
+    expect(host.querySelector(".sos")).toBeNull();
+  } finally { window.removeEventListener("paige-live-open-request",hear); }
+});
+it("holds the voice entry back while PAIGE is preparing a response",async()=>{
+  await render("?onboarding=1");
+  expect(host.querySelector<HTMLButtonElement>(".sos-voice")!.disabled).toBe(false);
+  // The workspace drives the stage's `thinking` from real chat work; check the
+  // busy mapping on the stage itself (the harness chat mock does not trace).
+  const stageHost=document.createElement("div"); host.append(stageHost);
+  const stageRoot=createRoot(stageHost);
+  try{
+    await act(async()=>{stageRoot.render(<SoloOnboardingStage thinking onTalkLive={()=>{}} profile={null}/>);});
+    expect(stageHost.querySelector<HTMLButtonElement>(".sos-voice")!.disabled).toBe(true);
+    await act(async()=>{stageRoot.render(<SoloOnboardingStage thinking={false} onTalkLive={()=>{}} profile={null}/>);});
+    expect(stageHost.querySelector<HTMLButtonElement>(".sos-voice")!.disabled).toBe(false);
+  } finally { await act(async()=>{stageRoot.unmount();}); stageHost.remove(); }
+});
+it("hides the voice entry when the tier does not carry Live Conversation",async()=>{
+  fixture.tierAllows=false;
+  await render("?onboarding=1");
+  expect(host.querySelector(".sos-voice")).toBeNull();
+  expect(host.querySelector(".sos-progress--link")).not.toBeNull();
 });
 it("does not auto-open customer onboarding for Platform Operator entry",async()=>{fixture.staff=true;await render();expect(host.querySelector("[data-context]")).toBeNull();expect(host.textContent).not.toContain("Meet PAIGE.");});
 it("holds transcript selection until caller-owned interview and canonical tenant resolve",async()=>{let finish!: (value: unknown)=>void;fixture.rpc.mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve;}));await render("?interviewThread="+id);expect(host.querySelector("[data-chat]")).toBeNull();expect(host.textContent).toContain("Opening the owned interview");await act(async()=>{finish({data:null,error:null});});expect(fixture.rpc.mock.calls.slice(0,2).map(([name])=>name)).toEqual(["get_solo_business_interview_checkpoint","get_solo_business_context"]);expect(host.querySelector("[data-thread]")?.getAttribute("data-thread")).toBe(id);});

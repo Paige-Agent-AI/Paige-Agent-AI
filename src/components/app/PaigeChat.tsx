@@ -40,7 +40,7 @@ import { PaigeThinkingIndicator } from "@/components/paige/chat/PaigeThinkingInd
 import { createAnchoredTranscriptScroll } from "@/components/chat/anchoredTranscriptScroll";
 import {useSharedClientPortalFrame} from "@/hooks/useClientPortalFrame";
 import {type ClientPortalFrame} from "@/lib/client-portal-frame";
-import {readCustomerChat} from "@/lib/customer-chat";
+import {readCustomerChat,readCustomerChatOutcome} from "@/lib/customer-chat";
 import {captureClientPortalAuthorization} from "@/lib/client-portal-scope";
 import {customerAgentName} from "../../../supabase/functions/_shared/client-portal-identity";
 import {usePortalStaffStanding} from "@/lib/portal/portalStaffStanding";
@@ -178,15 +178,40 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
   const [historyRetry,setHistoryRetry] = useState(0);
   const historyRetryFocus=useRef(false);
   const customerRequest = useRef({epoch:0,abort:null as AbortController|null});
+  type Recovery={threadId:string;intentId:string;phase:"sending"|"unknown"|"checking"|"unconfirmed"|"error"};
+  const [customerRecovery,setCustomerRecovery]=useState<Recovery|null>(null);
+  const customerRecoveryRef=useRef<Recovery|null>(null);
+  const customerRecoveryAbort=useRef<AbortController|null>(null);
+  const customerSendBusy=useRef(false);
+  const [customerRecovered,setCustomerRecovered]=useState(false);
+  const customerRecoveryFocus=useRef<string|null>(null);
+  const customerRecoveryActionFocus=useRef<string|null>(null);
+  const customerRecoveryButton=useRef<HTMLButtonElement|null>(null);
+  const customerRoute=useRef(location.pathname+(location.search??""));
+  customerRoute.current=location.pathname+(location.search??"");
+  const setRecovery=useCallback((value:Recovery|null)=>{customerRecoveryRef.current=value;setCustomerRecovery(value);},[]);
   const customerScope = customerFrame ? [customerFrame.actorId,customerFrame.profile.id,customerFrame.profile.tenant_id].join(":") : null;
   const customerRenderScope=useRef({scope:customerScope,available:customerAvailable});
   customerRenderScope.current={scope:customerScope,available:customerAvailable};
+  useLayoutEffect(()=>{
+    if(!customerAvailable)return;
+    if(customerRecoveryActionFocus.current&&customerRecovery&&["unconfirmed","error"].includes(customerRecovery.phase)){
+      const route=customerRecoveryActionFocus.current;customerRecoveryActionFocus.current=null;
+      if(route===customerRoute.current&&(document.activeElement===document.body||document.activeElement===customerRecoveryButton.current))customerRecoveryButton.current?.focus();
+    }
+    if(customerRecoveryFocus.current&&!customerRecovery){
+      const route=customerRecoveryFocus.current;customerRecoveryFocus.current=null;
+      if(route===customerRoute.current&&(document.activeElement===document.body||document.activeElement===inputRef.current))inputRef.current?.focus();
+    }
+  },[customerRecovery,customerAvailable,customerRecovered]);
   useEffect(() => {
     const lifetime=customerRequest.current;
     const epoch=++lifetime.epoch;
-    lifetime.abort?.abort();
-    setIsLoading(false);
-    if(!customerFrame||!customerAvailable)return;
+    lifetime.abort?.abort();customerRecoveryAbort.current?.abort();customerSendBusy.current=false;
+    const interrupted=customerRecoveryRef.current;
+    setCustomerRecovered(false);setIsLoading(false);
+    if(!customerFrame){setRecovery(null);return;}
+    if(!customerAvailable)return;
     let cancelled=false;
     const historyAbort=new AbortController();
     const expired=()=>cancelled||lifetime.epoch!==epoch||historyAbort.signal.aborted;
@@ -196,19 +221,28 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
     const timeout=()=>{
       if(expired())return;
       historyAbort.abort();
-      setHistoryState("error");
+      setMessages([]);setHistoryState("error");
     };
     const deadline=window.setTimeout(timeout,20_000);
-    void readCustomerChat(customerFrame,historyAbort.signal).then(result=>{
+    void readCustomerChat(customerFrame,historyAbort.signal).then(async result=>{
       if(expired())return;
       if(Date.now()>=deadlineAt){timeout();return;}
+      const originalIntent=interrupted?.intentId??result.latestRequestIntentId;
+      const originalThread=interrupted?.threadId??result.threadId;
+      if(originalIntent){
+        const outcome=await readCustomerChatOutcome(customerFrame,originalThread,originalIntent,historyAbort.signal);
+        if(expired())return;if(Date.now()>=deadlineAt){timeout();return;}
+        if(!outcome.settled)setRecovery({threadId:originalThread,intentId:originalIntent,phase:"unconfirmed"});
+        else if(result.latestRequestIntentId&&result.latestRequestIntentId!==originalIntent)setRecovery({threadId:result.threadId,intentId:result.latestRequestIntentId,phase:"unconfirmed"});
+        else setRecovery(null);
+      }
       setCustomerThread(result.threadId);
       setMessages(result.messages.length?result.messages:[mkMessage({role:"assistant",content:playbook.persona.greeting})]);
       setHistoryState("ready");
       if(historyRetryFocus.current){historyRetryFocus.current=false;inputRef.current?.focus();}
-    }).catch(()=>{if(!expired())setHistoryState("error");}).finally(()=>window.clearTimeout(deadline));
-    return ()=>{cancelled=true;window.clearTimeout(deadline);historyAbort.abort();++lifetime.epoch;lifetime.abort?.abort();};
-  },[customerFrame,customerScope,customerAvailable,historyRetry,playbook.persona.greeting]);
+    }).catch(()=>{if(!expired()){setMessages([]);setHistoryState("error");}}).finally(()=>window.clearTimeout(deadline));
+    return ()=>{cancelled=true;window.clearTimeout(deadline);historyAbort.abort();++lifetime.epoch;lifetime.abort?.abort();customerRecoveryAbort.current?.abort();};
+  },[customerFrame,customerScope,customerAvailable,historyRetry,playbook.persona.greeting,setRecovery]);
 
   // When context loads, send a context-aware, PAGE-AWARE opening via the AI
   useEffect(() => {
@@ -429,12 +463,49 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
     for (const f of proposal.fields) declinedFieldsRef.current.add(f.key);
   };
 
+
+  const checkCustomerConversation=async()=>{
+    const original=customerRecoveryRef.current;
+    if(!customerFrame||!customerAvailable||!original||original.phase==="checking"||original.phase==="sending")return;
+    const epoch=customerRequest.current.epoch,scope=customerScope,controller=new AbortController();
+    customerRecoveryAbort.current?.abort();customerRecoveryAbort.current=controller;
+    const requestRoute=customerRoute.current;
+    const deadlineAt=Date.now()+20_000;
+    const current=()=>customerRequest.current.epoch===epoch&&customerRenderScope.current.scope===scope
+      &&customerRenderScope.current.available&&!controller.signal.aborted;
+    const unavailable=()=>{if(current()){customerRecoveryActionFocus.current=requestRoute;setMessages([]);setRecovery({...original,phase:"error"});controller.abort();}};
+    const deadline=window.setTimeout(unavailable,20_000);
+    customerRecoveryActionFocus.current=null;setRecovery({...original,phase:"checking"});setCustomerRecovered(false);
+    const {data:{subscription}}=supabase.auth.onAuthStateChange((_event,next)=>{
+      if(next?.user.id===customerFrame.actorId)return;
+      if(!current())return;
+      ++customerRequest.current.epoch;setMessages([]);setCustomerThread(null);setHistoryState("error");setRecovery(null);controller.abort();
+    });
+    let listening=true;const unsubscribe=()=>{if(listening){listening=false;subscription.unsubscribe();}};
+    controller.signal.addEventListener("abort",unsubscribe,{once:true});
+    try{
+      const outcome=await readCustomerChatOutcome(customerFrame,original.threadId,original.intentId,controller.signal);
+      if(!current())return;if(Date.now()>=deadlineAt){unavailable();return;}
+      if(!outcome.settled){customerRecoveryActionFocus.current=requestRoute;setRecovery({...original,phase:"unconfirmed"});return;}
+      const saved=await readCustomerChat(customerFrame,controller.signal);
+      if(!current())return;if(Date.now()>=deadlineAt){unavailable();return;}
+      if(saved.threadId!==original.threadId)throw Error("Customer conversation changed");
+      if(saved.latestRequestIntentId&&saved.latestRequestIntentId!==original.intentId){
+        customerRecoveryActionFocus.current=requestRoute;setMessages(saved.messages);setRecovery({threadId:saved.threadId,intentId:saved.latestRequestIntentId,phase:"unconfirmed"});return;
+      }
+      setMessages(saved.messages.length?saved.messages:[mkMessage({role:"assistant",content:playbook.persona.greeting})]);
+      customerRecoveryFocus.current=requestRoute;setRecovery(null);setCustomerRecovered(true);
+    }catch{if(current()){customerRecoveryActionFocus.current=requestRoute;setMessages([]);setRecovery({...original,phase:"error"});}}
+    finally{window.clearTimeout(deadline);unsubscribe();controller.signal.removeEventListener("abort",unsubscribe);}
+  };
+
   const handleSend = async (overrideInput?: string) => {
-    if(customerFrame&&(!customerAvailable||historyState!=="ready"||!customerThread))return;
+    if(customerFrame&&(!customerAvailable||historyState!=="ready"||!customerThread||customerRecoveryRef.current||customerSendBusy.current))return;
     if (dictationActive) return;
     const messageText = overrideInput || input;
     if ((!messageText.trim() && !attachedDoc) || isLoading || (customerFrame && attachedDoc)) return;
 
+    if(customerFrame){customerSendBusy.current=true;setCustomerRecovered(false);}
     resetInactivityTimer();
 
     const userMessage = mkMessage({ role: "user", content: messageText.trim() || (attachedDoc ? `Analyze this document: ${attachedDoc.name}` : ""), documentFileName: attachedDoc?.name });
@@ -465,8 +536,30 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
     const requestActor=customerFrame?.actorId;
     const requestBusiness=customerFrame?.profile.tenant_id;
     const customerAbort=customerFrame?new AbortController():null;
-    const currentRequest=()=>!customerFrame||(customerRequest.current.epoch===requestEpoch
+    const requestIntent=customerFrame?crypto.randomUUID():null;
+    let customerDispatched=false;
+    const deadlineAt=Date.now()+360_000;
+    const visibleRequest=()=>!customerFrame||(customerRequest.current.epoch===requestEpoch
       &&customerRenderScope.current.scope===requestScope&&customerRenderScope.current.available&&!customerAbort?.signal.aborted);
+    const uncertain=()=>{
+      if(!customerFrame||!visibleRequest()||!requestIntent||!customerThread)return;
+      setRecovery({threadId:customerThread,intentId:requestIntent,phase:"unknown"});
+      setSteps(settleOpenSteps);setIsLoading(false);customerSendBusy.current=false;
+    };
+    const timeoutRequest=()=>{
+      if(!customerFrame||!visibleRequest())return;
+      if(customerDispatched)uncertain();
+      else{setInput(value=>value||messageText);setMessages(messages);setIsLoading(false);customerSendBusy.current=false;}
+      customerAbort?.abort();
+    };
+    const currentRequest=()=>{
+      if(!visibleRequest())return false;
+      if(customerFrame&&Date.now()>=deadlineAt){timeoutRequest();return false;}
+      return true;
+    };
+    const requestDeadline=customerFrame?window.setTimeout(timeoutRequest,360_000):undefined;
+    const clearRequestDeadline=()=>{if(requestDeadline!==undefined)window.clearTimeout(requestDeadline);};
+    customerAbort?.signal.addEventListener("abort",clearRequestDeadline,{once:true});
     customerRequest.current.abort=customerAbort;
     let endCustomerAuth=()=>{};
 
@@ -477,7 +570,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
         const {data:{subscription}}=supabase.auth.onAuthStateChange((_event,session)=>{
           if(session?.user.id===requestActor)return;
           ++customerRequest.current.epoch;customerAbort?.abort();
-          setMessages([]);setCustomerThread(null);setHistoryState("error");setIsLoading(false);
+          setMessages([]);setCustomerThread(null);setHistoryState("error");setIsLoading(false);customerSendBusy.current=false;
         });
         let open=true;endCustomerAuth=()=>{if(open){open=false;subscription.unsubscribe();}};
         customerAbort?.signal.addEventListener("abort",endCustomerAuth,{once:true});
@@ -511,7 +604,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
         for(const key of Object.keys(payload))delete payload[key];
         Object.assign(payload,{messages:[{role:"user",content:messageText.trim()}],
           surfaceContext:{kind:"customer_portal"},threadId:customerThread,
-          requestIntentId:crypto.randomUUID(),interactive:{kind:"message"},...getUserClock()});
+          requestIntentId:requestIntent,interactive:{kind:"message"},...getUserClock()});
       }
 
       if (currentDoc) {
@@ -522,6 +615,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
         };
       }
 
+      if(customerFrame&&requestIntent&&customerThread){customerDispatched=true;setRecovery({threadId:customerThread,intentId:requestIntent,phase:"sending"});}
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paige-ai-chat`,
         {
@@ -538,7 +632,12 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
       if(!currentRequest())return;
 
       if (!response.ok) {
-        if(customerFrame)setInput(value=>value||messageText);
+        if(customerFrame){
+          const refusal:unknown=await response.clone().json().catch(()=>null);
+          if(!currentRequest())return;
+          if(!refusal||typeof refusal!=="object"||!("message_accepted" in refusal)||refusal.message_accepted!==false){uncertain();return;}
+          setRecovery(null);setInput(value=>value||messageText);
+        }
         if (response.status === 429) {
           toast({ title: "Rate Limit Reached", description: "Please wait a moment.", variant: "destructive" });
           setMessages(messages);
@@ -554,6 +653,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
         return;
       }
 
+      let customerStreamDone=false;
       let assistantMessage = "";
       let syncStatus: SyncStatus | null = null;
       // The server withheld this turn's answer (its text read as internal) and sent one fixed sentence
@@ -568,6 +668,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
       // FIX (paige-turn): a non-JSON line is skipped; it used to stall the read and drop the rest of a "successful" reply.
       for await (const frame of readPaigeStream(response.body, { stopAtDone: true, malformed: "skip" })) {
         if(!currentRequest())return;
+        if(customerFrame&&frame.type==="done")customerStreamDone=true;
         if (frame.type === "step") {
           // Live "watch her work" frame — upsert into the reasoning strip.
           setSteps((prev) => upsertStep(prev, frame.step as PaigeStepFrame));
@@ -586,6 +687,8 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
           setMessages([...newMessages, mkMessage({ id: assistantId, role: "assistant", content: assistantMessage })]);
         }
       }
+      if(customerFrame&&(!customerStreamDone||!assistantMessage.trim())){uncertain();return;}
+      if(customerFrame)setRecovery(null);
       // The read is over: a step it started and never closed will not close now.
       setSteps(settleOpenSteps);
 
@@ -641,13 +744,15 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
       setIsLoading(false);
     } catch (error) {
       if(!currentRequest())return;
-      if(customerFrame)setInput(value=>value||messageText);
+      if(customerFrame){if(customerDispatched){uncertain();return;}setInput(value=>value||messageText);}
       console.error("Chat error:", error);
       toast({ title: "Error", description: "Failed to send message. Please try again.", variant: "destructive" });
       setMessages(messages);
       setSteps(settleOpenSteps);
       setIsLoading(false);
     } finally {
+      clearRequestDeadline();customerAbort?.signal.removeEventListener("abort",clearRequestDeadline);
+      if(customerFrame&&visibleRequest())customerSendBusy.current=false;
       endCustomerAuth();customerAbort?.signal.removeEventListener("abort",endCustomerAuth);
     }
   };
@@ -707,7 +812,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
       {/* Very short keyboard viewports scroll the chrome above the pinned composer. */}
       <div data-paige-content-scroll="true" className="flex-1 min-h-0 flex flex-col overflow-y-auto">
       {customerFrame&&historyState!=="ready"&&<div role="status" className="p-3 text-sm">
-        {historyState==="loading"?"Opening your conversation…":"Your conversation couldn’t be loaded."}
+        {historyState==="loading"?"Opening your conversation…":customerRecovery?"We couldn’t check your saved conversation. Your last question may still be saved.":"Your conversation couldn’t be loaded."}
         {historyState==="error"&&<Button variant="ghost" className="min-h-11" onClick={()=>{historyRetryFocus.current=true;setHistoryRetry(n=>n+1);}}>Try again</Button>}
       </div>}
       {/* Header — compact on mobile */}
@@ -779,9 +884,20 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
 
       {/* Paige's live reasoning — the "watch her work" strip (#95/#125), now on the
           primary /app surface. Shows an "on watch" resting pill when idle. */}
-      {(!customerFrame||historyState==="ready")&&<div className="px-3 sm:px-4 pt-1 flex-shrink-0">
+      {(!customerFrame||(historyState==="ready"&&(!customerRecovery||customerRecovery.phase==="sending")))&&<div className="px-3 sm:px-4 pt-1 flex-shrink-0">
         <PaigeReasoningStrip steps={steps} loading={isLoading} personaName={playbook?.persona?.name} />
       </div>}
+
+
+      {customerFrame&&historyState==="ready"&&customerRecovery&&customerRecovery.phase!=="sending"&&<section role="status" aria-live="polite" className="px-3 sm:px-4 py-3 border-t border-border space-y-2">
+        <h3 className="font-semibold text-base">{customerRecovery.phase==="checking"?"Checking your saved conversation…":customerRecovery.phase==="unconfirmed"?"Your reply is still unconfirmed":"We couldn’t confirm this reply"}</h3>
+        <p className="text-sm text-muted-foreground">{customerRecovery.phase==="error"?"Your conversation couldn’t be checked just now. You can check again; this does not resend your question.":"Your question may already be saved. Check the original conversation before sending it again."}</p>
+        <div className="flex flex-wrap gap-2">
+          <Button ref={customerRecoveryButton} variant="outline" className="min-h-11" disabled={customerRecovery.phase==="checking"} onClick={()=>void checkCustomerConversation()}>Check conversation</Button>
+          <Button variant="ghost" className="min-h-11" onClick={()=>navigate("/app/messages")}>Contact business</Button>
+        </div>
+      </section>}
+      {customerFrame&&customerRecovered&&<p role="status" className="px-3 sm:px-4 py-2 text-sm">Your saved conversation is up to date.</p>}
 
       {/* Quick actions — horizontally scrollable on mobile */}
       <div className="px-3 sm:px-4 pb-1.5 sm:pb-2 flex-shrink-0">
@@ -790,7 +906,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
             <button
               key={action.label}
               onClick={() => handleSend(action.prompt)}
-              disabled={isLoading || dictationActive || (!!customerFrame&&(!customerAvailable||historyState!=="ready"))}
+              disabled={isLoading || dictationActive || (!!customerFrame&&(!customerAvailable||historyState!=="ready"||!!customerRecovery))}
               className="min-h-[44px] md:min-h-0 text-[13px] md:text-[11px] px-2.5 py-1 rounded-full border border-border bg-background hover:bg-accent/10 hover:border-accent/40 text-muted-foreground hover:text-gold-dark transition-colors disabled:opacity-50 whitespace-nowrap flex-shrink-0"
             >
               {action.label}
@@ -821,7 +937,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
             rows={1}
             aria-label={customerFrame?`Message ${personaName}`:OWNER_CHAT.composer}
             className="flex-1 min-w-0 text-[16px] md:text-sm min-h-[44px] max-h-[200px] resize-none py-2"
-            disabled={isLoading}
+            disabled={isLoading||!!customerRecovery}
           />
           {/* Tap-to-dictate — neutral/indigo mic (never gold; Send owns the act, §11).
               Dictated words append into the composer for the client to edit + send. */}
@@ -831,11 +947,11 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
             onText={(seg, insertionPoint) => setInput((prev) => appendDictation(prev, seg, insertionPoint))}
             onActiveChange={handleDictationActivity}
             onError={(msg) => toast({ title: "Voice typing", description: msg, variant: "destructive" })}
-            disabled={isLoading}
+            disabled={isLoading||!!customerRecovery||(!!customerFrame&&(!customerAvailable||historyState!=="ready"))}
             variant="secondary"
             className={`flex-shrink-0 ${isMobile ? "h-[44px] w-[44px]" : "h-9 w-9"}`}
           />
-          <Button aria-label="Send message" onClick={() => handleSend()} disabled={isLoading || dictationActive || (!!customerFrame&&(!customerAvailable||historyState!=="ready")) || (!input.trim() && !attachedDoc)} className="bg-gradient-gold hover:opacity-90 h-[44px] w-[44px] md:h-10 md:w-10 flex-shrink-0" size="icon">
+          <Button aria-label="Send message" onClick={() => handleSend()} disabled={isLoading || dictationActive || (!!customerFrame&&(!customerAvailable||historyState!=="ready"||!!customerRecovery)) || (!input.trim() && !attachedDoc)} className="bg-gradient-gold hover:opacity-90 h-[44px] w-[44px] md:h-10 md:w-10 flex-shrink-0" size="icon">
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           </Button>
         </div>

@@ -411,6 +411,11 @@ private PDF. Native106 plus5 Portal-wiring tests and three Edge type checks pass
 release, authenticated recovery and full ALG01/12 acceptance remain proof owed.
 [Exact scope and limitations](../evidence/ui-delivery/e04-retained-completion-reconcile.md).
 
+## EXP02 verified source and bounded customer readback —2026-10-22
+
+Catalogue2516, declaration evidence2535 and optional actor-reader2541 are MERGED/DEPLOYED/READ BACK, with exact reviewed/main/tree, CI/review, production and proof boundaries in the sole Master4.0 EXP02 rows. This dated evidence supersedes the earlier source-candidate/development wording for those slices. Reviews are accurately AUTHOR-REVIEW / LOWER ASSURANCE. Catalogue production hashes restrict the change to two descriptions; ordinary panel reload/reopen returned both copies, without promoting the nine entries. One ordinary Business Review settled in52s, corrected the unsupported declaration/provider interpretation and retained the original question/answer/source links through reload; trace timing itself was transient. That one pass does not establish general reliability, provider readiness or causal business improvement.
+
+Actor2541 is deployed atd3ca6a3a5561caef14558444474925566744de17 with no product caller in that PR; actual role/RLS/source acceptance follows its consumer. Original domains, Metric/Evidence, Spine/Harness/Trust/LayerC/Rail and conversations remain authoritative. Desk2544/shared presentation2583/separate contextual consumer continue through their own review, exact-head gates, release and ordinary customer proof. No generic prepared-item editing or execution, provider/permission activation, new queue, registry or approval engine is introduced. Historical9/0 and12/0/4 remain; all19/nine, Chat/Live/departments/governed follow-through, algorithms and full founder acceptance remain open. Customer version/announcement none.
 ## EXP02 contextual review identity prerequisite — development
 
 Owner October21 Game Plan refinement retains contextual Chat suggestions, with

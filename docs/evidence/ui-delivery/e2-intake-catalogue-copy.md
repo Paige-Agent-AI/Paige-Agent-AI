@@ -57,7 +57,12 @@ reconciliation. Renew exact-head CI and normal disposable Preview; former green
 evidence does not satisfy the successor's release gates.
 
 Migration SHA256 bab34dce11a379901ac632b7f96f3ff6c98e3e02f10279058831e8f707b9134d;
-owning SQL proof SHA256 668e014eb2838ffbac4bf9367caf649c34c2442bad45d2befb377eb4ce29bb5b.
+owning SQL proof SHA256 dbb1b50ca3fe0daef0a7ee58029f59a9c9393a4b390bcc7b07121251e44750ec.
+The nine include paths follow170000; all assertions remain unchanged. Renewed native
+PG16 proof012506: released-state counterfactual exits3, actual source exits0 with
+all12 categories passing, zero residual fixture tables/roles, no provider calls,
+and the owned disposable cluster stopped. Original native visual/source copy is
+unchanged by the filename reconciliation.
 Initial Windows runner/service setup failures and interrupted initialization remain
 local diagnostic evidence and are not counted as successful test runs.
 

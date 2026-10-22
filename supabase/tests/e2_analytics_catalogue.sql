@@ -187,7 +187,7 @@ TRUNCATE public.paige_skills;
 INSERT INTO public.paige_skills SELECT * FROM catalogue_after;
 \ir ../migrations/20271113030000_e2_analytics_catalogue_coverage.sql
 CREATE TEMP TABLE intake_copy_before AS TABLE public.paige_skills;
-\ir ../migrations/20271113140000_e2_intake_catalogue_copy.sql
+\ir ../migrations/20271113170000_e2_intake_catalogue_copy.sql
 DO $$ BEGIN
   IF (SELECT count(*) FROM public.paige_skills s JOIN intake_copy_before b USING (slug)
       WHERE s.description IS DISTINCT FROM b.description) <> 2
@@ -212,7 +212,7 @@ DO $$ BEGIN
 END $$;
 \echo 'PASS: two intake descriptions, seven untouched capabilities and all authority fields preserved'
 CREATE TEMP TABLE intake_copy_after AS TABLE public.paige_skills;
-\ir ../migrations/20271113140000_e2_intake_catalogue_copy.sql
+\ir ../migrations/20271113170000_e2_intake_catalogue_copy.sql
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM public.paige_skills s JOIN intake_copy_after b USING (slug)
       WHERE to_jsonb(s) IS DISTINCT FROM to_jsonb(b)) THEN
@@ -244,48 +244,48 @@ SELECT pg_temp.reset_intake_copy_case();
 UPDATE public.paige_skills SET description='Custom intake copy' WHERE slug='conversion_funnel_diagnosis';
 UPDATE public.paige_skills SET name='Custom weekly review' WHERE slug='weekly_business_review';
 SELECT pg_temp.snapshot_intake_copy_case();
-\ir ../migrations/20271113140000_e2_intake_catalogue_copy.sql
+\ir ../migrations/20271113170000_e2_intake_catalogue_copy.sql
 SELECT pg_temp.assert_intake_copy_unchanged();
 
 SELECT pg_temp.reset_intake_copy_case();
 UPDATE public.paige_skills SET scoping='tenant' WHERE slug='conversion_funnel_diagnosis';
 UPDATE public.paige_skills SET created_by='admin' WHERE slug='weekly_business_review';
 SELECT pg_temp.snapshot_intake_copy_case();
-\ir ../migrations/20271113140000_e2_intake_catalogue_copy.sql
+\ir ../migrations/20271113170000_e2_intake_catalogue_copy.sql
 SELECT pg_temp.assert_intake_copy_unchanged();
 
 SELECT pg_temp.reset_intake_copy_case();
 UPDATE public.paige_skills SET category='marketing_content' WHERE slug='conversion_funnel_diagnosis';
 UPDATE public.paige_skills SET risk_level='high' WHERE slug='weekly_business_review';
 SELECT pg_temp.snapshot_intake_copy_case();
-\ir ../migrations/20271113140000_e2_intake_catalogue_copy.sql
+\ir ../migrations/20271113170000_e2_intake_catalogue_copy.sql
 SELECT pg_temp.assert_intake_copy_unchanged();
 
 SELECT pg_temp.reset_intake_copy_case();
 UPDATE public.paige_skills SET metadata='{"catalogue_coverage":{"version":2,"state":"limited"}}' WHERE slug='conversion_funnel_diagnosis';
 UPDATE public.paige_skills SET metadata='{"catalogue_coverage":{"version":1,"state":"coming_soon"}}' WHERE slug='weekly_business_review';
 SELECT pg_temp.snapshot_intake_copy_case();
-\ir ../migrations/20271113140000_e2_intake_catalogue_copy.sql
+\ir ../migrations/20271113170000_e2_intake_catalogue_copy.sql
 SELECT pg_temp.assert_intake_copy_unchanged();
 
 SELECT pg_temp.reset_intake_copy_case();
 UPDATE public.paige_skills SET metadata='[]' WHERE slug='conversion_funnel_diagnosis';
 UPDATE public.paige_skills SET metadata='{"catalogue_coverage":{"version":1,"state":"limited","providerReady":true}}' WHERE slug='weekly_business_review';
 SELECT pg_temp.snapshot_intake_copy_case();
-\ir ../migrations/20271113140000_e2_intake_catalogue_copy.sql
+\ir ../migrations/20271113170000_e2_intake_catalogue_copy.sql
 SELECT pg_temp.assert_intake_copy_unchanged();
 
 SELECT pg_temp.reset_intake_copy_case();
 UPDATE public.paige_skills SET metadata=NULL WHERE slug='conversion_funnel_diagnosis';
 UPDATE public.paige_skills SET metadata='{"catalogue_coverage":null}' WHERE slug='weekly_business_review';
 SELECT pg_temp.snapshot_intake_copy_case();
-\ir ../migrations/20271113140000_e2_intake_catalogue_copy.sql
+\ir ../migrations/20271113170000_e2_intake_catalogue_copy.sql
 SELECT pg_temp.assert_intake_copy_unchanged();
 \echo 'PASS: intake custom/name/scope/author/category/risk/version/state/malformed/extra/null guards'
 
 SELECT pg_temp.reset_intake_copy_case();
 UPDATE public.paige_skills SET status='disabled' WHERE slug IN ('conversion_funnel_diagnosis','weekly_business_review');
-\ir ../migrations/20271113140000_e2_intake_catalogue_copy.sql
+\ir ../migrations/20271113170000_e2_intake_catalogue_copy.sql
 DO $$ BEGIN
   IF (SELECT count(*) FROM public.paige_skills WHERE slug IN ('conversion_funnel_diagnosis','weekly_business_review')
       AND status='disabled' AND description LIKE '%recorded form intake%'

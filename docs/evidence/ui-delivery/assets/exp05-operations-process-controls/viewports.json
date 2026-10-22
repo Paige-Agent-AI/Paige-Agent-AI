@@ -6,7 +6,11 @@
   "productInputs": 323,
   "syntheticPorts": 178,
   "viewportCleared": true,
-  "boundary": "Native committed source with synthetic actor/process/Knowledge/PAIGE ports; no authentic business actions, provider effects or acceptance",
+  "nativeRestored": {
+    "height": 770,
+    "width": 1536
+  },
+  "boundary": "Synthetic engineering proof only; twelve initial noncanonical-height frames superseded; source and bundle unchanged",
   "frames": [
     {
       "label": "light-1536-closed",
@@ -158,7 +162,7 @@
       "composerPresent": true,
       "focus": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localSto",
       "fonts": "loaded",
-      "height": 770,
+      "height": 768,
       "primary": {
         "bg": "rgb(201, 169, 106)",
         "ink": "rgb(32, 30, 35)"
@@ -213,7 +217,7 @@
       "composerPresent": true,
       "focus": "Message PAIGE",
       "fonts": "loaded",
-      "height": 770,
+      "height": 768,
       "primary": {
         "bg": "rgb(201, 169, 106)",
         "ink": "rgb(32, 30, 35)"
@@ -268,7 +272,7 @@
       "composerPresent": true,
       "focus": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localSto",
       "fonts": "loaded",
-      "height": 900,
+      "height": 768,
       "primary": {
         "bg": "rgb(201, 169, 106)",
         "ink": "rgb(32, 30, 35)"
@@ -323,7 +327,7 @@
       "composerPresent": true,
       "focus": "Message PAIGE",
       "fonts": "loaded",
-      "height": 900,
+      "height": 768,
       "primary": {
         "bg": "rgb(201, 169, 106)",
         "ink": "rgb(32, 30, 35)"
@@ -378,7 +382,7 @@
       "composerPresent": true,
       "focus": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localSto",
       "fonts": "loaded",
-      "height": 900,
+      "height": 1000,
       "primary": {
         "bg": "rgb(201, 169, 106)",
         "ink": "rgb(32, 30, 35)"
@@ -433,7 +437,7 @@
       "composerPresent": true,
       "focus": "Message PAIGE",
       "fonts": "loaded",
-      "height": 900,
+      "height": 1000,
       "primary": {
         "bg": "rgb(201, 169, 106)",
         "ink": "rgb(32, 30, 35)"
@@ -598,7 +602,7 @@
       "composerPresent": true,
       "focus": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localSto",
       "fonts": "loaded",
-      "height": 770,
+      "height": 768,
       "primary": {
         "bg": "rgb(212, 167, 82)",
         "ink": "rgb(16, 14, 20)"
@@ -653,7 +657,7 @@
       "composerPresent": true,
       "focus": "Message PAIGE",
       "fonts": "loaded",
-      "height": 770,
+      "height": 768,
       "primary": {
         "bg": "rgb(212, 167, 82)",
         "ink": "rgb(16, 14, 20)"
@@ -708,7 +712,7 @@
       "composerPresent": true,
       "focus": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localSto",
       "fonts": "loaded",
-      "height": 900,
+      "height": 768,
       "primary": {
         "bg": "rgb(212, 167, 82)",
         "ink": "rgb(16, 14, 20)"
@@ -763,7 +767,7 @@
       "composerPresent": true,
       "focus": "Message PAIGE",
       "fonts": "loaded",
-      "height": 900,
+      "height": 768,
       "primary": {
         "bg": "rgb(212, 167, 82)",
         "ink": "rgb(16, 14, 20)"
@@ -818,7 +822,7 @@
       "composerPresent": true,
       "focus": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localSto",
       "fonts": "loaded",
-      "height": 900,
+      "height": 1000,
       "primary": {
         "bg": "rgb(212, 167, 82)",
         "ink": "rgb(16, 14, 20)"
@@ -873,7 +877,7 @@
       "composerPresent": true,
       "focus": "Message PAIGE",
       "fonts": "loaded",
-      "height": 900,
+      "height": 1000,
       "primary": {
         "bg": "rgb(212, 167, 82)",
         "ink": "rgb(16, 14, 20)"

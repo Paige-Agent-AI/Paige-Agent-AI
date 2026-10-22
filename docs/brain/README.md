@@ -10,6 +10,23 @@ These are bounded production/source increments, not client/model/full Experience
 
 PR2603/d5b3018eab007f847a880158e9c67b472a8ef2c5 merged9b9663b7754b4bc562aeebc423201f920b8fd362. All11 exact-head checks/full Preview/two statuses green;92 focused/77 original C0b/registry/8 strict CRM bindings PASS; review5617398951 AUTHOR-REVIEW / LOWER ASSURANCE. Original owner Auth-only factory preserved; separate request-local customer caller carries verified bearer and selected business through original native/private-history/Knowledge path. Edge508 ACTIVE/verify_jwt:true exact core1de19b80b5fb4944c8dbb7888fb550f859071259c72fb2b8d8df8421df7853e8; five original helper bodies unchanged. Exact READY web/public9b9663-mvjscyfa/served scope references verified; receipt6346465360. Original adapter metadata, owner execution and INT346 restrictions retained. Source/test/rendered proof is separate from actual owner/client/provider/return/revocation proof. Seven capabilities remain Limited, ALG01/12 bounded PARTIAL and ALG02/04/13 production UNVERIFIED; no founder acceptance.
 
+## EXP02 recorded Systems Check coverage — October22 development
+
+The sole EXP02 lead is correcting O06 evidence presentation in the original
+recorded-check consumer. Passed/resolved setup findings support Partial area
+coverage, not Live providers or completed business work. Missing expected results
+are Unavailable; original no-check, fail/skip/error, resolution and source records
+remain authoritative. Refresh still rereads; O07/O19 execution is not activated.
+Five source regressions reproduced before repair;64 focused cases/three suites
+pass again with isolated exact-lock dependencies; production build passes. Native
+original-shell responsive/state/keyboard and settled Obsidian/reduced-motion/drawer
+frames use synthetic input ports only. Type ratchet has six incumbent diagnostics
+and zero new ones; final review/CI, release
+readback and corrected ordinary authorized customer/reload/cohort proof remain
+owed. No competing readiness registry, Metric reader, provider, approval, runner or
+Rail. All19 outcomes/nine catalogue entries retain their full acceptance duties;
+none promoted Live. [Evidence](../evidence/ui-delivery/e2-system-check-coverage-truth.md).
+
 ## EXP04 original owner document API — October22 local dependent source
 
 Original agreement-document owner door now has bounded draft preparation,

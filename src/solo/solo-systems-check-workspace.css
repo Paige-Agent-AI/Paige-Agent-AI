@@ -137,3 +137,4 @@
 .sc-bucket-a .sc-button{min-height:26px;padding:4px 8px;font-size:9px}
 .sc-ready-open{background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;text-align:left;text-decoration:underline;text-decoration-color:var(--pg-line-strong);text-underline-offset:2px}
 .sc-ready-open:hover{text-decoration-color:var(--pg-gold)}
+.sc-area-b,.sc-ready-open,.sc-area-check .sc-button{min-height:44px}

@@ -837,6 +837,87 @@ These are two additional bounded internal source/readback releases, not seven-pi
 
 Functional: merged/deployed and public/native source read back as above. Visual: bounded actual-component local/synthetic evidence with device/full-shell/AT limits. Experiential: scoped read/response, uncertainty, note/exit and recovery controls; actual joined signed-in journey owed. Founder Acceptance: NOT_REQUESTED, one completed integrated Experience. Internal release channel production; no customer publication or new release identity. Forward correction/revert preserves original business records and unknown-outcome holds. This factual two-file closeout is not logged recursively.
 
+**2026-10-22 — EXP04 original commercial-presentation foundation released.**
+
+PR [#2550](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2550), reviewed
+`0b4092a9df0872171bb1923b569d92382cb32e90`, merged
+`1e1073133f960a394d41f7f27b0c84560d33f3aa`. Actual parents
+`f149ebb5328eb5d2662d8e033170c2fb1e408750` + reviewed head; actual/preflight
+union `a5d537bd51155622dac749e0463d616e88473f6f` matches. All13 applicable
+exact-head checks and two deployment statuses SUCCESS; review5609923926 is
+**AUTHOR-REVIEW / LOWER ASSURANCE**, inline threads0. Normal migration39735665747
+attempt2/deploy119688925032/lint119688927231 SUCCESS;230004 recorded after220004.
+First attempt119680772066 failed55P03 at the original5s limit and fully rolled
+back. An initial retry approval was rejected on a lock concern; separate timestamped
+production read07:06:11 verified0relation locks/full rollback before the SAME
+unchanged retry was approved. No session killed, timeout widened, control bypassed,
+source/test gate waived or migration history repaired.
+
+Production native hashes match: canonical JSONbbfeef876dc866c6d276d2be2662ae74,
+immutable guardff2fcc8d622aee366dd2e95e01222e4e,
+freeze4116200a24628e9149187e55eea2fb02. Original postgres owner, empty search_path,
+private INVOKER helpers and service-only DEFINER freeze match source; two nullable,
+no-default columns and one enabled original protection trigger. Original11-argument
+SAVE body1bd28e75afa0f50bb07b717795a5be0e is unchanged. No backfill or new ledger.
+Exact web `dpl_DDYF5646SrPkWswGQD7ZvdsBKzPi` READY/production/main;
+protected AND canonical public build
+`1e1073133f960a394d41f7f27b0c84560d33f3aa-mvj6cqfk`, customerUpdate:null.
+Own invoked Edge change NOT_APPLICABLE; no existing consumer redirected.
+[Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2550#issuecomment-6334959569).
+
+Functional: original immutable agreement/terms/invoice presentation, finite USD
+principal/schedule and explicit v2 service facts, with original Collections and PDF
+renderer. Native54 assertions/replay2/two actual sessions/one observed wait and
+Deno11 tests/26 steps are source proof, not hosted document or customer acceptance.
+Visual: no renderer/layout replaced. Experiential: original high confirmation,
+operation/Rail, hosted artifact/signing/accepted/effective terms and owner/staff/client
+integration remain owed; the producer is initially dormant. All O1-O12 and one
+complete founder evaluation remain mandatory/incomplete. No Chat/Live/provider,
+signing/send/payment or legal-sufficiency activation. Internal increment/no customer
+release name or announcement. Recovery is reviewed forward correction preserving
+original records and signed history. This factual closeout is not logged recursively.
+
+
+**2026-10-22 — EXP04 native supplied-wording template foundation.**
+
+PR [#2545](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2545), reviewed
+`3e33160023666d33da751344dfe021d3520cd60b`, merged
+`5a9c8fe0b38474c04c29e2d680bf195b41b0b42b`. Actual parents
+`c4bec1df71a0e0d4f183f7d1d1b1becee120a210` + reviewed head; actual,
+preflight and recomputed tree `a661995e51283bcaa30c0588d5c8fa4eafb32014`
+match. All13 applicable exact-head checks and both deployment statuses SUCCESS;
+review5609615107 is **AUTHOR-REVIEW / LOWER ASSURANCE**, inline threads0.
+Normal migration39730423040 attempt2/deploy119666985657 SUCCESS;
+`20271113220004` is recorded. First attempt119664093836 failed on the original5s
+lock timeout55P03; full rollback verified (0new columns/validator absent). Other
+reader locks cleared before the unchanged failed-job retry. No worker terminated,
+lock limit changed, failed test waived or migration history repaired.
+
+Production metadata verifies all six exact native source-body hashes, postgres
+owner, empty search_path and original intended ACL/definer/volatility; four
+nullable/no-default columns and one original template-protection trigger. Four
+Auth-only owner/admin RPCs, private trigger and pure Auth/service validator reuse
+original tenant_agreement_versions, immutable prepared versions and original
+agreement source IDs; no alternate agreement, authorization or execution store.
+Web `dpl_Fu7P9Z3T6wjcLKv3Stnmr1XT9VMw` READY/production/main/exact;
+protected build `5a9c8fe0b38474c04c29e2d680bf195b41b0b42b-mvj4irg0`,
+customerUpdate:null. Canonical public later descendant
+`62d615ac6deb10bacd80aa1129a23e4cc7e1bde8-mvj4vrdg` and Git ancestry verified;
+not substituted for the exact deployment. Own Edge NOT_APPLICABLE.
+[Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2545#issuecomment-6334034846).
+
+Functional: native version/list/read/same-UUID actor-bound recovery and optional
+jurisdiction/requested wording-review metadata. These options are not completed
+legal review or legal sufficiency. Local68 assertions/replay2/five participating
+sessions/three observed waits are bounded source evidence, not customer QA.
+Visual/Experiential: this foundation mounts no new UI; consumer#2549 enters its
+own actual-main review/CI/deployment gates. Actual ordinary owner/staff/client,
+two-cohort use, signature/provider/payment/service and complete O1–O12/founder
+acceptance remain owed. No Chat/Live/provider activation or automatic send/charge.
+Internal production foundation; no customer release name/announcement. Recovery
+is reviewed forward correction preserving original versions and signed history.
+This factual closeout is not logged recursively and changes no product/authority.
+
 **2026-10-22 — EXP09 scoped relationship, private history and recovery production closeout.**
 
 | Increment | Exact reviewed/deployed identity and bounded proof | Completion boundary |

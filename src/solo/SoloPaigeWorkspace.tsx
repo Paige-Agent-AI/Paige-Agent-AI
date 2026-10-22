@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { BookOpen, Bot, Brain, MessageSquarePlus, MessagesSquare, RotateCw, Search, Sparkles, Telescope, Wrench, X } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { PaigeAIChat, type ChatRailApi } from "@/components/dashboard/PaigeAIChat";
+import { SoloPlanningSuggestion } from "./SoloPlanningSuggestion";
+import { planningWorkRelevant } from "./planning-suggestion-context";
 import { PaigeComposerAutonomyChip } from "@/components/dashboard/paige/PaigeComposerAutonomyChip";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { ResearchView } from "@/solo/paige-research";
@@ -443,6 +445,13 @@ export function SoloPaigeWorkspace({
           soloTenantSafety
           liveConversation={liveConversationAvailable}
           composerAutonomyControl={<PaigeComposerAutonomyChip accountEpoch={activeTenantId} />}
+          renderComposerContext={api => <SoloPlanningSuggestion
+            key={JSON.stringify([activeTenantId, activeUserId, planScope?.businessMissionId, Boolean(planScope)])}
+            api={api} tenantId={isPlatformStaff ? null : activeTenantId} actorId={activeUserId ?? null}
+            active={visible && tab === "chat"} plan={planScope} onClearContext={releaseScope} sidePanel={!full}
+            relevant={!isPlatformStaff && planningWorkRelevant({ otherScope: Boolean(firstRun || interviewFocused || clientScope || presenceScope || requestedInterview || resumePending), plan: planScope,
+              onPlanPage: location.pathname.endsWith("/command-center/business-game-plan"), threadId: api.threadId, hasOwnerMessages: api.hasOwnerMessages })}
+          />}
           renderRail={(api) => <SoloHistoryRail api={api} />}
           onActiveThreadIdChange={observeThread}
           activeThreadId={resumedThread}
@@ -460,13 +469,7 @@ export function SoloPaigeWorkspace({
               <div><strong>{clientScope.label}</strong><span>Recorded outcomes for this client only. PAIGE reads them; she cannot change them.</span></div>
               <button type="button" className="spw-link-button spw-authority" onClick={releaseScope}>Clear</button>
             </div>
-          ) : planScope ? (
-            <div className="spw-chat-head" data-solo-paige-focus>
-              <TruthPill tone="partial">PLAN IN CONTEXT</TruthPill>
-              <div><strong>{planScope.label}</strong><span>Resolved from the active workspace. Changes still require authority, canonical readback, and Rail evidence.</span></div>
-              <button type="button" className="spw-link-button spw-authority" onClick={releaseScope}>Clear</button>
-            </div>
-          ) : presenceScope ? (
+          ) : !planScope && presenceScope ? (
             <div className="spw-chat-head" data-solo-paige-focus>
               <TruthPill tone="partial">PUBLIC PRESENCE</TruthPill>
               <div><strong>Safe public-business context</strong><span>PAIGE re-resolves approved facts and provider availability on the server for each turn.</span></div>

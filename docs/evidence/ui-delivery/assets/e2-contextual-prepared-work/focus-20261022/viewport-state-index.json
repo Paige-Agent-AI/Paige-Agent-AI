@@ -1,0 +1,112 @@
+{
+  "kind": "NATIVE_CHAT_CONSUMER_SYNTHETIC_PORTS",
+  "authenticated": "UNVERIFIED",
+  "baseline": "21 original frames at4a26fe727716310b9d5daf62ab8fdbd556dc8fcd. This supplement verifies the changed focus callbacks; no layout change.",
+  "narrowScroll": {
+    "before": 6030.39990234375,
+    "after": 6030.39990234375
+  },
+  "excluded": [
+    "Intermediate callback diagnostics; unisolated callback count; initial narrow scroll failure; unsupported oversized screenshot attempts; first1366 frame captured immediately after resizing without exercising keyboard return."
+  ],
+  "frames": [
+    {
+      "name": "v2-320-readable-sheet",
+      "css": [
+        320,
+        740
+      ],
+      "dialogCount": 1,
+      "draft": "An UNSENT focus-return question.",
+      "focus": "Clear planning context: Business Game Plan",
+      "fontLoaded": true,
+      "scrollWidth": 320,
+      "top": 6030.39990234375,
+      "raster": {
+        "height": 740,
+        "width": 320
+      },
+      "sha256": "5c3dcf903d2f525d4c4230f4b19384c70278bcd6b5358f814d92da34569bc931"
+    },
+    {
+      "name": "v2-320-keyboard-return",
+      "css": [
+        320,
+        740
+      ],
+      "dialogCount": 0,
+      "draft": "An UNSENT focus-return question.",
+      "focus": "37 items to review",
+      "fontLoaded": true,
+      "scrollWidth": 320,
+      "top": 6030.39990234375,
+      "raster": {
+        "height": 740,
+        "width": 320
+      },
+      "sha256": "7f17b1d4826df89442540c14f6cc4efe709458fa07d8b58677dab05f1165c08e"
+    },
+    {
+      "name": "v2-1536-outside-composer",
+      "css": [
+        1536,
+        770
+      ],
+      "dialogCount": 0,
+      "draft": "An UNSENT focus-return question.",
+      "focus": "Message PAIGE",
+      "fontLoaded": true,
+      "scrollWidth": 1536,
+      "top": 1865.5999755859375,
+      "raster": {
+        "height": 770,
+        "width": 1536
+      },
+      "sha256": "1031228964f69ff67dc66f81c72b7543d73ba26f9c7aee94aada3d78ac03227c"
+    },
+    {
+      "name": "v2-1366-retired-work-return",
+      "css": [
+        1366,
+        768
+      ],
+      "dialogCount": 0,
+      "draft": "An UNSENT focus-return question.",
+      "focus": "Message PAIGE",
+      "fontLoaded": true,
+      "scrollWidth": 1366,
+      "top": 2148,
+      "raster": {
+        "height": 768,
+        "width": 1366
+      },
+      "sha256": "afb6a7b4376ca3d98679339a8166fe2d23b166ca769005ef5a09e3bb442e961c"
+    },
+    {
+      "name": "v2-1366-settled-keyboard-return",
+      "css": [
+        1366,
+        768
+      ],
+      "dialogCount": 0,
+      "draft": "An UNSENT focus-return question.",
+      "focus": "37 items to review",
+      "fontLoaded": true,
+      "scrollWidth": 1366,
+      "top": 2148,
+      "raster": {
+        "height": 768,
+        "width": 1366
+      },
+      "sha256": "d190710db7c1a88f56c702371d12731541ff8e1d402ad86e97ff1bf8a726c9b6"
+    }
+  ],
+  "sourceHashes": {
+    "src/components/chat/ContextualSuggestion.tsx": "36511578d369ce324b1bc4f4fabd299511d2b99e5663d8a79bb5c752c1a3b952",
+    "src/components/dashboard/PaigeAIChat.tsx": "a725d172dd9857b0795034742ee7e5dc5482a6de7e9ae8e3baeb3d0e706a8161",
+    "src/solo/solo-planning-suggestion.css": "ed02b3eb71206e1bf21c977eaa4463873b093839fc9721eb4a600848597d5ee0",
+    "src/solo/SoloPlanningSuggestion.tsx": "087c5c15d1eaa0988ca42c285273eb35e42be80bf41b6a58cb268029704a168b",
+    "src/components/chat/contextual-suggestion.css": "a3768c2ccea13465c7bd794e51316737deb57bae6fb0c02adc7a96eebf9c5fc1",
+    "src/solo/PreparedWorkReview.tsx": "68502b6b16d5614fba8894e92fbecb76bca2e724159fb9196697318a98fc175c"
+  }
+}

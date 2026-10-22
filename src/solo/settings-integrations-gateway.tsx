@@ -88,7 +88,7 @@ const CATALOGUE: ReadonlyArray<CatItem> = [
   { n: "Instagram · Facebook · LinkedIn · TikTok · YouTube", c: "Social", m: "zapier", g: "◎", d: "No official direct path — post through Buffer, Metricool or Hootsuite.", legacy: "social" },
   { n: "WhatsApp Business", c: "Social", m: "zapier", g: "W", d: "Business Tools MCP announced; not verified yet. Bridge via Zapier." },
   // CRM & Sales
-  { n: "HighLevel", c: "CRM & Sales", m: "connect", g: "HL", d: "Contacts, conversations (SMS/email), pipelines, calendars, invoices. Connect with a Private Integration token (Settings → Private Integrations) plus your locationId header.", pop: true, r: 1, url: "https://services.leadconnectorhq.com/mcp/", pk: "gohighlevel", req: ["locationId"] },
+  { n: "HighLevel · LeadConnector", c: "CRM & Sales", m: "connect", g: "HL", d: "Contacts, conversations (SMS/email), pipelines, calendars, invoices. Connect with a Private Integration token (Settings → Private Integrations) plus your locationId header.", net: "A location token stays inside one sub-account; a company (agency) token can reach every location under the agency. Connect the narrowest token that does the job — Paige reads and acts only inside the location you point her at.", pop: true, r: 1, url: "https://services.leadconnectorhq.com/mcp/", pk: "gohighlevel", req: ["locationId"] },
   { n: "HubSpot", c: "CRM & Sales", m: "zapier", g: "HS", d: "CRM records, activities, pipelines. No direct path for Paige yet — bridge via Zapier." },
   { n: "Close", c: "CRM & Sales", m: "connect", g: "C", d: "Leads, contacts, opportunities; read and write scopes.", pop: true, r: 13, url: "https://mcp.close.com/mcp" },
   { n: "Attio", c: "CRM & Sales", m: "connect", g: "A", d: "Records, lists, notes, tasks.", url: "https://mcp.attio.com/mcp" },
@@ -124,7 +124,7 @@ const CATALOGUE: ReadonlyArray<CatItem> = [
   { n: "Linear", c: "Productivity", m: "connect", g: "L", d: "Issues, projects.", url: "https://mcp.linear.app/mcp" },
   { n: "monday.com", c: "Productivity", m: "connect", g: "mo", d: "60+ read/write tools.", url: "https://mcp.monday.com/mcp" },
   { n: "Google Workspace", c: "Productivity", m: "setup", g: "GW", d: "Gmail, Calendar, Drive. Developer Preview + per-client setup — bridge via Zapier meanwhile.", pop: true, r: 2 },
-  { n: "Microsoft 365", c: "Productivity", m: "zapier", g: "MS", d: "Mail, Calendar, Teams. No direct path for Paige yet — bridge via Zapier." },
+  { n: "Microsoft 365", c: "Productivity", m: "zapier", g: "MS", d: "Mail, Calendar, Teams. No direct path for Paige yet — bridge via Zapier.", net: "Teams is coming: a native connection needs an Azure AD app registration with admin consent (an owner/provider step, not a switch we can flip from here)." },
   { n: "Slack", c: "Productivity", m: "connect", pk: "slack", auth: "bearer", g: "Sl", pop: true, r: 4, d: "Search, read and send messages in channels you connect. Create a Slack app in your workspace (internal), add the MCP tool scopes, paste its user token here.", net: "Slack runs its own hosted server — the token's granted scopes decide what Paige can see and do. Workspace admin approval applies.", url: "https://mcp.slack.com/mcp" },
   { n: "Asana", c: "Productivity", m: "setup", g: "As", d: "Tasks, projects.", url: "https://mcp.asana.com/v2/mcp" },
   { n: "Zoom", c: "Productivity", m: "setup", g: "Zm", d: "Meetings, recordings, notes." },

@@ -1,0 +1,168 @@
+{
+  "source": "91491c4a1bafe9cf5f8ef856180e933e01053c3d",
+  "tree": "00ee73ae7877c596112dea40ee7bda84537d2538",
+  "bundleSha256": "3ef6a0e42f63559ff7b9ca339c30b2493b5454cb802cd15ec0cca42cf84c5af5",
+  "htmlSha256": "7a3e07d3e7cb9f8f149f017f6d7a31bb7b818a639c3a6415a1b26da7e76d8418",
+  "productInputs": 323,
+  "syntheticPorts": 178,
+  "productTransforms": [],
+  "frames": [
+    {
+      "file": "1536-770-light-closed.png",
+      "sha256": "6e8b070d9283c892c780368d5de24c1508b5dfecafa9740448926220d5b87c8e",
+      "height": 770,
+      "overflow": false,
+      "width": 1536,
+      "state": "before preparation"
+    },
+    {
+      "file": "1536-770-light-open.png",
+      "sha256": "18ff5ee36d8547a10c058c0966ed6c71b2587eabcfc404938fda95f00fd31b62",
+      "composerFocused": true,
+      "height": 770,
+      "overflow": false,
+      "prepared": true,
+      "width": 1536,
+      "sendDisabled": true,
+      "state": "Enter preparation; editable unsent question"
+    },
+    {
+      "file": "1536-770-dark-closed.png",
+      "sha256": "dc4a8812c7b11dd85032eef95993b2a364df642b4a5efe3d744f281acf6aed55",
+      "height": 770,
+      "overflow": false,
+      "width": 1536,
+      "state": "before preparation"
+    },
+    {
+      "file": "1536-770-dark-open.png",
+      "sha256": "711e456067b2ab3139d37b47395c4bc5f2094eb2532524d76b7f725be39cd139",
+      "composerFocused": true,
+      "height": 770,
+      "overflow": false,
+      "prepared": true,
+      "width": 1536,
+      "sendDisabled": true,
+      "state": "Enter preparation; editable unsent question"
+    },
+    {
+      "file": "1366-768-light-closed.png",
+      "sha256": "909385eb84fd76a539ee3a3397754f83725611e3f73d843a155e4ececf1f1e08",
+      "height": 768,
+      "overflow": false,
+      "width": 1366,
+      "state": "before preparation"
+    },
+    {
+      "file": "1366-768-light-open.png",
+      "sha256": "39c52cf0be7d792ee3a61f82a8d1f47d526f0694b1327ff1a2ff0431c55ac962",
+      "composerFocused": true,
+      "height": 768,
+      "overflow": false,
+      "prepared": true,
+      "width": 1366,
+      "sendDisabled": true,
+      "state": "Enter preparation; editable unsent question"
+    },
+    {
+      "file": "1366-768-dark-closed.png",
+      "sha256": "735b7a2464928aaa7aa16eaff75bb1b03000864ff25fdd5336721e0d3df2536e",
+      "height": 768,
+      "overflow": false,
+      "width": 1366,
+      "state": "before preparation"
+    },
+    {
+      "file": "1366-768-dark-open.png",
+      "sha256": "72ec730e570e0cb3b41d23c7b9f43465da6b96508b10626ee3e7d5ac86ade1ee",
+      "composerFocused": true,
+      "height": 768,
+      "overflow": false,
+      "prepared": true,
+      "width": 1366,
+      "sendDisabled": true,
+      "state": "Enter preparation; editable unsent question"
+    },
+    {
+      "file": "1024-768-light-closed.png",
+      "sha256": "8d82dded3de0408513cb65bcbe9156bc1cce40a1b7ed085235341e6ddffa68df",
+      "height": 768,
+      "overflow": false,
+      "width": 1024,
+      "state": "before preparation"
+    },
+    {
+      "file": "1024-768-light-open.png",
+      "sha256": "fb2cd00eb62b498ddc8eef039335b40589256487677edb82c3cf0ffde6ff8a46",
+      "composerFocused": true,
+      "height": 768,
+      "overflow": false,
+      "prepared": true,
+      "width": 1024,
+      "sendDisabled": true,
+      "state": "Enter preparation; editable unsent question"
+    },
+    {
+      "file": "1024-768-dark-closed.png",
+      "sha256": "9798c30fef5a8c4e0a8b5e9aab66dd004beab1039a2e7bf425a6c5e3be9da431",
+      "height": 768,
+      "overflow": false,
+      "width": 1024,
+      "state": "before preparation"
+    },
+    {
+      "file": "1024-768-dark-open.png",
+      "sha256": "1f231f0a0516f1146bb14d347fda066a189b61fd712ea4be60be6b60b594f500",
+      "composerFocused": true,
+      "height": 768,
+      "overflow": false,
+      "prepared": true,
+      "width": 1024,
+      "sendDisabled": true,
+      "state": "Enter preparation; editable unsent question"
+    },
+    {
+      "file": "900-1000-light-closed.png",
+      "sha256": "afcf1cf36126c196b18910ab5ccf18c5fd309222ba2c76fc182e3baeca8c06a9",
+      "height": 1000,
+      "overflow": false,
+      "width": 900,
+      "state": "before preparation"
+    },
+    {
+      "file": "900-1000-light-open.png",
+      "sha256": "7117030e1b8ee5cd66ff3792db624af34ea16050753c7b9f040f1de6df8ce984",
+      "composerFocused": true,
+      "height": 1000,
+      "overflow": false,
+      "prepared": true,
+      "width": 900,
+      "sendDisabled": true,
+      "state": "Enter preparation; editable unsent question"
+    },
+    {
+      "file": "900-1000-dark-closed.png",
+      "sha256": "36616bbd7fa1891125bd7edb89ef14a007ed82fd18b25cf372b33ced8c31060c",
+      "height": 1000,
+      "overflow": false,
+      "width": 900,
+      "state": "before preparation"
+    },
+    {
+      "file": "900-1000-dark-open.png",
+      "sha256": "5050c9df7ca3dd56642b87d64f006f828469d4a3f90f42bf00d765b133ccff70",
+      "composerFocused": true,
+      "height": 1000,
+      "overflow": false,
+      "prepared": true,
+      "width": 900,
+      "sendDisabled": true,
+      "state": "Enter preparation; editable unsent question"
+    }
+  ],
+  "boundary": "Actual source with explicit synthetic Auth/process/Knowledge/PAIGE ports, network disabled and Send disabled. Not production, authenticated or domain-effect proof.",
+  "viewportRestored": {
+    "height": 735,
+    "width": 1536
+  }
+}

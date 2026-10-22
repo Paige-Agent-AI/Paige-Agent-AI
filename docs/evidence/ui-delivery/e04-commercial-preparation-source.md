@@ -12,10 +12,16 @@ historical, never summed. First uncached restricted setup failed DNS before test
 it is INVALID environment, not a test PASS or product failure. Reused the existing
 native Deno cache and original strict command, no security-denial weakening.
 
-This remains original2564, NOT_MERGED/NOT_DEPLOYED/NOT_ACCEPTED. Parent2604 has
-native database check SUCCESS and longer full verify pending; its source is not
-silently called deployed. Original2599/300004/Edge37 readback is independently
-established; earlier native-hold notes below are historical. No runtime consumer,
+Current-main continuation consumes actual released2604/main4dac and disjoint
+mainc7fa122ae; both reader/test bytes still equal original0a. Parent2604 passed
+all applicable exact-head gates, merged4dac, and productiondpl_E1YR69zBJb2bjJwyCCRKiwCv3rFV
+is READY with canonical public build4dac-mvk2n058 and actual served owning modules
+read back. Protected ANT52 records bounded actual owner PDF/field save/reload/
+history proof, not Central QA or whole-Experience acceptance; the actual editor
+focus finding remains OPEN under its separate source repair. This reader remains
+original2564, NOT_MERGED/NOT_DEPLOYED/NOT_ACCEPTED until its own new gates.
+Original2599/300004/Edge37 readback is independently established; earlier native-
+hold notes below are historical. No runtime consumer,
 new endpoint, model registration, provider or role/permission change. Existing
 caller-JWT source projection still requires canonical exact PDF/assigned-map
 Kit/Trust approval BEFORE consequential C7, atomic freeze/operation/Rail and actual

@@ -221,8 +221,9 @@ export function useClientPortalMessages(): ClientPortalMessagesState {
   if(origin.current.key!==requestedScope){origin.current={key:requestedScope,generation:origin.current.generation+1,enabled};++epoch.current;++readSeq.current;}
   origin.current.enabled=enabled;
   const generation=origin.current.generation;
-  const scopeCurrent=useCallback(()=>origin.current.generation===generation&&origin.current.enabled
-    &&appliedScope.current===requestedScope&&(!requestedActor||actor.current===requestedActor),[generation,requestedScope,requestedActor]);
+  const scopeAlive=useCallback(()=>origin.current.generation===generation&&origin.current.enabled
+    &&appliedScope.current===requestedScope,[generation,requestedScope]);
+  const scopeCurrent=useCallback(()=>scopeAlive()&&(!requestedActor||actor.current===requestedActor),[scopeAlive,requestedActor]);
   const rpc=useCallback((name:"client_portal_conversation"|"client_portal_send_message",args:Record<string,unknown>)=>{
     if(!scopeCurrent())return Promise.reject(new Error("Customer request changed"));
     return portalRpc(name,args,requestedActor&&requestedBusiness?{actorId:requestedActor,businessId:requestedBusiness,current:scopeCurrent}:undefined);
@@ -281,6 +282,23 @@ export function useClientPortalMessages(): ClientPortalMessagesState {
   }, []);
 
   const refresh = useCallback(async () => {
+    if(!scopeAlive())return;
+    // The original initial Auth request can fail before an actor is established.
+    // Existing explicit Retry must re-check Auth rather than remaining inert.
+    if(!actor.current){
+      setLoading(true);setError(null);
+      try{
+        const actual=await supabase.auth.getUser();
+        if(!alive.current||!scopeAlive())return;
+        if(actual.error)throw new Error("Customer session could not be checked");
+        const next=actual.data.user?.id??null;
+        if(!next||(requestedActor&&next!==requestedActor)){setLoading(false);setUnavailable(true);return;}
+        actor.current=next;
+      }catch{
+        if(alive.current&&scopeAlive()){setError("We couldn't load your messages. Check your connection and try again.");setLoading(false);}
+        return;
+      }
+    }
     if(!scopeCurrent())return;
     const myEpoch = epoch.current;
     const seq = ++readSeq.current;
@@ -324,7 +342,7 @@ export function useClientPortalMessages(): ClientPortalMessagesState {
     } finally {
       if (current()) setLoading(false);
     }
-  }, [haltForMultiple, settleOutbox,scopeCurrent,rpc,requestedBusiness]);
+  }, [haltForMultiple, settleOutbox,scopeAlive,scopeCurrent,rpc,requestedBusiness,requestedActor]);
 
   const loadMore = useCallback(async () => {
     if(!scopeCurrent())return;
@@ -451,7 +469,9 @@ export function useClientPortalMessages(): ClientPortalMessagesState {
       if (!user) { setLoading(false); setUnavailable(true); return; }
       await refresh();
     };
-    void start();
+    void start().catch(()=>{
+      if(!cancelled&&scopeAlive()){setError("We couldn't load your messages. Check your connection and try again.");setLoading(false);}
+    });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (cancelled) return;
       const next = session?.user.id ?? null;
@@ -468,7 +488,7 @@ export function useClientPortalMessages(): ClientPortalMessagesState {
       alive.current = false;
       subscription.unsubscribe();
     };
-  }, [refresh, resetScope,requestedScope,enabled,requestedActor]);
+  }, [refresh, resetScope,requestedScope,enabled,requestedActor,scopeAlive]);
 
   // Freshness without realtime: focus, becoming visible, and a modest interval while visible.
   useEffect(() => {

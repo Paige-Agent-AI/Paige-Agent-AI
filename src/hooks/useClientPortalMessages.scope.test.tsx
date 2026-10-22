@@ -123,3 +123,9 @@ it("an unresolved customer shell never falls back to an unscoped legacy read",as
  await act(async()=>{root.render(<CustomerIdentityProvider state={{frame:null,phase:"loading"}}><Probe/></CustomerIdentityProvider>);await flush();});
  expect(f.native).toEqual([]);expect(f.getUser).not.toHaveBeenCalled();
 });
+it("an interrupted initial Auth check exposes existing retry and can recover the original business",async()=>{
+ f.getUser.mockRejectedValueOnce(Error("Synthetic interrupted Auth"));await render();
+ expect(state.loading).toBe(false);expect(state.error).toContain("couldn't load");expect(state.unavailable).toBe(false);
+ await act(async()=>{await state.refresh();await flush();});
+ expect(state.error).toBeNull();expect(state.tenantId).toBe(businessA);expect(state.messages[0].body).toBe(`Saved ${businessA}`);
+});

@@ -1,0 +1,417 @@
+{
+  "source": "c7b4c969efef093d972750158b690aaa046e6e69",
+  "bundle": "ea05c4c504feab55a3d9ef101f1694ba9c9364c4f8b88bf9e3396d16c12cabba",
+  "html": "383d6fef0b71f11beaf9b2196d595952696ca28c2be7f75b711eb65c3b1e01cf",
+  "productInputs": 311,
+  "syntheticPorts": 174,
+  "productTransforms": 0,
+  "invalidated": "Initial four browser-wide-capability captures returned default1536x735 and were overwritten by verified tab-scoped CDP captures.",
+  "overrideReset": {
+    "browser": true,
+    "cdp": true,
+    "height": 735,
+    "width": 1536
+  },
+  "frames": [
+    {
+      "file": "light-1536-closed.png",
+      "panel": "closed",
+      "background": "rgb(201, 169, 106)",
+      "body": "13px",
+      "color": "rgb(32, 30, 35)",
+      "contentTitle": "21px",
+      "height": 770,
+      "scrollWidth": 1536,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "light",
+      "title": "16px",
+      "width": 1536
+    },
+    {
+      "file": "light-1536-open.png",
+      "panel": "open",
+      "background": "rgb(201, 169, 106)",
+      "body": "13px",
+      "color": "rgb(32, 30, 35)",
+      "contentTitle": "21px",
+      "height": 770,
+      "scrollWidth": 1536,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "light",
+      "title": "16px",
+      "width": 1536
+    },
+    {
+      "file": "light-1366-closed.png",
+      "panel": "closed",
+      "background": "rgb(201, 169, 106)",
+      "body": "13px",
+      "color": "rgb(32, 30, 35)",
+      "contentTitle": "21px",
+      "height": 768,
+      "scrollWidth": 1366,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "light",
+      "title": "16px",
+      "width": 1366
+    },
+    {
+      "file": "light-1366-open.png",
+      "panel": "open",
+      "background": "rgb(201, 169, 106)",
+      "body": "13px",
+      "color": "rgb(32, 30, 35)",
+      "contentTitle": "21px",
+      "height": 768,
+      "scrollWidth": 1366,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "light",
+      "title": "16px",
+      "width": 1366
+    },
+    {
+      "file": "light-1024-closed.png",
+      "panel": "closed",
+      "background": "rgb(201, 169, 106)",
+      "body": "13px",
+      "color": "rgb(32, 30, 35)",
+      "contentTitle": "21px",
+      "height": 768,
+      "scrollWidth": 1024,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "light",
+      "title": "16px",
+      "width": 1024
+    },
+    {
+      "file": "light-1024-open.png",
+      "panel": "open",
+      "background": "rgb(201, 169, 106)",
+      "body": "13px",
+      "color": "rgb(32, 30, 35)",
+      "contentTitle": "21px",
+      "height": 768,
+      "scrollWidth": 1024,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "light",
+      "title": "16px",
+      "width": 1024
+    },
+    {
+      "file": "light-900-closed.png",
+      "panel": "closed",
+      "background": "rgb(201, 169, 106)",
+      "body": "13px",
+      "color": "rgb(32, 30, 35)",
+      "contentTitle": "21px",
+      "height": 1000,
+      "scrollWidth": 900,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "light",
+      "title": "16px",
+      "width": 900
+    },
+    {
+      "file": "light-900-open.png",
+      "panel": "open",
+      "background": "rgb(201, 169, 106)",
+      "body": "13px",
+      "color": "rgb(32, 30, 35)",
+      "contentTitle": "21px",
+      "height": 1000,
+      "scrollWidth": 900,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "light",
+      "title": "16px",
+      "width": 900
+    },
+    {
+      "file": "dark-1536-closed.png",
+      "panel": "closed",
+      "background": "rgb(212, 167, 82)",
+      "body": "13px",
+      "color": "rgb(16, 14, 20)",
+      "contentTitle": "21px",
+      "height": 770,
+      "scrollWidth": 1536,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "dark",
+      "title": "16px",
+      "width": 1536
+    },
+    {
+      "file": "dark-1536-open.png",
+      "panel": "open",
+      "background": "rgb(212, 167, 82)",
+      "body": "13px",
+      "color": "rgb(16, 14, 20)",
+      "contentTitle": "21px",
+      "height": 770,
+      "scrollWidth": 1536,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "dark",
+      "title": "16px",
+      "width": 1536
+    },
+    {
+      "file": "dark-1366-closed.png",
+      "panel": "closed",
+      "background": "rgb(212, 167, 82)",
+      "body": "13px",
+      "color": "rgb(16, 14, 20)",
+      "contentTitle": "21px",
+      "height": 768,
+      "scrollWidth": 1366,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "dark",
+      "title": "16px",
+      "width": 1366
+    },
+    {
+      "file": "dark-1366-open.png",
+      "panel": "open",
+      "background": "rgb(212, 167, 82)",
+      "body": "13px",
+      "color": "rgb(16, 14, 20)",
+      "contentTitle": "21px",
+      "height": 768,
+      "scrollWidth": 1366,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "dark",
+      "title": "16px",
+      "width": 1366
+    },
+    {
+      "file": "dark-1024-closed.png",
+      "panel": "closed",
+      "background": "rgb(212, 167, 82)",
+      "body": "13px",
+      "color": "rgb(16, 14, 20)",
+      "contentTitle": "21px",
+      "height": 768,
+      "scrollWidth": 1024,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "dark",
+      "title": "16px",
+      "width": 1024
+    },
+    {
+      "file": "dark-1024-open.png",
+      "panel": "open",
+      "background": "rgb(212, 167, 82)",
+      "body": "13px",
+      "color": "rgb(16, 14, 20)",
+      "contentTitle": "21px",
+      "height": 768,
+      "scrollWidth": 1024,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "dark",
+      "title": "16px",
+      "width": 1024
+    },
+    {
+      "file": "dark-900-closed.png",
+      "panel": "closed",
+      "background": "rgb(212, 167, 82)",
+      "body": "13px",
+      "color": "rgb(16, 14, 20)",
+      "contentTitle": "21px",
+      "height": 1000,
+      "scrollWidth": 900,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "dark",
+      "title": "16px",
+      "width": 900
+    },
+    {
+      "file": "dark-900-open.png",
+      "panel": "open",
+      "background": "rgb(212, 167, 82)",
+      "body": "13px",
+      "color": "rgb(16, 14, 20)",
+      "contentTitle": "21px",
+      "height": 1000,
+      "scrollWidth": 900,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "dark",
+      "title": "16px",
+      "width": 900
+    }
+  ]
+}

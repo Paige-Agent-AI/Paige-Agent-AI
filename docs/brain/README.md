@@ -10,7 +10,12 @@ are separate required consumers; current resolver stays surface_only. Exact-head
 review/CI, source readback and ordinary customer/cohort proof remain owed.
 Parent2612 and original2607 now have released-source proof below; source-reference
 SDK inference is corrected, actual type ratchet10/6/zero new and70 owning cases
-pass without baseline or runtime-query changes. All19/nine and one complete founder evaluation
+pass without baseline or runtime-query changes. Original source-binding contract
+causally refused the serializer delta; one reviewed dependency digest is renewed
+after reproducing original120-source/29-adapter proof. Original Spine self-test
+and77 incumbent positive/hostile controls pass; extractor/metadata/dispatch and
+other119 pins unchanged. Fresh exact-head hosted gates remain mandatory.
+All19/nine and one complete founder evaluation
 remain open. [Evidence](../evidence/ui-delivery/e2-prepared-source-reference.md).
 
 ## EXP02 Systems Check source release — October22 verified readback

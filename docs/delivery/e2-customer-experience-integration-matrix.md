@@ -10,6 +10,9 @@ failures then70 cases/five original suites pass. This does not mount a focused U
 or a Desk action: those remain separate required consumers; existing resolution
 is surface_only. Original type ratchet10/6/zero new and70 owning cases pass after
 the SDK inference correction; runtime projection/guards unchanged. Parent2612 and
+original source-binding proof are reconciled: one inspected serializer digest,
+original120-source/29-adapter restoration, Spine self-test and77 hostile/positive
+controls pass; no extractor/metadata/dispatch or other119-pin change. Parent2612 and
 original2607 source prerequisites are released. Own review/CI, actual source-query
 readback/permissions/reload/Chat/Live and one founder evaluation remain owed.
 No approval/execution/Rail, provider, catalogue or ALG03/13 promotion; all19/nine

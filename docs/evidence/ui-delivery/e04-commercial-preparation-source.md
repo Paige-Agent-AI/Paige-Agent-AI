@@ -20,7 +20,7 @@ TRUTHFUL_STATE_LABELS: PASS: proposed means review material only; never approved
 SOLO_UI: NO: unmounted shared internal source reader, not a new department or customer interface.
 UNVERIFIED: exact-head review/CI/release; real ordinary-role RLS; existing Collections/Kit approval/operation/Rail consumer; hosted exact PDF readback; full signing/effective terms and O1-O12/founder acceptance.
 
-INTERNAL_BUILD_IDENTITY: branch=codex/e04-commercial-preparation-source; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-commercial-preparation-source.md
+INTERNAL_BUILD_IDENTITY: branch=codex/e04-commercial-preparation-source; product_sha=7e2cc7a3608c3f684181a5efc13fc9a70d8c1a31; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-commercial-preparation-source.md
 RELEASE_CHANNEL: development: dormant original-source reconciliation only.
 RELEASE_CLASSIFICATION: internal-only: read/proposal prerequisite, no activation or customer announcement.
 CUSTOMER_RELEASE_IDENTITY: none: no completed customer outcome or founder acceptance.

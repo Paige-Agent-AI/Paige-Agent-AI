@@ -36,9 +36,9 @@ CREATE FUNCTION pg_temp.owner_context(actor uuid,hint uuid DEFAULT NULL) RETURNS
 SELECT ok(pg_temp.owner_context('e0980100-0000-4000-8000-000000000003') IS NULL,'a customer relationship does not supply owner context');
 SELECT ok(pg_temp.owner_context('e0980100-0000-4000-8000-000000000004') IS NULL,'untrusted role metadata supplies no owner standing');
 SELECT throws_ok($attempt$UPDATE public.profiles SET active_tenant_id='e0980200-0000-4000-8000-000000000001' WHERE user_id='e0980100-0000-4000-8000-000000000003'$attempt$,
- 'P0001','active_tenant_id must be a tenant you belong to or manage','original profile guard refuses a customer-only staff-workspace pointer');
+ '42501','active_tenant_id must be a tenant you belong to or manage','original profile guard refuses a customer-only staff-workspace pointer');
 SELECT throws_ok($attempt$UPDATE public.profiles SET active_tenant_id='e0980200-0000-4000-8000-000000000001' WHERE user_id='e0980100-0000-4000-8000-000000000004'$attempt$,
- 'P0001','active_tenant_id must be a tenant you belong to or manage','a forged owner label cannot bypass the original profile guard');
+ '42501','active_tenant_id must be a tenant you belong to or manage','a forged owner label cannot bypass the original profile guard');
 SELECT is(pg_temp.owner_context('e0980100-0000-4000-8000-000000000001')->>'tenant_id','e0980200-0000-4000-8000-000000000001','owner reads original active workspace A');
 SELECT is(pg_temp.owner_context('e0980100-0000-4000-8000-000000000001')#>>'{playbook_config,persona,domain}','internal A','owner retains its authorized private Playbook');
 SELECT is(pg_temp.owner_context('e0980100-0000-4000-8000-000000000002')->>'tenant_id','e0980200-0000-4000-8000-000000000002','staff workspace B wins over a separate customer relationship A');

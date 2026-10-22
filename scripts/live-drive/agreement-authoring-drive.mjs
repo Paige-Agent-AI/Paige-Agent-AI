@@ -12,7 +12,8 @@ import {exerciseDocumentPreparationPaths} from './agreement-document-preparation
 const root = path.resolve(import.meta.dirname, '../..');
 const historyProof = process.argv.includes('--history');
 const correctionProof = process.argv.includes('--correction');
-const templateProof = process.argv.includes('--templates');
+const editorLabelsProof = process.argv.includes('--editor-labels');
+const templateProof = process.argv.includes('--templates') || editorLabelsProof;
 const signerProof = process.argv.includes('--recipients');
 const fieldsProof=process.argv.includes('--document-fields');
 const preparationsProof=process.argv.includes('--preparations');
@@ -44,7 +45,7 @@ if (process.argv.includes('--compiled')) {
   await build({ configFile:path.join(root,'scripts/live-drive/harness/sales-mount/vite.agreement-authoring.config.ts'),
     build:{outDir:compiledRoot,emptyOutDir:false,rollupOptions:{input:path.join(root,'scripts/live-drive/harness/sales-mount/agreement-authoring.html')}} });
 }
-const out = process.argv.includes('--diagnose-narrow')?path.resolve(root,'../../outputs/e04-document-narrow-diagnostic'):path.join(root,'docs/evidence/ui-delivery/assets',preparationsProof?'e04-mounted-document-preparation':fieldsProof?'e04-agreement-document-fields':pdfIntakeProof?'e04-agreement-pdf-intake':signerProof?'e04-agreement-recipients':templateProof?'e04-agreement-templates':uploadProof?'e04-agreement-upload-intent':correctionProof?'e04-agreement-correction':historyProof?'e04-agreement-wording-history':'e04-agreement-authoring');
+const out = process.argv.includes('--diagnose-narrow')?path.resolve(root,'../../outputs/e04-document-narrow-diagnostic'):path.join(root,'docs/evidence/ui-delivery/assets',preparationsProof?'e04-mounted-document-preparation':fieldsProof?'e04-agreement-document-fields':pdfIntakeProof?'e04-agreement-pdf-intake':signerProof?'e04-agreement-recipients':editorLabelsProof?'e04-agreement-editor-labels':templateProof?'e04-agreement-templates':uploadProof?'e04-agreement-upload-intent':correctionProof?'e04-agreement-correction':historyProof?'e04-agreement-wording-history':'e04-agreement-authoring');
 await fs.mkdir(out,{recursive:true});
 console.log('Resolving owned Playwright');
 const { chromium } = await resolvePlaywright();
@@ -229,7 +230,19 @@ try{
   }else if(templateProof){
 
     const library=async()=>{await page.getByRole('button',{name:'Business templates',exact:true}).first().click();await page.getByRole('button',{name:'New template',exact:true}).waitFor();};
-    const enter=async()=>{await page.getByRole('button',{name:'New template',exact:true}).click();await page.getByRole('textbox',{name:'Template title',exact:true}).waitFor();};
+    let labelsCaptured=false;
+    const enter=async()=>{
+      await page.getByRole('button',{name:'New template',exact:true}).click();await page.getByRole('textbox',{name:'Template title',exact:true}).waitFor();
+      if(editorLabelsProof){
+        await page.getByRole('radio',{name:/^Undo (Ctrl\+Z|⌘Z)$/}).waitFor();
+        await page.getByRole('radio',{name:/^Redo (Ctrl\+Y|⌘Y)$/}).waitFor();
+        await page.getByRole('textbox',{name:'Agreement content',exact:true}).waitFor();
+        await page.getByRole('combobox',{name:'Block type',exact:true}).click();
+        for(const level of [1,2,3])await page.getByRole('option',{name:`Heading ${level}`,exact:true}).waitFor();
+        if(!labelsCaptured){await capture('actual-editor-heading-options');labelsCaptured=true;behavior.push('actual native Undo/Redo shortcuts are expanded','all three real heading options and Agreement content label remain accessible');}
+        await page.getByRole('option',{name:'Heading 1',exact:true}).press('Escape');
+      }
+    };
     const exactWords='# Supplied advisory scope\n\nRetain the actual business responsibilities.\n\tAnd the supplied line breaks.\n';
     const proposal=async()=>{await page.getByRole('textbox',{name:'Template title',exact:true}).fill('Supplied client-service wording');await page.getByRole('button',{name:'Text source',exact:true}).click();await page.getByRole('textbox',{name:'Agreement text source',exact:true}).fill(exactWords);};
     const options=async()=>{const panel=page.locator('.e04-template-options');if(!await panel.evaluate(el=>el.open))await panel.locator('summary').click();await page.getByRole('textbox',{name:'Jurisdiction',exact:true}).fill('Business-specified jurisdiction');await page.getByRole('combobox',{name:'Requested wording review',exact:true}).selectOption('qualified_legal');await page.getByRole('textbox',{name:'Reviewer or review team',exact:true}).fill('Designated review team');};
@@ -239,8 +252,9 @@ try{
       await page.setViewportSize({width,height});await page.goto(url(theme,paige),{waitUntil:'domcontentloaded'});
       const overlay=width<=1080&&paige==='open';if(overlay)await page.getByRole('button',{name:'Fold PAIGE conversation',exact:true}).last().click();
       await library();await enter();await proposal();await options();const submitButton=page.getByRole('button',{name:'Save template version',exact:true});await submitButton.scrollIntoViewIfNeeded();
-      const fit=await page.evaluate(()=>({viewport:innerWidth,document:document.documentElement.scrollWidth,pageScroll:scrollY,button:document.querySelector('[aria-label="Template version editor"] button[type=submit]')?.getBoundingClientRect().toJSON()}));
+      const fit=await page.evaluate(()=>({viewport:innerWidth,document:document.documentElement.scrollWidth,pageScroll:scrollY,button:document.querySelector('[aria-label="Template version editor"] button[type=submit]')?.getBoundingClientRect().toJSON(),navigation:document.querySelector('.sales-tabs')?.getBoundingClientRect().toJSON(),selected:document.querySelector('.sales-tabs [aria-selected=true]')?.getBoundingClientRect().toJSON(),destinations:document.querySelectorAll('.sales-tabs [role=tab]').length}));
       assert.ok(fit.document<=width+1,JSON.stringify(fit));assert.equal(fit.pageScroll,0);assert.ok(fit.button.left>=0&&fit.button.right<=width+1&&fit.button.bottom<=height+1,JSON.stringify(fit));
+      if(editorLabelsProof&&width<600){assert.ok(fit.navigation.height<=60,JSON.stringify(fit));assert.ok(fit.selected.left>=0&&fit.selected.right<=width+1,JSON.stringify(fit));assert.equal(fit.destinations,6);}
       if(width<600)await capture(`${width}-${height}-${theme}-action`);
       await page.locator('.e04-templates h2').scrollIntoViewIfNeeded();if(overlay)await page.getByRole('button',{name:'Direct PAIGE',exact:true}).click();await page.evaluate(()=>document.fonts.ready);await capture(`${width}-${height}-${theme}-${paige}`);frames.push({theme,width,height,paige,fit,nativePaigeOverlay:overlay});
       if(overlay){await page.getByRole('button',{name:'Fold PAIGE conversation',exact:true}).last().click();assert.equal(await page.getByRole('textbox',{name:'Template title',exact:true}).inputValue(),'Supplied client-service wording');}

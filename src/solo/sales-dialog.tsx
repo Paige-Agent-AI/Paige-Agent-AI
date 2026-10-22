@@ -33,7 +33,10 @@ export function useSalesDraftExit(draft: unknown, busy: boolean, onClose: () => 
   }, [busy, dirty, onClose]);
   React.useEffect(() => {
     const key = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
+      if (event.key !== "Escape" || event.defaultPrevented || event.isComposing) return;
+      // A native editor popup owns its dismissal. The same Sales leave guard
+      // remains authoritative for a later, unhandled Escape or navigation.
+      if (event.target instanceof Element && event.target.closest('[role="listbox"], [role="menu"]')) return;
       event.preventDefault();
       if (pending) setPending(null); else request();
     };

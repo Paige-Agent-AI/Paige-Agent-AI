@@ -74,9 +74,3 @@
 @media(max-width:1050px) { .e04-document-layout { grid-template-columns:minmax(0,1fr); } .e04-document-inspector { grid-template-columns:repeat(2,minmax(0,1fr)); } .e04-document-field-properties { grid-column:1/-1; } .e04-document-review { grid-template-columns:minmax(0,1fr); } }
 @media(max-width:600px) { .e04-document-tools,.e04-document-inspector { grid-template-columns:minmax(0,1fr); } .e04-document-stage { padding:10px; } .e04-document-page-controls { grid-template-columns:44px minmax(0,1fr) 44px; } .e04-document-zoom { grid-column:1/-1; justify-content:space-between; } .e04-document-kind button { flex:1; } .e04-document-fields-head { flex-direction:column; gap:10px; } }
 @media(forced-colors:active) { .e04-document-fields .e04-pdf-field { border:2px solid Highlight; color:CanvasText; background:Canvas; } .e04-document-fields button[aria-pressed=true] { outline:2px solid Highlight; } }
-/* Keep the original six destinations/roving keys/leave guard. This local row
- * gives the document its mobile viewport; it is not another application shell. */
-@media(max-width:600px) {
-  .sales-department[data-agreement-workspace=open]>.sales-tabs { flex-wrap:nowrap; max-width:calc(100% - 24px); overflow-x:auto; overscroll-behavior-x:contain; scroll-padding-inline:6px; }
-  .sales-department[data-agreement-workspace=open]>.sales-tabs button { flex:0 0 auto; min-height:44px; }
-}

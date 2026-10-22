@@ -1,5 +1,41 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
+## October22 original wording-editor labels — pre-edit correction
+
+Actual authorized ordinary-owner inspection of the deployed template editor found
+unexpanded shortcut and heading-level placeholders in accessible toolbar names.
+REPAIR the original AgreementBodyEditor translation callback to honor the existing
+MDXEditor interpolation contract while retaining its Agreement content label.
+REUSE the same editor, native Markdown, scope remount, normalization/input guard,
+source fallback, plugin allowlist, template/record/one leave guard and permissions.
+No new component library, localization engine, legal wording or Spine capability.
+The business event is ordinary private document editing; no LayerC action or
+approval/send/signature/payment authority follows from a toolbar choice. Original
+records/receipts are unchanged. Extend the existing source-mount template drive
+with real accessible Undo/Redo and three heading choices before correcting the
+callback; verify exact wording/options/reload/leave and desktop/narrow frames.
+Local fixtures are not hosted persistence, legal sufficiency, actual role/provider
+acceptance or full O1–O12/founder acceptance. Separate review/current exact-head CI,
+normal safe release/readback and bounded signed-in label confirmation remain owed.
+
+The unchanged native-browser heading-menu Escape then reproduced the original
+Sales guard closing the whole empty template editor instead of only the menu.
+Four actual guard cases reproduce popup/handled/composition Escape interception
+while15 incumbent cases PASS. Extend the SAME guard to defer to native popup or
+already-handled/composing Escape, retaining subsequent ordinary Escape, dirty,
+busy, unknown, beforeunload, original navigation and explicit discard semantics.
+No second listener, guard or approval path. Verify native menu dismissal before
+continuing the original wording/options journey; do not suppress its Escape test.
+
+The final original-template320 render also shows all six destinations stacked
+above the document. Reuse the existing bounded agreement-row behavior for actual
+template/creation work as well: keep its CSS in the original Sales stylesheet,
+recognize original template/request locations, and let the SAME Sales host reveal
+its selected destination. Preserve six routes/roving keys/guard and44px controls;
+no new navigation or mobile shell. Add actual narrow row-height/selection/route
+checks to this same source drive before correcting the omission, then confirm
+native document preparation still uses that single host behavior.
+
 ## October22 native uploaded-PDF intake — pre-edit customer correction
 
 Read-only production native SAVE body1bd28e75afa0f50bb07b717795a5be0e confirms

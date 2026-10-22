@@ -8,6 +8,24 @@ let root:ReturnType<typeof createRoot>;let host:HTMLDivElement;
 function Harness(){const [draft,setDraft]=React.useState('');const guard=useSalesDraftExit(draft,false,()=>{});return <div><input value={draft} onChange={e=>setDraft(e.target.value)}/>{guard.confirmation}</div>;}
 function open(){history.replaceState(null,'','/solo/alpha/growth/sales');host=document.createElement('div');document.body.append(host);root=createRoot(host);act(()=>root.render(<Harness/>));const input=host.querySelector('input')!;act(()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')!.set!.call(input,'dirty');input.dispatchEvent(new Event('input',{bubbles:true}));});}
 afterEach(()=>{act(()=>root?.unmount());host?.remove();history.replaceState(null,'','/');vi.restoreAllMocks();vi.unstubAllGlobals();});
+it.each(['listbox','menu'])('lets the native %s dismiss itself without leaving or discarding the Sales draft',role=>{
+  open();const popup=document.createElement('div'),choice=document.createElement('button');popup.setAttribute('role',role);popup.append(choice);host.append(popup);choice.focus();
+  act(()=>choice.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true})));
+  expect(host.querySelector('[role=alertdialog]')).toBeNull();expect(document.activeElement).toBe(choice);
+  const leave=new Event('beforeunload',{cancelable:true});window.dispatchEvent(leave);expect(leave.defaultPrevented).toBe(true);
+  popup.remove();act(()=>host.querySelector('input')!.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true})));
+  expect(host.querySelectorAll('[role=alertdialog]')).toHaveLength(1);
+});
+it('honors an Escape already handled by the original child editor without disabling the leave guard',()=>{
+  open();const input=host.querySelector('input')!;input.addEventListener('keydown',event=>event.preventDefault(),{once:true});
+  act(()=>input.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true})));
+  expect(host.querySelector('[role=alertdialog]')).toBeNull();const leave=new Event('beforeunload',{cancelable:true});window.dispatchEvent(leave);expect(leave.defaultPrevented).toBe(true);
+  act(()=>input.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true})));expect(host.querySelectorAll('[role=alertdialog]')).toHaveLength(1);
+});
+it('does not leave the draft when Escape belongs to input composition',()=>{
+  open();act(()=>host.querySelector('input')!.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',isComposing:true,bubbles:true,cancelable:true})));
+  expect(host.querySelector('[role=alertdialog]')).toBeNull();const leave=new Event('beforeunload',{cancelable:true});window.dispatchEvent(leave);expect(leave.defaultPrevented).toBe(true);
+});
 it('retains only opaque recovery metadata on the same agreement without bypassing unsaved-work protection',()=>{
   const navigation=new EventTarget();vi.stubGlobal('navigation',navigation);
   const id='aaaaaaaa-0000-4000-8000-000000000001',request='bbbbbbbb-0000-4000-8000-000000000001',tenant='cccccccc-0000-4000-8000-000000000001';

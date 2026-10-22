@@ -73,9 +73,6 @@ export function AgreementDocumentPreparation(props:Props){
   const loadRef=React.useRef(load);loadRef.current=load;
   React.useEffect(()=>{
     const workEpoch=epoch,historyWorkEpoch=historyEpoch;alive.current=true;
-    // The SAME native Sales tabs remain usable in a bounded narrow row. Reveal
-    // the selected destination without changing route, focus or unsaved work.
-    heading.current?.closest('.sales-department')?.querySelector<HTMLElement>('.sales-tabs [aria-selected=true]')?.scrollIntoView?.({block:'nearest',inline:'nearest'});
     heading.current?.focus();return()=>{alive.current=false;workEpoch.current++;historyWorkEpoch.current++;};
   },[]);
   React.useLayoutEffect(()=>{

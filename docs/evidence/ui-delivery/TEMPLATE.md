@@ -78,6 +78,17 @@ Record purpose, audience, primary action, visual direction, complete states, exi
 
 List exact artifacts, commands, routes, tenant contexts, roles, themes, timestamps, and results. Redact secrets and customer-sensitive data.
 
+## Browser / device / high-resolution coverage (owner 2026-10-15)
+
+Complete for changed customer-visible flows using the [browser/display support standard](../../doctrine/paige-browser-display-compatibility.md). **This is human-readable evidence in the existing file; the current UI evidence CI script does not yet require separate machine-parsed browser fields.** Do not claim complete compatibility from a single engine or screenshot.
+
+- Supported browser/version targets affected: identify Chrome / Edge / Firefox / Safari, iPhone/iPad Safari and Android Chrome as applicable; note exactly which were *tested* versus `UNVERIFIED`.
+- Automated engine tests (Chromium / Firefox / WebKit): record exact head, route, auth/tenant class, test command, artifacts, states and `PASS`/`FAIL`/`BLOCKED`/`UNVERIFIED` per engine. WebKit emulation is not actual Safari.
+- Actual device/branded browser acceptance: record OS, real browser/device, version, permission states, login/voice/OAuth/upload/touch/keyboard outcomes and untested limitations. A source fixture is not a real device.
+- Responsive CSS viewports: preserve the eight mandatory SOLO sizes and add risk-based 320/390 mobile, 768 tablet, 1920 Full HD, 2560 QHD and 3840 4K-width, both themes and PAIGE open/closed where affected.
+- 4K/high-DPI evidence: distinguish physical monitor pixels, CSS viewport, device pixel ratio, OS scaling 125/150/200%, browser zoom 200/400%/320px reflow, chart/SVG/image sharpness, scrolling and reachable controls. Do not claim actual 4K hardware tested from synthetic 3840x2160 captures.
+- Risks, exceptions and follow-up: list every unsupported browser/feature and exact owner-approved documented limitation, or `UNVERIFIED` if not tested. Do not use browser selection to change domain capability, user role, tenant scope or approval authority.
+
 ## Review and limitations
 
 Record independent review findings, fixes, remaining limitations, and every `UNVERIFIED` item.

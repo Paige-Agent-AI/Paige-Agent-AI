@@ -871,6 +871,44 @@ client proof remain separate; complete seven-pillar/eligible Live/founder accept
 PROOF OWED. Internal production increment; no customer version or announcement.
 Recovery: compatible reviewed forward fix preserving all original work and sources.
 
+**2026-10-21 — EXP04 inspect original retained agreement wording.**
+
+PR [#2524](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2524), reviewed
+`557aea9e9ee05169954ca29ecaff216662e39e74`, merged
+`ad51a060c7da4106a294a5b6e0c0245c303837fd`. Actual parents
+`a6b550b768982cf3b63cb36e0f21f63363379779` + reviewed557; tree
+`b52601a8dc0903671a9cabcd08897f80442e95e8` equals independently recomputed
+actual-parent union, preserving E09 CURA/game-plan source. Pre-merge97cef was an
+older main snapshot, never the actual released tree. All11 exact-head checks
+completed (10SUCCESS/schema-free Supabase Preview SKIPPED) and both Vercel statuses
+SUCCESS. Sequential **AUTHOR-REVIEW / LOWER ASSURANCE**5608222311; no non-author
+assurance or customer acceptance inferred.
+
+Production `dpl_5T5ZH314C5k28jZX1RbeH7Q7GpDz` READY/main/exact. Protected exact
+and canonical public version both
+`ad51a060c7da4106a294a5b6e0c0245c303837fd-mviv4gjz`, customerUpdate:null.
+Actual served `/assets/AgreementPreparationWorkspace-CmHBkkPy.js` SHA256
+`79f699a1ac3db8e296e84d46b06a9b95130b95d559106e29d6dd1837378baf04`
+contains original wording-history navigation/native reader. Own migration/Edge
+NOT_APPLICABLE; original native draft-history130000 already applied/read back.
+Internal production prerequisite; no customer release identity or announcement.
+Subsequent public build`2d554406f9e4019935a8b38a5b30e4643a88da1a-mvivca62` serves history/native reader
+from`/assets/AgreementPreparationWorkspace-CeBH7MP_.js`, SHA256
+`a257ce401d0b4f9b576481a2e093eb877cedde0e3bf68bc94943576a679e961b`. Those four owning source blobs remain identical;
+compiled bundle identity belongs to its own build, not the original79f699 asset.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2524#issuecomment-6330515475).
+
+Functional: owner-scoped immutable wording list/selected revision, original cursor,
+closed metadata/digest validation and fresh current-record return. Visual: actual
+20 viewport/theme cases/26 paths/zero page errors; unchanged20 runtime pins and
+178 source assertions, type baseline10/current6. Experiential: explicit read error,
+refusal retiring cached original, retained-version inspection and keyboard return.
+Actual owner/staff/linked-client authenticated operation, genuine document bytes,
+full professional templates/import/field/signing/communications/payment/delivery,
+all O1–O12 and complete founder acceptance remain owed. Correction#2532/native
+integrity#2526 are separate unreleased increments. No restore/edit/sign/send/pay,
+provider/admission change, algorithm or Chat/Live/Capabilities promotion.
+
 
 **2026-10-21 — EXP05 compact Operations banners and original Work week.**
 

@@ -1,0 +1,187 @@
+{
+  "context": "final original components, local synthetic ports only",
+  "browser": "in-app browser",
+  "frames": [
+    {
+      "file": "1536-closed",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "height": 770,
+      "minAreaHeight": 44,
+      "overflow": false,
+      "paige": "closed",
+      "width": 1536
+    },
+    {
+      "file": "1536-open",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "height": 770,
+      "minAreaHeight": 44,
+      "overflow": false,
+      "paige": "open",
+      "width": 1536
+    },
+    {
+      "file": "1366-closed",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "height": 768,
+      "minAreaHeight": 44,
+      "overflow": false,
+      "paige": "closed",
+      "width": 1366
+    },
+    {
+      "file": "1366-open",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "height": 768,
+      "minAreaHeight": 44,
+      "overflow": false,
+      "paige": "open",
+      "width": 1366
+    },
+    {
+      "file": "1024-closed",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "height": 768,
+      "minAreaHeight": 44,
+      "overflow": false,
+      "paige": "closed",
+      "width": 1024
+    },
+    {
+      "file": "1024-open",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "height": 768,
+      "minAreaHeight": 63,
+      "overflow": false,
+      "paige": "open",
+      "width": 1024
+    },
+    {
+      "file": "900-closed",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "height": 1000,
+      "minAreaHeight": 44,
+      "overflow": false,
+      "paige": "closed",
+      "width": 900
+    },
+    {
+      "file": "900-open",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "height": 1000,
+      "minAreaHeight": 63,
+      "overflow": false,
+      "paige": "open",
+      "width": 900
+    },
+    {
+      "file": "900-missing",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "height": 1000,
+      "minAreaHeight": 44,
+      "overflow": false,
+      "paige": "closed",
+      "width": 900
+    },
+    {
+      "file": "900-error",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "height": 1000,
+      "minAreaHeight": 44,
+      "overflow": false,
+      "paige": "closed",
+      "width": 900
+    },
+    {
+      "file": "900-loading",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "height": 1000,
+      "minAreaHeight": 44,
+      "overflow": false,
+      "paige": "closed",
+      "width": 900
+    },
+    {
+      "file": "900-empty",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "height": 1000,
+      "minAreaHeight": 44,
+      "overflow": false,
+      "paige": "closed",
+      "width": 900
+    },
+    {
+      "file": "900-resolved",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "height": 1000,
+      "minAreaHeight": 44,
+      "overflow": false,
+      "paige": "closed",
+      "width": 900
+    },
+    {
+      "file": "900-obsidian-reduced-motion",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "height": 1000,
+      "minAreaHeight": 44,
+      "overflow": false,
+      "paige": "closed",
+      "width": 900
+    },
+    {
+      "file": "900-obsidian-drawer",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "height": 1000,
+      "minAreaHeight": 44,
+      "overflow": false,
+      "paige": "closed",
+      "width": 900
+    },
+    {
+      "file": "320-keyboard",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "height": 740,
+      "minAreaHeight": 105.5999984741211,
+      "overflow": false,
+      "paige": "closed",
+      "width": 320
+    },
+    {
+      "file": "320-restored-focus",
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "fontLoaded": true,
+      "height": 740,
+      "minAreaHeight": 105.5999984741211,
+      "overflow": false,
+      "paige": "closed",
+      "width": 320
+    }
+  ],
+  "keyboard": {
+    "focus": "Marketing › Social",
+    "href": "/solo/1234567/growth/social",
+    "outline": "rgb(101, 90, 150) solid 1.6px"
+  },
+  "returnFocus": {
+    "dialog": false,
+    "focus": "Social account records",
+    "outline": "rgb(101, 90, 150) solid 1.6px"
+  },
+  "temporaryEmulation": "all cleared; viewport reset"
+}

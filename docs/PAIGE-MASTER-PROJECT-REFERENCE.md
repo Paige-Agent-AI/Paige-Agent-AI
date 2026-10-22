@@ -826,6 +826,46 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-22 — EXP04 original commercial-presentation foundation released.**
+
+PR [#2550](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2550), reviewed
+`0b4092a9df0872171bb1923b569d92382cb32e90`, merged
+`1e1073133f960a394d41f7f27b0c84560d33f3aa`. Actual parents
+`f149ebb5328eb5d2662d8e033170c2fb1e408750` + reviewed head; actual/preflight
+union `a5d537bd51155622dac749e0463d616e88473f6f` matches. All13 applicable
+exact-head checks and two deployment statuses SUCCESS; review5609923926 is
+**AUTHOR-REVIEW / LOWER ASSURANCE**, inline threads0. Normal migration39735665747
+attempt2/deploy119688925032/lint119688927231 SUCCESS;230004 recorded after220004.
+First attempt119680772066 failed55P03 at the original5s limit and fully rolled
+back. An initial retry approval was rejected on a lock concern; separate timestamped
+production read07:06:11 verified0relation locks/full rollback before the SAME
+unchanged retry was approved. No session killed, timeout widened, control bypassed,
+source/test gate waived or migration history repaired.
+
+Production native hashes match: canonical JSONbbfeef876dc866c6d276d2be2662ae74,
+immutable guardff2fcc8d622aee366dd2e95e01222e4e,
+freeze4116200a24628e9149187e55eea2fb02. Original postgres owner, empty search_path,
+private INVOKER helpers and service-only DEFINER freeze match source; two nullable,
+no-default columns and one enabled original protection trigger. Original11-argument
+SAVE body1bd28e75afa0f50bb07b717795a5be0e is unchanged. No backfill or new ledger.
+Exact web `dpl_DDYF5646SrPkWswGQD7ZvdsBKzPi` READY/production/main;
+protected AND canonical public build
+`1e1073133f960a394d41f7f27b0c84560d33f3aa-mvj6cqfk`, customerUpdate:null.
+Own invoked Edge change NOT_APPLICABLE; no existing consumer redirected.
+[Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2550#issuecomment-6334959569).
+
+Functional: original immutable agreement/terms/invoice presentation, finite USD
+principal/schedule and explicit v2 service facts, with original Collections and PDF
+renderer. Native54 assertions/replay2/two actual sessions/one observed wait and
+Deno11 tests/26 steps are source proof, not hosted document or customer acceptance.
+Visual: no renderer/layout replaced. Experiential: original high confirmation,
+operation/Rail, hosted artifact/signing/accepted/effective terms and owner/staff/client
+integration remain owed; the producer is initially dormant. All O1-O12 and one
+complete founder evaluation remain mandatory/incomplete. No Chat/Live/provider,
+signing/send/payment or legal-sufficiency activation. Internal increment/no customer
+release name or announcement. Recovery is reviewed forward correction preserving
+original records and signed history. This factual closeout is not logged recursively.
+
 
 **2026-10-22 — EXP04 native supplied-wording template foundation.**
 

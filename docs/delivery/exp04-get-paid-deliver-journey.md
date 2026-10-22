@@ -1908,6 +1908,46 @@ October22 current native prerequisites: template220004, commercial230004, signer
 
 ### Actual owner document/field surface — dependent implementation contract
 
+#### Original agreement-document owner API — pre-edit integration contract
+
+1. Outcome: prepare the original actual PDF, retain assigned fields as immutable
+   native versions, retrieve exact bytes/history and recover the same interrupted
+   request. Ordinary internal preparation never signs, sends or charges.
+2. Domain: same sole EXP04 lead; original agreement-document owner door, agreement/
+   party/event/version and canonical private Storage. EXP09/token GET doors and
+   client/global identity/Operations/Communications source remain protected.
+3. Execution: existing authenticated native domain path; no new LayerC adapter,
+   approval/executor/job/receipt store. Consequential exact-map send stays held.
+4. Spine: exact document preparation Chat/Live UNAVAILABLE until actually wired,
+   governed and accepted. This original manual API does not promote a catalogue.
+5. Source/provider: original renderer/planPresentedDocument/native parser/hash and
+   private paige-agreements bucket. Actual production28 policy inspection confirms
+   server-only writes; source uploads stay in original tenant-agreements. Original
+   immutable object metadata/version/bytes are checked before adoption. No browser
+   path/actor/manifest authority, overwrite/delete/signed URL or new provider.
+6. Authority: original Auth getUser/current_user_tenant_id plus authenticated
+   read_paige_agreement_preparation and existing active owner/admin native floor.
+   Repeat current actor/business/source checks around asynchronous work; trusted
+   service writer rechecks original actor and parent/CAS/party locks atomically.
+7. Identity: explicit preparation UUID, original tenant/agreement/client/source
+   version/microsecond timestamp, immutable actual PDF object/digest, assigned
+   manifest and original edited event. Same intent retries use the SAME UUID.
+8. Readback: original native retained row and actual private bytes/metadata/version.
+   Rendering/prepared field readiness, historical receipt, current selection/source
+   match, approval and signature are distinct. Unknown never means rolled back.
+9. Safety: stale/foreign/revoked/changed intent/unknown metadata refuses; private
+   bodies never logged/cached/put in URLs. Old native GET doors are byte-pinned.
+   Commercial-linked drafts must use exact original commercial presentation before
+   claiming review readiness; absent integration is explicit, never omitted terms.
+10. Surface/proof: mount in original Sales preparation using its ONE leave guard,
+    opaque request identity and actual scoped API/native reads. Original tests,
+    real PDF source/browser/native negative/retry/reload, exact-head review/CI/
+    migration+Edge+web readback and actual roles remain separate evidence gates.
+
+Native version+field source is consolidated in main-target#2593; original#2582 is
+closed SUPERSEDED SOURCE, branch/review/native bytes retained, NOT released by that
+closure. No original signed history or existing agreement is backfilled/activated.
+
 1. Outcome: inspect exact native retained PDF pages, assign five supported field
    kinds to actual original signers, correct positions with pointer/keyboard/form,
    retain/reload the exact native preparation and inspect earlier versions.

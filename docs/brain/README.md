@@ -1,3 +1,27 @@
+## EXP04 original owner document API — October22 local dependent source
+
+Original agreement-document owner door now has bounded draft preparation,
+immutable assigned-field version retention/recovery, sanitized native metadata
+and actual checksum-verified PDF responses in LOCAL source. Original Auth/current
+business/human reader and private active user/profile/member floor surround
+artifact work; native writer owns atomic source/CAS/party checks and original
+edited event. Actual native renderer/plan/parser/hash/shared field validator and
+canonical private Storage reused, no new signing/approval/job/financial engine.
+Same request adopts timestamped original bytes, never re-renders/overwrites;
+lost response recovers same historical event. Actual source-upload PDF is copied
+unchanged. Commercial-linked source stays explicitly held until original exact
+commercial-presentation integration, never silently stripped of economics.
+
+All original/new twelve Deno suites167 cases/102 steps PASS and actual Edge strict
+check PASS; actual native-rendered bytes/HTTP are used, Auth/RPC/Storage transports
+are synthetic, not actual hosted/native customer evidence. Original token/owner
+block hash and Portal scope/ordering negatives preserved. New tests join existing
+CI step with all original permissions/assertions retained. Own source review/CI,
+native prerequisite/ordered Edge release/readback, actual UI/controller/one leave
+guard/reload and owner/staff/client/provider/all12/founder acceptance remain owed.
+Exact document Chat/Live UNAVAILABLE; no Algorithm/LayerC/readiness or provider/
+signing/send/payment/INT346 activation. [Evidence](../evidence/ui-delivery/e04-owner-document-preparation-api.md).
+
 ## EXP04 exact PDF and assigned fields — October22 local dependent consumer
 
 Same sole lead reuses the original agreement/signers/native PDF parser and ONE

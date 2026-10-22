@@ -23,8 +23,8 @@ const snapshot = (subject = actor, business = tenant) => ({actor_id: subject,
 });
 let state: ReturnType<typeof useClientPortalFrame>, root: Root, host: HTMLDivElement, mounted: boolean;
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
-function Probe({subject = actor, enabled = true, required = false}: {subject?: string; enabled?: boolean; required?: boolean}) {
-  state = useClientPortalFrame(subject, enabled, required); return <output>{state.phase}:{state.frame?.brand.tenant_name}</output>;
+function Probe({subject = actor, enabled = true, required = false, business = null}: {subject?: string; enabled?: boolean; required?: boolean; business?: string | null}) {
+  state = useClientPortalFrame(subject, enabled, required, business); return <output>{state.phase}:{state.frame?.brand.tenant_name}</output>;
 }
 const flush = async () => act(async () => {for (let i = 0; i < 30; i++) await Promise.resolve();});
 const mount = async (props: Parameters<typeof Probe>[0] = {}, strict = false) => {
@@ -172,4 +172,86 @@ it("a dropped access read is asked once more before it becomes 'error'", async (
   });
   await mount();
   expect(state.phase).toBe("not-client"); expect(accessCalls).toBe(2);
+});
+
+// Each native request gets its own builder/header; no shared SDK state is changed.
+function scopedResult(data: unknown, headers: Array<[string,string]>, error: unknown = null) {
+  return Object.assign(Promise.resolve({data,error}), {setHeader(name: string, value: string) {
+    headers.push([name,value]); return this;
+  }});
+}
+it("binds the original frame request to the requested business and actual Auth actor", async () => {
+  const headers: Array<[string,string]> = [];
+  f.rpc.mockImplementation(() => scopedResult(snapshot(),headers));
+  await mount({business: tenant});
+  expect(state.phase).toBe("ready"); expect(state.businessId).toBe(tenant);
+  expect(headers).toEqual([["x-client-portal-business",tenant]]);
+  expect(f.rpc).toHaveBeenCalledWith("client_portal_frame");
+});
+it("withholds an ignored hint or frame from a different business", async () => {
+  f.rpc.mockImplementation(() => scopedResult(snapshot(actor,foreign),[]));
+  await mount({business: tenant}); expect(state.phase).toBe("unavailable"); expect(state.frame).toBeNull();
+});
+it("a missing selected relationship cannot fall back to a staff/noncustomer shell", async () => {
+  f.rpc.mockImplementation(() => scopedResult(null,[]));
+  await mount({business: tenant}); expect(state.phase).toBe("unavailable"); expect(state.frame).toBeNull();
+});
+it("never sends an invalid hint or retains a frame for it", async () => {
+  await mount({business: "not-a-business"});
+  expect(state.phase).toBe("error"); expect(state.frame).toBeNull();
+  // rpc constructs an unexecuted builder; the request has not been awaited/sent.
+});
+it("retires a previous business synchronously and discards its late reply", async () => {
+  const pending = deferred<{data: ReturnType<typeof snapshot>; error: null}>();
+  const old = Object.assign(pending.promise,{setHeader() {return this;}});
+  f.rpc.mockReturnValueOnce(old);
+  await mount({business: tenant});
+  const next = deferred<{data: ReturnType<typeof snapshot>; error: null}>();
+  f.rpc.mockReturnValueOnce(Object.assign(next.promise,{setHeader() {return this;}}));
+  await mount({business: foreign});
+  expect(state.phase).toBe("loading"); expect(state.frame).toBeNull(); expect(state.businessId).toBe(foreign);
+  pending.resolve({data: snapshot(),error: null}); await flush();
+  expect(state.frame).toBeNull();
+  next.resolve({data: snapshot(actor,foreign),error: null}); await flush();
+  expect(state.phase).toBe("ready"); expect(state.frame?.profile.tenant_id).toBe(foreign);
+});
+it("does not retain the old verified frame when the next business is offline", async () => {
+  f.rpc.mockImplementation(() => scopedResult(snapshot(),[])); await mount({business: tenant});
+  f.rpc.mockImplementation(() => Object.assign(Promise.reject(new Error("offline")),{setHeader() {return this;}}));
+  await mount({business: foreign}); expect(state.phase).toBe("error"); expect(state.frame).toBeNull();
+});
+it("an old business callback cannot restart or cancel the next business read", async () => {
+  f.rpc.mockImplementation(() => scopedResult(snapshot(),[])); await mount({business: tenant});
+  const oldReload = state.reload;
+  const pending = deferred<{data: ReturnType<typeof snapshot>; error: null}>();
+  f.rpc.mockReturnValueOnce(Object.assign(pending.promise,{setHeader() {return this;}}));
+  await mount({business: foreign}); const calls = f.rpc.mock.calls.length;
+  await act(async () => oldReload()); expect(f.rpc.mock.calls).toHaveLength(calls);
+  pending.resolve({data:snapshot(actor,foreign),error:null}); await flush();
+  expect(state.phase).toBe("ready"); expect(state.frame?.profile.tenant_id).toBe(foreign);
+});
+it.each(["paused","ended"] as const)("accepts only a natively bound %s notice", async kind => {
+  const headers: Array<[string,string]> = [];
+  f.rpc.mockImplementation((name: string) => scopedResult(name === "client_portal_frame" ? null : {...withheld(kind),request_business_id: tenant},headers));
+  await mount({business: tenant}); expect(state.phase).toBe(kind); expect(state.access?.businessName).toBe("Test business");
+  expect(headers).toEqual([["x-client-portal-business",tenant],["x-client-portal-business",tenant]]);
+  expect(JSON.stringify(state.access)).not.toContain(tenant);
+});
+it.each([undefined,foreign])( "never names an unbound or different-business access notice %s", async binding => {
+  f.rpc.mockImplementation((name: string) => scopedResult(name === "client_portal_frame" ? null : {...withheld("paused"),request_business_id: binding},[]));
+  await mount({business: tenant}); expect(state.phase).toBe("unavailable"); expect(state.access).toBeNull();
+});
+it("rechecks actual Auth after a withheld notice, even without a subscription event", async () => {
+  f.rpc.mockImplementation((name: string) => scopedResult(name === "client_portal_frame" ? null : {...withheld("paused"),request_business_id: tenant},[]));
+  f.getUser.mockResolvedValueOnce({data: {user: {id: actor}},error: null})
+    .mockResolvedValueOnce({data: {user: {id: actor}},error: null})
+    .mockResolvedValue({data: {user: {id: other}},error: null});
+  await mount({business: tenant}); expect(state.phase).toBe("unavailable"); expect(state.access).toBeNull();
+});
+it("keeps the existing bounded access retry usable after its first deadline", async () => {
+  vi.useFakeTimers(); let reads = 0;
+  f.rpc.mockImplementation((name: string) => name === "client_portal_frame" ? Promise.resolve({data:null,error:null})
+    : ++reads === 1 ? new Promise(() => {}) : Promise.resolve({data:{state:"none"},error:null}));
+  await mount(); await act(async () => vi.advanceTimersByTimeAsync(20_001));
+  expect(state.phase).toBe("not-client"); expect(reads).toBe(2);
 });

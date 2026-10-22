@@ -801,3 +801,25 @@ recovery claim. Original read-only Spine/Metric contract, CAP017 Limited/Access
 Unverified, applicable algorithms, Trust/LayerC/Rail and all19/nine obligations
 remain unchanged. No own schema, provider, role or consequential activation.
 This supersedes earlier candidate release statements without rewriting history.
+## EXP02 prepared source-reference release — October22 verified source
+
+PR2618 reviewed1b40e8d260fe25ab1baa4bf1f0f33ece87348d23, all11 exact-head
+checks/two web statuses SUCCESS, final AUTHOR-REVIEW / LOWER ASSURANCE5620803317
+and zero threads, merged32ad767ced6f3c31bb67687c467e2e7aef8243ee. Actual parents
+27c7+1b40 and clean-union tree2141cb36ead83b8451161976340818bdca3143f0 verified.
+Normal Edge39859025961/120104604584 strict source/config PASS for Chat510 and
+BusinessReview72; ACTIVE/verify_jwt=true, edge-live exact32ad. Production
+webdpl_DVsg4erKHJY6artJEDqgzU9biZ8R READY/public32ad-mvk2e2lw/customerUpdate:null.
+Served SoloEntry-CLHkEtYq.js2465420bytes/SHA256
+6db947b960d78204da8c0f0730441a919a641e4f945e38baec5b111ecbd8e9af contains
+original scalar finding selection and known remediator/source field.
+[Source release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2618#issuecomment-6351975445).
+
+Functional metadata/source release verified; no full action payload or inferred
+source, and no new writer/permission/provider/action/catalogue or algorithm
+activation. Original70-case/type0new/source-binding restoration proof remains
+supporting; actual ordinary source query/role/cohort/Chat/Live/reload acceptance
+remains UNVERIFIED. Mounted finding2626 and Desk2627 are separate gated consumers.
+Postmerge main ci39859025600 CANCELLED is not called PASS; reviewed-head gates
+passed. All19/nine and one complete founder evaluation remain owed. This supersedes
+prior development release wording only at the stated source-release boundary.

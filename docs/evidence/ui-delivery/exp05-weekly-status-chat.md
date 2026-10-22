@@ -67,3 +67,33 @@ typecheck, route/exposure and full native database gates remain required.
 
 Functional source, rendered/experiential proof and owner acceptance remain separate.
 Preserve the original E5-CV1–9, ten EXP05 outcomes and historical18/25/50 registers.
+
+## Exact-head CI reconciliation
+
+Initial verify39715027281 atd2999ba07 is FAIL, retained. Its uploaded unit
+attribution records three failures. Local reproduction confirms that all three
+come from this new binding: two exact admission/authority inventories need its
+one explicit read, and the original read-step source extractor needs the imported
+weekly tool-name constant. The EXP02 metric wording and its assertions remain
+unchanged; the failure was a missing test dependency, not an EXP02 behavior defect.
+
+The Kit guard also refused this existing get_weekly_commitment_checks executor.
+Extend its original exact-reader recognition only for the existing declared
+read/read_only/none/null tuple, empty Kit schema and mounted caller-JWT owner
+reader, retaining all generic and mutation guards and the unchanged debt baseline.
+Seventeen source-mutation cases prove the exact path and reject wrong declaration,
+executor, service/model scope, role/client offers, missing pre/post authority,
+scope/classification and unrelated payloads. The positive initially failed before
+the narrow recognition change; every negative remains refusing. This is bounded
+source-contract coverage, never a substitute for runtime authority or customer proof.
+
+Main5df82581f98d84328729d0e8ec26cbe844781d98 composed without conflicts, preserving
+E09 native relationship choices210009 and EXP02/EXP05 factual release rows. No
+Chat runtime, current29 fingerprint, original120 dependency pin, capability
+registration, native RPC, permission, deadline or provider source changes in this
+correction. Final composed source passes166 tests across nine suites, the Kit
+guard with unchanged288/296 baseline debt, all17 new weekly source-mutation cases
+and its preserved self-tests,48 original Kit constructor/guard tests, declaration
+guard216/215/one unchanged baseline/zero disagreements, ESLint and diff checks.
+ANT16131dd5eb2 records the bounded test/guard lease. Fresh exact-head
+review, complete required CI and actual deployment/authenticated proof remain owed.

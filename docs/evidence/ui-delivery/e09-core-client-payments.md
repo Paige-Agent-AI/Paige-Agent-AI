@@ -48,3 +48,9 @@ Applied Impeccable clarify, responsive/geometry, accessible targets, focus, trut
 ## Orchestration contract
 
 Customer chooses Payments from Portal navigation or Home. Original relationship-scoped client_portal_invoices, invoice ledger/document and payment-request readers remain the execution pathway. This presentation repair has no new Spine registration, approval, ActionAdapter, durable job or receipt. Existing invoice IDs and genuine payment receipts remain authoritative; retries and unconfirmed outcomes stay in their original domain contracts. Team Hub integration is unaffected. No algorithm is promoted by this change.
+
+## CI correction and current proof boundary
+
+Current main31bb0a91e is composed. The failed original server parity assertion exposed the existing model-facing menu copy's old billing flag; it now agrees with the authoritative frontend registry. The four incumbent customer-navigation/owner-preview/editor tests now assert core Payments while retaining business hiding, role and brand negatives.155 tests/eight UI suites and39 original Deno menu governance/readback/entitlement/parity tests pass. Actual frontend production source, tokens, layout and captured interactions are unchanged since the bounded fresh finish/preservation review, which is not represented as a new full-Experience certification.
+
+Affected Edge dependencies are execute-approval, paige-ai-chat, paige-native-event-dispatch and send-portal-invite per the existing dependency resolver. This changes their original menu metadata, not approval, admission, sender, financial execution or activation. Required new exact-head CI and normal deployment/source readback remain owed. The original supporting8f0f8c581 web-only identity above is historical; its Edge NOT_APPLICABLE does not describe the corrected final-head deployment requirement. No failed check is waived.

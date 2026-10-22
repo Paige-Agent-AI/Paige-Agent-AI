@@ -826,6 +826,35 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-22 — EXP04 correct the original unsigned agreement.**
+
+PR [#2532](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2532), reviewed
+`ee745f014a3d35c720ee2a502502389b641290b9`, merged
+`4580db2e45cb66674cf82dabb8a086bfe61a8fa0`. Actual parents
+`6e9380cd5d717bf2c05ae8b8aa1f4a0f7f6ed028` + reviewed head; tree
+`ba8344eb459e07972fb9a7319044f923f99572c5` equals the recomputed union.
+All11 applicable exact-head checks:10 SUCCESS/schema-free Preview SKIPPED;
+both Vercel statuses SUCCESS. Final review5608960420 is **AUTHOR-REVIEW /
+LOWER ASSURANCE**. Historical audit503/browser failures retained, no weaker test.
+Web `dpl_4UgdTb3CJsdggWdvzknSRhBvPskx` READY/production/main/exact;
+protected and canonical public build
+`4580db2e45cb66674cf82dabb8a086bfe61a8fa0-mvj0ukdd`, customerUpdate:null.
+Actual served AgreementPreparationWorkspace-BdC3QrzB.js SHA256
+`e86f92614b8236e28e1f5c77d15b6ea37d3dfa0f0d0c8893784c7f48b7f84c91`
+contains original correction/history controls. Own migrations/Edge NOT_APPLICABLE;
+original160000 native guard is separately released. [Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2532#issuecomment-6332510916).
+
+Functional: same native SAVE/CAS with client/offer/terms/template identity,
+retained history, strict acknowledgment and separate unknown/current recovery.
+Visual/Experiential:216 focused cases plus3 vocabulary, actual20 responsive/theme
+frames/16 paths/zero errors/22 exact source pins; synthetic Auth is not customer QA.
+Actual ordinary owner/staff/linked-client, signing/provider/payment/service,
+complete O1–O12 and founder acceptance remain owed. No new sender/approval/ledger,
+Chat admission or provider effect. Internal production increment; no customer
+release name/announcement. Recovery is reviewed forward correction preserving
+original saved work/unknown proposals, never automatic resubmission or unfreezing.
+This factual closeout is not logged recursively and changes no product/authority.
+
 **2026-10-21 — EXP04 retained source stays immutable before delivery advances.**
 
 PR [#2526](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2526), reviewed

@@ -268,6 +268,20 @@ and routing: [owning packet](../delivery/e2-review-actor-scope.md). ALG03/13
 prediction is not claimed. Original19 outcomes/nine capabilities and final
 complete founder evaluation remain required.
 
+## EXP02 payment declaration evidence — October22 source candidate
+
+Authorized ordinary SOLO analysis settled and survived reload, but its payment
+setup interpretation exceeded the native declaration-only evidence (ANT-52
+9d3d94dd/06396129). The existing Operations projection now names missing/unreadable
+payment declarations and explicitly withholds provider connectivity, payment
+availability and settlement verification. Original severity, sources, three issuer
+reads, authority, caps and actual automation-failure signals remain intact.
+Source204 targeted cases/77 original authority controls and15 native synthetic
+frames pass; exact-head CI, Edge source release/readback and corrected ordinary
+SOLO explanation remain owed. See `../evidence/ui-delivery/e2-payment-declaration-evidence.md`.
+No provider/action/permission activation; all19/nine and founder acceptance remain
+open. New owner Game Plan contextual suggestions remain the next distinct UI flow.
+
 ## EXP02 Systems Check source-accuracy repair — development
 
 The original recorded-check consumer now has a bounded, unreleased correction:

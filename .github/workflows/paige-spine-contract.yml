@@ -23,6 +23,7 @@ on:
       - "scripts/proof/e09-cura-preparation-concurrency.test.mjs"
       - "supabase/tests/e09_cura_teaching_authority.sql"
       - "supabase/tests/e09_client_game_plan_truth.sql"
+      - "supabase/tests/e09_client_capability_coverage.sql"
       - "scripts/proof/e09-cura-teaching-concurrency.mjs"
       - "scripts/proof/e09-cura-teaching-concurrency.test.mjs"
       - "supabase/tests/research_tenant_lineage.sql"
@@ -660,6 +661,19 @@ jobs:
           writeFileSync('.cache/e09_client_game_plan_truth.sql', test.replace(marker, readFileSync(source, 'utf8')));
           NODE
           supabase test db .cache/e09_client_game_plan_truth.sql
+        if: ${{ !cancelled() }}
+      - name: Original client-success catalogue coverage and preservation
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+          const source = 'supabase/migrations/20271113150000_e09_client_capability_coverage.sql';
+          const test = readFileSync('supabase/tests/e09_client_capability_coverage.sql', 'utf8');
+          const marker = '\\ir ../migrations/20271113150000_e09_client_capability_coverage.sql';
+          if (test.split(marker).length !== 3) throw new Error('Original catalogue replay markers changed');
+          mkdirSync('.cache', { recursive: true });
+          writeFileSync('.cache/e09_client_capability_coverage.sql', test.split(marker).join(readFileSync(source, 'utf8')));
+          NODE
+          supabase test db .cache/e09_client_capability_coverage.sql
         if: ${{ !cancelled() }}
       - name: CURA private preparation native publisher concurrency
         run: |

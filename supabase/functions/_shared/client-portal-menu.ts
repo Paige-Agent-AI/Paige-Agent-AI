@@ -30,7 +30,7 @@ export interface PortalMenuKey {
   /** False while the page behind the entry is not yet the client's own (Agreements was, until Slice A). */
   clientsLive: boolean;
   floor: PortalMenuFloor; defaultVisibility: "shown" | "catalog";
-  /** A catalog entry every customer of one business gets anyway (Resources), unless a listed route alias speaks. */
+  /** A catalog entry every customer of one business gets anyway, unless a listed route alias speaks. */
   shownToCustomers: boolean;
   catalogLabel: boolean;
   /**
@@ -69,8 +69,8 @@ export const PORTAL_MENU_KEYS: readonly PortalMenuKey[] = Object.freeze([
   k("documents", "Documents", "/app/documents", "paperwork", "brand", { defaultVisibility: "shown" }),
   // E09 Slice A: the customer's own agreements; every customer of one business has it by default (D-A1).
   k("agreements", "Agreements", "/app/agreements", "paperwork", "everyone", { shownToCustomers: true }),
-  // E09 Slice 5: live — /app/billing is the customer's Payments page.
-  k("billing", "Payments", "/app/billing", "paperwork", "customer", { catalogLabel: false }),
+  // Core client Payments; the original owner overlay may still hide or rename it.
+  k("billing", "Payments", "/app/billing", "paperwork", "customer", { catalogLabel: false, shownToCustomers: true }),
   // Core for customers (§58): every customer of one business has Resources, whatever the catalog lists.
   k("resources", "Resources", "/app/learn", "learn", "everyone", { shownToCustomers: true }),
   k("learn", "Resources", "/app/learn", "learn", "everyone"),

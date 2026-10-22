@@ -7,7 +7,36 @@ globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 let root:ReturnType<typeof createRoot>;let host:HTMLDivElement;
 function Harness(){const [draft,setDraft]=React.useState('');const guard=useSalesDraftExit(draft,false,()=>{});return <div><input value={draft} onChange={e=>setDraft(e.target.value)}/>{guard.confirmation}</div>;}
 function open(){history.replaceState(null,'','/solo/alpha/growth/sales');host=document.createElement('div');document.body.append(host);root=createRoot(host);act(()=>root.render(<Harness/>));const input=host.querySelector('input')!;act(()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')!.set!.call(input,'dirty');input.dispatchEvent(new Event('input',{bubbles:true}));});}
-afterEach(()=>{act(()=>root?.unmount());host?.remove();history.replaceState(null,'','/');vi.restoreAllMocks();});
+afterEach(()=>{act(()=>root?.unmount());host?.remove();history.replaceState(null,'','/');vi.restoreAllMocks();vi.unstubAllGlobals();});
+it('retains only opaque recovery metadata on the same agreement without bypassing unsaved-work protection',()=>{
+  const navigation=new EventTarget();vi.stubGlobal('navigation',navigation);
+  const id='aaaaaaaa-0000-4000-8000-000000000001',request='bbbbbbbb-0000-4000-8000-000000000001',tenant='cccccccc-0000-4000-8000-000000000001';
+  history.replaceState(null,'',`/solo/alpha/sales/agreements?agreement=${id}&theme=light`);
+  let retain!:(url:string,replace:()=>void)=>boolean;
+  function Checkpoint(){const guard=useSalesDraftExit('private unsaved work',false,()=>{}, {uncertain:true});retain=guard.retainRequestLocation;return <>{guard.confirmation}</>;}
+  host=document.createElement('div');document.body.append(host);root=createRoot(host);act(()=>root.render(<Checkpoint/>));
+  const target=`/solo/alpha/sales/agreements?agreement=${id}&theme=light&agreement_signer_request=${request}&agreement_business=${tenant}`;
+  let retained=false;act(()=>{retained=retain(target,()=>{const event=new Event('navigate',{cancelable:true});Object.assign(event,{destination:{url:new URL(target,location.href).href}});navigation.dispatchEvent(event);expect(event.defaultPrevented).toBe(false);history.replaceState(null,'',target);});});expect(retained).toBe(true);expect(location.search).toContain(request);
+  const before=new Event('beforeunload',{cancelable:true});window.dispatchEvent(before);expect(before.defaultPrevented).toBe(true);expect(hasUnsavedWork()).toBe(true);
+  const clear=`/solo/alpha/sales/agreements?agreement=${id}&theme=light`;act(()=>{retained=retain(clear,()=>history.replaceState(null,'',clear));});expect(retained).toBe(true);expect(location.search).not.toContain(request);
+  expect(retain(target,()=>{throw new DOMException('Navigation stopped','AbortError');})).toBe(false);
+  const exit=new Event('navigate',{cancelable:true});Object.assign(exit,{destination:{url:new URL('/solo/alpha/sales/offers',location.href).href}});act(()=>navigation.dispatchEvent(exit));expect(exit.defaultPrevented).toBe(true);expect(host.querySelectorAll('[role="alertdialog"]')).toHaveLength(1);
+});
+it.each(['https://outside.example.test/solo/alpha/sales/agreements?agreement=aaaaaaaa-0000-4000-8000-000000000001','/solo/beta/sales/agreements?agreement=aaaaaaaa-0000-4000-8000-000000000001','?agreement=aaaaaaaa-0000-4000-8000-000000000002','?agreement=aaaaaaaa-0000-4000-8000-000000000001&private=words','?agreement=aaaaaaaa-0000-4000-8000-000000000001&agreement_signer_request=private-name&agreement_business=cccccccc-0000-4000-8000-000000000001','?agreement=aaaaaaaa-0000-4000-8000-000000000001&agreement_signer_request=bbbbbbbb-0000-4000-8000-000000000001'])('refuses an exit or private/invalid payload as a recovery checkpoint: %s',target=>{
+  history.replaceState(null,'','/solo/alpha/sales/agreements?agreement=aaaaaaaa-0000-4000-8000-000000000001');let retain!:(url:string,replace:()=>void)=>boolean;
+  function Checkpoint(){const guard=useSalesDraftExit('',false,()=>{});retain=guard.retainRequestLocation;return <>{guard.confirmation}</>;}
+  host=document.createElement('div');document.body.append(host);root=createRoot(host);act(()=>root.render(<Checkpoint/>));const replace=vi.fn();expect(retain(target,replace)).toBe(false);expect(replace).not.toHaveBeenCalled();
+});
+it('keeps a different editor guard authoritative during an opaque recovery checkpoint',()=>{
+  const navigation=new EventTarget();vi.stubGlobal('navigation',navigation);history.replaceState(null,'','/solo/alpha/sales/agreements?agreement=aaaaaaaa-0000-4000-8000-000000000001');
+  let retain!:(url:string,replace:()=>void)=>boolean;
+  function OtherEditor(){const guard=useSalesDraftExit('other work',false,()=>{}, {uncertain:true});return <>{guard.confirmation}</>;}
+  function Checkpoint(){const guard=useSalesDraftExit('',false,()=>{});retain=guard.retainRequestLocation;return <>{guard.confirmation}<OtherEditor/></>;}
+  host=document.createElement('div');document.body.append(host);root=createRoot(host);act(()=>root.render(<Checkpoint/>));
+  const target='?agreement=aaaaaaaa-0000-4000-8000-000000000001&agreement_signer_request=bbbbbbbb-0000-4000-8000-000000000001&agreement_business=cccccccc-0000-4000-8000-000000000001';let result=true;
+  act(()=>{result=retain(target,()=>{const event=new Event('navigate',{cancelable:true});Object.assign(event,{destination:{url:new URL(target,location.href).href}});navigation.dispatchEvent(event);if(!event.defaultPrevented)history.replaceState(null,'',target);});});
+  expect(result).toBe(false);expect(location.search).not.toContain('agreement_signer_request');expect(host.querySelectorAll('[role="alertdialog"]')).toHaveLength(1);const leave=new Event('beforeunload',{cancelable:true});window.dispatchEvent(leave);expect(leave.defaultPrevented).toBe(true);
+});
 it('adopts only an explicit reviewed editor baseline and protects later edits again',()=>{
   let adopt!:(value:unknown)=>void,setValue!:(value:string)=>void;
   function BaselineHarness(){const [value,set]=React.useState('');setValue=set;const guard=useSalesDraftExit(value,false,()=>{});adopt=guard.adoptBaseline;return <>{guard.confirmation}</>;}

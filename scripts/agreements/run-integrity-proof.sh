@@ -240,7 +240,8 @@ deno test --allow-import --node-modules-dir=none --deny-net --deny-env --deny-ru
   "$REPO/supabase/functions/_shared/agreements/commercial-presentation.test.ts" \
   "$REPO/supabase/functions/_shared/agreements/commercial-presentation-read.test.ts" \
   "$REPO/supabase/functions/_shared/agreements/prepare-retained.test.ts" \
-  "$REPO/supabase/functions/_shared/sales-commercial/preparation-command.test.ts"
+  "$REPO/supabase/functions/_shared/sales-commercial/preparation-command.test.ts" \
+  "$REPO/supabase/functions/_shared/agreements/field-preparation.test.ts"
 # The pure source is TypeScript; CI's Node 20 cannot import it. Reuse the Deno
 # runtime already exercised above, with this same fenced native cluster and all
 # 54 original assertions. No transpiled copy or relaxed test is substituted.

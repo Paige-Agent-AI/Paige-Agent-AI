@@ -2,11 +2,11 @@
   "proofClass": "actual Sales shell/components/editor/SDK; synthetic identity/network only",
   "staticTransport": "native Vite compiled fixture",
   "normalizedLFSourceSHA256": {
-    "src/solo/sales-ops.tsx": "002f029bca09abf81426e4c039209eee605e6bd5cd4ce1c0ddd04dbaa5b78c70",
+    "src/solo/sales-ops.tsx": "ed25543370e39937099f153ef3f1a67c30a162b325745b00d3110ff940884c85",
     "src/solo/SalesWorkspace.tsx": "7c76c109cf9262f5332c2e5964deb7911c1444ea756a378db2d0a91a9acfd91d",
     "src/solo/sales-dialog.tsx": "3488ecfa25403acd81e668031499ff6c9abe31f657a023b000cf64ce3d9242ff",
     "src/hooks/useBeforeUnloadGuard.ts": "5d0ddcf56f30a74550042c04428a3c03d1904d9156f4173a46884cd60749d4ec",
-    "src/solo/sales/AgreementPreparationWorkspace.tsx": "be0fad15ad97995c524dee3fd2ab646948098b2f8b327bebfb49dee1bb4eb525",
+    "src/solo/sales/AgreementPreparationWorkspace.tsx": "131154106844897722b25a239a15137b1297acdda66a29ea881dc4e84d2fa1ef",
     "src/solo/sales/AgreementBodyEditor.tsx": "fbbda58c2a1f76924ed8232aa6cf0219768ba8a9c2563cacb5d8578e032ac315",
     "src/solo/sales/agreementPreparationApi.ts": "870997df40bc9c7193ccf362e27409115c477b580e6a182ba1ad1ab4bf08eea8",
     "src/solo/sales/agreementVocabulary.ts": "65997aa339d950aff13b8c607c4938b9a060340f75b7f43f397156fc0409a3d9",
@@ -19,7 +19,7 @@
     "scripts/live-drive/harness/sales-mount/agreement-authoring-client.ts": "1838e8309cec8fd47f5bfa2608fbdde78acbf372c99ce7dc29a74c6652267e0b",
     "scripts/live-drive/harness/sales-mount/vite.agreement-authoring.config.ts": "ae93d7029cd44a8fa590ea294394926d6535e5e4b4d0e02dee625877b356a7dd",
     "scripts/live-drive/harness/sales-mount/agreement-authoring.html": "c66db7a6acdd821c8aa0051561d06d650522dad1151905733e40ee38bbc25be7",
-    "scripts/live-drive/agreement-authoring-drive.mjs": "0b1ccc6691ec230308a489f24e317171abc70eb764c0a5373ed0af35db111b1a",
+    "scripts/live-drive/agreement-authoring-drive.mjs": "5aae9e3c896a48fd867c57d18a19aaa22c6cbdf6f1a9f54ca48f3a7d35942009",
     "src/solo/useSoloAgreementSignings.ts": "83a36b1214e93c6273ecfb21ac451a231d2f572d9bd979b224dcfde7be80884b"
   },
   "sharedUIFontSHA256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05",

@@ -8,9 +8,9 @@ const f=vi.hoisted(()=>({user:{id:"e0914000-0000-0000-0000-000000000001"} as {id
  listener:null as null|((event:string,session:{user:{id:string}}|null)=>void),
  rows:[] as Record<string,unknown>[],reserved:null as Record<string,unknown>|null,object:false,befores:[] as unknown[],beforeIds:[] as unknown[]}));
 vi.mock("@/integrations/supabase/client",()=>({supabase:{
- auth:{getUser:()=>f.getUser(),onAuthStateChange:(cb:typeof f.listener)=>{f.listener=cb;return{data:{subscription:{unsubscribe:vi.fn()}}};}},
- rpc:(...a:unknown[])=>f.rpc(...a),from:(...a:unknown[])=>f.from(...a),
- storage:{from:()=>({upload:(...a:unknown[])=>f.upload(...a),download:(...a:unknown[])=>f.download(...a),createSignedUrl:(...a:unknown[])=>f.sign(...a)})},
+ auth:{getUser:()=>f.getUser(),getSession:async()=>({data:{session:f.user?{user:f.user,access_token:"synthetic-existing-files"}:null},error:null}),onAuthStateChange:(cb:typeof f.listener)=>{f.listener=cb;return{data:{subscription:{unsubscribe:vi.fn()}}};}},
+ rpc:(...a:unknown[])=>{const q={setHeader:()=>q,then:(yes:(v:unknown)=>unknown,no:(e:unknown)=>unknown)=>Promise.resolve(f.rpc(...a)).then(yes,no)};return q;},from:(...a:unknown[])=>f.from(...a),
+ storage:{from:()=>{const q={setHeader:()=>q,upload:(...a:unknown[])=>f.upload(...a),download:(...a:unknown[])=>f.download(...a),createSignedUrl:(...a:unknown[])=>f.sign(...a)};return q;}},
  channel:()=>{const c={on:()=>c,subscribe:()=>c};return c;},removeChannel:vi.fn(),
 }}));
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
@@ -31,7 +31,7 @@ beforeEach(()=>{vi.clearAllMocks();f.user={id:actor};f.listener=null;f.rows=[row
  f.getUser.mockImplementation(async()=>({data:{user:f.user},error:null}));
  f.read.mockImplementation(async()=>({data:f.reserved,error:null}));
  f.list.mockImplementation(async()=>({data:envelope(f.rows),error:null}));
- f.from.mockImplementation(()=>{const q={select:()=>q,eq:()=>q,in:()=>q,order:()=>q,maybeSingle:()=>f.read(true)};return q;});
+ f.from.mockImplementation(()=>{const q={select:()=>q,eq:()=>q,in:()=>q,order:()=>q,setHeader:()=>q,maybeSingle:()=>f.read(true)};return q;});
  f.rpc.mockImplementation(async(name:string,args:Record<string,unknown>)=>{
   if(name==="client_portal_self_profile")return{data:profile(),error:null};
   if(name==="client_portal_documents"){f.befores.push(args.p_before);f.beforeIds.push(args.p_before_id);return f.list(args);}

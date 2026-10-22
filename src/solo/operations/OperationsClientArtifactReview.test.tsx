@@ -3,13 +3,13 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { OperationsClientArtifactReview } from "./OperationsClientArtifactReview";
 import { allowAccountSwitch } from "@/lib/auth/accountSwitchGuard";
-const mocks=vi.hoisted(()=>({rpc:vi.fn(),session:vi.fn()}));
-vi.mock("@/integrations/supabase/client",()=>({supabase:{rpc:mocks.rpc,auth:{getSession:mocks.session}}}));
+const mocks=vi.hoisted(()=>({rpc:vi.fn(),session:vi.fn(),user:vi.fn(),headers:[] as Array<{name:string;value:string}>}));
+vi.mock("@/integrations/supabase/client",()=>({supabase:{rpc:(...args:unknown[])=>{const q=Promise.resolve(mocks.rpc(...args));return Object.assign(q,{setHeader:(name:string,value:string)=>{mocks.headers.push({name,value});return q;},abortSignal:()=>q});},auth:{getSession:mocks.session,getUser:mocks.user}}}));
 const scope={actorId:"eb830000-0000-4000-8000-000000000001",tenantId:"eb830000-0000-4000-8000-000000000002",releaseId:"eb830000-0000-4000-8000-000000000003"};
 const record={actor_id:scope.actorId,tenant_id:scope.tenantId,release_id:scope.releaseId,submission_id:"eb830000-0000-4000-8000-000000000004",state:"awaiting_client",revision_no:2,artifact_digest:"a".repeat(64),title:"Synthetic deliverable",body:"<script>synthetic</script>\nReview this promised outcome.",updated_at:"2026-10-12T00:00:00Z"};
 let host:HTMLDivElement,root:Root;
-beforeEach(()=>{vi.clearAllMocks();mocks.session.mockResolvedValue({data:{session:{user:{id:scope.actorId}}},error:null});mocks.rpc.mockResolvedValue({data:record,error:null});host=document.createElement("div");document.body.append(host);root=createRoot(host);});
-afterEach(()=>{act(()=>root.unmount());host.remove();});
+beforeEach(()=>{vi.clearAllMocks();mocks.headers=[];mocks.user.mockResolvedValue({data:{user:{id:scope.actorId}},error:null});mocks.session.mockResolvedValue({data:{session:{user:{id:scope.actorId},access_token:"synthetic-review-actor"}},error:null});mocks.rpc.mockResolvedValue({data:record,error:null});host=document.createElement("div");document.body.append(host);root=createRoot(host);});
+afterEach(()=>{act(()=>root.unmount());host.remove();vi.useRealTimers();});
 async function render(props=scope){await act(async()=>root.render(<OperationsClientArtifactReview {...props}/>));}
 const button=(label:string)=>Array.from(document.querySelectorAll<HTMLButtonElement>("button")).find(b=>b.textContent===label)!;
 
@@ -143,3 +143,89 @@ it("late content for an earlier scope never appears in the new actor or tenant",
 it("recorded-state recovery preserves the client's revision note after refusal",async()=>{await render();const note=host.querySelector<HTMLTextAreaElement>("textarea")!;await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value")!.set!.call(note,"Preserve the requested changes");note.dispatchEvent(new Event("input",{bubbles:true}));});await act(async()=>button("Request changes").click());mocks.rpc.mockResolvedValueOnce({data:null,error:{code:"42501"}});await act(async()=>button("Confirm changes").click());expect(note.disabled).toBe(true);expect(button("Check recorded review").disabled).toBe(false);await act(async()=>button("Check recorded review").click());expect(host.querySelector<HTMLTextAreaElement>("textarea")!.value).toBe("Preserve the requested changes");expect(mocks.rpc.mock.calls.filter(c=>c[0]==="operations_delivery_client_decide_scoped")).toHaveLength(1);});
 it.each(["42501","08006"])("preserves a note through %s recovery without transferring it to a changed version",async code=>{await render();const note=host.querySelector<HTMLTextAreaElement>("textarea")!;await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value")!.set!.call(note,"Note for version two");note.dispatchEvent(new Event("input",{bubbles:true}));});await act(async()=>button("Request changes").click());mocks.rpc.mockResolvedValueOnce({data:null,error:{code}});await act(async()=>button("Confirm changes").click());mocks.rpc.mockResolvedValue({data:{...record,revision_no:3,artifact_digest:"b".repeat(64)},error:null});await act(async()=>button("Check recorded review").click());expect(host.querySelector<HTMLTextAreaElement>("textarea")!.value).toBe("Note for version two");expect(host.textContent).toContain("Your note belongs to the earlier released version");expect(button("Accept this version").disabled).toBe(true);await act(async()=>button("Clear review note").click());expect(host.querySelector<HTMLTextAreaElement>("textarea")!.value).toBe("");expect(button("Accept this version").disabled).toBe(code==="08006");expect(mocks.rpc.mock.calls.filter(c=>c[0]==="operations_delivery_client_decide_scoped")).toHaveLength(1);});
 it("revoked recovery masks the artifact but offers explicit draft clearance so the client can leave",async()=>{await render();const note=host.querySelector<HTMLTextAreaElement>("textarea")!;await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value")!.set!.call(note,"Private retained client note");note.dispatchEvent(new Event("input",{bubbles:true}));});await act(async()=>button("Request changes").click());mocks.rpc.mockResolvedValue({data:null,error:{code:"42501"}});await act(async()=>button("Confirm changes").click());await act(async()=>button("Check recorded review").click());expect(host.textContent).toContain("Review unavailable");expect(host.textContent).not.toContain(record.body);expect(host.textContent).not.toContain("Private retained client note");expect(button("Clear review note")).toBeDefined();await act(async()=>button("Clear review note").click());await act(async()=>expect(await allowAccountSwitch({fromTenantId:scope.tenantId,toTenantId:"foreign",toTenantName:"Synthetic other workspace"})).toBe(true));expect(mocks.rpc.mock.calls.filter(c=>c[0]==="operations_delivery_client_decide_scoped")).toHaveLength(1);});
+
+it("a retired Portal host cannot dispatch a pending confirmation or republish its private artifact",async()=>{
+ let active=true;let resolve!:(value:unknown)=>void;const verified=vi.fn();
+ await act(async()=>root.render(<OperationsClientArtifactReview {...scope} isCurrentScope={()=>active} onVerifiedDecision={verified}/>));
+ await act(async()=>button("Accept this version").click());
+ mocks.session.mockReturnValueOnce(new Promise(r=>{resolve=r;}));
+ await act(async()=>button("Confirm acceptance").click());
+ active=false;
+ await act(async()=>root.render(<OperationsClientArtifactReview {...scope} isCurrentScope={()=>active} onVerifiedDecision={verified}/>));
+ expect(host.textContent).not.toContain(record.body);
+ await act(async()=>resolve({data:{session:{user:{id:scope.actorId},access_token:"synthetic-review-actor"}},error:null}));
+ expect(mocks.rpc.mock.calls.filter(c=>c[0]==="operations_delivery_client_decide_scoped")).toHaveLength(0);
+ expect(verified).not.toHaveBeenCalled();expect(host.textContent).not.toContain(record.body);
+});
+it("cached account labels cannot send under another actual bearer and preserve an unsent note for recovery",async()=>{
+ const verified=vi.fn();await act(async()=>root.render(<OperationsClientArtifactReview {...scope} onVerifiedDecision={verified}/>));
+ const note=host.querySelector<HTMLTextAreaElement>("textarea")!;
+ await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value")!.set!.call(note,"Keep my private requested changes");note.dispatchEvent(new Event("input",{bubbles:true}));});
+ await act(async()=>button("Request changes").click());
+ mocks.user.mockResolvedValue({data:{user:{id:"foreign-actual-user"}},error:null});
+ await act(async()=>button("Confirm changes").click());
+ expect(mocks.rpc.mock.calls.filter(c=>c[0]==="operations_delivery_client_decide_scoped")).toHaveLength(0);
+ expect(host.textContent).toContain("Your decision wasn't sent");expect(host.textContent).not.toContain(record.body);expect(host.textContent).not.toContain("Keep my private requested changes");
+ expect(button("Clear review note")).toBeDefined();expect(verified).not.toHaveBeenCalled();
+ mocks.user.mockResolvedValue({data:{user:{id:scope.actorId}},error:null});
+ await act(async()=>button("Check review again").click());
+ expect(host.querySelector<HTMLTextAreaElement>("textarea")!.value).toBe("Keep my private requested changes");
+});
+it("each original exact-version RPC captures the actor bearer and explicit original business",async()=>{
+ await render();await act(async()=>button("Accept this version").click());
+ const saved={...record,state:"accepted",decision_by:scope.actorId,decision_at:"2026-10-12T01:00:00.123456Z",client_note:null,updated_at:"2026-10-12T01:00:00Z"};
+ mocks.rpc.mockResolvedValue({data:saved,error:null});
+ await act(async()=>button("Confirm acceptance").click());
+ expect(mocks.headers.filter(h=>h.name==="Authorization")).toEqual(Array.from({length:3},()=>({name:"Authorization",value:"Bearer synthetic-review-actor"})));
+ expect(mocks.headers.filter(h=>h.name==="x-client-portal-business")).toEqual(Array.from({length:3},()=>({name:"x-client-portal-business",value:scope.tenantId})));
+ expect(mocks.rpc.mock.calls.every(c=>c[1].p_expected_actor_id===scope.actorId&&c[1].p_expected_tenant_id===scope.tenantId)).toBe(true);
+});
+it("an account interruption after dispatch remains unknown and never becomes an unsent or verified decision",async()=>{
+ let resolve!:(value:unknown)=>void;const verified=vi.fn();let guard:()=>boolean=()=>true;
+ await act(async()=>root.render(<OperationsClientArtifactReview {...scope} registerCloseGuard={next=>{guard=next;return()=>{};}} onVerifiedDecision={verified}/>));
+ await act(async()=>button("Accept this version").click());
+ mocks.rpc.mockReturnValueOnce(new Promise(r=>{resolve=r;}));
+ await act(async()=>button("Confirm acceptance").click());
+ expect(mocks.rpc.mock.calls.filter(c=>c[0]==="operations_delivery_client_decide_scoped")).toHaveLength(1);
+ mocks.user.mockResolvedValue({data:{user:{id:"other-actual-user"}},error:null});
+ mocks.session.mockResolvedValue({data:{session:null},error:null});
+ await act(async()=>resolve({data:{...record,state:"accepted"},error:null}));
+ expect(host.textContent).toContain("Your original decision is still unconfirmed");
+ expect(host.textContent).not.toContain("Your decision wasn't sent");expect(host.textContent).not.toContain(record.body);expect(guard()).toBe(false);expect(verified).not.toHaveBeenCalled();
+ expect(mocks.rpc.mock.calls.filter(c=>c[0]==="operations_delivery_client_decide_scoped")).toHaveLength(1);
+});
+it("a hung initial session becomes recoverable and its late completion cannot start a retired native read",async()=>{
+ vi.useFakeTimers();let resolve!:(value:unknown)=>void;
+ mocks.session.mockReturnValueOnce(new Promise(r=>{resolve=r;}));
+ await render();expect(host.textContent).toContain("Loading your deliverable");
+ await act(async()=>vi.advanceTimersByTimeAsync(20_001));
+ expect(host.textContent).toContain("Review unavailable");expect(mocks.rpc).not.toHaveBeenCalled();
+ await act(async()=>resolve({data:{session:{user:{id:scope.actorId},access_token:"synthetic-review-actor"}},error:null}));
+ expect(mocks.rpc).not.toHaveBeenCalled();
+ await act(async()=>button("Check review again").click());expect(host.textContent).toContain(record.title);
+});
+it.each(["before dispatch","after dispatch"])("a deadline %s retains honest decision and replay state",async phase=>{
+ vi.useFakeTimers();let resolve!:(value:unknown)=>void;let guard:()=>boolean=()=>true;
+ await act(async()=>root.render(<OperationsClientArtifactReview {...scope} registerCloseGuard={next=>{guard=next;return()=>{};}}/>));
+ await act(async()=>button("Accept this version").click());
+ if(phase==="before dispatch")mocks.session.mockReturnValueOnce(new Promise(r=>{resolve=r;}));
+ else mocks.rpc.mockReturnValueOnce(new Promise(r=>{resolve=r;}));
+ await act(async()=>button("Confirm acceptance").click());await act(async()=>vi.advanceTimersByTimeAsync(20_001));
+ if(phase==="before dispatch"){
+  expect(host.textContent).toContain("Your decision wasn't sent");expect(guard()).toBe(true);
+ }else{
+  expect(host.textContent).toContain("Your decision could not be confirmed");expect(guard()).toBe(false);
+  expect(button("Accept this version").disabled).toBe(true);
+ }
+ const writers=mocks.rpc.mock.calls.filter(c=>c[0]==="operations_delivery_client_decide_scoped").length;
+ expect(writers).toBe(phase==="before dispatch"?0:1);
+ await act(async()=>resolve(phase==="before dispatch"?{data:{session:{user:{id:scope.actorId},access_token:"synthetic-review-actor"}},error:null}:{data:{...record,state:"accepted"},error:null}));
+ expect(mocks.rpc.mock.calls.filter(c=>c[0]==="operations_delivery_client_decide_scoped")).toHaveLength(writers);
+ expect(host.textContent).not.toContain("Your acceptance is recorded");
+});
+
+it("an explicit recorded-state check restores focus to the recovered review feedback",async()=>{
+ await render();await act(async()=>button("Check recorded review").click());
+ expect(document.activeElement?.getAttribute("role")).toBe("status");expect(document.activeElement?.textContent).not.toContain("Loading your deliverable");
+ expect(host.textContent).toContain(record.title);expect(mocks.rpc.mock.calls.some(c=>c[0]==="operations_delivery_client_decide_scoped")).toBe(false);
+});

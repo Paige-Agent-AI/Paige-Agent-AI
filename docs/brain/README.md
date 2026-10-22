@@ -419,6 +419,21 @@ private PDF. Native106 plus5 Portal-wiring tests and three Edge type checks pass
 release, authenticated recovery and full ALG01/12 acceptance remain proof owed.
 [Exact scope and limitations](../evidence/ui-delivery/e04-retained-completion-reconcile.md).
 
+## EXP02 contextual review — post-merge identities,2026-10-22
+
+Exact preceding release identities are now in the sole Master§4.0: Desk2544
+reviewed96c767bf61e835d87ef3e44c4c442dbfed070f28 → mainf96b18b60be5964f5c7fd24bb7b66ee2bf30774c;
+shared2583 reviewed6d231231444e777bf5caa307c64ff3e36b79c5c6 → maine22a736b965a1afbd80be86260a5062d178d0f14;
+consumer2596 reviewedaf6df0d9de42194e201e17357d6417b68f5e33f1 → maine2403625e26cb5abee802af62d372be5a6be986d.
+Exact trees, accurately AUTHOR-REVIEW / LOWER ASSURANCE receipts, required job/check
+results, workflow-summary metadata discrepancy, READY web and public build identities
+are retained in those rows and original receipts6343100297/6343922566/6344159048.
+Own migrations/Edge are NOT_APPLICABLE. This dated identity note supersedes only
+the earlier pending engineering identities for these three releases; source packets,
+existing ANT-52 acceptance evidence, capability readiness and full-Experience obligations
+retain their original authority. No new runtime, policy, capability or acceptance claim
+is introduced, and no customer version/announcement is assigned.
+
 ## EXP02 — Decision Desk required-style correction,2026-10-22
 
 Prepared-work reader#2544 remains unreleased. The original required verify job119609071921 failed Impeccable on a colored rationale edge; the decoration is removed and canonical radius tokens/readable prose retained. Pinned4.1.0 now reports zero blocking findings/two advisory type notes. All16 native component/shell frames were directly recaptured with current source hashes;62 checks across four selected owning suites and targeted ESLint pass. Original actor-reader#2541 at06c98060f7a59e2d223aa3c0914a450e40fe395a has fresh required CI in progress after clean current-main composition. No new schema, queue, approval writer, execution or capability activation. See the original `docs/evidence/ui-delivery/e2-prepared-review-desk.md`; native fixtures are not ordinary authenticated acceptance. Shared composer foundation/actual prepared-work consumer follow in separate small PRs. Full19/nine, actual Chat/Live and founder acceptance remain open.

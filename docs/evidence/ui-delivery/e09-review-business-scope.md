@@ -33,7 +33,7 @@ MUST_PRESERVE: original native actor/tenant/release/submission/version/digest/de
 ACCEPTANCE_CRITERIA: authorized client sees selected business work, explicitly decides on original exact version, recovers uncertainty without another write, and owner/client return to original authoritative state; ordinary authenticated completion remains separately owed.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: original Operations discovery/read/decision, original CustomerAccessGate frame context, actual Auth and existing per-builder authorization. AppShell/Chat/Spine/C0b/native SQL/EXP04 money/signing/provider sources unchanged.
-INTERNAL_BUILD_IDENTITY: cba5c43b7b8be18c10328410c7d114c177596a70 composed source; final exact commit recorded in PR; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record and delivery packet.
+INTERNAL_BUILD_IDENTITY: eca053d33eda35d761df0be464a620656e207cef verified implementation; final exact commit recorded in PR; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record and delivery packet.
 RELEASE_CHANNEL: development: local original-component verification; exact-head CI and ordinary reviewed production release are separate.
 RELEASE_CLASSIFICATION: internal-only: bounded original customer review binding/recovery repair.
 CUSTOMER_RELEASE_IDENTITY: none: full Experience customer acceptance remains separate.

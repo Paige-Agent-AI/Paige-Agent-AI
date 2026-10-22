@@ -1,5 +1,16 @@
 # EXP04 original agreement signer preparation and request recovery
 
+October22 current composition includes templatecc900b6ed and actual main2f4b6dee,
+including released native22-26 and the original upload correction. Existing driver
+retains recipient/template/upload modes; three single-line declarations/pins/output
+conflicts were combined without replacing a mode. No owning recipient/API/workspace
+source changed. Rebuilt actual source flow20 cases/16 paths/28 exact pins/zero page
+errors; fresh report and screenshots reflect this composed graph. Existing237 cases
+remain unchanged-source evidence, not a newly invented unit run. Current parent
+release, final-head review/CI/web/source readback and actual owner/staff/client/provider
+acceptance remain separately required. Jurisdiction/reviewer/review options are
+supplied-wording configuration, no completed legal review or infrastructure counsel gate.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: original twelve-outcome journey and the orchestration contract below retain owner outcome, source/authority, native execution, receipt, reload and recoverable exits.
 PAIGE_UI_DESIGN: PASS: installed original five-module project route, shared SOLO Sales Operate tokens/components, original workspace and single Sales leave guard; no replacement design system or Portal UI.

@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { routeLinkTarget } from "@/lib/links/workspaceLinks";
 import {
   AlertTriangle, ArrowUpRight, Bot, ChevronRight, RefreshCw, X,
@@ -847,7 +847,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
             <div className="sc-block-head"><h2 id="sc-business-review-title">Business performance</h2></div>
             {businessReview ? <>
               <p>Executive shows business figures with their source, currency and reporting window.</p>
-              <div><a className="sc-button sc-button--quiet" href={businessReview.to}>Review business performance<ChevronRight size={14} aria-hidden="true" /></a></div>
+              <div><Link className="sc-button sc-button--quiet" to={businessReview.to}>Review business performance<ChevronRight size={14} aria-hidden="true" /></Link></div>
             </> : <p>Business figures are available in Executive once this workspace resolves.</p>}
           </section>
 

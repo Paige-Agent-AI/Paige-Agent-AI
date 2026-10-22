@@ -631,7 +631,7 @@ describe("Solo Systems Check workspace", () => {
     act(() => root.render(<MemoryRouter initialEntries={["/solo/7100001/command-center/systems-check"]}>
       <Routes><Route path="/solo/:account/command-center/systems-check" element={
         <SoloSystemsCheckWorkspace accountContext={{ accountName: "Test tenant operations", accountType: "standalone" }} openPaige={openPaige} />
-      } /></Routes>
+      } /><Route path="/solo/:account/command-center/executive" element={<p role="status">Canonical Executive destination</p>} /></Routes>
     </MemoryRouter>));
     const link = [...host.querySelectorAll("a")].find(a => a.textContent?.includes("Review business performance"));
     expect(link?.getAttribute("href")).toBe("/solo/7100001/command-center/executive");
@@ -640,6 +640,8 @@ describe("Solo Systems Check workspace", () => {
     expect(baseCommand.approve).not.toHaveBeenCalled();
     expect(baseCommand.decline).not.toHaveBeenCalled();
     expect(openPaige).not.toHaveBeenCalled();
+    act(() => link?.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, button: 0 })));
+    expect(host.querySelector('[role="status"]')?.textContent).toBe("Canonical Executive destination");
   });
 
   it("withholds the business-review link until the route account resolves", () => {

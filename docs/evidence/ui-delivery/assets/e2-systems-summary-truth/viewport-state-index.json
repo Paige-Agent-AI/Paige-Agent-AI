@@ -13,7 +13,7 @@
       ],
       "encoded_width": 1536,
       "encoded_height": 770,
-      "sha256": "c285b58ad8b495bdbfdecff7c9627be16932a8dd7a80af83a73f233e2abfb5b1"
+      "sha256": "10aef1a58d1de85e219326e250ec4577bb2b6d4129d56936b830d56b3a4c7dd8"
     },
     {
       "file": "1536-open.jpg",
@@ -33,7 +33,7 @@
       ],
       "encoded_width": 1366,
       "encoded_height": 768,
-      "sha256": "8e30468b5fe42c1248ec22488ffe8b7c4d058fe31f2b4a146fbc5f717c9bc5c8"
+      "sha256": "2a6bfe3c7cab106ff4fe1b156e15eb4b887a31d157aa12fd061bad20af4dca2e"
     },
     {
       "file": "1366-open.jpg",
@@ -83,7 +83,7 @@
       ],
       "encoded_width": 900,
       "encoded_height": 1000,
-      "sha256": "896d2d9212f1fe460994754343a0a96317ca8c205fe6462916cbc6b04fbc7f2c"
+      "sha256": "9c6f58f63464fee63d0dd45f28b79c6c3591c09343bc787dd164a4d846a839a3"
     },
     {
       "file": "900-loading.jpg",
@@ -143,7 +143,7 @@
       ],
       "encoded_width": 320,
       "encoded_height": 740,
-      "sha256": "5dad9458ad9df321d8496f5de5dfa3a123a06e8bdb3a1d81ac5d46e940627936"
+      "sha256": "7249768539b6bba8a702e242a81e39a3ece3ee9a00363c3adf835e122b562540"
     },
     {
       "file": "1366-obsidian-reduced-motion.jpg",
@@ -157,8 +157,8 @@
     }
   ],
   "source_hashes": {
-    "src/solo/SoloSystemsCheckWorkspace.tsx": "7ae1550027080576ca6d433314cb3a51f68925e6f71d74949989a0dcc5cd7935",
+    "src/solo/SoloSystemsCheckWorkspace.tsx": "82e8fafdb52f127d399195d4ce84220175705941b3713324671aa06b113ccad1",
     "src/solo/solo-systems-check-workspace.css": "9d9f1f2801233758ca9595760e2186e016b47757475092cf7c5e999fb4ba39fd",
-    "src/solo/SoloSystemsCheckWorkspace.test.tsx": "eb886d582782d571657e9c3846969146a85bca7a6ee05902f1b219f89b932cc6"
+    "src/solo/SoloSystemsCheckWorkspace.test.tsx": "5f17764420e0e7aaaf140852e51d9f8573307818d7b615ad955c457b20960914"
   }
 }

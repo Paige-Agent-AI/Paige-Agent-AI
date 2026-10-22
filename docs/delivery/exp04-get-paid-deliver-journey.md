@@ -2392,6 +2392,27 @@ October22 current template composition: native#2545/220004 is RELEASED SOURCE VE
 
 REUSE original2192/179e52/current0a reader and all37 cases; compose original coherent2604/6b8 private PDF/field source without changing either owning reader/test file. Fresh canonical formatter/reader/field Deno25 tests/110 steps PASS with all original runtime denials and type checking. Older13/63 remains historical. No actual endpoint/Spine/Chat/Live/Portal or provider consumer is connected. This one existing-invoice draft path needs exact canonical same-client invoice/terms/source; it is not a requirement that every agreement must already have an issued invoice. Remaining integration must bind exact reviewed PDF AND assigned-map before original Kit/Trust consequential approval, then reuse the native immutable operation/freeze/Rail. No new financial obligation, external send or signature follows from a proposed presentation. Original native2599/300004/Edge37 readback is verified; own and parent final source/CI/merge/web/ordinary-role/full12/founder acceptance remain separate required legs.
 
+### Pre-edit: original locked commercial validation reuse
+
+Owner outcome is review of the exact commercial PDF and assigned fields BEFORE
+authorizing a signature request. E04 Sales/Agreements owns the originating source;
+EXP09 consumes authorized results without a Portal UI or identity change here.
+REUSE230004 validation in an owner-only invoker helper, retaining the original
+freeze ABI, actor/business/source/row-lock checks, immutable update/event/replay
+and service-only grant. This is native source infrastructure, not a new money/date
+engine, approval or execution path. Existing agreement.send/edge.agreement-send,
+Spine/Trust/Kit/Harness and original operation/Rail stay authoritative; no new
+registered action, provider/connection, budget or automation admission is added.
+The helper returns no data and creates no event or financial obligation. Ordinary
+reads/preparation use existing paths, not a new Layer C adapter. Existing Sales
+surface/binding remains PARTIAL/PROOF_OWED; exact fields Chat/Live UNAVAILABLE.
+Original retention proof must first reproduce the absent helper, then prove
+nonmutation, private ACLs, refusals, all incumbent freeze/replay/concurrency cases
+and migration replay under unchanged bounds. Local synthetic PostgreSQL16 is
+separate from required exact-head review/CI/full Preview, production body/ABI/ACL
+readback and ordinary role/provider/all12/founder acceptance. Prospective migration
+only; never rewrite applied230004 or remove commercial holds to adopt the helper.
+
 ## October22 original upload intent and uncertain result
 
 REPAIR original business upload adapter after actual-hook3 positive/2 genuine RED controls: loaded/current business must match before Storage, and lost/context-retired results never claim rollback or no effect. Original private bucket/RLS/path/cache/no-overwrite/result contract retained. Final9 hook plus102 existing Sales cases (111) and type10/current6/lint0 PASS; initial original audit-history timeout repeated green without changing5s limit/assertions. Actual Sales/modal/hook/SDK20 rendered cases/5 paths/19 exact pins/0page errors, neutral local transports only. Native PAIGE backdrop is respected and actual open/folded states are explicit. Stable same-request upload recovery, native-supported import/wording/preview/fields and owner/staff/client/provider/all12/founder acceptance remain incomplete. No actual upload, signing, send, payment, role, bucket, provider, model or Chat activation. [Bounded evidence](../evidence/ui-delivery/e04-agreement-upload-intent.md).

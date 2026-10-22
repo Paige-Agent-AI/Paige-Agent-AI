@@ -14,9 +14,14 @@ without dragging the server PDF/financial formatter graph into a browser. Exact
 serialization/refusal semantics stay unchanged; no second field/digest engine,
 browser component, dependency or endpoint is introduced by this foundation.
 
-Read-only production metadata: frontier20271113270009, new preparation table absent,
-original SAVE11 body1bd28e75afa0f50bb07b717795a5be0e unchanged. Never-applied270004
-proposal is renumbered forward280004; no migration-history change or backfill.
+Read-only production metadata: frontier20271113280009, new preparation table absent,
+original SAVE11 body1bd28e75afa0f50bb07b717795a5be0e unchanged. Never-applied270004/
+280004 proposals are renumbered forward290004; no migration-history change/backfill.
+Current main0af948c6d includes the reviewed E02 actor/E05 toolbar/E09 Account and
+Billing source, fully preserved by composition. Earlier e55 all12 ordinary checks
+passed while Preview's project fetch failed; neither substitutes for this NEW
+exact head. Existing owned reader/artifact Preview databases were independently
+verified empty/rebased forward, no new provider project/account/reset/check waiver.
 
 Private service-only retention binds actual actor/business/customer/agreement,
 source version/microsecond CAS, exact canonical manifest bytes/hash and assigned

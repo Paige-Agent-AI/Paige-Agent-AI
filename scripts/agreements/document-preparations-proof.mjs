@@ -25,7 +25,7 @@ export async function proveDocumentPreparations({sql,read,context,tenant,actor,c
  const commercial=read('supabase/migrations/20271113230004_agreement_commercial_presentation.sql');
  const canonicalStart=commercial.indexOf('CREATE OR REPLACE FUNCTION public._paige_commercial_canonical_json('),canonicalEnd=commercial.indexOf('\nCREATE OR REPLACE FUNCTION public._paige_commercial_presentation_immutable()',canonicalStart);
  assert(canonicalStart>=0&&canonicalEnd>canonicalStart);sql(commercial.slice(canonicalStart,canonicalEnd));
- const migration=read('supabase/migrations/20271113280004_agreement_document_preparation_versions.sql');sql(migration);sql(migration);
+ const migration=read('supabase/migrations/20271113290004_agreement_document_preparation_versions.sql');sql(migration);sql(migration);
  check(sql('SELECT count(*) FROM paige_agreement_document_preparations;')==='0','No backfill or activation');
  const originalSave=sql("SELECT md5(prosrc) FROM pg_proc WHERE oid='public.save_paige_agreement(uuid,uuid,uuid,text,text,uuid,uuid,text,uuid,text,timestamptz)'::regprocedure;");
  check(originalSave==='1bd28e75afa0f50bb07b717795a5be0e','Actual original agreement writer retained');

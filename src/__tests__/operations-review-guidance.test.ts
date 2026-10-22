@@ -33,6 +33,8 @@ describe("Operations review instruction contract", () => {
     expect(chat).toContain("const MAX_ROUNDS = 5, MAX_TOTAL_TOOL_CALLS = 12;");
     expect(chat).toContain("const WALL_CLOCK_MS = PAIGE_INTERACTIVE_TURN_BUDGET_MS;");
     expect(chat).toContain("if (seenSignatures.has(sig))");
+    expect(guidance).toContain("apply this section only when the customer requests inspection");
+    expect(guidance).toContain("must not disable those authorized action pathways");
   });
 
   it("keeps this instruction out of unrelated specialist identities", () => {

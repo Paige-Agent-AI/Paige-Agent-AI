@@ -1,3 +1,21 @@
+## EXP02 linked finding inspection — October22 consumer candidate
+
+Existing semantic Systems Check references now select a UUID in the mounted
+original workspace. Only a matching finding from the current scoped, completed
+snapshot supports the inline source context and explicit original drawer.
+Malformed/repeated, missing/historical, loading/error and unfinished sources do
+not disclose linked evidence or imply resolution. Clearing selection preserves
+other query/hash context and returns focus to the original Refresh control.
+No new reader, scan, action, approval, queue or authority. Original nineteen
+outcomes/nine capabilities remain mandatory; no catalogue or ALG03/13 promotion.
+Thirteen causal failures then156 cases/five original suites pass;19 untouched
+native synthetic frames verify17 source pins, eight shell sizes,320px keys,
+Obsidian/reduced motion and unavailable/resolved branches. Actual build passes
+with incumbent warnings. Final static/hosted CI, actual release/readback and
+ordinary authorized account/cohort proof remain separately required. Spacious
+Desk/Chat source CTA and return continuity are a subsequent small consumer.
+[Current evidence](../evidence/ui-delivery/e2-linked-finding-inspection.md).
+
 ## EXP02 prepared source references — October22 foundation
 
 The original scoped prepared-work reader now retains only a known remediator's

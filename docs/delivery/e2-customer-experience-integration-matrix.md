@@ -1,5 +1,21 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October22 — original finding inspection consumer candidate
+
+O14/Decision Desk source path now has a mounted consumer of the existing
+systems_check/finding semantic reference: current completed scoped snapshot →
+inline original title/status/as-of → explicit existing drawer → focus return.
+Invalid/ambiguous, missing/historical, loading/error and unfinished source states
+remain explicit; no broader/historical lookup, scan or click authorization is
+added. Source selection clears independently of other query/hash context.
+Thirteen causal failures then156 cases/five suites pass;19 native synthetic
+frames/17 source pins and actual build pass. Final static/exact-head CI,
+deployment/source readback and ordinary account/cohort proof remain
+owed. Desk/Chat CTA/return is a separate required consumer. Original ALG03/13,
+Layer C, approvals and Rail authority unchanged; catalogue status unpromoted.
+All19/nine and single complete founder acceptance remain incomplete.
+[Evidence](../evidence/ui-delivery/e2-linked-finding-inspection.md).
+
 ## October22 — prepared source-reference foundation
 
 O14/Decision Desk now has a local canonical source-reference prerequisite: original

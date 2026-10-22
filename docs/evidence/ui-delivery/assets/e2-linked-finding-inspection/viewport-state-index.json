@@ -1,0 +1,331 @@
+{
+  "kind": "Local native synthetic evidence; not authenticated or production proof",
+  "base": "13d26748311a35a6d2ae4b65c7d67116fa2aa6fa",
+  "parent": "0e18a294c7956792c92197f0eb9cfdb5aa8ca224",
+  "capture": "cua_repl Page.captureScreenshot; JPEG quality80; exact viewport clip; no image processing",
+  "sourcePins": [
+    {
+      "path": "src/solo/SoloSystemsCheckWorkspace.tsx",
+      "sha256": "9cef82df5035e7b907a9e316a34e6a3b1298ecd6c1fedab943490a239eced64c"
+    },
+    {
+      "path": "src/solo/systems-check-areas.ts",
+      "sha256": "ec8986c7113db65fe866b700c95f386c31f0e8b1c387b6c1b0c314188ab2225b"
+    },
+    {
+      "path": "src/solo/solo-systems-check-workspace.css",
+      "sha256": "78a7d8ad1a891cc5c3978700e7a3ff05f9bf94161d1bc887e85f1d8e9a392773"
+    },
+    {
+      "path": "src/solo/CommandCenter.tsx",
+      "sha256": "f16ada48b0c2cbb8748fa253db3000c3bd5ec0cfd9081746b611fac282ef4a61"
+    },
+    {
+      "path": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "sha256": "5a282f5f7c5627856470ae5062ba8cc8d657d3a9478f30261568a9f9c9d223f0"
+    },
+    {
+      "path": "src/index.css",
+      "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc"
+    },
+    {
+      "path": "src/solo/solo-tokens.css",
+      "sha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/main.tsx",
+      "sha256": "aaa330dd9ff17a906c24172c25c236d818a39454743c4825693f016dfe48a2f9"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/stubs.tsx",
+      "sha256": "10f0312b86ad8df4fb5b4e886fc7a5497d1a31d2e0c99fc42f09ae9a681ddf73"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/vite.config.ts",
+      "sha256": "9cad9f552151fad292d7df462db7726445bfa7a333e1b5124bd00ee377d58304"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/systems-check-fixtures.ts",
+      "sha256": "02790c30b70b606266baeb275b813683f55d1caa6370230af6581abc3352b07d"
+    },
+    {
+      "path": "scripts/live-drive/harness/systems-check-mount/useCommandCenter-stub.ts",
+      "sha256": "20546430d6952dd5175f3bcda197bc6201cedab6fe5acac428ef1a45df526466"
+    },
+    {
+      "path": "scripts/live-drive/harness/systems-check-mount/useSoloActivityFeed-stub.ts",
+      "sha256": "de194b9b75f913e342e557e3aaa05e278aea56f92ee1530e98325ce1e2483e9a"
+    },
+    {
+      "path": "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-normal.woff2",
+      "sha256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05"
+    },
+    {
+      "path": "src/lib/links/workspaceLinks.ts",
+      "sha256": "c8239322febf13eb83bbcc492244ace86d426608af5d5257d1a55e23fc57558f"
+    },
+    {
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "sha256": "5299b1ef17b7b5b816f23ed1830291d9be04689fde8b827b0f709703cfb9ed62"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-turn/record-links.ts",
+      "sha256": "a66d094680df5df1394b05ccd3ccd317c7382d4efe0d1c63aa2d10a602d622a3"
+    }
+  ],
+  "frames": [
+    {
+      "file": "1536-closed.jpg",
+      "viewport": [
+        1536,
+        770
+      ],
+      "raster": [
+        1536,
+        770
+      ],
+      "bytes": 88211,
+      "sha256": "8dc656876aca095f40e31d9cbe0e54203540db5633a53e7e3ed58fee108092d9"
+    },
+    {
+      "file": "1536-open.jpg",
+      "viewport": [
+        1536,
+        770
+      ],
+      "raster": [
+        1536,
+        770
+      ],
+      "bytes": 98932,
+      "sha256": "366f0f8f4fd51d31f8a49026272073b9c361f8ba41fb659d7b687c15af9cf994"
+    },
+    {
+      "file": "1366-closed.jpg",
+      "viewport": [
+        1366,
+        768
+      ],
+      "raster": [
+        1366,
+        768
+      ],
+      "bytes": 86347,
+      "sha256": "72eea01a899029862c971933782cf65f315dfc0c83f073a26ae5d6d7eded2cba"
+    },
+    {
+      "file": "1366-open.jpg",
+      "viewport": [
+        1366,
+        768
+      ],
+      "raster": [
+        1366,
+        768
+      ],
+      "bytes": 96429,
+      "sha256": "bc221d8b21778733b671ada3af8d4c9d06cef76246061c30a230c03fe1f9ae4c"
+    },
+    {
+      "file": "1024-closed.jpg",
+      "viewport": [
+        1024,
+        768
+      ],
+      "raster": [
+        1024,
+        768
+      ],
+      "bytes": 79959,
+      "sha256": "da8be0116fefa71135fad538fea25319b91e51b204a7f9a5d8c65bfd52a52b04"
+    },
+    {
+      "file": "1024-open.jpg",
+      "viewport": [
+        1024,
+        768
+      ],
+      "raster": [
+        1024,
+        768
+      ],
+      "bytes": 47302,
+      "sha256": "0aaf8ed96f879ce91b98676bb1f8a800d54f5dd132df186fa7f246c8a039ea10"
+    },
+    {
+      "file": "900-closed.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "bytes": 94637,
+      "sha256": "fe2f5f2a1fbfc1d5a60a6187c44278d4a7c8843ad086409a28b510bc8bbb0180"
+    },
+    {
+      "file": "900-open.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "bytes": 50759,
+      "sha256": "4fe0d1ab9bea1413233680a6e7e38e79ee3d929727f519b9d05457d127645ee2"
+    },
+    {
+      "file": "320-keyboard.jpg",
+      "viewport": [
+        320,
+        740
+      ],
+      "raster": [
+        320,
+        740
+      ],
+      "bytes": 40044,
+      "sha256": "6fde6e7da40a15c15664781892fbb41156f09f6ceb56fc82cbe46e65d0aa7295"
+    },
+    {
+      "file": "320-drawer.jpg",
+      "viewport": [
+        320,
+        740
+      ],
+      "raster": [
+        320,
+        740
+      ],
+      "bytes": 33972,
+      "sha256": "3911533c8ca5df077fc8495807da431db1d4ebd7461aeced2458027ad7901383"
+    },
+    {
+      "file": "320-return-focus.jpg",
+      "viewport": [
+        320,
+        740
+      ],
+      "raster": [
+        320,
+        740
+      ],
+      "bytes": 38436,
+      "sha256": "5ae888c43aeeab7919507272cefe1cefc4dd665a65212fa5ab2c7baad1c0e2ec"
+    },
+    {
+      "file": "900-obsidian-reduced.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "bytes": 79838,
+      "sha256": "7fb2cbcb1f4475ba36aee5213497d4790060e14f5d801a27cedba8e553c328a6"
+    },
+    {
+      "file": "900-obsidian-drawer.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "bytes": 106195,
+      "sha256": "e64d90faa6593e003f2579464934466d0e4a988a212be3d989e00e667957192a"
+    },
+    {
+      "file": "900-loading.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "bytes": 87297,
+      "sha256": "c60ed61b78bf6ca99034b00d6a7a27cfa22d5d9eca5c524d064edc706e85e9d5"
+    },
+    {
+      "file": "900-error.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "bytes": 84282,
+      "sha256": "9e85e45355cabc0273ca471ae88db39932bd301d978a7b7829084461263c5ae9"
+    },
+    {
+      "file": "900-empty.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "bytes": 92355,
+      "sha256": "617cf48359e92f14673146e92f8afb84cde330c1c789bc1a2a100155bb59dee5"
+    },
+    {
+      "file": "900-unmatched.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "bytes": 93216,
+      "sha256": "6443c17adb7512bca378541cc31d80a0a305b902577a9421031f08af1af5034b"
+    },
+    {
+      "file": "900-invalid.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "bytes": 89306,
+      "sha256": "2e1133b276b12a1ca60091b0d2d6446253fd71eb0b6b5a87677b5f53b09f25ef"
+    },
+    {
+      "file": "900-resolved.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "raster": [
+        900,
+        1000
+      ],
+      "bytes": 88686,
+      "sha256": "c7b9aa00cbf6ee83023a16527c27e828ea9f6567b16ac50d71d05be8fe35c013"
+    }
+  ],
+  "limitations": [
+    "Synthetic identity, read, Chat and backend-refusal ports",
+    "No provider/model/scan/approval/send/execution",
+    "No native zoom or assistive-technology proof",
+    "Customer/cohort/role/Live/production and founder proof remain owed"
+  ]
+}

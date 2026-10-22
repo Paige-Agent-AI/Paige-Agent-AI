@@ -18,6 +18,7 @@ import { EmptyState } from "@/components/ui/page/EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import {captureClientPortalAuthorization} from "@/lib/client-portal-scope";
 import {
   INVOICE_DISPLAY_LABEL,
   invoiceDateLabel,
@@ -26,6 +27,9 @@ import {
   liveProviderMinor,
   paymentLinkRequestHref,
   readPortalInvoicePayment,
+  verifyPortalInvoiceAccess,
+  PortalBillingAccessFailure,
+  type PortalBillingReadContext,
   useClientPortalInvoices,
   type PortalInvoice,
   type PortalPaymentRead,
@@ -51,7 +55,13 @@ function documentUrl(invoiceId: string, tenantId: string, format?: "pdf") {
   return `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sales-invoice-document?${params}`;
 }
 
-async function authHeaders(): Promise<Record<string, string>> {
+async function authHeaders(invoiceId: string, context?: PortalBillingReadContext): Promise<Record<string, string>> {
+  if (context) {
+    await verifyPortalInvoiceAccess(invoiceId, context);
+    const Authorization = await captureClientPortalAuthorization(supabase.auth, context.scope.actorId, context.current);
+    if (!context.current()) throw new Error("CUSTOMER_CHANGED");
+    return {Authorization, apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY};
+  }
   const { data } = await supabase.auth.getSession();
   if (!data.session) throw new Error("SIGNED_OUT");
   return { Authorization: `Bearer ${data.session.access_token}`, apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY };
@@ -257,32 +267,41 @@ export default function BillingInvoice() {
   const alive = useRef(true);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
 
+  const requestContext = list.requestContext;
+  const viewKey = JSON.stringify([requestContext?.scope.actorId, requestContext?.scope.tenantId ?? tenantId, requestContext?.scope.clientId, list.scopeEpoch, invoiceId]);
+  const pageLife = useRef({key: viewKey, generation: 0});
+  if (pageLife.current.key !== viewKey) pageLife.current = {key: viewKey, generation: pageLife.current.generation + 1};
+  const pageGeneration = pageLife.current.generation;
+  const pageCurrent = useCallback(() => alive.current && pageLife.current.generation === pageGeneration && (!requestContext || requestContext.current()), [pageGeneration, requestContext]);
+  const paymentFor = useRef<string | null>(null), htmlFor = useRef<string | null>(null), errorFor = useRef<string | null>(null), pdfFor = useRef<string | null>(null);
+
   // The payment link, read-only, for an issued invoice with something owed.
   const [payment, setPayment] = useState<PaymentView>({ state: "idle" });
   const [checking, setChecking] = useState(false);
   const paymentSeq = useRef(0);
   const needsPayment = !!invoice && invoice.status === "issued" && invoice.remaining_minor > 0;
   const readPayment = useCallback(async (quiet = false) => {
-    if (!invoice || !tenantId) return;
+    if (!invoice || !tenantId || !pageCurrent()) return;
     const seq = ++paymentSeq.current;
-    if (!quiet) setPayment({ state: "loading" });
+    if (!quiet || paymentFor.current !== viewKey) setPayment({ state: "loading" });
+    paymentFor.current = viewKey;
     setChecking(true);
     try {
-      const next = await readPortalInvoicePayment({ invoiceId: invoice.id, tenantId });
-      if (alive.current && seq === paymentSeq.current) setPayment(next);
-    } catch {
-      if (alive.current && seq === paymentSeq.current) setPayment({ state: "error" });
+      const next = await readPortalInvoicePayment({ invoiceId: invoice.id, tenantId, ...(requestContext ? {context: requestContext} : {}) });
+      if (pageCurrent() && seq === paymentSeq.current) setPayment(next);
+    } catch (error) {
+      if (pageCurrent() && seq === paymentSeq.current) setPayment({ state: error instanceof PortalBillingAccessFailure ? "unavailable" : "error" });
     } finally {
-      if (alive.current && seq === paymentSeq.current) setChecking(false);
+      if (pageCurrent() && seq === paymentSeq.current) setChecking(false);
     }
-  }, [invoice, tenantId]);
+  }, [invoice, tenantId, requestContext, pageCurrent, viewKey]);
   const paymentKey = invoice ? `${invoice.id}:${invoice.remaining_minor}:${invoice.payable}:${invoice.status}` : "";
   useEffect(() => {
     if (!needsPayment) { paymentSeq.current += 1; setPayment({ state: "idle" }); setChecking(false); return; }
     void readPayment();
     // Re-read when the invoice's own balance or link flag changes (the list refreshes on focus).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paymentKey, needsPayment, tenantId]);
+  }, [paymentKey, needsPayment, tenantId, viewKey]);
   // Coming back from the business's payment page: check again without blanking what is shown.
   useEffect(() => {
     if (!needsPayment) return;
@@ -315,28 +334,34 @@ export default function BillingInvoice() {
   const [html, setHtml] = useState<string | null>(null);
   const [docError, setDocError] = useState(false);
   const [docAttempt, setDocAttempt] = useState(0);
-  const docFor = invoice && tenantId ? `${tenantId}:${invoice.id}` : null;
+  const docFor = invoice && tenantId ? viewKey : null;
   useEffect(() => {
-    if (!docFor || !invoice || !tenantId) return;
+    if (!docFor || !invoice || !tenantId || !pageCurrent()) return;
     const controller = new AbortController();
     setHtml(null);
     setDocError(false);
+    const timer = setTimeout(() => {if (pageCurrent()) {errorFor.current = viewKey; setDocError(true);} controller.abort();}, 20_000);
     void (async () => {
       try {
         const response = await fetch(documentUrl(invoice.id, tenantId), {
-          headers: await authHeaders(), signal: controller.signal, cache: "no-store", referrerPolicy: "no-referrer",
+          headers: await authHeaders(invoice.id, requestContext), signal: controller.signal, cache: "no-store", referrerPolicy: "no-referrer",
         });
         if (!response.ok || !response.headers.get("content-type")?.startsWith("text/html")) throw new Error("UNAVAILABLE");
         const text = await response.text();
-        if (!controller.signal.aborted) setHtml(text);
-      } catch {
-        if (!controller.signal.aborted) setDocError(true);
+        if (requestContext) await verifyPortalInvoiceAccess(invoice.id, requestContext);
+        if (!controller.signal.aborted && pageCurrent()) {htmlFor.current = viewKey; setHtml(text);}
+      } catch (error) {
+        if (!controller.signal.aborted && pageCurrent()) {
+          errorFor.current = viewKey; setDocError(true);
+          if (error instanceof PortalBillingAccessFailure) void list.refresh();
+        }
+      } finally {clearTimeout(timer);
       }
     })();
-    return () => controller.abort();
+    return () => {clearTimeout(timer); controller.abort();};
     // The document is frozen at issue; it re-reads only for another invoice or an explicit retry.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [docFor, docAttempt]);
+  }, [docFor, docAttempt, pageCurrent]);
   const frame = useRef<HTMLIFrameElement>(null);
   const [frameHeight, setFrameHeight] = useState(900);
   const fit = useCallback(() => {
@@ -353,14 +378,16 @@ export default function BillingInvoice() {
   const [pdfBusy, setPdfBusy] = useState(false);
   const [pdfNotice, setPdfNotice] = useState("");
   const pdf = async (print: boolean) => {
-    if (!invoice || !tenantId || pdfBusy) return;
+    if (!invoice || !tenantId || (pdfFor.current === viewKey && pdfBusy) || !pageCurrent()) return;
+    pdfFor.current = viewKey;
     const popup = print ? window.open("about:blank", "_blank") : null;
     if (popup) popup.opener = null;
     setPdfBusy(true);
     setPdfNotice("");
     try {
-      const blob = await readInvoicePdf(documentUrl(invoice.id, tenantId, "pdf"), await authHeaders());
-      if (!alive.current) { popup?.close(); return; }
+      const blob = await readInvoicePdf(documentUrl(invoice.id, tenantId, "pdf"), await authHeaders(invoice.id, requestContext));
+      if (requestContext) await verifyPortalInvoiceAccess(invoice.id, requestContext);
+      if (!pageCurrent()) { popup?.close(); return; }
       if (print) {
         if (!popup) throw new Error("POPUP_BLOCKED");
         const url = URL.createObjectURL(blob);
@@ -371,12 +398,17 @@ export default function BillingInvoice() {
       }
     } catch {
       popup?.close();
-      if (alive.current) setPdfNotice("The PDF couldn't be opened. Try again, or allow the PDF window to open.");
+      if (pageCurrent()) setPdfNotice("The PDF couldn't be opened. Try again, or allow the PDF window to open.");
     } finally {
-      if (alive.current) setPdfBusy(false);
+      if (pageCurrent()) setPdfBusy(false);
     }
   };
 
+  const visibleHtml = pageCurrent() && htmlFor.current === viewKey ? html : null;
+  const visiblePayment: PaymentView = pageCurrent() && paymentFor.current === viewKey ? payment : {state: "loading"};
+  const visibleDocError = pageCurrent() && errorFor.current === viewKey && docError;
+  const visiblePdfBusy = pdfFor.current === viewKey && pdfBusy;
+  const visiblePdfNotice = pdfFor.current === viewKey ? pdfNotice : "";
   const title = invoice?.invoice_number ? `Invoice ${invoice.invoice_number}` : "Invoice";
   const blocked = list.unavailable || list.multipleBusinesses;
   const waiting = !notFound && !invoice && !blocked && (!list.loaded || list.hasMore) && !list.error;
@@ -390,17 +422,17 @@ export default function BillingInvoice() {
         </Link>
         {invoice && (
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="sm" className={QUIET_HOVER} disabled={!html || pdfBusy} onClick={() => void pdf(true)}>
+            <Button variant="outline" size="sm" className={QUIET_HOVER} disabled={!visibleHtml || visiblePdfBusy} onClick={() => void pdf(true)}>
               <Printer aria-hidden="true" className="mr-1.5 h-4 w-4" /> Open PDF / print
             </Button>
-            <Button variant="outline" size="sm" className={QUIET_HOVER} disabled={!html || pdfBusy} onClick={() => void pdf(false)}>
+            <Button variant="outline" size="sm" className={QUIET_HOVER} disabled={!visibleHtml || visiblePdfBusy} onClick={() => void pdf(false)}>
               <FileDown aria-hidden="true" className="mr-1.5 h-4 w-4" /> Download PDF
             </Button>
           </div>
         )}
       </div>
-      {pdfBusy && <p role="status" className="pb-2 text-sm text-muted-foreground"><Loader2 aria-hidden="true" className="mr-1.5 inline h-4 w-4 animate-spin align-[-0.2em] motion-reduce:animate-none" />Preparing the PDF…</p>}
-      {pdfNotice && <p role="alert" className="pb-2 text-sm">{pdfNotice}</p>}
+      {visiblePdfBusy && <p role="status" className="pb-2 text-sm text-muted-foreground"><Loader2 aria-hidden="true" className="mr-1.5 inline h-4 w-4 animate-spin align-[-0.2em] motion-reduce:animate-none" />Preparing the PDF…</p>}
+      {visiblePdfNotice && <p role="alert" className="pb-2 text-sm">{visiblePdfNotice}</p>}
 
       <header className="space-y-1 pb-4">
         <h1 id="invoice-title" className="text-2xl font-semibold tracking-tight">{notFound || blocked ? "Invoice" : title}</h1>
@@ -446,19 +478,19 @@ export default function BillingInvoice() {
         </div>
       ) : invoice ? (
         <div className="space-y-4">
-          <PaymentPanel invoice={invoice} payment={payment} businessName={businessName} checking={checking} onRetry={() => void readPayment(payment.state === "ready")} />
+          <PaymentPanel invoice={invoice} payment={visiblePayment} businessName={businessName} checking={checking} onRetry={() => void readPayment(payment.state === "ready")} />
           <section aria-label="Invoice document" className="overflow-hidden rounded-xl border border-border bg-card">
-            {docError ? (
+            {visibleDocError ? (
               <div role="alert" className="flex flex-wrap items-center justify-between gap-3 px-4 py-6 text-sm">
                 <p className="inline-flex items-center gap-2"><AlertCircle aria-hidden="true" className="h-4 w-4 shrink-0 text-destructive" /> We couldn't open the invoice document.</p>
                 <Button size="sm" variant="outline" className={QUIET_HOVER} onClick={() => setDocAttempt((n) => n + 1)}>Try again</Button>
               </div>
-            ) : html ? (
+            ) : visibleHtml ? (
               <iframe
                 ref={frame}
                 title={`${title} document`}
                 sandbox="allow-same-origin allow-modals"
-                srcDoc={html}
+                srcDoc={visibleHtml}
                 onLoad={fit}
                 style={{ height: frameHeight }}
                 className="block w-full border-0"

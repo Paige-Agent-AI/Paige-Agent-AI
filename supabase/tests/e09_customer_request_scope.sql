@@ -1,7 +1,7 @@
 -- Original replayed native functions and real roles. Synthetic, rolled back;
 -- provider execution disabled, no production identities or effectful acceptance.
 BEGIN;
-SELECT plan(62);
+SELECT plan(111);
 
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0970100-0000-4000-8000-000000000001','authenticated','authenticated','scope-owner@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -85,6 +85,135 @@ SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000002','SELECT p
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000001')->>'state','open','selected open state is genuine');
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000003')->>'state','none','foreign state reveals no notice');
 
+
+
+-- Original Sessions and admission only. No booking writer or provider call.
+INSERT INTO public.calendars(id,tenant_id,created_by,slug,title,duration_min,min_notice_min,enabled) VALUES
+ ('e0970700-0000-4000-8000-000000000001','e0970200-0000-4000-8000-000000000001','e0970100-0000-4000-8000-000000000001','test-tenant-scope-sessions-a','Session A',60,60,true),
+ ('e0970700-0000-4000-8000-000000000002','e0970200-0000-4000-8000-000000000002','e0970100-0000-4000-8000-000000000001','test-tenant-scope-sessions-b','Session B',60,60,true),
+ ('e0970700-0000-4000-8000-000000000003','e0970200-0000-4000-8000-000000000003','e0970100-0000-4000-8000-000000000001','test-tenant-scope-sessions-c','Session C',60,60,true);
+INSERT INTO public.internal_bookings(id,tenant_id,host_user_id,contact_id,calendar_id,title,notes,start_at,end_at,timezone,status,booking_kind,source) VALUES
+ ('e0970800-0000-4000-8000-000000000001','e0970200-0000-4000-8000-000000000001','e0970100-0000-4000-8000-000000000001','e0970300-0000-4000-8000-000000000001','e0970700-0000-4000-8000-000000000001','Private title A','Private staff note',now()+interval '3 hours',now()+interval '4 hours','UTC','scheduled','single','internal'),
+ ('e0970800-0000-4000-8000-000000000002','e0970200-0000-4000-8000-000000000002','e0970100-0000-4000-8000-000000000001','e0970300-0000-4000-8000-000000000002','e0970700-0000-4000-8000-000000000002','Private title B','Private staff note',now()+interval '5 hours',now()+interval '6 hours','UTC','scheduled','single','internal'),
+ ('e0970800-0000-4000-8000-000000000003','e0970200-0000-4000-8000-000000000003','e0970100-0000-4000-8000-000000000001','e0970300-0000-4000-8000-000000000003','e0970700-0000-4000-8000-000000000003','Private title C','Private staff note',now()+interval '7 hours',now()+interval '8 hours','UTC','scheduled','single','internal');
+CREATE FUNCTION pg_temp.scope_session_admit(booking_id uuid,business uuid,header text DEFAULT NULL) RETURNS jsonb LANGUAGE sql AS $session$
+ SELECT pg_temp.scope_read(format('SELECT public.client_portal_session_change_admit(%L::uuid,''cancel'',%L::uuid,NULL,%L::uuid)',booking_id,'e0970900-0000-4000-8000-000000000001',business),header) $session$;
+SELECT is(pg_temp.scope_read('SELECT public.client_portal_sessions()','e0970200-0000-4000-8000-000000000001')#>>'{sessions,0,id}',
+ 'e0970800-0000-4000-8000-000000000001','original selected A sessions contain only A booking');
+SELECT is(pg_temp.scope_read('SELECT public.client_portal_sessions()','e0970200-0000-4000-8000-000000000002')#>>'{sessions,0,id}',
+ 'e0970800-0000-4000-8000-000000000002','original selected B sessions contain only B booking');
+SELECT ok(pg_temp.scope_read('SELECT public.client_portal_sessions(NULL,''upcoming'',NULL,1)','e0970200-0000-4000-8000-000000000002')->>'tenant_id'='e0970200-0000-4000-8000-000000000002'
+ AND pg_temp.scope_read('SELECT public.client_portal_sessions(NULL,''upcoming'',NULL,1)','e0970200-0000-4000-8000-000000000002')::text NOT LIKE '%Private%',
+ 'Home one-item session read uses same business and excludes original private notes/title');
+SELECT ok(pg_temp.scope_read('SELECT public.client_portal_sessions()','e0970200-0000-4000-8000-000000000003') IS NULL,'foreign business session read has no fallback');
+SELECT ok(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000003','SELECT public.client_portal_sessions()',
+ '{"x-client-portal-business":"e0970200-0000-4000-8000-000000000001"}') IS NULL,'other actual customer cannot read A sessions');
+SELECT ok(pg_temp.scope_read($session$SELECT public.client_portal_sessions('e0970200-0000-4000-8000-000000000002')$session$,
+ 'e0970200-0000-4000-8000-000000000001') IS NULL,'conflicting native sessions business and header refuse');
+SELECT is(pg_temp.scope_read('SELECT public.client_portal_sessions()')->>'sqlstate','42501','unselected multiple session relationships retain native refusal');
+SELECT is(pg_temp.scope_session_admit('e0970800-0000-4000-8000-000000000002','e0970200-0000-4000-8000-000000000002')->>'ok','true',
+ 'original booking-manage explicit B admission works without a new Edge header');
+SELECT is(pg_temp.scope_session_admit('e0970800-0000-4000-8000-000000000002','e0970200-0000-4000-8000-000000000001')->>'error','SESSION_NOT_FOUND',
+ 'selected A body cannot admit B booking even though both relationships belong to this actor');
+SELECT is(pg_temp.scope_session_admit('e0970800-0000-4000-8000-000000000002','e0970200-0000-4000-8000-000000000002','e0970200-0000-4000-8000-000000000001')->>'error','SESSION_NOT_FOUND',
+ 'conflicting selected header cannot authorize B change');
+SELECT is(pg_temp.scope_session_admit('e0970800-0000-4000-8000-000000000003','e0970200-0000-4000-8000-000000000003')->>'error','SESSION_NOT_FOUND',
+ 'foreign customer original booking cannot be admitted');
+UPDATE public.calendars SET min_notice_min=1000 WHERE id='e0970700-0000-4000-8000-000000000001';
+SELECT is(pg_temp.scope_session_admit('e0970800-0000-4000-8000-000000000001','e0970200-0000-4000-8000-000000000001')->>'error','SESSION_CHANGE_WINDOW_CLOSED',
+ 'selected business never overrides the original calendar notice window');
+UPDATE public.calendars SET min_notice_min=60 WHERE id='e0970700-0000-4000-8000-000000000001';
+SELECT ok((SELECT count(*)=3 AND bool_and(status='scheduled') FROM public.internal_bookings WHERE id::text LIKE 'e0970800-%'),
+ 'admission is read-only and never cancels or reschedules the bookings');
+
+-- Original per-item shared Planning records. Final fixture share state only;
+-- no production writer, provider action or additional customer identity.
+INSERT INTO public.plan_items(id,tenant_id,item_type,created_by,contact_id,title,summary,status,client_shared_at,client_shared_by) VALUES
+ ('e0970500-0000-4000-8000-000000000001','e0970200-0000-4000-8000-000000000001','task','e0970100-0000-4000-8000-000000000001','e0970300-0000-4000-8000-000000000001','Shared work A','Private operating note A','open',now(),'e0970100-0000-4000-8000-000000000001'),
+ ('e0970500-0000-4000-8000-000000000002','e0970200-0000-4000-8000-000000000002','task','e0970100-0000-4000-8000-000000000001','e0970300-0000-4000-8000-000000000002','Shared work B','Private operating note B','open',now(),'e0970100-0000-4000-8000-000000000001'),
+ ('e0970500-0000-4000-8000-000000000003','e0970200-0000-4000-8000-000000000001','task','e0970100-0000-4000-8000-000000000001','e0970300-0000-4000-8000-000000000001','Unshared work A','Private unshared record','open',NULL,NULL);
+SELECT is(pg_temp.scope_read('SELECT public.client_portal_progress()','e0970200-0000-4000-8000-000000000001')#>>'{items,0,id}',
+ 'e0970500-0000-4000-8000-000000000001','selected A progress returns original shared A item');
+SELECT is(pg_temp.scope_read('SELECT public.client_portal_progress()','e0970200-0000-4000-8000-000000000002')#>>'{items,0,id}',
+ 'e0970500-0000-4000-8000-000000000002','selected B progress returns original shared B item');
+SELECT is(pg_temp.scope_read('SELECT public.client_portal_progress()','e0970200-0000-4000-8000-000000000001')#>>'{summary,shared}',
+ '1','progress summary excludes private work and other business');
+SELECT ok(jsonb_array_length(pg_temp.scope_read('SELECT public.client_portal_progress(NULL,1)','e0970200-0000-4000-8000-000000000002')->'items')=1
+ AND pg_temp.scope_read('SELECT public.client_portal_progress(NULL,1)','e0970200-0000-4000-8000-000000000002')->>'tenant_id'='e0970200-0000-4000-8000-000000000002'
+ AND pg_temp.scope_read('SELECT public.client_portal_progress(NULL,1)','e0970200-0000-4000-8000-000000000002')::text NOT LIKE '%Private operating note%',
+ 'one-item Home read has same selected business and no private summary');
+SELECT ok(pg_temp.scope_read('SELECT public.client_portal_progress()','e0970200-0000-4000-8000-000000000003') IS NULL,'foreign progress business has no fallback');
+SELECT ok(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000003','SELECT public.client_portal_progress()',
+ '{"x-client-portal-business":"e0970200-0000-4000-8000-000000000001"}') IS NULL,'other customer cannot read original A shared work');
+SELECT ok(pg_temp.scope_read($progress$SELECT public.client_portal_progress('e0970200-0000-4000-8000-000000000002')$progress$,
+ 'e0970200-0000-4000-8000-000000000001') IS NULL,'conflicting explicit progress business/header has no fallback');
+SELECT is(pg_temp.scope_read('SELECT public.client_portal_progress()')->>'sqlstate','42501','unselected multi-business progress retains native ambiguity refusal');
+
+
+-- Original assigned-work RLS and versioned response writer. Notifications and
+-- activity remain original native records inside this rolled-back transaction.
+INSERT INTO public.paige_customer_actions(id,tenant_id,contact_id,initiated_by_admin_id,action_type,title,status,expires_at,updated_at) VALUES
+ ('e0970600-0000-4000-8000-000000000001','e0970200-0000-4000-8000-000000000001','e0970300-0000-4000-8000-000000000001','e0970100-0000-4000-8000-000000000001','task','Assigned A','proposed','2099-01-01T00:00:00Z','2026-01-01T00:00:00Z'),
+ ('e0970600-0000-4000-8000-000000000002','e0970200-0000-4000-8000-000000000002','e0970300-0000-4000-8000-000000000002','e0970100-0000-4000-8000-000000000001','task','Assigned B','proposed','2099-01-01T00:00:00Z','2026-01-01T00:00:00Z'),
+ ('e0970600-0000-4000-8000-000000000003','e0970200-0000-4000-8000-000000000003','e0970300-0000-4000-8000-000000000003','e0970100-0000-4000-8000-000000000001','task','Assigned C','proposed','2099-01-01T00:00:00Z','2026-01-01T00:00:00Z');
+CREATE FUNCTION pg_temp.scope_actions(business text,contact uuid) RETURNS jsonb LANGUAGE sql AS $actions$
+ SELECT pg_temp.scope_read(format('SELECT coalesce(jsonb_agg(to_jsonb(a)),''[]''::jsonb) FROM (SELECT id,tenant_id,contact_id,status FROM public.paige_customer_actions WHERE tenant_id=%L::uuid AND contact_id=%L::uuid ORDER BY id) a',business,contact),business) $actions$;
+CREATE FUNCTION pg_temp.scope_respond(action_id uuid,business text,version timestamptz) RETURNS jsonb LANGUAGE sql AS $actions$
+ SELECT pg_temp.scope_read(format('SELECT public.customer_respond_to_action(%L::uuid,''completed'',NULL,%L::timestamptz)',action_id,version),business) $actions$;
+SELECT is(pg_temp.scope_actions('e0970200-0000-4000-8000-000000000001','e0970300-0000-4000-8000-000000000001')#>>'{0,id}',
+ 'e0970600-0000-4000-8000-000000000001','original RLS read returns own selected A action');
+SELECT is(pg_temp.scope_actions('e0970200-0000-4000-8000-000000000002','e0970300-0000-4000-8000-000000000002')#>>'{0,id}',
+ 'e0970600-0000-4000-8000-000000000002','original RLS read returns own selected B action');
+SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000003',
+ $actions$SELECT coalesce(jsonb_agg(to_jsonb(a)),'[]'::jsonb) FROM (SELECT id FROM public.paige_customer_actions WHERE id='e0970600-0000-4000-8000-000000000001') a$actions$,
+ '{"x-client-portal-business":"e0970200-0000-4000-8000-000000000001"}'),'[]'::jsonb,'other actual customer cannot read A action');
+SELECT is(pg_temp.scope_respond('e0970600-0000-4000-8000-000000000002','e0970200-0000-4000-8000-000000000002','2026-01-01T00:00:00Z')->>'ok',
+ 'true','selected B responds through original exact-version native writer');
+SELECT ok((SELECT count(*)=1 AND bool_and(contact_id='e0970300-0000-4000-8000-000000000002' AND responded_by_user_id='e0970100-0000-4000-8000-000000000002' AND response_type='completed')
+ FROM public.paige_customer_responses WHERE action_id='e0970600-0000-4000-8000-000000000002'),'canonical response retains original business relationship and actual actor');
+SELECT is(pg_temp.scope_respond('e0970600-0000-4000-8000-000000000002','e0970200-0000-4000-8000-000000000002','2026-01-01T00:00:00Z')->>'error',
+ 'ACTION_VERSION_CONFLICT','old version cannot duplicate the response');
+SELECT is(pg_temp.scope_respond('e0970600-0000-4000-8000-000000000002','e0970200-0000-4000-8000-000000000001',
+ (SELECT updated_at FROM public.paige_customer_actions WHERE id='e0970600-0000-4000-8000-000000000002'))->>'error','FORBIDDEN','conflicting selected business cannot respond to B');
+SELECT is(pg_temp.scope_respond('e0970600-0000-4000-8000-000000000003','e0970200-0000-4000-8000-000000000003','2026-01-01T00:00:00Z')->>'error',
+ 'FORBIDDEN','customer cannot respond to another actual customer action');
+SELECT is(pg_temp.scope_respond('e0970600-0000-4000-8000-000000000001','e0970200-0000-4000-8000-000000000001',NULL)->>'error',
+ 'ACTION_VERSION_CONFLICT','missing exact action version is refused');
+SELECT is(pg_temp.scope_actions('e0970200-0000-4000-8000-000000000002','e0970300-0000-4000-8000-000000000002')#>>'{0,status}',
+ 'customer_acted','returning read contains original saved B status');
+
+-- Original business-shared Conversations, distinct from the private CURA service below.
+-- Native writers only, provider execution disabled, all synthetic rows rolled back.
+CREATE FUNCTION pg_temp.scope_send_message(business text,body text,request_id uuid,kind text DEFAULT 'message')
+RETURNS jsonb LANGUAGE sql AS $message$
+ SELECT pg_temp.scope_read(format('SELECT public.client_portal_send_message(%L,%L::uuid,%L,%L::uuid)',body,request_id,kind,business),business) $message$;
+CREATE FUNCTION pg_temp.scope_conversation(business text)
+RETURNS jsonb LANGUAGE sql AS $message$
+ SELECT pg_temp.scope_read(format('SELECT public.client_portal_conversation(%L::uuid)',business),business) $message$;
+CREATE TEMP TABLE scope_messages(business text,result jsonb);
+INSERT INTO scope_messages VALUES
+ ('e0970200-0000-4000-8000-000000000001',pg_temp.scope_send_message('e0970200-0000-4000-8000-000000000001','Shared A only','e0970400-0000-4000-8000-000000000001','help')),
+ ('e0970200-0000-4000-8000-000000000002',pg_temp.scope_send_message('e0970200-0000-4000-8000-000000000002','Shared B only','e0970400-0000-4000-8000-000000000002'));
+SELECT is(result->>'ok','true','selected A help writes through original Conversations') FROM scope_messages WHERE business='e0970200-0000-4000-8000-000000000001';
+SELECT is(result->>'ok','true','selected B message writes through original Conversations') FROM scope_messages WHERE business='e0970200-0000-4000-8000-000000000002';
+SELECT is(pg_temp.scope_conversation('e0970200-0000-4000-8000-000000000001')#>'{messages}',
+ jsonb_build_array(jsonb_build_object('id',result->>'message_id','author','customer','kind','help','body','Shared A only','created_at',result->>'created_at','request_id','e0970400-0000-4000-8000-000000000001')),
+ 'A reads only its own original shared help receipt') FROM scope_messages WHERE business='e0970200-0000-4000-8000-000000000001';
+SELECT is(pg_temp.scope_conversation('e0970200-0000-4000-8000-000000000002')#>'{messages}',
+ jsonb_build_array(jsonb_build_object('id',result->>'message_id','author','customer','kind','message','body','Shared B only','created_at',result->>'created_at','request_id','e0970400-0000-4000-8000-000000000002')),
+ 'B reads only its own original shared message receipt') FROM scope_messages WHERE business='e0970200-0000-4000-8000-000000000002';
+SELECT ok(pg_temp.scope_send_message('e0970200-0000-4000-8000-000000000001','Shared A only','e0970400-0000-4000-8000-000000000001','help')
+ @> jsonb_build_object('ok',true,'replayed',true,'message_id',result->>'message_id'),'uncertain A retry reuses original canonical message identity') FROM scope_messages WHERE business='e0970200-0000-4000-8000-000000000001';
+SELECT is(pg_temp.scope_read($message$SELECT public.client_portal_send_message('Wrong business','e0970400-0000-4000-8000-000000000004','message','e0970200-0000-4000-8000-000000000002')$message$,
+ 'e0970200-0000-4000-8000-000000000001')->>'error','NO_RELATIONSHIP','a conflicting business argument cannot escape the captured request');
+SELECT ok(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000003',
+ $message$SELECT public.client_portal_conversation('e0970200-0000-4000-8000-000000000001')$message$,
+ '{"x-client-portal-business":"e0970200-0000-4000-8000-000000000001"}') IS NULL,'another customer cannot read A shared messages');
+SELECT is((SELECT jsonb_build_object('tenant',m.tenant_id,'contact',m.contact_id,'channel',m.channel_type,'actor',m.meta#>>'{portal,author_user_id}')
+ FROM public.messages m JOIN scope_messages proof ON m.id::text=proof.result->>'message_id' WHERE proof.business='e0970200-0000-4000-8000-000000000001'),
+ jsonb_build_object('tenant','e0970200-0000-4000-8000-000000000001','contact','e0970300-0000-4000-8000-000000000001','channel','portal','actor','e0970100-0000-4000-8000-000000000002'),
+ 'physical business record retains original tenant/client and actual customer attribution');
+
 -- Existing original private conversation service/RLS under the same future-shape
 -- CI fixture. No turn/provider execution, extra production identity or new writer.
 CREATE FUNCTION pg_temp.open_scoped_chat(business text DEFAULT NULL)
@@ -130,6 +259,12 @@ UPDATE public.clients SET portal_access_state='paused',portal_access_changed_at=
  WHERE id='e0970300-0000-4000-8000-000000000002';
 SELECT set_config('paige.portal_access_write','',true);
 SELECT ok(pg_temp.scope_read('SELECT public.client_portal_frame()','e0970200-0000-4000-8000-000000000001') IS NULL,'paused selection loses original frame');
+SELECT ok(pg_temp.scope_read('SELECT public.client_portal_sessions()','e0970200-0000-4000-8000-000000000001') IS NULL,'paused A cannot read original sessions');
+SELECT is(pg_temp.scope_session_admit('e0970800-0000-4000-8000-000000000001','e0970200-0000-4000-8000-000000000001')->>'error','SESSION_NOT_FOUND','paused A cannot admit a booking change');
+
+SELECT ok(pg_temp.scope_read('SELECT public.client_portal_progress()','e0970200-0000-4000-8000-000000000001') IS NULL,'paused A cannot read original shared progress');
+SELECT is(pg_temp.scope_respond('e0970600-0000-4000-8000-000000000001','e0970200-0000-4000-8000-000000000001','2026-01-01T00:00:00Z')->>'error','FORBIDDEN','paused A cannot write a customer action response');
+SELECT is(pg_temp.scope_send_message('e0970200-0000-4000-8000-000000000001','Paused refusal','e0970400-0000-4000-8000-000000000003')->>'error','NO_RELATIONSHIP','paused A cannot send a shared message');
 SELECT is(pg_temp.open_scoped_chat('e0970200-0000-4000-8000-000000000001')->>'sqlstate','42501','paused A cannot reopen a private conversation');
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000001')#>>'{business,name}',
  'Northwind Studio','selected older pause never names latest other-business pause');
@@ -146,6 +281,12 @@ UPDATE public.clients SET linked_user_id=NULL WHERE id='e0970300-0000-4000-8000-
 SELECT set_config('paige.link_ok','',true);
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000002')->>'state','ended','selected former user sees genuine ended notice');
 SELECT ok(pg_temp.scope_read('SELECT public.client_portal_frame()','e0970200-0000-4000-8000-000000000002') IS NULL,'revoked selection cannot obtain another frame');
+SELECT ok(pg_temp.scope_read('SELECT public.client_portal_sessions()','e0970200-0000-4000-8000-000000000002') IS NULL,'revoked B cannot read retained original sessions');
+SELECT is(pg_temp.scope_session_admit('e0970800-0000-4000-8000-000000000002','e0970200-0000-4000-8000-000000000002')->>'error','SESSION_NOT_FOUND','revoked B cannot admit a retained booking');
+
+SELECT ok(pg_temp.scope_read('SELECT public.client_portal_progress()','e0970200-0000-4000-8000-000000000002') IS NULL,'revoked B cannot read retained original progress');
+SELECT is(pg_temp.scope_actions('e0970200-0000-4000-8000-000000000002','e0970300-0000-4000-8000-000000000002'),'[]'::jsonb,'revoked B cannot read retained original actions');
+SELECT ok(pg_temp.scope_conversation('e0970200-0000-4000-8000-000000000002') IS NULL,'revoked B cannot read retained shared conversation history');
 SELECT ok(pg_temp.read_scoped_chat('e0970200-0000-4000-8000-000000000002',opened) IS NULL,'revoked B cannot read its retained original private thread') FROM scope_chats WHERE business='e0970200-0000-4000-8000-000000000002';
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000003')->>'state','none','foreign hint cannot reveal even own other-business ended notice');
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000001')->>'state','paused','returning A scope remains its own pause after B ends');

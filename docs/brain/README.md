@@ -1,3 +1,17 @@
+## EXP09 scoped relationship and CURA history recovery — production closeout,2026-10-22
+
+Seven bounded increments2542/2547/2551/2555/2548/2556/2558 have exact reviewed head, main/tree, CI/review and verified normal production web/native identities in the sole Master4.0 Shipped Delivery Log, with receipts6332943907/6333043227/6333044066/6333245798/6333534220/6333534905/6334013110. All reviews are accurately AUTHOR-REVIEW / LOWER ASSURANCE.
+
+Original native request scope210109 and notice binding210209 deployed via39723944701; exact parser/resolver/access/frame/choice source and ACL metadata match. Original browser frame/choice reuse verified native relationships, actual Auth rechecks and cancellation;182 choice tests and bounded original-component rendered evidence have explicit synthetic/iframe limits. They grant no membership and do not bypass the original global linked-user/acceptance restriction.
+
+Private CURA history binds all original SDK reads to captured business/actor and original canonical thread/turn records.62 native role/isolation assertions and83 browser/frame checks passed; future-shape fixture restores original index and rolls back. The owner persona reader now follows the original staff-workspace resolver; normal39728035946 persisted210309 and exact source/ACL metadata readback matches.22 authority negatives/positives passed.
+
+Original customer history recovery has cancellation,20-second deadline and explicit Retry, preserving same-business drafts, focusing composer after recovery and withholding unavailable history/false-ready states.180 focused tests and final overlap confirmations PASS. Four original-component responsive/dark/error/recovered-draft images and keyboard behavior were inspected; no Safari/device/400-percent/screen-reader or signed-in production journey certification is inferred. READY web/public exact or reviewed-descendant builds and customerUpdate=null are recorded for each. Own Edge N/A.
+
+Original Messages/Support2558 is now deployed as62d615ac6deb10bacd80aa1129a23e4cc7e1bde8 after11 checks/two statuses and full Preview PASS;95 focused and native72 controls passed. Original Conversations source/ACL unchanged; READY web/public build and served original Messages asset/recovery markers independently read back. Original actor/business capture, stale/foreign refusal and unknown-send reconciliation add no inbox/sender. No actual customer/provider message was sent. Progress2562 is a separate unmerged consumer slice at this checkpoint. Remaining selected-domain/Edge bindings, safe global-identity/recipient acceptance, actual owner/client publication/retrieval and the joined seven-pillar returning/revoked/multiple-business journey remain UNVERIFIED. No provider send/payment/publication/identity grant or INT346 bypass occurred.
+
+Original governed invitation/Communications, Knowledge/Teach, private CURA/business Conversations and domain services stay authoritative. No CURA-specific Layer C adapter is production-proven; no duplicate orchestration/Team Hub is built. Seven catalogue entries remain Limited; ALG01/12 bounded PARTIAL and ALG02/04/13 actual runtime UNVERIFIED. Functional/source/readback, visual quality, experiential acceptance and final founder evaluation remain separate. One final integrated founder evaluation is not yet requested. This factual closeout changes no product, activation or customer release authority.
+
 ## EXP09 relationship reads and Payments — bounded production closeout,2026-10-22
 
 PR2538 merged `5df82581f98d84328729d0e8ec26cbe844781d98` after all13 exact-head
@@ -1399,3 +1413,46 @@ Experience acceptance. Native releases, consumer exact-head review/CI/web readba
 owner/staff/linked-client/two-cohort QA, document fields/signing/effective economics,
 all O1–O12 and complete founder evaluation remain owed. See [bounded evidence](../evidence/ui-delivery/e04-agreement-recipients.md)
 and [original journey](../delivery/exp04-get-paid-deliver-journey.md).
+
+October22 recipient source continuation: actual template parent6ad4ab09e and main172013d89 are retained. Native250004 and260004 are actually production-source verified with five original/checked definitions and original readerc53a216 (receipts6336227514/6336228732); earlier pending notes are historical. Own recipient/source/SDK/navigation/CSS bytes are unchanged and all28 actual rendered source pins rechecked. Parent template release, this head fresh review/CI/web readback and actual owner/staff/client/provider/full12/founder acceptance remain required; no former green or source fixture is promoted.
+
+### EXP04 retained-copy integrity — October22 local source
+Original agreement-document handler passes three authorized positive controls then genuinely returns altered bytes as200 for owner/token/Portal fixtures. Repair reuses existing verifyRetainedAgreementPdf against the SAME authorized original record;45 handler and56 Deno tests/actual Edge type check PASS, final root type ratchet PASS baseline10/current6 with no baseline or signing-guard change. Existing legacy authorization-body digest remains7148c40a6ab73a948ee6a7df0aed28460e0a66e1fd82f9eb1f0e48501a126eb3 after explicit digest-projection-only inverse; three guard mutation controls still fail it. Portal-first/native relationship API, JWT/CORS/role/token/state/header/event semantics preserved. No actual production corruption, new provider/store/grant/renderer or acceptance claim. Source release/readback and ordinary owner/signer/linked-client/full Experience proof owed. [Evidence](../evidence/ui-delivery/e04-agreement-document-integrity.md).
+
+October22 release-state reconciliation: commercial#2550/230004 is now production-source verified (receipt6334959569); earlier failed/unapplied entries are dated history. Signer prerequisite#2554/605a8c4/240004 is merged and actual routine metadata matches f380cfa97f14e29c8b88721a76b9db4e; final normal-job/web receipt remains pending. Template UI still uses original220004, with no new signing, payment, provider or Chat effect. This composition preserves all prior template and signer sections; fresh exact-head CI/review/readback and customer acceptance remain owed.
+
+October22 current native prerequisites: template220004, commercial230004, signer240004, checked250004 and reader260004 are production-source verified. Actual main172013d896d78178473eaa1e2946e3f27558944b and all E09 Actions/Sessions source are retained; receipts6336226483/6336227514/6336228732 distinguish actual document35/six-file/JWT readback, five checked writer definitions and original readerc53a216. Earlier pending notes are dated history. This own template UI source is unchanged; its new composed head requires fresh exact-head CI/review/web readback and actual ordinary-role/customer acceptance. All12/full founder evaluation remain incomplete.
+
+### EXP04 C7 commercial presentation — October22 development, not released
+Selective native/pure formatter reuse from2192/179e52 retains exact original agreement/terms/invoice and explicit service facts, without replacing signed history or original renderer. New native strict-type negatives reproduce historical coercion; repaired54/replay2/two actual sessions/one observed wait and11 Deno tests/26 steps PASS. Native230004 is UNAPPLIED, source initially dormant/unmounted; no signing/send/payment/provider/Chat activation, accepted legal wording or effective terms claimed. Original Collections/Kit operation/approval/Rail integration and hosted exact document readback remain owed. All twelve outcomes and actual customer/founder acceptance stay incomplete. See [native evidence](../evidence/ui-delivery/e04-commercial-presentation-native.md).
+
+
+### EXP04 template current-main composition — October22 source
+Template workspace now composes actual main1e1073133, retaining both template and C7 contracts. Native template#2545/220004 is actually production-applied with exact catalog/web readback; earlier unapplied notes above are historical. Dormant commercial#2550 is merged but230004 rolled back at the original lock limit and remains NOT_APPLIED. No new template UI source is changed by this documentation composition; all25 rendered pins are rechecked. Fresh exact-head CI/review/release and actual owner/staff/client/full Experience acceptance remain required; no Chat/provider/signing/payment or completed legal review claimed.
+
+### EXP04 original signer preparation — October22 development, not released
+Two real native baselines pass six positive controls then fail frozen-source refusal/distinct concurrent order. Same original add_agreement_signer now serializes the parent, refuses retained source and advances original reviewed version after an actual party change; no supplied words/history/token/consent/send/payment rewritten. Native44/replay2/five sessions/three observed waits PASS, guarded exact-body migration240004 UNAPPLIED. Professional mounted signer/field journey, full signing/provider/customer/founder acceptance remain owed. All twelve outcomes remain mandatory/incomplete; [native evidence](../evidence/ui-delivery/e04-signer-preparation-integrity.md).
+
+
+### EXP04 checked recipient preparation — October22 native development, not released
+Legacy and new checked callers use one original private signer business body. Exact customer/version/time CAS, original signer PK creation identity and immutable edited-event receipt support same-intent retry/reload; post-wait original authority is revalidated. No new request table/ledger/approval/runtime or external/Chat/Portal effect. Native44 base plus75 new assertions/replay2 and genuine duplicate/source/recovery/revocation waits PASS; guarded250004 UNAPPLIED after220004/230004/240004. Mounted professional recipient/fields, actual JWT/provider/signature/all12/founder acceptance remain owed; [native evidence](../evidence/ui-delivery/e04-checked-signer-preparation.md).
+
+
+## EXP04 original preparation editability — October22
+
+Same E04 lead repairs the original closed preparation reader's editability to
+match existing content and sealed-reference writer freezes. Exact production
+routine metadata/source MD5a3950836 is reproduced in the disposable native proof;
+five new positive controls precede a genuine failing sealed-reference read.
+New260004 changes only that original boolean, preserving author/business floor,
+closed DTO, owner/ACL/STABLE/DEFINER/search_path and every stored record. Original
+unknown-source guard and both replays remain; no permission/table/event rewrite.
+
+Final142 native assertions pass:44 original signer +75 checked preparation +23
+read-state cases. Initial invalid Sent fixture omitted the original mandatory
+content digest; fixture corrected, original constraint preserved. New read proof
+adds no concurrency or real JWT/provider/customer acceptance claim. Exact-head
+review/CI/Preview, ordered release/readback and whole Experience acceptance remain
+owed. See [bounded native evidence](../evidence/ui-delivery/e04-preparation-editability.md).
+
+October22 checked-signer main-target continuation: original prerequisite#2554 is RELEASED SOURCE VERIFIED, merge605a8c4bcdfb63c016689717947caf09f3296f83/native240004/bodyf380cfa97f14e29c8b88721a76b9db4e/unchanged owner/search_path/ACL and exact webdpl_HMxLuMYHqkv8KYQVWYJBEm2K3UW7/build605a8c4…-mvj7pldd (receipt6335238273). Actual main and all E09 source retained through a clean composition; own native250004 and checked proof are unchanged. Earlier pending-prerequisite notes are historical. This own250004 still requires fresh exact-head CI/review/normal migration/readback; source119/replay2 is not customer/provider/signing acceptance. All12 outcomes remain mandatory/incomplete.

@@ -175,6 +175,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
   const [customerThread,setCustomerThread] = useState<string|null>(null);
   const [historyState,setHistoryState] = useState<"loading"|"ready"|"error">(customerFrame?"loading":"ready");
   const [historyRetry,setHistoryRetry] = useState(0);
+  const historyRetryFocus=useRef(false);
   const customerRequest = useRef({epoch:0,abort:null as AbortController|null});
   const customerScope = customerFrame ? [customerFrame.actorId,customerFrame.profile.id,customerFrame.profile.tenant_id].join(":") : null;
   useEffect(() => {
@@ -184,15 +185,27 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
     setIsLoading(false);
     if(!customerFrame||!customerAvailable)return;
     let cancelled=false;
+    const historyAbort=new AbortController();
+    const expired=()=>cancelled||lifetime.epoch!==epoch||historyAbort.signal.aborted;
+    const deadlineAt=Date.now()+20_000;
     setHistoryState("loading");
-    void readCustomerChat(customerFrame).then(result=>{
-      if(cancelled||lifetime.epoch!==epoch)return;
+    setCustomerThread(null);
+    const timeout=()=>{
+      if(expired())return;
+      historyAbort.abort();
+      setHistoryState("error");
+    };
+    const deadline=window.setTimeout(timeout,20_000);
+    void readCustomerChat(customerFrame,historyAbort.signal).then(result=>{
+      if(expired())return;
+      if(Date.now()>=deadlineAt){timeout();return;}
       setCustomerThread(result.threadId);
-      if(result.messages.length)setMessages(result.messages);
+      setMessages(result.messages.length?result.messages:[mkMessage({role:"assistant",content:playbook.persona.greeting})]);
       setHistoryState("ready");
-    }).catch(()=>{if(!cancelled&&lifetime.epoch===epoch)setHistoryState("error");});
-    return ()=>{cancelled=true;++lifetime.epoch;lifetime.abort?.abort();};
-  },[customerScope,customerAvailable,historyRetry]);
+      if(historyRetryFocus.current){historyRetryFocus.current=false;inputRef.current?.focus();}
+    }).catch(()=>{if(!expired())setHistoryState("error");}).finally(()=>window.clearTimeout(deadline));
+    return ()=>{cancelled=true;window.clearTimeout(deadline);historyAbort.abort();++lifetime.epoch;lifetime.abort?.abort();};
+  },[customerFrame,customerScope,customerAvailable,historyRetry,playbook.persona.greeting]);
 
   // When context loads, send a context-aware, PAGE-AWARE opening via the AI
   useEffect(() => {
@@ -671,7 +684,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
       <div data-paige-content-scroll="true" className="flex-1 min-h-0 flex flex-col overflow-y-auto">
       {customerFrame&&historyState!=="ready"&&<div role="status" className="p-3 text-sm">
         {historyState==="loading"?"Opening your conversation…":"Your conversation couldn’t be loaded."}
-        {historyState==="error"&&<Button variant="ghost" onClick={()=>setHistoryRetry(n=>n+1)}>Try again</Button>}
+        {historyState==="error"&&<Button variant="ghost" className="min-h-11" onClick={()=>{historyRetryFocus.current=true;setHistoryRetry(n=>n+1);}}>Try again</Button>}
       </div>}
       {/* Header — compact on mobile */}
       <div className="px-3 sm:px-4 py-2 sm:py-3 border-b border-border flex-shrink-0">
@@ -742,9 +755,9 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
 
       {/* Paige's live reasoning — the "watch her work" strip (#95/#125), now on the
           primary /app surface. Shows an "on watch" resting pill when idle. */}
-      <div className="px-3 sm:px-4 pt-1 flex-shrink-0">
+      {(!customerFrame||historyState==="ready")&&<div className="px-3 sm:px-4 pt-1 flex-shrink-0">
         <PaigeReasoningStrip steps={steps} loading={isLoading} personaName={playbook?.persona?.name} />
-      </div>
+      </div>}
 
       {/* Quick actions — horizontally scrollable on mobile */}
       <div className="px-3 sm:px-4 pb-1.5 sm:pb-2 flex-shrink-0">
@@ -753,7 +766,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
             <button
               key={action.label}
               onClick={() => handleSend(action.prompt)}
-              disabled={isLoading || dictationActive}
+              disabled={isLoading || dictationActive || (!!customerFrame&&(!customerAvailable||historyState!=="ready"))}
               className="min-h-[44px] md:min-h-0 text-[13px] md:text-[11px] px-2.5 py-1 rounded-full border border-border bg-background hover:bg-accent/10 hover:border-accent/40 text-muted-foreground hover:text-gold-dark transition-colors disabled:opacity-50 whitespace-nowrap flex-shrink-0"
             >
               {action.label}

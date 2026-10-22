@@ -195,6 +195,9 @@ jobs:
   database-contract:
     runs-on: ubuntu-latest
     timeout-minutes: 35
+    permissions:
+      contents: read
+      packages: read
     env:
       # Same official images/versions; avoid throttled anonymous ECR/Docker pulls.
       # postgres17.6.1.021 linux/amd64 is identical on GHCR and Docker Hub:
@@ -225,6 +228,13 @@ jobs:
             exit 1
           fi
           echo "Pull request branch is in $BASE_REPO; the production baseline can be read."
+      - name: Authenticate official container reads with the ephemeral workflow identity
+        env:
+          GHCR_READ_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_READ_USER: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$GHCR_READ_TOKEN" | docker login ghcr.io --username "$GHCR_READ_USER" --password-stdin
       - name: Verify baseline dump routing and failure handling (synthetic, no production access)
         run: node --test scripts/ci/__tests__/production-baseline.test.mjs
       - name: Read production's baseline (read-only)
@@ -1025,5 +1035,8 @@ jobs:
         run: |
           node scripts/ci/reproduce-production-grants.mjs --self-test
           scripts/ci/grant-ordering-proof.sh "$RUNNER_TEMP/prod"
+      - name: Clear the ephemeral container registry login
+        if: ${{ always() }}
+        run: docker logout ghcr.io
 
 

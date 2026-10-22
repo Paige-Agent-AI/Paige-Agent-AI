@@ -36,6 +36,21 @@ no new navigation or mobile shell. Add actual narrow row-height/selection/route
 checks to this same source drive before correcting the omission, then confirm
 native document preparation still uses that single host behavior.
 
+## October22 required database proof — pre-edit runner correction
+
+Actual exact-head database jobs fail before native tests when the existing GHCR
+Supabase postgres image is rate-limited; ordinary unchanged retries and backoff
+retain the failure. REPAIR the original database job's anonymous pull using its
+existing ephemeral GitHub workflow identity with job-scoped package READ only.
+Keep the same official registry/image/version, original fork refusal before login,
+stdin-only credential use and always logout. No permanent secret, schema/baseline
+permission, product runtime, grant, test, assertion or timeout is changed. This is
+the existing required proof infrastructure, not a new proof/authorization engine.
+Review the exact setup diff, parse the native workflow and preserve all original
+test steps. Actual new exact-head database/full required CI must prove recovery;
+documentation or source checks cannot convert the failed jobs into PASS. Parent
+native30/API and mounted UI release remain held until all original gates pass.
+
 ## October22 native uploaded-PDF intake — pre-edit customer correction
 
 Read-only production native SAVE body1bd28e75afa0f50bb07b717795a5be0e confirms

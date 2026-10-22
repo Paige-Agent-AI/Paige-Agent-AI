@@ -28,6 +28,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { supabase } from "@/integrations/supabase/client";
+import { displaySignatureState as readState } from "./sales/agreementVocabulary";
 
 /**
  * Mirrors `paige_agreements.status`'s CHECK, plus `unrecognised` for a value this build has no
@@ -270,15 +271,6 @@ function safeWriteMessage(code?: string): string {
   if (code === "PA001") return "The document stored for this agreement is not the file that was uploaded, so no link was issued. Create a new agreement from that document and send that instead.";
   if (code === "22023" || code === "23514" || code === "22P02") return "Check the client, the document and the wording, then try again.";
   return "That could not be confirmed. Refresh and check your records before trying again.";
-}
-
-/**
- * Derived, never stored. See `displayState` above for why this exists at all.
- */
-function readState(stored: SignatureState, expiresAt: string | null): SignatureState {
-  if (stored !== "sent" && stored !== "viewed") return stored;
-  const at = expiresAt ? Date.parse(expiresAt) : NaN;
-  return !Number.isNaN(at) && at <= Date.now() ? "expired" : stored;
 }
 
 /**

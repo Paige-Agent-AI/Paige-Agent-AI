@@ -1,17 +1,3 @@
-## EXP09 original status observation — 2026-10-21 production
-
-PR2511 reviewed0c6a7cff merged f7cc0cb6a0c92350680578336bcc08d95cbbd26d;
-all11 checks/two statuses and lower-assurance final review pass. Normal Edge39692766955
-source/configuration verification and direct Chat@500 JWTtrue/all261 served digests
-match the actual merge. Production web READY/public build exact; receipt6328805431
-and Master4.0 retain identities. No effect/retry/approval restoration/hold settlement.
-Owner Chat private preparation2519 remains in CI, not deployed. The original saved-card
-browser consumer is development at6a145405e226c80c3eafad7385f865e185271bbd;
-284 focused original/consumer regressions and bounded actual rendered component
-proof pass, not signed-in full-shell/customer proof. Publication/sharing, eligible
-Live, full seven pillars, capabilities/algorithms and one final founder evaluation
-remain incomplete. No customer version/announcement or LIVE promotion.
-
 ## EXP09 original preparation readback — 2026-10-21 production
 
 Native reader2496 merged5b03e90302e19ee1ef4a8dacbd677329378fa06e and normal
@@ -91,15 +77,54 @@ still requires the one complete integrated Experience.
 
 ## EXP04 current delivery checkpoint — 2026-10-21
 
+Released native draft-history#2521 extends the original agreement with immutable
+subordinate wording/source snapshots, bounded author-only readers and no second
+writer, ledger or execution receipt. Genuine original SAVE baseline loses earlier
+wording despite advancing its version. Local PostgreSQL16 proof73 assertions,
+replay2 and two actually overlapping correction sessions pass, including scope/
+role/ACL, no-op/reversion/title/source history, legacy known-state retention,
+stale-edit refusal, native signing freeze and existing request recovery. Exact
+original SAVE body is unchanged. Reviewedeb559f6d9fa9aca9e38bc1616a328f160c69b360
+merged e7388e4d2cf79d1f60f4df0db914d0c84136ba10; all13 exact-head checks/two
+statuses PASS. Normal39696187426/job119554146260 persisted130000 after120000;
+all five function bodies, private table/helper/read ACL, RLS, constraints/indexes
+and enabled triggers read back. Webdpl_DVuJJ6mZWCBA4w5AfK99eWwQrCyV READY/exact,
+canonical publice7388e4d2-mviroxn4. Master4.0/receipt6329247734 retains details.
+AUTHOR-REVIEW / LOWER ASSURANCE; no actual JWT/customer acceptance is inferred.
+Mounted history/correction with authentic ordinary roles remains owed. Private
+upload references do not prove retained PDF bytes or legal sufficiency.
+[Native evidence](../evidence/ui-delivery/e04-native-draft-revision-history.md).
+
+Latest authoring integration: original Sales New agreement now mounts a genuine
+rich/source wording editor, real client selection, request-bound native save and
+uncertainty recovery, and selected original-record/history/file inspection.
+Actual-shell synthetic browser proof passes20 viewport/theme cases and22 paths,
+including real editor paste events/source continuity, committed lost-response
+recovery and original-business intent fencing. Source/font hashes are retained;
+no provider or ordinary customer identity is exercised. Final145 focused regressions,
+type ratchet10 baseline/current6, native build and bounded lint pass; hosted exact-head
+review/CI/release and authenticated acceptance remain separately owed. Professional
+templates/import, exact retained revisions, assigned fields and signing preparation
+remain required; this is not the complete DocuSign-class outcome.
+
+The Oct21 Layer C addendum is mapped in the existing E04 journey. Reuse the three
+native actions, shared canonical approval/dispatch claims/receipts/recovery and
+legitimate native Sales/Finance/Planning paths. n8n effectful dispatch remains
+gated. No adapter registry entry establishes authenticated commercial execution.
+Existing agreement/invoice/Collections/Portal contracts, ALG01/02/12/13 truth
+labels and all twelve outcomes remain binding. No retired agent is assigned.
+
 Released bounded prerequisites #2486 register discovery, #2487 actual retained-copy
 completion readback, and #2493 truthful historical signing economics are recorded
 with exact source/CI/production identities in Master§4.0. They do not accept O1–O12.
-Current #2499 / product44c3d8e20142e6753706f0635a3b8648921dbd86 selectively reuses
+Released #2499 / merge3ff77d368d2bf5a4261d6ee1e3ce7ab314516892 selectively reuses
 #2175 recipient UI: strict native acknowledgment, partial/completed distinction,
 no-effect cancellation, token retirement, keyboard/document lock, result focus,
 contrast and canvas correction.28 source cases/12 native PDF viewport-theme cases
-plus five synthetic result modes pass; hosted CI/release and real signing acceptance
-remain separate. [Source evidence](../evidence/ui-delivery/e04-signing-result-reconcile.md).
+plus five synthetic result modes pass. All10 applicable checks/two statuses and exact
+production web/static readback pass; actual signing acceptance remains separate.
+Master§4.0/#2505 retains the exact release receipt and lower-assurance author review.
+[Source evidence](../evidence/ui-delivery/e04-signing-result-reconcile.md).
 Isolated workspace prototype062d9ed34 models the full preparation flow using the
 shared system; it is not production rich editing, assigned PDF fields or acceptance.
 Functional/Visual/Experiential/Acceptance are reported independently. All twelve
@@ -117,15 +142,22 @@ Exact reviewed CI, normal web/Edge/migration readback and factual Master closeou
 Bounded ordinary owner navigation/empty register/form cancel/reload is verified;
 actual signature/provider/staff/client/full Experience acceptance remains owed.
 
-New local native draft foundation reuses unchanged SAVE/agreements/signers/events
-and canonical author authority. Nullable immutable creation correlation, a thin
-create/recover wrapper and selected human DTO are UNMOUNTED, NOT_DEPLOYED.
+Native draft foundation#2504 reviewed8a883a39d337f552dda06d8f829038dc61e7d499,
+merged e7396e59e7409ec3a66599edd3c8dfcd9459f1db, reuses unchanged SAVE/agreements/
+signers/events and canonical author authority. Nullable immutable creation
+correlation, native create/read/recovery are deployed; the UI consumer is separate.
 Original-call baseline creates two drafts/two signers; native PostgreSQL16 repaired
 proof92 assertions, four concurrent sessions and migration replay twice PASS.
 Original-author request recovery supports later-page reconciliation using only an
 opaque UUID, preserving private legal input off browser storage; absent is unconfirmed.
-Existing integrity runner is extended, not replaced. Reserved20271113120000
-follows EXP09 pending100000/110000; reconcile before release.
+Existing integrity runner is extended, not replaced. All13 exact-head checks/two
+statuses pass. Normal39690945568/job119536945958 persisted20271113120000 after
+applied110000; exact four function bodies, original SAVE, caller-only ACL, validated
+constraint/index/enabled trigger read back. Webdpl_H2MRxR55zLme4E8sYUDTZwB79SBX
+READY/exact/publice7396e59e-mvipyzk2. Master§4.0 and receipt6328560544 hold details.
+Sequential AUTHOR-REVIEW / LOWER ASSURANCE; actual JWT/customer acceptance owed.
+Authoring consumer#2515/642994616 is unmerged/in fresh exact-head CI; native
+composed-source20 viewport/theme cases/21 interaction paths pass with synthetic ports.
 No Chat/Spine activation, Portal UI, send/sign/payment, new role or provider change.
 [Foundation evidence](../evidence/ui-delivery/e04-draft-request-identity.md).
 Functional bounded prerequisites differ from Visual professional prototype/render
@@ -155,6 +187,40 @@ and #2175's byte verifier: existing completed/replayed seal must match its actua
 private PDF. Native106 plus5 Portal-wiring tests and three Edge type checks pass;
 release, authenticated recovery and full ALG01/12 acceptance remain proof owed.
 [Exact scope and limitations](../evidence/ui-delivery/e04-retained-completion-reconcile.md).
+
+## EXP02 Business Review and orchestration — October21 22:50 UTC
+
+The existing sole EXP02 lead continues all19 original outcomes and CAP009–017.
+This checkpoint supersedes earlier current-state statements below, preserving their
+dated evidence, source owners, historical9/0 and12/0/4 and single founder evaluation.
+
+Period continuity#2507 and important-evidence/owning-Play context#2510 are source
+released. #2510 merged38b6a9d after exact21ce8e31 author review and six required
+workflows/all11 checks. Full-baseline recovery39687510436 succeeds on containing
+mainc33dac69e; actual certified tag/public build and all five selected Edge packages/
+configurations match. Earlier failures remain in Master§4.0, not waived.
+
+Actual ordinary customer Marketing read→original department→Back→Last30days
+reload→correct UNSENT VERA draft→reload preserved8 existing messages; only the
+test's own draft was cleared. Existing nine catalogue entries retain4ComingSoon,
+3Limited/2Unverified, all AccessUnverified. Intake-copy#2516 remains separate
+development/review/CI. Synthetic evidence does not establish customer acceptance.
+One fresh weekly request also completed by the44s observation (interface: one read
+step/22s); original request/narrative/six links persisted through canonical reload
+and a second stable reload, without a duplicate. Earlier CPU failures and broad
+reliability/Live/cohort/action/report proof remain separate.
+
+Business Review uses original permitted Metric/Evidence and Operating Fabric reads.
+VERA interprets under PAIGE without independent domain-write authority. Governed
+follow-through reuses LayerC/INT179, Spine/Trust/Harness, original domain writers and
+Rail. An authenticated EXP02 recommendation→action→verified-receipt loop is still
+owed. Durable observations/terminal-context eligibility do not authorize execution.
+
+The [original19 matrix](../delivery/e2-customer-experience-integration-matrix.md)
+records current orchestration/algorithm applicability and remaining release and
+acceptance work. Existing Assignment Lock EXP02 and DEL131 current notes were
+updated/read back. No new registry, scheduler, specialist runtime, provider
+activation or coding lane. Full premium finish and founder acceptance remain open.
 
 ## EXP02 Marketing consumer released — October21 20:35 UTC
 

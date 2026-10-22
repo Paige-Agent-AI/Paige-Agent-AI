@@ -224,5 +224,8 @@ node "$HERE/signing-context-economics-proof.mjs" "$PGBIN/psql" "$PORT" proofrunn
 # Same original cluster/engine, distinct disposable synthetic database. Includes
 # two real concurrent sessions and refusal controls, not another acceptance engine.
 node "$HERE/draft-request-identity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired
+# Retain the original agreement's actual draft revisions under the same native
+# cluster, including stale concurrent edits and the original signing freeze.
+node "$HERE/draft-revision-history-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired
 
 echo "OK — every negative refused with its expected SQLSTATE; positive controls succeeded."

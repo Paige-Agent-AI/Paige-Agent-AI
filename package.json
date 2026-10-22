@@ -236,7 +236,8 @@
     "tailwind-merge": "^2.6.0",
     "vaul": "^0.9.9",
     "vitest": "^4.1.9",
-    "zod": "^4.1.12"
+    "zod": "^4.1.12",
+    "pdfjs-dist": "5.5.207"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",

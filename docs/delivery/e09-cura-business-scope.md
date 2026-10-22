@@ -1,0 +1,49 @@
+# Original CURA selected-business request scope
+
+## Before-edit capability and source routing — 2026-10-22
+
+1. Outcome: the existing customer can use their selected, natively verified business's CURA and private history. A request must retain its actual customer actor through ordinary Auth changes and reload. The business hint never grants membership.
+2. Domain/source owner: EXP09 owns original app/PaigeChat and customer-chat consumers; preserve shared owner Chat/Spine/C0b and EXP04. ANT161 original lease reply a22902c9-fd8e-4398-bd41-58f3703c1f12 records exact files before edits. Active2583 modifies dashboard PaigeAIChat, not app/PaigeChat; historical2401 shared handler/C0b refusal work must remain intact.
+3. Canonical layers: original caller-JWT Auth, client_portal_frame and relationship resolver, paige_chat_threads/turns customer_private audience, K1/K2 authorized Knowledge/snapshot and existing interactive begin/settle. No second runtime, history, role resolver, Memory store, permission system or orchestration engine.
+4. Capability: original customer Chat/read/context entry, not a new model-callable tool. Original client.portal_invite and approved Teach publication are separate governed owner capabilities. Registry presence is not customer runtime activation.
+5. Provider: unchanged model and embedding routing, budgets, admission, INT346 and genuine metering. Only the original caller-scoped native request may carry the selected-business hint. Service clients receive no customer hint or authority.
+6. Actor/permission/approval: original verified bearer must match the captured customer actor; selected tenant/client must resolve through native CRM, thread, Knowledge publication and RLS. No role/email/frontend selector authority. No new customer mutation or approval channel.
+7. Durable work: original customer-private thread/issued turn intent and original begin/terminal receipt remain authoritative; no new action ledger. Ordinary history/context reads do not require Layer C. Customer source snapshots and current publication checks remain required before provider/terminal publication.
+8. Result/readback/recovery: current selected customer alone receives original private response/history. Abort, Auth changes, paused/revoked/mismatched/ambiguous relationship retire the old request; no automatic duplicate send. Preserve original UI recovery, typed controls, actual receipts and history.
+9. Interface: original approved customer shell/CURA composer, no new dashboard, navigation, app shell or owner chat. Transport/Auth correction retains existing states/actions/exits; flow prototype NOT_REQUIRED unless implementation creates or materially changes a visible state or exit. Actual original rendered mobile/focus workflow verification remains owed for component changes.
+10. Evidence/release: record original tests before edits; meaningful selected-business/Auth/private-history/foreign/retired/owner regression controls; inspect every C0b dispatch/lexical ancestry/dependency delta, retain negative-control logic, renew only audited source pins; exact-head required CI, applicable Preview, normal Edge/web release and deployed source readback. Full actual protected owner/client returning/revoked/Knowledge journey remains UNVERIFIED.
+
+## Grounded gap
+
+Current main51c06c8923b624f48b3cf4d21febf3feee671cb8: browser customer-chat history sends x-client-portal-business through original SDK requests; original native request resolver consumes the untrusted hint. app/PaigeChat customer fetch omits it, and paige-ai-chat CORS/caller initialization currently includes Authorization without the customer-business hint. Native ambiguity therefore fails closed; no data exposure is inferred. The browser history reader also relies on mutable SDK Auth after getUser rather than capturing the exact verified bearer per request. Preserve and narrow the existing paths.
+
+Production global clients_linked_user_id_unique and recipient/new-account guards remain intact. This request-context increment does not activate multi-business membership. No production fixture, customer identity, message, provider call, link, publication or privilege change is authorized by a source test.
+
+## State
+
+IMPLEMENTED / NOT_RELEASED. Functional, rendered visual, experiential and authenticated founder evidence must be recorded separately. Existing current-main code, historical2401 valid hunks, all original29 C0b adapters, private Knowledge/publication/expiry controls and actual runtime gates remain protected.
+
+INTERNAL_BUILD_IDENTITY: implementation=51c06c8923b624f48b3cf4d21febf3feee671cb8; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED; evidence=docs/delivery/e09-cura-business-scope.md
+RELEASE_CHANNEL: development: original customer request-context correction
+CUSTOMER_RELEASE_IDENTITY: none: internal engineering increment
+RELEASE_RECOVERY: position=preserve original single-business fallback and forward correction; reference=docs/delivery/e09-cura-business-scope.md
+
+## Implemented original-path repair — 2026-10-22
+
+Current-main composition4008a1390ed6bfbfda32c88f5afc0517053ddbde preserves all new owner Chat, Operations, Setup, commercial PDF and Agreements work. No shared backend/source-pin difference from the audited original51c06 exists outside this candidate's two narrow request hunks.
+
+Original history SDK requests now capture and independently verify the original actor's bearer per request and carry the existing selected-business hint; final current Auth/native frame checks still withhold stale records. Original component captures immutable actor/business/scope, retires the private request on current-render held/switch/unmount or an ordinary Auth identity event, clears old private text and rejects late replies. Same-actor Auth refresh retains existing permission semantics; no listener grants membership. Original server CORS and request-local caller pass only the existing untrusted business hint to native CRM/thread/Knowledge authority. Service client, owner workspace, actual user/role checks, private intent/terminal receipts and all model/approval/activation rules stay unchanged. No new helper module, runtime, permission/store or native migration.
+
+Original78 baseline PASS. Five genuine consumer/Auth failures and three actual-handler/real-SDK wire failures reproduced before product edits; the first wire setup failed on a test-only URL and was corrected before counting its three failures. First repair87/89: two old fixture expectations now reflect earlier Auth refusal and explicit separate Auth/business header chaining, preserving/strengthening the original privacy assertions. Final89/five files PASS. No result is inferred from the earlier npx launch that lacked a completion summary; direct-run artifacts establish counts.
+
+Source review reproduces all29 original C0b scalars and120 dependency pins at51c06. Exact inverse of only native caller-header/CORS changes restores entire handler byte-for-byte (LF). Candidate handler SHA2565132ecb4382b87a3f85f888e75497739afbaf073d93c380609c28e3d3e4baeb3.29 adapter entries use28 distinct scalar fingerprints; alias fingerprints agree. Only these reviewed caller-ancestry pins renewed; metadata, extractor and all hostile controls unchanged. Original77 C0b tests PASS, including private Knowledge/thread, publication/fingerprint and approval refusal controls. These are source proof, never runtime/provider permission.
+
+Changed-source/test lint0 errors and two incumbent useEffect dependency warnings. Original local type ratchet fails only the pre-existing missing @mdxeditor/editor in unchanged commercial editor; no candidate diagnostic/baseline/dependency change, no full local build/type PASS. Actual original component rendered900/390/320 light/dark with seven final ready/empty/reply/recovery/private-Auth-loss views. Scroll widths match viewport, mobile input/mic/send/Retry44px, keyboard Retry focus visible; no old or late private text after delayed fixture response. Initial clipped desktop capture excluded and corrected. All data/Auth/response fixtures synthetic; full signed-in shell/device/AT and actual provider/customer proof UNVERIFIED.
+
+## Execution and recovery contract
+
+Customer typed Portal request → original verified Auth and selected-business hint → original CRM/thread/private audience + current published Knowledge/source snapshot → existing conversational admission/provider/terminal receipt → same original private conversation/reload. Ordinary history/context reads use native services; no Layer C ActionAdapter is added. Owner invitations/Teach publishing continue through their existing Spine/Trust/approval/original sender/publication paths. No customer Chat action, owner permission, sender, scheduling/payment/document writer, alternative history or execution ledger is introduced.
+
+Actual memberships remain native; original global linked-user and invitation/new-account constraints retained. This bounded repair does not activate multiple-business signup, Live, a customer tool or INT346. Authenticated customer/owner/private Knowledge/return/revocation/business-isolation/full seven-pillar and founder acceptance remain owed. Source/review/exact-head CI/normal web+Edge deployment/source readback must precede release. Final source review accurately AUTHOR-REVIEW / LOWER ASSURANCE.
+
+Evidence: docs/evidence/ui-delivery/e09-cura-business-scope.md; local immutable outputs/e09-cura-business-final89.json, e09-cura-c0b-review-tests.log, e09-cura-business-c0b-before.json and e09-cura-business-c0b-candidate.json. No provider/customer communication, new identity/business, publication, private signing link, signature, charge, upload or booking was executed.

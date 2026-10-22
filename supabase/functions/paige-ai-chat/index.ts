@@ -354,7 +354,7 @@ If asked to create, change, send, schedule or delete anything: say plainly and b
 const CONVERSATIONAL_ADMITTED_READ_TOOLS: ReadonlySet<string> = new Set(Object.freeze(["read_business_metric", "get_business_snapshot", "read_client_engagement_status", "read_business_time_zone", "read_calendar_booking", "crm_get_task", WEEKLY_COMMITMENT_STATUS_TOOL_NAME]));
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": `authorization, x-client-info, apikey, content-type, ${CHAT_CONTROL_HEADER}`,
+  "Access-Control-Allow-Headers": `authorization, x-client-info, apikey, content-type, x-client-portal-business, ${CHAT_CONTROL_HEADER}`,
   "Access-Control-Expose-Headers": "Retry-After",
 };
 
@@ -1157,7 +1157,11 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     const supabaseClient = createClient(supabaseUrl, supabaseKey, {
-      global: { headers: { Authorization: authHeader } }
+      // Untrusted customer selection only: native Auth/CRM/thread/Knowledge checks
+      // still grant access. This request-local hint never changes the staff workspace.
+      global: { headers: { Authorization: authHeader,
+        ...(req.headers.has("x-client-portal-business")?{"x-client-portal-business":req.headers.get("x-client-portal-business")!}:{})
+      } }
     });
 
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser();

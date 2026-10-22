@@ -31,7 +31,8 @@ const portalFixture=vi.hoisted(()=>({phase:"not-client",frame:null as unknown,ch
   read:vi.fn(),reload:vi.fn(),summary:vi.fn()}));
 const memoryFixture = vi.hoisted(() => ({
   actor: "d2000000-0000-4000-8000-000000000001", tenant: "d2100000-0000-4000-8000-000000000001" as string | null,
-  loading: false, scope: vi.fn(), session: vi.fn(), auth: vi.fn(),
+  loading: false, scope: vi.fn(), session: vi.fn(), auth: vi.fn(), unsubscribe:vi.fn(),
+  authChange:null as null|((event:string,session:{user:{id:string}}|null)=>void),
   context: { block: "", loading: false, hasCreditData: false },
 }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: memoryFixture.tenant, loading: memoryFixture.loading }) }));
@@ -69,7 +70,8 @@ vi.mock("@/hooks/useChatDocumentUpload", () => ({
 vi.mock("@/components/voice/DictationMicButton", () => ({ DictationMicButton: () => <button type="button">Dictate</button> }));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: { auth: { getSession: (...args: unknown[]) => memoryFixture.session(...args),
-    getUser: (...args: unknown[]) => memoryFixture.auth(...args) }, functions: { invoke: vi.fn() } },
+    getUser: (...args: unknown[]) => memoryFixture.auth(...args),
+    onAuthStateChange:(callback:(event:string,session:{user:{id:string}}|null)=>void)=>{memoryFixture.authChange=callback;return {data:{subscription:{unsubscribe:()=>{memoryFixture.unsubscribe();if(memoryFixture.authChange===callback)memoryFixture.authChange=null;}}}};} }, functions: { invoke: vi.fn() } },
 }));
 
 import { PaigeChat } from "./PaigeChat";
@@ -118,7 +120,7 @@ describe("normal PaigeChat remount scroll behavior", () => {
     portalFixture.read.mockReset();portalFixture.summary.mockClear();
     memoryFixture.actor = "d2000000-0000-4000-8000-000000000001";
     memoryFixture.tenant = "d2100000-0000-4000-8000-000000000001";
-    memoryFixture.loading = false; memoryFixture.scope.mockClear();
+    memoryFixture.loading = false; memoryFixture.scope.mockClear();memoryFixture.authChange=null;memoryFixture.unsubscribe.mockClear();
     memoryFixture.context = { block: "", loading: false, hasCreditData: false };
     memoryFixture.auth.mockReset().mockImplementation(async () => ({ data: { user: { id: memoryFixture.actor } }, error: null }));
     memoryFixture.session.mockReset().mockImplementation(async () => ({ data: { session: { user: { id: memoryFixture.actor }, access_token: "synthetic-session" } } }));
@@ -442,6 +444,42 @@ describe("normal PaigeChat remount scroll behavior", () => {
       brand:{tenant_name:"Test practice",logo_url:null,primary_color:null},config:{}};
     return {user:{id:memoryFixture.actor,user_metadata:{}} as never,session:null};
   };
+
+  it("sends the selected customer business, verified bearer and private-only turn to CURA",async()=>{
+    const props=returningCustomer();portalFixture.read.mockResolvedValue({threadId:"e0945000-0000-4000-8000-000000000001",messages:[]});
+    const sent=vi.fn(async(..._args:unknown[])=>new Response('data: {"choices":[{"delta":{"content":"Authorized customer reply"}}]}\n\ndata: [DONE]\n\n',{status:200,headers:{"Content-Type":"text/event-stream"}}));vi.stubGlobal("fetch",sent);
+    await act(async()=>{root.render(<PaigeChat {...props}/>);await memoryFlush();});
+    const input=host.querySelector("textarea")!;
+    await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value")!.set!.call(input,"My approved program?");input.dispatchEvent(new Event("input",{bubbles:true}));});
+    await act(async()=>{input.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true}));await memoryFlush();});
+    expect(sent).toHaveBeenCalledTimes(1);const init=sent.mock.calls[0][1] as RequestInit;const headers=new Headers(init.headers);
+    expect(headers.get("x-client-portal-business")).toBe("e0925000-0000-4000-8000-000000000001");
+    expect(headers.get("Authorization")).toBe("Bearer synthetic-session");expect(memoryFixture.auth).toHaveBeenCalledWith("synthetic-session");
+    const body=JSON.parse(String(init.body));expect(body.messages).toEqual([{role:"user",content:"My approved program?"}]);expect(body.surfaceContext).toEqual({kind:"customer_portal"});
+    for(const k of ["clientId","clientContext","sessionDocumentContext","approvedConfirmations","attachments","document"])expect(body).not.toHaveProperty(k);
+  });
+  it("a different cached login cannot send the original customer's private request",async()=>{
+    const props=returningCustomer();portalFixture.read.mockResolvedValue({threadId:"e0945000-0000-4000-8000-000000000001",messages:[]});
+    const sent=vi.fn(async(..._args:unknown[])=>new Response("data: [DONE]\n\n"));vi.stubGlobal("fetch",sent);
+    memoryFixture.session.mockResolvedValue({data:{session:{user:{id:"other-login"},access_token:"synthetic-other"}}});
+    await act(async()=>{root.render(<PaigeChat {...props}/>);await memoryFlush();});const input=host.querySelector("textarea")!;
+    await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value")!.set!.call(input,"Keep my question");input.dispatchEvent(new Event("input",{bubbles:true}));});
+    await act(async()=>{input.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true}));await memoryFlush();});
+    expect(sent).not.toHaveBeenCalled();expect(input.value).toBe("Keep my question");
+  });
+
+  it("an actual Auth identity event aborts a private request and rejects its late reply",async()=>{
+    const props=returningCustomer();portalFixture.read.mockResolvedValue({threadId:"e0945000-0000-4000-8000-000000000001",messages:[{id:"private-old",role:"assistant",content:"Private previous customer answer"}]});
+    let finish!:(response:Response)=>void;const sent=vi.fn((..._args:unknown[])=>new Promise<Response>(r=>{finish=r;}));vi.stubGlobal("fetch",sent);
+    await act(async()=>{root.render(<PaigeChat {...props}/>);await memoryFlush();});const input=host.querySelector("textarea")!;
+    await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value")!.set!.call(input,"My private request");input.dispatchEvent(new Event("input",{bubbles:true}));});
+    await act(async()=>{input.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true}));await memoryFlush();});
+    expect(sent).toHaveBeenCalledTimes(1);expect(memoryFixture.authChange).not.toBeNull();
+    await act(async()=>{memoryFixture.authChange?.("SIGNED_OUT",null);await memoryFlush();});
+    expect((sent.mock.calls[0][1] as RequestInit).signal?.aborted).toBe(true);expect(host.textContent).not.toContain("Private previous customer answer");
+    await act(async()=>{finish(new Response('data: {"choices":[{"delta":{"content":"LATE_PRIVATE_REPLY"}}]}\n\ndata: [DONE]\n\n'));await memoryFlush();});
+    expect(host.textContent).not.toContain("LATE_PRIVATE_REPLY");expect(memoryFixture.unsubscribe).toHaveBeenCalledTimes(1);
+  });
   it("a genuine empty current conversation replaces an older transcript while preserving the draft",async()=>{
     const props=returningCustomer();
     portalFixture.read.mockResolvedValueOnce({threadId:"old-thread",messages:[{id:"old-turn",role:"assistant",content:"Older saved answer"}]})

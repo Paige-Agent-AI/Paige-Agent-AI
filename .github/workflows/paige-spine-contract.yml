@@ -195,14 +195,12 @@ jobs:
   database-contract:
     runs-on: ubuntu-latest
     timeout-minutes: 35
-    permissions:
-      contents: read
-      packages: read
     env:
-      # Same official images/versions; avoid throttled anonymous ECR/Docker pulls.
-      # postgres17.6.1.021 linux/amd64 is identical on GHCR and Docker Hub:
+      # Same official images/versions. GHCR remained rate-limited even after
+      # successful workflow login; use the CLI's official Docker Hub mirror.
+      # Both public registries' postgres17.6.1.021 linux/amd64 manifests verified:
       # sha256:759be34d849bf3eb5a59056b71b9e365ca89bfa83665bd0103343ef5598e7b78.
-      SUPABASE_INTERNAL_IMAGE_REGISTRY: ghcr.io
+      SUPABASE_INTERNAL_IMAGE_REGISTRY: docker.io
     steps:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
@@ -228,13 +226,6 @@ jobs:
             exit 1
           fi
           echo "Pull request branch is in $BASE_REPO; the production baseline can be read."
-      - name: Authenticate official container reads with the ephemeral workflow identity
-        env:
-          GHCR_READ_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GHCR_READ_USER: ${{ github.actor }}
-        run: |
-          set -euo pipefail
-          printf '%s' "$GHCR_READ_TOKEN" | docker login ghcr.io --username "$GHCR_READ_USER" --password-stdin
       - name: Verify baseline dump routing and failure handling (synthetic, no production access)
         run: node --test scripts/ci/__tests__/production-baseline.test.mjs
       - name: Read production's baseline (read-only)
@@ -1035,8 +1026,5 @@ jobs:
         run: |
           node scripts/ci/reproduce-production-grants.mjs --self-test
           scripts/ci/grant-ordering-proof.sh "$RUNNER_TEMP/prod"
-      - name: Clear the ephemeral container registry login
-        if: ${{ always() }}
-        run: docker logout ghcr.io
 
 

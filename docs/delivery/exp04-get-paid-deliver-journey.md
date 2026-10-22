@@ -51,6 +51,18 @@ test steps. Actual new exact-head database/full required CI must prove recovery;
 documentation or source checks cannot convert the failed jobs into PASS. Parent
 native30/API and mounted UI release remain held until all original gates pass.
 
+Actual5b hosted job119950403627 reports successful GHCR login, then the SAME
+image-config rate limit before baseline/native setup. That attempt is FAILED,
+not evidence of recovery. Remove its added package-read scope/login/logout and
+restore original workflow permissions/steps. Both official public registries were
+directly read: Docker Hub tag17.6.1.021 linux/amd64 is active with digest759be34d849bf3eb5a59056b71b9e365ca89bfa83665bd0103343ef5598e7b78,
+and GHCR returns200 for that exact manifest/digest. Reuse the existing CLI registry
+setting with docker.io, retaining exact images/versions, existing hosted-runner
+credentials and ALL original proof gates. Parsed native workflow compared against
+80 differs ONLY in this host value. Source/native/API/CI test bodies unchanged;
+original7 boundary fixtures remain applicable. Actual full hosted recovery is
+still owed, and any mirror/setup/test failure remains a release hold.
+
 ## October22 native uploaded-PDF intake — pre-edit customer correction
 
 Read-only production native SAVE body1bd28e75afa0f50bb07b717795a5be0e confirms

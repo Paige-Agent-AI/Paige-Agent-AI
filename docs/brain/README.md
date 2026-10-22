@@ -1,3 +1,23 @@
+## EXP09 original status and owner Chat preparation — verified releases,2026-10-22
+
+PR2511 merged f7cc0cb6a0c92350680578336bcc08d95cbbd26d after exact-head
+checks; normal Edge39692766955 and direct Chat@500/all261 digests/JWTtrue matched
+that release. Literal-true original consumed-preparation observation changes no
+original action or default CRM/reminder transport. Receipt6328805431.
+
+PR2519 merged d53fe8333b0cb1fe2134fb94c9f85bbb2d411b28 after11 applicable
+checks/two statuses and accurately labelled lower-assurance review. Normal Edge
+39696707197 and direct Chat@501/all261 served-source hashes/JWTtrue match actual
+merge including EXP04 revision130000. READY production web/public build and
+receipt6329286905 retain exact identities in Master4.0. Native original Knowledge
+preparation is not publication/indexing/sharing. No new runtime, sender, approval
+system, authority or Memory store is introduced.
+
+The original saved-card consumer2522 remains unmerged; complete signed-in
+owner/client Knowledge publication/retrieval, eligible Live and the seven-pillar
+Experience/capabilities/official algorithms remain owed. This factual closeout
+promotes no customer release or complete Experience acceptance.
+
 ## EXP09 original preparation readback — 2026-10-21 production
 
 Native reader2496 merged5b03e90302e19ee1ef4a8dacbd677329378fa06e and normal

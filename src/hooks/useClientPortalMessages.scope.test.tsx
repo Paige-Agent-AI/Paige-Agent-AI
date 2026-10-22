@@ -71,6 +71,8 @@ it("Auth A→B→A invalidates old sends even while the shell still holds the or
  await act(async()=>{for(const listener of f.listeners)listener("SIGNED_IN",{user:{id:actor}});await flush();});
  const count=f.native.length;await act(async()=>{expect(await old("Retired Auth intent","message")).toBe(false);});
  expect(f.native).toHaveLength(count);
+ await act(async()=>{expect(await state.send("Fresh returning request","help")).toBe(true);await flush();});
+ expect(f.native.filter(call=>call.name==="client_portal_send_message")).toHaveLength(1);
 });
 it("a changed actual Auth actor cannot borrow its new token for an old customer's send",async()=>{
  await render();f.getUser.mockResolvedValue({data:{user:{id:"changed-actor"}},error:null});const count=f.native.length;

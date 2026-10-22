@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useShellCustomerIdentity } from "@/lib/portal/customerIdentity";
+import { captureClientPortalAuthorization, withClientPortalBusiness } from "@/lib/client-portal-scope";
 import { formatPaymentMinor, readCustomerPaymentRequest, type CustomerPaymentRequest } from "@/solo/sales/customerPaymentRequest";
 
 /**
@@ -110,6 +112,38 @@ type PortalRpc = "client_portal_invoices" | "client_portal_invoice_payment_reque
 /** The E09 RPCs are newer than the generated Database types; keep the call shape typed locally. */
 function portalRpc(name: PortalRpc, args: Record<string, unknown>) {
   return supabase.rpc(name as never, args as never) as unknown as PromiseLike<RpcResult>;
+}
+
+
+/** Original customer/business intent, never a permission or stored credential. */
+export type PortalBillingScope = {actorId: string; tenantId: string; clientId: string};
+export type PortalBillingReadContext = {scope: PortalBillingScope; current: () => boolean};
+export class PortalBillingAccessFailure extends Error {}
+type BillingRequest = PromiseLike<RpcResult> & {setHeader(name: string, value: string): BillingRequest};
+/** One bounded original SDK read. Native Auth/CRM/commercial functions remain authority. */
+async function scopedBillingRpc(name: string, args: Record<string, unknown>, context: PortalBillingReadContext): Promise<RpcResult> {
+  let active = true, timer: ReturnType<typeof setTimeout> | undefined;
+  const current = () => active && context.current();
+  const check = () => {if (!current()) throw new PortalBillingAccessFailure("Customer context changed");};
+  const read = async () => {
+    check();
+    let authorization: string;
+    try {authorization = await captureClientPortalAuthorization(supabase.auth, context.scope.actorId, current);}
+    catch {throw new PortalBillingAccessFailure("Customer session could not be checked");}
+    check();
+    const query = supabase.rpc(name as never, {...args, p_tenant_id: context.scope.tenantId, p_expected_client_id: context.scope.clientId} as never) as unknown as BillingRequest;
+    const result = await withClientPortalBusiness(query, context.scope.tenantId).setHeader("Authorization", authorization);
+    check();
+    const [captured, actual] = await Promise.all([supabase.auth.getUser(authorization.slice(7)), supabase.auth.getUser()]);
+    check();
+    if (captured.error || actual.error || captured.data.user?.id !== context.scope.actorId || actual.data.user?.id !== context.scope.actorId)
+      throw new PortalBillingAccessFailure("Customer session changed");
+    if (errorParts(result.error).code === "42501") throw new PortalBillingAccessFailure("Customer financial access unavailable");
+    return result;
+  };
+  try {return await Promise.race([read(), new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {active = false; reject(new Error("Invoice read timed out"));}, 20_000);
+  })]);} finally {active = false; clearTimeout(timer);}
 }
 
 const errorParts = (err: unknown) => {
@@ -229,14 +263,26 @@ export function parseInvoicePage(data: unknown): PortalInvoicePage | null {
 }
 
 /** One read of the caller's invoices. Null = no customer relationship. Throws on a failed read. */
-export async function readPortalInvoices(args: { tenantId?: string | null; limit?: number; after?: PortalInvoiceCursor | null } = {}): Promise<PortalInvoicePage | null> {
-  const { data, error } = await portalRpc("client_portal_invoices", {
+export async function readPortalInvoices(args: { tenantId?: string | null; limit?: number; after?: PortalInvoiceCursor | null; context?: PortalBillingReadContext } = {}): Promise<PortalInvoicePage | null> {
+  const params = {
     p_tenant_id: args.tenantId ?? null,
     p_limit: args.limit ?? PORTAL_INVOICES_PAGE,
     p_after: args.after ?? null,
-  });
+  };
+  const {data, error} = await (args.context ? scopedBillingRpc("client_portal_invoices_scoped", params, args.context) : portalRpc("client_portal_invoices", params));
   if (error) throw error;
-  return parseInvoicePage(data);
+  const page = parseInvoicePage(data);
+  if (args.context && (!page || page.tenant_id !== args.context.scope.tenantId)) throw new PortalBillingAccessFailure("Customer financial scope changed");
+  return page;
+}
+
+
+/** Recheck the exact original invoice/customer through EXP04's unchanged ledger projection.
+ * Used before and after the existing document renderer; no bearer grant, ledger write or new renderer. */
+export async function verifyPortalInvoiceAccess(invoiceId: string, context: PortalBillingReadContext): Promise<void> {
+  const reply = await scopedBillingRpc("client_portal_invoice_ledger_scoped", {p_invoice_id: invoiceId, _limit: 1, _cursor: null}, context);
+  if (reply.error || !isObject(reply.data) || reply.data.invoice_id !== invoiceId)
+    throw new PortalBillingAccessFailure("Customer invoice access unavailable");
 }
 
 export type PortalPaymentRead =
@@ -253,11 +299,9 @@ export type PortalPaymentRead =
  * The payment request the business sent for one issued invoice, read-only. Never creates or dispatches
  * anything. The top-level shape is what readCustomerPaymentRequest already parses for the bearer page.
  */
-export async function readPortalInvoicePayment(args: { invoiceId: string; tenantId: string | null }): Promise<PortalPaymentRead> {
-  const { data, error } = await portalRpc("client_portal_invoice_payment_request", {
-    p_invoice_id: args.invoiceId,
-    p_tenant_id: args.tenantId,
-  });
+export async function readPortalInvoicePayment(args: { invoiceId: string; tenantId: string | null; context?: PortalBillingReadContext }): Promise<PortalPaymentRead> {
+  const params = {p_invoice_id: args.invoiceId, p_tenant_id: args.tenantId};
+  const {data, error} = await (args.context ? scopedBillingRpc("client_portal_invoice_payment_request_scoped", params, args.context) : portalRpc("client_portal_invoice_payment_request", params));
   if (error) {
     if (isInvoiceUnavailable(error)) return { state: "unavailable" };
     throw error;
@@ -299,7 +343,7 @@ export interface ClientPortalInvoicesState {
   error: string | null;
   /** Resolved: the caller has no customer relationship (the read returned null). */
   unavailable: boolean;
-  /** Resolved: the account is linked to more than one business, which Payments doesn't support yet. */
+  /** Resolved: the original resolver requires an authorized business choice. */
   multipleBusinesses: boolean;
   /** Tenant of the loaded invoices (server-resolved), or null before the first read. */
   tenantId: string | null;
@@ -307,6 +351,8 @@ export interface ClientPortalInvoicesState {
   scopeEpoch: number;
   /** True once a read for this identity has landed. */
   loaded: boolean;
+  /** Exact original selected intent for this mounted page; contains no credential. */
+  requestContext?: PortalBillingReadContext;
   refresh: () => Promise<void>;
   loadMore: () => Promise<void>;
 }
@@ -315,7 +361,26 @@ export const PORTAL_INVOICES_LOAD_ERROR = "We couldn't load your invoices. Check
 /** A failed re-read while the last list is still on screen: the list is there, it may just be behind. */
 export const PORTAL_INVOICES_REFRESH_ERROR = "We couldn't refresh your invoices, so this may be out of date.";
 
-export function useClientPortalInvoices(): ClientPortalInvoicesState {
+export function useClientPortalInvoices(enabled = true, initialLimit = PORTAL_INVOICES_PAGE): ClientPortalInvoicesState {
+  const identity = useShellCustomerIdentity();
+  const frame = identity?.viewer === "customer" ? identity.frame : null;
+  const requested = frame && isId(frame.actorId) && isId(frame.profile.tenant_id) && isId(frame.profile.id)
+    && frame.profile.linked_user_id === frame.actorId
+    ? {actorId: frame.actorId, tenantId: frame.profile.tenant_id, clientId: frame.profile.id} : undefined;
+  const requestedKey = identity ? JSON.stringify([identity.viewer, requested?.actorId, requested?.tenantId, requested?.clientId]) : "legacy";
+  const available = enabled && (!identity || identity.viewer === "staff" || !!requested && identity.phase === "ready" && !identity.checking);
+  const alive = useRef(true);
+  const origin = useRef({key: requestedKey, available, generation: 0, signedOut: false});
+  if (origin.current.key !== requestedKey || origin.current.available !== available) {
+    origin.current = {...origin.current, key: requestedKey, available, generation: origin.current.generation + 1};
+  }
+  const generation = origin.current.generation;
+  const dataGeneration = useRef(-1);
+  const requestedActor = requested?.actorId, requestedTenant = requested?.tenantId, requestedClient = requested?.clientId;
+  const scopeCurrent = useCallback(() => alive.current && origin.current.generation === generation && origin.current.available && !origin.current.signedOut, [generation]);
+  const requestContext = useMemo<PortalBillingReadContext | undefined>(() => requestedActor && requestedTenant && requestedClient
+    ? {scope: {actorId: requestedActor, tenantId: requestedTenant, clientId: requestedClient}, current: scopeCurrent} : undefined,
+  [requestedActor, requestedTenant, requestedClient, scopeCurrent]);
   const [invoices, setInvoices] = useState<PortalInvoice[]>([]);
   const [balances, setBalances] = useState<PortalInvoiceBalance[]>([]);
   const [openCount, setOpenCount] = useState(0);
@@ -328,7 +393,7 @@ export function useClientPortalInvoices(): ClientPortalInvoicesState {
   const [unavailable, setUnavailable] = useState(false);
   const [multipleBusinesses, setMultipleBusinesses] = useState(false);
   const [tenantId, setTenantId] = useState<string | null>(null);
-  const [scopeEpoch, setScopeEpoch] = useState(0);
+  const [, setScopeEpoch] = useState(0);
   const [loaded, setLoaded] = useState(false);
 
   // Mirrors for async callbacks; each async result is applied only if its epoch is current.
@@ -338,7 +403,6 @@ export function useClientPortalInvoices(): ClientPortalInvoicesState {
   const cursorRef = useRef<PortalInvoiceCursor | null>(null);
   const countRef = useRef(0);
   const readSeq = useRef(0);
-  const alive = useRef(true);
   const moreInFlight = useRef(false);
   /** Set once the server refused for multiple relationships: no further reads for this identity. */
   const halted = useRef(false);
@@ -391,12 +455,16 @@ export function useClientPortalInvoices(): ClientPortalInvoicesState {
       countRef.current = next.length;
       return next;
     });
+    dataGeneration.current = generation;
     setLoaded(true);
     shown.current = true;
-  }, []);
+  }, [generation]);
 
   const fail = useCallback((err: unknown) => {
-    if (isMultipleRelationships(err)) {
+    dataGeneration.current = generation;
+    if (err instanceof PortalBillingAccessFailure) {
+      halted.current = true; clearData(); setUnavailable(true); setError(null);
+    } else if (isMultipleRelationships(err)) {
       halted.current = true;
       clearData();
       setError(null);
@@ -404,22 +472,22 @@ export function useClientPortalInvoices(): ClientPortalInvoicesState {
     } else {
       setError(shown.current ? PORTAL_INVOICES_REFRESH_ERROR : PORTAL_INVOICES_LOAD_ERROR);
     }
-  }, [clearData]);
+  }, [clearData, generation]);
 
   const refresh = useCallback(async () => {
-    if (halted.current) return;
+    if (halted.current || !scopeCurrent()) return;
     const myEpoch = epoch.current;
     const seq = ++readSeq.current;
-    const current = () => alive.current && myEpoch === epoch.current && seq === readSeq.current;
+    const current = () => alive.current && scopeCurrent() && myEpoch === epoch.current && seq === readSeq.current;
     const pinned = tenantRef.current;
     // Re-read as many as are on screen (up to one full page), so a refresh never folds away older invoices
     // the customer just opened, unless they had opened more than one page holds.
-    const limit = Math.min(PORTAL_INVOICES_MAX_PAGE, Math.max(PORTAL_INVOICES_PAGE, countRef.current));
+    const limit = Math.min(PORTAL_INVOICES_MAX_PAGE, Math.max(initialLimit, countRef.current));
     try {
-      const page = await readPortalInvoices({ tenantId: pinned, limit });
+      const page = await readPortalInvoices({ tenantId: requestContext?.scope.tenantId ?? pinned, limit, context: requestContext });
       if (!current()) return;
       if (!page) {
-        clearData();
+        clearData(); dataGeneration.current = generation;
         setUnavailable(true);
       } else {
         // The first read pins the business; a later answer for another one is never shown.
@@ -433,20 +501,20 @@ export function useClientPortalInvoices(): ClientPortalInvoicesState {
     } finally {
       if (current()) setLoading(false);
     }
-  }, [apply, clearData, fail]);
+  }, [apply, clearData, fail, scopeCurrent, initialLimit, requestContext, generation]);
 
   const loadMore = useCallback(async () => {
     const after = cursorRef.current;
     const pinned = tenantRef.current;
-    if (halted.current || !after || !pinned || moreInFlight.current) return;
+    if (halted.current || !scopeCurrent() || !after || !pinned || moreInFlight.current) return;
     moreInFlight.current = true;
     const myEpoch = epoch.current;
     const seq = readSeq.current;
     // A refresh that started meanwhile owns the list; this page is then dropped.
-    const current = () => alive.current && myEpoch === epoch.current && seq === readSeq.current;
+    const current = () => alive.current && scopeCurrent() && myEpoch === epoch.current && seq === readSeq.current;
     setLoadingMore(true);
     try {
-      const page = await readPortalInvoices({ tenantId: pinned, after });
+      const page = await readPortalInvoices({ tenantId: pinned, after, context: requestContext });
       if (!current()) return;
       if (!page || page.tenant_id !== pinned) throw new Error("Invoice business changed");
       apply(page, true);
@@ -457,28 +525,37 @@ export function useClientPortalInvoices(): ClientPortalInvoicesState {
     } finally {
       if (myEpoch === epoch.current) { moreInFlight.current = false; if (alive.current) setLoadingMore(false); }
     }
-  }, [apply, fail]);
+  }, [apply, fail, requestContext, scopeCurrent]);
 
   // Identity scope + initial read.
   useEffect(() => {
     alive.current = true;
+    resetScope();
     let cancelled = false;
     const start = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (cancelled) return;
+      if (!available || origin.current.signedOut) return;
+      if (requestedActor) {actor.current = requestedActor; await refresh(); return;}
+      let user: {id: string} | null;
+      try {const result = await supabase.auth.getUser(); if (result.error) throw result.error; user = result.data.user;}
+      catch {if (!cancelled && scopeCurrent()) {fail(new PortalBillingAccessFailure("Customer session could not be checked")); setLoading(false);} return;}
+      if (cancelled || !scopeCurrent()) return;
+      if (requestedActor && user?.id !== requestedActor) {fail(new PortalBillingAccessFailure("Customer session changed")); setLoading(false); return;}
       actor.current = user?.id ?? null;
-      if (!user) { setLoading(false); setUnavailable(true); return; }
+      if (!user) { dataGeneration.current = generation; setLoading(false); setUnavailable(true); return; }
       await refresh();
     };
     void start();
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (cancelled) return;
+      if (origin.current.signedOut && event !== "SIGNED_IN") return;
       const next = session?.user.id ?? null;
       if (event === "INITIAL_SESSION" && next === actor.current) return;
       if (next === actor.current && event !== "SIGNED_OUT") return;
+      ++origin.current.generation;
+      origin.current.signedOut = event === "SIGNED_OUT" || !next;
       actor.current = next;
       resetScope();
-      if (!next || event === "SIGNED_OUT") { setLoading(false); setUnavailable(true); return; }
+      if (!next || event === "SIGNED_OUT") { dataGeneration.current = generation; setLoading(false); setUnavailable(true); return; }
       // Do not call SDK Auth/RPC methods while its Auth callback holds the lock.
       queueMicrotask(() => { if (!cancelled) void refresh(); });
     });
@@ -487,7 +564,7 @@ export function useClientPortalInvoices(): ClientPortalInvoicesState {
       alive.current = false;
       subscription.unsubscribe();
     };
-  }, [refresh, resetScope]);
+  }, [refresh, resetScope, available, scopeCurrent, fail, generation, requestedActor]);
 
   // Freshness without realtime or polling: window focus, and the tab becoming visible again (for
   // example, coming back from the business's payment page).
@@ -504,10 +581,16 @@ export function useClientPortalInvoices(): ClientPortalInvoicesState {
     };
   }, [refresh]);
 
+  const refused = !!identity && (identity.viewer === "inactive" || ["unavailable", "paused", "ended"].includes(identity.phase));
+  const heldError = !available && identity?.phase === "error";
+  const masked = !available || origin.current.signedOut || dataGeneration.current !== generation;
   const pastDueCount = invoices.filter((i) => i.past_due).length;
+  if (masked) return {invoices: [], balances: [], openCount: 0, pastDueCount: 0, invoiceCount: 0, hasMore: false, businessName: null,
+    loading: !origin.current.signedOut && !refused && !heldError, loadingMore: false, error: heldError ? PORTAL_INVOICES_LOAD_ERROR : null, unavailable: origin.current.signedOut || refused, multipleBusinesses: false, tenantId: null,
+    scopeEpoch: generation, loaded: false, requestContext, refresh, loadMore};
   return {
     invoices, balances, openCount, pastDueCount, invoiceCount, hasMore, businessName, loading, loadingMore, error, unavailable,
-    multipleBusinesses, tenantId, scopeEpoch, loaded, refresh, loadMore,
+    multipleBusinesses, tenantId, scopeEpoch: generation, loaded, requestContext, refresh, loadMore,
   };
 }
 
@@ -523,29 +606,11 @@ export type PortalInvoicesGlance =
  * count and balances cover every invoice; the past-due count is exact only when that page holds them all.
  */
 export function usePortalInvoicesGlance(enabled = true): PortalInvoicesGlance {
-  const [glance, setGlance] = useState<PortalInvoicesGlance>({ state: "loading" });
-  useEffect(() => {
-    if (!enabled) { setGlance({ state: "unavailable" }); return; }
-    let cancelled = false;
-    setGlance({ state: "loading" });
-    readPortalInvoices({ limit: PORTAL_INVOICES_MAX_PAGE })
-      .then((page) => {
-        if (cancelled) return;
-        if (!page) { setGlance({ state: "unavailable" }); return; }
-        setGlance({
-          state: "ready",
-          openCount: page.open_count,
-          balances: page.balances,
-          pastDue: page.has_more ? null : page.invoices.filter((i) => i.past_due).length,
-        });
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        setGlance(isMultipleRelationships(err) ? { state: "unavailable" } : { state: "error" });
-      });
-    return () => { cancelled = true; };
-  }, [enabled]);
-  return glance;
+  const source = useClientPortalInvoices(enabled, PORTAL_INVOICES_MAX_PAGE);
+  if (!enabled || source.unavailable || source.multipleBusinesses) return {state: "unavailable"};
+  if (source.error) return {state: "error"};
+  if (source.loading || !source.loaded) return {state: "loading"};
+  return {state: "ready", openCount: source.openCount, balances: source.balances, pastDue: source.hasMore ? null : source.pastDueCount};
 }
 
 /** "Mon, Nov 3" for an instant in the viewer's zone; the year only when it is not this year. */

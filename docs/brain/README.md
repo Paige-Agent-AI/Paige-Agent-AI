@@ -1309,8 +1309,8 @@ exact1509 is preserved by ancestry; native producer#2545/190000 is separate and
 production-unapplied. No template-specific Chat/Live execution or algorithm
 readiness promotion, no completed legal review inferred.
 
-Source161 selected tests/seven suites, final25-template refusal-exit subset, actual
-Sales/editor/SDK20 responsive frames/16 paths/zero errors and25 owning pins PASS.
+Source163 selected tests/seven suites, final25-template refusal-exit subset, actual
+Sales/editor/SDK20 responsive frames/17 paths/zero errors and25 owning pins PASS.
 One API predicate parameter annotation fixes real new type errors with identical
 emitted JS; final type baseline10/current6, scoped lint0errors/two incumbent warnings
 and BindingLedger35/Gold PASS. Impeccable exit0/57 advisory notes, including the
@@ -1322,3 +1322,11 @@ Review/exact-head CI/normal releases/actual production source readback, ordinary
 owner/staff/linked-client roles and full commercial/signature/payment/delivery/
 founder evaluation remain separately owed. See [bounded UI evidence](../evidence/ui-delivery/e04-agreement-templates.md)
 and [the original twelve-outcome journey](../delivery/exp04-get-paid-deliver-journey.md).
+
+Subsequent functional review: prior source passes25 template positives then fails
+two genuine interrupted-read regressions. Final query/authority interruption
+retires only stale UI read locks and preserves the native request/authority epoch.
+All163 integrated tests pass; actual SDK held-response completion plus render-frame
+barrier proves stale recovery cannot publish before a new explicit read. Final
+20-frame/17-path proof pins all25 owning files exactly. This is a functional
+recovery repair, not further visual polishing or a provider/acceptance claim.

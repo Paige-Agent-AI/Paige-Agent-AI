@@ -132,17 +132,16 @@ rich editor, native paper/tokens, query navigation and one Sales leave guard;
 no new library, execution, approval, sender or Portal interface. Optional review
 configuration never indicates completed review.
 
-Actual final owning Sales/editor/SDK source20 viewport/theme frames/16 paths/zero
+Actual final owning Sales/editor/SDK source20 viewport/theme frames/17 paths/zero
 page errors,25 owning source pins and27 images. Desktop and320 dark action/source
 views inspected. Native overlay folds/reopens without losing work. Required-field
 focus, actual source/record/client/reload, immutable version/earlier source, readonly
 unknown same-request retry/recovery, stale source, leave cancellation and scope/
 authority retirement pass. Finish found/repaired refusal save-lock exit and document
-heading hierarchy; bounded confirmation passed. Subsequent API parameter annotation
-fixes two real TypeScript errors with byte-identical emitted JavaScript; source
-compatibility evidence is separate, never a rewritten screenshot/pin. Final type
-baseline10/current6, ESLint0errors/two incumbent warnings;161 tests/seven suites,
-then25-template refusal-exit subset PASS. No baseline/timeout/assertion weakening.
+heading hierarchy; bounded confirmation passed. API parameter annotation fixes two real TypeScript errors with byte-identical
+emitted JavaScript; final browser pins include the corrected source. Final type
+baseline10/current6, ESLint0errors/two incumbent warnings;163 tests/seven suites,
+all27 template cases PASS. No baseline/timeout/assertion weakening.
 
 Cached Impeccable4.1.0 detect exit0 with57 non-failing advisories across incumbent
 Sales. One new15px template-row type advisory follows the selected native Sales
@@ -154,3 +153,11 @@ Original shell controls scroll; business-private words have no browser cache.
 Production prerequisites#2532/#2545, own review/CI/release/readback, actual ordinary
 owner/staff/linked-client/provider behavior, complete professional Agreements and
 all O1–O12/founder acceptance remain owed. No other agent is involved.
+
+Subsequent functional review: prior source passes25 template positives then fails
+two genuine interrupted-read regressions. Final query/authority interruption
+retires only stale UI read locks and preserves the native request/authority epoch.
+All163 integrated tests pass; actual SDK held-response completion plus render-frame
+barrier proves stale recovery cannot publish before a new explicit read. Final
+20-frame/17-path proof pins all25 owning files exactly. This is a functional
+recovery repair, not further visual polishing or a provider/acceptance claim.

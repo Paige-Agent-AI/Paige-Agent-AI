@@ -7,9 +7,9 @@ MATERIAL_FLOW_CHANGE: YES: original Terms & Agreements opens the native template
 FLOW_PROTOTYPE: PASS: isolated original native-shell prototype275be12415239d4ecdb66bec0894146ec9fe5c64,20 responsive/theme frames/13 paths/0errors, selected by existing lead under October21 routine UX delegation. No founder acceptance inferred.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an authorized business owner/admin retains exact reusable wording and optional requested-review routing, then prepares a client agreement from that original version.
 VISUAL_DIRECTION: PASS: native editorial document/rich-text/source views with secondary version/configuration context; source-backed rows and clear primary save/use actions. Existing shell owns scroll and PAIGE conversation. No decorative revenue chart or replacement navigation.
-AUTOMATED_EVIDENCE: PASS:161 selected tests/seven integrated suites, preserving original correction/preparation/API/leave coverage and adding template-to-client source continuity. Later25-case template subset confirms repaired refusal exit. Producer#2545 separately proves68 native checks/replay2/five concurrent sessions/three observed waits; these are not customer acceptance.
+AUTOMATED_EVIDENCE: PASS:163 selected tests/seven integrated suites, preserving original correction/preparation/API/leave coverage and adding template-to-client source continuity. Initial25-case template subset confirms repaired refusal exit; two additional deferred-read regressions fail on prior source and pass with the interruption fix. Producer#2545 separately proves68 native checks/replay2/five concurrent sessions/three observed waits; these are not customer acceptance.
 STATIC_EVIDENCE: PASS: final type ratchet baseline10/current6, baseline unchanged; scoped ESLint0errors/two incumbent warnings; BindingLedger35 and Gold guards PASS. Closed decoder and frozen native command preserve source/time/UUID/actor scope. Two new predicate-annotation type errors were fixed without changing emitted JavaScript or decoder/native validation.
-RENDERED_EVIDENCE: PASS: actual SalesWorkspace/SalesOps/TenantCommandCenterShell/rich editor/SDK compiled source,20 viewport/theme cases/16 interaction paths/0page errors,25 owning source pins and original font checksum. assets/e04-agreement-templates/result.json and27 actual frames. Final type-only API annotation has separately verified identical emitted JavaScript, not a silently replaced source pin.
+RENDERED_EVIDENCE: PASS: actual SalesWorkspace/SalesOps/TenantCommandCenterShell/rich editor/SDK compiled source,20 viewport/theme cases/17 interaction paths/0page errors,25 owning source pins and original font checksum. assets/e04-agreement-templates/result.json and27 actual frames. Final source pins match all25 owning files, including the corrected API annotation and interrupted-read repair; separate emission proof preserves type-fix history.
 BEHAVIORAL_EVIDENCE: PASS: actual library/new template, required title focus, supplied words/options retained, same native receipt/version navigation, actual client required, original source ID/body through original agreement CREATE, agreement reload/source navigation, new version/earlier source preservation, readonly unknown same-ID/payload retry/recovery, stale refusal, original leave dialog, unknown-role hiding, conclusive refusal/usable exit and business retirement.
 AUTHENTICATED_RUNTIME: UNVERIFIED: all browser authority/network ports are synthetic. Actual owner/staff/linked-client JWT roles, production template and agreement write/read/reload, providers/signatures/payments/delivery and full founder acceptance remain owed.
 KEYBOARD_FOCUS: PASS: actual required title/client focus and native editor/source controls; original leave dialog has meaningful stay/leave choices with keyboard/focus regressions retained. No second leave/approval mechanism.
@@ -82,17 +82,18 @@ separate reviewed release. Consumer owns no migration/Edge/provider operation.
 Actual source driver: existing `scripts/live-drive/agreement-authoring-drive.mjs
 --templates --compiled`; no new evaluator/runtime. Synthetic network and identity
 ports only; actual owning UI/editor/SDK/parser/route/guard. Private mock content is
-not a shipped legal template. Browser results25 owning pins/20 frames/16 paths/0
+not a shipped legal template. Browser results25 owning pins/20 frames/17 paths/0
 page errors and27 images, original font hash and source scope in result.json.
 `api-type-compatibility.json` records old/new API source hashes and **identical
 emitted JavaScript SHA256ed69374745a42741482d690480e089e2cd11d34efdd03567b30483f28a910f1c**.
-The final annotation corrects two real new TypeScript errors under the incumbent
+The annotation corrects two real new TypeScript errors under the incumbent
 nullable Zod/compiler inference; runtime required keys/strict schema/native checks
-are unchanged. All other owning source pins match the final composed consumer.
+are unchanged. Final actual browser source pins match the consumer, including
+the API annotation and interrupted-read repair.
 No historical screenshot/source pin was rewritten to imply a different render.
 
-Local logs: e04-template-integrated-regression.log161/seven; refusal-exit subset25;
-browser-confirmation20/16/0; final-type-ratchet baseline10/current6; final ESLint
+Local logs: e04-template-interrupted-read-repaired.log163/seven; original
+25-positive/two-failure deferred-read baseline retained; final actual browser20/17/0; final-type-ratchet baseline10/current6; final ESLint
 0errors/two incumbent warnings; Impeccable exit0. First sandbox Vitest TEMP EPERM
 was INVALID/no tests, rerun through existing native single-worker runtime. Initial
 missing prerequisite guard caused18 genuine integration failures; exact reviewed
@@ -124,3 +125,13 @@ block. Actual content review and legal sufficiency still need real applicable
 evidence. No business-private library/reviewer config is automatically projected
 into the client Portal. No real signatures, sends, charges, new QA business,
 privileged identity or protected Chat/provider activation occurred.
+
+The subsequent functional review reproduced two interrupted-read defects while
+all25 original template cases passed: retained-scope change could leave paging
+disabled, and a transient authority check could leave recovery disabled. Final
+source retires the stale UI read lock while preserving the native request and
+authority epoch. Both genuine negative regressions and all163 integrated tests
+pass. Actual SDK/browser proof holds the original recovery response across the
+authority interruption, waits for its response-completion barrier and next render
+frames before checking it cannot publish, then explicitly recovers the same native
+row. No new poller, timeout extension, assertion suppression or approval bypass.

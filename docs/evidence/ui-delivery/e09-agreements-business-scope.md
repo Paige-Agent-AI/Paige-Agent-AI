@@ -26,7 +26,7 @@ ACCEPTANCE_CRITERIA: actual actor/selected tenant/expected customer and current 
 MOTION_PURPOSE: none added.
 PROTECTED_SEAMS: original legal/financial engine, owner sender/signing approval/Edge, Chat/C0b/Spine/Knowledge and global identity remain unchanged. Native255 prerequisite is independently gated.
 
-INTERNAL_BUILD_IDENTITY: implementation=LOCAL_UNCOMMITTED; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(2586:20271113290009); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e09-agreements-business-scope.md
+INTERNAL_BUILD_IDENTITY: implementation=e99b20a792774b97f9f9218385635f28af850453; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(2586:20271113290009); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e09-agreements-business-scope.md
 RELEASE_CHANNEL: development: original component with synthetic records only; no customer, provider or legal action.
 RELEASE_CLASSIFICATION: internal-only: original consumer scope and link/copy recovery, not complete Portal activation.
 CUSTOMER_RELEASE_IDENTITY: none: bounded repair, no announcement.

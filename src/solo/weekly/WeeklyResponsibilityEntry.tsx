@@ -56,6 +56,11 @@ export function WeeklyResponsibilityDialog({ open, onOpenChange, theme, read, re
   control?: WeeklyFutureControl; controlBusy?: boolean;
 }) {
   return <Sheet open={open} onOpenChange={onOpenChange}><SheetContent className="e5-weekly-sheet paige-solo" data-pg={theme} data-theme={theme}
+    onEscapeKeyDown={event => {
+      // Radix handles Escape in capture before the inner review's React handler.
+      // Let that review dismiss itself without also closing its owning sheet.
+      if (event.target instanceof Element && event.target.closest('.e5-weekly-panel [aria-label="Review future checks"]')) event.preventDefault();
+    }}
     onCloseAutoFocus={event => { if (onReturnFocus) { event.preventDefault(); onReturnFocus(); } }}>
       <SheetHeader><SheetTitle>Weekly responsibility</SheetTitle><SheetDescription>Current owner scope, canonical schedules and verified results.</SheetDescription></SheetHeader>
       <WeeklyResponsibilityPanel read={read} refresh={refresh} control={control} controlBusy={controlBusy} pathname={pathname} draftComposer={open ? <WeeklyDraftComposer

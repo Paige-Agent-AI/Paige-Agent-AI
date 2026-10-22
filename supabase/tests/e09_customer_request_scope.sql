@@ -1,7 +1,7 @@
 -- Original replayed native functions and real roles. Synthetic, rolled back;
 -- provider execution disabled, no production identities or effectful acceptance.
 BEGIN;
-SELECT plan(39);
+SELECT plan(42);
 
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0970100-0000-4000-8000-000000000001','authenticated','authenticated','scope-owner@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -91,6 +91,11 @@ SELECT set_config('paige.portal_access_write','',true);
 SELECT ok(pg_temp.scope_read('SELECT public.client_portal_frame()','e0970200-0000-4000-8000-000000000001') IS NULL,'paused selection loses original frame');
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000001')#>>'{business,name}',
  'Northwind Studio','selected older pause never names latest other-business pause');
+SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000001')->>'request_business_id',
+ 'e0970200-0000-4000-8000-000000000001','scoped notice proves the native request hint was consumed');
+SELECT ok(NOT pg_temp.scope_read('SELECT public.client_portal_access_state()') ? 'request_business_id','legacy unscoped notice shape remains compatible');
+SELECT is((SELECT array_agg(k ORDER BY k) FROM jsonb_object_keys(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000001')) k),
+ ARRAY['business','request_business_id','since','state'],'scoped notice has no internal reason, note or other business');
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000002')->>'state','paused','selected B pause is named');
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()')#>>'{business,name}',
  'Harbor Lane Advisors','unselected legacy latest notice remains compatible');

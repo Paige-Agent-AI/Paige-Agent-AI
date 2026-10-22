@@ -63,6 +63,15 @@ it("A→B→A never revives a retained old send callback",async()=>{
  await render();const old=state.send;await render(businessB);await render();const count=f.native.length;
  await act(async()=>{expect(await old("Retired intent","message")).toBe(false);});expect(f.native).toHaveLength(count);expect(state.outbox).toEqual([]);
 });
+it("Auth A→B→A invalidates old sends even while the shell still holds the original frame",async()=>{
+ await render();const old=state.send;
+ f.getUser.mockResolvedValue({data:{user:{id:"changed-actor"}},error:null});
+ await act(async()=>{for(const listener of f.listeners)listener("SIGNED_IN",{user:{id:"changed-actor"}});await flush();});
+ f.getUser.mockResolvedValue(actual());
+ await act(async()=>{for(const listener of f.listeners)listener("SIGNED_IN",{user:{id:actor}});await flush();});
+ const count=f.native.length;await act(async()=>{expect(await old("Retired Auth intent","message")).toBe(false);});
+ expect(f.native).toHaveLength(count);
+});
 it("a changed actual Auth actor cannot borrow its new token for an old customer's send",async()=>{
  await render();f.getUser.mockResolvedValue({data:{user:{id:"changed-actor"}},error:null});const count=f.native.length;
  await act(async()=>{expect(await state.send("Old actor intent","message")).toBe(false);await flush();});
@@ -104,7 +113,8 @@ it("wrong-business pagination never appends rows or authorizes a later send",asy
  const count=f.native.length;await act(async()=>{expect(await state.send("Do not send","message")).toBe(false);});expect(f.native).toHaveLength(count);
 });
 it("sign-out invalidates retained customer sends before the frame rerenders",async()=>{
- await render();const old=state.send,count=f.native.length;await act(async()=>{for(const listener of f.listeners)listener("SIGNED_OUT",null);await flush();});
+ await render();const old=state.send,count=f.native.length;f.getUser.mockResolvedValue({data:{user:null},error:null});
+ await act(async()=>{for(const listener of f.listeners)listener("SIGNED_OUT",null);await flush();});
  await act(async()=>{expect(await old("Signed-out intent","message")).toBe(false);});expect(f.native).toHaveLength(count);
 });
 it("an unresolved customer shell never falls back to an unscoped legacy read",async()=>{

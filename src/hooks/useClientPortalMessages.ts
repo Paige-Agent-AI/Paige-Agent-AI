@@ -233,6 +233,7 @@ export function useClientPortalMessages(): ClientPortalMessagesState {
   outboxRef.current = outbox;
 
   const resetScope = useCallback(() => {
+    origin.current.generation+=1;
     epoch.current += 1;
     readSeq.current += 1;
     appliedScope.current=requestedScope;

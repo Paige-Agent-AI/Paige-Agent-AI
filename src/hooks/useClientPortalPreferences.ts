@@ -113,6 +113,8 @@ export function useClientPortalPreferences(options:{actorId:string;tenantId?:str
       const parsed=readClientPortalPreferences(result.data,tenantId);
       if(!parsed)throw new Error("unexpected preferences");
       await ensureActor(request,authorization);
+      // A still-valid captured bearer must not conceal a changed current ordinary login.
+      await ensureActor(request);
       if(!current(request))throw new Error("retired");
       return parsed;
     };

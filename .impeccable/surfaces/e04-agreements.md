@@ -6,6 +6,34 @@ mock. Complete live Experience evaluation remains pending. No other agent is use
 
 ## Compact flow brief
 
+October21 correction extension, before production editing. Goal: correct a real
+unsigned draft without replacing its agreement/client/offer/terms identity. Owner
+feels in control of the exact change. Entry/exit: original record → correction page
+→ confirmed original record, or explicit leave. Reuse native paper/editor/context,
+scope/leave controls and original SAVE, not another agreement or execution store.
+One frozen reviewed command carries original updated_at/CAS; uncertain retry never
+refreshes that baseline or changes its payload. Actual record readback is distinct
+from an execution acknowledgment. Immediate feedback/reduced motion, no haptic.
+Reject silent overwrite, signed-content edits, guessed completion and auto charges.
+
+State map: entry reads current authorized record; draft+text source may edit,
+signed/frozen and unsupported uploaded-source replacement refuse. Missing title/
+wording focuses the field. Confirmed native save returns the same ID. Lost response
+retains proposed wording read-only; inspect current state or retry SAME frozen CAS.
+Conflict shows the new original separately and never silently reapplies. Unknown
+leaving warns that the first request may still finish. Native authority refusal
+retires private wording; business/user switch retires selection. No browser cache
+of real legal wording. Prototype data/effects remain local synthetic mocks only.
+
+Routing: E04 original Sales/Agreements owner; ordinary human writer/read uses
+canonical auth.uid/current tenant/admin and native SAVE/events/history. Existing
+agreement.draft Spine declaration remains PARTIAL and its separate Chat/Live
+adoption/confirmation is not added by this UI prototype. No provider, job, Layer C
+act, new approval/budget/role framework, ledger or Mail/Finance/Portal writer.
+Durable identity is original agreement/version/update time/native activity; missing
+ack stays unconfirmed until actual evidence. sales.department remains PROOF_OWED;
+ordinary owner/staff/client/provider/full O1–O12/founder acceptance stays owed.
+
 October21 history extension, before production editing: original detail → read-only
 wording history beside retained document → select earlier occurrence/read older page
 → return to current agreement. Native page/inline tools preserve context; no long

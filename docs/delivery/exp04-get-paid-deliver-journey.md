@@ -1883,4 +1883,24 @@ A visual read-before-write cannot atomically bind the party to the reviewed clie
 
 Native44 base plus75 checked assertions PASS; exact-head CI/Preview/review and safe native deployment/readback remain required. Forward250004 is UNAPPLIED after220004/230004/240004, preserving Portal21xx. Bounded ALG01 reconciliation/ALG12 refusal-recovery evidence is not a global algorithm production/acceptance promotion; ALG02/13 progression/recommendations and the full original Experience remain incomplete. [Evidence](../evidence/ui-delivery/e04-checked-signer-preparation.md).
 
+
+## October22 original preparation read consistency
+
+REPAIR read_paige_agreement_preparation.can_edit to mirror the original native
+content/sealed freezes; REUSE the same signature, source, permissions, closed DTO
+and writer. No new UI, store, privilege, executor or orchestration path. Exact
+production routine metadata/source is reproduced locally; five reader positives
+then a genuine retained-object failure precede the correction. Guarded forward
+260004 follows220004→230004→240004→250004; all schema/source/review/release/actual
+customer acceptance states remain independent.
+
+Final142 native assertions (44 original,75 checked,23 read-state), each relevant
+migration replayed twice; wrong scope/actor/admin, source/DTO/metadata retention,
+normal/uploaded/frozen/Sent states and unknown routine-source refusal pass. An
+initial invalid Sent fixture was corrected to honor the original required content
+digest; no constraint or assertion weakened. Original native concurrency evidence
+is retained, not reclassified as new projection concurrency. This is not a new
+capability/algorithm activation or authenticated customer outcome. See [full
+orchestration and proof boundary](../evidence/ui-delivery/e04-preparation-editability.md).
+
 October22 checked-signer main-target continuation: original prerequisite#2554 is RELEASED SOURCE VERIFIED, merge605a8c4bcdfb63c016689717947caf09f3296f83/native240004/bodyf380cfa97f14e29c8b88721a76b9db4e/unchanged owner/search_path/ACL and exact webdpl_HMxLuMYHqkv8KYQVWYJBEm2K3UW7/build605a8c4…-mvj7pldd (receipt6335238273). Actual main and all E09 source retained through a clean composition; own native250004 and checked proof are unchanged. Earlier pending-prerequisite notes are historical. This own250004 still requires fresh exact-head CI/review/normal migration/readback; source119/replay2 is not customer/provider/signing acceptance. All12 outcomes remain mandatory/incomplete.

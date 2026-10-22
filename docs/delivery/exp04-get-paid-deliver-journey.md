@@ -1,5 +1,56 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
+## October21 configurable template wording options — pre-edit native contract
+
+Owner clarification: build jurisdiction/requested-wording-review/reviewer options;
+business-supplied words and real review evidence are separate. No counsel selection
+blocks infrastructure engineering or release. No template is called legally
+sufficient or reviewed from configuration alone. Existing isolated prototype
+2f0b3356ca673d2f24259033c825031b6f9f0967 passes20 responsive cases/nine paths/zero
+errors; the lead selects this routine intent under October21 delegation. Actual
+native persistence and the full Experience are not established by a mock.
+
+1. Outcome: an authorized business author retains reusable wording and optional
+   jurisdiction/review routing with its exact original template version. No legal
+   clauses or counsel-approved content are supplied by this infrastructure.
+2. Domain: original Sales/Agreements library, EXP04 sole lead. REUSE
+   tenant_agreement_versions and original agreement source-version references;
+   EXTEND version-bound options/scoped projection and native version command;
+   REPAIR mutable retained source if implicated; NEW only missing integration.
+3. Harness/Gateway: manual native draft/version work is a legitimate domain path;
+   no forced LayerC act, new execution runtime or competing confirmation system.
+4. Spine: agreement.draft remains its actual original SAVE/ordinary policy path.
+   Template-specific Chat/Live execution is UNAVAILABLE until genuinely registered
+   and integrated, not implied by a new native RPC. Existing agreement.* PARTIAL
+   and sales.department PROOF_OWED statuses are unchanged.
+5. Provider: original native template storage only; no external provider, spend,
+   sender, signature, payment or new document renderer/adapter is introduced.
+6. Authority/risk: original auth.uid/current_user_tenant_id/is_tenant_admin and
+   explicit expected business scope. Ordinary internal draft work is not approval
+   to send/sign/charge or release services. Review routing is not review completion.
+7. Durable identity: same original library/version UUID, original created actor/time
+   and version lineage; no separate template ledger, request/event store or job.
+8. Receipt: exact same original source/version and native readback. Identical
+   request retry converges on the same row; conflicting/stale input refuses.
+   No invented Rail receipt, acceptance or signed-document evidence.
+9. Surface: existing Sales Terms & Agreements preparation, original Binding Ledger
+   surface stays PARTIAL. This first native foundation is not a mounted template
+   workspace; ensuing consumer has its own actual-source rendered evidence.
+10. Proof: native negative/role/scope/CAS/concurrency/replay and legacy active-flag
+    compatibility, full exact-head CI/Preview/review, guarded release/catalog
+    readback, actual ordinary-role UI/use/reload and full founder evaluation remain
+    separate. Source tests never establish authenticated acceptance.
+
+Pre-edit production catalog: tenant_agreement_versions has0 rows,0 duplicate
+tenant/slug/version groups and0 incoming agreement references. No production data
+was changed. Original admin consumer changes is_active then inserts a new version;
+it does not edit/delete wording. Preserve those active-flag/provisioning paths,
+platform SaaS template words, original signatures/economics and EXP09 permissions.
+Own unapplied successor is forward190000 after yielding provisional180000 to
+Portal request-scope coordination; actual E02 170000 and E04 160000 are released.
+Re-ground the actual frontier and current reservations before release. No other agent is
+assigned and no shared Chat/C0b/Portal/Operations file is leased here.
+
 ## October21 orchestration integration — current-source checkpoint
 
 Grounded main `38b6a9d51121d89123a4f286fba28d34fe4dfb84`, the original

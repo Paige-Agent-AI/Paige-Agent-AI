@@ -228,4 +228,8 @@ node "$HERE/draft-request-identity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner 
 # cluster, including stale concurrent edits and the original signing freeze.
 node "$HERE/draft-revision-history-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired
 
+# Original business template library; version-bound wording options are not
+# completed legal review or a second agreement/authorization store.
+node "$HERE/template-wording-options-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired
+
 echo "OK — every negative refused with its expected SQLSTATE; positive controls succeeded."

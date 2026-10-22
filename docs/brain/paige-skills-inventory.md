@@ -35,6 +35,8 @@ browsing intelligence — the library comes first, the browser comes after.
 
 ---
 
+**EXP09 CAP018 development repair,2026-10-21:** the original `build_game_plan` bespoke recipe is being corrected to produce a private service-appropriate draft on its original `paige_skill_runs.outputs`, with native business/CRM/Memory authorization, original Model Fabric budget/metadata-only tracing and checked save acknowledgement. Generated text is not automatically confirmed Memory or an executed client program. See `docs/delivery/e09-client-game-plan-draft.md` for exact proof and the preserved high/confirm/service-principal restrictions. All seven assigned platform recipes exist active in the catalogue; that inventory does not prove owner Chat/Live execution, connected providers or customer acceptance. This note claims development evidence only; normal CI, merge, deployment and authenticated proof remain separate.
+
 ## 1. Vision & Strategy
 - Vision interpretation — unpack owner's vague language into concrete definition
 - Vision creation — help owner articulate what they actually want if they can't

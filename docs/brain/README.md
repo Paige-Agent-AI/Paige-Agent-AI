@@ -95,6 +95,20 @@ Experience remain separate unfinished increments; no catalogue Live promotion.
 Assess functional, visual and experiential quality independently; owner acceptance
 still requires the one complete integrated Experience.
 
+## EXP04 retained-document correction guard — 2026-10-21 local
+
+Original native reader/writer frozen-draft integrity mismatch reproduced in a
+disposable fixture; four positive setup controls precede genuine baseline RED.
+Bounded forward160000 repairs the existing seal trigger only; original SAVE/link,
+author framework, native record/audit/history preserved. Native43 assertions,
+replay2/two overlapping sessions PASS, including normal draft/link/void recovery.
+New source is UNRELEASED; only own unapplied150000 renumbered after confirmed
+E09 collision, exact SQL unchanged. Other reservations untouched. E09#2525/140000 is now released; E02
+resolved its duplicate by reserving170000, after E09 pending150000/E04 pending160000. No actual provider/JWT/
+customer acceptance, data repair, new writer/store/runtime or Chat activation.
+Pre-freeze source CAS/exact commercial presentation remains C7 integration work;
+correction mounting and all original O1–O12 remain open.
+[Evidence](../evidence/ui-delivery/e04-frozen-draft-integrity.md).
 ## EXP04 authoring release — 2026-10-21
 
 Native document authoring#2515 reviewed6ef6cd9bcf9dbb97b53153edffba0243a5a060bd →

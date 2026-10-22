@@ -25,12 +25,12 @@ MUST_PRESERVE: original owner Chat/Live, C0b and CRM contracts, Knowledge visibi
 ACCEPTANCE_CRITERIA: explain only actually shared work in the correct business; changed access/facts stop stale answer; same original intent/history recovers; authenticated integrated customer proof remains separately owed.
 MOTION_PURPOSE: NONE: no motion change; original reduced-motion behavior retained.
 PROTECTED_SEAMS: original Core customer-only seams and29 literal enclosing-handler fingerprint renewals, all original dependency pins and dispatch metadata/extractor retained plus one helper pin; current-main record-links pin preserved.
-INTERNAL_BUILD_IDENTITY: git HEAD of this PR; deployment=PENDING_REQUIRED_CI_AND_RELEASE; environment=local component plus normal reviewed production target; migrations=APPLIED(20271113310009,20271113320009) via separately released2613/2617; edge=PENDING_CONSUMER_DEPLOYMENT; evidence=assets/e09-cura-progress-answer/result.json and PR exact-head receipts
-RELEASE_CHANNEL: internal: safe prelaunch increment for all eligible customer relationships; no account allowlist or provider activation
-RELEASE_CLASSIFICATION: internal-development-increment: source-backed Progress context within existing Chat
+INTERNAL_BUILD_IDENTITY: source=831316343f286856e4e7bde726de491f524a7ec9; exact final evidence-only head recorded in PR; deployment=NOT_DEPLOYED; environment=development; migrations=APPLIED(20271113310009_e09_cura_progress_projection,20271113320009_e09_cura_progress_binding); edge=PROOF_OWED(paige-ai-chat normal deployment and exact consumer source readback); evidence=docs/evidence/ui-delivery/assets/e09-cura-progress-answer/result.json and PR exact-head receipts
+RELEASE_CHANNEL: development: exact local source and rendered original component; production deployment only after ordinary green review and required CI for all eligible relationships
+RELEASE_CLASSIFICATION: internal-only: bounded source-backed Progress context in the existing incomplete Portal
 CUSTOMER_RELEASE_IDENTITY: none: full integrated Experience and actual customer acceptance remain incomplete
 RELEASE_NOTE_REQUIRED: no: no standalone customer announcement for this prerequisite integration
-RELEASE_TRUTH_BOUNDARY: PARTIAL original Portal; local/rendered/source proof only before ordinary deployment/readback; actual customer/model result PROOF OWED
+RELEASE_TRUTH_BOUNDARY: PARTIAL: original Portal; local/rendered/source proof only before ordinary deployment/readback; actual customer/model result PROOF OWED
 RELEASE_RECOVERY: position=forward-fix preserving original accepted receipts, use original Stop/status/history; reference=docs/delivery/e09-cura-progress-answer.md; never auto-resend, restore private facts or bypass Native source guards
 
 ## Scope, evidence and finish review

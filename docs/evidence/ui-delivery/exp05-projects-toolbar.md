@@ -6,7 +6,7 @@ PAIGE_UI_DESIGN: PASS: installed Flow-by-Flow, existing PAIGE design router and 
 MATERIAL_FLOW_CHANGE: NO: redundant shortcut presentation only; original planning, project creation, permission, approval, execution, exit and recovery contracts are unchanged.
 FLOW_PROTOTYPE: NOT_REQUIRED: no new goal, form, state, approval or executor. Existing native Operations prototype nevertheless traversed Projects, creation/close/focus and main ZION handoff.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible SOLO customer sees project-specific creation/refresh without a repeated generic ZION action.
-VISUAL_DIRECTION: PASS: preserve incumbent Mineral/Obsidian, typography, compact heading and native toolbar; no added banner, tab or placeholder content.
+VISUAL_DIRECTION: PASS: preserve incumbent Mineral/Obsidian, typography, compact heading and native toolbar; original layout outside the affected control is retained. Actual two-theme captures are in assets/exp05-projects-toolbar/.
 AUTOMATED_EVIDENCE: PASS: new causal regression failed on baseline (one failed/43 passed); corrected source passes55 tests across Workspace, Overview and Projects. Original uncertain project recovery, authority, source and role cases retained.
 STATIC_EVIDENCE: PASS: one production condition; existing draft handoff, project writer, permissions and scope checks unchanged. Changed-path ESLint/diff PASS.
 RENDERED_EVIDENCE: PASS:16 actual native fixture captures, four required viewports PAIGE closed/open in both themes. No page horizontal overflow; measured heading16px in this mounted context. Source9558822d71fd7b0f7cafa519bb80b73d5a3d45dc; assets/exp05-projects-toolbar/viewports.json.
@@ -31,10 +31,10 @@ MUST_NOT_HAPPEN: Remove ZION from main Operations, send a prepared question, mod
 MUST_PRESERVE: New project, source refresh, exact project recovery/inspection, tenant isolation, incumbent Plan with ZION and existing PAIGE draft continuity.
 ACCEPTANCE_CRITERIA: Projects toolbar omits the generic shortcut; original project creation/refresh and main planning remain usable; native layout/focus unaffected.
 PROTECTED_SEAMS: Presentation only; no domain writer, shared Chat/Spine/Harness/Trust/Layer C/Rail, provider, role, entitlement, migration, native record or catalogue source changed.
-INTERNAL_BUILD_IDENTITY: source=9558822d71fd7b0f7cafa519bb80b73d5a3d45dc; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE.
+INTERNAL_BUILD_IDENTITY: source=9558822d71fd7b0f7cafa519bb80b73d5a3d45dc; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp05-projects-toolbar.md
 RELEASE_CHANNEL: development: actual candidate, not live.
 RELEASE_CLASSIFICATION: internal-only: bounded prelaunch UI cleanup; full Experience evaluation remains separate.
-CUSTOMER_RELEASE_IDENTITY: none.
+CUSTOMER_RELEASE_IDENTITY: none: bounded internal prelaunch cleanup, complete Experience acceptance remains separate.
 RELEASE_NOTE_REQUIRED: NO: no customer announcement.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: exact-head review/CI, production web readback and ordinary authenticated route check. Full Projects/Delivery/Playbooks, automation and delegated ZION outcomes remain unfinished.
 RELEASE_RECOVERY: position=reviewed forward correction or revert the one display condition; reference=original project/PAIGE data and permissions unchanged.

@@ -268,7 +268,8 @@
     "picomatch": "^4.0.3",
     "rollup": "^4.52.4",
     "launch-editor": "^2.11.2",
-    "ws": "^8.18.4"
+    "ws": "^8.18.4",
+    "dompurify": "3.4.17"
   },
   "resolutions": {
     "persona-react": "6.2.1",
@@ -277,6 +278,7 @@
     "picomatch": "^4.0.3",
     "rollup": "^4.52.4",
     "launch-editor": "^2.11.2",
-    "ws": "^8.18.4"
+    "ws": "^8.18.4",
+    "dompurify": "3.4.17"
   }
 }

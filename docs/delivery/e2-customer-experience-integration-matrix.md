@@ -1,5 +1,24 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October22 — O06 recorded-coverage repair in development
+
+Original19 definitions/nine analytics remain mandatory. The original Systems Check
+consumer is being corrected to distinguish passed/resolved setup from actual
+provider operation. Six covered areas use Partial when their expected recorded
+checks have no unresolved findings; absent expected results stay Unavailable and
+uncovered areas Not checked. Individual source results remain Pass/Resolved or
+their original attention/unavailable states. No new readiness registry or check
+execution is introduced; Refresh remains a reread, not O07 completion.
+
+Five controlled source regressions failed before repair;64 focused cases/three
+suites pass. Native original-shell responsive/keyboard/state evidence is synthetic
+and separately indexed; final dark/reduced-motion recapture is still owed. Local
+source evidence is not corrected production behavior or authenticated acceptance.
+Exact-head review/CI, merge, served source and ordinary released read/reload with
+permission/cohort negatives remain separate obligations. Canonical ALG03/12/13,
+nine catalogue states, provider/Trust/LayerC/Rail and O07/O19 holds remain unchanged.
+[Bounded evidence](../evidence/ui-delivery/e2-system-check-coverage-truth.md).
+
 ## October21 22:50 UTC — release and orchestration checkpoint
 
 All19 outcome definitions below and all nine analytics capabilities remain required.

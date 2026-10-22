@@ -6,8 +6,8 @@
  * engineering vocabulary, rendered verbatim. The owner ruled the surface speaks in plain business
  * language, so the grouping is authored here rather than derived from a database enum.
  *
- * IT IS A LABELLING LAYER AND NOTHING ELSE. It changes no status, invents no signal, and grants
- * nothing. Every status still comes from the finding the runner actually wrote.
+ * IT IS A LABELLING LAYER AND NOTHING ELSE. It changes no source result, invents no signal, and
+ * grants nothing. Recorded setup findings do not certify complete operational readiness.
  *
  * ───────────────────────────────────────────────────────────────────────────────────────────
  * READ THIS IF YOU ARE WIRING PAIGE'S TEAM, THE MIND, OR SECURITY. It is your first task there.
@@ -67,7 +67,7 @@ export interface AreaDefinition {
   /** One line of what this area covers, in the same register. */
   scope: string;
   /**
-   * A short subject phrase for the operating brief's plain-English lead ("{briefLabel} is ready").
+   * A short subject phrase for the recorded-check brief ("{briefLabel} has no open findings").
    * The full `name` is a heading; this is how the area is named inside a running sentence. Kept
    * here in the label home rather than derived in the surface (§18).
    */
@@ -86,21 +86,21 @@ export const SYSTEMS_CHECK_AREAS: AreaDefinition[] = [
   {
     id: "identity",
     name: "Business setup and identity",
-    scope: "Who your business is, and the details Paige is allowed to state as fact.",
+    scope: "Recorded business details and website information.",
     briefLabel: "Your business setup",
     coveredBy: ["company_info_populated", "website_connected"],
   },
   {
     id: "people",
     name: "People and CRM",
-    scope: "The people on your books and whether anything can reach them.",
+    scope: "Recorded customer entries; contactability is not tested.",
     briefLabel: "Your client list",
     coveredBy: ["crm_has_customers"],
   },
   {
     id: "sales",
     name: "Sales and commercial operations",
-    scope: "What you sell, how work is tracked, and how you get paid.",
+    scope: "Pipeline and payment setup; settlement is not tested.",
     briefLabel: "Sales",
     coveredBy: [
       "sales_pipeline_configured",
@@ -112,21 +112,21 @@ export const SYSTEMS_CHECK_AREAS: AreaDefinition[] = [
   {
     id: "comms",
     name: "Email, phone and SMS readiness",
-    scope: "Whether a message you send actually leaves this workspace.",
+    scope: "Recorded email and phone setup; delivery is not tested.",
     briefLabel: "Email and messaging",
     coveredBy: ["comms_configured"],
   },
   {
     id: "campaigns",
     name: "Marketing, social and advertising",
-    scope: "What you have live, and where new enquiries come from.",
+    scope: "Recorded social handles; campaign and ad performance is not tested.",
     briefLabel: "Marketing",
     coveredBy: ["social_accounts_connected"],
   },
   {
     id: "integrations",
     name: "Integrations and automations",
-    scope: "The outside tools connected here, and what Paige may run in them.",
+    scope: "Registered workflows and connections; execution is not tested.",
     briefLabel: "Your automations",
     coveredBy: ["automation_wired"],
   },
@@ -226,7 +226,7 @@ export const CHECK_DESTINATIONS: Record<SystemsCheckId, CheckDestination> = {
     path: (a) => `/solo/${acct(a)}/growth/pipeline`,
   },
   revenue_tracking_configured: {
-    title: "Revenue tracking is set up",
+    title: "Won-sale stage setup",
     area: "sales",
     // Stages are authored on Pipeline, not Sales. Sales is where the revenue SHOWS; sending someone
     // there to add a closing stage sends them to the result rather than to the fix.
@@ -247,7 +247,7 @@ export const CHECK_DESTINATIONS: Record<SystemsCheckId, CheckDestination> = {
       "Ask Paige to mark a stage as closing and she will. That page cannot set it yet, so the button below will not finish this one on its own.",
   },
   payment_processor_connected: {
-    title: "You can take payment",
+    title: "Payment processor declaration",
     area: "sales",
     label: "Marketing › Sales",
     path: (a) => `/solo/${acct(a)}/growth/sales`,
@@ -259,7 +259,7 @@ export const CHECK_DESTINATIONS: Record<SystemsCheckId, CheckDestination> = {
     path: (a) => `/solo/${acct(a)}/growth/sales`,
   },
   comms_configured: {
-    title: "Email, phone and texting are ready",
+    title: "Email and phone setup",
     // A query segment, not a path. Written as `/settings/connections/communications` it lands on
     // the default segment instead — silently, per the splat note above.
     area: "comms",
@@ -282,7 +282,7 @@ export const CHECK_DESTINATIONS: Record<SystemsCheckId, CheckDestination> = {
       "Recording the accounts is what this check asks for, and you can do that here. You cannot connect an account for publishing yet — that is a separate capability.",
   },
   automation_wired: {
-    title: "An outside automation tool is connected",
+    title: "Registered automation",
     // The `automations` BRANCH is declared but redirects away and renders nothing; the working
     // destination is the leaf under Settings › Integrations.
     area: "integrations",

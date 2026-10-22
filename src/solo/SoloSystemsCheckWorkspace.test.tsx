@@ -152,7 +152,7 @@ describe("Solo Systems Check workspace", () => {
     // The owner's five parts, all present and in order.
     for (const part of [
       "What needs you now",
-      "What is ready to operate",
+      "Passed and resolved checks",
       "Your operating areas",
       "Recent activity",
       "Who does what next",
@@ -175,6 +175,57 @@ describe("Solo Systems Check workspace", () => {
     const css = readFileSync(resolve(process.cwd(), "src/solo/solo-systems-check-workspace.css"), "utf8");
     expect(css).toContain(".sc-heading h1{font:700 19px/1.2");
     expect(css).toContain("@media(prefers-reduced-motion:reduce)");
+  });
+
+  it("reports a captured social handle as a passed setup check, never live Marketing", () => {
+    harness.systems.mockReturnValue({ ...baseSystems, findings: [{ ...finding,
+      id: "social-1", check_id: "social_accounts_connected", status: "pass",
+      evidence: { social_handle_count: 1, declared_capture_only: true },
+      paige_interpretation: "One social handle is on record.",
+    }] });
+    render();
+    const area = [...host.querySelectorAll(".sc-area-b")].find(row => row.textContent?.includes("Marketing, social"));
+    expect(area?.textContent).toContain("Partial");
+    expect(area?.textContent).toContain("performance is not tested");
+    expect(host.querySelector(".sc-brief-say")?.textContent).not.toContain("ready");
+    expect(host.querySelector("#sc-ready-title")?.textContent).toBe("Passed and resolved checks");
+    expect([...host.querySelectorAll(".sc-status")].some(row => row.textContent?.trim() === "Live")).toBe(false);
+    expect(baseCommand.approve).not.toHaveBeenCalled();
+  });
+
+  it("does not turn a passed communications setup check into delivery or calling readiness", () => {
+    harness.systems.mockReturnValue({ ...baseSystems, findings: [{ ...finding,
+      check_id: "comms_configured", status: "pass",
+      evidence: { has_email_identity: true, has_primary_phone: true, has_business_phone: true, calling_account_configured: false },
+    }] });
+    render();
+    expect(host.querySelector(".sc-ready")?.textContent).toContain("Email and phone setup");
+    expect(host.textContent).not.toContain("Email, phone and texting are ready");
+    expect(host.textContent).toContain("delivery is not tested");
+  });
+
+  it("withholds an area's all-clear when another expected setup check is absent", () => {
+    harness.systems.mockReturnValue({ ...baseSystems, findings: [{ ...finding,
+      check_id: "company_info_populated", status: "pass",
+    }] });
+    render();
+    const trigger = [...host.querySelectorAll<HTMLButtonElement>(".sc-area-b")].find(row => row.textContent?.includes("Business setup and identity"))!;
+    expect(trigger.textContent).toContain("Unavailable");
+    act(() => trigger.click());
+    expect(host.querySelector(".sc-area-d")?.textContent).toContain("Some expected checks have no result in this recorded run");
+    expect(host.querySelector(".sc-area-d")?.textContent).toContain("Your business details are on file");
+  });
+
+  it.each(["fail", "error"])("keeps resolved %s findings distinct from a passed check or provider verification", status => {
+    harness.systems.mockReturnValue({ ...baseSystems, findings: [{ ...finding,
+      check_id: "social_accounts_connected", status, resolved_at: "2026-08-27T18:00:00Z", resolution: "Reviewed by owner.",
+    }] });
+    render();
+    const trigger = [...host.querySelectorAll<HTMLButtonElement>(".sc-area-b")].find(row => row.textContent?.includes("Marketing, social"))!;
+    expect(trigger.textContent).toContain("Partial");
+    act(() => trigger.click());
+    expect(host.querySelector(".sc-area-d .sc-status")?.textContent).toBe("Resolved");
+    expect(host.querySelector(".sc-area-d")?.textContent).toContain("Recorded setup results do not verify provider readiness or successful work");
   });
 
   it("keeps contact follow-up counts separate from client-risk predictions and setup findings", () => {
@@ -390,6 +441,9 @@ describe("Solo Systems Check workspace", () => {
     expect(host.textContent).toContain("Nothing has been checked yet");
     // An absent check is never a claim that anything is wrong.
     expect(host.textContent).toContain("not a claim that anything is wrong");
+    expect(host.querySelector('.sc-area-b .sc-status--partial')).toBeNull();
+    expect(host.querySelector('.sc-area-b .sc-status--unavailable')).toBeNull();
+    expect(host.querySelectorAll('.sc-area-b .sc-status--notchecked')).toHaveLength(3);
   });
 
   it.each([0, 2])("never infers all-clear from an empty persisted run with check_count=%s", (checkCount) => {

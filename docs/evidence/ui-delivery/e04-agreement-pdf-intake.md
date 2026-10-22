@@ -6,7 +6,7 @@ PAIGE_UI_DESIGN: PASS: original five-module route, native SOLO Sales Operate dia
 MATERIAL_FLOW_CHANGE: YES: native upload preparation no longer requires a second contract the canonical writer discards; unsupported/empty/oversize selections refuse before any write and are correctable in the existing form.
 FLOW_PROTOTYPE: PASS: selected existing full native Agreements prototype275be12415239d4ecdb66bec0894146ec9fe5c64 supplies original PDF/document preparation intent under October21 UX delegation. This correction does not claim its unbuilt viewer/field execution.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: owner/admin chooses the actual client and supported PDF, understands which original document is used, and can correct a file selection before retaining it.
-VISUAL_DIRECTION: PASS: original native modal, associated help, primary review action and inline refusal. Existing document-source selector separated from the unrelated single-line provenance label so all three choices wrap and remain reachable. No token/typography/navigation or decorative data changes.
+VISUAL_DIRECTION: PASS: original native modal, associated help, primary review action and inline refusal. Document-source selector separated from the unrelated single-line provenance label so all three choices wrap. Two required inherited style findings corrected: normal ease-out for completion and actual status pill without redundant readiness stripe. No token/typography/navigation or decorative data changes.
 AUTOMATED_EVIDENCE: PASS: genuine original-source baseline109PASS/six intended RED plus one unchanged5s delivery-test timeout; corrected116 then120 focused cases PASS. Composed template/recipient/preparation/history/API/form/hook/dialog integration360 cases/12 suites PASS. Later layout recheck encountered the same incumbent5s link-test timeout; unchanged focused control and complete final360/12 source rerun PASS. No raised timeout or suppressed assertion.
 STATIC_EVIDENCE: PASS: ESLint0errors/one incumbent existing effect warning; canonical whole-app type ratchet baseline10/current6 PASS and direct same pinned TypeScript5.9.3 confirms six existing diagnostics. Binding35/35 negative controls and SOLO SP1-SP5/mutation controls PASS. No baseline/dependency/lockfile change.
 RENDERED_EVIDENCE: PASS: actual owning Sales/modal/hook/Storage SDK source,20 responsive/theme cases/ten paths/21 exact normalized source pins/zero page errors in assets/e04-agreement-pdf-intake/result.json. Includes actual source-choice wrapping/touch targets after a genuine baseline browser failure. Neutral identity/transport only; no actual upload/signing/provider acceptance.
@@ -68,10 +68,20 @@ wrap and retain touch targets in20 cases. Final composed render20/ten/21/zero;
 all21 source pins, including the actual owning CSS, reverified.
 Old failure diagnostics remain local/untracked, excluded from release evidence.
 
-Impeccable: final full SOLO scan and exact released07cb baseline BOTH exit2 with
-12 incumbent anti-patterns and1066 advisories. These are not waived, called PASS,
-or represented as zero findings. No new changed-form/style finding is introduced.
-The scoped class repair changes no design system. Bounded desktop/narrow/focus/feedback
+Exact ca1 hosted verification correctly FAILED the unchanged changed-file design
+gate on two inherited stylesheet findings: completion bounce and readiness stripe.
+Both are now fixed in the original owning stylesheet; no test/detector/source
+exclusion or waiver. The readiness pill/label remains authoritative; its legacy
+revenue row is not newly mounted. Original reduced-motion protection stays intact.
+An intermediate browser run correctly rejected a mid-run stylesheet edit; its
+diagnostic is not accepted evidence. Finished stable source rerun20/ten/21/zero
+PASS. Original TS tests remain the same360/12, not invented new motion tests.
+
+Impeccable: exact unchanged CI command on all FOUR changed UI files now exit0,
+zero anti-patterns/40 advisories. Full SOLO remains exit2: exact07cb baseline12/
+1066, corrected current10/1065. Remaining platform debt is not waived, called PASS,
+or represented as zero findings. The scoped repairs change no design system.
+Bounded desktop/narrow/focus/feedback
 inspection finds no new material interaction defect. Existing visual debt remains
 part of full E04 polish; no complete premium or founder-acceptance claim.
 

@@ -22,7 +22,7 @@
     "scripts/live-drive/agreement-authoring-drive.mjs": "691495ad54639203dbb2085c0443bde9365d43cb065530d0fafba2cf0e1a250b",
     "src/solo/useSoloAgreementSignings.ts": "bc125a4de410d5cabae0b4b22d3889a0284f752c9d4e469121524ea3f27c5af6",
     "src/solo/sales/agreementPdfIntake.ts": "0c4065a341baff61ff6490d2b03a95c2087f3edc7cb6c3f2684c557078cad0c2",
-    "src/solo/sales-ops.css": "c13a16aa05f18502a94a587e39805af78cd7dd665d1416f5b962bab30160cdb8"
+    "src/solo/sales-ops.css": "fb95ae343a7e16f61c2a893c811d8bb5ef4f49f1c11ae96fb85a60a3e6566046"
   },
   "sharedUIFontSHA256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05",
   "frames": [

@@ -184,3 +184,11 @@ renderer. Original file-to-title Tab/help and invalid-selection recovery retaine
 Synthetic identity/transport only; actual roles/provider/full premium/founder
 acceptance remain UNVERIFIED. One unchanged5s link control timed out, then passed
 focused and in complete360-case rerun; assertions and timeout unchanged.
+
+CI ca1 follow-through: the unchanged FOUR-file detector found the incumbent
+completion bounce and readiness left stripe in the now-changed stylesheet. Both
+corrected in owning source, no exemption or detector change. Exact gate exit0:
+zero anti-patterns/40 advisories. Full baseline12/1066 becomes10/1065, not globally
+clean. Readiness pill and original reduced-motion guard retained; dormant legacy
+revenue row not newly mounted. Final stable source render20/ten/21/zero PASS;
+an intermediate mid-edit run was invalidated by its source-pin guard and excluded.

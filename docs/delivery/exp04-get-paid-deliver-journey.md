@@ -17,8 +17,12 @@ keeps its scroll/focus/leave behavior; no new navigation or shared design system
 Final source integration360/12 PASS and actual rendered20cases/ten paths/21 owning
 source pins/zero errors. An unchanged original5s link control timed out under a
 combined run, then passed focused and in the complete unchanged360-case rerun;
-no timeout/assertion/test gate was weakened. Full SOLO scan still has12 incumbent
-anti-patterns/1066 advisories in both exact07cb and current; no global clean claim.
+no timeout/assertion/test gate was weakened. Hosted ca1 design gate then correctly
+failed two inherited stylesheet findings, repaired in the owning source: smooth
+completion easing and removal of the redundant readiness edge stripe, retaining
+its actual status pill. Exact FOUR-file design gate now0 failures/40 advisories;
+full baseline12/1066 versus current10/1065 remains not globally clean. One browser
+run rejected a mid-edit source change; only final stable20/ten/21/zero is evidence.
 
 1. Outcome: choose a supported original PDF, correct invalid selection and retain
    it on the actual client agreement without pasting a second ignored contract.

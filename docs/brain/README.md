@@ -1517,8 +1517,12 @@ PASS. Actual final native source render20cases/ten paths/21pins/zero page errors
 including keyboard file-to-title, correctable invalid selection and the genuine
 clipped source-choice regression repaired by separating the original provenance
 label selector from the actual document choices. Only synthetic
-ports. Exact main/current Impeccable BOTH12 incumbent anti-patterns/1066 advisories;
-not a clean whole-platform design scan or finished premium claim. Evidence:
+ports. Hosted ca1 design gate failed two inherited original stylesheet findings;
+bounce/stripe repaired without any exclusion or weakened check. Exact FOUR-file
+gate now0 failures/40 advisories; full baseline12/1066 versus current10/1065 remains
+not a clean whole-platform scan or finished premium claim. Final stable render
+passed after one mid-edit run was correctly invalidated by its source-pin guard.
+Evidence:
 [native PDF intake](../evidence/ui-delivery/e04-agreement-pdf-intake.md).
 
 Template consumer2549 actually released asd0741babff894cba40dc7566b5ea94390ac16b5c;

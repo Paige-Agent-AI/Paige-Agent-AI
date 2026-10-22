@@ -1,7 +1,7 @@
 -- Original replayed native functions and real roles. Synthetic, rolled back;
 -- provider execution disabled, no production identities or effectful acceptance.
 BEGIN;
-SELECT plan(82);
+SELECT plan(94);
 
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0970100-0000-4000-8000-000000000001','authenticated','authenticated','scope-owner@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -109,6 +109,39 @@ SELECT ok(pg_temp.scope_read($progress$SELECT public.client_portal_progress('e09
  'e0970200-0000-4000-8000-000000000001') IS NULL,'conflicting explicit progress business/header has no fallback');
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_progress()')->>'sqlstate','42501','unselected multi-business progress retains native ambiguity refusal');
 
+
+-- Original assigned-work RLS and versioned response writer. Notifications and
+-- activity remain original native records inside this rolled-back transaction.
+INSERT INTO public.paige_customer_actions(id,tenant_id,contact_id,initiated_by_admin_id,action_type,title,status,expires_at,updated_at) VALUES
+ ('e0970600-0000-4000-8000-000000000001','e0970200-0000-4000-8000-000000000001','e0970300-0000-4000-8000-000000000001','e0970100-0000-4000-8000-000000000001','task','Assigned A','proposed','2099-01-01T00:00:00Z','2026-01-01T00:00:00Z'),
+ ('e0970600-0000-4000-8000-000000000002','e0970200-0000-4000-8000-000000000002','e0970300-0000-4000-8000-000000000002','e0970100-0000-4000-8000-000000000001','task','Assigned B','proposed','2099-01-01T00:00:00Z','2026-01-01T00:00:00Z'),
+ ('e0970600-0000-4000-8000-000000000003','e0970200-0000-4000-8000-000000000003','e0970300-0000-4000-8000-000000000003','e0970100-0000-4000-8000-000000000001','task','Assigned C','proposed','2099-01-01T00:00:00Z','2026-01-01T00:00:00Z');
+CREATE FUNCTION pg_temp.scope_actions(business text,contact uuid) RETURNS jsonb LANGUAGE sql AS $actions$
+ SELECT pg_temp.scope_read(format('SELECT coalesce(jsonb_agg(to_jsonb(a)),''[]''::jsonb) FROM (SELECT id,tenant_id,contact_id,status FROM public.paige_customer_actions WHERE tenant_id=%L::uuid AND contact_id=%L::uuid ORDER BY id) a',business,contact),business) $actions$;
+CREATE FUNCTION pg_temp.scope_respond(action_id uuid,business text,version timestamptz) RETURNS jsonb LANGUAGE sql AS $actions$
+ SELECT pg_temp.scope_read(format('SELECT public.customer_respond_to_action(%L::uuid,''completed'',NULL,%L::timestamptz)',action_id,version),business) $actions$;
+SELECT is(pg_temp.scope_actions('e0970200-0000-4000-8000-000000000001','e0970300-0000-4000-8000-000000000001')#>>'{0,id}',
+ 'e0970600-0000-4000-8000-000000000001','original RLS read returns own selected A action');
+SELECT is(pg_temp.scope_actions('e0970200-0000-4000-8000-000000000002','e0970300-0000-4000-8000-000000000002')#>>'{0,id}',
+ 'e0970600-0000-4000-8000-000000000002','original RLS read returns own selected B action');
+SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000003',
+ $actions$SELECT coalesce(jsonb_agg(to_jsonb(a)),'[]'::jsonb) FROM (SELECT id FROM public.paige_customer_actions WHERE id='e0970600-0000-4000-8000-000000000001') a$actions$,
+ '{"x-client-portal-business":"e0970200-0000-4000-8000-000000000001"}'),'[]'::jsonb,'other actual customer cannot read A action');
+SELECT is(pg_temp.scope_respond('e0970600-0000-4000-8000-000000000002','e0970200-0000-4000-8000-000000000002','2026-01-01T00:00:00Z')->>'ok',
+ 'true','selected B responds through original exact-version native writer');
+SELECT ok((SELECT count(*)=1 AND bool_and(contact_id='e0970300-0000-4000-8000-000000000002' AND responded_by_user_id='e0970100-0000-4000-8000-000000000002' AND response_type='completed')
+ FROM public.paige_customer_responses WHERE action_id='e0970600-0000-4000-8000-000000000002'),'canonical response retains original business relationship and actual actor');
+SELECT is(pg_temp.scope_respond('e0970600-0000-4000-8000-000000000002','e0970200-0000-4000-8000-000000000002','2026-01-01T00:00:00Z')->>'error',
+ 'ACTION_VERSION_CONFLICT','old version cannot duplicate the response');
+SELECT is(pg_temp.scope_respond('e0970600-0000-4000-8000-000000000002','e0970200-0000-4000-8000-000000000001',
+ (SELECT updated_at FROM public.paige_customer_actions WHERE id='e0970600-0000-4000-8000-000000000002'))->>'error','FORBIDDEN','conflicting selected business cannot respond to B');
+SELECT is(pg_temp.scope_respond('e0970600-0000-4000-8000-000000000003','e0970200-0000-4000-8000-000000000003','2026-01-01T00:00:00Z')->>'error',
+ 'FORBIDDEN','customer cannot respond to another actual customer action');
+SELECT is(pg_temp.scope_respond('e0970600-0000-4000-8000-000000000001','e0970200-0000-4000-8000-000000000001',NULL)->>'error',
+ 'ACTION_VERSION_CONFLICT','missing exact action version is refused');
+SELECT is(pg_temp.scope_actions('e0970200-0000-4000-8000-000000000002','e0970300-0000-4000-8000-000000000002')#>>'{0,status}',
+ 'customer_acted','returning read contains original saved B status');
+
 -- Original business-shared Conversations, distinct from the private CURA service below.
 -- Native writers only, provider execution disabled, all synthetic rows rolled back.
 CREATE FUNCTION pg_temp.scope_send_message(business text,body text,request_id uuid,kind text DEFAULT 'message')
@@ -187,6 +220,7 @@ UPDATE public.clients SET portal_access_state='paused',portal_access_changed_at=
 SELECT set_config('paige.portal_access_write','',true);
 SELECT ok(pg_temp.scope_read('SELECT public.client_portal_frame()','e0970200-0000-4000-8000-000000000001') IS NULL,'paused selection loses original frame');
 SELECT ok(pg_temp.scope_read('SELECT public.client_portal_progress()','e0970200-0000-4000-8000-000000000001') IS NULL,'paused A cannot read original shared progress');
+SELECT is(pg_temp.scope_respond('e0970600-0000-4000-8000-000000000001','e0970200-0000-4000-8000-000000000001','2026-01-01T00:00:00Z')->>'error','FORBIDDEN','paused A cannot write a customer action response');
 SELECT is(pg_temp.scope_send_message('e0970200-0000-4000-8000-000000000001','Paused refusal','e0970400-0000-4000-8000-000000000003')->>'error','NO_RELATIONSHIP','paused A cannot send a shared message');
 SELECT is(pg_temp.open_scoped_chat('e0970200-0000-4000-8000-000000000001')->>'sqlstate','42501','paused A cannot reopen a private conversation');
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000001')#>>'{business,name}',
@@ -205,6 +239,7 @@ SELECT set_config('paige.link_ok','',true);
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000002')->>'state','ended','selected former user sees genuine ended notice');
 SELECT ok(pg_temp.scope_read('SELECT public.client_portal_frame()','e0970200-0000-4000-8000-000000000002') IS NULL,'revoked selection cannot obtain another frame');
 SELECT ok(pg_temp.scope_read('SELECT public.client_portal_progress()','e0970200-0000-4000-8000-000000000002') IS NULL,'revoked B cannot read retained original progress');
+SELECT is(pg_temp.scope_actions('e0970200-0000-4000-8000-000000000002','e0970300-0000-4000-8000-000000000002'),'[]'::jsonb,'revoked B cannot read retained original actions');
 SELECT ok(pg_temp.scope_conversation('e0970200-0000-4000-8000-000000000002') IS NULL,'revoked B cannot read retained shared conversation history');
 SELECT ok(pg_temp.read_scoped_chat('e0970200-0000-4000-8000-000000000002',opened) IS NULL,'revoked B cannot read its retained original private thread') FROM scope_chats WHERE business='e0970200-0000-4000-8000-000000000002';
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000003')->>'state','none','foreign hint cannot reveal even own other-business ended notice');

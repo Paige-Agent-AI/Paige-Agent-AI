@@ -1,6 +1,8 @@
 import {useCallback, useEffect, useRef, useState} from "react";
 import {supabase} from "@/integrations/supabase/client";
 import {readClientPortalSelfProfile} from "@/lib/client-portal-self-profile";
+import {useShellCustomerIdentity} from "@/lib/portal/customerIdentity";
+import {captureClientPortalAuthorization,withClientPortalBusiness} from "@/lib/client-portal-scope";
 
 export type ActionResponseType = "accepted" | "declined" | "question" | "completed";
 export interface ActionResponse {
@@ -68,6 +70,10 @@ function confirmed(rows:CustomerAction[],id:string,pending:PendingResponse):Acti
 
 /** Existing customer action records and response writer; no raw CRM or private approvals. */
 export function useMyActions(){
+  const identity=useShellCustomerIdentity(),frame=identity?.viewer==="customer"?identity.frame:null;
+  const requestedActor=frame?.actorId??null,requestedBusiness=frame?.profile.tenant_id??null,requestedClient=frame?.profile.id??null;
+  const requestedScope=identity?JSON.stringify([identity.viewer,requestedActor,requestedBusiness,requestedClient]):"legacy";
+  const enabled=!identity||identity.viewer==="staff"||!!frame&&identity.phase==="ready";
   const [actions,setActions]=useState<CustomerAction[]>([]),[loading,setLoading]=useState(true);
   const [error,setError]=useState<string|null>(null),[contactId,setContactId]=useState<string|null>(null);
   const [actorId,setActorId]=useState<string|null>(null);
@@ -75,6 +81,15 @@ export function useMyActions(){
   const [scopeEpoch,setScopeEpoch]=useState(0);
   const [confirmation,setConfirmation]=useState<{epoch:number;actionId:string;responseId:string;type:ActionResponseType}|null>(null);
   const life=useRef({alive:true,epoch:0,read:0,scope:null as Scope|null,lastScope:null as Scope|null,actions:[] as CustomerAction[],working:false,unknown:new Map<string,PendingResponse>()});
+  const origin=useRef({key:requestedScope,generation:0,enabled}),appliedScope=useRef(requestedScope),signedOut=useRef(false);
+  if(origin.current.key!==requestedScope){
+    origin.current={key:requestedScope,generation:origin.current.generation+1,enabled};
+    ++life.current.epoch;++life.current.read;life.current.scope=null;
+  }
+  origin.current.enabled=enabled;
+  const generation=origin.current.generation;
+  const scopeCurrent=useCallback(()=>origin.current.generation===generation&&origin.current.enabled
+    &&appliedScope.current===requestedScope&&!signedOut.current,[generation,requestedScope]);
   const retire=useCallback((notice:string|null,waiting:boolean)=>{
     const l=life.current;++l.epoch;++l.read;l.scope=null;l.lastScope=null;l.actions=[];l.unknown.clear();l.working=false;
     setScopeEpoch(l.epoch);
@@ -82,26 +97,35 @@ export function useMyActions(){
     setActions([]);setContactId(null);setActorId(null);setPendingActionId(null);setUncertainActionIds([]);setError(notice);setLoading(waiting);
   },[]);
   const refresh=useCallback(async(deadline=Date.now()+20_000)=>{
-    const l=life.current,n=++l.read,epoch=l.epoch,current=()=>l.alive&&l.read===n&&l.epoch===epoch;
-    if(!l.alive)return null;
+    const l=life.current,n=++l.read,epoch=l.epoch,current=()=>l.alive&&scopeCurrent()&&l.read===n&&l.epoch===epoch;
+    if(!l.alive||!scopeCurrent())return null;
     setLoading(true);setError(null);
     try{
       const identity=await bounded(supabase.auth.getUser(),deadline-Date.now());if(!current())return null;
       if(identity.error)throw new Error("authentication unavailable");
       if(!identity.data.user){retire("Sign in with your invited account to continue.",false);return null;}
       const actor=identity.data.user.id;
-      const native=await bounded(supabase.rpc("client_portal_self_profile"),deadline-Date.now());if(!current())return null;
+      if(requestedActor&&actor!==requestedActor){retire("Your session changed. Reload your action items to continue.",false);return null;}
+      const authorization=requestedActor&&requestedBusiness
+        ?await bounded(captureClientPortalAuthorization(supabase.auth,requestedActor,current),deadline-Date.now()):null;
+      if(!current())return null;
+      let profileRequest=supabase.rpc("client_portal_self_profile");
+      if(requestedBusiness&&authorization)profileRequest=withClientPortalBusiness(profileRequest,requestedBusiness).setHeader("Authorization",authorization);
+      const native=await bounded(profileRequest,deadline-Date.now());if(!current())return null;
       const profile=readClientPortalSelfProfile(native.data,actor);
       if((!native.error&&!native.data)||native.error?.code==="42501"){
         retire("Your customer access could not be verified. Contact the business for help.",false);return null;
       }
       if(native.error||!profile)throw new Error("relationship unavailable");
+      if(requestedBusiness&&(profile.tenant_id!==requestedBusiness||profile.id!==requestedClient))throw new Error("customer business changed");
       const scope={actor,tenant:profile.tenant_id,contact:profile.id};
       if(l.lastScope&&!sameScope(l.lastScope,scope)){
         retire("Your customer context changed. Reload your action items to continue.",false);return null;
       }
-      const read=await bounded(supabase.from("paige_customer_actions").select(SELECT)
-        .eq("tenant_id",scope.tenant).eq("contact_id",scope.contact).order("created_at",{ascending:false}).limit(100),deadline-Date.now());
+      let actionRequest=supabase.from("paige_customer_actions").select(SELECT)
+        .eq("tenant_id",scope.tenant).eq("contact_id",scope.contact).order("created_at",{ascending:false}).limit(100);
+      if(requestedBusiness&&authorization)actionRequest=withClientPortalBusiness(actionRequest,requestedBusiness).setHeader("Authorization",authorization);
+      const read=await bounded(actionRequest,deadline-Date.now());
       if(!current())return null;
       if(read.error?.code==="42501"){retire("Your customer access could not be verified. Contact the business for help.",false);return null;}
       if(read.error)throw read.error;
@@ -119,23 +143,28 @@ export function useMyActions(){
       if(current()){l.scope=null;l.actions=[];setActions([]);setContactId(null);setActorId(null);setError("Your action items could not be verified. Check your connection or contact the business, then try again.");}
       return null;
     }finally{if(current())setLoading(false);}
-  },[retire]);
+  },[retire,scopeCurrent,requestedActor,requestedBusiness,requestedClient]);
+  const refreshRef=useRef(refresh);refreshRef.current=refresh;
   useEffect(()=>{
     const l=life.current;l.alive=true;
     const {data:{subscription}}=supabase.auth.onAuthStateChange((event,session)=>{
       if(!l.alive)return;
-      if(event==="SIGNED_OUT"||!session){retire("Sign in with your invited account to continue.",false);return;}
+      if(event==="SIGNED_OUT"||!session){signedOut.current=true;++origin.current.generation;retire("Sign in with your invited account to continue.",false);return;}
+      signedOut.current=false;
       if(session.user.id===l.lastScope?.actor){
         // Ordinary same-subject refreshes revalidate authority without retiring
         // the customer's draft or pretending a pending write was cancelled.
-        const epoch=l.epoch;queueMicrotask(()=>{if(l.alive&&l.epoch===epoch)void refresh();});return;
+        const epoch=l.epoch;queueMicrotask(()=>{if(l.alive&&l.epoch===epoch)void refreshRef.current();});return;
       }
-      retire(null,true);const epoch=l.epoch;
-      queueMicrotask(()=>{if(l.alive&&l.epoch===epoch)void refresh();});
+      ++origin.current.generation;retire(null,true);
     });
-    const focus=()=>{if(l.alive)void refresh();};window.addEventListener("focus",focus);void refresh();
+    const focus=()=>{if(l.alive)void refreshRef.current();};window.addEventListener("focus",focus);
     return()=>{l.alive=false;++l.epoch;++l.read;subscription.unsubscribe();window.removeEventListener("focus",focus);};
-  },[refresh,retire]);
+  },[retire]);
+  useEffect(()=>{
+    if(appliedScope.current!==requestedScope){appliedScope.current=requestedScope;retire(null,enabled);}
+  },[requestedScope,enabled,retire]);
+  useEffect(()=>{if(enabled)void refresh();},[refresh,enabled]);
   useEffect(()=>{
     if(!contactId)return;
     const channel=supabase.channel(`my_actions_${contactId}`)
@@ -145,10 +174,10 @@ export function useMyActions(){
   },[contactId,refresh]);
   const respond=useCallback(async(actionId:string,type:ActionResponseType,text?:string)=>{
     const l=life.current,scope=l.scope,action=l.actions.find(a=>a.id===actionId);
-    if(!l.alive||!scope||!action||!isActionOpen(action)||l.working||l.unknown.has(actionId))throw new Error("Check the saved action before trying to respond.");
+    if(!l.alive||!scopeCurrent()||!scope||!action||!isActionOpen(action)||l.working||l.unknown.has(actionId))throw new Error("Check the saved action before trying to respond.");
     const message=text?.trim()||null;
     if(!responseTypes.includes(type)||(type==="question"&&!message)||(message?.length??0)>4000)throw new Error("Enter a question of up to 4,000 characters.");
-    const epoch=l.epoch,current=()=>l.alive&&l.epoch===epoch&&sameScope(l.scope,scope);
+    const epoch=l.epoch,current=()=>l.alive&&scopeCurrent()&&l.epoch===epoch&&sameScope(l.scope,scope);
     const deadline=Date.now()+20_000;
     const pending:PendingResponse={scope,type,text:message,prior:new Set(action.paige_customer_responses.map(r=>r.id)),status:type==="declined"?"customer_declined":type==="question"?action.status:"customer_acted"};
     l.working=true;setPendingActionId(actionId);let dispatched=false;
@@ -159,11 +188,19 @@ export function useMyActions(){
         retire("Your session could not be verified. Reload your action items to continue.",false);
         throw new Error("Your session changed. Reload your action items.");
       }
+      let authorization:string|null=null;
+      if(requestedActor&&requestedBusiness){
+        try{authorization=await bounded(captureClientPortalAuthorization(supabase.auth,scope.actor,current),deadline-Date.now());}
+        catch(failure){if(current())retire("Your session could not be verified. Reload your action items to continue.",false);throw failure;}
+      }
+      if(!current())throw new Error("Your customer context changed. Reload your action items.");
+      let responseRequest=supabase.rpc("customer_respond_to_action",{
+        p_action_id:actionId,p_response_type:type,p_response_text:message,p_expected_updated_at:action.updated_at,
+      } as never);
+      if(requestedBusiness&&authorization)responseRequest=withClientPortalBusiness(responseRequest,requestedBusiness).setHeader("Authorization",authorization);
       if(Date.now()>=deadline)throw new Error("Your connection is taking too long. Reload the item before responding.");
       dispatched=true;
-      const result=await bounded(supabase.rpc("customer_respond_to_action",{
-        p_action_id:actionId,p_response_type:type,p_response_text:message,p_expected_updated_at:action.updated_at,
-      } as never),deadline-Date.now());
+      const result=await bounded(responseRequest,deadline-Date.now());
       if(!current())throw new Error("Your session changed. Check your saved action after signing in.");
       if(result.error)throw result.error;
       const receipt=result.data as {ok?:boolean;error?:string}|null;
@@ -190,6 +227,11 @@ export function useMyActions(){
       }
       throw e;
     }finally{if(l.alive&&l.epoch===epoch){l.working=false;setPendingActionId(null);}}
-  },[refresh,retire]);
-  return {actions,open:actions.filter(isActionOpen),past:actions.filter(a=>!isActionOpen(a)),loading,error,contactId,actorId,refresh,respond,pendingActionId,uncertainActionIds,scopeEpoch,confirmation};
+  },[refresh,retire,scopeCurrent,requestedActor,requestedBusiness]);
+  const hidden=!scopeCurrent();
+  const visible=hidden?[]:actions;
+  return {actions:visible,open:visible.filter(isActionOpen),past:visible.filter(a=>!isActionOpen(a)),loading:hidden?enabled&&!signedOut.current:loading,
+    error:hidden?signedOut.current?error:null:error,contactId:hidden?null:contactId,actorId:hidden?null:actorId,refresh,respond,
+    pendingActionId:hidden?null:pendingActionId,uncertainActionIds:hidden?[]:uncertainActionIds,
+    scopeEpoch:hidden?life.current.epoch:scopeEpoch,confirmation:hidden?null:confirmation};
 }

@@ -12,13 +12,13 @@ STATIC_EVIDENCE: PASS: required native rotation follows real descriptor validati
 RENDERED_EVIDENCE: PASS: actual composed source20 viewport/theme/panel cases/14 paths/zero errors/33 owning pins, native field20/11/zero/30 and neighboring intake20/10/zero/21. All84 pin comparisons reverified; desktop paper,320 dark100% bounded pan and lost-response views inspected. Auth/API/RPC synthetic, no hosted persistence/role acceptance.
 BEHAVIORAL_EVIDENCE: PASS: original route/ONE leave guard, before-dispatch opaque checkpoint, verified PDF bytes/canvas, native-point field save, byte-identical same-request retry/reload, paged earlier/current history, corrupt-byte/source/authority refusal and compact mobile selection. Same six destinations/guarded keyboard route, no replacement navigation engine.
 AUTHENTICATED_RUNTIME: UNVERIFIED: real ordinary owner/staff/linked-client/cohort, hosted native JWT/Storage persistence and provider/signing behavior are not established by these source fixtures.
-KEYBOARD_FOCUS: PASS: leave/continue, pending-access protection, guard-before-navigation and verified save-result focus checks. Real narrow ArrowRight/cancel preserves route/current selection and exactly one dialog; real save focuses its result. Original field arrow/Shift/Delete/Undo/Escape/all five kinds pass; assistive-technology/real-device proof owed.
+KEYBOARD_FOCUS: PASS: local actual-source leave/continue, held-access protection, guard-before-navigation and verified save-result focus checks. Real narrow ArrowRight/cancel preserves route/current selection and exactly one dialog; real save focuses its result. Original field arrow/Shift/Delete/Undo/Escape/all five kinds pass in the incumbent source drive. External acceptance limitations are declared separately.
 ZOOM_REFLOW: PASS: actual320/390 and required desktops,100% bounded PDF pan/zero application overflow,44px controls and56px native row with selected destination visible. Actual device/browser zoom and assistive technology unverified.
 REDUCED_MOTION: PASS: source drive uses reducedMotion:reduce, no new motion; native waiting feedback preserved.
 STATE_COVERAGE: PASS: local first-use/loading/empty/retained/current/earlier/source-changed/commercial-hold/permission/PDF-error/saving/unknown/retry/reload/exit paths implemented. Real hosted coverage separately owed.
 TRUTHFUL_STATE_LABELS: PASS: unsigned preparation, selected/earlier and historical original receipt are distinct. No preparation implies approval, send, delivery, consent, signature, payment or completed services. Current signer names never substitute for unmatched original identities.
 SOLO_UI: YES: original shared Sales workspace for every eligible existing/future SOLO business, original actual session/business/admin/native authority; no account-specific feature branch or provisioning change.
-UNVERIFIED: final exact-head review/required CI/Preview and ordered prerequisite2599/native30/Edge plus own web release/readback; hosted actual roles/native recovery/tenant cohorts/provider behavior; canonical commercial terms/approval/signing/Comms/finance/delivery and all O1–O12/founder acceptance.
+UNVERIFIED: final exact-head review/required CI/Preview and ordered prerequisite2599/native30/Edge plus own web release/readback; hosted actual roles/native recovery/tenant cohorts/provider behavior, assistive technology/real device/browser zoom; canonical commercial terms/approval/signing/Comms/finance/delivery and all O1–O12/founder acceptance. Missing native request after reload stays unconfirmed, never rollback or a reconstructed original command.
 
 SOLO_1536X770_PAIGE_CLOSED: PASS: assets/e04-mounted-document-preparation/1536-770-light-closed.png/dark equivalent, actual PDF/field save/original context.
 SOLO_1536X770_PAIGE_OPEN: PASS:1536-770-light-open.png/dark equivalent, original PAIGE panel/no Chat transport.
@@ -38,10 +38,10 @@ PROTECTED_SEAMS: original captured Auth actor/token on the SAME existing SDK inv
 
 INTERNAL_BUILD_IDENTITY: branch=codex/e04-mounted-document-preparation; source_base=566a4658eb4052d979eb29ba2baeb527d1ca4df7; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; prerequisite=2599/native20271113300004/agreement-document; evidence=docs/evidence/ui-delivery/e04-mounted-document-preparation.md
 RELEASE_CHANNEL: development: local owning source and synthetic Auth/API/RPC only, no hosted/customer acceptance.
-RELEASE_CLASSIFICATION: bounded native UI/SDK integration, full O1 and whole Experience incomplete.
+RELEASE_CLASSIFICATION: internal-only: bounded native UI/SDK integration; full O1 and whole Experience incomplete.
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or founder acceptance from this increment.
 RELEASE_NOTE_REQUIRED: no: implementation increment, not the complete founder-evaluation package.
-RELEASE_TRUTH_BOUNDARY: original agreement capability PARTIAL; exact field preparation Chat/Live UNAVAILABLE; native/API/UI release and authenticated use PROOF OWED. ALG01/12 source reconciliation/refusal evidence is bounded; official ALG02/13 acceptance not promoted.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: own review/CI/ordered native/API/UI release and authenticated use; original agreement capability PARTIAL, exact fields Chat/Live UNAVAILABLE. ALG01/12 bounded source evidence does not promote official ALG02/13 or full Experience acceptance.
 RELEASE_RECOVERY: position=reviewed forward UI correction using original records/opaque request; reference=original journey/API evidence; never overwrite native documents, replay a new unknown identity or rewrite signed history.
 
 ## Original orchestration contract

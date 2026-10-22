@@ -7,9 +7,9 @@ MATERIAL_FLOW_CHANGE: YES: original author-scoped retained record now opens read
 FLOW_PROTOTYPE: PASS: original isolated native-shell history extensionda94f0b5f, twenty viewport/theme cases/eleven paths before production integration. Existing E04 lead selected design intent under explicit October21 owner UX delegation; one complete founder evaluation remains owed.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an authorized agreement author can inspect actual earlier saved wording without changing the original current or signed document.
 VISUAL_DIRECTION: PASS: incumbent document paper beside concise source/revision controls; native picker accommodates twenty-record pages on narrow screens. No ornamental metrics, long modal, new scroll owner, design system or synthetic product activity.
-AUTOMATED_EVIDENCE: PASS: current focused four-suite70/70 tests, including exact selected IDs/private DTO/cursor validation, original authoring transport and parent access/focus retirement. Prior run53 passed/one worker startup-response timeout, retained and unchanged repeat70 passes; no threshold/assertion weakened. Earlier missing test dependency was resolved using the incumbent React DOM idiom, with no new dependency. Full incumbent regression and frozen-head type/CI remain owed.
+AUTOMATED_EVIDENCE: PASS: final current-main seven-suite178/178 tests, including exact selected IDs/private DTO/cursor validation, original authoring transport and parent access/focus retirement. Prior run53 passed/one worker startup-response timeout, retained and unchanged repeat70 passes; no threshold/assertion weakened. Earlier missing test dependency was resolved using the incumbent React DOM idiom, with no new dependency. Current-main regression178/178 and existing type ratchet10/current6 pass; hosted exact-head CI remains required.
 STATIC_EVIDENCE: PASS: same bounded sanitized RPC boundary, closed metadata/body schemas, exact selected original/revision/metadata checks, decreasing bounded cursor, no private locators/tokens, no write or restore. Native refusal erases parent cached record; late/unmounted reads are discarded. No baseline, approval, role or source-hash bypass.
-RENDERED_EVIDENCE: PASS: actual SalesWorkspace/SalesOps/TenantCommandCenterShell/SDK source20 viewport/theme cases and25 paths, zero page errors; both themes at1536x770/1366x768/1024x768/900x1000 PAIGE closed/open,390x844/320x740. Twenty source hashes/shared font checksum in assets/e04-agreement-wording-history/result.json. Native overlays fold to operate and reopen for capture; no click-through. Synthetic identity/network ports only.
+RENDERED_EVIDENCE: PASS: actual SalesWorkspace/SalesOps/TenantCommandCenterShell/SDK source20 viewport/theme cases and26 paths, zero page errors; both themes at1536x770/1366x768/1024x768/900x1000 PAIGE closed/open,390x844/320x740. Twenty source hashes/shared font checksum in assets/e04-agreement-wording-history/result.json. Native overlays fold to operate and reopen for capture; no click-through. Synthetic identity/network ports only.
 BEHAVIORAL_EVIDENCE: PASS: existing agreement-authoring driver --compiled --history exercises twenty-row page/older cursor, exact earlier wording under the same original ID, current-record return/focus, missing/failed/unconfirmed reads, explicit retry and native-refusal cache retirement. Original save/uncertainty/authority/source-fallback paths remain exercised. Browser fixtures do not prove SQL or customer authentication; native producer separately has73 PostgreSQL assertions.
 AUTHENTICATED_RUNTIME: UNVERIFIED: ordinary owner/staff/linked-client roles, native browser-to-server persistence/isolation and complete customer acceptance remain owed. Source rendering and synthetic SDK responses are not authenticated acceptance.
 KEYBOARD_FOCUS: PASS: selected wording heading focus, native picker, original-history entry restoration after DOM commit, existing required-input/leave/access recovery paths. First native render exposed return focus failure; commit-time layout restoration and unchanged full20-case repeat pass. Full toolbar/assistive technology remains owed.
@@ -29,7 +29,7 @@ SOLO_900X1000_PAIGE_OPEN: PASS: both-theme900-1000-*-open.png; original overlay/
 OWNER_INTENT: Professional inspectable/correctable agreement history within the original all-twelve EXP04 commercial-to-delivery Experience; this is a read-only increment, not completion.
 MUST_NOT_HAPPEN: No overwritten original/signed wording, cross-business/role disclosure, stale selection relabelled as current, empty read inferred from failure, private locator/token leak, restore/send/sign/payment effect or new agreement/ledger/approval/execution system.
 MUST_PRESERVE: Original authoring/save/recovery, canonical agreement identity/native events/roles, signed/sealed evidence, original client/offer/terms references, E09 contracts and shared provider/Chat/INT346 controls.
-ACCEPTANCE_CRITERIA: Authorized user selects actual retained wording by exact original IDs and source metadata, pages with native cursor, returns to current record with focus and recovers explicit read failures. Native producer release/readback and actual-role QA remain separate gates.
+ACCEPTANCE_CRITERIA: Authorized user selects actual retained wording by exact original IDs and source metadata, pages with native cursor, returns to current record with focus and recovers explicit read failures. Native producer2521/130000 is released/read back; actual-role QA remains a separate gate.
 MOTION_PURPOSE: NONE: read navigation and source feedback reuse immediate native behavior.
 PROTECTED_SEAMS: AFFECTED E04 preparation/history component/API/CSS and existing source-mount drive/Binding Ledger row. UNCHANGED backend writer, financial calculations, native signatures, Gateway/Spine/Harness/Trust/Kit/Rail/admission, scheduler, sender, provider and Portal UI. No Mind/Memory promotion.
 INTERNAL_BUILD_IDENTITY: branch=codex/e04-agreement-wording-history; product_sha=3ceaaf6c24704c318de8eda4026cc47960b553d7; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; dependency=native producer2521/20271113130000 release/readback; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-agreement-wording-history.md
@@ -39,14 +39,14 @@ CUSTOMER_RELEASE_IDENTITY: none: no finished Experience or founder-acceptance an
 RELEASE_NOTE_REQUIRED: no: one complete integrated E04 evaluation package remains owed.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: native producer release, authentic ordinary roles, exact real file bytes/legal sufficiency, financial/provider and complete commercial/service outcomes remain unverified.
 RELEASE_RECOVERY: position=reviewed UI forward correction or revert preserving original agreements/history; reference=docs/delivery/exp04-get-paid-deliver-journey.md; no retained evidence deletion or blind replay.
-UNVERIFIED: producer2521 release/readback, exact-head hosted CI/deployment, native browser-to-server/customer-role operation, two eligible SOLO cohorts, actual200percent/AT, complete professional tools and financial/delivery/Portal continuity, final integrated founder acceptance.
+UNVERIFIED: exact-head hosted CI/deployment, native browser-to-server/customer-role operation, two eligible SOLO cohorts, actual200percent/AT, complete professional tools and financial/delivery/Portal continuity, final integrated founder acceptance.
 
 ## Scope and experience review
 
 EXTEND original owner record inspection; REUSE native retained-history readers and
 the single bounded RPC boundary. No document mutation exists in this increment.
-Native source#2521 remains a separate mandatory dependency; do not release this
-consumer before its migration/function/ACL readback. Existing#2515 authoring is
+Native source#2521 is released/read back; its mandatory source contract is preserved. Do not release this
+consumer without its authoring parent and final exact-head release gates. Existing#2515 authoring is
 the source parent. No other/retired agent is assigned and no E09 UI/source lease is
 touched. The existing Sales Binding Ledger stays PROOF_OWED, existing agreement
 capabilities PARTIAL; dedicated Chat/Live history has no new registered tool here.
@@ -58,7 +58,7 @@ economics, provider settlement and completed services remain separate records.
 ALG01 local dedup/recovery evidence does not accept the official algorithm;
 official ALG01/02/12/13 statuses remain unchanged. Manual reads have no Layer C act.
 
-Functional: current source/render/70 tests pass; final review/CI/release owed.
+Functional: current source/render/178 tests pass; final review/CI/release owed.
 Visual: native-system20-case render and focus repair pass; AT/zoom still owed.
 Experiential: bounded inspection flow; correction and full original journey owed.
 Founder Acceptance: one complete integrated live Experience evaluation pending.
@@ -70,3 +70,12 @@ Failed logs remain retained; no assertion, required inclusion or timeout was cha
 The earlier whole-src gold scan also identified an unchanged BusinessCreditDashboard
 incumbent; this PR changes neither it nor the gold guard. The required changed-source
 gold scope passes; no whole-src clean claim is made. Exact-head hosted CI is required.
+
+Final refinement: current document header explicitly labels the original content
+version. Returning from history re-reads that SAME original agreement before
+restoring entry focus; failed/refused return reads clear the previous record.
+Actual changed-current-record and access-refusal controls pass. Final current-main
+render20 cases/26 paths/zero errors and178/178 regressions pass; type ratchet10/6
+no-new passes. Earlier timeouts/setup logs are retained, never converted to PASS.
+The native evidence note now limits its counter example to the proven title case;
+source-reference changes retain the original engine version, not a new counter rule.

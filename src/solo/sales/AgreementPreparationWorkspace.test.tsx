@@ -195,11 +195,20 @@ describe('native agreement preparation flow', () => {
     expect(p.signings.signingEvents).toHaveBeenCalledWith(id, tenant);
   });
   it('returns keyboard focus to the original history entry after its view is mounted', async () => {
+    fixtures.read.mockResolvedValueOnce({ok:true,value:original()}).mockResolvedValueOnce({ok:true,value:{...original(),agreement:{...original().agreement,version:2,body_markdown:'Latest canonical correction.'}}});
     render(<AgreementPreparationWorkspace {...props()} agreementId={id} requestId={null} freshlyOpened={false} />);
     await screen.findByText('Original retained wording.');fireEvent.click(screen.getByRole('button',{name:'Inspect wording history'}));
     await screen.findByText('No retained wording was returned. The current document remains available.');
     fireEvent.click(screen.getByRole('button',{name:'Return to current agreement'}));
-    expect(document.activeElement).toBe(screen.getByRole('button',{name:'Inspect wording history'}));
+    await screen.findByText('Latest canonical correction.');expect(screen.getByText('Recorded wording · content version 2')).toBeTruthy();
+    expect(document.activeElement).toBe(screen.getByRole('button',{name:'Inspect wording history'}));expect(fixtures.read).toHaveBeenCalledTimes(2);
+  });
+  it('hides the previous current record when returning from history cannot establish native access', async () => {
+    fixtures.read.mockResolvedValueOnce({ok:true,value:original()}).mockResolvedValueOnce({ok:false,reason:'refused',message:'Synthetic native access changed.'});
+    render(<AgreementPreparationWorkspace {...props()} agreementId={id} requestId={null} freshlyOpened={false}/>);
+    await screen.findByText('Original retained wording.');fireEvent.click(screen.getByRole('button',{name:'Inspect wording history'}));
+    await screen.findByText('No retained wording was returned. The current document remains available.');fireEvent.click(screen.getByRole('button',{name:'Return to current agreement'}));
+    await screen.findByText('Synthetic native access changed.');expect(screen.queryByText('Original retained wording.')).toBeNull();expect(screen.queryByText('Synthetic retained agreement')).toBeNull();
   });
   it('retires the cached current legal wording when the native history reader refuses access', async () => {
     const p={...props(),agreementId:id,requestId:null,freshlyOpened:false};fixtures.history.mockResolvedValue({ok:false,reason:'refused',message:'Synthetic refusal'});

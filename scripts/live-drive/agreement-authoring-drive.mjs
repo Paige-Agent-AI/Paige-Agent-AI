@@ -163,12 +163,12 @@ try{
   assert.match(await page.getByRole('textbox',{name:'Agreement text source'}).inputValue(),/Retained final sentence/);
   await page.getByRole('button',{name:'Document',exact:true}).click();await editor.waitFor();
   await page.getByRole('button',{name:'Save agreement draft',exact:true}).click();
-  await page.getByText('Recorded wording · revision 1',{exact:true}).waitFor();
+  await page.getByText('Recorded wording · content version 1',{exact:true}).waitFor();
   const originalUrl=page.url(),id=new URL(originalUrl).searchParams.get('agreement');assert.equal(id,requests.get(requestId).id);
   assert.match(await page.locator('.e04-preparation-paper').innerText(),/Retained final sentence/);
   assert.match(await page.locator('.e04-preparation').innerText(),/does not establish payment or completion/);
   await page.getByRole('button',{name:'View signing history',exact:true}).click();await page.getByText('Draft recorded',{exact:true}).waitFor();
-  await page.reload();await page.getByText('Recorded wording · revision 1',{exact:true}).waitFor();assert.equal(page.url(),originalUrl);await capture('retained-record-reload');
+  await page.reload();await page.getByText('Recorded wording · content version 1',{exact:true}).waitFor();assert.equal(page.url(),originalUrl);await capture('retained-record-reload');
   assert.match(await page.locator('.e04-preparation-signers').innerText(),/Client signer · Order 1 · Awaiting signature/);
   for(const theme of ['light','dark'])for(const [width,height]of [[390,844],[320,740]]){
     await page.setViewportSize({width,height});
@@ -181,7 +181,7 @@ try{
     assert.ok(fit.signer.left>=0&&fit.signer.right<=width+1&&fit.signer.bottom<=height+1,JSON.stringify(fit));
     await capture(`${width}-${height}-${theme}-retained-signer`);
   }
-  await page.setViewportSize({width:1366,height:850});await page.goto(originalUrl,{waitUntil:'domcontentloaded'});await page.getByText('Recorded wording · revision 1',{exact:true}).waitFor();
+  await page.setViewportSize({width:1366,height:850});await page.goto(originalUrl,{waitUntil:'domcontentloaded'});await page.getByText('Recorded wording · content version 1',{exact:true}).waitFor();
   behavior.push('pending native counterparty with long identity remains readable after reload at 320/390 in both themes');
   behavior.push('required-field focus','actual rich keyboard/source round trip','single original native receipt navigation','same-record normal reload','canonical history port','signature/payment/service distinction');
   if(historyProof){
@@ -195,7 +195,7 @@ try{
     const enter=async()=>{await page.getByRole('button',{name:'Inspect wording history',exact:true}).click();await page.getByText('Retained revision 21 · Content version 21',{exact:true}).waitFor();};
     for(const theme of ['light','dark'])for(const [width,height]of [[1536,770],[1366,768],[1024,768],[900,1000],[390,844],[320,740]])for(const paige of width>=900?['closed','open']:['closed']){
       await page.setViewportSize({width,height});const target=new URL(originalUrl);target.searchParams.set('theme',theme);target.searchParams.set('paige',paige);
-      await page.goto(target.toString(),{waitUntil:'domcontentloaded'});await page.getByText('Recorded wording · revision 21',{exact:true}).waitFor();
+      await page.goto(target.toString(),{waitUntil:'domcontentloaded'});await page.getByText('Recorded wording · content version 21',{exact:true}).waitFor();
       const overlay=width<=1080&&paige==='open';if(overlay)await page.getByRole('button',{name:'Fold PAIGE conversation',exact:true}).last().click();
       await enter();const picker=page.getByRole('combobox',{name:'Saved revision',exact:true});assert.equal(await picker.locator('option').count(),20);
       await picker.selectOption(saved[19].id);await page.getByText('Retained revision 20 · Content version 20',{exact:true}).waitFor();
@@ -217,8 +217,11 @@ try{
       await page.getByRole('button',{name:'Return to current agreement',exact:true}).click();
     }
     mode='history-refused';await page.getByRole('button',{name:'Inspect wording history',exact:true}).click();await page.getByRole('heading',{name:'The agreement could not be opened',exact:true}).waitFor();assert.equal(await page.locator('.e04-preparation-paper').count(),0);await capture('history-refused-retires-original');
-    mode='normal';await page.getByRole('button',{name:'Try again',exact:true}).click();await page.getByText('Recorded wording · revision 21',{exact:true}).waitFor();
+    mode='normal';await page.getByRole('button',{name:'Try again',exact:true}).click();await page.getByText('Recorded wording · content version 21',{exact:true}).waitFor();
+    await enter();original.agreement.version=22;original.agreement.updated_at='2026-10-21T20:02:00Z';original.agreement.body_markdown='Current wording changed while history was open.';saved.push(revision(original,22));
+    await page.getByRole('button',{name:'Return to current agreement',exact:true}).click();await page.getByText('Recorded wording · content version 22',{exact:true}).waitFor();assert.match(await page.locator('.e04-preparation-paper').innerText(),/Current wording changed while history was open/);await capture('history-return-fresh-current');
     behavior.push('history twenty-row page and native older cursor','actual earlier wording under same original ID','history source timestamps and content/occurrence distinction','history narrow/desktop original return focus','empty history is not fabricated prior wording','history failed reads hide wording and explicit retry','native history refusal retires original cached wording');
+    behavior.push('history return rereads the current original instead of showing an obsolete cached version');
   }
   await page.getByRole('button',{name:'Agreements and terms',exact:true}).click();await newDraft();await fill('Uncertain response recovery');
   mode='uncertain-committed';const uncertainUrl=page.url(),uncertainRequest=new URL(uncertainUrl).searchParams.get('agreement_request');
@@ -228,13 +231,13 @@ try{
   await page.getByRole('button',{name:'Open recorded draft',exact:true}).click();const choice=page.getByRole('alertdialog');await choice.waitFor();
   assert.match(await choice.innerText(),/does not apply its current wording/);assert.equal(await page.getByRole('button',{name:'Continue editing',exact:true}).evaluate(el=>el===document.activeElement),true);
   await page.keyboard.press('Tab');assert.equal(await page.getByRole('button',{name:'Leave current editor',exact:true}).evaluate(el=>el===document.activeElement),true);
-  await page.getByRole('button',{name:'Leave current editor',exact:true}).click();await page.getByText('Recorded wording · revision 1',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'Leave current editor',exact:true}).click();await page.getByText('Recorded wording · content version 1',{exact:true}).waitFor();
   assert.equal(new URL(page.url()).searchParams.get('agreement'),requests.get(uncertainRequest).id);
-  await page.goto(uncertainUrl);await page.getByText('Recorded wording · revision 1',{exact:true}).waitFor();assert.equal(new URL(page.url()).searchParams.get('agreement'),requests.get(uncertainRequest).id);
+  await page.goto(uncertainUrl);await page.getByText('Recorded wording · content version 1',{exact:true}).waitFor();assert.equal(new URL(page.url()).searchParams.get('agreement'),requests.get(uncertainRequest).id);
   assert.equal(calls.filter(call=>call.name==='create_paige_agreement_draft_once'&&call.requestId===uncertainRequest).length,1);
   behavior.push('committed lost-response truth','RAM wording retained until explicit leave','leave focus/keyboard trap','opaque request reload recovery without another create');
   mode='read-error';await page.reload();await page.getByText('Record unavailable',{exact:true}).waitFor();assert.equal(await page.getByText('Draft preparation',{exact:true}).count(),0);await capture('read-error');mode='normal';
-  await page.getByRole('button',{name:'Try again',exact:true}).click();await page.getByText('Recorded wording · revision 1',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'Try again',exact:true}).click();await page.getByText('Recorded wording · content version 1',{exact:true}).waitFor();
   await page.getByRole('button',{name:'Agreements and terms',exact:true}).click();await newDraft();await fill('Private scope fence');
   await page.evaluate(()=>window.dispatchEvent(new CustomEvent('e04-authoring-port',{detail:{authorityUnknown:true}})));await page.getByRole('heading',{name:'Agreement access is being checked',exact:true}).waitFor();
   assert.equal(await page.getByRole('textbox',{name:'Agreement title',exact:true}).count(),0);

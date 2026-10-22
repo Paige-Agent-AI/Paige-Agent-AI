@@ -1,31 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  preferenceRefusal,
-  readClientPortalPreferences,
-  type ClientPortalPreferences,
-  type PreferenceRefusal,
-} from "@/lib/client-portal-preferences";
+import {useShellCustomerIdentity} from "@/lib/portal/customerIdentity";
+import {captureClientPortalAuthorization,withClientPortalBusiness} from "@/lib/client-portal-scope";
+import {preferenceRefusal,readClientPortalPreferences,type ClientPortalPreferences,type PreferenceRefusal} from "@/lib/client-portal-preferences";
 
-/**
- * E09 Slice 6 — the signed-in customer's messaging preferences and data-sharing choice for their
- * business, on Your account.
- *
- * Reads go through client_portal_communication_preferences(); the writers are
- * client_portal_set_communication_preference() and client_portal_set_shared_context_consent(). All
- * three resolve the customer relationship from the auth subject server-side (§9): no contact id or
- * address ever leaves this page, so nothing here can point a write at another person.
- *
- * A change is reported only after a FRESH read shows it (§70.1). The writer's acknowledgement is
- * never painted on its own: after every attempt — saved, refused or unknown — the page re-reads and
- * repaints from what the server now says. A refusal is named; an answer that cannot be confirmed says
- * so instead of claiming success.
- *
- * The first read pins the business; every later read and write is sent for that business, and an
- * answer for any other is refused. An account linked to more than one business is refused by the
- * relationship resolver (42501) and reported as its own state.
- */
-
+/** Original customer preferences, suppression and sharing sources. The selected tuple only clamps
+ * intent; native Auth/CRM still grants authority. Acknowledgement alone never proves saved state. */
 export type PreferencesPhase = "loading" | "ready" | "unavailable" | "multipleBusinesses" | "signed_out" | "error";
 export type PreferenceKey = "email" | "sms" | "updates" | "sharing";
 export type PreferenceOutcome =
@@ -35,21 +15,16 @@ export type PreferenceOutcome =
   | { key: PreferenceKey; kind: "multipleBusinesses" };
 
 type RpcResult = { data: unknown; error: { code?: string; message?: string } | null };
-type Rpc = "client_portal_communication_preferences" | "client_portal_set_communication_preference" | "client_portal_set_shared_context_consent";
-/** The E09 RPCs are newer than the generated Database types; keep the call shape typed locally. */
-function portalRpc(name: Rpc, args: Record<string, unknown>, credential?: string): PromiseLike<RpcResult> {
-  const call = supabase.rpc(name as never, args as never);
-  // Pin the request to the credential that was verified for it: SDK token acquisition can finish
-  // after an account switch, and a write must never travel under the next account's token.
-  const pinned = credential ? call.setHeader("Authorization", `Bearer ${credential}`) : call;
-  return pinned as unknown as PromiseLike<RpcResult>;
+type Rpc = "client_portal_communication_preferences_scoped" | "client_portal_set_communication_preference_scoped" | "client_portal_set_shared_context_consent_scoped";
+function portalRpc(name:Rpc,args:Record<string,unknown>,authorization:string,tenantId:string):PromiseLike<RpcResult> {
+  return withClientPortalBusiness(supabase.rpc(name as never,args as never),tenantId).setHeader("Authorization",authorization) as unknown as PromiseLike<RpcResult>;
 }
 
 /**
  * 42501 means several things here; only the message tells them apart. "customer authentication required"
  * is signed out; "select an authorized customer relationship" is more than one business; "customer
- * relationship unavailable" is no (longer a) relationship. Anything else — e.g. a writer whose own
- * readback did not hold — is not a definite answer, and the fresh read decides.
+ * relationship unavailable" is no (longer a) relationship. An unrecognized authorization refusal
+ * also closes this scope; transport or acknowledgment uncertainty uses the original fresh read.
  */
 function classify42501(error: RpcResult["error"]): "signed_out" | "multipleBusinesses" | "unavailable" | null {
   const message = typeof error?.message === "string" ? error.message : "";
@@ -77,144 +52,132 @@ export function preferenceReached(p: ClientPortalPreferences, key: PreferenceKey
   return state === (enabled ? "on" : "off");
 }
 
-/**
- * `actorId` is the account this page was opened for (Your account's verified relationship). The page
- * mounts this hook only once that account has resolved and keys it on the account, so a sign-out or
- * an account switch unmounts it; every read and write here still re-checks that the signed-in subject
- * is that account and refuses otherwise.
- */
-export function useClientPortalPreferences(options: { actorId: string; onCommitted?: (key: PreferenceKey) => void }) {
-  const [phase, setPhase] = useState<PreferencesPhase>("loading");
-  const [preferences, setPreferences] = useState<ClientPortalPreferences | null>(null);
-  const [stale, setStale] = useState(false);
-  const [pending, setPending] = useState<{ key: PreferenceKey; enabled: boolean } | null>(null);
-  const [outcome, setOutcome] = useState<PreferenceOutcome | null>(null);
-  const tenant = useRef<string | null>(null);
-  const actor = useRef<string>(options.actorId);
-  actor.current = options.actorId;
-  const generation = useRef(0);
-  const writing = useRef(false);
-  const signedOut = useRef(false);
-  const latest = useRef<ClientPortalPreferences | null>(null);
-  const committed = useRef(options.onCommitted);
-  committed.current = options.onCommitted;
+type Model={phase:PreferencesPhase;preferences:ClientPortalPreferences|null;stale:boolean;pending:{key:PreferenceKey;enabled:boolean}|null;outcome:PreferenceOutcome|null};
+const initial=():Model=>({phase:"loading",preferences:null,stale:false,pending:null,outcome:null});
 
-  const clear = useCallback((next: PreferencesPhase) => {
-    latest.current = null; tenant.current = null;
-    setPreferences(null); setStale(false); setPending(null); setOutcome(null); setPhase(next);
-  }, []);
+/** Local request lifetime only, never another consent store or execution engine. The Account page
+ * supplies its native-verified tuple; the canonical shell, when present, must match it exactly. */
+export function useClientPortalPreferences(options:{actorId:string;tenantId?:string;clientId?:string;onCommitted?:(key:PreferenceKey)=>void}) {
+  const identity=useShellCustomerIdentity();
+  const frame=identity?.viewer==="customer"?identity.frame:null;
+  const actorId=frame?.actorId??options.actorId,tenantId=frame?.profile.tenant_id??options.tenantId,clientId=frame?.profile.id??options.clientId;
+  const matches=(!options.tenantId||options.tenantId===tenantId)&&(!options.clientId||options.clientId===clientId)&&options.actorId===actorId;
+  const rootComplete=!identity||identity.viewer==="customer"&&!!frame?.actorId&&!!frame?.profile.tenant_id&&!!frame?.profile.id;
+  const complete=!!actorId&&!!tenantId&&!!clientId&&matches&&rootComplete;
+  const enabled=complete&&(!identity||identity.viewer==="customer"&&identity.phase==="ready"&&!identity.checking);
+  const key=JSON.stringify([actorId,tenantId,clientId,matches]);
+  const origin=useRef({key,enabled,generation:0});
+  if(origin.current.key!==key||origin.current.enabled!==enabled)origin.current={key,enabled,generation:origin.current.generation+1};
+  const scopeGeneration=origin.current.generation;
+  const applied=useRef(key),shown=useRef(-1),observedSignedOut=useRef(false);
+  const inScope=useCallback(()=>origin.current.generation===scopeGeneration&&origin.current.enabled&&applied.current===key&&!observedSignedOut.current,[scopeGeneration,key]);
+  const [model,setModel]=useState<Model>(initial),latest=useRef(model);
+  const committed=useRef(options.onCommitted);committed.current=options.onCommitted;
+  const actions=useRef<{load:()=>Promise<void>;write:(key:PreferenceKey,enabled:boolean)=>Promise<void>}|null>(null);
+  const publish=useCallback((next:Model)=>{latest.current=next;setModel(next);},[]);
 
-  /** One read for the pinned business. Throws a ReadFailure for a definite answer, an Error otherwise. */
-  const fetchOnce = useCallback(async (credential?: string): Promise<ClientPortalPreferences> => {
-    const pin = tenant.current;
-    const result = await portalRpc("client_portal_communication_preferences", pin ? { p_tenant_id: pin } : {}, credential);
-    if (result.error) {
-      const definite = result.error.code === "42501" ? classify42501(result.error) : null;
-      if (definite) throw new ReadFailure(definite);
-      throw new Error("read failed");
-    }
-    if (result.data === null || result.data === undefined) throw new ReadFailure("unavailable");
-    const parsed = readClientPortalPreferences(result.data, pin);
-    if (!parsed) throw new Error("unexpected preferences");
-    return parsed;
-  }, []);
-
-  const load = useCallback(async () => {
-    if (writing.current || signedOut.current) return;
-    const request = ++generation.current;
-    if (!latest.current) setPhase("loading");
-    try {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (request !== generation.current) return;
-      if (error?.name === "AuthSessionMissingError" || error?.status === 401 || (!error && !user)) { signedOut.current = true; clear("signed_out"); return; }
-      if (error || !user) throw new Error("auth unavailable");
-      if (user.id !== actor.current) { signedOut.current = true; clear("signed_out"); return; }
-      const next = await fetchOnce();
-      if (request !== generation.current) return;
-      tenant.current = next.tenant_id; latest.current = next;
-      setPreferences(next); setStale(false); setPhase("ready");
-    } catch (e) {
-      if (request !== generation.current) return;
-      if (e instanceof ReadFailure) { clear(e.phase); return; }
-      // A refresh that fails keeps what is on screen and says it may be out of date.
-      if (latest.current) { setStale(true); setPhase("ready"); } else setPhase("error");
-    }
-  }, [clear, fetchOnce]);
-
-  const write = useCallback(async (key: PreferenceKey, enabled: boolean) => {
-    const before = latest.current;
-    if (writing.current || !before || !tenant.current) return;
-    writing.current = true;
-    const request = ++generation.current;
-    setPending({ key, enabled }); setOutcome(null);
-    let refusal: PreferenceRefusal | "OTHER" | null = null;
-    let dispatched = false;
-    try {
-      const session = await supabase.auth.getSession();
-      const credential = session.data.session?.access_token;
-      if (session.error || !credential) throw new ReadFailure("signed_out");
-      // The credential's subject is verified by Auth, never inferred from the cached session user.
-      const verified = await supabase.auth.getUser(credential);
-      if (request !== generation.current) return;
-      if (verified.error || verified.data.user?.id !== actor.current) throw new ReadFailure("signed_out");
-      dispatched = true;
-      const result = key === "sharing"
-        ? await portalRpc("client_portal_set_shared_context_consent", { p_allow: enabled, p_tenant_id: tenant.current }, credential)
-        : await portalRpc("client_portal_set_communication_preference", {
-          p_channel: PORTAL_PREFERENCE_CHANNEL[key].channel, p_topic: PORTAL_PREFERENCE_CHANNEL[key].topic,
-          p_enabled: enabled, p_tenant_id: tenant.current,
-        }, credential);
-      if (request !== generation.current) return;
-      const definite = result.error?.code === "42501" ? classify42501(result.error) : null;
-      if (definite) throw new ReadFailure(definite);
-      refusal = preferenceRefusal(result.data, result.error);
-    } catch (e) {
-      if (request !== generation.current) return;
-      if (e instanceof ReadFailure) {
-        writing.current = false;
-        if (e.phase === "multipleBusinesses") { clear("multipleBusinesses"); setOutcome({ key, kind: "multipleBusinesses" }); }
-        else clear(e.phase);
-        return;
-      }
-      // Transport failure: the change may or may not have landed. The fresh read below decides.
-    }
-    // Repaint from a fresh read, whatever the writer said.
-    let fresh: ClientPortalPreferences | null = null;
-    try { fresh = await fetchOnce(); } catch (e) {
-      if (request !== generation.current) return;
-      if (e instanceof ReadFailure) { writing.current = false; clear(e.phase); return; }
-    }
-    if (request !== generation.current) return;
-    writing.current = false;
-    setPending(null);
-    if (fresh) { latest.current = fresh; setPreferences(fresh); setStale(false); setPhase("ready"); }
-    else setStale(true);
-    if (refusal) { setOutcome({ key, kind: "refused", code: refusal }); return; }
-    if (dispatched && fresh && preferenceReached(fresh, key, enabled)) {
-      setOutcome({ key, kind: "saved", enabled });
-      committed.current?.(key);
-      return;
-    }
-    setOutcome({ key, kind: "unconfirmed" });
-  }, [clear, fetchOnce]);
-
-  useEffect(() => {
-    void load();
-    const refresh = () => { if (document.visibilityState !== "hidden") void load(); };
-    window.addEventListener("focus", refresh);
-    document.addEventListener("visibilitychange", refresh);
-    return () => {
-      generation.current += 1;
-      window.removeEventListener("focus", refresh);
-      document.removeEventListener("visibilitychange", refresh);
+  useEffect(()=>{
+    const prior=applied.current===key?latest.current:null;
+    applied.current=key;
+    latest.current=prior?{...prior,pending:null,outcome:prior.pending?{key:prior.pending.key,kind:"unconfirmed"}:prior.outcome}:initial();
+    let disposed=false,signedOut=observedSignedOut.current,generation=0,writing=false;
+    const retire=new AbortController();
+    const current=(request:number)=>!disposed&&!signedOut&&inScope()&&request===generation;
+    const commit=(next:Model)=>{if(disposed||origin.current.generation!==scopeGeneration||applied.current!==key)return;shown.current=scopeGeneration;publish(next);};
+    const clear=(phase:PreferencesPhase)=>commit({...initial(),phase});
+    const wait=<T,>(value:PromiseLike<T>):Promise<T>=>new Promise((resolve,reject)=>{
+      const finish=(fn:()=>void)=>{clearTimeout(timer);retire.signal.removeEventListener("abort",abort);fn();};
+      const abort=()=>finish(()=>reject(new Error("retired")));
+      const timer=setTimeout(()=>finish(()=>reject(new Error("timeout"))),20_000);
+      retire.signal.addEventListener("abort",abort,{once:true});
+      Promise.resolve(value).then(v=>finish(()=>resolve(v)),e=>finish(()=>reject(e)));
+    });
+    const ensureActor=async(request:number,authorization?:string)=>{
+      const result=await wait(authorization?supabase.auth.getUser(authorization.replace(/^Bearer /,"")):supabase.auth.getUser());
+      if(!current(request))throw new Error("retired");
+      if(result.error?.name==="AuthSessionMissingError"||result.error?.status===401||!result.error&&!result.data.user||result.data.user&&result.data.user.id!==actorId)throw new ReadFailure("signed_out");
+      if(result.error||!result.data.user)throw new ReadFailure("error");
     };
-  }, [load, clear]);
-
-  return {
-    phase, preferences, stale, pending, outcome,
-    reload: load,
-    setChannel: (key: Exclude<PreferenceKey, "sharing">, enabled: boolean) => write(key, enabled),
-    setSharing: (allow: boolean) => write("sharing", allow),
-    dismissOutcome: () => setOutcome(null),
-  };
+    const authorizationFor=async(request:number)=>{
+      await ensureActor(request);
+      try{return await wait(captureClientPortalAuthorization(supabase.auth,actorId,()=>current(request)));}
+      catch(error){if(!current(request))throw error;throw new ReadFailure("error");}
+    };
+    const fetchOnce=async(request:number):Promise<ClientPortalPreferences>=>{
+      const authorization=await authorizationFor(request);
+      if(!current(request)||!tenantId||!clientId)throw new Error("retired");
+      const result=await wait(portalRpc("client_portal_communication_preferences_scoped",{p_tenant_id:tenantId,p_expected_client_id:clientId},authorization,tenantId));
+      if(!current(request))throw new Error("retired");
+      if(result.error){const definite=result.error.code==="42501"?(classify42501(result.error)??"unavailable"):null;if(definite)throw new ReadFailure(definite);throw new Error("read failed");}
+      if(result.data===null||result.data===undefined)throw new ReadFailure("unavailable");
+      const parsed=readClientPortalPreferences(result.data,tenantId);
+      if(!parsed)throw new Error("unexpected preferences");
+      await ensureActor(request,authorization);
+      if(!current(request))throw new Error("retired");
+      return parsed;
+    };
+    const load=async()=>{
+      if(!inScope()||disposed||signedOut||writing)return;
+      const request=++generation,before=latest.current;
+      if(!before.preferences)commit({...before,phase:"loading"});
+      try{const next=await fetchOnce(request);if(current(request))commit({...latest.current,phase:"ready",preferences:next,stale:false,pending:null});}
+      catch(error){if(!current(request))return;if(error instanceof ReadFailure){if(error.phase==="signed_out")signedOut=observedSignedOut.current=true;clear(error.phase);return;}
+        if(before.preferences)commit({...before,phase:"ready",stale:true,pending:null});else clear("error");}
+    };
+    const write=async(preference:PreferenceKey,enabled:boolean)=>{
+      const before=latest.current;
+      if(!inScope()||disposed||signedOut||writing||before.phase!=="ready"||!before.preferences||!tenantId||!clientId)return;
+      writing=true;const request=++generation;
+      commit({...before,pending:{key:preference,enabled},outcome:null});
+      let refusal:PreferenceRefusal|"OTHER"|null=null,dispatched=false;
+      try{
+        const authorization=await authorizationFor(request);
+        if(!current(request))return;
+        dispatched=true;
+        const result=preference==="sharing"
+          ?await wait(portalRpc("client_portal_set_shared_context_consent_scoped",{p_allow:enabled,p_tenant_id:tenantId,p_expected_client_id:clientId},authorization,tenantId))
+          :await wait(portalRpc("client_portal_set_communication_preference_scoped",{p_channel:PORTAL_PREFERENCE_CHANNEL[preference].channel,p_topic:PORTAL_PREFERENCE_CHANNEL[preference].topic,p_enabled:enabled,p_tenant_id:tenantId,p_expected_client_id:clientId},authorization,tenantId));
+        if(!current(request))return;
+        const definite=result.error?.code==="42501"?(classify42501(result.error)??"unavailable"):null;
+        if(definite)throw new ReadFailure(definite);
+        refusal=preferenceRefusal(result.data,result.error);
+      }catch(error){
+        if(!current(request))return;
+        if(error instanceof ReadFailure){writing=false;if(error.phase==="signed_out")signedOut=observedSignedOut.current=true;
+          clear(error.phase);if(error.phase==="multipleBusinesses")commit({...initial(),phase:error.phase,outcome:{key:preference,kind:"multipleBusinesses"}});return;}
+        // An uncertain external outcome never replays a choice. Only the original fresh read can prove it.
+      }
+      let fresh:ClientPortalPreferences|null=null;
+      try{fresh=await fetchOnce(request);}catch(error){if(!current(request))return;if(error instanceof ReadFailure){writing=false;if(error.phase==="signed_out")signedOut=observedSignedOut.current=true;clear(error.phase);return;}}
+      if(!current(request))return;
+      writing=false;
+      const outcome:PreferenceOutcome=refusal?{key:preference,kind:"refused",code:refusal}
+        :dispatched&&fresh&&preferenceReached(fresh,preference,enabled)?{key:preference,kind:"saved",enabled}:{key:preference,kind:"unconfirmed"};
+      commit({...before,phase:"ready",preferences:fresh??before.preferences,stale:!fresh,pending:null,outcome});
+      if(outcome.kind==="saved"&&current(request))committed.current?.(preference);
+    };
+    actions.current={load,write};
+    const {data:{subscription}}=supabase.auth.onAuthStateChange((event,session)=>{
+      if(disposed)return;const next=session?.user.id??null;
+      if(observedSignedOut.current&&event!=="SIGNED_IN")return;
+      if(event==="INITIAL_SESSION"&&next===actorId)return;
+      if(event==="SIGNED_OUT"||!next||next!==actorId||observedSignedOut.current){
+        signedOut=event!=="SIGNED_IN"||next!==actorId;observedSignedOut.current=signedOut;
+        generation++;++origin.current.generation;shown.current=origin.current.generation;
+        publish({...initial(),phase:signedOut?"signed_out":"loading"});return;
+      }
+      queueMicrotask(()=>{if(!disposed&&!signedOut)void load();});
+    });
+    const refresh=()=>{if(document.visibilityState!=="hidden")void load();};
+    window.addEventListener("focus",refresh);document.addEventListener("visibilitychange",refresh);
+    if(enabled&&!signedOut)void load();
+    return()=>{disposed=true;generation++;retire.abort();actions.current=null;subscription.unsubscribe();window.removeEventListener("focus",refresh);document.removeEventListener("visibilitychange",refresh);};
+  },[actorId,tenantId,clientId,key,scopeGeneration,enabled,inScope,publish]);
+  const inView=()=>inScope()&&shown.current===scopeGeneration;
+  const visible=inView()?model:{...initial(),phase:observedSignedOut.current?"signed_out" as const:!complete?"unavailable" as const:"loading" as const};
+  return {...visible,preferences:visible.phase==="ready"?visible.preferences:null,
+    reload:()=>inScope()?actions.current?.load():undefined,
+    setChannel:(preference:Exclude<PreferenceKey,"sharing">,enabled:boolean)=>inView()?actions.current?.write(preference,enabled):undefined,
+    setSharing:(allow:boolean)=>inView()?actions.current?.write("sharing",allow):undefined,
+    dismissOutcome:()=>{if(inView())publish({...latest.current,outcome:null});}};
 }

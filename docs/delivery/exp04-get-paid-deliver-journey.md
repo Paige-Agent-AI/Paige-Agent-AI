@@ -1,5 +1,29 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
+## October22 pending preparation installation — bounded pre-edit repair
+
+Six normal production attempts failed at the same DROP TRIGGER statement with
+the original5s55P03 timeout. Actual production readback after the sixth attempt
+still has frontier290009, no recorded300004/table/legacy triggers and unchanged
+SAVE11body1bd28e75. REPAIR only this merged-but-never-applied production migration's
+two legacy trigger installation statements; preserve its version, all other
+migrations, all eight function bodies/ABIs/grants, native signing holds and5s
+timeout. No migration ledger, original agreement/customer/signature/audit data,
+session or provider is changed. This is source correction, not history repair.
+
+REUSE PostgreSQL CREATE OR REPLACE TRIGGER and the existing disposable native
+proof runner. First reproduce the actual old installation timeout under an
+independent original-table read transaction; then prove fresh/replayed native
+installation completes with the same reader held and identical trigger meaning.
+No new test runner, product authority, store or customer identity. Ordinary
+private preparation stays on the original owner API/native records and event;
+exact-field Chat/Live/Spine remain UNAVAILABLE, no LayerC/provider activation or
+new approval lane. UI/prototype/design remain unchanged; actual native/Edge/web
+readback, proper role/persistence proof, all12 outcomes and founder acceptance
+remain separate. Required fresh review/normal Preview/exact-head CI precede the
+normal serialized deployment. Already-applied Preview schemas must retain the
+same final source/trigger definitions; do not reset or repair their history.
+
 ## October22 required database proof — pre-edit runner correction
 
 Actual exact-head database jobs fail before native tests when the existing GHCR

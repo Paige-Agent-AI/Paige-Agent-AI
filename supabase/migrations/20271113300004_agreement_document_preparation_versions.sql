@@ -69,8 +69,7 @@ BEGIN
   RETURN NEW;
 END $$;
 REVOKE ALL ON FUNCTION public._paige_preparation_legacy_effect_hold() FROM PUBLIC,anon,authenticated,service_role;
-DROP TRIGGER IF EXISTS trg_paige_preparation_legacy_effect_hold ON public.paige_agreements;
-CREATE TRIGGER trg_paige_preparation_legacy_effect_hold
+CREATE OR REPLACE TRIGGER trg_paige_preparation_legacy_effect_hold
   BEFORE UPDATE OF status,content_storage_key,content_sha256,sealed_storage_key,sealed_sha256
   ON public.paige_agreements FOR EACH ROW EXECUTE FUNCTION public._paige_preparation_legacy_effect_hold();
 
@@ -86,8 +85,7 @@ BEGIN
   RETURN NEW;
 END $$;
 REVOKE ALL ON FUNCTION public._paige_preparation_legacy_token_hold() FROM PUBLIC,anon,authenticated,service_role;
-DROP TRIGGER IF EXISTS trg_paige_preparation_legacy_token_hold ON public.paige_agreement_signers;
-CREATE TRIGGER trg_paige_preparation_legacy_token_hold BEFORE UPDATE OF token_hash,status
+CREATE OR REPLACE TRIGGER trg_paige_preparation_legacy_token_hold BEFORE UPDATE OF token_hash,status
   ON public.paige_agreement_signers FOR EACH ROW EXECUTE FUNCTION public._paige_preparation_legacy_token_hold();
 
 -- Same native party identity binding as the existing TypeScript preparation

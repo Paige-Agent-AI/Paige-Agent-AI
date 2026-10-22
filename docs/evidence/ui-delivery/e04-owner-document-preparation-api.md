@@ -1,5 +1,37 @@
 # EXP04 original owner document API — bounded dependent source
 
+## October22 pending native installation correction
+
+Six normal production attempts failed at statement16/original5s55P03. Actual
+post-sixth readback still has frontier290009, unrecorded300004, no preparation
+table or either new legacy hold trigger and unchanged SAVE11body1bd28e75.
+Correct ONLY this never-applied production migration's two legacy installations:
+native CREATE OR REPLACE TRIGGER instead of DROP followed by CREATE. Version,
+all eight function bodies/ABIs/grants, fixed5s timeout, immutable records and
+signing holds remain unchanged; no migration ledger or other migration is edited.
+Already-applied Preview schemas retain the same final trigger/source definitions.
+
+The existing fenced PostgreSQL16 runner now holds original agreement/signer
+AccessShare reads for8s. Unchanged installation/replay produced an actual lock
+timeout RED; after ONLY the two-statement SQL correction, the identical test and
+all221 native controls PASS (44 signer/75 checked/23 editability/79 document).
+Fresh/replayed installation both complete before the reader releases; replay's
+two hold definitions match. Existing authority/immutability/duplicate/source-CAS/
+legacy-effect/receipt controls stay intact. Original migration lint0 warnings,
+script syntax and whitespace checks PASS. Sandbox denied the initial localhost
+identity read; ordinary permitted local execution succeeded. That setup denial
+is not the causal RED. Logs: outputs/e04-trigger-installation-red.log and
+e04-trigger-installation-green.log (task-local, synthetic only).
+
+PostgreSQL documents CREATE TRIGGER's reader-compatible lock and native replacement:
+[locking](https://www.postgresql.org/docs/17/explicit-locking.html),
+[CREATE TRIGGER](https://www.postgresql.org/docs/17/sql-createtrigger.html).
+No new frontend/rendered artifact, provider, role, capability or execution path.
+Original source rendering below remains separate proof. New exact-head review,
+all required CI/normal Preview, safe normal deployment and actual native8-function/
+ABI/ACL/table/trigger/index readback remain gates. Native and customer preparation
+are NOT_DEPLOYED/NOT_ACCEPTED until that evidence exists; all12 outcomes remain.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: original exp04-get-paid-deliver-journey.md records the owner API ten-point pre-edit contract and all twelve outcomes; original agreement-document owner path extended.
 PAIGE_UI_DESIGN: PASS: original five-module/native Agreements direction preserved; this increment has no changed component, shell, navigation or design system.

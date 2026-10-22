@@ -1,5 +1,40 @@
 # EXP04 native document/layout versions — bounded source evidence
 
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: original E04 journey contains the exact native ten-point contract; combined source release2593 retains all twelve outcomes.
+PAIGE_UI_DESIGN: PASS: original five-module route and native SOLO Operate direction; actual dependent consumer evidence is e04-agreement-document-fields.md.
+MATERIAL_FLOW_CHANGE: YES: immutable native document/map versions support the actual dependent preparation consumer; native Save is still unconnected.
+FLOW_PROTOTYPE: PASS: existing full Agreements prototype275be12415239d4ecdb66bec0894146ec9fe5c64 and October21 delegated preparation direction; no founder acceptance inferred.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: authorized owner retains exact original document/map identity and later reads the same native version/event; this source increment is not yet a customer-native Save.
+VISUAL_DIRECTION: PASS: combined consumer uses original paper/context/assigned-field inspector and native shell tokens; SQL introduces no competing interface.
+AUTOMATED_EVIDENCE: PASS:218 native assertions/replay2/six new concurrent sessions/four observed lock waits; original actor/tenant/immutability/CAS/history/legacy negatives. Shared validator23 tests/73 steps and consumer15 model cases separately proven.
+STATIC_EVIDENCE: PASS: native grants/search-path/source/trigger inspection, unchanged production SAVE and exact latest source contract; consumer whole-app type10/current6 and changed-file lint0. No weakened baseline/assertion/timeout.
+RENDERED_EVIDENCE: PASS: combined actual consumer20 frames/11 paths/30 source pins/zero page errors, assets/e04-agreement-document-fields/result.json. This proves actual rendering/proposals only, not native persistence or authenticated acceptance.
+BEHAVIORAL_EVIDENCE: PASS: real disposable native database exercises original records/roles/locks/replay/immutability, while actual browser verifies pages/fields/proposal states. No fixture is described as an actual retained customer version.
+AUTHENTICATED_RUNTIME: UNVERIFIED: no actual owner/staff/client JWT, production child version, hosted PDF, signature or provider action; original source harness and disposable SQL are bounded engineering evidence.
+KEYBOARD_FOCUS: PASS: actual combined consumer arrow/Shift/Delete/Undo/Escape, named field/page/zoom controls and associated numeric controls; full assistive-technology/customer proof remains owed.
+ZOOM_REFLOW: PASS: actual combined consumer320/390 and required desktop sizes, bounded100% mobile paper zoom/pan and zero application horizontal overflow. Native SQL changes no layout.
+REDUCED_MOTION: PASS: actual source drive reducedMotion:reduce; original native waiting feedback only, no new animation.
+STATE_COVERAGE: PASS: native none/retained/selected/stale/history/duplicate/foreign/revoked/CAS/conflict/legacy hold; combined consumer loading/read-only/error/mask/proposals. Real API unknown-save/reload remains unconnected.
+TRUTHFUL_STATE_LABELS: PASS: native source match is agreement-and-parties only; commercial verification not_applicable/not_checked. Actual fixture explicitly reports no native Save. No approval/signature/send/payment/service or legal-sufficiency inference.
+SOLO_UI: YES: combined shared Sales consumer for every eligible current/future SOLO account; native user/business/role floor remains authoritative, no named-account implementation or entitlement.
+UNVERIFIED: native forward290004 production apply/readback, real API/customer mount/save/reload/history, exact approved document/map/send/signing/effective economics, ordinary role/provider/full O1–O12 and founder acceptance.
+SOLO_1536X770_PAIGE_CLOSED: PASS: assets/e04-agreement-document-fields/1536-770-light-closed.png and dark equivalent, actual combined source consumer only.
+SOLO_1536X770_PAIGE_OPEN: PASS:1536-770-light-open.png and dark equivalent, actual original PAIGE side panel.
+SOLO_1366X768_PAIGE_CLOSED: PASS:1366-768-light-closed.png and dark equivalent, paper/inspector and reachable actions.
+SOLO_1366X768_PAIGE_OPEN: PASS:1366-768-light-open.png and dark equivalent, original PAIGE preserved.
+SOLO_1024X768_PAIGE_CLOSED: PASS:1024-768-light-closed.png and dark equivalent, bounded native consumer.
+SOLO_1024X768_PAIGE_OPEN: PASS:1024-768-light-open.png and dark equivalent, original overlay explicitly Folded before fields; no click-through claim.
+SOLO_900X1000_PAIGE_CLOSED: PASS:900-1000-light-closed.png and dark equivalent, bounded native consumer.
+SOLO_900X1000_PAIGE_OPEN: PASS:900-1000-light-open.png and dark equivalent, actual original Fold before operation, correctly labelled.
+INTERNAL_BUILD_IDENTITY: native_source_sha=67184484e540c628bee325d736b7cdc269286979; consumer_source_sha=22f27e1d7187fb92ce2376a0e37326934087d2c0; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113290004 production apply and readback); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-native-document-preparations.md
+RELEASE_CHANNEL: development: original disposable native proof and actual local consumer render, no production/customer acceptance.
+RELEASE_CLASSIFICATION: internal-only: bounded native version and dependent consumer source, not complete Agreements Experience.
+CUSTOMER_RELEASE_IDENTITY: none: no complete Experience or owner acceptance.
+RELEASE_NOTE_REQUIRED: no: internal increment, no customer notification authority.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: normal native/web release/readback and actual API/mount/roles/provider/all twelve outcomes; exact preparation Chat/Live UNAVAILABLE.
+RELEASE_RECOVERY: position=reviewed forward correction preserving immutable native agreement/source/party/event/history; reference=docs/delivery/exp04-get-paid-deliver-journey.md; no native history repair/backfill/activation.
+
 Status: LOCAL, UNAPPLIED, NOT_DEPLOYED. No mounted field-placement or signing
 consumer. No authenticated customer, hosted file, provider or founder acceptance.
 

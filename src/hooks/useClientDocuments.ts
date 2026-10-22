@@ -1,14 +1,17 @@
 import {useCallback, useEffect, useRef, useState} from "react";
 import {supabase} from "@/integrations/supabase/client";
+import {useShellCustomerIdentity} from "@/lib/portal/customerIdentity";
+import {captureClientPortalAuthorization, withClientPortalBusiness} from "@/lib/client-portal-scope";
 import {readClientPortalSelfProfile} from "@/lib/client-portal-self-profile";
 import {CLIENT_DOCUMENT_COLUMNS, PORTAL_DOCUMENT_PAGE_SIZE, clientDocumentMime, portalDocumentFromUpload, readClientDocument,
   readPortalDocumentList, sameDocumentScope, type DocumentScope, type PortalDocument} from "@/lib/client-portal-documents";
 
 type RpcResult = {data: unknown; error: {code?: string; message?: string} | null};
-// These native functions are introduced by the paired forward migration. Keep
-// the existing SDK/client; shared generated types are not a competing API store.
-const fileRpc = (name: string, args: Record<string, unknown>) =>
-  supabase.rpc(name as never, args as never) as unknown as PromiseLike<RpcResult>;
+// Original native functions retain their existing server authority and signature.
+// Keep the existing SDK/client; generated types are not another API store.
+type FileRequest = PromiseLike<RpcResult> & {setHeader(name:string,value:string):FileRequest};
+const fileRpc = (name: string, args: Record<string, unknown>, scope: DocumentScope, authorization: string) =>
+  withClientPortalBusiness(supabase.rpc(name as never, args as never) as unknown as FileRequest, scope.tenant).setHeader("Authorization", authorization);
 type Phase = "loading" | "ready" | "error" | "unavailable" | "signed_out";
 type Upload = {kind: "idle" | "working" | "uncertain" | "finish" | "retry" | "saved" | "error"; notice: string; id: string | null};
 type Candidate = {id: string; name: string; mime: string; size: number; scope: DocumentScope; file: File | null};
@@ -30,44 +33,76 @@ class AccessFailure extends Error {}
 
 /** Local document UI lifetime. Auth, native relationship, file and Storage policies own permission. */
 export function useClientDocuments() {
+  const identity = useShellCustomerIdentity();
+  const frame = identity?.viewer === "customer" ? identity.frame : null;
+  const requested = frame ? {actor:frame.actorId,tenant:frame.profile.tenant_id,contact:frame.profile.id} : undefined;
+  const requestedKey = identity ? JSON.stringify([identity.viewer,requested?.actor,requested?.tenant,requested?.contact]) : "legacy";
+  const enabled = !identity || identity.viewer === "staff" || !!frame && identity.phase === "ready" && !identity.checking;
   const [phase, setPhase] = useState<Phase>("loading"), [files, setFiles] = useState<PortalDocument[]>([]);
   const [summary, setSummary] = useState<DocumentSummary | null>(null);
   const [scope, setScope] = useState<DocumentScope | null>(null), [more, setMore] = useState(false);
   const [reading, setReading] = useState(false), [notice, setNotice] = useState("");
   const [upload, setUpload] = useState<Upload>(idle), [epoch, setEpoch] = useState(0);
   const life = useRef({alive: true, epoch: 0, read: 0, writing: false, recoveryAllowed: false,
-    scope: null as DocumentScope | null, last: null as DocumentScope | null,
+    signedOut: false, scope: null as DocumentScope | null, last: null as DocumentScope | null,
     files: [] as PortalDocument[], candidate: null as Candidate | null});
+  const viewEpoch = useRef(0), dataGeneration = useRef(-1), applied = useRef(requestedKey);
+  const interrupted = useRef(false);
+  const origin = useRef({key:requestedKey,generation:0,enabled});
+  if(origin.current.key !== requestedKey || origin.current.enabled !== enabled) {
+    const l=life.current;
+    ++l.epoch; ++l.read;
+    if(origin.current.key !== requestedKey) {
+      ++viewEpoch.current; l.scope=null; l.last=null; l.files=[]; l.candidate=null;
+      l.writing=false; l.recoveryAllowed=false; interrupted.current=false;
+    } else if(l.writing && l.candidate) {
+      l.writing=false; l.recoveryAllowed=false; interrupted.current=true;
+    }
+    origin.current={key:requestedKey,generation:origin.current.generation+1,enabled};
+  }
+  const generation=origin.current.generation;
+  const scopeAlive=useCallback(()=>origin.current.generation===generation&&origin.current.enabled&&applied.current===requestedKey,[generation,requestedKey]);
+  const requestedActor=requested?.actor,requestedTenant=requested?.tenant,requestedContact=requested?.contact;
   const retire = useCallback((next: Phase, message: string) => {
     const l = life.current; ++l.epoch; ++l.read; l.scope = null; l.last = null; l.files = [];
     l.writing = false; l.recoveryAllowed = false; l.candidate = null;
-    setEpoch(l.epoch); setScope(null); setFiles([]); setSummary(null); setMore(false); setReading(false);
+    ++viewEpoch.current; dataGeneration.current=origin.current.generation;
+    setEpoch(viewEpoch.current); setScope(null); setFiles([]); setSummary(null); setMore(false); setReading(false);
     setPhase(next); setNotice(message); setUpload(idle());
   }, []);
-  const verifiedScope = useCallback(async (deadline: number, expected?: DocumentScope): Promise<DocumentScope> => {
-    const identity = await wait(supabase.auth.getUser(), deadline);
-    if (identity.error || !identity.data.user) throw new AccessFailure("Sign in with your invited account to continue.");
-    const actor = identity.data.user.id;
-    if (expected && actor !== expected.actor) throw new AccessFailure("Your customer session changed. Reload Documents to continue.");
-    const result = await wait(supabase.rpc("client_portal_self_profile"), deadline);
-    if (result.error?.code === "42501" || (!result.error && !result.data)) throw new AccessFailure("Your customer access could not be verified. Contact the business for help.");
-    const p = readClientPortalSelfProfile(result.data, actor);
-    if (result.error || !p) throw new Error("Your customer information could not be verified.");
-    const current = {actor, tenant: p.tenant_id, contact: p.id};
-    const final = await wait(supabase.auth.getUser(), deadline);
-    if (final.error || final.data.user?.id !== actor || (expected && !sameDocumentScope(expected, current))) {
+  // This ephemeral request tuple never enters UI state, a candidate or storage.
+  const verifiedAccess = useCallback(async (deadline: number, expected?: DocumentScope, valid:()=>boolean=scopeAlive): Promise<{scope:DocumentScope;authorization:string}> => {
+    const current=()=>valid()&&scopeAlive()&&life.current.alive&&!life.current.signedOut&&Date.now()<deadline;
+    if(!current())throw new AccessFailure("Your customer context changed.");
+    const wanted=requestedActor&&requestedTenant&&requestedContact?{actor:requestedActor,tenant:requestedTenant,contact:requestedContact}:expected;
+    const identity=await wait(supabase.auth.getUser(),deadline);
+    if(identity.error||!identity.data.user)throw new AccessFailure("Sign in with your invited account to continue.");
+    const actor=identity.data.user.id;
+    if(!current()||wanted&&actor!==wanted.actor)throw new AccessFailure("Your customer session changed. Reload Documents to continue.");
+    let authorization:string;
+    try{authorization=await wait(captureClientPortalAuthorization(supabase.auth,actor,current),deadline);}
+    catch{throw new AccessFailure("Your customer session could not be checked.");}
+    if(!current())throw new AccessFailure("Your customer context changed.");
+    let request=wanted?supabase.rpc("client_portal_self_profile",{p_tenant_id:wanted.tenant}):supabase.rpc("client_portal_self_profile");
+    if(wanted)request=withClientPortalBusiness(request,wanted.tenant);
+    const result=await wait(request.setHeader("Authorization",authorization),deadline);
+    if(result.error?.code==="42501"||!result.error&&!result.data)throw new AccessFailure("Your customer access could not be verified. Contact the business for help.");
+    const p=result.error?null:readClientPortalSelfProfile(result.data,actor,wanted?.tenant);
+    if(!p)throw new Error("Your customer information could not be verified.");
+    const scope={actor,tenant:p.tenant_id,contact:p.id};
+    const final=await wait(supabase.auth.getUser(),deadline);
+    if(final.error||final.data.user?.id!==actor||!current()||wanted&&!sameDocumentScope(wanted,scope)||expected&&!sameDocumentScope(expected,scope))
       throw new AccessFailure("Your customer session changed. Reload Documents to continue.");
-    }
-    return current;
-  }, []);
+    return {scope,authorization};
+  },[scopeAlive,requestedActor,requestedTenant,requestedContact]);
   const refresh = useCallback(async (append = false) => {
     const l = life.current;
-    if (!l.alive || l.writing) return;
+    if (!l.alive || !scopeAlive() || l.signedOut || l.writing) return;
     const request = ++l.read, generation = l.epoch, deadline = Date.now() + 20_000;
-    const current = () => l.alive && l.epoch === generation && l.read === request;
+    const current = () => l.alive && scopeAlive() && !l.signedOut && l.epoch === generation && l.read === request;
     setReading(true); setNotice(""); if (!append && !l.scope) setPhase("loading");
     try {
-      const next = await verifiedScope(deadline); if (!current()) return;
+      const access = await verifiedAccess(deadline,undefined,current),next=access.scope; if (!current()) return;
       if (l.last && !sameDocumentScope(l.last, next)) {
         retire("unavailable", "Your customer context changed. Reload Documents to continue."); return;
       }
@@ -77,36 +112,40 @@ export function useClientDocuments() {
       // the same instant as that one is never skipped.
       const last = append ? l.files.at(-1) ?? null : null;
       const result = await wait(fileRpc("client_portal_documents", {p_tenant_id: next.tenant, p_limit: pageSize,
-        p_before: last?.created_at ?? null, p_before_id: last?.id ?? null}), deadline);
+        p_before: last?.created_at ?? null, p_before_id: last?.id ?? null},next,access.authorization), deadline);
       if (!current()) return;
       if (result.error?.code === "42501") throw new AccessFailure("Your document access could not be verified.");
       if (result.error) throw new Error("Document read failed");
       if (result.data === null) throw new AccessFailure("Your customer access could not be verified. Contact the business for help.");
       const page = readPortalDocumentList(result.data, next);
-      await verifiedScope(deadline, next); if (!current()) return;
+      await verifiedAccess(deadline, next,current); if (!current()) return;
       const merged = append ? [...l.files] : [];
       for (const row of page.files) {const index = merged.findIndex(f => f.id === row.id); if (index < 0) merged.push(row); else merged[index] = row;}
-      l.scope = next; l.last = next; l.files = merged;
+      l.scope = next; l.last = next; l.files = merged; dataGeneration.current=origin.current.generation;
       setScope(next); setFiles(merged); setSummary(page.summary); setMore(page.has_more); setPhase("ready");
     } catch (error) {
       if (!current()) return;
       if (error instanceof AccessFailure) retire("unavailable", error.message);
-      else {l.scope = null; setScope(null); setFiles([]); setSummary(null); setPhase("error"); setNotice("Your documents could not be loaded. Check your connection and try again.");}
+      else {l.scope = null; l.files=[]; dataGeneration.current=origin.current.generation; setScope(null); setFiles([]); setSummary(null); setPhase("error"); setNotice("Your documents could not be loaded. Check your connection and try again.");}
     } finally {if (current()) setReading(false);}
-  }, [retire, verifiedScope]);
+  }, [retire, verifiedAccess, scopeAlive]);
   useEffect(() => {
-    const l = life.current; l.alive = true; setEpoch(l.epoch);
-    const {data: {subscription}} = supabase.auth.onAuthStateChange((event, session) => {
-      if (!l.alive) return;
-      if (event === "SIGNED_OUT" || !session) {retire("signed_out", "Sign in with your invited account to continue."); return;}
-      if (session.user.id !== l.last?.actor) retire("loading", "");
-      const generation = l.epoch;
-      queueMicrotask(() => {if (l.alive && l.epoch === generation && !l.writing) void refresh();});
+    const l=life.current;l.alive=true;let listening=true;
+    if(applied.current!==requestedKey){applied.current=requestedKey;setEpoch(viewEpoch.current);setScope(null);setFiles([]);setSummary(null);setMore(false);setReading(false);setUpload(idle());setNotice("");setPhase("loading");}
+    if(interrupted.current){interrupted.current=false;setUpload({kind:"uncertain",id:l.candidate?.id??null,notice:"Your access was checked again. Check this upload's saved status before continuing."});}
+    const {data:{subscription}}=supabase.auth.onAuthStateChange((event,session)=>{
+      if(!listening||!l.alive)return;
+      if(l.signedOut&&event!=="SIGNED_IN")return;
+      if(event==="INITIAL_SESSION"&&session&&(!l.last||session.user.id===l.last.actor))return;
+      if(event==="SIGNED_OUT"||!session){++origin.current.generation;l.signedOut=true;retire("signed_out","Sign in with your invited account to continue.");return;}
+      if(l.signedOut||session.user.id!==l.last?.actor){++origin.current.generation;l.signedOut=false;retire("loading","");}
+      const generation=l.epoch;
+      queueMicrotask(()=>{if(listening&&l.alive&&l.epoch===generation&&!l.writing)void refresh();});
     });
-    const focus = () => {if (l.alive && !l.writing) void refresh();};
-    window.addEventListener("focus", focus); void refresh();
-    return () => {l.alive = false; ++l.epoch; ++l.read; l.candidate = null; subscription.unsubscribe(); window.removeEventListener("focus", focus);};
-  }, [refresh, retire]);
+    const focus=()=>{if(l.alive&&scopeAlive()&&!l.signedOut&&!l.writing)void refresh();};
+    window.addEventListener("focus",focus);void refresh();
+    return()=>{listening=false;l.alive=false;++l.epoch;++l.read;subscription.unsubscribe();window.removeEventListener("focus",focus);};
+  },[refresh,retire,requestedKey,enabled,scopeAlive]);
   useEffect(() => {
     if (!scope) return;
     const channel = supabase.channel(`client-documents-${scope.contact}`)
@@ -114,8 +153,8 @@ export function useClientDocuments() {
     return () => {void supabase.removeChannel(channel);};
   }, [scope, refresh]);
 
-  const inspect = useCallback(async (candidate: Candidate, deadline: number) => {
-    const result = await wait(fileRpc("client_portal_file_upload_status", {p_file_id: candidate.id, p_tenant_id: candidate.scope.tenant}), deadline);
+  const inspect = useCallback(async (candidate: Candidate, deadline: number, authorization:string) => {
+    const result = await wait(fileRpc("client_portal_file_upload_status", {p_file_id: candidate.id, p_tenant_id: candidate.scope.tenant},candidate.scope,authorization), deadline);
     if (result.error) throw new Error("Upload status could not be checked");
     const value = result.data as {file?: unknown; object_verified?: unknown} | null;
     if (!value || Object.keys(value).length !== 2 || typeof value.object_verified !== "boolean" || !("file" in value)) throw new Error("Invalid upload status");
@@ -124,30 +163,31 @@ export function useClientDocuments() {
       || file.original_filename !== candidate.name || file.mime_type !== candidate.mime || file.size_bytes !== candidate.size)) throw new Error("Upload result changed");
     return {file, object: value.object_verified};
   }, []);
-  const confirm = useCallback(async (candidate: Candidate, deadline: number) => {
+  const confirm = useCallback(async (candidate: Candidate, deadline: number, authorization:string) => {
     const l = life.current, generation = l.epoch;
-    const current = () => l.alive && l.epoch === generation && sameDocumentScope(l.scope, candidate.scope);
+    const current = () => l.alive && scopeAlive() && !l.signedOut && l.epoch === generation && sameDocumentScope(l.scope, candidate.scope);
     if (!current()) return false;
-    const result = await inspect(candidate, deadline);
+    const result = await inspect(candidate, deadline,authorization);
+    if (!current()) return false;
     if (!result.file || result.file.upload_state !== "ready" || !result.object) return false;
     const read = await wait(supabase.from("client_files").select(CLIENT_DOCUMENT_COLUMNS)
-      .eq("id", candidate.id).eq("tenant_id", candidate.scope.tenant).eq("contact_id", candidate.scope.contact).maybeSingle(), deadline);
+      .eq("id", candidate.id).eq("tenant_id", candidate.scope.tenant).eq("contact_id", candidate.scope.contact).setHeader("x-client-portal-business",candidate.scope.tenant).setHeader("Authorization",authorization).maybeSingle(), deadline);
     if (read.error) throw new Error("Saved document could not be reloaded");
     const file = readClientDocument(read.data, candidate.scope);
     if (file.id !== candidate.id || file.storage_path !== result.file.storage_path || file.upload_state !== "ready"
       || file.uploaded_by_user_id !== candidate.scope.actor || file.original_filename !== candidate.name
       || file.mime_type !== candidate.mime || file.size_bytes !== candidate.size) throw new Error("Saved document changed");
-    await verifiedScope(deadline, candidate.scope);
+    await verifiedAccess(deadline, candidate.scope,current);
     if (!current()) return false;
     l.files = [portalDocumentFromUpload(file), ...l.files.filter(f => f.id !== file.id)];
     setFiles(l.files); l.candidate = null;
     setUpload({kind: "saved", id: file.id, notice: "Document uploaded. It is saved for your team."});
     return true;
-  }, [inspect, verifiedScope]);
+  }, [inspect, verifiedAccess,scopeAlive]);
   const transfer = useCallback(async (file?: File) => {
     const l = life.current, currentScope = l.scope;
-    if (!l.alive || !currentScope || l.writing) return;
-    const generation = l.epoch, current = () => l.alive && l.epoch === generation && sameDocumentScope(l.scope, currentScope);
+    if (!l.alive || !scopeAlive() || l.signedOut || !currentScope || l.writing) return;
+    const generation = l.epoch, current = () => l.alive && scopeAlive() && !l.signedOut && l.epoch === generation && sameDocumentScope(l.scope, currentScope);
     let candidate = l.candidate;
     if (candidate && !l.recoveryAllowed) return;
     if (candidate && !sameDocumentScope(candidate.scope, currentScope)) return;
@@ -164,47 +204,47 @@ export function useClientDocuments() {
     const deadline = Date.now() + 120_000; let dispatched = false;
     setUpload({kind: "working", id: attempt.id, notice: "Saving your document…"});
     try {
-      await verifiedScope(deadline, currentScope); if (!current()) return;
+      const access=await verifiedAccess(deadline,currentScope,current); if (!current()) return;
       // Retry uses the same canonical reservation ID and immutable object path.
       // Neither an overwrite nor a second file can result from a late reply.
       dispatched = true;
       const reserved = await wait(fileRpc("client_portal_begin_file_upload", {p_file_id: attempt.id, p_filename: attempt.name,
-        p_expected_client_id: currentScope.contact, p_mime_type: attempt.mime, p_size_bytes: attempt.size, p_tenant_id: currentScope.tenant}), deadline);
+        p_expected_client_id: currentScope.contact, p_mime_type: attempt.mime, p_size_bytes: attempt.size, p_tenant_id: currentScope.tenant},currentScope,access.authorization), deadline);
       if (reserved.error) throw reserved.error;
       const row = readClientDocument(reserved.data, currentScope); if (!current()) return;
       if (row.id !== attempt.id || row.uploaded_by_user_id !== currentScope.actor) throw new Error("Upload reservation changed");
-      const status = await inspect(attempt, deadline); if (!current()) return;
+      const status = await inspect(attempt, deadline,access.authorization); if (!current()) return;
       if (row.upload_state !== "ready" && !status.object) {
         if (!attempt.file) {l.recoveryAllowed = true; setUpload({kind: "retry", id: attempt.id, notice: "Choose the original file to continue this unfinished upload."}); return;}
         setUpload({kind: "working", id: attempt.id, notice: "Uploading your document…"});
-        const stored = await wait(supabase.storage.from("client-files").upload(row.storage_path, attempt.file, {contentType: attempt.mime, upsert: false}), deadline);
+        const stored = await wait(supabase.storage.from("client-files").setHeader("Authorization",access.authorization).upload(row.storage_path, attempt.file, {contentType: attempt.mime, upsert: false}), deadline);
         if (stored.error) throw stored.error;
       }
-      await verifiedScope(deadline, currentScope); if (!current()) return;
+      const finalAccess=await verifiedAccess(deadline,currentScope,current); if (!current()) return;
       setUpload({kind: "working", id: attempt.id, notice: "Saving your upload to your client record…"});
-      const saved = await wait(fileRpc("client_portal_finish_file_upload", {p_file_id: attempt.id, p_tenant_id: currentScope.tenant}), deadline);
+      const saved = await wait(fileRpc("client_portal_finish_file_upload", {p_file_id: attempt.id, p_tenant_id: currentScope.tenant},currentScope,finalAccess.authorization), deadline);
       if (saved.error) throw saved.error;
-      if (!current() || !await confirm(attempt, deadline)) throw new Error("Unconfirmed upload");
+      if (!current() || !await confirm(attempt, deadline,finalAccess.authorization)) throw new Error("Unconfirmed upload");
     } catch (error) {
       if (!current()) return;
       if (error instanceof AccessFailure || (error as {code?: string})?.code === "42501") retire("unavailable", "Your customer access changed. Reload Documents to continue.");
       else setUpload({kind: dispatched ? "uncertain" : "error", id: attempt.id,
         notice: dispatched ? "We couldn’t confirm your upload. Check its saved status before trying again." : "Your document could not be started. Check your connection and try again."});
     } finally {if (l.alive && l.epoch === generation) l.writing = false;}
-  }, [confirm, inspect, retire, verifiedScope]);
+  }, [confirm, inspect, retire, verifiedAccess,scopeAlive]);
   const checkUpload = useCallback(async (row?: PortalDocument) => {
     const l = life.current, currentScope = l.scope;
-    if (!currentScope || l.writing) return;
+    if (!l.alive || !scopeAlive() || l.signedOut || !currentScope || l.writing) return;
     const candidate = row ? l.candidate?.id === row.id ? l.candidate : {id: row.id, name: row.filename, mime: row.mime_type ?? "", size: row.size_bytes ?? 0, scope: currentScope, file: null} : l.candidate;
     if (!candidate || !sameDocumentScope(candidate.scope, currentScope) || (row && row.source !== "you")) return;
-    const generation = l.epoch, current = () => l.alive && l.epoch === generation && sameDocumentScope(l.scope, currentScope);
+    const generation = l.epoch, current = () => l.alive && scopeAlive() && !l.signedOut && l.epoch === generation && sameDocumentScope(l.scope, currentScope);
     l.writing = true; l.candidate = candidate; l.recoveryAllowed = false;
     setUpload({kind: "working", id: candidate.id, notice: "Checking your saved upload…"});
     try {
-      const deadline = Date.now() + 20_000; await verifiedScope(deadline, currentScope);
-      const status = await inspect(candidate, deadline); if (!current()) return;
-      if (status.file?.upload_state === "ready" && status.object) {if (!await confirm(candidate, deadline)) throw new Error("Unconfirmed upload");}
-      else {await verifiedScope(deadline, currentScope); if (current()) {
+      const deadline = Date.now() + 20_000; const access=await verifiedAccess(deadline,currentScope,current);
+      const status = await inspect(candidate, deadline,access.authorization); if (!current()) return;
+      if (status.file?.upload_state === "ready" && status.object) {if (!await confirm(candidate, deadline,access.authorization)) throw new Error("Unconfirmed upload");}
+      else {await verifiedAccess(deadline, currentScope,current); if (current()) {
         l.recoveryAllowed = true;
         setUpload({kind: status.object ? "finish" : "retry", id: candidate.id,
           notice: status.object ? "Your file is stored. Finish saving it to your client record." : "The transfer is unfinished. You can retry the same upload."});
@@ -213,15 +253,14 @@ export function useClientDocuments() {
       if (error instanceof AccessFailure) retire("unavailable", error.message);
       else setUpload({kind: "uncertain", id: candidate.id, notice: "The upload status could not be confirmed. Check your connection and try again."});
     }} finally {if (l.alive && l.epoch === generation) l.writing = false;}
-  }, [confirm, inspect, retire, verifiedScope]);
+  }, [confirm, inspect, retire, verifiedAccess,scopeAlive]);
   const stopWaiting = useCallback(() => {
     const l = life.current;
-    if (!l.alive || !l.writing || !l.candidate) return;
+    if (!l.alive || !scopeAlive() || l.signedOut || !l.writing || !l.candidate) return;
     ++l.epoch; ++l.read; l.writing = false; l.recoveryAllowed = false;
-    setEpoch(l.epoch);
     setUpload({kind: "uncertain", id: l.candidate.id,
       notice: "Stopped waiting here. The upload may have reached your business; check its saved status before trying again."});
-  }, []);
+  }, [scopeAlive]);
   /**
    * Two short-lived signed links for one listed, saved file: one to view, one that downloads under its
    * own name. The path comes only from the closed list read; Storage re-checks the file's permission
@@ -230,12 +269,12 @@ export function useClientDocuments() {
   const retrieve = useCallback(async (row: PortalDocument): Promise<DocumentLinks | null> => {
     const l = life.current, expected = l.scope, generation = l.epoch;
     const listed = l.files.find(f => f.id === row.id);
-    if (!expected || row.state !== "ready" || !listed || listed.storage_path !== row.storage_path) return null;
+    if (!l.alive || !scopeAlive() || l.signedOut || !expected || row.state !== "ready" || !listed || listed.storage_path !== row.storage_path) return null;
     try {
       const deadline = Date.now() + 20_000;
-      await verifiedScope(deadline, expected);
+      const access=await verifiedAccess(deadline,expected,()=>l.alive&&scopeAlive()&&!l.signedOut&&l.epoch===generation);
       if (!l.alive || l.epoch !== generation) return null;
-      const bucket = supabase.storage.from("client-files");
+      const bucket = supabase.storage.from("client-files").setHeader("Authorization",access.authorization);
       const [view, download] = await wait(Promise.all([
         bucket.createSignedUrl(row.storage_path, DOCUMENT_LINK_SECONDS),
         bucket.createSignedUrl(row.storage_path, DOCUMENT_LINK_SECONDS, {download: row.filename}),
@@ -244,15 +283,16 @@ export function useClientDocuments() {
       if (view.error || download.error || !view.data?.signedUrl || !download.data?.signedUrl) {
         throw new Error("This document could not be opened. Try again or contact the business.");
       }
-      await verifiedScope(deadline, expected);
-      return l.alive && l.epoch === generation && sameDocumentScope(l.scope, expected)
+      await verifiedAccess(deadline,expected,()=>l.alive&&scopeAlive()&&!l.signedOut&&l.epoch===generation);
+      return l.alive && scopeAlive() && !l.signedOut && l.epoch === generation && sameDocumentScope(l.scope, expected)
         ? {view: view.data.signedUrl, download: download.data.signedUrl, expiresAt: minted + DOCUMENT_LINK_SECONDS * 1000} : null;
     } catch (error) {
       if (!l.alive || l.epoch !== generation) return null;
       if (error instanceof AccessFailure) {retire("unavailable", error.message); return null;}
       throw error;
     }
-  }, [retire, verifiedScope]);
-  const isCurrent = useCallback((generation: number) => life.current.alive && life.current.epoch === generation, []);
-  return {phase, files, summary, scope, more, reading, notice, upload, epoch, refresh, transfer, checkUpload, stopWaiting, retrieve, isCurrent};
+  }, [retire, verifiedAccess,scopeAlive]);
+  const isCurrent=useCallback((expected:number)=>life.current.alive&&scopeAlive()&&!life.current.signedOut&&viewEpoch.current===expected&&dataGeneration.current===origin.current.generation&&!!life.current.scope,[scopeAlive]);
+  const masked=!scopeAlive()||dataGeneration.current!==origin.current.generation;
+  return {phase:masked?"loading" as const:phase,files:masked?[]:files,summary:masked?null:summary,scope:masked?null:scope,more:masked?false:more,reading:masked?enabled:reading,notice:masked?"":notice,upload,epoch:Math.max(epoch,viewEpoch.current),refresh,transfer,checkUpload,stopWaiting,retrieve,isCurrent};
 }

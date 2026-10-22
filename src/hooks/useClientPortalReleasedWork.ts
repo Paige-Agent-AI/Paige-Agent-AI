@@ -23,7 +23,7 @@ export type PortalReleaseScope = Readonly<{ actorId: string; tenantId: string; c
 export type PortalReleasedWork =
   | { kind: "ready"; scope: PortalReleaseScope; releases: ClientReleasedDelivery[]; unavailableCount: number; hasMore: boolean }
   /** Signed out, no customer relationship, more than one business, or releases not offered for this business. */
-  | { kind: "hidden" }
+  | { kind: "hidden"; reason?: "not_offered" }
   /** The read failed or the server answered outside the promised shape. */
   | { kind: "unavailable" }
   | { kind: "scope_changed" };
@@ -95,7 +95,7 @@ async function readOriginalReleasedWork(current: () => boolean, requested?: Port
     }, { actorId: scope.actorId, tenantId: scope.tenantId }, current);
     if (!current()) return { kind: "scope_changed" };
     if (result.kind === "ready") return { ...result, scope };
-    if (notOffered) return { kind: "hidden" };
+    if (notOffered) return { kind: "hidden", reason: "not_offered" };
     return result.kind === "scope_changed" ? { kind: "scope_changed" } : { kind: "unavailable" };
   } catch {
     return current() ? { kind: "unavailable" } : { kind: "scope_changed" };

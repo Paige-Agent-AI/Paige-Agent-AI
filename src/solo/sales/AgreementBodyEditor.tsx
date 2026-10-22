@@ -48,7 +48,8 @@ function ScopedBodyEditor({ value, onChange, readOnly = false }: Props) {
           onPointerDownCapture={event => { if ((event.target as HTMLElement).closest('[role="toolbar"]')) authorInput.current = true; }}>
         <MDXEditor key={editorEpoch} markdown={value} trim={false} suppressHtmlProcessing readOnly={readOnly}
           contentEditableClassName="e04-agreement-prose"
-          translation={(key, fallback) => key === 'contentArea.editableMarkdown' ? 'Agreement content' : fallback}
+          translation={(key, fallback, values = {}) => key === 'contentArea.editableMarkdown' ? 'Agreement content'
+            : Object.entries(values).reduce((text, [name, value]) => text.split(`{{${name}}}`).join(String(value)), fallback)}
           onChange={(next, initialNormalization) => {
             // Merely opening retained wording must never save a normalized replacement.
             if (!readOnly && !initialNormalization && authorInput.current) onChange(next);

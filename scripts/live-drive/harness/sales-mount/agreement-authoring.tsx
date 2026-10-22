@@ -9,6 +9,7 @@ import { AgentPresenceProvider } from "@/components/ui/paige/AgentPresenceContex
 import { TenantCommandCenterShell } from "@/components/tenant-shell/TenantCommandCenterShell";
 import { SalesWorkspace } from "@/solo/SalesWorkspace";
 import {AgreementDocumentFieldsMount} from './agreement-document-fields-mount';
+import {prepareDocumentProofSession} from './agreement-authoring-client';
 import { setSalesHarnessMode } from "./useSoloSalesOps-stub";
 import { setAgreementsHarnessMode } from "./useSoloCommercialTerms-stub";
 import { setSigningsHarnessMode } from "./useSoloAgreementSignings-stub";
@@ -26,7 +27,9 @@ localStorage.setItem("paige.tenantShell.navExpanded", "false");
 if (location.pathname.endsWith('.html')) history.replaceState(null, '', '/solo/42/sales/agreements' + location.search);
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
-createRoot(document.getElementById("root")!).render(
+async function renderAuthoring(){
+ if(params.get('preparationsProof')==='1')await prepareDocumentProofSession();
+ createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme={theme} enableSystem={false} storageKey={`agreements-proof-${theme}`}>
       <AgentPresenceProvider launcherEnabled={false} hasChatBody={false}>
@@ -47,3 +50,5 @@ createRoot(document.getElementById("root")!).render(
     </ThemeProvider>
   </QueryClientProvider>,
 );
+}
+void renderAuthoring();

@@ -116,7 +116,8 @@ export function validateDocumentBrief(input: unknown): BriefValidation {
       return { ok: false, code: "document_required_facts_invalid", message: "Required facts must be a bounded object." };
     }
     for (const [key, value] of Object.entries(input.required_facts)) {
-      if (!nonEmptyString(key, 100) || !["string", "number", "boolean"].includes(typeof value)) {
+      if (!nonEmptyString(key, 100) || !["string", "number", "boolean"].includes(typeof value)
+        || (typeof value === "number" && !Number.isFinite(value))) {
         return { ok: false, code: "document_required_facts_invalid", message: "Required facts must use short keys and scalar values." };
       }
       if (typeof value === "string" && (!nonEmptyString(value, 2_000) || containsDocumentPlaceholder(value))) {

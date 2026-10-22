@@ -33,7 +33,10 @@ export function useSalesDraftExit(draft: unknown, busy: boolean, onClose: () => 
   }, [busy, dirty, onClose]);
   React.useEffect(() => {
     const key = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
+      if (event.key !== "Escape" || event.defaultPrevented || event.isComposing) return;
+      // A native editor popup owns its dismissal. The same Sales leave guard
+      // remains authoritative for a later, unhandled Escape or navigation.
+      if (event.target instanceof Element && event.target.closest('[role="listbox"], [role="menu"]')) return;
       event.preventDefault();
       if (pending) setPending(null); else request();
     };
@@ -48,6 +51,21 @@ export function useSalesDraftExit(draft: unknown, busy: boolean, onClose: () => 
       if (bypass.current || !event.cancelable || (!dirty && !busy)) return;
       event.preventDefault();
       if (!busy) setPending(() => () => { bypass.current = true; window.location.assign(event.destination.url); });
+    };
+    // Sales declares this original request BEFORE calling the router. Waiting
+    // only for the browser Navigation event is too late: keyboard focus could
+    // already advance even though the route is refused. Reuse this ONE guard.
+    const salesNavigate=(event:Event)=>{
+      if(event.defaultPrevented||bypass.current||(!dirty&&!busy))return;
+      const proceed=(event as CustomEvent<{proceed?:unknown}>).detail?.proceed;
+      if(typeof proceed!=='function')return;
+      event.preventDefault();
+      if(!busy)setPending(()=>()=>{
+        // Another registered editor remains authoritative after this editor's
+        // explicit leave choice. No callback skips a different work guard.
+        const forwarded=new CustomEvent('paige:sales-before-navigation',{cancelable:true,detail:{proceed}});
+        if(window.dispatchEvent(forwarded))proceed();
+      });
     };
     const openedUrl = location.href;
     const openedState = history.state;
@@ -65,10 +83,12 @@ export function useSalesDraftExit(draft: unknown, busy: boolean, onClose: () => 
     };
     if (!navigation) window.addEventListener("popstate", pop, true);
     document.addEventListener("keydown", key);
+    window.addEventListener('paige:sales-before-navigation',salesNavigate);
     navigation?.addEventListener("navigate", navigate);
     return () => {
       window.removeEventListener("popstate", pop, true);
       document.removeEventListener("keydown", key);
+      window.removeEventListener('paige:sales-before-navigation',salesNavigate);
       navigation?.removeEventListener("navigate", navigate);
     };
   }, [dirty, busy, pending, request]);
@@ -99,19 +119,21 @@ export function useSalesDraftExit(draft: unknown, busy: boolean, onClose: () => 
   // background read automatically, and never bypass another editor's guard.
   const adoptBaseline = React.useCallback((baseline: unknown) => { initial.current = JSON.stringify(baseline); bypass.current = false; setPending(null); refreshBaseline(); }, []);
   // A same-document recovery checkpoint is not an exit or a saved-work receipt.
-  // Permit only these two opaque request keys, only for the SAME existing
+  // Permit one explicit opaque request kind and business, only for the SAME
   // agreement. Keep dirty/busy/beforeunload and every other guard active.
-  const retainRequestLocation = (url: string, replace: () => void) => {
+  const retainRequestLocation = (url: string, replace: () => void, kind:'signer'|'document'='signer') => {
     const current = new URL(location.href);
     let target: URL;
     try { target = new URL(url, location.href); } catch { return false; }
     const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (target.origin !== current.origin || target.pathname !== current.pathname || target.hash !== current.hash
+      || current.searchParams.getAll('agreement').length!==1||target.searchParams.getAll('agreement').length!==1
       || !uuid.test(current.searchParams.get('agreement') ?? '') || target.searchParams.get('agreement') !== current.searchParams.get('agreement')) return false;
-    const id = target.searchParams.get('agreement_signer_request'), business = target.searchParams.get('agreement_business');
-    if (target.searchParams.getAll('agreement_signer_request').length > 1 || target.searchParams.getAll('agreement_business').length > 1
+    const requestKey=kind==='document'?'agreement_document_request':'agreement_signer_request',otherKey=kind==='document'?'agreement_signer_request':'agreement_document_request';
+    const id = target.searchParams.get(requestKey), business = target.searchParams.get('agreement_business');
+    if(current.searchParams.has(otherKey)||target.searchParams.has(otherKey)||target.searchParams.getAll(requestKey).length > 1 || target.searchParams.getAll('agreement_business').length > 1
       || (id !== null ? !uuid.test(id) || !uuid.test(business ?? '') : business !== null)) return false;
-    for (const key of ['agreement_signer_request', 'agreement_business']) { current.searchParams.delete(key); target.searchParams.delete(key); }
+    for (const key of [requestKey, 'agreement_business']) { current.searchParams.delete(key); target.searchParams.delete(key); }
     current.searchParams.sort(); target.searchParams.sort();
     if (current.search !== target.search) return false;
     const destination = new URL(url, location.href).href;

@@ -4,7 +4,7 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
-import { PaigeAIChat } from "@/components/dashboard/PaigeAIChat";
+import { PaigeAIChat, type ChatComposerContextApi } from "@/components/dashboard/PaigeAIChat";
 import { createComposerRequestFence } from "@/lib/paigeComposerScopeState";
 import { SoloPaigeWorkspace } from "./SoloPaigeWorkspace";
 import type { SoloKnowledgeDoc } from "./data/useSoloKnowledge";
@@ -88,6 +88,34 @@ const RouteProbe = () => {
 };
 
 describe("Solo PAIGE workspace contract", () => {
+  it("keeps the optional composer context out of non-SOLO mounts", async () => {
+    const renderContext = vi.fn(() => <button type="button">Original source review</button>);
+    const host = document.createElement("div"); document.body.appendChild(host); const root = createRoot(host);
+    await act(async () => { root.render(<PaigeAIChat hideHeader fill renderComposerContext={renderContext} />); await Promise.resolve(); });
+    expect(renderContext).not.toHaveBeenCalled();
+    expect(host.querySelector('[data-solo-contextual-suggestion]')).toBeNull();
+    await act(async () => root.unmount()); host.remove();
+  });
+
+  it("lets a context return focus the same SOLO composer without sending or clearing its draft", async () => {
+    chatHarness.tenantId = "test-context-slot"; chatHarness.loadTurns.mockResolvedValue([]); chatHarness.ensureThread.mockClear();
+    const host = document.createElement("div"); document.body.appendChild(host); const root = createRoot(host);
+    let api: ChatComposerContextApi | undefined;
+    await act(async () => { root.render(<PaigeAIChat hideHeader fill enableHistory soloTenantSafety renderComposerContext={current => {
+      api = current; return <button type="button" data-context-return onClick={current.focusComposer}>Return to conversation</button>;
+    }} />); await Promise.resolve(); await Promise.resolve(); });
+    expect(api?.ready).toBe(true); expect(api?.busy).toBe(false); expect(api?.hasOwnerMessages).toBe(false);
+    const composer = host.querySelector('textarea')!;
+    act(() => { Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!.call(composer, "Keep this unsent source-review draft."); composer.dispatchEvent(new Event("input", { bubbles: true })); });
+    act(() => (host.querySelector('[data-context-return]') as HTMLButtonElement).click());
+    expect(document.activeElement).toBe(composer);
+    expect(composer.value).toBe("Keep this unsent source-review draft.");
+    expect(chatHarness.ensureThread).not.toHaveBeenCalled();
+    expect(host.querySelectorAll('[data-solo-contextual-suggestion]')).toHaveLength(1);
+    act(() => { Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!.call(composer, ""); composer.dispatchEvent(new Event("input", { bubbles: true })); });
+    await act(async () => root.unmount()); host.remove(); chatHarness.tenantId = "account-a";
+  });
+
   it("ships the approved taxonomy without a second Memory or Code workspace", () => {
     const workspace = source("src/solo/SoloPaigeWorkspace.tsx");
     expect(workspace).toContain('label: "Chat"');

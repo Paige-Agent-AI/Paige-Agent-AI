@@ -1,0 +1,11 @@
+{
+  "kind": "NATIVE_CHAT_SYNTHETIC_PORTS",
+  "before": 1472.800048828125,
+  "afterOpenEscape": 1472.800048828125,
+  "afterDismiss": 1472.800048828125,
+  "draftPreserved": "Preserve this UNSENT contextual-review draft.",
+  "escapeFocus": "3 items to review ▾",
+  "dismissFocus": "Message PAIGE",
+  "effects": "NO BACKEND; no submit, provider or action",
+  "authenticated": "UNVERIFIED"
+}

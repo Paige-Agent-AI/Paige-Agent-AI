@@ -73,6 +73,7 @@
       "bytes": 83190,
       "sha256": "5626de8df20419705488271888c25b68a118e85e0986b229f5a36fd9c1d2480f",
       "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "Edge, synthetic local only",
       "input": "synthetic setup/identity/authority ports; no backend",
       "observation": "Required original-shell responsive view; product font loaded and zero product horizontal overflow observed"
     },
@@ -89,6 +90,7 @@
       "bytes": 45537,
       "sha256": "ac304302952f598d409440e70628374a5e9d40bbc7a2ccbe6cc9ecb875ee16ec",
       "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "Edge, synthetic local only",
       "input": "synthetic setup/identity/authority ports; no backend",
       "observation": "Required original-shell responsive view; product font loaded and zero product horizontal overflow observed"
     },
@@ -105,6 +107,7 @@
       "bytes": 94778,
       "sha256": "e8906a0a7d6887e335b868436877608794990908767206b977f038cb7ba18ae7",
       "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "Edge, synthetic local only",
       "input": "synthetic setup/identity/authority ports; no backend",
       "observation": "Required original-shell responsive view; product font loaded and zero product horizontal overflow observed"
     },
@@ -121,6 +124,7 @@
       "bytes": 105350,
       "sha256": "6a084aa221148c169549d7ddcfa169ecfbec446b7097eabf097d966957df959b",
       "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "Edge, synthetic local only",
       "input": "synthetic setup/identity/authority ports; no backend",
       "observation": "Required original-shell responsive view; product font loaded and zero product horizontal overflow observed"
     },
@@ -137,6 +141,7 @@
       "bytes": 103930,
       "sha256": "345e943d6066a09ea7527c7aedd49c18739de2b834f2bcd83da19039483197ac",
       "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "Edge, synthetic local only",
       "input": "synthetic setup/identity/authority ports; no backend",
       "observation": "Required original-shell responsive view; product font loaded and zero product horizontal overflow observed"
     },
@@ -153,6 +158,7 @@
       "bytes": 112355,
       "sha256": "677fc83c3ad3fa30e1e57bb2f010c06302528f37746fca407833be6adf7a778d",
       "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "Edge, synthetic local only",
       "input": "synthetic setup/identity/authority ports; no backend",
       "observation": "Required original-shell responsive view; product font loaded and zero product horizontal overflow observed"
     },
@@ -169,6 +175,7 @@
       "bytes": 34433,
       "sha256": "29ca1419b57fb06519e2f562dca8583421d9f588b7cff69ae44aa0bef5df30bf",
       "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "Edge, synthetic local only",
       "input": "synthetic setup/identity/authority ports; no backend",
       "observation": "Native320px keyboard/drawer/Escape return with44px controls and visible focus"
     },
@@ -185,6 +192,7 @@
       "bytes": 33590,
       "sha256": "e698a7cb3c9353f250b493e0d5329a754956cd61d4bdb374304890a161f52bcb",
       "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "Edge, synthetic local only",
       "input": "synthetic setup/identity/authority ports; no backend",
       "observation": "Native320px keyboard/drawer/Escape return with44px controls and visible focus"
     },
@@ -201,6 +209,7 @@
       "bytes": 101285,
       "sha256": "5ec8ca1ff9601bacc79b6f6233e8b0172bdd6c767a6115a0dc4c4a43e2d1f2ef",
       "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "Edge, synthetic local only",
       "input": "synthetic setup/identity/authority ports; no backend",
       "observation": "Required original-shell responsive view; product font loaded and zero product horizontal overflow observed"
     },
@@ -217,6 +226,7 @@
       "bytes": 95630,
       "sha256": "75368c17f7ef12771dcea28e38d2528cabe849d26d688ed9718f67182ce68677",
       "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "Edge, synthetic local only",
       "input": "synthetic setup/identity/authority ports; no backend",
       "observation": "No completed run is not a healthy-check claim"
     },
@@ -233,6 +243,7 @@
       "bytes": 84659,
       "sha256": "70208aa4275a71bb95d5702e2d1e2aa273f3dd4463555fd3c4cf0df8129b391d",
       "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "Edge, synthetic local only",
       "input": "synthetic setup/identity/authority ports; no backend",
       "observation": "Failed source read is not healthy or empty"
     },
@@ -249,6 +260,7 @@
       "bytes": 90224,
       "sha256": "450d6adb588fa20a86c91c5c7cbc50ac4153ee73a07620dc5547c3f88148100b",
       "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "Edge, synthetic local only",
       "input": "synthetic setup/identity/authority ports; no backend",
       "observation": "Retained dated previous results during reread, not a newly completed check"
     },
@@ -265,8 +277,43 @@
       "bytes": 91280,
       "sha256": "4fdf43c86bc3e048ca890a049d9cc7445a42b618098255379458c41ea7c9b170",
       "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "Edge, synthetic local only",
       "input": "synthetic setup/identity/authority ports; no backend",
       "observation": "Missing expected setup result is unavailable; returned result remains inspectable"
+    },
+    {
+      "file": "900-obsidian-drawer.jpg",
+      "raster": {
+        "width": 900,
+        "height": 1000
+      },
+      "css": {
+        "width": 900,
+        "height": 1000
+      },
+      "bytes": 91402,
+      "sha256": "b724a53a064414664c82f2239b264b9bfdd9bb5ebdb57c2d1a9f11a66fd80139",
+      "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "in-app browser, synthetic local only",
+      "input": "synthetic setup/identity/authority ports; no backend",
+      "observation": "Settled readable original dark text, product font,44px areas and zero horizontal overflow; reduced motion observed; original drawer Escape return verified"
+    },
+    {
+      "file": "900-obsidian-reduced-motion.jpg",
+      "raster": {
+        "width": 900,
+        "height": 1000
+      },
+      "css": {
+        "width": 900,
+        "height": 1000
+      },
+      "bytes": 97955,
+      "sha256": "ff151a0e7e0075052acdf679c5a077931c92aebcd69da33d0d623eee351a8cf4",
+      "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "in-app browser, synthetic local only",
+      "input": "synthetic setup/identity/authority ports; no backend",
+      "observation": "Settled readable original dark text, product font,44px areas and zero horizontal overflow; reduced motion observed; original drawer Escape return verified"
     },
     {
       "file": "900-open.jpg",
@@ -281,6 +328,7 @@
       "bytes": 49653,
       "sha256": "50cb91848c22fe5e86d355480d932ac450d6d556cab0609878016e9fa684aa4e",
       "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "Edge, synthetic local only",
       "input": "synthetic setup/identity/authority ports; no backend",
       "observation": "Required original-shell responsive view; product font loaded and zero product horizontal overflow observed"
     },
@@ -297,6 +345,7 @@
       "bytes": 90819,
       "sha256": "7794cbd549826ff33747488316850961e3921f08c1f4131cebd6ffc545a95d91",
       "capture": "native Page.captureScreenshot via authorized cua_repl CDP; JPEG quality80, explicit viewport clip, no image processing",
+      "browser": "Edge, synthetic local only",
       "input": "synthetic setup/identity/authority ports; no backend",
       "observation": "Original resolved presentation; this fixture resolves a passed finding, while fail/error resolution is unit-tested"
     }
@@ -304,7 +353,7 @@
   "limitations": [
     "Not authenticated or production proof",
     "No backend, model, provider, approval, send or execution",
-    "An intermediate unreadable dark capture was rejected; final900px dark/reduced-motion recapture remains unverified",
+    "An intermediate unreadable dark capture was rejected; replacement dark/drawer native frames and dark-verification.json record settled rendering",
     "No native browser zoom or assistive-technology claim",
     "Final released source/customer/role/cohort/Live/founder proof remains owed"
   ]

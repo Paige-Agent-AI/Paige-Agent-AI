@@ -11,8 +11,9 @@ their original attention/unavailable states. No new readiness registry or check
 execution is introduced; Refresh remains a reread, not O07 completion.
 
 Five controlled source regressions failed before repair;64 focused cases/three
-suites pass. Native original-shell responsive/keyboard/state evidence is synthetic
-and separately indexed; final dark/reduced-motion recapture is still owed. Local
+suites pass again with isolated exact-lock dependencies, and production build passes.
+Native original-shell responsive/keyboard/state and settled dark/reduced-motion/drawer
+evidence is synthetic and separately indexed. Local
 source evidence is not corrected production behavior or authenticated acceptance.
 Exact-head review/CI, merge, served source and ordinary released read/reload with
 permission/cohort negatives remain separate obligations. Canonical ALG03/12/13,

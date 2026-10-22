@@ -1,0 +1,38 @@
+{
+  "context": "local synthetic input ports; original product components",
+  "browser": "in-app browser; not an authenticated customer session",
+  "observation": {
+    "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+    "fontLoaded": true,
+    "height": 1000,
+    "minAreaHeight": 44,
+    "overflow": false,
+    "reduced": true,
+    "styles": [
+      {
+        "color": "rgb(246, 242, 234)",
+        "sel": ".sc-workspace"
+      },
+      {
+        "color": "rgb(246, 242, 234)",
+        "sel": ".sc-area-n"
+      },
+      {
+        "color": "rgb(246, 242, 234)",
+        "sel": ".sc-area-check strong"
+      },
+      {
+        "color": "rgb(239, 236, 250)",
+        "sel": ".sc-block-head h2"
+      }
+    ],
+    "transition": "1e-05s",
+    "width": 900
+  },
+  "drawerEscape": {
+    "dialog": false,
+    "focus": "Your social accounts are on record",
+    "overflow": false
+  },
+  "temporaryEmulation": "cleared; viewport reset"
+}

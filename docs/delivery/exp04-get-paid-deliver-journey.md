@@ -1762,3 +1762,21 @@ release. Real ordinary owner/staff/linked-client/recipient, two eligible SOLO co
 provider/actual-document/200percent/AT and final integrated founder acceptance remain
 separate. ALG01 has bounded native recovery/deduplication evidence only; official
 ALG01/02/12/13 statuses, Mind/Memory and capability catalogue readiness are unchanged.
+
+
+## October22 original signer preparation — bounded native prerequisite
+
+REUSE original add_agreement_signer, original agreement/signer/event records, email uniqueness, actor/tenant/admin authority and draft-history/CAS. REPAIR native preparation after two genuine baseline failures: retained-but-Draft allowed a party change, and two concurrent additions took the same position. EXTEND source-version continuity for future party changes. No replacement signing engine, template words, acceptance rule or duplicate store.
+
+1. Outcome: owner prepares the correct authorized parties/order before freezing the exact signing document.
+2. Domain/owner: same EXP04 Sales/Agreements lead; E09 original signing/Portal contracts are not edited.
+3. Harness/Gateway: original manual internal preparation, no forced LayerC act or alternate runtime.
+4. Spine: existing agreement.* remains PARTIAL; no new Chat/Live signer mutation is registered or admitted.
+5. Provider: none; no token, document upload, signature email, spend or payment action.
+6. Authority/risk: preserve original session/expected-business/admin prefix, authenticated-only grant, signature/defaults and six-field DTO. Preparation is not signing/send/charge approval.
+7. Durable identity: original signer ID/agreement ID/version and original owner-attributed edited event, no new ledger/job/audit stream.
+8. Readback: actual added signer/order and advanced original source. Existing unique email prevents duplicate party rows; read/unknown recovery must never claim a fresh request acknowledgment from a coincidentally matching prior party.
+9. Failure/recovery: serialize at the original parent, recheck frozen source after waits, refuse stale owner SAVE and changed native writer. No side effect on refusal; no automatic duplicate retry or fabricated cancellation.
+10. UI/acceptance: Binding Ledger35 remains PARTIAL, signer/order display is existing. Professional management/assigned fields and actual owner/staff/client reload/ordinary-role/provider/full-founder proof remain owed by the following consumer.
+
+Local44 native assertions/replay2/five sessions/three observed waits PASS, exact production-body baseline read before changes. New240004 is UNAPPLIED; exact-head review/CI/Preview, safe migration/readback and authenticated acceptance remain separate. All O1–O12 and official algorithm/capability/LayerC readiness boundaries are unchanged. [Native evidence](../evidence/ui-delivery/e04-signer-preparation-integrity.md).

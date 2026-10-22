@@ -230,4 +230,7 @@ node "$HERE/draft-revision-history-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner 
 # Original frozen-document protection also applies before delivery leaves Draft.
 node "$HERE/frozen-draft-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired
 
+# Original signer preparation is serialized before native party/order changes.
+node "$HERE/signer-preparation-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired
+
 echo "OK — every negative refused with its expected SQLSTATE; positive controls succeeded."

@@ -1278,3 +1278,7 @@ publication path. Missing/foreign records never substitute another source;
 incoming references wait behind original terms/review/dialog/unknown-save state.
 Owner Chat/eligible Live teaching dispatch remains UNAVAILABLE in this bounded
 navigation prerequisite. [Source contract](../delivery/e09-cura-source-reference.md).
+
+
+### EXP04 original signer preparation — October22 development, not released
+Two real native baselines pass six positive controls then fail frozen-source refusal/distinct concurrent order. Same original add_agreement_signer now serializes the parent, refuses retained source and advances original reviewed version after an actual party change; no supplied words/history/token/consent/send/payment rewritten. Native44/replay2/five sessions/three observed waits PASS, guarded exact-body migration240004 UNAPPLIED. Professional mounted signer/field journey, full signing/provider/customer/founder acceptance remain owed. All twelve outcomes remain mandatory/incomplete; [native evidence](../evidence/ui-delivery/e04-signer-preparation-integrity.md).

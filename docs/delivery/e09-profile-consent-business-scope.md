@@ -37,3 +37,15 @@ Publish the85-line native exact-intent adapter and46 additions to the original11
 
 
 Native fixture expands to165 assertions: original111 retained plus54 exact-intent/ACL/unchanged-source/positive/negative controls. A same-business replacement with the identical profile timestamp explicitly rejects all four earlier-client intents and leaves the replacement untouched, then restores the original fixture linkage. This is source-backed isolated/native proof pending hosted execution, not concurrent live or production customer acceptance.
+
+
+## Native prerequisite release boundary
+
+Implementation17746d735 is composed with actual main784a07071bd798221cd86c24cce3729300563e81 at9d1394c64125e3a69543db18e2d8fd1f3288fd9d, preserving independent EXP04 template/upload sources and actual Sessions canonical row. Own delta remains three files, no frontend or original-function changes. Definer anon/PUBLIC guard and tracked migration collision guard1395 PASS; diff check PASS. Native165 and true lock/concurrency outcomes are NOT_RUN locally; full applicable hosted Preview/database/exact-head CI are required before merge. No Docker/local DB or production/managed-Preview fixture is used. Original UI baseline140 remains supporting pre-edit evidence, not proof the new RPCs execute. Immediate next work is the original selected Account/Consent UI consumer.
+
+INTERNAL_BUILD_IDENTITY: implementation=9d1394c64125e3a69543db18e2d8fd1f3288fd9d; deployment=NOT_DEPLOYED; environment=development; migration=20271113270009; edge=NOT_APPLICABLE
+RELEASE_CHANNEL: development
+RELEASE_CLASSIFICATION: internal-only: additive original-writer intent adapters, not completed Account or Portal
+CUSTOMER_RELEASE_IDENTITY: none
+RELEASE_TRUTH_BOUNDARY: PARTIAL: static/native-source prerequisites only; hosted165, exact-head CI/Preview, normal native production readback and actual original owner/client outcome PROOF OWED. No new catalogue or algorithm LIVE state.
+RELEASE_RECOVERY: additive old-ABI-compatible forward correction; original writers/ledger/records are never reset or overwritten.

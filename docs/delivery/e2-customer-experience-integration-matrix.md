@@ -780,3 +780,16 @@ recovery claim. Original read-only Spine/Metric contract, CAP017 Limited/Access
 Unverified, applicable algorithms, Trust/LayerC/Rail and all19/nine obligations
 remain unchanged. No own schema, provider, role or consequential activation.
 This supersedes earlier candidate release statements without rewriting history.
+
+## October22 — canonical document input prerequisite in development
+
+CAP014/015 remain required and Unverified for formal filed monthly/quarterly work.
+An existing document-validator defect is corrected locally: NaN/infinity/JSON numeric
+overflow are refused before serialization can silently turn a fact into null. Four
+causal failures then37 passing cases preserve finite zero/negative/fraction and
+boolean values. No supported type, native authority, artifact, worker, approval,
+Rail, provider or registry is added/activated. Actual source-bound report type,
+immutable permitted evidence, governed submission/status/unknown recovery and
+original artifact retrieval remain separate implementation duties. Review/CI,
+original2607 security dependency, normal Edge/readback and ordinary customer proof
+remain owed. All19 definitions/nine outcomes are unchanged. [Evidence](../evidence/ui-delivery/e2-document-finite-facts.md).

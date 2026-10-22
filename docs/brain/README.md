@@ -1749,3 +1749,15 @@ recovery claim. Original read-only Spine/Metric contract, CAP017 Limited/Access
 Unverified, applicable algorithms, Trust/LayerC/Rail and all19/nine obligations
 remain unchanged. No own schema, provider, role or consequential activation.
 This supersedes earlier candidate release statements without rewriting history.
+
+## EXP02 document-fact prerequisite — October22 development
+
+Existing document brief validation now refuses non-finite numbers before JSON can
+silently turn them into null. Four actual regression failures then37 original-suite
+passes retain zero, negative/fractional values, false booleans, supported types and
+native authority/recovery. No SQL, worker, registry, provider, approval, source owner
+or store change. This is not a formal monthly/quarterly report: its real source-bound
+type/evidence/artifact/retrieval consumer remains required; CAP014/015 stay Unverified.
+Exact-head review/CI, original2607 sanitizer dependency, normal affected-Edge source
+readback and ordinary authoring/reload/cohort/Live remain owed. Full19/nine and the
+single complete founder evaluation remain open. [Evidence](../evidence/ui-delivery/e2-document-finite-facts.md).

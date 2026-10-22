@@ -26,9 +26,9 @@ SOLO_1024X768_PAIGE_CLOSED: PASS: assets/e04-agreement-correction/1024-768-light
 SOLO_1024X768_PAIGE_OPEN: PASS: assets/e04-agreement-correction/1024-768-light-open.png and dark equivalent; fold/operate/reopen without losing proposal.
 SOLO_900X1000_PAIGE_CLOSED: PASS: assets/e04-agreement-correction/900-1000-light-closed.png and dark equivalent; original scroll owner/action reachability.
 SOLO_900X1000_PAIGE_OPEN: PASS: assets/e04-agreement-correction/900-1000-light-open.png and dark equivalent; original overlay/source state preserved.
-UNVERIFIED: exact-head review/full hosted CI, guard2526/history-parent release, deployment/readback, real role cohorts/provider/legal/full O1–O12 and one complete founder evaluation; no completed premium/customer claim.
+UNVERIFIED: exact-head review/full hosted CI, guard2526 release, deployment/readback, real role cohorts/provider/legal/full O1–O12 and one complete founder evaluation; no completed premium/customer claim.
 
-INTERNAL_BUILD_IDENTITY: branch=codex/e04-agreement-correction; product_sha=6b4faa44670435e58a27428baf9cd6b45af8b841; composition=1243372b12786d0c9e1fe605f8e83b436cf4307d; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-agreement-correction.md
+INTERNAL_BUILD_IDENTITY: branch=codex/e04-agreement-correction; product_sha=6b4faa44670435e58a27428baf9cd6b45af8b841; composition=ee204faffcf22fed936477de49b461536266844e; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-agreement-correction.md
 RELEASE_CHANNEL: development: local source/render only; hosted review, full exact-head CI, production readback and actual customer acceptance remain distinct.
 RELEASE_CLASSIFICATION: internal-only: professional agreement prerequisite within unfinished full O1–O12 Experience.
 CUSTOMER_RELEASE_IDENTITY: none: no finished Experience, customer version or founder acceptance announcement.
@@ -42,8 +42,8 @@ REUSE original agreement/SAVE/client/offer/terms/template identity, native event
 immutable history and leave framework. No unreviewed client reassignment, signed
 document correction, uploaded-file replacement, legal template, send, charge or
 onboarding action. Guard2526 is a separate native integrity release prerequisite.
-Read-only history2524 is the original parent; ordinary draft work needs no LayerC
-act. Existing agreement capabilities remain PARTIAL/sales.department PROOF_OWED;
+Read-only history2524 is released/read back atad51/6330515475; ordinary draft
+work needs no LayerC act. Existing agreement capabilities remain PARTIAL/sales.department PROOF_OWED;
 no dedicated Chat/Live correction or new specialist/algorithm score is registered.
 
 Exact non-null original timestamp and reviewed payload freeze once. Native errors
@@ -87,3 +87,9 @@ This bounded original-CAS/recovery evidence is not whole-algorithm verification.
 Final static repeat: e04-correction-visible-receipt-type-ratchet.log baseline10/current6 PASS;
 e04-correction-visible-receipt-eslint.log 0 errors/one incumbent warning. All22 runtime
 pins still match final product source after docs-only current-main/history composition.
+
+Current-main composition preserves released E09 game-plan/CURA and native wording
+history; only adjacent original E04 Brain additions conflicted, both retained.
+Final all22 normalized-LF source pins still match the rendered source. Guard2526
+fdae native43 and recreated full-schema Preview PASS; final full hosted CI and
+production160000/readback remain separate release prerequisites.

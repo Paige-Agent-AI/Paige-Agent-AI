@@ -48,6 +48,7 @@ import { SalesDialogPortal, useSalesDraftExit } from "./sales-dialog";
 import { useLocation, useNavigate } from "react-router-dom";
 import { deriveSalesCommand } from "./sales/deriveSalesCommand";
 import { deriveScenario } from "./sales/salesScenario";
+import { agreementPdfIntakeProblem } from "./sales/agreementPdfIntake";
 const AgreementPreparationWorkspace = React.lazy(() => import("./sales/AgreementPreparationWorkspace").then(module => ({ default: module.AgreementPreparationWorkspace })));
 const AgreementTemplateWorkspace = React.lazy(() => import("./sales/AgreementTemplateWorkspace").then(module => ({ default: module.AgreementTemplateWorkspace })));
 
@@ -559,7 +560,7 @@ function AgreementEditor({ agreements, signings, offers, tenantId, existing, exi
   const [source, setSource] = React.useState("none");
   const [file, setFile] = React.useState(null);
   const [docTitle, setDocTitle] = React.useState("");
-  const [docBody, setDocBody] = React.useState("");
+  const uploadHelpId = React.useId();
   const [pickerSearch, setPickerSearch] = React.useState("");
   const [pickerPage, setPickerPage] = React.useState(0);
   const picker = useCatalogOffers({ search: pickerSearch, page: pickerPage, pageSize: 5, referenceIds: offerId ? [offerId] : [] });
@@ -616,20 +617,24 @@ function AgreementEditor({ agreements, signings, offers, tenantId, existing, exi
   const termsReady = offerId !== "" && (Boolean(existing) || (picker.phase === "ready" && Boolean(chosenOffer)))
     && (quoting ? term === "custom_quote" : (basis === "catalog" ? (Boolean(existing) || planId !== "") : priced));
   const uploading = source === "tenant_upload";
-  // The wording is not optional on an uploaded document, and the reason is the counterparty's page
-  // rather than this one: the signer reads the TEXT and the countersigned PDF is built from it, so
-  // a file with no wording produces a page that tells them to ask for it again. Shipping a control
-  // whose successful path dead-ends on somebody else's screen is the §70 failure, not a shortcut.
-  const docReady = uploading && Boolean(file) && docTitle.trim() !== "" && docBody.trim() !== "";
+  // Native tenant_upload stores the file reference and NULL body_markdown. Do
+  // not require or claim a second pasted contract that the writer discards.
+  // Native parsing/hashing and retained-document review still precede signing.
+  const docReady = uploading && Boolean(file) && docTitle.trim() !== "" && !agreementPdfIntakeProblem(file);
   const ready = contactId !== ""
     && (offerId ? termsReady : true)
     && (uploading ? docReady : true)
     // Something has to be recorded. With no offer and no document there is nothing to save, and a
     // Save that could only ever be a no-op is the control this guard refuses to enable.
     && (offerId !== "" || docReady);
-  const { close, request, confirmation, alive } = useSalesDraftExit({ contactId, offerId, source, docTitle, docBody, fileName: file?.name ?? "", term, basis, planId, amount, currency, cadence, instalments, startsOn, renewsOn, endsOn, notes }, busy, onClose);
+  const { close, request, confirmation, alive } = useSalesDraftExit({ contactId, offerId, source, docTitle, fileName: file?.name ?? "", term, basis, planId, amount, currency, cadence, instalments, startsOn, renewsOn, endsOn, notes }, busy, onClose);
 
   const save = async () => {
+    // Refuse unsupported selection before the FIRST write, including terms.
+    if (uploading) {
+      const selectionProblem = agreementPdfIntakeProblem(file);
+      if (selectionProblem) { setNotice(selectionProblem); return; }
+    }
     setBusy(true);
     setNotice("");
     const digits = minorUnitDigits(currency);
@@ -674,7 +679,7 @@ function AgreementEditor({ agreements, signings, offers, tenantId, existing, exi
         agreementId,
         documentTitle: docTitle.trim(),
         documentSource: "tenant_upload",
-        documentBody: docBody.trim(),
+        documentBody: "",
         documentPath: uploaded.path,
       });
       if (!alive.current) return;
@@ -784,7 +789,7 @@ function AgreementEditor({ agreements, signings, offers, tenantId, existing, exi
               <button className="btn btn-s" onClick={signings.retry}><Ic.arrow size={13} />Retry documents</button>
             </p>
           ) : (<>
-            <div className="so-src" role="radiogroup" aria-label="The document">
+            <div className="so-document-sources" role="radiogroup" aria-label="The document">
               {/* The APPROVED order (§28 screen 2): the contract you already have, then Paige
                 * writing one, then no document at all — which the prototype's own note calls
                 * "today's behaviour preserved", and which stays the DEFAULT so nobody has to opt
@@ -830,7 +835,7 @@ function AgreementEditor({ agreements, signings, offers, tenantId, existing, exi
               <label className="so-field">
                 <span>The contract file</span>
                 <input type="file" aria-label="The contract file"
-                       accept=".pdf,.doc,.docx,.rtf,.txt,.md,application/pdf,text/plain"
+                       accept=".pdf,application/pdf" aria-describedby={uploadHelpId}
                        onChange={(e) => {
                          const picked = e.target.files && e.target.files[0] ? e.target.files[0] : null;
                          setFile(picked);
@@ -842,15 +847,12 @@ function AgreementEditor({ agreements, signings, offers, tenantId, existing, exi
                 <input value={docTitle} onChange={(e) => setDocTitle(e.target.value)}
                        placeholder="Coaching agreement" />
               </label>
-              <label className="so-field">
-                <span>The wording they sign</span>
-                <textarea rows={7} value={docBody} onChange={(e) => setDocBody(e.target.value)}
-                          placeholder="Paste the text of your contract here." />
-              </label>
-              <p className="so-absent">
-                The person signing reads this wording on the page and the countersigned PDF is built
-                from it, so it is what they are agreeing to. Your file is kept on the record beside it.
+              <p className="so-absent" id={uploadHelpId}>
+                PDF only, up to 25 MB. The uploaded document is the source for signing;
+                no separate pasted wording is recorded. PAIGE checks the actual PDF before
+                requesting signatures. Saving here does not send it.
               </p>
+              {file && agreementPdfIntakeProblem(file) && <p className="so-absent" role="alert">{agreementPdfIntakeProblem(file)}</p>}
             </>)}
           </>)}
 
@@ -1105,7 +1107,7 @@ function AgreementEditor({ agreements, signings, offers, tenantId, existing, exi
               : contactId === ""
                 ? "Pick the client this is for."
                 : uploading && !docReady
-                  ? "A document needs a file, a name, and the wording they sign."
+                  ? agreementPdfIntakeProblem(file) || "Name this PDF agreement before continuing."
                   : offerId === ""
                     ? "Choose one of your offers, or upload a document to record instead."
                     : "Say what they agreed to pay.")}

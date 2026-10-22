@@ -23,6 +23,16 @@ save: original owner API/router/one leave guard/retention/read/reload/history,
 exact approved PDF/map signing and actual role/provider proof remain owed.
 See docs/evidence/ui-delivery/e04-agreement-document-fields.md.
 
+October22 bounded intake correction preserves this native direction: original
+modal/fields/primary action, PDF guidance associated by useId, correctable inline
+refusal, no second unretained wording input. No token/CSS/layout system change.
+Actual final source20 responsive cases/nine paths/20 pins, keyboard file-to-title
+and zero page errors; native backdrop Fold respected. Exact-main and current SOLO
+detector both12 incumbent anti-patterns/1066 advisories, not a whole-surface clean
+certificate. New form/source introduces no detector finding or material observed
+interaction defect. Full professional exact-document workspace/ordinary-role and
+founder acceptance remain incomplete; no new design/owner acceptance is claimed.
+
 Owner authority: October21 EXP04 resume and premium Experience standard. Routine
 UX decisions are delegated to the existing lead; this is not a founder-reviewed
 mock. Complete live Experience evaluation remains pending. No other agent is used.
@@ -184,3 +194,24 @@ All163 integrated tests pass; actual SDK held-response completion plus render-fr
 barrier proves stale recovery cannot publish before a new explicit read. Final
 20-frame/17-path proof pins all25 owning files exactly. This is a functional
 recovery repair, not further visual polishing or a provider/acceptance claim.
+
+October22 original PDF intake finish review: actual source07cb/recipient composition
+passes360 tests/12 suites. Manual rendered inspection caught the original .so-src
+provenance label's nowrap/overflow rule colliding with the document choices. A new
+real-browser wrapping/touch-target assertion fails before the scoped selector
+repair; final20 responsive/theme cases/ten paths/21 source pins/zero page errors
+pass, with desktop320/390 and actual native PAIGE Fold/modal continuity. Both exact
+07cb baseline and current SOLO detect exit2 with12 incumbent anti-patterns and1066
+advisories, not a zero-finding result. No new design system, token, navigation or
+renderer. Original file-to-title Tab/help and invalid-selection recovery retained.
+Synthetic identity/transport only; actual roles/provider/full premium/founder
+acceptance remain UNVERIFIED. One unchanged5s link control timed out, then passed
+focused and in complete360-case rerun; assertions and timeout unchanged.
+
+CI ca1 follow-through: the unchanged FOUR-file detector found the incumbent
+completion bounce and readiness left stripe in the now-changed stylesheet. Both
+corrected in owning source, no exemption or detector change. Exact gate exit0:
+zero anti-patterns/40 advisories. Full baseline12/1066 becomes10/1065, not globally
+clean. Readiness pill and original reduced-motion guard retained; dormant legacy
+revenue row not newly mounted. Final stable source render20/ten/21/zero PASS;
+an intermediate mid-edit run was invalidated by its source-pin guard and excluded.

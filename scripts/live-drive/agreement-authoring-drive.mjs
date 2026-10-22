@@ -17,7 +17,8 @@ const documentFixturePath=path.resolve(root,'../../outputs/e04-native-document-f
 const documentFixture=fieldsProof?JSON.parse(await fs.readFile(documentFixturePath,'utf8')):null;
 const documentFixtureSHA=fieldsProof?createHash('sha256').update(await fs.readFile(documentFixturePath)).digest('hex'):null;
 let documentFixtureMode='normal';
-const uploadProof = process.argv.includes('--upload-intent');
+const pdfIntakeProof = process.argv.includes('--pdf-intake');
+const uploadProof = process.argv.includes('--upload-intent') || pdfIntakeProof;
 const sources = ['src/solo/sales-ops.tsx','src/solo/SalesWorkspace.tsx','src/solo/sales-dialog.tsx','src/hooks/useBeforeUnloadGuard.ts','src/solo/sales/AgreementPreparationWorkspace.tsx','src/solo/sales/AgreementBodyEditor.tsx','src/solo/sales/agreementPreparationApi.ts','src/solo/sales/agreementVocabulary.ts','src/solo/sales/agreement-body-editor.css','src/solo/sales/agreement-preparation.css','package.json','package-lock.json',...['agreement-authoring.tsx','agreement-authoring-ports.ts','agreement-authoring-client.ts','vite.agreement-authoring.config.ts','agreement-authoring.html'].map(file=>'scripts/live-drive/harness/sales-mount/'+file)];
 const hashes = async () => Object.fromEntries(await Promise.all(sources.map(async file => [file,createHash('sha256').update((await fs.readFile(path.join(root,file),'utf8')).replaceAll('\r\n','\n')).digest('hex')])));
 sources.push('scripts/live-drive/agreement-authoring-drive.mjs');
@@ -25,7 +26,7 @@ if(historyProof)sources.push('src/solo/sales/AgreementWordingHistory.tsx','src/s
 if(correctionProof)sources.push('src/solo/sales/AgreementWordingHistory.tsx','src/solo/sales/agreementRevisionApi.ts','src/solo/sales/AgreementDraftCorrection.tsx','src/solo/sales/agreementCorrectionApi.ts');
 if(templateProof)sources.push('src/solo/sales/AgreementTemplateWorkspace.tsx','src/solo/sales/agreementTemplateApi.ts','src/solo/sales/agreement-templates.css','src/solo/sales/AgreementWordingHistory.tsx','src/solo/sales/agreementRevisionApi.ts','src/solo/sales/AgreementDraftCorrection.tsx','src/solo/sales/agreementCorrectionApi.ts');
 if(signerProof)sources.push('src/solo/sales/AgreementSignerPreparation.tsx','src/solo/sales/agreementSignerApi.ts','scripts/live-drive/agreement-signer-paths.mjs','src/solo/sales/AgreementWordingHistory.tsx','src/solo/sales/agreementRevisionApi.ts','src/solo/sales/AgreementDraftCorrection.tsx','src/solo/sales/agreementCorrectionApi.ts','src/solo/sales/AgreementTemplateWorkspace.tsx','src/solo/sales/agreementTemplateApi.ts','src/solo/sales/agreement-templates.css');
-if(uploadProof)sources.push('src/solo/useSoloAgreementSignings.ts');
+if(uploadProof)sources.push('src/solo/useSoloAgreementSignings.ts','src/solo/sales/agreementPdfIntake.ts','src/solo/sales-ops.css');
 if(fieldsProof)sources.push('src/solo/sales/AgreementDocumentFields.tsx','src/solo/sales/AgreementPdfPage.tsx','src/solo/sales/agreementDocumentModel.ts','src/solo/sales/agreementPdfRenderer.ts','src/solo/sales/agreement-document-fields.css','scripts/live-drive/agreement-document-fields-paths.mjs','scripts/live-drive/harness/sales-mount/agreement-document-fields-mount.tsx','scripts/live-drive/harness/sales-mount/agreement-document-fixture.ts','supabase/functions/_shared/agreements/field-preparation.ts','supabase/functions/_shared/agreements/preparation-json.ts','supabase/functions/_shared/agreements/token.ts','supabase/functions/_shared/sales-collections/primitives.ts');
 console.log('Pinning actual source');
 const pinned = await hashes();
@@ -39,7 +40,7 @@ if (process.argv.includes('--compiled')) {
   await build({ configFile:path.join(root,'scripts/live-drive/harness/sales-mount/vite.agreement-authoring.config.ts'),
     build:{outDir:compiledRoot,emptyOutDir:false,rollupOptions:{input:path.join(root,'scripts/live-drive/harness/sales-mount/agreement-authoring.html')}} });
 }
-const out = path.join(root,'docs/evidence/ui-delivery/assets',fieldsProof?'e04-agreement-document-fields':signerProof?'e04-agreement-recipients':templateProof?'e04-agreement-templates':uploadProof?'e04-agreement-upload-intent':correctionProof?'e04-agreement-correction':historyProof?'e04-agreement-wording-history':'e04-agreement-authoring');
+const out = path.join(root,'docs/evidence/ui-delivery/assets',fieldsProof?'e04-agreement-document-fields':pdfIntakeProof?'e04-agreement-pdf-intake':signerProof?'e04-agreement-recipients':templateProof?'e04-agreement-templates':uploadProof?'e04-agreement-upload-intent':correctionProof?'e04-agreement-correction':historyProof?'e04-agreement-wording-history':'e04-agreement-authoring');
 await fs.mkdir(out,{recursive:true});
 console.log('Resolving owned Playwright');
 const { chromium } = await resolvePlaywright();
@@ -262,10 +263,34 @@ try{
         await page.getByRole('button',{name:'Fold PAIGE conversation',exact:true}).last().click();
       }
       await page.getByRole('button',{name:'Record terms or upload',exact:true}).click();
+      if(pdfIntakeProof){
+        const choices=page.getByRole('radiogroup',{name:'The document',exact:true});
+        const sourceFit=await choices.evaluate(el=>({height:el.clientHeight,width:el.clientWidth,scrollWidth:el.scrollWidth,cards:[...el.querySelectorAll('[role=radio]')].map(card=>({height:card.getBoundingClientRect().height,scrollWidth:card.scrollWidth,width:card.clientWidth}))}));
+        assert.equal(sourceFit.cards.length,3,'All three actual document-source choices remain present');
+        assert.ok(sourceFit.height>=sourceFit.cards.reduce((sum,card)=>sum+card.height,0),'Document choices must not collapse or clip their actual cards');
+        assert.ok(sourceFit.scrollWidth<=sourceFit.width+1&&sourceFit.cards.every(card=>card.height>=44&&card.scrollWidth<=card.width+1),'Document choices wrap and retain touch targets');
+        await choices.scrollIntoViewIfNeeded();
+        if(width===320||width===1366)await capture(`${width}-${height}-${theme}-${paige}-document-choices`);
+      }
       await page.getByRole('radio',{name:/Upload a contract/}).click();
-      await page.getByLabel('The contract file',{exact:true}).setInputFiles({name:'controlled.pdf',mimeType:'application/pdf',buffer:Buffer.from('Controlled upload fixture, not a signed PDF.')});
       await page.getByRole('combobox',{name:'Client',exact:true}).selectOption(client);
-      await page.getByLabel('The wording they sign',{exact:true}).fill('Synthetic source-mount placeholder; not approved agreement language.');
+      const fileInput=page.getByLabel('The contract file',{exact:true});
+      assert.equal(await fileInput.getAttribute('accept'),'.pdf,application/pdf');
+      assert.equal(await page.getByLabel('The wording they sign',{exact:true}).count(),0);
+      if(pdfIntakeProof){
+        assert.equal(await fileInput.evaluate(el=>document.getElementById(el.getAttribute('aria-describedby'))?.textContent.includes('25 MB')),true);
+        await fileInput.focus();await page.keyboard.press('Tab');
+        assert.equal(await page.getByLabel('What to call it',{exact:true}).evaluate(el=>document.activeElement===el),true,'Native file/title keyboard order remains usable');
+      }
+      if(pdfIntakeProof){
+        const beforeInvalid=observed;
+        await fileInput.setInputFiles({name:'agreement.docx',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',buffer:Buffer.from('Controlled unsupported document.')});
+        assert.equal(await page.getByRole('button',{name:'Review and send →',exact:true}).isDisabled(),true);
+        await page.getByRole('alert').filter({hasText:'Choose a PDF. Export Word or other documents to PDF before uploading.'}).waitFor();
+        assert.equal(observed,beforeInvalid,'Invalid selection must not reach Storage');
+        if(width===320&&theme==='dark')await capture('correctable-invalid-selection');
+      }
+      await page.getByLabel('The contract file',{exact:true}).setInputFiles({name:'controlled.pdf',mimeType:'application/pdf',buffer:Buffer.from('Controlled upload fixture, not a signed PDF.')});
       const before=observed;await page.getByRole('button',{name:'Review and send →',exact:true}).click();
       const notice=page.getByText('The upload result could not be confirmed. The file may already be stored. This response does not confirm an agreement or a signing request.',{exact:true});
       await notice.waitFor();assert.equal(observed,before+1,'Actual original SDK upload reached the controlled transport');
@@ -276,6 +301,7 @@ try{
       await page.evaluate(()=>document.fonts.ready);await capture(`${width}-${height}-${theme}-${paige}`);frames.push({theme,width,height,requestedPaige:paige,actualPaige:overlay?'folded-before-modal':paige,fit});
     }
     behavior.push('original owning Sales upload form and actual hook/SDK','controlled lost upload acknowledgement is visibly unconfirmed','no signing record call after unknown upload','notice wraps on narrow viewports','unchanged private bucket/no-overwrite behavior proven separately by actual-hook cases');
+    if(pdfIntakeProof)behavior.push('PDF-only selection matches canonical native document path','invalid selection is correctable before any upload','no second ignored contract or false text-signing explanation','actual native file-to-title Tab route and associated PDF guidance','all three source choices wrap without clipping and retain touch targets');
   }else if(correctionProof){
     const draftTitle=()=>page.getByRole('textbox',{name:'Draft title',exact:true});
     const enter=async()=>{await page.getByRole('button',{name:'Correct draft wording',exact:true}).click();await draftTitle().waitFor();};

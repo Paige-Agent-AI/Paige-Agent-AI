@@ -51,6 +51,45 @@ Portal request-scope coordination; actual E02 170000 and E04 160000 are released
 Re-ground the actual frontier and current reservations before release. No other agent is
 assigned and no shared Chat/C0b/Portal/Operations file is leased here.
 
+
+## October21 retained-document correction integrity — bounded repair
+
+Confirmed native reader/writer integrity mismatch, reproduced only in the existing
+disposable fixture with four positive controls before a genuine baseline RED.
+REPAIR existing seal trigger; REUSE original SAVE, agreement identity, signing
+engine, audit and retained wording. New160000 is forward-only and currently
+UNAPPLIED, preserving other pending reservations. Own earlier150000 collided with
+E09#2529; only own unapplied filename/includes are renumbered, SQL bytes unchanged.
+E02#2516/E09#2525 also share140000 and need originating-source reconciliation;
+neither is altered by E04. Native43 assertions/replay2/two
+overlapping sessions PASS. Source proof does not establish deployed acceptance.
+
+1. Event: human correction of an existing document; protect the retained source
+   when delivery still reads Draft. No automatic external transition.
+2. Surface: original Sales authoring and legitimate native domain callers; this
+   repair adds no Chat/Live/Team Hub/Portal entry.
+3. Record/capability: same paige_agreements/signers/events/draft_revisions;
+   agreement.draft/list/status/send remain PARTIAL, sales.department PROOF_OWED.
+4. Path: original SAVE and existing integrity trigger, not a new Layer C adapter
+   or executor. Ordinary draft editing does not require an event-to-action act.
+5. Authority: original caller JWT/tenant/admin checks and row-level scope remain;
+   trigger also binds service-role writes without granting new authority.
+6. Risk/approval: internal draft work is not permission to send, sign, charge,
+   onboard or release services. Existing consequential controls remain mandatory.
+7. Execution/identity: same original native row, audit and retained revisions;
+   refusal adds no edit activity/revision or invented Rail execution receipt.
+8. Reconciliation: original CAS remains; real overlapping freeze/legacy no-CAS
+   edit refuses after lock revalidation. No duplicate-effect engine introduced.
+9. Recovery: metadata/link/void paths continue; frozen source cannot silently
+   change. Pre-freeze document-source CAS and exact commercial presentation still
+   belong to C7; uncertain outcomes are not converted into successful delivery.
+10. Result: existing native can_edit false is enforced at the source writer;
+    no completed signature/payment/service or actual provider result is inferred.
+
+[Native proof and limits](../evidence/ui-delivery/e04-frozen-draft-integrity.md).
+Visual: no rendered changes. Experiential: correction mounting remains separate.
+Authenticated ordinary-role QA, all twelve outcomes and founder acceptance remain
+open. No other agent, permission system, sender, scheduler or ledger is introduced.
 ## October21 orchestration integration — current-source checkpoint
 
 Grounded main `38b6a9d51121d89123a4f286fba28d34fe4dfb84`, the original

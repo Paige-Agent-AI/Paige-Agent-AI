@@ -221,6 +221,34 @@ function crmTaskReadDoorBound(resolver) {
     && native.includes('constfirst=decode(awaitread())') && native.includes('constfinal=decode(awaitread())');
 }
 
+// The original owner-private weekly reader is get_*, not a naming-only read_* RPC.
+// Recognize only its declared read/schema and the actual caller-bound mount. These
+// source checks supplement runtime/negative tests; they are not an authority proof.
+const WEEKLY_STATUS_DECLARATION_FILE = "supabase/functions/_shared/paige-spine/domains/automations.ts";
+function weeklyStatusReadDoorBound(resolver) {
+  const read = file => resolver.sourceFile(path.join(ROOT, file))?.text.replace(/\s+/g, "") ?? "";
+  const chat = read("supabase/functions/paige-ai-chat/index.ts");
+  const domain = read(WEEKLY_STATUS_DECLARATION_FILE);
+  const adapter = read("supabase/functions/_shared/paige-orchestration/weekly-commitment-read.ts");
+  const native = read("supabase/functions/_shared/paige-orchestration/weekly-commitment-chat.ts");
+  return chat.includes('weeklyCommitmentStatusToolsForContext({callerTier,accountShape:calendarBookingAccountShape,role:taskReadRole,scopedClientId:scopedClientId??null,customerPortal}).length)toolDefs.push(...WEEKLY_COMMITMENT_STATUS_TOOLS)')
+    && domain.includes('context.callerTier==="tenant"&&context.accountShape==="solo"&&context.role==="owner"&&context.scopedClientId===null&&context.customerPortal===false')
+    && chat.includes('constweeklyTenant=callerTier==="tenant"?personaCtx?.tenant_id??null:null;')
+    && chat.includes('constweeklyIdentity:ContextIdentity={actorId:user.id,tenantId:weeklyTenant,workspaceId:weeklyTenant,')
+    && chat.includes('awaitprepareWeeklyCommitmentChatResponse(weeklyIdentity,{caller:supabaseClient,')
+    && chat.includes('currentIdentity:()=>req.signal.aborted||tenantKnowledgeScopeRevoked||customerPortal||callerTier!=="tenant"')
+    && chat.includes('revalidateScope:async()=>(awaitreadCalendarAccountShape(supabaseClientasunknownasCalendarBookingReadCaller,weeklyTenant,req.signal)).status==="available"')
+    && adapter.includes('origin.role!=="owner"||origin.actAsClientId!==null')
+    && adapter.includes('isCurrentWeeklyCommitmentScope(origin,deps.currentIdentity())')
+    && adapter.includes('constbefore=awaitrpc("current_user_tenant_id")')
+    && adapter.includes('constowner=awaitrpc("weekly_commitment_owner",{_tenant:origin.tenantId,_actor:origin.actorId})')
+    && adapter.includes('constafter=awaitrpc("current_user_tenant_id")')
+    && adapter.includes('conststillOwner=awaitrpc("weekly_commitment_owner",{_tenant:origin.tenantId,_actor:origin.actorId})')
+    && adapter.includes('parseWeeklyCommitmentSnapshot(read.checks,origin.tenantId,origin.actorId)')
+    && adapter.includes('readWeeklyCommitmentStatus({rpc})')
+    && native.includes('callerJwtDb.rpc("get_weekly_commitment_checks")');
+}
+
 function collectDeclaredCapabilityNames(files, resolver) {
   const riskKeys = new Set();
   const toolNames = new Set();
@@ -298,6 +326,12 @@ function collectDeclaredCapabilityNames(files, resolver) {
                 const identity=nestedProperties(sections,'identity',sourceFile);
                 if(identity&&literalProperty(identity,'id')==='platform.commercial_summary'&&owner.name.text==='PLATFORM_COMMERCIAL_SUMMARY_CAPABILITY'
                   && platformOperatorReadDoorBound(resolver))readTools.set('platform_commercial_summary',owner.name.text);
+              }
+              else if(operation==='public.get_weekly_commitment_checks'&&relative(file)===WEEKLY_STATUS_DECLARATION_FILE){
+                const identity=nestedProperties(sections,'identity',sourceFile);
+                if(identity&&literalProperty(identity,'id')==='automations.weekly_commitment_status'
+                  &&owner.name.text==='WEEKLY_COMMITMENT_STATUS_READ_CAPABILITY'&&weeklyStatusReadDoorBound(resolver))
+                  readTools.set('read_weekly_commitment_status',owner.name.text);
               }
               else if(operation==='edge.tenant-stripe-connect'&&relative(file)==='supabase/functions/_shared/sales-payments/merchant-capability.ts'){
                 const identity=nestedProperties(sections,'identity',sourceFile);
@@ -1422,6 +1456,37 @@ function runSelfTest() {
     if(from!==null){const original=texts.get(file);if(original.split(from).length!==2)throw Error('Task negative must mutate exactly one source: '+name);texts.set(file,original.replace(from,to));}
     const names=collectDeclaredCapabilityNames([taskFile],{sourceFile:file=>texts.has(file)?ts.createSourceFile(file,texts.get(file),ts.ScriptTarget.Latest,true,ts.ScriptKind.TS):undefined});
     const tool=file===null?taskTool.replace('CRM_TASK_READ_CAPABILITY.input','{type:"object"}'):taskTool;
+    const found=scanSource(tool,'src/probe.ts',{declaredReadTools:names.readTools}).some(item=>item.rule==='direct-tool-definition');
+    if(found!==expected){failed++;console.error(`  FAIL ${name}`);}else console.log(`  ok   ${name}`);
+  }
+  const weeklyFile=path.join(ROOT,'supabase/functions/_shared/paige-spine/domains/automations.ts');
+  const weeklyAdapter=path.join(ROOT,'supabase/functions/_shared/paige-orchestration/weekly-commitment-read.ts');
+  const weeklyNative=path.join(ROOT,'supabase/functions/_shared/paige-orchestration/weekly-commitment-chat.ts');
+  const weeklySources=new Map([weeklyFile,weeklyAdapter,weeklyNative,calendarChat].map(file=>[file,fs.readFileSync(file,'utf8').replace(/\r\n/g,'\n')]));
+  const weeklyTool='const tool={name:"read_weekly_commitment_status",description:"Read only",parameters:WEEKLY_COMMITMENT_STATUS_READ_CAPABILITY.input};';
+  for(const [name,file,from,to,expected] of [
+    ['Weekly exact existing owner reader',weeklyFile,null,null,false],
+    ['Weekly mutation cannot clear',weeklyFile,'effect: "read",\n  governance: { actionRiskKey: null, risk: "read_only", approval: "none", requiredPermission: ownerGrantablePermission("automations.weekly_commitment_status.read")','effect: "mutation",\n  governance: { actionRiskKey: null, risk: "read_only", approval: "none", requiredPermission: ownerGrantablePermission("automations.weekly_commitment_status.read")',true],
+    ['Weekly wrong declaration',weeklyFile,'identity: { id: "automations.weekly_commitment_status"','identity: { id: "automations.other"',true],
+    ['Weekly wrong executor',weeklyFile,'operation: "public.get_weekly_commitment_checks"','operation: "public.get_other_checks"',true],
+    ['Weekly service caller',calendarChat,'prepareWeeklyCommitmentChatResponse(weeklyIdentity, {\n            caller: supabaseClient','prepareWeeklyCommitmentChatResponse(weeklyIdentity, {\n            caller: supabase',true],
+    ['Weekly model scope',calendarChat,'const weeklyTenant = callerTier === "tenant" ? personaCtx?.tenant_id ?? null : null;','const weeklyTenant = args.tenant_id;',true],
+    ['Weekly missing server offer',calendarChat,'toolDefs.push(...WEEKLY_COMMITMENT_STATUS_TOOLS)','toolDefs.push(...OTHER_WEEKLY_TOOLS)',true],
+    ['Weekly missing classification recheck',calendarChat,'weeklyTenant, req.signal)).status === "available"','weeklyTenant, req.signal)).status !== "refused"',true],
+    ['Weekly member offer',weeklyFile,'context.role === "owner"','context.role !== "client"',true],
+    ['Weekly client offer',weeklyFile,'context.customerPortal === false','true',true],
+    ['Weekly missing native adapter',weeklyAdapter,weeklySources.get(weeklyAdapter),'',true],
+    ['Weekly no pre-owner check',weeklyAdapter,'const owner = await rpc("weekly_commitment_owner",','const owner = await rpc("other_owner",',true],
+    ['Weekly no final owner check',weeklyAdapter,'const stillOwner = await rpc("weekly_commitment_owner",','const stillOwner = await rpc("other_owner",',true],
+    ['Weekly loses final workspace check',weeklyAdapter,'const after = await rpc("current_user_tenant_id");','const after = before;',true],
+    ['Weekly loses epoch check',weeklyAdapter,'isCurrentWeeklyCommitmentScope(origin, deps.currentIdentity())','true',true],
+    ['Weekly missing original native RPC',weeklyNative,'callerJwtDb.rpc("get_weekly_commitment_checks")','callerJwtDb.rpc("dispatch_automation")',true],
+    ['Weekly unrelated payload',null,null,null,true],
+  ]){
+    const texts=new Map(weeklySources);
+    if(from!==null){const original=texts.get(file);if(original.split(from).length!==2)throw Error('Weekly negative must mutate exactly one source: '+name);texts.set(file,original.replace(from,to));}
+    const names=collectDeclaredCapabilityNames([weeklyFile],{sourceFile:file=>texts.has(file)?ts.createSourceFile(file,texts.get(file),ts.ScriptTarget.Latest,true,ts.ScriptKind.TS):undefined});
+    const tool=file===null?weeklyTool.replace('WEEKLY_COMMITMENT_STATUS_READ_CAPABILITY.input','{type:"object"}'):weeklyTool;
     const found=scanSource(tool,'src/probe.ts',{declaredReadTools:names.readTools}).some(item=>item.rule==='direct-tool-definition');
     if(found!==expected){failed++;console.error(`  FAIL ${name}`);}else console.log(`  ok   ${name}`);
   }

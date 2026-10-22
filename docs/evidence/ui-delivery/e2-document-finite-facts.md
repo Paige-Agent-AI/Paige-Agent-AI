@@ -15,7 +15,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: no released ordinary customer authoring/failu
 KEYBOARD_FOCUS: NOT_APPLICABLE: no focus/control change.
 ZOOM_REFLOW: NOT_APPLICABLE: no layout change.
 REDUCED_MOTION: PASS: no motion change.
-STATE_COVERAGE: PASS: original valid/invalid/placeholder/revision/outcome-unknown/allowlisted block cases retained; new non-finite and finite-scalar cases execute actual shared source. Original role/RLS/idempotency/concurrency remain native contracts, not established by these source tests.
+STATE_COVERAGE: PASS: original valid/invalid/placeholder/revision/ambiguous-submission/allowlisted block cases retained; new non-finite and finite-scalar cases execute actual shared source. Original role/RLS/idempotency/concurrency remain native contracts, not established by these source tests.
 TRUTHFUL_STATE_LABELS: PASS: invalid numeric input is refused, not converted into unavailable/zero, accepted work or a completed artifact. Existing document types/readiness unchanged; CAP014/015 stay Unverified for formal filed reviews.
 SOLO_UI: YES: existing generic SOLO document submission, all eligible accounts share the same validator and original native gates; no account-specific condition.
 SOLO_1536X770_PAIGE_CLOSED: NOT_APPLICABLE: no visual source change.

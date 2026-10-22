@@ -15,10 +15,12 @@ export function SalesDialogPortal({ children }: { children: React.ReactNode }) {
 
 export function useSalesDraftExit(draft: unknown, busy: boolean, onClose: () => void, options?: { uncertain?: boolean; recordedDraftFound?: boolean }) {
   const initial = React.useRef(JSON.stringify(draft));
+  const [, refreshBaseline] = React.useReducer((value: number) => value + 1, 0);
   const uncertain = options?.uncertain === true;
   const recordedDraftFound = options?.recordedDraftFound === true;
   const dirty = initial.current !== JSON.stringify(draft) || uncertain || recordedDraftFound;
   const bypass = React.useRef(false);
+  const retainedRequestLocation = React.useRef<string | null>(null);
   useBeforeUnloadGuard(dirty || busy, bypass);
   const [pending, setPending] = React.useState<null | (() => void)>(null);
   const confirmationRef = React.useRef<HTMLDivElement>(null);
@@ -42,6 +44,7 @@ export function useSalesDraftExit(draft: unknown, busy: boolean, onClose: () => 
     const sameAccount = (url: string) => new URL(url, location.href).pathname.split("/").slice(0, 3).join("/") === openedAccount;
     const navigate = (event: SalesNavigateEvent) => {
       if (!sameAccount(event.destination.url)) return;
+      if (retainedRequestLocation.current === new URL(event.destination.url, location.href).href) return;
       if (bypass.current || !event.cancelable || (!dirty && !busy)) return;
       event.preventDefault();
       if (!busy) setPending(() => () => { bypass.current = true; window.location.assign(event.destination.url); });
@@ -92,5 +95,30 @@ export function useSalesDraftExit(draft: unknown, busy: boolean, onClose: () => 
   // Only a verified canonical receipt permits the caller's immediate transition
   // from the editor to that original record. This does not authorize a write.
   const exitAfterSave = (action = onClose) => { bypass.current = true; action(); };
-  return { close: () => request(), request, confirmation, alive, exitAfterSave };
+  // Explicit entry/retirement of one editor's reviewed baseline. Never adopt a
+  // background read automatically, and never bypass another editor's guard.
+  const adoptBaseline = React.useCallback((baseline: unknown) => { initial.current = JSON.stringify(baseline); bypass.current = false; setPending(null); refreshBaseline(); }, []);
+  // A same-document recovery checkpoint is not an exit or a saved-work receipt.
+  // Permit only these two opaque request keys, only for the SAME existing
+  // agreement. Keep dirty/busy/beforeunload and every other guard active.
+  const retainRequestLocation = (url: string, replace: () => void) => {
+    const current = new URL(location.href);
+    let target: URL;
+    try { target = new URL(url, location.href); } catch { return false; }
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (target.origin !== current.origin || target.pathname !== current.pathname || target.hash !== current.hash
+      || !uuid.test(current.searchParams.get('agreement') ?? '') || target.searchParams.get('agreement') !== current.searchParams.get('agreement')) return false;
+    const id = target.searchParams.get('agreement_signer_request'), business = target.searchParams.get('agreement_business');
+    if (target.searchParams.getAll('agreement_signer_request').length > 1 || target.searchParams.getAll('agreement_business').length > 1
+      || (id !== null ? !uuid.test(id) || !uuid.test(business ?? '') : business !== null)) return false;
+    for (const key of ['agreement_signer_request', 'agreement_business']) { current.searchParams.delete(key); target.searchParams.delete(key); }
+    current.searchParams.sort(); target.searchParams.sort();
+    if (current.search !== target.search) return false;
+    const destination = new URL(url, location.href).href;
+    retainedRequestLocation.current = destination;
+    try { replace(); return location.href === destination; }
+    catch { return false; }
+    finally { retainedRequestLocation.current = null; }
+  };
+  return { close: () => request(), request, confirmation, alive, exitAfterSave, adoptBaseline, retainRequestLocation };
 }

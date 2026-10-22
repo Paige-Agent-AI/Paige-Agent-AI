@@ -8,8 +8,9 @@ import { CustomerIdentityProvider, type CustomerIdentityState } from "@/lib/port
 
 // D-QA5 (live QA as a synthetic customer, 2026-10-19): the header showed the customer's login email where a
 // name was known. A customer reads their own name; staff and anyone without a customer frame keep the email.
-vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => false }));
-vi.mock("@/contexts/DashboardModeContext", () => ({ useDashboardMode: () => ({ isAdmin: false, mode: "internal", setMode: vi.fn() }) }));
+const f = vi.hoisted(() => ({mobile: false, admin: false}));
+vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => f.mobile }));
+vi.mock("@/contexts/DashboardModeContext", () => ({ useDashboardMode: () => ({ isAdmin: f.admin, mode: "internal", setMode: vi.fn() }) }));
 vi.mock("@/components/dashboard/NotificationBell", () => ({ NotificationBell: () => null }));
 vi.mock("@/components/brand/PaigeCommandMark", () => ({ PaigeCommandMark: () => null }));
 vi.mock("@/hooks/useUnreadSupportCount", () => ({ useUnreadSupportCount: () => ({ count: 0 }) }));
@@ -34,7 +35,7 @@ const frame = (profile: Record<string, string | null>) => ({
 }) as unknown as CustomerIdentityState["frame"];
 
 let root: Root, host: HTMLDivElement;
-beforeEach(() => { host = document.createElement("div"); document.body.append(host); root = createRoot(host); });
+beforeEach(() => {f.mobile = false; f.admin = false; host = document.createElement("div"); document.body.append(host); root = createRoot(host); });
 afterEach(() => { act(() => root.unmount()); host.remove(); });
 const render = async (state: CustomerIdentityState) => {
   await act(async () => root.render(
@@ -63,4 +64,18 @@ it("keeps the email for staff and for a person with no customer frame", async ()
   expect(accountName()).toBe("jordan.rivera@example.test");
   await render({ frame: null, phase: "not-client", staff: false });
   expect(accountName()).toBe("jordan.rivera@example.test");
+});
+it("a customer who also has a separate staff role gets customer chrome and a full-navigation business choice", async () => {
+  f.admin = true;
+  await render({frame: frame({first_name: "Jordan"}), phase: "ready"});
+  expect(host.querySelector('[data-testid="portal-role-badge"]')?.textContent).toBe("Client");
+  const trigger = host.querySelector('[data-testid="account-name"]')!.closest("button")!;
+  await act(async () => trigger.dispatchEvent(new PointerEvent("pointerdown", {bubbles: true, button: 0, ctrlKey: false})));
+  const choice = document.querySelector('a[href="/app?chooseBusiness=1"]'); expect(choice?.textContent).toContain("Choose business");
+  expect(document.querySelector('[role="menu"]')?.textContent).not.toContain("Support");
+});
+it("the mobile customer drawer offers the same business-choice entry", async () => {
+  f.mobile = true; await render({frame: frame({first_name: "Jordan"}), phase: "ready"});
+  await act(async () => (host.querySelector('button[aria-label="Open navigation"]') as HTMLButtonElement).click());
+  expect(document.querySelector('a[href="/app?chooseBusiness=1"]')?.textContent).toContain("Choose business");
 });

@@ -24,6 +24,7 @@ import { overRateLimit, trustedClientIp } from "../_shared/rateLimit.ts";
 import { sha256Hex } from "../_shared/agreements/token.ts";
 import { TOKEN_SHAPE } from "../_shared/agreements/signing-guard.ts";
 import { isPortalDoorRequest, resolvePortalDocument } from "../_shared/agreements/portal-door.ts";
+import { verifyRetainedAgreementPdf } from "../_shared/agreements/retained-document.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -40,6 +41,11 @@ const json = (body: unknown, status = 200) =>
  */
 const refuse = () =>
   json({ ok: false, error: "This link is not valid. Ask the sender for a new copy." }, 404);
+
+const unavailableDocument = () => json({
+  ok: false,
+  error: "This document is temporarily unavailable. Please try again shortly.",
+}, 503);
 
 const serviceClient = () =>
   createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
@@ -64,6 +70,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const agreementParam = (url.searchParams.get("agreementId") ?? "").trim();
 
   let sealedKey: string | null = null;
+  let expectedDigest: unknown = null;
   let filename = "agreement.pdf";
   let disposition: "inline" | "attachment" = "inline";
 
@@ -80,6 +87,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const door = await resolvePortalDocument(url.searchParams, authHeader, caller as never, db as never);
     if (!door) return refuse();
     sealedKey = door.sealedKey;
+    // The original portal scope already proved this exact requested agreement.
+    // Bind its checksum to that SAME id/key/completed triple, never a key-only
+    // lookup or another client's record. The portal contract itself is unchanged.
+    const { data: retained, error: retainedError } = await db.from("paige_agreements")
+      .select("sealed_sha256").eq("id", agreementParam.toLowerCase())
+      .eq("sealed_storage_key", sealedKey).eq("status", "completed").maybeSingle();
+    if (retainedError || !retained) return refuse();
+    expectedDigest = retained.sealed_sha256;
     filename = safeFilename(door.title);
     disposition = door.disposition;
   } else if (token) {
@@ -101,7 +116,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // The agreement is read FROM THE TOKEN ROW. No query parameter names or steers it.
     const { data: agreement } = await db.from("paige_agreements")
-      .select("id,title,status,content_storage_key,sealed_storage_key")
+      .select("id,title,status,content_storage_key,sealed_storage_key,content_sha256,sealed_sha256")
       .eq("id", signer.agreement_id).maybeSingle();
     if (!agreement) return refuse();
 
@@ -114,9 +129,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (agreement.status === "completed") {
       if (!agreement.sealed_storage_key) return refuse();
       sealedKey = String(agreement.sealed_storage_key);
+      expectedDigest = agreement.sealed_sha256;
     } else if (["sent", "viewed", "partially_signed"].includes(String(agreement.status))) {
       if (!agreement.content_storage_key) return refuse();
       sealedKey = String(agreement.content_storage_key);
+      expectedDigest = agreement.content_sha256;
     } else {
       return refuse();
     }
@@ -141,10 +158,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (isAdmin !== true) return refuse();
 
     const { data: agreement } = await db.from("paige_agreements")
-      .select("id,title,status,sealed_storage_key")
+      .select("id,title,status,sealed_storage_key,sealed_sha256")
       .eq("id", agreementParam).eq("tenant_id", tenantId).maybeSingle();
     if (!agreement || agreement.status !== "completed" || !agreement.sealed_storage_key) return refuse();
     sealedKey = String(agreement.sealed_storage_key);
+    expectedDigest = agreement.sealed_sha256;
     filename = safeFilename(String(agreement.title));
   }
 
@@ -161,7 +179,19 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }, 503);
   }
 
-  return new Response(await file.data.arrayBuffer(), {
+  let retainedBytes: ArrayBuffer;
+  try {
+    retainedBytes = await file.data.arrayBuffer();
+    if (!await verifyRetainedAgreementPdf(new Uint8Array(retainedBytes), expectedDigest)) {
+      console.error("[agreement-document] retained document integrity could not be verified");
+      return unavailableDocument();
+    }
+  } catch {
+    console.error("[agreement-document] retained document bytes could not be verified");
+    return unavailableDocument();
+  }
+
+  return new Response(retainedBytes, {
     status: 200,
     headers: {
       ...corsHeaders,

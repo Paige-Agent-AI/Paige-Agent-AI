@@ -6,10 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
  * `error` is true only when the read itself failed (as opposed to resolving empty), so
  * callers can tell "not a customer" apart from "couldn't check".
  */
-export function useClientPortalRead<T>(readValue: () => Promise<T>, empty: T): { data: T; loading: boolean; error: boolean } {
+export function useClientPortalRead<T>(readValue: () => Promise<T>, empty: T, enabled = true): { data: T; loading: boolean; error: boolean } {
   const [state, setState] = useState({ data: empty, loading: true, error: false });
 
   useEffect(() => {
+    if (!enabled) return;
     let cancelled = false;
     let sequence = 0;
     let actor: string | null = null;
@@ -55,7 +56,7 @@ export function useClientPortalRead<T>(readValue: () => Promise<T>, empty: T): {
       subscription.unsubscribe();
       window.removeEventListener("focus", onFocus);
     };
-  }, [readValue, empty]);
+  }, [readValue, empty, enabled]);
 
-  return state;
+  return enabled ? state : {data: empty, loading: false, error: false};
 }

@@ -220,6 +220,10 @@ it("does not mistake a signed-out 42501 for several businesses", async () => {
   expect(state.multipleBusinesses).toBe(false);
   expect(state.error).toContain("couldn't load");
 });
+it.each(["permission denied for function client_portal_conversation","Invalid customer request scope"])("does not mistake %s for several businesses",async message=>{
+  f.rpc.mockResolvedValue({data:null,error:{code:"42501",message}});
+  await mount();expect(state.multipleBusinesses).toBe(false);expect(state.error).toContain("couldn't load");
+});
 
 it("treats a 42501 send refusal as definite (not unconfirmed) and halts", async () => {
   await mount();

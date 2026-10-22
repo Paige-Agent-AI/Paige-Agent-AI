@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState, type CSSProperties } from "react";
 import { useTheme } from "next-themes";
+import {useShellCustomerIdentity} from "@/lib/portal/customerIdentity";
 import { FileCheck2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -12,7 +13,7 @@ import type { ClientReleasedDelivery } from "@/solo/operations/operations-client
  *
  * Rebuilt from draft #2156's ClientReleasedWork. It renders only when there is something to say: released
  * work, or a read that failed. Each row opens a page-local dialog (not #2156's provider around every
- * route) hosting the unchanged Operations review, whose accept / request-changes run through
+ * route) hosting the original Operations review, whose accept / request-changes run through
  * operations_delivery_client_decide_scoped and are reported only from that component's own readback.
  * The dialog itself carries the portal's tokens; it adds no Solo theme class of its own.
  */
@@ -26,6 +27,7 @@ type Open = { scope: PortalReleaseScope; release: ClientReleasedDelivery; epoch:
 
 export function ClientReleasedWork({ businessName, accentStyle }: { businessName: string; accentStyle?: CSSProperties }) {
   const released = useClientPortalReleasedWork();
+  const identity = useShellCustomerIdentity();
   const { resolvedTheme, forcedTheme } = useTheme();
   const theme = (forcedTheme ?? resolvedTheme) === "dark" ? "dark" : "light";
   const [open, setOpen] = useState<Open | null>(null);
@@ -48,10 +50,12 @@ export function ClientReleasedWork({ businessName, accentStyle }: { businessName
     try { allowed = !entry || entry.instance !== shown?.instance || entry.check() === true; } catch { allowed = false; }
     if (!allowed) { setNotice("Finish or clear your review note before closing."); return; }
     setOpen(null); setNotice("");
+    // A recovered recorded decision may differ from the earlier list; only reread it.
+    if (shown && released.isCurrent(shown.epoch)) void released.refresh();
   };
 
-  if (!work || work.kind === "hidden" || work.kind === "scope_changed") return null;
-  if (work.kind === "ready" && work.releases.length === 0 && work.unavailableCount === 0 && !work.hasMore) return null;
+  if ((!work || work.kind === "hidden" || work.kind === "scope_changed") && !shown) return null;
+  if (work?.kind === "ready" && work.releases.length === 0 && work.unavailableCount === 0 && !work.hasMore && !shown) return null;
 
   return (
     <section aria-labelledby="client-released-work-title" className="space-y-4" data-client-released-work>
@@ -60,11 +64,11 @@ export function ClientReleasedWork({ businessName, accentStyle }: { businessName
           <h2 id="client-released-work-title" className="text-base font-semibold">Work for your review</h2>
           <p className="max-w-prose text-sm text-muted-foreground">Work {businessName} has finished and sent you. Review it, then accept it or ask for changes.</p>
         </div>
-        <Button variant="ghost" disabled={released.reading} onClick={() => void released.refresh()}>{released.reading ? "Checking…" : "Check again"}</Button>
+        <Button variant="ghost" className="min-h-[44px]" disabled={released.reading} onClick={() => void released.refresh()}>{released.reading ? "Checking…" : "Check again"}</Button>
       </div>
-      {work.kind === "unavailable" ? (
+      {work?.kind === "unavailable" ? (
         <p role="status" className="max-w-prose text-sm">Work sent for your review couldn’t be checked just now. Try again in a moment.</p>
-      ) : (
+      ) : work?.kind === "ready" ? (
         <>
           {work.releases.length > 0 && (
             <ul className="divide-y divide-border border-y border-border">
@@ -77,7 +81,7 @@ export function ClientReleasedWork({ businessName, accentStyle }: { businessName
                       Version {release.revision_no} · <span className={release.state === "awaiting_client" ? "font-medium text-foreground" : undefined}>{STATE_LABEL[release.state]}</span>
                     </p>
                   </div>
-                  <Button variant={release.state === "awaiting_client" ? "default" : "outline"}
+                  <Button className="min-h-[44px]" variant={release.state === "awaiting_client" ? "default" : "outline"}
                     style={release.state === "awaiting_client" ? accentStyle : undefined}
                     aria-label={`Review ${release.title}, version ${release.revision_no}`}
                     onClick={event => {
@@ -97,17 +101,18 @@ export function ClientReleasedWork({ businessName, accentStyle }: { businessName
             </p>
           )}
         </>
-      )}
+      ) : null}
       <Dialog open={!!shown} onOpenChange={next => { if (!next) close(); }}>
         {shown && (
           <DialogContent overlayClassName="motion-reduce:!animate-none"
             className="max-h-[90dvh] overflow-y-auto p-0 sm:max-w-3xl motion-reduce:!animate-none [&>button]:min-h-[44px] [&>button]:min-w-[44px]"
             onCloseAutoFocus={event => { event.preventDefault(); if (opener.current?.isConnected) opener.current.focus(); }}>
-            <DialogTitle className="sr-only">Review {shown.release.title}</DialogTitle>
-            <DialogDescription className="sr-only">Read this version, then accept it or ask {businessName} for changes.</DialogDescription>
+            <DialogTitle className="sr-only">{released.isCurrent(shown.epoch)?"Review released work":"Checking review access"}</DialogTitle>
+            <DialogDescription className="sr-only">Read the authorized version before accepting it or requesting changes.</DialogDescription>
             {notice && <p role="status" className="mx-6 mt-6 rounded-md border border-border p-3 text-sm">{notice}</p>}
             <OperationsClientArtifactReview key={shown.instance} actorId={shown.scope.actorId} tenantId={shown.scope.tenantId}
               releaseId={shown.release.release_id} theme={theme} registerCloseGuard={registerCloseGuard}
+              isCurrentScope={()=>released.isCurrent(shown.epoch)} onRetryAccess={identity?.retryAccess}
               onVerifiedDecision={async () => { await released.refresh(); }} />
           </DialogContent>
         )}

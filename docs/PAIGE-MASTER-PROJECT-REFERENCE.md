@@ -826,6 +826,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-22 — EXP05 Projects toolbar cleanup released.**
+
+| Increment | Exact reviewed/deployed identity and bounded proof | Completion boundary |
+| --- | --- | --- |
+| [#2585](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2585): Remove the repeated Projects ZION shortcut | Reviewed `3d73313f2f3b77e6b47adfdb15cc55d5388c73dd`; main `99b3093d7e0259c3904f1956ec88f071ddd28e1f`; actual tree `45acebb339ebc250d9d711af477bd9d073f3063e` equals inspected current-main union. All10 applicable required checks/two statuses SUCCESS; no-schema Preview SKIPPED. Separate sequential review6339905958/final6340554995 AUTHOR-REVIEW / LOWER ASSURANCE; zero review threads.55 focused tests and16 native responsive/theme frames PASS. Production `dpl_HSd44CGAtafe1CRXeAQC4Fmb7Cn7` READY/exact99/canonical aliases; public `99b3093d7e0259c3904f1956ec88f071ddd28e1f-mvjidgyk`, customerUpdate:null. Ordinary signed-in SOLO Projects shows New project/Refresh without the repeated shortcut; original creator opens with current owner/options, empty review stays disabled, Escape returns New project focus. No write submitted. [Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2585#issuecomment-6340627982). Own migration/Edge/provider/activation N/A. | Bounded toolbar/navigation verified; main Overview Plan with ZION and original PAIGE draft preserved. Full Projects authoring/persistence, Delivery, Playbooks, actual automation/ZION delegation, separate Live and complete ten outcomes/E5-CV1–9 remain unfinished. CAP073–083 unpromoted. No customer version/announcement or founder intermediate test. |
+
 **2026-10-22 — EXP05 original weekly-status Chat source release.**
 
 | Increment | Exact reviewed/deployed identity and bounded proof | Completion boundary |

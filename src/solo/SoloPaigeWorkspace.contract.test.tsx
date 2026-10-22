@@ -8,6 +8,7 @@ import { PaigeAIChat, type ChatComposerContextApi } from "@/components/dashboard
 import { createComposerRequestFence } from "@/lib/paigeComposerScopeState";
 import { SoloPaigeWorkspace } from "./SoloPaigeWorkspace";
 import type { SoloKnowledgeDoc } from "./data/useSoloKnowledge";
+import { setPaigeBusinessPlanScope, getPaigeBusinessPlanScope, clearPaigeSurfaceScope } from "./paigeClientScope";
 
 function visibleTranscriptGeometry(transcript: HTMLDivElement) {
   transcript.getBoundingClientRect = () => ({ top: 0, bottom: 300, left: 0, right: 600, width: 600, height: 300, x: 0, y: 0, toJSON: () => ({}) });
@@ -21,6 +22,9 @@ function visibleTranscriptGeometry(transcript: HTMLDivElement) {
 
 const chatHarness = vi.hoisted(() => ({
   tenantId: "account-a" as string | null,
+  actorId: null as string | null,
+  pendingReads: vi.fn(),
+  pendingRefresh: vi.fn(),
   loadTurns: vi.fn(),
   ensureThread: vi.fn(),
   dictationOnText: null as null | ((segment: string) => void),
@@ -28,7 +32,11 @@ const chatHarness = vi.hoisted(() => ({
 }));
 
 vi.mock("@tanstack/react-query", () => ({ useQuery: () => ({ data: null }) }));
-vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: chatHarness.tenantId, activeTenant: chatHarness.tenantId ? { account_number: "42" } : null }) }));
+vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: chatHarness.tenantId, activeUserId: chatHarness.actorId, activeTenant: chatHarness.tenantId ? { account_number: "42" } : null }) }));
+vi.mock("./data/useSoloPendingActions", () => ({ useSoloPendingActions: (tenant: string | null, actor: string | null) => {
+  chatHarness.pendingReads(tenant, actor);
+  return { items: tenant && actor ? [{ id: "test-prepared-parent", title: "Inspect original handoff", department: "Operations", summary: null, draftContent: null, rationale: null, createdAt: "" }] : [], total: tenant && actor ? 7 : null, loading: false, error: null, refresh: chatHarness.pendingRefresh };
+} }));
 vi.mock("@/hooks/useScopedUserId", () => ({ useScopedUserId: () => "owner-1" }));
 vi.mock("@/lib/playbook", () => ({ usePlaybook: () => ({ persona: { name: "PAIGE" } }) }));
 vi.mock("@/hooks/use-toast", () => ({ useToast: () => ({ toast: vi.fn() }) }));
@@ -88,6 +96,29 @@ const RouteProbe = () => {
 };
 
 describe("Solo PAIGE workspace contract", () => {
+  it("moves selected planning scope into the source overview and clears it without replacing the native Chat draft", async () => {
+    chatHarness.tenantId = "test-tenant-plan-parent"; chatHarness.actorId = "test-actor-plan-parent"; chatHarness.loadTurns.mockResolvedValue([]);
+    const host = document.createElement("div"); document.body.appendChild(host); const root = createRoot(host);
+    setPaigeBusinessPlanScope({ tenantId: chatHarness.tenantId, surface: "business_game_plan", businessMissionId: null, label: "Business Game Plan" });
+    try {
+      await act(async () => { root.render(<MemoryRouter initialEntries={["/solo/1234567/command-center/business-game-plan"]}><SoloPaigeWorkspace /></MemoryRouter>); await Promise.resolve(); await Promise.resolve(); });
+      expect(host.textContent).not.toContain("PLAN IN CONTEXT");
+      expect(host.querySelector('.e2ps-scope')).toBeNull();
+      expect(host.querySelector('.e2ps-chip')?.textContent).toContain("7 items to review");
+      expect(chatHarness.pendingReads).toHaveBeenLastCalledWith("test-tenant-plan-parent", "test-actor-plan-parent");
+      const composer = host.querySelector('textarea')!;
+      act(() => { Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!.call(composer, "Keep this unsent planning question."); composer.dispatchEvent(new Event("input", { bubbles: true })); });
+      act(() => (host.querySelector('.e2ps-chip') as HTMLButtonElement).click());
+      expect(document.querySelector('.e2ps-context')?.textContent).toContain("Business Game Plan");
+      act(() => (document.querySelector('.e2ps-context button') as HTMLButtonElement).click());
+      await act(async () => { await new Promise<void>(resolve => requestAnimationFrame(() => resolve())); });
+      expect(getPaigeBusinessPlanScope(chatHarness.tenantId)).toBeNull();
+      expect(composer.value).toBe("Keep this unsent planning question.");
+      expect(document.activeElement).toBe(composer);
+    } finally {
+      act(() => clearPaigeSurfaceScope()); await act(async () => root.unmount()); host.remove(); chatHarness.actorId = null; chatHarness.tenantId = "account-a";
+    }
+  });
   it("keeps the optional composer context out of non-SOLO mounts", async () => {
     const renderContext = vi.fn(() => <button type="button">Original source review</button>);
     const host = document.createElement("div"); document.body.appendChild(host); const root = createRoot(host);

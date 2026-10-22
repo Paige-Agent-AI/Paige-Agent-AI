@@ -81,6 +81,14 @@ it("A→B→A never revives an old response callback",async()=>{
   await render();const old=state.respond;await render(b);await render();const count=f.native.length;
   await act(async()=>{await expect(old(action(a),"completed")).rejects.toThrow();});expect(f.native).toHaveLength(count);
 });
+it("a retired refresh cannot invalidate the selected business's in-flight read",async()=>{
+  await render();const old=state.refresh,read=deferred<{data:Record<string,unknown>[];error:null}>(),reply=f.reply.getMockImplementation()!;
+  f.reply.mockImplementation(c=>c.name==="paige_customer_actions"&&c.headers["x-client-portal-business"]===b?read.promise:reply(c));
+  await render(b);expect(state.loading).toBe(true);const count=f.native.length;
+  await act(async()=>{await old();await flush();});expect(f.native).toHaveLength(count);
+  read.resolve({data:[item(b)],error:null});await act(flush);
+  expect(state.loading).toBe(false);expect(state.actions[0].id).toBe(action(b));
+});
 it("changed captured SDK session cannot dispatch another actor's response",async()=>{
   await render();f.getSession.mockResolvedValue({data:{session:{user:{id:"other-actor"},access_token:"synthetic-other"}},error:null});
   await act(async()=>{await expect(state.respond(action(a),"completed")).rejects.toThrow();});

@@ -97,8 +97,9 @@ export function useMyActions(){
     setActions([]);setContactId(null);setActorId(null);setPendingActionId(null);setUncertainActionIds([]);setError(notice);setLoading(waiting);
   },[]);
   const refresh=useCallback(async(deadline=Date.now()+20_000)=>{
-    const l=life.current,n=++l.read,epoch=l.epoch,current=()=>l.alive&&scopeCurrent()&&l.read===n&&l.epoch===epoch;
+    const l=life.current;
     if(!l.alive||!scopeCurrent())return null;
+    const n=++l.read,epoch=l.epoch,current=()=>l.alive&&scopeCurrent()&&l.read===n&&l.epoch===epoch;
     setLoading(true);setError(null);
     try{
       const identity=await bounded(supabase.auth.getUser(),deadline-Date.now());if(!current())return null;

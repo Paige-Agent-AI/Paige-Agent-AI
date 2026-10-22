@@ -95,22 +95,27 @@ export function toPendingAction(raw: unknown): SoloPendingAction | null {
   };
 }
 
-export function useSoloPendingActions(tenantId: string | null): SoloPendingActionsData {
+/** Optional actor binding is a UI read assertion, never backend identity or authority. */
+export function useSoloPendingActions(tenantId: string | null, actorId?: string | null): SoloPendingActionsData {
   const [items, setItems] = useState<SoloPendingAction[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState<number | null>(null);
   const [tick, setTick] = useState(0);
   const mounted = useRef(false);
-  const scope = typeof tenantId === "string" && tenantId ? tenantId : null;
-  const [settledScope, setSettledScope] = useState(scope);
+  const actorScope = actorId === undefined ? undefined : actorId?.trim() || null;
+  const scope = typeof tenantId === "string" && tenantId && actorScope !== null ? tenantId : null;
+  // Existing callers are unasserted; an explicit unresolved actor must not read.
+  // Compare the complete identity during render, before effects can retire old data.
+  const readKey = JSON.stringify([scope, actorId !== undefined, actorScope ?? null]);
+  const [settledReadKey, setSettledReadKey] = useState(readKey);
 
   const refresh = useCallback(() => setTick((t) => t + 1), []);
 
   useEffect(() => {
     mounted.current = true;
     let cancelled = false;
-    setSettledScope(scope);
+    setSettledReadKey(readKey);
     setItems([]);
     setTotal(null);
 
@@ -155,9 +160,9 @@ export function useSoloPendingActions(tenantId: string | null): SoloPendingActio
     })();
 
     return () => { cancelled = true; mounted.current = false; };
-  }, [tick, scope]);
+  }, [tick, scope, readKey]);
 
-  return useMemo(() => settledScope === scope
+  return useMemo(() => settledReadKey === readKey
     ? { items, total, loading, error, refresh }
-    : { items: [], total: null, loading: true, error: null, refresh }, [items, total, loading, error, refresh, settledScope, scope]);
+    : { items: [], total: null, loading: true, error: null, refresh }, [items, total, loading, error, refresh, settledReadKey, readKey]);
 }

@@ -3,7 +3,7 @@
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: original twelve-outcome journey records the bounded pre-edit installation repair and original owner API dependency; no new commercial workflow or authority.
 PAIGE_UI_DESIGN: PASS: existing five-module/native Agreements direction and approved source remain unchanged; this repair adds no component, layout, styling or navigation.
-MATERIAL_FLOW_CHANGE: YES: restore installation of the original private preparation writer while retaining both signing holds; customer mounting and actual hosted use remain separately gated.
+MATERIAL_FLOW_CHANGE: NO: original actor, private preparation inputs/results, UI flow and signing holds are unchanged; only the prerequisite installation statements change.
 FLOW_PROTOTYPE: NOT_REQUIRED: original approved Agreements flow is preserved; only two pending native trigger installation statements change.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: the existing owner can eventually retain exact unsigned document preparations through the original API after its native prerequisite deploys; this source is not customer acceptance.
 VISUAL_DIRECTION: NOT_APPLICABLE: no renderer, stylesheet, typography, shell or customer screen changes in this repair.
@@ -15,7 +15,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: local synthetic native authority is not genui
 KEYBOARD_FOCUS: NOT_APPLICABLE: no interactive component, keyboard handler, focus owner or existing leave guard changes.
 ZOOM_REFLOW: NOT_APPLICABLE: no viewport, layout, document canvas or responsive source changes.
 REDUCED_MOTION: NOT_APPLICABLE: no animation, transition or loading interaction changes.
-STATE_COVERAGE: PASS: original native empty/retained/current/earlier/source-error/permission-refused/unknown recovery remain; external signature approval stays held, never inferred from a preparation or installed trigger.
+STATE_COVERAGE: PASS: real native first-use, retained, source mismatch, permission refusal, uncertain recovery and immutable replay cases pass in221 controls. Existing signature approval holds are asserted; preparation conveys no signing authority.
 TRUTHFUL_STATE_LABELS: PASS: source proof does not mean deployed, approved, sent, signed, legally reviewed, effective obligation, paid or completed service.
 SOLO_UI: NO: only pending native SQL, existing native proof and evidence change; no recognized Solo UI source or customer-specific branch.
 UNVERIFIED: fresh exact-head review/all CI/normal Preview, native production8-function/ABI/ACL/table/trigger/index readback, genuine role/persistence/provider and full O1–O12/founder acceptance.
@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: exact native installation/replay succeeds during ordinary o
 MOTION_PURPOSE: NONE: no visible interaction or animation is introduced.
 PROTECTED_SEAMS: unchanged source/function/ABI/grant comparison, original pending migration ledger, fixed timeout, native immutable preparations and original signing-hold trigger definitions.
 
-INTERNAL_BUILD_IDENTITY: branch=codex/e04-preparation-trigger-installation; source_base=429388f2528942275334fd0c916c6fcfecb4f70a; source_head=192467989fd7ce454dc666340858f2e05c0da9a2; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=20271113300004(NOT_APPLIED); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-preparation-installation-locks.md
+INTERNAL_BUILD_IDENTITY: branch=codex/e04-preparation-trigger-installation; source_base=429388f2528942275334fd0c916c6fcfecb4f70a; source_head=192467989fd7ce454dc666340858f2e05c0da9a2; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113300004 reviewed native release and source readback after six rollbacks); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-preparation-installation-locks.md
 RELEASE_CHANNEL: development: local native proof and source correction only; actual native production deployment remains held.
 RELEASE_CLASSIFICATION: internal-only: original preparation prerequisite correction, not a complete professional Agreements or twelve-outcome customer release.
 CUSTOMER_RELEASE_IDENTITY: none: no customer version, announcement or founder acceptance from this repair.

@@ -1,7 +1,7 @@
 -- Original replayed native functions and real roles. Synthetic, rolled back;
 -- provider execution disabled, no production identities or effectful acceptance.
 BEGIN;
-SELECT plan(61);
+SELECT plan(62);
 
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0970100-0000-4000-8000-000000000001','authenticated','authenticated','scope-owner@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -108,6 +108,9 @@ SELECT is(pg_temp.read_scoped_chat(business,opened)->>'contact','e0970300-0000-4
 SELECT is(pg_temp.read_scoped_chat(business,opened),jsonb_build_object('tenant',business,'contact','e0970300-0000-4000-8000-000000000001','audience','customer_private','lens','client'),'original closed A thread facts retain private audience/lens') FROM scope_chats WHERE business='e0970200-0000-4000-8000-000000000001';
 SELECT ok(pg_temp.read_scoped_chat('e0970200-0000-4000-8000-000000000002',opened) IS NULL,'B request cannot read A private thread') FROM scope_chats WHERE business='e0970200-0000-4000-8000-000000000001';
 SELECT ok(pg_temp.read_scoped_chat('e0970200-0000-4000-8000-000000000001',opened) IS NULL,'A request cannot read B private thread') FROM scope_chats WHERE business='e0970200-0000-4000-8000-000000000002';
+SELECT ok(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001',
+ format('SELECT to_jsonb(id) FROM public.paige_chat_threads WHERE id::text=%L',opened#>>'{}'),
+ '{"x-client-portal-business":"e0970200-0000-4000-8000-000000000001"}') IS NULL,'business staff standing does not expose a customer private conversation') FROM scope_chats WHERE business='e0970200-0000-4000-8000-000000000001';
 SELECT is(pg_temp.open_scoped_chat()->>'sqlstate','42501','unselected ambiguity creates no guessed private conversation');
 SELECT is(pg_temp.open_scoped_chat('e0970200-0000-4000-8000-000000000003')->>'sqlstate','42501','foreign business creates no private conversation');
 SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000003',

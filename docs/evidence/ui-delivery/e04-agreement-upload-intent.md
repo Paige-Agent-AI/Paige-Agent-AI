@@ -1,6 +1,7 @@
 # EXP04 original upload intent and uncertain response
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
+COMPOSITION_READBACK: PASS: actual main2f4b6dee preserved in template consumer; original shared test driver retains both template/upload modes. Rebuilt upload20 cases/five paths/19 exact source pins/zero page errors, plus template20 cases/17 paths/25 pins. No owning hook change or new authenticated/provider proof.
 FLOW_BY_FLOW: PASS: repair the existing owner upload entry, same private bucket/adapter/form; all twelve outcomes continue in the original journey.
 PAIGE_UI_DESIGN: PASS: existing Sales dialog/tokens/notice and native PAIGE overlay; no layout, component library or competing uploader.
 MATERIAL_FLOW_CHANGE: NO: same upload/notice/return path; incorrect-business intent refuses before Storage and uncertain transport no longer claims no effect.

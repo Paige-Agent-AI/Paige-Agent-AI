@@ -1,0 +1,945 @@
+{
+  "proofClass": "actual Sales shell/components/editor/SDK; synthetic identity/network only",
+  "staticTransport": "native Vite compiled fixture",
+  "normalizedLFSourceSHA256": {
+    "src/solo/sales-ops.tsx": "f03bed3956b16eafde82e83b451ce66c10718b938ba53fad129fc9f9b6e428f8",
+    "src/solo/SalesWorkspace.tsx": "039ee4af441fc83161d304d486bc8bd5c92d3aa14594b1945edb9369b87d4d42",
+    "src/solo/sales-dialog.tsx": "8a36536ab86879b0199b19426909e9940aa866c595c96678c7ca4e798f5c768e",
+    "src/hooks/useBeforeUnloadGuard.ts": "5d0ddcf56f30a74550042c04428a3c03d1904d9156f4173a46884cd60749d4ec",
+    "src/solo/sales/AgreementPreparationWorkspace.tsx": "17fbe238fb4a2a2024ca8f33c23f1dd0e23000f5276417c848aa83512bde87e2",
+    "src/solo/sales/AgreementBodyEditor.tsx": "c28a39457d74ffff3f16cb7b5476ebd20b88bd549dcb06f5822911344d101a08",
+    "src/solo/sales/agreementPreparationApi.ts": "640770f300c5d8c3a77b84456b68c847f39b03c3a098b2e7920bd81732975bfc",
+    "src/solo/sales/agreementVocabulary.ts": "65997aa339d950aff13b8c607c4938b9a060340f75b7f43f397156fc0409a3d9",
+    "src/solo/sales/agreement-body-editor.css": "1d0f9cda84d9bc9e37e792e2d0228b011f78359c4fd4c9f734e389dbacf09767",
+    "src/solo/sales/agreement-preparation.css": "2cef8ef627b07b309703b67ed32378751229b001015e0390b53866efdb7c44c4",
+    "package.json": "41a1ff39c33482ed0a7b9f34aaa6919ed4806d1d112c5394452863a56c2cd1b4",
+    "package-lock.json": "6408b40f5c16be495a796c9be51881e29019cdf533845c406de164012509e7ab",
+    "scripts/live-drive/harness/sales-mount/agreement-authoring.tsx": "df2012ab1357ac3bf1cce2763947f5b5ef492d09fbf1b4eff26396162614f737",
+    "scripts/live-drive/harness/sales-mount/agreement-authoring-ports.ts": "d4beb58b1e5ad142fee41f9488d7979386acb18b310c4a8d94fece8376925af4",
+    "scripts/live-drive/harness/sales-mount/agreement-authoring-client.ts": "e7a059ff4bc064250d5f99e5e4459782d1c45fe7d4ee7521e9775fa971fa77f8",
+    "scripts/live-drive/harness/sales-mount/vite.agreement-authoring.config.ts": "ae93d7029cd44a8fa590ea294394926d6535e5e4b4d0e02dee625877b356a7dd",
+    "scripts/live-drive/harness/sales-mount/agreement-authoring.html": "c66db7a6acdd821c8aa0051561d06d650522dad1151905733e40ee38bbc25be7",
+    "src/solo/sales/sales-department.css": "e7794e2bbee16632aedbe3fb5508b1415573f468f62c82036f9b03aabf29cf07",
+    "scripts/live-drive/agreement-authoring-drive.mjs": "ec7f82b451458814d78ca7ebea6b3ea1e82a1a3acedffdc23a73c9308a4f887c",
+    "src/solo/sales/AgreementTemplateWorkspace.tsx": "b4cf372fe8fb1516141cf9f9e74a686dd8c65fdbb6a4d48a49ab896373892610",
+    "src/solo/sales/agreementTemplateApi.ts": "09e7f342ee39241fe6437a5466ea4a304e6edf235b51625d26786a345750d4a8",
+    "src/solo/sales/agreement-templates.css": "854ddb8cfb234f68a738ac343f2c7af0255d6b3298d53091bffca75fc8278e61",
+    "src/solo/sales/AgreementWordingHistory.tsx": "8e6594e209d847cb8cbf75aa2410be5c7fce35475e088f1815901afebd8d3f95",
+    "src/solo/sales/agreementRevisionApi.ts": "67fd3212d16b77d1b06d7c4fa24aba101fedeb270d5c21d05d94d6131c02eed7",
+    "src/solo/sales/AgreementDraftCorrection.tsx": "929e12ae7ea4e55afb154b6367358cf8faf0ebc8cedd9c9ed438aa638c565ca1",
+    "src/solo/sales/agreementCorrectionApi.ts": "edc5b35118af71d5ec6f498c4117f7fb2416d10fd5e18085884de312bca65f79"
+  },
+  "sharedUIFontSHA256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05",
+  "documentFixtureSHA": null,
+  "frames": [
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "paige": "closed",
+      "fit": {
+        "viewport": 1536,
+        "document": 1536,
+        "pageScroll": 0,
+        "button": {
+          "x": 1220,
+          "y": 612.109375,
+          "width": 258,
+          "height": 44,
+          "top": 612.109375,
+          "right": 1478,
+          "bottom": 656.109375,
+          "left": 1220
+        },
+        "navigation": {
+          "x": 84,
+          "y": 76,
+          "width": 1440,
+          "height": 49,
+          "top": 76,
+          "right": 1524,
+          "bottom": 125,
+          "left": 84
+        },
+        "selected": {
+          "x": 411.421875,
+          "y": 82,
+          "width": 172.5,
+          "height": 37,
+          "top": 82,
+          "right": 583.921875,
+          "bottom": 119,
+          "left": 411.421875
+        },
+        "destinations": 6
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "paige": "open",
+      "fit": {
+        "viewport": 1536,
+        "document": 1536,
+        "pageScroll": 0,
+        "button": {
+          "x": 697.765625,
+          "y": 612.109375,
+          "width": 258,
+          "height": 44,
+          "top": 612.109375,
+          "right": 955.765625,
+          "bottom": 656.109375,
+          "left": 697.765625
+        },
+        "navigation": {
+          "x": 84,
+          "y": 76,
+          "width": 917.765625,
+          "height": 49,
+          "top": 76,
+          "right": 1001.765625,
+          "bottom": 125,
+          "left": 84
+        },
+        "selected": {
+          "x": 411.421875,
+          "y": 82,
+          "width": 172.5,
+          "height": 37,
+          "top": 82,
+          "right": 583.921875,
+          "bottom": 119,
+          "left": 411.421875
+        },
+        "destinations": 6
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "paige": "closed",
+      "fit": {
+        "viewport": 1366,
+        "document": 1366,
+        "pageScroll": 0,
+        "button": {
+          "x": 1050,
+          "y": 610.109375,
+          "width": 258,
+          "height": 44,
+          "top": 610.109375,
+          "right": 1308,
+          "bottom": 654.109375,
+          "left": 1050
+        },
+        "navigation": {
+          "x": 84,
+          "y": 76,
+          "width": 1270,
+          "height": 49,
+          "top": 76,
+          "right": 1354,
+          "bottom": 125,
+          "left": 84
+        },
+        "selected": {
+          "x": 411.421875,
+          "y": 82,
+          "width": 172.5,
+          "height": 37,
+          "top": 82,
+          "right": 583.921875,
+          "bottom": 119,
+          "left": 411.421875
+        },
+        "destinations": 6
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "paige": "open",
+      "fit": {
+        "viewport": 1366,
+        "document": 1366,
+        "pageScroll": 0,
+        "button": {
+          "x": 585.5625,
+          "y": 610.109375,
+          "width": 258,
+          "height": 44,
+          "top": 610.109375,
+          "right": 843.5625,
+          "bottom": 654.109375,
+          "left": 585.5625
+        },
+        "navigation": {
+          "x": 84,
+          "y": 76,
+          "width": 805.5625,
+          "height": 49,
+          "top": 76,
+          "right": 889.5625,
+          "bottom": 125,
+          "left": 84
+        },
+        "selected": {
+          "x": 411.421875,
+          "y": 82,
+          "width": 172.5,
+          "height": 37,
+          "top": 82,
+          "right": 583.921875,
+          "bottom": 119,
+          "left": 411.421875
+        },
+        "destinations": 6
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "paige": "closed",
+      "fit": {
+        "viewport": 1024,
+        "document": 1024,
+        "pageScroll": 0,
+        "button": {
+          "x": 130,
+          "y": 609.75,
+          "width": 389,
+          "height": 44,
+          "top": 609.75,
+          "right": 519,
+          "bottom": 653.75,
+          "left": 130
+        },
+        "navigation": {
+          "x": 84,
+          "y": 76,
+          "width": 928,
+          "height": 49,
+          "top": 76,
+          "right": 1012,
+          "bottom": 125,
+          "left": 84
+        },
+        "selected": {
+          "x": 411.421875,
+          "y": 82,
+          "width": 172.5,
+          "height": 37,
+          "top": 82,
+          "right": 583.921875,
+          "bottom": 119,
+          "left": 411.421875
+        },
+        "destinations": 6
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "paige": "open",
+      "fit": {
+        "viewport": 1024,
+        "document": 1024,
+        "pageScroll": 0,
+        "button": {
+          "x": 130,
+          "y": 609.75,
+          "width": 389,
+          "height": 44,
+          "top": 609.75,
+          "right": 519,
+          "bottom": 653.75,
+          "left": 130
+        },
+        "navigation": {
+          "x": 84,
+          "y": 76,
+          "width": 928,
+          "height": 49,
+          "top": 76,
+          "right": 1012,
+          "bottom": 125,
+          "left": 84
+        },
+        "selected": {
+          "x": 411.421875,
+          "y": 82,
+          "width": 172.5,
+          "height": 37,
+          "top": 82,
+          "right": 583.921875,
+          "bottom": 119,
+          "left": 411.421875
+        },
+        "destinations": 6
+      },
+      "nativePaigeOverlay": true
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "paige": "closed",
+      "fit": {
+        "viewport": 900,
+        "document": 900,
+        "pageScroll": 0,
+        "button": {
+          "x": 130,
+          "y": 841.546875,
+          "width": 327,
+          "height": 44,
+          "top": 841.546875,
+          "right": 457,
+          "bottom": 885.546875,
+          "left": 130
+        },
+        "navigation": {
+          "x": 84,
+          "y": 76,
+          "width": 804,
+          "height": 49,
+          "top": 76,
+          "right": 888,
+          "bottom": 125,
+          "left": 84
+        },
+        "selected": {
+          "x": 411.421875,
+          "y": 82,
+          "width": 172.5,
+          "height": 37,
+          "top": 82,
+          "right": 583.921875,
+          "bottom": 119,
+          "left": 411.421875
+        },
+        "destinations": 6
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "paige": "open",
+      "fit": {
+        "viewport": 900,
+        "document": 900,
+        "pageScroll": 0,
+        "button": {
+          "x": 130,
+          "y": 841.546875,
+          "width": 327,
+          "height": 44,
+          "top": 841.546875,
+          "right": 457,
+          "bottom": 885.546875,
+          "left": 130
+        },
+        "navigation": {
+          "x": 84,
+          "y": 76,
+          "width": 804,
+          "height": 49,
+          "top": 76,
+          "right": 888,
+          "bottom": 125,
+          "left": 84
+        },
+        "selected": {
+          "x": 411.421875,
+          "y": 82,
+          "width": 172.5,
+          "height": 37,
+          "top": 82,
+          "right": 583.921875,
+          "bottom": 119,
+          "left": 411.421875
+        },
+        "destinations": 6
+      },
+      "nativePaigeOverlay": true
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "paige": "closed",
+      "fit": {
+        "viewport": 390,
+        "document": 390,
+        "pageScroll": 0,
+        "button": {
+          "x": 116,
+          "y": 696.171875,
+          "width": 230,
+          "height": 44,
+          "top": 696.171875,
+          "right": 346,
+          "bottom": 740.171875,
+          "left": 116
+        },
+        "navigation": {
+          "x": 84,
+          "y": 69,
+          "width": 294,
+          "height": 56,
+          "top": 69,
+          "right": 378,
+          "bottom": 125,
+          "left": 84
+        },
+        "selected": {
+          "x": 198.421875,
+          "y": 75,
+          "width": 172.5,
+          "height": 44,
+          "top": 75,
+          "right": 370.921875,
+          "bottom": 119,
+          "left": 198.421875
+        },
+        "destinations": 6
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "light",
+      "width": 320,
+      "height": 740,
+      "paige": "closed",
+      "fit": {
+        "viewport": 320,
+        "document": 320,
+        "pageScroll": 0,
+        "button": {
+          "x": 116,
+          "y": 563.046875,
+          "width": 160,
+          "height": 58.59375,
+          "top": 563.046875,
+          "right": 276,
+          "bottom": 621.640625,
+          "left": 116
+        },
+        "navigation": {
+          "x": 84,
+          "y": 69,
+          "width": 224,
+          "height": 56,
+          "top": 69,
+          "right": 308,
+          "bottom": 125,
+          "left": 84
+        },
+        "selected": {
+          "x": 128.421875,
+          "y": 75,
+          "width": 172.5,
+          "height": 44,
+          "top": 75,
+          "right": 300.921875,
+          "bottom": 119,
+          "left": 128.421875
+        },
+        "destinations": 6
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "paige": "closed",
+      "fit": {
+        "viewport": 1536,
+        "document": 1536,
+        "pageScroll": 0,
+        "button": {
+          "x": 1220,
+          "y": 612.109375,
+          "width": 258,
+          "height": 44,
+          "top": 612.109375,
+          "right": 1478,
+          "bottom": 656.109375,
+          "left": 1220
+        },
+        "navigation": {
+          "x": 84,
+          "y": 76,
+          "width": 1440,
+          "height": 49,
+          "top": 76,
+          "right": 1524,
+          "bottom": 125,
+          "left": 84
+        },
+        "selected": {
+          "x": 411.421875,
+          "y": 82,
+          "width": 172.5,
+          "height": 37,
+          "top": 82,
+          "right": 583.921875,
+          "bottom": 119,
+          "left": 411.421875
+        },
+        "destinations": 6
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "paige": "open",
+      "fit": {
+        "viewport": 1536,
+        "document": 1536,
+        "pageScroll": 0,
+        "button": {
+          "x": 697.765625,
+          "y": 612.109375,
+          "width": 258,
+          "height": 44,
+          "top": 612.109375,
+          "right": 955.765625,
+          "bottom": 656.109375,
+          "left": 697.765625
+        },
+        "navigation": {
+          "x": 84,
+          "y": 76,
+          "width": 917.765625,
+          "height": 49,
+          "top": 76,
+          "right": 1001.765625,
+          "bottom": 125,
+          "left": 84
+        },
+        "selected": {
+          "x": 411.421875,
+          "y": 82,
+          "width": 172.5,
+          "height": 37,
+          "top": 82,
+          "right": 583.921875,
+          "bottom": 119,
+          "left": 411.421875
+        },
+        "destinations": 6
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "paige": "closed",
+      "fit": {
+        "viewport": 1366,
+        "document": 1366,
+        "pageScroll": 0,
+        "button": {
+          "x": 1050,
+          "y": 610.109375,
+          "width": 258,
+          "height": 44,
+          "top": 610.109375,
+          "right": 1308,
+          "bottom": 654.109375,
+          "left": 1050
+        },
+        "navigation": {
+          "x": 84,
+          "y": 76,
+          "width": 1270,
+          "height": 49,
+          "top": 76,
+          "right": 1354,
+          "bottom": 125,
+          "left": 84
+        },
+        "selected": {
+          "x": 411.421875,
+          "y": 82,
+          "width": 172.5,
+          "height": 37,
+          "top": 82,
+          "right": 583.921875,
+          "bottom": 119,
+          "left": 411.421875
+        },
+        "destinations": 6
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "paige": "open",
+      "fit": {
+        "viewport": 1366,
+        "document": 1366,
+        "pageScroll": 0,
+        "button": {
+          "x": 585.5625,
+          "y": 610.109375,
+          "width": 258,
+          "height": 44,
+          "top": 610.109375,
+          "right": 843.5625,
+          "bottom": 654.109375,
+          "left": 585.5625
+        },
+        "navigation": {
+          "x": 84,
+          "y": 76,
+          "width": 805.5625,
+          "height": 49,
+          "top": 76,
+          "right": 889.5625,
+          "bottom": 125,
+          "left": 84
+        },
+        "selected": {
+          "x": 411.421875,
+          "y": 82,
+          "width": 172.5,
+          "height": 37,
+          "top": 82,
+          "right": 583.921875,
+          "bottom": 119,
+          "left": 411.421875
+        },
+        "destinations": 6
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "paige": "closed",
+      "fit": {
+        "viewport": 1024,
+        "document": 1024,
+        "pageScroll": 0,
+        "button": {
+          "x": 130,
+          "y": 609.75,
+          "width": 389,
+          "height": 44,
+          "top": 609.75,
+          "right": 519,
+          "bottom": 653.75,
+          "left": 130
+        },
+        "navigation": {
+          "x": 84,
+          "y": 76,
+          "width": 928,
+          "height": 49,
+          "top": 76,
+          "right": 1012,
+          "bottom": 125,
+          "left": 84
+        },
+        "selected": {
+          "x": 411.421875,
+          "y": 82,
+          "width": 172.5,
+          "height": 37,
+          "top": 82,
+          "right": 583.921875,
+          "bottom": 119,
+          "left": 411.421875
+        },
+        "destinations": 6
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "paige": "open",
+      "fit": {
+        "viewport": 1024,
+        "document": 1024,
+        "pageScroll": 0,
+        "button": {
+          "x": 130,
+          "y": 609.75,
+          "width": 389,
+          "height": 44,
+          "top": 609.75,
+          "right": 519,
+          "bottom": 653.75,
+          "left": 130
+        },
+        "navigation": {
+          "x": 84,
+          "y": 76,
+          "width": 928,
+          "height": 49,
+          "top": 76,
+          "right": 1012,
+          "bottom": 125,
+          "left": 84
+        },
+        "selected": {
+          "x": 411.421875,
+          "y": 82,
+          "width": 172.5,
+          "height": 37,
+          "top": 82,
+          "right": 583.921875,
+          "bottom": 119,
+          "left": 411.421875
+        },
+        "destinations": 6
+      },
+      "nativePaigeOverlay": true
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "paige": "closed",
+      "fit": {
+        "viewport": 900,
+        "document": 900,
+        "pageScroll": 0,
+        "button": {
+          "x": 130,
+          "y": 841.546875,
+          "width": 327,
+          "height": 44,
+          "top": 841.546875,
+          "right": 457,
+          "bottom": 885.546875,
+          "left": 130
+        },
+        "navigation": {
+          "x": 84,
+          "y": 76,
+          "width": 804,
+          "height": 49,
+          "top": 76,
+          "right": 888,
+          "bottom": 125,
+          "left": 84
+        },
+        "selected": {
+          "x": 411.421875,
+          "y": 82,
+          "width": 172.5,
+          "height": 37,
+          "top": 82,
+          "right": 583.921875,
+          "bottom": 119,
+          "left": 411.421875
+        },
+        "destinations": 6
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "paige": "open",
+      "fit": {
+        "viewport": 900,
+        "document": 900,
+        "pageScroll": 0,
+        "button": {
+          "x": 130,
+          "y": 841.546875,
+          "width": 327,
+          "height": 44,
+          "top": 841.546875,
+          "right": 457,
+          "bottom": 885.546875,
+          "left": 130
+        },
+        "navigation": {
+          "x": 84,
+          "y": 76,
+          "width": 804,
+          "height": 49,
+          "top": 76,
+          "right": 888,
+          "bottom": 125,
+          "left": 84
+        },
+        "selected": {
+          "x": 411.421875,
+          "y": 82,
+          "width": 172.5,
+          "height": 37,
+          "top": 82,
+          "right": 583.921875,
+          "bottom": 119,
+          "left": 411.421875
+        },
+        "destinations": 6
+      },
+      "nativePaigeOverlay": true
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "paige": "closed",
+      "fit": {
+        "viewport": 390,
+        "document": 390,
+        "pageScroll": 0,
+        "button": {
+          "x": 116,
+          "y": 696.171875,
+          "width": 230,
+          "height": 44,
+          "top": 696.171875,
+          "right": 346,
+          "bottom": 740.171875,
+          "left": 116
+        },
+        "navigation": {
+          "x": 84,
+          "y": 69,
+          "width": 294,
+          "height": 56,
+          "top": 69,
+          "right": 378,
+          "bottom": 125,
+          "left": 84
+        },
+        "selected": {
+          "x": 198.421875,
+          "y": 75,
+          "width": 172.5,
+          "height": 44,
+          "top": 75,
+          "right": 370.921875,
+          "bottom": 119,
+          "left": 198.421875
+        },
+        "destinations": 6
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "dark",
+      "width": 320,
+      "height": 740,
+      "paige": "closed",
+      "fit": {
+        "viewport": 320,
+        "document": 320,
+        "pageScroll": 0,
+        "button": {
+          "x": 116,
+          "y": 563.046875,
+          "width": 160,
+          "height": 58.59375,
+          "top": 563.046875,
+          "right": 276,
+          "bottom": 621.640625,
+          "left": 116
+        },
+        "navigation": {
+          "x": 84,
+          "y": 69,
+          "width": 224,
+          "height": 56,
+          "top": 69,
+          "right": 308,
+          "bottom": 125,
+          "left": 84
+        },
+        "selected": {
+          "x": 128.421875,
+          "y": 75,
+          "width": 172.5,
+          "height": 44,
+          "top": 75,
+          "right": 300.921875,
+          "bottom": 119,
+          "left": 128.421875
+        },
+        "destinations": 6
+      },
+      "nativePaigeOverlay": false
+    }
+  ],
+  "behavior": [
+    "actual native Undo/Redo shortcuts are expanded",
+    "all three real heading options and Agreement content label remain accessible",
+    "actual Sales library/editor/native SDK mounting",
+    "required title focus",
+    "exact native wording/options receipt and original version navigation",
+    "actual client is required, never invented",
+    "same original template ID/body into original agreement writer",
+    "same agreement reload and source-record navigation",
+    "new retained version preserves old original words and source identity",
+    "earlier source remains inspectable and inactive use withheld",
+    "readonly unknown proposal and original request read",
+    "explicit same-UUID same-payload retry",
+    "interrupted recovery releases read lock and discards stale authorized response",
+    "lost acknowledgment recovers original stored words without another create",
+    "stale source remains readonly and cannot overwrite",
+    "actual canonical leave dialog preserves or discards scoped proposal",
+    "unknown authority hides/restores RAM, conclusive native refusal retires private words",
+    "native refusal releases the pending-save lock and preserves a usable canonical exit",
+    "business switch retires selection and blocks foreign request read"
+  ],
+  "errors": [],
+  "blocked": [
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com"
+  ],
+  "canonicalRecords": 1,
+  "authenticated": "UNVERIFIED",
+  "providers": "NOT_EXERCISED"
+}

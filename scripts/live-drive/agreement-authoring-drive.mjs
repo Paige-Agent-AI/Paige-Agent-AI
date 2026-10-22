@@ -24,6 +24,7 @@ let documentFixtureMode='normal';
 const pdfIntakeProof = process.argv.includes('--pdf-intake');
 const uploadProof = process.argv.includes('--upload-intent') || pdfIntakeProof;
 const sources = ['src/solo/sales-ops.tsx','src/solo/SalesWorkspace.tsx','src/solo/sales-dialog.tsx','src/hooks/useBeforeUnloadGuard.ts','src/solo/sales/AgreementPreparationWorkspace.tsx','src/solo/sales/AgreementBodyEditor.tsx','src/solo/sales/agreementPreparationApi.ts','src/solo/sales/agreementVocabulary.ts','src/solo/sales/agreement-body-editor.css','src/solo/sales/agreement-preparation.css','package.json','package-lock.json',...['agreement-authoring.tsx','agreement-authoring-ports.ts','agreement-authoring-client.ts','vite.agreement-authoring.config.ts','agreement-authoring.html'].map(file=>'scripts/live-drive/harness/sales-mount/'+file)];
+sources.push('src/solo/sales/sales-department.css');
 const hashes = async () => Object.fromEntries(await Promise.all(sources.map(async file => [file,createHash('sha256').update((await fs.readFile(path.join(root,file),'utf8')).replaceAll('\r\n','\n')).digest('hex')])));
 sources.push('scripts/live-drive/agreement-authoring-drive.mjs');
 if(historyProof)sources.push('src/solo/sales/AgreementWordingHistory.tsx','src/solo/sales/agreementRevisionApi.ts');

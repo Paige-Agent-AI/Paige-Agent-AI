@@ -36,6 +36,16 @@ no new navigation or mobile shell. Add actual narrow row-height/selection/route
 checks to this same source drive before correcting the omission, then confirm
 native document preparation still uses that single host behavior.
 
+Final composed-source template/editor20/19/26, mounted20/14/34, original
+fields20/11/31 and intake20/10/22 PASS/zero errors/all113 pins exact. Actual native
+heading menu and320 dark compact template frame inspected. Six-file design0
+blocking/18 incumbent advisories, lint0/one incumbent warning. Final1027 cases/
+66 suites PASS after one unchanged5s signed-copy refusal case passed isolated98ms
+and in the full unchanged quiet rerun. Initial missing local dependency/MSYS and
+selector setup attempts are not causal/product/customer evidence. Type baseline
+remains untouched; final ratchet10/current6/no new errors and gold0 PASS; review/required CI/prerequisite release/readback
+and actual role/cohort/device/provider/whole12/founder acceptance remain separate.
+
 ## October22 required database proof — pre-edit runner correction
 
 Actual exact-head database jobs fail before native tests when the existing GHCR

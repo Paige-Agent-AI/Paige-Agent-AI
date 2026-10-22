@@ -1,3 +1,31 @@
+## EXP04 original editor interactions — October22 local follow-through
+
+Actual ordinary-owner inspection exposed unexpanded native shortcut/heading
+labels. Real browser assertions reproduced them, then the original menu Escape
+closed the whole empty editor. Four causal popup/handled/composition guard REDs
+are repaired in the SAME Sales listener; native later Escape/beforeunload remain.
+The library's actual interpolation values preserve Agreement content and exact
+canonical wording; split/join retains the existing TypeScript target. Native
+template390 geometry also reproduced a129px stacked row. Move the SAME compact
+row to its original Sales stylesheet and let the SAME host reveal its selected
+agreement/template/request destination; document result focus is preserved.
+
+Actual-source template/editor20/19/26, mounted preparation20/14/34, original
+fields20/11/31 and intake20/10/22 PASS/zero page errors/all113 pins exact. Native
+heading choices and320 dark compact template frame inspected. Six-file design0
+blocking/18 existing paper and Sales type/radius advisories, not globally clean.
+Earlier69 controller/SDK/guard cases and final1027 regression/66 suites PASS. One
+unchanged5s signed-copy refusal case timed out, then passed isolated98ms and in
+the complete unchanged quiet1027 rerun. Type baseline10/current6/no new errors,
+lint0/one incumbent warning and gold0 PASS; final review/CI remain in progress.
+No new user/tenant/provider/words/signature/payment act.
+
+LOCAL source only, not deployed or customer accepted. Original2599 native30/API
+and2604 mounted source must first satisfy their own exact-head release/readback.
+This correction changes no native agreement, permission, token/Portal, approval,
+Comms, financial or orchestration engine. Whole O1–O12 and role/cohort/provider/
+founder acceptance remain mandatory. No agent assigned or capability promoted.
+
 ## EXP04 original mounted document preparation — October22 local source
 
 Original Sales agreement now mounts the actual captured-session owner SDK, exact

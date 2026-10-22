@@ -1,6 +1,7 @@
 import { useCallback, useContext, useLayoutEffect, useRef, useState } from "react";
-import { UNSAFE_NavigationContext, useLocation, useNavigate, useNavigationType } from "react-router-dom";
+import { UNSAFE_NavigationContext, useLocation, useNavigate, useNavigationType, useParams } from "react-router-dom";
 import { useSubtabRoute } from "@/lib/routing/useSubtabRoute";
+import { subtabPath } from "@/lib/routing/tierBranches";
 import { OperationsWorkspace } from "./OperationsWorkspace";
 
 /** Mounted only by the canonical Solo route after shared navigation integration. */
@@ -9,6 +10,7 @@ export function OperationsRoute({ openPaige, onNavigationGuardChange }: { openPa
   const [view, setView] = useSubtabRoute("solo", "operations", "overview");
   const location = useLocation();
   const navigate = useNavigate();
+  const { account } = useParams();
   const navigationType = useNavigationType();
   const { navigator } = useContext(UNSAFE_NavigationContext);
   // Preserve the accepted history position (E05), never replace a popped entry.
@@ -54,6 +56,7 @@ export function OperationsRoute({ openPaige, onNavigationGuardChange }: { openPa
     setCurrent({ view, search: location.search, key: location.key });
   }, [location, view, current.view, navigate, index, navigationType]);
   return <>{historyNotice&&<p className="ops-inline-notice" role="status">{historyNotice}</p>}<OperationsWorkspace openPaige={openPaige} view={current.view}
+    onOpenAgreements={account ? () => { if (!notifyGuard.current?.()) navigate(subtabPath("solo", account, "sales", "agreements")); } : undefined}
     weeklySourceSearch={current.search} weeklySourceKey={current.key} onNavigationGuardChange={registerGuard}
     onViewChange={next => { if (!notifyGuard.current?.()) setView(next); }}
     onWeeklySourceDismiss={() => {

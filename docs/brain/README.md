@@ -1,3 +1,15 @@
+## EXP09 CURA private reply recovery and original Progress source — October22 production
+
+Original private Chat recovery#2606/head29e957d41 merged475c6a5ff05d9b6ad1012f183f428b37a2e54f90, exact READY webdpl_6L7HhPEgXRg5Du4skCbpdRGUv8og. All11 required applicable checks/two statuses,136/seven suites and7 actual responsive/focus/Auth-loss component views; final LOWER review5620094635. Public475 was not separately sampled before descendantbf; actual publicbf0b2a48-mvjywo18/customerUpdate:null and all5 served recovery/intent/control/business references verified, receipt6350291708. Original scoped private thread/intent/status/history, explicit check, no automatic retry/model/send or second store.
+
+Original Progress projection prerequisite#2613/headf28510b8 mergedbf0b2a484ea4fb0656212ba4563ed120158b9de1, exact READY webdpl_6VY2Mt3G4aiTw5AptDe6S6aLBLEu. All13 checks/full Preview/two statuses/129 actual native tests; final LOWER review5620122382. Normal migration39845284205 SUCCESS; actual310009 follows290009/300004. Native public0dbf858b415ff74840748199a75ec2af/original ABI/ACL and internal0989fc980b2490ebc308478c557fc111/postgres-only verified; original Knowledge context208b4d1b7a1c58bd489a92daf94d4fa8 unchanged. Receipt6350293448. Fresh Edge508/JWTtrue/Core1de19b80 plus5 original helper hashes unchanged across both releases.
+
+These are bounded production/source increments, not client/model/full Experience acceptance. Native source binding2617 and typed CURA Progress consumer remain separate; seven capabilities Limited, algorithms unchanged, global identity constraint and provider/INT346 gates retained. No founder test requested before the one complete integrated evaluation. Sole Master§4.0 rows record exact releases; this mechanical closeout adds no product or capability promotion.
+
+## EXP09 CURA business request scope — October22 verified release
+
+PR2603/d5b3018eab007f847a880158e9c67b472a8ef2c5 merged9b9663b7754b4bc562aeebc423201f920b8fd362. All11 exact-head checks/full Preview/two statuses green;92 focused/77 original C0b/registry/8 strict CRM bindings PASS; review5617398951 AUTHOR-REVIEW / LOWER ASSURANCE. Original owner Auth-only factory preserved; separate request-local customer caller carries verified bearer and selected business through original native/private-history/Knowledge path. Edge508 ACTIVE/verify_jwt:true exact core1de19b80b5fb4944c8dbb7888fb550f859071259c72fb2b8d8df8421df7853e8; five original helper bodies unchanged. Exact READY web/public9b9663-mvjscyfa/served scope references verified; receipt6346465360. Original adapter metadata, owner execution and INT346 restrictions retained. Source/test/rendered proof is separate from actual owner/client/provider/return/revocation proof. Seven capabilities remain Limited, ALG01/12 bounded PARTIAL and ALG02/04/13 production UNVERIFIED; no founder acceptance.
+
 ## EXP04 original owner document API — October22 local dependent source
 
 Original agreement-document owner door now has bounded draft preparation,

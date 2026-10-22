@@ -48,6 +48,7 @@
 @keyframes sc-spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.sc-spin{animation:none;opacity:.6}}
 
+.sc-business-review .sc-button{min-height:44px;max-width:100%}
 .sc-block{display:flex;flex-direction:column;gap:9px}
 .sc-block-head{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
 .sc-block-head h2{margin:0;font-size:14px;letter-spacing:-.015em}

@@ -1140,6 +1140,10 @@ jobs:
           deno test --allow-read=supabase/functions --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \
             supabase/functions/_shared/crm/client-file-share.test.ts
 
+      - name: E09 original client game-plan draft and saved-receipt proof
+        if: ${{ !cancelled() }}
+        run: node --import ./scripts/knowledge-scope/register.mjs scripts/proof/e09-client-game-plan.mjs
+
       - name: The platform email sender is not an open relay (who may send, and to whom)
         if: ${{ !cancelled() }}
         run: |

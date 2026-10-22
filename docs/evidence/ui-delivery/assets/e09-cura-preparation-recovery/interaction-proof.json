@@ -1,0 +1,18 @@
+{
+  "timeoutProof": {
+    "focus": "Check original status",
+    "sourceLinks": 0,
+    "text": "The earlier result could not be verified here. Nothing was retried."
+  },
+  "reducedProof": {
+    "focus": "Check original status",
+    "overflow": false,
+    "reduced": true
+  },
+  "renderedIncumbentFailure": "Maximum update depth exceeded at existing onPinnedChange during narrow-panel recovery",
+  "repair": "Only notify React when original pin/newer-content state changes; original scroll engine/anchor/storage untouched",
+  "fullShellAuth": "UNVERIFIED",
+  "browser200PercentZoom": "UNVERIFIED",
+  "nativeIphone": "UNVERIFIED",
+  "assistiveTechnology": "UNVERIFIED"
+}

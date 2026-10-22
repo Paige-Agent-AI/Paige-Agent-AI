@@ -56,3 +56,9 @@
 @media(max-width:1100px) { .e04-preparation-layout { grid-template-columns:minmax(0,1fr); } .e04-preparation-context { grid-template-columns:repeat(2,minmax(0,1fr)); } .e04-preparation-context>.e04-preparation-primary { grid-column:1/-1; justify-self:start; } }
 @media(max-width:600px) { .e04-preparation { padding:16px 12px; } .e04-preparation-top { flex-direction:column; gap:12px; } .e04-preparation-status { margin:0; max-width:100%; } .e04-preparation h2 { font-size:21px; } .e04-preparation-form-row,.e04-preparation-context { grid-template-columns:minmax(0,1fr); } .e04-preparation-paper { padding:24px 18px; } .e04-preparation-context-card { padding:18px; } .e04-preparation-message { padding:24px 18px; } .e04-agreement-editor .mdxeditor-toolbar :is(button,[role=combobox]) { min-height:44px; } }
 @media(prefers-reduced-motion:reduce) { .e04-preparation-spinner { animation:none; } }
+.e04-wording-history>h3 { font-size:18px; margin:20px 0 8px; }
+.e04-wording-history>.e04-preparation-note { max-width:70ch; margin-bottom:24px; }
+.e04-wording-picker { display:grid; gap:8px; min-width:0; font-size:13px; }
+.e04-preparation .e04-wording-picker select { min-width:0; width:100%; min-height:44px; border:1px solid var(--pg-line-strong); border-radius:8px; background:var(--pg-surface); color:var(--pg-ink); padding:9px 12px; }
+.e04-wording-picker span { color:var(--pg-ink-2); font-size:12px; }
+@media(max-width:1100px) { .e04-wording-history .e04-preparation-context { order:-1; } }

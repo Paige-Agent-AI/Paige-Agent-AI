@@ -1635,3 +1635,40 @@ reconciled lower frontier. No existing applied migration or protected shared Cha
 C0b, sender, Portal, Operations or financial calculation source is changed.
 All twelve outcomes, complete professional preparation, signed/effective economics,
 authorized provider proof, legitimate role QA and full founder evaluation remain owed.
+
+## October21 — retained-wording owner UI contract
+
+Existing prototype history extensionda94f0b5f selected by this lead under explicit
+owner UX delegation;20 native-shell cases/11 paths before production integration.
+Current read-only page preserves the original agreement and native paper/context
+layout, with a bounded native revision picker and explicit older/latest paging.
+No new modal, scroll runtime or approval. Correction is a later writer integration,
+not a hidden restore button; full O1–O12 remains required.
+
+1. Request: owner inspects exact earlier saved wording under the original agreement.
+2. Entry: Sales Terms & Agreements → original record → Inspect wording history.
+3. Source/Spine: original agreement and native retained revisions; existing agreement
+   declarations remain PARTIAL. Dedicated Chat/Live history is UNAVAILABLE because
+   no registered tool/admitted path is added by this UI increment.
+4. Path: existing author-scoped native history readers, via the original bounded
+   sanitized RPC boundary. Ordinary reads need no Layer C act or new executor.
+5. Authority: original selected tenant/user/author epoch and server role framework;
+   native refusal retires cached current wording, late/unmounted reads are discarded.
+6. Risk: read_only, no MUTATION_VERB or approval/budget grant; no signing/sending,
+   payment, client disclosure, restore or service effect.
+7. Durable identity: original agreement/revision IDs, native body-version/source time,
+   actual retention sequence/time/checksum. No invented Rail/execution receipt.
+8. Readback: strict closed DTOs, exact selected IDs/metadata and bounded decreasing
+   cursor; uploaded reference does not establish document-byte availability.
+9. Recovery: failed/empty/refused states are distinct; explicit re-read, original-record
+   return/focus and scope retirement. No automatic mutation or blind replay.
+10. Visible proof: source20 viewport/theme cases/25 paths, native picker/page cursor,
+    actual earlier wording, normal original-record navigation, failure/retry and
+    corrected focus. Existing sales.department Binding Ledger remains PROOF_OWED.
+
+No provider is used or activated; existing managed-mail/Stripe/Portal paths remain
+unchanged. Native producer#2521/130000 must release and read back before this UI
+release. Real ordinary owner/staff/linked-client/recipient, two eligible SOLO cohorts,
+provider/actual-document/200percent/AT and final integrated founder acceptance remain
+separate. ALG01 has bounded native recovery/deduplication evidence only; official
+ALG01/02/12/13 statuses, Mind/Memory and capability catalogue readiness are unchanged.

@@ -150,7 +150,8 @@ it("shows the unavailable and multiple-business states instead of a list", async
   act(() => root.unmount()); root = createRoot(host);
   f.state = { ...f.state, unavailable: false, multipleBusinesses: true };
   await render();
-  expect(text()).toContain("Payments for more than one business isn't available yet");
+  expect(text()).toContain("Choose a business to view Payments");
+  expect(Array.from(host.querySelectorAll("a")).find(a=>a.textContent === "Choose business")?.getAttribute("href")).toBe("/app?chooseBusiness=1");
   expect(host.querySelector("[data-testid=invoice-row]")).toBeNull();
 });
 

@@ -36,8 +36,8 @@ import { day, on, outcomeText, preferenceCards, type PreferenceCard as Card } fr
 
 const SWITCH_TARGET = "relative after:absolute after:inset-x-0 after:-inset-y-[12px] after:content-['']";
 
-export function ClientPreferences({ actorId, onCommitted }: { actorId: string; onCommitted?: (key: PreferenceKey) => void }) {
-  const prefs = useClientPortalPreferences({ actorId, onCommitted });
+export function ClientPreferences({ actorId, tenantId, clientId, onCommitted }: { actorId: string; tenantId?: string; clientId?: string; onCommitted?: (key: PreferenceKey) => void }) {
+  const prefs = useClientPortalPreferences({ actorId, tenantId, clientId, onCommitted });
   const location = useLocation();
   const section = useRef<HTMLElement | null>(null);
   const business = prefs.preferences?.business_name?.trim() || "your business";
@@ -107,11 +107,12 @@ export function ClientPreferences({ actorId, onCommitted }: { actorId: string; o
 function PhaseMessage({ phase, onRetry }: { phase: string; onRetry: () => void }) {
   const text = phase === "signed_out" ? "Sign in with your invited account to see your preferences."
     : phase === "unavailable" ? "Your preferences aren't available for this business."
-      : phase === "multipleBusinesses" ? "Your account is linked to more than one business, so preferences can't be changed here yet."
+      : phase === "multipleBusinesses" ? "Your account is linked to more than one business. Choose the business whose preferences you want to open."
         : "Your preferences couldn't be loaded. Check your connection and try again.";
   return (
     <div className="space-y-4 py-1">
       <p role={phase === "error" ? "alert" : "status"} className="max-w-prose text-sm">{text}</p>
+      {phase === "multipleBusinesses" && <Link to="/app?chooseBusiness=1" className="inline-flex min-h-[44px] items-center rounded-md text-sm underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Choose a business</Link>}
       {phase === "error" && <Button variant="outline" className="min-h-[44px]" onClick={onRetry}>Try again</Button>}
     </div>
   );

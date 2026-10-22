@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useClientPortalRead } from "./useClientPortalRead";
+import {useShellCustomerIdentity} from "@/lib/portal/customerIdentity";
 
 /**
  * The tenant brand for the signed-in customer's client portal (§6). Resolves the
@@ -47,7 +48,11 @@ const MULTIPLE: BrandRead = { brand: null, multipleBusinesses: true };
  * tenant brand, then fall back to the platform brand only once resolved-empty.
  */
 export function useClientPortalBrandState(): ClientPortalBrandState {
-  const { data, loading, error } = useClientPortalRead(readBrand, NO_BRAND);
+  const identity = useShellCustomerIdentity();
+  const useFrame = identity !== null && identity.viewer !== "staff";
+  const { data, loading, error } = useClientPortalRead(readBrand, NO_BRAND, !useFrame);
+  if (useFrame) return {brand: identity.frame?.brand ?? null, loading: identity.checking || identity.phase === "loading",
+    error: identity.phase === "error" || identity.phase === "unavailable", multipleBusinesses: identity.phase === "choose-business"};
   return { brand: data.brand, loading, error, multipleBusinesses: data.multipleBusinesses };
 }
 

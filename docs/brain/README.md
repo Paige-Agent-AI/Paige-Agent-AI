@@ -1,3 +1,17 @@
+## EXP09 scoped relationship and CURA history recovery — production closeout,2026-10-22
+
+Seven bounded increments2542/2547/2551/2555/2548/2556/2558 have exact reviewed head, main/tree, CI/review and verified normal production web/native identities in the sole Master4.0 Shipped Delivery Log, with receipts6332943907/6333043227/6333044066/6333245798/6333534220/6333534905/6334013110. All reviews are accurately AUTHOR-REVIEW / LOWER ASSURANCE.
+
+Original native request scope210109 and notice binding210209 deployed via39723944701; exact parser/resolver/access/frame/choice source and ACL metadata match. Original browser frame/choice reuse verified native relationships, actual Auth rechecks and cancellation;182 choice tests and bounded original-component rendered evidence have explicit synthetic/iframe limits. They grant no membership and do not bypass the original global linked-user/acceptance restriction.
+
+Private CURA history binds all original SDK reads to captured business/actor and original canonical thread/turn records.62 native role/isolation assertions and83 browser/frame checks passed; future-shape fixture restores original index and rolls back. The owner persona reader now follows the original staff-workspace resolver; normal39728035946 persisted210309 and exact source/ACL metadata readback matches.22 authority negatives/positives passed.
+
+Original customer history recovery has cancellation,20-second deadline and explicit Retry, preserving same-business drafts, focusing composer after recovery and withholding unavailable history/false-ready states.180 focused tests and final overlap confirmations PASS. Four original-component responsive/dark/error/recovered-draft images and keyboard behavior were inspected; no Safari/device/400-percent/screen-reader or signed-in production journey certification is inferred. READY web/public exact or reviewed-descendant builds and customerUpdate=null are recorded for each. Own Edge N/A.
+
+Original Messages/Support2558 is now deployed as62d615ac6deb10bacd80aa1129a23e4cc7e1bde8 after11 checks/two statuses and full Preview PASS;95 focused and native72 controls passed. Original Conversations source/ACL unchanged; READY web/public build and served original Messages asset/recovery markers independently read back. Original actor/business capture, stale/foreign refusal and unknown-send reconciliation add no inbox/sender. No actual customer/provider message was sent. Progress2562 is a separate unmerged consumer slice at this checkpoint. Remaining selected-domain/Edge bindings, safe global-identity/recipient acceptance, actual owner/client publication/retrieval and the joined seven-pillar returning/revoked/multiple-business journey remain UNVERIFIED. No provider send/payment/publication/identity grant or INT346 bypass occurred.
+
+Original governed invitation/Communications, Knowledge/Teach, private CURA/business Conversations and domain services stay authoritative. No CURA-specific Layer C adapter is production-proven; no duplicate orchestration/Team Hub is built. Seven catalogue entries remain Limited; ALG01/12 bounded PARTIAL and ALG02/04/13 actual runtime UNVERIFIED. Functional/source/readback, visual quality, experiential acceptance and final founder evaluation remain separate. One final integrated founder evaluation is not yet requested. This factual closeout changes no product, activation or customer release authority.
+
 ## EXP09 relationship reads and Payments — bounded production closeout,2026-10-22
 
 PR2538 merged `5df82581f98d84328729d0e8ec26cbe844781d98` after all13 exact-head
@@ -1371,3 +1385,10 @@ All163 integrated tests pass; actual SDK held-response completion plus render-fr
 barrier proves stale recovery cannot publish before a new explicit read. Final
 20-frame/17-path proof pins all25 owning files exactly. This is a functional
 recovery repair, not further visual polishing or a provider/acceptance claim.
+
+### EXP04 C7 commercial presentation — October22 development, not released
+Selective native/pure formatter reuse from2192/179e52 retains exact original agreement/terms/invoice and explicit service facts, without replacing signed history or original renderer. New native strict-type negatives reproduce historical coercion; repaired54/replay2/two actual sessions/one observed wait and11 Deno tests/26 steps PASS. Native230004 is UNAPPLIED, source initially dormant/unmounted; no signing/send/payment/provider/Chat activation, accepted legal wording or effective terms claimed. Original Collections/Kit operation/approval/Rail integration and hosted exact document readback remain owed. All twelve outcomes and actual customer/founder acceptance stay incomplete. See [native evidence](../evidence/ui-delivery/e04-commercial-presentation-native.md).
+
+
+### EXP04 template current-main composition — October22 source
+Template workspace now composes actual main1e1073133, retaining both template and C7 contracts. Native template#2545/220004 is actually production-applied with exact catalog/web readback; earlier unapplied notes above are historical. Dormant commercial#2550 is merged but230004 rolled back at the original lock limit and remains NOT_APPLIED. No new template UI source is changed by this documentation composition; all25 rendered pins are rechecked. Fresh exact-head CI/review/release and actual owner/staff/client/full Experience acceptance remain required; no Chat/provider/signing/payment or completed legal review claimed.

@@ -162,6 +162,7 @@ it("refreshes on focus, on becoming visible, and on the poll", async () => {
 it("drops everything and re-reads with no pinned tenant when the signed-in person changes", async () => {
   await mount();
   const epoch = state.scopeEpoch;
+  f.getUser.mockResolvedValue({ data: { user: { id: "u2" } }, error: null });
   f.rpc.mockResolvedValue(ok(payload([item("j1")], { tenant_id: T2 })));
   await act(async () => { f.authListener!("SIGNED_IN", { user: { id: "u2" } }); });
   await flush();

@@ -1,3 +1,18 @@
+## EXP04 October22 current release reconciliation
+
+Mounted preparation consumes reviewed main13d267 and the released2607 manifest
+pins for both install lanes. Original owner API2599/429 Edge37/source parity and
+native300004 catalog parity are verified; normal39839940779/120038195038 passes
+unchanged main with remote up to date/persistence and db-live7a874. Initial native
+application provenance remains UNVERIFIED; six prior failures remain failures.
+Superseded2610 is CLOSED UNMERGED; no recorded migration rewrite. Only its benign
+sanitizer regression is reused. Fresh84 selected cases/six suites plus three
+actual-source drives20/14/33,20/11/30,20/10/21 pass; all84 pins reverified after
+current main composition, desktop/320 document views inspected. Older source
+proof below is historical, not added to fresh coverage. Own exact-head gates/web
+and actual ordinary roles/provider/full twelve-outcome/founder acceptance remain
+owed. No legal words/counsel gate, competing architecture or Chat activation.
+
 ## EXP04 original editor interactions — October22 local follow-through
 
 Actual ordinary-owner inspection exposed unexpanded native shortcut/heading

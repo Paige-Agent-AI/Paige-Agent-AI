@@ -1,16 +1,22 @@
 # EXP04 original Sales document-preparation consumer
 
-October22 main composition57f4b6f8502abd001560249acfa56072cd623281 preserves
-all owning UI/controller/SDK/harness bytes and incoming E09/E05 source verbatim.
-Fresh142 integration cases/six suites and current8UI/one-record evidence guard
-PASS. The first hosted composition check used the prior API baseae444, including
-already merged E09/Operations UI, and failed its Solo-record attestation check;
-it is retained as FAILED, not waived. This factual follow-up is evaluated against
-the actual main429 base; no shared guard or unrelated E09 evidence is modified.
-API2599 is merged429 with all13 required checks and normal Preview SUCCESS,
-actual Edge37/16-file source parity and public429...-mvjte1ly web readback.
-Native300004 remains a release hold after four original5s55P03 lock rollbacks;
-no table/session/timeout/history mutation or hosted acceptance is inferred.
+October22 final source composition55cb5fcd41a331397b8ac039d7e1ae6d1253776e
+preserves released main13d26748311a35a6d2ae4b65c7d67116fa2aa6fa, including
+security2607's exact npm/Bun manifest pins. All owning UI/controller/SDK/harness
+bytes remain identical to reviewed4b; only the benign sanitizer regression is
+reused from superseded2610. Fresh84 focused cases/six suites PASS, separate from
+prior142 composed cases and earlier995 full cases before the two response repairs.
+Fresh actual-source mounted20/14/33, field20/11/30 and intake20/10/21 PASS with
+zero page errors; all84 pins independently reverified after main composition.
+Desktop and320 dark document views inspected. Auth/API/RPC remain synthetic.
+
+API2599/429 Edge37 has16-file deployed-source parity. Root native300004 now has
+all8 original expected bodies/ABI/owner/config/ACL/private RLS table/4triggers/
+5indexes and unchanged SAVE1bd. Canonical normal unchanged-main39839940779 /
+120038195038 SUCCESS verifies remote up to date/persistence and db-live7a874.
+The initial apply path stays UNVERIFIED and all six failed attempts remain FAILED.
+Original recorded migration is unchanged;2610 was closed SUPERSEDED UNMERGED.
+Own final exact-head review/CI/web/ordinary-role acceptance remain release steps.
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: original exp04-get-paid-deliver-journey.md owner API/consumer pre-edit contract; all twelve outcomes remain mandatory.
@@ -19,7 +25,7 @@ MATERIAL_FLOW_CHANGE: YES: the existing owner can prepare/read the exact unsigne
 FLOW_PROTOTYPE: PASS: original complete Agreements prototype275be12415239d4ecdb66bec0894146ec9fe5c64 and October21 owner preparation/visual-quality delegation; routine adoption by the sole original lead, not founder acceptance.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: authorized business agreement author prepares and inspects an exact original unsigned signing document and its assigned fields; no signature, send or financial execution.
 VISUAL_DIRECTION: PASS: existing SOLO Sales typography, native private paper/PDF, contextual field inspector, purposeful compact unsigned-preparation header and actual version/receipt; original shell owns vertical scrolling.
-AUTOMATED_EVIDENCE: PASS:995 regression cases/65 suites before the final two late-response repairs; current136 integration cases/six suites, including35 actual SDK-boundary/fifteen controller/two parent-navigation cases. Both late-response cases reproduced their actual stale-byte/selection failures before repair. Actual WebCrypto/PDF bytes/native validator; synthetic Auth/transport. One unchanged5s completed-agreement case timed out during concurrent builds, then passed isolated and in the complete995-case rerun; no assertion/timeout change. The original field-browser negative subsequently caught the optional saved-SHA label; its unchanged final20/11 proof passes after correction.
+AUTOMATED_EVIDENCE: PASS:995 regression cases/65 suites before the final two late-response repairs; prior142 composed integration cases/six suites; refreshed84 selected cases/six suites include the actual SDK/controller/navigation/model/leave-guard and two sanitizer controls. These are separate invocations, not summed coverage. Both late-response cases reproduced their actual stale-byte/selection failures before repair. Actual WebCrypto/PDF bytes/native validator; synthetic Auth/transport. One unchanged5s completed-agreement case timed out during concurrent builds, then passed isolated and in the complete995-case rerun; no assertion/timeout change. The original field-browser negative subsequently caught the optional saved-SHA label; its unchanged final20/11 proof passes after correction.
 STATIC_EVIDENCE: PASS: required native rotation follows real descriptor validation; type ratchet baseline10/current6/no new errors, changed-source ESLint0/two incumbent warnings, gold0. Seven-file design detector0 blocking/four intentional paper/overlay advisories. Exact-head CI/review still required.
 RENDERED_EVIDENCE: PASS: actual composed source20 viewport/theme/panel cases/14 paths/zero errors/33 owning pins, native field20/11/zero/30 and neighboring intake20/10/zero/21. All84 pin comparisons reverified; desktop paper,320 dark100% bounded pan and lost-response views inspected. Auth/API/RPC synthetic, no hosted persistence/role acceptance.
 BEHAVIORAL_EVIDENCE: PASS: original route/ONE leave guard, before-dispatch opaque checkpoint, verified PDF bytes/canvas, native-point field save, byte-identical same-request retry/reload, paged earlier/current history, corrupt-byte/source/authority refusal and compact mobile selection. Same six destinations/guarded keyboard route, no replacement navigation engine.
@@ -30,7 +36,7 @@ REDUCED_MOTION: PASS: source drive uses reducedMotion:reduce, no new motion; nat
 STATE_COVERAGE: PASS: local first-use/loading/empty/retained/current/earlier/source-changed/commercial-hold/permission/PDF-error/saving/unknown/retry/reload/exit paths implemented. Real hosted coverage separately owed.
 TRUTHFUL_STATE_LABELS: PASS: unsigned preparation, selected/earlier and historical original receipt are distinct. No preparation implies approval, send, delivery, consent, signature, payment or completed services. Current signer names never substitute for unmatched original identities.
 SOLO_UI: YES: original shared Sales workspace for every eligible existing/future SOLO business, original actual session/business/admin/native authority; no account-specific feature branch or provisioning change.
-UNVERIFIED: final exact-head review/required CI/Preview and ordered prerequisite2599/native30/Edge plus own web release/readback; hosted actual roles/native recovery/tenant cohorts/provider behavior, assistive technology/real device/browser zoom; canonical commercial terms/approval/signing/Comms/finance/delivery and all O1–O12/founder acceptance. Missing native request after reload stays unconfirmed, never rollback or a reconstructed original command.
+UNVERIFIED: final exact-head review/required CI/Preview and own web release/readback; prerequisite2599/native30/Edge are verified separately, original native apply provenance remains unknown; hosted actual roles/native recovery/tenant cohorts/provider behavior, assistive technology/real device/browser zoom; canonical commercial terms/approval/signing/Comms/finance/delivery and all O1–O12/founder acceptance. Missing native request after reload stays unconfirmed, never rollback or a reconstructed original command.
 
 SOLO_1536X770_PAIGE_CLOSED: PASS: assets/e04-mounted-document-preparation/1536-770-light-closed.png/dark equivalent, actual PDF/field save/original context.
 SOLO_1536X770_PAIGE_OPEN: PASS:1536-770-light-open.png/dark equivalent, original PAIGE panel/no Chat transport.
@@ -73,6 +79,6 @@ RELEASE_RECOVERY: position=reviewed forward UI correction using original records
 
 Actual REDs repaired: oversized error cleanup wait, lost unsaved-field guard during access read, missing current-document reload checkpoint and unknown work reopening after explicit leave. The native narrow trace exposed focus advancing after refused navigation; the same guard now handles the original Sales navigation request before router/focus advancement. Actual pointer-focus unit/browser cases confirm verified-save result focus. The original readonly field assertion exposed a false saved label when both optional references were absent; corrected without changing that assertion. Final20/14/33, field20/11/30 and intake20/10/21 PASS/zero errors, all84 pins exact. No further polish round required; source/hosted acceptance remain distinct.
 
-Exact1af author review5617064903 found two additional same-instance response races: an older PDF retry could replace a newly retained preparation's bytes, and an older history read could republish its former selected label. Both actual failures were reproduced after awaiting the real native proposal/write inside React act; earlier setup failures are INVALID as causal proof. A per-file request and preparation identity fence now retires the old PDF response; starting a save retires the pending history read. Current15 controller/136 integration cases PASS; fresh unchanged mounted20/14/33 and all84 source pins PASS after repair. Earlier995-case full coverage precedes these two repairs, not a claimed997-case rerun. These fixes do not establish hosted persistence or authenticated customer acceptance.
+Exact1af author review5617064903 found two additional same-instance response races: an older PDF retry could replace a newly retained preparation's bytes, and an older history read could republish its former selected label. Both actual failures were reproduced after awaiting the real native proposal/write inside React act; earlier setup failures are INVALID as causal proof. A per-file request and preparation identity fence now retires the old PDF response; starting a save retires the pending history read. Then-current15 controller/136 integration cases PASS; fresh unchanged mounted20/14/33 and all84 source pins PASS after repair. Earlier995-case full coverage precedes these two repairs, not a claimed997-case rerun. These fixes do not establish hosted persistence or authenticated customer acceptance.
 
 The original native helper deliberately freezes its input proposal. Its unit case was corrected to supply a mutable caller copy; this was not a runtime defect. Fixture top-level-await/invalid synthetic encoding and one edit quoting error failed before browser operation and are excluded from PASS. No native SQL/Storage/Auth customer, signature/provider, new QA identity or ANT52 acceptance evidence was created.

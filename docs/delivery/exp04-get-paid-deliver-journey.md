@@ -1,5 +1,23 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
+## October22 current preparation release and security composition
+
+Original native300004 is now recorded with all8 expected bodies/ABI/ACL, private
+RLS table/four triggers/five indexes and unchanged SAVE. Normal canonical
+39839940779/deploy120038195038 SUCCESS confirms unchanged reviewed main7a874 is
+up to date, original persistence guard passes and db-live7a874. Original apply
+provenance remains UNVERIFIED; all six prior timeout failures remain FAILED.
+Do not rewrite an applied migration:2610 is superseded unmerged, historical proof
+and reviews preserved. Reuse only its benign sanitizer regression in2604, which
+composes reviewed main13d267 including released shared2607's BOTH install pins.
+All owning UI/controller/SDK/harness bytes remain unchanged from reviewed4b;
+fresh84 selected cases/six suites and actual mounted20/14/33,field20/11/30,
+intake20/10/21 PASS/zero errors/all84 pins exact. Final exact-head review/CI and
+own web release/readback precede actual ordinary-role checks; no source fixture
+establishes authenticated acceptance. Editor2605, commercial exact approval,
+PRE-1, stable upload recovery and all12 outcomes remain mandatory. Historical
+runner attempts and earlier source-stage plans below retain their dated limits.
+
 ## October22 original wording-editor labels — pre-edit correction
 
 Actual authorized ordinary-owner inspection of the deployed template editor found

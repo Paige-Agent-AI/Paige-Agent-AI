@@ -43,6 +43,29 @@ separate dormant prerequisite, not imported by this correction. Optional templat
 jurisdiction/wording-review/reviewer routing supplies no agreement words or legal
 sufficiency and does not impose an infrastructure counsel gate.
 
+## October22 actual template consumer — bounded integration contract
+
+Before mounting: preserve selected native-shell prototype275be1241 and native
+foundation#2545. Same original Sales Terms & Agreements query navigation → scoped
+list/read → supplied-wording editor/options → exact UUID native acknowledgment or
+readonly unknown/recovery/conflict → retained version → original real-client
+agreement preparation. REUSE existing rich editor, per-instance Sales exit guard
+from prerequisite#2532, original RPC boundary, native library/source versions and
+agreement CREATE. No private wording browser cache, new ledger/approval/runtime
+or Portal UI. Captured command/source time never silently rebases.
+
+Owner/admin/current actor and original business gates cover every consumer/read;
+unknown role hides RAM, conclusive refusal retires it, async epochs discard late
+results. Native domain writers revalidate authoritative scope. Optional requested
+wording review is source configuration, never completed review or legal sufficiency.
+Active prepared text sources alone hand off into a new agreement; actual client
+is required. A later agreement record links back to its retained source. Native
+manual preparation remains legitimate; template-specific Chat/Live is UNAVAILABLE,
+agreement.* PARTIAL, sales.department PROOF_OWED, no LayerC act/algorithm promotion.
+Actual owning UI/SDK route proof, keyboard/focus/narrow/reload/source guards, exact
+head review/CI/normal release/readback and ordinary-role acceptance remain distinct.
+No sends/signatures/charges/automatic onboarding or business effects from preview.
+
 ## October22 template foundation and consumer checkpoint
 
 LOCAL native original-library version/list/read/actor-bound recovery now passes
@@ -106,6 +129,7 @@ Own unapplied successor is forward190000 after yielding provisional180000 to
 Portal request-scope coordination; actual E02 170000 and E04 160000 are released.
 Re-ground the actual frontier and current reservations before release. No other agent is
 assigned and no shared Chat/C0b/Portal/Operations file is leased here.
+
 
 ## October21 original agreement correction — integration checkpoint
 
@@ -1871,8 +1895,14 @@ separate. ALG01 has bounded native recovery/deduplication evidence only; officia
 ALG01/02/12/13 statuses, Mind/Memory and capability catalogue readiness are unchanged.
 
 
+October22 template consumer composition checkpoint: existing#2549 now contains reviewed nativeb346fe6d0/220004 and correctionee745f01 plus released main6e9380cd without changing any of25 rendered owning source files. Earlier190000/1509 references are historical proposals; native migration remains production-unapplied pending full CI/release. Both independent Shipped Log blocks preserved, no shared UI source or another agent assigned. Native Preview was safely rebuilt only within the verified empty original development PR integration; actual production/ordinary-role/provider/full Experience acceptance remains owed.
+
 ## October22 retained document retrieval — local integrity repair
 Actual-source owner/token/Portal positives then3 corrupted-byte RED cases establish a bounded original download defect. Repair verifies actual returned bytes with the existing retained-PDF hash helper and original selected record. Portal-first/native relationship function unchanged; owner/token authorization body retains its original7148c40a pin through an explicit checksum-only inverse, with three real guard mutations still detected.45 handler/56 Deno/actual Edge type checks PASS; final root type ratchet PASS baseline10/current6 with no baseline or signing-guard change. No URL/key substitution, status/signature/audit rewrite, fabricated viewed event or private error leakage. Original unavailable/retry UI is unchanged. [Evidence and full orchestration contract](../evidence/ui-delivery/e04-agreement-document-integrity.md). All12 remain mandatory; source proof is not actual customer/provider/founder acceptance.
+
+October22 release-state reconciliation: commercial#2550/230004 is now production-source verified (receipt6334959569); earlier failed/unapplied entries are dated history. Signer prerequisite#2554/605a8c4/240004 is merged and actual routine metadata matches f380cfa97f14e29c8b88721a76b9db4e; final normal-job/web receipt remains pending. Template UI still uses original220004, with no new signing, payment, provider or Chat effect. This composition preserves all prior template and signer sections; fresh exact-head CI/review/readback and customer acceptance remain owed.
+
+October22 current native prerequisites: template220004, commercial230004, signer240004, checked250004 and reader260004 are production-source verified. Actual main172013d896d78178473eaa1e2946e3f27558944b and all E09 Actions/Sessions source are retained; receipts6336226483/6336227514/6336228732 distinguish actual document35/six-file/JWT readback, five checked writer definitions and original readerc53a216. Earlier pending notes are dated history. This own template UI source is unchanged; its new composed head requires fresh exact-head CI/review/web readback and actual ordinary-role/customer acceptance. All12/full founder evaluation remain incomplete.
 
 ## October22 C7 original commercial-presentation reconciliation
 
@@ -1890,6 +1920,9 @@ This same EXP04 lead selectively reuses#2192 exact179e52; no retired agent or wh
 10. Visible result/Binding Ledger35: no new mount or status promotion. Following original Sales preparation/inspection and authorized E09 signing must show the source-backed reviewed document/receipt; actual customer traversal remains owed.
 
 Local54 native checks/replay2/two concurrent sessions/one observed wait and11 Deno tests/26 nested steps pass. Sequential exact-head review, normal hosted CI/Preview, deployment/readback and owner/staff/client/provider QA remain separately required. All O1–O12, full professional agreement fields/signing/effective obligations/finance/delivery and one complete founder evaluation remain mandatory and incomplete. Official ALG01P1/acceptance owed, ALG02UNVERIFIED, ALG12PARTIAL, ALG13UNVERIFIED are unchanged. [Bounded evidence](../evidence/ui-delivery/e04-commercial-presentation-native.md).
+
+
+October22 current template composition: native#2545/220004 is RELEASED SOURCE VERIFIED, not the historical unapplied state. Source main1e1073133 and both exact template/C7 sections preserved; own template source unchanged and25 rendered source hashes rechecked. Dormant commercial#2550 migration230004 rolled back safely at the original5s relation-lock limit and is NOT_APPLIED; template UI uses already-applied220004 and no C7 action. This new head still requires fresh CI/review/release/readback; no earlier green substitutes, no actual customer/full Experience acceptance implied.
 
 ## October22 original upload intent and uncertain result
 

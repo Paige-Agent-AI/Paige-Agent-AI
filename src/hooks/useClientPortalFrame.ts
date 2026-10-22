@@ -155,6 +155,8 @@ const SharedFrame = createContext<{actorId: string; value: FrameValue} | null>(n
  * home and its chat do not each re-run the frame and access calls on every focus.
  */
 export const ClientPortalFrameProvider = SharedFrame.Provider;
+/** Read the existing gate result only; never starts another frame reader. */
+export function useExistingClientPortalFrame() {return useContext(SharedFrame);}
 /**
  * The gate's reading when it is for this same person and nothing narrower is asked; otherwise this
  * component's own reader (staff viewing as a client, a route that requires a customer, no gate).

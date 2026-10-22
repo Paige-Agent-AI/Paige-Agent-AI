@@ -50,6 +50,7 @@ import { deriveSalesCommand } from "./sales/deriveSalesCommand";
 import { deriveScenario } from "./sales/salesScenario";
 import { agreementPdfIntakeProblem } from "./sales/agreementPdfIntake";
 const AgreementPreparationWorkspace = React.lazy(() => import("./sales/AgreementPreparationWorkspace").then(module => ({ default: module.AgreementPreparationWorkspace })));
+const AgreementTemplateWorkspace = React.lazy(() => import("./sales/AgreementTemplateWorkspace").then(module => ({ default: module.AgreementTemplateWorkspace })));
 
 /**
  * The five shapes a Solo business can sell on. Deliberately not narrower: the owner's instruction
@@ -1710,6 +1711,33 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
   const selectedAgreement = new URLSearchParams(location.search).get("agreement");
   const agreementRequest = new URLSearchParams(location.search).get("agreement_request");
   const agreementBusiness = new URLSearchParams(location.search).get("agreement_business");
+  const templateSelection = new URLSearchParams(location.search).get("agreement_templates");
+  const templateRequest = new URLSearchParams(location.search).get("template_request");
+  const templateBusiness = new URLSearchParams(location.search).get("template_business");
+  const templateSource = new URLSearchParams(location.search).get("template_source");
+  const agreementTemplateVersion = new URLSearchParams(location.search).get("agreement_template");
+  const freshTemplateRequests = React.useRef(new Set());
+  const clearTemplateNavigation = (query) => { for (const key of ["agreement_templates", "template_request", "template_business", "template_source"]) query.delete(key); };
+  const openTemplateVersion = (id) => {
+    const query = new URLSearchParams(location.search); clearTemplateNavigation(query);
+    for (const key of ["agreement", "agreement_request", "agreement_business", "agreement_template"]) query.delete(key);
+    query.set("agreement_templates", id);
+    navigate({ pathname: location.pathname, search: `?${query.toString()}`, hash: location.hash }, { replace: templateSelection === "new" });
+  };
+  const closeTemplateWorkspace = () => {
+    const query = new URLSearchParams(location.search); clearTemplateNavigation(query);
+    freshTemplateRequests.current.delete(templateRequest);
+    navigate({ pathname: location.pathname, search: query.toString() ? `?${query.toString()}` : "", hash: location.hash });
+  };
+  const startTemplateVersion = (sourceId) => {
+    if (!canStartAgreement) return;
+    const request = crypto.randomUUID(); freshTemplateRequests.current.add(request);
+    const query = new URLSearchParams(location.search); clearTemplateNavigation(query);
+    for (const key of ["agreement", "agreement_request", "agreement_business", "agreement_template"]) query.delete(key);
+    query.set("agreement_templates", "new"); query.set("template_request", request); query.set("template_business", signings.tenantId);
+    if (sourceId) query.set("template_source", sourceId);
+    navigate({ pathname: location.pathname, search: `?${query.toString()}`, hash: location.hash });
+  };
   const canStartAgreement = Boolean(signings.tenantId && signings.phase === "ready" && signings.canManage && !signings.authorityUnknown && agreements.tenantId === signings.tenantId);
   // Only ephemeral entry metadata; private agreement wording stays in the author
   // component until its native canonical save. The opaque request URL survives reload.
@@ -1717,23 +1745,26 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
   const openAgreementDocument = (id) => {
     setDetail(null);
     const query = new URLSearchParams(location.search);
+    clearTemplateNavigation(query); query.delete("agreement_template");
     query.set("agreement", id); query.delete("agreement_request"); query.delete("agreement_business");
     signings.retry();
     navigate({ pathname: location.pathname, search: `?${query.toString()}`, hash: location.hash }, { replace: selectedAgreement === "new" });
   };
-  const startAgreementDocument = () => {
+  const startAgreementDocument = (templateVersionId = null) => {
     if (!canStartAgreement) return;
     const request = crypto.randomUUID();
     freshAgreementRequests.current.add(request);
     setDetail(null); setEditor(null); setEditing(null);
     const query = new URLSearchParams(location.search);
+    clearTemplateNavigation(query); query.delete("agreement_template");
+    if (templateVersionId) query.set("agreement_template", templateVersionId);
     query.set("agreement", "new"); query.set("agreement_request", request); query.set("agreement_business", signings.tenantId);
     navigate({ pathname: location.pathname, search: `?${query.toString()}`, hash: location.hash });
   };
   const closeAgreementDocument = () => {
     const query = new URLSearchParams(location.search);
     freshAgreementRequests.current.delete(agreementRequest);
-    query.delete("agreement"); query.delete("agreement_request"); query.delete("agreement_business");
+    query.delete("agreement"); query.delete("agreement_request"); query.delete("agreement_business"); query.delete("agreement_template");
     navigate({ pathname: location.pathname, search: query.toString() ? `?${query.toString()}` : "", hash: location.hash });
   };
   // The Sales-internal view lives in a Sales-local `?view=` param — deep-linkable and testable,
@@ -2253,16 +2284,24 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
         : <ScenarioLab offers={offers} deals={deals} stages={stages} onAskPaige={askPaige} />
       )}
 
-      {view === "terms" && selectedAgreement && <React.Suspense fallback={<div className="so-absent" role="status">Opening the agreement workspace…</div>}>
+      {view === "terms" && selectedAgreement && !templateSelection && <React.Suspense fallback={<div className="so-absent" role="status">Opening the agreement workspace…</div>}>
         <AgreementPreparationWorkspace tenantId={signings.tenantId} canManage={signings.canManage} authorityUnknown={signings.authorityUnknown}
           authorizationReady={signings.phase === "ready"} clients={agreements.clients}
           clientsReady={agreements.phase === "ready" && agreements.tenantId === signings.tenantId} clientsReadable={agreements.clientsReadable}
-          agreementId={selectedAgreement} requestId={agreementRequest} requestTenantId={agreementBusiness} freshlyOpened={freshAgreementRequests.current.has(agreementRequest)}
+          agreementId={selectedAgreement} requestId={agreementRequest} requestTenantId={agreementBusiness} freshlyOpened={freshAgreementRequests.current.has(agreementRequest)} templateVersionId={agreementTemplateVersion}
           onDraftAttempted={(request) => freshAgreementRequests.current.delete(request)}
-          onOpenRecord={openAgreementDocument} onClose={closeAgreementDocument} onOpenClients={onOpenClients}
+          onOpenRecord={openAgreementDocument} onClose={closeAgreementDocument} onOpenClients={onOpenClients} onOpenTemplate={openTemplateVersion}
           signings={signings} onRefresh={() => { signings.retry(); agreements.retry(); }} />
       </React.Suspense>}
-      {view === "terms" && !selectedAgreement && (<>
+      {view === "terms" && templateSelection && <React.Suspense fallback={<div className="so-absent" role="status">Opening business templates…</div>}>
+        <AgreementTemplateWorkspace tenantId={signings.tenantId} canManage={signings.canManage} authorityUnknown={signings.authorityUnknown}
+          authorizationReady={signings.phase === "ready"} selection={templateSelection} requestId={templateRequest} requestTenantId={templateBusiness}
+          sourceId={templateSource} freshlyOpened={freshTemplateRequests.current.has(templateRequest)}
+          onAttempted={(request) => freshTemplateRequests.current.delete(request)} onClose={closeTemplateWorkspace}
+          onOpenVersion={openTemplateVersion} onNewVersion={startTemplateVersion} onUseVersion={startAgreementDocument}
+          onRefresh={() => { signings.retry(); agreements.retry(); }} />
+      </React.Suspense>}
+      {view === "terms" && !selectedAgreement && !templateSelection && (<>
       {/* ── ONE BAND: what each client agreed, and the document they signed to agree it ─────
         * There were two bands here. The second browsed the Catalog beside a table that had
         * nothing to do with browsing, and the owner removed it (2026-09-22). Its capabilities did
@@ -2289,7 +2328,7 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
             <button className="btn btn-s btn-q" onClick={() => onOpenCatalog()}>Open Catalog</button>
           ) : null}
           {agreements.canManage
-            ? <><button className="btn btn-s" onClick={() => { setEditing(null); setEditor("agreement"); }}>Record terms or upload</button><button className="btn btn-s btn-p" onClick={startAgreementDocument} disabled={!canStartAgreement}>New agreement</button>{!canStartAgreement && <span className="so-quiet">Agreement author access must be confirmed.</span>}</>
+            ? <><button className="btn btn-s" onClick={() => openTemplateVersion("list")} disabled={!canStartAgreement}>Business templates</button><button className="btn btn-s" onClick={() => { setEditing(null); setEditor("agreement"); }}>Record terms or upload</button><button className="btn btn-s btn-p" onClick={() => startAgreementDocument()} disabled={!canStartAgreement}>New agreement</button>{!canStartAgreement && <span className="so-quiet">Agreement author access must be confirmed.</span>}</>
             : agreements.phase === "ready" && agreements.agreementsReadable
               // A reader who cannot write is told WHO may — never a silently missing button (§36/§70).
               ? <span className="so-quiet">An owner or admin records this.</span>
@@ -2357,7 +2396,7 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
               ? (onOpenClients ? <div className="so-blank-acts"><button className="btn btn-p" onClick={() => onOpenClients()}>Go to Clients <Ic.arrow size={13} /></button></div> : null)
               : agreements.canManage ? (
                 <div className="so-blank-acts">
-                  <button className="btn btn-p" onClick={startAgreementDocument} disabled={!canStartAgreement}>New agreement</button>
+                  <button className="btn btn-p" onClick={() => startAgreementDocument()} disabled={!canStartAgreement}>New agreement</button>
                   {onOpenCatalog ? <button className="btn btn-s" onClick={() => onOpenCatalog()}>Open Catalog <Ic.arrow size={12} /></button> : null}
                 </div>
               ) : null}

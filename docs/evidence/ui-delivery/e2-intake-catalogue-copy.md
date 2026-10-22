@@ -49,7 +49,12 @@ NEW runtime infrastructure. Source reservation is ANT-161 595ea919, renewed906f3
 the never-applied103000/113000 candidate was renumbered140000 after verified
 production120000, preserving E04's provisional130000. Current-main e7396e59e
 composition preserves the original SQL bytes and rendered component source.
-Recheck actual main/frontier before release; never rewrite history.
+Recheck actual main/frontier before release; never rewrite history. At01:24 UTC,
+main4e7767f399d8c7a255e55d69fa0b03cc21429f66 already contains E09's140000.
+Move only this unapplied EXP02 migration to170000, preserving the identical SQL
+hash below and E09/E04's reserved150000/160000. ANT-161885d936b records the
+reconciliation. Renew exact-head CI and normal disposable Preview; former green
+evidence does not satisfy the successor's release gates.
 
 Migration SHA256 bab34dce11a379901ac632b7f96f3ff6c98e3e02f10279058831e8f707b9134d;
 owning SQL proof SHA256 668e014eb2838ffbac4bf9367caf649c34c2442bad45d2befb377eb4ce29bb5b.

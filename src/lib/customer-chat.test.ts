@@ -1,10 +1,10 @@
 import {beforeEach,expect,it,vi} from "vitest";
 import {readCustomerChat} from "./customer-chat";
 import {readClientPortalFrame} from "./client-portal-frame";
-const f=vi.hoisted(()=>({getUser:vi.fn(),rpc:vi.fn(),from:vi.fn(),thread:null as unknown,turns:[] as unknown[],
+const f=vi.hoisted(()=>({getUser:vi.fn(),getSession:vi.fn(),rpc:vi.fn(),from:vi.fn(),thread:null as unknown,turns:[] as unknown[],
  error:null as unknown,reads:[] as string[],filters:[] as unknown[][],headers:[] as unknown[][],signals:[] as AbortSignal[]}));
 vi.mock("@/integrations/supabase/client",()=>({supabase:{
- auth:{getUser:(...a:unknown[])=>f.getUser(...a)},rpc:(...a:unknown[])=>f.rpc(...a),
+ auth:{getUser:(...a:unknown[])=>f.getUser(...a),getSession:(...a:unknown[])=>f.getSession(...a)},rpc:(...a:unknown[])=>f.rpc(...a),
  from:(name:string)=>{f.reads.push(name);return f.from(name);},
 }}));
 const actor="e0917000-0000-4000-8000-000000000001",client="e0937000-0000-4000-8000-000000000001",
@@ -15,16 +15,19 @@ const value=()=>({actor_id:actor,profile:{id:client,tenant_id:tenant,linked_user
  paige_shared_context_consent_updated_at:null,updated_at:null,email:null,phone:null,contact_methods:[]},
  brand:{tenant_id:tenant,tenant_name:"Test practice",tenant_slug:"test-practice",logo_url:null,primary_color:null,support_email:null},config:{}});
 const frame=()=>readClientPortalFrame(value(),actor)!;
-const request=(data:unknown,error:unknown=null,name="rpc")=>Object.assign(Promise.resolve({data,error}),{
- setHeader:(key:string,business:string)=>{f.headers.push([name,key,business]);return Promise.resolve({data,error});},
- abortSignal:(signal:AbortSignal)=>{f.signals.push(signal);return request(data,error,name);},
-});
+const request=(data:unknown,error:unknown=null,name="rpc")=>{
+ const q=Object.assign(Promise.resolve({data,error}),{
+  setHeader:(key:string,v:string)=>{f.headers.push([name,key,v]);return q;},
+  abortSignal:(signal:AbortSignal)=>{f.signals.push(signal);return q;},
+ });return q;
+};
 beforeEach(()=>{
  vi.clearAllMocks();f.reads=[];f.filters=[];f.headers=[];f.signals=[];f.error=null;
  f.thread={id:thread,caller_user_id:actor,contact_id:client,tenant_id:tenant,lens:"client"};
  f.turns=[{id:"e0957000-0000-4000-8000-000000000002",role:"assistant",content:"Saved answer"},
   {id:"e0957000-0000-4000-8000-000000000001",role:"user",content:"Saved question"}];
  f.getUser.mockResolvedValue({data:{user:{id:actor}},error:null});
+ f.getSession.mockResolvedValue({data:{session:{user:{id:actor},access_token:"synthetic-captured-history"}},error:null});
  f.rpc.mockImplementation((name:string)=>request(name==="client_portal_frame"?value():thread,null,name));
  f.from.mockImplementation((name:string)=>{const q={select:()=>q,eq:(...args:unknown[])=>{f.filters.push([name,...args]);return q;},is:()=>q,order:()=>q,
    setHeader:(key:string,business:string)=>{f.headers.push([name,key,business]);return q;},
@@ -54,7 +57,7 @@ it("does not return old history after an Auth actor change",async()=>{
  f.getUser.mockResolvedValueOnce({data:{user:{id:actor}},error:null})
   .mockResolvedValueOnce({data:{user:{id:"other"}}});
  await expect(readCustomerChat(frame())).rejects.toThrow("Customer session changed");
- expect(f.rpc.mock.calls.map(c=>c[0])).toEqual(["client_portal_frame"]);
+ expect(f.rpc).not.toHaveBeenCalled();
 });
 it("does not return old history after native relationship revocation",async()=>{
  let frames=0;f.rpc.mockImplementation((name:string)=>request(name==="client_portal_frame"
@@ -66,7 +69,7 @@ it("reports unavailable history instead of fabricating an empty conversation",as
 });
 it("binds every native/private-history request to the same captured business",async()=>{
  await readCustomerChat(frame());
- expect(f.headers).toEqual([
+ expect(f.headers.filter(h=>h[1]==="x-client-portal-business")).toEqual([
   ["client_portal_frame","x-client-portal-business",tenant],
   ["paige_chat_thread_create","x-client-portal-business",tenant],
   ["paige_chat_threads","x-client-portal-business",tenant],
@@ -78,7 +81,7 @@ it("binds every native/private-history request to the same captured business",as
 it("retains the original captured binding if a caller mutates the frame while awaiting Auth",async()=>{
  const captured=frame(),pending=readCustomerChat(captured);
  captured.actorId="e0917000-0000-4000-8000-000000000002";captured.profile.tenant_id="e0927000-0000-4000-8000-000000000002";
- const result=await pending;expect(result.threadId).toBe(thread);expect(f.headers.every(h=>h[2]===tenant)).toBe(true);
+ const result=await pending;expect(result.threadId).toBe(thread);expect(f.headers.filter(h=>h[1]==="x-client-portal-business").every(h=>h[2]===tenant)).toBe(true);
 });
 it("a selected second business cannot fall back to an ignored-hint first business frame",async()=>{
  const selected=frame();selected.profile.tenant_id="e0927000-0000-4000-8000-000000000002";
@@ -112,10 +115,7 @@ it("cancellation during a saved-turn read withholds history and prevents further
  expect(f.rpc.mock.calls.map(c=>c[0])).toEqual(["client_portal_frame","paige_chat_thread_create"]);
 });
 it("final Auth change after loading turns still withholds saved history",async()=>{
- f.getUser.mockResolvedValueOnce({data:{user:{id:actor}},error:null})
-  .mockResolvedValueOnce({data:{user:{id:actor}},error:null})
-  .mockResolvedValueOnce({data:{user:{id:actor}},error:null})
-  .mockResolvedValueOnce({data:{user:{id:"changed-actor"}},error:null});
+ f.getUser.mockImplementation(async(jwt?:string)=>({data:{user:{id:!jwt&&f.reads.includes("paige_chat_turns")?"changed-actor":actor}},error:null}));
  await expect(readCustomerChat(frame())).rejects.toThrow("Customer session changed");
  expect(f.reads).toEqual(["paige_chat_threads","paige_chat_turns"]);
 });
@@ -125,14 +125,14 @@ it("concurrent authorized A/B history reads keep every request and saved result 
  const bFrame=readClientPortalFrame(bValue,actor)!;
  f.rpc.mockImplementation((name:string)=>{
   let scope:string|null=null;
-  const q={setHeader:(_key:string,business:string)=>{scope=business;return q;},
+  const q={setHeader:(key:string,business:string)=>{if(key==="x-client-portal-business")scope=business;return q;},
    then:(resolve:(v:unknown)=>unknown,reject?:(e:unknown)=>unknown)=>Promise.resolve({data:name==="client_portal_frame"
     ?scope===bTenant?bValue:aValue:scope===bTenant?bThread:thread,error:null}).then(resolve,reject)};
   return q;
  });
  f.from.mockImplementation(()=>{
   let scope:string|null=null;
-  const q={select:()=>q,eq:()=>q,is:()=>q,filter:()=>q,order:()=>q,setHeader:(_key:string,business:string)=>{scope=business;return q;},
+  const q={select:()=>q,eq:()=>q,is:()=>q,filter:()=>q,order:()=>q,setHeader:(key:string,business:string)=>{if(key==="x-client-portal-business")scope=business;return q;},
    maybeSingle:async()=>({data:{id:scope===bTenant?bThread:thread,caller_user_id:actor,contact_id:scope===bTenant?bClient:client,
     tenant_id:scope===bTenant?bTenant:tenant,lens:"client"},error:null}),
    limit:async()=>({data:[{id:scope===bTenant?"e0957000-0000-4000-8000-000000000003":"e0957000-0000-4000-8000-000000000001",role:"assistant",content:scope===bTenant?"History B":"History A"}],error:null})};
@@ -143,3 +143,20 @@ it("concurrent authorized A/B history reads keep every request and saved result 
  expect(b).toEqual({threadId:bThread,messages:[{id:"e0957000-0000-4000-8000-000000000003",role:"assistant",content:"History B"}]});
 });
 
+
+it("pins the independently verified captured bearer on every original history request",async()=>{
+ await readCustomerChat(frame());
+ expect(f.getUser).toHaveBeenCalledWith("synthetic-captured-history");
+ const auth=f.headers.filter(h=>h[1]==="Authorization");
+ expect(auth).toHaveLength(5);expect(auth.every(h=>h[2]==="Bearer synthetic-captured-history")).toBe(true);
+});
+it("refuses a cached different actor before any native history or thread creation",async()=>{
+ f.getSession.mockResolvedValue({data:{session:{user:{id:"other-actor"},access_token:"synthetic-other"}},error:null});
+ await expect(readCustomerChat(frame())).rejects.toThrow("Customer session changed");
+ expect(f.rpc).not.toHaveBeenCalled();expect(f.reads).toEqual([]);
+});
+it("refuses a captured bearer rejected by original Auth before opening any private thread",async()=>{
+ f.getUser.mockImplementation(async(jwt?:string)=>jwt?{data:{user:null},error:{code:"invalid_token"}}:{data:{user:{id:actor}},error:null});
+ await expect(readCustomerChat(frame())).rejects.toThrow("Customer session changed");
+ expect(f.rpc).not.toHaveBeenCalled();expect(f.reads).toEqual([]);
+});

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PORTAL_MESSAGE_MAX, portalBodyLength } from "@/lib/portal-message-body";
+import { useShellCustomerIdentity } from "@/lib/portal/customerIdentity";
+import { captureClientPortalAuthorization, withClientPortalBusiness } from "@/lib/client-portal-scope";
 
 /**
  * The signed-in customer's portal conversation with their business (E09).
@@ -15,10 +17,10 @@ import { PORTAL_MESSAGE_MAX, portalBodyLength } from "@/lib/portal-message-body"
  * outcome is unknown keeps its request id so a retry replays idempotently instead
  * of duplicating. Nothing here infers that the business has READ a message.
  *
- * An account linked to more than one business is refused by the relationship
- * resolver (42501) until multi-business membership ships. That is reported as its
- * own state — never as a network failure — and polling stops, because asking
- * again cannot change the answer.
+ * The original native business argument and request header narrow the verified
+ * customer frame. An unselected ambiguous relationship is refused (42501) and
+ * polling stops. Original global multi-business admission remains a separate
+ * integration; this request binding never creates membership or an identity.
  */
 
 export type PortalMessageAuthor = "customer" | "business";
@@ -45,7 +47,7 @@ export interface OutboxMessage {
   body: string;
   kind: PortalMessageKind;
   status: OutboxStatus;
-  /** Server error code for a definite refusal; null when the outcome is unknown. */
+  /** Definite server refusal or local preflight code; null when the outcome is unknown. */
   error: string | null;
 }
 
@@ -79,9 +81,21 @@ interface ConversationPayload {
 }
 
 type RpcResult = { data: unknown; error: unknown };
+class PortalMessageNotDispatched extends Error {}
 /** The E09 RPCs are newer than the generated Database types; keep the call shape typed locally. */
-function portalRpc(name: "client_portal_conversation" | "client_portal_send_message", args: Record<string, unknown>) {
-  return supabase.rpc(name as never, args as never) as unknown as PromiseLike<RpcResult>;
+async function portalRpc(name: "client_portal_conversation" | "client_portal_send_message", args: Record<string, unknown>,
+  scope?: {actorId: string; businessId: string; current: () => boolean}) {
+  if(!scope)return supabase.rpc(name as never,args as never) as unknown as PromiseLike<RpcResult>;
+  let authorization:string;
+  try{authorization=await captureClientPortalAuthorization(supabase.auth,scope.actorId,scope.current);}
+  catch{throw new PortalMessageNotDispatched("Customer request could not be verified before dispatch");}
+  if(!scope.current())throw new Error("Customer request changed");
+  const result=await withClientPortalBusiness(supabase.rpc(name as never,args as never),scope.businessId)
+    .setHeader("Authorization",authorization);
+  if(!scope.current())throw new Error("Customer request changed");
+  const actual=await supabase.auth.getUser();
+  if(!scope.current()||actual.error||actual.data.user?.id!==scope.actorId)throw new Error("Customer session changed");
+  return result as RpcResult;
 }
 
 /**
@@ -93,7 +107,7 @@ function isMultipleRelationships(err: unknown): boolean {
   if (!err || typeof err !== "object") return false;
   const e = err as { code?: unknown; message?: unknown };
   if (e.code !== "42501") return false;
-  return !(typeof e.message === "string" && /authentication required/i.test(e.message));
+  return typeof e.message === "string" && /select an authorized customer relationship/i.test(e.message);
 }
 
 function newId(): string {
@@ -160,7 +174,7 @@ export interface ClientPortalMessagesState {
   error: string | null;
   /** Resolved: the caller has no customer relationship (conversation returned null). */
   unavailable: boolean;
-  /** Resolved: the account is linked to more than one business, which messaging doesn't support yet. */
+  /** Resolved: the original native resolver requires an explicit business selection. */
   multipleBusinesses: boolean;
   hasMore: boolean;
   loadingMore: boolean;
@@ -176,6 +190,11 @@ export interface ClientPortalMessagesState {
 }
 
 export function useClientPortalMessages(): ClientPortalMessagesState {
+  const identity=useShellCustomerIdentity();
+  const frame=identity?.viewer==="customer"?identity.frame:null;
+  const requestedActor=frame?.actorId??null, requestedClient=frame?.profile.id??null, requestedBusiness=frame?.profile.tenant_id??null;
+  const requestedScope=identity?JSON.stringify([identity.viewer,requestedActor,requestedClient,requestedBusiness]):"legacy";
+  const enabled=!identity||identity.viewer==="staff"||!!frame&&identity.phase==="ready";
   const [messages, setMessages] = useState<PortalMessage[]>([]);
   const [outbox, setOutbox] = useState<OutboxMessage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -190,11 +209,24 @@ export function useClientPortalMessages(): ClientPortalMessagesState {
   // Mirrors for async callbacks; each async result is applied only if its epoch is current.
   const epoch = useRef(0);
   const actor = useRef<string | null>(null);
-  const tenantRef = useRef<string | null>(null);
+  const tenantRef = useRef<string | null>(requestedBusiness);
+  const conversationVerified=useRef(false);
   const messagesRef = useRef<PortalMessage[]>([]);
   const outboxRef = useRef<OutboxMessage[]>([]);
   const readSeq = useRef(0);
   const alive = useRef(true);
+  const origin=useRef({key:requestedScope,generation:0,enabled});
+  const appliedScope=useRef(requestedScope);
+  // Invalidate old work during render, before effect cleanup; generation also rejects A→B→A callbacks.
+  if(origin.current.key!==requestedScope){origin.current={key:requestedScope,generation:origin.current.generation+1,enabled};++epoch.current;++readSeq.current;}
+  origin.current.enabled=enabled;
+  const generation=origin.current.generation;
+  const scopeCurrent=useCallback(()=>origin.current.generation===generation&&origin.current.enabled
+    &&appliedScope.current===requestedScope&&(!requestedActor||actor.current===requestedActor),[generation,requestedScope,requestedActor]);
+  const rpc=useCallback((name:"client_portal_conversation"|"client_portal_send_message",args:Record<string,unknown>)=>{
+    if(!scopeCurrent())return Promise.reject(new Error("Customer request changed"));
+    return portalRpc(name,args,requestedActor&&requestedBusiness?{actorId:requestedActor,businessId:requestedBusiness,current:scopeCurrent}:undefined);
+  },[scopeCurrent,requestedActor,requestedBusiness]);
   /** Set once the server refused for multiple relationships: no further polling for this identity. */
   const halted = useRef(false);
   messagesRef.current = messages;
@@ -203,7 +235,9 @@ export function useClientPortalMessages(): ClientPortalMessagesState {
   const resetScope = useCallback(() => {
     epoch.current += 1;
     readSeq.current += 1;
-    tenantRef.current = null;
+    appliedScope.current=requestedScope;
+    tenantRef.current = requestedBusiness;
+    conversationVerified.current=false;
     halted.current = false;
     messagesRef.current = [];
     outboxRef.current = [];
@@ -217,9 +251,10 @@ export function useClientPortalMessages(): ClientPortalMessagesState {
     setLoading(true);
     setTenantId(null);
     setScopeEpoch(epoch.current);
-  }, []);
+  }, [requestedScope,requestedBusiness]);
 
   const haltForMultiple = useCallback(() => {
+    conversationVerified.current=false;
     halted.current = true;
     messagesRef.current = [];
     setMessages([]);
@@ -245,21 +280,25 @@ export function useClientPortalMessages(): ClientPortalMessagesState {
   }, []);
 
   const refresh = useCallback(async () => {
+    if(!scopeCurrent())return;
     const myEpoch = epoch.current;
     const seq = ++readSeq.current;
-    const current = () => alive.current && myEpoch === epoch.current && seq === readSeq.current;
+    const current = () => alive.current && scopeCurrent() && myEpoch === epoch.current && seq === readSeq.current;
     try {
-      const { data, error: rpcError } = await portalRpc("client_portal_conversation", {
+      const { data, error: rpcError } = await rpc("client_portal_conversation", {
         p_tenant_id: tenantRef.current, p_before: null, p_limit: PORTAL_MESSAGES_PAGE,
       });
       if (rpcError) throw rpcError;
       const payload = parseConversation(data);
       if (!current()) return;
+      if(payload&&requestedBusiness&&payload.tenant_id!==requestedBusiness){conversationVerified.current=false;throw new Error("Customer business changed");}
       if (!payload) {
+        conversationVerified.current=false;
         setUnavailable(true);
         setMessages([]);
         setHasMore(false);
       } else {
+        conversationVerified.current=true;
         tenantRef.current = payload.tenant_id;
         setTenantId(payload.tenant_id);
         setUnavailable(false);
@@ -284,22 +323,24 @@ export function useClientPortalMessages(): ClientPortalMessagesState {
     } finally {
       if (current()) setLoading(false);
     }
-  }, [haltForMultiple, settleOutbox]);
+  }, [haltForMultiple, settleOutbox,scopeCurrent,rpc,requestedBusiness]);
 
   const loadMore = useCallback(async () => {
+    if(!scopeCurrent())return;
     const oldest = messagesRef.current[0];
     if (!oldest || loadingMore) return;
     const myEpoch = epoch.current;
     setLoadingMore(true);
     try {
-      const { data, error: rpcError } = await portalRpc("client_portal_conversation", {
+      const { data, error: rpcError } = await rpc("client_portal_conversation", {
         // The exact (created_at, id) of the oldest row held: a row sharing its timestamp is never skipped.
         p_tenant_id: tenantRef.current, p_before: oldest.created_at, p_limit: PORTAL_MESSAGES_PAGE, p_before_id: oldest.id,
       });
       if (rpcError) throw rpcError;
       const payload = parseConversation(data);
-      if (!alive.current || myEpoch !== epoch.current) return;
-      if (!payload) { setUnavailable(true); return; }
+      if (!alive.current || !scopeCurrent() || myEpoch !== epoch.current) return;
+      if(payload&&requestedBusiness&&payload.tenant_id!==requestedBusiness){conversationVerified.current=false;throw new Error("Customer business changed");}
+      if (!payload) { conversationVerified.current=false;setUnavailable(true); return; }
       const merged = mergeChronological(payload.messages, messagesRef.current);
       messagesRef.current = merged;
       setMessages(merged);
@@ -307,13 +348,13 @@ export function useClientPortalMessages(): ClientPortalMessagesState {
       setHasMore(payload.has_more);
       setError(null);
     } catch (err) {
-      if (!alive.current || myEpoch !== epoch.current) return;
+      if (!alive.current || !scopeCurrent() || myEpoch !== epoch.current) return;
       if (isMultipleRelationships(err)) haltForMultiple();
       else setError("We couldn't load earlier messages. Try again.");
     } finally {
-      if (alive.current && myEpoch === epoch.current) setLoadingMore(false);
+      if (alive.current && scopeCurrent() && myEpoch === epoch.current) setLoadingMore(false);
     }
-  }, [loadingMore, haltForMultiple, settleOutbox]);
+  }, [loadingMore, haltForMultiple, settleOutbox,scopeCurrent,rpc,requestedBusiness]);
 
   const patchOutbox = (localId: string, patch: Partial<OutboxMessage> | null) => {
     const next = patch === null
@@ -325,10 +366,11 @@ export function useClientPortalMessages(): ClientPortalMessagesState {
 
   const deliver = useCallback(async (entry: OutboxMessage): Promise<boolean> => {
     const myEpoch = epoch.current;
-    const current = () => alive.current && myEpoch === epoch.current;
+    const current = () => alive.current && scopeCurrent() && myEpoch === epoch.current;
+    if(!current()||!conversationVerified.current)return false;
     patchOutbox(entry.localId, { status: "sending", error: null });
     try {
-      const { data, error: rpcError } = await portalRpc("client_portal_send_message", {
+      const { data, error: rpcError } = await rpc("client_portal_send_message", {
         p_body: entry.body, p_request_id: entry.requestId, p_kind: entry.kind, p_tenant_id: tenantRef.current,
       });
       if (!current()) return false;
@@ -356,42 +398,54 @@ export function useClientPortalMessages(): ClientPortalMessagesState {
       // A definite refusal from the server: nothing was saved.
       patchOutbox(entry.localId, { status: "failed", error: typeof result.error === "string" ? result.error : "UNKNOWN" });
       return false;
-    } catch {
-      // Network/transport failure: the message MAY have been saved. Retrying with the same
-      // request id is safe — the server replays instead of creating a second message.
-      if (current()) patchOutbox(entry.localId, { status: "unconfirmed", error: null });
+    } catch (failure) {
+      // A failed local preflight did not dispatch. Other transport failures MAY have saved;
+      // explicit recovery retains the same request id instead of creating a second message.
+      if (current()) patchOutbox(entry.localId, failure instanceof PortalMessageNotDispatched
+        ?{status:"failed",error:"UNVERIFIED_CUSTOMER_SESSION"}:{ status: "unconfirmed", error: null });
       return false;
     }
-  }, [refresh, haltForMultiple]);
+  }, [refresh, haltForMultiple,scopeCurrent,rpc]);
 
   const send = useCallback(async (body: string, kind: PortalMessageKind) => {
+    if(!scopeCurrent()||!conversationVerified.current)return false;
     const trimmed = body.trim();
     if (!trimmed || portalBodyLength(trimmed) > PORTAL_MESSAGE_MAX || !tenantRef.current || halted.current) return false;
     const entry: OutboxMessage = { localId: newId(), requestId: newId(), body: trimmed, kind, status: "sending", error: null };
     outboxRef.current = [...outboxRef.current, entry];
     setOutbox(outboxRef.current);
     return deliver(entry);
-  }, [deliver]);
+  }, [deliver,scopeCurrent]);
 
   const retry = useCallback(async (localId: string) => {
+    if(!scopeCurrent())return false;
     const entry = outboxRef.current.find((o) => o.localId === localId);
     if (!entry || entry.status === "sending" || halted.current) return false;
     return deliver(entry);
-  }, [deliver]);
+  }, [deliver,scopeCurrent]);
 
   const discard = useCallback((localId: string) => {
+    if(!scopeCurrent())return;
     const entry = outboxRef.current.find((o) => o.localId === localId);
     if (!entry || entry.status === "sending") return;
     patchOutbox(localId, null);
-  }, []);
+  }, [scopeCurrent]);
 
   // Identity scope + initial read.
   useEffect(() => {
     alive.current = true;
+    if(appliedScope.current!==requestedScope)resetScope();
+    if(!enabled){
+      // An interrupted acknowledgment is unknown, never a reason to resend automatically.
+      const next=outboxRef.current.map(o=>o.status==="sending"?{...o,status:"unconfirmed" as const}:o);
+      outboxRef.current=next;setOutbox(next);setLoading(false);
+      return ()=>{alive.current=false;};
+    }
     let cancelled = false;
     const start = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (cancelled) return;
+      if(requestedActor&&user?.id!==requestedActor){setLoading(false);setUnavailable(true);return;}
       actor.current = user?.id ?? null;
       if (!user) { setLoading(false); setUnavailable(true); return; }
       await refresh();
@@ -413,12 +467,12 @@ export function useClientPortalMessages(): ClientPortalMessagesState {
       alive.current = false;
       subscription.unsubscribe();
     };
-  }, [refresh, resetScope]);
+  }, [refresh, resetScope,requestedScope,enabled,requestedActor]);
 
   // Freshness without realtime: focus, becoming visible, and a modest interval while visible.
   useEffect(() => {
     const visible = () => typeof document === "undefined" || document.visibilityState !== "hidden";
-    const live = () => !!actor.current && !halted.current;
+    const live = () => !!actor.current && !halted.current && scopeCurrent();
     const onFocus = () => { if (live()) void refresh(); };
     const onVisibility = () => { if (visible() && live()) void refresh(); };
     window.addEventListener("focus", onFocus);
@@ -429,7 +483,10 @@ export function useClientPortalMessages(): ClientPortalMessagesState {
       document.removeEventListener("visibilitychange", onVisibility);
       window.clearInterval(timer);
     };
-  }, [refresh]);
+  }, [refresh,scopeCurrent]);
 
-  return { messages, outbox, loading, error, unavailable, multipleBusinesses, hasMore, loadingMore, tenantId, scopeEpoch, refresh, loadMore, send, retry, discard };
+  const retiring=appliedScope.current!==requestedScope;
+  return { messages:retiring?[]:messages, outbox:retiring?[]:outbox, loading:retiring||loading, error:retiring?null:error,
+    unavailable:retiring?false:unavailable, multipleBusinesses:retiring?false:multipleBusinesses, hasMore:retiring?false:hasMore,
+    loadingMore:retiring?false:loadingMore, tenantId:retiring?null:tenantId, scopeEpoch:retiring?epoch.current:scopeEpoch, refresh, loadMore, send, retry, discard };
 }

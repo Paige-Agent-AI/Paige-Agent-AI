@@ -826,6 +826,24 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-22 — EXP04 original preparation native release verified.**
+
+The later root readback records original `20271113300004` with all eight expected
+function bodies/ABI/owner/search_path/ACL, private table/RLS, four triggers and five
+indexes; original SAVE body `1bd28e75afa0f50bb07b717795a5be0e` is unchanged.
+Ledger37 statements/md5 `d4916916779593323c6f3e9d63204df3` retains the original
+DROP form. Initial application provenance remains UNVERIFIED; none of the six
+failed attempts below is called successful. Normal unchanged-main verification
+[39839940779](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/39839940779),
+deploy120038195038, SUCCESS: remote up to date, persistence guard passed and
+`db-live` now `7a874fa2cb6193c8ae795f227a8b3f8a3dbb6cd8`.
+Pending-installation repair2610 is superseded unmerged; do not rewrite the now
+recorded migration. Its original causal proof/reviews remain historical.
+Workspace2604 composes released security2607/main7a874, preserving both manifest
+install pins. Only the benign sanitizer regression is reused; no native repair,
+new writer, permission, provider or execution activation. Mounted/editor release,
+ordinary owner/staff/linked-client acceptance and all twelve outcomes remain owed.
+
 **2026-10-22 — EXP04 preparation owner API, native deployment held.**
 
 PR[#2599](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2599), reviewed

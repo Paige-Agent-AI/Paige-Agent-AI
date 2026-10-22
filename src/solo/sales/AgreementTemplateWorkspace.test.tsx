@@ -91,3 +91,30 @@ describe('original template workspace authority and durable intent',()=>{
  it('paged list and local title filter never invent a global result count',async()=>{const row=original(),{body_markdown:_,...summary}=row;ports.list.mockResolvedValueOnce({ok:true,value:{items:[summary],next_cursor:{created_at:at,id:version}}}).mockResolvedValueOnce({ok:true,value:{items:[],next_cursor:null}});render(<AgreementTemplateWorkspace {...props()} selection='list'/>);await screen.findByRole('button',{name:'New template'});expect(screen.getByText('1 returned version · titles filter only these records.')).not.toBeNull();click('Read more versions');await waitFor(()=>expect(ports.list).toHaveBeenCalledTimes(2));expect(ports.list.mock.calls[1]).toEqual([tenant,{created_at:at,id:version},true]);});
  it('actual read-only preview preserves words when returning to editing',async()=>{render(<AgreementTemplateWorkspace {...props()}/>);await ready();fill();click('Preview template wording');expect(document.querySelector('[aria-label="Proposed template wording"]')?.textContent).toContain('Private business wording');expect(screen.queryByLabelText('Agreement content')).toBeNull();click('Return to template editing');expect((screen.getByLabelText('Agreement content') as HTMLTextAreaElement).value).toContain('Preserve its line breaks');});
 });
+
+
+describe('interrupted template reads remain recoverable',()=>{
+ it('changing retained-version scope retires the old page read and permits the new cursor',async()=>{
+  const {body_markdown:unused,...summary}=original();void unused;
+  const page=Array.from({length:20},(_,index)=>({...summary,id:'eeeeeeee-0000-4000-8000-'+String(19-index).padStart(12,'0')}));
+  const cursor={created_at:at,id:page.at(-1)!.id},old=pending<unknown>();
+  ports.list.mockResolvedValueOnce({ok:true,value:{items:page,next_cursor:cursor}}).mockReturnValueOnce(old.promise)
+   .mockResolvedValueOnce({ok:true,value:{items:page,next_cursor:cursor}});
+  render(<AgreementTemplateWorkspace {...props()} selection='list'/>);await screen.findByRole('button',{name:'Read more versions'});click('Read more versions');
+  fireEvent.click(screen.getByLabelText('Include earlier retained versions'));
+  await screen.findByRole('button',{name:'New template'});
+  expect((screen.getByRole('button',{name:'Read more versions'}) as HTMLButtonElement).disabled).toBe(false);
+  await act(async()=>old.resolve({ok:true,value:{items:[],next_cursor:null}}));
+  expect((screen.getByRole('button',{name:'Read more versions'}) as HTMLButtonElement).disabled).toBe(false);
+  expect(ports.list.mock.calls[2]).toEqual([tenant,null,false]);
+ });
+ it('transient authority interruption releases a pending recovery read without publishing its late result',async()=>{
+  ports.save.mockResolvedValue({ok:false,reason:'unconfirmed',message:'Synthetic response lost'});const task=pending<unknown>();ports.recover.mockReturnValue(task.promise);
+  const p=props(),view=render(<AgreementTemplateWorkspace {...p}/>);await ready();fill();click('Save template version');await screen.findByRole('button',{name:'Check original template request'});click('Check original template request');
+  view.rerender(<AgreementTemplateWorkspace {...p} authorityUnknown/>);view.rerender(<AgreementTemplateWorkspace {...p}/>);
+  expect((screen.getByRole('button',{name:'Check original template request'}) as HTMLButtonElement).disabled).toBe(false);
+  await act(async()=>task.resolve({ok:true,value:{state:'recovered',version_record:{...original(),id:request}}}));
+  expect((screen.getByLabelText('Agreement content') as HTMLTextAreaElement).value).toContain('Private business wording');
+  expect(screen.queryByText('The exact original template request was recovered. Review its retained wording below.')).toBeNull();
+ });
+});

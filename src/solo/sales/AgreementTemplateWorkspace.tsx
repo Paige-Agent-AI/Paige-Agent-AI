@@ -57,7 +57,7 @@ function ScopedTemplates(p:Props&{activeTenantId:string|null;actor:string|null;s
   };
   React.useEffect(()=>{
     if((p.authorizationReady&&!p.authorityUnknown&&!p.canManage)||(!p.actor&&p.scopeReady))retire();
-    else if(!allowed&&phaseRef.current==='saving'){busy.current=false;setPhase('unconfirmed');}
+    else if(!allowed){setReading(false);if(phaseRef.current==='saving'){busy.current=false;setPhase('unconfirmed');}}
     // Authority can hide RAM transiently; a conclusive loss retires it permanently.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },[p.authorizationReady,p.authorityUnknown,p.canManage,p.actor,p.scopeReady,allowed]);
@@ -66,7 +66,7 @@ function ScopedTemplates(p:Props&{activeTenantId:string|null;actor:string|null;s
     if(!allowed||!p.tenantId)return;
     if(p.selection==='new'&&loaded.current)return;
     const epoch=authority.current.epoch,id=++readingId.current,tenant=p.tenantId;
-    setPhase('loading');setMessage('');
+    setReading(false);setPhase('loading');setMessage('');
     void(async()=>{
       if(p.selection==='list'){
         const result=await listAgreementTemplates(tenant,null,!archived);

@@ -1,7 +1,7 @@
 -- Real original native resolver/brand and authenticated roles; synthetic fixture,
 -- no permanent identities, provider effect or production auth impersonation.
 BEGIN;
-SELECT plan(24);
+SELECT plan(28);
 
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0960100-0000-4000-8000-000000000001','authenticated','authenticated','choices-owner@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -17,8 +17,17 @@ INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner,joined_
  FROM public.tenants WHERE slug LIKE 'test-tenant-choices-%';
 INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,status) VALUES
  ('e0960300-0000-4000-8000-000000000001','e0960200-0000-4000-8000-000000000001','e0960100-0000-4000-8000-000000000002','e0960100-0000-4000-8000-000000000001','Jordan','Rivera','active'),
- ('e0960300-0000-4000-8000-000000000002','e0960200-0000-4000-8000-000000000002','e0960100-0000-4000-8000-000000000002','e0960100-0000-4000-8000-000000000001','Jordan','Rivera','active'),
  ('e0960300-0000-4000-8000-000000000003','e0960200-0000-4000-8000-000000000003','e0960100-0000-4000-8000-000000000003','e0960100-0000-4000-8000-000000000001','Casey','Morgan','active');
+
+-- Current production permits one linked client per login globally. Prove that
+-- guard before exercising the explicitly future shape, only in this rollback.
+SELECT ok(EXISTS (SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_id_unique') AND indisunique AND pg_get_expr(indpred,indrelid)='(linked_user_id IS NOT NULL)'),'actual global unique linkage exists before the future-shape fixture');
+SELECT throws_ok($guard$ INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,status) VALUES
+ ('e0960300-0000-4000-8000-000000000002','e0960200-0000-4000-8000-000000000002','e0960100-0000-4000-8000-000000000002','e0960100-0000-4000-8000-000000000001','Jordan','Rivera','active'); $guard$,'23505',NULL,'current native global guard refuses a second business link');
+DROP INDEX public.clients_linked_user_id_unique;
+SELECT ok(EXISTS (SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_tenant_linked_user_key') AND indisunique),'future fixture retains original within-business uniqueness');
+INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,status) VALUES
+ ('e0960300-0000-4000-8000-000000000002','e0960200-0000-4000-8000-000000000002','e0960100-0000-4000-8000-000000000002','e0960100-0000-4000-8000-000000000001','Jordan','Rivera','active');
 
 CREATE FUNCTION pg_temp.as_user(actor uuid,statement text) RETURNS jsonb LANGUAGE plpgsql AS $$
 DECLARE answer jsonb;
@@ -77,6 +86,9 @@ SELECT is(jsonb_array_length(pg_temp.choices()->'relationships'),1,'ended/unlink
 SELECT ok(has_function_privilege('authenticated','public.client_portal_relationship_choices(integer,uuid)','EXECUTE')
  AND NOT has_function_privilege('anon','public.client_portal_relationship_choices(integer,uuid)','EXECUTE')
  AND NOT has_function_privilege('service_role','public.client_portal_relationship_choices(integer,uuid)','EXECUTE'),'authenticated-only execution; no anonymous/service grant');
+
+CREATE UNIQUE INDEX clients_linked_user_id_unique ON public.clients(linked_user_id) WHERE linked_user_id IS NOT NULL;
+SELECT ok(EXISTS (SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_id_unique') AND indisunique AND pg_get_expr(indpred,indrelid)='(linked_user_id IS NOT NULL)'),'future fixture restores the original global guard before outer rollback');
 
 SELECT * FROM finish();
 ROLLBACK;

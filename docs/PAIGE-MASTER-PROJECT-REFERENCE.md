@@ -847,6 +847,10 @@ Actual served `/assets/AgreementPreparationWorkspace-CmHBkkPy.js` SHA256
 contains original wording-history navigation/native reader. Own migration/Edge
 NOT_APPLICABLE; original native draft-history130000 already applied/read back.
 Internal production prerequisite; no customer release identity or announcement.
+Subsequent public build`2d554406f9e4019935a8b38a5b30e4643a88da1a-mvivca62` serves history/native reader
+from`/assets/AgreementPreparationWorkspace-CeBH7MP_.js`, SHA256
+`a257ce401d0b4f9b576481a2e093eb877cedde0e3bf68bc94943576a679e961b`. Those four owning source blobs remain identical;
+compiled bundle identity belongs to its own build, not the original79f699 asset.
 [Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2524#issuecomment-6330515475).
 
 Functional: owner-scoped immutable wording list/selected revision, original cursor,

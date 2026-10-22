@@ -1,7 +1,7 @@
 -- Original replayed native functions and real roles. Synthetic, rolled back;
 -- provider execution disabled, no production identities or effectful acceptance.
 BEGIN;
-SELECT plan(72);
+SELECT plan(82);
 
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0970100-0000-4000-8000-000000000001','authenticated','authenticated','scope-owner@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -85,6 +85,30 @@ SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000002','SELECT p
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000001')->>'state','open','selected open state is genuine');
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000003')->>'state','none','foreign state reveals no notice');
 
+
+-- Original per-item shared Planning records. Final fixture share state only;
+-- no production writer, provider action or additional customer identity.
+INSERT INTO public.plan_items(id,tenant_id,item_type,created_by,contact_id,title,summary,status,client_shared_at,client_shared_by) VALUES
+ ('e0970500-0000-4000-8000-000000000001','e0970200-0000-4000-8000-000000000001','task','e0970100-0000-4000-8000-000000000001','e0970300-0000-4000-8000-000000000001','Shared work A','Private operating note A','open',now(),'e0970100-0000-4000-8000-000000000001'),
+ ('e0970500-0000-4000-8000-000000000002','e0970200-0000-4000-8000-000000000002','task','e0970100-0000-4000-8000-000000000001','e0970300-0000-4000-8000-000000000002','Shared work B','Private operating note B','open',now(),'e0970100-0000-4000-8000-000000000001'),
+ ('e0970500-0000-4000-8000-000000000003','e0970200-0000-4000-8000-000000000001','task','e0970100-0000-4000-8000-000000000001','e0970300-0000-4000-8000-000000000001','Unshared work A','Private unshared record','open',NULL,NULL);
+SELECT is(pg_temp.scope_read('SELECT public.client_portal_progress()','e0970200-0000-4000-8000-000000000001')#>>'{items,0,id}',
+ 'e0970500-0000-4000-8000-000000000001','selected A progress returns original shared A item');
+SELECT is(pg_temp.scope_read('SELECT public.client_portal_progress()','e0970200-0000-4000-8000-000000000002')#>>'{items,0,id}',
+ 'e0970500-0000-4000-8000-000000000002','selected B progress returns original shared B item');
+SELECT is(pg_temp.scope_read('SELECT public.client_portal_progress()','e0970200-0000-4000-8000-000000000001')#>>'{summary,shared}',
+ '1','progress summary excludes private work and other business');
+SELECT ok(jsonb_array_length(pg_temp.scope_read('SELECT public.client_portal_progress(NULL,1)','e0970200-0000-4000-8000-000000000002')->'items')=1
+ AND pg_temp.scope_read('SELECT public.client_portal_progress(NULL,1)','e0970200-0000-4000-8000-000000000002')->>'tenant_id'='e0970200-0000-4000-8000-000000000002'
+ AND pg_temp.scope_read('SELECT public.client_portal_progress(NULL,1)','e0970200-0000-4000-8000-000000000002')::text NOT LIKE '%Private operating note%',
+ 'one-item Home read has same selected business and no private summary');
+SELECT ok(pg_temp.scope_read('SELECT public.client_portal_progress()','e0970200-0000-4000-8000-000000000003') IS NULL,'foreign progress business has no fallback');
+SELECT ok(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000003','SELECT public.client_portal_progress()',
+ '{"x-client-portal-business":"e0970200-0000-4000-8000-000000000001"}') IS NULL,'other customer cannot read original A shared work');
+SELECT ok(pg_temp.scope_read($progress$SELECT public.client_portal_progress('e0970200-0000-4000-8000-000000000002')$progress$,
+ 'e0970200-0000-4000-8000-000000000001') IS NULL,'conflicting explicit progress business/header has no fallback');
+SELECT is(pg_temp.scope_read('SELECT public.client_portal_progress()')->>'sqlstate','42501','unselected multi-business progress retains native ambiguity refusal');
+
 -- Original business-shared Conversations, distinct from the private CURA service below.
 -- Native writers only, provider execution disabled, all synthetic rows rolled back.
 CREATE FUNCTION pg_temp.scope_send_message(business text,body text,request_id uuid,kind text DEFAULT 'message')
@@ -162,6 +186,7 @@ UPDATE public.clients SET portal_access_state='paused',portal_access_changed_at=
  WHERE id='e0970300-0000-4000-8000-000000000002';
 SELECT set_config('paige.portal_access_write','',true);
 SELECT ok(pg_temp.scope_read('SELECT public.client_portal_frame()','e0970200-0000-4000-8000-000000000001') IS NULL,'paused selection loses original frame');
+SELECT ok(pg_temp.scope_read('SELECT public.client_portal_progress()','e0970200-0000-4000-8000-000000000001') IS NULL,'paused A cannot read original shared progress');
 SELECT is(pg_temp.scope_send_message('e0970200-0000-4000-8000-000000000001','Paused refusal','e0970400-0000-4000-8000-000000000003')->>'error','NO_RELATIONSHIP','paused A cannot send a shared message');
 SELECT is(pg_temp.open_scoped_chat('e0970200-0000-4000-8000-000000000001')->>'sqlstate','42501','paused A cannot reopen a private conversation');
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000001')#>>'{business,name}',
@@ -179,6 +204,7 @@ UPDATE public.clients SET linked_user_id=NULL WHERE id='e0970300-0000-4000-8000-
 SELECT set_config('paige.link_ok','',true);
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000002')->>'state','ended','selected former user sees genuine ended notice');
 SELECT ok(pg_temp.scope_read('SELECT public.client_portal_frame()','e0970200-0000-4000-8000-000000000002') IS NULL,'revoked selection cannot obtain another frame');
+SELECT ok(pg_temp.scope_read('SELECT public.client_portal_progress()','e0970200-0000-4000-8000-000000000002') IS NULL,'revoked B cannot read retained original progress');
 SELECT ok(pg_temp.scope_conversation('e0970200-0000-4000-8000-000000000002') IS NULL,'revoked B cannot read retained shared conversation history');
 SELECT ok(pg_temp.read_scoped_chat('e0970200-0000-4000-8000-000000000002',opened) IS NULL,'revoked B cannot read its retained original private thread') FROM scope_chats WHERE business='e0970200-0000-4000-8000-000000000002';
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000003')->>'state','none','foreign hint cannot reveal even own other-business ended notice');

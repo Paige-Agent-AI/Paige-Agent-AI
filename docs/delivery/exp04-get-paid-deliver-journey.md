@@ -1857,3 +1857,20 @@ This internal module is not imported by a mounted UI, endpoint or Chat/Live capa
 REUSE #2192/179e52 command/receipt and original private object adapter. Actual native renderer/first-PDF positive then same-operation later-timestamp RED confirms historical retry cannot compare a re-render's hash to the original. REPAIR using the same original object's source metadata and actual readback before rendering, with stable ID/version/native parser and actor/tenant/admin rechecks. No new store, approval or sender and no signed/history overwrite.30 artifact cases/four original command cases, composed47 Deno tests/63 steps PASS; fixture compile corrected before genuine baseline, no denial/test waiver.
 
 This remains dormant server-only source stacked on the reconciled source reader. Actual high/confirm Collections/Kit decision, native atomic freeze/original operation/Rail receipt, hosted API parity and owner/recipient/linked-client acceptance remain required before activation or completion. No Chat/Live/Layer C registration or actual Storage/provider effect. [Evidence, original source references and full ten-point orchestration contract](../evidence/ui-delivery/e04-retained-commercial-artifact.md). Full O1-O12, professional fields/import/signing/financial/delivery and complete founder evaluation continue.
+
+## October22 original signer preparation — bounded native prerequisite
+
+REUSE original add_agreement_signer, original agreement/signer/event records, email uniqueness, actor/tenant/admin authority and draft-history/CAS. REPAIR native preparation after two genuine baseline failures: retained-but-Draft allowed a party change, and two concurrent additions took the same position. EXTEND source-version continuity for future party changes. No replacement signing engine, template words, acceptance rule or duplicate store.
+
+1. Outcome: owner prepares the correct authorized parties/order before freezing the exact signing document.
+2. Domain/owner: same EXP04 Sales/Agreements lead; E09 original signing/Portal contracts are not edited.
+3. Harness/Gateway: original manual internal preparation, no forced LayerC act or alternate runtime.
+4. Spine: existing agreement.* remains PARTIAL; no new Chat/Live signer mutation is registered or admitted.
+5. Provider: none; no token, document upload, signature email, spend or payment action.
+6. Authority/risk: preserve original session/expected-business/admin prefix, authenticated-only grant, signature/defaults and six-field DTO. Preparation is not signing/send/charge approval.
+7. Durable identity: original signer ID/agreement ID/version and original owner-attributed edited event, no new ledger/job/audit stream.
+8. Readback: actual added signer/order and advanced original source. Existing unique email prevents duplicate party rows; read/unknown recovery must never claim a fresh request acknowledgment from a coincidentally matching prior party.
+9. Failure/recovery: serialize at the original parent, recheck frozen source after waits, refuse stale owner SAVE and changed native writer. No side effect on refusal; no automatic duplicate retry or fabricated cancellation.
+10. UI/acceptance: Binding Ledger35 remains PARTIAL, signer/order display is existing. Professional management/assigned fields and actual owner/staff/client reload/ordinary-role/provider/full-founder proof remain owed by the following consumer.
+
+Local44 native assertions/replay2/five sessions/three observed waits PASS, exact production-body baseline read before changes. New240004 is UNAPPLIED; exact-head review/CI/Preview, safe migration/readback and authenticated acceptance remain separate. All O1–O12 and official algorithm/capability/LayerC readiness boundaries are unchanged. [Native evidence](../evidence/ui-delivery/e04-signer-preparation-integrity.md).

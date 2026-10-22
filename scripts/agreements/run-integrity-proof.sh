@@ -248,4 +248,7 @@ deno run --allow-import --node-modules-dir=none --allow-read --allow-run="$PGBIN
   --deny-net --deny-write --deny-ffi --deny-sys \
   "$HERE/commercial-presentation-retention-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired
 
+# Original signer preparation is serialized before native party/order changes.
+node "$HERE/signer-preparation-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired
+
 echo "OK — every negative refused with its expected SQLSTATE; positive controls succeeded."

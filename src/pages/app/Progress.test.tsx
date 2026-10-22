@@ -278,11 +278,12 @@ it("says progress isn't available on an account with no business", async () => {
   expect(host.querySelector("[data-testid=action-items-waiting]")).toBeNull();
 });
 
-it("says progress for several businesses isn't available yet, and points to Support", async () => {
+it("unselected progress uses the original verified business chooser, without platform Support", async () => {
   f.state = { ...f.state, multipleBusinesses: true };
   await render();
-  expect(host.textContent).toContain("Progress for more than one business isn't available yet");
-  expect(host.querySelector('a[href="/app/support"]')).not.toBeNull();
+  expect(host.textContent).toContain("Choose a business to see your progress");
+  expect(host.querySelector('a[href="/app?chooseBusiness=1"]')).not.toBeNull();
+  expect(host.querySelector('a[href="/app/support"]')).toBeNull();
 });
 
 it("keeps the last list on a failed refresh, says so, and offers a retry", async () => {
@@ -292,6 +293,30 @@ it("keeps the last list on a failed refresh, says so, and offers a retry", async
   expect(ids(host)).toEqual(["a"]);
   await click(Array.from(host.querySelectorAll("button")).find(b => b.textContent === "Try again")!);
   expect(f.state.refresh).toHaveBeenCalledTimes(1);
+});
+
+it("explicit successful Retry focuses the recovered Progress heading", async () => {
+  f.state = { ...f.state, error: "We couldn't load your progress." };
+  (f.state.refresh as ReturnType<typeof vi.fn>).mockImplementation(async () => { withItems([it_("recovered")], { error: null }); });
+  await render();
+  await click(Array.from(host.querySelectorAll("button")).find(b => b.textContent === "Try again")!);
+  expect(document.activeElement).toBe(host.querySelector("h1"));
+  expect(ids(host)).toEqual(["recovered"]);
+});
+
+it("Retry from a retired scope cannot move focus into another business's result", async () => {
+  f.state = { ...f.state, error: "We couldn't load your progress." };
+  (f.state.refresh as ReturnType<typeof vi.fn>).mockImplementation(async () => { withItems([it_("new-scope")], { error: null, scopeEpoch: 1 }); });
+  await render();
+  await click(Array.from(host.querySelectorAll("button")).find(b => b.textContent === "Try again")!);
+  expect(document.activeElement).not.toBe(host.querySelector("h1"));
+});
+
+it("ordinary background progress updates do not steal keyboard focus", async () => {
+  withItems([it_("first")]);await render();
+  const link = host.querySelector('a[href="/app/messages?topic=progress"]') as HTMLAnchorElement;
+  link.focus();withItems([it_("updated")]);await render();
+  expect(document.activeElement).toBe(link);
 });
 
 it("says when only part of the shared list is shown", async () => {

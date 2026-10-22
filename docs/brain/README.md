@@ -7,9 +7,29 @@ absent rather than becoming the current time. Four causal failures then70 cases
 in five original suites pass. No new control, route map, reader, store, worker or
 authority. Actual mounted finding focus and spacious Desk source CTA/Chat return
 are separate required consumers; current resolver stays surface_only. Exact-head
-review/CI, parent2612/original2607 prerequisites, source readback and ordinary
-customer/cohort proof remain owed. All19/nine and one complete founder evaluation
+review/CI, source readback and ordinary customer/cohort proof remain owed.
+Parent2612 and original2607 now have released-source proof below; source-reference
+SDK inference is corrected, actual type ratchet10/6/zero new and70 owning cases
+pass without baseline or runtime-query changes. All19/nine and one complete founder evaluation
 remain open. [Evidence](../evidence/ui-delivery/e2-prepared-source-reference.md).
+
+## EXP02 Systems Check source release — October22 verified readback
+
+PR2612 reviewedc033ded75c8593c8f1fa3a18b0530cb8f725257f, separate
+AUTHOR-REVIEW / LOWER ASSURANCE5619760376, all10 applicable checks/two web
+statuses pass, no-schema Preview skip/zero threads. Guarded main
+8e97c949d7a7234a842a9ba44d8bc8646caf2cc6 has expected parents and union
+62a6bd5c330ed2b5cc62a315e3507b434a0d916e. Exact production
+dpl_EKYTdUDpjDWd6Z6NX6agpGPqA3Kx READY/public build8e97c949-mvjz6m2z;
+served SoloEntry-DOOs5lu_.js has all four reviewed source markers and no obsolete
+readiness title. [Exact release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2612#issuecomment-6350335218).
+Functional source release is verified; Visual17 native synthetic frames remain
+supporting; Experiential corrected ordinary account/cohort/role/Live and Founder
+Acceptance remain unverified. No own SQL/Edge/scan/action/approval/provider or
+catalogue/algorithm activation. All19/nine remain mandatory. This readback
+supersedes the earlier development-state statements below without changing their
+historical evidence. Reliability2608 and source-reference/inspection/Desk
+consumers retain separate exact-head gates; no customer announcement.
 
 ## EXP02 recorded Systems Check coverage — October22 development
 

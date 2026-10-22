@@ -826,6 +826,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-22 — EXP02 finite document-fact validation source release.**
+
+| Increment | Exact released identity and proof | Completion boundary |
+| --- | --- | --- |
+| [#2615](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2615): refuse non-finite facts before JSON serialization | Reviewed `5f7ff7f62b1c1e2bc19bfb928dd7f109795ea466`, separate AUTHOR-REVIEW / LOWER ASSURANCE5621232278; all11 exact-head checks/two web statuses SUCCESS, zero threads. Main `c7fa122ae37aebdde2db61c8fd19f3e64c8b7da5`, parents4dac+5f7, tree `bcf0bb17b15601941e2dbe92e57b6c6d9b49e3a9` equals inspected clean union. Production `dpl_3e1jcLLdUwKeLZpXj9d4XapEahAJ` READY/main; publicc7fa-mvk3ffby/customerUpdate:null. Normal Edge39862725330/job120117198282 SUCCESS, original Chat511 and internal document-worker50 strict actual source/config PASS; existing caller protections unchanged, edge-live exactc7fa. Four causal failures then37 original-suite cases; broader72 cases/four suites support the fix; original worker-startup failure is not counted as a five-suite pass. [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2615#issuecomment-6352427257). Own migrations N/A. | SOURCE RELEASE VERIFIED, internal-only/no customer release identity or announcement. Input validation is not Metric provenance, provider-output correctness or a filed report. Functional source released; no visual change; ordinary authoring/reload/role/cohort/Live and full19/nine/founder acceptance remain owed. CAP014/015 remain Unverified; no permission/provider/action activation. |
+
 **2026-10-22 — EXP02 recorded Systems Check coverage truth released; full Experience remains in progress.**
 
 | Increment | Exact released identity and proof | Completion boundary |
@@ -5189,6 +5195,50 @@ status and creates no recursive delivery row.
 **2026-10-15 — Canonical owner invitation history, PR [#2228](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2228), reviewed `4bf620c9d4f4a77a14dcf772dbad20951dad4ed1`, runtime `c498f3cdfed82400a243b9566c23a70d124add32`, main `695b4ab3fb9ee2bb2333bf1335b1c91fd3be1417`.** Existing approved Portal Client access inspection now reads bounded canonical consumer invitation/email history through an exact-subject/tenant/native-authority reader and closed nonsecret DTO. Stored-recipient/template/invitation matching, truthful provider handoff versus delivery/acceptance/linkage, explicit latest50 truncation and stale-context retirement; no new sender/store/authority or shared Chat/Spine/booking overwrite. Shared implementation covers eligible current/future accounts without an allowlist/backfill. Ordered distinct NON-AUTHOR specification/security and quality COMPLETE PASS, bounded Impeccable finish SHIP; separate main composition PASS. Native45PASS/omission2fixturePASS+42expectedFAIL, managed-schema112PASS, combined-source93PASS/9 suites and source UI88 cases/30 saved frames/five manifests×13pins. Browser engines are isolated Windows Chrome/Edge/Firefox/WebKit, not real-device/Safari/physical4K/OS scaling/actual zoom certification. Build/scoped guards PASS;8 incumbent app-type diagnostics outside patch/0changed. All8 exact-head workflow groups/two Vercel statuses SUCCESS after two retained pre-test ECR throttles; no skipped/weakened check. [Final gates](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2228#issuecomment-6207017262). Actual tree `3891506782bf822bbfbaffd97ae44eef543af9b0` and all51 owned blobs match reviewed composition, preserving BUG #2211/E01. Normal deploy-migrations38843143491 SUCCESS/db-live exact main; `20271107120000_e09_owner_invitation_history` APPLIED once, original unapplied version absent. Reader prosrcMD5 `495b49e27d72d7d7099d6f251b95222e`, STABLE/definer/fixed search path and authenticated/service-only grants verified; eight incumbent portal/acceptance/stage/playbook bodies preserved. Advisor delta is solely the expected guarded authenticated-definer inventory addition, no anonymous/other finding change or global clearance claim. Vercel production `dpl_N5X6rEEteJr8NzvudKyBhXNBgu8s` READY/exact main; immutable/live versionHTTP200 `695b4ab3fb9ee2bb2333bf1335b1c91fd3be1417-mvadosc3`, customerUpdate null. Observed served import/CSS graph confirms native history RPC and860px measure. [Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2228#issuecomment-6207057544), [source evidence](evidence/ui-delivery/e09-invitation-history.md). Channel production/internal-only, Edge NOT_APPLICABLE; no customer release identity/publication. Genuine owner/external invitation/acceptance/Welcome persistence/isolation/returning/cohort testing NOT_RUN/PROOF OWED; full approved customer frame/all7 pillars, common dashboard/typed Chat/Live sending and final owner acceptance remain INCOMPLETE. No real customer/provider/identity operation or protected activation. Owner testing follows release under the current prelaunch policy. Recovery: reviewed forward correction preserving canonical rows/applied history, reconcile uncertain outcomes before resend. This sole exact-identity closeout is not logged recursively.
 
 **2026-10-16 — Readable owner Portal invitation and preview dialogs, PR [#2233](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2233), reviewed `8efab2224601ca3fd402ab81ea98c297e5582676`, main `720e6628ddc0d878d49cf3d6144ad8590585296a`.** The two existing native body-portalled dialogs now retain the resolved SOLO light/dark theme, repairing the owner-reported transparent invitation window without changing the approved dashboard, shared Dialog/CSS, recipient binding, authority or actions. Same shared implementation for all eligible existing/future accounts; no account fork, registry, sender, identity or execution infrastructure. Separate [AUTHOR-REVIEW / LOWER ASSURANCE](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2233#issuecomment-6207842987); five failing-first controls, final53 focused tests,23 actual-source browser cases/15 captures/15 matching source hashes, build/scoped lint/TypeScript ratchet10→8/no new diagnostics and parity negatives PASS. All six exact-head workflows and both Vercel contexts SUCCESS before expected-head merge; original pinned-image ECR startup rate limit retained and only failed job retried after parent completion, unchanged image/tests PASS. [Final gates](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2233#issuecomment-6208068763). Production `dpl_DRFwxB8mu8Z9YVVrQiXqusZA2Jjq` READY/exact main; live and immutable buildHTTP200 `720e6628ddc0d878d49cf3d6144ad8590585296a-mvaguqlm`, customerUpdate null; actual served import graph and both reviewed dialog theme markers read back. Authorized owner-side reload retains existing contact/pending invitation; opaque light dialog, no horizontal overflow, Escape/focus and saved-presentation preview Close PASS. Exact authority branch/nonplatform-role cohort not independently measured. Private live evidence stays local; no send/resend/cancel/config/Auth/role/provider or customer operation. [Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2233#issuecomment-6208117459), [source evidence](evidence/ui-delivery/e09-portal-dialog-theme.md). Channel production; migrations/Edge NOT_APPLICABLE; internal-only/no customer release identity or announcement. Bounded owner dialog repair shipped; clients.portal remains PARTIAL. Owner-reported email arrival is distinct from native Accepted for sending, customer acceptance and visits. Provider-delivery/open/click completeness, secure new-customer signup/Welcome, external-client isolation/recovery/return, physical iPhone/Safari, all seven pillars/common Chat-Live invitation execution and final owner product acceptance remain PROOF OWED/INCOMPLETE. Existing Beta entry signs in existing accounts only; this patch does not claim that gap fixed. Recovery is a reviewed UI forward correction/revert preserving canonical records and security. This identity-only closeout is not logged recursively.
+
+
+**2026-10-22 — EXP04 original preparation native release verified.**
+
+The later root readback records original `20271113300004` with all eight expected
+function bodies/ABI/owner/search_path/ACL, private table/RLS, four triggers and five
+indexes; original SAVE body `1bd28e75afa0f50bb07b717795a5be0e` is unchanged.
+Ledger37 statements/md5 `d4916916779593323c6f3e9d63204df3` retains the original
+DROP form. Initial application provenance remains UNVERIFIED; none of the six
+failed attempts below is called successful. Normal unchanged-main verification
+[39839940779](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/39839940779),
+deploy120038195038, SUCCESS: remote up to date, persistence guard passed and
+`db-live` now `7a874fa2cb6193c8ae795f227a8b3f8a3dbb6cd8`.
+Pending-installation repair2610 is superseded unmerged; do not rewrite the now
+recorded migration. Its original causal proof/reviews remain historical.
+Workspace2604 composes released security2607/main7a874, preserving both manifest
+install pins. Only the benign sanitizer regression is reused; no native repair,
+new writer, permission, provider or execution activation. Mounted/editor release,
+ordinary owner/staff/linked-client acceptance and all twelve outcomes remain owed.
+
+**2026-10-22 — EXP04 preparation owner API, native deployment held (earlier checkpoint; superseded by later parity above).**
+
+PR[#2599](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2599), reviewed
+`ae444dade5b9d1dd3edd849e29150d1ed84dece2`, AUTHOR-REVIEW / LOWER ASSURANCE
+5618223345, merged `429388f2528942275334fd0c916c6fcfecb4f70a`; actual reviewed
+composition tree `702b16653bd4afa11471e2abe47b170576dc9540`. All13 required
+exact-head checks/full normal Preview/two statuses SUCCESS. Original official
+postgres image mirror correction preserves every test, timeout and permission;
+earlier failed registry attempts remain failed. Production Edge39822870560 /
+119978430775 SUCCESS, agreement-document ACTIVE37, original JWT setting false;
+canonical artifact12445511636 and independent16 served-source/config hashes PASS,
+edge-live429. Web `dpl_A9HYaxNza3MaKepmnBwh2JXEvZfn` READY, actual public200
+build `429388f2528942275334fd0c916c6fcfecb4f70a-mvjte1ly`, customerUpdate:null.
+**Native20271113300004 NOT_APPLIED:** original workflow39822870632 failed three
+times and normal serialized recovery39825776556 failed once at statement16,
+original5s lock timeout55P03. Transaction rollback leaves frontier290009, no
+preparation table and original SAVE11body1bd28e75afa0f50bb07b717795a5be0e.
+Read-only schema locks are investigated without terminating sessions, weakening
+timeouts or editing migration history. Dependent2604/2605 remain unreleased;
+actual native ABI/ACL/table/trigger/source readback and owner/staff/client proof
+are owed. This is a merged API increment with a deployment hold, not a complete
+customer release, algorithm/catalogue promotion, signing/send/payment authority
+or full twelve-outcome/founder acceptance. Recovery: unchanged serialized normal
+workflow after a quiet read window; otherwise a separately reviewed forward fix.
 
 ### Paige OS Integration — the Surface Binding Ledger + the Surface Context Handoff Contract (2026-09-06, Phases 0–1)
 

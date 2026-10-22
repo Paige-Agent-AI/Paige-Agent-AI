@@ -47,6 +47,7 @@ type Inspection = { kind: "item"; id: string; view: Destination; proposedStage?:
 type WorkspaceProps = { openPaige?: () => void; view?: string; onViewChange?: (view: string) => void; onOpenAgreements?: () => void;
   weeklySourceSearch?: string; weeklySourceKey?: string; onWeeklySourceDismiss?: () => void;
   onTaskFocusDismiss?: () => void;
+  onPlaybooksViewChange?: (view: "procedures" | "automations") => void;
   onNavigationGuardChange?: (guard: (() => string | null) | null, notify?: () => string | null) => void };
 const subscribePersona = (changed: () => void) => subscribeScopedUser(() => changed());
 const serverPersona = () => null;
@@ -72,7 +73,7 @@ function OperationsLoading() {
 }
 
 function ScopedOperations({ tenantId, userId, openPaige, onOpenAgreements, view, onViewChange, weeklySourceSearch = "", weeklySourceKey,
-  onWeeklySourceDismiss, onTaskFocusDismiss, onNavigationGuardChange }: WorkspaceProps & {
+  onWeeklySourceDismiss, onTaskFocusDismiss, onPlaybooksViewChange, onNavigationGuardChange }: WorkspaceProps & {
   tenantId: string; userId: string;
 }) {
   const [localDestination, setLocalDestination] = useState<Destination>(() => DESTINATIONS.find(name => name.toLowerCase() === view) ?? "Overview");
@@ -99,6 +100,10 @@ function ScopedOperations({ tenantId, userId, openPaige, onOpenAgreements, view,
     editorGuard.current = guard;
     onNavigationGuardChange?.(navigationReason, checkNavigation);
   }, [onNavigationGuardChange, navigationReason, checkNavigation]);
+  const registerProcessGuard = useCallback((guard: (() => string | null) | null) => {
+    registerEditorGuard(guard);
+    if (!guard?.()) setNavigationNotice("");
+  }, [registerEditorGuard]);
   // Publish hold-clear changes as well as initial registration. The shell only
   // rerenders when the hold changes; no draft or record leaves Operations.
   useLayoutEffect(() => { onNavigationGuardChange?.(navigationReason, checkNavigation); });
@@ -398,7 +403,7 @@ function ScopedOperations({ tenantId, userId, openPaige, onOpenAgreements, view,
         planningReady={planningAvailable && !source.loading} members={people.members}
         peopleReady={!people.loading && !people.error && !people.partial}
         onVerified={async planId => { await source.refresh({ silent: true }); setInspection({ kind: "plan", id: planId, view: destination }); }} />
-        : destination === "Playbooks" ? <OperationsPlaybooks tenantId={tenantId} onPrepare={openPaige ? preparePlaybookWithPaige : undefined} />
+        : destination === "Playbooks" ? <OperationsPlaybooks tenantId={tenantId} view={onPlaybooksViewChange ? new URLSearchParams(weeklySourceSearch).get("playbooks") === "automations" ? "automations" : "procedures" : undefined} onViewChange={onPlaybooksViewChange} onNavigationGuardChange={registerProcessGuard} canLeave={()=>!checkNavigation()} onPrepare={openPaige ? preparePlaybookWithPaige : undefined} />
         : destination === "Work" ? workView
         : destination === "Capacity" ? capacityView
         : destination === "Overview" ? overviewView

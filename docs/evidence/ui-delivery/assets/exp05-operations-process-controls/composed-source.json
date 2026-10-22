@@ -1,0 +1,268 @@
+{
+  "source": "2a41920865a09c463fe79a6c68c19efd7c64f38d",
+  "bundle": "7238c0c0b64c93c9659a66b72b14743964b71361b0463e7080fb210f57cd6a46",
+  "transforms": 0,
+  "frames": [
+    {
+      "label": "composed-dark-1536-closed",
+      "alerts": [],
+      "buttons": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Procedures"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Automations"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Design with ZION"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Refresh"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Review to enable"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "View history"
+        }
+      ],
+      "canvas": "#100e14",
+      "composerDraftLength": 0,
+      "composerPresent": true,
+      "focus": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localSto",
+      "fonts": "loaded",
+      "height": 770,
+      "primary": {
+        "bg": "rgb(212, 167, 82)",
+        "ink": "rgb(16, 14, 20)"
+      },
+      "scrollWidth": 1536,
+      "selected": {
+        "ink": "rgb(246, 242, 234)",
+        "line": "rgb(246, 242, 234)"
+      },
+      "sendDisabled": true,
+      "theme": "dark",
+      "url": "http://127.0.0.1:5219/solo/1701/operations/playbooks?work=empty&controls=0&theme=dark&books=empty&playbooks=automations",
+      "width": 1536
+    },
+    {
+      "label": "composed-dark-1536-open",
+      "alerts": [],
+      "buttons": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Procedures"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Automations"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Design with ZION"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Refresh"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Review to enable"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "View history"
+        }
+      ],
+      "canvas": "#100e14",
+      "composerDraftLength": 471,
+      "composerPresent": true,
+      "focus": "Message PAIGE",
+      "fonts": "loaded",
+      "height": 770,
+      "primary": {
+        "bg": "rgb(212, 167, 82)",
+        "ink": "rgb(16, 14, 20)"
+      },
+      "scrollWidth": 1536,
+      "selected": {
+        "ink": "rgb(246, 242, 234)",
+        "line": "rgb(246, 242, 234)"
+      },
+      "sendDisabled": true,
+      "theme": "dark",
+      "url": "http://127.0.0.1:5219/solo/1701/operations/playbooks?work=empty&controls=0&theme=dark&books=empty&playbooks=automations",
+      "width": 1536
+    },
+    {
+      "label": "composed-light-900-closed",
+      "alerts": [],
+      "buttons": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Procedures"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Automations"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Design with ZION"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Refresh"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Review to enable"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "View history"
+        }
+      ],
+      "canvas": "#fbf9f5",
+      "composerDraftLength": 0,
+      "composerPresent": true,
+      "focus": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localSto",
+      "fonts": "loaded",
+      "height": 1000,
+      "primary": {
+        "bg": "rgb(201, 169, 106)",
+        "ink": "rgb(32, 30, 35)"
+      },
+      "scrollWidth": 900,
+      "selected": {
+        "ink": "rgb(32, 30, 35)",
+        "line": "rgb(32, 30, 35)"
+      },
+      "sendDisabled": true,
+      "theme": "light",
+      "url": "http://127.0.0.1:5219/solo/1701/operations/playbooks?work=empty&controls=0&theme=light&books=empty&playbooks=automations",
+      "width": 900
+    },
+    {
+      "label": "composed-light-900-open",
+      "alerts": [],
+      "buttons": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Procedures"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Automations"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Design with ZION"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Refresh"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Review to enable"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "View history"
+        }
+      ],
+      "canvas": "#fbf9f5",
+      "composerDraftLength": 471,
+      "composerPresent": true,
+      "focus": "Message PAIGE",
+      "fonts": "loaded",
+      "height": 1000,
+      "primary": {
+        "bg": "rgb(201, 169, 106)",
+        "ink": "rgb(32, 30, 35)"
+      },
+      "scrollWidth": 900,
+      "selected": {
+        "ink": "rgb(32, 30, 35)",
+        "line": "rgb(32, 30, 35)"
+      },
+      "sendDisabled": true,
+      "theme": "light",
+      "url": "http://127.0.0.1:5219/solo/1701/operations/playbooks?work=empty&controls=0&theme=light&books=empty&playbooks=automations",
+      "width": 900
+    }
+  ],
+  "viewportCleared": true,
+  "boundary": "Synthetic engineering proof only; original full matrix remains source df8, all five owned production leaves unchanged.",
+  "html": "7a3e07d3e7cb9f8f149f017f6d7a31bb7b818a639c3a6415a1b26da7e76d8418",
+  "productInputs": 323,
+  "syntheticPorts": 178,
+  "changedProductInputs": [
+    {
+      "path": "src/solo/systems-check-areas.ts",
+      "before": "5374c1e102b1465e67bb1e788cb3e226b04279bb",
+      "after": "fda4d942958d300f44a7c416bd2cb9ce1330aafd"
+    },
+    {
+      "path": "src/solo/solo-systems-check-workspace.css",
+      "before": "d3880b7c0722430958e2814ccf66a8ba471cedee",
+      "after": "4ca93673fe11a1e37132baf98971acdde01902fc"
+    },
+    {
+      "path": "src/solo/SoloSystemsCheckWorkspace.tsx",
+      "before": "7f641e7076ab90c5f91f57d602f2241bd72d8a77",
+      "after": "695878ac67724ea9939281ca0766cbc4d88b1e1b"
+    },
+    {
+      "path": "src/solo/solo-onboarding-stage.css",
+      "before": "c1d5945ef58df0ac85494f4f9dbb921a9b9b111e",
+      "after": "fbd3179a2c49961502c406c1194eefede0116a6b"
+    },
+    {
+      "path": "src/solo/SoloOnboardingStage.tsx",
+      "before": "6189e5e5aa2150938cfee2ad37c1b0944ce6358d",
+      "after": "0eca0d047021d93e6e112a34fe5a0126cb045edf"
+    },
+    {
+      "path": "src/solo/SoloPaigeWorkspace.tsx",
+      "before": "241755462ac41a2eac55540ea3377ea5ce00820b",
+      "after": "c4e558a4da68d29b257aaeab3e3e542a314fba34"
+    }
+  ],
+  "ownFiveProductLeavesUnchanged": true,
+  "sourceManifestSha256": "5b6848419e762eec58c8112d07ce5d1a99e678757d5541660dcd7c07baf9bec1",
+  "earlierFullMatrixSource": "df8f0bb647a7be12aa89a3d632ad28372e5bbd24",
+  "limitations": "Four proportionate composition frames are not a newly exercised complete matrix or authenticated production proof. Earlier full matrix remains its exact source. Actual200%/AT, ordinary role/controls/occurrence, Live and full Experience remain UNVERIFIED."
+}

@@ -1,0 +1,1219 @@
+{
+  "source": "df8f0bb647a7be12aa89a3d632ad28372e5bbd24",
+  "bundle": "5bde8c45141fb5371dde30bf3ca4f8ebb1432070d68419380b5ad39609a73905",
+  "html": "ba360d3c9847f7799688393580b074096994e8c113debaa78336d03dca1da50b",
+  "productTransforms": 0,
+  "productInputs": 323,
+  "syntheticPorts": 178,
+  "viewportCleared": true,
+  "nativeRestored": {
+    "height": 770,
+    "width": 1536
+  },
+  "boundary": "Synthetic engineering proof only; twelve initial noncanonical-height frames superseded; source and bundle unchanged",
+  "frames": [
+    {
+      "label": "light-1536-closed",
+      "alerts": [],
+      "buttons": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Procedures"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Automations"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Design with ZION"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Refresh"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Review to enable"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "View history"
+        }
+      ],
+      "canvas": "#fbf9f5",
+      "composerDraftLength": 0,
+      "composerPresent": true,
+      "focus": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localSto",
+      "fonts": "loaded",
+      "height": 770,
+      "primary": {
+        "bg": "rgb(201, 169, 106)",
+        "ink": "rgb(32, 30, 35)"
+      },
+      "scrollWidth": 1536,
+      "selected": {
+        "ink": "rgb(32, 30, 35)",
+        "line": "rgb(32, 30, 35)"
+      },
+      "sendDisabled": true,
+      "theme": "light",
+      "url": "http://127.0.0.1:5219/solo/1701/operations/playbooks?work=empty&controls=0&theme=light&books=empty&playbooks=automations",
+      "width": 1536
+    },
+    {
+      "label": "light-1536-open",
+      "alerts": [],
+      "buttons": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Procedures"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Automations"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Design with ZION"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Refresh"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Review to enable"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "View history"
+        }
+      ],
+      "canvas": "#fbf9f5",
+      "composerDraftLength": 471,
+      "composerPresent": true,
+      "focus": "Message PAIGE",
+      "fonts": "loaded",
+      "height": 770,
+      "primary": {
+        "bg": "rgb(201, 169, 106)",
+        "ink": "rgb(32, 30, 35)"
+      },
+      "scrollWidth": 1536,
+      "selected": {
+        "ink": "rgb(32, 30, 35)",
+        "line": "rgb(32, 30, 35)"
+      },
+      "sendDisabled": true,
+      "theme": "light",
+      "url": "http://127.0.0.1:5219/solo/1701/operations/playbooks?work=empty&controls=0&theme=light&books=empty&playbooks=automations",
+      "width": 1536
+    },
+    {
+      "label": "light-1366-closed",
+      "alerts": [],
+      "buttons": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Procedures"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Automations"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Design with ZION"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Refresh"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Review to enable"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "View history"
+        }
+      ],
+      "canvas": "#fbf9f5",
+      "composerDraftLength": 0,
+      "composerPresent": true,
+      "focus": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localSto",
+      "fonts": "loaded",
+      "height": 768,
+      "primary": {
+        "bg": "rgb(201, 169, 106)",
+        "ink": "rgb(32, 30, 35)"
+      },
+      "scrollWidth": 1366,
+      "selected": {
+        "ink": "rgb(32, 30, 35)",
+        "line": "rgb(32, 30, 35)"
+      },
+      "sendDisabled": true,
+      "theme": "light",
+      "url": "http://127.0.0.1:5219/solo/1701/operations/playbooks?work=empty&controls=0&theme=light&books=empty&playbooks=automations",
+      "width": 1366
+    },
+    {
+      "label": "light-1366-open",
+      "alerts": [],
+      "buttons": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Procedures"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Automations"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Design with ZION"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Refresh"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Review to enable"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "View history"
+        }
+      ],
+      "canvas": "#fbf9f5",
+      "composerDraftLength": 471,
+      "composerPresent": true,
+      "focus": "Message PAIGE",
+      "fonts": "loaded",
+      "height": 768,
+      "primary": {
+        "bg": "rgb(201, 169, 106)",
+        "ink": "rgb(32, 30, 35)"
+      },
+      "scrollWidth": 1366,
+      "selected": {
+        "ink": "rgb(32, 30, 35)",
+        "line": "rgb(32, 30, 35)"
+      },
+      "sendDisabled": true,
+      "theme": "light",
+      "url": "http://127.0.0.1:5219/solo/1701/operations/playbooks?work=empty&controls=0&theme=light&books=empty&playbooks=automations",
+      "width": 1366
+    },
+    {
+      "label": "light-1024-closed",
+      "alerts": [],
+      "buttons": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Procedures"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Automations"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Design with ZION"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Refresh"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Review to enable"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "View history"
+        }
+      ],
+      "canvas": "#fbf9f5",
+      "composerDraftLength": 0,
+      "composerPresent": true,
+      "focus": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localSto",
+      "fonts": "loaded",
+      "height": 768,
+      "primary": {
+        "bg": "rgb(201, 169, 106)",
+        "ink": "rgb(32, 30, 35)"
+      },
+      "scrollWidth": 1024,
+      "selected": {
+        "ink": "rgb(32, 30, 35)",
+        "line": "rgb(32, 30, 35)"
+      },
+      "sendDisabled": true,
+      "theme": "light",
+      "url": "http://127.0.0.1:5219/solo/1701/operations/playbooks?work=empty&controls=0&theme=light&books=empty&playbooks=automations",
+      "width": 1024
+    },
+    {
+      "label": "light-1024-open",
+      "alerts": [],
+      "buttons": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Procedures"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Automations"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Design with ZION"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Refresh"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Review to enable"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "View history"
+        }
+      ],
+      "canvas": "#fbf9f5",
+      "composerDraftLength": 471,
+      "composerPresent": true,
+      "focus": "Message PAIGE",
+      "fonts": "loaded",
+      "height": 768,
+      "primary": {
+        "bg": "rgb(201, 169, 106)",
+        "ink": "rgb(32, 30, 35)"
+      },
+      "scrollWidth": 1024,
+      "selected": {
+        "ink": "rgb(32, 30, 35)",
+        "line": "rgb(32, 30, 35)"
+      },
+      "sendDisabled": true,
+      "theme": "light",
+      "url": "http://127.0.0.1:5219/solo/1701/operations/playbooks?work=empty&controls=0&theme=light&books=empty&playbooks=automations",
+      "width": 1024
+    },
+    {
+      "label": "light-900-closed",
+      "alerts": [],
+      "buttons": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Procedures"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Automations"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Design with ZION"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Refresh"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Review to enable"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "View history"
+        }
+      ],
+      "canvas": "#fbf9f5",
+      "composerDraftLength": 0,
+      "composerPresent": true,
+      "focus": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localSto",
+      "fonts": "loaded",
+      "height": 1000,
+      "primary": {
+        "bg": "rgb(201, 169, 106)",
+        "ink": "rgb(32, 30, 35)"
+      },
+      "scrollWidth": 900,
+      "selected": {
+        "ink": "rgb(32, 30, 35)",
+        "line": "rgb(32, 30, 35)"
+      },
+      "sendDisabled": true,
+      "theme": "light",
+      "url": "http://127.0.0.1:5219/solo/1701/operations/playbooks?work=empty&controls=0&theme=light&books=empty&playbooks=automations",
+      "width": 900
+    },
+    {
+      "label": "light-900-open",
+      "alerts": [],
+      "buttons": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Procedures"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Automations"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Design with ZION"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Refresh"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Review to enable"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "View history"
+        }
+      ],
+      "canvas": "#fbf9f5",
+      "composerDraftLength": 471,
+      "composerPresent": true,
+      "focus": "Message PAIGE",
+      "fonts": "loaded",
+      "height": 1000,
+      "primary": {
+        "bg": "rgb(201, 169, 106)",
+        "ink": "rgb(32, 30, 35)"
+      },
+      "scrollWidth": 900,
+      "selected": {
+        "ink": "rgb(32, 30, 35)",
+        "line": "rgb(32, 30, 35)"
+      },
+      "sendDisabled": true,
+      "theme": "light",
+      "url": "http://127.0.0.1:5219/solo/1701/operations/playbooks?work=empty&controls=0&theme=light&books=empty&playbooks=automations",
+      "width": 900
+    },
+    {
+      "label": "dark-1536-closed",
+      "alerts": [],
+      "buttons": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Procedures"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Automations"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Design with ZION"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Refresh"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Review to enable"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "View history"
+        }
+      ],
+      "canvas": "#100e14",
+      "composerDraftLength": 0,
+      "composerPresent": true,
+      "focus": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localSto",
+      "fonts": "loaded",
+      "height": 770,
+      "primary": {
+        "bg": "rgb(212, 167, 82)",
+        "ink": "rgb(16, 14, 20)"
+      },
+      "scrollWidth": 1536,
+      "selected": {
+        "ink": "rgb(246, 242, 234)",
+        "line": "rgb(246, 242, 234)"
+      },
+      "sendDisabled": true,
+      "theme": "dark",
+      "url": "http://127.0.0.1:5219/solo/1701/operations/playbooks?work=empty&controls=0&theme=dark&books=empty&playbooks=automations",
+      "width": 1536
+    },
+    {
+      "label": "dark-1536-open",
+      "alerts": [],
+      "buttons": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Procedures"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Automations"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Design with ZION"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Refresh"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Review to enable"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "View history"
+        }
+      ],
+      "canvas": "#100e14",
+      "composerDraftLength": 471,
+      "composerPresent": true,
+      "focus": "Message PAIGE",
+      "fonts": "loaded",
+      "height": 770,
+      "primary": {
+        "bg": "rgb(212, 167, 82)",
+        "ink": "rgb(16, 14, 20)"
+      },
+      "scrollWidth": 1536,
+      "selected": {
+        "ink": "rgb(246, 242, 234)",
+        "line": "rgb(246, 242, 234)"
+      },
+      "sendDisabled": true,
+      "theme": "dark",
+      "url": "http://127.0.0.1:5219/solo/1701/operations/playbooks?work=empty&controls=0&theme=dark&books=empty&playbooks=automations",
+      "width": 1536
+    },
+    {
+      "label": "dark-1366-closed",
+      "alerts": [],
+      "buttons": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Procedures"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Automations"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Design with ZION"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Refresh"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Review to enable"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "View history"
+        }
+      ],
+      "canvas": "#100e14",
+      "composerDraftLength": 0,
+      "composerPresent": true,
+      "focus": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localSto",
+      "fonts": "loaded",
+      "height": 768,
+      "primary": {
+        "bg": "rgb(212, 167, 82)",
+        "ink": "rgb(16, 14, 20)"
+      },
+      "scrollWidth": 1366,
+      "selected": {
+        "ink": "rgb(246, 242, 234)",
+        "line": "rgb(246, 242, 234)"
+      },
+      "sendDisabled": true,
+      "theme": "dark",
+      "url": "http://127.0.0.1:5219/solo/1701/operations/playbooks?work=empty&controls=0&theme=dark&books=empty&playbooks=automations",
+      "width": 1366
+    },
+    {
+      "label": "dark-1366-open",
+      "alerts": [],
+      "buttons": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Procedures"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Automations"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Design with ZION"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Refresh"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Review to enable"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "View history"
+        }
+      ],
+      "canvas": "#100e14",
+      "composerDraftLength": 471,
+      "composerPresent": true,
+      "focus": "Message PAIGE",
+      "fonts": "loaded",
+      "height": 768,
+      "primary": {
+        "bg": "rgb(212, 167, 82)",
+        "ink": "rgb(16, 14, 20)"
+      },
+      "scrollWidth": 1366,
+      "selected": {
+        "ink": "rgb(246, 242, 234)",
+        "line": "rgb(246, 242, 234)"
+      },
+      "sendDisabled": true,
+      "theme": "dark",
+      "url": "http://127.0.0.1:5219/solo/1701/operations/playbooks?work=empty&controls=0&theme=dark&books=empty&playbooks=automations",
+      "width": 1366
+    },
+    {
+      "label": "dark-1024-closed",
+      "alerts": [],
+      "buttons": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Procedures"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Automations"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Design with ZION"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Refresh"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Review to enable"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "View history"
+        }
+      ],
+      "canvas": "#100e14",
+      "composerDraftLength": 0,
+      "composerPresent": true,
+      "focus": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localSto",
+      "fonts": "loaded",
+      "height": 768,
+      "primary": {
+        "bg": "rgb(212, 167, 82)",
+        "ink": "rgb(16, 14, 20)"
+      },
+      "scrollWidth": 1024,
+      "selected": {
+        "ink": "rgb(246, 242, 234)",
+        "line": "rgb(246, 242, 234)"
+      },
+      "sendDisabled": true,
+      "theme": "dark",
+      "url": "http://127.0.0.1:5219/solo/1701/operations/playbooks?work=empty&controls=0&theme=dark&books=empty&playbooks=automations",
+      "width": 1024
+    },
+    {
+      "label": "dark-1024-open",
+      "alerts": [],
+      "buttons": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Procedures"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Automations"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Design with ZION"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Refresh"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Review to enable"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "View history"
+        }
+      ],
+      "canvas": "#100e14",
+      "composerDraftLength": 471,
+      "composerPresent": true,
+      "focus": "Message PAIGE",
+      "fonts": "loaded",
+      "height": 768,
+      "primary": {
+        "bg": "rgb(212, 167, 82)",
+        "ink": "rgb(16, 14, 20)"
+      },
+      "scrollWidth": 1024,
+      "selected": {
+        "ink": "rgb(246, 242, 234)",
+        "line": "rgb(246, 242, 234)"
+      },
+      "sendDisabled": true,
+      "theme": "dark",
+      "url": "http://127.0.0.1:5219/solo/1701/operations/playbooks?work=empty&controls=0&theme=dark&books=empty&playbooks=automations",
+      "width": 1024
+    },
+    {
+      "label": "dark-900-closed",
+      "alerts": [],
+      "buttons": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Procedures"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Automations"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Design with ZION"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Refresh"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Review to enable"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "View history"
+        }
+      ],
+      "canvas": "#100e14",
+      "composerDraftLength": 0,
+      "composerPresent": true,
+      "focus": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localSto",
+      "fonts": "loaded",
+      "height": 1000,
+      "primary": {
+        "bg": "rgb(212, 167, 82)",
+        "ink": "rgb(16, 14, 20)"
+      },
+      "scrollWidth": 900,
+      "selected": {
+        "ink": "rgb(246, 242, 234)",
+        "line": "rgb(246, 242, 234)"
+      },
+      "sendDisabled": true,
+      "theme": "dark",
+      "url": "http://127.0.0.1:5219/solo/1701/operations/playbooks?work=empty&controls=0&theme=dark&books=empty&playbooks=automations",
+      "width": 900
+    },
+    {
+      "label": "dark-900-open",
+      "alerts": [],
+      "buttons": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Procedures"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Automations"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Design with ZION"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Refresh"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Review to enable"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "View history"
+        }
+      ],
+      "canvas": "#100e14",
+      "composerDraftLength": 471,
+      "composerPresent": true,
+      "focus": "Message PAIGE",
+      "fonts": "loaded",
+      "height": 1000,
+      "primary": {
+        "bg": "rgb(212, 167, 82)",
+        "ink": "rgb(16, 14, 20)"
+      },
+      "scrollWidth": 900,
+      "selected": {
+        "ink": "rgb(246, 242, 234)",
+        "line": "rgb(246, 242, 234)"
+      },
+      "sendDisabled": true,
+      "theme": "dark",
+      "url": "http://127.0.0.1:5219/solo/1701/operations/playbooks?work=empty&controls=0&theme=dark&books=empty&playbooks=automations",
+      "width": 900
+    },
+    {
+      "label": "dark-900-held-review",
+      "alerts": [
+        "Finish or cancel the process review before leaving."
+      ],
+      "buttons": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Procedures"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Automations"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Design with ZION"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Refresh"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Review to enable"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "View history"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Enable future contacts"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Cancel"
+        }
+      ],
+      "canvas": "#100e14",
+      "composerDraftLength": 471,
+      "composerPresent": true,
+      "focus": "Work",
+      "fonts": "loaded",
+      "height": 900,
+      "primary": {
+        "bg": "rgb(212, 167, 82)",
+        "ink": "rgb(16, 14, 20)"
+      },
+      "scrollWidth": 900,
+      "selected": {
+        "ink": "rgb(246, 242, 234)",
+        "line": "rgb(246, 242, 234)"
+      },
+      "sendDisabled": true,
+      "theme": "dark",
+      "url": "http://127.0.0.1:5219/solo/1701/operations/playbooks?work=empty&controls=0&theme=dark&books=empty&playbooks=automations",
+      "width": 900
+    },
+    {
+      "label": "dark-900-original-history",
+      "alerts": [],
+      "buttons": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Procedures"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Automations"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Design with ZION"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Refresh"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Review to enable"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "View history"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Close history"
+        }
+      ],
+      "canvas": "#100e14",
+      "composerDraftLength": 471,
+      "composerPresent": true,
+      "focus": "View history",
+      "fonts": "loaded",
+      "height": 900,
+      "primary": {
+        "bg": "rgb(212, 167, 82)",
+        "ink": "rgb(16, 14, 20)"
+      },
+      "scrollWidth": 900,
+      "selected": {
+        "ink": "rgb(246, 242, 234)",
+        "line": "rgb(246, 242, 234)"
+      },
+      "sendDisabled": true,
+      "theme": "dark",
+      "url": "http://127.0.0.1:5219/solo/1701/operations/playbooks?work=empty&controls=0&theme=dark&books=empty&playbooks=automations",
+      "width": 900
+    },
+    {
+      "label": "light-390-loading",
+      "alerts": [
+        "Checking internal task processes…"
+      ],
+      "buttons": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Procedures"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Automations"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Design with ZION"
+        },
+        {
+          "disabled": true,
+          "height": 44,
+          "text": "Refresh"
+        }
+      ],
+      "canvas": "#fbf9f5",
+      "composerDraftLength": 0,
+      "composerPresent": true,
+      "focus": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localSto",
+      "fonts": "loaded",
+      "height": 844,
+      "primary": {
+        "bg": "rgb(201, 169, 106)",
+        "ink": "rgb(32, 30, 35)"
+      },
+      "scrollWidth": 390,
+      "selected": {
+        "ink": "rgb(32, 30, 35)",
+        "line": "rgb(32, 30, 35)"
+      },
+      "sendDisabled": true,
+      "theme": "light",
+      "url": "http://127.0.0.1:5219/solo/1701/operations/playbooks?work=empty&controls=0&theme=light&books=empty&playbooks=automations&process=loading",
+      "width": 390
+    },
+    {
+      "label": "light-390-refused",
+      "alerts": [
+        "An active owner or admin in this workspace is required."
+      ],
+      "buttons": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Procedures"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Automations"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Design with ZION"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Refresh"
+        }
+      ],
+      "canvas": "#fbf9f5",
+      "composerDraftLength": 0,
+      "composerPresent": true,
+      "focus": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localSto",
+      "fonts": "loaded",
+      "height": 844,
+      "primary": {
+        "bg": "rgb(201, 169, 106)",
+        "ink": "rgb(32, 30, 35)"
+      },
+      "scrollWidth": 390,
+      "selected": {
+        "ink": "rgb(32, 30, 35)",
+        "line": "rgb(32, 30, 35)"
+      },
+      "sendDisabled": true,
+      "theme": "light",
+      "url": "http://127.0.0.1:5219/solo/1701/operations/playbooks?work=empty&controls=0&theme=light&books=empty&playbooks=automations&process=refused",
+      "width": 390
+    },
+    {
+      "label": "light-390-empty",
+      "alerts": [],
+      "buttons": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Procedures"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Automations"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Design with ZION"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Refresh"
+        }
+      ],
+      "canvas": "#fbf9f5",
+      "composerDraftLength": 0,
+      "composerPresent": true,
+      "focus": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localSto",
+      "fonts": "loaded",
+      "height": 844,
+      "primary": {
+        "bg": "rgb(201, 169, 106)",
+        "ink": "rgb(32, 30, 35)"
+      },
+      "scrollWidth": 390,
+      "selected": {
+        "ink": "rgb(32, 30, 35)",
+        "line": "rgb(32, 30, 35)"
+      },
+      "sendDisabled": true,
+      "theme": "light",
+      "url": "http://127.0.0.1:5219/solo/1701/operations/playbooks?work=empty&controls=0&theme=light&books=empty&playbooks=automations&process=empty",
+      "width": 390
+    },
+    {
+      "label": "light-390-unknown",
+      "alerts": [
+        "The outcome could not be confirmed. The process may have changed. Refresh before making another decision."
+      ],
+      "buttons": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Procedures"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Automations"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Design with ZION"
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Refresh"
+        },
+        {
+          "disabled": true,
+          "height": 44,
+          "text": "Review to enable"
+        },
+        {
+          "disabled": true,
+          "height": 44,
+          "text": "View history"
+        }
+      ],
+      "canvas": "#fbf9f5",
+      "composerDraftLength": 0,
+      "composerPresent": true,
+      "focus": "!function(){try{var d=document.documentElement,c=d.classList;c.remove('light','dark');var e=localSto",
+      "fonts": "loaded",
+      "height": 844,
+      "primary": {
+        "bg": "rgb(201, 169, 106)",
+        "ink": "rgb(32, 30, 35)"
+      },
+      "scrollWidth": 390,
+      "selected": {
+        "ink": "rgb(32, 30, 35)",
+        "line": "rgb(32, 30, 35)"
+      },
+      "sendDisabled": true,
+      "theme": "light",
+      "url": "http://127.0.0.1:5219/solo/1701/operations/playbooks?work=empty&controls=0&theme=light&books=empty&playbooks=automations&process=unknown",
+      "width": 390
+    }
+  ]
+}

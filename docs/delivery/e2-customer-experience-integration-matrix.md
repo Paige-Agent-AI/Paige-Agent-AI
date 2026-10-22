@@ -849,3 +849,35 @@ remains UNVERIFIED. Mounted finding2626 and Desk2627 are separate gated consumer
 Postmerge main ci39859025600 CANCELLED is not called PASS; reviewed-head gates
 passed. All19/nine and one complete founder evaluation remain owed. This supersedes
 prior development release wording only at the stated source-release boundary.
+
+
+## October22 — canonical document input prerequisite in development
+
+CAP014/015 remain required and Unverified for formal filed monthly/quarterly work.
+An existing document-validator defect is corrected locally: NaN/infinity/JSON numeric
+overflow are refused before serialization can silently turn a fact into null. Four
+causal failures then37 passing cases preserve finite zero/negative/fraction and
+boolean values. No supported type, native authority, artifact, worker, approval,
+Rail, provider or registry is added/activated. Actual source-bound report type,
+immutable permitted evidence, governed submission/status/unknown recovery and
+original artifact retrieval remain separate implementation duties. Review/CI,
+original2607 security dependency, normal Edge/readback and ordinary customer proof
+remain owed. All19 definitions/nine outcomes are unchanged. [Evidence](../evidence/ui-delivery/e2-document-finite-facts.md).
+
+## EXP02 finite document-fact source release — October22 verified
+
+PR2615 reviewed5f7ff7f62b1c1e2bc19bfb928dd7f109795ea466, separate
+AUTHOR-REVIEW / LOWER ASSURANCE5621232278, all11 exact-head checks/two web
+statuses SUCCESS and zero threads, mergedc7fa122ae37aebdde2db61c8fd19f3e64c8b7da5.
+Actual clean4dac+5f7 union treebcf0bb17b15601941e2dbe92e57b6c6d9b49e3a9 verified.
+Productiondpl_3e1jcLLdUwKeLZpXj9d4XapEahAJ READY/publicc7fa-mvk3ffby/null;
+normal Edge39862725330/120117198282 strict source/config PASS for original Chat511
+and internal document-worker50, original caller protections retained, edge-livec7fa.
+[Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2615#issuecomment-6352427257).
+
+Functional source released; Visual unchanged; Experiential original report/artifact,
+ordinary authoring/reload/role/cohort/Live proof owed; Founder Acceptance NOT_ACCEPTED.
+Finite input refusal is not source provenance or model-output correctness. No own
+migration, permission/provider/consequential activation or catalogue/algorithm
+promotion. CAP014/015 Unverified and all19/nine remain required. This supersedes
+older candidate release wording at this bounded source-release level only.

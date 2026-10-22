@@ -2,7 +2,7 @@
   "proofClass": "actual native PDF bytes/browser canvas/assigned-field components/shared validator; synthetic source/identity/network, NO NATIVE SAVE",
   "staticTransport": "native Vite compiled fixture",
   "normalizedLFSourceSHA256": {
-    "src/solo/sales-ops.tsx": "12ee417c71676ef8c508fdb49970ab1d52814a21d51712527ec227236c7eb00b",
+    "src/solo/sales-ops.tsx": "01cca48580f717af60820ad909c81fc8e2dcae1274e60f6d17141fed9395539d",
     "src/solo/SalesWorkspace.tsx": "7c76c109cf9262f5332c2e5964deb7911c1444ea756a378db2d0a91a9acfd91d",
     "src/solo/sales-dialog.tsx": "2db857c01974bec40fd44cba32e019870f3e27e33f245649a93ee050af80c0cd",
     "src/hooks/useBeforeUnloadGuard.ts": "5d0ddcf56f30a74550042c04428a3c03d1904d9156f4173a46884cd60749d4ec",
@@ -19,7 +19,7 @@
     "scripts/live-drive/harness/sales-mount/agreement-authoring-client.ts": "1838e8309cec8fd47f5bfa2608fbdde78acbf372c99ce7dc29a74c6652267e0b",
     "scripts/live-drive/harness/sales-mount/vite.agreement-authoring.config.ts": "ae93d7029cd44a8fa590ea294394926d6535e5e4b4d0e02dee625877b356a7dd",
     "scripts/live-drive/harness/sales-mount/agreement-authoring.html": "c66db7a6acdd821c8aa0051561d06d650522dad1151905733e40ee38bbc25be7",
-    "scripts/live-drive/agreement-authoring-drive.mjs": "6619656ab48465b88074b9419fee54c3f23cf2730cc045813d7eb4e367cf4e2c",
+    "scripts/live-drive/agreement-authoring-drive.mjs": "29f89a81515bb2935bac89ba317cb9b942b5bc9a5ec20bfa7f086883b402d93f",
     "src/solo/sales/AgreementDocumentFields.tsx": "98ce793cc882ef4ac7add6fc238a90af611213a75bd4bff6c2d7bf19f32c66ac",
     "src/solo/sales/AgreementPdfPage.tsx": "c4a7189cb71c82add8373add0af36da81a22676a925cb73b2111c9527fa79207",
     "src/solo/sales/agreementDocumentModel.ts": "e20769ea15ab97013b48bc6197b624d57d80bfa1b03b89ddf9b12399da3c5766",

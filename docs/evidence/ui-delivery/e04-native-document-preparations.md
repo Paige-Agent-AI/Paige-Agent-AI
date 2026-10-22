@@ -18,7 +18,7 @@ REDUCED_MOTION: PASS: actual source drive reducedMotion:reduce; original native 
 STATE_COVERAGE: PASS: native none/retained/selected/stale/history/duplicate/foreign/revoked/CAS/conflict/legacy hold; combined consumer loading/read-only/error/mask/proposals. Real API unknown-save/reload remains unconnected.
 TRUTHFUL_STATE_LABELS: PASS: native source match is agreement-and-parties only; commercial verification not_applicable/not_checked. Actual fixture explicitly reports no native Save. No approval/signature/send/payment/service or legal-sufficiency inference.
 SOLO_UI: YES: combined shared Sales consumer for every eligible current/future SOLO account; native user/business/role floor remains authoritative, no named-account implementation or entitlement.
-UNVERIFIED: native forward290004 production apply/readback, real API/customer mount/save/reload/history, exact approved document/map/send/signing/effective economics, ordinary role/provider/full O1–O12 and founder acceptance.
+UNVERIFIED: native forward300004 production apply/readback, real API/customer mount/save/reload/history, exact approved document/map/send/signing/effective economics, ordinary role/provider/full O1–O12 and founder acceptance.
 SOLO_1536X770_PAIGE_CLOSED: PASS: assets/e04-agreement-document-fields/1536-770-light-closed.png and dark equivalent, actual combined source consumer only.
 SOLO_1536X770_PAIGE_OPEN: PASS:1536-770-light-open.png and dark equivalent, actual original PAIGE side panel.
 SOLO_1366X768_PAIGE_CLOSED: PASS:1366-768-light-closed.png and dark equivalent, paper/inspector and reachable actions.
@@ -27,7 +27,7 @@ SOLO_1024X768_PAIGE_CLOSED: PASS:1024-768-light-closed.png and dark equivalent, 
 SOLO_1024X768_PAIGE_OPEN: PASS:1024-768-light-open.png and dark equivalent, original overlay explicitly Folded before fields; no click-through claim.
 SOLO_900X1000_PAIGE_CLOSED: PASS:900-1000-light-closed.png and dark equivalent, bounded native consumer.
 SOLO_900X1000_PAIGE_OPEN: PASS:900-1000-light-open.png and dark equivalent, actual original Fold before operation, correctly labelled.
-INTERNAL_BUILD_IDENTITY: native_source_sha=67184484e540c628bee325d736b7cdc269286979; consumer_source_sha=22f27e1d7187fb92ce2376a0e37326934087d2c0; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113290004 production apply and readback); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-native-document-preparations.md
+INTERNAL_BUILD_IDENTITY: native_source_sha=67184484e540c628bee325d736b7cdc269286979; consumer_source_sha=22f27e1d7187fb92ce2376a0e37326934087d2c0; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113300004 production apply and readback); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-native-document-preparations.md
 RELEASE_CHANNEL: development: original disposable native proof and actual local consumer render, no production/customer acceptance.
 RELEASE_CLASSIFICATION: internal-only: bounded native version and dependent consumer source, not complete Agreements Experience.
 CUSTOMER_RELEASE_IDENTITY: none: no complete Experience or owner acceptance.
@@ -37,6 +37,17 @@ RELEASE_RECOVERY: position=reviewed forward correction preserving immutable nati
 
 Status: LOCAL, UNAPPLIED, NOT_DEPLOYED. No mounted field-placement or signing
 consumer. No authenticated customer, hosted file, provider or founder acceptance.
+
+Latest October22 current-main continuation: Portal#2586 ACTUALLY applied290009.
+Never-applied native proposal is now FORWARD20271113300004, exact original SQL
+body retained, only proof input filename advances. Original218 assertions/replay2
+PASS AGAIN against the verified task-owned cluster; six new document sessions/
+four observed waits unchanged. No migration-history alteration or data backfill.
+Original#2582 is closed SUPERSEDED SOURCE, preserved in main-target2593 with its
+actual field consumer. Current main41b31270d includes E09 scoped Agreements and
+released original upload2577; both full harness modes and complete design records
+retained after two routine merge conflicts. Actual merged field source rerender
+20 cases/11 paths/30 pins/zero page errors PASS. No customer/native-save inference.
 
 REUSE the original agreement, signers, edited events, actual actor floor and
 native PDF/field validators; EXTEND immutable subordinate preparation versions.

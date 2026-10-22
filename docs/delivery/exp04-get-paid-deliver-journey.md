@@ -1,5 +1,23 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
+## October22 actual-owner pending signer wording — pre-edit repair
+
+REPAIR, not a new signing path. Actual authorized owner saved/reloaded a private
+Not sent draft, while its original pending signer was labeled Awaiting signature.
+Customer outcome: see the actual unsigned state without implying a request was
+issued. Reuse canonical agreementVocabulary SIGNER_STATE in the selected record
+and existing signer roster; pending means Not signed, not sending or delivery.
+Sales is the entry; same native agreement/party records, actual owner/business/
+role and original SDK/Rail/history remain authoritative. UI vocabulary only, no
+Spine/LayerC execution, new adapter, risk/approval/budget/autonomy/provider access,
+identity/store/job/receipt/scheduler or signature/payment/Comms mutation. Preserve
+viewed/signed/declined and genuine agreement-sent states. Existing prepared roster
+flow must causally reject request-implying copy before the one-label repair;
+actual original signer source drive covers desktop/narrow/focus/refusal/recovery.
+Then separate exact source review/CI, ordered parent release, production readback
+and actual same-owner observation; no source or author smoke is independent/full
+O1–O12/founder acceptance. No new legal clauses or infrastructure counsel gate.
+
 ## October22 required visual-check repair
 
 Actual verify120044935098 on0010067d3 FAILED only at the original Impeccable
@@ -14,6 +32,20 @@ render pins remain exact because this only changes an unbundled test fixture.
 Fresh exact-head CI/review remain required; candidate NOT_DEPLOYED/NOT_ACCEPTED.
 Actual ordinary-owner draft/reload/history proof is separately protected in ANT52,
 from the existing live foundation, not this candidate or full O1 acceptance.
+
+## October22 editor current source proof
+
+Checkpoint2fa4702fb consumes reviewed2604/0010067d3 and released2607 install pins,
+retaining all8 owning source/guard/test/drive files byte-exact to reviewedd555.
+Fresh169 selected cases/eight suites and four actual source drives20/19/26,
+20/14/34,20/11/31,20/10/22 PASS/zero errors/all113 pins exact.320 dark template
+view inspected; synthetic engineering evidence only. Prior173 composed/full1027
+coverage remains separate. Original API/native parity and normal39839940779
+verified; initial apply provenance unknown, six failures retained,2610 superseded
+unmerged. Final source review/CI/ordered parent and own web release/readback/real
+role/provider/whole twelve-outcome and founder acceptance remain owed. Incoming
+accepted2616 Mammoth lock delta/2614 provider docs will be reconciled separately,
+never silently replacing original rendered-source pin identities. No activation.
 
 ## October22 current preparation release and security composition
 
@@ -32,6 +64,52 @@ own web release/readback precede actual ordinary-role checks; no source fixture
 establishes authenticated acceptance. Editor2605, commercial exact approval,
 PRE-1, stable upload recovery and all12 outcomes remain mandatory. Historical
 runner attempts and earlier source-stage plans below retain their dated limits.
+
+## October22 original wording-editor labels — pre-edit correction
+
+Actual authorized ordinary-owner inspection of the deployed template editor found
+unexpanded shortcut and heading-level placeholders in accessible toolbar names.
+REPAIR the original AgreementBodyEditor translation callback to honor the existing
+MDXEditor interpolation contract while retaining its Agreement content label.
+REUSE the same editor, native Markdown, scope remount, normalization/input guard,
+source fallback, plugin allowlist, template/record/one leave guard and permissions.
+No new component library, localization engine, legal wording or Spine capability.
+The business event is ordinary private document editing; no LayerC action or
+approval/send/signature/payment authority follows from a toolbar choice. Original
+records/receipts are unchanged. Extend the existing source-mount template drive
+with real accessible Undo/Redo and three heading choices before correcting the
+callback; verify exact wording/options/reload/leave and desktop/narrow frames.
+Local fixtures are not hosted persistence, legal sufficiency, actual role/provider
+acceptance or full O1–O12/founder acceptance. Separate review/current exact-head CI,
+normal safe release/readback and bounded signed-in label confirmation remain owed.
+
+The unchanged native-browser heading-menu Escape then reproduced the original
+Sales guard closing the whole empty template editor instead of only the menu.
+Four actual guard cases reproduce popup/handled/composition Escape interception
+while15 incumbent cases PASS. Extend the SAME guard to defer to native popup or
+already-handled/composing Escape, retaining subsequent ordinary Escape, dirty,
+busy, unknown, beforeunload, original navigation and explicit discard semantics.
+No second listener, guard or approval path. Verify native menu dismissal before
+continuing the original wording/options journey; do not suppress its Escape test.
+
+The final original-template320 render also shows all six destinations stacked
+above the document. Reuse the existing bounded agreement-row behavior for actual
+template/creation work as well: keep its CSS in the original Sales stylesheet,
+recognize original template/request locations, and let the SAME Sales host reveal
+its selected destination. Preserve six routes/roving keys/guard and44px controls;
+no new navigation or mobile shell. Add actual narrow row-height/selection/route
+checks to this same source drive before correcting the omission, then confirm
+native document preparation still uses that single host behavior.
+
+Final composed-source template/editor20/19/26, mounted20/14/34, original
+fields20/11/31 and intake20/10/22 PASS/zero errors/all113 pins exact. Actual native
+heading menu and320 dark compact template frame inspected. Six-file design0
+blocking/18 incumbent advisories, lint0/one incumbent warning. Final1027 cases/
+66 suites PASS after one unchanged5s signed-copy refusal case passed isolated98ms
+and in the full unchanged quiet rerun. Initial missing local dependency/MSYS and
+selector setup attempts are not causal/product/customer evidence. Type baseline
+remains untouched; final ratchet10/current6/no new errors and gold0 PASS; review/required CI/prerequisite release/readback
+and actual role/cohort/device/provider/whole12/founder acceptance remain separate.
 
 ## October22 required database proof — pre-edit runner correction
 

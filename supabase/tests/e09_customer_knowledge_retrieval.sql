@@ -28,7 +28,7 @@
 --  10. A turn begun through the original 7-argument begin (a v1 binding) replays through the unchanged
 --      v1 context.
 BEGIN;
-SELECT plan(90);
+SELECT plan(148);
 
 -- ── Seed ────────────────────────────────────────────────────────────────────────────────────────
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
@@ -386,6 +386,124 @@ UPDATE public.paige_chat_turns t SET bundle_ref=jsonb_set(coalesce(e.bundle_ref,
 SELECT is((SELECT pg_temp.ctx('a3',th,unused_intent,NULL)->'query_embedding_eligible' FROM k2_eligibility_evidence),
  'false'::jsonb,'legacy request evidence prevents replay embedding');
 UPDATE public.paige_chat_turns t SET bundle_ref=e.bundle_ref FROM k2_eligibility_evidence e WHERE t.id=e.turn_id;
+
+
+-- EXP09: original shared Progress bound to the same private native question (rollback-only).
+CREATE FUNCTION pg_temp.progress_ctx(_who text,_thread uuid,_intent uuid) RETURNS jsonb LANGUAGE sql AS $$
+ SELECT pg_temp.as_user(pg_temp.u(_who),format('SELECT public.client_portal_assistant_progress_context(%L,%L)',_thread,_intent)) $$;
+CREATE FUNCTION pg_temp.progress_begin(_thread uuid,_intent uuid) RETURNS jsonb LANGUAGE sql AS $$
+ SELECT pg_temp.as_user(pg_temp.u('a2'),format('SELECT public.client_portal_assistant_begin_progress(%L,%L,NULL,%L,false,false,false,NULL)',
+  _thread,_intent,'What is my shared progress?')) $$;
+CREATE FUNCTION pg_temp.progress_settle(_thread uuid,_intent uuid,_content text,_progress jsonb,_state text DEFAULT 'FINAL')
+RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE bundle jsonb; knowledge jsonb;
+BEGIN
+ SELECT bundle_ref->'customer_knowledge' INTO knowledge FROM public.paige_chat_turns
+  WHERE thread_id=_thread AND role='user' AND interactive_intent_id=_intent;
+ bundle:=jsonb_build_object('interactive',jsonb_build_object('request_intent_id',_intent),
+  'turn_state',jsonb_build_object('v',1,'state',_state));
+ IF NOT (_content='' AND _state IN('WITHHELD','INTERRUPTED','REFUSED')) THEN
+  IF knowledge IS NOT NULL THEN bundle:=bundle||jsonb_build_object('customer_knowledge',knowledge); END IF;
+ END IF;
+ IF _progress IS NOT NULL THEN bundle:=bundle||jsonb_build_object('customer_progress',_progress); END IF;
+ RETURN pg_temp.as_user(pg_temp.u('a2'),format('SELECT to_jsonb(public.paige_chat_interactive_settle(%L,%L,%L,%L,%L,NULL,NULL,%L::jsonb,NULL))',
+  _thread,pg_temp.u('a2'),pg_temp.t('a'),_intent,_content,bundle::text),'service_role');
+END $$;
+INSERT INTO public.plan_items(id,tenant_id,item_type,created_by,contact_id,title,summary,status,client_shared_at,client_shared_by) VALUES
+ ('e0b20800-0000-4000-8000-000000000001',pg_temp.t('a'),'milestone',pg_temp.u('a1'),pg_temp.c('a2'),'Shared kickoff','PRIVATE INTERNAL SUMMARY','open',now(),pg_temp.u('a1')),
+ ('e0b20800-0000-4000-8000-000000000002',pg_temp.t('a'),'task',pg_temp.u('a1'),pg_temp.c('a2'),'Shared worksheet','PRIVATE NOTES','done',now(),pg_temp.u('a1')),
+ ('e0b20800-0000-4000-8000-000000000003',pg_temp.t('a'),'task',pg_temp.u('a1'),pg_temp.c('a2'),'PRIVATE UNSHARED WORK','PRIVATE INTERNAL SUMMARY','open',NULL,NULL),
+ ('e0b20800-0000-4000-8000-000000000004',pg_temp.t('a'),'task',pg_temp.u('a1'),pg_temp.c('a3'),'PEER PRIVATE PROGRESS',NULL,'open',now(),pg_temp.u('a1')),
+ ('e0b20800-0000-4000-8000-000000000005',pg_temp.t('b'),'task',pg_temp.u('b1'),pg_temp.c('b2'),'FOREIGN BUSINESS PROGRESS',NULL,'open',now(),pg_temp.u('b1'));
+CREATE TEMP TABLE progress_turn AS SELECT pg_temp.thread('a2') th,gen_random_uuid() intent;
+ALTER TABLE progress_turn ADD COLUMN pre jsonb;
+UPDATE progress_turn SET pre=pg_temp.progress_ctx('a2',th,intent);
+
+SELECT ok(NOT has_function_privilege('anon','public._client_progress_snapshot_valid(jsonb)','EXECUTE') AND NOT has_function_privilege('authenticated','public._client_progress_snapshot_valid(jsonb)','EXECUTE') AND NOT has_function_privilege('service_role','public._client_progress_snapshot_valid(jsonb)','EXECUTE'),'Progress helper remains postgres-only: public._client_progress_snapshot_valid(jsonb)');
+SELECT ok(NOT has_function_privilege('anon','public._client_progress_scope_current(uuid,uuid,uuid)','EXECUTE') AND NOT has_function_privilege('authenticated','public._client_progress_scope_current(uuid,uuid,uuid)','EXECUTE') AND NOT has_function_privilege('service_role','public._client_progress_scope_current(uuid,uuid,uuid)','EXECUTE'),'Progress helper remains postgres-only: public._client_progress_scope_current(uuid,uuid,uuid)');
+SELECT ok(NOT has_function_privilege('anon','public._client_progress_snapshot_current(uuid,uuid,uuid,jsonb)','EXECUTE') AND NOT has_function_privilege('authenticated','public._client_progress_snapshot_current(uuid,uuid,uuid,jsonb)','EXECUTE') AND NOT has_function_privilege('service_role','public._client_progress_snapshot_current(uuid,uuid,uuid,jsonb)','EXECUTE'),'Progress helper remains postgres-only: public._client_progress_snapshot_current(uuid,uuid,uuid,jsonb)');
+SELECT ok(NOT has_function_privilege('anon','public._client_progress_snapshot_lock(uuid,uuid,uuid,jsonb)','EXECUTE') AND NOT has_function_privilege('authenticated','public._client_progress_snapshot_lock(uuid,uuid,uuid,jsonb)','EXECUTE') AND NOT has_function_privilege('service_role','public._client_progress_snapshot_lock(uuid,uuid,uuid,jsonb)','EXECUTE'),'Progress helper remains postgres-only: public._client_progress_snapshot_lock(uuid,uuid,uuid,jsonb)');
+SELECT ok(NOT has_function_privilege('anon','public._client_progress_terminal_guard()','EXECUTE') AND NOT has_function_privilege('authenticated','public._client_progress_terminal_guard()','EXECUTE') AND NOT has_function_privilege('service_role','public._client_progress_terminal_guard()','EXECUTE'),'Progress helper remains postgres-only: public._client_progress_terminal_guard()');
+SELECT ok(NOT has_function_privilege('anon','public._client_progress_publication_current(uuid,uuid)','EXECUTE') AND NOT has_function_privilege('authenticated','public._client_progress_publication_current(uuid,uuid)','EXECUTE') AND NOT has_function_privilege('service_role','public._client_progress_publication_current(uuid,uuid)','EXECUTE'),'Progress helper remains postgres-only: public._client_progress_publication_current(uuid,uuid)');
+SELECT ok(has_function_privilege('authenticated','public.client_portal_assistant_progress_context(uuid,uuid)','EXECUTE') AND NOT has_function_privilege('anon','public.client_portal_assistant_progress_context(uuid,uuid)','EXECUTE') AND NOT has_function_privilege('service_role','public.client_portal_assistant_progress_context(uuid,uuid)','EXECUTE'),'new native entry is authenticated only: public.client_portal_assistant_progress_context(uuid,uuid)');
+SELECT ok(has_function_privilege('authenticated','public.client_portal_assistant_begin_progress(uuid,uuid,uuid,text,boolean,boolean,boolean,extensions.vector)','EXECUTE') AND NOT has_function_privilege('anon','public.client_portal_assistant_begin_progress(uuid,uuid,uuid,text,boolean,boolean,boolean,extensions.vector)','EXECUTE') AND NOT has_function_privilege('service_role','public.client_portal_assistant_begin_progress(uuid,uuid,uuid,text,boolean,boolean,boolean,extensions.vector)','EXECUTE'),'new native entry is authenticated only: public.client_portal_assistant_begin_progress(uuid,uuid,uuid,text,boolean,boolean,boolean,extensions.vector)');
+SELECT is(pg_temp.as_user(pg_temp.u('a2'),'SELECT public._client_progress_scope_current(NULL,NULL,NULL)')->>'sqlstate','42501','actual customer role cannot call trusted actor helper');
+SELECT is(pg_temp.as_user(pg_temp.u('a2'),'SELECT public._client_progress_scope_current(NULL,NULL,NULL)','service_role')->>'sqlstate','42501','actual service role cannot call trusted actor helper');
+SELECT is((SELECT pre->>'mode' FROM progress_turn),'fresh','own open customer gets fresh source facts');
+SELECT is((SELECT array_agg(k ORDER BY k) FROM progress_turn,jsonb_object_keys(pre) k),ARRAY['frame','intent_id','mode','progress','snapshot','thread_id'],'new native DTO has exactly six keys');
+SELECT is((SELECT pre->'progress' FROM progress_turn),(pg_temp.as_user(pg_temp.u('a2'),format('SELECT public.client_portal_progress(%L,100)',pg_temp.t('a')))-'server_now'),'facts exactly match original authorized Progress allowlist');
+SELECT is((SELECT jsonb_array_length(pre#>'{progress,items}') FROM progress_turn),2,'only two explicitly shared own items');
+SELECT ok((SELECT pre::text NOT LIKE '%PRIVATE%' AND pre::text NOT LIKE '%FOREIGN BUSINESS%' AND pre::text NOT LIKE '%PEER PRIVATE%' FROM progress_turn),'no internal summary, unshared work, peer or foreign business facts');
+SELECT ok((SELECT NOT (pre->'progress' ? 'server_now') AND public._client_progress_snapshot_valid(pre->'snapshot') FROM progress_turn),'volatile observation is excluded from valid bound facts');
+SELECT is((SELECT pg_temp.progress_ctx('a1',th,intent)->>'sqlstate' FROM progress_turn),'42501','business owner cannot become the private customer');
+SELECT is((SELECT pg_temp.progress_ctx('a3',th,intent)->>'sqlstate' FROM progress_turn),'42501','same-business peer cannot read customer facts');
+SELECT is((SELECT pg_temp.progress_ctx('b2',th,intent)->>'sqlstate' FROM progress_turn),'42501','foreign-business client cannot read customer facts');
+SELECT is((SELECT pg_temp.as_user(pg_temp.u('a2'),format('SELECT public.client_portal_assistant_progress_context(%L,%L)',th,intent),'anon')->>'sqlstate' FROM progress_turn),'42501','anonymous caller denied before source read');
+SELECT is((SELECT pg_temp.progress_ctx('a2',th,NULL)->>'sqlstate' FROM progress_turn),'42501','missing intent is not a source authority');
+SELECT is((SELECT pg_temp.progress_begin(th,intent)->>'status' FROM progress_turn),'accepted','original native begin accepts one source-bound question');
+SELECT is((SELECT bundle_ref->'customer_progress' FROM public.paige_chat_turns t,progress_turn p WHERE t.thread_id=p.th AND t.interactive_intent_id=p.intent AND t.role='user'),(SELECT pre->'snapshot' FROM progress_turn),'original accepted user turn owns exact Progress provenance');
+SELECT is((SELECT pg_temp.progress_ctx('a2',th,intent)->>'mode' FROM progress_turn),'bound','accepted replay uses bound source');
+SELECT is((SELECT pg_temp.progress_ctx('a2',th,intent)-'mode' FROM progress_turn),(SELECT pre-'mode' FROM progress_turn),'accepted read matches original facts, no new snapshot');
+SELECT is((SELECT pg_temp.progress_begin(th,intent)->>'turn_id' FROM progress_turn),(SELECT t.id::text FROM public.paige_chat_turns t,progress_turn p WHERE t.thread_id=p.th AND t.interactive_intent_id=p.intent AND t.role='user'),'replay returns the same original accepted user receipt');
+SELECT is((SELECT count(*) FROM public.paige_chat_turns t,progress_turn p WHERE t.thread_id=p.th AND t.interactive_intent_id=p.intent AND t.role='user'),1::bigint,'one original user receipt after retry');
+SELECT ok((SELECT r->>'sqlstate'='42501' OR r='0'::jsonb FROM progress_turn p CROSS JOIN LATERAL (SELECT pg_temp.as_user(pg_temp.u('a2'),format($q$WITH changed AS (UPDATE public.paige_chat_turns SET bundle_ref=bundle_ref||'{"customer_progress":{"owner_override":true}}'::jsonb WHERE thread_id=%L AND interactive_intent_id=%L AND role='user' RETURNING id) SELECT to_jsonb(count(*)) FROM changed$q$,p.th,p.intent))) AS result(r)),'ordinary customer cannot rewrite accepted native provenance');
+SELECT is((SELECT bundle_ref->'customer_progress' FROM public.paige_chat_turns t,progress_turn p WHERE t.thread_id=p.th AND t.interactive_intent_id=p.intent AND t.role='user'),(SELECT pre->'snapshot' FROM progress_turn),'source binding remains original after denied direct write');
+SELECT ok(NOT public._client_progress_snapshot_valid('[]'::jsonb) AND NOT public._client_progress_snapshot_valid('"not a snapshot"'::jsonb),'malformed scalar/array snapshot returns false without trusting it');
+SELECT is((SELECT pg_temp.progress_settle(th,intent,'Unbound answer',NULL)->>'error' FROM progress_turn),'CUSTOMER_PROGRESS_BINDING_INVALID','missing terminal Progress provenance refused');
+SELECT is((SELECT pg_temp.progress_settle(th,intent,'Forged answer',jsonb_set(pre->'snapshot','{source_fingerprint}',to_jsonb(repeat('0',64))))->>'error' FROM progress_turn),'CUSTOMER_PROGRESS_BINDING_INVALID','different terminal fingerprint refused');
+UPDATE public.plan_items SET title='Updated shared kickoff' WHERE id='e0b20800-0000-4000-8000-000000000001';
+SELECT is((SELECT pg_temp.progress_ctx('a2',th,intent)->>'error' FROM progress_turn),'CUSTOMER_PROGRESS_SOURCE_WITHDRAWN','changed work cannot silently replace accepted facts');
+SELECT is((SELECT pg_temp.progress_settle(th,intent,'Stale answer',pre->'snapshot')->>'error' FROM progress_turn),'CUSTOMER_PROGRESS_SOURCE_WITHDRAWN','trusted service settlement also refuses changed source');
+UPDATE public.plan_items SET title='Shared kickoff' WHERE id='e0b20800-0000-4000-8000-000000000001';
+SELECT ok((SELECT NOT (pg_temp.progress_settle(th,intent,'Your shared kickoff is open and worksheet is done.',pre->'snapshot') ? 'sqlstate') FROM progress_turn),'actual native settlement accepts exact current source');
+SELECT ok((SELECT (pg_temp.as_user(pg_temp.u('a2'),format('SELECT to_jsonb(public.paige_chat_interactive_publication_context_v2(%L,%L))',th,intent))#>>'{}')::boolean FROM progress_turn),'original publication admits exact authorized result');
+SELECT ok((SELECT jsonb_path_exists(pg_temp.ctx('a2',th,gen_random_uuid(),NULL),'$.history[*] ? (@.content == "Your shared kickoff is open and worksheet is done.")') FROM progress_turn),'current Progress answer can inform later model context');
+UPDATE public.plan_items SET client_shared_at=NULL,client_shared_by=NULL WHERE id='e0b20800-0000-4000-8000-000000000001';
+SELECT ok((SELECT NOT (pg_temp.as_user(pg_temp.u('a2'),format('SELECT to_jsonb(public.paige_chat_interactive_publication_context_v2(%L,%L))',th,intent))#>>'{}')::boolean FROM progress_turn),'withdrawal immediately closes original publication');
+SELECT ok((SELECT NOT jsonb_path_exists(pg_temp.ctx('a2',th,gen_random_uuid(),NULL),'$.history[*] ? (@.content == "Your shared kickoff is open and worksheet is done.")') AND (pg_temp.ctx('a2',th,gen_random_uuid(),NULL)->>'history_limited')::boolean FROM progress_turn),'withdrawn Progress prose omitted from new model context, visibly limited');
+SELECT is((SELECT count(*) FROM public.paige_chat_turns t,progress_turn p WHERE t.thread_id=p.th AND t.interactive_intent_id=p.intent AND t.role='assistant'),1::bigint,'original private UI history is preserved, not deleted');
+SELECT is((SELECT pg_temp.progress_ctx('a3',th,intent)->>'mode' FROM k2_v1),'legacy','legacy accepted Knowledge-only question stays Knowledge-only');
+SELECT is((SELECT pg_temp.progress_ctx('a3',th,intent)->'progress' FROM k2_v1),'null'::jsonb,'no new service facts attached to a legacy question');
+
+-- A source read may be empty only when the original authorized projection is genuinely empty.
+CREATE TEMP TABLE progress_empty AS SELECT pg_temp.thread('a3') th,gen_random_uuid() intent;
+UPDATE public.plan_items SET client_shared_at=NULL,client_shared_by=NULL WHERE id='e0b20800-0000-4000-8000-000000000004';
+SELECT is((SELECT pg_temp.progress_ctx('a3',th,intent)#>'{progress,summary,shared}' FROM progress_empty),'0'::jsonb,'genuine authorized zero shared work is explicit');
+SELECT is((SELECT pg_temp.progress_ctx('a3',th,intent)#>'{progress,items}' FROM progress_empty),'[]'::jsonb,'empty source is not a fallback to another customer');
+
+SELECT set_config('paige.portal_access_write','1',true);
+UPDATE public.clients SET portal_access_state='paused' WHERE id=pg_temp.c('a2');
+SELECT is((SELECT pg_temp.progress_ctx('a2',th,intent)->>'sqlstate' FROM progress_turn),'42501','paused relationship refuses even an already accepted question');
+SELECT is((SELECT pg_temp.progress_begin(th,gen_random_uuid())->>'sqlstate' FROM progress_turn),'42501','paused relationship cannot begin a new question');
+SELECT ok((SELECT NOT public._client_progress_snapshot_current(pg_temp.u('a2'),pg_temp.t('a'),pg_temp.c('a2'),pre->'snapshot') FROM progress_turn),'trusted current-source helper refuses paused membership');
+UPDATE public.clients SET portal_access_state='open' WHERE id=pg_temp.c('a2');
+SELECT set_config('paige.portal_access_write','',true);
+UPDATE auth.users SET banned_until=now()+interval '1 day' WHERE id=pg_temp.u('a2');
+SELECT is((SELECT pg_temp.progress_ctx('a2',th,intent)->>'sqlstate' FROM progress_turn),'42501','banned identity refused despite a still-valid session subject');
+SELECT ok((SELECT NOT public._client_progress_snapshot_lock(pg_temp.u('a2'),pg_temp.t('a'),pg_temp.c('a2'),pre->'snapshot') FROM progress_turn),'trusted settlement refuses banned original actor');
+SELECT is((SELECT pg_temp.progress_begin(th,intent)->>'sqlstate' FROM progress_turn),'42501','banned replay cannot bypass active original-actor validation');
+UPDATE auth.users SET banned_until=NULL WHERE id=pg_temp.u('a2');
+
+-- Actual original access/link seams in rollback-only fixtures; no production role or identity changes.
+SELECT set_config('paige.portal_access_write','1',true);
+SELECT set_config('paige.link_ok','1',true);
+UPDATE public.clients SET portal_access_state='ended',linked_user_id=NULL,portal_access_former_user_id=pg_temp.u('a2') WHERE id=pg_temp.c('a2');
+SELECT is((SELECT pg_temp.progress_ctx('a2',th,intent)->>'sqlstate' FROM progress_turn),'42501','revoked/unlinked relationship cannot read source');
+SELECT is((SELECT pg_temp.progress_begin(th,gen_random_uuid())->>'sqlstate' FROM progress_turn),'42501','revoked relationship cannot submit a new question');
+UPDATE public.clients SET portal_access_state='open',linked_user_id=pg_temp.u('a2'),portal_access_former_user_id=NULL WHERE id=pg_temp.c('a2');
+SELECT set_config('paige.link_ok','',true);
+SELECT set_config('paige.portal_access_write','',true);
+
+SELECT ok((SELECT NOT public._client_progress_snapshot_current(pg_temp.u('a2'),pg_temp.t('b'),pg_temp.c('a2'),pre->'snapshot') FROM progress_turn),'trusted actor metadata cannot substitute another business');
+SELECT ok((SELECT NOT public._client_progress_snapshot_current(pg_temp.u('a3'),pg_temp.t('a'),pg_temp.c('a2'),pre->'snapshot') FROM progress_turn),'trusted actor metadata cannot substitute another customer');
+SELECT ok((SELECT NOT public._client_progress_snapshot_valid((pre->'snapshot')||'{"owner_override":true}') FROM progress_turn),'snapshot rejects additional authority fields');
+SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.client_portal_assistant_begin(uuid,uuid,uuid,text,boolean,boolean,boolean,extensions.vector)'::regprocedure),'72ffe10c2b1c9aeadcb6f7006aad8b88','original begin8 source preserved byte-for-byte');
+
+-- Empty interruption remains recoverable after withdrawal, without publishing stale facts.
+CREATE TEMP TABLE progress_interrupted AS SELECT pg_temp.thread('a2') th,gen_random_uuid() intent;
+SELECT is((SELECT pg_temp.progress_begin(th,intent)->>'status' FROM progress_interrupted),'accepted','second private question is bound through same original native begin');
+UPDATE public.plan_items SET client_shared_at=NULL,client_shared_by=NULL WHERE id='e0b20800-0000-4000-8000-000000000002';
+SELECT ok((SELECT NOT (pg_temp.progress_settle(th,intent,'',NULL,'WITHHELD') ? 'sqlstate') FROM progress_interrupted),'withdrawn source permits original empty native cleanup, not duplicate send');
 
 SELECT * FROM finish();
 ROLLBACK;

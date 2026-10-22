@@ -59,6 +59,7 @@ it.each(["changed", "removed", "foreign", "retagged", "refused"])("re-reads and 
   expect(document.querySelector('[role="dialog"]')).toBeTruthy();
   expect(document.querySelector('[role="alert"]')?.textContent).toContain("Reload source");
   expect(button("Prepare workflow draft")?.disabled).toBe(true);
+  expect(document.activeElement).toBe(button("Reload source"));
 });
 it("allows one checking read and withholds a late reply after the scope retires", async () => {
   let finish!: (value: ReturnType<typeof reply>) => void;

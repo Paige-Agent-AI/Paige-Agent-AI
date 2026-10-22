@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowRight, BookOpen, Search } from "lucide-react";
 import { useKnowledgeDocuments } from "@/hooks/useKnowledgeDocuments";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -68,6 +68,9 @@ function ProcedureDetail({ tenantId, id, onPrepare }: { tenantId: string; id: st
   const checking = useRef(false);
   const [preparing, setPreparing] = useState(false);
   const [recheckError, setRecheckError] = useState<string | null>(null);
+  const recovery = useRef<HTMLButtonElement | null>(null);
+  const { isCurrent } = source;
+  useEffect(() => { if (recheckError && isCurrent()) recovery.current?.focus(); }, [recheckError, isCurrent]);
   const document = source.docs.find(doc => doc.id === id && doc.tenant_id === tenantId && isProcedure(doc));
   const ready = !source.loading && !source.error && !preparing && !recheckError && document && source.isCurrent();
   async function prepare() {
@@ -100,7 +103,7 @@ function ProcedureDetail({ tenantId, id, onPrepare }: { tenantId: string; id: st
       : !document ? <p>This procedure is no longer available.</p>
       : <><div className="ops-procedure-next"><div><strong>Turn the procedure into a workflow</strong><p>Review its trigger, steps, people and approval needs with ZION before anything is saved or enabled.</p></div><button type="button" disabled={!ready || !onPrepare} onClick={() => void prepare()}>
         {preparing ? "Checking source…" : "Prepare workflow draft"} <ArrowRight size={16} aria-hidden="true" /></button></div>
-        {recheckError && <div role="alert"><p>{recheckError}</p><button type="button" onClick={() => { setRecheckError(null); void source.reload(); }}>Reload source</button></div>}
+        {recheckError && <div className="ops-procedure-recovery" role="alert"><p>{recheckError}</p><button ref={recovery} type="button" onClick={() => { setRecheckError(null); void source.reload(); }}>Reload source</button></div>}
         {document.summary && <p>{document.summary}</p>}<div className="ops-procedure-content">{document.content ?? "The source has no readable body in this view."}</div>
         <p className="ops-source-limit">Reading this source does not start work or record an approval.</p></>}</div></>;
 }

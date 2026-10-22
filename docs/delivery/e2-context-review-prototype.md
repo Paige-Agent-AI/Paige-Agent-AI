@@ -110,4 +110,3 @@ Flow Prototype2.0.2 / portable direct-language writing fallback; no production m
 ## Lead-selected direction and final mock proof
 
 Owner delegated this UX decision; founder acceptance is pending. The adjacent popover above the native1080px docking boundary preserves the transcript/composer geometry. At or below that boundary, the shared Dialog sheet provides readable space. Rejected inline expansion cramped the transcript; the initial900px popover was behind the native shell overlay and is excluded. Canonical data-pg on portals corrected the transparent-dialog diagnostic. Final ten accepted original frames and fourteen mocked interaction cases are indexed in viewport-state-index.json / interaction-results.json. They are prototype evidence, not actual Chat runtime, roles, approvals or customer acceptance. Production must reuse createAnchoredTranscriptScroll, not the local prototype scroll snapshot.
-

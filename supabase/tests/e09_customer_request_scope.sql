@@ -1,7 +1,7 @@
 -- Original replayed native functions and real roles. Synthetic, rolled back;
 -- provider execution disabled, no production identities or effectful acceptance.
 BEGIN;
-SELECT plan(62);
+SELECT plan(72);
 
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0970100-0000-4000-8000-000000000001','authenticated','authenticated','scope-owner@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -85,6 +85,38 @@ SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000002','SELECT p
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000001')->>'state','open','selected open state is genuine');
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000003')->>'state','none','foreign state reveals no notice');
 
+-- Original business-shared Conversations, distinct from the private CURA service below.
+-- Native writers only, provider execution disabled, all synthetic rows rolled back.
+CREATE FUNCTION pg_temp.scope_send_message(business text,body text,request_id uuid,kind text DEFAULT 'message')
+RETURNS jsonb LANGUAGE sql AS $message$
+ SELECT pg_temp.scope_read(format('SELECT public.client_portal_send_message(%L,%L::uuid,%L,%L::uuid)',body,request_id,kind,business),business) $message$;
+CREATE FUNCTION pg_temp.scope_conversation(business text)
+RETURNS jsonb LANGUAGE sql AS $message$
+ SELECT pg_temp.scope_read(format('SELECT public.client_portal_conversation(%L::uuid)',business),business) $message$;
+CREATE TEMP TABLE scope_messages(business text,result jsonb);
+INSERT INTO scope_messages VALUES
+ ('e0970200-0000-4000-8000-000000000001',pg_temp.scope_send_message('e0970200-0000-4000-8000-000000000001','Shared A only','e0970400-0000-4000-8000-000000000001','help')),
+ ('e0970200-0000-4000-8000-000000000002',pg_temp.scope_send_message('e0970200-0000-4000-8000-000000000002','Shared B only','e0970400-0000-4000-8000-000000000002'));
+SELECT is(result->>'ok','true','selected A help writes through original Conversations') FROM scope_messages WHERE business='e0970200-0000-4000-8000-000000000001';
+SELECT is(result->>'ok','true','selected B message writes through original Conversations') FROM scope_messages WHERE business='e0970200-0000-4000-8000-000000000002';
+SELECT is(pg_temp.scope_conversation('e0970200-0000-4000-8000-000000000001')#>'{messages}',
+ jsonb_build_array(jsonb_build_object('id',result->>'message_id','author','customer','kind','help','body','Shared A only','created_at',result->>'created_at','request_id','e0970400-0000-4000-8000-000000000001')),
+ 'A reads only its own original shared help receipt') FROM scope_messages WHERE business='e0970200-0000-4000-8000-000000000001';
+SELECT is(pg_temp.scope_conversation('e0970200-0000-4000-8000-000000000002')#>'{messages}',
+ jsonb_build_array(jsonb_build_object('id',result->>'message_id','author','customer','kind','message','body','Shared B only','created_at',result->>'created_at','request_id','e0970400-0000-4000-8000-000000000002')),
+ 'B reads only its own original shared message receipt') FROM scope_messages WHERE business='e0970200-0000-4000-8000-000000000002';
+SELECT ok(pg_temp.scope_send_message('e0970200-0000-4000-8000-000000000001','Shared A only','e0970400-0000-4000-8000-000000000001','help')
+ @> jsonb_build_object('ok',true,'replayed',true,'message_id',result->>'message_id'),'uncertain A retry reuses original canonical message identity') FROM scope_messages WHERE business='e0970200-0000-4000-8000-000000000001';
+SELECT is(pg_temp.scope_read($message$SELECT public.client_portal_send_message('Wrong business','e0970400-0000-4000-8000-000000000004','message','e0970200-0000-4000-8000-000000000002')$message$,
+ 'e0970200-0000-4000-8000-000000000001')->>'error','NO_RELATIONSHIP','a conflicting business argument cannot escape the captured request');
+SELECT ok(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000003',
+ $message$SELECT public.client_portal_conversation('e0970200-0000-4000-8000-000000000001')$message$,
+ '{"x-client-portal-business":"e0970200-0000-4000-8000-000000000001"}') IS NULL,'another customer cannot read A shared messages');
+SELECT is((SELECT jsonb_build_object('tenant',m.tenant_id,'contact',m.contact_id,'channel',m.channel_type,'actor',m.meta#>>'{portal,author_user_id}')
+ FROM public.messages m JOIN scope_messages proof ON m.id::text=proof.result->>'message_id' WHERE proof.business='e0970200-0000-4000-8000-000000000001'),
+ jsonb_build_object('tenant','e0970200-0000-4000-8000-000000000001','contact','e0970300-0000-4000-8000-000000000001','channel','portal','actor','e0970100-0000-4000-8000-000000000002'),
+ 'physical business record retains original tenant/client and actual customer attribution');
+
 -- Existing original private conversation service/RLS under the same future-shape
 -- CI fixture. No turn/provider execution, extra production identity or new writer.
 CREATE FUNCTION pg_temp.open_scoped_chat(business text DEFAULT NULL)
@@ -130,6 +162,7 @@ UPDATE public.clients SET portal_access_state='paused',portal_access_changed_at=
  WHERE id='e0970300-0000-4000-8000-000000000002';
 SELECT set_config('paige.portal_access_write','',true);
 SELECT ok(pg_temp.scope_read('SELECT public.client_portal_frame()','e0970200-0000-4000-8000-000000000001') IS NULL,'paused selection loses original frame');
+SELECT is(pg_temp.scope_send_message('e0970200-0000-4000-8000-000000000001','Paused refusal','e0970400-0000-4000-8000-000000000003')->>'error','NO_RELATIONSHIP','paused A cannot send a shared message');
 SELECT is(pg_temp.open_scoped_chat('e0970200-0000-4000-8000-000000000001')->>'sqlstate','42501','paused A cannot reopen a private conversation');
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000001')#>>'{business,name}',
  'Northwind Studio','selected older pause never names latest other-business pause');
@@ -146,6 +179,7 @@ UPDATE public.clients SET linked_user_id=NULL WHERE id='e0970300-0000-4000-8000-
 SELECT set_config('paige.link_ok','',true);
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000002')->>'state','ended','selected former user sees genuine ended notice');
 SELECT ok(pg_temp.scope_read('SELECT public.client_portal_frame()','e0970200-0000-4000-8000-000000000002') IS NULL,'revoked selection cannot obtain another frame');
+SELECT ok(pg_temp.scope_conversation('e0970200-0000-4000-8000-000000000002') IS NULL,'revoked B cannot read retained shared conversation history');
 SELECT ok(pg_temp.read_scoped_chat('e0970200-0000-4000-8000-000000000002',opened) IS NULL,'revoked B cannot read its retained original private thread') FROM scope_chats WHERE business='e0970200-0000-4000-8000-000000000002';
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000003')->>'state','none','foreign hint cannot reveal even own other-business ended notice');
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000001')->>'state','paused','returning A scope remains its own pause after B ends');

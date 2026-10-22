@@ -578,6 +578,9 @@ jobs:
       # Additive E09 customer-safe relationship/profile foundation; no new CI database.
       - run: supabase test db supabase/tests/client_portal_self_projection.sql
         if: ${{ !cancelled() }}
+      - name: Original owner context and customer boundary (rolled back)
+        run: supabase test db supabase/tests/e09_owner_context_boundary.sql
+        if: ${{ !cancelled() }}
       - run: supabase test db supabase/tests/client_portal_self_profile_write.sql
         if: ${{ !cancelled() }}
       # E09 consumer acceptance uses the same fully replayed identity/CRM schema.

@@ -2,9 +2,10 @@ import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AgreementPreparation } from './agreementPreparationApi';
-const fixtures = vi.hoisted(() => ({ context: {} as Record<string, unknown>, read: vi.fn(), recover: vi.fn(), create: vi.fn(), history: vi.fn(), correct: vi.fn() }));
+const fixtures = vi.hoisted(() => ({ context: {} as Record<string, unknown>, read: vi.fn(), recover: vi.fn(), create: vi.fn(), history: vi.fn(), template:vi.fn(), correct: vi.fn() }));
 vi.mock('@/hooks/useTenantContext', () => ({ useTenantContext: () => fixtures.context }));
 vi.mock('./agreementPreparationApi', () => ({ readAgreementPreparation: fixtures.read, recoverAgreementCreation: fixtures.recover, createAgreementDraft: fixtures.create }));
+vi.mock('./agreementTemplateApi',()=>({readAgreementTemplate:fixtures.template}));
 vi.mock('./agreementRevisionApi', () => ({ readAgreementRevisions: fixtures.history, readAgreementRetainedWording: vi.fn() }));
 vi.mock('./agreementCorrectionApi', async importOriginal => ({...await importOriginal<typeof import('./agreementCorrectionApi')>(),saveAgreementCorrection:fixtures.correct}));
 // Flow tests exercise real scope/receipt/leave state. The actual rich editor is
@@ -85,6 +86,7 @@ beforeEach(() => {
   fixtures.recover.mockReset().mockResolvedValue({ ok: true, value: { state: 'unconfirmed' } });
   fixtures.create.mockReset().mockResolvedValue({ ok: true, value: receipt() });
   fixtures.correct.mockReset().mockResolvedValue({ok:false,reason:'unconfirmed',message:'Synthetic lost response.'});
+  fixtures.template.mockReset().mockResolvedValue({ok:true,value:{id:'99999999-0000-4000-8000-000000000001',title:'Supplied template wording',body_markdown:'Original supplied template words.\n',version:2,preparation_purpose:'client_engagement',is_active:true,has_uploaded_source:false,source_mode:'tenant_fork',preparation_options:{jurisdiction:'Business jurisdiction',review_route:'qualified_legal',reviewer:'Designated team'}}});
   fixtures.history.mockReset().mockResolvedValue({ ok: true, value: { agreement_id: id, current_source_version: 1, current_updated_at: '2026-10-21T20:00:00Z', revisions: [], truncated: false, next_before_revision_no: null } });
 });
 afterEach(() => { act(() => root?.unmount()); host?.remove(); vi.useRealTimers(); });
@@ -296,4 +298,38 @@ describe('native agreement preparation flow', () => {
     await screen.findByText('Agreement access could not be confirmed. Recheck the original business and record.');
     expect(screen.queryByText('Original retained wording.')).toBeNull();expect(screen.queryByText('Inspect wording history')).toBeNull();expect(p.onRefresh).toHaveBeenCalledTimes(1);
   });
+});
+
+
+describe('exact native template into original agreement',()=>{
+ const template='99999999-0000-4000-8000-000000000001';
+ it('loads supplied wording/options, asks for the actual client and saves its original source ID',async()=>{
+  const p=props();render(<AgreementPreparationWorkspace {...p} templateVersionId={template}/>);
+  await screen.findByRole('button',{name:'Save agreement draft'});
+  expect((screen.getByLabelText('Agreement content') as HTMLTextAreaElement).value).toBe('Original supplied template words.\n');
+  expect((screen.getByLabelText('Client') as HTMLSelectElement).value).toBe('');
+  save();expect(fixtures.create).not.toHaveBeenCalled();expect(document.activeElement).toBe(screen.getByLabelText('Client'));
+  fireEvent.change(screen.getByLabelText('Client'),{target:{value:client}});save();
+  await waitFor(()=>expect(p.onOpenRecord).toHaveBeenCalledWith(id));
+  expect(fixtures.create.mock.calls[0][0]).toMatchObject({tenantId:tenant,clientId:client,source:'tenant_template',sourceVersionId:template,body:'Original supplied template words.\n'});
+  expect(screen.getByText('Source-template options do not record completed review. Review this agreement’s actual wording before signing.')).not.toBeNull();
+ });
+ it('does not replace a missing or inactive source with a blank authored agreement',async()=>{
+  fixtures.template.mockResolvedValue({ok:true,value:{id:template,preparation_purpose:'client_engagement',is_active:false,source_mode:'tenant_fork',has_uploaded_source:false,body_markdown:'Old words'}});
+  render(<AgreementPreparationWorkspace {...props()} templateVersionId={template}/>);
+  await screen.findByText('Select an active retained client template with supplied text wording before preparing this agreement.');
+  expect(screen.queryByLabelText('Agreement content')).toBeNull();expect(fixtures.create).not.toHaveBeenCalled();
+ });
+ it('transient authority hides loaded source work and does not silently reload over later edits',async()=>{
+  const p=props(),view=render(<AgreementPreparationWorkspace {...p} templateVersionId={template}/>);
+  await screen.findByRole('button',{name:'Save agreement draft'});fireEvent.change(screen.getByLabelText('Agreement content'),{target:{value:'Owner corrected actual agreement words'}});
+  view.rerender(<AgreementPreparationWorkspace {...p} templateVersionId={template} authorityUnknown/>);expect(screen.queryByLabelText('Agreement content')).toBeNull();
+  view.rerender(<AgreementPreparationWorkspace {...p} templateVersionId={template}/>);await screen.findByRole('button',{name:'Save agreement draft'});
+  expect((screen.getByLabelText('Agreement content') as HTMLTextAreaElement).value).toBe('Owner corrected actual agreement words');expect(fixtures.template).toHaveBeenCalledOnce();
+ });
+ it('hard reload recovers the original agreement request rather than copying the template again',async()=>{
+  render(<AgreementPreparationWorkspace {...props()} templateVersionId={template} freshlyOpened={false}/>);
+  await screen.findByText('The original save is not confirmed yet. Check again, inspect recent agreements, or continue the same draft.');
+  expect(fixtures.template).not.toHaveBeenCalled();expect(fixtures.create).not.toHaveBeenCalled();expect(fixtures.recover).toHaveBeenCalledWith(tenant,request);
+ });
 });

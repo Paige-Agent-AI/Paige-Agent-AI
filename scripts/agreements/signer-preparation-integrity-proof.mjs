@@ -19,10 +19,16 @@ const tenant='aaaaaaaa-0000-4000-8000-000000000001',actor='11111111-0000-4000-80
 const context=`SET ROLE authenticated;SET test.uid='${actor}';SET test.tenant='${tenant}';SET test.admin='true';SET test.member='true';`;
 const check=(value,message)=>{assert(value,message);checks++;};
 const refused=(statement,code='23514',prefix=context)=>{sql(prefix+`DO $proof$ BEGIN BEGIN ${statement.replace(/^SELECT\s+/,'PERFORM ').replace(/;\s*$/,'')};RAISE EXCEPTION 'Expected native refusal ${code}';EXCEPTION WHEN SQLSTATE '${code}' THEN NULL;END;END $proof$;`);checks++;};
-const startSession=(name,input)=>{
+const startSession=(name,input,{holdOpen=false}={})=>{
  const child=spawn(binary,args(),{windowsHide:true});
  const promise=new Promise((resolve,reject)=>{let output='',errors='';const timer=setTimeout(()=>{child.kill();reject(Error('Owned signer session timed out'));},20000);child.stdout.on('data',v=>output+=v);child.stderr.on('data',v=>errors+=v);child.on('error',e=>{clearTimeout(timer);reject(e);});child.on('close',code=>{clearTimeout(timer);code===0?resolve(output.trim()):reject(Error(errors));});});
- sessions.push(promise);promise.catch(()=>{});child.stdin.end(`SET application_name=${quote(name)};`+input);return promise;
+ sessions.push(promise);promise.catch(()=>{});
+ const initial=`SET application_name=${quote(name)};`+input;
+ if(holdOpen){
+  child.stdin.write(initial+'\n');
+  promise.release=()=>{if(!child.stdin.destroyed&&!child.stdin.writableEnded)child.stdin.end('ROLLBACK;\n');};
+ }else child.stdin.end(initial);
+ return promise;
 };
 const observe=async query=>{const deadline=Date.now()+5000;do{if(sql(query)==='t')return;await new Promise(resolve=>setTimeout(resolve,20));}while(Date.now()<deadline);throw Error('Expected original lock/session state was not observed');};
 try{

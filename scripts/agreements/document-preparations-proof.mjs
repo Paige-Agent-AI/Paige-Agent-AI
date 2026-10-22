@@ -26,21 +26,19 @@ export async function proveDocumentPreparations({sql,read,context,tenant,actor,c
  const canonicalStart=commercial.indexOf('CREATE OR REPLACE FUNCTION public._paige_commercial_canonical_json('),canonicalEnd=commercial.indexOf('\nCREATE OR REPLACE FUNCTION public._paige_commercial_presentation_immutable()',canonicalStart);
  assert(canonicalStart>=0&&canonicalEnd>canonicalStart);sql(commercial.slice(canonicalStart,canonicalEnd));
  const migration=read('supabase/migrations/20271113300004_agreement_document_preparation_versions.sql');
- // An ordinary schema reader must not prevent installing the original safety
- // holds. Keep the real migration's5s timeout: the reader lasts longer than it.
- // The unchanged DROP-before-CREATE fails here before the source repair.
- const installTag='e04_preparation_install_'+randomUUID().replaceAll('-','');let readerReleased=false;
- const reader=startSession(installTag+'reader','BEGIN;LOCK TABLE paige_agreements,paige_agreement_signers IN ACCESS SHARE MODE;SELECT pg_sleep(8);ROLLBACK;').finally(()=>{readerReleased=true;});
- const triggerDefinitions=()=>sql("SELECT jsonb_agg(pg_get_triggerdef(oid) ORDER BY tgname) FROM pg_trigger WHERE tgname IN ('trg_paige_preparation_legacy_effect_hold','trg_paige_preparation_legacy_token_hold');");
+ // Hold a real reader until explicit release, rather than relying on sleep or
+ // child lifetime. Existing5s migration and20s session caps stay unchanged.
+ const installTag='e04_preparation_install_'+randomUUID().replaceAll('-','');
+ const reader=startSession(installTag+'reader','BEGIN;LOCK TABLE public.paige_agreements,public.paige_agreement_signers IN ACCESS SHARE MODE;',{holdOpen:true});
+ const readLocks=` FROM pg_locks l JOIN pg_stat_activity a ON a.pid=l.pid WHERE a.application_name=${quote(installTag+'reader')} AND l.granted AND l.mode='AccessShareLock' AND l.relation IN ('public.paige_agreements'::regclass,'public.paige_agreement_signers'::regclass)`;
+ const checkpoint=phase=>`SELECT jsonb_build_object('phase',${quote(phase)},'held',count(DISTINCT l.relation)=2,'preparation_table_exists',EXISTS(SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname='paige_agreement_document_preparations'),'definitions',(SELECT jsonb_agg(pg_get_triggerdef(oid) ORDER BY tgname) FROM pg_trigger WHERE tgname IN ('trg_paige_preparation_legacy_effect_hold','trg_paige_preparation_legacy_token_hold')))${readLocks};`;
  try{
-  await observe(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name=${quote(installTag+'reader')} AND wait_event='PgSleep');`);
-  await startSession(installTag+'fresh',migration);
-  check(!readerReleased,'Fresh native installation completes while original-table reads remain held');
-  const definitions=triggerDefinitions();
-  await startSession(installTag+'replay',migration);
-  check(!readerReleased,'Native replay completes while original-table reads remain held');
-  check(triggerDefinitions()===definitions,'Replay preserves both original signing-hold trigger definitions');
- }finally{await reader;}
+  await observe(`SELECT count(DISTINCT l.relation)=2${readLocks};`);
+  const snapshots=(await startSession(installTag+'install',checkpoint('before')+migration+checkpoint('fresh')+migration+checkpoint('replay'))).split(/\r?\n/).filter(Boolean).map(JSON.parse);
+  check(snapshots.length===3&&snapshots.map(v=>v.phase).join(',')==='before,fresh,replay'&&!snapshots[0].preparation_table_exists&&snapshots[1].preparation_table_exists&&snapshots[2].preparation_table_exists,'Actual fresh installation and replay checkpoints');
+  check(snapshots.every(v=>v.held===true),'Both original-table reader locks remain granted at every checkpoint');
+  check(Array.isArray(snapshots[1].definitions)&&snapshots[1].definitions.length===2&&JSON.stringify(snapshots[1].definitions)===JSON.stringify(snapshots[2].definitions),'Replay preserves both original signing-hold trigger definitions');
+ }finally{reader.release();await reader;}
  check(sql('SELECT count(*) FROM paige_agreement_document_preparations;')==='0','No backfill or activation');
  const originalSave=sql("SELECT md5(prosrc) FROM pg_proc WHERE oid='public.save_paige_agreement(uuid,uuid,uuid,text,text,uuid,uuid,text,uuid,text,timestamptz)'::regprocedure;");
  check(originalSave==='1bd28e75afa0f50bb07b717795a5be0e','Actual original agreement writer retained');
@@ -136,5 +134,5 @@ export async function proveDocumentPreparations({sql,read,context,tenant,actor,c
  await Promise.all([barrier,oneSession,twoSession]);
  check(sql(`SELECT count(*) FROM paige_agreement_document_preparations WHERE agreement_id='${competingSource.agreement_id}'`)==='1','Real competing selected-version CAS retains only one winner');
  check(sql(`SELECT count(*) FROM paige_agreement_events WHERE agreement_id='${competingSource.agreement_id}' AND detail->>'action'='document_preparation_recorded'`)==='1','Losing concurrent selection creates no success event');
- return {checks,migrationReplay:2,concurrentSessions:9,concurrentReadInstallations:2,observedLockWaits:4,scope:'Native metadata only; actual PDF tests separate, no hosted Storage/JWT/provider/customer acceptance'};
+ return {checks,migrationReplay:2,concurrentSessions:8,concurrentReadInstallations:2,observedLockWaits:4,scope:'Native metadata only; actual PDF tests separate, no hosted Storage/JWT/provider/customer acceptance'};
 }

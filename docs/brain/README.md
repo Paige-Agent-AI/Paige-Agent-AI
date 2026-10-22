@@ -75,6 +75,21 @@ Experience remain separate unfinished increments; no catalogue Live promotion.
 Assess functional, visual and experiential quality independently; owner acceptance
 still requires the one complete integrated Experience.
 
+## EXP04 authoring release — 2026-10-21
+
+Native document authoring#2515 reviewed6ef6cd9bcf9dbb97b53153edffba0243a5a060bd →
+mergec647eceb3dd66f304b1662ccc66d2fa4d304639d, exact reviewed uniona8a9661b6.
+All10 applicable checks/two statuses pass, AUTHOR-REVIEW / LOWER ASSURANCE5607950900.
+Actual20 viewport/theme cases/22 paths and selected143/five suites pass;18 source
+pins unchanged. Webdpl_5cHXA4yMKYXGJbVdGn8Nqycj6dUT READY/exact, exact deployment
+versionc647eceb3-mvitkdra read back through Vercel; canonical doc-only descendant
+d873a1b7b-mvitnzwh serves actual native authoring chunk8105842a13. Own migration/
+Edge N/A, native120000/130000 applied prerequisites. Master4.0/receipt6329998318
+records exact proof. Genuine authoring/one-request recovery is a prerequisite,
+not full professional agreements or O1–O12 acceptance. Ordinary owner/staff/client,
+legal/provider/signature/payment/service and complete founder acceptance remain
+owed. No actual sends, financial/provider/Chat activation or customer announcement.
+
 ## EXP04 current delivery checkpoint — 2026-10-21
 
 Released native draft-history#2521 extends the original agreement with immutable

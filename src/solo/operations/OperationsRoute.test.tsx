@@ -1,20 +1,21 @@
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { BrowserRouter, MemoryRouter, Router, NavigationType, useLocation, useNavigate } from "react-router-dom";
+import { BrowserRouter, MemoryRouter, Router, Routes, Route, NavigationType, useLocation, useNavigate } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 const harness = vi.hoisted(() => ({ reason: null as string | null }));
 vi.mock("@/lib/routing/useSubtabRoute", () => ({ useSubtabRoute: () => {
   const location = useLocation(); const navigate = useNavigate();
   return [location.pathname.endsWith("/capacity") ? "capacity" : "work", (view: string) => navigate(`/solo/123/operations/${view}`)];
 } }));
-vi.mock("./OperationsWorkspace", () => ({ OperationsWorkspace: ({ view, weeklySourceSearch, onNavigationGuardChange, onViewChange, onWeeklySourceDismiss, onTaskFocusDismiss }: {
+vi.mock("./OperationsWorkspace", () => ({ OperationsWorkspace: ({ view, weeklySourceSearch, onNavigationGuardChange, onViewChange, onWeeklySourceDismiss, onTaskFocusDismiss, onOpenAgreements }: {
   view: string; weeklySourceSearch: string; onViewChange: (view: string) => void; onWeeklySourceDismiss: () => void;
   onNavigationGuardChange: (guard: (() => string | null) | null) => void;
-  onTaskFocusDismiss: () => void;
+  onTaskFocusDismiss: () => void; onOpenAgreements?: () => void;
 }) => {
   React.useLayoutEffect(() => { onNavigationGuardChange(() => harness.reason); return () => onNavigationGuardChange(null); }, [onNavigationGuardChange]);
   return <div data-view={view} data-query={weeklySourceSearch}><button onClick={() => onViewChange("capacity")}>Capacity</button>
-    <button onClick={onWeeklySourceDismiss}>Dismiss source</button><button onClick={onTaskFocusDismiss}>Dismiss Task focus</button></div>;
+    <button onClick={onWeeklySourceDismiss}>Dismiss source</button><button onClick={onTaskFocusDismiss}>Dismiss Task focus</button>
+    <button disabled={!onOpenAgreements} onClick={onOpenAgreements}>Original agreements</button></div>;
 } }));
 import { OperationsRoute } from "./OperationsRoute";
 function HistoryControls() {
@@ -35,6 +36,26 @@ async function click(label: string) {
   const button = Array.from(container.querySelectorAll<HTMLButtonElement>("button")).find(candidate => candidate.textContent === label)!;
   await act(async () => button.click());
 }
+it.each(["test-account-a", "test-account-b"])("continues Delivery to the canonical Sales path for %s", async account => {
+  await act(async () => root.render(<MemoryRouter initialEntries={[`/solo/${account}/operations/delivery`]}>
+    <HistoryControls /><Routes><Route path="/solo/:account/*" element={<OperationsRoute openPaige={vi.fn()} />} /></Routes>
+  </MemoryRouter>));
+  await click("Original agreements");
+  expect(container.querySelector("output")?.textContent).toBe(`/solo/${account}/sales/agreements`);
+});
+it("does not leave the original workflow through the Sales exit while its draft is guarded", async () => {
+  await act(async () => root.render(<MemoryRouter initialEntries={["/solo/test-account-a/operations/delivery?keep=context"]}>
+    <HistoryControls /><Routes><Route path="/solo/:account/*" element={<OperationsRoute openPaige={vi.fn()} />} /></Routes>
+  </MemoryRouter>));
+  harness.reason = "Unsaved original work";
+  await click("Original agreements");
+  expect(container.querySelector("output")?.textContent).toBe("/solo/test-account-a/operations/delivery?keep=context");
+});
+it("withholds the Sales exit in an inline mount without the original account route", async () => {
+  await render();
+  const exit = Array.from(container.querySelectorAll<HTMLButtonElement>("button")).find(node => node.textContent === "Original agreements")!;
+  expect(exit.disabled).toBe(true);
+});
 it("keeps the accepted query through dirty Back and repeated-source transitions without a replace loop", async () => {
   await render(); harness.reason = "Unsaved draft";
   await click("Back"); expect(container.querySelector("output")?.textContent).toContain(search);

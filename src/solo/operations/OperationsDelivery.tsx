@@ -25,10 +25,11 @@ function amount(row: ClientAgreement) {
   catch { return "Currency unavailable"; }
 }
 
-type Props = { openPaige?: () => void; plans?: Plan[]; items?: PlanItem[]; planningReady?: boolean;
+type Props = { openPaige?: () => void; onOpenAgreements?: () => void; onOpenWork?: () => void;
+  plans?: Plan[]; items?: PlanItem[]; planningReady?: boolean;
   members?: TeamMemberRecord[]; peopleReady?: boolean; onVerified?: (planId: string) => Promise<void> };
 /** Sales evidence stays source-owned; reviewed handoffs write through canonical Planning. */
-export default function OperationsDelivery({ openPaige, plans = [], items = [], planningReady = false,
+export default function OperationsDelivery({ openPaige, onOpenAgreements, onOpenWork, plans = [], items = [], planningReady = false,
   members = [], peopleReady = false, onVerified }: Props) {
   const terms = useSoloCommercialTerms();
   const { soloStandalone } = useTierFeatures();
@@ -101,7 +102,7 @@ export default function OperationsDelivery({ openPaige, plans = [], items = [], 
     <header className="op-delivery-heading"><h1>Keep the promise.</h1><button onClick={retry}><RefreshCw size={16} /> Refresh</button></header>
     {!ready ? <div className="op-delivery-state" role="status"><FileText size={32} /><h2>{terms.phase === "error" ? "Commitments could not be loaded" : terms.phase === "unavailable" ? "Choose a workspace to see its commitments" : "Loading client commitments…"}</h2>{terms.phase === "error" && <p>Refresh to read the current Sales records again.</p>}</div>
       : terms.authorityUnknown || !terms.agreementsReadable ? <div className="op-delivery-state"><FileText size={32} /><h2>{terms.authorityUnknown ? "Your access could not be confirmed" : "Commercial agreements are outside your current access"}</h2><p>{terms.authorityUnknown ? "Refresh before viewing client commitments." : "Ask your workspace owner for the appropriate Sales access."}</p></div>
-      : !engagement ? <div className="op-delivery-state"><FileText size={32} /><h2>Your next client promise starts in Sales</h2><p>Record an engagement in Sales. Its terms and signing evidence will appear here for review.</p></div>
+      : !engagement ? <div className="op-delivery-start"><div className="op-delivery-start-main"><span className="op-delivery-kicker">FROM PROMISE TO DELIVERY</span><h2>Agree the outcome. Follow it through.</h2><p>Start with the agreed scope in Sales. Keep its delivery plan, responsible people and original evidence connected here.</p><div className="op-delivery-start-actions"><button type="button" disabled={!onOpenAgreements} onClick={onOpenAgreements}>Open Sales agreements <ArrowRight size={16} aria-hidden="true" /></button><button type="button" disabled={!onOpenWork} onClick={onOpenWork}>Open existing work</button></div></div><ol className="op-delivery-start-path" aria-label="How a promise becomes delivered work"><li><span aria-hidden="true">01</span><div><strong>Agree the scope</strong><p>The original agreement holds the terms, dates and signing evidence.</p></div></li><li><span aria-hidden="true">02</span><div><strong>Connect the delivery plan</strong><p>Review the linked project, milestones and people responsible.</p></div></li><li><span aria-hidden="true">03</span><div><strong>Close with evidence</strong><p>Inspect delivered work and the acceptance still needed.</p></div></li></ol></div>
       : <>
         <div className="op-delivery-register" aria-label="Choose an engagement">{rows.map(row => <button key={row.id} aria-pressed={engagement.id === row.id} onClick={() => { copyRequest.current += 1; setSelection({ id: row.id, epoch: epoch.current }); setCopy(null); }}><span>{clientName(row)}</span><strong>{row.title || "Untitled engagement"}</strong><small>{label(row.status)}</small></button>)}</div>
         <div className="op-delivery-spread">

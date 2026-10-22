@@ -27,13 +27,13 @@ ACCEPTANCE_CRITERIA: Native requests receive the same caller AbortSignal and can
 MOTION_PURPOSE: None added.
 PROTECTED_SEAMS: Own original app/PaigeChat and customer-chat library only. Active2401/2546 owner Chat/Spine/Edge source is unchanged. Parent private-history request binding remains PR2555.
 
-INTERNAL_BUILD_IDENTITY: implementation=c69a43d24e2e217c4d478bfed014f7ef75137e3b; final evidence/review head in PR; environment=development; production=NOT_DEPLOYED; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE.
+INTERNAL_BUILD_IDENTITY: implementation=c69a43d24e2e217c4d478bfed014f7ef75137e3b; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e09-history-recovery.md
 RELEASE_CHANNEL: development: controlled original-component and SDK transport tests.
 RELEASE_CLASSIFICATION: internal-only: original private-history recovery prerequisite, not complete Portal/Chat execution or multi-business release.
 CUSTOMER_RELEASE_IDENTITY: none: no announcement.
 RELEASE_NOTE_REQUIRED: no: bounded recovery repair.
-RELEASE_TRUTH_BOUNDARY: PARTIAL source/browser recovery; PROOF OWED hosted exact-head/native-parent/production and actual customer journey.
-RELEASE_RECOVERY: forward-fix through original conversation service; no history deletion or migration rollback.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: source/browser recovery; PROOF OWED: exact-head hosted CI, native-parent release, production and actual customer journey.
+RELEASE_RECOVERY: position=forward-fix through original conversation service without deleting history; reference=docs/delivery/e09-customer-relationships.md
 
 ## Bounded Impeccable finish review
 

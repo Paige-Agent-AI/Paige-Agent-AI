@@ -53,7 +53,7 @@ try{
     console.log(JSON.stringify({checkpoint:'Original template library and authority positive controls',checks}));
     refused(`UPDATE tenant_agreement_versions SET body_markdown='Changed original words' WHERE id='${legacy}'`,'23514');
   }else{
-    const migration=read('supabase/migrations/20271113190000_agreement_template_wording_options.sql');sql(migration);sql(migration);
+    const migration=read('supabase/migrations/20271113220004_agreement_template_wording_options.sql');sql(migration);sql(migration);
     refused(`UPDATE tenant_agreement_versions SET body_markdown='Changed original words' WHERE id='${legacy}'`,'23514');
     const a=JSON.parse(sql(context()+`SELECT ${create()};`)),b=JSON.parse(sql(context()+`SELECT ${create()};`));
     capturedSources.set(first,a.updated_at);

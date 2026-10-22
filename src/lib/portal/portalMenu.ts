@@ -17,7 +17,7 @@ import type { PortalModuleOverlay } from "@/hooks/useClientPortalConfig";
 //      anyone whose business brand resolved, staff only. The tenant overlay can never reveal past a floor.
 //   2. The Playbook CATALOG (`portal.modules`). Catalog-only entries — the funding preset's keys, Approvals —
 //      render only when the catalog lists them (§2: funding wording is a chosen opt-in, never a default).
-//      Resources and Agreements are core for customers: a customer of one business always has them, whatever
+//      Resources, Agreements and Payments are core for customers: a customer of one business has them, whatever
 //      the catalog lists (§58 / owner decision D-A1), unless the owner hides them; every other viewer keeps the
 //      catalog rule for them. The catalog also supplies an entry's default name.
 //   3. The tenant OVERLAY (`portal_config.modules`): hide, rename, reorder. Purely presentational: unknown
@@ -120,13 +120,12 @@ export const PORTAL_MENU_ENTRIES: readonly PortalMenuEntry[] = [
   // of one business by default (owner decision D-A1, honest empty state), hideable and renameable by the owner. Staff
   // and every other viewer keep the catalog rule exactly as before: the route still renders MyAgreements for them.
   entry({ key: "agreements", defaultLabel: "Agreements", route: "/app/agreements", icon: FileSignature, group: "paperwork", floor: "everyone", shownToCustomers: true, description: "Sign and download", editorHint: "Agreements you send from Sales" }),
-  // E09 Slice 5: /app/billing is the customer's Payments page (the invoices their business issued). Catalog-placed,
-  // never force-injected: every generic Playbook lists `billing`. A Playbook without it (the funding preset) gives
-  // its customers no in-app way in: the Home balance line is shown only where this entry is in the menu, so they
-  // reach the page only by its address. Known limitation, recorded in the Payments evidence record and master §5;
-  // not fixed here. Named "Payments" whatever the catalog calls it (owner ruling 2026-10-18).
+  // Core service billing is independent of optional funding/credit. A customer of one business gets the original
+  // Payments destination even when an older catalogue omitted it; the owner's overlay may still hide, rename or
+  // reorder it. The same assembly controls the Home balance line and owner editor/preview. Visibility grants no
+  // invoice or payment authority. Named "Payments" whatever the catalogue calls it (owner ruling 2026-10-18).
   // customer-identity-exempt: owner-only editor hint (PortalMenuEditor); never rendered in the customer menu
-  entry({ key: "billing", defaultLabel: "Payments", route: "/app/billing", icon: CreditCard, group: "paperwork", floor: "customer", catalogLabel: false, description: "Invoices and receipts", editorHint: "Hide if you bill outside Paige" }),
+  entry({ key: "billing", defaultLabel: "Payments", route: "/app/billing", icon: CreditCard, group: "paperwork", floor: "customer", shownToCustomers: true, catalogLabel: false, description: "Invoices and receipts", editorHint: "Hide if you bill outside Paige" }),
 
   // ── Learn ──
   // Core for customers (§58): shown to a customer of one business whatever the catalog lists, hideable only by the

@@ -1,5 +1,5 @@
-import {beforeEach,expect,it,vi} from "vitest";
-import {readCustomerChat} from "./customer-chat";
+import {afterEach,beforeEach,expect,it,vi} from "vitest";
+import {readCustomerChat,readCustomerChatOutcome} from "./customer-chat";
 import {readClientPortalFrame} from "./client-portal-frame";
 const f=vi.hoisted(()=>({getUser:vi.fn(),getSession:vi.fn(),rpc:vi.fn(),from:vi.fn(),thread:null as unknown,turns:[] as unknown[],
  error:null as unknown,reads:[] as string[],filters:[] as unknown[][],headers:[] as unknown[][],signals:[] as AbortSignal[]}));
@@ -29,7 +29,7 @@ beforeEach(()=>{
  f.getUser.mockResolvedValue({data:{user:{id:actor}},error:null});
  f.getSession.mockResolvedValue({data:{session:{user:{id:actor},access_token:"synthetic-captured-history"}},error:null});
  f.rpc.mockImplementation((name:string)=>request(name==="client_portal_frame"?value():thread,null,name));
- f.from.mockImplementation((name:string)=>{const q={select:()=>q,eq:(...args:unknown[])=>{f.filters.push([name,...args]);return q;},is:()=>q,order:()=>q,
+ f.from.mockImplementation((name:string)=>{const q={select:()=>q,returns:()=>q,eq:(...args:unknown[])=>{f.filters.push([name,...args]);return q;},is:()=>q,order:()=>q,
    setHeader:(key:string,business:string)=>{f.headers.push([name,key,business]);return q;},
    abortSignal:(signal:AbortSignal)=>{f.signals.push(signal);return q;},
    filter:(...args:unknown[])=>{f.filters.push(args);return q;},
@@ -108,7 +108,7 @@ it("late Auth completion after cancellation cannot open a conversation",async()=
 });
 it("cancellation during a saved-turn read withholds history and prevents further native calls",async()=>{
  const controller=new AbortController();
- f.from.mockImplementation(()=>{const q={select:()=>q,eq:()=>q,is:()=>q,filter:()=>q,order:()=>q,
+ f.from.mockImplementation(()=>{const q={select:()=>q,returns:()=>q,eq:()=>q,is:()=>q,filter:()=>q,order:()=>q,
   setHeader:()=>q,abortSignal:()=>q,maybeSingle:async()=>({data:f.thread,error:null}),
   limit:async()=>{controller.abort();return {data:f.turns,error:null};}};return q;});
  await expect(readCustomerChat(frame(),controller.signal)).rejects.toMatchObject({name:"AbortError"});
@@ -132,7 +132,7 @@ it("concurrent authorized A/B history reads keep every request and saved result 
  });
  f.from.mockImplementation(()=>{
   let scope:string|null=null;
-  const q={select:()=>q,eq:()=>q,is:()=>q,filter:()=>q,order:()=>q,setHeader:(key:string,business:string)=>{if(key==="x-client-portal-business")scope=business;return q;},
+  const q={select:()=>q,returns:()=>q,eq:()=>q,is:()=>q,filter:()=>q,order:()=>q,setHeader:(key:string,business:string)=>{if(key==="x-client-portal-business")scope=business;return q;},
    maybeSingle:async()=>({data:{id:scope===bTenant?bThread:thread,caller_user_id:actor,contact_id:scope===bTenant?bClient:client,
     tenant_id:scope===bTenant?bTenant:tenant,lens:"client"},error:null}),
    limit:async()=>({data:[{id:scope===bTenant?"e0957000-0000-4000-8000-000000000003":"e0957000-0000-4000-8000-000000000001",role:"assistant",content:scope===bTenant?"History B":"History A"}],error:null})};
@@ -159,4 +159,41 @@ it("refuses a captured bearer rejected by original Auth before opening any priva
  f.getUser.mockImplementation(async(jwt?:string)=>jwt?{data:{user:null},error:{code:"invalid_token"}}:{data:{user:{id:actor}},error:null});
  await expect(readCustomerChat(frame())).rejects.toThrow("Customer session changed");
  expect(f.rpc).not.toHaveBeenCalled();expect(f.reads).toEqual([]);
+});
+
+afterEach(()=>vi.unstubAllGlobals());
+
+const originalStatus=()=>new Response(JSON.stringify({executor_active:false,settled:true}),{headers:{"Content-Type":"application/json"}});
+const originalIntent="e0967000-0000-4000-8000-000000000001";
+it("reads only original private intent status through the existing control transport",async()=>{
+ const sent=vi.fn(async(..._args:unknown[])=>originalStatus());vi.stubGlobal("fetch",sent);const controller=new AbortController();
+ expect(await readCustomerChatOutcome(frame(),thread,originalIntent,controller.signal)).toEqual({executor_active:false,settled:true});
+ expect(sent).toHaveBeenCalledTimes(1);const init=sent.mock.calls[0][1] as RequestInit,headers=new Headers(init.headers);
+ expect(headers.get("Authorization")).toBe("Bearer synthetic-captured-history");expect(headers.get("x-client-portal-business")).toBe(tenant);expect(headers.get("x-paige-chat-control")).toBe("status");
+ expect(JSON.parse(String(init.body))).toEqual({threadId:thread,requestIntentId:originalIntent,messages:[{role:"user",content:"Status"}],surfaceContext:{kind:"customer_portal"},interactive:{kind:"status"}});
+ expect(init.signal).toBe(controller.signal);expect(f.rpc.mock.calls.every(c=>c[0]==="client_portal_frame")).toBe(true);
+ expect(f.reads.every(name=>name==="paige_chat_threads")).toBe(true);expect(f.filters).toContainEqual(["audience","eq","customer_private"]);
+});
+for(const value of [{}, {executor_active:false,settled:"yes"},{executor_active:true,settled:true}, {executor_active:null,settled:false}])it("refuses malformed or contradictory original status "+JSON.stringify(value),async()=>{
+ vi.stubGlobal("fetch",vi.fn(async()=>new Response(JSON.stringify(value))));await expect(readCustomerChatOutcome(frame(),thread,originalIntent)).rejects.toThrow("Conversation status could not be checked");
+});
+it("refuses a foreign private thread before asking its status",async()=>{
+ const sent=vi.fn();vi.stubGlobal("fetch",sent);f.thread={...(f.thread as object),contact_id:"foreign"};
+ await expect(readCustomerChatOutcome(frame(),thread,originalIntent)).rejects.toThrow("Customer conversation changed");expect(sent).not.toHaveBeenCalled();
+});
+it("withholds status after the current relationship is revoked",async()=>{
+ vi.stubGlobal("fetch",vi.fn(async()=>{f.rpc.mockReturnValue(request(null));return originalStatus();}));
+ await expect(readCustomerChatOutcome(frame(),thread,originalIntent)).rejects.toThrow("Customer access changed");
+});
+it("withholds status after an Auth change during the original transport",async()=>{
+ vi.stubGlobal("fetch",vi.fn(async()=>{f.getUser.mockResolvedValue({data:{user:{id:"other-actor"}},error:null});return originalStatus();}));
+ await expect(readCustomerChatOutcome(frame(),thread,originalIntent)).rejects.toThrow("Customer session changed");
+});
+it("does not publish a late original status after cancellation",async()=>{
+ const controller=new AbortController();vi.stubGlobal("fetch",vi.fn(async()=>{controller.abort();return originalStatus();}));
+ await expect(readCustomerChatOutcome(frame(),thread,originalIntent,controller.signal)).rejects.toMatchObject({name:"AbortError"});
+});
+it("returns the original native latest intent as a recovery reference, never as proof of completion",async()=>{
+ f.thread={...(f.thread as object),interactive_latest_intent:originalIntent};const result=await readCustomerChat(frame());
+ expect(result.latestRequestIntentId).toBe(originalIntent);expect(result).not.toHaveProperty("settled");
 });

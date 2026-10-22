@@ -98,6 +98,25 @@ async function click(text: string) {
   const button = Array.from(container.querySelectorAll("button")).find((entry) => entry.textContent === text);
   expect(button).toBeTruthy(); await act(async () => button?.click());
 }
+
+it("returns from first-use Projects to original Work without opening or sending PAIGE", async () => {
+  const openPaige = vi.fn();
+  await act(async () => root.render(<OperationsWorkspace openPaige={openPaige} />));
+  await click("Projects");
+  await click("Open existing work");
+  expect(container.querySelector('[aria-current="page"]')?.textContent).toBe("Work");
+  expect(container.textContent).toContain("test-tenant-a assigned work");
+  expect(openPaige).not.toHaveBeenCalled(); expect(paige.handoff).not.toHaveBeenCalled();
+});
+
+it.each(["unavailable", "foreign"])("withholds the first-use path when current project source is %s", async state => {
+  if (state === "unavailable") harness.planningError = "Current source unavailable";
+  else harness.foreign = true;
+  await act(async () => root.render(<OperationsWorkspace view="projects" />));
+  expect(container.textContent).not.toContain("Open existing work");
+  expect(container.textContent).not.toContain("Start with one outcome");
+  expect(container.textContent).toContain("Your work couldn’t be loaded");
+});
 it("continues an Overview group through List and the original guarded inspector",async()=>{
  await act(async()=>root.render(<OperationsWorkspace/>));
  await click("Review all missing dates");

@@ -31,7 +31,7 @@ import { useCommandCenter } from "./useCommandCenter";
 import { useSoloSetupBrief, type SoloSetupSaveResult } from "./useSoloSetupBrief";
 import { useCatalogOffers } from "../useCatalogOffers";
 import { useSoloKnowledge } from "./useSoloKnowledge";
-import { useSoloPendingActions } from "./useSoloPendingActions";
+import { useSoloPendingActions, type SoloPendingActionsData } from "./useSoloPendingActions";
 import { useSoloActivityFeed, elapsedLabel, departmentLabel, type SoloActivityStatus } from "./useSoloActivityFeed";
 import { useSystemsCheck } from "@/hooks/useSystemsCheck";
 import { useTenantContext } from "@/hooks/useTenantContext";
@@ -224,9 +224,12 @@ export interface SoloGamePlanView {
   playsStatus: PlaysStatus;
   /** Decision & opportunity desk items, each source-labelled. */
   decisions: DecisionItem[];
+  /** Original prepared rows/count for the spacious Desk; no second query. */
+  preparedReview: SoloPendingActionsData;
+  reviewScope: string | null;
   /** Whether the drafts read behind `decisions` resolved. On an OUTAGE (`pending.error`) this is
    *  "unavailable" so the deck never announces "All caught up" over a queue it couldn't check (§13). */
-  decisionsStatus: "ready" | "unavailable";
+  decisionsStatus: "loading" | "ready" | "unavailable";
   /** Supporting dependencies (demoted Systems Check) that can block a play. */
   dependencies: DependencyItem[];
   /** Whether the Systems Check read behind `dependencies` actually resolved. On an OUTAGE
@@ -273,15 +276,16 @@ function checkStateTitle(interp: string | null | undefined): string {
 }
 
 export function useSoloGamePlan(account: string, workspaceId?: string | null): SoloGamePlanView {
+  const { activeTenant, activeTenantId, activeUserId, isPlatformStaff } = useTenantContext();
+  const reviewScope = activeUserId && workspaceId && activeTenantId === workspaceId ? JSON.stringify([workspaceId, activeUserId]) : null;
   const cc = useCommandCenter();
   const setup = useSoloSetupBrief();
   const catalog = useCatalogOffers();
   const knowledge = useSoloKnowledge();
-  const pending = useSoloPendingActions(workspaceId ?? null); // §9 — scope to the viewed workspace, like the activity feed
+  const pending = useSoloPendingActions(reviewScope ? workspaceId ?? null : null, activeUserId ?? null);
   const checks = useSystemsCheck("tenant");
   const activity = useSoloActivityFeed(workspaceId);
   const campaigns = useSoloCampaignBriefs();
-  const { activeTenant, activeTenantId, isPlatformStaff } = useTenantContext();
 
   // §57 identity: the personal greeting belongs to the person WHOSE workspace this is. The
   // signed-in user's name is only theirs to show when the active workspace is genuinely their own —
@@ -875,14 +879,16 @@ export function useSoloGamePlan(account: string, workspaceId?: string | null): S
   // Drafted work and recorded-contact follow-up nudges are recommendations, never execution.
   const decisions = useMemo<DecisionItem[]>(() => {
     const out: DecisionItem[] = [];
-    const drafts = Array.isArray(pending.items) ? pending.items : [];
-    if (drafts.length > 0) {
+    const preparedReady = Boolean(reviewScope) && !pending.loading && !pending.error;
+    const drafts = preparedReady && Array.isArray(pending.items) ? pending.items : [];
+    const total = preparedReady ? pending.total : null;
+    if (drafts.length > 0 || (total ?? 0) > 0) {
       out.push({
         id: "decision:drafts",
-        title: `Review ${pending.total ?? "up to " + drafts.length} draft${pending.total === 1 ? "" : "s"} Paige is holding`,
-        detail: drafts[0]?.rationale || "Paige prepared these and stopped for your approval.",
+        title: total == null ? "Review prepared work" : `Review ${total} prepared item${total === 1 ? "" : "s"}`,
+        detail: drafts.length ? "Inspect original drafts, summaries and sources. Prepared work is separate from approvals." : "The source returned a count without readable items. Check the original work again.",
         source: "recommendation", waiting: true, destination: "paige",
-        evidence: `${pending.total ?? "up to " + drafts.length} filed items; ${drafts.length} loaded for preview.`,
+        evidence: `${total ?? "up to " + drafts.length} filed items; ${drafts.length} loaded for preview.`,
       });
     }
     const at = (cc.attention ?? {}) as AttentionLike;
@@ -907,11 +913,11 @@ export function useSoloGamePlan(account: string, workspaceId?: string | null): S
       });
     }
     return out;
-  }, [pending.items, pending.total, cc.attention]);
+  }, [pending.items, pending.total, pending.loading, pending.error, reviewScope, cc.attention]);
 
   // A failed drafts read must never render as "All caught up" — an empty `decisions` from an errored
   // pending read is "couldn't check", not "nothing waiting" (§13, Codex P2).
-  const decisionsStatus: "ready" | "unavailable" = pending.error ? "unavailable" : "ready";
+  const decisionsStatus: SoloGamePlanView["decisionsStatus"] = !reviewScope || pending.loading ? "loading" : pending.error ? "unavailable" : "ready";
 
   return {
     loading,
@@ -931,6 +937,8 @@ export function useSoloGamePlan(account: string, workspaceId?: string | null): S
     plays,
     playsStatus,
     decisions,
+    preparedReview: pending,
+    reviewScope,
     decisionsStatus,
     dependencies,
     dependenciesStatus,

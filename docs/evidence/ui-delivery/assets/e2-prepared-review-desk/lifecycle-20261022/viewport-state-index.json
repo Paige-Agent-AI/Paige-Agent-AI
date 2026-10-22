@@ -1,0 +1,543 @@
+{
+  "classification": "SYNTHETIC / native untransformed source; data, authority and Chat ports refuse real effects. Not authenticated acceptance.",
+  "frames": [
+    {
+      "name": "900-refresh-loading",
+      "css": [
+        900,
+        1000
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 624.7249908447266,
+          "height": 249.4499969482422,
+          "left": 16,
+          "right": 884,
+          "top": 375.2749938964844,
+          "width": 868,
+          "x": 16,
+          "y": 375.2749938964844
+        }
+      },
+      "draft": "Keep the next launch focused.",
+      "focus": " Decision & opportunity deskWork prepared for your reviewRead the orig",
+      "fontLoaded": true,
+      "scrollWidth": 900,
+      "raster": {
+        "height": 1000,
+        "width": 900
+      },
+      "sha256": "3c99def696e7199f007fb4d019351cb71e040fcac98bb1f393ca87f3045b015f"
+    },
+    {
+      "name": "900-refresh-error",
+      "css": [
+        900,
+        1000
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 652.7250061035156,
+          "height": 305.45001220703125,
+          "left": 16,
+          "right": 884,
+          "top": 347.2749938964844,
+          "width": 868,
+          "x": 16,
+          "y": 347.2749938964844
+        }
+      },
+      "draft": "Keep the next launch focused.",
+      "focus": " Decision & opportunity deskWork prepared for your reviewRead the orig",
+      "fontLoaded": true,
+      "scrollWidth": 900,
+      "raster": {
+        "height": 1000,
+        "width": 900
+      },
+      "sha256": "32797eae752b5346b9bc239baa94287fc2b741cdb0365a75be09c219b7f110a0"
+    },
+    {
+      "name": "900-refresh-empty",
+      "css": [
+        900,
+        1000
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 708.5750122070312,
+          "height": 417.1499938964844,
+          "left": 16,
+          "right": 884,
+          "top": 291.4250183105469,
+          "width": 868,
+          "x": 16,
+          "y": 291.4250183105469
+        }
+      },
+      "draft": "Keep the next launch focused.",
+      "focus": " Decision & opportunity deskWork prepared for your reviewRead the orig",
+      "fontLoaded": true,
+      "scrollWidth": 900,
+      "raster": {
+        "height": 1000,
+        "width": 900
+      },
+      "sha256": "fadfff242cf4b204d4b3f4e4211b0b77b228bc7ec5b8fa4f7009bcc6d9932cbb"
+    },
+    {
+      "name": "900-page-loading",
+      "css": [
+        900,
+        1000
+      ],
+      "dialog": null,
+      "draft": "Keep the next launch focused.",
+      "focus": "loading",
+      "fontLoaded": true,
+      "scrollWidth": 900,
+      "raster": {
+        "height": 1000,
+        "width": 900
+      },
+      "sha256": "29f7903c3452da4f3c06a8bfc8ab50691b64f2440b604967e507839aa12b60ea"
+    },
+    {
+      "name": "1536-closed",
+      "css": [
+        1536,
+        770
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 754.4000244140625,
+          "height": 738.4000244140625,
+          "left": 248,
+          "right": 1288,
+          "top": 16,
+          "width": 1040,
+          "x": 248,
+          "y": 16
+        }
+      },
+      "draft": "Keep the next launch focused.",
+      "focus": " Refresh",
+      "fontLoaded": true,
+      "scrollWidth": 1536,
+      "raster": {
+        "height": 770,
+        "width": 1536
+      },
+      "sha256": "5e1ed02cd51e35125083b1722f28ff7f0c72199b90f993f221a63b0ec8333bed"
+    },
+    {
+      "name": "1536-open",
+      "css": [
+        1536,
+        770
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 754.4000244140625,
+          "height": 738.4000244140625,
+          "left": 248,
+          "right": 1288,
+          "top": 16,
+          "width": 1040,
+          "x": 248,
+          "y": 16
+        }
+      },
+      "draft": "A distinct UNSENT draft through source rereads.",
+      "focus": " Refresh",
+      "fontLoaded": true,
+      "scrollWidth": 1536,
+      "raster": {
+        "height": 770,
+        "width": 1536
+      },
+      "sha256": "7fd8dbf38ecd65cd1246f16c6bb5c590be92ea752d8c03b5f82c534b966cb6b1"
+    },
+    {
+      "name": "1366-closed",
+      "css": [
+        1366,
+        768
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 752,
+          "height": 736,
+          "left": 163.1999969482422,
+          "right": 1203.1999969482422,
+          "top": 16,
+          "width": 1040,
+          "x": 163.1999969482422,
+          "y": 16
+        }
+      },
+      "draft": "A distinct UNSENT draft through source rereads.",
+      "focus": " Refresh",
+      "fontLoaded": true,
+      "scrollWidth": 1366,
+      "raster": {
+        "height": 768,
+        "width": 1366
+      },
+      "sha256": "0ed6adfefdc9992534d5f7093968f13758de9e5df086c7be8b8ca01d798d78e5"
+    },
+    {
+      "name": "1366-open",
+      "css": [
+        1366,
+        768
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 752,
+          "height": 736,
+          "left": 163.1999969482422,
+          "right": 1203.1999969482422,
+          "top": 16,
+          "width": 1040,
+          "x": 163.1999969482422,
+          "y": 16
+        }
+      },
+      "draft": "A distinct UNSENT draft through source rereads.",
+      "focus": " Refresh",
+      "fontLoaded": true,
+      "scrollWidth": 1366,
+      "raster": {
+        "height": 768,
+        "width": 1366
+      },
+      "sha256": "06bb172be879578846f71d2170eaafa27914781ace7dc9f00f54f0583e9ae19a"
+    },
+    {
+      "name": "1024-open",
+      "css": [
+        1024,
+        768
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 752,
+          "height": 736,
+          "left": 16,
+          "right": 1008,
+          "top": 16,
+          "width": 992,
+          "x": 16,
+          "y": 16
+        }
+      },
+      "draft": "A distinct UNSENT draft through source rereads.",
+      "focus": " Refresh",
+      "fontLoaded": true,
+      "scrollWidth": 1024,
+      "raster": {
+        "height": 768,
+        "width": 1024
+      },
+      "sha256": "53a8cbed2ec99ed334915e4fc159666d1f422730a6ab04e6be889646846470c4"
+    },
+    {
+      "name": "900-open",
+      "css": [
+        900,
+        1000
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 984,
+          "height": 968,
+          "left": 16,
+          "right": 884,
+          "top": 16,
+          "width": 868,
+          "x": 16,
+          "y": 16
+        }
+      },
+      "draft": "A distinct UNSENT draft through source rereads.",
+      "focus": " Refresh",
+      "fontLoaded": true,
+      "scrollWidth": 900,
+      "raster": {
+        "height": 1000,
+        "width": 900
+      },
+      "sha256": "a44fa7bff9f48cf0221f2b563ed1126d795b2691a1fc29c5df881148bcb4d012"
+    },
+    {
+      "name": "900-closed",
+      "css": [
+        900,
+        1000
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 984,
+          "height": 968,
+          "left": 16,
+          "right": 884,
+          "top": 16,
+          "width": 868,
+          "x": 16,
+          "y": 16
+        }
+      },
+      "draft": "A distinct UNSENT draft through source rereads.",
+      "focus": " Refresh",
+      "fontLoaded": true,
+      "scrollWidth": 900,
+      "raster": {
+        "height": 1000,
+        "width": 900
+      },
+      "sha256": "e786db5a7bb968d84032cf9f053e7c545de1ff033a95be64119443d82a5dd174"
+    },
+    {
+      "name": "1024-closed",
+      "css": [
+        1024,
+        768
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 752,
+          "height": 736,
+          "left": 16,
+          "right": 1008,
+          "top": 16,
+          "width": 992,
+          "x": 16,
+          "y": 16
+        }
+      },
+      "draft": "A distinct UNSENT draft through source rereads.",
+      "focus": " Refresh",
+      "fontLoaded": true,
+      "scrollWidth": 1024,
+      "raster": {
+        "height": 768,
+        "width": 1024
+      },
+      "sha256": "8d712a4ed6fd6437b1eda4c9942bcf8b2bfe55437514570b59d3d2b7c57b4d4a"
+    },
+    {
+      "name": "320-source",
+      "css": [
+        320,
+        740
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 732,
+          "height": 724,
+          "left": 8,
+          "right": 312,
+          "top": 8,
+          "width": 304,
+          "x": 8,
+          "y": 8
+        }
+      },
+      "draft": "A distinct UNSENT draft through source rereads.",
+      "focus": " Refresh",
+      "fontLoaded": true,
+      "scrollWidth": 320,
+      "raster": {
+        "height": 740,
+        "width": 320
+      },
+      "sha256": "dcb9256b822710c12c0f6086dbc0f25f15728fd5f6abfe5e4aeb805e6951edfd"
+    },
+    {
+      "name": "320-keyboard-summary",
+      "css": [
+        320,
+        740
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 732,
+          "height": 724,
+          "left": 8,
+          "right": 312,
+          "top": 8,
+          "width": 304,
+          "x": 8,
+          "y": 8
+        }
+      },
+      "draft": "A distinct UNSENT draft through source rereads.",
+      "focus": "SalesReview the commercial scopeRecorded summary",
+      "fontLoaded": true,
+      "scrollWidth": 320,
+      "raster": {
+        "height": 740,
+        "width": 320
+      },
+      "sha256": "c9d7ced1355d536805039d8cb13ac32fb31b9595141c9e57afac0c6823e1add4"
+    },
+    {
+      "name": "900-page-empty",
+      "css": [
+        900,
+        1000
+      ],
+      "dialog": null,
+      "draft": "A distinct UNSENT draft through source rereads.",
+      "focus": "empty",
+      "fontLoaded": true,
+      "scrollWidth": 900,
+      "raster": {
+        "height": 1000,
+        "width": 900
+      },
+      "sha256": "2940d26ba57fecd619f50ffc1514dffc1a1b4ebf911ada0e4c6654b22834fdfd"
+    },
+    {
+      "name": "900-page-error",
+      "css": [
+        900,
+        1000
+      ],
+      "dialog": null,
+      "draft": "A distinct UNSENT draft through source rereads.",
+      "focus": "error",
+      "fontLoaded": true,
+      "scrollWidth": 900,
+      "raster": {
+        "height": 1000,
+        "width": 900
+      },
+      "sha256": "bc679936dab009d0f74da13c078f909d53451df9a877831c705cec02a9ebe0cd"
+    },
+    {
+      "name": "900-unknown-total",
+      "css": [
+        900,
+        1000
+      ],
+      "dialog": {
+        "background": "rgb(245, 242, 236)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 821.0249938964844,
+          "height": 642.0499877929688,
+          "left": 16,
+          "right": 884,
+          "top": 178.97500610351562,
+          "width": 868,
+          "x": 16,
+          "y": 178.97500610351562
+        }
+      },
+      "draft": "A distinct UNSENT draft through source rereads.",
+      "focus": " Refresh",
+      "fontLoaded": true,
+      "scrollWidth": 900,
+      "raster": {
+        "height": 1000,
+        "width": 900
+      },
+      "sha256": "e77dcd9f2260bbc9d9724aedd759223c0327d50ddd8767550c4f714def03172e"
+    },
+    {
+      "name": "1366-obsidian",
+      "css": [
+        1366,
+        768
+      ],
+      "dialog": {
+        "background": "rgb(25, 22, 30)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 705.0249900817871,
+          "height": 642.0499877929688,
+          "left": 163.1999969482422,
+          "right": 1203.1999969482422,
+          "top": 62.97500228881836,
+          "width": 1040,
+          "x": 163.1999969482422,
+          "y": 62.97500228881836
+        }
+      },
+      "draft": "A distinct UNSENT draft through source rereads.",
+      "focus": " Refresh",
+      "fontLoaded": true,
+      "scrollWidth": 1366,
+      "raster": {
+        "height": 768,
+        "width": 1366
+      },
+      "sha256": "1a0747bc47bcbc6f107c71088b4d306aabf8b0b55da5e1a7c8cee9fb71c46603"
+    },
+    {
+      "name": "1366-reduced-motion",
+      "css": [
+        1366,
+        768
+      ],
+      "dialog": {
+        "background": "rgb(25, 22, 30)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "rect": {
+          "bottom": 705.0249900817871,
+          "height": 642.0499877929688,
+          "left": 163.1999969482422,
+          "right": 1203.1999969482422,
+          "top": 62.97500228881836,
+          "width": 1040,
+          "x": 163.1999969482422,
+          "y": 62.97500228881836
+        }
+      },
+      "draft": "A distinct UNSENT draft through source rereads.",
+      "focus": " Refresh",
+      "fontLoaded": true,
+      "scrollWidth": 1366,
+      "raster": {
+        "height": 768,
+        "width": 1366
+      },
+      "sha256": "1a0747bc47bcbc6f107c71088b4d306aabf8b0b55da5e1a7c8cee9fb71c46603"
+    }
+  ],
+  "sourceHashes": {
+    "src/solo/data/useSoloGamePlan.ts": "a9df763a8ee4b30ced300b4b3bc254aacf3b4a335ad7030a0ef55fc34dd9e27f",
+    "src/solo/prepared-work-review.css": "310d1f29deeb57a60e283fd98b30dbe3f34d588c844bb1b6c0f1b8d1f3893c4b",
+    "src/solo/SoloGamePlanWorkspace.tsx": "d238dd17138bef0e75cf2d32a985e229e617bd37e9ae705588fb39c1d681514f",
+    "src/solo/PreparedWorkReview.tsx": "68502b6b16d5614fba8894e92fbecb76bca2e724159fb9196697318a98fc175c"
+  },
+  "lifecycle": "Native original Desk reader remains open while its source row retires on refresh loading, failure or empty read. Escape returns to the named Decision Desk fallback. Synthetic ports; original Chat continuity and authorization remain unverified."
+}

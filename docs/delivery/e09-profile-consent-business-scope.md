@@ -52,3 +52,20 @@ RELEASE_RECOVERY: additive old-ABI-compatible forward correction; original write
 
 
 Final source review strengthened the replacement negative to pass the captured, matching original timestamp to the profile adapter; a NULL-version rejection would not prove exact intent as clearly. Original fixture plan remains165. No production/security function changed in this review correction.
+
+
+## Original consumer continuation, before UI edits
+
+Native prerequisite is draft PR2576/c7431cfe32c46d244fdfa51200cc25d67b381109, review5612394995 AUTHOR-REVIEW / LOWER ASSURANCE;165 native/Preview/exact-head gates pending. Consumer branch codex/exp09-account-consent-business-scope starts there so the eventual UI calls only the additive exact-client ABI, retaining original140-control behavior and existing design. Source lease covers only Account/Prefs hooks/components/tests and own evidence. No fallback to unbound effectful reads/writes when the selected relationship is missing or checking. Each actual request captures actor/business/client, exact original native records and ephemeral Authorization; no token in UI state/logs. A-B-A/held/late/sign-out lifetimes retire old operations; same-business checking retains local edits and unconfirmed saves, with explicit original saved-state recovery. Actual new native functions and full customer outcome remain unverified until their separate gates/readbacks.
+
+
+Original consumer verification:12 new Account scope controls reproduced10 failures/2 passes before implementation; repaired12/12. Updating inherited fixtures to actual session.user and the additive exact-client ABI retained their original behavioral assertions. The broader48 run then exposed two REAL Auth-failure regressions: generic capture failure left the old form visible. Treat that failure as a private, recoverable read_error with no write, hiding fields until actual scope is re-proved; add a direct changed-Auth-before-save negative. No assertion or native permission was weakened. Final broader rerun pending.
+
+
+Original combined Account/Consent suites167 PASS, including original140 behavior and27 new scope controls. Actual rendered review found focus-triggered Account refresh replaced the input DOM before the first click could enter text. Make only focus refresh quiet and preserve edits made while that native read is pending; keep Auth/captured-session failures concealing private fields. Add two original-hook regression controls for in-flight editing and borrowed-session focus. No native writer, permission or confirmation change. Updated combined run required.
+
+
+Sequential source/privacy review added an actual late-current-login control: a still-valid captured bearer did not reveal that the current ordinary SDK login changed after the native preference read (15 controls PASS, one genuine FAIL). Recheck both the original captured bearer and current actual Auth before painting the original fresh preference projection. No fallback, different identity, new credential or native authority is introduced; final focused rerun required.
+
+
+Final focused184/six suites PASS: original140,34 new Account/Consent scope/privacy controls and10 existing scope-helper checks. Changed-source/test ESLint0 errors/warnings and diff check PASS. Original-component900/390/320 light/dark nine images prove local form fit, actual edit/Tab/Space, truthful uncertainty, same-scope hold/recovery and existing Check/result focus. Native/production and true joined customer acceptance remain separate. Final local type ratchet has no own changed-file diagnostic; only incumbent missing @mdxeditor/editor in unchanged AgreementBodyEditor fails. No baseline/lockfile/install or guard edit. Sequential author source and Impeccable/React review is LOWER ASSURANCE; exact-head hosted gates and native ABI production readback remain mandatory.

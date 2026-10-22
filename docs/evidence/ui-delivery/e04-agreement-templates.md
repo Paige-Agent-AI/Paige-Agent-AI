@@ -135,3 +135,6 @@ pass. Actual SDK/browser proof holds the original recovery response across the
 authority interruption, waits for its response-completion barrier and next render
 frames before checking it cannot publish, then explicitly recovers the same native
 row. No new poller, timeout extension, assertion suppression or approval bypass.
+
+
+October22 prerequisite/main composition: producer#2545 exactb346fe6d0 now carries the identical native SQL at still-unapplied220004, above actual Portal210009 and pending210109/210209/210309. Its prior190000 Preview was replaced only after zero users/members/agreements/templates/storage readback; rebuilt exact-head Preview nowPASS, full CI/release remains separate. Correction#2532 exactee745f01 is preserved by ancestry; current main6e9380cd customer-payment/relationship source is retained. Both independent E04 guard and E05 weekly-review Shipped Log blocks were preserved; the second conflict was a single blank line. All25 actual-render owning source hashes remain exact, with no TSX/API/CSS/driver change. Prior163 integrated cases and20-frame/17-path evidence apply to those identical source bytes. Consumer still waits for actual prerequisite release/readback and main retarget/exact-head checks; no customer acceptance is promoted.

@@ -5,7 +5,8 @@
 All19 definitions below and all nine analytics remain required. Current-main
 grounding8bf6f15a preserves released contextual suggestion/Decision Desk#2544,
 #2583/#2596 and factual closeout#2602; exact identities and bounded ordinary
-customer evidence remain in Master§4.0/ANT52aa8d6fc7. No release is redone.
+customer evidence remain in Master§4.0/ANT52aa8d6fc7. Subsequent main429388f2 is
+composed intact, including the original EXP04 prerequisite. No release is redone.
 
 O01/O02/O16 and CAP017: controlled pending-dependency tests reproduced an unbounded
 initial/final scope read in the existing transport. The candidate enforces one

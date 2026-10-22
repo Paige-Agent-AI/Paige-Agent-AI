@@ -44,7 +44,7 @@ const WORK_SET_LABELS: Record<OperationsWorkSet, string> = {
 };
 type Inspection = { kind: "item"; id: string; view: Destination; proposedStage?: PlanItemStatus; weeklySource?: boolean } | { kind: "plan"; id: string; view: Destination } | {kind:"crm";id:string;view:Destination;record:CrmWorkRecord} | {kind:"crm_recovery";id:string;view:Destination} | {kind:"crm_focus";id:string;view:Destination} | null;
 
-type WorkspaceProps = { openPaige?: () => void; view?: string; onViewChange?: (view: string) => void;
+type WorkspaceProps = { openPaige?: () => void; view?: string; onViewChange?: (view: string) => void; onOpenAgreements?: () => void;
   weeklySourceSearch?: string; weeklySourceKey?: string; onWeeklySourceDismiss?: () => void;
   onTaskFocusDismiss?: () => void;
   onNavigationGuardChange?: (guard: (() => string | null) | null, notify?: () => string | null) => void };
@@ -71,7 +71,7 @@ function OperationsLoading() {
     <div className="ops-loading-lines" aria-hidden="true"><i /><i /><i /></div></div>;
 }
 
-function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, weeklySourceSearch = "", weeklySourceKey,
+function ScopedOperations({ tenantId, userId, openPaige, onOpenAgreements, view, onViewChange, weeklySourceSearch = "", weeklySourceKey,
   onWeeklySourceDismiss, onTaskFocusDismiss, onNavigationGuardChange }: WorkspaceProps & {
   tenantId: string; userId: string;
 }) {
@@ -344,6 +344,8 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
     // re-resolve permissions; this opens no dispatch or approval path.
     handOffPaigePrompt(destination === "Capacity"
       ? "ZION, review our current work assignments. Who owns the most active work, what is blocked, and what reassignment should we consider? Keep missing hours and effort unknown. Propose next steps for my review."
+      : destination === "Delivery"
+      ? "ZION, review our client delivery commitments using current authorized agreements and linked work where available. What promise is due next, who owns it, and which delivery evidence or acceptance is still missing? A signature does not prove delivery. Explain unavailable sources and propose bounded next steps for my review. Do not change, release, approve or send anything."
       : "ZION, review our active projects and work this week. What is behind schedule, who is responsible, and which blockers need attention today? Use current work records and propose bounded next steps for my review.");
     openPaige();
   }
@@ -381,7 +383,8 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
     </header>
     {navigationNotice && <p className="ops-inline-notice" role="status">{navigationNotice}</p>}
     <div className="ops-department-body">
-      {destination === "Delivery" ? <OperationsDelivery openPaige={openPaige} plans={source.plans} items={source.allItems}
+      {destination === "Delivery" ? <OperationsDelivery openPaige={openPaige} onOpenAgreements={onOpenAgreements ? () => { if (!checkNavigation()) onOpenAgreements(); } : undefined}
+        onOpenWork={() => setDestination("Work")} plans={source.plans} items={source.allItems}
         planningReady={planningAvailable && !source.loading} members={people.members}
         peopleReady={!people.loading && !people.error && !people.partial}
         onVerified={async planId => { await source.refresh({ silent: true }); setInspection({ kind: "plan", id: planId, view: destination }); }} />

@@ -826,6 +826,31 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-22 — EXP04 preparation owner API, native deployment held.**
+
+PR[#2599](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2599), reviewed
+`ae444dade5b9d1dd3edd849e29150d1ed84dece2`, AUTHOR-REVIEW / LOWER ASSURANCE
+5618223345, merged `429388f2528942275334fd0c916c6fcfecb4f70a`; actual reviewed
+composition tree `702b16653bd4afa11471e2abe47b170576dc9540`. All13 required
+exact-head checks/full normal Preview/two statuses SUCCESS. Original official
+postgres image mirror correction preserves every test, timeout and permission;
+earlier failed registry attempts remain failed. Production Edge39822870560 /
+119978430775 SUCCESS, agreement-document ACTIVE37, original JWT setting false;
+canonical artifact12445511636 and independent16 served-source/config hashes PASS,
+edge-live429. Web `dpl_A9HYaxNza3MaKepmnBwh2JXEvZfn` READY, actual public200
+build `429388f2528942275334fd0c916c6fcfecb4f70a-mvjte1ly`, customerUpdate:null.
+**Native20271113300004 NOT_APPLIED:** original workflow39822870632 failed three
+times and normal serialized recovery39825776556 failed once at statement16,
+original5s lock timeout55P03. Transaction rollback leaves frontier290009, no
+preparation table and original SAVE11body1bd28e75afa0f50bb07b717795a5be0e.
+Read-only schema locks are investigated without terminating sessions, weakening
+timeouts or editing migration history. Dependent2604/2605 remain unreleased;
+actual native ABI/ACL/table/trigger/source readback and owner/staff/client proof
+are owed. This is a merged API increment with a deployment hold, not a complete
+customer release, algorithm/catalogue promotion, signing/send/payment authority
+or full twelve-outcome/founder acceptance. Recovery: unchanged serialized normal
+workflow after a quiet read window; otherwise a separately reviewed forward fix.
+
 **2026-10-22 — EXP04 original uploaded-PDF preparation correction.**
 
 PR[#2577](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2577), reviewed

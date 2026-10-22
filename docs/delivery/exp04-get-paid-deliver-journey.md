@@ -1854,6 +1854,13 @@ ALG01/02/12/13 statuses, Mind/Memory and capability catalogue readiness are unch
 
 October22 template consumer composition checkpoint: existing#2549 now contains reviewed nativeb346fe6d0/220004 and correctionee745f01 plus released main6e9380cd without changing any of25 rendered owning source files. Earlier190000/1509 references are historical proposals; native migration remains production-unapplied pending full CI/release. Both independent Shipped Log blocks preserved, no shared UI source or another agent assigned. Native Preview was safely rebuilt only within the verified empty original development PR integration; actual production/ordinary-role/provider/full Experience acceptance remains owed.
 
+## October22 retained document retrieval — local integrity repair
+Actual-source owner/token/Portal positives then3 corrupted-byte RED cases establish a bounded original download defect. Repair verifies actual returned bytes with the existing retained-PDF hash helper and original selected record. Portal-first/native relationship function unchanged; owner/token authorization body retains its original7148c40a pin through an explicit checksum-only inverse, with three real guard mutations still detected.45 handler/56 Deno/actual Edge type checks PASS; final root type ratchet PASS baseline10/current6 with no baseline or signing-guard change. No URL/key substitution, status/signature/audit rewrite, fabricated viewed event or private error leakage. Original unavailable/retry UI is unchanged. [Evidence and full orchestration contract](../evidence/ui-delivery/e04-agreement-document-integrity.md). All12 remain mandatory; source proof is not actual customer/provider/founder acceptance.
+
+October22 release-state reconciliation: commercial#2550/230004 is now production-source verified (receipt6334959569); earlier failed/unapplied entries are dated history. Signer prerequisite#2554/605a8c4/240004 is merged and actual routine metadata matches f380cfa97f14e29c8b88721a76b9db4e; final normal-job/web receipt remains pending. Template UI still uses original220004, with no new signing, payment, provider or Chat effect. This composition preserves all prior template and signer sections; fresh exact-head CI/review/readback and customer acceptance remain owed.
+
+October22 current native prerequisites: template220004, commercial230004, signer240004, checked250004 and reader260004 are production-source verified. Actual main172013d896d78178473eaa1e2946e3f27558944b and all E09 Actions/Sessions source are retained; receipts6336226483/6336227514/6336228732 distinguish actual document35/six-file/JWT readback, five checked writer definitions and original readerc53a216. Earlier pending notes are dated history. This own template UI source is unchanged; its new composed head requires fresh exact-head CI/review/web readback and actual ordinary-role/customer acceptance. All12/full founder evaluation remain incomplete.
+
 ## October22 C7 original commercial-presentation reconciliation
 
 This same EXP04 lead selectively reuses#2192 exact179e52; no retired agent or whole historical stack is activated. REUSE original agreement/terms/invoice, actor floor, immutable native presentation and Collections schedule/conditions; EXTEND original v2 explicit service facts; REPAIR native type coercion; NEW current-main dormant integration only. Template options remain business configuration, not legal-review evidence. Original signed history is never backfilled.
@@ -1891,4 +1898,42 @@ REUSE original add_agreement_signer, original agreement/signer/event records, em
 
 Local44 native assertions/replay2/five sessions/three observed waits PASS, exact production-body baseline read before changes. New240004 is UNAPPLIED; exact-head review/CI/Preview, safe migration/readback and authenticated acceptance remain separate. All O1–O12 and official algorithm/capability/LayerC readiness boundaries are unchanged. [Native evidence](../evidence/ui-delivery/e04-signer-preparation-integrity.md).
 
-October22 release-state reconciliation: commercial#2550/230004 is now production-source verified (receipt6334959569); earlier failed/unapplied entries are dated history. Signer prerequisite#2554/605a8c4/240004 is merged and actual routine metadata matches f380cfa97f14e29c8b88721a76b9db4e; final normal-job/web receipt remains pending. Template UI still uses original220004, with no new signing, payment, provider or Chat effect. This composition preserves all prior template and signer sections; fresh exact-head CI/review/readback and customer acceptance remain owed.
+
+## October22 checked recipient preparation — original record and recovery contract
+
+A visual read-before-write cannot atomically bind the party to the reviewed client/document or identify a lost creation response. REUSE the exact original240004 signer business body/human reader; EXTEND checked source CAS and actor-bound same-record recovery. One private business body serves the unchanged legacy public interface and new checked caller. No new agreement/signer ledger, approval, generic executor, sender or authorization framework.
+
+1. Outcome: owner prepares the intended signer on an exact original customer/document revision and retrieves that same receipt after interruption.
+2. Domain: sole EXP04 Agreements lead; original Sales/Clients identity and E09 Portal boundaries remain.
+3. Harness/Gateway: legitimate internal manual preparation; no forced LayerC act or competing orchestration.
+4. Spine: recipient mutation remains UNAVAILABLE to Chat/Live until actually registered/governed/accepted. Existing agreement.* PARTIAL is not promoted by new native code.
+5. Provider: none. No email, signature token, legal consent, merchant, charge, document upload or provider activation.
+6. Authority/risk: original human reader and private writer both enforce actual session/tenant/admin. Expected client/version/timestamp CAS is atomic; private calls are owner-only, new entries authenticated-only. Internal preparation is not consequential signing or financial approval.
+7. Durable identity: existing signer PK and one original edited event/receipt. No additional request/operation/approval/event store. Legacy defaults/DTO/ACL stay compatible.
+8. Readback: closed original signer/event/source identity; same normalized request returns recorded/replayed/recovered receipt. Current signer/signature state must still come from its current canonical read, not the historical pending creation receipt.
+9. Recovery: same identity lock, fresh post-wait authorization and read snapshot. Missing evidence stays unconfirmed. Foreign/other-actor/changed intent/stale source refuses; no unknown new identity, duplicate effect or invented cancellation.
+10. Surface/acceptance: original BindingLedger35 remains PARTIAL; recipient UI uses the selected prototype and single leave guard only after source release/readback. Ordinary owner/staff/client JWT, full signer/field/signing/provider/O1–O12/founder acceptance remain separately owed.
+
+Native44 base plus75 checked assertions PASS; exact-head CI/Preview/review and safe native deployment/readback remain required. Forward250004 is UNAPPLIED after220004/230004/240004, preserving Portal21xx. Bounded ALG01 reconciliation/ALG12 refusal-recovery evidence is not a global algorithm production/acceptance promotion; ALG02/13 progression/recommendations and the full original Experience remain incomplete. [Evidence](../evidence/ui-delivery/e04-checked-signer-preparation.md).
+
+
+## October22 original preparation read consistency
+
+REPAIR read_paige_agreement_preparation.can_edit to mirror the original native
+content/sealed freezes; REUSE the same signature, source, permissions, closed DTO
+and writer. No new UI, store, privilege, executor or orchestration path. Exact
+production routine metadata/source is reproduced locally; five reader positives
+then a genuine retained-object failure precede the correction. Guarded forward
+260004 follows220004→230004→240004→250004; all schema/source/review/release/actual
+customer acceptance states remain independent.
+
+Final142 native assertions (44 original,75 checked,23 read-state), each relevant
+migration replayed twice; wrong scope/actor/admin, source/DTO/metadata retention,
+normal/uploaded/frozen/Sent states and unknown routine-source refusal pass. An
+initial invalid Sent fixture was corrected to honor the original required content
+digest; no constraint or assertion weakened. Original native concurrency evidence
+is retained, not reclassified as new projection concurrency. This is not a new
+capability/algorithm activation or authenticated customer outcome. See [full
+orchestration and proof boundary](../evidence/ui-delivery/e04-preparation-editability.md).
+
+October22 checked-signer main-target continuation: original prerequisite#2554 is RELEASED SOURCE VERIFIED, merge605a8c4bcdfb63c016689717947caf09f3296f83/native240004/bodyf380cfa97f14e29c8b88721a76b9db4e/unchanged owner/search_path/ACL and exact webdpl_HMxLuMYHqkv8KYQVWYJBEm2K3UW7/build605a8c4…-mvj7pldd (receipt6335238273). Actual main and all E09 source retained through a clean composition; own native250004 and checked proof are unchanged. Earlier pending-prerequisite notes are historical. This own250004 still requires fresh exact-head CI/review/normal migration/readback; source119/replay2 is not customer/provider/signing acceptance. All12 outcomes remain mandatory/incomplete.

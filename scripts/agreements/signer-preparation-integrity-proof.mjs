@@ -3,6 +3,8 @@ import {readFileSync} from 'node:fs';
 import {spawn,spawnSync} from 'node:child_process';
 import {randomUUID} from 'node:crypto';
 import assert from 'node:assert/strict';
+import {proveCheckedSignerPreparation} from './checked-signer-preparation-proof.mjs';
+import {provePreparationEditability} from './preparation-editability-proof.mjs';
 const [binary,port,user,directory,mode]=process.argv.slice(2);
 assert(binary&&/^\d+$/.test(port??'')&&user&&directory&&['baseline-frozen','baseline-order','repaired'].includes(mode));
 let database='postgres',checks=0;const sessions=[];
@@ -101,5 +103,7 @@ try{
   check(sql("SELECT md5(prosrc) FROM pg_proc WHERE oid='public.add_agreement_signer(uuid,uuid,text,text,text,integer)'::regprocedure;")==='f380cfa97f14e29c8b88721a76b9db4e','Source guard refuses a changed writer rather than overwriting it');
 
  }
- console.log(JSON.stringify({result:'PASS',checks,migrationReplay:mode==='repaired'?2:0,concurrentSessions:mode==='repaired'?5:3,observedLockWaits:mode==='repaired'?3:2,scope:'Original native signer preparation only; no actual JWT/signature/provider/customer acceptance'}));
+ const checked=process.argv.includes('--checked') ? await proveCheckedSignerPreparation({sql,read,context,tenant,actor,client,fresh,startSession,observe,quote}) : null;
+ const editability=process.argv.includes('--editability') ? provePreparationEditability({sql,read,context,tenant,fresh,quote,applyMigration:!process.argv.includes('--editability-baseline')}) : null;
+ console.log(JSON.stringify({result:'PASS',checks,checked,editability,migrationReplay:mode==='repaired'?2:0,concurrentSessions:mode==='repaired'?5:3,observedLockWaits:mode==='repaired'?3:2,scope:'Original native signer preparation only; no actual JWT/signature/provider/customer acceptance'}));
 }finally{await Promise.allSettled(sessions);database='postgres';sql(`DROP DATABASE ${fixture};`);}

@@ -39,7 +39,9 @@ const changes = [
 ];
 
 test('reviewed Calendar, Task, email, reminder and read-receipt context binds all incumbent adapters without replacing their contracts', () => {
-  assert.equal(incumbentSourcePaths.length, 118);
+  assert.equal(incumbentSourcePaths.length, 120);
+  assert.ok(incumbentSourcePaths.includes('supabase/functions/_shared/knowledge-extraction.ts'), 'original extraction acknowledgment validation must remain a restrictive ancestry input');
+  assert.ok(incumbentSourcePaths.includes('supabase/functions/_shared/paige-turn/record-links.ts'), 'original source-reference sanitizer must remain a restrictive ancestry input');
   assert.ok(incumbentSourcePaths.includes('supabase/functions/_shared/paige-turn/interactive-cura-history.ts'), 'original CURA history authority must remain a restrictive ancestry input');
   assert.ok(incumbentSourcePaths.includes('supabase/functions/_shared/cura-knowledge-teaching.ts'), 'native CURA preparation authority must remain a restrictive ancestry input');
   assert.ok(incumbentSourcePaths.includes(controlTransportPath), 'bounded control reader must remain a restrictive ancestry input');

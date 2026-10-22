@@ -1,3 +1,11 @@
+## EXP09 — original Payments and Agreements native verified releases,2026-10-22
+
+Payments UI2584/0af948c6d91cbd803aed0f98f6da68b1a0c094b3, Agreements native2586/51c06c8923b624f48b3cf4d21febf3feee671cb8 and original Agreements UI2592/4008a1390ed6bfbfda32c88f5afc0517053ddbde are MERGED/DEPLOYED/SOURCE READ BACK. Exact reviewed heads, merge trees, required green checks/full Preview, accurately AUTHOR-REVIEW / LOWER ASSURANCE, web/public identities, served Payments scope modules and native source/ABI/ACL are recorded in the sole Master4.0 rows and production receipts6340712100/6341825188/6344425785. Payments78 focused controls and11 local responsive/focus renders; Agreements original184+71=255 native controls PASS. The earlier recorded249 fixture failure was repaired and fully rerun without weakening production authority. This dated closeout supersedes the historical pending/failure wording below.
+
+Original E04 money/merchant/ledger/signing/recipient/document systems remain authoritative and unchanged; no invoice/payment is invented and no signing link, signature, charge, provider send or customer file was executed. No separate knowledge/history/permission/execution system. Original request→Auth/CRM/S7→domain record→existing result/receipt/reload remains; Layer C is not required for ordinary native Portal self-service/read seams. Original Agreements consumer2592/a94023e985985058e5a2a16ad4616de45aeca59c has90 focused tests and9 actual local rendered views;11 exact-head checks/full Preview/two statuses PASS before merge. Native prerequisite and all seven original/scoped function contracts independently unchanged after UI release; exact served page/hook and READY web/public build4008…-mvjosgei read back. No actual customer/legal/provider action was executed.
+
+Functional bounded releases are distinct from actual authenticated customer results. Visual evidence is local original-component desktop/narrow/small light/dark/recovery/focus, not full signed-in shell/device/AT acceptance. Experiential joined owner/client returning, revoked/wrong-business, signing/payment and approved Knowledge publication proof remains owed. Global linked-user identity/recipient/new-account restrictions remain intact; multi-business is NOT_ACTIVATED and original shared CURA/Knowledge selected context is being repaired. All seven Capabilities remain Limited; ALG01/12 bounded PARTIAL, ALG02/04/13 production runtime UNVERIFIED. Founder evaluation once the complete integrated Experience is ready, NOT_REQUESTED / NOT_ACCEPTED.
+
 ## EXP09 — Account/Consent and original Billing native release readback,2026-10-22
 
 Original native Account2576/6df040cac5191cc4711e61dbcb459bdb1dfddca9, customer Account2579/f313277f828eaa27210a9c465f38f89187c3b250 and original financial-read intent2580/0bcb088184b59f1badaef34be3aaa45df916ff28 are merged/deployed/source read back. Exact trees, required checks/full Preview, accurately lower-assurance author reviews, native fingerprints/grants and exact web/public evidence are in the sole Master4.0 rows and production receipts6339278471/6340522894/6340324317. Native165/171 and focused209 controls support bounded behavior; source/CI do not constitute actual customer acceptance. This dated factual closeout supersedes the earlier Account2576/consumer pending wording.
@@ -418,6 +426,21 @@ and #2175's byte verifier: existing completed/replayed seal must match its actua
 private PDF. Native106 plus5 Portal-wiring tests and three Edge type checks pass;
 release, authenticated recovery and full ALG01/12 acceptance remain proof owed.
 [Exact scope and limitations](../evidence/ui-delivery/e04-retained-completion-reconcile.md).
+
+## EXP02 contextual review — post-merge identities,2026-10-22
+
+Exact preceding release identities are now in the sole Master§4.0: Desk2544
+reviewed96c767bf61e835d87ef3e44c4c442dbfed070f28 → mainf96b18b60be5964f5c7fd24bb7b66ee2bf30774c;
+shared2583 reviewed6d231231444e777bf5caa307c64ff3e36b79c5c6 → maine22a736b965a1afbd80be86260a5062d178d0f14;
+consumer2596 reviewedaf6df0d9de42194e201e17357d6417b68f5e33f1 → maine2403625e26cb5abee802af62d372be5a6be986d.
+Exact trees, accurately AUTHOR-REVIEW / LOWER ASSURANCE receipts, required job/check
+results, workflow-summary metadata discrepancy, READY web and public build identities
+are retained in those rows and original receipts6343100297/6343922566/6344159048.
+Own migrations/Edge are NOT_APPLICABLE. This dated identity note supersedes only
+the earlier pending engineering identities for these three releases; source packets,
+existing ANT-52 acceptance evidence, capability readiness and full-Experience obligations
+retain their original authority. No new runtime, policy, capability or acceptance claim
+is introduced, and no customer version/announcement is assigned.
 
 ## EXP02 — Decision Desk required-style correction,2026-10-22
 

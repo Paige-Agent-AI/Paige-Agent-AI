@@ -41,6 +41,7 @@ import { createAnchoredTranscriptScroll } from "@/components/chat/anchoredTransc
 import {useSharedClientPortalFrame} from "@/hooks/useClientPortalFrame";
 import {type ClientPortalFrame} from "@/lib/client-portal-frame";
 import {readCustomerChat} from "@/lib/customer-chat";
+import {captureClientPortalAuthorization} from "@/lib/client-portal-scope";
 import {customerAgentName} from "../../../supabase/functions/_shared/client-portal-identity";
 import {usePortalStaffStanding} from "@/lib/portal/portalStaffStanding";
 import {mergeIntoDraft, subscribePaigePromptHandoff} from "@/lib/paigePromptHandoff";
@@ -178,6 +179,8 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
   const historyRetryFocus=useRef(false);
   const customerRequest = useRef({epoch:0,abort:null as AbortController|null});
   const customerScope = customerFrame ? [customerFrame.actorId,customerFrame.profile.id,customerFrame.profile.tenant_id].join(":") : null;
+  const customerRenderScope=useRef({scope:customerScope,available:customerAvailable});
+  customerRenderScope.current={scope:customerScope,available:customerAvailable};
   useEffect(() => {
     const lifetime=customerRequest.current;
     const epoch=++lifetime.epoch;
@@ -458,20 +461,38 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
     setAttachedDoc(null);
     setIsLoading(true);
     const requestEpoch=customerRequest.current.epoch;
-    const currentRequest=()=>!customerFrame||customerRequest.current.epoch===requestEpoch;
+    const requestScope=customerScope;
+    const requestActor=customerFrame?.actorId;
+    const requestBusiness=customerFrame?.profile.tenant_id;
     const customerAbort=customerFrame?new AbortController():null;
+    const currentRequest=()=>!customerFrame||(customerRequest.current.epoch===requestEpoch
+      &&customerRenderScope.current.scope===requestScope&&customerRenderScope.current.available&&!customerAbort?.signal.aborted);
     customerRequest.current.abort=customerAbort;
+    let endCustomerAuth=()=>{};
 
     try {
-      const { data: { session: freshSession } } = await supabase.auth.getSession();
-      if(!currentRequest())return;
-
-      if (!freshSession) {
-        toast({ title: "Session Expired", description: "Please sign in again.", variant: "destructive" });
-        setMessages(messages);
-        setIsLoading(false);
-        return;
+      let requestAuthorization:string;
+      if(customerFrame&&requestActor){
+        // The original Auth listener retires this one private request; it grants no role.
+        const {data:{subscription}}=supabase.auth.onAuthStateChange((_event,session)=>{
+          if(session?.user.id===requestActor)return;
+          ++customerRequest.current.epoch;customerAbort?.abort();
+          setMessages([]);setCustomerThread(null);setHistoryState("error");setIsLoading(false);
+        });
+        let open=true;endCustomerAuth=()=>{if(open){open=false;subscription.unsubscribe();}};
+        customerAbort?.signal.addEventListener("abort",endCustomerAuth,{once:true});
+        if(!currentRequest())return;
+        requestAuthorization=await captureClientPortalAuthorization(supabase.auth,requestActor,currentRequest);
+      }else{
+        const { data: { session: freshSession } } = await supabase.auth.getSession();
+        if(!currentRequest())return;
+        if (!freshSession) {
+          toast({ title: "Session Expired", description: "Please sign in again.", variant: "destructive" });
+          setMessages(messages);setIsLoading(false);return;
+        }
+        requestAuthorization=`Bearer ${freshSession.access_token}`;
       }
+      if(!currentRequest())return;
 
       const payload: Record<string, unknown> = {
         messages: newMessages.map(m => ({
@@ -507,7 +528,8 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${freshSession.access_token}`,
+            Authorization: requestAuthorization,
+            ...(requestBusiness?{"x-client-portal-business":requestBusiness}:{}),
           },
           body: JSON.stringify(payload),
           signal:customerAbort?.signal,
@@ -625,6 +647,8 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
       setMessages(messages);
       setSteps(settleOpenSteps);
       setIsLoading(false);
+    } finally {
+      endCustomerAuth();customerAbort?.signal.removeEventListener("abort",endCustomerAuth);
     }
   };
 

@@ -93,18 +93,46 @@ export async function readBusinessSnapshotTransport(
   const unavailable = (): BusinessSnapshotChatResult => ({ status: 'unavailable', message: 'The business review could not be read right now. No financial figures or completed actions are inferred.' });
   const tenant = ctx.who.tenantId;
   if (!tenant) return refused();
+  // One elapsed read budget includes BOTH authority checks. An abort signal on
+  // invoke alone cannot settle a hung scope RPC or an uncooperative transport.
+  // Bound every await so late preflight completion cannot start another stage.
+  const controller = new AbortController();
+  const expires = performance.now() + 15_000;
+  const checkBudget = () => {
+    if (controller.signal.aborted || performance.now() >= expires) {
+      controller.abort();
+      throw new Error('business_review_read_expired');
+    }
+  };
+  const withinBudget = async <T>(start: () => PromiseLike<T>): Promise<T> => {
+    checkBudget();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const value = await Promise.race([
+        Promise.resolve().then(() => { checkBudget(); return start(); }),
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(() => {
+            controller.abort();
+            reject(new Error('business_review_read_expired'));
+          }, Math.max(0, expires - performance.now()));
+        }),
+      ]);
+      checkBudget();
+      return value;
+    } finally { if (timer !== undefined) clearTimeout(timer); }
+  };
   const current = async () => {
-    const scope = await deps.caller.rpc('current_user_tenant_id');
+    const scope = await withinBudget(() => deps.caller.rpc('current_user_tenant_id'));
     return !scope.error && scope.data === tenant;
   };
   try {
     if (!await current()) return refused();
     const { period, customStart, customEnd, focus } = parsed.request;
-    const { data, error } = await deps.caller.functions.invoke('paige-business-review?chat=1&finance_sources=1', {
+    const { data, error } = await withinBudget(() => deps.caller.functions.invoke('paige-business-review?chat=1&finance_sources=1', {
       body: { ...(period === undefined ? {} : { period }), ...(customStart === undefined ? {} : { custom_start: customStart }),
         ...(customEnd === undefined ? {} : { custom_end: customEnd }), ...(focus === undefined ? {} : { focus }), timezone: ctx.timezone },
-      headers: { 'x-paige-review-scope': tenant }, signal: AbortSignal.timeout(15_000),
-    });
+      headers: { 'x-paige-review-scope': tenant }, signal: controller.signal,
+    }));
     if (!await current()) return refused();
     const envelope = object(data), result = object(envelope?.result);
     if (error || envelope?.version !== 1 || envelope.actor_id !== ctx.who.actorId

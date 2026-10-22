@@ -240,6 +240,36 @@ describe('operations adapter', () => {
     expect(data(await ops(f)).risks[0].summary).toMatch(/^Systems Check could not check your website \(high priority/);
   });
 
+  it.each([
+    ['payment_processor_connected', 'fail', 'Systems Check: no payment processor is declared in your business setup'],
+    ['payment_method_options', 'fail', 'Systems Check: no accepted payment methods are declared in your business setup'],
+    ['payment_processor_connected', 'error', 'Systems Check could not check your recorded payment processor declaration'],
+    ['payment_method_options', 'error', 'Systems Check could not check your recorded payment-method declarations'],
+  ] as const)('preserves %s/%s as declaration evidence, never operational payment proof', async (key, status, beginning) => {
+    const f = fakeCaller({ script: (k) => k === OPERATIONS_METRICS.exceptions
+      ? { values: events(finding(key, 'blocking', 1, status)) } : undefined });
+    const s = data(await ops(f));
+    expect(s.risks[0]).toMatchObject({
+      kind: 'systems_check_blocking', severity: 'act',
+      summary: `${beginning} (blocking; found 2026-10-11 09:01 UTC). This declaration check does not verify a provider connection, payment availability or settlement.`,
+    });
+    expect(fig(s, 'operations.exceptions_blocking')?.value).toBe(1);
+    expect(s.sources).toHaveLength(3);
+    expect(s.sources.every((source) => source.system === 'operations_pmo')).toBe(true);
+    expect(f.issuedKeys()).toEqual([OPERATIONS_METRICS.exceptions, OPERATIONS_METRICS.unresolved, OPERATIONS_METRICS.workflowRuns]);
+    expect(JSON.stringify(s)).not.toContain('taking payment is not set up');
+  });
+
+  it('does not recast non-payment findings as declarations or weaken actual failed-run evidence', async () => {
+    const s = data(await ops(fakeCaller({ script: (k) => k === OPERATIONS_METRICS.exceptions
+      ? { values: events(finding('website_connected', 'high', 1)) }
+      : k === OPERATIONS_METRICS.workflowRuns ? { values: dist(['failed', 2]) } : undefined })));
+    expect(s.risks.find((r) => r.kind === 'systems_check_high')?.summary).toBe('Systems Check: no website is connected (high priority; found 2026-10-11 09:01 UTC).');
+    expect(s.risks[0]).toMatchObject({ kind: 'automation_runs_failed', severity: 'act', summary: expect.stringMatching(/^2 automation runs failed in /) });
+    expect(fig(s, 'operations.workflow_runs_failed')?.value).toBe(2);
+    expect(JSON.stringify(s)).not.toMatch(/declaration|payment availability/);
+  });
+
   it('when the producer has more findings than it listed: says the list is incomplete and per-priority counts are not available', async () => {
     const twenty = Array.from({ length: 20 }, (_, i) => finding('company_info_populated', 'medium', i + 1));
     const f = fakeCaller({ script: (k) => k === OPERATIONS_METRICS.exceptions ? { values: events(...twenty), truth: 'PARTIAL', excluded: 5 } : undefined });
@@ -508,7 +538,8 @@ describe('composeBusinessReview with F2b', () => {
     expect(r.projection).toMatch(/\[Operations\] read at/);
     expect(r.projection).toMatch(/\[Clients\] read at/);
     expect(r.projection).toMatch(/\[Work and tasks\] NOT AVAILABLE/);
-    expect(r.projection).toMatch(/Risk \(act\): "Systems Check: taking payment is not set up/);
+    expect(r.projection).toMatch(/Risk \(act\): "Systems Check: no payment processor is declared in your business setup/);
+    expect(r.projection).toContain('This declaration check does not verify a provider connection, payment availability or settlement.');
     expect(JSON.stringify(r)).not.toMatch(/aneb_v1_/);
     // 8 F2a reads + 3 operations + 3 clients; each domain read its own keys only
     expect(f.issuedKeys().filter((k) => k.startsWith('operations.'))).toHaveLength(3);

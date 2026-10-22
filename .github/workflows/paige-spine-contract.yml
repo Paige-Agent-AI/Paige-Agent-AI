@@ -195,6 +195,11 @@ jobs:
   database-contract:
     runs-on: ubuntu-latest
     timeout-minutes: 35
+    env:
+      # Same official images/versions; avoid throttled anonymous ECR/Docker pulls.
+      # postgres17.6.1.021 linux/amd64 is identical on GHCR and Docker Hub:
+      # sha256:759be34d849bf3eb5a59056b71b9e365ca89bfa83665bd0103343ef5598e7b78.
+      SUPABASE_INTERNAL_IMAGE_REGISTRY: ghcr.io
     steps:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1

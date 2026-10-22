@@ -1,6 +1,6 @@
 import {supabase} from "@/integrations/supabase/client";
 import {readClientPortalFrame,sameClientPortalFrame,type ClientPortalFrame} from "./client-portal-frame";
-import {withClientPortalBusiness} from "./client-portal-scope";
+import {captureClientPortalAuthorization,withClientPortalBusiness} from "./client-portal-scope";
 export type CustomerChatMessage={id:string;role:"user"|"assistant";content:string};
 const uuid=(v:unknown):v is string=>typeof v==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 
@@ -9,9 +9,10 @@ export async function readCustomerChat(frame:ClientPortalFrame,signal?:AbortSign
  const captured={...frame,profile:{...frame.profile}};
  const business=captured.profile.tenant_id;
  const current=()=>{if(signal?.aborted)throw new DOMException("Conversation read canceled","AbortError");};
+ const authorization=await captureClientPortalAuthorization(supabase.auth,captured.actorId,()=>{current();return true;});
  const request=<T extends {abortSignal(signal:AbortSignal):T;setHeader(name:string,value:string):T}>(query:T)=>{
   current();
-  return withClientPortalBusiness(signal?query.abortSignal(signal):query,business);
+  return withClientPortalBusiness(signal?query.abortSignal(signal):query,business).setHeader("Authorization",authorization);
  };
  const check=async()=>{
   current();

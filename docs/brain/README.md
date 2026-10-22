@@ -13,6 +13,10 @@ then157 cases/five original suites pass;20 untouched final-source
 native synthetic frames verify17 source pins, eight shell sizes,320px keys,
 Obsidian/reduced motion, interruption/fallback focus and unavailable/resolved branches. Actual build passes
 with incumbent warnings. Final static/hosted CI, actual release/readback and
+ordinary proof remain required. One reviewed route-helper binding digest is
+renewed after restoring original120-source/29-adapter proof; original Spine
+self-test and77 hostile/positive controls pass, no extractor/metadata/dispatch
+or other119 accepted pin change. All17 native render inputs remain exact. Actual release/readback and
 ordinary authorized account/cohort proof remain separately required. Spacious
 Desk/Chat source CTA and return continuity are a subsequent small consumer.
 [Current evidence](../evidence/ui-delivery/e2-linked-finding-inspection.md).

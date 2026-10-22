@@ -11,6 +11,10 @@ added. Source selection clears independently of other query/hash context.
 Thirteen causal failures plus a separate Ask First interruption review regression,
 then157 cases/five suites pass;20 final-source native synthetic
 frames/17 source pins and actual build pass. Final static/exact-head CI,
+plus reviewed route-helper binding restoration120sources/29adapters and original
+Spine self-test/77 hostile controls, remain distinct proof legs. Only that one
+route-helper digest changes; extractor/metadata/dispatch/other119 accepted pins
+and all17 native render inputs remain unchanged. Final exact-head CI,
 deployment/source readback and ordinary account/cohort proof remain
 owed. Desk/Chat CTA/return is a separate required consumer. Original ALG03/13,
 Layer C, approvals and Rail authority unchanged; catalogue status unpromoted.

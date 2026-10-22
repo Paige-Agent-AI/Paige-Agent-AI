@@ -372,7 +372,18 @@ export interface PaigeAIChatProps {
    * governance seam — this component makes no authority claim of its own.
    */
   composerAutonomyControl?: React.ReactNode;
+  /** Caller-owned read/context presentation; omitted mounts remain unchanged. */
+  renderComposerContext?: (api: ChatComposerContextApi) => React.ReactNode;
 }
+
+export type ChatComposerContextApi = {
+  threadId: string | null;
+  ready: boolean;
+  busy: boolean;
+  hasOwnerMessages: boolean;
+  restoreLayout: () => void;
+  focusComposer: () => void;
+};
 
 /** Everything a caller-supplied history rail needs, and nothing it could corrupt. */
 export type ChatRailApi = {
@@ -413,6 +424,7 @@ const PaigeAIChatInner = ({
   soloTenantSafety = false,
   liveConversation = true,
   composerAutonomyControl,
+  renderComposerContext,
 }: PaigeAIChatProps) => {
   /** Claude Design's operator chrome. Presentation only — never a second engine. */
   const cd = presentation === "operator";
@@ -961,6 +973,14 @@ const PaigeAIChatInner = ({
   const setTranscriptElement = useCallback((node: HTMLDivElement | null) => {
     transcriptScrollRef.current?.attach(node);
   }, []);
+  const restoreContextLayout = useCallback(() => {
+    transcriptScrollRef.current?.notifyLayoutChange("focus");
+    requestAnimationFrame(() => transcriptScrollRef.current?.notifyLayoutChange("focus"));
+  }, []);
+  const focusContextComposer = useCallback(() => {
+    inputRef.current?.focus({ preventScroll: true });
+    restoreContextLayout();
+  }, [restoreContextLayout]);
 
   const jumpToLatest = useCallback(() => {
     const reduceMotion = typeof window.matchMedia === "function"
@@ -3895,6 +3915,10 @@ const PaigeAIChatInner = ({
             <div role="status" aria-live="polite" className={isProcessingFile ? "mb-2 px-1 text-xs text-muted-foreground" : "sr-only"}>
               {isProcessingFile ? "Preparing attachment…" : attachedDoc ? `${attachedDoc.name} attached` : ""}
             </div>
+            {soloTenantSafety && renderComposerContext && <div data-solo-contextual-suggestion className="min-w-0">
+              {renderComposerContext({ threadId: activeThreadId, ready: composerScope.status === "ready-new" || composerScope.status === "ready-thread", busy: isLoading,
+                hasOwnerMessages: messages.some(message => message.role === "user"), restoreLayout: restoreContextLayout, focusComposer: focusContextComposer })}
+            </div>}
             {/* Composer + slash palette + inline voice. The palette anchors above the
                 input in both chromes and focus never leaves the Textarea. */}
             <div

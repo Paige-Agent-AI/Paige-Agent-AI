@@ -6,11 +6,17 @@ import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';
 import { buildLaunchOptions, resolvePlaywright } from './live-drive.mjs';
 import { exerciseAgreementSignerPaths } from './agreement-signer-paths.mjs';
+import {exerciseAgreementDocumentFields} from './agreement-document-fields-paths.mjs';
 const root = path.resolve(import.meta.dirname, '../..');
 const historyProof = process.argv.includes('--history');
 const correctionProof = process.argv.includes('--correction');
 const templateProof = process.argv.includes('--templates');
 const signerProof = process.argv.includes('--recipients');
+const fieldsProof=process.argv.includes('--document-fields');
+const documentFixturePath=path.resolve(root,'../../outputs/e04-native-document-fixture.json');
+const documentFixture=fieldsProof?JSON.parse(await fs.readFile(documentFixturePath,'utf8')):null;
+const documentFixtureSHA=fieldsProof?createHash('sha256').update(await fs.readFile(documentFixturePath)).digest('hex'):null;
+let documentFixtureMode='normal';
 const pdfIntakeProof = process.argv.includes('--pdf-intake');
 const uploadProof = process.argv.includes('--upload-intent') || pdfIntakeProof;
 const sources = ['src/solo/sales-ops.tsx','src/solo/SalesWorkspace.tsx','src/solo/sales-dialog.tsx','src/hooks/useBeforeUnloadGuard.ts','src/solo/sales/AgreementPreparationWorkspace.tsx','src/solo/sales/AgreementBodyEditor.tsx','src/solo/sales/agreementPreparationApi.ts','src/solo/sales/agreementVocabulary.ts','src/solo/sales/agreement-body-editor.css','src/solo/sales/agreement-preparation.css','package.json','package-lock.json',...['agreement-authoring.tsx','agreement-authoring-ports.ts','agreement-authoring-client.ts','vite.agreement-authoring.config.ts','agreement-authoring.html'].map(file=>'scripts/live-drive/harness/sales-mount/'+file)];
@@ -21,6 +27,7 @@ if(correctionProof)sources.push('src/solo/sales/AgreementWordingHistory.tsx','sr
 if(templateProof)sources.push('src/solo/sales/AgreementTemplateWorkspace.tsx','src/solo/sales/agreementTemplateApi.ts','src/solo/sales/agreement-templates.css','src/solo/sales/AgreementWordingHistory.tsx','src/solo/sales/agreementRevisionApi.ts','src/solo/sales/AgreementDraftCorrection.tsx','src/solo/sales/agreementCorrectionApi.ts');
 if(signerProof)sources.push('src/solo/sales/AgreementSignerPreparation.tsx','src/solo/sales/agreementSignerApi.ts','scripts/live-drive/agreement-signer-paths.mjs','src/solo/sales/AgreementWordingHistory.tsx','src/solo/sales/agreementRevisionApi.ts','src/solo/sales/AgreementDraftCorrection.tsx','src/solo/sales/agreementCorrectionApi.ts','src/solo/sales/AgreementTemplateWorkspace.tsx','src/solo/sales/agreementTemplateApi.ts','src/solo/sales/agreement-templates.css');
 if(uploadProof)sources.push('src/solo/useSoloAgreementSignings.ts','src/solo/sales/agreementPdfIntake.ts','src/solo/sales-ops.css');
+if(fieldsProof)sources.push('src/solo/sales/AgreementDocumentFields.tsx','src/solo/sales/AgreementPdfPage.tsx','src/solo/sales/agreementDocumentModel.ts','src/solo/sales/agreementPdfRenderer.ts','src/solo/sales/agreement-document-fields.css','scripts/live-drive/agreement-document-fields-paths.mjs','scripts/live-drive/harness/sales-mount/agreement-document-fields-mount.tsx','scripts/live-drive/harness/sales-mount/agreement-document-fixture.ts','supabase/functions/_shared/agreements/field-preparation.ts','supabase/functions/_shared/agreements/preparation-json.ts','supabase/functions/_shared/agreements/token.ts','supabase/functions/_shared/sales-collections/primitives.ts');
 console.log('Pinning actual source');
 const pinned = await hashes();
 let compiledRoot = null;
@@ -33,7 +40,7 @@ if (process.argv.includes('--compiled')) {
   await build({ configFile:path.join(root,'scripts/live-drive/harness/sales-mount/vite.agreement-authoring.config.ts'),
     build:{outDir:compiledRoot,emptyOutDir:false,rollupOptions:{input:path.join(root,'scripts/live-drive/harness/sales-mount/agreement-authoring.html')}} });
 }
-const out = path.join(root,'docs/evidence/ui-delivery/assets',pdfIntakeProof?'e04-agreement-pdf-intake':signerProof?'e04-agreement-recipients':templateProof?'e04-agreement-templates':uploadProof?'e04-agreement-upload-intent':correctionProof?'e04-agreement-correction':historyProof?'e04-agreement-wording-history':'e04-agreement-authoring');
+const out = path.join(root,'docs/evidence/ui-delivery/assets',fieldsProof?'e04-agreement-document-fields':pdfIntakeProof?'e04-agreement-pdf-intake':signerProof?'e04-agreement-recipients':templateProof?'e04-agreement-templates':uploadProof?'e04-agreement-upload-intent':correctionProof?'e04-agreement-correction':historyProof?'e04-agreement-wording-history':'e04-agreement-authoring');
 await fs.mkdir(out,{recursive:true});
 console.log('Resolving owned Playwright');
 const { chromium } = await resolvePlaywright();
@@ -81,11 +88,17 @@ await context.route('**/*',async route=>{
     const relative=url.pathname.startsWith('/assets/')?decodeURIComponent(url.pathname).slice(1):'agreement-authoring.html';
     const target=path.resolve(compiledRoot,relative);
     assert.ok(target.startsWith(compiledRoot+path.sep),'Compiled fixture path escaped build');
-    const contentType=target.endsWith('.js')?'text/javascript':target.endsWith('.css')?'text/css':'text/html';
+    const contentType=/\.m?js$/.test(target)?'text/javascript':target.endsWith('.css')?'text/css':target.endsWith('.html')?'text/html':'application/octet-stream';
     return route.fulfill({status:200,contentType,body:await fs.readFile(target)});
   }
   if (url.hostname==='127.0.0.1' || ['blob:','data:'].includes(url.protocol)) return route.continue();
   blocked.push(url.origin); return route.abort();
+});
+if(fieldsProof)await context.route('**/__e04_document_fixture__',async route=>{
+  const fixture=structuredClone(documentFixture);
+  if(documentFixtureMode==='corrupt'){const bytes=Buffer.from(fixture.bytes,'base64');bytes[0]^=1;fixture.bytes=bytes.toString('base64');}
+  if(documentFixtureMode==='geometry')fixture.document.pages[0].width+=7;
+  return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(fixture)});
 });
 await context.route('**/__e04_rpc__/**',async route=>{
   const name = new URL(route.request().url()).pathname.split('/').at(-1), args = route.request().postDataJSON();
@@ -199,7 +212,9 @@ const fill = async(title='Client services agreement')=>{
 };
 const capture = async(name)=>{await page.screenshot({path:path.join(out,name+'.png')});};
 try{
-  if(signerProof){
+  if(fieldsProof){
+    await exerciseAgreementDocumentFields({page,url,capture,frames,behavior,setFixtureMode:value=>{documentFixtureMode=value;}});
+  }else if(signerProof){
     await exerciseAgreementSignerPaths({page,url,newDraft,fill,capture,frames,behavior,calls,records,
       setMode:value=>{mode=value;},
       holdRecovery:()=>{mode='signer-recovery-held';signerRecoveryEntered=false;signerRecoveryFinished=false;},
@@ -463,7 +478,8 @@ try{
   assert.equal(errors.length,0,errors.join('\n'));assert.equal(blocked.filter(origin=>origin!=='https://fonts.googleapis.com').length,0,blocked.join(','));
   assert.deepEqual(await hashes(),pinned,'Source changed during native browser drive');
   assert.equal(createHash('sha256').update(await fs.readFile(fontPath)).digest('hex'),fontSHA256,'Shared font changed during proof');
-  const report={proofClass:'actual Sales shell/components/editor/SDK; synthetic identity/network only',staticTransport:compiledRoot?'native Vite compiled fixture':'loopback Vite',normalizedLFSourceSHA256:pinned,sharedUIFontSHA256:fontSHA256,frames,behavior,errors,blocked,canonicalRecords:records.size,authenticated:'UNVERIFIED',providers:'NOT_EXERCISED'};
+  if(fieldsProof)assert.equal(createHash('sha256').update(await fs.readFile(documentFixturePath)).digest('hex'),documentFixtureSHA,'Native PDF fixture changed during proof');
+  const report={proofClass:fieldsProof?'actual native PDF bytes/browser canvas/assigned-field components/shared validator; synthetic source/identity/network, NO NATIVE SAVE':'actual Sales shell/components/editor/SDK; synthetic identity/network only',staticTransport:compiledRoot?'native Vite compiled fixture':'loopback Vite',normalizedLFSourceSHA256:pinned,sharedUIFontSHA256:fontSHA256,documentFixtureSHA,frames,behavior,errors,blocked,canonicalRecords:records.size,authenticated:'UNVERIFIED',providers:'NOT_EXERCISED'};
   await fs.writeFile(path.join(out,'result.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify({result:'PASS',frames:frames.length,behavior:behavior.length,pageErrors:errors.length}));
 }catch(error){await capture('failure').catch(()=>{});await fs.writeFile(path.join(out,'failure.json'),JSON.stringify({error:String(error),errors,blocked,frames,behavior},null,2));throw error;}
 finally{await browser.close();}

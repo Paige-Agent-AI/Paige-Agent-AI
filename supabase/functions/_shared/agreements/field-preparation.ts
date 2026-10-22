@@ -1,5 +1,5 @@
 import { UUID, object } from '../sales-collections/primitives.ts';
-import { canonicalPresentationJson } from './commercial-presentation.ts';
+import { canonicalPresentationJson } from './preparation-json.ts';
 import { sha256Hex } from './token.ts';
 
 /** Internal native preparation data, not authority, approval or signing evidence.
@@ -30,7 +30,7 @@ export type AgreementFieldPreparation = {
 };
 const fail = (): never => { throw new TypeError('AGREEMENT_FIELD_PREPARATION_INVALID'); };
 const closed = (v: unknown, keys: string[]): Record<string, unknown> => {
-  if (!object(v) || Object.keys(v).length !== keys.length || keys.some(k => !Object.hasOwn(v, k))) return fail();
+  if (!object(v) || Object.keys(v).length !== keys.length || keys.some(k => !Object.prototype.hasOwnProperty.call(v, k))) return fail();
   return v;
 };
 const id = (v: unknown): string => typeof v === 'string' && UUID.test(v) ? v.toLowerCase() : fail();

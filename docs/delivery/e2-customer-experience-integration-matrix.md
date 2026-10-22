@@ -12,6 +12,25 @@ immutable permitted evidence, governed submission/status/unknown recovery and
 original artifact retrieval remain separate implementation duties. Review/CI,
 original2607 security dependency, normal Edge/readback and ordinary customer proof
 remain owed. All19 definitions/nine outcomes are unchanged. [Evidence](../evidence/ui-delivery/e2-document-finite-facts.md).
+## October22 — O06 recorded-coverage repair in development
+
+Original19 definitions/nine analytics remain mandatory. The original Systems Check
+consumer is being corrected to distinguish passed/resolved setup from actual
+provider operation. Six covered areas use Partial when their expected recorded
+checks have no unresolved findings; absent expected results stay Unavailable and
+uncovered areas Not checked. Individual source results remain Pass/Resolved or
+their original attention/unavailable states. No new readiness registry or check
+execution is introduced; Refresh remains a reread, not O07 completion.
+
+Five controlled source regressions failed before repair;64 focused cases/three
+suites pass again with isolated exact-lock dependencies, and production build passes.
+Native original-shell responsive/keyboard/state and settled dark/reduced-motion/drawer
+evidence is synthetic and separately indexed. Local
+source evidence is not corrected production behavior or authenticated acceptance.
+Exact-head review/CI, merge, served source and ordinary released read/reload with
+permission/cohort negatives remain separate obligations. Canonical ALG03/12/13,
+nine catalogue states, provider/Trust/LayerC/Rail and O07/O19 holds remain unchanged.
+[Bounded evidence](../evidence/ui-delivery/e2-system-check-coverage-truth.md).
 
 ## October21 22:50 UTC — release and orchestration checkpoint
 

@@ -826,6 +826,47 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+
+**2026-10-22 — EXP04 native supplied-wording template foundation.**
+
+PR [#2545](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2545), reviewed
+`3e33160023666d33da751344dfe021d3520cd60b`, merged
+`5a9c8fe0b38474c04c29e2d680bf195b41b0b42b`. Actual parents
+`c4bec1df71a0e0d4f183f7d1d1b1becee120a210` + reviewed head; actual,
+preflight and recomputed tree `a661995e51283bcaa30c0588d5c8fa4eafb32014`
+match. All13 applicable exact-head checks and both deployment statuses SUCCESS;
+review5609615107 is **AUTHOR-REVIEW / LOWER ASSURANCE**, inline threads0.
+Normal migration39730423040 attempt2/deploy119666985657 SUCCESS;
+`20271113220004` is recorded. First attempt119664093836 failed on the original5s
+lock timeout55P03; full rollback verified (0new columns/validator absent). Other
+reader locks cleared before the unchanged failed-job retry. No worker terminated,
+lock limit changed, failed test waived or migration history repaired.
+
+Production metadata verifies all six exact native source-body hashes, postgres
+owner, empty search_path and original intended ACL/definer/volatility; four
+nullable/no-default columns and one original template-protection trigger. Four
+Auth-only owner/admin RPCs, private trigger and pure Auth/service validator reuse
+original tenant_agreement_versions, immutable prepared versions and original
+agreement source IDs; no alternate agreement, authorization or execution store.
+Web `dpl_Fu7P9Z3T6wjcLKv3Stnmr1XT9VMw` READY/production/main/exact;
+protected build `5a9c8fe0b38474c04c29e2d680bf195b41b0b42b-mvj4irg0`,
+customerUpdate:null. Canonical public later descendant
+`62d615ac6deb10bacd80aa1129a23e4cc7e1bde8-mvj4vrdg` and Git ancestry verified;
+not substituted for the exact deployment. Own Edge NOT_APPLICABLE.
+[Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2545#issuecomment-6334034846).
+
+Functional: native version/list/read/same-UUID actor-bound recovery and optional
+jurisdiction/requested wording-review metadata. These options are not completed
+legal review or legal sufficiency. Local68 assertions/replay2/five participating
+sessions/three observed waits are bounded source evidence, not customer QA.
+Visual/Experiential: this foundation mounts no new UI; consumer#2549 enters its
+own actual-main review/CI/deployment gates. Actual ordinary owner/staff/client,
+two-cohort use, signature/provider/payment/service and complete O1–O12/founder
+acceptance remain owed. No Chat/Live/provider activation or automatic send/charge.
+Internal production foundation; no customer release name/announcement. Recovery
+is reviewed forward correction preserving original versions and signed history.
+This factual closeout is not logged recursively and changes no product/authority.
+
 **2026-10-22 — EXP04 correct the original unsigned agreement.**
 
 PR [#2532](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2532), reviewed

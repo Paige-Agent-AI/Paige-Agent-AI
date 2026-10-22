@@ -1,7 +1,7 @@
 {
   "kind": "Native original-component synthetic composition supplement; no authenticated/customer proof",
   "sourceBase": "d581b3ece45e5640447fab70530082443bda8cf9",
-  "capture": "cua_repl native Tab.screenshot; original JPEG bytes, no resizing or processing",
+  "capture": "cua_repl native Tab.screenshot; each final image recaptured separately after its source/Chat/drawer state was observed; original JPEG bytes, no raster processing",
   "sourcePins": [
     {
       "path": "src/solo/SoloSystemsCheckWorkspace.tsx",
@@ -79,7 +79,6 @@
     {
       "file": "composed-1536-closed.jpg",
       "drawer": false,
-      "focus": "BODY",
       "fontLoaded": true,
       "linkedText": "Linked recorded findingClear selectionPayment processor declarationNeeds attentionThis recorded setup result does not verify a business action.From the last completed check · 10/22/2026, 5:00:00 AMInspect linked evidence",
       "pageOverflow": false,
@@ -105,13 +104,12 @@
         1535,
         770
       ],
-      "bytes": 82667,
-      "sha256": "9caf2aef3c3e4ad4d6e05efb19eebf780173e4f18c1f3279728b1b8cf2cf544c"
+      "bytes": 85684,
+      "sha256": "481aabda5556bf867e082861da3128d2da5922958e778ca06df574ff821e79a4"
     },
     {
       "file": "composed-1536-open.jpg",
       "drawer": false,
-      "focus": "Direct PAIGE",
       "fontLoaded": true,
       "linkedText": "Linked recorded findingClear selectionPayment processor declarationNeeds attentionThis recorded setup result does not verify a business action.From the last completed check · 10/22/2026, 5:00:00 AMInspect linked evidence",
       "pageOverflow": false,
@@ -137,13 +135,12 @@
         1535,
         770
       ],
-      "bytes": 91463,
-      "sha256": "65ced834076fa0406b77640f03a61138209ffe6a18ebd3d9e5d38a2797c845cb"
+      "bytes": 97554,
+      "sha256": "62be4d60f00617a6306a5228e41a56e89a3b90c288bbb0b0be511bbb5c89235b"
     },
     {
       "file": "composed-320-closed.jpg",
       "drawer": false,
-      "focus": "BODY",
       "fontLoaded": true,
       "linkedText": "Linked recorded findingClear selectionPayment processor declarationNeeds attentionThis recorded setup result does not verify a business action.From the last completed check · 10/22/2026, 5:00:00 AMInspect linked evidence",
       "pageOverflow": false,
@@ -169,13 +166,12 @@
         320,
         740
       ],
-      "bytes": 35200,
-      "sha256": "695630ef02810d25ef5d6272487f91f517cf5bf482c37d33ea4cc5bce5d8df26"
+      "bytes": 37373,
+      "sha256": "ac8ad85b1b2d0fd69f78a457ce411a9cd431650f04747b8dc41b288abdb9df1d"
     },
     {
       "file": "composed-320-drawer.jpg",
       "drawer": true,
-      "focus": "Expand",
       "fontLoaded": true,
       "linkedText": "Linked recorded findingClear selectionPayment processor declarationNeeds attentionThis recorded setup result does not verify a business action.From the last completed check · 10/22/2026, 5:00:00 AMInspect linked evidence",
       "pageOverflow": false,
@@ -201,13 +197,12 @@
         320,
         740
       ],
-      "bytes": 36305,
-      "sha256": "592e58e382e3eb91ade7ff4ebd9257c5699f192de4e31c78abdffeb87df2ca58"
+      "bytes": 32170,
+      "sha256": "23c785859a054aced0045f60b6aeed8baffdd9776567277b9a82e04832fc030f"
     },
     {
       "file": "composed-320-return-focus.jpg",
       "drawer": false,
-      "focus": "Inspect linked evidence",
       "fontLoaded": true,
       "linkedText": "Linked recorded findingClear selectionPayment processor declarationNeeds attentionThis recorded setup result does not verify a business action.From the last completed check · 10/22/2026, 5:00:00 AMInspect linked evidence",
       "pageOverflow": false,
@@ -239,7 +234,6 @@
     {
       "file": "composed-320-open.jpg",
       "drawer": false,
-      "focus": "Synthetic message draft",
       "fontLoaded": true,
       "linkedText": "Linked recorded findingClear selectionPayment processor declarationNeeds attentionThis recorded setup result does not verify a business action.From the last completed check · 10/22/2026, 5:00:00 AMInspect linked evidence",
       "pageOverflow": false,
@@ -265,8 +259,8 @@
         320,
         740
       ],
-      "bytes": 23041,
-      "sha256": "048cf5b7226d24f59daf067642f5e11578fe09a90c29679afa2b87657dee58ad"
+      "bytes": 25062,
+      "sha256": "16a4b0af116da27c8e09d9f1322fb3d9fb0118c8e7665550f394d0df0969b011"
     }
   ],
   "keyboard": {
@@ -282,6 +276,7 @@
   "limitations": [
     "Original20 earlier JPEGs retain their historical17 source pins; only shared shell source changed",
     "Native desktop screenshot thumbnail is1535px for1536 CSS; no raster editing or exact-raster claim",
-    "Native320 CSS/raster exact; no real browser zoom/AT/customer/cohort/Live/founder proof"
+    "Native320 CSS/raster exact; no real browser zoom/AT/customer/cohort/Live/founder proof",
+    "Initial pre-paint thumbnail images were rejected; final settled images directly inspected before evidence acceptance. Per-image focus is not inferred from screenshots; explicit keyboard observation retained separately."
   ]
 }

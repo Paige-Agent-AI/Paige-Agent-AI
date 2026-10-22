@@ -211,15 +211,20 @@ async function scopedAgreementRpc(name: string, args: Record<string, unknown>, c
     check();
     const [captured, actual] = await Promise.all([supabase.auth.getUser(authorization.slice(7)), supabase.auth.getUser()]);
     check();
-    if (captured.error || actual.error || captured.data.user?.id !== context.scope.actorId || actual.data.user?.id !== context.scope.actorId)
+    if (captured.error || actual.error || captured.data.user?.id !== context.scope.actorId || actual.data.user?.id !== context.scope.actorId) {
+      if(effectful)throw new PortalAgreementUncertainOutcome("Private link response could not be verified");
       throw new PortalAgreementAccessFailure("Customer session changed");
+    }
     if ((result.error as {code?: unknown} | null)?.code === "42501" && !isMultipleRelationships(result.error))
       throw new PortalAgreementAccessFailure("Customer agreement access unavailable");
     return result;
   };
   try {return await Promise.race([request(), new Promise<never>((_,reject) => {
     timer=setTimeout(() => {active=false; reject(effectful && dispatched ? new PortalAgreementUncertainOutcome("Private link outcome not confirmed") : new Error("Agreement request timed out"));},20_000);
-  })]);} finally {active=false;clearTimeout(timer);}
+  })]);} catch(error) {
+    if(effectful&&dispatched&&!(error instanceof PortalAgreementAccessFailure)&&!(error instanceof PortalAgreementUncertainOutcome))throw new PortalAgreementUncertainOutcome("Private link outcome could not be verified");
+    throw error;
+  } finally {active=false;clearTimeout(timer);}
 }
 
 /** One read of the caller's agreements. Null = no customer relationship. Throws on a failed read. */
@@ -355,7 +360,7 @@ export const PORTAL_AGREEMENTS_REFRESH_ERROR = "We couldn't refresh this list, s
 export function useClientPortalAgreements(enabled=true,initialLimit=PORTAL_AGREEMENTS_LIMIT): ClientPortalAgreementsState {
   const identity=useShellCustomerIdentity();
   const frame=identity?.viewer==="customer"?identity.frame:null;
-  const requested=frame&&UUID.test(frame.actorId)&&UUID.test(frame.profile.tenant_id)&&UUID.test(frame.profile.id)&&frame.profile.linked_user_id===frame.actorId
+  const requested=frame&&frame.profile&&UUID.test(frame.actorId)&&UUID.test(frame.profile.tenant_id)&&UUID.test(frame.profile.id)&&frame.profile.linked_user_id===frame.actorId
     ?{actorId:frame.actorId,tenantId:frame.profile.tenant_id,clientId:frame.profile.id}:undefined;
   const requestedKey=identity?JSON.stringify([identity.viewer,requested?.actorId,requested?.tenantId,requested?.clientId]):"legacy";
   const available=enabled&&(!identity||identity.viewer==="staff"||!!requested&&identity.phase==="ready"&&!identity.checking);

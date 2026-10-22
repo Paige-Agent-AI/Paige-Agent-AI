@@ -552,7 +552,7 @@ describe("selected customer intent and interrupted private-link recovery",()=>{
     const document=ag({title:"Current customer agreement"});withList([document]);
     f.open.mockResolvedValue({ok:false,code:"OUTCOME_UNKNOWN"});await render();
     await click(buttons(host,/Review and sign/)[0]);
-    expect(f.open).toHaveBeenCalledTimes(1);expect(f.goTo).not.toHaveBeenCalled();
+    expect(f.open).toHaveBeenCalledTimes(1);expect(f.goTo).not.toHaveBeenCalled();expect(f.state.refresh).toHaveBeenCalledTimes(1);
     const problem=host.querySelector<HTMLElement>('[data-testid="agreement-problem"]');
     expect(problem?.textContent).toContain("A link may have been created");expect(problem?.textContent).toContain("does not sign");
     expect(globalThis.document.activeElement).toBe(problem);expect(buttons(host,/Review and sign/)[0].disabled).toBe(true);

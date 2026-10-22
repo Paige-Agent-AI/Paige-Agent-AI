@@ -182,7 +182,7 @@ function AgreementRow({ a, business, tz, nowMs, primary, onRefresh, tenantId, si
     }
     inFlight.current=false;
     setBusy(null);
-    if(result.code==="OUTCOME_UNKNOWN"){setUncertain(true);setProblem(openFailureCopy(result.code,business));return;}
+    if(result.code==="OUTCOME_UNKNOWN"){setUncertain(true);setProblem(openFailureCopy(result.code,business));onRefresh();return;}
     setProblem(openFailureCopy(result.code, business, result.note));
     if (result.code === "TRY_AGAIN_LATER") setThrottled(true);
     if (result.code === "NOT_SIGNABLE" || result.code === "CLIENT_AGREEMENT_UNAVAILABLE" || result.code === "NOT_SIGNABLE_HERE") onRefresh();

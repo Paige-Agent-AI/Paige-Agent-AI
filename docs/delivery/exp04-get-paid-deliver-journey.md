@@ -1861,3 +1861,21 @@ REUSE original add_agreement_signer, original agreement/signer/event records, em
 10. UI/acceptance: Binding Ledger35 remains PARTIAL, signer/order display is existing. Professional management/assigned fields and actual owner/staff/client reload/ordinary-role/provider/full-founder proof remain owed by the following consumer.
 
 Local44 native assertions/replay2/five sessions/three observed waits PASS, exact production-body baseline read before changes. New240004 is UNAPPLIED; exact-head review/CI/Preview, safe migration/readback and authenticated acceptance remain separate. All O1–O12 and official algorithm/capability/LayerC readiness boundaries are unchanged. [Native evidence](../evidence/ui-delivery/e04-signer-preparation-integrity.md).
+
+
+## October22 checked recipient preparation — original record and recovery contract
+
+A visual read-before-write cannot atomically bind the party to the reviewed client/document or identify a lost creation response. REUSE the exact original240004 signer business body/human reader; EXTEND checked source CAS and actor-bound same-record recovery. One private business body serves the unchanged legacy public interface and new checked caller. No new agreement/signer ledger, approval, generic executor, sender or authorization framework.
+
+1. Outcome: owner prepares the intended signer on an exact original customer/document revision and retrieves that same receipt after interruption.
+2. Domain: sole EXP04 Agreements lead; original Sales/Clients identity and E09 Portal boundaries remain.
+3. Harness/Gateway: legitimate internal manual preparation; no forced LayerC act or competing orchestration.
+4. Spine: recipient mutation remains UNAVAILABLE to Chat/Live until actually registered/governed/accepted. Existing agreement.* PARTIAL is not promoted by new native code.
+5. Provider: none. No email, signature token, legal consent, merchant, charge, document upload or provider activation.
+6. Authority/risk: original human reader and private writer both enforce actual session/tenant/admin. Expected client/version/timestamp CAS is atomic; private calls are owner-only, new entries authenticated-only. Internal preparation is not consequential signing or financial approval.
+7. Durable identity: existing signer PK and one original edited event/receipt. No additional request/operation/approval/event store. Legacy defaults/DTO/ACL stay compatible.
+8. Readback: closed original signer/event/source identity; same normalized request returns recorded/replayed/recovered receipt. Current signer/signature state must still come from its current canonical read, not the historical pending creation receipt.
+9. Recovery: same identity lock, fresh post-wait authorization and read snapshot. Missing evidence stays unconfirmed. Foreign/other-actor/changed intent/stale source refuses; no unknown new identity, duplicate effect or invented cancellation.
+10. Surface/acceptance: original BindingLedger35 remains PARTIAL; recipient UI uses the selected prototype and single leave guard only after source release/readback. Ordinary owner/staff/client JWT, full signer/field/signing/provider/O1–O12/founder acceptance remain separately owed.
+
+Native44 base plus75 checked assertions PASS; exact-head CI/Preview/review and safe native deployment/readback remain required. Forward250004 is UNAPPLIED after220004/230004/240004, preserving Portal21xx. Bounded ALG01 reconciliation/ALG12 refusal-recovery evidence is not a global algorithm production/acceptance promotion; ALG02/13 progression/recommendations and the full original Experience remain incomplete. [Evidence](../evidence/ui-delivery/e04-checked-signer-preparation.md).

@@ -14,6 +14,7 @@ source = source.replace("'sales_performance_'+randomUUID()", "'analytics_calenda
 source = source.replace("const read=p=>readFileSync(new URL('../../'+p,import.meta.url),'utf8');", `const read=p=>readFileSync(${JSON.stringify(salesRoot)}+'/'+p,'utf8');`);
 const sql = readFileSync(`${root}/supabase/migrations/20270601000006_int340_shared_metric_evidence.sql`, 'utf8');
 const forward = readFileSync(`${root}/supabase/migrations/20271101110001_int2086_overdue_metric_compatibility.sql`, 'utf8');
+const reportCapture = readFileSync(`${root}/supabase/migrations/20271113330002_exp02_document_metric_capture.sql`, 'utf8');
 const extra = `
 run(\`CREATE TABLE analytics_evidence_reference(token_digest text PRIMARY KEY,issued_to uuid NOT NULL,tenant_id uuid NOT NULL,metric_id text NOT NULL CONSTRAINT analytics_evidence_reference_metric_id_check CHECK(metric_id<>'') ,range_key text NOT NULL CONSTRAINT analytics_evidence_reference_range_key_check CHECK(range_key<>'') ,range_start timestamptz,range_end timestamptz,source_revision_ref text,issued_at timestamptz,expires_at timestamptz,revoked_at timestamptz);
 ALTER TABLE analytics_evidence_reference ENABLE ROW LEVEL SECURITY;
@@ -49,6 +50,33 @@ const invalid=json(scope()+'SET ROLE authenticated;'+issue());eq(invalid.values,
 run(\`UPDATE analytics_evidence_reference SET expires_at=clock_timestamp()-interval '1 second' WHERE token_digest=encode(extensions.digest(convert_to('\${invalid.evidence_ref}','UTF8'),'sha256'),'hex');\`);
 denied(scope()+'SET ROLE authenticated;'+resolved(invalid.evidence_ref));
 eq(json(scope()+'SET ROLE authenticated;'+issue('sales.cash.recorded_received','1.0.0')).metric_version,'1.0.0');
+run(${JSON.stringify(reportCapture)});
+// The existing October5 fixture is outside a live last-week issuance. Move only
+// this disposable receipt inside that period before testing source retirement.
+run(\`UPDATE paige_invoice_payments SET received_at=clock_timestamp()-interval '2 days' WHERE id='\${id(7,1)}';\`);
+const original=json(scope()+'SET ROLE authenticated;'+issue('sales.cash.recorded_received','1.0.0'));
+eq(original.values.by_currency.find(row=>row.currency==='usd').amount_minor,'40000');
+const capture=refs=>\`SELECT public._paige_document_capture_metric_evidence('\${JSON.stringify(refs)}'::jsonb);\`;
+// A native SECURITY DEFINER document writer will call this private helper. No
+// application role receives a grant in the actual migration.
+for(const role of ['anon','authenticated','service_role'])denied(scope()+\`SET ROLE \${role};\`+capture([original.evidence_ref]));
+const proof=json(scope()+capture([original.evidence_ref]));
+eq(proof.version,1);eq(proof.measurements.length,1);
+const {account_epoch,account_epoch_ref,...originalProjection}=original;
+eq(proof.measurements[0],originalProjection);
+assert(Date.parse(proof.captured_at)>=Date.parse(original.as_of));checks++;
+for(const refs of [null,{},[],[original.evidence_ref,original.evidence_ref],[{evidence_ref:original.evidence_ref,values:9000}],['https://example.invalid'],Array(13).fill(original.evidence_ref)])denied(scope()+capture(refs),'22023');
+denied(scope(otherActor,foreign)+capture([original.evidence_ref]));
+run(\`UPDATE tenant_members SET role='member' WHERE user_id='\${actor}';\`);denied(scope()+capture([original.evidence_ref]));
+run(\`UPDATE tenant_members SET role='owner' WHERE user_id='\${actor}';\`);
+run(\`UPDATE paige_invoice_payments SET amount_cents=amount_cents+1 WHERE id='\${id(7,1)}';\`);
+denied(scope()+capture([original.evidence_ref]));
+run(\`UPDATE paige_invoice_payments SET amount_cents=amount_cents-1 WHERE id='\${id(7,1)}';\`);
+json(scope()+'SET ROLE authenticated;'+issue('sales.cash.recorded_received','1.0.0'));
+denied(scope()+capture([original.evidence_ref])); // original issuer revokes superseded same-series references
+const expiring=json(scope()+'SET ROLE authenticated;'+issue('sales.cash.recorded_received','1.0.0'));
+run(\`UPDATE analytics_evidence_reference SET expires_at=clock_timestamp()-interval '1 second' WHERE token_digest=encode(extensions.digest(convert_to('\${expiring.evidence_ref}','UTF8'),'sha256'),'hex');\`);
+denied(scope()+capture([expiring.evidence_ref]));
 `;
 assert(source.includes('const schema=run('), 'Missing Sales proof anchor');
 source = source.replace('const schema=run(', () => '{\n' + extra + '\n}\nconst schema=run(');

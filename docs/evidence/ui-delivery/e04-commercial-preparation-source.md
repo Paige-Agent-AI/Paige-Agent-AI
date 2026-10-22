@@ -1,5 +1,28 @@
 # EXP04 original commercial source preparation — dormant read/proposal port
 
+October22 combined-source continuation: source155885c1a715b31707bc84d6fff4775e5930049e
+composes original reader0a282f453edcec9c59a0fb1456ccef333bb59e63 with coherent
+private-preparation candidate2604/6b8d5db6a8bb47c0f37e12f79a0bea0533a3b301.
+Both owning reader/test files remain BYTE IDENTICAL to0a; original formatter,
+canonical Collections calculation and all original assertions are preserved.
+Fresh canonical Deno invocation (formatter, reader, field-preparation) passes
+25 tests/110 nested steps with original runtime network/environment/run/FFI/system
+denials and type checking enabled. Separate original13/63 evidence below remains
+historical, never summed. First uncached restricted setup failed DNS before tests;
+it is INVALID environment, not a test PASS or product failure. Reused the existing
+native Deno cache and original strict command, no security-denial weakening.
+
+This remains original2564, NOT_MERGED/NOT_DEPLOYED/NOT_ACCEPTED. Parent2604 has
+native database check SUCCESS and longer full verify pending; its source is not
+silently called deployed. Original2599/300004/Edge37 readback is independently
+established; earlier native-hold notes below are historical. No runtime consumer,
+new endpoint, model registration, provider or role/permission change. Existing
+caller-JWT source projection still requires canonical exact PDF/assigned-map
+Kit/Trust approval BEFORE consequential C7, atomic freeze/operation/Rail and actual
+ordinary-role/provider/full O1–O12/founder acceptance.
+
+Earlier dated source/proof records are retained below with their original scope:
+
 October22 current composition20782f1e148855e3f90e80094f58d44976ebdde7 preserves
 actual merged main429388f2528942275334fd0c916c6fcfecb4f70a and original API2599.
 Original reader and209-line test source are BYTE IDENTICAL3180045d336ea73b683e426b9808168ddfa0b2e6.
@@ -25,7 +48,7 @@ MATERIAL_FLOW_CHANGE: NO: dormant internal read/proposal module only; no endpoin
 FLOW_PROTOTYPE: NOT_REQUIRED: no mounted flow changes; the existing selected professional Agreements prototype remains the future integration reference.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: prepare exact same-client agreement/invoice/terms facts for a later authorized human review, without inventing commercial terms.
 VISUAL_DIRECTION: NOT_APPLICABLE: no new layout, renderer, typography or interaction.
-AUTOMATED_EVIDENCE: PASS: 37 source-read cases (18 original, 19 added) and unchanged formatter coverage; combined Deno13 tests/63 nested steps under original denial flags.
+AUTOMATED_EVIDENCE: PASS: fresh original canonical formatter/reader/field invocation25 tests/110 nested steps under unchanged runtime effect denials and type checking; reader37 cases retain18 original and19 added. Earlier13/63 is separate history, not summed.
 STATIC_EVIDENCE: PASS: only caller Auth, original RLS-filtered records, exact source links, canonical formatter and original Collections calendar/condition routines; no service client, new writer or provider.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no renderer or customer UI changed; the unchanged formatter suite exercises the original real PDF renderer in memory.
 BEHAVIORAL_EVIDENCE: PASS: original 350000 principal/50000 deposit/ten30000 example; exact supplied CRLF/tab wording and microsecond timestamp; stale/crossed/source/version refusals; four retained-document references; same-business actor switch before/after hashing; final workspace switch; role revocation; private query error sanitation.
@@ -38,7 +61,7 @@ TRUTHFUL_STATE_LABELS: PASS: proposed means review material only; never approved
 SOLO_UI: NO: unmounted shared internal source reader, not a new department or customer interface.
 UNVERIFIED: exact-head review/CI/release; real ordinary-role RLS; existing Collections/Kit approval/operation/Rail consumer; hosted exact PDF readback; full signing/effective terms and O1-O12/founder acceptance.
 
-INTERNAL_BUILD_IDENTITY: branch=codex/e04-commercial-preparation-source; product_sha=7e2cc7a3608c3f684181a5efc13fc9a70d8c1a31; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-commercial-preparation-source.md
+INTERNAL_BUILD_IDENTITY: branch=codex/e04-commercial-preparation-source; product_sha=155885c1a715b31707bc84d6fff4775e5930049e; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-commercial-preparation-source.md
 RELEASE_CHANNEL: development: dormant original-source reconciliation only.
 RELEASE_CLASSIFICATION: internal-only: read/proposal prerequisite, no activation or customer announcement.
 CUSTOMER_RELEASE_IDENTITY: none: no completed customer outcome or founder acceptance.

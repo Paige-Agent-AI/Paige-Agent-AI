@@ -20,6 +20,14 @@ TRUTHFUL_STATE_LABELS: PASS: Draft delivery status is not proof that retained so
 SOLO_UI: NO: native domain repair only; no Portal, Chat, Live, Operations or shared shell source changes.
 UNVERIFIED: exact-head CI/review/merge/deployment, actual production function/ACL readback, ordinary-role customer QA and founder acceptance; pre-freeze document/source concurrency and immutable commercial presentation remain C7 integration work.
 
+INTERNAL_BUILD_IDENTITY: branch=codex/e04-frozen-draft-integrity; product_sha=0d8e35807b5f26605f53bc895b4f5c3889f95dc6; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113150000_agreement_frozen_draft_integrity currently unapplied); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-frozen-draft-integrity.md
+RELEASE_CHANNEL: development: native source proof, required review/CI, deployment and authenticated customer acceptance remain separate.
+RELEASE_CLASSIFICATION: internal-only: bounded prelaunch integrity repair; full professional agreement and all twelve outcomes remain incomplete.
+CUSTOMER_RELEASE_IDENTITY: none: no finished Experience or founder acceptance announcement.
+RELEASE_NOTE_REQUIRED: no: internal prerequisite for the complete integrated E04 evaluation package.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: exact reviewed release/readback and actual ordinary-role, provider/document-byte/signing/payment and whole Experience customer acceptance.
+RELEASE_RECOVERY: position=reviewed forward correction preserving original agreements, retained documents and audit; reference=docs/delivery/exp04-get-paid-deliver-journey.md; never silently unfreeze retained records or rewrite applied history.
+
 ## Scope and evidence
 
 REPAIR the existing `enforce_agreement_seal_immutable` trigger through new forward

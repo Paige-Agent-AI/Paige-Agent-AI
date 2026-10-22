@@ -15,7 +15,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: earlier protected owner inspection establishe
 KEYBOARD_FOCUS: PASS: actual native accessible actions and heading-menu Escape, original required-title/client focus and unsaved leave controls; source guards honor handled/composing/native popup Escape while subsequent unhandled Escape and beforeunload remain authoritative. Full device/assistive technology acceptance is separate.
 ZOOM_REFLOW: PASS: actual320/390/900/1024/1366/1536 light/dark/native PAIGE states; no application overflow, compact narrow row/current destination and44px controls; original PDF100percent bounded pan retained.
 REDUCED_MOTION: PASS: original source drive uses reducedMotion:reduce; no new motion or animated navigation.
-STATE_COVERAGE: PASS: original empty/editor/retained/earlier/unknown/refused/retry/read/reload/native leave and guarded navigation states exercised; no new approval, signing, delivery or payment state implied.
+STATE_COVERAGE: PASS: actual original empty/editor/retained/earlier/unconfirmed/refused/retry/read/reload/native leave and guarded navigation paths in the four current source-mount records; canonical state vocabulary retained.
 TRUTHFUL_STATE_LABELS: PASS: optional requested wording review is not completed review, template/save is not sending/signature, and document preparation/current selection/original receipt remain distinct.
 SOLO_UI: YES: same original implementation for all eligible existing/future SOLO accounts, with original server-resolved tenant/role authority and provisioning contracts; no tenant-specific feature branch.
 UNVERIFIED: final exact-head evidence guard/review/required CI; parent2599 native30/API/web/readback and consumer2604 release; own safe web/source readback and actual owner/staff/linked-client/cohort/device/AT/provider operation; complete O1–O12/founder acceptance. Initial missing local dependency/MSYS startup/selector attempts are not product or customer proof.
@@ -36,7 +36,7 @@ ACCEPTANCE_CRITERIA: exact native action names and three heading levels, child-m
 MOTION_PURPOSE: NONE: no motion added; existing reduced-motion/native waiting behavior retained.
 PROTECTED_SEAMS: native editor content and draft writers, one original leave/navigation guard, existing Sales route registry and stylesheet, native document bytes/field/CAS/version/history, original token/Portal/legal/finance/Comms/Operations/LayerC/INT346 boundaries unchanged.
 
-INTERNAL_BUILD_IDENTITY: branch=codex/e04-agreement-editor-labels; parent=original2604; exact_head=review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-agreement-editor-interactions.md
+INTERNAL_BUILD_IDENTITY: branch=codex/e04-agreement-editor-labels; source_base=c3ae3cd1222b51c39644ec62fb8d3c18e089fcc2; source_head=72fa1382dd9f379bfd9e89b737fba033acce6295; final_head=PR review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-agreement-editor-interactions.md
 RELEASE_CHANNEL: development: actual original component/native editor/SDK with synthetic Auth/API/RPC only.
 RELEASE_CLASSIFICATION: internal-only: bounded original editor/navigation corrections, not whole O1 or complete Experience acceptance.
 CUSTOMER_RELEASE_IDENTITY: none: no founder or whole-Experience announcement.

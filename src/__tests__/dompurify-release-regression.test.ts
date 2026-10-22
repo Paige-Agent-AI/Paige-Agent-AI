@@ -14,7 +14,7 @@ describe('existing HTML sanitizer dependency',()=>{
  });
 
  it('preserves actual signature-preview formatting while removing active markup',()=>{
-  const html=renderSignaturePreview('<p><strong>{{name}}</strong><img onerror="void(0)"><script>void(0)</script><a href="javascript:void(0)">Read</a><span>{{missing}}</span></p>',{'{{name}}':'<em>Sample &amp; Co</em>'});
+  const html=renderSignaturePreview('<p><strong>{{name}}</strong><img src="/favicon.png" onerror="void(0)"><script>void(0)</script><a href="javascript:void(0)">Read</a><span>{{missing}}</span></p>',{'{{name}}':'<em>Sample &amp; Co</em>'});
   const preview=document.createElement('div');preview.innerHTML=html;
   expect(preview.querySelector('strong em')?.textContent).toBe('Sample & Co');
   expect(preview.querySelector('script')).toBeNull();

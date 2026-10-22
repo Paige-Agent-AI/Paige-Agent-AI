@@ -826,6 +826,33 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-21 — EXP04 retained source stays immutable before delivery advances.**
+
+PR [#2526](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2526), reviewed
+`fdae5a69c3b02956683d6f2fe8e2fe639e53dda5`, merged
+`31bb0a91e0e2163fda0aab8a385636297b356d96`. Actual parents90700534acac4e5a441d2683e7a1e6e8f24a25d4
++fdae; tree`7f7d05f4dbb5b805d0cd78cd8c8165179c9321d4` equals recomputed union,
+preserving E09/E02 source. All13 exact-head checks/two Vercel statuses SUCCESS,
+including final full-schema Preview. **AUTHOR-REVIEW / LOWER ASSURANCE**5608454864.
+Normal deploy-migrations39709577134/deploy119597546705 SUCCESS;160000 APPLIED.
+Catalog parity: guard`457b2abd652581a75cf073cd766eefad`, original
+SAVE`1bd28e75afa0f50bb07b717795a5be0e`, postgres owner/ACL and single enabled
+original trigger preserved; empty search_path. No data/history rewrite or new grant.
+Web`dpl_6UmnBWqeYBu61QYZFGTEGRPpH5VQ` READY/main/exact; protected/public
+`31bb0a91e0e2163fda0aab8a385636297b356d96-mviwhywx`, customerUpdate:null.
+Own Edge NOT_APPLICABLE; internal prerequisite, no customer release identity.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2526#issuecomment-6331039476).
+
+Functional: original retained-but-Draft source/customer/commercial references are
+protected at the existing writer trigger. Native43/replay2/two observed overlapping
+sessions, original baseline four positive controls then expected refusal failure.
+Visual: no renderer changed. Experiential: original link/void/metadata recovery
+preserved; correction UI is separate. Pre-freeze C7/exact effective signed terms,
+actual owner/staff/client/provider/document/signature/payment/service acceptance,
+full O1–O12 and founder evaluation remain owed. Forward fixes preserve originals;
+no new agreement/payment ledger, sender, executor, admission or algorithm activation.
+
+
 **2026-10-21 — EXP09 owner Chat CURA private preparation.**
 PR [#2519](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2519), reviewed
 `8b4f4d6de0ec5b529572eff1989b32cfce242609`, merged
@@ -905,8 +932,8 @@ closed metadata/digest validation and fresh current-record return. Visual: actua
 refusal retiring cached original, retained-version inspection and keyboard return.
 Actual owner/staff/linked-client authenticated operation, genuine document bytes,
 full professional templates/import/field/signing/communications/payment/delivery,
-all O1–O12 and complete founder acceptance remain owed. Correction#2532/native
-integrity#2526 are separate unreleased increments. No restore/edit/sign/send/pay,
+all O1–O12 and complete founder acceptance remain owed. Correction#2532 remains
+a separate release; native integrity#2526 is now released/read back6331039476. No restore/edit/sign/send/pay,
 provider/admission change, algorithm or Chat/Live/Capabilities promotion.
 
 

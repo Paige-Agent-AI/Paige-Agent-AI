@@ -26,9 +26,9 @@ SOLO_1024X768_PAIGE_CLOSED: PASS: assets/e04-agreement-correction/1024-768-light
 SOLO_1024X768_PAIGE_OPEN: PASS: assets/e04-agreement-correction/1024-768-light-open.png and dark equivalent; fold/operate/reopen without losing proposal.
 SOLO_900X1000_PAIGE_CLOSED: PASS: assets/e04-agreement-correction/900-1000-light-closed.png and dark equivalent; original scroll owner/action reachability.
 SOLO_900X1000_PAIGE_OPEN: PASS: assets/e04-agreement-correction/900-1000-light-open.png and dark equivalent; original overlay/source state preserved.
-UNVERIFIED: exact-head review/full hosted CI, guard2526 release, deployment/readback, real role cohorts/provider/legal/full O1–O12 and one complete founder evaluation; no completed premium/customer claim.
+UNVERIFIED: exact-head review/full hosted CI, own UI deployment/readback, real role cohorts/provider/legal/full O1–O12 and one complete founder evaluation; no completed premium/customer claim.
 
-INTERNAL_BUILD_IDENTITY: branch=codex/e04-agreement-correction; product_sha=6b4faa44670435e58a27428baf9cd6b45af8b841; composition=ee204faffcf22fed936477de49b461536266844e; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-agreement-correction.md
+INTERNAL_BUILD_IDENTITY: branch=codex/e04-agreement-correction; product_sha=6b4faa44670435e58a27428baf9cd6b45af8b841; composition=e9a764ddb5fe0dfe8dd0d6121b23f1fe2617ac34; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-agreement-correction.md
 RELEASE_CHANNEL: development: local source/render only; hosted review, full exact-head CI, production readback and actual customer acceptance remain distinct.
 RELEASE_CLASSIFICATION: internal-only: professional agreement prerequisite within unfinished full O1–O12 Experience.
 CUSTOMER_RELEASE_IDENTITY: none: no finished Experience, customer version or founder acceptance announcement.
@@ -93,3 +93,11 @@ history; only adjacent original E04 Brain additions conflicted, both retained.
 Final all22 normalized-LF source pins still match the rendered source. Guard2526
 fdae native43 and recreated full-schema Preview PASS; final full hosted CI and
 production160000/readback remain separate release prerequisites.
+
+Native prerequisite2526 is now released31bb0a91e0e2163fda0aab8a385636297b356d96: normal
+160000/source457b2abd65/original SAVE+ACL+enabled trigger parity and protected/public
+web readback6331039476 PASS. Current production integration preserves both original
+E04 correction/guard contracts and E09 source. Mechanical history closeout commits
+f32ae8e91/7e5e94982 are retained ancestors here; no competing release or evidence store.
+All22 owning runtime hashes still match the actual20/16/0 proof; only factual docs
+changed. Fresh exact-head CI/review and THIS UI release/readback remain required.

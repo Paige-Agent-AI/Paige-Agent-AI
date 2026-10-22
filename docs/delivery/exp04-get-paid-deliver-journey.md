@@ -1906,6 +1906,42 @@ October22 current native prerequisites: template220004, commercial230004, signer
 
 ## October22 exact PDF and assigned-field preparation — pre-edit contract
 
+### Actual owner document/field surface — dependent implementation contract
+
+1. Outcome: inspect exact native retained PDF pages, assign five supported field
+   kinds to actual original signers, correct positions with pointer/keyboard/form,
+   retain/reload the exact native preparation and inspect earlier versions.
+2. Domain: same EXP04 lead, original Sales agreement/client/party/event records.
+   No Portal, global identity, Operations writer or shared component ownership.
+3. Path: ordinary private preparation reuses original agreement-document owner
+   door and new scoped native version functions; no forced LayerC execution.
+4. Spine: no field-placement Chat/Live registration or Live claim. Consequential
+   send must later consume original Kit/Trust/operation/Rail/exact-map approval.
+5. Provider: local Mozilla core PDF renderer only, exact5.5.207/Node20-compatible,
+   bundled worker/font/CMap assets. No scripting manager, external viewer service,
+   new signing engine, sender or provider expense. Unreleased5.6.205 advisory
+   candidate rejected; original18 audit findings/locked packages unchanged.
+6. Authority: current original owner/business/actor readiness gates and native
+   server revalidation. Private bytes/maps stay in current RAM only; no cache,
+   cross-business fallback or caller-authored file path/actor adoption.
+7. Identity: original agreement/customer/source CAS, actual PDF hash/length/page
+   crop/rotation, native points and signer UUID/role/order. Server's ONE field/PDF
+   constructor remains authoritative; UI geometry is a proposal, never permission.
+8. Result: exact retained version/event or explicit unconfirmed/stale/refused
+   state, separate from file rendering, current source, approval or signature.
+9. Experience: existing preparation workspace/context/one leave guard; paper
+   preview, real pages, assigned field list and accessible numeric controls.
+   Loading/empty/denied/stale/error/unknown/saved/recoverable states are explicit.
+10. Proof: actual bytes/hash/page/rotation/worker and source-retirement controls,
+    rendered desktop/narrow/focus/keyboard and original workflow regression,
+    exact-head review/CI/Preview/release/readback and actual roles independently.
+
+Native prerequisite forward290004 is DRAFT2582; latest Preview is SKIPPED/no
+associated branch, not a successful hosted proof. No UI or future handler
+may bypass that gate or silently fall back to an old send/token path. This is a
+dependent integration, not an implemented complete professional Experience or
+owner/client/provider/founder acceptance. ALL original O1–O12 remain mandatory.
+
 This is the next original-engine foundation, not a second signing implementation.
 Studio versions require marketing/session lineage; marketing draft history is
 truncated prose, and agreement draft revisions retain wording/source only. None

@@ -1,5 +1,28 @@
 # Agreements preparation — Operate
 
+## October22 exact document/field surface — local, not customer mounted
+
+Existing delegated document/recipient direction continues: real white PDF paper
+with named assigned fields, active-page/zoom tools, contextual inspector and
+distinct draft/review-ready proposal actions. Native Sales tokens/typography and
+original shell/Fold remain. Narrow layout stacks tools; actual100% mobile zoom
+pans only inside the bounded paper viewport, no application horizontal overflow.
+Pointer plus keyboard/numeric position adjustment, Delete/Undo/Escape, source
+mask and byte/geometry errors have actual rendered proof20 cases/11 paths/30pins.
+Previous-page inspector and stale document validation repaired in final review.
+Fifteen model tests/original23 strict cases/73steps/type10-current6/lint0 PASS.
+
+Mandatory Impeccable five owning files:0 anti-patterns/four nonblocking advisories
+for literal white actual document/purple field contrast and2px field corner.
+These intentional bounded document/overlay shapes do not introduce platform
+tokens or waive full-app design debt. Actual320light/desktop rotated-page image
+inspection and direction/craft/clarify/harden/adapt/React lifecycle checks apply.
+AUTHOR-REVIEW / LOWER ASSURANCE, no other agent reviewer. Whole premium Experience
+and founder acceptance remain incomplete. Current source fixture says no native
+save: original owner API/router/one leave guard/retention/read/reload/history,
+exact approved PDF/map signing and actual role/provider proof remain owed.
+See docs/evidence/ui-delivery/e04-agreement-document-fields.md.
+
 Owner authority: October21 EXP04 resume and premium Experience standard. Routine
 UX decisions are delegated to the existing lead; this is not a founder-reviewed
 mock. Complete live Experience evaluation remains pending. No other agent is used.

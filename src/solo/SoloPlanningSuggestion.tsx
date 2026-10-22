@@ -53,7 +53,20 @@ export function SoloPlanningSuggestion({ api, tenantId, actorId, relevant, activ
       <ContextualSuggestion open={open} onOpenChange={next => { setOpen(next); if (next) data.refresh(); }} sidePanel={sidePanel}
         title="Ready for your review" description="Original prepared work, with its source. Reviewing does not approve or execute it."
         trigger={<button ref={trigger} type="button" className="e2ps-chip"><FileText size={15} aria-hidden /><span>{available && total !== null ? `${total} item${total === 1 ? "" : "s"} to review` : "Prepared work"}</span><ChevronDown size={13} aria-hidden /></button>}
-        onCloseAutoFocus={event => { if (reviewOpen) event.preventDefault(); else returnToChat(event); }}>
+        onCloseAutoFocus={event => {
+          if (reviewOpen) { event.preventDefault(); return; }
+          api.restoreLayout();
+          // Respect the control chosen by an outside click. Keyboard/modal
+          // return uses preventScroll so it cannot move the original transcript.
+          const focused = document.activeElement;
+          if (!focused || focused === document.body || (event.target instanceof HTMLElement && event.target.contains(focused))) {
+            event.preventDefault(); trigger.current?.focus({ preventScroll: true });
+          }
+          // Closing after a failed reread can retire the trigger in the same commit.
+          requestAnimationFrame(() => {
+            if (!trigger.current && document.activeElement === document.body) api.focusComposer();
+          });
+        }}>
         {scopeVisible && <div className="e2ps-context"><span>{plan!.label}</span><button type="button" aria-label={`Clear planning context: ${plan!.label}`} onClick={clearContext}>Clear context</button></div>}
         {data.loading ? <p className="e2ps-state" role="status">Checking the original work…</p>
           : data.error ? <div className="e2ps-state"><p role="alert">Prepared work could not be checked. Previous details and counts are withheld.</p><button type="button" onClick={data.refresh}><RefreshCw size={15} aria-hidden /> Retry the read</button></div>

@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: YES: replace only cramped PLAN IN CONTEXT presentation wit
 FLOW_PROTOTYPE: PASS: docs/delivery/e2-context-review-prototype.md retains the owner-delegated selected direction. No intermediate founder signoff or acceptance asserted.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: authorized ordinary SOLO actor notices actual returned work in explicit generic planning context or a fresh Game Plan-page conversation, inspects the source, then resumes the same Chat.
 VISUAL_DIRECTION: PASS: one quiet composer row; adjacent wide overview/readable narrow sheet; substantial source inspection uses the same existing Decision Desk reader. Active scope/Clear appear inside the overview, with a compact fallback token when no suggestion is shown.
-AUTOMATED_EVIDENCE: PASS:61 cases/four owning consumer/Reader/actual Workspace/onboarding suites pass after a genuine focus-return RED and correction. Cases cover context/actor/workspace/hydration negatives, actual count versus preview, dismissal/new identity/content, thread adoption, failed/loading/empty reads, no send/action and retiring hidden portals. Final composed-head evidence follows in PR review.
+AUTOMATED_EVIDENCE: PASS:62 cases/four owning consumer/Reader/actual Workspace/onboarding suites pass after a genuine focus-return RED and correction. Cases cover context/actor/workspace/hydration negatives, actual count versus preview, dismissal/new identity/content, thread adoption, failed/loading/empty reads, no send/action and retiring hidden portals. Final composed-head evidence follows in PR review.
 STATIC_EVIDENCE: PASS: original RLS table/filter/count/ten-row preview and optional actor assertion reused; businessMissionId/client/Live/approval/admission and original writers preserved. No new store, queue, registry, runtime, scheduler or privilege. Exact-head lint/build/style/CI remain required.
 RENDERED_EVIDENCE: PASS: assets/e2-contextual-prepared-work/viewport-state-index.json pins21 untouched native Chat/consumer/Reader/shell JPEGs, actual loaded font and exact raster/CSS/source hashes. Actual parent/policy integration is separately labelled in the manifest; those parents are unit-mounted rather than claimed native pixels. Data/auth/read ports are synthetic and I/O refuses.
 BEHAVIORAL_EVIDENCE: PASS: native draft and original transcript1488 remain through overview→same Desk→Escape, dismissal, source replacement and Clear context. Escape returns to the chip, dismissal/Clear to the original composer. Unchanged work stays dismissed; a new source ID at the same total resurfaces. Actual shell collapse retires the portal.
@@ -35,7 +35,7 @@ RELEASE_NOTE_REQUIRED: no: no version or announcement for an incomplete Experien
 RELEASE_TRUTH_BOUNDARY: PARTIAL: local source/native UI behavior; PROOF OWED: released ordinary customer journey/role isolation and full governed follow-through.
 RELEASE_RECOVERY: position=forward source-presentation correction retaining original context, data, approvals and writers; reference=src/solo/SoloPlanningSuggestion.test.tsx.
 
-Functional:61 selected cases and original read-contract reuse; final hosted checks owed.
+Functional:62 selected cases and original read-contract reuse; final hosted checks owed.
 Visual:21 current native frames with fonts,320px one-row control fix and no composer
 overlap. Earlier hot-reload/stale-collector/cold-server diagnostics are excluded;
 only the clean explicit-scope page and parameterized native collector are indexed.
@@ -56,3 +56,8 @@ paused original#2401 recovery source untouched.
 finish review inspected actual wide/narrow/Obsidian pixels, hierarchy, typography,
 target size, source honesty, portal/focus recovery and motion. Final pinned scanner,
 source review and exact-head CI are recorded in the PR, without source-check waivers.
+
+
+## Final focus supplement,2026-10-22
+
+The21 native frames retain their original source pins at4a26fe727716310b9d5daf62ab8fdbd556dc8fcd. Five new untouched native frames in assets/e2-contextual-prepared-work/focus-20261022/viewport-state-index.json pin the final focus callbacks. A genuine outside-click defect returned focus to the chip; original shared Popover now retains the clicked composer control. The closing focus scope returns keyboard/modal focus with preventScroll; the original nonzero narrow transcript remains6030.39990234375 before/after, and the unsent draft remains. A failed reread retiring the trigger now falls back to the original composer after the portal releases. Shared presentation retirement is repaired in dependency#2583, separately from this consumer. Intermediate failed captures and the original narrow scroll jump are explicitly excluded, not counted as passing evidence. No source, approval, message or execution is written. Current-source62 owning cases pass; actual released customer/Live/isolation and whole19/nine/founder acceptance remain UNVERIFIED.

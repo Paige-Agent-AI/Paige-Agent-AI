@@ -22,10 +22,21 @@ beforeEach(() => {
   ] };
   props = { api: { threadId: null, ready: true, busy: false, hasOwnerMessages: false, restoreLayout: vi.fn(), focusComposer: vi.fn() }, tenantId: "test-tenant-plan", actorId: "test-actor-a", relevant: true, active: true, plan: null, onClearContext: vi.fn(), sidePanel: true };
 });
-afterEach(() => { act(() => root.unmount()); host.remove(); });
+afterEach(() => { act(() => root.unmount()); host.remove(); vi.unstubAllGlobals(); });
 function render() { act(() => root.render(<SoloPlanningSuggestion key={JSON.stringify([props.tenantId, props.actorId])} {...props} />)); }
 function click(selector: string) { const button = document.querySelector<HTMLButtonElement>(selector)!; expect(button).toBeTruthy(); act(() => button.click()); }
 function open() { click(".e2ps-chip"); }
+it("keeps focus on an outside composer control when it dismisses the wide overview", async () => {
+  vi.stubGlobal("matchMedia", () => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+  const composer = document.createElement("textarea"); host.appendChild(composer);
+  render(); document.body.appendChild(composer); open();
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)); });
+  act(() => { composer.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true, button: 0 })); composer.focus(); composer.click(); });
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)); });
+  expect(document.querySelector('[role="dialog"]')).toBeNull();
+  expect(document.activeElement).toBe(composer);
+  composer.remove();
+});
 it("uses the original actor/tenant read, separates actual count from preview and opens the same Desk source", () => {
   render(); expect(fixture.reads).toHaveBeenLastCalledWith("test-tenant-plan", "test-actor-a");
   expect(host.textContent).toContain("37 items to review"); open();

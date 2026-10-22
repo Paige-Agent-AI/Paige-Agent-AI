@@ -8,7 +8,9 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 vi.mock("next-themes", () => ({ useTheme: () => ({ resolvedTheme: "light" }) }));
 let host: HTMLDivElement, root: Root, wide: boolean, change: (() => void) | null;
 let page = false;
+const closeFallback = vi.fn();
 beforeEach(() => {
+  closeFallback.mockClear();
   wide = true; change = null; page = false;
   vi.stubGlobal("matchMedia", () => ({ get matches() { return wide; }, addEventListener: (_: string, fn: () => void) => { change = fn; }, removeEventListener: () => { change = null; } }));
   host = document.createElement("div"); document.body.appendChild(host); root = createRoot(host);
@@ -16,7 +18,7 @@ beforeEach(() => {
 afterEach(() => { act(() => root.unmount()); host.remove(); vi.unstubAllGlobals(); });
 function Probe() {
   const [open, setOpen] = useState(false);
-  return <ContextualSuggestion open={open} onOpenChange={setOpen} sidePanel={!page} trigger={<button type="button">Inspect recorded work</button>} title="Work awaiting review" description="Choose an original source to inspect."><button type="button">Read original item</button></ContextualSuggestion>;
+  return <ContextualSuggestion open={open} onOpenChange={setOpen} sidePanel={!page} trigger={<button type="button">Inspect recorded work</button>} title="Work awaiting review" description="Choose an original source to inspect." onCloseAutoFocus={closeFallback}><button type="button">Read original item</button></ContextualSuggestion>;
 }
 function render() { act(() => root.render(<Probe />)); }
 function open() { const trigger = host.querySelector("button")!; trigger.focus(); act(() => trigger.click()); }
@@ -46,4 +48,12 @@ it("keeps one open overview when the original responsive boundary changes", () =
 it("closes through its explicit wide close control without invoking its source content", () => {
   render(); open(); const close = document.querySelector('[aria-label="Close suggestions"]') as HTMLButtonElement;
   act(() => close.click()); expect(document.querySelector('[role="dialog"]')).toBeNull();
+});
+it("honours the caller's focus fallback when the open presentation itself retires", async () => {
+  render(); open();
+  await act(async () => { await new Promise<void>(resolve => requestAnimationFrame(() => resolve())); });
+  closeFallback.mockClear();
+  act(() => root.render(<button type="button">Other context</button>));
+  await act(async () => { await new Promise<void>(resolve => requestAnimationFrame(() => resolve())); });
+  expect(closeFallback).toHaveBeenCalledOnce();
 });

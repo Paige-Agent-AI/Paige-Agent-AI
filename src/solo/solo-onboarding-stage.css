@@ -55,3 +55,5 @@
 .sos-voice:focus-visible{outline:2px solid currentColor;outline-offset:2px}
 .sos-voice-entry p{font-size:12px;line-height:1.4;color:hsl(var(--muted-foreground));margin:0;max-width:52ch;min-width:0;flex:1 1 260px}
 @container(max-width:360px){.sos-voice-entry p{flex-basis:100%}}
+.sos-voice:disabled{opacity:.55;cursor:not-allowed}
+.sos-voice:disabled:hover{background:hsl(var(--primary)/.12)}

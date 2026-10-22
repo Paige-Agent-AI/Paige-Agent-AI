@@ -32,8 +32,8 @@ export function SoloOnboardingStage({ thinking, profile, onResumeProfile, profil
     <div className="sos-introduction">
       <div className="sos-state" role="status"><span aria-hidden="true" />{thinking && !checking && !held ? "PAIGE is preparing your response" : LABEL[state]}</div>
       {onTalkLive && <div className="sos-voice-entry">
-        <button type="button" className="sos-voice" onClick={onTalkLive}><Volume2 aria-hidden />Talk with Paige live</button>
-        <p>She speaks and listens in this same conversation. Your browser asks for microphone permission first — or keep typing below; typing works the whole time.</p>
+        <button type="button" className="sos-voice" disabled={thinking} onClick={onTalkLive}><Volume2 aria-hidden />Talk with Paige live</button>
+        <p>Same conversation — she speaks and listens. Before anything starts, Paige explains what the speech provider keeps and your browser asks for microphone permission. Minimize Live any time to keep typing.</p>
       </div>}
       {onResumeProfile
         ? <button type="button" className="sos-progress sos-progress--link" data-empty={profile?.confirmedCount ? undefined : "true"} aria-expanded={profileOpen} onClick={onResumeProfile}>{profile && profile.confirmedCount > 0

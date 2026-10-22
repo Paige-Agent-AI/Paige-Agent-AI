@@ -275,10 +275,12 @@ function CapabilitiesView() {
           <div className="spw-cap-row"><div><strong>Voice input</strong><small>Hold the mic in the composer to dictate. Speech-to-text only — Paige does not speak back here.</small></div><TruthPill tone="live">Available</TruthPill><span>Active</span></div>
           {/* Dictation is one-way input; this row is the two-way surface, and the two must stay
               distinguishable (owner capabilities directive: never conflate voice dictation with
-              bidirectional Live Conversation). Live audio is OFF until the owner of the voice
-              accepts the speech-provider terms in the Live surface — so the honest access state is
-              consent-required, never Active, until a person has actually turned it on. */}
-          <div className="spw-cap-row"><div><strong>Live Conversation</strong><small>Two-way voice with Paige inside your chat — she listens and speaks in the same conversation. Turn it on from the chat composer: your browser asks for microphone permission, and Paige explains what the speech provider keeps before anything starts.</small></div><TruthPill tone="partial">Consent required</TruthPill><span>Not activated</span></div>
+              bidirectional Live Conversation). Live audio is off for an account until the owner of
+              the voice accepts the speech-provider terms in the Live surface — so the honest access
+              state is consent-required, never Active, until a person has actually turned it on.
+              The label is this account's current fact, derived per-account when Live state is
+              verified end-to-end (EXP01 PR5). */}
+          <div className="spw-cap-row"><div><strong>Live Conversation</strong><small>Two-way voice with Paige inside your chat — she listens and speaks in the same conversation. Off for your account until you turn it on from the chat composer: your browser asks for microphone permission, and Paige explains what the speech provider keeps before anything starts.</small></div><TruthPill tone="partial">Consent required</TruthPill><span>Not activated yet</span></div>
           <div className="spw-cap-row"><div><strong>Onboarding & business discovery</strong><small>Paige interviews your business in chat, tracks every confirmed detail into Setup, and you review, skip or correct each one. Speak or type — speaking needs Live Conversation turned on.</small></div><TruthPill tone="live">Available</TruthPill><span>Active</span></div>
           <div className="spw-cap-row"><div><strong>Code or sandbox execution</strong><small>Contextual previews may be shown, but no execution substrate is available.</small></div><TruthPill tone="unavailable">Unavailable</TruthPill><span>Off</span></div>
         </section>

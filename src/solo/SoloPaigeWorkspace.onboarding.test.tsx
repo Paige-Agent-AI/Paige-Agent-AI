@@ -3,6 +3,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter, useLocation, useNavigate } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { SoloPaigeWorkspace } from "./SoloPaigeWorkspace";
+import { SoloOnboardingStage } from "./SoloOnboardingStage";
 import { cleanSoloSetupBrief } from "./settings-setup-contract";
 const id = "11111111-1111-4111-8111-111111111111";
 const fixture = vi.hoisted(() => ({ tenant: "test-tenant-a", staff: false, tierAllows: true, rpc: vi.fn(), context: {} as Record<string, unknown>, renders: [] as (string|null|undefined)[], chips: [] as {label:string;prompt:string;autoSend?:boolean}[] }));
@@ -46,7 +47,10 @@ it("offers the voice-first entry on first run and requests the existing Live sur
     const talk=host.querySelector<HTMLButtonElement>(".sos-voice");
     expect(talk).not.toBeNull();
     expect(talk!.textContent).toContain("Talk with Paige live");
-    expect(host.textContent).toContain("typing works the whole time");
+    // The copy must not promise typing DURING Live — the immersive stage is modal
+    // (focus-trapped, rest inert). It promises the honest path back to typing.
+    expect(host.textContent).toContain("Minimize Live any time to keep typing");
+    expect(host.textContent).not.toContain("typing works the whole time");
     expect(host.textContent).not.toContain("Meet PAIGE.");
     await act(async()=>{talk!.click();});
     expect(requests).toEqual(["paige-live-open-request"]);
@@ -56,6 +60,20 @@ it("offers the voice-first entry on first run and requests the existing Live sur
     expect(host.querySelector(".sos-voice")).toBeNull();
     expect(host.querySelector(".sos")).toBeNull();
   } finally { window.removeEventListener("paige-live-open-request",hear); }
+});
+it("holds the voice entry back while PAIGE is preparing a response",async()=>{
+  await render("?onboarding=1");
+  expect(host.querySelector<HTMLButtonElement>(".sos-voice")!.disabled).toBe(false);
+  // The workspace drives the stage's `thinking` from real chat work; check the
+  // busy mapping on the stage itself (the harness chat mock does not trace).
+  const stageHost=document.createElement("div"); host.append(stageHost);
+  const stageRoot=createRoot(stageHost);
+  try{
+    await act(async()=>{stageRoot.render(<SoloOnboardingStage thinking onTalkLive={()=>{}} profile={null}/>);});
+    expect(stageHost.querySelector<HTMLButtonElement>(".sos-voice")!.disabled).toBe(true);
+    await act(async()=>{stageRoot.render(<SoloOnboardingStage thinking={false} onTalkLive={()=>{}} profile={null}/>);});
+    expect(stageHost.querySelector<HTMLButtonElement>(".sos-voice")!.disabled).toBe(false);
+  } finally { await act(async()=>{stageRoot.unmount();}); stageHost.remove(); }
 });
 it("hides the voice entry when the tier does not carry Live Conversation",async()=>{
   fixture.tierAllows=false;

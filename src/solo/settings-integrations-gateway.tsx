@@ -1594,8 +1594,13 @@ function ScopedIntegrationsGatewaySection({
               providerKey: item.pk,
               // A preset with required headers is a Token + headers contract by definition; a
               // curated row that names its proven auth mode preselects that mode (the catalogue's
-              // singular "header" is the form's "headers" choice).
-              auth: item.pk && item.req?.length ? "headers" : item.auth === "header" ? "headers" : item.auth,
+              // singular "header" is the form's "headers" choice). The GENERIC entry stays
+              // unprefilled by its own documented contract ("nothing prefilled, since it names no
+              // vendor") — its historical auth field is dead data, never a preselection.
+              auth: item.manual ? undefined
+                : item.pk && item.req?.length ? "headers"
+                : item.auth === "header" ? "headers"
+                : item.auth,
               requiredHeaders: item.req,
             } })}
             onSetup={(item) => setDrawer({ kind: "stop", item, via: "setup" })}

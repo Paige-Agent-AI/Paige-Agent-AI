@@ -781,6 +781,45 @@ coverage label asserts per-account access. NO VERIFIED ALGORITHM is added; the
 canonical ALG03/04/06/11/12/13 and PAIGE/VERA/originating specialist boundaries remain.
 
 
+## EXP02 report evidence foundation — October22 source release, not activated
+
+D1 adds only private `_paige_document_capture_metric_evidence(jsonb)` under applied
+20271113330002. The original issuer/resolver and owner/admin/current-workspace guard
+remain authoritative. Only1–12 unique original reference tokens are accepted; no
+caller/model figures or tenant input. Original definitions, values/null, period,
+semantics, coverage, exclusions, caveats, as-of and source revision are retained;
+workspace identity fields are removed from the returned document projection.
+Malformed/duplicate/oversize, foreign/denied, superseded, expired or changed-source
+references fail closed. Final actor/tenant/authority/expiry revalidation applies.
+
+Original composed native PostgreSQL16.14 proof passes195 checks. A missing-helper
+original-source control fails42883. Initial source-change fixture was outside the
+issued live period; placing only that disposable receipt inside the period makes
+the unchanged denial assertion meaningful. Sandboxed initdb/startup attempts and
+private launcher diagnosis are excluded from passing proof. Existing full-schema
+shared_metric_evidence rollback proof now covers exact unavailable/null/provenance,
+private ACL and foreign/expired/forged/duplicate inputs; hosted database-contract
+120122063443 SUCCESS on the exact reviewed head.
+
+The function is SECURITY INVOKER with all application-role grants revoked. No table,
+public RPC, report type, model/provider, worker, Chat binding or action is activated;
+no capture is persisted yet. Original submit/worker/immutable marketing_content,
+turn/reconnect/Rail consumer and formal monthly/quarterly customer deliverable remain
+required. Functional private source prerequisite released; Visual N/A/unmounted; Experiential
+and Founder Acceptance UNVERIFIED. CAP014/015 stay Unverified, other nine states and
+ALG03/06/11/12/13 unchanged. All19/nine remain mandatory.
+
+PR2630 reviewed42590fae083ce25eb3f63172e07154922f32a303, AUTHOR-REVIEW / LOWER
+ASSURANCE5621569245, all13 exact-head checks/two statuses SUCCESS, merged
+1727865977efb507ad5ed043e72f49ee3b5e63ee/treef0ceff81e4fa8ced70b0fce65fbc06ce8f8ff828.
+Normal deploy-migrations39870716321/120144323034 SUCCESS; db-live exactmerge.
+Actual private bodyMD5 151a73a04e1e0d97ce2f641a5ee34c26 matches source, jsonb ABI,
+INVOKER/empty search_path/UTC and all four application/public execute grants FALSE.
+Original Metric resolver/authority/document submit/complete bodies remain unchanged.
+Webdpl_5eY5SJ5RpHjGNZmprRjNpwhEZZmk READY/exactmain; public build172786-mvk5v4a3,
+customerUpdate:null. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2630#issuecomment-6353478230).
+Source/native prerequisite only; no runtime report consumer or customer acceptance.
+
 ## EXP02 October22 — verified Business Review reliability source release
 
 PR2608 reviewed c6b93ce0821c707ca2294130da1b11690972ea05, separate

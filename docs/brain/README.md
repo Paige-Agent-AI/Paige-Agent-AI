@@ -1659,6 +1659,9 @@ Selective native/pure formatter reuse from2192/179e52 retains exact original agr
 ### EXP04 template current-main composition — October22 source
 Template workspace now composes actual main1e1073133, retaining both template and C7 contracts. Native template#2545/220004 is actually production-applied with exact catalog/web readback; earlier unapplied notes above are historical. Dormant commercial#2550 is merged but230004 rolled back at the original lock limit and remains NOT_APPLIED. No new template UI source is changed by this documentation composition; all25 rendered pins are rechecked. Fresh exact-head CI/review/release and actual owner/staff/client/full Experience acceptance remain required; no Chat/provider/signing/payment or completed legal review claimed.
 
+### EXP04 C7 source preparation — October22 dormant read port
+Selective original2192/179e52 reader/tests remain exact0a282f after composition with coherent2604/6b8 preparation source; no runtime consumer or permission change. Fresh canonical formatter/reader/field Deno25 tests/110 steps PASS under unchanged runtime denials/type checks. Earlier13/63 is historical, not summed. Existing same-client agreement/invoice/terms, actor/business/admin, exact wording/microsecond revisions and private-field refusal checks remain; no new money/date engine. Canonical exact-PDF/assigned-map approval BEFORE C7, atomic original operation/Rail, signing/effective terms and actual ordinary-role/provider/full12/founder acceptance remain owed. Native2599/300004/Edge37 prerequisite is separately readback-verified, not the earlier hold. Parent2604 review/CI/merge/web proof and this reader's own fresh exact-head gates remain required. [Source evidence](../evidence/ui-delivery/e04-commercial-preparation-source.md).
+
 ### EXP04 original upload intent — development
 
 REPAIR original business upload adapter after actual-hook3 positive/2 genuine RED controls: loaded/current business must match before Storage, and lost/context-retired results never claim rollback or no effect. Original private bucket/RLS/path/cache/no-overwrite/result contract retained. Final9 hook plus102 existing Sales cases (111) and type10/current6/lint0 PASS; initial original audit-history timeout repeated green without changing5s limit/assertions. Actual Sales/modal/hook/SDK20 rendered cases/5 paths/19 exact pins/0page errors, neutral local transports only. Native PAIGE backdrop is respected and actual open/folded states are explicit. Stable same-request upload recovery, native-supported import/wording/preview/fields and owner/staff/client/provider/all12/founder acceptance remain incomplete. No actual upload, signing, send, payment, role, bucket, provider, model or Chat activation. [Bounded evidence](../evidence/ui-delivery/e04-agreement-upload-intent.md).
@@ -1748,6 +1751,45 @@ nine analytics, historical9/0 and12/0/4, shared ownership and consequential hold
 remain. See the existing integration matrix and transport UI evidence; ANT138
 eca1796a and ANT1613217e341 record the dependency-ordered continuation plan.
 
+
+## EXP02 report evidence foundation — October22 source release, not activated
+
+D1 adds only private `_paige_document_capture_metric_evidence(jsonb)` under applied
+20271113330002. The original issuer/resolver and owner/admin/current-workspace guard
+remain authoritative. Only1–12 unique original reference tokens are accepted; no
+caller/model figures or tenant input. Original definitions, values/null, period,
+semantics, coverage, exclusions, caveats, as-of and source revision are retained;
+workspace identity fields are removed from the returned document projection.
+Malformed/duplicate/oversize, foreign/denied, superseded, expired or changed-source
+references fail closed. Final actor/tenant/authority/expiry revalidation applies.
+
+Original composed native PostgreSQL16.14 proof passes195 checks. A missing-helper
+original-source control fails42883. Initial source-change fixture was outside the
+issued live period; placing only that disposable receipt inside the period makes
+the unchanged denial assertion meaningful. Sandboxed initdb/startup attempts and
+private launcher diagnosis are excluded from passing proof. Existing full-schema
+shared_metric_evidence rollback proof now covers exact unavailable/null/provenance,
+private ACL and foreign/expired/forged/duplicate inputs; hosted database-contract
+120122063443 SUCCESS on the exact reviewed head.
+
+The function is SECURITY INVOKER with all application-role grants revoked. No table,
+public RPC, report type, model/provider, worker, Chat binding or action is activated;
+no capture is persisted yet. Original submit/worker/immutable marketing_content,
+turn/reconnect/Rail consumer and formal monthly/quarterly customer deliverable remain
+required. Functional private source prerequisite released; Visual N/A/unmounted; Experiential
+and Founder Acceptance UNVERIFIED. CAP014/015 stay Unverified, other nine states and
+ALG03/06/11/12/13 unchanged. All19/nine remain mandatory.
+
+PR2630 reviewed42590fae083ce25eb3f63172e07154922f32a303, AUTHOR-REVIEW / LOWER
+ASSURANCE5621569245, all13 exact-head checks/two statuses SUCCESS, merged
+1727865977efb507ad5ed043e72f49ee3b5e63ee/treef0ceff81e4fa8ced70b0fce65fbc06ce8f8ff828.
+Normal deploy-migrations39870716321/120144323034 SUCCESS; db-live exactmerge.
+Actual private bodyMD5 151a73a04e1e0d97ce2f641a5ee34c26 matches source, jsonb ABI,
+INVOKER/empty search_path/UTC and all four application/public execute grants FALSE.
+Original Metric resolver/authority/document submit/complete bodies remain unchanged.
+Webdpl_5eY5SJ5RpHjGNZmprRjNpwhEZZmk READY/exactmain; public build172786-mvk5v4a3,
+customerUpdate:null. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2630#issuecomment-6353478230).
+Source/native prerequisite only; no runtime report consumer or customer acceptance.
 
 ## EXP02 October22 — verified Business Review reliability source release
 

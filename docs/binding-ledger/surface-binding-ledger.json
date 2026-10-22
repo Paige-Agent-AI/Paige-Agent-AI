@@ -167,7 +167,7 @@
       "chain": {
         "canonical_source": {
           "status": "real",
-          "note": "Mounted presentations reuse existing Pipeline RPC, offer prices, terms/signing and draft adapters; no aggregate financial source is invented. Native agreement authoring reuses paige_agreements, its original created event/counterparty and the create_paige_agreement_draft_once/read_paige_agreement_preparation/recover_paige_agreement_draft_creation seams. Read-only wording inspection consumes the same agreement's native retained revisions; producer#2521/130000 is released and read back. Correction source reuses original SAVE with a frozen reviewed payload/original timestamp CAS, unchanged client/offer/commercial/template references and the same audit/history. Native retained-source guard#2526/160000 is released and read back. Customer proof is owed; no Chat/Live execution or signature evidence is inferred. No second document/execution store. Business templates reuse original tenant_agreement_versions and scoped version/list/read/same-UUID recovery; producer#2545 must release and read back before this consumer. Selected immutable prepared source IDs and supplied words continue through the original client-agreement CREATE; review routing never implies completed review. Template-specific Chat/Live remains unavailable and actual ordinary-role proof is owed."
+          "note": "Mounted presentations reuse existing Pipeline RPC, offer prices, terms/signing and draft adapters; no aggregate financial source is invented. Native agreement authoring reuses paige_agreements, its original created event/counterparty and the create_paige_agreement_draft_once/read_paige_agreement_preparation/recover_paige_agreement_draft_creation seams. Read-only wording inspection consumes the same agreement's native retained revisions; producer#2521/130000 is released and read back. Correction source reuses original SAVE with a frozen reviewed payload/original timestamp CAS, unchanged client/offer/commercial/template references and the same audit/history. Native retained-source guard#2526/160000 is released and read back. Customer proof is owed; no Chat/Live execution or signature evidence is inferred. No second document/execution store. Business templates reuse original tenant_agreement_versions and scoped version/list/read/same-UUID recovery; producer#2545 must release and read back before this consumer. Selected immutable prepared source IDs and supplied words continue through the original client-agreement CREATE; review routing never implies completed review. Template-specific Chat/Live remains unavailable and actual ordinary-role proof is owed. Checked signer preparation consumes the original agreement/client/version/time, signer UUID and native edited-event receipt through prepare_agreement_signer/recover_agreement_signer_preparation; producer #2557 must release before activation. The owner form preserves one Sales leave guard, opaque reload recovery and exact same-request retries. Historical creation receipt is distinct from current signer status; this internal preparation performs no send, consent, signature or payment."
         },
         "tenant_scope": {
           "status": "inherited_contract",
@@ -225,6 +225,9 @@
         "src/solo/sales/AgreementPreparationWorkspace.tsx",
         "src/solo/sales/AgreementBodyEditor.tsx",
         "src/solo/sales/agreementPreparationApi.ts",
+        "src/solo/sales/AgreementSignerPreparation.tsx",
+        "src/solo/sales/agreementSignerApi.ts",
+        "docs/evidence/ui-delivery/e04-agreement-recipients.md",
         "docs/evidence/ui-delivery/e04-agreement-authoring-workspace.md",
         "src/solo/sales/AgreementWordingHistory.tsx",
         "src/solo/sales/agreementRevisionApi.ts",

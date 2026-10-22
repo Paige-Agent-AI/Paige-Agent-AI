@@ -49,7 +49,7 @@ type RpcResponse = { data: unknown; error: { code?: string } | null };
 // Generated database types lag additive native migrations. Keep one explicit
 // boundary, strict closed readback, and no raw errors/legal body in logs or Rail.
 const port = supabase as unknown as RpcPort;
-async function call<Schema extends z.ZodTypeAny>(name: string, args: Record<string, unknown>, schema: Schema, explainRefusal = false): Promise<AgreementApiResult<z.output<Schema>>> {
+async function call<Schema extends z.ZodTypeAny>(name: string, args: Record<string, unknown>, schema: Schema, explainRefusal = false, stateRefusalCodes: readonly string[] = []): Promise<AgreementApiResult<z.output<Schema>>> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const controller = new AbortController();
   const expired = Symbol('agreement response deadline');
@@ -64,7 +64,7 @@ async function call<Schema extends z.ZodTypeAny>(name: string, args: Record<stri
     const { data, error } = response;
     if (error?.code === '42501') return { ok: false, reason: 'refused', message: 'Your agreement access or business context changed. Return to Sales and check the selected business.', ...(explainRefusal ? { refusal: 'authority' as const } : {}) };
     if (error?.code === '40001') return { ok: false, reason: 'conflict', message: 'This request refers to different saved work. Recover the original draft before starting another.' };
-    if (error?.code === '23514' || error?.code === '22023') return { ok: false, reason: 'refused', message: 'Review the client, document and required details before continuing.', ...(explainRefusal ? { refusal: 'state' as const } : {}) };
+    if (error?.code === '23514' || error?.code === '22023' || (error?.code && stateRefusalCodes.includes(error.code))) return { ok: false, reason: 'refused', message: 'Review the client, document and required details before continuing.', ...(explainRefusal ? { refusal: 'state' as const } : {}) };
     if (error) return { ok: false, reason: 'unconfirmed', message: 'The agreement result could not be confirmed. Check the original request before trying again.' };
     const parsed = schema.safeParse(data);
     if (!parsed.success) return { ok: false, reason: 'unconfirmed', message: 'The agreement result could not be verified. Check the original request before trying again.' };

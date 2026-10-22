@@ -1,37 +1,35 @@
 # EXP04 original Sales document-preparation consumer
 
-## October22 required visual-check repair
+October22 combined preparation source checkpoint2e804682fe70c3b4c5d63013eb160122607eea41, based on
+reviewed main ec1c497e0d26de218f28dfd61dd614fae05097eb. Existing2604 workspace,
+2605 editor and actual-owner pending-label repair are one coherent increment;
+all23 owning source/controller/SDK/harness/test files match retained1f254d78c.
+Current canonical npm install has DOMPurify3.4.17/Mammoth1.13.0; no production
+Mammoth resolution claim. All source/version/permission/native engine boundaries
+remain original; no own SQL/Edge/workflow/grant/provider/Chat activation.
 
-Actual verify120044935098 on0010067d3 FAILED only at the original Impeccable
-changed-source gate: the new benign sanitizer fixture had an image without src.
-The full functional Test and other required checks passed; the failed overall
-job is retained as FAILED. Supply the real existing /favicon.png in that SAME
-fixture; preserve every event/script/URL/template assertion and all check rules.
-Fresh unchanged two-case sanitizer suite PASS; exact cached Impeccable4.1.0 on
-all owning changed source now0 anti-patterns/four incumbent advisories. No skip,
-config/threshold/assertion/timeout change, product image or runtime edit. All84
-render pins remain exact because this only changes an unbundled test fixture.
-Fresh exact-head CI/review remain required; candidate NOT_DEPLOYED/NOT_ACCEPTED.
-Actual ordinary-owner draft/reload/history proof is separately protected in ANT52,
-from the existing live foundation, not this candidate or full O1 acceptance.
+Fresh scoped Sales regression986 cases/65 suites PASS. First run had one unchanged
+5s upload-test timeout (985 PASS); SAME case passed isolated170ms, then all986
+passed in unchanged quiet rerun. No assertion/timeout/baseline waiver. The earlier
+001 hosted verify failure was the benign sanitizer fixture's missing image src;
+existing real /favicon.png fixes it with all security assertions retained.
+Current lint0/two incumbent warnings, gold/UTF8 PASS, canonical Impeccable4.1.0
+0 anti-patterns/18 incumbent advisories; production audit0 high/critical with8
+moderate remaining. Earlier type ratchet10/current6 predates current main; new
+exact-head CI type proof remains required, not inferred from these local checks.
 
-October22 final source composition55cb5fcd41a331397b8ac039d7e1ae6d1253776e
-preserves released main13d26748311a35a6d2ae4b65c7d67116fa2aa6fa, including
-security2607's exact npm/Bun manifest pins. All owning UI/controller/SDK/harness
-bytes remain identical to reviewed4b; only the benign sanitizer regression is
-reused from superseded2610. Fresh84 focused cases/six suites PASS, separate from
-prior142 composed cases and earlier995 full cases before the two response repairs.
-Fresh actual-source mounted20/14/33, field20/11/30 and intake20/10/21 PASS with
-zero page errors; all84 pins independently reverified after main composition.
-Desktop and320 dark document views inspected. Auth/API/RPC remain synthetic.
-
-API2599/429 Edge37 has16-file deployed-source parity. Root native300004 now has
-all8 original expected bodies/ABI/owner/config/ACL/private RLS table/4triggers/
-5indexes and unchanged SAVE1bd. Canonical normal unchanged-main39839940779 /
-120038195038 SUCCESS verifies remote up to date/persistence and db-live7a874.
-The initial apply path stays UNVERIFIED and all six failed attempts remain FAILED.
-Original recorded migration is unchanged;2610 was closed SUPERSEDED UNMERGED.
-Own final exact-head review/CI/web/ordinary-role acceptance remain release steps.
+This record's fresh compiled native source drive:20 viewport/theme/panel cases,
+14 paths/34 exact pins/zero page errors. All five drives together remain
+separate scoped proofs:editor20/19/26,mounted20/14/34,fields20/11/31,intake20/10/22,
+recipients20/16/29; all142 recorded pin comparisons recomputed. Actual desktop
+paper/Not signed roster and320 dark template images inspected. Synthetic Auth/
+API/RPC only. Initial native30 apply provenance unknown, six failed attempts
+preserved; canonical normal39839940779 and fresh root frontier320009 show all8
+original preparation bodies/ABI/ACL/private table/RLS/4triggers/5indexes/SAVE
+unchanged. Superseded2610 was never merged. Original owner API2599/Edge37 parity
+is separate; current combined UI NOT_DEPLOYED/NOT_ACCEPTED until final review,
+ALL exact-head gates, normal release/readback and actual ordinary roles. Protected
+existing-live owner draft/reload/history in ANT52 does not accept this candidate.
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: original exp04-get-paid-deliver-journey.md owner API/consumer pre-edit contract; all twelve outcomes remain mandatory.
@@ -40,18 +38,18 @@ MATERIAL_FLOW_CHANGE: YES: the existing owner can prepare/read the exact unsigne
 FLOW_PROTOTYPE: PASS: original complete Agreements prototype275be12415239d4ecdb66bec0894146ec9fe5c64 and October21 owner preparation/visual-quality delegation; routine adoption by the sole original lead, not founder acceptance.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: authorized business agreement author prepares and inspects an exact original unsigned signing document and its assigned fields; no signature, send or financial execution.
 VISUAL_DIRECTION: PASS: existing SOLO Sales typography, native private paper/PDF, contextual field inspector, purposeful compact unsigned-preparation header and actual version/receipt; original shell owns vertical scrolling.
-AUTOMATED_EVIDENCE: PASS:995 regression cases/65 suites before the final two late-response repairs; prior142 composed integration cases/six suites; refreshed84 selected cases/six suites include the actual SDK/controller/navigation/model/leave-guard and two sanitizer controls. These are separate invocations, not summed coverage. Both late-response cases reproduced their actual stale-byte/selection failures before repair. Actual WebCrypto/PDF bytes/native validator; synthetic Auth/transport. One unchanged5s completed-agreement case timed out during concurrent builds, then passed isolated and in the complete995-case rerun; no assertion/timeout change. The original field-browser negative subsequently caught the optional saved-SHA label; its unchanged final20/11 proof passes after correction.
-STATIC_EVIDENCE: PASS: required native rotation follows real descriptor validation; type ratchet baseline10/current6/no new errors, changed-source ESLint0/two incumbent warnings, gold0. Seven-file design detector0 blocking/four intentional paper/overlay advisories. Exact-head CI/review still required.
-RENDERED_EVIDENCE: PASS: actual composed source20 viewport/theme/panel cases/14 paths/zero errors/33 owning pins, native field20/11/zero/30 and neighboring intake20/10/zero/21. All84 pin comparisons reverified; desktop paper,320 dark100% bounded pan and lost-response views inspected. Auth/API/RPC synthetic, no hosted persistence/role acceptance.
+AUTOMATED_EVIDENCE: PASS: fresh scoped Sales986/65 on current main composition; one unchanged5s upload timeout preserved, identical isolated170ms PASS then complete quiet986 PASS. Original SDK/controller/model/guard/terms/invoice calculations and two unchanged sanitizer controls; synthetic authority, no provider. Older coverage below is historical/separate, never summed.
+STATIC_EVIDENCE: PASS: current changed-source ESLint0/two incumbent warnings, gold/UTF8 PASS, exact Impeccable4.1.0 zero anti-patterns/18 incumbent advisories. Original npm audit --omit=dev --audit-level=high PASS,8 moderate remain. Earlier type10/6 is supporting only; fresh exact-head CI type/other gates remain UNVERIFIED.
+RENDERED_EVIDENCE: PASS: fresh actual compiled source20 viewport/theme/panel cases/14 behavioral paths/34 normalized owning pins/zero page errors; all five records142 pin comparisons recomputed. Actual desktop paper/roster and320 dark template inspected. Native PDF/worker/fonts/bytes, source components; Auth/API/RPC synthetic, not hosted persistence or legal/provider/customer acceptance.
 BEHAVIORAL_EVIDENCE: PASS: original route/ONE leave guard, before-dispatch opaque checkpoint, verified PDF bytes/canvas, native-point field save, byte-identical same-request retry/reload, paged earlier/current history, corrupt-byte/source/authority refusal and compact mobile selection. Same six destinations/guarded keyboard route, no replacement navigation engine.
-AUTHENTICATED_RUNTIME: UNVERIFIED: real ordinary owner/staff/linked-client/cohort, hosted native JWT/Storage persistence and provider/signing behavior are not established by these source fixtures.
+AUTHENTICATED_RUNTIME: UNVERIFIED: current combined candidate not deployed. Separate protected actual ordinary-owner preexisting foundation draft/create/full reload/history does not prove candidate field retention, roles/cohorts, signing/provider, full O1 or whole Experience acceptance.
 KEYBOARD_FOCUS: PASS: local actual-source leave/continue, held-access protection, guard-before-navigation and verified save-result focus checks. Real narrow ArrowRight/cancel preserves route/current selection and exactly one dialog; real save focuses its result. Original field arrow/Shift/Delete/Undo/Escape/all five kinds pass in the incumbent source drive. External acceptance limitations are declared separately.
 ZOOM_REFLOW: PASS: actual320/390 and required desktops,100% bounded PDF pan/zero application overflow,44px controls and56px native row with selected destination visible. Actual device/browser zoom and assistive technology unverified.
 REDUCED_MOTION: PASS: source drive uses reducedMotion:reduce, no new motion; native waiting feedback preserved.
 STATE_COVERAGE: PASS: local first-use/loading/empty/retained/current/earlier/source-changed/commercial-hold/permission/PDF-error/saving/unknown/retry/reload/exit paths implemented. Real hosted coverage separately owed.
 TRUTHFUL_STATE_LABELS: PASS: unsigned preparation, selected/earlier and historical original receipt are distinct. No preparation implies approval, send, delivery, consent, signature, payment or completed services. Current signer names never substitute for unmatched original identities.
 SOLO_UI: YES: original shared Sales workspace for every eligible existing/future SOLO business, original actual session/business/admin/native authority; no account-specific feature branch or provisioning change.
-UNVERIFIED: final exact-head review/required CI/Preview and own web release/readback; prerequisite2599/native30/Edge are verified separately, original native apply provenance remains unknown; hosted actual roles/native recovery/tenant cohorts/provider behavior, assistive technology/real device/browser zoom; canonical commercial terms/approval/signing/Comms/finance/delivery and all O1–O12/founder acceptance. Missing native request after reload stays unconfirmed, never rollback or a reconstructed original command.
+UNVERIFIED: current final exact-head review/ALL required CI/normal Preview/own web release/readback; actual ordinary owner/staff/properly linked external-client/cohort/hosted native field retention/recovery/provider behavior, physical device/AT/zoom, canonical commercial terms/exact-map approval/effective signing/finance/Comms/delivery and all O1–O12/founder acceptance. Source fixtures never establish those legs.
 
 SOLO_1536X770_PAIGE_CLOSED: PASS: assets/e04-mounted-document-preparation/1536-770-light-closed.png/dark equivalent, actual PDF/field save/original context.
 SOLO_1536X770_PAIGE_OPEN: PASS:1536-770-light-open.png/dark equivalent, original PAIGE panel/no Chat transport.
@@ -69,7 +67,7 @@ ACCEPTANCE_CRITERIA: ordinary authorized owner prepares an actual retained PDF/m
 MOTION_PURPOSE: NONE: no animation added; cancellation/reduced-motion behavior remains native.
 PROTECTED_SEAMS: original captured Auth actor/token on the SAME existing SDK invocation; per-await authority epoch; closed DTO/canonical digest/native page shape; native RPC history/current selection; exact PDF MIME/length/magic/SHA; same immutable command/deadline/checkpoint; original guarded tab navigation. Token/Portal GET, signature/consent/sealing, finance/Stripe/Comms/Operations/LayerC/INT346 remain untouched.
 
-INTERNAL_BUILD_IDENTITY: branch=codex/e04-mounted-document-preparation; source_base=566a4658eb4052d979eb29ba2baeb527d1ca4df7; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; prerequisite=2599/native20271113300004/agreement-document; evidence=docs/evidence/ui-delivery/e04-mounted-document-preparation.md
+INTERNAL_BUILD_IDENTITY: branch=codex/e04-mounted-document-preparation; source_base=ec1c497e0d26de218f28dfd61dd614fae05097eb; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; prerequisite=2599/native20271113300004/agreement-document; evidence=docs/evidence/ui-delivery/e04-mounted-document-preparation.md
 RELEASE_CHANNEL: development: local owning source and synthetic Auth/API/RPC only, no hosted/customer acceptance.
 RELEASE_CLASSIFICATION: internal-only: bounded native UI/SDK integration; full O1 and whole Experience incomplete.
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or founder acceptance from this increment.

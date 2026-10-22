@@ -1782,3 +1782,35 @@ signed/effective terms, invoice/Stripe/collections/onboarding/delivery/Portal/
 standing and one whole founder evaluation remain required. No new agent, legal
 wording, counsel gate, provider/send/signature/payment or INT346 activation.
 
+
+## EXP04 current combined preparation release — October22
+
+Current source2e804682f/ec1c497 main combines original2604 exact PDF/controller,
+2605 editor/menu/native navigation and pending signer Not signed repair. Existing
+23 owning source files are byte-identical to retained1f254d78c; no own SQL/Edge/
+workflow/grant/provider/admission changes. Main Brain text retained verbatim;
+only own105 prefix lines moved here, own43 Master lines remain in §4.0 away from
+shared insertion point. Verified GitHub dirty/Brain conflict caused missing PR
+Actions; normal reopen and same-tree replay did not cure it and are not PASS.
+Normal conflict resolution is used, no new CI engine. GitHub official workflow
+troubleshooting confirms merge conflicts withhold pull_request workflows.
+
+Fresh canonical install DOMPurify3.4.17/Mammoth1.13.0; source resolution is not a
+production Bun Mammoth claim. Local scoped Sales986/65 PASS after unchanged5s
+upload timeout→isolated170ms→complete unchanged quiet986 PASS; failed run retained.
+Lint0/two incumbent warnings, gold/UTF8 pass, canonical4.1.0 detector0 anti-patterns/
+18 incumbent notes, original production audit0 high/critical/8 moderate. Fresh
+compiled source editor20/19/26,mounted20/14/34,fields20/11/31,intake20/10/22,
+recipients20/16/29 PASS/zero errors/all142 pin comparisons exact. Actual desktop
+paper/Not signed roster/320 dark template inspected; synthetic Auth/API/RPC only.
+Final exact-head review/CI/normal safe release/readback and actual candidate roles
+remain owed. Prior type10/6 is not refreshed current-main proof.
+
+Original preparation native30 still matches all8 bodies/ABI/ACL/private RLS table,
+four triggers/five indexes/SAVE; fresh root frontier320009. Initial apply path
+unknown; normal39839940779 verified, six prior failures preserved,2610 superseded
+UNMERGED. Actual ordinary-owner earlier private draft/reload/history is protected
+ANT52, not candidate/full acceptance. All12, exact map/terms approval, PRE-1/2,
+stable import identity, Stripe/Comms/onboarding/delivery/Portal/Chat and founder
+acceptance remain mandatory. Original agreement capability PARTIAL, exact fields
+Chat/Live UNAVAILABLE; no algorithm/catalogue activation or other-agent assignment.

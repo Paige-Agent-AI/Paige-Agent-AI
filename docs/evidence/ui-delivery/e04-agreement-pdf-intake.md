@@ -1,5 +1,36 @@
 # EXP04 uploaded PDF — native source and correctable selection
 
+October22 combined preparation source checkpoint2e804682fe70c3b4c5d63013eb160122607eea41, based on
+reviewed main ec1c497e0d26de218f28dfd61dd614fae05097eb. Existing2604 workspace,
+2605 editor and actual-owner pending-label repair are one coherent increment;
+all23 owning source/controller/SDK/harness/test files match retained1f254d78c.
+Current canonical npm install has DOMPurify3.4.17/Mammoth1.13.0; no production
+Mammoth resolution claim. All source/version/permission/native engine boundaries
+remain original; no own SQL/Edge/workflow/grant/provider/Chat activation.
+
+Fresh scoped Sales regression986 cases/65 suites PASS. First run had one unchanged
+5s upload-test timeout (985 PASS); SAME case passed isolated170ms, then all986
+passed in unchanged quiet rerun. No assertion/timeout/baseline waiver. The earlier
+001 hosted verify failure was the benign sanitizer fixture's missing image src;
+existing real /favicon.png fixes it with all security assertions retained.
+Current lint0/two incumbent warnings, gold/UTF8 PASS, canonical Impeccable4.1.0
+0 anti-patterns/18 incumbent advisories; production audit0 high/critical with8
+moderate remaining. Earlier type ratchet10/current6 predates current main; new
+exact-head CI type proof remains required, not inferred from these local checks.
+
+This record's fresh compiled native source drive:20 viewport/theme/panel cases,
+10 paths/22 exact pins/zero page errors. All five drives together remain
+separate scoped proofs:editor20/19/26,mounted20/14/34,fields20/11/31,intake20/10/22,
+recipients20/16/29; all142 recorded pin comparisons recomputed. Actual desktop
+paper/Not signed roster and320 dark template images inspected. Synthetic Auth/
+API/RPC only. Initial native30 apply provenance unknown, six failed attempts
+preserved; canonical normal39839940779 and fresh root frontier320009 show all8
+original preparation bodies/ABI/ACL/private table/RLS/4triggers/5indexes/SAVE
+unchanged. Superseded2610 was never merged. Original owner API2599/Edge37 parity
+is separate; current combined UI NOT_DEPLOYED/NOT_ACCEPTED until final review,
+ALL exact-head gates, normal release/readback and actual ordinary roles. Protected
+existing-live owner draft/reload/history in ANT52 does not accept this candidate.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: original E04 journey contains the ten pre-edit answers, native source evidence, actions, permissions, records, refusal and recovery; all twelve outcomes stay mandatory.
 PAIGE_UI_DESIGN: PASS: original five-module route, native SOLO Sales Operate dialog/fields/alerts and one leave guard; no new layout system, scroll owner or component engine.
@@ -7,11 +38,11 @@ MATERIAL_FLOW_CHANGE: YES: native upload preparation no longer requires a second
 FLOW_PROTOTYPE: PASS: selected existing full native Agreements prototype275be12415239d4ecdb66bec0894146ec9fe5c64 supplies original PDF/document preparation intent under October21 UX delegation. This correction does not claim its unbuilt viewer/field execution.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: owner/admin chooses the actual client and supported PDF, understands which original document is used, and can correct a file selection before retaining it.
 VISUAL_DIRECTION: PASS: original native modal, associated help, primary review action and inline refusal. Document-source selector separated from the unrelated single-line provenance label so all three choices wrap. Two required inherited style findings corrected: normal ease-out for completion and actual status pill without redundant readiness stripe. No token/typography/navigation or decorative data changes.
-AUTOMATED_EVIDENCE: PASS: genuine original-source baseline109PASS/six intended RED plus one unchanged5s delivery-test timeout; corrected116 then120 focused cases PASS. Composed template/recipient/preparation/history/API/form/hook/dialog integration360 cases/12 suites PASS. Later layout recheck encountered the same incumbent5s link-test timeout; unchanged focused control and complete final360/12 source rerun PASS. No raised timeout or suppressed assertion.
-STATIC_EVIDENCE: PASS: ESLint0errors/one incumbent existing effect warning; canonical whole-app type ratchet baseline10/current6 PASS and direct same pinned TypeScript5.9.3 confirms six existing diagnostics. Binding35/35 negative controls and SOLO SP1-SP5/mutation controls PASS. No baseline/dependency/lockfile change.
-RENDERED_EVIDENCE: PASS: actual owning Sales/modal/hook/Storage SDK source,20 responsive/theme cases/ten paths/21 exact normalized source pins/zero page errors in assets/e04-agreement-pdf-intake/result.json. Includes actual source-choice wrapping/touch targets after a genuine baseline browser failure. Neutral identity/transport only; no actual upload/signing/provider acceptance.
+AUTOMATED_EVIDENCE: PASS: fresh scoped Sales986/65 on current main composition; one unchanged5s upload timeout preserved, identical isolated170ms PASS then complete quiet986 PASS. Original SDK/controller/model/guard/terms/invoice calculations and two unchanged sanitizer controls; synthetic authority, no provider. Older coverage below is historical/separate, never summed.
+STATIC_EVIDENCE: PASS: current changed-source ESLint0/two incumbent warnings, gold/UTF8 PASS, exact Impeccable4.1.0 zero anti-patterns/18 incumbent advisories. Original npm audit --omit=dev --audit-level=high PASS,8 moderate remain. Earlier type10/6 is supporting only; fresh exact-head CI type/other gates remain UNVERIFIED.
+RENDERED_EVIDENCE: PASS: fresh actual compiled source20 viewport/theme/panel cases/10 behavioral paths/22 normalized owning pins/zero page errors; all five records142 pin comparisons recomputed. Actual desktop paper/roster and320 dark template inspected. Native PDF/worker/fonts/bytes, source components; Auth/API/RPC synthetic, not hosted persistence or legal/provider/customer acceptance.
 BEHAVIORAL_EVIDENCE: PASS: invalid selection blocks Storage and agreement creation, replacing it restores the original path, no ignored wording field, exact private bucket/path/cache/no-overwrite contract, stale-business/actor completion retirement and truthful unconfirmed response. An unconfirmed upload does not proceed to signing creation.
-AUTHENTICATED_RUNTIME: UNVERIFIED: source Auth/query/Storage ports, neutral fixtures and read-only native metadata are not ordinary owner/staff/client JWT, hosted file or customer acceptance. No new QA identity or business.
+AUTHENTICATED_RUNTIME: UNVERIFIED: current combined candidate not deployed. Separate protected actual ordinary-owner preexisting foundation draft/create/full reload/history does not prove candidate field retention, roles/cohorts, signing/provider, full O1 or whole Experience acceptance.
 KEYBOARD_FOCUS: PASS: actual native file-to-title Tab route and associated PDF guidance exercised in all20 cases; original radio/leave/modal behavior and focused dialog tests retained. Full assistive-technology/customer proof remains owed.
 ZOOM_REFLOW: PASS: original dialog/notice at320/390 and all required desktop sizes has no horizontal overflow; error bounds verified. Native browser zoom/device/assistive technology remain unverified.
 REDUCED_MOTION: PASS: existing actual source drive uses reducedMotion:reduce; no motion/style source introduced.
@@ -26,7 +57,7 @@ SOLO_1024X768_PAIGE_CLOSED: PASS: both themes;1024-768-light-closed.png and dark
 SOLO_1024X768_PAIGE_OPEN: PASS: actual native open backdrop in1024-768-light-open-background.png/dark equivalent, followed by its real Fold before modal entry; corresponding open.png is explicitly folded-before-modal. No forced click or simultaneous open-modal claim.
 SOLO_900X1000_PAIGE_CLOSED: PASS: both themes;900-1000-dark-closed.png and light equivalent.
 SOLO_900X1000_PAIGE_OPEN: PASS: actual native open backdrop in900-1000-dark-open-background.png/light equivalent, real Fold before modal, then open.png labelled folded-before-modal. Actual PAIGE closed12/open4/folded-before-modal4 overall.
-UNVERIFIED: exact-head hosted CI/review/release/source readback, ordinary owner/staff/linked-client/two-cohort/provider QA, stable same-request upload recovery, complete professional PDF preview/fields, signing/effective obligations, all O1-O12 and full founder acceptance.
+UNVERIFIED: current final exact-head review/ALL required CI/normal Preview/own web release/readback; actual ordinary owner/staff/properly linked external-client/cohort/hosted native field retention/recovery/provider behavior, physical device/AT/zoom, canonical commercial terms/exact-map approval/effective signing/finance/Comms/delivery and all O1–O12/founder acceptance. Source fixtures never establish those legs.
 
 INTERNAL_BUILD_IDENTITY: branch=codex/e04-native-pdf-upload-intake; product_sha=0b5429869; source_base_sha=07cbfd95adabb3291915ac86a515e1c304d70c6e; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-agreement-pdf-intake.md
 RELEASE_CHANNEL: development: source and controlled native rendered proof, not customer acceptance.

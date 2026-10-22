@@ -9,11 +9,11 @@
     "src/solo/sales/AgreementPreparationWorkspace.tsx": "17fbe238fb4a2a2024ca8f33c23f1dd0e23000f5276417c848aa83512bde87e2",
     "src/solo/sales/AgreementBodyEditor.tsx": "c28a39457d74ffff3f16cb7b5476ebd20b88bd549dcb06f5822911344d101a08",
     "src/solo/sales/agreementPreparationApi.ts": "640770f300c5d8c3a77b84456b68c847f39b03c3a098b2e7920bd81732975bfc",
-    "src/solo/sales/agreementVocabulary.ts": "65997aa339d950aff13b8c607c4938b9a060340f75b7f43f397156fc0409a3d9",
+    "src/solo/sales/agreementVocabulary.ts": "b37288058de91d37dcaa49f1657363e6ef663d65441fb6d5fd8ae88cdd03f69c",
     "src/solo/sales/agreement-body-editor.css": "1d0f9cda84d9bc9e37e792e2d0228b011f78359c4fd4c9f734e389dbacf09767",
     "src/solo/sales/agreement-preparation.css": "2cef8ef627b07b309703b67ed32378751229b001015e0390b53866efdb7c44c4",
     "package.json": "a82458ee86a06fa08c93a653fbc17c0c02212a9a202b979d064bf9c89971c500",
-    "package-lock.json": "bc88a98855e6ae2f83e1cd11558646812b6d5762e2ca316137fc5f73311c991f",
+    "package-lock.json": "6d0d47ef0baa80fb136ba44286aa37bdada2b101614301cd9a5e43cce15c6fec",
     "scripts/live-drive/harness/sales-mount/agreement-authoring.tsx": "df2012ab1357ac3bf1cce2763947f5b5ef492d09fbf1b4eff26396162614f737",
     "scripts/live-drive/harness/sales-mount/agreement-authoring-ports.ts": "d4beb58b1e5ad142fee41f9488d7979386acb18b310c4a8d94fece8376925af4",
     "scripts/live-drive/harness/sales-mount/agreement-authoring-client.ts": "e7a059ff4bc064250d5f99e5e4459782d1c45fe7d4ee7521e9775fa971fa77f8",
@@ -38,7 +38,7 @@
     "supabase/functions/_shared/sales-collections/primitives.ts": "945e7794c62defde7da83718b1c1910afeb805bed080ee73903ce451e2b5ac91"
   },
   "sharedUIFontSHA256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05",
-  "documentFixtureSHA": "e9a9a8abe99f3b916334be651e95a7e3a8d10fb941624c3d1042e32779aadb25",
+  "documentFixtureSHA": "6939d8082f52a9b9b91ac8ac22a261c2de244bcf7b6751fadbaa615afd915749",
   "frames": [
     {
       "theme": "light",

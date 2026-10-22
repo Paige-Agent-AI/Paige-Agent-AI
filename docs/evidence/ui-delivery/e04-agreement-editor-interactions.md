@@ -1,24 +1,35 @@
 # EXP04 original editor labels, menu dismissal and template viewport
 
-October22 current source checkpoint2fa4702fb86964ef5a165a988338bbfb31d0e899
-composes reviewed parent2604/0010067d3ba9dd97302630a24724494acc6d94db and
-released2607's BOTH manifest install pins. All8 owning UI/guard/test/drive files
-remain byte-identical to reviewedd555; no product change in this composition.
-Fresh169 selected cases/eight suites PASS, separate from prior173 composed cases
-and earlier1027 full cases/66 suites. Fresh actual-source editor20/19/26,
-mounted20/14/34,fields20/11/31,intake20/10/22 PASS/zero errors; all113 pins
-independently recomputed. Actual320 dark template view inspected. Source fixtures
-use synthetic Auth/API/RPC; not hosted persistence, role or customer acceptance.
+October22 combined preparation source checkpoint2e804682fe70c3b4c5d63013eb160122607eea41, based on
+reviewed main ec1c497e0d26de218f28dfd61dd614fae05097eb. Existing2604 workspace,
+2605 editor and actual-owner pending-label repair are one coherent increment;
+all23 owning source/controller/SDK/harness/test files match retained1f254d78c.
+Current canonical npm install has DOMPurify3.4.17/Mammoth1.13.0; no production
+Mammoth resolution claim. All source/version/permission/native engine boundaries
+remain original; no own SQL/Edge/workflow/grant/provider/Chat activation.
 
-API2599/429 Edge37/source parity and original native300004 metadata parity are
-verified; canonical normal39839940779/deploy120038195038 SUCCESS/up-to-date/
-persistence/db-live7a874. Initial apply path unknown; all six failures remain
-FAILED.2610 is CLOSED SUPERSEDED UNMERGED, no historical migration rewrite.
-Parent2604 has separate final lower-assurance review5619881209 and its own exact
-CI/release steps; this editor still needs final exact-head review/required CI and
-ordered parent/own release/readback. Later accepted main2616 Mammoth/orphan lock
-change and2614 provider docs are separate composition evidence, not covered by
-these113 exact source-head pins. No legal words, provider or restricted activation.
+Fresh scoped Sales regression986 cases/65 suites PASS. First run had one unchanged
+5s upload-test timeout (985 PASS); SAME case passed isolated170ms, then all986
+passed in unchanged quiet rerun. No assertion/timeout/baseline waiver. The earlier
+001 hosted verify failure was the benign sanitizer fixture's missing image src;
+existing real /favicon.png fixes it with all security assertions retained.
+Current lint0/two incumbent warnings, gold/UTF8 PASS, canonical Impeccable4.1.0
+0 anti-patterns/18 incumbent advisories; production audit0 high/critical with8
+moderate remaining. Earlier type ratchet10/current6 predates current main; new
+exact-head CI type proof remains required, not inferred from these local checks.
+
+This record's fresh compiled native source drive:20 viewport/theme/panel cases,
+19 paths/26 exact pins/zero page errors. All five drives together remain
+separate scoped proofs:editor20/19/26,mounted20/14/34,fields20/11/31,intake20/10/22,
+recipients20/16/29; all142 recorded pin comparisons recomputed. Actual desktop
+paper/Not signed roster and320 dark template images inspected. Synthetic Auth/
+API/RPC only. Initial native30 apply provenance unknown, six failed attempts
+preserved; canonical normal39839940779 and fresh root frontier320009 show all8
+original preparation bodies/ABI/ACL/private table/RLS/4triggers/5indexes/SAVE
+unchanged. Superseded2610 was never merged. Original owner API2599/Edge37 parity
+is separate; current combined UI NOT_DEPLOYED/NOT_ACCEPTED until final review,
+ALL exact-head gates, normal release/readback and actual ordinary roles. Protected
+existing-live owner draft/reload/history in ANT52 does not accept this candidate.
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: original twelve-outcome journey contains the pre-edit correction and source-backed labels/menu/narrow-navigation findings; same original owner lead.
@@ -27,18 +38,18 @@ MATERIAL_FLOW_CHANGE: YES: native heading-menu Escape preserves the template edi
 FLOW_PROTOTYPE: PASS: original complete Agreements prototype275be12415239d4ecdb66bec0894146ec9fe5c64 and October21 owner design delegation; correction follows actual existing rendered interaction defects.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: existing authorized agreement authors can compose supplied wording, inspect correct editor actions and dismiss a child menu without leaving or discarding their work.
 VISUAL_DIRECTION: PASS: existing Sales Operate and paper/editor/sidebar hierarchy, unchanged native tokens and six routes; mobile document receives its viewport through the original compact row, no new shell or decorative system.
-AUTOMATED_EVIDENCE: PASS: fresh169 selected cases/eight suites on current source; earlier full and composed coverage below are separate invocations.  four actual guard REDs then69 focused cases; final1027 current regression cases/66 suites PASS, including original Sales/opportunity/native adapters and all60 Sales suites. One unchanged5s signed-copy refusal case timed out in the first broader run, then passed isolated98ms and in the complete unchanged1027-case quiet rerun. No test, assertion, timeout or type baseline weakened.
-STATIC_EVIDENCE: PASS: current type ratchet baseline10/current6/no new errors; owning lint0/one incumbent Fast Refresh warning, gold0, six-file pinned design0 blockers/18 incumbent advisories. Initial replaceAll incompatibility repaired with existing-target split/join semantics, no baseline/target change. Final exact-head evidence guard/review/CI remains required.
-RENDERED_EVIDENCE: PASS: actual-source editor/template20 viewport/theme/PAIGE cases/19 paths/26 pins; mounted preparation20/14/34, original field20/11/31 and intake20/10/22. Zero page errors/all113 source pins exact. Actual native editor menu and320 dark compact template view inspected. Synthetic Auth/API/RPC only.
+AUTOMATED_EVIDENCE: PASS: fresh scoped Sales986/65 on current main composition; one unchanged5s upload timeout preserved, identical isolated170ms PASS then complete quiet986 PASS. Original SDK/controller/model/guard/terms/invoice calculations and two unchanged sanitizer controls; synthetic authority, no provider. Older coverage below is historical/separate, never summed.
+STATIC_EVIDENCE: PASS: current changed-source ESLint0/two incumbent warnings, gold/UTF8 PASS, exact Impeccable4.1.0 zero anti-patterns/18 incumbent advisories. Original npm audit --omit=dev --audit-level=high PASS,8 moderate remain. Earlier type10/6 is supporting only; fresh exact-head CI type/other gates remain UNVERIFIED.
+RENDERED_EVIDENCE: PASS: fresh actual compiled source20 viewport/theme/panel cases/19 behavioral paths/26 normalized owning pins/zero page errors; all five records142 pin comparisons recomputed. Actual desktop paper/roster and320 dark template inspected. Native PDF/worker/fonts/bytes, source components; Auth/API/RPC synthetic, not hosted persistence or legal/provider/customer acceptance.
 BEHAVIORAL_EVIDENCE: PASS: expanded native Undo/Redo shortcuts and all three heading levels; actual menu Escape retains editor; exact wording/options/version/recovery/original-client handoff and reload; bounded narrow row/current destination/six routes; neighboring original PDF/save/history/unknown/keyboard/intake paths retained.
-AUTHENTICATED_RUNTIME: UNVERIFIED: earlier protected owner inspection established the defects and deployed optional settings only; these corrections are local, not actual hosted acceptance or completed legal review.
+AUTHENTICATED_RUNTIME: UNVERIFIED: current combined candidate not deployed. Separate protected actual ordinary-owner preexisting foundation draft/create/full reload/history does not prove candidate field retention, roles/cohorts, signing/provider, full O1 or whole Experience acceptance.
 KEYBOARD_FOCUS: PASS: actual native accessible actions and heading-menu Escape, original required-title/client focus and unsaved leave controls; source guards honor handled/composing/native popup Escape while subsequent unhandled Escape and beforeunload remain authoritative. Full device/assistive technology acceptance is separate.
 ZOOM_REFLOW: PASS: actual320/390/900/1024/1366/1536 light/dark/native PAIGE states; no application overflow, compact narrow row/current destination and44px controls; original PDF100percent bounded pan retained.
 REDUCED_MOTION: PASS: original source drive uses reducedMotion:reduce; no new motion or animated navigation.
 STATE_COVERAGE: PASS: actual original empty/editor/retained/earlier/unconfirmed/refused/retry/read/reload/native leave and guarded navigation paths in the four current source-mount records; canonical state vocabulary retained.
 TRUTHFUL_STATE_LABELS: PASS: optional requested wording review is not completed review, template/save is not sending/signature, and document preparation/current selection/original receipt remain distinct.
 SOLO_UI: YES: same original implementation for all eligible existing/future SOLO accounts, with original server-resolved tenant/role authority and provisioning contracts; no tenant-specific feature branch.
-UNVERIFIED: final exact-head evidence guard/review/required CI; parent2599 native30/API/web/readback and consumer2604 release; own safe web/source readback and actual owner/staff/linked-client/cohort/device/AT/provider operation; complete O1–O12/founder acceptance. Initial missing local dependency/MSYS startup/selector attempts are not product or customer proof.
+UNVERIFIED: current final exact-head review/ALL required CI/normal Preview/own web release/readback; actual ordinary owner/staff/properly linked external-client/cohort/hosted native field retention/recovery/provider behavior, physical device/AT/zoom, canonical commercial terms/exact-map approval/effective signing/finance/Comms/delivery and all O1–O12/founder acceptance. Source fixtures never establish those legs.
 
 SOLO_1536X770_PAIGE_CLOSED: PASS: assets/e04-agreement-editor-labels/1536-770-light-closed.png and dark equivalent, original template composition/controls.
 SOLO_1536X770_PAIGE_OPEN: PASS:1536-770-light-open.png/dark equivalent, original PAIGE panel preserved without Chat transport.

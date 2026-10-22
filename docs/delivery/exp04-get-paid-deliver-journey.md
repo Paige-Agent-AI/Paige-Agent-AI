@@ -1,5 +1,42 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
+## October22 coherent preparation release checkpoint
+
+Reuse the existing native signing/document/party engine and API2599. Extend the
+same mounted Sales record with exact unsigned PDF/assigned fields/native version
+history/same-request recovery; repair original editor labels/menu Escape/compact
+six-route row and request-implying pending-party copy. Combine reviewed2604/2605
+and1f254d78c into existing2604, retaining source/review histories; supersede2605
+UNMERGED only after published source retention is verified. No competing store,
+approval/runtime/sender/ledger/Portal, own SQL/Edge/CI/grant or activation.
+
+Current2e804682f composes main ec1c497, preserves all23 owned source bytes and
+current main records. Own shared Brain notes moved from common prefix to own
+appended section; own Master rows placed within end of §4.0, preserving main text.
+Actual dirty Brain conflict withheld normal PR Actions; replay attempts are not
+PASS. Use normal source reconciliation and original required checks, no bypass.
+Fresh canonical npm dependencies3.4.17 sanitizer/1.13.0 Mammoth installed; no
+production Bun Mammoth claim. Fresh986 scoped Sales cases/65 suites PASS after
+original5s upload timeout→unchanged isolated170ms→complete quiet986 PASS; preserve
+failed run, assertions/timeouts. Lint0/two incumbent warnings, gold/UTF8 pass,
+Impeccable4.1.0 zero blocking/18 incumbent notes; strict production audit0 high/
+critical,8 moderate remain. Current five compiled drives20/19/26,20/14/34,20/11/31,
+20/10/22,20/16/29 PASS/zero errors/all142 source-pin comparisons exact; desktop
+paper/Not signed roster/320 template inspected. All Auth/API/RPC fixtures synthetic.
+
+Final current exact-head review/CI, safe web release/readback and actual candidate
+roles remain gates. Original native30 parity/normal39839940779 separate; fresh
+root frontier320009 retains8 original bodies/ABI/ACL/private table/RLS/4triggers/
+5indexes/SAVE, initial apply provenance unknown, six failures kept,2610 unmerged.
+Actual protected existing-live owner draft/reload/history does not establish
+candidate or full O1 acceptance. All12 outcomes, commercial exact-map approval/
+effective signed terms/PRE-1/scoped Planning/PRE-2/stable upload/Stripe/Comms/
+onboarding/client delivery/self-service/unified standing remain mandatory. Native
+manual drafts/reads do not require a new LayerC runtime; consequential transitions
+still require canonical existing authorization/approval/domain writers/receipts.
+No jurisdiction words/legal-sufficiency claim, blanket counsel gate, catalogue/
+algorithm/INT346/provider activation, other-agent assignment or founder acceptance.
+
 ## October22 actual-owner pending signer wording — pre-edit repair
 
 REPAIR, not a new signing path. Actual authorized owner saved/reloaded a private

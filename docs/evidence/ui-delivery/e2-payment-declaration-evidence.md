@@ -54,7 +54,7 @@ RENDERED_EVIDENCE: PASS:15 original native JPEGs, eight prescribed open/closed v
 BEHAVIORAL_EVIDENCE: PASS: narrow original Systems Check link has solid keyboard focus, Enter opens the original owning component, Back/reload retains corrected evidence. Missing/unreadable declaration wording is distinct; refused/loading reads withhold stale priorities. Destination authorization is not established by synthetic ports.
 AUTHENTICATED_RUNTIME: UNVERIFIED: the original answer settled/persisted but overstated payment availability. Corrected released ordinary SOLO explanation/reload remains owed.
 KEYBOARD_FOCUS: PASS: original narrow source link is reachable with visible solid focus, Enter/Back/reload; no control or focus policy added.
-ZOOM_REFLOW: UNVERIFIED: original native narrow layout to be inspected; no native zoom claim.
+ZOOM_REFLOW: UNVERIFIED: all15 native CSS/raster sizes and320 reflow fit without horizontal overflow; native browser zoom was not exercised.
 REDUCED_MOTION: NOT_APPLICABLE: no animation or motion change.
 STATE_COVERAGE: PASS: both payment declaration fail/error cases, non-payment findings, actual workflow failure, missing/refused/partial reads, original caps/abort/foreign scope covered by owning/targeted controls. Rendered failed/loading reads withhold stale priorities. Authenticated variants remain owed.
 TRUTHFUL_STATE_LABELS: PASS: original recorded priority retained; fail names a missing declaration, error names an unreadable declaration. Both explicitly withhold connectivity/payment/settlement verification; no business effect is claimed.
@@ -74,7 +74,7 @@ MUST_PRESERVE: original issuer/authority, findings/severity/times, counts/caps, 
 ACCEPTANCE_CRITERIA: fail/error declaration findings name the missing/unreadable recorded declaration, preserve priority and sources, disclose no connectivity/payment/settlement verification, retain actual workflow failures and refusal semantics; released customer answer respects that boundary and persists on reload.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: native domain writers/issuer, scope/permissions, evidence references, original Chat transport and exact-head required gates remain unchanged.
-INTERNAL_BUILD_IDENTITY: 4e7767f399d8c7a255e55d69fa0b03cc21429f66; role=supporting-source-base; deployment=PROOF_OWED(not-released); environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED; evidence=docs/evidence/ui-delivery/e2-payment-declaration-evidence.md.
+INTERNAL_BUILD_IDENTITY: 4e7767f399d8c7a255e55d69fa0b03cc21429f66; role=supporting-source-base; deployment=PROOF_OWED(not-released); environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(changed-adapter-source-readback); evidence=docs/evidence/ui-delivery/e2-payment-declaration-evidence.md.
 RELEASE_CHANNEL: development: corrected source and native synthetic proof; production release/readback owed.
 RELEASE_CLASSIFICATION: internal-only: bounded evidence-interpretation correction.
 CUSTOMER_RELEASE_IDENTITY: none: complete Experience and founder acceptance remain open.

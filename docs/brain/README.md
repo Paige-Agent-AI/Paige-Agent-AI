@@ -434,6 +434,24 @@ private PDF. Native106 plus5 Portal-wiring tests and three Edge type checks pass
 release, authenticated recovery and full ALG01/12 acceptance remain proof owed.
 [Exact scope and limitations](../evidence/ui-delivery/e04-retained-completion-reconcile.md).
 
+## EXP02 contextual review identity prerequisite — development
+
+Owner October21 Game Plan refinement retains contextual Chat suggestions, with
+substantial work in the original Decision & Opportunity Desk. The first small
+prerequisite adds optional actor-bound UI read epochs to the original native
+prepared-work reader. Explicit unresolved actors cannot read; actor changes mask
+old loaded work synchronously and cancel stale results. Existing unasserted
+callers and the original query/RLS/columns/count/filter/order/cap remain unchanged.
+The actor assertion never becomes backend identity or additional authority.
+
+Source counterfactual2 FAIL/9 PASS; final composed60 cases/three owning suites and
+targeted ESLint pass. No consumer opts in yet, and no new customer control,
+capability, provider, registry, store, approval or action is activated. Review,
+exact-head CI, release and genuine actor/RLS/customer proof remain owed. Source
+and routing: [owning packet](../delivery/e2-review-actor-scope.md). ALG03/13
+prediction is not claimed. Original19 outcomes/nine capabilities and final
+complete founder evaluation remain required.
+
 ## EXP02 payment declaration evidence — October22 source candidate
 
 Authorized ordinary SOLO analysis settled and survived reload, but its payment

@@ -1986,16 +1986,16 @@ deployment. Jurisdiction/requested-wording-review/reviewer options stay optional
 business configuration; the infrastructure supplies no clauses or completed review.
 ## October22 C7 original commercial-presentation reconciliation
 
-### Native document-preparation versions — pre-edit forward280004 contract
+### Native document-preparation versions — pre-edit forward290004 contract
 
 The original parent has an automatic updated_at trigger. Retaining/selecting a
 prepared PDF must not mutate that source CAS. EXTEND the original agreement with
 subordinate immutable PDF/layout versions and one current selection, as existing
 native version lineage does; this is not an agreement, approval, job or ledger.
 Canonical words, parties, economic sources and signatures remain in their originals.
-Read-only production frontier270009 is actually applied; original SAVE body remains
+Read-only production frontier280009 is actually applied; original SAVE body remains
 1bd28e75afa0f50bb07b717795a5be0e and this new table is absent. The never-applied
-proposal270004 is renumbered forward280004, preserving E09 and all prior histories.
+proposals270004/280004 are renumbered forward290004, preserving E09 and all prior histories.
 Final existing native runner218 assertions PASS (44 original/75 checked/23 read/
 76 new), relevant migrations replay2. New document cases use six actual sessions/
 four observed waits for same-request and competing-current convergence. These

@@ -108,6 +108,25 @@ Mounted history/correction with authentic ordinary roles remains owed. Private
 upload references do not prove retained PDF bytes or legal sufficiency.
 [Native evidence](../evidence/ui-delivery/e04-native-draft-revision-history.md).
 
+Latest authoring integration: original Sales New agreement now mounts a genuine
+rich/source wording editor, real client selection, request-bound native save and
+uncertainty recovery, and selected original-record/history/file inspection.
+Actual-shell synthetic browser proof passes20 viewport/theme cases and22 paths,
+including real editor paste events/source continuity, committed lost-response
+recovery and original-business intent fencing. Source/font hashes are retained;
+no provider or ordinary customer identity is exercised. Final145 focused regressions,
+type ratchet10 baseline/current6, native build and bounded lint pass; hosted exact-head
+review/CI/release and authenticated acceptance remain separately owed. Professional
+templates/import, exact retained revisions, assigned fields and signing preparation
+remain required; this is not the complete DocuSign-class outcome.
+
+The Oct21 Layer C addendum is mapped in the existing E04 journey. Reuse the three
+native actions, shared canonical approval/dispatch claims/receipts/recovery and
+legitimate native Sales/Finance/Planning paths. n8n effectful dispatch remains
+gated. No adapter registry entry establishes authenticated commercial execution.
+Existing agreement/invoice/Collections/Portal contracts, ALG01/02/12/13 truth
+labels and all twelve outcomes remain binding. No retired agent is assigned.
+
 Released bounded prerequisites #2486 register discovery, #2487 actual retained-copy
 completion readback, and #2493 truthful historical signing economics are recorded
 with exact source/CI/production identities in Master§4.0. They do not accept O1–O12.
@@ -181,6 +200,40 @@ and #2175's byte verifier: existing completed/replayed seal must match its actua
 private PDF. Native106 plus5 Portal-wiring tests and three Edge type checks pass;
 release, authenticated recovery and full ALG01/12 acceptance remain proof owed.
 [Exact scope and limitations](../evidence/ui-delivery/e04-retained-completion-reconcile.md).
+
+## EXP02 Business Review and orchestration — October21 22:50 UTC
+
+The existing sole EXP02 lead continues all19 original outcomes and CAP009–017.
+This checkpoint supersedes earlier current-state statements below, preserving their
+dated evidence, source owners, historical9/0 and12/0/4 and single founder evaluation.
+
+Period continuity#2507 and important-evidence/owning-Play context#2510 are source
+released. #2510 merged38b6a9d after exact21ce8e31 author review and six required
+workflows/all11 checks. Full-baseline recovery39687510436 succeeds on containing
+mainc33dac69e; actual certified tag/public build and all five selected Edge packages/
+configurations match. Earlier failures remain in Master§4.0, not waived.
+
+Actual ordinary customer Marketing read→original department→Back→Last30days
+reload→correct UNSENT VERA draft→reload preserved8 existing messages; only the
+test's own draft was cleared. Existing nine catalogue entries retain4ComingSoon,
+3Limited/2Unverified, all AccessUnverified. Intake-copy#2516 remains separate
+development/review/CI. Synthetic evidence does not establish customer acceptance.
+One fresh weekly request also completed by the44s observation (interface: one read
+step/22s); original request/narrative/six links persisted through canonical reload
+and a second stable reload, without a duplicate. Earlier CPU failures and broad
+reliability/Live/cohort/action/report proof remain separate.
+
+Business Review uses original permitted Metric/Evidence and Operating Fabric reads.
+VERA interprets under PAIGE without independent domain-write authority. Governed
+follow-through reuses LayerC/INT179, Spine/Trust/Harness, original domain writers and
+Rail. An authenticated EXP02 recommendation→action→verified-receipt loop is still
+owed. Durable observations/terminal-context eligibility do not authorize execution.
+
+The [original19 matrix](../delivery/e2-customer-experience-integration-matrix.md)
+records current orchestration/algorithm applicability and remaining release and
+acceptance work. Existing Assignment Lock EXP02 and DEL131 current notes were
+updated/read back. No new registry, scheduler, specialist runtime, provider
+activation or coding lane. Full premium finish and founder acceptance remain open.
 
 ## EXP02 Marketing consumer released — October21 20:35 UTC
 

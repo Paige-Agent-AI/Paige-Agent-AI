@@ -35,6 +35,173 @@ overlapping sessions PASS. Source proof does not establish deployed acceptance.
 Visual: no rendered changes. Experiential: correction mounting remains separate.
 Authenticated ordinary-role QA, all twelve outcomes and founder acceptance remain
 open. No other agent, permission system, sender, scheduler or ledger is introduced.
+## October21 orchestration integration — current-source checkpoint
+
+Grounded main `38b6a9d51121d89123a4f286fba28d34fe4dfb84`, the original
+Layer C implementation, and merged GitHub records #1173/#1188/#1203/#1208/
+#1212/#1225/#1235/#2019/#2031/#2044/#2063. The existing Linear historical
+shared-chain records are ANT-145 and ANT-98; direct lookup of the legacy INT-179
+identifier did not resolve. Those records' former staffing and acceptance claims
+are historical, not authority to resume retired agents or declare current QA.
+EXP04 retains this entire commercial outcome; EXP09 retains its Portal surface.
+
+**REUSE:** `paige-orchestration/{engine,adapters,native-adapter,approve-executor,
+dispatch-claim,outcomes}.ts`, the shared n8n adapter, original event/act ledger,
+Gateway, canonical approvals, capability receipts and Rails. There are currently
+three concrete native actions: `crm.advance_journey_stage`,
+`planning.weekly_commitment_check`, and `owner.task`. Client journey-stage advancement
+and owner-task follow-ups can consume that existing path, subject to actual
+availability and authority. These do not establish arbitrary deal/offer transitions
+or Operations team assignment. This is source integration, not authenticated E04
+execution proof.
+The n8n adapter's presence does not establish an enabled commercial workflow or
+connector/provider readiness: engine dispatch and the approval executor currently
+admit native execution only. Preserve this gate and EXP10's connector hold.
+
+The existing approval executor re-resolves Gateway authority and current process
+state/lane before dispatch or absent-effect recovery. Both engine and approval
+executor use the same atomic dispatch claim. Lost claims can be retried only when
+the adapter's readback proves absence; n8n's unknown outcome cannot be blindly
+re-fired. `accepted_for_execution`, `approval_pending` and `ambiguous` are not
+`executed`. Approval is not payment consent or evidence of an external effect.
+
+**Legitimate domain paths:** agreement list/status and native SAVE/preparation;
+`sales-invoice-command` plus `execute_sales_invoice_command` and its stored result;
+`execute_sales_collection_command` and its result; canonical Planning caller-JWT
+writers; original recipient signing/retained-completion verification; and scoped
+Portal readers. These do not need another Layer C hop for ordinary reads, draft
+wording or calculations. Existing Spine declarations remain PARTIAL and source
+Chat bindings do not establish admitted Chat/Live or authenticated acceptance.
+
+**EXTEND / REPAIR:** connect exact accepted agreement/version to original obligation,
+invoice and delivery handoff; adopt request-safe draft creation in an authorized
+Chat integration without replacing its approval contract; complete exact-version
+signing preparation and approved sender/reminder integration; reconcile provider
+settlement and uncertain results through existing Finance/Stripe records. The three
+native actions do not currently supply an agreement-send, payment, invoice or
+post-signing commercial adapter. Do not call these transitions connected merely
+because their capability or event name is registered. Add a bounded adapter only
+where a real event-driven flow requires it, delegating to the canonical writer,
+approval and operation identity; preserve other legitimate governed pathways.
+Planning declarations explicitly retain request/retry limitations for several
+writers. Do not adopt them as duplicate-safe post-signing handoffs until resolved.
+
+### Ten-point orchestration contract — this authoring increment
+
+1. **Request/event:** owner selects a real client, composes wording and saves a
+   draft. No signing, communication, obligation or charge event is inferred.
+2. **Entry:** existing SOLO Sales → Terms & Agreements → New agreement; captured
+   business/request URL, existing PAIGE context and explicit leave/recovery flow.
+3. **Original record/Spine:** `paige_agreements`, original counterparty and created
+   event; existing `agreement.draft/list/status` declarations. This UI uses the
+   #2504 native seam; the existing Chat draft executor is not changed here.
+4. **Execution path:** original SAVE behind `create_paige_agreement_draft_once`,
+   `read_paige_agreement_preparation` and `recover_paige_agreement_draft_creation`.
+   Human-native draft authoring is not a new ActionAdapter or background executor.
+5. **Authority:** original server actor, active tenant and author permissions;
+   captured request business and account epoch prevent stale/cross-business UI
+   reuse. Frontend hints never grant database authority.
+6. **Risk/approval:** canonical Chat draft policy remains ordinary/confirm if that
+   separate entry is used. This explicit human save invokes the unchanged native
+   author boundary. It grants no permission to send, sign, publish or charge.
+7. **Identity/receipt:** one tenant/request UUID on the original agreement, immutable
+   request fingerprint, original native creation event and canonical six-field
+   result. No fabricated Layer C act or Rail execution receipt for a manual save.
+8. **Readback/idempotency:** exact same request recovers the original draft/current
+   metadata; selected-record reader and normal URL reload inspect the same ID.
+   No provider is exercised and no input echo proves persistence.
+9. **Recovery:** refusal retains truthful authority state; unknown save retains its
+   request and private RAM wording. Recovery never creates a replacement UUID,
+   assumes rollback or overwrites wording without an explicit owner decision.
+10. **Visible result:** actual draft ID, status/version/time and retained content;
+    pending, unconfirmed, conflict, unavailable and permission states stay distinct.
+    A draft preview is not the immutable signing document or signed completion.
+
+### Dependency-ordered continuation and verification
+
+Finish #2504 and its existing authoring consumer first, then governed templates/
+import and retained legal revisions, signer/field preparation and exact frozen
+document, signed-term/obligation integrity, approved delivery/reminders and original
+receipt/history UI, then commercial-to-Operations handoff and full role/provider QA.
+Each applicable PR records the ten points above for its own actual action. Sending
+must use canonical Communications and exact approved sender/recipient/revision;
+invoice delivery's provider acceptance is distinct from delivery, viewing and paid.
+Invoice payment-request `prepared/dispatching/provider_accepted/customer_action_required/
+outcome_unknown/settled` states stay separate. Manual receipts are not settlement.
+
+EXP09 consumes only the original `client_portal_agreements`,
+`client_portal_open_agreement_signing`, `client_portal_agreement_document_scope`,
+`/app/agreements` and `/sign/:token` contracts, preserving confirmed relationship,
+own signer/current email, signing order, expiry/revocation and retained-document
+seal. Coordinate changes in ANT-163; no Portal UI, blanket sharing or Team Hub
+implementation in this increment. Future MERIT updates must point to these original
+authorized records, not copied business state. One specialist registry remains.
+
+Official algorithm status is unchanged: **ALG-01 P1 production issue/acceptance
+owed**, **ALG-02 UNVERIFIED**, **ALG-12 PARTIAL**, **ALG-13 UNVERIFIED**. ALG-01
+has bounded implementation evidence in the original request/event/act/provider
+identity and reconciliation seams: recorded/replayed/uncertain outcomes reduce
+duplicate or false effects, but do not establish the entire registered algorithm
+as production accepted. ALG-02's required integration inputs are exact effective
+engagement and confirmed required deposit; eligible original onboarding is the
+intended output, not a proven automatic progression. ALG-12 has bounded exception
+states from failed/declined/expired/stalled/unconfirmed original records and exposes
+specific recovery/holds; complete commercial coverage remains owed. ALG-13's
+required inputs are those source facts and missing preconditions; an explainable
+recommendation is the intended output, not an implemented score or executed
+follow-up proven by this increment. Customer-visible benefits remain bounded by
+the actual connected workflow and authenticated evidence.
+
+Functional, Visual, Experiential, Founder Acceptance, Algorithm Support,
+Orchestration Contract and Capabilities readiness are reported independently.
+All twelve E04 outcomes remain incomplete; no source or local proof is customer
+acceptance. No dormant capability, provider, send, signature or charge is activated.
+
+## October21 professional authoring mount — pre-edit contract
+
+The full approved source/Document/Recipients/Fields/Review/detail/recovery flow in
+prototype062d9ed34 remains the destination. This next customer-visible increment
+mounts genuine draft creation and selected-record inspection in the existing Sales
+Terms & Agreements workspace. It must not advertise unfinished signing/field/send
+steps as completed. Preserve original commercial-terms controls and native signature
+management while replacing the limited document entry with coherent page authoring.
+
+1. Outcome: select the actual client, compose professional agreement wording, retain
+   one canonical draft/receipt and reopen the same exact record after reload.
+2. Domain: sole E04 native Agreements; no Portal UI, shared Chat/C0b or other owner
+   reassignment. Existing Sales/Clients/Finance/Operations stores remain authoritative.
+3. Harness/Gateway: reuse original native SAVE through#2504 request-correlated seam;
+   editing remains existing-ID/CAS. No second authority/approval/execution engine.
+4. Spine: existing agreement.draft/list/status/send registrations remain their actual
+   PARTIAL state; no Chat mutation/admission or catalogue Live promotion here.
+5. Provider: none. Draft preview is not frozen signing PDF or provider acceptance.
+   Upload/Knowledge/signature sending require their actual existing domain readiness.
+6. Authority: existing active business/author permissions, captured workspace and
+   account epoch; no stale response may place one business's legal text in another.
+7. Jobs/events: original created/event/signers; no new scheduler or false activity.
+8. Receipt: original ID/current status/version/time/native created event; same request
+   retry recovers the record. Source input is never an execution receipt.
+9. Surface: existing Sales Terms & Agreements container/URL conventions; full page
+   document with contextual decisions, responsive layout and existing PAIGE context.
+   Return preserves parent context; dirty work requires the existing leave safeguard.
+10. Proof: actual component render in current PAIGE shell/both themes/desktop+narrow,
+    real keyboard/source/normalization/parser recovery, failed/uncertain/recovered save,
+    workspace fencing, same-record reload, exact-head CI/review/deploy/readback and
+    legitimate role/customer acceptance separately. No source-only acceptance claim.
+
+Editor selection: @mdxeditor/editor4.3.3, MIT, React18-compatible; official Markdown
+editor interface and native Markdown remain separate from the canonical signing
+renderer. Isolated eight-path real-browser trial and248-package zero-advisory audit
+pass. Original body remains unchanged on initial normalization, unsupported formatting
+retains source recovery, and no JSX/image provider plugin executes document content.
+Style the component with existing PAIGE tokens; inspect the actual shell after CSS
+loading rather than infer design conformity from the standalone trial. Read-only
+original documents, exact legal revisions/frozen PDF, governed template management,
+all recipient/field/send/accepted-terms and O1–O12 completion remain subsequent work.
+
+Primary references: [vendor API](https://mdxeditor.dev/editor/api/interfaces/MDXEditorProps),
+[error contract](https://mdxeditor.dev/editor/docs/error-handling),
+[license](https://github.com/mdx-editor/editor/blob/main/LICENSE).
 
 ## October21 professional draft save/recovery — native foundation pre-edit contract
 

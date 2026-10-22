@@ -241,7 +241,7 @@ const buttonSaying = (text: string) =>
  */
 function openQuickOffer() {
   render("terms");
-  act(() => (buttonSaying("New agreement") as HTMLButtonElement).click());
+  act(() => (buttonSaying("Record terms or upload") as HTMLButtonElement).click());
   act(() => (buttonSaying("Quick offer") as HTMLButtonElement).click());
 }
 
@@ -635,7 +635,7 @@ describe("Sales operations — what an owner can actually do (§70.1)", () => {
                  billingInterval: "month", kind: "recurring", installmentsTotal: null, active: true }],
     }];
     render("terms");
-    act(() => (buttonSaying("New agreement") as HTMLButtonElement).click());
+    act(() => (buttonSaying("Record terms or upload") as HTMLButtonElement).click());
     const dialog = document.querySelector('[role="dialog"]');
     const text = dialog?.textContent ?? "";
     expect(text).toContain("Search your Catalog");
@@ -670,7 +670,7 @@ describe("Sales operations — what an owner can actually do (§70.1)", () => {
     }];
     harness.offers.hasMore = true;
     render("terms");
-    act(() => (buttonSaying("New agreement") as HTMLButtonElement).click());
+    act(() => (buttonSaying("Record terms or upload") as HTMLButtonElement).click());
     expect(document.querySelector('[role="dialog"]')!.textContent).toContain("Offer page 1 · up to 5 offers");
     const next = buttonSaying("Next") as HTMLButtonElement;
     expect(next).toBeDefined();
@@ -684,7 +684,7 @@ describe("Sales operations — what an owner can actually do (§70.1)", () => {
   it("keeps the no-matching-offers reading and the unknown-offer-authority notice (Terms)", () => {
     harness.offers.authorityUnknown = true;
     render("terms");
-    act(() => (buttonSaying("New agreement") as HTMLButtonElement).click());
+    act(() => (buttonSaying("Record terms or upload") as HTMLButtonElement).click());
     const dialog = document.querySelector('[role="dialog"]')!;
     expect(dialog.textContent).toContain("Offer editing access could not be confirmed");
     expect(buttonSaying("Retry offer access")).toBeDefined();
@@ -749,7 +749,7 @@ describe("Sales operations — what an owner can actually do (§70.1)", () => {
   it("hides Quick offer inside the editor from someone who may not write the catalog (Terms)", () => {
     harness.offers.canManage = false;
     render("terms");
-    act(() => (buttonSaying("New agreement") as HTMLButtonElement).click());
+    act(() => (buttonSaying("Record terms or upload") as HTMLButtonElement).click());
     const dialog = document.querySelector('[role="dialog"]')!;
     expect(dialog.textContent).toContain("Nothing in your catalog yet");
     expect([...dialog.querySelectorAll("button")].some((b) => b.textContent === "Quick offer")).toBe(false);
@@ -836,7 +836,7 @@ describe("Sales operations — what an owner can actually do (§70.1)", () => {
     expect(headings).toContain("Agreements and terms");
     // §58 RE-POINT: "Find an offer" was the deleted band's heading. It is now the labelled search
     // step inside the editor, and the editor's own steps are real headings rather than bold text.
-    act(() => (buttonSaying("New agreement") as HTMLButtonElement).click());
+    act(() => (buttonSaying("Record terms or upload") as HTMLButtonElement).click());
     const editorHeadings = [...document.querySelectorAll('[role="dialog"] h2, [role="dialog"] h3')]
       .map((h) => h.textContent?.trim());
     expect(editorHeadings).toContain("Where the document comes from");
@@ -1062,7 +1062,7 @@ describe("Sales usability repair", () => {
     input.dispatchEvent(new Event("input", { bubbles: true }));
   });
   // Each control lives in the view that owns it: Record it → Revenue; Quick offer / Record terms → Terms.
-  it.each([["Record it", "revenue"], ["New agreement", "terms"]] as const)(
+  it.each([["Record it", "revenue"], ["Record terms or upload", "terms"]] as const)(
     "keeps %s outside inert content and Cancel restores focus", (name, view) => {
       render(view);
       const opener = buttonSaying(name) as HTMLButtonElement;
@@ -1131,7 +1131,7 @@ describe("Commercial quote transitions (Terms)", () => {
     render("terms");
     if (existing) { act(() => (host.querySelector('[aria-label="Agreements and terms"] button') as HTMLButtonElement).click()); act(() => (buttonSaying("Edit commercial terms") as HTMLButtonElement).click()); expect(buttonSaying("Your catalog price")).toBeUndefined(); }
     else {
-      act(() => (buttonSaying("New agreement") as HTMLButtonElement).click());
+      act(() => (buttonSaying("Record terms or upload") as HTMLButtonElement).click());
       // The client is still a select; the offer is now an attach row, so it is CLICKED rather
       // than assigned. Reaching it by its name and not by index keeps this test honest if the
       // list ever reorders.
@@ -1495,7 +1495,7 @@ describe("Agreement documents — signature state, separate from commercial stat
   it("records an uploaded contract and sends what the server needs, with no offer attached", async () => {
     harness.agreements.clients = [{ id: "c1", name: "Acme" }];
     render("terms");
-    act(() => (buttonSaying("New agreement") as HTMLButtonElement).click());
+    act(() => (buttonSaying("Record terms or upload") as HTMLButtonElement).click());
     const dialog = document.querySelector('[role="dialog"]')!;
     const pick = (label: string) =>
       [...dialog.querySelectorAll('.so-src-card')].find((b) => b.textContent?.includes(label)) as HTMLButtonElement;
@@ -1640,7 +1640,7 @@ describe("Agreement documents — signature state, separate from commercial stat
   it("tells the truth about Paige drafting, and keeps the other two sources working (§70.1)", () => {
     harness.agreements.clients = [{ id: "c1", name: "Acme" }];
     render("terms");
-    act(() => (buttonSaying("New agreement") as HTMLButtonElement).click());
+    act(() => (buttonSaying("Record terms or upload") as HTMLButtonElement).click());
     const dialog = document.querySelector('[role="dialog"]')!;
     const card = [...dialog.querySelectorAll(".so-src-card")]
       .find((b) => b.textContent?.includes("Paige drafts it")) as HTMLButtonElement;

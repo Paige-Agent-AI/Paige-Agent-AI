@@ -1,6 +1,8 @@
 -- Reuse the original230004 locked source validation before a document is frozen.
 -- This private invoker returns no source data and performs no commercial write.
 -- Existing caller-JWT/Trust/Kit approval and original freeze remain authoritative.
+-- This is the original validation phase, not a write authorization. Callers
+-- retain their own exact source CAS/state checks; freeze keeps its replay/CAS tail.
 BEGIN;
 SET LOCAL lock_timeout='5s';
 SET LOCAL statement_timeout='20s';

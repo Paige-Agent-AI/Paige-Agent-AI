@@ -761,9 +761,9 @@ function Catalogue({
 function providerRevokeStep(providerKey: string | null): string {
   switch (providerKey) {
     case "slack":
-      return "In Slack: a workspace admin can remove the app (Settings → Tools & Apps), or rotate the token you pasted — until then the token itself stays valid at Slack.";
+      return "In Slack: a workspace admin can remove the app (Tools & settings → Manage apps), or rotate the token you pasted — until then the token itself stays valid at Slack.";
     case "gohighlevel":
-      return "In GoHighLevel: delete the Private Integration under your sub-account's Settings → Private Integrations — the token stays valid at HighLevel until deleted there.";
+      return "In GoHighLevel: delete the Private Integration in the sub-account's or agency's Settings → Private Integrations, wherever it was created — the token stays valid at HighLevel until deleted there.";
     case "n8n":
       return "In n8n: revoke the API key or disconnect the OAuth client under n8n's settings — the key stays valid at your n8n until revoked there.";
     case "zapier":

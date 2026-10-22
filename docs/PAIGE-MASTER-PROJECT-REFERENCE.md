@@ -826,6 +826,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-22 — EXP05 Projects first-use entry released; complete Projects/Operations remains in progress.**
+
+| Increment | Exact reviewed/deployed identity and bounded proof | Completion boundary |
+| --- | --- | --- |
+| [#2594](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2594): Connect compact Projects first use to original creation and Work | Reviewed `12c97c83c9341544f7b0447733728aa7adf01138`; review6341909675/final6343155372 AUTHOR-REVIEW / LOWER ASSURANCE. All10 applicable exact-head checks/two statuses SUCCESS; schema-free Preview SKIPPED. Main `6bf58e9fec880e37776d35c80f8b4534b3fb6b7f`; actual tree `e15b0d0117249e33025581e0b5f18b99389a755c` equals inspected union. Exact READY web `dpl_4C46UsiA8HuAfRtajJzPTsBbzrx4`; public `6bf58e9fec880e37776d35c80f8b4534b3fb6b7f-mvjmuyb6`, customerUpdate:null.76 focused composed/creator cases;16 two-theme native fixture frames. Actual ordinary SOLO owner confirms canonical Projects first use, original creator loading, disabled empty Review, Escape/New project focus, existing Work read, return and reload. Actual1536x735/no horizontal overflow/16px title/21px content/44px targets. No business write or expected business receipt. Private packetd485769b9f7778346ae89519da432d2f211c9a036fcebf9d9bb36b6dfa85e1f5. [Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2594#issuecomment-6343706909). Own SQL/Edge/provider/activation change N/A. | Bounded native entry/navigation authenticated PASS in one ordinary cohort, not project save/milestone/dependency or full Experience acceptance. Internal project recipes remain Listed / Unverified; no catalogue promotion. Later Capabilities-to-Chat browser timeout excluded from PASS. Full Delivery/Playbooks, builder, actual ZION delegation/execution, monitoring/recovery, separate Live/universal cohorts and founder acceptance remain owed. Internal-only routine prelaunch increment, no customer release identity or announcement. |
+
 **2026-10-22 — EXP05 weekly inspection recovery and native future-control source released.**
 
 | Increment | Exact reviewed/deployed identity and bounded proof | Completion boundary |

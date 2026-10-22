@@ -5,8 +5,11 @@
 Confirmed native reader/writer integrity mismatch, reproduced only in the existing
 disposable fixture with four positive controls before a genuine baseline RED.
 REPAIR existing seal trigger; REUSE original SAVE, agreement identity, signing
-engine, audit and retained wording. New150000 is forward-only and currently
-UNAPPLIED, preserving E02's140000 reservation. Native43 assertions/replay2/two
+engine, audit and retained wording. New160000 is forward-only and currently
+UNAPPLIED, preserving other pending reservations. Own earlier150000 collided with
+E09#2529; only own unapplied filename/includes are renumbered, SQL bytes unchanged.
+E02#2516/E09#2525 also share140000 and need originating-source reconciliation;
+neither is altered by E04. Native43 assertions/replay2/two
 overlapping sessions PASS. Source proof does not establish deployed acceptance.
 
 1. Event: human correction of an existing document; protect the retained source

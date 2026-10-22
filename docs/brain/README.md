@@ -79,10 +79,12 @@ still requires the one complete integrated Experience.
 
 Original native reader/writer frozen-draft integrity mismatch reproduced in a
 disposable fixture; four positive setup controls precede genuine baseline RED.
-Bounded forward150000 repairs the existing seal trigger only; original SAVE/link,
+Bounded forward160000 repairs the existing seal trigger only; original SAVE/link,
 author framework, native record/audit/history preserved. Native43 assertions,
 replay2/two overlapping sessions PASS, including normal draft/link/void recovery.
-New source is UNRELEASED; E02 reserved140000 untouched. No actual provider/JWT/
+New source is UNRELEASED; only own unapplied150000 renumbered after confirmed
+E09 collision, exact SQL unchanged. Other140000/150000 reservations untouched;
+their duplicate140000 needs source-owner reconciliation. No actual provider/JWT/
 customer acceptance, data repair, new writer/store/runtime or Chat activation.
 Pre-freeze source CAS/exact commercial presentation remains C7 integration work;
 correction mounting and all original O1–O12 remain open.

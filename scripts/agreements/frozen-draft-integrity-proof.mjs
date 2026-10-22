@@ -57,7 +57,7 @@ try {
   const originalLinkHash = sql("SELECT md5(prosrc) FROM pg_proc WHERE oid='public.issue_agreement_signing_link(uuid,uuid,integer)'::regprocedure;");
   check(saveHash === '1bd28e75afa0f50bb07b717795a5be0e', 'Original SAVE reproduced before freeze proof');
   if (mode === 'repaired') {
-    const migration = read('supabase/migrations/20271113150000_agreement_frozen_draft_integrity.sql');
+    const migration = read('supabase/migrations/20271113160000_agreement_frozen_draft_integrity.sql');
     sql(migration); sql(migration);
   }
   const fresh = JSON.parse(sql(context + `SELECT save_paige_agreement('${tenant}',NULL,'${client}','Original review title','Original review wording');`));

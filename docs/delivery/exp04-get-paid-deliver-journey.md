@@ -1873,3 +1873,22 @@ Local54 native checks/replay2/two concurrent sessions/one observed wait and11 De
 
 
 October22 current template composition: native#2545/220004 is RELEASED SOURCE VERIFIED, not the historical unapplied state. Source main1e1073133 and both exact template/C7 sections preserved; own template source unchanged and25 rendered source hashes rechecked. Dormant commercial#2550 migration230004 rolled back safely at the original5s relation-lock limit and is NOT_APPLIED; template UI uses already-applied220004 and no C7 action. This new head still requires fresh CI/review/release/readback; no earlier green substitutes, no actual customer/full Experience acceptance implied.
+
+## October22 original signer preparation — bounded native prerequisite
+
+REUSE original add_agreement_signer, original agreement/signer/event records, email uniqueness, actor/tenant/admin authority and draft-history/CAS. REPAIR native preparation after two genuine baseline failures: retained-but-Draft allowed a party change, and two concurrent additions took the same position. EXTEND source-version continuity for future party changes. No replacement signing engine, template words, acceptance rule or duplicate store.
+
+1. Outcome: owner prepares the correct authorized parties/order before freezing the exact signing document.
+2. Domain/owner: same EXP04 Sales/Agreements lead; E09 original signing/Portal contracts are not edited.
+3. Harness/Gateway: original manual internal preparation, no forced LayerC act or alternate runtime.
+4. Spine: existing agreement.* remains PARTIAL; no new Chat/Live signer mutation is registered or admitted.
+5. Provider: none; no token, document upload, signature email, spend or payment action.
+6. Authority/risk: preserve original session/expected-business/admin prefix, authenticated-only grant, signature/defaults and six-field DTO. Preparation is not signing/send/charge approval.
+7. Durable identity: original signer ID/agreement ID/version and original owner-attributed edited event, no new ledger/job/audit stream.
+8. Readback: actual added signer/order and advanced original source. Existing unique email prevents duplicate party rows; read/unknown recovery must never claim a fresh request acknowledgment from a coincidentally matching prior party.
+9. Failure/recovery: serialize at the original parent, recheck frozen source after waits, refuse stale owner SAVE and changed native writer. No side effect on refusal; no automatic duplicate retry or fabricated cancellation.
+10. UI/acceptance: Binding Ledger35 remains PARTIAL, signer/order display is existing. Professional management/assigned fields and actual owner/staff/client reload/ordinary-role/provider/full-founder proof remain owed by the following consumer.
+
+Local44 native assertions/replay2/five sessions/three observed waits PASS, exact production-body baseline read before changes. New240004 is UNAPPLIED; exact-head review/CI/Preview, safe migration/readback and authenticated acceptance remain separate. All O1–O12 and official algorithm/capability/LayerC readiness boundaries are unchanged. [Native evidence](../evidence/ui-delivery/e04-signer-preparation-integrity.md).
+
+October22 release-state reconciliation: commercial#2550/230004 is now production-source verified (receipt6334959569); earlier failed/unapplied entries are dated history. Signer prerequisite#2554/605a8c4/240004 is merged and actual routine metadata matches f380cfa97f14e29c8b88721a76b9db4e; final normal-job/web receipt remains pending. Template UI still uses original220004, with no new signing, payment, provider or Chat effect. This composition preserves all prior template and signer sections; fresh exact-head CI/review/readback and customer acceptance remain owed.

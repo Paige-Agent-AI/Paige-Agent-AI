@@ -924,7 +924,13 @@ const ANCESTRY_SOURCES = {
  "supabase/functions/_shared/planning/original-reminder-outcome.ts": "f7ba277de16f284d0699fc4f9ab103f48bf8ea42cddf6f10c67102c2e9ffd0ce",
  "supabase/functions/_shared/paige-turn/interactive-reminder-history.ts": "84e35fd73307cf8172951fc1dcbf0b1064dd988cfb596ea95bc3ea7e244b4415",
  // Original record references remain URL-free, bounded and reauthorized at destination.
- "supabase/functions/_shared/paige-turn/record-links.ts": "8465c6c38640490c72696da8ca0dd3afba1c8b26a6a070f9c77323fdb0aee385",
+ // EXP02 source review, AUTHOR-REVIEW / LOWER ASSURANCE (ANT161/a22186d8):
+ // only the two existing UUID-reference branches admit systems_check. Original
+ // six-link cap, UUID guard, contact-only labels and URL/account/authority stripping
+ // stay exact. Restoring main8e97's helper reproduces old8465 digest, all120 source
+ // pins and all29 dispatches. Renew this inspected helper only; no extractor,
+ // metadata, dispatch scalar or other dependency changes. Hostile controls retained.
+ "supabase/functions/_shared/paige-turn/record-links.ts": "10dedf3b503c7db57ec2a5ac3195bb4129b8694399c9e7ba9ea15dbcb6e17ac8",
  // Original extraction input/acknowledgment validation remains authoritative.
  "supabase/functions/_shared/knowledge-extraction.ts": "458e778114b65959f35c5a65f1b371992faf199f6828d2928df8cb0c5435578d",
  // Original CURA history and strict native preparation adapter; native authority unchanged.

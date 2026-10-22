@@ -1,15 +1,35 @@
 # EXP04 original agreement signer preparation and request recovery
 
-October22 current composition includes templatecc900b6ed and actual main2f4b6dee,
-including released native22-26 and the original upload correction. Existing driver
-retains recipient/template/upload modes; three single-line declarations/pins/output
-conflicts were combined without replacing a mode. No owning recipient/API/workspace
-source changed. Rebuilt actual source flow20 cases/16 paths/28 exact pins/zero page
-errors; fresh report and screenshots reflect this composed graph. Existing237 cases
-remain unchanged-source evidence, not a newly invented unit run. Current parent
-release, final-head review/CI/web/source readback and actual owner/staff/client/provider
-acceptance remain separately required. Jurisdiction/reviewer/review options are
-supplied-wording configuration, no completed legal review or infrastructure counsel gate.
+October22 combined preparation source checkpoint2e804682fe70c3b4c5d63013eb160122607eea41, based on
+reviewed main ec1c497e0d26de218f28dfd61dd614fae05097eb. Existing2604 workspace,
+2605 editor and actual-owner pending-label repair are one coherent increment;
+all23 owning source/controller/SDK/harness/test files match retained1f254d78c.
+Current canonical npm install has DOMPurify3.4.17/Mammoth1.13.0; no production
+Mammoth resolution claim. All source/version/permission/native engine boundaries
+remain original; no own SQL/Edge/workflow/grant/provider/Chat activation.
+
+Fresh scoped Sales regression986 cases/65 suites PASS. First run had one unchanged
+5s upload-test timeout (985 PASS); SAME case passed isolated170ms, then all986
+passed in unchanged quiet rerun. No assertion/timeout/baseline waiver. The earlier
+001 hosted verify failure was the benign sanitizer fixture's missing image src;
+existing real /favicon.png fixes it with all security assertions retained.
+Current lint0/two incumbent warnings, gold/UTF8 PASS, canonical Impeccable4.1.0
+0 anti-patterns/18 incumbent advisories; production audit0 high/critical with8
+moderate remaining. Earlier type ratchet10/current6 predates current main; new
+exact-head CI type proof remains required, not inferred from these local checks.
+
+This record's fresh compiled native source drive:20 viewport/theme/panel cases,
+16 paths/29 exact pins/zero page errors. All five drives together remain
+separate scoped proofs:editor20/19/26,mounted20/14/34,fields20/11/31,intake20/10/22,
+recipients20/16/29; all142 recorded pin comparisons recomputed. Actual desktop
+paper/Not signed roster and320 dark template images inspected. Synthetic Auth/
+API/RPC only. Initial native30 apply provenance unknown, six failed attempts
+preserved; canonical normal39839940779 and fresh root frontier320009 show all8
+original preparation bodies/ABI/ACL/private table/RLS/4triggers/5indexes/SAVE
+unchanged. Superseded2610 was never merged. Original owner API2599/Edge37 parity
+is separate; current combined UI NOT_DEPLOYED/NOT_ACCEPTED until final review,
+ALL exact-head gates, normal release/readback and actual ordinary roles. Protected
+existing-live owner draft/reload/history in ANT52 does not accept this candidate.
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: original twelve-outcome journey and the orchestration contract below retain owner outcome, source/authority, native execution, receipt, reload and recoverable exits.
@@ -18,18 +38,18 @@ MATERIAL_FLOW_CHANGE: YES: an authorized owner prepares original agreement recip
 FLOW_PROTOTYPE: PASS: existing full native-shell preparation prototype275be12415239d4ecdb66bec0894146ec9fe5c64 includes recipient configuration;20 responsive/theme frames/13 paths, selected by the existing lead under October21 routine UX authority. Illustrative PDF fields in that prototype are not activated by this increment.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: original authorized agreement authors inspect existing recipients and record the correct new signer against the same client and reviewed document version.
 VISUAL_DIRECTION: PASS: native editorial agreement context, ordered recipient roster, one primary Save signer action, secondary source/recovery context, original typography/tokens and responsive host scroll. No decorative business metrics.
-AUTOMATED_EVIDENCE: PASS:237 tests/nine integrated agreement suites, including strict closed receipt binding, exact source/time/client, duplicate events, uncertainty/retry/reload, stale source, native authority loss, single leave guard, retained-location refusal and distinct-editor protection. Native producer#2557 separately proves119 assertions/replay twice; these are not customer acceptance.
-STATIC_EVIDENCE: PASS: final source type ratchet baseline10/current6, baseline unchanged; scoped ESLint0errors/two incumbent warnings and no new hook-dependency warning. BindingLedger35 and Gold guards pass. Exact-head hosted gates remain separately required. Impeccable4.1.0 detector exits0; the new10px-radius advisory was corrected to the existing8px control scale, final scoped invocation reports no finding.
-RENDERED_EVIDENCE: PASS: actual SalesWorkspace/SalesOps/TenantCommandCenterShell/SDK compiled source,20 viewport/theme cases/16 interaction paths/zero page errors,28 normalized-LF owning source hashes and original font hash. assets/e04-agreement-recipients/result.json records every source pin, native scroll/action bounds and uncovered first keyboard focus. Actual images cover both themes,1536/1366/1024/900,390/320, receipt, unknown request, reload, refusal and desktop/narrow leave choices.
+AUTOMATED_EVIDENCE: PASS: fresh scoped Sales986/65 on current main composition; one unchanged5s upload timeout preserved, identical isolated170ms PASS then complete quiet986 PASS. Original SDK/controller/model/guard/terms/invoice calculations and two unchanged sanitizer controls; synthetic authority, no provider. Older coverage below is historical/separate, never summed.
+STATIC_EVIDENCE: PASS: current changed-source ESLint0/two incumbent warnings, gold/UTF8 PASS, exact Impeccable4.1.0 zero anti-patterns/18 incumbent advisories. Original npm audit --omit=dev --audit-level=high PASS,8 moderate remain. Earlier type10/6 is supporting only; fresh exact-head CI type/other gates remain UNVERIFIED.
+RENDERED_EVIDENCE: PASS: fresh actual compiled source20 viewport/theme/panel cases/16 behavioral paths/29 normalized owning pins/zero page errors; all five records142 pin comparisons recomputed. Actual desktop paper/roster and320 dark template inspected. Native PDF/worker/fonts/bytes, source components; Auth/API/RPC synthetic, not hosted persistence or legal/provider/customer acceptance.
 BEHAVIORAL_EVIDENCE: PASS: same original document/client/version, actual native receipt before refreshing canonical signer state, distinct historical pending creation and current signature progress, locked unknown payload, identical UUID/digest retry, read-only reload recovery without creation, absent receipt not cancellation, held-read interruption, stale/duplicate refusal, usable refusal recovery, original leave dialog/focus and private business retirement.
-AUTHENTICATED_RUNTIME: UNVERIFIED: local browser identity/network ports are synthetic. Ordinary owner/staff/linked external-client JWT, two legitimate SOLO cohorts, actual native write/read/reload, signature/provider/payment/service and complete founder acceptance remain owed. No new account or business created.
+AUTHENTICATED_RUNTIME: UNVERIFIED: current combined candidate not deployed. Separate protected actual ordinary-owner preexisting foundation draft/create/full reload/history does not prove candidate field retention, roles/cohorts, signing/provider, full O1 or whole Experience acceptance.
 KEYBOARD_FOCUS: PASS: all20 source-render cases assert initial name-field focus is uncovered by native navigation; missing required name/email/order focus and original leave-dialog keyboard trap/Escape verified. Desktop and320px leave dialog fit without clipping.
 ZOOM_REFLOW: PASS: actual320/390 CSS-pixel reflow, primary action reachable, document fits viewport and window scroll stays0 under original Sales scroll owner. Actual browser zoom and assistive-technology traversal remain unverified.
 REDUCED_MOTION: PASS: browser preference reduce, original spinner respects it, no new motion or animation channel.
 STATE_COVERAGE: PASS: loading, empty/current recipients, editing, required fields, saving, exact acknowledgment/current read, unknown/readonly retry, absent recovery, interrupted recovery, stale source, duplicate refusal, authority denial, recoverable original request and tenant retirement.
 TRUTHFUL_STATE_LABELS: PASS: preparing a signer sends no email, collects no consent/signature/payment and creates no Portal entitlement. Original request receipt records historical preparation; current signer status comes from a fresh original read. No completed service or legal-review claim.
 SOLO_UI: YES: original Sales Terms & Agreements shared implementation for all eligible current/future SOLO accounts, with normal native authority/configuration differences.
-UNVERIFIED: consumer merge/deployment/readback, native prerequisites#2545/#2554/#2557, actual owner/staff/client/provider QA and the complete twelve-outcome Experience. Editing/removing recipients, assigned document fields, import/preview, governed sends, exact signed economics and full lifecycle remain separate mandatory work.
+UNVERIFIED: current final exact-head review/ALL required CI/normal Preview/own web release/readback; actual ordinary owner/staff/properly linked external-client/cohort/hosted native field retention/recovery/provider behavior, physical device/AT/zoom, canonical commercial terms/exact-map approval/effective signing/finance/Comms/delivery and all O1–O12/founder acceptance. Source fixtures never establish those legs.
 
 SOLO_1536X770_PAIGE_CLOSED: PASS: assets/e04-agreement-recipients/1536-770-light-closed.png and dark counterpart; native ordered roster, visible keyboard entry and reachable save.
 SOLO_1536X770_PAIGE_OPEN: PASS: assets/e04-agreement-recipients/1536-770-light-open.png and dark counterpart; native dock preserves exact draft.

@@ -1,0 +1,10 @@
+{
+  "draft": "ZION, prepare a reviewable workflow design. Help me design a Weekly review. Ask for the actual procedure and missing business details; do not assume a saved source exists. Clarify the trigger, conditions, steps, people, timing, time zone, limits, connected-provider readiness, approval needs and expected evidence. Explain unsupported actions. Do not save, authorize, enable, schedule, execute or contact anyone. This is preparation for my review.\n\nprepare a reviewable workflow design. Help me design a Quality check. Ask for the actual procedure and missing business details; do not assume a saved source exists. Clarify the trigger, conditions, steps, people, timing, time zone, limits, connected-provider readiness, approval needs and expected evidence. Explain unsupported actions. Do not save, authorize, enable, schedule, execute or contact anyone. This is preparation for my review.",
+  "focus": null,
+  "height": 774,
+  "overflow": false,
+  "width": 524,
+  "workspaceCount": 1,
+  "source": "b4a6733e1d2e04520f172e708089b0b509f87e88",
+  "result": "FAIL: original Solo host still used expandRail; editor focus absent"
+}

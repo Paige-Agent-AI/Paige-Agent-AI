@@ -433,6 +433,22 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
     relayRef.current.setMuted(mutedRef.current);
   };
 
+  // The first-run onboarding stage asks for the voice entry by window event — the same
+  // decoupled request pattern as `paige:open` in the Solo shell. This component keeps sole
+  // ownership of opening and of consent: a request is honored only through begin(), which
+  // runs the same authorization check and terms surface as the trigger, and is ignored
+  // whenever the surface could not legally start.
+  const beginRef = useRef(begin);
+  beginRef.current = begin;
+  useEffect(() => {
+    const requestOpen = () => {
+      if (disabled || open || !PAIGE_LIVE_CONVERSATION_ENABLED) return;
+      void beginRef.current();
+    };
+    window.addEventListener("paige-live-open-request", requestOpen);
+    return () => window.removeEventListener("paige-live-open-request", requestOpen);
+  }, [disabled, open]);
+
   const retry = async () => {
     if (disabled) return;
     // Clear the last refusal BEFORE re-asking. It is written on every refusal and was cleared in

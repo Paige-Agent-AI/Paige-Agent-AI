@@ -8,6 +8,16 @@ let root:ReturnType<typeof createRoot>;let host:HTMLDivElement;
 function Harness(){const [draft,setDraft]=React.useState('');const guard=useSalesDraftExit(draft,false,()=>{});return <div><input value={draft} onChange={e=>setDraft(e.target.value)}/>{guard.confirmation}</div>;}
 function open(){history.replaceState(null,'','/solo/alpha/growth/sales');host=document.createElement('div');document.body.append(host);root=createRoot(host);act(()=>root.render(<Harness/>));const input=host.querySelector('input')!;act(()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')!.set!.call(input,'dirty');input.dispatchEvent(new Event('input',{bubbles:true}));});}
 afterEach(()=>{act(()=>root?.unmount());host?.remove();history.replaceState(null,'','/');vi.restoreAllMocks();});
+it('adopts only an explicit reviewed editor baseline and protects later edits again',()=>{
+  let adopt!:(value:unknown)=>void,setValue!:(value:string)=>void;
+  function BaselineHarness(){const [value,set]=React.useState('');setValue=set;const guard=useSalesDraftExit(value,false,()=>{});adopt=guard.adoptBaseline;return <>{guard.confirmation}</>;}
+  host=document.createElement('div');document.body.append(host);root=createRoot(host);act(()=>root.render(<BaselineHarness/>));
+  act(()=>{adopt('Reviewed original');setValue('Reviewed original');});
+  let leave=new Event('beforeunload',{cancelable:true});window.dispatchEvent(leave);expect(leave.defaultPrevented).toBe(false);
+  act(()=>setValue('Proposed change'));leave=new Event('beforeunload',{cancelable:true});window.dispatchEvent(leave);expect(leave.defaultPrevented).toBe(true);
+  act(()=>{adopt('');setValue('');});leave=new Event('beforeunload',{cancelable:true});window.dispatchEvent(leave);expect(leave.defaultPrevented).toBe(false);
+  act(()=>setValue('Later proposal'));leave=new Event('beforeunload',{cancelable:true});window.dispatchEvent(leave);expect(leave.defaultPrevented).toBe(true);
+});
 it('fallback protects same-account Back with a visible choice',()=>{open();act(()=>{history.replaceState(null,'','/solo/alpha/growth/catalog');window.dispatchEvent(new PopStateEvent('popstate',{state:null}));});expect(location.pathname).toBe('/solo/alpha/growth/sales');expect(host.querySelector('[role="alertdialog"]')).not.toBeNull();expect(document.activeElement?.textContent).toBe('Continue editing');});
 it('fallback permits a different-account Back without retaining its draft',()=>{open();const listener=vi.fn();window.addEventListener('popstate',listener);act(()=>{history.replaceState(null,'','/solo/beta/growth/sales');window.dispatchEvent(new PopStateEvent('popstate',{state:null}));});expect(host.querySelector('[role="alertdialog"]')).toBeNull();expect(listener).toHaveBeenCalledTimes(1);window.removeEventListener('popstate',listener);});
 

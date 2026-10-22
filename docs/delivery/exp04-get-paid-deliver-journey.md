@@ -1,5 +1,28 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
+## October22 actual template consumer — bounded integration contract
+
+Before mounting: preserve selected native-shell prototype275be1241 and native
+foundation#2545. Same original Sales Terms & Agreements query navigation → scoped
+list/read → supplied-wording editor/options → exact UUID native acknowledgment or
+readonly unknown/recovery/conflict → retained version → original real-client
+agreement preparation. REUSE existing rich editor, per-instance Sales exit guard
+from prerequisite#2532, original RPC boundary, native library/source versions and
+agreement CREATE. No private wording browser cache, new ledger/approval/runtime
+or Portal UI. Captured command/source time never silently rebases.
+
+Owner/admin/current actor and original business gates cover every consumer/read;
+unknown role hides RAM, conclusive refusal retires it, async epochs discard late
+results. Native domain writers revalidate authoritative scope. Optional requested
+wording review is source configuration, never completed review or legal sufficiency.
+Active prepared text sources alone hand off into a new agreement; actual client
+is required. A later agreement record links back to its retained source. Native
+manual preparation remains legitimate; template-specific Chat/Live is UNAVAILABLE,
+agreement.* PARTIAL, sales.department PROOF_OWED, no LayerC act/algorithm promotion.
+Actual owning UI/SDK route proof, keyboard/focus/narrow/reload/source guards, exact
+head review/CI/normal release/readback and ordinary-role acceptance remain distinct.
+No sends/signatures/charges/automatic onboarding or business effects from preview.
+
 ## October22 template foundation and consumer checkpoint
 
 LOCAL native original-library version/list/read/actor-bound recovery now passes

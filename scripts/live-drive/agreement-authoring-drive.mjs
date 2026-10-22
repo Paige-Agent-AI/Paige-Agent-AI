@@ -7,10 +7,14 @@ import { createHash, randomUUID } from 'node:crypto';
 import { buildLaunchOptions, resolvePlaywright } from './live-drive.mjs';
 const root = path.resolve(import.meta.dirname, '../..');
 const historyProof = process.argv.includes('--history');
+const correctionProof = process.argv.includes('--correction');
+const templateProof = process.argv.includes('--templates');
 const sources = ['src/solo/sales-ops.tsx','src/solo/SalesWorkspace.tsx','src/solo/sales-dialog.tsx','src/hooks/useBeforeUnloadGuard.ts','src/solo/sales/AgreementPreparationWorkspace.tsx','src/solo/sales/AgreementBodyEditor.tsx','src/solo/sales/agreementPreparationApi.ts','src/solo/sales/agreementVocabulary.ts','src/solo/sales/agreement-body-editor.css','src/solo/sales/agreement-preparation.css','package.json','package-lock.json',...['agreement-authoring.tsx','agreement-authoring-ports.ts','agreement-authoring-client.ts','vite.agreement-authoring.config.ts','agreement-authoring.html'].map(file=>'scripts/live-drive/harness/sales-mount/'+file)];
 const hashes = async () => Object.fromEntries(await Promise.all(sources.map(async file => [file,createHash('sha256').update((await fs.readFile(path.join(root,file),'utf8')).replaceAll('\r\n','\n')).digest('hex')])));
 sources.push('scripts/live-drive/agreement-authoring-drive.mjs');
 if(historyProof)sources.push('src/solo/sales/AgreementWordingHistory.tsx','src/solo/sales/agreementRevisionApi.ts');
+if(correctionProof)sources.push('src/solo/sales/AgreementWordingHistory.tsx','src/solo/sales/agreementRevisionApi.ts','src/solo/sales/AgreementDraftCorrection.tsx','src/solo/sales/agreementCorrectionApi.ts');
+if(templateProof)sources.push('src/solo/sales/AgreementTemplateWorkspace.tsx','src/solo/sales/agreementTemplateApi.ts','src/solo/sales/agreement-templates.css','src/solo/sales/AgreementWordingHistory.tsx','src/solo/sales/agreementRevisionApi.ts','src/solo/sales/AgreementDraftCorrection.tsx','src/solo/sales/agreementCorrectionApi.ts');
 console.log('Pinning actual source');
 const pinned = await hashes();
 let compiledRoot = null;
@@ -23,7 +27,7 @@ if (process.argv.includes('--compiled')) {
   await build({ configFile:path.join(root,'scripts/live-drive/harness/sales-mount/vite.agreement-authoring.config.ts'),
     build:{outDir:compiledRoot,emptyOutDir:false,rollupOptions:{input:path.join(root,'scripts/live-drive/harness/sales-mount/agreement-authoring.html')}} });
 }
-const out = path.join(root,'docs/evidence/ui-delivery/assets',historyProof?'e04-agreement-wording-history':'e04-agreement-authoring');
+const out = path.join(root,'docs/evidence/ui-delivery/assets',templateProof?'e04-agreement-templates':correctionProof?'e04-agreement-correction':historyProof?'e04-agreement-wording-history':'e04-agreement-authoring');
 await fs.mkdir(out,{recursive:true});
 console.log('Resolving owned Playwright');
 const { chromium } = await resolvePlaywright();
@@ -54,6 +58,13 @@ const revision = (row,number) => ({id:randomUUID(),agreement_id:row.agreement.id
   snapshot_sha256:number.toString(16).padStart(64,'0'),contact_id:row.agreement.contact_id,offer_id:null,
   commercial_terms_id:null,source_version_id:null,body_markdown:row.agreement.body_markdown,has_source_document:false});
 let mode = 'normal';
+// Synthetic native ports only; production components/SDK and parsers stay actual.
+const templates=new Map();
+const originalTemplate=randomUUID();
+const suppliedOptions={jurisdiction:null,review_route:'unspecified',reviewer:null};
+const templateReceipt=row=>Object.fromEntries(['id','template_slug','title','body_markdown','version','is_active','preparation_options','preparation_purpose','source_template_version_id','source_template_updated_at','created_at','updated_at'].map(key=>[key,row[key]]));
+if(templateProof)templates.set(originalTemplate,{id:originalTemplate,template_slug:'service-'+originalTemplate,title:'Supplied service wording',body_markdown:'# Business-supplied scope\n\nSynthetic retained wording for UI proof. No legal sufficiency or completed review is implied.\n',version:1,is_active:true,source_mode:'tenant_fork',has_uploaded_source:false,preparation_purpose:'client_engagement',preparation_options:{...suppliedOptions},source_template_version_id:null,source_template_updated_at:null,created_at:'2026-10-21T20:00:00.123456+00:00',updated_at:'2026-10-21T20:00:00.123456+00:00'});
+
 const receipt = (row,state='created') => ({state,signing_id:row.agreement.id,signature_state:row.agreement.status,version:row.agreement.version,updated_at:row.agreement.updated_at,creation_event_id:row.eventId});
 await context.route('**/*',async route=>{
   const url = new URL(route.request().url());
@@ -69,9 +80,42 @@ await context.route('**/*',async route=>{
 });
 await context.route('**/__e04_rpc__/**',async route=>{
   const name = new URL(route.request().url()).pathname.split('/').at(-1), args = route.request().postDataJSON();
-  calls.push({name,requestId:args._request_id ?? null});
+  calls.push({name,requestId:args._request_id ?? args._version_id ?? null,expectedAt:args._expected_updated_at??null,commandDigest:['save_paige_agreement','create_agreement_template_version'].includes(name)?createHash('sha256').update(JSON.stringify(args)).digest('hex'):null});
   const answer = value=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(value)});
   if(args._expected_tenant_id!==tenant || mode==='refused') return route.fulfill({status:403,contentType:'application/json',body:JSON.stringify({code:'42501',message:'Synthetic refusal'})});
+  if(name==='list_agreement_template_versions'){
+    if(mode==='template-read-error')return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({code:'55000'})});
+    const all=[...templates.values()].filter(row=>(!args._active_only||row.is_active)&&(!args._before_created_at||row.created_at<args._before_created_at||row.created_at===args._before_created_at&&row.id<args._before_id)).sort((a,b)=>b.created_at.localeCompare(a.created_at)||b.id.localeCompare(a.id));
+    const rows=all.slice(0,20),last=rows.at(-1);return answer({items:rows.map(({body_markdown,...row})=>row),next_cursor:all.length>20?{created_at:last.created_at,id:last.id}:null});
+  }
+  if(name==='read_agreement_template_version'){const row=templates.get(args._version_id);return row?answer(row):route.fulfill({status:403,contentType:'application/json',body:JSON.stringify({code:'42501'})});}
+  if(name==='recover_agreement_template_creation'){const row=templates.get(args._version_id);return answer(row?{state:'recovered',version_record:row}:{state:'unconfirmed'});}
+  if(name==='create_agreement_template_version'){
+    if(mode==='template-conflict')return route.fulfill({status:409,contentType:'application/json',body:JSON.stringify({code:'40001'})});
+    if(mode==='template-unknown-pending')return route.abort('failed');
+    if(templates.has(args._version_id))return answer(templateReceipt(templates.get(args._version_id)));
+    const source=templates.get(args._previous_version_id),stamp=new Date().toISOString();
+    if(source)assert.equal(source.updated_at,args._expected_source_updated_at);
+    const row={id:args._version_id,template_slug:source?.template_slug??'service-'+args._version_id,title:args._title.replace(/^ +| +$/g,''),body_markdown:args._body_markdown,version:source?source.version+1:1,is_active:true,source_mode:'tenant_fork',has_uploaded_source:false,preparation_purpose:'client_engagement',preparation_options:args._preparation_options,source_template_version_id:args._previous_version_id,source_template_updated_at:args._expected_source_updated_at,created_at:stamp,updated_at:stamp};
+    templates.set(row.id,row);if(source){source.is_active=false;source.updated_at=stamp;}
+    if(mode==='template-unknown-saved')return route.abort('failed');return answer(templateReceipt(row));
+  }
+  if(name==='save_paige_agreement'){
+    const row=records.get(args._agreement_id);assert.ok(row,'Synthetic same original must exist');
+    assert.equal(args._contact_id,row.agreement.contact_id);assert.equal(args._offer_id,row.agreement.offer_id);assert.equal(args._commercial_terms_id,row.agreement.commercial_terms_id);
+    assert.equal(args._body_source,row.agreement.body_source);assert.equal(args._source_version_id,row.agreement.source_version_id);assert.equal(args._document_path,null);
+    if(mode==='correction-conflict') { row.agreement.body_markdown='A different authorized correction is currently recorded.';row.agreement.version++;row.agreement.updated_at='2026-10-21T20:20:00Z'; }
+    if(args._expected_updated_at!==row.agreement.updated_at)return route.fulfill({status:409,contentType:'application/json',body:JSON.stringify({code:'40001'})});
+    if(!row.agreement.can_edit||mode==='correction-blocked')return route.fulfill({status:400,contentType:'application/json',body:JSON.stringify({code:'23514'})});
+    if(mode==='correction-unknown-pending')return route.abort('failed');
+    const trim=value=>{let a=0,b=value.length;while(a<b&&value[a]===' ')a++;while(b>a&&value[b-1]===' ')b--;return value.slice(a,b);};
+    row.agreement.version+=trim(args._body_markdown)===row.agreement.body_markdown?0:1;
+    row.agreement.title=trim(args._title);row.agreement.body_markdown=trim(args._body_markdown);
+    row.agreement.updated_at=`2026-10-21T20:10:${String(calls.filter(call=>call.name==='save_paige_agreement').length).padStart(2,'0')}Z`;
+    histories.get(args._agreement_id).push(revision(row,histories.get(args._agreement_id).length+1));
+    if(mode==='correction-unknown-committed')return route.abort('failed');
+    return answer({...row.agreement,tenant_id:tenant});
+  }
   if(name==='create_paige_agreement_draft_once'){
     assert.equal(args._contact_id,client); const fingerprint=JSON.stringify(args);
     const previous=requests.get(args._request_id);
@@ -79,7 +123,7 @@ await context.route('**/__e04_rpc__/**',async route=>{
       if(previous.fingerprint!==fingerprint) return route.fulfill({status:409,contentType:'application/json',body:JSON.stringify({code:'40001',message:'Synthetic conflict'})});
       return answer(receipt(records.get(previous.id),'recovered'));
     }
-    const id=randomUUID(),row={agreement:{id,contact_id:client,offer_id:null,commercial_terms_id:null,title:args._title,body_source:'paige_draft',source_version_id:null,body_markdown:args._body_markdown,has_source_document:false,status:'draft',version:1,updated_at:'2026-10-21T20:00:00Z',expires_at:null,can_edit:true,content_sha256:null,sealed_sha256:null},signers:[{id:randomUUID(),full_name:signerName,email:signerEmail,signer_role:'counterparty',signing_order:1,status:'pending',signed_at:null,declined_at:null}],eventId:randomUUID()};
+    const id=randomUUID(),row={agreement:{id,contact_id:client,offer_id:null,commercial_terms_id:null,title:args._title,body_source:args._body_source??'paige_draft',source_version_id:args._source_version_id??null,body_markdown:args._body_markdown,has_source_document:false,status:'draft',version:1,updated_at:'2026-10-21T20:00:00Z',expires_at:null,can_edit:true,content_sha256:null,sealed_sha256:null},signers:[{id:randomUUID(),full_name:signerName,email:signerEmail,signer_role:'counterparty',signing_order:1,status:'pending',signed_at:null,declined_at:null}],eventId:randomUUID()};
     records.set(id,row);requests.set(args._request_id,{id,fingerprint});histories.set(id,[revision(row,1)]);
     if(mode==='uncertain-committed')return route.abort('failed');
     return answer(receipt(row));
@@ -128,6 +172,80 @@ const fill = async(title='Client services agreement')=>{
 };
 const capture = async(name)=>{await page.screenshot({path:path.join(out,name+'.png')});};
 try{
+  if(templateProof){
+
+    const library=async()=>{await page.getByRole('button',{name:'Business templates',exact:true}).first().click();await page.getByRole('button',{name:'New template',exact:true}).waitFor();};
+    const enter=async()=>{await page.getByRole('button',{name:'New template',exact:true}).click();await page.getByRole('textbox',{name:'Template title',exact:true}).waitFor();};
+    const exactWords='# Supplied advisory scope\n\nRetain the actual business responsibilities.\n\tAnd the supplied line breaks.\n';
+    const proposal=async()=>{await page.getByRole('textbox',{name:'Template title',exact:true}).fill('Supplied client-service wording');await page.getByRole('button',{name:'Text source',exact:true}).click();await page.getByRole('textbox',{name:'Agreement text source',exact:true}).fill(exactWords);};
+    const options=async()=>{const panel=page.locator('.e04-template-options');if(!await panel.evaluate(el=>el.open))await panel.locator('summary').click();await page.getByRole('textbox',{name:'Jurisdiction',exact:true}).fill('Business-specified jurisdiction');await page.getByRole('combobox',{name:'Requested wording review',exact:true}).selectOption('qualified_legal');await page.getByRole('textbox',{name:'Reviewer or review team',exact:true}).fill('Designated review team');};
+    const submit=()=>page.getByRole('button',{name:'Save template version',exact:true}).click();
+    const stored=()=>page.getByRole('article',{name:'Retained template wording',exact:true}).waitFor();
+    for(const theme of ['light','dark'])for(const [width,height]of [[1536,770],[1366,768],[1024,768],[900,1000],[390,844],[320,740]])for(const paige of width>=900?['closed','open']:['closed']){
+      await page.setViewportSize({width,height});await page.goto(url(theme,paige),{waitUntil:'domcontentloaded'});
+      const overlay=width<=1080&&paige==='open';if(overlay)await page.getByRole('button',{name:'Fold PAIGE conversation',exact:true}).last().click();
+      await library();await enter();await proposal();await options();const submitButton=page.getByRole('button',{name:'Save template version',exact:true});await submitButton.scrollIntoViewIfNeeded();
+      const fit=await page.evaluate(()=>({viewport:innerWidth,document:document.documentElement.scrollWidth,pageScroll:scrollY,button:document.querySelector('[aria-label="Template version editor"] button[type=submit]')?.getBoundingClientRect().toJSON()}));
+      assert.ok(fit.document<=width+1,JSON.stringify(fit));assert.equal(fit.pageScroll,0);assert.ok(fit.button.left>=0&&fit.button.right<=width+1&&fit.button.bottom<=height+1,JSON.stringify(fit));
+      if(width<600)await capture(`${width}-${height}-${theme}-action`);
+      await page.locator('.e04-templates h2').scrollIntoViewIfNeeded();if(overlay)await page.getByRole('button',{name:'Direct PAIGE',exact:true}).click();await page.evaluate(()=>document.fonts.ready);await capture(`${width}-${height}-${theme}-${paige}`);frames.push({theme,width,height,paige,fit,nativePaigeOverlay:overlay});
+      if(overlay){await page.getByRole('button',{name:'Fold PAIGE conversation',exact:true}).last().click();assert.equal(await page.getByRole('textbox',{name:'Template title',exact:true}).inputValue(),'Supplied client-service wording');}
+      page.once('dialog',dialog=>dialog.accept());
+    }
+    await page.setViewportSize({width:1366,height:768});await page.goto(url(),{waitUntil:'domcontentloaded'});await library();await capture('actual-business-library');await enter();
+    await submit();assert.equal(await page.getByRole('textbox',{name:'Template title',exact:true}).evaluate(el=>el===document.activeElement),true);await proposal();await options();
+    const request=new URL(page.url()).searchParams.get('template_request');assert.ok(request);await submit();await stored();assert.equal(new URL(page.url()).searchParams.get('agreement_templates'),request);assert.equal(templates.get(request).body_markdown,exactWords);await page.getByText('No completed wording review is recorded by these options.',{exact:true}).waitFor();await capture('retained-native-template');behavior.push('actual Sales library/editor/native SDK mounting','required title focus','exact native wording/options receipt and original version navigation');
+    await page.getByRole('button',{name:'Use this version',exact:true}).click();await page.getByRole('textbox',{name:'Agreement content',exact:true}).waitFor();assert.equal(await page.getByRole('combobox',{name:'Client',exact:true}).inputValue(),'');await page.getByRole('button',{name:'Save agreement draft',exact:true}).click();assert.equal(await page.getByRole('combobox',{name:'Client',exact:true}).evaluate(el=>el===document.activeElement),true);await page.getByRole('combobox',{name:'Client',exact:true}).selectOption(client);await page.getByRole('button',{name:'Text source',exact:true}).click();assert.equal(await page.getByRole('textbox',{name:'Agreement text source',exact:true}).inputValue(),exactWords);await page.getByRole('button',{name:'Save agreement draft',exact:true}).click();await page.getByText('Recorded wording · content version 1',{exact:true}).waitFor();
+    const agreementId=new URL(page.url()).searchParams.get('agreement'),original=records.get(agreementId);assert.ok(original);assert.equal(original.agreement.body_source,'tenant_template');assert.equal(original.agreement.source_version_id,request);assert.equal(original.agreement.contact_id,client);assert.equal(original.agreement.body_markdown,exactWords);await page.reload();await page.getByText('Recorded wording · content version 1',{exact:true}).waitFor();await page.getByRole('button',{name:'Inspect source template',exact:true}).click();await stored();assert.equal(new URL(page.url()).searchParams.get('agreement_templates'),request);behavior.push('actual client is required, never invented','same original template ID/body into original agreement writer','same agreement reload and source-record navigation');
+    await page.getByRole('button',{name:'Prepare a new version',exact:true}).click();await page.getByRole('textbox',{name:'Template title',exact:true}).waitFor();await page.getByRole('button',{name:'Text source',exact:true}).click();assert.equal(await page.getByRole('textbox',{name:'Agreement text source',exact:true}).inputValue(),exactWords);await page.getByRole('textbox',{name:'Agreement text source',exact:true}).fill(exactWords+'\nReviewed revision supplied by the business.\n');await submit();await stored();const secondVersion=new URL(page.url()).searchParams.get('agreement_templates');assert.notEqual(secondVersion,request);assert.equal(templates.get(secondVersion).source_template_version_id,request);assert.equal(templates.get(request).body_markdown,exactWords);await page.getByRole('button',{name:'Inspect earlier source version',exact:true}).click();await stored();assert.equal(await page.getByRole('button',{name:'Use this version',exact:true}).count(),0);behavior.push('new retained version preserves old original words and source identity','earlier source remains inspectable and inactive use withheld');
+    await library();await enter();await proposal();mode='template-unknown-pending';await submit();await page.getByRole('button',{name:'Retry same reviewed request',exact:true}).waitFor();assert.equal(await page.getByRole('textbox',{name:'Agreement text source',exact:true}).getAttribute('readonly'),'');const pendingCommand=calls.filter(row=>row.name==='create_agreement_template_version').at(-1);await page.getByRole('button',{name:'Check original template request',exact:true}).click();await page.getByText('The same original request is still unconfirmed. Its first save may still finish.',{exact:true}).waitFor();await capture('unconfirmed-original-request');mode='normal';await page.getByRole('button',{name:'Retry same reviewed request',exact:true}).click();await stored();const retryCommand=calls.filter(row=>row.name==='create_agreement_template_version').at(-1);assert.equal(pendingCommand.requestId,retryCommand.requestId);assert.equal(pendingCommand.commandDigest,retryCommand.commandDigest);behavior.push('readonly unknown proposal and original request read','explicit same-UUID same-payload retry');
+    await library();await enter();await proposal();mode='template-unknown-saved';await submit();await page.getByRole('button',{name:'Check original template request',exact:true}).waitFor();const beforeRecovery=calls.filter(row=>row.name==='create_agreement_template_version').length;mode='normal';await page.getByRole('button',{name:'Check original template request',exact:true}).click();await stored();assert.equal(calls.filter(row=>row.name==='create_agreement_template_version').length,beforeRecovery);behavior.push('lost acknowledgment recovers original stored words without another create');
+    await page.getByRole('button',{name:'Prepare a new version',exact:true}).click();await page.getByRole('textbox',{name:'Template title',exact:true}).waitFor();mode='template-conflict';await submit();await page.getByRole('heading',{name:'Source version changed',exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:'Retry same reviewed request',exact:true}).count(),0);mode='normal';await page.getByRole('button',{name:'Return to agreements',exact:true}).click();await page.getByRole('alertdialog').waitFor();await page.getByRole('button',{name:'Continue editing',exact:true}).click();assert.equal(await page.getByRole('textbox',{name:'Agreement content',exact:true}).getAttribute('contenteditable'),'false');await page.getByRole('button',{name:'Return to agreements',exact:true}).click();await page.getByRole('button',{name:'Leave and check later',exact:true}).or(page.getByRole('button',{name:'Discard changes',exact:true})).click();behavior.push('stale source remains readonly and cannot overwrite','actual canonical leave dialog preserves or discards scoped proposal');
+    await library();await enter();await proposal();await page.evaluate(()=>window.dispatchEvent(new CustomEvent('e04-authoring-port',{detail:{authorityUnknown:true}})));assert.equal(await page.getByRole('textbox',{name:'Template title',exact:true}).count(),0);await page.evaluate(()=>window.dispatchEvent(new CustomEvent('e04-authoring-port',{detail:{authorityUnknown:false}})));assert.equal(await page.getByRole('textbox',{name:'Template title',exact:true}).inputValue(),'Supplied client-service wording');mode='refused';await submit();await page.getByRole('heading',{name:'Template access changed',exact:true}).waitFor();assert.equal(await page.getByRole('textbox',{name:'Template title',exact:true}).count(),0);mode='normal';await page.getByRole('button',{name:'Agreements and terms',exact:true}).click();await page.getByRole('alertdialog').waitFor();await page.getByRole('button',{name:'Leave and check later',exact:true}).click();await library();await enter();await proposal();behavior.push('unknown authority hides/restores RAM, conclusive native refusal retires private words','native refusal releases the pending-save lock and preserves a usable canonical exit');
+    const beforeForeign=calls.length;await page.evaluate(()=>window.dispatchEvent(new CustomEvent('e04-authoring-port',{detail:{activeTenantId:'aaaaaaaa-0000-4000-8000-000000000002'}})));assert.equal(await page.getByRole('textbox',{name:'Template title',exact:true}).count(),0);assert.equal(calls.length,beforeForeign);behavior.push('business switch retires selection and blocks foreign request read');
+
+  }else if(correctionProof){
+    const draftTitle=()=>page.getByRole('textbox',{name:'Draft title',exact:true});
+    const enter=async()=>{await page.getByRole('button',{name:'Correct draft wording',exact:true}).click();await draftTitle().waitFor();};
+    const proposal=async()=>{await draftTitle().fill('Reviewed correction');await page.getByRole('button',{name:'Text source',exact:true}).click();await page.getByRole('textbox',{name:'Agreement text source',exact:true}).fill('# Revised advisory wording\n\nRetain the actual responsibilities.\n');await page.getByRole('button',{name:'Document',exact:true}).click();};
+    const submit=()=>page.getByRole('button',{name:'Save revised draft',exact:true}).click();
+    await page.goto(url(),{waitUntil:'domcontentloaded'});await newDraft();await fill();await page.getByRole('button',{name:'Save agreement draft',exact:true}).click();await page.getByText('Recorded wording · content version 1',{exact:true}).waitFor();
+    const originalUrl=page.url(),id=new URL(originalUrl).searchParams.get('agreement');assert.ok(records.has(id),'Original selection remains canonical');
+    for(const theme of ['light','dark'])for(const [width,height]of [[1536,770],[1366,768],[1024,768],[900,1000],[390,844],[320,740]])for(const paige of width>=900?['closed','open']:['closed']){
+      await page.setViewportSize({width,height});const target=new URL(originalUrl);target.searchParams.set('theme',theme);target.searchParams.set('paige',paige);await page.goto(target.href,{waitUntil:'domcontentloaded'});
+      const overlay=width<=1080&&paige==='open';if(overlay)await page.getByRole('button',{name:'Fold PAIGE conversation',exact:true}).last().click();
+      await enter();await proposal();await page.getByRole('button',{name:'Save revised draft',exact:true}).scrollIntoViewIfNeeded();
+      const fit=await page.evaluate(()=>({viewport:innerWidth,document:document.documentElement.scrollWidth,pageScroll:scrollY,button:document.querySelector('[aria-label="Correct draft wording"] button[type=submit]')?.getBoundingClientRect().toJSON()}));
+      assert.ok(fit.document<=width+1,JSON.stringify(fit));assert.equal(fit.pageScroll,0);assert.ok(fit.button.left>=0&&fit.button.right<=width+1&&fit.button.bottom<=height+1,JSON.stringify(fit));
+      if(width<600)await capture(`${width}-${height}-${theme}-action`);
+      await page.locator('.e04-preparation h2').scrollIntoViewIfNeeded();if(overlay)await page.getByRole('button',{name:'Direct PAIGE',exact:true}).click();
+      await page.evaluate(()=>document.fonts.ready);await capture(`${width}-${height}-${theme}-${paige}`);frames.push({theme,width,height,paige,fit,nativePaigeOverlay:overlay});
+      if(overlay){await page.getByRole('button',{name:'Fold PAIGE conversation',exact:true}).last().click();assert.equal(await draftTitle().inputValue(),'Reviewed correction');}
+      page.once('dialog',dialog=>dialog.accept());
+    }
+    await page.setViewportSize({width:1366,height:768});await page.goto(originalUrl,{waitUntil:'domcontentloaded'});await enter();await proposal();
+    const beforeCreates=calls.filter(call=>call.name==='create_paige_agreement_draft_once').length;
+    await submit();await page.getByText('Recorded wording · content version 2',{exact:true}).waitFor();assert.equal(new URL(page.url()).searchParams.get('agreement'),id);assert.equal(calls.filter(call=>call.name==='create_paige_agreement_draft_once').length,beforeCreates);
+    assert.equal(await page.getByRole('button',{name:'Correct draft wording',exact:true}).evaluate(el=>el===document.activeElement),true);const acknowledged=page.getByRole('status').filter({hasText:'Draft correction acknowledged · content version 2.'});await acknowledged.waitFor();const acknowledgedBounds=await acknowledged.boundingBox();assert.ok(acknowledgedBounds&&acknowledgedBounds.y>=0&&acknowledgedBounds.y+acknowledgedBounds.height<=page.viewportSize().height,'Original correction acknowledgment remains visible at restored focus');await capture('acknowledged-original');await page.reload();await page.getByText('Recorded wording · content version 2',{exact:true}).waitFor();behavior.push('acknowledgment preserves same original/no create','fresh original read and focus','normal saved record reload','only actual native acknowledgment displays a success receipt');
+    await enter();await page.getByRole('button',{name:'Text source',exact:true}).click();await page.getByRole('textbox',{name:'Agreement text source',exact:true}).fill('Uncertain proposed correction.');
+    mode='correction-unknown-pending';await submit();await page.getByText('Correction not confirmed',{exact:true}).waitFor();await page.getByRole('button',{name:'Read current agreement',exact:true}).click();await page.getByRole('button',{name:'Retry original correction',exact:true}).waitFor();
+    const first=calls.filter(call=>call.name==='save_paige_agreement').at(-1);mode='normal';await page.getByRole('button',{name:'Retry original correction',exact:true}).click();await page.getByText('Recorded wording · content version 3',{exact:true}).waitFor();const second=calls.filter(call=>call.name==='save_paige_agreement').at(-1);assert.equal(first.commandDigest,second.commandDigest);assert.equal(first.expectedAt,second.expectedAt);behavior.push('unknown read separate from acknowledgment','explicit retry same frozen CAS and reviewed payload');
+    await enter();await page.getByRole('button',{name:'Text source',exact:true}).click();await page.getByRole('textbox',{name:'Agreement text source',exact:true}).fill('Committed but unacknowledged proposal.');mode='correction-unknown-committed';await submit();await page.getByText('Correction not confirmed',{exact:true}).waitFor();mode='normal';await page.getByRole('button',{name:'Read current agreement',exact:true}).click();await page.getByRole('region',{name:'Current stored wording',exact:true}).getByText('Committed but unacknowledged proposal.',{exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:'Retry original correction',exact:true}).count(),0);await capture('uncertain-committed');
+    await page.getByRole('button',{name:'Return to current agreement',exact:true}).click();await page.getByRole('alertdialog').waitFor();await page.getByRole('button',{name:'Continue editing',exact:true}).click();assert.equal(await page.getByRole('textbox',{name:'Agreement text source',exact:true}).inputValue(),'Committed but unacknowledged proposal.');behavior.push('matching stored wording is not acknowledgment','unknown leave warning/cancel preserves proposal');
+    await page.getByRole('button',{name:'Return to current agreement',exact:true}).click();await page.getByRole('button',{name:'Leave and check later',exact:true}).click();await page.getByText('Recorded wording · content version 4',{exact:true}).waitFor();
+    await enter();await page.getByRole('button',{name:'Text source',exact:true}).click();await page.getByRole('textbox',{name:'Agreement text source',exact:true}).fill('Proposed wording must not overwrite current.');mode='correction-conflict';await submit();await page.getByText('Current agreement has changed',{exact:true}).waitFor();mode='normal';await page.getByRole('button',{name:'Read current agreement',exact:true}).click();await page.getByRole('region',{name:'Current stored wording',exact:true}).getByText('A different authorized correction is currently recorded.',{exact:true}).waitFor();assert.equal(await page.getByRole('textbox',{name:'Agreement text source',exact:true}).inputValue(),'Proposed wording must not overwrite current.');assert.equal(await page.getByRole('button',{name:'Retry original correction',exact:true}).count(),0);await capture('conflict');behavior.push('concurrent current source and proposal separate/no auto overwrite');
+    mode='read-error';await page.getByRole('button',{name:'Read current agreement',exact:true}).click();await page.getByText('The current agreement could not be verified. Your proposal remains here; retry the read when the connection is available.',{exact:true}).waitFor();assert.equal(await page.getByRole('region',{name:'Current stored wording',exact:true}).count(),0);behavior.push('failed current read clears stale stored view and preserves proposal');
+    mode='refused';await page.getByRole('button',{name:'Read current agreement',exact:true}).click();await page.getByText('Agreement access could not be confirmed. Recheck the original business and record.',{exact:true}).waitFor();assert.equal(await draftTitle().count(),0);behavior.push('native access refusal retires proposal');
+    mode='normal';await page.goto(originalUrl,{waitUntil:'domcontentloaded'});await enter();await draftTitle().fill('Private unsaved correction');
+    await page.evaluate(()=>window.dispatchEvent(new CustomEvent('e04-authoring-port',{detail:{authorityUnknown:true}})));await page.getByText('Agreement access is being checked',{exact:true}).waitFor();assert.equal(await draftTitle().count(),0);
+    await page.evaluate(()=>window.dispatchEvent(new CustomEvent('e04-authoring-port',{detail:{authorityUnknown:false}})));await draftTitle().waitFor();assert.equal(await draftTitle().inputValue(),'Private unsaved correction');behavior.push('unknown authority hides and restores scoped RAM proposal');
+    await draftTitle().focus();await page.keyboard.press('Escape');await page.getByRole('alertdialog').waitFor();assert.equal(await page.getByRole('button',{name:'Continue editing',exact:true}).evaluate(el=>el===document.activeElement),true);await page.keyboard.press('Tab');assert.equal(await page.getByRole('button',{name:'Discard changes',exact:true}).evaluate(el=>el===document.activeElement),true);await page.keyboard.press('Escape');assert.equal(await draftTitle().inputValue(),'Private unsaved correction');behavior.push('one canonical Escape/Tab/leave focus contract');
+    await page.evaluate(()=>window.dispatchEvent(new CustomEvent('e04-authoring-port',{detail:{canManage:false}})));await page.getByText('Agreement author access required',{exact:true}).waitFor();assert.equal(await draftTitle().count(),0);
+    await page.evaluate(()=>window.dispatchEvent(new CustomEvent('e04-authoring-port',{detail:{canManage:true}})));await page.getByRole('button',{name:'Correct draft wording',exact:true}).waitFor();await enter();assert.notEqual(await draftTitle().inputValue(),'Private unsaved correction');behavior.push('conclusive role revocation erases proposal');
+    await page.evaluate(()=>window.dispatchEvent(new CustomEvent('e04-authoring-port',{detail:{activeTenantId:'aaaaaaaa-0000-4000-8000-000000000002'}})));await page.getByText('The agreement could not be opened',{exact:true}).waitFor();assert.equal(await draftTitle().count(),0);behavior.push('business change retires original correction without foreign read/write');
+    await page.evaluate(tenant=>window.dispatchEvent(new CustomEvent('e04-authoring-port',{detail:{activeTenantId:tenant}})),tenant);await page.getByRole('button',{name:'Correct draft wording',exact:true}).waitFor();
+    records.get(id).agreement.can_edit=false;await page.reload();await page.getByText('Agreement details',{exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:'Correct draft wording',exact:true}).count(),0);behavior.push('native retained/frozen state withholds correction entry');
+  }else{
   for(const theme of historyProof?[]:['light','dark'])for(const [width,height]of [[1536,770],[1366,768],[1024,768],[900,1000],[390,844],[320,740]])for(const paige of width>=900?['closed','open']:['closed']){
     console.log(`Rendering ${width}x${height} ${theme} ${paige}`);
     await page.setViewportSize({width,height});await page.goto(url(theme,paige),{waitUntil:'domcontentloaded'});
@@ -258,6 +376,7 @@ try{
   const hostile='Original wording\n\n![diagram](https://blocked.example.test/private.png)';await source.fill(hostile);await page.getByRole('button',{name:'Document',exact:true}).click();
   await page.getByText(/Some document formatting could not be opened/).waitFor();assert.equal(await source.inputValue(),hostile);await capture('source-fallback');
   behavior.push('unregistered formatting preserves exact source without remote fetch');
+  }
   assert.equal(errors.length,0,errors.join('\n'));assert.equal(blocked.filter(origin=>origin!=='https://fonts.googleapis.com').length,0,blocked.join(','));
   assert.deepEqual(await hashes(),pinned,'Source changed during native browser drive');
   assert.equal(createHash('sha256').update(await fs.readFile(fontPath)).digest('hex'),fontSHA256,'Shared font changed during proof');

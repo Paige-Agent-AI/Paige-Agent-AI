@@ -2,10 +2,12 @@ import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AgreementPreparation } from './agreementPreparationApi';
-const fixtures = vi.hoisted(() => ({ context: {} as Record<string, unknown>, read: vi.fn(), recover: vi.fn(), create: vi.fn(), history: vi.fn() }));
+const fixtures = vi.hoisted(() => ({ context: {} as Record<string, unknown>, read: vi.fn(), recover: vi.fn(), create: vi.fn(), history: vi.fn(), template:vi.fn(), correct: vi.fn() }));
 vi.mock('@/hooks/useTenantContext', () => ({ useTenantContext: () => fixtures.context }));
 vi.mock('./agreementPreparationApi', () => ({ readAgreementPreparation: fixtures.read, recoverAgreementCreation: fixtures.recover, createAgreementDraft: fixtures.create }));
+vi.mock('./agreementTemplateApi',()=>({readAgreementTemplate:fixtures.template}));
 vi.mock('./agreementRevisionApi', () => ({ readAgreementRevisions: fixtures.history, readAgreementRetainedWording: vi.fn() }));
+vi.mock('./agreementCorrectionApi', async importOriginal => ({...await importOriginal<typeof import('./agreementCorrectionApi')>(),saveAgreementCorrection:fixtures.correct}));
 // Flow tests exercise real scope/receipt/leave state. The actual rich editor is
 // verified by the separate framework-native browser drive, not this textarea.
 vi.mock('./AgreementBodyEditor', () => ({ AgreementBodyEditor: ({ value, onChange, readOnly }: { value: string; onChange: (value: string) => void; readOnly: boolean }) => <label>Agreement content<textarea value={value} readOnly={readOnly} onChange={event => onChange(event.target.value)} /></label> }));
@@ -83,9 +85,89 @@ beforeEach(() => {
   fixtures.read.mockReset().mockResolvedValue({ ok: true, value: original() });
   fixtures.recover.mockReset().mockResolvedValue({ ok: true, value: { state: 'unconfirmed' } });
   fixtures.create.mockReset().mockResolvedValue({ ok: true, value: receipt() });
+  fixtures.correct.mockReset().mockResolvedValue({ok:false,reason:'unconfirmed',message:'Synthetic lost response.'});
+  fixtures.template.mockReset().mockResolvedValue({ok:true,value:{id:'99999999-0000-4000-8000-000000000001',title:'Supplied template wording',body_markdown:'Original supplied template words.\n',version:2,preparation_purpose:'client_engagement',is_active:true,has_uploaded_source:false,source_mode:'tenant_fork',preparation_options:{jurisdiction:'Business jurisdiction',review_route:'qualified_legal',reviewer:'Designated team'}}});
   fixtures.history.mockReset().mockResolvedValue({ ok: true, value: { agreement_id: id, current_source_version: 1, current_updated_at: '2026-10-21T20:00:00Z', revisions: [], truncated: false, next_before_revision_no: null } });
 });
 afterEach(() => { act(() => root?.unmount()); host?.remove(); vi.useRealTimers(); });
+
+describe('original agreement correction flow',()=>{
+  async function openCorrection(){
+    const p={...props(),agreementId:id,requestId:null,freshlyOpened:false};
+    const mounted=render(<AgreementPreparationWorkspace {...p}/>);
+    await screen.findByText('Original retained wording.');fireEvent.click(screen.getByRole('button',{name:'Correct draft wording'}));
+    await screen.findByText('Review the correction');return {...mounted,p};
+  }
+  const propose=()=>fireEvent.change(screen.getByLabelText('Agreement content'),{target:{value:'Proposed private correction.'}});
+  const submitCorrection=()=>fireEvent.click(screen.getByRole('button',{name:'Save revised draft'}));
+  it('focuses missing required wording before any write',async()=>{
+    await openCorrection();fireEvent.change(screen.getByLabelText('Draft title'),{target:{value:''}});submitCorrection();
+    expect(document.activeElement).toBe(screen.getByLabelText('Draft title'));expect(fixtures.correct).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText('Draft title'),{target:{value:'Reviewed title'}});
+    fireEvent.change(screen.getByLabelText('Agreement content'),{target:{value:''}});submitCorrection();
+    expect(document.activeElement).toBe(screen.getByLabelText('Agreement content'));expect(fixtures.correct).not.toHaveBeenCalled();
+  });
+  it('returns from verified same-record correction through a fresh native read and restores focus',async()=>{
+    const {p}=await openCorrection();propose();
+    const current=original();current.agreement.body_markdown='Proposed private correction.';current.agreement.version=2;current.agreement.updated_at='2026-10-21T20:01:00Z';
+    fixtures.correct.mockResolvedValueOnce({ok:true,value:{agreementId:id,version:2,updatedAt:current.agreement.updated_at}});
+    fixtures.read.mockResolvedValue({ok:true,value:current});submitCorrection();
+    await waitFor(()=>expect(screen.queryByText('Review the correction')).toBeNull());await screen.findByText('Proposed private correction.');
+    expect(fixtures.read).toHaveBeenCalledTimes(2);expect(fixtures.correct.mock.calls[0][0]).toMatchObject({agreementId:id,clientId:client,expectedUpdatedAt:'2026-10-21T20:00:00Z'});
+    expect(fixtures.create).not.toHaveBeenCalled();expect(p.onOpenRecord).not.toHaveBeenCalled();
+    expect(document.body.textContent).toContain('Draft correction acknowledged · content version 2.');
+    expect(document.activeElement).toBe(screen.getByRole('button',{name:'Correct draft wording'}));
+    const leave=new Event('beforeunload',{cancelable:true});window.dispatchEvent(leave);expect(leave.defaultPrevented).toBe(false);
+  });
+  it('keeps an unchanged correction clean and protects actual unsaved changes on return',async()=>{
+    await openCorrection();let leave=new Event('beforeunload',{cancelable:true});window.dispatchEvent(leave);expect(leave.defaultPrevented).toBe(false);
+    propose();leave=new Event('beforeunload',{cancelable:true});window.dispatchEvent(leave);expect(leave.defaultPrevented).toBe(true);
+    fireEvent.click(screen.getByRole('button',{name:'Return to current agreement'}));expect(screen.getByRole('alertdialog')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button',{name:'Continue editing'}));expect((screen.getByLabelText('Agreement content') as HTMLTextAreaElement).value).toBe('Proposed private correction.');
+    fireEvent.click(screen.getByRole('button',{name:'Return to current agreement'}));fireEvent.click(screen.getByRole('button',{name:'Discard changes'}));
+    await screen.findByText('Original retained wording.');expect(fixtures.correct).not.toHaveBeenCalled();
+  });
+  it('focuses the original heading when fresh readback is retained and no longer offers correction',async()=>{
+    await openCorrection();propose();const current=original();current.agreement.body_markdown='Proposed private correction.';current.agreement.version=2;current.agreement.can_edit=false;current.agreement.content_sha256='a'.repeat(64);
+    fixtures.correct.mockResolvedValueOnce({ok:true,value:{agreementId:id,version:2,updatedAt:'2026-10-21T20:01:00Z'}});fixtures.read.mockResolvedValue({ok:true,value:current});submitCorrection();
+    await waitFor(()=>expect(screen.queryByText('Review the correction')).toBeNull());await screen.findByText('Proposed private correction.');
+    expect(screen.queryByText('Correct draft wording')).toBeNull();expect(document.activeElement).toBe(document.querySelector('.e04-preparation h2'));
+  });
+  it('freezes uncertain input, reads current state separately and retries exactly the original command',async()=>{
+    await openCorrection();propose();submitCorrection();await screen.findByText('Correction not confirmed');
+    expect((screen.getByLabelText('Agreement content') as HTMLTextAreaElement).readOnly).toBe(true);expect(fixtures.correct).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button',{name:'Read current agreement'}));await screen.findByRole('button',{name:'Retry original correction'});
+    expect(document.querySelector('[aria-label="Current stored wording"]')?.textContent).toContain('Original retained wording.');
+    fixtures.correct.mockResolvedValueOnce({ok:false,reason:'conflict',message:'Synthetic native conflict.'});
+    fireEvent.click(screen.getByRole('button',{name:'Retry original correction'}));await screen.findByText('Current agreement has changed');
+    expect(fixtures.correct.mock.calls[1][0]).toBe(fixtures.correct.mock.calls[0][0]);expect(fixtures.correct.mock.calls[1][0].expectedUpdatedAt).toBe('2026-10-21T20:00:00Z');expect(fixtures.create).not.toHaveBeenCalled();
+  });
+  it('does not claim an acknowledgment or enable overwrite when a later read matches the proposal',async()=>{
+    await openCorrection();propose();submitCorrection();await screen.findByText('Correction not confirmed');
+    const current=original();current.agreement.body_markdown='Proposed private correction.';current.agreement.version=2;current.agreement.updated_at='2026-10-21T20:01:00Z';fixtures.read.mockResolvedValue({ok:true,value:current});
+    fireEvent.click(screen.getByRole('button',{name:'Read current agreement'}));await waitFor(()=>expect(document.querySelector('[aria-label="Current stored wording"]')?.textContent).toContain('Proposed private correction.'));
+    expect(screen.queryByText('Retry original correction')).toBeNull();expect(screen.getByText('Correction not confirmed')).toBeTruthy();expect(fixtures.correct).toHaveBeenCalledTimes(1);
+    expect(document.body.textContent).not.toContain('Draft correction acknowledged');
+    fireEvent.click(screen.getByRole('button',{name:'Return to current agreement'}));expect(screen.getByText('Leave while the save is unconfirmed?')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button',{name:'Continue editing'}));expect((screen.getByLabelText('Agreement content') as HTMLTextAreaElement).value).toBe('Proposed private correction.');
+  });
+  it('preserves a refused-state proposal but retires it on conclusive native authority refusal',async()=>{
+    const {p}=await openCorrection();propose();fixtures.correct.mockResolvedValueOnce({ok:false,reason:'refused',refusal:'state',message:'Synthetic retained source.'});submitCorrection();
+    await screen.findByText('Correction unavailable');expect((screen.getByLabelText('Agreement content') as HTMLTextAreaElement).value).toBe('Proposed private correction.');
+    fixtures.read.mockResolvedValueOnce({ok:false,reason:'refused',message:'Synthetic authority changed.'});fireEvent.click(screen.getByRole('button',{name:'Read current agreement'}));
+    await screen.findByText('Agreement access could not be confirmed. Recheck the original business and record.');expect(screen.queryByLabelText('Agreement content')).toBeNull();expect(document.body.textContent).not.toContain('Proposed private correction.');expect(p.onRefresh).toHaveBeenCalled();
+  });
+  it('hides unknown authority, ignores a late acknowledgment and resumes the locked original proposal',async()=>{
+    const {p,rerender}=await openCorrection();propose();let resolve!:(value:unknown)=>void;fixtures.correct.mockReturnValueOnce(new Promise(done=>{resolve=done;}));submitCorrection();
+    rerender(<AgreementPreparationWorkspace {...p} authorityUnknown/>);expect(screen.queryByLabelText('Agreement content')).toBeNull();
+    await act(async()=>resolve({ok:true,value:{agreementId:id,version:2,updatedAt:'2026-10-21T20:01:00Z'}}));expect(p.onRefresh).not.toHaveBeenCalled();
+    rerender(<AgreementPreparationWorkspace {...p}/>);await screen.findByText('Correction not confirmed');expect((screen.getByLabelText('Agreement content') as HTMLTextAreaElement).value).toBe('Proposed private correction.');expect((screen.getByLabelText('Agreement content') as HTMLTextAreaElement).readOnly).toBe(true);
+  });
+  it.each([{can_edit:false},{status:'completed'},{body_source:'tenant_upload',body_markdown:null,has_source_document:true}])('does not offer correction for retained/nontext state %j',async patch=>{
+    const current=original();Object.assign(current.agreement,patch);fixtures.read.mockResolvedValue({ok:true,value:current});
+    render(<AgreementPreparationWorkspace {...props()} agreementId={id} requestId={null} freshlyOpened={false}/>);await screen.findByText('Agreement details');expect(screen.queryByText('Correct draft wording')).toBeNull();expect(fixtures.correct).not.toHaveBeenCalled();
+  });
+});
 
 describe('native agreement preparation flow', () => {
   it('opens a fresh authoring request without a record or reconciliation write', () => {
@@ -216,4 +298,38 @@ describe('native agreement preparation flow', () => {
     await screen.findByText('Agreement access could not be confirmed. Recheck the original business and record.');
     expect(screen.queryByText('Original retained wording.')).toBeNull();expect(screen.queryByText('Inspect wording history')).toBeNull();expect(p.onRefresh).toHaveBeenCalledTimes(1);
   });
+});
+
+
+describe('exact native template into original agreement',()=>{
+ const template='99999999-0000-4000-8000-000000000001';
+ it('loads supplied wording/options, asks for the actual client and saves its original source ID',async()=>{
+  const p=props();render(<AgreementPreparationWorkspace {...p} templateVersionId={template}/>);
+  await screen.findByRole('button',{name:'Save agreement draft'});
+  expect((screen.getByLabelText('Agreement content') as HTMLTextAreaElement).value).toBe('Original supplied template words.\n');
+  expect((screen.getByLabelText('Client') as HTMLSelectElement).value).toBe('');
+  save();expect(fixtures.create).not.toHaveBeenCalled();expect(document.activeElement).toBe(screen.getByLabelText('Client'));
+  fireEvent.change(screen.getByLabelText('Client'),{target:{value:client}});save();
+  await waitFor(()=>expect(p.onOpenRecord).toHaveBeenCalledWith(id));
+  expect(fixtures.create.mock.calls[0][0]).toMatchObject({tenantId:tenant,clientId:client,source:'tenant_template',sourceVersionId:template,body:'Original supplied template words.\n'});
+  expect(screen.getByText('Source-template options do not record completed review. Review this agreement’s actual wording before signing.')).not.toBeNull();
+ });
+ it('does not replace a missing or inactive source with a blank authored agreement',async()=>{
+  fixtures.template.mockResolvedValue({ok:true,value:{id:template,preparation_purpose:'client_engagement',is_active:false,source_mode:'tenant_fork',has_uploaded_source:false,body_markdown:'Old words'}});
+  render(<AgreementPreparationWorkspace {...props()} templateVersionId={template}/>);
+  await screen.findByText('Select an active retained client template with supplied text wording before preparing this agreement.');
+  expect(screen.queryByLabelText('Agreement content')).toBeNull();expect(fixtures.create).not.toHaveBeenCalled();
+ });
+ it('transient authority hides loaded source work and does not silently reload over later edits',async()=>{
+  const p=props(),view=render(<AgreementPreparationWorkspace {...p} templateVersionId={template}/>);
+  await screen.findByRole('button',{name:'Save agreement draft'});fireEvent.change(screen.getByLabelText('Agreement content'),{target:{value:'Owner corrected actual agreement words'}});
+  view.rerender(<AgreementPreparationWorkspace {...p} templateVersionId={template} authorityUnknown/>);expect(screen.queryByLabelText('Agreement content')).toBeNull();
+  view.rerender(<AgreementPreparationWorkspace {...p} templateVersionId={template}/>);await screen.findByRole('button',{name:'Save agreement draft'});
+  expect((screen.getByLabelText('Agreement content') as HTMLTextAreaElement).value).toBe('Owner corrected actual agreement words');expect(fixtures.template).toHaveBeenCalledOnce();
+ });
+ it('hard reload recovers the original agreement request rather than copying the template again',async()=>{
+  render(<AgreementPreparationWorkspace {...props()} templateVersionId={template} freshlyOpened={false}/>);
+  await screen.findByText('The original save is not confirmed yet. Check again, inspect recent agreements, or continue the same draft.');
+  expect(fixtures.template).not.toHaveBeenCalled();expect(fixtures.create).not.toHaveBeenCalled();expect(fixtures.recover).toHaveBeenCalledWith(tenant,request);
+ });
 });

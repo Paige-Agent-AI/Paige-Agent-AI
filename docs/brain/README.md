@@ -1,3 +1,16 @@
+## EXP02 prepared source references — October22 foundation
+
+The original scoped prepared-work reader now retains only a known remediator's
+scalar finding UUID through the shared E4 frame. No full action payload, inferred
+department source, arbitrary URL or approval claim. Missing creation time stays
+absent rather than becoming the current time. Four causal failures then70 cases
+in five original suites pass. No new control, route map, reader, store, worker or
+authority. Actual mounted finding focus and spacious Desk source CTA/Chat return
+are separate required consumers; current resolver stays surface_only. Exact-head
+review/CI, parent2612/original2607 prerequisites, source readback and ordinary
+customer/cohort proof remain owed. All19/nine and one complete founder evaluation
+remain open. [Evidence](../evidence/ui-delivery/e2-prepared-source-reference.md).
+
 ## EXP02 recorded Systems Check coverage — October22 development
 
 The sole EXP02 lead is correcting O06 evidence presentation in the original

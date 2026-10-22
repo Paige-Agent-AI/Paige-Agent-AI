@@ -1,5 +1,18 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October22 — prepared source-reference foundation
+
+O14/Decision Desk now has a local canonical source-reference prerequisite: original
+scoped filed/confirm rows select only the known remediator's scalar finding UUID,
+not full payload or guessed department routes. Shared E4 frame retains the UUID,
+not account/address/approval text. Missing source date remains absent. Four causal
+failures then70 cases/five original suites pass. This does not mount a focused URL
+or a Desk action: those remain separate required consumers; existing resolution
+is surface_only. Review/CI, parent2612 and original2607 security prerequisite,
+actual readback/permissions/reload/Chat/Live and one founder evaluation remain owed.
+No approval/execution/Rail, provider, catalogue or ALG03/13 promotion; all19/nine
+definitions remain required. [Evidence](../evidence/ui-delivery/e2-prepared-source-reference.md).
+
 ## October22 — O06 recorded-coverage repair in development
 
 Original19 definitions/nine analytics remain mandatory. The original Systems Check

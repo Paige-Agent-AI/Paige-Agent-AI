@@ -75,6 +75,19 @@ Experience remain separate unfinished increments; no catalogue Live promotion.
 Assess functional, visual and experiential quality independently; owner acceptance
 still requires the one complete integrated Experience.
 
+## EXP04 original wording history released — 2026-10-21
+
+Read-only history#2524 reviewed557aea9e9ee05169954ca29ecaff216662e39e74 →
+mergead51a060c7da4106a294a5b6e0c0245c303837fd, actual treeb52601a8dc verified.
+All11 checks completed (10success/schema-free Preview skipped), two statuses pass;
+AUTHOR-REVIEW / LOWER ASSURANCE5608222311. Webdpl_5T5ZH314C5k28jZX1RbeH7Q7GpDz
+READY/exact; protected/public ad51…-mviv4gjz and actual history asset79f699a1ac
+read back, receipt6330515475/Master4.0. Own migration/Edge N/A; native130000
+already applied. Actual20 cases/26 paths/178 source assertions and type10/current6
+remain source evidence, not actual ordinary-role/customer acceptance. Full twelve
+outcomes, professional template/import/fields/signing, provider/payment/service
+and founder acceptance remain owed; no new availability, algorithm or Chat claim.
+
 ## EXP04 authoring release — 2026-10-21
 
 Native document authoring#2515 reviewed6ef6cd9bcf9dbb97b53153edffba0243a5a060bd →

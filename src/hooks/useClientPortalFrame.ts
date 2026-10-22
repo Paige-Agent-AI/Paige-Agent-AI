@@ -120,7 +120,7 @@ export function useClientPortalFrame(actorId: string | null, enabled = true, req
     setState(initial(requestedActor, l.epoch, requestedBusiness));
     if (!requestedActor) return () => {l.alive = false; ++l.request;};
     const {data: {subscription}} = supabase.auth.onAuthStateChange((event, session) => {
-      if (!l.alive) return;
+      if (!l.alive || l.scope !== scope) return;
       if (event === "SIGNED_OUT" || session?.user.id !== requestedActor) {
         ++l.request; l.frame = null;
         setState({actorId: requestedActor, businessId: requestedBusiness, phase: "unavailable", frame: null, access: null, checking: false, epoch: ++l.epoch}); return;
@@ -130,7 +130,7 @@ export function useClientPortalFrame(actorId: string | null, enabled = true, req
     const focus = () => {void reload();};
     window.addEventListener("focus", focus); void reload();
     return () => {l.alive = false; ++l.request; subscription.unsubscribe(); window.removeEventListener("focus", focus);};
-  }, [requestedActor, requestedBusiness, reload]);
+  }, [requestedActor, requestedBusiness, reload, scope]);
   // Retire the old subject synchronously, before effects or late reads settle.
   const visible = state.actorId === requestedActor && state.businessId === requestedBusiness ? state : initial(requestedActor, life.current.epoch, requestedBusiness);
   return {...visible, reload};

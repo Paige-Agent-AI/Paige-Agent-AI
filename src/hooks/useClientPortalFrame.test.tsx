@@ -230,6 +230,15 @@ it("an old business callback cannot restart or cancel the next business read", a
   pending.resolve({data:snapshot(actor,foreign),error:null}); await flush();
   expect(state.phase).toBe("ready"); expect(state.frame?.profile.tenant_id).toBe(foreign);
 });
+it("an already-retired Auth callback cannot cancel the next business read", async () => {
+  f.rpc.mockImplementation(() => scopedResult(snapshot(),[])); await mount({business: tenant});
+  const oldListener = f.listener;
+  const pending = deferred<{data: ReturnType<typeof snapshot>; error: null}>();
+  f.rpc.mockReturnValueOnce(Object.assign(pending.promise,{setHeader() {return this;}}));
+  await mount({business: foreign}); act(() => oldListener?.("SIGNED_OUT",null));
+  pending.resolve({data:snapshot(actor,foreign),error:null}); await flush();
+  expect(state.phase).toBe("ready"); expect(state.frame?.profile.tenant_id).toBe(foreign);
+});
 it.each(["paused","ended"] as const)("accepts only a natively bound %s notice", async kind => {
   const headers: Array<[string,string]> = [];
   f.rpc.mockImplementation((name: string) => scopedResult(name === "client_portal_frame" ? null : {...withheld(kind),request_business_id: tenant},headers));

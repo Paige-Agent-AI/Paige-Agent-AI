@@ -1572,3 +1572,66 @@ This closes the source-only invoice-navigation subset of §15's surface-link gap
 **Responsible dependencies.** Sales owns PRE-1 canonical agreement revisions (#2140, candidate `11f14c866aeffedd78dab3631fd669783ccd5179`) and separately frozen signed economics/effectuation. The owner-appointed Shared Chat runtime replacement grounds INT-304/#1615 and owns only bounded shared schema/dispatch integration; PRE-2 requires Operations' reviewed scoped writers plus canonical operation identity, unknown-outcome handling, readback and receipts before adoption. Sales/Analytics coordinate overdue_current1.1.0 under the Coordinator's exact-key/version ruling; no second date/financial engine. INT-335 proposal pieces are reused without inventing batch/package approval. Mind/Memory/Knowledge applicability remains a Coordinator/shared-runtime question. INT-346 stays DRAINING; no consequential activation is inferred.
 
 **QA and communications.** Central QA owns existing #2119 and reports3 PASS rows/19 BLOCKED/0 recorded FAIL, representing only two distinct passed observations (entry and Chat readiness), with no E4 prompt/zone save and transport infrastructure blocking further drive. Positive record/overdue cases need an existing approved fixture; no fixture, account or provider change is fabricated. Authenticated end-to-end acceptance and owner product acceptance remain UNVERIFIED. Material progress is posted to owner chat and ANT-51/ANT-147, Coordinator comments are checked before integration/release decisions, and writes are read back. EXP03 remains Claude Code-owned. Latest Coordinator provider policy: operator corporate/system Resend; tenant PAIGE Email governed SendGrid; independently authorized Gmail/iCloud retain their own paths, without fallback/crossover.
+
+## October21 native draft revision retention — pre-edit contract
+
+The preceding October14 staffing/provider notes are retained history. Current owner
+direction assigns the complete E04 outcome to this sole lead; no retired agent is
+resumed. The October18 SendGrid-only managed-mail policy supersedes the historical
+operator Resend exception. This increment has no sender or provider effect.
+
+REUSE original `paige_agreements`, canonical SAVE/author checks, native events,
+template/source relationships and sent-content/sealed-document immutability.
+Current production catalog has no native agreement draft-revision relation.
+`tenant_agreement_versions` is the template library, not engagement history;
+`paige_durable_document_work` creates draft artifacts in marketing_content, not
+executed agreements. Original SAVE replaces draft wording and records its version
+in an edited event without retaining the prior body. The preserved C7 commercial
+presentation remains the source to reconcile for exact signed economics; this
+history increment does not replace it or freeze financial obligations.
+
+EXTEND one native agreement with subordinate immutable draft revision evidence.
+Do not create another agreement entity, signing runtime, execution/approval store,
+ledger or financial engine. Preserve the original SAVE function body/authority and
+capture actual known before/after wording through a domain-owned parent trigger.
+No historical body is invented or backfilled from a version counter. Templates,
+signers, external signing and uploaded/frozen PDF bytes retain their original homes.
+
+1. **Request/event:** authorized owner retains a new draft or changes its wording
+   through the existing native writer. No sign/send/financial action is inferred.
+2. **Entry:** original Sales authoring consumer is #2515, stacked on #2504. This
+   native increment initially changes no UI, Chat, Live, Portal or Team Hub.
+3. **Source/Spine:** original agreement ID, body/content version and native created/
+   edited event remain authoritative. Existing agreement.draft/list/status/send
+   declarations remain PARTIAL; history is not a new Live Chat capability.
+4. **Path:** original SAVE and native row authority; subordinate retention only.
+   Ordinary manual draft revision/read does not require a Layer C act. Applicable
+   consequential transitions still use the existing governed execution paths.
+5. **Authority:** original auth.uid/current_user_tenant_id/is_tenant_admin and exact
+   agreement tenant; human history reads use the same author boundary. Closed DTOs
+   exclude tokens, private object locators, IP, credentials and request digests.
+6. **Risk/approval:** no expanded grant, role, risk class or approval channel.
+   Separate Chat ordinary/confirm policy stays unchanged. A retained revision never
+   authorizes client disclosure, signing, obligation, payment or notification.
+7. **Identity/receipt:** immutable revision belongs to the SAME original agreement,
+   ordered by its own actual retention identity. Original event/actor attribution
+   is preserved; no fabricated Layer C act, owner activity or Rail completion.
+8. **Readback/idempotency:** actual persisted snapshots and exact native metadata;
+   unchanged content produces no extra snapshot. Reverting wording retains a new
+   chronological occurrence. Retention identity is not a payment or signing seal.
+9. **Recovery:** original writer/CAS remains controlling. Subsequent correction must
+   compare the exact reviewed current state and never silently refresh/reapply after
+   uncertainty. Absent earlier history is explicit; uploaded-source references do
+   not prove retained document bytes. Existing signed/sealed records are untouched.
+10. **Visible result/proof:** subsequent owner UI inspects exact saved wording and
+    actual source/version/time, with historical coverage limits. Native old/new
+    caller, replay, concurrency, isolation, immutable-history and no-op proofs,
+    exact-head review/CI and production readback precede customer adoption. Local
+    synthetic auth helpers do not establish JWT/customer/provider acceptance.
+
+Source lease: native agreement revision migration/readers and their owning proof
+through the EXISTING integrity runner; provisional130000 after own120000 and actual
+reconciled lower frontier. No existing applied migration or protected shared Chat/
+C0b, sender, Portal, Operations or financial calculation source is changed.
+All twelve outcomes, complete professional preparation, signed/effective economics,
+authorized provider proof, legitimate role QA and full founder evaluation remain owed.

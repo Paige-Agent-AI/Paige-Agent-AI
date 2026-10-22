@@ -851,6 +851,28 @@ production test write/provider action. Internal production prerequisite, no cust
 version or announcement. Recovery uses reviewed forward correction preserving originals.
 
 
+**2026-10-21 — EXP09 atomic private CURA preparation admission.**
+PR [#2503](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2503), reviewed
+`137623d536bd86b62e48a6df3303c642eb831207`, merged
+`a9c8503b9e66849a1f371865dc0dfb7c73f34fd9`. The isolated caller-JWT adapter
+submits through the original Knowledge extraction writer in the same locked
+publisher transaction. No new permission predicate, store, worker, scheduler,
+approval channel or Layer C executor. All 13 exact-head checks and two statuses
+passed; distinct runtime/factual/composition reviews 5606298470, 5606442295 and
+5606611932 were clear. Native 55-reader/43-writer assertions and actual authority
+concurrency/cleanup passed; the original audit-marker guard caught an earlier
+head and remained unchanged after its 69-case focused repair.
+Normal migration [39684011502](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/39684011502),
+job119513522361, pushed and verified persisted `20271113110000` and recorded the
+applied commit. Actual production body `3596b87b764dcaf9fa309231719ccb60` matches
+merged source; postgres/VOLATILE/SECURITY DEFINER/empty search path and
+authenticated-only execution were verified. All five original helper/writer
+bodies and owners plus the deployed original reader remain unchanged.
+Evidence: [production readback](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2503#issuecomment-6327753609).
+Native preparation is APPLIED; owner Chat/Live dispatch remains UNWIRED.
+No customer release/version, publication, indexing, sharing, provider activation
+or founder acceptance is inferred. Full integrated EXP09 delivery remains owed.
+
 **2026-10-21 — EXP09 exact CURA Knowledge source recovery.**
 PR [#2492](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2492), reviewed
 `530809fb0ae05d642251f9ddba6b362ae44929f3`, merged
@@ -1025,6 +1047,43 @@ version or announcement. Recovery is a bounded reviewed consumer forward fix or
 revert preserving native authority and records. This factual closeout is not
 logged recursively.
 
+
+**2026-10-21 — EXP04 native agreement draft request identity and recovery.**
+PR [#2504](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2504), reviewed
+`8a883a39d337f552dda06d8f829038dc61e7d499`, merged
+`e7396e59e7409ec3a66599edd3c8dfcd9459f1db`; actual parentsc4181fe342 and8a883a39d,
+tree`7e0725eae49f417e482e0cf6bd4361ad8a2e4711` exactly matches the reviewed
+current-main union. Reuses original SAVE, agreements, counterparties/events and
+canonical author authority. Same tenant/request recovers original identity/current
+metadata/native creation event instead of duplicating drafts/signers after uncertainty.
+Selected human preparation read excludes private locators, credentials and digests.
+Original-author opaque request recovery retains no private browser body cache;
+missing remains unconfirmed. No new ledger, approval/runtime, signer or financial engine.
+Native PostgreSQL16 proof92 assertions/replay2/four real concurrent sessions; all13
+exact-head checks including actual Preview/database-contract/verify and both Vercel
+statuses SUCCESS. Sequential AUTHOR-REVIEW / LOWER ASSURANCE, no non-author claim.
+Normal migration39690945568/job119536945958 SUCCESS/exact merge;
+`20271113120000_agreement_draft_request_identity` persisted after110000.
+Readback confirms nullable columns, validated paired/digest constraint, enabled
+identity-preservation trigger and exact tenant/request partial unique index.
+Selected-source/production MD5 match: create`50bd774baf1facddc079e1996e55b742`,
+preparation`a3950836bd7b886838da885bfd799fa0`, recovery`2343e156f7917c5e0c07aee1598996da`,
+preserve`082487b61784c1fc45be6f1d494cd45f`; original SAVE remains
+`1bd28e75afa0f50bb07b717795a5be0e`. Three new SECURITY DEFINER routines use empty
+search_path and authenticated-only execution; PUBLIC/anon/service EXECUTE absent.
+Preserve helper has no application-role EXECUTE. Web
+`dpl_H2MRxR55zLme4E8sYUDTZwB79SBX` READY/production/main/exact; canonical public
+`e7396e59e7409ec3a66599edd3c8dfcd9459f1db-mvipyzk2`, customerUpdate:null.
+Own Edge changes NOT_APPLICABLE. [Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2504#issuecomment-6328560544),
+[native proof](evidence/ui-delivery/e04-draft-request-identity.md).
+Functional: native prerequisite released/read back. Visual: no mounted change here;
+authoring consumer#2515 remains separate, unmerged/in CI. Experiential: same-request
+native proof is not full professional preparation or integrated O1–O12. Acceptance:
+actual owner/staff/linked-client/recipient, provider/legal and full founder evaluation
+remain owed. No production business record, send, signature, payment or Chat/Live
+activation exercised. No customer version/announcement. Recovery is a reviewed
+forward correction preserving original records, assigned request metadata and applied
+migration history. This factual closeout does not require recursive logging.
 
 **2026-10-21 — EXP04 truthful recipient signing results and accessible feedback.**
 PR [#2499](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2499), reviewed

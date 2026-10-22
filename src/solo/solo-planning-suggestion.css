@@ -1,0 +1,23 @@
+.e2ps { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-width: 0; padding-bottom: 8px; color: var(--pg-ink); font-family: var(--pg-font-ui); }
+.e2ps button { min-height: 44px; }
+.e2ps button:focus-visible, .e2ps-item:focus-visible, .e2ps-open:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 2px; }
+.e2ps-chip, .e2ps-scope { display: inline-flex; align-items: center; justify-content: center; gap: 8px; max-width: 100%; padding: 8px 12px; border: 1px solid var(--pg-line); border-radius: var(--pg-r-chip); background: var(--pg-raised); color: var(--pg-ink); font-size: 13px; }
+.e2ps-scope { max-width: min(100%, 220px); background: transparent; color: var(--pg-muted); font-size: 12px; }
+.e2ps-scope span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.e2ps-dismiss { display: inline-grid; place-items: center; min-width: 44px; border-radius: var(--pg-r-chip); color: var(--pg-muted); }
+.e2ps-count { padding: 0 8px 10px; color: var(--pg-muted); font-size: 12px; line-height: 1.6; }
+.e2ps-context { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 8px 8px; color: var(--pg-muted); font-size: 12px; }
+.e2ps-context span { overflow-wrap: anywhere; }
+.e2ps-context button { flex: none; padding-inline: 8px; text-decoration: underline; text-underline-offset: 3px; }
+.e2ps-item { display: block; width: 100%; padding: 14px 8px; border-bottom: 1px solid var(--pg-line); text-align: left; color: var(--pg-ink); overflow-wrap: anywhere; }
+.e2ps-item > span, .e2ps-item small { display: flex; align-items: center; gap: 5px; color: var(--pg-muted); font-size: 12px; }
+.e2ps-item strong { display: block; margin-top: 7px; font-size: 14px; line-height: 1.5; }
+.e2ps-item p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 7px; font-size: 13px; line-height: 1.6; }
+.e2ps-item small { margin-top: 10px; }
+.e2ps-open, .e2ps-state button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 8px; color: var(--pg-ink); font-size: 13px; }
+.e2ps-open { width: 100%; margin-top: 8px; }
+.e2ps-state { padding: 12px 8px; color: var(--pg-ink-2); font-size: 14px; line-height: 1.6; }
+@media (max-width: 650px) {
+  .e2ps-chip { gap: 6px; padding-inline: 8px; }
+  .e2ps-chip > svg { display: none; }
+}

@@ -38,7 +38,7 @@ Final local rendered assets:
 
 First desktop screenshot was clipped by the browser screenshot API; retained locally as historical diagnostic only and excluded from final assets. Replaced by the actual900x900 capture above. The browser inspection stalled; current main was re-grounded afterward and all new E2/EXP04/EXP05/Setup releases preserved. The temporary tab was closed and viewport override cleared.
 
-INTERNAL_BUILD_IDENTITY: implementation=40adb9399738653250c6ba08d7bbe6572dff5966; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat exact deployed source and request context); evidence=docs/evidence/ui-delivery/e09-cura-business-scope.md
+INTERNAL_BUILD_IDENTITY: implementation=8aff5204d4bd284f5532092989485e0c4dfd1a19; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat exact deployed source and request context); evidence=docs/evidence/ui-delivery/e09-cura-business-scope.md
 RELEASE_CHANNEL: development: original private customer Chat request correction
 RELEASE_CLASSIFICATION: internal-only: existing customer scope/privacy restoration
 CUSTOMER_RELEASE_IDENTITY: none: no customer publication

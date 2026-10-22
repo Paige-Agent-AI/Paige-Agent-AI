@@ -44,3 +44,8 @@ Final recheck after the original-gate precedence and returning-Auth fixes:213 te
 ## Main composition after dependency release
 
 Sessions2567 merged as eba561cda65f90a8e0d54cc72b5922841bae2349, actual tree6a369483a920413b2f0e8cc36ce92ba10d424ecf matching inspected composition. This review branch explicitly composes that main in a3b37742bd22514149e7b45befd7668ad2271331. Its main-relative delta is only the21 review source/test/evidence files; prior Sessions and independent EXP04 retained-document/checked-signer/native-history releases are not changed or removed. No runtime source changed after213-control run. Native migration collision guard1393 and final own-delta UI/diff guards PASS. Final PR base is main; actual final-head review/CI/Preview/source readback remains separate from the parent and from ordinary client acceptance.
+
+
+### Exact-head CI correction
+
+At5b924e1f9b2ca868f64d72ac6e6e6cd22a25d357, hosted build, type ratchet, unit and native database checks passed, but the tier-feature guard correctly held release: two direct UUID comparisons in the synthetic business-switch fixture matched its prohibited-render pattern. Name that existing synthetic business once and use the variable in the fixture and transition; all13 original component assertions and the unchanged tier-feature guard now pass. No production code, account-specific branch, guard exemption, workflow or assertion was changed. New exact-head review and required CI remain mandatory.

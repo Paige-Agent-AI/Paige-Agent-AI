@@ -197,6 +197,25 @@ Experience remain separate unfinished increments; no catalogue Live promotion.
 Assess functional, visual and experiential quality independently; owner acceptance
 still requires the one complete integrated Experience.
 
+## EXP04 exact document and assigned fields — dormant source foundation, October22
+
+Original native agreement rendering/sealing/authorization callers are unchanged.
+New document-preparation/field-preparation helpers bind actual retained checksum,
+page crop/media/rotation, original agreement/customer/version/microsecond CAS,
+original signer identity/role/order and all five assigned field kinds. Reuses
+pdf-lib1.17.1, original native parser/hash and canonical presentation serializer;
+no new package, table, signing/approval/execution engine, provider or Portal source.
+Missing signatures and overlaps prevent review readiness; unsupported/foreign or
+malformed placement refuses.69 strict Deno cases/47 nested steps including original
+render/seal/signing-guard controls PASS, not production/customer proof. Initial test
+callback type error was corrected, never skipped. Native persistence, real preview,
+keyboard placement, exact PDF/map approval, original Rail/send/seal and Portal
+consumption remain unconnected; Chat/Live execution UNAVAILABLE, all12 outcomes and
+owner/staff/client/provider/founder acceptance remain owed. See existing
+[journey](../delivery/exp04-get-paid-deliver-journey.md) pre-edit contract. Optional
+jurisdiction/requested-review/reviewer configuration supplies no agreement wording,
+completed legal review or infrastructure counsel gate.
+
 ## EXP04 original draft correction — 2026-10-21 local
 
 Same original unsigned text record now has controlled title/wording correction

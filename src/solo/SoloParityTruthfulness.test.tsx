@@ -160,7 +160,7 @@ describe("SOLO catalogue truthfulness", () => {
     // consent-required — never Active — and the onboarding row may not claim voice works before
     // that consent exists.
     expect(rowFor("Live Conversation").textContent).toContain("Consent required");
-    expect(rowFor("Live Conversation").textContent).toContain("Not activated");
+    expect(rowFor("Live Conversation").textContent).toContain("Not activated yet");
     expect(rowFor("Live Conversation").textContent).toContain("Two-way voice");
     expect(rowFor("Onboarding & business discovery").textContent).toContain("Available");
     expect(rowFor("Onboarding & business discovery").textContent).toContain("needs Live Conversation turned on");

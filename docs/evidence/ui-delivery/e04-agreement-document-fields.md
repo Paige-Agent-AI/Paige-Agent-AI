@@ -36,7 +36,7 @@ ACCEPTANCE_CRITERIA: actual authorized owner opens exact original PDF, assigns f
 MOTION_PURPOSE: NONE: no new animation; existing native waiting indicator only.
 PROTECTED_SEAMS: single original field constructor and canonical serializer; actual digest/byte length/crop/rotation; authority-key remount and current render lifecycle; original native source/party/CAS/functions and exact approval holds remain prerequisites. No Portal token, client DTO, global identity, shared Operations, Communications, Stripe or Chat source edit.
 
-INTERNAL_BUILD_IDENTITY: branch=codex/e04-document-preparation-surface; source_base=e55f5a70268117420e8fb61c6b8c022ac61f445e; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE_TO_THIS_CONSUMER; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-agreement-document-fields.md
+INTERNAL_BUILD_IDENTITY: branch=codex/e04-document-preparation-surface; source_base=e55f5a70268117420e8fb61c6b8c022ac61f445e; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-agreement-document-fields.md
 RELEASE_CHANNEL: development: actual local source render, not customer reachable or customer acceptance.
 RELEASE_CLASSIFICATION: internal-only: bounded dependent consumer; no finished professional Experience claim.
 CUSTOMER_RELEASE_IDENTITY: none: no complete Experience or owner acceptance.
@@ -119,3 +119,10 @@ EXP09 owns its actual client UI and consumes approved linked-customer records,
 never this private owner fixture or raw Storage path. ALG01/12 bounded correctness
 evidence does not promote official algorithm acceptance; ALG02/13, all12 outcomes
 and actual ordinary-role/provider/full founder acceptance remain incomplete.
+
+Current composition retains exact native parent67184484e540c628bee325d736b7cdc269286979,
+including actual main0af948c6d/E02 actor/E05/E09 billing280009 and never-applied
+forward290004. All30 rendered source pins remain byte-identical after the clean
+merge. The initial evidence guard rejected the noncanonical metadata value
+NOT_APPLICABLE_TO_THIS_CONSUMER; corrected to its original NOT_APPLICABLE grammar,
+without changing the guard or implying its separate native prerequisite applied.

@@ -1,0 +1,421 @@
+{
+  "source": "a0cb7e8db6737c5e040f0eb24e0e6ed34a01b757",
+  "bundle": "2d1782ffe1cafbcfc6ace8f8adb295665be00fd661cd8f601954086d12c95a43",
+  "html": "97d00e15415afd5cb962f5e8026fca7969b087316f96ae74f3d33754c4f9e513",
+  "browser": "Edge as reported by reinitialized browser control; local fixture only",
+  "productInputs": 311,
+  "syntheticPorts": 174,
+  "productTransforms": 0,
+  "priorProof": "Initial c7b4c969 native Chrome frames remain in earlier commits. Final composed frames replace them here. Earlier invalid default-size frames were not accepted.",
+  "overrideReset": {
+    "cdp": true,
+    "height": 822,
+    "width": 1514
+  },
+  "defaultBefore": {
+    "height": 822,
+    "width": 1514
+  },
+  "frames": [
+    {
+      "file": "light-1536-closed.png",
+      "panel": "closed",
+      "background": "rgb(201, 169, 106)",
+      "body": "13px",
+      "color": "rgb(32, 30, 35)",
+      "contentTitle": "21px",
+      "height": 770,
+      "scrollWidth": 1536,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "light",
+      "title": "16px",
+      "width": 1536
+    },
+    {
+      "file": "light-1536-open.png",
+      "panel": "open",
+      "background": "rgb(201, 169, 106)",
+      "body": "13px",
+      "color": "rgb(32, 30, 35)",
+      "contentTitle": "21px",
+      "height": 770,
+      "scrollWidth": 1536,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "light",
+      "title": "16px",
+      "width": 1536
+    },
+    {
+      "file": "light-1366-closed.png",
+      "panel": "closed",
+      "background": "rgb(201, 169, 106)",
+      "body": "13px",
+      "color": "rgb(32, 30, 35)",
+      "contentTitle": "21px",
+      "height": 768,
+      "scrollWidth": 1366,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "light",
+      "title": "16px",
+      "width": 1366
+    },
+    {
+      "file": "light-1366-open.png",
+      "panel": "open",
+      "background": "rgb(201, 169, 106)",
+      "body": "13px",
+      "color": "rgb(32, 30, 35)",
+      "contentTitle": "21px",
+      "height": 768,
+      "scrollWidth": 1366,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "light",
+      "title": "16px",
+      "width": 1366
+    },
+    {
+      "file": "light-1024-closed.png",
+      "panel": "closed",
+      "background": "rgb(201, 169, 106)",
+      "body": "13px",
+      "color": "rgb(32, 30, 35)",
+      "contentTitle": "21px",
+      "height": 768,
+      "scrollWidth": 1024,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "light",
+      "title": "16px",
+      "width": 1024
+    },
+    {
+      "file": "light-1024-open.png",
+      "panel": "open",
+      "background": "rgb(201, 169, 106)",
+      "body": "13px",
+      "color": "rgb(32, 30, 35)",
+      "contentTitle": "21px",
+      "height": 768,
+      "scrollWidth": 1024,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "light",
+      "title": "16px",
+      "width": 1024
+    },
+    {
+      "file": "light-900-closed.png",
+      "panel": "closed",
+      "background": "rgb(201, 169, 106)",
+      "body": "13px",
+      "color": "rgb(32, 30, 35)",
+      "contentTitle": "21px",
+      "height": 1000,
+      "scrollWidth": 900,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "light",
+      "title": "16px",
+      "width": 900
+    },
+    {
+      "file": "light-900-open.png",
+      "panel": "open",
+      "background": "rgb(201, 169, 106)",
+      "body": "13px",
+      "color": "rgb(32, 30, 35)",
+      "contentTitle": "21px",
+      "height": 1000,
+      "scrollWidth": 900,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "light",
+      "title": "16px",
+      "width": 900
+    },
+    {
+      "file": "dark-1536-closed.png",
+      "panel": "closed",
+      "background": "rgb(212, 167, 82)",
+      "body": "13px",
+      "color": "rgb(16, 14, 20)",
+      "contentTitle": "21px",
+      "height": 770,
+      "scrollWidth": 1536,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "dark",
+      "title": "16px",
+      "width": 1536
+    },
+    {
+      "file": "dark-1536-open.png",
+      "panel": "open",
+      "background": "rgb(212, 167, 82)",
+      "body": "13px",
+      "color": "rgb(16, 14, 20)",
+      "contentTitle": "21px",
+      "height": 770,
+      "scrollWidth": 1536,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "dark",
+      "title": "16px",
+      "width": 1536
+    },
+    {
+      "file": "dark-1366-closed.png",
+      "panel": "closed",
+      "background": "rgb(212, 167, 82)",
+      "body": "13px",
+      "color": "rgb(16, 14, 20)",
+      "contentTitle": "21px",
+      "height": 768,
+      "scrollWidth": 1366,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "dark",
+      "title": "16px",
+      "width": 1366
+    },
+    {
+      "file": "dark-1366-open.png",
+      "panel": "open",
+      "background": "rgb(212, 167, 82)",
+      "body": "13px",
+      "color": "rgb(16, 14, 20)",
+      "contentTitle": "21px",
+      "height": 768,
+      "scrollWidth": 1366,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "dark",
+      "title": "16px",
+      "width": 1366
+    },
+    {
+      "file": "dark-1024-closed.png",
+      "panel": "closed",
+      "background": "rgb(212, 167, 82)",
+      "body": "13px",
+      "color": "rgb(16, 14, 20)",
+      "contentTitle": "21px",
+      "height": 768,
+      "scrollWidth": 1024,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "dark",
+      "title": "16px",
+      "width": 1024
+    },
+    {
+      "file": "dark-1024-open.png",
+      "panel": "open",
+      "background": "rgb(212, 167, 82)",
+      "body": "13px",
+      "color": "rgb(16, 14, 20)",
+      "contentTitle": "21px",
+      "height": 768,
+      "scrollWidth": 1024,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "dark",
+      "title": "16px",
+      "width": 1024
+    },
+    {
+      "file": "dark-900-closed.png",
+      "panel": "closed",
+      "background": "rgb(212, 167, 82)",
+      "body": "13px",
+      "color": "rgb(16, 14, 20)",
+      "contentTitle": "21px",
+      "height": 1000,
+      "scrollWidth": 900,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "dark",
+      "title": "16px",
+      "width": 900
+    },
+    {
+      "file": "dark-900-open.png",
+      "panel": "open",
+      "background": "rgb(212, 167, 82)",
+      "body": "13px",
+      "color": "rgb(16, 14, 20)",
+      "contentTitle": "21px",
+      "height": 1000,
+      "scrollWidth": 900,
+      "targets": [
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open Sales agreements "
+        },
+        {
+          "disabled": false,
+          "height": 44,
+          "text": "Open existing work"
+        }
+      ],
+      "theme": "dark",
+      "title": "16px",
+      "width": 900
+    }
+  ]
+}

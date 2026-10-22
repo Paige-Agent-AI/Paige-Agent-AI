@@ -48,7 +48,7 @@ source kinds and uncertain results, and uses original PAIGE shell/tokens/font.
 Those are mock interaction observations, not actual Chat/RLS/provider acceptance.
 
 Functional: the original source fails both new actor cases (2 FAIL /9 PASS);
-the corrected source passes70 cases across the pending-work, Game Plan and
+the final composed source passes60 cases across the pending-work, Game Plan and
 Executive owning suites. ESLint for both changed leaves and release-governance/
 whitespace checks pass. Hosted exact-head CI and release remain gates. These
 are source tests, not real actor/RLS acceptance. Visual: no new mounted interface in this slice.

@@ -260,7 +260,7 @@ old loaded work synchronously and cancel stale results. Existing unasserted
 callers and the original query/RLS/columns/count/filter/order/cap remain unchanged.
 The actor assertion never becomes backend identity or additional authority.
 
-Source counterfactual2 FAIL/9 PASS; corrected70 cases/three owning suites and
+Source counterfactual2 FAIL/9 PASS; final composed60 cases/three owning suites and
 targeted ESLint pass. No consumer opts in yet, and no new customer control,
 capability, provider, registry, store, approval or action is activated. Review,
 exact-head CI, release and genuine actor/RLS/customer proof remain owed. Source

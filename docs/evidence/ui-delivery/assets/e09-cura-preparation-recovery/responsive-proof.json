@@ -1,0 +1,638 @@
+[
+  {
+    "size": {
+      "width": 1536,
+      "height": 770
+    },
+    "state": "recorded",
+    "controls": [
+      {
+        "focus": true,
+        "rect": {
+          "h": 31.5,
+          "w": 137.52500915527344,
+          "x": 604.1500244140625,
+          "y": 175.9499969482422
+        }
+      }
+    ],
+    "focus": "Check original status",
+    "overflow": false,
+    "results": [
+      "Preparation recorded. Publishing and customer sharing are separate.See it in your workspaceReview CURA source"
+    ],
+    "sourceLinks": [
+      {
+        "href": "/solo/3855/clients/portal?view=knowledge&source=a2375000-0000-4000-8000-000000000006",
+        "label": "Review CURA source"
+      }
+    ]
+  },
+  {
+    "size": {
+      "width": 1536,
+      "height": 770
+    },
+    "state": "unknown",
+    "controls": [
+      {
+        "focus": true,
+        "rect": {
+          "h": 31.5,
+          "w": 137.52500915527344,
+          "x": 604.1500244140625,
+          "y": 175.9499969482422
+        }
+      }
+    ],
+    "focus": "Check original status",
+    "overflow": false,
+    "results": [
+      "Preparation outcome is still unconfirmed. Publishing and customer sharing are separate.See it in your workspaceReview CURA source"
+    ],
+    "sourceLinks": [
+      {
+        "href": "/solo/3855/clients/portal?view=knowledge&source=a2375000-0000-4000-8000-000000000006",
+        "label": "Review CURA source"
+      }
+    ]
+  },
+  {
+    "size": {
+      "width": 1536,
+      "height": 770
+    },
+    "state": "unverified",
+    "controls": [
+      {
+        "focus": true,
+        "rect": {
+          "h": 31.5,
+          "w": 137.52500915527344,
+          "x": 604.1500244140625,
+          "y": 175.9499969482422
+        }
+      }
+    ],
+    "focus": "Check original status",
+    "overflow": false,
+    "results": [
+      "The earlier result could not be verified here. Nothing was retried."
+    ],
+    "sourceLinks": []
+  },
+  {
+    "size": {
+      "width": 1536,
+      "height": 770
+    },
+    "state": "source-withheld",
+    "controls": [
+      {
+        "focus": true,
+        "rect": {
+          "h": 31.5,
+          "w": 137.52500915527344,
+          "x": 604.1500244140625,
+          "y": 175.9499969482422
+        }
+      }
+    ],
+    "focus": "Check original status",
+    "overflow": false,
+    "results": [
+      "Preparation recorded. Publishing and customer sharing are separate."
+    ],
+    "sourceLinks": []
+  },
+  {
+    "size": {
+      "width": 1366,
+      "height": 768
+    },
+    "state": "recorded",
+    "controls": [
+      {
+        "focus": true,
+        "rect": {
+          "h": 31.5,
+          "w": 137.52500915527344,
+          "x": 519.3500366210938,
+          "y": 175.9499969482422
+        }
+      }
+    ],
+    "focus": "Check original status",
+    "overflow": false,
+    "results": [
+      "Preparation recorded. Publishing and customer sharing are separate.See it in your workspaceReview CURA source"
+    ],
+    "sourceLinks": [
+      {
+        "href": "/solo/3855/clients/portal?view=knowledge&source=a2375000-0000-4000-8000-000000000006",
+        "label": "Review CURA source"
+      }
+    ]
+  },
+  {
+    "size": {
+      "width": 1366,
+      "height": 768
+    },
+    "state": "unknown",
+    "controls": [
+      {
+        "focus": true,
+        "rect": {
+          "h": 31.5,
+          "w": 137.52500915527344,
+          "x": 519.3500366210938,
+          "y": 175.9499969482422
+        }
+      }
+    ],
+    "focus": "Check original status",
+    "overflow": false,
+    "results": [
+      "Preparation outcome is still unconfirmed. Publishing and customer sharing are separate.See it in your workspaceReview CURA source"
+    ],
+    "sourceLinks": [
+      {
+        "href": "/solo/3855/clients/portal?view=knowledge&source=a2375000-0000-4000-8000-000000000006",
+        "label": "Review CURA source"
+      }
+    ]
+  },
+  {
+    "size": {
+      "width": 1366,
+      "height": 768
+    },
+    "state": "unverified",
+    "controls": [
+      {
+        "focus": true,
+        "rect": {
+          "h": 31.5,
+          "w": 137.52500915527344,
+          "x": 519.3500366210938,
+          "y": 175.9499969482422
+        }
+      }
+    ],
+    "focus": "Check original status",
+    "overflow": false,
+    "results": [
+      "The earlier result could not be verified here. Nothing was retried."
+    ],
+    "sourceLinks": []
+  },
+  {
+    "size": {
+      "width": 1366,
+      "height": 768
+    },
+    "state": "source-withheld",
+    "controls": [
+      {
+        "focus": true,
+        "rect": {
+          "h": 31.5,
+          "w": 137.52500915527344,
+          "x": 519.3500366210938,
+          "y": 175.9499969482422
+        }
+      }
+    ],
+    "focus": "Check original status",
+    "overflow": false,
+    "results": [
+      "Preparation recorded. Publishing and customer sharing are separate."
+    ],
+    "sourceLinks": []
+  },
+  {
+    "size": {
+      "width": 1024,
+      "height": 768
+    },
+    "state": "recorded",
+    "controls": [
+      {
+        "focus": true,
+        "rect": {
+          "h": 31.5,
+          "w": 137.52500915527344,
+          "x": 348.1499938964844,
+          "y": 175.9499969482422
+        }
+      }
+    ],
+    "focus": "Check original status",
+    "overflow": false,
+    "results": [
+      "Preparation recorded. Publishing and customer sharing are separate.See it in your workspaceReview CURA source"
+    ],
+    "sourceLinks": [
+      {
+        "href": "/solo/3855/clients/portal?view=knowledge&source=a2375000-0000-4000-8000-000000000006",
+        "label": "Review CURA source"
+      }
+    ]
+  },
+  {
+    "size": {
+      "width": 1024,
+      "height": 768
+    },
+    "state": "unknown",
+    "controls": [
+      {
+        "focus": true,
+        "rect": {
+          "h": 31.5,
+          "w": 137.52500915527344,
+          "x": 348.1499938964844,
+          "y": 175.9499969482422
+        }
+      }
+    ],
+    "focus": "Check original status",
+    "overflow": false,
+    "results": [
+      "Preparation outcome is still unconfirmed. Publishing and customer sharing are separate.See it in your workspaceReview CURA source"
+    ],
+    "sourceLinks": [
+      {
+        "href": "/solo/3855/clients/portal?view=knowledge&source=a2375000-0000-4000-8000-000000000006",
+        "label": "Review CURA source"
+      }
+    ]
+  },
+  {
+    "size": {
+      "width": 1024,
+      "height": 768
+    },
+    "state": "unverified",
+    "controls": [
+      {
+        "focus": true,
+        "rect": {
+          "h": 31.5,
+          "w": 137.52500915527344,
+          "x": 348.1499938964844,
+          "y": 175.9499969482422
+        }
+      }
+    ],
+    "focus": "Check original status",
+    "overflow": false,
+    "results": [
+      "The earlier result could not be verified here. Nothing was retried."
+    ],
+    "sourceLinks": []
+  },
+  {
+    "size": {
+      "width": 1024,
+      "height": 768
+    },
+    "state": "source-withheld",
+    "controls": [
+      {
+        "focus": true,
+        "rect": {
+          "h": 31.5,
+          "w": 137.52500915527344,
+          "x": 348.1499938964844,
+          "y": 175.9499969482422
+        }
+      }
+    ],
+    "focus": "Check original status",
+    "overflow": false,
+    "results": [
+      "Preparation recorded. Publishing and customer sharing are separate."
+    ],
+    "sourceLinks": []
+  },
+  {
+    "size": {
+      "width": 900,
+      "height": 1000
+    },
+    "state": "recorded",
+    "controls": [
+      {
+        "focus": true,
+        "rect": {
+          "h": 31.5,
+          "w": 137.52500915527344,
+          "x": 326.1499938964844,
+          "y": 175.9499969482422
+        }
+      }
+    ],
+    "focus": "Check original status",
+    "overflow": false,
+    "results": [
+      "Preparation recorded. Publishing and customer sharing are separate.See it in your workspaceReview CURA source"
+    ],
+    "sourceLinks": [
+      {
+        "href": "/solo/3855/clients/portal?view=knowledge&source=a2375000-0000-4000-8000-000000000006",
+        "label": "Review CURA source"
+      }
+    ]
+  },
+  {
+    "size": {
+      "width": 900,
+      "height": 1000
+    },
+    "state": "unknown",
+    "controls": [
+      {
+        "focus": true,
+        "rect": {
+          "h": 31.5,
+          "w": 137.52500915527344,
+          "x": 326.1499938964844,
+          "y": 175.9499969482422
+        }
+      }
+    ],
+    "focus": "Check original status",
+    "overflow": false,
+    "results": [
+      "Preparation outcome is still unconfirmed. Publishing and customer sharing are separate.See it in your workspaceReview CURA source"
+    ],
+    "sourceLinks": [
+      {
+        "href": "/solo/3855/clients/portal?view=knowledge&source=a2375000-0000-4000-8000-000000000006",
+        "label": "Review CURA source"
+      }
+    ]
+  },
+  {
+    "size": {
+      "width": 900,
+      "height": 1000
+    },
+    "state": "unverified",
+    "controls": [
+      {
+        "focus": true,
+        "rect": {
+          "h": 31.5,
+          "w": 137.52500915527344,
+          "x": 326.1499938964844,
+          "y": 175.9499969482422
+        }
+      }
+    ],
+    "focus": "Check original status",
+    "overflow": false,
+    "results": [
+      "The earlier result could not be verified here. Nothing was retried."
+    ],
+    "sourceLinks": []
+  },
+  {
+    "size": {
+      "width": 900,
+      "height": 1000
+    },
+    "state": "source-withheld",
+    "controls": [
+      {
+        "focus": true,
+        "rect": {
+          "h": 31.5,
+          "w": 137.52500915527344,
+          "x": 326.1499938964844,
+          "y": 175.9499969482422
+        }
+      }
+    ],
+    "focus": "Check original status",
+    "overflow": false,
+    "results": [
+      "Preparation recorded. Publishing and customer sharing are separate."
+    ],
+    "sourceLinks": []
+  },
+  {
+    "size": {
+      "width": 390,
+      "height": 844
+    },
+    "state": "recorded",
+    "controls": [
+      {
+        "focus": true,
+        "rect": {
+          "h": 31.5,
+          "w": 137.52500915527344,
+          "x": 56.650001525878906,
+          "y": 299.875
+        }
+      }
+    ],
+    "focus": "Check original status",
+    "overflow": false,
+    "results": [
+      "Preparation recorded. Publishing and customer sharing are separate.See it in your workspaceReview CURA source"
+    ],
+    "sourceLinks": [
+      {
+        "href": "/solo/3855/clients/portal?view=knowledge&source=a2375000-0000-4000-8000-000000000006",
+        "label": "Review CURA source"
+      }
+    ]
+  },
+  {
+    "size": {
+      "width": 390,
+      "height": 844
+    },
+    "state": "unknown",
+    "controls": [
+      {
+        "focus": true,
+        "rect": {
+          "h": 31.5,
+          "w": 137.52500915527344,
+          "x": 56.650001525878906,
+          "y": 286.2749938964844
+        }
+      }
+    ],
+    "focus": "Check original status",
+    "overflow": false,
+    "results": [
+      "Preparation outcome is still unconfirmed. Publishing and customer sharing are separate.See it in your workspaceReview CURA source"
+    ],
+    "sourceLinks": [
+      {
+        "href": "/solo/3855/clients/portal?view=knowledge&source=a2375000-0000-4000-8000-000000000006",
+        "label": "Review CURA source"
+      }
+    ]
+  },
+  {
+    "size": {
+      "width": 390,
+      "height": 844
+    },
+    "state": "unverified",
+    "controls": [
+      {
+        "focus": true,
+        "rect": {
+          "h": 31.5,
+          "w": 137.52500915527344,
+          "x": 56.650001525878906,
+          "y": 326.2749938964844
+        }
+      }
+    ],
+    "focus": "Check original status",
+    "overflow": false,
+    "results": [
+      "The earlier result could not be verified here. Nothing was retried."
+    ],
+    "sourceLinks": []
+  },
+  {
+    "size": {
+      "width": 390,
+      "height": 844
+    },
+    "state": "source-withheld",
+    "controls": [
+      {
+        "focus": true,
+        "rect": {
+          "h": 31.5,
+          "w": 137.52500915527344,
+          "x": 56.650001525878906,
+          "y": 326.2749938964844
+        }
+      }
+    ],
+    "focus": "Check original status",
+    "overflow": false,
+    "results": [
+      "Preparation recorded. Publishing and customer sharing are separate."
+    ],
+    "sourceLinks": []
+  },
+  {
+    "size": {
+      "width": 320,
+      "height": 740
+    },
+    "state": "recorded",
+    "controls": [
+      {
+        "focus": true,
+        "rect": {
+          "h": 31.5,
+          "w": 137.52500915527344,
+          "x": 56.650001525878906,
+          "y": 143.5
+        }
+      }
+    ],
+    "focus": "Check original status",
+    "overflow": false,
+    "results": [
+      "Preparation recorded. Publishing and customer sharing are separate.See it in your workspaceReview CURA source"
+    ],
+    "sourceLinks": [
+      {
+        "href": "/solo/3855/clients/portal?view=knowledge&source=a2375000-0000-4000-8000-000000000006",
+        "label": "Review CURA source"
+      }
+    ]
+  },
+  {
+    "size": {
+      "width": 320,
+      "height": 740
+    },
+    "state": "unknown",
+    "controls": [
+      {
+        "focus": true,
+        "rect": {
+          "h": 31.5,
+          "w": 137.52500915527344,
+          "x": 56.650001525878906,
+          "y": 143.5
+        }
+      }
+    ],
+    "focus": "Check original status",
+    "overflow": false,
+    "results": [
+      "Preparation outcome is still unconfirmed. Publishing and customer sharing are separate.See it in your workspaceReview CURA source"
+    ],
+    "sourceLinks": [
+      {
+        "href": "/solo/3855/clients/portal?view=knowledge&source=a2375000-0000-4000-8000-000000000006",
+        "label": "Review CURA source"
+      }
+    ]
+  },
+  {
+    "size": {
+      "width": 320,
+      "height": 740
+    },
+    "state": "unverified",
+    "controls": [
+      {
+        "focus": true,
+        "rect": {
+          "h": 31.5,
+          "w": 137.52500915527344,
+          "x": 56.650001525878906,
+          "y": 202.6999969482422
+        }
+      }
+    ],
+    "focus": "Check original status",
+    "overflow": false,
+    "results": [
+      "The earlier result could not be verified here. Nothing was retried."
+    ],
+    "sourceLinks": []
+  },
+  {
+    "size": {
+      "width": 320,
+      "height": 740
+    },
+    "state": "source-withheld",
+    "controls": [
+      {
+        "focus": true,
+        "rect": {
+          "h": 31.5,
+          "w": 137.52500915527344,
+          "x": 56.650001525878906,
+          "y": 198.6999969482422
+        }
+      }
+    ],
+    "focus": "Check original status",
+    "overflow": false,
+    "results": [
+      "Preparation recorded. Publishing and customer sharing are separate."
+    ],
+    "sourceLinks": []
+  }
+]

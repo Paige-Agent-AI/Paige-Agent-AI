@@ -1,0 +1,40 @@
+{
+  "recoverySequence": [
+    {
+      "state": "unverified",
+      "focus": "Check original status",
+      "mainWidth": 480,
+      "result": "The earlier result could not be verified here. Nothing was retried."
+    },
+    {
+      "state": "recorded",
+      "focus": "Check original status",
+      "mainWidth": 480,
+      "result": "Preparation recorded. Publishing and customer sharing are separate.See it in your workspaceReview CURA source"
+    },
+    {
+      "state": "completed",
+      "focus": "Check original status",
+      "mainWidth": 480,
+      "result": "Preparation completed. Publishing and customer sharing are separate.See it in your workspaceReview CURA source"
+    },
+    {
+      "state": "recorded",
+      "focus": "Check original status",
+      "mainWidth": 480,
+      "result": "Preparation recorded. Publishing and customer sharing are separate.See it in your workspaceReview CURA source"
+    }
+  ],
+  "switchCleared": {
+    "business": "Synthetic business B",
+    "links": 0,
+    "results": 0
+  },
+  "switchedSource": {
+    "focus": "Check original status",
+    "links": [
+      "/solo/3856/clients/portal?view=knowledge&source=a2375000-0000-4000-8000-000000000066"
+    ]
+  },
+  "proofBoundary": "Synthetic current-context UI clearing and route composition only. Native membership/authority proven separately; no production identity claim."
+}

@@ -82,11 +82,26 @@ source, retaining native SAVE/CAS/client/offer/commercial/template identity and
 one existing leave guard. Frozen/nontext source refuses; unknown result preserves
 read-only reviewed payload, current read is separate from acknowledgment, explicit
 retry never refreshes original CAS. Conclusive access loss retires private work.
-Native render20 cases/15 paths/22 pins/zero page errors and full217/eight suites
-PASS; unchanged original102 included. Native guard2526 and all exact release/
+Native render20 cases/16 paths/22 pins/zero page errors, final216/seven suites
+plus original vocabulary3 PASS; unchanged original102 included. Native history
+2524 is released/read back; guard2526 and all exact release/
 ordinary-role/provider/legal/full O1–O12/founder acceptance gates remain owed.
 No new writer/ledger/approval/runtime, Chat/Live or algorithm promotion.
 [Journey](../delivery/exp04-get-paid-deliver-journey.md).
+## EXP04 authoring release — 2026-10-21
+
+Native document authoring#2515 reviewed6ef6cd9bcf9dbb97b53153edffba0243a5a060bd →
+mergec647eceb3dd66f304b1662ccc66d2fa4d304639d, exact reviewed uniona8a9661b6.
+All10 applicable checks/two statuses pass, AUTHOR-REVIEW / LOWER ASSURANCE5607950900.
+Actual20 viewport/theme cases/22 paths and selected143/five suites pass;18 source
+pins unchanged. Webdpl_5cHXA4yMKYXGJbVdGn8Nqycj6dUT READY/exact, exact deployment
+versionc647eceb3-mvitkdra read back through Vercel; canonical doc-only descendant
+d873a1b7b-mvitnzwh serves actual native authoring chunk8105842a13. Own migration/
+Edge N/A, native120000/130000 applied prerequisites. Master4.0/receipt6329998318
+records exact proof. Genuine authoring/one-request recovery is a prerequisite,
+not full professional agreements or O1–O12 acceptance. Ordinary owner/staff/client,
+legal/provider/signature/payment/service and complete founder acceptance remain
+owed. No actual sends, financial/provider/Chat activation or customer announcement.
 
 ## EXP04 current delivery checkpoint — 2026-10-21
 

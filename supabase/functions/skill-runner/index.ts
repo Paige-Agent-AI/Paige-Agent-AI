@@ -34,6 +34,7 @@ import {
 } from "../_shared/paige-skill/email-approval.ts";
 import { confirmFingerprint } from "../_shared/confirm-fingerprint.ts";
 import { classifyBusinessVerifyResponse } from "../_shared/business-verify-outcome.ts";
+import { gamePlanContext, readGamePlanCompletion, recordedGamePlan } from "../_shared/paige-skill/client-game-plan.ts";
 import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses } from "../_shared/contact-methods.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -769,8 +770,8 @@ Deno.serve(async (req) => {
 
     try {
       // Dispatch. Non-bespoke slugs (and force_interpreter) flow through the generic S1b interpreter;
-      // the 4 shipped slugs stay on their bespoke handlers below — byte-identical (§58 by construction),
-      // since force_interpreter defaults false and only NON-bespoke slugs otherwise take this path.
+      // the 4 shipped slugs stay on their own bespoke handlers below (§58, no interpreter replacement).
+      // force_interpreter defaults false; only NON-bespoke slugs otherwise take this path.
       if (shouldUseInterpreter(skill.slug, body.force_interpreter)) {
         // §9/§59 — the acting tenant is the CALLER's, resolved server-side above, NEVER the contact's
         // tenant and NEVER body.tenant_id. interpretSkill already scopes its OWN contact lookup to this
@@ -893,41 +894,77 @@ Deno.serve(async (req) => {
         }
         case "build_game_plan": {
           const contact_id = body.contact_id;
-          if (!contact_id) throw new Error("contact_id required");
-          // §9 — scope the contact to the CALLER's resolved tenant. A cross-tenant contact_id returns
-          // nothing and is refused BEFORE any memory is read or written under another tenant's client.
-          // The contact's PRIMARY email and phone ride along as `email` / `phone`, read from its
-          // contact methods (the clients row holds no address).
-          const { data: contactRow } = await admin.from("clients").select(`*, ${CLIENT_CONTACT_METHODS_EMBED}`).eq("id", contact_id).eq("tenant_id", callerTenantId).maybeSingle();
-          const contact = withPrimaryAddresses(contactRow);
-          if (!contact) throw new Error("contact not found in your workspace");
-          // client_memory carries no tenant_id; the contact above is already proven to be the caller's,
-          // so its memory (keyed by client_id) is in-tenant by construction.
-          const { data: memory } = await admin.from("client_memory").select("*").eq("client_id", contact_id).order("created_at", { ascending: false }).limit(10);
-          stepsLog.push({ step: "context", memory_count: memory?.length ?? 0 });
-          {
-            const ai = await gatewayCompat("anthropic", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                model: "google/gemini-2.5-flash",
-                messages: [
-                  { role: "system", content: "You are Paige. Produce a personalized step-by-step game plan for this client. Use ACCEL/BUILD/FUND frameworks. Numbered steps, with owner + timeline per step. End with a 'next 7 days' checklist." },
-                  { role: "user", content: `Client: ${JSON.stringify(contact)}\n\nRecent memory:\n${JSON.stringify(memory)}` },
-                ],
-              }),
-            });
-            const aiData = await ai.json();
-            const plan = aiData?.choices?.[0]?.message?.content ?? "";
-            outputs = { game_plan: plan };
-            await admin.from("client_memory").insert({
-              client_id: contact_id,
-              memory_type: "game_plan",
-              content: plan,
-              metadata: { source: "skill:build_game_plan", run_id: run.id },
-            });
-            stepsLog.push({ step: "save_memory", ok: true });
+          if (!contact_id) throw new Error("Select the existing customer before preparing a game plan.");
+          // Original server-resolved business + CRM relationship, never a body tenant or email match.
+          // Do not send unrelated contact/financial/address fields to a service draft.
+          // Reuse authenticated PostgREST/RLS as the actual caller for private context.
+          // The service client remains the existing original-run recorder, not a read grant.
+          if (skillCaller.principal !== "person" || !skillCaller.userId) throw new Error("The customer draft needs an authorized signed-in business user.");
+          const caller = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY") ?? "", {
+            global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
+            auth: { persistSession: false, autoRefreshToken: false },
+          });
+          const businessAccess = async () => {
+            try {
+              const { data, error } = await caller.rpc("get_my_access");
+              return !error && !!data && (data.tier === "god" ? skillCaller.isApprovingAuthority
+                : ["tenant", "subaccount", "agency"].includes(data.tier) && data.account_id === callerTenantId);
+            } catch { return false; }
+          };
+          if (!await businessAccess()) throw new Error("This private business draft is not available to this account.");
+          const readClient = () => caller.from("clients").select("id,tenant_id,linked_user_id,first_name,last_name")
+            .eq("id", contact_id).eq("tenant_id", callerTenantId).maybeSingle();
+          let clientRead;
+          try { clientRead = await readClient(); } catch { throw new Error("The selected customer could not be verified in this workspace."); }
+          const { data: contact, error: contactError } = clientRead;
+          if (contactError || !contact) throw new Error("The selected customer could not be verified in this workspace.");
+          gamePlanContext({ tenantId: callerTenantId!, contactId: contact_id, client: contact, memory: [], inputs: {}, memoryAvailable: false });
+          const stillAuthorized = async () => {
+            if (req.signal.aborted) return false;
+            try {
+              const [scope, current, access] = await Promise.all([caller.rpc("current_user_tenant_id"), readClient(), businessAccess()]);
+              return access && !scope.error && scope.data === callerTenantId && !current.error && !!current.data
+                && current.data.id === contact_id && current.data.tenant_id === callerTenantId
+                && current.data.linked_user_id === contact.linked_user_id && !req.signal.aborted;
+            } catch { return false; }
+          };
+          let memory: unknown[] = [], memoryAvailable = !!contact.linked_user_id;
+          // No user is invented for an unlinked CRM contact. Existing linked-person Memory is
+          // read-only context; only active, confirmed facts in this exact business/relationship.
+          if (contact.linked_user_id) {
+            let read;
+            try { read = await caller.from("client_memory")
+              .select("id,client_id,tenant_id,client_user_id,memory_type,content,created_at,is_active,metadata")
+              .eq("client_id", contact_id).eq("tenant_id", callerTenantId)
+              .eq("client_user_id", contact.linked_user_id).eq("is_active", true)
+              .contains("metadata", { confirmation_state: "confirmed" })
+              .order("created_at", { ascending: false }).limit(10); }
+            catch { read = { data: null, error: true }; }
+            memoryAvailable = !read.error;
+            if (memoryAvailable && Array.isArray(read.data)) memory = read.data;
           }
+          const draft = gamePlanContext({ tenantId: callerTenantId!, contactId: contact_id,
+            client: contact, memory, inputs: body.inputs, memoryAvailable });
+          stepsLog.push({ step: "context", memory_count: draft.memoryCount, memory_available: memoryAvailable });
+          if (req.signal.aborted) throw new Error("The game-plan request was interrupted. No draft was saved.");
+          let ai: Awaited<ReturnType<typeof gatewayCompat>>;
+          try { ai = await gatewayCompat("anthropic", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ model: "google/gemini-2.5-flash", messages: draft.messages }),
+          }, { tenant_id: callerTenantId, working_context_tenant_id: callerTenantId,
+            agent_id: "skill-runner", job_kind: "client_game_plan", content_policy: "metadata_only" },
+          stillAuthorized); } catch { throw new Error("The game plan could not be prepared. No draft was saved."); }
+          if (!ai.ok) throw new Error("The game plan could not be prepared. No draft was saved.");
+          let result: unknown;
+          try { result = await ai.json(); } catch { throw new Error("The game plan could not be prepared. No draft was saved."); }
+          const plan = readGamePlanCompletion(result);
+          if (req.signal.aborted) throw new Error("The game-plan request was interrupted. No draft was saved.");
+          if (!await stillAuthorized()) throw new Error("Customer access changed or the request was interrupted. No draft was saved.");
+          outputs = { game_plan: plan };
+          // The original run below is the draft's durable home. Generating a recommendation
+          // does not silently publish/share it or turn it into a confirmed Memory fact.
+          stepsLog.push({ step: "prepare_draft", ok: true, memory_changed: false });
           break;
         }
         // NOTE: `draft_and_email_document` is NOT dispatched here. As the one EXTERNAL-SEND skill it is
@@ -946,7 +983,7 @@ Deno.serve(async (req) => {
     }
 
     const duration_ms = Date.now() - start;
-    await admin.from("paige_skill_runs")
+    const completion = admin.from("paige_skill_runs")
       .update({
         status: runStatus,
         steps_log: stepsLog,
@@ -956,6 +993,14 @@ Deno.serve(async (req) => {
         completed_at: new Date().toISOString(),
       })
       .eq("id", run.id);
+    if (skill.slug === "build_game_plan" && !shouldUseInterpreter(skill.slug, body.force_interpreter)) {
+      let acknowledged = false;
+      try { acknowledged = recordedGamePlan(await completion.select("id,status,outputs").maybeSingle(), { runId: run.id, status: runStatus, outputs }); }
+      catch { /* Lost acknowledgement is unknown, never a reason to repeat generation. */ }
+      if (!acknowledged) return new Response(JSON.stringify({ run_id: run.id, status: "outcome_unknown", outcome_unknown: true,
+        error: "The saved result could not be verified. Check this original run before starting another." }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    } else await completion;
 
     await admin.from("paige_skills")
       .update({

@@ -826,6 +826,38 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-22 — EXP04 original signer-preparation integrity prerequisite.**
+
+PR [#2554](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2554), reviewed
+`de275622f4d993b75da7a826193f25bcff80ee82`, merged
+`605a8c4bcdfb63c016689717947caf09f3296f83`. Actual parents
+`1e1073133f960a394d41f7f27b0c84560d33f3aa` + reviewed head; actual/preflight
+tree `d283f0221b6276a2b08a89feb2d9412a13b60f47` matches. All12 applicable
+exact-head checks and two statuses SUCCESS, inline threads0; review5610217639
+is **AUTHOR-REVIEW / LOWER ASSURANCE**. Normal production migration39739847779,
+lint119694151590/deploy119694340814 SUCCESS. Native240004 APPLIED; original
+six-argument add_agreement_signer body `f380cfa97f14e29c8b88721a76b9db4e`,
+postgres owner, VOLATILE/DEFINER, search_path public,pg_temp and original
+authenticated-only execute ACL independently verified. No history repair/backfill.
+Exact web `dpl_HMxLuMYHqkv8KYQVWYJBEm2K3UW7` READY/production/main;
+protected AND canonical version.json200 build
+`605a8c4bcdfb63c016689717947caf09f3296f83-mvj7pldd`, customerUpdate:null.
+Own Edge change NOT_APPLICABLE.
+[Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2554#issuecomment-6335238273).
+
+Functional: original parent is serialized before assigning default signer order;
+retained source cannot acquire a new party, and a real party addition advances the
+original reviewed version. Original normalized-email uniqueness, signature/defaults,
+authority, DTO, audit event and canonical agreement/signer records remain. Native44
+assertions/replay2/five participating sessions/three observed waits are source proof.
+Visual: no UI/layout/renderer change. Experiential: checked request recovery250004,
+reader260004, mounted professional recipient/field preparation and actual ordinary
+owner/staff/client/signing/provider acceptance remain separately owed. All O1-O12
+and one complete founder evaluation remain mandatory/incomplete. No real signer,
+token, consent, external send, charge, Chat admission or legal-sufficiency claim.
+Internal increment/no customer name or announcement. Forward correction preserves
+original documents and signed history; this factual closeout is not logged recursively.
+
 **2026-10-22 — EXP04 original commercial-presentation foundation released.**
 
 PR [#2550](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2550), reviewed

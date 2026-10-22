@@ -1,3 +1,4 @@
+import { Volume2 } from "lucide-react";
 import { PaigePresence } from "@/components/paige/live/PaigePresence";
 import { PaigeCommandMark } from "@/components/brand/PaigeCommandMark";
 import "./solo-onboarding-stage.css";
@@ -15,8 +16,10 @@ const LABEL: Record<OnboardingRecordState, string> = {
 };
 
 /** Presentation of existing request/readback events. No microphone, model,
- * save, timer-driven completion or second progress store is started here. */
-export function SoloOnboardingStage({ thinking, profile, onResumeProfile, profileOpen }: { thinking: boolean; profile: OnboardingProfileStatus | null; onResumeProfile?: () => void; profileOpen?: boolean }) {
+ * save, timer-driven completion or second progress store is started here.
+ * The voice entry only REQUESTS the existing Live Conversation surface; that
+ * surface owns permission, terms and every audio state. */
+export function SoloOnboardingStage({ thinking, profile, onResumeProfile, profileOpen, onTalkLive }: { thinking: boolean; profile: OnboardingProfileStatus | null; onResumeProfile?: () => void; profileOpen?: boolean; onTalkLive?: () => void }) {
   const state = profile?.state ?? "reading";
   const checking = state === "saving" || state === "reconciling" || state === "reading";
   const held = state === "unknown" || state === "unavailable";
@@ -28,6 +31,10 @@ export function SoloOnboardingStage({ thinking, profile, onResumeProfile, profil
     </div>
     <div className="sos-introduction">
       <div className="sos-state" role="status"><span aria-hidden="true" />{thinking && !checking && !held ? "PAIGE is preparing your response" : LABEL[state]}</div>
+      {onTalkLive && <div className="sos-voice-entry">
+        <button type="button" className="sos-voice" onClick={onTalkLive}><Volume2 aria-hidden />Talk with Paige live</button>
+        <p>She speaks and listens in this same conversation. Your browser asks for microphone permission first — or keep typing below; typing works the whole time.</p>
+      </div>}
       {onResumeProfile
         ? <button type="button" className="sos-progress sos-progress--link" data-empty={profile?.confirmedCount ? undefined : "true"} aria-expanded={profileOpen} onClick={onResumeProfile}>{profile && profile.confirmedCount > 0
             ? `${held ? "Last verified: " : ""}${profile.confirmedCount} confirmed business ${profile.confirmedCount === 1 ? "detail" : "details"} in Setup`

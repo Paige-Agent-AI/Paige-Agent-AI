@@ -46,3 +46,12 @@
 .sos-progress--link{appearance:none;background:none;border:0;padding:0;text-align:inherit;font:inherit;color:inherit;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}
 .sos-progress--link:hover,.sos-progress--link:focus-visible{text-decoration-style:solid}
 .sos-progress--link:focus-visible{outline:2px solid currentColor;outline-offset:3px;border-radius:2px}
+/* Voice-first entry (first run only): a request into the existing Live Conversation
+   surface, in the stage's existing token language. The Live surface owns permission,
+   terms and audio; this only makes the door visible where the conversation begins. */
+.sos-voice-entry{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;min-width:0}
+.sos-voice{display:inline-flex;align-items:center;gap:8px;appearance:none;border:1px solid hsl(var(--primary)/.45);background:hsl(var(--primary)/.12);color:hsl(var(--foreground));font:inherit;font-size:13px;font-weight:600;padding:8px 14px;border-radius:10px;cursor:pointer;flex:none}
+.sos-voice:hover{background:hsl(var(--primary)/.2)}
+.sos-voice:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+.sos-voice-entry p{font-size:12px;line-height:1.4;color:hsl(var(--muted-foreground));margin:0;max-width:52ch;min-width:0;flex:1 1 260px}
+@container(max-width:360px){.sos-voice-entry p{flex-basis:100%}}

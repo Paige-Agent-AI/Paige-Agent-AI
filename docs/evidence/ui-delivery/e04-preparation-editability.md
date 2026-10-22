@@ -57,3 +57,5 @@ The first repaired invocation reached all four retained-state cases but construc
 10. Display: existing consumers use the truthful same flag and existing read-only/error states. No signed/paid/completed status fabricated.
 
 No provider or Integration Capability Registry readiness changes. No new ALG-01 reconciliation engine, ALG-02 activation or ALG-13 score; bounded ALG-12 unavailable-state signal is source-backed only. Official overall algorithm and customer acceptance statuses are not promoted. All O1–O12 remain incomplete and mandatory.
+
+October22 parent continuation: composes exact checked-signer9ea531198 and actual released main605a8c4, preserving both complete original reader-consistency and checked-parent release sections after two documentation-only append conflicts. Own260004 SQL and native read proof remain byte-identical to af7c1f0; no reader authority/DTO/source change beyond reviewed four-reference editability repair. Predecessor240004 production verified;250004 and this260004 remain unapplied/ordered. Fresh exact-head review/CI/Preview and later actual production/customer acceptance are mandatory.

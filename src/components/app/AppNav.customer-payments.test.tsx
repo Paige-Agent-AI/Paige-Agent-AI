@@ -57,13 +57,12 @@ it("places Payments in Paperwork where the Playbook lists billing, once, named P
   expect(host.textContent + document.body.textContent).not.toContain("Billing");
 });
 
-it("is never force-injected: a Playbook without billing has no Payments entry", async () => {
+it("keeps core Payments reachable when the business catalog omits billing", async () => {
   await render();
-  expect(await desktopNavHrefs(host)).not.toContain("/app/billing");
+  expect((await desktopNavHrefs(host)).filter(h => h === "/app/billing")).toHaveLength(1);
 });
 
-it("respects the business's portal overlay hiding it", async () => {
-  f.modules = [{ key: "home", label: "Home" }, { key: "billing", label: "Billing" }];
+it("respects the business hiding core Payments even when its catalog omits billing", async () => {
   f.config = { modules: [{ key: "billing", visible: false }] };
   await render();
   expect(await desktopNavHrefs(host)).not.toContain("/app/billing");

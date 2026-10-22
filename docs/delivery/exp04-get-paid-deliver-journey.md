@@ -1826,3 +1826,21 @@ release. Real ordinary owner/staff/linked-client/recipient, two eligible SOLO co
 provider/actual-document/200percent/AT and final integrated founder acceptance remain
 separate. ALG01 has bounded native recovery/deduplication evidence only; official
 ALG01/02/12/13 statuses, Mind/Memory and capability catalogue readiness are unchanged.
+
+
+## October22 C7 original commercial-presentation reconciliation
+
+This same EXP04 lead selectively reuses#2192 exact179e52; no retired agent or whole historical stack is activated. REUSE original agreement/terms/invoice, actor floor, immutable native presentation and Collections schedule/conditions; EXTEND original v2 explicit service facts; REPAIR native type coercion; NEW current-main dormant integration only. Template options remain business configuration, not legal-review evidence. Original signed history is never backfilled.
+
+1. Owner outcome: review the exact supplied document and principal/deposit/installments/service facts before any separately approved signing request.
+2. Domain: Sales/Agreements within sole EXP04 ownership; E09 consumes only original authorized customer records, not these private native helpers.
+3. Harness/Gateway: no new executor. Following owner preparation must reuse existing Collections/Kit confirmation, immutable operation, bounded renderer and Rail receipt; that integration is not yet connected here.
+4. Spine: existing agreement.draft/list/status/send declarations remain PARTIAL. A commercial-presentation Chat/Live act is UNAVAILABLE; no new registered capability or admission is implied.
+5. Provider: no new connection/provider. Original private agreement storage/PDF renderer remains authoritative; hosted upload and exact-byte readback require separate proof before a signing/send claim.
+6. Risk: internal preparation only. No HIGH action-risk or approval channel is altered; consequential signing requests, sends, obligation effectuation and payment effects retain their actual gates.
+7. Durable identity: original agreement ID/version, source terms/invoice revisions, native frozen edit event and exact capsule. No parallel scheduler, job, ledger or audit store.
+8. Readback: exact native payload/body/document digests and original rows. Freeze/replay is not legal acceptance, effective economics, provider delivery or payment settlement.
+9. Recovery: lock exact source rows, same frozen payload yields one event, conflicting/stale scope or facts refuse. Actual unknown hosted upload/operation recovery belongs to the subsequent governed consumer.
+10. Visible result/Binding Ledger35: no new mount or status promotion. Following original Sales preparation/inspection and authorized E09 signing must show the source-backed reviewed document/receipt; actual customer traversal remains owed.
+
+Local54 native checks/replay2/two concurrent sessions/one observed wait and11 Deno tests/26 nested steps pass. Sequential exact-head review, normal hosted CI/Preview, deployment/readback and owner/staff/client/provider QA remain separately required. All O1–O12, full professional agreement fields/signing/effective obligations/finance/delivery and one complete founder evaluation remain mandatory and incomplete. Official ALG01P1/acceptance owed, ALG02UNVERIFIED, ALG12PARTIAL, ALG13UNVERIFIED are unchanged. [Bounded evidence](../evidence/ui-delivery/e04-commercial-presentation-native.md).

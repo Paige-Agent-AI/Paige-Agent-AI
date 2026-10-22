@@ -1,3 +1,44 @@
+## EXP09 relationship reads and Payments — bounded production closeout,2026-10-22
+
+PR2538 merged `5df82581f98d84328729d0e8ec26cbe844781d98` after all13 exact-head
+checks/two statuses and lower-assurance author review5608776578. Normal migration
+39718645740 persisted210009; actual function body3fe81a22912dd6292462b69a155a25f0,
+original metadata/ACL and unchanged resolver/brand hashes read back.28 native
+assertions passed. READY web/public build matched; receipt6332541466. This read
+lists original authorized public relationships; it does not grant or select one.
+
+PR2539 merged `7317d30ea7c4f758283e955ce7498576d1122d66` after9 applicable checks,
+two statuses and author review5608792745.77 combined read/frame/access tests PASS;
+READY web/public build matched; own SQL/Edge N/A, parent210009 verified.
+Receipt6332542068. Closed decoder, cancellation and actual Auth postcheck add no
+membership cache, identity store, execution path or mounted interface.
+
+PR2536 merged `6e9380cd5d717bf2c05ae8b8aa1f4a0f7f6ed028` after10 applicable checks,
+two statuses, source author review5608548568 and bounded unchanged-frontend
+finish/preservation review6330821329. Required audit recovered on the exact head
+after fresh identical-dependency endpoint success; no waiver or dependency edit.
+155 UI+39 original server checks PASS. Normal Edge39719731881/119630179830 SUCCESS;
+all513 served source files match exact main across original execute-approval167,
+Chat504, native-event-dispatch239 and invitation2034. Original JWT/in-function
+security settings retained. READY web/public build matched; receipt6332542652.
+The owner-hideable customer Payments menu and original server mirror agree;
+EXP04 remains the invoice/merchant/financial authority. No send or charge was
+exercised and no financial writer, provider activation or INT346 bypass added.
+
+These are internal bounded releases, not the completed customer Experience or a
+customer announcement. Source/readback, rendered quality, actual customer journey
+and founder acceptance remain separate. Original global linked-user uniqueness
+and recipient-bound acceptance currently refuse a second business; future-shape
+CI fixtures are rolled back. Original native request scope, browser frame/choice,
+all domain/Edge/private-history bindings and genuine revoked/interrupted/returning
+acceptance remain unfinished. The new choice has182 focused tests and bounded
+actual-component responsive/focus evidence, not authenticated production proof.
+The seven original client-success entries remain Limited; ALG01/12 bounded
+PARTIAL and ALG02/04/13 runtime UNVERIFIED. Original governed invitations/Teach
+and domain services remain authoritative; Layer C is used where appropriate,
+with no new orchestrator or Team Hub. One final integrated founder evaluation
+is still pending. Sole Master4.0 contains the exact release/deployment records.
+
 ## EXP09 draft, preparation recovery and catalogue — production closeout,2026-10-22
 
 PR2525 merged4e7767f399d8c7a255e55d69fa0b03cc21429f66 after exact-head

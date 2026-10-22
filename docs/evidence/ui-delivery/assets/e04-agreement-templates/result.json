@@ -1,0 +1,521 @@
+{
+  "proofClass": "actual Sales shell/components/editor/SDK; synthetic identity/network only",
+  "staticTransport": "native Vite compiled fixture",
+  "normalizedLFSourceSHA256": {
+    "src/solo/sales-ops.tsx": "ed25543370e39937099f153ef3f1a67c30a162b325745b00d3110ff940884c85",
+    "src/solo/SalesWorkspace.tsx": "7c76c109cf9262f5332c2e5964deb7911c1444ea756a378db2d0a91a9acfd91d",
+    "src/solo/sales-dialog.tsx": "3488ecfa25403acd81e668031499ff6c9abe31f657a023b000cf64ce3d9242ff",
+    "src/hooks/useBeforeUnloadGuard.ts": "5d0ddcf56f30a74550042c04428a3c03d1904d9156f4173a46884cd60749d4ec",
+    "src/solo/sales/AgreementPreparationWorkspace.tsx": "131154106844897722b25a239a15137b1297acdda66a29ea881dc4e84d2fa1ef",
+    "src/solo/sales/AgreementBodyEditor.tsx": "fbbda58c2a1f76924ed8232aa6cf0219768ba8a9c2563cacb5d8578e032ac315",
+    "src/solo/sales/agreementPreparationApi.ts": "870997df40bc9c7193ccf362e27409115c477b580e6a182ba1ad1ab4bf08eea8",
+    "src/solo/sales/agreementVocabulary.ts": "65997aa339d950aff13b8c607c4938b9a060340f75b7f43f397156fc0409a3d9",
+    "src/solo/sales/agreement-body-editor.css": "1d0f9cda84d9bc9e37e792e2d0228b011f78359c4fd4c9f734e389dbacf09767",
+    "src/solo/sales/agreement-preparation.css": "45c52c89ea5fd75537e24b89afe2716ea86d26fd50b371c0591a1a319fc5e48c",
+    "package.json": "651ef3965bc792e47b6c516efffea652b8bd86d9e80b97f3aa61d1b06a0ccd51",
+    "package-lock.json": "c39a38279fd973f7ab80c5f497053bf7ab4246790017cad26d70d133f6454177",
+    "scripts/live-drive/harness/sales-mount/agreement-authoring.tsx": "4136827093f1ed340313b19c81742ddf7ead519a043c22484375fa19e26e0b65",
+    "scripts/live-drive/harness/sales-mount/agreement-authoring-ports.ts": "d4beb58b1e5ad142fee41f9488d7979386acb18b310c4a8d94fece8376925af4",
+    "scripts/live-drive/harness/sales-mount/agreement-authoring-client.ts": "1838e8309cec8fd47f5bfa2608fbdde78acbf372c99ce7dc29a74c6652267e0b",
+    "scripts/live-drive/harness/sales-mount/vite.agreement-authoring.config.ts": "ae93d7029cd44a8fa590ea294394926d6535e5e4b4d0e02dee625877b356a7dd",
+    "scripts/live-drive/harness/sales-mount/agreement-authoring.html": "c66db7a6acdd821c8aa0051561d06d650522dad1151905733e40ee38bbc25be7",
+    "scripts/live-drive/agreement-authoring-drive.mjs": "5aae9e3c896a48fd867c57d18a19aaa22c6cbdf6f1a9f54ca48f3a7d35942009",
+    "src/solo/sales/AgreementTemplateWorkspace.tsx": "b4cf372fe8fb1516141cf9f9e74a686dd8c65fdbb6a4d48a49ab896373892610",
+    "src/solo/sales/agreementTemplateApi.ts": "09e7f342ee39241fe6437a5466ea4a304e6edf235b51625d26786a345750d4a8",
+    "src/solo/sales/agreement-templates.css": "854ddb8cfb234f68a738ac343f2c7af0255d6b3298d53091bffca75fc8278e61",
+    "src/solo/sales/AgreementWordingHistory.tsx": "8e6594e209d847cb8cbf75aa2410be5c7fce35475e088f1815901afebd8d3f95",
+    "src/solo/sales/agreementRevisionApi.ts": "67fd3212d16b77d1b06d7c4fa24aba101fedeb270d5c21d05d94d6131c02eed7",
+    "src/solo/sales/AgreementDraftCorrection.tsx": "929e12ae7ea4e55afb154b6367358cf8faf0ebc8cedd9c9ed438aa638c565ca1",
+    "src/solo/sales/agreementCorrectionApi.ts": "edc5b35118af71d5ec6f498c4117f7fb2416d10fd5e18085884de312bca65f79"
+  },
+  "sharedUIFontSHA256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05",
+  "frames": [
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "paige": "closed",
+      "fit": {
+        "viewport": 1536,
+        "document": 1536,
+        "pageScroll": 0,
+        "button": {
+          "x": 1220,
+          "y": 612.109375,
+          "width": 258,
+          "height": 44,
+          "top": 612.109375,
+          "right": 1478,
+          "bottom": 656.109375,
+          "left": 1220
+        }
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "paige": "open",
+      "fit": {
+        "viewport": 1536,
+        "document": 1536,
+        "pageScroll": 0,
+        "button": {
+          "x": 697.765625,
+          "y": 612.109375,
+          "width": 258,
+          "height": 44,
+          "top": 612.109375,
+          "right": 955.765625,
+          "bottom": 656.109375,
+          "left": 697.765625
+        }
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "paige": "closed",
+      "fit": {
+        "viewport": 1366,
+        "document": 1366,
+        "pageScroll": 0,
+        "button": {
+          "x": 1050,
+          "y": 610.109375,
+          "width": 258,
+          "height": 44,
+          "top": 610.109375,
+          "right": 1308,
+          "bottom": 654.109375,
+          "left": 1050
+        }
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "paige": "open",
+      "fit": {
+        "viewport": 1366,
+        "document": 1366,
+        "pageScroll": 0,
+        "button": {
+          "x": 585.5625,
+          "y": 610.109375,
+          "width": 258,
+          "height": 44,
+          "top": 610.109375,
+          "right": 843.5625,
+          "bottom": 654.109375,
+          "left": 585.5625
+        }
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "paige": "closed",
+      "fit": {
+        "viewport": 1024,
+        "document": 1024,
+        "pageScroll": 0,
+        "button": {
+          "x": 130,
+          "y": 609.75,
+          "width": 389,
+          "height": 44,
+          "top": 609.75,
+          "right": 519,
+          "bottom": 653.75,
+          "left": 130
+        }
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "paige": "open",
+      "fit": {
+        "viewport": 1024,
+        "document": 1024,
+        "pageScroll": 0,
+        "button": {
+          "x": 130,
+          "y": 609.75,
+          "width": 389,
+          "height": 44,
+          "top": 609.75,
+          "right": 519,
+          "bottom": 653.75,
+          "left": 130
+        }
+      },
+      "nativePaigeOverlay": true
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "paige": "closed",
+      "fit": {
+        "viewport": 900,
+        "document": 900,
+        "pageScroll": 0,
+        "button": {
+          "x": 130,
+          "y": 841.546875,
+          "width": 327,
+          "height": 44,
+          "top": 841.546875,
+          "right": 457,
+          "bottom": 885.546875,
+          "left": 130
+        }
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "paige": "open",
+      "fit": {
+        "viewport": 900,
+        "document": 900,
+        "pageScroll": 0,
+        "button": {
+          "x": 130,
+          "y": 841.546875,
+          "width": 327,
+          "height": 44,
+          "top": 841.546875,
+          "right": 457,
+          "bottom": 885.546875,
+          "left": 130
+        }
+      },
+      "nativePaigeOverlay": true
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "paige": "closed",
+      "fit": {
+        "viewport": 390,
+        "document": 390,
+        "pageScroll": 0,
+        "button": {
+          "x": 116,
+          "y": 696.171875,
+          "width": 230,
+          "height": 44,
+          "top": 696.171875,
+          "right": 346,
+          "bottom": 740.171875,
+          "left": 116
+        }
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "light",
+      "width": 320,
+      "height": 740,
+      "paige": "closed",
+      "fit": {
+        "viewport": 320,
+        "document": 320,
+        "pageScroll": 0,
+        "button": {
+          "x": 116,
+          "y": 564.453125,
+          "width": 160,
+          "height": 57.6875,
+          "top": 564.453125,
+          "right": 276,
+          "bottom": 622.140625,
+          "left": 116
+        }
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "paige": "closed",
+      "fit": {
+        "viewport": 1536,
+        "document": 1536,
+        "pageScroll": 0,
+        "button": {
+          "x": 1220,
+          "y": 612.109375,
+          "width": 258,
+          "height": 44,
+          "top": 612.109375,
+          "right": 1478,
+          "bottom": 656.109375,
+          "left": 1220
+        }
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "paige": "open",
+      "fit": {
+        "viewport": 1536,
+        "document": 1536,
+        "pageScroll": 0,
+        "button": {
+          "x": 697.765625,
+          "y": 612.109375,
+          "width": 258,
+          "height": 44,
+          "top": 612.109375,
+          "right": 955.765625,
+          "bottom": 656.109375,
+          "left": 697.765625
+        }
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "paige": "closed",
+      "fit": {
+        "viewport": 1366,
+        "document": 1366,
+        "pageScroll": 0,
+        "button": {
+          "x": 1050,
+          "y": 610.109375,
+          "width": 258,
+          "height": 44,
+          "top": 610.109375,
+          "right": 1308,
+          "bottom": 654.109375,
+          "left": 1050
+        }
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "paige": "open",
+      "fit": {
+        "viewport": 1366,
+        "document": 1366,
+        "pageScroll": 0,
+        "button": {
+          "x": 585.5625,
+          "y": 610.109375,
+          "width": 258,
+          "height": 44,
+          "top": 610.109375,
+          "right": 843.5625,
+          "bottom": 654.109375,
+          "left": 585.5625
+        }
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "paige": "closed",
+      "fit": {
+        "viewport": 1024,
+        "document": 1024,
+        "pageScroll": 0,
+        "button": {
+          "x": 130,
+          "y": 609.75,
+          "width": 389,
+          "height": 44,
+          "top": 609.75,
+          "right": 519,
+          "bottom": 653.75,
+          "left": 130
+        }
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "paige": "open",
+      "fit": {
+        "viewport": 1024,
+        "document": 1024,
+        "pageScroll": 0,
+        "button": {
+          "x": 130,
+          "y": 609.75,
+          "width": 389,
+          "height": 44,
+          "top": 609.75,
+          "right": 519,
+          "bottom": 653.75,
+          "left": 130
+        }
+      },
+      "nativePaigeOverlay": true
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "paige": "closed",
+      "fit": {
+        "viewport": 900,
+        "document": 900,
+        "pageScroll": 0,
+        "button": {
+          "x": 130,
+          "y": 841.546875,
+          "width": 327,
+          "height": 44,
+          "top": 841.546875,
+          "right": 457,
+          "bottom": 885.546875,
+          "left": 130
+        }
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "paige": "open",
+      "fit": {
+        "viewport": 900,
+        "document": 900,
+        "pageScroll": 0,
+        "button": {
+          "x": 130,
+          "y": 841.546875,
+          "width": 327,
+          "height": 44,
+          "top": 841.546875,
+          "right": 457,
+          "bottom": 885.546875,
+          "left": 130
+        }
+      },
+      "nativePaigeOverlay": true
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "paige": "closed",
+      "fit": {
+        "viewport": 390,
+        "document": 390,
+        "pageScroll": 0,
+        "button": {
+          "x": 116,
+          "y": 696.171875,
+          "width": 230,
+          "height": 44,
+          "top": 696.171875,
+          "right": 346,
+          "bottom": 740.171875,
+          "left": 116
+        }
+      },
+      "nativePaigeOverlay": false
+    },
+    {
+      "theme": "dark",
+      "width": 320,
+      "height": 740,
+      "paige": "closed",
+      "fit": {
+        "viewport": 320,
+        "document": 320,
+        "pageScroll": 0,
+        "button": {
+          "x": 116,
+          "y": 564.453125,
+          "width": 160,
+          "height": 57.6875,
+          "top": 564.453125,
+          "right": 276,
+          "bottom": 622.140625,
+          "left": 116
+        }
+      },
+      "nativePaigeOverlay": false
+    }
+  ],
+  "behavior": [
+    "actual Sales library/editor/native SDK mounting",
+    "required title focus",
+    "exact native wording/options receipt and original version navigation",
+    "actual client is required, never invented",
+    "same original template ID/body into original agreement writer",
+    "same agreement reload and source-record navigation",
+    "new retained version preserves old original words and source identity",
+    "earlier source remains inspectable and inactive use withheld",
+    "readonly unknown proposal and original request read",
+    "explicit same-UUID same-payload retry",
+    "interrupted recovery releases read lock and discards stale authorized response",
+    "lost acknowledgment recovers original stored words without another create",
+    "stale source remains readonly and cannot overwrite",
+    "actual canonical leave dialog preserves or discards scoped proposal",
+    "unknown authority hides/restores RAM, conclusive native refusal retires private words",
+    "native refusal releases the pending-save lock and preserves a usable canonical exit",
+    "business switch retires selection and blocks foreign request read"
+  ],
+  "errors": [],
+  "blocked": [
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com"
+  ],
+  "canonicalRecords": 1,
+  "authenticated": "UNVERIFIED",
+  "providers": "NOT_EXERCISED"
+}

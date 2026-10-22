@@ -64,4 +64,24 @@
 .e04-wording-picker { display:grid; gap:8px; min-width:0; font-size:13px; }
 .e04-preparation .e04-wording-picker select { min-width:0; width:100%; min-height:44px; border:1px solid var(--pg-line-strong); border-radius:8px; background:var(--pg-surface); color:var(--pg-ink); padding:9px 12px; }
 .e04-wording-picker span { color:var(--pg-ink-2); font-size:12px; }
+.e04-signer-main { min-width:0; display:grid; gap:24px; }
+.e04-signer-heading { display:flex; gap:14px; align-items:center; margin:16px 0 0; }
+.e04-signer-heading p { margin-top:4px; font-size:13px; }
+.e04-signer-heading h3:focus { outline:none; }
+.e04-signer-mark { display:grid; place-items:center; flex:none; width:44px; height:44px; border:1px solid var(--pg-line-strong); border-radius:8px; color:var(--pg-violet); background:var(--pg-surface); }
+.e04-signer-form,.e04-signer-roster { min-width:0; display:grid; gap:16px; padding:24px; border:1px solid var(--pg-line); border-radius:13px; background:var(--pg-surface); }
+.e04-signer-main h4 { margin:0; font:600 15px/1.5 var(--pg-font-ui); }
+.e04-signer-form .e04-preparation-form-row { margin:0; grid-template-columns:repeat(2,minmax(0,1fr)); }
+.e04-signer-roster ol { list-style:none; display:grid; gap:16px; padding:0; margin:0; }
+.e04-signer-roster li { display:flex; align-items:start; gap:14px; min-width:0; }
+.e04-signer-position { flex:none; display:grid; place-items:center; min-width:32px; height:32px; border:1px solid var(--pg-line-strong); border-radius:50%; background:var(--pg-raised); font:500 13px/1 var(--pg-font-ui); }
+.e04-signer-roster li>div { min-width:0; display:grid; gap:3px; overflow-wrap:anywhere; }
+.e04-signer-roster strong { font-size:14px; font-weight:600; }
+.e04-signer-roster li>div>span { font-size:13px; color:var(--pg-ink-2); }
+.e04-signer-roster small { font-size:12px; color:var(--pg-muted); }
+.e04-signer-actions { display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
+.e04-signer-actions>p { display:flex; align-items:center; gap:8px; font-size:13px; }
+.e04-preparation>.so-discard { position:fixed; inset:50% auto auto 50%; transform:translate(-50%,-50%); z-index:200; width:min(460px,calc(100vw - 32px)); max-height:calc(100dvh - 32px); overflow:auto; border:1px solid var(--pg-line-strong); border-radius:13px; background:var(--pg-surface); color:var(--pg-ink); padding:24px; box-shadow:0 0 0 100vmax color-mix(in srgb,var(--pg-ink) 25%,transparent); }
+.e04-preparation>.so-discard .btn { min-height:44px; }
+@media(max-width:600px) { .e04-signer-form,.e04-signer-roster { padding:18px; } .e04-signer-form .e04-preparation-form-row { grid-template-columns:minmax(0,1fr); } .e04-signer-heading { align-items:start; } }
 @media(max-width:1100px) { .e04-wording-history .e04-preparation-context { order:-1; } }

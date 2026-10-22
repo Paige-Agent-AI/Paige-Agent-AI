@@ -1,0 +1,92 @@
+# EXP04 original agreement signer preparation and request recovery
+
+October22 current composition includes templatecc900b6ed and actual main2f4b6dee,
+including released native22-26 and the original upload correction. Existing driver
+retains recipient/template/upload modes; three single-line declarations/pins/output
+conflicts were combined without replacing a mode. No owning recipient/API/workspace
+source changed. Rebuilt actual source flow20 cases/16 paths/28 exact pins/zero page
+errors; fresh report and screenshots reflect this composed graph. Existing237 cases
+remain unchanged-source evidence, not a newly invented unit run. Current parent
+release, final-head review/CI/web/source readback and actual owner/staff/client/provider
+acceptance remain separately required. Jurisdiction/reviewer/review options are
+supplied-wording configuration, no completed legal review or infrastructure counsel gate.
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: original twelve-outcome journey and the orchestration contract below retain owner outcome, source/authority, native execution, receipt, reload and recoverable exits.
+PAIGE_UI_DESIGN: PASS: installed original five-module project route, shared SOLO Sales Operate tokens/components, original workspace and single Sales leave guard; no replacement design system or Portal UI.
+MATERIAL_FLOW_CHANGE: YES: an authorized owner prepares original agreement recipients, roles and sequential positions, with source CAS, exact native receipt, same-request retry and read-only reload recovery.
+FLOW_PROTOTYPE: PASS: existing full native-shell preparation prototype275be12415239d4ecdb66bec0894146ec9fe5c64 includes recipient configuration;20 responsive/theme frames/13 paths, selected by the existing lead under October21 routine UX authority. Illustrative PDF fields in that prototype are not activated by this increment.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: original authorized agreement authors inspect existing recipients and record the correct new signer against the same client and reviewed document version.
+VISUAL_DIRECTION: PASS: native editorial agreement context, ordered recipient roster, one primary Save signer action, secondary source/recovery context, original typography/tokens and responsive host scroll. No decorative business metrics.
+AUTOMATED_EVIDENCE: PASS:237 tests/nine integrated agreement suites, including strict closed receipt binding, exact source/time/client, duplicate events, uncertainty/retry/reload, stale source, native authority loss, single leave guard, retained-location refusal and distinct-editor protection. Native producer#2557 separately proves119 assertions/replay twice; these are not customer acceptance.
+STATIC_EVIDENCE: PASS: final source type ratchet baseline10/current6, baseline unchanged; scoped ESLint0errors/two incumbent warnings and no new hook-dependency warning. BindingLedger35 and Gold guards pass. Exact-head hosted gates remain separately required. Impeccable4.1.0 detector exits0; the new10px-radius advisory was corrected to the existing8px control scale, final scoped invocation reports no finding.
+RENDERED_EVIDENCE: PASS: actual SalesWorkspace/SalesOps/TenantCommandCenterShell/SDK compiled source,20 viewport/theme cases/16 interaction paths/zero page errors,28 normalized-LF owning source hashes and original font hash. assets/e04-agreement-recipients/result.json records every source pin, native scroll/action bounds and uncovered first keyboard focus. Actual images cover both themes,1536/1366/1024/900,390/320, receipt, unknown request, reload, refusal and desktop/narrow leave choices.
+BEHAVIORAL_EVIDENCE: PASS: same original document/client/version, actual native receipt before refreshing canonical signer state, distinct historical pending creation and current signature progress, locked unknown payload, identical UUID/digest retry, read-only reload recovery without creation, absent receipt not cancellation, held-read interruption, stale/duplicate refusal, usable refusal recovery, original leave dialog/focus and private business retirement.
+AUTHENTICATED_RUNTIME: UNVERIFIED: local browser identity/network ports are synthetic. Ordinary owner/staff/linked external-client JWT, two legitimate SOLO cohorts, actual native write/read/reload, signature/provider/payment/service and complete founder acceptance remain owed. No new account or business created.
+KEYBOARD_FOCUS: PASS: all20 source-render cases assert initial name-field focus is uncovered by native navigation; missing required name/email/order focus and original leave-dialog keyboard trap/Escape verified. Desktop and320px leave dialog fit without clipping.
+ZOOM_REFLOW: PASS: actual320/390 CSS-pixel reflow, primary action reachable, document fits viewport and window scroll stays0 under original Sales scroll owner. Actual browser zoom and assistive-technology traversal remain unverified.
+REDUCED_MOTION: PASS: browser preference reduce, original spinner respects it, no new motion or animation channel.
+STATE_COVERAGE: PASS: loading, empty/current recipients, editing, required fields, saving, exact acknowledgment/current read, unknown/readonly retry, absent recovery, interrupted recovery, stale source, duplicate refusal, authority denial, recoverable original request and tenant retirement.
+TRUTHFUL_STATE_LABELS: PASS: preparing a signer sends no email, collects no consent/signature/payment and creates no Portal entitlement. Original request receipt records historical preparation; current signer status comes from a fresh original read. No completed service or legal-review claim.
+SOLO_UI: YES: original Sales Terms & Agreements shared implementation for all eligible current/future SOLO accounts, with normal native authority/configuration differences.
+UNVERIFIED: consumer merge/deployment/readback, native prerequisites#2545/#2554/#2557, actual owner/staff/client/provider QA and the complete twelve-outcome Experience. Editing/removing recipients, assigned document fields, import/preview, governed sends, exact signed economics and full lifecycle remain separate mandatory work.
+
+SOLO_1536X770_PAIGE_CLOSED: PASS: assets/e04-agreement-recipients/1536-770-light-closed.png and dark counterpart; native ordered roster, visible keyboard entry and reachable save.
+SOLO_1536X770_PAIGE_OPEN: PASS: assets/e04-agreement-recipients/1536-770-light-open.png and dark counterpart; native dock preserves exact draft.
+SOLO_1366X768_PAIGE_CLOSED: PASS: assets/e04-agreement-recipients/1366-768-light-closed.png and dark counterpart; recipient and agreement context hierarchy inspected.
+SOLO_1366X768_PAIGE_OPEN: PASS: assets/e04-agreement-recipients/1366-768-light-open.png and dark counterpart; shared dock remains the conversation surface.
+SOLO_1024X768_PAIGE_CLOSED: PASS: assets/e04-agreement-recipients/1024-768-light-closed.png and dark counterpart; native host scroll and keyboard/action bounds verified.
+SOLO_1024X768_PAIGE_OPEN: PASS: assets/e04-agreement-recipients/1024-768-light-open.png and dark counterpart; existing overlay explicitly folded for operation, reopened for capture, then folded to verify retained signer values. No click-through claim.
+SOLO_900X1000_PAIGE_CLOSED: PASS: assets/e04-agreement-recipients/900-1000-light-closed.png and dark counterpart; original narrow composition retained.
+SOLO_900X1000_PAIGE_OPEN: PASS: assets/e04-agreement-recipients/900-1000-light-open.png and dark counterpart; existing overlay folded for operation, reopened for capture, then folded to verify original field values.
+
+OWNER_INTENT: October21 professional Agreements and orchestration directives, all twelve EXP04 outcomes; owner paralegal clarification permits optional wording-review infrastructure without an engineering-wide counsel gate.
+MUST_PRESERVE: original client/agreement/source versions, native signer/order/role permissions, immutable audit, truthful attribution, E4-S3, original Sales leave protection and native document/signature/payment gates.
+MUST_NOT_HAPPEN: duplicate unknown requests, silent intent/source rebasing, private signer payload in browser persistence/URL/logs, fabricated send/consent/signature/payment, alternate approval/receipt/ledger/runtime or Portal authority.
+ACCEPTANCE_CRITERIA: ordinary authorized owner records correct recipients on an editable original, verifies receipt and current status, recovers the same interrupted request after reload and safely handles stale/forbidden work. Actual production-role proof remains owed.
+MOTION_PURPOSE: NONE: original reduced-motion-safe waiting indication only.
+PROTECTED_SEAMS: original native author floor and expected client/version/timestamp, signer UUID and original edited-event receipt; same-request advisory lock and post-wait permission revalidation; original scoped Sales leave guard; original Portal/signing/payment/Communications/Chat holds remain controlling.
+
+INTERNAL_BUILD_IDENTITY: branch=codex/e04-agreement-recipient-preparation; product_sha=16c9c56e856a602e9897ed0ac8d814da1951190b; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-agreement-recipients.md
+RELEASE_CHANNEL: development: actual source render and bounded API/native prerequisite proof, no production consumer or authenticated outcome claimed.
+RELEASE_CLASSIFICATION: internal-only: bounded original Agreements increment; full professional Experience is incomplete.
+CUSTOMER_RELEASE_IDENTITY: none: no finished Experience or founder acceptance.
+RELEASE_NOTE_REQUIRED: no: internal increment, no customer notification authority invoked.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: native prerequisites and consumer release/readback, actual ordinary-role use and full commercial/signing/provider/delivery acceptance. Checked signer Chat/Live execution UNAVAILABLE; existing agreement capabilities remain PARTIAL.
+RELEASE_RECOVERY: position=reviewed forward correction preserving original agreement/signer/event and unknown-request identity; reference=docs/delivery/exp04-get-paid-deliver-journey.md; never silently replace an original request or rewrite signed history.
+
+## Scope, review and original orchestration contract
+
+REUSE original agreement/signer/event store and permissions, native checked writer and recovery, original bounded sanitized SDK RPC transport, same Sales workspace and leave guard. EXTEND recipient/source-aware native consumer and opaque query navigation. REPAIR two actual rendered recovery failures in the original guard/controller; NEW closed consumer boundary only, no independent executor.
+
+1. Event/outcome: owner deliberately records a signer on the reviewed original agreement; this is internal preparation.
+2. Surface/domain: Sales Terms & Agreements, sole EXP04/Agreements ownership. E09 consumes original customer-authorized signing records, not this private author form.
+3. Original record/Spine: paige_agreements, paige_agreement_signers and immutable paige_agreement_events. Checked preparation has no registered model act: UNAVAILABLE in Chat/Live. Existing agreement.draft/list/status/send declarations are not promoted.
+4. Harness/LayerC: legitimate original manual native author path; no commercial ActionAdapter or background event dispatcher is invented. Existing Spine/Trust/Harness/LayerC remain required for later governed conversational consequential actions.
+5. Authorization: current authenticated author/business, original client/version/exact microsecond timestamp, same signer identity, native actor-bound receipt and post-wait authority check. Query metadata is an intent fence, never authority.
+6. Risk/approval: native internal preparation preserves original add-signer human-author permission. No new model MUTATION_VERB/risk decision is registered. Signature requests, obligations, communications and payments retain original approval and restricted-effect gates.
+7. Execution/receipt: prepare_agreement_signer uses the original private signer writer, one original signer PK, source revision and edited event. This is the native domain receipt, not a new Rail or execution store; no new governed Chat/Rail act is claimed.
+8. Reconciliation/idempotency: replay requires exact original intent and actor, UI retries the same frozen command/UUID, recovery is read-only and returns original receipt or unconfirmed. Canonical current signer state is freshly read and distinct from creation state.
+9. Refusal/recovery: expired UI waits never imply rollback; stale source/unique recipient refusals are distinct. Authority loss hides/retires private work and ignores late responses. Retained opaque recovery has a usable original-record action; no automatic replacement signer.
+10. Customer result: original roster/order/role, inspectable preparation event/version, current progress and explicit uncertainty/errors, reload under the original business. Provider delivery, signatures and paid/service completion remain separate.
+
+Original Integration Capability Registry native signing/Communications/Stripe readiness is unchanged; this consumer introduces no provider and confers no provider authority. Binding Ledger sales.department retains PROOF_OWED, all35 rows preserved. No duplicate registry, scheduling, approval or audit stream.
+
+## Material findings and finish review
+
+The first actual rendered20-frame run failed because native Navigation API intercepted the internal recovery-reference update. The repair allows only two UUID query keys on the SAME document/origin/path/hash/other query; dirty/busy/beforeunload and every distinct editor remain active. Invalid, changed-document, private-payload, intercepted and aborted navigation refuse before native creation. No global bypass or false saved receipt is introduced.
+
+The second genuine rendered failure retained an opaque reference after native refusal but offered no recovery action on the current record. The repaired view provides original-request recovery, keeps unknown work unavailable for a fresh signer, and retains its original metadata. The existing absolute leave panel also clipped under shell chrome; its bounded native view now fits desktop/320px with the same original dialog/keyboard behavior. Initial logs e04-recipient-rendered-source.log and e04-recipient-rendered-recovery.log preserve failures; final e04-recipient-final-overlay-rendered.log passes. Local diagnostic failure images are retained outside the final accepted frame set.
+
+Sequential finish review uses the installed [Impeccable](https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md) direction/craft/harden/adapt/clarify checks and actual desktop/light, narrow/dark and desktop/narrow dialog images. New dependency warnings were repaired without suppressions; one radius advisory was corrected to native8px. Final detector exits0, ESLint retains only the original Sales existing-effect and mixed-export warnings. No material bounded-interface finding remains. Shared stacked Sales navigation is preserved; joined authenticated shell/cohort, browser zoom and assistive-technology proof remain owed. This is AUTHOR-REVIEW / LOWER ASSURANCE under October15 and the owner's no-other-agent instruction, never a non-author review or finished premium Experience claim.
+
+## Algorithm support and remaining destination
+
+ALG-01: bounded native duplicate/retry/receipt reconciliation uses original source/event/signers;119 local producer assertions and this consumer's same-ID/native-receipt paths are implementation evidence. Official overall production acceptance remains owed.
+ALG-02: no signer-preparation result activates onboarding or completed engagement; original signed/effective obligation and Operations progression remains incomplete/UNVERIFIED.
+ALG-12: source-backed refusal/timeout/unknown/permission signals drive truthful recovery states here; this is bounded PARTIAL behavior, not complete platform exception acceptance.
+ALG-13: no new recommendation score or algorithm is invented. Static source-backed next actions remain separate from executed work and full contextual recommendation evidence is UNVERIFIED.
+
+Actual document import/preview/assigned fields, signer correction/reordering/removal, retained signing content/consent, governed send/reminders, signed-to-effective economics, obligation/invoice/payment reconciliation, onboarding/delivery/client approval and final completion/self-service remain mandatory. No O1–O12 outcome or founder acceptance is closed by this increment.
+
+October22 source continuation: actual parent template6ad4ab09e and main172013d89 retained after two documentation-only insertions; complete recipient and original release/native blocks preserved. Native250004/260004 are actually applied/source/ACL/web verified (receipts6336227514/6336228732), no longer pending prerequisites. All28 rendered source pins remain byte-identical; previous237 cases/nine suites/20 frames/16 paths are source-only proof for those identical bytes. Parent template and this head still require actual release/readback and current exact-head CI/review; actual ordinary-role/provider/full Experience/founder acceptance remains owed.

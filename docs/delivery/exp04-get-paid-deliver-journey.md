@@ -1,49 +1,27 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
-## October22 exact PDF and assigned-field preparation — pre-edit contract
+## October22 actual template consumer — bounded integration contract
 
-This is the next original-engine foundation, not a second signing implementation.
-Studio versions require marketing/session lineage; marketing draft history is
-truncated prose, and agreement draft revisions retain wording/source only. None
-binds the exact retained PDF to assigned signer fields. Existing C7 source command
-does not yet establish approval of that PDF/map. It remains unactivated.
+Before mounting: preserve selected native-shell prototype275be1241 and native
+foundation#2545. Same original Sales Terms & Agreements query navigation → scoped
+list/read → supplied-wording editor/options → exact UUID native acknowledgment or
+readonly unknown/recovery/conflict → retained version → original real-client
+agreement preparation. REUSE existing rich editor, per-instance Sales exit guard
+from prerequisite#2532, original RPC boundary, native library/source versions and
+agreement CREATE. No private wording browser cache, new ledger/approval/runtime
+or Portal UI. Captured command/source time never silently rebases.
 
-1. Outcome: prepare the exact document and signature/initial/date/text/checkbox
-   placements for original authorized parties; identify missing or overlapping
-   fields before a later governed signing request.
-2. Owner: EXP04 original Sales/Agreements. REUSE native document/parser/checksum,
-   original agreement/customer/signer versions; EXTEND pure preparation validation.
-   No Portal/Files/Storage/Operations review source is edited.
-3. Harness/Gateway: ordinary internal preparation is a legitimate native domain
-   path. Later external send uses the existing governed approval/receipt path;
-   this helper neither executes nor creates another confirmation channel.
-4. Spine: existing agreement.* remains PARTIAL. Exact-document field preparation
-   Chat/Live execution is UNAVAILABLE; this source registers/activates no action.
-5. Provider: existing pdf-lib1.17.1 and native private document checksum/parser.
-   No new dependency, renderer, storage client, connection, provider or spend.
-6. Authority/risk: trusted original record must be resolved by the eventual
-   authenticated domain boundary. A pure parser/digest is not authorization,
-   signature, consent, high/confirm approval or legal sufficiency.
-7. Identity: exact original agreement/tenant/customer/body version/source timestamp,
-   original signer IDs/roles/order, retained PDF digest/length/actual page geometry
-   and assigned map. No new table, job, scheduler, ledger or event store here.
-8. Readback: inspect actual immutable bytes with the native parser/checksum before
-   deriving geometry; bind the complete map/source in a deterministic digest.
-   That digest is preparation identity, never an action or acceptance receipt.
-9. Visible state/Binding35: no mounted change or readiness promotion. Draft maps
-   may expose actionable missing-signature/overlap issues; no signing-ready claim
-   from unsupported input, absent fields or a stale source/document/signer map.
-10. Proof owed: actual PDF geometry/rotation/crop/byte-mutation and strict source,
-    signer/field/bounds/order negatives; exact-head review/CI. Native persistence,
-    actual preview/keyboard placement, exact document approval, signing/sealing,
-    Portal consumption and owner/staff/client/provider/founder acceptance follow
-    in bounded releases. All O1-O12 remain mandatory and incomplete.
-
-The initial slice adds dormant modules beside the original document engine; it
-does not edit the deployed document.ts or redirect existing inspector/send/seal
-callers. This narrows the proposed lease and avoids an unnecessary shared Edge
-deployment. Jurisdiction/requested-wording-review/reviewer options stay optional
-business configuration; the infrastructure supplies no clauses or completed review.
+Owner/admin/current actor and original business gates cover every consumer/read;
+unknown role hides RAM, conclusive refusal retires it, async epochs discard late
+results. Native domain writers revalidate authoritative scope. Optional requested
+wording review is source configuration, never completed review or legal sufficiency.
+Active prepared text sources alone hand off into a new agreement; actual client
+is required. A later agreement record links back to its retained source. Native
+manual preparation remains legitimate; template-specific Chat/Live is UNAVAILABLE,
+agreement.* PARTIAL, sales.department PROOF_OWED, no LayerC act/algorithm promotion.
+Actual owning UI/SDK route proof, keyboard/focus/narrow/reload/source guards, exact
+head review/CI/normal release/readback and ordinary-role acceptance remain distinct.
+No sends/signatures/charges/automatic onboarding or business effects from preview.
 
 ## October22 template foundation and consumer checkpoint
 
@@ -108,6 +86,7 @@ Own unapplied successor is forward190000 after yielding provisional180000 to
 Portal request-scope coordination; actual E02 170000 and E04 160000 are released.
 Re-ground the actual frontier and current reservations before release. No other agent is
 assigned and no shared Chat/C0b/Portal/Operations file is leased here.
+
 
 ## October21 original agreement correction — integration checkpoint
 
@@ -1873,9 +1852,102 @@ separate. ALG01 has bounded native recovery/deduplication evidence only; officia
 ALG01/02/12/13 statuses, Mind/Memory and capability catalogue readiness are unchanged.
 
 
+October22 template consumer composition checkpoint: existing#2549 now contains reviewed nativeb346fe6d0/220004 and correctionee745f01 plus released main6e9380cd without changing any of25 rendered owning source files. Earlier190000/1509 references are historical proposals; native migration remains production-unapplied pending full CI/release. Both independent Shipped Log blocks preserved, no shared UI source or another agent assigned. Native Preview was safely rebuilt only within the verified empty original development PR integration; actual production/ordinary-role/provider/full Experience acceptance remains owed.
+
+
+## October22 original recipient preparation consumer
+
+Same E04 lead, original source boundary. The owner can inspect current ordered
+recipients, enter one signer/role/position and deliberately save against the exact
+client, agreement version and microsecond timestamp. The new consumer calls only
+original checked prepare_agreement_signer and actor-bound recovery from#2557;
+legacy unchecked add_agreement_signer is not adopted. Same opaque signer UUID and
+frozen command survive uncertain retry; reload uses only original business/
+agreement/request identities. A native creation receipt does not relabel the
+current signing state. Preparing a party sends no message, records no consent or
+signature, and authorizes no obligation or payment.
+
+Existing Spine declarations remain agreement.draft/list/status/send; checked
+recipient Chat/Live action is UNAVAILABLE. This is a legitimate internal manual
+native-author path, with original admin/current-business floor, source CAS,
+original signer and immutable edited-event receipt. No new ActionAdapter, risk
+classification, MUTATION_VERB, approval channel, durable executor or Rail stream.
+Later consequential commercial execution still reuses Trust/Harness/LayerC where
+established, original Collections/Kit/operations/receipts and provider authority.
+
+Binding Ledger sales.department keeps PROOF_OWED. Original35 rows and E4-S3 remain
+preserved; no customer acceptance or status promotion. Producer ordering and exact
+head gates remain mandatory. Final local237 tests/nine suites; actual compiled
+Sales20 frames/16 paths/28 source pins/zero page errors and visible keyboard focus;
+type baseline10/current6, zero lint errors/two incumbent warnings. Actual
+navigation/recovery failures and clipped leave panel were repaired and recorded,
+with no assertion or authority weakening. Final proof includes both themes,
+320/390 reflow and the original PAIGE dock/overlay states.
+
+[Full ten-point contract and functional/visual/experiential limits](../evidence/ui-delivery/e04-agreement-recipients.md)
+remain separate from actual ordinary-role/provider/whole Experience/founder
+acceptance. ALG01 bounded duplicate/receipt evidence and ALG12 recovery signals
+are partial implementation proof only; ALG02 activation and ALG13 full contextual
+recommendations remain unverified. Full recipient correction/removal/order,
+assigned fields/import/preview/signing, canonical signed-to-effective economics,
+invoice/installment/Stripe reconciliation, onboarding/Operations/client-approved
+service completion, Collections and self-service remain mandatory. No O1–O12
+outcome is closed here.
+
+October22 recipient source continuation: actual template parent6ad4ab09e and main172013d89 are retained. Native250004 and260004 are actually production-source verified with five original/checked definitions and original readerc53a216 (receipts6336227514/6336228732); earlier pending notes are historical. Own recipient/source/SDK/navigation/CSS bytes are unchanged and all28 actual rendered source pins rechecked. Parent template release, this head fresh review/CI/web readback and actual owner/staff/client/provider/full12/founder acceptance remain required; no former green or source fixture is promoted.
+
 ## October22 retained document retrieval — local integrity repair
 Actual-source owner/token/Portal positives then3 corrupted-byte RED cases establish a bounded original download defect. Repair verifies actual returned bytes with the existing retained-PDF hash helper and original selected record. Portal-first/native relationship function unchanged; owner/token authorization body retains its original7148c40a pin through an explicit checksum-only inverse, with three real guard mutations still detected.45 handler/56 Deno/actual Edge type checks PASS; final root type ratchet PASS baseline10/current6 with no baseline or signing-guard change. No URL/key substitution, status/signature/audit rewrite, fabricated viewed event or private error leakage. Original unavailable/retry UI is unchanged. [Evidence and full orchestration contract](../evidence/ui-delivery/e04-agreement-document-integrity.md). All12 remain mandatory; source proof is not actual customer/provider/founder acceptance.
 
+October22 release-state reconciliation: commercial#2550/230004 is now production-source verified (receipt6334959569); earlier failed/unapplied entries are dated history. Signer prerequisite#2554/605a8c4/240004 is merged and actual routine metadata matches f380cfa97f14e29c8b88721a76b9db4e; final normal-job/web receipt remains pending. Template UI still uses original220004, with no new signing, payment, provider or Chat effect. This composition preserves all prior template and signer sections; fresh exact-head CI/review/readback and customer acceptance remain owed.
+
+October22 current native prerequisites: template220004, commercial230004, signer240004, checked250004 and reader260004 are production-source verified. Actual main172013d896d78178473eaa1e2946e3f27558944b and all E09 Actions/Sessions source are retained; receipts6336226483/6336227514/6336228732 distinguish actual document35/six-file/JWT readback, five checked writer definitions and original readerc53a216. Earlier pending notes are dated history. This own template UI source is unchanged; its new composed head requires fresh exact-head CI/review/web readback and actual ordinary-role/customer acceptance. All12/full founder evaluation remain incomplete.
+
+
+## October22 exact PDF and assigned-field preparation — pre-edit contract
+
+This is the next original-engine foundation, not a second signing implementation.
+Studio versions require marketing/session lineage; marketing draft history is
+truncated prose, and agreement draft revisions retain wording/source only. None
+binds the exact retained PDF to assigned signer fields. Existing C7 source command
+does not yet establish approval of that PDF/map. It remains unactivated.
+
+1. Outcome: prepare the exact document and signature/initial/date/text/checkbox
+   placements for original authorized parties; identify missing or overlapping
+   fields before a later governed signing request.
+2. Owner: EXP04 original Sales/Agreements. REUSE native document/parser/checksum,
+   original agreement/customer/signer versions; EXTEND pure preparation validation.
+   No Portal/Files/Storage/Operations review source is edited.
+3. Harness/Gateway: ordinary internal preparation is a legitimate native domain
+   path. Later external send uses the existing governed approval/receipt path;
+   this helper neither executes nor creates another confirmation channel.
+4. Spine: existing agreement.* remains PARTIAL. Exact-document field preparation
+   Chat/Live execution is UNAVAILABLE; this source registers/activates no action.
+5. Provider: existing pdf-lib1.17.1 and native private document checksum/parser.
+   No new dependency, renderer, storage client, connection, provider or spend.
+6. Authority/risk: trusted original record must be resolved by the eventual
+   authenticated domain boundary. A pure parser/digest is not authorization,
+   signature, consent, high/confirm approval or legal sufficiency.
+7. Identity: exact original agreement/tenant/customer/body version/source timestamp,
+   original signer IDs/roles/order, retained PDF digest/length/actual page geometry
+   and assigned map. No new table, job, scheduler, ledger or event store here.
+8. Readback: inspect actual immutable bytes with the native parser/checksum before
+   deriving geometry; bind the complete map/source in a deterministic digest.
+   That digest is preparation identity, never an action or acceptance receipt.
+9. Visible state/Binding35: no mounted change or readiness promotion. Draft maps
+   may expose actionable missing-signature/overlap issues; no signing-ready claim
+   from unsupported input, absent fields or a stale source/document/signer map.
+10. Proof owed: actual PDF geometry/rotation/crop/byte-mutation and strict source,
+    signer/field/bounds/order negatives; exact-head review/CI. Native persistence,
+    actual preview/keyboard placement, exact document approval, signing/sealing,
+    Portal consumption and owner/staff/client/provider/founder acceptance follow
+    in bounded releases. All O1-O12 remain mandatory and incomplete.
+
+The initial slice adds dormant modules beside the original document engine; it
+does not edit the deployed document.ts or redirect existing inspector/send/seal
+callers. This narrows the proposed lease and avoids an unnecessary shared Edge
+deployment. Jurisdiction/requested-wording-review/reviewer options stay optional
+business configuration; the infrastructure supplies no clauses or completed review.
 ## October22 C7 original commercial-presentation reconciliation
 
 This same EXP04 lead selectively reuses#2192 exact179e52; no retired agent or whole historical stack is activated. REUSE original agreement/terms/invoice, actor floor, immutable native presentation and Collections schedule/conditions; EXTEND original v2 explicit service facts; REPAIR native type coercion; NEW current-main dormant integration only. Template options remain business configuration, not legal-review evidence. Original signed history is never backfilled.
@@ -1892,6 +1964,9 @@ This same EXP04 lead selectively reuses#2192 exact179e52; no retired agent or wh
 10. Visible result/Binding Ledger35: no new mount or status promotion. Following original Sales preparation/inspection and authorized E09 signing must show the source-backed reviewed document/receipt; actual customer traversal remains owed.
 
 Local54 native checks/replay2/two concurrent sessions/one observed wait and11 Deno tests/26 nested steps pass. Sequential exact-head review, normal hosted CI/Preview, deployment/readback and owner/staff/client/provider QA remain separately required. All O1–O12, full professional agreement fields/signing/effective obligations/finance/delivery and one complete founder evaluation remain mandatory and incomplete. Official ALG01P1/acceptance owed, ALG02UNVERIFIED, ALG12PARTIAL, ALG13UNVERIFIED are unchanged. [Bounded evidence](../evidence/ui-delivery/e04-commercial-presentation-native.md).
+
+
+October22 current template composition: native#2545/220004 is RELEASED SOURCE VERIFIED, not the historical unapplied state. Source main1e1073133 and both exact template/C7 sections preserved; own template source unchanged and25 rendered source hashes rechecked. Dormant commercial#2550 migration230004 rolled back safely at the original5s relation-lock limit and is NOT_APPLIED; template UI uses already-applied220004 and no C7 action. This new head still requires fresh CI/review/release/readback; no earlier green substitutes, no actual customer/full Experience acceptance implied.
 
 ## October22 original upload intent and uncertain result
 

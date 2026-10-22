@@ -77,15 +77,21 @@ still requires the one complete integrated Experience.
 
 ## EXP04 current delivery checkpoint — 2026-10-21
 
-Native draft-history increment extends the original agreement with immutable
+Released native draft-history#2521 extends the original agreement with immutable
 subordinate wording/source snapshots, bounded author-only readers and no second
 writer, ledger or execution receipt. Genuine original SAVE baseline loses earlier
 wording despite advancing its version. Local PostgreSQL16 proof73 assertions,
 replay2 and two actually overlapping correction sessions pass, including scope/
 role/ACL, no-op/reversion/title/source history, legacy known-state retention,
 stale-edit refusal, native signing freeze and existing request recovery. Exact
-original SAVE body is unchanged. Source only: review/full-schema CI/release and
-mounted history/correction with authentic ordinary roles remain owed. Private
+original SAVE body is unchanged. Reviewedeb559f6d9fa9aca9e38bc1616a328f160c69b360
+merged e7388e4d2cf79d1f60f4df0db914d0c84136ba10; all13 exact-head checks/two
+statuses PASS. Normal39696187426/job119554146260 persisted130000 after120000;
+all five function bodies, private table/helper/read ACL, RLS, constraints/indexes
+and enabled triggers read back. Webdpl_DVuJJ6mZWCBA4w5AfK99eWwQrCyV READY/exact,
+canonical publice7388e4d2-mviroxn4. Master4.0/receipt6329247734 retains details.
+AUTHOR-REVIEW / LOWER ASSURANCE; no actual JWT/customer acceptance is inferred.
+Mounted history/correction with authentic ordinary roles remains owed. Private
 upload references do not prove retained PDF bytes or legal sufficiency.
 [Native evidence](../evidence/ui-delivery/e04-native-draft-revision-history.md).
 

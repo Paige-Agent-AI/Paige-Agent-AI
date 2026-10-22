@@ -1048,6 +1048,41 @@ revert preserving native authority and records. This factual closeout is not
 logged recursively.
 
 
+**2026-10-21 — EXP04 original agreement draft revision retention.**
+PR [#2521](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2521), reviewed
+`eb559f6d9fa9aca9e38bc1616a328f160c69b360`, merged
+`e7388e4d2cf79d1f60f4df0db914d0c84136ba10`; actual parentsbfad30b07 andeb559f6d9,
+tree`2ae04405f9d88c542225f588efcef9b6cc0d6eac` exactly matches reviewed union.
+Retains actual saved wording/source states beneath the SAME original agreement,
+using its existing writer, author framework, native activity and signing freeze.
+No missing past body is reconstructed, no historical data scan/backfill, no second
+agreement/writer/ledger/runtime or execution receipt. Original SAVE body remains
+`1bd28e75afa0f50bb07b717795a5be0e`. Native PostgreSQL16 proof73 assertions,
+replay2/two real concurrent sessions; genuine prior-wording-loss baseline RED.
+All13 exact-head checks including actual Preview/database-contract/verify and both
+Vercel statuses SUCCESS. Sequential AUTHOR-REVIEW / LOWER ASSURANCE, no non-author claim.
+Normal deploy-migrations`39696187426`/deploy job`119554146260` SUCCESS;
+`20271113130000_agreement_draft_revision_history` persisted after120000.
+Five selected-source/production MD5 match: state`714ee8c8e73c8ade27d0df46eb805d78`,
+guard`991e3854936d826b3183cbd652835d6c`, retain`cab11bf62fcf91de924a3616f06bbd83`,
+list`e3c081040b6f7678987b7719da66c52f`, selected`525f70701183e0d4e962731602670151`.
+All five search paths empty; two definer readers authenticated-only, three helpers
+have no application-role execution; PUBLIC/anon/service EXECUTE absent. Table RLS
+on, no direct application/PUBLIC table privilege, validated constraints/indexes,
+original agreement/revision unique index and all three enabled integrity triggers.
+Web`dpl_DVuJJ6mZWCBA4w5AfK99eWwQrCyV` READY/production/main/exact; canonical public
+`e7388e4d2cf79d1f60f4df0db914d0c84136ba10-mviroxn4`, customerUpdate:null. Own Edge N/A.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2521#issuecomment-6329247734),
+[native proof](evidence/ui-delivery/e04-native-draft-revision-history.md).
+Functional: native prerequisite released/read back. Visual: no mounted UI change;
+owner history inspection/correction remains separate. Experiential: source/native
+proof does not accept original O1–O12 or the complete professional workspace.
+Actual owner/staff/linked-client/recipient, retained PDF bytes, provider/legal and
+full founder acceptance remain owed. No production business DML, signature/send/
+payment/provider/Chat activation or customer version/announcement exercised.
+Recovery is reviewed forward correction retaining original/signed/history records
+and the applied ledger. This factual closeout requires no recursive log entry.
+
 **2026-10-21 — EXP04 native agreement draft request identity and recovery.**
 PR [#2504](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2504), reviewed
 `8a883a39d337f552dda06d8f829038dc61e7d499`, merged

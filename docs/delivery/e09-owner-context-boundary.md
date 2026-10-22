@@ -1,0 +1,14 @@
+# EXP09 original owner-context boundary
+
+1. Outcome: CURA customers obtain their approved client context from the existing Portal frame/Knowledge; the existing owner persona reader resolves only the original authorized staff workspace.
+2. Owner/source lease: EXP09 consumes Identity and existing owner Playbook context. Current main c5b5061ca includes only a newer E02 release-log row after dda459c23; preserve it. ANT-161 leases only get_paige_persona_context() plus one guarded migration/test registration; no shared Chat/Spine file edit.
+3. Harness/Gateway: original authenticated native read; no model, provider or executor. This ordinary context read does not need Layer C.
+4. Spine: original owner context reader, not a new customer capability. CURA already disables owner Playbook lookup and uses original client_portal_frame and approved Knowledge. No new Chat/Live action is registered (UNAVAILABLE/not applicable for an internal read).
+5. Connection: existing Supabase native integration. No credential, sender, merchant, connection or provider activation.
+6. Authority: existing current_user_tenant_id() validates staff membership/agency/operator standing. No role label, email, linked customer row or untrusted profile pointer grants owner context. Preserve effective ACL/schema/funding/brand expressions and existing staff behavior. Read-only; no approval, mutation, budget or new grant.
+7. Work: none; no durable job, scheduler, state store or alternate runtime.
+8. Readback: original authorized workspace context or no row; native real-role scope negatives and existing owner finance/context regressions. No execution receipt or customer-visible completion claim.
+9. Surface: no UI change; existing customer Portal remains PARTIAL and owner context retains its original projection contract. No owner catalogue/customer capability promotion.
+10. Proof: native actual-role customer/unlinked/forged profile/role-label refusals, authorized owner workspace and changed/revoked membership, preserved output/ACL/funding semantics. Exact-head required CI, managed Preview, source fingerprints and production readback remain holds. Full customer switching and founder acceptance stay unfinished.
+
+Original source/contract: get_paige_persona_context() body866d4e907c3cd8f2c30a6ef012821352, STABLE definer, postgres, search_path public; authenticated execute true, anonymous/service false. The proposed replacement changes only its initial workspace lookup to original current_user_tenant_id(), retaining all later Playbook/funding/brand fields for authorized staff. The original customer frame/CURA runtime, legacy invoker self-context RLS, global linked-user index, invitations, approval, communications and payment contracts are unchanged.

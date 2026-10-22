@@ -1828,6 +1828,9 @@ separate. ALG01 has bounded native recovery/deduplication evidence only; officia
 ALG01/02/12/13 statuses, Mind/Memory and capability catalogue readiness are unchanged.
 
 
+## October22 retained document retrieval — local integrity repair
+Actual-source owner/token/Portal positives then3 corrupted-byte RED cases establish a bounded original download defect. Repair verifies actual returned bytes with the existing retained-PDF hash helper and original selected record. Portal-first/native relationship function unchanged; owner/token authorization body retains its original7148c40a pin through an explicit checksum-only inverse, with three real guard mutations still detected.45 handler/56 Deno/actual Edge type checks PASS; final root type ratchet PASS baseline10/current6 with no baseline or signing-guard change. No URL/key substitution, status/signature/audit rewrite, fabricated viewed event or private error leakage. Original unavailable/retry UI is unchanged. [Evidence and full orchestration contract](../evidence/ui-delivery/e04-agreement-document-integrity.md). All12 remain mandatory; source proof is not actual customer/provider/founder acceptance.
+
 ## October22 C7 original commercial-presentation reconciliation
 
 This same EXP04 lead selectively reuses#2192 exact179e52; no retired agent or whole historical stack is activated. REUSE original agreement/terms/invoice, actor floor, immutable native presentation and Collections schedule/conditions; EXTEND original v2 explicit service facts; REPAIR native type coercion; NEW current-main dormant integration only. Template options remain business configuration, not legal-review evidence. Original signed history is never backfilled.

@@ -25,6 +25,7 @@ on:
       - "supabase/tests/e09_client_game_plan_truth.sql"
       - "supabase/tests/e09_client_capability_coverage.sql"
       - "supabase/tests/e09_customer_relationship_choices.sql"
+      - "supabase/tests/e09_customer_request_scope.sql"
       - "scripts/proof/e09-cura-teaching-concurrency.mjs"
       - "scripts/proof/e09-cura-teaching-concurrency.test.mjs"
       - "supabase/tests/research_tenant_lineage.sql"
@@ -631,6 +632,9 @@ jobs:
         if: ${{ !cancelled() }}
       - name: Original customer relationship choices and isolation
         run: supabase test db supabase/tests/e09_customer_relationship_choices.sql
+        if: ${{ !cancelled() }}
+      - name: Original customer selected request and access isolation
+        run: supabase test db supabase/tests/e09_customer_request_scope.sql
         if: ${{ !cancelled() }}
       # E09 F1a: the per-business finance entitlement — one predicate (install OR flag), neither leg
       # self-grantable from the browser, Marketplace install/uninstall unaffected, push defaults off,

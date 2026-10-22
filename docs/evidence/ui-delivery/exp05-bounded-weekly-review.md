@@ -15,21 +15,22 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: corrected ordinary-owner review on the actual
 KEYBOARD_FOCUS: UNVERIFIED: no keyboard/focus code changed; candidate answer and original record-control reentry remain to be checked.
 ZOOM_REFLOW: UNVERIFIED: no layout source changed; this backend repair does not claim a new responsive/zoom certification.
 REDUCED_MOTION: UNVERIFIED: no motion source changed; no new motion claim.
-STATE_COVERAGE: PASS: guidance preserves partial, refused, unavailable and unknown evidence rather than treating absent reads as zero; tests protect unchanged limits and route/permission contracts. Actual model behavior remains separately owed.
-TRUTHFUL_STATE_LABELS: PASS: no catalogue status, runtime registration, activation or provider readiness is promoted. Full weekly planning, delegated execution and Live remain proof owed.
+STATE_COVERAGE: UNVERIFIED: candidate model handling of partial, refused and unavailable sources needs the actual deployed authenticated review; instruction and reader regressions pass without substituting for that result.
+TRUTHFUL_STATE_LABELS: UNVERIFIED: original catalogue statuses and registry/provider declarations are preserved; the candidate model's evidence qualifications must be checked in its deployed response.
 SOLO_UI: NO: only Edge model instructions and source/instruction tests change; existing SOLO interface is consumed unchanged.
 OWNER_INTENT: Finish the weekly review within existing limits; continue the whole EXP05 Experience without intermediate founder testing.
 MUST_NOT_HAPPEN: Raise budgets, silently drop required evidence, invent Calendar availability, weaken authority, create work during read-only inspection, replace domain readers or claim a delegated ZION run.
 MUST_PRESERVE: Existing route/exposure, Spine/Gateway, Harness, Trust approvals, Layer C, Rail, native permissions/readbacks, turn recovery and limit warning, original record links and existing/future tenant neutrality.
 ACCEPTANCE_CRITERIA: The same ordinary read-only question completes without LIMIT_REACHED within current round/tool/time budgets; covers available CRM/Planning responsibilities, owners and missing dates; names unavailable Calendar/capacity evidence; creates no action/approval; original saved answer and permitted record controls survive reload.
 PROTECTED_SEAMS: Prompt selection is affected and tested. Tenant/client isolation, authentication/account choice, entitlement/provisioning/billing, approvals/authority, tool dispatch, canonical writes/readback, Rail/Memory, transcript scroll/identity/history, Live state, Browser/Vault, provider effects, durable scheduling/retries/recovery, responsive shell, accessibility and privacy implementations are not changed. Their applicable original authority, route/exposure and C0b hostile regressions remain gates.
-INTERNAL_BUILD_IDENTITY: base sha=d873a1b7b9937c5cacd7a1228665e08bdc99919e; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_DEPLOYED(paige-ai-chat); evidence=docs/evidence/ui-delivery/exp05-bounded-weekly-review.md
+INTERNAL_BUILD_IDENTITY: base sha=d873a1b7b9937c5cacd7a1228665e08bdc99919e; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat reviewed candidate awaiting production deployment and source readback); evidence=docs/evidence/ui-delivery/exp05-bounded-weekly-review.md
 RELEASE_CHANNEL: development: bounded source correction pending ordinary reviewed release and production readback.
 RELEASE_CLASSIFICATION: internal-only: reliability repair with no customer release version or launch claim.
 CUSTOMER_RELEASE_IDENTITY: none: whole Experience acceptance and announcement remain owner-reserved.
 RELEASE_NOTE_REQUIRED: NO: ordinary prelaunch repair; report actual release evidence in existing records.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: candidate exact-head review/CI, production Edge identity and authenticated review completion/reload. No full Calendar, automation, delegated worker, Live, algorithm or Experience acceptance claim.
 RELEASE_RECOVERY: position=reviewed forward correction or revert of these instruction literals; reference=original Chat reader/limit/recovery controls remain unchanged.
+UNVERIFIED: Candidate production review completion, timing, original record reentry and reload await deployment; whole EXP05, Live, delegated execution and founder acceptance are not covered by source tests.
 
 ## Capability routing and Orchestration Contract
 

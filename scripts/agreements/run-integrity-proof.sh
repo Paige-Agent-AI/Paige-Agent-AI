@@ -230,4 +230,10 @@ node "$HERE/draft-revision-history-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner 
 # Original frozen-document protection also applies before delivery leaves Draft.
 node "$HERE/frozen-draft-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired
 
+# Reconciled EXP04 commercial preparation uses the same original agreement engine,
+# existing Collections schedule/conditions and this verified disposable cluster.
+deno test --allow-import --node-modules-dir=none --deny-net --deny-env --deny-run --deny-ffi --deny-sys \
+  "$REPO/supabase/functions/_shared/agreements/commercial-presentation.test.ts"
+node "$HERE/commercial-presentation-retention-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired
+
 echo "OK — every negative refused with its expected SQLSTATE; positive controls succeeded."

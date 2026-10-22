@@ -1246,3 +1246,7 @@ publication path. Missing/foreign records never substitute another source;
 incoming references wait behind original terms/review/dialog/unknown-save state.
 Owner Chat/eligible Live teaching dispatch remains UNAVAILABLE in this bounded
 navigation prerequisite. [Source contract](../delivery/e09-cura-source-reference.md).
+
+
+### EXP04 C7 commercial presentation — October22 development, not released
+Selective native/pure formatter reuse from2192/179e52 retains exact original agreement/terms/invoice and explicit service facts, without replacing signed history or original renderer. New native strict-type negatives reproduce historical coercion; repaired54/replay2/two actual sessions/one observed wait and11 Deno tests/26 steps PASS. Native230004 is UNAPPLIED, source initially dormant/unmounted; no signing/send/payment/provider/Chat activation, accepted legal wording or effective terms claimed. Original Collections/Kit operation/approval/Rail integration and hosted exact document readback remain owed. All twelve outcomes and actual customer/founder acceptance stay incomplete. See [native evidence](../evidence/ui-delivery/e04-commercial-presentation-native.md).

@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
+import { routeLinkTarget } from "@/lib/links/workspaceLinks";
 import {
   AlertTriangle, ArrowUpRight, Bot, ChevronRight, RefreshCw, X,
 } from "lucide-react";
@@ -281,6 +282,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
   const systems = useSystemsCheck("tenant");
   const resolvedAccount = resolveTenantAccountContext(accountContext);
   const account = useParams().account ?? "";
+  const businessReview = routeLinkTarget({ destination: "executive", record_id: null }, "solo", account);
   const [openArea, setOpenArea] = useState<string | null>(null);
   const [selected, setSelected] = useState<SystemsCheckFinding | null>(null);
   const [expanded, setExpanded] = useState(false);
@@ -558,7 +560,11 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
    * treats this number as the size of the full sweep is wrong for that flavour.
    */
   const freshDetail = !systems.run
-    ? "No completed check has been recorded for this workspace."
+    ? systems.loading
+      ? "Reading recorded check evidence…"
+      : systems.isError
+        ? "Refresh current data to retry the recorded check read."
+        : "No completed check has been recorded for this workspace."
     : (() => {
         const trustRun = hasCompletedRun;
         const total = trustRun ? (systems.run.check_count ?? currentFindings.length) : currentFindings.length;
@@ -832,27 +838,18 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
                   </li>
                 ))}
               </ul>
-              {command.metrics.length > 0 && (
-                <ul className="sc-ready">
-                  {command.metrics.map((metric) => (
-                    <li key={metric.k}>
-                      <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-                        <path d="M2.6 7.4l2.8 2.8L11.4 4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <div>
-                        <p>{metric.k}: <strong>{metric.v}</strong></p>
-                        <small>
-                          {command.isError
-                            ? "Last available — the current read failed, so this may not be today's number"
-                            : "Live read from your own records"}
-                        </small>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
             </section>
           )}
+
+          {/* Business figures retain the same Metric/Evidence consumer as PAIGE.
+              Legacy practice totals are not client-health or revenue evidence. */}
+          <section className="sc-block sc-business-review" aria-labelledby="sc-business-review-title">
+            <div className="sc-block-head"><h2 id="sc-business-review-title">Business performance</h2></div>
+            {businessReview ? <>
+              <p>Executive shows business figures with their source, currency and reporting window.</p>
+              <div><Link className="sc-button sc-button--quiet" to={businessReview.to}>Review business performance<ChevronRight size={14} aria-hidden="true" /></Link></div>
+            </> : <p>Business figures are available in Executive once this workspace resolves.</p>}
+          </section>
 
           {/* 3 — the nine operating areas */}
           <section className="sc-block" aria-labelledby="sc-areas-title">

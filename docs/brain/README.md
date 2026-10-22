@@ -130,6 +130,19 @@ Experience remain separate unfinished increments; no catalogue Live promotion.
 Assess functional, visual and experiential quality independently; owner acceptance
 still requires the one complete integrated Experience.
 
+## EXP04 original draft correction — 2026-10-21 local
+
+Same original unsigned text record now has controlled title/wording correction
+source, retaining native SAVE/CAS/client/offer/commercial/template identity and
+one existing leave guard. Frozen/nontext source refuses; unknown result preserves
+read-only reviewed payload, current read is separate from acknowledgment, explicit
+retry never refreshes original CAS. Conclusive access loss retires private work.
+Native render20 cases/16 paths/22 pins/zero page errors, final216/seven suites
+plus original vocabulary3 PASS; unchanged original102 included. Native history
+2524 and native guard2526 are released/read back; composed UI release/
+ordinary-role/provider/legal/full O1–O12/founder acceptance gates remain owed.
+No new writer/ledger/approval/runtime, Chat/Live or algorithm promotion.
+[Journey](../delivery/exp04-get-paid-deliver-journey.md).
 ## EXP04 retained-document correction guard — 2026-10-21 local
 
 Original native reader/writer frozen-draft integrity mismatch reproduced in a
@@ -137,13 +150,32 @@ disposable fixture; four positive setup controls precede genuine baseline RED.
 Bounded forward160000 repairs the existing seal trigger only; original SAVE/link,
 author framework, native record/audit/history preserved. Native43 assertions,
 replay2/two overlapping sessions PASS, including normal draft/link/void recovery.
-New source is UNRELEASED; only own unapplied150000 renumbered after confirmed
-E09 collision, exact SQL unchanged. Other reservations untouched. E09#2525/140000 is now released; E02
-resolved its duplicate by reserving170000, after E09 pending150000/E04 pending160000. No actual provider/JWT/
-customer acceptance, data repair, new writer/store/runtime or Chat activation.
+Released#2526 reviewedfdae5a69c3b02956683d6f2fe8e2fe639e53dda5 ->
+merge31bb0a91e0e2163fda0aab8a385636297b356d96/tree7f7d05f4dbb verified.
+All13 checks/two statuses PASS, AUTHOR-REVIEW / LOWER ASSURANCE5608454864.
+Normal migration39709577134/119597546705 applied160000; source457b2abd65,
+original SAVE/owner/ACL/enabled trigger preserved, empty search_path verified.
+Webdpl_6UmnBWqeYBu61QYZFGTEGRPpH5VQ READY/exact; protected/public31bb...-mviwhywx,
+receipt6331039476. Own earlier150000 was safely renumbered before release; E09
+150000 was already applied and E02 reserved170000 remains separate. No actual
+ordinary-role/provider acceptance, data repair, new writer/store/runtime or Chat activation.
 Pre-freeze source CAS/exact commercial presentation remains C7 integration work;
 correction mounting and all original O1–O12 remain open.
 [Evidence](../evidence/ui-delivery/e04-frozen-draft-integrity.md).
+
+## EXP04 original wording history released — 2026-10-21
+
+Read-only history#2524 reviewed557aea9e9ee05169954ca29ecaff216662e39e74 →
+mergead51a060c7da4106a294a5b6e0c0245c303837fd, actual treeb52601a8dc verified.
+All11 checks completed (10success/schema-free Preview skipped), two statuses pass;
+AUTHOR-REVIEW / LOWER ASSURANCE5608222311. Webdpl_5T5ZH314C5k28jZX1RbeH7Q7GpDz
+READY/exact; protected/public ad51…-mviv4gjz and actual history asset79f699a1ac
+read back, receipt6330515475/Master4.0. Own migration/Edge N/A; native130000
+already applied. Actual20 cases/26 paths/178 source assertions and type10/current6
+remain source evidence, not actual ordinary-role/customer acceptance. Full twelve
+outcomes, professional template/import/fields/signing, provider/payment/service
+and founder acceptance remain owed; no new availability, algorithm or Chat claim.
+
 ## EXP04 authoring release — 2026-10-21
 
 Native document authoring#2515 reviewed6ef6cd9bcf9dbb97b53153edffba0243a5a060bd →
@@ -1247,6 +1279,23 @@ incoming references wait behind original terms/review/dialog/unknown-save state.
 Owner Chat/eligible Live teaching dispatch remains UNAVAILABLE in this bounded
 navigation prerequisite. [Source contract](../delivery/e09-cura-source-reference.md).
 
+
+## EXP04 original template wording/options — local native foundation
+
+Existing E04 lead extends the original tenant_agreement_versions store under the
+October21/22 owner clarification. Optional jurisdiction, requested business/qualified
+wording-review route and reviewer do not imply completed legal review or block
+infrastructure engineering. Product58b9572229c7816c4b7b875036be464a85213c50,
+compositionf06e157b796787e63caf6bf480a7980d115fe2af: scoped native version/list/read/
+actor-bound same-UUID recovery, retained supplied words/source time, original
+legacy maintenance compatibility. Native68/replay2/five concurrent sessions/three
+observed lock waits; original baseline five positive controls then required refusal
+RED. These are source/fixture proofs, not customer JWT/provider/acceptance evidence.
+No new ledger/approval/sender/executor, legal wording, Chat/Live capability or
+algorithm activation. Own220004 successor remains unapplied; hosted review/CI/
+Preview, migration/catalog readback and actual mounted template consumer are owed.
+See [native evidence](../evidence/ui-delivery/e04-template-wording-options.md) and
+[original twelve-outcome journey](../delivery/exp04-get-paid-deliver-journey.md).
 
 ### EXP04 C7 commercial presentation — October22 development, not released
 Selective native/pure formatter reuse from2192/179e52 retains exact original agreement/terms/invoice and explicit service facts, without replacing signed history or original renderer. New native strict-type negatives reproduce historical coercion; repaired54/replay2/two actual sessions/one observed wait and11 Deno tests/26 steps PASS. Native230004 is UNAPPLIED, source initially dormant/unmounted; no signing/send/payment/provider/Chat activation, accepted legal wording or effective terms claimed. Original Collections/Kit operation/approval/Rail integration and hosted exact document readback remain owed. All twelve outcomes and actual customer/founder acceptance stay incomplete. See [native evidence](../evidence/ui-delivery/e04-commercial-presentation-native.md).

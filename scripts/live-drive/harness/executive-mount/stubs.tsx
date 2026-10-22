@@ -30,7 +30,14 @@ export function useBusinessReview() {
 }
 export function useSoloPendingActions() {
   const state = useHarnessParams().get("state");
-  return { items: state === "empty" || state === "error" ? [] : Array.from({ length: 10 }, (_, i) => ({ id: "test-action-" + i, title: ["Review a service proposal", "Prepare a client check-in", "Revisit a recorded deadline"][i % 3], department: ["Sales", "Client Success", "Operations"][i % 3] })), total: state === "empty" ? 0 : 37, loading: state === "loading", error: state === "error" ? "unavailable" : null, refresh: noop };
+  if (import.meta.env.E2_HARNESS_SLICE === "desk") return {
+    items: state === "empty" ? [] : [
+      { id: "test-work-finding", title: "Review the payment processor setup", department: "Operations", summary: "No payment processor connection was recorded. Settlement has not been tested.", draftContent: null, rationale: null, createdAt: state === "missing-date" ? "" : "2026-10-22T09:30:00Z", ...(state === "missing-source" ? {} : { sourceLink: { destination: "systems_check" as const, record_id: "e2000000-0000-4000-8000-000000000006" } }) },
+      { id: "test-work-draft", title: "Review the service priorities", department: "Executive", summary: "Confirm the priorities with PAIGE before authorizing work.", draftContent: Array.from({length:12}, (_, i) => `Review point ${i + 1}: inspect the original delivery commitments and confirm the next useful step with the owner.`).join("\n\n"), rationale: "The original draft requires owner review.", createdAt: "2026-10-21T14:00:00Z" },
+      { id: "test-work-empty", title: "Inspect the original follow-up", department: "Client Success", summary: null, draftContent: null, rationale: null, createdAt: "" },
+    ], total: state === "empty" ? 0 : 37, loading: state === "loading", error: state === "error" ? "Synthetic read refused" : null, refresh: noop,
+  };
+  return { items: state === "empty" || state === "error" ? [] : Array.from({ length: 10 }, (_, i) => ({ id: "test-action-" + i, title: ["Review a service proposal", "Prepare a client check-in", "Revisit a recorded deadline"][i % 3], department: ["Sales", "Client Success", "Operations"][i % 3], summary:null, draftContent:null, rationale:null, createdAt:"" })), total: state === "empty" ? 0 : 37, loading: state === "loading", error: state === "error" ? "unavailable" : null, refresh: noop };
 }
 export function useSoloActivityFeed() {
   const state = useHarnessParams().get("state");

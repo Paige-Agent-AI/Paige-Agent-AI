@@ -3,6 +3,7 @@ import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { PreparedWorkReview } from "./PreparedWorkReview";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import type { SoloPendingActionsData } from "./data/useSoloPendingActions";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -16,7 +17,10 @@ beforeEach(() => {
   ] };
 });
 afterEach(() => { act(() => root.unmount()); host.remove(); });
-function render(scope = "test-scope-a") { act(() => root.render(<PreparedWorkReview key={scope} data={data}><button type="button">Inspect prepared work</button></PreparedWorkReview>)); }
+function render(scope = "test-scope-a", account?: string) {
+  const view = <PreparedWorkReview key={scope} data={data}><button type="button">Inspect prepared work</button></PreparedWorkReview>;
+  act(() => root.render(account ? <MemoryRouter initialEntries={[`/solo/${account}/command-center/business-game-plan`]}><Routes><Route path="/solo/:account/*" element={view} /></Routes></MemoryRouter> : view));
+}
 function open() { const trigger = host.querySelector("button")!; trigger.focus(); act(() => trigger.click()); }
 function dialog() { return document.querySelector('[role="dialog"]')!; }
 
@@ -34,7 +38,9 @@ it("opens a spacious source-labelled read without executing, approving or sendin
 it("selects the other original source and does not invent missing draft content", () => {
   render(); open(); act(() => (dialog().querySelectorAll('nav button')[1] as HTMLButtonElement).click());
   expect(dialog().querySelector('article')?.textContent).toContain("Prepared work · Sales");
-  expect(dialog().querySelector('article')?.textContent).toContain("No readable draft text");
+  expect(dialog().querySelector('article')?.textContent).toContain("Recorded summary");
+  expect(dialog().querySelector('article')?.textContent).not.toContain("Original draft");
+  expect(dialog().querySelector('article')?.textContent?.match(/Summary only/g)).toHaveLength(1);
   expect(dialog().querySelector('article')?.textContent).not.toContain("First original paragraph");
 });
 it("withholds details and counts during a failed or loading reread, and retry only refreshes", () => {
@@ -62,4 +68,40 @@ it("does not turn a capped preview into a total when the native count is unavail
 it("retires the entire review when the caller changes the identity key", () => {
   render(); open(); expect(dialog()).toBeTruthy(); render("test-scope-b");
   expect(document.querySelector('[role="dialog"]')).toBeNull();
+});
+
+it("links only the exact original finding in the current SOLO account, in an announced new tab", () => {
+  data.items[0].sourceLink = { destination: "systems_check", record_id: "e2000000-0000-4000-8000-000000000006" };
+  render("test-scope-a", "1234567"); open();
+  const link = dialog().querySelector<HTMLAnchorElement>('a')!;
+  expect(link.textContent).toContain("Open recorded finding");
+  expect(link.textContent).toContain("new tab");
+  expect(link.getAttribute('href')).toBe('/solo/1234567/command-center/systems-check?finding=e2000000-0000-4000-8000-000000000006');
+  expect(link.target).toBe('_blank'); expect(link.rel).toBe('noopener noreferrer');
+  expect(data.refresh).not.toHaveBeenCalled();
+});
+it.each(["absent", "surface_only", "malformed", "no_account"])("withholds a fabricated direct record link for %s", variant => {
+  if (variant !== "absent") data.items[0].sourceLink = { destination: "systems_check", record_id: variant === "surface_only" ? null : variant === "malformed" ? "../other-account" : "e2000000-0000-4000-8000-000000000006" };
+  render("test-scope-a", variant === "no_account" ? undefined : "1234567"); open();
+  expect(dialog().querySelector('a')).toBeNull();
+  expect(dialog().textContent).toContain("original approval or department");
+});
+it("shows only the original preparation time with its explicit time zone", () => {
+  data.items[0].createdAt = "2026-10-22T09:30:00Z"; render(); open();
+  const time = dialog().querySelector('time')!;
+  expect(time.getAttribute('datetime')).toBe(data.items[0].createdAt);
+  expect(time.textContent).toContain('Oct 22, 2026');
+  expect(time.textContent).toContain('9:30 AM UTC');
+});
+it.each(["", "not a date", "1", "2026-10-22T09:30:00"])("does not invent or guess an unavailable preparation date (%s)", date => {
+  data.items[0].createdAt = date; render(); open();
+  expect(dialog().querySelector('time')).toBeNull();
+  expect(dialog().textContent).toContain('Preparation date unavailable');
+});
+it("does not present a missing summary as an empty original document", () => {
+  data.items[0] = { ...data.items[0], draftContent: null, summary: null }; render(); open();
+  const article = dialog().querySelector('article')!;
+  expect(article.textContent).toContain('No readable draft or summary was returned');
+  expect(article.querySelector('section')).toBeNull();
+  expect(dialog().querySelector('nav small')?.textContent).toBe('Details unavailable');
 });

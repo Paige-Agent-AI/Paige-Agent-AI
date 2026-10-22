@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useTheme } from "next-themes";
-import { FileText, RefreshCw, Scale } from "lucide-react";
+import { useParams } from "react-router-dom";
+import { ArrowUpRight, FileText, RefreshCw, Scale } from "lucide-react";
+import { routeLinkTarget } from "@/lib/links/workspaceLinks";
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import type { SoloPendingActionsData } from "./data/useSoloPendingActions";
 import "./prepared-work-review.css";
@@ -11,6 +13,16 @@ function preparedWorkCountLabel(data: SoloPendingActionsData): string {
     ? `${data.total} prepared item${data.total === 1 ? "" : "s"}`
     : "Prepared work";
 }
+
+/** Native timestamps carry a zone. Do not guess one or substitute the read time. */
+function preparationDate(value: string | undefined): Date | null {
+  if (!value || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(value)) return null;
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? date : null;
+}
+const preparedAtFormat = new Intl.DateTimeFormat("en-US", {
+  year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "UTC", timeZoneName: "short",
+});
 
 /** Source-fed presentation only. Original domains retain all editing/approval authority. */
 export function PreparedWorkReview({ data, children, open, onOpenChange, selectedItemId, onSelectedItemChange, onCloseAutoFocus }: {
@@ -23,16 +35,22 @@ export function PreparedWorkReview({ data, children, open, onOpenChange, selecte
   onCloseAutoFocus?: (event: Event) => void;
 }) {
   const { resolvedTheme } = useTheme();
+  const { account } = useParams<{ account: string }>();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = data.items.find((item) => item.id === (selectedItemId ?? selectedId)) ?? data.items[0];
   const available = !data.loading && !data.error;
+  // Current mounted account only; a route never grants record access. The original
+  // destination reauthorizes the read, and a surface-only fallback is not a source.
+  const target = selected?.sourceLink ? routeLinkTarget(selected.sourceLink, "solo", account) : null;
+  const source = target?.status === "exact" ? target : null;
+  const preparedAt = preparationDate(selected?.createdAt);
   return <Dialog open={open} onOpenChange={onOpenChange}>
     {children && <DialogTrigger asChild>{children}</DialogTrigger>}
     <DialogContent data-pg={resolvedTheme === "dark" ? "dark" : "light"} className="pwr" overlayClassName="pwr-scrim" onCloseAutoFocus={onCloseAutoFocus}>
       <header className="pwr-heading">
         <span className="pwr-eyebrow"><Scale size={16} aria-hidden /> Decision &amp; opportunity desk</span>
         <DialogTitle>Work prepared for your review</DialogTitle>
-        <DialogDescription>Read the original draft and its source. Prepared work has not been approved or completed.</DialogDescription>
+        <DialogDescription>Read the original work and its source. Prepared work has not been approved or completed.</DialogDescription>
       </header>
       {data.loading ? <p className="pwr-state" role="status">Checking this workspace’s prepared work…</p>
         : data.error ? <div className="pwr-state"><p role="alert">Prepared work could not be read. Previous details and counts are withheld.</p><button type="button" onClick={data.refresh}><RefreshCw size={16} aria-hidden /> Retry the read</button></div>
@@ -41,15 +59,22 @@ export function PreparedWorkReview({ data, children, open, onOpenChange, selecte
               <div className="pwr-summary"><strong>{preparedWorkCountLabel(data)}</strong><span>{data.items.length} shown · {data.total == null ? "total unavailable" : "latest first"}</span><button type="button" onClick={data.refresh}><RefreshCw size={16} aria-hidden /> Refresh</button></div>
               <div className="pwr-workspace">
                 <nav className="pwr-list" aria-label="Prepared items">
-                  {data.items.map((item) => <button type="button" key={item.id} aria-pressed={selected.id === item.id} onClick={() => { setSelectedId(item.id); onSelectedItemChange?.(item.id); }}><span>{item.department}</span><strong>{item.title}</strong><small>{item.draftContent ? "Draft text available" : "Recorded summary"}</small></button>)}
+                  {data.items.map((item) => <button type="button" key={item.id} aria-pressed={selected.id === item.id} onClick={() => { setSelectedId(item.id); onSelectedItemChange?.(item.id); }}><span>{item.department}</span><strong>{item.title}</strong><small>{item.draftContent ? "Draft text available" : item.summary ? "Recorded summary" : "Details unavailable"}</small></button>)}
                 </nav>
                 <article className="pwr-document" aria-label="Selected prepared work">
                   <div className="pwr-source"><FileText size={16} aria-hidden /> Prepared work · {selected.department}</div>
+                  <p className="pwr-time">{preparedAt ? <>Prepared <time dateTime={selected.createdAt}>{preparedAtFormat.format(preparedAt)}</time></> : "Preparation date unavailable"}</p>
                   <h2>{selected.title}</h2>
                   {selected.rationale && <aside className="pwr-reason"><strong>Why PAIGE held this</strong><p>{selected.rationale}</p></aside>}
-                  {selected.summary && <p className="pwr-lead">{selected.summary}</p>}
-                  <section aria-label="Original draft"><h3>Original draft</h3>{selected.draftContent ? <div className="pwr-prose">{selected.draftContent}</div> : <p className="pwr-muted">No readable draft text was returned for this item.</p>}</section>
-                  <footer className="pwr-boundary"><strong>Available next step</strong><p>Inspect the source and check the original approval or department before acting. This prepared item cannot be edited, approved or executed here.</p></footer>
+                  {selected.draftContent && selected.summary && <p className="pwr-lead">{selected.summary}</p>}
+                  {selected.draftContent || selected.summary
+                    ? <section aria-label={selected.draftContent ? "Original draft" : "Recorded summary"}><h3>{selected.draftContent ? "Original draft" : "Recorded summary"}</h3><div className="pwr-prose">{selected.draftContent || selected.summary}</div></section>
+                    : <p className="pwr-muted">No readable draft or summary was returned for this item.</p>}
+                  <footer className="pwr-boundary"><strong>Available next step</strong>
+                    <p>{source ? "Open the recorded source in a new tab to keep this review and conversation in place." : "Check the original approval or department before acting. No direct source link was returned."}</p>
+                    {source && <a className="pwr-next" href={source.to} target="_blank" rel="noopener noreferrer">{source.label}<ArrowUpRight size={16} aria-hidden /><span>new tab</span></a>}
+                    <p>This prepared item cannot be edited, approved or executed here.</p>
+                  </footer>
                 </article>
               </div>
             </>}

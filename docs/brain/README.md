@@ -1737,3 +1737,24 @@ no supplied legal words/completed review or infrastructure counsel gate. Own int
 review/CI/release/readback and actual customer/provider/full12/founder acceptance
 remain owed. Stable upload recovery, real PDF preview/fields and canonical approved
 Communications/provider integration remain unfinished; no Chat/Live activation.
+
+## EXP02 Decision Desk source and continuity — October22 development
+
+Original prepared work now has an exact canonical source inspection action in an
+explicitly labeled native tab, preserving review/selection/scroll/unsent Chat.
+Summary-only rows are readable Recorded summaries, original drafts remain drafts,
+missing content Details unavailable, and only original zoned preparation times
+are shown in explicit UTC. Missing/malformed/surface-only/no-account references
+withhold the source link; the original destination reauthorizes its own read.
+No click authorizes, approves, sends or executes work. Existing dismissal state
+recognizes a changed original source identity, with no new suggestions registry.
+
+Ten causal failures preceded correction, then128 cases/five original suites pass;
+type ratchet10/6/zero new and actual build pass; hosted gates remain required.20 native synthetic frames
+and22 exact source pins verify the original leaf/shared shell,320px keyboard,
+actual source tab/drawer/return and284.8→284.8 retained scroll/draft/focus.
+No whole-page or authenticated acceptance is inferred from this bounded mount.
+Functional candidate, Visual native synthetic proof, Experiential ordinary/cohort/
+role/Live release proof and Founder Acceptance remain separate. ALG03/13 and nine
+capability states are unpromoted; original Trust/LayerC/Rail writers unchanged.
+All19/nine remain mandatory. [Evidence](../evidence/ui-delivery/e2-desk-source-continuity.md).

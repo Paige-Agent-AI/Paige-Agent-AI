@@ -205,6 +205,29 @@ BEGIN
   END IF;
 END $$;
 
+-- ── (G) EXP10 PR4 review hardening: last_error_code's closedness is SCHEMA-enforced ───────────
+-- The projection carries the code to a model-facing surface; the boundary that makes that safe
+-- is the table's own constraint, so the constraint itself is what this proves — from both sides.
+DO $$
+BEGIN
+  -- (G1) a bounded closed code writes fine (this fixture row already carries one).
+  IF NOT EXISTS (SELECT 1 FROM public.mcp_connections WHERE label = 'Failed Refused'
+                  AND last_error_code = 'provider_reflected_credential') THEN
+    RAISE EXCEPTION '(G1) the closed-code fixture row is missing';
+  END IF;
+  -- (G2) provider PROSE is refused at the write — the constraint, not a writer's goodwill,
+  -- keeps unbounded provider text out of a model-facing field.
+  BEGIN
+    INSERT INTO public.mcp_connections (connection_id, tenant_id, provider_key, label, server_url_ct, auth_kind, visibility, enabled, status, health, last_error_code)
+    VALUES ('f1a00000-0000-0000-0000-0000000000c6', 'f1a00000-0000-0000-0000-0000000000b1', 'generic-remote', 'Prose Refused',
+            public.platform_encrypt('https://prose.example/mcp'), 'none', 'tenant', true, 'error', 'needs_attention',
+            'Provider said: quota exceeded for account 12345, contact support');
+    RAISE EXCEPTION '(G2) REGRESSION: provider prose was accepted into last_error_code';
+  EXCEPTION WHEN check_violation THEN
+    NULL; -- the constraint refused it — exactly the proof
+  END;
+END $$;
+
 DO $$ BEGIN RAISE NOTICE 'INTEGRATIONS_SURFACE_SEES_MCP_PROVEN'; END $$;
 
 ROLLBACK;

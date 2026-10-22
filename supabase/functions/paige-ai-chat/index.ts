@@ -1157,11 +1157,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     const supabaseClient = createClient(supabaseUrl, supabaseKey, {
-      // Untrusted customer selection only: native Auth/CRM/thread/Knowledge checks
-      // still grant access. This request-local hint never changes the staff workspace.
-      global: { headers: { Authorization: authHeader,
-        ...(req.headers.has("x-client-portal-business")?{"x-client-portal-business":req.headers.get("x-client-portal-business")!}:{})
-      } }
+      global: { headers: { Authorization: authHeader } }
     });
 
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
@@ -1324,6 +1320,14 @@ serve(async (req) => {
     // The surface narrows the audience; only the native customer frame proves it.
     // It cannot supply a tenant/client identity or inherit a global owner role.
     const customerPortal = validatedData.surfaceContext?.kind === "customer_portal";
+    // The customer's request-local view uses the same SDK, Auth bearer and
+    // native records. Original owner/service callers and their contracts stay intact.
+    const customerCaller = customerPortal ? createClient(supabaseUrl,supabaseKey,{
+      global:{headers:{Authorization:authHeader,
+        ...(req.headers.has("x-client-portal-business")?{"x-client-portal-business":req.headers.get("x-client-portal-business")!}:{})
+      }},
+    }) : supabaseClient;
+
     if (customerPortal) {
       // Zod accepts UUID case aliases; native identity/receipt text is canonical.
       validatedData.threadId = validatedData.threadId?.toLowerCase();
@@ -1335,8 +1339,8 @@ serve(async (req) => {
     // E09 K2: the first customer read carries no question vector (recency); the gate below needs only
     // its persona. The question is embedded after the caller is proven to be this thread's customer.
     const customerPersonaSource = customerPortal
-      ? await (customerControl ? readCustomerAssistantControlContext(supabaseClient, user.id, validatedData.threadId, validatedData.requestIntentId)
-        : readCustomerAssistantContext(supabaseClient, user.id, validatedData.threadId, validatedData.requestIntentId)) : null;
+      ? await (customerControl ? readCustomerAssistantControlContext(customerCaller, user.id, validatedData.threadId, validatedData.requestIntentId)
+        : readCustomerAssistantContext(customerCaller, user.id, validatedData.threadId, validatedData.requestIntentId)) : null;
     let customerAssistant = customerPersonaSource?.status === "available" ? customerPersonaSource.data : null;
     const customerPersona = customerAssistant?.persona ?? null;
     let customerQuery: CustomerQueryEmbedding | null = null;
@@ -1352,7 +1356,7 @@ serve(async (req) => {
           recommendation:"Try again, or contact the business through Support if this continues."}),
           {status:403,headers:{...corsHeaders,"Content-Type":"application/json"}});
       }
-      const bound = await supabaseClient.rpc("paige_chat_customer_thread_authorized", {p_thread:validatedData.threadId});
+      const bound = await customerCaller.rpc("paige_chat_customer_thread_authorized", {p_thread:validatedData.threadId});
       if (bound.error || bound.data !== true) return new Response(JSON.stringify({
         code:"CUSTOMER_CHAT_SCOPE_CHANGED",message_accepted:false,
         reason:"Your customer access changed.",recommendation:"Reopen the portal to check your access."}),
@@ -1418,8 +1422,9 @@ serve(async (req) => {
           { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       if (!validatedData.threadId || !validatedData.requestIntentId || validatedData.liveRuntimeChallenge || validatedData.generateSessionSummary)
         return new Response(JSON.stringify({ error: "Invalid interactive scope", message_accepted: false }), { status: 400, headers: corsHeaders });
-      const { data: thread, error: threadError } = await supabaseClient.from("paige_chat_threads")
-        .select("tenant_id,audience").eq("id", validatedData.threadId).eq("caller_user_id", user.id).maybeSingle();
+      const threadMetadataQuery = customerCaller.from("paige_chat_threads")
+        .select("tenant_id,audience").eq("id", validatedData.threadId).eq("caller_user_id", user.id);
+      const { data: thread, error: threadError } = await threadMetadataQuery.maybeSingle();
       if (threadError || !thread) throw new Error("INTERACTIVE_SCOPE_UNAVAILABLE");
       if ((thread.audience === "customer_private") !== customerPortal)
         return new Response(JSON.stringify({code:"CHAT_AUDIENCE_MISMATCH",message_accepted:false}),
@@ -1434,7 +1439,7 @@ serve(async (req) => {
         customerQuery = await embedCustomerQuery([...validatedData.messages].reverse().find((m: any) => m.role === "user")?.content,
           voyageEmbedOne, VOYAGE_MODEL);
         if (customerQuery.embedding) {
-          const ranked = await readCustomerAssistantContext(supabaseClient, user.id, validatedData.threadId,
+          const ranked = await readCustomerAssistantContext(customerCaller, user.id, validatedData.threadId,
             validatedData.requestIntentId, customerQuery.embedding);
           if (ranked.status === "available" && ranked.data && JSON.stringify(ranked.data.persona) === JSON.stringify(customerPersona))
             customerAssistant = ranked.data;
@@ -1581,7 +1586,7 @@ serve(async (req) => {
         p_bundle_ref: { interactive: { request_intent_id: validatedData.requestIntentId },
           turn_state: { v: 1, state: "INTERRUPTED", mode: "pending", rounds: 0, tools: 0 } }, p_tool_calls: null,
       });
-      const beginTurn = (effectful: boolean) => supabaseClient.rpc(customerPortal ? "client_portal_assistant_begin" : "paige_chat_interactive_begin_v2", {
+      const beginTurn = (effectful: boolean) => (customerPortal?customerCaller:supabaseClient).rpc(customerPortal ? "client_portal_assistant_begin" : "paige_chat_interactive_begin_v2", {
         p_thread: validatedData.threadId, p_intent: validatedData.requestIntentId,
         p_supersedes: interactiveInput.supersedesIntentId ?? null,
         p_content: userText ?? "", p_bound_answer: validatedData.resume?.kind === "answer",
@@ -1630,7 +1635,7 @@ serve(async (req) => {
           store: { state: () => executor("state"), acquire: async () => (await executor("acquire")).acquired === true,
             release: async () => { await interactiveSettlement!.release(); },
             publication: async () => {
-              const { data, error } = await supabaseClient.rpc("paige_chat_interactive_publication_context_v2", {
+              const { data, error } = await customerCaller.rpc("paige_chat_interactive_publication_context_v2", {
                 p_thread: validatedData.threadId, p_intent: validatedData.requestIntentId,
               });
               if (error) throw new Error("INTERACTIVE_PUBLICATION_UNAVAILABLE");
@@ -1653,12 +1658,12 @@ serve(async (req) => {
           { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       // Re-read only after the preceding executor has finished its receipts.
-      const { data: history, error: historyError } = await supabaseClient.from("paige_chat_turns")
+      const { data: history, error: historyError } = await customerCaller.from("paige_chat_turns")
         .select("role,content,bundle_ref").eq("thread_id", validatedData.threadId).order("seq", { ascending: false }).limit(49);
       if (historyError) throw new Error("INTERACTIVE_HISTORY_UNAVAILABLE");
       // An unknown external effect is a dispatch brake, not a failed action. This scoped
       // canonical read also covers older receipts outside the bounded model transcript.
-      const { data: unresolved, error: unresolvedError } = await supabaseClient.from("paige_chat_turns")
+      const { data: unresolved, error: unresolvedError } = await customerCaller.from("paige_chat_turns")
         .select("bundle_ref").eq("thread_id", validatedData.threadId)
         .contains("bundle_ref", { interactive: { effects: [{ outcome: "outcome_unknown" }] } }).limit(100);
       if (unresolvedError) throw new Error("INTERACTIVE_RECEIPT_READBACK_UNAVAILABLE");
@@ -3206,7 +3211,7 @@ JSON:`;
     // service (owner ruling 2026-10-19).
     if (callerTier === "client") personaCtx.funding_enabled = false;
     const customerChatBinding = customerPersona?.binding ?? (callerTier === "client" && !payloadClientId
-      ? await readClientPortalChatBinding(supabaseClient, user.id) : null);
+      ? await readClientPortalChatBinding(customerPortal?customerCaller:supabaseClient, user.id) : null);
     const fundingEnabled = personaCtx.funding_enabled;
 
     // INT-326 — MEMORY READ IN ANOTHER WORKSPACE NEVER REACHES THIS TURN. Client memory is loaded
@@ -3934,8 +3939,8 @@ JSON:`;
     const revalidateTenantKnowledgeScope = async (required = false, summaryMaintenance = false): Promise<boolean> => {
       if (tenantKnowledgeScopeRevoked) return false;
       if (customerPortal) {
-        const source = await readCustomerAssistantContext(supabaseClient, user.id, payloadThreadId, validatedData.requestIntentId);
-        const scope = await supabaseClient.rpc("paige_chat_customer_thread_authorized", {p_thread:payloadThreadId});
+        const source = await readCustomerAssistantContext(customerCaller, user.id, payloadThreadId, validatedData.requestIntentId);
+        const scope = await customerCaller.rpc("paige_chat_customer_thread_authorized", {p_thread:payloadThreadId});
         if (source.status === "available" && source.data?.persona.enabled === true && !scope.error && scope.data === true &&
           JSON.stringify(source.data) === JSON.stringify(customerAssistant)) return true;
         tenantKnowledgeScopeRevoked = true;
@@ -3983,7 +3988,7 @@ JSON:`;
         if (callerTier === "client" && !payloadClientId && (customerChatBinding || turnScopeTenantId !== null)) {
           declaredScopeMatches = customerChatBinding?.tenantId === turnScopeTenantId &&
             sameClientPortalChatBinding(customerChatBinding,
-              await readClientPortalChatBinding(supabaseClient, user.id));
+              await readClientPortalChatBinding(customerPortal?customerCaller:supabaseClient, user.id));
         } else if (turnScopeTenantId !== null) {
           const { data: declaredProfile, error: declaredError } = await supabaseClient
             .from("profiles").select("active_tenant_id").eq("user_id", user.id).maybeSingle();

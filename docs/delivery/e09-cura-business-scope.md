@@ -28,7 +28,7 @@ RELEASE_CHANNEL: development: original customer request-context correction
 CUSTOMER_RELEASE_IDENTITY: none: internal engineering increment
 RELEASE_RECOVERY: position=preserve original single-business fallback and forward correction; reference=docs/delivery/e09-cura-business-scope.md
 
-## Implemented original-path repair — 2026-10-22
+## Initial implementation and pre-CI evidence — 2026-10-22
 
 Current-main composition4008a1390ed6bfbfda32c88f5afc0517053ddbde preserves all new owner Chat, Operations, Setup, commercial PDF and Agreements work. No shared backend/source-pin difference from the audited original51c06 exists outside this candidate's two narrow request hunks.
 
@@ -47,3 +47,17 @@ Customer typed Portal request → original verified Auth and selected-business h
 Actual memberships remain native; original global linked-user and invitation/new-account constraints retained. This bounded repair does not activate multiple-business signup, Live, a customer tool or INT346. Authenticated customer/owner/private Knowledge/return/revocation/business-isolation/full seven-pillar and founder acceptance remain owed. Source/review/exact-head CI/normal web+Edge deployment/source readback must precede release. Final source review accurately AUTHOR-REVIEW / LOWER ASSURANCE.
 
 Evidence: docs/evidence/ui-delivery/e09-cura-business-scope.md; local immutable outputs/e09-cura-business-final89.json, e09-cura-c0b-review-tests.log, e09-cura-business-c0b-before.json and e09-cura-business-c0b-candidate.json. No provider/customer communication, new identity/business, publication, private signing link, signature, charge, upload or booking was executed.
+
+## Required-CI correction: customer-only caller — 2026-10-22
+
+The first headf64f9c649 failed the mandatory registry contract at119923616279: the strict CRM proof requires the original Auth-only supabaseClient initializer. This was a real shared-source boundary, not a test to waive. Preserve c0b-crm-read-binding and its expectations unchanged. The original owner/service factories are now byte-identical to current main.
+
+Only a customer_portal request creates a request-local view of the ORIGINAL Supabase SDK, original URL/anon key and same already-verified bearer, carrying the selected-business hint. This is an ephemeral client instance of the existing backend, not another identity, data store, Chat/model/execution runtime or permission source. Owner requests use the identical original client object and ignore an incoming customer-selection header. Private frame/Knowledge/control/binding reads, original begin, thread/history/receipt RLS reads and publication checks use that same customer scope; original native membership/privacy/receipt rules remain authority.
+
+All29 original source scalars and120 dependency pins reproduce against4008; action metadata is unchanged. Exact inverse of11 customer-native/CORS source patches restores the full baseline handler byte-for-byte, while original owner/service factories remain exact. Candidate coreSHA2561de19b80b5fb4944c8dbb7888fb550f859071259c72fb2b8d8df8421df7853e8. Original strict CRM proof8 bindings PASS, FULL canonical Spine registry self-test PASS, original77 hostile C0b tests PASS after individually reviewed ancestry renewal; no verifier/negative/baseline relaxation. Local source audit: outputs/e09-cura-customer-scoped-caller-source.json and e09-cura-customer-scoped-c0b-candidate.json.
+
+Final92 focused tests/five files PASS: original78 retained, verified actor/history lifetime, actual SDK customer-only hint and anon key, owner incoming-hint exclusion/unchanged instance, private thread RLS scope and actual customer begin distinct from owner caller. A setup-only missing second caller argument in the intermediate91-case run was corrected while preserving every original native-begin/vector/field assertion. Actual customer UI source and all seven rendered images are unchanged by this server-only correction.
+
+Whole-file Edge ESLint is NOT green: baseline407 and candidate407 errors; source/rule/message comparison shows zero introduced diagnostics. Changed frontend/tests remain0 lint errors/two incumbent app-hook warnings; local type ratchet has only the incumbent missing MDX dependency. No install/lock/baseline, production Auth/provider/customer action or current runtime activation. Required fresh exact-head CI/Preview/Deno/build and deployed source readback remain mandatory.
+
+Actual production BEFORE snapshot507/verify_jwt:true and raw coreSHA256eea17cc1e4dfec21673e1a5bf6387145f5186ae1848ef3dd4940b5210db8f3de exactly match main baseline; five original Knowledge/persona/history/teaching helper raw hashes also match. These snapshots establish source preservation, never authenticated provider/customer acceptance. Original global identity/recipient constraints and INT346 gates remain intact; private message-outcome recovery, operational CURA facts, guarded multi-business integration and full seven-pillar owner/client journey remain further product work.

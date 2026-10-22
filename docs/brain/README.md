@@ -1398,6 +1398,36 @@ barrier proves stale recovery cannot publish before a new explicit read. Final
 20-frame/17-path proof pins all25 owning files exactly. This is a functional
 recovery repair, not further visual polishing or a provider/acceptance claim.
 
+
+## EXP04 original signer preparation and recovery — October22
+
+The existing E04 lead extends the original Sales preparation workspace with an
+owner-authorized signer form, role/order and original checked native receipt.
+REUSE original agreement/client/source versions, signer PK, immutable edited event,
+scoped writer and one Sales leave guard; EXTEND closed SDK consumer and opaque
+business/request navigation. The internal act sends/signs/charges nothing, and its
+historical preparation receipt is distinct from freshly read current signer state.
+Native producer#2557 and earlier template/signer contracts require actual ordered
+release/readback before this consumer. Chat/Live execution remains UNAVAILABLE;
+no LayerC, approval, Rail or agreement store is replaced.
+
+Final237 tests/nine integrated suites, original compiled Sales20 viewport/theme
+cases/16 paths/zero page errors/28 source pins and uncovered entry focus pass.
+Canonical type ratchet10/current6 and scoped lint0errors/two incumbent warnings
+pass; Impeccable detector exits0 after correcting one new radius advisory. Actual
+Navigation API blocked the initial recovery checkpoint, and a later native refusal
+left no visible recovery action; both genuine rendered findings were repaired in
+the original single guard/controller, with invalid-location/distinct-editor and
+interruption negatives. Original leave dialog now fits desktop/320px.
+
+This is local source/render proof, not customer authentication or full premium
+Experience acceptance. Native releases, consumer exact-head review/CI/web readback,
+owner/staff/linked-client/two-cohort QA, document fields/signing/effective economics,
+all O1–O12 and complete founder evaluation remain owed. See [bounded evidence](../evidence/ui-delivery/e04-agreement-recipients.md)
+and [original journey](../delivery/exp04-get-paid-deliver-journey.md).
+
+October22 recipient source continuation: actual template parent6ad4ab09e and main172013d89 are retained. Native250004 and260004 are actually production-source verified with five original/checked definitions and original readerc53a216 (receipts6336227514/6336228732); earlier pending notes are historical. Own recipient/source/SDK/navigation/CSS bytes are unchanged and all28 actual rendered source pins rechecked. Parent template release, this head fresh review/CI/web readback and actual owner/staff/client/provider/full12/founder acceptance remain required; no former green or source fixture is promoted.
+
 ### EXP04 retained-copy integrity — October22 local source
 Original agreement-document handler passes three authorized positive controls then genuinely returns altered bytes as200 for owner/token/Portal fixtures. Repair reuses existing verifyRetainedAgreementPdf against the SAME authorized original record;45 handler and56 Deno tests/actual Edge type check PASS, final root type ratchet PASS baseline10/current6 with no baseline or signing-guard change. Existing legacy authorization-body digest remains7148c40a6ab73a948ee6a7df0aed28460e0a66e1fd82f9eb1f0e48501a126eb3 after explicit digest-projection-only inverse; three guard mutation controls still fail it. Portal-first/native relationship API, JWT/CORS/role/token/state/header/event semantics preserved. No actual production corruption, new provider/store/grant/renderer or acceptance claim. Source release/readback and ordinary owner/signer/linked-client/full Experience proof owed. [Evidence](../evidence/ui-delivery/e04-agreement-document-integrity.md).
 

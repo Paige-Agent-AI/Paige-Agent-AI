@@ -110,6 +110,32 @@ it('returns focus to Review or correct after closing a real draft flow whose sha
  await click('Close');await act(async()=>vi.advanceTimersByTimeAsync(0));await flush();
  expect(document.querySelector('[role="dialog"]')).toBeNull();expect(document.activeElement).toBe(button('Review or correct'));expect(button('Review or correct').disabled).toBe(false);expect(f.invoke).not.toHaveBeenCalled();
 });
+it('refreshes the original saved revision after Finish later and reopens without another extraction or publication',async()=>{
+ await mount();await click('Review or correct');await click('Save review');
+ expect(revision).toBe(4);expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Publish to Knowledge');
+ await click('Finish later');await act(async()=>vi.advanceTimersByTimeAsync(0));await flush();
+ expect(host.textContent).toContain('Version 4');expect(button('Review sharing').disabled).toBe(true);
+ expect(document.activeElement).toBe(button('Review or correct'));
+ await click('Review or correct');
+ expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Your saved review is ready');
+ expect(host.textContent).not.toContain('The saved source could not be verified');
+ expect(f.invoke).not.toHaveBeenCalled();
+ expect(f.rpc.mock.calls.filter(call=>call[0]==='save_tenant_knowledge_review')).toHaveLength(1);
+ expect(f.rpc.mock.calls.some(call=>['submit_tenant_knowledge_publication','set_client_portal_business_knowledge_share'].includes(call[0]))).toBe(false);
+});
+it('withholds a foreign return refresh and recovers by reading the same original source without another write',async()=>{
+ await mount();await click('Review or correct');await click('Save review');
+ const held=deferred<{data:ReturnType<typeof inventory>;error:null}>();inventoryHold=held;
+ await click('Finish later');
+ expect(host.querySelector('[aria-label="Loading CURA Knowledge"]')).not.toBeNull();
+ inventoryHold=null;held.resolve({data:{...inventory(),tenant_id:'b3b50200-0000-4000-8000-000000000099'},error:null});await flush();
+ expect(host.textContent).toContain('Knowledge sharing could not be checked');
+ expect(host.textContent).not.toContain(metadata.title);expect(host.textContent).not.toContain('Start with an answer');
+ await click('Reload Knowledge');expect(host.textContent).toContain('Version 4');await click('Review or correct');
+ expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Your saved review is ready');
+ expect(f.invoke).not.toHaveBeenCalled();expect(f.rpc.mock.calls.filter(call=>call[0]==='save_tenant_knowledge_review')).toHaveLength(1);
+ expect(f.rpc.mock.calls.some(call=>['submit_tenant_knowledge_publication','set_client_portal_business_knowledge_share'].includes(call[0]))).toBe(false);
+});
 it('retains saved staged metadata and resumes publication without replacing the source',async()=>{
  saved=true;metadata={title:'Saved FAQ',summary:'Approved summary',category:'Services',tags:['onboarding']};
  await mount();await click('Review or correct');expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Your saved review is ready');

@@ -57,7 +57,12 @@ function CuraKnowledgeSession({tenantId,actor,onBack,onPendingChange,reference}:
  const cancel=()=>{focus.current=restore.current;setSelected(null);model.cancel();};
  const review=()=>{if(!selected)return;focus.current='review';void model.review(selected.document_id,true,terms);};
  const withdraw=(row:CuraKnowledgeSource)=>{setSelected(null);restore.current=row.document_id;focus.current='review';void model.review(row.document_id,false,{kind:row.share!.customer_kind,validFrom:row.share!.valid_from,validUntil:row.share!.valid_until});};
- const closeDialog=()=>{setAdding(false);focus.current='publication';model.cancel();};
+ const closeDialog=()=>{
+  setAdding(false);focus.current='publication';model.cancel();
+  // Saving a private review also advances its native revision. Re-read the
+  // original inventory on return, preserving any publication/focus read in flight.
+  if(model.phase!=='loading')void model.load();
+ };
  const p=model.proposal;
  return <section aria-labelledby={`${id}-title`} className="min-w-0 space-y-6 [&_button]:min-h-[44px]">
   <Button variant="ghost" className={quietButton} disabled={exitBlocked} onClick={onBack}><ArrowLeft aria-hidden className="mr-2 h-4 w-4"/>Back to experience</Button>

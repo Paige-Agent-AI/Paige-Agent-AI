@@ -95,6 +95,20 @@ Experience remain separate unfinished increments; no catalogue Live promotion.
 Assess functional, visual and experiential quality independently; owner acceptance
 still requires the one complete integrated Experience.
 
+## EXP04 retained-document correction guard — 2026-10-21 local
+
+Original native reader/writer frozen-draft integrity mismatch reproduced in a
+disposable fixture; four positive setup controls precede genuine baseline RED.
+Bounded forward160000 repairs the existing seal trigger only; original SAVE/link,
+author framework, native record/audit/history preserved. Native43 assertions,
+replay2/two overlapping sessions PASS, including normal draft/link/void recovery.
+New source is UNRELEASED; only own unapplied150000 renumbered after confirmed
+E09 collision, exact SQL unchanged. Other reservations untouched. E09#2525/140000 is now released; E02
+resolved its duplicate by reserving170000, after E09 pending150000/E04 pending160000. No actual provider/JWT/
+customer acceptance, data repair, new writer/store/runtime or Chat activation.
+Pre-freeze source CAS/exact commercial presentation remains C7 integration work;
+correction mounting and all original O1–O12 remain open.
+[Evidence](../evidence/ui-delivery/e04-frozen-draft-integrity.md).
 ## EXP04 authoring release — 2026-10-21
 
 Native document authoring#2515 reviewed6ef6cd9bcf9dbb97b53153edffba0243a5a060bd →
@@ -235,6 +249,20 @@ and #2175's byte verifier: existing completed/replayed seal must match its actua
 private PDF. Native106 plus5 Portal-wiring tests and three Edge type checks pass;
 release, authenticated recovery and full ALG01/12 acceptance remain proof owed.
 [Exact scope and limitations](../evidence/ui-delivery/e04-retained-completion-reconcile.md).
+
+## EXP02 payment declaration evidence — October22 source candidate
+
+Authorized ordinary SOLO analysis settled and survived reload, but its payment
+setup interpretation exceeded the native declaration-only evidence (ANT-52
+9d3d94dd/06396129). The existing Operations projection now names missing/unreadable
+payment declarations and explicitly withholds provider connectivity, payment
+availability and settlement verification. Original severity, sources, three issuer
+reads, authority, caps and actual automation-failure signals remain intact.
+Source204 targeted cases/77 original authority controls and15 native synthetic
+frames pass; exact-head CI, Edge source release/readback and corrected ordinary
+SOLO explanation remain owed. See `../evidence/ui-delivery/e2-payment-declaration-evidence.md`.
+No provider/action/permission activation; all19/nine and founder acceptance remain
+open. New owner Game Plan contextual suggestions remain the next distinct UI flow.
 
 ## EXP02 Systems Check source-accuracy repair — development
 

@@ -1365,4 +1365,22 @@ Two real native baselines pass six positive controls then fail frozen-source ref
 ### EXP04 checked recipient preparation — October22 native development, not released
 Legacy and new checked callers use one original private signer business body. Exact customer/version/time CAS, original signer PK creation identity and immutable edited-event receipt support same-intent retry/reload; post-wait original authority is revalidated. No new request table/ledger/approval/runtime or external/Chat/Portal effect. Native44 base plus75 new assertions/replay2 and genuine duplicate/source/recovery/revocation waits PASS; guarded250004 UNAPPLIED after220004/230004/240004. Mounted professional recipient/fields, actual JWT/provider/signature/all12/founder acceptance remain owed; [native evidence](../evidence/ui-delivery/e04-checked-signer-preparation.md).
 
+
+## EXP04 original preparation editability — October22
+
+Same E04 lead repairs the original closed preparation reader's editability to
+match existing content and sealed-reference writer freezes. Exact production
+routine metadata/source MD5a3950836 is reproduced in the disposable native proof;
+five new positive controls precede a genuine failing sealed-reference read.
+New260004 changes only that original boolean, preserving author/business floor,
+closed DTO, owner/ACL/STABLE/DEFINER/search_path and every stored record. Original
+unknown-source guard and both replays remain; no permission/table/event rewrite.
+
+Final142 native assertions pass:44 original signer +75 checked preparation +23
+read-state cases. Initial invalid Sent fixture omitted the original mandatory
+content digest; fixture corrected, original constraint preserved. New read proof
+adds no concurrency or real JWT/provider/customer acceptance claim. Exact-head
+review/CI/Preview, ordered release/readback and whole Experience acceptance remain
+owed. See [bounded native evidence](../evidence/ui-delivery/e04-preparation-editability.md).
+
 October22 checked-signer main-target continuation: original prerequisite#2554 is RELEASED SOURCE VERIFIED, merge605a8c4bcdfb63c016689717947caf09f3296f83/native240004/bodyf380cfa97f14e29c8b88721a76b9db4e/unchanged owner/search_path/ACL and exact webdpl_HMxLuMYHqkv8KYQVWYJBEm2K3UW7/build605a8c4…-mvj7pldd (receipt6335238273). Actual main and all E09 source retained through a clean composition; own native250004 and checked proof are unchanged. Earlier pending-prerequisite notes are historical. This own250004 still requires fresh exact-head CI/review/normal migration/readback; source119/replay2 is not customer/provider/signing acceptance. All12 outcomes remain mandatory/incomplete.

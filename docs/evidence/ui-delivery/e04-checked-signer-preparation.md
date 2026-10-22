@@ -20,7 +20,7 @@ TRUTHFUL_STATE_LABELS: PASS: signer preparation is not a signature, notification
 SOLO_UI: NO: native preparation/read contract only.
 UNVERIFIED: exact-head review/CI/Preview, actual deployment/native parity, mounted owner/staff/client recipient/field journey and full provider/Experience/founder acceptance.
 
-INTERNAL_BUILD_IDENTITY: branch=codex/e04-checked-signer-preparation; product_sha=PR/source receipt; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113250004_agreement_checked_signer_preparation); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-checked-signer-preparation.md
+INTERNAL_BUILD_IDENTITY: branch=codex/e04-checked-signer-preparation; product_sha=6e6fc56416508c386e1572e02b36bfff9c9cc1c8; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113250004_agreement_checked_signer_preparation); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-checked-signer-preparation.md
 RELEASE_CHANNEL: development: native source proof, not authenticated customer acceptance.
 RELEASE_CLASSIFICATION: internal-only: checked recipient/recovery prerequisite, not completed professional Agreements.
 CUSTOMER_RELEASE_IDENTITY: none: no whole Experience/founder acceptance.

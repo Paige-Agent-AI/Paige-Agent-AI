@@ -445,6 +445,12 @@ and routing: [owning packet](../delivery/e2-review-actor-scope.md). ALG03/13
 prediction is not claimed. Original19 outcomes/nine capabilities and final
 complete founder evaluation remain required.
 
+## EXP02 verified source and bounded customer readback —2026-10-22
+
+Catalogue2516, declaration evidence2535 and optional actor-reader2541 are MERGED/DEPLOYED/READ BACK, with exact reviewed/main/tree, CI/review, production and proof boundaries in the sole Master4.0 EXP02 rows. This dated evidence supersedes the earlier source-candidate/development wording for those slices. Reviews are accurately AUTHOR-REVIEW / LOWER ASSURANCE. Catalogue production hashes restrict the change to two descriptions; ordinary panel reload/reopen returned both copies, without promoting the nine entries. One ordinary Business Review settled in52s, corrected the unsupported declaration/provider interpretation and retained the original question/answer/source links through reload; trace timing itself was transient. That one pass does not establish general reliability, provider readiness or causal business improvement.
+
+Actor2541 is deployed atd3ca6a3a5561caef14558444474925566744de17 with no product caller in that PR; actual role/RLS/source acceptance follows its consumer. Original domains, Metric/Evidence, Spine/Harness/Trust/LayerC/Rail and conversations remain authoritative. Desk2544/shared presentation2583/separate contextual consumer continue through their own review, exact-head gates, release and ordinary customer proof. No generic prepared-item editing or execution, provider/permission activation, new queue, registry or approval engine is introduced. Historical9/0 and12/0/4 remain; all19/nine, Chat/Live/departments/governed follow-through, algorithms and full founder acceptance remain open. Customer version/announcement none.
+
 ## EXP02 payment declaration evidence — October22 source candidate
 
 Authorized ordinary SOLO analysis settled and survived reload, but its payment
@@ -1533,3 +1539,36 @@ review/CI/Preview, ordered release/readback and whole Experience acceptance rema
 owed. See [bounded native evidence](../evidence/ui-delivery/e04-preparation-editability.md).
 
 October22 checked-signer main-target continuation: original prerequisite#2554 is RELEASED SOURCE VERIFIED, merge605a8c4bcdfb63c016689717947caf09f3296f83/native240004/bodyf380cfa97f14e29c8b88721a76b9db4e/unchanged owner/search_path/ACL and exact webdpl_HMxLuMYHqkv8KYQVWYJBEm2K3UW7/build605a8c4…-mvj7pldd (receipt6335238273). Actual main and all E09 source retained through a clean composition; own native250004 and checked proof are unchanged. Earlier pending-prerequisite notes are historical. This own250004 still requires fresh exact-head CI/review/normal migration/readback; source119/replay2 is not customer/provider/signing acceptance. All12 outcomes remain mandatory/incomplete.
+
+## EXP04 uploaded-PDF source correction — October22, development
+
+Original native SAVE11-argument body1bd28e75afa0f50bb07b717795a5be0e verified read-only:
+uploaded source retains its file path and NULL body. Original form's required second
+pasted contract was ignored; native PDF preparation, link refusal and send/parse/hash
+contracts are authoritative. Same original form/hook now share bounded supported-PDF/
+media/25MB selection, correctable before any terms/upload write; no second wording or
+false explanation. Original DTO/path/bucket/RLS/SDK/cache/no-overwrite/leave/authority
+epochs and unconfirmed-outcome messages remain. No converter or signing engine added.
+
+Source baseline six intended RED plus original timeout; corrected120 focused and
+actual composed360/12 suites PASS without timeout/assertion waiver. Whole-app type
+ratchet10/current6, lint0/one incumbent, Binding35/controls and SOLO parity/controls
+PASS. Actual final native source render20cases/ten paths/21pins/zero page errors,
+including keyboard file-to-title, correctable invalid selection and the genuine
+clipped source-choice regression repaired by separating the original provenance
+label selector from the actual document choices. Only synthetic
+ports. Hosted ca1 design gate failed two inherited original stylesheet findings;
+bounce/stripe repaired without any exclusion or weakened check. Exact FOUR-file
+gate now0 failures/40 advisories; full baseline12/1066 versus current10/1065 remains
+not a clean whole-platform scan or finished premium claim. Final stable render
+passed after one mid-edit run was correctly invalidated by its source-pin guard.
+Evidence:
+[native PDF intake](../evidence/ui-delivery/e04-agreement-pdf-intake.md).
+
+Template consumer2549 actually released asd0741babff894cba40dc7566b5ea94390ac16b5c;
+READY exact protected version and served native UI/API verified, receipt6337776679.
+Jurisdiction/requested-wording-review/reviewer options are optional configuration,
+no supplied legal words/completed review or infrastructure counsel gate. Own intake
+review/CI/release/readback and actual customer/provider/full12/founder acceptance
+remain owed. Stable upload recovery, real PDF preview/fields and canonical approved
+Communications/provider integration remain unfinished; no Chat/Live activation.

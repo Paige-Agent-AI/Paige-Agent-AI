@@ -27,7 +27,7 @@ Original caller: authenticated customer entering/returning to their Portal. Even
 
 Internal bounded native read, no customer release name or announcement. No existing resolver, RLS policy, original function body, identity link, staff context, sender, private history or service writer changes. A source lease guards the original resolver/brand definition and ownership. Compatible replay/forward correction preserves original records. Functional source/native proof, UI quality, joined workflow and final founder acceptance remain distinct. The complete seven-pillar mission continues after this increment.
 
-Current-main composition: agreement integrity #2526 uses migration20271113160000. The unapplied Portal migration is therefore numbered20271113170000, preserving both SQL bodies and the original24 role/isolation assertions. The native prerequisite must be verified on this composed head; an earlier data-free Preview or CI result is not exact-head release proof. No production ledger rewrite or historical migration edit is permitted.
+Current-main composition: agreement integrity #2526 uses migration20271113160000 and main now includes E02's20271113170000. The unapplied Portal read is therefore20271113210009, above both original main migrations; its SQL body and24 role/isolation assertions are unchanged. The earlier170000 Preview is historical only and must be recreated before exact-head parity can be asserted. The following request-scope/notice increments reserve210109/210209 respectively. No production ledger rewrite or historical main migration edit is permitted.
 
 ## Browser read companion, separate dependent increment
 

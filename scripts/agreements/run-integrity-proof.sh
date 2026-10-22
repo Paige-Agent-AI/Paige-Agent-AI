@@ -227,5 +227,7 @@ node "$HERE/draft-request-identity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner 
 # Retain the original agreement's actual draft revisions under the same native
 # cluster, including stale concurrent edits and the original signing freeze.
 node "$HERE/draft-revision-history-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired
+# Original frozen-document protection also applies before delivery leaves Draft.
+node "$HERE/frozen-draft-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired
 
 echo "OK — every negative refused with its expected SQLSTATE; positive controls succeeded."

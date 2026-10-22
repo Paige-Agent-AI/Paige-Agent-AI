@@ -10,6 +10,7 @@ import { AgreementWordingHistory } from './AgreementWordingHistory';
 import { AgreementDraftCorrection, type AgreementCorrectionSession } from './AgreementDraftCorrection';
 import { prepareAgreementCorrection, saveAgreementCorrection } from './agreementCorrectionApi';
 import { createAgreementDraft, readAgreementPreparation, recoverAgreementCreation, type AgreementPreparation } from './agreementPreparationApi';
+import {readAgreementTemplate,type AgreementTemplateVersion} from './agreementTemplateApi';
 import { SIGNER_STATE, signingPreparationLabel } from './agreementVocabulary';
 import './agreement-preparation.css';
 
@@ -17,8 +18,10 @@ type Props = {
   tenantId: string | null; canManage: boolean; authorityUnknown: boolean; authorizationReady: boolean;
   clients: readonly AgreementClient[]; clientsReady: boolean; clientsReadable: boolean;
   agreementId: string; requestId: string | null; requestTenantId: string | null; freshlyOpened: boolean;
+  templateVersionId?: string | null;
   onDraftAttempted: (requestId: string) => void;
   onOpenRecord: (id: string) => void; onClose: () => void; onOpenClients?: () => void;
+  onOpenTemplate?: (id:string)=>void;
   signings: Pick<SigningsState, 'signingEvents' | 'signedCopyUrl'>; onRefresh: () => void;
 };
 type Phase = 'loading' | 'editing' | 'saving' | 'uncertain' | 'record' | 'error';
@@ -27,7 +30,7 @@ type Phase = 'loading' | 'editing' | 'saving' | 'uncertain' | 'record' | 'error'
 export function AgreementPreparationWorkspace(props: Props) {
   const scope = useTenantContext();
   const subject = scope.accountContextStatus === 'signed_out' ? null : scope.activeUserId;
-  return <ScopedPreparation key={`${scope.activeTenantId}:${subject}:${props.agreementId}`} {...props}
+  return <ScopedPreparation key={`${scope.activeTenantId}:${subject}:${props.agreementId}:${props.requestId}:${props.templateVersionId}`} {...props}
     activeTenantId={scope.activeTenantId} activeUserId={subject} scopeReady={scope.accountContextStatus === 'ready'} />;
 }
 function WorkspaceMessage({ title, text, onClose, onRetry }: { title: string; text: string; onClose: () => void; onRetry?: () => void }) {
@@ -36,9 +39,11 @@ function WorkspaceMessage({ title, text, onClose, onRetry }: { title: string; te
   return <section className="e04-preparation"><button className="e04-preparation-back" onClick={onClose}><ArrowLeft size={16} />Agreements and terms</button><div className="e04-preparation-message"><FileText size={28} aria-hidden="true" /><h2 tabIndex={-1} ref={heading}>{title}</h2><p>{text}</p>{onRetry && <button onClick={onRetry}><RefreshCw size={16} />Check again</button>}</div></section>;
 }
 type SessionProps = Props & { activeTenantId: string | null; activeUserId: string | null; scopeReady: boolean };
-function ScopedPreparation({ tenantId, agreementId, requestId, requestTenantId, freshlyOpened, clients, clientsReady, clientsReadable, onClose, onOpenRecord, onOpenClients, signings, onRefresh, activeTenantId, activeUserId, scopeReady, canManage, authorityUnknown, authorizationReady, onDraftAttempted }: SessionProps) {
+function ScopedPreparation({ tenantId, agreementId, requestId, requestTenantId, freshlyOpened, templateVersionId=null, clients, clientsReady, clientsReadable, onClose, onOpenRecord, onOpenClients, onOpenTemplate, signings, onRefresh, activeTenantId, activeUserId, scopeReady, canManage, authorityUnknown, authorizationReady, onDraftAttempted }: SessionProps) {
   const originalFresh = React.useRef(freshlyOpened && agreementId === 'new');
-  const [phase, setPhase] = React.useState<Phase>(originalFresh.current ? 'editing' : 'loading');
+  const [phase, setPhase] = React.useState<Phase>(originalFresh.current&&!templateVersionId ? 'editing' : 'loading');
+  const [templateSource,setTemplateSource]=React.useState<AgreementTemplateVersion|null>(null);
+  const templateLoaded=React.useRef(false);
   const [title, setTitle] = React.useState('');
   const [clientId, setClientId] = React.useState('');
   const [body, setBody] = React.useState('');
@@ -134,6 +139,23 @@ function ScopedPreparation({ tenantId, agreementId, requestId, requestTenantId, 
     if (!allowed || !tenantId) return;
     const expectedTenant = tenantId;
     const readEpoch = accessEpoch.current.value;
+    if(originalFresh.current&&templateVersionId&&!templateLoaded.current){
+      setPhase('loading');setMessage('');
+      void(async()=>{
+        const result=await readAgreementTemplate(expectedTenant,templateVersionId);
+        if(!current||!accessEpoch.current.allowed||accessEpoch.current.value!==readEpoch)return;
+        if(result.ok===false){setPhase('error');setMessage(result.message);return;}
+        const source=result.value;
+        if(source.preparation_purpose!=='client_engagement'||!source.is_active||source.has_uploaded_source
+          ||source.source_mode!=='tenant_fork'||source.body_markdown===null){
+          setPhase('error');setMessage('Select an active retained client template with supplied text wording before preparing this agreement.');return;
+        }
+        templateLoaded.current=true;setTemplateSource(source);setTitle(source.title);setBody(source.body_markdown);
+        adoptDraftBaseline({title:source.title,clientId:'',body:source.body_markdown});setPhase('editing');
+      })();
+      return()=>{current=false;};
+    }
+    if(originalFresh.current&&templateLoaded.current)return;
     if (originalFresh.current && attempt === 0) return;
     setPhase('loading'); setMessage('');
     void (async () => {
@@ -162,11 +184,12 @@ function ScopedPreparation({ tenantId, agreementId, requestId, requestTenantId, 
       }
     })();
     return () => { current = false; };
-  }, [allowed, tenantId, agreementId, requestId, attempt, adoptDraftBaseline]);
+  }, [allowed, tenantId, agreementId, requestId, templateVersionId, attempt, adoptDraftBaseline]);
   React.useEffect(() => {
     // Unknown authority hides retained RAM work. A conclusive revocation retires it.
     if (scopeMatches && authorizationReady && !authorityUnknown && !canManage) {
       setBody(''); setTitle(''); setClientId(''); setRecord(null);
+      setTemplateSource(null);templateLoaded.current=false;
       correctionEpoch.current++; correctionRead.current++; correctionBusy.current=false; setCorrection(null);
       setCorrectionReceipt(null);
       adoptDraftBaseline({title:'',clientId:'',body:''});
@@ -201,12 +224,14 @@ function ScopedPreparation({ tenantId, agreementId, requestId, requestTenantId, 
     if (!title.trim()) { setMessage('Give the agreement a title.'); titleField.current?.focus(); return; }
     if (!body.trim()) { setMessage('Add the agreement wording before saving.'); bodyPanel.current?.querySelector<HTMLElement>('textarea,[contenteditable="true"]')?.focus(); return; }
     if (!requestId || !clientsReady || !clientsReadable) return;
+    if(templateVersionId&&(!templateSource||templateSource.id.toLowerCase()!==templateVersionId.toLowerCase())){setMessage('The original template version must be verified before saving.');return;}
     onDraftAttempted(requestId);
     originalFresh.current = false;
     setPhase('saving'); setMessage('');
     // The SAME native request atomically creates, recovers an identical intent,
     // or refuses a conflict. No read-then-create check or replacement request.
-    const result = await createAgreementDraft({ tenantId, requestId, clientId, title, body });
+    const result = await createAgreementDraft({ tenantId, requestId, clientId, title, body,
+      ...(templateSource?{source:'tenant_template' as const,sourceVersionId:templateSource.id}:{}) });
     if (!exit.alive.current || !accessEpoch.current.allowed || accessEpoch.current.value !== openedEpoch) return;
     if (result.ok === true) openConfirmed(result.value.signing_id);
     else { setPhase(result.reason === 'unconfirmed' || result.reason === 'conflict' ? 'uncertain' : 'editing'); setMessage(result.message); }
@@ -243,12 +268,13 @@ function ScopedPreparation({ tenantId, agreementId, requestId, requestTenantId, 
     {(phase === 'editing' || phase === 'saving') && <form onSubmit={save} className="e04-preparation-layout">
       <div className="e04-preparation-document"><div className="e04-preparation-form-row"><label>Agreement title<input ref={titleField} value={title} onChange={event => setTitle(event.target.value)} disabled={busy} placeholder="Client services agreement" /></label><label>Client<select ref={clientField} value={clientId} onChange={event => setClientId(event.target.value)} disabled={busy || !clientsReady || !clientsReadable}><option value="">Select a client</option>{visibleClients.map(client => <option key={client.id} value={client.id}>{client.name}</option>)}</select></label></div><div ref={bodyPanel}><AgreementBodyEditor scopeKey={`${tenantId}:${requestId}`} value={body} onChange={setBody} readOnly={busy} /></div></div>
       <aside className="e04-preparation-context"><div className="e04-preparation-context-card"><FileText size={22} aria-hidden="true" /><h3>A draft for review</h3><p>Saving retains the agreement wording and client relationship. It does not request a signature or payment.</p><ul><li><Check size={16} aria-hidden="true" />Review the services and responsibilities.</li><li><Check size={16} aria-hidden="true" />Specify the intended fees and payment dates.</li><li><Check size={16} aria-hidden="true" />Use reviewed terms appropriate to the engagement.</li></ul></div>
+        {templateSource&&<section className="e04-preparation-context-card" aria-label="Original template source"><h3>{templateSource.title}</h3><p>Retained template version {templateSource.version}</p><dl><dt>Jurisdiction</dt><dd>{templateSource.preparation_options?.jurisdiction||'Not specified'}</dd><dt>Requested wording review</dt><dd>{templateSource.preparation_options?.review_route==='qualified_legal'?'Qualified legal review':templateSource.preparation_options?.review_route==='business'?'Business review':'Not specified'}</dd>{templateSource.preparation_options?.reviewer&&<><dt>Reviewer</dt><dd>{templateSource.preparation_options.reviewer}</dd></>}</dl><p>Source-template options do not record completed review. Review this agreement’s actual wording before signing.</p>{onOpenTemplate&&<button type="button" onClick={()=>exit.request(()=>onOpenTemplate(templateSource.id))}>Inspect source template</button>}</section>}
         {(!clientsReady || !clientsReadable || visibleClients.length === 0) && <div className="e04-preparation-context-card"><h3>{!clientsReady ? 'Client records are not ready' : !clientsReadable ? 'Client records could not be read' : 'Add the client first'}</h3><p>Select an actual client before retaining an agreement.</p>{clientsReady && clientsReadable && onOpenClients ? <button type="button" onClick={() => exit.request(onOpenClients)}>Open Clients<ArrowRight size={16} /></button> : <button type="button" onClick={onRefresh}>Check client records</button>}</div>}
         {message && <p className="e04-preparation-notice" role="alert">{message}</p>}
         <button className="e04-preparation-primary" type="submit" disabled={busy || !clientsReady || !clientsReadable}>{busy ? <><Loader2 size={16} aria-hidden="true" />Confirming draft…</> : <>Save agreement draft<ArrowRight size={16} /></>}</button>
       </aside>
     </form>}
-    {phase === 'record' && visibleRecord && agreement && !historyOpen && !correction && <div className="e04-preparation-layout"><section className="e04-preparation-document"><div className="e04-preparation-document-heading"><FileText size={17} aria-hidden="true" /><span>Recorded wording · content version {agreement.version}</span></div>{agreement.body_markdown !== null ? <div className="e04-preparation-paper"><ReactMarkdown components={{ img: ({ alt }) => <span>[Embedded image: {alt || 'document image'}]</span> }}>{agreement.body_markdown}</ReactMarkdown></div> : <div className="e04-preparation-message"><FileText size={28} aria-hidden="true" /><h3>Original PDF document</h3><p>Use signature history and files to inspect the retained documents available for this agreement.</p></div>}</section><aside className="e04-preparation-context"><div className="e04-preparation-context-card"><h3>Agreement details</h3><dl><dt>Client</dt><dd>{currentClient?.name ?? 'Client details are not loaded'}</dd><dt>Document source</dt><dd>{agreement.body_source === 'tenant_template' ? 'Business template version' : agreement.body_source === 'tenant_upload' ? 'Uploaded document' : 'Authored agreement'}</dd>{agreement.expires_at && <><dt>Signing link deadline</dt><dd>{historyTime(agreement.expires_at)}</dd></>}<dt>Last recorded</dt><dd>{new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(agreement.updated_at))}</dd></dl></div><div className="e04-preparation-context-card"><Users size={22} aria-hidden="true" /><h3>Signing progress</h3>{visibleRecord.signers.length ? <ol className="e04-preparation-signers">{visibleRecord.signers.map(signer => <li key={signer.id}><strong>{signer.full_name}</strong><span>{signer.email}</span><small>{signer.signer_role === 'counterparty' ? 'Client signer' : signer.signer_role === 'tenant_signatory' ? 'Business signer' : 'Witness'} · Order {signer.signing_order} · {SIGNER_STATE[signer.status] ?? 'Status unavailable'}</small></li>)}</ol> : <p>No signer is recorded. A signer is required before signatures can be requested.</p>}</div><div className="e04-preparation-context-card"><h3>Document changes</h3>{correctionAcknowledgment}<p>Inspect wording retained under this agreement. Earlier saved versions may not be available.</p>{agreement.can_edit && agreement.status==='draft' && agreement.body_markdown!==null && agreement.body_source!=='tenant_upload' && !agreement.has_source_document && !agreement.content_sha256 && !agreement.sealed_sha256 && <button ref={correctionTrigger} onClick={beginCorrection}>Correct draft wording</button>}<button ref={historyTrigger} onClick={() => setHistoryOpen(true)}>Inspect wording history</button></div><AgreementRecordHistory key={agreement.id} id={agreement.id} tenantId={tenantId} completed={agreement.status === 'completed'} signings={signings} /><p className="e04-preparation-note">A signing status does not establish payment or completion of the agreed services.</p></aside></div>}
+    {phase === 'record' && visibleRecord && agreement && !historyOpen && !correction && <div className="e04-preparation-layout"><section className="e04-preparation-document"><div className="e04-preparation-document-heading"><FileText size={17} aria-hidden="true" /><span>Recorded wording · content version {agreement.version}</span></div>{agreement.body_markdown !== null ? <div className="e04-preparation-paper"><ReactMarkdown components={{ img: ({ alt }) => <span>[Embedded image: {alt || 'document image'}]</span> }}>{agreement.body_markdown}</ReactMarkdown></div> : <div className="e04-preparation-message"><FileText size={28} aria-hidden="true" /><h3>Original PDF document</h3><p>Use signature history and files to inspect the retained documents available for this agreement.</p></div>}</section><aside className="e04-preparation-context"><div className="e04-preparation-context-card"><h3>Agreement details</h3><dl><dt>Client</dt><dd>{currentClient?.name ?? 'Client details are not loaded'}</dd><dt>Document source</dt><dd>{agreement.body_source === 'tenant_template' ? 'Business template version' : agreement.body_source === 'tenant_upload' ? 'Uploaded document' : 'Authored agreement'}</dd>{agreement.source_version_id&&onOpenTemplate&&<><dt>Source record</dt><dd><button onClick={()=>exit.request(()=>onOpenTemplate(agreement.source_version_id!))}>Inspect source template</button></dd></>}{agreement.expires_at && <><dt>Signing link deadline</dt><dd>{historyTime(agreement.expires_at)}</dd></>}<dt>Last recorded</dt><dd>{new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(agreement.updated_at))}</dd></dl></div><div className="e04-preparation-context-card"><Users size={22} aria-hidden="true" /><h3>Signing progress</h3>{visibleRecord.signers.length ? <ol className="e04-preparation-signers">{visibleRecord.signers.map(signer => <li key={signer.id}><strong>{signer.full_name}</strong><span>{signer.email}</span><small>{signer.signer_role === 'counterparty' ? 'Client signer' : signer.signer_role === 'tenant_signatory' ? 'Business signer' : 'Witness'} · Order {signer.signing_order} · {SIGNER_STATE[signer.status] ?? 'Status unavailable'}</small></li>)}</ol> : <p>No signer is recorded. A signer is required before signatures can be requested.</p>}</div><div className="e04-preparation-context-card"><h3>Document changes</h3>{correctionAcknowledgment}<p>Inspect wording retained under this agreement. Earlier saved versions may not be available.</p>{agreement.can_edit && agreement.status==='draft' && agreement.body_markdown!==null && agreement.body_source!=='tenant_upload' && !agreement.has_source_document && !agreement.content_sha256 && !agreement.sealed_sha256 && <button ref={correctionTrigger} onClick={beginCorrection}>Correct draft wording</button>}<button ref={historyTrigger} onClick={() => setHistoryOpen(true)}>Inspect wording history</button></div><AgreementRecordHistory key={agreement.id} id={agreement.id} tenantId={tenantId} completed={agreement.status === 'completed'} signings={signings} /><p className="e04-preparation-note">A signing status does not establish payment or completion of the agreed services.</p></aside></div>}
     {exit.confirmation}
   </article>;
 }

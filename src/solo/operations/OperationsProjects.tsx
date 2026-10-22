@@ -7,6 +7,7 @@ import "./operations-views.css";
 
 export interface OperationsProjectsProps {
   plans: Plan[];
+  onOpenWork?: () => void;
   items?: PlanItem[];
   members: TeamMemberRecord[];
   onInspectItem: (item: PlanItem) => void;
@@ -14,10 +15,10 @@ export interface OperationsProjectsProps {
 }
 const projectDate = (value: string | null) => value && !Number.isNaN(new Date(value).getTime()) ? new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(new Date(`${value.slice(0, 10)}T12:00:00`)) : "Not scheduled";
 
-export function OperationsProjects({ plans, members, onInspectItem, onInspectPlan }: OperationsProjectsProps) {
+export function OperationsProjects({ plans, members, onInspectItem, onInspectPlan, onOpenWork }: OperationsProjectsProps) {
   const people = new Map(members.map(member => [member.user_id, member]));
   return <section className="ops-views" aria-label="Projects"><header className="ops-view-heading"><h1>Every project, a clear next step</h1><span className="ops-view-muted">{plans.length} plans shown</span></header>
-    {!plans.length ? <div className="ops-view-empty"><Flag size={32} aria-hidden="true" /><h2>A shared path from start to finish</h2><p>Your plans will appear here with their milestones and assigned work.</p></div> : <div className="ops-project-landscape">{plans.map(plan => {
+    {!plans.length ? <div className="ops-project-start"><div className="ops-project-start-main"><span className="ops-project-start-kicker">YOUR NEXT OUTCOME</span><h2>Start with one outcome.</h2><p>Set the owner and the time window. Keep milestones and the work that follows connected.</p><div className="ops-project-start-actions"><button type="button" disabled={!onOpenWork} onClick={onOpenWork}>Open existing work</button></div></div><ol className="ops-project-start-path" aria-label="How a project connects to work"><li><span aria-hidden="true">01</span><div><strong>Define the outcome</strong><p>A project, an accountable person and a real time window.</p></div></li><li><span aria-hidden="true">02</span><div><strong>Mark the milestones</strong><p>Review the checkpoints and who owns each next step.</p></div></li><li><span aria-hidden="true">03</span><div><strong>Follow the original work</strong><p>Keep tasks, deadlines and progress together in Operations.</p></div></li></ol></div> : <div className="ops-project-landscape">{plans.map(plan => {
       const eligible = plan.items.filter(item => item.status !== "cancelled");
       const completed = eligible.filter(item => item.status === "done").length;
       const closedWithUnfinishedWork = ["completed", "archived"].includes(plan.status) && completed < eligible.length;

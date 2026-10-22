@@ -373,7 +373,7 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
           setInspection({kind:"crm_recovery",id:pendingCrmRecovery.taskId,view:destination});setCrmReview(pendingCrmRecovery);
         }}>Recover pending task change</button>}
         {destination === "Work" && <button type="button" disabled={source.loading || source.forbidden || Boolean(source.error) || !matches || people.loading || Boolean(people.error)} onClick={event => { if(checkNavigation())return;creationInvoker.current = event.currentTarget; setCreatingWork(true); }}>New task</button>}
-        {destination === "Projects" && <button type="button" disabled={source.loading || source.forbidden || Boolean(source.error) || !matches || people.loading || Boolean(people.error)} onClick={event => { projectCreationInvoker.current = event.currentTarget; setCreatingProject({}); }}>New project</button>}
+        {destination === "Projects" && <button className="ops-project-create" type="button" disabled={source.loading || source.forbidden || Boolean(source.error) || !matches || people.loading || Boolean(people.error)} onClick={event => { projectCreationInvoker.current = event.currentTarget; setCreatingProject({}); }}>New project</button>}
         {isPlanning && <button type="button" aria-label="Refresh work and team profiles"
           disabled={source.loading || people.loading || (readsCrm && crm.loading) || weeklySource.phase === "reading" || taskFocus.phase === "reading" || Boolean(crmReview)} onClick={() => { void refreshSelectedWork(); void people.refresh(); if(readsCrm)void crm.refresh(); }}><RefreshCw size={16} /></button>}
         {openPaige && destination !== "Overview" && destination !== "Projects" && <button type="button" onClick={reviewWithPaige}><Sparkles size={16} aria-hidden="true" />Review with ZION</button>}
@@ -394,7 +394,7 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
         : source.error || !matches ? <div className="ops-state" role="alert"><h1>Your work couldn’t be loaded</h1><p>Refresh to read the current workspace again.</p><button type="button" onClick={() => void source.refresh()}>Try again</button></div>
         : <>
           {people.error && <div className="ops-inline-notice" role="status">Work is available, but team names and photos couldn’t be loaded. <button type="button" onClick={() => void people.refresh()}>Retry profiles</button></div>}
-          {destination === "Projects" && <OperationsProjects {...props} />}
+          {destination === "Projects" && <OperationsProjects {...props} onOpenWork={() => setDestination("Work")} />}
           <p className="ops-source-limit">Figures reflect the projects and work loaded here. {people.partial && "Some team profiles are outside the current read."}</p>
         </>}
     </div>

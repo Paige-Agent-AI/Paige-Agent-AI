@@ -6,6 +6,29 @@ import { OperationsProjects } from "./OperationsProjects";
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
+it("connects first use to existing Work without pretending a project or inspection exists", () => {
+  const container = document.createElement("div"); const root = createRoot(container);
+  const openWork = vi.fn(), inspect = vi.fn();
+  try {
+    act(() => root.render(<OperationsProjects plans={[]} members={[]} onInspectItem={inspect} onInspectPlan={inspect} onOpenWork={openWork} />));
+    const action = Array.from(container.querySelectorAll("button")).find(button => button.textContent === "Open existing work");
+    expect(action).toBeTruthy();
+    act(() => action!.click());
+    expect(openWork).toHaveBeenCalledOnce(); expect(inspect).not.toHaveBeenCalled();
+    expect(container.querySelector('[role="progressbar"]')).toBeNull();
+    expect(container.querySelector("ol")?.getAttribute("aria-label")).toBe("How a project connects to work");
+  } finally { act(() => root.unmount()); }
+});
+
+it("does not expose an operative first-use exit without its owning navigation callback", () => {
+  const container = document.createElement("div"); const root = createRoot(container);
+  try {
+    act(() => root.render(<OperationsProjects plans={[]} members={[]} onInspectItem={vi.fn()} onInspectPlan={vi.fn()} />));
+    const action = Array.from(container.querySelectorAll("button")).find(button => button.textContent === "Open existing work");
+    expect(action).toBeTruthy(); expect(action!.disabled).toBe(true);
+  } finally { act(() => root.unmount()); }
+});
+
 it("flags unfinished work on a closed project without rewriting its source status", () => {
   const container = document.createElement("div");
   const root = createRoot(container);

@@ -978,7 +978,7 @@ button.so-row:focus-visible { outline: 2px solid var(--violet); outline-offset: 
   margin: 4px 0 -4px; font: 600 10.5px/1 var(--font); letter-spacing: .1em; text-transform: uppercase;
   color: var(--violet);
 }
-.so-src { display: grid; gap: 8px; }
+.so-document-sources { display: grid; gap: 8px; min-width: 0; }
 .so-src-card {
   position: relative; overflow: hidden; display: grid; gap: 3px;
   grid-template-columns: 26px minmax(0, 1fr); align-items: start;

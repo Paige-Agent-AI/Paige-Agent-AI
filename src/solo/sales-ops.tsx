@@ -789,7 +789,7 @@ function AgreementEditor({ agreements, signings, offers, tenantId, existing, exi
               <button className="btn btn-s" onClick={signings.retry}><Ic.arrow size={13} />Retry documents</button>
             </p>
           ) : (<>
-            <div className="so-src" role="radiogroup" aria-label="The document">
+            <div className="so-document-sources" role="radiogroup" aria-label="The document">
               {/* The APPROVED order (§28 screen 2): the contract you already have, then Paige
                 * writing one, then no document at all — which the prototype's own note calls
                 * "today's behaviour preserved", and which stays the DEFAULT so nobody has to opt

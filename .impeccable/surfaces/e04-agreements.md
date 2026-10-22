@@ -171,3 +171,16 @@ All163 integrated tests pass; actual SDK held-response completion plus render-fr
 barrier proves stale recovery cannot publish before a new explicit read. Final
 20-frame/17-path proof pins all25 owning files exactly. This is a functional
 recovery repair, not further visual polishing or a provider/acceptance claim.
+
+October22 original PDF intake finish review: actual source07cb/recipient composition
+passes360 tests/12 suites. Manual rendered inspection caught the original .so-src
+provenance label's nowrap/overflow rule colliding with the document choices. A new
+real-browser wrapping/touch-target assertion fails before the scoped selector
+repair; final20 responsive/theme cases/ten paths/21 source pins/zero page errors
+pass, with desktop320/390 and actual native PAIGE Fold/modal continuity. Both exact
+07cb baseline and current SOLO detect exit2 with12 incumbent anti-patterns and1066
+advisories, not a zero-finding result. No new design system, token, navigation or
+renderer. Original file-to-title Tab/help and invalid-selection recovery retained.
+Synthetic identity/transport only; actual roles/provider/full premium/founder
+acceptance remain UNVERIFIED. One unchanged5s link control timed out, then passed
+focused and in complete360-case rerun; assertions and timeout unchanged.

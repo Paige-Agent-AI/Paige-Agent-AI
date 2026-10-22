@@ -1484,10 +1484,12 @@ false explanation. Original DTO/path/bucket/RLS/SDK/cache/no-overwrite/leave/aut
 epochs and unconfirmed-outcome messages remain. No converter or signing engine added.
 
 Source baseline six intended RED plus original timeout; corrected120 focused and
-actual composed293/11 suites PASS without timeout/assertion waiver. Whole-app type
+actual composed360/12 suites PASS without timeout/assertion waiver. Whole-app type
 ratchet10/current6, lint0/one incumbent, Binding35/controls and SOLO parity/controls
-PASS. Actual final native source render20cases/nine paths/20pins/zero page errors,
-including keyboard file-to-title and correctable invalid selection, only synthetic
+PASS. Actual final native source render20cases/ten paths/21pins/zero page errors,
+including keyboard file-to-title, correctable invalid selection and the genuine
+clipped source-choice regression repaired by separating the original provenance
+label selector from the actual document choices. Only synthetic
 ports. Exact main/current Impeccable BOTH12 incumbent anti-patterns/1066 advisories;
 not a clean whole-platform design scan or finished premium claim. Evidence:
 [native PDF intake](../evidence/ui-delivery/e04-agreement-pdf-intake.md).

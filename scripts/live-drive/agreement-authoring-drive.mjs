@@ -20,7 +20,7 @@ if(historyProof)sources.push('src/solo/sales/AgreementWordingHistory.tsx','src/s
 if(correctionProof)sources.push('src/solo/sales/AgreementWordingHistory.tsx','src/solo/sales/agreementRevisionApi.ts','src/solo/sales/AgreementDraftCorrection.tsx','src/solo/sales/agreementCorrectionApi.ts');
 if(templateProof)sources.push('src/solo/sales/AgreementTemplateWorkspace.tsx','src/solo/sales/agreementTemplateApi.ts','src/solo/sales/agreement-templates.css','src/solo/sales/AgreementWordingHistory.tsx','src/solo/sales/agreementRevisionApi.ts','src/solo/sales/AgreementDraftCorrection.tsx','src/solo/sales/agreementCorrectionApi.ts');
 if(signerProof)sources.push('src/solo/sales/AgreementSignerPreparation.tsx','src/solo/sales/agreementSignerApi.ts','scripts/live-drive/agreement-signer-paths.mjs','src/solo/sales/AgreementWordingHistory.tsx','src/solo/sales/agreementRevisionApi.ts','src/solo/sales/AgreementDraftCorrection.tsx','src/solo/sales/agreementCorrectionApi.ts','src/solo/sales/AgreementTemplateWorkspace.tsx','src/solo/sales/agreementTemplateApi.ts','src/solo/sales/agreement-templates.css');
-if(uploadProof)sources.push('src/solo/useSoloAgreementSignings.ts','src/solo/sales/agreementPdfIntake.ts');
+if(uploadProof)sources.push('src/solo/useSoloAgreementSignings.ts','src/solo/sales/agreementPdfIntake.ts','src/solo/sales-ops.css');
 console.log('Pinning actual source');
 const pinned = await hashes();
 let compiledRoot = null;
@@ -248,6 +248,15 @@ try{
         await page.getByRole('button',{name:'Fold PAIGE conversation',exact:true}).last().click();
       }
       await page.getByRole('button',{name:'Record terms or upload',exact:true}).click();
+      if(pdfIntakeProof){
+        const choices=page.getByRole('radiogroup',{name:'The document',exact:true});
+        const sourceFit=await choices.evaluate(el=>({height:el.clientHeight,width:el.clientWidth,scrollWidth:el.scrollWidth,cards:[...el.querySelectorAll('[role=radio]')].map(card=>({height:card.getBoundingClientRect().height,scrollWidth:card.scrollWidth,width:card.clientWidth}))}));
+        assert.equal(sourceFit.cards.length,3,'All three actual document-source choices remain present');
+        assert.ok(sourceFit.height>=sourceFit.cards.reduce((sum,card)=>sum+card.height,0),'Document choices must not collapse or clip their actual cards');
+        assert.ok(sourceFit.scrollWidth<=sourceFit.width+1&&sourceFit.cards.every(card=>card.height>=44&&card.scrollWidth<=card.width+1),'Document choices wrap and retain touch targets');
+        await choices.scrollIntoViewIfNeeded();
+        if(width===320||width===1366)await capture(`${width}-${height}-${theme}-${paige}-document-choices`);
+      }
       await page.getByRole('radio',{name:/Upload a contract/}).click();
       await page.getByRole('combobox',{name:'Client',exact:true}).selectOption(client);
       const fileInput=page.getByLabel('The contract file',{exact:true});
@@ -277,7 +286,7 @@ try{
       await page.evaluate(()=>document.fonts.ready);await capture(`${width}-${height}-${theme}-${paige}`);frames.push({theme,width,height,requestedPaige:paige,actualPaige:overlay?'folded-before-modal':paige,fit});
     }
     behavior.push('original owning Sales upload form and actual hook/SDK','controlled lost upload acknowledgement is visibly unconfirmed','no signing record call after unknown upload','notice wraps on narrow viewports','unchanged private bucket/no-overwrite behavior proven separately by actual-hook cases');
-    if(pdfIntakeProof)behavior.push('PDF-only selection matches canonical native document path','invalid selection is correctable before any upload','no second ignored contract or false text-signing explanation','actual native file-to-title Tab route and associated PDF guidance');
+    if(pdfIntakeProof)behavior.push('PDF-only selection matches canonical native document path','invalid selection is correctable before any upload','no second ignored contract or false text-signing explanation','actual native file-to-title Tab route and associated PDF guidance','all three source choices wrap without clipping and retain touch targets');
   }else if(correctionProof){
     const draftTitle=()=>page.getByRole('textbox',{name:'Draft title',exact:true});
     const enter=async()=>{await page.getByRole('button',{name:'Correct draft wording',exact:true}).click();await draftTitle().waitFor();};

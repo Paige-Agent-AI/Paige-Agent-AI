@@ -9,6 +9,17 @@ file, and native agreement-send reads/parses/hashes the PDF. The current form's
 required pasted words and claim that those words are signed are therefore false.
 No customer document or signing/provider action was executed to establish this.
 
+Final rendered composition on released recipient/source07cb found the incumbent
+single-line provenance selector also applied to the document source group. This
+clipped the actual choices. Genuine browser RED precedes a scoped class correction;
+all three original choices now wrap and retain touch targets. The existing dialog
+keeps its scroll/focus/leave behavior; no new navigation or shared design system.
+Final source integration360/12 PASS and actual rendered20cases/ten paths/21 owning
+source pins/zero errors. An unchanged original5s link control timed out under a
+combined run, then passed focused and in the complete unchanged360-case rerun;
+no timeout/assertion/test gate was weakened. Full SOLO scan still has12 incumbent
+anti-patterns/1066 advisories in both exact07cb and current; no global clean claim.
+
 1. Outcome: choose a supported original PDF, correct invalid selection and retain
    it on the actual client agreement without pasting a second ignored contract.
 2. Owner: same EXP04 original Sales form/hook. REUSE original native source writer,

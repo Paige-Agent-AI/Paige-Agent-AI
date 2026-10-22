@@ -1280,5 +1280,25 @@ Owner Chat/eligible Live teaching dispatch remains UNAVAILABLE in this bounded
 navigation prerequisite. [Source contract](../delivery/e09-cura-source-reference.md).
 
 
+## EXP04 original template wording/options — local native foundation
+
+Existing E04 lead extends the original tenant_agreement_versions store under the
+October21/22 owner clarification. Optional jurisdiction, requested business/qualified
+wording-review route and reviewer do not imply completed legal review or block
+infrastructure engineering. Product58b9572229c7816c4b7b875036be464a85213c50,
+compositionf06e157b796787e63caf6bf480a7980d115fe2af: scoped native version/list/read/
+actor-bound same-UUID recovery, retained supplied words/source time, original
+legacy maintenance compatibility. Native68/replay2/five concurrent sessions/three
+observed lock waits; original baseline five positive controls then required refusal
+RED. These are source/fixture proofs, not customer JWT/provider/acceptance evidence.
+No new ledger/approval/sender/executor, legal wording, Chat/Live capability or
+algorithm activation. Own220004 successor remains unapplied; hosted review/CI/
+Preview, migration/catalog readback and actual mounted template consumer are owed.
+See [native evidence](../evidence/ui-delivery/e04-template-wording-options.md) and
+[original twelve-outcome journey](../delivery/exp04-get-paid-deliver-journey.md).
+
+### EXP04 C7 commercial presentation — October22 development, not released
+Selective native/pure formatter reuse from2192/179e52 retains exact original agreement/terms/invoice and explicit service facts, without replacing signed history or original renderer. New native strict-type negatives reproduce historical coercion; repaired54/replay2/two actual sessions/one observed wait and11 Deno tests/26 steps PASS. Native230004 is UNAPPLIED, source initially dormant/unmounted; no signing/send/payment/provider/Chat activation, accepted legal wording or effective terms claimed. Original Collections/Kit operation/approval/Rail integration and hosted exact document readback remain owed. All twelve outcomes and actual customer/founder acceptance stay incomplete. See [native evidence](../evidence/ui-delivery/e04-commercial-presentation-native.md).
+
 ### EXP04 original signer preparation — October22 development, not released
 Two real native baselines pass six positive controls then fail frozen-source refusal/distinct concurrent order. Same original add_agreement_signer now serializes the parent, refuses retained source and advances original reviewed version after an actual party change; no supplied words/history/token/consent/send/payment rewritten. Native44/replay2/five sessions/three observed waits PASS, guarded exact-body migration240004 UNAPPLIED. Professional mounted signer/field journey, full signing/provider/customer/founder acceptance remain owed. All twelve outcomes remain mandatory/incomplete; [native evidence](../evidence/ui-delivery/e04-signer-preparation-integrity.md).

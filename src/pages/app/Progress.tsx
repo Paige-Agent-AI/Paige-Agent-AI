@@ -12,7 +12,7 @@
  * here. Customer action items keep their own completion, on /app/actions, and are linked from here
  * when any are waiting.
  */
-import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
   AlertCircle, ArrowRight, Check, ChevronDown, CircleDashed, ClipboardList, Flag, Home, ListChecks, MessageSquare,
@@ -35,6 +35,7 @@ import {
 } from "@/hooks/useClientPortalProgress";
 import { useClientPortalBrand } from "@/hooks/useClientPortalBrand";
 import { useMyActions } from "@/hooks/useMyActions";
+import { CLIENT_PORTAL_CHOOSE_HREF } from "@/lib/client-portal-entry";
 
 const FOCUS = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 /**
@@ -214,6 +215,24 @@ function DoneUnlistedNote({ count }: { count: number }) {
 
 export default function Progress() {
   const progress = useClientPortalProgress();
+  const heading = useRef<HTMLHeadingElement>(null);
+  const retry = useRef<{ id: number; epoch: number } | null>(null);
+  const retrySequence = useRef(0);
+  const [settledRetry, setSettledRetry] = useState(0);
+  useEffect(() => {
+    const intent = retry.current;
+    if (!intent || intent.id !== settledRetry) return;
+    retry.current = null;
+    if (intent.epoch === progress.scopeEpoch && !progress.loading && !progress.error && progress.summary) {
+      heading.current?.focus({ preventScroll: true });
+    }
+  }, [settledRetry, progress.scopeEpoch, progress.loading, progress.error, progress.summary]);
+  const retryRead = async () => {
+    const intent = { id: ++retrySequence.current, epoch: progress.scopeEpoch };
+    retry.current = intent;
+    await progress.refresh();
+    setSettledRetry(intent.id);
+  };
   const brand = useClientPortalBrand();
   const businessName = brand?.tenant_name?.trim() || "your team";
   const tz = useMemo(viewerTimeZone, []);
@@ -263,7 +282,7 @@ export default function Progress() {
       className="mx-auto max-w-2xl [&_button]:min-h-[44px]"
     >
       <header className="space-y-1 pb-4">
-        <h1 id="progress-title" className="text-2xl font-semibold tracking-tight">Progress</h1>
+        <h1 ref={heading} id="progress-title" tabIndex={-1} className={`text-2xl font-semibold tracking-tight rounded-sm ${FOCUS}`}>Progress</h1>
         {!blocked && summary && summary.shared > 0 && (
           <div data-testid="progress-summary" className="pt-1">
             {allDone ? (
@@ -292,7 +311,7 @@ export default function Progress() {
           <p className="inline-flex items-center gap-2">
             <AlertCircle aria-hidden="true" className="h-4 w-4 shrink-0 text-destructive" /> {progress.error}
           </p>
-          <Button size="sm" variant="outline" className={QUIET_HOVER} onClick={() => void progress.refresh()}>Try again</Button>
+          <Button size="sm" variant="outline" className={QUIET_HOVER} onClick={() => void retryRead()}>Try again</Button>
         </div>
       )}
 
@@ -301,15 +320,9 @@ export default function Progress() {
       {progress.multipleBusinesses ? (
         <ProgressEmpty
           icon={ListChecks}
-          title="Progress for more than one business isn't available yet"
-          description={(
-            <>
-              Your account is connected to more than one business. Progress here works with one business at a time
-              for now. For help in the meantime, use{" "}
-              <Link to="/app/support" className={`font-medium text-foreground underline underline-offset-4 ${FOCUS}`}>Support</Link>.
-            </>
-          )}
-          action={<BackHome />}
+          title="Choose a business to see your progress"
+          description="Choose one of your authorized businesses to see the work it has shared with you."
+          action={<a href={CLIENT_PORTAL_CHOOSE_HREF} className={LINK_BUTTON}>Choose business <ArrowRight aria-hidden="true" className="h-4 w-4" /></a>}
         />
       ) : progress.unavailable ? (
         <ProgressEmpty

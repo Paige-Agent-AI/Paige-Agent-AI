@@ -6,6 +6,26 @@ mock. Complete live Experience evaluation remains pending. No other agent is use
 
 ## Compact flow brief
 
+October21 correction adoption, before product editing: original native record →
+explicit correction of unsigned editable text → same SAVE/CAS → fresh same record.
+Prototype59f81c0049c7f050178d4e51abc59ae46d369649 passed20 viewport/theme cases and17
+recovery paths; existing lead selects routine intent under Oct21 owner delegation,
+not founder acceptance. Reuse the current rich/source editor, paper/context layout,
+one per-instance Sales leave guard, original agreement/customer/offer/terms/template
+identity, native audit/retention. Title/body alone are editable. No private browser
+cache, Layer C act, new writer/ledger/approval/provider or automatic signing/charge.
+Frozen-draft native guard#2526 is a separately reviewed release prerequisite.
+
+Missing title/wording focuses the input. Capture original timestamp and reviewed
+payload once; lost response locks the proposal. Actual current-record inspection
+stays separate from execution acknowledgment. Retry requires that same frozen CAS,
+never refreshed baseline or automatic conflict overwrite. Unknown authority hides
+retained RAM; conclusive native revocation retires it. Workspace/user switch retires
+selection. Confirmed save returns through fresh native read/focus. Leaving unknown
+work explains that the original request may still complete. Existing authoring and
+history remain intact. Loading/empty/error/refusal/conflict/unknown/recovery and
+keyboard/narrow states require actual mounted evidence before release.
+
 Goal: prepare, review, request and later inspect the same client agreement.
 Human and feel: a service-business owner; composed, legible, in control of consequences.
 Entry and exit: existing Sales → Terms & Agreements; return to the same register and draft.
@@ -100,3 +120,44 @@ retirement and original entry focus. First rendered focus failure was repaired u
 commit-time restoration and repeated unchanged assertions. Synthetic SDK/identity
 ports remain distinct from73 native SQL assertions and actual customer acceptance.
 All twelve outcomes and correction/signing/financial/delivery completeness stay open.
+
+
+## October22 original native template consumer — bounded finish
+
+Prototype275be12415239d4ecdb66bec0894146ec9fe5c64 preserves the selected native
+Sales library → supplied-wording editor/options → original retained version →
+real-client draft flow. Lead routine intent selected under October21 delegation,
+not founder acceptance. Actual implementation reuses original template/RPC/auth,
+rich editor, native paper/tokens, query navigation and one Sales leave guard;
+no new library, execution, approval, sender or Portal interface. Optional review
+configuration never indicates completed review.
+
+Actual final owning Sales/editor/SDK source20 viewport/theme frames/17 paths/zero
+page errors,25 owning source pins and27 images. Desktop and320 dark action/source
+views inspected. Native overlay folds/reopens without losing work. Required-field
+focus, actual source/record/client/reload, immutable version/earlier source, readonly
+unknown same-request retry/recovery, stale source, leave cancellation and scope/
+authority retirement pass. Finish found/repaired refusal save-lock exit and document
+heading hierarchy; bounded confirmation passed. API parameter annotation fixes two real TypeScript errors with byte-identical
+emitted JavaScript; final browser pins include the corrected source. Final type
+baseline10/current6, ESLint0errors/two incumbent warnings;163 tests/seven suites,
+all27 template cases PASS. No baseline/timeout/assertion weakening.
+
+Cached Impeccable4.1.0 detect exit0 with57 non-failing advisories across incumbent
+Sales. One new15px template-row type advisory follows the selected native Sales
+row pattern; remaining legacy advisories remain explicit. No material visual or
+interaction defect remains in this increment. React checks cover unconditional
+hooks, lazy workspace mount, bounded metadata reads and epoch-fenced async results.
+Original shell controls scroll; business-private words have no browser cache.
+
+Production prerequisites#2532/#2545, own review/CI/release/readback, actual ordinary
+owner/staff/linked-client/provider behavior, complete professional Agreements and
+all O1–O12/founder acceptance remain owed. No other agent is involved.
+
+Subsequent functional review: prior source passes25 template positives then fails
+two genuine interrupted-read regressions. Final query/authority interruption
+retires only stale UI read locks and preserves the native request/authority epoch.
+All163 integrated tests pass; actual SDK held-response completion plus render-frame
+barrier proves stale recovery cannot publish before a new explicit read. Final
+20-frame/17-path proof pins all25 owning files exactly. This is a functional
+recovery repair, not further visual polishing or a provider/acceptance claim.

@@ -27,9 +27,10 @@ export default function ClientDocuments() {
   const [preview, setPreview] = useState<Preview | null>(null);
   const [downloadStarted, setDownloadStarted] = useState(false);
   const input = useRef<HTMLInputElement>(null), opener = useRef<HTMLButtonElement | null>(null);
-  const stopButton = useRef<HTMLButtonElement>(null), checkButton = useRef<HTMLButtonElement>(null);
+  const stopButton = useRef<HTMLButtonElement>(null), checkButton = useRef<HTMLButtonElement>(null), continueButton = useRef<HTMLButtonElement>(null);
   const openSequence = useRef(0), heading = useRef<HTMLHeadingElement>(null);
-  const shownPreview = preview?.epoch === docs.epoch ? preview : null;
+  const shownPreview = preview?.epoch === docs.epoch && docs.isCurrent(preview.epoch) && docs.phase === "ready"
+    && docs.files.some(row => row.id === preview.file.id && row.storage_path === preview.file.storage_path && row.state === "ready") ? preview : null;
   const working = docs.upload.kind === "working";
   const unresolved = !!docs.upload.id && !["idle", "saved"].includes(docs.upload.kind);
   const accent = brand?.tenant_id === docs.scope?.tenant ? brand?.primary_color : null;
@@ -53,9 +54,11 @@ export default function ClientDocuments() {
     return () => window.clearTimeout(timer);
   }, [expiresAt]);
   useEffect(() => {
+    if (docs.phase !== "ready") return;
     if (docs.upload.kind === "working") stopButton.current?.focus();
     else if (docs.upload.kind === "uncertain") checkButton.current?.focus();
-  }, [docs.upload.kind]);
+    else if (docs.upload.kind === "finish" || docs.upload.kind === "retry") continueButton.current?.focus();
+  }, [docs.upload.kind, docs.phase]);
   useEffect(() => {
     if (docs.upload.kind !== "saved") return;
     setSelection({epoch: docs.epoch, file: null});
@@ -64,6 +67,7 @@ export default function ClientDocuments() {
   }, [docs.upload.kind, docs.upload.id, docs.epoch]);
   const closePreview = () => {++openSequence.current; setPreview(null); setDownloadStarted(false);};
   const open = async (row: PortalDocument, button: HTMLButtonElement) => {
+    if (docs.phase !== "ready" || !docs.isCurrent(docs.epoch)) return;
     const generation = docs.epoch, request = ++openSequence.current;
     opener.current = button; setDownloadStarted(false);
     setPreview({epoch: generation, file: row, links: null, error: null, expired: false});
@@ -105,7 +109,7 @@ export default function ClientDocuments() {
           <div className="flex flex-wrap gap-2">
             {working && <Button ref={stopButton} type="button" variant="outline" onClick={docs.stopWaiting}>Stop waiting</Button>}
             {["uncertain", "error"].includes(docs.upload.kind) && docs.upload.id && <Button ref={checkButton} type="button" variant="outline" onClick={() => void docs.checkUpload()}>Check saved upload</Button>}
-            {["finish", "retry"].includes(docs.upload.kind) && <Button type="button" onClick={() => void docs.transfer(file ?? undefined)} style={accentStyle}>
+            {["finish", "retry"].includes(docs.upload.kind) && <Button ref={continueButton} type="button" onClick={() => void docs.transfer(file ?? undefined)} style={accentStyle}>
               {docs.upload.kind === "finish" ? "Finish saved upload" : "Continue upload"}</Button>}
           </div>
         </div>}
@@ -126,7 +130,7 @@ export default function ClientDocuments() {
       </div>
     </>}
     <Dialog open={!!shownPreview} onOpenChange={value => {if (!value) closePreview();}}>
-      <DialogContent overlayClassName="motion-reduce:!animate-none" className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl motion-reduce:!animate-none [&_button]:min-h-[44px] [&>button]:min-w-[44px]" onCloseAutoFocus={event => {event.preventDefault(); if (opener.current?.isConnected) opener.current.focus();}}>
+      <DialogContent overlayClassName="motion-reduce:!animate-none" className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl motion-reduce:!animate-none [&_button]:min-h-[44px] [&>button]:min-w-[44px]" onCloseAutoFocus={event => {event.preventDefault(); if (docs.isCurrent(docs.epoch) && opener.current?.isConnected) opener.current.focus();}}>
         <DialogHeader className="pr-12"><DialogTitle className="break-words">{shownPreview?.file.filename ?? "Document"}</DialogTitle>
           <DialogDescription>{shownPreview ? `${size(shownPreview.file.size_bytes)} · ${label(shownPreview.file)}` : ""}</DialogDescription></DialogHeader>
         {shownPreview?.error ? <div className="space-y-4"><p role="alert" className="text-sm">{shownPreview.error}</p><Button variant="outline" onClick={() => {if (opener.current && shownPreview) void open(shownPreview.file, opener.current);}}>Try again</Button></div>

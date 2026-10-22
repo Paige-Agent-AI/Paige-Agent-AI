@@ -230,4 +230,22 @@ node "$HERE/draft-revision-history-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner 
 # Original frozen-document protection also applies before delivery leaves Draft.
 node "$HERE/frozen-draft-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired
 
+# Original business template library; version-bound wording options are not
+# completed legal review or a second agreement/authorization store.
+node "$HERE/template-wording-options-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired
+
+# Reconciled EXP04 commercial preparation uses the same original agreement engine,
+# existing Collections schedule/conditions and this verified disposable cluster.
+deno test --allow-import --node-modules-dir=none --deny-net --deny-env --deny-run --deny-ffi --deny-sys \
+  "$REPO/supabase/functions/_shared/agreements/commercial-presentation.test.ts"
+# The pure source is TypeScript; CI's Node 20 cannot import it. Reuse the Deno
+# runtime already exercised above, with this same fenced native cluster and all
+# 54 original assertions. No transpiled copy or relaxed test is substituted.
+deno run --allow-import --node-modules-dir=none --allow-read --allow-run="$PGBIN/psql" --allow-env \
+  --deny-net --deny-write --deny-ffi --deny-sys \
+  "$HERE/commercial-presentation-retention-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired
+
+# Original signer preparation is serialized before native party/order changes.
+node "$HERE/signer-preparation-integrity-proof.mjs" "$PGBIN/psql" "$PORT" proofrunner "$WORK/data" repaired --checked --editability
+
 echo "OK — every negative refused with its expected SQLSTATE; positive controls succeeded."

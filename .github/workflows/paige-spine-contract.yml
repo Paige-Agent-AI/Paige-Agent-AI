@@ -24,6 +24,8 @@ on:
       - "supabase/tests/e09_cura_teaching_authority.sql"
       - "supabase/tests/e09_client_game_plan_truth.sql"
       - "supabase/tests/e09_client_capability_coverage.sql"
+      - "supabase/tests/e09_customer_relationship_choices.sql"
+      - "supabase/tests/e09_customer_request_scope.sql"
       - "scripts/proof/e09-cura-teaching-concurrency.mjs"
       - "scripts/proof/e09-cura-teaching-concurrency.test.mjs"
       - "supabase/tests/research_tenant_lineage.sql"
@@ -193,6 +195,11 @@ jobs:
   database-contract:
     runs-on: ubuntu-latest
     timeout-minutes: 35
+    env:
+      # Same official images/versions; avoid throttled anonymous ECR/Docker pulls.
+      # postgres17.6.1.021 linux/amd64 is identical on GHCR and Docker Hub:
+      # sha256:759be34d849bf3eb5a59056b71b9e365ca89bfa83665bd0103343ef5598e7b78.
+      SUPABASE_INTERNAL_IMAGE_REGISTRY: ghcr.io
     steps:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
@@ -571,6 +578,9 @@ jobs:
       # Additive E09 customer-safe relationship/profile foundation; no new CI database.
       - run: supabase test db supabase/tests/client_portal_self_projection.sql
         if: ${{ !cancelled() }}
+      - name: Original owner context and customer boundary (rolled back)
+        run: supabase test db supabase/tests/e09_owner_context_boundary.sql
+        if: ${{ !cancelled() }}
       - run: supabase test db supabase/tests/client_portal_self_profile_write.sql
         if: ${{ !cancelled() }}
       # E09 consumer acceptance uses the same fully replayed identity/CRM schema.
@@ -622,6 +632,12 @@ jobs:
       # E09 Access at integration: the Documents, Profile & Consent, Agreements and Payments customer doors
       # refuse a paused or ended client, even when the pause lands after the resolver read (one shared helper).
       - run: supabase test db supabase/tests/customer_portal_access_doors.sql
+        if: ${{ !cancelled() }}
+      - name: Original customer relationship choices and isolation
+        run: supabase test db supabase/tests/e09_customer_relationship_choices.sql
+        if: ${{ !cancelled() }}
+      - name: Original customer selected request and access isolation
+        run: supabase test db supabase/tests/e09_customer_request_scope.sql
         if: ${{ !cancelled() }}
       # E09 F1a: the per-business finance entitlement — one predicate (install OR flag), neither leg
       # self-grantable from the browser, Marketplace install/uninstall unaffected, push defaults off,

@@ -4,6 +4,11 @@ export const supabase = createClient('https://authoring.fixture.invalid', 'synth
   auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   global: { fetch: async (input, init) => {
     const request = new Request(input, init), url = new URL(request.url);
+    if (new URLSearchParams(location.search).get('uploadProof') === '1'
+      && url.pathname.startsWith('/storage/v1/object/tenant-agreements/')) {
+      console.info('[e04-local-proof] Storage upload request observed');
+      throw new Error('Synthetic lost upload acknowledgement');
+    }
     if (url.pathname.startsWith('/rest/v1/rpc/')) {
       return fetch(`/__e04_rpc__/${url.pathname.split('/').at(-1)}`, { method: request.method,
         body: await request.text(), headers: { 'Content-Type': 'application/json' }, signal: request.signal });

@@ -253,8 +253,8 @@ describe("Customer portal menu editor", () => {
     db.features = { playbook_config: { persona: { name: "Guide", greeting: "Hi" }, portal: { modules: [{ key: "home", label: "Home" }, { key: "approvals", label: "Sign-offs" }, { key: "agreements", label: "Agreements" }] } } };
     await render();
     // Agreements is the customer's own agreements since Slice A: a row. Resources is core for customers (§58): a row
-    // even though this Playbook does not list it. Payments is catalog-placed: this Playbook does not list `billing`, so no row.
-    expect(editorRows()).toEqual(["# Always shown", "home", "messages", "# Your work", "progress", "actions", "sessions", "approvals", "# Paperwork", "documents", "agreements", "# Learn", "resources"]);
+    // even though this Playbook does not list it. Core Payments is also available to configure or hide.
+    expect(editorRows()).toEqual(["# Always shown", "home", "messages", "# Your work", "progress", "actions", "sessions", "approvals", "# Paperwork", "documents", "agreements", "billing", "# Learn", "resources"]);
     expect(byLabel<HTMLInputElement>("Name for Sign-offs").value).toBe("Sign-offs");
   });
 });

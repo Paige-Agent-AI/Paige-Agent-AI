@@ -170,6 +170,24 @@ Deno.test("Payments is configurable now that its page exists (E09 Slice 5)", asy
   assertEquals(f.stored(), [{ key: "billing", label: "Pay" }]);
 });
 
+Deno.test("core Payments agrees with the customer menu across catalogs and preserves owner hiding", async () => {
+  for (const catalog of [CATALOG, {slug: "funding", authored_usable: false, modules: null},
+    {slug: null, authored_usable: true, modules: [{key: "home", label: "Home"}]}]) {
+    const f = fakeCaller({modules: [], catalog});
+    const read = await readPortalMenu({caller: f.caller, expectedTenantId: TENANT});
+    assert(read.success);
+    const pay = read.entries.filter(e => e.key === "billing");
+    assertEquals(pay.map(e => [e.group,e.shown,e.hidden_because,e.label]), [["paperwork",true,null,"Payments"]]);
+    const hidden = await configurePortalMenu({caller: f.caller, expectedTenantId: TENANT,
+      args: {entries: [{key: "billing", visible: false}]}});
+    assert(hidden.success);
+    const after = await readPortalMenu({caller: f.caller, expectedTenantId: TENANT});
+    assert(after.success);
+    assertEquals(after.entries.filter(e => e.key === "billing").map(e => [e.shown,e.hidden_because]), [[false,"owner_hid_it"]]);
+    assert(!after.entries.some(e => ["credit","funding","funding-journey"].includes(e.key)));
+  }
+});
+
 Deno.test("Agreements is every customer's since Slice A: shown by default, and the owner can hide or rename it", async () => {
   // A business whose catalog does not list it (general) and one whose catalog does (funding) alike (D-A1).
   for (const catalog of [{ slug: "general", authored_usable: false, modules: null }, { slug: "funding", authored_usable: false, modules: null }]) {
@@ -423,8 +441,8 @@ Deno.test("the read projects each customer entry with the owner's name and why i
   assert(!("learn" in by), "the learn alias shares Resources' route: one row, not two");
   assertEquals([by.agreements.shown, by.agreements.hidden_because], [true, null]);
   assertEquals([by.messages.label, by.messages.fixed, by.messages.shown], ["Messages", true, true]);
-  // Payments is live (E09 Slice 5) but catalog-placed: a catalog that does not list `billing` does not show it.
-  assertEquals([by.billing.label, by.billing.shown, by.billing.hidden_because], ["Payments", false, "playbook_does_not_list_it"]);
+  // Core Payments remains offered when the catalog omits it; the original overlay may still hide it.
+  assertEquals([by.billing.label, by.billing.shown, by.billing.hidden_because], ["Payments", true, null]);
   assert(!("planning" in by), "a staff-only entry is not a customer entry");
   assertEquals(f.calls, [{ name: "read_tenant_portal_menu", args: { p_expected_tenant_id: TENANT } },
     { name: "current_tenant_finance_entitled", args: {} }]);

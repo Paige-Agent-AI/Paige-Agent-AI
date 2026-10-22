@@ -15,6 +15,7 @@ export function SalesDialogPortal({ children }: { children: React.ReactNode }) {
 
 export function useSalesDraftExit(draft: unknown, busy: boolean, onClose: () => void, options?: { uncertain?: boolean; recordedDraftFound?: boolean }) {
   const initial = React.useRef(JSON.stringify(draft));
+  const [, refreshBaseline] = React.useReducer((value: number) => value + 1, 0);
   const uncertain = options?.uncertain === true;
   const recordedDraftFound = options?.recordedDraftFound === true;
   const dirty = initial.current !== JSON.stringify(draft) || uncertain || recordedDraftFound;
@@ -92,5 +93,8 @@ export function useSalesDraftExit(draft: unknown, busy: boolean, onClose: () => 
   // Only a verified canonical receipt permits the caller's immediate transition
   // from the editor to that original record. This does not authorize a write.
   const exitAfterSave = (action = onClose) => { bypass.current = true; action(); };
-  return { close: () => request(), request, confirmation, alive, exitAfterSave };
+  // Explicit entry/retirement of one editor's reviewed baseline. Never adopt a
+  // background read automatically, and never bypass another editor's guard.
+  const adoptBaseline = React.useCallback((baseline: unknown) => { initial.current = JSON.stringify(baseline); bypass.current = false; setPending(null); refreshBaseline(); }, []);
+  return { close: () => request(), request, confirmation, alive, exitAfterSave, adoptBaseline };
 }

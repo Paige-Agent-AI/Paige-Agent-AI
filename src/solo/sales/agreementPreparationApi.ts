@@ -35,7 +35,7 @@ export type AgreementCreationReceipt = z.infer<typeof creationReceipt>;
 export type AgreementCreationRecovery = z.infer<typeof reconciliation>;
 export type AgreementApiResult<T> =
   | { ok: true; value: T }
-  | { ok: false; reason: 'refused' | 'conflict' | 'unconfirmed'; message: string };
+  | { ok: false; reason: 'refused' | 'conflict' | 'unconfirmed'; message: string; refusal?: 'authority' | 'state' };
 export type AgreementDraftInput = {
   tenantId: string; requestId: string; clientId: string; title: string; body: string | null;
   offerId?: string | null; commercialTermsId?: string | null;
@@ -49,7 +49,7 @@ type RpcResponse = { data: unknown; error: { code?: string } | null };
 // Generated database types lag additive native migrations. Keep one explicit
 // boundary, strict closed readback, and no raw errors/legal body in logs or Rail.
 const port = supabase as unknown as RpcPort;
-async function call<T>(name: string, args: Record<string, unknown>, schema: z.ZodType<T>): Promise<AgreementApiResult<T>> {
+async function call<Schema extends z.ZodTypeAny>(name: string, args: Record<string, unknown>, schema: Schema, explainRefusal = false): Promise<AgreementApiResult<z.output<Schema>>> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const controller = new AbortController();
   const expired = Symbol('agreement response deadline');
@@ -62,9 +62,9 @@ async function call<T>(name: string, args: Record<string, unknown>, schema: z.Zo
     // Stopping the browser wait is never evidence that the server rolled back.
     if (response === expired) return { ok: false, reason: 'unconfirmed', message: 'The agreement result is taking longer than expected. Check the original request; it may still complete.' };
     const { data, error } = response;
-    if (error?.code === '42501') return { ok: false, reason: 'refused', message: 'Your agreement access or business context changed. Return to Sales and check the selected business.' };
+    if (error?.code === '42501') return { ok: false, reason: 'refused', message: 'Your agreement access or business context changed. Return to Sales and check the selected business.', ...(explainRefusal ? { refusal: 'authority' as const } : {}) };
     if (error?.code === '40001') return { ok: false, reason: 'conflict', message: 'This request refers to different saved work. Recover the original draft before starting another.' };
-    if (error?.code === '23514' || error?.code === '22023') return { ok: false, reason: 'refused', message: 'Review the client, document and required details before continuing.' };
+    if (error?.code === '23514' || error?.code === '22023') return { ok: false, reason: 'refused', message: 'Review the client, document and required details before continuing.', ...(explainRefusal ? { refusal: 'state' as const } : {}) };
     if (error) return { ok: false, reason: 'unconfirmed', message: 'The agreement result could not be confirmed. Check the original request before trying again.' };
     const parsed = schema.safeParse(data);
     if (!parsed.success) return { ok: false, reason: 'unconfirmed', message: 'The agreement result could not be verified. Check the original request before trying again.' };

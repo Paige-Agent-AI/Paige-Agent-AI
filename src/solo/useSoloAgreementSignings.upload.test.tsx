@@ -27,10 +27,27 @@ beforeEach(async()=>{
 afterEach(async()=>{await act(async()=>root.unmount());host.remove();vi.restoreAllMocks();});
 const file=()=>new File(['controlled source bytes'],'../private agreement.pdf',{type:'application/pdf'});
 
+it.each(['office document','plain text','wrong media type','empty PDF','oversize PDF'] as const)('%s refuses before Storage',async kind=>{
+  const value=kind==='office document'?new File(['source'],'agreement.docx',{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'})
+    :kind==='plain text'?new File(['source'],'agreement.txt',{type:'text/plain'})
+    :kind==='wrong media type'?new File(['source'],'agreement.pdf',{type:'image/png'})
+    :kind==='empty PDF'?new File([],'agreement.pdf',{type:'application/pdf'}):file();
+  if(kind==='oversize PDF')Object.defineProperty(value,'size',{value:26214401});
+  const result=await latest.uploadDocument(value,'test-tenant-a');expect(result.ok).toBe(false);expect(m.upload).not.toHaveBeenCalled();
+});
+
 it('positive original upload retains the private bucket, business prefix and no-overwrite options',async()=>{
   const result=await latest.uploadDocument(file(),'test-tenant-a');expect(result.ok).toBe(true);
   expect(result.path).toMatch(/^test-tenant-a\/source\/[0-9]+-private-agreement\.pdf$/);
   expect(m.upload).toHaveBeenCalledTimes(1);expect(m.upload.mock.calls[0][2]).toEqual({cacheControl:'3600',upsert:false});
+});
+it.each(['','application/octet-stream'])('browser PDF media type %s is accepted with the original safe filename',async type=>{
+  const value=new File(['controlled source bytes'],'agreement.PDF',{type});
+  expect((await latest.uploadDocument(value,'test-tenant-a')).ok).toBe(true);expect(m.upload).toHaveBeenCalledTimes(1);
+});
+it('the original native25MB size boundary remains selectable',async()=>{
+  const value=file();Object.defineProperty(value,'size',{value:26214400});
+  expect((await latest.uploadDocument(value,'test-tenant-a')).ok).toBe(true);expect(m.upload).toHaveBeenCalledTimes(1);
 });
 it('a loaded intent for another business is refused before Storage, even if the same person can access both',async()=>{
   const result=await latest.uploadDocument(file(),'test-tenant-b');expect(result.ok).toBe(false);expect(m.upload).not.toHaveBeenCalled();

@@ -126,3 +126,13 @@ forward290004. All30 rendered source pins remain byte-identical after the clean
 merge. The initial evidence guard rejected the noncanonical metadata value
 NOT_APPLICABLE_TO_THIS_CONSUMER; corrected to its original NOT_APPLICABLE grammar,
 without changing the guard or implying its separate native prerequisite applied.
+
+October22 latest composition: original2582 is closed SUPERSEDED SOURCE and its
+native version is included in main-target2593, not an independently pending
+release. Portal native290009 is now ACTUALLY applied; never-applied proposal moves
+FORWARD300004 without changing its SQL body/history. Original218 native/replay2
+PASS again. Current main41b31270d retains scoped Portal Agreements and released
+PDF-intake2577. Both complete driver modes and both design blocks retained in
+routine conflicts. Actual current native+field source rerender20/11/30/zero PASS,
+e04-document-fields-forward30-final-browser.log. The earlier exact160 check set
+is historical after this source composition; fresh head CI/review remain required.

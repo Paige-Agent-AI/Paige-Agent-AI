@@ -5209,10 +5209,13 @@ deploy120038195038, SUCCESS: remote up to date, persistence guard passed and
 `db-live` now `7a874fa2cb6193c8ae795f227a8b3f8a3dbb6cd8`.
 Pending-installation repair2610 is superseded unmerged; do not rewrite the now
 recorded migration. Its original causal proof/reviews remain historical.
-Workspace2604 composes released security2607/main7a874, preserving both manifest
-install pins. Only the benign sanitizer regression is reused; no native repair,
-new writer, permission, provider or execution activation. Mounted/editor release,
-ordinary owner/staff/linked-client acceptance and all twelve outcomes remain owed.
+Earlier workspace checkpoint2604 composed security2607/main7a874; the actual
+release below supersedes its then-pending mounted/editor source state. Original
+install pins and native engine are preserved; no native repair was reapplied.
+
+| Increment | Exact released identity and proof | Completion boundary |
+|---|---|---|
+| EXP04 private exact-PDF and assigned-field workspace [#2604](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2604) | Reviewed6b8d5db6a8bb47c0f37e12f79a0bea0533a3b301; reviews5620971691/5621265256 AUTHOR-REVIEW / LOWER ASSURANCE. All10 applicable exact-head checks/two statuses SUCCESS, normal no-schema Preview SKIP. Main4dac29197cdfe834b8b5bccb6f7266f28c9468e0, exact uniontree9a8f8f59419c587754c1032d2521ccd591c5ee3d. Productiondpl_E1YR69zBJb2bjJwyCCRKiwCv3rFV READY/canonical aliases; public build4dac-mvk2n058/customerUpdate:null and served source modules verified. Native2599/300004/Edge37 prerequisite separately verified, no own SQL/Edge delta. | Protected ANT52 bounded actual ordinary-owner real unsigned PDF, one required signer field, saved preparation2, full reload, identical event/checksum, earlier1 read-only, selected2 return and unchanged original wording/contentv1. No signing/link/send/payment/new identity. Actual editor menu-focus finding OPEN with bounded source repair in progress; author-run proof is not Central QA, staff/client/cohort/device/full12 or founder acceptance. No named customer release/announcement. |
 
 **2026-10-22 — EXP04 preparation owner API, native deployment held (earlier checkpoint; superseded by later parity above).**
 

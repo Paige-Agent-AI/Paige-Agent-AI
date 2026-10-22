@@ -64,21 +64,34 @@ rewrite. Native owner/business/role/source/party/CAS/receipt boundaries remain.
 Source parity is separate from ordinary role/provider/customer acceptance.
 [Evidence](../evidence/ui-delivery/e04-owner-document-preparation-api.md).
 
-## EXP04 exact PDF and assigned fields — combined preparation candidate
+## EXP04 exact PDF and assigned fields — released subset, keyboard repair
 
 Sole original E04 lead retains all12 outcomes. Existing2604 consumes2605 editor
 and pending-party Not signed repair, reusing the same native engine, actual SDK,
 immutable PDF/field versions, one leave guard, history and same-request recovery.
-Current UI/controller/harness sources are preserved; no own SQL/Edge/workflow/
-permission/provider/Chat activation. Source986/65 PASS after unchanged5s upload
-timeout→isolated170ms→complete quiet rerun; failed run retained. Lint0/two incumbent
-warnings, gold/UTF8 pass, Impeccable0 blocking/18 incumbent advisories; strict
-production audit0 high/critical with8 moderate remaining. Five fresh compiled
-source drives20/19/26,20/14/34,20/11/31,20/10/22,20/16/29 PASS/zero errors/142 pin
-comparisons exact. Synthetic Auth/API/RPC only; earlier type10/6 is supporting,
-fresh exact-head gates remain required. Existing-live owner draft/reload/history
-is protected ANT52, not this candidate or full acceptance. Current candidate is
-LOCAL, not deployed/accepted. All12, exact-map approval/effective terms/PRE-1/2,
+Released2604 reviewed6b8, main4dac/tree9a8 after all10 applicable exact-head checks,
+two statuses and normal schema-free Preview SKIP. Reviews5620971691/5621265256
+are AUTHOR-REVIEW / LOWER ASSURANCE. Productiondpl_E1YR69zBJb2bjJwyCCRKiwCv3rFV
+READY; canonical public build4dac-mvk2n058 and served owning modules read back.
+Actual bounded ordinary-owner PDF/one assigned field/save/full reload/original
+event/version history and earlier read-only selection are protected ANT52; no
+send/signature/payment or new identity. This author-run proof is not Central QA.
+
+Actual native heading-menu Escape then revealed BODY focus after dismissal.
+Current narrow repair observes only its own native aria-controls pair and returns
+focus after dismissal; it never handles navigation or changes supplied wording.
+ONE original Sales leave guard remains. Original browser assertion reproduced RED;
+corrected native20 frames/19 paths/26 pins/zero errors and8 portal-context controls
+PASS. Two broader runs each timed out in a different unchanged5s signing-link
+case (993/994 passed); a separate restricted file run102/103 failed too. All
+failed runs remain failed. SAME unchanged103-case file then103/103 PASS and full
+994/994 in66 suites PASS under normal Windows process permissions; no timeout,
+assertion or transport guard changed. Type ratchet10/current6/no new diagnostics
+PASS. Required exact-head hosted CI remains a separate release gate.
+No own SQL/Edge/workflow/permission/provider/Chat activation. Other four source
+drive records remain dated2604 supporting proof, not refreshed current pin claims.
+Focus repair is LOCAL/NOT_DEPLOYED; actual owner recheck remains owed. All12,
+exact-map approval/effective terms/PRE-1/2,
 stable import recovery/Stripe/Comms/onboarding/delivery/Portal/Chat and founder
 acceptance remain owed. Agreement capability PARTIAL, exact fields Chat/Live
 UNAVAILABLE; no algorithm/catalogue promotion. Detailed history stays in the

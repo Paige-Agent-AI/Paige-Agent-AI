@@ -412,7 +412,7 @@
       "rail_mind_memory": "Rail/Mind/Memory: none until wired.",
       "status": "DEFERRED",
       "owner": "Integrations workstream",
-      "dependency": "Deliberately sequenced after Google Workspace parity. EXP10 (Connect My Business, activated 2026-10-22) now owns the Teams connection lane: native Teams requires an Azure AD app registration + admin consent (an owner/provider action, not codeable alone); until then the honest customer state is Coming Soon and the gateway panel's bridge-via-Zapier note remains the only path. Deliberately sequenced after Google Workspace parity.",
+      "dependency": "Deliberately sequenced after Google Workspace parity. EXP10 (Connect My Business, activated 2026-10-22) now owns the Teams connection lane: native Teams requires an Azure AD app registration + admin consent (an owner/provider action, not codeable alone); until then the honest customer state is Coming Soon and the gateway panel's bridge-via-Zapier note remains the only path.",
       "next_slice": "Owner decision on Azure AD app registration; then Teams graph-adapter slices (workspace/team discovery, channel access, permitted collaboration actions) through the canonical gateway/orchestration seams.",
       "tier_eligibility": {
         "platform": "deferred",

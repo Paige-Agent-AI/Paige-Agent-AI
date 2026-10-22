@@ -40,6 +40,10 @@ export function SoloGamePlanWorkspace({ accountContext, openPaige, workspaceId }
   const [saving, setSaving] = useState(false);
   const [saveErr, setSaveErr] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [preparedReviewScope, setPreparedReviewScope] = useState<string | null>(null);
+  const preparedButtonRef = useRef<HTMLButtonElement | null>(null);
+  const preparedDeskRef = useRef<HTMLElement | null>(null);
+  useEffect(() => setPreparedReviewScope(null), [plan.reviewScope]);
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const flash = useCallback((message: string) => {
@@ -105,18 +109,22 @@ export function SoloGamePlanWorkspace({ accountContext, openPaige, workspaceId }
           <div className="sd-detail-cta"><button className="sd-btn sd-btn-sm" disabled={!brief.canEdit} onClick={openEdit}><Pencil />{brief.hasPlan ? "Edit plan" : "Set your plan"}</button><button className="sd-btn sd-btn-sm sd-btn-quiet" onClick={() => setOverlay("legend")}><Info /> How this works</button></div>
           {brief.pendingProposal && <div className="sd-banner sd-banner-prop"><Sparkles /><span><b>Paige proposed a plan-brief change.</b> Review it before it becomes your direction.</span><button className="sd-btn sd-btn-sm" onClick={() => go("setup")}>Review <ArrowRight /></button></div>}
         </div></section>
-        <section className="sd-card"><div className="sd-card-hd"><span className="sd-eyebrow"><Scale /> Decision &amp; opportunity desk</span></div>
+        <section ref={preparedDeskRef} data-prepared-review-desk tabIndex={-1} aria-label="Decision and opportunity desk" className="sd-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--pg-violet)]"><div className="sd-card-hd"><span className="sd-eyebrow"><Scale /> Decision &amp; opportunity desk</span></div>
+          {plan.decisionsStatus === "loading" && <div className="sd-todo" role="status"><RefreshCw /><span>Checking prepared work…</span></div>}
           {plan.decisionsStatus === "unavailable" && <div className="sd-todo" role="alert"><Info /><span>Prepared work could not be checked.</span><button className="sd-btn sd-btn-sm" onClick={plan.refresh}>Retry</button></div>}
-          {plan.decisions.length === 0 ? plan.decisionsStatus !== "unavailable" && <div className="sd-todo"><Info /><span>No prepared work or follow-up returned.</span></div> : <div className="sd-list">{plan.decisions.slice(0, 4).map((item) => {
+          {plan.decisions.length === 0 ? plan.decisionsStatus === "ready" && <div className="sd-todo"><Info /><span>No prepared work or follow-up returned.</span></div> : <div className="sd-list">{plan.decisions.slice(0, 4).map((item) => {
             const content = <><span className="sd-ic v"><Scale /></span><span className="sd-main"><span className="sd-title">{item.title}</span><span className="sd-note">{item.detail}</span></span><ArrowRight /></>;
             return item.id === "decision:drafts" && plan.preparedReview && plan.reviewScope
-              ? <PreparedWorkReview key={plan.reviewScope} data={plan.preparedReview}><button type="button" className="sd-row">{content}</button></PreparedWorkReview>
+              ? <button ref={preparedButtonRef} type="button" className="sd-row" key={item.id} aria-haspopup="dialog" aria-expanded={preparedReviewScope === plan.reviewScope} onClick={() => setPreparedReviewScope(plan.reviewScope)}>{content}</button>
               : <button type="button" className="sd-row" key={item.id} onClick={() => go(item.destination)}>{content}</button>;
           })}</div>}
         </section>
       </div>
       <div className="sd-rail"><GamePlanApprovals /><PlanInMotion workspaceId={workspaceId} openPaige={openPaige} onNotice={flash} selectedPlayId={selectedPlayId} onSelectPlay={selectPlay} onClosePlay={closePlay} /></div>
     </div>
+    {plan.preparedReview && plan.reviewScope && <PreparedWorkReview key={plan.reviewScope} data={plan.preparedReview}
+      open={preparedReviewScope === plan.reviewScope} onOpenChange={open => setPreparedReviewScope(open ? plan.reviewScope : null)}
+      onCloseAutoFocus={event => { event.preventDefault(); (preparedButtonRef.current ?? preparedDeskRef.current)?.focus({ preventScroll: true }); }} />}
     {overlay === "edit" && draft && <Overlay title={brief.hasPlan ? "Edit your plan" : "Set your plan"} onClose={() => setOverlay(null)}><div className="ov-body"><div className="ov-note"><Info /><span>This is your durable direction. Strategic plays remain separate, revisitable records in Plan in Motion.</span></div><EditField label="Annual direction" value={draft.annualDirection} onChange={(value) => setDraft({ ...draft, annualDirection: value })} /><EditField label="Current-quarter focus" value={draft.currentPriority} onChange={(value) => setDraft({ ...draft, currentPriority: value })} /><EditField label="Desired outcome" value={draft.goals90Day} onChange={(value) => setDraft({ ...draft, goals90Day: value })} /><EditField label="Success criteria" value={draft.successDefinition} onChange={(value) => setDraft({ ...draft, successDefinition: value })} /><EditField label="Constraints" value={draft.constraints} onChange={(value) => setDraft({ ...draft, constraints: value })} /><EditField label="How Paige should operate" value={draft.operatingPreferences} onChange={(value) => setDraft({ ...draft, operatingPreferences: value })} /><EditField label="What Paige must not assume" value={draft.doNotAssume} onChange={(value) => setDraft({ ...draft, doNotAssume: value })} />{saveErr && <div className="ov-err" role="alert">{saveErr}</div>}</div><div className="ov-foot"><button className="sd-btn sd-btn-sm" onClick={() => setOverlay(null)}>Cancel</button><button className="sd-btn sd-btn-sm sd-act" disabled={saving} onClick={() => void saveBrief()}><Check />{saving ? "Saving." : "Save plan"}</button></div></Overlay>}
     {overlay === "legend" && <Overlay title="How the Business Game Plan works" onClose={() => setOverlay(null)}><div className="ov-body"><div className="ov-note"><Info /><span>Set your plan holds annual and quarterly direction. Plan in Motion holds governed Strategic Plays. A play is shown as changed only after canonical readback; Rail evidence is emitted after that verification. Mind and durable Memory remain unavailable for these records.</span></div></div><div className="ov-foot"><button className="sd-btn sd-btn-sm" onClick={() => setOverlay(null)}>Close</button></div></Overlay>}
     {notice && <div className="sd-toast" role="status" aria-live="polite"><Info />{notice}</div>}

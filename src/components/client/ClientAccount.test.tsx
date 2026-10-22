@@ -19,6 +19,7 @@ const profile = (actor = actorA): ClientPortalSelfProfile => ({
 });
 type Listener = (event: string, session: { user: { id: string } } | null) => void;
 let actor: string | null, row: ClientPortalSelfProfile | null, listener: Listener | undefined;
+const authListeners = new Set<Listener>();
 const rpc = vi.fn(), getUser = vi.fn(), getSession = vi.fn(), unsubscribe = vi.fn();
 const raw = vi.fn(() => { throw new Error("No raw relationship or global-profile access"); });
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {
@@ -28,7 +29,8 @@ vi.mock("@/integrations/supabase/client", () => ({ supabase: {
     return Object.assign(request, { setHeader: () => request });
   }, from: () => raw(),
   auth: { getUser: (...args: unknown[]) => getUser(...args), getSession: () => getSession(), onAuthStateChange: (cb: Listener) => {
-    listener = cb; return { data: { subscription: { unsubscribe } } };
+    authListeners.add(cb); listener = (event, session) => { for (const handler of [...authListeners]) handler(event,session); };
+    return { data: { subscription: { unsubscribe: () => { authListeners.delete(cb); unsubscribe(); } } } };
   } },
 } }));
 const { ClientAccount } = await import("./ClientAccount");
@@ -46,16 +48,16 @@ async function change(label: string, value: string) {
     input(label).dispatchEvent(new Event("input", { bubbles: true })); }); await flush();
 }
 async function submit() { act(() => { host.querySelector("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })); }); await flush(); }
-function writes() { return rpc.mock.calls.filter(x => x[0] === "client_portal_update_self_profile"); }
+function writes() { return rpc.mock.calls.filter(x => x[0] === "client_portal_update_self_profile_scoped"); }
 function deferred<T>() { let resolve!: (value: T) => void; const promise = new Promise<T>(done => { resolve = done; }); return { promise, resolve }; }
 beforeEach(() => {
-  actor = actorA; row = profile(); listener = undefined;
+  actor = actorA; row = profile(); listener = undefined; authListeners.clear();
   rpc.mockReset(); getUser.mockReset(); getSession.mockReset(); raw.mockClear(); unsubscribe.mockClear();
-  getSession.mockImplementation(async () => ({ data: { session: actor ? { access_token: `unit-${actor}` } : null }, error: null }));
+  getSession.mockImplementation(async () => ({ data: { session: actor ? { user:{id:actor}, access_token: `unit-${actor}` } : null }, error: null }));
   getUser.mockImplementation(async () => ({ data: { user: actor ? { id: actor } : null }, error: null }));
   rpc.mockImplementation(async (name: string, args?: Record<string, unknown>) => {
     if (name === "client_portal_self_profile") return { data: row, error: null };
-    if (name !== "client_portal_update_self_profile") throw new Error("Unexpected contract");
+    if (name !== "client_portal_update_self_profile_scoped") throw new Error("Unexpected contract");
     row = { ...row!, ...args!.p_profile as object, updated_at: "2026-10-15T18:01:00.000Z" };
     return { data: row, error: null };
   });
@@ -78,11 +80,12 @@ describe("approved Account personal information", () => {
   });
   it("saves only permitted changed fields with exact native scope/version and independently reads back", async () => {
     await mount(); await change("First name", "Updated"); await submit();
-    expect(writes()).toEqual([["client_portal_update_self_profile", {
-      p_expected_updated_at: "2026-10-15T18:00:00.000Z", p_tenant_id: tenant, p_profile: { first_name: "Updated" },
+    expect(writes()).toEqual([["client_portal_update_self_profile_scoped", {
+      p_expected_updated_at: "2026-10-15T18:00:00.000Z", p_tenant_id: tenant, p_expected_client_id: profile().id, p_profile: { first_name: "Updated" },
     }]]);
     expect(rpc.mock.calls.filter(x => x[0] === "client_portal_self_profile").length).toBeGreaterThan(1);
     expect(host.textContent).toContain("Information saved"); expect(input("First name").value).toBe("Updated");
+    expect(document.activeElement?.textContent).toBe("Information saved.");
   });
   it.each(["missing", "refused", "foreign", "widened"])("withholds form for %s relationship", async kind => {
     if (kind === "missing") row = null;
@@ -96,9 +99,10 @@ describe("approved Account personal information", () => {
   });
   it("preserves edits after stale-version refusal and prevents overwrite until explicit reload", async () => {
     await mount(); await change("First name", "Draft");
-    rpc.mockImplementation(async name => name === "client_portal_update_self_profile"
+    rpc.mockImplementation(async name => name === "client_portal_update_self_profile_scoped"
       ? { data: null, error: { code: "40001" } } : { data: row, error: null });
     await submit(); expect(input("First name").value).toBe("Draft"); expect(host.textContent).toContain("changed");
+    expect(document.activeElement).toBe(button("Discard edits and reload"));
     await submit(); expect(writes()).toHaveLength(1);
     act(() => button("Discard edits and reload").click()); await flush();
     expect(input("First name").value).toBe("Test");
@@ -106,18 +110,19 @@ describe("approved Account personal information", () => {
   it("unknown write acknowledgement keeps the draft and offers readback without write replay", async () => {
     await mount(); await change("First name", "Draft");
     rpc.mockImplementation(async name => {
-      if (name === "client_portal_update_self_profile") throw new Error("connection lost");
+      if (name === "client_portal_update_self_profile_scoped") throw new Error("connection lost");
       return { data: row, error: null };
     });
     await submit(); expect(input("First name").value).toBe("Draft"); expect(host.textContent).not.toContain("Information saved");
     await submit(); expect(writes()).toHaveLength(1);
     expect(button("Check saved information")).toBeTruthy();
+    expect(document.activeElement).toBe(button("Check saved information"));
     act(() => button("Check saved information").click()); await flush(); expect(writes()).toHaveLength(1);
   });
   it("duplicate submit does not dispatch a second write", async () => {
     await mount(); await change("Last name", "Changed");
     const pending = deferred<{ data: unknown; error: null }>();
-    rpc.mockImplementation(name => name === "client_portal_update_self_profile" ? pending.promise : Promise.resolve({ data: row, error: null }));
+    rpc.mockImplementation(name => name === "client_portal_update_self_profile_scoped" ? pending.promise : Promise.resolve({ data: row, error: null }));
     await submit(); await submit(); expect(writes()).toHaveLength(1);
     pending.resolve({ data: { ...row!, last_name: "Changed" }, error: null }); await flush();
   });
@@ -156,7 +161,7 @@ describe("approved Account personal information", () => {
   });
   it("does not turn malformed acknowledgement or differing readback into success", async () => {
     await mount(); await change("First name", "Draft");
-    rpc.mockImplementation(async name => name === "client_portal_update_self_profile"
+    rpc.mockImplementation(async name => name === "client_portal_update_self_profile_scoped"
       ? { data: { ...profile(), first_name: "Draft", updated_at: "2026-10-15T18:01:00.000Z" }, error: null }
       : { data: profile(), error: null });
     await submit(); expect(host.textContent).not.toContain("Information saved");
@@ -174,8 +179,9 @@ describe("approved Account personal information", () => {
   it("a customer of more than one business is told why, with no retry that can't change it (round 3, verifier minor 7)", async () => {
     rpc.mockImplementation(async () => ({ data: null, error: { code: "42501", message: "select an authorized customer relationship" } }));
     await mount();
-    expect(host.querySelector('[role="alert"], [role="status"]')?.textContent).toBe("You're a client of more than one business, so your account settings can't be shown here yet.");
+    expect(host.querySelector('[role="alert"], [role="status"]')?.textContent).toBe("Choose the business whose account details you want to open.");
     expect(button("Try again")).toBeUndefined();
+    expect(host.querySelector('a[href="/app?chooseBusiness=1"]')?.textContent).toBe("Choose a business");
     expect(host.querySelector("form")).toBeNull();
   });
   it("a relationship that is simply unavailable still offers a retry", async () => {
@@ -228,7 +234,7 @@ describe("approved Account personal information", () => {
       } },
     });
     await mount(); await change("First name", "Original draft");
-    rpc.mockImplementation((name: string, args: never) => name === "client_portal_update_self_profile"
+    rpc.mockImplementation((name: string, args: never) => name === "client_portal_update_self_profile_scoped"
       ? sdk.rpc(name, args) : Promise.resolve({ data: rows.get(actor!), error: null }));
     await submit(); expect(acquiring).toBe(true);
     actor = actorB; act(() => listener?.("SIGNED_IN", { user: { id: actorB } }));
@@ -247,7 +253,7 @@ describe("approved Account personal information", () => {
         return new Response(JSON.stringify(rows.get(subject)), { status: 200, headers: { "Content-Type": "application/json" } });
       } },
     });
-    await sdk.rpc("client_portal_update_self_profile", { p_tenant_id: tenant,
+    await sdk.rpc("client_portal_update_self_profile_scoped", { p_tenant_id: tenant, p_expected_client_id: profile().id,
       p_expected_updated_at: profile().updated_at, p_profile: { first_name: "Control draft" } });
     expect(rows.get(actorB)?.first_name).toBe("Control draft");
     expect(rows.get(actorA)?.first_name).toBe("Test");
@@ -300,13 +306,13 @@ describe("Account address and preferences (E09 Slice 6)", () => {
     shared = false;
     rpc.mockImplementation(async (name: string, args?: Record<string, unknown>) => {
       if (name === "client_portal_self_profile") return { data: row, error: null };
-      if (name === "client_portal_communication_preferences") return { data: { ...prefs, data_sharing: { allowed: shared, updated_at: shared ? "2026-10-18T12:01:00.000Z" : null } }, error: null };
-      if (name === "client_portal_set_shared_context_consent") {
+      if (name === "client_portal_communication_preferences_scoped") return { data: { ...prefs, data_sharing: { allowed: shared, updated_at: shared ? "2026-10-18T12:01:00.000Z" : null } }, error: null };
+      if (name === "client_portal_set_shared_context_consent_scoped") {
         // The writer bumps clients.updated_at (update_clients_updated_at) — the open form's version is now stale.
         shared = args!.p_allow as boolean; row = { ...row!, updated_at: "2026-10-15T18:05:00.000Z" };
         return { data: { ok: true, replayed: false }, error: null };
       }
-      if (name !== "client_portal_update_self_profile") throw new Error("Unexpected contract");
+      if (name !== "client_portal_update_self_profile_scoped") throw new Error("Unexpected contract");
       if (args!.p_expected_updated_at !== row!.updated_at) return { data: null, error: { code: "40001" } };
       const patch = Object.fromEntries(Object.entries(args!.p_profile as Record<string, string>).map(([k, v]) => [k, v === "" ? null : v]));
       row = { ...row!, ...patch, updated_at: "2026-10-15T18:01:00.000Z" };
@@ -317,8 +323,8 @@ describe("Account address and preferences (E09 Slice 6)", () => {
 
   it("edits the street address and city through the same versioned writer, and reads them back", async () => {
     await mount(); await change("Street address", "12 Harbour Lane"); await change("City", "Portland"); await submit();
-    expect(writes()).toEqual([["client_portal_update_self_profile", {
-      p_expected_updated_at: "2026-10-15T18:00:00.000Z", p_tenant_id: tenant, p_profile: { street_address: "12 Harbour Lane", city: "Portland" },
+    expect(writes()).toEqual([["client_portal_update_self_profile_scoped", {
+      p_expected_updated_at: "2026-10-15T18:00:00.000Z", p_tenant_id: tenant, p_expected_client_id: profile().id, p_profile: { street_address: "12 Harbour Lane", city: "Portland" },
     }]]);
     expect(host.textContent).toContain("Information saved"); expect(input("Street address").value).toBe("12 Harbour Lane");
   });

@@ -1492,7 +1492,7 @@ describe("Agreement documents — signature state, separate from commercial stat
     expect(text).toContain("No offer or price on this document");
   });
 
-  it("records an uploaded contract and sends what the server needs, with no offer attached", async () => {
+  it("records an uploaded PDF without a second ignored contract, with no offer attached", async () => {
     harness.agreements.clients = [{ id: "c1", name: "Acme" }];
     render("terms");
     act(() => (buttonSaying("Record terms or upload") as HTMLButtonElement).click());
@@ -1511,9 +1511,9 @@ describe("Agreement documents — signature state, separate from commercial stat
     Object.defineProperty(fileInput, "files", { value: [file], configurable: true });
     act(() => { fileInput.dispatchEvent(new Event("change", { bubbles: true })); });
 
-    const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!;
-    const body = dialog.querySelector("textarea") as HTMLTextAreaElement;
-    act(() => { setter.call(body, "These are the terms."); body.dispatchEvent(new Event("input", { bubbles: true })); });
+    // Native SAVE discards body text for tenant_upload and the signing engine
+    // reviews the retained PDF. A second pasted contract must not be requested.
+    expect(dialog.querySelector('textarea[placeholder="Paste the text of your contract here."]')).toBeNull();
 
     const save = [...dialog.querySelectorAll("button")].find((b) => b.textContent === "Review and send \u2192") as HTMLButtonElement;
     expect(save.disabled).toBe(false);
@@ -1526,10 +1526,28 @@ describe("Agreement documents — signature state, separate from commercial stat
     expect(sent).toMatchObject({
       tenantId: "tenant-1", contactId: "c1", agreementId: null,
       documentTitle: "coaching", documentSource: "tenant_upload",
-      documentBody: "These are the terms.", documentPath: "tenant-1/source/1-agreement.pdf",
+      documentBody: "", documentPath: "tenant-1/source/1-agreement.pdf",
     });
     // Straight into the send step rather than stopping at "saved".
     expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Send for signature");
+  });
+
+  it('refuses unsupported document selection and lets the owner correct it before any write',()=>{
+    harness.agreements.clients=[{id:'c1',name:'Example client'}];render('terms');
+    act(()=>(buttonSaying('Record terms or upload') as HTMLButtonElement).click());
+    const dialog=document.querySelector('[role="dialog"]')!;
+    act(()=>{([...dialog.querySelectorAll('.so-src-card')].find(b=>b.textContent?.includes('Upload a contract')) as HTMLButtonElement).click();});
+    const client=dialog.querySelector('select')!;act(()=>{client.value='c1';client.dispatchEvent(new Event('change',{bubbles:true}));});
+    const input=dialog.querySelector('input[type="file"]') as HTMLInputElement;
+    expect(input.accept).toBe('.pdf,application/pdf');
+    const choose=(file:File)=>{Object.defineProperty(input,'files',{value:[file],configurable:true});act(()=>{input.dispatchEvent(new Event('change',{bubbles:true}));});};
+    choose(new File(['source'],'agreement.docx',{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}));
+    const save=()=>[...dialog.querySelectorAll('button')].find(b=>b.textContent==='Review and send →') as HTMLButtonElement;
+    expect(save().disabled).toBe(true);expect(dialog.textContent).toContain('Export Word or other documents to PDF');
+    expect(harness.signings.uploadDocument).not.toHaveBeenCalled();expect(harness.signings.createSigning).not.toHaveBeenCalled();
+    expect(harness.agreements.saveAgreement).not.toHaveBeenCalled();
+    choose(new File(['controlled PDF source'],'agreement.pdf',{type:'application/pdf'}));
+    expect(save().disabled).toBe(false);expect(dialog.textContent).not.toContain('Export Word or other documents to PDF');
   });
 
   it("issues a link only on a real acknowledgement, and says it is shown once", async () => {

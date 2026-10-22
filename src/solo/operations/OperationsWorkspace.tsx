@@ -376,7 +376,7 @@ function ScopedOperations({ tenantId, userId, openPaige, view, onViewChange, wee
         {destination === "Projects" && <button type="button" disabled={source.loading || source.forbidden || Boolean(source.error) || !matches || people.loading || Boolean(people.error)} onClick={event => { projectCreationInvoker.current = event.currentTarget; setCreatingProject({}); }}>New project</button>}
         {isPlanning && <button type="button" aria-label="Refresh work and team profiles"
           disabled={source.loading || people.loading || (readsCrm && crm.loading) || weeklySource.phase === "reading" || taskFocus.phase === "reading" || Boolean(crmReview)} onClick={() => { void refreshSelectedWork(); void people.refresh(); if(readsCrm)void crm.refresh(); }}><RefreshCw size={16} /></button>}
-        {openPaige && destination !== "Overview" && <button type="button" onClick={reviewWithPaige}><Sparkles size={16} aria-hidden="true" />Review with ZION</button>}
+        {openPaige && destination !== "Overview" && destination !== "Projects" && <button type="button" onClick={reviewWithPaige}><Sparkles size={16} aria-hidden="true" />Review with ZION</button>}
       </div>
     </header>
     {navigationNotice && <p className="ops-inline-notice" role="status">{navigationNotice}</p>}

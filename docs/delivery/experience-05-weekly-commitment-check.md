@@ -1,5 +1,39 @@
 # Experience 05 Weekly Internal Commitment Check
 
+### October22 bounded continuation — native future-only stop controls
+
+Pre-edit routing: EXP05 outcomes04/06/08/10 consume the original owner-human
+`control_weekly_commitment_check` for pause/cancel only. Original process ID,
+schedule/revision and current owner/tenant are re-read before one deliberate
+native call; original result is read afterward. A lost response is unknown and
+must be inspected, never automatically replayed. Running acts/history remain
+untouched. No Chat/Live mutation admission, authorize/resume/configure, trigger,
+provider, new approval store or execution engine. Native human-owner authority
+and original audit logs remain canonical; a stopped schedule is not a completed
+weekly occurrence or Rail execution receipt. Existing native weekly panel and
+review/correction/return flow will be extended with explicit future-only review,
+busy/refused/stale/unknown states and scope retirement. Prototype/rendered,
+negative/recovery, independent review, exact-head CI, deployed source and actual
+authorized proof remain owed. Current mainc5b5061ca/ANT11/52/147/161 and adjacent
+Experience leases checked; #2546 is a separate read-only pending release. No
+customer/account-specific implementation or migration is planned.
+
+Development checkpoint: five production sources now connect this original native
+human-only stop path through the existing weekly panel/hook and Chat/Calendar
+entries.17 baseline failures preceded implementation;66 protected tests and a
+strict native-adapter compile PASS. Original disposable PostgreSQL proof29PASS
+retains26 cases and adds actual browser adapter -> fixture Auth -> native owner
+SQL/process/audit -> actual readback, stale-review refusal and committed-cancel
+lost-ack recovery without replay. Native trigger/events and original role posture
+stay unchanged; no customer/production action. Actual desktop inline review was
+observed with safe initial focus; full final narrow/two-theme/control/reload
+browser proof remains held after debugger detachment. Temporary viewport reset
+was attempted but not confirmed; both own dev listeners stopped. The existing
+evidence record preserves these limits. Local full-app checks are not reported
+green; required exact-head hosted checks and final rendered review remain gates.
+This is a local development checkpoint, not released controls, recurring
+activation, a new catalogue Live claim, or founder acceptance.
+
 ## October20 — native deadline presentation verified locally; final release pending
 
 The deadline-semantics candidate now has source146/final-composition170 NON-AUTHOR review checks,92 native cases,220 assertions/12 suites and exacta07413 green check runs. The recovered same Chrome connection produced16 selected native responsive result frames in two neutral contexts, narrow/mobile, historical/corrected/refused/unavailable/empty/malformed/unsupported/loading-timeout states, settled keyboard return and original reminder Work inspection.308 captured project inputs remain exact through compositiondf048/currentmain26418b. The hashed UI artifact record explicitly preserves invalid attempts, offline font fallback and actual zoom/authentication limits. Final evidence-bearing-head Independent Review/CI, migration/Edge/web release and genuine authenticated results remain owed. No recurring authority, Chat/Live activation, new receipt or strict1/18 and2/50 closure is claimed. Earlier dated development/browser checkpoints below remain historical.

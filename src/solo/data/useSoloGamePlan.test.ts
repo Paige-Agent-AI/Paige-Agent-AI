@@ -234,6 +234,13 @@ describe("useSoloGamePlan derivation", () => {
     render();
     expect(view.decisionsStatus).toBe("unavailable");
   });
+  it("withholds prepared decisions and distinguishes loading from a completed empty read", () => {
+    m.pending = { ...m.pending, loading: true, total: 37, items: [{ id: "test-stale-work", title: "Previous source" }] };
+    render(); expect(view.decisionsStatus).toBe("loading");
+    expect(view.decisions.some(item => item.id === "decision:drafts")).toBe(false);
+    m.pending = { ...m.pending, loading: false, total: 0, items: [] };
+    render(); expect(view.decisionsStatus).toBe("ready");
+  });
 
   it("proposalPlanOnly reflects whether the proposal patch stays within the plan fields (Codex P1)", () => {
     m.setup = { ...m.setup, pendingProposal: { id: "p1", reason: "r", patch: { currentPriority: "x", goals90Day: "y" } } };

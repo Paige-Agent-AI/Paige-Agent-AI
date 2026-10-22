@@ -11,6 +11,8 @@ const harness = vi.hoisted(() => ({
   save: vi.fn(async () => ({ ok: true })),
   refresh: vi.fn(),
   prepared: false,
+  preparedState: "ready" as "ready" | "loading" | "error" | "empty",
+  reviewScope: "test-review-scope",
   mission: {
     items: [] as StrategicPlay[],
     status: "ready" as "loading" | "ready" | "forbidden" | "error",
@@ -43,9 +45,9 @@ vi.mock("./data/useSoloGamePlan", () => ({
       provenance: {}, pendingProposal: null, proposalPlanOnly: true,
       save: harness.save, applyProposal: vi.fn(), dismissProposal: vi.fn(),
     },
-    decisions: harness.prepared ? [{ id: "decision:drafts", title: "Review 37 prepared items", detail: "Original prepared work", destination: "paige" }] : [], decisionsStatus: "ready",
-    reviewScope: "test-review-scope",
-    preparedReview: { total: 37, loading: false, error: null, refresh: harness.refresh, items: [{ id: "test-work", title: "Inspect original scope", department: "Operations", draftContent: "Recorded draft text", summary: null, rationale: null, createdAt: "" }] },
+    decisions: harness.prepared && harness.preparedState === "ready" ? [{ id: "decision:drafts", title: "Review 37 prepared items", detail: "Original prepared work", destination: "paige" }] : [], decisionsStatus: harness.preparedState === "loading" ? "loading" : harness.preparedState === "error" ? "unavailable" : "ready",
+    reviewScope: harness.reviewScope,
+    preparedReview: { total: harness.preparedState === "ready" ? 37 : null, loading: harness.preparedState === "loading", error: harness.preparedState === "error" ? "Read unavailable" : null, refresh: harness.refresh, items: harness.preparedState === "ready" ? [{ id: "test-work", title: "Inspect original scope", department: "Operations", draftContent: "Recorded draft text", summary: null, rationale: null, createdAt: "" }] : [] },
   }),
 }));
 vi.mock("@/hooks/useTenantContext", () => ({ useOptionalTenantContext: () => ({ activeUserId: "test-owner",
@@ -70,6 +72,7 @@ import { getPaigeBusinessPlanScope, clearPaigeSurfaceScope } from "./paigeClient
 let host: HTMLDivElement;
 let root: Root;
 beforeEach(() => {
+  harness.prepared = false; harness.preparedState = "ready"; harness.reviewScope = "test-review-scope";
   harness.openPaige.mockClear(); harness.save.mockClear(); harness.refresh.mockClear();
   harness.mission.refresh.mockReset(); harness.mission.getDetail.mockReset(); harness.mission.mutate.mockReset();
   harness.mission.items = []; harness.mission.status = "ready";
@@ -90,6 +93,26 @@ function click(label: string) {
 }
 
 describe("Business Game Plan owner-complete vertical", () => {
+  it("retires the reader across scope changes without automatically reopening it on an A-B-A return", () => {
+    harness.prepared = true; render(); click("Review 37 prepared items");
+    harness.reviewScope = "test-review-other"; render();
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+    harness.reviewScope = "test-review-scope"; render();
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+  });
+  it("keeps the open reader through loading, failed and empty rereads after its source row retires", async () => {
+    harness.prepared = true; render(); click("Review 37 prepared items");
+    harness.preparedState = "loading"; render();
+    expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Checking this workspace");
+    expect(document.body.textContent).not.toContain("Recorded draft text");
+    harness.preparedState = "error"; render();
+    expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Previous details and counts are withheld");
+    harness.preparedState = "empty"; render();
+    expect(document.querySelector('[role="dialog"]')?.textContent).toContain("No prepared items returned");
+    act(() => [...document.querySelectorAll<HTMLButtonElement>('.pwr button')].find(button => button.textContent?.trim() === "Close")!.click());
+    await act(async () => { await new Promise<void>(resolve => requestAnimationFrame(() => resolve())); });
+    expect(document.activeElement).toBe(host.querySelector('[data-prepared-review-desk]'));
+  });
   it("opens original prepared work in the spacious Decision Desk without opening or sending Chat", () => {
     harness.prepared = true; render(); click("Review 37 prepared items");
     expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Recorded draft text");

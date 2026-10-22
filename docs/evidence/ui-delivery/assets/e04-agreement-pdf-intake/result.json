@@ -1,0 +1,488 @@
+{
+  "proofClass": "actual Sales shell/components/editor/SDK; synthetic identity/network only",
+  "staticTransport": "native Vite compiled fixture",
+  "normalizedLFSourceSHA256": {
+    "src/solo/sales-ops.tsx": "01cca48580f717af60820ad909c81fc8e2dcae1274e60f6d17141fed9395539d",
+    "src/solo/SalesWorkspace.tsx": "7c76c109cf9262f5332c2e5964deb7911c1444ea756a378db2d0a91a9acfd91d",
+    "src/solo/sales-dialog.tsx": "2db857c01974bec40fd44cba32e019870f3e27e33f245649a93ee050af80c0cd",
+    "src/hooks/useBeforeUnloadGuard.ts": "5d0ddcf56f30a74550042c04428a3c03d1904d9156f4173a46884cd60749d4ec",
+    "src/solo/sales/AgreementPreparationWorkspace.tsx": "1a54b627f0295bd2fd9f2343f95fa39d2a552528e7cf8139039b499b7d80dc44",
+    "src/solo/sales/AgreementBodyEditor.tsx": "fbbda58c2a1f76924ed8232aa6cf0219768ba8a9c2563cacb5d8578e032ac315",
+    "src/solo/sales/agreementPreparationApi.ts": "640770f300c5d8c3a77b84456b68c847f39b03c3a098b2e7920bd81732975bfc",
+    "src/solo/sales/agreementVocabulary.ts": "65997aa339d950aff13b8c607c4938b9a060340f75b7f43f397156fc0409a3d9",
+    "src/solo/sales/agreement-body-editor.css": "1d0f9cda84d9bc9e37e792e2d0228b011f78359c4fd4c9f734e389dbacf09767",
+    "src/solo/sales/agreement-preparation.css": "2cef8ef627b07b309703b67ed32378751229b001015e0390b53866efdb7c44c4",
+    "package.json": "651ef3965bc792e47b6c516efffea652b8bd86d9e80b97f3aa61d1b06a0ccd51",
+    "package-lock.json": "c39a38279fd973f7ab80c5f497053bf7ab4246790017cad26d70d133f6454177",
+    "scripts/live-drive/harness/sales-mount/agreement-authoring.tsx": "4136827093f1ed340313b19c81742ddf7ead519a043c22484375fa19e26e0b65",
+    "scripts/live-drive/harness/sales-mount/agreement-authoring-ports.ts": "d4beb58b1e5ad142fee41f9488d7979386acb18b310c4a8d94fece8376925af4",
+    "scripts/live-drive/harness/sales-mount/agreement-authoring-client.ts": "1838e8309cec8fd47f5bfa2608fbdde78acbf372c99ce7dc29a74c6652267e0b",
+    "scripts/live-drive/harness/sales-mount/vite.agreement-authoring.config.ts": "ae93d7029cd44a8fa590ea294394926d6535e5e4b4d0e02dee625877b356a7dd",
+    "scripts/live-drive/harness/sales-mount/agreement-authoring.html": "c66db7a6acdd821c8aa0051561d06d650522dad1151905733e40ee38bbc25be7",
+    "scripts/live-drive/agreement-authoring-drive.mjs": "691495ad54639203dbb2085c0443bde9365d43cb065530d0fafba2cf0e1a250b",
+    "src/solo/useSoloAgreementSignings.ts": "bc125a4de410d5cabae0b4b22d3889a0284f752c9d4e469121524ea3f27c5af6",
+    "src/solo/sales/agreementPdfIntake.ts": "0c4065a341baff61ff6490d2b03a95c2087f3edc7cb6c3f2684c557078cad0c2",
+    "src/solo/sales-ops.css": "fb95ae343a7e16f61c2a893c811d8bb5ef4f49f1c11ae96fb85a60a3e6566046"
+  },
+  "sharedUIFontSHA256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05",
+  "frames": [
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "closed",
+      "actualPaige": "closed",
+      "fit": {
+        "viewport": 1536,
+        "document": 1536,
+        "bounds": {
+          "x": 407,
+          "y": 630.015625,
+          "width": 722,
+          "height": 34.78125,
+          "top": 630.015625,
+          "right": 1129,
+          "bottom": 664.796875,
+          "left": 407
+        }
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "open",
+      "actualPaige": "open",
+      "fit": {
+        "viewport": 1536,
+        "document": 1536,
+        "bounds": {
+          "x": 407,
+          "y": 630.015625,
+          "width": 722,
+          "height": 34.78125,
+          "top": 630.015625,
+          "right": 1129,
+          "bottom": 664.796875,
+          "left": 407
+        }
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "closed",
+      "actualPaige": "closed",
+      "fit": {
+        "viewport": 1366,
+        "document": 1366,
+        "bounds": {
+          "x": 322,
+          "y": 628.1328125,
+          "width": 722,
+          "height": 34.78125,
+          "top": 628.1328125,
+          "right": 1044,
+          "bottom": 662.9140625,
+          "left": 322
+        }
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "open",
+      "actualPaige": "open",
+      "fit": {
+        "viewport": 1366,
+        "document": 1366,
+        "bounds": {
+          "x": 322,
+          "y": 628.1328125,
+          "width": 722,
+          "height": 34.78125,
+          "top": 628.1328125,
+          "right": 1044,
+          "bottom": 662.9140625,
+          "left": 322
+        }
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "closed",
+      "actualPaige": "closed",
+      "fit": {
+        "viewport": 1024,
+        "document": 1024,
+        "bounds": {
+          "x": 151,
+          "y": 628.1328125,
+          "width": 722,
+          "height": 34.78125,
+          "top": 628.1328125,
+          "right": 873,
+          "bottom": 662.9140625,
+          "left": 151
+        }
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "open",
+      "actualPaige": "folded-before-modal",
+      "fit": {
+        "viewport": 1024,
+        "document": 1024,
+        "bounds": {
+          "x": 151,
+          "y": 628.1328125,
+          "width": 722,
+          "height": 34.78125,
+          "top": 628.1328125,
+          "right": 873,
+          "bottom": 662.9140625,
+          "left": 151
+        }
+      }
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "closed",
+      "actualPaige": "closed",
+      "fit": {
+        "viewport": 900,
+        "document": 900,
+        "bounds": {
+          "x": 89,
+          "y": 846.21875,
+          "width": 722,
+          "height": 34.78125,
+          "top": 846.21875,
+          "right": 811,
+          "bottom": 881,
+          "left": 89
+        }
+      }
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "open",
+      "actualPaige": "folded-before-modal",
+      "fit": {
+        "viewport": 900,
+        "document": 900,
+        "bounds": {
+          "x": 89,
+          "y": 846.21875,
+          "width": 722,
+          "height": 34.78125,
+          "top": 846.21875,
+          "right": 811,
+          "bottom": 881,
+          "left": 89
+        }
+      }
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "closed",
+      "actualPaige": "closed",
+      "fit": {
+        "viewport": 390,
+        "document": 390,
+        "bounds": {
+          "x": 19,
+          "y": 732.828125,
+          "width": 352,
+          "height": 52.171875,
+          "top": 732.828125,
+          "right": 371,
+          "bottom": 785,
+          "left": 19
+        }
+      }
+    },
+    {
+      "theme": "light",
+      "width": 320,
+      "height": 740,
+      "requestedPaige": "closed",
+      "actualPaige": "closed",
+      "fit": {
+        "viewport": 320,
+        "document": 320,
+        "bounds": {
+          "x": 19,
+          "y": 628.828125,
+          "width": 282,
+          "height": 52.171875,
+          "top": 628.828125,
+          "right": 301,
+          "bottom": 681,
+          "left": 19
+        }
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "closed",
+      "actualPaige": "closed",
+      "fit": {
+        "viewport": 1536,
+        "document": 1536,
+        "bounds": {
+          "x": 407,
+          "y": 630.015625,
+          "width": 722,
+          "height": 34.78125,
+          "top": 630.015625,
+          "right": 1129,
+          "bottom": 664.796875,
+          "left": 407
+        }
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "requestedPaige": "open",
+      "actualPaige": "open",
+      "fit": {
+        "viewport": 1536,
+        "document": 1536,
+        "bounds": {
+          "x": 407,
+          "y": 630.015625,
+          "width": 722,
+          "height": 34.78125,
+          "top": 630.015625,
+          "right": 1129,
+          "bottom": 664.796875,
+          "left": 407
+        }
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "closed",
+      "actualPaige": "closed",
+      "fit": {
+        "viewport": 1366,
+        "document": 1366,
+        "bounds": {
+          "x": 322,
+          "y": 628.1328125,
+          "width": 722,
+          "height": 34.78125,
+          "top": 628.1328125,
+          "right": 1044,
+          "bottom": 662.9140625,
+          "left": 322
+        }
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "requestedPaige": "open",
+      "actualPaige": "open",
+      "fit": {
+        "viewport": 1366,
+        "document": 1366,
+        "bounds": {
+          "x": 322,
+          "y": 628.1328125,
+          "width": 722,
+          "height": 34.78125,
+          "top": 628.1328125,
+          "right": 1044,
+          "bottom": 662.9140625,
+          "left": 322
+        }
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "closed",
+      "actualPaige": "closed",
+      "fit": {
+        "viewport": 1024,
+        "document": 1024,
+        "bounds": {
+          "x": 151,
+          "y": 628.1328125,
+          "width": 722,
+          "height": 34.78125,
+          "top": 628.1328125,
+          "right": 873,
+          "bottom": 662.9140625,
+          "left": 151
+        }
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "requestedPaige": "open",
+      "actualPaige": "folded-before-modal",
+      "fit": {
+        "viewport": 1024,
+        "document": 1024,
+        "bounds": {
+          "x": 151,
+          "y": 628.1328125,
+          "width": 722,
+          "height": 34.78125,
+          "top": 628.1328125,
+          "right": 873,
+          "bottom": 662.9140625,
+          "left": 151
+        }
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "closed",
+      "actualPaige": "closed",
+      "fit": {
+        "viewport": 900,
+        "document": 900,
+        "bounds": {
+          "x": 89,
+          "y": 846.21875,
+          "width": 722,
+          "height": 34.78125,
+          "top": 846.21875,
+          "right": 811,
+          "bottom": 881,
+          "left": 89
+        }
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "requestedPaige": "open",
+      "actualPaige": "folded-before-modal",
+      "fit": {
+        "viewport": 900,
+        "document": 900,
+        "bounds": {
+          "x": 89,
+          "y": 846.21875,
+          "width": 722,
+          "height": 34.78125,
+          "top": 846.21875,
+          "right": 811,
+          "bottom": 881,
+          "left": 89
+        }
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "requestedPaige": "closed",
+      "actualPaige": "closed",
+      "fit": {
+        "viewport": 390,
+        "document": 390,
+        "bounds": {
+          "x": 19,
+          "y": 732.828125,
+          "width": 352,
+          "height": 52.171875,
+          "top": 732.828125,
+          "right": 371,
+          "bottom": 785,
+          "left": 19
+        }
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 320,
+      "height": 740,
+      "requestedPaige": "closed",
+      "actualPaige": "closed",
+      "fit": {
+        "viewport": 320,
+        "document": 320,
+        "bounds": {
+          "x": 19,
+          "y": 628.828125,
+          "width": 282,
+          "height": 52.171875,
+          "top": 628.828125,
+          "right": 301,
+          "bottom": 681,
+          "left": 19
+        }
+      }
+    }
+  ],
+  "behavior": [
+    "original owning Sales upload form and actual hook/SDK",
+    "controlled lost upload acknowledgement is visibly unconfirmed",
+    "no signing record call after unknown upload",
+    "notice wraps on narrow viewports",
+    "unchanged private bucket/no-overwrite behavior proven separately by actual-hook cases",
+    "PDF-only selection matches canonical native document path",
+    "invalid selection is correctable before any upload",
+    "no second ignored contract or false text-signing explanation",
+    "actual native file-to-title Tab route and associated PDF guidance",
+    "all three source choices wrap without clipping and retain touch targets"
+  ],
+  "errors": [],
+  "blocked": [
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com"
+  ],
+  "canonicalRecords": 0,
+  "authenticated": "UNVERIFIED",
+  "providers": "NOT_EXERCISED"
+}

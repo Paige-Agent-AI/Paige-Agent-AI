@@ -112,10 +112,7 @@ BEGIN
   LEFT JOIN public.tenant_legal_profile p ON p.tenant_id = v_hit.tenant_id;
   RETURN jsonb_build_object('state', v_hit.state, 'since', v_hit.since,
     'business', jsonb_build_object('name', v_brand.tenant_name, 'logo_url', v_brand.logo_url,
-      'logo_dark_url', v_brand.logo_dark_url))
-    -- A scoped browser must be able to reject a pre-migration/ignored hint:
-    -- a public brand alone does not identify the requested business.
-    || CASE WHEN v_business IS NOT NULL THEN jsonb_build_object('request_business_id',v_business) ELSE '{}'::jsonb END;
+      'logo_dark_url', v_brand.logo_dark_url));
 END $$;
 REVOKE ALL ON FUNCTION public.client_portal_access_state() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.client_portal_access_state() TO authenticated, service_role;

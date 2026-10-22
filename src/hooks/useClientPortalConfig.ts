@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useClientPortalRead } from "./useClientPortalRead";
+import {useShellCustomerIdentity} from "@/lib/portal/customerIdentity";
 
 /**
  * The tenant's PRESENTATION OVERLAY for the signed-in customer's client portal.
@@ -82,7 +83,10 @@ export interface ClientPortalConfigState {
  * payloads are normalized to {} — an absent/empty overlay must never hide a tab.
  */
 export function useClientPortalConfigState(): ClientPortalConfigState {
-  const { data: config, loading } = useClientPortalRead(readConfig, EMPTY_CONFIG);
+  const identity = useShellCustomerIdentity();
+  const useFrame = identity !== null && identity.viewer !== "staff";
+  const { data: config, loading } = useClientPortalRead(readConfig, EMPTY_CONFIG, !useFrame);
+  if (useFrame) return {config: identity.frame?.config ?? EMPTY_CONFIG, loading: identity.checking || identity.phase === "loading"};
   return { config, loading };
 }
 

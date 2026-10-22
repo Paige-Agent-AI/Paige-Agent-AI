@@ -5,11 +5,11 @@ import {fetchWithheldCustomerAccess} from "@/lib/client-portal-access";
 import {withClientPortalBusiness} from "@/lib/client-portal-scope";
 
 /** `paused` / `ended` (E09 Slice 7): the business withheld this person's access. Not a fault. */
-type Phase = "loading" | "ready" | "not-client" | "unavailable" | "error" | "paused" | "ended";
+type Phase = "loading" | "ready" | "not-client" | "unavailable" | "error" | "paused" | "ended" | "choose-business";
 /** The business's public presentation only — never the reason, the note, or any id. */
 export type WithheldCustomerAccess = {businessName: string; logoUrl: string | null; logoDarkUrl: string | null; since: string | null};
 type State = {actorId: string | null; businessId: string | null; phase: Phase; frame: ClientPortalFrame | null; access: WithheldCustomerAccess | null; checking: boolean; epoch: number};
-type Result = {data: unknown; error: {code?: string} | null};
+type Result = {data: unknown; error: {code?: string; message?: string} | null};
 const initial = (actorId: string | null, epoch = 0, businessId: string | null = null): State => ({actorId, businessId, phase: actorId ? "loading" : "not-client", frame: null, access: null, checking: !!actorId, epoch});
 const RETRY_MS = 8_000;
 async function wait<T>(value: PromiseLike<T>, deadline: number): Promise<T> {
@@ -92,7 +92,17 @@ export function useClientPortalFrame(actorId: string | null, enabled = true, req
       if (identity.data.user?.id !== requestedActor) {refuse(); return;}
       const result = await wait(withClientPortalBusiness(supabase.rpc("client_portal_frame" as never), requestedBusiness) as unknown as PromiseLike<Result>, deadline);
       if (!current()) return;
-      if (result.error?.code === "42501") {await refuseUnlessWithheld(); return;}
+      if (result.error?.code === "42501") {
+        if (requestedBusiness === null && result.error.message === "select an authorized customer relationship") {
+          const final = await wait(supabase.auth.getUser(), deadline);
+          if (!current()) return;
+          if (final.error || final.data.user?.id !== requestedActor) {refuse(); return;}
+          l.frame = null;
+          setState({actorId: requestedActor, businessId: null, phase: "choose-business", frame: null, access: null, checking: false, epoch: ++l.epoch});
+          return;
+        }
+        await refuseUnlessWithheld(); return;
+      }
       if (result.error) throw new Error("Customer view unavailable");
       const frame = result.data === null ? null : readClientPortalFrame(result.data, requestedActor);
       if (result.data !== null && !frame) throw new Error("Invalid customer view");
@@ -128,8 +138,10 @@ export function useClientPortalFrame(actorId: string | null, enabled = true, req
       queueMicrotask(() => {if (l.alive) void reload();});
     });
     const focus = () => {void reload();};
-    window.addEventListener("focus", focus); void reload();
-    return () => {l.alive = false; ++l.request; subscription.unsubscribe(); window.removeEventListener("focus", focus);};
+    const resume = (event: PageTransitionEvent) => {if (event.persisted) void reload();};
+    const visible = () => {if (document.visibilityState === "visible") void reload();};
+    window.addEventListener("focus", focus); window.addEventListener("pageshow", resume); document.addEventListener("visibilitychange", visible); void reload();
+    return () => {l.alive = false; ++l.request; subscription.unsubscribe(); window.removeEventListener("focus", focus); window.removeEventListener("pageshow", resume); document.removeEventListener("visibilitychange", visible);};
   }, [requestedActor, requestedBusiness, reload, scope]);
   // Retire the old subject synchronously, before effects or late reads settle.
   const visible = state.actorId === requestedActor && state.businessId === requestedBusiness ? state : initial(requestedActor, life.current.epoch, requestedBusiness);

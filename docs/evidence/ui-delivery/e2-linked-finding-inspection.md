@@ -15,7 +15,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: authorized Edge connection absent from curren
 KEYBOARD_FOCUS: PASS:320px Clear→Tab→Inspect, visible1.6px token outline, native Return→original dialog/Expand focus→Escape→exact trigger. Original focus trap/inert/scroll owner retained.
 ZOOM_REFLOW: UNVERIFIED: actual320px reflow has no product/source horizontal overflow and reachable44px controls; native browser zoom/assistive-technology proof not performed.
 REDUCED_MOTION: PASS: original Obsidian drawer under actual reduce preference reports transition/animation1e-05s; temporary preference cleared after capture. No new animation or haptic.
-STATE_COVERAGE: PASS: original known/unknown source, malformed/repeated reference, no/unfinished run, current missing/historical row, loading/error/reread/returned resolution, clear/back/drawer close and ordinary page. Synthetic native states are not actual authorization proof.
+STATE_COVERAGE: PASS: original matching/nonmatching source, malformed/repeated reference, no/unfinished run, current missing/historical row, loading/error/reread/returned resolution, clear/back/drawer close and ordinary page. Synthetic native states are not actual authorization proof.
 TRUTHFUL_STATE_LABELS: PASS: original finding Pass/Resolved/Needs attention remains evidence, not current provider operation or completed corrective work. Missing source has no inferred success.
 SOLO_UI: YES: original Systems Check inside canonical SOLO shell, shared implementation for eligible existing/future accounts; source is reauthorized by original hook/RLS.
 UNVERIFIED: Exact-head CI, actual deployment and affected Edge source/config readback, ordinary account/cohort permissions and tenant-isolation proof, native zoom/AT, Live, Desk/Chat CTA and complete founder evaluation remain owed.
@@ -28,9 +28,11 @@ MOTION_PURPOSE: Existing drawer transition communicates secondary inspection; no
 PROTECTED_SEAMS: Existing semantic URL focus gains finding only beside a mounted consumer. Original sanitizer/tier/refusal controls and five actual suites exercised. No backend writer/auth/approval/money/provider/INT346, Conversation runtime, new registry or capability activation change.
 INTERNAL_BUILD_IDENTITY: base=13d26748311a35a6d2ae4b65c7d67116fa2aa6fa; parent=0e18a294c7956792c92197f0eb9cfdb5aa8ca224; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(shared canonical URL importers); evidence=ANT138/313e3d2e; exact candidate/release identity recorded in the original PR after commit.
 RELEASE_CHANNEL: development: source and local native synthetic proof only.
-CUSTOMER_RELEASE_CLASSIFICATION: internal-only: no release name or customer announcement.
-CUSTOMER_RELEASE_NOTE: NOT_REQUIRED: bounded source inspection remains part of the complete unaccepted Experience.
-ROLLBACK_OR_FORWARD_FIX: Reviewed forward correction through original route/consumer, retaining read/authority/records. No automatic action replay.
+RELEASE_CLASSIFICATION: internal-only: bounded source inspection remains part of the complete unaccepted Experience.
+CUSTOMER_RELEASE_IDENTITY: none: no owner-evaluated complete release or customer announcement.
+RELEASE_NOTE_REQUIRED: no: routine prelaunch source-navigation increment only.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: local source and synthetic native inspection; PROOF OWED: actual deployed/customer/cohort/Live and complete Experience acceptance.
+RELEASE_RECOVERY: position=reviewed forward correction through original route/consumer retaining read authority and records; reference=src/solo/SoloSystemsCheckWorkspace.test.tsx.
 SOLO_1536X770_PAIGE_CLOSED: PASS: assets/e2-linked-finding-inspection/1536-closed.jpg; original shell and source controls reachable.
 SOLO_1536X770_PAIGE_OPEN: PASS: assets/e2-linked-finding-inspection/1536-open.jpg; original separate conversation panel.
 SOLO_1366X768_PAIGE_CLOSED: PASS: assets/e2-linked-finding-inspection/1366-closed.jpg; loaded product font/no product overflow.

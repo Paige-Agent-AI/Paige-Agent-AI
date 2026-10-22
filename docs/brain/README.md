@@ -1,6 +1,3 @@
-## EXP02 — Decision Desk required-style correction,2026-10-22
-
-Prepared-work reader#2544 remains unreleased. The original required verify job119609071921 failed Impeccable on a colored rationale edge; the decoration is removed and canonical radius tokens/readable prose retained. Pinned4.1.0 now reports zero blocking findings/two advisory type notes. All16 native component/shell frames were directly recaptured with current source hashes;62 checks across four selected owning suites and targeted ESLint pass. Original actor-reader#2541 at06c98060f7a59e2d223aa3c0914a450e40fe395a has fresh required CI in progress after clean current-main composition. No new schema, queue, approval writer, execution or capability activation. See the original `docs/evidence/ui-delivery/e2-prepared-review-desk.md`; native fixtures are not ordinary authenticated acceptance. Shared composer foundation/actual prepared-work consumer follow in separate small PRs. Full19/nine, actual Chat/Live and founder acceptance remain open.
 ## EXP09 — original reviews and Files verified releases,2026-10-22
 
 Reviews2571/268b12b516121136cc6748c8492c1676443b0a9f and Files2575/7f11a5703baad97c14f555cff80fa7a2d50a09d9 are MERGED/DEPLOYED/SOURCE READ BACK, with exact trees,10 applicable checks/two statuses, accurately AUTHOR-REVIEW / LOWER ASSURANCE, served source and unchanged native authority in the sole Master4.0 rows.213 review and198 Files focused tests plus original native review/discovery/concurrency/Documents244/selected111 checks are bounded engineering evidence. Production receipts6337525786/6338147392 record exact web/public identities and hashes. This dated closeout supersedes earlier notes listing2571/2575 as pending; it does not turn source proof into customer acceptance.
@@ -413,6 +410,10 @@ and #2175's byte verifier: existing completed/replayed seal must match its actua
 private PDF. Native106 plus5 Portal-wiring tests and three Edge type checks pass;
 release, authenticated recovery and full ALG01/12 acceptance remain proof owed.
 [Exact scope and limitations](../evidence/ui-delivery/e04-retained-completion-reconcile.md).
+
+## EXP02 — Decision Desk required-style correction,2026-10-22
+
+Prepared-work reader#2544 remains unreleased. The original required verify job119609071921 failed Impeccable on a colored rationale edge; the decoration is removed and canonical radius tokens/readable prose retained. Pinned4.1.0 now reports zero blocking findings/two advisory type notes. All16 native component/shell frames were directly recaptured with current source hashes;62 checks across four selected owning suites and targeted ESLint pass. Original actor-reader#2541 at06c98060f7a59e2d223aa3c0914a450e40fe395a has fresh required CI in progress after clean current-main composition. No new schema, queue, approval writer, execution or capability activation. See the original `docs/evidence/ui-delivery/e2-prepared-review-desk.md`; native fixtures are not ordinary authenticated acceptance. Shared composer foundation/actual prepared-work consumer follow in separate small PRs. Full19/nine, actual Chat/Live and founder acceptance remain open.
 
 ## EXP02 contextual review identity prerequisite — development
 

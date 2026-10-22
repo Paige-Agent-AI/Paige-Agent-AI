@@ -67,7 +67,7 @@ ACCEPTANCE_CRITERIA: ordinary authorized owner prepares an actual retained PDF/m
 MOTION_PURPOSE: NONE: no animation added; cancellation/reduced-motion behavior remains native.
 PROTECTED_SEAMS: original captured Auth actor/token on the SAME existing SDK invocation; per-await authority epoch; closed DTO/canonical digest/native page shape; native RPC history/current selection; exact PDF MIME/length/magic/SHA; same immutable command/deadline/checkpoint; original guarded tab navigation. Token/Portal GET, signature/consent/sealing, finance/Stripe/Comms/Operations/LayerC/INT346 remain untouched.
 
-INTERNAL_BUILD_IDENTITY: branch=codex/e04-mounted-document-preparation; source_base=ec1c497e0d26de218f28dfd61dd614fae05097eb; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; prerequisite=2599/native20271113300004/agreement-document; evidence=docs/evidence/ui-delivery/e04-mounted-document-preparation.md
+INTERNAL_BUILD_IDENTITY: branch=codex/e04-mounted-document-preparation; source_base=27c7c822528de533a0cadeabb79c3a5b1228d55f; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; prerequisite=2599/native20271113300004/agreement-document; evidence=docs/evidence/ui-delivery/e04-mounted-document-preparation.md
 RELEASE_CHANNEL: development: local owning source and synthetic Auth/API/RPC only, no hosted/customer acceptance.
 RELEASE_CLASSIFICATION: internal-only: bounded native UI/SDK integration; full O1 and whole Experience incomplete.
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or founder acceptance from this increment.

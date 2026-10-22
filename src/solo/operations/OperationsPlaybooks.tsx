@@ -12,6 +12,13 @@ function isProcedure(document: KnowledgeDocument) {
   return [document.category, ...(document.tags ?? [])].some(label => label && procedureLabels.has(label.trim().toLowerCase()));
 }
 export type ProcedureReference = Pick<KnowledgeDocument, "id" | "tenant_id" | "title" | "revision">;
+function focusPreparedComposer(origin: HTMLButtonElement, isCurrent: () => boolean = () => true) {
+  requestAnimationFrame(() => {
+    if (!origin.isConnected || !isCurrent()) return;
+    const composer = origin.closest('[data-tenant-shell]')?.querySelector<HTMLTextAreaElement>('#tenant-paige-workspace textarea[aria-label="Message PAIGE"]');
+    if (composer && !composer.disabled && composer.getClientRects().length && !composer.closest('[hidden],[aria-hidden="true"],[inert]')) composer.focus({ preventScroll: true });
+  });
+}
 type Props = {
   tenantId: string;
   view?: "procedures" | "automations";
@@ -45,7 +52,10 @@ function ProcedureLibrary({ tenantId, onPrepare }: Props) {
       : source.error ? <div className="ops-state" role="alert"><h2>Procedures couldn’t be loaded</h2><p>{source.error}</p><button type="button" onClick={() => void source.reload()}>Try again</button></div>
       : !shown.length ? procedures.length || query ? <div className="ops-procedure-first-use"><h2>No matching procedure</h2><p>Try a different search.</p><button type="button" onClick={() => setQuery("")}>Clear search</button></div>
         : <div className="ops-procedure-start"><div><span className="ops-project-start-kicker">YOUR PROCESS LIBRARY</span><h2>Give your best work a repeatable path.</h2><p>Read documented procedures here, then work with ZION to shape the next workflow. Add a source tagged SOP, procedure or playbook in Knowledge.</p><small>Starting points prepare a question. Nothing is saved, enabled or run.</small></div>
-          <div className="ops-procedure-routines" aria-label="Workflow starting points">{routines.map(([name, note]) => <button type="button" key={name} disabled={!onPrepare || !source.isCurrent()} onClick={() => { if (source.isCurrent()) onPrepare?.(null, name); }}><span><strong>{name}</strong><small>{note}</small></span><ArrowRight size={17} aria-hidden="true" /></button>)}</div></div>
+          <div className="ops-procedure-routines" aria-label="Workflow starting points">{routines.map(([name, note]) => <button type="button" key={name} disabled={!onPrepare || !source.isCurrent()} onClick={event => {
+            if (!source.isCurrent() || !onPrepare) return;
+            const origin = event.currentTarget; onPrepare(null, name); focusPreparedComposer(origin, source.isCurrent);
+          }}><span><strong>{name}</strong><small>{note}</small></span><ArrowRight size={17} aria-hidden="true" /></button>)}</div></div>
         : <div className="ops-procedure-index">{shown.map(doc => <button type="button" key={doc.id} onClick={event => { invoker.current = event.currentTarget; setSelected(doc.id); }}>
           <BookOpen size={21} aria-hidden="true" /><span><strong>{doc.title}</strong>{doc.summary && <span>{doc.summary}</span>}</span>
           <small>Revision {doc.revision}<br />Read source <ArrowRight size={12} aria-hidden="true" /></small></button>)}</div>}
@@ -139,11 +149,7 @@ export function OperationsPlaybooks(props: Props) {
   const design = (origin: HTMLButtonElement) => {
     if (!leave() || !props.onPrepare) return;
     props.onPrepare(null, "contact-created internal task process");
-    requestAnimationFrame(() => {
-      if (!origin.isConnected) return;
-      const composer = origin.closest('[data-tenant-shell]')?.querySelector<HTMLTextAreaElement>('#tenant-paige-workspace textarea[aria-label="Message PAIGE"]');
-      if (composer && !composer.disabled && composer.getClientRects().length && !composer.closest('[hidden],[aria-hidden="true"],[inert]')) composer.focus({ preventScroll: true });
-    });
+    focusPreparedComposer(origin);
   };
   return <div className="ops-playbook-area">
     <div className="ops-process-views" role="group" aria-label="Playbook content">

@@ -1,16 +1,20 @@
 {
-  "source": "c7b4c969efef093d972750158b690aaa046e6e69",
-  "bundle": "ea05c4c504feab55a3d9ef101f1694ba9c9364c4f8b88bf9e3396d16c12cabba",
-  "html": "383d6fef0b71f11beaf9b2196d595952696ca28c2be7f75b711eb65c3b1e01cf",
+  "source": "a0cb7e8db6737c5e040f0eb24e0e6ed34a01b757",
+  "bundle": "2d1782ffe1cafbcfc6ace8f8adb295665be00fd661cd8f601954086d12c95a43",
+  "html": "97d00e15415afd5cb962f5e8026fca7969b087316f96ae74f3d33754c4f9e513",
+  "browser": "Edge as reported by reinitialized browser control; local fixture only",
   "productInputs": 311,
   "syntheticPorts": 174,
   "productTransforms": 0,
-  "invalidated": "Initial four browser-wide-capability captures returned default1536x735 and were overwritten by verified tab-scoped CDP captures.",
+  "priorProof": "Initial c7b4c969 native Chrome frames remain in earlier commits. Final composed frames replace them here. Earlier invalid default-size frames were not accepted.",
   "overrideReset": {
-    "browser": true,
     "cdp": true,
-    "height": 735,
-    "width": 1536
+    "height": 822,
+    "width": 1514
+  },
+  "defaultBefore": {
+    "height": 822,
+    "width": 1514
   },
   "frames": [
     {

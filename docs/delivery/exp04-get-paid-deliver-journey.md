@@ -1,5 +1,20 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
+## October22 required visual-check repair
+
+Actual verify120044935098 on0010067d3 FAILED only at the original Impeccable
+changed-source gate: the new benign sanitizer fixture had an image without src.
+The full functional Test and other required checks passed; the failed overall
+job is retained as FAILED. Supply the real existing /favicon.png in that SAME
+fixture; preserve every event/script/URL/template assertion and all check rules.
+Fresh unchanged two-case sanitizer suite PASS; exact cached Impeccable4.1.0 on
+all owning changed source now0 anti-patterns/four incumbent advisories. No skip,
+config/threshold/assertion/timeout change, product image or runtime edit. All84
+render pins remain exact because this only changes an unbundled test fixture.
+Fresh exact-head CI/review remain required; candidate NOT_DEPLOYED/NOT_ACCEPTED.
+Actual ordinary-owner draft/reload/history proof is separately protected in ANT52,
+from the existing live foundation, not this candidate or full O1 acceptance.
+
 ## October22 current preparation release and security composition
 
 Original native300004 is now recorded with all8 expected bodies/ABI/ACL, private

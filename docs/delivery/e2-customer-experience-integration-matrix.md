@@ -797,8 +797,10 @@ observations and all series points are retained. No bearer token/private workspa
 identity is returned. Closed detached provenance retains the original source lineage;
 no current-value, prediction, executed action or verified improvement is inferred.
 
-73 cases/three original suites pass; final21 new-module cases pass after the ES2020
-regex compatibility correction. Strict module/test compiler and scoped ESLint/whitespace
+Two genuine async value/context mutation failures preceded correction: bounded
+original evidence, capture time and work scope are copied before the digest yields.
+Final75 cases/three original suites and23 new-module cases pass, including source
+retirement/immutable facts and the ES2020 regex compatibility correction. Strict module/test compiler and scoped ESLint/whitespace
 pass. Initial whole-app compilation found three new replaceAll/lib diagnostics; those
 methods were replaced, baseline untouched. Final whole-app exact-head CI remains owed;
 no cancelled/incomplete local ratchet is called PASS. Relevant private install retains

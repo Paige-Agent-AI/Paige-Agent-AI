@@ -62,34 +62,37 @@ export async function buildBusinessReviewEvidenceBlocks(capture: unknown, contex
   now?: number;
 }): Promise<{ blocks: Block[]; provenance: DocumentMetricProvenance[] }> {
   const now = context.now ?? Date.now();
+  const tenantId = context.tenantId, period = { ...context.period };
   if (!record(capture) || Object.keys(capture).some(key => !['version', 'captured_at', 'measurements'].includes(key))
     || capture.version !== 1 || !stamp(capture.captured_at) || !Number.isFinite(now) || Date.parse(capture.captured_at) > now + 30_000
-    || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(context.tenantId)
-    || !['month', 'quarter'].includes(context.period.key) || !stamp(context.period.start) || !stamp(context.period.end)
+    || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(tenantId)
+    || !['month', 'quarter'].includes(period.key) || !stamp(period.start) || !stamp(period.end)
     || !Array.isArray(capture.measurements) || !capture.measurements.length || capture.measurements.length > 12) return invalid();
   try { if (new TextEncoder().encode(JSON.stringify(capture)).byteLength > 24576) return invalid(); } catch { return invalid(); }
+  const capturedAtText = capture.captured_at, capturedAt = Date.parse(capturedAtText);
+  let measurements: unknown[];
+  try { measurements = structuredClone(capture.measurements); } catch { return invalid(); }
   // Rehydrate only the private identity fields omitted by the native capture,
   // using the ORIGINAL work tenant. This digest is not an authorization token.
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(context.tenantId));
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(tenantId));
   const epochRef = `ae_v1_${Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('')}`;
-  const capturedAt = Date.parse(capture.captured_at);
   const seen = new Set<string>();
   const metrics: MetricResult[] = [];
-  for (const item of capture.measurements) {
+  for (const item of measurements) {
     if (!record(item) || typeof item.metric_key !== 'string' || !metricKeys.includes(item.metric_key)
       || 'account_epoch' in item || 'account_epoch_ref' in item || typeof item.evidence_ref !== 'string'
       || seen.has(item.evidence_ref)) return invalid();
     seen.add(item.evidence_ref);
     try {
-      const metric = parseMetricResult({ ...item, account_epoch: context.tenantId, account_epoch_ref: epochRef }, {
-        metricKey: item.metric_key, metricVersion: currentMetricVersion(item.metric_key), accountEpoch: context.tenantId,
-        rangeKey: context.period.key, rangeStart: context.period.start, rangeEnd: context.period.end, dimensions: {},
+      const metric = parseMetricResult({ ...item, account_epoch: tenantId, account_epoch_ref: epochRef }, {
+        metricKey: item.metric_key, metricVersion: currentMetricVersion(item.metric_key), accountEpoch: tenantId,
+        rangeKey: period.key, rangeStart: period.start, rangeEnd: period.end, dimensions: {},
       }, capturedAt);
       if (Date.parse(metric.as_of) > capturedAt) return invalid();
       metrics.push(metric);
     } catch { return invalid(); }
   }
-  const blocks: Block[] = [{ type: 'callout', body: `Historical business evidence captured ${capture.captured_at}. Read current business information again before a new decision.`, variant: 'definition' }];
+  const blocks: Block[] = [{ type: 'callout', body: `Historical business evidence captured ${capturedAtText}. Read current business information again before a new decision.`, variant: 'definition' }];
   const provenance = metrics.map(metric => {
     blocks.push({ type: 'section-header', title: metric.label });
     blocks.push(...valueBlocks(metric));

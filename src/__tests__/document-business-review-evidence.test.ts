@@ -83,6 +83,18 @@ describe('original document historical business evidence', () => {
     source.measurements[0].range.start = 'changed'; source.measurements[0].caveats.push('later mutation');
     expect(result.provenance[0].range.start).toBe(context.period.start); expect(text(result.provenance)).not.toMatch(/omit-me|later mutation/);
   });
+  it('retains original captured values if the caller mutates its object while formatting yields', async () => {
+    const source = capture(); const pending = buildBusinessReviewEvidenceBlocks(source, context);
+    if (source.measurements[0].values?.kind === 'currency_totals') source.measurements[0].values.by_currency[0].amount_minor = '99999';
+    const result = await pending;
+    expect(text(result.blocks)).toContain('USD 200.00'); expect(text(result.blocks)).not.toMatch(/999.99|2099-/);
+  });
+  it('keeps the original work period when caller context changes during the async digest', async () => {
+    const scope = { ...context, period: { ...context.period } };
+    const pending = buildBusinessReviewEvidenceBlocks(capture(), scope);
+    scope.tenantId = 'a3400000-0000-4000-8000-000000000012'; scope.period.start = '2026-09-01T00:00:00Z';
+    expect((await pending).provenance[0].range.start).toBe(context.period.start);
+  });
   it('retains original failed-work observations and retries without claiming an executed fix', async () => {
     const source = metric(); source.metric_key = 'operations.recorded_workflow_activity'; source.owner_department = 'operations'; source.unit = 'events';
     source.coverage = { state: 'complete', candidate_count: 1, contributing_count: 1, excluded_count: 0 };

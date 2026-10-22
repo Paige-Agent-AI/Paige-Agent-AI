@@ -57,6 +57,15 @@ describe("C0b canonical read declaration convergence", () => {
         expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(true);
         continue;
       }
+      // EXP05's newly bound private read retains the stricter native owner gate.
+      // Its shared door-seat prerequisite cannot admit a seatless Operator.
+      if (tool === "read_weekly_commitment_status") {
+        expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(true);
+        for (const workspaceAdmin of [false, true]) for (const platformOperator of [false, true]) {
+          expect(authorityAdmits(tool, { workspaceAdmin, platformOperator, seat: false }, new Set())).toBe(false);
+        }
+        continue;
+      }
       expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(tool !== "capability_status" && (OWNER_OPS_BEFORE.includes(tool) || outsideBefore.has(tool)));
     }
   });

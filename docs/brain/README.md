@@ -1,6 +1,14 @@
 ## EXP02 — Decision Desk required-style correction,2026-10-22
 
 Prepared-work reader#2544 remains unreleased. The original required verify job119609071921 failed Impeccable on a colored rationale edge; the decoration is removed and canonical radius tokens/readable prose retained. Pinned4.1.0 now reports zero blocking findings/two advisory type notes. All16 native component/shell frames were directly recaptured with current source hashes;62 checks across four selected owning suites and targeted ESLint pass. Original actor-reader#2541 at06c98060f7a59e2d223aa3c0914a450e40fe395a has fresh required CI in progress after clean current-main composition. No new schema, queue, approval writer, execution or capability activation. See the original `docs/evidence/ui-delivery/e2-prepared-review-desk.md`; native fixtures are not ordinary authenticated acceptance. Shared composer foundation/actual prepared-work consumer follow in separate small PRs. Full19/nine, actual Chat/Live and founder acceptance remain open.
+## EXP09 — original reviews and Files verified releases,2026-10-22
+
+Reviews2571/268b12b516121136cc6748c8492c1676443b0a9f and Files2575/7f11a5703baad97c14f555cff80fa7a2d50a09d9 are MERGED/DEPLOYED/SOURCE READ BACK, with exact trees,10 applicable checks/two statuses, accurately AUTHOR-REVIEW / LOWER ASSURANCE, served source and unchanged native authority in the sole Master4.0 rows.213 review and198 Files focused tests plus original native review/discovery/concurrency/Documents244/selected111 checks are bounded engineering evidence. Production receipts6337525786/6338147392 record exact web/public identities and hashes. This dated closeout supersedes earlier notes listing2571/2575 as pending; it does not turn source proof into customer acceptance.
+
+Original Operations exact artifact/version/decision, original file reservation/status/Storage/finish/object/metadata and Home facts remain the only authorities. No new CRM, document store, approval inbox, scheduler, sender, ledger, model or CURA runtime. Ordinary self-service remains on its established native path; successful Layer C fixture161 is not CURA adapter activation. Global identity/recipient restrictions remain. Nine review and11 Files original-component local/synthetic images support responsive/focus behavior; full signed-in shell/device/AT/actual customer/provider outcomes remain UNVERIFIED.
+
+Account/Consent exact-intent prerequisite2576 and original UI continuation remain separate work in progress. Original commercial consumers, protected shared Edge/Chat/Knowledge selection, guarded multi-business/recipient/new-account compatibility and the joined protected owner/client returning/revocation/approval/publication journey remain unfinished. Seven catalogue rows stay Limited; ALG01/12 bounded PARTIAL and02/04/13 runtime UNVERIFIED. Functional, Visual, Experiential and Founder Acceptance stay separate. Founder evaluation once the full integrated Experience is ready.
+
 ## EXP09 — original Sessions verified release, 2026-10-22
 
 Sessions2567 is merged at `eba561cda65f90a8e0d54cc72b5922841bae2349` after reviewed8529bfb2c0a444fe4e5e936f78acb3b260695dbe,11 applicable exact-head checks/full Preview/two statuses and documented AUTHOR-REVIEW / LOWER ASSURANCE. Exact production web/public identity, two served module hashes, original native authority readback and supporting139 focused/native111 checks are recorded in the sole Master4.0 row and receipt6336153344. Native steps99 and161 independently succeeded; a Layer C fixture does not prove CURA adapter activation. This factual release supersedes the earlier dated sentence listing Sessions2567 as unfinished preparation; actual ordinary customer booking/notice and complete-pillar acceptance are still PROOF OWED.
@@ -199,6 +207,25 @@ ANT-11 and ANT-161. Contextual ZION UI and the approved full immersive Operation
 Experience remain separate unfinished increments; no catalogue Live promotion.
 Assess functional, visual and experiential quality independently; owner acceptance
 still requires the one complete integrated Experience.
+
+## EXP04 exact document and assigned fields — dormant source foundation, October22
+
+Original native agreement rendering/sealing/authorization callers are unchanged.
+New document-preparation/field-preparation helpers bind actual retained checksum,
+page crop/media/rotation, original agreement/customer/version/microsecond CAS,
+original signer identity/role/order and all five assigned field kinds. Reuses
+pdf-lib1.17.1, original native parser/hash and canonical presentation serializer;
+no new package, table, signing/approval/execution engine, provider or Portal source.
+Missing signatures and overlaps prevent review readiness; unsupported/foreign or
+malformed placement refuses.69 strict Deno cases/47 nested steps including original
+render/seal/signing-guard controls PASS, not production/customer proof. Initial test
+callback type error was corrected, never skipped. Native persistence, real preview,
+keyboard placement, exact PDF/map approval, original Rail/send/seal and Portal
+consumption remain unconnected; Chat/Live execution UNAVAILABLE, all12 outcomes and
+owner/staff/client/provider/founder acceptance remain owed. See existing
+[journey](../delivery/exp04-get-paid-deliver-journey.md) pre-edit contract. Optional
+jurisdiction/requested-review/reviewer configuration supplies no agreement wording,
+completed legal review or infrastructure counsel gate.
 
 ## EXP04 original draft correction — 2026-10-21 local
 

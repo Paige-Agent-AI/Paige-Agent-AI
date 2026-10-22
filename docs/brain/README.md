@@ -95,6 +95,25 @@ Mounted history/correction with authentic ordinary roles remains owed. Private
 upload references do not prove retained PDF bytes or legal sufficiency.
 [Native evidence](../evidence/ui-delivery/e04-native-draft-revision-history.md).
 
+Latest authoring integration: original Sales New agreement now mounts a genuine
+rich/source wording editor, real client selection, request-bound native save and
+uncertainty recovery, and selected original-record/history/file inspection.
+Actual-shell synthetic browser proof passes20 viewport/theme cases and22 paths,
+including real editor paste events/source continuity, committed lost-response
+recovery and original-business intent fencing. Source/font hashes are retained;
+no provider or ordinary customer identity is exercised. Final145 focused regressions,
+type ratchet10 baseline/current6, native build and bounded lint pass; hosted exact-head
+review/CI/release and authenticated acceptance remain separately owed. Professional
+templates/import, exact retained revisions, assigned fields and signing preparation
+remain required; this is not the complete DocuSign-class outcome.
+
+The Oct21 Layer C addendum is mapped in the existing E04 journey. Reuse the three
+native actions, shared canonical approval/dispatch claims/receipts/recovery and
+legitimate native Sales/Finance/Planning paths. n8n effectful dispatch remains
+gated. No adapter registry entry establishes authenticated commercial execution.
+Existing agreement/invoice/Collections/Portal contracts, ALG01/02/12/13 truth
+labels and all twelve outcomes remain binding. No retired agent is assigned.
+
 Released bounded prerequisites #2486 register discovery, #2487 actual retained-copy
 completion readback, and #2493 truthful historical signing economics are recorded
 with exact source/CI/production identities in Master§4.0. They do not accept O1–O12.

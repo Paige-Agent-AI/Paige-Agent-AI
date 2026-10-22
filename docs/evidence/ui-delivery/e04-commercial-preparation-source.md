@@ -1,7 +1,7 @@
 # EXP04 original commercial source preparation — dormant read/proposal port
 
-October22 current composition7633ea55fccedddf1e7ab257d5672799e6c11fa3 preserves
-parent2599/ae444dade5b9d1dd3edd849e29150d1ed84dece2 and currentmaincdeedfe24.
+October22 current composition20782f1e148855e3f90e80094f58d44976ebdde7 preserves
+actual merged main429388f2528942275334fd0c916c6fcfecb4f70a and original API2599.
 Original reader and209-line test source are BYTE IDENTICAL3180045d336ea73b683e426b9808168ddfa0b2e6.
 Fresh strict Deno13 tests/63 steps PASS with all original runtime effect denials;
 37 reader cases include18 original plus19 added, not55 separate cases. No current
@@ -9,6 +9,14 @@ consumer/runtime imports it, no actual caller-RLS/provider/customer acceptance.
 This remains the SAME original draft#2564, with fresh own exact-head review/CI/
 normal Preview and parent native/API release/readback required; old failed
 Preview config-update status is not overwritten or represented as PASS.
+
+Actual83a own normal Preview and database-contract are now SUCCESS; earlier
+Preview failures remain historical failures. Its evidence job compared the old
+maincde base, including already merged Solo UI, and failed the unmounted reader
+record's Solo attestation. Current owning diff against actual main429 has ZERO
+UI files and its original evidence guard PASS. Preserve all incoming E09/E05
+source, unchanged reader/test bytes and the guard itself; no invented viewport
+or customer proof. Native300004/API customer release remains held separately.
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: reuse the historical commercial source reader for original O1/O2 preparation; no existing consumer is redirected and all twelve outcomes remain mandatory.

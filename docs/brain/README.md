@@ -1,3 +1,15 @@
+## EXP02 document-fact prerequisite — October22 development
+
+Existing document brief validation now refuses non-finite numbers before JSON can
+silently turn them into null. Four actual regression failures then37 original-suite
+passes retain zero, negative/fractional values, false booleans, supported types and
+native authority/recovery. No SQL, worker, registry, provider, approval, source owner
+or store change. This is not a formal monthly/quarterly report: its real source-bound
+type/evidence/artifact/retrieval consumer remains required; CAP014/015 stay Unverified.
+Exact-head review/CI, original2607 sanitizer dependency, normal affected-Edge source
+readback and ordinary authoring/reload/cohort/Live remain owed. Full19/nine and the
+single complete founder evaluation remain open. [Evidence](../evidence/ui-delivery/e2-document-finite-facts.md).
+
 ## EXP04 original owner document API — October22 local dependent source
 
 Original agreement-document owner door now has bounded draft preparation,

@@ -55,6 +55,26 @@ describe("durable document production contract", () => {
     expect(validateDocumentBrief({ ...brief, brief: "Draft this for [CLIENT NAME]." }).ok).toBe(false);
   });
 
+  it.each([NaN, Infinity, -Infinity])("refuses a non-finite fact instead of silently serializing it to null (%s)", value => {
+    expect(validateDocumentBrief({ ...brief, required_facts: { amount: value } })).toMatchObject({
+      ok: false, code: "document_required_facts_invalid",
+    });
+  });
+
+  it("refuses numeric overflow received through parsed JSON", () => {
+    const required_facts = JSON.parse('{"amount":1e400}');
+    expect(validateDocumentBrief({ ...brief, required_facts })).toMatchObject({
+      ok: false, code: "document_required_facts_invalid",
+    });
+  });
+
+  it("preserves finite zero, negative and fractional facts and false booleans", () => {
+    const required_facts = { zero: 0, change: -12.5, ratio: 1.25, included: false, confirmed: true };
+    const result = validateDocumentBrief({ ...brief, required_facts });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value.required_facts).toEqual(required_facts);
+  });
+
   it("keeps markdown links but detects fill-in-the-blank placeholders", () => {
     expect(containsDocumentPlaceholder("Read [the guide](https://example.com)")).toBe(false);
     expect(containsDocumentPlaceholder("Start on [Date]")).toBe(true);

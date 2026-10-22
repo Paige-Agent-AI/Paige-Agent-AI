@@ -488,3 +488,14 @@ it.each([
   expect(errors.mock.calls.some(call => String(call[0]).includes("same key"))).toBe(false);
   errors.mockRestore();
 });
+
+it("prepares a delivery-specific ZION question without sending or authorizing work", async () => {
+  const open = vi.fn();
+  await act(async () => root.render(<OperationsWorkspace view="delivery" openPaige={open} />));
+  await click("Review with ZION");
+  expect(paige.handoff).toHaveBeenCalledOnce();
+  expect(paige.handoff).toHaveBeenCalledWith(expect.stringContaining("client delivery commitments"));
+  expect(paige.handoff).toHaveBeenCalledWith(expect.stringContaining("signature does not prove delivery"));
+  expect(paige.handoff).toHaveBeenCalledWith(expect.stringContaining("Do not change, release, approve or send anything"));
+  expect(open).toHaveBeenCalledOnce();
+});

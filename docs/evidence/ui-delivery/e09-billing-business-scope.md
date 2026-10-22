@@ -26,7 +26,7 @@ ACCEPTANCE_CRITERIA: actual actor/selected tenant/exact expected customer per na
 MOTION_PURPOSE: none added.
 PROTECTED_SEAMS: ANT161 Billing consumer/read-adapter lease152cddb2-f37d-4133-af00-663af8c7deb7. Native prerequisite2580 separate; original financial writer/helper/Edge/renderer, shared Chat/C0b/Spine/Knowledge and identity constraints untouched.
 
-INTERNAL_BUILD_IDENTITY: implementation=f8d85d059ee0e598709160d2e3a2356076078c95; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(2580:20271113280009); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e09-billing-business-scope.md
+INTERNAL_BUILD_IDENTITY: implementation=8b5af2efd9815928792930eb729e637e4d88bdd5; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(2580:20271113280009); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e09-billing-business-scope.md
 RELEASE_CHANNEL: development: local original components/synthetic responses, no real customer/provider effects; hosted and production proof separate.
 RELEASE_CLASSIFICATION: internal-only: original Payments scope/recovery, not complete Portal or financial activation.
 CUSTOMER_RELEASE_IDENTITY: none: bounded original consumer repair, no announcement or new named customer release.

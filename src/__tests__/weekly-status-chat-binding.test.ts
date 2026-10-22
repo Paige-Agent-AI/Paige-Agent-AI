@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import * as automation from "../../supabase/functions/_shared/paige-spine/domains/automations";
+import { interactiveEffect, interactiveRecoveryReadAllowed } from "../../supabase/functions/_shared/paige-turn/interactive";
+import { PAIGE_SPINE_CAPABILITIES } from "../../supabase/functions/_shared/paige-spine/registry";
 
 const chat = readFileSync("supabase/functions/paige-ai-chat/index.ts", "utf8");
 type Offer = (context: { callerTier: string; accountShape: string | null; role: string | null;
@@ -13,6 +15,22 @@ function offer() {
 }
 
 describe("original owner-private weekly status Chat binding", () => {
+  it("reuses closed-read recovery admission without granting actions or undeclared tools", () => {
+    const tool = automation.WEEKLY_COMMITMENT_STATUS_TOOL_NAME;
+    expect(interactiveRecoveryReadAllowed(tool, new Set([tool]), PAIGE_SPINE_CAPABILITIES)).toBe(true);
+    expect(interactiveRecoveryReadAllowed(tool, new Set(), PAIGE_SPINE_CAPABILITIES)).toBe(false);
+    expect(interactiveRecoveryReadAllowed(tool, new Set([tool]), [])).toBe(false);
+    expect(interactiveRecoveryReadAllowed("weekly_commitment_draft", new Set(["weekly_commitment_draft"]), PAIGE_SPINE_CAPABILITIES)).toBe(false);
+  });
+
+  it("retains uncertainty for contradictory weekly results and preserves no private payload", () => {
+    const tool = automation.WEEKLY_COMMITMENT_STATUS_TOOL_NAME;
+    expect(interactiveEffect(tool, { status: "available", message: "PRIVATE", outcome_unknown: true }, PAIGE_SPINE_CAPABILITIES))
+      .toEqual({ tool, outcome: "outcome_unknown" });
+    expect(interactiveEffect(tool, { status: "available", message: "PRIVATE" }, []))
+      .toEqual({ tool, outcome: "outcome_unknown" });
+  });
+
   it("offers exactly the existing declared read with no model scope or action input", () => {
     const tools = offer()(owner);
     expect(tools).toHaveLength(1);

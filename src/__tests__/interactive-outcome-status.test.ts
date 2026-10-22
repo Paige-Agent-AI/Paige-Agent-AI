@@ -81,7 +81,7 @@ describe('automatic lookup preserves ordinary status and ownership',()=>{
 
 describe('canonical closed-read interactive receipt truth', () => {
   const statuses = ['available', 'needs_input', 'refused', 'unavailable'] as const;
-  const currentReads = ['read_business_metric', 'get_business_snapshot', 'read_client_engagement_status', 'read_business_time_zone', 'read_calendar_booking'];
+  const currentReads = ['read_business_metric', 'get_business_snapshot', 'read_client_engagement_status', 'read_business_time_zone', 'read_calendar_booking', 'read_weekly_commitment_status'];
   // Task is now composed into the real server registry. Appending the former
   // isolated declaration would correctly trigger the duplicate-registration refusal.
   const spine = PAIGE_SPINE_CAPABILITIES;

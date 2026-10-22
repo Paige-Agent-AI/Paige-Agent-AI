@@ -83,12 +83,26 @@ Bounded forward160000 repairs the existing seal trigger only; original SAVE/link
 author framework, native record/audit/history preserved. Native43 assertions,
 replay2/two overlapping sessions PASS, including normal draft/link/void recovery.
 New source is UNRELEASED; only own unapplied150000 renumbered after confirmed
-E09 collision, exact SQL unchanged. Other140000/150000 reservations untouched;
-their duplicate140000 needs source-owner reconciliation. No actual provider/JWT/
+E09 collision, exact SQL unchanged. Other reservations untouched. E09#2525/140000 is now released; E02
+resolved its duplicate by reserving170000, after E09 pending150000/E04 pending160000. No actual provider/JWT/
 customer acceptance, data repair, new writer/store/runtime or Chat activation.
 Pre-freeze source CAS/exact commercial presentation remains C7 integration work;
 correction mounting and all original O1–O12 remain open.
 [Evidence](../evidence/ui-delivery/e04-frozen-draft-integrity.md).
+## EXP04 authoring release — 2026-10-21
+
+Native document authoring#2515 reviewed6ef6cd9bcf9dbb97b53153edffba0243a5a060bd →
+mergec647eceb3dd66f304b1662ccc66d2fa4d304639d, exact reviewed uniona8a9661b6.
+All10 applicable checks/two statuses pass, AUTHOR-REVIEW / LOWER ASSURANCE5607950900.
+Actual20 viewport/theme cases/22 paths and selected143/five suites pass;18 source
+pins unchanged. Webdpl_5cHXA4yMKYXGJbVdGn8Nqycj6dUT READY/exact, exact deployment
+versionc647eceb3-mvitkdra read back through Vercel; canonical doc-only descendant
+d873a1b7b-mvitnzwh serves actual native authoring chunk8105842a13. Own migration/
+Edge N/A, native120000/130000 applied prerequisites. Master4.0/receipt6329998318
+records exact proof. Genuine authoring/one-request recovery is a prerequisite,
+not full professional agreements or O1–O12 acceptance. Ordinary owner/staff/client,
+legal/provider/signature/payment/service and complete founder acceptance remain
+owed. No actual sends, financial/provider/Chat activation or customer announcement.
 
 ## EXP04 current delivery checkpoint — 2026-10-21
 
@@ -109,6 +123,19 @@ AUTHOR-REVIEW / LOWER ASSURANCE; no actual JWT/customer acceptance is inferred.
 Mounted history/correction with authentic ordinary roles remains owed. Private
 upload references do not prove retained PDF bytes or legal sufficiency.
 [Native evidence](../evidence/ui-delivery/e04-native-draft-revision-history.md).
+
+Unreleased owner wording-inspection source consumes native producer#2521's retained
+revisions under the same original agreement. Original author scope, strict selected
+ID/metadata, twenty-row native cursor and explicit failed/empty/refused recovery;
+native refusal retires cached current wording. Actual-source20 viewport/theme
+cases/26 paths and current-main178 tests PASS; type ratchet no-new10/current6.
+First rendered return-focus defect was repaired at DOM commit; return now reads
+the current original before restoring focus, with failed reads retiring old data.
+Producer release/readback is verified; final consumer review/CI/deployment and
+actual ordinary roles remain owed. Dedicated Chat/Live
+history is not registered; no capability/algorithm Live promotion. Correction and
+all original professional signing/financial/service outcomes remain mandatory.
+[UI evidence](../evidence/ui-delivery/e04-agreement-wording-history.md).
 
 Latest authoring integration: original Sales New agreement now mounts a genuine
 rich/source wording editor, real client selection, request-bound native save and

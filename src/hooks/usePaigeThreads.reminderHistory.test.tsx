@@ -187,3 +187,75 @@ describe('original Reminder history status hook', () => {
     expect(ports.invoke).toHaveBeenCalledTimes(2); noEffects();
   });
 });
+
+
+// CURA selects only its original metadata through the same transport, scope and cooldown.
+const curaHistory = () => ({ v: 1, status: 'recorded_preparation', thread_id: scope.threadId, turn_id: scope.turnId,
+  origin_intent_id: scope.intentId, tenant_id: scope.tenantId, historical: true, retry_authorized: false,
+  confirmations_restored: false, new_effect_possible: false, settles_interrupted_turn: false,
+  preparations: [{ tool: 'save_to_knowledge_base', preparation_recorded: true, work_id: id(8), work_status: 'succeeded',
+    knowledge_doc_id: id(9), current_document_revision: 2, work_updated_at: '2026-10-21T20:00:00Z' }] });
+const curaRead = (api: UsePaigeThreads, signal = new AbortController().signal) =>
+  api.loadOriginalCuraPreparationHistory(scope.threadId, scope.turnId, scope.intentId, signal);
+
+describe('CURA original preparation on the incumbent status transport', () => {
+  beforeEach(() => ports.invoke.mockResolvedValue({ data: { cura_preparation_history: curaHistory() }, error: null }));
+  const noCuraEffects = () => {
+    expect(ports.from).not.toHaveBeenCalled(); expect(ports.rpc).not.toHaveBeenCalled(); expect(ports.invalidate).not.toHaveBeenCalled();
+    for (const [name, options] of ports.invoke.mock.calls) {
+      expect(name).toBe('paige-ai-chat'); expect(options.headers).toEqual({ 'x-paige-chat-control': 'status' });
+      expect(options.body).toEqual({ messages: [{ role: 'user', content: 'Read pending approval status.' }],
+        threadId: scope.threadId, requestIntentId: scope.intentId,
+        interactive: { kind: 'status', approvalTurnId: scope.turnId, includeCuraPreparationHistory: true } });
+    }
+  };
+  it('passes the exact physical signal and selects only original CURA metadata', async () => {
+    const view = await mount(), abort = new AbortController();
+    expect(await curaRead(view.api, abort.signal)).toEqual(curaHistory());
+    expect(ports.invoke.mock.calls[0][1].signal).toBe(abort.signal); expect(ports.invoke).toHaveBeenCalledTimes(1); noCuraEffects();
+  });
+  it.each([null, { approval_history: history() }, { bundle_ref: { cura_preparation_history: curaHistory() } },
+    { cura_preparation_history: { ...curaHistory(), tenant_id: id(99) } },
+    { cura_preparation_history: { ...curaHistory(), retry_authorized: true } }])('rejects invalid or foreign data %j', async data => {
+    ports.invoke.mockResolvedValue({ data, error: null });
+    expect(await curaRead((await mount()).api)).toBeNull(); expect(ports.invoke).toHaveBeenCalledTimes(1); noCuraEffects();
+  });
+  it.each(['actor', 'tenant', 'platform'] as const)('rejects late %s A-B-A evidence without lending its rate limit', async change => {
+    let finish!: (value: unknown) => void;
+    ports.invoke.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    const view = await mount(), pending = curaRead(view.api);
+    await view.render({ ...eligible, ...(change === 'actor' ? { callerUserId: id(98) }
+      : change === 'tenant' ? { tenantId: id(99) } : { platform: true }) });
+    await view.render(eligible); finish({ data: { cura_preparation_history: curaHistory() }, error: null });
+    expect(await pending).toBeNull(); expect(await curaRead(view.api)).toEqual(curaHistory()); noCuraEffects();
+  });
+  it('cannot read with revoked local scope or a pre-aborted signal', async () => {
+    const view = await mount(), old = view.api, abort = new AbortController(); abort.abort();
+    expect(await curaRead(view.api, abort.signal)).toBeNull();
+    await view.render({ ...eligible, tenantId: null }); expect(await curaRead(old)).toBeNull();
+    expect(ports.invoke).not.toHaveBeenCalled(); noCuraEffects();
+  });
+  it('discards late success after physical cancellation without retry', async () => {
+    let finish!: (value: unknown) => void;
+    ports.invoke.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    const view = await mount(), abort = new AbortController(), pending = curaRead(view.api, abort.signal);
+    abort.abort(); finish({ data: { cura_preparation_history: curaHistory() }, error: null });
+    expect(await pending).toBeNull(); expect(ports.invoke).toHaveBeenCalledTimes(1); noCuraEffects();
+  });
+  it('shares the existing cooldown with reminder status and never schedules retries', async () => {
+    const view = await mount(), now = Date.UTC(2026, 9, 21); vi.spyOn(Date, 'now').mockReturnValue(now);
+    ports.invoke.mockResolvedValueOnce({ data: null, error: { context: new Response('{}', { status: 429, headers: { 'Retry-After': '10' } }) } });
+    expect(await curaRead(view.api)).toBeNull(); expect(await read(view.api)).toBeNull();
+    expect(await view.api.loadApprovalRecovery(scope.threadId, scope.turnId, scope.intentId)).toBeNull();
+    expect(ports.invoke).toHaveBeenCalledTimes(1); noCuraEffects();
+  });
+  it('uses one generation across original result kinds', async () => {
+    let finish!: (value: unknown) => void;
+    ports.invoke.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    const view = await mount(), olderReminder = read(view.api);
+    expect(await curaRead(view.api)).toEqual(curaHistory());
+    finish(response()); expect(await olderReminder).toBeNull(); expect(ports.invoke).toHaveBeenCalledTimes(2);
+    expect(ports.invoke.mock.calls[0][1].body.interactive).not.toHaveProperty('includeCuraPreparationHistory');
+    expect(ports.from).not.toHaveBeenCalled(); expect(ports.rpc).not.toHaveBeenCalled();
+  });
+});

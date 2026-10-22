@@ -78,6 +78,8 @@ async function call<T>(name: string, args: Record<string, unknown>, schema: z.Zo
 function validScope(tenantId: string, id: string) {
   return uuid.safeParse(tenantId).success && uuid.safeParse(id).success;
 }
+// Reuse this bounded, sanitized native RPC boundary for agreement-history reads.
+export { call as callAgreementRpc };
 const invalid = { ok: false, reason: 'refused', message: 'Choose the original business and agreement before continuing.' } as const;
 
 export async function readAgreementPreparation(tenantId: string, signingId: string): Promise<AgreementApiResult<AgreementPreparation>> {

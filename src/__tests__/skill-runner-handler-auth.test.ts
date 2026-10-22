@@ -12,6 +12,7 @@ import * as browserAuthority from "../../supabase/functions/_shared/secure-brows
 import * as interpreterCore from "../../supabase/functions/_shared/skill-interpreter-core.ts";
 import * as contactMethods from "../../supabase/functions/_shared/contact-methods.ts";
 import * as businessVerify from "../../supabase/functions/_shared/business-verify-outcome.ts";
+import * as clientGamePlan from "../../supabase/functions/_shared/paige-skill/client-game-plan.ts";
 
 type Row = Record<string, unknown>;
 const source = readFileSync("supabase/functions/skill-runner/index.ts", "utf8");
@@ -124,6 +125,7 @@ function fixture(options: {
     "../_shared/paige-skill/email-approval.ts": emailApproval,
     "../_shared/confirm-fingerprint.ts": fingerprint,
     "../_shared/business-verify-outcome.ts": businessVerify,
+    "../_shared/paige-skill/client-game-plan.ts": clientGamePlan,
     "../_shared/contact-methods.ts": contactMethods,
   };
   const load = (id: string) => {

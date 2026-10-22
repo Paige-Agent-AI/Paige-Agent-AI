@@ -2,7 +2,7 @@
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: preserved C7 commercial preparation is reconciled into a bounded original-record prerequisite; all twelve outcomes remain mandatory.
-PAIGE_UI_DESIGN: NOT_APPLICABLE: no mounted renderer or interaction changes in this increment.
+PAIGE_UI_DESIGN: PASS: original Sales paper/editor/source identity and the existing five-module PAIGE router are preserved; no mounted renderer or interaction changes. Evidence: docs/delivery/exp04-get-paid-deliver-journey.md October22 C7 contract.
 MATERIAL_FLOW_CHANGE: NO: the new native producer and pure formatters are initially dormant; no existing send, sign, approve, payment or document consumer is redirected.
 FLOW_PROTOTYPE: NOT_REQUIRED: no mounted customer interaction changes. Existing professional Agreements design remains controlling for the following consumer.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: retain exact reviewed commercial facts and document identity for an authorized business owner on the original agreement.
@@ -20,7 +20,7 @@ TRUTHFUL_STATE_LABELS: PASS: native frozen means retained capsule only; it never
 SOLO_UI: NO: pure shared preparation and native original-record prerequisite only.
 UNVERIFIED: current-head CI/full-schema Preview, actual native deployment, approved Collections/Kit receipt/UI integration, hosted exact document readback, owner/staff/client QA and complete founder acceptance.
 
-INTERNAL_BUILD_IDENTITY: branch=codex/e04-commercial-presentation-native; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113230004_agreement_commercial_presentation); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-commercial-presentation-native.md
+INTERNAL_BUILD_IDENTITY: branch=codex/e04-commercial-presentation-native; product_sha=a79e8927962c7ef2412b5662048f67762c9fad8d; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113230004_agreement_commercial_presentation); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-commercial-presentation-native.md
 RELEASE_CHANNEL: development: local native and pure formatter proof, not production acceptance.
 RELEASE_CLASSIFICATION: internal-only: dormant prerequisite for full professional commercial/signing integration.
 CUSTOMER_RELEASE_IDENTITY: none: no finished Experience or founder acceptance.

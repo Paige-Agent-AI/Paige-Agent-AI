@@ -93,8 +93,8 @@ describe("dictation composer scope and send contract", () => {
     };
     visit(source);
     expect(predicates).toHaveLength(1);
-    const disabled = new Function("state", `const {isLoading,dictationActive,customerFrame,customerAvailable,historyState,input,attachedDoc}=state;return (${predicates[0]});`);
-    const ready = {isLoading:false,dictationActive:false,customerFrame:null,customerAvailable:true,historyState:"ready",input:"Ready to send",attachedDoc:null};
+    const disabled = new Function("state", `const {isLoading,dictationActive,customerFrame,customerAvailable,historyState,customerRecovery,input,attachedDoc}=state;return (${predicates[0]});`);
+    const ready = {isLoading:false,dictationActive:false,customerFrame:null,customerAvailable:true,historyState:"ready",customerRecovery:null,input:"Ready to send",attachedDoc:null};
     expect(disabled(ready)).toBe(false);
     expect(disabled({...ready,dictationActive:true})).toBe(true);
     expect(disabled({...ready,isLoading:true})).toBe(true);
@@ -103,6 +103,12 @@ describe("dictation composer scope and send contract", () => {
     expect(disabled({...ready,customerFrame:{}})).toBe(false);
     expect(disabled({...ready,customerFrame:{},dictationActive:true})).toBe(true);
     expect(disabled({...ready,customerFrame:{},customerAvailable:false})).toBe(true);
+    // Recovery holds only the customer send; every original voice/owner guard remains.
+    for (const phase of ["sending","unknown","checking","unconfirmed","error"]) {
+      expect(disabled({...ready,customerFrame:{},customerRecovery:{phase}})).toBe(true);
+      expect(disabled({...ready,customerRecovery:{phase}})).toBe(false);
+      expect(disabled({...ready,dictationActive:true,customerRecovery:{phase}})).toBe(true);
+    }
     for (const historyState of ["loading","error"])
       expect(disabled({...ready,customerFrame:{},historyState})).toBe(true);
     expect(conversations).toContain("sendDisabled={sendDisabled || dictationActive}");

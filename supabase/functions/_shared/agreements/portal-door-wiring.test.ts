@@ -12,13 +12,36 @@ async function sha256(text: string): Promise<string> {
   return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-Deno.test("doors one and two are byte-identical to main (dbb8a8842)", async () => {
-  // From the DOOR ONE banner to the shared storage read: both existing door bodies, whole. The pin
-  // was computed from the same region of the file on main before door three was added.
-  const start = source.indexOf("    // ── DOOR ONE");
-  const end = source.indexOf("  const file = await db.storage");
+function originalDoorBodies(text: string): string {
+  const start = text.indexOf("    // ── DOOR ONE");
+  const end = text.indexOf("  const file = await db.storage");
   assert(start > 0 && end > start, "both door bodies are present");
-  assertEquals(await sha256(source.slice(start, end)), "7148c40a6ab73a948ee6a7df0aed28460e0a66e1fd82f9eb1f0e48501a126eb3");
+  // EXP04 adds only the selected original record's checksum projection and three
+  // assignments. Undo those EXACT additions, retaining the original digest pin.
+  // No new hash, broad normalization or authorization statement is waived.
+  return text.slice(start, end)
+    .replace('.select("id,title,status,content_storage_key,sealed_storage_key,content_sha256,sealed_sha256")', '.select("id,title,status,content_storage_key,sealed_storage_key")')
+    .replace('.select("id,title,status,sealed_storage_key,sealed_sha256")', '.select("id,title,status,sealed_storage_key")')
+    .replace('      expectedDigest = agreement.sealed_sha256;\n', '')
+    .replace('      expectedDigest = agreement.content_sha256;\n', '')
+    .replace('    expectedDigest = agreement.sealed_sha256;\n', '');
+}
+
+Deno.test("doors one and two retain every original authorization statement (dbb8a8842)", async () => {
+  // The original whole-body pin remains unchanged, not renewed to the new code.
+  assertEquals(await sha256(originalDoorBodies(source)), "7148c40a6ab73a948ee6a7df0aed28460e0a66e1fd82f9eb1f0e48501a126eb3");
+});
+
+Deno.test("digest-projection normalization cannot mask an altered original authorization gate", async () => {
+  for (const [before, after] of [
+    ['if (isAdmin !== true) return refuse();', 'if (false) return refuse();'],
+    ['.eq("id", agreementParam).eq("tenant_id", tenantId)', '.eq("id", agreementParam)'],
+    ['if (signer.token_revoked_at) return refuse();', 'if (false) return refuse();'],
+  ]) {
+    assert(source.includes(before), "mutation must reach an original gate");
+    const changed = source.replace(before, after);
+    assert(await sha256(originalDoorBodies(changed)) !== "7148c40a6ab73a948ee6a7df0aed28460e0a66e1fd82f9eb1f0e48501a126eb3");
+  }
 });
 
 Deno.test("door three is checked before door one and door two", () => {

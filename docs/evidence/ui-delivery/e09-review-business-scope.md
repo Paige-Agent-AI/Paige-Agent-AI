@@ -12,12 +12,20 @@ STATIC_EVIDENCE: PASS: unchanged original native Operations/CRM/receipt contract
 RENDERED_EVIDENCE: PASS: nine actual-component PNGs in assets/e09-review-business-scope at900/390/320x560 light/dark; synthetic Auth/transport and local iframe, with original production components/hooks/styles.
 BEHAVIORAL_EVIDENCE: PASS: explicit confirmation/cancel, unknown-write duplicate hold and exact recorded-state recovery; original shared-gate recheck masks artifact/title/note and restores the full draft through original Retry; actual-Auth refusal shows unsent and hides artifact.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no current protected ordinary external-client session was used; local transports/native fixtures are not production customer acceptance, tenant billing/signing or provider proof.
-KEYBOARD_FOCUS: PASS: Return opens exact-version confirmation; Keep reviewing restores invoker; explicit original access Retry restores the retained textarea; recorded-state check focuses live feedback; underlying original note/exit/unknown guards retained.
+KEYBOARD_FOCUS: PASS: Return opens exact-version confirmation; Keep reviewing restores invoker; explicit original access Retry restores the retained textarea; recorded-state check focuses live feedback; underlying original note/exit/unconfirmed-decision guards retained.
 ZOOM_REFLOW: PASS: bounded iframe reflow900 to390 to320 has no document horizontal overflow and reachable original modal scroll/actions; native400-percent zoom and actual device browser are outside this evidence.
 REDUCED_MOTION: PASS: static inspection retains original motion-reduce Dialog and original Operations prefers-reduced-motion rule; no motion added.
-STATE_COVERAGE: PASS: loading/empty/ready/refused/error/unsent/deadline/unknown/recorded/retry/close/draft/version-change/actor-business-change paths have proportional automated or rendered evidence.
+STATE_COVERAGE: PASS: loading/empty/ready/refused/error/unsent/deadline/unconfirmed/recorded/retry/close/draft/version-change/actor-business-change paths have proportional automated or rendered evidence.
 TRUTHFUL_STATE_LABELS: PASS: unsent is used only before original writer dispatch; dispatched uncertainty never becomes saved without exact original readback. No capability, algorithm, provider or entire Portal is promoted.
-SOLO_UI: NO: this is the existing external-customer /app/documents review and context-only recovery projection, with original standalone domain mount preserved; no owner SOLO shell or PAIGE-panel layout changes.
+SOLO_UI: YES: the original shared Operations review component is recognized as a Solo path; its external-customer mount and context-only recovery are changed, with original standalone domain compatibility retained.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: actual signed-in Solo shell and PAIGE panel at this size were not exercised; bounded original component images and compatibility tests are recorded separately.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: actual signed-in Solo shell and PAIGE panel at this size were not exercised; bounded original component images and compatibility tests are recorded separately.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: actual signed-in Solo shell and PAIGE panel at this size were not exercised; bounded original component images and compatibility tests are recorded separately.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: actual signed-in Solo shell and PAIGE panel at this size were not exercised; bounded original component images and compatibility tests are recorded separately.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: actual signed-in Solo shell and PAIGE panel at this size were not exercised; bounded original component images and compatibility tests are recorded separately.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: actual signed-in Solo shell and PAIGE panel at this size were not exercised; bounded original component images and compatibility tests are recorded separately.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: actual signed-in Solo shell and PAIGE panel at this size were not exercised; bounded original component images and compatibility tests are recorded separately.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: actual signed-in Solo shell and PAIGE panel at this size were not exercised; bounded original component images and compatibility tests are recorded separately.
 UNVERIFIED: full customer shell, iPhone/Safari, native zoom, assistive technology, actual signed-in owner/client two-way and returning/revoked/multiple-business journey, Chat/Live review actions and final founder acceptance.
 OWNER_INTENT: finish the existing CURA Portal through canonical original business records with secure, premium responsive interaction.
 MUST_NOT_HAPPEN: stale actor/business/phase callbacks, borrowed bearer, owner impersonation, private draft leakage, false saved decision or duplicate uncertain action.
@@ -25,12 +33,12 @@ MUST_PRESERVE: original native actor/tenant/release/submission/version/digest/de
 ACCEPTANCE_CRITERIA: authorized client sees selected business work, explicitly decides on original exact version, recovers uncertainty without another write, and owner/client return to original authoritative state; ordinary authenticated completion remains separately owed.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: original Operations discovery/read/decision, original CustomerAccessGate frame context, actual Auth and existing per-builder authorization. AppShell/Chat/Spine/C0b/native SQL/EXP04 money/signing/provider sources unchanged.
-INTERNAL_BUILD_IDENTITY: development branch codex/exp09-customer-review-business-scope; final exact commit recorded in PR; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record and delivery packet.
+INTERNAL_BUILD_IDENTITY: cba5c43b7b8be18c10328410c7d114c177596a70 composed source; final exact commit recorded in PR; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record and delivery packet.
 RELEASE_CHANNEL: development: local original-component verification; exact-head CI and ordinary reviewed production release are separate.
 RELEASE_CLASSIFICATION: internal-only: bounded original customer review binding/recovery repair.
 CUSTOMER_RELEASE_IDENTITY: none: full Experience customer acceptance remains separate.
 RELEASE_NOTE_REQUIRED: no: no customer announcement authority or named release is requested.
-RELEASE_TRUTH_BOUNDARY: clients.portal remains PARTIAL; actual protected client/owner outcome is PROOF OWED; no new review Spine capability or CURA Layer C adapter is asserted live.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: clients.portal retains its original bounded implementation; actual protected client/owner outcome is PROOF OWED; no new review Spine capability or CURA Layer C adapter is asserted live.
 RELEASE_RECOVERY: position=forward correction or revert preserves original releases, versioned decisions and uncertainty holds; reference=docs/delivery/e09-customer-review-business-scope.md.
 
 ## Scope and collisions

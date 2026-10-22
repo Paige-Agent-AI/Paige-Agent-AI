@@ -163,7 +163,7 @@ it('the real Supabase Functions SDK keeps per-invoke captured Authorization out 
 });
 
 it('a newly verified frame actor rechecks actual Auth instead of remaining pinned to the prior actor',async()=>{
- await render();const nextActor='e0917600-0000-4000-8000-000000000002',nextFrame={...(frame(b) as any),actorId:nextActor,profile:{...(frame(b) as any).profile,linked_user_id:nextActor}};
+ await render();const nextActor='e0917600-0000-4000-8000-000000000002',priorFrame=frame(b) as NonNullable<CustomerIdentityState['frame']>,nextFrame={...priorFrame,actorId:nextActor,profile:{...priorFrame.profile,linked_user_id:nextActor}};
  f.getUser.mockResolvedValue({data:{user:{id:nextActor}},error:null});f.getSession.mockResolvedValue({data:{session:{user:{id:nextActor},access_token:'synthetic-next-actor'}},error:null});
  const consoleError=vi.spyOn(console,'error');
  await act(async()=>{root.render(<CustomerIdentityProvider state={{frame:nextFrame,phase:'ready'}}><Probe business={b}/></CustomerIdentityProvider>);await flush();});

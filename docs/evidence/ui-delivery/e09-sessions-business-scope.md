@@ -26,7 +26,7 @@ ACCEPTANCE_CRITERIA: scoped original native SDK reads and per-invoke captured ac
 MOTION_PURPOSE: None added.
 PROTECTED_SEAMS: ANT161 lease covers original hook/page/tests, original native rolled-back fixture and own evidence. Original server booking/notification, shared Edge/C0b/Spine/owner Chat and EXP04 signing/money sources are unchanged.
 
-INTERNAL_BUILD_IDENTITY: implementation=b2c981249a08e294671f97d72e2593744d323d9c; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e09-sessions-business-scope.md
+INTERNAL_BUILD_IDENTITY: implementation=926d9ba550b4d87fb711e40da63d2b73b2801fdf; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e09-sessions-business-scope.md
 RELEASE_CHANNEL: development: local original-component and synthetic Auth/transport proof only.
 RELEASE_CLASSIFICATION: internal-only: original Sessions selection/recovery prerequisite, not whole Portal or multi-business activation.
 CUSTOMER_RELEASE_IDENTITY: none: no customer release name or publication.

@@ -26,7 +26,7 @@ SOLO_1024X768_PAIGE_CLOSED: PASS: both themes, exact dimensions and no page over
 SOLO_1024X768_PAIGE_OPEN: PASS: both themes, exact dimensions and focused editable question.
 SOLO_900X1000_PAIGE_CLOSED: PASS: both themes, exact dimensions and no page overflow.
 SOLO_900X1000_PAIGE_OPEN: PASS: both themes, original modal panel and focused editable question; viewport override cleared to native1536x735 afterward.
-INTERNAL_BUILD_IDENTITY: source91491c4a1bafe9cf5f8ef856180e933e01053c3d; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp05-procedure-focus.md
+INTERNAL_BUILD_IDENTITY: source 91491c4a1bafe9cf5f8ef856180e933e01053c3d; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp05-procedure-focus.md
 RELEASE_CHANNEL: development: bounded interaction repair, production release requires review and exact-head CI.
 RELEASE_CLASSIFICATION: internal-only: ordinary prelaunch keyboard-continuity correction.
 CUSTOMER_RELEASE_IDENTITY: none: no separate customer announcement or whole-Experience claim.

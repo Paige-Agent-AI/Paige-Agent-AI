@@ -52,3 +52,6 @@ RELEASE_RECOVERY: additive old-ABI-compatible forward correction; original write
 
 
 Final source review strengthened the replacement negative to pass the captured, matching original timestamp to the profile adapter; a NULL-version rejection would not prove exact intent as clearly. Original fixture plan remains165. No production/security function changed in this review correction.
+
+
+Exact-head hosted165 executed:163 PASS, two incumbent access-history expectations failed because the new same-business replacement fixture legitimately produced an ended-access notice before the old timeline scenario. Move that entire eight-assertion replacement scenario after all incumbent access-history controls, before restoring the original global guard and outer ROLLBACK. No assertion, expected result, original/native function, authorization, CI guard or migration is changed. All54 new and111 original controls remain. Repaired-head exact CI/native165 and review are required; this failed head is not merged or deployed.

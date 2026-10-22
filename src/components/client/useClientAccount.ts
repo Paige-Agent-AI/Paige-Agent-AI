@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useShellCustomerIdentity } from "@/lib/portal/customerIdentity";
+import { captureClientPortalAuthorization, withClientPortalBusiness } from "@/lib/client-portal-scope";
 import { readClientPortalSelfProfile, type ClientPortalSelfProfile } from "@/lib/client-portal-self-profile";
 
 type Draft = {
@@ -27,22 +29,43 @@ export const CLIENT_ACCOUNT_MAX: Record<keyof Draft, number> = {
 const matches = (p: ClientPortalSelfProfile, draft: Draft) => fields.every(k => (p[k] ?? "") === draft[k].trim());
 const dirty = (m: Model) => !!m.profile && fields.some(k => m.draft[k] !== (m.profile![k] ?? ""));
 class ReadFailure extends Error {
-  constructor(readonly phase: "unavailable" | "multiple_businesses" | "signed_out" | "read_error") { super(phase); }
+  constructor(readonly phase: "unavailable" | "multiple_businesses" | "signed_out" | "read_error", readonly conceal = false) { super(phase); }
 }
 
 /** Local edit lifetime only. Native Auth, relationship and versioned writer own authority. */
 export function useClientAccount() {
+  const identity = useShellCustomerIdentity();
+  const frame = identity?.viewer === "customer" ? identity.frame : null;
+  const wantedActor = frame?.actorId, wantedTenant = frame?.profile.tenant_id, wantedClient = frame?.profile.id;
+  const key = identity ? JSON.stringify([identity.viewer,wantedActor,wantedTenant,wantedClient]) : "legacy";
+  const enabled = !identity || identity.viewer === "customer" && !!wantedActor && !!wantedTenant && !!wantedClient && identity.phase === "ready" && !identity.checking;
+  const origin = useRef({key,enabled,generation:0});
+  if (origin.current.key !== key || origin.current.enabled !== enabled) origin.current = {key,enabled,generation:origin.current.generation+1};
+  const scopeGeneration = origin.current.generation;
+  const applied = useRef(key), shownGeneration = useRef(-1), observedSignedOut = useRef(false);
+  const inScope = useCallback(() => origin.current.generation === scopeGeneration && origin.current.enabled
+    && applied.current === key && !observedSignedOut.current,[scopeGeneration,key]);
+  const inView = () => inScope() && shownGeneration.current === scopeGeneration;
   const [model, setModel] = useState<Model>(initial);
   const latest = useRef(model);
   const actions = useRef<{ load: (reconcile?: boolean) => Promise<void>; save: () => Promise<void>; revalidate: () => void } | null>(null);
   const publish = useCallback((next: Model) => { latest.current = next; setModel(next); }, []);
 
   useEffect(() => {
-    let disposed = false, signedOut = false, generation = 0, writing = false;
-    let actor: string | null = null;
+    const prior = applied.current === key ? latest.current : null;
+    applied.current = key;
+    if (!prior) latest.current = initial();
+    const preserved = prior?.profile ? {...prior,outcome:prior.outcome === "saving" ? "unknown" as const : prior.outcome} : undefined;
+    if (preserved) latest.current = preserved;
+    let disposed = false, signedOut = observedSignedOut.current, generation = 0, writing = false;
+    let actor: string | null = wantedActor ?? preserved?.profile?.linked_user_id ?? null;
+    const commit = (next:Model) => {
+      if (disposed || origin.current.generation !== scopeGeneration || applied.current !== key) return;
+      shownGeneration.current = scopeGeneration; publish(next);
+    };
     let deferredRead: { generation: number; actor: string; preserve?: Model } | null = null;
     const retire = new AbortController();
-    const current = (request: number) => !disposed && !signedOut && request === generation;
+    const current = (request: number) => !disposed && !signedOut && inScope() && request === generation;
     // Bound local waiting without claiming the server request was cancelled.
     const wait = <T,>(value: PromiseLike<T>): Promise<T> => new Promise((resolve, reject) => {
       const finish = (fn: () => void) => { clearTimeout(timer); retire.signal.removeEventListener("abort", abort); fn(); };
@@ -55,37 +78,46 @@ export function useClientAccount() {
       const { data: { user }, error } = await wait(credential ? supabase.auth.getUser(credential) : supabase.auth.getUser());
       if (!current(request)) return null;
       if (error?.name === "AuthSessionMissingError" || error?.status === 401) throw new ReadFailure("signed_out");
-      if (error) throw new ReadFailure("read_error");
+      if (error) throw new ReadFailure("read_error",true);
       if (!user) throw new ReadFailure("signed_out");
       if (expected && user.id !== expected) throw new ReadFailure("unavailable");
       return user.id;
     };
     const readProfile = async (request: number, expected?: string, tenantId?: string) => {
-      const id = await verifiedActor(request, expected);
+      const id = await verifiedActor(request, expected ?? wantedActor);
       if (!id || !current(request)) return null;
       actor = id;
-      const result = await wait(tenantId
-        ? supabase.rpc("client_portal_self_profile", { p_tenant_id: tenantId })
-        : supabase.rpc("client_portal_self_profile"));
+      const business = wantedTenant ?? tenantId ?? latest.current.profile?.tenant_id;
+      const expectedClient = wantedClient ?? (latest.current.profile?.linked_user_id === id ? latest.current.profile.id : undefined);
+      let authorization: string;
+      try { authorization = await wait(captureClientPortalAuthorization(supabase.auth,id,() => current(request))); }
+      catch { throw new ReadFailure("read_error",true); }
       if (!current(request)) return null;
-      // More than one business: the checked relationship helper asks for a choice this page can't make yet
-      // (multi-business membership is Slice 8). Retrying can't change that, so it is its own phase.
+      let call = business ? supabase.rpc("client_portal_self_profile",{p_tenant_id:business}) : supabase.rpc("client_portal_self_profile");
+      if (business) call = withClientPortalBusiness(call,business);
+      const result = await wait(call.setHeader("Authorization",authorization));
+      if (!current(request)) return null;
+      // Original native ambiguity is resolved through the canonical business-choice route, never a guessed fallback.
       if (result.error) throw new ReadFailure(result.error.code !== "42501" ? "read_error"
         : /select an authorized customer relationship/i.test(result.error.message ?? "") ? "multiple_businesses" : "unavailable");
-      const row = readClientPortalSelfProfile(result.data, id, tenantId);
+      const row = readClientPortalSelfProfile(result.data, id, business);
       if (!row) throw new ReadFailure(result.data === null ? "unavailable" : "read_error");
+      if (expectedClient && row.id !== expectedClient) throw new ReadFailure("unavailable");
       if (!await verifiedActor(request, id) || !current(request)) return null;
       return row;
     };
     const load = async (preserve?: Model, reconcile = false, expected?: string, quiet = false) => {
-      if (disposed || signedOut || writing) return;
+      if (disposed || signedOut || !inScope() || writing) return;
       // A retryable read failure hides the form without discarding its local draft.
       preserve ??= ["loading", "read_error"].includes(latest.current.phase) && latest.current.profile ? latest.current : undefined;
       const request = ++generation;
-      if (!quiet) publish(preserve ? { ...preserve, phase: "loading" } : initial());
+      if (!quiet) commit(preserve ? { ...preserve, phase: "loading" } : initial());
       try {
         const p = await readProfile(request, expected);
         if (!p || !current(request)) return;
+        // A quiet native refresh must not replace edits made while its read was in flight.
+        if (quiet && latest.current.profile?.id === p.id && latest.current.profile.tenant_id === p.tenant_id
+          && latest.current.profile.linked_user_id === p.linked_user_id) preserve = latest.current;
         const same = preserve?.profile?.id === p.id && preserve.profile.tenant_id === p.tenant_id
           && preserve.profile.linked_user_id === p.linked_user_id;
         let next: Model = { phase: "ready", profile: p, draft: fromProfile(p), outcome: "idle", notice: "" };
@@ -94,37 +126,37 @@ export function useClientAccount() {
           if (reconcile && matches(p, preserve.draft)) {
             next = { ...next, draft: fromProfile(p), outcome: "reconciled", notice: "Your saved information matches this form." };
           } else if (preserve.outcome === "unknown") {
-            next = { ...next, outcome: "unknown", notice: "Your edits differ from the saved information. Keep a copy or discard your edits before making another save." };
+            next = { ...next, outcome: "unknown", notice: "Check saved information before saving again. Keep a copy or discard your edits if they differ." };
           } else if (preserve.outcome === "conflict" || (dirty(preserve) && preserve.profile!.updated_at !== p.updated_at)) {
             next = { ...next, outcome: "conflict", notice: "Your information changed in another session. Reload saved information before saving again." };
           }
         }
-        publish(next);
+        commit(next);
       } catch (error) {
         if (current(request)) {
           const phase = error instanceof ReadFailure ? error.phase : "read_error";
           // A quiet re-read that fails keeps the form; its next save meets the writer's version check.
-          if (quiet && phase === "read_error") return;
-          publish(phase === "read_error" && preserve ? { ...preserve, phase } : { ...initial(), phase });
+          if (quiet && phase === "read_error" && !(error instanceof ReadFailure && error.conceal)) return;
+          commit(phase === "read_error" && preserve ? { ...preserve, phase } : { ...initial(), phase });
         }
       }
     };
     const save = async () => {
       const before = latest.current;
-      if (disposed || signedOut || writing || before.phase !== "ready" || !before.profile || !dirty(before)
+      if (disposed || signedOut || !inScope() || writing || before.phase !== "ready" || !before.profile || !dirty(before)
         || ["unknown", "conflict"].includes(before.outcome)) return;
       const patch: Partial<Draft> = {};
       for (const key of fields) {
         if (before.draft[key] === (before.profile[key] ?? "")) continue;
         const value = before.draft[key].trim();
         if (value.length > CLIENT_ACCOUNT_MAX[key]) {
-          publish({ ...before, outcome: "invalid", notice: key === "street_address"
+          commit({ ...before, outcome: "invalid", notice: key === "street_address"
             ? "Shorten the street address to 500 characters or fewer."
             : "Shorten that entry to 200 characters or fewer." });
           return;
         }
         if (!value && !clearable.has(key)) {
-          publish({ ...before, outcome: "invalid", notice: key === "phone"
+          commit({ ...before, outcome: "invalid", notice: key === "phone"
             ? "Enter a phone number. To remove a saved number, contact your business."
             : "Enter a first and last name, up to 200 characters each." });
           return;
@@ -132,34 +164,30 @@ export function useClientAccount() {
         patch[key] = value;
       }
       if (!before.profile.updated_at) {
-        publish({ ...before, outcome: "conflict", notice: "Reload saved information before making a change." }); return;
+        commit({ ...before, outcome: "conflict", notice: "Reload saved information before making a change." }); return;
       }
       const request = ++generation;
       writing = true;
       let dispatched = false;
-      publish({ ...before, outcome: "saving", notice: "Saving your information…" });
+      commit({ ...before, outcome: "saving", notice: "Saving your information…" });
       try {
-        const session = await wait(supabase.auth.getSession());
+        const id = before.profile.linked_user_id;
+        let authorization:string;
+        try { authorization = await wait(captureClientPortalAuthorization(supabase.auth,id,() => current(request))); }
+        catch { throw new ReadFailure("read_error"); }
         if (!current(request)) return;
-        if (session.error) throw new ReadFailure(session.error.status === 401 ? "signed_out" : "read_error");
-        const credential = session.data.session?.access_token;
-        if (!credential) throw new ReadFailure("signed_out");
-        // Request-local credential, verified by Auth and never persisted or logged.
-        // Pin the builder header: SDK token acquisition can finish after a scope switch.
-        const id = await verifiedActor(request, before.profile.linked_user_id, credential);
-        if (!id || !current(request)) return;
         dispatched = true;
         // This deployed native ABI is not yet present in the generated SDK type snapshot.
-        const result = await wait(supabase.rpc("client_portal_update_self_profile" as never, {
-          p_expected_updated_at: before.profile.updated_at, p_profile: patch, p_tenant_id: before.profile.tenant_id,
-        } as never).setHeader("Authorization", `Bearer ${credential}`)) as { data: unknown; error: { code?: string } | null };
+        const result = await wait(withClientPortalBusiness(supabase.rpc("client_portal_update_self_profile_scoped" as never, {
+          p_expected_updated_at: before.profile.updated_at, p_profile: patch, p_tenant_id: before.profile.tenant_id, p_expected_client_id: before.profile.id,
+        } as never),before.profile.tenant_id).setHeader("Authorization", authorization)) as { data: unknown; error: { code?: string } | null };
         if (!current(request)) return;
         if (result.error?.code === "42501") throw new ReadFailure("unavailable");
         if (result.error?.code === "40001") {
-          publish({ ...before, outcome: "conflict", notice: "Your information changed in another session. Reload saved information before saving again." }); return;
+          commit({ ...before, outcome: "conflict", notice: "Your information changed in another session. Reload saved information before saving again." }); return;
         }
         if (result.error?.code === "22023") {
-          publish({ ...before, outcome: "invalid", notice: "Check your name, phone number and address before trying again." }); return;
+          commit({ ...before, outcome: "invalid", notice: "Check your name, phone number and address before trying again." }); return;
         }
         if (result.error) throw new Error("unconfirmed");
         const saved = readClientPortalSelfProfile(result.data, id, before.profile.tenant_id);
@@ -167,14 +195,14 @@ export function useClientAccount() {
         const readback = await readProfile(request, id, before.profile.tenant_id);
         if (!current(request) || !readback) return;
         if (readback.id !== saved.id || fields.some(k => readback[k] !== saved[k]) || readback.updated_at !== saved.updated_at) throw new Error("unconfirmed");
-        publish({ phase: "ready", profile: readback, draft: fromProfile(readback), outcome: "saved", notice: "Information saved." });
+        commit({ phase: "ready", profile: readback, draft: fromProfile(readback), outcome: "saved", notice: "Information saved." });
       } catch (error) {
         if (current(request)) {
-          if (error instanceof ReadFailure) publish(error.phase === "read_error"
+          if (error instanceof ReadFailure) commit(error.phase === "read_error"
             ? { ...before, phase: "read_error", outcome: dispatched ? "unknown" : "idle" }
             : { ...initial(), phase: error.phase });
-          else if (dispatched) publish({ ...before, outcome: "unknown", notice: "We couldn’t confirm the save. Check saved information before making another save." });
-          else publish({ ...before, outcome: "invalid", notice: "Your session could not be verified. Try again when connected." });
+          else if (dispatched) commit({ ...before, outcome: "unknown", notice: "We couldn’t confirm the save. Check saved information before making another save." });
+          else commit({ ...before, outcome: "invalid", notice: "Your session could not be verified. Try again when connected." });
         }
       } finally {
         writing = false;
@@ -187,18 +215,26 @@ export function useClientAccount() {
     // version stays current; a dirty form is left alone, and its next save meets the writer's 40001.
     const revalidate = () => {
       const m = latest.current;
-      if (!disposed && !signedOut && !writing && m.phase === "ready" && m.outcome !== "saving" && !dirty(m)) void load(m, false, undefined, true);
+      if (!disposed && !signedOut && inScope() && !writing && m.phase === "ready" && m.outcome !== "saving" && !dirty(m)) void load(m, false, undefined, true);
     };
     actions.current = { load: reconcile => load(reconcile ? latest.current : undefined, !!reconcile), save, revalidate };
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (disposed) return;
       const next = session?.user.id ?? null;
-      if (event === "INITIAL_SESSION" && next === actor) return;
+      if (observedSignedOut.current && event !== "SIGNED_IN") return;
+      if (event === "INITIAL_SESSION" && next && (!actor || next === actor)) return;
+      if (event === "SIGNED_OUT" || !next || observedSignedOut.current || actor && next !== actor) {
+        signedOut = event === "SIGNED_OUT" || !next; observedSignedOut.current = signedOut;
+        generation += 1; actor = next; deferredRead = null;
+        ++origin.current.generation; shownGeneration.current = origin.current.generation;
+        publish(signedOut ? {...initial(),phase:"signed_out"} : initial());
+        return;
+      }
       const previous = latest.current;
       const preserve = next === actor && previous.profile?.linked_user_id === next
         ? { ...previous, outcome: writing ? "unknown" as const : previous.outcome } : undefined;
-      generation += 1; actor = next; signedOut = event === "SIGNED_OUT";
-      publish(signedOut || !next ? { ...initial(), phase: "signed_out" }
+      generation += 1; actor = next; signedOut = false;
+      commit(signedOut || !next ? { ...initial(), phase: "signed_out" }
         : preserve ? { ...preserve, phase: "loading" } : initial());
       if (!next || signedOut) { deferredRead = null; return; }
       const scheduled = generation;
@@ -208,21 +244,29 @@ export function useClientAccount() {
         else void load(preserve, false, next);
       });
     });
-    const focus = () => { if (!disposed && !signedOut && !writing) void load(latest.current); };
+    const focus = () => { if (!disposed && !signedOut && inScope() && !writing) void load(latest.current,false,undefined,true); };
     window.addEventListener("focus", focus);
-    void load();
+    if (enabled && !signedOut) void load(preserved);
     return () => {
       disposed = true; generation += 1; deferredRead = null; actions.current = null;
       retire.abort(); subscription.unsubscribe(); window.removeEventListener("focus", focus);
     };
-  }, [publish]);
+  }, [publish,inScope,key,enabled,scopeGeneration,wantedActor,wantedTenant,wantedClient]);
 
   const edit = (field: keyof Draft, value: string) => {
     const m = latest.current;
-    if (m.phase !== "ready" || m.outcome === "saving") return;
+    if (!inView() || m.phase !== "ready" || m.outcome === "saving") return;
     publish({ ...m, draft: { ...m.draft, [field]: value }, outcome: ["unknown", "conflict"].includes(m.outcome) ? m.outcome : "idle", notice: ["unknown", "conflict"].includes(m.outcome) ? m.notice : "" });
   };
-  return { ...model, dirty: dirty(model), edit,
-    save: () => actions.current?.save(), reload: (reconcile = false) => actions.current?.load(reconcile),
-    revalidate: () => actions.current?.revalidate() };
+  const sameView = applied.current === key;
+  const masked = !inScope() || shownGeneration.current !== scopeGeneration;
+  const retained = sameView ? latest.current : initial();
+  const visible = masked ? {...initial(),phase:observedSignedOut.current ? "signed_out" as const : "loading" as const,
+    outcome:retained.outcome === "saving" ? "unknown" as const : retained.outcome} : model;
+  return { ...visible,profile:visible.phase === "ready" ? visible.profile : null,
+    draft:visible.phase === "ready" ? visible.draft : emptyDraft(),dirty:sameView && dirty(retained),edit,
+    save: () => inView() ? actions.current?.save() : undefined,
+    reload: (reconcile = false) => inScope() ? actions.current?.load(reconcile) : undefined,
+    revalidate: () => inView() ? actions.current?.revalidate() : undefined };
+
 }

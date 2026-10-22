@@ -25,10 +25,13 @@ import { sha256Hex } from "../_shared/agreements/token.ts";
 import { TOKEN_SHAPE } from "../_shared/agreements/signing-guard.ts";
 import { isPortalDoorRequest, resolvePortalDocument } from "../_shared/agreements/portal-door.ts";
 import { verifyRetainedAgreementPdf } from "../_shared/agreements/retained-document.ts";
+import { handleOwnerPreparation } from "../_shared/agreements/owner-preparation-http.ts";
+import type { OwnerPreparationCaller, OwnerPreparationService } from "../_shared/agreements/owner-preparation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Cache-Control": "no-store",
 };
 
@@ -54,7 +57,7 @@ const serviceClient = () =>
 
 Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-  if (req.method !== "GET") return json({ ok: false, error: "GET only" }, 405);
+  if (req.method !== "GET" && req.method !== "POST") return json({ ok: false, error: "GET or POST only" }, 405);
 
   const db = serviceClient();
   const url = new URL(req.url);
@@ -64,6 +67,26 @@ Deno.serve(async (req: Request): Promise<Response> => {
   // not deny somebody their own signed contract, and entropy is what defeats guessing a token.
   if (await overRateLimit(db, `ad:ip:${ip}`, 30, 60) || await overRateLimit(db, `ad:iph:${ip}`, 200, 3600)) {
     return json({ ok: false, error: "Too many attempts. Please wait a moment and try again." }, 429);
+  }
+
+  if (req.method === "POST" || url.searchParams.has("preparation")) {
+    const authHeader = req.headers.get("Authorization") ?? "";
+    if (!authHeader) return json({ ok: false, error: "Agreement access could not be verified." }, 403);
+    const caller = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } }, auth: { persistSession: false },
+    });
+    const service: OwnerPreparationService = {
+      rpc: (name, args) => db.rpc(name, args),
+      storage: db.storage,
+      originalUploadPath: async (tenantId, agreementId) => {
+        const { data, error } = await db.from("paige_agreements").select("document_path")
+          .eq("id", agreementId).eq("tenant_id", tenantId).maybeSingle();
+        if (error || !data || typeof data.document_path !== "string") return null;
+        return data.document_path;
+      },
+    };
+    return handleOwnerPreparation(req, caller as unknown as OwnerPreparationCaller, service, corsHeaders,
+      actorId => overRateLimit(db, `ad:prepare:${actorId}`, 120, 3600, true));
   }
 
   const token = (url.searchParams.get("token") ?? "").trim();

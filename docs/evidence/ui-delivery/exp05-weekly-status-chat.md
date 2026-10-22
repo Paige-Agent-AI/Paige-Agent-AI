@@ -1,5 +1,57 @@
 # EXP05 — original weekly responsibility status in Chat
 
+> October22 receipt/recovery correction — development, not released. Ordinary
+> owner production inspection and reload returned the correct empty native
+> responsibility state, one completed tool, and one canonical inspection receipt.
+> The persisted interactive effect nevertheless reads `outcome_unknown`.
+> Source diagnosis: the declaration omitted `refused` from its outcome kinds;
+> the original shared closed-read contract requires exactly all four statuses.
+> Four actual registry-to-interactive-effect cases fail before the correction,
+> then all95 cases across the original outcome/binding suites pass. The repair
+> adds that existing native outcome to the original declaration only. It changes
+> no shared recovery algorithm, admission set, scope, permission or business writer.
+
+## Current bounded repair routing and acceptance
+
+1. Owner outcome: an authorized weekly lookup is recorded as inspection, with
+   refused/unavailable results kept distinct from uncertain business execution.
+2. EXP05 owns this declaration and weekly reader. Preserve active EXP02 Desk and
+   composer, EXP04 document source and EXP09 Payments/Account/Files work.
+3. Reuse original Chat/Harness interactive receipt and recovery-read contracts;
+   do not change their strict closed-vocabulary opt-in or action handling.
+4. Reuse `automations.weekly_commitment_status` / `read_weekly_commitment_status`;
+   native reader already returns available/needs_input/refused/unavailable.
+5. Internal native source only; no provider or connection requirement is added.
+6. Existing read_only, no approval or mutation authority. Exact ordinary owner,
+   server SOLO context and original native pre/post checks remain mandatory.
+7. No job or durable business action. Existing Layer C occurrences are untouched.
+8. Original saved turn and inspection Rail correlate the read. A lookup receipt
+   cannot prove a weekly occurrence, delegation or any changed Work record.
+9. Existing PAIGE/Operations surfaces remain PARTIAL/PROOF OWED for the complete
+   Experience. No frontend layout, control, modality or catalogue entry is added.
+10. Required proof: four outcome statuses, canonical declaration/admitted-read
+   intersection, absent registration, contradictory uncertainty and non-read
+   negatives; exact-head review/CI, served source and new ordinary-owner saved
+   receipt/recovery. The original pre-repair turn stays historical and unchanged.
+
+Reproduction uses the actual server registry and original interactiveEffect,
+not an invented read list. Baseline four failures/75 passes; corrected95 passes
+include16 owner/client/classification/offer and recovery-authority assertions.
+Kit288/296 debt baseline and194 action-risk classifications are unchanged.
+Actual source/hosted CI, deploy and corrected production effect remain separate
+gates. No current source acceptance is inferred from the earlier UI answer.
+
+Current implementation base0bcb088184b59f1badaef34be3aaa45df916ff28;
+deployment=NOT_DEPLOYED for this correction; environment=development;
+own migrations=NOT_APPLICABLE; Edge=PROOF_OWED(original affected graph).
+CAP073–083 and weekly capability maturity/self-description stay unpromoted.
+ALG01 repair reuses original state reconciliation; ALG12/13 consume truthful
+inspection. ALG11 routing/budgets and all other algorithm statuses are unchanged.
+Independent Review remains separately required. No customer version or release
+announcement, founder test, production mutation, recurring activation or replay.
+
+The original source connection evidence below remains its historical record.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: original saved responsibility -> ordinary owner Chat inspection -> existing caller-JWT status/projection -> qualified answer -> saved-turn recovery. No schedule control or action executor is introduced.
 PAIGE_UI_DESIGN: PASS: existing project router, intent/protected behavior, interaction geometry and release guidance read; preserve native compact Operations/Chat and weekly panel contracts.

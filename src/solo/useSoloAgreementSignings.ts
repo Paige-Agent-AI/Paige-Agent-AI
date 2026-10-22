@@ -29,6 +29,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { supabase } from "@/integrations/supabase/client";
 import { displaySignatureState as readState } from "./sales/agreementVocabulary";
+import { agreementPdfIntakeProblem } from "./sales/agreementPdfIntake";
 
 /**
  * Mirrors `paige_agreements.status`'s CHECK, plus `unrecognised` for a value this build has no
@@ -455,6 +456,8 @@ export function useSoloAgreementSignings(): SigningsState {
     if (openedIdentity.tenantId !== expected) {
       return { ok: false, message: "Your business context changed. Reopen this form in the intended business before uploading." };
     }
+    const selectionProblem = agreementPdfIntakeProblem(file);
+    if (selectionProblem) return { ok: false, message: selectionProblem };
     const safe = (file.name || "document")
       .replace(/[^\w.-]+/g, "-")
       .replace(/^[.-]+/, "")

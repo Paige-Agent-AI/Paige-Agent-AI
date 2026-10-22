@@ -83,12 +83,12 @@ describe("useSoloPendingActions — tenant scoping (§9)", () => {
     return { builder, eqCalls, selectCalls };
   }
 
-  async function mount(tenantId: string | null) {
+  async function mount(tenantId: string | null, actorId?: string | null) {
     const host = document.createElement("div");
     document.body.appendChild(host);
     root = createRoot(host);
     let observed: ReturnType<typeof useSoloPendingActions>;
-    function Probe() { observed = useSoloPendingActions(tenantId); return null; }
+    function Probe() { observed = useSoloPendingActions(tenantId, actorId); return null; }
     act(() => { root!.render(createElement(Probe)); });
     await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
     return observed!;
@@ -122,5 +122,47 @@ describe("useSoloPendingActions — tenant scoping (§9)", () => {
     const { builder } = build();
     supa.from.mockReturnValue(builder);
     expect((await mount("tenant-x")).total).toBeNull();
+  });
+
+  it("does not read while an explicitly asserted actor is unresolved", async () => {
+    await mount("tenant-x", null);
+    expect(supa.from).not.toHaveBeenCalled();
+  });
+
+  it("retires loaded work synchronously on same-workspace actor change and ignores a late actor result", async () => {
+    type Reply = { data: Array<{ id: string; title: string }>; error: null; count: number };
+    const waiting: Array<(reply: Reply) => void> = [];
+    const { builder, eqCalls } = build();
+    builder.limit = () => new Promise<Reply>((resolve) => waiting.push(resolve));
+    supa.from.mockReturnValue(builder);
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    root = createRoot(host);
+    let actor = "test-actor-a";
+    let observed!: ReturnType<typeof useSoloPendingActions>;
+    const renders: Array<{ actor: string; ids: string[]; total: number | null | undefined }> = [];
+    function Probe() {
+      observed = useSoloPendingActions("tenant-x", actor);
+      renders.push({ actor, ids: observed.items.map((item) => item.id), total: observed.total });
+      return null;
+    }
+    act(() => root!.render(createElement(Probe)));
+    await act(async () => { waiting[0]({ data: [{ id: "test-work-a", title: "First actor's recorded work" }], error: null, count: 37 }); });
+    expect(observed.items[0]?.id).toBe("test-work-a");
+    actor = "test-actor-b";
+    act(() => root!.render(createElement(Probe)));
+    expect(renders.filter((render) => render.actor === actor).every((render) => render.ids.length === 0 && render.total === null)).toBe(true);
+    actor = "test-actor-c";
+    act(() => root!.render(createElement(Probe)));
+    expect(waiting).toHaveLength(3);
+    await act(async () => { waiting[2]({ data: [{ id: "test-work-c", title: "Current actor's recorded work" }], error: null, count: 2 }); });
+    await act(async () => { waiting[1]({ data: [{ id: "test-work-b", title: "Late superseded actor work" }], error: null, count: 99 }); });
+    expect(observed.items.map((item) => item.id)).toEqual(["test-work-c"]);
+    expect(observed.total).toBe(2);
+    expect(renders.filter((render) => render.actor === "test-actor-c").every((render) => !render.ids.includes("test-work-a") && !render.ids.includes("test-work-b"))).toBe(true);
+    // The actor argument is a client assertion; only the original session/RLS owns identity.
+    expect(eqCalls.filter(([column]) => column === "tenant_id")).toEqual(Array.from({ length: 3 }, () => ["tenant_id", "tenant-x"]));
+    expect(eqCalls.some(([column]) => column === "actor_id" || column === "user_id")).toBe(false);
+    host.remove();
   });
 });

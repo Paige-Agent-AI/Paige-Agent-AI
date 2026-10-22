@@ -41,12 +41,13 @@ export function signNoteCopy(note: PortalAgreementSignNote, business: string): A
 export function openFailureCopy(code: OpenAgreementFailure, business: string, note?: PortalAgreementSignNote): AgreementCopy {
   switch (code) {
     case "NOT_SIGNABLE_HERE": return signNoteCopy(note ?? "use_email_link", business);
+    case "OUTCOME_UNKNOWN": return {text:"We couldn’t confirm the private link. A link may have been created. This request does not sign the agreement.",ask:"button",askLabel:`Contact ${business}`};
     // Ten portal opens in an hour: the first of them already replaced the emailed link (D-A4), so that link is
     // never the way out here.
     case "TRY_AGAIN_LATER": return { text: "This agreement has been opened several times in the last hour. Try again in an hour, or", ask: "inline" };
     case "NOT_SIGNABLE": return { text: "This agreement can't be signed right now. The list has been refreshed to show where it stands.", ask: null };
     case "CLIENT_AGREEMENT_UNAVAILABLE": return { text: "This agreement isn't available to you any more. The list has been refreshed.", ask: null };
-    case "MULTIPLE_BUSINESSES": return { text: "Your account is connected to more than one business, so agreements can't be opened here yet.", ask: null };
+    case "MULTIPLE_BUSINESSES": return { text: "Choose the business this agreement belongs to, then open it from that portal.", ask: null };
     default: return { text: "We couldn't open this agreement. Check your connection and try again.", ask: null };
   }
 }

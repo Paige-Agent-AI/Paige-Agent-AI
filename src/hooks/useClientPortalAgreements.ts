@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import {useShellCustomerIdentity} from "@/lib/portal/customerIdentity";
+import {captureClientPortalAuthorization, withClientPortalBusiness} from "@/lib/client-portal-scope";
 
 /**
  * The Sales Agreements a business sent the signed-in customer (E09 Slice A).
@@ -185,20 +187,60 @@ export function parseAgreementsPage(data: unknown): PortalAgreementsPage | null 
   };
 }
 
+
+/** Captured original actor/business/customer intent. Never authority or a persisted credential. */
+export type PortalAgreementContext = {scope: {actorId: string; tenantId: string; clientId: string}; current: () => boolean};
+export class PortalAgreementAccessFailure extends Error {}
+class PortalAgreementUncertainOutcome extends Error {}
+type AgreementRequest = PromiseLike<RpcResult> & {setHeader(name: string, value: string): AgreementRequest};
+async function scopedAgreementRpc(name: string, args: Record<string, unknown>, context: PortalAgreementContext, effectful = false): Promise<RpcResult> {
+  let active = true, dispatched = false, timer: ReturnType<typeof setTimeout> | undefined;
+  const current = () => active && context.current();
+  const check = () => {if (!current()) throw new PortalAgreementAccessFailure("Customer request changed");};
+  const request = async () => {
+    check();
+    let authorization: string;
+    try {authorization = await captureClientPortalAuthorization(supabase.auth, context.scope.actorId, current);}
+    catch {throw new PortalAgreementAccessFailure("Customer session could not be checked");}
+    check();
+    const query = supabase.rpc(name as never, {...args, p_tenant_id: context.scope.tenantId, p_expected_client_id: context.scope.clientId} as never) as unknown as AgreementRequest;
+    dispatched = true;
+    let result: RpcResult;
+    try {result = await withClientPortalBusiness(query, context.scope.tenantId).setHeader("Authorization", authorization);}
+    catch (error) {if (effectful) throw new PortalAgreementUncertainOutcome("Private link response was not confirmed"); throw error;}
+    check();
+    const [captured, actual] = await Promise.all([supabase.auth.getUser(authorization.slice(7)), supabase.auth.getUser()]);
+    check();
+    if (captured.error || actual.error || captured.data.user?.id !== context.scope.actorId || actual.data.user?.id !== context.scope.actorId) {
+      if(effectful)throw new PortalAgreementUncertainOutcome("Private link response could not be verified");
+      throw new PortalAgreementAccessFailure("Customer session changed");
+    }
+    if ((result.error as {code?: unknown} | null)?.code === "42501" && !isMultipleRelationships(result.error))
+      throw new PortalAgreementAccessFailure("Customer agreement access unavailable");
+    return result;
+  };
+  try {return await Promise.race([request(), new Promise<never>((_,reject) => {
+    timer=setTimeout(() => {active=false; reject(effectful && dispatched ? new PortalAgreementUncertainOutcome("Private link outcome not confirmed") : new Error("Agreement request timed out"));},20_000);
+  })]);} catch(error) {
+    if(effectful&&dispatched&&!(error instanceof PortalAgreementAccessFailure)&&!(error instanceof PortalAgreementUncertainOutcome))throw new PortalAgreementUncertainOutcome("Private link outcome could not be verified");
+    throw error;
+  } finally {active=false;clearTimeout(timer);}
+}
+
 /** One read of the caller's agreements. Null = no customer relationship. Throws on a failed read. */
-export async function readPortalAgreements(args: { tenantId?: string | null; limit?: number } = {}): Promise<PortalAgreementsPage | null> {
-  const { data, error } = await portalRpc("client_portal_agreements", {
-    p_tenant_id: args.tenantId ?? null,
-    p_limit: args.limit ?? PORTAL_AGREEMENTS_LIMIT,
-  });
+export async function readPortalAgreements(args: { tenantId?: string | null; limit?: number; context?: PortalAgreementContext } = {}): Promise<PortalAgreementsPage | null> {
+  const params = {p_tenant_id: args.tenantId ?? null, p_limit: args.limit ?? PORTAL_AGREEMENTS_LIMIT};
+  const {data,error} = await (args.context ? scopedAgreementRpc("client_portal_agreements_scoped",params,args.context) : portalRpc("client_portal_agreements",params));
   if (error) throw error;
-  return parseAgreementsPage(data);
+  const page=parseAgreementsPage(data);
+  if(args.context && (!page || page.tenant_id !== args.context.scope.tenantId)) throw new PortalAgreementAccessFailure("Agreement business unavailable");
+  return page;
 }
 
 /** The server's refusal codes for opening an agreement to sign, plus the two the browser can meet on its own. */
 export type OpenAgreementFailure =
   | "CLIENT_AGREEMENT_UNAVAILABLE" | "NOT_SIGNABLE" | "NOT_SIGNABLE_HERE" | "TRY_AGAIN_LATER"
-  | "MULTIPLE_BUSINESSES" | "FAILED";
+  | "MULTIPLE_BUSINESSES" | "OUTCOME_UNKNOWN" | "FAILED";
 export type OpenAgreementResult =
   | { ok: true; token: string; expiresAt: string }
   /** `note` is set only on NOT_SIGNABLE_HERE: why, so the page never points at a dead link. */
@@ -210,29 +252,28 @@ const OPEN_CODES = new Set<OpenAgreementFailure>(["CLIENT_AGREEMENT_UNAVAILABLE"
  * success when it carries a well-formed token and deadline; anything else is a failure, never a
  * navigation to a page that cannot open.
  */
-export async function openAgreementForSigning(agreementId: string, tenantId: string | null): Promise<OpenAgreementResult> {
+export async function openAgreementForSigning(agreementId: string, tenantId: string | null, context?: PortalAgreementContext): Promise<OpenAgreementResult> {
   try {
-    const { data, error } = await portalRpc("client_portal_open_agreement_signing", {
-      p_agreement_id: agreementId,
-      p_tenant_id: tenantId,
-    });
-    if (error) return { ok: false, code: isMultipleRelationships(error) ? "MULTIPLE_BUSINESSES" : "FAILED" };
-    if (!isObject(data)) return { ok: false, code: "FAILED" };
+    const params={p_agreement_id:agreementId,p_tenant_id:tenantId};
+    const {data,error}=await(context ? scopedAgreementRpc("client_portal_open_agreement_signing_scoped",params,context,true) : portalRpc("client_portal_open_agreement_signing",params));
+    if (error) return {ok:false,code:isMultipleRelationships(error)?"MULTIPLE_BUSINESSES":context?"OUTCOME_UNKNOWN":"FAILED"};
+    if (!isObject(data)) return {ok:false,code:context?"OUTCOME_UNKNOWN":"FAILED"};
     if (data.ok === true) {
       if (!exactKeys(data, ["ok", "token", "expires_at"]) || typeof data.token !== "string" || !TOKEN.test(data.token) || !isDate(data.expires_at)) {
-        return { ok: false, code: "FAILED" };
+        return {ok:false,code:context?"OUTCOME_UNKNOWN":"FAILED"};
       }
       return { ok: true, token: data.token, expiresAt: data.expires_at };
     }
     const code = data.error;
+    if(context && (data.ok!==false||typeof code!=="string"||!OPEN_CODES.has(code as OpenAgreementFailure)))return{ok:false,code:"OUTCOME_UNKNOWN"};
     if (code === "NOT_SIGNABLE_HERE") {
       const note = data.note;
       // Without a recognised reason, the answer that is true in every case: the emailed link, or a new one.
       return { ok: false, code, note: typeof note === "string" && SIGN_NOTES.has(note as PortalAgreementSignNote) ? note as PortalAgreementSignNote : "use_email_link" };
     }
     return { ok: false, code: typeof code === "string" && OPEN_CODES.has(code as OpenAgreementFailure) ? code as OpenAgreementFailure : "FAILED" };
-  } catch {
-    return { ok: false, code: "FAILED" };
+  } catch(error) {
+    return {ok:false,code:error instanceof PortalAgreementAccessFailure?"CLIENT_AGREEMENT_UNAVAILABLE":error instanceof PortalAgreementUncertainOutcome?"OUTCOME_UNKNOWN":"FAILED"};
   }
 }
 
@@ -251,17 +292,31 @@ export type SignedCopyResult = { ok: true; blob: Blob } | { ok: false };
  * session they already hold. A document is only a document when bytes actually arrived: the endpoint
  * answers every refusal with the same JSON shape, so anything that is not a non-empty Blob fails.
  */
-export async function fetchSignedCopy(agreementId: string, tenantId: string | null, download: boolean): Promise<SignedCopyResult> {
-  const q = new URLSearchParams({ portal: "1", agreementId });
-  if (tenantId) q.set("tenantId", tenantId);
-  if (download) q.set("download", "1");
-  try {
-    const { data, error } = await supabase.functions.invoke(`agreement-document?${q.toString()}`, { method: "GET" });
-    if (error || !(data instanceof Blob) || data.size === 0) return { ok: false };
-    return { ok: true, blob: data };
-  } catch {
-    return { ok: false };
-  }
+export async function fetchSignedCopy(agreementId: string, tenantId: string | null, download: boolean, context?: PortalAgreementContext): Promise<SignedCopyResult> {
+  const q = new URLSearchParams({portal:"1",agreementId});
+  const business=context?.scope.tenantId ?? tenantId;
+  if(business)q.set("tenantId",business);
+  if(download)q.set("download","1");
+  let active=true,timer:ReturnType<typeof setTimeout>|undefined;
+  const current=()=>active&&(!context||context.current());
+  const verify=async()=>{
+    if(!current())throw new PortalAgreementAccessFailure("Customer context changed");
+    if(!context)return;
+    const result=await scopedAgreementRpc("client_portal_agreement_document_access_scoped",{p_agreement_id:agreementId},{...context,current});
+    if(result.error||result.data!==true)throw new PortalAgreementAccessFailure("Signed copy unavailable");
+  };
+  const read=async():Promise<SignedCopyResult>=>{
+    await verify();
+    const authorization=context?await captureClientPortalAuthorization(supabase.auth,context.scope.actorId,current):undefined;
+    if(!current())return{ok:false};
+    const {data,error}=await supabase.functions.invoke(`agreement-document?${q.toString()}`,{method:"GET",...(authorization?{headers:{Authorization:authorization}}:{})});
+    if(!current()||error||!(data instanceof Blob)||data.size===0||context&&data.type!=="application/pdf")return{ok:false};
+    await verify();
+    if(!current())return{ok:false};
+    return{ok:true,blob:data};
+  };
+  try{return await Promise.race([read(),new Promise<SignedCopyResult>(resolve=>{timer=setTimeout(()=>{active=false;resolve({ok:false});},20_000);})]);}
+  catch{return{ok:false};}finally{active=false;clearTimeout(timer);}
 }
 
 /** A file name for the saved copy, from the agreement's title: letters, digits, spaces and dashes only. */
@@ -294,6 +349,7 @@ export interface ClientPortalAgreementsState {
   tenantId: string | null;
   /** Bumped whenever the signed-in identity changes. */
   scopeEpoch: number;
+  requestContext?: PortalAgreementContext;
   refresh: () => Promise<void>;
 }
 
@@ -301,7 +357,21 @@ export const PORTAL_AGREEMENTS_LOAD_ERROR = "We couldn't load your agreements. C
 /** A failed re-read while the last list is still on screen: the list is there, it may just be behind. */
 export const PORTAL_AGREEMENTS_REFRESH_ERROR = "We couldn't refresh this list, so it may be out of date.";
 
-export function useClientPortalAgreements(): ClientPortalAgreementsState {
+export function useClientPortalAgreements(enabled=true,initialLimit=PORTAL_AGREEMENTS_LIMIT): ClientPortalAgreementsState {
+  const identity=useShellCustomerIdentity();
+  const frame=identity?.viewer==="customer"?identity.frame:null;
+  const requested=frame&&frame.profile&&UUID.test(frame.actorId)&&UUID.test(frame.profile.tenant_id)&&UUID.test(frame.profile.id)&&frame.profile.linked_user_id===frame.actorId
+    ?{actorId:frame.actorId,tenantId:frame.profile.tenant_id,clientId:frame.profile.id}:undefined;
+  const requestedKey=identity?JSON.stringify([identity.viewer,requested?.actorId,requested?.tenantId,requested?.clientId]):"legacy";
+  const available=enabled&&(!identity||identity.viewer==="staff"||!!requested&&identity.phase==="ready"&&!identity.checking);
+  const origin=useRef({key:requestedKey,available,generation:0,signedOut:false});
+  if(origin.current.key!==requestedKey||origin.current.available!==available)origin.current={...origin.current,key:requestedKey,available,generation:origin.current.generation+1};
+  const generation=origin.current.generation;
+  const dataGeneration=useRef(-1);
+  const requestedActor=requested?.actorId,requestedTenant=requested?.tenantId,requestedClient=requested?.clientId;
+  const scopeCurrent=useCallback(()=>alive.current&&origin.current.generation===generation&&origin.current.available&&!origin.current.signedOut,[generation]);
+  const requestContext=useMemo<PortalAgreementContext|undefined>(()=>requestedActor&&requestedTenant&&requestedClient
+    ?{scope:{actorId:requestedActor,tenantId:requestedTenant,clientId:requestedClient},current:scopeCurrent}:undefined,[requestedActor,requestedTenant,requestedClient,scopeCurrent]);
   const [agreements, setAgreements] = useState<PortalAgreement[]>([]);
   const [summary, setSummary] = useState<PortalAgreementsSummary | null>(null);
   const [businessName, setBusinessName] = useState<string | null>(null);
@@ -313,7 +383,7 @@ export function useClientPortalAgreements(): ClientPortalAgreementsState {
   const [customerConfirmed, setCustomerConfirmed] = useState(false);
   const [multipleBusinesses, setMultipleBusinesses] = useState(false);
   const [tenantId, setTenantId] = useState<string | null>(null);
-  const [scopeEpoch, setScopeEpoch] = useState(0);
+  const [, setScopeEpoch] = useState(0);
 
   // Mirrors for async callbacks; each async result is applied only if its epoch is current.
   const epoch = useRef(0);
@@ -351,14 +421,15 @@ export function useClientPortalAgreements(): ClientPortalAgreementsState {
   }, [clearData]);
 
   const refresh = useCallback(async () => {
-    if (halted.current) return;
+    if (halted.current||!scopeCurrent()) return;
     const myEpoch = epoch.current;
     const seq = ++readSeq.current;
-    const current = () => alive.current && myEpoch === epoch.current && seq === readSeq.current;
+    const current = () => scopeCurrent() && myEpoch === epoch.current && seq === readSeq.current;
     const pinned = tenantRef.current;
     try {
-      const page = await readPortalAgreements({ tenantId: pinned });
+      const page = await readPortalAgreements({tenantId:requestContext?.scope.tenantId??pinned,limit:initialLimit,context:requestContext});
       if (!current()) return;
+      dataGeneration.current=generation;
       if (!page) {
         clearData();
         setCustomerConfirmed(false);
@@ -380,7 +451,10 @@ export function useClientPortalAgreements(): ClientPortalAgreementsState {
       setError(null);
     } catch (err) {
       if (!current()) return;
-      if (isMultipleRelationships(err)) {
+      dataGeneration.current=generation;
+      if(err instanceof PortalAgreementAccessFailure){
+        halted.current=true;clearData();setCustomerConfirmed(false);setUnavailable(true);setError(null);
+      } else if (isMultipleRelationships(err)) {
         halted.current = true;
         clearData();
         setError(null);
@@ -391,28 +465,36 @@ export function useClientPortalAgreements(): ClientPortalAgreementsState {
     } finally {
       if (current()) setLoading(false);
     }
-  }, [clearData]);
+  }, [clearData,scopeCurrent,requestContext,initialLimit,generation]);
 
   // Identity scope + initial read.
   useEffect(() => {
     alive.current = true;
+    resetScope();
     let cancelled = false;
     const start = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (cancelled) return;
+      if(!available||origin.current.signedOut)return;
+      if(requestedActor){actor.current=requestedActor;await refresh();return;}
+      let user:{id:string}|null;
+      try{const result=await supabase.auth.getUser();if(result.error)throw result.error;user=result.data.user;}
+      catch{if(!cancelled&&scopeCurrent()){dataGeneration.current=generation;setError(PORTAL_AGREEMENTS_LOAD_ERROR);setLoading(false);}return;}
+      if (cancelled||!scopeCurrent()) return;
       actor.current = user?.id ?? null;
-      if (!user) { setLoading(false); setUnavailable(true); return; }
+      if (!user) {dataGeneration.current=generation;setLoading(false);setUnavailable(true);return;}
       await refresh();
     };
     void start();
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (cancelled) return;
+      if(origin.current.signedOut&&event!=="SIGNED_IN")return;
       const next = session?.user.id ?? null;
       if (event === "INITIAL_SESSION" && next === actor.current) return;
       if (next === actor.current && event !== "SIGNED_OUT") return;
+      ++origin.current.generation;
+      origin.current.signedOut=event==="SIGNED_OUT"||!next;
       actor.current = next;
       resetScope();
-      if (!next || event === "SIGNED_OUT") { setLoading(false); setUnavailable(true); return; }
+      if (!next || event === "SIGNED_OUT") {dataGeneration.current=generation;setLoading(false);setUnavailable(true);return;}
       // Do not call SDK Auth/RPC methods while its Auth callback holds the lock.
       queueMicrotask(() => { if (!cancelled) void refresh(); });
     });
@@ -421,7 +503,7 @@ export function useClientPortalAgreements(): ClientPortalAgreementsState {
       alive.current = false;
       subscription.unsubscribe();
     };
-  }, [refresh, resetScope]);
+  }, [refresh,resetScope,available,scopeCurrent,generation,requestedActor]);
 
   // Freshness without realtime: focus and becoming visible — which is how the customer comes back from
   // signing, or from the email, to a list that already says what happened.
@@ -438,9 +520,11 @@ export function useClientPortalAgreements(): ClientPortalAgreementsState {
     };
   }, [refresh]);
 
-  return {
-    agreements, summary, businessName, hasMore, serverNow, loading, error, unavailable, customerConfirmed, multipleBusinesses, tenantId, scopeEpoch, refresh,
-  };
+  const refused=!!identity&&(identity.viewer==="inactive"||["unavailable","paused","ended"].includes(identity.phase));
+  const heldError=!available&&identity?.phase==="error";
+  if(!available||origin.current.signedOut||dataGeneration.current!==generation)return{agreements:[],summary:null,businessName:null,hasMore:false,serverNow:null,
+    loading:!origin.current.signedOut&&!refused&&!heldError,error:heldError?PORTAL_AGREEMENTS_LOAD_ERROR:null,unavailable:origin.current.signedOut||refused,customerConfirmed:false,multipleBusinesses:false,tenantId:null,scopeEpoch:generation,requestContext,refresh};
+  return {agreements,summary,businessName,hasMore,serverNow,loading,error,unavailable,customerConfirmed,multipleBusinesses,tenantId,scopeEpoch:generation,requestContext,refresh};
 }
 
 export type PortalAgreementsGlance =
@@ -451,21 +535,9 @@ export type PortalAgreementsGlance =
 
 /** Home's glance: how many agreements wait for this customer's signature, from a one-row read. */
 export function usePortalAgreementsGlance(enabled = true): PortalAgreementsGlance {
-  const [glance, setGlance] = useState<PortalAgreementsGlance>({ state: "loading" });
-  useEffect(() => {
-    if (!enabled) { setGlance({ state: "unavailable" }); return; }
-    let cancelled = false;
-    setGlance({ state: "loading" });
-    readPortalAgreements({ limit: 1 })
-      .then((page) => {
-        if (cancelled) return;
-        setGlance(page ? { state: "ready", awaitingYou: page.summary.awaiting_you } : { state: "unavailable" });
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        setGlance(isMultipleRelationships(err) ? { state: "unavailable" } : { state: "error" });
-      });
-    return () => { cancelled = true; };
-  }, [enabled]);
-  return glance;
+  const source=useClientPortalAgreements(enabled,1);
+  if(!enabled||source.unavailable||source.multipleBusinesses)return{state:"unavailable"};
+  if(source.error)return{state:"error"};
+  if(source.loading||!source.summary)return{state:"loading"};
+  return{state:"ready",awaitingYou:source.summary.awaiting_you};
 }

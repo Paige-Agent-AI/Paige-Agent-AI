@@ -1,7 +1,7 @@
 -- Original replayed native functions and real roles. Synthetic, rolled back;
 -- provider execution disabled, no production identities or effectful acceptance.
 BEGIN;
-SELECT plan(46);
+SELECT plan(62);
 
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0970100-0000-4000-8000-000000000001','authenticated','authenticated','scope-owner@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -85,6 +85,38 @@ SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000002','SELECT p
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000001')->>'state','open','selected open state is genuine');
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000003')->>'state','none','foreign state reveals no notice');
 
+-- Existing original private conversation service/RLS under the same future-shape
+-- CI fixture. No turn/provider execution, extra production identity or new writer.
+CREATE FUNCTION pg_temp.open_scoped_chat(business text DEFAULT NULL)
+RETURNS jsonb LANGUAGE sql AS $chat$
+ SELECT pg_temp.scope_read('SELECT to_jsonb(public.paige_chat_thread_create(NULL,''customer'',''Native scope proof'',''{"audience":"customer_private"}''::jsonb))',business) $chat$;
+CREATE TEMP TABLE scope_chats(business text,opened jsonb);
+INSERT INTO scope_chats VALUES
+ ('e0970200-0000-4000-8000-000000000001',pg_temp.open_scoped_chat('e0970200-0000-4000-8000-000000000001')),
+ ('e0970200-0000-4000-8000-000000000002',pg_temp.open_scoped_chat('e0970200-0000-4000-8000-000000000002'));
+CREATE FUNCTION pg_temp.read_scoped_chat(business text,opened jsonb)
+RETURNS jsonb LANGUAGE sql AS $chat$
+ SELECT pg_temp.scope_read(format('SELECT jsonb_build_object(''tenant'',tenant_id,''contact'',contact_id,''audience'',audience,''lens'',lens) FROM public.paige_chat_threads WHERE id::text=%L',opened#>>'{}'),business) $chat$;
+SELECT is((SELECT jsonb_typeof(opened) FROM scope_chats WHERE business='e0970200-0000-4000-8000-000000000001'),'string','selected A opens an original private thread');
+SELECT is((SELECT jsonb_typeof(opened) FROM scope_chats WHERE business='e0970200-0000-4000-8000-000000000002'),'string','selected B opens an original private thread');
+SELECT ok((SELECT opened FROM scope_chats WHERE business='e0970200-0000-4000-8000-000000000001') IS DISTINCT FROM
+ (SELECT opened FROM scope_chats WHERE business='e0970200-0000-4000-8000-000000000002'),'original private thread identity differs across businesses');
+SELECT is(pg_temp.open_scoped_chat('e0970200-0000-4000-8000-000000000001'),(SELECT opened FROM scope_chats WHERE business='e0970200-0000-4000-8000-000000000001'),'returning A reuses its original private thread');
+SELECT is(pg_temp.open_scoped_chat('e0970200-0000-4000-8000-000000000002'),(SELECT opened FROM scope_chats WHERE business='e0970200-0000-4000-8000-000000000002'),'returning B reuses its original private thread');
+SELECT is(pg_temp.read_scoped_chat(business,opened)->>'contact','e0970300-0000-4000-8000-000000000001','native A history reader binds its original client') FROM scope_chats WHERE business='e0970200-0000-4000-8000-000000000001';
+SELECT is(pg_temp.read_scoped_chat(business,opened)->>'contact','e0970300-0000-4000-8000-000000000002','native B history reader binds its original client') FROM scope_chats WHERE business='e0970200-0000-4000-8000-000000000002';
+SELECT is(pg_temp.read_scoped_chat(business,opened),jsonb_build_object('tenant',business,'contact','e0970300-0000-4000-8000-000000000001','audience','customer_private','lens','client'),'original closed A thread facts retain private audience/lens') FROM scope_chats WHERE business='e0970200-0000-4000-8000-000000000001';
+SELECT ok(pg_temp.read_scoped_chat('e0970200-0000-4000-8000-000000000002',opened) IS NULL,'B request cannot read A private thread') FROM scope_chats WHERE business='e0970200-0000-4000-8000-000000000001';
+SELECT ok(pg_temp.read_scoped_chat('e0970200-0000-4000-8000-000000000001',opened) IS NULL,'A request cannot read B private thread') FROM scope_chats WHERE business='e0970200-0000-4000-8000-000000000002';
+SELECT ok(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001',
+ format('SELECT to_jsonb(id) FROM public.paige_chat_threads WHERE id::text=%L',opened#>>'{}'),
+ '{"x-client-portal-business":"e0970200-0000-4000-8000-000000000001"}') IS NULL,'business staff standing does not expose a customer private conversation') FROM scope_chats WHERE business='e0970200-0000-4000-8000-000000000001';
+SELECT is(pg_temp.open_scoped_chat()->>'sqlstate','42501','unselected ambiguity creates no guessed private conversation');
+SELECT is(pg_temp.open_scoped_chat('e0970200-0000-4000-8000-000000000003')->>'sqlstate','42501','foreign business creates no private conversation');
+SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000003',
+ 'SELECT to_jsonb(public.paige_chat_thread_create(NULL,''customer'',''Refused scope'',''{}''::jsonb))',
+ '{"x-client-portal-business":"e0970200-0000-4000-8000-000000000001"}')->>'sqlstate','42501','another actor cannot reuse prior private conversation scope');
+
 UPDATE public.clients SET status='archived' WHERE id='e0970300-0000-4000-8000-000000000001';
 SELECT ok(pg_temp.scope_read('SELECT public.client_portal_frame()','e0970200-0000-4000-8000-000000000001') IS NULL,'archived A never falls back to open B');
 UPDATE public.clients SET status='active' WHERE id='e0970300-0000-4000-8000-000000000001';
@@ -98,6 +130,7 @@ UPDATE public.clients SET portal_access_state='paused',portal_access_changed_at=
  WHERE id='e0970300-0000-4000-8000-000000000002';
 SELECT set_config('paige.portal_access_write','',true);
 SELECT ok(pg_temp.scope_read('SELECT public.client_portal_frame()','e0970200-0000-4000-8000-000000000001') IS NULL,'paused selection loses original frame');
+SELECT is(pg_temp.open_scoped_chat('e0970200-0000-4000-8000-000000000001')->>'sqlstate','42501','paused A cannot reopen a private conversation');
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000001')#>>'{business,name}',
  'Northwind Studio','selected older pause never names latest other-business pause');
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000001')->>'request_business_id',
@@ -113,6 +146,7 @@ UPDATE public.clients SET linked_user_id=NULL WHERE id='e0970300-0000-4000-8000-
 SELECT set_config('paige.link_ok','',true);
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000002')->>'state','ended','selected former user sees genuine ended notice');
 SELECT ok(pg_temp.scope_read('SELECT public.client_portal_frame()','e0970200-0000-4000-8000-000000000002') IS NULL,'revoked selection cannot obtain another frame');
+SELECT ok(pg_temp.read_scoped_chat('e0970200-0000-4000-8000-000000000002',opened) IS NULL,'revoked B cannot read its retained original private thread') FROM scope_chats WHERE business='e0970200-0000-4000-8000-000000000002';
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000003')->>'state','none','foreign hint cannot reveal even own other-business ended notice');
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_access_state()','e0970200-0000-4000-8000-000000000001')->>'state','paused','returning A scope remains its own pause after B ends');
 SELECT set_config('paige.portal_access_write','1',true);

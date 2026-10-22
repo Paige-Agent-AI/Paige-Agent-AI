@@ -27,7 +27,8 @@ function decodeProgress(value:unknown,tenantId:string):Progress|null{
    typeof i.title!=="string"||i.title.length>400||[...i.title].length>200||
    (i.state!=="not_started"&&i.state!=="in_progress"&&i.state!=="done")||!nullableDate(i.due_at)||
    !nullableDate(i.completed_at)||!date(i.shared_at)||(i.parent_id!==null&&!uuid(i.parent_id)))return null;
-  items.push({id:i.id,kind:i.kind,title:i.title,state:i.state,due_at:i.due_at,completed_at:i.completed_at,shared_at:i.shared_at,parent_id:i.parent_id});
+  const parentId=typeof i.parent_id==="string"?i.parent_id:null;
+  items.push({id:i.id,kind:i.kind,title:i.title,state:i.state,due_at:i.due_at,completed_at:i.completed_at,shared_at:i.shared_at,parent_id:parentId});
  }
  if(items.filter(i=>i.state==="done").length>s.done||items.filter(i=>i.state!=="done").length>s.open)return null;
  return{tenant_id:tenantId,summary:{shared:s.shared,done:s.done,open:s.open,overdue:s.overdue},items,has_more:p.has_more};

@@ -24,6 +24,7 @@ describe("original native customer Progress source",()=>{
   "bad fingerprint":(r:ReturnType<typeof fixture>)=>r.snapshot.source_fingerprint="claimed",
   "extra source fields":(r:ReturnType<typeof fixture>)=>Object.assign(r.progress,{internal_notes:"PRIVATE"}),
   "wrong source business":(r:ReturnType<typeof fixture>)=>r.progress.tenant_id=item,
+  "malformed parent identifier":(r:ReturnType<typeof fixture>)=>Object.assign(r.progress.items[0],{parent_id:{id:item}}),
   "private item fields":(r:ReturnType<typeof fixture>)=>Object.assign(r.progress.items[0],{summary:"PRIVATE"}),
   "unsupported item":(r:ReturnType<typeof fixture>)=>r.progress.items[0].kind="reminder",
   "internal status":(r:ReturnType<typeof fixture>)=>r.progress.items[0].state="blocked",
@@ -36,10 +37,11 @@ describe("original native customer Progress source",()=>{
   "false truncation":(r:ReturnType<typeof fixture>)=>r.progress.has_more=true,
   "missing snapshot":(r:ReturnType<typeof fixture>)=>Object.assign(r,{snapshot:null}),
   "legacy source upgrade":(r:ReturnType<typeof fixture>)=>r.mode="legacy",
-  "extra root authority":(r:ReturnType<typeof fixture>)=>r.owner=true,
+  "extra root authority":(r:ReturnType<typeof fixture>)=>Object.assign(r,{owner:true}),
  }))it("refuses "+name+" without fallback",async()=>{const row=fixture();change(row);const s=await setup(row);const r=await s.read();expect(r.status).not.toBe("available");expect(r.data).toBeNull();expect(JSON.stringify(r)).not.toContain("PRIVATE");});
  it("accepts a genuine empty projection and distinguishes it from source failure",async()=>{const row=fixture();row.progress.items=[];row.progress.summary={shared:0,done:0,open:0,overdue:0};const s=await setup(row);const r=await s.read();expect(r.status).toBe("available");expect(r.data?.progress?.summary.shared).toBe(0);});
  it("preserves a legacy accepted question without adding service facts",async()=>{const row={...fixture(),mode:"legacy",snapshot:null,progress:null};const s=await setup(row);const r=await s.read();expect(r.status).toBe("available");expect(r.data?.snapshot).toBeNull();expect(customerProgressMessages(r.data!)).toEqual([]);});
+ it("preserves an already validated parent UUID",async()=>{const row=fixture();Object.assign(row.progress.items[0],{parent_id:thread});const r=await (await setup(row)).read();expect(r.status).toBe("available");expect(r.data?.progress?.items[0].parent_id).toBe(thread);});
  it("fresh and accepted source reads have identical stable model data",async()=>{const fresh=await (await setup()).read();const row=fixture();row.mode="bound";const bound=await (await setup(row)).read();expect(bound.data).toEqual(fresh.data);});
  for(const code of ["42501","XX000"])it("sanitizes native "+code+" failure and never calls it empty",async()=>{const s=await setup(null,{code,message:"PRIVATE DIAGNOSTIC"});const r=await s.read();expect(r.status).toBe(code==="42501"?"unavailable":"degraded");expect(r.data).toBeNull();expect(JSON.stringify(r)).not.toContain("PRIVATE");});
  it("sanitizes rejected transport",async()=>{const s=await setup();s.rpc.mockRejectedValue(new Error("PRIVATE"));expect((await s.read()).status).toBe("degraded");});

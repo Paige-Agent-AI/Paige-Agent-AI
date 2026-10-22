@@ -40,7 +40,7 @@ createRoot(document.getElementById("root")!).render(
               </div>
             </div>
           </TenantCommandCenterShell>
-          <div data-harness-chrome style={{ position: "fixed", bottom: 0, left: 0, zIndex: 200, background: "#16131a", color: "#f6f2ea", padding: "2px 6px", fontSize: 11 }}>LOCAL SYNTHETIC DATA · AUTH AND PROVIDERS UNVERIFIED</div>
+          <div data-harness-chrome style={{ position: "fixed", bottom: 0, left: 0, zIndex: 200, background: "#16131a", color: "#f6f2ea", padding: "2px 6px", fontSize: 11, maxWidth:params.get('uploadProof')==='1'?140:undefined, pointerEvents:'none' }}>LOCAL SYNTHETIC DATA · AUTH AND PROVIDERS UNVERIFIED</div>
         </BrowserRouter>
       </AgentPresenceProvider>
     </ThemeProvider>

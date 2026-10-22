@@ -4,8 +4,8 @@ import { readPortalDocumentsGlance } from "./usePortalDocumentsGlance";
 const actor = "e0914000-0000-4000-8000-0000000000c1", tenant = "e0924000-0000-4000-8000-0000000000c1", contact = "e0934000-0000-4000-8000-0000000000c1";
 const f = vi.hoisted(() => ({ rpc: vi.fn(), from: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {
-  auth: { getUser: async () => ({ data: { user: { id: actor } }, error: null }) },
-  rpc: (...a: unknown[]) => f.rpc(...a), from: (...a: unknown[]) => f.from(...a),
+  auth: { getUser: async () => ({ data: { user: { id: actor } }, error: null }), getSession: async () => ({data: {session: {user: {id: actor}, access_token: "synthetic-glance"}}, error: null}) },
+  rpc: (...a: unknown[]) => {const q = {setHeader: () => q, then: (yes: (value: unknown) => unknown, no: (error: unknown) => unknown) => Promise.resolve(f.rpc(...a)).then(yes, no)};return q;}, from: (...a: unknown[]) => f.from(...a),
 } }));
 const profile = { id: contact, tenant_id: tenant, linked_user_id: actor, first_name: "Jordan", last_name: "Rivera", entity_name: null, street_address: null, city: null, state: null, zip_code: null, onboarding_stage: null, is_signup_contact: false, paige_shared_context_consent: false, paige_shared_context_consent_updated_at: null, updated_at: "2026-01-01T00:00:00Z", email: "jordan@example.test", phone: null, contact_methods: [] };
 const docs = (summary = { shared: 3, from_you: 1 }) => ({ data: { tenant_id: tenant, client_id: contact, summary, files: [], has_more: true }, error: null });

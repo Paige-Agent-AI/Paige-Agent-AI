@@ -136,21 +136,6 @@ SELECT is(pg_temp.scope_read('SELECT public.client_portal_set_communication_pref
 SELECT is(pg_temp.scope_read('SELECT public.client_portal_communication_preferences_scoped(''e0970200-0000-4000-8000-000000000002'',''e0970300-0000-4000-8000-000000000002'')','e0970200-0000-4000-8000-000000000002')#>>'{email,state}','off','fresh original preference projection confirms the customer opt-out');
 SELECT is(pg_temp.scope_read(format('SELECT public.client_portal_update_self_profile_scoped(%L::timestamptz,%L::jsonb,%L::uuid,%L::uuid)',(SELECT updated_at FROM public.clients WHERE id='e0970300-0000-4000-8000-000000000002'),'{"tenant_id":"forbidden"}','e0970200-0000-4000-8000-000000000002','e0970300-0000-4000-8000-000000000002'),'e0970200-0000-4000-8000-000000000002')->>'sqlstate','22023','original native profile allowlist still refuses privilege fields');
 
--- Same-business replacement with the SAME profile version must not inherit an earlier intent.
-CREATE TEMP TABLE e09_profile_intent_before ON COMMIT DROP AS SELECT updated_at FROM public.clients WHERE id='e0970300-0000-4000-8000-000000000001';
-UPDATE public.clients SET linked_user_id=NULL WHERE id='e0970300-0000-4000-8000-000000000001';
-INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,status,updated_at) SELECT 'e0970300-0000-4000-8000-000000000004','e0970200-0000-4000-8000-000000000001','e0970100-0000-4000-8000-000000000002','e0970100-0000-4000-8000-000000000001','Replacement','Customer','active',updated_at FROM e09_profile_intent_before;
-SELECT is((SELECT updated_at FROM public.clients WHERE id='e0970300-0000-4000-8000-000000000004'),(SELECT updated_at FROM e09_profile_intent_before),'same version alone cannot bind a customer identity');
-SELECT is(pg_temp.scope_read(format('SELECT public.client_portal_update_self_profile_scoped(%L::timestamptz,%L::jsonb,%L::uuid,%L::uuid)',(SELECT updated_at FROM e09_profile_intent_before),'{"city":"must not be saved"}','e0970200-0000-4000-8000-000000000001','e0970300-0000-4000-8000-000000000001'),'e0970200-0000-4000-8000-000000000001')->>'sqlstate','42501','replaced same-business client refuses old intent even with a matching profile version');
-SELECT is(pg_temp.scope_read('SELECT public.client_portal_communication_preferences_scoped(''e0970200-0000-4000-8000-000000000001'',''e0970300-0000-4000-8000-000000000001'')','e0970200-0000-4000-8000-000000000001')->>'sqlstate','42501','replaced same-business client refuses old intent adapter 2');
-SELECT is(pg_temp.scope_read('SELECT public.client_portal_set_communication_preference_scoped(''email'',NULL,false,''e0970200-0000-4000-8000-000000000001'',''e0970300-0000-4000-8000-000000000001'')','e0970200-0000-4000-8000-000000000001')->>'sqlstate','42501','replaced same-business client refuses old intent adapter 3');
-SELECT is(pg_temp.scope_read('SELECT public.client_portal_set_shared_context_consent_scoped(false,''e0970200-0000-4000-8000-000000000001'',''e0970300-0000-4000-8000-000000000001'')','e0970200-0000-4000-8000-000000000001')->>'sqlstate','42501','replaced same-business client refuses old intent adapter 4');
-SELECT is(pg_temp.scope_read('SELECT public.client_portal_self_profile()','e0970200-0000-4000-8000-000000000001')->>'id','e0970300-0000-4000-8000-000000000004','original resolver identifies the actual replacement independently');
-SELECT is((SELECT city FROM public.clients WHERE id='e0970300-0000-4000-8000-000000000004'),NULL::text,'old intent changes no replacement profile');
-UPDATE public.clients SET linked_user_id=NULL WHERE id='e0970300-0000-4000-8000-000000000004';
-UPDATE public.clients SET linked_user_id='e0970100-0000-4000-8000-000000000002' WHERE id='e0970300-0000-4000-8000-000000000001';
-SELECT is(pg_temp.scope_read('SELECT public.client_portal_self_profile()','e0970200-0000-4000-8000-000000000001')->>'id','e0970300-0000-4000-8000-000000000001','original fixture relationship is restored for all incumbent controls');
-
 -- Original Sessions and admission only. No booking writer or provider call.
 INSERT INTO public.calendars(id,tenant_id,created_by,slug,title,duration_min,min_notice_min,enabled) VALUES
  ('e0970700-0000-4000-8000-000000000001','e0970200-0000-4000-8000-000000000001','e0970100-0000-4000-8000-000000000001','test-tenant-scope-sessions-a','Session A',60,60,true),
@@ -368,6 +353,23 @@ SELECT ok(has_function_privilege('authenticated','public.client_portal_frame()',
  AND NOT has_function_privilege('service_role','public.client_portal_frame()','EXECUTE'),'original frame ACL preserved');
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.client_portal_frame()'::regprocedure),
  'b3826e6b52ba34cd40348112b8145883','original frame source unchanged');
+
+-- Run the replacement scenario after incumbent access-history assertions: unlinking legitimately
+-- records an ended-access notice, which must not contaminate their original timeline fixtures.
+-- Same-business replacement with the SAME profile version must not inherit an earlier intent.
+CREATE TEMP TABLE e09_profile_intent_before ON COMMIT DROP AS SELECT updated_at FROM public.clients WHERE id='e0970300-0000-4000-8000-000000000001';
+UPDATE public.clients SET linked_user_id=NULL WHERE id='e0970300-0000-4000-8000-000000000001';
+INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,status,updated_at) SELECT 'e0970300-0000-4000-8000-000000000004','e0970200-0000-4000-8000-000000000001','e0970100-0000-4000-8000-000000000002','e0970100-0000-4000-8000-000000000001','Replacement','Customer','active',updated_at FROM e09_profile_intent_before;
+SELECT is((SELECT updated_at FROM public.clients WHERE id='e0970300-0000-4000-8000-000000000004'),(SELECT updated_at FROM e09_profile_intent_before),'same version alone cannot bind a customer identity');
+SELECT is(pg_temp.scope_read(format('SELECT public.client_portal_update_self_profile_scoped(%L::timestamptz,%L::jsonb,%L::uuid,%L::uuid)',(SELECT updated_at FROM e09_profile_intent_before),'{"city":"must not be saved"}','e0970200-0000-4000-8000-000000000001','e0970300-0000-4000-8000-000000000001'),'e0970200-0000-4000-8000-000000000001')->>'sqlstate','42501','replaced same-business client refuses old intent even with a matching profile version');
+SELECT is(pg_temp.scope_read('SELECT public.client_portal_communication_preferences_scoped(''e0970200-0000-4000-8000-000000000001'',''e0970300-0000-4000-8000-000000000001'')','e0970200-0000-4000-8000-000000000001')->>'sqlstate','42501','replaced same-business client refuses old intent adapter 2');
+SELECT is(pg_temp.scope_read('SELECT public.client_portal_set_communication_preference_scoped(''email'',NULL,false,''e0970200-0000-4000-8000-000000000001'',''e0970300-0000-4000-8000-000000000001'')','e0970200-0000-4000-8000-000000000001')->>'sqlstate','42501','replaced same-business client refuses old intent adapter 3');
+SELECT is(pg_temp.scope_read('SELECT public.client_portal_set_shared_context_consent_scoped(false,''e0970200-0000-4000-8000-000000000001'',''e0970300-0000-4000-8000-000000000001'')','e0970200-0000-4000-8000-000000000001')->>'sqlstate','42501','replaced same-business client refuses old intent adapter 4');
+SELECT is(pg_temp.scope_read('SELECT public.client_portal_self_profile()','e0970200-0000-4000-8000-000000000001')->>'id','e0970300-0000-4000-8000-000000000004','original resolver identifies the actual replacement independently');
+SELECT is((SELECT city FROM public.clients WHERE id='e0970300-0000-4000-8000-000000000004'),NULL::text,'old intent changes no replacement profile');
+UPDATE public.clients SET linked_user_id=NULL WHERE id='e0970300-0000-4000-8000-000000000004';
+UPDATE public.clients SET linked_user_id='e0970100-0000-4000-8000-000000000002' WHERE id='e0970300-0000-4000-8000-000000000001';
+SELECT is(pg_temp.scope_read('SELECT public.client_portal_self_profile()','e0970200-0000-4000-8000-000000000001')->>'id','e0970300-0000-4000-8000-000000000001','original fixture relationship is restored for all incumbent controls');
 
 CREATE UNIQUE INDEX clients_linked_user_id_unique ON public.clients(linked_user_id) WHERE linked_user_id IS NOT NULL;
 SELECT ok(EXISTS (SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_id_unique') AND indisunique AND pg_get_expr(indpred,indrelid)='(linked_user_id IS NOT NULL)'),'future fixture restores the original global guard before outer rollback');

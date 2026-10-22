@@ -1,0 +1,684 @@
+{
+  "proofClass": "actual Sales shell/components/editor/SDK; synthetic identity/network only",
+  "staticTransport": "native Vite compiled fixture",
+  "normalizedLFSourceSHA256": {
+    "src/solo/sales-ops.tsx": "12ee417c71676ef8c508fdb49970ab1d52814a21d51712527ec227236c7eb00b",
+    "src/solo/SalesWorkspace.tsx": "7c76c109cf9262f5332c2e5964deb7911c1444ea756a378db2d0a91a9acfd91d",
+    "src/solo/sales-dialog.tsx": "2db857c01974bec40fd44cba32e019870f3e27e33f245649a93ee050af80c0cd",
+    "src/hooks/useBeforeUnloadGuard.ts": "5d0ddcf56f30a74550042c04428a3c03d1904d9156f4173a46884cd60749d4ec",
+    "src/solo/sales/AgreementPreparationWorkspace.tsx": "1a54b627f0295bd2fd9f2343f95fa39d2a552528e7cf8139039b499b7d80dc44",
+    "src/solo/sales/AgreementBodyEditor.tsx": "fbbda58c2a1f76924ed8232aa6cf0219768ba8a9c2563cacb5d8578e032ac315",
+    "src/solo/sales/agreementPreparationApi.ts": "640770f300c5d8c3a77b84456b68c847f39b03c3a098b2e7920bd81732975bfc",
+    "src/solo/sales/agreementVocabulary.ts": "65997aa339d950aff13b8c607c4938b9a060340f75b7f43f397156fc0409a3d9",
+    "src/solo/sales/agreement-body-editor.css": "1d0f9cda84d9bc9e37e792e2d0228b011f78359c4fd4c9f734e389dbacf09767",
+    "src/solo/sales/agreement-preparation.css": "2cef8ef627b07b309703b67ed32378751229b001015e0390b53866efdb7c44c4",
+    "package.json": "651ef3965bc792e47b6c516efffea652b8bd86d9e80b97f3aa61d1b06a0ccd51",
+    "package-lock.json": "c39a38279fd973f7ab80c5f497053bf7ab4246790017cad26d70d133f6454177",
+    "scripts/live-drive/harness/sales-mount/agreement-authoring.tsx": "4136827093f1ed340313b19c81742ddf7ead519a043c22484375fa19e26e0b65",
+    "scripts/live-drive/harness/sales-mount/agreement-authoring-ports.ts": "d4beb58b1e5ad142fee41f9488d7979386acb18b310c4a8d94fece8376925af4",
+    "scripts/live-drive/harness/sales-mount/agreement-authoring-client.ts": "1838e8309cec8fd47f5bfa2608fbdde78acbf372c99ce7dc29a74c6652267e0b",
+    "scripts/live-drive/harness/sales-mount/vite.agreement-authoring.config.ts": "ae93d7029cd44a8fa590ea294394926d6535e5e4b4d0e02dee625877b356a7dd",
+    "scripts/live-drive/harness/sales-mount/agreement-authoring.html": "c66db7a6acdd821c8aa0051561d06d650522dad1151905733e40ee38bbc25be7",
+    "scripts/live-drive/agreement-authoring-drive.mjs": "ba09cebc22f02a963aae4f1ac6783554e00b44bd9b74889a1f48b42b5f31d0a9",
+    "src/solo/sales/AgreementSignerPreparation.tsx": "b87a8311d52ec80d87ae26d49d67fcc7e1eadb732d1bdeb8aee358c40b4c7a1d",
+    "src/solo/sales/agreementSignerApi.ts": "facaa4c6d1016509ef8cc200045a63f4818596dadb075fcd02ba395d82bb168f",
+    "scripts/live-drive/agreement-signer-paths.mjs": "9e8b5003017594f1cea004aec3029fcb681637e2e9d47bf94eb417a4ee158a50",
+    "src/solo/sales/AgreementWordingHistory.tsx": "8e6594e209d847cb8cbf75aa2410be5c7fce35475e088f1815901afebd8d3f95",
+    "src/solo/sales/agreementRevisionApi.ts": "67fd3212d16b77d1b06d7c4fa24aba101fedeb270d5c21d05d94d6131c02eed7",
+    "src/solo/sales/AgreementDraftCorrection.tsx": "929e12ae7ea4e55afb154b6367358cf8faf0ebc8cedd9c9ed438aa638c565ca1",
+    "src/solo/sales/agreementCorrectionApi.ts": "edc5b35118af71d5ec6f498c4117f7fb2416d10fd5e18085884de312bca65f79",
+    "src/solo/sales/AgreementTemplateWorkspace.tsx": "b4cf372fe8fb1516141cf9f9e74a686dd8c65fdbb6a4d48a49ab896373892610",
+    "src/solo/sales/agreementTemplateApi.ts": "09e7f342ee39241fe6437a5466ea4a304e6edf235b51625d26786a345750d4a8",
+    "src/solo/sales/agreement-templates.css": "854ddb8cfb234f68a738ac343f2c7af0255d6b3298d53091bffca75fc8278e61"
+  },
+  "sharedUIFontSHA256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05",
+  "frames": [
+    {
+      "width": 1536,
+      "height": 770,
+      "theme": "light",
+      "paige": "closed",
+      "overlayFoldedForOperation": false,
+      "overlayCapturedOpen": false,
+      "fit": {
+        "viewport": 1536,
+        "document": 1536,
+        "pageScroll": 0,
+        "button": {
+          "x": 134,
+          "y": 663.984375,
+          "width": 124.515625,
+          "height": 44,
+          "top": 663.984375,
+          "right": 258.515625,
+          "bottom": 707.984375,
+          "left": 134
+        }
+      },
+      "focusFit": {
+        "x": 134,
+        "y": 674,
+        "width": 500,
+        "height": 44,
+        "uncovered": true
+      }
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "theme": "light",
+      "paige": "open",
+      "overlayFoldedForOperation": false,
+      "overlayCapturedOpen": false,
+      "fit": {
+        "viewport": 1536,
+        "document": 1536,
+        "pageScroll": 0,
+        "button": {
+          "x": 134,
+          "y": 663.984375,
+          "width": 124.515625,
+          "height": 44,
+          "top": 663.984375,
+          "right": 258.515625,
+          "bottom": 707.984375,
+          "left": 134
+        }
+      },
+      "focusFit": {
+        "x": 134,
+        "y": 674,
+        "width": 238.875,
+        "height": 44,
+        "uncovered": true
+      }
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "theme": "light",
+      "paige": "closed",
+      "overlayFoldedForOperation": false,
+      "overlayCapturedOpen": false,
+      "fit": {
+        "viewport": 1366,
+        "document": 1366,
+        "pageScroll": 0,
+        "button": {
+          "x": 134,
+          "y": 661.984375,
+          "width": 124.515625,
+          "height": 44,
+          "top": 661.984375,
+          "right": 258.515625,
+          "bottom": 705.984375,
+          "left": 134
+        }
+      },
+      "focusFit": {
+        "x": 134,
+        "y": 674,
+        "width": 415,
+        "height": 44,
+        "uncovered": true
+      }
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "theme": "light",
+      "paige": "open",
+      "overlayFoldedForOperation": false,
+      "overlayCapturedOpen": false,
+      "fit": {
+        "viewport": 1366,
+        "document": 1366,
+        "pageScroll": 0,
+        "button": {
+          "x": 134,
+          "y": 661.96875,
+          "width": 124.515625,
+          "height": 44,
+          "top": 661.96875,
+          "right": 258.515625,
+          "bottom": 705.96875,
+          "left": 134
+        }
+      },
+      "focusFit": {
+        "x": 134,
+        "y": 717.1875,
+        "width": 182.78125,
+        "height": 44,
+        "uncovered": true
+      }
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "theme": "light",
+      "paige": "closed",
+      "overlayFoldedForOperation": false,
+      "overlayCapturedOpen": false,
+      "fit": {
+        "viewport": 1024,
+        "document": 1024,
+        "pageScroll": 0,
+        "button": {
+          "x": 134,
+          "y": 429.984375,
+          "width": 124.515625,
+          "height": 44,
+          "top": 429.984375,
+          "right": 258.515625,
+          "bottom": 473.984375,
+          "left": 134
+        }
+      },
+      "focusFit": {
+        "x": 134,
+        "y": 248,
+        "width": 406,
+        "height": 44,
+        "uncovered": true
+      }
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "theme": "light",
+      "paige": "open",
+      "overlayFoldedForOperation": true,
+      "overlayCapturedOpen": true,
+      "fit": {
+        "viewport": 1024,
+        "document": 1024,
+        "pageScroll": 0,
+        "button": {
+          "x": 134,
+          "y": 429.984375,
+          "width": 124.515625,
+          "height": 44,
+          "top": 429.984375,
+          "right": 258.515625,
+          "bottom": 473.984375,
+          "left": 134
+        }
+      },
+      "focusFit": {
+        "x": 134,
+        "y": 248,
+        "width": 406,
+        "height": 44,
+        "uncovered": true
+      }
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "theme": "light",
+      "paige": "closed",
+      "overlayFoldedForOperation": false,
+      "overlayCapturedOpen": false,
+      "fit": {
+        "viewport": 900,
+        "document": 900,
+        "pageScroll": 0,
+        "button": {
+          "x": 134,
+          "y": 855.984375,
+          "width": 124.515625,
+          "height": 44,
+          "top": 855.984375,
+          "right": 258.515625,
+          "bottom": 899.984375,
+          "left": 134
+        }
+      },
+      "focusFit": {
+        "x": 134,
+        "y": 674,
+        "width": 344,
+        "height": 44,
+        "uncovered": true
+      }
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "theme": "light",
+      "paige": "open",
+      "overlayFoldedForOperation": true,
+      "overlayCapturedOpen": true,
+      "fit": {
+        "viewport": 900,
+        "document": 900,
+        "pageScroll": 0,
+        "button": {
+          "x": 134,
+          "y": 855.984375,
+          "width": 124.515625,
+          "height": 44,
+          "top": 855.984375,
+          "right": 258.515625,
+          "bottom": 899.984375,
+          "left": 134
+        }
+      },
+      "focusFit": {
+        "x": 134,
+        "y": 674,
+        "width": 344,
+        "height": 44,
+        "uncovered": true
+      }
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "paige": "closed",
+      "overlayFoldedForOperation": false,
+      "overlayCapturedOpen": false,
+      "fit": {
+        "viewport": 390,
+        "document": 390,
+        "pageScroll": 0,
+        "button": {
+          "x": 116,
+          "y": 499.125,
+          "width": 124.515625,
+          "height": 44,
+          "top": 499.125,
+          "right": 240.515625,
+          "bottom": 543.125,
+          "left": 116
+        }
+      },
+      "focusFit": {
+        "x": 116,
+        "y": 499.171875,
+        "width": 230,
+        "height": 44,
+        "uncovered": true
+      }
+    },
+    {
+      "width": 320,
+      "height": 740,
+      "theme": "light",
+      "paige": "closed",
+      "overlayFoldedForOperation": false,
+      "overlayCapturedOpen": false,
+      "fit": {
+        "viewport": 320,
+        "document": 320,
+        "pageScroll": 0,
+        "button": {
+          "x": 116,
+          "y": 507.03125,
+          "width": 124.515625,
+          "height": 44,
+          "top": 507.03125,
+          "right": 240.515625,
+          "bottom": 551.03125,
+          "left": 116
+        }
+      },
+      "focusFit": {
+        "x": 116,
+        "y": 507.28125,
+        "width": 160,
+        "height": 44,
+        "uncovered": true
+      }
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "theme": "dark",
+      "paige": "closed",
+      "overlayFoldedForOperation": false,
+      "overlayCapturedOpen": false,
+      "fit": {
+        "viewport": 1536,
+        "document": 1536,
+        "pageScroll": 0,
+        "button": {
+          "x": 134,
+          "y": 663.984375,
+          "width": 124.515625,
+          "height": 44,
+          "top": 663.984375,
+          "right": 258.515625,
+          "bottom": 707.984375,
+          "left": 134
+        }
+      },
+      "focusFit": {
+        "x": 134,
+        "y": 674,
+        "width": 500,
+        "height": 44,
+        "uncovered": true
+      }
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "theme": "dark",
+      "paige": "open",
+      "overlayFoldedForOperation": false,
+      "overlayCapturedOpen": false,
+      "fit": {
+        "viewport": 1536,
+        "document": 1536,
+        "pageScroll": 0,
+        "button": {
+          "x": 134,
+          "y": 663.984375,
+          "width": 124.515625,
+          "height": 44,
+          "top": 663.984375,
+          "right": 258.515625,
+          "bottom": 707.984375,
+          "left": 134
+        }
+      },
+      "focusFit": {
+        "x": 134,
+        "y": 674,
+        "width": 238.875,
+        "height": 44,
+        "uncovered": true
+      }
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "theme": "dark",
+      "paige": "closed",
+      "overlayFoldedForOperation": false,
+      "overlayCapturedOpen": false,
+      "fit": {
+        "viewport": 1366,
+        "document": 1366,
+        "pageScroll": 0,
+        "button": {
+          "x": 134,
+          "y": 661.984375,
+          "width": 124.515625,
+          "height": 44,
+          "top": 661.984375,
+          "right": 258.515625,
+          "bottom": 705.984375,
+          "left": 134
+        }
+      },
+      "focusFit": {
+        "x": 134,
+        "y": 674,
+        "width": 415,
+        "height": 44,
+        "uncovered": true
+      }
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "theme": "dark",
+      "paige": "open",
+      "overlayFoldedForOperation": false,
+      "overlayCapturedOpen": false,
+      "fit": {
+        "viewport": 1366,
+        "document": 1366,
+        "pageScroll": 0,
+        "button": {
+          "x": 134,
+          "y": 661.96875,
+          "width": 124.515625,
+          "height": 44,
+          "top": 661.96875,
+          "right": 258.515625,
+          "bottom": 705.96875,
+          "left": 134
+        }
+      },
+      "focusFit": {
+        "x": 134,
+        "y": 717.1875,
+        "width": 182.78125,
+        "height": 44,
+        "uncovered": true
+      }
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "theme": "dark",
+      "paige": "closed",
+      "overlayFoldedForOperation": false,
+      "overlayCapturedOpen": false,
+      "fit": {
+        "viewport": 1024,
+        "document": 1024,
+        "pageScroll": 0,
+        "button": {
+          "x": 134,
+          "y": 429.984375,
+          "width": 124.515625,
+          "height": 44,
+          "top": 429.984375,
+          "right": 258.515625,
+          "bottom": 473.984375,
+          "left": 134
+        }
+      },
+      "focusFit": {
+        "x": 134,
+        "y": 248,
+        "width": 406,
+        "height": 44,
+        "uncovered": true
+      }
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "theme": "dark",
+      "paige": "open",
+      "overlayFoldedForOperation": true,
+      "overlayCapturedOpen": true,
+      "fit": {
+        "viewport": 1024,
+        "document": 1024,
+        "pageScroll": 0,
+        "button": {
+          "x": 134,
+          "y": 429.984375,
+          "width": 124.515625,
+          "height": 44,
+          "top": 429.984375,
+          "right": 258.515625,
+          "bottom": 473.984375,
+          "left": 134
+        }
+      },
+      "focusFit": {
+        "x": 134,
+        "y": 248,
+        "width": 406,
+        "height": 44,
+        "uncovered": true
+      }
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "theme": "dark",
+      "paige": "closed",
+      "overlayFoldedForOperation": false,
+      "overlayCapturedOpen": false,
+      "fit": {
+        "viewport": 900,
+        "document": 900,
+        "pageScroll": 0,
+        "button": {
+          "x": 134,
+          "y": 855.984375,
+          "width": 124.515625,
+          "height": 44,
+          "top": 855.984375,
+          "right": 258.515625,
+          "bottom": 899.984375,
+          "left": 134
+        }
+      },
+      "focusFit": {
+        "x": 134,
+        "y": 674,
+        "width": 344,
+        "height": 44,
+        "uncovered": true
+      }
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "theme": "dark",
+      "paige": "open",
+      "overlayFoldedForOperation": true,
+      "overlayCapturedOpen": true,
+      "fit": {
+        "viewport": 900,
+        "document": 900,
+        "pageScroll": 0,
+        "button": {
+          "x": 134,
+          "y": 855.984375,
+          "width": 124.515625,
+          "height": 44,
+          "top": 855.984375,
+          "right": 258.515625,
+          "bottom": 899.984375,
+          "left": 134
+        }
+      },
+      "focusFit": {
+        "x": 134,
+        "y": 674,
+        "width": 344,
+        "height": 44,
+        "uncovered": true
+      }
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "paige": "closed",
+      "overlayFoldedForOperation": false,
+      "overlayCapturedOpen": false,
+      "fit": {
+        "viewport": 390,
+        "document": 390,
+        "pageScroll": 0,
+        "button": {
+          "x": 116,
+          "y": 499.125,
+          "width": 124.515625,
+          "height": 44,
+          "top": 499.125,
+          "right": 240.515625,
+          "bottom": 543.125,
+          "left": 116
+        }
+      },
+      "focusFit": {
+        "x": 116,
+        "y": 499.171875,
+        "width": 230,
+        "height": 44,
+        "uncovered": true
+      }
+    },
+    {
+      "width": 320,
+      "height": 740,
+      "theme": "dark",
+      "paige": "closed",
+      "overlayFoldedForOperation": false,
+      "overlayCapturedOpen": false,
+      "fit": {
+        "viewport": 320,
+        "document": 320,
+        "pageScroll": 0,
+        "button": {
+          "x": 116,
+          "y": 507.03125,
+          "width": 124.515625,
+          "height": 44,
+          "top": 507.03125,
+          "right": 240.515625,
+          "bottom": 551.03125,
+          "left": 116
+        }
+      },
+      "focusFit": {
+        "x": 116,
+        "y": 507.28125,
+        "width": 160,
+        "height": 44,
+        "uncovered": true
+      }
+    }
+  ],
+  "behavior": [
+    "20 actual desktop/narrow/theme/PAIGE cases with native scroll ownership",
+    "recipient required-field entry focus and reachable primary action",
+    "missing name refuses before write",
+    "original source/client/version/native receipt and current ordered roster",
+    "readonly unknown private proposal",
+    "opaque request/business reload fence",
+    "absent receipt is not cancellation",
+    "same signer UUID and exact-payload retry",
+    "lost acknowledgment reload recovers original event without another write",
+    "interrupted read releases pending state and ignores stale authorized acknowledgment",
+    "stale document CAS refuses without false signer success",
+    "native duplicate email/position refusal remains distinct from uncertainty",
+    "single original leave dialog, desktop/narrow fit, focus trap and Escape preserves recipient work",
+    "unknown access hides/restores RAM, conclusive revocation retires private recipient details",
+    "native authority refusal retires private form with usable original-record recovery",
+    "business change retires recipient context before foreign RPC"
+  ],
+  "errors": [],
+  "blocked": [
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com",
+    "https://fonts.googleapis.com"
+  ],
+  "canonicalRecords": 1,
+  "authenticated": "UNVERIFIED",
+  "providers": "NOT_EXERCISED"
+}

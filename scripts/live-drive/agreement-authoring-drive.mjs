@@ -5,10 +5,12 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';
 import { buildLaunchOptions, resolvePlaywright } from './live-drive.mjs';
+import { exerciseAgreementSignerPaths } from './agreement-signer-paths.mjs';
 const root = path.resolve(import.meta.dirname, '../..');
 const historyProof = process.argv.includes('--history');
 const correctionProof = process.argv.includes('--correction');
 const templateProof = process.argv.includes('--templates');
+const signerProof = process.argv.includes('--recipients');
 const pdfIntakeProof = process.argv.includes('--pdf-intake');
 const uploadProof = process.argv.includes('--upload-intent') || pdfIntakeProof;
 const sources = ['src/solo/sales-ops.tsx','src/solo/SalesWorkspace.tsx','src/solo/sales-dialog.tsx','src/hooks/useBeforeUnloadGuard.ts','src/solo/sales/AgreementPreparationWorkspace.tsx','src/solo/sales/AgreementBodyEditor.tsx','src/solo/sales/agreementPreparationApi.ts','src/solo/sales/agreementVocabulary.ts','src/solo/sales/agreement-body-editor.css','src/solo/sales/agreement-preparation.css','package.json','package-lock.json',...['agreement-authoring.tsx','agreement-authoring-ports.ts','agreement-authoring-client.ts','vite.agreement-authoring.config.ts','agreement-authoring.html'].map(file=>'scripts/live-drive/harness/sales-mount/'+file)];
@@ -17,6 +19,7 @@ sources.push('scripts/live-drive/agreement-authoring-drive.mjs');
 if(historyProof)sources.push('src/solo/sales/AgreementWordingHistory.tsx','src/solo/sales/agreementRevisionApi.ts');
 if(correctionProof)sources.push('src/solo/sales/AgreementWordingHistory.tsx','src/solo/sales/agreementRevisionApi.ts','src/solo/sales/AgreementDraftCorrection.tsx','src/solo/sales/agreementCorrectionApi.ts');
 if(templateProof)sources.push('src/solo/sales/AgreementTemplateWorkspace.tsx','src/solo/sales/agreementTemplateApi.ts','src/solo/sales/agreement-templates.css','src/solo/sales/AgreementWordingHistory.tsx','src/solo/sales/agreementRevisionApi.ts','src/solo/sales/AgreementDraftCorrection.tsx','src/solo/sales/agreementCorrectionApi.ts');
+if(signerProof)sources.push('src/solo/sales/AgreementSignerPreparation.tsx','src/solo/sales/agreementSignerApi.ts','scripts/live-drive/agreement-signer-paths.mjs','src/solo/sales/AgreementWordingHistory.tsx','src/solo/sales/agreementRevisionApi.ts','src/solo/sales/AgreementDraftCorrection.tsx','src/solo/sales/agreementCorrectionApi.ts','src/solo/sales/AgreementTemplateWorkspace.tsx','src/solo/sales/agreementTemplateApi.ts','src/solo/sales/agreement-templates.css');
 if(uploadProof)sources.push('src/solo/useSoloAgreementSignings.ts','src/solo/sales/agreementPdfIntake.ts');
 console.log('Pinning actual source');
 const pinned = await hashes();
@@ -30,7 +33,7 @@ if (process.argv.includes('--compiled')) {
   await build({ configFile:path.join(root,'scripts/live-drive/harness/sales-mount/vite.agreement-authoring.config.ts'),
     build:{outDir:compiledRoot,emptyOutDir:false,rollupOptions:{input:path.join(root,'scripts/live-drive/harness/sales-mount/agreement-authoring.html')}} });
 }
-const out = path.join(root,'docs/evidence/ui-delivery/assets',pdfIntakeProof?'e04-agreement-pdf-intake':templateProof?'e04-agreement-templates':uploadProof?'e04-agreement-upload-intent':correctionProof?'e04-agreement-correction':historyProof?'e04-agreement-wording-history':'e04-agreement-authoring');
+const out = path.join(root,'docs/evidence/ui-delivery/assets',pdfIntakeProof?'e04-agreement-pdf-intake':signerProof?'e04-agreement-recipients':templateProof?'e04-agreement-templates':uploadProof?'e04-agreement-upload-intent':correctionProof?'e04-agreement-correction':historyProof?'e04-agreement-wording-history':'e04-agreement-authoring');
 await fs.mkdir(out,{recursive:true});
 console.log('Resolving owned Playwright');
 const { chromium } = await resolvePlaywright();
@@ -61,6 +64,8 @@ const revision = (row,number) => ({id:randomUUID(),agreement_id:row.agreement.id
   snapshot_sha256:number.toString(16).padStart(64,'0'),contact_id:row.agreement.contact_id,offer_id:null,
   commercial_terms_id:null,source_version_id:null,body_markdown:row.agreement.body_markdown,has_source_document:false});
 let mode = 'normal';
+const signerRequests=new Map();
+let releaseSignerRecovery=null,signerRecoveryEntered=false,signerRecoveryFinished=false;
 // Synthetic native ports only; production components/SDK and parsers stay actual.
 const templates=new Map();
 let releaseTemplateRecovery=null,templateRecoveryEntered=false,templateRecoveryFinished=false;
@@ -84,9 +89,27 @@ await context.route('**/*',async route=>{
 });
 await context.route('**/__e04_rpc__/**',async route=>{
   const name = new URL(route.request().url()).pathname.split('/').at(-1), args = route.request().postDataJSON();
-  calls.push({name,requestId:args._request_id ?? args._version_id ?? null,expectedAt:args._expected_updated_at??null,commandDigest:['save_paige_agreement','create_agreement_template_version'].includes(name)?createHash('sha256').update(JSON.stringify(args)).digest('hex'):null});
+  calls.push({name,requestId:args._request_id ?? args._version_id ?? args._signer_id ?? null,expectedAt:args._expected_updated_at??null,commandDigest:['save_paige_agreement','create_agreement_template_version','prepare_agreement_signer'].includes(name)?createHash('sha256').update(JSON.stringify(args)).digest('hex'):null});
   const answer = value=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(value)});
   if(args._expected_tenant_id!==tenant || mode==='refused') return route.fulfill({status:403,contentType:'application/json',body:JSON.stringify({code:'42501',message:'Synthetic refusal'})});
+  if(name==='prepare_agreement_signer'){
+    const row=records.get(args._signing_id);assert.ok(row,'Original agreement must exist');
+    const prior=signerRequests.get(args._signer_id),fingerprint=JSON.stringify(args);
+    if(prior)return prior.fingerprint===fingerprint?answer({...prior.receipt,state:'replayed'}):route.fulfill({status:409,contentType:'application/json',body:JSON.stringify({code:'40001'})});
+    if(mode==='signer-unknown-pending')return route.abort('failed');
+    if(mode==='signer-conflict'){row.agreement.version++;row.agreement.updated_at='2026-10-22T04:59:00.123456+00:00';}
+    if(row.agreement.contact_id!==args._expected_contact_id||row.agreement.version!==args._expected_version||row.agreement.updated_at!==args._expected_updated_at)return route.fulfill({status:409,contentType:'application/json',body:JSON.stringify({code:'40001'})});
+    if(row.signers.some(signer=>signer.email===args._email||args._signing_order!==null&&signer.signing_order===args._signing_order))return route.fulfill({status:409,contentType:'application/json',body:JSON.stringify({code:'23505'})});
+    const signer={id:args._signer_id,full_name:args._full_name,email:args._email,signer_role:args._signer_role,signing_order:args._signing_order??Math.max(0,...row.signers.map(s=>s.signing_order))+1,status:'pending',signed_at:null,declined_at:null};
+    row.signers.push(signer);row.agreement.version++;row.agreement.updated_at=`2026-10-22T04:${String(row.agreement.version).padStart(2,'0')}:00.123456+00:00`;
+    const retained={schema_version:1,state:'recorded',agreement_id:row.agreement.id,client_id:row.agreement.contact_id,signer_id:signer.id,full_name:signer.full_name,email:signer.email,signer_role:signer.signer_role,signing_order:signer.signing_order,status:'pending',source_version:row.agreement.version,source_updated_at:row.agreement.updated_at,event_id:randomUUID()};
+    signerRequests.set(signer.id,{fingerprint,receipt:retained});histories.get(row.agreement.id).push(revision(row,histories.get(row.agreement.id).length+1));
+    if(mode==='signer-unknown-saved')return route.abort('failed');return answer(retained);
+  }
+  if(name==='recover_agreement_signer_preparation'){
+    if(mode==='signer-recovery-held'){signerRecoveryEntered=true;await new Promise(resolve=>{releaseSignerRecovery=resolve;});}
+    const prior=signerRequests.get(args._signer_id);await answer(prior?{...prior.receipt,state:'recovered'}:{state:'unconfirmed'});signerRecoveryFinished=true;return;
+  }
   if(name==='list_agreement_template_versions'){
     if(mode==='template-read-error')return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({code:'55000'})});
     const all=[...templates.values()].filter(row=>(!args._active_only||row.is_active)&&(!args._before_created_at||row.created_at<args._before_created_at||row.created_at===args._before_created_at&&row.id<args._before_id)).sort((a,b)=>b.created_at.localeCompare(a.created_at)||b.id.localeCompare(a.id));
@@ -176,7 +199,12 @@ const fill = async(title='Client services agreement')=>{
 };
 const capture = async(name)=>{await page.screenshot({path:path.join(out,name+'.png')});};
 try{
-  if(templateProof){
+  if(signerProof){
+    await exerciseAgreementSignerPaths({page,url,newDraft,fill,capture,frames,behavior,calls,records,
+      setMode:value=>{mode=value;},
+      holdRecovery:()=>{mode='signer-recovery-held';signerRecoveryEntered=false;signerRecoveryFinished=false;},
+      recoveryState:()=>({entered:signerRecoveryEntered,finished:signerRecoveryFinished}),releaseRecovery:()=>releaseSignerRecovery?.()});
+  }else if(templateProof){
 
     const library=async()=>{await page.getByRole('button',{name:'Business templates',exact:true}).first().click();await page.getByRole('button',{name:'New template',exact:true}).waitFor();};
     const enter=async()=>{await page.getByRole('button',{name:'New template',exact:true}).click();await page.getByRole('textbox',{name:'Template title',exact:true}).waitFor();};

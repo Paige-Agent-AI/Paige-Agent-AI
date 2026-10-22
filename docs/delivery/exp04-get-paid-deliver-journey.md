@@ -1897,6 +1897,48 @@ ALG01/02/12/13 statuses, Mind/Memory and capability catalogue readiness are unch
 
 October22 template consumer composition checkpoint: existing#2549 now contains reviewed nativeb346fe6d0/220004 and correctionee745f01 plus released main6e9380cd without changing any of25 rendered owning source files. Earlier190000/1509 references are historical proposals; native migration remains production-unapplied pending full CI/release. Both independent Shipped Log blocks preserved, no shared UI source or another agent assigned. Native Preview was safely rebuilt only within the verified empty original development PR integration; actual production/ordinary-role/provider/full Experience acceptance remains owed.
 
+
+## October22 original recipient preparation consumer
+
+Same E04 lead, original source boundary. The owner can inspect current ordered
+recipients, enter one signer/role/position and deliberately save against the exact
+client, agreement version and microsecond timestamp. The new consumer calls only
+original checked prepare_agreement_signer and actor-bound recovery from#2557;
+legacy unchecked add_agreement_signer is not adopted. Same opaque signer UUID and
+frozen command survive uncertain retry; reload uses only original business/
+agreement/request identities. A native creation receipt does not relabel the
+current signing state. Preparing a party sends no message, records no consent or
+signature, and authorizes no obligation or payment.
+
+Existing Spine declarations remain agreement.draft/list/status/send; checked
+recipient Chat/Live action is UNAVAILABLE. This is a legitimate internal manual
+native-author path, with original admin/current-business floor, source CAS,
+original signer and immutable edited-event receipt. No new ActionAdapter, risk
+classification, MUTATION_VERB, approval channel, durable executor or Rail stream.
+Later consequential commercial execution still reuses Trust/Harness/LayerC where
+established, original Collections/Kit/operations/receipts and provider authority.
+
+Binding Ledger sales.department keeps PROOF_OWED. Original35 rows and E4-S3 remain
+preserved; no customer acceptance or status promotion. Producer ordering and exact
+head gates remain mandatory. Final local237 tests/nine suites; actual compiled
+Sales20 frames/16 paths/28 source pins/zero page errors and visible keyboard focus;
+type baseline10/current6, zero lint errors/two incumbent warnings. Actual
+navigation/recovery failures and clipped leave panel were repaired and recorded,
+with no assertion or authority weakening. Final proof includes both themes,
+320/390 reflow and the original PAIGE dock/overlay states.
+
+[Full ten-point contract and functional/visual/experiential limits](../evidence/ui-delivery/e04-agreement-recipients.md)
+remain separate from actual ordinary-role/provider/whole Experience/founder
+acceptance. ALG01 bounded duplicate/receipt evidence and ALG12 recovery signals
+are partial implementation proof only; ALG02 activation and ALG13 full contextual
+recommendations remain unverified. Full recipient correction/removal/order,
+assigned fields/import/preview/signing, canonical signed-to-effective economics,
+invoice/installment/Stripe reconciliation, onboarding/Operations/client-approved
+service completion, Collections and self-service remain mandatory. No O1–O12
+outcome is closed here.
+
+October22 recipient source continuation: actual template parent6ad4ab09e and main172013d89 are retained. Native250004 and260004 are actually production-source verified with five original/checked definitions and original readerc53a216 (receipts6336227514/6336228732); earlier pending notes are historical. Own recipient/source/SDK/navigation/CSS bytes are unchanged and all28 actual rendered source pins rechecked. Parent template release, this head fresh review/CI/web readback and actual owner/staff/client/provider/full12/founder acceptance remain required; no former green or source fixture is promoted.
+
 ## October22 retained document retrieval — local integrity repair
 Actual-source owner/token/Portal positives then3 corrupted-byte RED cases establish a bounded original download defect. Repair verifies actual returned bytes with the existing retained-PDF hash helper and original selected record. Portal-first/native relationship function unchanged; owner/token authorization body retains its original7148c40a pin through an explicit checksum-only inverse, with three real guard mutations still detected.45 handler/56 Deno/actual Edge type checks PASS; final root type ratchet PASS baseline10/current6 with no baseline or signing-guard change. No URL/key substitution, status/signature/audit rewrite, fabricated viewed event or private error leakage. Original unavailable/retry UI is unchanged. [Evidence and full orchestration contract](../evidence/ui-delivery/e04-agreement-document-integrity.md). All12 remain mandatory; source proof is not actual customer/provider/founder acceptance.
 

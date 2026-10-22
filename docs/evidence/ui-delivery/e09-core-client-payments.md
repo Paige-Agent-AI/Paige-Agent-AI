@@ -33,7 +33,7 @@ MUST_PRESERVE: original grouped navigation, labels, rename/order/hide, floor rul
 ACCEPTANCE_CRITERIA: missing/legacy/funding catalogue customers can find the same Payments entry; owner hiding removes it and the Home balance read; unresolved and noncustomer viewers cannot gain it; original authorized invoice journey remains intact.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: existing menu assembly and Home gating tested. Identity/RLS, Chat/Live, Spine/Harness/Trust/Layer C, Rails, Knowledge, sender, Calendar, documents, Agreements and EXP04 financial sources are unchanged.
-INTERNAL_BUILD_IDENTITY: development working tree; supporting implementation commit to be recorded in the exact-head PR receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/delivery/e09-core-client-payments.md
+INTERNAL_BUILD_IDENTITY: 8f0f8c581618d44dac2a026a3d0d05731109ea62; supporting implementation composed with current main2d554406f9e4019935a8b38a5b30e4643a88da1a; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/delivery/e09-core-client-payments.md
 RELEASE_CHANNEL: development: merge and production readback require documented exact-head review and green required CI.
 RELEASE_CLASSIFICATION: internal-only: bounded existing navigation repair, not complete Portal acceptance.
 CUSTOMER_RELEASE_IDENTITY: none: no named release or customer announcement.

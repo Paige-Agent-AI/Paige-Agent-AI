@@ -213,7 +213,7 @@ describe("Solo Systems Check workspace", () => {
     expect(trigger.textContent).toContain("Unavailable");
     act(() => trigger.click());
     expect(host.querySelector(".sc-area-d")?.textContent).toContain("Some expected checks have no result in this recorded run");
-    expect(host.querySelector(".sc-area-d")?.textContent).toContain("Your business details are on file");
+    expect(host.querySelector(".sc-area-d")?.textContent).toContain("Business details");
   });
 
   it.each(["fail", "error"])("keeps resolved %s findings distinct from a passed check or provider verification", status => {

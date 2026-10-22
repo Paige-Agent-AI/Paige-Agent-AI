@@ -8,7 +8,8 @@ remain authoritative. Refresh still rereads; O07/O19 execution is not activated.
 Five source regressions reproduced before repair;64 focused cases/three suites
 pass again with isolated exact-lock dependencies; production build passes. Native
 original-shell responsive/state/keyboard and settled Obsidian/reduced-motion/drawer
-frames use synthetic input ports only. Final type/review/CI, release
+frames use synthetic input ports only. Type ratchet has six incumbent diagnostics
+and zero new ones; final review/CI, release
 readback and corrected ordinary authorized customer/reload/cohort proof remain
 owed. No competing readiness registry, Metric reader, provider, approval, runner or
 Rail. All19 outcomes/nine catalogue entries retain their full acceptance duties;

@@ -202,25 +202,25 @@ const acct = (account: string) => encodeURIComponent(account);
 
 export const CHECK_DESTINATIONS: Record<SystemsCheckId, CheckDestination> = {
   company_info_populated: {
-    title: "Your business details are on file",
+    title: "Business details",
     area: "identity",
     label: "Setup › Business profile",
     path: (a) => `/solo/${acct(a)}/settings/setup/business-profile`,
   },
   website_connected: {
-    title: "Your website is on record",
+    title: "Website record",
     area: "identity",
     label: "Setup › Business profile",
     path: (a) => `/solo/${acct(a)}/settings/setup/business-profile`,
   },
   crm_has_customers: {
-    title: "You have people on your books",
+    title: "Customer records",
     area: "people",
     label: "Clients › People",
     path: (a) => `/solo/${acct(a)}/clients/people`,
   },
   sales_pipeline_configured: {
-    title: "Your pipeline stages are set up",
+    title: "Pipeline stage setup",
     area: "sales",
     label: "Marketing › Pipeline",
     path: (a) => `/solo/${acct(a)}/growth/pipeline`,
@@ -253,7 +253,7 @@ export const CHECK_DESTINATIONS: Record<SystemsCheckId, CheckDestination> = {
     path: (a) => `/solo/${acct(a)}/growth/sales`,
   },
   payment_method_options: {
-    title: "The ways you accept payment are written down",
+    title: "Accepted payment methods",
     area: "sales",
     label: "Marketing › Sales",
     path: (a) => `/solo/${acct(a)}/growth/sales`,
@@ -267,7 +267,7 @@ export const CHECK_DESTINATIONS: Record<SystemsCheckId, CheckDestination> = {
     path: (a) => `/solo/${acct(a)}/settings/connections?segment=communications`,
   },
   social_accounts_connected: {
-    title: "Your social accounts are on record",
+    title: "Social account records",
     area: "campaigns",
     label: "Marketing › Social",
     path: (a) => `/solo/${acct(a)}/growth/social`,

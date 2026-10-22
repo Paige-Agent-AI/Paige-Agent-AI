@@ -10,6 +10,13 @@ BEGIN
   IF p_tenant_id IS NULL OR p_expected_client_id IS NULL THEN
     RAISE EXCEPTION 'CLIENT_AGREEMENT_UNAVAILABLE' USING ERRCODE = '42501';
   END IF;
+  -- Reuse the original Auth-account authority and its established read-lock order
+  -- (Auth user before the S7 client/tenant SHARE gate), without financial permissions.
+  PERFORM 1 FROM auth.users u WHERE u.id=auth.uid() AND u.deleted_at IS NULL
+    AND (u.banned_until IS NULL OR u.banned_until<now()) FOR SHARE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'CLIENT_AGREEMENT_UNAVAILABLE' USING ERRCODE='42501';
+  END IF;
   -- The original S7 gate resolves actual Auth and holds the exact open relationship through
   -- the original call. No role/email inference, financial helper or Account write-lock upgrade.
   IF public._client_portal_lock_relationship(p_tenant_id,'share') IS DISTINCT FROM p_expected_client_id THEN
@@ -29,6 +36,13 @@ BEGIN
   IF p_tenant_id IS NULL OR p_expected_client_id IS NULL THEN
     RAISE EXCEPTION 'CLIENT_AGREEMENT_UNAVAILABLE' USING ERRCODE = '42501';
   END IF;
+  -- Reuse the original Auth-account authority and its established read-lock order
+  -- (Auth user before the S7 client/tenant SHARE gate), without financial permissions.
+  PERFORM 1 FROM auth.users u WHERE u.id=auth.uid() AND u.deleted_at IS NULL
+    AND (u.banned_until IS NULL OR u.banned_until<now()) FOR SHARE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'CLIENT_AGREEMENT_UNAVAILABLE' USING ERRCODE='42501';
+  END IF;
   -- The original S7 gate resolves actual Auth and holds the exact open relationship through
   -- the original call. No role/email inference, financial helper or Account write-lock upgrade.
   IF public._client_portal_lock_relationship(p_tenant_id,'share') IS DISTINCT FROM p_expected_client_id THEN
@@ -47,6 +61,13 @@ AS $original$
 BEGIN
   IF p_tenant_id IS NULL OR p_expected_client_id IS NULL THEN
     RAISE EXCEPTION 'CLIENT_AGREEMENT_UNAVAILABLE' USING ERRCODE = '42501';
+  END IF;
+  -- Reuse the original Auth-account authority and its established read-lock order
+  -- (Auth user before the S7 client/tenant SHARE gate), without financial permissions.
+  PERFORM 1 FROM auth.users u WHERE u.id=auth.uid() AND u.deleted_at IS NULL
+    AND (u.banned_until IS NULL OR u.banned_until<now()) FOR SHARE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'CLIENT_AGREEMENT_UNAVAILABLE' USING ERRCODE='42501';
   END IF;
   -- The original S7 gate resolves actual Auth and holds the exact open relationship through
   -- the original call. No role/email inference, financial helper or Account write-lock upgrade.

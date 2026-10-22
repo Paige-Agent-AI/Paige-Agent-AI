@@ -9,7 +9,7 @@
 -- link or the agreement; every refusal; the signer-status backstop on the token write; the download
 -- scope; sub-account parity; and no RLS policy changed.
 BEGIN;
-SELECT plan(249);
+SELECT plan(255);
 
 -- ── Seed ────────────────────────────────────────────────────────────────────────────────────────
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at) VALUES
@@ -665,6 +665,18 @@ SELECT is(pg_temp.agreement_intent('SELECT to_jsonb(public.client_portal_agreeme
 SELECT is(pg_temp.agreement_intent('SELECT public.client_portal_agreements_scoped(NULL,''c0900000-0000-4000-8000-000000000005'')',NULL,'0a090000-0000-4000-8000-000000000006')->>'sqlstate','42501','missing explicit business refuses adapter 1');
 SELECT is(pg_temp.agreement_intent('SELECT public.client_portal_open_agreement_signing_scoped(pg_temp.ag(70),NULL,''c0900000-0000-4000-8000-000000000005'')',NULL,'0a090000-0000-4000-8000-000000000006')->>'sqlstate','42501','missing explicit business refuses adapter 2');
 SELECT is(pg_temp.agreement_intent('SELECT to_jsonb(public.client_portal_agreement_document_access_scoped(pg_temp.ag(70),NULL,''c0900000-0000-4000-8000-000000000005''))',NULL,'0a090000-0000-4000-8000-000000000006')->>'sqlstate','42501','missing explicit business refuses adapter 3');
+
+-- Existing Auth authority: an old claimed subject is not an active account.
+UPDATE auth.users SET banned_until=now()+interval '1 hour' WHERE id='0a090000-0000-4000-8000-000000000006';
+SELECT is(pg_temp.agreement_intent('SELECT public.client_portal_agreements_scoped(''a0900000-0000-4000-8000-000000000001'',''c0900000-0000-4000-8000-000000000005'')','a0900000-0000-4000-8000-000000000001','0a090000-0000-4000-8000-000000000006')->>'sqlstate','42501','banned original Auth account refuses legal adapter 1');
+SELECT is(pg_temp.agreement_intent('SELECT public.client_portal_open_agreement_signing_scoped(pg_temp.ag(70),''a0900000-0000-4000-8000-000000000001'',''c0900000-0000-4000-8000-000000000005'')','a0900000-0000-4000-8000-000000000001','0a090000-0000-4000-8000-000000000006')->>'sqlstate','42501','banned original Auth account refuses legal adapter 2');
+SELECT is(pg_temp.agreement_intent('SELECT to_jsonb(public.client_portal_agreement_document_access_scoped(pg_temp.ag(70),''a0900000-0000-4000-8000-000000000001'',''c0900000-0000-4000-8000-000000000005''))','a0900000-0000-4000-8000-000000000001','0a090000-0000-4000-8000-000000000006')->>'sqlstate','42501','banned original Auth account refuses legal adapter 3');
+UPDATE auth.users SET banned_until=NULL WHERE id='0a090000-0000-4000-8000-000000000006';
+UPDATE auth.users SET deleted_at=now() WHERE id='0a090000-0000-4000-8000-000000000006';
+SELECT is(pg_temp.agreement_intent('SELECT public.client_portal_agreements_scoped(''a0900000-0000-4000-8000-000000000001'',''c0900000-0000-4000-8000-000000000005'')','a0900000-0000-4000-8000-000000000001','0a090000-0000-4000-8000-000000000006')->>'sqlstate','42501','soft-deleted original Auth account refuses legal adapter 1');
+SELECT is(pg_temp.agreement_intent('SELECT public.client_portal_open_agreement_signing_scoped(pg_temp.ag(70),''a0900000-0000-4000-8000-000000000001'',''c0900000-0000-4000-8000-000000000005'')','a0900000-0000-4000-8000-000000000001','0a090000-0000-4000-8000-000000000006')->>'sqlstate','42501','soft-deleted original Auth account refuses legal adapter 2');
+SELECT is(pg_temp.agreement_intent('SELECT to_jsonb(public.client_portal_agreement_document_access_scoped(pg_temp.ag(70),''a0900000-0000-4000-8000-000000000001'',''c0900000-0000-4000-8000-000000000005''))','a0900000-0000-4000-8000-000000000001','0a090000-0000-4000-8000-000000000006')->>'sqlstate','42501','soft-deleted original Auth account refuses legal adapter 3');
+UPDATE auth.users SET deleted_at=NULL WHERE id='0a090000-0000-4000-8000-000000000006';
 SELECT is((SELECT jsonb_agg(to_jsonb(s) ORDER BY s.id) FROM public.paige_agreement_signers s),(SELECT signers FROM exact_agreements_before),'all intent refusals preserve every original signer token and status');
 SELECT is((SELECT count(*) FROM public.paige_audit_log WHERE action='agreement.portal_link_issued'),(SELECT audits FROM exact_agreements_before),'all intent refusals issue no audit or replacement link');
 CREATE TEMP TABLE exact_opened AS SELECT pg_temp.agreement_intent('SELECT public.client_portal_open_agreement_signing_scoped(pg_temp.ag(70),''a0900000-0000-4000-8000-000000000001'',''c0900000-0000-4000-8000-000000000005'')','a0900000-0000-4000-8000-000000000001','0a090000-0000-4000-8000-000000000006') AS result;

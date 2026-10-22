@@ -32,12 +32,12 @@ MUST_PRESERVE: Original authoring/save/recovery, canonical agreement identity/na
 ACCEPTANCE_CRITERIA: Authorized user selects actual retained wording by exact original IDs and source metadata, pages with native cursor, returns to current record with focus and recovers explicit read failures. Native producer2521/130000 is released/read back; actual-role QA remains a separate gate.
 MOTION_PURPOSE: NONE: read navigation and source feedback reuse immediate native behavior.
 PROTECTED_SEAMS: AFFECTED E04 preparation/history component/API/CSS and existing source-mount drive/Binding Ledger row. UNCHANGED backend writer, financial calculations, native signatures, Gateway/Spine/Harness/Trust/Kit/Rail/admission, scheduler, sender, provider and Portal UI. No Mind/Memory promotion.
-INTERNAL_BUILD_IDENTITY: branch=codex/e04-agreement-wording-history; product_sha=4551cee0c2830046d9e41caea82859fbb4d8c5f4; composition=b22577213ad8354ea54ec912a2c698708950811e; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; dependency=APPLIED(20271113130000_agreement_draft_revision_history)/producer2521 readback6329247734; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-agreement-wording-history.md
+INTERNAL_BUILD_IDENTITY: branch=codex/e04-agreement-wording-history; product_sha=4551cee0c2830046d9e41caea82859fbb4d8c5f4; composition=511361a4e8be37b870e441aeb24b2fa4aa310a7d; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; dependency=APPLIED(20271113130000_agreement_draft_revision_history)/producer2521 readback6329247734; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-agreement-wording-history.md
 RELEASE_CHANNEL: development: source, review/CI, deployment, customer operation and acceptance states remain independent.
 RELEASE_CLASSIFICATION: internal-only: prelaunch bounded history prerequisite; all twelve and full professional agreement outcome remain incomplete.
 CUSTOMER_RELEASE_IDENTITY: none: no finished Experience or founder-acceptance announcement.
 RELEASE_NOTE_REQUIRED: no: one complete integrated E04 evaluation package remains owed.
-RELEASE_TRUTH_BOUNDARY: PROOF OWED: native producer release, authentic ordinary roles, exact real file bytes/legal sufficiency, financial/provider and complete commercial/service outcomes remain unverified.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: this mounted consumer's exact release/readback, authentic ordinary roles, exact real file bytes/legal sufficiency, financial/provider and complete commercial/service outcomes remain unverified. Native producer2521 is already released and read back.
 RELEASE_RECOVERY: position=reviewed UI forward correction or revert preserving original agreements/history; reference=docs/delivery/exp04-get-paid-deliver-journey.md; no retained evidence deletion or blind replay.
 UNVERIFIED: exact-head hosted CI/deployment, native browser-to-server/customer-role operation, two eligible SOLO cohorts, actual200percent/AT, complete professional tools and financial/delivery/Portal continuity, final integrated founder acceptance.
 
@@ -47,7 +47,10 @@ EXTEND original owner record inspection; REUSE native retained-history readers a
 the single bounded RPC boundary. No document mutation exists in this increment.
 Native source#2521 is released/read back; its mandatory source contract is preserved. Do not release this
 consumer without its authoring parent and final exact-head release gates. Existing#2515 authoring is
-the source parent. No other/retired agent is assigned and no E09 UI/source lease is
+mergedc647eceb3dd66f304b1662ccc66d2fa4d304639d; webdpl_5cHXA4yMKYXGJbVdGn8Nqycj6dUT
+is READY/exact, with served-source/customer proof still independently required.
+Currentmaind873a1b7b adds only EXP02/05 factual documentation, preserved verbatim.
+No other/retired agent is assigned and no E09 UI/source lease is
 touched. The existing Sales Binding Ledger stays PROOF_OWED, existing agreement
 capabilities PARTIAL; dedicated Chat/Live history has no new registered tool here.
 

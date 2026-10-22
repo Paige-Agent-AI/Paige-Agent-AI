@@ -6,6 +6,26 @@ mock. Complete live Experience evaluation remains pending. No other agent is use
 
 ## Compact flow brief
 
+October21 correction adoption, before product editing: original native record →
+explicit correction of unsigned editable text → same SAVE/CAS → fresh same record.
+Prototype59f81c0049c7f050178d4e51abc59ae46d369649 passed20 viewport/theme cases and17
+recovery paths; existing lead selects routine intent under Oct21 owner delegation,
+not founder acceptance. Reuse the current rich/source editor, paper/context layout,
+one per-instance Sales leave guard, original agreement/customer/offer/terms/template
+identity, native audit/retention. Title/body alone are editable. No private browser
+cache, Layer C act, new writer/ledger/approval/provider or automatic signing/charge.
+Frozen-draft native guard#2526 is a separately reviewed release prerequisite.
+
+Missing title/wording focuses the input. Capture original timestamp and reviewed
+payload once; lost response locks the proposal. Actual current-record inspection
+stays separate from execution acknowledgment. Retry requires that same frozen CAS,
+never refreshed baseline or automatic conflict overwrite. Unknown authority hides
+retained RAM; conclusive native revocation retires it. Workspace/user switch retires
+selection. Confirmed save returns through fresh native read/focus. Leaving unknown
+work explains that the original request may still complete. Existing authoring and
+history remain intact. Loading/empty/error/refusal/conflict/unknown/recovery and
+keyboard/narrow states require actual mounted evidence before release.
+
 Goal: prepare, review, request and later inspect the same client agreement.
 Human and feel: a service-business owner; composed, legible, in control of consequences.
 Entry and exit: existing Sales → Terms & Agreements; return to the same register and draft.

@@ -8,11 +8,13 @@ import { buildLaunchOptions, resolvePlaywright } from './live-drive.mjs';
 const root = path.resolve(import.meta.dirname, '../..');
 const historyProof = process.argv.includes('--history');
 const correctionProof = process.argv.includes('--correction');
+const uploadProof = process.argv.includes('--upload-intent');
 const sources = ['src/solo/sales-ops.tsx','src/solo/SalesWorkspace.tsx','src/solo/sales-dialog.tsx','src/hooks/useBeforeUnloadGuard.ts','src/solo/sales/AgreementPreparationWorkspace.tsx','src/solo/sales/AgreementBodyEditor.tsx','src/solo/sales/agreementPreparationApi.ts','src/solo/sales/agreementVocabulary.ts','src/solo/sales/agreement-body-editor.css','src/solo/sales/agreement-preparation.css','package.json','package-lock.json',...['agreement-authoring.tsx','agreement-authoring-ports.ts','agreement-authoring-client.ts','vite.agreement-authoring.config.ts','agreement-authoring.html'].map(file=>'scripts/live-drive/harness/sales-mount/'+file)];
 const hashes = async () => Object.fromEntries(await Promise.all(sources.map(async file => [file,createHash('sha256').update((await fs.readFile(path.join(root,file),'utf8')).replaceAll('\r\n','\n')).digest('hex')])));
 sources.push('scripts/live-drive/agreement-authoring-drive.mjs');
 if(historyProof)sources.push('src/solo/sales/AgreementWordingHistory.tsx','src/solo/sales/agreementRevisionApi.ts');
 if(correctionProof)sources.push('src/solo/sales/AgreementWordingHistory.tsx','src/solo/sales/agreementRevisionApi.ts','src/solo/sales/AgreementDraftCorrection.tsx','src/solo/sales/agreementCorrectionApi.ts');
+if(uploadProof)sources.push('src/solo/useSoloAgreementSignings.ts');
 console.log('Pinning actual source');
 const pinned = await hashes();
 let compiledRoot = null;
@@ -25,7 +27,7 @@ if (process.argv.includes('--compiled')) {
   await build({ configFile:path.join(root,'scripts/live-drive/harness/sales-mount/vite.agreement-authoring.config.ts'),
     build:{outDir:compiledRoot,emptyOutDir:false,rollupOptions:{input:path.join(root,'scripts/live-drive/harness/sales-mount/agreement-authoring.html')}} });
 }
-const out = path.join(root,'docs/evidence/ui-delivery/assets',correctionProof?'e04-agreement-correction':historyProof?'e04-agreement-wording-history':'e04-agreement-authoring');
+const out = path.join(root,'docs/evidence/ui-delivery/assets',uploadProof?'e04-agreement-upload-intent':correctionProof?'e04-agreement-correction':historyProof?'e04-agreement-wording-history':'e04-agreement-authoring');
 await fs.mkdir(out,{recursive:true});
 console.log('Resolving owned Playwright');
 const { chromium } = await resolvePlaywright();
@@ -146,7 +148,34 @@ const fill = async(title='Client services agreement')=>{
 };
 const capture = async(name)=>{await page.screenshot({path:path.join(out,name+'.png')});};
 try{
-  if(correctionProof){
+  if(uploadProof){
+    let observed=0;page.on('console',message=>{if(message.text()==='[e04-local-proof] Storage upload request observed')observed++;});
+    for(const theme of ['light','dark'])for(const [width,height]of [[1536,770],[1366,768],[1024,768],[900,1000],[390,844],[320,740]])for(const paige of width>=900?['closed','open']:['closed']){
+      await page.setViewportSize({width,height});await page.goto(url(theme,paige)+'&uploadProof=1',{waitUntil:'domcontentloaded'});
+      const overlay=width<=1080&&paige==='open';
+      if(overlay){
+        // The original native conversation backdrop intentionally blocks the
+        // underlying form entry. Record it, then use its actual Fold control;
+        // never force-click through it or claim a simultaneous open dialog.
+        await capture(`${width}-${height}-${theme}-open-background`);
+        await page.getByRole('button',{name:'Fold PAIGE conversation',exact:true}).last().click();
+      }
+      await page.getByRole('button',{name:'Record terms or upload',exact:true}).click();
+      await page.getByRole('radio',{name:/Upload a contract/}).click();
+      await page.getByLabel('The contract file',{exact:true}).setInputFiles({name:'controlled.pdf',mimeType:'application/pdf',buffer:Buffer.from('Controlled upload fixture, not a signed PDF.')});
+      await page.getByRole('combobox',{name:'Client',exact:true}).selectOption(client);
+      await page.getByLabel('The wording they sign',{exact:true}).fill('Synthetic source-mount placeholder; not approved agreement language.');
+      const before=observed;await page.getByRole('button',{name:'Review and send →',exact:true}).click();
+      const notice=page.getByText('The upload result could not be confirmed. The file may already be stored. This response does not confirm an agreement or a signing request.',{exact:true});
+      await notice.waitFor();assert.equal(observed,before+1,'Actual original SDK upload reached the controlled transport');
+      await notice.scrollIntoViewIfNeeded();
+      const fit=await notice.evaluate(el=>({viewport:innerWidth,document:document.documentElement.scrollWidth,bounds:el.getBoundingClientRect().toJSON()}));
+      assert.ok(fit.document<=width+1,JSON.stringify(fit));assert.ok(fit.bounds.x>=0&&fit.bounds.x+fit.bounds.width<=width+1,JSON.stringify(fit));
+      assert.equal(calls.some(call=>call.name==='create_agreement_signing'),false,'Unknown upload must not proceed to original signing creation');
+      await page.evaluate(()=>document.fonts.ready);await capture(`${width}-${height}-${theme}-${paige}`);frames.push({theme,width,height,requestedPaige:paige,actualPaige:overlay?'folded-before-modal':paige,fit});
+    }
+    behavior.push('original owning Sales upload form and actual hook/SDK','controlled lost upload acknowledgement is visibly unconfirmed','no signing record call after unknown upload','notice wraps on narrow viewports','unchanged private bucket/no-overwrite behavior proven separately by actual-hook cases');
+  }else if(correctionProof){
     const draftTitle=()=>page.getByRole('textbox',{name:'Draft title',exact:true});
     const enter=async()=>{await page.getByRole('button',{name:'Correct draft wording',exact:true}).click();await draftTitle().waitFor();};
     const proposal=async()=>{await draftTitle().fill('Reviewed correction');await page.getByRole('button',{name:'Text source',exact:true}).click();await page.getByRole('textbox',{name:'Agreement text source',exact:true}).fill('# Revised advisory wording\n\nRetain the actual responsibilities.\n');await page.getByRole('button',{name:'Document',exact:true}).click();};

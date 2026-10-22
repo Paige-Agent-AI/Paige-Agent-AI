@@ -21,6 +21,7 @@
 .e5-weekly-facts dd { margin:0; overflow-wrap:anywhere; }
 .e5-weekly-notice { padding:12px; background:var(--pg-raised,hsl(var(--muted))); border-radius:8px; }
 .e5-weekly-attempt,.e5-weekly-result,.e5-weekly-controls { margin-top:24px; }
+.e5-weekly-controls :is(button,summary) { min-height:44px; }
 .e5-weekly-sources { list-style:none; padding:0; }
 .e5-weekly-sources li { display:flex; flex-direction:column; gap:4px; padding:12px 0; border-bottom:1px solid var(--pg-line,hsl(var(--border))); }
 .e5-weekly-sources a { display:flex; align-items:center; gap:8px; overflow-wrap:anywhere; }

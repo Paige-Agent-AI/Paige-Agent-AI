@@ -44,6 +44,19 @@ SOLO_900X1000_PAIGE_OPEN: PASS: assets/e2-linked-finding-inspection/900-open.jpg
 
 ## Ownership, algorithms and orchestration
 
+Current-main composition supplement: d581b3ece45e5640447fab70530082443bda8cf9
+preserves all product leaves;16/17 original render inputs are unchanged. The
+shared shell adds EXP05's optional opener callback. Six actual native original-
+component frames in assets/e2-linked-finding-inspection/composed-observations.json
+pin all17 current inputs and separately retain the original20 historical JPEGs.
+Desktop1536 CSS/native1535 screenshot-thumbnail width is explicitly disclosed;
+no raster processing or exact desktop-raster claim. Actual320 CSS/raster matches.
+No page/source overflow, original source controls44px, loaded product font,
+keyboard Enter→drawer→Escape→exact Inspect trigger and scroll59.2→59.2 verified.
+Chat fold/reopen preserves the unsent synthetic draft. No backend/provider/action
+ran. This bounded composition check does not certify the full live Experience,
+natural customer recovery, native zoom/AT or authenticated/cohort/Live acceptance.
+
 Single source-navigation outcome: two original semantic helpers, one original mounted
 workspace/scoped CSS, three original test suites and existing harness/fixtures;
 supporting native assets, Brain and original matrix complete the review packet.

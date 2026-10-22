@@ -48,7 +48,9 @@ the single bounded RPC boundary. No document mutation exists in this increment.
 Native source#2521 is released/read back; its mandatory source contract is preserved. Do not release this
 consumer without its authoring parent and final exact-head release gates. Existing#2515 authoring is
 mergedc647eceb3dd66f304b1662ccc66d2fa4d304639d; webdpl_5cHXA4yMKYXGJbVdGn8Nqycj6dUT
-is READY/exact, with served-source/customer proof still independently required.
+is READY/exact. Exact parent deployment versionc647-mvitkdra and current canonical
+doc-only descendantd873-mvitnzwh/served authoring module8105842a13 are verified in
+PR2515/6329998318. Authenticated customer proof remains independently required.
 Currentmaind873a1b7b adds only EXP02/05 factual documentation, preserved verbatim.
 No other/retired agent is assigned and no E09 UI/source lease is
 touched. The existing Sales Binding Ledger stays PROOF_OWED, existing agreement

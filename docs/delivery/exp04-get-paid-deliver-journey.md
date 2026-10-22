@@ -1,5 +1,23 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
+## October22 actual-owner pending signer wording — pre-edit repair
+
+REPAIR, not a new signing path. Actual authorized owner saved/reloaded a private
+Not sent draft, while its original pending signer was labeled Awaiting signature.
+Customer outcome: see the actual unsigned state without implying a request was
+issued. Reuse canonical agreementVocabulary SIGNER_STATE in the selected record
+and existing signer roster; pending means Not signed, not sending or delivery.
+Sales is the entry; same native agreement/party records, actual owner/business/
+role and original SDK/Rail/history remain authoritative. UI vocabulary only, no
+Spine/LayerC execution, new adapter, risk/approval/budget/autonomy/provider access,
+identity/store/job/receipt/scheduler or signature/payment/Comms mutation. Preserve
+viewed/signed/declined and genuine agreement-sent states. Existing prepared roster
+flow must causally reject request-implying copy before the one-label repair;
+actual original signer source drive covers desktop/narrow/focus/refusal/recovery.
+Then separate exact source review/CI, ordered parent release, production readback
+and actual same-owner observation; no source or author smoke is independent/full
+O1–O12/founder acceptance. No new legal clauses or infrastructure counsel gate.
+
 ## October22 required visual-check repair
 
 Actual verify120044935098 on0010067d3 FAILED only at the original Impeccable

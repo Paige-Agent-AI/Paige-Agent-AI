@@ -59,5 +59,7 @@ export function signingPreparationLabel(stored: string, expiresAt: string | null
   return SIGNATURE_STATE[state]?.label ?? 'Status unavailable';
 }
 export const SIGNER_STATE: Record<string, string> = {
-  pending: 'Awaiting signature', viewed: 'Signing link opened', signed: 'Signature recorded', declined: 'Declined',
+  // A prepared party is pending before any request is issued. Sending has its
+  // own agreement/provider evidence; this state only confirms no signature.
+  pending: 'Not signed', viewed: 'Signing link opened', signed: 'Signature recorded', declined: 'Declined',
 };

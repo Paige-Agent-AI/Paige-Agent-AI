@@ -1,6 +1,32 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
-## October22 coherent preparation release checkpoint
+## October22 actual preparation release and bounded focus repair
+
+Original2604 is released: reviewed6b8d5db6a8bb47c0f37e12f79a0bea0533a3b301,
+main4dac29197cdfe834b8b5bccb6f7266f28c9468e0, productiondpl_E1YR69zBJb2bjJwyCCRKiwCv3rFV,
+all applicable exact-head gates and source readback verified in Master4.0.
+GitHub recorded2605 as merged into its source parent after2fc was included; it
+is now in main THROUGH2604, not a separate main release or discarded source.
+Bounded actual ordinary-owner PDF/one field/save/reload/history proof is protected
+ANT52. Additional actual native editor Escape retained words but left BODY focus;
+this OPEN recovery finding is being repaired in the SAME editor/native menu.
+Original compiled assertion causally failed before repair. Current8 portal-context
+controls and20 native frames/19 paths/26 exact pins/zero page errors PASS. The
+document observer is focus-only and checks the exact own aria-controls pair;
+ONE original Sales leave guard remains authoritative. No wording save, new
+authority, provider, signing, payment or service-completion claim follows.
+Two complete local Sales runs each have993/994 PASS with one unchanged5s link-test
+timeout; neither is full-suite PASS. The separate restricted103-file also failed
+one different timeout. Original same103 tests then pass103/103 and full994/994
+in66 suites PASS under normal Windows process permissions, all assertions/timeouts/
+network guard unchanged. Type10/current6/no new diagnostics PASS; initial
+restricted compiler produced no result and was stopped, never counted as PASS.
+Fresh required CI and actual post-release
+owner focus recheck remain gates. Other four source-drive records retain their
+dated2604 proof; their source pins are not relabeled current. All12 outcomes and
+one final complete founder evaluation remain mandatory and incomplete.
+
+## Earlier October22 coherent preparation checkpoint — historical
 
 Reuse the existing native signing/document/party engine and API2599. Extend the
 same mounted Sales record with exact unsigned PDF/assigned fields/native version
@@ -101,6 +127,10 @@ own web release/readback precede actual ordinary-role checks; no source fixture
 establishes authenticated acceptance. Editor2605, commercial exact approval,
 PRE-1, stable upload recovery and all12 outcomes remain mandatory. Historical
 runner attempts and earlier source-stage plans below retain their dated limits.
+
+## October22 native heading-menu focus — pre-edit repair
+
+REPAIR the existing AgreementBodyEditor and its SAME source-browser path. Actual ordinary-owner production operation retains the unchanged draft and resolves all toolbar/heading labels, but Escape leaves DOM focus on BODY after the native heading menu closes. Installed MDX SelectContent explicitly prevents close autofocus. Owner outcome: dismiss the menu and continue keyboard work in the same editor without losing context or changing wording. Sales/Agreements is the domain; original editor/menu/fieldset/ONE leave guard, native agreement/template and source epochs remain. This is private interface focus only: no new Spine/Chat/Live registration, LayerC/Harness/approval/permission/budget/provider, durable job or Rail receipt. Original sales.department remains PARTIAL/PROOF_OWED for the complete Experience. Restore only the actual current native trigger after its handled dismissal; unmounted/disabled/retired or separately focused context must not receive delayed focus. Add the original compiled-browser causal assertion first, preserve all prior menu/wording/guard/source/state checks, verify desktop/narrow and exact source, then final review/CI/release/readback/actual owner recheck. All twelve outcomes, proper roles/cohorts/physical device, algorithms/catalogue/INT346 and whole founder acceptance remain separate. No legal words or universal counsel gate is introduced.
 
 ## October22 original wording-editor labels — pre-edit correction
 

@@ -1,5 +1,39 @@
 # EXP04 original editor labels, menu dismissal and template viewport
 
+## Current October22 native-menu keyboard repair
+
+Based on actual mainc7fa122ae37aebdde2db61c8fd19f3e64c8b7da5. Released2604/main4dac
+is independently production/source verified with bounded actual-owner private
+PDF/field save/reload/history in protected ANT52. That additional real editor
+inspection found native menu Escape returning focus to BODY. The original MDX
+primitive portals outside the editor event boundary and prevents close autofocus.
+
+The SAME original editor now observes only its own native listbox/aria-controls
+pair and, after native dismissal, restores the still-current enabled trigger.
+It never prevents default, handles navigation, changes words or saves. The ONE
+original Sales leave guard is unchanged. Retired/unmounted/read-only/source-mode,
+hidden or separately focused work cannot receive delayed focus. Native unit
+fixture causally failed1/8 before repair, then all8 pass. Original real-library
+source-browser assertion also failed before repair; corrected20 frames/19 paths/
+26 owning pins/zero page errors PASS. Desktop1536/light and320/dark renders were
+inspected; the existing native document/sidebar/compact navigation remain intact.
+Other four records below are dated2604 supporting proof, not freshly verified
+current pins. No physical-device, screen-reader or browser-zoom claim.
+
+Two full scoped Sales runs each have993/994 PASS with one different unchanged5s
+link-test timeout; a separate103-case file run has102 PASS/one different timeout.
+The initially failing single case passed unchanged in isolation246ms. SAME
+unchanged103-case file passes103/103, then full994/994 in66 suites PASS under
+normal Windows process permissions. All failed runs remain FAILED; no assertion,
+timeout, baseline or transport guard is changed. Type ratchet10/current6/no new
+diagnostics PASS; the first restricted compiler produced no result and was
+stopped, not counted as PASS. Exact-head normal hosted CI remains a release gate.
+Current focus source is
+NOT_DEPLOYED/NOT_ACCEPTED until review/gates/readback/actual-owner recheck. No own
+SQL/Edge/provider/permission/approval/signing/payment or catalogue activation.
+
+## Earlier2604 source checkpoint — historical, superseded release state
+
 October22 combined preparation source checkpoint2e804682fe70c3b4c5d63013eb160122607eea41, based on
 reviewed main ec1c497e0d26de218f28dfd61dd614fae05097eb. Existing2604 workspace,
 2605 editor and actual-owner pending-label repair are one coherent increment;
@@ -38,12 +72,12 @@ MATERIAL_FLOW_CHANGE: YES: native heading-menu Escape preserves the template edi
 FLOW_PROTOTYPE: PASS: original complete Agreements prototype275be12415239d4ecdb66bec0894146ec9fe5c64 and October21 owner design delegation; correction follows actual existing rendered interaction defects.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: existing authorized agreement authors can compose supplied wording, inspect correct editor actions and dismiss a child menu without leaving or discarding their work.
 VISUAL_DIRECTION: PASS: existing Sales Operate and paper/editor/sidebar hierarchy, unchanged native tokens and six routes; mobile document receives its viewport through the original compact row, no new shell or decorative system.
-AUTOMATED_EVIDENCE: PASS: fresh scoped Sales986/65 on current main composition; one unchanged5s upload timeout preserved, identical isolated170ms PASS then complete quiet986 PASS. Original SDK/controller/model/guard/terms/invoice calculations and two unchanged sanitizer controls; synthetic authority, no provider. Older coverage below is historical/separate, never summed.
-STATIC_EVIDENCE: PASS: current changed-source ESLint0/two incumbent warnings, gold/UTF8 PASS, exact Impeccable4.1.0 zero anti-patterns/18 incumbent advisories. Original npm audit --omit=dev --audit-level=high PASS,8 moderate remain. Earlier type10/6 is supporting only; fresh exact-head CI type/other gates remain UNVERIFIED.
-RENDERED_EVIDENCE: PASS: fresh actual compiled source20 viewport/theme/panel cases/19 behavioral paths/26 normalized owning pins/zero page errors; all five records142 pin comparisons recomputed. Actual desktop paper/roster and320 dark template inspected. Native PDF/worker/fonts/bytes, source components; Auth/API/RPC synthetic, not hosted persistence or legal/provider/customer acceptance.
+AUTOMATED_EVIDENCE: PASS: full994/994 in66 suites under normal Windows process permissions, preceded by same103-case file103/103 PASS.8 focused native-portal/context controls after causal1FAIL/7PASS, original actual-library drive20 frames/19 paths/26 pins/zero errors. Restricted two full runs993/994 and separate file102/103 remain FAILED on different unchanged5s link-test timeouts; initially failing case isolated246ms PASS. No assertions/timeouts/network guard changed. Required exact-head hosted CI stays a release gate.
+STATIC_EVIDENCE: PASS: changed production/test ESLint0, gold/UTF8, TypeScript ratchet10/current6/no new diagnostics and canonical Impeccable4.1.0 detection passed. First restricted compiler produced no result and was stopped, never PASS. Earlier2604 results are separate history; new hosted checks remain required.
+RENDERED_EVIDENCE: PASS: current original compiled source20 viewport/theme/panel frames/19 paths/26 exact normalized owning pins/zero page errors. Actual1536 light and320 dark inspected. Native real library, synthetic Auth/API/RPC; other four source-drive records are dated2604 supporting evidence, not relabeled current.
 BEHAVIORAL_EVIDENCE: PASS: expanded native Undo/Redo shortcuts and all three heading levels; actual menu Escape retains editor; exact wording/options/version/recovery/original-client handoff and reload; bounded narrow row/current destination/six routes; neighboring original PDF/save/history/unknown/keyboard/intake paths retained.
-AUTHENTICATED_RUNTIME: UNVERIFIED: current combined candidate not deployed. Separate protected actual ordinary-owner preexisting foundation draft/create/full reload/history does not prove candidate field retention, roles/cohorts, signing/provider, full O1 or whole Experience acceptance.
-KEYBOARD_FOCUS: PASS: actual native accessible actions and heading-menu Escape, original required-title/client focus and unsaved leave controls; source guards honor handled/composing/native popup Escape while subsequent unhandled Escape and beforeunload remain authoritative. Full device/assistive technology acceptance is separate.
+AUTHENTICATED_RUNTIME: UNVERIFIED: focus repair is not deployed or owner-rechecked. Released parent2604 has protected actual-owner PDF/one field/save/full reload/history proof, plus the OPEN actual BODY-focus defect. This is author-run, not Central QA, staff/client/cohort/signing/provider/full12/founder acceptance.
+KEYBOARD_FOCUS: PASS: current actual-library Escape assertion returns focus to the exact Block type trigger while retaining editor/words and ONE original leave guard.8 portal/context tests reject stale/unmounted/read-only/source/hidden/foreign-menu/other-focus recovery. Actual deployed repair/device/assistive technology acceptance remains separate.
 ZOOM_REFLOW: PASS: actual320/390/900/1024/1366/1536 light/dark/native PAIGE states; no application overflow, compact narrow row/current destination and44px controls; original PDF100percent bounded pan retained.
 REDUCED_MOTION: PASS: original source drive uses reducedMotion:reduce; no new motion or animated navigation.
 STATE_COVERAGE: PASS: actual original empty/editor/retained/earlier/unconfirmed/refused/retry/read/reload/native leave and guarded navigation paths in the four current source-mount records; canonical state vocabulary retained.
@@ -67,7 +101,7 @@ ACCEPTANCE_CRITERIA: exact native action names and three heading levels, child-m
 MOTION_PURPOSE: NONE: no motion added; existing reduced-motion/native waiting behavior retained.
 PROTECTED_SEAMS: native editor content and draft writers, one original leave/navigation guard, existing Sales route registry and stylesheet, native document bytes/field/CAS/version/history, original token/Portal/legal/finance/Comms/Operations/LayerC/INT346 boundaries unchanged.
 
-INTERNAL_BUILD_IDENTITY: branch=codex/e04-agreement-editor-labels; source_base=c3ae3cd1222b51c39644ec62fb8d3c18e089fcc2; source_head=72fa1382dd9f379bfd9e89b737fba033acce6295; final_head=PR review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-agreement-editor-interactions.md
+INTERNAL_BUILD_IDENTITY: branch=codex/e04-editor-menu-focus; source_base=c7fa122ae37aebdde2db61c8fd19f3e64c8b7da5; source_head=PR review receipt; final_head=PR review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-agreement-editor-interactions.md
 RELEASE_CHANNEL: development: actual original component/native editor/SDK with synthetic Auth/API/RPC only.
 RELEASE_CLASSIFICATION: internal-only: bounded original editor/navigation corrections, not whole O1 or complete Experience acceptance.
 CUSTOMER_RELEASE_IDENTITY: none: no founder or whole-Experience announcement.

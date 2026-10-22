@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useOwnerTaskAutomations } from "./data/useOwnerTaskAutomations";
 import { OwnerTaskProcessHistory } from "./owner-task-process-history";
@@ -36,7 +36,7 @@ const feedbackWords = (feedback: NonNullable<ReturnType<typeof useOwnerTaskAutom
   }
 };
 
-export function OwnerTaskAutomations({ navigationHeld = false }: { navigationHeld?: boolean }) {
+export function OwnerTaskAutomations({ navigationHeld = false, onNavigationGuardChange, canLeave }: { navigationHeld?: boolean; onNavigationGuardChange?: (guard: (()=>string|null)|null)=>void; canLeave?: ()=>boolean }) {
   const a = useOwnerTaskAutomations(), id = useId(), { pathname } = useLocation();
   const base = pathname.match(/^(\/solo\/[^/]+)(?:\/|$)/)?.[1];
   const [review, setReview] = useState<{ item: OwnerTaskReview; scope: string } | null>(null);
@@ -49,6 +49,12 @@ export function OwnerTaskAutomations({ navigationHeld = false }: { navigationHel
   const sourceRef = useRef<HTMLButtonElement | null>(null), scopeRef = useRef(a.scopeKey);
   scopeRef.current = a.scopeKey;
   const selected = review?.scope === a.scopeKey && a.read.status === "ready" && a.read.items.includes(review.item) && !a.needsRefresh ? review.item : null;
+  useLayoutEffect(() => {
+    const reason = a.busy ? "Wait for the current process decision to finish."
+      : selected ? "Finish or cancel the process review before leaving." : null;
+    onNavigationGuardChange?.(() => reason);
+    return () => onNavigationGuardChange?.(null);
+  }, [a.busy, selected, onNavigationGuardChange]);
   useEffect(() => { if (selected) cancelRef.current?.focus(); }, [selected]);
   const cancel = () => { setReview(null); sourceRef.current?.focus(); };
   const submit = async (item: OwnerTaskReview, action: "arm" | "pause") => {
@@ -110,7 +116,7 @@ export function OwnerTaskAutomations({ navigationHeld = false }: { navigationHel
         })}</ul>
         {a.read.hasMore && <p className="sa-empty">Only the first 50 contact-created processes were checked. Older processes may not appear here.</p>}
       </>}
-    {base && <footer className="sa-editor-foot"><Link to={`${base}/command-center/business-game-plan`} className="sa-note">Review pending tasks</Link>
-      <Link to={`${base}/operations/work`} className="sa-note">Open work</Link></footer>}
+    {base && <footer className="sa-editor-foot"><Link to={`${base}/command-center/business-game-plan`} className="sa-note" onClick={event=>{if(canLeave&&!canLeave())event.preventDefault();}}>Review pending tasks</Link>
+      <Link to={`${base}/operations/work`} className="sa-note" onClick={event=>{if(canLeave&&!canLeave())event.preventDefault();}}>Open work</Link></footer>}
   </section>;
 }

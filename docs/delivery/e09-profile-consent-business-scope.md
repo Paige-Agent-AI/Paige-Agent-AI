@@ -49,3 +49,6 @@ RELEASE_CLASSIFICATION: internal-only: additive original-writer intent adapters,
 CUSTOMER_RELEASE_IDENTITY: none
 RELEASE_TRUTH_BOUNDARY: PARTIAL: static/native-source prerequisites only; hosted165, exact-head CI/Preview, normal native production readback and actual original owner/client outcome PROOF OWED. No new catalogue or algorithm LIVE state.
 RELEASE_RECOVERY: additive old-ABI-compatible forward correction; original writers/ledger/records are never reset or overwritten.
+
+
+Final source review strengthened the replacement negative to pass the captured, matching original timestamp to the profile adapter; a NULL-version rejection would not prove exact intent as clearly. Original fixture plan remains165. No production/security function changed in this review correction.

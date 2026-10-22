@@ -43,7 +43,17 @@ export function OperationsPlaybooks({ tenantId, onPrepare }: Props) {
     {shown.length > 0 && <p className="ops-source-limit">These are documented procedures. Prepare a workflow for review from its source; saving, authorizing and executing work are separate steps.</p>}
     <Sheet open={Boolean(selected)} onOpenChange={open => { if (!open) setSelected(null); }}>
       <SheetContent className="ops-detail-sheet paige-solo" data-pg={portalTheme} data-theme={portalTheme} onCloseAutoFocus={event => {
-        if (handoffClosing.current) { event.preventDefault(); handoffClosing.current = false; }
+        if (handoffClosing.current) {
+          event.preventDefault(); handoffClosing.current = false;
+          const origin = invoker.current;
+          const shell = origin?.closest("[data-tenant-shell]");
+          requestAnimationFrame(() => {
+            if (!origin?.isConnected) return;
+            const composer = shell?.querySelector<HTMLTextAreaElement>('#tenant-paige-workspace textarea[aria-label="Message PAIGE"]');
+            if (composer && !composer.disabled && composer.getClientRects().length && !composer.closest('[hidden],[aria-hidden="true"],[inert]')) composer.focus({ preventScroll: true });
+            else origin.focus({ preventScroll: true });
+          });
+        }
         else if (invoker.current?.isConnected) { event.preventDefault(); invoker.current.focus(); }
       }}>{selected && <ProcedureDetail tenantId={tenantId} id={selected} onPrepare={onPrepare ? doc => {
         handoffClosing.current = true; setSelected(null); onPrepare(doc);

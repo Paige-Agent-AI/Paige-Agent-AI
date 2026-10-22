@@ -11,14 +11,15 @@ vi.mock("@/hooks/useKnowledgeDocuments", () => ({ useKnowledgeDocuments: (_tenan
   error: id ? fixture.detailError : fixture.error, hasMore: false, reload: vi.fn(), loadMore: vi.fn(), isCurrent: () => fixture.current,
 }) }));
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-let root: Root, container: HTMLDivElement;
+let root: Root, container: HTMLDivElement, shell: HTMLDivElement;
 const doc = { id: "test-procedure-a", tenant_id: "test-tenant-a", title: "Client handoff", summary: "Confirm the next owner.",
   category: "SOP", tags: [], revision: 2, source: "manual", content: "Source body, never copied to the handoff." } as KnowledgeDocument;
 beforeEach(() => {
   Object.assign(fixture, { docs: [doc], detail: [{ ...doc, revision: 3 }], loading: false, error: null, detailLoading: false, detailError: null, current: true });
-  container = document.createElement("div"); document.body.append(container); root = createRoot(container);
+  shell = document.createElement("div"); shell.dataset.tenantShell = ""; document.body.append(shell);
+  container = document.createElement("div"); shell.append(container); root = createRoot(container);
 });
-afterEach(() => { act(() => root.unmount()); container.remove(); });
+afterEach(() => { act(() => root.unmount()); shell.remove(); });
 function button(text: string) { return Array.from(document.querySelectorAll("button")).find(b => b.textContent?.trim() === text); }
 async function render(onPrepare = vi.fn()) { await act(async () => root.render(<OperationsPlaybooks tenantId="test-tenant-a" onPrepare={onPrepare} />)); return onPrepare; }
 async function inspect() { await act(async () => container.querySelector<HTMLButtonElement>(".ops-procedure-index>button")!.click()); }
@@ -46,6 +47,15 @@ it("refuses a source retired between display and activation", async () => {
 it("withholds preparation without a conversation callback", async () => {
   await act(async () => root.render(<OperationsPlaybooks tenantId="test-tenant-a" />)); await inspect();
   expect(button("Prepare workflow draft")?.disabled).toBe(true);
+});
+it.each([false, true])("keeps a usable keyboard destination after the source handoff (composer disabled:%s)", async disabled => {
+  const composer = document.createElement("textarea"); composer.setAttribute("aria-label", "Message PAIGE"); composer.disabled = disabled;
+  vi.spyOn(composer, "getClientRects").mockReturnValue([new DOMRect(0, 0, 300, 80)] as unknown as DOMRectList);
+  const panel = document.createElement("aside"); panel.id = "tenant-paige-workspace"; panel.append(composer); shell.append(panel);
+  await render(); const sourceButton = container.querySelector<HTMLButtonElement>(".ops-procedure-index>button")!;
+  sourceButton.focus(); await inspect();
+  await act(async () => button("Prepare workflow draft")!.click());
+  await vi.waitFor(() => expect(document.activeElement).toBe(disabled ? sourceButton : composer));
 });
 it("filters a foreign source from the library", async () => {
   fixture.docs = [{ ...doc, tenant_id: "test-tenant-b" }]; await render();

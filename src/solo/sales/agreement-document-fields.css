@@ -1,6 +1,24 @@
 .e04-document-fields { min-width:0; color:var(--pg-ink); }
 .e04-document-fields-head { display:flex; align-items:start; justify-content:space-between; gap:16px; margin-bottom:20px; }
-.e04-document-eyebrow { color:var(--pg-ink-2); font:600 12px/1.5 var(--pg-font-ui); }
+.e04-native-preparation { min-width:0; color:var(--pg-ink); }
+.e04-native-preparation-heading { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:20px; margin:8px 0 12px; }
+.e04-native-preparation-heading h3 { margin:0 0 4px; font:600 20px/1.35 var(--pg-font-ui); }
+.e04-native-preparation-heading .e04-preparation-status { margin:0; }
+.e04-native-preparation-status { margin:8px 0; color:var(--pg-ink-2); font:400 13px/1.6 var(--pg-font-ui); max-width:75ch; }
+.e04-native-preparation :is(p,dd) { overflow-wrap:anywhere; }
+.e04-native-preparation-heading p,.e04-native-preparation-receipt p { margin:0; color:var(--pg-ink-2); font:400 13px/1.6 var(--pg-font-ui); max-width:70ch; }
+.e04-native-preparation-history { display:flex; align-items:end; flex-wrap:wrap; gap:12px; margin:8px 0 12px; }
+.e04-native-preparation-history label { display:grid; flex:1; gap:8px; min-width:min(100%,240px); color:var(--pg-ink-2); font-size:13px; }
+.e04-native-preparation :is(button,select,summary) { min-height:44px; }
+.e04-native-preparation-history :is(button,select),.e04-native-preparation .e04-preparation-message button,.e04-native-preparation-recovery button { padding:10px 14px; border:1px solid var(--pg-line-strong); border-radius:var(--r-s); color:var(--pg-ink); background:var(--pg-surface); font:500 13px/1.5 var(--pg-font-ui); }
+.e04-native-preparation-history select { max-width:100%; width:100%; }
+.e04-native-preparation :is(button,select,summary):focus-visible { outline:2px solid var(--pg-violet); outline-offset:3px; }
+.e04-native-preparation-receipt { margin-top:24px; padding-top:16px; border-top:1px solid var(--pg-line); }
+.e04-native-preparation-receipt summary { display:list-item; align-content:center; font:500 13px/1.5 var(--pg-font-ui); cursor:pointer; }
+.e04-native-preparation-receipt dl { display:grid; grid-template-columns:minmax(120px,1fr) minmax(0,3fr); gap:10px 20px; margin:12px 0; font:400 13px/1.6 var(--pg-font-ui); }
+.e04-native-preparation-receipt :is(dt,dd) { margin:0; }
+.e04-native-preparation-receipt dt { color:var(--pg-ink-2); }
+@media(max-width:600px) { .e04-native-preparation-heading { grid-template-columns:minmax(0,1fr); gap:8px; } .e04-native-preparation-heading .e04-preparation-back { justify-self:start; } .e04-native-preparation-heading .e04-preparation-status { justify-self:start; } .e04-native-preparation-receipt dl { grid-template-columns:minmax(0,1fr); gap:4px; } .e04-native-preparation-receipt dd { margin-bottom:10px; } }
 .e04-document-fields h3 { margin:4px 0 8px; font:600 20px/1.35 var(--pg-font-ui); overflow-wrap:anywhere; }
 .e04-document-fields :is(h4,legend) { margin:0; color:var(--pg-ink); font:600 14px/1.5 var(--pg-font-ui); }
 .e04-document-fields p { margin:0; color:var(--pg-ink-2); font:400 13px/1.6 var(--pg-font-ui); }
@@ -56,3 +74,9 @@
 @media(max-width:1050px) { .e04-document-layout { grid-template-columns:minmax(0,1fr); } .e04-document-inspector { grid-template-columns:repeat(2,minmax(0,1fr)); } .e04-document-field-properties { grid-column:1/-1; } .e04-document-review { grid-template-columns:minmax(0,1fr); } }
 @media(max-width:600px) { .e04-document-tools,.e04-document-inspector { grid-template-columns:minmax(0,1fr); } .e04-document-stage { padding:10px; } .e04-document-page-controls { grid-template-columns:44px minmax(0,1fr) 44px; } .e04-document-zoom { grid-column:1/-1; justify-content:space-between; } .e04-document-kind button { flex:1; } .e04-document-fields-head { flex-direction:column; gap:10px; } }
 @media(forced-colors:active) { .e04-document-fields .e04-pdf-field { border:2px solid Highlight; color:CanvasText; background:Canvas; } .e04-document-fields button[aria-pressed=true] { outline:2px solid Highlight; } }
+/* Keep the original six destinations/roving keys/leave guard. This local row
+ * gives the document its mobile viewport; it is not another application shell. */
+@media(max-width:600px) {
+  .sales-department[data-agreement-workspace=open]>.sales-tabs { flex-wrap:nowrap; max-width:calc(100% - 24px); overflow-x:auto; overscroll-behavior-x:contain; scroll-padding-inline:6px; }
+  .sales-department[data-agreement-workspace=open]>.sales-tabs button { flex:0 0 auto; min-height:44px; }
+}

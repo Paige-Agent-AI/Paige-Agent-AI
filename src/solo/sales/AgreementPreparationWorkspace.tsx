@@ -9,12 +9,14 @@ import { AgreementBodyEditor } from './AgreementBodyEditor';
 import { AgreementWordingHistory } from './AgreementWordingHistory';
 import { AgreementDraftCorrection, type AgreementCorrectionSession } from './AgreementDraftCorrection';
 import { AgreementSignerPreparation, type AgreementSignerSession } from './AgreementSignerPreparation';
+import type {DocumentGuard} from './AgreementDocumentPreparation';
 import { canPrepareAgreementSigners, emptySignerDraft, prepareAgreementSignerCommand, recoverAgreementSigner, saveAgreementSigner, type AgreementSignerReceipt } from './agreementSignerApi';
 import { prepareAgreementCorrection, saveAgreementCorrection } from './agreementCorrectionApi';
 import { createAgreementDraft, readAgreementPreparation, recoverAgreementCreation, type AgreementPreparation } from './agreementPreparationApi';
 import {readAgreementTemplate,type AgreementTemplateVersion} from './agreementTemplateApi';
 import { SIGNER_STATE, signingPreparationLabel } from './agreementVocabulary';
 import './agreement-preparation.css';
+const AgreementDocumentPreparation=React.lazy(()=>import('./AgreementDocumentPreparation').then(module=>({default:module.AgreementDocumentPreparation})));
 
 type Props = {
   tenantId: string | null; canManage: boolean; authorityUnknown: boolean; authorizationReady: boolean;
@@ -22,6 +24,8 @@ type Props = {
   agreementId: string; requestId: string | null; requestTenantId: string | null; freshlyOpened: boolean;
   templateVersionId?: string | null;
   signerRequestId?: string | null;
+  documentRequestId?: string | null;
+  onDocumentRequestRetained?: (id: string | null) => { url: string; replace: () => void } | undefined;
   onSignerRequestRetained?: (id: string | null) => { url: string; replace: () => void } | undefined;
   onDraftAttempted: (requestId: string) => void;
   onOpenRecord: (id: string) => void; onClose: () => void; onOpenClients?: () => void;
@@ -43,7 +47,7 @@ function WorkspaceMessage({ title, text, onClose, onRetry }: { title: string; te
   return <section className="e04-preparation"><button className="e04-preparation-back" onClick={onClose}><ArrowLeft size={16} />Agreements and terms</button><div className="e04-preparation-message"><FileText size={28} aria-hidden="true" /><h2 tabIndex={-1} ref={heading}>{title}</h2><p>{text}</p>{onRetry && <button onClick={onRetry}><RefreshCw size={16} />Check again</button>}</div></section>;
 }
 type SessionProps = Props & { activeTenantId: string | null; activeUserId: string | null; scopeReady: boolean };
-function ScopedPreparation({ tenantId, agreementId, requestId, requestTenantId, freshlyOpened, templateVersionId=null, signerRequestId=null, onSignerRequestRetained, clients, clientsReady, clientsReadable, onClose, onOpenRecord, onOpenClients, onOpenTemplate, signings, onRefresh, activeTenantId, activeUserId, scopeReady, canManage, authorityUnknown, authorizationReady, onDraftAttempted }: SessionProps) {
+function ScopedPreparation({ tenantId, agreementId, requestId, requestTenantId, freshlyOpened, templateVersionId=null, signerRequestId=null, documentRequestId=null,onDocumentRequestRetained,onSignerRequestRetained, clients, clientsReady, clientsReadable, onClose, onOpenRecord, onOpenClients, onOpenTemplate, signings, onRefresh, activeTenantId, activeUserId, scopeReady, canManage, authorityUnknown, authorizationReady, onDraftAttempted }: SessionProps) {
   const originalFresh = React.useRef(freshlyOpened && agreementId === 'new');
   const [phase, setPhase] = React.useState<Phase>(originalFresh.current&&!templateVersionId ? 'editing' : 'loading');
   const [templateSource,setTemplateSource]=React.useState<AgreementTemplateVersion|null>(null);
@@ -60,6 +64,9 @@ function ScopedPreparation({ tenantId, agreementId, requestId, requestTenantId, 
   const [signerReceipt, setSignerReceipt] = React.useState<AgreementSignerReceipt | null>(null);
   const signerEpoch = React.useRef(0), signerBusy = React.useRef(false), signerRecoverySeen = React.useRef<string | null>(null);
   const signerTrigger = React.useRef<HTMLButtonElement>(null), signerReturnPending = React.useRef(false);
+  const [documentOpen,setDocumentOpen]=React.useState(false);
+  const [documentGuard,setDocumentGuard]=React.useState<DocumentGuard>({draft:[],busy:false,uncertain:false});
+  const documentTrigger=React.useRef<HTMLButtonElement>(null),documentReturnPending=React.useRef(false),documentSeen=React.useRef<string|null>(null);
   const [historyOpen, setHistoryOpen] = React.useState(false);
   const historyTrigger = React.useRef<HTMLButtonElement>(null);
   const historyReturnPending = React.useRef(false);
@@ -74,22 +81,38 @@ function ScopedPreparation({ tenantId, agreementId, requestId, requestTenantId, 
   const titleField = React.useRef<HTMLInputElement>(null);
   const clientField = React.useRef<HTMLSelectElement>(null);
   const bodyPanel = React.useRef<HTMLDivElement>(null);
-  const busy = phase === 'saving' || correction?.state === 'saving' || signer?.state === 'saving' || signer?.state === 'checking';
+  const busy = phase === 'saving' || correction?.state === 'saving' || signer?.state === 'saving' || signer?.state === 'checking'||(documentOpen&&documentGuard.busy);
   const scopeMatches = Boolean(scopeReady && activeUserId && tenantId && activeTenantId === tenantId);
   // A request URL preserves its originating business across reload and business
   // switching. This is an intent fence; canonical native authority still decides.
-  const requestScopeMatches = (agreementId !== 'new' && !signerRequestId) || requestTenantId === tenantId;
+  const requestScopeMatches = ((agreementId !== 'new' && !signerRequestId&&!documentRequestId) || requestTenantId === tenantId)&&!(signerRequestId&&documentRequestId);
   const allowed = scopeMatches && requestScopeMatches && authorizationReady && canManage && !authorityUnknown;
   const accessEpoch = React.useRef({ allowed, value: 0 });
   if (accessEpoch.current.allowed !== allowed) accessEpoch.current = { allowed, value: accessEpoch.current.value + 1 };
   const visibleClients = clientsReady && clientsReadable ? clients : [];
-  const exit = useSalesDraftExit(signer ? signer.draft : correction ? { title:correction.title, clientId:correction.original.contact_id, body:correction.body } : { title, clientId, body }, busy, onClose, {
-    uncertain: signer?.state === 'unconfirmed' || correction?.state === 'unconfirmed' || (agreementId === 'new' && !originalFresh.current && !foundOriginal),
+  const exit = useSalesDraftExit(documentOpen?documentGuard.draft:signer ? signer.draft : correction ? { title:correction.title, clientId:correction.original.contact_id, body:correction.body } : { title, clientId, body }, busy, onClose, {
+    uncertain: (documentOpen&&documentGuard.uncertain)||signer?.state === 'unconfirmed' || correction?.state === 'unconfirmed' || (agreementId === 'new' && !originalFresh.current && !foundOriginal),
     recordedDraftFound: foundOriginal !== null,
   });
   const navigation = React.useRef({ open: onOpenRecord, finish: exit.exitAfterSave });
   const adoptDraftBaseline = exit.adoptBaseline;
   navigation.current = { open: onOpenRecord, finish: exit.exitAfterSave };
+  const retainDocumentRequest=(id:string|null)=>{
+    const next=onDocumentRequestRetained?.(id);
+    // A real navigation checkpoint is required before a native write.
+    return Boolean(next&&exit.retainRequestLocation(next.url,next.replace,'document'));
+  };
+  const returnFromDocument=()=>{
+    documentSeen.current=documentRequestId;
+    if(!documentGuard.uncertain)retainDocumentRequest(null);
+    setDocumentOpen(false);setDocumentGuard({draft:[],busy:false,uncertain:false});
+    exit.adoptBaseline({title:'',clientId:'',body:''});documentReturnPending.current=true;
+    recordEpoch.current=-1;setRecord(null);setPhase('loading');setAttempt(value=>value+1);onRefresh();
+  };
+  const beginDocument=()=>{
+    if(!allowed||!record||recordEpoch.current!==accessEpoch.current.value||signerRequestId)return;
+    documentSeen.current=documentRequestId;exit.adoptBaseline([]);setDocumentGuard({draft:[],busy:false,uncertain:Boolean(documentRequestId)});setDocumentOpen(true);
+  };
 
   const retireCorrection = () => {
     correctionEpoch.current++; correctionRead.current++; correctionBusy.current=false;
@@ -268,6 +291,7 @@ function ScopedPreparation({ tenantId, agreementId, requestId, requestTenantId, 
       correctionEpoch.current++; correctionRead.current++; correctionBusy.current=false; setCorrection(null);
       setCorrectionReceipt(null);
       signerEpoch.current++; signerBusy.current=false; signerRecoverySeen.current=null; setSigner(null); setSignerReceipt(null);
+      setDocumentOpen(false);setDocumentGuard({draft:[],busy:false,uncertain:false});documentSeen.current=null;
       adoptDraftBaseline({title:'',clientId:'',body:''});
     }
   }, [scopeMatches, authorizationReady, authorityUnknown, canManage, adoptDraftBaseline]);
@@ -279,6 +303,7 @@ function ScopedPreparation({ tenantId, agreementId, requestId, requestTenantId, 
       correctionBusy.current=false; correctionRead.current++;
       setCorrection(value=>value ? {...value,reading:false,state:value.state==='saving'?'unconfirmed':value.state} : null);
       signerBusy.current=false;
+      setDocumentGuard(value=>({...value,busy:false,uncertain:value.uncertain||value.busy}));
       setSigner(value=>value ? {...value,state:value.state==='saving'||value.state==='checking'?'unconfirmed':value.state} : null);
     }
   }, [allowed]);
@@ -287,6 +312,7 @@ function ScopedPreparation({ tenantId, agreementId, requestId, requestTenantId, 
     if (phase === 'record' && signerReturnPending.current) {
       (signerTrigger.current ?? heading.current)?.focus(); signerReturnPending.current=false; return;
     }
+    if(phase==='record'&&documentReturnPending.current){(documentTrigger.current??heading.current)?.focus();documentReturnPending.current=false;return;}
     if (phase === 'record' && correctionReturnPending.current) {
       (correctionTrigger.current ?? heading.current)?.focus(); correctionReturnPending.current=false; return;
     }
@@ -329,6 +355,10 @@ function ScopedPreparation({ tenantId, agreementId, requestId, requestTenantId, 
     // Read-only actor-bound recovery is the only automatic continuation.
     void recoverSignerRef.current(pending);
   },[allowed,tenantId,phase,visibleRecord,signerRequestId,signer,adoptDraftBaseline]);
+  React.useEffect(()=>{
+    if(!allowed||phase!=='record'||!visibleRecord||!documentRequestId||documentOpen||signer||documentSeen.current===documentRequestId)return;
+    documentSeen.current=documentRequestId;adoptDraftBaseline([]);setDocumentGuard({draft:[],busy:false,uncertain:true});setDocumentOpen(true);
+  },[allowed,phase,visibleRecord,documentRequestId,documentOpen,signer,adoptDraftBaseline]);
   const currentClient = visibleClients.find(client => client.id === (agreement?.contact_id ?? clientId));
   const savedStatus = agreement ? signingPreparationLabel(agreement.status, agreement.expires_at) : null;
   const reading = phase === 'loading' || (phase === 'record' && !visibleRecord);
@@ -359,6 +389,13 @@ function ScopedPreparation({ tenantId, agreementId, requestId, requestTenantId, 
     {phase === 'uncertain' && <div className="e04-preparation-recovery" role="alert"><h3>Check the original save</h3><p>{message}</p><div>{foundOriginal && <button className="e04-preparation-primary" onClick={() => exit.request(() => onOpenRecord(foundOriginal))}>Open recorded draft<ArrowRight size={16} /></button>}<button className="e04-preparation-primary" onClick={() => setAttempt(value => value + 1)}><RefreshCw size={16} />Check original save</button><button onClick={() => { setPhase('editing'); setMessage('Continue the original draft. Saving reuses its original request and will not replace an existing document.'); }}>Continue this draft</button></div></div>}
     {phase==='record' && correction && <AgreementDraftCorrection key={correctionEpoch.current} session={correction} tenantId={tenantId} sessionId={correctionEpoch.current} clientName={visibleClients.find(client=>client.id===correction.original.contact_id)?.name ?? 'Client details are not loaded'} onChange={patch=>setCorrection(value=>value?.state==='editing' && !value.command ? {...value,...patch} : value)} onSave={() => { void saveCorrection(); }} onRead={() => { void readCurrentForCorrection(); }} onReturn={()=>exit.request(returnFromCorrection)}/>}
     {phase==='record' && signer && <AgreementSignerPreparation key={signerEpoch.current} session={signer} clientName={visibleClients.find(client=>client.id===signer.original.agreement.contact_id)?.name ?? 'Client details are not loaded'} onChange={patch=>setSigner(value=>value?.state==='editing'&&!value.command?{...value,draft:{...value.draft,...patch}}:value)} onSave={()=>{void saveSigner();}} onRecover={()=>{void recoverSigner();}} onReturn={()=>exit.request(()=>returnFromSigner())}/>}
+    {phase==='record'&&agreement&&documentOpen&&activeUserId&&<React.Suspense fallback={<p role="status">Opening document preparation…</p>}><AgreementDocumentPreparation tenantId={tenantId} actorId={activeUserId} agreementId={agreement.id} requestId={documentRequestId}
+      authorityKey={`${tenantId}:${activeUserId}:${accessEpoch.current.value}`} isCurrent={()=>allowed&&accessEpoch.current.allowed&&exit.alive.current}
+      resume={documentGuard} onGuard={(value,baseline)=>{setDocumentGuard(value);if(baseline)exit.adoptBaseline(baseline);}}
+      onRetainRequest={retainDocumentRequest} onRequest={exit.request} onReturn={returnFromDocument}
+      onAddSigners={()=>{if(documentGuard.uncertain||!retainDocumentRequest(null))return;setDocumentOpen(false);setDocumentGuard({draft:[],busy:false,uncertain:false});beginSigner();}}
+      onAccessRefused={()=>{documentSeen.current=documentRequestId;setDocumentOpen(false);setDocumentGuard({draft:[],busy:false,uncertain:false});exit.adoptBaseline({title:'',clientId:'',body:''});recordEpoch.current=-1;setRecord(null);setPhase('error');setMessage('Agreement access could not be confirmed. Recheck the original business and record.');onRefresh();}}
+      /></React.Suspense>}
     {(phase === 'editing' || phase === 'saving') && <form onSubmit={save} className="e04-preparation-layout">
       <div className="e04-preparation-document"><div className="e04-preparation-form-row"><label>Agreement title<input ref={titleField} value={title} onChange={event => setTitle(event.target.value)} disabled={busy} placeholder="Client services agreement" /></label><label>Client<select ref={clientField} value={clientId} onChange={event => setClientId(event.target.value)} disabled={busy || !clientsReady || !clientsReadable}><option value="">Select a client</option>{visibleClients.map(client => <option key={client.id} value={client.id}>{client.name}</option>)}</select></label></div><div ref={bodyPanel}><AgreementBodyEditor scopeKey={`${tenantId}:${requestId}`} value={body} onChange={setBody} readOnly={busy} /></div></div>
       <aside className="e04-preparation-context"><div className="e04-preparation-context-card"><FileText size={22} aria-hidden="true" /><h3>A draft for review</h3><p>Saving retains the agreement wording and client relationship. It does not request a signature or payment.</p><ul><li><Check size={16} aria-hidden="true" />Review the services and responsibilities.</li><li><Check size={16} aria-hidden="true" />Specify the intended fees and payment dates.</li><li><Check size={16} aria-hidden="true" />Use reviewed terms appropriate to the engagement.</li></ul></div>
@@ -368,7 +405,7 @@ function ScopedPreparation({ tenantId, agreementId, requestId, requestTenantId, 
         <button className="e04-preparation-primary" type="submit" disabled={busy || !clientsReady || !clientsReadable}>{busy ? <><Loader2 size={16} aria-hidden="true" />Confirming draft…</> : <>Save agreement draft<ArrowRight size={16} /></>}</button>
       </aside>
     </form>}
-    {phase === 'record' && visibleRecord && agreement && !historyOpen && !correction && !signer && <div className="e04-preparation-layout"><section className="e04-preparation-document"><div className="e04-preparation-document-heading"><FileText size={17} aria-hidden="true" /><span>Recorded wording · content version {agreement.version}</span></div>{agreement.body_markdown !== null ? <div className="e04-preparation-paper"><ReactMarkdown components={{ img: ({ alt }) => <span>[Embedded image: {alt || 'document image'}]</span> }}>{agreement.body_markdown}</ReactMarkdown></div> : <div className="e04-preparation-message"><FileText size={28} aria-hidden="true" /><h3>Original PDF document</h3><p>Use signature history and files to inspect the retained documents available for this agreement.</p></div>}</section><aside className="e04-preparation-context"><div className="e04-preparation-context-card"><h3>Agreement details</h3><dl><dt>Client</dt><dd>{currentClient?.name ?? 'Client details are not loaded'}</dd><dt>Document source</dt><dd>{agreement.body_source === 'tenant_template' ? 'Business template version' : agreement.body_source === 'tenant_upload' ? 'Uploaded document' : 'Authored agreement'}</dd>{agreement.source_version_id&&onOpenTemplate&&<><dt>Source record</dt><dd><button onClick={()=>exit.request(()=>onOpenTemplate(agreement.source_version_id!))}>Inspect source template</button></dd></>}{agreement.expires_at && <><dt>Signing link deadline</dt><dd>{historyTime(agreement.expires_at)}</dd></>}<dt>Last recorded</dt><dd>{new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(agreement.updated_at))}</dd></dl></div><div className="e04-preparation-context-card"><Users size={22} aria-hidden="true" /><h3>Signing progress</h3>{signerAcknowledgment}{canPrepareAgreementSigners(agreement) && <button ref={signerTrigger} onClick={beginSigner} disabled={Boolean(signerRequestId)}>Add signer</button>}{signerRequestId && <button onClick={()=>{signerRecoverySeen.current=null;setAttempt(value=>value+1);}}>Check retained signer request</button>}{visibleRecord.signers.length ? <ol className="e04-preparation-signers">{visibleRecord.signers.map(signer => <li key={signer.id}><strong>{signer.full_name}</strong><span>{signer.email}</span><small>{signer.signer_role === 'counterparty' ? 'Client signer' : signer.signer_role === 'tenant_signatory' ? 'Business signer' : 'Witness'} · Order {signer.signing_order} · {SIGNER_STATE[signer.status] ?? 'Status unavailable'}</small></li>)}</ol> : <p>No signer is recorded. A signer is required before signatures can be requested.</p>}</div><div className="e04-preparation-context-card"><h3>Document changes</h3>{correctionAcknowledgment}<p>Inspect wording retained under this agreement. Earlier saved versions may not be available.</p>{agreement.can_edit && agreement.status==='draft' && agreement.body_markdown!==null && agreement.body_source!=='tenant_upload' && !agreement.has_source_document && !agreement.content_sha256 && !agreement.sealed_sha256 && <button ref={correctionTrigger} onClick={beginCorrection}>Correct draft wording</button>}<button ref={historyTrigger} onClick={() => setHistoryOpen(true)}>Inspect wording history</button></div><AgreementRecordHistory key={agreement.id} id={agreement.id} tenantId={tenantId} completed={agreement.status === 'completed'} signings={signings} /><p className="e04-preparation-note">A signing status does not establish payment or completion of the agreed services.</p></aside></div>}
+    {phase === 'record' && visibleRecord && agreement && !historyOpen && !correction && !signer && !documentOpen && <div className="e04-preparation-layout"><section className="e04-preparation-document"><div className="e04-preparation-document-heading"><FileText size={17} aria-hidden="true" /><span>Recorded wording · content version {agreement.version}</span></div>{agreement.body_markdown !== null ? <div className="e04-preparation-paper"><ReactMarkdown components={{ img: ({ alt }) => <span>[Embedded image: {alt || 'document image'}]</span> }}>{agreement.body_markdown}</ReactMarkdown></div> : <div className="e04-preparation-message"><FileText size={28} aria-hidden="true" /><h3>Original PDF document</h3><p>Use signature history and files to inspect the retained documents available for this agreement.</p></div>}</section><aside className="e04-preparation-context"><div className="e04-preparation-context-card"><h3>Agreement details</h3><dl><dt>Client</dt><dd>{currentClient?.name ?? 'Client details are not loaded'}</dd><dt>Document source</dt><dd>{agreement.body_source === 'tenant_template' ? 'Business template version' : agreement.body_source === 'tenant_upload' ? 'Uploaded document' : 'Authored agreement'}</dd>{agreement.source_version_id&&onOpenTemplate&&<><dt>Source record</dt><dd><button onClick={()=>exit.request(()=>onOpenTemplate(agreement.source_version_id!))}>Inspect source template</button></dd></>}{agreement.expires_at && <><dt>Signing link deadline</dt><dd>{historyTime(agreement.expires_at)}</dd></>}<dt>Last recorded</dt><dd>{new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(agreement.updated_at))}</dd></dl></div><div className="e04-preparation-context-card"><Users size={22} aria-hidden="true" /><h3>Signing progress</h3>{signerAcknowledgment}{canPrepareAgreementSigners(agreement) && <button ref={signerTrigger} onClick={beginSigner} disabled={Boolean(signerRequestId)}>Add signer</button>}{signerRequestId && <button onClick={()=>{signerRecoverySeen.current=null;setAttempt(value=>value+1);}}>Check retained signer request</button>}{visibleRecord.signers.length ? <ol className="e04-preparation-signers">{visibleRecord.signers.map(signer => <li key={signer.id}><strong>{signer.full_name}</strong><span>{signer.email}</span><small>{signer.signer_role === 'counterparty' ? 'Client signer' : signer.signer_role === 'tenant_signatory' ? 'Business signer' : 'Witness'} · Order {signer.signing_order} · {SIGNER_STATE[signer.status] ?? 'Status unavailable'}</small></li>)}</ol> : <p>No signer is recorded. A signer is required before signatures can be requested.</p>}</div><div className="e04-preparation-context-card"><h3>Document preparation</h3><p>Review the exact PDF, place signer fields and inspect saved preparation versions.</p><button ref={documentTrigger} onClick={beginDocument} disabled={Boolean(signerRequestId)}>Prepare document and fields</button></div><div className="e04-preparation-context-card"><h3>Document changes</h3>{correctionAcknowledgment}<p>Inspect wording retained under this agreement. Earlier saved versions may not be available.</p>{agreement.can_edit && agreement.status==='draft' && agreement.body_markdown!==null && agreement.body_source!=='tenant_upload' && !agreement.has_source_document && !agreement.content_sha256 && !agreement.sealed_sha256 && <button ref={correctionTrigger} onClick={beginCorrection}>Correct draft wording</button>}<button ref={historyTrigger} onClick={() => setHistoryOpen(true)}>Inspect wording history</button></div><AgreementRecordHistory key={agreement.id} id={agreement.id} tenantId={tenantId} completed={agreement.status === 'completed'} signings={signings} /><p className="e04-preparation-note">A signing status does not establish payment or completion of the agreed services.</p></aside></div>}
     {exit.confirmation}
   </article>;
 }

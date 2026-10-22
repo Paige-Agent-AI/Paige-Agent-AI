@@ -1968,6 +1968,41 @@ October22 current native prerequisites: template220004, commercial230004, signer
 
 #### Original agreement-document owner API — pre-edit integration contract
 
+Mounted-consumer continuation: use the SAME original Sales workspace/one leave
+guard, actual native view/PDF/version/history and opaque document request UUID
+plus original business reference. Capture the actual existing Auth session/user
+before dispatch and pin that Authorization on the existing SDK request; retire
+before/after every await on user/business/permission/instance change. No private
+fields/PDF/token in URL/storage/logs. Retain the recovery UUID BEFORE a mutation;
+unknown outcome keeps that SAME immutable command until native recovery. Original
+signer/template/wording/import and E09 source remain, no competing pane/approval.
+Fresh native view/source match is separate from the historical save receipt;
+actual bytes/hash/geometry render before placement, source-matched signer labels
+only. Current versus historical version and missing/changed/forbidden/unknown/
+commercial-hold/loading/saved/recoverable states are explicit. A historical read
+does not authorize a replacement; new writes use original native current CAS.
+Source/component/transport fixtures cannot close authenticated acceptance.
+
+Mounted-source review additionally REPAIRS original native Sales navigation:
+six wrapped mobile destination rows obscured the real document, and native arrow
+navigation moved focus after a browser-level refusal. Preserve the SAME six
+destinations/route registry and show one bounded narrow row only in an agreement
+workspace; reveal the selected destination. The SAME existing Sales leave guard
+now consumes the already-established sales-before-navigation request BEFORE
+router/focus advancement. Other registered guards retain authority. This is no
+new navigation or approval engine. A real narrow geometry/focus failure and
+bounded diagnostic establish the defect; full final confirmation remains owed.
+One unit run overlapped the source repair and is excluded as causal RED evidence;
+its subsequent PASS does not replace the actual failing browser trace.
+
+Other actual source findings: preserve unsaved field guards while native access
+is pending; checkpoint an explicitly opened verified existing document for reload;
+leave an unknown request without automatically reopening it; keep its opaque
+reference for later inspection. Native preparation remains unsigned and separate
+from approval/signing/financial/accepted-service evidence. Compact the repeated
+heading/status content so document controls retain the viewport. Full hosted
+owner/staff/linked-client/provider and all twelve outcomes remain unaccepted.
+
 1. Outcome: prepare the original actual PDF, retain assigned fields as immutable
    native versions, retrieve exact bytes/history and recover the same interrupted
    request. Ordinary internal preparation never signs, sends or charges.

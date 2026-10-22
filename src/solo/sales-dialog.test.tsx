@@ -37,6 +37,18 @@ it('keeps a different editor guard authoritative during an opaque recovery check
   act(()=>{result=retain(target,()=>{const event=new Event('navigate',{cancelable:true});Object.assign(event,{destination:{url:new URL(target,location.href).href}});navigation.dispatchEvent(event);if(!event.defaultPrevented)history.replaceState(null,'',target);});});
   expect(result).toBe(false);expect(location.search).not.toContain('agreement_signer_request');expect(host.querySelectorAll('[role="alertdialog"]')).toHaveLength(1);const leave=new Event('beforeunload',{cancelable:true});window.dispatchEvent(leave);expect(leave.defaultPrevented).toBe(true);
 });
+it('retains only the explicit document request kind and keeps unsaved fields guarded',()=>{
+  const agreement='aaaaaaaa-0000-4000-8000-000000000001',request='bbbbbbbb-0000-4000-8000-000000000001',tenant='cccccccc-0000-4000-8000-000000000001';
+  history.replaceState(null,'',`/solo/alpha/sales/agreements?agreement=${agreement}`);
+  let retain!:ReturnType<typeof useSalesDraftExit>['retainRequestLocation'];
+  function Checkpoint(){const guard=useSalesDraftExit('private field proposal',false,()=>{}, {uncertain:true});retain=guard.retainRequestLocation;return <>{guard.confirmation}</>;}
+  host=document.createElement('div');document.body.append(host);root=createRoot(host);act(()=>root.render(<Checkpoint/>));
+  const target=`?agreement=${agreement}&agreement_document_request=${request}&agreement_business=${tenant}`;
+  const replace=vi.fn(()=>history.replaceState(null,'',target));expect(retain(target,replace)).toBe(false);expect(replace).not.toHaveBeenCalled();
+  act(()=>expect(retain(target,replace,'document')).toBe(true));
+  const before=new Event('beforeunload',{cancelable:true});window.dispatchEvent(before);expect(before.defaultPrevented).toBe(true);expect(hasUnsavedWork()).toBe(true);
+  for(const bad of [target+`&agreement_signer_request=${request}`,target+`&agreement=${agreement}`,target+'&fields=private',target+`&agreement_document_request=${request}`])expect(retain(bad,vi.fn(),'document')).toBe(false);
+});
 it('adopts only an explicit reviewed editor baseline and protects later edits again',()=>{
   let adopt!:(value:unknown)=>void,setValue!:(value:string)=>void;
   function BaselineHarness(){const [value,set]=React.useState('');setValue=set;const guard=useSalesDraftExit(value,false,()=>{});adopt=guard.adoptBaseline;return <>{guard.confirmation}</>;}
@@ -48,6 +60,13 @@ it('adopts only an explicit reviewed editor baseline and protects later edits ag
   act(()=>setValue('Later proposal'));leave=new Event('beforeunload',{cancelable:true});window.dispatchEvent(leave);expect(leave.defaultPrevented).toBe(true);
 });
 it('fallback protects same-account Back with a visible choice',()=>{open();act(()=>{history.replaceState(null,'','/solo/alpha/growth/catalog');window.dispatchEvent(new PopStateEvent('popstate',{state:null}));});expect(location.pathname).toBe('/solo/alpha/growth/sales');expect(host.querySelector('[role="alertdialog"]')).not.toBeNull();expect(document.activeElement?.textContent).toBe('Continue editing');});
+it('the original Sales navigation request is intercepted BEFORE route and keyboard focus can advance',()=>{
+  open();const proceed=vi.fn(),event=new CustomEvent('paige:sales-before-navigation',{cancelable:true,detail:{proceed}});
+  act(()=>{if(window.dispatchEvent(event))proceed();});expect(event.defaultPrevented).toBe(true);expect(proceed).not.toHaveBeenCalled();expect(host.querySelectorAll('[role=alertdialog]')).toHaveLength(1);
+  act(()=>[...host.querySelectorAll<HTMLButtonElement>('button')].find(button=>button.textContent==='Continue editing')!.click());expect(proceed).not.toHaveBeenCalled();
+  const second=new CustomEvent('paige:sales-before-navigation',{cancelable:true,detail:{proceed}});act(()=>{if(window.dispatchEvent(second))proceed();});
+  act(()=>[...host.querySelectorAll<HTMLButtonElement>('button')].find(button=>button.textContent==='Discard changes')!.click());expect(proceed).toHaveBeenCalledOnce();
+});
 it('fallback permits a different-account Back without retaining its draft',()=>{open();const listener=vi.fn();window.addEventListener('popstate',listener);act(()=>{history.replaceState(null,'','/solo/beta/growth/sales');window.dispatchEvent(new PopStateEvent('popstate',{state:null}));});expect(host.querySelector('[role="alertdialog"]')).toBeNull();expect(listener).toHaveBeenCalledTimes(1);window.removeEventListener('popstate',listener);});
 
 it('a confirmed receipt transition bypasses only its own native leave warning',()=>{

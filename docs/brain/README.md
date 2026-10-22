@@ -1,3 +1,41 @@
+## EXP02 prepared source references — October22 foundation
+
+The original scoped prepared-work reader now retains only a known remediator's
+scalar finding UUID through the shared E4 frame. No full action payload, inferred
+department source, arbitrary URL or approval claim. Missing creation time stays
+absent rather than becoming the current time. Four causal failures then70 cases
+in five original suites pass. No new control, route map, reader, store, worker or
+authority. Actual mounted finding focus and spacious Desk source CTA/Chat return
+are separate required consumers; current resolver stays surface_only. Exact-head
+review/CI, source readback and ordinary customer/cohort proof remain owed.
+Parent2612 and original2607 now have released-source proof below; source-reference
+SDK inference is corrected, actual type ratchet10/6/zero new and70 owning cases
+pass without baseline or runtime-query changes. Original source-binding contract
+causally refused the serializer delta; one reviewed dependency digest is renewed
+after reproducing original120-source/29-adapter proof. Original Spine self-test
+and77 incumbent positive/hostile controls pass; extractor/metadata/dispatch and
+other119 pins unchanged. Fresh exact-head hosted gates remain mandatory.
+All19/nine and one complete founder evaluation
+remain open. [Evidence](../evidence/ui-delivery/e2-prepared-source-reference.md).
+
+## EXP02 Systems Check source release — October22 verified readback
+
+PR2612 reviewedc033ded75c8593c8f1fa3a18b0530cb8f725257f, separate
+AUTHOR-REVIEW / LOWER ASSURANCE5619760376, all10 applicable checks/two web
+statuses pass, no-schema Preview skip/zero threads. Guarded main
+8e97c949d7a7234a842a9ba44d8bc8646caf2cc6 has expected parents and union
+62a6bd5c330ed2b5cc62a315e3507b434a0d916e. Exact production
+dpl_EKYTdUDpjDWd6Z6NX6agpGPqA3Kx READY/public build8e97c949-mvjz6m2z;
+served SoloEntry-DOOs5lu_.js has all four reviewed source markers and no obsolete
+readiness title. [Exact release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2612#issuecomment-6350335218).
+Functional source release is verified; Visual17 native synthetic frames remain
+supporting; Experiential corrected ordinary account/cohort/role/Live and Founder
+Acceptance remain unverified. No own SQL/Edge/scan/action/approval/provider or
+catalogue/algorithm activation. All19/nine remain mandatory. This readback
+supersedes the earlier development-state statements below without changing their
+historical evidence. Reliability2608 and source-reference/inspection/Desk
+consumers retain separate exact-head gates; no customer announcement.
+
 ## EXP02 recorded Systems Check coverage — October22 development
 
 The sole EXP02 lead is correcting O06 evidence presentation in the original
@@ -1689,3 +1727,25 @@ verified implementation; LayerC does not apply to this pure read. All19 outcomes
 nine analytics, historical9/0 and12/0/4, shared ownership and consequential holds
 remain. See the existing integration matrix and transport UI evidence; ANT138
 eca1796a and ANT1613217e341 record the dependency-ordered continuation plan.
+
+
+## EXP02 October22 — verified Business Review reliability source release
+
+PR2608 reviewed c6b93ce0821c707ca2294130da1b11690972ea05, separate
+AUTHOR-REVIEW / LOWER ASSURANCE5620278242, all11 exact-head checks/two web
+statuses SUCCESS and zero threads, merged27c7c822528de533a0cadeabb79c3a5b1228d55f.
+Actual parents9e194dd4bb82c12ab313eef0c5f8c02a4f976b27+c6 and tree
+790307bcced28f74b10dcb02b88ae0d5fde38e80 match the clean inspected union.
+Normal Edge39852405952/120081762965 strictly verified original source/config
+for paige-ai-chat509 and paige-business-review70; both ACTIVE/verify_jwt=true,
+edge-live exactmerge. Production dpl_5umtRSvBeMEjmHQx94FzyLGxa2h8 READY;
+public build27c7c822528de533a0cadeabb79c3a5b1228d55f-mvk0nvdb/customerUpdate:null.
+[Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2608#issuecomment-6351119623).
+
+Functional source release verified;193 source cases supporting. Visual layout
+unchanged. Experiential corrected ordinary weekly response/original turn/reload
+and whole Founder Acceptance remain UNVERIFIED; no universal historical CPU
+recovery claim. Original read-only Spine/Metric contract, CAP017 Limited/Access
+Unverified, applicable algorithms, Trust/LayerC/Rail and all19/nine obligations
+remain unchanged. No own schema, provider, role or consequential activation.
+This supersedes earlier candidate release statements without rewriting history.

@@ -1,6 +1,6 @@
 import { act, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { OwnerTaskReview } from "./data/ownerTaskAutomation";
 const m = vi.hoisted(() => ({ state: {} as Record<string, unknown>, refresh: vi.fn(), control: vi.fn(),
@@ -222,5 +222,33 @@ describe("original internal-task history inspection", () => {
     const close = screen.getByRole("button", { name: "Close history", exact: true });
     if (choice === "Escape") fireEvent.keyDown(close, { key: "Escape" }); else fireEvent.click(close);
     expect(m.closeHistory).toHaveBeenCalledTimes(1); expect(document.activeElement).toBe(opener); expect(m.control).not.toHaveBeenCalled();
+  });
+});
+
+
+describe("Operations host navigation contract", () => {
+  function Location() { const location = useLocation(); return <output>{location.pathname}</output>; }
+  it("publishes the original exact-review hold and clears it on Cancel and unmount", () => {
+    let guard: () => string | null = () => null;
+    const register = vi.fn((next: (() => string | null) | null) => { guard = next ?? (() => null); });
+    render(<MemoryRouter><OwnerTaskAutomations onNavigationGuardChange={register} /></MemoryRouter>);
+    expect(guard()).toBeNull(); fireEvent.click(screen.getByRole("button", { name: "Review to enable" }));
+    expect(guard()).toContain("Finish or cancel");
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" })); expect(guard()).toBeNull();
+    expect(m.control).not.toHaveBeenCalled(); cleanup(); expect(register).toHaveBeenLastCalledWith(null);
+  });
+  it.each(["review", "saving"])("keeps the original Work exit in the host while %s is held", state => {
+    let guard: () => string | null = () => null;
+    const register = (next: (() => string | null) | null) => { guard = next ?? (() => null); };
+    if (state === "saving") m.state.busy = true;
+    render(<MemoryRouter initialEntries={["/solo/test-account/operations/playbooks"]}><Location />
+      <OwnerTaskAutomations onNavigationGuardChange={register} canLeave={() => !guard()} /></MemoryRouter>);
+    if (state === "review") fireEvent.click(screen.getByRole("button", { name: "Review to enable" }));
+    fireEvent.click(screen.getByRole("link", { name: "Open work" }));
+    expect(document.querySelector("output")?.textContent).toBe("/solo/test-account/operations/playbooks");
+    expect(m.control).not.toHaveBeenCalled();
+    if (state === "review") { fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+      fireEvent.click(screen.getByRole("link", { name: "Open work" }));
+      expect(document.querySelector("output")?.textContent).toBe("/solo/test-account/operations/work"); }
   });
 });

@@ -1,23 +1,32 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight, BookOpen, Search } from "lucide-react";
 import { useKnowledgeDocuments } from "@/hooks/useKnowledgeDocuments";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { readKnowledge, type KnowledgeDocument } from "@/lib/knowledge-service";
 import { supabase } from "@/integrations/supabase/client";
 
+import { OwnerTaskAutomations } from "@/solo/owner-task-automations";
+import "@/solo/settings-integrations.css";
 const procedureLabels = new Set(["sop", "procedure", "procedures", "playbook", "playbooks", "operating procedure"]);
 function isProcedure(document: KnowledgeDocument) {
   return [document.category, ...(document.tags ?? [])].some(label => label && procedureLabels.has(label.trim().toLowerCase()));
 }
 export type ProcedureReference = Pick<KnowledgeDocument, "id" | "tenant_id" | "title" | "revision">;
-type Props = { tenantId: string; onPrepare?: (source: ProcedureReference | null, routine?: string) => void };
+type Props = {
+  tenantId: string;
+  view?: "procedures" | "automations";
+  onViewChange?: (view: "procedures" | "automations") => void;
+  onNavigationGuardChange?: (guard: (() => string | null) | null) => void;
+  canLeave?: () => boolean;
+  onPrepare?: (source: ProcedureReference | null, routine?: string) => void;
+};
 const routines = [
   ["Client handoff", "Clarify the owner, required inputs and the next team handoff."],
   ["Weekly review", "Define what to inspect, when to review it and what needs your attention."],
   ["Quality check", "Outline the checks and evidence needed before work is accepted."],
 ] as const;
 
-export function OperationsPlaybooks({ tenantId, onPrepare }: Props) {
+function ProcedureLibrary({ tenantId, onPrepare }: Props) {
   const source = useKnowledgeDocuments(tenantId);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
@@ -106,4 +115,47 @@ function ProcedureDetail({ tenantId, id, onPrepare }: { tenantId: string; id: st
         {recheckError && <div className="ops-procedure-recovery" role="alert"><p>{recheckError}</p><button ref={recovery} type="button" onClick={() => { setRecheckError(null); void source.reload(); }}>Reload source</button></div>}
         {document.summary && <p>{document.summary}</p>}<div className="ops-procedure-content">{document.content ?? "The source has no readable body in this view."}</div>
         <p className="ops-source-limit">Reading this source does not start work or record an approval.</p></>}</div></>;
+}
+
+export function OperationsPlaybooks(props: Props) {
+  const { onNavigationGuardChange } = props;
+  const [localMode, setLocalMode] = useState<"procedures" | "automations">("procedures");
+  const [notice, setNotice] = useState("");
+  const mode = props.view ?? localMode;
+  const held = useRef<(() => string | null) | null>(null);
+  const register = useCallback((guard: (() => string | null) | null) => {
+    held.current = guard; onNavigationGuardChange?.(guard);
+    if (!guard?.()) setNotice("");
+  }, [onNavigationGuardChange]);
+  const leave = () => {
+    const reason = held.current?.();
+    if (reason) { setNotice(reason); return false; }
+    return props.canLeave?.() ?? true;
+  };
+  const select = (next: "procedures" | "automations") => {
+    if (next === mode || !leave()) return;
+    if (props.onViewChange) props.onViewChange(next); else setLocalMode(next);
+  };
+  const design = (origin: HTMLButtonElement) => {
+    if (!leave() || !props.onPrepare) return;
+    props.onPrepare(null, "contact-created internal task process");
+    requestAnimationFrame(() => {
+      if (!origin.isConnected) return;
+      const composer = origin.closest('[data-tenant-shell]')?.querySelector<HTMLTextAreaElement>('#tenant-paige-workspace textarea[aria-label="Message PAIGE"]');
+      if (composer && !composer.disabled && composer.getClientRects().length && !composer.closest('[hidden],[aria-hidden="true"],[inert]')) composer.focus({ preventScroll: true });
+    });
+  };
+  return <div className="ops-playbook-area">
+    <div className="ops-process-views" role="group" aria-label="Playbook content">
+      {(["procedures", "automations"] as const).map(name => <button type="button" key={name} aria-pressed={mode === name} onClick={() => select(name)}>
+        {name === "procedures" ? "Procedures" : "Automations"}</button>)}
+    </div>
+    {notice && <p role="status" className="ops-inline-notice">{notice}</p>}
+    {mode === "procedures" ? <ProcedureLibrary {...props} /> : <section className="ops-views ops-saved-processes" aria-label="Saved automations">
+      <header className="ops-view-heading"><h1>Automations</h1><button className="ops-process-design" type="button" disabled={!props.onPrepare}
+        onClick={event => design(event.currentTarget)}>Design with ZION</button></header>
+      <p className="ops-process-path">Contact created <span aria-hidden="true">→</span> Task approval <span aria-hidden="true">→</span> Original work and receipt</p>
+      <OwnerTaskAutomations onNavigationGuardChange={register} canLeave={leave} />
+    </section>}
+  </div>;
 }

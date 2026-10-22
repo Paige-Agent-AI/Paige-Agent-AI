@@ -31,6 +31,14 @@ describe("Marketing surface reference", () => {
 });
 const B = "e4000000-0000-4000-8000-0000000c0002";
 
+it("retains a Systems Check finding UUID through the original reference frame without source text or authority", () => {
+  const persisted = JSON.parse(JSON.stringify([{ destination: "systems_check", record_id: A.toUpperCase(),
+    path: "/foreign", account: "other", subject: "Private finding", approved: true }]));
+  expect(readRecordLinks(persisted)).toEqual([{ destination: "systems_check", record_id: A }]);
+  expect(readRecordLinks([{ destination: "systems_check", record_id: "../foreign" }]))
+    .toEqual([{ destination: "systems_check", record_id: null }]);
+});
+
 describe("readRecordLinks — the defensive reader for live frames and persisted bundle_ref", () => {
   it("retains the existing destinations and admits the bounded owner Portal Knowledge reference", () => {
     expect([...READ_LINK_DESTINATIONS]).toEqual([

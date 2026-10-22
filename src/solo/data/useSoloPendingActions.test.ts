@@ -56,6 +56,21 @@ describe("toPendingAction — a filed action must earn its modal", () => {
     expect(toPendingAction({ ...base, draft_content: 42 })?.draftContent).toBeNull();
   });
 
+  it("retains only the known original Systems Check finding reference", () => {
+    const findingId = "aaaaaaaa-0000-4000-8000-000000000002";
+    const item = toPendingAction({ ...base, action_kind: "systems.remediate",
+      source_finding_id: findingId.toUpperCase(), payload: { url: "https://foreign.invalid" } });
+    expect(item?.sourceLink).toEqual({ destination: "systems_check", record_id: findingId });
+    for (const source_finding_id of [null, "../foreign", { id: findingId }]) {
+      expect(toPendingAction({ ...base, action_kind: "systems.remediate", source_finding_id })?.sourceLink).toBeUndefined();
+    }
+    expect(toPendingAction({ ...base, action_kind: "other.action", source_finding_id: findingId })?.sourceLink).toBeUndefined();
+  });
+
+  it("does not invent a source creation time when the original timestamp is missing", () => {
+    expect(toPendingAction({ ...base, created_at: null })?.createdAt).toBe("");
+  });
+
   it("drops a row with no id or no usable title", () => {
     expect(toPendingAction({ ...base, id: undefined })).toBeNull();
     expect(toPendingAction({ ...base, title: undefined })).toBeNull();
@@ -101,6 +116,16 @@ describe("useSoloPendingActions — tenant scoping (§9)", () => {
     expect(supa.from).toHaveBeenCalledWith("paige_actions");
     // The scope filter must be present — without it the operator escape would surface other tenants.
     expect(eqCalls).toContainEqual(["tenant_id", "tenant-x"]);
+  });
+
+  it("reads only the source finding scalar without widening the original pending-work filters", async () => {
+    const { builder, selectCalls, eqCalls } = build();
+    supa.from.mockReturnValue(builder);
+    await mount("tenant-x", "test-actor");
+    expect(selectCalls[0][0]).toContain("action_kind,source_finding_id:payload->>finding_id");
+    expect(selectCalls[0][0].split(",")).not.toContain("payload");
+    expect(selectCalls[0][1]).toEqual({ count: "exact" });
+    expect(eqCalls).toEqual([["tenant_id", "tenant-x"], ["status", "filed"], ["autonomy_lane", "confirm"]]);
   });
 
   it("runs NO query when the workspace is unresolved (never an unscoped read)", async () => {

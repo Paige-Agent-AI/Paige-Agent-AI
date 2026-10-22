@@ -25,10 +25,11 @@ it.each(["editable", "disabled", "hidden", "closed", "navigated"])("focuses only
   const popup = { document: popupDocument, closed: false, focus: vi.fn(), addEventListener: vi.fn(), close: vi.fn() };
   const open = vi.spyOn(window, "open").mockReturnValue(popup as unknown as Window);
   const host = document.createElement("div"); document.body.append(host); const root = createRoot(host);
+  let ownedOpener: (() => void) | null = null;
   let composerFocus: ReturnType<typeof vi.spyOn> | undefined;
   try {
     await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/operations/playbooks"]}>
-      <TenantCommandCenterShell accountName="Test studio" accountType="standalone" userRole="owner" onSignOut={vi.fn()}
+      <TenantCommandCenterShell accountName="Test studio" accountType="standalone" userRole="admin" onSignOut={vi.fn()} onPaigeOpenerChange={opener => { ownedOpener = opener; }}
         soloPaigeWorkspace={<textarea aria-label="Message PAIGE" defaultValue="Original editable question" />}><p>Original Operations</p></TenantCommandCenterShell>
     </MemoryRouter>));
     await act(async () => host.querySelector<HTMLButtonElement>("[data-tenant-paige-command]")!.click());
@@ -39,12 +40,13 @@ it.each(["editable", "disabled", "hidden", "closed", "navigated"])("focuses only
     composerFocus = vi.spyOn(composer, "focus");
     composer.disabled = state === "disabled"; composer.hidden = state === "hidden";
     if (state === "navigated") Object.defineProperty(popup, "document", { get: () => { throw new DOMException("Foreign origin", "SecurityError"); } });
-    await act(async () => { host.querySelector<HTMLButtonElement>("[data-tenant-paige-command]")!.click(); if (state === "closed") popup.closed = true; await settleFocus(); });
+    expect(ownedOpener).toBeTypeOf("function");
+    await act(async () => { ownedOpener!(); if (state === "closed") popup.closed = true; await settleFocus(); });
     expect(popup.focus).toHaveBeenCalledOnce();
     expect(composerFocus).toHaveBeenCalledTimes(state === "editable" ? 1 : 0);
     expect(composer.value).toBe("Original editable question"); expect(host.textContent).toContain("Original Operations");
   } finally {
-    await act(async () => root.unmount()); composerFocus?.mockRestore(); open.mockRestore(); styles.remove(); host.remove();
+    await act(async () => root.unmount()); expect(ownedOpener).toBeNull(); composerFocus?.mockRestore(); open.mockRestore(); styles.remove(); host.remove();
     window.localStorage.removeItem("paige.tenantShell.navExpanded");
   }
 });

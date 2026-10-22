@@ -23,7 +23,7 @@ Production global clients_linked_user_id_unique and recipient/new-account guards
 
 IMPLEMENTED / NOT_RELEASED. Functional, rendered visual, experiential and authenticated founder evidence must be recorded separately. Existing current-main code, historical2401 valid hunks, all original29 C0b adapters, private Knowledge/publication/expiry controls and actual runtime gates remain protected.
 
-INTERNAL_BUILD_IDENTITY: implementation=40adb9399738653250c6ba08d7bbe6572dff5966; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED; evidence=docs/delivery/e09-cura-business-scope.md
+INTERNAL_BUILD_IDENTITY: implementation=40adb9399738653250c6ba08d7bbe6572dff5966; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat exact deployed source and request context); evidence=docs/delivery/e09-cura-business-scope.md
 RELEASE_CHANNEL: development: original customer request-context correction
 CUSTOMER_RELEASE_IDENTITY: none: internal engineering increment
 RELEASE_RECOVERY: position=preserve original single-business fallback and forward correction; reference=docs/delivery/e09-cura-business-scope.md

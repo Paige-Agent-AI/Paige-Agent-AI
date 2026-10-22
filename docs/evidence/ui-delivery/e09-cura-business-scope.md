@@ -15,9 +15,9 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: actual protected customer/owner session, prov
 KEYBOARD_FOCUS: PASS: actual native keyboard Tab reaches visible44px original Try again control with clear focus ring; composer and mic/send retain names/44px mobile targets. Full assistive-technology audit remains unverified.
 ZOOM_REFLOW: UNVERIFIED: actual390/320 reflow/no horizontal overflow verified; physical-device/OS zoom not exercised.
 REDUCED_MOTION: NOT_APPLICABLE: no motion/style change. Existing thinking/status feedback retained; physical reduced-motion acceptance not claimed.
-STATE_COVERAGE: PASS: ready/populated/empty/history-error/retry focus/reply/Auth-loss UI plus timeout/held/disabled/retirement/concurrent A-B/foreign identity/source withdrawal controls; pending provider result never proves success.
+STATE_COVERAGE: PASS: ready/populated/empty/history-error/retry focus/reply/Auth-loss UI plus timeout/held/disabled/retirement/concurrent A-B/foreign identity/source withdrawal controls; an in-flight reply is not completion.
 TRUTHFUL_STATE_LABELS: PASS: local fixture views are not authenticated production evidence; source tests are not native/Chat activation or business membership grants.
-SOLO_UI: PASS: every eligible actual customer relationship uses the same original code; no account allowlist or new tenant/customer. Production global linkage/recipient/new-account guards remain intact.
+SOLO_UI: YES: every eligible actual customer relationship uses the same original code; no account allowlist or new tenant/customer. Production global linkage/recipient/new-account guards remain intact.
 UNVERIFIED: production deployment/Edge/source readback, actual customer/provider/return/isolation/revocation, full signed-in shell/device/AT, membership activation and complete founder acceptance.
 
 OWNER_INTENT: original CURA represents the selected business using authorized customer Knowledge and private history; PAIGE remains the owner's COO.
@@ -38,7 +38,7 @@ Final local rendered assets:
 
 First desktop screenshot was clipped by the browser screenshot API; retained locally as historical diagnostic only and excluded from final assets. Replaced by the actual900x900 capture above. The browser inspection stalled; current main was re-grounded afterward and all new E2/EXP04/EXP05/Setup releases preserved. The temporary tab was closed and viewport override cleared.
 
-INTERNAL_BUILD_IDENTITY: implementation=40adb9399738653250c6ba08d7bbe6572dff5966; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED; evidence=docs/evidence/ui-delivery/e09-cura-business-scope.md
+INTERNAL_BUILD_IDENTITY: implementation=40adb9399738653250c6ba08d7bbe6572dff5966; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat exact deployed source and request context); evidence=docs/evidence/ui-delivery/e09-cura-business-scope.md
 RELEASE_CHANNEL: development: original private customer Chat request correction
 RELEASE_CLASSIFICATION: internal-only: existing customer scope/privacy restoration
 CUSTOMER_RELEASE_IDENTITY: none: no customer publication

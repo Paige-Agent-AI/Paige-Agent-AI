@@ -6,7 +6,7 @@ import { tenantRoutePrefixForPath } from "@/components/tenant-shell/tenantShellR
 import { useWeeklyOwnerAudience, useWeeklyResponsibility } from "./useWeeklyResponsibility";
 import { WeeklyResponsibilityPanel } from "./WeeklyResponsibilityPanel";
 import { WEEKDAYS, weeklyInstantLabel, weeklyStateLabel } from "./weekly-responsibility";
-import type { WeeklyOwnerRead } from "./weekly-owner-read";
+import type { WeeklyFutureControl, WeeklyOwnerRead } from "./weekly-owner-read";
 import { WeeklyDraftComposer } from "./WeeklyDraftComposer";
 
 /** Same owner review entry in PAIGE and Calendar; conversational tools stay unadmitted. */
@@ -20,13 +20,13 @@ function ScopedEntry({ hideEmpty }: { hideEmpty: boolean }) {
   const [theme, setTheme] = useState("dark");
   const opener = useRef<HTMLButtonElement | null>(null);
   const location = useLocation();
-  const { read, refresh } = useWeeklyResponsibility(open || hideEmpty);
+  const { read, refresh, control, controlBusy } = useWeeklyResponsibility(open || hideEmpty);
   const snapshot = read.status === "ready" ? read.snapshot : null;
   // First-run onboarding owns its conversation; no weekly prompt without a verified existing responsibility.
   if (hideEmpty && (!snapshot || snapshot.checks.length === 0)) return null;
   return <div className="e5-weekly-chat-entry">
     <button ref={opener} type="button" className="e5-weekly-open" aria-label="Weekly responsibility" title="Weekly responsibility" onClick={event => { setTheme(event.currentTarget.closest("[data-pg]")?.getAttribute("data-pg") ?? "dark"); setOpen(true); }}><CalendarDays size={15} aria-hidden /><span className="e5-weekly-open-label">Weekly responsibility</span></button>
-    <WeeklyResponsibilityDialog open={open} onOpenChange={setOpen} theme={theme} read={read} refresh={refresh} pathname={location.pathname} onReturnFocus={() => opener.current?.focus()} />
+    <WeeklyResponsibilityDialog open={open} onOpenChange={setOpen} theme={theme} read={read} refresh={refresh} control={control} controlBusy={controlBusy} pathname={location.pathname} onReturnFocus={() => opener.current?.focus()} />
   </div>;
 }
 export function WeeklyCalendarSummary({ read, refresh, pathname, onInspect }: {
@@ -50,14 +50,15 @@ export function WeeklyCalendarSummary({ read, refresh, pathname, onInspect }: {
       {root && <Link to={`${root}/paige/chat`}>Review with PAIGE</Link>}
   </div>;
 }
-export function WeeklyResponsibilityDialog({ open, onOpenChange, theme, read, refresh, pathname, onReturnFocus }: {
+export function WeeklyResponsibilityDialog({ open, onOpenChange, theme, read, refresh, pathname, onReturnFocus, control, controlBusy }: {
   open: boolean; onOpenChange: (open: boolean) => void; theme: string; read: WeeklyOwnerRead;
   refresh: () => void; pathname: string; onReturnFocus?: () => void;
+  control?: WeeklyFutureControl; controlBusy?: boolean;
 }) {
   return <Sheet open={open} onOpenChange={onOpenChange}><SheetContent className="e5-weekly-sheet paige-solo" data-pg={theme} data-theme={theme}
     onCloseAutoFocus={event => { if (onReturnFocus) { event.preventDefault(); onReturnFocus(); } }}>
       <SheetHeader><SheetTitle>Weekly responsibility</SheetTitle><SheetDescription>Current owner scope, canonical schedules and verified results.</SheetDescription></SheetHeader>
-      <WeeklyResponsibilityPanel read={read} refresh={refresh} pathname={pathname} draftComposer={open ? <WeeklyDraftComposer
+      <WeeklyResponsibilityPanel read={read} refresh={refresh} control={control} controlBusy={controlBusy} pathname={pathname} draftComposer={open ? <WeeklyDraftComposer
         businessZone={read.status === "ready" && read.snapshot.business_time_zone.state === "configured" ? read.snapshot.business_time_zone.zone : null}
         onSaved={refresh} /> : undefined} />
     </SheetContent></Sheet>;

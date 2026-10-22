@@ -3,7 +3,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { WeeklyResponsibilityPanel } from "./WeeklyResponsibilityPanel";
-import type { WeeklyOwnerRead } from "./weekly-owner-read";
+import type { WeeklyFutureControl, WeeklyOwnerRead } from "./weekly-owner-read";
 import type { WeeklyCommitmentSnapshot } from "../../../supabase/functions/_shared/paige-orchestration/weekly-commitment-projection";
 
 const prepare = vi.hoisted(() => vi.fn());
@@ -21,8 +21,8 @@ function recordedSnapshot() {
     execution_availability: "held", execution_hold_reason: "paused", next_run_at: null, intended_next_run_at: null, last_run: null, last_verified_run: null });
   return data;
 }
-async function render(read: WeeklyOwnerRead) {
-  await act(async () => root.render(<MemoryRouter><WeeklyResponsibilityPanel read={read} refresh={() => {}} pathname="/solo/42/paige/chat" /></MemoryRouter>));
+async function render(read: WeeklyOwnerRead, control?: WeeklyFutureControl) {
+  await act(async () => root.render(<MemoryRouter><WeeklyResponsibilityPanel read={read} refresh={() => {}} control={control} pathname="/solo/42/paige/chat" /></MemoryRouter>));
 }
 async function click(text: string) {
   const button = Array.from(container.querySelectorAll("button")).find(b => b.textContent === text);
@@ -56,9 +56,46 @@ it("unknown latest attempt, older verified check and current source navigation r
   expect(container.textContent).toContain("No executable next run is available");
   expect(container.querySelector('a[href*="weeklySource=planning_item"]')?.getAttribute("href")).toBe(`/solo/42/operations/work?weeklySource=planning_item&item=${id}`);
   expect(container.textContent).toContain(id);
-  for (const name of ["Pause unavailable", "Change unavailable", "Resume unavailable", "Cancel unavailable"]) {
+  for (const name of ["Pause future checks", "Change unavailable", "Resume unavailable", "Cancel responsibility"]) {
     expect(Array.from(container.querySelectorAll("button")).find(b => b.textContent === name)?.disabled).toBe(true);
   }
+});
+
+it.each(["pause", "cancel"] as const)("reviews the exact responsibility before %s, and preserves owner cancellation", async action => {
+  const data = recordedSnapshot(); data.checks[0].schedule_status = "scheduled";
+  const control = vi.fn<WeeklyFutureControl>().mockResolvedValue({ status: "saved", snapshot: data });
+  await render({ status: "ready", snapshot: data }, control);
+  await click(action === "pause" ? "Pause future checks" : "Cancel responsibility");
+  expect(control).not.toHaveBeenCalled(); expect(container.textContent).toContain("UTC");
+  expect(container.textContent).toContain("An attempt already running can finish");
+  expect(document.activeElement?.textContent).toBe("Keep current schedule");
+  await click("Keep current schedule"); expect(control).not.toHaveBeenCalled();
+  expect(document.activeElement?.textContent).toBe(action === "pause" ? "Pause future checks" : "Cancel responsibility");
+  await click(action === "pause" ? "Pause future checks" : "Cancel responsibility");
+  await click(action === "pause" ? "Confirm pause" : "Confirm cancellation");
+  expect(control).toHaveBeenCalledExactlyOnceWith(data.checks[0], action);
+  expect(container.textContent).toContain("history is preserved");
+  expect(document.activeElement?.getAttribute("aria-label")).toBe("Refresh weekly responsibility");
+});
+
+it("keeps unknown feedback visible when the controller withholds the unconfirmed record", async () => {
+  const data = recordedSnapshot(); data.checks[0].schedule_status = "scheduled";
+  const control = vi.fn<WeeklyFutureControl>().mockResolvedValue({ status: "unknown" });
+  await render({ status: "ready", snapshot: data }, control); await click("Cancel responsibility"); await click("Confirm cancellation");
+  await render({ status: "unavailable" }, control);
+  expect(container.textContent).toContain("result is unknown");
+  expect(container.textContent).toContain("Nothing will be repeated automatically");
+  expect(control).toHaveBeenCalledTimes(1);
+});
+
+it("a replaced read retires the old control review", async () => {
+  const data = recordedSnapshot(); data.checks[0].schedule_status = "scheduled";
+  const control = vi.fn<WeeklyFutureControl>();
+  await render({ status: "ready", snapshot: data }, control); await click("Cancel responsibility");
+  const changed = structuredClone(data); changed.checks[0].revision++;
+  await render({ status: "ready", snapshot: changed }, control);
+  expect(Array.from(container.querySelectorAll("button")).some(button => button.textContent === "Confirm cancellation")).toBe(false);
+  expect(control).not.toHaveBeenCalled();
 });
 it("permission and failed read clear all private result content and never claim an empty schedule", async () => {
   for (const status of ["refused", "unavailable", "loading"] as const) {

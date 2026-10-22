@@ -75,6 +75,19 @@ Experience remain separate unfinished increments; no catalogue Live promotion.
 Assess functional, visual and experiential quality independently; owner acceptance
 still requires the one complete integrated Experience.
 
+## EXP04 original draft correction — 2026-10-21 local
+
+Same original unsigned text record now has controlled title/wording correction
+source, retaining native SAVE/CAS/client/offer/commercial/template identity and
+one existing leave guard. Frozen/nontext source refuses; unknown result preserves
+read-only reviewed payload, current read is separate from acknowledgment, explicit
+retry never refreshes original CAS. Conclusive access loss retires private work.
+Native render20 cases/15 paths/22 pins/zero page errors and full217/eight suites
+PASS; unchanged original102 included. Native guard2526 and all exact release/
+ordinary-role/provider/legal/full O1–O12/founder acceptance gates remain owed.
+No new writer/ledger/approval/runtime, Chat/Live or algorithm promotion.
+[Journey](../delivery/exp04-get-paid-deliver-journey.md).
+
 ## EXP04 current delivery checkpoint — 2026-10-21
 
 Released native draft-history#2521 extends the original agreement with immutable

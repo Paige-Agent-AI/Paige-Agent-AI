@@ -1,5 +1,56 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
+## October21 original agreement correction — integration checkpoint
+
+REUSE original native SAVE/CAS/author permissions, agreement/client/offer/commercial/
+template references, events/immutable draft history and one existing per-instance
+Sales leave guard. EXTEND the actual rich/source workspace with explicit correction
+and separate current-record readback. REPAIR native frozen-document guard2526 through
+its separately reviewed release, not a writer replacement. NEW only the missing
+controlled correction UI and closed original-writer acknowledgment projection.
+Prototype59f81c0049c7f050178d4e51abc59ae46d36964920/17 selected by the existing lead
+under October21 routine UX delegation; no founder approval/acceptance inferred.
+
+1. Event/request: owner explicitly corrects title/wording of the selected unsigned
+   editable text agreement. Do not reassign the client, offer or accepted economics.
+2. Entry: original Sales record → Correct draft wording → same current agreement.
+   No new Portal, Chat, Live, Team Hub or specialist execution entry.
+3. Canonical record/capability: original paige_agreements/signers/events and native
+   draft revisions. agreement.draft/list/status/send stay PARTIAL, sales.department
+   PROOF_OWED; this does not repair the legacy non-idempotent Chat create path.
+4. Governed path: original SAVE under caller scope, with non-null original timestamp
+   CAS. Manual draft work needs no invented Layer C act, runtime or request ledger.
+5. Authority: original native actor/tenant/admin and scoped session epochs remain;
+   frozen/nontext/signed source withholds correction. Unknown access hides RAM;
+   conclusive revocation retires private work; business/user changes remount scope.
+6. Risk/approval: explicit draft save is not send/sign/payment/onboarding or service
+   release approval. Existing consequential action/admission gates remain intact.
+7. Execution/receipt: one frozen reviewed payload, same original ID and exact native
+   version/update acknowledgment. No new execution store or fabricated Rail receipt.
+8. Readback/reconciliation: return uses fresh native current read. Lost responses
+   retain read-only proposal; current matching wording is NOT an acknowledgment.
+   Explicit retry reuses SAME CAS/payload, never refreshes a baseline automatically.
+9. Refusal/interruption: changed source, retained state, authority refusal, failed
+   current read and unknown outcome stay distinct. Current view is cleared on read
+   failure; unknown leaving warns that the original request may still complete.
+10. Result: current original wording/history/navigation/focus. Native body counter
+    semantics and SQL btrim source line breaks are preserved; signing, payment and
+    accepted service completion are never inferred.
+
+Actual native-shell render20 viewport/theme cases/16 paths/zero page errors with22
+owning source pins; desktop/narrow inspected. Full eight-suite217 assertions PASS,
+including unchanged original102. One initial incumbent signed-copy5000ms timeout
+remains logged; unchanged full repeat217 passes, no assertion/timeout suppressed.
+Type ratchet10/current6 passed before final source refinement; exact final repeat
+running. Scoped ESLint0 errors/one incumbent fast-refresh warning. No new dependency.
+Source only: exact review/CI/guard dependency/deployment/source readback and actual
+ordinary owner/staff/linked-client/provider/legal/full twelve/founder acceptance
+remain owed. Owner clarified October21: jurisdiction and wording-review requirements
+are configurable template/agreement options. The business supplies its wording and
+selects applicable review; no counsel/jurisdiction input blocks infrastructure
+engineering/release. Options are subsequent integration work, not shipped by this
+correction increment; no legal-sufficiency claim or global counsel gate.
+
 ## October21 orchestration integration — current-source checkpoint
 
 Grounded main `38b6a9d51121d89123a4f286fba28d34fe4dfb84`, the original

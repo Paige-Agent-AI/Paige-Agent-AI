@@ -1950,6 +1950,62 @@ deployment. Jurisdiction/requested-wording-review/reviewer options stay optional
 business configuration; the infrastructure supplies no clauses or completed review.
 ## October22 C7 original commercial-presentation reconciliation
 
+### Native document-preparation versions — pre-edit forward280004 contract
+
+The original parent has an automatic updated_at trigger. Retaining/selecting a
+prepared PDF must not mutate that source CAS. EXTEND the original agreement with
+subordinate immutable PDF/layout versions and one current selection, as existing
+native version lineage does; this is not an agreement, approval, job or ledger.
+Canonical words, parties, economic sources and signatures remain in their originals.
+Read-only production frontier270009 is actually applied; original SAVE body remains
+1bd28e75afa0f50bb07b717795a5be0e and this new table is absent. The never-applied
+proposal270004 is renumbered forward280004, preserving E09 and all prior histories.
+Final existing native runner218 assertions PASS (44 original/75 checked/23 read/
+76 new), relevant migrations replay2. New document cases use six actual sessions/
+four observed waits for same-request and competing-current convergence. These
+metadata/source cases do not prove hosted files or actual customer acceptance.
+[Bounded source evidence](../evidence/ui-delivery/e04-native-document-preparations.md).
+
+1. Outcome: retain/reload the exact verified PDF and signer-field map, inspect
+   earlier preparations, and distinguish selected from source-current/approved.
+2. Owner: existing sole EXP04 lead. Original agreement/signer/event records and
+   actor floor REUSED; native version metadata/selection EXTENDED. No Portal,
+   Files, global identity, Operations writer or shared Chat source edited.
+3. Execution: internal draft preparation keeps the legitimate native domain path.
+   Actual external signing request must later use original Kit/Trust/approval,
+   bounded execution and receipt, not a new confirmation/runtime.
+4. Spine: exact-document preparation Chat/Live is UNAVAILABLE; original agreement.*
+   PARTIAL remains. No new registered or activated consequential action here.
+5. Provider: original private paige-agreements storage/native PDF/hash/field helper.
+   Trusted server must verify actual bytes/object metadata before retaining a
+   version. SQL cannot prove hosted bytes; no provider or storage client added.
+6. Authorization: private service-only retention repeats original
+   _sales_invoice_actor active user/business/profile/membership locks and exact
+   original agreement/client/source/party checks. Human reads use current JWT/
+   business and the same owner/admin floor. No privileged/platform bypass.
+7. Identity: one original agreement, immutable native preparation UUID/revision,
+   actual source CAS, document/map digests, optional commercial-payload digest,
+   and original edited event. No execution/job/scheduler/financial store.
+8. Receipt: same UUID/canonical bytes retry returns the SAME historical record and
+   event without reselecting it. Selection/source match are separate; no claim
+   that bytes still exist, signatures happened or financial terms took effect.
+9. Safety: previous selection only retires, never rewrites its artifact/map. Parent
+   source changes make the selection stale. Legacy send/token/seal effects refuse
+   for selected preparations until exact document/map approval/send is connected;
+   existing agreements have no new versions/backfill and retain their old path.
+10. Proof: actual native actor/RLS/grants/immutability/source/replay/concurrency and
+    untouched legacy DTO/timestamp negatives; original harness/disposable cluster,
+    exact-head review/CI/Preview and normal production readback. No actual customer
+    record, Storage/signature/provider effect or acceptance is established locally.
+
+The same existing canonical JSON serializer produces the manifest on the trusted
+server. SQL hashes those exact UTF-8 bytes and parses them for source/party checks;
+it does not invent a second numeric/geometry/financial serialization engine.
+Full actual viewer/keyboard placement, approval, effective economics, all O1-O12
+and authenticated owner/staff/client/provider/founder acceptance remain incomplete.
+Jurisdiction/requested-wording-review/reviewer options impose no infrastructure
+counsel gate and supply no legal clauses or completed review.
+
 This same EXP04 lead selectively reuses#2192 exact179e52; no retired agent or whole historical stack is activated. REUSE original agreement/terms/invoice, actor floor, immutable native presentation and Collections schedule/conditions; EXTEND original v2 explicit service facts; REPAIR native type coercion; NEW current-main dormant integration only. Template options remain business configuration, not legal-review evidence. Original signed history is never backfilled.
 
 1. Owner outcome: review the exact supplied document and principal/deposit/installments/service facts before any separately approved signing request.

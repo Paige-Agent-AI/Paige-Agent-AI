@@ -237,7 +237,8 @@ node "$HERE/template-wording-options-proof.mjs" "$PGBIN/psql" "$PORT" proofrunne
 # Reconciled EXP04 commercial preparation uses the same original agreement engine,
 # existing Collections schedule/conditions and this verified disposable cluster.
 deno test --allow-import --node-modules-dir=none --deny-net --deny-env --deny-run --deny-ffi --deny-sys \
-  "$REPO/supabase/functions/_shared/agreements/commercial-presentation.test.ts"
+  "$REPO/supabase/functions/_shared/agreements/commercial-presentation.test.ts" \
+  "$REPO/supabase/functions/_shared/agreements/field-preparation.test.ts"
 # The pure source is TypeScript; CI's Node 20 cannot import it. Reuse the Deno
 # runtime already exercised above, with this same fenced native cluster and all
 # 54 original assertions. No transpiled copy or relaxed test is substituted.

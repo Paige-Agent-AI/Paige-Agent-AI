@@ -14,6 +14,8 @@ import { readCalendarAccountShape, readCalendarBooking, type CalendarBookingRead
 import { CALENDAR_BOOKING_READ_TOOLS } from "../_shared/paige-spine/domains/calendar_booking.ts";
 import { readOperationsTask, type OperationsTaskReadCaller } from "../_shared/operations-task-read.ts";
 import { CRM_TASK_READ_TOOLS } from "../_shared/paige-spine/domains/crm_task.ts";
+import { WEEKLY_COMMITMENT_STATUS_TOOL_NAME, WEEKLY_COMMITMENT_STATUS_TOOLS, weeklyCommitmentStatusToolsForContext } from "../_shared/paige-spine/domains/automations.ts";
+import { prepareWeeklyCommitmentChatResponse } from "../_shared/paige-orchestration/weekly-commitment-read.ts";
 import { adoptApprovedReminder, executeApprovedReminder, type ReminderExecutionBinding } from "../_shared/planning/approved-reminder.ts";
 import { readOriginalReminderApprovalHistory } from "../_shared/paige-turn/interactive-reminder-history.ts";
 import { stageCuraKnowledge, CURA_TEACH_PURPOSE } from '../_shared/cura-knowledge-teaching.ts';
@@ -349,7 +351,7 @@ If asked to create, change, send, schedule or delete anything: say plainly and b
 // the owner in Setup (set_business_time_zone).
 // Owner restoration (2026-10-17): exact saved-booking read only; original caller JWT,
 // native membership/host visibility, no Calendar write or provider authority.
-const CONVERSATIONAL_ADMITTED_READ_TOOLS: ReadonlySet<string> = new Set(Object.freeze(["read_business_metric", "get_business_snapshot", "read_client_engagement_status", "read_business_time_zone", "read_calendar_booking", "crm_get_task"]));
+const CONVERSATIONAL_ADMITTED_READ_TOOLS: ReadonlySet<string> = new Set(Object.freeze(["read_business_metric", "get_business_snapshot", "read_client_engagement_status", "read_business_time_zone", "read_calendar_booking", "crm_get_task", WEEKLY_COMMITMENT_STATUS_TOOL_NAME]));
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": `authorization, x-client-info, apikey, content-type, ${CHAT_CONTROL_HEADER}`,
@@ -674,6 +676,7 @@ function describeStep(
     case "read_calendar_booking": return { label: failed ? "Couldn't check that booking" : "Checked that booking", group: "shared" };
     case "crm_get_task": return { label: failed ? "Couldn't check that Task" : "Checked that Task", group: "shared" };
     case "read_business_time_zone": return { label: failed ? "Couldn't check your business time zone" : "Checked your business time zone", group: "shared" };
+    case WEEKLY_COMMITMENT_STATUS_TOOL_NAME: return { label: failed ? "Couldn't check your weekly responsibility" : "Checked your weekly responsibility", group: "shared" };
     default: return { label: "Working on that", group: "shared" };
   }
 }
@@ -8789,6 +8792,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     if (callerTier === "tenant" && !scopedClientId && !customerPortal) toolDefs.push(...PORTAL_ACCESS_TOOLS as any);
     if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && calendarBookingRole && !scopedClientId && !customerPortal) toolDefs.push(...CALENDAR_BOOKING_READ_TOOLS);
     if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && taskReadRole && !scopedClientId && !customerPortal) toolDefs.push(...CRM_TASK_READ_TOOLS);
+    if (weeklyCommitmentStatusToolsForContext({ callerTier, accountShape: calendarBookingAccountShape, role: taskReadRole, scopedClientId: scopedClientId ?? null, customerPortal }).length) toolDefs.push(...WEEKLY_COMMITMENT_STATUS_TOOLS);
     // One-to-one business email (INT-328): declared by its domain module, executed only by its door.
     toolDefs.push(...COMMS_EMAIL_TOOLS as any);
     // Inbox Intelligence (#1140 two-mailbox pilot): declared by its domain module. The reads
@@ -17959,6 +17963,31 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               ? { success: false, outcome_unknown: true, error: "The access change did not report back. Read it with read_client_portal_access before anything else, and do not retry automatically.", note: OUTCOME_UNKNOWN_NOTE }
               : { success: false, error: "The client's portal access could not be read just now.", not_applied: true }) });
           }
+        } else if (tc.function.name === WEEKLY_COMMITMENT_STATUS_TOOL_NAME) {
+          // Final domain consumer: no incumbent executor gains a dominating condition.
+          // Original caller JWT, canonical owner-only RPC and current server scope.
+          const weeklyTenant = callerTier === "tenant" ? personaCtx?.tenant_id ?? null : null;
+          const weeklyIdentity: ContextIdentity = { actorId: user.id, tenantId: weeklyTenant, workspaceId: weeklyTenant,
+            role: taskReadRole, accountShape: calendarBookingAccountShape, actAsClientId: scopedClientId ?? null,
+            scopeEpoch: payloadThreadId ?? validatedData.requestIntentId ?? "current_request" };
+          let weeklyArgs: unknown = null;
+          try { weeklyArgs = JSON.parse(tc.function.arguments || "{}"); } catch { weeklyArgs = null; }
+          const result = await prepareWeeklyCommitmentChatResponse(weeklyIdentity, {
+            caller: supabaseClient,
+            currentIdentity: () => req.signal.aborted || tenantKnowledgeScopeRevoked || customerPortal || callerTier !== "tenant"
+              ? null : { ...weeklyIdentity, tenantId: personaCtx?.tenant_id ?? null, workspaceId: personaCtx?.tenant_id ?? null },
+            revalidateScope: async () => (await readCalendarAccountShape(supabaseClient as unknown as CalendarBookingReadCaller,
+              weeklyTenant, req.signal)).status === "available",
+            signal: req.signal,
+          }, weeklyArgs);
+          if (result.status === "available" && weeklyTenant) {
+            try {
+              await recordCapabilityRun(supabase, { tenantId: weeklyTenant, actorId: user.id, capabilityKey: tc.function.name,
+                outcome: "capability_succeeded", runId: await stableRunId([tc.function.name, weeklyTenant, `${payloadThreadId ?? ""}:${tc.id}`]),
+                detail: { channel: "paige_chat", tool: tc.function.name, scope: "personal_planning_commitments", read_only: true } });
+            } catch (e) { console.error("[paige] Weekly status read receipt unavailable:", (e as Error)?.message); }
+          }
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result) });
         } else {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: `Unknown tool: ${tc.function.name}` }) });
         }

@@ -1,5 +1,98 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October21 22:50 UTC — release and orchestration checkpoint
+
+All19 outcome definitions below and all nine analytics capabilities remain required.
+This supersedes earlier dated current-state claims without rewriting their evidence.
+The accepted original first-briefing refusal is historical, not a permanent reduction
+of the complete product. Source tests, empty-data reads and merged foundations do
+not close execution or complete customer outcomes. Original domain owners remain.
+
+#2507 period continuity and #2510 evidence/owning-Play context are source released.
+#2510 reviewed21ce8e31, merged38b6a9d; six required exact-head workflows/all11 checks
+and final295 cases/nine suites pass. Full-baseline39687510436 on containing mainc33
+verifies source/configuration/certification; actual tag/public build match. Initial
+failed source/download and prior-gap certification attempts remain recorded. Exact
+identities are in Master§4.0. Own migrations N/A; no execution activation implied.
+
+Actual authorized ordinary SOLO owner verified Marketing intake/disclosure→original
+Marketing→native Back→Last30days exact reload→correct UNSENT VERA draft/reload,
+retaining8 saved messages; only that test draft was cleared. Existing nine catalogue
+states are4ComingSoon/3Limited/2Unverified, all AccessUnverified. New intake-copy
+#2516 remains development-only. ANT-52 33e97fc9 records the bounded proof; populated
+sources, other roles/tenants/cohorts, Live and full19 remain owed.
+
+### Canonical orchestration integration
+
+| Interaction | Existing source/seam | Verified boundary and remaining work |
+| --- | --- | --- |
+| Explain business performance with VERA | business.operating_snapshot; business.operating_snapshot.read; original get_business_snapshot/bounded Business Review transport and Metric/Evidence adapters | Read-only/no approval. Bounded briefing/native-reference proof; no action receipt or need to force a pure read through LayerC. VERA remains under PAIGE. |
+| Identify priorities/recommend next steps | Existing snapshot severity_order.v1/projection and native six-reference consumer | Already-authorized source act/watch ordering, whole retained evidence and sampled Play links. Recommendations are not execution; resolve an eligible follow-up to its owning Experience. |
+| Authorized native follow-through | Existing LayerC ActionAdapter/engine/approval executor; original CRM/Planning/Work writers | Native kinds crm.advance_journey_stage, planning.weekly_commitment_check and owner.task have source contracts. Registry support is not arbitrary account activation; exact current authority, original approval, domain readback and Rail remain required. |
+| What was approved, blocked or accomplished | Original pending approvals, act executions, durable work and Rail/activity projections | Executive reads existing prepared/activity records. A complete source-bound recommendation→approved action→verified result loop has no authenticated EXP02 acceptance yet. |
+| Return/recover long work | Original durable-job observation/continuation and domain job records, #1874/#1929 | Observation and terminal-context eligibility never authorize dispatch/wake/retry/settlement. Preserve original objective/context and reconcile unknown results through original contracts. |
+| Future Team Hub intelligence | Same permitted review/measurements/work references | EXP08 owns that interface; no new Team Hub UI, team access grant or duplicate review/work store. |
+
+Current source: `_shared/paige-orchestration/{engine,adapters,native-adapter,
+approve-executor,dispatch-claim,outcomes}.ts` and `_shared/durable-job/{observation,
+continuation,continuation-read}.ts`. History#1173/#1188/#1203/#1208/#1212/#1225/
+#1235/#2019/#2031/#2044/#2063 establishes mechanisms and bounded proofs, not blanket
+live provider outcomes. Existing one-approval/Gateway/Trust/Harness/Rail, INT346,
+external effects/sends/payments/provider and protected-fixture holds remain binding.
+VERA does not become the Sales, Finance, Communications, Operations or client writer.
+
+Every executable follow-up PR must name original question/signal and entry; permitted
+evidence/context; registered capability/specialist; existing path/adapter; risk and
+approval; receiving domain/writer; original durable identity/receipts; interruption,
+cancel and uncertain recovery; verified result; and customer feedback. Distinguish
+read, recommendation, draft, approval and execution. Completion is not causal
+business improvement; later measurements must retain their own source/provenance.
+
+### Canonical Algorithm Support
+
+The official [EXP Algorithms tab](https://docs.google.com/spreadsheets/d/1qMN3h4fU4zVftWY-KPheBL95SxrbyI7ykn7kIcWb_J4/edit#gid=2129355338)
+was reread. Keep its IDs/meanings; broader performance/context goals do not silently
+rename ALG06 or ALG11. Expected benefits below are goals, not measured results.
+
+Consumer source anchors: `_shared/paige-context/snapshot.ts`,
+`_shared/paige-context/business-review-chat.ts`,
+`_shared/paige-context/adapters/finance.ts`, `src/solo/executive-review.ts`,
+`_shared/model-router.ts` and `_shared/llm-trace.ts`. Shared Edge paths are under
+`supabase/functions/`; the source release identities above bound this inspection.
+
+| Algorithm | Actual source; input/logic | Owner/maturity | Production and visible result | Impact/acceptance still owed |
+| --- | --- | --- | --- | --- |
+| ALG03 COO business-health prioritization | Existing snapshot rank/projection and Executive consumer; authorized act before watch, stable source ties, complete evidence/reference limits | Operating Fabric; EXP02 consumer. Partial-source deterministic baseline, no invented health score | #2510 certified; bounded genuine ranked customer findings and native links | Identify a supported blocker; full outcome and measured business improvement unverified |
+| ALG06 Cash-flow forecasting | Original Finance adapter/presenter/metric target actuals; stored verified source facts and current balances distinct from receipts/forecast | Original Finance/EXP04 sources; EXP02 consumer. Partial sources; no backtested forecast here | Released unavailable-not-zero source class; explicit financial limitations | Populated source/currency/cohort proof, forecast/backtest accuracy and planning benefit |
+| ALG11 Model quality and cost evaluation | Original Model Fabric/router/traces; permitted snapshot grounding is not a new model scorer | Shared Model Fabric/Intelligence; EXP02 consumer. Foundation/partial measurement | Bounded Chat latency/answers, no full measured quality/cost acceptance | Accuracy, cost and business outcome impact through original telemetry |
+| ALG12 Anomaly and incident detection | Original Systems Check/domain exceptions/work observations; source-reported findings, no invented statistical detector | Operations/observability/EXP05; EXP02 consumer. Partial | Genuine findings/unknowns can be inspected | Detection→authorized reconciliation, false-alert bounds and incident impact |
+| ALG13 Useful next-best-action recommendations | Existing Operating Fabric priorities/PAIGE narrative/native references;1–3 explainable source-grounded steps | Operating Fabric/EXP02 and receiving Experiences. Partial read/recommendation integration | Bounded advisory read/reload; suggestions do not claim completed actions | Helpfulness, governed follow-through, durable outcome and measured benefit |
+
+### Reliability and next small increments
+
+Two authenticated weekly worker CPU failures remain historical failures. Later
+weekly FINAL (~57s/six references/reload), last30 and quarter advisory reads prove
+bounded successful cases, not universal recovery or filed documents. A fresh single
+released read/reload check completed by its44s observation (one read step/22s shown).
+Original request/narrative/six links persist after optimistic-to-canonical row
+reconciliation and a second stable reload, with no duplicate and an empty composer. This
+adds one bounded post-release success, not an SLO or action/report outcome. Private
+original evidence and ANT-52 6799af27 retain the observation boundary.
+Never auto-resend an unknown result or hold HTTP indefinitely. Continuation
+foundations do not activate work.
+
+Sequence: finish#2516 two-description accuracy; close current release records;
+repair a reproduced weekly continuation/feedback defect using existing contracts;
+extend canonical report/artifact support and its source-bound consumer; integrate
+eligible original-domain preparation, approval/status/receipt and recovery. Small
+reviewed PRs/exact-head CI/release/readback and all19 acceptance remain mandatory.
+
+Functional: bounded source verified, full action loop incomplete. Visual: native
+original-font responsive proof supports named paths, full premium finish open.
+Experiential: bounded read/navigation/context proof, whole cross-domain execution/
+recovery not accepted. Founder Acceptance: pending one complete evaluation.
+Historical9/0 and12/0/4, all19/nine definitions and original owners remain intact.
+
 **October21 20:35 UTC — Marketing consumer production checkpoint:** #2494 reviewedf791480428c42894ec6833c3304d5a2642add1f2 mergeddd58164de75479212428f7e26581eeec3a333951; actual treead78adf3 equals reviewed current-main union. Sequential AUTHOR-REVIEW / LOWER ASSURANCE5605649901, six exact-head workflows/all11 checks including Preview/two Vercel statuses SUCCESS; original Deno failure retained and corrected without a contract/guard waiver. Exact READY web/publicdd58164d-mvijxzap, strict Edge39668706898/edge-live and direct Business Reviewv59 all32files/Chatv495 three changed modules verify (Master§4.0). O01/O02/O03/O08/O10/O14/O16 gain released original intake evidence/risks/navigation; no originating producer, provider, authority or action activation. Native desktop/tablet/320 original-font synthetic proof passes, separately from authenticated customer Marketing/Chat/navigation/reload, which remains UNVERIFIED because restored Edge still fails before page-control dispatch. No alternate account or product FAIL inferred. Next same-reader period-continuity slice is local,93 related cases/type0new/native synthetic proof passed; review/exact-head CI/release/customer proof remain owed. Functional, Visual, Experiential and Acceptance stay separate. All19 definitions/owners, nine catalogue labels, historical9/0 and12/0/4, consequential/permission/cohort/Live and final complete founder evaluation remain unchanged. Earlier unmounted/DRAFT statements below are dated history superseded by this checkpoint.
 
 **October21 Marketing/quality checkpoint:** original unmounted adapter#2489 merged51af8283 with six exact-head workflows/all11 checks/Preview, exact web/public and zero-affected Edge readback in Master§4.0. Active consumer#2494 d8373ccf remains DRAFT;182 source cases/71 authority controls/type10baseline6current0new pass, while native recapture/finish review/CI/release and actual customer Marketing proof remain owed. Owner October21 quality standard requires separate Functional, Visual, Experiential and Acceptance reports; no code/endpoint/synthetic proof establishes a finished premium Experience. All19 definitions below, nine analytics, original9/0 and12/0/4, source ownership, consequential gates and single founder evaluation remain unchanged.

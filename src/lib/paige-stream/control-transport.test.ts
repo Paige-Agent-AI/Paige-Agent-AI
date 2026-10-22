@@ -26,6 +26,17 @@ describe("canonical control transport helpers", () => {
     expect(matchesChatControlHint("status", input, "message")).toBe(false);
     expect(matchesChatControlHint("stop", { ...input, interactive: { kind: "stop", supersedesIntentId: "foreign" }, messages: [{ role: "user", content: "Stop" }] }, "stop")).toBe(false);
   });
+  it("accepts the explicit read projection only for original approval status", () => {
+    const selected = { ...input, interactive: { kind: "status", approvalTurnId: id, includeCuraPreparationHistory: true } };
+    expect(matchesChatControlHint("status", selected, "status")).toBe(true);
+    expect(matchesChatControlHint("status", { ...selected, approvedConfirmations: ["untrusted"] }, "status")).toBe(false);
+    for (const value of [false, null, "true", 1]) {
+      expect(matchesChatControlHint("status", { ...selected, interactive: { ...selected.interactive, includeCuraPreparationHistory: value } }, "status")).toBe(false);
+    }
+    expect(matchesChatControlHint("status", { ...input, interactive: { kind: "status", includeCuraPreparationHistory: true } }, "status")).toBe(false);
+    expect(matchesChatControlHint("stop", { ...input, interactive: { kind: "stop", supersedesIntentId: id, approvalTurnId: id, includeCuraPreparationHistory: true }, messages: [{ role: "user", content: "Stop" }] }, "stop")).toBe(false);
+    expect(matchesChatControlHint("status", selected, "message")).toBe(false);
+  });
   it.each([[null, 60_000], [undefined, 60_000], ["", 60_000], ["invalid", 60_000], ["-1", 60_000], ["Infinity", 60_000], ["0", 1_000], ["10", 10_000], ["0.5", 1_000], ["999999", 300_000]] as const)("bounds Retry-After %j", (raw, expected) => {
     expect(chatControlRetryDelay(raw, Date.UTC(2026, 9, 18))).toBe(expected);
   });

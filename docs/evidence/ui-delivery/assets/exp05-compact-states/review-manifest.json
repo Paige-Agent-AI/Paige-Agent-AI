@@ -1,0 +1,206 @@
+{
+  "sourceHead": "89e778725e3e3f63cf21c1a40e28ddee995be0db",
+  "sourceTree": "15b0d4480ce359403db194c0563df513f9683189",
+  "productInputs": 304,
+  "ports": 173,
+  "transforms": 0,
+  "cssSource": {
+    "path": "src/solo/operations/operations-workspace.css",
+    "sha256": "f502346c0f2ffb1ba0aa516ab88403a4aa47d27f09aece69d3f2d989b4dd3f2f",
+    "gitBlob": "fcdd3aa73ceffb8111278dbef0cea265bc5488f1",
+    "acceptedBlob": "fcdd3aa73ceffb8111278dbef0cea265bc5488f1",
+    "normalization": "raw",
+    "role": "accepted product source"
+  },
+  "bundleSha256": "81335844efce359f0f8d4f90d66b691d70d49211fe23e17262799884aab3c4c2",
+  "captures": [
+    {
+      "label": "1536-closed-confirmed",
+      "busy": "true",
+      "heading": "Loading your work",
+      "height": 770,
+      "pageWidth": 1536,
+      "role": "status",
+      "size": "16px",
+      "width": 1536,
+      "raw": {
+        "width": 1535,
+        "height": 770,
+        "format": "jpeg"
+      },
+      "file": "1536-closed-confirmed.jpg",
+      "sha256": "72a8997ea4c9a2ec9f44d889a1513ccddb15f44523d4f1056a13ef612b810f42"
+    },
+    {
+      "label": "1536-open-confirmed",
+      "busy": "true",
+      "heading": "Loading your work",
+      "height": 770,
+      "pageWidth": 1536,
+      "role": "status",
+      "size": "16px",
+      "width": 1536,
+      "raw": {
+        "width": 1535,
+        "height": 770,
+        "format": "jpeg"
+      },
+      "file": "1536-open-confirmed.jpg",
+      "sha256": "277d71622f1065a0fc7ae0fe8cb4d9de14ca8c8944114f1f6f324b3da7ff015f"
+    },
+    {
+      "label": "1366-open",
+      "busy": "true",
+      "heading": "Loading your work",
+      "height": 768,
+      "pageWidth": 1366,
+      "role": "status",
+      "size": "16px",
+      "width": 1366,
+      "raw": {
+        "width": 1366,
+        "height": 768,
+        "format": "jpeg"
+      },
+      "file": "1366-open.jpg",
+      "sha256": "6e6c07fb7f1f1968211dc6409ff2d283e1423c3ca99f39f105a73dc4fea21a92"
+    },
+    {
+      "label": "1366-closed",
+      "busy": "true",
+      "heading": "Loading your work",
+      "height": 768,
+      "pageWidth": 1366,
+      "role": "status",
+      "size": "16px",
+      "width": 1366,
+      "raw": {
+        "width": 1366,
+        "height": 768,
+        "format": "jpeg"
+      },
+      "file": "1366-closed.jpg",
+      "sha256": "77af62979daaf9264a097ecfead95ea5aa8c7564929f05a2b6bae286f4df6b2f"
+    },
+    {
+      "label": "1024-closed",
+      "busy": "true",
+      "heading": "Loading your work",
+      "height": 768,
+      "pageWidth": 1024,
+      "role": "status",
+      "size": "16px",
+      "width": 1024,
+      "raw": {
+        "width": 1024,
+        "height": 768,
+        "format": "jpeg"
+      },
+      "file": "1024-closed.jpg",
+      "sha256": "0efd2b813d171f2b41110c7f985211b574e1e7299c43f8457af1cb409d91f887"
+    },
+    {
+      "label": "1024-open",
+      "busy": "true",
+      "heading": "Loading your work",
+      "height": 768,
+      "pageWidth": 1024,
+      "role": "status",
+      "size": "16px",
+      "width": 1024,
+      "raw": {
+        "width": 1024,
+        "height": 768,
+        "format": "jpeg"
+      },
+      "file": "1024-open.jpg",
+      "sha256": "4c124a0daef845363b42d91606abe86414f7ded0e072ab118aacde0a0cb65713"
+    },
+    {
+      "label": "900-open",
+      "busy": "true",
+      "heading": "Loading your work",
+      "height": 1000,
+      "pageWidth": 900,
+      "role": "status",
+      "size": "16px",
+      "width": 900,
+      "raw": {
+        "width": 900,
+        "height": 1000,
+        "format": "jpeg"
+      },
+      "file": "900-open.jpg",
+      "sha256": "3e3bdc839b62d75081cb03ae6e604e704bb943f42aed7b60ae24415b66bade1c"
+    },
+    {
+      "label": "900-closed",
+      "busy": "true",
+      "heading": "Loading your work",
+      "height": 1000,
+      "pageWidth": 900,
+      "role": "status",
+      "size": "16px",
+      "width": 900,
+      "raw": {
+        "width": 900,
+        "height": 1000,
+        "format": "jpeg"
+      },
+      "file": "900-closed.jpg",
+      "sha256": "c38986f6b74869fa0ae8a995fcc81e1f38babeceaf7a72a6d00b389116307518"
+    },
+    {
+      "label": "390-loading-mineral",
+      "busy": "true",
+      "heading": "Loading your work",
+      "height": 844,
+      "pageWidth": 390,
+      "role": "status",
+      "size": "16px",
+      "width": 390,
+      "raw": {
+        "width": 390,
+        "height": 843,
+        "format": "jpeg"
+      },
+      "file": "390-loading-mineral.jpg",
+      "sha256": "f3f668a0771d6b177fc8ce4636f3fce08785a4e5935ccd6eded29c630c4063d3"
+    },
+    {
+      "label": "390-loading-obsidian",
+      "busy": "true",
+      "heading": "Loading your work",
+      "height": 844,
+      "pageWidth": 390,
+      "role": "status",
+      "size": "16px",
+      "width": 390,
+      "raw": {
+        "width": 390,
+        "height": 843,
+        "format": "jpeg"
+      },
+      "file": "390-loading-obsidian.jpg",
+      "sha256": "90b8a0b7a0a627edcd99c4a16d471b0c07f9e533e8d1145f0ff4558329a7809d"
+    },
+    {
+      "label": "390-unavailable-obsidian",
+      "busy": null,
+      "heading": "Your work couldn’t be loaded",
+      "height": 844,
+      "pageWidth": 390,
+      "role": "alert",
+      "size": "16px",
+      "width": 390,
+      "raw": {
+        "width": 390,
+        "height": 843,
+        "format": "jpeg"
+      },
+      "file": "390-unavailable-obsidian.jpg",
+      "sha256": "df7b5770790662a21aeea6c884a82ccd21441e21f1bb858e6ebaac8ab5a856a7"
+    }
+  ],
+  "boundary": "ACTUAL CANDIDATE COMPONENTS AND FOCUSED READER; SYNTHETIC TRANSPORT/AUTH/DOMAIN PORTS; NO NETWORK/PROVIDER/WRITE; NOT AUTHENTICATED OR PRODUCTION PROOF"
+}

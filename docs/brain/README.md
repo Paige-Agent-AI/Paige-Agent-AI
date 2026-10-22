@@ -1,4 +1,39 @@
-## EXP09 original status and owner Chat preparation — verified releases,2026-10-22
+## EXP09 draft, preparation recovery and catalogue — production closeout,2026-10-22
+
+PR2525 merged4e7767f399d8c7a255e55d69fa0b03cc21429f66 after exact-head
+checks/review; normal Edge39705421048/skill-runner185 all39 source hashes and
+normal migration39705421049/native140000 original metadata match the release.
+Web/public build matched. Receipt6330435057. Bounded private draft/original run
+acknowledgment is not literal recipe admission, Memory learning or client delivery.
+
+PR2522 mergeda6b550b768982cf3b63cb36e0f21f63363379779 after exact-head
+checks/review. READY production web and exact public build read back;
+receipt6330596414. Protected owner saved-card original status read returned the
+completed preparation/source without another preparation or restored approval.
+One private draft/revision3, zero chunks/shares/other work independently read back.
+
+PR2529 merged1d291ab48898366b57daf958219f490fe2679bc8 after all12 checks;
+normal migration39706420743/native150000 confirms the seven original Limited
+coverage rows with original risk/lanes. READY production web and verified later
+public descendant retain the release. Receipt6330596903. Limited means original
+owner read/private text proposals, not full document/send/customer handoffs.
+
+PR2531 merged90700534acac4e5a441d2683e7a1e6e8f24a25d4 after exact-head
+checks/review; READY production web/public build matched. Receipt6330762841.
+Protected owner Finish later refreshes the original inventory and immediately
+reopens the saved private review, with no additional save/publication/sharing.
+Native source remains draft/revision3, zero chunks/shares/other work.96 original
+tests cover the version-advance race; that race was not re-triggered with another
+production write. Complete client Knowledge publication/retrieval remains owed.
+
+All four final reviews are accurately AUTHOR-REVIEW / LOWER ASSURANCE. Exact
+identities/deployment and limits are in the sole Master4.0 Shipped Delivery Log.
+This factual closeout adds no capability, provider activation or customer release.
+Complete source-approved customer Knowledge retrieval, eligible Live, genuine
+backend multi-business selection and the joined seven-pillar owner/client journey
+remain unfinished. Founder acceptance is separate and has not been requested.
+
+## EXP09 original status and owner Chat preparation — preceding closeout,2026-10-22
 
 PR2511 merged f7cc0cb6a0c92350680578336bcc08d95cbbd26d after exact-head
 checks; normal Edge39692766955 and direct Chat@500/all261 digests/JWTtrue matched
@@ -13,7 +48,7 @@ receipt6329286905 retain exact identities in Master4.0. Native original Knowledg
 preparation is not publication/indexing/sharing. No new runtime, sender, approval
 system, authority or Memory store is introduced.
 
-The original saved-card consumer2522 remains unmerged; complete signed-in
+At that preceding closeout, saved-card consumer2522 remained unmerged; complete signed-in
 owner/client Knowledge publication/retrieval, eligible Live and the seven-pillar
 Experience/capabilities/official algorithms remain owed. This factual closeout
 promotes no customer release or complete Experience acceptance.
@@ -281,6 +316,20 @@ and #2175's byte verifier: existing completed/replayed seal must match its actua
 private PDF. Native106 plus5 Portal-wiring tests and three Edge type checks pass;
 release, authenticated recovery and full ALG01/12 acceptance remain proof owed.
 [Exact scope and limitations](../evidence/ui-delivery/e04-retained-completion-reconcile.md).
+
+## EXP02 payment declaration evidence — October22 source candidate
+
+Authorized ordinary SOLO analysis settled and survived reload, but its payment
+setup interpretation exceeded the native declaration-only evidence (ANT-52
+9d3d94dd/06396129). The existing Operations projection now names missing/unreadable
+payment declarations and explicitly withholds provider connectivity, payment
+availability and settlement verification. Original severity, sources, three issuer
+reads, authority, caps and actual automation-failure signals remain intact.
+Source204 targeted cases/77 original authority controls and15 native synthetic
+frames pass; exact-head CI, Edge source release/readback and corrected ordinary
+SOLO explanation remain owed. See `../evidence/ui-delivery/e2-payment-declaration-evidence.md`.
+No provider/action/permission activation; all19/nine and founder acceptance remain
+open. New owner Game Plan contextual suggestions remain the next distinct UI flow.
 
 ## EXP02 Systems Check source-accuracy repair — development
 

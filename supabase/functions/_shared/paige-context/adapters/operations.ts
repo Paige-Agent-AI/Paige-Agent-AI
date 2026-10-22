@@ -71,7 +71,10 @@ const SEVERITY_WORDS: Readonly<Record<Severity, string>> = {
  * listed here is described generically and the id itself is NEVER shown. `subject` is used when the
  * check could not run; `problem` when it ran and failed.
  */
-const CHECK_WORDS: Readonly<Record<string, { readonly subject: string; readonly problem: string }>> = {
+type CheckWords = { readonly subject: string; readonly problem: string; readonly limitation?: string };
+// Both native payment runners inspect declared setup fields, not provider operation.
+const PAYMENT_DECLARATION_LIMIT = "This declaration check does not verify a provider connection, payment availability or settlement.";
+const CHECK_WORDS: Readonly<Record<string, CheckWords>> = {
   comms_configured: { subject: "email, phone and texting", problem: "email, phone and texting are not fully set up" },
   website_connected: { subject: "your website", problem: "no website is connected" },
   social_accounts_connected: { subject: "your social accounts", problem: "your social accounts are not on record" },
@@ -80,13 +83,18 @@ const CHECK_WORDS: Readonly<Record<string, { readonly subject: string; readonly 
   crm_has_customers: { subject: "your contacts", problem: "there are no customers in your contacts yet" },
   sales_pipeline_configured: { subject: "your pipeline stages", problem: "your pipeline stages are not set up" },
   revenue_tracking_configured: { subject: "your revenue tracking", problem: "revenue tracking is not set up" },
-  payment_processor_connected: { subject: "how you take payment", problem: "taking payment is not set up" },
+  payment_processor_connected: {
+    subject: "your recorded payment processor declaration",
+    problem: "no payment processor is declared in your business setup",
+    limitation: PAYMENT_DECLARATION_LIMIT,
+  },
   payment_method_options: {
-    subject: "the ways you accept payment",
-    problem: "the ways you accept payment are not written down",
+    subject: "your recorded payment-method declarations",
+    problem: "no accepted payment methods are declared in your business setup",
+    limitation: PAYMENT_DECLARATION_LIMIT,
   },
 };
-const GENERIC_CHECK = { subject: "one setup item", problem: "one setup item needs attention" } as const;
+const GENERIC_CHECK: CheckWords = { subject: "one setup item", problem: "one setup item needs attention" };
 
 const UNRESOLVED = {
   key: "operations.unresolved_findings",
@@ -132,9 +140,10 @@ function checkSummary(event: DiagnosticEvent): string {
   const severity = SEVERITY_WORDS[event.severity as Severity];
   const when = plainUtcMinute(event.at);
   const tail = `${severity}${when !== null ? `; found ${when}` : ""}`;
-  return event.status === "error"
+  const summary = event.status === "error"
     ? `Systems Check could not check ${words.subject} (${tail}).`
     : `Systems Check: ${words.problem} (${tail}).`;
+  return words.limitation === undefined ? summary : `${summary} ${words.limitation}`;
 }
 
 function rank(severity: string | null): number {

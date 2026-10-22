@@ -48,6 +48,7 @@ export async function readPortalDocumentsGlance(current: () => boolean = () => t
     if (!live()) return { state: "unavailable" };
     if (docs.error?.code === "42501" || !docs.error && docs.data === null) return { state: "unavailable" };
     if (docs.error || released.kind === "unavailable" || released.kind === "scope_changed") return { state: "error" };
+    if (released.kind === "hidden" && released.reason !== "not_offered") return { state: "error" };
     if (released.kind === "ready" && (!same(released.scope, scope) || released.unavailableCount > 0)) return { state: "error" };
     const page = readPortalDocumentList(docs.data, {actor, tenant: scope.tenantId, contact: scope.clientId});
     const finalScope = await profileRead(scope);

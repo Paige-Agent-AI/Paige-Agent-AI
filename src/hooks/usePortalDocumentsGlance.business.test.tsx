@@ -34,3 +34,6 @@ it("hangs are bounded and their late Auth reply cannot dispatch native reads",as
 it("revocation between original list and final relationship read is not a ready summary",async()=>{let profiles=0;const original=f.reply.getMockImplementation()!;f.reply.mockImplementation((name,args)=>name==="client_portal_self_profile"&&++profiles>1?{data:null,error:null}:original(name,args));expect((await readPortalDocumentsGlance(()=>true,scope())).state).toBe("unavailable");});
 
 it("sign-out observed during a frame hold cannot be bypassed by returning to ready",async()=>{await render();await render(a,"error");await act(async()=>{for(const cb of [...f.listeners])cb("SIGNED_OUT",null);await flush();});const count=f.native.length;await render();expect(state.state).toBe("unavailable");expect(f.native).toHaveLength(count);});
+
+it("indeterminate hidden access is a failed count, never zero pending reviews",async()=>{f.reviews.mockResolvedValue({kind:"hidden"});expect((await readPortalDocumentsGlance(()=>true,scope())).state).toBe("error");});
+it("explicit original native not-offered reason preserves successful authorized file counts",async()=>{f.reviews.mockResolvedValue({kind:"hidden",reason:"not_offered"});expect(await readPortalDocumentsGlance(()=>true,scope())).toEqual({state:"ready",shared:3,fromYou:1,awaitingReview:0,awaitingReviewMore:false});});

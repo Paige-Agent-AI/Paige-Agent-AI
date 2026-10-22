@@ -22,6 +22,7 @@ on:
       - "scripts/proof/e09-cura-preparation-concurrency.mjs"
       - "scripts/proof/e09-cura-preparation-concurrency.test.mjs"
       - "supabase/tests/e09_cura_teaching_authority.sql"
+      - "supabase/tests/e09_client_game_plan_truth.sql"
       - "scripts/proof/e09-cura-teaching-concurrency.mjs"
       - "scripts/proof/e09-cura-teaching-concurrency.test.mjs"
       - "supabase/tests/research_tenant_lineage.sql"
@@ -644,6 +645,8 @@ jobs:
           node scripts/proof/e09-cura-preparation-concurrency.mjs
         if: ${{ !cancelled() }}
       - run: supabase test db supabase/tests/e09_cura_teaching_authority.sql
+        if: ${{ !cancelled() }}
+      - run: supabase test db supabase/tests/e09_client_game_plan_truth.sql
         if: ${{ !cancelled() }}
       - name: CURA private preparation native publisher concurrency
         run: |

@@ -250,6 +250,20 @@ private PDF. Native106 plus5 Portal-wiring tests and three Edge type checks pass
 release, authenticated recovery and full ALG01/12 acceptance remain proof owed.
 [Exact scope and limitations](../evidence/ui-delivery/e04-retained-completion-reconcile.md).
 
+## EXP02 payment declaration evidence — October22 source candidate
+
+Authorized ordinary SOLO analysis settled and survived reload, but its payment
+setup interpretation exceeded the native declaration-only evidence (ANT-52
+9d3d94dd/06396129). The existing Operations projection now names missing/unreadable
+payment declarations and explicitly withholds provider connectivity, payment
+availability and settlement verification. Original severity, sources, three issuer
+reads, authority, caps and actual automation-failure signals remain intact.
+Source204 targeted cases/77 original authority controls and15 native synthetic
+frames pass; exact-head CI, Edge source release/readback and corrected ordinary
+SOLO explanation remain owed. See `../evidence/ui-delivery/e2-payment-declaration-evidence.md`.
+No provider/action/permission activation; all19/nine and founder acceptance remain
+open. New owner Game Plan contextual suggestions remain the next distinct UI flow.
+
 ## EXP02 Systems Check source-accuracy repair — development
 
 The original recorded-check consumer now has a bounded, unreleased correction:

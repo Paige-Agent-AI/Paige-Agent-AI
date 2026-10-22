@@ -501,7 +501,7 @@ export function useClientPortalSessions({enabled: requested = true, limit = PORT
     const current = () => stillCurrent() && !controller.signal.aborted;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const work = async () => {
-      if (!actor.current) {
+      if (!actor.current || requestedActor && actor.current !== requestedActor) {
         const actual = await supabase.auth.getUser();
         if (!current()) throw new SessionsAuthorityError('Customer request changed');
         if (actual.error) throw new SessionsAuthorityError('Customer session could not be checked');
@@ -700,12 +700,14 @@ export function useClientPortalSessions({enabled: requested = true, limit = PORT
     if (!current()) return false;
     if (!dispatched) {
       clearProtected();
+      setError("We couldn't check your sign-in. Try again before changing this session.");
       patchChange(entry.sessionId, {status: 'failed', error: 'CUSTOMER_SESSION_UNVERIFIED', actionsHeld: false});
       return false;
     }
     if (!verified) {
       // Dispatch may have succeeded. Keep its original request; never claim it was unsent or done.
       clearProtected();
+      setError("We couldn't check this session's latest state. Try again.");
       patchChange(entry.sessionId, {status: 'unconfirmed', error: null});
       return false;
     }

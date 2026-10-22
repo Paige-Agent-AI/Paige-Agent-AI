@@ -100,7 +100,7 @@ it('a frame recheck hides sessions and blocks a retained change until ready',asy
 });
 it('change preflight failure never reaches the booking writer and is not outcome unknown',async()=>{
  await render(b);f.getSession.mockRejectedValueOnce(Error('Synthetic missing session'));await act(async()=>{expect(await state.cancel('session-'+b)).toBe(false);await flush();});
- expect(f.invoke).not.toHaveBeenCalled();expect(state.changes['session-'+b]).toMatchObject({status:'failed',error:'CUSTOMER_SESSION_UNVERIFIED'});
+ expect(f.invoke).not.toHaveBeenCalled();expect(state.error).toContain("couldn't check");expect(state.changes['session-'+b]).toMatchObject({status:'failed',error:'CUSTOMER_SESSION_UNVERIFIED'});
 });
 it('an uncertain booking change retries only the original request and captured actor',async()=>{
  await render(b);f.invoke.mockRejectedValueOnce(Error('Synthetic lost acknowledgment'));
@@ -149,7 +149,7 @@ it('a frame recheck releases a stranded send only as unconfirmed, retaining its 
 });
 it('changed actual Auth after a dispatched change never claims success or leaves sending forever',async()=>{
  await render();f.invoke.mockImplementation(()=>{f.getUser.mockResolvedValue({data:{user:{id:'other-actor'}},error:null});return {data:{ok:true},error:null};});
- await act(async()=>{expect(await state.cancel('session-'+a)).toBe(false);await flush();});expect(state.upcoming).toEqual([]);expect(state.changes['session-'+a].status).toBe('unconfirmed');
+ await act(async()=>{expect(await state.cancel('session-'+a)).toBe(false);await flush();});expect(state.upcoming).toEqual([]);expect(state.error).toContain("couldn't check");expect(state.changes['session-'+a].status).toBe('unconfirmed');
 });
 it('the real Supabase Functions SDK keeps per-invoke captured Authorization out of other requests',async()=>{
  const {createClient}=await import('@supabase/supabase-js');let token='synthetic-current-a';const seen:Array<{auth:string|null;business:string}>=[];
@@ -160,4 +160,12 @@ it('the real Supabase Functions SDK keeps per-invoke captured Authorization out 
  const first=client.functions.invoke('booking-manage',{body:{tenant_id:a},headers:{Authorization:'Bearer synthetic-captured-a'}});token='synthetic-current-b';await first;
  await client.functions.invoke('booking-manage',{body:{tenant_id:b}});
  expect(seen).toEqual([{auth:'Bearer synthetic-captured-a',business:a},{auth:'Bearer synthetic-current-b',business:b}]);
+});
+
+it('a newly verified frame actor rechecks actual Auth instead of remaining pinned to the prior actor',async()=>{
+ await render();const nextActor='e0917600-0000-4000-8000-000000000002',nextFrame={...(frame(b) as any),actorId:nextActor,profile:{...(frame(b) as any).profile,linked_user_id:nextActor}};
+ f.getUser.mockResolvedValue({data:{user:{id:nextActor}},error:null});f.getSession.mockResolvedValue({data:{session:{user:{id:nextActor},access_token:'synthetic-next-actor'}},error:null});
+ const consoleError=vi.spyOn(console,'error');
+ await act(async()=>{root.render(<CustomerIdentityProvider state={{frame:nextFrame,phase:'ready'}}><Probe business={b}/></CustomerIdentityProvider>);await flush();});
+ expect(state.tenantId).toBe(b);expect(state.upcoming[0].id).toBe('session-'+b);expect(f.native.at(-1)?.headers.Authorization).toBe('Bearer synthetic-next-actor');expect(consoleError).not.toHaveBeenCalled();consoleError.mockRestore();
 });

@@ -45,3 +45,5 @@ Original51 and25 new controls=76/six suites PASS before and after current mainf1
 Functional BUILDING; Visual local bounded PASS; Experiential original local navigation/recovery PASS; Founder Acceptance not requested until whole Experience ready. Native2580 and consumer Independent Review, exact-head required CI/Preview, ordinary migration/ACL/source and web served-source readback remain separate gates.
 
 Final consumer77/six suites PASS, including26 new controls and unchanged original51. Revised whole-project type ratchet reports only the incumbent missing @mdxeditor/editor in unchanged AgreementBodyEditor; no own diagnostic, no baseline/lock/install change or local full type/build PASS. Final required hosted checks and rendered/authorization review remain binding.
+
+Separate final source review also found an unbounded second Auth capture between exact native invoice verification and original PDF request. Bound that existing capture to20 seconds, retire late work and preserve original recovery notice. Added a late-PDF-dispatch negative; final78/six suites PASS (original51 plus27 controls). No original renderer, money source, provider or permission change.

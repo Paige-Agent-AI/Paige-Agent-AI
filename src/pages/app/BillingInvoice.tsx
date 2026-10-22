@@ -57,10 +57,17 @@ function documentUrl(invoiceId: string, tenantId: string, format?: "pdf") {
 
 async function authHeaders(invoiceId: string, context?: PortalBillingReadContext): Promise<Record<string, string>> {
   if (context) {
-    await verifyPortalInvoiceAccess(invoiceId, context);
-    const Authorization = await captureClientPortalAuthorization(supabase.auth, context.scope.actorId, context.current);
-    if (!context.current()) throw new Error("CUSTOMER_CHANGED");
-    return {Authorization, apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY};
+    let active = true, timer: ReturnType<typeof setTimeout> | undefined;
+    const guarded = {...context, current: () => active && context.current()};
+    const capture = async (): Promise<Record<string, string>> => {
+      await verifyPortalInvoiceAccess(invoiceId, guarded);
+      const Authorization = await captureClientPortalAuthorization(supabase.auth, guarded.scope.actorId, guarded.current);
+      if (!guarded.current()) throw new Error("CUSTOMER_CHANGED");
+      return {Authorization, apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY};
+    };
+    try {return await Promise.race([capture(), new Promise<never>((_, reject) => {
+      timer = setTimeout(() => {active = false; reject(new Error("Invoice session check timed out"));}, 20_000);
+    })]);} finally {active = false; clearTimeout(timer);}
   }
   const { data } = await supabase.auth.getSession();
   if (!data.session) throw new Error("SIGNED_OUT");

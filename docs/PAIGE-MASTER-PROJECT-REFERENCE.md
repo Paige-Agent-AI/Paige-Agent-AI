@@ -5189,6 +5189,50 @@ status and creates no recursive delivery row.
 
 **2026-10-16 — Readable owner Portal invitation and preview dialogs, PR [#2233](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2233), reviewed `8efab2224601ca3fd402ab81ea98c297e5582676`, main `720e6628ddc0d878d49cf3d6144ad8590585296a`.** The two existing native body-portalled dialogs now retain the resolved SOLO light/dark theme, repairing the owner-reported transparent invitation window without changing the approved dashboard, shared Dialog/CSS, recipient binding, authority or actions. Same shared implementation for all eligible existing/future accounts; no account fork, registry, sender, identity or execution infrastructure. Separate [AUTHOR-REVIEW / LOWER ASSURANCE](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2233#issuecomment-6207842987); five failing-first controls, final53 focused tests,23 actual-source browser cases/15 captures/15 matching source hashes, build/scoped lint/TypeScript ratchet10→8/no new diagnostics and parity negatives PASS. All six exact-head workflows and both Vercel contexts SUCCESS before expected-head merge; original pinned-image ECR startup rate limit retained and only failed job retried after parent completion, unchanged image/tests PASS. [Final gates](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2233#issuecomment-6208068763). Production `dpl_DRFwxB8mu8Z9YVVrQiXqusZA2Jjq` READY/exact main; live and immutable buildHTTP200 `720e6628ddc0d878d49cf3d6144ad8590585296a-mvaguqlm`, customerUpdate null; actual served import graph and both reviewed dialog theme markers read back. Authorized owner-side reload retains existing contact/pending invitation; opaque light dialog, no horizontal overflow, Escape/focus and saved-presentation preview Close PASS. Exact authority branch/nonplatform-role cohort not independently measured. Private live evidence stays local; no send/resend/cancel/config/Auth/role/provider or customer operation. [Production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2233#issuecomment-6208117459), [source evidence](evidence/ui-delivery/e09-portal-dialog-theme.md). Channel production; migrations/Edge NOT_APPLICABLE; internal-only/no customer release identity or announcement. Bounded owner dialog repair shipped; clients.portal remains PARTIAL. Owner-reported email arrival is distinct from native Accepted for sending, customer acceptance and visits. Provider-delivery/open/click completeness, secure new-customer signup/Welcome, external-client isolation/recovery/return, physical iPhone/Safari, all seven pillars/common Chat-Live invitation execution and final owner product acceptance remain PROOF OWED/INCOMPLETE. Existing Beta entry signs in existing accounts only; this patch does not claim that gap fixed. Recovery is a reviewed UI forward correction/revert preserving canonical records and security. This identity-only closeout is not logged recursively.
 
+
+**2026-10-22 — EXP04 original preparation native release verified.**
+
+The later root readback records original `20271113300004` with all eight expected
+function bodies/ABI/owner/search_path/ACL, private table/RLS, four triggers and five
+indexes; original SAVE body `1bd28e75afa0f50bb07b717795a5be0e` is unchanged.
+Ledger37 statements/md5 `d4916916779593323c6f3e9d63204df3` retains the original
+DROP form. Initial application provenance remains UNVERIFIED; none of the six
+failed attempts below is called successful. Normal unchanged-main verification
+[39839940779](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/39839940779),
+deploy120038195038, SUCCESS: remote up to date, persistence guard passed and
+`db-live` now `7a874fa2cb6193c8ae795f227a8b3f8a3dbb6cd8`.
+Pending-installation repair2610 is superseded unmerged; do not rewrite the now
+recorded migration. Its original causal proof/reviews remain historical.
+Workspace2604 composes released security2607/main7a874, preserving both manifest
+install pins. Only the benign sanitizer regression is reused; no native repair,
+new writer, permission, provider or execution activation. Mounted/editor release,
+ordinary owner/staff/linked-client acceptance and all twelve outcomes remain owed.
+
+**2026-10-22 — EXP04 preparation owner API, native deployment held (earlier checkpoint; superseded by later parity above).**
+
+PR[#2599](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2599), reviewed
+`ae444dade5b9d1dd3edd849e29150d1ed84dece2`, AUTHOR-REVIEW / LOWER ASSURANCE
+5618223345, merged `429388f2528942275334fd0c916c6fcfecb4f70a`; actual reviewed
+composition tree `702b16653bd4afa11471e2abe47b170576dc9540`. All13 required
+exact-head checks/full normal Preview/two statuses SUCCESS. Original official
+postgres image mirror correction preserves every test, timeout and permission;
+earlier failed registry attempts remain failed. Production Edge39822870560 /
+119978430775 SUCCESS, agreement-document ACTIVE37, original JWT setting false;
+canonical artifact12445511636 and independent16 served-source/config hashes PASS,
+edge-live429. Web `dpl_A9HYaxNza3MaKepmnBwh2JXEvZfn` READY, actual public200
+build `429388f2528942275334fd0c916c6fcfecb4f70a-mvjte1ly`, customerUpdate:null.
+**Native20271113300004 NOT_APPLIED:** original workflow39822870632 failed three
+times and normal serialized recovery39825776556 failed once at statement16,
+original5s lock timeout55P03. Transaction rollback leaves frontier290009, no
+preparation table and original SAVE11body1bd28e75afa0f50bb07b717795a5be0e.
+Read-only schema locks are investigated without terminating sessions, weakening
+timeouts or editing migration history. Dependent2604/2605 remain unreleased;
+actual native ABI/ACL/table/trigger/source readback and owner/staff/client proof
+are owed. This is a merged API increment with a deployment hold, not a complete
+customer release, algorithm/catalogue promotion, signing/send/payment authority
+or full twelve-outcome/founder acceptance. Recovery: unchanged serialized normal
+workflow after a quiet read window; otherwise a separately reviewed forward fix.
+
 ### Paige OS Integration — the Surface Binding Ledger + the Surface Context Handoff Contract (2026-09-06, Phases 0–1)
 
 **What shipped: two durable contracts + one CI regression guard. NO runtime binding was created and no

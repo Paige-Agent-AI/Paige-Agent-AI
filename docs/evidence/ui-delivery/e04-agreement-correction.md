@@ -7,15 +7,15 @@ MATERIAL_FLOW_CHANGE: YES: original unsigned text agreement opens explicit title
 FLOW_PROTOTYPE: PASS: isolated existing native-shell prototype59f81c0049c7f050178d4e51abc59ae46d369649 passed20 viewport/theme cases/17 paths. Existing lead selects routine intent under explicit October21 owner UX delegation; no founder acceptance.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an authorized agreement author corrects the actual reviewed draft without replacing its agreement/customer/commercial identity or silently overwriting a newer version.
 VISUAL_DIRECTION: PASS: current rich/source document beside concise original-version/client context and primary save/recovery action; narrow stacked native layout. No ornamental metrics, long modal or new scroll owner.
-AUTOMATED_EVIDENCE: PASS: selected217/eight-suite regressions (final216/seven suites plus unchanged vocabulary1 separately) including all102 incumbent Sales assertions and new original-ID/CAS/receipt/refusal/unknown/native line-break/focus/leave controls. Two incumbent signed-copy5000ms timeouts in earlier composed runs remain logged; unchanged full repeat217 and final216 plus vocabulary1 pass, no assertion/threshold/timeout/inclusion weakened. Final type/lint/hosted gates remain separately required.
-STATIC_EVIDENCE: PASS: same bounded sanitized RPC seam, strict command/non-null captured CAS, closed original-writer acknowledgment projection, native title/body counter and PostgreSQL btrim semantics preserved. No new dependency, provider, writer, agreement/request ledger, role/approval or executor. ESLint0 errors/one incumbent fast-refresh warning; type baseline10/current6 previously passes, final repeat pending.
+AUTOMATED_EVIDENCE: PASS: selected219/eight-suite regressions (final216/seven suites plus unchanged vocabulary3 separately) including all102 incumbent Sales assertions and new original-ID/CAS/receipt/refusal/unknown/native line-break/focus/leave controls. Two incumbent signed-copy5000ms timeouts in earlier composed runs remain logged; unchanged full repeat217 and final216 plus vocabulary3 pass, no assertion/threshold/timeout/inclusion weakened. Final type/lint/hosted gates remain separately required.
+STATIC_EVIDENCE: PASS: same bounded sanitized RPC seam, strict command/non-null captured CAS, closed original-writer acknowledgment projection, native title/body counter and PostgreSQL btrim semantics preserved. No new dependency, provider, writer, agreement/request ledger, role/approval or executor. ESLint0 errors/one incumbent fast-refresh warning; type baseline10/current6 prior pass; exact final type check is reported separately below.
 RENDERED_EVIDENCE: PASS: actual SalesWorkspace/SalesOps/TenantCommandCenterShell/editor/SDK source20 viewport/theme cases,16 paths,zero page errors;22 owning source hashes/original shared font checksum in assets/e04-agreement-correction/result.json. Both themes at1536x770/1366x768/1024x768/900x1000 PAIGE closed/open and390x844/320x740. Native overlays fold to operate/reopen to capture, no click-through. Synthetic identity/network only.
 BEHAVIORAL_EVIDENCE: PASS: same-original save/no creation, fresh native return/focus/reload, identical frozen-CAS retry, matching stored wording remains unconfirmed, lost-response leave/cancel, conflict separation, failed current read retires stale view, authority unknown/revocation, business retirement, retained-source refusal and one Escape/Tab/focus contract. Unit checks also cover missing required fields and post-ack retained-source heading fallback.
 AUTHENTICATED_RUNTIME: UNVERIFIED: actual ordinary owner/staff/linked-client roles, hosted read/write/reload and original financial/service/provider/legal outcomes require authorized customer QA. Local fixtures are not JWT/customer acceptance.
 KEYBOARD_FOCUS: PASS: actual correction entry, verified return, canonical Escape/Tab leave trap and cancel; unit required-field/retained-heading fallback. Full rich-toolbar keyboard and assistive-technology audit remains owed.
 ZOOM_REFLOW: PASS: actual320/390 plus prescribed desktop/tablet viewport checks, zero horizontal document overflow and reachable primary action within viewport after native scrolling. Physical200-percent zoom and assistive technology remain unverified; no scale emulation is claimed as physical zoom.
 REDUCED_MOTION: PASS: actual browser reducedMotion reduce, incumbent CSS spinner preference honored; no new movement/haptic.
-STATE_COVERAGE: PASS: original record loading/empty/error/refused behavior preserved; new editable/proposed/saving/acknowledged/unknown/conflict/retained-state/access-refused/read-failed/scope-retired/explicit-leave states. No approval-pending/provider state is fabricated for an ordinary draft edit.
+STATE_COVERAGE: PASS: original record loading/empty/error/refused behavior preserved; new editable/proposed/saving/acknowledged/unconfirmed/conflict/retained-state/access-refused/read-failed/scope-retired/explicit-leave states. External-provider effects are outside this ordinary draft edit.
 TRUTHFUL_STATE_LABELS: PASS: proposed and stored wording stay separate; a matching current read is not execution acknowledgment, signing or payment. Unknown save can still complete; original native content version is not a reconstructed revision counter.
 SOLO_UI: YES: existing Sales Terms & Agreements original record; E09 Portal UI/relationship permissions and shared Chat/C0b/Operations sources unchanged.
 SOLO_1536X770_PAIGE_CLOSED: PASS: assets/e04-agreement-correction/1536-770-light-closed.png and dark equivalent; native editor/context and save reachability.
@@ -27,6 +27,14 @@ SOLO_1024X768_PAIGE_OPEN: PASS: assets/e04-agreement-correction/1024-768-light-o
 SOLO_900X1000_PAIGE_CLOSED: PASS: assets/e04-agreement-correction/900-1000-light-closed.png and dark equivalent; original scroll owner/action reachability.
 SOLO_900X1000_PAIGE_OPEN: PASS: assets/e04-agreement-correction/900-1000-light-open.png and dark equivalent; original overlay/source state preserved.
 UNVERIFIED: exact final type/design/review/full CI, guard2526/history-parent release, deployment/readback, real role cohorts/provider/legal/full O1–O12 and one complete founder evaluation; no completed premium/customer claim.
+
+INTERNAL_BUILD_IDENTITY: branch=codex/e04-agreement-correction; product_sha=6b4faa44670435e58a27428baf9cd6b45af8b841; composition=1243372b12786d0c9e1fe605f8e83b436cf4307d; exact_final_head=PR/review receipt; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e04-agreement-correction.md
+RELEASE_CHANNEL: development: local source/render only; hosted review, full exact-head CI, production readback and actual customer acceptance remain distinct.
+RELEASE_CLASSIFICATION: internal-only: professional agreement prerequisite within unfinished full O1–O12 Experience.
+CUSTOMER_RELEASE_IDENTITY: none: no finished Experience, customer version or founder acceptance announcement.
+RELEASE_NOTE_REQUIRED: no: bounded internal prelaunch increment; complete integrated founder evaluation remains owed.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: safe reviewed release/readback and actual ordinary-owner/staff/linked-client read/write/reload, genuine document/sign/provider/payment/service and full Experience acceptance.
+RELEASE_RECOVERY: position=reviewed forward fix preserving original saved wording, same agreement/audit/history; reference=docs/delivery/exp04-get-paid-deliver-journey.md; never automatically resubmit unknown corrections or unfreeze retained source.
 
 ## Source, interaction and evidence boundaries
 
@@ -55,7 +63,7 @@ Local logs retained: e04-correction-full-regression.log (incumbent async timeout
 e04-correction-full-regression-repeat.log (217/217), e04-correction-native-browser.log
 (20/15/0), final e04-correction-visible-receipt-browser.log (20/16/0),
 e04-correction-visible-receipt-regression.log (216/seven suites), unchanged
-e04-correction-visible-receipt-vocabulary.log (1), e04-correction-final-eslint.log (0 errors/one incumbent warning).
+e04-correction-visible-receipt-vocabulary.log (3), e04-correction-final-eslint.log (0 errors/one incumbent warning).
 Initial new tests used an incorrectly unwrapped synthetic native read response;
 fixed to the actual ok/value shape and wait for genuine record transition. The
 first generic typed parser exposed compiler errors; corrected for the installed

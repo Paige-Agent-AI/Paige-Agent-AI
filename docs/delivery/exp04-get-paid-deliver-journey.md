@@ -38,9 +38,9 @@ under October21 routine UX delegation; no founder approval/acceptance inferred.
     accepted service completion are never inferred.
 
 Actual native-shell render20 viewport/theme cases/16 paths/zero page errors with22
-owning source pins; desktop/narrow inspected. Full eight-suite217 assertions PASS,
-including unchanged original102. One initial incumbent signed-copy5000ms timeout
-remains logged; unchanged full repeat217 passes, no assertion/timeout suppressed.
+owning source pins; desktop/narrow inspected. Selected final216/seven suites plus original vocabulary3 pass, including unchanged
+original102. Two incumbent signed-copy5000ms timeouts in earlier composed runs remain
+logged; unchanged full repeat217 also passed, no assertion/timeout suppressed.
 Type ratchet10/current6 passed before final source refinement; exact final repeat
 running. Scoped ESLint0 errors/one incumbent fast-refresh warning. No new dependency.
 Source only: exact review/CI/guard dependency/deployment/source readback and actual

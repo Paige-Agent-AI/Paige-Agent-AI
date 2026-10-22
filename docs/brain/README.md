@@ -95,6 +95,19 @@ Mounted history/correction with authentic ordinary roles remains owed. Private
 upload references do not prove retained PDF bytes or legal sufficiency.
 [Native evidence](../evidence/ui-delivery/e04-native-draft-revision-history.md).
 
+Unreleased owner wording-inspection source consumes native producer#2521's retained
+revisions under the same original agreement. Original author scope, strict selected
+ID/metadata, twenty-row native cursor and explicit failed/empty/refused recovery;
+native refusal retires cached current wording. Actual-source20 viewport/theme
+cases/26 paths and current-main178 tests PASS; type ratchet no-new10/current6.
+First rendered return-focus defect was repaired at DOM commit; return now reads
+the current original before restoring focus, with failed reads retiring old data.
+Producer release/readback is verified; final consumer review/CI/deployment and
+actual ordinary roles remain owed. Dedicated Chat/Live
+history is not registered; no capability/algorithm Live promotion. Correction and
+all original professional signing/financial/service outcomes remain mandatory.
+[UI evidence](../evidence/ui-delivery/e04-agreement-wording-history.md).
+
 Latest authoring integration: original Sales New agreement now mounts a genuine
 rich/source wording editor, real client selection, request-bound native save and
 uncertainty recovery, and selected original-record/history/file inspection.

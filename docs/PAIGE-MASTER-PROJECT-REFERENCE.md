@@ -826,6 +826,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-22 — EXP09 original Sessions production closeout.**
+
+| Increment | Exact reviewed/deployed identity and bounded proof | Completion boundary |
+| --- | --- | --- |
+| [#2567](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2567): Original customer Sessions, selected business and same-request recovery | Reviewed `8529bfb2c0a444fe4e5e936f78acb3b260695dbe`; main `eba561cda65f90a8e0d54cc72b5922841bae2349`; actual tree `6a369483a920413b2f0e8cc36ce92ba10d424ecf` matches inspected composition preserving concurrent EXP04 releases.11 applicable exact-head checks/full Preview and2 statuses SUCCESS; reviews5610358663/5610724026/5610739139/5611143822 AUTHOR-REVIEW / LOWER ASSURANCE.139 focused checks/five suites, including25 selected-business/Auth/SDK/deadline controls; original native111 selected-request checks PASS in job119700749361, with step99 independently SUCCESS. Original Sessions step88, Operations review/discovery/competing-decision steps41/42/44 and Layer C native step161 also independently SUCCESS; no CURA adapter claim. Production read prosrc1bbb4e8f7361b6396bb8131b71246ee3/admission6fde1e99b3c20c89e4ae5038af50a456 and original owner/ACL/search paths read back unchanged. Web `dpl_EjHhmkCSCycpCiQK1JsNqwfuZtyo` READY at exactmain; public `eba561cda65f90a8e0d54cc72b5922841bae2349-mvj9mhs0`, customerUpdate:null. Served useClientPortalSessions-3T3_foTC.js SHA2560630715427470e8499f44ecf8172aeda669f50d9301bbda96355b011d38c2c33 and Sessions-CItR1EdZ.js SHA256ed88b6c99a86126edf3875cd17bf3833950cbca906d2b8989bb08c7b446356b9. Own migration/Edge NOT_APPLICABLE. | Original native booking admission, booking-manage/public-booking, notice/slot/CRM checks and original request/audit identity retained; captured actual actor/business and bounded preflight/read/recovery. Seven original-component local/synthetic desktop/narrow/dark/focus images; no actual cancellation/reschedule/provider notice. Joined owner/client, returning/revoked/multiple-business and whole-Experience acceptance remain PROOF OWED. Original global identity guard remains. No customer announcement/version. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2567#issuecomment-6336153344). |
+
 **2026-10-22 — EXP09 original Progress and Action Items production closeout.**
 
 | Increment | Exact reviewed/deployed identity and bounded proof | Completion boundary |

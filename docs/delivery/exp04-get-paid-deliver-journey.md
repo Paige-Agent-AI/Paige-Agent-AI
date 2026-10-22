@@ -1,5 +1,50 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
+## October22 exact PDF and assigned-field preparation — pre-edit contract
+
+This is the next original-engine foundation, not a second signing implementation.
+Studio versions require marketing/session lineage; marketing draft history is
+truncated prose, and agreement draft revisions retain wording/source only. None
+binds the exact retained PDF to assigned signer fields. Existing C7 source command
+does not yet establish approval of that PDF/map. It remains unactivated.
+
+1. Outcome: prepare the exact document and signature/initial/date/text/checkbox
+   placements for original authorized parties; identify missing or overlapping
+   fields before a later governed signing request.
+2. Owner: EXP04 original Sales/Agreements. REUSE native document/parser/checksum,
+   original agreement/customer/signer versions; EXTEND pure preparation validation.
+   No Portal/Files/Storage/Operations review source is edited.
+3. Harness/Gateway: ordinary internal preparation is a legitimate native domain
+   path. Later external send uses the existing governed approval/receipt path;
+   this helper neither executes nor creates another confirmation channel.
+4. Spine: existing agreement.* remains PARTIAL. Exact-document field preparation
+   Chat/Live execution is UNAVAILABLE; this source registers/activates no action.
+5. Provider: existing pdf-lib1.17.1 and native private document checksum/parser.
+   No new dependency, renderer, storage client, connection, provider or spend.
+6. Authority/risk: trusted original record must be resolved by the eventual
+   authenticated domain boundary. A pure parser/digest is not authorization,
+   signature, consent, high/confirm approval or legal sufficiency.
+7. Identity: exact original agreement/tenant/customer/body version/source timestamp,
+   original signer IDs/roles/order, retained PDF digest/length/actual page geometry
+   and assigned map. No new table, job, scheduler, ledger or event store here.
+8. Readback: inspect actual immutable bytes with the native parser/checksum before
+   deriving geometry; bind the complete map/source in a deterministic digest.
+   That digest is preparation identity, never an action or acceptance receipt.
+9. Visible state/Binding35: no mounted change or readiness promotion. Draft maps
+   may expose actionable missing-signature/overlap issues; no signing-ready claim
+   from unsupported input, absent fields or a stale source/document/signer map.
+10. Proof owed: actual PDF geometry/rotation/crop/byte-mutation and strict source,
+    signer/field/bounds/order negatives; exact-head review/CI. Native persistence,
+    actual preview/keyboard placement, exact document approval, signing/sealing,
+    Portal consumption and owner/staff/client/provider/founder acceptance follow
+    in bounded releases. All O1-O12 remain mandatory and incomplete.
+
+The initial slice adds dormant modules beside the original document engine; it
+does not edit the deployed document.ts or redirect existing inspector/send/seal
+callers. This narrows the proposed lease and avoids an unnecessary shared Edge
+deployment. Jurisdiction/requested-wording-review/reviewer options stay optional
+business configuration; the infrastructure supplies no clauses or completed review.
+
 ## October22 template foundation and consumer checkpoint
 
 LOCAL native original-library version/list/read/actor-bound recovery now passes

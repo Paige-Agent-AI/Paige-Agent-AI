@@ -14,7 +14,7 @@ BEHAVIORAL_EVIDENCE: PASS: actual Enter on original Open your portal reaches exp
 AUTHENTICATED_RUNTIME: UNVERIFIED: no real recipient/Auth/native acceptance/customer surface test in this evidence.
 KEYBOARD_FOCUS: PASS: keyboard Enter on named44px original button traverses changed handoff. Full authenticated destination focus and screen reader UNVERIFIED.
 ZOOM_REFLOW: UNVERIFIED:200% zoom/physical Safari not exercised; actual390CSSpx no horizontal overflow and primary action reachable.
-REDUCED_MOTION: NOT_REQUIRED: no animation/motion change; incumbent reduced-motion behavior preserved, not newly device-tested.
+REDUCED_MOTION: NOT_APPLICABLE: no animation/motion change; incumbent reduced-motion behavior preserved, not newly device-tested.
 STATE_COVERAGE: PASS: actual populated ready→exact route handoff; original recipient/signup/confirmation/unknown/readback/refusal/paused/ended/session-change cases retained in102 tests. Other unchanged states not newly rendered.
 TRUTHFUL_STATE_LABELS: PASS: local route evidence only; native acceptance/full shell/customer/provider/whole Experience not implied.
 SOLO_UI: NO: public recipient route, not SOLO owner shell/PAIGE-open-closed viewport matrix.
@@ -25,7 +25,7 @@ MUST_PRESERVE: original recipient binding/status/profile/Auth, confirmation/cons
 ACCEPTANCE_CRITERIA: fresh/recovered/returning acceptance uses existing verified-business route only after same current identity checks.
 MOTION_PURPOSE: NONE: no new motion/haptics.
 PROTECTED_SEAMS: Auth/onboarding/recipient/native/sender/Chat/Live/Spine/booking/signing/money/Knowledge untouched.
-INTERNAL_BUILD_IDENTITY: exact final head/review/CI recorded in PR; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e09-invitation-business-entry/result.json
+INTERNAL_BUILD_IDENTITY: 4ad740231c0fcb02c181da37870fb6d63d192079; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e09-invitation-business-entry/result.json
 RELEASE_CHANNEL: development: source/component/raw local render; required exact-head checks and normal web readback before production.
 RELEASE_CLASSIFICATION: internal-only: bounded original invitation entry repair; Portal PARTIAL.
 CUSTOMER_RELEASE_IDENTITY: none: complete integrated Experience acceptance remains owed.

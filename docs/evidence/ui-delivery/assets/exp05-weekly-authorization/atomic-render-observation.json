@@ -1,0 +1,24 @@
+{
+  "sourceCommit": "8c37617a7d2e787a030f687f4a9775183b5c71bc",
+  "desktop": {
+    "width": 1366,
+    "height": 768,
+    "fonts": "loaded",
+    "overflow": false,
+    "safeFocus": "Not now"
+  },
+  "narrow": {
+    "width": 320,
+    "height": 800,
+    "fonts": "loaded",
+    "overflow": false,
+    "safeFocus": "Not now",
+    "focusVisible": true
+  },
+  "escape": {
+    "dialogOpen": true,
+    "focus": "Review authorization",
+    "reviewClosed": true
+  },
+  "boundary": "Actual original UI and owner consumer over existing synthetic ports; no authorization click, authenticated customer or native concurrency claim."
+}

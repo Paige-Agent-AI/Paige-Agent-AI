@@ -614,15 +614,15 @@ async function invokeSoft(
   const cfg = (agent.config ?? {}) as Record<string, unknown>;
   // §14 model routing: every agent picks the cheapest-capable model per its job tier.
   // Default 'internal_first_draft' (open-model-eligible) — a sub-agent's output is an
-  // internal draft Paige integrates/reviews; an agent can override job_kind in its config
-  // (e.g. a client-facing final → 'client_copy_final', which routes to Claude reasoning).
+  // internal draft Paige integrates/reviews; the registered job_kind supplies the
+  // original capability band. ZION maps that band to the shared cognitive class.
   const jobKind = (typeof cfg.job_kind === "string" ? cfg.job_kind : "internal_first_draft") as JobKind;
   const userPayload = typeof input === "string" ? input : JSON.stringify(input);
   try {
     // §34-L5 attribution: thread the trace ctx so this routed call lands in paige_llm_trace tagged with
     // WHICH agent ran it (agent_id is a TEXT column → the stable slug) and the caller's tenant — without
-    // it these rows were writing agent_id=null. A null/absent tenant_id degrades gracefully in the L1
-    // writer (#146/#355), so we never throw on a platform/anon caller. Attribution only — routing unchanged.
+    // it these rows were writing agent_id=null. Existing other specialists retain
+    // their original legacy route; ZION uses metadata-only Fabric attribution.
     const body = {
       messages: [
         { role: "system" as const, content: agent.system_prompt },

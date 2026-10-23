@@ -869,6 +869,7 @@ jobs:
             supabase/functions/_shared/agreements/retained-document.test.ts \
             supabase/functions/_shared/agreements/seal-readback.test.ts \
             supabase/functions/_shared/agreements/signing-guard.test.ts \
+            supabase/functions/sign-agreement/preflight.test.ts \
             supabase/functions/_shared/agreements/preparation-artifact.test.ts \
             supabase/functions/_shared/agreements/owner-preparation.test.ts \
             supabase/functions/_shared/agreements/owner-preparation-http.test.ts \

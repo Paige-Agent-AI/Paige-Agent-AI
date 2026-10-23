@@ -2860,18 +2860,18 @@
       "required_scopes": [
         "Slack MCP connection scopes verified against Slack's official MCP documentation at build time (read channels/history and chat:write candidates; never admin-sensitive scopes by default)"
       ],
-      "safe_readable_context": "Connection status, per-tool approval state, channel/conversation metadata the connected workspace authorizes; never credentials, never private-message content outside the connected authorization, provider payloads fenced as untrusted data.",
-      "allowed_writes_external_effects": "None implemented. Planned: Slack message sends and other consequential Slack actions only through the gateway's governed execute (per-tool durable approval + prepare + owner go flag + Rail receipt); no chat shortcut around the gate.",
+      "safe_readable_context": "Connection status, per-tool approval state, and the tool catalogue Slack offers for the connected token's scopes; never the token, never message content outside the connected authorization, provider payloads fenced as untrusted data.",
+      "allowed_writes_external_effects": "None live. Implemented and reachable: bearer connect (Slack OAuth user token from the tenant's own internal/directory-published Slack app) through the canonical gateway's create + verify + tools read-only path; no write lane opens until per-tool durable approvals + the owner go flag. Authenticated end-to-end runtime proof is absent — no tenant has connected Slack yet.",
       "authority_lane": [
         "prohibited"
       ],
       "m1_dependency": "none",
       "canonical_provider_receipt": "None; future Slack MCP tool-call responses carried in the gateway's closed outcome vocabulary + Rail receipt.",
       "rail_mind_memory": "Rail: governed Slack action outcomes. Mind: only safe channel/action facts. Memory: none of message payloads or credentials.",
-      "status": "PROPOSED",
+      "status": "PROOF_OWED",
       "owner": "EXP10 Connect My Business (zCod)",
-      "dependency": "Provider OAuth facts verification (hosted MCP endpoint, token/scopes shape) before PR2; mcp_providers descriptor row; gateway-panel connect flow; governed approvals before any write lane opens.",
-      "next_slice": "EXP10 PR2: verify Slack's hosted MCP auth contract, add the mcp_providers descriptor, connect through the existing gateway, prove verify + tools/list read-only against a real authorized workspace.",
+      "dependency": "Provider facts verified 2026-10-22 (docs.slack.dev/ai/slack-mcp-server): hosted endpoint mcp.slack.com/mcp, Streamable HTTP, NO Dynamic Client Registration — so the gateway's DCR oauth_begin cannot complete for Slack; the bearer facet (xoxp user token, token scopes govern offered tools) is the verified surface shipped in EXP10 PR2 (descriptor migration 20271113410000 + gateway-panel connect preset). Remaining: a real workspace connect+verify proof; the pre-registered-client OAuth variant (RFC 8414 IS supported; DCR is the only gap) behind an owner-registered PAIGE Slack app; per-tool approvals before any write.",
+      "next_slice": "Owner/test-workspace live proof: connect Slack via the gateway panel (internal app user token), verify read-only handshake, list the tool catalogue; then the approvals slice and the pre-registered OAuth variant.",
       "tier_eligibility": {
         "platform": "eligible",
         "solo": "eligible",
@@ -2904,11 +2904,33 @@
         "rail_outcome": "Governed Slack action outcome on Rail (future)",
         "pause_revoke_path": "Disconnect through the gateway clears the stored credential; Slack workspace admins may additionally revoke the app in Slack settings",
         "next_owner": "EXP10 Connect My Business",
-        "next_slice": "Verify provider facts and ship read-only connect+verify"
+        "next_slice": "Live connect+verify proof on a real workspace; then approvals slice"
       },
       "sources": [
         "docs/delivery/exp10-connect-my-business/EXP10-SOURCE-RECONCILIATION-REGISTER.md",
         "supabase/functions/mcp-gateway/index.ts"
+      ],
+      "code_anchors": [
+        {
+          "path": "supabase/migrations/20271113410000_exp10_slack_mcp_provider_descriptor.sql",
+          "role": "provider_adapter",
+          "note": "the Slack provider descriptor (bearer facet, no-DCR honesty, /mcp endpoint shape) that gates create_mcp_connection for provider_key=slack."
+        },
+        {
+          "path": "supabase/functions/mcp-gateway/index.ts",
+          "role": "provider_adapter",
+          "note": "the governed gateway door serving slack connections (create/verify/tools/approve/execute — provider-agnostic, M1-pinned)."
+        },
+        {
+          "path": "supabase/functions/_shared/mcp-gateway/connection.ts",
+          "role": "fail_closed_containment",
+          "note": "the canonical loader: SSRF-guarded credential resolution; refuses non-executable facets so a listed Slack connection can never mis-dispatch."
+        },
+        {
+          "path": "src/solo/settings-integrations-gateway.tsx",
+          "role": "provider_adapter",
+          "note": "the customer gateway-panel connect preset routing Slack to provider_key=slack with bearer auth preselected."
+        }
       ]
     },
     {

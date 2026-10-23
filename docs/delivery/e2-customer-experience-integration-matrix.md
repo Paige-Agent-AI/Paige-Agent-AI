@@ -1,5 +1,64 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October23 — worker source release; additive ordinary review proof
+
+Original worker2653 is released at06f0ff637ab4a79a57c647f7cf7da839b9f0dc86,
+exact reviewed tree5769886a8639b61e9f6811925486ea7c8a8aa51d/LOWER5630049749/all11
+checks/two statuses SUCCESS. Normal Edge39978748563/120500162700 and actual worker51/
+36-source/config readback PASS; READY5Z2Wn7/public06f-mvl4mesp/null. Native writer/
+claim/submit sources and ACL unchanged. [Release6368560367](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2653#issuecomment-6368560367).
+Public report admission/real report run/retrieval and full19/nine remain owed.
+
+On earlier actual productionbdd1/Chat514/review72, one authorized ordinary-owner
+weekly request settled43seconds/3steps with actual source limitations/3 supported
+priorities. Exact answer persisted through real reload, Executive navigation and
+catalogue return. Released Desk ordinary count/date/summary/historical-source warning,
+source-tab/parent preservation and exact focus/conversation return were separately
+observed. [Weekly6368295944](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2608#issuecomment-6368295944),
+[Desk6368390069](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2627#issuecomment-6368390069).
+These bounded cases do not replace historic9/0 or12/0/4, or close general reliability,
+negative permissions/isolation, Live/mobile/cohorts or complete founder acceptance. Actual
+nine catalogue labels/access remain as recorded; no algorithm/readiness promotion.
+Reader3754 green history is superseded for release by required fresh exact-head
+review/CI on this worker composition; no product/render input changed.
+
+## October23 — native report artifact prerequisite released
+
+CAP014/015 and O01/O02/O13/O16/O17 remain required, not accepted. Original atomic
+work/artifact/turn/Rail producer #2652 is released at
+da509d09190bfee0c4a19bfba6dc7f1792991d61/treef8740c615ef747ff73a5fa9dfcd68643d59962c9;
+reviewed4007/LOWER5628945189+5629390859, all13 exact-head/two statuses SUCCESS.
+Normal39967757112/deploy120462229828 and actual450002/sourcef9024/inversec0a5/
+private ACL PASS; original public submit61b3 unchanged. READY Bmga/public200 exact
+da509-mvl1vzq6/null. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2652#issuecomment-6366972590).
+Own Edge N/A; zero report artifacts, no admission/worker/provider/Chat/action/
+readiness activation. Next existing worker2653 retains original reviewed source
+after current-main composition; fresh129/seven surrounding suites PASS, earlier
+159/seven proof remains separately scoped. Final-head review/CI/release/readback,
+original reader, server capture-once admission and actual customer continuity
+remain required. Functional source released; Visual unmounted; Experiential
+ordinary roles/cohorts/Chat/Live and Founder Acceptance owed. No algorithm claim
+changes, CAP014/015 stay Unverified, all19/nine definitions and historical
+9PASS/0FAIL plus12PASS/0FAIL/4BLOCKED preserved.
+
+## October23 — original report reader source and responsive recovery
+
+O01/O02/O13/O16/O17 and CAP014/015 consumer: same original artifact Card→scoped
+Studio parser→paged document, correctly labelled Business review. Source candidate
+e144/main-composition6a99eb3 preserves all declared render bytes. Existing mobile
+clipping,32/16px controls, prior-context paint, opener return, read failure/retry,
+page-position and thumbnail keyboard defects are repaired within original files.
+Final serialized original Card5FAIL/1PASS then115/six and composed100/six PASS;
+typeszero new, scoped ESLint and17 actual source-pinned synthetic IAB frames support
+functional/visual/interaction scope. Actual320dialog302/302,44px controls, original
+scroll reset, same-read retry/Print focus, exact Open return/draft retained and
+workspace facts retired. Native Chrome/authenticated/cohorts/real Chat-Live/
+200percent zoom/AT remain unverified. No public report submission, action, provider,
+registry or algorithm promotion; monthly_qbr_draft/qbr_draft stay Unverified.
+Final exact-head review/CI/release/readback, server capture-once admission and
+ordinary acceptance remain required; original19/nine definitions, historical
+9PASS/0FAIL and12PASS/0FAIL/4BLOCKED unchanged. [Evidence](../evidence/ui-delivery/e2-business-review-document-reader.md).
+
 ## October22 — original finding inspection consumer candidate
 
 Full-CI diagnostic39876480194 on f9ac actually reports20113 total/20098 passed/
@@ -971,6 +1030,45 @@ Acceptance UNVERIFIED. CAP014/015 remain Unverified; no ALG maturity promotion.
 Full19/nine, original worker/renderer/public admission/retrieval, ordinary
 roles/isolation/cohorts/Chat/Live and actual governed-result acceptance remain open.
 ANT1389daa4628/ANT16156cd6b3a record ten-answer routing; sole lead.
+
+S2D print-context follow-up: two actual-handler failures showed the original
+title existed only outside printable blocks. Add the existing title-only cover
+block before D2 facts, within its reserved block budget; no decorative label or
+new renderer. Fresh159/seven suites PASS. Native rendered report proof remains
+owed with the original reader consumer; no visual/customer acceptance inferred.
+
+**S2D original report worker, development:** consumes only the original service-
+claimed immutable business_review work before the legacy model branch. D2's
+existing Metric capture formatter supplies all facts/blocks; no model/provider,
+new read, public admission, caller-supplied evidence, queue or action activation.
+Legacy9, Knowledge handlers and original sweep/recovery are unchanged. Native
+capture/version/title/period/revision boundaries are validated; original SQL
+claim/completion current authority and atomic artifact/turn/Rail remain owners.
+Success requires exactly one completion row, original artifact/work identity,
+revision1, original completion-turn UUID and receipt_recorded:true. No empty,
+foreign, malformed or unreceipted result can become success.
+
+Original-source actual-handler control reproduced20 FAIL/3 PASS for this missing
+report path. New source passed88 cases/five suites; after a fresh sequential
+review, an unconfirmed settlement still carried a refusal code. Three actual
+negative cases reproduced that finding; corrected response now reports outcome
+unknown consistently. Final159 cases/seven original/actual-handler suites PASS,
+including23 report cases, D2/parser/export/Knowledge/Chat reach and receipt
+regressions. No helper/model/SQL writer is mocked into an allow-all authority;
+handler tests use explicit isolated transport ports and are not database or
+customer proof. Original native issuer/writer/full-schema gates remain separate.
+Completion transport/missing-readback remains uncertain; original failure/unknown
+settlement must return the exact committed status before persistence is claimed.
+Otherwise original work/recovery remains authoritative, with no automatic retry.
+
+Functional development integration; Visual N/A for unadmitted report path;
+Experiential/authenticated ordinary/cohort/Live/Founder Acceptance UNVERIFIED.
+CAP014/015 remain Unverified and algorithms unchanged. Exact-head separate
+AUTHOR-REVIEW/lower assurance, hosted CI/Deno/Preview, dependency-current-main
+composition, safe release and strict actual Edge source/configuration readback
+remain required. Renderer/public server capture-once admission/retrieval and
+all19/nine acceptance still owed. Master4.0 N/A until actual merge.
+ANT161371a4b4f records pre-edit ten-answer source routing; sole lead.
 **D3A source/native release verified:** PR2643 reviewed097eaf205f57866203adbf196aa0dbddcc567f03,
 LOWER5622701932; all13 final checks and two web statuses SUCCESS, no unresolved
 threads. Main52dfacc418578c9dea9e3e7f3b33363288d17c66/tree73f3e18a65b1e26dc8f9baa22d014f31a14ea9d6

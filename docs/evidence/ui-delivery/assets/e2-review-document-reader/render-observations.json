@@ -1,0 +1,232 @@
+{
+  "evidenceClass": "original source rendered in IAB; synthetic Auth/data/Chat ports only; no customer acceptance",
+  "capturedAt": "2026-10-23T14:24:50.127Z",
+  "frames": [
+    {
+      "file": "verified-390-error-retry.jpg",
+      "bytes": 22267,
+      "raster": [
+        390,
+        843
+      ]
+    },
+    {
+      "file": "verified-320-review-page1.jpg",
+      "bytes": 25601,
+      "raster": [
+        320,
+        740
+      ]
+    },
+    {
+      "file": "verified-320-review-page2-reset.jpg",
+      "bytes": 20179,
+      "raster": [
+        320,
+        740
+      ]
+    },
+    {
+      "file": "verified-1536-770-closed.jpg",
+      "bytes": 37876,
+      "raster": [
+        1535,
+        770
+      ]
+    },
+    {
+      "file": "verified-1536-770-open.jpg",
+      "bytes": 51565,
+      "raster": [
+        1535,
+        770
+      ]
+    },
+    {
+      "file": "verified-1366-768-closed.jpg",
+      "bytes": 36361,
+      "raster": [
+        1366,
+        768
+      ]
+    },
+    {
+      "file": "verified-1366-768-open.jpg",
+      "bytes": 50088,
+      "raster": [
+        1366,
+        768
+      ]
+    },
+    {
+      "file": "verified-1024-768-closed.jpg",
+      "bytes": 33021,
+      "raster": [
+        1024,
+        768
+      ]
+    },
+    {
+      "file": "verified-1024-768-open.jpg",
+      "bytes": 34320,
+      "raster": [
+        1024,
+        768
+      ]
+    },
+    {
+      "file": "verified-900-1000-closed.jpg",
+      "bytes": 33923,
+      "raster": [
+        900,
+        1000
+      ]
+    },
+    {
+      "file": "verified-900-1000-open.jpg",
+      "bytes": 35914,
+      "raster": [
+        900,
+        1000
+      ]
+    },
+    {
+      "file": "verified-1536-review-open.jpg",
+      "bytes": 54167,
+      "raster": [
+        1535,
+        770
+      ]
+    },
+    {
+      "file": "verified-desktop-keyboard-return.jpg",
+      "bytes": 55146,
+      "raster": [
+        1535,
+        770
+      ]
+    },
+    {
+      "file": "verified-390-loading-reduced.jpg",
+      "bytes": 15502,
+      "raster": [
+        390,
+        843
+      ]
+    },
+    {
+      "file": "verified-390-member-reduced.jpg",
+      "bytes": 22679,
+      "raster": [
+        390,
+        843
+      ]
+    },
+    {
+      "file": "verified-390-obsidian-reduced.jpg",
+      "bytes": 31189,
+      "raster": [
+        390,
+        843
+      ]
+    },
+    {
+      "file": "verified-390-workspace-return-refused.jpg",
+      "bytes": 22253,
+      "raster": [
+        390,
+        843
+      ]
+    }
+  ],
+  "states": [
+    {
+      "state": "loading",
+      "view": "Recorded business review\n\nDocument\n\nLoading document preview\nClose"
+    },
+    {
+      "state": "empty",
+      "view": "Recorded business review\n\nDocument\n\nPreview unavailable\n\nThe document could not be loaded. Return to its original conversation or project, check access, and try again.\n\nRetry preview\nClose"
+    },
+    {
+      "state": "member",
+      "view": "Recorded business review\n\nDocument\n\nPreview unavailable\n\nThe document could not be loaded. Return to its original conversation or project, check access, and try again.\n\nRetry preview\nClose"
+    },
+    {
+      "state": "unavailable",
+      "view": "Recorded business review\n\nDocument\n\nPreview unavailable\n\nThe document could not be loaded. Return to its original conversation or project, check access, and try again.\n\nRetry preview\nClose"
+    }
+  ],
+  "geometry390": {
+    "dialog": [
+      {
+        "scrollWidth": 373,
+        "theme": "dark",
+        "width": 373
+      }
+    ],
+    "scroll": [
+      {
+        "h": 0,
+        "scroll": 0,
+        "top": 0
+      },
+      {
+        "h": 484,
+        "scroll": 1265,
+        "top": 0
+      }
+    ],
+    "skeletonMotion": [],
+    "viewport": {
+      "height": 844,
+      "width": 390
+    }
+  },
+  "reducedMotion": {
+    "reduced": true,
+    "theme": "dark"
+  },
+  "observations": {
+    "desktopReturn": {
+      "active": "BUTTON Open",
+      "draft": "Explain the recorded receipts and source limitations.",
+      "dialogCount": 0
+    },
+    "mobile320": {
+      "dialogClientWidth": 302,
+      "dialogScrollWidth": 302,
+      "scrollBeforePageTurn": 620,
+      "page2ScrollTop": 0,
+      "allVisibleDialogControlsMinHeight": 44
+    },
+    "retry": {
+      "sameOriginalRead": true,
+      "recoveredFocus": "Print / Save as PDF",
+      "noWorkRedispatch": true
+    },
+    "workspaceB": {
+      "originalFactsRemain": false,
+      "readRefused": true
+    },
+    "thumbnail": {
+      "inert": true,
+      "toolbar": false
+    },
+    "font": {
+      "family": "Schibsted Grotesk",
+      "platformCustomFontObserved": true,
+      "source": "original local font files in development harness; no production font delivery claim"
+    }
+  },
+  "unverified": [
+    "authenticated customer and independent legitimate cohorts",
+    "native Chrome recapture unavailable",
+    "full real Chat/Live/Conversations transport",
+    "native browser 200 percent zoom",
+    "assistive technology and physical device",
+    "ordinary same-tenant role revocation lifecycle beyond existing Card props",
+    "public business-review admission",
+    "founder acceptance"
+  ]
+}

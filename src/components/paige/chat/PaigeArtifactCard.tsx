@@ -30,7 +30,8 @@
 //   • Honest degrade (§13): a document that won't hydrate falls back to a FileText glyph on the tile and
 //     an honest empty state in Open — never a fabricated preview; an image that won't load falls back to
 //     an image glyph, never a broken <img>.
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
+import { useTheme } from "next-themes";
 import { motion, useReducedMotion } from "framer-motion";
 import { Eye, FileText, Image as ImageIcon, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -96,12 +97,12 @@ type DocState = "idle" | "loading" | "ready" | "failed";
  *  (the intended target) prints. */
 function DocThumbnail({ document }: { document: StudioDocument }) {
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden bg-card print:hidden" aria-hidden>
+    <div className="pointer-events-none absolute inset-0 overflow-hidden bg-card print:hidden" aria-hidden {...{ inert: "" }}>
       <div
         className="origin-top-left"
         style={{ width: THUMB_CONTENT_W, height: THUMB_CONTENT_H, transform: `scale(${THUMB_SCALE})` }}
       >
-        <DocumentPreview document={document} />
+        <DocumentPreview document={document} toolbar={false} />
       </div>
     </div>
   );
@@ -118,43 +119,61 @@ function GlyphTile({ icon: Icon }: { icon: typeof FileText }) {
 }
 
 export function PaigeArtifactCard({ artifact, tenantId, onSend, className }: PaigeArtifactCardProps) {
+  const { resolvedTheme } = useTheme();
   const reduce = useReducedMotion();
   const isDoc = artifact.artifactType === "document";
   const imageUrl = artifact.artifactType === "image" ? artifact.url : undefined;
 
   const [open, setOpen] = useState(false);
+  const identity = JSON.stringify([tenantId, artifact.id, artifact.artifactType]);
+  const priorIdentity = useRef(identity);
+  const opener = useRef<{ element: HTMLButtonElement; identity: string } | null>(null);
+  const review = useRef<HTMLDivElement>(null), retryButton = useRef<HTMLButtonElement>(null);
+  const retryRequested = useRef(false);
+  const [readAttempt, setReadAttempt] = useState(0);
+  const openPreview = (event: MouseEvent<HTMLButtonElement>) => {
+    opener.current = { element: event.currentTarget, identity };
+    setOpen(true);
+  };
+  useEffect(() => {
+    if (priorIdentity.current !== identity) {
+      priorIdentity.current = identity; opener.current = null; retryRequested.current = false; setOpen(false);
+    }
+  }, [identity]);
 
   // Document hydrate (thumbnail + Open share it). loadDocument never throws — it returns null on a gone/
   // corrupt row — but we still catch to be safe and degrade to a glyph/empty (§13). Cancelled on unmount
   // or id change so a late resolve never lands on a stale card.
-  const [doc, setDoc] = useState<StudioDocument | null>(null);
-  const [docState, setDocState] = useState<DocState>(isDoc ? "loading" : "idle");
+  const [read, setRead] = useState<{ identity: string; doc: StudioDocument | null; state: DocState }>({ identity, doc: null, state: isDoc ? "loading" : "idle" });
+  // Effect cleanup stops late reads; this render gate also retires old content
+  // before the first paint of a new workspace/record, not one effect later.
+  const doc = read.identity === identity ? read.doc : null;
+  const docState = read.identity === identity ? read.state : isDoc ? "loading" : "idle";
   useEffect(() => {
     if (!isDoc) {
-      setDoc(null);
-      setDocState("idle");
+      setRead({ identity, doc: null, state: "idle" });
       return;
     }
     let cancelled = false;
-    setDoc(null);
-    setDocState("loading");
+    setRead({ identity, doc: null, state: "loading" });
     loadDocument(tenantId, artifact.id)
       .then((d) => {
         if (cancelled) return;
-        if (d) {
-          setDoc(d);
-          setDocState("ready");
-        } else {
-          setDocState("failed");
-        }
+        setRead({ identity, doc: d, state: d ? "ready" : "failed" });
       })
       .catch(() => {
-        if (!cancelled) setDocState("failed");
+        if (!cancelled) setRead({ identity, doc: null, state: "failed" });
       });
     return () => {
       cancelled = true;
     };
-  }, [isDoc, tenantId, artifact.id]);
+  }, [isDoc, tenantId, artifact.id, identity, readAttempt]);
+  useEffect(() => {
+    if (!retryRequested.current || docState === "loading") return;
+    retryRequested.current = false;
+    const target = docState === "ready" ? review.current?.querySelector<HTMLButtonElement>('button') : retryButton.current;
+    target?.focus({ preventScroll: true });
+  }, [docState]);
 
   // Image load state — Skeleton until the pixels arrive, glyph if the src is missing or errors.
   const [imgLoaded, setImgLoaded] = useState(false);
@@ -216,7 +235,7 @@ export function PaigeArtifactCard({ artifact, tenantId, onSend, className }: Pai
         {/* The tile doubles as an Open affordance. Indigo focus ring (never gold, §11). */}
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={openPreview}
           aria-label={`Open ${artifact.title}`}
           className="relative h-24 w-20 shrink-0 overflow-hidden rounded-lg border border-border bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
         >
@@ -233,7 +252,7 @@ export function PaigeArtifactCard({ artifact, tenantId, onSend, className }: Pai
           </p>
 
           <div className="mt-auto flex items-center gap-2 pt-2.5">
-            <Button variant="outline" size="sm" className="h-8 gap-1.5 px-3" onClick={() => setOpen(true)}>
+            <Button variant="outline" size="sm" className="h-11 gap-1.5 px-3" onClick={openPreview}>
               <Eye className="h-3.5 w-3.5" aria-hidden />
               Open
             </Button>
@@ -242,7 +261,7 @@ export function PaigeArtifactCard({ artifact, tenantId, onSend, className }: Pai
               <Button
                 variant="gold"
                 size="sm"
-                className="h-8 gap-1.5 px-3"
+                className="h-11 gap-1.5 px-3"
                 onClick={() => {
                   onSend();
                   setOpen(false);
@@ -259,7 +278,8 @@ export function PaigeArtifactCard({ artifact, tenantId, onSend, className }: Pai
       {/* Open — a real render of the artifact (§13 no dead ends): DocumentPreview for a document, the
           full image for an image. Both degrade to an honest empty state on failure. */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className={cn("gap-0 p-0", isDoc ? "max-w-4xl" : "max-w-3xl")}>
+        <DialogContent ref={review} data-pg={resolvedTheme === "dark" ? "dark" : "light"} className={cn("min-w-0 gap-0 p-0 [&>button]:right-1 [&>button]:top-1 [&>button]:grid [&>button]:h-11 [&>button]:w-11 [&>button]:place-items-center", isDoc ? "max-w-4xl" : "max-w-3xl")}
+          onCloseAutoFocus={event => { const target = opener.current; opener.current = null; if (target?.identity === identity && target.element.isConnected) { event.preventDefault(); target.element.focus({ preventScroll: true }); } }}>
           <DialogHeader className="border-b border-border px-5 py-3 pr-12 text-left">
             <DialogTitle className="truncate text-base">{artifact.title}</DialogTitle>
             <DialogDescription className="flex items-center gap-1 text-xs">
@@ -271,23 +291,27 @@ export function PaigeArtifactCard({ artifact, tenantId, onSend, className }: Pai
           {isDoc ? (
             docState === "ready" && doc ? (
               // DocumentPreview owns its own scroll/print; give it a real height to fill.
-              <div className="h-[72vh]">
+              <div className="h-[72vh] min-w-0">
                 <DocumentPreview document={doc} />
               </div>
             ) : docState === "loading" ? (
-              <div className="space-y-4 p-6">
+              <div className="space-y-4 p-6" role="status" aria-label="Loading document preview">
+                <span className="sr-only">Loading document preview</span>
                 <Skeleton className="h-40 w-full motion-reduce:animate-none" />
                 <Skeleton className="h-4 w-2/3 motion-reduce:animate-none" />
                 <Skeleton className="h-4 w-1/2 motion-reduce:animate-none" />
               </div>
             ) : (
-              <div className="p-10">
+              <div className="p-10" role="alert">
                 <EmptyState
                   icon={FileText}
                   tone="brand"
                   title="Preview unavailable"
-                  description="This document is filed to the project. Ask Paige to rebuild it and it appears here."
+                  description="The document could not be loaded. Return to its original conversation or project, check access, and try again."
                 />
+                <div className="mt-4 flex justify-center"><Button ref={retryButton} variant="outline" className="min-h-11" onClick={() => {
+                  retryRequested.current = true; review.current?.focus({ preventScroll: true }); setReadAttempt(attempt => attempt + 1);
+                }}>Retry preview</Button></div>
               </div>
             )
           ) : imgFailed || !imageUrl ? (
@@ -313,7 +337,7 @@ export function PaigeArtifactCard({ artifact, tenantId, onSend, className }: Pai
             <DialogFooter className="border-t border-border px-5 py-3">
               <Button
                 variant="gold"
-                className="gap-1.5"
+                className="min-h-11 gap-1.5"
                 onClick={() => {
                   onSend();
                   setOpen(false);

@@ -36,6 +36,77 @@ receipt exclusion and separate work transition without inventing an actor. The
 ordinary JWT path still always carries its verified actor and receipt requirement.
 This correction is not a new service authority or proof of replay-safe delegation.
 
+## October23 — atomic exact weekly authorization correction, development
+
+Valid review5629673041 holds the original authorization candidate despite green
+CI: a newer pause must not be undone by an older review. Extend the existing native
+writer with an owner-only compare-and-authorize overload using original state and
+future-control cutoff under its existing row lock. Preserve original writer/ACL,
+fixed act, audits, recurrence and three-argument caller compatibility; no second
+approval/version store. Exact original consumer always sends the reviewed cutoff;
+stale or uncertain work is never retried.114 native cases PASS, including six
+concurrent stale reviews and ABA. Full authenticated/cohort/Live/recurrence and
+ten-outcome Experience acceptance remain owed; migration510005 and source are not
+yet deployed. [Exact proof](../evidence/ui-delivery/exp05-weekly-authorization.md).
+
+## October23 — exact native weekly authorization review, development
+
+EXTEND the original weekly owner controller and inline review with the existing
+`control_weekly_commitment_check(...,'authorize',original_revision)`. Only the
+current ordinary owner can review a requested/paused original definition; fixed
+personal Planning scope, day/time/zone and saved revision remain visible. The
+original native writer owns consent, concurrency, next occurrence and audit.
+Separate original readback must match the definition and acknowledged intended
+occurrence. Authorized/held is not executable/ready or a completed check. Unknown
+results offer original inspection without replay. No trigger/cron/Chat/Live,
+provider, new approval, scheduler, store, autonomy policy or domain writer change.
+
+The throwaway local Flow Prototype retained the existing compact design/CSS and
+explicit synthetic-only ports. All six outcome branches and Escape were traversed;
+320px light/1366px dark had no horizontal overflow. A real busy-state focus loss
+was corrected to a focusable live progress message before production UI. Standing
+owner design approval/autonomous delivery applies; no separate human prototype
+review is claimed. Actual native mounted/source-pinned frames remain required.
+Seventeen causal regressions failed before implementation; the first ten-suite
+run passes284. Updated native proof, final scoped/compiled/rendered review and
+exact-head hosted release checks are separate pending gates. No ordinary customer
+authorization or recurring run performed. The original global activation boundary,
+all ten outcomes/E5-CV1–9/cohorts/Live and founder evaluation remain owed.
+
+Orchestration Contract: original Operations/Chat/Calendar weekly sheet → exact
+owner-only definition authorization RPC/audit → original owner projection. This
+human control is not a Layer C business execution receipt; future occurrences
+retain original Spine/Harness/Trust/Layer C/native ActionAdapter/Planning/Rail.
+ALG-01 preserves original identity/readback/no unknown retry; ALG-08 consumes the
+native next occurrence without calculating recurrence; ALG-12/13 preserve real
+held/ready/unknown guidance. ALG-02/03/11 unchanged. All eleven catalogue recipes
+remain Listed / Unverified; weekly status read is preserved and Chat/Live mutation
+admission remains unavailable. Grounding maine504/ANT11/52/147/161, own bounded
+weekly paths only; E01/E02/E04/CURA/EXP10 source and deployed2641/2645 preserved.
+
+Native review correction: the first full native run failed because its preceding
+actual-engine fixture intentionally left the trigger ready, while the new case
+incorrectly assumed held. Ready and explicitly held disposable scenarios now have
+separate exact assertions and restore original posture; no product gate is waived.
+Actual mounted Escape also closed the whole sheet: a new aria-label had broken
+the existing Radix capture guard. Two real Chat/Calendar cases reproduced that
+defect (5PASS/2FAIL); keeping the original review-container contract fixes it
+without changing the owning sheet/escape engine. The affected40 cases PASS.
+Direct compiler completed with6 existing baseline signatures and0 new; baseline
+unchanged. Native corrected run/final rendered recapture and hosted gates remain
+pending. Production read-only preflight confirms the original control/getter/owner
+hashes and ACLs unchanged and weekly trigger is_live=false. No customer write.
+The final original native run passes108, including actual ready/held authorization,
+original audit and dropped-response recovery with no extra occurrence; final
+service-role teardown is separately verified. Existing dark-reason constraint23514
+also correctly rejected an incomplete fixture hold; its real original flag/reason
+contract is now restored, never bypassed. Final286 tests/ten suites and all16
+native theme/viewport/panel frames plus320px pass; native pending/unknown/refused
+and original inspection are recorded with explicit synthetic Auth/RPC. The original
+process auto grant is the deliberate authorization result, not a change to global
+defaults, separate tool permission or trigger activation. Required hosted CI,
+source release and ordinary customer acceptance remain separate pending gates.
+
 ## October22 — ZION original invocation receipt correction, development
 
 REPAIR the existing `paige-orchestrator` receipt producer. Original invocation

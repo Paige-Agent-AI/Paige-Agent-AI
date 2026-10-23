@@ -1,5 +1,27 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October23 — worker source release; additive ordinary review proof
+
+Original worker2653 is released at06f0ff637ab4a79a57c647f7cf7da839b9f0dc86,
+exact reviewed tree5769886a8639b61e9f6811925486ea7c8a8aa51d/LOWER5630049749/all11
+checks/two statuses SUCCESS. Normal Edge39978748563/120500162700 and actual worker51/
+36-source/config readback PASS; READY5Z2Wn7/public06f-mvl4mesp/null. Native writer/
+claim/submit sources and ACL unchanged. [Release6368560367](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2653#issuecomment-6368560367).
+Public report admission/real report run/retrieval and full19/nine remain owed.
+
+On earlier actual productionbdd1/Chat514/review72, one authorized ordinary-owner
+weekly request settled43seconds/3steps with actual source limitations/3 supported
+priorities. Exact answer persisted through real reload, Executive navigation and
+catalogue return. Released Desk ordinary count/date/summary/historical-source warning,
+source-tab/parent preservation and exact focus/conversation return were separately
+observed. [Weekly6368295944](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2608#issuecomment-6368295944),
+[Desk6368390069](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2627#issuecomment-6368390069).
+These bounded cases do not replace historic9/0 or12/0/4, or close general reliability,
+negative permissions/isolation, Live/mobile/cohorts or complete founder acceptance. Actual
+nine catalogue labels/access remain as recorded; no algorithm/readiness promotion.
+Reader3754 green history is superseded for release by required fresh exact-head
+review/CI on this worker composition; no product/render input changed.
+
 ## October23 — native report artifact prerequisite released
 
 CAP014/015 and O01/O02/O13/O16/O17 remain required, not accepted. Original atomic
@@ -18,6 +40,24 @@ remain required. Functional source released; Visual unmounted; Experiential
 ordinary roles/cohorts/Chat/Live and Founder Acceptance owed. No algorithm claim
 changes, CAP014/015 stay Unverified, all19/nine definitions and historical
 9PASS/0FAIL plus12PASS/0FAIL/4BLOCKED preserved.
+
+## October23 — original report reader source and responsive recovery
+
+O01/O02/O13/O16/O17 and CAP014/015 consumer: same original artifact Card→scoped
+Studio parser→paged document, correctly labelled Business review. Source candidate
+e144/main-composition6a99eb3 preserves all declared render bytes. Existing mobile
+clipping,32/16px controls, prior-context paint, opener return, read failure/retry,
+page-position and thumbnail keyboard defects are repaired within original files.
+Final serialized original Card5FAIL/1PASS then115/six and composed100/six PASS;
+typeszero new, scoped ESLint and17 actual source-pinned synthetic IAB frames support
+functional/visual/interaction scope. Actual320dialog302/302,44px controls, original
+scroll reset, same-read retry/Print focus, exact Open return/draft retained and
+workspace facts retired. Native Chrome/authenticated/cohorts/real Chat-Live/
+200percent zoom/AT remain unverified. No public report submission, action, provider,
+registry or algorithm promotion; monthly_qbr_draft/qbr_draft stay Unverified.
+Final exact-head review/CI/release/readback, server capture-once admission and
+ordinary acceptance remain required; original19/nine definitions, historical
+9PASS/0FAIL and12PASS/0FAIL/4BLOCKED unchanged. [Evidence](../evidence/ui-delivery/e2-business-review-document-reader.md).
 
 ## October22 — original finding inspection consumer candidate
 

@@ -6,6 +6,7 @@ import { TenantCommandCenterShell } from "@/components/tenant-shell/TenantComman
 import { CommandHub } from "@/solo/CommandCenter";
 import { subscribePaigePromptHandoff } from "@/lib/paigePromptHandoff";
 import { HarnessPresence, useAgentPresence, useSoloPendingActions } from "./stubs";
+import { ReportReadFixture } from "./report-fixture";
 import { SoloPlanningSuggestion } from "@/solo/SoloPlanningSuggestion";
 import { PreparedWorkReview } from "@/solo/PreparedWorkReview";
 import "@/index.css";
@@ -42,7 +43,7 @@ function App() {
     <div className="e2-walkthrough-shell" style={{ height: "calc(100dvh - 32px)" }}>
       <TenantCommandCenterShell accountName={name} accountType="standalone" userRole={p.get("state") === "member" ? "member" : "admin"} onSignOut={() => {}} brandHomeHref="/solo/1234567/command-center" soloPaigeWorkspace={p.get("view") === "capabilities" ? <CataloguePanel /> : <Routes><Route path="/solo/:account/*" element={<Conversation />} /></Routes>}>
         <div className="paige-solo" data-theme={theme} style={{ height: "100%", minHeight: 0, minWidth: 0 }}>
-          <Routes><Route path="/solo/:account/*" element={import.meta.env.E2_HARNESS_SLICE === "desk" && l.pathname.includes("business-game-plan") ? <DeskEntry /> : l.pathname.includes("command-center") ? <CommandHub account="1234567" accountContext={{ accountName: name, accountType: "standalone" }} openPaige={expandRail} /> : <section style={{ padding: 24 }}><h2>Canonical destination</h2><p>{l.pathname + l.search}</p><p>Destination resolution only; the actual departmental read is not executed by this walkthrough.</p><Link to="/solo/1234567/command-center/executive">Back to Executive</Link></section>} /></Routes>
+          <Routes><Route path="/solo/:account/*" element={import.meta.env.E2_HARNESS_SLICE === "report" ? <ReportReadFixture /> : import.meta.env.E2_HARNESS_SLICE === "desk" && l.pathname.includes("business-game-plan") ? <DeskEntry /> : l.pathname.includes("command-center") ? <CommandHub account="1234567" accountContext={{ accountName: name, accountType: "standalone" }} openPaige={expandRail} /> : <section style={{ padding: 24 }}><h2>Canonical destination</h2><p>{l.pathname + l.search}</p><p>Destination resolution only; the actual departmental read is not executed by this walkthrough.</p><Link to="/solo/1234567/command-center/executive">Back to Executive</Link></section>} /></Routes>
         </div>
       </TenantCommandCenterShell>
     </div>

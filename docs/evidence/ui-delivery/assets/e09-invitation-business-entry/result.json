@@ -1,0 +1,69 @@
+{
+  "at": "2026-10-23T15:50:33.898Z",
+  "component": "Actual JoinWorkspace/ConsumerInvitation and CSS; original isolated SDK fixture; current-lock router6.30.6",
+  "boundary": "Synthetic Auth/receipt/profile; destination is a labeled original-route readout, not the authenticated customer shell or native acceptance",
+  "scenarios": [
+    {
+      "state": "original-verified-recipient-ready",
+      "image": "invitation-ready-900x768.png",
+      "pngWidth": 900,
+      "pngHeight": 768,
+      "button": [
+        {
+          "bottom": 529.8000183105469,
+          "disabled": false,
+          "height": 44,
+          "left": 243.1999969482422,
+          "name": "Open your portal",
+          "right": 641.5999908447266,
+          "top": 485.8000183105469,
+          "width": 398.3999938964844,
+          "x": 243.1999969482422,
+          "y": 485.8000183105469
+        }
+      ],
+      "focus": null,
+      "height": 768,
+      "horizontalOverflow": false,
+      "title": "Join Second Test Business with a Longer Name",
+      "width": 900
+    },
+    {
+      "state": "original-verified-recipient-ready",
+      "image": "invitation-ready-390x844.png",
+      "pngWidth": 390,
+      "pngHeight": 844,
+      "button": [
+        {
+          "bottom": 355.6000061035156,
+          "disabled": false,
+          "height": 44,
+          "left": 40.79999923706055,
+          "name": "Open your portal",
+          "right": 334.4000053405762,
+          "top": 311.6000061035156,
+          "width": 293.6000061035156,
+          "x": 40.79999923706055,
+          "y": 311.6000061035156
+        }
+      ],
+      "focus": null,
+      "height": 844,
+      "horizontalOverflow": false,
+      "title": "Join Second Test Business with a Longer Name",
+      "width": 390
+    },
+    {
+      "state": "keyboard-original-verified-business-route",
+      "image": "invitation-handoff-390x844.png",
+      "pngWidth": 390,
+      "pngHeight": 844,
+      "handoff": "/app?business=e0921000-0000-0000-0000-000000000001",
+      "height": 844,
+      "horizontalOverflow": false,
+      "title": "Original portal route handoff",
+      "width": 390
+    }
+  ],
+  "capture": "Raw PNG with temporary1x metrics; no image editing"
+}

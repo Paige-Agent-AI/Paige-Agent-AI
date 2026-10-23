@@ -47,6 +47,16 @@ Direct compiler completed with6 existing baseline signatures and0 new; baseline
 unchanged. Native corrected run/final rendered recapture and hosted gates remain
 pending. Production read-only preflight confirms the original control/getter/owner
 hashes and ACLs unchanged and weekly trigger is_live=false. No customer write.
+The final original native run passes108, including actual ready/held authorization,
+original audit and dropped-response recovery with no extra occurrence; final
+service-role teardown is separately verified. Existing dark-reason constraint23514
+also correctly rejected an incomplete fixture hold; its real original flag/reason
+contract is now restored, never bypassed. Final286 tests/ten suites and all16
+native theme/viewport/panel frames plus320px pass; native pending/unknown/refused
+and original inspection are recorded with explicit synthetic Auth/RPC. The original
+process auto grant is the deliberate authorization result, not a change to global
+defaults, separate tool permission or trigger activation. Required hosted CI,
+source release and ordinary customer acceptance remain separate pending gates.
 
 ## October22 — ZION original invocation receipt correction, development
 

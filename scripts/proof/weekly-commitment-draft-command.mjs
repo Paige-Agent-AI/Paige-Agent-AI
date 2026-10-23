@@ -318,8 +318,9 @@ export async function weeklyDraftCommandProof({run,json,literal,source,check,ref
   const paused=pausedRead.snapshot.checks.find(c=>c.automation_id===authId);assert(paused);dropAck=true;
   // Explicit isolated hold, using the same original catalogue field as the
   // incumbent dark-trigger test. Restore its incoming posture even on failure.
+  const originalTrigger=json("SELECT jsonb_build_object('is_live',is_live,'dark_reason',dark_reason) FROM paige_automation_triggers WHERE key='schedule.weekly_commitment_check';");
   try {
-  run("UPDATE paige_automation_triggers SET is_live=false WHERE key='schedule.weekly_commitment_check';");
+  run("UPDATE paige_automation_triggers SET is_live=false,dark_reason='Protected weekly authorization fixture hold' WHERE key='schedule.weekly_commitment_check';");
   const lostAuthorization=await controlWeeklyOwner(scope,paused,'authorize',caller,()=>scope);
   const authRecovered=await readWeeklyOwner(scope,caller,()=>scope);
   check('held native authorization with lost response recovers original state without replay',()=>{
@@ -331,7 +332,8 @@ export async function weeklyDraftCommandProof({run,json,literal,source,check,ref
     assert.equal(run("SELECT is_live FROM paige_automation_triggers WHERE key='schedule.weekly_commitment_check';"),'f');
   });
   } finally {
-    run(`UPDATE paige_automation_triggers SET is_live=${flagBefore==='t'?'true':'false'} WHERE key='schedule.weekly_commitment_check';`);
+    run(`UPDATE paige_automation_triggers SET is_live=${originalTrigger.is_live?'true':'false'},dark_reason=${originalTrigger.dark_reason===null?'NULL':literal(originalTrigger.dark_reason)} WHERE key='schedule.weekly_commitment_check';`);
+    assert.deepEqual(json("SELECT jsonb_build_object('is_live',is_live,'dark_reason',dark_reason) FROM paige_automation_triggers WHERE key='schedule.weekly_commitment_check';"),originalTrigger);
     assert.equal(run("SELECT is_live FROM paige_automation_triggers WHERE key='schedule.weekly_commitment_check';"),flagBefore);
   }
   return {status:'PASS',source:migration,migration_sha256:createHash('sha256').update(source(migration)).digest('hex'),

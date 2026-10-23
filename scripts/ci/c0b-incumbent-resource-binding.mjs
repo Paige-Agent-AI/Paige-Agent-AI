@@ -750,7 +750,7 @@ const SOURCES = {
   // receipt exclusion without an invented identity. Same-ID uncertainty, no replay.
   // Original a8d0324d digest reproduced; only this source changed/held. All peer
   // pins, actual authority, adapters, registry, providers and verifier rules retained.
-  "supabase/functions/paige-orchestrator/index.ts": "12a0c05862ab503166e539d1a64046951dac03812df623864e528ffb5f24f3e3",
+  "supabase/functions/paige-orchestrator/index.ts": "f5ef6feacb632d1cb54b2dcf1aa444ca573791fc92b084435f5d9faa57621d9e",
   "supabase/functions/subagent-forge/index.ts": "1acb5488f11bd93a2d6b36638fddcd73323f4363eacbd58b284d1fa648b3d906",
   // EXP00 comms-door renewal (2026-10-19), AUTHOR source review (NOT non-author; an independent reviewer
   // must confirm): branch zcod/exp00-comms-door-content-order changes send-message/index.ts in ONE hunk —

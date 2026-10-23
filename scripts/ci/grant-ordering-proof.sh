@@ -19,6 +19,7 @@ set -euo pipefail
 prod="${1:?usage: grant-ordering-proof.sh <prod-baseline-dir>}"
 db=postgresql://postgres:postgres@127.0.0.1:54322/postgres
 tool=scripts/ci/reproduce-production-grants.mjs
+node --test scripts/ci/grant-proof-unused-version.test.mjs
 
 v="$(node "$tool" --reset-version --recorded "$prod/recorded_versions.txt" --aside-list /dev/null)"
 # Greatest unused integer below V: versions are not always dates, and adjacent versions can
@@ -28,7 +29,8 @@ if [[ ! "$older" < "$v" ]]; then echo "::error::out-of-order probe $older is not
 newer_probe=supabase/migrations/29991231235959_ci_grant_ordering_probe.sql
 older_probe="supabase/migrations/${older}_ci_grant_ordering_probe_out_of_order.sql"
 if ls supabase/migrations/"${older}"_* >/dev/null 2>&1; then echo "::error::probe version $older already exists"; exit 1; fi
-trap 'rm -f "$newer_probe" "$older_probe"' EXIT
+probe_aside_list="$(mktemp)"
+trap 'rm -f "$newer_probe" "$older_probe" "$probe_aside_list"' EXIT
 
 cat > "$newer_probe" <<'SQL'
 CREATE TABLE public._ci_grant_ordering_probe (id int);
@@ -47,11 +49,14 @@ expect() { # label, sql, expected
   if [ "$got" = "$3" ]; then echo "  ok   $1"; else echo "::error::grant-ordering proof: $1 — expected $3, got $got"; exit 1; fi
 }
 
-out="$(scripts/ci/reproduce-production-grants.sh "$prod" 2>&1 | tee /dev/stderr)"
-# The out-of-order probe must actually have taken the set-aside path, or this proof tests nothing new.
-if ! grep -q "1 of them older than $v, set aside" <<<"$out"; then
-  echo "::error::grant-ordering proof: the out-of-order probe was not set aside for the rebuild"; exit 1
-fi
+# Inspect the SAME original planner the rebuild uses. Real production drift can
+# add other older files; a total of exactly one is not the proof's invariant.
+checked_v="$(node "$tool" --reset-version --recorded "$prod/recorded_versions.txt" --aside-list "$probe_aside_list")"
+if [[ "$checked_v" != "$v" ]]; then echo "::error::grant-ordering proof: rebuild frontier changed"; exit 1; fi
+node scripts/ci/grant-proof-unused-version.mjs --assert-aside-list "$probe_aside_list" "$(basename "$older_probe")"
+scripts/ci/reproduce-production-grants.sh "$prod"
+# Actual survival assertions below and their reconcile-only negatives remain
+# mandatory: merely listing the probe cannot pass if the rebuild applies it early.
 
 expect "the newer unrecorded migration's GRANT survives" \
   "select has_table_privilege('authenticated','public._ci_grant_ordering_probe','SELECT')" t

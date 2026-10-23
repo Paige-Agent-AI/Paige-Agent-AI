@@ -106,5 +106,6 @@ try{
  const checked=process.argv.includes('--checked') ? await proveCheckedSignerPreparation({sql,read,context,tenant,actor,client,fresh,startSession,observe,quote}) : null;
  const editability=process.argv.includes('--editability') ? provePreparationEditability({sql,read,context,tenant,fresh,quote,applyMigration:!process.argv.includes('--editability-baseline')}) : null;
  const documentPreparations=process.argv.includes('--document-preparations') ? await (await import('./document-preparations-proof.mjs')).proveDocumentPreparations({sql,read,context,tenant,actor,client,fresh,quote,startSession,observe}) : null;
- console.log(JSON.stringify({result:'PASS',checks,checked,editability,documentPreparations,migrationReplay:mode==='repaired'?2:0,concurrentSessions:mode==='repaired'?5:3,observedLockWaits:mode==='repaired'?3:2,scope:'Original native signer preparation only; no actual JWT/signature/provider/customer acceptance'}));
+ const signatureRecord=process.argv.includes('--signature-record') ? await (await import('./signature-record-proof.mjs')).proveSignatureRecord({sql,read,tenant,fresh,quote,startSession,observe}) : null;
+ console.log(JSON.stringify({result:'PASS',checks,checked,editability,documentPreparations,signatureRecord,migrationReplay:mode==='repaired'?2:0,concurrentSessions:mode==='repaired'?5:3,observedLockWaits:mode==='repaired'?3:2,scope:'Original native signer preparation only; no actual JWT/signature/provider/customer acceptance'}));
 }finally{await Promise.allSettled(sessions);database='postgres';sql(`DROP DATABASE ${fixture};`);}

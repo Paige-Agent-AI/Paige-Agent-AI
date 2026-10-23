@@ -1,5 +1,13 @@
 ## EXP02 linked finding inspection — October22 consumer candidate
 
+Full-CI diagnostic39876480194 on f9ac actually reports20113 total/20098 passed/
+12 failed/3 pending, all failures in original soloCommandCenterRailPanel.test.tsx.
+Local reproduction confirms useLocation outside Router,12 FAIL/1 PASS. The original
+fixture now supplies actual MemoryRouter to every existing render, retaining the
+real Rail hook/RPC, every assertion, scope-switch FrameRecorder and timeout/guard.
+All13 original cases PASS; runtime/rendered source unchanged. Final successor
+review/full exact-head CI remain required; original9700/f9ac failures retained.
+
 Existing semantic Systems Check references now select a UUID in the mounted
 original workspace. Only a matching finding from the current scoped, completed
 snapshot supports the inline source context and explicit original drawer.
@@ -1831,6 +1839,16 @@ customerUpdate:null. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/
 Source/native prerequisite only; no runtime report consumer or customer acceptance.
 
 ## EXP02 historical report block consumer — October22 development, unmounted
+
+**Verified source release2632:** reviewed943fd25f/finalLOWER5622432967, all11
+required checks/two web statuses SUCCESS, merged1d2b2456e6d7006e9e299592c65abfb2bb71a927.
+Actual tree144bb9b767c987ad0992ddd749548616399656af equals inspected current-main
+union. Productiondpl_45F3hz84VBVr1FA8DBXmMKuEQUSs READY/canonical aliases;
+public HTTP200 build1d2b2456e6d7006e9e299592c65abfb2bb71a927-mvk92u58/null.
+Own SQL/Edge N/A; pure module remains unused/unmounted, not a working report.
+[Receipt6354689388](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2632#issuecomment-6354689388)
+and Master4.0 close actual identity. Original artifact/worker/current Metric
+authority/retrieval/ordinary/cohort/Live/all19/nine/founder proof remain owed.
 
 D2 serializes the original native capture into existing document blocks using the
 canonical Metric parser, currency formatter and block normalizer. Explicit source

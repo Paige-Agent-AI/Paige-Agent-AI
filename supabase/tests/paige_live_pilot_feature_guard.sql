@@ -414,11 +414,15 @@ SELECT lives_ok($q$SELECT public.set_paige_live_pilot_internal(
   'the platform operator closes the rollout without naming a workspace');
 SELECT is((SELECT count(*)::integer FROM public.paige_live_pilot_subjects WHERE revoked_at IS NULL),0,
   'disable withdraws every admitted subject');
--- RECORDS CURRENT BEHAVIOUR pending the platform-level Live kill-switch restoration item (owner
--- ruling 2026-09-26). Change this assertion back to a refusal when that item lands.
+-- OWNER DIRECTIVE 2026-10-23 closes the recorded-behaviour gap: the disable above withdrew
+-- every subject's acknowledgement, and the person's own CURRENT acknowledgement is what gates
+-- audio — so the withdrawal stops the member. The platform-level kill-switch item remains
+-- open; when it lands this assertion stays a refusal for a NEW reason (the switch, not the
+-- withdrawal), and should then be restated on a workspace the switch does not cover.
 SELECT is(public.paige_live_pilot_authorized_internal(
-  'fa100000-0000-4000-8000-000000000001','fa100000-0000-4000-8000-000000001111'),true,
-  'the global rollout disable does not currently stop a Solo member (kill switch pending restoration)');
+  'fa100000-0000-4000-8000-000000000001','fa100000-0000-4000-8000-000000001111'),false,
+  'the global rollout disable stops the Solo member too: it withdrew their acknowledgement, '
+  'and the person''s own CURRENT acknowledgement is what gates audio');
 SELECT is(public.paige_live_pilot_authorized_internal(
   'fa100000-0000-4000-8000-000000000002','fa100000-0000-4000-8000-000000001111'),false,
   'disable denies the operator subject immediately');
@@ -430,8 +434,10 @@ SELECT is(public.paige_live_pilot_authorized_internal(
   'fa100000-0000-4000-8000-000000000002','fa100000-0000-4000-8000-000000001111'),false,
   'the operator stays refused on a workspace they are not a member of');
 SELECT is(public.paige_live_pilot_authorized_internal(
-  'fa100000-0000-4000-8000-000000000001','fa100000-0000-4000-8000-000000001111'),true,
-  'the Solo member stays admitted: acceptance is a record, not a gate');
+  'fa100000-0000-4000-8000-000000000001','fa100000-0000-4000-8000-000000001111'),false,
+  'the Solo member stays refused until they re-accept for themselves: the operator''s fresh '
+  'acceptance is the operator''s, and one person''s acceptance never stands as another''s '
+  'authorization (owner directive 2026-10-23)');
 
 
 -- ===========================================================================
@@ -658,22 +664,24 @@ SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
 SELECT ok((public.set_paige_live_rollout_scope_internal(
   'fa100000-0000-4000-8000-000000000002','off') ->> 'subjects_withdrawn')::integer >= 1,
   'closing the scope withdraws the subjects it was carrying');
--- RECORDS CURRENT BEHAVIOUR pending the platform-level Live kill-switch restoration item (owner
--- ruling 2026-09-26). Change this assertion back to a refusal when that item lands.
+-- OWNER DIRECTIVE 2026-10-23: the scope-close above withdrew the acknowledgements it carried
+-- (this member's among them), and the person's own CURRENT acknowledgement gates audio — so
+-- closing the scope now stops them. Reopening the scope never silently revives a withdrawn
+-- acceptance; each person re-accepts for themselves.
 SELECT is(public.paige_live_pilot_authorized_internal(
-  'fa100000-0000-4000-8000-00000000000a','fa100000-0000-4000-8000-000000003333'),true,
-  'closing the rollout scope does not currently stop a Solo member (kill switch pending restoration)');
+  'fa100000-0000-4000-8000-00000000000a','fa100000-0000-4000-8000-000000003333'),false,
+  'closing the rollout scope stops the Solo member: their acknowledgement was withdrawn, and '
+  'only their own re-acceptance restores it');
 SELECT is(public.paige_live_pilot_authorized_internal(
   'fa100000-0000-4000-8000-00000000000b','fa100000-0000-4000-8000-000000004444'),false,
   'and the agency owner stays refused: Live is Solo-only');
 SELECT is(public.set_paige_live_rollout_scope_internal(
   'fa100000-0000-4000-8000-000000000002','solo_tier') ->> 'scope','solo_tier',
   'the owner re-opens it');
--- RECORDS CURRENT BEHAVIOUR pending the platform-level Live kill-switch restoration item (owner
--- ruling 2026-09-26). Change this assertion back to a refusal when that item lands.
 SELECT is(public.paige_live_pilot_authorized_internal(
-  'fa100000-0000-4000-8000-00000000000a','fa100000-0000-4000-8000-000000003333'),true,
-  'and the Solo member is still admitted after the scope is reopened');
+  'fa100000-0000-4000-8000-00000000000a','fa100000-0000-4000-8000-000000003333'),false,
+  'and the Solo member is still refused after the scope is reopened: reopening carries no '
+  'fresh decision about anyone''s personal acknowledgement');
 
 -- 10. The global disable CLOSES the audience too. Two switches that compose in one direction and
 --     not the other are a trap: leaving the scope open means the next authorization silently

@@ -1,3 +1,13 @@
+## EXP05 original MCP ZION context — source preparation, October23
+
+Original delegate_to_subagent now forwards the existing server-resolved workspace
+for ZION even without a contact; missing/unavailable scope refuses before transport.
+Four causal failures/three incumbent passes become seven passing original-handler
+cases; original MCP governed-door/destructive guards and self-tests retained.
+[Evidence and boundary](../evidence/ui-delivery/exp05-mcp-zion-workspace.md).
+Source preparation only: no instructions/provider/activation or authenticated
+ZION result, historical acceptance or full ten-outcome/E5/founder closure.
+
 ## EXP02 Finance specialist attribution — October23 source released
 
 Owner Oct23 standard is canonical in the existing
@@ -7,8 +17,8 @@ and actual-contributor bylines retain their meaning. Original Finance and Debt
 review labels/addressed prompts, current records/constraints, authorization and
 editable Chat handoff are preserved. No runtime, provider, permission or capability
 activation.65 focused cases/four suites, scoped lint/type ratchet/build and19
-original native synthetic frames support the released source; ordinary review
-QA remains due. [Evidence](../evidence/ui-delivery/e2-finance-vera-attribution.md).
+original native synthetic frames support the released source; additive ordinary
+review QA is recorded below. [Evidence](../evidence/ui-delivery/e2-finance-vera-attribution.md).
 
 Existing North Star, Strategy, Bootstrap and official roadmap policy pointers
 were saved/read back; existing Delivery Register Standards Evidence row15 and
@@ -16,8 +26,9 @@ specialist/capability ownership notes synchronized. Original owner handoffs:
 ANT50MENTOR35c0c368, ANT81MERIT684ce232, ANT11ZIONa9120873,
 ANT163CURA0b59e72d and ANT164NEXUSef4ea8eb; incorporation remains pending actual owner receipts.
 No peer-source takeover, new agent or Agency/subaccount implementation.
-Functional source deployed / Visual synthetic verified / Experiential released handoff
-owed / Founder NOT_ACCEPTED. Algorithms/readiness and all19 outcomes unchanged.
+Functional source deployed / Visual synthetic verified / Experiential bounded
+ordinary handoff/read/reload verified with the exact-reference gap below /
+Founder NOT_ACCEPTED. Algorithms/readiness and all19 outcomes unchanged.
 
 Additive ordinary read evidence: second fresh weekly review observed settled
 within58seconds, same normalized2863character answer after reload; addressed
@@ -35,9 +46,14 @@ served Finance/roster/CSS independently verified; own SQL/Edge N/A.
 [Production receipt6372746988](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2672#issuecomment-6372746988).
 The initial private marker looked in the wrong split chunk; the observed immutable
 roster import confirms the original remit. Failure retained, no product repair.
-New CTA ordinary authenticated proof is UNVERIFIED: existing/fresh Edge control
-times out before page access. Earlier read cases stay separate. Current containing
-64347d7 preserves Finance source. Existing owner incorporation still pending;
+The earlier Edge access hold was resolved. Additive ordinary SOLO QA verifies the
+VERA label/44px target, keyboard prefill without automatic send, bounded read-only
+review and identical2043-character response after reload. Existing own draft was
+preserved on mouse and settled keyboard handoff. Exact-reference inspection remains
+UNVERIFIED: the original CTA omitted its original range key/bounds; the reader
+correctly refused that reference and distinguished a separate current snapshot.
+[QA and repair boundary6373093970](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2672#issuecomment-6373093970).
+This mechanical closeout includes no repair source. Existing owner incorporation still pending;
 no capability/algorithm/provider promotion, customer announcement or founder acceptance.
 This mechanical closeout records the preceding delivery in the sole Master4.0 log.
 
@@ -2668,3 +2684,44 @@ Experiential original signed-in prepared signing/approval/consent/native write/s
 effective terms and all12/CentralQA/cohorts/provider remain owed; Founder NOT_ACCEPTED.
 ALG01/12 supporting checks only; ALG02/13/catalogue unchanged. Next original PDF
 prepared-field renderer/source integration remains bounded, not a second engine.
+
+
+## EXP02 original source-backed report Chat consumer — October23 development
+
+The original document_generate tool adds closed business_review briefs with an
+explicit month/quarter period and1–12 issued canonical Metric references. Same
+caller-JWT submit, owned thread/stable intent and existing owner/admin/Studio
+gates; the server520002/worker51/reader foundations are already released. No
+model-supplied numbers/capture/tenant/revision steering or new registry/runtime.
+Original nine document types/non-signable Sales language and shared holds remain.
+
+Original branch2FAIL/14PASS and unknown-hold4FAIL/27SKIP were repaired before
+publication.229/eight suites and final formatted104/two PASS. The actual extracted
+handler uses explicit RPC/receipt ports, not a model/server/authenticated session.
+Connection/unknown status/missing work identity/rejected transport set original
+requestExecutionState.needsReview; confirmed SQL refusal is not accepted work.
+No blind retry or completion from admission. Owned test/validator lint0;
+whole Chat407baseline/407current, no increase (inherited errors not called clean).
+
+Original strict source binding refuses the changed enclosing Chat handler.
+Independent read-only AST decomposition reproduced all29 baseline bindings/122
+dependencies and isolated only identity15; dispatch/control/other identity/helper/
+import/extractor/metadata/dependency pins remain unchanged. Literal renewal and
+original hostile tests are part of the same bounded source review, not a waiver.
+[Flow/limits](../evidence/ui-delivery/e2-source-backed-review-chat.md).
+
+Mandatory exact-head CI/Edge type ratchet and normal actual Chat package/config
+readback remain due. Original source-bound renderer images are supporting
+synthetic proof; actual ordinary report/artifact/turn/Rail/reload/permission/
+interruption/unknown recovery/Live/cohorts and complete19/founder acceptance remain
+UNVERIFIED. CAP014/015 stay Unverified; other seven analytics/access/algorithm
+states unchanged. Original9PASS/0FAIL and12PASS/0FAIL/4BLOCKED preserved.
+Functional source tested / Visual unchanged original renderer / Experiential
+released ordinary workflow owed / Founder NOT_ACCEPTED.
+
+Current composition: recovery2663 mergedfd123cc (original993 parent), actual main
+64347d7 retained with no peer source change. Combined283 cases had one unchanged
+5second C1 timeout; original isolated C1 suite53/53 PASS without changing timeout,
+and original77/77 source mutation controls PASS. Worker/native-cache startup errors
+remain separate history. Chat407baseline/407current, no increase; owned lint0.
+New exact-head review/hosted CI/normal Edge source readback remain mandatory.

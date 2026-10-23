@@ -29,13 +29,19 @@ matches inspected union. Normal READY dpl_8ouHoWpHRXUeZKEga5GaPg5DyVj3/exact pub
 52091d6d-mvlc66az/null; served Finance/roster/CSS verified, own SQL/Edge N/A.
 [Release6372746988](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2672#issuecomment-6372746988).
 Initial private split-chunk marker failure retained and resolved through its actual
-immutable roster import, without product edits. New CTA ordinary proof UNVERIFIED:
-Edge control times out before page access, including fresh-tab/inventory attempts.
-Earlier addressed reads do not substitute. No readiness/algorithm promotion.
+immutable roster import, without product edits. Earlier Edge access hold resolved;
+additive ordinary SOLO verifies VERA label/44px keyboard prefill without send,
+bounded read-only review, identical2043-character response after reload and own
+unsent-draft continuity. Exact-reference inspection remains UNVERIFIED because the
+original CTA omitted original range key/bounds; the reader refused rather than
+substituting another reference. Separate bounded consumer repair follows.
+[QA6373093970](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2672#issuecomment-6373093970).
+No readiness/algorithm promotion or full Experience acceptance.
 
 Functional: report server and Finance attribution source released. Visual: Finance synthetic
-verified. Experiential: original Finance handoff/report/artifact/read/reload and
-real role/cohort/Live still owed. Founder Acceptance NOT_ACCEPTED; original19
+verified. Experiential: bounded Finance handoff/read/reload verified with original
+reference gap; report/artifact and real role/cohort/Live still owed.
+Founder Acceptance NOT_ACCEPTED; original19
 outcomes/nine analytics are unchanged. ALG03/06/11/12 Partial, ALG13 Unverified;
 no identity-only promotion. Original9PASS/0FAIL and12PASS/0FAIL/4BLOCKED preserved.
 
@@ -1406,3 +1412,36 @@ still refuses reports, so no catalogue promotion follows from this server founda
 Next release order: required native/real-issuer exact-head CI → safe migration/source
 readback → narrow original Chat consumer, coordinated through ANT161 → actual ordinary
 SOLO report/receipt/read/reload/permission and recovery proof. All19/nine remain owed.
+
+
+## October23 — original source-backed review Chat consumer candidate
+
+Reuse released native520002/original worker51/reader2661 through the original
+document_generate tool. Closed monthly/quarterly period plus original issued
+references, same owned saved conversation/caller-JWT/stable intent; no caller
+facts/capture/tenant/revision steering. Canonical server owns source/authority/
+period resolution and capture once; original artifact/turn/Rail establish success.
+Original nine legacy document types, Studio refusal, source-authority policies,
+non-signable Sales text and existing shared reconciliation hold are preserved.
+
+Actual original-handler2FAIL/14PASS and unknown-hold4FAIL/27SKIP retained;
+corrected229/eight suites then final104/two cases PASS. Owned lint0; Chat
+407baseline/407current, no increase. Actual whole-handler strict-binding refusal
+is separately retained: baseline29 bindings/122 dependencies reproduce; independent
+AST decomposition isolates only identity15. No extractor/metadata/dependency/
+hostile-control waiver. [Consumer evidence](../evidence/ui-delivery/e2-source-backed-review-chat.md).
+
+Functional source candidate; required final review/exact-head CI/normal Edge
+deployment/configuration/source readback pending. Visual original renderer only;
+Experiential actual ordinary report/artifact/receipt/read/reload/role/tenant/
+uncertain recovery/Live/cohort remains owed. Founder NOT_ACCEPTED. CAP014/015
+Unverified and other seven analytics/access/ALG03/06/11/12Partial/13Unverified
+unchanged. No provider/model/spend/consequential activation. All19/nine and
+historical9PASS/0FAIL plus12PASS/0FAIL/4BLOCKED remain intact.
+
+Recovery2663 now releasedfd123cc/original993; consumer cleanly composes actualmain
+64347d7. Own final diff is the original nine report/test/guard/evidence files.
+Combined283-case run retained one5second C1 timeout; original isolated53/53 suite
+and77/77 source controls PASS without assertion/timeout changes. Chat407/407lint,
+owned0. New exact-head review/CI/normal Edge and ordinary report QA remain owed;
+old3e green is historical. No algorithm/catalogue/permission/provider promotion.

@@ -153,6 +153,9 @@ const urlDriven = !!urlAccount;
 const urlBranchSlug = urlDriven ? ((urlParams["*"] || "").split("/")[0] || defaultBranchSlug("solo")) : null;
 const[stateRoute,setStateRoute]=React.useState('home');
 const[paigeDockedTab,setPaigeDockedTab]=React.useState('chat');
+const shellPaigeOpener=React.useRef<(()=>void)|null>(null);
+const registerPaigeOpener=React.useCallback((opener:(()=>void)|null)=>{shellPaigeOpener.current=opener},[]);
+const revealPaige=React.useCallback(()=>{if(shellPaigeOpener.current)shellPaigeOpener.current();else expandRail()},[expandRail]);
 const legacySettingsDestination=LEGACY_SETTINGS[urlBranchSlug]||null;
 const route = urlDriven ? (legacySettingsDestination?'settings':branchBySlug("solo", urlBranchSlug)?.key ?? "home") : stateRoute;
 // Real approvals count for the rail's Command Center badge (§13 — hidden when 0).
@@ -343,7 +346,7 @@ const theme=resolvedTheme==='light'?'light':'dark';
 // Owner directive (2026-08-18) — the slide-in panel pops out from THIS launcher ONLY
 // (the TopBar spark / ⌘K). EVERY rail item, "Paige" included, navigates to its own URL
 // and nothing more; the rail is navigation, never a panel trigger.
-const openPaige=()=>{setPaigeDockedTab('chat');expandRail()};
+const openPaige=()=>{setPaigeDockedTab('chat');revealPaige()};
 // `paige:open` had three dispatchers in this app and NO listener, so every "Ask PAIGE"
 // on Pipeline dispatched into nothing. This is that listener. It does three separable
 // things and none depends on another: it opens the fold, it hands the surface's drafted
@@ -359,8 +362,8 @@ React.useEffect(()=>{const h=(event:Event)=>{
   if(scope||cleanPaigePrompt(detail?.prompt))setPaigeDockedTab('chat');
   // The question a surface drafted goes into PAIGE's composer for the owner to send (prefill only).
   handOffPaigePrompt(detail?.prompt);
-  expandRail();
-};window.addEventListener('paige:open',h);return()=>window.removeEventListener('paige:open',h)},[activeTenantId,expandRail]);
+  revealPaige();
+};window.addEventListener('paige:open',h);return()=>window.removeEventListener('paige:open',h)},[activeTenantId,revealPaige]);
 // An account switch invalidates a client scope outright: the client belonged to the
 // account being left. `getPaigeClientScope` already refuses to hand out a scope stamped
 // with another account, so this is the durable half of the same rule, not the guard.
@@ -407,6 +410,7 @@ userRole={shellRole}
 accountControls={<WorkspaceExitControl />}
 contextualNavigation={contextualNavigation}
 soloPaigeWorkspace={<SoloPaigeWorkspace key={accountEpochKey} full={screenRoute==='paige'} dockedTab={paigeDockedTab} onDockedTabChange={setPaigeDockedTab} onboarding={Boolean(onboardingOwner)} visible={screenRoute === 'paige' || railExpanded}/>}
+onPaigeOpenerChange={registerPaigeOpener}
 paigeFull={screenRoute==='paige'}
 paigeFullHref={urlDriven?`${branchPath('solo',urlAccount,'paige')}/${paigeDockedTab}`:undefined}
 paigeReturnHref={urlDriven?branchPath('solo',urlAccount,'command-center'):undefined}

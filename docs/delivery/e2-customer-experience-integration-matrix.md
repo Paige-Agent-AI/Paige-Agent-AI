@@ -760,9 +760,9 @@ coverage label asserts per-account access. NO VERIFIED ALGORITHM is added; the
 canonical ALG03/04/06/11/12/13 and PAIGE/VERA/originating specialist boundaries remain.
 
 
-## EXP02 report evidence foundation — October22 development, not activated
+## EXP02 report evidence foundation — October22 source release, not activated
 
-D1 adds only private `_paige_document_capture_metric_evidence(jsonb)` under proposed
+D1 adds only private `_paige_document_capture_metric_evidence(jsonb)` under applied
 20271113330002. The original issuer/resolver and owner/admin/current-workspace guard
 remain authoritative. Only1–12 unique original reference tokens are accepted; no
 caller/model figures or tenant input. Original definitions, values/null, period,
@@ -777,44 +777,28 @@ issued live period; placing only that disposable receipt inside the period makes
 the unchanged denial assertion meaningful. Sandboxed initdb/startup attempts and
 private launcher diagnosis are excluded from passing proof. Existing full-schema
 shared_metric_evidence rollback proof now covers exact unavailable/null/provenance,
-private ACL and foreign/expired/forged/duplicate inputs; hosted execution is owed.
+private ACL and foreign/expired/forged/duplicate inputs; hosted database-contract
+120122063443 SUCCESS on the exact reviewed head.
 
 The function is SECURITY INVOKER with all application-role grants revoked. No table,
 public RPC, report type, model/provider, worker, Chat binding or action is activated;
 no capture is persisted yet. Original submit/worker/immutable marketing_content,
 turn/reconnect/Rail consumer and formal monthly/quarterly customer deliverable remain
-required. Functional private local foundation only; Visual N/A/unmounted; Experiential
+required. Functional private source prerequisite released; Visual N/A/unmounted; Experiential
 and Founder Acceptance UNVERIFIED. CAP014/015 stay Unverified, other nine states and
-ALG03/06/11/12/13 unchanged. Section4.0 N/A until merge. All19/nine remain mandatory.
+ALG03/06/11/12/13 unchanged. All19/nine remain mandatory.
 
-## EXP02 historical report block consumer — October22 development, unmounted
+PR2630 reviewed42590fae083ce25eb3f63172e07154922f32a303, AUTHOR-REVIEW / LOWER
+ASSURANCE5621569245, all13 exact-head checks/two statuses SUCCESS, merged
+1727865977efb507ad5ed043e72f49ee3b5e63ee/treef0ceff81e4fa8ced70b0fce65fbc06ce8f8ff828.
+Normal deploy-migrations39870716321/120144323034 SUCCESS; db-live exactmerge.
+Actual private bodyMD5 151a73a04e1e0d97ce2f641a5ee34c26 matches source, jsonb ABI,
+INVOKER/empty search_path/UTC and all four application/public execute grants FALSE.
+Original Metric resolver/authority/document submit/complete bodies remain unchanged.
+Webdpl_5eY5SJ5RpHjGNZmprRjNpwhEZZmk READY/exactmain; public build172786-mvk5v4a3,
+customerUpdate:null. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2630#issuecomment-6353478230).
+Source/native prerequisite only; no runtime report consumer or customer acceptance.
 
-D2 serializes the original native capture into existing document blocks using the
-canonical Metric parser, currency formatter and block normalizer. Explicit source
-period/as-of/coverage, null-versus-zero, separate currencies, exact large minor units,
-source categories, quarter-to-date bounds, business calendar, original workflow
-observations and all series points are retained. No bearer token/private workspace
-identity is returned. Closed detached provenance retains the original source lineage;
-no current-value, prediction, executed action or verified improvement is inferred.
-
-Two genuine async value/context mutation failures preceded correction: bounded
-original evidence, capture time and work scope are copied before the digest yields.
-Final75 cases/three original suites and23 new-module cases pass, including source
-retirement/immutable facts and the ES2020 regex compatibility correction. Strict module/test compiler and scoped ESLint/whitespace
-pass. Initial whole-app compilation found three new replaceAll/lib diagnostics; those
-methods were replaced, baseline untouched. Final whole-app exact-head CI remains owed;
-no cancelled/incomplete local ratchet is called PASS. Relevant private install retains
-UI dependencies but is not claimed as an exact complete current-lock install.
-
-No public caller, report type, UI, writer, worker/provider or Chat binding is mounted.
-Structure validation at capture time is not authorization or a fresh current read.
-Next original writer must capture once per stable intent, reject caller-supplied proof,
-and revalidate report-specific current Metric owner/admin authority at claim/completion,
-not merely generic document roles. Original artifact/turn/Rail/renderer/readback and
-ordinary permission/isolation/cohort/Live/visual/founder proof remain required.
-Functional unused local consumer; Visual N/A/unmounted; Experiential and Founder
-Acceptance UNVERIFIED. CAP014/015 remain Unverified; all19/nine/algorithms/Orchestration
-and original domain authority unchanged. Section4.0 N/A until actual merge.
 ## EXP02 October22 — verified Business Review reliability source release
 
 PR2608 reviewed c6b93ce0821c707ca2294130da1b11690972ea05, separate

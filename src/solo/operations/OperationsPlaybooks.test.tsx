@@ -117,6 +117,33 @@ it("offers prospective routines without pretending they are saved or running", a
   expect(prepare).toHaveBeenCalledExactlyOnceWith(null, "Client handoff");
   expect(container.textContent).toContain("Nothing is saved, enabled or run");
 });
+it.each(["Client handoff", "Weekly review", "Quality check"])("continues %s preparation in the editable composer without sending", async name => {
+  fixture.docs = [];
+  const panel = document.createElement("aside"); panel.id = "tenant-paige-workspace";
+  const composer = document.createElement("textarea"); composer.setAttribute("aria-label", "Message PAIGE"); panel.append(composer); shell.append(panel);
+  vi.spyOn(composer, "getClientRects").mockReturnValue([new DOMRect(0, 0, 300, 80)] as unknown as DOMRectList);
+  const prepare = await render(vi.fn(() => { composer.value = "Existing editable draft\nPrepared question"; }));
+  const starter = Array.from(container.querySelectorAll<HTMLButtonElement>(".ops-procedure-routines>button")).find(b => b.textContent?.includes(name))!;
+  starter.focus(); await act(async () => starter.click());
+  await vi.waitFor(() => expect(document.activeElement).toBe(composer));
+  expect(prepare).toHaveBeenCalledExactlyOnceWith(null, name);
+  expect(composer.value).toBe("Existing editable draft\nPrepared question"); expect(fixture.rpc).not.toHaveBeenCalled();
+});
+it.each(["disabled", "hidden", "foreign", "retired", "detached"])("does not transfer routine focus to a %s destination", async state => {
+  vi.useFakeTimers(); fixture.docs = [];
+  const panel = document.createElement("aside"); panel.id = "tenant-paige-workspace";
+  const composer = document.createElement("textarea"); composer.setAttribute("aria-label", "Message PAIGE"); panel.append(composer);
+  if (state === "foreign") document.body.append(panel); else shell.append(panel);
+  if (state === "disabled") composer.disabled = true;
+  if (state === "hidden") panel.hidden = true;
+  vi.spyOn(composer, "getClientRects").mockReturnValue([new DOMRect(0, 0, 300, 80)] as unknown as DOMRectList);
+  await render(vi.fn(() => { if (state === "retired") fixture.current = false; if (state === "detached") shell.remove(); }));
+  const starter = container.querySelector<HTMLButtonElement>(".ops-procedure-routines>button")!;
+  starter.focus(); await act(async () => { starter.click(); await vi.advanceTimersByTimeAsync(50); });
+  expect(document.activeElement).not.toBe(composer);
+  if (state !== "detached") expect(document.activeElement).toBe(starter);
+  expect(fixture.rpc).not.toHaveBeenCalled(); panel.remove();
+});
 it.each(["loading", "refused"])("does not present routine preparation as a successful %s source read", async state => {
   fixture.docs = []; fixture.loading = state === "loading"; fixture.error = state === "refused" ? "Access refused" : null;
   await render(); expect(container.querySelector(".ops-procedure-routines")).toBeNull();

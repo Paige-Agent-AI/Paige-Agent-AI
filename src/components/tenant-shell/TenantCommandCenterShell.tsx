@@ -70,6 +70,8 @@ export interface TenantCommandCenterShellProps {
   };
   /** Solo-only presentation slot. Other tiers keep the current shared chat. */
   soloPaigeWorkspace?: ReactNode;
+  /** Let the existing Solo host reveal this exact docked or owned pop-out surface. */
+  onPaigeOpenerChange?: (opener: (() => void) | null) => void;
   /** The Solo /paige route displays the same persistent workspace at full size. */
   paigeFull?: boolean;
   paigeFullHref?: string;
@@ -159,6 +161,7 @@ export function TenantCommandCenterShell({
   signingOut = false,
   contextualNavigation,
   soloPaigeWorkspace,
+  onPaigeOpenerChange,
   paigeFull = false,
   paigeFullHref,
   paigeReturnHref,
@@ -197,12 +200,24 @@ export function TenantCommandCenterShell({
     const child = paigePopoutRef.current;
     if (child && !child.closed) {
       child.focus();
+      window.requestAnimationFrame(() => {
+        if (paigePopoutRef.current !== child || child.closed) return;
+        try {
+          const composer = child.document.querySelector<HTMLTextAreaElement>('#tenant-paige-workspace textarea[aria-label="Message PAIGE"]');
+          if (composer && !composer.disabled && composer.getClientRects().length && !composer.closest('[hidden],[aria-hidden="true"],[inert]')) composer.focus({ preventScroll: true });
+        } catch { /* A navigated child is no longer an accessible composer. */ }
+      });
       setAnnouncement("PAIGE separate window focused; the main workspace remains available");
       return;
     }
     expandRail();
     setAnnouncement("PAIGE conversation opened");
   }, [expandRail]);
+
+  useLayoutEffect(() => {
+    onPaigeOpenerChange?.(openPaige);
+    return () => onPaigeOpenerChange?.(null);
+  }, [onPaigeOpenerChange, openPaige]);
 
   const closePaige = useCallback(() => {
     collapseRail();

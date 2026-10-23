@@ -1927,6 +1927,33 @@ Historical development notes below are superseded only at this source boundary.
 Actual report execution/read/retrieval, ordinary roles/cohorts/Chat/Live/all19/nine
 and Founder Acceptance remain owed; CAP/ALG states unchanged.
 
+
+**S2B source/native release verified:** PR2650 reviewed646e8e7d69fef99b2b45e9d2d0cf1dd218179c25,
+LOWER5623276127/5628860200/all13 final checks/two statuses SUCCESS. Actual main
+e504c252362a1174c895513c576c8de7bb9663a6/treeea73b746567b8589d93626d4ce4ac56fac4a6688
+equals recomputed clean6ccf+646 union. Concurrent E05#2645 advanced parent after
+a047 preflight; four files inspected/no native SQL/proof/ci.yml overlap.
+Normal migration39961082732/deploy120439159397 SUCCESS; actual440002 persisted.
+Claim2f1b0185ceb708564385bafad80aa125/completec0a5e4a1651e70994225865a232658d7
+and exact inverse-to-original81a2/4c58, one change each, private postgres/DEFINER/
+empty-path/service-only ACL verified. READYdpl_D1fBQE9JhvWLyECofmtWe4zBjKtt/
+canonical aliases/public200 e504-mvl06nby/customerUpdate:null. OwnEdge N/A.
+[Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2650#issuecomment-6366004658).
+Historical92Linux startup FAIL retained; corrected646 Linux/native/full CI PASS.
+No public report/type/worker/provider/permission/Chat/action activation. Native
+source metadata is not authenticated execution; all19/nine/ordinary/cohorts/
+Chat-Live/Founder Acceptance remain owed. Development notes below stay historical.
+
+**Prepared-source review source release verified:** PR2627 reviewed e35dfe7687aa0a7e7d1dd42ab4033901e17351ec,
+LOWER5623173327/all10 applicable SUCCESS/designed PreviewSKIP/two statuses.
+Main39c278447379a6b8eff530e49a9903a72d7e02e0/tree959e426e59c0f245a6a30a739ba6c83dd84730f8,
+READYdpl_GeQJnhU813CgrU2xdibjRFf4nX97/canonical aliases/public39c27844-mvkdfcn5/null.
+Actual served SoloEntry2475755bytes/SHA256658ccfc53f595bb55bb7627d818180ec581cdd44f6c9f6eace7cbdb02cf806cf,
+five own markers verified. OwnSQL/Edge N/A. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2627#issuecomment-6356238674).
+78 scoped tests plus original22/six composed native frames retain their source/
+synthetic boundaries; no actual ordinary customer/cohort/Live/zoom/founder claim.
+Original record/source/count/focus/draft/scroll retained, no execution from UI.
+Both exact postmerge rows appended to canonical Master4.0; no replacement log.
 **S2B native authority, development:** proposed440002 adds the SAME private Metric
 predicate to original document claim and completion, including before historical
 report-labelled success readback. No public type admitted: original nine types and
@@ -1962,6 +1989,55 @@ ordinary roles/cohorts/Chat/Live/all19/nine remain required. CAP/ALG states unch
 no model/provider/role/action or Chat activation. Master4.0 N/A until actual merge.
 ANT138349babde/ANT1613da7266c+837f1a8f record pre-edit source/CI routing; sole lead.
 
+
+S2C hosted345aba5 native/full-schema/Preview and all12 final check contexts PASS,
+including actual issuer/capture/original artifact/turn/Rail Analytics step10.
+Current-main e504 composition preserves all three product/proof files byte-for-
+byte; fresh main-target exact-head CI/review/release still required. No old
+stacked result is promoted to new composition or customer acceptance.
+
+**S2C original report artifact producer, development:** proposed450002 extends
+ONLY the original service-only complete_paige_document_work, after S2B440002.
+Original work/thread/turn/Marketing artifact/Rail transaction and legacy nine
+types remain authoritative. Strict current source c0a5e4a1651e70994225865a232658d7,
+owner/DEFINER/empty-path/private ACL and exact inverse replay guards fail closed
+on drift. No public business_review admission, worker/renderer/Chat activation,
+new store, metrics calculation, runtime, provider, permission or consequential action.
+
+For future native report work, stored and output types must agree; original
+document capability, current Metric authority and owned unarchived thread are
+required. Captured evidence is bounded1–12 measurements/24KiB; report period is
+explicit month/quarter source range, not an invented calendar period. No revision,
+provider/model attribution or token charge is manufactured. Original artifact meta
+uses reserved metric_business_review with closed source/range/as-of/coverage/
+exclusion/caveat provenance, omitting reference bearers/private account identity.
+Exact original persisted body/meta/draft readback precedes original completion
+turn, success and attributable Rail receipt; all remain atomic. Historical replay
+rechecks authority and original metadata. This private producer trusts immutable
+native work; future public admission MUST capture once server-side and refuse
+caller-supplied captures/numbers. D2 remains the deterministic fact formatter.
+
+Original isolated PostgreSQL16.14 lifecycle plus10 authority scenarios PASS
+with the final TCP-only fixture. Native producer positive/readback/replay,
+immutable facts/current-scope read/refusals and report-specific receipt-failure
+rollback PASS. Four causal faults fail original assertions: wrong privacy class,
+whole-capture provenance leak, omitted receipt and unknown completion source.
+An initial source-anchor count failure was corrected against the actual original
+four purpose projections; guard unchanged. A private receipt-control generator
+first mishandled literal dollar quoting and failed with SQL42601; invalid control
+was corrected before observing the intended missing-receipt failure. Neither
+failure was a production defect or a waived assertion. Full production-schema
+rollback proof now extends the SAME shared_metric_evidence.sql: real issuer,
+private capture, original native writer/artifact/turn and paige_workspace_events,
+then current-scope read and workspace-switch refusal; execution still owed in
+required hosted database-contract. Existing test statements unchanged.
+Syntax/migration ordering/signature-ACL/whitespace PASS. Exact-head review/CI/
+Preview/dependency release and production readback remain owed; Master4.0 N/A.
+Functional private native prerequisite only; Visual N/A; Experiential/Founder
+Acceptance UNVERIFIED. CAP014/015 remain Unverified; no ALG maturity promotion.
+Full19/nine, original worker/renderer/public admission/retrieval, ordinary
+roles/isolation/cohorts/Chat/Live and actual governed-result acceptance remain open.
+ANT1389daa4628/ANT16156cd6b3a record ten-answer routing; sole lead.
 **D3A source/native release verified:** PR2643 reviewed097eaf205f57866203adbf196aa0dbddcc567f03,
 LOWER5622701932; all13 final checks and two web statuses SUCCESS, no unresolved
 threads. Main52dfacc418578c9dea9e3e7f3b33363288d17c66/tree73f3e18a65b1e26dc8f9baa22d014f31a14ea9d6

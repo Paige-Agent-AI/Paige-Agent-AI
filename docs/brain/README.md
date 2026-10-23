@@ -33,6 +33,13 @@ readback and ordinary roles/cohorts/continuity remain owed. CAP014/015 Unverifie
 ALG03/06/11/12/13 unchanged, all19/nine and one full founder evaluation required.
 [Reader evidence](../evidence/ui-delivery/e2-business-review-document-reader.md).
 
+Current-main security composition4cb448cb0949b973cf9428edb892964bed9e1670 preserves
+the original reader/render inputs while including mainbdd1 and its router repair.
+Fresh100/six suites, type ratchet10/6zero new and actual75second build PASS. Two
+supplementary original synthetic desktop/narrow frames confirm302/302 narrow fit,
+44px controls, page reset and exact opener return. Hosted locked-install required
+CI and real release/customer acceptance remain owed; no missing check is green.
+
 ## EXP04 exact prepared-field seal — October23 source release
 
 Original1352 renderer prerequisite2655 is SOURCE RELEASE VERIFIED, not an

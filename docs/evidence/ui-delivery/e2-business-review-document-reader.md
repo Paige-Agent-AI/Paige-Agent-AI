@@ -89,3 +89,24 @@ no global design-sidecar drift repair or new ignore is introduced. Functional so
 and Visual/Experiential synthetic proof remain separate from actual deployment,
 ordinary authorization/cohort/continuity and Founder Acceptance. No final Experience
 acceptance claimed; historical9PASS/0FAIL and12PASS/0FAIL/4BLOCKED preserved.
+
+## Current-main security composition confirmation
+
+Composition4cb448cb0949b973cf9428edb892964bed9e1670 includes mainbdd1a553386b6f1a84aac6a315114dc8f4df4983
+and its original React Router6.30.6/@remix1.23.4 security repair. Original product,
+harness and test bytes are unchanged. All17 declared input pins/19 original frame
+hashes match. Fresh100/six suites PASS; type ratchet10baseline/6current/zero new;
+actual production build PASS75seconds with incumbent chunk warnings. The isolated
+local runtime resolved additional packages; hosted locked-install CI is still required.
+
+Two supplementary original synthetic IAB JPEGs verify this runtime: desktop CSS1536x770
+(raster1535x770), security-composed-1536-review.jpg, SHA256
+9aed077aa16e54bc46f3e0e0bc0c202e6348d01323ff0ba6a0e08ac0ae44d195;
+and CSS/raster320x740, security-composed-320-review.jpg, SHA256
+b8ec55752bdc89bdabc34bb3e70fff26924c8edc6430cffd58a3ff5c3dfb33e7.
+Narrow dialog302client/302scroll and44px visible controls, page2 scroll0 and exact
+Open focus on Escape confirmed; temporary viewport reset. Earlier cold-load timeout
+is retained as failed setup, not customer behavior. No native Chrome, authenticated
+or cohort acceptance follows from this bounded confirmation. Fresh final-head review,
+required hosted CI, merge/deployment/source readback and original public report
+admission remain gates; all19/nine and catalogue/algorithm evidence states unchanged.

@@ -2503,6 +2503,48 @@ No customer release name/announcement, algorithm or catalogue promotion. C13
 assigned inputs and subsequent native exact approval/signing/seal/effective terms
 remain required. Master§4.0 and the original journey retain canonical boundaries.
 
+## EXP02 original reader released; source-bound report admission candidate — October23
+
+Reader2661 reviewed9fa94386c7578d9668aff887034ecbc9cbf6f9ac, separate LOWER5630725979/
+5631154981, all10 applicable checks/two statuses SUCCESS and normal source-only
+PreviewSKIP. Actual main440b97b79fb73eaa786def0f58467aa9147ef9cd/tree92897fe6 is the
+inspected dd798+9fa union. Normal productiondpl_AWSyRnnGsJr2ivaik3HQRBn96pAL READY,
+public440b97b79fb73eaa786def0f58467aa9147ef9cd-mvl68530/null; all5 original reader
+markers verified in observed served assets. Master§4.0 and release6369573538 retain
+the exact boundary. Same authorized SOLO workspace/weekly answer survives the
+original update reload; no typed report Card was present, so its customer acceptance
+remains UNVERIFIED. Original17+2 render frames stay synthetic; no catalogue promotion.
+
+Next small REUSE/EXTEND slice changes only the original submit RPC, its original
+native proof and real-issuer full-schema proof. Never-applied migration520002 replaces
+reserved490002 after actual production frontier500009 and EXP05reservation510005;
+no deployed history/permissions or other owner's source changes. The original
+submit61b3/private capture151a remain the guarded prerequisites. Five exact fragments
+extend original Auth-only submit with explicit month/quarter period and1–12 canonical
+references. Current actor/thread/Metric authority is required, including after the
+original lock wait. Capture once under that lock; compare same intent/reference order
+without rereading expired evidence. Original claim, worker, producer, turn and Rail
+remain the sole execution/result path. No model/provider, new metric calculation,
+store, scheduler, approval engine, public impersonation or consequential activation.
+
+Original positive-admission probe RED at TYPE_INVALID; actual contended authority
+probe exposed a missing post-wait check and was repaired before release. PostgreSQL16
+native proof covers competing requests/one capture, six authority retirement cases,
+source/period/caller-fact refusal, immutable expired-reference replay, original atomic
+artifact/turn/Rail and safe status DTO; recapture/removed-authority controls fail.
+Resolver IO in that proof is explicitly isolated. The extended existing full-schema
+proof uses the real issuer/capture/claim/writer inside its original rollback; hosted
+execution is still required. Initial sandbox setup/static replacement-probe failures
+are not product proof. No test/loader/baseline/required guard is waived.
+
+Functional: candidate, not merged/deployed/accepted. Visual: no current UI change;
+original reader release is separate. Experiential: original Chat typed admission
+still refuses reports; next bounded original consumer and authenticated retrieval/
+reload/permissions/Live/cohorts remain owed. Founder NOT_ACCEPTED. ALG03/06/11/12/13
+and CAP014/015 Unverified unchanged; all19/nine remain required. Master shipped row
+N/A for this new candidate until an actual safe merge/release. Coordinate protected
+Chat consumer source via ANT161 before editing; preserve EXP01/EXP05/EXP09 leases.
+
 ## EXP04 checked prepared signer input — verified source release October23
 
 2654 reviewed36b68557e3a39612255c3380ea391a1b40e2b888, separate AUTHOR-REVIEW /

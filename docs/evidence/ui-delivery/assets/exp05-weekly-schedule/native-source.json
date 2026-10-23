@@ -1,6 +1,14 @@
 {
-  "source": "c7bf26db1e6eb14b491213bd292b7806e0434746",
+  "source": "883df1577841eece1771dcab73c396c4c6322a65",
   "productInputs": [
+    {
+      "path": "supabase/functions/_shared/paige-context/vp-address.ts",
+      "sha256": "08da97f2dadd97468c54d57d8f35e9d5b22ce0348b03d12a2a9d3b33b7d4ad91",
+      "gitBlob": "2a3ef29cae374c9dc1e7cb3c62073b87e55763d2",
+      "acceptedBlob": "2a3ef29cae374c9dc1e7cb3c62073b87e55763d2",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
     {
       "path": "src/lib/paigePromptHandoff.ts",
       "sha256": "5ace29c005c1434322501ed2441b8471d71425ec870bfa9c79d2fd42d0616a75",
@@ -22,6 +30,54 @@
       "sha256": "cf6046734a45ccff3d66d41e83b9e6ff304097e9105fb5a2a75a4278a7ae31fa",
       "gitBlob": "d9c677cb052d74f0290f243f07a5fc39822304a9",
       "acceptedBlob": "d9c677cb052d74f0290f243f07a5fc39822304a9",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-context/mod.ts",
+      "sha256": "608d221c85d8fba5999ed4da613e3ce41b1aff9a17ae534666013f0d6002c70f",
+      "gitBlob": "ff3a60b9c7bacd27b9016abbfd574af64c98668b",
+      "acceptedBlob": "ff3a60b9c7bacd27b9016abbfd574af64c98668b",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "supabase/functions/_shared/finance/business-review-evidence.ts",
+      "sha256": "46e8acd3fe62dcb6d0dbc4d937bc21f82074af16f488b13d8dacd1d3da7bb084",
+      "gitBlob": "da894d6d050314fd86fe887403a101176f94420a",
+      "acceptedBlob": "da894d6d050314fd86fe887403a101176f94420a",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "supabase/functions/_shared/analytics-metrics/metric-contract.ts",
+      "sha256": "9b7c3f8bebcafad7976d9baf571829f8928a4e0fb01e97939518d3b15714ba61",
+      "gitBlob": "217417a96902b932f32a053ebde2b4a12d8f5f4e",
+      "acceptedBlob": "217417a96902b932f32a053ebde2b4a12d8f5f4e",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "supabase/functions/_shared/business-mission-targets/contract.ts",
+      "sha256": "a57e5acde00407adae272c94850993b1a666f90529b46c0b9b339c7253370174",
+      "gitBlob": "6f50e387d6cd35264980a36ee34b30ad52fecc34",
+      "acceptedBlob": "6f50e387d6cd35264980a36ee34b30ad52fecc34",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "supabase/functions/_shared/business-mission-targets/presentation.ts",
+      "sha256": "47d312f526c8315f713b8fea570347e9bd6e633574c98b3373a9d7036776e5d8",
+      "gitBlob": "4fb6b3b24b538e00a7428577b96e3691c286010a",
+      "acceptedBlob": "4fb6b3b24b538e00a7428577b96e3691c286010a",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-context/snapshot.ts",
+      "sha256": "e2e4dcb6c003e15fee9d619224f1792a7465896886d792286f605550600614f1",
+      "gitBlob": "498595a3261590ea76797c4e5e48670ba6968d09",
+      "acceptedBlob": "498595a3261590ea76797c4e5e48670ba6968d09",
       "normalization": "raw",
       "role": "accepted product source"
     },
@@ -74,6 +130,14 @@
       "role": "accepted product source"
     },
     {
+      "path": "supabase/functions/_shared/solo-classification.ts",
+      "sha256": "51daa30a31f55912ecda5aa00847aee82b78dfa61050f99c3e8e4c43a63e3245",
+      "gitBlob": "eb29faaa550eb67d826115e8f0c2dd5dec46b914",
+      "acceptedBlob": "eb29faaa550eb67d826115e8f0c2dd5dec46b914",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
       "path": "src/lib/tier/tierFeatures.ts",
       "sha256": "ba484c578aa74e52357be19aaf0050f0a04877f62f6271b2b9455c9774505ae9",
       "gitBlob": "0d6e505f1ee8a534210b1e848a8d1be368d75151",
@@ -118,6 +182,14 @@
       "sha256": "b6537ce521b4d83232dfcc21b5f03c00202d6360c1678f4d72628835aba0ce0c",
       "gitBlob": "33656bf8c5e655cfe303ec5c59440b8665d71787",
       "acceptedBlob": "33656bf8c5e655cfe303ec5c59440b8665d71787",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "sha256": "873b28fee331f08d17f06ffec97b709f4970131a3ae74f775e79d609eadabe97",
+      "gitBlob": "dca3b87556036bfacfe9ed07bf140862ced4a0b7",
+      "acceptedBlob": "dca3b87556036bfacfe9ed07bf140862ced4a0b7",
       "normalization": "raw",
       "role": "accepted product source"
     },
@@ -206,6 +278,14 @@
       "sha256": "68502b6b16d5614fba8894e92fbecb76bca2e724159fb9196697318a98fc175c",
       "gitBlob": "c40a28df435f412e67f396d931fcbd6d23bc048e",
       "acceptedBlob": "c40a28df435f412e67f396d931fcbd6d23bc048e",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-turn/record-links.ts",
+      "sha256": "a66d094680df5df1394b05ccd3ccd317c7382d4efe0d1c63aa2d10a602d622a3",
+      "gitBlob": "fa870252a40a89d2eb26399944f864dd6f0820a0",
+      "acceptedBlob": "fa870252a40a89d2eb26399944f864dd6f0820a0",
       "normalization": "raw",
       "role": "accepted product source"
     },
@@ -626,18 +706,42 @@
       "role": "accepted product source"
     },
     {
-      "path": "src/solo/weekly/weekly-responsibility.ts",
-      "sha256": "796067513eaad0f1144c92757c9dfe3aecf092e6f973c04095cae25d14446553",
-      "gitBlob": "15f4f10f09afc59345b57063d010e8c04b1dd5ae",
-      "acceptedBlob": "15f4f10f09afc59345b57063d010e8c04b1dd5ae",
+      "path": "supabase/functions/_shared/paige-orchestration/weekly-commitment-chat.ts",
+      "sha256": "07b8f49acb4e300a3632cf86289c335892783874fb50e91ad1045156a53ccd32",
+      "gitBlob": "b0216eb1f5502e485f085417563cbcad5d0f08d0",
+      "acceptedBlob": "b0216eb1f5502e485f085417563cbcad5d0f08d0",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-orchestration/weekly-commitment-projection.ts",
+      "sha256": "6fcc01ad0e458fc22cbeabdf82db7cb747f9be4649833d24a8ccbe565d497519",
+      "gitBlob": "4ec650327cb9c4c54a1159db5d2bdcf178fdf63d",
+      "acceptedBlob": "4ec650327cb9c4c54a1159db5d2bdcf178fdf63d",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-orchestration/weekly-draft-deadline.ts",
+      "sha256": "f8ee3cd39d5b942eb64b0343ae50bcd0614c750f111c3c1a1a1cf77d7c103bda",
+      "gitBlob": "c99364409eadfe057a4e1a2e1530a64b502a4715",
+      "acceptedBlob": "c99364409eadfe057a4e1a2e1530a64b502a4715",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-orchestration/weekly-commitment-read.ts",
+      "sha256": "9a8dbadf079aa1ec2d1b815eba7efb83b108221fe08b25b43aa78ab6d376e07d",
+      "gitBlob": "3518bd1a5d0b1a5ef612a31802b60e6528fd0cdf",
+      "acceptedBlob": "3518bd1a5d0b1a5ef612a31802b60e6528fd0cdf",
       "normalization": "raw",
       "role": "accepted product source"
     },
     {
       "path": "src/solo/weekly/weekly-owner-read.ts",
-      "sha256": "bc8755f6279a7e43bd04462d8cda1305596f23caf0710682a1b5096527fbe929",
-      "gitBlob": "096927ad0e0e2673550b313254db771792525170",
-      "acceptedBlob": "096927ad0e0e2673550b313254db771792525170",
+      "sha256": "81a7e519e67a6af7ed6d1d3b96e9ae6f695f2fe82216e71c2f7a87f5588ed942",
+      "gitBlob": "580fa4c39c838b8602252e8a0478961be768ac12",
+      "acceptedBlob": "580fa4c39c838b8602252e8a0478961be768ac12",
       "normalization": "raw",
       "role": "accepted product source"
     },
@@ -650,10 +754,18 @@
       "role": "accepted product source"
     },
     {
+      "path": "src/solo/weekly/weekly-responsibility.ts",
+      "sha256": "796067513eaad0f1144c92757c9dfe3aecf092e6f973c04095cae25d14446553",
+      "gitBlob": "15f4f10f09afc59345b57063d010e8c04b1dd5ae",
+      "acceptedBlob": "15f4f10f09afc59345b57063d010e8c04b1dd5ae",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
       "path": "src/solo/weekly/WeeklyScheduleChange.tsx",
-      "sha256": "7f9bc45fcd80dc87f5641ff8525df811aae2bab4555e762d6ab46604a7a4857c",
-      "gitBlob": "29df5de4e77ea8c98c0c3fcb9458ed400c529cb4",
-      "acceptedBlob": "29df5de4e77ea8c98c0c3fcb9458ed400c529cb4",
+      "sha256": "dd97ffe954f4561ac895c6cd449db8cde0ef54d105336544bee4138af2327946",
+      "gitBlob": "e5ef4ad4e6e9aadea14c47e5e83fe17ccc4dbe77",
+      "acceptedBlob": "e5ef4ad4e6e9aadea14c47e5e83fe17ccc4dbe77",
       "normalization": "raw",
       "role": "accepted product source"
     },
@@ -670,6 +782,14 @@
       "sha256": "9cc6e25abee9c34a338f121210635a069679bd38b6c0af08b3d19a2518a6a140",
       "gitBlob": "7d1b702be689bfb2434d700e828b83dd54d5cdfa",
       "acceptedBlob": "7d1b702be689bfb2434d700e828b83dd54d5cdfa",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-orchestration/weekly-commitment-control-intent.ts",
+      "sha256": "4c5336d7b98bbb8f829120e453e548d18fd8face1640a40b945c53279cf299db",
+      "gitBlob": "2da616e686185b43834e383bcc305c45bee8253e",
+      "acceptedBlob": "2da616e686185b43834e383bcc305c45bee8253e",
       "normalization": "raw",
       "role": "accepted product source"
     },
@@ -874,6 +994,46 @@
       "role": "accepted product source"
     },
     {
+      "path": "supabase/functions/_shared/sales-collections/primitives.ts",
+      "sha256": "945e7794c62defde7da83718b1c1910afeb805bed080ee73903ce451e2b5ac91",
+      "gitBlob": "e8533e4ff872f018ca94d7dbe4d6edb0f4db7383",
+      "acceptedBlob": "e8533e4ff872f018ca94d7dbe4d6edb0f4db7383",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-commercial/terms-command.ts",
+      "sha256": "6d663e9766f5e7feb7811b921b6a517db33bf629e728831687fc4c8e0e1bd98e",
+      "gitBlob": "684576379c297f3638ee9090e64cc80e3fde4f53",
+      "acceptedBlob": "684576379c297f3638ee9090e64cc80e3fde4f53",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-collections/contract.ts",
+      "sha256": "aad73fa38bb9c960f4362e5cd741c85dbae2e4cdcc46ec7f635869d51df8e2d3",
+      "gitBlob": "1de86a373336968b0203cf3403c035d8bebb4bc3",
+      "acceptedBlob": "1de86a373336968b0203cf3403c035d8bebb4bc3",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-collections/model.ts",
+      "sha256": "21ab19f168ab8063e9f1c5cdb919185acdd23b641c6041842c93d7dc1edec8a6",
+      "gitBlob": "9cb1326cf8fc2dd030ffb40ddbedeb9cca0f5dd9",
+      "acceptedBlob": "9cb1326cf8fc2dd030ffb40ddbedeb9cca0f5dd9",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "supabase/functions/_shared/client-engagement/status.ts",
+      "sha256": "458440837fa433b338d63c8fc3ac41d0fb97c6fe98c0d76130366e7a0706c4b1",
+      "gitBlob": "bb096ea7d457f58ec6811a50d584a33dbd20f185",
+      "acceptedBlob": "bb096ea7d457f58ec6811a50d584a33dbd20f185",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
       "path": "src/solo/engagement/useClientEngagementStatus.ts",
       "sha256": "c9def5f37cf3a313af66527ba872d86685bed8ae36e42c1f281de4136e4c5bf2",
       "gitBlob": "a9672537efcd2aef7ab298727837f2edb46c9e3e",
@@ -902,6 +1062,14 @@
       "sha256": "e6e0cf5d0021dcf12d5833774c642f4645c5e50b43a73a997f292eb8a294fb9f",
       "gitBlob": "c6635f6885b4e60fa88d3524e50c90c4a23e86fe",
       "acceptedBlob": "c6635f6885b4e60fa88d3524e50c90c4a23e86fe",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "supabase/functions/_shared/client-engagement/labels.ts",
+      "sha256": "c5b6c9f7301d15672126670b7b12e52940108a156ce1634c724755d06c52ac29",
+      "gitBlob": "57a3f7a70a40e2199af936f535d0a098bde33e41",
+      "acceptedBlob": "57a3f7a70a40e2199af936f535d0a098bde33e41",
       "normalization": "raw",
       "role": "accepted product source"
     },
@@ -994,6 +1162,14 @@
       "role": "accepted product source"
     },
     {
+      "path": "supabase/functions/_shared/client-portal-identity.ts",
+      "sha256": "a124e67fb67546e4bc6e7040fd2a750f4abada95827b126755106c4d8084eff2",
+      "gitBlob": "bba73a93915b1d3d4e2713222eec0b5d97b33117",
+      "acceptedBlob": "bba73a93915b1d3d4e2713222eec0b5d97b33117",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
       "path": "src/lib/client-portal-self-profile.ts",
       "sha256": "0e6167187869c34f0fea5f73f29f6cff3b2ba5a9b0941e9441fc3e53475e2b04",
       "gitBlob": "2800604d42c31288a144960080bbfce73c947c8c",
@@ -1030,6 +1206,14 @@
       "sha256": "7da8e203a5153adf3a834aba79d7350e0db4420fbc710007bdee9221a56690c9",
       "gitBlob": "f770e0076454012add878e077b3fb34147d1a15c",
       "acceptedBlob": "f770e0076454012add878e077b3fb34147d1a15c",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "supabase/functions/_shared/client-portal-access.ts",
+      "sha256": "455d9c6b6757f8732b005939dd223f92e307b031fbbf71335660604edf5f5085",
+      "gitBlob": "91c2f496344a545faf3d6e06c6781976a2cb2d19",
+      "acceptedBlob": "91c2f496344a545faf3d6e06c6781976a2cb2d19",
       "normalization": "raw",
       "role": "accepted product source"
     },
@@ -1490,6 +1674,14 @@
       "role": "accepted product source"
     },
     {
+      "path": "supabase/functions/_shared/comms-email/contract.ts",
+      "sha256": "79c754ab6b261b64cdd93b225b46fb20c65f0ef46c693aea5c2b26b989f440c4",
+      "gitBlob": "5a0d3ffc77ef4bee1fe7e754d7e71adbe98aaa69",
+      "acceptedBlob": "5a0d3ffc77ef4bee1fe7e754d7e71adbe98aaa69",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
       "path": "src/components/chat/confirmPreview.ts",
       "sha256": "14958f071cdc0d67777c640c638ad2bf4de675d6fc1e6641b543e2663d2f1945",
       "gitBlob": "ecb602b479d86e15c3447a70ff4db6afc86d6db7",
@@ -1510,6 +1702,14 @@
       "sha256": "748946ed94ef97ab52fd306d5288fcc02af3305b2a7c3d4ab86f733a1c7b0089",
       "gitBlob": "80748527596e80f0d63826c3080c1381b25a42e8",
       "acceptedBlob": "80748527596e80f0d63826c3080c1381b25a42e8",
+      "normalization": "raw",
+      "role": "accepted product source"
+    },
+    {
+      "path": "supabase/functions/paige-action-worker/draft.ts",
+      "sha256": "eaaffd678bcd7c24115de43babe5830304db47339d82e162acd2ff88e10db7a4",
+      "gitBlob": "89c7ddef230171c7dc76e5e489d0e72f5e580dd1",
+      "acceptedBlob": "89c7ddef230171c7dc76e5e489d0e72f5e580dd1",
       "normalization": "raw",
       "role": "accepted product source"
     },
@@ -2594,8 +2794,894 @@
       "role": "accepted product source"
     }
   ],
-  "portCount": 177,
+  "mocked": [
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "@/components/auth/WorkspaceExitControl",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "@/hooks/usePendingApprovals",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "./CommandCenter",
+      "port": "command-host.tsx: actual SystemsCheck workspace, synthetic data"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "./conversations",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "./growth2",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "./AdsWorkspace",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "./SalesWorkspace",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "./finance/FinanceWorkspace",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "@/components/tenant-calendar/TenantCanonicalCalendarWorkspace",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "./marketplace",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "./settings",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "./vault/useBusinessVault",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "./vibe",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "@/lib/voice/VoiceDeviceProvider",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "@/components/admin/voice/DialPadSurface",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "@/components/admin/voice/IncomingCallOverlay",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloApp.tsx",
+      "module": "@/components/admin/voice/LiveTranscriptPanel",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\auth\\RequireSetupComplete.tsx",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloPaigeWorkspace.tsx",
+      "module": "@/components/dashboard/PaigeAIChat",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloPaigeWorkspace.tsx",
+      "module": "@/components/dashboard/paige/PaigeComposerAutonomyChip",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloPaigeWorkspace.tsx",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\lib\\auth\\signOut.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloPaigeWorkspace.tsx",
+      "module": "@/hooks/useTierFeatures",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\TenantRelationshipsClientsWorkspace.tsx",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloPaigeWorkspace.tsx",
+      "module": "./data/useSoloKnowledge",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloPaigeWorkspace.tsx",
+      "module": "./data/useSoloSkills",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\TenantRelationshipsClientsWorkspace.tsx",
+      "module": "./useTenantRelationshipsData",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-shell\\TenantCommandCenterShell.tsx",
+      "module": "@/components/admin/voice/DialPadTrigger",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\TenantRelationshipsClientsWorkspace.tsx",
+      "module": "@/components/tenant-calendar/TenantCanonicalCalendarWorkspace",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloPaigeWorkspace.tsx",
+      "module": "./SoloBusinessInterview",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloPaigeWorkspace.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\TenantRelationshipsClientsWorkspace.tsx",
+      "module": "@/hooks/useTierFeatures",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-shell\\TenantCommandCenterShell.tsx",
+      "module": "@/components/dashboard/PaigeAIChat",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloSystemsCheckWorkspace.tsx",
+      "module": "@/hooks/useSystemsCheck",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsWorkspace.tsx",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloSystemsCheckWorkspace.tsx",
+      "module": "./data/useCommandCenter",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsWorkspace.tsx",
+      "module": "@/contexts/ImpersonationContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\SoloSystemsCheckWorkspace.tsx",
+      "module": "./data/useSoloActivityFeed",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsWorkspace.tsx",
+      "module": "@/hooks/usePlanList",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\data\\deepResearch.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\data\\deepResearch.ts",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\data\\useSoloPendingActions.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\weekly\\useWeeklyResponsibility.ts",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\weekly\\useWeeklyResponsibility.ts",
+      "module": "@/hooks/useTierFeatures",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\weekly\\useWeeklyResponsibility.ts",
+      "module": "@/contexts/ImpersonationContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\weekly\\WeeklyDraftComposer.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\PortalConfigurationGate.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\PortalConfigurationGate.tsx",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\admin\\contacts\\ContactPortalPanel.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\auth\\RoleGate.tsx",
+      "module": "@/hooks/useUserRoles",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\auth\\RoleGate.tsx",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsWorkspace.tsx",
+      "module": "@/hooks/useTierFeatures",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\weekly\\useWeeklyResponsibility.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\ClientPortalAccess.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\ClientPortalAccess.tsx",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\ClientCommunicationState.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\ClientCommunicationState.tsx",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsWorkspace.tsx",
+      "module": "./useOperationsPeople",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\ClientSharedWork.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\PeopleContactEditor.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\lib\\scopedUser.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\ClientSharedWork.tsx",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\ClientSharedWork.tsx",
+      "module": "@/hooks/usePlanList",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\pages\\admin\\ClientsConversations.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\data\\useSoloActivityFeed.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsWorkspace.tsx",
+      "module": "./useOperationsCrmWork",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\lib\\client-portal-access.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\pages\\admin\\CalendarAdmin.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\PortalInvitationManager.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\hooks\\useClientFilesOwner.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\hooks\\useClientFilesOwner.ts",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\PortalInvitationManager.tsx",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\admin\\contacts\\ContactPortalPanel.tsx",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\PortalInvitationManager.tsx",
+      "module": "@/hooks/useTierFeatures",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\admin\\contacts\\ContactPortalPanel.tsx",
+      "module": "@/hooks/useTierFeatures",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\pages\\admin\\PortalStudio.tsx",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\usePortalInvitations.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\usePortalInvitations.ts",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\hooks\\useClientPortalProgress.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\data\\useBusinessTimeZone.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\useOperationsPeople.ts",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsWorkCreator.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\engagement\\useClientEngagementStatus.ts",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\useOperationsPeople.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\engagement\\useClientEngagementStatus.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\contactUpsert.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\lib\\functions\\adminAccountActions.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\lib\\contacts.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\pages\\admin\\CalendarAdmin.tsx",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\PortalInvitationCommand.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\pages\\admin\\CalendarAdmin.tsx",
+      "module": "@/hooks/usePlanList",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\PortalInvitationCommand.tsx",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\PortalInvitationCommand.tsx",
+      "module": "@/hooks/useTierFeatures",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\operations-work-create.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\hooks\\useClientPortalFrame.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\operations-crm-work-command.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\operations-weekly-source.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsWorkActivity.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsCrmWorkEditor.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsPlaybooks.tsx",
+      "module": "@/hooks/useKnowledgeDocuments",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsProjectEditor.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\lib\\planning.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\lib\\playbook\\resolve.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\admin\\calendar\\CalendarsPanel.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsWorkEditor.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\hooks\\useRailEvents.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsCrmStageReview.tsx",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\hooks\\usePortalConfig.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsDelivery.tsx",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\hooks\\useRealtimeTable.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsDelivery.tsx",
+      "module": "@/solo/useSoloCommercialTerms",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsDelivery.tsx",
+      "module": "@/solo/useSoloAgreementSignings",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\hooks\\useFinanceEntitlement.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsProjectCreator.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsPlaybooks.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\hooks\\useFinanceEntitlement.ts",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\hooks\\useBrandKit.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\hooks\\useClientPortalConfig.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\planning\\QuickAddDialog.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\operations-project-update.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsWorkEditor.tsx",
+      "module": "@/hooks/useUserRoles",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\OwnerCustomerResources.tsx",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsDelivery.tsx",
+      "module": "@/hooks/useTierFeatures",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\OwnerCustomerResources.tsx",
+      "module": "@/hooks/useKnowledgeDocuments",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\hooks\\useClientPortalRead.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\tenant-relationships\\CuraKnowledgePanel.tsx",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\pages\\admin\\ClientsConversations.tsx",
+      "module": "@/lib/voice/VoiceDeviceProvider",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\pages\\admin\\ClientsConversations.tsx",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\operations-work-update.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\owner-task-automations.tsx",
+      "module": "./data/useOwnerTaskAutomations",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\operations-project-create.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\data\\useBusinessReview.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\hooks\\useOwnerResourceShares.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\pages\\admin\\conversations\\portalReply.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\useOperationsEngagementEvidence.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\OperationsEngagementHandoff.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\hooks\\useCuraKnowledge.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\pages\\admin\\conversations\\ComposeThreadDialog.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\pages\\admin\\conversations\\useLeadReplyReview.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\admin\\calendar\\CalendarsPanel.tsx",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\operations-delivery-staff.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\knowledge\\AddKnowledgeFlow.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\pages\\admin\\conversations\\LeadReplyDrafts.tsx",
+      "module": "@/hooks/usePendingApprovals",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\pages\\admin\\conversations\\LeadReplyDrafts.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\pages\\admin\\conversations\\inbox-shared.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\lib\\voice\\useDictation.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\useCatalogOffers.ts",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\useCatalogOffers.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\operations-delivery-source.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\pages\\admin\\conversations\\shell\\ConversationsCallButton.tsx",
+      "module": "@/lib/voice/VoiceDeviceProvider",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\knowledge\\AddKnowledgeFlow.tsx",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\operations-handoff-recovery.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\operations\\operations-engagement-handoff-write.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\pages\\admin\\conversations\\ContactCardRail.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\pages\\admin\\conversations\\AttachmentChip.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\pages\\admin\\conversations\\ContactCardRail.tsx",
+      "module": "@/hooks/useTierFeatures",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\paige\\CustomerSelector.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\admin\\contacts\\ContactBillingPanel.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\admin\\voice\\CallButton.tsx",
+      "module": "@/lib/voice/VoiceDeviceProvider",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\admin\\contacts\\ContactAutomationHistory.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\lib\\customFields.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\admin\\contacts\\ContactDealsSection.tsx",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\admin\\contacts\\ContactDealsSection.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\pages\\admin\\conversations\\AgentsLog.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\hooks\\useClientOnboardingStatus.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\lib\\pipelines.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\admin\\pipeline\\NewDealDialog.tsx",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\hooks\\useTenantFeature.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\lib\\team\\assignableStaff.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\hooks\\useTenantOffers.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\deals\\useSoloDealClients.ts",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\deals\\useSoloDealClients.ts",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\components\\admin\\contacts\\NewContactDialog.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\deals\\CrmDealCommandReview.tsx",
+      "module": "@/integrations/supabase/client",
+      "port": "ports.tsx"
+    },
+    {
+      "importer": "src\\solo\\deals\\CrmDealCommandReview.tsx",
+      "module": "@/hooks/useTenantContext",
+      "port": "ports.tsx"
+    }
+  ],
   "transforms": [],
-  "bundleSha256": "8e1f97440238982669d733548cf656565f5cc1c06da3459717c24d729f363f32",
+  "bundleSha256": "6ffc37517ff1374cbbc276c7816af9fa7b5460223463ad76620214f8ee8791e6",
   "boundary": "ACTUAL COMMITTED WEEKLY OWNER CONSUMER; ZERO PRODUCT TRANSFORMS; SYNTHETIC AUTH/PROCESS/KNOWLEDGE/PAIGE PORTS; NO LIVE I/O/WRITE/PROVIDER; NOT AUTHENTICATED OR PRODUCTION PROOF"
 }

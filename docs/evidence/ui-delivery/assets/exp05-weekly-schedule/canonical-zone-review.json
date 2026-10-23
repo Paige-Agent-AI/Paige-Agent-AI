@@ -1,0 +1,10 @@
+{
+  "source": "883df1577841eece1771dcab73c396c4c6322a65",
+  "boundary": "Synthetic native UI ports; no real tenant mutation",
+  "before": {
+    "focus": "Keep current schedule",
+    "pageOverflow": false,
+    "review": "Review schedule changeWeekly commitment check · saved revision 2Current scheduleMonday · 09:00 · CETNew scheduleFriday · 09:00 · CETSaving stops future checks and requires fresh authorization. An attempt already running may finish. Original work, history and receipts remain.Keep current scheduleEdit changeSave unapproved schedule"
+  },
+  "after": "Browser tab: 3, Title: \"Native EXP05 weekly schedule correction\", URL: \"http://127.0.0.1:5221/solo/1701/operations/overview\".\nThe following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.\nRemoved element IDs: 41-58\n~\t\t\t\t17 text Awaiting approval\n~\t\t\t\t\t19 text Every  Friday  at  09:00\n~\t\t\t\t\t30 text Exact recurring configuration awaits authorization.\n~\t\t\t\t\t37 button Pause future checks\n+\t\t\t\t70 text Schedule saved as an unapproved definition. Future checks require fresh authorization; history is preserved.\nThe focused UI element is 13 button Refresh weekly responsibility"
+}

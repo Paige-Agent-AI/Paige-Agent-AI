@@ -209,7 +209,7 @@ function readProposeActionDraft(args: any, scopedClientId: string | null): {
   return { actionType, channel, contactId, body, summary, draftContent, problem };
 }
 import { buildFormSchemaFromQuestions } from "../_shared/growth-form-build.ts";
-import { classifyDocumentSubmissionError, validateDocumentBrief } from "../_shared/document-production.ts";
+import { classifyDocumentSubmissionError, validateDocumentBrief, validateBusinessReviewBrief } from "../_shared/document-production.ts";
 // Wave 4 · 4a.3 — token-aware compaction trigger (§18 one home; smoke-tested per §32).
 import { estimateTokens, estimateTurnsTokens, shouldCompact, keepCountForFold, compactionPressurePct } from "../_shared/token-estimate.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
@@ -7718,15 +7718,17 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "document_generate",
-              description: "Team only. Submit a substantial private document for durable authoring. Use for guides, one-pagers, ebooks, checklists, worksheets, proposals, offer letters, sales offers, and attorney-review agreement drafts. Give the authoring worker a complete bounded brief and every real fact it must use; never invent missing names, prices, dates, legal terms, results, or sources. Ask the owner for material missing facts before calling. This call accepts work and returns immediately; the completed artifact is posted back into the same conversation after verified persistence, so never claim it is ready from the submission result alone. Ordinary offer letters and sales offers are non-signable draft documents: never request signature lines, an Accept button, or any other execution affordance. If the document is meant to be signed, use agreement_draft; it remains an attorney-review draft artifact and must enter the Agreements lifecycle before it can be sent or signed.",
+              description: "Workspace owner/admin only. Submit a private document for durable authoring: guides, one-pagers, ebooks, checklists, worksheets, proposals, offer letters, sales offers, attorney-review agreement drafts, or source-backed monthly/quarterly business reviews. Legacy drafts need a complete bounded brief and real facts; never invent missing names, prices, dates, legal terms, results or sources. Business reviews require original read_business_metric references and their exact explicit period; they preserve source measurements and limitations, not invented analysis, historical balances or forecasts. Ask for material missing context. Acceptance is pending work, not a finished artifact: verified persistence posts the result into this same conversation. Ordinary offer letters and sales offers are non-signable draft documents: never request signature lines, an Accept button, or any other execution affordance. If the document is meant to be signed, use agreement_draft; it remains an attorney-review draft artifact and must enter the Agreements lifecycle before it can be sent or signed.",
               parameters: {
                 type: "object",
                 properties: {
-                  doc_type: { type: "string", enum: ["guide", "one_pager", "ebook", "checklist", "worksheet", "proposal", "offer_letter", "sales_offer", "agreement_draft"], description: "The requested draft type. agreement_draft is the only signable-document-shaped type, but it is still not sendable or signable until promoted through Agreements." },
+                  doc_type: { type: "string", enum: ["guide", "one_pager", "ebook", "checklist", "worksheet", "proposal", "offer_letter", "sales_offer", "agreement_draft", "business_review"], description: "The requested private draft type. business_review is a source-backed monthly or quarterly review: establish the explicit period with the owner, read its metrics through read_business_metric, then pass only the successful original evidence_refs with the exact matching report_period. Never invent references or numbers; omit audience, purpose, required_facts and revision targets for a review. agreement_draft remains unsendable and unsignable until promoted through Agreements." },
                   title: { type: "string", description: "The document's title (benefit-led and specific, not the bare topic). For a proposal, name the client + engagement." },
                   brief: { type: "string", description: "A complete authoring brief: desired structure, depth, tone, constraints, and what the finished draft must accomplish. Maximum 12,000 characters." },
                   audience: { type: "string", description: "Optional bounded description of the intended reader." },
                   purpose: { type: "string", description: "Optional bounded description of how the private draft will be used." },
+                  report_period: { type: "object", additionalProperties: false, properties: { key: { type: "string", enum: ["month", "quarter"] }, start: { type: "string", description: "Exact original Metric period start, zoned ISO timestamp, inclusive." }, end: { type: "string", description: "Exact original Metric period end, zoned ISO timestamp, exclusive." } }, required: ["key", "start", "end"], description: "Required only for business_review. Read the original metrics for this same explicit period; a current snapshot is never a historical balance." },
+                  evidence_refs: { type: "array", minItems: 1, maxItems: 12, uniqueItems: true, items: { type: "string", pattern: "^aneb_v1_[0-9a-f]{64}$" }, description: "Required only for business_review: original successful authorized Metric reads for the exact review period. Do not supply values or a report_evidence capture." },
                   required_facts: { type: "object", description: "Real scalar facts the draft must preserve exactly, such as client, candidate, scope, dates, compensation, packages, and prices. Never put placeholders here.", additionalProperties: { type: ["string", "number", "boolean"] } },
                   target_content_id: { type: "string", description: "Set to the on-canvas artifact's id (see CANVAS STATE) ONLY when the user is refining/revising the document already on the canvas — this updates that same document in place and keeps its version history. OMIT it to create a brand-new/additional document as a separate asset. Never pass an id for a genuinely new document." },
                 },
@@ -15489,7 +15491,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 }
 
                 if (targetVerified) {
-                  const candidate = {
+                  const candidate = args.doc_type === "business_review" ? { ...args, version: 1 } : {
                     version: 1,
                     doc_type: args.doc_type,
                     title: args.title,
@@ -15501,7 +15503,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                       ? { target_content_id: requestedTarget, expected_revision: expectedRevision }
                       : {}),
                   };
-                  const validatedBrief = validateDocumentBrief(candidate);
+                  const validatedBrief = candidate.doc_type === "business_review"
+                    ? validateBusinessReviewBrief(candidate) : validateDocumentBrief(candidate);
                   if (!validatedBrief.ok) {
                     await recordDocumentSubmissionOutcome(validatedBrief.code, "capability_refused");
                     result = { success: false, error: validatedBrief.message, code: validatedBrief.code };
@@ -15513,13 +15516,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                         _thread_id: payloadThreadId,
                         _request_payload: validatedBrief.value,
                       },
-                    );
+                    ).then(reply => reply, error => ({ data: null, error }));
                     if (submitError) {
-                      // Any five-character PostgreSQL SQLSTATE proves the statement aborted and
-                      // rolled back, so refusal is honest. Gateway/transport codes may describe a
+                      // Confirmed PostgreSQL statement-abort codes establish rollback. Connection,
+                      // unknown-completion and gateway/transport codes may describe a
                       // lost response after commit and must stay unknown;
                       // the worker may still finish the same intent and file its terminal receipt.
                       const submissionOutcome = classifyDocumentSubmissionError(submitError);
+                      const uncertainSubmission = submissionOutcome === "capability_outcome_unknown";
+                      if (uncertainSubmission) requestExecutionState.needsReview = true;
                       await recordDocumentSubmissionOutcome(
                         "DURABLE_DOCUMENT_SUBMIT_FAILED",
                         submissionOutcome,
@@ -15530,6 +15535,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                           ? "The document request was refused before any work was accepted."
                           : "Paige could not confirm whether the document request was accepted. Do not submit it again until this conversation reconnects and reconciles the same request.",
                         code: "DURABLE_DOCUMENT_SUBMIT_FAILED",
+                        ...(uncertainSubmission ? { outcome_unknown: true } : {}),
                       };
                     } else {
                       const accepted = Array.isArray(submitted) ? submitted[0] : submitted;
@@ -15558,12 +15564,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                           };
                         } else {
                           const needsReconciliation = workStatus === "outcome_unknown" || workStatus === "expired";
+                          if (needsReconciliation) requestExecutionState.needsReview = true;
                           result = {
                             success: false,
                             accepted: false,
                             work_id: accepted.work_id,
                             work_status: workStatus,
                             resumed_existing: false,
+                            ...(needsReconciliation ? { outcome_unknown: true } : {}),
                             code: needsReconciliation
                               ? "DURABLE_DOCUMENT_RECONCILIATION_REQUIRED"
                               : workStatus === "blocked"
@@ -15577,9 +15585,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                           };
                         }
                       } else {
+                        requestExecutionState.needsReview = true;
                         await recordDocumentSubmissionOutcome("DURABLE_DOCUMENT_WORK_ID_MISSING", "capability_outcome_unknown");
                         result = {
                           success: false,
+                          outcome_unknown: true,
                           error: "The document request returned no durable work identity. Nothing may be claimed as created.",
                           code: "DURABLE_DOCUMENT_WORK_ID_MISSING",
                         };

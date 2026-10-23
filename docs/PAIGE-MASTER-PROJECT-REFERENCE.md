@@ -826,6 +826,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-22 — EXP02 original report-artifact privacy prerequisite released.**
+
+| Increment | Exact released identity and proof | Completion boundary |
+| --- | --- | --- |
+| [#2647](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2647): retain canonical Metric scope and immutable facts in original report artifacts | Reviewed `4560f297165c3329de9daa3256a917900bf860c9`, AUTHOR-REVIEW / LOWER ASSURANCE5622919945; all13 final checks/two statuses SUCCESS, zero threads. Main `a7ea2513a4172edb252d8640e2e6bf7f0b32d6b8`, actual/inspected tree `1f88385e509ea3ec94bdc6baede52efc76ade2b1` equals clean c98+456 union. Normal deploy-migrations39888217187/120201499373 SUCCESS; actual20271113430002. Readable/guard bodyMD5s4336bfd19107ac41cf993644f24074a6/d0786e4b75d3d9a67f35f446897d3149 exact; original-table restrictive authenticated-only SELECT/enabled trigger and original private ACL/security verified. Six original Metric/document bodies unchanged. Isolated264 cases/three causal controls plus actual final full-schema database gate120190119217 SUCCESS support source. Web `dpl_FCr7QZHWwc8WgyAU2NKx6ZnTnYUq` READY/canonical aliases; public200 exacta7ea-mvkc3tf8/customerUpdate:null. Own Edge N/A. [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2647#issuecomment-6355753951). Own preview auto-retired; no peer/main deletion/quota increase. | SOURCE/NATIVE RELEASE VERIFIED, internal-only/no customer release identity/announcement. Existing marketing_content, current original Metric authority, native work identity and genuine FK retirement reused; no new store, broader actor permission, report admission, worker, provider, Chat/action or approvals activation. Zero reserved report artifacts. Visual N/A/unmounted; actual report producer/retrieval/ordinary roles/cohorts/Chat/Live/full19/nine/Founder Acceptance remain owed. Recovery is reviewed forward repair without replaying original business work. |
+
 **2026-10-22 — EXP02 canonical Metric authority prerequisite released.**
 
 | Increment | Exact released identity and proof | Completion boundary |

@@ -1,5 +1,9 @@
 # Customer relationship selection: existing identity integration
 
+## Current unpublished migration ordering — 2026-10-23
+
+Pre-merge production readback records EXP04 atomic-signature migration `20271113530004`. The original deployment policy applies only newer migrations and forbids `--include-all`. Neither EXP09 migration `20271113510009` nor `20271113520009` reached production. Their byte-identical SQL is now reserved as `20271113540009` (legacy self-context/recovery) and `20271113550009` (verified saved-business return), released in that order after `20271113530004`. Existing main/production history, E04 signing, and original tests, guards and grants remain unchanged. The earlier 243-case and 61-case Native results and empty Preview source/ACL proofs are historical support; both renamed heads require fresh exact-head CI, empty Preview, review and production readback. Only the two owned nonpersistent `with_data:false` development branches, rechecked with zero Auth users and zero CRM contacts, were deleted for recreation through the normal Preview integration. Production reset and ledger repair are excluded.
+
 ## Actual inherited gap and dependency order
 
 Current main and production agree: client_portal_relationship_id(uuid) is Auth-subject-bound, active, unmerged and open-access only; its optional tenant argument narrows existing authority. Without that argument, more than one relationship raises42501. client_portal_frame(), brand/config and several existing callers have no selected-business transport. The current UI therefore refuses a multiple-business customer. That is a missing integrated workflow, not completed selection or a frontend label defect.

@@ -826,11 +826,11 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
-**2026-10-22 — EXP02 original finding inspection and current-source navigation released.**
+**2026-10-22 — EXP02 canonical Metric authority prerequisite released.**
 
 | Increment | Exact released identity and proof | Completion boundary |
 | --- | --- | --- |
-| [#2626](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2626): inspect original linked findings in the current scoped completed check | Reviewed `452a6ca969bb0f10abd82c1bab856865d316ef02`, AUTHOR-REVIEW / LOWER ASSURANCE5622695418; all11 exact-head checks/two statuses SUCCESS, zero threads. Original f9 full Test FAIL12 Rail cases reproduced; original fixture now uses real MemoryRouter,13 plus133 composed cases PASS, assertions/RPC/frame recorder retained. Main `7ef7cc4db5258bd1d106c805eb06dbf4fbaedd53`; actual/inspected tree `940dd10e969c9173ad760b4988a7e29347e371cf`. Web `dpl_AsavNJFgDwidjjnhUiqabL8Zj32a` READY/canonical aliases; public200 exact7ef-mvkapgtp/customerUpdate:null. Actual import lineage to SoloEntry-9E2GUs1P.js2472503bytes/SHA2566979919439d57d503180ecf345608673f1ec404dbdf56ca1cb64f837499a43a7/five owning markers verified. Original Edge39884559996 retained12PASS/3deployment-changeFAIL. Normal current-main recovery39885135758/120191444779 SUCCESS: all16 source/configuration matches, certified edge-live containing83008187360b12b8d76de0192f6bda3aba213bc1. Chat513 and notify-team-event2102/send-message149/sales-invoice-delivery83 ACTIVE/original JWT configuration verified. [Recovery receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2626#issuecomment-6355336462). Own SQL N/A. | SOURCE RELEASE VERIFIED; presentation selects only the original currently authorized completed snapshot, never another reader/history lookup or execution grant. Original20 native images plus six composition frames/17 exact inputs are supporting synthetic evidence. Functional web/Edge source verified; Visual synthetic; Experiential ordinary MMA/role/isolation/cohort/Live and full19/nine/Founder Acceptance remain owed. No scan/corrective action/provider/role/approval activation or customer release identity/announcement. Recovery used original current-main workflow/certified baseline/strict verifier, no old-head redeploy or manual tag bypass. |
+| [#2643](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2643): retain original Metric authority for later native report work | Reviewed `097eaf205f57866203adbf196aa0dbddcc567f03`, AUTHOR-REVIEW / LOWER ASSURANCE5622701932; all13 latest exact-head checks/two web statuses SUCCESS, zero unresolved threads. Main `52dfacc418578c9dea9e3e7f3b33363288d17c66`, parents `e1c7dee08ff6ed961ac15b9dc7b71ebd43fd6908`+097; actual tree `73f3e18a65b1e26dc8f9baa22d014f31a14ea9d6` equals inspected clean union with concurrent E04/EXP10. Normal deploy-migrations39884109801/120188295620 SUCCESS; actual20271113360002 persisted. Private actor helper/wrapper source MD5s85edb0f907e1d6ec2840849d9993e9c1/c59c22734db019fadeb8616916901061 exact; postgres/STABLE/empty search_path, INVOKER helper/DEFINER wrapper, application/PUBLIC execution closed. Production `dpl_519MEdHhbM4U8Ri8r9TB6bYvzWVU` READY/canonical aliases; public200 exact52dfacc418578c9dea9e3e7f3b33363288d17c66-mvkajd0b/customerUpdate:null. Original234 isolated native checks and actual final hosted full-schema database proof support source. [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2643#issuecomment-6355198172). Own Edge N/A. | SOURCE/NATIVE RELEASE VERIFIED, internal-only/no customer release identity/announcement. Exact original Metric profile/Auth/owner-admin/tenant predicate is reused privately; no public actor override, new report type, worker, artifact, provider, Chat/action or privileged caller activated. Zero reserved report artifacts. Visual N/A/unmounted; report claim/completion/read privacy/original Rail/retrieval and genuine ordinary/cohort/Live/full19/nine/Founder Acceptance remain owed. Recovery is reviewed forward repair without business-work replay. |
 
 **2026-10-22 — EXP05 prepared-question focus and original-window return repaired.**
 
@@ -855,6 +855,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 | Increment | Exact released identity and proof | Completion boundary |
 | --- | --- | --- |
 | [#2632](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2632): preserve historical original Metric evidence in canonical document blocks | Reviewed `943fd25ff40d02ba1bb68ff6b9a5c4bfe773bc60`/tree`29855ce0ce7081077748907ef57d6368c399c742`; final5622432967 AUTHOR-REVIEW / LOWER ASSURANCE, zero threads. All11 exact-head checks/six workflow families and two web statuses SUCCESS. Main `1d2b2456e6d7006e9e299592c65abfb2bb71a927`, parents0c1be9496+943fd; actual tree`144bb9b767c987ad0992ddd749548616399656af` equals inspected clean union. Exact production`dpl_45F3hz84VBVr1FA8DBXmMKuEQUSs` READY/main/canonical aliases; public HTTP200 build`1d2b2456e6d7006e9e299592c65abfb2bb71a927-mvk92u58`/customerUpdate:null.75 cases/three original suites supporting; two causal async mutation failures fixed, original stale-stack UI failure retained and actual main-target guard green. [Release receipt6354689388](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2632#issuecomment-6354689388). | Unused/unmounted pure serializer source only; no report type/public caller/worker/model/provider/action activation. Own SQL/Edge N/A; production build identity is not an executable renderer or customer report proof. Original Metric parser/formatter/block normalizer reused; source/as-of/period/coverage/null/zero/currencies/precision preserved, no bearer/private workspace identity. Native admission/immutable artifact/current Metric authority at claim AND completion/worker/turn/Rail/retrieval and ordinary role/isolation/cohort/Live/all19/nine/single Founder Acceptance remain owed. CAP014/015 Unverified, algorithms unchanged. Internal production prerequisite, no customer release identity or announcement; recovery is forward repair without business-work replay. |
+
+**2026-10-22 — EXP02 original finding inspection and current-source navigation released.**
+
+| Increment | Exact released identity and proof | Completion boundary |
+| --- | --- | --- |
+| [#2626](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2626): inspect original linked findings in the current scoped completed check | Reviewed `452a6ca969bb0f10abd82c1bab856865d316ef02`, AUTHOR-REVIEW / LOWER ASSURANCE5622695418; all11 exact-head checks/two statuses SUCCESS, zero threads. Original f9 full Test FAIL12 Rail cases reproduced; original fixture now uses real MemoryRouter,13 plus133 composed cases PASS, assertions/RPC/frame recorder retained. Main `7ef7cc4db5258bd1d106c805eb06dbf4fbaedd53`; actual/inspected tree `940dd10e969c9173ad760b4988a7e29347e371cf`. Web `dpl_AsavNJFgDwidjjnhUiqabL8Zj32a` READY/canonical aliases; public200 exact7ef-mvkapgtp/customerUpdate:null. Actual import lineage to SoloEntry-9E2GUs1P.js2472503bytes/SHA2566979919439d57d503180ecf345608673f1ec404dbdf56ca1cb64f837499a43a7/five owning markers verified. Original Edge39884559996 retained12PASS/3deployment-changeFAIL. Normal current-main recovery39885135758/120191444779 SUCCESS: all16 source/configuration matches, certified edge-live containing83008187360b12b8d76de0192f6bda3aba213bc1. Chat513 and notify-team-event2102/send-message149/sales-invoice-delivery83 ACTIVE/original JWT configuration verified. [Recovery receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2626#issuecomment-6355336462). Own SQL N/A. | SOURCE RELEASE VERIFIED; presentation selects only the original currently authorized completed snapshot, never another reader/history lookup or execution grant. Original20 native images plus six composition frames/17 exact inputs are supporting synthetic evidence. Functional web/Edge source verified; Visual synthetic; Experiential ordinary MMA/role/isolation/cohort/Live and full19/nine/Founder Acceptance remain owed. No scan/corrective action/provider/role/approval activation or customer release identity/announcement. Recovery used original current-main workflow/certified baseline/strict verifier, no old-head redeploy or manual tag bypass. |
 
 **2026-10-22 — EXP02 private document Metric-evidence capture prerequisite released.**
 
@@ -5245,6 +5251,33 @@ status and creates no recursive delivery row.
 | Increment | Exact released identity and proof | Completion boundary |
 |---|---|---|
 | Source-bound commercial PDF/field manifest [#2637](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2637) | Reviewed83196740a5e5a03cf5307cad590479dcff63753d/treeb85d016398e9e753444ff36ff8eb1baa37ebcc1a; reviews5622415979/5622631780 AUTHOR-REVIEW / LOWER ASSURANCE. All13 exact-head checks/full normal Preview/two statuses SUCCESS. Main0c1be949652959948af7c72520c4ac43898f49b5, exact parentseffc2bc37+8319674 and SAME inspected treeb85d016. Normal deploy-migrations39879828230/deploy120174381011/persistence guard SUCCESS, db-live exact0c1. Actual production350004/retainerab4f8d36f18ecef8650edb85c1d6b89b/12arg ABI/one default/postgres+service ACL/empty search_path match source. Original validator61056f39 and Save1bd28e75 preserved; private table remains postgres-only/RLS/zero policies. Webdpl_EDopJWKpZesc8W2z9w2nJNMYmPoj READY/exact/canonical aliases; public0c1-mvk8yw32/customerUpdate:null. | Native private dependency only; no current product action prepares commercial2 yet. Original schema1/token/effect/approval holds preserved. Local247 native controls and actual Preview metadata are not authenticated commercial owner/staff/client/provider/full12/founder acceptance. No financial obligation, send, signature, payment or named customer announcement. |
+
+**2026-10-22 — EXP04 commercial owner document consumer, development.**
+
+Constructor prerequisite2640 is now released: reviewed1c29b61f0613a05a517f5affe8f1367018469d59,
+main e1c7dee08ff6ed961ac15b9dc7b71ebd43fd6908/actual tree db8d842a4c0f13f1e1dbc3bf77fe65ca342d7daa,
+all10 applicable gates/two statuses SUCCESS, normal schema-free Preview SKIP,
+final review5622877147 AUTHOR-REVIEW / LOWER ASSURANCE. Webdpl_EE13d7PP8b1tEhTLfgSrEMLD3sC5
+READY/exact. Initial Edge39884026649 FAILED previous-source certification;
+original workflow_dispatch39884488108/120189357681 SUCCESS reconciles actual
+c7fa baseline→accepted52dfacc418578c9dea9e3e7f3b33363288d17c66. Only original
+agreement-document selected, ACTIVE67/verify_jwtfalse/22 served files/config pass,
+canonical artifact12471982491/edge-live52df. Root350004/retainerab4f8d36/validator61056f39/
+Save1bd28e75/ABI/ACL unchanged. Public52df-mvkajd0b/null is current source ancestry,
+not exact e1 public-response proof. No new executed customer action or acceptance.
+
+Original Sales → same-client linked invoice choice → canonical original terms
+review → exact reviewed-digest command → original PDF/artifact/native350004 →
+assigned fields/receipt/history/reload. Branchcodex/e04-commercial-document-owner-api
+from reviewed2640/1c29b61f0613a05a517f5affe8f1367018469d59; native2637 separately
+released above. Local45 Deno cases/29 steps,63 mounted/SDK cases and1005 Sales/65
+files/exit0 PASS; original worker teardown warning followed by isolated103 PASS.
+Final compiled20 viewport/theme/panel frames/eight paths/44 exact source pins/zero
+errors,30 neutral images. Auth/HTTP/RPC are synthetic. Source/receipt/late-selection
+negatives fixed; same schema1/authority/one leave guard/recovery/history preserved.
+No SQL/grant/engine/provider/Portal/Chat/algorithm activation. Final source review/
+CI/ordered Edge/web/readback/ordinary owner/staff/client/cohort/provider/all12 and
+single founder evaluation remain owed; no customer release identity. [Evidence](evidence/ui-delivery/e04-commercial-document-owner-workspace.md).
 
 **2026-10-22 — EXP04 original preparation native release verified.**
 

@@ -1,12 +1,29 @@
 import assert from 'node:assert/strict';
 import {handleOwnerPreparation} from './owner-preparation-http.ts';
-import {fixture,tenant,agreement,request,next,prepare,save} from './test-fixtures/owner-preparation.ts';
+import {fixture,commercialFixture,tenant,agreement,request,next,prepare,save} from './test-fixtures/owner-preparation.ts';
 import {sha256Hex} from './token.ts';
 
 const base='https://source-fixture.invalid/agreement-document';
 const post=(body:unknown,query='')=>new Request(base+query,{method:'POST',headers:{Authorization:'Bearer local-fixture-only','Content-Type':'application/json'},body:JSON.stringify(body)});
 const get=(mode:string,id:string|null=request,extra='')=>new Request(`${base}?preparation=${mode}&businessId=${tenant}&agreementId=${agreement}${id?'&preparationId='+id:''}${extra}`,{headers:{Authorization:'Bearer local-fixture-only'}});
 const headers={'Access-Control-Allow-Origin':'*'};
+
+Deno.test('commercial owner HTTP list/review remain private reads through the original door',async()=>{
+  const f=await commercialFixture(),run=(r:Request)=>handleOwnerPreparation(r,f.caller,f.service,headers,async()=>false);
+  const list=await run(get('commercial_sources',null));assert.equal(list.status,200);assert.equal(list.headers.get('cache-control'),'no-store, private');
+  const sources=(await list.json()).sources;assert.equal(sources.tenant_id,tenant);assert.equal(sources.agreement_id,agreement);assert.equal(sources.items[0].invoice_id,f.commercial.invoiceId);
+  const reviewed=await run(get('commercial_review',null,'&invoiceId='+f.commercial.invoiceId));assert.equal(reviewed.status,200);
+  const review=(await reviewed.json()).review;assert.equal(review.tenant_id,tenant);assert.equal(review.agreement_id,agreement);assert.equal(review.state,'ready');
+  const command={...prepare(),action:'prepare_commercial_document',invoice_id:f.commercial.invoiceId,commercial_payload_digest:review.payload_digest};
+  const created=await run(post(command));assert.equal(created.status,200);const wire=await created.text();
+  assert.equal(JSON.parse(wire).view.preparation.manifest.schema_version,2);assert(!wire.includes('content_storage_key'));assert(!wire.includes('manifest_canonical'));
+  assert.equal(f.calls.upload,1);assert.equal(f.calls.write,1);
+});
+Deno.test('commercial HTTP modes reject cross-door extras and missing invoice; wrong role reads no source',async()=>{
+  const f=await commercialFixture(),run=(r:Request)=>handleOwnerPreparation(r,f.caller,f.service,headers,async()=>false);
+  for(const r of [get('commercial_sources',null,'&token=forbidden'),get('commercial_sources',request),get('commercial_review',null),get('metadata',null,'&invoiceId='+f.commercial.invoiceId)])assert.equal((await run(r)).status,400);
+  f.state.admin=false;assert.equal((await run(get('commercial_sources',null))).status,403);assert.equal(f.calls.upload,0);assert.equal(f.calls.write,0);
+});
 
 Deno.test('actual owner HTTP prepare/save/read/PDF returns native receipts and exact uncached bytes',async()=>{
   const f=await fixture(),run=(r:Request)=>handleOwnerPreparation(r,f.caller,f.service,headers,async()=>false);

@@ -843,6 +843,45 @@ All19/nine remain mandatory. [Evidence](../evidence/ui-delivery/e2-desk-source-c
 
 ## EXP02 report evidence foundation — October22 source release, not activated
 
+**D3A source/native release verified:** PR2643 reviewed097eaf205f57866203adbf196aa0dbddcc567f03,
+LOWER5622701932; all13 final checks and two web statuses SUCCESS, no unresolved
+threads. Main52dfacc418578c9dea9e3e7f3b33363288d17c66/tree73f3e18a65b1e26dc8f9baa22d014f31a14ea9d6
+matches the inspected clean union with concurrent E04/EXP10 parent e1c7dee0.
+Normal migration39884109801/120188295620 SUCCESS; actual360002 recorded. Actual
+private helper/wrapper bodyMD5s85edb0f907e1d6ec2840849d9993e9c1/c59c22734db019fadeb8616916901061
+match reviewed SQL; postgres ownership, STABLE/empty path, INVOKER helper/DEFINER
+wrapper and closed application/PUBLIC execution verified. Webdpl_519MEdHhbM4U8Ri8r9TB6bYvzWVU
+READY/canonical aliases, public200 build52dfacc418578c9dea9e3e7f3b33363288d17c66-mvkajd0b,
+customerUpdate:null. [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2643#issuecomment-6355198172).
+Own Edge N/A. Zero reserved reports; no report/worker/provider/Chat/action activation.
+Historical development paragraph below is superseded only at this release boundary.
+
+**S2A artifact privacy, development:** proposed430002 sorts after actual410000 and
+observed pending420009. Own unpublished370002 was renamed with identical SQL bytes;
+no applied history rewritten. Reserved metric_business_review artifacts use original
+marketing_content, original work identity and original Metric authority. Restrictive
+SELECT adds a caller-bound eligibility boolean without an actor override or business
+data. The private original actor helper remains private. Correlated native work is
+required for server insertion; original captured facts, privacy and ownership cannot
+be silently retagged/revised. Only original archive/touch and genuine absent-reference
+FK retirement are preserved; original deletion/erasure and nine legacy types remain.
+This is a pre-activation contract, not a confirmed active report exposure.
+
+Original isolated PostgreSQL16.14 proof264 checks PASS (234 preserved+30), including
+real roles, switched active workspace, banned/deleted/member/foreign reads, original
+legacy grant, forbidden writes and actual work/creator FK retirement. Three controlled
+faults fail the original assertions: read bypass, fact rewrite and erasure refusal.
+An attempted original Sales actor erasure correctly hit retained export FK23503;
+only an extra ephemeral isolated creator fixture replaced that invalid setup. No
+original constraint/authority relaxed or permanent QA identity created. Supporting
+260-case first pass is historical; full-schema rollback proof/hosted CI/review/release
+remain owed. Native fixture is privacy-only, not Harness/admission/worker/customer
+proof. No report type, writer, worker, model/provider, UI, queue or store activated.
+Functional local prerequisite; Visual N/A/unmounted; Experiential/Founder Acceptance
+UNVERIFIED. CAP014/015/nine/ALG maturity unchanged; original artifact/turn/Rail,
+report execution, ordinary roles/isolation/cohorts/Chat/Live/all19 proof still owed.
+ANT138591c908f/ANT161bd60f0e0 and784d9aaf hold routing/release; sole lead.
+
 **D3A authority prerequisite, development:** proposed360002 (after verified production350004) factors the exact
 original Metric actor predicate into private INVOKER
 `_analytics_metric_actor_authorized(uuid,uuid)`. The existing JWT/current-workspace

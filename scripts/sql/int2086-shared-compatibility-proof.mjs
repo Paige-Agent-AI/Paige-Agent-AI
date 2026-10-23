@@ -16,6 +16,7 @@ const sql = readFileSync(`${root}/supabase/migrations/20270601000006_int340_shar
 const forward = readFileSync(`${root}/supabase/migrations/20271101110001_int2086_overdue_metric_compatibility.sql`, 'utf8');
 const reportCapture = readFileSync(`${root}/supabase/migrations/20271113330002_exp02_document_metric_capture.sql`, 'utf8');
 const actorAuthority = readFileSync(`${root}/supabase/migrations/20271113360002_exp02_metric_actor_authority.sql`, 'utf8');
+const reportScope = readFileSync(`${root}/supabase/migrations/20271113430002_exp02_metric_report_artifact_scope.sql`, 'utf8');
 const extra = `
 run(\`CREATE TABLE analytics_evidence_reference(token_digest text PRIMARY KEY,issued_to uuid NOT NULL,tenant_id uuid NOT NULL,metric_id text NOT NULL CONSTRAINT analytics_evidence_reference_metric_id_check CHECK(metric_id<>'') ,range_key text NOT NULL CONSTRAINT analytics_evidence_reference_range_key_check CHECK(range_key<>'') ,range_start timestamptz,range_end timestamptz,source_revision_ref text,issued_at timestamptz,expires_at timestamptz,revoked_at timestamptz);
 ALTER TABLE analytics_evidence_reference ENABLE ROW LEVEL SECURITY;
@@ -117,6 +118,59 @@ denied(scope()+capture([original.evidence_ref])); // original issuer revokes sup
 const expiring=json(scope()+'SET ROLE authenticated;'+issue('sales.cash.recorded_received','1.0.0'));
 run(\`UPDATE analytics_evidence_reference SET expires_at=clock_timestamp()-interval '1 second' WHERE token_digest=encode(extensions.digest(convert_to('\${expiring.evidence_ref}','UTF8'),'sha256'),'hex');\`);
 denied(scope()+capture([expiring.evidence_ref]));
+// Artifact privacy only: these minimal native dependencies do NOT prove document
+// admission, the Harness, worker settlement or customer acceptance. A deliberately
+// broad fixture SELECT policy proves the new restrictive policy cannot be ORed away.
+run(\`CREATE TABLE paige_durable_work(id uuid PRIMARY KEY,tenant_id uuid,initiating_user_id uuid,capability_key text,work_kind text,status text,request_payload jsonb);
+CREATE TABLE marketing_content(id uuid PRIMARY KEY,tenant_id uuid,created_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,kind text,title text,body text,brief text,status text NOT NULL DEFAULT 'draft',meta jsonb NOT NULL DEFAULT '{}',work_id uuid REFERENCES paige_durable_work(id) ON DELETE SET NULL,document_revision int DEFAULT 1,updated_at timestamptz DEFAULT now());
+ALTER TABLE marketing_content ENABLE ROW LEVEL SECURITY;GRANT SELECT ON marketing_content TO authenticated;
+CREATE POLICY fixture_legacy_read ON marketing_content FOR SELECT TO authenticated USING(true);\`);
+run(${JSON.stringify(reportScope)});
+const reportWork=id(8,1),legacyDocument=id(8,2);
+const reportPayload=JSON.stringify({doc_type:'business_review',report_evidence:proof}).replaceAll("'","''");
+run(\`INSERT INTO paige_durable_work VALUES('\${reportWork}','\${tenant}','\${actor}','document_generate','document_authoring','claimed','\${reportPayload}'::jsonb);
+INSERT INTO marketing_content(id,tenant_id,created_by,kind,title,body)VALUES('\${legacyDocument}','\${tenant}','\${actor}','document','Original legacy fixture','Original body');\`);
+const insertReport=(row=reportWork,creator=actor)=>\`INSERT INTO marketing_content(id,tenant_id,created_by,kind,title,body,meta,work_id)VALUES('\${row}','\${tenant}','\${creator}','document','Historical review fixture','Original captured fixture','{"document_purpose":"metric_business_review"}','\${reportWork}');\`;
+denied(scope()+insertReport()); // no caller can manufacture server-origin evidence
+denied(scope('',tenant)+insertReport(id(8,3)));
+denied(scope('',tenant)+insertReport(reportWork,otherActor));
+run(scope('',tenant)+insertReport());
+const visible=(a=actor,t=tenant,row=reportWork)=>scalar(scope(a,t)+\`SET ROLE authenticated;SELECT count(*) FROM marketing_content WHERE id='\${row}';\`);
+eq(visible(),'1');eq(visible(otherActor,foreign),'0');
+eq(visible(otherActor,foreign,legacyDocument),'1'); // original assumed grant remains, not production RLS proof
+run(\`UPDATE profiles SET active_tenant_id='\${foreign}' WHERE user_id='\${actor}';\`);eq(visible(),'0');
+run(\`UPDATE profiles SET active_tenant_id='\${tenant}' WHERE user_id='\${actor}';UPDATE auth.users SET banned_until=now()+interval '1 day' WHERE id='\${actor}';\`);eq(visible(),'0');
+run(\`UPDATE auth.users SET banned_until=NULL,deleted_at=now() WHERE id='\${actor}';\`);eq(visible(),'0');
+run(\`UPDATE auth.users SET deleted_at=NULL WHERE id='\${actor}';UPDATE tenant_members SET role='member' WHERE user_id='\${actor}';\`);eq(visible(),'0');
+run(\`UPDATE tenant_members SET role='admin' WHERE user_id='\${actor}';\`);eq(visible(),'1');
+run(\`UPDATE tenant_members SET role='owner' WHERE user_id='\${actor}';\`);
+for(const assignment of ["body='Changed facts'","meta='{}'","kind='text'","work_id=NULL","tenant_id='"+foreign+"'","created_by='"+otherActor+"'","title='Rewritten report'"])
+ denied(scope()+\`UPDATE marketing_content SET \${assignment} WHERE id='\${reportWork}';\`,'22023');
+run(scope()+\`UPDATE marketing_content SET status='archived' WHERE id='\${reportWork}';\`);
+eq(run(\`SELECT body||':'||status FROM marketing_content WHERE id='\${reportWork}';\`),'Original captured fixture:archived');
+denied(scope(otherActor,foreign)+\`UPDATE marketing_content SET status='draft' WHERE id='\${reportWork}';\`);
+run(\`UPDATE marketing_content SET body='Legacy writer still works' WHERE id='\${legacyDocument}';\`);
+eq(visible(otherActor,foreign,legacyDocument),'1');
+for(const role of ['anon','service_role'])denied(scope()+\`SET ROLE \${role};SELECT public._paige_metric_report_readable('\${tenant}');\`);
+eq(scalar(scope()+\`SET ROLE authenticated;SELECT public._paige_metric_report_readable('\${foreign}');\`),'f');
+eq(run("SELECT count(*) FROM pg_proc p CROSS JOIN LATERAL aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a WHERE p.oid='public._paige_metric_report_readable(uuid)'::regprocedure AND a.grantee=0;"),'0');
+eq(run("SELECT has_table_privilege('authenticated','public.marketing_content','UPDATE');"),'f');
+run(scope(otherActor,foreign)+\`DELETE FROM paige_durable_work WHERE id='\${reportWork}';\`);
+eq(run(\`SELECT work_id IS NULL AND meta->>'document_purpose'='metric_business_review' AND body='Original captured fixture' FROM marketing_content WHERE id='\${reportWork}';\`),'t');
+// The original Sales actors have retained export references: never remove those
+// constraints to manufacture erasure. This extra identity is ephemeral to this
+// isolated cluster and has only the original creator/work FK relationships.
+const retirementActor=id(8,4),retirementWork=id(8,5);
+run(scope('',tenant)+\`INSERT INTO auth.users(id)VALUES('\${retirementActor}');
+INSERT INTO profiles(user_id,active_tenant_id)VALUES('\${retirementActor}','\${tenant}');
+INSERT INTO tenant_members VALUES('\${tenant}','\${retirementActor}','active','owner');
+INSERT INTO paige_durable_work VALUES('\${retirementWork}','\${tenant}','\${retirementActor}','document_generate','document_authoring','claimed','\${reportPayload}'::jsonb);
+INSERT INTO marketing_content(id,tenant_id,created_by,kind,title,body,meta,work_id)VALUES('\${retirementWork}','\${tenant}','\${retirementActor}','document','Creator FK fixture','Creator FK fixture','{"document_purpose":"metric_business_review"}','\${retirementWork}');\`);
+run(scope(otherActor,foreign)+\`DELETE FROM paige_durable_work WHERE id='\${retirementWork}';\`);
+eq(run(\`SELECT work_id IS NULL FROM marketing_content WHERE id='\${retirementWork}';\`),'t');
+run(scope(otherActor,foreign)+\`DELETE FROM auth.users WHERE id='\${retirementActor}';\`);
+eq(run(\`SELECT created_by IS NULL AND meta->>'document_purpose'='metric_business_review' AND body='Creator FK fixture' FROM marketing_content WHERE id='\${retirementWork}';\`),'t');
+eq(visible(retirementActor,tenant,retirementWork),'0'); // retired identity never regains a read
 `;
 assert(source.includes('const schema=run('), 'Missing Sales proof anchor');
 source = source.replace('const schema=run(', () => '{\n' + extra + '\n}\nconst schema=run(');

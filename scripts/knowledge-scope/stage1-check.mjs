@@ -4242,6 +4242,9 @@ group("32 Explicit customer audience uses native private history and customer pr
     history:[{role:"user",content:"NATIVE_PRIVATE_CUSTOMER_HISTORY",source_refs:[sourceRef]}],history_limited:false,
     // E09 K2: the v2 context reports how it chose (a v1 binding replays by recency) and what it left out.
     ranking:"recency",sources_limited:false,authorized_count:1,query_embedding_eligible:true});
+  const progressContext=(mode="bound")=>({frame,thread_id:thread,intent_id:intent,mode,
+    snapshot:mode==="legacy"?null:{version:1,kind:"customer_progress",tenant_id:CHILD,contact_id:contact,source_fingerprint:"b".repeat(64)},
+    progress:mode==="legacy"?null:{tenant_id:CHILD,summary:{shared:0,done:0,open:0,overdue:0},items:[],has_more:false}});
   let terminal=false;
   const scenario={personaTenant:CHILD,memberships:[],activeTenantId:null,
     bodyExtras:{surfaceContext:{kind:"customer_portal"},threadId:thread,requestIntentId:intent,
@@ -4252,6 +4255,8 @@ group("32 Explicit customer audience uses native private history and customer pr
       current_user_tenant_id:{data:null,error:null},
       client_portal_frame:{data:frame,error:null},
       client_portal_assistant_context_v2:{data:customerContext(),error:null},
+      client_portal_assistant_progress_context:{data:progressContext(),error:null},
+      client_portal_assistant_begin_progress:args=>({data:{status:args.p_stop?"stopped":"accepted",turn_id:contact},error:null}),
       paige_chat_customer_thread_authorized:{data:true,error:null},
       paige_chat_interactive_protocol:{data:{version:2,active:false},error:null},
       paige_chat_interactive_begin_v2:{data:{status:"accepted",turn_id:contact},error:null},
@@ -4278,7 +4283,7 @@ group("32 Explicit customer audience uses native private history and customer pr
   assert("32 customer text settles once through the canonical server receipt",
     good.rec.rpc.filter(x=>x.name==="paige_chat_interactive_settle").length===1);
   assert("32 customer uses the native source-binding adapter and exact terminal snapshot",
-    good.rec.rpc.some(x=>x.name==="client_portal_assistant_begin")
+    good.rec.rpc.some(x=>x.name==="client_portal_assistant_begin_progress")
     &&!good.rec.rpc.some(x=>x.name==="paige_chat_interactive_begin_v2")
     &&JSON.stringify(good.rec.rpc.find(x=>x.name==="paige_chat_interactive_settle")?.args.p_bundle_ref.customer_knowledge)===JSON.stringify(snapshot));
   {
@@ -4288,7 +4293,7 @@ group("32 Explicit customer audience uses native private history and customer pr
     const order=good.rec.rpc.map(x=>x.name);
     const reads=good.rec.rpc.filter(x=>x.name==="client_portal_assistant_context_v2");
     const ranked=reads.filter(x=>Array.isArray(x.args.p_query_embedding));
-    const begin=good.rec.rpc.find(x=>x.name==="client_portal_assistant_begin");
+    const begin=good.rec.rpc.find(x=>x.name==="client_portal_assistant_begin_progress");
     assert("32 the same question vector binds the customer read and the begin",
       good.embeds===1&&ranked.length===1&&ranked[0].args.p_query_embedding.length===1024
       &&reads[0].args.p_query_embedding===null
@@ -4298,6 +4303,8 @@ group("32 Explicit customer audience uses native private history and customer pr
       {embeds:good.embeds,reads:reads.map(x=>Array.isArray(x.args.p_query_embedding)?x.args.p_query_embedding.length:x.args.p_query_embedding),
        begin:Array.isArray(begin?.args.p_query_embedding)?begin.args.p_query_embedding.length:begin?.args.p_query_embedding});
   }
+  assert("32 Progress context uses captured caller JWT and exact private question",good.rec.rpc.some(x=>x.name==="client_portal_assistant_progress_context"&&x.client==="jwt"&&x.args.p_thread===thread&&x.args.p_intent===intent));
+  assert("32 same original terminal retains exact native Progress provenance",JSON.stringify(good.rec.rpc.find(x=>x.name==="paige_chat_interactive_settle")?.args.p_bundle_ref.customer_progress)===JSON.stringify(progressContext().snapshot));
   const privateTraces=good.rec.inserts.filter(x=>x.table==="paige_llm_trace");
   assert("32 customer provider telemetry contains no private transcript excerpts",
     privateTraces.length>0&&privateTraces.every(x=>x.row.input_excerpt===null&&x.row.output_excerpt===null&&x.row.error_message===null),
@@ -4333,6 +4340,10 @@ group("32 Explicit customer audience uses native private history and customer pr
   assert("32 unsolicited owner-tool output creates no business action or shared customer record",
     !untrustedTool.rec.inserts.some(x=>["tasks","client_notes","paige_acts","paige_processes","paige_events","paige_customer_actions","messages"].includes(x.table))
     &&!untrustedTool.rec.rpc.some(x=>["file_act","create_paige_act","emit_client_event","emit_client_rail_event"].includes(x.name)));
+  for(const [label,reply] of [["withdrawn Progress",{data:null,error:{code:"42501"}}],["foreign Progress",{data:{...progressContext(),progress:{...progressContext().progress,tenant_id:AGENCY}},error:null}]]){
+    terminal=false;const r=await drive({...scenario,rpcExtras:{...scenario.rpcExtras,client_portal_assistant_progress_context:reply}});
+    assert("32 "+label+" refuses before provider while retaining accepted question",r.providerCalls.length===0&&r.responseText.includes('"message_accepted":true')&&r.rec.rpc.some(x=>x.name==="client_portal_assistant_begin_progress"));
+  }
   for(const [label,extra] of [
     ["disabled",{client_portal_assistant_context_v2:{data:customerContext({...frame,config:{assistant:{enabled:false}}}),error:null}}],
     ["revoked",{client_portal_assistant_context_v2:{data:null,error:{code:"42501"}}}],
@@ -4359,7 +4370,8 @@ group("32 Explicit customer audience uses native private history and customer pr
   const legacyProjection={...customerContext(),snapshot:null,sources:[],authorized_count:0,
     history:[{role:"user",content:"My own earlier words",source_refs:[]}]};
   const legacy=await drive({...scenario,rpcExtras:{...scenario.rpcExtras,
-    client_portal_assistant_context_v2:{data:legacyProjection,error:null}},
+    client_portal_assistant_context_v2:{data:legacyProjection,error:null},
+    client_portal_assistant_progress_context:{data:progressContext("legacy"),error:null}},
     tableExtras:{...scenario.tableExtras,paige_chat_turns:()=>[{role:"user",content:"My own earlier words",bundle_ref:{}},
       {role:"assistant",content:"WITHDRAWN_PROGRAM_HISTORY",bundle_ref:{customer_knowledge:snapshot}}]}});
   assert("32 compatible direct-admission retry stays knowledgeless at the real provider boundary",
@@ -4369,8 +4381,9 @@ group("32 Explicit customer audience uses native private history and customer pr
   assert("32 compatible retry cannot manufacture source attestation in its terminal",
     legacy.rec.rpc.filter(x=>x.name==="paige_chat_interactive_settle").length===1
     &&!legacy.rec.rpc.find(x=>x.name==="paige_chat_interactive_settle")?.args.p_bundle_ref.customer_knowledge);
+  assert("32 legacy question cannot acquire a new Progress attestation",!legacy.rec.rpc.find(x=>x.name==="paige_chat_interactive_settle")?.args.p_bundle_ref.customer_progress);
   assert("32 nothing authorized to rank: no embedding, and the begin binds no vector",
-    legacy.embeds===0&&legacy.rec.rpc.find(x=>x.name==="client_portal_assistant_begin")?.args.p_query_embedding===null,
+    legacy.embeds===0&&legacy.rec.rpc.find(x=>x.name==="client_portal_assistant_begin_progress")?.args.p_query_embedding===null,
     {embeds:legacy.embeds});
   for(const [label,overrides]of [["thread",{threadId:thread.toUpperCase()}],["intent",{requestIntentId:intent.toUpperCase()}]]){
     terminal=false;

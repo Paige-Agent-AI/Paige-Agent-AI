@@ -77,7 +77,9 @@ export function routeLinkTarget(link: ReadRecordLink, tier: WorkspaceLinkTier, a
     recordId: link.record_id,
   });
   if (!resolved) return null;
-  const label = resolved.status === "exact" && link.destination === "contacts"
+  const label = resolved.status === "exact" && link.destination === "systems_check"
+    ? "Open recorded finding"
+    : resolved.status === "exact" && link.destination === "contacts"
     ? (link.subject ? `Open ${link.subject}` : "Open client record")
     : resolved.status === "exact" && link.destination === "sales_invoices"
       ? "Open invoice"

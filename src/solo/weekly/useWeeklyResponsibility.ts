@@ -44,14 +44,14 @@ export function useWeeklyResponsibility(enabled = true) {
     const value = await readWeeklyOwner(captured, supabase as unknown as Parameters<typeof readWeeklyOwner>[1], () => getScopedUserId() === null ? scope.current : null);
     if (ticket === request.current && scope.current?.epoch === captured.epoch && generation.current.key === key) publish({ key, epoch: captured.epoch, value });
   }, [key, publish]);
-  const control = useCallback(async (check: Parameters<typeof controlWeeklyOwner>[1], action: Parameters<typeof controlWeeklyOwner>[2]) => {
+  const control = useCallback(async (check: Parameters<typeof controlWeeklyOwner>[1], action: Parameters<typeof controlWeeklyOwner>[2], schedule?: Parameters<typeof controlWeeklyOwner>[5]) => {
     const captured = scope.current, source = readRef.current;
     if (!captured || flight.current || source.key !== key || source.epoch !== captured.epoch || source.value.status !== "ready"
       || !source.value.snapshot.checks.includes(check) || getScopedUserId() !== null) return { status: "refused" as const };
     const token = {}; flight.current = token; invalidate(); setControlBusy(true);
     try {
       const result = await controlWeeklyOwner(captured, check, action, supabase as unknown as Parameters<typeof controlWeeklyOwner>[3],
-        () => getScopedUserId() === null ? scope.current : null);
+        () => getScopedUserId() === null ? scope.current : null, schedule);
       if (scope.current?.epoch !== captured.epoch || generation.current.key !== key) return { status: "refused" as const };
       publish({ key, epoch: captured.epoch, value: result.status === "saved" ? { status: "ready", snapshot: result.snapshot } : { status: "unavailable" } });
       return result;

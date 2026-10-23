@@ -1,6 +1,8 @@
 import { UUID, object } from '../sales-collections/primitives.ts';
 import { canonicalPresentationJson } from './preparation-json.ts';
 import { sha256Hex } from './token.ts';
+import {prepareCommercialPresentation,commercialPresentationText,type CommercialPresentationPayload} from './commercial-presentation.ts';
+import {MAX_BODY_BYTES} from './signing-guard.ts';
 
 /** Internal native preparation data, not authority, approval or signing evidence.
  * The eventual domain boundary must resolve source and document from the original
@@ -27,6 +29,13 @@ export type AgreementFieldPreparation = {
     fields: AgreementField[];
   };
   preparation_sha256: string; ready_for_review: boolean; issues: AgreementFieldIssue[];
+};
+export type CommercialAgreementFieldPreparation = Omit<AgreementFieldPreparation,'manifest'> & {
+  manifest: Omit<AgreementFieldPreparation['manifest'],'schema_version'> & {
+    schema_version:2;
+    commercial:{payload:Extract<CommercialPresentationPayload,{schema_version:2}>;payload_digest:string;
+      presented_body_markdown:string;presented_body_sha256:string};
+  };
 };
 const fail = (): never => { throw new TypeError('AGREEMENT_FIELD_PREPARATION_INVALID'); };
 const closed = (v: unknown, keys: string[]): Record<string, unknown> => {
@@ -69,6 +78,34 @@ export function readAgreementPdfDocument(value: unknown): AgreementPdfDocument {
 /** Coordinates are PDF points from the visible, rotated crop's TOP LEFT, at
  * scale 1. CSS pixels, browser zoom and percentage prototype values never enter
  * this contract. Future display and stamping must use this same page descriptor. */
+function readAssignedFields(document:AgreementPdfDocument,seenSigners:ReadonlySet<string>,fieldsValue:unknown):AgreementField[]{
+  if (!Array.isArray(fieldsValue) || fieldsValue.length > 500) return fail();
+  const seenFields = new Set<string>();
+  return Array.from(fieldsValue).map(value => {
+    const f = closed(value, ['id', 'signer_id', 'kind', 'page', 'x', 'y', 'width', 'height', 'required', 'label']);
+    const fieldId = id(f.id), signer_id = id(f.signer_id);
+    if (seenFields.has(fieldId) || !seenSigners.has(signer_id) || !['signature', 'initials', 'signed_date', 'text', 'checkbox'].includes(String(f.kind))
+      || typeof f.required !== 'boolean' || f.kind === 'signature' && !f.required) return fail();
+    seenFields.add(fieldId);
+    const page = integer(f.page, 1, document.pages.length), p = document.pages[page - 1];
+    const x = finite(f.x, 0, p.width), y = finite(f.y, 0, p.height);
+    const width = finite(f.width, 1, p.width), height = finite(f.height, 1, p.height);
+    if (x + width > p.width || y + height > p.height) return fail();
+    return { id: fieldId, signer_id, kind: f.kind as AgreementField['kind'], page, x, y, width, height, required: f.required, label: text(f.label, 160) };
+  }).sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+}
+function assignedFieldIssues(signers:readonly {id:string}[],fields:readonly AgreementField[]):AgreementFieldIssue[]{
+  const issues: AgreementFieldIssue[] = [];
+  if (!signers.length) issues.push({ code: 'missing_signer' });
+  for (const signer of signers) if (!fields.some(f => f.signer_id === signer.id && f.kind === 'signature' && f.required)) issues.push({ code: 'missing_signature', signer_id: signer.id });
+  for (let i = 0; i < fields.length; i++) for (let j = i + 1; j < fields.length; j++) {
+    const a = fields[i], b = fields[j];
+    if (a.page === b.page && a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y)
+      issues.push({ code: 'overlapping_fields', field_ids: [a.id, b.id] });
+  }
+  return issues;
+}
+
 export async function prepareAgreementFields(sourceValue: unknown, documentValue: unknown, fieldsValue: unknown): Promise<AgreementFieldPreparation> {
   try { [sourceValue, documentValue, fieldsValue] = structuredClone([sourceValue, documentValue, fieldsValue]); } catch { return fail(); }
   const s = closed(sourceValue, ['tenant_id', 'agreement_id', 'client_id', 'version', 'updated_at', 'status', 'signers']);
@@ -91,28 +128,8 @@ export async function prepareAgreementFields(sourceValue: unknown, documentValue
   }
   // Equal order is legitimate parallel signing. Do not invent a new sequence.
   signers.sort((a, b) => a.signing_order - b.signing_order || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-  if (!Array.isArray(fieldsValue) || fieldsValue.length > 500) return fail();
-  const seenFields = new Set<string>();
-  const fields: AgreementField[] = Array.from(fieldsValue).map(value => {
-    const f = closed(value, ['id', 'signer_id', 'kind', 'page', 'x', 'y', 'width', 'height', 'required', 'label']);
-    const fieldId = id(f.id), signer_id = id(f.signer_id);
-    if (seenFields.has(fieldId) || !seenSigners.has(signer_id) || !['signature', 'initials', 'signed_date', 'text', 'checkbox'].includes(String(f.kind))
-      || typeof f.required !== 'boolean' || f.kind === 'signature' && !f.required) return fail();
-    seenFields.add(fieldId);
-    const page = integer(f.page, 1, document.pages.length), p = document.pages[page - 1];
-    const x = finite(f.x, 0, p.width), y = finite(f.y, 0, p.height);
-    const width = finite(f.width, 1, p.width), height = finite(f.height, 1, p.height);
-    if (x + width > p.width || y + height > p.height) return fail();
-    return { id: fieldId, signer_id, kind: f.kind as AgreementField['kind'], page, x, y, width, height, required: f.required, label: text(f.label, 160) };
-  }).sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
-  const issues: AgreementFieldIssue[] = [];
-  if (!signers.length) issues.push({ code: 'missing_signer' });
-  for (const signer of signers) if (!fields.some(f => f.signer_id === signer.id && f.kind === 'signature' && f.required)) issues.push({ code: 'missing_signature', signer_id: signer.id });
-  for (let i = 0; i < fields.length; i++) for (let j = i + 1; j < fields.length; j++) {
-    const a = fields[i], b = fields[j];
-    if (a.page === b.page && a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y)
-      issues.push({ code: 'overlapping_fields', field_ids: [a.id, b.id] });
-  }
+  const fields=readAssignedFields(document,seenSigners,fieldsValue);
+  const issues=assignedFieldIssues(signers,fields);
   const manifest = { schema_version: 1 as const, source, document, signers, fields };
   // Return the reviewed snapshot, not mutable aliases paired with an old digest.
   for (const page of document.pages) Object.freeze(page);
@@ -123,4 +140,92 @@ export async function prepareAgreementFields(sourceValue: unknown, documentValue
   for (const issue of issues) { if (issue.code === 'overlapping_fields') Object.freeze(issue.field_ids); Object.freeze(issue); }
   Object.freeze(issues);
   return Object.freeze({ manifest, preparation_sha256: await sha256Hex(canonicalPresentationJson(manifest)), ready_for_review: issues.length === 0, issues });
+}
+
+/** Pure composition only. The trusted caller must resolve original commercial
+ * records under current authority and pass the PDF actually rendered from these
+ * canonical presented words. Geometry/checksums alone cannot attest PDF content.
+ * Native retention repeats source/CAS/economics checks before any record write. */
+export async function prepareCommercialAgreementFields(
+  sourceValue:unknown,documentValue:unknown,fieldsValue:unknown,commercialValue:unknown,
+):Promise<CommercialAgreementFieldPreparation>{
+  // Both original constructors await digests. Own one snapshot before either
+  // starts so a later caller edit cannot combine different source revisions.
+  try{[sourceValue,documentValue,fieldsValue,commercialValue]=structuredClone([sourceValue,documentValue,fieldsValue,commercialValue]);}
+  catch{return fail();}
+  const fields=await prepareAgreementFields(sourceValue,documentValue,fieldsValue);
+  const presentation=await prepareCommercialPresentation(commercialValue),payload=presentation.payload;
+  if(payload.schema_version!==2||!object(commercialValue))return fail();
+  const source=fields.manifest.source,commercialSource=payload.source;
+  if(commercialSource.tenant_id!==source.tenant_id||commercialSource.client_id!==source.client_id
+    ||commercialSource.agreement_id!==source.agreement_id||commercialSource.agreement_version!==source.version
+    ||commercialSource.agreement_updated_at!==source.updated_at)return fail();
+  const words=commercialPresentationText(commercialValue.body_markdown as string,presentation);
+  if(words.length>300000)return fail();
+  const commercial=Object.freeze({payload,payload_digest:presentation.payload_digest,
+    presented_body_markdown:words,presented_body_sha256:await sha256Hex(words)});
+  const manifest=Object.freeze({...fields.manifest,schema_version:2 as const,commercial});
+  return Object.freeze({manifest,preparation_sha256:await sha256Hex(canonicalPresentationJson(manifest)),
+    ready_for_review:fields.ready_for_review,issues:fields.issues});
+}
+
+export type AgreementFieldInput=Readonly<{
+  schema_version:1;preparation_id:string;preparation_sha256:string;document_sha256:string;signer_id:string;signed_at:string;
+  values:readonly Readonly<{field_id:string;kind:AgreementField['kind'];value:string|boolean}>[];field_input_sha256:string;
+}>;
+
+/** Proposed field input only, never signature/consent/approval/authority evidence.
+ * A trusted caller MUST resolve the original preparation ID/hash, document and
+ * token-derived signer/current source under native authority. Client-supplied
+ * records cannot establish that authority. Original signing/token holds remain.
+ * Signature=true references the original signer's eventual existing signing act;
+ * this helper does not accept a signature, write a record or authorize execution. */
+export async function prepareAgreementFieldInput(preparationValue:unknown,expectedValue:unknown,valuesValue:unknown):Promise<AgreementFieldInput>{
+  const invalid=():never=>{throw new TypeError('AGREEMENT_PREPARED_FIELD_INPUT_INVALID');};
+  try{
+    [preparationValue,expectedValue,valuesValue]=structuredClone([preparationValue,expectedValue,valuesValue]);
+    const p=closed(preparationValue,['manifest','preparation_sha256','ready_for_review','issues']);
+    const expected=closed(expectedValue,['tenant_id','agreement_id','client_id','preparation_id','preparation_sha256','signer_id','signed_at']);
+    const preparation_id=id(expected.preparation_id),preparation_sha256=hash(expected.preparation_sha256),signer_id=id(expected.signer_id),signed_at=timestamp(expected.signed_at);
+    if(p.preparation_sha256!==preparation_sha256||p.ready_for_review!==true||!Array.isArray(p.issues)||p.issues.length||!object(p.manifest))return invalid();
+    const schema=integer(p.manifest.schema_version,1,2),m=closed(p.manifest,['schema_version','source','document','signers','fields',...(schema===2?['commercial']:[])]);
+    const s=closed(m.source,['tenant_id','agreement_id','client_id','version','updated_at']);
+    if(id(s.tenant_id)!==id(expected.tenant_id)||id(s.agreement_id)!==id(expected.agreement_id)||id(s.client_id)!==id(expected.client_id))return invalid();
+    integer(s.version,1,Number.MAX_SAFE_INTEGER);timestamp(s.updated_at);
+    const document=readAgreementPdfDocument(m.document),signers=new Set<string>();
+    if(!Array.isArray(m.signers)||m.signers.length<1||m.signers.length>100)return invalid();
+    for(const row of m.signers){
+      const party=closed(row,['id','identity_sha256','signer_role','signing_order']),partyId=id(party.id);
+      if(signers.has(partyId)||!['counterparty','tenant_signatory','witness'].includes(String(party.signer_role)))return invalid();
+      hash(party.identity_sha256);integer(party.signing_order,1,2147483647);signers.add(partyId);
+    }
+    if(!signers.has(signer_id))return invalid();
+    const fields=readAssignedFields(document,signers,m.fields);
+    if(assignedFieldIssues([...signers].map(id=>({id})),fields).length)return invalid();
+    if(!Array.isArray(valuesValue)||valuesValue.length>500||new TextEncoder().encode(JSON.stringify(valuesValue)).length>MAX_BODY_BYTES)return invalid();
+    const own=fields.filter(field=>field.signer_id===signer_id),supplied=new Map<string,string|boolean>();
+    for(const row of valuesValue){
+      const answer=closed(row,['field_id','value']),fieldId=id(answer.field_id),field=own.find(field=>field.id===fieldId);
+      if(!field||field.kind==='signed_date'||supplied.has(fieldId))return invalid();
+      const value=answer.value;
+      if(field.kind==='signature'){if(value!==true)return invalid();}
+      else if(field.kind==='checkbox'){if(typeof value!=='boolean')return invalid();}
+      else{
+        if(typeof value!=='string'||field.required&&!value.trim()||[...value].some(char=>{const code=char.charCodeAt(0);return code===127||code<32&&!(field.kind==='text'&&[9,10,13].includes(code));}))return invalid();
+      }
+      supplied.set(fieldId,value as string|boolean);
+    }
+    const values:AgreementFieldInput['values'][number][]=[];
+    for(const field of own){
+      if(field.kind==='signed_date')values.push(Object.freeze({field_id:field.id,kind:field.kind,value:signed_at}));
+      else if(supplied.has(field.id))values.push(Object.freeze({field_id:field.id,kind:field.kind,value:supplied.get(field.id)!}));
+      else if(field.required)return invalid();
+    }
+    const canonical=canonicalPresentationJson(m);
+    // Same retained native manifest limit, independent of the original signing
+    // request-body bound above. This does not expand either execution boundary.
+    if(new TextEncoder().encode(canonical).length>1_048_576||await sha256Hex(canonical)!==preparation_sha256)return invalid();
+    const input={schema_version:1 as const,preparation_id,preparation_sha256,document_sha256:document.sha256,signer_id,signed_at,values:Object.freeze(values)};
+    return Object.freeze({...input,field_input_sha256:await sha256Hex(canonicalPresentationJson(input))});
+  }catch{return invalid();}
 }

@@ -10,6 +10,13 @@ const UUID = "e4000000-0000-4000-8000-0000000c0001";
 const soloTenant = { account_type: "standalone", parent_tenant_id: null, account_number: 3855 };
 const subTenant = { account_type: "sub_account", parent_tenant_id: "e4000000-0000-4000-8000-00000000aaaa", account_number: 3856 };
 
+it("names exact recorded finding inspection without implying execution or cross-tier availability", () => {
+  expect(workspaceLinkTarget({ destination: "systems_check", record_id: UUID }, soloTenant)).toEqual({
+    label: "Open recorded finding", to: `/solo/3855/command-center/systems-check?finding=${UUID}`, status: "exact",
+  });
+  expect(workspaceLinkTarget({ destination: "systems_check", record_id: UUID }, subTenant)).toBeNull();
+});
+
 describe("workspaceLinkTier — through the tier helpers, never an inline account_type compare", () => {
   it("is solo only for a top-level standalone workspace", () => {
     expect(workspaceLinkTier({ account_type: "standalone", parent_tenant_id: null })).toBe("solo");

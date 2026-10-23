@@ -9,6 +9,8 @@ import { exerciseAgreementSignerPaths } from './agreement-signer-paths.mjs';
 import {exerciseAgreementDocumentFields} from './agreement-document-fields-paths.mjs';
 import {installDocumentPreparationPorts} from './agreement-document-preparation-ports.mjs';
 import {exerciseDocumentPreparationPaths} from './agreement-document-preparation-paths.mjs';
+import {exerciseCommercialPreparationPaths} from './agreement-commercial-preparation-paths.mjs';
+import {exerciseSignatureRequestPaths} from './agreement-signature-request-paths.mjs';
 const root = path.resolve(import.meta.dirname, '../..');
 const historyProof = process.argv.includes('--history');
 const correctionProof = process.argv.includes('--correction');
@@ -16,8 +18,10 @@ const editorLabelsProof = process.argv.includes('--editor-labels');
 const templateProof = process.argv.includes('--templates') || editorLabelsProof;
 const signerProof = process.argv.includes('--recipients');
 const fieldsProof=process.argv.includes('--document-fields');
-const preparationsProof=process.argv.includes('--preparations');
-const documentFixturePath=path.resolve(root,preparationsProof?'src/solo/sales/fixtures/agreement-document-source.json':'../../outputs/e04-native-document-fixture.json');
+const commercialProof=process.argv.includes('--commercial-preparations');
+const signatureProof=process.argv.includes('--signature-outcomes');
+const preparationsProof=process.argv.includes('--preparations')||commercialProof;
+const documentFixturePath=path.resolve(root,commercialProof?'../../outputs/e04-commercial-document-fixture.json':preparationsProof?'src/solo/sales/fixtures/agreement-document-source.json':'../../outputs/e04-native-document-fixture.json');
 const documentFixture=fieldsProof||preparationsProof?JSON.parse(await fs.readFile(documentFixturePath,'utf8')):null;
 const documentFixtureSHA=fieldsProof||preparationsProof?createHash('sha256').update(await fs.readFile(documentFixturePath)).digest('hex'):null;
 let documentFixtureMode='normal';
@@ -27,6 +31,7 @@ const sources = ['src/solo/sales-ops.tsx','src/solo/SalesWorkspace.tsx','src/sol
 sources.push('src/solo/sales/sales-department.css');
 const hashes = async () => Object.fromEntries(await Promise.all(sources.map(async file => [file,createHash('sha256').update((await fs.readFile(path.join(root,file),'utf8')).replaceAll('\r\n','\n')).digest('hex')])));
 sources.push('scripts/live-drive/agreement-authoring-drive.mjs');
+if(signatureProof)sources.push('src/solo/useSoloAgreementSignings.ts','src/solo/sales-dialog.tsx','src/solo/sales-ops.css','scripts/live-drive/harness/sales-mount/agreement-signature-request-mount.tsx','scripts/live-drive/agreement-signature-request-paths.mjs');
 if(historyProof)sources.push('src/solo/sales/AgreementWordingHistory.tsx','src/solo/sales/agreementRevisionApi.ts');
 if(correctionProof)sources.push('src/solo/sales/AgreementWordingHistory.tsx','src/solo/sales/agreementRevisionApi.ts','src/solo/sales/AgreementDraftCorrection.tsx','src/solo/sales/agreementCorrectionApi.ts');
 if(templateProof)sources.push('src/solo/sales/AgreementTemplateWorkspace.tsx','src/solo/sales/agreementTemplateApi.ts','src/solo/sales/agreement-templates.css','src/solo/sales/AgreementWordingHistory.tsx','src/solo/sales/agreementRevisionApi.ts','src/solo/sales/AgreementDraftCorrection.tsx','src/solo/sales/agreementCorrectionApi.ts');
@@ -34,6 +39,7 @@ if(signerProof)sources.push('src/solo/sales/AgreementSignerPreparation.tsx','src
 if(uploadProof)sources.push('src/solo/useSoloAgreementSignings.ts','src/solo/sales/agreementPdfIntake.ts','src/solo/sales-ops.css');
 if(fieldsProof)sources.push('src/solo/sales/AgreementDocumentFields.tsx','src/solo/sales/AgreementPdfPage.tsx','src/solo/sales/agreementDocumentModel.ts','src/solo/sales/agreementPdfRenderer.ts','src/solo/sales/agreement-document-fields.css','scripts/live-drive/agreement-document-fields-paths.mjs','scripts/live-drive/harness/sales-mount/agreement-document-fields-mount.tsx','scripts/live-drive/harness/sales-mount/agreement-document-fixture.ts','supabase/functions/_shared/agreements/field-preparation.ts','supabase/functions/_shared/agreements/preparation-json.ts','supabase/functions/_shared/agreements/token.ts','supabase/functions/_shared/sales-collections/primitives.ts');
 if(preparationsProof)sources.push('src/solo/sales/AgreementDocumentPreparation.tsx','src/solo/sales/agreementDocumentApi.ts','src/solo/sales/AgreementDocumentFields.tsx','src/solo/sales/AgreementPdfPage.tsx','src/solo/sales/agreementDocumentModel.ts','src/solo/sales/agreementPdfRenderer.ts','src/solo/sales/agreement-document-fields.css','src/solo/sales/fixtures/agreement-document-source.json','scripts/live-drive/agreement-document-preparation-ports.mjs','scripts/live-drive/agreement-document-preparation-paths.mjs','supabase/functions/_shared/agreements/field-preparation.ts','supabase/functions/_shared/agreements/preparation-json.ts','supabase/functions/_shared/agreements/token.ts','supabase/functions/_shared/agreements/retained-document.ts','supabase/functions/_shared/sales-collections/primitives.ts');
+if(commercialProof)sources.push('scripts/live-drive/agreement-commercial-preparation-paths.mjs','scripts/live-drive/agreement-commercial-preparation-fixture.ts','supabase/functions/_shared/agreements/commercial-presentation.ts','supabase/functions/_shared/agreements/commercial-engagement.ts','supabase/functions/_shared/sales-collections/model.ts','supabase/functions/_shared/sales-collections/contract.ts','supabase/functions/_shared/sales-commercial/conditions.ts','supabase/functions/_shared/agreements/document.ts','supabase/functions/_shared/agreements/document-preparation.ts','supabase/functions/_shared/doc-render.ts');
 console.log('Pinning actual source');
 const pinned = await hashes();
 let compiledRoot = null;
@@ -46,7 +52,7 @@ if (process.argv.includes('--compiled')) {
   await build({ configFile:path.join(root,'scripts/live-drive/harness/sales-mount/vite.agreement-authoring.config.ts'),
     build:{outDir:compiledRoot,emptyOutDir:false,rollupOptions:{input:path.join(root,'scripts/live-drive/harness/sales-mount/agreement-authoring.html')}} });
 }
-const out = process.argv.includes('--diagnose-narrow')?path.resolve(root,'../../outputs/e04-document-narrow-diagnostic'):path.join(root,'docs/evidence/ui-delivery/assets',preparationsProof?'e04-mounted-document-preparation':fieldsProof?'e04-agreement-document-fields':pdfIntakeProof?'e04-agreement-pdf-intake':signerProof?'e04-agreement-recipients':editorLabelsProof?'e04-agreement-editor-labels':templateProof?'e04-agreement-templates':uploadProof?'e04-agreement-upload-intent':correctionProof?'e04-agreement-correction':historyProof?'e04-agreement-wording-history':'e04-agreement-authoring');
+const out = process.argv.includes('--diagnose-narrow')?path.resolve(root,'../../outputs/e04-document-narrow-diagnostic'):path.join(root,'docs/evidence/ui-delivery/assets',signatureProof?'e04-signature-request-outcome':commercialProof?'e04-commercial-document-preparation':preparationsProof?'e04-mounted-document-preparation':fieldsProof?'e04-agreement-document-fields':pdfIntakeProof?'e04-agreement-pdf-intake':signerProof?'e04-agreement-recipients':editorLabelsProof?'e04-agreement-editor-labels':templateProof?'e04-agreement-templates':uploadProof?'e04-agreement-upload-intent':correctionProof?'e04-agreement-correction':historyProof?'e04-agreement-wording-history':'e04-agreement-authoring');
 await fs.mkdir(out,{recursive:true});
 console.log('Resolving owned Playwright');
 const { chromium } = await resolvePlaywright();
@@ -192,7 +198,7 @@ await context.route('**/__e04_rpc__/**',async route=>{
   }
   return answer([]);
 });
-const documentPorts=preparationsProof?await installDocumentPreparationPorts({context,records,fixture:documentFixture}):null;
+const documentPorts=preparationsProof?await installDocumentPreparationPorts({context,records,fixture:documentFixture,commercial:commercialProof}):null;
 const page = await context.newPage();
 page.setDefaultTimeout(15_000);
 page.setDefaultNavigationTimeout(30_000);
@@ -219,7 +225,11 @@ const fill = async(title='Client services agreement')=>{
 };
 const capture = async(name)=>{await page.screenshot({path:path.join(out,name+'.png')});};
 try{
-  if(preparationsProof){
+  if(signatureProof){
+    await exerciseSignatureRequestPaths({page,url,capture,frames,behavior});
+  }else if(commercialProof){
+    await exerciseCommercialPreparationPaths({page,url,capture,frames,behavior,ports:documentPorts,fixture:documentFixture});
+  }else if(preparationsProof){
     await exerciseDocumentPreparationPaths({page,url,capture,frames,behavior,ports:documentPorts,agreementId:documentFixture.source.agreement_id});
   }else if(fieldsProof){
     await exerciseAgreementDocumentFields({page,url,capture,frames,behavior,setFixtureMode:value=>{documentFixtureMode=value;}});

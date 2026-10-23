@@ -2,7 +2,10 @@ import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
 import {webcrypto} from 'node:crypto';
 import {Blob as NativeBlob} from 'node:buffer';
 import fixture from './fixtures/agreement-document-source.json';
-import {prepareAgreementFields,type AgreementFieldPreparation} from '../../../supabase/functions/_shared/agreements/field-preparation';
+import {prepareAgreementFields,prepareCommercialAgreementFields,type AgreementFieldPreparation} from '../../../supabase/functions/_shared/agreements/field-preparation';
+import {assembleFixedRepaymentSchedule} from '../../../supabase/functions/_shared/sales-collections/model';
+import {prepareCommercialPresentation,commercialPresentationText} from '../../../supabase/functions/_shared/agreements/commercial-presentation';
+import * as documentSDK from './agreementDocumentApi';
 const {getSession,invoke,rpc,setHeader,abortSignal}=vi.hoisted(()=>({getSession:vi.fn(),invoke:vi.fn(),rpc:vi.fn(),setHeader:vi.fn(),abortSignal:vi.fn()}));
 vi.mock('@/integrations/supabase/client',()=>({supabase:{auth:{getSession},functions:{invoke},rpc}}));
 import {listAgreementDocumentHistory,prepareAgreementDocumentCommand,readAgreementDocument,readAgreementDocumentPdf,saveAgreementDocument,type AgreementDocumentContext,type AgreementDocumentView} from './agreementDocumentApi';
@@ -19,6 +22,71 @@ const reply=(view:AgreementDocumentView=retained())=>({data:{ok:true,view},error
 function held<T>(){let resolve!:(value:T)=>void;return {promise:new Promise<T>(done=>{resolve=done;}),resolve:(value:T)=>resolve(value)};}
 beforeEach(async()=>{vi.stubGlobal('crypto',webcrypto);vi.stubGlobal('Blob',NativeBlob);vi.clearAllMocks();getSession.mockResolvedValue(session());prepared=await prepareAgreementFields(fixture.source,fixture.document,[]);});
 afterEach(()=>{vi.useRealTimers();vi.unstubAllGlobals();});
+
+const commercialInvoice='77777777-0000-4000-8000-000000000001';
+function commercialInput(){
+  const s=fixture.source,schedule=assembleFixedRepaymentSchedule({total_cents:350000,currency:'usd',deposit_cents:50000,
+    deposit_date:'2026-10-22',installment_cents:30000,first_installment_date:'2026-11-22',cadence:'monthly'});
+  if(schedule.state!=='ready')throw Error('Canonical fixture unavailable');
+  const treatment={state:'not_applicable',charges:[],source:'Synthetic owner decision',policy:'No applicable charge recorded'};
+  return {schema_version:2,engagement:{starts_on:'2026-10-22',ends_on:null,price_basis:'negotiated'},
+    source:{tenant_id:s.tenant_id,client_id:s.client_id,agreement_id:s.agreement_id,agreement_version:s.version,agreement_updated_at:s.updated_at,
+      offer_id:'55555555-0000-4000-8000-000000000001',body_source:'paige_draft',status:'draft',content_sha256:null,
+      terms_id:'66666666-0000-4000-8000-000000000001',terms_version:1,terms_updated_at:s.updated_at,invoice_id:commercialInvoice,invoice_version:1,invoice_draft_version:1,invoice_updated_at:s.updated_at},
+    title:'Controlled agreement',body_markdown:'Neutral commercial source.',principal_minor:350000,currency:'usd',collection_terms:schedule.terms,
+    conditions:{schema_version:1,tax:treatment,fees:treatment},lines:[{unit_minor:350000,quantity:1}]};
+}
+type CommercialSDK={
+  readAgreementCommercialSources:(ctx:AgreementDocumentContext,cursor?:string|null)=>Promise<{ok:boolean;value?:unknown}>;
+  readAgreementCommercialReview:(ctx:AgreementDocumentContext,invoice:string)=>Promise<{ok:boolean;value?:unknown}>;
+  prepareAgreementCommercialCommand:(ctx:AgreementDocumentContext,id:string,view:AgreementDocumentView,review:unknown)=>unknown;
+};
+function commercialSDK(){const sdk=documentSDK as unknown as CommercialSDK;
+  expect(sdk.readAgreementCommercialSources).toBeTypeOf('function');expect(sdk.readAgreementCommercialReview).toBeTypeOf('function');expect(sdk.prepareAgreementCommercialCommand).toBeTypeOf('function');return sdk;}
+
+describe('canonical commercial document SDK',()=>{
+  it('refuses a self-consistent native receipt for different commercial terms than the reviewed command',async()=>{
+    const input=commercialInput(),intended=await prepareCommercialPresentation(input);
+    input.source.terms_version=2;const commercial=await prepareCommercialAgreementFields(fixture.source,fixture.document,[],input),original=retained();
+    const raw={...original,preparation:{...original.preparation,manifest:commercial.manifest,preparation_sha256:commercial.preparation_sha256,commercial_verification:'not_checked'},commercial_readback:{state:'current',invoice_id:commercialInvoice,payload_digest:commercial.manifest.commercial.payload_digest}};
+    const p=raw.preparation;invoke.mockResolvedValue({data:{ok:true,view:raw,receipt:{state:'recorded',historical_receipt:true,id:p.id,event_id:p.event_id,revision_no:p.revision_no,document_sha256:p.document_sha256,preparation_sha256:p.preparation_sha256,is_selected:true}},error:null});
+    const command={tenant_id:fixture.source.tenant_id,agreement_id:fixture.source.agreement_id,request_id:request,expected_source:{client_id:fixture.source.client_id,version:fixture.source.version,updated_at:fixture.source.updated_at},action:'prepare_commercial_document' as const,expected_current_id:null,invoice_id:commercialInvoice,commercial_payload_digest:intended.payload_digest};
+    expect((await saveAgreementDocument(context(),command)).ok).toBe(false);
+  });
+  it('reads same scoped original invoice choices using the captured owner context',async()=>{
+    const sdk=commercialSDK();invoke.mockResolvedValue({data:{ok:true,sources:{tenant_id:fixture.source.tenant_id,agreement_id:fixture.source.agreement_id,
+      items:[{invoice_id:commercialInvoice,invoice_number:'DRAFT-TEST',total_minor:350000,currency:'usd'}],has_more:false,next_cursor:null}},error:null});
+    expect(await sdk.readAgreementCommercialSources(context())).toMatchObject({ok:true,value:{items:[{invoice_id:commercialInvoice,total_minor:350000}]}});
+    expect(invoke.mock.calls[0][0]).toBe(`agreement-document?preparation=commercial_sources&businessId=${fixture.source.tenant_id}&agreementId=${fixture.source.agreement_id}`);
+  });
+  it('recomputes original review presentation and binds a closed immutable prepare command',async()=>{
+    const sdk=commercialSDK(),input=commercialInput(),presentation=await prepareCommercialPresentation(input);
+    const wire={state:'ready',tenant_id:fixture.source.tenant_id,agreement_id:fixture.source.agreement_id,invoice_id:commercialInvoice,input,presentation,
+      payload_digest:presentation.payload_digest,presented_body_markdown:commercialPresentationText(input.body_markdown,presentation)};
+    invoke.mockResolvedValue({data:{ok:true,review:wire},error:null});const result=await sdk.readAgreementCommercialReview(context(),commercialInvoice);
+    expect(result.ok).toBe(true);const command=sdk.prepareAgreementCommercialCommand(context(),request,none(),result.value);
+    expect(command).toMatchObject({action:'prepare_commercial_document',invoice_id:commercialInvoice,commercial_payload_digest:presentation.payload_digest,expected_current_id:null});
+    expect(Object.isFrozen(command)).toBe(true);
+    wire.payload_digest='f'.repeat(64);expect((await sdk.readAgreementCommercialReview(context(),commercialInvoice)).ok).toBe(false);
+  });
+  it('reads a native commercial2 manifest and preserves its economics through another preparation command',async()=>{
+    const input=commercialInput(),commercial=await prepareCommercialAgreementFields(fixture.source,fixture.document,[],input),original=retained();
+    const raw={...original,preparation:{...original.preparation,manifest:commercial.manifest,preparation_sha256:commercial.preparation_sha256,commercial_verification:'not_checked'},
+      commercial_readback:{state:'current',invoice_id:commercialInvoice,payload_digest:commercial.manifest.commercial.payload_digest}};
+    invoke.mockResolvedValue({data:{ok:true,view:raw},error:null});const result=await readAgreementDocument(context(),request);expect(result.ok).toBe(true);
+    if(!result.ok)throw Error('Expected exact commercial view');
+    expect(result.value.state==='retained'&&'derived_fields_sha256' in result.value.preparation?result.value.preparation.derived_fields_sha256:null).toBe(prepared.preparation_sha256);
+    expect(prepareAgreementDocumentCommand(context(),'b1111111-0000-4000-8000-000000000002',result.value)).toMatchObject({action:'prepare_commercial_document',invoice_id:commercialInvoice,commercial_payload_digest:commercial.manifest.commercial.payload_digest});
+  });
+  it('refuses mismatched commercial source/readback and any edit claim on changed economics',async()=>{
+    const input=commercialInput(),commercial=await prepareCommercialAgreementFields(fixture.source,fixture.document,[],input),original=retained();
+    const raw={...original,preparation:{...original.preparation,manifest:commercial.manifest,preparation_sha256:commercial.preparation_sha256,commercial_verification:'not_checked'},
+      commercial_readback:{state:'changed',invoice_id:commercialInvoice,payload_digest:commercial.manifest.commercial.payload_digest}};
+    invoke.mockResolvedValue({data:{ok:true,view:raw},error:null});expect((await readAgreementDocument(context(),request)).ok).toBe(false);
+    raw.can_edit=false;raw.can_prepare=false;raw.preparation.source_matches=false;
+    const result=await readAgreementDocument(context(),request);expect(result.ok).toBe(true);if(result.ok)expect(prepareAgreementDocumentCommand(context(),request,result.value)).toBeNull();
+  });
+});
 
 describe('same original owner document SDK boundary',()=>{
   it('uses the existing SDK with the actual captured actor token and exact scoped request',async()=>{

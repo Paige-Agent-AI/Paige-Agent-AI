@@ -9,7 +9,7 @@
 -- assertions marked RECORDS CURRENT BEHAVIOUR cover the platform-level kill switch, which the
 -- owner has ruled must be restored; they change back to refusals when that item lands.
 BEGIN;
-SELECT plan(140);
+SELECT plan(142);
 
 SELECT ok((SELECT relrowsecurity FROM pg_class WHERE oid='public.paige_live_tenant_availability'::regclass),'platform availability has RLS');
 SELECT ok(NOT has_table_privilege('authenticated','public.paige_live_tenant_availability','SELECT'),'tenant roles cannot read pilot holder rows');

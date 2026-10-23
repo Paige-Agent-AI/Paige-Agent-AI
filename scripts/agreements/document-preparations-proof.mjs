@@ -3,7 +3,8 @@
 import assert from 'node:assert/strict';
 import {randomUUID,createHash} from 'node:crypto';
 import {prepareAgreementFields} from '../../supabase/functions/_shared/agreements/field-preparation.ts';
-import {canonicalPresentationJson} from '../../supabase/functions/_shared/agreements/commercial-presentation.ts';
+import {canonicalPresentationJson,prepareCommercialPresentation,commercialPresentationText} from '../../supabase/functions/_shared/agreements/commercial-presentation.ts';
+import {assembleFixedRepaymentSchedule} from '../../supabase/functions/_shared/sales-collections/model.ts';
 
 export async function proveDocumentPreparations({sql,read,context,tenant,actor,client,fresh,quote,startSession,observe}){
  let checks=0;const check=(v,message)=>{assert(v,message);checks++;};
@@ -26,12 +27,25 @@ export async function proveDocumentPreparations({sql,read,context,tenant,actor,c
  const canonicalStart=commercial.indexOf('CREATE OR REPLACE FUNCTION public._paige_commercial_canonical_json('),canonicalEnd=commercial.indexOf('\nCREATE OR REPLACE FUNCTION public._paige_commercial_presentation_immutable()',canonicalStart);
  assert(canonicalStart>=0&&canonicalEnd>canonicalStart);sql(commercial.slice(canonicalStart,canonicalEnd));
  const migration=read('supabase/migrations/20271113300004_agreement_document_preparation_versions.sql');sql(migration);sql(migration);
+ const commercialProof=process.argv.includes('--commercial-document-preparations');
+ if(commercialProof){
+  // The original parent fixture already retains the canonical offer foreign key.
+  sql(`ALTER TABLE tenant_client_agreements ADD COLUMN status text DEFAULT 'draft',
+    ADD COLUMN collection_terms jsonb,ADD COLUMN collection_terms_version bigint DEFAULT 1,ADD COLUMN installments_total integer,
+    ADD COLUMN starts_on date,ADD COLUMN ends_on date,ADD COLUMN price_basis text,ADD COLUMN updated_at timestamptz DEFAULT now();
+    CREATE TABLE paige_invoices(id uuid PRIMARY KEY,tenant_id uuid,contact_id uuid,status text,currency text,
+      billing_lifecycle_version bigint,billing_draft_version bigint,billing_draft jsonb,updated_at timestamptz DEFAULT now());`);
+  sql(commercial);
+  const validation=read('supabase/migrations/20271113340004_agreement_commercial_source_validation.sql');sql(validation);sql(validation);
+  if(!process.argv.includes('--commercial-document-baseline')){
+   const extension=read('supabase/migrations/20271113350004_agreement_commercial_document_preparation.sql');sql(extension);sql(extension);
+  }
+ }
  check(sql('SELECT count(*) FROM paige_agreement_document_preparations;')==='0','No backfill or activation');
  const originalSave=sql("SELECT md5(prosrc) FROM pg_proc WHERE oid='public.save_paige_agreement(uuid,uuid,uuid,text,text,uuid,uuid,text,uuid,text,timestamptz)'::regprocedure;");
  check(originalSave==='1bd28e75afa0f50bb07b717795a5be0e','Actual original agreement writer retained');
- const original=()=>{
-  const a=fresh();return json(`SELECT jsonb_build_object('tenant_id',a.tenant_id,'agreement_id',a.id,'client_id',a.contact_id,'version',a.version,'updated_at',a.updated_at,'status',a.status,'signers',coalesce((SELECT jsonb_agg(jsonb_build_object('id',s.id,'full_name',s.full_name,'email',s.email,'signer_role',s.signer_role,'signing_order',s.signing_order,'status',s.status) ORDER BY s.signing_order,s.id) FROM paige_agreement_signers s WHERE s.agreement_id=a.id),'[]'::jsonb)) FROM paige_agreements a WHERE a.id='${a.id}';`);
- };
+ const readSource=id=>json(`SELECT jsonb_build_object('tenant_id',a.tenant_id,'agreement_id',a.id,'client_id',a.contact_id,'version',a.version,'updated_at',a.updated_at,'status',a.status,'signers',coalesce((SELECT jsonb_agg(jsonb_build_object('id',s.id,'full_name',s.full_name,'email',s.email,'signer_role',s.signer_role,'signing_order',s.signing_order,'status',s.status) ORDER BY s.signing_order,s.id) FROM paige_agreement_signers s WHERE s.agreement_id=a.id),'[]'::jsonb)) FROM paige_agreements a WHERE a.id='${id}';`);
+ const original=()=>readSource(fresh().id);
  const stamp=id=>sql(`SELECT jsonb_build_object('version',version,'updated_at',updated_at,'words',body_markdown) FROM paige_agreements WHERE id='${id}';`);
  const prepare=async(source,{id=randomUUID(),current=null,storage=null}={})=>{
   const fields=source.signers.map((s,i)=>({id:randomUUID(),signer_id:s.id,kind:'signature',page:1,x:20,y:30+i*50,width:140,height:30,required:true,label:'Signature'}));
@@ -121,5 +135,88 @@ export async function proveDocumentPreparations({sql,read,context,tenant,actor,c
  await Promise.all([barrier,oneSession,twoSession]);
  check(sql(`SELECT count(*) FROM paige_agreement_document_preparations WHERE agreement_id='${competingSource.agreement_id}'`)==='1','Real competing selected-version CAS retains only one winner');
  check(sql(`SELECT count(*) FROM paige_agreement_events WHERE agreement_id='${competingSource.agreement_id}' AND detail->>'action'='document_preparation_recorded'`)==='1','Losing concurrent selection creates no success event');
- return {checks,migrationReplay:2,concurrentSessions:6,observedLockWaits:4,scope:'Native metadata only; actual PDF tests separate, no hosted Storage/JWT/provider/customer acceptance'};
+ let commercialChecks=0;
+ if(commercialProof){
+  const start=checks,hex=value=>createHash('sha256').update(value).digest('hex');
+  const literal=value=>quote(JSON.stringify(value))+'::jsonb';
+  const makeCommercial=async()=>{
+   const initial=original(),offer=randomUUID(),terms=randomUUID(),invoice=randomUUID();
+   const schedule=assembleFixedRepaymentSchedule({total_cents:350000,currency:'usd',deposit_cents:50000,deposit_date:'2026-10-15',installment_cents:30000,first_installment_date:'2026-11-15',cadence:'monthly'});
+   assert.equal(schedule.state,'ready');
+   const treatment={state:'not_applicable',charges:[],source:'Synthetic owner decision',policy:'No applicable charge recorded'},conditions={schema_version:1,tax:treatment,fees:treatment};
+   sql(`INSERT INTO tenant_products(id,tenant_id) VALUES('${offer}','${tenant}');
+    INSERT INTO tenant_client_agreements(id,tenant_id,contact_id,offer_id,agreed_amount_minor,agreed_currency,term_kind,installments_total,collection_terms,starts_on,price_basis)
+      VALUES('${terms}','${tenant}','${client}','${offer}',350000,'USD','installment',10,${literal(schedule.terms)},'2026-10-15','negotiated');
+    UPDATE paige_agreements SET offer_id='${offer}',commercial_terms_id='${terms}' WHERE id='${initial.agreement_id}';`);
+   const source=readSource(initial.agreement_id),words=json(`SELECT jsonb_build_object('title',title,'body',body_markdown) FROM paige_agreements WHERE id='${source.agreement_id}';`);
+   const draft={schema_version:3,agreement_id:source.agreement_id,total_minor:350000,agreement_snapshot:{id:source.agreement_id,version:source.version},commercial_terms_reference:{id:terms,version:1},commercial_conditions:conditions,
+    items:[{unit_minor:350000,quantity:1,catalog_facts:{product_id:offer,unit_minor:350000,currency:'usd'}}]};
+   sql(`INSERT INTO paige_invoices VALUES('${invoice}','${tenant}','${client}','draft','usd',1,1,${literal(draft)},now());`);
+   const times=json(`SELECT jsonb_build_object('terms',t.updated_at,'invoice',i.updated_at) FROM tenant_client_agreements t,paige_invoices i WHERE t.id='${terms}' AND i.id='${invoice}';`);
+   const proposed=await prepareCommercialPresentation({schema_version:2,engagement:{starts_on:'2026-10-15',ends_on:null,price_basis:'negotiated'},
+    source:{tenant_id:tenant,client_id:client,offer_id:offer,agreement_id:source.agreement_id,agreement_version:source.version,agreement_updated_at:source.updated_at,body_source:'paige_draft',status:'draft',content_sha256:null,
+     terms_id:terms,terms_version:1,terms_updated_at:times.terms,invoice_id:invoice,invoice_version:1,invoice_draft_version:1,invoice_updated_at:times.invoice},
+    title:words.title,body_markdown:words.body,principal_minor:350000,currency:'usd',collection_terms:schedule.terms,conditions,lines:[{unit_minor:350000,quantity:1}]});
+   const base=await prepare(source),body=commercialPresentationText(words.body,proposed),manifest=JSON.parse(base.manifest);
+   manifest.schema_version=2;manifest.commercial={payload:proposed.payload,payload_digest:proposed.payload_digest,presented_body_markdown:body,presented_body_sha256:hex(body)};
+   const canonical=canonicalPresentationJson(manifest);
+   return {p:{...base,manifest:canonical,digest:hex(canonical),commercial:proposed.payload_digest},terms,invoice};
+  };
+  const c=await makeCommercial(),cp=c.p,sourceBefore=stamp(cp.source.agreement_id);
+  const financialState=()=>sql(`SELECT jsonb_build_object('terms',to_jsonb(t),'invoice',to_jsonb(i)) FROM tenant_client_agreements t,paige_invoices i WHERE t.id='${c.terms}' AND i.id='${c.invoice}';`);
+  const financialBefore=financialState(),cr=run(cp);
+  check(cr.state==='recorded'&&cr.historical_receipt&&!cr.replayed,'Exact commercial document/map retained without consequential execution');
+  check(stamp(cp.source.agreement_id)===sourceBefore&&financialState()===financialBefore,'Preparation does not freeze or change original commercial/financial sources');
+  const cv=readCurrent(cp.source);assert.deepEqual(cv.manifest,JSON.parse(cp.manifest));checks++;
+  check(cv.commercial_payload_digest===cp.commercial&&cv.commercial_verification==='not_checked'&&cv.source_scope==='agreement_and_parties','Retention is not a current financial validation or approval claim');
+  check(sql(`SELECT commercial_presentation IS NULL AND content_sha256 IS NULL AND status='draft' FROM paige_agreements WHERE id='${cp.source.agreement_id}';`)==='t','Private commercial preparation does not invoke the original freeze');
+  check(sql(`SELECT count(*) FROM paige_agreement_signers WHERE agreement_id='${cp.source.agreement_id}' AND (token_hash IS NOT NULL OR signed_at IS NOT NULL OR esign_consent_at IS NOT NULL);`)==='0','No signing link, signature or consent is manufactured');
+  const replay=run(cp);check(replay.replayed&&replay.event_id===cr.event_id,'Same exact commercial request returns its original event');
+  const changeCommercial=(edit)=>{
+   const next=mutated(cp,m=>{edit(m.commercial);m.commercial.payload_digest=hex(canonicalPresentationJson(m.commercial.payload));});
+   return {...next,current:cp.id,commercial:JSON.parse(next.manifest).commercial.payload_digest};
+  };
+  refused(command(changeCommercial(c=>c.payload.principal_minor++)),'40001');
+  refused(command(changeCommercial(c=>c.payload.source.agreement_id=randomUUID())),'23514');
+  refused(command(changeCommercial(c=>c.payload.schema_version=1)),'22023');
+  refused(command(changeCommercial(c=>c.payload=null)),'22023');
+  refused(command(changeCommercial(c=>c.extra=true)),'22023');
+  refused(command(changeCommercial(c=>c.presented_body_markdown+=' changed')),'22023');
+  refused(command({...cp,id:randomUUID(),current:cp.id,commercial:'f'.repeat(64)}),'22023');
+  refused(command({...cp,id:randomUUID(),actor:randomUUID()}),'42501');
+  sql(`UPDATE paige_invoices SET billing_draft_version=2 WHERE id='${c.invoice}';`);
+  refused(command({...cp,id:randomUUID(),current:cp.id}),'40001');
+  sql(`UPDATE paige_invoices SET billing_draft_version=1 WHERE id='${c.invoice}';`);
+  refused(`UPDATE paige_agreement_document_preparations SET manifest_canonical='{}' WHERE id='${cp.id}';`,'23514','');
+  check(sql(`SELECT count(*) FROM paige_agreement_document_preparations WHERE agreement_id='${cp.source.agreement_id}';`)==='1','All refused commercial attempts leave one immutable original preparation');
+  check(sql(`SELECT count(*) FROM paige_agreement_events WHERE agreement_id='${cp.source.agreement_id}' AND detail->>'action'='document_preparation_recorded';`)==='1','All refused commercial attempts leave one original event');
+  sql(`UPDATE tenant_client_agreements SET collection_terms_version=2 WHERE id='${c.terms}';`);
+  const historical=run(cp);check(historical.replayed&&historical.historical_receipt&&historical.event_id===cr.event_id,'Changed current economics do not replace an exact historical receipt');
+  refused(command({...cp,id:randomUUID(),current:cp.id}),'40001');
+  check(readCurrent(cp.source).commercial_verification==='not_checked','Historical replay never reports current financial verification');
+  const race=await makeCommercial(),tag='e04_commercial_document_'+randomUUID().replaceAll('-','');
+  const holder=startSession(tag+'terms',`BEGIN;UPDATE tenant_client_agreements SET collection_terms_version=2 WHERE id='${race.terms}';SELECT pg_sleep(1.5);COMMIT;`);
+  await observe(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name='${tag}terms' AND wait_event='PgSleep');`);
+  const waiting=startSession(tag+'retain','SET ROLE service_role;DO $proof$ BEGIN BEGIN '+command(race.p).replace(/^SELECT\s+/,'PERFORM ')+"RAISE EXCEPTION 'Expected changed original economics';EXCEPTION WHEN SQLSTATE '40001' THEN NULL;END;END $proof$;");
+  await observe(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name='${tag}retain' AND wait_event_type='Lock');`);checks++;
+  await Promise.all([holder,waiting]);
+  check(sql(`SELECT count(*) FROM paige_agreement_document_preparations WHERE agreement_id='${race.p.source.agreement_id}';`)==='0','Waiting commercial preparation refuses changed committed terms');
+  check(sql(`SELECT count(*) FROM paige_agreement_events WHERE agreement_id='${race.p.source.agreement_id}' AND detail->>'action'='document_preparation_recorded';`)==='0','Concurrent commercial refusal leaves no preparation event');
+  const identity='public._retain_agreement_document_preparation(uuid,uuid,uuid,uuid,integer,timestamptz,uuid,uuid,text,text,text,text)';
+  const meta=json(`SELECT jsonb_build_object('owner',pg_get_userbyid(proowner),'definer',prosecdef,'config',proconfig,'acl',proacl::text,'defaults',pronargdefaults) FROM pg_proc WHERE oid='${identity}'::regprocedure;`);
+  check(meta.owner==='proofrunner'&&meta.definer&&meta.config.includes('search_path=""')&&meta.defaults===1&&meta.acl.includes('service_role=X/')&&!meta.acl.includes('authenticated=X/')&&!meta.acl.includes('anon=X/'),'Original private writer ABI, owner, search path and grants preserved');
+  const extension=read('supabase/migrations/20271113350004_agreement_commercial_document_preparation.sql');
+  const retained=sql(`SELECT pg_get_functiondef('${identity}'::regprocedure);`);
+  sql(retained.replace('BEGIN','BEGIN\n  -- A later source writer, in this disposable fixture only.'));
+  assert.throws(()=>sql(extension),/Original preparation writer changed; reconcile before applying/);checks++;
+  sql(retained);
+  const validationIdentity='public._validate_paige_commercial_presentation(uuid,uuid,jsonb,text,text,text,text,text,text)';
+  const validation=sql(`SELECT pg_get_functiondef('${validationIdentity}'::regprocedure);`);
+  sql(validation.replace('BEGIN','BEGIN\n  -- A later source validator, in this disposable fixture only.'));
+  assert.throws(()=>sql(extension),/Original commercial validator changed; reconcile before applying/);checks++;
+  sql(validation);
+  check(sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${validationIdentity}'::regprocedure;`)==='61056f39c2e8c9a5fa7aab3641820a1b','Original commercial validator is not rewritten by the document extension');
+  commercialChecks=checks-start;
+ }
+ return {checks,migrationReplay:2,concurrentSessions:6,observedLockWaits:4,commercial:commercialProof?{checks:commercialChecks,migrationReplay:2,concurrentSessions:2,observedLockWaits:1}:null,scope:'Native metadata only; actual PDF tests separate, no hosted Storage/JWT/provider/customer acceptance'};
 }

@@ -463,7 +463,7 @@ SELECT is(pg_temp.scope_read('SELECT public.load_self_context()','e0970200-0000-
 SELECT is(pg_temp.scope_read('SELECT to_jsonb(h) FROM public.ensure_client_role_self_heal() h','e0970200-0000-4000-8000-000000000001')->>'sqlstate','42501','customer cannot invoke protected legacy recovery');
 SELECT is(pg_temp.as_scope_user(NULL,'SELECT public.load_self_context()')->>'error','NO_LINKED_CONTACT','self-context never substitutes missing actual subject');
 SELECT set_config('paige.portal_access_write','1',true);
-UPDATE public.clients SET linked_user_id='e0970100-0000-4000-8000-000000000001',portal_access_state='open',status='active' WHERE id='e0970300-0000-4000-8000-000000000012';
+UPDATE public.clients SET linked_user_id='e0970100-0000-4000-8000-000000000001',portal_access_state='open',status='active',portal_access_former_user_id=NULL WHERE id='e0970300-0000-4000-8000-000000000012';
 SELECT set_config('paige.portal_access_write','',true);
 SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.load_self_context()','{"x-client-portal-business":"e0970200-0000-4000-8000-000000000001"}')->>'contact_id','e0970300-0000-4000-8000-000000000011','authorized INVOKER self-context reads selected A through original consent loader');
 SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.load_self_context()','{"x-client-portal-business":"e0970200-0000-4000-8000-000000000002"}')->>'error','NO_LINKED_CONTACT','selected B cannot bypass original active-workspace RLS');
@@ -494,7 +494,7 @@ BEGIN
  RETURN answer;
 END $$;
 SELECT set_config('paige.portal_access_write','1',true);
-UPDATE public.clients SET linked_user_id='e0970100-0000-4000-8000-000000000002',onboarding_stage=NULL,portal_access_state='open',status='active' WHERE id='e0970300-0000-4000-8000-000000000002';
+UPDATE public.clients SET linked_user_id='e0970100-0000-4000-8000-000000000002',onboarding_stage=NULL,portal_access_state='open',status='active',portal_access_former_user_id=NULL WHERE id='e0970300-0000-4000-8000-000000000002';
 SELECT set_config('paige.portal_access_write','',true);
 UPDATE public.clients SET onboarding_stage=NULL WHERE id='e0970300-0000-4000-8000-000000000001';
 DELETE FROM public.user_roles WHERE user_id='e0970100-0000-4000-8000-000000000002' AND role='client';

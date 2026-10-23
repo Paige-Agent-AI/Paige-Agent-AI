@@ -402,22 +402,25 @@ export function SoloPaigeWorkspace({
   }, [activeTenantId, requestedInterview, resumeScope, resumeAttempt, clientScope, planScope, presenceScope]);
   // Reliable resume: an owner re-entering an UNFINISHED onboarding lands back
   // in their own unfinished interview conversation, not a blank one. One
-  // lookup per tenant on first-run entry (only while no thread is active and
-  // no deep link was given); a hit adopts the SAME verified deep-link path —
-  // the checkpoint/authority verification above then runs unchanged. A failed
-  // or empty lookup never blocks the fresh interview.
+  // lookup per resolved tenant on first-run entry (only while no thread is
+  // active and no deep link was given); a hit adopts the SAME verified
+  // deep-link path — the checkpoint/authority verification above then runs
+  // unchanged. A failed or empty lookup never blocks the fresh interview, and
+  // a resolve that lands after the user started or chose a conversation is
+  // discarded (the same cancellation guard the verification effect uses).
   const resumeLookupRef = useRef<string | null>(null);
   useEffect(() => {
     if (!firstRun || requestedInterview || clientScope || planScope || presenceScope) return;
-    if (observedThread.current) return;
-    const scope = activeTenantId ?? "resolving";
+    if (!activeTenantId || observedThread.current) return;
+    const scope = activeTenantId;
     if (resumeLookupRef.current === scope) return;
     resumeLookupRef.current = scope;
+    let current = true;
     void (async () => {
       try {
         const rpc = supabase.rpc as unknown as (name: string, args?: object) => Promise<{ data: unknown; error: unknown }>;
         const lookup = await rpc("latest_solo_business_interview_thread");
-        if (resumeLookupRef.current !== scope) return;
+        if (!current || resumeLookupRef.current !== scope || observedThread.current) return;
         const row = lookup.data as { threadId?: string } | null;
         if (lookup.error || !row?.threadId) return;
         const search = new URLSearchParams(location.search);
@@ -425,6 +428,7 @@ export function SoloPaigeWorkspace({
         navigate(`${location.pathname}?${search}`, { replace: true });
       } catch { /* a failed lookup never blocks the fresh interview */ }
     })();
+    return () => { current = false; };
   }, [firstRun, requestedInterview, activeTenantId, clientScope, planScope, presenceScope, location.pathname, location.search, navigate]);
   // Completion retirement of the URL itself: once setup is complete, a stale
   // ?onboarding=1 (bookmarked or hand-typed) is stripped so the address stops

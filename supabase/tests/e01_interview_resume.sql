@@ -32,8 +32,10 @@ select set_config('test.tenant','11111111-1111-4111-8111-111111111111',false);
 -- Helper: an interview thread with ONE genuine user turn, then a checkpoint
 -- saved through the REAL save RPC at the given phase/age. Creates under the
 -- thread's own caller/tenant context and restores the original context.
+-- p_shape 'archived' marks the thread is_archived so the sibling would reject
+-- it (the candidate query must exclude such shapes BEFORE the limit).
 create or replace procedure pg_temp.interview_thread(p_id uuid, p_tenant uuid, p_caller uuid,
-  p_phase text, p_next text, p_age_minutes bigint)
+  p_phase text, p_next text, p_age_minutes bigint, p_shape text default 'normal')
 language plpgsql as $$
 declare v_turn uuid; v_sub text; v_tenant text;
 begin
@@ -41,13 +43,31 @@ begin
   v_tenant := current_setting('test.tenant',true);
   perform set_config('request.jwt.claim.sub',p_caller::text,false);
   perform set_config('test.tenant',p_tenant::text,false);
-  insert into public.paige_chat_threads(id,tenant_id,caller_user_id,lens)
-    values (p_id,p_tenant,p_caller,'coach');
-  insert into public.paige_chat_turns(id,seq,thread_id,role,content,created_at)
-    values (gen_random_uuid(),1,p_id,'user','a genuine interview answer',now()-(p_age_minutes||' minutes')::interval)
-    returning id into v_turn;
-  perform public.save_solo_business_interview_checkpoint(p_id,p_tenant,
-    jsonb_build_object('phase',p_phase,'nextField',p_next),null);
+  if p_shape = 'archived' then
+    insert into public.paige_chat_threads(id,tenant_id,caller_user_id,lens,is_archived)
+      values (p_id,p_tenant,p_caller,'coach',true);
+  else
+    insert into public.paige_chat_threads(id,tenant_id,caller_user_id,lens)
+      values (p_id,p_tenant,p_caller,'coach');
+  end if;
+  -- For archived shapes the sibling save would refuse (thread unavailable), so
+  -- write the checkpoint-bearing turn directly: the metadata is VALID, only
+  -- the thread shape is disallowed — exactly the burn-a-candidate-slot class.
+  if p_shape = 'archived' then
+    insert into public.paige_chat_turns(id,seq,thread_id,role,content,created_at)
+      values (gen_random_uuid(),1,p_id,'user','a genuine interview answer',now()-(p_age_minutes||' minutes')::interval)
+      returning id into v_turn;
+    update public.paige_chat_turns set bundle_ref=jsonb_set(coalesce(bundle_ref,'{}'::jsonb),'{solo_business_interview}',
+      jsonb_build_object('version',1,'phase',p_phase,'nextField',p_next,'sourceTurnId',v_turn,'sourceTurnSeq',1,
+        'updatedAt',clock_timestamp()::text,'contextRevisionAtCheckpoint',null))
+      where id=v_turn;
+  else
+    insert into public.paige_chat_turns(id,seq,thread_id,role,content,created_at)
+      values (gen_random_uuid(),1,p_id,'user','a genuine interview answer',now()-(p_age_minutes||' minutes')::interval)
+      returning id into v_turn;
+    perform public.save_solo_business_interview_checkpoint(p_id,p_tenant,
+      jsonb_build_object('phase',p_phase,'nextField',p_next),null);
+  end if;
   perform set_config('request.jwt.claim.sub',v_sub,false);
   perform set_config('test.tenant',v_tenant,false);
 end $$;
@@ -146,3 +166,30 @@ begin
     raise notice 'INTERVIEW_RESUME_PROOF FAIL case7 grants';
   end if;
 end $case7$;
+
+-- CASE 8 — sibling-rejected thread SHAPES never burn candidate slots: eight
+-- archived threads with valid-looking checkpoints sit NEWER than the caller's
+-- valid unfinished thread. The candidate query must exclude them by shape
+-- (before the limit); if they entered the window they would consume all eight
+-- slots and the valid thread would silently miss.
+select set_config('request.jwt.claim.sub','22222222-2222-4222-8222-222222222222',false);
+select set_config('test.tenant','11111111-1111-4111-8111-111111111111',false);
+do $case8$
+declare i int;
+begin
+  for i in 1..8 loop
+    call pg_temp.interview_thread(
+      ('cccccccc-0000-4000-8000-'||lpad(i::text,12,'0'))::uuid,
+      '11111111-1111-4111-8111-111111111111','22222222-2222-4222-8222-222222222222',
+      'paused','goals90Day',4-i,'archived');
+  end loop;
+end $case8$;
+do $case8b$
+declare v jsonb := public.latest_solo_business_interview_thread();
+begin
+  if v->>'threadId' is distinct from 'aaaaaaaa-0000-4000-8000-000000000002' then
+    raise notice 'INTERVIEW_RESUME_PROOF FAIL case8 rejected-shapes-excluded got %', v;
+  else
+    raise notice 'INTERVIEW_RESUME_PROOF case8-pass rejected-shapes-excluded valid-thread-survives-window';
+  end if;
+end $case8b$;

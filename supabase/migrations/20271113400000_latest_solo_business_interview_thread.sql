@@ -29,13 +29,20 @@ begin
   if v_uid is null then return null; end if;
   for v_thread in
     -- Candidate threads: the CALLER's own threads in this workspace that carry
-    -- a checkpoint namespace on a genuine non-terminal USER turn. Grouped per
+    -- a checkpoint namespace on a genuine non-terminal USER turn. The thread-
+    -- shape predicates mirror what the sibling assert requires (private coach
+    -- lens, no contact/studio scope, not archived) so rejected shapes never
+    -- burn candidate slots ahead of a valid unfinished thread. Grouped per
     -- thread, newest activity first; only the first few can matter.
     select th.id as thread_id
     from public.paige_chat_threads th
     join public.paige_chat_turns t on t.thread_id = th.id
     where th.tenant_id = v_tid
       and th.caller_user_id = v_uid
+      and th.lens = 'coach'
+      and th.contact_id is null
+      and th.studio_session_id is null
+      and not th.is_archived
       and t.role = 'user'
       and t.interactive_terminal_state is null
       and t.work_id is null

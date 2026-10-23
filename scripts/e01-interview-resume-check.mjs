@@ -49,6 +49,6 @@ const proofs=(result.stdout+'\n'+result.stderr).split('\n').filter(l=>l.includes
 const passes=proofs.filter(l=>!l.includes(' FAIL '));
 const fails=proofs.filter(l=>l.includes(' FAIL '));
 if(fails.length){console.error(fails.join('\n'));process.exit(1)}
-if(passes.length<7)throw Error(`expected 7 passing INTERVIEW_RESUME_PROOF lines, saw ${passes.length}`);
+if(passes.length<8)throw Error(`expected 8 passing INTERVIEW_RESUME_PROOF lines, saw ${passes.length}`);
 console.log(passes.join('\n'));
 console.log('PASS e01 interview resume lookup: newest unfinished wins, completed retires, forged checkpoints skipped fail-closed, foreign tenant/caller excluded, caller sees own newest, unauthenticated refused, execute authenticated-only');

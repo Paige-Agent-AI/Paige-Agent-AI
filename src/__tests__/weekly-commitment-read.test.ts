@@ -46,6 +46,19 @@ function fixture(data: unknown = canonical(), mutate?: (name: string) => void) {
   return { caller, calls, currentIdentity: () => current, switchIdentity: (next: ContextIdentity) => { current = next; } };
 }
 describe("prepared owner-only weekly read — not conversationally admitted", () => {
+  it("preserves the original cutoff for human review without publishing it into model context", () => {
+    const raw = canonical(), cutoff = "2026-10-23T15:20:10.123456+00:00";
+    const data = { ...raw, checks: raw.checks.map(c => ({ ...c, schedule: { ...c.schedule, future_control_at: cutoff } })) };
+    const parsed = parseWeeklyCommitmentSnapshot(data, tenant, actor)!;
+    expect(parsed.checks[0].future_control_at).toBe(cutoff);
+    expect(projectWeeklyCalendar(parsed).definitions[0].future_control_at).toBe(cutoff);
+    expect(projectWeeklyCommitmentChat(parsed)).not.toContain("future_control_at");
+  });
+  it.each([42, "invalid", "2026-99-99T00:00:00Z"])("refuses a malformed original cutoff %s", future_control_at => {
+    const raw = canonical();
+    expect(parseWeeklyCommitmentSnapshot({ ...raw, checks: raw.checks.map(c => ({ ...c,
+      schedule: { ...c.schedule, future_control_at } })) }, tenant, actor)).toBeNull();
+  });
   it("refuses an already cancelled inspection before any RPC", async () => {
     const f = fixture(), stop = new AbortController(); stop.abort();
     const result = await readWeeklyCommitmentProjection(identity, { ...f, signal: stop.signal });

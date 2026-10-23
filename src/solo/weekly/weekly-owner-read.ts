@@ -65,7 +65,7 @@ export type WeeklyFutureControl = (check: WeeklyCheck, action: "pause" | "cancel
 export async function controlWeeklyOwner(scope: WeeklyBrowserScope, review: WeeklyCheck, action: "pause" | "cancel" | "configure" | "authorize",
   caller: Caller, current: () => WeeklyBrowserScope | null, schedule?: WeeklySchedule): Promise<WeeklyOwnerControl> {
   const origin = { ...scope }, expected = { id: review.automation_id, revision: review.revision,
-    status: review.schedule_status, schedule: { ...review.schedule } };
+    status: review.schedule_status, futureControlAt: review.future_control_at ?? null, schedule: { ...review.schedule } };
   const uuid = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
   let retired = false, dispatched = false;
   const matches = () => {
@@ -91,6 +91,7 @@ export async function controlWeeklyOwner(scope: WeeklyBrowserScope, review: Week
     if (before.status !== "ready") return { status: before.status === "refused" ? "refused" : "unavailable" };
     const target = before.snapshot.checks.find(item => item.automation_id === expected.id);
     if (!target || !sameDefinition(target) || target.schedule_status !== expected.status
+      || authorizing && (target.future_control_at ?? null) !== expected.futureControlAt
       || target.schedule_status === "cancelled" || action === "pause" && target.schedule_status === "paused") return { status: "stale" };
     if (proposed && proposed.weekday === expected.schedule.weekday && proposed.local_time === expected.schedule.local_time
       && proposed.timezone === expected.schedule.timezone) return { status: "unsupported" };
@@ -100,7 +101,8 @@ export async function controlWeeklyOwner(scope: WeeklyBrowserScope, review: Week
       dispatched = true;
       const request = proposed ? caller.rpc("configure_weekly_commitment_check", { _automation_id: expected.id,
         _weekday: proposed.weekday, _local_time: proposed.local_time, _timezone: proposed.timezone, _expected_revision: expected.revision })
-        : caller.rpc("control_weekly_commitment_check", { _automation_id: expected.id, _action: action, _expected_revision: expected.revision });
+        : caller.rpc("control_weekly_commitment_check", { _automation_id: expected.id, _action: action, _expected_revision: expected.revision,
+          ...(authorizing ? { _expected_control: { state: expected.status, future_control_at: expected.futureControlAt } } : {}) });
       if (request instanceof Promise) void request.catch(() => {});
       return stage(() => new Promise<{ data: unknown; error: unknown }>((resolve, reject) => request.then(resolve, reject)));
     });

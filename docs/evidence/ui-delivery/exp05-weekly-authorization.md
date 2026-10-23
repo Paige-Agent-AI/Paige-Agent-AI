@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: YES: an ordinary eligible owner can explicitly authorize o
 FLOW_PROTOTYPE: PASS: private throwaway weekly-authorization prototype/brief, six deterministic outcomes and Escape traversed; 320px light/1366px dark inspected. Owner October21 standing approval of design choices and autonomous increments applies; no separate human prototype approval claimed. No prototype ships.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: current eligible SOLO owner reviews original name/revision/schedule and personal Planning scope, then deliberately chooses Authorize this weekly responsibility or Not now.
 VISUAL_DIRECTION: PASS: original Operations/weekly design; no new banner, tab, card system, dependency, decorative metric or motion.
-AUTOMATED_EVIDENCE: PASS:17 fail-first controller/UI cases and two additional real Chat/Calendar nested-Escape failures corrected; final286 cases/ten original suites PASS. Original complete PostgreSQL proof108 PASS, actual engine/Gateway/native adapter/observation/Rail/redrain and new authorize/readback/uncertainty. Auth/context/Trust/cron/network/display fixture boundaries explicit.
+AUTOMATED_EVIDENCE: PASS: original17 controller/UI and two real nested-Escape failures retained. Atomic-control correction passes243 owning consumer/control cases and109 original shared projection/binding cases; additional exact cutoff/parser controls verified. Original complete PostgreSQL proof now114 PASS, including six concurrent stale reviews and pause/live/pause ABA, original engine/Gateway/native adapter/observation/Rail/redrain. Auth/context/Trust/cron/network/display fixture boundaries explicit.
 STATIC_EVIDENCE: PASS: scoped ESLint0/0, diff and SOLO SP1–5/all hostile mutations; actual installed compiler completed6 existing baseline signatures/0 new, unchanged baseline. Native source bundle349 product inputs/177 explicit ports/0 transforms. Full final-head hosted checks remain mandatory.
 RENDERED_EVIDENCE: PASS: assets/exp05-weekly-authorization/viewports.json and image-index.json;16 actual original-shell/sheet frames at1536x770,1366x768,1024x768,900x1000 × light/dark × PAIGE open/closed, plus320x800. Fonts loaded, no page/dialog horizontal overflow, safe default Not now visible in every review.
 BEHAVIORAL_EVIDENCE: PASS: assets/exp05-weekly-authorization/saved-held.json, unknown-recovery.json, bounded-busy.json, phone-and-escape.json and refused.json record actual mounted review/cancel/Escape, saved-held state, reply-loss inspection, bounded12-second failure and current-owner refusal. Synthetic ports write only a local fixture map; real Auth and business/provider effects are excluded.
@@ -32,8 +32,8 @@ MUST_NOT_HAPPEN: unauthorized or stale authorization, automatic uncertain retry,
 MUST_PRESERVE: original Configure/Pause/Cancel, owner-only native RPCs/audit, immutable fixed Planning act, server recurrence/DST, original Work/history/Rail, source navigation and original Chat/Calendar sheet exits.
 ACCEPTANCE_CRITERIA: current owner reviews the exact original definition; one original native authorization and matching fresh intended occurrence/readiness are required. Scope/authority/revision changes refuse; unknown allows inspection only. Real customer record/receipt/reload proof remains separate.
 MOTION_PURPOSE: NONE: no new motion; existing sheet retained.
-PROTECTED_SEAMS: tested owner/session/tenant/epoch, original ID/revision and stored schedule, native acknowledgment/readback, no repeated control, current owner refusal, original nested Escape and Calendar/draft integration. Unchanged SQL/RLS/ACL, global trigger/cron, providers, Chat/Live admission, Spine/Harness/Trust/Layer C implementation, receipt/Memory stores, provisioning and other Experiences.
-INTERNAL_BUILD_IDENTITY: source=cb2d89c8b4e1226482add343987884e5e2fcdb91; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/exp05-weekly-authorization
+PROTECTED_SEAMS: tested owner/session/tenant/epoch, original ID/revision/state/control cutoff and stored schedule, native acknowledgment/readback, no repeated control, current owner refusal, original nested Escape and Calendar/draft integration. Original writer/RLS/ACL remain; additive owner-only compare-and-authorize overload. Global trigger/cron, providers, Chat/Live admission, Spine/Harness/Trust/Layer C, receipt/Memory stores, provisioning and other Experiences unchanged.
+INTERNAL_BUILD_IDENTITY: historical-render-source=cb2d89c8b4e1226482add343987884e5e2fcdb91; corrected-source=exact immutable PR review; deployment=NOT_DEPLOYED; environment=development; migrations=20271113510005; edge=NOT_APPLICABLE; evidence=assets/exp05-weekly-authorization
 RELEASE_CHANNEL: development: source/fixture/native rendered evidence only; required exact-head checks and guarded source release/readback remain separate.
 RELEASE_CLASSIFICATION: internal-only: bounded native owner-control increment, no customer launch announcement.
 CUSTOMER_RELEASE_IDENTITY: none: no owner-approved customer release identity/publication.
@@ -42,6 +42,29 @@ RELEASE_TRUTH_BOUNDARY: PROOF OWED: native synthetic and source behavior are ver
 RELEASE_RECOVERY: position=reviewed forward fix/revert of presentation/consumer; reference=original weekly commitment packet; preserve canonical authorization/audit/history and never repeat unknown work.
 
 ## Original orchestration and algorithm contracts
+
+Review5629673041 identified a valid native race that green a0d CI did not close.
+The original three-argument writer accepts schedule revision but cannot distinguish
+a newer pause. The local predecessor comparison reproduces that stale authorization
+executing instead of refusing40001. The additive four-argument overload locks the
+SAME original owner process, compares its reviewed state and original
+`future_control_at`, then calls the unchanged original writer in that transaction.
+The cutoff also distinguishes pause/live/pause ABA without another version store.
+The getter already returns it inside the saved configuration; the owner parser
+preserves exact native microseconds, and the model projection excludes it. Existing
+three-argument callers remain compatible; the new exact-review UI always uses the
+atomic overload, with no fallback to its predecessor. No migration rewrites history,
+publishes work, grants a service/anonymous caller or activates the global trigger.
+
+`native-atomic-proof.json` preserves114 actual native cases and six concurrent
+stale reviews; `native-atomic-teardown.json` independently verifies final fixture
+role restoration. Initial sandbox connection/cache failures executed no assertions.
+An early fixture cleanup correctly hit the history-preservation guard; correction
+uses the original guarded retirement/disposable teardown, without bypassing it.
+An initial SQL CASE-parentheses error was corrected before the final native proof.
+Original108 proof and sourcecb2 render artifacts remain historical evidence, not
+rewritten as the corrected source. No TSX, CSS, geometry, typography or focus changes
+in this atomic-control correction; current source/render verification stays explicit.
 
 REUSE `control_weekly_commitment_check` and original owner getter. Human definition authorization is not Layer C execution: future occurrences retain existing Spine/Harness/Trust/Layer C/native ActionAdapter/Planning/Rail. No new capability, approval service, executor, ledger, scheduler or source store. Native owner-only writer validates exact revision and immutable fixed act; it alone records consent and intended occurrence.
 

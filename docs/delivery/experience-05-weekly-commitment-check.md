@@ -1,5 +1,18 @@
 # Experience 05 Weekly Internal Commitment Check
 
+## October23 — atomic exact weekly authorization correction, development
+
+Valid review5629673041 holds the original authorization candidate despite green
+CI: a newer pause must not be undone by an older review. Extend the existing native
+writer with an owner-only compare-and-authorize overload using original state and
+future-control cutoff under its existing row lock. Preserve original writer/ACL,
+fixed act, audits, recurrence and three-argument caller compatibility; no second
+approval/version store. Exact original consumer always sends the reviewed cutoff;
+stale or uncertain work is never retried.114 native cases PASS, including six
+concurrent stale reviews and ABA. Full authenticated/cohort/Live/recurrence and
+ten-outcome Experience acceptance remain owed; migration510005 and source are not
+yet deployed. [Exact proof](../evidence/ui-delivery/exp05-weekly-authorization.md).
+
 ## October23 — exact native weekly authorization review, development
 
 EXTEND the original weekly owner controller and inline review with the existing

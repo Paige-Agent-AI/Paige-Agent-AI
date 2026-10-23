@@ -14,7 +14,8 @@ function fixture() {
   const original = { ...scope }, saved = check(), effects: unknown[] = [];
   const dto = () => ({ ok: true, scope: "personal_planning_commitments", actor_id: actor, tenant_id: tenant,
     read_at: "2026-10-22T00:00:00Z", limit: 50, has_more: false,
-    business_time_zone: { state: "configured", zone: "UTC" }, checks: [structuredClone(saved)] });
+    business_time_zone: { state: "configured", zone: "UTC" }, checks: [{ ...structuredClone(saved),
+      schedule: { ...saved.schedule, future_control_at: saved.future_control_at ?? null } }] });
   const response: { data: unknown; error: unknown } = { data: null, error: null };
   const caller = { auth: { getSession: vi.fn(async () => ({ data: { session: { user: { id: actor } } }, error: null })) },
     rpc: vi.fn(async (name: string, args?: Record<string, unknown>): Promise<{ data: unknown; error: unknown }> => {
@@ -63,14 +64,32 @@ describe("exact native weekly authorization", () => {
   it.each([false, true])("saves exact authorization with real readiness %s", async ready => {
     const f = authorizationFixture(ready), reviewed = structuredClone(f.saved);
     expect((await f.control(reviewed, "authorize")).status).toBe("saved");
-    expect(f.effects).toEqual([{ _automation_id: id, _action: "authorize", _expected_revision: 2 }]);
+    expect(f.effects).toEqual([{ _automation_id: id, _action: "authorize", _expected_revision: 2,
+      _expected_control: { state: "requested", future_control_at: null } }]);
     expect(f.saved.execution_availability).toBe(ready ? "ready" : "held"); expect(f.saved.last_verified_run).toBeNull();
     expect(f.caller.rpc.mock.calls.filter(([name]) => name === "get_weekly_commitment_checks")).toHaveLength(2);
   });
   it("a paused responsibility receives fresh authorization, never a catch-up command", async () => {
     const f = authorizationFixture(); f.saved.schedule_status = "paused";
     expect((await f.control(structuredClone(f.saved), "authorize")).status).toBe("saved");
-    expect(f.effects).toEqual([{ _automation_id: id, _action: "authorize", _expected_revision: 2 }]);
+    expect(f.effects).toEqual([{ _automation_id: id, _action: "authorize", _expected_revision: 2,
+      _expected_control: { state: "paused", future_control_at: null } }]);
+  });
+  it("preserves the original microsecond cutoff in the atomic authorization predicate", async () => {
+    const f = authorizationFixture(), cutoff = "2026-10-23T15:20:10.123456+00:00";
+    f.saved.future_control_at = cutoff;
+    expect((await f.control(structuredClone(f.saved), "authorize")).status).toBe("saved");
+    expect(f.effects).toEqual([{ _automation_id: id, _action: "authorize", _expected_revision: 2,
+      _expected_control: { state: "requested", future_control_at: cutoff } }]);
+  });
+  it("refuses a changed original control cutoff before any authorization write", async () => {
+    const f = authorizationFixture(), review = structuredClone(f.saved);
+    review.future_control_at = "2026-10-23T15:20:10Z";
+    expect((await f.control(review, "authorize")).status).toBe("stale"); expect(f.effects).toEqual([]);
+  });
+  it("a native concurrent-control conflict is stale and never retried", async () => {
+    const f = authorizationFixture(); f.response.error = { code: "40001" };
+    expect((await f.control(structuredClone(f.saved), "authorize")).status).toBe("stale"); expect(f.effects).toHaveLength(1);
   });
   it.each(["automation_id", "revision", "state", "future_runs_only", "next_run_at"])("rejects contradictory %s acknowledgment", async field => {
     const f = authorizationFixture();

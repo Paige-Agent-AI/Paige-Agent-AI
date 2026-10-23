@@ -223,7 +223,7 @@ export async function weeklyDraftCommandProof({run,json,literal,source,check,ref
     const calls={current_user_tenant_id:()=>`to_jsonb(current_user_tenant_id())`,
       weekly_commitment_owner:()=>`to_jsonb(weekly_commitment_owner(${literal(args._tenant)},${literal(args._actor)}))`,
       get_weekly_commitment_checks:()=>`get_weekly_commitment_checks()`,
-      control_weekly_commitment_check:()=>`control_weekly_commitment_check(${literal(args._automation_id)},${literal(args._action)},${literal(args._expected_revision)})`,
+      control_weekly_commitment_check:()=>`control_weekly_commitment_check(${literal(args._automation_id)},${literal(args._action)},${literal(args._expected_revision)}${Object.hasOwn(args,'_expected_control')?`,${literal(JSON.stringify(args._expected_control))}::jsonb`:''})`,
       configure_weekly_commitment_check:()=>`configure_weekly_commitment_check(${literal(args._automation_id)},${literal(args._weekday)},${literal(args._local_time)},${literal(args._timezone)},${literal(args._expected_revision)})`};
     assert(Object.hasOwn(calls,name),'closed native fixture RPC port');
     try{const data=json(`SELECT ${calls[name]()};`,ctx);

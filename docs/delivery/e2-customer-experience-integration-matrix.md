@@ -1299,3 +1299,53 @@ current-head CI or customer acceptance after a later source update. All original
 required final-head checks remain mandatory; no workflow, security guard,
 assertion, timeout, baseline or source-domain authority is weakened. All19/nine,
 ordinary SOLO/cohort/Live evidence and one full founder evaluation remain owed.
+
+## October23 — original reader release and public report capture-once slice
+
+Reader2661 is source released at440b97b79fb73eaa786def0f58467aa9147ef9cd, exact clean
+union92897fe6, reviewed9fa/LOWER5630725979+5631154981/all10 applicable checks and two
+statusesSUCCESS/normal PreviewSKIP. Productiondpl_AWSyRnnGsJr2ivaik3HQRBn96pAL READY,
+public440b-mvl68530/null and five served reader markers verified; own SQL/EdgeN/A.
+Receipt6369573538 and Master§4.0 retain exact evidence. Original authorized SOLO
+update reload preserves workspace/weekly answer; this does not verify a typed report
+Card absent from that conversation.17+2 actual renders remain synthetic, not customer
+acceptance. Historical9/0 and12/0/4 unchanged.
+
+The next single-outcome foundation extends O01/O04/O16/O18 and CAP014/015 through
+the ORIGINAL document submit/capture/worker/writer. It does not complete those
+outcomes by itself. Scope: one guarded never-applied migration20271113520002,
+original native proof, existing real-issuer SQL proof and canonical closeout records.
+Forward-number reconciliation preserves actual frontier500009 and EXP05reserved
+510005. No new originating-domain writer or registry.
+
+Orchestration contract: (1) explicit owner request for a historical monthly/quarterly
+review; (2) original Chat document entry, consumer still future/unmounted;
+(3) original Metric issuer/resolver with actual tenant/actor and exact period;
+(4) existing research_knowledge.document_generate/long_form, PARTIAL;
+(5) original Auth-only submit, private capture and durable document worker, not a
+second LayerC adapter; (6) original ordinary document-draft authority, no send/share/
+payment or reusable approval; (7) original marketing_content writer;
+(8) same work UUID/idempotency key/artifact revision/turn/original Rail;
+(9) original safe status, claim/recovery and uncertain outcome, no blind replay;
+(10) original persisted result/receipt required, admission is not completion.
+Reads/interpretation need no forced event-to-action run. No capability activation
+or Model Fabric/provider/spend change; VERA remains an analytical specialist.
+
+Closed request accepts numeric1, explicit checked period and1–12 issued references;
+caller facts/capture/actor/tenant/revision steering refuse. Capture once under the
+original work lock, recheck current authority after waiting, preserve source values
+and compare the same intent without recapturing expired references. Native actual
+positive/negative/concurrent/PostgreSQL proof is separate from the extended real
+issuer full-schema proof, required exact-head CI and future production/customer QA.
+The contended-authority failing-first case was corrected before publication;
+original recapture/removed-authority controls fail and original regressions remain.
+
+Functional candidate only; Visual current UI unchanged/original reader evidence;
+Experiential real typed request/artifact/reload/roles/isolation/Live/cohorts and
+Founder Acceptance UNVERIFIED. ALG03/06/11/12 remain Partial and ALG13 Unverified,
+no predictive claim. CAP009/010/011/013 ComingSoon,012/016/017 Limited,014/015
+Unverified and actor Access Unverified remain unchanged. Original public TS validator
+still refuses reports, so no catalogue promotion follows from this server foundation.
+Next release order: required native/real-issuer exact-head CI → safe migration/source
+readback → narrow original Chat consumer, coordinated through ANT161 → actual ordinary
+SOLO report/receipt/read/reload/permission and recovery proof. All19/nine remain owed.

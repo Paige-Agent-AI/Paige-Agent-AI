@@ -3,7 +3,7 @@
   "environment": "isolated local PostgreSQL16, reduced dependency fixture; original source body and exact same22 added canonical pgTAP expressions through local assertion adapters; full schema CI remains required",
   "original_source_md5": "5c2991f867ebd18fdd0805259e23aced",
   "candidate_source_md5": "a6e37b8e7881c142be52d3b65e1c6f8c",
-  "migration_sha256": "078157a425002fd9a5436bc52359911123bc8d9f6c31cec945f14ed7bd069941",
+  "migration_sha256": "7be32551288005633c7417ce489ca01c9ce9a1e3d32f11ce6304361c656a43b3",
   "baseline": {
     "mode": "baseline",
     "environment": "isolated local PostgreSQL16; reduced dependency fixture; original source and exact22 canonical pgTAP expressions with local assertion adapters; not full schema or authenticated production",
@@ -92,5 +92,52 @@
     "Initial sandbox loopback refused before assertions; isolated elevated runner then executed normally and stopped its own cluster",
     "Initial local guard runner syntax error occurred before execution, corrected without product SQL changes",
     "No managed fixtures, real Auth, provider effect, payment or multi-business activation"
-  ]
+  ],
+  "fresh_preview_incumbent": {
+    "project_ref": "mnulpazcstvhnvfdjvkg",
+    "branch": "codex/exp09-exact-tier-journey",
+    "id": "ad57bafa-5ea3-460b-bad8-f702bc998ae0",
+    "with_data": false,
+    "auth_count": 0,
+    "client_count": 0,
+    "frontier": "20271113550009",
+    "source_md5": "5c2991f867ebd18fdd0805259e23aced",
+    "owner": "postgres",
+    "acl": "{postgres=X/postgres}",
+    "result": "trigger",
+    "definer": true,
+    "volatile": "v",
+    "search_path": "public",
+    "first_check": "120667008785 FAIL: guarded before replacement, preserved original source; closed guard corrected to preserve either actual private incumbent ACL without adding grants"
+  },
+  "owner_only": {
+    "mode": "owner-only",
+    "environment": "isolated local PostgreSQL16; reduced dependency fixture; original source and exact22 canonical pgTAP expressions with local assertion adapters; not full schema or authenticated production",
+    "cases": [
+      "PASS tier exact source inverse preserves all original business logic",
+      "PASS tier preserves original internal-only trigger ABI/owner/DEFINER/volatility/path",
+      "PASS original enabled trigger and exact client FK remain",
+      "PASS explicit tier client advances exact B despite older linked A",
+      "PASS exact B tier event leaves older A unchanged",
+      "PASS original transition receipt names exact B and original tier facts",
+      "PASS replayed original tier update creates no duplicate transition",
+      "PASS journey projection does not invent payment or rewrite original tier source",
+      "PASS ambiguous legacy event changes neither business",
+      "PASS ambiguous legacy event creates no misleading transition receipt",
+      "PASS foreign exact client never falls back to another linked business",
+      "PASS exact client with wrong source user does not advance either identity",
+      "PASS missing source user cannot advance even an explicit client",
+      "PASS original single-business legacy fallback remains compatible",
+      "PASS single-business legacy event retains original exact receipt",
+      "PASS original business-authored Blueprint still owns B journey",
+      "PASS original stage ordering never downgrades advanced journey",
+      "PASS original unsupported tier is still a no-op",
+      "PASS missing original global paid stage degrades safely",
+      "PASS original caught receipt failure atomically rolls back customer stage",
+      "PASS failed original receipt never records completion",
+      "PASS original tier write survives its optional journey failure"
+    ],
+    "passed": 22,
+    "failed": 0
+  }
 }

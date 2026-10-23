@@ -11,7 +11,7 @@ BEGIN
     AND p.pronargs=0 AND p.prosecdef AND p.provolatile='v'
     AND pg_catalog.pg_get_function_result(p.oid)='trigger'
     AND p.proconfig=ARRAY['search_path=public']
-    AND (SELECT array_agg(pg_catalog.pg_get_userbyid(a.grantee)||':'||a.privilege_type||':'||a.is_grantable::text ORDER BY pg_catalog.pg_get_userbyid(a.grantee)) FROM pg_catalog.aclexplode(p.proacl) a)=ARRAY['postgres:EXECUTE:false','service_role:EXECUTE:false']
+    AND (SELECT array_agg(pg_catalog.pg_get_userbyid(a.grantee)||':'||a.privilege_type||':'||a.is_grantable::text ORDER BY pg_catalog.pg_get_userbyid(a.grantee)) FROM pg_catalog.aclexplode(p.proacl) a) IN (ARRAY['postgres:EXECUTE:false'],ARRAY['postgres:EXECUTE:false','service_role:EXECUTE:false'])
  ) THEN
   RAISE EXCEPTION 'Original tier journey source/authority changed; reconcile' USING ERRCODE='42501';
  END IF;

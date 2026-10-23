@@ -17,7 +17,10 @@ const f = vi.hoisted(() => ({
   route: vi.fn(), rpc: vi.fn(), signin: vi.fn(), getUser: vi.fn(), reset: vi.fn(), toast: vi.fn(),
 }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {
-  rpc: (...a: unknown[]) => f.rpc(...a),
+  rpc: (...a: unknown[]) => {
+    const request = Promise.resolve(f.rpc(...a));
+    return Object.assign(request, {abortSignal: () => request});
+  },
   auth: {
     getUser: () => f.getUser(),
     signInWithPassword: (...a: unknown[]) => f.signin(...a),
@@ -36,6 +39,8 @@ const at = (url: string) => dom.reconfigure({ url });
 
 let host: HTMLDivElement, root: Root;
 const acme = { tenant_name: "Acme Studio", tenant_slug: "acme", logo_url: null, primary_color: "#26483e" };
+const customerActor = "e0960100-0000-4000-8000-000000000002";
+const customerBusiness = "e0960200-0000-4000-8000-000000000002";
 const render = (path: string) => act(async () => root.render(
   <HelmetProvider><MemoryRouter initialEntries={[path]}><Routes>
     <Route path="/portal/:tenantSlug" element={<PortalGateway />} />
@@ -54,11 +59,12 @@ const click = (label: string) => act(async () => {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  f.user = { id: "test-customer" };
+  f.user = { id: customerActor };
   f.route.mockResolvedValue("/app");
   f.getUser.mockImplementation(async () => ({ data: { user: f.user }, error: null }));
   f.rpc.mockImplementation(async (name: string, args?: { _slug?: string }) => (
-    name === "peek_tenant_portal_brand" ? { data: [{ ...acme, tenant_slug: args?._slug ?? "acme" }], error: null }
+    name === "client_portal_entry_for_slug" ? {data: {contract_version: 1, actor_id: customerActor, tenant_id: customerBusiness, tenant_slug: "acme", state: "open"}, error: null}
+      : name === "peek_tenant_portal_brand" ? { data: [{ ...acme, tenant_slug: args?._slug ?? "acme" }], error: null }
       : { data: [acme], error: null }));
   f.reset.mockResolvedValue({ error: null });
   host = document.createElement("div");
@@ -73,6 +79,7 @@ it("does not loop a signed-in visitor on a tenant host: it never reads the sessi
   expect(f.getUser).not.toHaveBeenCalled();
   expect(f.route).not.toHaveBeenCalled();
   expect(f.rpc.mock.calls.some(([name]) => name === "get_client_portal_brand")).toBe(false);
+  expect(f.rpc.mock.calls.some(([name]) => name === "client_portal_entry_for_slug")).toBe(false);
   expect(host.textContent).not.toContain("Signed-in customer portal");
 });
 
@@ -98,7 +105,7 @@ it("pins a wrong route slug on a tenant host to the hostname tenant for both the
 it("keeps the app origin's own gateway unchanged: a signed-in customer goes straight into /app", async () => {
   at("https://paigeagent.ai/portal/acme");
   await render("/portal/acme");
-  expect(f.route).toHaveBeenCalledWith("test-customer", { customerPortal: true });
+  expect(f.route).toHaveBeenCalledWith(customerActor, { customerPortal: true, customerBusinessId: customerBusiness });
   expect(host.textContent).toContain("Signed-in customer portal");
   expect(entryLink()).toBeNull();
 });

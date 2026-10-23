@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchWithheldCustomerAccess } from "@/lib/client-portal-access";
 import { workspaceRootForTenant } from "@/lib/auth/workspaceEntry";
 import { readClientPortalSelfProfile } from "@/lib/client-portal-self-profile";
+import { isClientPortalBusinessId } from "@/lib/client-portal-scope";
 
 // Customer onboarding and agreements remain actual work inside the portal.
 // Entry never pretends to complete Welcome or accept an unsigned agreement.
@@ -185,20 +186,25 @@ type LandingTenant = {
 export const LANDING_ROUTE_RETRY = "/auth?mode=login&route=retry";
 
 /** True only when the server says this person's access was paused or ended. An unknown answer is false: it never invents a customer route. */
-async function customerAccessWithheld(): Promise<boolean> {
+async function customerAccessWithheld(businessId: string | null = null): Promise<boolean> {
   try {
-    return (await fetchWithheldCustomerAccess()) !== null;
+    return (await (businessId === null ? fetchWithheldCustomerAccess() : fetchWithheldCustomerAccess(businessId))) !== null;
   } catch {
     return false;
   }
 }
 
-export async function resolveLandingRoute(userId: string, options: { customerPortal?: boolean } = {}): Promise<string> {
+export async function resolveLandingRoute(userId: string, options: { customerPortal?: boolean; customerBusinessId?: string } = {}): Promise<string> {
   try {
+    // Narrow only an explicit customer entry. Ordinary staff/operator landing stays unchanged.
+    const businessId = options.customerPortal ? options.customerBusinessId : undefined;
+    const invalidBusiness = businessId !== undefined && !isClientPortalBusinessId(businessId);
     const [rolesRes, clientRes, ownedTenantRes, memberTenantRes, agencyTeamRes] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", userId),
       // Customer entry must not depend on permission to read an internal CRM row.
-      Promise.resolve(supabase.rpc("client_portal_self_profile"))
+      invalidBusiness ? Promise.resolve({data: null, error: {message: "Customer business unavailable"}})
+      : Promise.resolve(businessId === undefined ? supabase.rpc("client_portal_self_profile")
+        : supabase.rpc("client_portal_self_profile", {p_tenant_id: businessId}))
         .catch(() => ({ data: null, error: { message: "Customer relationship unavailable" } })),
       supabase.from("tenants").select("id, account_type, parent_tenant_id, account_number").eq("owner_user_id", userId).limit(1).maybeSingle(),
       supabase.from("tenant_members").select("tenant_id").eq("user_id", userId).limit(1).maybeSingle(),
@@ -255,13 +261,13 @@ export async function resolveLandingRoute(userId: string, options: { customerPor
     if (options.customerPortal) {
       if (clientRes.error) return LANDING_ROUTE_RETRY;
       if (clientRes.data !== null) {
-        const profile = readClientPortalSelfProfile(clientRes.data, userId);
+        const profile = readClientPortalSelfProfile(clientRes.data, userId, businessId);
         if (!profile) return LANDING_ROUTE_RETRY;
         return "/app";
       }
       // E09 Slice 7: no open relationship, but a business paused or ended this person's access.
       // /app shows that business's own page; it never grants anything.
-      if (await customerAccessWithheld()) return "/app";
+      if (await customerAccessWithheld(businessId ?? null)) return "/app";
     }
     // Tenant/agency operators may prefer to land on their /agency side (#191);
     // a non-agency operator, or one who prefers 'last_account', falls to /admin.
@@ -349,7 +355,7 @@ export async function resolveLandingRoute(userId: string, options: { customerPor
     // E09 Slice 7: a customer whose access was paused or ended has no relationship that resolves,
     // so everything above came back empty. They are a business's client, not a prospective
     // subscriber: /app tells them where they stand, instead of the platform's pricing page.
-    if (await customerAccessWithheld()) return "/app";
+    if (await customerAccessWithheld(businessId ?? null)) return "/app";
 
     // Signed in, but no tenant yet ⇒ no active platform subscription (a tenant is
     // only provisioned after payment). Pay-before-workspace: send them to /pricing to

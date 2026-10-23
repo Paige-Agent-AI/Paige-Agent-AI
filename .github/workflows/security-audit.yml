@@ -16,6 +16,8 @@ on:
     branches: [main, master]
   push:
     branches: [main, master]
+  # Identical locked dependency audit for the exact manually requested ref.
+  workflow_dispatch:
 
 jobs:
   audit:

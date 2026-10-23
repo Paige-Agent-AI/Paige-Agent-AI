@@ -1689,8 +1689,15 @@ Original native247 controls now consume actual constructor output, not a manual
 manifest; corrected fixture-shadowing failure retained. No SQL, authority, public
 commercial hold, provider, Portal or capability activation. Hash composition is
 not source authorization or PDF-content attestation; trusted record/renderer/
-Storage/native CAS/API/UI remain owed. Native2637/350004 is separate pending CI,
-not silently deployed here. Final review/CI/source readback/actual roles/full12/
+Storage/native CAS/API/UI remain owed. Native2637 is now separately released
+0c1be949652959948af7c72520c4ac43898f49b5: all13 exact-head gates/two statuses,
+normal native39879828230/deploy120174381011/persistence/db-live exact0c1 and
+actual350004/retainerab4f8d36f18ecef8650edb85c1d6b89b/ABI/private ACL verified.
+Validator61056f39 and Save1bd28e75 remain; private table/RLS/grants unchanged.
+READYdpl_EDopJWKpZesc8W2z9w2nJNMYmPoj/public0c1-mvk8yw32 verified. No new
+product consumer. Original2640/ad6 Preview CANCELLED, not PASS; exact source,
+proof and evidence bytes are preserved while current main0c1 is composed for
+fresh normal gates. Final review/CI/source readback/actual roles/full12/
 founder acceptance stay separate. [Evidence](../evidence/ui-delivery/e04-commercial-field-constructor.md).
 
 ### EXP04 original upload intent — development

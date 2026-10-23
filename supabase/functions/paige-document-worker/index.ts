@@ -2,8 +2,11 @@ import { downloadKnowledgeText, runKnowledgeExtraction } from '../_shared/knowle
 import { runKnowledgePublication } from '../_shared/knowledge-publication-worker.ts';
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { callModel } from "../_shared/model-router.ts";
+import { buildBusinessReviewEvidenceBlocks } from "../_shared/document-business-review-evidence.ts";
 import {
   buildDocumentAuthoringPrompt,
+  classifyDocumentSubmissionError,
+  containsDocumentPlaceholder,
   parseDocumentModelOutput,
   validateDocumentBrief,
 } from "../_shared/document-production.ts";
@@ -46,6 +49,61 @@ async function settleFailure(
   return true;
 }
 
+// This consumes only original claimed native work. Public report admission is
+// separate; no request body, model or replacement Metric read supplies facts.
+async function runMetricReview(admin: SupabaseClient, work: StartedWork): Promise<Record<string, unknown>> {
+  const startedAt = Date.now();
+  let completionAttempted = false;
+  try {
+    const payload = work.request_payload as Record<string, unknown>;
+    if (payload.version !== 1 || payload.doc_type !== "business_review"
+      || Object.keys(payload).some(key => !["version", "doc_type", "title", "brief", "report_evidence", "report_period"].includes(key))
+      || typeof payload.title !== "string" || !payload.title.trim() || payload.title.length > 200
+      || typeof payload.brief !== "string" || !payload.brief.trim() || payload.brief.length > 12_000
+      || containsDocumentPlaceholder(payload.title) || containsDocumentPlaceholder(payload.brief)
+      || !payload.report_period || typeof payload.report_period !== "object" || Array.isArray(payload.report_period)) {
+      throw new Error("DOCUMENT_OUTPUT_EVIDENCE_INVALID");
+    }
+    const period = payload.report_period as { key: "month" | "quarter"; start: string; end: string };
+    const { blocks } = await buildBusinessReviewEvidenceBlocks(payload.report_evidence, { tenantId: work.tenant_id, period });
+    completionAttempted = true;
+    const { data, error } = await admin.rpc("complete_paige_document_work", {
+      _work_id: work.work_id, _server_idempotency_key: work.server_idempotency_key,
+      _doc_type: "business_review", _title: payload.title.trim(),
+      _blocks: [{ type: "cover", title: payload.title.trim() }, ...blocks],
+      _provider: null, _model: null, _tokens_used: 0, _latency_ms: Date.now() - startedAt,
+    });
+    if (error) throw error;
+    const row = Array.isArray(data) && data.length === 1 ? data[0] : null;
+    if (!row || row.work_status !== "succeeded" || row.content_id !== work.work_id
+      || row.document_revision !== 1 || row.receipt_recorded !== true
+      || typeof row.completion_turn_id !== "string"
+      || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(row.completion_turn_id)) {
+      throw new Error("DURABLE_DOCUMENT_SUCCESS_READBACK_MISSING");
+    }
+    return { ok: true, work_id: work.work_id, status: "succeeded", content_id: row.content_id,
+      verified_readback: true, receipt_recorded: true };
+  } catch (error) {
+    // A transport/missing readback cannot prove rollback or terminal failure.
+    const status = !completionAttempted || classifyDocumentSubmissionError(error) === "capability_refused"
+      ? "failed" : "outcome_unknown";
+    const code = status === "failed" ? "business_review_refused" : "business_review_outcome_unknown";
+    let settled = false;
+    try {
+      const result = await admin.rpc("settle_paige_document_work_failure", {
+        _work_id: work.work_id, _server_idempotency_key: work.server_idempotency_key,
+        _new_status: status, _error_code: code,
+        _safe_summary: status === "failed" ? "The business review was not completed. Inspect its original work before trying again."
+          : "The business review outcome needs reconciliation. Return to the original work before trying again.",
+      });
+      settled = !result.error && result.data === status;
+    } catch { /* The original claimed work remains authoritative. */ }
+    return { ok: false, work_id: work.work_id, status: settled ? status : "outcome_unknown",
+      error_code: settled ? code : "business_review_outcome_unknown", settlement_verified: settled,
+      reconciliation_required: !settled || status === "outcome_unknown" };
+  }
+}
+
 async function runOne(admin: SupabaseClient, workId: string): Promise<Record<string, unknown>> {
   const { data, error } = await admin.rpc("start_paige_document_work_execution", { _work_id: workId });
   if (error) {
@@ -59,6 +117,14 @@ async function runOne(admin: SupabaseClient, workId: string): Promise<Record<str
   if (!work) return { ok: true, work_id: workId, duplicate_dispatch_prevented: true };
   if (work.work_status === "blocked") {
     return { ok: false, work_id: workId, status: "blocked", blocked_reason: "authority_changed" };
+  }
+
+  if (work.request_payload && typeof work.request_payload === "object"
+    && (work.request_payload as Record<string, unknown>).doc_type === "business_review") {
+    if (work.work_id !== workId || work.work_status !== "claimed" || !work.server_idempotency_key) {
+      throw new Error("DURABLE_DOCUMENT_WORK_READBACK_INVALID");
+    }
+    return runMetricReview(admin, work);
   }
 
   const checked = validateDocumentBrief(work.request_payload);

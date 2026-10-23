@@ -840,13 +840,117 @@
       "feedback": true
     }
   ],
-  "rawCapture": "Page.captureScreenshot original PNG bytes at deviceScaleFactor1; earlier tab screenshot JPEG captures are diagnostics only",
+  "rawCapture": "Seven valid original PNGs cover six viewport classes and native-error recovery. Foreign-refusal PNG is INVALID/excluded despite valid metadata; its DOM geometry and behavior are separate evidence. Earlier JPEG captures are diagnostics only.",
   "unverified": [
     "authenticated external-client and owner",
     "native customer shell/paused-ended notices",
     "physical iPhone/Safari",
     "screen reader",
     "real email/provider recovery",
-    "full integrated Experience"
-  ]
+    "full integrated Experience",
+    "foreign-refusal complete PNG capture; capture-tool scaled painting clips at a correct DOM viewport"
+  ],
+  "foreignRefusalGeometry": {
+    "controls": [
+      {
+        "font": "16px",
+        "name": "portal-email",
+        "rect": {
+          "bottom": 436,
+          "height": 44,
+          "left": 40.79999923706055,
+          "right": 349.6000175476074,
+          "top": 392,
+          "width": 308.8000183105469,
+          "x": 40.79999923706055,
+          "y": 392
+        }
+      },
+      {
+        "font": "16px",
+        "name": "portal-pw",
+        "rect": {
+          "bottom": 524,
+          "height": 44,
+          "left": 40.79999923706055,
+          "right": 349.6000175476074,
+          "top": 480,
+          "width": 308.8000183105469,
+          "x": 40.79999923706055,
+          "y": 480
+        }
+      },
+      {
+        "font": "16px",
+        "name": "Show password",
+        "rect": {
+          "bottom": 524,
+          "height": 44,
+          "left": 305.6000061035156,
+          "right": 349.6000061035156,
+          "top": 480,
+          "width": 44,
+          "x": 305.6000061035156,
+          "y": 480
+        }
+      },
+      {
+        "font": "14px",
+        "name": "Sign in",
+        "rect": {
+          "bottom": 580,
+          "height": 44,
+          "left": 40.79999923706055,
+          "right": 349.6000175476074,
+          "top": 536,
+          "width": 308.8000183105469,
+          "x": 40.79999923706055,
+          "y": 536
+        }
+      },
+      {
+        "font": "12px",
+        "name": "Forgot your password?",
+        "rect": {
+          "bottom": 636,
+          "height": 44,
+          "left": 40.79999923706055,
+          "right": 349.6000175476074,
+          "top": 592,
+          "width": 308.8000183105469,
+          "x": 40.79999923706055,
+          "y": 592
+        }
+      }
+    ],
+    "dpr": 1.0000000149011612,
+    "height": 844,
+    "scrollHeight": 844,
+    "scrollWidth": 390,
+    "toast": {
+      "font": "13px",
+      "rect": {
+        "bottom": 812,
+        "height": 39,
+        "left": 55,
+        "right": 358.3999938964844,
+        "top": 773,
+        "width": 303.3999938964844,
+        "x": 55,
+        "y": 773
+      },
+      "text": "This login does not have access to this business’s portal. Use the portal link from your provider."
+    },
+    "visualScale": 1,
+    "visualWidth": 390.3999938964844,
+    "width": 390
+  },
+  "invalidCapture": {
+    "path": "390-confirmed-foreign-refusal-b.png",
+    "verdict": "INVALID / EXCLUDED FROM PASS",
+    "originalSha256": "e91cb630e1a6fa1a00b7ad5e13ba39b817b677b84f95d5c89bad2dc4bc533ac3",
+    "protocolAttemptSha256": "2d1744694d788757f5bde78c8fa546cebc2a4f156bb2e657068f79bbb92c8cc8",
+    "retention": "original unedited frames retained as local diagnostics; not committed valid artifacts",
+    "scope": "foreign refusal DOM geometry/behavior verified; full-viewport PNG UNVERIFIED"
+  }
 }

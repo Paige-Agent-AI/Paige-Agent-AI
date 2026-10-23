@@ -73,12 +73,6 @@
       "height": 844
     },
     {
-      "path": "390-confirmed-foreign-refusal-b.png",
-      "sha256": "e91cb630e1a6fa1a00b7ad5e13ba39b817b677b84f95d5c89bad2dc4bc533ac3",
-      "width": 390,
-      "height": 844
-    },
-    {
       "path": "390-confirmed-native-error-b-dark.png",
       "sha256": "8cd6ac52301a2fba1f7ecdfbec684d12bbe705c15daa5de6229d1bc4396835e1",
       "width": 390,
@@ -102,5 +96,13 @@
     "physical device and assistive technology",
     "actual email/reset/provider effects",
     "full Experience founder acceptance"
-  ]
+  ],
+  "invalidCapture": {
+    "path": "390-confirmed-foreign-refusal-b.png",
+    "verdict": "INVALID / EXCLUDED FROM PASS",
+    "originalSha256": "e91cb630e1a6fa1a00b7ad5e13ba39b817b677b84f95d5c89bad2dc4bc533ac3",
+    "protocolAttemptSha256": "2d1744694d788757f5bde78c8fa546cebc2a4f156bb2e657068f79bbb92c8cc8",
+    "retention": "original unedited frames retained as local diagnostics; not committed valid artifacts",
+    "scope": "foreign refusal DOM geometry/behavior verified; full-viewport PNG UNVERIFIED"
+  }
 }

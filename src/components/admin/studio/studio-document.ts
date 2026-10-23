@@ -12,7 +12,7 @@ export function parseStudioDocument(id: string, title: string | null, body: stri
     const parsed = JSON.parse(body) as { docType?: string; title?: string; blocks?: unknown };
     const blocks = Array.isArray(parsed.blocks) ? (parsed.blocks as StudioDocBlock[]) : [];
     if (!blocks.length) return null;
-    const docType = (["guide", "one_pager", "ebook", "checklist", "worksheet", "proposal", "offer_letter", "sales_offer", "agreement_draft"].includes(String(parsed.docType))
+    const docType = (["guide", "one_pager", "ebook", "checklist", "worksheet", "proposal", "offer_letter", "sales_offer", "agreement_draft", "business_review"].includes(String(parsed.docType))
       ? parsed.docType : "guide") as StudioDocType;
     return { id, title: title || parsed.title || "Untitled document", docType, blocks };
   } catch {

@@ -25,6 +25,86 @@ this unmounted prerequisite. Experiential ordinary roles/cohorts/Chat/Live and
 Founder Acceptance remain UNVERIFIED; all19/nine remain mandatory. CAP014/015
 Unverified. Historical9PASS/0FAIL and12PASS/0FAIL/4BLOCKED are unchanged.
 
+## EXP02 original report reader — October23 source candidate
+
+Owning draft [#2661](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2661)
+has a separate AUTHOR-REVIEW / LOWER ASSURANCE5629723997 on initial final source
+d7fead6e2d8ed899919d2c8fe8ba7d4d2245b0f6/tree080b888f435d29404405365a17966f97f7dbbb7b.
+Actual production build111seconds and UI evidence guard PASS; exact hosted gates,
+merge/deployment/source readback remain pending. Initial bot-authored PR event
+created only external Preview statuses, not the required Actions runs; this factual
+PR-bound closeout preserves all source/render pins and must earn fresh head checks.
+No missing check is called PASS. Local canonical SOLO guard and its original
+hostile controls are separately running; no global source or baseline change.
+
+Same original Card/Studio parser/DocumentPreview now recognizes business_review,
+fits320px without clipping, uses44px visible controls, retires prior-workspace facts
+before paint and late reads, restores exact opener focus, and retries only the
+same original scoped read. Original public9 admission still refuses reports; no
+new viewer, Auth/runtime, metrics read, writer, approval or work redispatch.
+Initial parser1FAIL/5PASS and final serialized original Card5FAIL/1PASS controls;
+repaired115/six suites then current-main100/six PASS. Earlier overlapping retry
+negative is INVALID, not evidence. Types10baseline/6current/zero new and ESLint
+zero errors support source; one fixture FastRefresh warning/five incumbent Studio
+type-size advisories retained without global design changes.
+
+Seventeen actual original IAB synthetic frames pin17 declared render inputs and
+original JPEG bytes. Four required shell sizes open/closed,320dialog302/302,
+scroll620→page2zero, same-read Retry recovery, exact Open focus/unchanged draft,
+scope retirement, Mineral/Obsidian/reduced-motion confirmed. Local font delivery
+uses shipped Schibsted files; native Chrome/customer/200percent zoom/AT and complete
+real Chat/Live transport remain unverified. No synthetic acceptance promotion.
+Source implementatione144 composed with released main da509 at6a99eb3 preserves
+all declared render bytes. Required final review/exact-head CI/actual release/
+readback and ordinary roles/cohorts/continuity remain owed. CAP014/015 Unverified,
+ALG03/06/11/12/13 unchanged, all19/nine and one full founder evaluation required.
+[Reader evidence](../evidence/ui-delivery/e2-business-review-document-reader.md).
+
+Current-main security composition4cb448cb0949b973cf9428edb892964bed9e1670 preserves
+the original reader/render inputs while including mainbdd1 and its router repair.
+Fresh100/six suites, type ratchet10/6zero new and actual75second build PASS. Two
+supplementary original synthetic desktop/narrow frames confirm302/302 narrow fit,
+44px controls, page reset and exact opener return. Hosted locked-install required
+CI and real release/customer acceptance remain owed; no missing check is green.
+
+## EXP02 worker release and ordinary review supplement — October23
+
+Original worker2653 is SOURCE RELEASE VERIFIED at
+06f0ff637ab4a79a57c647f7cf7da839b9f0dc86/tree5769886a8639b61e9f6811925486ea7c8a8aa51d,
+exact inspected bdd1+8d union. LOWER5630049749/all11 applicable checks/two statuses
+SUCCESS; normal Edge39978748563/job120500162700 SUCCESS. Actual original worker51
+ACTIVE retains internal caller/cron authority and verify_jwt:false/import_map:false;
+all36 downloaded source files match reviewed bytes. READY5Z2Wn7/public exact
+06f-mvl4mesp/null; native completef9024/claim2f1b/publicsubmit61b3/ACL unchanged.
+[Release6368560367](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2653#issuecomment-6368560367).
+Public source-bound report admission and actual typed report runtime remain owed.
+
+Separate real ordinary-owner supplement on productionbdd1-mvl2dffa/Chat514/review72:
+one fresh weekly request settled43seconds/3steps, acknowledged source gaps and
+returned3 supported recommendations. Exact substantive answer survived real
+reload, original Executive navigation and catalogue-to-Chat return. Existing9/0
+and12/0/4 packages are unchanged; this is not a repeat of all nine criteria, a
+universal latency/reliability claim, negative permission/isolation/cohort/Live,
+typed-report or whole Experience acceptance. Raw customer evidence stays private.
+[Weekly6368295944](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2608#issuecomment-6368295944),
+[original protocol supplement](../delivery/e2-3-authenticated-first-briefing-acceptance.md).
+
+Released Desk2627 also has one real count/date/summary/older-source refusal,
+separate-source-tab/parent preservation and exact opener/conversation return case.
+No approval, dismissal, edit, run or send invoked; source warning observed in native
+AX, not the incomplete parent-only DOM probe. Native narrow/zoom/AT/cohorts remain
+owed. [Desk6368390069](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2627#issuecomment-6368390069).
+Actual catalogue009/010/011/013 ComingSoon,012/016/017 Limited,014/015 Unverified;
+all access labels Unverified. No algorithm/readiness promotion. All19/nine and one
+complete live founder evaluation remain required. Reader3754 all10 checks/two
+statuses SUCCESS/normal PreviewSKIP is supporting history; this current-main
+composition preserves both complete documentation sections and requires fresh
+final-head review/CI before its own release. No old-head gate inheritance.
+Fresh composed137 cases/eight document/worker/reader/Knowledge/Chat/receipt suites
+PASS103.69seconds after unchanged retry of a pre-assertion sandbox native-cache
+startup failure. All17 original render-input pins/19 original frame hashes match;
+no reader or harness changes. Final exact-head checks still mandatory.
+
 ## EXP04 exact prepared-field seal — October23 source release
 
 Original1352 renderer prerequisite2655 is SOURCE RELEASE VERIFIED, not an
@@ -202,6 +282,24 @@ acceptance remain owed. Agreement capability PARTIAL, exact fields Chat/Live
 UNAVAILABLE; no algorithm/catalogue promotion. Detailed history stays in the
 [original E04 journey](../delivery/exp04-get-paid-deliver-journey.md), with
 [mounted source evidence](../evidence/ui-delivery/e04-mounted-document-preparation.md).
+
+## EXP09 CURA private reply recovery and original Progress source — October22 production
+
+Original private Chat recovery#2606/head29e957d41 merged475c6a5ff05d9b6ad1012f183f428b37a2e54f90, exact READY webdpl_6L7HhPEgXRg5Du4skCbpdRGUv8og. All11 required applicable checks/two statuses,136/seven suites and7 actual responsive/focus/Auth-loss component views; final LOWER review5620094635. Public475 was not separately sampled before descendantbf; actual publicbf0b2a48-mvjywo18/customerUpdate:null and all5 served recovery/intent/control/business references verified, receipt6350291708. Original scoped private thread/intent/status/history, explicit check, no automatic retry/model/send or second store.
+
+Original Progress projection prerequisite#2613/headf28510b8 mergedbf0b2a484ea4fb0656212ba4563ed120158b9de1, exact READY webdpl_6VY2Mt3G4aiTw5AptDe6S6aLBLEu. All13 checks/full Preview/two statuses/129 actual native tests; final LOWER review5620122382. Normal migration39845284205 SUCCESS; actual310009 follows290009/300004. Native public0dbf858b415ff74840748199a75ec2af/original ABI/ACL and internal0989fc980b2490ebc308478c557fc111/postgres-only verified; original Knowledge context208b4d1b7a1c58bd489a92daf94d4fa8 unchanged. Receipt6350293448. Fresh Edge508/JWTtrue/Core1de19b80 plus5 original helper hashes unchanged across both releases.
+
+Native Progress binding#2617/heade0a7861c mergedec1c497e0d26de218f28dfd61dd614fae05097eb/treef667a14666e6300066d80edfd73994ae501be3e1. All13 checks/full Preview/two statuses/148 native assertions PASS; final LOWER review5620427511. Migration39849147965 SUCCESS, actual320009 after reconciled290009/300004/310009;8 function hashes/ABI/ACL/terminal trigger verified, six helpers postgres-only/two entries Auth-only. Original begin/projection/public-reader/globalIdentity constraint retained. Exact webdpl_AxxEdXru67iKKRnmKr5io8Sb9XfX READY; publicec1 not independently sampled, actual containingfc52b998-mvk5dc0k verified23:14:52Z. Edge508 unchanged. Original accepted intent/source binding, stale-context filtering and publication/empty cleanup remain one Native history; receipt6353428686.
+
+Typed CURA Progress consumer#2635/head43ba0a181877810630191dc8d8769278ff63b6fa merged00ab9ee1783698eee31dae8f4305805828ac6ddb/tree6a518fade130c29544315c91699a4be126bf573a, exact reviewed current-main union. All11 checks/full Preview/two statuses,97 focused/223 C0b/11 observation/543 original-handler cases and eight actual component frames; final LOWER review5628923046. Normal Edge39961776906 attempt1 source mismatch retained, attempt2/job120444616866 SUCCESS and edge-live advanced. Fresh514 ACTIVE/JWTtrue/all266 served files exactly match main; original Native begin/progress-context/publication source and ACL unchanged. Exact READY webdpl_8xcBJS4qWEJBRzQ8QCtbfkA9bvWW/public00ab9ee-mvl0d347/customerUpdate:null. Post-merge cleanup finding NOT REPRODUCED: original Knowledge helper empties fallback;3 direct original-handler/lifecycle error/timeout regressions settle empty/release once. Receipt6366482564. No actual customer/model/full journey proof or provider/effect activation.
+
+Original Sessions source#2638/head3697d08619f53d5135ea60031c22d9a791c74883 merged07c895ba9e5f6c2335633656c2b3ef9ba0a92285/treebd748dc16d27dea992552b1acccc281bf9d742f7; all13 checks/full Preview/two statuses/113 Native assertions PASS, LOWER5629555770. Normal migrations39968670771 actual460009 and public/private/location body/ABI/ACL readback verified. Native source binding#2644/head421b04ee9ac6d38416deaea5278411e02f1e5e19 mergedbdd1a553386b6f1a84aac6a315114dc8f4df4983/tree3962290aa1101585a665d3a4d21bcf55d89d6888; all13 checks/full Preview/two statuses/208 Native assertions PASS, LOWER5629664134/correction5629682159. Normal migrations39969692632 actual470009, all14 composed/dependency/native bodies/ABI/owner/search path/ACL and enabled terminal trigger verified. Original global linkage guard retained. Exact READY websdpl_NfSPQkBxVJdBRSNVLw14gZ1QpAr9/dpl_HZ6vLG2JuSU5QWorbibGuhyerBXC; exact public manifests not separately sampled. Receipts6367200261/6367298357. No booking/provider/customer action, model or complete Experience proof; typed consumer2659 is still a separate release.
+
+These are bounded production/source increments, not client/model/full Experience acceptance. Native binding2617 is now separately deployed/source-verified; typed Progress consumer2635 is separately deployed/source-verified; seven capabilities Limited, algorithms unchanged, global identity constraint and provider/INT346 gates retained. No founder test requested before the one complete integrated evaluation. Sole Master§4.0 rows record exact releases; this mechanical closeout adds no product or capability promotion.
+
+## EXP09 CURA business request scope — October22 verified release
+
+PR2603/d5b3018eab007f847a880158e9c67b472a8ef2c5 merged9b9663b7754b4bc562aeebc423201f920b8fd362. All11 exact-head checks/full Preview/two statuses green;92 focused/77 original C0b/registry/8 strict CRM bindings PASS; review5617398951 AUTHOR-REVIEW / LOWER ASSURANCE. Original owner Auth-only factory preserved; separate request-local customer caller carries verified bearer and selected business through original native/private-history/Knowledge path. Edge508 ACTIVE/verify_jwt:true exact core1de19b80b5fb4944c8dbb7888fb550f859071259c72fb2b8d8df8421df7853e8; five original helper bodies unchanged. Exact READY web/public9b9663-mvjscyfa/served scope references verified; receipt6346465360. Original adapter metadata, owner execution and INT346 restrictions retained. Source/test/rendered proof is separate from actual owner/client/provider/return/revocation proof. Seven capabilities remain Limited, ALG01/12 bounded PARTIAL and ALG02/04/13 production UNVERIFIED; no founder acceptance.
 
 ## EXP09 — original Payments and Agreements native verified releases,2026-10-22
 

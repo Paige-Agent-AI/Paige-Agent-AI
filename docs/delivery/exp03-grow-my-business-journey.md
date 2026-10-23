@@ -11,7 +11,8 @@ blocker (production `paige_chat_interactive_protocol()` is active v2 as of 2026-
 owner's designated ordinary SOLO account is the engineering testing account). S3's backend merged as #2126
 (f2e2a0af6) — §12's "not merged" lines are historical. Receiving ACK: ANT-161 comment 25d0cb99 (2026-10-23).
 Current leases coordinate in ANT-161 (E03 #2172 preserved). **2026-10-23 first live F5→F6 reproduction: see §13 —
-the chain works end to end on the designated account; first production submissions/attribution/routing on record.**
+the chain works end to end on the designated account; the first production form submissions on record (0-ever
+verified beforehand), with attribution and routing exercised for the first time as a direct consequence.**
 
 **Status: CHECKPOINT 1 — inventory and plan. Slice 1 implementation started on branch
 `claude/stoic-archimedes-pv4r8u`.** Nothing here is owner-accepted. Every claim below names its evidence; absence
@@ -502,7 +503,9 @@ These are additions to the S2a acceptance package and ANT-52; no prior test is r
 
 ## 13. Reproduction 2026-10-23 — the first live end-to-end exercise of F5→F6 (zCod resumption, sequencing step 1)
 
-The journey had never run end to end on production (§5: 0 submissions ever). This drive exercised the real path on
+The journey had never run end to end on production (Integration Matrix O3: "Production has 0 publish receipts and
+0 submissions"; read-only aggregate re-verified 2026-10-23: 0 `growth_form_submissions`, 0
+`campaign_brief_asset_links`, 0 form-sourced deals/clients). This drive exercised the real path on
 the owner's designated ordinary SOLO account (tenant `36d626be`, account 3062585; PC-1 retired) under no-send
 safeguards, and **the F5→F6 chain works live.** Read-only evidence below; drive reported on ANT-161.
 
@@ -513,7 +516,8 @@ notify_email, lead_reply off); **publish executed through the door's internal ex
 as service role) because the interactive approval door cannot be driven without a browser session — the RPC's ACL
 is deliberately `{postgres, service_role}` (the one-door design), which the drive confirmed by refusal first;
 the approval door itself stays covered by its existing contract suites. Form attached to the brief via
-`configure_campaign_brief_assets` — the first `campaign_brief_asset_links` row in production.
+`configure_campaign_brief_assets` — the first `campaign_brief_asset_links` row in production (the same read-only
+aggregate read 0 rows in this table before the attach).
 
 **F5 (the prospect):** two real submissions through the live `growth-public-submit` endpoint (allowed origin,
 empty bot trap, human timing, `utm_campaign=CB-20DEBF`) — the first `growth_form_submissions` rows in production
@@ -523,7 +527,8 @@ history (`ea1e6338`, then duplicate-evidence `3bdf871b`).
 - **S1a stamp:** both submissions stamped `campaign_attribution='form_and_tag'`, `campaign_brief_id` set (link + tag
   matched — the strongest class).
 - **Processing:** trigger → processor → `processing_state='done'`; contact created (`source='paige_form'`) with the
-  mapped email.
+  mapped email — a synthetic `test.invalid` address, so no real person's data entered production or the retained
+  fixture.
 - **S1b precedence:** the deal filed into the **campaign's** pipeline and its first open stage (not the default
   pipeline) — `_growth_form_campaign_route` order proven live: no form route → campaign route.
 - **F6 owner read:** `get_campaign_brief_leads` returns the lead with truthful counts (1 lead / 1 open), contact

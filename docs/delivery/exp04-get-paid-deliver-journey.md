@@ -7,8 +7,42 @@ its integration assertions remain intact. Current pure source guard reuses the
 canonical commercial-engagement parser, including explicit service start/end and
 catalog/negotiated price basis. Genuine old-source baseline had15 positives and
 three intended failures; repaired18 plus19 accepted-source cases PASS37 locally.
-No command router, approval surface, native writer or Chat action is activated by
-this unmounted module. Native580004 is reserved/unapplied and not yet created.
+Native580004 is now implemented locally, reserved and UNAPPLIED. The original
+service-only Collections router delegates the exact effectuation action; its
+typed endpoint/approval card and customer UI are not connected by this slice.
+No Chat/Live action or production execution is activated.
+
+Current original native proof PASS562:406 preserved preparation/signature/
+accepted-source controls plus156 effectuation controls, replay2, five added
+concurrent sessions and three observed lock waits. Actual authority withdrawal
+while waiting produces SQLSTATE42501 with zero terms/operation/Rail effect.
+Original manual writer errors/CAS/closed response keys, unchanged package DTO,
+incumbent read labels/time-zone attribution and all original tests are retained.
+Before/replay body and search-path drift refuse before replacement. The final
+original Linux Deno invocation adds the same cases, removing no existing gate.
+
+Earlier current-guard run correctly rejected an outdated Rail fixture; it now
+loads the canonical final E02 read-label wrapper. Source uses pg_catalog/public,
+while actual deployed metadata reports empty; only those two inspected paths
+are accepted, and the difference's cause is UNVERIFIED. A later authority case
+reached refusal but lacked session SQLSTATE diagnostics; it remains FAIL, then
+the added session alone enabled verbose diagnostics and the original proof
+passed unchanged. The disposable cluster was verified empty and stopped.
+All identity/Trust-rung/file metadata is synthetic. No real document, provider,
+ordinary-role or customer acceptance is implied by native proof.
+
+Pre-edit routes for this native increment: Sales/Agreements owns the intended
+exact-accepted-terms outcome; E05 retains shared Chat/risk/runtime source and
+E09 retains Portal. Existing Harness/Trust/Collections command/immutable operation/
+Rail are reused. Existing sales.commercial_package_read stays unchanged; a new
+Spine effectuation action is UNAVAILABLE, not registered/Live. No provider or
+connection is required; a signature never grants charge/send authority. Existing
+operator_card governance, Trust rung and tenant tool autonomy are re-read after
+record-lock waits. There is no new scheduler/job/approval/execution store. Exact
+original operation and Rail readback prove only historical effectuation; later
+pause returns that history without reactivation. Existing invoice-commercial
+surface remains PARTIAL, with no new mounted UI. Exact-head full-schema/CI/
+review/release and real owner/staff/client/cohort/CentralQA proof are owed.
 
 Next flow: original accepted agreement → existing Collections consequence review
 → canonical governed status writer → original terms/immutable operation/Rail →

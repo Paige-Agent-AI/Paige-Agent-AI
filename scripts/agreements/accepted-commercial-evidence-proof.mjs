@@ -117,5 +117,23 @@ export async function proveAcceptedCommercial({sql,read,quote,tenant,actor,clien
  const {proveAcceptedCommercialRecord}=await import('./accepted-commercial-proof.mjs');
  const ownerRead=await proveAcceptedCommercialRecord({sql,read,quote,tenant,actor,client,invoiceId:c.invoice,agreementId:id,expected:commercial.payload,legacyId,startSession,observe});
  checks+=ownerRead.checks;
- return {checks,migrationReplay:2,ownerRead,scope:'Synthetic original native evidence only; metadata PDF hashes are not actual file/provider/customer acceptance'};
+ if(process.argv.includes('--effective-commercial-baseline')){
+  // The original accepted history survives changed current terms. The intended
+  // new canonical review must refuse to activate that mismatch, not infer a
+  // new accepted source. Before C19 the native review contract is absent.
+  console.log(JSON.stringify({checkpoint:'Original retained/schema2/native signing/owner controls before effectuation',acceptedChecks:checks,ownerChecks:ownerRead.checks}));
+  const source=commercial.payload.source;
+  const command={action:'collection.effectuate_terms',agreement_id:c.terms,expected_version:source.terms_version,expected_updated_at:source.terms_updated_at,
+   signing_id:id,signing_version:source.agreement_version,invoice_id:c.invoice,invoice_draft_version:source.invoice_draft_version,
+   payload_digest:commercial.payload_digest,sealed_sha256:'d'.repeat(64)};
+  const preview=json(`SELECT public._preview_sales_effectuation('${actor}','${tenant}',${literal(command)});`);
+  check(preview.eligible===false,'Changed current economics cannot become effective from historical signed terms');
+ }
+ let effectiveCommercial=null;
+ if(process.argv.includes('--effective-commercial')){
+  const {proveEffectiveCommercialCurrent}=await import('./effective-commercial-proof.mjs');
+  effectiveCommercial=await proveEffectiveCommercialCurrent({sql,read,quote,tenant,actor,makeCommercial,startSession,observe});
+  checks+=effectiveCommercial.checks;
+ }
+ return {checks,migrationReplay:2,ownerRead,...(effectiveCommercial?{effectiveCommercial}:{}),scope:'Synthetic original native evidence only; metadata PDF hashes are not actual file/provider/customer acceptance'};
 }

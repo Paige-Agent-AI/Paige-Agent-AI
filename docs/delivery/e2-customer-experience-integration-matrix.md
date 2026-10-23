@@ -782,6 +782,14 @@ canonical ALG03/04/06/11/12/13 and PAIGE/VERA/originating specialist boundaries 
 
 ## EXP02 Decision Desk source and continuity — October22 development
 
+Current parent2626/f9ac/main effc composition retains all consumer source and21/22
+original rendered hashes; only E05's shared-shell callback changed. Six new native
+composition frames/current22 pins verify desktop/narrow source→original drawer→
+return,304.8 scroll, unsent text and exact source/suggestion keyboard focus.
+Desktop1536CSS/native1535 distinction is explicit; viewport reset. Original22
+images remain dated; synthetic proof is not ordinary QA, natural production async
+reread or founder acceptance. Required final review/CI/release/readback remain owed.
+
 Original prepared work now has an exact canonical source inspection action in an
 explicitly labeled native tab, preserving review/selection/scroll/unsent Chat.
 Summary-only rows are readable Recorded summaries, original drafts remain drafts,

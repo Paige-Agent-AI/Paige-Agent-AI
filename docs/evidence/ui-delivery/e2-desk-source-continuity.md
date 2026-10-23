@@ -48,3 +48,24 @@ SOLO_900X1000_PAIGE_OPEN: PASS: assets/e2-desk-source-continuity/900-open.jpg, a
 The private install retains the relevant React/router/UI lane; installed Mammoth1.12.2 differs from checkout lock1.13.0 and is not imported by the bounded Desk consumer. This is not a claim of an exact full-application dependency install. Hosted required exact-head install/build remain mandatory. Native images are compositor output, not resized or edited. Cold listener/navigation and an absent-dialog capture are excluded, never counted as working proof.
 
 Material finding disposition: PR comment6351797348 supersedes d31f640's limited no-op-read return claim. The existing window-focus reader temporarily removes the original scroll containers. The recovery now preserves positions only after source inspection and restores them only following a successful same-source reread; manual Refresh/Retry, changed source, close or account retirement discard the marker. Final22 frames replace the earlier20-frame set; the earlier commit/private first-pass copy retains its historical proof boundary. No product test port, new runtime or business action was introduced.
+
+Current composition supplement: actual321ae6a8ddf64e7005a072998b0d01bee1ef43c6
+preserves parent2626/f9ac and main effc. Only the E05 shared-shell callback changes
+among the original22 render inputs; the other21 hashes remain exact. The original
+22 images/index remain historical, not repinned. Six newly inspected, untouched
+native frames and current22 pins are in assets/e2-desk-source-continuity/composed-observations.json:
+desktop1536x770 closed/open,320px keyboard source/return/retained Chat and the
+actual original source drawer. Native Enter opens the exact current finding;
+inspection invokes no action; closing that child preserves original source focus,
+unsent synthetic text and workspace304.79998779296875→same. Escape returns to the
+existing suggestion. The desktop1536 CSS override produced1535-wide native raster;
+this difference is disclosed, never resized.320 raster is exact; source child is
+native1536x735 without a viewport claim. Viewport override cleared after inspection.
+Cold-start navigation and the initial image-parser attempt are excluded. This is
+bounded composition proof, not a fresh claim for every historical width/theme,
+natural production async reread, complete Game Plan, ordinary customer or founder
+acceptance. Current composed adjacent set122 cases/five suites PASS, including38
+review/suggestion cases. This is not represented as a rerun of the earlier131-case
+set. Impeccable review: hierarchy, original fonts/tokens, readable source
+states,44px source action, visible keyboard focus, reflow/no page overflow and
+context/exit continuity remain intact; no new material composition defect found.

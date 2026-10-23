@@ -2422,6 +2422,26 @@ October22 current template composition: native#2545/220004 is RELEASED SOURCE VE
 
 REUSE original2192/179e52/current0a reader and all37 cases; compose original coherent2604/6b8 private PDF/field source without changing either owning reader/test file. Fresh canonical formatter/reader/field Deno25 tests/110 steps PASS with all original runtime denials and type checking. Older13/63 remains historical. No actual endpoint/Spine/Chat/Live/Portal or provider consumer is connected. This one existing-invoice draft path needs exact canonical same-client invoice/terms/source; it is not a requirement that every agreement must already have an issued invoice. Remaining integration must bind exact reviewed PDF AND assigned-map before original Kit/Trust consequential approval, then reuse the native immutable operation/freeze/Rail. No new financial obligation, external send or signature follows from a proposed presentation. Original native2599/300004/Edge37 readback is verified; own and parent final source/CI/merge/web/ordinary-role/full12/founder acceptance remain separate required legs.
 
+### October22 later commercial-document native checkpoint
+
+Original2633 validation is mergedab2228036789be2bf81fb48896d919a867b79e8a,
+all13 exact-head gates/full Preview/two statuses PASS, final5622338107 LOWER;
+production340004/normal39874959218 exact source/ABI/private ACL readback PASS.
+No preparation consumer, signature/financial effect or capability activation.
+Prospective350004 now extends only the original private writer/manifest with
+closed commercial2 and original340004 validation before selection/event/write.
+Source-bound economics/PDF/map are retained without changing original terms,
+invoice or agreement. Read remains not_checked; historical replay is not current
+financial readiness. Original v1, immutable events/revisions, source CAS, roles,
+token/effect holds and public commercial preparation hold remain unchanged.
+Old native source causally rejects new manifest2. Corrected original suite247
+controls PASS under Node and actual Deno permissions, including all76 original
+document controls,29 commercial controls and actual concurrent changed-terms
+refusal/observed wait. Initial fixture setup and SQL syntax failures retained;
+no assertions/timeouts/denials weakened. CLI-generated unpublished350004 is
+guarded against unknown writer/validator bodies. Review/CI/Preview/deployment,
+trusted actual renderer/API/SDK/customer UI and all full12 acceptance remain owed.
+
 ### Pre-edit: original locked commercial validation reuse
 
 Owner outcome is review of the exact commercial PDF and assigned fields BEFORE
@@ -2442,6 +2462,32 @@ and migration replay under unchanged bounds. Local synthetic PostgreSQL16 is
 separate from required exact-head review/CI/full Preview, production body/ABI/ACL
 readback and ordinary role/provider/all12/founder acceptance. Prospective migration
 only; never rewrite applied230004 or remove commercial holds to adopt the helper.
+
+### Pre-edit: exact commercial preparation in the original private manifest
+
+EXTEND the SAME private document-preparation record/12-argument native writer
+with an additive closed manifest2 carrying the canonical commercial payload,
+payload digest and exact presented wording/digest alongside the existing PDF,
+signer roster and assigned fields. No new table, column, ledger or approval store.
+Original v1 behavior/ABI/receipt/replay/CAS/actor locks and every legacy token/
+effect hold remain. New manifest2 must bind the SAME original tenant/client/
+agreement/version/microsecond source and native340004 validator in the SAME
+transaction before selection/event/write. Canonical Collections and formatter
+own economics; native validation does not generate another obligation or schedule.
+Historical replay remains a historical receipt. Read scope stays agreement/parties
+and commercial_verification stays not_checked until the actual later API consumer
+reconciles current terms/invoice state. No current financial match or approval is
+inferred from retained bytes. E04 owns this protocol; EXP09 Portal/recipient/
+identity/source boundaries are unchanged and receive no new grant or interface.
+Existing agreement.send/edge.agreement-send/Trust/Kit/Harness/Rail remain the
+governed send path; no new provider, job, budget or Spine/Chat/Live activation.
+Private preparation remains held publicly until native/SDK/API/UI integration;
+exact commercial PDF+field-map review must precede consequential approval/C7.
+Extend the ORIGINAL native preparation proof with canonical neutral economics,
+closed shape/source/role/refusal/nonmutation/replay/immutability and all incumbent
+controls. Prospective350004 follows earlier330002/340004, no history rewrite.
+Required review/CI/Preview/native readback and actual whole owner/staff/client/
+provider/all12/founder acceptance stay separate; no legal words or counsel gate.
 
 ## October22 original upload intent and uncertain result
 

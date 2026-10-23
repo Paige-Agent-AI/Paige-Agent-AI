@@ -1,0 +1,244 @@
+{
+  "version": 1,
+  "sourceHead": "6a99eb312b99cf11aa3d74139510dac89867971b",
+  "productCommit": "e14449ed1",
+  "baseMain": "da509d09190bfee0c4a19bfba6dc7f1792991d61",
+  "scope": "Declared original reader, shell, shared style, formatter and harness inputs; not a complete transitive bundle graph or authenticated acceptance.",
+  "inputs": [
+    {
+      "path": "src/components/admin/studio/DocumentPreview.tsx",
+      "sha256": "03511d34e9c2b52592f01bee91990b3e80731ae15b0261d46c7947607fb70d56"
+    },
+    {
+      "path": "src/components/admin/studio/studio-document.ts",
+      "sha256": "945cee2cd9dffaec24db4e571ad71a65ca07638d25cb30938e66226ca958fb1b"
+    },
+    {
+      "path": "src/components/admin/studio/studio-types.ts",
+      "sha256": "91e10916e4267b7edb63a0b988c01eaf5712ff3fba056a768fd6f0aa6a48bf05"
+    },
+    {
+      "path": "src/components/paige/chat/PaigeArtifactCard.tsx",
+      "sha256": "7bce0f610af4d0edd215253005e926894a3badc76517d067c89bf7e49acddc15"
+    },
+    {
+      "path": "src/components/ui/dialog.tsx",
+      "sha256": "9107e63b84d67eafb311c13cb52bc48f32ef3b36eddebe65365b10fdfbd9d2ca"
+    },
+    {
+      "path": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "sha256": "7aaa24d867af1ac5e2222f3581ab361288ba54e6319e5c86db245875adb13e7c"
+    },
+    {
+      "path": "src/components/tenant-shell/tenant-command-center-shell.css",
+      "sha256": "e9756f8cfc04a330748711d798afeda35cb8f02bd133914dfee9a5fe4b0bf355"
+    },
+    {
+      "path": "src/index.css",
+      "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc"
+    },
+    {
+      "path": "src/solo/solo-tokens.css",
+      "sha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/index.html",
+      "sha256": "5ae436157119e1a702b87dbacb7122ca35cea9bf584f26ab499618fda7ff01eb"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/main.tsx",
+      "sha256": "5cc3429f4a35d2fd2ac488734cf2aa073e76a437ca5f7b9f2c87db91f52bf2cc"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/stubs.tsx",
+      "sha256": "65f0a15233e39a103e16a793dee7d8a8cfd18fd899b4d822d8dc3f9dfc397b86"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/vite.config.ts",
+      "sha256": "d727d65d9f4f0769854ff9bd442fb3dfb518da33fdf08841bcb4205ea6926f42"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/report-fixture.tsx",
+      "sha256": "f3de676a84c606e042f8f81a3fe1e324a1e859948f61244e55f7813a4962daed"
+    },
+    {
+      "path": "supabase/functions/_shared/document-business-review-evidence.ts",
+      "sha256": "de7805d9c8f8ee5352b7802711adeabeaa88a640858f2b71f1db5dee4f1dde58"
+    },
+    {
+      "path": "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-italic.woff2",
+      "sha256": "4c72510c1a185a7b7ae2c9e402fbe531a58b74c95f4d2450f4d58482213c65f7"
+    },
+    {
+      "path": "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-normal.woff2",
+      "sha256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05"
+    }
+  ],
+  "frames": [
+    {
+      "file": "verified-390-error-retry.jpg",
+      "bytes": 22267,
+      "raster": [
+        390,
+        843
+      ],
+      "sha256": "8820efa0237f42ab40f011ff8287e3193b4b960ec1d2a948161c5f674490ee30"
+    },
+    {
+      "file": "verified-320-review-page1.jpg",
+      "bytes": 25601,
+      "raster": [
+        320,
+        740
+      ],
+      "sha256": "6b3a508cb27c01b652d587dd527e897e808f791e0ef78aca880a04d4a5291414"
+    },
+    {
+      "file": "verified-320-review-page2-reset.jpg",
+      "bytes": 20179,
+      "raster": [
+        320,
+        740
+      ],
+      "sha256": "4f0935f85b3028eea062dc4c8ce54fc75fd553373f779581216e5564395f8462"
+    },
+    {
+      "file": "verified-1536-770-closed.jpg",
+      "bytes": 37876,
+      "raster": [
+        1535,
+        770
+      ],
+      "sha256": "d6a58ff93f1d38cfa8bd497bb6f7628b92ff46e84056ab990b124a778e8714f2"
+    },
+    {
+      "file": "verified-1536-770-open.jpg",
+      "bytes": 51565,
+      "raster": [
+        1535,
+        770
+      ],
+      "sha256": "2a2bb7b226f1db0750a4a8cb4368ec27d0de0d29b5c1160a1791e65dc958b5d9"
+    },
+    {
+      "file": "verified-1366-768-closed.jpg",
+      "bytes": 36361,
+      "raster": [
+        1366,
+        768
+      ],
+      "sha256": "9d7e2336fadfcbe50051676855401e2b0c494214fbbd28e3bed5f0147c7eb01e"
+    },
+    {
+      "file": "verified-1366-768-open.jpg",
+      "bytes": 50088,
+      "raster": [
+        1366,
+        768
+      ],
+      "sha256": "bd13cb9aa5947e5b7b0ab664fcd1c0f33487920f7121d37cc70b350583db841e"
+    },
+    {
+      "file": "verified-1024-768-closed.jpg",
+      "bytes": 33021,
+      "raster": [
+        1024,
+        768
+      ],
+      "sha256": "dbdabc27b19e02c11627e6adcee918e60ebae59b4dab39d9f4ea5065264fe784"
+    },
+    {
+      "file": "verified-1024-768-open.jpg",
+      "bytes": 34320,
+      "raster": [
+        1024,
+        768
+      ],
+      "sha256": "4cb5bf27666437ca0e8f82b88558ba027cf493158435b4f1be82bc26fea71075"
+    },
+    {
+      "file": "verified-900-1000-closed.jpg",
+      "bytes": 33923,
+      "raster": [
+        900,
+        1000
+      ],
+      "sha256": "4d9ac3641352e84f85537054c242c45d6207a3032c5e7dc2ab6262de66e44088"
+    },
+    {
+      "file": "verified-900-1000-open.jpg",
+      "bytes": 35914,
+      "raster": [
+        900,
+        1000
+      ],
+      "sha256": "638586487875ac97a3ad6950fdb4e57a09ebf75567f922be35e92c9af307efe6"
+    },
+    {
+      "file": "verified-1536-review-open.jpg",
+      "bytes": 54167,
+      "raster": [
+        1535,
+        770
+      ],
+      "sha256": "c1de525d003ad4f3b6d7689846f096336ef577ed7651f76617282aef7199233c"
+    },
+    {
+      "file": "verified-desktop-keyboard-return.jpg",
+      "bytes": 55146,
+      "raster": [
+        1535,
+        770
+      ],
+      "sha256": "70a0620e6bbf48f72d84ce1c750c819d334901f5e6098978c4a4bfb582794a64"
+    },
+    {
+      "file": "verified-390-loading-reduced.jpg",
+      "bytes": 15502,
+      "raster": [
+        390,
+        843
+      ],
+      "sha256": "0de41377eedbbf3c3a3471c679f17a16ca04cc76e5e11a0a1d53a25ea43cda15"
+    },
+    {
+      "file": "verified-390-member-reduced.jpg",
+      "bytes": 22679,
+      "raster": [
+        390,
+        843
+      ],
+      "sha256": "a6f18391c4cc752772002be327e84e5915955d3e2b49302ce99cd09de7a4186f"
+    },
+    {
+      "file": "verified-390-obsidian-reduced.jpg",
+      "bytes": 31189,
+      "raster": [
+        390,
+        843
+      ],
+      "sha256": "908c2510b625ae82ca18ec8adc6ddff25182db2e5ebd78db90b7b61347f0722d"
+    },
+    {
+      "file": "verified-390-workspace-return-refused.jpg",
+      "bytes": 22253,
+      "raster": [
+        390,
+        843
+      ],
+      "sha256": "bd3af2a11c8fa1886d8baae6c3a9ecaff9cc0e4e4caa888ca9dd7119a15d1819"
+    }
+  ],
+  "before": [
+    {
+      "file": "320-review-page2-before.jpg",
+      "sha256": "bc0598113a5c67ae08868a46cbda5b48bcfe8603bc54d231ad80e734be009555",
+      "class": "before repair; original actual source, synthetic ports"
+    },
+    {
+      "file": "before-320-page-turn-position.jpg",
+      "sha256": "3dc71c55925d1a0f0965e2ea6f3402c6503200e577bb27dfdd80ae9c06349db5",
+      "class": "before repair; original actual source, synthetic ports"
+    }
+  ]
+}

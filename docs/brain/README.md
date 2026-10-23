@@ -1,3 +1,28 @@
+## EXP02 original report reader — October23 source candidate
+
+Same original Card/Studio parser/DocumentPreview now recognizes business_review,
+fits320px without clipping, uses44px visible controls, retires prior-workspace facts
+before paint and late reads, restores exact opener focus, and retries only the
+same original scoped read. Original public9 admission still refuses reports; no
+new viewer, Auth/runtime, metrics read, writer, approval or work redispatch.
+Initial parser1FAIL/5PASS and final serialized original Card5FAIL/1PASS controls;
+repaired115/six suites then current-main100/six PASS. Earlier overlapping retry
+negative is INVALID, not evidence. Types10baseline/6current/zero new and ESLint
+zero errors support source; one fixture FastRefresh warning/five incumbent Studio
+type-size advisories retained without global design changes.
+
+Seventeen actual original IAB synthetic frames pin17 declared render inputs and
+original JPEG bytes. Four required shell sizes open/closed,320dialog302/302,
+scroll620→page2zero, same-read Retry recovery, exact Open focus/unchanged draft,
+scope retirement, Mineral/Obsidian/reduced-motion confirmed. Local font delivery
+uses shipped Schibsted files; native Chrome/customer/200percent zoom/AT and complete
+real Chat/Live transport remain unverified. No synthetic acceptance promotion.
+Source implementatione144 composed with released main da509 at6a99eb3 preserves
+all declared render bytes. Required final review/exact-head CI/actual release/
+readback and ordinary roles/cohorts/continuity remain owed. CAP014/015 Unverified,
+ALG03/06/11/12/13 unchanged, all19/nine and one full founder evaluation required.
+[Reader evidence](../evidence/ui-delivery/e2-business-review-document-reader.md).
+
 ## EXP02 linked finding inspection — October22 consumer candidate
 
 Full-CI diagnostic39876480194 on f9ac actually reports20113 total/20098 passed/

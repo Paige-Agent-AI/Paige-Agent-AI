@@ -1,5 +1,23 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October23 — original report reader source and responsive recovery
+
+O01/O02/O13/O16/O17 and CAP014/015 consumer: same original artifact Card→scoped
+Studio parser→paged document, correctly labelled Business review. Source candidate
+e144/main-composition6a99eb3 preserves all declared render bytes. Existing mobile
+clipping,32/16px controls, prior-context paint, opener return, read failure/retry,
+page-position and thumbnail keyboard defects are repaired within original files.
+Final serialized original Card5FAIL/1PASS then115/six and composed100/six PASS;
+typeszero new, scoped ESLint and17 actual source-pinned synthetic IAB frames support
+functional/visual/interaction scope. Actual320dialog302/302,44px controls, original
+scroll reset, same-read retry/Print focus, exact Open return/draft retained and
+workspace facts retired. Native Chrome/authenticated/cohorts/real Chat-Live/
+200percent zoom/AT remain unverified. No public report submission, action, provider,
+registry or algorithm promotion; monthly_qbr_draft/qbr_draft stay Unverified.
+Final exact-head review/CI/release/readback, server capture-once admission and
+ordinary acceptance remain required; original19/nine definitions, historical
+9PASS/0FAIL and12PASS/0FAIL/4BLOCKED unchanged. [Evidence](../evidence/ui-delivery/e2-business-review-document-reader.md).
+
 ## October22 — original finding inspection consumer candidate
 
 Full-CI diagnostic39876480194 on f9ac actually reports20113 total/20098 passed/

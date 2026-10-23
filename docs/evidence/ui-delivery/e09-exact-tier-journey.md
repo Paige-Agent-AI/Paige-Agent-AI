@@ -25,7 +25,7 @@ MUST_PRESERVE: original tier/payment producer, Blueprint-owned journeys, stage o
 ACCEPTANCE_CRITERIA: the original internal event uses exact client plus linked user; unbound ambiguity does not alter a customer; valid legacy single-business behavior and original atomic receipts remain
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: original tier/CRM/journey lookup source and ACL guarded/tested; shared Chat/Live/Spine/Harness/Trust/LayerC/Rail, sender, Knowledge, calendar, billing and signing source unchanged
-INTERNAL_BUILD_IDENTITY: source-base=2748432e1ab0c7c29a01b5c9516a8b68803e7844; exact final head in PR review; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113610009); edge=NOT_APPLICABLE; evidence=assets/e09-exact-tier-journey/native-source-proof.json
+INTERNAL_BUILD_IDENTITY: source-base=907a73784f4f84e49b48b34056a422352083ba02; exact final head in PR review; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271113610009); edge=NOT_APPLICABLE; evidence=assets/e09-exact-tier-journey/native-source-proof.json
 RELEASE_CHANNEL: development: ordinary production candidate after exact-head gates and authoritative native readback
 RELEASE_CLASSIFICATION: internal-only: bounded native compatibility prerequisite, no complete customer release
 CUSTOMER_RELEASE_IDENTITY: none: full integrated Experience and founder acceptance remain unverified

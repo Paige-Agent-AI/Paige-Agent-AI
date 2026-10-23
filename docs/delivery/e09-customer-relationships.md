@@ -2,6 +2,12 @@
 
 Shared main2748432e1ab0c7c29a01b5c9516a8b68803e7844 legitimately applied20271113600000 to production before this PR. The never-production-applied tier migration is now610009; the prior560009 Preview evidence below remains historical, not a production claim. SQL bytes and all265 scope assertions are unchanged. Preserve current main and source/ACL/trigger guards; renewed exact-head CI and normal empty Preview required. No migration history rewrite, include-all or identity activation.
 
+## Ordinary verified customer sign-in — October23 source release
+
+Pre-edit source lease ANT161/bb33a129-c658-4b4f-919f-ab9767026555 extends the original relationships flow. Existing native ambiguous profile response plus two closed actual-actor/current-Auth choices may continue ordinary sign-in to the original /app gate. Exact42501 AND original ambiguity message required; no selected-business fallback, ordinary outage substitution, operator/admin/broker regression, role backfill, index removal or new identity/action. Original native gate/chooser owns admission and any remembered authorized selection.
+
+Original parent2680/b030 is now separately merged cb1d891d7b20e09d3d09263d3d9e4a6b690a8241/deployed and served-source verified, receipt6374536491. Released original head34a682/main907a73784 has163/seven actual focused suites, original type10→6/lint/gold/pinned detector, five raw source-pinned desktop/narrow frames and keyboard exact-B own paused recovery with synthetic SDK. It is now source-release verified: exact-head gates and accurately labeled reviews passed, main907a73784f4f84e49b48b34056a422352083ba02/deploymentdpl_CndfEBCVQpqfhM8vcoFYFNSgtk8q/public907-mvlka5t2 and served guards are verified in receipt6376334526. Complete real external-client/new-account/two-business/returning/founder proof remains UNVERIFIED; original global linkage/recipient-bound acceptor transition still mandatory. No new UI, provider, store, runtime, approval, job, visit or receipt. Full details: e09-ordinary-customer-signin.md.
+
 # Customer relationship selection: existing identity integration
 
 ## Current tier-to-journey relationship prerequisite — 2026-10-23

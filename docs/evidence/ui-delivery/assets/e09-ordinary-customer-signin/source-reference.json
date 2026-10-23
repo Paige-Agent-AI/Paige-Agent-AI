@@ -1,0 +1,86 @@
+{
+  "sourceParent": "b0300921744d37f0a12f574f2a2c664b22b19516",
+  "sourceState": "Uncommitted actual generic sign-in resolver and original unchanged gate/chooser/readers/CSS at capture",
+  "transport": "Synthetic SDK only; no production Auth/provider/records",
+  "sourcePins": [
+    {
+      "path": "src/lib/auth/resolveLandingRoute.ts",
+      "sha256": "7b2cd16949fe0b3038dbff29ef9cfecc171c74f9bd7a395629be316a676ad5b2"
+    },
+    {
+      "path": "src/lib/client-portal-relationships.ts",
+      "sha256": "2f7ce6a7345079f4ea9a1141f1461a953976e626555d76308e4b196f1c174287"
+    },
+    {
+      "path": "src/lib/client-portal-entry.ts",
+      "sha256": "0586dec8165b19198d258afd3dd119eabfcb59889345368fec13e38267e33b0b"
+    },
+    {
+      "path": "src/lib/client-portal-scope.ts",
+      "sha256": "7da8e203a5153adf3a834aba79d7350e0db4420fbc710007bdee9221a56690c9"
+    },
+    {
+      "path": "src/lib/client-portal-access.ts",
+      "sha256": "45a1247b93721b6c7bcc5f8163a5c4876c9cd4e2dd5a4c7eb84c45bc19992abe"
+    },
+    {
+      "path": "src/components/app/CustomerAccessGate.tsx",
+      "sha256": "05445ef6416b05712cc05ee10a6721e5b06f8ee6f583b1eb4ce81c72a213ae3a"
+    },
+    {
+      "path": "src/components/app/CustomerBusinessChoice.tsx",
+      "sha256": "1c5460c5c177da32780f44e535167d763f28a1ed4540f8d5aac9ec6bffdcf3cf"
+    },
+    {
+      "path": "src/hooks/useClientPortalRelationshipChoices.ts",
+      "sha256": "5184a55a71f27c77018d54267b5a7279a2fd3dd909d77bbf5956fd9b5377870a"
+    },
+    {
+      "path": "src/hooks/useClientPortalFrame.ts",
+      "sha256": "e38c808c95235bb21824fa9524e0e54793b0decee984e6f6ab84d69058c0dbf8"
+    },
+    {
+      "path": "src/index.css",
+      "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc"
+    }
+  ],
+  "rawPngPins": [
+    {
+      "path": "1024-choice-light.png",
+      "sha256": "8a480505d8fd569daa66b52a971f92612d2d1c46d4209c73a09a7686575591a7",
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "path": "1366-choice-light.png",
+      "sha256": "b08fb57a5eef29d22ee0d21f902df870e402200b4cc5790360046af1c5e6909c",
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "path": "1536-choice-light.png",
+      "sha256": "4c2316ce441f48e9390b6c2f1351dc7c38caebeac89e0e46b6922d85217f71fe",
+      "width": 1536,
+      "height": 770
+    },
+    {
+      "path": "320-choice-light.png",
+      "sha256": "52817061d4b1778bfffd9235ee30c1002ebb623db272a18c6419280b37c8f679",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "path": "900-choice-light.png",
+      "sha256": "13ac865ba0b729240afa89ed7bd3d73fa18146c7e5d49132d744cf3e9f2230eb",
+      "width": 900,
+      "height": 1000
+    }
+  ],
+  "claims": "5 original unedited raw PNGs, four desktop classes and320x568 narrow; no other screenshot claim",
+  "runtime": "Actual original resolver→gate→chooser→exact B native own paused notice with synthetic responses",
+  "unverified": [
+    "global identity activation",
+    "actual customer/Auth/multiple-business/returning persistence",
+    "physical device, AT, zoom, dark and reduced-motion rerun"
+  ]
+}

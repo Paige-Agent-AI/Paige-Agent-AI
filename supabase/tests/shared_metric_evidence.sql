@@ -55,7 +55,54 @@ INSERT INTO public.profiles(user_id,active_tenant_id) VALUES
  ON CONFLICT(user_id) DO UPDATE SET active_tenant_id=EXCLUDED.active_tenant_id;
 CREATE TEMP TABLE seam_result(bundle jsonb);
 GRANT SELECT,INSERT,UPDATE ON seam_result TO authenticated;
+-- EXP02 delayed work must reuse the original Metric actor predicate, never
+-- broaden it to generic document roles. All mutations below are rolled back.
+SELECT pg_temp.require_true(NOT EXISTS (
+ SELECT 1 FROM (VALUES ('anon'),('authenticated'),('service_role')) roles(name)
+ WHERE has_function_privilege(name,'public._analytics_metric_actor_authorized(uuid,uuid)','EXECUTE')
+),'Metric actor predicate is private to native callers');
+SELECT pg_temp.require_true(NOT EXISTS (
+ SELECT 1 FROM pg_proc p CROSS JOIN LATERAL aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a
+ WHERE p.oid='public._analytics_metric_actor_authorized(uuid,uuid)'::regprocedure AND a.grantee=0
+),'Metric actor predicate has no PUBLIC grant');
+DO $metric_actor$ DECLARE
+ actor uuid := 'a3450000-0000-4000-8000-000000000001';
+ workspace uuid := 'a3450000-0000-4000-8000-000000000011';
+ other_workspace uuid := 'a3450000-0000-4000-8000-000000000012';
+ seat_role text;
+BEGIN
+ PERFORM pg_temp.require_true(public._analytics_metric_actor_authorized(actor,workspace),'original admin with current profile');
+ PERFORM pg_temp.require_true(NOT public._analytics_metric_actor_authorized(actor,other_workspace),'even a real seat in another active workspace is insufficient');
+ PERFORM pg_temp.require_true(NOT public._analytics_metric_actor_authorized(NULL,workspace)
+  AND NOT public._analytics_metric_actor_authorized(actor,NULL),'missing stored work context');
+ PERFORM pg_temp.require_true(NOT public._analytics_metric_actor_authorized('a3450000-0000-4000-8000-000000000003',workspace),'platform role alone is not Metric authority');
+ FOREACH seat_role IN ARRAY ARRAY['coach','member','admin'] LOOP
+  UPDATE public.tenant_members SET role=seat_role::public.tenant_role WHERE user_id=actor AND tenant_id=workspace;
+  PERFORM pg_temp.require_true(public._analytics_metric_actor_authorized(actor,workspace) IS NOT DISTINCT FROM (seat_role='admin'),'original exact Metric seat role');
+ END LOOP;
+ UPDATE public.tenant_members SET status='suspended' WHERE user_id=actor AND tenant_id=workspace;
+ PERFORM pg_temp.require_true(NOT public._analytics_metric_actor_authorized(actor,workspace),'suspended initiating seat');
+ UPDATE public.tenant_members SET status='active' WHERE user_id=actor AND tenant_id=workspace;
+ UPDATE public.profiles SET active_tenant_id=other_workspace WHERE user_id=actor;
+ PERFORM pg_temp.require_true(NOT public._analytics_metric_actor_authorized(actor,workspace),'initiating actor switched active workspace');
+ UPDATE public.profiles SET active_tenant_id=workspace WHERE user_id=actor;
+ UPDATE auth.users SET banned_until=now()+interval '1 day' WHERE id=actor;
+ PERFORM pg_temp.require_true(NOT public._analytics_metric_actor_authorized(actor,workspace),'currently banned initiating identity');
+ UPDATE auth.users SET banned_until=now()-interval '1 day' WHERE id=actor;
+ PERFORM pg_temp.require_true(public._analytics_metric_actor_authorized(actor,workspace),'expired ban does not become permanent denial');
+ UPDATE auth.users SET banned_until=NULL,deleted_at=now() WHERE id=actor;
+ PERFORM pg_temp.require_true(NOT public._analytics_metric_actor_authorized(actor,workspace),'deleted initiating identity');
+ UPDATE auth.users SET deleted_at=NULL WHERE id=actor;
+ PERFORM pg_temp.require_true(public._analytics_metric_actor_authorized(actor,workspace),'restored original fixture remains eligible');
+END $metric_actor$;
+SET LOCAL ROLE anon;
+SELECT pg_temp.require_denied($q$SELECT public._analytics_metric_actor_authorized(NULL,NULL)$q$,'anonymous cannot supply an actor');
+RESET ROLE;
+SET LOCAL ROLE service_role;
+SELECT pg_temp.require_denied($q$SELECT public._analytics_metric_actor_authorized(NULL,NULL)$q$,'service role has no actor override RPC');
+RESET ROLE;
 SET LOCAL ROLE authenticated;
+SELECT pg_temp.require_denied($q$SELECT public._analytics_metric_actor_authorized(NULL,NULL)$q$,'authenticated cannot supply an actor');
 SELECT set_config('request.jwt.claim.sub','a3450000-0000-4000-8000-000000000001',true),set_config('request.jwt.claims','{"sub":"a3450000-0000-4000-8000-000000000001","role":"authenticated"}',true);
 INSERT INTO seam_result SELECT public.issue_analytics_evidence_bundle('business.retention','1.0.0','{}','week',now()-interval '7 days',now(),'a3450000-0000-4000-8000-000000000011');
 SELECT pg_temp.require_true((SELECT bundle->>'truth_state'='UNAVAILABLE' AND bundle->'values'='null'::jsonb AND bundle#>>'{range,key}'='week' FROM seam_result),'flat unavailable contract');

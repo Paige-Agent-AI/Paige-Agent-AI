@@ -26,6 +26,34 @@ cases; original MCP governed-door/destructive guards and self-tests retained.
 Source preparation only: no instructions/provider/activation or authenticated
 ZION result, historical acceptance or full ten-outcome/E5/founder closure.
 
+
+
+## EXP02 Systems Check dialog return — October23 source candidate
+
+Original review dialogs now consume Escape before shared shell shortcuts and
+restore their original control after inert clears. A per-account decision generation
+retires late success/refusal/focus, including A→B→A and unmount, without cancelling
+or settling the original domain operation. Four causal keyboard/inert failures,
+then two late-result scope failures are retained;93 cases/three original suites pass,
+scoped lint0 and pre-composition normal build69seconds. Detector0 findings.
+Candidate native desktop/narrow/keyboard proof is BLOCKED by Edge page-control
+timeouts; no old/synthetic/source evidence closes that required proof or release.
+[Evidence](../evidence/ui-delivery/e2-systems-dialog-return.md).
+Functional local / Visual candidate UNVERIFIED / Experiential original defect and
+source controls only / Founder NOT_ACCEPTED. No shell, runner, approval writer,
+provider, registry, LayerC, Rail or permission change; original Systems Check stays
+PARTIAL. All19/nine remain mandatory.
+
+Preceding Finance2684 is source-releasedd780fd85e3cfd0c73256847c79f2692a5a399d1a,
+LOWER5634377259/all10 applicable checks/two statuses. Normal2M5h READY/exactmeta;
+public containinga9bd855c-mvlgdzr6/null and unchanged source/six served markers
+verified, exactd780 public intermediate not sampled (receipt6374834566). Same-ref/
+date-range ordinary read/reload is still owed. Original monthly CPU failure and
+unknown claim are preserved; EXP05 recovery ACK ANT11/96c5091a, no retry/reset.
+Earlier candidate sections remain dated historical evidence; historical9/0 and
+12/0/4, algorithms, nine catalogue/access labels, role/cohort/Live and full founder
+acceptance are unchanged.
+
 ## EXP02 Finance specialist attribution — October23 source released
 
 Owner Oct23 standard is canonical in the existing

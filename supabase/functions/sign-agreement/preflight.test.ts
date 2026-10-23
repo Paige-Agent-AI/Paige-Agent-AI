@@ -15,6 +15,7 @@ Deno.test('the signing handler verifies the retained presentation before any ter
   const bytes=await renderPresentedPdf({title:'Neutral retained document proof',bodyMarkdown:body});
   let agreement:Record<string,unknown>={},storage:Response,terminalWrites=0,storageReads=0,storageThrows=false,earlier=0;
   let signerOverride:Record<string,unknown>={};
+  let emptyWrite=false,recoveryOverride:Record<string,unknown>={};
   const json=(value:unknown,status=200)=>new Response(JSON.stringify(value),{status,headers:{'Content-Type':'application/json'}});
   try{
     Deno.serve=((callback:typeof handler)=>{handler=callback;return {} as never;}) as unknown as typeof Deno.serve;
@@ -25,11 +26,17 @@ Deno.test('the signing handler verifies the retained presentation before any ter
       if(url.pathname==='/rest/v1/rpc/check_public_rate_limit')return json(true);
       if(url.pathname==='/rest/v1/paige_agreement_signers'){
         if(request.method==='PATCH'){
+          assert.equal(url.searchParams.get('tenant_id'),'eq.'+tenant,'native update must keep original business scope');
+          assert.equal(url.searchParams.get('agreement_id'),'eq.'+agreementId,'native update must keep original agreement');
+          assert.equal(url.searchParams.get('token_hash'),'eq.'+await sha256Hex('a'.repeat(64)),'a replaced credential cannot authorize this update');
+          assert(url.searchParams.get('token_expires_at')?.startsWith('gt.'),'expired credential must not satisfy the original conditional write');
           terminalWrites++;
+          if(emptyWrite)return json([]);
           return json({message:'Synthetic write intentionally refused',code:'42501'},403);
         }
         if(request.method==='HEAD')return new Response(null,{headers:{'Content-Range':`0-0/${earlier}`}});
         const signer:Record<string,unknown>={id:signerId,agreement_id:agreementId,tenant_id:tenant,status:'pending',signing_order:1,full_name:'Synthetic Signer',email:'signer@example.invalid',token_hash:await sha256Hex('a'.repeat(64)),token_expires_at:'2099-10-15T00:00:00Z',token_revoked_at:null,...signerOverride};
+        if(emptyWrite&&terminalWrites>0&&url.searchParams.has('id'))Object.assign(signer,{status:'signed'},recoveryOverride);
         return json(Object.fromEntries((url.searchParams.get('select')??'').split(',').map(key=>[key,signer[key]])));
       }
       if(url.pathname==='/rest/v1/paige_agreements')return json(agreement);
@@ -85,5 +92,15 @@ Deno.test('the signing handler verifies the retained presentation before any ter
       assert.equal((await invoke()).status,409);assert.equal(terminalWrites,1);
       assert.equal(storageReads,row.content_storage_key?1:0);
     }
+    emptyWrite=true;
+    for(const variant of [
+      {name:'same current credential can reconcile an existing signature',override:{},status:200,ok:true},
+      {name:'replaced credential cannot adopt another signature',override:{token_hash:'b'.repeat(64)},status:404,ok:false},
+      {name:'revoked credential cannot adopt another signature',override:{token_revoked_at:'2026-01-01T00:00:00Z'},status:404,ok:false},
+      {name:'expired credential cannot adopt another signature',override:{token_expires_at:'2020-01-01T00:00:00Z'},status:404,ok:false},
+    ])await t.step(variant.name,async()=>{
+      agreement=base;storage=new Response(new Uint8Array(bytes).buffer);recoveryOverride=variant.override;terminalWrites=0;
+      const reply=await invoke();assert.equal(reply.status,variant.status);assert.equal((await reply.json()).ok,variant.ok);assert.equal(terminalWrites,1);
+    });
   }finally{Deno.serve=serve;Deno.env.get=envGet;globalThis.fetch=fetch;}
 });

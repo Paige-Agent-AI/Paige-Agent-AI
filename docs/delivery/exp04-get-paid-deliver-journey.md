@@ -2512,8 +2512,8 @@ First genuine RED: an eligible original token was404 instead of reaching the
 intentionally refused synthetic write409. Supplying ONLY original token_hash then
 exposed separate genuine RED: missing PDF still reached that write409 instead of
 refusal503. Same historical preflight selectively reused. Final original205 cases/
-178 steps PASS under denied net/write/env/run/ffi/sys; exact existing required CI
-Agreements step152 cases/46steps PASS without adding read authority. Actual
+182 steps PASS under denied net/write/env/run/ffi/sys; exact existing required CI
+Agreements step152 cases/50steps PASS without adding read authority. Actual
 sign-agreement entry types, UTF8/diff PASS. One existing CI step gains only the
 explicit preflight.test.ts path; no flag, baseline, condition or shared gate change.
 
@@ -2524,6 +2524,16 @@ foreign/revoked/expired/missing-expiry/already-signed/declined/order/void/deadli
 refusals are checked. Ineligible/foreign credentials cannot read private PDF bytes.
 Successful preflight deliberately stops at a synthetic403 write; no signature,
 notification, database/customer/provider effect or role/cohort acceptance occurs.
+
+Separate execution review reproduced missing original tenant/agreement/current-token
+UPDATE predicates at the real supabase-js transport boundary. Same existing row
+write now includes that original scope/hash and expiry compared with the fresh
+server act timestamp; zero-row readback checks the same original tokenState/hash
+before adopting a recorded signature. Four additional controls distinguish a
+still-current credential from replaced/revoked/expired recovery. These prove the
+actual client request/response contract, not hosted/native concurrency acceptance.
+Native atomic signature/events, parent-state serialization and complete interrupted
+outcome recovery remain required; this does not declare them solved.
 
 ORCHESTRATION_CONTRACT C15: original recipient/signing UI -> existing token/native
 authority -> SAME retained original presentation/readback -> original signing row/

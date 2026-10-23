@@ -20,7 +20,7 @@
 // signature genuinely IS recorded and claiming otherwise would be its own lie.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { overRateLimit, trustedClientIp } from "../_shared/rateLimit.ts";
-import { sha256Hex } from "../_shared/agreements/token.ts";
+import { sha256Hex, tokenState } from "../_shared/agreements/token.ts";
 import { verifyRetainedAgreementPdf } from "../_shared/agreements/retained-document.ts";
 import { checkSignatureImage, decideSigningAccess, MAX_BODY_BYTES, TOKEN_SHAPE } from "../_shared/agreements/signing-guard.ts";
 import { assertDocumentIsRenderable, UnrenderableDocumentError, wouldLoseCharacters } from "../_shared/agreements/document.ts";
@@ -216,7 +216,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const consentText = consentEvidenceText(
     ESIGN_CONSENT_DISCLOSURE, String(tenantRow?.name ?? "the sender"), tenantContact,
   );
-  const nowIso = now.toISOString();
+  const nowIso = new Date().toISOString();
 
   // Conditional on the signer still being unsigned, which is what makes a double-submit idempotent at
   // the ROW rather than in this function's memory. The database's own triggers independently refuse
@@ -232,7 +232,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
     esign_consent_sha256: await sha256Hex(consentText),
     signing_ip: ip === "unknown" ? null : ip,
     signing_user_agent: (req.headers.get("user-agent") ?? "").slice(0, 500),
-  }).eq("id", signer.id).in("status", ["pending", "viewed"]).is("token_revoked_at", null).select("id");
+  }).eq("id", signer.id).eq("tenant_id", signer.tenant_id).eq("agreement_id", signer.agreement_id)
+    .eq("token_hash", tokenHash).gt("token_expires_at", nowIso)
+    .in("status", ["pending", "viewed"]).is("token_revoked_at", null).select("id");
 
   if (signError) {
     console.error("[sign-agreement] signature write refused", {
@@ -247,8 +249,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // legally bound themselves that nothing happened. Re-read before refusing: if they are signed,
     // say so idempotently; only a genuinely ineligible row gets the refusal.
     const { data: already } = await db.from("paige_agreement_signers")
-      .select("status").eq("id", signer.id).maybeSingle();
-    if (already?.status !== "signed") return refuse();
+      .select("status,token_hash,token_expires_at,token_revoked_at").eq("id", signer.id)
+      .eq("tenant_id", signer.tenant_id).eq("agreement_id", signer.agreement_id).maybeSingle();
+    if (already?.status !== "signed" || already.token_hash !== tokenHash
+      || tokenState(already, new Date()).usable !== true) return refuse();
     const { data: nowAgreement } = await db.from("paige_agreements")
       .select("status").eq("id", signer.agreement_id).maybeSingle();
     return json({

@@ -46,6 +46,7 @@ type Inspection = { kind: "item"; id: string; view: Destination; proposedStage?:
 
 type WorkspaceProps = { openPaige?: () => void; view?: string; onViewChange?: (view: string) => void; onOpenAgreements?: () => void;
   onOpenBusinessTimeZone?: () => void;
+  businessTimeZoneRef?: (node: HTMLButtonElement | null) => void;
   weeklySourceSearch?: string; weeklySourceKey?: string; onWeeklySourceDismiss?: () => void;
   onTaskFocusDismiss?: () => void;
   onPlaybooksViewChange?: (view: "procedures" | "automations") => void;
@@ -73,7 +74,7 @@ function OperationsLoading() {
     <div className="ops-loading-lines" aria-hidden="true"><i /><i /><i /></div></div>;
 }
 
-function ScopedOperations({ tenantId, userId, openPaige, onOpenAgreements, onOpenBusinessTimeZone, view, onViewChange, weeklySourceSearch = "", weeklySourceKey,
+function ScopedOperations({ tenantId, userId, openPaige, onOpenAgreements, onOpenBusinessTimeZone, businessTimeZoneRef, view, onViewChange, weeklySourceSearch = "", weeklySourceKey,
   onWeeklySourceDismiss, onTaskFocusDismiss, onPlaybooksViewChange, onNavigationGuardChange }: WorkspaceProps & {
   tenantId: string; userId: string;
 }) {
@@ -324,6 +325,7 @@ function ScopedOperations({ tenantId, userId, openPaige, onOpenAgreements, onOpe
     {!crmAvailable && !crm.loading && <div className="ops-inline-notice" role="status">CRM tasks couldn’t be verified for this workspace. <button type="button" onClick={()=>void crm.refresh()}>Retry CRM tasks</button></div>}
     <OperationsOverview {...props} tenantId={tenantId} crmTasks={crmTasks} onInspectCrmTask={inspectCrm}
       onOpenBusinessTimeZone={onOpenBusinessTimeZone ? () => { if (!checkNavigation()) onOpenBusinessTimeZone(); } : undefined}
+      businessTimeZoneRef={businessTimeZoneRef}
       nativeWorkState={workReadable ? 'ready' : source.loading || crm.loading ? 'loading' : 'unavailable'}
       recordedFindings={<OperationsRecordedFindings tenantId={tenantId} userId={userId} openPaige={openPaige} canLeave={() => !checkNavigation()} />}
       onNavigate={setDestination} onInspectWorkSet={group => setDestination("Work", group)} onReviewWithPaige={openPaige ? reviewWithPaige : undefined}

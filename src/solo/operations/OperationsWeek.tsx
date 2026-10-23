@@ -8,7 +8,7 @@ import "./operations-week.css";
 
 type Props = { tenantId: string; items: PlanItem[]; tasks: CrmWorkRecord[];
   onInspectItem: (item: PlanItem) => void; onInspectTask?: (task: CrmWorkRecord) => void;
-  onOpenBusinessTimeZone?: () => void };
+  onOpenBusinessTimeZone?: () => void; businessTimeZoneRef?: (node: HTMLButtonElement | null) => void };
 const dateLabel = (date: string, options: Intl.DateTimeFormatOptions) =>
   new Intl.DateTimeFormat("en-US", { ...options, timeZone: "UTC" }).format(new Date(`${date}T12:00:00Z`));
 
@@ -16,7 +16,7 @@ const dateLabel = (date: string, options: Intl.DateTimeFormatOptions) =>
 export function OperationsWeek(props: Props) {
   return <ScopedWeek key={props.tenantId} {...props} />;
 }
-function ScopedWeek({ tenantId, items, tasks, onInspectItem, onInspectTask, onOpenBusinessTimeZone }: Props) {
+function ScopedWeek({ tenantId, items, tasks, onInspectItem, onInspectTask, onOpenBusinessTimeZone, businessTimeZoneRef }: Props) {
   const { day, refresh } = useBusinessCalendarDay(tenantId);
   const [offset, setOffset] = useState(0);
   const week = operationsWeek(tenantId, items, tasks, day, offset);
@@ -26,7 +26,7 @@ function ScopedWeek({ tenantId, items, tasks, onInspectItem, onInspectTask, onOp
     {week.reason === "missing" && <p>Review the business time zone in Settings to place work on the right day.</p>}
     {week.reason !== "loading" && <div className="ops-week-recovery">
       {(week.reason === "missing" || week.reason === "invalid") && onOpenBusinessTimeZone &&
-        <button type="button" onClick={onOpenBusinessTimeZone}>Review business time zone</button>}
+        <button type="button" ref={businessTimeZoneRef} onClick={onOpenBusinessTimeZone}>Review business time zone</button>}
       <button type="button" onClick={() => void refresh()}>Refresh business calendar</button>
     </div>}
   </section>;

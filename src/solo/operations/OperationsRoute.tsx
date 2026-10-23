@@ -5,6 +5,8 @@ import { subtabPath } from "@/lib/routing/tierBranches";
 import { routeLinkTarget } from "@/lib/links/workspaceLinks";
 import { OperationsWorkspace } from "./OperationsWorkspace";
 
+const BUSINESS_ZONE_RETURN = "paige.operations.businessCalendarReturn";
+
 /** Mounted only by the canonical Solo route after shared navigation integration. */
 export function OperationsRoute({ openPaige, onNavigationGuardChange }: { openPaige: () => void;
   onNavigationGuardChange?: (guard: (() => string | null) | null) => void }) {
@@ -13,6 +15,9 @@ export function OperationsRoute({ openPaige, onNavigationGuardChange }: { openPa
   const navigate = useNavigate();
   const { account } = useParams();
   const businessZoneTarget = routeLinkTarget({ destination: "business_time_zone", record_id: null }, "solo", account);
+  const returnState = location.state && typeof location.state === "object" && !Array.isArray(location.state)
+    ? location.state as Record<string, unknown> : null;
+  const [businessZoneButton, setBusinessZoneButton] = useState<HTMLButtonElement | null>(null);
   const navigationType = useNavigationType();
   const { navigator } = useContext(UNSAFE_NavigationContext);
   // Preserve the accepted history position (E05), never replace a popped entry.
@@ -57,9 +62,23 @@ export function OperationsRoute({ openPaige, onNavigationGuardChange }: { openPa
     setHistoryNotice("");
     setCurrent({ view, search: location.search, key: location.key });
   }, [location, view, current.view, navigate, index, navigationType]);
+  useLayoutEffect(() => {
+    if (navigationType !== "POP" || !account || returnState?.[BUSINESS_ZONE_RETURN] !== account
+      || !businessZoneButton?.isConnected || guard.current?.()) return;
+    businessZoneButton.focus();
+    const next = { ...returnState }; delete next[BUSINESS_ZONE_RETURN];
+    navigate({ pathname: location.pathname, search: location.search, hash: location.hash }, { replace: true, state: next });
+  }, [navigationType, account, returnState, businessZoneButton, navigate, location.pathname, location.search, location.hash]);
   return <>{historyNotice&&<p className="ops-inline-notice" role="status">{historyNotice}</p>}<OperationsWorkspace openPaige={openPaige} view={current.view}
     onOpenAgreements={account ? () => { if (!notifyGuard.current?.()) navigate(subtabPath("solo", account, "sales", "agreements")); } : undefined}
-    onOpenBusinessTimeZone={businessZoneTarget ? () => { if (!notifyGuard.current?.()) navigate(businessZoneTarget.to); } : undefined}
+    onOpenBusinessTimeZone={businessZoneTarget ? () => {
+      if (notifyGuard.current?.()) return;
+      // UI return context only, never a resource or execution authority. Preserve unknown legacy state.
+      if (location.state == null || returnState) navigate({ pathname: location.pathname, search: location.search, hash: location.hash },
+        { replace: true, state: { ...returnState, [BUSINESS_ZONE_RETURN]: account } });
+      navigate(businessZoneTarget.to);
+    } : undefined}
+    businessTimeZoneRef={setBusinessZoneButton}
     onPlaybooksViewChange={mode => {
       if (notifyGuard.current?.()) return;
       const prior = accepted.current;

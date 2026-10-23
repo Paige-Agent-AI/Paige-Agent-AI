@@ -2422,6 +2422,26 @@ October22 current template composition: native#2545/220004 is RELEASED SOURCE VE
 
 REUSE original2192/179e52/current0a reader and all37 cases; compose original coherent2604/6b8 private PDF/field source without changing either owning reader/test file. Fresh canonical formatter/reader/field Deno25 tests/110 steps PASS with all original runtime denials and type checking. Older13/63 remains historical. No actual endpoint/Spine/Chat/Live/Portal or provider consumer is connected. This one existing-invoice draft path needs exact canonical same-client invoice/terms/source; it is not a requirement that every agreement must already have an issued invoice. Remaining integration must bind exact reviewed PDF AND assigned-map before original Kit/Trust consequential approval, then reuse the native immutable operation/freeze/Rail. No new financial obligation, external send or signature follows from a proposed presentation. Original native2599/300004/Edge37 readback is verified; own and parent final source/CI/merge/web/ordinary-role/full12/founder acceptance remain separate required legs.
 
+### Pre-edit: original commercial field constructor
+
+EXTEND existing field-preparation.ts with one additive commercial constructor;
+reuse original prepareAgreementFields and canonical commercial formatter, never
+another schedule, document, agreement, approval or financial engine. Owner outcome
+is the same exact commercial document and assigned map before review. Source-only
+prerequisite for existing agreement.draft/send and original Trust/Kit/Harness/Rail;
+no new registered capability, LayerC admission, provider, job, budget or mutation.
+Capture all inputs before awaits, require same tenant/client/agreement/version/
+original microsecond token, canonical commercial2 facts and exact presented words,
+then one immutable manifest/digest. Preserve original schema1 constructor/field
+issues and native350004 source contract. Pure composition is not authorization
+or PDF-byte attestation: original caller-JWT reader, canonical renderer, Storage
+readback and later API revalidation remain required. Public commercial hold and
+all signing/payment/Comms restrictions remain. No mounted UI change; original
+complete approved UX controls later owner/customer work. Fail-first original
+renderer/fields/formatter source tests, strict types/denials, independent review,
+exact-head CI and real consumer/readback remain owed. EXP09 permissions/Portal
+unchanged; all12/algorithms/whole founder acceptance unpromoted.
+
 ### October22 later commercial-document native checkpoint
 
 Original2633 validation is mergedab2228036789be2bf81fb48896d919a867b79e8a,

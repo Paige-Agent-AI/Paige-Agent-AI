@@ -762,6 +762,30 @@ canonical ALG03/04/06/11/12/13 and PAIGE/VERA/originating specialist boundaries 
 
 ## EXP02 report evidence foundation — October22 source release, not activated
 
+**D3A authority prerequisite, development:** proposed360002 (after verified production350004) factors the exact
+original Metric actor predicate into private INVOKER
+`_analytics_metric_actor_authorized(uuid,uuid)`. The existing JWT/current-workspace
+wrapper keeps its ABI, DEFINER, owner and ACL. This is one predicate, not a second
+authorizer: exact owner/admin seat, active profile/workspace, eligible tenant and
+nondeleted/unbanned Auth identity remain mandatory. Generic document coach or
+is_owner fallback is insufficient. No application/service/PUBLIC execute grant,
+public actor override, report/worker/Chat/provider/action activation or storage.
+Original composed PostgreSQL16.14 proof234 checks PASS (195 original +39 new),
+including exact original-wrapper equivalence/metadata and real role/Auth/scope
+negatives. Omitting the new helper fails42883. Early catalog-type, temporary-oracle
+session and psql SET-output fixture errors are retained, excluded from PASS.
+First hosted full-schema run correctly refused the new fixture's retired coach
+seat under the original title-role constraint. The fixture now proves that exact
+refusal, then tests legitimate member/admin seats; no constraint or authority is
+relaxed. Full-schema rerun, hosted CI/Preview, review and actual production
+body/ACL readback remain owed.
+Existing Spine document_generate/document_authoring, native durable worker,
+immutable original artifact/turn/Rail remain the future path; claim AND completion
+must check the stored initiating actor without JWT impersonation. Functional local
+prerequisite; Visual N/A/unmounted; Experiential/Founder Acceptance UNVERIFIED.
+CAP014/015 and all nine/ALG maturity unchanged; all19 outcomes remain mandatory.
+Section4.0 N/A until merge. ANT1388fbb1883/ANT161a3a141f0 record the original route.
+
 D1 adds only private `_paige_document_capture_metric_evidence(jsonb)` under applied
 20271113330002. The original issuer/resolver and owner/admin/current-workspace guard
 remain authoritative. Only1–12 unique original reference tokens are accepted; no

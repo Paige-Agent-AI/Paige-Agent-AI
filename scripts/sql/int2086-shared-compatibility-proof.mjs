@@ -15,6 +15,7 @@ source = source.replace("const read=p=>readFileSync(new URL('../../'+p,import.me
 const sql = readFileSync(`${root}/supabase/migrations/20270601000006_int340_shared_metric_evidence.sql`, 'utf8');
 const forward = readFileSync(`${root}/supabase/migrations/20271101110001_int2086_overdue_metric_compatibility.sql`, 'utf8');
 const reportCapture = readFileSync(`${root}/supabase/migrations/20271113330002_exp02_document_metric_capture.sql`, 'utf8');
+const actorAuthority = readFileSync(`${root}/supabase/migrations/20271113360002_exp02_metric_actor_authority.sql`, 'utf8');
 const extra = `
 run(\`CREATE TABLE analytics_evidence_reference(token_digest text PRIMARY KEY,issued_to uuid NOT NULL,tenant_id uuid NOT NULL,metric_id text NOT NULL CONSTRAINT analytics_evidence_reference_metric_id_check CHECK(metric_id<>'') ,range_key text NOT NULL CONSTRAINT analytics_evidence_reference_range_key_check CHECK(range_key<>'') ,range_start timestamptz,range_end timestamptz,source_revision_ref text,issued_at timestamptz,expires_at timestamptz,revoked_at timestamptz);
 ALTER TABLE analytics_evidence_reference ENABLE ROW LEVEL SECURITY;
@@ -51,6 +52,45 @@ run(\`UPDATE analytics_evidence_reference SET expires_at=clock_timestamp()-inter
 denied(scope()+'SET ROLE authenticated;'+resolved(invalid.evidence_ref));
 eq(json(scope()+'SET ROLE authenticated;'+issue('sales.cash.recorded_received','1.0.0')).metric_version,'1.0.0');
 run(${JSON.stringify(reportCapture)});
+// Keep the actual original predicate as an isolated equivalence oracle. No
+// production helper, policy or caller identity is replaced by this fixture.
+run('CREATE SCHEMA metric_authority_proof;');
+run(run("SELECT pg_get_functiondef('public._analytics_metric_authorized(uuid)'::regprocedure);")
+ .replace('public._analytics_metric_authorized(', 'metric_authority_proof.original_metric_authorized('));
+run('REVOKE ALL ON FUNCTION metric_authority_proof.original_metric_authorized(uuid) FROM PUBLIC,anon,authenticated,service_role;');
+const wrapperMetadata="SELECT jsonb_build_array(proowner,prosecdef,provolatile::text,proconfig,proacl::text) FROM pg_proc WHERE oid='public._analytics_metric_authorized(uuid)'::regprocedure;";
+const wrapperIdentity=run(wrapperMetadata);
+run(${JSON.stringify(actorAuthority)});
+eq(run(wrapperMetadata),wrapperIdentity);
+const actorAllowed=(a=actor,t=tenant)=>\`SELECT public._analytics_metric_actor_authorized(\${a===null?'NULL':"'"+a+"'"}::uuid,\${t===null?'NULL':"'"+t+"'"}::uuid);\`;
+const scalar=sql=>run(sql).split(String.fromCharCode(10)).at(-1).trim();
+const sameAuthority=(expected,a=actor,t=tenant)=>{
+ eq(scalar(scope(a??'',t??'')+\`SELECT public._analytics_metric_authorized(\${t===null?'NULL':"'"+t+"'"}::uuid) IS NOT DISTINCT FROM metric_authority_proof.original_metric_authorized(\${t===null?'NULL':"'"+t+"'"}::uuid);\`),'t');
+ eq(run(actorAllowed(a,t)),expected?'t':'f');
+};
+sameAuthority(true);
+for(const role of ['anon','authenticated','service_role'])denied(scope()+\`SET ROLE \${role};\`+actorAllowed());
+eq(run("SELECT count(*) FROM pg_proc p CROSS JOIN LATERAL aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a WHERE p.oid='public._analytics_metric_actor_authorized(uuid,uuid)'::regprocedure AND a.grantee=0;"),'0');
+for(const role of ['admin','coach','member']){
+ run(\`UPDATE tenant_members SET role='\${role}' WHERE user_id='\${actor}';\`);sameAuthority(role==='admin');
+}
+run(\`UPDATE tenant_members SET role='owner',status='inactive' WHERE user_id='\${actor}';\`);sameAuthority(false);
+run(\`UPDATE tenant_members SET status='active' WHERE user_id='\${actor}';UPDATE profiles SET active_tenant_id='\${foreign}' WHERE user_id='\${actor}';\`);sameAuthority(false);
+run(\`UPDATE profiles SET active_tenant_id='\${tenant}' WHERE user_id='\${actor}';UPDATE auth.users SET banned_until=now()+interval '1 day' WHERE id='\${actor}';\`);sameAuthority(false);
+run(\`UPDATE auth.users SET banned_until=now()-interval '1 day' WHERE id='\${actor}';\`);sameAuthority(true);
+run(\`UPDATE auth.users SET banned_until=NULL,deleted_at=now() WHERE id='\${actor}';\`);sameAuthority(false);
+run(\`UPDATE auth.users SET deleted_at=NULL WHERE id='\${actor}';\`);
+for(const state of ['trial','past_due','inactive']){
+ run(\`UPDATE tenants SET status='\${state}' WHERE id='\${tenant}';\`);sameAuthority(state!=='inactive');
+}
+run(\`UPDATE tenants SET status='active' WHERE id='\${tenant}';\`);
+sameAuthority(false,null);sameAuthority(false,actor,null);sameAuthority(false,otherActor,tenant);
+// A stored initiating actor may be checked privately without a JWT. The original
+// caller wrapper still refuses absent or mismatched current caller/workspace.
+eq(scalar(scope('',tenant)+actorAllowed()),'t');
+eq(scalar(scope('',tenant)+\`SELECT public._analytics_metric_authorized('\${tenant}');\`),'f');
+eq(scalar(scope(actor,foreign)+\`SELECT public._analytics_metric_authorized('\${tenant}') IS NOT DISTINCT FROM metric_authority_proof.original_metric_authorized('\${tenant}');\`),'t');
+eq(scalar(scope(actor,foreign)+\`SELECT public._analytics_metric_authorized('\${tenant}');\`),'f');
 // The existing October5 fixture is outside a live last-week issuance. Move only
 // this disposable receipt inside that period before testing source retirement.
 run(\`UPDATE paige_invoice_payments SET received_at=clock_timestamp()-interval '2 days' WHERE id='\${id(7,1)}';\`);

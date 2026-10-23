@@ -115,8 +115,12 @@ locally.
 
 - **ALG-01 (reconciliation):** PARTIAL — connection state + tools cache + (unused) receipts
   machinery exist; provider event reconciliation unproven with zero receipts.
-- **ALG-12 (exception detection):** NOT BUILT — status/error codes recorded per row, no detection
-  loop, no staleness surfacing. PR4 delivers the deterministic baseline.
+- **ALG-12 (exception detection):** PARTIAL as of PR4 (20271113510000) — list_integration_surface now derives
+  probe staleness (connected-claiming row with a probe older than 7 days renders degraded + stale=true,
+  the same recency rule the channel half always applied) and carries the gateway half's closed-vocabulary
+  last_error_code (schema-enforced bounded-token shape since this PR) into the projection, so chat's
+  integrations_list answers "why isn't it working" from the row's real evidence. Remaining: a scheduled
+  re-probe loop and alerting (post-acceptance slice).
 - **ALG-13 (next-best-action):** NOT BUILT — PR4/5 deliver rule-based recommendations from real
   connection state (connect a useful tool / fix a failure / take an authorized next step).
 - **Capabilities catalogue:** must be synchronized per-PR (owner 2026-10-20 directive); PR6 lands

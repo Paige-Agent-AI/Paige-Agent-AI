@@ -52,12 +52,12 @@ it("Chat Escape returns focus to the existing weekly opener", async () => {
   expect(document.querySelector('[role="dialog"]')).toBeNull();
   await vi.waitFor(() => expect(document.activeElement).toBe(opener));
 });
-it.each(["Chat", "Calendar"])("%s keeps its original dialog when Escape dismisses only a future-control review", async surface => {
+it.each(["Chat", "Calendar"].flatMap(surface => ["pause", "authorize"].map(action => ({ surface, action }))))("$surface keeps its original dialog when Escape dismisses only $action review", async ({ surface, action }) => {
   const control = vi.fn();
   harness.read.mockReturnValue({ read: { status: "ready", snapshot: { source: "canonical_process_and_act_receipts",
     read_at: "2026-10-13T13:00:00Z", business_time_zone: { state: "configured", zone: "UTC" }, limit: 50, has_more: false,
     checks: [{ automation_id: "11111111-1111-4111-8111-111111111111", name: "Weekly check", revision: 2,
-      schedule_status: "scheduled", schedule: { weekday: 1, local_time: "09:00", timezone: "UTC" },
+      schedule_status: action === "authorize" ? "requested" : "scheduled", schedule: { weekday: 1, local_time: "09:00", timezone: "UTC" },
       execution_availability: "available", execution_hold_reason: null, next_run_at: "2026-10-19T09:00:00Z",
       intended_next_run_at: null, last_run: null, last_verified_run: null }] } }, refresh: vi.fn(), control });
   await act(async () => root.render(<MemoryRouter>{surface === "Chat" ? <WeeklyResponsibilityEntry />
@@ -66,8 +66,8 @@ it.each(["Chat", "Calendar"])("%s keeps its original dialog when Escape dismisse
   await act(async () => opener.click());
   const find = (text: string) => [...document.querySelectorAll<HTMLButtonElement>("button")].find(button => button.textContent === text)!;
   await act(async () => document.querySelector<HTMLElement>(".e5-weekly-controls summary")!.click());
-  const pause = find("Pause future checks"); await act(async () => pause.click());
-  const keep = find("Keep current schedule"); expect(document.activeElement).toBe(keep);
+  const pause = find(action === "authorize" ? "Review authorization" : "Pause future checks"); await act(async () => pause.click());
+  const keep = find(action === "authorize" ? "Not now" : "Keep current schedule"); expect(document.activeElement).toBe(keep);
   await act(async () => keep.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true })));
   expect(document.querySelector('[role="dialog"]')).toBeTruthy();
   expect(document.querySelector('[aria-label="Review future checks"]')).toBeNull();

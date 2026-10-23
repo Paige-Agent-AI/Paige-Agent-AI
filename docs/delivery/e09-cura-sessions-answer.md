@@ -7,7 +7,7 @@ Source unavailable, changed or withdrawn after acceptance preserves the original
 
 ## Pre-edit capability routing
 1. Owner outcome: useful source-backed appointment answers and safe return to the same customer conversation.
-2. EXP09 consumes the original Calendar internal_bookings/calendars projection; source2638/3697d086 and Native binding2644/421b04ee are separate prerequisites. Preserve current main00ab9ee and incoming EXP02/04/05/10. Source lease ANT161/bca5918d-7c05-4d7e-9ece-f5fec15289dd.
+2. EXP09 consumes the original Calendar internal_bookings/calendars projection; source2638/3697d086→07c895ba/460009 and Native binding2644/421b04ee→bdd1a553/470009 are separately deployed/source/ABI/ACL verified. Preserve composed current mainbdd1a553 and incoming EXP02/04/05/10. Source lease ANT161/bca5918d-7c05-4d7e-9ece-f5fec15289dd.
 3. Original request-local caller JWT, private Native actor/thread/intent, Harness/Model Fabric admission, terminal/publication and INT346 fences. No customer request receives owner authority.
 4. Existing client_portal_sessions read, source-bound client_portal_assistant_begin_sessions and client_portal_assistant_sessions_context. A new effectful customer Chat tool is UNAVAILABLE; no Spine registration or maturity promotion.
 5. Existing Supabase/Auth/internal Calendar and original Model Fabric only. No new provider, connection, credential, sender, spend or activation.
@@ -25,11 +25,11 @@ Only the customer message admission selects begin_sessions. Original owner entry
 All29 incumbent dispatch bodies/controls/helpers/imports and metadata/extractor are retained. The complete customer-only Core inverse reproduces current main. Reviewed literal fingerprints change only enclosing handler ancestry; all121 accepted dependency pins, including incoming orchestrator/canonical-app-url, are retained plus one explicit Sessions helper pin. No automatic acceptance/snapshot regeneration or weakened guard.
 
 ## Verification and distinct evidence boundaries
-Current-main179 focused cases/seven files PASS, including three direct actual-handler/settlement/lifetime regressions for early Progress withdrawal, error and timeout: original Knowledge cleanup already empties interrupted prose before a null Progress snapshot; exactly one empty receipt and one executor release. The post-merge2635 review concern is not reproduced. No speculative production rewrite is needed.
+179 focused cases/seven files PASS on the unchanged consumer runtime; fresh current-main frozen hosted CI remains mandatory, including three direct actual-handler/settlement/lifetime regressions for early Progress withdrawal, error and timeout: original Knowledge cleanup already empties interrupted prose before a null Progress snapshot; exactly one empty receipt and one executor release. The post-merge2635 review concern is not reproduced. No speculative production rewrite is needed.
 
 Expanded real TypeScript compiler six roots:0 own/0 other diagnostics; scoped ESLint PASS. Full original actual-handler Knowledge/privacy smoke548 PASS; complete C0b224 PASS and registry self-test PASS. Synthetic services/model boundaries are explicit; no provider request or live identity. Original113 Sessions and208 Native binding assertions remain in the separate required full-schema prerequisite CI.
 
-Nine actual original PaigeChat/CSS frames cover1536x770,1366x768,1024x768,900x1000,390x844 and320x568, source failure, dark/reduced-motion and keyboard original-question recovery. Source result and raster/geometry evidence: ../evidence/ui-delivery/assets/e09-cura-sessions-answer/result.json. No horizontal overflow; composer and44px recovery controls reachable; history owns short-screen scrolling. Local component proof is not full-shell, physical Safari, screen reader,200% zoom or authenticated customer evidence.
+Nine fresh actual original PaigeChat/CSS frames on current-main react-router-dom/react-router6.30.6 and @remix-run/router1.23.4 cover1536x770,1366x768,1024x768,900x1000,390x844 and320x568, source failure, dark/reduced-motion and keyboard original-question recovery. Source result and raster/geometry evidence: ../evidence/ui-delivery/assets/e09-cura-sessions-answer/result.json. No horizontal overflow; composer and44px recovery controls reachable; history owns short-screen scrolling. Local component proof is not full-shell, physical Safari, screen reader,200% zoom or authenticated customer evidence.
 
 ## Orchestration contract
 1. Request: customer asks about their own appointment or change policy.
@@ -41,11 +41,13 @@ Nine actual original PaigeChat/CSS frames cover1536x770,1366x768,1024x768,900x10
 7. Identity/receipt: same accepted user and exact source fingerprint, matching original terminal and UI history.
 8. Recovery: source revalidation, original empty withheld/interrupted/refused cleanup and explicit status/history readback; no automatic repeat after uncertain outcome.
 9. Result: original private customer conversation; private prose is not business Messages or Team Hub.
-10. Production: prerequisites46/47 must actually deploy and source/ABI/ACL match before this Edge consumer ships. Exact-head CI/review and ordinary production source readback are mandatory. Customer/model outcome remains separately UNVERIFIED.
+10. Production: prerequisites46/47 actually deployed through normal migrations39968670771/39969692632, all14 source/body/ABI/owner/ACL and enabled terminal trigger verified, global linkage guard retained. This Edge consumer remains undeployed. Exact-head CI/review and ordinary production source readback are mandatory. Customer/model outcome remains separately UNVERIFIED.
 
-Functional: built with bounded local/source/rendered proof; Native-before-Edge release and genuine customer outcome separately owed.
+Functional: built with bounded local/source/rendered proof; Native prerequisites deployed/source-verified; Edge consumer release and genuine customer outcome separately owed.
 Visual: existing design-system/component retained; nine actual component frames inspected, no material new visual finding.
 Experiential: original customer question, business role, policy boundary, private history and recovery preserved; complete authenticated journey remains owed.
 Founder Acceptance: NOT_REQUESTED; one complete integrated Experience evaluation later.
 
 Seven catalogue entries remain Limited; ALG01/12 bounded PARTIAL and02/04/13 production UNVERIFIED. Global Identity linkage guard retained; multi-business NOT_ACTIVATED until original backend/recipient/new-account/legacy reconciliation. Internal-only increment, no customer version/announcement. No send/payment/signature/booking/upload/Knowledge publication/privilege/provider/INT346 activation. Recovery is a reviewed forward correction preserving original work and unknown-outcome holds.
+
+Current-main integration: native source/binding exact reviewed treesbd748dc1/3962290a and production receipts6367200261/6367298357. Incoming EXP02/04/10 and security dependency changes are preserved. Nine frames re-rendered with isolated exact current-main router packages; all three cached archive SHA512 values match package-lock, shared node_modules untouched. Original runtimeCoreb000dd61/helper5c7d3ecd,179 tests/548 smoke/224 C0b source proof unchanged; fresh final-head hosted frozen CI mandatory. Local full-shell/physical-device/authenticated proof is not inferred.

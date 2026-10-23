@@ -1,6 +1,12 @@
 {
-  "at": "2026-10-23T13:59:54.985Z",
+  "at": "2026-10-23T14:37:35.739Z",
   "component": "original PaigeChat and children/CSS; Auth, Native data and model response synthetic",
+  "dependencyVersions": {
+    "react-router-dom": "6.30.6",
+    "react-router": "6.30.6",
+    "@remix-run/router": "1.23.4"
+  },
+  "dependencyScope": "isolated review packages match current-main lockfile tarball integrity; shared node_modules remains untouched",
   "scenarios": [
     {
       "case": "synthetic-authorized-source-answer",
@@ -220,6 +226,6 @@
       "width": 390
     }
   ],
-  "renderedEvidence": "9 actual original-component frames; all specified viewport rasters match; no horizontal overflow, composer/recovery controls reachable, dark and reduced motion, original history readback via keyboard restores Message Cura without duplicate send or invented reply",
-  "boundaries": "Local original-component proof only; not full authenticated shell, production customer/model, physical Safari, screen reader, browser zoom or whole seven-pillar acceptance."
+  "renderedEvidence": "9 actual original-component frames on the current-main dependency set; all viewport rasters match DOM geometry, no horizontal overflow,44px reachable recovery, dark/reduced-motion and keyboard original-question readback restores Message Cura without duplicate send or invented reply",
+  "boundaries": "Local component only; not full authenticated shell, actual customer/model/provider, physical Safari, screen reader,200% zoom or whole Experience acceptance."
 }

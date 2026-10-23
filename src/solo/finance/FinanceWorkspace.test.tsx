@@ -6,14 +6,15 @@ import { FinanceWorkspace } from "./FinanceWorkspace";
 import { financeDebtReviewPrompt } from "./financeDebtSource";
 import { branchBySlug, subtabByKey } from "@/lib/routing/tierBranches";
 import { tenantShellDestinationsForPath } from "@/components/tenant-shell/tenantShellRoutes";
-const mocks = vi.hoisted(() => ({ phase: "ready", metricPhase: "ready", retry: vi.fn(), rows: [] as unknown[], identity: "A:0:0" }));
+import type { SalesMetricBundle } from "../sales/performance/types";
+const mocks = vi.hoisted(() => ({ phase: "ready", metricPhase: "ready", retry: vi.fn(), rows: [] as unknown[], metrics: [] as SalesMetricBundle[], identity: "A:0:0" }));
 const sourceRead = vi.hoisted(() => ({ value: { state: "loading" } as Record<string, unknown>, refresh: vi.fn(), read: vi.fn() }));
 vi.mock("../data/useBusinessReview", () => ({ useBusinessReview: (epoch: string | null | undefined) => { sourceRead.read(epoch); return { ...sourceRead.value, refresh: sourceRead.refresh }; } }));
-vi.mock("../sales/performance/useSalesPerformanceMetrics", () => ({ useSalesPerformanceMetrics: () => ({ phase: mocks.metricPhase, metrics: [], retry: mocks.retry, unavailableKeys: {} }) }));
+vi.mock("../sales/performance/useSalesPerformanceMetrics", () => ({ useSalesPerformanceMetrics: () => ({ phase: mocks.metricPhase, metrics: mocks.metrics, retry: mocks.retry, unavailableKeys: {} }) }));
 vi.mock("./useFinanceInvoices", () => ({ useFinanceInvoices: () => ({ identity: mocks.identity, phase: mocks.phase, rows: mocks.rows, hasMore: false, readAt: null, retry: mocks.retry, loadMore: vi.fn() }) }));
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let root: Root, host: HTMLDivElement;
-beforeEach(() => { mocks.phase = "ready"; mocks.metricPhase = "ready"; mocks.rows = []; mocks.identity = "A:0:0"; mocks.retry.mockReset(); sourceRead.value = { state: "loading" }; sourceRead.refresh.mockReset(); sourceRead.read.mockReset(); host = document.createElement("div"); document.body.append(host); root = createRoot(host); });
+beforeEach(() => { mocks.phase = "ready"; mocks.metricPhase = "ready"; mocks.rows = []; mocks.metrics = []; mocks.identity = "A:0:0"; mocks.retry.mockReset(); sourceRead.value = { state: "loading" }; sourceRead.refresh.mockReset(); sourceRead.read.mockReset(); host = document.createElement("div"); document.body.append(host); root = createRoot(host); });
 afterEach(() => { act(() => root.unmount()); host.remove(); });
 async function render(path = "/solo/123/finance/overview", epoch = "A") { await act(async () => root.render(<MemoryRouter initialEntries={[path]}><Routes><Route path="/solo/:account/*" element={<FinanceWorkspace epoch={epoch}/>}/></Routes></MemoryRouter>)); }
 const readySourceReview = () => ({ state: "ready", snapshot: { period: { timezone: "UTC" }, domains: { finance: { status: "available", data: { finance_evidence: {
@@ -26,6 +27,41 @@ const readySourceReview = () => ({ state: "ready", snapshot: { period: { timezon
   } } } } } });
 
 describe("Finance canonical destination", () => {
+ it.each(["week", "month", "quarter", "year"] as const)("hands the original evidence with its exact custom %s bounds to VERA", async range => {
+  const evidence = `aneb_v1_${"d".repeat(64)}`;
+  const start = "2026-09-03T00:00:00.000Z", end = "2026-10-03T00:00:00.000Z";
+  mocks.metrics = [{ metric_key: "sales.receivables.outstanding_current", evidence_ref: evidence,
+   truth_state: "PARTIAL", values: null, reference_expires_at: "2099-01-01T00:00:00Z",
+   range: { start, end, bounds: "[start,end)", timezone: "UTC", semantics: "current_snapshot" } } as SalesMetricBundle];
+  const prompts: string[] = [];
+  const listener = (event: Event) => prompts.push((event as CustomEvent).detail.prompt);
+  window.addEventListener("paige:open", listener);
+  try {
+   await render();
+   const select = host.querySelector("select")!;
+   await act(async () => { select.value = range; select.dispatchEvent(new Event("change", { bubbles: true })); });
+   await act(async () => (host.querySelector(".finance-primary") as HTMLButtonElement).click());
+   expect(prompts).toHaveLength(1);
+   expect(prompts[0]).toContain(JSON.stringify({ metric_key: "sales.receivables.outstanding_current", period: "custom",
+    range_key: range, range_start: start, range_end: end, evidence_ref: evidence }));
+   expect(prompts[0]).toContain("re-resolve its scope and expiry");
+   expect(prompts[0]).toContain("do not move money or edit books");
+  } finally { window.removeEventListener("paige:open", listener); }
+ });
+ it.each([undefined, { start: "not a timestamp", end: "2026-10-03T00:00:00.000Z" },
+  { start: "2026-10-03T00:00:00.000Z", end: "2026-09-03T00:00:00.000Z" }])("does not hand off an unbound evidence reference %#", async range => {
+  const evidence = `aneb_v1_${"e".repeat(64)}`;
+  mocks.metrics = [{ metric_key: "sales.receivables.outstanding_current", evidence_ref: evidence,
+   truth_state: "PARTIAL", values: null, reference_expires_at: "2099-01-01T00:00:00Z", range } as SalesMetricBundle];
+  let prompt = "";
+  const listener = (event: Event) => { prompt = (event as CustomEvent).detail.prompt; };
+  window.addEventListener("paige:open", listener);
+  try {
+   await render(); await act(async () => (host.querySelector(".finance-primary") as HTMLButtonElement).click());
+   expect(prompt).not.toContain(evidence);
+   expect(prompt).toContain("original evidence context is incomplete");
+  } finally { window.removeEventListener("paige:open", listener); }
+ });
  it("discards source facts on a workspace switch even if a prior review is retained", async () => {
   sourceRead.value = readySourceReview();
   await render("/solo/123/finance/banking-cash", "A");

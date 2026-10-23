@@ -164,6 +164,9 @@ The standalone required checks also expose exact-ref recovery:
 gh workflow run migration-lint.yml --ref <pr-branch>
 gh workflow run security-audit.yml --ref <pr-branch>
 gh workflow run ui-delivery-evidence.yml --ref <pr-branch>
+gh workflow run finance-source-proof.yml --ref <pr-branch>
+gh workflow run sales-collections-proof.yml --ref <pr-branch>
+gh workflow run sales-invoice-channel-proof.yml --ref <pr-branch>
 ```
 
 These run the existing linter, locked production-dependency audit and UI evidence
@@ -175,3 +178,9 @@ another PR's normal check. Record the actual run/head/results for every required
 check. A missing, skipped or earlier-head check is never a successful current
 check. These triggers do not bypass branch protection, Preview, review or release
 and provider gates.
+
+The three SQL proof workflows run their original complete jobs at the requested
+ref, with their existing permissions and PR/push path filters preserved. The
+Spine contract already supports `gh workflow run paige-spine-contract.yml --ref
+<pr-branch>` and is still required where applicable. Main `ci.yml` alone does not
+include these standalone SQL jobs; record each actual result separately.

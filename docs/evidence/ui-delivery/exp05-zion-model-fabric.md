@@ -25,7 +25,7 @@ MUST_PRESERVE: original service/JWT authentication, contact/funding/local-target
 ACCEPTANCE_CRITERIA: existing classification-band and plan jobs request only a Fabric cognitive class/job, recheck current original authority/registry on every Fabric leg, retain protected/unknown/unported legacy routing, existing internal worker compatibility and original durable outcome semantics.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: exact service key and trusted actor/workspace context; current workspace-role resolver; original registry identity/version/config; shared Fabric provider/budget/trace policy; original work and capability receipt.
-INTERNAL_BUILD_IDENTITY: base=7af31846619ce4b803847074567a1099b9f202cf, composed with actual main64347d7 and reviewed recovery/activity dependencies; exact candidate in immutable Git review; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-orchestrator); evidence=docs/evidence/ui-delivery/exp05-zion-model-fabric.md
+INTERNAL_BUILD_IDENTITY: base=576cf8a15fe917feadbe31a1228301f33f3f16c2, composed with actual main56219f44 and reviewed recovery/activity dependencies; exact candidate in immutable Git review; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-orchestrator); evidence=docs/evidence/ui-delivery/exp05-zion-model-fabric.md
 RELEASE_CHANNEL: development: explicit closed synthetic transports; no live provider, business record or production activation.
 RELEASE_CLASSIFICATION: internal-only: Model Fabric consumer prerequisite, not a completed ZION capability or customer launch.
 CUSTOMER_RELEASE_IDENTITY: NONE: no earned customer version or announcement.

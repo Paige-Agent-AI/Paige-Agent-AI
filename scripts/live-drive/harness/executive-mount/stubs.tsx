@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { Link, useLocation } from "react-router-dom";
 import { TEST_BUSINESS_REVIEW, TEST_REVIEW_TENANT } from "@/test/fixtures/business-review";
 import { SECOND_REVIEW_TENANT, withTargetAndFinanceFixtures } from "./slice-fixtures";
+import { reportFixtureFrom } from "./report-fixture";
 export { businessDateLabel, businessCalendarHeldNote } from "@/solo/data/useBusinessTimeZone";
 const Presence = createContext({ railExpanded: false, expandRail: () => {}, collapseRail: () => {} });
 export function HarnessPresence({ children }: { children: React.ReactNode }) {
@@ -13,7 +14,7 @@ export function HarnessPresence({ children }: { children: React.ReactNode }) {
 export const useAgentPresence = () => useContext(Presence);
 function useHarnessParams() { return new URLSearchParams(useLocation().search); }
 const noop = () => {};
-export const supabase = { rpc: () => { throw Error("HARNESS_NO_BACKEND"); }, from: () => { throw Error("HARNESS_NO_BACKEND"); }, functions: { invoke: () => { throw Error("HARNESS_NO_BACKEND"); } } };
+export const supabase = { rpc: () => { throw Error("HARNESS_NO_BACKEND"); }, from: (table: string) => { if (import.meta.env.E2_HARNESS_SLICE === "report") return reportFixtureFrom(table); throw Error("HARNESS_NO_BACKEND"); }, functions: { invoke: () => { throw Error("HARNESS_NO_BACKEND"); } } };
 export function useTenantContext() { const p = useHarnessParams(); return { activeTenantId: p.get("workspace") === "b" ? SECOND_REVIEW_TENANT : TEST_REVIEW_TENANT, activeUserId: "test-owner" }; }
 export const useOptionalTenantContext = useTenantContext;
 export function useTierFeatures() { return { has: () => true, loading: false }; }

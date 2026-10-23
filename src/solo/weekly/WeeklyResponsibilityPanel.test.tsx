@@ -32,6 +32,13 @@ async function changeDay(value = "5") {
   const select = container.querySelector<HTMLSelectElement>('form[aria-label="Review future checks"] select')!;
   await act(async () => { select.value = value; select.dispatchEvent(new Event("change", { bubbles: true })); });
 }
+it.each(["CET", "GMT", "EST", "America/Coyhaique"])("reviews an unchanged canonical saved zone %s", async timezone => {
+  const data = recordedSnapshot(); data.checks[0].schedule.timezone = timezone;
+  const control = vi.fn<WeeklyFutureControl>().mockResolvedValue({ status: "unknown" });
+  await render({ status: "ready", snapshot: data }, control); await click("Change schedule");
+  await changeDay(); await click("Review change"); await click("Save unapproved schedule");
+  expect(control).toHaveBeenCalledExactlyOnceWith(data.checks[0], "configure", { weekday: 5, local_time: "09:00", timezone });
+});
 it("reviews and saves an exact changed schedule without authorizing future execution", async () => {
   const data = recordedSnapshot(), control = vi.fn<WeeklyFutureControl>().mockResolvedValue({ status: "saved", snapshot: data });
   await render({ status: "ready", snapshot: data }, control); await click("Change schedule");

@@ -37,13 +37,21 @@ function configurationFixture() {
   const f = fixture(), original = f.caller.rpc.getMockImplementation()!;
   f.caller.rpc.mockImplementation(async (name, args) => {
     if (name !== "configure_weekly_commitment_check") return original(name, args);
-    f.effects.push(args); f.saved.revision = 3; f.saved.schedule_status = "requested"; f.saved.schedule = changedSchedule();
+    f.effects.push(args); f.saved.revision = 3; f.saved.schedule_status = "requested";
+    f.saved.schedule = { weekday: Number(args?._weekday), local_time: String(args?._local_time), timezone: String(args?._timezone) };
     return f.response.data || f.response.error ? f.response
       : { data: { ok: true, automation_id: id, state: "draft", revision: 3, requires_authorization: true }, error: null };
   });
   return f;
 }
 describe("native human-owner future controls", () => {
+  it.each(["CET", "GMT", "EST", "America/Coyhaique"])("preserves the saved PostgreSQL zone %s when only day/time changes", async timezone => {
+    const f = configurationFixture(); f.saved.schedule.timezone = timezone;
+    const reviewed = structuredClone(f.saved);
+    const proposed = { ...reviewed.schedule, weekday: 5, local_time: "14:30" };
+    expect((await f.control(reviewed, "configure", proposed)).status).toBe("saved");
+    expect(f.effects).toEqual([{ _automation_id: id, _expected_revision: 2, _weekday: 5, _local_time: "14:30", _timezone: timezone }]);
+  });
   it("changes the original schedule only as a disarmed next revision", async () => {
     const f = configurationFixture();
     expect(await f.control(check(), "configure", changedSchedule())).toMatchObject({ status: "saved" });

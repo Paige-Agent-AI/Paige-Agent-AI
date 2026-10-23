@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { WeeklyCheck } from "../../../supabase/functions/_shared/paige-orchestration/weekly-commitment-projection";
 import type { WeeklyFutureControl, WeeklyOwnerControl } from "./weekly-owner-read";
-import { reviewWeeklyProposal, WEEKDAYS } from "./weekly-responsibility";
+import { WEEKDAYS } from "./weekly-responsibility";
+import { reviewWeeklyScheduleChange } from "../../../supabase/functions/_shared/paige-orchestration/weekly-commitment-projection.ts";
 export type WeeklyScheduleDraft = { weekday: number; local_time: string; timezone: string; reviewing: boolean };
 
 /** An inline human review of the original saved definition, never schedule authority. */
@@ -13,7 +14,7 @@ export function WeeklyScheduleChange({ check, draft, onDraftChange, control, bus
   const { weekday, local_time: time, timezone: zone, reviewing } = draft;
   const [invalid, setInvalid] = useState(false);
   const first = useRef<HTMLSelectElement>(null), back = useRef<HTMLButtonElement>(null), submitting = useRef(false);
-  const proposed = reviewWeeklyProposal(weekday, time, zone);
+  const proposed = reviewWeeklyScheduleChange(check.schedule, { weekday, local_time: time, timezone: zone });
   const changed = proposed && (weekday !== check.schedule.weekday || time !== check.schedule.local_time || zone !== check.schedule.timezone);
   useEffect(() => { if (reviewing) back.current?.focus(); else first.current?.focus(); }, [reviewing]);
   const confirm = async () => {

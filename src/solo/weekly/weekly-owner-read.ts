@@ -2,7 +2,7 @@ import { readWeeklyCommitmentProjection } from "../../../supabase/functions/_sha
 import type { WeeklyCheck, WeeklyCommitmentSnapshot } from "../../../supabase/functions/_shared/paige-orchestration/weekly-commitment-projection";
 import type { ContextIdentity } from "../../../supabase/functions/_shared/paige-context/mod";
 import { createWeeklyDraftDeadline } from "../../../supabase/functions/_shared/paige-orchestration/weekly-draft-deadline.ts";
-import { reviewWeeklyProposal } from "./weekly-responsibility";
+import { reviewWeeklyScheduleChange } from "../../../supabase/functions/_shared/paige-orchestration/weekly-commitment-projection.ts";
 import type { WeeklySchedule } from "../../../supabase/functions/_shared/paige-orchestration/weekly-commitment-projection";
 
 export type WeeklyOwnerRead = { status: "ready"; snapshot: WeeklyCommitmentSnapshot }
@@ -74,7 +74,7 @@ export async function controlWeeklyOwner(scope: WeeklyBrowserScope, review: Week
         && now?.actorId === origin.actorId && now.tenantId === origin.tenantId && now.epoch === origin.epoch;
     } catch { return false; }
   };
-  const proposed = action === "configure" && schedule ? reviewWeeklyProposal(schedule.weekday, schedule.local_time, schedule.timezone) : null;
+  const proposed = action === "configure" && schedule ? reviewWeeklyScheduleChange(expected.schedule, schedule) : null;
   if (!["pause", "cancel", "configure"].includes(action) || action === "configure" && !proposed || action !== "configure" && schedule !== undefined
     || !uuid.test(origin.actorId) || !uuid.test(origin.tenantId)
     || !uuid.test(expected.id) || !Number.isSafeInteger(expected.revision) || expected.revision < 1 || !matches()) return { status: "refused" };

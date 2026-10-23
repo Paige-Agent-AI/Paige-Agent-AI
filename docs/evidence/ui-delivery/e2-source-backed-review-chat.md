@@ -68,3 +68,32 @@ other seven assigned analytics states and all actor Access evidence unchanged.
 **Experiential:** actual complete Chat-to-artifact-to-reload/recovery remains owed.
 **Founder Acceptance:** NOT_ACCEPTED; historical9PASS/0FAIL and supplement
 12PASS/0FAIL/4BLOCKED preserved; all19/nine requirements remain mandatory.
+
+## Reviewed recovery dependency and actual-main composition
+
+Original3e8460b33253a286ba347972c2bac333461bfba2 earned all applicable exact-head
+checks/two web statuses SUCCESS, including genuine normal Preview, actual Edge
+type ratchet and full database suite. This is historical, not combined-head CI.
+The same small consumer is now composed with existing recovery dependency
+993420e79807cf61bc1eeca1d2afde9cc6f4a9b8 and actual main
+df7441d7104f99934a5d8fe37d68b66ec1496430; neither original owner branch is modified.
+Release order remains recovery first, then this original document consumer.
+
+Only29 literal source fingerprints conflicted. Each was first resolved to the
+verified incoming value, with an inverse byte comparison proving every parent
+extractor/metadata/dependency byte retained plus the historical E02 comment.
+Independent read-only decomposition reproduces all29 parent baseline bindings/
+122 dependencies and again isolates only enclosing-handler identity15; every
+dispatch/control/other identity/helper/import remains exact. The combined Chat
+blob is c82273249f6ec7507e634e318b3124d3542c2ffb; own diff versus the dependency is
+the original document branch/schema/import only. Incoming orchestrator source is
+unchanged. Renewed witness is in the same source-binding.json; original3e witness
+remains in Git history. No extractor or authority waiver, whole-handler replacement,
+new engine, actor/provider permission or activation.
+
+Final combined-source regressions, separate lower-assurance review, exact-head CI
+and actual normal Edge readback must be completed; no initial green is borrowed.
+Known O16 visibility gap is tracked in ANT52/2529d636 and ANT161/de30e384: ordinary
+Stop truthfully warns display-only while live, but that notice is absent after
+reload. Original question/new read response persist; backend cessation is not
+proven. This consumer adds no frontend workaround or new status store.

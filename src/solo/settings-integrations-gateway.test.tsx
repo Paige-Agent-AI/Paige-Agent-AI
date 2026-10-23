@@ -1285,6 +1285,26 @@ describe("An unreadable account is never rendered as an empty one", () => {
 });
 
 describe("A failure belongs to the tool it happened on", () => {
+  it("names the provider-side revocation step when disconnecting (the credential outlives the disconnect)", async () => {
+    // EXP10 §2: "disconnect and revoke its permissions" has two halves. The disconnect clears
+    // Paige's copy and approvals HERE; the credential itself stays valid at the provider until
+    // the tenant acts there — the confirmation must say so, in the provider's own words.
+    world({ rows: [
+      row({ provider_key: "slack", label: "Operations workspace" }),
+      row({ connection_id: "conn-2", label: "Ops server" }),
+    ] });
+    const { host } = await render();
+    await click(host.querySelector('[data-gateway-tool="conn-1"]'));
+    await click(byText(host, "Disconnect"));
+    expect(dialog(host)?.textContent).toMatch(/In Slack: a workspace admin can remove the app/i);
+    await click(byText(host, "Keep it"));
+    await click(host.querySelector('[data-gateway-tool="conn-2"]'));
+    await click(byText(host, "Disconnect"));
+    // A generic-remote tool gets the honest rotate-at-the-provider truth, never an invented vendor step.
+    expect(dialog(host)?.textContent).toMatch(/rotating or revoking it at the provider/i);
+    expect(dialog(host)?.textContent).not.toMatch(/In Slack:/i);
+  });
+
   it("does not replay one tool's refusal as a live alert on the next tool opened", async () => {
     world({
       rows: [row(), row({ connection_id: "conn-2", label: "Docs tool" })],

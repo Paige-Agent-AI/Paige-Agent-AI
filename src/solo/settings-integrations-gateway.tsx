@@ -751,6 +751,27 @@ function Catalogue({
 }
 
 /* ── Detail (re-key / disconnect / honest tool state) ────────────────────────── */
+
+/**
+ * The provider-side half of "disconnect and revoke" (EXP10): disconnecting here removes
+ * PAIGE's stored credential and every approval, but the credential itself stays VALID at the
+ * provider until the tenant acts there. Each connectable provider's real step, honestly named;
+ * an unknown provider gets the generic rotate-the-credential truth instead of an invented one.
+ */
+function providerRevokeStep(providerKey: string | null): string {
+  switch (providerKey) {
+    case "slack":
+      return "In Slack: a workspace admin can remove the app (Tools & settings → Manage apps), or rotate the token you pasted — until then the token itself stays valid at Slack.";
+    case "gohighlevel":
+      return "In GoHighLevel: delete the Private Integration in the sub-account's or agency's Settings → Private Integrations, wherever it was created — the token stays valid at HighLevel until deleted there.";
+    case "n8n":
+      return "In n8n: revoke the API key or disconnect the OAuth client under n8n's settings — the key stays valid at your n8n until revoked there.";
+    case "zapier":
+      return "In Zapier: disconnect or regenerate the MCP connection in your Zapier MCP settings — the credential stays valid at Zapier until then.";
+    default:
+      return "Wherever this credential came from: rotating or revoking it at the provider is the step that kills it — disconnecting here removes Paige's copy only.";
+  }
+}
 /* ── The actions a connection offers ──────────────────────────────────────────
    Until this shipped, the drawer ended in a paragraph saying that choosing which
    actions Paige may use "needs a change on Paige's side that hasn't shipped yet."
@@ -1359,6 +1380,9 @@ function DisconnectConfirm({ gw, tool, onDone, onCancel }: { gw: UseMcpGateway; 
   return (
     <>
       <div className="ig-gw-warn" role="note"><span>Either way, Paige stops using {tool.label} right now.</span></div>
+      {/* The provider-side revocation step (EXP10): the disconnect clears Paige's copy + approvals;
+          the credential itself lives on at the provider until the tenant acts there. */}
+      <p className="ig-note" role="note">{providerRevokeStep(tool.providerKey)}</p>
       {message && <div className="ig-error" role="alert"><TriangleAlert aria-hidden size={14} /><span>{message}</span></div>}
       <div
         className="ig-gw-choices"

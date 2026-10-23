@@ -157,3 +157,21 @@ and head from the dispatched ref, so the changed-set, the tsc-baseline + regress
 the eslint/gold changed-src gates, and the Deno edge ratchet all run exactly as they would on
 a PR. `pull_request` and `push` runs are unchanged. The dispatched ref's own `ci.yml` must
 carry the trigger, so sync `main` into a stale branch before dispatching it.
+
+The standalone required checks also expose exact-ref recovery:
+
+```
+gh workflow run migration-lint.yml --ref <pr-branch>
+gh workflow run security-audit.yml --ref <pr-branch>
+gh workflow run ui-delivery-evidence.yml --ref <pr-branch>
+```
+
+These run the existing linter, locked production-dependency audit and UI evidence
+guard. The two changed-file checks verify the checkout equals `GITHUB_SHA`, then
+compare the exact head with its merge base against freshly fetched `origin/main`.
+Their normal PR/push comparisons and assertions remain unchanged. A manually
+dispatched UI check has its own ref-based concurrency group; it cannot cancel
+another PR's normal check. Record the actual run/head/results for every required
+check. A missing, skipped or earlier-head check is never a successful current
+check. These triggers do not bypass branch protection, Preview, review or release
+and provider gates.

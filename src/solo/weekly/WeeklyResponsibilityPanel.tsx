@@ -6,6 +6,7 @@ import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import { planningItemHref, reviewWeeklyProposal, WEEKDAYS, weeklyInstantLabel, weeklyStateLabel } from "./weekly-responsibility";
 import type { WeeklyFutureControl, WeeklyOwnerRead } from "./weekly-owner-read";
 import type { WeeklyCheck } from "../../../supabase/functions/_shared/paige-orchestration/weekly-commitment-projection";
+import { WeeklyScheduleChange, type WeeklyScheduleDraft } from "./WeeklyScheduleChange";
 import "./weekly-responsibility.css";
 
 export function WeeklyResponsibilityPanel({ read, refresh, pathname, onRequestPrepared, draftComposer, control, controlBusy = false }: {
@@ -22,6 +23,12 @@ export function WeeklyResponsibilityPanel({ read, refresh, pathname, onRequestPr
   const [reviewing, setReviewing] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [stopReview, setStopReview] = useState<{ check: WeeklyCheck; action: "pause" | "cancel" } | null>(null);
+  const [changing, setChanging] = useState<{ check: WeeklyCheck; draft: WeeklyScheduleDraft } | null>(null);
+  const originalChange = changing?.check;
+  const change = snapshot?.checks.find(check => originalChange && check.automation_id === originalChange.automation_id
+    && check.revision === originalChange.revision && check.name === originalChange.name && check.schedule_status === originalChange.schedule_status
+    && check.schedule.weekday === originalChange.schedule.weekday && check.schedule.local_time === originalChange.schedule.local_time
+    && check.schedule.timezone === originalChange.schedule.timezone) ?? null;
   const stop = useMemo(() => {
     if (!stopReview || !snapshot) return null;
     const original = stopReview.check;
@@ -39,6 +46,9 @@ export function WeeklyResponsibilityPanel({ read, refresh, pathname, onRequestPr
   useEffect(() => {
     if (stopReview && (read.status === "refused" || read.status === "unavailable" || read.status === "ready" && !stop)) setStopReview(null);
   }, [read.status, stop, stopReview]);
+  useEffect(() => {
+    if (changing && (read.status === "refused" || read.status === "unavailable" || read.status === "ready" && !change)) setChanging(null);
+  }, [read.status, change, changing]);
   useEffect(() => { if (stopFinished) refreshButton.current?.focus(); }, [stopFinished]);
   useEffect(() => { if (stop) back.current?.focus(); }, [stop]);
   const dismissStop = () => { setStopReview(null); opener.current?.focus(); };
@@ -107,9 +117,22 @@ export function WeeklyResponsibilityPanel({ read, refresh, pathname, onRequestPr
           <details className="e5-weekly-controls"><summary>Future executions</summary><p>Pause, change, resume and cancel affect future runs. They do not terminate an act already processing.</p>
             <div className="e5-weekly-actions">{(["pause", "cancel"] as const).map(action => <button type="button" key={action}
               disabled={!control || controlBusy || check.schedule_status === "cancelled" || action === "pause" && check.schedule_status === "paused"}
-              onClick={event => { opener.current = event.currentTarget; setFeedback(""); setStopReview({ check, action }); }}>
+              onClick={event => { opener.current = event.currentTarget; setChanging(null); setFeedback(""); setStopReview({ check, action }); }}>
               {action === "pause" ? "Pause future checks" : "Cancel responsibility"}</button>)}
-              <button type="button" disabled>Change unavailable</button><button type="button" disabled>Resume unavailable</button></div>
+              <button type="button" disabled={!control || controlBusy || check.schedule_status === "cancelled"} onClick={event => {
+                opener.current = event.currentTarget; setStopReview(null); setFeedback(""); setChanging({ check, draft: { ...check.schedule, reviewing: false } });
+              }}>Change schedule</button><button type="button" disabled>Resume unavailable</button></div>
+            {change === check && changing && control && <WeeklyScheduleChange key={`${check.automation_id}:${check.revision}`} check={check} control={control} busy={controlBusy}
+              draft={changing.draft} onDraftChange={draft => setChanging(value => value ? { ...value, draft } : null)}
+              onDismiss={() => { setChanging(null); opener.current?.focus(); }} onFinished={result => {
+                setChanging(null); setStopFinished(value => value + 1);
+                setFeedback(result.status === "saved" ? "Schedule saved as an unapproved definition. Future checks require fresh authorization; history is preserved."
+                  : result.status === "stale" ? "Your reviewed version changed. Refresh and review the current responsibility."
+                    : result.status === "refused" ? "Current workspace or authorization could not be verified. Inspect the original responsibility before repeating the change."
+                      : result.status === "unsupported" ? "This schedule change is not available. Refresh and inspect the current responsibility."
+                        : result.status === "unavailable" ? "The request could not start. Refresh before reviewing it again."
+                          : "The result is unknown; the schedule may have changed. Refresh to inspect it. Nothing will be repeated automatically.");
+              }} />}
             {stop?.check === check && <div className="e5-weekly-planning" role="group" aria-label="Review future checks"
               onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); dismissStop(); } }}>
               <h4>{stop.action === "pause" ? "Pause future checks?" : "Cancel this responsibility?"}</h4>
@@ -119,7 +142,7 @@ export function WeeklyResponsibilityPanel({ read, refresh, pathname, onRequestPr
               <div className="e5-weekly-actions"><button ref={back} type="button" onClick={dismissStop}>Keep current schedule</button>
                 <button type="button" disabled={controlBusy} onClick={() => void confirmStop()}>{stop.action === "pause" ? "Confirm pause" : "Confirm cancellation"}</button></div>
             </div>}
-            <p>Changing, authorizing and resuming require their original owner-only action path and remain unavailable here.</p></details>
+            <p>Authorizing and resuming require their original owner-only action path and remain unavailable here.</p></details>
         </article>;
       })}
       {snapshot.has_more && <p>This bounded read shows up to 50 responsibilities; more records may exist.</p>}

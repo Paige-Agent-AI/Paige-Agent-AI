@@ -242,6 +242,8 @@ try{
         for(const level of [1,2,3])await page.getByRole('option',{name:`Heading ${level}`,exact:true}).waitFor();
         if(!labelsCaptured){await capture('actual-editor-heading-options');labelsCaptured=true;behavior.push('actual native Undo/Redo shortcuts are expanded','all three real heading options and Agreement content label remain accessible');}
         await page.getByRole('option',{name:'Heading 1',exact:true}).press('Escape');
+        await page.waitForFunction(()=>document.activeElement?.getAttribute('role')==='combobox'&&document.activeElement?.getAttribute('aria-label')==='Block type',null,{timeout:2000});
+        assert.equal(await page.getByRole('combobox',{name:'Block type',exact:true}).evaluate(el=>el===document.activeElement),true,'native heading-menu Escape must return focus to its original editor trigger');
       }
     };
     const exactWords='# Supplied advisory scope\n\nRetain the actual business responsibilities.\n\tAnd the supplied line breaks.\n';

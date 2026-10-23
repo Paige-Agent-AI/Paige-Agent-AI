@@ -61,6 +61,26 @@ try{
   const presented=input.body_markdown+'\n\n'+prepared.appendix;
   const key=`${tenant}/${agreementId}/presented-commercial-fixture.pdf`,pdfHash='a'.repeat(64);
   const migration=read('supabase/migrations/20271113230004_agreement_commercial_presentation.sql');sql(migration);sql(migration);
+  if(!process.argv.includes('--baseline-source-validation')){
+    const validation=read('supabase/migrations/20271113340004_agreement_commercial_source_validation.sql');sql(validation);sql(validation);
+  }
+  const validationSignature='public._validate_paige_commercial_presentation(uuid,uuid,jsonb,text,text,text,text,text,text)';
+  const validate=(payload=prepared.payload,who=actor)=>`SELECT public._validate_paige_commercial_presentation('${who}','${tenant}',${literal(payload)},${text(digest(canonicalPresentationJson(payload)))},${text(presented)},${text(digest(presented))},${text(key)},${text(pdfHash)});`;
+  const sourceState=()=>sql(`SELECT jsonb_build_object('agreement',to_jsonb(a),'terms',to_jsonb(t),'invoice',to_jsonb(i),
+    'events',(SELECT jsonb_agg(to_jsonb(e) ORDER BY e.id) FROM paige_agreement_events e WHERE e.agreement_id=a.id))
+    FROM paige_agreements a,tenant_client_agreements t,paige_invoices i WHERE a.id='${agreementId}' AND t.id='${termsId}' AND i.id='${invoiceId}';`);
+  const originalSourceState=sourceState();
+  sql(validate());checks++;
+  assert.equal(sourceState(),originalSourceState,'source validation must not freeze, revise, invoice, sign or create an event');checks++;
+  for(const role of ['anon','authenticated','service_role']){
+    assert.throws(()=>sql(`SET ROLE ${role};`+validate()),/42501/);checks++;
+    assert.equal(sql(`SELECT has_function_privilege('${role}','${validationSignature}','EXECUTE');`),'f');checks++;
+  }
+  assert.equal(sql(`SELECT NOT prosecdef AND proconfig=ARRAY['search_path=""'] FROM pg_proc WHERE oid='${validationSignature}'::regprocedure;`),'t');checks++;
+  assert.throws(()=>sql(validate(prepared.payload,'99999999-0000-4000-8000-000000000001')),/42501/);checks++;
+  const changedPrincipal=structuredClone(prepared.payload);changedPrincipal.principal_minor++;
+  assert.throws(()=>sql(validate(changedPrincipal)),/40001/);checks++;
+  assert.equal(sourceState(),originalSourceState,'refused validation cannot change the original commercial records');checks++;
   const call=(payload=prepared.payload,payloadDigest=prepared.payload_digest,who=actor,role='service_role')=>`SET ROLE ${role}; SELECT _freeze_paige_commercial_presentation('${who}','${tenant}',${literal(payload)},${text(payloadDigest)},${text(presented)},${text(digest(presented))},${text(key)},${text(pdfHash)});`;
   // Recomputed adversarial digests must fail source/semantic validation,
   // rather than merely failing the transport checksum.
@@ -147,5 +167,5 @@ try{
   assert.equal(sql(`SELECT status FROM paige_agreements WHERE id='${a2.id}';`),'draft');checks++;
   assert.equal(sql(`SELECT count(*) FROM paige_agreement_signers WHERE agreement_id='${a2.id}' AND (token_hash IS NOT NULL OR status='signed');`),'0');checks++;
   assert.equal(sql(`SELECT has_function_privilege('service_role','_freeze_paige_commercial_presentation(uuid,uuid,jsonb,text,text,text,text,text,text)','EXECUTE') AND NOT has_function_privilege('authenticated','_freeze_paige_commercial_presentation(uuid,uuid,jsonb,text,text,text,text,text,text)','EXECUTE') AND NOT has_function_privilege('anon','_freeze_paige_commercial_presentation(uuid,uuid,jsonb,text,text,text,text,text,text)','EXECUTE');`),'t');checks++;
-  console.log(JSON.stringify({result:'PASS',checks,migrationReplay:2,concurrentSessions:2,observedLockWaits:1,scope:'Original native commercial presentation only; synthetic Auth/PDF hash is not signing, provider or customer acceptance'}));
+  console.log(JSON.stringify({result:'PASS',checks,migrationReplay:2,sourceValidationMigrationReplay:2,concurrentSessions:2,observedLockWaits:1,scope:'Original native commercial validation/freeze only; synthetic Auth/PDF hash is not signing, provider or customer acceptance'}));
 }finally{database='postgres';sql(`DROP DATABASE ${own};`);}

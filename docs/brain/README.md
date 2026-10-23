@@ -87,21 +87,34 @@ rewrite. Native owner/business/role/source/party/CAS/receipt boundaries remain.
 Source parity is separate from ordinary role/provider/customer acceptance.
 [Evidence](../evidence/ui-delivery/e04-owner-document-preparation-api.md).
 
-## EXP04 exact PDF and assigned fields — combined preparation candidate
+## EXP04 exact PDF and assigned fields — released subset, keyboard repair
 
 Sole original E04 lead retains all12 outcomes. Existing2604 consumes2605 editor
 and pending-party Not signed repair, reusing the same native engine, actual SDK,
 immutable PDF/field versions, one leave guard, history and same-request recovery.
-Current UI/controller/harness sources are preserved; no own SQL/Edge/workflow/
-permission/provider/Chat activation. Source986/65 PASS after unchanged5s upload
-timeout→isolated170ms→complete quiet rerun; failed run retained. Lint0/two incumbent
-warnings, gold/UTF8 pass, Impeccable0 blocking/18 incumbent advisories; strict
-production audit0 high/critical with8 moderate remaining. Five fresh compiled
-source drives20/19/26,20/14/34,20/11/31,20/10/22,20/16/29 PASS/zero errors/142 pin
-comparisons exact. Synthetic Auth/API/RPC only; earlier type10/6 is supporting,
-fresh exact-head gates remain required. Existing-live owner draft/reload/history
-is protected ANT52, not this candidate or full acceptance. Current candidate is
-LOCAL, not deployed/accepted. All12, exact-map approval/effective terms/PRE-1/2,
+Released2604 reviewed6b8, main4dac/tree9a8 after all10 applicable exact-head checks,
+two statuses and normal schema-free Preview SKIP. Reviews5620971691/5621265256
+are AUTHOR-REVIEW / LOWER ASSURANCE. Productiondpl_E1YR69zBJb2bjJwyCCRKiwCv3rFV
+READY; canonical public build4dac-mvk2n058 and served owning modules read back.
+Actual bounded ordinary-owner PDF/one assigned field/save/full reload/original
+event/version history and earlier read-only selection are protected ANT52; no
+send/signature/payment or new identity. This author-run proof is not Central QA.
+
+Actual native heading-menu Escape then revealed BODY focus after dismissal.
+Current narrow repair observes only its own native aria-controls pair and returns
+focus after dismissal; it never handles navigation or changes supplied wording.
+ONE original Sales leave guard remains. Original browser assertion reproduced RED;
+corrected native20 frames/19 paths/26 pins/zero errors and8 portal-context controls
+PASS. Two broader runs each timed out in a different unchanged5s signing-link
+case (993/994 passed); a separate restricted file run102/103 failed too. All
+failed runs remain failed. SAME unchanged103-case file then103/103 PASS and full
+994/994 in66 suites PASS under normal Windows process permissions; no timeout,
+assertion or transport guard changed. Type ratchet10/current6/no new diagnostics
+PASS. Required exact-head hosted CI remains a separate release gate.
+No own SQL/Edge/workflow/permission/provider/Chat activation. Other four source
+drive records remain dated2604 supporting proof, not refreshed current pin claims.
+Focus repair is LOCAL/NOT_DEPLOYED; actual owner recheck remains owed. All12,
+exact-map approval/effective terms/PRE-1/2,
 stable import recovery/Stripe/Comms/onboarding/delivery/Portal/Chat and founder
 acceptance remain owed. Agreement capability PARTIAL, exact fields Chat/Live
 UNAVAILABLE; no algorithm/catalogue promotion. Detailed history stays in the
@@ -1660,7 +1673,9 @@ Selective native/pure formatter reuse from2192/179e52 retains exact original agr
 Template workspace now composes actual main1e1073133, retaining both template and C7 contracts. Native template#2545/220004 is actually production-applied with exact catalog/web readback; earlier unapplied notes above are historical. Dormant commercial#2550 is merged but230004 rolled back at the original lock limit and remains NOT_APPLIED. No new template UI source is changed by this documentation composition; all25 rendered pins are rechecked. Fresh exact-head CI/review/release and actual owner/staff/client/full Experience acceptance remain required; no Chat/provider/signing/payment or completed legal review claimed.
 
 ### EXP04 C7 source preparation — October22 dormant read port
-Selective original2192/179e52 reader/tests remain exact0a282f after composition with coherent2604/6b8 preparation source; no runtime consumer or permission change. Fresh canonical formatter/reader/field Deno25 tests/110 steps PASS under unchanged runtime denials/type checks. Earlier13/63 is historical, not summed. Existing same-client agreement/invoice/terms, actor/business/admin, exact wording/microsecond revisions and private-field refusal checks remain; no new money/date engine. Canonical exact-PDF/assigned-map approval BEFORE C7, atomic original operation/Rail, signing/effective terms and actual ordinary-role/provider/full12/founder acceptance remain owed. Native2599/300004/Edge37 prerequisite is separately readback-verified, not the earlier hold. Parent2604 review/CI/merge/web proof and this reader's own fresh exact-head gates remain required. [Source evidence](../evidence/ui-delivery/e04-commercial-preparation-source.md).
+Original2564 source is merged1882d0142323d116ce95f61ce7b86f85d3ab2446 after all11 exact-head checks/two statuses and lower-assurance reviews5621665868/5621939287. Web source builddpl_3u3LXFfLi4QTejECuSM96KJEktEk READY/public exact1882-mvk5803x read back. Reader/test bytes remain exact0a; strict Deno25 tests/110 steps PASS with all runtime denials/type checks. This is UNMOUNTED source, not an executable runtime consumer or deployed customer capability; static graph0 affected Edge entrypoints is not a production-importer census. Original same-client facts, actor/business/admin, exact wording/revisions and refusals remain, no new money/date engine. Parent2604/2599/300004/Edge37 release proof is separately established. [Original source evidence](../evidence/ui-delivery/e04-commercial-preparation-source.md).
+
+Next private native source validation is LOCAL/NOT_DEPLOYED: reuse original230004 checks before freeze, owner-only invoker/no API grant; original freezer ABI/service grant/replay/CAS/write/event remain. Causal absent-helper42883 then66 native controls/two migration replays/two sessions/observed wait PASS on isolated PostgreSQL16.14, fixtures removed/own cluster stopped. Original production body4116200a24628e9149187e55eea2fb02 matches source; proposed helper absent. No prep consumer, hold removal, obligation/signature/provider or activation. Ordered frontier (including active330002), final review/CI/full Preview/native readback remain gates. Exact economics/PDF/assigned-map approval BEFORE C7, operation/Rail/effective terms/PRE1/2 and actual roles/provider/all12/founder acceptance remain owed. [Bounded native evidence](../evidence/ui-delivery/e04-commercial-source-validation.md).
 
 ### EXP04 original upload intent — development
 

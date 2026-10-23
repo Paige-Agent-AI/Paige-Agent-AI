@@ -2,8 +2,8 @@
 // runner, customer identity, hosted object, signature, provider or acceptance.
 import assert from 'node:assert/strict';
 import {randomUUID,createHash} from 'node:crypto';
-import {prepareAgreementFields} from '../../supabase/functions/_shared/agreements/field-preparation.ts';
-import {canonicalPresentationJson,prepareCommercialPresentation,commercialPresentationText} from '../../supabase/functions/_shared/agreements/commercial-presentation.ts';
+import {prepareAgreementFields,prepareCommercialAgreementFields} from '../../supabase/functions/_shared/agreements/field-preparation.ts';
+import {canonicalPresentationJson} from '../../supabase/functions/_shared/agreements/commercial-presentation.ts';
 import {assembleFixedRepaymentSchedule} from '../../supabase/functions/_shared/sales-collections/model.ts';
 
 export async function proveDocumentPreparations({sql,read,context,tenant,actor,client,fresh,quote,startSession,observe}){
@@ -153,14 +153,14 @@ export async function proveDocumentPreparations({sql,read,context,tenant,actor,c
     items:[{unit_minor:350000,quantity:1,catalog_facts:{product_id:offer,unit_minor:350000,currency:'usd'}}]};
    sql(`INSERT INTO paige_invoices VALUES('${invoice}','${tenant}','${client}','draft','usd',1,1,${literal(draft)},now());`);
    const times=json(`SELECT jsonb_build_object('terms',t.updated_at,'invoice',i.updated_at) FROM tenant_client_agreements t,paige_invoices i WHERE t.id='${terms}' AND i.id='${invoice}';`);
-   const proposed=await prepareCommercialPresentation({schema_version:2,engagement:{starts_on:'2026-10-15',ends_on:null,price_basis:'negotiated'},
+   const input={schema_version:2,engagement:{starts_on:'2026-10-15',ends_on:null,price_basis:'negotiated'},
     source:{tenant_id:tenant,client_id:client,offer_id:offer,agreement_id:source.agreement_id,agreement_version:source.version,agreement_updated_at:source.updated_at,body_source:'paige_draft',status:'draft',content_sha256:null,
      terms_id:terms,terms_version:1,terms_updated_at:times.terms,invoice_id:invoice,invoice_version:1,invoice_draft_version:1,invoice_updated_at:times.invoice},
-    title:words.title,body_markdown:words.body,principal_minor:350000,currency:'usd',collection_terms:schedule.terms,conditions,lines:[{unit_minor:350000,quantity:1}]});
-   const base=await prepare(source),body=commercialPresentationText(words.body,proposed),manifest=JSON.parse(base.manifest);
-   manifest.schema_version=2;manifest.commercial={payload:proposed.payload,payload_digest:proposed.payload_digest,presented_body_markdown:body,presented_body_sha256:hex(body)};
-   const canonical=canonicalPresentationJson(manifest);
-   return {p:{...base,manifest:canonical,digest:hex(canonical),commercial:proposed.payload_digest},terms,invoice};
+    title:words.title,body_markdown:words.body,principal_minor:350000,currency:'usd',collection_terms:schedule.terms,conditions,lines:[{unit_minor:350000,quantity:1}]};
+   const base=await prepare(source),baseManifest=JSON.parse(base.manifest);
+   const prepared=await prepareCommercialAgreementFields(source,baseManifest.document,baseManifest.fields,input);
+   return {p:{...base,manifest:canonicalPresentationJson(prepared.manifest),digest:prepared.preparation_sha256,
+    commercial:prepared.manifest.commercial.payload_digest},terms,invoice};
   };
   const c=await makeCommercial(),cp=c.p,sourceBefore=stamp(cp.source.agreement_id);
   const financialState=()=>sql(`SELECT jsonb_build_object('terms',to_jsonb(t),'invoice',to_jsonb(i)) FROM tenant_client_agreements t,paige_invoices i WHERE t.id='${c.terms}' AND i.id='${c.invoice}';`);

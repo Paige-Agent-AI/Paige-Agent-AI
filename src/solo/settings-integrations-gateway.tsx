@@ -125,7 +125,7 @@ const CATALOGUE: ReadonlyArray<CatItem> = [
   { n: "monday.com", c: "Productivity", m: "connect", g: "mo", d: "60+ read/write tools.", url: "https://mcp.monday.com/mcp" },
   { n: "Google Workspace", c: "Productivity", m: "setup", g: "GW", d: "Gmail, Calendar, Drive. Developer Preview + per-client setup — bridge via Zapier meanwhile.", pop: true, r: 2 },
   { n: "Microsoft 365", c: "Productivity", m: "zapier", g: "MS", d: "Mail, Calendar, Teams. No direct path for Paige yet — bridge via Zapier." },
-  { n: "Slack", c: "Productivity", m: "setup", g: "Sl", d: "Search/read/send messages, files. Workspace admin approval.", url: "https://mcp.slack.com/mcp" },
+  { n: "Slack", c: "Productivity", m: "connect", pk: "slack", auth: "bearer", g: "Sl", pop: true, r: 4, d: "Search, read and send messages in channels you connect. Create a Slack app in your workspace (internal), add the MCP tool scopes, paste its user token here.", net: "Slack runs its own hosted server — the token's granted scopes decide what Paige can see and do. Workspace admin approval applies.", url: "https://mcp.slack.com/mcp" },
   { n: "Asana", c: "Productivity", m: "setup", g: "As", d: "Tasks, projects.", url: "https://mcp.asana.com/v2/mcp" },
   { n: "Zoom", c: "Productivity", m: "setup", g: "Zm", d: "Meetings, recordings, notes." },
   { n: "Miro", c: "Productivity", m: "setup", g: "Mi", d: "Boards, diagrams. Verify + register." },
@@ -1592,8 +1592,15 @@ function ScopedIntegrationsGatewaySection({
               label: item.manual ? undefined : item.n,
               url: item.url,
               providerKey: item.pk,
-              // A preset with required headers is a Token + headers contract by definition.
-              auth: item.pk && item.req?.length ? "headers" : undefined,
+              // A preset with required headers is a Token + headers contract by definition; a
+              // curated row that names its proven auth mode preselects that mode (the catalogue's
+              // singular "header" is the form's "headers" choice). The GENERIC entry stays
+              // unprefilled by its own documented contract ("nothing prefilled, since it names no
+              // vendor") — its historical auth field is dead data, never a preselection.
+              auth: item.manual ? undefined
+                : item.pk && item.req?.length ? "headers"
+                : item.auth === "header" ? "headers"
+                : item.auth,
               requiredHeaders: item.req,
             } })}
             onSetup={(item) => setDrawer({ kind: "stop", item, via: "setup" })}

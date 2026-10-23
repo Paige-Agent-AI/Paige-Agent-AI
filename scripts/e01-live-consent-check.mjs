@@ -37,7 +37,7 @@ const sql=`begin;${roles}${fixtureSchema}${shims}
 -- predicate standalone; the earlier readiness-envelope chain it superseded is not
 -- needed for this fixture, exactly as production's own chain ends up here.
 ${stripTx(read('supabase/migrations/20270425000000_live_is_open_to_solo_no_enablement_ceremony.sql'))}
-${stripTx(read('supabase/migrations/20271113500000_live_acknowledgement_before_audio.sql'))}
+${stripTx(read('supabase/migrations/20271113600000_live_acknowledgement_before_audio.sql'))}
 ${read('supabase/tests/e01_live_consent.sql')}
 rollback;`;
 const result=spawnSync(process.env.PSQL_BIN??'psql',['-X','-v','ON_ERROR_STOP=1',url],{input:sql,encoding:'utf8',timeout:60000,windowsHide:true});

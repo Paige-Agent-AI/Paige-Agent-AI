@@ -20,7 +20,7 @@ TRUTHFUL_STATE_LABELS: PASS: refusal copy distinguishes actionable (acknowledge)
 SOLO_UI: YES: one Solo shell for every tenant; the gate reads the caller's own canonical row.
 UNVERIFIED: production migration readback (post-merge); rendered disclosure/acceptance frames; the founder's own consent→audio pass — PROOF OWED to the single final evaluation window.
 
-INTERNAL_BUILD_IDENTITY: code-commit=c09557c53c9de47bbcb274b4beb2f5b27d7b5908; deployment=PROOF_OWED(undeployed fix branch; post-merge deploy-migrations + deploy-edge readbacks owed); environment=local; migrations=PROOF_OWED(20271113500000_live_acknowledgement_before_audio);edge=PROOF_OWED(paige-live-session); evidence=scripts/e01-live-consent-check.mjs
+INTERNAL_BUILD_IDENTITY: code-commit=c09557c53c9de47bbcb274b4beb2f5b27d7b5908; deployment=PROOF_OWED(undeployed fix branch; post-merge deploy-migrations + deploy-edge readbacks owed); environment=local; migrations=PROOF_OWED(20271113600000_live_acknowledgement_before_audio);edge=PROOF_OWED(paige-live-session); evidence=scripts/e01-live-consent-check.mjs
 RELEASE_CHANNEL: development: local/development build environment; production release follows the standing small-PR merge/deploy/readback gate.
 RELEASE_CLASSIFICATION: internal-only: consent-gate repair ahead of the single EXP01 founder evaluation; the Live surface itself is unchanged.
 CUSTOMER_RELEASE_IDENTITY: none: fix branch only; founder evaluation precedes any release identity.

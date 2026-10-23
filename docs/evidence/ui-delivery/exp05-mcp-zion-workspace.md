@@ -28,6 +28,7 @@ PROTECTED_SEAMS: original MCP authentication/authority/approval adapter, server 
 INTERNAL_BUILD_IDENTITY: base=8932aea03af7e5c99fea8fdb9c0e01601a430ba9; exact candidate in immutable Git review; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-mcp); evidence=docs/evidence/ui-delivery/exp05-mcp-zion-workspace.md
 RELEASE_CHANNEL: development: explicit synthetic transport only, no production business mutation or provider call.
 RELEASE_CLASSIFICATION: internal-only: original context integration, not an activated or authenticated ZION capability.
+CUSTOMER_RELEASE_IDENTITY: none: no earned customer version or announcement for this internal context repair.
 RELEASE_NOTE_REQUIRED: NO: bounded internal repair; no earned customer release identity or announcement.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: source/transport proof; actual MCP/customer/Live execution and complete EXP05 remain unverified. All eleven Operations catalogue recipes stay Listed / Unverified.
 RELEASE_RECOVERY: position=reviewed forward correction preserving original invocation/history and uncertain-outcome no-replay; reference=original EXP05 delivery packet and agents.delegate contract.

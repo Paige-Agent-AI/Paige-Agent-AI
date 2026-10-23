@@ -761,7 +761,10 @@ Deno.serve(async (req) => {
         dispatched: isDispatch,
         latencyMs: latency,
       });
-      if (tenantId && !receiptRecorded) return ok({ ok: false, outcome_unknown: true,
+      // The original ActionBus draft worker has no human actor and owns its own
+      // work/receipt transition. Preserve that path without inventing an actor.
+      // A JWT caller cannot select this exclusion: ctx.user_id is server-verified.
+      if (tenantId && ctx.user_id && !receiptRecorded) return ok({ ok: false, outcome_unknown: true,
         invocation_id: invocationId, outcome_recorded: true, receipt_unverified: true,
         error: "The original specialist outcome is saved, but its receipt could not be confirmed. Inspect the original work before repeating it." }, 202);
 

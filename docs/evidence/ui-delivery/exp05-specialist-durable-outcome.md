@@ -16,7 +16,7 @@ KEYBOARD_FOCUS: NOT_APPLICABLE: no control, keyboard route, event or focus behav
 ZOOM_REFLOW: NOT_APPLICABLE: no dimensions, overflow, typography or layout changes.
 REDUCED_MOTION: NOT_APPLICABLE: no animation, motion preference, timer or haptic changes.
 STATE_COVERAGE: PASS: original work-registration refusal, confirmed completion, confirmed runtime failure and post-start uncertainty; no optimistic retry or invented result.
-TRUTHFUL_STATE_LABELS: PASS: original saved outcome and receipt acknowledgment are required for a tenant completion response. Async dispatch remains unobserved completion; actual ZION execution and all eleven Operations catalogue recipes remain unpromoted.
+TRUTHFUL_STATE_LABELS: PASS: original saved outcome and receipt acknowledgment are required for an actor-bound tenant completion response. Existing actorless internal draft calls retain their receipt exclusion explicitly; no identity is invented. Async dispatch remains unobserved completion; actual ZION execution and all eleven Operations catalogue recipes remain unpromoted.
 SOLO_UI: NO: shared backend result repair changes no SOLO frontend source or geometry; the tenant-neutral original actor/resource/entitlement contracts remain.
 UNVERIFIED: exact-head CI, source/Edge production release/readback, ordinary authenticated customer outcome/reload/cohorts/Live, full ZION/automation integration and all ten EXP05 outcomes/E5-CV1–9.
 OWNER_INTENT: reliable Operations/ZION work with real original records, truthful receipts and safe recovery, delivered without founder testing of each increment.
@@ -52,7 +52,17 @@ An invocation UUID is not an exactly-once request key. A new HTTP invocation can
 still create a new assignment. The source must not be used to claim replay-safe
 delegation or enable a known incomplete specialist path. Platform-only calls keep
 their original receipt exclusion and explicitly report `receipt_recorded:false`;
-tenant work cannot report verified completion without its canonical receipt.
+actor-bound tenant work cannot report verified completion without its canonical receipt.
+
+Extended real-caller review found a compatibility regression in the candidate:
+the original `paige-action-worker/draft.ts` posts a trusted tenant-scoped service
+request with no human actor. It owns its separate original draft/receipt transition.
+An actual worker -> whole orchestrator case failed against9517 before correction.
+The candidate now preserves that actorless internal path with explicit
+`receipt_recorded:false`, without inventing an owner. Ordinary JWT callers cannot
+select this exclusion: the trusted context always carries their verified actor.
+No worker, role, approval or provider source is changed. Exact final tests/review
+must cover this correction; review5630091222 does not approve the earlier regression.
 
 Separate source review found the generic uncertainty wording hid a known saved
 outcome when only the receipt acknowledgment failed. The corrected response

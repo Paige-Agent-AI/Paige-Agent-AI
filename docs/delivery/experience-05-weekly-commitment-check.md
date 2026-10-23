@@ -4,7 +4,7 @@
 
 REPAIR the existing orchestrator, not a new ZION runtime. Failed or malformed
 original invocation registration now prevents dispatch. The existing saved outcome
-must acknowledge the same invocation/status, and tenant completion requires the
+must acknowledge the same invocation/status, and actor-bound completion requires the
 original canonical receipt result. Post-start errors retain the original identity
 and unknown state without a repeated provider/runtime call. Existing runtime
 failure and asynchronous-dispatch distinctions remain. This does not supply a
@@ -18,6 +18,12 @@ source pins and verifier logic remain. [Evidence and orchestration contract](../
 No production invocation, provider, permission, prompt, model, schedule or trigger
 was changed. All eleven recipes remain Listed / Unverified; complete ZION,
 automations, recovery, ten outcomes/E5-CV1–9/cohorts/Live/founder proof remain owed.
+
+Real-caller review also reproduced an unintended candidate regression in the
+original actorless ActionBus drafting caller. Preserve its original explicit
+receipt exclusion and separate work transition without inventing an actor. The
+ordinary JWT path still always carries its verified actor and receipt requirement.
+This correction is not a new service authority or proof of replay-safe delegation.
 
 ## October22 — ZION original invocation receipt correction, development
 

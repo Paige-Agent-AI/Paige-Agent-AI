@@ -18,6 +18,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import ts from "typescript";
+import { draftClaimedAction } from "../../supabase/functions/paige-action-worker/draft.ts";
 
 const root = join(__dirname, "..", "..");
 const fnDir = join(root, "supabase/functions");
@@ -255,7 +256,7 @@ const invoke = { action: "tool_invoke", slug: "email-composer", input: { intent:
 
 // Exercise the REAL whole handler and canonical capability recorder. Only the
 // database/model transports are synthetic; no provider or production record.
-function durableSpecialist(options: { insert?: "error" | "invalid"; update?: "error" | "missing" | "mismatch" | "wrong-id" | "throw"; receipt?: "error" | "throw"; runtimeThrows?: boolean } = {}) {
+function durableSpecialist(options: { insert?: "error" | "invalid"; update?: "error" | "missing" | "mismatch" | "wrong-id" | "throw"; receipt?: "error" | "throw"; runtimeThrows?: boolean; actorlessWorker?: boolean } = {}) {
   const id = "cccccccc-2222-4222-8222-222222222222";
   const rows: Record<string, unknown>[] = [];
   const rpc = vi.fn(async (_name: string, ..._args: unknown[]) => {
@@ -291,7 +292,7 @@ function durableSpecialist(options: { insert?: "error" | "invalid"; update?: "er
   const h = loadEdge("paige-orchestrator", { database, stubs: { ...ORCH_STUBS,
     "_shared/model-router.ts": { ...ORCH_STUBS["_shared/model-router.ts"], routedChatCompletion: model },
   } });
-  const run = () => h.handler(post({ action: "tool_invoke", slug: "zion", input: { request: "Synthetic read-only plan" }, context: { user_id: "forged-actor" } }, bearer(USER_JWT)));
+  const run = (body: unknown = { action: "tool_invoke", slug: "zion", input: { request: "Synthetic read-only plan" }, context: { user_id: "forged-actor" } }) => h.handler(post(body, bearer(options.actorlessWorker ? SERVICE : USER_JWT)));
   return { id, rows, rpc, model, run };
 }
 
@@ -322,6 +323,19 @@ describe("EXP05 original specialist durable outcome", () => {
     expect(r.status).toBe(502); expect(await r.json()).toMatchObject({ ok: false, receipt_recorded: true, invocation_id: h.id });
     expect(h.rpc.mock.calls[0][1]).toMatchObject({ _run_id: h.id, _actor_id: USER_A, _tenant_id: TENANT_A, _outcome: "capability_failed" });
     expect(h.model).toHaveBeenCalledOnce();
+  });
+  it("the original actorless ActionBus draft remains usable without an invented actor or receipt", async () => {
+    const h = durableSpecialist({ actorlessWorker: true }), advance = vi.fn(async () => ({ error: null }));
+    const result = await draftClaimedAction({ rpc: advance, invoke: async request => {
+      const response = await h.run(request), body = await response.json();
+      expect(body).toMatchObject({ ok: true, invocation_id: h.id, receipt_recorded: false });
+      return { httpOk: response.ok, status: response.status, body };
+    } }, { id: CONTACT, tenant_id: TENANT_A, action_kind: "owner.synthetic_plan", contact_id: null,
+      conversation_id: null, title: "Synthetic bounded draft", summary: null, payload: {}, draft_subagent_slug: "zion" });
+    expect(result).toMatchObject({ kind: "drafted", invocationId: h.id });
+    expect(h.rows[0]).toMatchObject({ invoked_by: null, tenant_id: TENANT_A });
+    expect(h.rpc).not.toHaveBeenCalled(); expect(h.model).toHaveBeenCalledOnce();
+    expect(advance).toHaveBeenCalledWith("advance_action", expect.objectContaining({ p_invocation_id: h.id, p_tenant_id: TENANT_A }));
   });
 });
 

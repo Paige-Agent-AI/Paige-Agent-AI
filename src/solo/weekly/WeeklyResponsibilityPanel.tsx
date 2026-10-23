@@ -153,7 +153,7 @@ export function WeeklyResponsibilityPanel({ read, refresh, pathname, onRequestPr
                         : result.status === "unavailable" ? "The request could not start. Refresh before reviewing it again."
                           : "The result is unknown; the schedule may have changed. Refresh to inspect it. Nothing will be repeated automatically.");
               }} />}
-            {stop?.check === check && <div className="e5-weekly-planning" role="group" aria-label={stop.action === "authorize" ? "Review weekly authorization" : "Review future checks"}
+            {stop?.check === check && <div className="e5-weekly-planning" role="group" aria-label="Review future checks"
               onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); dismissStop(); } }}>
               <h4>{stop.action === "authorize" ? "Authorize future weekly checks?" : stop.action === "pause" ? "Pause future checks?" : "Cancel this responsibility?"}</h4>
               <p>{check.name} · saved revision {check.revision} · {WEEKDAYS[check.schedule.weekday - 1]} at {check.schedule.local_time} · {check.schedule.timezone}</p>

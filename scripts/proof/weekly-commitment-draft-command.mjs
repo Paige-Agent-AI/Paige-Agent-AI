@@ -293,18 +293,20 @@ export async function weeklyDraftCommandProof({run,json,literal,source,check,ref
     assert.equal(run("SELECT is_live FROM paige_automation_triggers WHERE key='schedule.weekly_commitment_check';"),flagBefore);
   });
   // The original human-only authorization writer, not trigger activation. The
-  // same production consumer must verify held state and original next occurrence.
+  // same production consumer verifies ready AND held states. The preceding
+  // actual-engine fixture deliberately made this trigger live; that is not a
+  // production activation and must not be mistaken for a dark fixture here.
   dropAck=false;
   const authId=json(`SELECT draft_weekly_commitment_check(${literal(randomUUID())},'Synthetic exact weekly authorization',1,'09:00','UTC');`,ctx).automation_id;
   const authRead=await readWeeklyOwner(scope,caller,()=>scope);assert.equal(authRead.status,'ready');
   const authReview=authRead.snapshot.checks.find(c=>c.automation_id===authId);assert(authReview);
   const callsBeforeAuth=controlCalls;
   const authorized=await controlWeeklyOwner(scope,authReview,'authorize',caller,()=>scope);
-  check('original browser authorization verifies held native definition without publishing work',()=>{
+  check('original browser authorization verifies prepared ready definition without publishing work',()=>{
     assert.equal(authorized.status,'saved');assert.equal(controlCalls,callsBeforeAuth+1);
     const saved=authorized.snapshot.checks.find(c=>c.automation_id===authId);assert(saved);
-    assert.equal(saved.schedule_status,'scheduled');assert.equal(saved.execution_availability,'held');
-    assert.equal(saved.next_run_at,null);assert(saved.intended_next_run_at);assert.equal(saved.last_verified_run,null);
+    assert.equal(saved.schedule_status,'scheduled');assert.equal(saved.execution_availability,'ready');
+    assert(saved.intended_next_run_at);assert.equal(saved.next_run_at,saved.intended_next_run_at);assert.equal(saved.last_verified_run,null);
     assert.equal(json(`SELECT count(*) FROM audit_logs WHERE entity_id=${literal(authId)} AND action='weekly_check.authorize';`),1);
     assert.equal(run('SELECT count(*) FROM paige_native_events;'),eventsBefore);
     assert.equal(run("SELECT is_live FROM paige_automation_triggers WHERE key='schedule.weekly_commitment_check';"),flagBefore);
@@ -314,16 +316,24 @@ export async function weeklyDraftCommandProof({run,json,literal,source,check,ref
   json(`SELECT control_weekly_commitment_check(${literal(authId)},'pause',1);`,ctx);
   const pausedRead=await readWeeklyOwner(scope,caller,()=>scope);assert.equal(pausedRead.status,'ready');
   const paused=pausedRead.snapshot.checks.find(c=>c.automation_id===authId);assert(paused);dropAck=true;
+  // Explicit isolated hold, using the same original catalogue field as the
+  // incumbent dark-trigger test. Restore its incoming posture even on failure.
+  try {
+  run("UPDATE paige_automation_triggers SET is_live=false WHERE key='schedule.weekly_commitment_check';");
   const lostAuthorization=await controlWeeklyOwner(scope,paused,'authorize',caller,()=>scope);
   const authRecovered=await readWeeklyOwner(scope,caller,()=>scope);
-  check('lost native authorization response recovers original state with no duplicate or catch-up',()=>{
+  check('held native authorization with lost response recovers original state without replay',()=>{
     assert.equal(lostAuthorization.status,'unknown');assert.equal(controlCalls,callsBeforeAuth+2);assert.equal(authRecovered.status,'ready');
     const saved=authRecovered.snapshot.checks.find(c=>c.automation_id===authId);assert(saved);
     assert.equal(saved.schedule_status,'scheduled');assert.equal(saved.execution_availability,'held');assert.equal(saved.next_run_at,null);
     assert.equal(json(`SELECT count(*) FROM audit_logs WHERE entity_id=${literal(authId)} AND action='weekly_check.authorize';`),2);
     assert.equal(run('SELECT count(*) FROM paige_native_events;'),eventsBefore);
-    assert.equal(run("SELECT is_live FROM paige_automation_triggers WHERE key='schedule.weekly_commitment_check';"),flagBefore);
+    assert.equal(run("SELECT is_live FROM paige_automation_triggers WHERE key='schedule.weekly_commitment_check';"),'f');
   });
+  } finally {
+    run(`UPDATE paige_automation_triggers SET is_live=${flagBefore==='t'?'true':'false'} WHERE key='schedule.weekly_commitment_check';`);
+    assert.equal(run("SELECT is_live FROM paige_automation_triggers WHERE key='schedule.weekly_commitment_check';"),flagBefore);
+  }
   return {status:'PASS',source:migration,migration_sha256:createHash('sha256').update(source(migration)).digest('hex'),
     decline_scope:{source:declineScopeMigration,migration_sha256:createHash('sha256').update(source(declineScopeMigration)).digest('hex'),
       same_claim_commit_authority_prefix:true,current_owner_denials:true},

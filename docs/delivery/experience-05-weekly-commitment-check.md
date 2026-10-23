@@ -35,6 +35,19 @@ remain Listed / Unverified; weekly status read is preserved and Chat/Live mutati
 admission remains unavailable. Grounding maine504/ANT11/52/147/161, own bounded
 weekly paths only; E01/E02/E04/CURA/EXP10 source and deployed2641/2645 preserved.
 
+Native review correction: the first full native run failed because its preceding
+actual-engine fixture intentionally left the trigger ready, while the new case
+incorrectly assumed held. Ready and explicitly held disposable scenarios now have
+separate exact assertions and restore original posture; no product gate is waived.
+Actual mounted Escape also closed the whole sheet: a new aria-label had broken
+the existing Radix capture guard. Two real Chat/Calendar cases reproduced that
+defect (5PASS/2FAIL); keeping the original review-container contract fixes it
+without changing the owning sheet/escape engine. The affected40 cases PASS.
+Direct compiler completed with6 existing baseline signatures and0 new; baseline
+unchanged. Native corrected run/final rendered recapture and hosted gates remain
+pending. Production read-only preflight confirms the original control/getter/owner
+hashes and ACLs unchanged and weekly trigger is_live=false. No customer write.
+
 ## October22 — ZION original invocation receipt correction, development
 
 REPAIR the existing `paige-orchestrator` receipt producer. Original invocation

@@ -843,6 +843,58 @@ All19/nine remain mandatory. [Evidence](../evidence/ui-delivery/e2-desk-source-c
 
 ## EXP02 report evidence foundation — October22 source release, not activated
 
+**S2A source/native release verified:** PR2647 reviewed4560f297165c3329de9daa3256a917900bf860c9,
+LOWER5622919945, all13 final checks/two statuses SUCCESS, no unresolved threads.
+Maina7ea2513a4172edb252d8640e2e6bf7f0b32d6b8/tree1f88385e509ea3ec94bdc6baede52efc76ade2b1
+matches inspected c98+456 union. Normal migration39888217187/120201499373 SUCCESS;
+actual430002 persisted. Original-table authenticated-only restrictive SELECT policy
+and enabled INVOKER trigger read back; readable/guard bodyMD5s
+4336bfd19107ac41cf993644f24074a6/d0786e4b75d3d9a67f35f446897d3149 match Git SQL.
+Original private Metric/document bodies unchanged; all expected owner/path/ACL
+contracts verified. Eligibility boolean alone is authenticated-callable; no actor
+parameter or business data. Webdpl_FCr7QZHWwc8WgyAU2NKx6ZnTnYUq READY/canonical aliases,
+public200 exacta7ea-mvkc3tf8/customerUpdate:null. Own Edge N/A; zero reserved reports,
+no report/type/worker/provider/role/Chat/action activation. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2647#issuecomment-6355753951).
+Own merged preview auto-retired/inventory22; no peer/main deletion or quota increase.
+Historical development notes below are superseded only at this source boundary.
+Actual report execution/read/retrieval, ordinary roles/cohorts/Chat/Live/all19/nine
+and Founder Acceptance remain owed; CAP/ALG states unchanged.
+
+**S2B native authority, development:** proposed440002 adds the SAME private Metric
+predicate to original document claim and completion, including before historical
+report-labelled success readback. No public type admitted: original nine types and
+legacy writers/turn/Rail remain. Original title-role transformer is applied in the
+same native fixture; historical April source alone is not current authority.
+Current production claim81a2a0ab7dbf4384e6da22e5f11f9dd6/complete4c58e791d20db13b5dc8fe8fd6ce0c36
+are exact guarded forward inputs. Unknown changed source fails; exact replay alone
+is accepted. CREATE OR REPLACE retains original private service ABI/owner/ACL/path.
+A claim becomes blocked before dispatch; completion refusal occurs before original
+persistence/success and leaves no unauthorized artifact/turn/receipt. This is not
+an executable report producer or a customer acceptance claim.
+
+Original isolated native document lifecycle PASS plus10 future-report scenarios:
+public report submission still refused, current-profile switch, banned/deleted
+identity, member-with-owner-flag cannot substitute for exact Metric seat, eligible
+claim and subsequent authority loss, report-labelled historical replay. No native
+Auth/Metric helper is replaced by an allow-all stub. Four actual causal faults
+fail the original proof: disabled claim guard, disabled completion guard, unknown
+original source and broadened function permission. Review tightened the private
+security metadata invariant before exact replay; no applied source was affected.
+Existing ci.yml invokes the SAME original native runner in one
+additive fail-closed step; no new QA engine, timeout/baseline/skip or dependencies.
+Original legacy replay/duplicate dispatch/atomic receipt rollback/conflict/authority/
+lease/unknown recovery assertions remain. First hosted92 native step99 failed
+at Linux pg_ctl startup before assertions. The original TCP-only fixture now
+explicitly disables unused Unix sockets and retains bounded pre-fixture startup
+diagnostics; no host/authority/assertion/timeout change. Original FAIL is retained,
+fresh local original legacy lifecycle +10 future-report authority scenarios PASS on PostgreSQL16.14, including the explicit TCP-only assertion. Fresh hosted proof remains required. Scoped syntax/migration/ACL/whitespace
+checks PASS. Hosted exact-head/full-schema/Preview/review/release remain owed.
+Functional local prerequisite; Visual N/A; Experiential/Founder Acceptance
+UNVERIFIED. Worker producer/public admission/immutable artifact/read/turn/Rail and
+ordinary roles/cohorts/Chat/Live/all19/nine remain required. CAP/ALG states unchanged;
+no model/provider/role/action or Chat activation. Master4.0 N/A until actual merge.
+ANT138349babde/ANT1613da7266c+837f1a8f record pre-edit source/CI routing; sole lead.
+
 **D3A source/native release verified:** PR2643 reviewed097eaf205f57866203adbf196aa0dbddcc567f03,
 LOWER5622701932; all13 final checks and two web statuses SUCCESS, no unresolved
 threads. Main52dfacc418578c9dea9e3e7f3b33363288d17c66/tree73f3e18a65b1e26dc8f9baa22d014f31a14ea9d6

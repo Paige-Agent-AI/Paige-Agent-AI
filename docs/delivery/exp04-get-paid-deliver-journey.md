@@ -2623,6 +2623,78 @@ Visible-Flow-Impact: no — new export is unmounted, original preparation parser
 boolean access decisions are unchanged; no UI/backend action/record schema change.
 Shipped Delivery Log: N/A until an actual reviewed main merge and source release.
 
+October23 actual C13 source release supersedes that dated N/A:2654 reviewed36b,
+LOWER5623411227, all11 final latest checks/two statuses/full Preview SUCCESS;
+maina047a2ab48a0d40f586b0bc269d108692ce2c40b has verified89+36b parents/tree7b1f3096.
+Normal Edge39897418203/job120230949041/artifact12477710875 verifies original
+agreement-document@76/23 files and sign-agreement@28/11 files/config. READY web
+dpl_Gaa4rAtSJKRXHqeZfoCVbtsGD7UT and both publica047-mvkfr69o/null verified;
+original C12 feedback remains. [Actual release receipt6357008694](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2654#issuecomment-6357008694).
+Helper remains UNMOUNTED, not signing/consent/approval/native input or full12
+customer acceptance. Exact verified row and Brain entry are in this closeout.
+
+### C14 original prepared-field PDF sealing — development
+
+OWNER_INTENT: reproduce the owner's reviewed assigned field positions and each
+signer's actual recorded values in the original completed PDF. EXTEND1352's
+sealAgreementPdf, not a replacement signature/PDF/record engine. Optional prepared
+input is unmounted; no seal.ts/endpoint/native hold/permission/Portal/Chat/provider
+activation. Original global signature and signing-record appendix stay intact.
+
+Pre-edit source leases ANT161/8bd49d64 and ANT163/eab0e05d name the ten routing
+answers. Canonical preparation from300004/350004 and C13 field input are required
+dependencies. The future trusted original native caller must resolve exact selected
+preparation/bytes, recorded input, party/status/consent/time and approved send.
+The renderer cannot establish authorization or turn proposed answers into a signature.
+
+Snapshot before awaits; same original PDF inspector, manifest/byte/hash/identity/
+consent/input-digest checks; visible rotated crop coordinates transformed once to
+native PDF. Stamp actual typed/drawn signature, explicit initials/text, original
+server timestamp and checkbox true/false. Optional omissions stay absent. Unsupported
+glyphs, stale/foreign evidence and unfit text refuse; no silent truncation or smaller
+than6pt text. Native preflight must run before a signature is committed, so a later
+render refusal cannot strand an irreversible signature. Upload/readback/completion
+remains the original sealAndComplete responsibility in a later bounded integration.
+
+Two initial fixture setup failures (nullable typing and mutation of a frozen fixture)
+are preserved as INVALID, not product RED. Corrected actual baseline36 incumbent
+cases PASS,4 new cases/17 steps FAIL. Initial new strict type diagnostics preserved,
+corrected without no-check/baseline change. First checkbox assertion incorrectly
+expected a PDF rectangle shorthand; actual native operators showed four stroked
+segments. Corrected proof now requires those exact four segments, explicit false
+versus two additional checked strokes, all five exact text values and four native
+crop/rotation transforms. Final210 original cases/178 steps PASS under denied
+net/write/env/run/ffi/sys, including two actual signers, optional omission and
+drawn mark/corrupt-image refusal. Resource review reproduced four duplicate image
+embeddings versus one; one per-signer image is now reused on all assigned pages.
+Actual original three affected Edge entrypoints typecheck PASS; corrected final
+root10/6/no new PASS, no compiler/baseline/authority relaxation. The same native
+inspector uses the original const import convention and identical for-loop checks
+with explicit numeric index to keep both frontend and strict Deno compilation.
+
+Actual original renderer's two neutral PDFs, all six PDFium images and independent
+pixel/text/source readback are retained in
+[native proof](../evidence/ui-delivery/assets/e04-prepared-field-sealing/receipt.json)
+and [render inspection](../evidence/ui-delivery/assets/e04-prepared-field-sealing/render-inspection.json).
+Four actual rotated crops each retain all five field kinds with zero dark pixels
+outside reviewed fields; original two appendices retained. Poppler's bundled font
+substitution emitted Symbol/ArialUnicode warnings and dropped some appendix glyphs;
+independent native PDFium plus actual PDF text/operators verifies complete content.
+Both observations remain; no product code was changed to hide a renderer warning.
+These are SYNTHETIC records, not actual authority/consent/signing/provider/customer
+acceptance. Final exact-head review/required CI/source release/readback remain owed.
+
+ORCHESTRATION_CONTRACT C14: eventual original token-derived signer/native recorded
+input -> original selected preparation -> this pure renderer -> original immutable
+Storage/readback/completion/Rail receipt -> authorized completed-file surface.
+No new executor/approval/job/ledger/consent store or provider. Pure file reproduction
+is not an ActionAdapter or consequential action. ALG01/12 supporting verification
+only; ALG02/13/catalogue/all12/full customer/founder acceptance unpromoted. Proper
+native assigned-input write/preflight/consent, exact-map approved send, effective
+terms/PRE1 and EXP09 scoped consumption remain mandatory subsequent work.
+Visible-Flow-Impact: no — original callers never supply the optional prepared input;
+no mounted UI/action or existing legacy-render behavior changes in this increment.
+
 ### Native document-preparation versions — pre-edit forward290004 contract
 
 The original parent has an automatic updated_at trigger. Retaining/selecting a

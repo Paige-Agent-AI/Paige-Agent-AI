@@ -1910,6 +1910,58 @@ eca1796a and ANT1613217e341 record the dependency-ordered continuation plan.
 
 ## EXP02 report evidence foundation — October22 source release, not activated
 
+**S2A source/native release verified:** PR2647 reviewed4560f297165c3329de9daa3256a917900bf860c9,
+LOWER5622919945, all13 final checks/two statuses SUCCESS, no unresolved threads.
+Maina7ea2513a4172edb252d8640e2e6bf7f0b32d6b8/tree1f88385e509ea3ec94bdc6baede52efc76ade2b1
+matches inspected c98+456 union. Normal migration39888217187/120201499373 SUCCESS;
+actual430002 persisted. Original-table authenticated-only restrictive SELECT policy
+and enabled INVOKER trigger read back; readable/guard bodyMD5s
+4336bfd19107ac41cf993644f24074a6/d0786e4b75d3d9a67f35f446897d3149 match Git SQL.
+Original private Metric/document bodies unchanged; all expected owner/path/ACL
+contracts verified. Eligibility boolean alone is authenticated-callable; no actor
+parameter or business data. Webdpl_FCr7QZHWwc8WgyAU2NKx6ZnTnYUq READY/canonical aliases,
+public200 exacta7ea-mvkc3tf8/customerUpdate:null. Own Edge N/A; zero reserved reports,
+no report/type/worker/provider/role/Chat/action activation. [Receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2647#issuecomment-6355753951).
+Own merged preview auto-retired/inventory22; no peer/main deletion or quota increase.
+Historical development notes below are superseded only at this source boundary.
+Actual report execution/read/retrieval, ordinary roles/cohorts/Chat/Live/all19/nine
+and Founder Acceptance remain owed; CAP/ALG states unchanged.
+
+**S2B native authority, development:** proposed440002 adds the SAME private Metric
+predicate to original document claim and completion, including before historical
+report-labelled success readback. No public type admitted: original nine types and
+legacy writers/turn/Rail remain. Original title-role transformer is applied in the
+same native fixture; historical April source alone is not current authority.
+Current production claim81a2a0ab7dbf4384e6da22e5f11f9dd6/complete4c58e791d20db13b5dc8fe8fd6ce0c36
+are exact guarded forward inputs. Unknown changed source fails; exact replay alone
+is accepted. CREATE OR REPLACE retains original private service ABI/owner/ACL/path.
+A claim becomes blocked before dispatch; completion refusal occurs before original
+persistence/success and leaves no unauthorized artifact/turn/receipt. This is not
+an executable report producer or a customer acceptance claim.
+
+Original isolated native document lifecycle PASS plus10 future-report scenarios:
+public report submission still refused, current-profile switch, banned/deleted
+identity, member-with-owner-flag cannot substitute for exact Metric seat, eligible
+claim and subsequent authority loss, report-labelled historical replay. No native
+Auth/Metric helper is replaced by an allow-all stub. Four actual causal faults
+fail the original proof: disabled claim guard, disabled completion guard, unknown
+original source and broadened function permission. Review tightened the private
+security metadata invariant before exact replay; no applied source was affected.
+Existing ci.yml invokes the SAME original native runner in one
+additive fail-closed step; no new QA engine, timeout/baseline/skip or dependencies.
+Original legacy replay/duplicate dispatch/atomic receipt rollback/conflict/authority/
+lease/unknown recovery assertions remain. First hosted92 native step99 failed
+at Linux pg_ctl startup before assertions. The original TCP-only fixture now
+explicitly disables unused Unix sockets and retains bounded pre-fixture startup
+diagnostics; no host/authority/assertion/timeout change. Original FAIL is retained,
+fresh local original legacy lifecycle +10 future-report authority scenarios PASS on PostgreSQL16.14, including the explicit TCP-only assertion. Fresh hosted proof remains required. Scoped syntax/migration/ACL/whitespace
+checks PASS. Hosted exact-head/full-schema/Preview/review/release remain owed.
+Functional local prerequisite; Visual N/A; Experiential/Founder Acceptance
+UNVERIFIED. Worker producer/public admission/immutable artifact/read/turn/Rail and
+ordinary roles/cohorts/Chat/Live/all19/nine remain required. CAP/ALG states unchanged;
+no model/provider/role/action or Chat activation. Master4.0 N/A until actual merge.
+ANT138349babde/ANT1613da7266c+837f1a8f record pre-edit source/CI routing; sole lead.
+
 **D3A source/native release verified:** PR2643 reviewed097eaf205f57866203adbf196aa0dbddcc567f03,
 LOWER5622701932; all13 final checks and two web statuses SUCCESS, no unresolved
 threads. Main52dfacc418578c9dea9e3e7f3b33363288d17c66/tree73f3e18a65b1e26dc8f9baa22d014f31a14ea9d6
@@ -2151,3 +2203,57 @@ Full O1–O12/exact approval/effective terms/payment/delivery/CentralQA/founder-
 remain required. No source or acceptance reassignment, provider/Chat activation,
 customer release identity or announcement. Exact row is in Master§4.0; original
 [journey](../delivery/exp04-get-paid-deliver-journey.md) remains controlling.
+
+## EXP04 signature-request feedback — verified source release October23
+
+Original2651 reviewed9f513b26353ad2fed88bef1875a3b94f8d62888a/sourcebbac2dd7,
+final AUTHOR-REVIEW / LOWER ASSURANCE5623259280, all10 applicable exact-head
+checks/two statuses SUCCESS; normal unchanged no-schema App SKIPPED. Actual
+main89e5cea37fad64f0b1b73c844f038861a864f79b and clean unionf3c7156f match
+inspected39c+9f parents. Webdpl_EcMBTag36PKNvPua2B9B9LdZayFi READY/canonical
+aliases; both public hosts exact89e5cea-mvkeb5u4/null, served original Solo JS
+cb85b7439195d80b533a7d75757fbc1b16ab1b5903040ac7d2da8dbecd298ba2 and CSS
+9c83f7e947af5ae5d263439aad313af2cd43828066e97045dce2d1a38e2c3c44 verified.
+Own SQL/Edge N/A. The original sender, native holds, permission/admission and
+Spine/Kit/Trust/Harness/LayerC/Rail remain unchanged.
+
+Original Sales feedback distinguishes accepted requests, skipped existing links,
+partial issues/status warnings and an unconfirmed outcome. It does not claim
+delivery, opened, signed or no effect after an uncertain dispatch. Same-actor
+session capture and epoch retire A→B→A late results; interaction fences are not
+durable sender idempotency.1039 Sales/68 and20 native synthetic frames/eight
+paths/23 pins support source behavior. Full provider/execution proof remains owed.
+
+Fresh ordinary owner read shows the original unsigned schema1 selected preparation,
+saved field and exact original receipt; protected ANT52, author-run bounded proof.
+This supersedes earlier unavailable-browser wording only for that read; control
+is intermittent and no new commercial2 preparation/signature/send was performed.
+Functional SOURCE RELEASE VERIFIED; Visual synthetic source inspection; Experiential
+new request/provider/roles/cohorts/CentralQA/full12 UNVERIFIED; Founder NOT_ACCEPTED.
+No customer release name/announcement, algorithm or catalogue promotion. C13
+assigned inputs and subsequent native exact approval/signing/seal/effective terms
+remain required. Master§4.0 and the original journey retain canonical boundaries.
+
+## EXP04 checked prepared signer input — verified source release October23
+
+2654 reviewed36b68557e3a39612255c3380ea391a1b40e2b888, separate AUTHOR-REVIEW /
+LOWER ASSURANCE5623411227; all11 latest exact-head checks/two statuses/full Preview
+SUCCESS. Actual maina047a2ab48a0d40f586b0bc269d108692ce2c40b/tree7b1f3096 has
+inspected89+36b parents. Normal Edge39897418203/job120230949041/artifact12477710875
+verifies agreement-document@76/23 exact files and sign-agreement@28/11 files/config.
+Original token/application authorization remains; no SQL/grant/hold activation.
+Productiondpl_Gaa4rAtSJKRXHqeZfoCVbtsGD7UT READY/canonical aliases, both public
+hostsa047-mvkfr69o/null; original SoloEntry50484fff and C12 feedback/styles persist.
+[Release receipt6357008694](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2654#issuecomment-6357008694).
+
+Pure original-module helper remains UNMOUNTED. It validates an immutable proposed
+field input against the original map/hash/document/party, explicit checkbox false,
+optional omissions and server timestamp; it grants no authority and writes nothing.
+89 backend/98steps,78 client/three suites, actual Edge entry types/root10/6 PASS;
+capacity cancellation and original compiler failures stay dated. Existing source
+guard's literal boolean discriminant is logically unchanged. No UI or role test
+is inferred from source. Functional SOURCE VERIFIED; Visual N/A/unmounted;
+Experiential original signed-in prepared signing/approval/consent/native write/seal/
+effective terms and all12/CentralQA/cohorts/provider remain owed; Founder NOT_ACCEPTED.
+ALG01/12 supporting checks only; ALG02/13/catalogue unchanged. Next original PDF
+prepared-field renderer/source integration remains bounded, not a second engine.

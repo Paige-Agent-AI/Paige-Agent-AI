@@ -1,5 +1,114 @@
 # Experience 04 — Get Paid & Deliver My Services: journey inventory, flow map and delivery plan
 
+## C16 original native signature record — October23 bounded prerequisite
+
+Original sole EXP04 lead, all O1–O12 remain mandatory. Pre-edit contracts are
+ANT161/4d564699 and ANT163/a4c1699a. REPAIR original1352 signature/consent/audit
+atomicity using the SAME three original tables; NEW service-only native callable
+seam, not a new signing engine, authority, ledger or execution store. Source starts
+from reviewed2656/5821b225eaad9a14dead88e0d1d35d9bc56a4e17. The existing handler
+does not yet call this native seam; that consumer/recovery increment remains next.
+
+OWNER_INTENT: authorized original signature, affirmative consent and original
+consented/signed events commit together or refuse together; later verification
+retrieves that original immutable record without signing twice.
+MUST_NOT_HAPPEN: an audit failure leaving a new signature behind; current-credential,
+parent-state or document-identity changes admitted after a lock wait; a later write
+or deletion replacing signed evidence; fabricated historical audit; held prepared
+documents admitted or payment/communications authority inferred.
+MUST_PRESERVE: original signer/tenant/customer/document/version and append-only
+events; original token privacy, tier/order/consent and selected-preparation holds;
+legitimate original completed-copy token maintenance; original1352 seal/readback;
+EXP09 consumes only approved original scoped records. No Portal UI change.
+ACCEPTANCE_CRITERIA: native service-role positive/rollback/duplicate/recovery and
+actual lock-wait negatives; anon/authenticated refusal; exact original scope and
+accepted evidence remain durable; original native preparation cases remain green.
+Actual handler/UI, customer/provider/role/cohort/CentralQA acceptance is separate.
+
+The new _record_agreement_signature resolves original IDs from the token hash,
+locks original parent then signer, reads the native act clock AFTER waits, and
+rechecks expiry/revocation/order/state plus preflight version/hash/private-file
+identity. Explicit consent/name/digest bounds precede the original signer UPDATE.
+Both original events and applicable partial progress are in that transaction;
+completion still requires the original actual PDF seal/Storage readback. Recovery
+reads actual original event IDs, reports missing old audit and inserts nothing.
+It uses SECURITY INVOKER/empty search_path and existing service privileges only;
+ordinary roles have no execution grant. No provider work occurs under row locks.
+
+An original-table immutable-evidence trigger binds an issued credential to its
+original recipient identity and refuses subsequent recorded signature/consent/
+attribution changes and signed-row deletion, including historical rows missing
+audit. Original retrieval-token rotation/expiry/revocation
+and updated_at remain usable. The existing one-way status, source/party guards,
+private preparations, token/effect holds and event append-only bodies are unchanged.
+
+Proof: genuine missing-native-contract RED, same-status evidence rewrite RED, and
+historical signed-row deletion RED retained. One error-text matcher failed because
+the original runner omits localized SQLSTATE text; corrected to have PostgreSQL
+catch the exact expected SQLSTATE, preserving every negative and positive. Exact
+source review then reproduced issued-credential recipient replacement as a RED;
+the same native guard now preserves that identity before signing. The out-of-order
+fixture creates its second signer through the ORIGINAL draft writer before token
+issuance; no assertion is removed. Final original native323 checks PASS:44 original
++75 checked +23 editability +105 document/commercial preparation +76 signature.
+Earlier319 is retained historical proof. Commercial29 is INCLUDED in105, not added
+again. New transaction migration replays twice; eight actual sessions/four observed
+lock waits cover duplicates, voiding, credential revocation and expiry while waiting.
+Audit-trigger failure rolls back BOTH signer and earlier consent event. Historical
+recovery invents no audit and preserves its source record. Existing actual original
+native preparation holds are exercised by the unchanged105 cases.
+
+Required hosted database-contract39970490494/job120471548919 then FAILED on
+the existing Portal fixture's post-signature recipient rewrite. The native
+protection is retained. Signed fixtures now carry their intended email at INSERT;
+the foreign-recipient negative uses a distinct immutable agreement and the sealed
+positive adds the customer's own original signer instead of rewriting another
+person's signature. Completed synthetic evidence remains until the existing final
+ROLLBACK. All255 assertions remain:253 exact source assertions are unchanged;
+two identical foreign-recipient predicates target the new separate fixture.
+Native runtime/proof bytes remain exact323-tested source. Source comparison is
+not a pgTAP PASS; renewed full-schema hosted CI remains required before release.
+
+Normal existing Linux integrity runner gains only --signature-record on its final
+same-cluster proof; original assertions/deny flags remain. CLI-created empty local
+20261023134452 was renamed while never applied to reserved20271113480004, after
+E02/450002 and E09/460009/470009. Initial actual frontier44 is historical; the
+subsequent production read verifies45/46/47 applied, and source now composes their
+accepted mainbdd1a553386b6f1a84aac6a315114dc8f4df4983. At that point48 was UNAPPLIED.
+Later concurrent main440b97b79/EXP09 release advanced actual production to500009
+while this candidate was in CI. Metadata confirms both new functions remain
+ABSENT. Reconcile the SAME unpublished migration forward to reserved530004,
+preserving SQL100% byte-for-byte; update only the proof reference/current source.
+Earlier480004 Preview/CI evidence remains history, not production application.
+Existing reservations510005/510009/520002 are preserved; actual current-main/
+production order is the rollout prerequisite, with no new global release hold.
+The same original native323 checks pass again under530004; the migration's SQL
+blob is100% unchanged from reviewed25fd6b9c5. The existing disposable cluster
+was verified empty and stopped. Relocate only this candidate's own new2656 Brain
+closeout beside its existing E04 release section to avoid the shared prepend
+collision; its complete original text and every other owner's section are retained.
+New native functions were absent in production; original held bodies/ACLs were read intact.
+Migration/source/permission/UTF8/diff checks PASS. No hosted migration or original
+recipient action is performed by this local proof. Required review/exact-head CI,
+frontier composition, normal production deployment/readback remain owed.
+
+ORCHESTRATION_CONTRACT C16: eventual original recipient POST -> same token/guard
+and actual retained-PDF/appearance preflight -> original native transaction ->
+original consent/sign events/receipt -> original seal/readback and authorized
+recipient/owner/EXP09 projection. Native recipient signature is not PAIGE acting
+as signer or LayerC automation. Original agreement.send/high/external_effect/
+confirm/Kit/Trust/Rail remains unchanged; exact-map approved send and prepared
+input/consent/appearance/seal/effective terms still required. Explicit EXECUTE on
+the private callable goes only to the existing service_role, using its existing
+table rights. No new ordinary-role/table privilege or definer elevation,
+ActionAdapter, provider, account, scheduler, registry or money movement. ALG01/12 supporting
+only; ALG02/13 and catalogue unpromoted. All twelve/one founder evaluation remain
+INCOMPLETE. Shipped log N/A for this native candidate until actual merge/release.
+
+Visible-Flow-Impact: no — native callable remains unmounted; immutable evidence
+enforces the existing noneditable signed-record contract, preserving actual token
+maintenance. No recipient/Solo/Portal UI source, container or navigation changes.
+
 ## C12 original signature-request feedback — pre-edit repair contract
 
 OWNER_INTENT: report exactly what the original signature-request result proves,

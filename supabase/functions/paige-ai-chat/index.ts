@@ -16605,6 +16605,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           }
         } else if (tc.function.name === "list_subagents" || tc.function.name === "delegate_to_subagent") {
           // Section 18: Orchestrator delegation. Role gate to admin only.
+          let specialistDispatched = false;
           try {
             if (!authorityAdmits(tc.function.name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS)) {
               toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Working with the specialist team needs this workspace's owner or an admin." }) });
@@ -16620,6 +16621,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             const body = tc.function.name === "list_subagents"
               ? { action: "tool_search", query: args.query, domain: args.domain, tenant_id: orchTenant, funding_enabled: orchFunding }
               : { action: "tool_invoke", slug: args.slug, input: args.input ?? {}, tenant_id: orchTenant, funding_enabled: orchFunding, context: { contact_id: args.contact_id, user_id: user.id } };
+            specialistDispatched = tc.function.name === "delegate_to_subagent";
             const r = await fetch(orchestratorUrl, {
               method: "POST",
               headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseServiceKey}`, apikey: supabaseServiceKey },
@@ -16627,9 +16629,21 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             });
             const text = await r.text();
             let payload: any; try { payload = JSON.parse(text); } catch { payload = { raw: text }; }
+            // Reuse the existing same-request write hold and final uncertainty
+            // feedback. A saved specialist result is not a confirmed receipt;
+            // asynchronous dispatch is not completed work. Never auto-repeat it.
+            if (specialistDispatched && (payload?.outcome_unknown === true || typeof payload?.ok !== "boolean"
+                || payload.ok === true && (payload.runtime === "langgraph" || payload.receipt_recorded !== true
+                  || typeof payload.invocation_id !== "string" || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(payload.invocation_id)))) {
+              requestExecutionState.needsReview = true;
+              payload = { ...payload, success: false, outcome_unknown: true, note: OUTCOME_UNKNOWN_NOTE };
+            }
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(payload) });
           } catch (e) {
-            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: e instanceof Error ? e.message : "orchestrator_error" }) });
+            if (specialistDispatched) requestExecutionState.needsReview = true;
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false,
+              error: e instanceof Error ? e.message : "orchestrator_error",
+              ...(specialistDispatched ? { outcome_unknown: true, note: OUTCOME_UNKNOWN_NOTE } : {}) }) });
           }
         } else if (tc.function.name === "forge_subagent") {
           // Spin up a NEW specialist at will (§8/§14). Role-gated to admin/coach.

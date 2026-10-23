@@ -1,5 +1,16 @@
 # Experience 05 Weekly Internal Commitment Check
 
+## October23 — original specialist uncertainty consumer correction, development
+
+Final review4360946061 reproduced five cases where the original Chat specialist
+consumer returned an uncertain result but allowed the next mutator. The same
+existing `requestExecutionState.needsReview` now holds later writes and drives
+original final uncertainty feedback. Lost/malformed responses and async dispatch
+remain inspect-only; original read/pre-dispatch refusals do not invent effects.
+No new approval, execution gate or replay exists. Exact final review/CI and actual
+Chat/orchestrator deployment/readback remain required. Prior source tests and
+reviews alone did not close this finding. Full ten-outcome acceptance remains owed.
+
 ## October23 — original specialist durable outcome, development
 
 REPAIR the existing orchestrator, not a new ZION runtime. Failed or malformed

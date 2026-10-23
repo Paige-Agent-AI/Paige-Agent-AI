@@ -716,6 +716,21 @@ describe("Adding a tool", () => {
     });
   });
 
+  it("finds HighLevel under the LeadConnector name the provider's own API uses", async () => {
+    // EXP10: the owner's vocabulary for this provider is "LeadConnector" (their API host is
+    // leadconnectorhq.com). A catalogue that only says "HighLevel" is unfindable for the
+    // customers who know the other name.
+    world({ rows: [] });
+    const { host } = await render();
+    await openCatalogue(host);
+    const search = host.querySelector<HTMLInputElement>('input[type="search"]');
+    await type(search, "LeadConnector");
+    const names = Array.from(host.querySelectorAll(".ig-gw-tile-name")).map((n) => n.textContent);
+    expect(names).toContain("HighLevel · LeadConnector");
+    // The scope copy names the agency-vs-location distinction the connection implies.
+    expect(host.textContent).toMatch(/company \(agency\) token can reach every location/i);
+  });
+
   it("refuses a private or non-HTTPS address instead of letting the server reject it", async () => {
     world({ rows: [] });
     const { host } = await render();

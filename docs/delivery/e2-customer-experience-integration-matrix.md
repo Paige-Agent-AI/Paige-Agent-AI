@@ -6,13 +6,16 @@ Original review dialogs now consume Escape before shared shell shortcuts and
 restore their original control after inert clears. A per-account decision generation
 retires late success/refusal/focus, including A→B→A and unmount, without cancelling
 or settling the original domain operation. Four causal keyboard/inert failures,
-then two late-result scope failures are retained;93 cases/three original suites pass,
-scoped lint0 and pre-composition normal build69seconds. Detector0 findings.
-Candidate native desktop/narrow/keyboard proof is BLOCKED by Edge page-control
-timeouts; no old/synthetic/source evidence closes that required proof or release.
+then two late-result scope failures are retained; final106 cases/four original suites
+pass, scoped lint0/current-main build112seconds. Detector0 findings. Native Cancel/
+Escape returns to the original control after inert clears; focus trap, unchanged
+synthetic draft/scroll are verified. Eight DOM geometries have no page overflow,
+but lagging compositor frames are INVALID; complete matching renders/zoom/scope
+and released ordinary proof remain owed. Exact origin access was authorized;
+intermittent browser stalls/reset and read-only synthetic-confirm refusal retained.
 [Evidence](../evidence/ui-delivery/e2-systems-dialog-return.md).
 Functional local / Visual candidate UNVERIFIED / Experiential original defect and
-source controls only / Founder NOT_ACCEPTED. No shell, runner, approval writer,
+bounded native return, released proof owed / Founder NOT_ACCEPTED. No shell, runner, approval writer,
 provider, registry, LayerC, Rail or permission change. Native recorded-check UI is
 partial; canonical Systems Check Mind-context stays UNAVAILABLE (SCR-2/SCR-3).
 All19/nine remain mandatory.

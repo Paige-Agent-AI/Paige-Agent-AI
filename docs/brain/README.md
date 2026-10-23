@@ -1700,6 +1700,22 @@ proof and evidence bytes are preserved while current main0c1 is composed for
 fresh normal gates. Final review/CI/source readback/actual roles/full12/
 founder acceptance stay separate. [Evidence](../evidence/ui-delivery/e04-commercial-field-constructor.md).
 
+Later production closeout: constructor2640 merged e1c7dee08ff6ed961ac15b9dc7b71ebd43fd6908,
+reviewed1c29b61f0613a05a517f5affe8f1367018469d59, final lower review5622877147.
+All10 applicable checks/two statuses SUCCESS; normal no-SQL Preview SKIP. Actual
+merge tree db8d842a4c0f13f1e1dbc3bf77fe65ca342d7daa equals inspected main union.
+Webdpl_EE13d7PP8b1tEhTLfgSrEMLD3sC5 READY/exact/canonical aliases. Initial Edge
+39884026649 FAILED prior-source certification, retained as failure. Original
+serialized recovery39884488108/job120189357681 SUCCESS: certified c7fa→accepted
+main52dfacc418578c9dea9e3e7f3b33363288d17c66, only agreement-document selected,
+actual ACTIVE67/verify_jwtfalse/22 exact source files/config, edge-live52df.
+Canonical artifact12471982491 manifest899dbaffc1b657339d4e33934f8f619b82337de7c73b18c76f1642cde274f93c
+establishes bounded served source, not business execution. Actual350004/retainerab4/
+validator610/Save1bd and original ABI/ACL unchanged. Public build52df-mvkajd0b/null
+contains this source ancestry; no exact e1 public-response claim. Current consumer
+2646 remains DRAFT/NOT_DEPLOYED. Earlier development gates above are historical;
+whole commercial/customer/role/cohort/provider/full12/founder proof remains owed.
+
 ### EXP04 original commercial owner document workspace — development
 
 Original invoice page/source reader/formatter feed explicit commercial review in

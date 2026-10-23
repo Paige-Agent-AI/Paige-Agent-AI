@@ -30,7 +30,7 @@ RELEASE_CHANNEL: development: explicit closed synthetic transports; no live prov
 RELEASE_CLASSIFICATION: internal-only: Model Fabric consumer prerequisite, not a completed ZION capability or customer launch.
 CUSTOMER_RELEASE_IDENTITY: NONE: no earned customer version or announcement.
 RELEASE_NOTE_REQUIRED: NO: internal prerequisite only; no earned customer release identity, announcement or completed ZION capability.
-RELEASE_TRUTH_BOUNDARY: SOURCE_IMPLEMENTED locally; NOT_DEPLOYED, AUTHENTICATED_UNVERIFIED and OWNER_ACCEPTANCE_PENDING. A safe code increment does not prove activated specialist execution or full EXP05 readiness.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: local source/transport proof only; NOT_DEPLOYED, AUTHENTICATED_UNVERIFIED and OWNER_ACCEPTANCE_PENDING. A safe code increment does not prove activated specialist execution or full EXP05 readiness.
 RELEASE_RECOVERY: position=reviewed forward correction preserving original invocation history and no unknown-outcome replay; reference=existing EXP05 delivery packet and canonical Model Fabric contract.
 
 ## Orchestration Contract and Algorithm Support

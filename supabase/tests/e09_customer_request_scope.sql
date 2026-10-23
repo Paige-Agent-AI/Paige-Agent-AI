@@ -1,7 +1,7 @@
 -- Original replayed native functions and real roles. Synthetic, rolled back;
 -- provider execution disabled, no production identities or effectful acceptance.
 BEGIN;
-SELECT plan(210);
+SELECT plan(243);
 
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0970100-0000-4000-8000-000000000001','authenticated','authenticated','scope-owner@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -451,6 +451,75 @@ SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT p
 UPDATE public.clients SET linked_user_id=NULL WHERE id='e0970300-0000-4000-8000-000000000012';
 SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.customer_paige_activity_summary()','{"x-client-portal-business":"e0970200-0000-4000-8000-000000000002"}')->>'error','NO_LINKED_CONTACT','revoked activity B never falls back to A');
 SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.customer_paige_activity_summary()') ->>'count','1','single original self-link activity stays compatible');
+
+-- Original legacy self-context and protected recovery: selected future-shape CI only.
+SELECT is((SELECT md5(replace(prosrc,' AND id = public.client_portal_relationship_id(NULL::uuid)','')) FROM pg_proc WHERE oid='public.load_self_context()'::regprocedure),'ab8f20546c8231cbac0efc5bcc4b3381','legacy self-context exact predicate inverse preserves original consent/source path');
+SELECT is((SELECT md5(replace(prosrc,'    AND id = public.client_portal_relationship_id(NULL::uuid)
+','')) FROM pg_proc WHERE oid='public.ensure_client_role_self_heal()'::regprocedure),'2c3c45b1007a7658666b4863a8b9dbd0','protected recovery exact predicate inverse preserves original role/stage/audit path');
+SELECT ok((SELECT pg_get_userbyid(proowner)='postgres' AND NOT prosecdef AND provolatile='v' AND proconfig=ARRAY['search_path=public'] FROM pg_proc WHERE oid='public.load_self_context()'::regprocedure) AND has_function_privilege('authenticated','public.load_self_context()','EXECUTE') AND has_function_privilege('service_role','public.load_self_context()','EXECUTE') AND NOT has_function_privilege('anon','public.load_self_context()','EXECUTE'),'self-context keeps original INVOKER/RLS/owner/ACL');
+SELECT ok((SELECT pg_get_userbyid(proowner)='postgres' AND prosecdef AND provolatile='v' AND proconfig=ARRAY['search_path=public'] FROM pg_proc WHERE oid='public.ensure_client_role_self_heal()'::regprocedure) AND has_function_privilege('service_role','public.ensure_client_role_self_heal()','EXECUTE') AND NOT has_function_privilege('authenticated','public.ensure_client_role_self_heal()','EXECUTE') AND NOT has_function_privilege('anon','public.ensure_client_role_self_heal()','EXECUTE'),'recovery keeps original service-only permission, never grants browser execution');
+SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.load_contact_context(uuid,text[])'::regprocedure),'66685db32ea456a064dc0f373fe92410','original consent/context loader remains byte-identical');
+SELECT is(pg_temp.scope_read('SELECT public.load_self_context()','e0970200-0000-4000-8000-000000000001')->>'error','NO_LINKED_CONTACT','pure customer retains original raw CRM RLS refusal');
+SELECT is(pg_temp.scope_read('SELECT to_jsonb(h) FROM public.ensure_client_role_self_heal() h','e0970200-0000-4000-8000-000000000001')->>'sqlstate','42501','customer cannot invoke protected legacy recovery');
+SELECT is(pg_temp.as_scope_user(NULL,'SELECT public.load_self_context()')->>'error','NO_LINKED_CONTACT','self-context never substitutes missing actual subject');
+SELECT set_config('paige.portal_access_write','1',true);
+UPDATE public.clients SET linked_user_id='e0970100-0000-4000-8000-000000000001',portal_access_state='open',status='active' WHERE id='e0970300-0000-4000-8000-000000000012';
+SELECT set_config('paige.portal_access_write','',true);
+SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.load_self_context()','{"x-client-portal-business":"e0970200-0000-4000-8000-000000000001"}')->>'contact_id','e0970300-0000-4000-8000-000000000011','authorized INVOKER self-context reads selected A through original consent loader');
+SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.load_self_context()','{"x-client-portal-business":"e0970200-0000-4000-8000-000000000002"}')->>'error','NO_LINKED_CONTACT','selected B cannot bypass original active-workspace RLS');
+SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.load_self_context()')->>'sqlstate','42501','two legitimate self-links require explicit selection');
+SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.load_self_context()','{"x-client-portal-business":"invalid"}')->>'sqlstate','42501','malformed self-context business does not fall back');
+SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.load_self_context()','{"x-client-portal-business":"e0970200-0000-4000-8000-000000000003"}')->>'error','NO_LINKED_CONTACT','foreign business cannot read another own self-context');
+UPDATE public.profiles SET active_tenant_id='e0970200-0000-4000-8000-000000000002' WHERE user_id='e0970100-0000-4000-8000-000000000001';
+SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.load_self_context()','{"x-client-portal-business":"e0970200-0000-4000-8000-000000000002"}')->>'contact_id','e0970300-0000-4000-8000-000000000012','actual authorized workspace B self-context keeps exact B client identity');
+SELECT ok(EXISTS(SELECT 1 FROM public.paige_context_loads WHERE contact_id='e0970300-0000-4000-8000-000000000012' AND caller_user_id='e0970100-0000-4000-8000-000000000001' AND consent_state='self'),'original self-context writes its original exact actor/client consent receipt');
+UPDATE public.profiles SET active_tenant_id=(SELECT active_tenant_id FROM e09_legacy_staff_context) WHERE user_id='e0970100-0000-4000-8000-000000000001';
+UPDATE public.clients SET linked_user_id=NULL WHERE id='e0970300-0000-4000-8000-000000000012';
+SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.load_self_context()','{"x-client-portal-business":"e0970200-0000-4000-8000-000000000002"}')->>'error','NO_LINKED_CONTACT','revoked B self-context cannot return A');
+SELECT is(pg_temp.as_scope_user('e0970100-0000-4000-8000-000000000001','SELECT public.load_self_context()')->>'contact_id','e0970300-0000-4000-8000-000000000011','original single self-context without selection stays compatible');
+
+-- Synthetic original trusted service lane, exclusively in this rolled-back local CI transaction.
+CREATE FUNCTION pg_temp.as_scope_service(actor uuid,statement text,business text DEFAULT NULL)
+RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE answer jsonb;
+BEGIN
+ PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',actor,'role','service_role')::text,true);
+ PERFORM set_config('request.headers',CASE WHEN business IS NULL THEN '{}' ELSE jsonb_build_object('x-client-portal-business',business)::text END,true);
+ SET LOCAL ROLE service_role;
+ BEGIN EXECUTE statement INTO answer;
+ EXCEPTION WHEN OTHERS THEN answer:=jsonb_build_object('sqlstate',SQLSTATE); END;
+ RESET ROLE;
+ PERFORM set_config('request.jwt.claims','{}',true);
+ PERFORM set_config('request.headers','{}',true);
+ RETURN answer;
+END $$;
+UPDATE public.clients SET linked_user_id='e0970100-0000-4000-8000-000000000002',onboarding_stage=NULL WHERE id='e0970300-0000-4000-8000-000000000002';
+UPDATE public.clients SET onboarding_stage=NULL WHERE id='e0970300-0000-4000-8000-000000000001';
+DELETE FROM public.user_roles WHERE user_id='e0970100-0000-4000-8000-000000000002' AND role='client';
+SELECT is(pg_temp.as_scope_service('e0970100-0000-4000-8000-000000000002','SELECT to_jsonb(h) FROM public.ensure_client_role_self_heal() h')->>'sqlstate','42501','protected recovery refuses ambiguity instead of choosing LIMIT1');
+SELECT ok(NOT EXISTS(SELECT 1 FROM public.user_roles WHERE user_id='e0970100-0000-4000-8000-000000000002' AND role='client'),'ambiguous recovery grants no global role');
+SELECT ok(pg_temp.as_scope_service(NULL,'SELECT to_jsonb(h) FROM public.ensure_client_role_self_heal() h') IS NULL,'trusted service without actual subject cannot recover a customer');
+SELECT ok(pg_temp.as_scope_service('e0970100-0000-4000-8000-000000000003','SELECT to_jsonb(h) FROM public.ensure_client_role_self_heal() h','e0970200-0000-4000-8000-000000000001') IS NULL,'changed actual subject cannot recover another customer');
+SELECT is(pg_temp.as_scope_service('e0970100-0000-4000-8000-000000000002','SELECT to_jsonb(h) FROM public.ensure_client_role_self_heal() h','invalid')->>'sqlstate','42501','invalid recovery selection refuses');
+SELECT ok(pg_temp.as_scope_service('e0970100-0000-4000-8000-000000000002','SELECT to_jsonb(h) FROM public.ensure_client_role_self_heal() h','e0970200-0000-4000-8000-000000000003') IS NULL,'foreign recovery selection does not fall through to own A');
+SELECT is(pg_temp.as_scope_service('e0970100-0000-4000-8000-000000000002','SELECT to_jsonb(h) FROM public.ensure_client_role_self_heal() h','e0970200-0000-4000-8000-000000000001')->>'client_id','e0970300-0000-4000-8000-000000000001','original trusted recovery initializes only exact selected A');
+SELECT is((SELECT onboarding_stage FROM public.clients WHERE id='e0970300-0000-4000-8000-000000000002'),NULL::text,'selected A recovery leaves B onboarding unchanged');
+SELECT is((SELECT count(*) FROM public.user_roles WHERE user_id='e0970100-0000-4000-8000-000000000002' AND role='client'),1::bigint,'original global client role is inserted once');
+SELECT is(pg_temp.as_scope_service('e0970100-0000-4000-8000-000000000002','SELECT to_jsonb(h) FROM public.ensure_client_role_self_heal() h','e0970200-0000-4000-8000-000000000001')->>'healed','false','original repeated selected recovery is idempotent');
+SELECT ok(EXISTS(SELECT 1 FROM public.paige_audit_log WHERE actor_user_id='e0970100-0000-4000-8000-000000000002' AND target_id='e0970300-0000-4000-8000-000000000001' AND action='client_role_self_heal'),'original recovery audit names actual subject and selected client');
+SELECT set_config('paige.portal_access_write','1',true);
+UPDATE public.clients SET portal_access_state='paused' WHERE id='e0970300-0000-4000-8000-000000000002';
+SELECT set_config('paige.portal_access_write','',true);
+SELECT ok(pg_temp.as_scope_service('e0970100-0000-4000-8000-000000000002','SELECT to_jsonb(h) FROM public.ensure_client_role_self_heal() h','e0970200-0000-4000-8000-000000000002') IS NULL,'paused B recovery never initializes or restores it');
+SELECT is((SELECT onboarding_stage FROM public.clients WHERE id='e0970300-0000-4000-8000-000000000002'),NULL::text,'paused B still has its original absent onboarding stage');
+SELECT set_config('paige.portal_access_write','1',true);
+UPDATE public.clients SET portal_access_state='open' WHERE id='e0970300-0000-4000-8000-000000000002';
+SELECT set_config('paige.portal_access_write','',true);
+SELECT is(pg_temp.as_scope_service('e0970100-0000-4000-8000-000000000002','SELECT to_jsonb(h) FROM public.ensure_client_role_self_heal() h','e0970200-0000-4000-8000-000000000002')->>'client_id','e0970300-0000-4000-8000-000000000002','original trusted recovery now initializes exact selected B');
+UPDATE public.clients SET linked_user_id=NULL WHERE id='e0970300-0000-4000-8000-000000000002';
+SELECT ok(pg_temp.as_scope_service('e0970100-0000-4000-8000-000000000002','SELECT to_jsonb(h) FROM public.ensure_client_role_self_heal() h','e0970200-0000-4000-8000-000000000002') IS NULL,'revoked B recovery cannot select A or restore B');
+SELECT is(pg_temp.as_scope_service('e0970100-0000-4000-8000-000000000002','SELECT to_jsonb(h) FROM public.ensure_client_role_self_heal() h')->>'client_id','e0970300-0000-4000-8000-000000000001','original single-business trusted recovery stays compatible');
+
 UPDATE public.clients SET linked_user_id=NULL WHERE id='e0970300-0000-4000-8000-000000000011';
 
 CREATE UNIQUE INDEX clients_linked_user_id_unique ON public.clients(linked_user_id) WHERE linked_user_id IS NOT NULL;

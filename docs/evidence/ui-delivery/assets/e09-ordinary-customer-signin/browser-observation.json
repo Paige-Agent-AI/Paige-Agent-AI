@@ -1,0 +1,207 @@
+{
+  "scope": "Original resolver, native SDK readers, gate and chooser; synthetic SDK only, no real Auth/backend/customer shell",
+  "frames": [
+    {
+      "controls": [
+        {
+          "font": "16px",
+          "height": 84,
+          "href": "/app?business=e0970200-0000-4000-8000-000000000001",
+          "text": "TTest Service Studio",
+          "width": 544,
+          "x": 496,
+          "y": 335.8000183105469
+        },
+        {
+          "font": "16px",
+          "height": 84,
+          "href": "/app?business=e0970200-0000-4000-8000-000000000002",
+          "text": "SSecond Test Business with a Longer Name",
+          "width": 544,
+          "x": 496,
+          "y": 431.8000183105469
+        },
+        {
+          "font": "14px",
+          "height": 44,
+          "href": null,
+          "text": "Sign out",
+          "width": 109.32500457763672,
+          "x": 496,
+          "y": 564.6000366210938
+        }
+      ],
+      "dpr": 1.0000000149011612,
+      "height": 770,
+      "scrollHeight": 770,
+      "scrollWidth": 1536,
+      "width": 1536,
+      "pngWidth": 1536,
+      "pngHeight": 770
+    },
+    {
+      "controls": [
+        {
+          "font": "16px",
+          "height": 84,
+          "href": "/app?business=e0970200-0000-4000-8000-000000000001",
+          "text": "TTest Service Studio",
+          "width": 544,
+          "x": 411.2000122070313,
+          "y": 334.6000061035156
+        },
+        {
+          "font": "16px",
+          "height": 84,
+          "href": "/app?business=e0970200-0000-4000-8000-000000000002",
+          "text": "SSecond Test Business with a Longer Name",
+          "width": 544,
+          "x": 411.2000122070313,
+          "y": 430.6000061035156
+        },
+        {
+          "font": "14px",
+          "height": 44,
+          "href": null,
+          "text": "Sign out",
+          "width": 109.32500457763672,
+          "x": 411.2000122070313,
+          "y": 563.4000244140625
+        }
+      ],
+      "dpr": 1.0000000149011612,
+      "height": 768,
+      "scrollHeight": 768,
+      "scrollWidth": 1366,
+      "width": 1366,
+      "pngWidth": 1366,
+      "pngHeight": 768
+    },
+    {
+      "controls": [
+        {
+          "font": "16px",
+          "height": 84,
+          "href": "/app?business=e0970200-0000-4000-8000-000000000001",
+          "text": "TTest Service Studio",
+          "width": 544,
+          "x": 240,
+          "y": 334.6000061035156
+        },
+        {
+          "font": "16px",
+          "height": 84,
+          "href": "/app?business=e0970200-0000-4000-8000-000000000002",
+          "text": "SSecond Test Business with a Longer Name",
+          "width": 544,
+          "x": 240,
+          "y": 430.6000061035156
+        },
+        {
+          "font": "14px",
+          "height": 44,
+          "href": null,
+          "text": "Sign out",
+          "width": 109.32500457763672,
+          "x": 240,
+          "y": 563.4000244140625
+        }
+      ],
+      "dpr": 1.0000000149011612,
+      "height": 768,
+      "scrollHeight": 768,
+      "scrollWidth": 1024,
+      "width": 1024,
+      "pngWidth": 1024,
+      "pngHeight": 768
+    },
+    {
+      "controls": [
+        {
+          "font": "16px",
+          "height": 84,
+          "href": "/app?business=e0970200-0000-4000-8000-000000000001",
+          "text": "TTest Service Studio",
+          "width": 544,
+          "x": 178,
+          "y": 450.6000061035156
+        },
+        {
+          "font": "16px",
+          "height": 84,
+          "href": "/app?business=e0970200-0000-4000-8000-000000000002",
+          "text": "SSecond Test Business with a Longer Name",
+          "width": 544,
+          "x": 178,
+          "y": 546.6000366210938
+        },
+        {
+          "font": "14px",
+          "height": 44,
+          "href": null,
+          "text": "Sign out",
+          "width": 109.32500457763672,
+          "x": 178,
+          "y": 679.4000244140625
+        }
+      ],
+      "dpr": 1.0000000149011612,
+      "height": 1000,
+      "scrollHeight": 1000,
+      "scrollWidth": 900,
+      "width": 900,
+      "pngWidth": 900,
+      "pngHeight": 1000
+    },
+    {
+      "controls": [
+        {
+          "font": "16px",
+          "height": 84,
+          "href": "/app?business=e0970200-0000-4000-8000-000000000001",
+          "text": "TTest Service Studio",
+          "width": 264.8000183105469,
+          "x": 20,
+          "y": 274.3999938964844
+        },
+        {
+          "font": "16px",
+          "height": 99.5999984741211,
+          "href": "/app?business=e0970200-0000-4000-8000-000000000002",
+          "text": "SSecond Test Business with a Longer Name",
+          "width": 264.8000183105469,
+          "x": 20,
+          "y": 370.3999938964844
+        },
+        {
+          "font": "14px",
+          "height": 44,
+          "href": null,
+          "text": "Sign out",
+          "width": 109.32500457763672,
+          "x": 20,
+          "y": 518.7999877929688
+        }
+      ],
+      "dpr": 1.0000000149011612,
+      "height": 568,
+      "scrollHeight": 611,
+      "scrollWidth": 305,
+      "width": 320,
+      "pngWidth": 320,
+      "pngHeight": 568
+    }
+  ],
+  "keyboard": {
+    "tab": "Original first business link Tab moved focus to exact second-business link",
+    "enter": "Original link Enter navigated to /app?business=e0970200-0000-4000-8000-000000000002 and rendered original own paused notice for Second Test Business with a Longer Name",
+    "source": "Browser tab: 20, Title: \"Original customer choice verification\", URL: \"http://127.0.0.1:5279/app?business=e0970200-0000-4000-8000-000000000002\".\n1 AXWebArea Original customer choice verification, URL: 127.0.0.1:5279/app?business=e0970200-0000-4000-8000-000000000002\n\t2 container root\n\t\t3 text Synthetic SDK only · original resolver, gate and chooser · no live account\n\t\t4 container Your access to Second Test Business with a Longer Name is paused.\n\t\t\t5 heading Your access to Second Test Business with a Longer Name is paused., Value: 1, ID: customer-access-title\n\t\t\t\t6 text Your access to Second Test Business with a Longer Name is paused.\n\t\t\t7 text Second Test Business with a Longer Name has paused your portal for now. Your portal messages and files are kept. If you have questions, reach out to Second Test Business with a Longer Name the way you usually do.\n\t\t\t8 link Description: Choose another business, Value: 127.0.0.1:5279/app?chooseBusiness=1\n\t\t\t9 button Sign out\n\nThe focused UI element is 1 AXWebArea Original customer choice verification, URL: 127.0.0.1:5279/app?business=e0970200-0000-4000-8000-000000000002"
+  },
+  "initialLoad": "First navigation timed out during local compilation; existing tab then loaded actual source",
+  "unverified": [
+    "physical Safari/device and assistive technology",
+    "390px capture, dark theme, reduced motion and 200% zoom on this unchanged chooser",
+    "real signup/authentication/multi-business activation/persistence/full seven pillars/founder acceptance"
+  ],
+  "cleanup": "Device/media/browser viewport reset; owned tab20 closed"
+}

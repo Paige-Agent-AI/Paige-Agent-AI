@@ -63,5 +63,3 @@ it('withholds confirmation on server refusal or transport failure',async()=>{
  expect(await readAcceptedCommercialAgreement(tenant,{invoice_id:invoice,agreement_id:agreement},{rpc:async()=>({data:await retained(),error:{message:'private detail'}})})).toEqual({state:'refused'});
  expect(await readAcceptedCommercialAgreement(tenant,{invoice_id:invoice,agreement_id:agreement},{rpc:async()=>{throw Error('private detail');}})).toEqual({state:'refused'});
 });
-
-

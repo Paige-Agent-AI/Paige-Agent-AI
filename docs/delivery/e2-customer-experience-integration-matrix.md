@@ -843,6 +843,49 @@ ordinary roles/cohorts/Chat/Live/all19/nine remain required. CAP/ALG states unch
 no model/provider/role/action or Chat activation. Master4.0 N/A until actual merge.
 ANT138349babde/ANT1613da7266c+837f1a8f record pre-edit source/CI routing; sole lead.
 
+
+**S2C original report artifact producer, development:** proposed450002 extends
+ONLY the original service-only complete_paige_document_work, after S2B440002.
+Original work/thread/turn/Marketing artifact/Rail transaction and legacy nine
+types remain authoritative. Strict current source c0a5e4a1651e70994225865a232658d7,
+owner/DEFINER/empty-path/private ACL and exact inverse replay guards fail closed
+on drift. No public business_review admission, worker/renderer/Chat activation,
+new store, metrics calculation, runtime, provider, permission or consequential action.
+
+For future native report work, stored and output types must agree; original
+document capability, current Metric authority and owned unarchived thread are
+required. Captured evidence is bounded1–12 measurements/24KiB; report period is
+explicit month/quarter source range, not an invented calendar period. No revision,
+provider/model attribution or token charge is manufactured. Original artifact meta
+uses reserved metric_business_review with closed source/range/as-of/coverage/
+exclusion/caveat provenance, omitting reference bearers/private account identity.
+Exact original persisted body/meta/draft readback precedes original completion
+turn, success and attributable Rail receipt; all remain atomic. Historical replay
+rechecks authority and original metadata. This private producer trusts immutable
+native work; future public admission MUST capture once server-side and refuse
+caller-supplied captures/numbers. D2 remains the deterministic fact formatter.
+
+Original isolated PostgreSQL16.14 lifecycle plus10 authority scenarios PASS
+with the final TCP-only fixture. Native producer positive/readback/replay,
+immutable facts/current-scope read/refusals and report-specific receipt-failure
+rollback PASS. Four causal faults fail original assertions: wrong privacy class,
+whole-capture provenance leak, omitted receipt and unknown completion source.
+An initial source-anchor count failure was corrected against the actual original
+four purpose projections; guard unchanged. A private receipt-control generator
+first mishandled literal dollar quoting and failed with SQL42601; invalid control
+was corrected before observing the intended missing-receipt failure. Neither
+failure was a production defect or a waived assertion. Full production-schema
+rollback proof now extends the SAME shared_metric_evidence.sql: real issuer,
+private capture, original native writer/artifact/turn and paige_workspace_events,
+then current-scope read and workspace-switch refusal; execution still owed in
+required hosted database-contract. Existing test statements unchanged.
+Syntax/migration ordering/signature-ACL/whitespace PASS. Exact-head review/CI/
+Preview/dependency release and production readback remain owed; Master4.0 N/A.
+Functional private native prerequisite only; Visual N/A; Experiential/Founder
+Acceptance UNVERIFIED. CAP014/015 remain Unverified; no ALG maturity promotion.
+Full19/nine, original worker/renderer/public admission/retrieval, ordinary
+roles/isolation/cohorts/Chat/Live and actual governed-result acceptance remain open.
+ANT1389daa4628/ANT16156cd6b3a record ten-answer routing; sole lead.
 **D3A source/native release verified:** PR2643 reviewed097eaf205f57866203adbf196aa0dbddcc567f03,
 LOWER5622701932; all13 final checks and two web statuses SUCCESS, no unresolved
 threads. Main52dfacc418578c9dea9e3e7f3b33363288d17c66/tree73f3e18a65b1e26dc8f9baa22d014f31a14ea9d6

@@ -24,7 +24,7 @@ package-lock; resolves react-router 6.30.4). Three advisories flagged by `npm au
 
 | Advisory | Severity | Range (vs 6.30.4) | What it is | Applicability here |
 |---|---|---|---|---|
-| **GHSA-jjmj-jmhj-qwj2** | **High-side (CVSS 6.9)** | 6.30.2–6.30.5 — **APPLIED** | Open redirect leading to XSS | **Client-applicable**: the app uses `Link`/`useNavigate` throughout; no SSR requirement stated. **The material risk of the group.** |
+| **GHSA-jjmj-jmhj-qwj2** | **Top-of-Moderate (CVSS 6.9)** | 6.30.2–6.30.5 — **APPLIED** | Open redirect leading to XSS | **Client-applicable**: the app uses `Link`/`useNavigate` throughout; no SSR requirement stated. **The material risk of the group.** |
 | GHSA-337j-9hxr-rhxg | Moderate (6.1) | ≥6.4.0 <7.18.0 — applied | Constructor injection via `deserializeErrors()` in **SSR hydration** (Framework/Data Mode) | **Not exploitable here, verified against source**: `src/App.tsx` uses `<BrowserRouter>` + `<Routes>` (Declarative Mode); zero `hydrateRoot`/`renderToString`/SSR entry points in `src/` (all mounts are client `createRoot`). `RouterProvider`+`createMemoryRouter` appear only in three vitest harnesses (client-side memory routers; no hydration) — `src/pages/sign/AgreementSigning.test.tsx`, `src/solo/settings-notifications-retirement.test.tsx`, `src/solo/settings.rendered-copy.test.tsx`. |
 | GHSA-wrjc-x8rr-h8h6 | Moderate (5.1) | ≥6.0.0 <7.18.0 — applied | Open redirect via backslash in `<Link>`/`useNavigate` (CVE-2025-68470 bypass) | Client-side class; requires an attacker-influenced `to`/href reaching a router navigation primitive. App routes are overwhelmingly static literals; a dedicated dynamic-link audit is named owed in §5 rather than assumed safe. |
 
@@ -37,8 +37,9 @@ published 2026-08-18; non-major — `npm audit` itself advertises it as the fix 
 - Verified locally on this branch: `npm audit --omit=dev --audit-level=high` — **exit 0**
   (the gate's own command). Remaining findings after the bump: 2 react-router moderates
   (337j, wrjc — dispositioned in §1/§5) and 2 `@vitest/mocker` moderates (dev-tooling scope,
-  GHSA-qxg6-89mg-rqv8 / GHSA-xp26-3454-mjgp, upgradeable via `npm audit fix` — dev-dependency
-  lane, not customer-facing).
+  GHSA-qxg6-89mg-rqv8 / GHSA-xp26-3454-mjgp — test tooling declared under `dependencies` (hence visible
+  to --omit=dev) but never bundled into any customer artifact; upgradeable via `npm
+  audit fix` in the toolchain lane).
 - Regression surface: two patch releases on the same major; the full verify suite (routing
   covered heavily) is the CI gate on this PR.
 

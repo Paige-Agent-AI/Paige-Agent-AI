@@ -1,5 +1,25 @@
 # Experience 05 Weekly Internal Commitment Check
 
+## October23 — unavailable specialist evidence, development
+
+Original specialist inspection must distinguish a failed read from no activity.
+Three causal failures corrected; 112 focused original-source/authority/identity/
+receipt/Chat cases PASS using closed ports. Existing scoped history, registry and
+error envelope remain; no dispatch, provider/model, role or activation changes.
+[Proof boundary](../evidence/ui-delivery/exp05-specialist-activity-unavailable.md).
+Release, ordinary authenticated status/reload/cohorts/Live, complete ZION and all
+ten outcomes/E5-CV1–9 remain owed; eleven recipes stay Listed / Unverified.
+
+## October23 — original specialist activity scope, development
+
+Extend the existing tenant-bound specialist status repair: original inspection
+must use both verified requester and selected workspace. Four closed-source
+fixture failures reproduced incorrect activity attribution; corrected109 owning
+cases PASS. No new health store, runtime, grant or execution. Ordinary authenticated
+proof, exact work retrieval, complete metrics/recovery and full ten outcomes remain
+owed. Small dependent source release follows parent2663; no catalogue Live or
+customer acceptance promotion. [Bounded evidence](../evidence/ui-delivery/exp05-specialist-history-scope.md).
+
 ## October23 — original specialist uncertainty consumer correction, development
 
 Final review4360946061 reproduced five cases where the original Chat specialist

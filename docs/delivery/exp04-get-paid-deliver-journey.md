@@ -57,6 +57,14 @@ Protected shared Chat/risk/audit source and original closed package DTO are not
 copied wholesale from the old stack. Full native/endpoint/UI/review/CI/release,
 ordinary-role/cohort/CentralQA and whole-Experience acceptance remain owed.
 
+October23 current-main composition: original C18 source preserves incoming
+cb1d891d7 E05/EXP02/EXP09 work and the entire incoming shared Brain text. All21
+critical compiled-evidence inputs retain their original raw hashes and identical
+Git LF content relative to5fa0e2f; the original rendered receipt is unchanged.
+Reviewed CI prerequisite2683 is composed as a dependency, not represented as
+released. Current-head review, every applicable unchanged CI check, normal full
+Preview, production source readback and authenticated acceptance remain separate.
+
 ## C18 original accepted agreement inspection — October23 flow brief
 
 Goal: inspect the exact retained commercial record and distinguish today's terms.

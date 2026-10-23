@@ -5,7 +5,7 @@
 -- admission refuses everything that is not the caller's own changeable booking with one "not found";
 -- request-id and state replay; and admission never writes public.internal_bookings.
 BEGIN;
-SELECT plan(93);
+SELECT plan(113);
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0961000-0000-4000-8000-000000000001','authenticated','authenticated','sessions-host-a@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
  ('e0961000-0000-4000-8000-000000000002','authenticated','authenticated','sessions-host-b@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -320,5 +320,53 @@ SELECT is(public._portal_session_move_class_seat('e0965000-0000-4000-8000-000000
 SELECT ok((SELECT b.start_at=now()+interval '20 hours' AND b.class_session_id IS DISTINCT FROM s0.class_session_id FROM public.internal_bookings b, seat0 s0 WHERE b.id='e0965000-0000-4000-8000-000000000011'),'into the class session at the new time');
 SELECT is(public._portal_session_move_class_seat('e0965000-0000-4000-8000-000000000011',(SELECT start_at FROM seat0),now()+interval '20 hours',now()+interval '21 hours'),
  '{"moved":false}'::jsonb,'a duplicate of the same move, carrying the old start, moves nothing');
+
+-- CURA source reuse: original93 assertions retained; all fixtures remain CI rollback-only.
+CREATE FUNCTION pg_temp.sessions_projection_role_probe(_role text) RETURNS jsonb LANGUAGE plpgsql AS $probe$
+DECLARE observed text; result jsonb;
+BEGIN
+ IF _role NOT IN('anon','authenticated','service_role') THEN RAISE EXCEPTION 'test role refused'; END IF;
+ EXECUTE format('SET LOCAL ROLE %I',_role); observed:=current_user;
+ BEGIN
+  SELECT public._client_portal_sessions_projection(NULL,NULL,'upcoming',NULL,20) INTO result;
+ EXCEPTION WHEN OTHERS THEN result:=jsonb_build_object('sqlstate',SQLSTATE);
+ END;
+ RESET ROLE;
+ RETURN jsonb_build_object('database_role',observed)||coalesce(result,'{}'::jsonb);
+END $probe$;
+CREATE TEMP TABLE sessions_projection_before AS SELECT md5(string_agg(to_jsonb(b)::text,'|' ORDER BY b.id)) h FROM public.internal_bookings b;
+SELECT ok(NOT has_function_privilege('authenticated','public._client_portal_sessions_projection(uuid,uuid,text,timestamptz,integer)','EXECUTE'),'trusted Sessions projection is not customer-callable');
+SELECT ok(NOT has_function_privilege('anon','public._client_portal_sessions_projection(uuid,uuid,text,timestamptz,integer)','EXECUTE'),'trusted Sessions projection is not anonymous-callable');
+SELECT ok(NOT has_function_privilege('service_role','public._client_portal_sessions_projection(uuid,uuid,text,timestamptz,integer)','EXECUTE'),'trusted Sessions projection is not service-callable');
+SELECT is(pg_temp.sessions_projection_role_probe('authenticated'),'{"database_role":"authenticated","sqlstate":"42501"}'::jsonb,'actual authenticated role cannot execute the private source');
+SELECT is(pg_temp.sessions_projection_role_probe('anon'),'{"database_role":"anon","sqlstate":"42501"}'::jsonb,'actual anonymous role cannot execute the private source');
+SELECT is(pg_temp.sessions_projection_role_probe('service_role'),'{"database_role":"service_role","sqlstate":"42501"}'::jsonb,'actual service role cannot execute the private source');
+SELECT ok(public._client_portal_sessions_projection(NULL,'e0963000-0000-4000-8000-000000000001','upcoming',NULL,20) IS NULL
+ AND public._client_portal_sessions_projection('e0962000-0000-4000-8000-000000000002','e0963000-0000-4000-8000-000000000001','upcoming',NULL,20) IS NULL,'missing/mismatched scope is not an empty authorized source');
+SELECT ok((SELECT pg_get_userbyid(proowner)='postgres' AND provolatile='s' AND prosecdef AND proconfig=ARRAY['search_path=""'] FROM pg_proc WHERE oid='public._client_portal_sessions_projection(uuid,uuid,text,timestamptz,integer)'::regprocedure),'private projection retains postgres/STABLE/definer/empty-path contract');
+SELECT ok((SELECT pg_get_userbyid(proowner)='postgres' AND provolatile='s' AND prosecdef AND proconfig=ARRAY['search_path=public, pg_temp']
+ AND pg_get_function_arguments(oid)=$args$p_tenant_id uuid DEFAULT NULL::uuid, p_window text DEFAULT 'upcoming'::text, p_before timestamp with time zone DEFAULT NULL::timestamp with time zone, p_limit integer DEFAULT 20$args$
+ AND pg_get_function_result(oid)='jsonb' FROM pg_proc WHERE oid='public.client_portal_sessions(uuid,text,timestamptz,integer)'::regprocedure)
+ AND has_function_privilege('authenticated','public.client_portal_sessions(uuid,text,timestamptz,integer)','EXECUTE')
+ AND has_function_privilege('service_role','public.client_portal_sessions(uuid,text,timestamptz,integer)','EXECUTE')
+ AND NOT has_function_privilege('anon','public.client_portal_sessions(uuid,text,timestamptz,integer)','EXECUTE'),'public reader ABI/defaults/attributes/owner/ACL remain original');
+SELECT is((SELECT md5(left(prosrc,725)) FROM pg_proc WHERE oid='public.client_portal_sessions(uuid,text,timestamptz,integer)'::regprocedure),'bbfc6ca47d341033e388db163ffaab3b','complete original Auth/resolver prelude remains byte-exact');
+SELECT is((SELECT md5(substring(prosrc FROM position('  WITH own AS (' IN prosrc) FOR 5449)) FROM pg_proc WHERE oid='public._client_portal_sessions_projection(uuid,uuid,text,timestamptz,integer)'::regprocedure),'71c4e2f07dd8fa3bfb7471695e4c5727','complete original client-safe query tail remains byte-exact');
+SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public._portal_session_location_label(text,text,boolean,boolean)'::regprocedure),'2263158bf71f718f1b372f621e7ef3b3','original location helper unchanged');
+SELECT is(public._client_portal_sessions_projection('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000001','upcoming',NULL,20),
+ pg_temp.jordan($q$SELECT public.client_portal_sessions('e0962000-0000-4000-8000-000000000001','upcoming',NULL,20)$q$),'original public/private projection parity: default upcoming');
+SELECT is(public._client_portal_sessions_projection('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000001','past',NULL,20),
+ pg_temp.jordan($q$SELECT public.client_portal_sessions('e0962000-0000-4000-8000-000000000001','past',NULL,20)$q$),'original public/private projection parity: past');
+SELECT is(public._client_portal_sessions_projection('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000001','upcoming',NULL,1),
+ pg_temp.jordan($q$SELECT public.client_portal_sessions('e0962000-0000-4000-8000-000000000001','upcoming',NULL,1)$q$),'original public/private projection parity: one-item page/ties');
+SELECT is(public._client_portal_sessions_projection('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000001','upcoming',NULL,-10),
+ pg_temp.jordan($q$SELECT public.client_portal_sessions('e0962000-0000-4000-8000-000000000001','upcoming',NULL,-10)$q$),'original public/private projection parity: negative limit');
+SELECT is(public._client_portal_sessions_projection('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000001','upcoming',NULL,NULL),
+ pg_temp.jordan($q$SELECT public.client_portal_sessions('e0962000-0000-4000-8000-000000000001','upcoming',NULL,NULL)$q$),'original public/private projection parity: null limit');
+SELECT is(public._client_portal_sessions_projection('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000001','upcoming',now()+interval '5 hours',100),
+ pg_temp.jordan($q$SELECT public.client_portal_sessions('e0962000-0000-4000-8000-000000000001','upcoming',now()+interval '5 hours',100)$q$),'original public/private projection parity: large limit with cursor');
+SELECT is(public._client_portal_sessions_projection('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000001',NULL,NULL,20),
+ pg_temp.jordan($q$SELECT public.client_portal_sessions('e0962000-0000-4000-8000-000000000001',NULL,NULL,20)$q$),'original public/private projection parity: null window');
+SELECT is((SELECT md5(string_agg(to_jsonb(b)::text,'|' ORDER BY b.id)) FROM public.internal_bookings b),(SELECT h FROM sessions_projection_before),'all original booking rows remain unchanged by source reads');
 SELECT * FROM finish();
 ROLLBACK;

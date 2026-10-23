@@ -468,7 +468,7 @@ const SHEET_CLS =
  *  (scaled) and re-render churn on a 40-page doc would jank (a tracked virtualization fast-follow). */
 function PageSheet({ blocks, allBlocks, className }: { blocks: StudioDocBlock[]; allBlocks: StudioDocBlock[]; className?: string }) {
   return (
-    <article className={cn(SHEET_CLS, "px-6 py-8", className)}>
+    <article className={cn(SHEET_CLS, "min-w-0 break-words px-6 py-8", className)}>
       {blocks.map((b, i) => (
         <Block key={i} block={b} allBlocks={allBlocks} />
       ))}
@@ -495,7 +495,7 @@ function PageThumbRail({
   const items = pages.map((p) => ({ id: String(p.index), label: `Page ${p.index + 1}`, caption: String(p.index + 1), page: p }));
   const scale = 60 / PAGE_CONTENT_W; // tile inner width ≈ 60px
   return (
-    <div className="h-full min-h-0 shrink-0">
+    <div className="hidden h-full min-h-0 shrink-0 sm:block">
       <ArtifactStrip
         orientation="vertical"
         className="h-full min-h-0"
@@ -549,19 +549,23 @@ function DocumentPager({
   }, [pages.length]);
   const safePage = Math.min(currentPage, pages.length - 1);
   const page = pages[safePage] ?? pages[0];
+  const pageScroll = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    if (pageScroll.current) pageScroll.current.scrollTop = 0;
+  }, [safePage]);
 
   const pageView = (
-    <div className="mx-auto w-[720px] max-w-full">
+    <div className="mx-auto w-[720px] min-w-0 max-w-full">
       <PageSheet blocks={page.blocks} allBlocks={allBlocks} />
     </div>
   );
 
   return (
-    <div className="flex h-full min-h-0 gap-4 print:hidden">
+    <div className="flex h-full min-h-0 min-w-0 gap-4 print:hidden">
       <PageThumbRail pages={pages} allBlocks={allBlocks} currentPage={safePage} onSelect={setCurrentPage} reduceMotion={reduceMotion} />
       {/* min-w-0: the page column may shrink below the 720px sheet in a narrow host instead of overflowing it. */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <div className="min-h-0 flex-1 overflow-y-auto px-1 py-1">
+        <div ref={pageScroll} className="min-h-0 flex-1 overflow-y-auto px-1 py-1">
           {reduceMotion ? (
             pageView
           ) : (
@@ -580,7 +584,7 @@ function DocumentPager({
             type="button"
             variant="outline"
             size="icon"
-            className="h-8 w-8"
+            className="h-11 w-11"
             aria-label="Previous page"
             disabled={safePage <= 0}
             onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
@@ -594,7 +598,7 @@ function DocumentPager({
             type="button"
             variant="outline"
             size="icon"
-            className="h-8 w-8"
+            className="h-11 w-11"
             aria-label="Next page"
             disabled={safePage >= pages.length - 1}
             onClick={() => setCurrentPage((p) => Math.min(pages.length - 1, p + 1))}
@@ -626,7 +630,7 @@ export function DocumentPreview({ document, className, toolbar = true }: { docum
   const paged = pages.length > 1;
 
   return (
-    <div className={cn("h-full", paged ? "flex flex-col overflow-hidden" : "overflow-y-auto", className)}>
+    <div className={cn("h-full min-w-0", paged ? "flex flex-col overflow-hidden" : "overflow-y-auto", className)}>
       {/* Measurement tree — fixed + clipped to 0×0 so it never scrolls, shows, or prints; the inner
           720px column still lays out (real offsetHeights). aria-hidden: a measurement twin only. */}
       <div aria-hidden className="pointer-events-none fixed left-0 top-0 -z-50 h-0 w-0 overflow-hidden print:hidden">
@@ -652,11 +656,11 @@ export function DocumentPreview({ document, className, toolbar = true }: { docum
         </article>
       )}
 
-      <div className={cn("mx-auto flex w-full max-w-3xl flex-col gap-3 px-1 py-1", paged && "h-full min-h-0")}>
+      <div className={cn("mx-auto flex w-full min-w-0 max-w-3xl flex-col gap-3 px-1 py-1", paged && "h-full min-h-0")}>
         {/* Toolbar — neutral, no gold (§11). Honest label: it's the browser's Save-as-PDF. */}
         {toolbar && (
           <div className="flex shrink-0 items-center justify-end print:hidden">
-            <Button variant="outline" size="sm" onClick={onPrint} className="gap-2">
+            <Button variant="outline" size="sm" onClick={onPrint} className="min-h-11 gap-2">
               <Printer className="h-4 w-4" aria-hidden />
               Print / Save as PDF
             </Button>

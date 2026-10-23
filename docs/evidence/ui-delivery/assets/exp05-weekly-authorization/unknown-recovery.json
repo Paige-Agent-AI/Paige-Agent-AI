@@ -1,0 +1,13 @@
+{
+  "source": "cb2d89c8b4e1226482add343987884e5e2fcdb91",
+  "unknown": {
+    "focus": "Refresh weekly responsibility",
+    "review": false,
+    "text": "Weekly commitment checkReview the week. Keep the original work in Operations.Current status couldn’t be verifiedRefresh to read the schedule again. This does not mean no check exists or that a run failed.Try againThe result is unknown; the responsibility may have changed. Refresh to inspect it. Nothing will be repeated automatically.Draft status is unavailable. Your proposal has not been reported as saved.Read saved proposalsPrepare a weekly responsibilityClients → CalendarOperations → Work"
+  },
+  "inspected": {
+    "focus": "Refresh weekly responsibility",
+    "text": "Weekly commitment checkReview the week. Keep the original work in Operations.Read Thu, Oct 22, 6:00 PM UTCWeekly commitment checkHeldEvery Monday at 09:00UTCNext executionNo executable next run is availableScopeYour open, in-progress and blocked Planning work assigned to you or created by you.PermissionRecorded configuration; execution also requires current permission and availability.Execution is held. The requested time is not a promise of a run. No booking reserves this slot.No receipt-backed completed check has been verified.Future executionsPause, change, resume and cancel affect future runs. They do not terminate an act already processing.Pause future checksCancel responsibilityChange scheduleReview authorizationAuthorization applies to this saved definition. A paused responsibility needs a fresh review before future checks can continue; nothing runs retroactively here.The result is unknown; the responsibility may have changed. Refresh to inspect it. Nothing will be repeated automatically.Draft status is unavailable. Your proposal has not been reported as saved.Read saved proposalsPrepare a weekly responsibilityClients → CalendarOperations → Work"
+  },
+  "boundary": "Original UI/controller with synthetic committed-definition and dropped-response port; no production write, no audit/receipt attribution inferred"
+}

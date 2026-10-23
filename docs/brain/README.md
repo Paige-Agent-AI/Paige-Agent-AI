@@ -25,6 +25,86 @@ this unmounted prerequisite. Experiential ordinary roles/cohorts/Chat/Live and
 Founder Acceptance remain UNVERIFIED; all19/nine remain mandatory. CAP014/015
 Unverified. Historical9PASS/0FAIL and12PASS/0FAIL/4BLOCKED are unchanged.
 
+## EXP02 original report reader — October23 source candidate
+
+Owning draft [#2661](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2661)
+has a separate AUTHOR-REVIEW / LOWER ASSURANCE5629723997 on initial final source
+d7fead6e2d8ed899919d2c8fe8ba7d4d2245b0f6/tree080b888f435d29404405365a17966f97f7dbbb7b.
+Actual production build111seconds and UI evidence guard PASS; exact hosted gates,
+merge/deployment/source readback remain pending. Initial bot-authored PR event
+created only external Preview statuses, not the required Actions runs; this factual
+PR-bound closeout preserves all source/render pins and must earn fresh head checks.
+No missing check is called PASS. Local canonical SOLO guard and its original
+hostile controls are separately running; no global source or baseline change.
+
+Same original Card/Studio parser/DocumentPreview now recognizes business_review,
+fits320px without clipping, uses44px visible controls, retires prior-workspace facts
+before paint and late reads, restores exact opener focus, and retries only the
+same original scoped read. Original public9 admission still refuses reports; no
+new viewer, Auth/runtime, metrics read, writer, approval or work redispatch.
+Initial parser1FAIL/5PASS and final serialized original Card5FAIL/1PASS controls;
+repaired115/six suites then current-main100/six PASS. Earlier overlapping retry
+negative is INVALID, not evidence. Types10baseline/6current/zero new and ESLint
+zero errors support source; one fixture FastRefresh warning/five incumbent Studio
+type-size advisories retained without global design changes.
+
+Seventeen actual original IAB synthetic frames pin17 declared render inputs and
+original JPEG bytes. Four required shell sizes open/closed,320dialog302/302,
+scroll620→page2zero, same-read Retry recovery, exact Open focus/unchanged draft,
+scope retirement, Mineral/Obsidian/reduced-motion confirmed. Local font delivery
+uses shipped Schibsted files; native Chrome/customer/200percent zoom/AT and complete
+real Chat/Live transport remain unverified. No synthetic acceptance promotion.
+Source implementatione144 composed with released main da509 at6a99eb3 preserves
+all declared render bytes. Required final review/exact-head CI/actual release/
+readback and ordinary roles/cohorts/continuity remain owed. CAP014/015 Unverified,
+ALG03/06/11/12/13 unchanged, all19/nine and one full founder evaluation required.
+[Reader evidence](../evidence/ui-delivery/e2-business-review-document-reader.md).
+
+Current-main security composition4cb448cb0949b973cf9428edb892964bed9e1670 preserves
+the original reader/render inputs while including mainbdd1 and its router repair.
+Fresh100/six suites, type ratchet10/6zero new and actual75second build PASS. Two
+supplementary original synthetic desktop/narrow frames confirm302/302 narrow fit,
+44px controls, page reset and exact opener return. Hosted locked-install required
+CI and real release/customer acceptance remain owed; no missing check is green.
+
+## EXP02 worker release and ordinary review supplement — October23
+
+Original worker2653 is SOURCE RELEASE VERIFIED at
+06f0ff637ab4a79a57c647f7cf7da839b9f0dc86/tree5769886a8639b61e9f6811925486ea7c8a8aa51d,
+exact inspected bdd1+8d union. LOWER5630049749/all11 applicable checks/two statuses
+SUCCESS; normal Edge39978748563/job120500162700 SUCCESS. Actual original worker51
+ACTIVE retains internal caller/cron authority and verify_jwt:false/import_map:false;
+all36 downloaded source files match reviewed bytes. READY5Z2Wn7/public exact
+06f-mvl4mesp/null; native completef9024/claim2f1b/publicsubmit61b3/ACL unchanged.
+[Release6368560367](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2653#issuecomment-6368560367).
+Public source-bound report admission and actual typed report runtime remain owed.
+
+Separate real ordinary-owner supplement on productionbdd1-mvl2dffa/Chat514/review72:
+one fresh weekly request settled43seconds/3steps, acknowledged source gaps and
+returned3 supported recommendations. Exact substantive answer survived real
+reload, original Executive navigation and catalogue-to-Chat return. Existing9/0
+and12/0/4 packages are unchanged; this is not a repeat of all nine criteria, a
+universal latency/reliability claim, negative permission/isolation/cohort/Live,
+typed-report or whole Experience acceptance. Raw customer evidence stays private.
+[Weekly6368295944](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2608#issuecomment-6368295944),
+[original protocol supplement](../delivery/e2-3-authenticated-first-briefing-acceptance.md).
+
+Released Desk2627 also has one real count/date/summary/older-source refusal,
+separate-source-tab/parent preservation and exact opener/conversation return case.
+No approval, dismissal, edit, run or send invoked; source warning observed in native
+AX, not the incomplete parent-only DOM probe. Native narrow/zoom/AT/cohorts remain
+owed. [Desk6368390069](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2627#issuecomment-6368390069).
+Actual catalogue009/010/011/013 ComingSoon,012/016/017 Limited,014/015 Unverified;
+all access labels Unverified. No algorithm/readiness promotion. All19/nine and one
+complete live founder evaluation remain required. Reader3754 all10 checks/two
+statuses SUCCESS/normal PreviewSKIP is supporting history; this current-main
+composition preserves both complete documentation sections and requires fresh
+final-head review/CI before its own release. No old-head gate inheritance.
+Fresh composed137 cases/eight document/worker/reader/Knowledge/Chat/receipt suites
+PASS103.69seconds after unchanged retry of a pre-assertion sandbox native-cache
+startup failure. All17 original render-input pins/19 original frame hashes match;
+no reader or harness changes. Final exact-head checks still mandatory.
+
 ## EXP04 exact prepared-field seal — October23 source release
 
 Original1352 renderer prerequisite2655 is SOURCE RELEASE VERIFIED, not an

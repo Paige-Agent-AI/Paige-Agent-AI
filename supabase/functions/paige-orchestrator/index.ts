@@ -712,28 +712,28 @@ Deno.serve(async (req) => {
       error: "The specialist result could not be verified. Inspect the original work before repeating it." }, 202);
 
     try {
-    let result: { status: number; body: unknown };
-    // §34-L5 / §13 SCOPE NOTE: per-agent model routing (config.job_kind → pickRoute) is wired for SOFT
-    // agents ONLY today — a `local` target hardcodes its model inside its own edge function (unreachable
-    // per-agent from here) and `langgraph` has no live agent. Extending per-agent routing to those runtimes
-    // is a documented follow-up, deliberately NOT faked here (never claim a swap that does nothing, §13).
-    if (agent.runtime === "local") {
-      result = await invokeLocal(agent.edge_function, boundInput, ctx);
-    } else if (agent.runtime === "soft") {
-      result = await invokeSoft(
-        { slug: agent.slug, name: agent.name, system_prompt: agent.system_prompt, config: agent.config },
-        boundInput,
-        ctx,
-        tenantId,
-      );
-    } else {
-      if (!agent.langgraph_graph) return fail(`Sub-agent ${agent.slug} has no langgraph_graph configured`, 500);
-      result = await dispatchLangGraph(agent.langgraph_graph, boundInput, ctx);
-    }
+      let result: { status: number; body: unknown };
+      // §34-L5 / §13 SCOPE NOTE: per-agent model routing (config.job_kind → pickRoute) is wired for SOFT
+      // agents ONLY today — a `local` target hardcodes its model inside its own edge function (unreachable
+      // per-agent from here) and `langgraph` has no live agent. Extending per-agent routing to those runtimes
+      // is a documented follow-up, deliberately NOT faked here (never claim a swap that does nothing, §13).
+      if (agent.runtime === "local") {
+        result = await invokeLocal(agent.edge_function, boundInput, ctx);
+      } else if (agent.runtime === "soft") {
+        result = await invokeSoft(
+          { slug: agent.slug, name: agent.name, system_prompt: agent.system_prompt, config: agent.config },
+          boundInput,
+          ctx,
+          tenantId,
+        );
+      } else {
+        if (!agent.langgraph_graph) return fail(`Sub-agent ${agent.slug} has no langgraph_graph configured`, 500);
+        result = await dispatchLangGraph(agent.langgraph_graph, boundInput, ctx);
+      }
 
-    const latency = Date.now() - startedAt;
-    const success = result.status >= 200 && result.status < 300;
-    const isDispatch = agent.runtime === "langgraph" && success;
+      const latency = Date.now() - startedAt;
+      const success = result.status >= 200 && result.status < 300;
+      const isDispatch = agent.runtime === "langgraph" && success;
 
       const outcomeRecorded = await updateInvocation(invocationId, {
         status: success ? (isDispatch ? "dispatched" : "succeeded") : "failed",
@@ -749,36 +749,36 @@ Deno.serve(async (req) => {
             ? (result.body as Record<string, unknown>).run_id as string | undefined ?? null
             : null,
       });
-    if (!outcomeRecorded) return unconfirmed();
+      if (!outcomeRecorded) return unconfirmed();
 
-    const receiptRecorded = await recordInvocationReceipt({
-      invocationId,
-      slug: agent.slug,
-      runtime: agent.runtime,
-      tenantId,
-      actorId: ctx.user_id ?? null,
-      success,
-      dispatched: isDispatch,
-      latencyMs: latency,
-    });
-    if (tenantId && !receiptRecorded) return ok({ ok: false, outcome_unknown: true,
-      invocation_id: invocationId, outcome_recorded: true, receipt_unverified: true,
-      error: "The original specialist outcome is saved, but its receipt could not be confirmed. Inspect the original work before repeating it." }, 202);
-
-    return ok(
-      {
-        ok: success,
-        subagent: agent.slug,
+      const receiptRecorded = await recordInvocationReceipt({
+        invocationId,
+        slug: agent.slug,
         runtime: agent.runtime,
-        latency_ms: latency,
-        // §13/§14: surface the invocation id so a caller (e.g. the action-bus drainer) can attach it to
-        // the artifact it produced — proving "her TEAM did this", auditable, not Paige acting alone.
-        invocation_id: invocationId,
-        receipt_recorded: receiptRecorded,
-        result: result.body,
-      },
-      success ? 200 : result.status,
-    );
+        tenantId,
+        actorId: ctx.user_id ?? null,
+        success,
+        dispatched: isDispatch,
+        latencyMs: latency,
+      });
+      if (tenantId && !receiptRecorded) return ok({ ok: false, outcome_unknown: true,
+        invocation_id: invocationId, outcome_recorded: true, receipt_unverified: true,
+        error: "The original specialist outcome is saved, but its receipt could not be confirmed. Inspect the original work before repeating it." }, 202);
+
+      return ok(
+        {
+          ok: success,
+          subagent: agent.slug,
+          runtime: agent.runtime,
+          latency_ms: latency,
+          // §13/§14: surface the invocation id so a caller (e.g. the action-bus drainer) can attach it to
+          // the artifact it produced — proving "her TEAM did this", auditable, not Paige acting alone.
+          invocation_id: invocationId,
+          receipt_recorded: receiptRecorded,
+          result: result.body,
+        },
+        success ? 200 : result.status,
+      );
     } catch (error) {
       // A transport/storage exception after registration can hide committed work.
       // Keep its original identity and inspect-only result; never re-dispatch here.

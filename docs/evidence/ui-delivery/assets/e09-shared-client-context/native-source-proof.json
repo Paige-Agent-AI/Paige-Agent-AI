@@ -1,7 +1,7 @@
 {
   "date": "2026-10-23",
   "classification": "Original private identity reader prerequisite, NOT_DEPLOYED",
-  "parent": "2691/c9d8fb17d3329e659ccd8005de8fbc44ea42631c",
+  "parent": "2691/51670c633c28534b3d4a49eea9b505cfacd7179a",
   "lease": "ANT161/92068e5d-68f3-4e1f-84e4-29cc4a65e219",
   "migration": "20271113620009",
   "migration_sha256": "6e3aed54bd8644fe7dc6284b227a700ffa3aa6bf4d277ec443e1fdfdb2b5752f",
@@ -284,5 +284,6 @@
       "failed": 3
     },
     "boundary": "Actual original private identity, wrappers and workspace guard run with reduced Auth/agency/platform/origin dependencies. Full current-head native/CI remains required."
-  }
+  },
+  "current_composed_main": "907a73784f4f84e49b48b34056a422352083ba02"
 }

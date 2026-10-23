@@ -4,7 +4,7 @@ Hosted120686303176 ran283 assertions with no failed assertion, then the original
 
 ## Current shared-identity ordering — 2026-10-23
 
-Native59 follows parent2691/c9d8fb17d3329e659ccd8005de8fbc44ea42631c and actual main2748432e1, which legitimately applied600000 to production. This never-production-applied identity migration moves590009→620009 after parent610009. Its SQL/function/test bytes remain unchanged; old reserved versions and previous Preview statements below are historical. Fresh required exact-head CI, ordinary empty Preview and production readback remain owed. The global unique guard is still present: no second-business admission yet.
+Native59 follows parent2691/51670c633c28534b3d4a49eea9b505cfacd7179a and actual main907a73784. Its preserved EXP01 release legitimately applied600000 to production. This never-production-applied identity migration moves590009→620009 after parent610009. Its SQL/function/test bytes remain unchanged; old reserved versions and previous Preview statements below are historical. Fresh required exact-head CI, ordinary empty Preview and production readback remain owed. The global unique guard is still present: no second-business admission yet.
 
 ## Current-main ordering correction — 2026-10-23
 

@@ -83,8 +83,11 @@ afterEach(() => {
   host.remove();
 });
 
-function render() {
-  act(() => root.render(<SoloSystemsCheckWorkspace accountContext={{ accountName: "First Sterling Capital", accountType: "standalone" }} openPaige={openPaige} />));
+function render(entry = "/") {
+  const workspace = <SoloSystemsCheckWorkspace accountContext={{ accountName: "First Sterling Capital", accountType: "standalone" }} openPaige={openPaige} />;
+  act(() => root.render(<MemoryRouter initialEntries={[entry]}><Routes>
+    <Route path="/solo/:account/*" element={workspace} /><Route path="*" element={workspace} />
+  </Routes></MemoryRouter>));
 }
 
 function button(name: string) {
@@ -92,6 +95,98 @@ function button(name: string) {
 }
 
 describe("Solo Systems Check workspace", () => {
+  const sourceId = "e2000000-0000-4000-8000-000000000001";
+  const sourceEntry = `/solo/7100001/command-center/systems-check?keep=1&finding=${sourceId}#evidence`;
+  it("offers explicit source inspection in the original drawer and returns keyboard focus", () => {
+    harness.systems.mockReturnValue({ ...baseSystems, findings: [{ ...finding, id: sourceId }] });
+    render(sourceEntry);
+    const context = host.querySelector('[aria-labelledby="sc-linked-title"]');
+    expect(context?.textContent).toContain("Payment connection needs attention");
+    expect(context?.textContent).toContain("From the last completed check");
+    expect(host.querySelector('[role="dialog"]')).toBeNull();
+    const inspect = button("Inspect linked evidence")!;
+    expect(inspect).toBeTruthy();
+    act(() => { inspect.focus(); inspect.click(); });
+    expect(host.querySelector('[role="dialog"]')?.textContent).toContain("disconnected");
+    act(() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
+    expect(host.querySelector('[role="dialog"]')).toBeNull();
+    expect(document.activeElement).toBe(inspect);
+    expect(baseCommand.approve).not.toHaveBeenCalled();
+    expect(baseCommand.decline).not.toHaveBeenCalled();
+    expect(refreshSystems).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { loading: true, message: "Reading the linked finding" },
+    { isError: true, message: "could not be read" },
+    { run: null, message: "No completed check" },
+    { run: { ...baseSystems.run, completed_at: null }, message: "No completed check" },
+    { findings: [{ ...finding, id: sourceId, run_id: "older-run" }], message: "not in the last completed check" },
+    { findings: [], message: "not in the last completed check" },
+  ])("withholds linked source evidence when its current scoped read cannot support it: %j", patch => {
+    harness.systems.mockReturnValue({ ...baseSystems, findings: [{ ...finding, id: sourceId }], ...patch });
+    render(sourceEntry);
+    const context = host.querySelector('[aria-labelledby="sc-linked-title"]');
+    expect(context?.textContent).toContain(patch.message);
+    expect(context?.textContent).not.toContain(finding.paige_interpretation);
+    expect(context?.textContent).not.toContain(sourceId);
+    expect(button("Inspect linked evidence")).toBeUndefined();
+  });
+
+  it.each(["../other", "", `${sourceId}&finding=${sourceId}`])("refuses a malformed or ambiguous source reference: %s", reference => {
+    render(`/solo/7100001/command-center/systems-check?finding=${reference}`);
+    expect(host.querySelector('[aria-labelledby="sc-linked-title"]')?.textContent).toContain("source reference is not valid");
+    expect(button("Inspect linked evidence")).toBeUndefined();
+  });
+
+  it("clears only the source selection without running work", () => {
+    render(sourceEntry);
+    expect(host.querySelector('a[aria-label="Clear source selection"]')?.getAttribute("href"))
+      .toBe("/solo/7100001/command-center/systems-check?keep=1#evidence");
+    const clear = host.querySelector('a[aria-label="Clear source selection"]') as HTMLAnchorElement;
+    act(() => clear.click());
+    expect(host.querySelector('[aria-labelledby="sc-linked-title"]')).toBeNull();
+    expect(document.activeElement).toBe(button("Refresh current data"));
+    expect(refreshSystems).not.toHaveBeenCalled();
+  });
+
+  it("retires an inspected linked source during reread and shows only its returned resolution", () => {
+    harness.systems.mockReturnValue({ ...baseSystems, findings: [{ ...finding, id: sourceId }] });
+    render(sourceEntry);
+    act(() => button("Inspect linked evidence")!.click());
+    expect(host.querySelector('[role="dialog"]')).not.toBeNull();
+    harness.systems.mockReturnValue({ ...baseSystems, loading: true, findings: [{ ...finding, id: sourceId }] });
+    render(sourceEntry);
+    expect(host.querySelector('[role="dialog"]')).toBeNull();
+    expect(host.querySelector('[aria-labelledby="sc-linked-title"]')?.textContent).not.toContain(finding.paige_interpretation);
+    harness.systems.mockReturnValue({ ...baseSystems, findings: [{ ...finding, id: sourceId, resolved_at: "2026-08-27T18:00:00Z" }] });
+    render(sourceEntry);
+    expect(host.querySelector('[aria-labelledby="sc-linked-title"]')?.textContent).toContain("Resolved");
+    expect(host.querySelector('[role="dialog"]')).toBeNull();
+    expect(baseCommand.approve).not.toHaveBeenCalled();
+  });
+
+  it("retires the original Ask First presentation when a linked source becomes unreadable", () => {
+    harness.systems.mockReturnValue({ ...baseSystems, findings: [{ ...finding, id: sourceId }] });
+    render(sourceEntry);
+    act(() => button("Inspect linked evidence")!.click());
+    act(() => button("Put PAIGE to work")!.click());
+    expect(host.querySelector('[aria-labelledby="ask-first-title"]')).not.toBeNull();
+    harness.systems.mockReturnValue({ ...baseSystems, isError: true, findings: [{ ...finding, id: sourceId }] });
+    render(sourceEntry);
+    expect(host.querySelector('[aria-labelledby="ask-first-title"]')).toBeNull();
+    expect(host.querySelector('[role="dialog"]')).toBeNull();
+    expect(host.querySelector('.sc-scroll-owner')?.getAttribute("aria-hidden")).toBeNull();
+    expect(document.activeElement).toBe(button("Refresh current data"));
+    expect(openPaige).not.toHaveBeenCalled();
+    expect(baseCommand.approve).not.toHaveBeenCalled();
+  });
+
+  it("adds no source section to ordinary navigation", () => {
+    render();
+    expect(host.querySelector('[aria-labelledby="sc-linked-title"]')).toBeNull();
+  });
+
   it("keeps completed findings while naming the unfinished check reported at the last read", () => {
     harness.systems.mockReturnValue({ ...baseSystems, scanInProgressSince: "2026-08-27T18:00:00Z" });
     render();

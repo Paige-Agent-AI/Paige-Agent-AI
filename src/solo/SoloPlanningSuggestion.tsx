@@ -8,7 +8,7 @@ import type { PaigeBusinessPlanScope } from "./paigeClientScope";
 import "./solo-planning-suggestion.css";
 
 // Only mounted presentation memory. It is neither an approval nor another work store.
-const itemKey = (item: SoloPendingAction) => JSON.stringify([item.id, item.createdAt, item.title, item.summary, item.draftContent, item.rationale]);
+const itemKey = (item: SoloPendingAction) => JSON.stringify([item.id, item.createdAt, item.title, item.summary, item.draftContent, item.rationale, item.sourceLink?.destination, item.sourceLink?.record_id]);
 
 export function SoloPlanningSuggestion({ api, tenantId, actorId, relevant, active, plan, onClearContext, sidePanel }: {
   api: ChatComposerContextApi; tenantId: string | null; actorId: string | null;
@@ -72,7 +72,7 @@ export function SoloPlanningSuggestion({ api, tenantId, actorId, relevant, activ
           : data.error ? <div className="e2ps-state"><p role="alert">Prepared work could not be checked. Previous details and counts are withheld.</p><button type="button" onClick={data.refresh}><RefreshCw size={15} aria-hidden /> Retry the read</button></div>
             : !workReturned ? <p className="e2ps-state">No prepared work returned. Original approvals remain separate.</p>
               : <><p className="e2ps-count">{total === null ? "Total unavailable" : `${total} prepared item${total === 1 ? "" : "s"}`} · {data.items.length} loaded for preview</p>
-                {data.items.slice(0, 3).map(item => <button className="e2ps-item" type="button" key={item.id} onClick={() => inspect(item.id)}><span>{item.department} · {item.draftContent ? "Draft available" : "Recorded summary"}</span><strong>{item.title}</strong>{item.summary && <p>{item.summary}</p>}<small>Read in Decision Desk <ArrowUpRight size={13} aria-hidden /></small></button>)}
+                {data.items.slice(0, 3).map(item => <button className="e2ps-item" type="button" key={item.id} onClick={() => inspect(item.id)}><span>{item.department} · {item.draftContent ? "Draft available" : item.summary ? "Recorded summary" : "Details unavailable"}</span><strong>{item.title}</strong>{item.summary && <p>{item.summary}</p>}<small>Read in Decision Desk <ArrowUpRight size={13} aria-hidden /></small></button>)}
                 <button type="button" className="e2ps-open" onClick={() => inspect(null)}>Open Decision Desk <ArrowUpRight size={15} aria-hidden /></button></>}
       </ContextualSuggestion>
       <button type="button" className="e2ps-dismiss" aria-label="Dismiss prepared-work suggestion" onClick={() => { setDismissed({ keys: data.items.map(itemKey), total }); setOpen(false); api.focusComposer(); }}><X size={14} aria-hidden /></button>

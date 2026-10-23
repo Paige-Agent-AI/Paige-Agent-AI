@@ -1,0 +1,282 @@
+{
+  "kind": "Native original-component synthetic composition supplement; no authenticated/customer proof",
+  "sourceBase": "d581b3ece45e5640447fab70530082443bda8cf9",
+  "capture": "cua_repl native Tab.screenshot; each final image recaptured separately after its source/Chat/drawer state was observed; original JPEG bytes, no raster processing",
+  "sourcePins": [
+    {
+      "path": "src/solo/SoloSystemsCheckWorkspace.tsx",
+      "sha256": "5586b2689982284acf15daabaa6102d636516c2198dcf7812190a2566e935467"
+    },
+    {
+      "path": "src/solo/systems-check-areas.ts",
+      "sha256": "ec8986c7113db65fe866b700c95f386c31f0e8b1c387b6c1b0c314188ab2225b"
+    },
+    {
+      "path": "src/solo/solo-systems-check-workspace.css",
+      "sha256": "78a7d8ad1a891cc5c3978700e7a3ff05f9bf94161d1bc887e85f1d8e9a392773"
+    },
+    {
+      "path": "src/solo/CommandCenter.tsx",
+      "sha256": "f16ada48b0c2cbb8748fa253db3000c3bd5ec0cfd9081746b611fac282ef4a61"
+    },
+    {
+      "path": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "sha256": "7aaa24d867af1ac5e2222f3581ab361288ba54e6319e5c86db245875adb13e7c"
+    },
+    {
+      "path": "src/index.css",
+      "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc"
+    },
+    {
+      "path": "src/solo/solo-tokens.css",
+      "sha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/main.tsx",
+      "sha256": "aaa330dd9ff17a906c24172c25c236d818a39454743c4825693f016dfe48a2f9"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/stubs.tsx",
+      "sha256": "10f0312b86ad8df4fb5b4e886fc7a5497d1a31d2e0c99fc42f09ae9a681ddf73"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/vite.config.ts",
+      "sha256": "9cad9f552151fad292d7df462db7726445bfa7a333e1b5124bd00ee377d58304"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/systems-check-fixtures.ts",
+      "sha256": "02790c30b70b606266baeb275b813683f55d1caa6370230af6581abc3352b07d"
+    },
+    {
+      "path": "scripts/live-drive/harness/systems-check-mount/useCommandCenter-stub.ts",
+      "sha256": "20546430d6952dd5175f3bcda197bc6201cedab6fe5acac428ef1a45df526466"
+    },
+    {
+      "path": "scripts/live-drive/harness/systems-check-mount/useSoloActivityFeed-stub.ts",
+      "sha256": "de194b9b75f913e342e557e3aaa05e278aea56f92ee1530e98325ce1e2483e9a"
+    },
+    {
+      "path": "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-normal.woff2",
+      "sha256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05"
+    },
+    {
+      "path": "src/lib/links/workspaceLinks.ts",
+      "sha256": "c8239322febf13eb83bbcc492244ace86d426608af5d5257d1a55e23fc57558f"
+    },
+    {
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "sha256": "5299b1ef17b7b5b816f23ed1830291d9be04689fde8b827b0f709703cfb9ed62"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-turn/record-links.ts",
+      "sha256": "a66d094680df5df1394b05ccd3ccd317c7382d4efe0d1c63aa2d10a602d622a3"
+    }
+  ],
+  "changedOriginalPins": [
+    "src/components/tenant-shell/TenantCommandCenterShell.tsx"
+  ],
+  "frames": [
+    {
+      "file": "composed-1536-closed.jpg",
+      "drawer": false,
+      "fontLoaded": true,
+      "linkedText": "Linked recorded findingClear selectionPayment processor declarationNeeds attentionThis recorded setup result does not verify a business action.From the last completed check · 10/22/2026, 5:00:00 AMInspect linked evidence",
+      "pageOverflow": false,
+      "paige": "closed",
+      "sourceButtons": [
+        {
+          "height": 44,
+          "name": "Clear selection",
+          "width": 119.0875015258789
+        },
+        {
+          "height": 44,
+          "name": "Inspect linked evidence",
+          "width": 173.6125030517578
+        }
+      ],
+      "sourceOverflow": false,
+      "viewport": [
+        1536,
+        770
+      ],
+      "raster": [
+        1535,
+        770
+      ],
+      "bytes": 85684,
+      "sha256": "481aabda5556bf867e082861da3128d2da5922958e778ca06df574ff821e79a4"
+    },
+    {
+      "file": "composed-1536-open.jpg",
+      "drawer": false,
+      "fontLoaded": true,
+      "linkedText": "Linked recorded findingClear selectionPayment processor declarationNeeds attentionThis recorded setup result does not verify a business action.From the last completed check · 10/22/2026, 5:00:00 AMInspect linked evidence",
+      "pageOverflow": false,
+      "paige": "open",
+      "sourceButtons": [
+        {
+          "height": 44,
+          "name": "Clear selection",
+          "width": 119.0875015258789
+        },
+        {
+          "height": 44,
+          "name": "Inspect linked evidence",
+          "width": 173.6125030517578
+        }
+      ],
+      "sourceOverflow": false,
+      "viewport": [
+        1536,
+        770
+      ],
+      "raster": [
+        1535,
+        770
+      ],
+      "bytes": 97554,
+      "sha256": "62be4d60f00617a6306a5228e41a56e89a3b90c288bbb0b0be511bbb5c89235b"
+    },
+    {
+      "file": "composed-320-closed.jpg",
+      "drawer": false,
+      "fontLoaded": true,
+      "linkedText": "Linked recorded findingClear selectionPayment processor declarationNeeds attentionThis recorded setup result does not verify a business action.From the last completed check · 10/22/2026, 5:00:00 AMInspect linked evidence",
+      "pageOverflow": false,
+      "paige": "closed",
+      "sourceButtons": [
+        {
+          "height": 44,
+          "name": "Clear selection",
+          "width": 119.0875015258789
+        },
+        {
+          "height": 44,
+          "name": "Inspect linked evidence",
+          "width": 173.6125030517578
+        }
+      ],
+      "sourceOverflow": false,
+      "viewport": [
+        320,
+        740
+      ],
+      "raster": [
+        320,
+        740
+      ],
+      "bytes": 37373,
+      "sha256": "ac8ad85b1b2d0fd69f78a457ce411a9cd431650f04747b8dc41b288abdb9df1d"
+    },
+    {
+      "file": "composed-320-drawer.jpg",
+      "drawer": true,
+      "fontLoaded": true,
+      "linkedText": "Linked recorded findingClear selectionPayment processor declarationNeeds attentionThis recorded setup result does not verify a business action.From the last completed check · 10/22/2026, 5:00:00 AMInspect linked evidence",
+      "pageOverflow": false,
+      "paige": "closed",
+      "sourceButtons": [
+        {
+          "height": 44,
+          "name": "Clear selection",
+          "width": 119.0875015258789
+        },
+        {
+          "height": 44,
+          "name": "Inspect linked evidence",
+          "width": 173.6125030517578
+        }
+      ],
+      "sourceOverflow": false,
+      "viewport": [
+        320,
+        740
+      ],
+      "raster": [
+        320,
+        740
+      ],
+      "bytes": 32170,
+      "sha256": "23c785859a054aced0045f60b6aeed8baffdd9776567277b9a82e04832fc030f"
+    },
+    {
+      "file": "composed-320-return-focus.jpg",
+      "drawer": false,
+      "fontLoaded": true,
+      "linkedText": "Linked recorded findingClear selectionPayment processor declarationNeeds attentionThis recorded setup result does not verify a business action.From the last completed check · 10/22/2026, 5:00:00 AMInspect linked evidence",
+      "pageOverflow": false,
+      "paige": "closed",
+      "sourceButtons": [
+        {
+          "height": 44,
+          "name": "Clear selection",
+          "width": 119.0875015258789
+        },
+        {
+          "height": 44,
+          "name": "Inspect linked evidence",
+          "width": 173.6125030517578
+        }
+      ],
+      "sourceOverflow": false,
+      "viewport": [
+        320,
+        740
+      ],
+      "raster": [
+        320,
+        740
+      ],
+      "bytes": 36305,
+      "sha256": "592e58e382e3eb91ade7ff4ebd9257c5699f192de4e31c78abdffeb87df2ca58"
+    },
+    {
+      "file": "composed-320-open.jpg",
+      "drawer": false,
+      "fontLoaded": true,
+      "linkedText": "Linked recorded findingClear selectionPayment processor declarationNeeds attentionThis recorded setup result does not verify a business action.From the last completed check · 10/22/2026, 5:00:00 AMInspect linked evidence",
+      "pageOverflow": false,
+      "paige": "open",
+      "sourceButtons": [
+        {
+          "height": 44,
+          "name": "Clear selection",
+          "width": 119.0875015258789
+        },
+        {
+          "height": 44,
+          "name": "Inspect linked evidence",
+          "width": 173.6125030517578
+        }
+      ],
+      "sourceOverflow": false,
+      "viewport": [
+        320,
+        740
+      ],
+      "raster": [
+        320,
+        740
+      ],
+      "bytes": 25062,
+      "sha256": "16a4b0af116da27c8e09d9f1322fb3d9fb0118c8e7665550f394d0df0969b011"
+    }
+  ],
+  "keyboard": {
+    "before": "Inspect linked evidence",
+    "returned": "Inspect linked evidence",
+    "scrollBefore": 59.20000076293945,
+    "scrollAfter": 59.20000076293945
+  },
+  "conversation": {
+    "draftPreservedAcrossFold": true,
+    "backend": "Synthetic refused ports only"
+  },
+  "limitations": [
+    "Original20 earlier JPEGs retain their historical17 source pins; only shared shell source changed",
+    "Native desktop screenshot thumbnail is1535px for1536 CSS; no raster editing or exact-raster claim",
+    "Native320 CSS/raster exact; no real browser zoom/AT/customer/cohort/Live/founder proof",
+    "Initial pre-paint thumbnail images were rejected; final settled images directly inspected before evidence acceptance. Per-image focus is not inferred from screenshots; explicit keyboard observation retained separately."
+  ]
+}

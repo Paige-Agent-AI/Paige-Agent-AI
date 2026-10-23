@@ -2,6 +2,8 @@ import { readWeeklyCommitmentProjection } from "../../../supabase/functions/_sha
 import type { WeeklyCheck, WeeklyCommitmentSnapshot } from "../../../supabase/functions/_shared/paige-orchestration/weekly-commitment-projection";
 import type { ContextIdentity } from "../../../supabase/functions/_shared/paige-context/mod";
 import { createWeeklyDraftDeadline } from "../../../supabase/functions/_shared/paige-orchestration/weekly-draft-deadline.ts";
+import { reviewWeeklyScheduleChange } from "../../../supabase/functions/_shared/paige-orchestration/weekly-commitment-projection.ts";
+import type { WeeklySchedule } from "../../../supabase/functions/_shared/paige-orchestration/weekly-commitment-projection";
 
 export type WeeklyOwnerRead = { status: "ready"; snapshot: WeeklyCommitmentSnapshot }
   | { status: "loading" | "unavailable" | "refused" };
@@ -56,11 +58,11 @@ export async function readWeeklyOwner(scope: WeeklyBrowserScope, caller: Caller,
 
 export type WeeklyOwnerControl = { status: "saved"; snapshot: WeeklyCommitmentSnapshot }
   | { status: "refused" | "stale" | "unsupported" | "unavailable" | "unknown" };
-export type WeeklyFutureControl = (check: WeeklyCheck, action: "pause" | "cancel") => Promise<WeeklyOwnerControl>;
-/** Deliberate human-only future stop. The original native writer owns authority,
- * concurrency and audit; this adapter cannot authorize, enable or replay work. */
-export async function controlWeeklyOwner(scope: WeeklyBrowserScope, review: WeeklyCheck, action: "pause" | "cancel",
-  caller: Caller, current: () => WeeklyBrowserScope | null): Promise<WeeklyOwnerControl> {
+export type WeeklyFutureControl = (check: WeeklyCheck, action: "pause" | "cancel" | "configure", schedule?: WeeklySchedule) => Promise<WeeklyOwnerControl>;
+/** Deliberate human-only future control. The original native writers own authority,
+ * concurrency and audit; a changed definition disarms and cannot authorize, enable or replay work. */
+export async function controlWeeklyOwner(scope: WeeklyBrowserScope, review: WeeklyCheck, action: "pause" | "cancel" | "configure",
+  caller: Caller, current: () => WeeklyBrowserScope | null, schedule?: WeeklySchedule): Promise<WeeklyOwnerControl> {
   const origin = { ...scope }, expected = { id: review.automation_id, revision: review.revision,
     status: review.schedule_status, schedule: { ...review.schedule } };
   const uuid = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
@@ -72,7 +74,9 @@ export async function controlWeeklyOwner(scope: WeeklyBrowserScope, review: Week
         && now?.actorId === origin.actorId && now.tenantId === origin.tenantId && now.epoch === origin.epoch;
     } catch { return false; }
   };
-  if (!["pause", "cancel"].includes(action) || !uuid.test(origin.actorId) || !uuid.test(origin.tenantId)
+  const proposed = action === "configure" && schedule ? reviewWeeklyScheduleChange(expected.schedule, schedule) : null;
+  if (!["pause", "cancel", "configure"].includes(action) || action === "configure" && !proposed || action !== "configure" && schedule !== undefined
+    || !uuid.test(origin.actorId) || !uuid.test(origin.tenantId)
     || !uuid.test(expected.id) || !Number.isSafeInteger(expected.revision) || expected.revision < 1 || !matches()) return { status: "refused" };
   const stage = createWeeklyDraftDeadline(12_000, matches);
   const sameDefinition = (value: WeeklyCheck) => value.automation_id === expected.id && value.revision === expected.revision
@@ -85,12 +89,15 @@ export async function controlWeeklyOwner(scope: WeeklyBrowserScope, review: Week
     const target = before.snapshot.checks.find(item => item.automation_id === expected.id);
     if (!target || !sameDefinition(target) || target.schedule_status !== expected.status
       || target.schedule_status === "cancelled" || action === "pause" && target.schedule_status === "paused") return { status: "stale" };
+    if (proposed && proposed.weekday === expected.schedule.weekday && proposed.local_time === expected.schedule.local_time
+      && proposed.timezone === expected.schedule.timezone) return { status: "unsupported" };
     const result = await stage(() => {
       // Treat an eager SDK/factory as possibly dispatched. Recheck again before
       // subscribing to a lazy PostgREST query; late preflight can never write.
       dispatched = true;
-      const request = caller.rpc("control_weekly_commitment_check", { _automation_id: expected.id,
-        _action: action, _expected_revision: expected.revision });
+      const request = proposed ? caller.rpc("configure_weekly_commitment_check", { _automation_id: expected.id,
+        _weekday: proposed.weekday, _local_time: proposed.local_time, _timezone: proposed.timezone, _expected_revision: expected.revision })
+        : caller.rpc("control_weekly_commitment_check", { _automation_id: expected.id, _action: action, _expected_revision: expected.revision });
       if (request instanceof Promise) void request.catch(() => {});
       return stage(() => new Promise<{ data: unknown; error: unknown }>((resolve, reject) => request.then(resolve, reject)));
     });
@@ -99,15 +106,21 @@ export async function controlWeeklyOwner(scope: WeeklyBrowserScope, review: Week
       const code = typeof result.error === "object" && "code" in result.error ? result.error.code : null;
       return { status: code === "40001" ? "stale" : code === "42501" ? "refused" : code === "22023" ? "unsupported" : "unknown" };
     }
-    const data = result.data, state = action === "pause" ? "paused" : "cancelled";
+    const data = result.data, state = proposed ? "draft" : action === "pause" ? "paused" : "cancelled";
+    const revision = expected.revision + (proposed ? 1 : 0);
     if (!data || typeof data !== "object" || !("ok" in data) || data.ok !== true
-      || !("automation_id" in data) || data.automation_id !== expected.id || !("revision" in data) || data.revision !== expected.revision
-      || !("state" in data) || data.state !== state || !("future_runs_only" in data) || data.future_runs_only !== true) return { status: "unknown" };
+      || !("automation_id" in data) || data.automation_id !== expected.id || !("revision" in data) || data.revision !== revision
+      || !("state" in data) || data.state !== state || (proposed
+        ? !("requires_authorization" in data) || data.requires_authorization !== true
+        : !("future_runs_only" in data) || data.future_runs_only !== true)) return { status: "unknown" };
     const after = await stage(() => readWeeklyOwner(origin, caller, () => matches() ? origin : null));
     if (!matches()) return { status: "refused" };
     if (after.status !== "ready") return { status: after.status === "refused" ? "refused" : "unknown" };
     const saved = after.snapshot.checks.find(item => item.automation_id === expected.id);
-    return saved && sameDefinition(saved) && saved.schedule_status === state && saved.next_run_at === null
+    const definitionMatches = saved && (proposed ? saved.automation_id === expected.id && saved.revision === revision
+      && saved.schedule.weekday === proposed.weekday && saved.schedule.local_time === proposed.local_time && saved.schedule.timezone === proposed.timezone
+      && saved.schedule_status === "requested" && saved.execution_availability === "held" : sameDefinition(saved) && saved.schedule_status === state);
+    return saved && definitionMatches && saved.next_run_at === null
       ? { status: "saved", snapshot: after.snapshot } : { status: "unknown" };
   } catch { return { status: !matches() ? "refused" : dispatched ? "unknown" : "unavailable" }; }
   finally { retired = true; }

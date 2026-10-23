@@ -469,19 +469,19 @@ async function recordInvocationReceipt(opts: {
   slug: string;
   runtime: string;
   tenantId: string | null;
+  actorId: string | null;
   success: boolean;
   dispatched: boolean;
   latencyMs: number;
 }): Promise<void> {
-  if (!opts.invocationId || !opts.tenantId) return;
+  if (!opts.invocationId || !opts.tenantId || !opts.actorId) return;
   try {
-    const { data: m } = await supabase.from("tenant_members")
-      .select("user_id").eq("tenant_id", opts.tenantId).eq("status", "active")
-      .in("role", ["owner", "admin"]).limit(1);
-    const actor = m?.[0]?.user_id ?? null;
+    // Keep the original verified requester and invocation. Never borrow another
+    // owner's identity or mint a new receipt identity after an uncertain write.
     await recordCapabilityRun(supabase, {
       tenantId: opts.tenantId,
-      actorId: actor,
+      actorId: opts.actorId,
+      runId: opts.invocationId,
       capabilityKey: "subagent_invoke",
       outcome: opts.dispatched
         ? "capability_outcome_unknown"
@@ -747,6 +747,7 @@ Deno.serve(async (req) => {
       slug: agent.slug,
       runtime: agent.runtime,
       tenantId,
+      actorId: ctx.user_id ?? null,
       success,
       dispatched: isDispatch,
       latencyMs: latency,

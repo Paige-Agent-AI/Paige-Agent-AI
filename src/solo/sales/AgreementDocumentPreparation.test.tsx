@@ -4,14 +4,16 @@ import {webcrypto} from 'node:crypto';
 import {beforeEach,afterEach,expect,it,vi} from 'vitest';
 import fixture from './fixtures/agreement-document-source.json';
 import {prepareAgreementFields} from '../../../supabase/functions/_shared/agreements/field-preparation';
-import type {AgreementDocumentView,AgreementDocumentCommand} from './agreementDocumentApi';
+import {prepareCommercialPresentation,commercialPresentationText} from '../../../supabase/functions/_shared/agreements/commercial-presentation';
+import {assembleFixedRepaymentSchedule} from '../../../supabase/functions/_shared/sales-collections/model';
+import type {AgreementDocumentView,AgreementDocumentCommand,AgreementCommercialReview} from './agreementDocumentApi';
 import {sha256Hex} from '../../../supabase/functions/_shared/agreements/token';
 import type {AssignedField} from './agreementDocumentModel';
 import {useSalesDraftExit} from '../sales-dialog';
-const ports=vi.hoisted(()=>({read:vi.fn(),pdf:vi.fn(),save:vi.fn(),history:vi.fn(),retained:vi.fn(),return:vi.fn(),refused:vi.fn(),checkpoints:[] as string[],fieldWork:null as Promise<unknown>|null}));
+const ports=vi.hoisted(()=>({read:vi.fn(),pdf:vi.fn(),save:vi.fn(),history:vi.fn(),sources:vi.fn(),review:vi.fn(),retained:vi.fn(),return:vi.fn(),refused:vi.fn(),checkpoints:[] as string[],fieldWork:null as Promise<unknown>|null}));
 vi.mock('@/integrations/supabase/client',()=>({supabase:{}}));
-vi.mock('./agreementDocumentApi',async original=>({...await original<typeof import('./agreementDocumentApi')>(),readAgreementDocument:ports.read,readAgreementDocumentPdf:ports.pdf,saveAgreementDocument:ports.save,listAgreementDocumentHistory:ports.history}));
-vi.mock('./AgreementDocumentFields',()=>({AgreementDocumentFields:(props:{canEdit:boolean;source:unknown;document:unknown;bytes:Uint8Array;fields:AssignedField[];onChange:(fields:AssignedField[])=>void;onSave:(value:Awaited<ReturnType<typeof prepareAgreementFields>>)=>void})=><div data-field-inspector data-editable={props.canEdit}>
+vi.mock('./agreementDocumentApi',async original=>({...await original<typeof import('./agreementDocumentApi')>(),readAgreementDocument:ports.read,readAgreementDocumentPdf:ports.pdf,saveAgreementDocument:ports.save,listAgreementDocumentHistory:ports.history,readAgreementCommercialSources:ports.sources,readAgreementCommercialReview:ports.review}));
+vi.mock('./AgreementDocumentFields',()=>({AgreementDocumentFields:(props:{canEdit:boolean;source:unknown;document:unknown;bytes:Uint8Array;fields:AssignedField[];savedPreparationSha:string;onChange:(fields:AssignedField[])=>void;onSave:(value:Awaited<ReturnType<typeof prepareAgreementFields>>)=>void})=><div data-field-inspector data-editable={props.canEdit} data-saved-fields-sha={props.savedPreparationSha}>
   <span data-displayed-byte-length>{props.bytes.length}</span><span>{props.fields.length} proposed fields</span><button disabled={!props.canEdit} onClick={()=>props.onChange([...props.fields,{id:'f1111111-0000-4000-8000-000000000001',signer_id:fixture.signers[0].id,kind:'signature',page:1,x:20,y:20,width:120,height:40,required:true,label:'Signature'}])}>Place controlled field</button>
   <button disabled={!props.canEdit} onClick={()=>{ports.fieldWork=prepareAgreementFields(props.source,props.document,props.fields).then(props.onSave);}}>Save controlled fields</button></div>}));
 import {AgreementDocumentPreparation,type DocumentGuard} from './AgreementDocumentPreparation';
@@ -42,6 +44,47 @@ beforeEach(async()=>{vi.stubGlobal('crypto',webcrypto);vi.clearAllMocks();ports.
   const prepared=await prepareAgreementFields(fixture.source,fixture.document,[]);record={...empty(),state:'retained',can_edit:true,document_signers:structuredClone(fixture.signers) as AgreementDocumentView['document_signers'],preparation:{id:request,agreement_id:fixture.source.agreement_id,client_id:fixture.source.client_id,revision_no:1,source_version:1,source_updated_at:fixture.source.updated_at,actor_user_id:actor,document_sha256:fixture.document.sha256,document_byte_length:fixture.document.byte_length,manifest:structuredClone(prepared.manifest),preparation_sha256:prepared.preparation_sha256,event_id:event,is_selected:true,created_at:fixture.source.updated_at,source_scope:'agreement_and_parties',source_matches:true,commercial_verification:'not_applicable'}};
 });
 afterEach(()=>{act(()=>root?.unmount());host?.remove();vi.unstubAllGlobals();});
+const invoice='77777777-0000-4000-8000-000000000001';
+const held=():AgreementDocumentView=>({...empty(),can_prepare:false,preparation_hold:'commercial_review_required'});
+const choices=()=>({ok:true,value:{tenant_id:fixture.source.tenant_id,agreement_id:fixture.source.agreement_id,items:[{invoice_id:invoice,invoice_number:'DRAFT-TEST',total_minor:350000,currency:'usd'}],has_more:false,next_cursor:null}});
+async function terms():Promise<AgreementCommercialReview>{
+  const s=fixture.source,schedule=assembleFixedRepaymentSchedule({total_cents:350000,currency:'usd',deposit_cents:50000,deposit_date:'2026-10-22',installment_cents:30000,first_installment_date:'2026-11-22',cadence:'monthly'});
+  if(schedule.state!=='ready')throw Error('Canonical schedule expected');
+  const treatment={state:'not_applicable',charges:[],source:'Synthetic owner decision',policy:'No applicable charge recorded'};
+  const input={schema_version:2,engagement:{starts_on:'2026-10-22',ends_on:null,price_basis:'negotiated'},source:{tenant_id:s.tenant_id,client_id:s.client_id,agreement_id:s.agreement_id,agreement_version:s.version,agreement_updated_at:s.updated_at,offer_id:'55555555-0000-4000-8000-000000000001',body_source:'paige_draft',status:'draft',content_sha256:null,terms_id:'66666666-0000-4000-8000-000000000001',terms_version:1,terms_updated_at:s.updated_at,invoice_id:invoice,invoice_version:1,invoice_draft_version:1,invoice_updated_at:s.updated_at},title:'Controlled agreement',body_markdown:'Neutral commercial source.',principal_minor:350000,currency:'usd',collection_terms:schedule.terms,conditions:{schema_version:1,tax:treatment,fees:treatment},lines:[{unit_minor:350000,quantity:1}]};
+  const presentation=await prepareCommercialPresentation(input);return {state:'ready',invoice_id:invoice,presentation,payload_digest:presentation.payload_digest,presented_body_markdown:commercialPresentationText(input.body_markdown,presentation)};
+}
+async function selectInvoice(value=invoice){await act(async()=>{const control=host.querySelector<HTMLSelectElement>('select[aria-label="Agreement invoice"]');expect(control).not.toBeNull();control!.value=value;control!.dispatchEvent(new Event('change',{bubbles:true}));});}
+it('requires an explicit invoice choice and canonical review before any commercial preparation write',async()=>{
+  const review=await terms();ports.read.mockResolvedValue(good(held()));ports.sources.mockResolvedValue(choices());ports.review.mockResolvedValue({ok:true,value:review});ports.save.mockResolvedValue(absent());await mount();
+  expect(ports.sources).toHaveBeenCalledOnce();expect(ports.review).not.toHaveBeenCalled();expect(ports.save).not.toHaveBeenCalled();expect(button('Review recorded terms').disabled).toBe(true);
+  await selectInvoice();await click('Review recorded terms');expect(ports.review.mock.calls[0][1]).toBe(invoice);expect(host.textContent).toContain('Neutral commercial source.');expect(document.activeElement).toBe(host.querySelector('[data-commercial-review-heading]'));
+  await click('Prepare exact PDF');const command=ports.save.mock.calls[0][1];expect(command).toMatchObject({action:'prepare_commercial_document',invoice_id:invoice,commercial_payload_digest:review.state==='ready'?review.payload_digest:'',expected_current_id:null});expect(ports.checkpoints).toEqual([command.request_id]);expect(host.textContent).toContain('Check the same preparation');await click('Retry same request');expect(ports.save.mock.calls[1][1]).toBe(command);expect(host.textContent).not.toContain('Review recorded terms');
+});
+it('keeps missing original facts correctable without generating document words or a write',async()=>{
+  ports.read.mockResolvedValue(good(held()));ports.sources.mockResolvedValue(choices());ports.review.mockResolvedValue({ok:true,value:{state:'needs_input',fields:['Installment due dates']}});await mount();await selectInvoice();await click('Review recorded terms');expect(host.textContent).toContain('Installment due dates');expect(host.textContent).toContain('Complete the original terms');expect([...host.querySelectorAll('button')].some(b=>b.textContent==='Prepare exact PDF')).toBe(false);expect(ports.save).not.toHaveBeenCalled();
+});
+it('discards the prior invoice review when another invoice is chosen and ignores its late read',async()=>{
+  let release!:(value:unknown)=>void;const review=await terms(),second='77777777-0000-4000-8000-000000000002',page=choices();page.value.items.push({...page.value.items[0],invoice_id:second,invoice_number:'DRAFT-SECOND'});
+  ports.read.mockResolvedValue(good(held()));ports.sources.mockResolvedValue(page);ports.review.mockReturnValue(new Promise(done=>{release=done;}));await mount();await selectInvoice();await click('Review recorded terms');await selectInvoice(second);await act(async()=>release({ok:true,value:review}));expect(host.textContent).not.toContain('Neutral commercial source.');expect(ports.save).not.toHaveBeenCalled();expect(button('Review recorded terms').disabled).toBe(false);
+});
+it('handles empty choices and read failures with a read-only retry',async()=>{
+  ports.read.mockResolvedValue(good(held()));ports.sources.mockResolvedValueOnce({ok:false,reason:'unconfirmed',message:'Connection unavailable.'}).mockResolvedValueOnce({...choices(),value:{...choices().value,items:[]}});await mount();expect(host.textContent).toContain('Connection unavailable.');await click('Retry invoice choices');expect(host.textContent).toContain('No linked invoice was returned');expect(ports.save).not.toHaveBeenCalled();expect(ports.review).not.toHaveBeenCalled();
+});
+it('clears the commercial surface on native access refusal and suppresses a late retired read',async()=>{
+  ports.read.mockResolvedValue(good(held()));ports.sources.mockResolvedValue({ok:false,reason:'access_unverified',message:'Access changed.'});await mount();expect(ports.refused).toHaveBeenCalledOnce();expect(host.querySelector('[data-commercial-review]')).toBeNull();expect(ports.save).not.toHaveBeenCalled();
+});
+it('compares unchanged commercial fields with the original field digest, preserving the full native digest',async()=>{
+  record.preparation.derived_fields_sha256='a'.repeat(64);record.preparation.preparation_sha256='b'.repeat(64);ports.read.mockResolvedValue(good(record));await mount();expect(host.querySelector('[data-field-inspector]')?.getAttribute('data-saved-fields-sha')).toBe('a'.repeat(64));expect(record.preparation.preparation_sha256).toBe('b'.repeat(64));
+});
+it('lets a conclusively refused source request return through a fresh review without retrying stale intent',async()=>{
+  ports.read.mockResolvedValue(good(held()));ports.sources.mockResolvedValue(choices());ports.review.mockResolvedValue({ok:true,value:await terms()});ports.save.mockResolvedValue({ok:false,reason:'source_changed',message:'The original terms changed.'});await mount();await selectInvoice();await click('Review recorded terms');await click('Prepare exact PDF');
+  expect(host.textContent).toContain('Preparation was refused');expect(host.textContent).not.toContain('Check the same preparation');expect([...host.querySelectorAll('button')].some(b=>b.textContent==='Retry same request')).toBe(false);
+  await click('Read current agreement source');expect(ports.read).toHaveBeenCalledTimes(2);expect(ports.read.mock.calls[1][1]).toBeNull();expect(ports.checkpoints.at(-1)).toBe('');expect(ports.save).toHaveBeenCalledOnce();expect(button('Review recorded terms').disabled).toBe(true);
+});
+it('gives the reviewed document the workspace instead of repeating its source chooser',async()=>{
+  ports.read.mockResolvedValue(good(held()));ports.sources.mockResolvedValue(choices());ports.review.mockResolvedValue({ok:true,value:await terms()});await mount();await selectInvoice();await click('Review recorded terms');expect(host.querySelector('select[aria-label="Agreement invoice"]')).toBeNull();expect(host.textContent).not.toContain('Review the recorded terms');await click('Choose another invoice');expect(host.querySelector('select[aria-label="Agreement invoice"]')).not.toBeNull();expect(button('Review recorded terms').disabled).toBe(true);
+});
 it('does no write on entry and retains a recovery reference before the first real SDK command',async()=>{
   ports.read.mockResolvedValue(good(empty()));ports.save.mockImplementation(async(_ctx,command)=>{expect(ports.checkpoints).toEqual([command.request_id]);return absent();});await mount();expect(ports.save).not.toHaveBeenCalled();await click('Prepare exact PDF');expect(ports.save).toHaveBeenCalledOnce();expect(host.textContent).toContain('Check the same preparation');expect(host.textContent).not.toContain('Document preparation recorded.');
 });

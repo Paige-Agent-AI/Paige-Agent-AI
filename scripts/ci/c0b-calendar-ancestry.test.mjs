@@ -19,6 +19,7 @@ const [tool, spec] = baseline.tools.entries().next().value;
 const capability = { key: spec.key, action: { ...spec, chatTool: tool }, selfDescribe: spec.selfDescribe,
   readiness: spec.readiness, chatBinding: 'LIVE', mindBinding: 'UNAVAILABLE', maturity: 'PARTIAL' };
 const changes = [
+  ['customer Progress relationship binding', 'supabase/functions/_shared/client-portal-progress-context.ts', 's.contact_id!==persona.data.binding.clientId', 'false'],
   ['Calendar caller authentication', 'supabase/functions/_shared/calendar-booking-read.ts', 'deps.caller.auth.getUser()', 'Promise.resolve({ data: { user: { id: origin.actorId } }, error: null })'],
   ['SOLO classification', 'supabase/functions/_shared/solo-classification.ts', '!c.parent_tenant_id && c.account_type === "standalone"', 'true'],
   ['Calendar read declaration', 'supabase/functions/_shared/paige-spine/domains/calendar_booking.ts', 'effect: "read"', 'effect: "mutation"'],
@@ -39,7 +40,7 @@ const changes = [
 ];
 
 test('reviewed Calendar, Task, email, reminder and read-receipt context binds all incumbent adapters without replacing their contracts', () => {
-  assert.equal(incumbentSourcePaths.length, 120);
+  assert.equal(incumbentSourcePaths.length, 121);
   assert.ok(incumbentSourcePaths.includes('supabase/functions/_shared/knowledge-extraction.ts'), 'original extraction acknowledgment validation must remain a restrictive ancestry input');
   assert.ok(incumbentSourcePaths.includes('supabase/functions/_shared/paige-turn/record-links.ts'), 'original source-reference sanitizer must remain a restrictive ancestry input');
   assert.ok(incumbentSourcePaths.includes('supabase/functions/_shared/paige-turn/interactive-cura-history.ts'), 'original CURA history authority must remain a restrictive ancestry input');

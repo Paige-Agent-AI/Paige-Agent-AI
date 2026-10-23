@@ -1,0 +1,33 @@
+{
+  "proof": "ACTUAL_NATIVE_RENDERER_SYNTHETIC_INPUT",
+  "source_hash_encoding": "UTF-8 LF",
+  "created_at": "2026-10-23T03:55:19.350Z",
+  "sources": {
+    "supabase/functions/_shared/agreements/document.ts": "4ba36a2267b2df17bf005cdaa1817f761d4a4390a4f4a00c8e0f29c0c0d3b36e",
+    "supabase/functions/_shared/agreements/document-preparation.ts": "4164eeb196c1c599e486ac95efdeb21eb9a0287427e9fd8830dc8ac3f4a2b630",
+    "supabase/functions/_shared/agreements/field-preparation.ts": "822fb917acf2821a983e43b75177029c75db52fdae655186fbd90599c43ba466",
+    "supabase/functions/_shared/agreements/test-fixtures/prepared-seal.ts": "3f13c5b2f81fc738fc8549756f9d8aee5a851a7dff30be2988fa49b216cff3d2",
+    "scripts/agreements-prepared-seal-proof.mts": "65d9e16e900dcb549ff0e0baf46748ec09ed1fc3f28db8203a589e2ba17e4020"
+  },
+  "presented_sha256": "049930cba1fdfa54b1cae00dec3126abc110fd9504d5b71b7ad62e09475c1096",
+  "sealed_sha256": "6392897d2829e5df3cb48233c1e20d2f50e48d50fad5ef8e19b27b300865cfa2",
+  "preparation_sha256": "1f03bf21dc780739a04306a458b906450860ccbc96d8b1aa28af8ab9796e7977",
+  "field_input_sha256": "8455f59f3b5450217bd8075461696fbdc9ff89a1d979b9513036d15b803ffded",
+  "rotations": [
+    0,
+    90,
+    180,
+    270
+  ],
+  "kinds": [
+    "signature",
+    "initials",
+    "signed_date",
+    "text",
+    "checkbox"
+  ],
+  "authenticated": "UNVERIFIED",
+  "authority": "NOT_ESTABLISHED",
+  "signing_execution": "NOT_PERFORMED",
+  "provider": "NOT_EXERCISED"
+}

@@ -1,10 +1,11 @@
 import {z} from 'zod';
 import {supabase} from '@/integrations/supabase/client';
 import {documentDescriptorSchema,assignedFieldSchema} from './agreementDocumentModel';
-import {readAgreementPdfDocument,type AgreementFieldPreparation} from '../../../supabase/functions/_shared/agreements/field-preparation';
+import {prepareAgreementFields,readAgreementPdfDocument,type AgreementFieldPreparation} from '../../../supabase/functions/_shared/agreements/field-preparation';
 import {canonicalPresentationJson} from '../../../supabase/functions/_shared/agreements/preparation-json';
 import {sha256Hex} from '../../../supabase/functions/_shared/agreements/token';
 import {verifyRetainedAgreementPdf} from '../../../supabase/functions/_shared/agreements/retained-document';
+import {prepareCommercialPresentation,commercialPresentationText,type PreparedCommercialPresentation} from '../../../supabase/functions/_shared/agreements/commercial-presentation';
 
 const id=z.string().uuid(),date=z.string().datetime({offset:true}),hash=z.string().regex(/^[a-f0-9]{64}$/);
 const role=z.enum(['counterparty','tenant_signatory','witness']);
@@ -12,31 +13,52 @@ const status=z.enum(['draft','sent','viewed','partially_signed','completed','dec
 const party=z.object({id,full_name:z.string().min(1),email:z.string().min(1),signer_role:role,signing_order:z.number().int().positive(),status:z.enum(['pending','viewed','signed','declined'])}).strict();
 const sourceRef={tenant_id:id,agreement_id:id,client_id:id,version:z.number().int().positive(),updated_at:date};
 const source=z.object({...sourceRef,status,signers:z.array(party).max(100)}).strict();
-const manifest=z.object({schema_version:z.literal(1),source:z.object(sourceRef).strict(),document:documentDescriptorSchema,
-  signers:z.array(z.object({id,identity_sha256:hash,signer_role:role,signing_order:z.number().int().positive()}).strict()).max(100),fields:z.array(assignedFieldSchema).max(500)}).strict();
+const manifestFields={source:z.object(sourceRef).strict(),document:documentDescriptorSchema,
+  signers:z.array(z.object({id,identity_sha256:hash,signer_role:role,signing_order:z.number().int().positive()}).strict()).max(100),fields:z.array(assignedFieldSchema).max(500)};
+// Read immutable native metadata; current economics are re-read through the
+// original commercial review door, never inferred from these archived hashes.
+const commercialMetadata=z.object({payload:z.object({schema_version:z.literal(2),source:z.object({tenant_id:id,agreement_id:id,client_id:id,
+  agreement_version:z.number().int().positive(),agreement_updated_at:date,invoice_id:id}).passthrough()}).passthrough(),
+  payload_digest:hash,presented_body_markdown:z.string().min(1).max(300000),presented_body_sha256:hash}).strict();
+const manifest=z.discriminatedUnion('schema_version',[z.object({schema_version:z.literal(1),...manifestFields}).strict(),
+  z.object({schema_version:z.literal(2),...manifestFields,commercial:commercialMetadata}).strict()]);
+const commercialReadback=z.object({state:z.enum(['current','changed','unavailable']),invoice_id:id,payload_digest:hash}).strict();
 const preparation=z.object({id,agreement_id:id,client_id:id,revision_no:z.number().int().positive(),source_version:z.number().int().positive(),source_updated_at:date,actor_user_id:id,
   document_sha256:hash,document_byte_length:z.number().int().min(5).max(26214400),manifest,preparation_sha256:hash,event_id:id,is_selected:z.boolean(),created_at:date,
   source_scope:z.literal('agreement_and_parties'),source_matches:z.boolean(),commercial_verification:z.enum(['not_applicable','not_checked'])}).strict();
 const common={title:z.string().min(1),source,can_prepare:z.boolean(),preparation_hold:z.enum(['commercial_review_required','source_not_editable']).nullable(),document_signers:z.array(party).max(100)};
-const view=z.discriminatedUnion('state',[z.object({state:z.literal('none'),...common}).strict(),z.object({state:z.literal('retained'),...common,preparation,can_edit:z.boolean()}).strict()]);
+const view=z.discriminatedUnion('state',[z.object({state:z.literal('none'),...common}).strict(),z.object({state:z.literal('retained'),...common,preparation,can_edit:z.boolean(),commercial_readback:commercialReadback.optional()}).strict()]);
 const receipt=z.object({state:z.enum(['recorded','recovered']),historical_receipt:z.literal(true),id,event_id:id,revision_no:z.number().int().positive(),document_sha256:hash,preparation_sha256:hash,is_selected:z.boolean()}).strict();
 const readReply=z.object({ok:z.literal(true),view}).strict(),writeReply=z.object({ok:z.literal(true),view,receipt}).strict();
 const history=z.object({items:z.array(z.object({id,revision_no:z.number().int().positive(),source_version:z.number().int().positive(),created_at:date,is_selected:z.boolean(),
   document_sha256:hash,preparation_sha256:hash,event_id:id,actor_user_id:id}).strict()).max(20),has_more:z.boolean()}).strict();
 type RawView=z.infer<typeof view>;
 type RetainedView=Extract<RawView,{state:'retained'}>;
+type VerifiedManifest<T>=T extends unknown?Omit<T,'document'>&{document:ReturnType<typeof readAgreementPdfDocument>}:never;
 // Preserve the native validator's required rotation/page shape after decoding.
 // Zod's union inference alone is optional under this project's TS configuration.
 export type AgreementDocumentView=Extract<RawView,{state:'none'}>|(Omit<RetainedView,'preparation'>&{
-  preparation:Omit<RetainedView['preparation'],'manifest'>&{manifest:Omit<RetainedView['preparation']['manifest'],'document'>&{document:ReturnType<typeof readAgreementPdfDocument>}}
+  preparation:Omit<RetainedView['preparation'],'manifest'>&{manifest:VerifiedManifest<RetainedView['preparation']['manifest']>;
+    /** Local comparison for the original field editor; never a retained/approval digest. */
+    derived_fields_sha256?:string}
 });
 export type AgreementDocumentReceipt=z.infer<typeof receipt>;
 export type AgreementDocumentHistory=z.infer<typeof history>;
 export type AgreementDocumentContext={tenantId:string;actorId:string;agreementId:string;isCurrent:()=>boolean};
 type ExpectedSource={client_id:string;version:number;updated_at:string};
 export type AgreementDocumentCommand={tenant_id:string;agreement_id:string;request_id:string;expected_source:ExpectedSource}&(
-  {action:'prepare_document';expected_current_id:string|null}|{action:'retain_fields';source_preparation_id:string;fields:AgreementFieldPreparation['manifest']['fields']}
+  {action:'prepare_document';expected_current_id:string|null}
+  |{action:'prepare_commercial_document';expected_current_id:string|null;invoice_id:string;commercial_payload_digest:string}
+  |{action:'retain_fields';source_preparation_id:string;fields:AgreementFieldPreparation['manifest']['fields']}
 );
+export type AgreementCommercialReview={state:'needs_input';fields:readonly string[]}|{state:'ready';invoice_id:string;
+  presentation:PreparedCommercialPresentation;payload_digest:string;presented_body_markdown:string};
+const commercialSources=z.object({tenant_id:id,agreement_id:id,items:z.array(z.object({invoice_id:id,invoice_number:z.string().min(1).max(100),total_minor:z.number().int().positive().max(2147483647),currency:z.literal('usd')}).strict()).max(50),has_more:z.boolean(),next_cursor:id.nullable()}).strict();
+export type AgreementCommercialSources=z.infer<typeof commercialSources>;
+const commercialReview=z.discriminatedUnion('state',[
+  z.object({state:z.literal('needs_input'),tenant_id:id,agreement_id:id,invoice_id:id,fields:z.array(z.string().min(1)).max(30)}).strict(),
+  z.object({state:z.literal('ready'),tenant_id:id,agreement_id:id,invoice_id:id,input:z.unknown(),presentation:z.unknown(),payload_digest:hash,presented_body_markdown:z.string().min(1).max(300000)}).strict(),
+]);
 export type DocumentFailure='access_unverified'|'source_changed'|'commercial_review_required'|'document_unavailable'|'rate_limited'|'invalid_request'|'unconfirmed'|'retired';
 export type DocumentResult<T>={ok:true;value:T}|{ok:false;reason:DocumentFailure;message:string};
 const messages:Record<DocumentFailure,string>={access_unverified:'Agreement access could not be verified. Reopen the record in the intended business.',source_changed:'The agreement or selected preparation changed. Inspect its current version before continuing.',
@@ -91,7 +113,58 @@ async function verifyView(value:RawView,ctx:AgreementDocumentContext,expectedId:
     ||m.document.sha256!==p.document_sha256||m.document.byte_length!==p.document_byte_length)throw Error('Unverified original preparation');
   const document=readAgreementPdfDocument(m.document);
   if(await sha256Hex(canonicalPresentationJson(m))!==p.preparation_sha256)throw Error('Unverified preparation digest');
-  return {...value,preparation:{...p,manifest:{...m,document}}};
+  let fieldsComparison:string|undefined;
+  if(m.schema_version===2){
+    const c=m.commercial,s=c.payload.source,r=value.commercial_readback;
+    if(!r||r.invoice_id!==s.invoice_id||r.payload_digest!==c.payload_digest||p.commercial_verification!=='not_checked'
+      ||s.tenant_id!==m.source.tenant_id||s.agreement_id!==m.source.agreement_id||s.client_id!==m.source.client_id
+      ||s.agreement_version!==m.source.version||s.agreement_updated_at!==m.source.updated_at
+      ||await sha256Hex(canonicalPresentationJson(c.payload))!==c.payload_digest||await sha256Hex(c.presented_body_markdown)!==c.presented_body_sha256
+      ||(value.can_edit||value.can_prepare)&&(r.state!=='current'||!p.source_matches||value.source.status!=='draft'))throw Error('Unverified commercial preparation');
+    if(p.source_matches){
+      const fields=await prepareAgreementFields(value.source,document,m.fields);
+      if(canonicalPresentationJson(fields.manifest)!==canonicalPresentationJson({schema_version:1,source:m.source,document,signers:m.signers,fields:m.fields}))throw Error('Unverified current signer fields');
+      fieldsComparison=fields.preparation_sha256;
+    }
+  }else if(value.commercial_readback)throw Error('Unexpected commercial readback');
+  return {...value,preparation:{...p,manifest:{...m,document},...(fieldsComparison?{derived_fields_sha256:fieldsComparison}:{})}};
+}
+export async function readAgreementCommercialSources(ctx:AgreementDocumentContext,cursor:string|null=null):Promise<DocumentResult<AgreementCommercialSources>>{
+  ctx={...ctx};if(cursor!==null&&!id.safeParse(cursor).success)return failure('invalid_request');
+  const query=new URLSearchParams({preparation:'commercial_sources',businessId:ctx.tenantId,agreementId:ctx.agreementId});if(cursor)query.set('beforeId',cursor);
+  return authorized(ctx,(headers,signal)=>supabase.functions.invoke('agreement-document?'+query,{method:'GET',headers,signal}),async data=>{
+    const result=z.object({ok:z.literal(true),sources:commercialSources}).strict().parse(data).sources;
+    if(result.tenant_id!==ctx.tenantId||result.agreement_id!==ctx.agreementId
+      ||(result.has_more?!result.next_cursor||result.next_cursor===cursor:result.next_cursor!==null))throw Error('Unverified commercial choices');
+    return result;
+  });
+}
+export async function readAgreementCommercialReview(ctx:AgreementDocumentContext,invoiceId:string):Promise<DocumentResult<AgreementCommercialReview>>{
+  ctx={...ctx};if(!id.safeParse(invoiceId).success)return failure('invalid_request');
+  const query=new URLSearchParams({preparation:'commercial_review',businessId:ctx.tenantId,agreementId:ctx.agreementId,invoiceId});
+  return authorized(ctx,(headers,signal)=>supabase.functions.invoke('agreement-document?'+query,{method:'GET',headers,signal}),async data=>{
+    const result=z.object({ok:z.literal(true),review:commercialReview}).strict().parse(data).review;
+    if(result.tenant_id!==ctx.tenantId||result.agreement_id!==ctx.agreementId||result.invoice_id!==invoiceId)throw Error('Unverified commercial review');
+    if(result.state==='needs_input')return {state:'needs_input' as const,fields:Object.freeze([...result.fields])};
+    const prepared=await prepareCommercialPresentation(result.input),s=prepared.payload.source;
+    const body=(result.input as {body_markdown:string}).body_markdown,words=commercialPresentationText(body,prepared);
+    if(prepared.payload.schema_version!==2||s.tenant_id!==ctx.tenantId||s.agreement_id!==ctx.agreementId||s.invoice_id!==invoiceId
+      ||prepared.payload_digest!==result.payload_digest||canonicalPresentationJson(prepared)!==canonicalPresentationJson(result.presentation)
+      ||words!==result.presented_body_markdown)throw Error('Unverified canonical commercial presentation');
+    return Object.freeze({state:'ready' as const,invoice_id:invoiceId,presentation:prepared,payload_digest:prepared.payload_digest,presented_body_markdown:words});
+  });
+}
+export function prepareAgreementCommercialCommand(ctx:AgreementDocumentContext,requestId:string,current:AgreementDocumentView,review:AgreementCommercialReview):AgreementDocumentCommand|null{
+  if(!valid(ctx)||!isCurrent(ctx)||!id.safeParse(requestId).success||requestId!==requestId.toLowerCase()||!review||review.state!=='ready'
+    ||review.presentation.payload.schema_version!==2||review.payload_digest!==review.presentation.payload_digest
+    ||current.source.tenant_id!==ctx.tenantId||current.source.agreement_id!==ctx.agreementId||current.source.status!=='draft'
+    ||!current.can_prepare&&current.preparation_hold!=='commercial_review_required'||current.state==='retained'&&!current.preparation.is_selected)return null;
+  const s=review.presentation.payload.source,v=current.source;
+  if(s.tenant_id!==ctx.tenantId||s.agreement_id!==ctx.agreementId||s.client_id!==v.client_id||s.agreement_version!==v.version||s.agreement_updated_at!==v.updated_at
+    ||review.invoice_id!==s.invoice_id||!hash.safeParse(review.payload_digest).success)return null;
+  return Object.freeze({tenant_id:ctx.tenantId,agreement_id:ctx.agreementId,request_id:requestId,
+    expected_source:Object.freeze({client_id:v.client_id,version:v.version,updated_at:v.updated_at}),action:'prepare_commercial_document' as const,
+    invoice_id:review.invoice_id,commercial_payload_digest:review.payload_digest,expected_current_id:current.state==='retained'?current.preparation.id:null});
 }
 export async function readAgreementDocument(ctx:AgreementDocumentContext,preparationId:string|null=null):Promise<DocumentResult<AgreementDocumentView>>{
   ctx={...ctx};
@@ -111,7 +184,12 @@ export function prepareAgreementDocumentCommand(ctx:AgreementDocumentContext,req
     for(const field of command.fields)Object.freeze(field);Object.freeze(command.fields);
   }else{
     if(current.state==='retained'&&!current.preparation.is_selected)return null;
-    command={tenant_id:ctx.tenantId,agreement_id:ctx.agreementId,request_id:requestId,expected_source,action:'prepare_document',expected_current_id:current.state==='retained'?current.preparation.id:null};
+    const commercial=current.state==='retained'&&current.preparation.manifest.schema_version===2?current.preparation.manifest.commercial:null;
+    if(commercial){
+      if(current.state!=='retained'||current.commercial_readback?.state!=='current')return null;
+      command={tenant_id:ctx.tenantId,agreement_id:ctx.agreementId,request_id:requestId,expected_source,action:'prepare_commercial_document',expected_current_id:current.preparation.id,
+        invoice_id:commercial.payload.source.invoice_id,commercial_payload_digest:commercial.payload_digest};
+    }else command={tenant_id:ctx.tenantId,agreement_id:ctx.agreementId,request_id:requestId,expected_source,action:'prepare_document',expected_current_id:current.state==='retained'?current.preparation.id:null};
   }
   Object.freeze(expected_source);return Object.freeze(command);
 }
@@ -124,6 +202,13 @@ export async function saveAgreementDocument(ctx:AgreementDocumentContext,command
     if(p.state!=='retained'||response.receipt.id!==captured.request_id||response.receipt.event_id!==p.preparation.event_id||response.receipt.revision_no!==p.preparation.revision_no||response.receipt.is_selected!==p.preparation.is_selected||response.receipt.document_sha256!==p.preparation.document_sha256
       ||response.receipt.preparation_sha256!==p.preparation.preparation_sha256||p.preparation.client_id!==captured.expected_source.client_id||p.preparation.source_version!==captured.expected_source.version
       ||p.preparation.source_updated_at!==captured.expected_source.updated_at)throw Error('Unverified original receipt');
+    if(captured.action==='prepare_commercial_document'){
+      const m=p.preparation.manifest;
+      if(m.schema_version!==2||m.commercial.payload_digest!==captured.commercial_payload_digest
+        ||m.commercial.payload.source.invoice_id!==captured.invoice_id||m.fields.length!==0)throw Error('Unverified reviewed commercial intent');
+    }
+    if(captured.action==='retain_fields'&&canonicalPresentationJson(p.preparation.manifest.fields)!==canonicalPresentationJson(captured.fields))throw Error('Unverified retained field intent');
+    if(captured.action==='prepare_document'&&(p.preparation.manifest.schema_version!==1||p.preparation.manifest.fields.length!==0))throw Error('Unverified plain document intent');
     return {view:p,receipt:response.receipt};
   });
 }

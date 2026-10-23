@@ -26,6 +26,7 @@
    surface reorganised, not a second design system. Status colours are the local --sc-* aliases
    already declared on .sc-workspace, so light and dark both follow the app's own palette. */
 .sc-console{max-width:1220px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.sc-linked-source{padding:16px 0;border-block:1px solid var(--pg-line);overflow-wrap:anywhere}.sc-linked-source .sc-block-head{justify-content:space-between;align-items:center;margin-bottom:14px}.sc-linked-source .sc-block-head h2{font-size:16px}.sc-linked-source .sc-item-t h3{font-size:16px}.sc-linked-source p{font-size:13px;line-height:1.6;max-width:70ch;margin:10px 0}.sc-linked-source .sc-linked-date{color:var(--pg-muted);font-size:12px}.sc-linked-source .sc-button{min-height:44px;border:1px solid var(--pg-line);border-radius:9px;padding:9px 12px;font:600 13px/1.4 var(--pg-font-ui)}.sc-linked-source button.sc-button{border-color:var(--sc-paige);color:var(--sc-paige)}.sc-linked-source .sc-button:hover{background:var(--pg-raised)}
 .sc-strip{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;border:1px solid var(--pg-line);background:var(--pg-surface);border-radius:12px;box-shadow:var(--pg-e1);padding:11px 13px}
 .sc-strip-l{flex:1 1 300px;min-width:0}
 .sc-strip-h{font-size:12px;font-weight:750}

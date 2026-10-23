@@ -45,8 +45,8 @@ it("uses the original actor/tenant read, separates actual count from preview and
   click(".e2ps-item:nth-of-type(2)");
   const article = document.querySelector('.pwr-document')!;
   expect(article.textContent).toContain("Review commercial terms");
-  expect(article.textContent).toContain("No readable draft text");
-  expect(document.querySelector('.pwr-prose')).toBeNull();
+  expect(article.textContent).toContain("Recorded summary");
+  expect(article.textContent).not.toContain("Original draft");
   expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(1);
   expect(document.body.textContent).not.toContain("Original delivery draft");
   expect(document.body.textContent).toContain("cannot be edited, approved or executed here");
@@ -67,6 +67,15 @@ it("resurfaces changed source content and restores dismissal eligibility only in
   props = { ...props, actorId: "test-actor-b" }; render();
   expect(host.querySelector('.e2ps-chip')).not.toBeNull();
   expect(fixture.reads).toHaveBeenLastCalledWith("test-tenant-plan", "test-actor-b");
+});
+it("keeps the same original source dismissed, but surfaces a newly linked source at the same count", () => {
+  const sourceLink = { destination: "systems_check" as const, record_id: "e2000000-0000-4000-8000-000000000006" };
+  fixture.data!.items[0].sourceLink = sourceLink;
+  render(); click('[aria-label="Dismiss prepared-work suggestion"]');
+  fixture.data = { ...fixture.data!, items: fixture.data!.items.map(item => ({ ...item, ...(item.sourceLink ? { sourceLink: { ...sourceLink } } : {}) })) }; render();
+  expect(host.querySelector('.e2ps-chip')).toBeNull();
+  fixture.data!.items[0].sourceLink = { ...sourceLink, record_id: "e2000000-0000-4000-8000-000000000007" }; render();
+  expect(host.querySelector('.e2ps-chip')).not.toBeNull();
 });
 it("does not revive dismissed work when the same conversation acquires its canonical thread ID", () => {
   render(); click('[aria-label="Dismiss prepared-work suggestion"]');

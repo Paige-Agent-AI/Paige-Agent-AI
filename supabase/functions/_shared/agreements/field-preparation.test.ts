@@ -3,6 +3,10 @@ import { PDFDocument, PDFName, PDFNumber, degrees } from 'npm:pdf-lib@1.17.1';
 import { inspectAgreementPreparationPdf } from './document-preparation.ts';
 import { prepareAgreementFields, readAgreementPdfDocument } from './field-preparation.ts';
 import { hashDocument, inspectUploadedPdf, renderPresentedPdf, sealAgreementPdf } from './document.ts';
+import * as fieldPreparation from './field-preparation.ts';
+import {assembleFixedRepaymentSchedule} from '../sales-collections/model.ts';
+import {canonicalPresentationJson,commercialPresentationText,prepareCommercialPresentation} from './commercial-presentation.ts';
+import {sha256Hex} from './token.ts';
 
 const uid = (n: number) => `aaaaaaaa-0000-4000-8000-${String(n).padStart(12, '0')}`;
 const source = () => ({ tenant_id: uid(1), agreement_id: uid(2), client_id: uid(3), version: 4,
@@ -16,6 +20,127 @@ const field = (n = 5, index = 0) => ({ id: uid(10 + index), signer_id: uid(n), k
 const fields = () => [field(), field(6, 1)];
 const invalid = /AGREEMENT_FIELD_PREPARATION_INVALID/;
 const unavailable = /AGREEMENT_PREPARATION_PDF_UNAVAILABLE/;
+
+type FieldInputConstructor=(preparation:unknown,expected:unknown,values:unknown)=>Promise<{
+  preparation_id:string;preparation_sha256:string;document_sha256:string;signer_id:string;signed_at:string;
+  values:readonly {field_id:string;kind:string;value:string|boolean}[];field_input_sha256:string;
+}>;
+function fieldInputConstructor():FieldInputConstructor{
+  const fn=(fieldPreparation as unknown as Record<string,unknown>).prepareAgreementFieldInput;
+  assert(typeof fn==='function','Original prepared signing field input constructor is missing');return fn as FieldInputConstructor;
+}
+const fieldInputFixture=async()=>{
+  const extra=(kind:string,n:number,y:number,required=true)=>({...field(),id:uid(n),kind,y,height:25,label:kind,required});
+  const prepared=await prepareAgreementFields(source(),document(),[...fields(),extra('initials',51,300),extra('text',52,350),extra('checkbox',53,400),extra('signed_date',54,450),extra('text',55,500,false)]);
+  const expected={tenant_id:uid(1),agreement_id:uid(2),client_id:uid(3),preparation_id:uid(70),preparation_sha256:prepared.preparation_sha256,signer_id:uid(5),signed_at:'2026-10-22T12:00:00.123456Z'};
+  const values=[{field_id:uid(10),value:true},{field_id:uid(51),value:'AS'},{field_id:uid(52),value:'Business-supplied answer'},{field_id:uid(53),value:false}];
+  return {prepared,expected,values};
+};
+
+Deno.test('prepared field input uses the original map, preserves explicit false and server date without signing',async()=>{
+  const fn=fieldInputConstructor(),f=await fieldInputFixture(),actual=await fn(f.prepared,f.expected,f.values);
+  assertEquals(actual.preparation_id,f.expected.preparation_id);assertEquals(actual.preparation_sha256,f.prepared.preparation_sha256);assertEquals(actual.document_sha256,document().sha256);assertEquals(actual.signer_id,uid(5));
+  assertEquals(actual.values.map(row=>row.field_id),[10,51,52,53,54].map(uid));assertEquals(actual.values.find(row=>row.field_id===uid(53))?.value,false);
+  assertEquals(actual.values.find(row=>row.field_id===uid(54))?.value,f.expected.signed_at);assert(!actual.values.some(row=>row.field_id===uid(11)||row.field_id===uid(55)));
+  assertEquals(actual.field_input_sha256,(await fn(f.prepared,f.expected,[...f.values].reverse())).field_input_sha256);assert(Object.isFrozen(actual)&&Object.isFrozen(actual.values)&&actual.values.every(Object.isFrozen));
+  assertNotEquals(actual.field_input_sha256,(await fn(f.prepared,f.expected,f.values.map(row=>row.field_id===uid(53)?{...row,value:true}:row))).field_input_sha256);
+});
+
+Deno.test('prepared signing input refuses stale, foreign, duplicate, omitted, forged and malformed answers',async t=>{
+  const fn=fieldInputConstructor(),f=await fieldInputFixture(),bad=/AGREEMENT_PREPARED_FIELD_INPUT_INVALID/;
+  const cases:{name:string;expected?:unknown;values?:unknown;preparation?:unknown}[]=[
+    {name:'foreign business',expected:{...f.expected,tenant_id:uid(90)}},{name:'foreign client',expected:{...f.expected,client_id:uid(90)}},{name:'foreign agreement',expected:{...f.expected,agreement_id:uid(90)}},
+    {name:'stale native preparation digest',expected:{...f.expected,preparation_sha256:'f'.repeat(64)}},{name:'foreign signer',expected:{...f.expected,signer_id:uid(99)}},
+    {name:'another signer field',values:[...f.values,{field_id:uid(11),value:true}]},{name:'unknown field',values:[...f.values,{field_id:uid(99),value:true}]},{name:'duplicate field',values:[...f.values,f.values[0]]},
+    {name:'missing signature',values:f.values.slice(1)},{name:'missing required text',values:f.values.filter(row=>row.field_id!==uid(52))},{name:'empty required initials',values:f.values.map(row=>row.field_id===uid(51)?{...row,value:' '}:row)},
+    {name:'checkbox truthiness',values:f.values.map(row=>row.field_id===uid(53)?{...row,value:'false'}:row)},{name:'client supplied signing date',values:[...f.values,{field_id:uid(54),value:f.expected.signed_at}]},
+    {name:'unknown answer property',values:[{...f.values[0],signer_id:uid(6)},...f.values.slice(1)]},{name:'control character',values:f.values.map(row=>row.field_id===uid(52)?{...row,value:'word\u0000word'}:row)},
+    {name:'oversized original signing body bound',values:f.values.map(row=>row.field_id===uid(52)?{...row,value:'x'.repeat(524289)}:row)},
+    {name:'unready map cannot be relabeled',preparation:{...f.prepared,manifest:{...f.prepared.manifest,fields:[]}}},
+  ];
+  for(const entry of cases)await t.step(entry.name,async()=>{await assertRejects(()=>fn(entry.preparation??f.prepared,entry.expected??f.expected,entry.values??f.values),TypeError,bad.source);});
+});
+
+Deno.test('prepared field input snapshots all proposed values before digest awaits',async()=>{
+  const fn=fieldInputConstructor(),f=await fieldInputFixture(),pending=fn(f.prepared,f.expected,f.values);f.values[2].value='Changed during validation';f.expected.signed_at='2026-11-01T00:00:00Z';
+  const result=await pending;assertEquals(result.signed_at,'2026-10-22T12:00:00.123456Z');assertEquals(result.values.find(row=>row.field_id===uid(52))?.value,'Business-supplied answer');
+});
+
+Deno.test('prepared field input preserves commercial schema2 and independently refuses a relabeled unready map',async()=>{
+  const fn=fieldInputConstructor(),f=await fieldInputFixture();
+  const commercial=await fieldPreparation.prepareCommercialAgreementFields(source(),document(),f.prepared.manifest.fields,commercialInput());
+  const actual=await fn(commercial,{...f.expected,preparation_sha256:commercial.preparation_sha256},f.values);
+  assertEquals(actual.preparation_sha256,commercial.preparation_sha256);assertNotEquals(actual.field_input_sha256,(await fn(f.prepared,f.expected,f.values)).field_input_sha256);
+  const unready=await prepareAgreementFields(source(),document(),[]);
+  await assertRejects(()=>fn({...unready,ready_for_review:true,issues:[]},{...f.expected,preparation_sha256:unready.preparation_sha256},f.values),TypeError,'AGREEMENT_PREPARED_FIELD_INPUT_INVALID');
+});
+
+const commercialInput = () => {
+  const original=source(),schedule=assembleFixedRepaymentSchedule({total_cents:350000,currency:'usd',deposit_cents:50000,
+    deposit_date:'2026-10-22',installment_cents:30000,first_installment_date:'2026-11-22',cadence:'monthly'});
+  assert(schedule.state==='ready');
+  const treatment={state:'not_applicable',charges:[],source:'Synthetic owner decision',policy:'No applicable charge recorded'};
+  return {schema_version:2,engagement:{starts_on:'2026-10-22',ends_on:null,price_basis:'negotiated'},
+    source:{tenant_id:original.tenant_id,client_id:original.client_id,agreement_id:original.agreement_id,
+      agreement_version:original.version,agreement_updated_at:original.updated_at,offer_id:uid(30),body_source:'paige_draft',
+      status:'draft',content_sha256:null,terms_id:uid(31),terms_version:1,terms_updated_at:original.updated_at,
+      invoice_id:uid(32),invoice_version:1,invoice_draft_version:1,invoice_updated_at:original.updated_at},
+    title:'Service agreement',body_markdown:'Business-supplied example wording.',principal_minor:350000,currency:'usd',
+    collection_terms:schedule.terms,conditions:{schema_version:1,tax:treatment,fees:treatment},lines:[{unit_minor:350000,quantity:1}]};
+};
+type CommercialConstructor=(s:unknown,d:unknown,f:unknown,c:unknown)=>Promise<{
+  manifest:{schema_version:number;source:Record<string,unknown>;document:Record<string,unknown>;signers:unknown[];fields:unknown[];
+    commercial:{payload:Record<string,unknown>;payload_digest:string;presented_body_markdown:string;presented_body_sha256:string}};
+  preparation_sha256:string;ready_for_review:boolean;issues:unknown[];
+}>;
+const commercialConstructor=()=>{
+  const prepare=(fieldPreparation as unknown as Record<string,unknown>).prepareCommercialAgreementFields;
+  assert(typeof prepare==='function','Original field-preparation module must compose the canonical commercial manifest');
+  return prepare as CommercialConstructor;
+};
+
+Deno.test('commercial field preparation composes actual original PDF/fields/formatter without changing source',async()=>{
+  const prepare=commercialConstructor(),s=source(),input=commercialInput();
+  const presentation=await prepareCommercialPresentation(input),body=commercialPresentationText(input.body_markdown,presentation);
+  const bytes=await renderPresentedPdf({title:input.title,bodyMarkdown:body}),before=bytes.slice();
+  const pdf=await inspectAgreementPreparationPdf(bytes,await hashDocument(bytes));
+  const ordinary=await prepareAgreementFields(s,pdf,fields()),original=structuredClone([s,input]);
+  const result=await prepare(s,pdf,fields(),input);
+  assertEquals(result.manifest,{...ordinary.manifest,schema_version:2,commercial:{payload:presentation.payload,
+    payload_digest:presentation.payload_digest,presented_body_markdown:body,presented_body_sha256:await sha256Hex(body)}});
+  assertEquals(result.preparation_sha256,await sha256Hex(canonicalPresentationJson(result.manifest)));
+  assertNotEquals(result.preparation_sha256,ordinary.preparation_sha256);assert(result.ready_for_review);
+  assertEquals([s,input],original);assertEquals(bytes,before);
+  assert(Object.isFrozen(result)&&Object.isFrozen(result.manifest)&&Object.isFrozen(result.manifest.commercial));
+  assert(Object.isFrozen(result.manifest.commercial.payload));
+});
+
+Deno.test('commercial construction refuses foreign client/source, stale microseconds, legacy or incomplete economics',async t=>{
+  const prepare=commercialConstructor();
+  for(const [key,value] of [['tenant_id',uid(91)],['client_id',uid(92)],['agreement_id',uid(93)],['agreement_version',5],
+    ['agreement_updated_at','2026-10-22T08:00:00.123457Z']] as const){
+    await t.step(key,async()=>{const input=commercialInput();Object.assign(input.source,{[key]:value});await assertRejects(()=>prepare(source(),document(),fields(),input));});
+  }
+  for(const change of [(v:Record<string,unknown>)=>{v.schema_version=1;delete v.engagement;},
+    (v:Record<string,unknown>)=>{v.principal_minor=NaN;},(v:Record<string,unknown>)=>{delete v.conditions;},
+    (v:Record<string,unknown>)=>{v.extra=true;}]){
+    const input=commercialInput();change(input);await assertRejects(()=>prepare(source(),document(),fields(),input));
+  }
+});
+
+Deno.test('commercial composition retains original missing-field and overlap issues',async()=>{
+  const prepare=commercialConstructor(),missing=await prepare(source(),document(),[],commercialInput());
+  assert(!missing.ready_for_review);assertEquals(missing.issues,(await prepareAgreementFields(source(),document(),[])).issues);
+  const overlap=[field(),{...field(6,1),x:20,y:100}],result=await prepare(source(),document(),overlap,commercialInput());
+  assert(!result.ready_for_review);assertEquals(result.issues,(await prepareAgreementFields(source(),document(),overlap)).issues);
+});
+
+Deno.test('commercial constructor captures every input before its asynchronous digests',async()=>{
+  const prepare=commercialConstructor(),s=source(),d=document(),f=fields(),input=commercialInput();
+  const expected=await prepare(s,d,f,input),pending=prepare(s,d,f,input);
+  s.signers[0].full_name='Changed after call';d.sha256='b'.repeat(64);f[0].x=300;input.principal_minor=1;input.source.agreement_updated_at='2026-10-22T08:00:00.123457Z';
+  assertEquals(await pending,expected);
+});
 
 Deno.test('actual native rendered PDF remains unchanged and can still be sealed', async () => {
   const bytes = await renderPresentedPdf({ title: 'Preparation source', bodyMarkdown: 'Business-supplied example wording.' });

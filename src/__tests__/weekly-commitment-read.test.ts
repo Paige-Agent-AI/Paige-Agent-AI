@@ -1,12 +1,31 @@
 import { describe, it, expect, vi } from "vitest";
 import { readWeeklyCommitmentProjection, prepareWeeklyCommitmentChatResponse } from "../../supabase/functions/_shared/paige-orchestration/weekly-commitment-read";
-import { projectWeeklyCalendar, parseWeeklyCommitmentSnapshot, parseWeeklySourceItems, projectWeeklyCommitmentChat } from "../../supabase/functions/_shared/paige-orchestration/weekly-commitment-projection";
+import { projectWeeklyCalendar, parseWeeklyCommitmentSnapshot, parseWeeklySourceItems, projectWeeklyCommitmentChat, reviewWeeklyScheduleChange } from "../../supabase/functions/_shared/paige-orchestration/weekly-commitment-projection";
 import type { ContextIdentity } from "../../supabase/functions/_shared/paige-context/mod";
 
 const actor = "11111111-1111-4111-8111-111111111111", tenant = "22222222-2222-4222-8222-222222222222";
 const process = "33333333-3333-4333-8333-333333333333", event = "44444444-4444-4444-8444-444444444444";
 const act = "55555555-5555-4555-8555-555555555555", receipt = "66666666-6666-4666-8666-666666666666";
 const identity: ContextIdentity = { actorId: actor, tenantId: tenant, workspaceId: tenant, role: "owner", actAsClientId: null, accountShape: "solo", scopeEpoch: 1 };
+describe("saved schedule review uses the canonical zone contract", () => {
+  const saved = { weekday: 1, local_time: "09:00", timezone: "UTC" };
+  it("preserves the original server zone even if this consumer's ICU cannot recognize it", () => {
+    const format = vi.spyOn(Intl, "DateTimeFormat").mockImplementation(() => { throw new RangeError("older ICU"); });
+    try {
+      const original = { ...saved, timezone: "America/Coyhaique" }, proposed = { ...original, weekday: 5 };
+      expect(reviewWeeklyScheduleChange(original, proposed)).toEqual(proposed);
+      expect(reviewWeeklyScheduleChange(saved, proposed)).toBeNull();
+    } finally { format.mockRestore(); }
+  });
+  it.each(["invalid", "posix/US/Eastern", "right/UTC", "bad zone", "", "x".repeat(129)])("refuses unsupported new zone %s", timezone => {
+    expect(reviewWeeklyScheduleChange(saved, { ...saved, timezone, weekday: 5 })).toBeNull();
+  });
+  it("preserves new recognized zones and copies the reviewed arguments", () => {
+    const proposed = { weekday: 7, local_time: "23:59", timezone: "GMT" };
+    const reviewed = reviewWeeklyScheduleChange(saved, proposed);
+    expect(reviewed).toEqual(proposed); expect(reviewed).not.toBe(proposed);
+  });
+});
 function canonical() {
   const observation = { tenant_id: tenant, authorized_by: actor, automation_id: process, event_id: event, act_id: act,
     correlation_ref: "occurrence:act", receipt_id: receipt, source: "public.plan_items", observed_at: "2026-10-12T13:00:00Z",

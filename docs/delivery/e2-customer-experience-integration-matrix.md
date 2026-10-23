@@ -788,6 +788,58 @@ filed-document deliverables remain Unverified, matching the table above. No
 coverage label asserts per-account access. NO VERIFIED ALGORITHM is added; the
 canonical ALG03/04/06/11/12/13 and PAIGE/VERA/originating specialist boundaries remain.
 
+## EXP02 Decision Desk source and continuity — October22 development
+
+Current main83008187360b12b8d76de0192f6bda3aba213bc1 composition preserves all22
+native render-input hashes. Fresh original Desk/suggestion/pending-read/source-link/
+contextual-control suite78 cases/five files PASS in37.07s, scoped ESLint0/0 and UI
+routing/whitespace PASS. This is a new bounded set, not a relabel of historical122/131.
+Original composed six native frames and earlier22 remain dated supporting evidence.
+
+Parent2626 source release is now verified: reviewed452a6ca/LOWER5622695418, all11
+exact-head checks/two statuses SUCCESS; merged7ef7cc4db5258bd1d106c805eb06dbf4fbaedd53,
+actualtree940dd10e969c9173ad760b4988a7e29347e371cf equals inspected union. Web
+dpl_AsavNJFgDwidjjnhUiqabL8Zj32a READY/public7ef-mvkapgtp/null; actual served
+SoloEntry-9E2GUs1P.js2472503bytes/SHA2566979919439d57d503180ecf345608673f1ec404dbdf56ca1cb64f837499a43a7,
+five owning markers verified. Original Edge12PASS/3deployment-changeFAIL retained;
+normal current-main recovery39885135758/120191444779 strictly verifies all16 source/
+configurations and advances edge-live to containing83008187. Chat513 and original
+three changed functions ACTIVE/config verified. [Recovery receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2626#issuecomment-6355336462).
+No scan/action/provider/role activation. Native images are synthetic; genuine
+ordinary MMA/role/isolation/cohort/Live/all19/nine/Founder Acceptance remain owed.
+
+Current parent2626/f9ac/main effc composition retains all consumer source and21/22
+original rendered hashes; only E05's shared-shell callback changed. Six new native
+composition frames/current22 pins verify desktop/narrow source→original drawer→
+return,304.8 scroll, unsent text and exact source/suggestion keyboard focus.
+Desktop1536CSS/native1535 distinction is explicit; viewport reset. Original22
+images remain dated; synthetic proof is not ordinary QA, natural production async
+reread or founder acceptance. Required final review/CI/release/readback remain owed.
+
+Original prepared work now has an exact canonical source inspection action in an
+explicitly labeled native tab, preserving review/selection/scroll/unsent Chat.
+Summary-only rows are readable Recorded summaries, original drafts remain drafts,
+missing content Details unavailable, and only original zoned preparation times
+are shown in explicit UTC. Missing/malformed/surface-only/no-account references
+withhold the source link; the original destination reauthorizes its own read.
+No click authorizes, approves, sends or executes work. Existing dismissal state
+recognizes a changed original source identity, with no new suggestions registry.
+
+Ten initial causal failures and a later genuine return-reread scroll failure
+preceded correction; final131 cases/five original suites, type ratchet10/6/zero new,
+scoped lint and actual recovery build pass. Hosted gates remain required.22 native
+synthetic frames and22 exact source pins verify the original leaf/shared shell,
+320px keyboard, actual source tab/drawer/close and284.8→284.8 scroll/draft/focus.
+A separate disclosed synthetic hold/release reread withholds stale source/count
+and restores the same presentation on settlement; production return revalidation
+is not inferred. Changed source, account retirement, close and explicit Retry
+supersede recovery. No new product listener, data store or action authority.
+No whole-page or authenticated acceptance is inferred from this bounded mount.
+Functional candidate, Visual native synthetic proof, Experiential ordinary/cohort/
+role/Live release proof and Founder Acceptance remain separate. ALG03/13 and nine
+capability states are unpromoted; original Trust/LayerC/Rail writers unchanged.
+All19/nine remain mandatory. [Evidence](../evidence/ui-delivery/e2-desk-source-continuity.md).
+
 
 ## EXP02 report evidence foundation — October22 source release, not activated
 

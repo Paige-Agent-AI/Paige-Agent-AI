@@ -36,7 +36,7 @@ function fixture() {
   return { fabric, legacy, from, permission, scopeCheck,
     setAllowed: (value: boolean) => { allowed = value; }, setScope: (value: boolean) => { scope = value; },
     setFailed: () => { failed = true; }, setRow: (patch: Partial<typeof registered>) => { current = { ...current, ...patch }; },
-    invoke: (agent = registered, ctx: { user_id?: string } = { user_id: actor }, selectedTenant: string | null = tenant) => invoke(agent, { request: "Prepare a weekly plan; execute nothing." }, ctx, selectedTenant, scopeCheck),
+    invoke: (agent = registered, ctx: { user_id?: string } = { user_id: actor }, selectedTenant: string | null = tenant, actorlessService = false) => invoke(agent, { request: "Prepare a weekly plan; execute nothing." }, ctx, selectedTenant, scopeCheck, actorlessService),
   };
 }
 describe("ZION consumes the original Model Fabric without activating a specialist", () => {
@@ -91,6 +91,26 @@ describe("ZION consumes the original Model Fabric without activating a specialis
   it("does not start a tenantless planning model call", async () => {
     const f = fixture(), result = await f.invoke(registered, { user_id: actor }, null);
     expect(result.status).toBeGreaterThanOrEqual(400); expect(f.fabric).not.toHaveBeenCalled(); expect(f.legacy).not.toHaveBeenCalled();
+  });
+  it("preserves original actorless service drafting without inventing a human role", async () => {
+    const f = fixture(), result = await f.invoke(registered, {}, tenant, true);
+    expect(result).toMatchObject({ status: 200, body: { ok: true, answer: "canonical draft" } });
+    expect(f.permission).not.toHaveBeenCalled(); expect(f.legacy).not.toHaveBeenCalled();
+    expect(f.from).toHaveBeenCalledWith("paige_subagents");
+  });
+  it.each(["scope", "disabled", "version", "foreign"])("actorless service still refuses %s drift", async change => {
+    const f = fixture();
+    if (change === "scope") f.setScope(false);
+    if (change === "disabled") f.setRow({ enabled: false });
+    if (change === "version") f.setRow({ version: 4 });
+    if (change === "foreign") f.setRow({ tenant_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb" });
+    expect((await f.invoke(registered, {}, tenant, true)).body.ok).toBe(false);
+    expect(f.legacy).not.toHaveBeenCalled();
+  });
+  it("service authority does not excuse a malformed or unauthorized named actor", async () => {
+    const f = fixture(); expect((await f.invoke(registered, { user_id: "malformed" }, tenant, true)).body.ok).toBe(false);
+    f.setAllowed(false); expect((await f.invoke(registered, { user_id: actor }, tenant, true)).body.ok).toBe(false);
+    expect(f.legacy).not.toHaveBeenCalled();
   });
   it("preserves the currently missing ZION prompt refusal with no model call", async () => {
     const f = fixture(); await f.invoke({ ...registered, system_prompt: null } as unknown as typeof registered);

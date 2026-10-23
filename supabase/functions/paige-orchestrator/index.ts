@@ -577,14 +577,17 @@ async function zionProviderAuthority(
   context: OrchestratorRequest["context"],
   tenantId: string | null,
   currentScope: () => Promise<boolean>,
+  actorlessService = false,
 ): Promise<boolean> {
   try {
     const actor = context?.user_id;
-    if (!actor || !UUID_RE.test(actor) || !tenantId || !UUID_RE.test(tenantId)
+    if ((!actor && !actorlessService) || (actor && !UUID_RE.test(actor)) || !tenantId || !UUID_RE.test(tenantId)
       || !agent.id || !UUID_RE.test(agent.id) || !Number.isInteger(agent.version)
       || (agent.version ?? 0) < 1 || !await currentScope()) return false;
-    const permission = await resolveWorkspaceAuthorityAs(supabase, actor, tenantId);
-    if (!permission.ok || !authorityAdmits("delegate_to_subagent", permission.authority, new Set())) return false;
+    if (actor) {
+      const permission = await resolveWorkspaceAuthorityAs(supabase, actor, tenantId);
+      if (!permission.ok || !authorityAdmits("delegate_to_subagent", permission.authority, new Set())) return false;
+    }
     const { data, error } = await supabase.from("paige_subagents")
       .select("id,slug,version,tenant_id,runtime,enabled,system_prompt,config")
       .eq("id", agent.id).eq("version", agent.version)
@@ -605,6 +608,7 @@ async function invokeSoft(
   context: OrchestratorRequest["context"],
   tenantId: string | null,
   currentScope?: () => Promise<boolean>,
+  actorlessService = false,
 ) {
   if (!agent.system_prompt) return { status: 500, body: { ok: false, error: `Soft agent ${agent.slug} missing system_prompt` } };
   const cfg = (agent.config ?? {}) as Record<string, unknown>;
@@ -628,14 +632,15 @@ async function invokeSoft(
     };
     let data: unknown;
     if (agent.slug === "zion") {
-      if (!tenantId || !UUID_RE.test(tenantId) || !context?.user_id || !UUID_RE.test(context.user_id) || !currentScope) {
+      if (!tenantId || !UUID_RE.test(tenantId) || (!context?.user_id && !actorlessService)
+        || (context?.user_id && !UUID_RE.test(context.user_id)) || !currentScope) {
         return { status: 403, body: { ok: false, error: "Current workspace authority is required for ZION planning." } };
       }
       const completion = await fabricCompletion({ ...body,
         cognitive_class: pickRoute(jobKind).tier === "classification" ? "cheap" : "operational",
         job: "zion_operations_draft",
       }, { trace: { agent_id: agent.slug, tenant_id: tenantId, content_policy: "metadata_only" },
-        beforeProviderAttempt: () => zionProviderAuthority(agent, context, tenantId, currentScope),
+        beforeProviderAttempt: () => zionProviderAuthority(agent, context, tenantId, currentScope, actorlessService),
       });
       if (!completion.ok) return { status: 503, body: { ok: false,
         error: "ZION could not verify current permission or model readiness. No planning result was confirmed." } };
@@ -788,6 +793,10 @@ Deno.serve(async (req) => {
             const trusted = await buildTrustedContext(payload, fresh);
             return !("error" in trusted) && trusted.ctx.user_id === ctx.user_id;
           },
+          // Only the ORIGINAL exact-service-key ActionBus drafting path may have
+          // no acting human. Rechecked by currentScope above; never request JSON,
+          // an invented owner, or authority to perform a business effect.
+          isService && !ctx.user_id,
         );
       } else {
         if (!agent.langgraph_graph) return fail(`Sub-agent ${agent.slug} has no langgraph_graph configured`, 500);

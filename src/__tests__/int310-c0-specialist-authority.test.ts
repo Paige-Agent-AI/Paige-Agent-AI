@@ -280,17 +280,21 @@ function durableSpecialist(options: { insert?: "error" | "invalid"; update?: "er
   const database = () => ({
     auth: { getUser: async () => ({ data: { user: { id: USER_A } }, error: null }) },
     rpc: async (name: string, ...args: unknown[]) => name === "get_paige_persona_context"
-      ? { data: [{ tenant_id: TENANT_A, funding_enabled: false }], error: null } : rpc(name, ...args),
+      ? { data: [{ tenant_id: TENANT_A, funding_enabled: false }], error: null }
+      : name === "is_tenant_admin_as" ? { data: true, error: null }
+      : name === "agency_can_manage_child" ? { data: false, error: null } : rpc(name, ...args),
     from(table: string) {
       let mode = "read", patch: Record<string, unknown> = {};
       const result = () => {
-        if (table === "paige_subagents") return { data: { slug: "zion", name: "ZION", runtime: "soft", domain: "operations", enabled: true, system_prompt: "Synthetic registered instructions", config: {}, tenant_id: null }, error: null };
+        if (table === "paige_subagents") return { data: { id: CONTACT, version: 1, slug: "zion", name: "ZION", runtime: "soft", domain: "operations", enabled: true, system_prompt: "Synthetic registered instructions", config: {}, tenant_id: null }, error: null };
+        if (table === "user_roles") return { data: [], error: null };
+        if (table === "tenant_members") return { data: { role: "owner" }, error: null };
         if (mode === "insert") return { data: options.insert === "error" ? null : { id: options.insert === "invalid" ? "not-a-work-identity" : id }, error: options.insert === "error" ? { message: "synthetic insert failure" } : null };
         if (options.update === "throw") throw new Error("synthetic lost update response");
         return { data: options.update === "missing" ? null : { id: options.update === "wrong-id" ? CONTACT : id, status: options.update === "mismatch" ? "pending" : patch.status }, error: options.update === "error" ? { message: "synthetic update failure" } : null };
       };
       const chain = {
-        select: () => chain, eq: () => chain, or: () => chain, is: () => chain,
+        select: () => chain, eq: () => chain, or: () => chain, is: () => chain, limit: () => chain,
         insert: (row: Record<string, unknown>) => { mode = "insert"; rows.push(row); return chain; },
         update: (row: Record<string, unknown>) => { mode = "update"; patch = row; return chain; },
         single: async () => result(), maybeSingle: async () => result(),
@@ -301,6 +305,10 @@ function durableSpecialist(options: { insert?: "error" | "invalid"; update?: "er
   });
   const h = loadEdge("paige-orchestrator", { database, stubs: { ...ORCH_STUBS,
     "_shared/model-router.ts": { ...ORCH_STUBS["_shared/model-router.ts"], routedChatCompletion: model },
+    "_shared/model-fabric.ts": { fabricCompletion: async (_request: unknown, options: { beforeProviderAttempt: () => Promise<boolean> }) => {
+      if (!await options.beforeProviderAttempt()) return { ok: false, error: { failure: "caller_refused" } };
+      return { ok: true, response: await model() };
+    } },
   } });
   const run = (body: unknown = { action: "tool_invoke", slug: "zion", input: { request: "Synthetic read-only plan" }, context: { user_id: "forged-actor" } }) => h.handler(post(body, bearer(options.actorlessWorker ? SERVICE : USER_JWT)));
   return { id, rows, rpc, model, run };
@@ -355,6 +363,12 @@ describe("INT-310 C0 — paige-orchestrator tool_invoke needs a real actor", () 
     const res = await h.handler(post(invoke, bearer(ANON)));
     expect(res.status).toBe(401);
     expect(h.from).not.toContain("paige_subagents");
+    expect(h.from).not.toContain("paige_subagent_invocations");
+  });
+  it("a body claiming actorless-service authority cannot promote an anonymous caller", async () => {
+    const h = loadEdge("paige-orchestrator", { stubs: ORCH_STUBS });
+    const res = await h.handler(post({ ...invoke, slug: "zion", actorlessService: true, isService: true, tenant_id: TENANT_A }, bearer(ANON)));
+    expect(res.status).toBe(401); expect(h.from).not.toContain("paige_subagents");
     expect(h.from).not.toContain("paige_subagent_invocations");
   });
   it("a verified signed-in person still proceeds to sub-agent resolution", async () => {

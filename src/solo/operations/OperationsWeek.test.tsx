@@ -14,8 +14,8 @@ beforeEach(() => { h.day = { kind: "configured", zone: "America/New_York", date:
 afterEach(() => { act(() => root.unmount()); container.remove(); });
 const record = { id: "original", tenant_id: "tenant-a", title: "Confirm the handoff", item_type: "task", status: "open",
   due_at: "2026-10-21T14:00:00Z", remind_at: null, assigned_to_user_id: null } as PlanItem;
-const mount = async (items = [record], tenantId = "tenant-a", inspect = vi.fn()) => {
-  await act(async () => root.render(<OperationsWeek tenantId={tenantId} items={items} tasks={[]} onInspectItem={inspect} />));
+const mount = async (items = [record], tenantId = "tenant-a", inspect = vi.fn(), openZone?: () => void) => {
+  await act(async () => root.render(<OperationsWeek tenantId={tenantId} items={items} tasks={[]} onInspectItem={inspect} onOpenBusinessTimeZone={openZone} />));
   return inspect;
 };
 const button = (text: string) => [...container.querySelectorAll<HTMLButtonElement>("button")].find(node => node.textContent?.includes(text));
@@ -62,4 +62,25 @@ it("reports undated and malformed original times without pretending the week con
   await mount([{ ...record, due_at: null }, { ...record, id: "invalid", due_at: "not-a-date" }]);
   expect(container.textContent).toContain("0 dated commitments"); expect(container.textContent).toContain("1 active item needs a saved date");
   expect(container.textContent).toContain("1 saved date is unavailable"); expect(button(record.title)).toBeUndefined();
+});
+
+it.each(["missing", "invalid"] as const)("opens the original setting for %s calendar evidence without assigning dates or saving a zone", async reason => {
+  h.day = { kind: "withheld", reason, canSet: true }; const openZone = vi.fn();
+  const inspect = await mount([record], "tenant-a", vi.fn(), openZone);
+  const entry = button("Review business time zone"); expect(entry).toBeTruthy();
+  await act(async () => entry!.click());
+  expect(openZone).toHaveBeenCalledOnce(); expect(h.refresh).not.toHaveBeenCalled();
+  expect(inspect).not.toHaveBeenCalled(); expect(container.querySelector("time")).toBeNull();
+  expect(record.due_at).toBe("2026-10-21T14:00:00Z");
+});
+it("offers an inspection, never a save, when the native reader says this actor cannot set the zone", async () => {
+  h.day = { kind: "withheld", reason: "missing", canSet: false }; const openZone = vi.fn();
+  await mount([record], "tenant-a", vi.fn(), openZone);
+  await act(async () => button("Review business time zone")!.click());
+  expect(openZone).toHaveBeenCalledOnce(); expect(button("Set business time zone")).toBeUndefined();
+});
+it.each(["loading", "refused", "unreadable", "no_workspace"] as const)("does not offer a setting repair for unverified calendar state %s", async reason => {
+  h.day = { kind: "withheld", reason, canSet: false }; const openZone = vi.fn();
+  await mount([record], "tenant-a", vi.fn(), openZone);
+  expect(button("Review business time zone")).toBeUndefined(); expect(openZone).not.toHaveBeenCalled();
 });

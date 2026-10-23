@@ -18,6 +18,7 @@ export interface OperationsOverviewProps {
   onInspectItem: (item: PlanItem) => void; onInspectPlan: (plan: Plan) => void;
   onNavigate?: (destination: Destination) => void;
   onInspectWorkSet?: (group: OperationsWorkSet) => void;
+  onOpenBusinessTimeZone?: () => void;
   onReviewWithPaige?: () => void;
   onReviewWorkWithPaige?: (work: NativeOperationsWork) => void;
   recordedFindings?: ReactNode; nativeWorkState?: 'ready' | 'loading' | 'unavailable';
@@ -25,7 +26,7 @@ export interface OperationsOverviewProps {
 
 export function OperationsOverview({ tenantId, plans, items, members, crmTasks = [], onInspectCrmTask,
   onInspectItem, onInspectPlan, onNavigate, onInspectWorkSet, onReviewWithPaige, onReviewWorkWithPaige,
-  recordedFindings, nativeWorkState = 'ready' }: OperationsOverviewProps) {
+  recordedFindings, nativeWorkState = 'ready', onOpenBusinessTimeZone }: OperationsOverviewProps) {
   const people = new Map(members.map(member => [member.user_id, member]));
   const projects = new Map(plans.map(plan => [plan.id, plan]));
   const work = overviewNativeWork(tenantId, nativeWorkState === 'ready' ? items : [], nativeWorkState === 'ready' ? crmTasks : []);
@@ -60,7 +61,7 @@ export function OperationsOverview({ tenantId, plans, items, members, crmTasks =
     </header>
     {work.active.length > 0 && <p className="ops-desk-read-scope">{work.active.length} active {work.active.length === 1 ? "commitment" : "commitments"} · {work.inProgress.length} in progress · {work.reminders.length} {work.reminders.length === 1 ? "reminder" : "reminders"} in the sources shown</p>}
     {hasNativeWork && <OperationsWeek tenantId={tenantId} items={items} tasks={crmTasks}
-      onInspectItem={onInspectItem} onInspectTask={onInspectCrmTask} />}
+      onInspectItem={onInspectItem} onInspectTask={onInspectCrmTask} onOpenBusinessTimeZone={onOpenBusinessTimeZone} />}
     <div className={hasNativeWork ? 'ops-desk-columns' : undefined}><div className={hasNativeWork ? 'ops-desk-primary-column' : undefined}>
       {hasNativeWork && (spotlight ? <section className="ops-desk-attention" aria-label="Priority work to inspect"><header>
         <h2>{spotlight.status === "blocked" ? <CirclePause size={17} aria-hidden="true" /> : <CalendarClock size={17} aria-hidden="true" />}Needs your attention</h2>

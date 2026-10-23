@@ -2,6 +2,7 @@ import { useCallback, useContext, useLayoutEffect, useRef, useState } from "reac
 import { UNSAFE_NavigationContext, useLocation, useNavigate, useNavigationType, useParams } from "react-router-dom";
 import { useSubtabRoute } from "@/lib/routing/useSubtabRoute";
 import { subtabPath } from "@/lib/routing/tierBranches";
+import { routeLinkTarget } from "@/lib/links/workspaceLinks";
 import { OperationsWorkspace } from "./OperationsWorkspace";
 
 /** Mounted only by the canonical Solo route after shared navigation integration. */
@@ -11,6 +12,7 @@ export function OperationsRoute({ openPaige, onNavigationGuardChange }: { openPa
   const location = useLocation();
   const navigate = useNavigate();
   const { account } = useParams();
+  const businessZoneTarget = routeLinkTarget({ destination: "business_time_zone", record_id: null }, "solo", account);
   const navigationType = useNavigationType();
   const { navigator } = useContext(UNSAFE_NavigationContext);
   // Preserve the accepted history position (E05), never replace a popped entry.
@@ -57,6 +59,7 @@ export function OperationsRoute({ openPaige, onNavigationGuardChange }: { openPa
   }, [location, view, current.view, navigate, index, navigationType]);
   return <>{historyNotice&&<p className="ops-inline-notice" role="status">{historyNotice}</p>}<OperationsWorkspace openPaige={openPaige} view={current.view}
     onOpenAgreements={account ? () => { if (!notifyGuard.current?.()) navigate(subtabPath("solo", account, "sales", "agreements")); } : undefined}
+    onOpenBusinessTimeZone={businessZoneTarget ? () => { if (!notifyGuard.current?.()) navigate(businessZoneTarget.to); } : undefined}
     onPlaybooksViewChange={mode => {
       if (notifyGuard.current?.()) return;
       const prior = accepted.current;
